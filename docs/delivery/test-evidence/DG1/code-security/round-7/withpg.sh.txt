@@ -1,0 +1,15 @@
+#!/bin/bash
+# usage: withpg.sh <cmd...> — initdb a FRESH disposable PG16 cluster under $TMPDIR on 127.0.0.1:5491 (round 7, code-security),
+# run cmd with TEST_DATABASE_ADMIN_URL set, then stop the cluster and delete it. Runs postgres as uid 1000 via unshare.
+PGBIN=/usr/lib/postgresql/16/bin; D=$TMPDIR/pg5491
+rm -rf $D; mkdir -p $D; chown 1000:1000 $D
+unshare --user --map-user=1000 --map-group=1000 $PGBIN/initdb -D $D/data -U postgres --auth=trust >$D/initdb.log 2>&1 || { echo "BLOCKED: initdb failed"; cat $D/initdb.log; exit 65; }
+unshare --user --map-user=1000 --map-group=1000 $PGBIN/postgres -D $D/data -c unix_socket_directories='' -c listen_addresses=127.0.0.1 -p 5491 -c fsync=off > $D/pg.log 2>&1 & PGP=$!
+for i in $(seq 1 60); do psql postgresql://postgres@127.0.0.1:5491/postgres -qAtc "select 1" >/dev/null 2>&1 && break; sleep 0.5; done
+echo "# disposable cluster: $(psql postgresql://postgres@127.0.0.1:5491/postgres -qAtc 'select version()')"
+export TEST_DATABASE_ADMIN_URL=postgresql://postgres@127.0.0.1:5491/postgres
+"$@"; rc=$?
+echo "# server log FATAL/57P01 lines: $(grep -c -E 'FATAL|57P01|terminating connection' $D/pg.log)"
+grep -E 'FATAL|terminating connection' $D/pg.log | head -5
+kill -INT $PGP; wait $PGP 2>/dev/null; rm -rf $D
+exit $rc

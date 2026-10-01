@@ -1,0 +1,43 @@
+$ withpg.sh pnpm test:integration   # run 1, disposable clone @2cfbf4f, fresh PG16 cluster 127.0.0.1:5491
+chown: changing ownership of '/var/tmp/mth-run.LZ9MnX/claude-0/pg5491': Invalid argument
+# disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+> mobily-transformation-hub@0.1.0 test:integration /var/tmp/mth-run.LZ9MnX/claude-0/rev
+> vitest run --project integration
+
+
+ RUN  v3.2.4 /var/tmp/mth-run.LZ9MnX/claude-0/rev
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mupjnnp5_0e34bc0b; applied 8 migrations to a fresh database
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts (10 tests) 5158ms
+   ✓ worker runtime: end to end, restarts and the dead-letter queue > relays and handles a created transformation, and survives a restart without losing the job  3691ms
+   ✓ worker runtime: end to end, restarts and the dead-letter queue > moves a job that keeps failing to ops.failed after the bounded retries  1049ms
+ ✓ |integration| packages/db/test/integration/scratch-drop.test.ts (3 tests) 5060ms
+   ✓ dropScratchDatabase never terminates a live client (F-DG1-009) > a drop right after pool.end() raises no 57P01 on the closing pool (40 rounds, 8 clients each)  4617ms
+   ✓ dropScratchDatabase never terminates a live client (F-DG1-009) > a client that is still connected is NOT terminated: the drop refuses, names it, and succeeds once it ends  441ms
+ ✓ |integration| tests/qa/integration/a13-job-idempotency.test.ts (5 tests) 3122ms
+   ✓ A13 running worker: a duplicate delivery is a no-op > consumes the event once; an extra job with the same message completes as 'duplicate'  2612ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts (30 tests) 785ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts (18 tests) 695ms
+ ✓ |integration| packages/db/test/integration/bootstrap.test.ts (5 tests) 928ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts (9 tests) 680ms
+ ✓ |integration| apps/api/test/integration/access-derived-race.test.ts (4 tests) 756ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts (14 tests) 633ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts (11 tests) 513ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts (19 tests) 639ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts (10 tests) 436ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts (7 tests) 591ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts (13 tests) 294ms
+ ✓ |integration| tests/qa/integration/a14-concurrency.test.ts (5 tests) 261ms
+ ✓ |integration| apps/worker/test/integration/maintenance.test.ts (2 tests) 349ms
+ ✓ |integration| apps/api/test/integration/platform.test.ts (9 tests) 180ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts (17 tests) 119ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts (9 tests) 32ms
+
+ Test Files  19 passed (19)
+      Tests  200 passed (200)
+   Start at  13:02:31
+   Duration  25.76s (transform 784ms, setup 0ms, collect 3.57s, tests 21.23s, environment 0ms, prepare 64ms)
+
+# server log FATAL/57P01 lines: 0
+exit=0

@@ -1,0 +1,110 @@
+clone HEAD: a6bdea00f8ee9d75926bc08b089d9a895b1f810f
+
+ RUN  v3.2.4 /var/tmp/mth-run.wbpvss/claude-0/review-dom7
+
+ ✓ |unit-node| apps/api/src/modules/access/rules.test.ts > grantApplies > requires the permission to be held 4ms
+ ✓ |unit-node| apps/api/src/modules/access/rules.test.ts > grantApplies > organization grant: inheriting role reaches every record in the organization, never another organization 1ms
+ ✓ |unit-node| apps/api/src/modules/access/rules.test.ts > grantApplies > organization grant of a NON-inheriting role applies to organization-level targets only (job title != global access) 0ms
+ ✓ |unit-node| apps/api/src/modules/access/rules.test.ts > grantApplies > business-unit grant: the unit itself (S = T), its subtree only when inheriting, never a sibling 0ms
+ ✓ |unit-node| apps/api/src/modules/access/rules.test.ts > grantApplies > transformation grant covers exactly that transformation 0ms
+ ✓ |unit-node| apps/api/src/modules/access/rules.test.ts > grantApplies > structural (organization administration) permissions cover the organization's structure without inheritance 0ms
+ ✓ |unit-node| apps/api/src/modules/access/rules.test.ts > grantApplies > reserved scope types grant nothing until their stage 0ms
+ ✓ |unit-node| apps/api/src/modules/access/rules.test.ts > decide (with separation-of-duties hooks) > allows with the applying assignment ids, denies without 2ms
+ ✓ |unit-node| apps/api/src/modules/access/rules.test.ts > decide (with separation-of-duties hooks) > never lets a service principal approve (automation never approves) 7ms
+ ✓ |unit-node| apps/api/src/modules/access/rules.test.ts > decide (with separation-of-duties hooks) > rejects the requester as approver 0ms
+ ✓ |unit-node| apps/api/src/modules/access/rules.test.ts > decide (with separation-of-duties hooks) > classifies approval permissions by category 0ms
+ ✓ |unit-node| apps/api/src/modules/access/rules.test.ts > scopeSets (inputs of the SQL scope filter) > splits grants by level and by whether they apply downward for this permission 5ms
+ ✓ |unit-node| apps/api/src/modules/platform/platform.test.ts > cursor > round-trips and is bound to the filter hash 10ms
+ ✓ |unit-node| apps/api/src/modules/platform/platform.test.ts > cursor > paginates limit+1 rows into a page and a next cursor 1ms
+ ✓ |unit-node| apps/api/src/modules/platform/platform.test.ts > If-Match > 428 when missing, 400 when not a strong numeric ETag, the version otherwise 1ms
+ ✓ |unit-node| apps/api/src/modules/platform/platform.test.ts > request IDs > accepts ^[A-Za-z0-9._-]{1,128}$ and generates a UUIDv7 otherwise 1ms
+ ✓ |unit-node| apps/api/src/modules/platform/platform.test.ts > problems > render RFC 9457 bodies with code and requestId, currentVersion on 409 1ms
+ ✓ |unit-node| apps/api/src/modules/platform/platform.test.ts > problems > maps zod issues to JSON pointers and i18n codes 2ms
+ ✓ |unit-node| apps/api/src/modules/platform/platform.test.ts > Idempotency-Key request hash > ignores key order and changes with any value 1ms
+ ✓ |unit-node| apps/api/src/modules/transformations/transitions.test.ts > isAllowedTransition > allows exactly draft->active, active->on_hold, on_hold->active (plus no-op) 6ms
+ ✓ |unit-node| apps/api/src/modules/transformations/transitions.test.ts > isAllowedTransition > refuses every client-driven close in P1 (closure is governed by the G6 business approval) - F-DG1-001 0ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > API module boundaries (ADR-0002) > has only mapped module directories, and every P1 module has a public index.ts 2ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > API module boundaries (ADR-0002) > the six §16 business modules all exist, each with its own test suite (A12; D-048) 4ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages 1180ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > API module boundaries (ADR-0002) > the declared module graph is acyclic, and audit/access depend on no business module 2ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > A static deep import is a violation 2ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > A2 type-only deep import is a violation 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > B dynamic import, literal is a violation 3ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > B2 dynamic import, template literal is a violation 2ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > C re-export is a violation 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > D createRequire is a violation 2ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > D2 node:module itself is a violation 2ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > D3 createRequire via namespace is a violation 2ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > E computed import() is a violation 2ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > E2 computed import() via variable is a violation 2ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F require literal is a violation 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F2 require computed is a violation 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > G import-equals require is a violation 2ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > H import type() is a violation 2ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > I composition root is a violation 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > J undeclared module (via its index) is a violation 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > K unknown package is a violation 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > L getBuiltinModule + computed member is a violation 2ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > L2 computed member of process is a violation 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > L3 loader name as a string key is a violation 10ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > L4 process aliased is a violation 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > L5 process destructured is a violation 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > L6 computed member of globalThis is a violation 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > L7 globalThis.process is a violation 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > M new Function dynamic import is a violation 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > M2 Function() call is a violation 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > M3 Function aliased is a violation 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > M4 globalThis.Function is a violation 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > M5 eval is a violation 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > M6 AsyncFunction via .constructor is a violation 2ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > M7 ['constructor'] member is a violation 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > N1 AsyncFunction via aliased .constructor is a violation 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > N2 constructor destructured is a violation 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > N3 Reflect.construct of .constructor is a violation 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > N4 getPrototypeOf(...).constructor aliased is a violation 2ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > N5 generator constructor, shorthand destructuring is a violation 2ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > N6 destructuring assignment with a string key is a violation 2ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > N7 computed constructor key in a binding pattern is a violation 2ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > N8 constructor key as a string value is a violation 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > M8 node:vm is a violation 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > M9 worker_threads is a violation 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P1 constructed key f["constr" + "uctor"] is a violation (round-4 lint: 'missed') 2ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P2 Reflect.get(fn, "constructor") is a violation (round-4 lint: 'caught') 18ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P3 Reflect.get with a constructed key is a violation (round-4 lint: 'missed') 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P4 constructed key held in a variable is a violation (round-4 lint: 'missed') 2ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P5 template-literal key is a violation (round-4 lint: 'missed') 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P6 optional-chain constructed key is a violation (round-4 lint: 'missed') 4ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P7 constructed key in a destructuring pattern is a violation (round-4 lint: 'missed') 2ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P8 descriptors: the constructor without its name is a violation (round-4 lint: 'missed') 2ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P9 own property names, then a variable key is a violation (round-4 lint: 'missed') 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P10 __proto__ is a violation (round-4 lint: 'missed') 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P11 loader name as a string handed to a helper is a violation (round-4 lint: 'missed') 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P12 process.binding is a violation (round-4 lint: 'missed') 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P13 node:inspector (in-process evaluation) is a violation (round-4 lint: 'missed') 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P14 node:child_process is a violation (round-4 lint: 'missed') 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P15 look-alike member o.eval (was an allowed form) is a violation (round-4 lint: 'missed') 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P16 constructor as an object key, fed to a keyed reader (was an allowed form) is a violation (round-4 lint: 'missed') 2ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P20 a syntax error fails closed (parser recovery hid P4's key) is a violation (round-4 lint: 'missed') 2ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > X6 node:process default import .dlopen is a violation (round-4 lint: 'missed') 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > X7 node:process default import .binding is a violation (round-4 lint: 'missed') 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > X8 node:process named import dlopen is a violation (round-4 lint: 'missed') 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > A1 node:sqlite loadExtension is a violation (round-4 lint: 'missed') 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P17 module.constructor is a violation (round-4 lint: 'caught') 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P18 aliased AsyncFunction constructor (F-DG1-121 N1) is a violation (round-4 lint: 'caught') 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P19 new Function (F-DG1-117 M) is a violation (round-4 lint: 'caught') 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > allowed forms stay clean (public index of a declared dependency, shared packages, own files) 19ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > a module's own test may read the module map and the lint, but its runtime files may not 6ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > a scaffold may not reach a business module it does not declare (reporting -> workflows) 2ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > scanSource reports what it saw (paths resolve relative to the planted file) 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > package dependency direction (ADR-0002 rule 5) > packages/db imports only @mth/config and @mth/shared 40ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > package dependency direction (ADR-0002 rule 5) > packages/config imports only @mth/shared 16ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > package dependency direction (ADR-0002 rule 5) > packages/shared imports no workspace package 41ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets) 277ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > package dependency direction (ADR-0002 rule 5) > apps/worker imports no API code 12ms
+
+ Test Files  4 passed (4)
+      Tests  99 passed (99)
+   Start at  12:58:14
+   Duration  3.19s (transform 933ms, setup 0ms, collect 3.05s, tests 1.78s, environment 1ms, prepare 584ms)
+
+exit=0

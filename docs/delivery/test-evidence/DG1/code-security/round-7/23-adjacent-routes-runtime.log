@@ -1,0 +1,20 @@
+# runtime proof of the two adjacent routes that the module lint passes with 0 violations (Node v22.22.2, disposable dir $TMPDIR/probe)
+## R1 node:test run({ files:[<computed path>], isolation:'none' }) imports an arbitrary file IN-PROCESS (no literal specifier, no code generation)
+$ cat target.mjs
+globalThis.__LOADED = "loaded-in-process pid=" + process.pid;
+$ cat runner.mjs
+import { run } from "node:test";
+const p = ["tar", "get.mjs"].join("");           // computed path: no literal specifier anywhere
+const stream = run({ files: [new URL(p, import.meta.url).pathname], isolation: "none" });
+stream.on("test:fail", () => {});
+for await (const _ of stream) {}
+console.log("node:test run isolation:none ->", globalThis.__LOADED, "(runner pid=" + process.pid + ")");
+console.log("typeof process.execve =", typeof process.execve);
+$ node runner.mjs
+node:test run isolation:none -> loaded-in-process pid=8 (runner pid=8)
+typeof process.execve = function
+exit=0
+## R2 global process.execve (Node >=22.15) replaces the process with an arbitrary executable (same capability class as the banned child_process/cluster)
+$ node -e 'process.execve("/bin/sh", ["sh","-c","echo execve-ran-arbitrary-binary pid=$$"])'
+execve-ran-arbitrary-binary pid=15
+exit=0

@@ -1,0 +1,42 @@
+// DISPOSABLE (code-security round 7, F-DG1-127 re-test). Not candidate source.
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { MODULES_DIR, bareAllowed, fileViolations, moduleViolations } from "./architecture.testkit.ts";
+import { API_MODULES, type ApiModule } from "./modules.ts";
+
+const F = join(MODULES_DIR, "transformations", "planted.ts");
+const v = (src: string) => fileViolations("transformations", F, src);
+const log = (name: string, out: string[]) => console.log(`[plant] ${name} -> ${out.length} violation(s)${out.length ? ": " + out.join(" | ") : ""}`);
+
+describe("F-DG1-127 A1 closed (code-security r7)", () => {
+  it("bareAllowed", () => {
+    for (const s of ["sqlite", "node:sqlite", "node:process", "process"]) { console.log(`[plant] bareAllowed(${s}) = ${bareAllowed(s)}`); expect(bareAllowed(s)).toBe(false); }
+    for (const s of ["node:fs", "node:path", "node:crypto"]) { console.log(`[plant] bareAllowed(${s}) = ${bareAllowed(s)}`); expect(bareAllowed(s)).toBe(true); }
+  });
+  const must: [string, string][] = [
+    ["A1 exact (assignment)", `import { DatabaseSync } from "node:sqlite";\nnew DatabaseSync(":memory:", { allowExtension: true }).loadExtension("/tmp/x.so");`],
+    ["A1 bare sqlite", `import { DatabaseSync } from "sqlite";\nnew DatabaseSync(":memory:", { allowExtension: true }).loadExtension("/tmp/x.so");`],
+    ["A1 namespace", `import * as s from "node:sqlite";\nnew s.DatabaseSync(":memory:", { allowExtension: true }).loadExtension("/tmp/x.so");`],
+    ["A1 dynamic literal", `const { DatabaseSync } = await import("node:sqlite");\nnew DatabaseSync(":memory:", { allowExtension: true }).loadExtension("/tmp/x.so");`],
+    ["A1 re-export", `export { DatabaseSync } from "node:sqlite";`],
+    ["A1 export-star", `export * from "node:sqlite";`],
+    ["A1 type-only", `import type { DatabaseSync } from "node:sqlite";\nexport type D = DatabaseSync;`],
+    ["A1 import-equals", `import s = require("node:sqlite");`],
+    ["A1 template literal dynamic", "const m = await import(`node:sqlite`);"],
+  ];
+  for (const [name, src] of must) it(`violation: ${name}`, () => { const out = v(src); log(name, out); expect(out.join("\n")).toMatch(/node:sqlite|package sqlite|bypasses/); });
+
+  it("real module tree: zero moduleViolations", () => {
+    for (const m of Object.keys(API_MODULES) as ApiModule[]) { const out = moduleViolations(m); console.log(`[plant] moduleViolations(${m}) = ${out.length}`); expect(out).toEqual([]); }
+  });
+  it("A2 residual: node:fs is deliberately allowed", () => {
+    const out = v(`import { readFileSync } from "node:fs";\nexport const x = readFileSync("a.txt", "utf8");`); log("node:fs read", out); expect(out).toEqual([]);
+    const gen = v(`import { writeFileSync } from "node:fs";\nwriteFileSync(new URL("./gen.mjs", import.meta.url), "export default 1");\nawait import("./gen.mjs");`); log("A2 fs-write-then-import literal same-module (residual b)", gen); expect(gen).toEqual([]);
+  });
+  it("adjacent probes (reported, not asserted)", () => {
+    log("ADJ node:test run isolation:none (computed path, in-process import)", v(`import { run } from "node:test";\nconst p = ["../access/", "policy.ts"].join("");\nfor await (const _ of run({ files: [new URL(p, import.meta.url).pathname], isolation: "none" })) {}`));
+    log("ADJ global process.execve", v(`process.execve("/bin/sh", ["sh", "-c", "id"]);`));
+    log("ADJ node:wasi / WebAssembly (residual c names WebAssembly)", v(`import { WASI } from "node:wasi";\nconst w = new WASI({ version: "preview1" });\nawait WebAssembly.instantiate(new Uint8Array([0]), w.getImportObject());`));
+    log("ADJ process.dlopen (F-DG1-125 regression)", v(`process.dlopen({ exports: {} }, "/tmp/x.so");`));
+  });
+});

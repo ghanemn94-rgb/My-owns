@@ -1,0 +1,25 @@
+# installer acceptance suite, disposable clone $TMPDIR/rev @2cfbf4f; bwrap nested in the reviewer sandbox; npm_config_store_dir=private writable copy of the host pnpm store (host store under read-only HOME); no registry access
+$ npm_config_store_dir=$TMPDIR/store-v10 bash tools/deps/tests/install-sandbox.test.sh
+PASS  AC-1 write to /etc is refused read-only under the sandbox
+FAIL  AC-1 (effect) create did not populate node_modules in the target tree
+PASS  AC-2 a non-allow-listed dependency's postinstall did not run
+PASS  AC-2 an allow-listed dependency's postinstall did run
+PASS  AC-3 frozen install without a committed lockfile fails non-zero
+PASS  AC-3 frozen install that would change the lockfile fails non-zero
+PASS  AC-4 a missing bubblewrap exits 65 (BLOCKED), never an unsandboxed install
+PASS  AC-5 control paths (.git, tools/gates) are read-only inside the sandbox
+PASS  AC-6 a host environment variable (secret) does not cross into the sandbox
+PASS  AC-6 (control) PATH is set inside the sandbox (install is usable)
+PASS  AC-7 control-path escape (parent-rename, installer append, delivery write) is refused; real repo unchanged
+PASS  AC-8 agent-config surfaces (CLAUDE.local.md, .mcp.json, nested CLAUDE.md, .vscode) cannot be created
+PASS  AC-9 a planted non-member node_modules (evil-ctrl/node_modules) is not copied back
+PASS  AC-10 a '!'-excluded package and a non-`packages:` list entry are not copy-back destinations
+install-sandbox acceptance: 13 passed, 1 failed
+exit=1
+
+## why AC-1 (effect) fails here: it needs registry metadata for is-number@7.0.0 (the reviewer sandbox has no registry access)
+$ install-sandbox.sh --root $TMPDIR/ac1chk create  (package.json depends on is-number 7.0.0)
+ WARN  GET https://registry.npmjs.org/is-number error (ECONNREFUSED). Will retry in 10 seconds. 2 retries left.
+ WARN  GET https://registry.npmjs.org/is-number error (ECONNREFUSED). Will retry in 1 minute. 1 retries left.
+ ERR_PNPM_META_FETCH_FAIL  GET https://registry.npmjs.org/is-number: request to https://registry.npmjs.org/is-number failed, reason: connect ECONNREFUSED 127.0.0.1:3128
+exit=1  -> AC-1 (effect) BLOCKED (no registry). The offline ACs (AC-2/AC-9/AC-10 populate root node_modules via create from file: deps) prove the create + copy-back path.

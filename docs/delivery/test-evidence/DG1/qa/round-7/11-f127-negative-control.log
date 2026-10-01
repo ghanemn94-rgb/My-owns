@@ -1,0 +1,11 @@
+# F-DG1-127 negative control (disposable clone at 2cfbf4f): pre-fix testkit from 5dceadc (= 3e0316d^) + the frozen architecture.test.ts
+$ git show 5dceadc:apps/api/src/architecture.testkit.ts > apps/api/src/architecture.testkit.ts && pnpm vitest run --project unit-node apps/api/src/architecture.test.ts
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > A1 node:sqlite loadExtension is a violation (round-4 lint: 'missed') 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > A1 node:sqlite loadExtension is a violation (round-4 lint: 'missed')
+AssertionError: A1 node:sqlite loadExtension: []: expected 0 to be greater than 0
+      Tests  1 failed | 77 passed (78)
+exit=1
+$ (restored frozen testkit) pnpm vitest run --project unit-node apps/api/src/architecture.test.ts
+      Tests  78 passed (78)
+exit=0

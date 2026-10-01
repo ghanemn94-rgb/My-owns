@@ -1,0 +1,53 @@
+clone HEAD: a6bdea00f8ee9d75926bc08b089d9a895b1f810f; r6 testkit from 0026a7b
+
+ RUN  v3.2.4 /var/tmp/mth-run.wbpvss/claude-0/review-dom7
+
+stdout | apps/api/src/zz-dom7-probe.test.ts > F-DG1-127 over-reach probe (domain-reviewer r7) > (a) legitimate specifiers stay allowed
+real-tree bare specifiers: @fastify/cookie, @fastify/rate-limit, @mth/config, @mth/db, @mth/shared, @mth/shared/schemas, ajv/dist/2020.js, fastify, node:crypto, node:fs, node:path, node:url, openid-client, pg, uuid, vitest, yaml, zod
+checked 47 legitimate specifiers; rejected: []
+
+stdout | apps/api/src/zz-dom7-probe.test.ts > F-DG1-127 over-reach probe (domain-reviewer r7) > (b) differential vs round-6 testkit: only sqlite/node:sqlite change
+corpus 108 specifiers; verdict changes: ["node:sqlite: r6=true r7=false"]
+
+stdout | apps/api/src/zz-dom7-probe.test.ts > F-DG1-127 over-reach probe (domain-reviewer r7) > (c) every import route of the sqlite module is a violation
+sqlite import forms tested: 9; missed: []
+
+stdout | apps/api/src/zz-dom7-probe.test.ts > F-DG1-127 over-reach probe (domain-reviewer r7) > (d) real module tree has zero violations; global process.env read still fine
+real module tree violations: 0; global process.env violations: []
+
+ ✓ |unit-node| apps/api/src/zz-dom7-probe.test.ts > F-DG1-127 over-reach probe (domain-reviewer r7) > (a) legitimate specifiers stay allowed 2ms
+ × |unit-node| apps/api/src/zz-dom7-probe.test.ts > F-DG1-127 over-reach probe (domain-reviewer r7) > (b) differential vs round-6 testkit: only sqlite/node:sqlite change 8ms
+   → expected [ 'node:sqlite: r6=true r7=false' ] to deeply equal [ …(2) ]
+ ✓ |unit-node| apps/api/src/zz-dom7-probe.test.ts > F-DG1-127 over-reach probe (domain-reviewer r7) > (c) every import route of the sqlite module is a violation 46ms
+ ✓ |unit-node| apps/api/src/zz-dom7-probe.test.ts > F-DG1-127 over-reach probe (domain-reviewer r7) > (d) real module tree has zero violations; global process.env read still fine 482ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| apps/api/src/zz-dom7-probe.test.ts > F-DG1-127 over-reach probe (domain-reviewer r7) > (b) differential vs round-6 testkit: only sqlite/node:sqlite change
+AssertionError: expected [ 'node:sqlite: r6=true r7=false' ] to deeply equal [ …(2) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "node:sqlite: r6=true r7=false",[22m
+[32m-   "sqlite: r6=true r7=false",[39m
+[2m  ][22m
+
+ ❯ apps/api/src/zz-dom7-probe.test.ts:51:28
+     49|       .map((s) => `${s}: r6=${bareAllowedR6(s)} r7=${bareAllowed(s)}`);
+     50|     console.log(`corpus ${new Set(corpus).size} specifiers; verdict ch…
+     51|     expect(changed.sort()).toEqual(["node:sqlite: r6=true r7=false", "…
+       |                            ^
+     52|   });
+     53|   it("(c) every import route of the sqlite module is a violation", () …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  12:58:49
+   Duration  1.75s (transform 144ms, setup 0ms, collect 872ms, tests 541ms, environment 0ms, prepare 76ms)
+
+exit=1

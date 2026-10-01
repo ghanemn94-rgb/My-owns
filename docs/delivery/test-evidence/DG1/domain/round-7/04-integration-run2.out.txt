@@ -1,0 +1,220 @@
+cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+clone HEAD: a6bdea00f8ee9d75926bc08b089d9a895b1f810f
+
+ RUN  v3.2.4 /var/tmp/mth-run.wbpvss/claude-0/review-dom7
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mupjjwj9_9fa3913f; applied 8 migrations to a fresh database
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts > pg-boss schema (installed by mth-db migrate) > migration 0006 is exactly pg-boss 11's construction plan without its transaction wrapper 2ms
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts > pg-boss schema (installed by mth-db migrate) > runs as mth_app with migrate=false (the version check passes; no DDL rights needed) 6ms
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts > outbox relay idempotency > publishes each event exactly once, even when relayed twice 35ms
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts > outbox relay idempotency > is safe after a crash between send and mark (the replayed send is a no-op) 15ms
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts > outbox relay idempotency > never double-publishes with concurrent relays (FOR UPDATE SKIP LOCKED) 44ms
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts > outbox relay idempotency > records an unroutable event as a relay failure instead of dropping it 11ms
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts > idempotent consumer (processed_message ledger) > processes a duplicate delivery once: one ledger row, one audit event 17ms
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts > idempotent consumer (processed_message ledger) > rejects a malformed envelope (so pg-boss retries it and finally dead-letters it) 2ms
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts > worker runtime: end to end, restarts and the dead-letter queue > relays and handles a created transformation, and survives a restart without losing the job 3687ms
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts > worker runtime: end to end, restarts and the dead-letter queue > moves a job that keeps failing to ops.failed after the bounded retries 1048ms
+ ✓ |integration| packages/db/test/integration/scratch-drop.test.ts > dropScratchDatabase never terminates a live client (F-DG1-009) > a drop right after pool.end() raises no 57P01 on the closing pool (40 rounds, 8 clients each) 5482ms
+ ✓ |integration| packages/db/test/integration/scratch-drop.test.ts > dropScratchDatabase never terminates a live client (F-DG1-009) > a client that is still connected is NOT terminated: the drop refuses, names it, and succeeds once it ends 446ms
+ ✓ |integration| packages/db/test/integration/scratch-drop.test.ts > dropScratchDatabase never terminates a live client (F-DG1-009) > refuses a database name that is not a plain identifier (no SQL is built from it) 1ms
+ ✓ |integration| tests/qa/integration/a13-job-idempotency.test.ts > A13 create with Idempotency-Key: a retried request is one record and one outbox event > replays the original 201 and writes nothing new; the same key with another body is 422 74ms
+ ✓ |integration| tests/qa/integration/a13-job-idempotency.test.ts > A13 outbox relay: publishing twice enqueues one job > a second relay pass is a no-op, and a replayed (un-marked) row does not create a second job 62ms
+ ✓ |integration| tests/qa/integration/a13-job-idempotency.test.ts > A13 transformation.created handler: processed twice = one ledger effect > first run is 'done', the duplicate is 'duplicate'; one ledger row and one audit event 41ms
+ ✓ |integration| tests/qa/integration/a13-job-idempotency.test.ts > A13 transformation.created handler: processed twice = one ledger effect > concurrent deliveries of the same message produce exactly one effect 50ms
+ ✓ |integration| tests/qa/integration/a13-job-idempotency.test.ts > A13 running worker: a duplicate delivery is a no-op > consumes the event once; an extra job with the same message completes as 'duplicate' 2659ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > create > persists a draft End-to-End record in Diagnose with organization defaults (Asia/Riyadh, SAR) and a generated code 41ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > create > writes exactly one audit event and one outbox event, in the same transaction 14ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > create > rolls back record, audit and outbox together when a rule fails (duplicate code -> 409) 39ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > create > rejects invalid input {"businessUnitId":"not-a-uuid","name":"x","mode":"end_to_end"} with 400 and a field pointer 8ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > create > rejects invalid input {"name":"x","mode":"end_to_end"} with 400 and a field pointer 5ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > create > rejects invalid input {"businessUnitId":"01920000-0000-7000-8000-000000000001","name":"","mode":"end_to_end"} with 400 and a field pointer 4ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > create > rejects invalid input {"businessUnitId":"01920000-0000-7000-8000-000000000001","name":"x","mode":"modular"} with 400 and a field pointer 5ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > create > rejects invalid input {"businessUnitId":"01920000-0000-7000-8000-000000000001","name":"x","mode":"end_to_end","entryPhase":"design"} with 400 and a field pointer 3ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > create > rejects invalid input {"businessUnitId":"01920000-0000-7000-8000-000000000001","name":"x","mode":"end_to_end","timezone":"Mars/Base"} with 400 and a field pointer 5ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > create > rejects invalid input {"businessUnitId":"01920000-0000-7000-8000-000000000001","name":"x","mode":"end_to_end","currency":"sar"} with 400 and a field pointer 4ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > create > rejects invalid input {"businessUnitId":"01920000-0000-7000-8000-000000000001","name":"x","mode":"end_to_end","extra":1} with 400 and a field pointer 4ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > create > refuses an inactive business unit (422) and unknown sponsor/lead users (422) 17ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > create > requires a session (401) and CSRF + same Origin (403) on create 13ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > Idempotency-Key on create > replays the original 201 for the same key and body, creating one record, one audit event and one outbox event 25ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > Idempotency-Key on create > rejects the same key with a different body (422) and a malformed key (400) 30ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > update with optimistic concurrency (A14) > needs If-Match: missing -> 428, malformed -> 400 23ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > update with optimistic concurrency (A14) > applies a fresh update, bumps the version by exactly one and audits the field diff 16ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > update with optimistic concurrency (A14) > rejects a stale If-Match with 409 and currentVersion, writing nothing and auditing nothing 18ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > update with optimistic concurrency (A14) > serializes two simultaneous writers holding the same version: exactly one wins 15ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > update with optimistic concurrency (A14) > enforces explicit status transitions (422 invalid-transition) 9ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > update with optimistic concurrency (A14) > rejects fields that are not editable here (mode, currentPhase) with 400 12ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > update with optimistic concurrency (A14) > denies an update without transformation.update (auditor: 403) before looking at If-Match 10ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > closure is not a status edit (F-DG1-001: closure needs the G6 business approval, absent in P1) > refuses active -> closed with 422 invalid-transition; the record keeps its state, version and audit trail 45ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > closure is not a status edit (F-DG1-001: closure needs the G6 business approval, absent in P1) > refuses on_hold -> closed with 422 invalid-transition; the record keeps its state, version and audit trail 54ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > closure is not a status edit (F-DG1-001: closure needs the G6 business approval, absent in P1) > refuses a close from draft as well (no path to closed exists in P1) 15ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > archive > needs a reason, If-Match and transformation.archive; archived records are read-only and hidden by default 103ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > list: filters, sorting and cursor pagination > pages through a stable order without duplicates or gaps 66ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > list: filters, sorting and cursor pagination > supports updatedAt ordering both ways and repeatable status filters 13ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > list: filters, sorting and cursor pagination > rejects a cursor reused with other filters, unknown query parameters and an out-of-range limit (400) 20ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > audit trail endpoint > lists events newest first with actor names, paginated; needs audit.read (TO yes, others 403/404) 67ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts > cross-scope READ is denied by the policy function (404, existence not disclosed) > TO of organization A reads every transformation in A (inherits downward), none in B 29ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts > cross-scope READ is denied by the policy function (404, existence not disclosed) > TO of organization B cannot read organization A's records 19ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts > cross-scope READ is denied by the policy function (404, existence not disclosed) > TL granted at BU a1 (non-inheriting) sees no transformation below a1, and none in the sibling a2 18ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts > cross-scope READ is denied by the policy function (404, existence not disclosed) > a transformation-scope grant covers exactly that transformation 17ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts > cross-scope READ is denied by the policy function (404, existence not disclosed) > technical administrators cannot read business records at all 19ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts > cross-scope READ is denied by the policy function (404, existence not disclosed) > a user without grants sees nothing, and an unknown id is indistinguishable from a forbidden one 11ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts > list filtering happens in SQL through the same rules > returns exactly the readable set per principal 13ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts > cross-scope WRITE is denied (404 when unreadable, 403 when readable but not permitted) > TO of B cannot update or archive A's transformation, and nothing is written 24ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts > cross-scope WRITE is denied (404 when unreadable, 403 when readable but not permitted) > an auditor can read but not update (403) and the denial itself is audited 22ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts > cross-scope WRITE is denied (404 when unreadable, 403 when readable but not permitted) > TL at BU a1 may create in a1 but not in the sibling a2 (BU unreadable -> 404) nor in org B 43ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts > cross-scope WRITE is denied (404 when unreadable, 403 when readable but not permitted) > an auditor can read the BU but may not create in it (403) 9ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts > revocation applies to the next request (grants are loaded per request) > revoking the TO grant removes access immediately 21ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts > revocation applies to the next request (grants are loaded per request) > future-dated and expired grants do not apply 17ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts > a business-unit-scoped creator can work on what it created, and nothing more (F-DG1-106) > TL @ BU a1: create -> read -> list -> update -> audit -> archive all succeed (explicit, audited assignment) 85ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts > a business-unit-scoped creator can work on what it created, and nothing more (F-DG1-106) > still denies the BU-scoped creator every OTHER transformation, cross-BU and cross-organization 130ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts > a business-unit-scoped creator can work on what it created, and nothing more (F-DG1-106) > adds no assignment when the creator can already read the record (TO inherits downward) 29ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts > a business-unit-scoped creator can work on what it created, and nothing more (F-DG1-106) > never carries over a role that holds an approval permission (no approver is manufactured by a create) 48ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts > a business-unit-scoped creator can work on what it created, and nothing more (F-DG1-106) > revoking the source BU grant also revokes the derived assignment (same transaction, audited) 74ms
+ ✓ |integration| packages/db/test/integration/bootstrap.test.ts > mth-db bootstrap > creates the first organization and a technical/access admin with no business permission, fully audited 277ms
+ ✓ |integration| packages/db/test/integration/bootstrap.test.ts > mth-db bootstrap > refuses to run twice 282ms
+ ✓ |integration| packages/db/test/integration/bootstrap.test.ts > mth-db bootstrap > validates its input and refuses the dev-login issuer 171ms
+ ✓ |integration| packages/db/test/integration/bootstrap.test.ts > mth-db seed-dev (synthetic, development only) > refuses in production and outside AUTH_MODE=dev 0ms
+ ✓ |integration| packages/db/test/integration/bootstrap.test.ts > mth-db seed-dev (synthetic, development only) > seeds synthetic users bound to urn:mth:dev-local once, idempotently 192ms
+ ✓ |integration| apps/api/test/integration/access-derived-race.test.ts > a create racing the revocation of its source BU grant leaves no active derived assignment (F-DG1-115) > A. revoke first: the create waits for the revoke, sees the source revoked and is refused (nothing persists) 127ms
+ ✓ |integration| apps/api/test/integration/access-derived-race.test.ts > a create racing the revocation of its source BU grant leaves no active derived assignment (F-DG1-115) > B. create first: the revoke waits for the create and its cascade revokes the new derived assignment 137ms
+ ✓ |integration| apps/api/test/integration/access-derived-race.test.ts > a create racing the revocation of its source BU grant leaves no active derived assignment (F-DG1-115) > C. one of two source grants revoked concurrently: the create succeeds and derives only from the survivor 128ms
+ ✓ |integration| apps/api/test/integration/access-derived-race.test.ts > a create racing the revocation of its source BU grant leaves no active derived assignment (F-DG1-115) > D. the only source revoked concurrently, another (approval-holding, non-source) grant still authorizes create 90ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts > A12 cross-scope read is denied (404, existence not disclosed); in-scope read succeeds > probe 0: reads exactly its scope 37ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts > A12 cross-scope read is denied (404, existence not disclosed); in-scope read succeeds > probe 1: reads exactly its scope 35ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts > A12 cross-scope read is denied (404, existence not disclosed); in-scope read succeeds > probe 2: reads exactly its scope 44ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts > A12 cross-scope read is denied (404, existence not disclosed); in-scope read succeeds > probe 0: the list is scope-filtered (no foreign record, even when filtering for it) 25ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts > A12 cross-scope read is denied (404, existence not disclosed); in-scope read succeeds > probe 1: the list is scope-filtered (no foreign record, even when filtering for it) 14ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts > A12 cross-scope read is denied (404, existence not disclosed); in-scope read succeeds > probe 2: the list is scope-filtered (no foreign record, even when filtering for it) 12ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts > A12 cross-scope write is denied and writes nothing; in-scope write succeeds > probe 0: PATCH and archive outside the scope are 404 and change nothing 43ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts > A12 cross-scope write is denied and writes nothing; in-scope write succeeds > probe 1: PATCH and archive outside the scope are 404 and change nothing 77ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts > A12 cross-scope write is denied and writes nothing; in-scope write succeeds > probe 2: PATCH and archive outside the scope are 404 and change nothing 102ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts > A12 cross-scope write is denied and writes nothing; in-scope write succeeds > probe 0: PATCH inside the scope succeeds and bumps the version 27ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts > A12 cross-scope write is denied and writes nothing; in-scope write succeeds > probe 1: PATCH inside the scope succeeds and bumps the version 18ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts > A12 cross-scope write is denied and writes nothing; in-scope write succeeds > probe 2: PATCH inside the scope succeeds and bumps the version 14ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts > A12 cross-scope write is denied and writes nothing; in-scope write succeeds > create is denied outside the caller's scope (no row), allowed inside it 61ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts > A12 the policy function itself decides the same way > authorize() allows read/update in scope and denies them out of scope, per scope level 37ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > route coverage > maps every governed Fastify route to an OpenAPI operation with the same method, and back 1ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > route coverage > declares access on every governed route (public or a permission) 1ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > health 10ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > auth + me 151ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > organizations and business units 131ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > users, roles, permissions and assignments 126ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > transformations and audit 143ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > branding tokens (getBrandingTokens): authenticated-only, provisional provenance, contract + zod valid 9ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > covers every operation with at least one success and every successful body with its zod mirror 3ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts > users > lists users of an organization for user.read holders only (403 otherwise), with search 36ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts > users > pre-provisions a user with an identity binding (user.manage), 409 on duplicate e-mail or identity, audited 52ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts > users > reads a user (self always; others need user.read on the home organization, else 404) 31ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts > users > disables a user with If-Match, revoking all their sessions in the same transaction; audited 66ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts > users > refuses to let an administrator disable themself (403 user.cannot_disable_self) 11ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts > role and permission catalogue > lists roles with permissions equal to the seeded catalogue (role.read), 403 without it 23ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts > scoped role assignments > grants a role at a transformation scope (access.assign), with a mandatory reason; audited; access follows 64ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts > scoped role assignments > refuses self-grants, reserved scope types, unknown scopes and cross-organization scopes 27ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts > scoped role assignments > never makes a technical administrator an approver: admin roles carry no approval permission 26ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts > scoped role assignments > lists assignments (access.read) with filters; 403 for callers without access.read in that organization 17ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts > scoped role assignments > revokes with If-Match and a reason (never deletes); the user loses access and their sessions end; audited 110ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/login > redirects to the IdP with code flow, PKCE S256, state and nonce, storing only the state's hash 23ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/login > rejects returnTo=//evil.example/x (open redirect) with 400 9ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/login > rejects returnTo=https://evil.example/ (open redirect) with 400 1ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/login > rejects returnTo=relative (open redirect) with 400 1ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/login > rejects returnTo=/\evil (open redirect) with 400 1ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > provisions a first-time user just in time, WITHOUT any role, and signs them in (audited) 79ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > signs an existing (issuer, subject) back in to the same user 29ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > binds a pre-provisioned user by VERIFIED e-mail only 41ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > refuses a disabled user 13ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > uses each state once, and rejects unknown or expired states 31ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > login CSRF: the state is bound to the browser that started the login (F-DG1-103) > refuses an attacker's live callback in the victim's browser; the victim stays signed in as themself 53ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > login CSRF: the state is bound to the browser that started the login (F-DG1-103) > sets a short-lived HttpOnly SameSite=Lax login cookie, stores only its hash, and clears it at the callback 5ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > login CSRF: the state is bound to the browser that started the login (F-DG1-103) > uses the __Host- prefix and Secure on an https origin 26ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > rejects a wrong nonce and a PKCE mismatch (token_invalid), and IdP errors (idp_denied), all without a session 35ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > refuses just-in-time provisioning when several organizations exist (users must be pre-provisioned) 12ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > OIDC logout and configuration > returns the IdP end-session URL for OIDC sessions 32ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > OIDC logout and configuration > answers 404 on /auth/login and /auth/callback when OIDC is not configured 19ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > OIDC logout and configuration > redirects to /login?error=idp_unavailable when the IdP cannot be reached, and never fails startup 29ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > OIDC logout and configuration > keeps the IdP's token endpoint behind the server (the browser never receives tokens) 0ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts > organizations > lists only organizations in which the caller holds organization.read 10ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts > organizations > reads one organization with ETag; others are 404 13ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts > organizations > updates with If-Match (technical admin), 403 for a business role, 404 across organizations; audited 42ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts > organizations > creates an organization (organization.manage) and carries over only the creator's technical-admin roles 31ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts > business units > creates under an organization (business_unit.manage on the organization), with duplicate and cross-org checks 42ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts > business units > lists the organization's units for readers and 404s other organizations 22ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts > business units > rejects moving a unit under itself or its descendant (422 cycle) and keeps the hierarchy 21ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts > business units > re-parents and renames with If-Match; audited with a diff 29ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts > business units > limits nesting depth (400 on create, per the contract) 74ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts > business units > reads one unit (business_unit.read) and 404s outside scope 24ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > applies every shipped migration, then reports up to date 112ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > is idempotent on an up-to-date database 8ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > records id, name, sha256, applied_at and applied_by = mth_owner 6ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > refuses to run when an applied file changed on disk 23ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > refuses to run when the database has a migration the build does not ship 23ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > applies a new forward migration atomically: a failing file leaves no trace 22ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate guards > refuses to run as the app role (objects must be owned by mth_owner) 92ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts > dev login (AUTH_MODE=dev) > signs in a synthetic user: 204, HttpOnly SameSite=Lax cookie, only the SHA-256 of the token stored, audited 19ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts > dev login (AUTH_MODE=dev) > refuses unknown and disabled users with 401 and audits the failure 13ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts > dev login (AUTH_MODE=dev) > needs a same-origin Origin header (login CSRF) and a valid body 11ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts > dev login (AUTH_MODE=dev) > rotates the session: a login presented with an existing session revokes it 63ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts > dev login (AUTH_MODE=dev) > does not exist (404) when AUTH_MODE=oidc 18ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts > GET /api/v1/me > returns the user, CSRF token, product name, home organization, active assignments and permissions per scope 18ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts > GET /api/v1/me > answers 401 without a session, with a forged cookie, after logout and after expiry 26ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts > GET /api/v1/me > stops accepting a session as soon as its user is disabled 12ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts > PUT /api/v1/me/preferences > persists the language and time zone with If-Match (428, 409, 200) and audits the change 56ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts > PUT /api/v1/me/preferences > needs the CSRF token 23ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts > logout > needs CSRF, revokes the session, clears the cookie, audits, and returns no end-session URL in dev mode 34ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts > logout > uses the __Host- cookie with Secure on an https base URL 32ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts > request IDs > echoes a well-formed X-Request-Id and replaces a malformed one 4ms
+ ✓ |integration| tests/qa/integration/a14-concurrency.test.ts > A14 transformation PATCH > create returns version 1 with a strong ETag 28ms
+ ✓ |integration| tests/qa/integration/a14-concurrency.test.ts > A14 transformation PATCH > fresh If-Match succeeds and bumps version; stale If-Match is 409 with currentVersion; missing is 428 68ms
+ ✓ |integration| tests/qa/integration/a14-concurrency.test.ts > A14 transformation PATCH > two writers racing on the same version: exactly one 200, the rest 409, version bumped once 41ms
+ ✓ |integration| tests/qa/integration/a14-concurrency.test.ts > A14 transformation archive > stale If-Match is 409, missing is 428, fresh archives and bumps version 54ms
+ ✓ |integration| tests/qa/integration/a14-concurrency.test.ts > A14 own preferences (PUT /me/preferences) > missing If-Match is 428, stale is 409 with currentVersion, fresh succeeds 39ms
+ ✓ |integration| apps/worker/test/integration/maintenance.test.ts > purgeExpired > deletes only expired or long-revoked rows 34ms
+ ✓ |integration| apps/worker/test/integration/maintenance.test.ts > schedule > registers the purge cron in the configured time zone, idempotently 36ms
+ ✓ |integration| apps/api/test/integration/platform.test.ts > health and readiness > reports ready when the database answers and every shipped migration is applied 12ms
+ ✓ |integration| apps/api/test/integration/platform.test.ts > health and readiness > reports 503 not_ready/pending when the build ships a migration the database lacks, and fail on checksum drift 30ms
+ ✓ |integration| apps/api/test/integration/platform.test.ts > rate limiting (ADR-0007 T-3) > limits auth endpoints per IP with a 429 problem and Retry-After 31ms
+ ✓ |integration| apps/api/test/integration/platform.test.ts > rate limiting (ADR-0007 T-3) > limits general API traffic per session, never the health endpoints 73ms
+ ✓ |integration| apps/api/test/integration/platform.test.ts > request hygiene > rejects malformed JSON, non-JSON bodies and bodies over 1 MiB with 400 problems 42ms
+ ✓ |integration| apps/api/test/integration/platform.test.ts > request hygiene > answers unknown API paths with a 404 problem 1ms
+ ✓ |integration| apps/api/test/integration/platform.test.ts > request hygiene > sends a strict same-origin Content-Security-Policy and other security headers 1ms
+ ✓ |integration| apps/api/test/integration/platform.test.ts > fail-closed guards (ADR-0006) > refuses to start with an /api route that declares no access 1ms
+ ✓ |integration| apps/api/test/integration/platform.test.ts > fail-closed guards (ADR-0006) > turns a success from a route that never consulted the policy function into a 500 3ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > lets mth_app INSERT and SELECT 1ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > rejects UPDATE by mth_app (no privilege) 3ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > rejects DELETE by mth_app (no privilege) 4ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > rejects TRUNCATE by mth_app 8ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > rejects UPDATE even by the owner (trigger audit_event_immutable) 10ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > rejects DELETE even by the owner (trigger audit_event_immutable) 6ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > rejects TRUNCATE even by the owner (trigger audit_event_immutable) 6ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > enforces the version step and the user-actor rule 21ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > rejects ADM_TECH + gate.decide and + finance.validate, even for the owner 12ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > rejects ADM_ACCESS + gate.decide and + finance.validate, even for the owner 14ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > rejects ADM_METHOD + gate.decide and + finance.validate, even for the owner 11ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > rejects re-classifying an approver role as technical_admin 6ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > rejects re-classifying a permission held by a technical admin as an approval 6ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > still allows approval permissions on business roles (positive case) 13ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > gives mth_app no way to write role_permission at all 6ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > seeded catalogue equals permissions.ts > permissions 6ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > seeded catalogue equals permissions.ts > roles and their permissions 3ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts > schema.ts matches the migrated database > has exactly the same relations and columns as public 10ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts > schema.ts matches the migrated database > marks exactly the views as views 3ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts > type and structure rules (ADR-0003, data dictionary global rules) > uses timestamptz only (no timestamp without time zone) and no floating point 3ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts > type and structure rules (ADR-0003, data dictionary global rules) > gives every base table a primary key and uuid ids without defaults 5ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts > type and structure rules (ADR-0003, data dictionary global rules) > gives every mutable business table a version column >= 1 defaulting to 1 3ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts > type and structure rules (ADR-0003, data dictionary global rules) > stores money-bearing currency as char(3) with a code check 2ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts > mth_app privileges are exactly the data dictionary's > matches per table 3ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts > mth_app privileges are exactly the data dictionary's > has no CREATE on public and owns nothing 1ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts > mth_app privileges are exactly the data dictionary's > can use the pg-boss schema without DDL 1ms
+
+ Test Files  19 passed (19)
+      Tests  200 passed (200)
+   Start at  12:59:35
+   Duration  27.66s (transform 959ms, setup 0ms, collect 4.02s, tests 22.69s, environment 0ms, prepare 69ms)
+
+wall_seconds=28.492481992
+---- leftover databases on the cluster after the run (expect only postgres/template0/template1):
+postgres
+template0
+template1
+---- pg.log FATAL/57P01 lines:
+0
+exit=0

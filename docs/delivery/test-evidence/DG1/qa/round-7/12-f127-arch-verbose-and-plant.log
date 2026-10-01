@@ -1,0 +1,29 @@
+# frozen self-check names: A1, X6-X8, P12 (verbose)
+$ pnpm vitest run --project unit-node apps/api/src/architecture.test.ts --reporter=verbose
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P12 process.binding is a violation (round-4 lint: 'missed') 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > X6 node:process default import .dlopen is a violation (round-4 lint: 'missed') 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > X7 node:process default import .binding is a violation (round-4 lint: 'missed') 2ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > X8 node:process named import dlopen is a violation (round-4 lint: 'missed') 2ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > A1 node:sqlite loadExtension is a violation (round-4 lint: 'missed') 2ms
+      Tests  78 passed (78)
+exit=0
+
+# F-DG1-127 end-to-end plant: a real file in the module tree importing node:sqlite
+$ cat apps/api/src/modules/access/zz-qa-planted.ts
+import { DatabaseSync } from "node:sqlite";
+export const qaPlanted = () => new DatabaseSync(":memory:", { allowExtension: true });
+$ pnpm vitest run --project unit-node apps/api/src/architecture.test.ts
+   × API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages 606ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > A1 node:sqlite loadExtension is a violation (round-4 lint: 'missed') 9ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+[31m+   "modules/access/zz-qa-planted.ts: imports package node:sqlite",[39m
+      Tests  1 failed | 77 passed (78)
+exit=1
+$ (plant removed) pnpm vitest run --project unit-node apps/api/src/architecture.test.ts
+      Tests  78 passed (78)
+exit=0
+# runtime context: node version and whether node:sqlite loadExtension exists in this host Node
+v22.22.2
+DatabaseSync.prototype.loadExtension: function
+(node:403) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

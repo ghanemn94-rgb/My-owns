@@ -1,0 +1,76 @@
+# F-DG1-127 re-test: planted A1 forms + real module tree + A2 residual + adjacent probes (disposable clone $TMPDIR/rev @2cfbf4f; test file = plant-r7.test.ts.txt, NOT candidate source)
+$ npx vitest run --project unit-node apps/api/src/plant-r7.test.ts apps/api/src/architecture.test.ts
+
+ RUN  v3.2.4 /var/tmp/mth-run.LZ9MnX/claude-0/rev
+
+stdout | apps/api/src/plant-r7.test.ts > F-DG1-127 A1 closed (code-security r7) > bareAllowed
+[plant] bareAllowed(sqlite) = false
+[plant] bareAllowed(node:sqlite) = false
+[plant] bareAllowed(node:process) = false
+[plant] bareAllowed(process) = false
+[plant] bareAllowed(node:fs) = true
+[plant] bareAllowed(node:path) = true
+[plant] bareAllowed(node:crypto) = true
+
+stdout | apps/api/src/plant-r7.test.ts > F-DG1-127 A1 closed (code-security r7) > violation: A1 exact (assignment)
+[plant] A1 exact (assignment) -> 1 violation(s): modules/transformations/planted.ts: imports package node:sqlite
+
+stdout | apps/api/src/plant-r7.test.ts > F-DG1-127 A1 closed (code-security r7) > violation: A1 bare sqlite
+[plant] A1 bare sqlite -> 1 violation(s): modules/transformations/planted.ts: imports package sqlite
+
+stdout | apps/api/src/plant-r7.test.ts > F-DG1-127 A1 closed (code-security r7) > violation: A1 namespace
+[plant] A1 namespace -> 1 violation(s): modules/transformations/planted.ts: imports package node:sqlite
+
+stdout | apps/api/src/plant-r7.test.ts > F-DG1-127 A1 closed (code-security r7) > violation: A1 dynamic literal
+[plant] A1 dynamic literal -> 1 violation(s): modules/transformations/planted.ts: imports package node:sqlite
+
+stdout | apps/api/src/plant-r7.test.ts > F-DG1-127 A1 closed (code-security r7) > violation: A1 re-export
+[plant] A1 re-export -> 1 violation(s): modules/transformations/planted.ts: imports package node:sqlite
+
+stdout | apps/api/src/plant-r7.test.ts > F-DG1-127 A1 closed (code-security r7) > violation: A1 export-star
+[plant] A1 export-star -> 1 violation(s): modules/transformations/planted.ts: imports package node:sqlite
+
+stdout | apps/api/src/plant-r7.test.ts > F-DG1-127 A1 closed (code-security r7) > violation: A1 type-only
+[plant] A1 type-only -> 1 violation(s): modules/transformations/planted.ts: imports package node:sqlite
+
+stdout | apps/api/src/plant-r7.test.ts > F-DG1-127 A1 closed (code-security r7) > violation: A1 import-equals
+[plant] A1 import-equals -> 1 violation(s): modules/transformations/planted.ts: imports package node:sqlite
+
+stdout | apps/api/src/plant-r7.test.ts > F-DG1-127 A1 closed (code-security r7) > violation: A1 template literal dynamic
+[plant] A1 template literal dynamic -> 1 violation(s): modules/transformations/planted.ts: imports package node:sqlite
+
+stdout | apps/api/src/plant-r7.test.ts > F-DG1-127 A1 closed (code-security r7) > real module tree: zero moduleViolations
+[plant] moduleViolations(platform) = 0
+[plant] moduleViolations(audit) = 0
+[plant] moduleViolations(identity) = 0
+[plant] moduleViolations(access) = 0
+[plant] moduleViolations(organization) = 0
+[plant] moduleViolations(transformations) = 0
+[plant] moduleViolations(methodology) = 0
+[plant] moduleViolations(workflows) = 0
+[plant] moduleViolations(kpi) = 0
+[plant] moduleViolations(reporting) = 0
+[plant] moduleViolations(evidence) = 0
+[plant] moduleViolations(jobs) = 0
+[plant] moduleViolations(admin) = 0
+
+stdout | apps/api/src/plant-r7.test.ts > F-DG1-127 A1 closed (code-security r7) > A2 residual: node:fs is deliberately allowed
+[plant] node:fs read -> 0 violation(s)
+[plant] A2 fs-write-then-import literal same-module (residual b) -> 0 violation(s)
+
+stdout | apps/api/src/plant-r7.test.ts > F-DG1-127 A1 closed (code-security r7) > adjacent probes (reported, not asserted)
+[plant] ADJ node:test run isolation:none (computed path, in-process import) -> 0 violation(s)
+[plant] ADJ global process.execve -> 0 violation(s)
+[plant] ADJ node:wasi / WebAssembly (residual c names WebAssembly) -> 0 violation(s)
+[plant] ADJ process.dlopen (F-DG1-125 regression) -> 1 violation(s): modules/transformations/planted.ts: module loader via process.dlopen (line 1) bypasses the module-interface check
+
+ ✓ |unit-node| apps/api/src/plant-r7.test.ts (13 tests) 1088ms
+   ✓ F-DG1-127 A1 closed (code-security r7) > real module tree: zero moduleViolations  980ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (78 tests) 1707ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  1192ms
+
+ Test Files  2 passed (2)
+      Tests  91 passed (91)
+   Start at  12:59:01
+   Duration  2.83s (transform 223ms, setup 0ms, collect 1.32s, tests 2.80s, environment 0ms, prepare 267ms)
+

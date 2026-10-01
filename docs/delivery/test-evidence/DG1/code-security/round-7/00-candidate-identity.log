@@ -1,0 +1,24 @@
+# candidate identity (round 7, code-security)
+$ git rev-parse HEAD (candidate tree)
+2cfbf4fab018e433f80fc36d8384da28a219f0f6
+$ git diff --stat a6bdea0 2cfbf4f  (freeze source_commit -> HEAD: candidate-excluded metadata only)
+ docs/delivery/assignments/DG1/round-7/audit.md     |   23 +
+ .../DG1/round-7/review-code-security-reviewer.md   |   12 +
+ .../assignments/DG1/round-7/review-common.md       |   16 +
+ .../DG1/round-7/review-domain-reviewer.md          |   11 +
+ .../assignments/DG1/round-7/review-qa-verifier.md  |   16 +
+ .../candidates/DG1/d3743a352912a357.manifest.json  | 1968 ++++++++++++++++++++
+ docs/delivery/stages.json                          |   20 +-
+ 7 files changed, 2062 insertions(+), 4 deletions(-)
+$ node tools/gates/candidate.mjs --stage DG1  (candidate tree)
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:d3743a352912a357b0a81124794561cea5f06f5dbc31542b9623c68c47649ab7","files":390}
+exit=0
+$ clone @2cfbf4f: git rev-parse --is-shallow-repository
+false
+$ node tools/gates/candidate.mjs --stage DG1 (clean clone @2cfbf4f)
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:d3743a352912a357b0a81124794561cea5f06f5dbc31542b9623c68c47649ab7","files":390}
+exit=0
+$ node tools/gates/candidate.mjs --stage DG1 (clean clone @a6bdea0 = source_commit)
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:d3743a352912a357b0a81124794561cea5f06f5dbc31542b9623c68c47649ab7","files":390}
+exit=0
+expected: sha256:d3743a352912a357b0a81124794561cea5f06f5dbc31542b9623c68c47649ab7

@@ -1,0 +1,71 @@
+clone HEAD: a6bdea00f8ee9d75926bc08b089d9a895b1f810f
+== product/runtime diff since round-6 candidate commit 0026a7b (outside docs/delivery)
+ apps/api/src/architecture.test.ts    |  9 +++++++++
+ apps/api/src/architecture.testkit.ts | 25 ++++++++++++++++++++-----
+ 2 files changed, 29 insertions(+), 5 deletions(-)
+== diff of runtime surfaces (apps/web, apps/worker, packages, docs/api, docs/architecture, docs/source, apps/api excl. architecture.test*) — expect empty
+(end of runtime diff)
+== register / decisions diff since 0026a7b
+ docs/delivery/decisions.md | 1 +
+ 1 file changed, 1 insertion(+)
+== tsconfig.build.json (api)
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "rootDir": "src",
+    "outDir": "dist",
+    "customConditions": []
+  },
+  "include": ["src"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/**/*.testkit.ts"]
+}
+== dist architecture files
+0
+== pnpm -s openapi:lint
+PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 33 operations
+exit=0
+== pnpm -s check:no-cdn
+PASS no-cdn: scanned apps, packages
+exit=0
+== typecheck api/web
+api=0
+web=0
+== design tokens provisional flags
+top-level provisional: true
+colour tokens: 34 not provisional: []
+0078FF: [[".color.brand.primary","#0078FF",true]]
+== honesty grep (unnegated official/certified/PMI standard claims) in i18n catalogues
+(none)
+== DG[0-7] in i18n catalogues
+apps/web/src/i18n/glossary.test.ts:1:// Domain terms in the UI catalogues follow the approved DG0 glossary (F-DG1-003, REQ-PB-003).
+apps/web/src/i18n/glossary.test.ts:2:// Source: docs/analysis/glossary.md (T-DG0-AN-01, revised T-DG0-AN-05). The test parses the glossary tables directly,
+apps/web/src/i18n/glossary.test.ts:71:  it("parses the DG0 glossary with distinct Transformation and Initiative terms", () => {
+== sqlite usage in production source (expect none outside the lint)
+apps/api/src/architecture.testkit.ts
+apps/api/src/architecture.test.ts
+== ADR-0003 persistence statement
+grep: docs/architecture/*0003*: No such file or directory
+== D-053 in decisions.md
+7:| D-053 | 2026-10-01 | delivery-orchestrator | **DG1 round-7 repairs (both DG1 round-6 findings Low/non-mandatory): close the concrete native-loader route and formally STATE+ACCEPT the irreducible residual of the module lint, so the denylist does not churn a finding per round.** (1) **F-DG1-127 (code-security): two loader routes outside `LOADER_BUILTINS`.** A1 `node:sqlite` `DatabaseSync(...,{al
+8-| D-052 | 2026-10-01 | delivery-orchestrator | **DG1 round-6 repairs (both DG1 round-5 findings were Low/non-mandatory; fixed rather than accepted because each is a correctness gap in a security control with a precise, bounded fix).** (1) **F-DG1-125 (code-security): the module-lint native-loader rule 3 was bypassable through an import of `node:process`.** Rule 3 flagged `process.binding/_linked
+9-| D-001 | 2026-09-28 | delivery-orchestrator | The uploaded `Business_Transformation_Playbook(2).docx` (SHA-256 `2584a352…548ad2`) is the authoritative methodology source. It's committed at `docs/source/` together with a reproducible, standard-library-only extraction (`tools/source/check_extraction.sh`). | Master prompt §1–§2. The file was supplied as a session upload. Extraction is anchor
+10-| D-002 | 2026-09-28 | delivery-orchestrator | The Arabic edition of the master prompt isn't present. The English edition v2.0 is executed. | Master prompt header: "The Arabic edition is an equivalent translation, not an additional scope." | The Arabic edition is supplied and differs materially. |
+11-| D-003 | 2026-09-28 | delivery-orchestrator | Project agents are invoked as separate `claude -p --agent <name>` processes via `tools/agents/run-agent.sh`. Each run gets a unique `--session-id` (its invocation reference) and the orchestrator's model passed explicitly. The permission mode stays `auto`, the same controls as the orchestrator. The role write guard is applied per invocation via `--s
+12-| D-004 | 2026-09-28 | delivery-orchestrator | Agent Teams aren't used. Ordinary separate agent invocations run at most 4 active workers at a time. Concurrent writers use separate git worktrees with explicit file ownership; otherwise writes are serialized. | Master prompt §0.1/§0.2. Agent Teams is experimental and optional. | — |
+13-| D-005 | 2026-09-28 | delivery-orchestrator | **Candidate identity** = `sha256:` + SHA-256 of the sorted lines `"<sha256>  <git mode>  <path>\n"` (algorithm `mth-candidate-v2`; historical DG0 rounds 1–2 used `mth-candidate-v1`, `"<sha256>  <path>\n"`) over every tracked and untracked-not-ignored file. The only exclusions are `trading_agent/**` (unrelated user project) and delivery metadata: 
+== (correction) ADR-0003 located via find; the glob above missed the ADR directory layout
+docs/architecture/erd.md
+docs/architecture/README.md
+docs/architecture/ci/ci.yml
+10:| [adr/ADR-0003](adr/ADR-0003-persistence.md) | PostgreSQL 18 (floor 16), Kysely + pg, forward-only SQL migrations, UUIDv7, timestamptz, numeric + decimal.js, optimistic concurrency (409/428), archive vs retention |
+19:| [adr/ADR-0012](adr/ADR-0012-testing-strategy.md) | Unit / integration (real PostgreSQL) / contract / e2e (Playwright 1.56.1, CF-2) / a11y / visual |
+74:      postgres:
+75:        image: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722 # devops-engineer: pin by digest (ADR-0003/ADR-0011)
+77:          POSTGRES_USER: mth_ci_admin
+== D-053 full text
+| D-053 | 2026-10-01 | delivery-orchestrator | **DG1 round-7 repairs (both DG1 round-6 findings Low/non-mandatory): close the concrete native-loader route and formally STATE+ACCEPT the irreducible residual of the module lint, so the denylist does not churn a finding per round.** (1) **F-DG1-127 (code-security): two loader routes outside `LOADER_BUILTINS`.** A1 `node:sqlite` `DatabaseSync(...,{allowExtension:true}).loadExtension(so)` loads a native shared object — the same class as the `process.dlopen` route closed by F-DG1-125. A2 runtime code GENERATION then a dynamic import of a literal same-module path (`writeFileSync(new URL("./gen.mjs",…)); await import("./gen.mjs")`) — the specifier is a legal own-module path and the bytes exist only at runtime, so the lint never sees them. **Fix (T-DG1-BE8):** add `sqlite`/`node:sqlite` to `LOADER_BUILTINS` (a module never needs SQLite — persistence is `@mth/db`/PostgreSQL, ADR-0003; zero imports in src), closing A1 (self-check A1 added). A2 and the general class are **documented and ACCEPTED as stated residuals** in the testkit header, NOT chased: (a) the pre-existing runtime-data-flow residual; (b) runtime code-generation-then-import (node:fs deliberately not banned — tests and future modules legitimately read files; a write-API-only ban is brittle); (c) the loader/eval denylist is ENUMERATED and cannot be proven exhaustive over every host capability (a future Node built-in, `WebAssembly` instantiation) — **known native loaders are closed as found** (`process.dlopen` F-DG1-125, `node:sqlite` F-DG1-127). Rationale: this lint is static defence-in-depth for the ADR-0002 module boundaries, enforced against human-reviewed code that runs with a read-only production source tree — **not** a runtime security boundary; the residuals are accepted, not syntactically closable. (2) **F-DG1-212 (qa): the REQ-DLV-042 cited installer acceptance log was the pre-F-DG1-126 13-case run.** Regenerated `docs/delivery/test-evidence/DG1/orchestrator/install-sandbox-acceptance.log` against the post-fix installer: AC-1..AC-10, 14 passed, 0 failed, exit 0. | DG1 round 6: all three reviewers PASS on candidate `sha256:a7b46fbc…`; the only open items were these two Low/non-mandatory findings. CLAUDE.md (a control's stated guarantee must hold; evidence must match the frozen candidate). **Evidence:** `architecture.test.ts` 78/78 incl. self-check A1 + the real module-tree check; `@mth/api` typecheck/eslint/prettier clean; the regenerated 14/14 installer log; the round-7 freeze + its three PASS reviews + auditor. | A reviewer demonstrates a native/loader route that a module could reach and that is NOT a stated residual (then it is closed like sqlite); or a module legitimately needs `node:fs`/`node:sqlite` (then the ban/residual is revisited). |
+== playbook source fidelity for the closure rule (G6 Sustain)
+104:| G6 - Sustain | Is value embedded in BAU? | Benefits evidence, ownership transfer, controls, continuous improvement backlog. |
+565:06  REALIZE — Benefits & Sustainability <!-- B0118 -->
+582:| Sustain | Who owns the metric after transformation closure? | BAU owner + control cadence |
