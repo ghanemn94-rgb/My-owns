@@ -91,6 +91,14 @@ regexes = [
 ]
 
 [[allowlists]]
+description = "A JV partner's `materialsAccessApprovedBy` field holds the approving user's id (a UUID) in API responses that Playwright traces of the CI test reports capture; generic-api-key matches the word 'Access' in the key. Only this key with a UUID value is allowed; a user id is not a credential."
+targetRules = ["generic-api-key"]
+regexTarget = "match"
+regexes = [
+  '''materialsAccessApprovedBy\\?"\s*:\s*\\?"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\?"''',
+]
+
+[[allowlists]]
 description = "gitleaks' own redaction placeholder quoted in review documents: the P1 QA re-review (docs/reviews/P1-qa-rereview.md) reproduces the scanner's redacted output (e.g. postgres://hub_app:REDACTED@db:5432). The literal word REDACTED is the scanner's placeholder, not a credential."
 condition = "AND"
 paths = ['''(?:^|/)transformation-hub/docs/reviews/[^/]+\.md$''']

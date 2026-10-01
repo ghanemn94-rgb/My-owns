@@ -45,6 +45,7 @@ import {
 } from './readiness';
 import { transition, TSA_MACHINE } from './workflows';
 import { DomainError } from './errors';
+import { DECISION_STATUSES } from './enums';
 
 const ALL: CutoverPrerequisites = {
   hasRunbook: true,
@@ -383,6 +384,18 @@ describe('TSA (REQ-TSA-001..006, AT-10, D-25)', () => {
     expect(codeOf(() => extensionTermsBinding({ ...base, decisionStatus: 'approved', requested: { ...terms, continuityPlan: 'Another plan' } }))).toBe('rule_violation:tsa.extension.terms_bound');
     expect(extensionTermsBinding({ ...base, decisionStatus: 'draft', requested: { ...terms, proposedEndDate: '2027-02-19' } })).toBe('rebind');
     expect(extensionTermsBinding({ ...base, bound: null })).toBe('new');
+  });
+  it('DOM-P34R2-01: terms are bound for the FIRST time only while the paper is before the committee (draft / submitted / under review)', () => {
+    const terms = { tsaServiceId: 't1', proposedEndDate: '2027-01-19', continuityPlan: 'Keep the bridge' };
+    const bindable = ['draft', 'submitted', 'under_review'];
+    for (const decisionStatus of DECISION_STATUSES) {
+      // Every status with a committee outcome (recommended — e.g. pending an external authority —, approved, implementation
+      // pending / verified, rejected, deferred, superseded) refuses a first binding.
+      if (bindable.includes(decisionStatus)) expect(extensionTermsBinding({ decisionStatus, bound: null, requested: terms }), decisionStatus).toBe('new');
+      else expect(codeOf(() => extensionTermsBinding({ decisionStatus, bound: null, requested: terms })), decisionStatus).toBe('rule_violation:tsa.extension.terms_after_outcome');
+    }
+    // Terms bound before the outcome stay usable after it (same terms).
+    expect(extensionTermsBinding({ decisionStatus: 'approved', bound: terms, requested: terms })).toBe('same');
   });
   it('DOM-P34R-04: the terms are bound per DECISION — another TSA is refused, and record-extension applies only the bound terms', () => {
     const terms = { tsaServiceId: 't1', proposedEndDate: '2027-01-19', continuityPlan: 'Keep the bridge' };

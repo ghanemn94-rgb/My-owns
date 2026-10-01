@@ -473,11 +473,16 @@ Rules **[server]**:
    request with another end date or continuity plan is refused (`tsa.extension.terms_bound`) and a request for another TSA
    too (`tsa.extension.decision_other_tsa`), whatever decision the TSA was linked to in between — a new date needs a new
    decision. Re-sending the bound terms is accepted. `record-extension` applies only the terms bound to the linked decision
-   (`tsa.extension.terms_mismatch` otherwise).
+   (`tsa.extension.terms_mismatch` otherwise). **The terms are bound for the first time only while the paper is still
+   before the committee** — the decision is `draft`, `submitted` or `under_review` (DOM-P34R2-01): an extension request
+   linked to a decision that already has an outcome is refused (`tsa.extension.terms_after_outcome`), so the committee
+   always decides on a paper that carries the end date and continuity plan it approves.
 6. **A decision backs one TSA (DOM-P3-13, conservative option — governance owner to confirm).** A
    `tsa_approval_or_extension` decision already used for TSA A (its terms or its extension) never backs a use for another
    TSA B (`tsa.extension.decision_other_tsa` / `tsa.approve.decision_other_tsa`); the same decision may still approve the
-   terms of A and one extension of A. Open question Q-P3-13 in `docs/assumptions-and-open-questions.md`.
+   terms of A and one extension of A, but only when the extension was requested on it while its paper was before the
+   committee (rule 5): the decision that approved A's terms cannot later be reused for an extension it never showed.
+   Open question Q-P3-13 in `docs/assumptions-and-open-questions.md` (governance owner to confirm both points).
 7. **Extension to a future date (DOM-P3-07).** The new end date must follow the current one **and** be after today (project
    timezone), at the request and again when the extension is recorded (`tsa.extension.end_date_past`).
 8. **Guards (DOM-P3-15, DOM-P3-17).** `activate` needs the service start date reached (`tsa.activate.not_started`);

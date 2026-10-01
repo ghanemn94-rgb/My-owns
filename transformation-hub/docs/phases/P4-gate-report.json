@@ -1,0 +1,195 @@
+{
+  "phase": "P4",
+  "title": "JV & Finance",
+  "revision": "d8ea39d (gate revision; CI run 64 green on it). Later commits (the DOM-P34R2-01 fix, P2 residual screens) are P3/P2 work and are not part of this gate.",
+  "requirements": {
+    "source": "docs/requirements/requirements.yaml at the gate revision (generated from status-evidence.yaml; apply_status.py --check OK)",
+    "p4_musts": 39,
+    "tested": 39,
+    "implemented": 0,
+    "deferred": 0,
+    "planned": 0,
+    "note": "REQ-PHS-006 (P4 exit) moves to Tested with this report; every other P4 must was already Tested with executed evidence."
+  },
+  "exit_criteria": [
+    {
+      "criterion": "Missing CP blocks closing",
+      "evidence": "jv at-12-closing-blocked-cp.spec.ts, at-13-cp-non-waivable.spec.ts; the P4 domain review probes (DOM-P4-*) as regression tests; QA journey qa-p34-journeys.spec.ts; the focused domain re-review and its re-check confirm it (docs/reviews/P3-P4-domain-rereview.md §7 and §9)",
+      "status": "Met"
+    },
+    {
+      "criterion": "Partner isolation",
+      "evidence": "jv at-03-partner-room-isolation.spec.ts; security review and re-check (docs/reviews/P3-P4-security-review.md, P3-P4-security-recheck.md): no titles, snippets, counts, activity, search or AI retrieval across partner rooms",
+      "status": "Met"
+    },
+    {
+      "criterion": "NDA alone insufficient for access",
+      "evidence": "jv-partner-rules.spec.ts and the security review's controls",
+      "status": "Met"
+    },
+    {
+      "criterion": "Financial reconciliation",
+      "evidence": "finance at-29-currency-unit-aggregation.spec.ts; reconciliation review excludes every editor (DOM-P34R-09); QA AT-29 probe and journey J4 (units vs thousands refused, English and Arabic)",
+      "status": "Met"
+    },
+    {
+      "criterion": "Financial data only with finance-domain clearance and reach",
+      "evidence": "finance-isolation.spec.ts; SEC-P34-03 (AI retrieval and /ai/ask), SEC-P34-06 (TSA charge) and SEC-P34R-05 (AI proposals list and detail) fixed with regression tests",
+      "status": "Met (the AI proposals part fixed after the security re-check; its independent re-verification is condition C1)"
+    },
+    {
+      "criterion": "Domain, security and QA review",
+      "evidence": "see reviewers",
+      "status": "Met — all PASS WITH CONDITIONS, no open Critical or High in P4 scope"
+    }
+  ],
+  "implemented": [
+    "Finance: snapshots, budget lines with approved amounts resting on decisions, financial models and versions, benefits, KPIs, intercompany reconciliations; money with currency and unit scale, no cross-unit aggregation without a basis",
+    "JV / due diligence / CPs: partners, rooms (partner, clean team) with grants, scenarios, DD requests and findings, negotiation issues, signings and closings, conditions precedent with waivability set by Legal, long-stop dates and lapse, closing checklist with two-person 'not required', funds flow, post-close obligations",
+    "Decisions relied upon through the shared decision-use registry (one decision backs one record of each kind; external-approval evidence re-checked)",
+    "Verifications refuse every person who linked or uploaded the evidence they verify",
+    "AI channels apply the finance and JV visibility rules in SQL",
+    "Web: Finance & Value, JV & Diligence screens in Arabic RTL and English LTR"
+  ],
+  "tests_executed": [
+    {
+      "command": "GitHub Actions transformation-hub-ci (run 64, id 36829914867, at d8ea39d — conclusion success, 14/14 jobs green)",
+      "result": "success — every job green",
+      "revision": "d8ea39d (gate revision; CI run 64 green on it). Later commits (the DOM-P34R2-01 fix, P2 residual screens) are P3/P2 work and are not part of this gate.",
+      "environment": "GitHub-hosted runners"
+    },
+    {
+      "command": "full API integration suite",
+      "result": "136 files, 1054 passed + 4 expected fail (open review DEFECT probes: DOM-P2F-02/04 and the two DOM-P34R2-01 probes of P3 scope) in CI run 64",
+      "revision": "d8ea39d (gate revision; CI run 64 green on it). Later commits (the DOM-P34R2-01 fix, P2 residual screens) are P3/P2 work and are not part of this gate.",
+      "environment": "GitHub-hosted runners (CI) and the build container"
+    },
+    {
+      "command": "full Playwright suite",
+      "result": "395 passed + 1 skipped (32.4 min) in CI run 64 at d8ea39d against a production web build on a fresh demo seed; 396 passed on the QA-fix branch locally",
+      "revision": "d8ea39d (gate revision; CI run 64 green on it). Later commits (the DOM-P34R2-01 fix, P2 residual screens) are P3/P2 work and are not part of this gate.",
+      "environment": "see result"
+    },
+    {
+      "command": "review runs",
+      "result": "P4 domain review at 40fac20 (FAIL, 5 High), focused re-review at 9a93951 and its re-check at 2ed5d55 (PASS WITH CONDITIONS); security review at 5bf274b and re-check at 4fde3ec (PASS WITH CONDITIONS); QA review at 5bf274b (PASS WITH CONDITIONS): each review's commands and real results are in its document",
+      "revision": "see each review",
+      "environment": "build container (reviewers)"
+    }
+  ],
+  "reviewers": [
+    {
+      "agent": "carveout-domain-analyst",
+      "verdict": "PASS WITH CONDITIONS",
+      "evidence": [
+        "docs/reviews/P4-domain-review.md (FAIL, 5 High, 4 Medium) — fixed in two parts (decision-use registry)",
+        "docs/reviews/P3-P4-domain-rereview.md: every DOM-P4 High and Medium fixed and verified; §9 re-check at 2ed5d55 confirms P4 PASS WITH CONDITIONS"
+      ]
+    },
+    {
+      "agent": "security-privacy-reviewer",
+      "verdict": "PASS WITH CONDITIONS",
+      "evidence": [
+        "docs/reviews/P3-P4-security-review.md (P4 PASS WITH CONDITIONS; SEC-P34-01/-03/-04 Medium fixed)",
+        "docs/reviews/P3-P4-security-recheck.md at 4fde3ec: every SEC-P34 finding fixed; new SEC-P34R-05 (AI proposals list) and SEC-P34R-07 (evidence supersede/flag) Medium — fixed after the re-check (fix status in that document)"
+      ]
+    },
+    {
+      "agent": "qa-test-engineer",
+      "verdict": "PASS WITH CONDITIONS",
+      "evidence": [
+        "docs/reviews/P3-P4-qa-review.md at 5bf274b (P4 PASS WITH CONDITIONS); QA-P34-01 items c and h, -04, -06, -07 fixed (fix status §12; full Playwright 396 passed on the fix branch)"
+      ]
+    }
+  ],
+  "conditions": [
+    {
+      "id": "C1",
+      "status": "Open",
+      "detail": "Independent re-verification of the fixes made after the last review of each kind: SEC-P34R-05 and SEC-P34R-07 (security), QA-P34-01 c/h and QA-P34-07 (QA). Assigned to the next security and QA review cycles (P5/P6 reviews re-check them)."
+    },
+    {
+      "id": "C2",
+      "status": "Open",
+      "detail": "Owner decisions recorded as questions: DOM-P34R-I1 (one G5 approval backing several signings — governance owner), Q-P34R-08 (non-blocking CPs — Legal), SEC-P34R-06 (who may confirm 'not required' — JV/Legal owner), SEC-P34-14/-15/-18 (JV domain clearance, auditor room metadata, requiresApproval clearing — data governance / JV owner)."
+    }
+  ],
+  "open_findings": [
+    {
+      "id": "DOM-P4-13",
+      "severity": "Low",
+      "status": "Open",
+      "owner": "governance owner, then backend-data-engineer (jv)",
+      "gate": "owner decision",
+      "detail": "Negotiation issues accept any final decision, and one decision for several issues (documented proposed rule, business-gates.md §8.1; the decision's external evidence is re-checked)"
+    },
+    {
+      "id": "DOM-P4-14 (funds-flow part)",
+      "severity": "Low",
+      "status": "Open",
+      "owner": "backend-data-engineer (jv)",
+      "gate": "P6",
+      "detail": "Single-person steps in the funds flow (the closing-checklist part is fixed by SEC-P34-10)"
+    },
+    {
+      "id": "DOM-P4-15",
+      "severity": "Low",
+      "status": "Open",
+      "owner": "JV owner, then backend-data-engineer (jv)",
+      "gate": "owner decision",
+      "detail": "'Materials access approved by' is recorded without an approval (documented, business-gates.md §8 rule 4)"
+    },
+    {
+      "id": "DOM-P34R-I1",
+      "severity": "Info",
+      "status": "Open",
+      "owner": "governance owner",
+      "gate": "owner decision",
+      "detail": "One G5 approval can back several signings"
+    },
+    {
+      "id": "SEC-P34R-06",
+      "severity": "Info",
+      "status": "Open",
+      "owner": "JV / Legal owner (policy matrix)",
+      "gate": "owner decision",
+      "detail": "The second person who confirms 'not required' can be a functional approver who cannot open the item"
+    },
+    {
+      "id": "SEC-P34-14, -15, -18",
+      "severity": "Info",
+      "status": "Open",
+      "owner": "data governance / JV owner",
+      "gate": "owner decision",
+      "detail": "JV applies no domain clearance; auditors see partner-room activity metadata; requiresApproval can be cleared before agreement"
+    },
+    {
+      "id": "QA-P34-05",
+      "severity": "Info",
+      "status": "Open",
+      "owner": "qa-test-engineer",
+      "gate": "P8 UAT",
+      "detail": "Coverage notes: AT-12 'all workstreams green' is simulated in the test (the QA journey J1 runs the worker for AT-10)"
+    },
+    {
+      "id": "QA-P1-09 (partial), SEC-P1S-05/06",
+      "severity": "Low",
+      "status": "Open",
+      "owner": "devops-platform-engineer / backend-data-engineer",
+      "gate": "P7",
+      "detail": "Carried from the P1 gate report"
+    }
+  ],
+  "assumptions": [
+    "docs/assumptions-and-open-questions.md (incl. A-P3-*, Q-P3-*, Q-P34R-*, AMQ-10)"
+  ],
+  "external_dependencies": [
+    "Reference image and Excel workbook not provided — image extraction NOT performed",
+    "All JV / finance data in the demo is synthetic; no partner identity, valuation, ownership percentage or amount is a real fact",
+    "Mobily IdP, object store, malware scanner, SMTP/Teams, SIEM, approved model endpoint, infrastructure: Not configured",
+    "No Docker daemon in the build environment: images, Compose and Helm validated only in CI; Helm install NOT EXECUTED"
+  ],
+  "gate": "PASS WITH CONDITIONS",
+  "gate_note": "All three independent reviews (domain, security, QA) returned PASS WITH CONDITIONS for P4 with no open Critical or High finding, and every P4 exit criterion is met at the gate revision with executed tests (CI green on it). Conditions: independent re-verification of the fixes made after the last review round, and owner decisions recorded as questions. Engineering gate only, not Mobily production approval; nothing here means Production Ready.",
+  "next_action": "P3 gate after the DOM-P34R2-01 fix and its re-check; P5 security and QA reviews (which also re-verify the C1 fixes); P6."
+}
