@@ -267,11 +267,15 @@ export class BenefitsService {
     return result;
   }
 
-  /** Verification by a person independent of the owner and the reporter (not_self); never a service identity. */
+  /**
+   * Verification by a person independent of the owner, the reporter (not_self) and whoever linked active evidence of the
+   * realization (SEC-P34-01, access-matrix §5.1); never a service identity.
+   */
   async verify(ctx: RequestContext, projectId: string, id: string, body: { expectedVersion: number; note: string }) {
     const b = await loadInProject(this.s.db, T, projectId, id);
     this.s.assert(ctx, 'finance.benefit.verify', { projectId, classification: b.classification, workstreamId: b.workstreamId, requesterUserId: b.realizationRecordedBy });
-    assertBenefitVerifiable({ status: b.status, ownerUserId: b.ownerUserId, realizationRecordedBy: b.realizationRecordedBy, verificationSource: b.verificationSource }, actorOf(ctx));
+    const linkers = await this.s.evidenceLinkers(projectId, 'benefit', b.id);
+    assertBenefitVerifiable({ status: b.status, ownerUserId: b.ownerUserId, realizationRecordedBy: b.realizationRecordedBy, verificationSource: b.verificationSource, evidenceLinkerUserIds: linkers }, actorOf(ctx));
     const ev = await this.s.evidence(projectId, 'benefit', b.id);
     return this.apply(ctx, b, 'verify', body.expectedVersion, { verifiedBy: ctx.principal.userId, verifiedAt: this.s.clock.now(), verificationNote: body.note }, body.note, {
       verificationSource: b.verificationSource,

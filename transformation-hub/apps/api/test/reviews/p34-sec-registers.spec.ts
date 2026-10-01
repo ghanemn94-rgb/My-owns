@@ -97,7 +97,7 @@ describe('SEC-P34-02 — AI detections list a TSA the caller may not read (class
     }
   });
 
-  it.fails('DEFECT SEC-P34-02: GET /ai/detections never lists (id, code, name, end date) a TSA the caller cannot read', async () => {
+  it('SEC-P34-02 (fixed, regression): GET /ai/detections never lists (id, code, name, end date) a TSA the caller cannot read', async () => {
     const r = await p.contributor.get(`${G(projectId)}/ai/detections`);
     const hits = ((r.body.items ?? []) as { entityType: string; entityId: string; label: string; detail: string }[]).filter((d) => d.entityId === tsaId);
     console.log(`SEC-P34-02 observed: ${r.status}; detections of the hidden TSA shown to the contributor: ${JSON.stringify(hits)}`);
@@ -142,7 +142,7 @@ describe('SEC-P34-03 — AI retrieval of approved figures ignores the finance re
     expect(JSON.stringify(list)).not.toContain(figureId);
   });
 
-  it.fails('DEFECT SEC-P34-03: the AI never retrieves nor answers with a figure outside the caller’s finance reach', async () => {
+  it('SEC-P34-03 (fixed, regression): the AI never retrieves nor answers with a figure outside the caller’s finance reach', async () => {
     const { contexts, db, knowledge } = await serviceHandles();
     const ctx = (await contexts.forUser(p.techLead.userId, projectId))!;
     const r = await db.run(ctx, () => knowledge.approvedFinancials(ctx, projectId, true));

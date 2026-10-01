@@ -288,6 +288,17 @@ export class FinanceSupport {
   }
 
   /**
+   * FOR RULES (SEC-P34-01, access-matrix §5.1): the people who linked the ACTIVE evidence of a record — "the person who
+   * recorded the evidence" is self for its verification. Every link counts, visible to the caller or not.
+   */
+  async evidenceLinkers(projectId: string, targetType: 'benefit' | 'financial_snapshot', targetId: string): Promise<string[]> {
+    const r = await this.db.tx().execute<{ added_by: string }>(sql`
+      select distinct added_by::text as added_by from evidence_link
+       where project_id = ${projectId} and target_type = ${targetType} and target_id = ${targetId} and status = 'active'`);
+    return r.rows.map((x) => x.added_by);
+  }
+
+  /**
    * Evidence counters DISPLAYED to the caller: only links the caller could open in the evidence list (SEC-P1R-05,
    * SEC-P1S-04) — a counter never reveals evidence the caller cannot read.
    */

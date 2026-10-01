@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { and, asc, desc, eq, inArray, isNull, lt, sql, SQL } from 'drizzle-orm';
+import type { PgColumn } from 'drizzle-orm/pg-core';
 import { schema } from '@hub/db';
 import {
   addCalendarDays,
   delayImpact,
+  EVIDENCE_TARGET_READ_PERMISSION,
   detectInstructionLikeContent,
   extractSearchTerms,
   workingDaySlip,
@@ -17,6 +19,7 @@ import { DbService } from '../../platform/db.service';
 import { PolicyService } from '../../platform/policy.service';
 import type { RequestContext } from '../../platform/context';
 import { evidenceLinkVisibleSql } from '../../platform/helpers';
+import { RecordVisibility } from '../../platform/record-visibility';
 import { AiConfig } from './ai-config';
 
 /**
@@ -24,8 +27,12 @@ import { AiConfig } from './ai-config';
  * transaction (RLS context set) and:
  *   1. checks the permission (RBAC) of the corresponding tool — a missing permission returns `null` (callers report
  *      "not available in sources you are authorized to see" without revealing whether data exists);
- *   2. applies `policy.visibilitySql(...)` INSIDE the SQL WHERE clause (classification, rooms, room-only principals) —
- *      never fetch-then-filter (ADR-0008, C-23).
+ *   2. applies the OWNING MODULE's read rule INSIDE the SQL WHERE clause — never fetch-then-filter (ADR-0008, C-23;
+ *      access-matrix §2.5 "AI retrieval … inside SQL with the same predicates"): classification, rooms and room-only
+ *      principals (`policy.visibilitySql`), AND the coverage of the read permission's grant (SEC-P34-02 / SEC-P34-03):
+ *      the workstream reach for workstream-structured records, a project-wide grant for project-level registers, the
+ *      finance-domain clearance for finance records — through `RecordVisibility` (the rules the activity feed and the
+ *      evidence targets use, which mirror each module's list) or `policy.grantSql` for registers without a record rule.
  * Other modules' tables are only read, never written.
  */
 @Injectable()
@@ -38,6 +45,21 @@ export class AiKnowledgeService {
 
   private can(ctx: RequestContext, permission: string, projectId: string) {
     return this.policy.canInProject(ctx, permission, projectId);
+  }
+
+  /**
+   * The owning module's record rule for `type` (SEC-P34-02 / SEC-P34-03): own or inherited classification (finance records:
+   * finance-domain clearance), room, and the reach of the type's read permission — e.g. a TSA needs its classification and
+   * the readiness reach of its workstream (`TsaService.scopeSql`); an approved figure the finance-domain clearance and the
+   * finance reach (`FinanceSupport.visibleSql`); a valuation a project-wide finance grant.
+   */
+  private readable(ctx: RequestContext, projectId: string, type: string, id: PgColumn | SQL): SQL {
+    return new RecordVisibility(this.policy, ctx, projectId, { reach: true, readPermission: (t) => (EVIDENCE_TARGET_READ_PERMISSION as Record<string, string>)[t] }).exists(type, id);
+  }
+
+  /** A project-level register without a workstream: only a project-wide grant of its read permission covers it (§2.2). */
+  private projectWide(ctx: RequestContext, permission: string, projectId: string): SQL {
+    return this.policy.grantSql(ctx, permission, projectId, {});
   }
 
   async project(projectId: string) {
@@ -74,6 +96,8 @@ export class AiKnowledgeService {
     );
     const visChunk = this.policy.visibilitySql(ctx, projectId, { classification: schema.documentChunk.classification, room: schema.documentChunk.roomId });
     const visDoc = this.policy.visibilitySql(ctx, projectId, { classification: schema.document.classification, room: schema.document.roomId });
+    // The documents list's grant coverage (documents.service list): a workstream-scoped reader reaches room-less documents only.
+    const grantDoc = this.policy.grantSql(ctx, 'documents.document.read', projectId, { room: schema.document.roomId });
     const r = await this.db.tx().execute<{
       id: string;
       document_id: string;
@@ -106,6 +130,7 @@ export class AiKnowledgeService {
          and document_version.scan_status in ('clean', 'not_scanned')
          and ${visChunk}
          and ${visDoc}
+         and ${grantDoc}
          and document_chunk.tsv @@ hub_q.query
        order by rank desc, document_chunk.id
        limit ${limit}`);
@@ -123,7 +148,7 @@ export class AiKnowledgeService {
       .tx()
       .select({ documentId: schema.evidenceLink.documentId, targetType: schema.evidenceLink.targetType, targetId: schema.evidenceLink.targetId, conflictWith: schema.evidenceLink.conflictWithLinkId })
       .from(schema.evidenceLink)
-      .where(and(eq(schema.evidenceLink.projectId, projectId), eq(schema.evidenceLink.status, 'conflicting'), inArray(schema.evidenceLink.documentId, documentIds)));
+      .where(and(eq(schema.evidenceLink.projectId, projectId), eq(schema.evidenceLink.status, 'conflicting'), inArray(schema.evidenceLink.documentId, documentIds), this.readable(ctx, projectId, 'evidence_link', schema.evidenceLink.id)));
   }
 
   // ---------------------------------------------------------------------------------------------------------
@@ -225,23 +250,34 @@ export class AiKnowledgeService {
     if (!this.can(ctx, 'governance.decision.read', projectId)) return null;
     const tx = this.db.tx();
     const vis = this.policy.visibilitySql(ctx, projectId, { classification: schema.decision.classification });
+    // Governance registers are project-level: the lists require a project-wide grant (decisions.service / actions.service).
+    const grant = this.projectWide(ctx, 'governance.decision.read', projectId);
     const decisions = await tx
       .select({ id: schema.decision.id, code: schema.decision.code, title: schema.decision.title, status: schema.decision.status, latestSafeDate: schema.decision.latestSafeDate, gateKey: schema.decision.gateKey, version: schema.decision.version, updatedAt: schema.decision.updatedAt, classification: schema.decision.classification, isDemo: schema.decision.isDemo })
       .from(schema.decision)
-      .where(and(eq(schema.decision.projectId, projectId), vis, inArray(schema.decision.status, ['submitted', 'under_review', 'recommended', 'implementation_pending'])))
+      .where(and(eq(schema.decision.projectId, projectId), vis, grant, inArray(schema.decision.status, ['submitted', 'under_review', 'recommended', 'implementation_pending'])))
       .orderBy(asc(schema.decision.updatedAt))
       .limit(30);
     const visProject = this.policy.visibilitySql(ctx, projectId, {});
     const actions = await tx
       .select({ id: schema.actionItem.id, code: schema.actionItem.code, title: schema.actionItem.title, status: schema.actionItem.status, ownerUserId: schema.actionItem.ownerUserId, dueDate: schema.actionItem.dueDate, version: schema.actionItem.version, updatedAt: schema.actionItem.updatedAt })
       .from(schema.actionItem)
-      .where(and(eq(schema.actionItem.projectId, projectId), visProject, inArray(schema.actionItem.status, ['open', 'in_progress']), lt(schema.actionItem.dueDate, today)))
+      .where(and(eq(schema.actionItem.projectId, projectId), visProject, grant, this.readable(ctx, projectId, 'action_item', schema.actionItem.id), inArray(schema.actionItem.status, ['open', 'in_progress']), lt(schema.actionItem.dueDate, today)))
       .orderBy(asc(schema.actionItem.dueDate))
       .limit(30);
     const approvals = await tx
       .select({ id: schema.approvalRequest.id, subjectType: schema.approvalRequest.subjectType, action: schema.approvalRequest.action, createdAt: schema.approvalRequest.createdAt, version: schema.approvalRequest.version })
       .from(schema.approvalRequest)
-      .where(and(eq(schema.approvalRequest.projectId, projectId), visProject, eq(schema.approvalRequest.status, 'pending'), lt(schema.approvalRequest.createdAt, sql`now() - (${this.cfg.approvalBottleneckDays}::int * interval '1 day')`)))
+      .where(
+        and(
+          eq(schema.approvalRequest.projectId, projectId),
+          visProject,
+          grant,
+          this.readable(ctx, projectId, 'approval_request', schema.approvalRequest.id), // its subject must be readable (SEC-P34-16)
+          eq(schema.approvalRequest.status, 'pending'),
+          lt(schema.approvalRequest.createdAt, sql`now() - (${this.cfg.approvalBottleneckDays}::int * interval '1 day')`),
+        ),
+      )
       .limit(30);
     return { decisions, actions, approvals };
   }
@@ -281,6 +317,7 @@ export class AiKnowledgeService {
   async closingConditions(ctx: RequestContext, projectId: string) {
     if (!this.can(ctx, 'jv.deal.read', projectId)) return null;
     const vis = this.policy.visibilitySql(ctx, projectId, {});
+    const grant = this.projectWide(ctx, 'jv.deal.read', projectId); // JV registers carry no workstream (§2.2 strict rule)
     const evVis = evidenceLinkVisibleSql(this.policy, ctx, projectId); // counters = what the evidence list shows (SEC-P1R-05)
     const r = await this.db.tx().execute<{
       id: string;
@@ -308,24 +345,26 @@ export class AiKnowledgeService {
                where e.project_id = closing_condition.project_id and e.target_type = 'closing_condition'
                  and e.target_id = closing_condition.id and e.status = 'conflicting' and ${evVis})::int as conflicting_evidence
         from closing_condition
-       where closing_condition.project_id = ${projectId} and ${vis} and closing_condition.status not in ('verified', 'waived')
+       where closing_condition.project_id = ${projectId} and ${vis} and ${grant} and closing_condition.status not in ('verified', 'waived')
        order by closing_condition.reference
        limit 50`);
     return r.rows;
   }
 
+  /** SEC-P34-02: the TSA register's own rule — the TSA's classification and the readiness reach of its workstream. */
   async tsaExpiring(ctx: RequestContext, projectId: string, today: string) {
     if (!this.can(ctx, 'readiness.register.read', projectId)) return null;
     const until = addCalendarDays(today, this.cfg.tsaWindowDays);
     const vis = this.policy.visibilitySql(ctx, projectId, {});
     return this.db
       .tx()
-      .select({ id: schema.tsaService.id, code: schema.tsaService.code, name: schema.tsaService.name, status: schema.tsaService.status, endDate: schema.tsaService.endDate, ownerUserId: schema.tsaService.ownerUserId, replacementAccepted: schema.tsaService.replacementAccepted, version: schema.tsaService.version, updatedAt: schema.tsaService.updatedAt, isDemo: schema.tsaService.isDemo })
+      .select({ id: schema.tsaService.id, code: schema.tsaService.code, name: schema.tsaService.name, status: schema.tsaService.status, endDate: schema.tsaService.endDate, ownerUserId: schema.tsaService.ownerUserId, replacementAccepted: schema.tsaService.replacementAccepted, version: schema.tsaService.version, updatedAt: schema.tsaService.updatedAt, isDemo: schema.tsaService.isDemo, classification: schema.tsaService.classification })
       .from(schema.tsaService)
       .where(
         and(
           eq(schema.tsaService.projectId, projectId),
           vis,
+          this.readable(ctx, projectId, 'tsa_service', schema.tsaService.id),
           inArray(schema.tsaService.status, ['approved', 'active', 'extended', 'exit_in_progress', 'breached']),
           eq(schema.tsaService.replacementAccepted, false),
           sql`${schema.tsaService.endDate} <= ${until}`,
@@ -342,7 +381,7 @@ export class AiKnowledgeService {
       .tx()
       .select({ id: schema.readinessCheck.id, code: schema.readinessCheck.code, title: schema.readinessCheck.title, area: schema.readinessCheck.area, status: schema.readinessCheck.status, blocker: schema.readinessCheck.blocker, dueDate: schema.readinessCheck.dueDate, version: schema.readinessCheck.version, updatedAt: schema.readinessCheck.updatedAt, isDemo: schema.readinessCheck.isDemo })
       .from(schema.readinessCheck)
-      .where(and(eq(schema.readinessCheck.projectId, projectId), vis, this.policy.reachSql(ctx, 'readiness.register.read', projectId, schema.readinessCheck.workstreamId), sql`(${schema.readinessCheck.blocker} or ${schema.readinessCheck.mandatory})`, inArray(schema.readinessCheck.status, ['not_started', 'in_progress', 'failed'])))
+      .where(and(eq(schema.readinessCheck.projectId, projectId), vis, this.readable(ctx, projectId, 'readiness_check', schema.readinessCheck.id), sql`(${schema.readinessCheck.blocker} or ${schema.readinessCheck.mandatory})`, inArray(schema.readinessCheck.status, ['not_started', 'in_progress', 'failed'])))
       .orderBy(desc(schema.readinessCheck.blocker), asc(schema.readinessCheck.code))
       .limit(30);
   }
@@ -361,26 +400,32 @@ export class AiKnowledgeService {
   async partners(ctx: RequestContext, projectId: string, projectIsDemo: boolean) {
     if (!this.can(ctx, 'jv.partner.read', projectId)) return null;
     const tx = this.db.tx();
+    const grant = this.projectWide(ctx, 'jv.partner.read', projectId); // JV registers carry no workstream (§2.2 strict rule)
     const visP = this.policy.visibilitySql(ctx, projectId, { classification: schema.partner.classification });
     const demo: SQL = projectIsDemo ? sql`true` : eq(schema.partner.isDemo, false);
     const partners = await tx
       .select({ id: schema.partner.id, code: schema.partner.code, name: schema.partner.name, stage: schema.partner.stage, version: schema.partner.version, updatedAt: schema.partner.updatedAt, isDemo: schema.partner.isDemo, classification: schema.partner.classification })
       .from(schema.partner)
-      .where(and(eq(schema.partner.projectId, projectId), visP, demo))
+      .where(and(eq(schema.partner.projectId, projectId), visP, grant, demo))
       .limit(20);
     const visS = this.policy.visibilitySql(ctx, projectId, { classification: schema.dealScenario.classification });
     const approvedScenarios = await tx
       .select({ id: schema.dealScenario.id, partnerId: schema.dealScenario.partnerId, name: schema.dealScenario.name, versionLabel: schema.dealScenario.versionLabel, version: schema.dealScenario.version, approvedAt: schema.dealScenario.approvedAt, isDemo: schema.dealScenario.isDemo })
       .from(schema.dealScenario)
-      .where(and(eq(schema.dealScenario.projectId, projectId), visS, eq(schema.dealScenario.approvalState, 'approved'), projectIsDemo ? sql`true` : eq(schema.dealScenario.isDemo, false)));
+      .where(and(eq(schema.dealScenario.projectId, projectId), visS, grant, eq(schema.dealScenario.approvalState, 'approved'), projectIsDemo ? sql`true` : eq(schema.dealScenario.isDemo, false)));
     return { partners, approvedScenarios };
   }
 
-  /** Approved figures only (the model never computes them; aggregation is the money engine's job). */
+  /**
+   * Approved figures only (the model never computes them; aggregation is the money engine's job). SEC-P34-03 (P4 exit
+   * criterion "financial data only with the finance-domain clearance AND reach"): the finance module's own predicate —
+   * finance-domain clearance, and the reach of `finance.record.read` (a workstream-scoped reader: its workstreams' figures
+   * only; valuations — no workstream — need a project-wide grant), as `FinanceSupport.visibleSql`.
+   */
   async approvedFinancials(ctx: RequestContext, projectId: string, projectIsDemo: boolean) {
     if (!this.can(ctx, 'finance.record.read', projectId)) return null;
     const tx = this.db.tx();
-    const visM = this.policy.visibilitySql(ctx, projectId, { classification: schema.financialModelVersion.classification });
+    const visM = this.readable(ctx, projectId, 'financial_model_version', schema.financialModelVersion.id);
     const valuations = await tx
       .select({
         id: schema.financialModelVersion.id,
@@ -404,7 +449,7 @@ export class AiKnowledgeService {
         ),
       )
       .limit(5);
-    const visS = this.policy.visibilitySql(ctx, projectId, { classification: schema.financialSnapshot.classification });
+    const visS = this.readable(ctx, projectId, 'financial_snapshot', schema.financialSnapshot.id);
     const figures = await tx
       .select({
         id: schema.financialSnapshot.id,
@@ -505,7 +550,15 @@ export class AiKnowledgeService {
             await tx
               .select({ id: schema.document.id })
               .from(schema.document)
-              .where(and(eq(schema.document.projectId, projectId), inArray(schema.document.id, ids), isNull(schema.document.deletedAt), this.policy.visibilitySql(ctx, projectId, { classification: schema.document.classification, room: schema.document.roomId }))),
+              .where(
+                and(
+                  eq(schema.document.projectId, projectId),
+                  inArray(schema.document.id, ids),
+                  isNull(schema.document.deletedAt),
+                  this.policy.visibilitySql(ctx, projectId, { classification: schema.document.classification, room: schema.document.roomId }),
+                  this.policy.grantSql(ctx, 'documents.document.read', projectId, { room: schema.document.roomId }),
+                ),
+              ),
           );
           break;
         case 'task':
@@ -519,13 +572,13 @@ export class AiKnowledgeService {
         }
         case 'decision':
           if (!this.can(ctx, 'governance.decision.read', projectId)) break;
-          add(type, await tx.select({ id: schema.decision.id }).from(schema.decision).where(and(eq(schema.decision.projectId, projectId), inArray(schema.decision.id, ids), this.policy.visibilitySql(ctx, projectId, { classification: schema.decision.classification }))));
+          add(type, await tx.select({ id: schema.decision.id }).from(schema.decision).where(and(eq(schema.decision.projectId, projectId), inArray(schema.decision.id, ids), this.policy.visibilitySql(ctx, projectId, { classification: schema.decision.classification }), this.projectWide(ctx, 'governance.decision.read', projectId))));
           break;
         case 'action_item':
         case 'approval_request': {
           if (!this.can(ctx, 'governance.decision.read', projectId)) break;
           const t = type === 'action_item' ? schema.actionItem : schema.approvalRequest;
-          add(type, await tx.select({ id: t.id }).from(t).where(and(eq(t.projectId, projectId), inArray(t.id, ids), projectVis)));
+          add(type, await tx.select({ id: t.id }).from(t).where(and(eq(t.projectId, projectId), inArray(t.id, ids), projectVis, this.projectWide(ctx, 'governance.decision.read', projectId), this.readable(ctx, projectId, type, t.id))));
           break;
         }
         case 'gate_definition':
@@ -534,14 +587,14 @@ export class AiKnowledgeService {
           break;
         case 'closing_condition':
           if (!this.can(ctx, 'jv.deal.read', projectId)) break;
-          add(type, await tx.select({ id: schema.closingCondition.id }).from(schema.closingCondition).where(and(eq(schema.closingCondition.projectId, projectId), inArray(schema.closingCondition.id, ids), projectVis)));
+          add(type, await tx.select({ id: schema.closingCondition.id }).from(schema.closingCondition).where(and(eq(schema.closingCondition.projectId, projectId), inArray(schema.closingCondition.id, ids), projectVis, this.projectWide(ctx, 'jv.deal.read', projectId))));
           break;
         case 'tsa_service':
         case 'readiness_check': {
           if (!this.can(ctx, 'readiness.register.read', projectId)) break;
           const t = type === 'tsa_service' ? schema.tsaService : schema.readinessCheck;
-          const reach = type === 'readiness_check' ? this.policy.reachSql(ctx, 'readiness.register.read', projectId, schema.readinessCheck.workstreamId) : sql`true`;
-          add(type, await tx.select({ id: t.id }).from(t).where(and(eq(t.projectId, projectId), inArray(t.id, ids), projectVis, reach)));
+          // SEC-P34-02: the record rule (TSA: classification + readiness reach; check: readiness reach).
+          add(type, await tx.select({ id: t.id }).from(t).where(and(eq(t.projectId, projectId), inArray(t.id, ids), projectVis, this.readable(ctx, projectId, type, t.id))));
           break;
         }
         case 'status_dimension':
@@ -550,19 +603,20 @@ export class AiKnowledgeService {
           break;
         case 'partner':
           if (!this.can(ctx, 'jv.partner.read', projectId)) break;
-          add(type, await tx.select({ id: schema.partner.id }).from(schema.partner).where(and(eq(schema.partner.projectId, projectId), inArray(schema.partner.id, ids), this.policy.visibilitySql(ctx, projectId, { classification: schema.partner.classification }))));
+          add(type, await tx.select({ id: schema.partner.id }).from(schema.partner).where(and(eq(schema.partner.projectId, projectId), inArray(schema.partner.id, ids), this.policy.visibilitySql(ctx, projectId, { classification: schema.partner.classification }), this.projectWide(ctx, 'jv.partner.read', projectId))));
           break;
         case 'deal_scenario':
           if (!this.can(ctx, 'jv.partner.read', projectId)) break;
-          add(type, await tx.select({ id: schema.dealScenario.id }).from(schema.dealScenario).where(and(eq(schema.dealScenario.projectId, projectId), inArray(schema.dealScenario.id, ids), this.policy.visibilitySql(ctx, projectId, { classification: schema.dealScenario.classification }))));
+          add(type, await tx.select({ id: schema.dealScenario.id }).from(schema.dealScenario).where(and(eq(schema.dealScenario.projectId, projectId), inArray(schema.dealScenario.id, ids), this.policy.visibilitySql(ctx, projectId, { classification: schema.dealScenario.classification }), this.projectWide(ctx, 'jv.partner.read', projectId))));
           break;
         case 'financial_model_version':
           if (!this.can(ctx, 'finance.record.read', projectId)) break;
-          add(type, await tx.select({ id: schema.financialModelVersion.id }).from(schema.financialModelVersion).where(and(eq(schema.financialModelVersion.projectId, projectId), inArray(schema.financialModelVersion.id, ids), this.policy.visibilitySql(ctx, projectId, { classification: schema.financialModelVersion.classification }))));
+          // SEC-P34-03: finance-domain clearance + finance reach (FinanceSupport.visibleSql), as in retrieval.
+          add(type, await tx.select({ id: schema.financialModelVersion.id }).from(schema.financialModelVersion).where(and(eq(schema.financialModelVersion.projectId, projectId), inArray(schema.financialModelVersion.id, ids), this.readable(ctx, projectId, type, schema.financialModelVersion.id))));
           break;
         case 'financial_snapshot':
           if (!this.can(ctx, 'finance.record.read', projectId)) break;
-          add(type, await tx.select({ id: schema.financialSnapshot.id }).from(schema.financialSnapshot).where(and(eq(schema.financialSnapshot.projectId, projectId), inArray(schema.financialSnapshot.id, ids), this.policy.visibilitySql(ctx, projectId, { classification: schema.financialSnapshot.classification }))));
+          add(type, await tx.select({ id: schema.financialSnapshot.id }).from(schema.financialSnapshot).where(and(eq(schema.financialSnapshot.projectId, projectId), inArray(schema.financialSnapshot.id, ids), this.readable(ctx, projectId, type, schema.financialSnapshot.id))));
           break;
         default:
           break; // unknown types: not visible (deny by default)

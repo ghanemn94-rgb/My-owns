@@ -7,6 +7,8 @@ import {
   POST_CLOSE_MACHINE,
   assertAssessmentEntry,
   assertChecklistItemAcceptable,
+  assertChecklistNotRequiredDecision,
+  assertChecklistNotRequiredRequest,
   assertCpVerifiable,
   assertCpWaivabilityDetermination,
   assertCriteriaWeights,
@@ -227,11 +229,17 @@ describe('REQ-JV-011 — findings', () => {
 
 describe('REQ-JV-013 / AT-12 / AT-13 — conditions precedent', () => {
   it('verifyCP without evidence is rejected; the owner / evidence submitter cannot verify', () => {
-    expect(code(() => assertCpVerifiable({ activeEvidence: 0, verifierUserId: 'legal', ownerUserId: 'pm', evidenceSubmittedBy: 'pm' }))).toBe('jv.cp.evidence_required');
-    expect(code(() => assertCpVerifiable({ activeEvidence: 1, verifierUserId: 'pm', ownerUserId: 'pm', evidenceSubmittedBy: 'x' }))).toBe('jv.cp.self_verification');
-    expect(code(() => assertCpVerifiable({ activeEvidence: 1, verifierUserId: 'x', ownerUserId: 'pm', evidenceSubmittedBy: 'x' }))).toBe('jv.cp.self_verification');
-    expect(code(() => assertCpVerifiable({ activeEvidence: 1, verifierUserId: 'legal', ownerUserId: 'pm', evidenceSubmittedBy: 'pm' }))).toBe('no error');
+    expect(code(() => assertCpVerifiable({ activeEvidence: 0, verifierUserId: 'legal', ownerUserId: 'pm', evidenceSubmittedBy: 'pm', evidenceLinkerUserIds: [] }))).toBe('jv.cp.evidence_required');
+    expect(code(() => assertCpVerifiable({ activeEvidence: 1, verifierUserId: 'pm', ownerUserId: 'pm', evidenceSubmittedBy: 'x', evidenceLinkerUserIds: [] }))).toBe('jv.cp.self_verification');
+    expect(code(() => assertCpVerifiable({ activeEvidence: 1, verifierUserId: 'x', ownerUserId: 'pm', evidenceSubmittedBy: 'x', evidenceLinkerUserIds: [] }))).toBe('jv.cp.self_verification');
+    expect(code(() => assertCpVerifiable({ activeEvidence: 1, verifierUserId: 'legal', ownerUserId: 'pm', evidenceSubmittedBy: 'pm', evidenceLinkerUserIds: ['pm'] }))).toBe('no error');
     expect(() => transition('closing_condition', CONDITION_MACHINE, 'open', 'verify')).toThrow();
+  });
+  it('SEC-P34-01: whoever linked active evidence of a CP / deliverable / obligation cannot verify or accept it', () => {
+    expect(code(() => assertCpVerifiable({ activeEvidence: 1, verifierUserId: 'legal', ownerUserId: 'pm', evidenceSubmittedBy: 'pm', evidenceLinkerUserIds: ['pm', 'legal'] }))).toBe('jv.cp.self_verification');
+    expect(code(() => assertChecklistItemAcceptable({ status: 'delivered', executedVersionUsable: true, acceptorUserId: 'legal', ownerUserId: 'x', deliveredBy: 'pm', evidenceLinkerUserIds: ['legal'] }))).toBe('jv.checklist_item.self_acceptance');
+    expect(code(() => assertObligationVerifiable({ activeEvidence: 1, verifierUserId: 'legal', ownerUserId: 'pm', reportedBy: 'pm', evidenceLinkerUserIds: ['legal'] }))).toBe('jv.obligation.self_verification');
+    expect(code(() => assertObligationVerifiable({ activeEvidence: 1, verifierUserId: 'legal', ownerUserId: 'pm', reportedBy: 'pm', evidenceLinkerUserIds: ['pm'] }))).toBe('no error');
   });
   it('waivability is a documented specialist determination', () => {
     expect(code(() => assertCpWaivabilityDetermination({ waivable: true, waiverAuthorityRole: null, basis: 'x' }))).toBe('jv.cp.waiver_authority_required');
@@ -291,10 +299,25 @@ describe('REQ-LCY-009 / REQ-JV-012 / REQ-JV-017 / REQ-JV-018 — signing and clo
 
 describe('REQ-JV-014 / REQ-JV-015 / REQ-JV-016 / REQ-JV-019', () => {
   it('checklist-item acceptance requires the executed document and another person', () => {
-    expect(code(() => assertChecklistItemAcceptable({ status: 'delivered', executedVersionUsable: null, acceptorUserId: 'legal', ownerUserId: 'pm', deliveredBy: 'pm' }))).toBe('jv.checklist_item.executed_document_required');
-    expect(code(() => assertChecklistItemAcceptable({ status: 'delivered', executedVersionUsable: true, acceptorUserId: 'pm', ownerUserId: 'x', deliveredBy: 'pm' }))).toBe('jv.checklist_item.self_acceptance');
-    expect(code(() => assertChecklistItemAcceptable({ status: 'pending', executedVersionUsable: true, acceptorUserId: 'legal', ownerUserId: 'x', deliveredBy: 'pm' }))).toBe('jv.checklist_item.not_delivered');
-    expect(code(() => assertChecklistItemAcceptable({ status: 'delivered', executedVersionUsable: true, acceptorUserId: 'legal', ownerUserId: 'x', deliveredBy: 'pm' }))).toBe('no error');
+    expect(code(() => assertChecklistItemAcceptable({ status: 'delivered', executedVersionUsable: null, acceptorUserId: 'legal', ownerUserId: 'pm', deliveredBy: 'pm', evidenceLinkerUserIds: [] }))).toBe('jv.checklist_item.executed_document_required');
+    expect(code(() => assertChecklistItemAcceptable({ status: 'delivered', executedVersionUsable: true, acceptorUserId: 'pm', ownerUserId: 'x', deliveredBy: 'pm', evidenceLinkerUserIds: [] }))).toBe('jv.checklist_item.self_acceptance');
+    expect(code(() => assertChecklistItemAcceptable({ status: 'pending', executedVersionUsable: true, acceptorUserId: 'legal', ownerUserId: 'x', deliveredBy: 'pm', evidenceLinkerUserIds: [] }))).toBe('jv.checklist_item.not_delivered');
+    expect(code(() => assertChecklistItemAcceptable({ status: 'delivered', executedVersionUsable: true, acceptorUserId: 'legal', ownerUserId: 'x', deliveredBy: 'pm', evidenceLinkerUserIds: ['pm'] }))).toBe('no error');
+  });
+  it('SEC-P34-10: "not required" is requested with a reason and decided by a second person on the unchanged item', () => {
+    expect(code(() => assertChecklistNotRequiredRequest({ status: 'verified', reason: 'x', pendingRequest: false }))).toBe('jv.checklist_item.invalid_state');
+    expect(code(() => assertChecklistNotRequiredRequest({ status: 'pending', reason: ' ', pendingRequest: false }))).toBe('jv.checklist_item.reason_required');
+    expect(code(() => assertChecklistNotRequiredRequest({ status: 'delivered', reason: 'x', pendingRequest: true }))).toBe('jv.checklist_item.not_required_pending');
+    expect(code(() => assertChecklistNotRequiredRequest({ status: 'pending', reason: 'Superseded by the SPA (synthetic)', pendingRequest: false }))).toBe('no error');
+    const d = { status: 'pending', requestPending: true, requestedVersion: 3, currentVersion: 3, deciderUserId: 'legal', requestedBy: 'pm', decision: 'confirm' as const, note: null };
+    expect(code(() => assertChecklistNotRequiredDecision({ ...d, requestPending: false }))).toBe('jv.checklist_item.no_not_required_request');
+    expect(code(() => assertChecklistNotRequiredDecision({ ...d, status: 'verified' }))).toBe('jv.checklist_item.invalid_state');
+    expect(code(() => assertChecklistNotRequiredDecision({ ...d, currentVersion: 4 }))).toBe('jv.checklist_item.not_required_stale');
+    expect(code(() => assertChecklistNotRequiredDecision({ ...d, deciderUserId: 'pm' }))).toBe('jv.checklist_item.not_required_self');
+    expect(code(() => assertChecklistNotRequiredDecision({ ...d, requestedBy: null }))).toBe('jv.checklist_item.not_required_self');
+    expect(code(() => assertChecklistNotRequiredDecision({ ...d, decision: 'reject' }))).toBe('jv.checklist_item.reason_required');
+    expect(code(() => assertChecklistNotRequiredDecision(d))).toBe('no error');
+    expect(code(() => assertChecklistNotRequiredDecision({ ...d, decision: 'reject', note: 'Still needed (synthetic)' }))).toBe('no error');
   });
   it('funds flow is record-only: its machine has no execute/pay command', () => {
     expect(Object.keys(FUNDS_FLOW_MACHINE).sort()).toEqual(['cancel', 'confirm', 'report_settled']);
@@ -305,7 +328,7 @@ describe('REQ-JV-014 / REQ-JV-015 / REQ-JV-016 / REQ-JV-019', () => {
     expect(assessObligationOverdue({ status: 'in_progress', dueDate: '2026-10-01', today: '2026-10-01' })).toEqual({ overdue: false, daysOverdue: 0 });
     expect(assessObligationOverdue({ status: 'verified', dueDate: '2026-09-01', today: '2026-10-01' }).overdue).toBe(false);
     expect(transition('post_close_obligation', POST_CLOSE_MACHINE, 'open', 'mark_overdue')).toBe('overdue');
-    expect(code(() => assertObligationVerifiable({ activeEvidence: 0, verifierUserId: 'legal', ownerUserId: 'pm', reportedBy: 'pm' }))).toBe('jv.obligation.evidence_required');
+    expect(code(() => assertObligationVerifiable({ activeEvidence: 0, verifierUserId: 'legal', ownerUserId: 'pm', reportedBy: 'pm', evidenceLinkerUserIds: [] }))).toBe('jv.obligation.evidence_required');
   });
   it('program closure is rejected before G7 passes and by the requester', () => {
     expect(code(() => assertProgramClosureAllowed({ g7Status: null, confirmerUserId: 'pfa', requesterUserId: 'pm' }))).toBe('jv.program_closure.g7_not_passed');

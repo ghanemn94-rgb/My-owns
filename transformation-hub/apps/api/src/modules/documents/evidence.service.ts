@@ -102,8 +102,27 @@ export class EvidenceService {
    * evidence, propose N/A, note — gates.service): the owner role or the project manager (access-matrix §2.4); anyone else is
    * refused (403) exactly like the submit. Other target types keep the RBAC grant check above (their `W` conditions apply
    * to the target's own commands — access-matrix §6, documents).
+   *
+   * SEC-P34-13 (SEC-P2-02 residual): a decision paper's supporting evidence is part of the paper (DOM-P2-14), and the paper
+   * is written and submitted by its requester only — so while the paper is `draft` or `submitted`, only the requester links
+   * evidence to it (403 `governance.decision.not_requester`; an unknown requester fails closed). Later evidence (the record
+   * of an external authority's decision on a recommendation, for instance) keeps the RBAC grant check.
    */
   private async assertTargetCommand(ctx: RequestContext, projectId: string, targetType: EvidenceTargetType, targetId: string, targetPerm: string): Promise<void> {
+    if (targetType === 'decision') {
+      const [d] = await this.db
+        .tx()
+        .select({ status: schema.decision.status, requesterUserId: schema.decision.requesterUserId })
+        .from(schema.decision)
+        .where(and(eq(schema.decision.id, targetId), eq(schema.decision.projectId, projectId)));
+      if (!d) throw notFound();
+      if (d.status !== 'draft' && d.status !== 'submitted') return;
+      if (!d.requesterUserId) throw forbidden('policy.sod_subject_unknown', 'The requester of this paper is unknown, so nobody may add evidence to it');
+      if (d.requesterUserId !== ctx.principal.userId) {
+        throw forbidden('governance.decision.not_requester', 'Only the requester adds supporting evidence to a decision paper while it is drafted or submitted; ask the requester');
+      }
+      return;
+    }
     if (targetType !== 'gate_criterion') return;
     const [row] = await this.db
       .tx()

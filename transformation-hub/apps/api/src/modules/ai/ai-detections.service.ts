@@ -299,7 +299,8 @@ export class AiDetectionsService {
           gateKey: null,
           dueDate: s.endDate,
           citations: [{ type: 'tsa_service', id: s.id, version: s.version, label: `${s.code} ${s.name}`, isDemo: s.isDemo }],
-          meta: { ownerUserId: s.ownerUserId, updatedAt: iso(s.updatedAt), verification: null, version: s.version, category: c },
+          // The TSA's own classification (provider ceiling, derived classification — access-matrix §2.6).
+          meta: { ownerUserId: s.ownerUserId, updatedAt: iso(s.updatedAt), verification: null, version: s.version, category: c, classification: s.classification as Classification },
         }));
       }
       case 'readiness': {

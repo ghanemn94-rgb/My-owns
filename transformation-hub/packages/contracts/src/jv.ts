@@ -490,6 +490,11 @@ export const ChecklistItemDto = z.object({
   verifiedAt: z.string().nullable(),
   statusNote: z.string().nullable(),
   evidence: Evidence,
+  /**
+   * SEC-P34-10: a pending request to set the item "not required", awaiting a second person (`jv.cp.verify`, not the
+   * requester). Null when none is pending for the item as it is now (a request made on an earlier version no longer applies).
+   */
+  notRequiredRequest: z.object({ requestId: Uuid, requestedBy: Uuid, requestedAt: z.string(), reason: z.string().nullable() }).nullable(),
   isDemo: z.boolean(),
   version: z.number().int(),
 });
@@ -1484,12 +1489,24 @@ export const jvRoutes = registerRoutes({
     id: 'jv.setChecklistItemNotRequired',
     method: 'POST',
     path: `${P}/checklist-items/:itemId/not-required`,
-    summary: 'Mark an item not required (documented reason)',
+    summary: 'REQUEST that an item be set not required (documented reason); the item keeps its state and blocker until a second person confirms (SEC-P34-10)',
     tags,
     access: 'jv.closing_checklist.manage',
     command: true,
     params: idP('itemId'),
     body: CmdWithReason,
+    response: z.object({ id: Uuid, status: z.enum(CLOSING_DELIVERABLE_STATUSES), version: z.number().int(), approvalRequestId: Uuid }),
+  }),
+  decideChecklistItemNotRequired: defineRoute({
+    id: 'jv.decideChecklistItemNotRequired',
+    method: 'POST',
+    path: `${P}/checklist-items/:itemId/not-required/decide`,
+    summary: 'Second person (not the requester) confirms or rejects the pending "not required" request of an unchanged item (SEC-P34-10)',
+    tags,
+    access: 'jv.cp.verify',
+    command: true,
+    params: idP('itemId'),
+    body: z.object({ expectedVersion: ExpectedVersion, decision: z.enum(['confirm', 'reject']), note: Text(2000).optional() }),
     response: z.object({ id: Uuid, status: z.enum(CLOSING_DELIVERABLE_STATUSES), version: z.number().int() }),
   }),
 

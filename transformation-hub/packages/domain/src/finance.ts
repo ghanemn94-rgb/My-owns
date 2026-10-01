@@ -727,12 +727,16 @@ export function assertRealizationRecordable(r: { actualValue: string | null | un
 }
 
 /** Verification: a human who is neither the benefit owner nor the person who reported the realization; source present. */
-export function assertBenefitVerifiable(b: { status: BenefitStatus; ownerUserId: string | null; realizationRecordedBy: string | null; verificationSource: string | null }, actor: Actor): void {
+export function assertBenefitVerifiable(
+  b: { status: BenefitStatus; ownerUserId: string | null; realizationRecordedBy: string | null; verificationSource: string | null; evidenceLinkerUserIds: readonly string[] },
+  actor: Actor,
+): void {
   assertHumanActor(actor, 'Benefit verification');
   if (b.status !== 'realized_unverified') throw ruleViolation('finance.benefit.not_realized', `Only a reported realization can be verified (the benefit is ${b.status})`, { status: b.status });
   if (!b.verificationSource?.trim()) throw ruleViolation('finance.benefit.verification_source_required', 'A benefit realization needs its verification source');
-  if (actor.userId === b.ownerUserId || actor.userId === b.realizationRecordedBy) {
-    throw forbidden('finance.benefit.verify_self', 'Separation of duties: the benefit owner or the person who reported the realization cannot verify it');
+  // access-matrix §5.1 (SEC-P34-01): the owner, the reporter of the realization and whoever linked its active evidence.
+  if (actor.userId === b.ownerUserId || actor.userId === b.realizationRecordedBy || (!!actor.userId && b.evidenceLinkerUserIds.includes(actor.userId))) {
+    throw forbidden('finance.benefit.verify_self', 'Separation of duties: the benefit owner, the person who reported the realization or who linked its evidence cannot verify it');
   }
 }
 

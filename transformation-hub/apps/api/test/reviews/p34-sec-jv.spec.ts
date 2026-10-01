@@ -59,7 +59,7 @@ describe('SEC-P34-01 — a CP verified by the person who linked its evidence [ac
     expect(links.rows.map((r) => r.added_by)).toEqual([j.p.legal.userId]);
   }, 120_000);
 
-  it.fails('DEFECT SEC-P34-01: whoever recorded the evidence of a CP cannot verify it (403) — its only evidence is their own', async () => {
+  it('SEC-P34-01 (fixed, regression): whoever recorded the evidence of a CP cannot verify it (403) — its only evidence is their own', async () => {
     const r = await j.p.legal.post(`${P(pid)}/closing-conditions/${cpId}/verify`, { expectedVersion: version, outcome: 'verify' });
     console.log(`SEC-P34-01 (CP) observed: verify by the evidence linker → ${r.status} ${JSON.stringify(r.body)}`);
     expect(r.status).toBe(403);
@@ -87,7 +87,7 @@ describe('SEC-P34-04 — an external (counterparty) account uses the INTERNAL DD
     expect([403, 404]).toContain((await ext.get(`${P(pid)}/diligence-requests`)).status);
   });
 
-  it.fails('DEFECT SEC-P34-04: the counterparty cannot create a DD request through the internal route (403/404) — no internal-origin record, no free requester label', async () => {
+  it('SEC-P34-04 (fixed, regression): the counterparty cannot create a DD request through the internal route (403/404) — no internal-origin record, no free requester label', async () => {
     const r = await ext.post(`${P(pid)}/diligence-requests`, { roomId, question: `${TAG} question posing as internal (synthetic)`, domain: 'finance', requesterLabel: 'Mobily Legal (spoofed label, synthetic)', dueDate: '2026-12-31', classification: 'internal' });
     const row = r.body?.id ? (await owner().query(`select origin, requester_label, due_date::text, classification, created_by from diligence_request where id = $1`, [r.body.id])).rows[0] : null;
     console.log(`SEC-P34-04 observed: external POST /diligence-requests → ${r.status}; stored row ${JSON.stringify(row)}`);
@@ -109,7 +109,7 @@ describe('SEC-P34-09 — DD findings list vs detail for a workstream-only princi
     expect(r.status).toBe(403);
   });
 
-  it.fails('DEFECT SEC-P34-09: the findings list never shows (title, materiality, valuation implication) a finding the same caller is refused', async () => {
+  it('SEC-P34-09 (fixed, regression): the findings list never shows (title, materiality, valuation implication) a finding the same caller is refused', async () => {
     const r = await wsl.get(`${P(pid)}/diligence-findings?pageSize=100`);
     const shown = ((r.body.items ?? []) as { id: string; title: string }[]).filter((x) => x.id === findingId);
     console.log(`SEC-P34-09 observed: list → ${r.status}, total ${r.body.total}; shown: ${JSON.stringify(shown.map((x) => x.title))}`);
@@ -139,7 +139,7 @@ describe('SEC-P34-12 — SEC-P2-01 re-check in P3 / P4 context: a prerequisite s
     expect((await wsl.get(`${P(pid)}/agreements/${agreementId}`)).status).toBe(404);
   });
 
-  it.fails('DEFECT SEC-P34-12: the prerequisite list never shows (code, title, state) an agreement the caller cannot open', async () => {
+  it('SEC-P34-12 (fixed, regression): the prerequisite list never shows (code, title, state) an agreement the caller cannot open', async () => {
     const list = await wsl.get(`${P(pid)}/prerequisites?successorId=${taskId}`);
     console.log(`SEC-P34-12 observed: prerequisites → ${list.status} ${JSON.stringify((list.body.items ?? []).map((i: { predecessorLabel: string }) => i.predecessorLabel))}`);
     expect(JSON.stringify(list.body)).not.toContain('AGREEMENT-CANARY');
@@ -148,17 +148,40 @@ describe('SEC-P34-12 — SEC-P2-01 re-check in P3 / P4 context: a prerequisite s
 
 // ---------------------------------------------------------------------------------------------------------------------
 describe('SEC-P34-10 — a closing checklist item is set "not required" by one person [REQ-JV-012/014; security angle of "nobody bypasses a closing blocker"]', () => {
-  it('OBSERVED SEC-P34-10: the PM alone marks a pending deliverable not required and the blocker disappears (no second person, no authority)', async () => {
+  // OBSERVED SEC-P34-10 (at 5bf274b): the PM alone set a pending deliverable not required, the blocker disappeared and no
+  // approval request existed. Updated with the fix (review recommendation: a second person, jv.cp.verify, not the requester).
+  it('SEC-P34-10 (fixed, regression): the PM alone only REQUESTS "not required" — the blocker stays until a second person (jv.cp.verify, not the requester) confirms', async () => {
     const { signingId } = await signingAndClosing();
     const item = await ok(await j.p.pm.post(`${P(pid)}/checklist-items`, { eventId: signingId, title: `${TAG} executed side letter (synthetic)` }));
     const before = (await j.p.pm.get(`${P(pid)}/signings/${signingId}`).expect(200)).body;
     expect(before.blockers.map((b: { ref: string }) => b.ref)).toContain(item.code);
     const nr = await ok(await j.p.pm.post(`${P(pid)}/checklist-items/${item.id}/not-required`, { expectedVersion: 1, reason: 'Not needed (probe, synthetic)' }));
-    expect(nr.status).toBe('not_required');
+    expect(nr.status).toBe('pending'); // a request only: the item keeps its state
+    const mid = (await j.p.pm.get(`${P(pid)}/signings/${signingId}`).expect(200)).body;
+    expect(mid.blockers.map((b: { ref: string }) => b.ref)).toContain(item.code);
+    const row = mid.checklist.find((x: { id: string }) => x.id === item.id);
+    expect(row.notRequiredRequest).toMatchObject({ requestId: nr.approvalRequestId, requestedBy: j.p.pm.userId, reason: 'Not needed (probe, synthetic)' });
+    const approvals = await owner().query(`select status, requested_by, required_permission from approval_request where project_id = $1 and subject_id = $2`, [pid, item.id]);
+    expect(approvals.rows).toEqual([{ status: 'pending', requested_by: j.p.pm.userId, required_permission: 'jv.cp.verify' }]);
+    // The requester cannot decide it (the PM lacks jv.cp.verify: 403); the second person confirms and the blocker goes.
+    expect((await j.p.pm.post(`${P(pid)}/checklist-items/${item.id}/not-required/decide`, { expectedVersion: 1, decision: 'confirm' })).status).toBe(403);
+    const conf = await ok(await j.p.approver.post(`${P(pid)}/checklist-items/${item.id}/not-required/decide`, { expectedVersion: 1, decision: 'confirm' }));
+    expect(conf.status).toBe('not_required');
     const after = (await j.p.pm.get(`${P(pid)}/signings/${signingId}`).expect(200)).body;
     expect(after.blockers.map((b: { ref: string }) => b.ref)).not.toContain(item.code);
-    const approvals = await owner().query(`select count(*)::int n from approval_request where project_id = $1 and subject_id = $2`, [pid, item.id]);
-    expect(approvals.rows[0].n).toBe(0);
+    const rec = await owner().query(`select r.approver_user_id, r.decision, q.status from approval_record r join approval_request q on q.id = r.approval_request_id where q.subject_id = $1`, [item.id]);
+    expect(rec.rows).toEqual([{ approver_user_id: j.p.approver.userId, decision: 'approve', status: 'approved' }]);
+  });
+
+  it('SEC-P34-10 (fixed, regression): a requester who also holds jv.cp.verify cannot confirm their own request (403, item unchanged)', async () => {
+    const { signingId } = await signingAndClosing();
+    const item = await ok(await j.p.legal.post(`${P(pid)}/checklist-items`, { eventId: signingId, title: `${TAG} board minute (synthetic)` }));
+    await ok(await j.p.legal.post(`${P(pid)}/checklist-items/${item.id}/not-required`, { expectedVersion: 1, reason: 'Covered elsewhere (probe, synthetic)' }));
+    const self = await j.p.legal.post(`${P(pid)}/checklist-items/${item.id}/not-required/decide`, { expectedVersion: 1, decision: 'confirm' });
+    expect(self.status).toBe(403);
+    expect(self.body.code).toBe('jv.checklist_item.not_required_self');
+    const row = (await owner().query(`select status, version from closing_deliverable where id = $1`, [item.id])).rows[0];
+    expect(row).toEqual({ status: 'pending', version: 1 });
   });
 
   it('CONTROL: a blocking CP cannot be released by a determination (422), and only Legal determines waivability (PM 403)', async () => {
@@ -193,7 +216,7 @@ describe('SEC-P34-13 — SEC-P2-02 re-check: the paper is shaped only by its req
     expect(s2.body.code).toBe('governance.decision.not_requester');
   });
 
-  it.fails('DEFECT SEC-P34-13: another voting member cannot add evidence to the requester’s draft paper either (the paper’s evidence is part of the paper, DOM-P2-14)', async () => {
+  it('SEC-P34-13 (fixed, regression): another voting member cannot add evidence to the requester’s draft paper either (the paper’s evidence is part of the paper, DOM-P2-14)', async () => {
     const r = await j.p.finance.post(`${P(pid)}/evidence`, { targetType: 'decision', targetId: decisionId, note: 'Supporting evidence added by a voting member who is not the requester (probe)' });
     console.log(`SEC-P34-13 observed: evidence link on another member's draft paper → ${r.status} ${JSON.stringify(r.body)}`);
     expect(r.status).toBe(403);

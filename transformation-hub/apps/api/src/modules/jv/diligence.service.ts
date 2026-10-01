@@ -143,6 +143,9 @@ export class DiligenceService {
     const where = and(
       eq(t.projectId, projectId),
       this.s.policy.visibilitySql(ctx, projectId, { classification: t.classification, room: t.roomId }),
+      // SEC-P34-09: the grant must COVER the row, as in `GET` (a workstream-only grant covers no DD record; a room role only
+      // its rooms) — the list never shows what the detail refuses.
+      this.s.policy.grantSql(ctx, 'jv.dd_request.read', projectId, { room: t.roomId }),
       q.roomId ? eq(t.roomId, q.roomId) : undefined,
       q.releaseStatus ? eq(t.releaseStatus, q.releaseStatus) : undefined,
       q.q ? or(ilike(t.question, likeContains(q.q)), ilike(t.domain, likeContains(q.q))) : undefined,
@@ -204,7 +207,15 @@ export class DiligenceService {
     };
   }
 
+  /**
+   * The INTERNAL route (origin `internal`, free requester label, due date, classification). SEC-P34-04: only internal full
+   * members with a project-wide grant use it — a counterparty (room-only principal, whose `jv.dd_request.create` comes from
+   * its room role) gets 404 like any internal register and files its questions through the partner-access route, which
+   * records origin `partner` / requester "Counterparty". The request records its real author (`createdBy`).
+   */
   async create(ctx: RequestContext, projectId: string, body: Q<'createDdRequest'>['body']) {
+    if (this.s.policy.isRoomOnly(ctx.principal, projectId)) throw notFound();
+    if (!this.s.policy.permissionReach(ctx, 'jv.dd_request.create', projectId).all) throw forbidden('policy.forbidden', 'Missing project-wide permission jv.dd_request.create');
     const room = await this.s.room(projectId, body.roomId);
     this.s.assertClassification(ctx, body.classification);
     this.s.policy.assert(ctx, 'jv.dd_request.create', this.s.roomAttrs(room, body.classification));
@@ -457,6 +468,8 @@ export class DiligenceService {
     const where = and(
       eq(t.projectId, projectId),
       this.s.policy.visibilitySql(ctx, projectId, { classification: t.classification, room: t.roomId }),
+      // SEC-P34-09: grant coverage, as in `GET /diligence-findings/:id` (list and total never include a refused finding).
+      this.s.policy.grantSql(ctx, 'jv.dd_request.read', projectId, { room: t.roomId }),
       q.materiality ? eq(t.materiality, q.materiality) : undefined,
       q.status ? eq(t.status, q.status) : undefined,
       q.roomId ? eq(t.roomId, q.roomId) : undefined,

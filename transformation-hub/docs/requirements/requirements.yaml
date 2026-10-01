@@ -860,7 +860,7 @@
   acceptance_tests: ["AT-30", "UT: closure without evidence rejected; owner self-verification rejected"]
   phase: P2
   status: Tested
-  evidence: ['governance decision-lifecycle.spec.ts "7. action closure: owner reports done with evidence; self-verification is rejected; a different person verifies"; "6. approval ≠ implementation: approved is not implemented; tracking needs an owned, dated action"', 'D governance.p2.test.ts "verification requires evidence, all live actions verified closed, and a verifier who owns none of them"', AT-30 is verified with REQ-PLT-003 (P8)]
+  evidence: ['governance decision-lifecycle.spec.ts "7. action closure: owner reports done with evidence; self-verification is rejected; a different person verifies"; "6. approval ≠ implementation: approved is not implemented; tracking needs an owned, dated action"', 'D governance.p2.test.ts "verification requires evidence, all live actions verified closed, and a verifier who owns none of them"', AT-30 is verified with REQ-PLT-003 (P8), 'reviews p34-sec-fixes.spec.ts "governance action: the secretary who linked evidence of the action cannot verify its closure (403); another secretary can"']
 - id: REQ-GOV-019
   section: "4.2"
   title: "Decision state machine"
@@ -1921,7 +1921,7 @@
   acceptance_tests: ["UT: benefit realization requires verification source"]
   phase: P4
   status: Tested
-  evidence: ['finance finance-registers.spec.ts "UT: benefit realization requires verification source"; "the owner / reporter cannot verify, nor can a service identity; an independent Finance verifier can"', 'D finance.test.ts "UT: benefit realization requires verification source"', 'accepted definition, baseline, target and value need re-acceptance (DOM-P4-12): finance p4-domain-fixes-finance.spec.ts "definition / baseline / target / value locked after acceptance; revision returns it to proposed; a fresh independent acceptance"']
+  evidence: ['finance finance-registers.spec.ts "UT: benefit realization requires verification source"; "the owner / reporter cannot verify, nor can a service identity; an independent Finance verifier can"', 'D finance.test.ts "UT: benefit realization requires verification source"', 'accepted definition, baseline, target and value need re-acceptance (DOM-P4-12): finance p4-domain-fixes-finance.spec.ts "definition / baseline / target / value locked after acceptance; revision returns it to proposed; a fresh independent acceptance"', 'reviews p34-sec-fixes.spec.ts "benefit realization: the Finance member who linked its evidence cannot verify it (403, unchanged); an independent verifier can"']
 - id: REQ-FIN-010
   section: "7.5"
   title: "Human financial validation before approval"
@@ -2100,7 +2100,7 @@
   acceptance_tests: ["UT: release without approval rejected"]
   phase: P4
   status: Tested
-  evidence: ['DOM-P4-05 fixed (the evidence versions pinned at submission are the ones reviewed and disclosed): reviews p4-domain-jv.spec.ts "DOM-P4-05: releasing a reviewed DD answer never discloses an evidence version the reviewer did not see ... (fixed, regression)"; jv p4-domain-fixes.spec.ts "a newer evidence version before the review refuses the approval; after resubmission the pinned version is disclosed"', 'jv jv-diligence.spec.ts "UT: release without approval is rejected (and logged); the drafter never reviews or releases"; "the counterparty raises a question in its room; the deal team sees the internal projection"', 'D jv.test.ts "release requires the approved review, a separate reviewer and releaser"; D p4-domain-fixes.test.ts "every evidence document needs its pinned version; a newer current version refuses the review"']
+  evidence: ['DOM-P4-05 fixed (the evidence versions pinned at submission are the ones reviewed and disclosed): reviews p4-domain-jv.spec.ts "DOM-P4-05: releasing a reviewed DD answer never discloses an evidence version the reviewer did not see ... (fixed, regression)"; jv p4-domain-fixes.spec.ts "a newer evidence version before the review refuses the approval; after resubmission the pinned version is disclosed"', 'jv jv-diligence.spec.ts "UT: release without approval is rejected (and logged); the drafter never reviews or releases"; "the counterparty raises a question in its room; the deal team sees the internal projection"', 'D jv.test.ts "release requires the approved review, a separate reviewer and releaser"; D p4-domain-fixes.test.ts "every evidence document needs its pinned version; a newer current version refuses the review"', 'reviews p34-sec-jv.spec.ts "SEC-P34-04 (fixed, regression): the counterparty cannot create a DD request through the internal route (403/404)"', 'reviews p34-sec-fixes.spec.ts "SEC-P34-09: the DD request list applies the grant coverage too"']
 - id: REQ-JV-011
   section: "8"
   title: "Diligence findings with implications"
@@ -2116,7 +2116,7 @@
   acceptance_tests: ["UT: material finding requires remediation owner"]
   phase: P4
   status: Tested
-  evidence: ['jv jv-diligence.spec.ts "UT: a material finding requires a remediation owner (API and database)"', D jv.test.ts "a material finding requires a remediation owner and plan"]
+  evidence: ['jv jv-diligence.spec.ts "UT: a material finding requires a remediation owner (API and database)"', D jv.test.ts "a material finding requires a remediation owner and plan", 'reviews p34-sec-jv.spec.ts "SEC-P34-09 (fixed, regression): the findings list never shows (title, materiality, valuation implication) a finding the same caller is refused"']
 - id: REQ-JV-012
   section: "8"
   title: "Separate signing and closing checklists"
@@ -2148,7 +2148,7 @@
   acceptance_tests: ["AT-12", "UT: verifyCP without evidence rejected"]
   phase: P4
   status: Tested
-  evidence: ['DOM-P4-03 and DOM-P4-04 fixed (the two findings the P4 domain review held against this requirement): jv p4-domain-fixes.spec.ts "a functional approver and a Finance member (both hold gates.criterion.set_waivability) are refused (403)"; "Legal cannot release a blocking CP (non-waivable or waivable); the refusal is logged; raising blocking is a recorded determination"; "the validity of a verified CP changes only after a reopen and a fresh verification"; "a long-stop date is set or brought forward; moving it later or clearing it needs an approved extension"; "the daily scan lapses an unsatisfied CP past its long-stop date and escalates it once; an open CP without evidence near its date is escalated"; "a lapsed CP is open again only on an approved extension (FINAL decision, later date, not reused); it cannot be verified meanwhile"', 'probes turned regressions: reviews p4-domain-jv.spec.ts "DOM-P4-03: a functional approver (not a Legal specialist) cannot make a non-waivable blocking CP non-blocking, and the CP keeps blocking the closing ... (fixed, regression)"; "DOM-P4-04: moving the validity date of a verified CP after it lapsed does not clear the blocker without re-verification ... (fixed, regression)"', 'jv at-12-closing-blocked-cp.spec.ts "UT: verifyCP without evidence is rejected (and logged); submitting without evidence is rejected"', 'jv at-13-cp-non-waivable.spec.ts "only a specialist determines waivability (documented basis); the PM cannot"; "a waiver needs the specialist-set authority: approval outside it is refused; the CP stays unmet"', 'D jv.test.ts "verifyCP without evidence is rejected; the owner / evidence submitter cannot verify"; D p4-domain-fixes.test.ts "the validity of a verified or waived CP changes only after it is reopened"; "long-stop scan: lapse past the date, escalate an open CP without evidence inside the (proposed) window"']
+  evidence: ['DOM-P4-03 and DOM-P4-04 fixed (the two findings the P4 domain review held against this requirement): jv p4-domain-fixes.spec.ts "a functional approver and a Finance member (both hold gates.criterion.set_waivability) are refused (403)"; "Legal cannot release a blocking CP (non-waivable or waivable); the refusal is logged; raising blocking is a recorded determination"; "the validity of a verified CP changes only after a reopen and a fresh verification"; "a long-stop date is set or brought forward; moving it later or clearing it needs an approved extension"; "the daily scan lapses an unsatisfied CP past its long-stop date and escalates it once; an open CP without evidence near its date is escalated"; "a lapsed CP is open again only on an approved extension (FINAL decision, later date, not reused); it cannot be verified meanwhile"', 'probes turned regressions: reviews p4-domain-jv.spec.ts "DOM-P4-03: a functional approver (not a Legal specialist) cannot make a non-waivable blocking CP non-blocking, and the CP keeps blocking the closing ... (fixed, regression)"; "DOM-P4-04: moving the validity date of a verified CP after it lapsed does not clear the blocker without re-verification ... (fixed, regression)"', 'jv at-12-closing-blocked-cp.spec.ts "UT: verifyCP without evidence is rejected (and logged); submitting without evidence is rejected"', 'jv at-13-cp-non-waivable.spec.ts "only a specialist determines waivability (documented basis); the PM cannot"; "a waiver needs the specialist-set authority: approval outside it is refused; the CP stays unmet"', 'D jv.test.ts "verifyCP without evidence is rejected; the owner / evidence submitter cannot verify"; D p4-domain-fixes.test.ts "the validity of a verified or waived CP changes only after it is reopened"; "long-stop scan: lapse past the date, escalate an open CP without evidence inside the (proposed) window"', 'reviews p34-sec-jv.spec.ts "SEC-P34-01 (fixed, regression): whoever recorded the evidence of a CP cannot verify it (403)" (P3/P4 security review: whoever linked active evidence of a CP is self for its verification, access-matrix §5.1)']
 - id: REQ-JV-014
   section: "8"
   title: "Closing deliverables, decisions and executed documents"
@@ -2164,7 +2164,7 @@
   acceptance_tests: ["UT: deliverable acceptance requires executed document"]
   phase: P4
   status: Tested
-  evidence: ['jv jv-closing-rules.spec.ts "UT: deliverable acceptance requires an executed document; never by its owner or deliverer"']
+  evidence: ['jv jv-closing-rules.spec.ts "UT: deliverable acceptance requires an executed document; never by its owner or deliverer"', 'reviews p34-sec-fixes.spec.ts "closing checklist item: whoever linked evidence of the item cannot accept it (403); another verifier can"; "a request made on an earlier version of the item no longer applies (422 stale); a new request replaces it"; "the second person may reject with a reason: the item keeps its state and blocker; the request is closed"', 'reviews p34-sec-jv.spec.ts "SEC-P34-10 (fixed, regression): the PM alone only REQUESTS"; "a requester who also holds jv.cp.verify cannot confirm their own request (403, item unchanged)" (setting a deliverable not required needs a second person)']
 - id: REQ-JV-015
   section: "8"
   title: "Track financial flows without executing payments"
@@ -2196,7 +2196,7 @@
   acceptance_tests: ["UT: overdue obligation escalates"]
   phase: P4
   status: Tested
-  evidence: ['jv jv-closing-rules.spec.ts "UT: overdue obligation escalates (worker job, durable per-project schedule, project timezone) — idempotent"', D jv.test.ts "an overdue obligation (project-timezone business date) is detected; verified/cancelled never are"]
+  evidence: ['jv jv-closing-rules.spec.ts "UT: overdue obligation escalates (worker job, durable per-project schedule, project timezone) — idempotent"', D jv.test.ts "an overdue obligation (project-timezone business date) is detected; verified/cancelled never are", 'reviews p34-sec-fixes.spec.ts "post-close obligation: the evidence linker cannot verify (403, unchanged); another verifier can"']
 - id: REQ-JV-017
   section: "8"
   title: "Task completion does not close the transaction"

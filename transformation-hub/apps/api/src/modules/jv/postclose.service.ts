@@ -149,10 +149,12 @@ export class PostCloseService {
     const o = await this.load(ctx, projectId, id, 'jv.cp.verify');
     const cmd: ObligationCommand = body.outcome === 'verify' ? 'verify' : 'reject_completion';
     const ev = body.outcome === 'verify' ? await this.s.evidence(projectId, 'post_close_obligation', o.id) : null;
-    // Role → state (evidence, completion reported: 422) → separation from the completion reporter (I-R3).
+    const linkers = ev ? await this.s.evidenceLinkers(projectId, 'post_close_obligation', o.id) : [];
+    // Role → state (evidence, completion reported: 422) → separation from the owner, the completion reporter (I-R3) and
+    // whoever linked active evidence of the obligation (SEC-P34-01).
     let to = o.status;
     this.s.policy.assertApproval(ctx, 'jv.cp.verify', { projectId, requesterUserId: o.completionReportedBy }, () => {
-      if (ev) assertObligationVerifiable({ activeEvidence: ev.active, verifierUserId: ctx.principal.userId!, ownerUserId: o.ownerUserId, reportedBy: o.completionReportedBy });
+      if (ev) assertObligationVerifiable({ activeEvidence: ev.active, verifierUserId: ctx.principal.userId!, ownerUserId: o.ownerUserId, reportedBy: o.completionReportedBy, evidenceLinkerUserIds: linkers });
       to = transition('post_close_obligation', POST_CLOSE_MACHINE, o.status, cmd);
     });
     const values: Record<string, unknown> = { status: to, statusNote: body.note ?? null };

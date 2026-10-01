@@ -221,6 +221,17 @@ export const REFUSAL_KEYS: Readonly<Record<string, Entry>> = {
   'jv.signing.decision_evidence_invalid': 'jv.refusal.codes.signing_decision_evidence_invalid',
   'jv.cp.decision_evidence_invalid': 'jv.refusal.codes.cp_decision_evidence_invalid',
   'jv.negotiation.decision_evidence_invalid': 'jv.refusal.codes.negotiation_decision_evidence_invalid',
+  // P3/P4 security review fixes: the evidence linker is "self" for a verification (SEC-P34-01); "not required" on a
+  // checklist item is decided by a second person (SEC-P34-10); only the requester shapes the paper (SEC-P34-13).
+  'jv.cp.self_verification': 'jv.refusal.codes.cp_self_verification',
+  'jv.obligation.self_verification': 'jv.refusal.codes.obligation_self_verification',
+  'jv.checklist_item.self_acceptance': 'jv.refusal.codes.checklist_self_acceptance',
+  'jv.checklist_item.not_required_self': 'jv.refusal.codes.checklist_not_required_self',
+  'jv.checklist_item.not_required_stale': 'jv.refusal.codes.checklist_not_required_stale',
+  'jv.checklist_item.not_required_pending': 'jv.refusal.codes.checklist_not_required_pending',
+  'jv.checklist_item.no_not_required_request': 'jv.refusal.codes.checklist_no_not_required_request',
+  'governance.action.linker_verification': 'governance.refusal.codes.action_linker_verification',
+  'governance.decision.not_requester': 'governance.refusal.codes.decision_not_requester',
 };
 
 /** `(error) => translated explanation | null` for the active locale. */

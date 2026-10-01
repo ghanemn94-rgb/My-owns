@@ -189,6 +189,13 @@ export class ActionsService {
   async verifyClosure(ctx: RequestContext, projectId: string, actionId: string, body: { expectedVersion: number; note?: string }) {
     const a = await this.loadAction(ctx, projectId, actionId, 'governance.action.verify_closure', (a0) => ({ requesterUserId: a0.reportedDoneBy }), 'verify_closure');
     if (a.ownerUserId === ctx.principal.userId) throw ruleViolation('governance.action.self_verification', 'The owner of an action cannot verify its closure');
+    // SEC-P34-01 (access-matrix §5.1): whoever linked active evidence of the action recorded (part of) its closure evidence.
+    const linkers = await this.db.tx().execute<{ added_by: string }>(sql`
+      select distinct added_by::text as added_by from evidence_link
+       where project_id = ${projectId} and target_type = 'action_item' and target_id = ${a.id} and status = 'active'`);
+    if (linkers.rows.some((r) => r.added_by === ctx.principal.userId)) {
+      throw forbidden('governance.action.linker_verification', 'The person who linked evidence of an action cannot verify its closure');
+    }
     return this.apply(ctx, a, 'verify_closure', body.expectedVersion, { verifiedBy: ctx.principal.userId, verifiedAt: new Date() }, body.note);
   }
 

@@ -74,6 +74,14 @@ The scope hierarchy is `organization ⊃ portfolio ⊃ project ⊃ {workstream, 
 The `app.project_ids` setting used by PostgreSQL RLS is computed server-side from the user's active assignments and room grants at the start of each transaction. It is **never** taken from request parameters or job payloads.
 
 Lists, counts and search apply the same coverage in SQL as the single-record check (§2.5): a list never shows a record — or a document title — that the same caller would be refused when opening it. **Known deviation (open, after the P2 security fixes):** the governance lists (decisions, committees, meetings, actions, escalations) and the activity feed's type filter still check the type's read permission RBAC-only, so a workstream-only principal lists governance titles / events that `GET` refuses (403). Pinned by the `OBSERVED` test in `apps/api/test/reviews/p2-sec-access-matrix.spec.ts`; the fix belongs to the governance and portfolio modules (require a project-wide grant, e.g. `PolicyService.grantSql(…, {})`, which is `false` for a workstream-only grant of a non-§2.2.1 permission).
+**Record-level rules of project-level registers (SEC-P34-12, P3/P4 security review).** Wherever a record is shown through
+`RecordVisibility` for a non-auditor — the activity feed, the labels of a task's / milestone's prerequisites, evidence
+targets — the project-level registers **decision** (`governance.decision.read`), **agreement** and **consent**
+(`carveout.register.read`) and **regulatory requirement** (`newco.register.read`) need a PROJECT-WIDE grant of their read
+permission, exactly like their own modules (`grantSql(…, {})`, `assertProjectWide`, `assertProjectRead`): a workstream-only
+reader no longer sees their code / title / state there (`apps/api/src/platform/record-visibility.ts`, rule `ws: <read>, wsCol: null`).
+Tests: `apps/api/test/reviews/p34-sec-jv.spec.ts` (SEC-P34-12, agreement prerequisite) and
+`apps/api/test/reviews/p34-sec-fixes.spec.ts` (decision prerequisite and decision events in the activity feed).
 
 #### 2.2.1 Project-level read exceptions for workstream-scoped grants
 
@@ -142,6 +150,18 @@ Order: `public < internal < confidential < restricted < strictly_confidential`.
 | `authority` | The action is within delegated authority (§4 and §5.2): an active approved `AuthorityMatrixVersion` authorises the actor (or the actor's committee) for the decision type, and the amount is ≤ the limit **in the same currency and unit_scale** (a different currency is denied unless a recorded conversion basis exists). In production mode, with no active approved matrix, the result is **deny**. In `HUB_MODE=demo`, a Demo authority policy (`is_demo=true`) is used and outcomes are badged Demo. For assignment/grant/AI permissions the special meanings in §5.2 apply. | 403 `OUTSIDE_AUTHORITY` / `AUTHORITY_MATRIX_NOT_ACTIVE` |
 | `own_workstream` | The user is the resource's accountable owner, an assignee, or its creator; **or** holds `workstream_lead` on the resource's workstream; **or** holds `project_manager` on the resource's project. A project-scope grant of any other role does **not** satisfy it. | 403 `NOT_OWNER` (404 if not visible) |
 
+**`own_workstream` and create commands (decision, P3/P4 security review SEC-P34-11).** For a CREATE the actor is the
+creator, so `W` holds by construction (the create commands pass the actor as owner). `W` therefore binds the commands on
+EXISTING records (updates and the owner's status commands); a create is bound by the **scope of the grant**: a
+workstream-scoped grant creates only inside its workstream(s) (`PolicyService.check`; `workstream_lead` is only ever
+workstream-scoped), a project-scoped grant (project manager, a project-scoped contributor) creates in any workstream of the
+project. This is the documented semantics, **not a vulnerability**: approvals and verifications of those records stay with
+another person (`not_self` against the owner, the creator, the latest recorder and every evidence linker — §5.1). Open
+for the domain owner, not changed (AMQ-10): whether a project-scoped contributor may set `blocker` / `signoffRole` on the
+readiness checks it creates, and whether the readiness template instantiation (bulk creation of blocker-capable checks
+bound to a site or cutover plan) should be limited to the project manager / workstream lead. Pinned by the `OBSERVED
+SEC-P34-11` test in `apps/api/test/reviews/p34-sec-registers.spec.ts`.
+
 #### 2.4.1 Universal attribute rule (defence in depth)
 
 `classification`, `room` and `clean_team` are evaluated for **every** resource that carries the attribute, whether or not the permission lists the condition. The lists in the matrix record intent and drive the completeness tests (SEC-T-35). They are not a way to switch the check off.
@@ -151,6 +171,16 @@ Order: `public < internal < confidential < restricted < strictly_confidential`.
 - If the user cannot see the resource, the response is 404, with the same body shape and code as a genuinely missing ID.
 - List `total`, facet counts, dashboard aggregates, search hits, snippets, AI retrieval and notification badges are computed **inside SQL with the same predicates** (project scope, classification, room, clean_team). Results are never fetched and then filtered.
 - Unique constraints that could reveal existence across scopes (for example document titles) are scoped per project. A 409 message never names the conflicting record.
+- **AI retrieval uses the owning module's predicate, not only classification (SEC-P34-02 / SEC-P34-03).** Every
+  `AiKnowledgeService` source (detections, tool retrieval, briefings, `/ai/ask`) and the citation re-check
+  (`visibleCitationKeys`) apply, inside SQL: the type's `RecordVisibility` rule with the workstream reach of its read
+  permission (TSA: classification + readiness reach; readiness check: readiness reach; approved figures: finance-domain
+  clearance + finance reach; approved valuations: finance-domain clearance + a project-wide finance grant — the finance
+  module's `visibleSql`; action items / approval requests: their decision / subject), `grantSql(…, {})` for project-level
+  registers without a record rule (decisions, closing conditions, partners, deal scenarios), and the documents list's grant
+  coverage for document chunks (a workstream-scoped reader reaches room-less documents only). Tests:
+  `p34-sec-registers.spec.ts` (SEC-P34-02, SEC-P34-03) and `p34-sec-fixes.spec.ts` (TSA reach, valuations, decisions,
+  room documents).
 
 ### 2.6 Derived data
 
@@ -237,6 +267,20 @@ Nobody can assign a role they could not be assigned by the table. A role assignm
 | `integrations.send_authority.approve` | requester/configurer |
 | `ai.killswitch.release` | activator |
 | `admin.users.manage`, `admin.access.suspend`, `admin.role_assignment.manage`, `admin.clearance.grant`, `jv.room.grant_access` | the target user (grantee) |
+
+**"The person who recorded the evidence" (SEC-P34-01, P3/P4 security review).** It is EVERY person who linked active
+evidence of the record (`evidence_link.added_by`, status `active`), whoever ran the status command: a verifier who
+supplied any of the evidence it is asked to verify is refused (403), as the gate criteria already did. Implemented for
+`jv.cp.verify` (CP verify → `jv.cp.self_verification`; closing deliverable acceptance → `jv.checklist_item.self_acceptance`;
+post-close obligation verify → `jv.obligation.self_verification`), `finance.benefit.verify` (realization verify →
+`finance.benefit.verify_self`) and `governance.action.verify_closure` (the action's evidence linkers →
+`governance.action.linker_verification`, in addition to the owners). The readiness sign-off, NewCo incorporation /
+regulatory and carve-out transfer verifications are fixed with the P3-module findings (separate change). Considered and
+not changed: `finance.snapshot.approve` (figures are validated and approved by two further people on a content hash, not
+on evidence links) and `governance.decision.verify_implementation` (every implementing action must first be verified
+closed by a non-linker). `jv.cp.verify` also decides a checklist item's "not required" request; its self is the requester
+(SEC-P34-10). While a decision paper is `draft` or `submitted` only its requester links evidence to it (SEC-P34-13), so
+the requester stays the only person who shaped the paper.
 
 Quorum, majority, recusal and tie rules are computed **on the server** from committee membership at the vote timestamp. Historical votes are never recomputed when membership or delegation changes later (master prompt §4.2).
 
@@ -495,7 +539,9 @@ Evidence links (`documents.evidence.link`) also need the **target's** work permi
 condition evaluated exactly as by the criterion commands (submit evidence, propose N/A, note): the criterion's `ownerRole`
 or the project manager (§2.4). Anyone else is refused (403) — linking is refused exactly like submitting (SEC-P2-05). For the
 other target types the link checks the RBAC grant of the target permission; their `W` conditions apply to the target's
-own commands.
+own commands. On a **decision** in `draft` or `submitted` only the paper's requester links evidence (403
+`governance.decision.not_requester`, an unknown requester fails closed): the paper's evidence is part of the paper
+(DOM-P2-14) and the paper is written by its requester only (SEC-P2-02, residual SEC-P34-13).
 
 #### Reporting (`reports.*`, 5 permissions)
 
@@ -600,13 +646,14 @@ Every permission below has `ai: "none"`. **No AI tool exists** that calls it (to
 | `ai_runtime` | Derived: `{p : p.ai ∈ {retrieve, propose}}` ∩ delegating user's **current** permissions ∩ project mode allowlist | Never an approver. Never holds role assignments. Every tool call and every execution re-runs `authorize` as the delegating user (AT-19). If the delegating user is disabled, the job is cancelled. |
 | `bi_reader` | `reports.bi_view.read` | Explicit project list; max clearance internal unless raised through `admin.clearance.grant`; views are `security_invoker`; no room or clean-team data |
 | `integration_adapter` | none | Authenticates to the external system only. Sends run under the approving/sending user's authority, re-checked at send time. |
+| `svc-jv` (worker jobs) | One allowlist PER JOB (SEC-P34-17): the post-close overdue scan `jv.closing_checklist.manage`; the CP long-stop scan `jv.cp.manage` (`apps/api/src/modules/jv/jv.jobs.ts`) | Marks overdue / lapsed and raises system escalations only; never verifies, waives, extends, confirms or notifies externally (human-only commands refuse service principals). Test: `p34-sec-fixes.spec.ts` (SEC-P34-17) |
 
 ---
 
 ## 10. Invariants the implementation must test (SEC-T-35)
 
 1. Every route in the contracts registry names exactly one permission key that exists in this matrix. The API refuses to boot otherwise (dev/test).
-2. Every permission key in this matrix is used by at least one route or worker command, or is listed as reserved.
+2. Every permission key in this matrix is used by at least one route or worker command, or is listed as reserved. Reserved (no route yet, fail-closed): `jv.submission.upload`, `jv.clean_team_output.submit`, `jv.clean_team_output.release` (P3/P4 security review, Info SEC-P34-17).
 3. `auditor` holds no mutating permission except `audit.event.export`, `reports.snapshot.export`, `documents.document.download` (audited reads), `audit.chain.verify` (read-only verification) and `notifications.preferences.manage_own`.
 4. `external_partner_limited` holds only room-conditioned `jv.*` permissions and own-notification permissions. External accounts cannot be assigned any other role.
 5. `platform_admin` holds no permission with a `classification` or `room` condition (except its own inbox).
@@ -771,10 +818,10 @@ If the lead rejects an extension, drop it here and move the equivalent rule into
     "jv.finding.manage": {"description": "Maintain DD findings (materiality, risks, remediation, valuation/document/CP implications).", "conditions": ["room", "clean_team", "classification"], "ai": "none"},
     "jv.clean_team_output.submit": {"description": "Submit a clean-team output (aggregated/redacted) for release review.", "conditions": ["room", "clean_team"], "ai": "none"},
     "jv.clean_team_output.release": {"description": "Release a reviewed clean-team output to the wider deal team (clears the clean-team flag on that output only).", "conditions": ["room", "clean_team", "not_self"], "ai": "none"},
-    "jv.closing_checklist.manage": {"description": "Maintain signing and closing checklists, closing deliverables, conditions subsequent and post-close obligations.", "conditions": ["classification"], "ai": "none"},
+    "jv.closing_checklist.manage": {"description": "Maintain signing and closing checklists, closing deliverables, conditions subsequent and post-close obligations. Setting a checklist item not required is only a request, confirmed by a second person holding jv.cp.verify (SEC-P34-10).", "conditions": ["classification"], "ai": "none"},
     "jv.cp.manage": {"description": "Maintain closing conditions (reference, owner, evidence links, long-stop date).", "conditions": ["classification"], "ai": "none"},
     "jv.cp.set_waivability": {"description": "Legal specialist determination of a closing condition's blocking status, waivability and waiver authority (business-gates.md §7). Never releases a blocking condition (DOM-P4-03).", "conditions": ["classification"], "ai": "none"},
-    "jv.cp.verify": {"description": "Verify a closing condition (verifyCP) against evidence.", "conditions": ["classification", "not_self"], "ai": "none"},
+    "jv.cp.verify": {"description": "Verify a closing condition (verifyCP) against evidence; accept a delivered closing deliverable; verify a post-close obligation; confirm or reject the request to set a checklist item not required. Self: the owner, the submitter / deliverer / reporter / requester and every person who linked active evidence of the record (SEC-P34-01, SEC-P34-10).", "conditions": ["classification", "not_self"], "ai": "none"},
     "jv.cp.waive": {"description": "Waive a closing condition. Non-waivable conditions are refused (AT-12, AT-13).", "conditions": ["classification", "not_self", "authority"], "ai": "none"},
     "jv.signing.record": {"description": "Record signing of a transaction agreement with the executed copy.", "conditions": ["classification", "not_self", "authority"], "ai": "none"},
     "jv.closing.declare": {"description": "Authorised closing confirmation. Refused while any mandatory CP is unverified and unwaived (AT-12).", "conditions": ["classification", "not_self", "authority"], "ai": "none"},
@@ -925,3 +972,4 @@ If the lead rejects an extension, drop it here and move the equivalent rule into
 | AMQ-07 | Maximum room-grant and clearance-grant durations; periodic access-review cadence | Mobily Cybersecurity | Grant expiry defaults |
 | AMQ-08 | Document domain list | Mobily Data Governance | `domainClearance` |
 | AMQ-09 | Confirm the §2.2.1 project-level read exceptions for workstream-scoped roles (`gates.gate.read`, `documents.document.read`, `documents.document.download`, `portfolio.project.read`): may a workstream lead / workstream-scoped contributor read the gate register, the project's non-room documents up to its clearance, and the project header? | Mobily Data Governance | §2.2.1 (implemented, pending confirmation) |
+| AMQ-10 | Contributor powers at creation (SEC-P34-11): may a project-scoped contributor set `blocker` / `signoffRole` on the readiness checks it creates, and instantiate a site's or cutover plan's whole readiness checklist from the template, or should both be project manager / workstream lead only? | Program PMO / Readiness owner (Role — To be confirmed) | §2.4 (current behaviour documented, not changed) |

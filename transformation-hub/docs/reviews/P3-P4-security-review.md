@@ -313,3 +313,71 @@ $ GITLEAKS=… bash scripts/ops/secret-scan.sh history
 ```
 This section was filled in by a follow-up documentation commit. Nothing was pushed; no process started by the reviewer is left
 running.
+
+
+---
+
+## 8. Fix status — JV, finance, governance, AI and platform findings (implementer, separate context)
+
+Written by the implementer (`backend-data-engineer`, implementation mode) in its own context; the reviewer's text above is
+unchanged. Scope of this section (lead's narrowed assignment): SEC-P34-01 for the JV, finance and governance verifications,
+SEC-P34-02, -03, -04, -09, -10, -12, -13, -17 and the SEC-P34-11 documentation. The P3-module findings (SEC-P34-01 for the
+readiness sign-off / NewCo incorporation and regulatory verifications, SEC-P34-05, -06, -07, -08) are fixed by another
+agent, which records its own fix status. Every fixed `DEFECT` probe of this scope is renamed "… (fixed, regression)" and is a
+plain `it` with its assertion unchanged; the implementer's additional regression tests are in
+`apps/api/test/reviews/p34-sec-fixes.spec.ts` (16 tests).
+
+| Finding | Status | Rule → file | Tests |
+|---|---|---|---|
+| **SEC-P34-01** (JV / finance / governance part) | **Fixed** | "The person who recorded the evidence" = every person who linked ACTIVE evidence of the record (`evidence_link.added_by`), read for rules (visible or not): CP verify, closing deliverable acceptance, post-close obligation verify → `packages/domain/src/jv.ts` (`assertCpVerifiable`, `assertChecklistItemAcceptable`, `assertObligationVerifiable`, `isEvidenceLinker`), `apps/api/src/modules/jv/{jv.support.ts (evidenceLinkers), transactions.service.ts, postclose.service.ts}`; benefit verify → `packages/domain/src/finance.ts` (`assertBenefitVerifiable`), `apps/api/src/modules/finance/{finance.support.ts, benefits.service.ts}`; governance action closure → `apps/api/src/modules/governance/actions.service.ts` (403 `governance.action.linker_verification`). Considered, not changed: `finance.snapshot.approve` (validation + approval by two further people on a content hash, not on evidence links) and `governance.decision.verify_implementation` (every implementing action must first be verified closed by a non-linker). access-matrix §5.1 note | `p34-sec-jv.spec.ts` "SEC-P34-01 (fixed, regression): whoever recorded the evidence of a CP cannot verify it (403) …"; `p34-sec-fixes.spec.ts` (obligation, checklist item, benefit, governance action — refusal 403 with the row unchanged, then another person succeeds); `packages/domain/src/jv.test.ts` "SEC-P34-01: whoever linked active evidence …", `finance.test.ts` |
+| **SEC-P34-02** | **Fixed** | `AiKnowledgeService.tsaExpiring` and the `tsa_service` / `readiness_check` citation re-check use the TSA register's rule (classification + readiness reach, `RecordVisibility`); TSA detections carry the TSA's classification → `apps/api/src/modules/ai/{ai-knowledge.service.ts, ai-detections.service.ts}` | `p34-sec-registers.spec.ts` "SEC-P34-02 (fixed, regression) …"; `p34-sec-fixes.spec.ts` "TSA detections: the readiness reach applies …" |
+| **SEC-P34-03** | **Fixed** — the P4 exit criterion "financial data only with the finance-domain clearance and reach" now holds for the AI channel | `approvedFinancials` and the `financial_snapshot` / `financial_model_version` citation re-check use the finance module's predicate (finance-domain clearance + finance reach; a valuation — no workstream — needs a project-wide grant) through `RecordVisibility` (= `FinanceSupport.visibleSql`). Every other AI knowledge source was checked for the same gap and aligned with its owning module: decisions / action items / approval requests (project-wide `governance.decision.read`, their decision / subject rule — SEC-P34-16 on touch), closing conditions and partners / scenarios (project-wide JV grant), document chunks (the documents list's grant coverage: a workstream-scoped reader with only a room GRANT is not given room documents), conflicting-evidence notes (the evidence link's target rule) → `ai-knowledge.service.ts`; access-matrix §2.5 | `p34-sec-registers.spec.ts` "SEC-P34-03 (fixed, regression) …"; `p34-sec-fixes.spec.ts` "approved valuations …", "decisions awaiting action …", "document retrieval: a room document …" |
+| **SEC-P34-04** | **Fixed** | The internal DD request route refuses room-only principals (404, like any internal register) and needs a project-wide `jv.dd_request.create`; a counterparty files questions only through the partner-access route (origin `partner`, requester "Counterparty"); the internal request records its real author (`createdBy`, in the DTO) → `apps/api/src/modules/jv/diligence.service.ts` (`create`). Invariant: every route whose permission `external_partner_limited` holds is a partner-access route except `jv.createDdRequest` | `p34-sec-jv.spec.ts` "SEC-P34-04 (fixed, regression) …"; `p34-sec-fixes.spec.ts` "invariant: every route whose permission external_partner_limited holds …", "the internal route records its real author …" |
+| **SEC-P34-09** | **Fixed** | DD request and finding lists (and totals) add `grantSql('jv.dd_request.read', …, { room })`, the grant coverage `GET` applies → `diligence.service.ts` (`list`, `listFindings`) | `p34-sec-jv.spec.ts` "SEC-P34-09 (fixed, regression) …"; `p34-sec-fixes.spec.ts` "SEC-P34-09: the DD request list applies the grant coverage too …" |
+| **SEC-P34-10** | **Fixed** (review recommendation: a second person, `jv.cp.verify`, not the requester) | "Not required" is a REQUEST by the checklist manager (documented reason, `approval_request` bound to the item version; the item keeps its state and blocker); `POST …/checklist-items/:id/not-required/decide` (`jv.cp.verify`, human, never the requester — 403 `jv.checklist_item.not_required_self`) confirms (item `not_required`, blocker gone, `approval_record`) or rejects with a reason; a request on an earlier item version is stale (422) and replaced → `packages/domain/src/jv.ts` (`assertChecklistNotRequiredRequest` / `…Decision`), `packages/contracts/src/jv.ts` (`decideChecklistItemNotRequired`, `ChecklistItemDto.notRequiredRequest`), `apps/api/src/modules/jv/{transactions.service.ts, jv.controller.ts, jv.support.ts}`; web checklist (request, confirm, reject; en + ar) → `apps/web/src/app/(app)/projects/[projectId]/jv/_components/event-detail.tsx`, `apps/web/src/i18n/messages/{en,ar}/jv.json`, `apps/web/src/lib/refusals.ts` | `p34-sec-jv.spec.ts`: the OBSERVED test updated with the fix — "SEC-P34-10 (fixed, regression): the PM alone only REQUESTS …" and "… a requester who also holds jv.cp.verify cannot confirm their own request …"; `p34-sec-fixes.spec.ts` (stale request, rejection); `jv.test.ts` "SEC-P34-10 …" |
+| **SEC-P34-12** | **Fixed** | `RecordVisibility` rules of the project-level registers decision, agreement, consent and regulatory requirement take `ws: <read>, wsCol: null`: with `reach` (non-auditors) only a project-wide grant of the module's read permission reaches them — prerequisite labels, activity feed, evidence targets → `apps/api/src/platform/record-visibility.ts`; access-matrix §2.2 | `p34-sec-jv.spec.ts` "SEC-P34-12 (fixed, regression) …"; `p34-sec-fixes.spec.ts` "a decision as the prerequisite of the lead’s own task is not listed; decision events are not in the lead’s activity feed" |
+| **SEC-P34-13** | **Fixed** (first recommendation: the requester only) | While a decision paper is `draft` or `submitted`, only its requester links evidence to it (403 `governance.decision.not_requester`; unknown requester fails closed); later evidence (the record of an external decision on a recommendation) keeps the RBAC rule → `apps/api/src/modules/documents/evidence.service.ts` (`assertTargetCommand`); access-matrix §6 documents note | `p34-sec-jv.spec.ts` "SEC-P34-13 (fixed, regression) …"; `p34-sec-fixes.spec.ts` "the requester links evidence to their draft paper (201) …" |
+| SEC-P34-17 | **Fixed** (allowlist part) | One `svc-jv` allowlist per job: overdue scan `['jv.closing_checklist.manage']`, CP long-stop scan `['jv.cp.manage']` (`jv.deal.read` was unused) → `apps/api/src/modules/jv/jv.jobs.ts`. The three unused permissions are listed as reserved in access-matrix §10 invariant 2 (no matrix change) | `p34-sec-fixes.spec.ts` "the allowlists are one permission each …" (each job's identity is refused the other scan, 403); existing job tests `jv/jv-closing-rules.spec.ts`, `jv/p4-domain-fixes.spec.ts` |
+| SEC-P34-11 | **Documented** (decision: not a vulnerability) | access-matrix §2.4 "`own_workstream` and create commands": `W` binds commands on existing records; creates are bound by the grant's scope. The two open domain questions (contributor setting `blocker` / `signoffRole`; template instantiation by a project-scoped contributor) are recorded as AMQ-10 (§12), not changed | `OBSERVED SEC-P34-11` in `p34-sec-registers.spec.ts` (unchanged) |
+| SEC-P34-14, -15, -18 | Recorded, not changed | Info (domain / data-governance decisions) | — |
+| SEC-P34-16 | Recorded; partly addressed on touch | The AI's pending approval requests are now filtered by their subject's rule (`ai-knowledge.service.ts`); the perimeter / agreements / readiness secondary fields are in the P3 modules | — |
+
+Web refusal texts (en + ar) were added for the new or newly reachable codes: `jv.cp.self_verification`,
+`jv.obligation.self_verification`, `jv.checklist_item.self_acceptance`, `jv.checklist_item.not_required_self`,
+`jv.checklist_item.not_required_stale`, `jv.checklist_item.not_required_pending`, `jv.checklist_item.no_not_required_request`,
+`governance.action.linker_verification`, `governance.decision.not_requester`; the finance text of `finance.benefit.verify_self`
+now names the evidence linker.
+
+### Verification of the fixes (implementer's worktree, own databases `hub_test_secfix2` / `hub_test_secfix2_e2e`)
+
+```
+$ (apps/api) TEST_DATABASE_URL=…/hub_test_secfix2 TEST_DATABASE_MIGRATION_URL=…/hub_test_secfix2 pnpm test
+  (at a48f9b3 = the fixes merged with origin 8bdeb0c)
+  Test Files  112 passed (112)
+       Tests  931 passed | 19 expected fail (950)          Duration 1202.69s   exit=0
+  (19 expected fails = the DEFECT probes still open for other findings: 5 P3-module SEC-P34 probes of
+   p34-sec-registers.spec.ts (SEC-P34-01 readiness, -05, -06, -07, -08), 12 P3 domain review probes
+   (p3-domain-*.spec.ts) and DOM-P2F-02/04)
+$ (apps/api) vitest run test/reviews/p34-sec-jv.spec.ts test/reviews/p34-sec-fixes.spec.ts   (after 7ac58d2, row lock)
+  Test Files  2 passed (2)   Tests  28 passed (28)
+$ (apps/api) vitest run test/reviews/p34-sec-registers.spec.ts
+  Tests  11 passed | 5 expected fail (16)   (SEC-P34-02 / -03 now plain tests; the 5 open probes are the P3-module findings)
+$ (packages/domain) npx vitest run      → Test Files 22 passed (22)  Tests 441 passed (441)  (incl. the policy drift test)
+$ (packages/contracts) npx vitest run   → Test Files 3 passed (3)    Tests 105 passed (105)
+$ pnpm typecheck → exit 0;  pnpm lint → exit 0 (i18n parity, module boundaries, hard-coded strings)
+$ (e2e, own stack: API :4591 + worker, production web build :3591, HUB_RATE_LIMIT_PUBLIC_PER_MINUTE=1000)
+  npx playwright test tests/p34-sec-not-required.spec.ts tests/p4-jv.spec.ts
+    → p4-jv.spec.ts 4/4 passed; the new spec failed once on its own assertion (the requester's own view names them
+      "You", not by name) — assertion corrected, re-run: 1 passed
+$ python3 scripts/requirements/apply_status.py --check → OK (263 entries); apply → statuses unchanged (Tested), evidence
+  extended for REQ-JV-010, -011, -013, -014, -016, REQ-FIN-009, REQ-GOV-018
+```
+The e2e stack was stopped by PID after the run.
+
+Secret scans (`GITLEAKS=… bash scripts/ops/secret-scan.sh tree|history`, gitleaks 8.30.1): **tree PASS** at the head of the
+fix branch. **history FAIL (1), a false positive for the lead to dispose of before push:** commit `f6ad5d1` added, in
+`apps/api/test/reviews/p34-sec-fixes.spec.ts` line 106, a test variable for the second secretariat member whose name
+contains "secret" and is assigned from the JV fixture — the `generic-api-key` rule matches it; the variable was renamed
+in a later commit (no allow-list entry added). Commit `3bdb445` then quoted that line in this section (line 379 at that
+commit; reworded in the next commit), which the rule reports as a second fingerprint of the same false positive. The implementer's history rewrite of its unpushed commits was not permitted in its session;
+a squash merge of the fix branch (or a rewrite by the lead) removes the blob from the pushed history.

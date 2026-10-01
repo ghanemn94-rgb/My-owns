@@ -129,6 +129,17 @@ export class JvSupport {
   }
 
   /**
+   * FOR RULES (SEC-P34-01, access-matrix §5.1): the people who linked the ACTIVE evidence of a record — "the person who
+   * recorded the evidence" is self for its verification / acceptance. Every link counts, visible to the caller or not.
+   */
+  async evidenceLinkers(projectId: string, targetType: 'closing_condition' | 'closing_deliverable' | 'post_close_obligation', targetId: string): Promise<string[]> {
+    const r = await this.db.tx().execute<{ added_by: string }>(sql`
+      select distinct added_by::text as added_by from evidence_link
+       where project_id = ${projectId} and target_type = ${targetType} and target_id = ${targetId} and status = 'active'`);
+    return r.rows.map((x) => x.added_by);
+  }
+
+  /**
    * Evidence counters FOR DISPLAY (SEC-P1R-05): counted with the evidence list's visibility, so a counter never reveals
    * that restricted / room evidence exists on a CP, deliverable or obligation.
    */
@@ -374,7 +385,7 @@ export class JvSupport {
   async createApprovalRequest(
     ctx: RequestContext,
     projectId: string,
-    r: { subjectType: 'partner' | 'closing' | 'project'; subjectId: string; subjectVersion: number; action: string; requiredPermission: string; payload: Record<string, unknown>; note: string },
+    r: { subjectType: 'partner' | 'closing' | 'project' | 'closing_deliverable'; subjectId: string; subjectVersion: number; action: string; requiredPermission: string; payload: Record<string, unknown>; note: string },
   ): Promise<string> {
     const id = newId();
     await this.db.tx().insert(schema.approvalRequest).values({
