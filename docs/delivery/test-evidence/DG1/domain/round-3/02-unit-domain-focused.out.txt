@@ -1,0 +1,57 @@
+ RUN  v3.2.4 /var/tmp/mth-run.HfnMbv/claude-0/review-dom-r3
+ ✓ |unit-web| src/i18n/i18n.test.ts > catalogue parity > has the same namespace files for ar and en 3ms
+ ✓ |unit-web| src/i18n/i18n.test.ts > catalogue parity > every key in Arabic exists in English and vice versa 4ms
+ ✓ |unit-web| src/i18n/i18n.test.ts > catalogue parity > has no empty values and identical interpolation variables 1ms
+ ✓ |unit-web| src/i18n/i18n.test.ts > catalogue parity > Arabic values are actually Arabic (not copied English) 0ms
+ ✓ |unit-web| src/i18n/i18n.test.ts > catalogue parity > contains every key literally used in the source code 5ms
+ ✓ |unit-web| src/i18n/i18n.test.ts > catalogue parity > covers every value of the enumerations rendered with template keys 1ms
+ ✓ |unit-web| src/i18n/i18n.test.ts > catalogue parity > translates every problem code the P1 API can return 0ms
+ ✓ |unit-web| src/i18n/i18n.test.ts > direction and default language > defaults to Arabic RTL 10ms
+ ✓ |unit-web| src/i18n/i18n.test.ts > direction and default language > switches <html lang dir> to English LTR and back 2ms
+ ✓ |unit-web| src/i18n/i18n.test.ts > direction and default language > uses the stored language hint before sign-in 1ms
+ ✓ |unit-web| src/i18n/i18n.test.ts > direction and default language > maps directions 9ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts > audit field labels > maps every audited field key to a label in both languages (no raw keys) 20ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts > audit field labels > uses the localized words, Arabic in Arabic and English in English 1ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts > audit field labels > normalises camelCase keys 0ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts > audit values > shows enum codes with their catalogue labels (status, mode, phase, deliverable) in en and ar 1ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts > audit values > has a label for every value of every audited enumeration, in both languages 6ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts > audit values > types ids, timestamps, identifiers and free text instead of printing them raw 1ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts > audit values > shows 'none' for an absent value, never a blank or a symbol 0ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts > audit values > falls back to the raw code, explicitly marked, for values and fields without a translation 6ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts > audit values > orders fields stably, unknown fields last 0ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts > role-assignment events on a transformation's trail (F-DG1-008) > labels the action in both languages, the derived grant differently from a manual one 0ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts > role-assignment events on a transformation's trail (F-DG1-008) > falls back (null -> raw code, marked by the caller) for an unknown or malformed action 0ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts > role-assignment events on a transformation's trail (F-DG1-008) > English: every field and value of the derived event is localized, none raw 1ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts > role-assignment events on a transformation's trail (F-DG1-008) > Arabic: the same fields and the role with Arabic (glossary) labels 0ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts > role-assignment events on a transformation's trail (F-DG1-008) > has a role label for every role code, and the revocation time 'now' reads as the event time 6ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts > role-assignment events on a transformation's trail (F-DG1-008) > keeps the marked fallback for unexpected role codes and malformed scopes 0ms
+ ✓ |unit-web| src/i18n/glossary.test.ts > glossary source > parses the DG0 glossary with distinct Transformation and Initiative terms 2ms
+ ✓ |unit-web| src/i18n/glossary.test.ts > Arabic catalogue follows the glossary > names a Transformation with the glossary term everywhere it is the subject 1ms
+ ✓ |unit-web| src/i18n/glossary.test.ts > Arabic catalogue follows the glossary > never renders a Transformation as an Initiative (no 'مبادرة/مبادرات التحول' anywhere) 1ms
+ ✓ |unit-web| src/i18n/glossary.test.ts > Arabic catalogue follows the glossary > spells the Transformation term consistently (with shadda, as in the glossary) 0ms
+ ✓ |unit-web| src/i18n/glossary.test.ts > Arabic catalogue follows the glossary > uses the glossary terms for the modes; never 'معياري' (reads as standard/normative) 0ms
+ ✓ |unit-web| src/i18n/glossary.test.ts > Arabic catalogue follows the glossary > uses the glossary terms for the six phases; Phase 5 differs from the Transformation term 0ms
+ ✓ |unit-web| src/i18n/glossary.test.ts > Arabic catalogue follows the glossary > uses the glossary role, record and methodology names 0ms
+ ✓ |unit-web| src/i18n/glossary.test.ts > English catalogue follows the glossary > uses the glossary English names 1ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > after create (F-DG1-004) > shows the created record when the server lets the creator read it 580ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > after create (F-DG1-004) > explains, in English, that the draft was created but cannot be opened (server 404), instead of 'Not found' 200ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > after create (F-DG1-004) > explains the same in Arabic (RTL), using the glossary term for Transformation 161ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > after create (F-DG1-004) > treats a 403 for the just-created record the same way 112ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > truly out-of-scope records keep the correct localized message > 404 without a just-created record: 'Not found' (en) / 'غير موجود' (ar), nothing disclosed 62ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > truly out-of-scope records keep the correct localized message > 403: 'You do not have access' rather than 'Not found' 29ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > truly out-of-scope records keep the correct localized message > router state for a different id does not turn a 404 into the created message 56ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > audit trail changes (F-DG1-005) > English: field and value labels, not raw keys or enum codes 124ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > audit trail changes (F-DG1-005) > Arabic: the same changes with Arabic labels in the RTL layout 116ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > P1 close rule in the edit form (F-DG1-001, T-DG1-FE3) > governs exactly `closed`, mirroring the API's GOVERNED_TARGET_STATUSES 1ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > P1 close rule in the edit form (F-DG1-001, T-DG1-FE3) > offers only the P1 transitions plus the current status; never `closed` 1ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > P1 close rule in the edit form (F-DG1-001, T-DG1-FE3) > the status hint no longer promises a close transition and names the G6 approval (en and ar) 0ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > P1 close rule in the edit form (F-DG1-001, T-DG1-FE3) > en: the rendered status select for an active record has no Closed option 53ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > P1 close rule in the edit form (F-DG1-001, T-DG1-FE3) > ar: the rendered status select for an active record has no Closed option 44ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > derived creator assignment on the audit trail (F-DG1-008) > English: localized action, fields, role, user and scope; nothing raw or marked untranslated 94ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > derived creator assignment on the audit trail (F-DG1-008) > Arabic (RTL): the same event with Arabic labels and the glossary role name 114ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > derived creator assignment on the audit trail (F-DG1-008) > an action the catalogue does not know stays readable and is explicitly marked (en and ar) 175ms
+ Test Files  4 passed (4)
+      Tests  51 passed (51)
+   Start at  09:32:34
+   Duration  5.04s (transform 1.33s, setup 0ms, collect 2.49s, tests 2.02s, environment 3.45s, prepare 870ms)
+exit=0

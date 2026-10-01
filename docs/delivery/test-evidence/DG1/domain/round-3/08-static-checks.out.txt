@@ -1,0 +1,106 @@
+== candidate
+520417922c46d465a19433440bb41faf2bef319a
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:f0baa87d0163560fc05119a310c73ed365564833697c74bfa3a1c7f8795595a8","files":389}
+== tokens.json provenance
+.color.brand.primary #0078FF None True
+.color.brand.deep #003B73 None True
+.color.surface.page #F5F8FC None True
+.color.surface.card #FFFFFF None True
+.color.text.primary #142438 None True
+.color.text.secondary #526174 None True
+.color.border.default #DCE5EF None True
+.derived.action.primary #006DE9 None True
+.derived.action.primary-hover #0055B6 None True
+.semantic.text.inverse #FFFFFF None True
+.semantic.border.control #7A8699 None True
+.semantic.nav.text #FFFFFF None True
+.semantic.nav.text-muted #C9D8EA None True
+.semantic.header.gradient-end #0A4F96 None True
+.semantic.surface.selected #E8F1FC None True
+.semantic.status.on-track.fg #1A6B3C None True
+.semantic.status.on-track.bg #E6F4EA None True
+.semantic.status.at-risk.fg #7A4B00 None True
+.semantic.status.at-risk.bg #FFF1D6 None True
+.semantic.status.off-track.fg #A11B1B None True
+.semantic.status.off-track.bg #FDECEC None True
+.semantic.status.unknown.fg #4A5565 None True
+.semantic.status.unknown.bg #EDF0F4 None True
+.semantic.status.stale.fg #5A3E8C None True
+.semantic.status.stale.bg #F0EBFA None True
+.semantic.feedback.error.fg #A11B1B None True
+.semantic.feedback.error.bg #FDECEC None True
+.semantic.feedback.warning.fg #7A4B00 None True
+.semantic.feedback.warning.bg #FFF1D6 None True
+.semantic.feedback.success.fg #1A6B3C None True
+.semantic.feedback.success.bg #E6F4EA None True
+.semantic.feedback.info.bg #E8F1FC None True
+.semantic.badge.provisional.fg #7A4B00 None True
+.semantic.badge.provisional.bg #FFF1D6 None True
+top-level keys: ['$comment', 'provisional', 'color', 'derived', 'semantic', 'contrastPairs']
+== no-cdn
+PASS no-cdn: scanned apps, packages
+exit=0
+== openapi lint
+PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 33 operations
+exit=0
+33
+== web typecheck
+exit=0
+== fonts
+4:import "@fontsource/ibm-plex-sans-arabic/arabic-400.css";
+5:import "@fontsource/ibm-plex-sans-arabic/arabic-500.css";
+6:import "@fontsource/ibm-plex-sans-arabic/arabic-600.css";
+7:import "@fontsource/ibm-plex-sans/latin-400.css";
+8:import "@fontsource/ibm-plex-sans/latin-500.css";
+9:import "@fontsource/ibm-plex-sans/latin-600.css";
+== honesty grep (PMI/certified/official) in UI catalogues/components
+apps/web/src/i18n/en/common.json:5:    "provisionalHint": "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.",
+apps/web/src/i18n/en/common.json:6:    "provisionalNotice": "Branding is provisional: the text wordmark and colours are placeholders, not official Mobily brand assets."
+apps/web/src/i18n/en/common.json:120:    "brandBody": "No official Mobily logo or verified brand colours have been supplied. The header shows a provisional text wordmark, and the colours (including #0078FF) are provision
+apps/web/src/i18n/en/common.json:123:    "methodBody": "The product operationalizes the Business Transformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with custom extensions. It
+apps/web/src/i18n/ar/common.json:5:    "provisionalHint": "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي ا
+apps/web/src/i18n/ar/common.json:6:    "provisionalNotice": "الهوية البصرية مؤقتة: الشعار النصي والألوان بدائل مؤقتة وليست أصولًا رسمية لعلامة موبا
+apps/web/src/i18n/ar/common.json:117:    "brandBody": "لم يُقدَّم شعار رسمي لموبايلي ولا ألوان علامة معتمدة. يعرض الترويسة شعارًا نصيًا مؤقتًا، و
+apps/web/src/i18n/ar/common.json:120:    "methodBody": "يطبّق المنتج دليل تحوّل الأعمال الإصدار 1.0، وهو خلاصة عملية مستوحاة من ممارسات PMI وBrightline وB
+apps/web/src/components/Wordmark.tsx:1:// Provisional TEXT wordmark (REQ-S15-006, ADR-0009 §5). No official Mobily logo has been supplied, so the header
+== DG0-DG7 in UI catalogues
+apps/web/src/i18n/glossary.test.ts:1:// Domain terms in the UI catalogues follow the approved DG0 glossary (F-DG1-003, REQ-PB-003).
+apps/web/src/i18n/glossary.test.ts:2:// Source: docs/analysis/glossary.md (T-DG0-AN-01, revised T-DG0-AN-05). The test parses the glossary tables directly,
+apps/web/src/i18n/glossary.test.ts:71:  it("parses the DG0 glossary with distinct Transformation and Initiative terms", () => {
+(none above = ok)
+== modules
+access
+admin
+audit
+identity
+jobs
+kpi
+organization
+platform
+reporting
+transformations
+workflows
+index.ts
+workflows.test.ts
+index.ts
+kpi.test.ts
+index.ts
+reporting.test.ts
+== decisions D-048/D-050
+40:| D-048 | 2026-10-01 | delivery-orchestrator | **DG1 round-1 reviewers rejected D-047's "architecture-only" reading of REQ-S16-003; the three reserved modules are BUILT now (supersedes D-047 part 1).** All three DG1 round-1 reviewers (domain F-DG1-105 Medium/mandatory; code-security; qa) read A12 ("the six modules exist with separate test suites + a dependency-lint check") **literally**: `workflows`, `kpi`/formulas and `reporting` must EXIST as modules with their own test suites at DG1, not merely as reserved names in `modules.ts`. D-047's revisit-when triggered. **Decision:** the three modules are promoted from reserved to **active P1 scaffolds** — each gets `apps/api/src/modules/<m>/index.ts` (a typed public interface and a `register<M>Module` wiring hook, no business behaviour yet), is listed in `P1_MODULES` with its dependency-direction rules in `modules.ts`, is covered by `architecture.test.ts`, and has its **own** test suite (`apps/api/src/modules/<m>/<m>.test.ts`) asserting the module is registered and its boundary is enforced. The six §16 business modules (identity/access, transformations, workflows, formulas/KPI, reporting, admin) therefore all exist with separate suites, meeting A12 **literally**. Their business behaviour still lands in its stage (workflows P2, formulas/KPI P4, reporting P5) — "later stages add code, not new boundaries" — but the module and its suite now exist. Implemented under T-DG1-BE3; the register (REQ-S16-003/004) is corrected by T-DG1-ANALYST2 to describe the six-module scaffold set (closes F-DG1-105, F-DG1-002, F-DG1-207's REQ-S16-003 item). | The round-1 reviewers' consensus; master prompt §16 ("explicit modules for identity/access, transformation records, workflows, formulas, reporting and administration"). **Evidence:** the three module dirs + `index.ts` + per-module `*.test.ts`; `modules.ts` `P1_MODULES` now eleven; `architecture.test.ts` dependency-lint green with a planted-violation check; the register rows corrected. | A reserved module's real behaviour arrives in its stage; the scaffold's interface is expected to grow, not its boundary. |
+43:| D-050 | 2026-10-01 | delivery-orchestrator | **REQ-S16-004's DG1 increment is the persistence ARCHITECTURE (all P1 state in one PostgreSQL via forward-only migrations), proven by the A18 clean start; the A19 restore DRILL is owned by DG7 (closes F-DG1-002's REQ-S16-004 item).** REQ-S16-004's acceptance is "A18;A19: a restore of the PostgreSQL backup alone (plus evidence bytes) recovers records, configuration, snapshots and job state." At DG1 the deliverable is that **every** P1 persistent state — records, roles/permissions configuration, audit, outbox and pg-boss job state — lives in PostgreSQL and is reconstructed from the committed forward-only migrations (`packages/db/migrations/0001..0008`), which **A18** (fresh build → migrate → start, `/healthz`+`/readyz` ready) demonstrates. The **A19 restore drill** (take a backup, restore it alone, confirm recovery) is an operational test owned by the DG7 rows **REQ-S19-012 / REQ-S20-019** (backup/restore + IT handover), not DG1 — reporting snapshots (P5) do not exist yet to be restored. REQ-S16-004 is therefore legitimately IMPLEMENTED at DG1 for its persistence-architecture increment; the register note records that A19's demonstration is DG7's. | The T-DG1-ANALYST2 round-2 reconciliation flagged that REQ-S16-004 was IMPLEMENTED while its acceptance text still named the restore drill (F-DG1-002). Master prompt §16 (one PostgreSQL system of record) and the existing DG7 backup/restore rows. **Evidence:** migrations 0001–0008 apply to a fresh DB; the A18 clean-start evidence; the DG7 rows that own A19. | A reviewer judges A19's restore drill itself to be DG1-scoped (then it is demonstrated at DG1, not DG7), or REQ-S16-004 is re-staged. |
+== worker/api entry/compose changes since round-2 candidate f32c705
+(end)
+== conflation grep
+(none above = ok)
+== money/format
+5://  - Money and rates are decimal strings formatted without binary floating point (decimal.js + Intl string input).
+6:import Decimal from "decimal.js";
+42: * Formats a decimal string exactly (no float rounding: "0.1" + "0.2" artefacts cannot occur because the value is never
+46:export function formatDecimal(
+51:  const d = toDecimal(value);
+== defaults
+packages/config/src/index.ts:106:    default: "Asia/Riyadh",
+packages/config/src/index.ts:113:    default: "SAR",
+packages/config/src/load.test.ts:25:  it("applies catalogue defaults (Asia/Riyadh, SAR, session limits, rate limits)", () => {
+packages/config/src/load.test.ts:27:    expect(c.defaultTimezone).toBe("Asia/Riyadh");

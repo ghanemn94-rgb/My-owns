@@ -1,0 +1,68 @@
+=== REQ-S15-002 | IMPLEMENTED | final=DG1 | inc=P1 | evidence=5 missing=[] stale=[]
+  TITLE: Seed the provisional design tokens brand.primary #0078FF, brand.deep #003B73, surface.page #F5F8FC, surface.card #FFFFFF, text.primary #142438, text.secondary #526174 and border.default #DCE5EF, labelled provisional and not official Mobily colours
+  ACC: A20: the API returns the seven tokens with the values listed and provenance=provisional; no UI string or document claims official Mobily brand compliance
+  NOTES: D-011. #0078FF is unverified and labelled provisional. GET /api/v1/branding/tokens (getBrandingTokens) returns the seven seeded tokens with provenance=provisional (branding.ts; branding.test.ts; BrandingTokens schema in lockstep with openapi.yaml). Tokens seeded and CSS-applied in packages/design-tokens (tokens.test.ts; contrast.ts). Token editing is Branding Settings in P5 (REQ-S15-004). T-DG1-BE2.
+=== REQ-S15-005 | IMPLEMENTED | final=DG1 | inc=P1 | evidence=7 missing=[] stale=[]
+  TITLE: Use supplied licensed fonts or locally bundled open-license Arabic and Latin fonts, with no dependency on public font CDNs
+  ACC: A20;A18: a browser session with outbound internet blocked renders Arabic and Latin text in the bundled fonts, and no request to a public font host appears in the network log
+  NOTES: DG1 analyst check (T-DG1-REG): IBM Plex Sans Arabic/IBM Plex Sans (OFL-1.1) bundled via @fontsource; check:no-cdn PASS; e2e asserts the Plex face is loaded.
+=== REQ-S15-006 | IMPLEMENTED | final=DG1 | inc=P1 | evidence=4 missing=[] stale=[]
+  TITLE: Use a clearly provisional text wordmark when no official Mobily logo is supplied, never an invented logo
+  ACC: A20: with no logo configured, the header shows the text wordmark with a 'provisional' marker; the repository contains no invented Mobily logo image
+  NOTES: D-011. DG1 analyst check (T-DG1-REG): shell header wordmark with Provisional/مؤقت badge; the unit test asserts no img/svg. The report-header use comes with reports (REQ-S01-002, REQ-S15-004, DG5).
+=== REQ-S16-001 | IMPLEMENTED | final=DG1 | inc=P1 | evidence=8 missing=[] stale=[]
+  TITLE: Build a maintainable modular monolith with a separate background worker before considering microservices
+  ACC: A13;A22: an ADR records the choice; the deployment starts one API and one worker process, and stopping the worker does not stop the API
+  NOTES: DG1 analyst check (T-DG1-REG; re-checked T-DG1-ANALYST2): API and worker are separate processes of one codebase (separate compose services; separate entry points apps/api/src/main.ts and apps/worker/src/main.ts), and the API suites run with no worker process. The criterion 'stopping the worker does not stop the API' rests on that process separation and is NOT yet covered by an automated test: no test stops a running worker and then probes the API (a18-clean-start.sh restarts the API only). The DG1 round-1 domain reviewer checked it manually (worker exit 0 on SIGTERM, then /readyz 200; docs/delivery/test-evidence/DG1/domain/round-1/01-runtime-scenario.out.txt).
+=== REQ-S16-002 | IMPLEMENTED | final=DG1 | inc=P1 | evidence=5 missing=[] stale=[]
+  TITLE: Build the web frontend in TypeScript with React or an equivalent maintainable open-source UI stack
+  ACC: A20: an ADR records the stack; the frontend builds with type checking enabled and zero type errors
+  NOTES: D-014. DG1 analyst check (T-DG1-REG): React 19 + Vite + TypeScript strict; tsc --noEmit exit 0.
+=== REQ-S16-004 | IMPLEMENTED | final=DG1 | inc=P1 | evidence=11 missing=[] stale=[]
+  TITLE: Use PostgreSQL for relational records, configuration, reporting snapshots and durable workflow state
+  ACC: A18;A19: a restore of the PostgreSQL backup alone (plus evidence bytes) recovers records, configuration, snapshots and job state
+  NOTES: DG1 analyst check (T-DG1-REG; re-checked T-DG1-ANALYST2 against migrations 0001-0008): all P1 persistent state (records, roles/permissions and scoped-assignment configuration, OIDC login state, audit, outbox and pg-boss job state) is in PostgreSQL through migrations. What DG1 delivers is the persistence part of the acceptance. The A19 restore drill is not demonstrated at DG1; REQ-S19-012/REQ-S20-019 (DG7) own it. Reporting snapshots do not exist yet (P5).
+=== REQ-S19-004 | IMPLEMENTED | final=DG1 | inc=P1 | evidence=16 missing=[] stale=[]
+  TITLE: Deliver the P1 data design: ERD, database schema and migrations, validation rules and indexes, applied to a fresh database
+  ACC: A18: migrations apply cleanly to an empty PostgreSQL database; the ERD matches the migrated schema
+  NOTES: DG1 analyst check (T-DG1-REG; updated by T-DG1-ANALYST3 for F-DG1-007/F-DG1-209): migrations 0001-0008 (0007 adds oidc_login_state.browser_binding_hash, 0008 adds scoped_assignment.derived_from_assignment_id) apply to a fresh PostgreSQL 16 database. Evidence from the DG1 round-2 QA run on candidate 991d3241 (commit f32c705): 'applied 8 migrations to a fresh database' with migrate.test.ts (7 tests) and catalogue.test.ts passing in two integration runs (193/193), and the schema probe confirms the 0007/0008 columns and constraints. packages/db/migrations is unchanged between f32c705 and the round-3 base 45d0297. The data dictionary documents both new columns; erd.md defers physical columns to i
+=== REQ-S19-006 | IMPLEMENTED | final=DG1 | inc=P1 | evidence=5 missing=[] stale=[]
+  TITLE: Deliver the P1 API contract: a versioned OpenAPI specification with authentication described
+  ACC: A12: the OpenAPI document validates, and the P1 endpoints pass contract tests against it
+  NOTES: DG1 analyst check (T-DG1-ANALYST2): pnpm openapi:lint PASS (OpenAPI 3.1.1, 33 operations, including getBrandingTokens) in the analyst's own run. Contract suite: 9/9 passed with all 33 operations exercised and none unmatched, per the T-DG1-BE3 focused run (docs/delivery/handbacks/DG1/round-2/T-DG1-BE3-backend-workflow-engineer.md). The analyst could not re-run it (no PostgreSQL cluster available to the analyst run).
+=== REQ-S16-003 | IMPLEMENTED | final=DG1 | inc=P1 | evidence=13 missing=[] stale=[]
+  TITLE: Build a TypeScript server/API with explicit modules for identity/access, transformation records, workflows, formulas, reporting and administration
+  ACC: A12: the six modules exist with separate test suites; a dependency-lint check fails on imports that bypass a module interface
+  NOTES: D-048 (supersedes D-047 part 1): all six §16 business modules exist as module directories with a public index.ts and their own test suites: identity/access (modules identity and access; access/rules.test.ts plus the identity and OIDC integration suites); transformations (transitions.test.ts); workflows (workflows.test.ts); formulas/KPI (module kpi; kpi.test.ts); reporting (reporting.test.ts); admin (branding.test.ts). workflows, kpi and reporting are P1 scaffolds (P1_SCAFFOLD_MODULES): a typed public interface and a register hook that registers no route; their business behaviour lands in P2 (workflows), P4 (formulas/KPI) and P5 (reporting) under their own requirement rows. modules.ts P1_MODU
+=== REQ-S16-023 | SPECIFIED | final=DG6 | inc=P1;P2;P3;P4;P5;P6 | evidence=0 missing=[] stale=[]
+  TITLE: Enforce canonical reference links, uniqueness constraints, required ownership and explicit status transitions, and protect finalized records and evidence from destructive deletion
+  ACC: A08;A07: deleting an approved gate decision or its evidence returns 409; an illegal status transition returns 422 invalid-transition (ADR-0007); a duplicate unique key returns 409
+  NOTES: 
+=== REQ-PB-001 | SPECIFIED | final=DG5 | inc=P1;P5 | evidence=0 missing=[] stale=[]
+  TITLE: Label the methodology provenance honestly as a practical synthesis inspired by PMI/Brightline/BRM and never claim official PMI status
+  ACC: A01: provenance text on reader/About/report footer matches B0004 verbatim; an automated text scan of UI strings (en+ar) and report templates finds no claim of 'official PMI standard', 'PMI certified' or equivalent
+  NOTES: Playbook (B0004, B0024, B0155, B0156): the provenance statement and the source-foundations table (Source / Used for). Master-prompt additions (§2): showing the statement in the reader, the About page and report footers, and the automated scan for claims of official PMI status or certification. Interpretations: none beyond where the statement is displayed. The Arabic rendering of the statement needs linguistic review.
+=== REQ-PB-003 | SPECIFIED | final=DG2 | inc=P1;P2 | evidence=0 missing=[] stale=[]
+  TITLE: Offer the two source usage modes End-to-End and Modular when creating or entering a transformation
+  ACC: A01;A03: API accepts mode End-to-End or Modular only; Modular without entry phase is rejected with a validation error; guidance text shows 'Run Phases 1-6 sequentially...' and 'Enter at the relevant phase...' verbatim
+  NOTES: Playbook (B0007-B0009): the two modes with their 'When to use' and 'How' text, preserved verbatim. Master-prompt additions (§3 M0095; §4 M0125): Modular enters an existing transformation at a selected phase, so a Modular transformation records its entry phase; a material change to an approved scope goes through an impact assessment and reapproval. Interpretations: a change of mode after G1 approval is treated as such a material change (the listed material changes do not name the mode), so it needs a change request. (AN-08, finding F-DG0-006: provenance labels re-checked against source_ref.)
+=== REQ-PB-009 | SPECIFIED | final=DG4 | inc=P3;P4 | evidence=0 missing=[] stale=[]
+  TITLE: Apply 'Benefits before closure': an initiative is complete only when value is realized and sustained, not when delivered
+  ACC: A11: an initiative with delivery=Complete and no validated benefit cannot be closed (API 422 invalid-transition); UI shows 'Delivered — value validation pending'
+  NOTES: Playbook (B0014): the principle 'Benefits before closure'. Master-prompt additions (§3 M0092, §11 M0218): separate delivery, value-realization and sustainment statuses, and the documented transition decision. Interpretations: the closure rule (validated benefits plus a sustainment owner, or a transition decision), enforced as API 422 invalid-transition (ADR-0007; the single transition contract of REQ-S16-023).
+=== REQ-S15-007 | SPECIFIED | final=DG6 | inc=P1;P2;P3;P4;P5;P6 | evidence=0 missing=[] stale=[]
+  TITLE: Provide full Arabic RTL and English LTR with a persistent language switch, readable technical identifiers, formulas and numbers in Arabic layouts, and bilingual workflows, errors, validation and exports
+  ACC: A20;A15: a test finds no missing ar or en key; a validation error returned by the API is shown in the selected language; an Arabic export keeps 'KPI-001' and '12.5%' readable
+  NOTES: 
+=== REQ-S15-008 | SPECIFIED | final=DG4 | inc=P1;P4 | evidence=0 missing=[] stale=[]
+  TITLE: Default the timezone to Asia/Riyadh and the currency to SAR, both configurable; store timestamps consistently and distinguish observation period, business date and event timestamp
+  ACC: A05;A09: a KPI actual for period 2026-10 entered on 2026-11-02 23:30 Asia/Riyadh keeps observation period 2026-10, business date 2026-11-02 and a UTC event timestamp; changing the default currency affects only new records
+  NOTES: D-012.
+=== REQ-S15-011 | SPECIFIED | final=DG6 | inc=P1;P2;P3;P4;P5;P6 | evidence=0 missing=[] stale=[]
+  TITLE: Distinguish saved draft from submitted or approved data, and handle empty, loading, error, stale, conflict and no-permission states explicitly
+  ACC: A14;A20: component tests render each of the six states; a draft is labelled 'Draft - not submitted' and never counted in approved totals
+  NOTES: 
+=== REQ-S03-003 | SPECIFIED | final=DG4 | inc=P3;P4 | evidence=0 missing=[] stale=[]
+  TITLE: Keep initiative delivery, business adoption, validated value and transformation closure as separate statuses
+  ACC: A11: setting delivery to Complete leaves adoption, validated value and closure unchanged; the API rejects a closure request while validated value is pending unless a transition decision exists
+  NOTES: Related source principle: REQ-PB-009.
