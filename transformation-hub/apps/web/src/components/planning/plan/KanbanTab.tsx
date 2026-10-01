@@ -16,6 +16,7 @@ import { LoadingState } from '../../LoadingState';
 import { ScrollRegion } from '../../ScrollRegion';
 import { SearchInput } from '../../SearchInput';
 import { StatusBadge } from '../../StatusBadge';
+import { useToast } from '../../Toast';
 import { VerificationBadge } from '../../VerificationBadge';
 import { btn, card, cx } from '../../ui';
 import { CommandConfirmDialog, usableCommands, type CommandSpec } from '../CommandBar';
@@ -190,6 +191,9 @@ export function KanbanTab() {
   const [shown, setShown] = useState<Partial<Record<TaskStatus, number>>>({});
   const [pending, setPending] = useState<{ task: Task; move: Move } | null>(null);
   const [dragging, setDragging] = useState<Task | null>(null);
+  // Set synchronously at drag start: the first dragover can arrive before React re-renders with `dragging`.
+  const draggingRef = useRef<Task | null>(null);
+  const toast = useToast();
   const [dropTarget, setDropTarget] = useState<TaskStatus | null>(null);
   const [focusId, setFocusId] = useState<string | null>(null);
   const moved = useRef<string | null>(null);
@@ -212,11 +216,23 @@ export function KanbanTab() {
   const dropMove = (status: TaskStatus) => dragMoves.find((m) => m.to === status) ?? null;
   const onDrop = (status: TaskStatus) => (e: DragEvent<HTMLElement>) => {
     e.preventDefault();
+    const task = draggingRef.current ?? dragging;
     const m = dropMove(status);
-    if (dragging && m) startMove(dragging, m);
+    if (task && m) startMove(task, m);
+    else if (task && status !== task.status) toast.show('error', t('planning.kanban.notAllowed', { code: task.wbsCode, column: tStatus('taskStatuses', status) }));
+    draggingRef.current = null;
     setDragging(null);
     setDropTarget(null);
   };
+  const startDrag = useCallback((task: Task) => {
+    draggingRef.current = task;
+    setDragging(task);
+  }, []);
+  const endDrag = useCallback(() => {
+    draggingRef.current = null;
+    setDragging(null);
+    setDropTarget(null);
+  }, []);
 
   return (
     <div className="space-y-4" data-testid="kanban-tab">
@@ -244,7 +260,7 @@ export function KanbanTab() {
           <EmptyState title={filtered ? t('planning.wbs.emptyFiltered') : t('planning.wbs.empty')} />
         </div>
       ) : (
-        <ScrollRegion label={t('planning.kanban.title')} className="overflow-x-auto pb-2">
+        <ScrollRegion label={t('planning.kanban.title')} className="relative overflow-x-auto pb-2">
           <div className="flex items-start gap-3" data-testid="kanban-board">
             {columns.map(({ status, items }) => {
               const limit = shown[status] ?? COLUMN_PAGE;
@@ -261,7 +277,8 @@ export function KanbanTab() {
                   data-status={status}
                   data-count={items.length}
                   onDragOver={(e) => {
-                    if (!canDrop) return;
+                    const source = draggingRef.current;
+                    if (!canDrop && !(source && source.status !== status && dragging === null)) return;
                     e.preventDefault();
                     e.dataTransfer.dropEffect = 'move';
                     if (dropTarget !== status) setDropTarget(status);
@@ -290,11 +307,8 @@ export function KanbanTab() {
                           focusMe={focusId === x.id}
                           onFocused={focused}
                           onMove={startMove}
-                          onDragStart={setDragging}
-                          onDragEnd={() => {
-                            setDragging(null);
-                            setDropTarget(null);
-                          }}
+                          onDragStart={startDrag}
+                          onDragEnd={endDrag}
                         />
                       ))}
                     </ol>

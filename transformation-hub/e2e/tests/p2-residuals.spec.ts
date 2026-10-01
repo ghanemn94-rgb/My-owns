@@ -141,6 +141,17 @@ async function countRows(table: Locator): Promise<number> {
   return n;
 }
 
+/** The page never scrolls sideways — at the current width and at 390 px (wide content scrolls inside its own region). */
+async function noSideScroll(page: Page, ready: Locator, name: string) {
+  const overflow = () => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(await overflow(), `${name}: no horizontal page scroll`).toBeLessThanOrEqual(0);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.reload();
+  await expect(ready).toBeVisible({ timeout: 30_000 });
+  expect(await overflow(), `${name}: no horizontal page scroll at 390 px`).toBeLessThanOrEqual(0);
+  await page.screenshot({ path: join(SHOTS, `${name}-390.png`), fullPage: true });
+}
+
 const problem = (status: number, title: string) => ({ status, contentType: 'application/problem+json', body: JSON.stringify({ type: 'about:blank', title, status, code: status === 404 ? 'not_found' : 'internal' }) });
 
 let dc = '';
@@ -219,7 +230,16 @@ test.describe('P2 residuals — screens and end-to-end acceptance', () => {
       await page.goto(`/projects/${dc}/plan?tab=kanban`);
       await page.getByLabel('Search by code or title').fill(RUN);
       await expect(inColumn('in_progress')).toBeVisible();
-      await card.dragTo(page.locator('[data-testid="kanban-column"][data-status="blocked"]'));
+      // Drag-and-drop of the card onto the "Blocked" column: the HTML drag events (dragstart → dragover → drop → dragend)
+      // with one DataTransfer, dispatched on the elements (native pointer drags are not deterministic in headless runs).
+      const blocked = page.locator('[data-testid="kanban-column"][data-status="blocked"]');
+      const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
+      await card.dispatchEvent('dragstart', { dataTransfer });
+      await expect(blocked).toHaveClass(/border-primary/); // the legal target is highlighted while dragging
+      await blocked.dispatchEvent('dragenter', { dataTransfer });
+      await blocked.dispatchEvent('dragover', { dataTransfer });
+      await blocked.dispatchEvent('drop', { dataTransfer });
+      await card.dispatchEvent('dragend', { dataTransfer });
       dialog = page.getByRole('dialog');
       await expect(dialog).toContainText(`${task.wbsCode} moves from “In progress” to “Blocked”.`);
       await expect(dialog.getByRole('button', { name: 'Record blocker', exact: true })).toBeVisible();
@@ -244,6 +264,7 @@ test.describe('P2 residuals — screens and end-to-end acceptance', () => {
       const second = await ar.page.locator('[data-testid="kanban-column"][data-status="not_started"]').boundingBox();
       expect(first!.x, 'RTL: the first column is to the right of the second').toBeGreaterThan(second!.x);
       await checkArabic(ar.page, testInfo, SHOTS, 'p2r-kanban', bilingual);
+      await noSideScroll(ar.page, ar.page.getByTestId('kanban-board'), 'ar-p2r-kanban');
       expect(ar.problems(), ar.problems().join('\n')).toEqual([]);
     } finally {
       await ar.close();
@@ -297,6 +318,7 @@ test.describe('P2 residuals — screens and end-to-end acceptance', () => {
       await expect(ar.page.getByTestId('overview-baseline')).toHaveAttribute('data-state', 'approved');
       await expect(ar.page.getByTestId('overview-committees')).toHaveAttribute('data-state', 'ready');
       await checkArabic(ar.page, testInfo, SHOTS, 'p2r-overview-charter-baseline', bilingual);
+      await noSideScroll(ar.page, ar.page.locator('[data-testid="overview-baseline"][data-state="approved"]'), 'ar-p2r-overview');
     } finally {
       await ar.close();
     }
@@ -514,6 +536,7 @@ test.describe('P2 residuals — screens and end-to-end acceptance', () => {
       await secAr.page.goto(`/projects/${np}/setup?step=committee`);
       await expect(secAr.page.locator('[data-testid="wizard-matrix-status"][data-version="1"]')).toHaveAttribute('data-state', 'pending_approval');
       await checkArabic(secAr.page, testInfo, SHOTS, 'p2r-wizard-step5', bilingual);
+      await noSideScroll(secAr.page, secAr.page.getByTestId('wizard-matrices-table'), 'ar-p2r-wizard-step5');
     } finally {
       await secAr.close();
     }
@@ -564,6 +587,7 @@ test.describe('P2 residuals — screens and end-to-end acceptance', () => {
       await expect(pmAr.page.getByTestId('wizard-baseline-status')).toHaveAttribute('data-status', 'proposed');
       await expect(pmAr.page.locator('[data-testid="wizard-gate"]')).toHaveCount(counts.gates);
       await checkArabic(pmAr.page, testInfo, SHOTS, 'p2r-wizard-step6', bilingual);
+      await noSideScroll(pmAr.page, pmAr.page.getByTestId('wizard-gates-table'), 'ar-p2r-wizard-step6');
     } finally {
       await pmAr.close();
     }
