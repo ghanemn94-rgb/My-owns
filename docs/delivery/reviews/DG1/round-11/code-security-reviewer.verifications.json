@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "verifications": [
+    {
+      "finding_id": "F-DG1-132",
+      "result": "PASS",
+      "status_after": "ACCEPTED_OBSERVATION",
+      "note": "Verified by the originating reviewer on candidate sha256:e5cc6ef9...feb8 (freeze commit 32e6478, HEAD d8eb695). The ID is identical in the real repo and in a full disposable clone at both commits (00-candidate-identity.log). The fix is d54c151. In round 10 I asked for one of two things: close the node:crypto namespace-as-value route, or stop claiming 'every form' and name the route under residual (a). The second was done. apps/api/src/architecture.testkit.ts:19-22, :53-56, :64-74 and :100-101, and architecture.test.ts:15-16, now say 'every SPELLED form' and name runtime enumeration as residual (a). architecture.test.ts:530-556 pins E1-E4 as non-violations. D-055 says the same. I re-proved this on Node 22.22.2 AND Node 24.21.0 (01-lint-probes.log). All 16 spelled and computed forms are violations: named, namespace member, string key, aliased, destructured alias, default member, unicode-escaped, escaped key, template key, re-export, optional chain, dynamic-literal import, bare string, renamed re-export, concatenated key (rule 2) and computed destructuring key (rule 2). The enumeration forms E1-E4, plus my E5 (dynamic import() then enumerate), give 0 violations, as documented. Positive controls are clean: randomUUID/createHash, the namespace import alone, and Map(Object.entries(plainObject)).get. The real 13-module tree has 0 moduleViolations. architecture.test.ts passes 109/109 on both runtimes. The route is now documented and deliberate, a Low and non-mandatory static-lint residual, so I accept it as an observation (the release-auditor must also accept it). One inaccuracy in the stated justification remains: the header says the route is 'not closable statically' and that a namespace ban 'would break' identity/routes.ts and access/rules.ts, which actually enumerate plain objects. I raise that separately as F-DG1-133 (Low, non-mandatory). It does not reopen this finding.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-11/00-candidate-identity.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-11/01-lint-probes.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-11/zz-r11-probe.test.ts.txt"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-215",
+      "result": "PASS",
+      "status_after": "ACCEPTED_OBSERVATION",
+      "note": "Specialist acceptance by code-security-reviewer, not the reporter. F-DG1-215 (qa) is the same route as F-DG1-132: enumerating the allow-listed node:crypto namespace or default binding to reach setEngine. The same fix (d54c151) documents and pins it as residual (a), and the same re-proof applies on Node 22.22.2 and 24.21.0 (01-lint-probes.log). Spelled forms: 16/16 flagged. Enumeration forms: E1-E5 give 0 violations, as documented. Positive controls are clean. The real tree has 0 violations. architecture.test.ts passes 109/109. It is Low and non-mandatory, and is now an honestly named residual (see F-DG1-133 on the wording of the justification only). The release-auditor must also accept it."
+    }
+  ]
+}

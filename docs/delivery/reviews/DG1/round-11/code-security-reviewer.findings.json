@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG1-133",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Module lint header: the residual (a) justification for not closing the node:crypto namespace-enumeration route is partly inaccurate. The header calls the route 'not closable statically' and says banning namespace-as-value use 'would break legitimate code (new Map(Object.entries(x)).get(name) in identity/routes.ts, access/rules.ts)'. Those two call sites enumerate plain objects (request.cookies, PERMISSIONS), not a module namespace. Every one of the 41 module files imports node:crypto through named imports only. A narrow static rule would therefore close E1-E5 without breaking any current module code: allow only named imports from node:crypto, and flag namespace/default import, dynamic import() and export * of it. Accepting the route is a legitimate choice. It is just not a forced one, and the documentation should say so.",
+      "reproduction": "Candidate sha256:e5cc6ef9...feb8 (freeze 32e6478, HEAD d8eb695), full disposable clone, Node v22.22.2 and v24.21.0. (1) Static reading: apps/api/src/architecture.testkit.ts:63 '(stated and ACCEPTED, not closable statically)' and :72-74 'banning all namespace-as-value use or all dynamic reads would break legitimate code (`new Map(Object.entries(x)).get(name)` in identity/routes.ts, access/rules.ts)'. architecture.test.ts:533 says the same ('banning namespace-as-value use or Object.entries/Map lookups would break legitimate module code'). apps/api/src/modules/identity/routes.ts:35 is `new Map(Object.entries(request.cookies)).get(name)` and apps/api/src/modules/access/rules.ts:55 is `new Map(Object.entries(PERMISSIONS))`. Neither uses a node:crypto (or any module) namespace as a value. (2) Probe (docs/delivery/test-evidence/DG1/code-security/round-11/zz-r11-probe.test.ts.txt, output in 01-lint-probes.log): scanning every file of the 13 modules (41 files) for `import * as X from \"node:crypto\"`, a default import, `import(\"node:crypto\")` or `export * from \"node:crypto\"` finds none ('NARROW-CLOSURE ... []'), on both Node versions. The cited Map/Object.entries idiom on a plain object (positive control P3) is independent of such a rule. (3) The enumeration forms E1-E4 pinned by the candidate, plus E5 (dynamic import() then enumerate), all give 0 violations. Each needs a namespace or default binding, or a dynamic import of node:crypto, so the narrow rule would cover all five.",
+      "expected": "The residual (a) text is honest about why the route stays open. Either the lint closes it with the narrow rule (named imports only for node:crypto, since that module carries a banned member), or the header and the E-case comment say the route is accepted BY CHOICE (defence-in-depth lint over reviewed code). In that case they would not call it 'not closable statically' or cite identity/routes.ts and access/rules.ts as code a namespace ban would break. Those files would only be broken by a blanket ban on Object.entries/Map dynamic reads, which nobody proposed.",
+      "actual": "The header's 'every SPELLED form' correction is accurate: 16/16 spelled and computed forms are flagged, the real tree has 0 violations and architecture.test.ts passes 109/109. The enumeration reach is named and pinned, as F-DG1-132 asked. Only the stated reason for leaving the route open overstates the cost of closing it. This is a documentation-accuracy defect in a test-side lint (static defence-in-depth, not a runtime boundary). It is Low and non-mandatory, and I would accept it as an observation if the auditor agrees.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-11/01-lint-probes.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-11/zz-r11-probe.test.ts.txt",
+        "apps/api/src/architecture.testkit.ts",
+        "apps/api/src/architecture.test.ts",
+        "apps/api/src/modules/identity/routes.ts",
+        "apps/api/src/modules/access/rules.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-11/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T15:34:01Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG1 round 11 while verifying F-DG1-132/215. My assignment asked me to confirm that the residual framing is honest and to check the identity/access files. The enumeration reach itself is the documented residual (a) and is NOT what this finding is about. This finding concerns only the accuracy of the stated justification. Proposed ID: the next free number in the code-security 1xx range (F-DG1-133); the orchestrator may renumber. Low and non-mandatory, so it does not block DG1."
+        }
+      ]
+    }
+  ]
+}
