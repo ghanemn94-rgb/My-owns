@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG1-125",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Module lint rule 3 (native loaders process.binding/_linkedBinding/dlopen) is bypassed by aliasing process through an import of node:process",
+      "reproduction": "Candidate 24eb3779 (commit 5f83a336), disposable clone. apps/api/src/architecture.testkit.ts:290 flags `<root>.binding|_linkedBinding|dlopen` only when rootName() (line 131-134) sees the identifier text `process`/`globalThis`/`global`; BANNED_PRIMITIVES (57-72) does not contain binding/_linkedBinding/dlopen; and node:process is not in LOADER_BUILTINS (51-55), so bareAllowed() accepts it as a `node:` built-in. Plants through fileViolations('transformations', .../planted.ts): `import proc from \"node:process\"; proc.dlopen({exports:{}} as any, \"/tmp/x.node\")` -> 0 violations; `(proc as any).binding(\"fs\")` -> 0; `import { dlopen } from \"node:process\"` -> 0 (22-plant-f124.log X6-X8). Written as a real file apps/api/src/modules/access/zz-planted.ts (`import { binding } from \"node:process\"; ... binding(\"fs\")`, or the dlopen form), the candidate's architecture.test.ts stays green, 74/74, exit 0 (22b-plant-f124-module-tree.log). Runtime, Node 22.22.2: the default export of node:process is `process` itself, and the named exports binding and dlopen are functions; binding('fs') returns the internal fs binding, binding('natives') exposes the built-in JS sources, and dlopen attempts a native load (ERR_DLOPEN_FAILED for a missing file) (23-node-process-alias-runtime.log). The same forms written with the identifier `process` ARE caught (X9; the candidate's own P12 case).",
+      "expected": "The testkit header claims rule 3 bans the native loaders process.binding / process._linkedBinding / process.dlopen, and that rules 1-2 'remove every syntactic route inside module source'. To make that hold: add binding/_linkedBinding/dlopen to the banned names (rule 1, every syntactic form), or treat an import of node:process (default, namespace or named) as an alias of the runtime root, or ban the node:process specifier in src/modules (process is a global, so a module never needs the import). Then add the X6-X8 forms to the self-check table.",
+      "actual": "The three native-loader primitives are reachable from module source through an import of node:process without any violation. Impact is limited. Neither primitive is a JS module loader that hands out another module's internals. dlopen needs a compiled .node file on disk; binding gives raw internal bindings (fs, natives). This is a static architecture lint (defence in depth, ADR-0002), not a runtime security boundary, and the required plants of F-DG1-124 (constructed key, Reflect.get) are all caught. Hence Low, not mandatory.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-5/22-plant-f124.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-5/22b-plant-f124-module-tree.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-5/23-node-process-alias-runtime.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-5/plant-f124.test.ts",
+        "apps/api/src/architecture.testkit.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-5/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T11:40:31Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG1 round 5 while verifying F-DG1-124; reproduced in a disposable clone (lint, real module tree, Node runtime). ID proposed as the next free number in the 1xx range; the orchestrator may renumber."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-126",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-042",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "install-sandbox.sh copy-back member resolver reads every YAML list item in pnpm-workspace.yaml as a glob and ignores '!' exclusions, so non-member directories can become copy-back destinations",
+      "reproduction": "tools/deps/install-sandbox.sh:154-168 (candidate 5f83a336). The node resolver matches /^\\s*-\\s*[\"']?([^\"'\\n#]+?)[\"']?\\s*$/gm over the WHOLE file, not only the `packages:` sequence, and passes every item to fs.globSync. fs.globSync has no negation, so a `!pattern` item matches nothing and never removes a member. Repro (repro-f123-copyback.sh Case B, unchanged installer, --root on a disposable workspace, offline): pnpm-workspace.yaml = packages: [apps/*, packages/*, \"!apps/legacy\"] plus publicHoistPattern: [\"tools/x\"]; apps/legacy and tools/x each have a package.json; an allow-listed dependency's postinstall plants node_modules/PWNED in the disposable copy at tools/x and apps/legacy. The resolver parses the globs as [\"apps/*\",\"packages/*\",\"!apps/legacy\",\"tools/x\"] and lists apps/legacy and tools/x as members. pnpm itself reports 'Scope: all 3 workspace projects' (apps/legacy excluded), yet after `create` the REAL target tree has tools/x/node_modules/PWNED and apps/legacy/node_modules/PWNED (18-f123-copyback.log).",
+      "expected": "The destinations are exactly the pnpm workspace members, as the installer's own comment states ('the root plus every directory that the packages: globs in pnpm-workspace.yaml resolve to'): parse only the `packages:` sequence and apply `!` exclusions (or ask pnpm for the member list, e.g. `pnpm ls -r --depth -1 --json` run on the trusted real tree outside the sandbox), and add a test case with an exclusion and an unrelated list key.",
+      "actual": "Not exploitable on the committed tree. Today's pnpm-workspace.yaml has only the `packages:` sequence with apps/* and packages/* (case A: the resolver yields exactly root, apps/*, packages/* with a package.json; the stray tools/x/package.json is NOT a destination). The latent mismatch is reached only if a maintainer later adds a negated workspace pattern, or a list-valued pnpm setting (onlyBuiltDependencies, publicHoistPattern, ...) whose item names an existing directory with a package.json. The YAML is part of the trusted real tree (dependency code cannot change it), so this is hardening, not a current escape. Low, not mandatory.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-5/18-f123-copyback.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-5/repro-f123-copyback.sh",
+        "tools/deps/install-sandbox.sh",
+        "pnpm-workspace.yaml"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-5/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T11:40:31Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG1 round 5 while verifying F-DG1-123 (residual of the new member resolver); reproduced with the unchanged installer on a disposable workspace. ID proposed as the next free number in the 1xx range; the orchestrator may renumber."
+        }
+      ]
+    }
+  ]
+}

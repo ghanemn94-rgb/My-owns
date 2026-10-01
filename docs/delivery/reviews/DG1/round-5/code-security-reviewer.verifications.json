@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "verifications": [
+    {
+      "finding_id": "F-DG1-122",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fixed on candidate 24eb3779 (commit 5f83a336). tools/deps/tests/install-sandbox.test.sh:135-151 (AC-8) records which of CLAUDE.local.md, .mcp.json, apps/api/CLAUDE.md, .vscode/tasks.json pre-exist (line 137), and afterwards removes a path only if it exists AND was not pre-existing (line 147); a newly created path also fails AC-8 (ac8_created). The unconditional `rm -rf` of round 4 is gone. AC-7 (124-125) and AC-5 (101) touch only their own probe names (tools.mth-ac7, docs/delivery/mth-ac7-probe, mth-ac5-probe). Proof (17-ac8-nondestructive-proof.log): in a disposable clone I planted .vscode/tasks.json (one of the AC-8 probe paths), .vscode/settings.json, CLAUDE.local.md, .mcp.json and apps/api/CLAUDE.md with sentinel content, then ran the suite. AC-8 PASSes, all five files keep identical SHA-256s, and git status is unchanged. Mutation control (17b-ac8-mutation-control.log): with the test's WRAP replaced by an unsandboxed `run`, AC-8 FAILs (writable=4, created=1), and only the newly created CLAUDE.local.md, .mcp.json and .vscode/tasks.json are removed; the pre-existing .vscode/settings.json survives. Residual observation (not this finding): in that broken-sandbox case the probe's own `echo x > apps/api/CLAUDE.md` overwrote a pre-existing file. That happens only once the sandbox has already failed and the test reports FAIL; the probe could skip or rename paths that pre-exist. Suite on this candidate: 12/13 PASS in the reviewer sandbox; AC-1 (effect) is BLOCKED only by the lack of registry access (is-number metadata). Its property PASSes in an offline equivalent with the unchanged wrapper (create and frozen populate node_modules; 10c-ac1-effect-offline.log). The orchestrator's committed 13/13 run is docs/delivery/test-evidence/DG1/orchestrator/install-sandbox-acceptance.log.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-5/17-ac8-nondestructive-proof.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-5/17b-ac8-mutation-control.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-5/10c-ac1-effect-offline.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-5/repro-ac1-effect-offline.sh",
+        "tools/deps/tests/install-sandbox.test.sh"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-123",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fixed on 5f83a336 for both parts of the finding. (a) Copy errors: tools/deps/install-sandbox.sh:170-182 checks every `rm -rf`/`cp -a`, reports the failing destination and ends with fail (exit 1) if any copy failed; the unconditional success path of round 4 is gone. Fault injection with the unchanged installer (18-f123-copyback.log Cases C/D): a PATH shim making cp fail on the node_modules copy-back gives 'failed to copy node_modules back to ...' for each member and 'node_modules copy-back failed; the install is incomplete', exit 1; an rm shim failing on the destination gives the same, exit 1; the control run without a shim exits 0 (Case E). (b) Destinations: lines 150-168 resolve the members from pnpm-workspace.yaml on the REAL tree (root plus glob matches that have a package.json), no longer from every on-disk package.json at depth <= 4. In Case A, the yaml is identical to the committed one (packages: apps/*, packages/*). The resolver yields root, apps/a, apps/legacy and packages/b. A planted node_modules at a stray tools/x/package.json (depth 2, the round-4 hazard) and at packages/c (glob match, no package.json) is NOT copied back. create and frozen populate the root and member node_modules and write the lockfile. AC-9 PASSes in the suite (17-ac8-nondestructive-proof.log). Residual, raised separately as F-DG1-126 (Low): the resolver regex reads every YAML list item, not only `packages:`, and ignores `!` exclusions (Case B). It is not reachable with the committed yaml.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-5/18-f123-copyback.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-5/repro-f123-copyback.sh",
+        "docs/delivery/test-evidence/DG1/code-security/round-5/17-ac8-nondestructive-proof.log",
+        "tools/deps/install-sandbox.sh"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-124",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fixed on 5f83a336. apps/api/src/architecture.testkit.ts bans the dynamic-code primitive names in every non-type syntactic form (rule 1: identifier, member, string literal, key, import/export name; 57-72, 266-274) and every computed member or computed property name whose key is not a literal or numeric by construction (rule 2: 171-178, 275-283). Re-test (22-plant-f124.log), through the candidate's fileViolations(): f[\"constr\"+\"uctor\"] -> 'computed member with a non-literal key'; Reflect.get(fn, \"constructor\") -> 'reflection via Reflect' + 'the \"constructor\" key as a value'; Reflect.get(fn, \"constr\".concat(\"uctor\")) -> 'reflection via Reflect'. My own probes are also caught: unicode-escaped Fun\\u0063tion and .constr\\u0075ctor, String.raw`constructor`, globalThis destructuring, a class computed member, Object.values(getOwnPropertyDescriptors(...)) and a k+0 key. End to end (22b-plant-f124-module-tree.log): as real files in apps/api/src/modules/access/, the R1 and R2 plants turn architecture.test.ts red (1 failed of 74, naming the file and line); without a plant the real module tree passes 74/74 with zero violations (also 07-test.log). The module-source refactors (access/rules.ts PERMISSION_CATEGORY Map; identity/routes.ts cookieValue over own cookie entries; platform/cursor.ts entries sorted by the same UTF-16 order as keys().sort(); transformations/routes.ts STATUS_TRANSITIONS and SORTS Maps, whose six keys equal the shared listQuery sort enum) behave the same for every valid input, and an invalid one is now refused rather than throwing a TypeError. The integration suite covers them: sorting and cursor pagination, OIDC cookies, status transitions; 200/200 twice (20-integration-run1/2.log). A different primitive still gets through: the native loaders, via an import of node:process. It is raised separately as F-DG1-125 (Low); the constructed-key route this finding is about is closed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-5/22-plant-f124.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-5/22b-plant-f124-module-tree.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-5/plant-f124.test.ts",
+        "docs/delivery/test-evidence/DG1/code-security/round-5/07-test.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-5/20-integration-run1.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-5/20-integration-run2.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-204",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "On the committed tree 5f83a336, `node licenses/generate-sbom.mjs --check` -> 'OK: packages=422 runtime=112 bundled=17 development=293 containers=4 shipped-without-licence-id=0 lockfile-sha256=f199a0e1...', exit 0. The recorded lockfile hash equals sha256(pnpm-lock.yaml) = f199a0e18472519b... (15-node-modules-provenance.log).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-5/26-sbom-check.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-5/15-node-modules-provenance.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-205",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "On 5f83a336, .github/workflows/ci.yml, deploy/ci/ci.yml and docs/architecture/ci/ci.yml all have SHA-256 8b5b1106...76ce; `cmp` of each pair exits 0. deploy/scripts/check-ci-needs.mjs on the installed workflow exits 0 (integration and e2e need verify, and images needs integration and e2e, all reaching delivery-gates); deploy/scripts tests 59/59.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-5/27-ci-yml-identity.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-5/09-deploy-scripts-tests.log"
+      ]
+    }
+  ]
+}
