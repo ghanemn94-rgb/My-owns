@@ -259,8 +259,26 @@ export class AiKnowledgeService {
       .orderBy(asc(schema.decision.updatedAt))
       .limit(30);
     const visProject = this.policy.visibilitySql(ctx, projectId, {});
+    // SEC-P5-03: an action inherits the classification of its decision, of that decision's committee and of its meeting's
+    // committee for the provider ceiling (read here; combined — fail closed — by the detection, `derivedClassification`).
+    const A = schema.actionItem;
     const actions = await tx
-      .select({ id: schema.actionItem.id, code: schema.actionItem.code, title: schema.actionItem.title, status: schema.actionItem.status, ownerUserId: schema.actionItem.ownerUserId, dueDate: schema.actionItem.dueDate, version: schema.actionItem.version, updatedAt: schema.actionItem.updatedAt })
+      .select({
+        id: A.id,
+        code: A.code,
+        title: A.title,
+        status: A.status,
+        ownerUserId: A.ownerUserId,
+        dueDate: A.dueDate,
+        version: A.version,
+        updatedAt: A.updatedAt,
+        decisionId: A.decisionId,
+        meetingId: A.meetingId,
+        // Column references are qualified by hand: inside a select field drizzle renders them unqualified.
+        decisionClassification: sql<string | null>`(select hub_ad.classification::text from decision hub_ad where hub_ad.id = action_item.decision_id and hub_ad.project_id = action_item.project_id)`,
+        decisionCommitteeClassification: sql<string | null>`(select hub_adc.classification::text from decision hub_ad join committee hub_adc on hub_adc.id = hub_ad.committee_id and hub_adc.project_id = hub_ad.project_id where hub_ad.id = action_item.decision_id and hub_ad.project_id = action_item.project_id)`,
+        meetingCommitteeClassification: sql<string | null>`(select hub_amc.classification::text from meeting hub_am join committee hub_amc on hub_amc.id = hub_am.committee_id and hub_amc.project_id = hub_am.project_id where hub_am.id = action_item.meeting_id and hub_am.project_id = action_item.project_id)`,
+      })
       .from(schema.actionItem)
       .where(and(eq(schema.actionItem.projectId, projectId), visProject, grant, this.readable(ctx, projectId, 'action_item', schema.actionItem.id), inArray(schema.actionItem.status, ['open', 'in_progress']), lt(schema.actionItem.dueDate, today)))
       .orderBy(asc(schema.actionItem.dueDate))
@@ -576,6 +594,32 @@ export class AiKnowledgeService {
       else false end)`;
   }
 
+  /**
+   * The reader may read EVERY record a run gave the model (SEC-P5-01, SEC-P5-05): the run inputs sent to the provider, each
+   * under {@link refVisibleSql} for `reader` — the rule 2 of the AI proposals' reader visibility, for one reader. `refs` are
+   * passed by the runtime before the run's snapshot is stored; otherwise the run's stored evidence snapshot is read (items
+   * with `sentToProvider`, absent flag = sent). Fails closed when the inputs are unknown (no run, or a run without a
+   * snapshot); an empty input set passes. One SQL statement in the current transaction.
+   */
+  async inputsVisible(reader: RequestContext, projectId: string, content: ContentInputs): Promise<boolean> {
+    let items: SQL;
+    if ('refs' in content) {
+      const refs = content.refs.map((r) => ({ type: String(r.type), id: String(r.id), sentToProvider: true }));
+      items = sql`${JSON.stringify(refs)}::jsonb`;
+    } else {
+      if (!content.runId) return false;
+      items = sql`(select case when jsonb_typeof(hub_cr.evidence_snapshot->'items') = 'array' then hub_cr.evidence_snapshot->'items' end
+                     from ai_run hub_cr where hub_cr.id = ${content.runId}::uuid and hub_cr.project_id = ${projectId})`;
+    }
+    const r = await this.db.tx().execute<{ ok: boolean }>(sql`
+      select case when hub_ci.items is null then false else not exists (
+               select 1 from jsonb_array_elements(hub_ci.items) hub_it
+                where coalesce((hub_it->>'sentToProvider')::boolean, true)
+                  and not ${this.refVisibleSql(reader, projectId, sql`(hub_it->>'type')`, sql`(hub_it->>'id')`)}) end as ok
+        from (select ${items} as items) hub_ci`);
+    return r.rows[0]?.ok === true;
+  }
+
   // ---------------------------------------------------------------------------------------------------------
   /**
    * Visibility re-check of cited items for the CURRENT principal (before output and on every read — §12.1).
@@ -691,5 +735,17 @@ export class AiKnowledgeService {
     return r.rows[0] ? r.rows[0].v : 'missing';
   }
 }
+
+/** A record reference (type + id) as stored in a run's evidence snapshot. */
+export interface ContentRef {
+  type: string;
+  id: string;
+}
+
+/**
+ * What derived content (a proposal, a draft, a stored run's model text) was produced from (SEC-P5-01): the records its run
+ * sent to the model — explicit refs while the run is being finalized, the run's stored evidence snapshot afterwards.
+ */
+export type ContentInputs = { refs: ContentRef[] } | { runId: string | null };
 
 export const PROPOSAL_TARGET_TYPES = ['task', 'milestone', 'decision', 'action_item', 'closing_condition', 'readiness_check', 'tsa_service', 'gate_definition', 'workstream'] as const;

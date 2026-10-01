@@ -39,7 +39,7 @@ import type { RouteInput, aiRoutes } from '@hub/contracts';
 import { newId, payloadHash } from '../../platform/ids';
 import { AiConfig } from './ai-config';
 import { AiSettingsService, autopilotStatus, type AutopilotPolicyStored, type SettingsRow } from './ai-settings.service';
-import { AiKnowledgeService, PROPOSAL_TARGET_TYPES } from './ai-knowledge.service';
+import { AiKnowledgeService, PROPOSAL_TARGET_TYPES, type ContentInputs, type ContentRef } from './ai-knowledge.service';
 import { AiArtifactsService } from './ai-artifacts.service';
 
 export const AI_EXECUTE_JOB = 'ai.execute_proposal';
@@ -77,7 +77,36 @@ export interface ProposalRefusal {
   audit: 'AI_TOOL_DENIED' | 'DESTINATION_NOT_APPROVED';
 }
 
+/** Outcome of the recipient re-authorisation; the reason is the invalidation / audit code. */
+export type RecipientCheck = { ok: true } | { ok: false; reason: 'recipient_not_authorized' | 'recipient_not_cleared_for_content' };
+
+/** Refusal code (HTTP 422) of a recipient that may not read the content of a message (SEC-P5-01, AIT-07). */
+export const RECIPIENT_NOT_CLEARED = 'ai.recipient_not_cleared';
+
 const iso = (d: Date | string | null | undefined) => (d ? new Date(d).toISOString() : null);
+
+/** The project's autopilot policy when it was approved (the domain rule checks revocation, expiry, allowlist and limit). */
+function approvedAutopilotPolicy(s: SettingsRow): AutopilotPolicy | null {
+  const pol = s.autopilotPolicy as AutopilotPolicyStored | null;
+  return pol && pol.approvedBy ? { allowlist: pol.allowlist, maxActionsPerDay: pol.maxActionsPerDay, expiresOn: pol.expiresOn, revoked: pol.revoked } : null;
+}
+
+/** Platform marker of an AI message's title (SEC-P5-I7): never left to the model; "Simulated" for the mock provider. */
+export function aiMessageMarker(provider: string | null, locale: 'en' | 'ar'): string {
+  const simulated = provider === 'mock';
+  if (locale === 'ar') return simulated ? 'مولَّد بالذكاء الاصطناعي (محاكاة): ' : 'مولَّد بالذكاء الاصطناعي: ';
+  return simulated ? 'AI-generated (Simulated): ' : 'AI-generated: ';
+}
+
+/** The records a run sent to the model, from its stored evidence snapshot (items without the flag count as sent). */
+function snapshotInputs(snapshot: unknown): ContentRef[] {
+  const items = (snapshot as { items?: unknown } | null | undefined)?.items;
+  if (!Array.isArray(items)) return [];
+  return items
+    .filter((i): i is { type: string; id: string; sentToProvider?: boolean } => !!i && typeof i === 'object' && typeof (i as { type?: unknown }).type === 'string' && typeof (i as { id?: unknown }).id === 'string')
+    .filter((i) => i.sentToProvider !== false)
+    .map((i) => ({ type: i.type, id: i.id }));
+}
 
 /**
  * AI proposals and human approvals (spec §12.3–12.4, AT-18, AT-20, C-21).
@@ -109,7 +138,11 @@ export class AiProposalsService {
   // ---------------------------------------------------------------------------------------------------------
   // Creation (called by the runtime for a model tool call, in the delegating user's transaction)
 
-  async createFromTool(ctx: RequestContext, projectId: string, run: { id: string; requestedBy: string | null }, tool: AiToolDef, rawArgs: Record<string, unknown>, s: SettingsRow): Promise<{ proposal: ProposalRow } | ProposalRefusal> {
+  /**
+   * `run.inputs`: the records the run sent to the model (the runtime passes them; its snapshot is stored after the proposals).
+   * Without it the run's stored snapshot is used — a run that has none fails the recipient check closed.
+   */
+  async createFromTool(ctx: RequestContext, projectId: string, run: { id: string; requestedBy: string | null; inputs?: ContentRef[] }, tool: AiToolDef, rawArgs: Record<string, unknown>, s: SettingsRow): Promise<{ proposal: ProposalRow } | ProposalRefusal> {
     const action = tool.action!;
     const refuse = async (reason: string, code: ProposalRefusal['audit'] = 'AI_TOOL_DENIED'): Promise<ProposalRefusal> => {
       await this.audit.record({ action: code, entityType: 'ai_run', entityId: run.id, projectId, outcome: 'denied', reason: `${tool.name}: ${reason}` });
@@ -121,7 +154,7 @@ export class AiProposalsService {
     const schemaFor = ARGS[action as keyof typeof ARGS];
     const parsed = schemaFor.safeParse(rawArgs ?? {});
     if (!parsed.success) return refuse(`invalid arguments (${parsed.error.issues.map((i) => i.path.join('.') || i.message).slice(0, 3).join(', ')})`);
-    const v = await this.validatePayload(ctx, projectId, action, parsed.data as Record<string, unknown>);
+    const v = await this.validatePayload(ctx, projectId, action, parsed.data as Record<string, unknown>, run.inputs ? { refs: run.inputs } : { runId: run.id });
     if ('error' in v) return refuse(v.error, v.code);
     const payload = v.payload;
     const idempotencyKey = `ai:${run.id}:${action}:${(payload.targetId as string | undefined) ?? '-'}:${(payload.recipientUserId as string | undefined) ?? '-'}`.slice(0, 200);
@@ -162,29 +195,31 @@ export class AiProposalsService {
 
   /**
    * Validates a proposal payload for the delegating user: same-project target visible to the user; recipients are
-   * active internal full project members who can see the target (AIT-07, AIT-26). Returns the canonical payload.
+   * active internal full project members who can see the target AND every record the message was drafted from (AIT-07,
+   * AIT-26, SEC-P5-01). Returns the canonical payload, or the refusal (audit action + HTTP refusal code).
    */
   private async validatePayload(
     ctx: RequestContext,
     projectId: string,
     action: AiProposableAction,
     args: Record<string, unknown>,
-  ): Promise<{ payload: Record<string, unknown>; targetVersion: number | null } | { error: string; code: ProposalRefusal['audit'] }> {
+    content: ContentInputs,
+  ): Promise<{ payload: Record<string, unknown>; targetVersion: number | null } | { error: string; code: ProposalRefusal['audit']; refusalCode: string }> {
     const targetType = (args.targetType as string | undefined) ?? null;
     const targetId = (args.targetId as string | undefined) ?? null;
-    if (!!targetType !== !!targetId) return { error: 'target type and id must be given together', code: 'AI_TOOL_DENIED' };
+    if (!!targetType !== !!targetId) return { error: 'target type and id must be given together', code: 'AI_TOOL_DENIED', refusalCode: 'AI_TOOL_DENIED' };
     let targetVersion: number | null = null;
     if (targetType && targetId) {
       const tv = await this.knowledge.targetVersion(projectId, targetType, targetId);
       const visible = await this.knowledge.visibleCitationKeys(ctx, projectId, [{ type: targetType, id: targetId }]);
-      if (tv === 'missing' || !visible.has(`${targetType}:${targetId}`)) return { error: 'target not found', code: 'AI_TOOL_DENIED' };
+      if (tv === 'missing' || !visible.has(`${targetType}:${targetId}`)) return { error: 'target not found', code: 'AI_TOOL_DENIED', refusalCode: 'AI_TOOL_DENIED' };
       targetVersion = tv;
     }
     if (typeof args.workstreamId === 'string') {
       try {
         await loadInProject(this.db, schema.workstream, projectId, args.workstreamId);
       } catch {
-        return { error: 'workstream not found', code: 'AI_TOOL_DENIED' };
+        return { error: 'workstream not found', code: 'AI_TOOL_DENIED', refusalCode: 'AI_TOOL_DENIED' };
       }
     }
     const clean = (t: unknown) => (typeof t === 'string' ? sanitizeAiText(t).text : t);
@@ -192,24 +227,38 @@ export class AiProposalsService {
     for (const [k, val] of Object.entries(args)) if (val !== undefined) payload[k] = typeof val === 'string' && k !== 'recipientUserId' && k !== 'targetId' && k !== 'workstreamId' ? clean(val) : val;
     if ((AI_MESSAGE_ACTIONS as string[]).includes(action)) {
       const recipientUserId = String(args.recipientUserId);
-      const ok = await this.recipientAllowed(ctx.principal.orgId, projectId, recipientUserId, targetType, targetId);
-      if (!ok) return { error: 'recipient is not an authorised internal project member for this content', code: 'DESTINATION_NOT_APPROVED' };
+      const chk = await this.recipientAllowed(ctx.principal.orgId, projectId, recipientUserId, targetType, targetId, content);
+      if (!chk.ok && chk.reason === 'recipient_not_cleared_for_content') {
+        return { error: 'recipient_not_cleared_for_content: the recipient may not read every record this message was drafted from', code: 'DESTINATION_NOT_APPROVED', refusalCode: RECIPIENT_NOT_CLEARED };
+      }
+      if (!chk.ok) return { error: 'recipient is not an authorised internal project member for this content', code: 'DESTINATION_NOT_APPROVED', refusalCode: 'DESTINATION_NOT_APPROVED' };
     }
     return { payload, targetVersion };
   }
 
-  /** Recipient re-authorisation (creation, approval AND execution): active, internal, full project member who can see the target. */
-  async recipientAllowed(orgId: string, projectId: string, userId: string, targetType: string | null, targetId: string | null): Promise<boolean> {
+  /**
+   * Recipient re-authorisation (creation, approval AND execution — SEC-P5-01, AIT-07, access-matrix §5.2): the recipient is
+   * an active, internal, full project member who may read
+   *  1. the message's TARGET, and
+   *  2. its CONTENT: every record the run gave the model (`content`), under the same per-type rules as the AI knowledge
+   *     sources (`AiKnowledgeService.refVisibleSql`: classification, finance-domain clearance, rooms, workstream reach,
+   *     project-wide registers) — the model wrote the free text from those records, so a recipient who may not read one
+   *     of them never receives it. A message without a target is judged on its content alone.
+   * Evaluated inside SQL in the current transaction (its RLS scope ∩ the recipient's predicates).
+   */
+  async recipientAllowed(orgId: string, projectId: string, userId: string, targetType: string | null, targetId: string | null, content: ContentInputs): Promise<RecipientCheck> {
     const u = await this.db.query<{ is_active: boolean; is_service_account: boolean; org_id: string }>(`select is_active, is_service_account, org_id from hub_auth_user_by_id($1)`, [userId]);
     const row = u.rows[0];
-    if (!row || !row.is_active || row.is_service_account || row.org_id !== orgId) return false;
+    if (!row || !row.is_active || row.is_service_account || row.org_id !== orgId) return { ok: false, reason: 'recipient_not_authorized' };
     const rctx = await this.contexts.forUser(userId, projectId);
     const scope = rctx?.principal.projects.get(projectId);
-    if (!rctx || !scope || !isFullScope(scope)) return false;
-    if (!targetType || !targetId) return true;
-    // Intersection of the current transaction's RLS scope and the recipient's ACL predicates.
-    const visible = await this.knowledge.visibleCitationKeys(rctx, projectId, [{ type: targetType, id: targetId }]);
-    return visible.has(`${targetType}:${targetId}`);
+    if (!rctx || !scope || !isFullScope(scope)) return { ok: false, reason: 'recipient_not_authorized' };
+    if (targetType && targetId) {
+      const visible = await this.knowledge.visibleCitationKeys(rctx, projectId, [{ type: targetType, id: targetId }]);
+      if (!visible.has(`${targetType}:${targetId}`)) return { ok: false, reason: 'recipient_not_authorized' };
+    }
+    if (!(await this.knowledge.inputsVisible(rctx, projectId, content))) return { ok: false, reason: 'recipient_not_cleared_for_content' };
+    return { ok: true };
   }
 
   // ---------------------------------------------------------------------------------------------------------
@@ -251,8 +300,18 @@ export class AiProposalsService {
       throw conflict('ai.approval_invalidated', 'The target record changed after the proposal was prepared — a fresh review is required');
     }
     const recipient = (p.payload as { recipientUserId?: string }).recipientUserId;
-    if (recipient && !(await this.recipientAllowed(ctx.principal.orgId, projectId, recipient, p.targetType, p.targetId))) {
-      throw ruleViolation('DESTINATION_NOT_APPROVED', 'The recipient is no longer an authorised project member for this content');
+    if (recipient) {
+      // SEC-P5-01 / AIT-07: the recipient must still be a member who may read the target AND every record the message was
+      // drafted from. An uncleared recipient is refused BEFORE approval; the proposal is invalidated (kept and audited
+      // although the request is refused) — the requester may revise it to another recipient.
+      const chk = await this.recipientAllowed(ctx.principal.orgId, projectId, recipient, p.targetType, p.targetId, { runId: p.runId });
+      if (!chk.ok) {
+        await this.invalidateDetached(ctx, p, chk.reason);
+        if (chk.reason === 'recipient_not_cleared_for_content') {
+          throw ruleViolation(RECIPIENT_NOT_CLEARED, 'The recipient may not read every record this message was drafted from (its target and the sources the AI used) — it cannot be sent to them');
+        }
+        throw ruleViolation('DESTINATION_NOT_APPROVED', 'The recipient is no longer an authorised project member for this content');
+      }
     }
     const now = this.clock.now();
     const approvalId = newId();
@@ -277,12 +336,19 @@ export class AiProposalsService {
     this.policy.assert(ctx, 'ai.proposal.reject', { projectId });
     if (p.version !== body.expectedVersion) throw conflict('concurrency.version_mismatch', 'The proposal was changed — reload and review');
     if (p.status !== 'proposed' && p.status !== 'approved') throw conflict('ai.proposal_not_pending', `The proposal is ${p.status}`);
+    // SEC-P5-02: the proposal row is locked FIRST (same order as the execution: proposal → approval), and the rejection is
+    // written only while the proposal is still pending at the reviewed version — never over an execution that won the race.
+    const cur = await this.lockProposal(projectId, proposalId);
+    if (!cur || cur.version !== body.expectedVersion) throw conflict('concurrency.version_mismatch', 'The proposal was changed — reload and review');
+    if (cur.status !== 'proposed' && cur.status !== 'approved') throw conflict('ai.proposal_not_pending', `The proposal is ${cur.status}`);
     await this.db.tx().update(schema.aiActionApproval).set({ status: 'invalidated', invalidatedReason: 'proposal_rejected' }).where(and(eq(schema.aiActionApproval.proposalId, proposalId), eq(schema.aiActionApproval.projectId, projectId), eq(schema.aiActionApproval.status, 'valid')));
-    await this.db
+    const [rejected] = await this.db
       .tx()
       .update(schema.aiProposal)
       .set({ status: 'rejected', invalidatedReason: `rejected: ${body.note}`.slice(0, 1000), updatedAt: this.clock.now(), version: sql`${schema.aiProposal.version} + 1` })
-      .where(and(eq(schema.aiProposal.id, proposalId), eq(schema.aiProposal.projectId, projectId)));
+      .where(and(eq(schema.aiProposal.id, proposalId), eq(schema.aiProposal.projectId, projectId), eq(schema.aiProposal.version, body.expectedVersion), inArray(schema.aiProposal.status, ['proposed', 'approved'])))
+      .returning({ id: schema.aiProposal.id });
+    if (!rejected) throw conflict('ai.proposal_not_pending', 'The proposal is no longer awaiting review');
     await this.audit.record({ action: 'ai.proposal.reject', entityType: 'ai_proposal', entityId: proposalId, projectId, reason: body.note });
     return this.get(ctx, projectId, proposalId);
   }
@@ -303,8 +369,13 @@ export class AiProposalsService {
     if (externalDestination(rest)) throw ruleViolation('DESTINATION_NOT_APPROVED', 'External or unapproved destination');
     const parsed = schemaFor.safeParse(rest);
     if (!parsed.success) throw ruleViolation('ai.invalid_payload', 'Invalid proposal payload', { issues: parsed.error.issues.map((i) => i.path.join('.')) });
-    const v = await this.validatePayload(ctx, projectId, action, parsed.data as Record<string, unknown>);
-    if ('error' in v) throw ruleViolation(v.code, v.error);
+    // The revised message is still drafted from the same run: its recipient is checked against that run's inputs (SEC-P5-01).
+    const v = await this.validatePayload(ctx, projectId, action, parsed.data as Record<string, unknown>, { runId: p.runId });
+    if ('error' in v) throw ruleViolation(v.refusalCode, v.error);
+    // Lock order proposal → approvals (as the execution and reject), then write only at the reviewed version (SEC-P5-02).
+    const cur = await this.lockProposal(projectId, proposalId);
+    if (!cur || cur.version !== body.expectedVersion) throw conflict('concurrency.version_mismatch', 'The proposal was changed — reload and review');
+    if (!['proposed', 'approved', 'invalidated'].includes(cur.status)) throw conflict('ai.proposal_not_pending', `The proposal is ${cur.status}`);
     const n = await this.invalidateApprovals(proposalId, projectId, 'payload_changed');
     const [updated] = await this.db
       .tx()
@@ -328,6 +399,12 @@ export class AiProposalsService {
     return this.get(ctx, projectId, proposalId);
   }
 
+  /** `SELECT … FOR UPDATE` of one proposal (current transaction). Every writer locks the proposal before its approvals. */
+  private async lockProposal(projectId: string, proposalId: string): Promise<{ status: string; version: number } | null> {
+    const r = await this.db.query<{ status: string; version: number }>(`select status, version from ai_proposal where id = $1 and project_id = $2 for update`, [proposalId, projectId]);
+    return r.rows[0] ?? null;
+  }
+
   private async invalidateApprovals(proposalId: string, projectId: string, reason: string): Promise<number> {
     const r = await this.db
       .tx()
@@ -343,29 +420,40 @@ export class AiProposalsService {
    * request transaction back, so the invalidation and its AI_APPROVAL_INVALIDATED audit row are written in an autonomous
    * transaction (as the refused cutover GO, readiness module) — otherwise the proposal stayed "proposed" with nothing
    * recorded. Safe here: approve() has not written or locked the proposal or its approvals before this point.
+   * SEC-P5-I1: only the version the approver reviewed is invalidated (a concurrent revision by the requester is kept), and
+   * the proposal is written before its approvals (the lock order of every other writer).
    */
   private async invalidateDetached(ctx: RequestContext, p: ProposalRow, reason: string) {
-    await this.db.runDetached(ctx, async (tx) => {
+    const changed = await this.db.runDetached(ctx, async (tx) => {
+      const rows = await tx
+        .update(schema.aiProposal)
+        .set({ status: 'invalidated', invalidatedReason: reason, updatedAt: this.clock.now(), version: sql`${schema.aiProposal.version} + 1` })
+        .where(and(eq(schema.aiProposal.id, p.id), eq(schema.aiProposal.projectId, p.projectId), eq(schema.aiProposal.version, p.version), inArray(schema.aiProposal.status, ['proposed', 'approved', 'executing'])))
+        .returning({ id: schema.aiProposal.id });
+      if (!rows.length) return false;
       await tx
         .update(schema.aiActionApproval)
         .set({ status: 'invalidated', invalidatedReason: reason })
         .where(and(eq(schema.aiActionApproval.proposalId, p.id), eq(schema.aiActionApproval.projectId, p.projectId), eq(schema.aiActionApproval.status, 'valid')));
-      await tx
-        .update(schema.aiProposal)
-        .set({ status: 'invalidated', invalidatedReason: reason, updatedAt: this.clock.now(), version: sql`${schema.aiProposal.version} + 1` })
-        .where(and(eq(schema.aiProposal.id, p.id), eq(schema.aiProposal.projectId, p.projectId), inArray(schema.aiProposal.status, ['proposed', 'approved', 'executing'])));
+      return true;
     });
-    await this.audit.recordDetached(ctx, { action: 'AI_APPROVAL_INVALIDATED', entityType: 'ai_proposal', entityId: p.id, projectId: p.projectId, outcome: 'rejected', reason });
+    if (changed) await this.audit.recordDetached(ctx, { action: 'AI_APPROVAL_INVALIDATED', entityType: 'ai_proposal', entityId: p.id, projectId: p.projectId, outcome: 'rejected', reason });
   }
 
-  /** Marks the proposal (and its valid approvals) invalidated and audits AI_APPROVAL_INVALIDATED. Current transaction. */
+  /**
+   * Marks the proposal (and its valid approvals) invalidated and audits AI_APPROVAL_INVALIDATED. Current transaction.
+   * Only the version that was checked is invalidated (a revision committed meanwhile is kept — SEC-P5-I1), and the proposal
+   * is written before its approvals (lock order proposal → approval of every writer — SEC-P5-02).
+   */
   private async invalidate(p: ProposalRow, approval: ApprovalRow | null, reason: string) {
-    await this.invalidateApprovals(p.id, p.projectId, reason);
-    await this.db
+    const rows = await this.db
       .tx()
       .update(schema.aiProposal)
       .set({ status: 'invalidated', invalidatedReason: reason, updatedAt: this.clock.now(), version: sql`${schema.aiProposal.version} + 1` })
-      .where(and(eq(schema.aiProposal.id, p.id), eq(schema.aiProposal.projectId, p.projectId), inArray(schema.aiProposal.status, ['proposed', 'approved', 'executing'])));
+      .where(and(eq(schema.aiProposal.id, p.id), eq(schema.aiProposal.projectId, p.projectId), eq(schema.aiProposal.version, p.version), inArray(schema.aiProposal.status, ['proposed', 'approved', 'executing'])))
+      .returning({ id: schema.aiProposal.id });
+    if (!rows.length) return;
+    await this.invalidateApprovals(p.id, p.projectId, reason);
     await this.audit.record({ action: 'AI_APPROVAL_INVALIDATED', entityType: 'ai_proposal', entityId: p.id, projectId: p.projectId, outcome: 'rejected', reason: `${reason}${approval ? ` (approval ${approval.id})` : ''}` });
   }
 
@@ -507,12 +595,12 @@ export class AiProposalsService {
       const now = this.clock.now();
       const today = this.clock.today(tz);
       if (s.killSwitch) {
-        await this.audit.record({ action: 'AI_KILLSWITCH_BLOCKED', entityType: 'ai_proposal', entityId: p.id, projectId, outcome: 'denied', reason: 'execution blocked by emergency stop' });
-        await this.invalidateApprovals(p.id, projectId, 'kill_switch');
-        await this.db.tx().update(schema.aiProposal).set({ status: 'cancelled', invalidatedReason: 'kill_switch', updatedAt: now, version: sql`${schema.aiProposal.version} + 1` }).where(eq(schema.aiProposal.id, p.id));
+        await this.cancelForKillSwitch(p);
         return { stop: { status: 'cancelled_killswitch' } };
       }
-      const [run] = p.runId ? await this.db.tx().select({ requestedBy: schema.aiRun.requestedBy }).from(schema.aiRun).where(eq(schema.aiRun.id, p.runId)) : [];
+      const [run] = p.runId
+        ? await this.db.tx().select({ requestedBy: schema.aiRun.requestedBy, provider: schema.aiRun.provider, locale: schema.aiRun.locale, snapshot: schema.aiRun.evidenceSnapshot }).from(schema.aiRun).where(and(eq(schema.aiRun.id, p.runId), eq(schema.aiRun.projectId, projectId)))
+        : [];
       const requester = run?.requestedBy ?? null;
       const perm = AI_ACTION_PERMISSION[p.actionType as AiProposableAction];
       const fail = async (reason: string) => {
@@ -520,12 +608,10 @@ export class AiProposalsService {
         return { stop: { status: 'invalidated', reason } };
       };
       if (!perm) return fail('not_executable');
-      // Mode / kill switch / autopilot allowlist, rate and expiry (domain rule).
+      // Mode / kill switch / autopilot allowlist, rate and expiry (domain rule). Checked again under the lock in phase 2.
       const actionsToday = await this.autopilotActionsToday(projectId, tz, today);
-      const pol = s.autopilotPolicy as AutopilotPolicyStored | null;
-      const autopilotPolicy: AutopilotPolicy | null = pol && pol.approvedBy ? { allowlist: pol.allowlist, maxActionsPerDay: pol.maxActionsPerDay, expiresOn: pol.expiresOn, revoked: pol.revoked } : null;
       try {
-        assertActionExecutable({ mode: s.mode, killSwitch: s.killSwitch, action: p.actionType, approved: !!approval, autopilot: autopilotPolicy, actionsToday, today });
+        assertActionExecutable({ mode: s.mode, killSwitch: s.killSwitch, action: p.actionType, approved: !!approval, autopilot: approvedAutopilotPolicy(s), actionsToday, today });
       } catch (e) {
         if (e instanceof DomainError) return fail(e.code);
         throw e;
@@ -553,17 +639,26 @@ export class AiProposalsService {
         const tv = await this.knowledge.targetVersion(projectId, p.targetType, p.targetId);
         if (tv === 'missing' || tv !== p.targetVersion) return fail('target_version_changed');
       }
+      const isMessage = (AI_MESSAGE_ACTIONS as string[]).includes(p.actionType);
       const recipient = (p.payload as { recipientUserId?: string }).recipientUserId;
-      if (recipient && !(await this.recipientAllowed(job.org_id, projectId, recipient, p.targetType, p.targetId))) return fail('recipient_no_longer_authorized');
+      if (isMessage || recipient) {
+        // SEC-P5-01: the recipient may read the target AND every record the message was drafted from — re-checked now.
+        const chk = recipient ? await this.recipientAllowed(job.org_id, projectId, recipient, p.targetType, p.targetId, { runId: p.runId }) : ({ ok: false, reason: 'recipient_not_authorized' } as const);
+        if (!chk.ok) return fail(chk.reason === 'recipient_not_cleared_for_content' ? chk.reason : 'recipient_no_longer_authorized');
+      } else {
+        // A draft is delivered to the delegating user's AI workspace: they must still read its target and its run inputs.
+        const targetOk = !p.targetType || !p.targetId || (await this.knowledge.visibleCitationKeys(requesterCtx, projectId, [{ type: p.targetType, id: p.targetId }])).has(`${p.targetType}:${p.targetId}`);
+        if (!targetOk || !(await this.knowledge.inputsVisible(requesterCtx, projectId, { runId: p.runId }))) return fail('requester_not_cleared_for_content');
+      }
       // Quiet hours: defer (not drop) message actions.
-      if ((AI_MESSAGE_ACTIONS as string[]).includes(p.actionType)) {
+      if (isMessage) {
         const h = localHour(now, tz);
         if (isWithinQuietHours(h, s.quietHoursStart, s.quietHoursEnd)) {
           const hours = ((s.quietHoursEnd! - h + 24) % 24) || 24;
           return { defer: new Date(now.getTime() + hours * 3_600_000 - now.getUTCMinutes() * 60_000), requesterId: requester };
         }
       }
-      return { go: { p, approval, requesterCtx, approverCtx } };
+      return { go: { p, approval, requesterCtx, approverCtx, tz, provider: run?.provider ?? null, locale: run?.locale === 'ar' ? ('ar' as const) : ('en' as const), inputs: snapshotInputs(run?.snapshot) } };
     });
     if ('stop' in pre) return pre.stop as Record<string, unknown>;
     if ('defer' in pre) {
@@ -571,17 +666,38 @@ export class AiProposalsService {
       await this.queue.enqueueDirect({ kind: AI_EXECUTE_JOB, orgId: job.org_id, projectId, payload: job.payload, idempotencyKey: `${job.idempotency_key}:deferred:${at.toISOString().slice(0, 13)}`, runAt: at, requestedBy: job.requested_by });
       return { status: 'deferred_quiet_hours', runAt: at.toISOString() };
     }
-    const { p, approval, requesterCtx, approverCtx } = pre.go;
+    const { p, approval, requesterCtx, approverCtx, tz, provider, locale, inputs } = pre.go;
     // Phase 2 (ONE transaction as the accountable human — approver, or the delegating user under autopilot):
-    // lock → re-check single use → effect → consume approval → mark executed → audit. Retry-safe (AT-20).
+    // lock → re-check everything a concurrent command may have changed since phase 1 (status, version, approval, emergency
+    // stop, mode / autopilot policy / daily limit) → effect → consume approval → mark executed → audit. The effect and the
+    // state change commit together, so a stop, a rejection or a revision committed before the lock wins, and one committed
+    // after it finds the proposal executed (SEC-P5-02). Retry-safe (AT-20).
     const actorCtx = approverCtx ?? requesterCtx;
-    return this.db.run(actorCtx, async () => {
+    type Phase2 = { done: Record<string, unknown> } | { stop: Record<string, unknown>; invalidate?: string; killSwitch?: true };
+    const out = await this.db.run(actorCtx, async (): Promise<Phase2> => {
       const tx = this.db.tx();
-      const locked = await this.db.query<{ status: string; version: number }>(`select status, version from ai_proposal where id = $1 and project_id = $2 for update`, [p.id, projectId]);
-      if (locked.rows[0]?.status === 'executed') return { status: 'already_executed' };
+      // SEC-P5-06: one autopilot execution of a project at a time — the daily limit is counted and consumed under this lock.
+      if (!approval) await this.db.query(`select pg_advisory_xact_lock(hashtextextended('hub_ai_autopilot:' || $1, 0))`, [projectId]);
+      const cur = await this.lockProposal(projectId, p.id);
+      if (!cur) return { stop: { skipped: 'proposal not found' } };
+      if (cur.status === 'executed') return { stop: { status: 'already_executed' } };
+      if (cur.status !== 'proposed' && cur.status !== 'approved') return { stop: { status: `proposal_${cur.status}` } };
+      if (cur.version !== p.version) return { stop: { status: 'proposal_changed' } };
       if (approval) {
         const a = await this.db.query<{ status: string }>(`select status from ai_action_approval where id = $1 and project_id = $2 for update`, [approval.id, projectId]);
-        if (a.rows[0]?.status !== 'valid') return { status: 'approval_consumed' };
+        if (a.rows[0]?.status !== 'valid') return { stop: { status: a.rows[0]?.status === 'consumed' ? 'approval_consumed' : 'approval_invalidated' } };
+      }
+      // The emergency stop is read AFTER the proposal lock: a stop that committed before it is seen here; a stop that commits
+      // later waits for this transaction and then finds the proposal executed (its cancellation skips executed rows).
+      const s = await this.settings.load(projectId);
+      if (s.killSwitch) return { stop: { status: 'cancelled_killswitch' }, killSwitch: true };
+      const today = this.clock.today(tz);
+      const actionsToday = approval ? 0 : await this.autopilotActionsToday(projectId, tz, today);
+      try {
+        assertActionExecutable({ mode: s.mode, killSwitch: s.killSwitch, action: p.actionType, approved: !!approval, autopilot: approvedAutopilotPolicy(s), actionsToday, today });
+      } catch (e) {
+        if (e instanceof DomainError) return { stop: { status: 'invalidated', reason: e.code }, invalidate: e.code };
+        throw e;
       }
       const result: Record<string, unknown> = { mode: approval ? 'approved' : 'autopilot', approvalId: approval?.id ?? null };
       const payload = p.payload as Record<string, unknown>;
@@ -591,12 +707,13 @@ export class AiProposalsService {
         // In-app notification with a dedupe key: a crashed/retried execution can never create a second one.
         // No RETURNING and no conflict target: the row belongs to the recipient and RLS only lets its owner read it back
         // (a targeted ON CONFLICT would apply the SELECT policy). The unique (user_id, dedupe_key) index still deduplicates.
+        // SEC-P5-I7: the platform (not the model) marks the message as AI-generated, and as Simulated for the mock provider.
         const notificationId = newId();
         const ins = await this.db.query(
           `insert into notification (id, org_id, project_id, user_id, kind, title, body, link, channel, delivery_status, dedupe_key, source_type, source_id, ai_proposal_id)
            values ($1, $2, $3, $4, 'ai_action', $5, $6, $7, 'in_app', 'sent', $8, $9, $10, $11)
            on conflict do nothing`,
-          [notificationId, actorCtx.principal.orgId, projectId, recipient, String(payload.title), String(payload.body ?? ''), p.targetType && p.targetId ? `/projects/${projectId}/${p.targetType}/${p.targetId}` : `/projects/${projectId}`, `ai-proposal:${p.id}`, p.targetType, p.targetId, p.id],
+          [notificationId, actorCtx.principal.orgId, projectId, recipient, `${aiMessageMarker(provider, locale)}${String(payload.title)}`, String(payload.body ?? ''), p.targetType && p.targetId ? `/projects/${projectId}/${p.targetType}/${p.targetId}` : `/projects/${projectId}`, `ai-proposal:${p.id}`, p.targetType, p.targetId, p.id],
         );
         result.notificationId = (ins.rowCount ?? 0) > 0 ? notificationId : null;
         result.deduplicated = (ins.rowCount ?? 0) === 0;
@@ -608,7 +725,11 @@ export class AiProposalsService {
         }
       } else {
         // The draft belongs to the delegating user (keyed by THEIR ACL fingerprint); nothing is written to the owning module.
-        const artifactId = await this.artifacts.store(requesterCtx, projectId, `draft_${p.actionType}`, p.targetType && p.targetId ? [{ type: p.targetType, id: p.targetId }] : [], {
+        // SEC-P5-05: its sources are its target AND the run inputs it was drafted from, so every read re-checks all of them
+        // and a document change / reclassification invalidates it.
+        const refs: { type: string; id: string }[] = p.targetType && p.targetId ? [{ type: p.targetType, id: p.targetId }] : [];
+        for (const r of inputs) if (!refs.some((x) => x.type === r.type && x.id === r.id)) refs.push(r);
+        const artifactId = await this.artifacts.store(requesterCtx, projectId, `draft_${p.actionType}`, refs, {
           ...payload,
           label: 'AI-generated draft — requires human review; creates no record in the owning module',
           proposalId: p.id,
@@ -617,13 +738,32 @@ export class AiProposalsService {
       }
       if (approval) await tx.update(schema.aiActionApproval).set({ status: 'consumed' }).where(eq(schema.aiActionApproval.id, approval.id));
       const now = this.clock.now();
-      await tx
+      const [executed] = await tx
         .update(schema.aiProposal)
         .set({ status: 'executed', executedAt: now, executionResult: result, updatedAt: now, version: sql`${schema.aiProposal.version} + 1` })
-        .where(and(eq(schema.aiProposal.id, p.id), eq(schema.aiProposal.projectId, projectId)));
+        .where(and(eq(schema.aiProposal.id, p.id), eq(schema.aiProposal.projectId, projectId), eq(schema.aiProposal.version, p.version), inArray(schema.aiProposal.status, ['proposed', 'approved'])))
+        .returning({ id: schema.aiProposal.id });
+      // Unreachable while the row lock is held; if it ever happens the effect rolls back with this transaction.
+      if (!executed) throw new Error('ai.execute_proposal: the proposal changed under its lock');
       await this.audit.record({ action: 'ai.proposal.execute', entityType: 'ai_proposal', entityId: p.id, projectId, after: result });
-      return { status: 'executed', ...result };
+      return { done: { status: 'executed', ...result } };
     });
+    if ('done' in out) return out.done;
+    // Phase 2 refused before any effect: record it as the service principal (as phase 1 does).
+    if (out.killSwitch) await this.db.run(svc, () => this.cancelForKillSwitch(p));
+    else if (out.invalidate) await this.db.run(svc, () => this.invalidate(p, approval, out.invalidate!));
+    return out.stop;
+  }
+
+  /** Emergency stop met by an execution: audit, cancel the proposal (unless it already left the pending states), then its approvals. */
+  private async cancelForKillSwitch(p: ProposalRow) {
+    await this.audit.record({ action: 'AI_KILLSWITCH_BLOCKED', entityType: 'ai_proposal', entityId: p.id, projectId: p.projectId, outcome: 'denied', reason: 'execution blocked by emergency stop' });
+    await this.db
+      .tx()
+      .update(schema.aiProposal)
+      .set({ status: 'cancelled', invalidatedReason: 'kill_switch', updatedAt: this.clock.now(), version: sql`${schema.aiProposal.version} + 1` })
+      .where(and(eq(schema.aiProposal.id, p.id), eq(schema.aiProposal.projectId, p.projectId), inArray(schema.aiProposal.status, ['proposed', 'approved', 'executing'])));
+    await this.invalidateApprovals(p.id, p.projectId, 'kill_switch');
   }
 
   private async autopilotActionsToday(projectId: string, tz: string, today: string): Promise<number> {

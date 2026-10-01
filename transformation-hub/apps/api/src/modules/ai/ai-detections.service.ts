@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { AiDetection } from '@hub/contracts';
-import type { Classification } from '@hub/domain';
+import { derivedClassification, type Classification } from '@hub/domain';
 import type { RequestContext } from '../../platform/context';
 import { AiKnowledgeService } from './ai-knowledge.service';
 import { AiConfig } from './ai-config';
@@ -224,7 +224,19 @@ export class AiDetectionsService {
             gateKey: null,
             dueDate: a.dueDate,
             citations: [{ type: 'action_item', id: a.id, version: a.version, label: `${a.code} ${a.title}` }],
-            meta: { ownerUserId: a.ownerUserId, updatedAt: iso(a.updatedAt), verification: null, version: a.version, category: c },
+            // SEC-P5-03: derived classification for the provider ceiling — the action's decision, that decision's committee and
+            // its meeting's committee (a linked parent that cannot be read fails closed to strictly_confidential).
+            meta: {
+              ownerUserId: a.ownerUserId,
+              updatedAt: iso(a.updatedAt),
+              verification: null,
+              version: a.version,
+              category: c,
+              classification: derivedClassification('internal', [
+                ...(a.decisionId ? [a.decisionClassification, a.decisionCommitteeClassification] : []),
+                ...(a.meetingId ? [a.meetingCommitteeClassification] : []),
+              ]),
+            },
           });
         }
         for (const p of r.approvals) {

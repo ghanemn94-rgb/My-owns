@@ -9,6 +9,7 @@ import {
   aclFingerprintInput,
   aiFlagOf,
   circuitIsOpen,
+  derivedClassification,
   detectInstructionLikeContent,
   evaluateBudget,
   extractSearchTerms,
@@ -158,6 +159,15 @@ describe('REQ-AI-004 / REQ-AI-006 — output validation, sanitising and DLP', ()
   it('provider ceilings never allow strictly_confidential; the external gateway is capped at internal', () => {
     expect(AI_PROVIDER_MAX_CLASSIFICATION.anthropic).toBe('internal');
     expect(Object.values(AI_PROVIDER_MAX_CLASSIFICATION)).not.toContain('strictly_confidential');
+  });
+  it('SEC-P5-03: a derived item takes the highest classification of its parents and fails closed on an unknown or missing one', () => {
+    expect(derivedClassification('internal', [])).toBe('internal');
+    expect(derivedClassification('internal', ['restricted', 'confidential'])).toBe('restricted');
+    expect(derivedClassification('confidential', ['internal'])).toBe('confidential');
+    expect(derivedClassification('internal', ['strictly_confidential'])).toBe('strictly_confidential');
+    expect(derivedClassification('internal', [null])).toBe('strictly_confidential');
+    expect(derivedClassification('internal', [undefined, 'internal'])).toBe('strictly_confidential');
+    expect(derivedClassification('internal', ['unknown_level'])).toBe('strictly_confidential');
   });
 });
 

@@ -30,12 +30,17 @@ export class KillSwitchActiveError extends Error {
   }
 }
 
+/**
+ * Register classification of records that carry none of their own (threat-model §5.2). Committee actions are NOT listed:
+ * their classification is derived from their decision and committees (SEC-P5-03, `meta.classification`); a detection of a
+ * type that is neither here nor carries a derived classification fails closed (strictly_confidential — never sent).
+ * Approval requests carry only their subject type, action and age (no subject content).
+ */
 const RECORD_CLASSIFICATION: Record<string, Classification> = {
   task: 'internal',
   milestone: 'internal',
   workstream: 'internal',
   readiness_check: 'internal',
-  action_item: 'internal',
   approval_request: 'internal',
   closing_condition: 'confidential',
   tsa_service: 'confidential',
@@ -236,8 +241,9 @@ export class AiToolsService {
       kind: primary.type === 'computation' ? 'computation' : 'record',
       tool,
       // Derived classification for the provider ceiling (threat-model §5.2 examples): plan/readiness records are
-      // internal; decisions carry their own classification; CP and TSA registers are confidential.
-      classification: d.meta.classification ?? RECORD_CLASSIFICATION[d.entityType] ?? 'confidential',
+      // internal; decisions and TSAs carry their own classification; committee actions their decision's and committees'
+      // (SEC-P5-03); the CP register is confidential; anything else fails closed.
+      classification: d.meta.classification ?? RECORD_CLASSIFICATION[d.entityType] ?? 'strictly_confidential',
       roomId: null,
       title: d.label,
       text: d.detail,

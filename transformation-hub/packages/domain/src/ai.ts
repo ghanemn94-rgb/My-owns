@@ -258,6 +258,23 @@ export function classificationWithinCeiling(classification: Classification, ceil
   return CLASSIFICATIONS.indexOf(classification) <= CLASSIFICATIONS.indexOf(ceiling);
 }
 
+/**
+ * Derived classification of an item that inherits from parent records (access-matrix §2.6 "max of its inputs";
+ * SEC-P5-03): the highest of the item's own register classification (`base`) and every parent classification given.
+ * Fails closed: a parent value that is missing (null / undefined — the parent should exist but could not be read) or not a
+ * known classification yields `strictly_confidential`, which no provider ever receives.
+ */
+export function derivedClassification(base: Classification, parents: readonly (string | null | undefined)[]): Classification {
+  let idx = CLASSIFICATIONS.indexOf(base);
+  if (idx < 0) return 'strictly_confidential';
+  for (const p of parents) {
+    const i = typeof p === 'string' ? CLASSIFICATIONS.indexOf(p as Classification) : -1;
+    if (i < 0) return 'strictly_confidential';
+    if (i > idx) idx = i;
+  }
+  return CLASSIFICATIONS[idx]!;
+}
+
 /** Budget evaluation before a provider call (AT-21). A monthly token budget of 0 means "no budget configured" → refuse. */
 export function evaluateBudget(b: {
   monthlyTokenBudget: number;

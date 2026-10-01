@@ -348,10 +348,12 @@ export class AiSettingsService {
         .where(eq(schema.aiProjectSettings.projectId, projectId));
     const jobs = await tx.execute(sql`update job set status = 'cancelled', finished_at = now(), updated_at = now(), last_error = 'cancelled_killswitch'
        where project_id = ${projectId} and kind in (${sql.join(AI_ACTION_JOB_KINDS.map((k) => sql`${k}`), sql`, `)}) and status = 'queued'`);
-    const approvals = await tx.execute(sql`update ai_action_approval set status = 'invalidated', invalidated_reason = 'kill_switch'
-       where project_id = ${projectId} and status = 'valid'`);
+    // Proposals before their approvals: the lock order of every proposal writer, including an execution in flight (SEC-P5-02).
+    // An execution that holds a proposal's lock commits first; this update then skips it (it is no longer pending).
     const proposals = await tx.execute(sql`update ai_proposal set status = 'cancelled', invalidated_reason = 'kill_switch', updated_at = now(), version = version + 1
        where project_id = ${projectId} and status in ('proposed', 'approved', 'executing')`);
+    const approvals = await tx.execute(sql`update ai_action_approval set status = 'invalidated', invalidated_reason = 'kill_switch'
+       where project_id = ${projectId} and status = 'valid'`);
     const deliveries = await tx.execute(sql`update delivery_record set status = 'cancelled', detail = 'cancelled_killswitch', updated_at = now()
        where project_id = ${projectId} and idempotency_key like 'ai:%' and status = 'queued'`);
     const result = {

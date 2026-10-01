@@ -12,6 +12,7 @@ import { AiSettingsService, AI_BRIEFING_JOB } from './ai-settings.service';
 import { AiRuntimeService } from './ai-runtime.service';
 import { AiGatewayService } from './ai-gateway.service';
 import { AiDetectionsService } from './ai-detections.service';
+import { AiKnowledgeService } from './ai-knowledge.service';
 import { ProviderRegistry } from './providers/provider-registry';
 
 const iso = (d: Date | string | null | undefined) => (d ? new Date(d).toISOString() : null);
@@ -33,6 +34,7 @@ export class AiOpsService {
     private readonly gateway: AiGatewayService,
     private readonly detections: AiDetectionsService,
     private readonly providers: ProviderRegistry,
+    private readonly knowledge: AiKnowledgeService,
   ) {}
 
   /** Runs are per user and never shared (AIT-08): only runs requested by / scheduled for the caller. */
@@ -65,9 +67,35 @@ export class AiOpsService {
       const claims = await this.runtime.dropInvisible(ctx, projectId, out.claims);
       const detections = await this.runtime.dropInvisible(ctx, projectId, out.detections);
       const conflicts = await this.runtime.dropInvisible(ctx, projectId, out.conflicts);
-      dto.output = { ...out, claims, detections, conflicts, droppedClaims: out.droppedClaims + (out.claims.length - claims.length) };
+      const { warnings, preparedRequests } = await this.recheckDerivedText(ctx, projectId, r, out);
+      dto.output = { ...out, claims, detections, conflicts, warnings, preparedRequests, droppedClaims: out.droppedClaims + (out.claims.length - claims.length) };
     }
     return dto;
+  }
+
+  /**
+   * SEC-P5-05: stored text that names or was written from sources is re-checked against the reader's CURRENT access, like
+   * the claims: a warning naming a source the reader can no longer see is dropped, and the model-written prepared requests are
+   * shown only while the reader may still read every record the run gave the model (`AiKnowledgeService.inputsVisible`).
+   * Runs stored before this rule (no markers in the snapshot) keep their warnings and prepared requests as recorded.
+   */
+  private async recheckDerivedText(ctx: RequestContext, projectId: string, r: typeof schema.aiRun.$inferSelect, out: AiRunOutput) {
+    const snap = (r.evidenceSnapshot ?? {}) as { warningSources?: unknown; modelPreparedFrom?: unknown };
+    const sources = Array.isArray(snap.warningSources)
+      ? (snap.warningSources as unknown[]).filter((w): w is { index: number; type: string; id: string } => !!w && typeof w === 'object' && typeof (w as { index?: unknown }).index === 'number' && typeof (w as { type?: unknown }).type === 'string' && typeof (w as { id?: unknown }).id === 'string')
+      : [];
+    let warnings = out.warnings;
+    if (sources.length) {
+      const visible = await this.knowledge.visibleCitationKeys(ctx, projectId, sources.map((w) => ({ type: w.type, id: w.id })));
+      const hidden = new Set(sources.filter((w) => !visible.has(`${w.type}:${w.id}`)).map((w) => w.index));
+      warnings = out.warnings.filter((_, i) => !hidden.has(i));
+    }
+    let preparedRequests = out.preparedRequests;
+    const from = typeof snap.modelPreparedFrom === 'number' ? snap.modelPreparedFrom : null;
+    if (from !== null && out.preparedRequests.length > from && !(await this.knowledge.inputsVisible(ctx, projectId, { runId: r.id }))) {
+      preparedRequests = out.preparedRequests.slice(0, from);
+    }
+    return { warnings, preparedRequests };
   }
 
   async status(ctx: RequestContext, projectId: string) {
@@ -79,7 +107,18 @@ export class AiOpsService {
     const now = this.clock.now();
     const month = this.clock.today(tz).slice(0, 7);
     const usage = await this.gateway.monthUsage(projectId, tz, month);
-    const [last] = await this.db.tx().select({ id: schema.aiRun.id, kind: schema.aiRun.kind, status: schema.aiRun.status, finishedAt: schema.aiRun.finishedAt, error: schema.aiRun.error }).from(schema.aiRun).where(eq(schema.aiRun.projectId, projectId)).orderBy(desc(schema.aiRun.createdAt)).limit(1);
+    // Project health uses the project's latest run status and error code (content-free); the run shown as "last run" is the
+    // caller's own — runs are never shared (AIT-08, SEC-P5-I2).
+    const [last] = await this.db.tx().select({ status: schema.aiRun.status, error: schema.aiRun.error }).from(schema.aiRun).where(eq(schema.aiRun.projectId, projectId)).orderBy(desc(schema.aiRun.createdAt)).limit(1);
+    const [mine] = ctx.principal.userId
+      ? await this.db
+          .tx()
+          .select({ id: schema.aiRun.id, kind: schema.aiRun.kind, status: schema.aiRun.status, finishedAt: schema.aiRun.finishedAt, error: schema.aiRun.error })
+          .from(schema.aiRun)
+          .where(and(eq(schema.aiRun.projectId, projectId), eq(schema.aiRun.requestedBy, ctx.principal.userId)))
+          .orderBy(desc(schema.aiRun.createdAt))
+          .limit(1)
+      : [];
     const next = await this.db.query<{ next: Date | null }>(`select min(next_run_at) as next from scheduled_job where project_id = $1 and kind = $2 and enabled`, [projectId, AI_BRIEFING_JOB]);
     const exhausted = s.monthlyTokenBudget > 0 && usage.tokens >= s.monthlyTokenBudget;
     const circuit = circuitIsOpen(s.circuitOpenUntil, now);
@@ -95,7 +134,7 @@ export class AiOpsService {
       killSwitch: s.killSwitch,
       health: health as 'off' | 'ok' | 'degraded' | 'circuit_open' | 'budget_exhausted' | 'kill_switch' | 'not_configured',
       failureReason,
-      lastRun: last ? { id: last.id, kind: last.kind, status: last.status, finishedAt: iso(last.finishedAt), error: last.error } : null,
+      lastRun: mine ? { id: mine.id, kind: mine.kind, status: mine.status, finishedAt: iso(mine.finishedAt), error: mine.error } : null,
       nextRunAt: iso(next.rows[0]?.next ?? null),
       circuitOpenUntil: circuit ? iso(s.circuitOpenUntil) : null,
       budget: { month, tokensUsed: usage.tokens, monthlyTokenBudget: s.monthlyTokenBudget, costUsed: usage.cost, monthlyCostBudget: s.monthlyCostBudget, currency: s.costCurrency, exhausted },

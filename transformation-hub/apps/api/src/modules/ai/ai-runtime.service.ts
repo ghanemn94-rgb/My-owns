@@ -423,6 +423,8 @@ export class AiRuntimeService {
     } else if (outcome.kind === 'error') {
       status = 'failed';
       error = outcome.error;
+      // The adapter refused an unapproved hop (allowlist or a redirect — SEC-P5-04): audited like the preflight refusal.
+      if (outcome.error.startsWith('EGRESS_')) await this.audit.record({ action: 'AI_EGRESS_BLOCKED', entityType: 'ai_run', entityId: prep.runId, projectId, outcome: 'denied', reason: `provider ${s.provider}: ${outcome.error}` });
     }
     // Circuit breaker bookkeeping.
     if (outcome.kind === 'ok' && (s.consecutiveFailures > 0 || s.circuitOpenUntil)) await this.settings.recordProviderOutcome(projectId, nextCircuitState(s, 'success', now));
@@ -458,7 +460,9 @@ export class AiRuntimeService {
           const text = sanitizeAiText(String(call.args['text'] ?? '')).text.slice(0, 2000);
           if (text) preparedRequests.push({ action: String(call.args['requestedAction'] ?? 'request').slice(0, 64), text });
         } else {
-          const res = await this.proposals.createFromTool(ctx, projectId, { id: prep.runId, requestedBy: prep.requestedBy }, tool, call.args, s);
+          // The records the model saw (its context) — a message's recipient must be able to read every one (SEC-P5-01).
+          const inputs = prep.sent.map((i) => ({ type: i.ref.type, id: i.ref.id }));
+          const res = await this.proposals.createFromTool(ctx, projectId, { id: prep.runId, requestedBy: prep.requestedBy, inputs }, tool, call.args, s);
           if ('refused' in res) refused.push({ name: call.name, reason: res.reason });
           else if (!proposals.some((p) => p.id === res.proposal.id)) proposals.push({ id: res.proposal.id, actionType: res.proposal.actionType, status: res.proposal.status });
         }
@@ -504,9 +508,12 @@ export class AiRuntimeService {
       dropped += kept.length - claims.length;
       claims = claims.slice(0, 20);
     }
-    if (status === 'budget_exceeded') warnings.push(L('The AI budget for this project is exhausted — no AI analysis was run. Deterministic detections and all project features remain available.', 'استُنفدت ميزانية الذكاء الاصطناعي لهذا المشروع — لم يُجرَ أي تحليل. تبقى الاكتشافات الحتمية وجميع وظائف المشروع متاحة.'));
-    if (status === 'failed') warnings.push(L(`The AI provider is unavailable (${error}). Deterministic detections and all project features remain available.`, `مزوّد الذكاء الاصطناعي غير متاح (${error}). تبقى الاكتشافات الحتمية وجميع وظائف المشروع متاحة.`));
-    if (status === 'cancelled') warnings.push(L('The AI emergency stop is active — nothing was run or sent.', 'إيقاف الطوارئ للذكاء الاصطناعي مفعّل — لم يُشغَّل أو يُرسل أي شيء.'));
+    // The status explanation is also the headline of a run that did not succeed (never a source-naming warning — SEC-P5-05).
+    let statusWarning: string | null = null;
+    if (status === 'budget_exceeded') statusWarning = L('The AI budget for this project is exhausted — no AI analysis was run. Deterministic detections and all project features remain available.', 'استُنفدت ميزانية الذكاء الاصطناعي لهذا المشروع — لم يُجرَ أي تحليل. تبقى الاكتشافات الحتمية وجميع وظائف المشروع متاحة.');
+    if (status === 'failed') statusWarning = L(`The AI provider is unavailable (${error}). Deterministic detections and all project features remain available.`, `مزوّد الذكاء الاصطناعي غير متاح (${error}). تبقى الاكتشافات الحتمية وجميع وظائف المشروع متاحة.`);
+    if (status === 'cancelled') statusWarning = L('The AI emergency stop is active — nothing was run or sent.', 'إيقاف الطوارئ للذكاء الاصطناعي مفعّل — لم يُشغَّل أو يُرسل أي شيء.');
+    if (statusWarning) warnings.push(statusWarning);
 
     // ---- conflicts & freshness ----
     const citedDocs = [...new Set(claims.flatMap((c) => c.citations.filter((x) => x.type === 'document').map((x) => x.id)))];
@@ -522,13 +529,18 @@ export class AiRuntimeService {
     const times = dated.map((i) => i.sourceUpdatedAt!).sort();
     const staleCut = now.getTime() - this.cfg.staleSourceDays * 86_400_000;
     const stale = dated.filter((i) => new Date(i.sourceUpdatedAt!).getTime() < staleCut);
-    for (const i of stale.slice(0, 5)) warnings.push(L(`Source "${i.title}" was last updated on ${i.sourceUpdatedAt!.slice(0, 10)} (older than ${this.cfg.staleSourceDays} days) — check it is still current.`, `آخر تحديث للمصدر «${i.title}» كان في ${i.sourceUpdatedAt!.slice(0, 10)} (أقدم من ${this.cfg.staleSourceDays} يومًا) — تحقق من أنه ما زال ساريًا.`));
+    // SEC-P5-05: a warning that names a source is stored with that source, so every later read re-checks it (`getRun`).
+    const warningSources: { index: number; type: string; id: string }[] = [];
+    for (const i of stale.slice(0, 5)) {
+      warningSources.push({ index: warnings.length, type: i.ref.type, id: i.ref.id });
+      warnings.push(L(`Source "${i.title}" was last updated on ${i.sourceUpdatedAt!.slice(0, 10)} (older than ${this.cfg.staleSourceDays} days) — check it is still current.`, `آخر تحديث للمصدر «${i.title}» كان في ${i.sourceUpdatedAt!.slice(0, 10)} (أقدم من ${this.cfg.staleSourceDays} يومًا) — تحقق من أنه ما زال ساريًا.`));
+    }
 
     const detections = prep.task === 'briefing' ? prep.detections.map((d) => AiDetectionsService.toDto(d)).slice(0, 100) : [];
     const insufficient = claims.length === 0 && status === 'succeeded';
     const headline =
       status !== 'succeeded'
-        ? (warnings[warnings.length - 1] ?? error ?? status)
+        ? (statusWarning ?? error ?? status)
         : `${insufficient ? L('Insufficient evidence in sources you are authorized to see. ', 'لا توجد أدلة كافية في المصادر المصرح لك بالاطلاع عليها. ') : ''}${L(
             `${claims.length} sourced finding(s); ${prep.missing.length} missing input(s); ${conflicts.length} conflict(s)${prep.task === 'briefing' ? `; ${detections.length} rule-based detection(s)` : ''}.`,
             `${claims.length} نتيجة موثقة؛ ${prep.missing.length} مدخلات ناقصة؛ ${conflicts.length} تعارضات${prep.task === 'briefing' ? `؛ ${detections.length} اكتشافات قائمة على القواعد` : ''}.`,
@@ -565,6 +577,10 @@ export class AiRuntimeService {
       cited: claims.flatMap((c) => c.citations.map((x) => ({ type: x.type, id: x.id, version: x.version ?? null }))),
       withheld: prep.withheld,
       modelToolCalls: outcome.kind === 'ok' ? outcome.response.toolCalls.map((t) => t.name).slice(0, 50) : [],
+      // SEC-P5-05 — re-checked on every read of the run (never returned): the source each warning names, and the index from
+      // which prepared requests are model-written text (shown only while the reader may read every input the model saw).
+      warningSources,
+      modelPreparedFrom: prep.preparedRequests.length,
     };
     const cost = prep.provider.estimateCost(usage.inputTokens, usage.outputTokens);
     const [row] = await this.db

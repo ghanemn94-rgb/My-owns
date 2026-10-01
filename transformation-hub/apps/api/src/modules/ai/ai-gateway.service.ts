@@ -69,7 +69,7 @@ export class AiGatewayService {
         roomRestricted++;
         continue;
       }
-      const cls = it.classification ?? 'confidential';
+      const cls = it.classification ?? 'strictly_confidential'; // unknown classification: fail closed (SEC-P5-03)
       if (!classificationWithinCeiling(cls, ceiling)) {
         aboveCeiling++;
         continue;
