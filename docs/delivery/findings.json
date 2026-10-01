@@ -8551,14 +8551,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-3/code-security-reviewer.json",
       "owner": "frontend-ux-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-01T22:36:54Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG1 round 3 (T-DG1-REV-SEC-R3). Pre-existing coverage gap noticed while reviewing the test-only F-DG1-232 change, not a regression. Proposed ID in the code-security range; the orchestrator may renumber."
+        },
+        {
+          "at": "2026-10-01T23:13:02Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at ac4a13c56e172a601b2b9eada5d4e5eafa857c9d"
         }
-      ]
+      ],
+      "fix_revision": "ac4a13c56e172a601b2b9eada5d4e5eafa857c9d",
+      "fix_summary": "New apps/web/tsconfig.e2e.json type-checks apps/web/e2e/**/*.ts and the root playwright.config.ts (extends the strict base, node types, isolated from vitest/vite); apps/web typecheck now runs tsc -p tsconfig.json && tsc -p tsconfig.e2e.json, so pnpm -r typecheck (and CI) covers the e2e specs. Fail-then-pass proof: a deliberate type error in an e2e spec is now caught. No real type errors existed. No product change; e2e tests still run green."
     }
   ]
 }
