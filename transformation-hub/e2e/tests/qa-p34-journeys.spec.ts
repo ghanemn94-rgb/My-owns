@@ -172,6 +172,10 @@ test.describe('QA P3/P4 — critical journeys through the UI [AT-09, AT-10, AT-2
       const { page } = pm;
       await page.goto(`/projects/${dc}/readiness/tsa`);
       await page.getByLabel('Search code or name').fill(name);
+      // QA-P34-07: the search reaches the URL through a 300 ms debounced router.replace; a row-link click before it lands is
+      // undone by that replace. Wait for the filter to be applied (URL and a one-row table) before clicking.
+      await page.waitForURL((u) => u.searchParams.get('q') === name);
+      await expect(page.getByTestId('tsa-table').getByRole('row')).toHaveCount(2);
       const row = page.getByTestId('tsa-table').getByRole('row').filter({ hasText: name });
       await expect(row).toHaveCount(1);
       await row.getByRole('link').first().click();
@@ -414,6 +418,39 @@ test.describe('QA P3/P4 — critical journeys through the UI [AT-09, AT-10, AT-2
       await pm.close();
       await legal.close();
       await sponsor.close();
+    }
+  });
+
+  test('OBSERVED QA-P34-07: a row link clicked within the 300 ms search debounce is undone when the navigation outlasts the debounce (the cause of two run-B failures)', async ({ browser, baseURL }) => {
+    test.setTimeout(120_000);
+    const pm = await asPersona(browser, baseURL!, P.pm);
+    try {
+      const { page } = pm;
+      await page.goto(`/projects/${dc}/readiness/tsa`);
+      const row = page.getByTestId('tsa-table').getByRole('row').filter({ hasText: 'Legacy monitoring bridge' });
+      await expect(row).toHaveCount(1); // visible before any search
+      // The detail route's payload is answered 1.5 s late (as under load); the search is typed and the row clicked at once.
+      await page.route(/\/readiness\/tsa\/[0-9a-f-]{36}/, async (route) => {
+        await new Promise((r) => setTimeout(r, 1_500));
+        await route.continue().catch(() => undefined);
+      });
+      // Control: the same slow navigation WITHOUT typing reaches the detail page.
+      await row.getByRole('link').first().click();
+      await expect(page.getByTestId('tsa-detail')).toBeVisible({ timeout: 20_000 });
+      console.log('QA-P34-07 control: slow navigation without a pending search → TSA detail shown');
+      await page.goto(`/projects/${dc}/readiness/tsa`);
+      await expect(row).toHaveCount(1);
+      await page.getByLabel('Search code or name').fill('Legacy monitoring bridge');
+      await row.getByRole('link').first().click();
+      await page.waitForTimeout(4_000);
+      const url = new URL(page.url());
+      console.log(`QA-P34-07: after the click the page is ${url.pathname}${url.search}; TSA detail shown: ${await page.getByTestId('tsa-detail').count()}`);
+      await page.unrouteAll({ behavior: 'ignoreErrors' });
+      // Current behaviour: back on the filtered register, the navigation lost.
+      expect(url.pathname).toMatch(/\/readiness\/tsa$/);
+      expect(url.searchParams.get('q')).toBe('Legacy monitoring bridge');
+    } finally {
+      await pm.close();
     }
   });
 
