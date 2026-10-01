@@ -4,7 +4,11 @@
 # Agent shells have no network (D-025), so dependency installation is an ORCHESTRATOR step. The orchestrator must never
 # run a package manager with its own unconfined privileges: a malicious or compromised dependency's install/postinstall
 # script would then run against the real filesystem and secrets. This wrapper runs the package manager inside bubblewrap:
-#   - the root filesystem is READ-ONLY; only the target tree (the repo) and the package store are writable;
+#   - the root filesystem is READ-ONLY; only the target tree (the repo) and the package store are writable, and the
+#     repo's control paths (.git, .claude, .github, tools/{gates,agents,deps,source}, docs/{source,delivery}, …) are
+#     re-bound READ-ONLY so a dependency script cannot tamper with git internals, delivery controls or CI config;
+#   - the process runs with ALL capabilities dropped and from a CLEARED environment (only PATH/HOME/XDG/PNPM/registry and
+#     the proxy's TLS vars are set) so the orchestrator's own environment — which may hold credentials — never crosses in;
 #   - package lifecycle scripts (install/preinstall/postinstall/prepare/…) are DISABLED unless a package is on the
 #     reviewed allow-list in the root package.json `pnpm.onlyBuiltDependencies`;
 #   - the lockfile is enforced: the default mode refuses to install without a committed lockfile or to change it
@@ -71,8 +75,9 @@ case "$MODE" in
 esac
 
 # bubblewrap: read-only root; writable only the repo (target tree) and the pnpm store; private /tmp, /dev, /proc; own
-# user/ipc/pid/uts/cgroup namespaces; host network shared (registry reachability, bounded by the env policy). The
-# container has no unprivileged user namespaces for nesting, but bwrap itself runs fine as root here (see D-030).
+# ipc/pid/uts/cgroup namespaces; all capabilities dropped; host network shared (registry reachability, bounded by the env
+# policy). The container has no unprivileged user namespaces for nesting (so no --unshare-user), but bwrap itself runs
+# fine as root here and --cap-drop ALL confines the install's process (see D-030).
 bwrap_args=(
   --ro-bind / /
   --dev /dev
@@ -81,10 +86,25 @@ bwrap_args=(
   --tmpfs /run
   --bind "$REPO_ROOT" "$REPO_ROOT"
   --bind "$PNPM_STORE" "$PNPM_STORE"
+)
+# Re-bind the repository's control paths READ-ONLY on top of the writable target tree, so a dependency's install script
+# cannot tamper with git internals, delivery controls, CI config or the sources even though the tree itself is writable
+# (F-DG1-102). Only paths that actually exist are bound — the disposable scratch trees used under --root have none of
+# them, so the loop is a no-op there.
+for ctrl in .git .claude .github .gitignore .gitattributes CLAUDE.md CLAUDE.local.md \
+            tools/gates tools/agents tools/deps tools/source docs/source docs/delivery; do
+  [ -e "$REPO_ROOT/$ctrl" ] && bwrap_args+=(--ro-bind "$REPO_ROOT/$ctrl" "$REPO_ROOT/$ctrl")
+done
+bwrap_args+=(
   --unshare-ipc --unshare-pid --unshare-uts --unshare-cgroup
+  --cap-drop ALL
   --die-with-parent
   --new-session
   --chdir "$REPO_ROOT"
+  # Start from an EMPTY environment, then set only what the install needs: the orchestrator's own environment
+  # (which may hold credentials/secrets) must not cross into code that runs a package manager (F-DG1-102).
+  --clearenv
+  --setenv PATH "$PATH"
   --setenv HOME "$SBX_TMP"
   --setenv XDG_CACHE_HOME "$SBX_TMP/cache"
   --setenv XDG_STATE_HOME "$SBX_TMP/state"
@@ -94,6 +114,12 @@ bwrap_args=(
   --setenv npm_config_registry "https://registry.npmjs.org/"
   --setenv CI "1"
 )
+# Pass through ONLY the network/TLS variables needed to reach the registry through the managed proxy (if the environment
+# sets them); nothing else — no credentials — crosses in. Each is forwarded only when non-empty.
+for v in HTTPS_PROXY HTTP_PROXY NO_PROXY https_proxy http_proxy no_proxy \
+         NODE_EXTRA_CA_CERTS SSL_CERT_FILE SSL_CERT_DIR; do
+  [ -n "${!v:-}" ] && bwrap_args+=(--setenv "$v" "${!v}")
+done
 # Recreate the private tmp inside the sandbox before the command runs.
 prelude='mkdir -p "$HOME" "$XDG_CACHE_HOME" "$XDG_STATE_HOME" "$XDG_DATA_HOME" "$PNPM_HOME";'
 
