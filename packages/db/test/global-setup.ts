@@ -7,7 +7,8 @@
 //  3. Creates mth_test_<runId> OWNED BY mth_owner and applies ALL migrations to it as mth_owner (this doubles as the
 //     REQ-S19-004 "applied to a fresh database" check).
 //  4. Provides the URLs to test files (inject("mthDb")) and as TEST_DATABASE_URL / TEST_DATABASE_OWNER_URL.
-//  5. Drops the database at teardown (unless MTH_KEEP_TEST_DB=1, for debugging).
+//  5. Drops the database at teardown (unless MTH_KEEP_TEST_DB=1, for debugging), only after every client of it has
+//     disconnected (dropScratchDatabase, F-DG1-009).
 import { spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { createRequire } from "node:module";
@@ -75,10 +76,54 @@ export async function createScratchDatabase(adminUrl: string, prefix: string): P
   return name;
 }
 
-export async function dropScratchDatabase(adminUrl: string, name: string): Promise<void> {
-  const admin = new pg.Client({ connectionString: adminUrl });
+/**
+ * Thrown when a scratch database still has client connections after the grace period: a test left a pool or client
+ * open. The database is NOT force-dropped then, because terminating a live client is exactly what surfaces as an
+ * unhandled FATAL 57P01 "terminating connection due to administrator command" (F-DG1-009). The leak is named instead.
+ */
+export class ScratchDatabaseInUse extends Error {}
+
+/** Lists the other backends connected to `database` (application name and state), excluding this session. */
+async function otherBackends(admin: PgModule.Client, database: string): Promise<string[]> {
+  const { rows } = await admin.query<{ application_name: string; state: string | null }>(
+    "SELECT application_name, state FROM pg_stat_activity WHERE datname = $1 AND pid <> pg_backend_pid()",
+    [database],
+  );
+  return rows.map((r) => `${r.application_name || "?"} (${r.state ?? "?"})`);
+}
+
+/**
+ * Drops a scratch database only once NO client is connected to it any more (F-DG1-009, generalizing F-DG1-110).
+ *
+ * node-postgres' `pool.end()` / `db.destroy()` resolve as soon as the pool has *asked* its clients to end, before the
+ * server has processed their Terminate messages, so their backends can still exist for a moment. A `DROP DATABASE ...
+ * WITH (FORCE)` in that window terminates them and the server sends FATAL 57P01 to a client that may still carry the
+ * pool's idle listener, which re-emits it as a pool `error` event - an uncaught exception when the pool has no
+ * listener. So this waits (bounded, polling pg_stat_activity) until the closing backends have exited, and only then
+ * drops. `WITH (FORCE)` remains only as a guard against a connection racing in between; it then has nobody to
+ * terminate. A connection that is still there after `timeoutMs` is a leak: it fails with ScratchDatabaseInUse naming
+ * it, rather than being terminated into an unhandled error somewhere else.
+ */
+export async function dropScratchDatabase(
+  adminUrl: string,
+  name: string,
+  options: { readonly timeoutMs?: number } = {},
+): Promise<void> {
+  if (!/^[a-z_][a-z0-9_]*$/.test(name)) throw new Error(`refusing to drop an unexpected database name: ${name}`);
+  const admin = new pg.Client({ connectionString: adminUrl, application_name: "mth-test-drop" });
   await admin.connect();
   try {
+    const until = Date.now() + (options.timeoutMs ?? 10_000);
+    for (;;) {
+      const open = await otherBackends(admin, name);
+      if (open.length === 0) break;
+      if (Date.now() > until)
+        throw new ScratchDatabaseInUse(
+          `test teardown: ${open.length} connection(s) to ${name} are still open, so it is not dropped ` +
+            `(a pool or client was not ended): ${open.join(", ")}`,
+        );
+      await new Promise((r) => setTimeout(r, 25));
+    }
     await admin.query(`DROP DATABASE IF EXISTS ${name} WITH (FORCE)`);
   } finally {
     await admin.end();

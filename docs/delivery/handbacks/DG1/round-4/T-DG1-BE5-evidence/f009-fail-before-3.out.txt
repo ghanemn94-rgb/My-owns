@@ -1,0 +1,45 @@
+cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit port 5483
+tree HEAD: c6cd4111cce837b817a76726f8d13bf30f0d6bf6
+
+ RUN  v3.2.4 /home/user/mth-wt-be5
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mupdlou4_20a8929b; applied 8 migrations to a fresh database
+ ❯ |integration| packages/db/test/integration/scratch-drop.test.ts (3 tests | 1 failed | 2 skipped) 8904ms
+   × dropScratchDatabase never terminates a live client (F-DG1-009) > a drop right after pool.end() raises no 57P01 on the closing pool (40 rounds, 8 clients each) 8902ms
+     → expected [ …(4) ] to deeply equal []
+   ↓ dropScratchDatabase never terminates a live client (F-DG1-009) > a client that is still connected is NOT terminated: the drop refuses, names it, and succeeds once it ends
+   ↓ dropScratchDatabase never terminates a live client (F-DG1-009) > refuses a database name that is not a plain identifier (no SQL is built from it)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| packages/db/test/integration/scratch-drop.test.ts > dropScratchDatabase never terminates a live client (F-DG1-009) > a drop right after pool.end() raises no 57P01 on the closing pool (40 rounds, 8 clients each)
+AssertionError: expected [ …(4) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "57P01 terminating connection due to administrator command",
++   "57P01 terminating connection due to administrator command",
++   "57P01 terminating connection due to administrator command",
++   "57P01 terminating connection due to administrator command",
++ ]
+
+ ❯ packages/db/test/integration/scratch-drop.test.ts:38:20
+     36|     }
+     37|     await new Promise((r) => setTimeout(r, 100)); // let any late sock…
+     38|     expect(errors).toEqual([]);
+       |                    ^
+     39|   });
+     40| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 skipped (3)
+   Start at  10:13:01
+   Duration  10.17s (transform 97ms, setup 0ms, collect 236ms, tests 8.90s, environment 0ms, prepare 72ms)
+
+EXIT=1

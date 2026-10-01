@@ -23,35 +23,6 @@ export interface WorkerEnv {
 /** Every pg-boss instance a test created, with the database URL it uses. */
 const openBosses = new Map<PgBoss, string>();
 
-/**
- * Waits until no client is connected to `database` any more (a closed pool's backends exit asynchronously), so the
- * DROP ... WITH (FORCE) never terminates a live connection (F-DG1-110: unhandled 57P01 "terminating connection due to
- * administrator command"). A connection that is still there after the timeout is a LEAK: it fails the teardown with
- * its application_name instead of surfacing later as a flaky unhandled error.
- */
-async function waitForNoConnections(adminUrl: string, database: string, timeoutMs = 10_000): Promise<void> {
-  const admin = new pg.Client({ connectionString: adminUrl });
-  await admin.connect();
-  try {
-    const until = Date.now() + timeoutMs;
-    for (;;) {
-      const { rows } = await admin.query<{ application_name: string; state: string | null }>(
-        "SELECT application_name, state FROM pg_stat_activity WHERE datname = $1 AND pid <> pg_backend_pid()",
-        [database],
-      );
-      if (rows.length === 0) return;
-      if (Date.now() > until)
-        throw new Error(
-          `worker test teardown: ${rows.length} connection(s) to ${database} still open before the drop: ` +
-            rows.map((r) => `${r.application_name || "?"} (${r.state ?? "?"})`).join(", "),
-        );
-      await new Promise((r) => setTimeout(r, 50));
-    }
-  } finally {
-    await admin.end();
-  }
-}
-
 export async function workerEnv(): Promise<WorkerEnv> {
   const { adminUrl } = testDatabase();
   const name = await createScratchDatabase(adminUrl, "mth_wrk");
@@ -78,10 +49,11 @@ export async function workerEnv(): Promise<WorkerEnv> {
         await boss.stop({ graceful: false, wait: true, timeout: 5000 }).catch(() => undefined);
         openBosses.delete(boss);
       }
-      // 2. the test's own pools, 3. wait until the server has no client left, 4. only then drop the database.
+      // 2. the test's own pools, 3. drop the database once the server has no client of it left.
       await db.destroy();
       await owner.end();
-      await waitForNoConnections(adminUrl, name);
+      // dropScratchDatabase waits until the server has no client of the database left (F-DG1-110/F-DG1-009), so the
+      // forced drop never terminates a live connection; a leaked connection fails the teardown with its name.
       await dropScratchDatabase(adminUrl, name);
     },
   };

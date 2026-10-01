@@ -15,6 +15,13 @@
 //       `globalThis.process` / `.Function` / `.eval` / `.require`;
 //     - code evaluation: `Function` / `eval` in any value position (`new Function("return import(s)")`), and
 //       `.constructor(...)` / `new x.constructor(...)` / `x["constructor"]` (e.g. the AsyncFunction constructor);
+//     - F-DG1-121, the same constructor reached WITHOUT calling `.constructor` directly: any value use of a
+//       `.constructor` member (`const C = (async () => {}).constructor; C(...)`, `Reflect.construct(f.constructor,
+//       ...)`, `Object.getPrototypeOf(async function () {}).constructor`), a `constructor` key in a destructuring
+//       binding or assignment pattern (`const { constructor: F } = fn`, `({ constructor } = fn)`, string or computed
+//       key), and the string "constructor" as a value (`Reflect.get(fn, "constructor")`). Whether the receiver is a
+//       function (async / generator / async generator) cannot be known statically, so every such use is reported;
+//       a class's own `constructor() {}` declaration is not a use and stays clean.
 //     - the built-ins that evaluate code: `vm`, `worker_threads` (with or without `node:`).
 //    Data flow through third-party code cannot be followed statically; the rules close every syntactic route.
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
@@ -108,6 +115,34 @@ function isValueReference(node: ts.Identifier): boolean {
   return true;
 }
 
+/** True for a property name `constructor`, `"constructor"` or `["constructor"]` (in a pattern or object literal). */
+function isConstructorKey(name: ts.Node | undefined): boolean {
+  if (!name) return false;
+  if (ts.isIdentifier(name) || ts.isStringLiteral(name) || ts.isNoSubstitutionTemplateLiteral(name))
+    return name.text === "constructor";
+  if (ts.isComputedPropertyName(name)) return literalText(unwrap(name.expression)) === "constructor";
+  return false;
+}
+
+/** True when the object literal is (nested in) the target of a destructuring assignment: `({ a } = x)`, `for ({ a } of xs)`. */
+function inAssignmentPattern(literal: ts.Node): boolean {
+  let n: ts.Node = literal;
+  while (
+    ts.isParenthesizedExpression(n.parent) ||
+    ts.isArrayLiteralExpression(n.parent) ||
+    ts.isObjectLiteralExpression(n.parent) ||
+    ts.isPropertyAssignment(n.parent) ||
+    ts.isSpreadElement(n.parent) ||
+    ts.isSpreadAssignment(n.parent)
+  )
+    n = n.parent;
+  const p = n.parent;
+  return (
+    (ts.isBinaryExpression(p) && p.operatorToken.kind === ts.SyntaxKind.EqualsToken && p.left === n) ||
+    ((ts.isForOfStatement(p) || ts.isForInStatement(p)) && p.initializer === n)
+  );
+}
+
 function literalText(node: ts.Node | undefined): string | null {
   if (!node) return null;
   if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return node.text;
@@ -160,12 +195,12 @@ export function scanSource(fileName: string, source: string): ScanResult {
         if (RUNTIME_ROOTS.has(name) || CODE_EVALUATORS.has(name) || name === "require" || name === "module")
           evasions.push(`${root}.${name} (${at(node)})`);
       }
-      if (
-        node.name.text === "constructor" &&
-        (ts.isCallExpression(node.parent) || ts.isNewExpression(node.parent)) &&
-        node.parent.expression === node
-      )
-        evasions.push(`code evaluation via .constructor() (${at(node)})`);
+      if (node.name.text === "constructor") {
+        const called =
+          (ts.isCallExpression(node.parent) || ts.isNewExpression(node.parent)) && node.parent.expression === node;
+        // F-DG1-121: an aliased/passed `.constructor` is the same Function/AsyncFunction/GeneratorFunction constructor.
+        evasions.push(`code evaluation via .constructor${called ? "()" : " (aliased)"} (${at(node)})`);
+      }
     } else if (ts.isIdentifier(node) && isValueReference(node)) {
       if (CODE_EVALUATORS.has(node.text)) {
         evasions.push(`code evaluation via ${node.text} (${at(node)})`);
@@ -186,6 +221,26 @@ export function scanSource(fileName: string, source: string): ScanResult {
         if (!wrappedMemberUse) evasions.push(`${node.text} used as a value (${at(node)})`);
       }
     }
+    // F-DG1-121: the constructor taken out by destructuring (binding or assignment pattern; plain, string or
+    // computed key; shorthand) - `const { constructor: F } = fn`, `({ constructor: F } = fn)`, `const { constructor } = fn`.
+    if (
+      (ts.isBindingElement(node) && isConstructorKey(node.propertyName ?? node.name)) ||
+      ((ts.isPropertyAssignment(node) || ts.isShorthandPropertyAssignment(node)) &&
+        isConstructorKey(node.name) &&
+        inAssignmentPattern(node.parent))
+    )
+      evasions.push(`code evaluation via a destructured constructor (${at(node)})`);
+    // F-DG1-121: the key as a string value - `Reflect.get(fn, "constructor")`, `getOwnPropertyDescriptor(p, "constructor")`.
+    // (Element-access keys are reported above already; literal types and import specifiers are not values.)
+    if (
+      (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) &&
+      node.text === "constructor" &&
+      !(ts.isElementAccessExpression(node.parent) && node.parent.argumentExpression === node) &&
+      !ts.isComputedPropertyName(node.parent) &&
+      !(ts.isBindingElement(node.parent) || ts.isPropertyAssignment(node.parent)) &&
+      !ts.isLiteralTypeNode(node.parent)
+    )
+      evasions.push(`code evaluation via the "constructor" key as a value (${at(node)})`);
     ts.forEachChild(node, visit);
   };
   visit(sf);

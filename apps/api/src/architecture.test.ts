@@ -156,6 +156,48 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
       /code evaluation via \.constructor\(\)/,
     ],
     ["M7 ['constructor'] member", `const C = (() => 0)["constructor"];`, /code evaluation via \["constructor"\]/],
+    // F-DG1-121: the Function/AsyncFunction/GeneratorFunction constructor reached through an ALIASED `.constructor`
+    // (round-3 code-security plants first; each was missed by the round-3 lint).
+    [
+      "N1 AsyncFunction via aliased .constructor",
+      `const C = (async () => {}).constructor as any;\nawait C("s", "return import(s)")("../access/policy.ts");`,
+      /code evaluation via \.constructor \(aliased\)/,
+    ],
+    [
+      "N2 constructor destructured",
+      `const { constructor: F } = (async () => {}) as any;\nawait F("s", "return import(s)")("../access/policy.ts");`,
+      /code evaluation via a destructured constructor/,
+    ],
+    [
+      "N3 Reflect.construct of .constructor",
+      `const f = Reflect.construct((async () => {}).constructor, ["s", "return import(s)"]);\nawait f("../access/policy.ts");`,
+      /code evaluation via \.constructor \(aliased\)/,
+    ],
+    [
+      "N4 getPrototypeOf(...).constructor aliased",
+      `const AF = Object.getPrototypeOf(async function () {}).constructor;\nawait AF("s", "return import(s)")("../access/policy.ts");`,
+      /code evaluation via \.constructor \(aliased\)/,
+    ],
+    [
+      "N5 generator constructor, shorthand destructuring",
+      `const { constructor } = function* () {} as any;\nconstructor("return import('../access/policy.ts')")().next();`,
+      /code evaluation via a destructured constructor/,
+    ],
+    [
+      "N6 destructuring assignment with a string key",
+      `let G: any;\n({ "constructor": G } = async function* () {});`,
+      /code evaluation via a destructured constructor/,
+    ],
+    [
+      "N7 computed constructor key in a binding pattern",
+      `const { ["constructor"]: H } = (() => 0) as any;`,
+      /code evaluation via a destructured constructor/,
+    ],
+    [
+      "N8 constructor key as a string value",
+      `const C = Reflect.get(async () => {}, "constructor");`,
+      /code evaluation via the "constructor" key as a value/,
+    ],
     ["M8 node:vm", `import vm from "node:vm";`, /imports package node:vm/],
     ["M9 worker_threads", `import { Worker } from "worker_threads";`, /imports package worker_threads/],
   ])("%s is a violation", (_case, source, message) => {
@@ -179,6 +221,11 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
       `const o = { process: 1, eval: 2, Function: 3 };\nconst e = o.eval + o.process + o.Function;`,
       `let t: typeof process.env | undefined;`,
       `class K { constructor() {} }\nconst k = new K();`,
+      // F-DG1-121 rules flag uses of the constructor, not definitions: a class constructor with parameter properties,
+      // a plain object literal (not a destructuring target) and a `constructor` type member stay clean.
+      `class P { constructor(private readonly n: number) {} }`,
+      `const spec = { constructor: "Cls", name: "x" };`,
+      `interface I { constructor: string }`,
     ].join("\n");
     expect(planted("transformations", clean)).toEqual([]);
   });
