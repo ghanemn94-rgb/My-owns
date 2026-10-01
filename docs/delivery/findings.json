@@ -11135,7 +11135,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-10/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "ACCEPTED_OBSERVATION",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-01T14:44:39Z",
@@ -11156,10 +11156,15 @@
           "at": "2026-10-01T15:34:01Z",
           "status": "ACCEPTED_OBSERVATION",
           "note": "verified by code-security-reviewer round 11: PASS"
+        },
+        {
+          "at": "2026-10-01T15:55:51Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 792973b308d19e2c57490ff7c4a185939cd46600"
         }
       ],
-      "fix_revision": "d54c151c44e20810e75d637784c33875959e71a3",
-      "fix_summary": "setEngine ban is spelled-name-based; reaching crypto.setEngine by runtime enumeration of the node:crypto namespace is documented+pinned as residual (a); 'every form'->'every SPELLED form'. architecture 109/109.",
+      "fix_revision": "792973b308d19e2c57490ff7c4a185939cd46600",
+      "fix_summary": "Module-lint rule 5 (named-imports-only for node:crypto, which carries the banned member setEngine) flags any namespace/default/export-*/import=require/dynamic-import() binding, so the crypto namespace can no longer be bound and enumerated to reach setEngine; residual (a) corrected to plain-objects/third-party only; legit plain-object enumeration still allowed. architecture 122/122; full unit 315/315 Node 22+24.",
       "verification": {
         "by_role": "code-security-reviewer",
         "invocation_reference": {
@@ -11342,14 +11347,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-11/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-01T15:34:01Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG1 round 11 while verifying F-DG1-132/215. My assignment asked me to confirm that the residual framing is honest and to check the identity/access files. The enumeration reach itself is the documented residual (a) and is NOT what this finding is about. This finding concerns only the accuracy of the stated justification. Proposed ID: the next free number in the code-security 1xx range (F-DG1-133); the orchestrator may renumber. Low and non-mandatory, so it does not block DG1."
+        },
+        {
+          "at": "2026-10-01T15:55:51Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 792973b308d19e2c57490ff7c4a185939cd46600"
         }
-      ]
+      ],
+      "fix_revision": "792973b308d19e2c57490ff7c4a185939cd46600",
+      "fix_summary": "Module-lint rule 5 (named-imports-only for node:crypto, which carries the banned member setEngine) flags any namespace/default/export-*/import=require/dynamic-import() binding, so the crypto namespace can no longer be bound and enumerated to reach setEngine; residual (a) corrected to plain-objects/third-party only; legit plain-object enumeration still allowed. architecture 122/122; full unit 315/315 Node 22+24."
     }
   ]
 }
