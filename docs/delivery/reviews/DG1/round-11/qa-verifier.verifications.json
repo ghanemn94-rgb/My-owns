@@ -1,0 +1,37 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG1-214",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on frozen candidate sha256:e5cc6ef982ba7d53ed80138c0cbaa0119bcfe8dcaad4e324b5dafdb6431afeb8 (freeze commit 32e6478; the ID recomputes identically in a full disposable clone). Fix d54c151 (T-DG1-FE3) is harness-only: the r10->r11 manifest diff adds apps/web/test/jsdom-native-abort-environment.ts and changes apps/web/vitest.config.ts (environment -> the custom env) and apps/web/tsconfig.json (include test). No product source changed. On Node v24.21.0, the ADR-0001 target and a CI unit-matrix leg (ci.yml node ['24','22']): pnpm test gives 302/302, unit-web 110/110, unit-node 192/192, and 0 'Expected signal to be an instance of AbortSignal'. The round-10 failing files app.test.tsx and transformations.test.tsx are 37/37 green on Node 24, including the F-DG1-004 and F-DG1-210 EN/AR/fail-safe regression tests. On Node v22.22.2 the result is the same, 302/302 with unit-web 110/110. Negative control, in the disposable clone only: reverting the environment to built-in 'jsdom' reproduces exactly the round-10 failure on Node 24 (12 failed | 98 passed, all 'RequestInit: Expected signal (\"AbortSignal {}\") to be an instance of AbortSignal') and stays 110/110 on Node 22. The custom environment is therefore what fixes it, and the finding's expected outcome (the required unit check passes on every declared runtime, in particular Node 24) is met. e2e (real Chromium, where AbortSignal and Request always share a realm) is 22/22 on both runtimes.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-11/04-unit-node24.log",
+        "docs/delivery/test-evidence/DG1/qa/round-11/05-unit-web-v24.21.0.log",
+        "docs/delivery/test-evidence/DG1/qa/round-11/03-unit-node22.log",
+        "docs/delivery/test-evidence/DG1/qa/round-11/05-unit-web-v22.22.2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-11/06-f214-node24-files-and-negative-control.log",
+        "docs/delivery/test-evidence/DG1/qa/round-11/01b-candidate-diff-r10-r11.log",
+        "docs/delivery/test-evidence/DG1/qa/round-11/12-e2e-node24.log",
+        "apps/web/test/jsdom-native-abort-environment.ts",
+        "apps/web/vitest.config.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-215",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on frozen candidate sha256:e5cc6ef9…afeb8 (freeze 32e6478). The finding's expected outcome lists 'name enumeration of an allow-listed namespace as a stated residual and correct the every form / every syntactic route wording' as an acceptable closure, and the implementer (T-DG1-BE12) chose that one. Checked: (1) architecture.testkit.ts. Rule 1, the member audit, the SAFE_NODE_BUILTINS doc and BANNED_PRIMITIVES now say 'every SPELLED form'. Residual (a) explicitly names enumeration of an allow-listed built-in's namespace/default binding via Object.entries/Object.values/Map/find/regex with a runtime-built key, with setEngine examples. It now reads 'Rules 1-2 remove every SPELLED route inside module source, not every runtime route'. D-055 references F-DG1-132/215 residual (a) (19-f215-wording-check.log). (2) architecture.test.ts pins E1-E4 as 0 violations ('is NOT flagged (accepted static-lint residual)') and keeps S1-S3 as violations: 109/109 on Node 22 and on Node 24. (3) My independent probe, 31/31 on both runtimes: all 20 spelled forms are flagged 'native loader'. E1-E4 and the extra X2 (spread of values + fn.name regex) reach crypto.setEngine (runtime identity true; nothing loaded) with 0 violations, which is the documented residual, so no undocumented route remains in that class. The extra X1 (getOwnPropertyDescriptors) is flagged as reflection, stricter than the residual. My attempt-1 probe wrongly expected X1 to be unflagged; those logs are kept. The justification holds: access/rules.ts and identity/routes.ts really use new Map(Object.entries(...)). Per the round-11 common instructions, a namespace-enumeration reach of an allow-listed member is the documented residual (a), not a new finding. F-DG1-132 (code-security) is the same route; this verification covers the shared evidence, but I leave 132's closure to its reporter.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-11/07-f215-arch-selfcheck-extract.log",
+        "docs/delivery/test-evidence/DG1/qa/round-11/19-f215-wording-check.log",
+        "docs/delivery/test-evidence/DG1/qa/round-11/08-r11-setengine-probe-v22.22.2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-11/08-r11-setengine-probe-v24.21.0.log",
+        "docs/delivery/test-evidence/DG1/qa/round-11/08-r11-setengine-probe-v22.22.2.attempt1.log",
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r11-setengine-probe.test.ts",
+        "apps/api/src/architecture.testkit.ts",
+        "apps/api/src/architecture.test.ts"
+      ]
+    }
+  ]
+}
