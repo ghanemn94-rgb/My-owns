@@ -683,7 +683,7 @@
       "id": "DG1",
       "stage": "P1",
       "name": "Architecture and working foundation",
-      "state": "BUILDING",
+      "state": "REVIEWING",
       "depends_on": [
         "DG0"
       ],
@@ -702,12 +702,25 @@
         ]
       },
       "candidate": {
-        "candidate_id": null,
-        "source_commit": null,
-        "frozen_at": null,
-        "manifest_path": null
+        "candidate_id": "sha256:7fcc4943694dc9d7d207b18b53c42eab1efa131da46b898f733ae20298b39367",
+        "source_commit": "85e5bbd601643d21b7420c704f99176d9e94b35a",
+        "frozen_at": "2026-10-01T06:19:20Z",
+        "manifest_path": "docs/delivery/candidates/DG1/7fcc4943694dc9d7.manifest.json"
       },
-      "review_rounds": [],
+      "review_rounds": [
+        {
+          "round": 1,
+          "candidate_id": "sha256:7fcc4943694dc9d7d207b18b53c42eab1efa131da46b898f733ae20298b39367",
+          "frozen_at": "2026-10-01T06:19:20Z",
+          "source_commit": "85e5bbd601643d21b7420c704f99176d9e94b35a",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG1/round-1/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG1/round-1/qa-verifier.json"
+          },
+          "note": "DG1 round 1: 3 independent reviewers verify the frozen P1 candidate (architecture, product code+security, acceptance) + the 12 DG1-final requirements; auditor records the gate."
+        }
+      ],
       "gate_record": "docs/delivery/gates/DG1.json",
       "blockers": [],
       "history": [
@@ -719,6 +732,11 @@
           "state": "BUILDING",
           "at": "2026-09-30T16:05:00Z",
           "note": "DG0 APPROVED. Begin P1/DG1 architecture and working foundation. Serial-first: solution-architect (T-DG1-ARCH-01) writes ADRs (stack/boundaries/auth/storage), ERD/data-dictionary, OpenAPI v1 contract, monorepo skeleton, config-versioning and migration design, and the P1 work split; then backend/frontend/devops build in parallel. Env verified: Node 22.22.2, pnpm 10.33.0, npm registry reachable."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-10-01T06:25:00Z",
+          "note": "P1 implementation integrated (solution-architect ADRs/ERD/OpenAPI/skeleton; backend API/auth/audit/worker + branding endpoint; frontend bilingual shell/tokens; devops Docker/Compose/CI/Keycloak; qa acceptance suites; analyst register). Orchestrator: REQ-DLV-042 installer (D-046), A26 first defect drill, vitest/ci/prettier integration, register IMPLEMENTED (12/12) + D-047. Prefreeze all PASS. Candidate frozen sha256:7fcc4943 (source 85e5bbd) for review round 1."
         }
       ]
     },
