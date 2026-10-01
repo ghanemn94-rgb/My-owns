@@ -1,0 +1,45 @@
+== tsconfig.build.json
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "rootDir": "src",
+    "outDir": "dist",
+    "customConditions": []
+  },
+  "include": ["src"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/**/*.testkit.ts"]
+}
+== vitest include
+vitest.config.ts:3://   unit-web    - React component/unit tests in jsdom (apps/web/vitest.config.ts)
+vitest.config.ts:20:          include: [
+vitest.config.ts:21:            "apps/api/src/**/*.test.ts",
+vitest.config.ts:22:            "apps/worker/src/**/*.test.ts",
+vitest.config.ts:23:            "packages/*/src/**/*.test.ts",
+vitest.config.ts:24:            "tests/qa/unit/**/*.test.ts",
+vitest.config.ts:28:      "apps/web/vitest.config.ts",
+vitest.config.ts:35:          include: [
+vitest.config.ts:36:            "apps/*/test/integration/**/*.test.ts",
+vitest.config.ts:37:            "packages/*/test/integration/**/*.test.ts",
+vitest.config.ts:38:            "tests/qa/integration/**/*.test.ts",
+== module tree files by extension
+     41 ts
+== module test-like files
+apps/api/src/modules/access/rules.test.ts
+apps/api/src/modules/admin/branding.test.ts
+apps/api/src/modules/kpi/kpi.test.ts
+apps/api/src/modules/platform/platform.test.ts
+apps/api/src/modules/reporting/reporting.test.ts
+apps/api/src/modules/transformations/transitions.test.ts
+apps/api/src/modules/workflows/workflows.test.ts
+== any non-.ts/.tsx test-like file anywhere in apps/api/src (expect none)
+== TEST_FILE/ isTest usage
+9:// `vitest`) apply ONLY to `*.test.ts`/`*.test.tsx` (TEST_FILE) - exactly the test extensions tsconfig.build.json
+173:const TEST_SUPPORT_FILES = new Set(["modules.ts", "architecture.testkit.ts"]);
+179: * F-DG1-135: only `*.test.ts`/`*.test.tsx` is a test (TEST_FILE) - the extensions tsconfig.build.json excludes. A
+182:const CODE_FILE = /\.[cm]?[jt]sx?$/;
+183:const TEST_FILE = /\.test\.tsx?$/;
+191:    return statSync(p).isDirectory() ? walk(p) : CODE_FILE.test(name) ? [p] : [];
+467:  const isTest = TEST_FILE.test(file);
+477:        if (isTest && TEST_SUPPORT_FILES.has(relative(SRC, target))) continue;
+486:    } else if (!bareAllowed(spec) && !(spec === "vitest" && isTest)) {

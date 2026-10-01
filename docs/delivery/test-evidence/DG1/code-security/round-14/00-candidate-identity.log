@@ -1,0 +1,27 @@
+$ date -u; git rev-parse HEAD (real repo)
+2026-10-01T17:01:56Z
+6a3e3b2d663a85dedfdf879daf1efb4b3938604e
+$ git merge-base --is-ancestor 985d0fa HEAD -> yes
+$ git log --oneline 985d0fa..HEAD
+6a3e3b2 DG1 r14: freeze candidate dd747fe1 + round-14 review assignments
+$ git diff --stat 985d0fa..HEAD
+ docs/delivery/assignments/DG1/round-14/audit.md    |   24 +
+ .../DG1/round-14/review-code-security-reviewer.md  |   11 +
+ .../assignments/DG1/round-14/review-common.md      |   15 +
+ .../DG1/round-14/review-domain-reviewer.md         |   11 +
+ .../assignments/DG1/round-14/review-qa-verifier.md |   16 +
+ .../candidates/DG1/dd747fe1df62d876.manifest.json  | 1973 ++++++++++++++++++++
+ docs/delivery/stages.json                          |   22 +-
+ 7 files changed, 2067 insertions(+), 5 deletions(-)
+$ node tools/gates/candidate.mjs --stage DG1   # real repo
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:dd747fe1df62d876a74101caa826542b90d3eb36cedb1de14f299b0b6de8c559","files":391}
+exit=0
+$ (disposable full clone @985d0fa) git rev-parse HEAD; git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG1
+985d0fa6d05e0b63f53ad67f641910dab34f50ca
+false
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:dd747fe1df62d876a74101caa826542b90d3eb36cedb1de14f299b0b6de8c559","files":391}
+exit=0
+$ git diff --stat 08cbd12..985d0fa -- apps packages tools deploy tests .github licenses
+ apps/api/src/architecture.test.ts    | 25 +++++++++++++++++++++++--
+ apps/api/src/architecture.testkit.ts | 12 +++++++++---
+ 2 files changed, 32 insertions(+), 5 deletions(-)

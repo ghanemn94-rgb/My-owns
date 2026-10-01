@@ -1,0 +1,22 @@
+$ git -C $TMPDIR/review-r14 status --short (before removal; untracked build outputs ignored)
+$ rm -rf $TMPDIR/{review-r14,rv,pnpm-store,ac1p,loop.sh}
+(none left)
+$ pgrep -f 'postgres -D' (excluding self)
+1
+2
+$ ss -ltn | grep :5491
+(port 5491 free)
+$ git status --short -- apps packages tools deploy tests scripts .github licenses docs/source docs/architecture (real repo)
+(end; empty above = no source change)
+$ git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG1   (real repo, at end)
+2c7d1c2088ef36acf1296c3a32b8a54c0bf6fb52
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:dd747fe1df62d876a74101caa826542b90d3eb36cedb1de14f299b0b6de8c559","files":391}
+$ git log --oneline -3
+2c7d1c2 run: DG1-T-DG1-REV-DOM-R14-domain-reviewer-20261001T170044Z-a6772d9a (review evidence, auto-committed by run-agent.sh)
+6a3e3b2 DG1 r14: freeze candidate dd747fe1 + round-14 review assignments
+985d0fa DG1 r14: mark F-DG1-135 FIXED_PENDING_VERIFICATION
+note: pgrep PIDs 1 and 2 are this sandbox's own bash processes (their command line contains the pattern; same as the ps output captured in 22-race-file-flake-probe.log check); no postgres binary process exists and port 5491 is free.
+$ git diff --stat --name-only 6a3e3b2..2c7d1c2 | sed 's#/[^/]*$##' | sort -u   (directory names only; contents not opened)
+docs/delivery/reviews/DG1/round-14
+docs/delivery/runs/DG1/DG1-T-DG1-REV-DOM-R14-domain-reviewer-20261001T170044Z-a6772d9a
+docs/delivery/test-evidence/DG1/domain/round-14

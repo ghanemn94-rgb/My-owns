@@ -1,0 +1,13 @@
+# F-DG1-135 scope: files changed between the r13 candidate commit (08cbd12) and the r14 freeze (985d0fa), product tree only
+$ git diff --stat 08cbd12 985d0fa -- . ":(exclude)docs/delivery"
+ apps/api/src/architecture.test.ts    | 25 +++++++++++++++++++++++--
+ apps/api/src/architecture.testkit.ts | 12 +++++++++---
+ 2 files changed, 32 insertions(+), 5 deletions(-)
+exit=0
+$ git diff 08cbd12 985d0fa -- apps/api/src/architecture.testkit.ts | grep -E "^[-+]const"
+-const TEST_FILE = /\.test\.[cm]?[jt]sx?$/;
++const TEST_FILE = /\.test\.tsx?$/;
+$ grep testkit apps/api/tsconfig.build.json; find apps/api/dist -name "architecture*"  (excluded from the build -> test-only)
+"src/**/*.testkit.ts"
+0
+# empirical build/vitest alignment: see 07-build-vitest-alignment.log

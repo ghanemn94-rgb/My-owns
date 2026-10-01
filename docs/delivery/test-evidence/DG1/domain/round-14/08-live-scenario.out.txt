@@ -1,0 +1,133 @@
+clone HEAD: 985d0fa6d05e0b63f53ad67f641910dab34f50ca
+node: v24.21.0
+cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applied 8 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+readyz: {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+PASS A0 dev.office login 204 :: 204
+PASS A1 create 201 draft :: 201 draft
+PASS A2 draft->active 200 :: 200
+PASS A3 active->closed (status only) refused 422 invalid-transition citing G6 :: 422 urn:mth:problem:invalid-transition :: A transformation cannot be closed by a status edit. Closure requires the G6 (Sustain) business approval with validated benefits, which is not available in this release.
+PASS A3 active->closed (mixed with rename) refused 422 invalid-transition citing G6 :: 422 urn:mth:problem:invalid-transition :: A transformation cannot be closed by a status edit. Closure requires the G6 (Sustain) business approval with validated benefits, which is not available in this release.
+PASS A4 record unchanged (active, v2, name) :: active|2|SYNTHETIC domain-review closure probe
+PASS A5 no audit row written by the refused close :: 2 -> 2
+PASS A6 no transformation is closed in the database
+PASS B1 dev.lead (TL @ SYN-RETAIL) create 201 :: 201
+PASS B2 dev.lead GET own record 200 (no dead not-found) :: 200
+PASS B3 derived assignment is TL @ transformation, linked to source :: TL|transformation|true
+PASS B4 the carried-over TL role holds no gate approval permission
+PASS B5 dev.lead still cannot read a record it did not create (404) :: 404
+B6 API audit entry of the derived grant: {"id":"01a0f871-c7a2-71af-9c73-2e3f0eb3af69","seq":"21","occurredAt":"2026-10-01T17:10:01.368Z","action":"scoped_assignment.create","recordType":"scoped_assignment","recordId":"01a0f871-c7a0-74fe-a50c-53359d0a2603","transformationId":"01a0f871-c79b-731e-9fc9-4f1eb752715a","actor":{"type":"user","userId":"01920000-0000-7000-9000-000000000203","displayName":"Synthetic Transformation Lead"},"onBehalfOfUserId":null,"priorVersion":null,"newVersion":1,"reason":"Creator of transformation TR-0002: TL carried over from business-unit assignment 01a0f871-bff6-70c3-ae38-da10b73dc2fc","requestId":"01a0f871-c795-718d-8f3e-0dd025e5c722","changes":{"scope":{"to":{"id":"01a0f871-c79b-731e-9fc9-4f1eb752715a","type":"transformation"},"from":null},"userId":{"to":"01920000-0000-7000-9000-000000000203","from":null},"roleCode":{"to":"TL","from":null},"effectiveTo":{"to":null,"from":null},"derivedFromAssignmentId":{"to":"01a0f871-bff6-70c3-ae38-da10b73dc2fc","from":null}}}
+PASS B6 derived grant recorded on the transformation's own trail
+C0 GET /api/v1/branding/tokens -> 200 {"provenance":"provisional","tokens":[{"name":"brand.primary","value":"#0078FF","purpose":"Primary accents and selected elements","provisional":true},{"name":"brand.deep","value":"#003B73","purpose":"Stronger blue surfaces and text where suitable","provisional":true},{"name":"surface.page","value":"#F5F8FC","purpose":"Page background","provisional":true},{"name":"surface.card","value":"#FFFFFF","purpose":"Content surfaces","provisional":true},{"name":"text.primary","value":"#142438","purpose":"Main text","provisional":true},{"name":"text.secondary","value":"#526174","purpose":"Secondary text","provisional":true},{"name":"border.default","value":"#DCE5EF","purpose":"Dividers and field boundaries","provisional":true}]}
+PASS C1 tokens unauthenticated -> 401
+PASS C2 tokens: 200, #0078FF present, provenance provisional, never official
+I0 dev.office unpaged list: 9 items, nextCursor=null
+PASS I1 updatedAt:desc: paging by 2 (5 pages) returns the same ordered set as one page, no duplicates/gaps :: 9 vs 9; first keys ["2026-10-01T17:10:01.629Z","2026-10-01T17:10:01.605Z","2026-10-01T17:10:01.596Z"]
+PASS I1 updatedAt:asc: paging by 2 (5 pages) returns the same ordered set as one page, no duplicates/gaps :: 9 vs 9; first keys ["2026-10-01T17:10:01.135Z","2026-10-01T17:10:01.368Z","2026-10-01T17:10:01.518Z"]
+PASS I1 name:asc: paging by 2 (5 pages) returns the same ordered set as one page, no duplicates/gaps :: 9 vs 9; first keys ["SYNTHETIC 10","SYNTHETIC Beta","SYNTHETIC Zeta"]
+PASS I1 name:desc: paging by 2 (5 pages) returns the same ordered set as one page, no duplicates/gaps :: 9 vs 9; first keys ["SYNTHETIC تحوّل تجريبي","SYNTHETIC lead-created transformation","SYNTHETIC domain-review closure probe"]
+PASS I1 code:asc: paging by 2 (5 pages) returns the same ordered set as one page, no duplicates/gaps :: 9 vs 9; first keys ["TR-0001","TR-0002","TR-0003"]
+PASS I1 code:desc: paging by 2 (5 pages) returns the same ordered set as one page, no duplicates/gaps :: 9 vs 9; first keys ["TR-0009","TR-0008","TR-0007"]
+PASS I2 a cursor reused with another sort is refused 400 :: 400
+PASS I3 a cursor reused with another status filter is refused 400 :: 400
+PASS I4 a tampered cursor is refused 400 :: 400
+PASS I5 an unknown sort (e.g. __proto__) is a 400 validation problem, never a 500 :: 400
+PASS I6 repeatable status filter works and returns only those statuses :: 200 active,active,on_hold,active,active
+PASS I7 the filter hash is order-insensitive for status (cursor from on_hold,active accepted under active,on_hold) :: 200
+PASS I8 scoped list: dev.lead sees its own created record but not the office's record :: 1 items
+PASS J1 GET /me without a session cookie -> 401
+PASS J2 GET /me with an unknown session token -> 401
+PASS J3 prototype-named cookies only -> 401 (no 500, no session) :: 401
+PASS J4 prototype-named cookies on a business route -> 401 :: 401
+PASS J5 dev-login then GET /me -> 200 with the user :: 200 {"user":{"id":"01920000-0000-7000-9000-000000000203","organizationId":"01920000-0000-7000-9000-000000000001","displayName":"Synthetic Transformation Lead","emai
+PASS J6 dev.lead's effective permissions hold no gate/finance approval
+PASS J7 logout accepted :: 200
+PASS J8 after logout GET /me -> 401
+PASS J9 OIDC callback in AUTH_MODE=dev (OIDC not configured) -> 404, no session :: 404
+PASS D1 ar: html dir :: rtl
+PASS D2 ar: provisional wordmark marker :: منصة موبايلي للتحوّل مؤقت شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتم
+PASS D3 ar: edit form status options exclude closed :: active=نشط, on_hold=معلّق
+PASS D4 ar: status hint names the G6 business approval
+PASS D5 ar: detail uses the Transformation glossary term
+PASS D6 ar: no 'مبادرة التحوّل' conflation
+PASS D7 ar: audit trail shows no raw keys
+PASS D8 ar: audit trail shows localized status label
+PASS D9 ar: missing value data shows Unknown, never 0/green
+PASS D10 ar: no request outside the stack origin (fonts bundled, no CDN)
+PASS D11 ar: bundled IBM Plex faces loaded :: IBM Plex Sans Arabic, IBM Plex Sans
+PASS D1 en: html dir :: ltr
+PASS D2 en: provisional wordmark marker :: Mobily Transformation Hub Provisional Provisional wordmark: no official logo has been supplied. Colours are provisional 
+PASS D3 en: edit form status options exclude closed :: active=Active, on_hold=On hold
+PASS D4 en: status hint names the G6 business approval
+PASS D5 en: detail uses the Transformation glossary term
+PASS D6 en: no 'مبادرة التحوّل' conflation
+PASS D7 en: audit trail shows no raw keys
+PASS D8 en: audit trail shows localized status label
+PASS D9 en: missing value data shows Unknown, never 0/green
+PASS D10 en: no request outside the stack origin (fonts bundled, no CDN)
+PASS D11 en: bundled IBM Plex faces loaded :: IBM Plex Sans Arabic, IBM Plex Sans
+PASS E0 ar: dev.lead opens its own created record :: TR-0002 SYNTHETIC lead-created transformation
+E-rows ar: [["01‏/10‏/2026 20:10","zz_probe.synthetic_event (إجراء بلا ترجمة)","Synthetic Transformation Lead","— → —","mysteryField (حقل بلا ترجمة): لا يوجد ← zz_code (قيمة بلا ترجمة)"],["01‏/10‏/2026 20:10","إسناد دور لمُنشئ السجل (منقول من إسناد على مستوى وحدة العمل)","Synthetic Transformation Lead","— → 1","المستخدم: لا يوجد ← Synthetic Transformation Lead الدور: لا يوجد ← قائد التحوّل النطاق: لا يوجد ← التحوّل: هذا التحوّل يسري حتى: لا يوجد ← لا يوجد منقول من الإسناد: لا يوجد ← 01a0f871-bff6-70c3-ae38-da10b73dc2fc"],["01‏/10‏/2026 20:10","إنشاء","Synthetic Transformation Lead","— → 1","الرمز: لا يوجد ← TR-0002 الاسم: لا يوجد ← SYNTHETIC lead-created transformation النمط: لا يوجد ← النمط الجزئي المرن (الدخول عند المرحلة المناسبة) مرحلة الدخول: لا يوجد ← التصميم المرحلة: لا يوجد ← التصميم الحالة: لا يوجد ← مسودة – لم تُقدَّم المنطقة الزمنية: لا يوجد ← Asia/Riyadh العملة: لا يوجد ← SAR وحدة العمل: لا يوجد ← التجزئة (اصطناعي) SYN-RETAIL"]]
+PASS E1 ar: derived entry action is the localized 'carried over' label :: 01‏/10‏/2026 20:10 | إسناد دور لمُنشئ السجل (منقول من إسناد على مستوى وحدة العمل) | Synthetic Transformation Lead | — → 1 | المستخدم: لا يوجد ← Synthetic Transformation Lead الدور: لا يوجد ← قائد التحوّل النطاق: لا يوجد ← التحوّل: هذا التحوّل يسري حتى: لا يوجد ← لا يوجد منقول من الإسناد: لا يوجد ← 01a0f871-bff6-70c3-ae38-da10b73dc2fc
+PASS E2 ar: no raw action code
+PASS E3 ar: role shown as 'قائد التحوّل'
+PASS E4 ar: user shown by name, not id
+PASS E5 ar: scope shown as scope type + 'this transformation'
+PASS E6 ar: source labelled 'منقول من الإسناد'
+PASS E7 ar: nothing in the derived entry marked untranslated
+PASS E8 ar: no raw camelCase field keys
+PASS G1 ar: unknown action stays readable and marked 'إجراء بلا ترجمة' :: 01‏/10‏/2026 20:10 | zz_probe.synthetic_event (إجراء بلا ترجمة) | Synthetic Transformation Lead | — → — | mysteryField (حقل بلا ترجمة): لا يوجد ← zz_code (قيمة بلا ترجمة)
+PASS G2 ar: unknown field stays readable and marked 'حقل بلا ترجمة' :: 01‏/10‏/2026 20:10 | zz_probe.synthetic_event (إجراء بلا ترجمة) | Synthetic Transformation Lead | — → — | mysteryField (حقل بلا ترجمة): لا يوجد ← zz_code (قيمة بلا ترجمة)
+PASS G3 ar: unknown value stays readable and marked 'قيمة بلا ترجمة' :: 01‏/10‏/2026 20:10 | zz_probe.synthetic_event (إجراء بلا ترجمة) | Synthetic Transformation Lead | — → — | mysteryField (حقل بلا ترجمة): لا يوجد ← zz_code (قيمة بلا ترجمة)
+PASS G4 ar: the raw action code is LTR-isolated (bdi dir=ltr) :: 1
+PASS E0 en: dev.lead opens its own created record :: TR-0002 SYNTHETIC lead-created transformation
+E-rows en: [["1 Oct 2026, 20:10","zz_probe.synthetic_event (action without a translation)","Synthetic Transformation Lead","— → —","mysteryField (field without a translation): None → zz_code (value without a translation)"],["1 Oct 2026, 20:10","Role granted to the creator (carried over from a business-unit assignment)","Synthetic Transformation Lead","— → 1","User: None → Synthetic Transformation Lead Role: None → Transformation Lead Scope: None → Transformation: this transformation Effective until: None → None Carried over from assignment: None → 01a0f871-bff6-70c3-ae38-da10b73dc2fc"],["1 Oct 2026, 20:10","Created","Synthetic Transformation Lead","— → 1","Code: None → TR-0002 Name: None → SYNTHETIC lead-created transformation Mode: None → Modular Entry phase: None → Design Phase: None → Design Status: None → Draft – not submitted Time zone: None → Asia/Riyadh Currency: None → SAR Business unit: None → Synthetic Retail SYN-RETAIL"]]
+PASS E1 en: derived entry action is the localized 'carried over' label :: 1 Oct 2026, 20:10 | Role granted to the creator (carried over from a business-unit assignment) | Synthetic Transformation Lead | — → 1 | User: None → Synthetic Transformation Lead Role: None → Transformation Lead Scope: None → Transformation: this transformation Effective until: None → None Carried over from assignment: None → 01a0f871-bff6-70c3-ae38-da10b73dc2fc
+PASS E2 en: no raw action code
+PASS E3 en: role shown as 'Transformation Lead'
+PASS E4 en: user shown by name, not id
+PASS E5 en: scope shown as scope type + 'this transformation'
+PASS E6 en: source labelled 'Carried over from assignment'
+PASS E7 en: nothing in the derived entry marked untranslated
+PASS E8 en: no raw camelCase field keys
+PASS G1 en: unknown action stays readable and marked 'action without a translation' :: 1 Oct 2026, 20:10 | zz_probe.synthetic_event (action without a translation) | Synthetic Transformation Lead | — → — | mysteryField (field without a translation): None → zz_code (value without a translation)
+PASS G2 en: unknown field stays readable and marked 'field without a translation' :: 1 Oct 2026, 20:10 | zz_probe.synthetic_event (action without a translation) | Synthetic Transformation Lead | — → — | mysteryField (field without a translation): None → zz_code (value without a translation)
+PASS G3 en: unknown value stays readable and marked 'value without a translation' :: 1 Oct 2026, 20:10 | zz_probe.synthetic_event (action without a translation) | Synthetic Transformation Lead | — → — | mysteryField (field without a translation): None → zz_code (value without a translation)
+PASS G4 en: the raw action code is LTR-isolated (bdi dir=ltr) :: 1
+F-row ar: 01‏/10‏/2026 20:10 | إسناد دور لمُنشئ السجل (منقول من إسناد على مستوى وحدة العمل) | Synthetic Transformation Lead | — → 1 | المستخدم: لا يوجد ← غير معروف : غير مرئي لك الدور: لا يوجد ← قائد التحوّل النطاق: لا يوجد ← التحوّل: هذا التحوّل يسري حتى: لا يوجد ← لا يوجد منقول من الإسناد: لا يوجد ← 01a0f871-bff6-70c3-ae38-da10b73dc2fc
+PASS F1 ar: TO sees the localized derived entry with the role label
+PASS F2 ar: TO sees the user by name or as an honest Unknown, never a raw id :: 01‏/10‏/2026 20:10 | إسناد دور لمُنشئ السجل (منقول من إسناد على مستوى وحدة العمل) | Synthetic Transformation Lead | — → 1 | المستخدم: لا يوجد ← غير معروف : غير مرئي لك الدور: لا يوجد ← قائد التحوّل النطاق: لا يوجد ← التحوّل: هذا التحوّل يسري حتى: لا يوجد ← لا يوجد منقول من الإسناد: لا يوجد ← 01a0f871-bff6-70c3-ae38-da10b73dc2fc
+F-row en: 1 Oct 2026, 20:10 | Role granted to the creator (carried over from a business-unit assignment) | Synthetic Transformation Lead | — → 1 | User: None → Unknown : Not visible to you Role: None → Transformation Lead Scope: None → Transformation: this transformation Effective until: None → None Carried over from assignment: None → 01a0f871-bff6-70c3-ae38-da10b73dc2fc
+PASS F1 en: TO sees the localized derived entry with the role label
+PASS F2 en: TO sees the user by name or as an honest Unknown, never a raw id :: 1 Oct 2026, 20:10 | Role granted to the creator (carried over from a business-unit assignment) | Synthetic Transformation Lead | — → 1 | User: None → Unknown : Not visible to you Role: None → Transformation Lead Scope: None → Transformation: this transformation Effective until: None → None Carried over from assignment: None → 01a0f871-bff6-70c3-ae38-da10b73dc2fc
+H0 ar: business-unit options offered to dev.lead: ["اختر…","التجزئة (اصطناعي) (SYN-RETAIL)"]
+PASS H1 ar: Edit link visible on the new record without a reload :: edit=1 after 164 ms
+PASS H2 ar: Archive button visible :: 1
+PASS H3 ar: audit trail region visible :: 1
+PASS H4 ar: no document reload happened (window marker survives; SPA navigation only) :: framenavigated main-frame events since submit: 1
+PASS H5 ar: GET /me was re-fetched after the create :: [{"at":1790874616266,"status":200}]
+PASS H6 ar: the trail already shows the localized derived grant :: 01‏/10‏/2026 20:10 | إسناد دور لمُنشئ السجل (منقول من إسناد على مستوى وحدة العمل) | Synthetic Transformation Lead | — → 1 | المستخدم: لا يوجد ← Synthetic Transformation Lead الدور: لا يوجد ← قائد التحوّل النطاق: لا يوجد ← التحوّل: هذا التحوّل يسري حتى: لا يوجد ← لا يوجد منقول من الإسناد: لا يوجد ← 01a0f871-bff6-70c3-ae38-da10b73dc2fc
+PASS H7 ar: the edit via the newly shown control is persisted (server-authorized) :: SYNTHETIC AR UI lead-created (F-DG1-210) - edited|2
+PASS H8 ar: the edit wrote an audit event :: 1
+PASS H9 ar: still no document reload through create -> edit -> save
+H0 en: business-unit options offered to dev.lead: ["Choose…","Synthetic Retail (SYN-RETAIL)"]
+PASS H1 en: Edit link visible on the new record without a reload :: edit=1 after 174 ms
+PASS H2 en: Archive button visible :: 1
+PASS H3 en: audit trail region visible :: 1
+PASS H4 en: no document reload happened (window marker survives; SPA navigation only) :: framenavigated main-frame events since submit: 1
+PASS H5 en: GET /me was re-fetched after the create :: [{"at":1790874617657,"status":200}]
+PASS H6 en: the trail already shows the localized derived grant :: 1 Oct 2026, 20:10 | Role granted to the creator (carried over from a business-unit assignment) | Synthetic Transformation Lead | — → 1 | User: None → Synthetic Transformation Lead Role: None → Transformation Lead Scope: None → Transformation: this transformation Effective until: None → None Carried over from assignment: None → 01a0f871-bff6-70c3-ae38-da10b73dc2fc
+PASS H7 en: the edit via the newly shown control is persisted (server-authorized) :: SYNTHETIC EN UI lead-created (F-DG1-210) - edited|2
+PASS H8 en: the edit wrote an audit event :: 1
+PASS H9 en: still no document reload through create -> edit -> save
+SUMMARY failures=0
+exit=0

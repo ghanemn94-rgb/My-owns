@@ -1,0 +1,29 @@
+$ npx vitest run --project unit-node apps/api/src/architecture.test.ts   # clone @985d0fa node v22.22.2
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/architecture.test.ts [2m([22m[2m128 tests[22m[2m)[22m[33m 2023[2mms[22m[39m
+   [33m[2m✓[22m[39m API module boundaries (ADR-0002)[2m > [22mevery import respects dependsOn, public surfaces and allowed packages [33m 1244[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m128 passed[39m[22m[90m (128)[39m
+[2m   Start at [22m 17:02:47
+[2m   Duration [22m 3.49s[2m (transform 287ms, setup 0ms, collect 896ms, tests 2.02s, environment 0ms, prepare 131ms)[22m
+
+exit=0
+$ find apps/api/src/modules -name '*.test.*' ! -name '*.test.ts'
+count=0
+$ find apps/api/src -name '*.test.*' ! -name '*.test.ts'   (whole api src)
+0
+$ find apps/api/src/modules -name '*.test.ts' | wc -l
+7
+--- dist ship check: plant kpi/zz.test.mts + kpi/zz.test.ts (export const z = 1), build apps/api
+src/server.ts(16,75): error TS2307: Cannot find module '@mth/db' or its corresponding type declarations.
+src/server.ts(20,51): error TS2307: Cannot find module '@mth/design-tokens' or its corresponding type declarations.
+ ELIFECYCLE  Command failed with exit code 2.
+build_exit=2
+zz.test.d.mts
+zz.test.d.mts.map
+zz.test.mjs
+zz.test.mjs.map
+$ npx vitest list --project unit-node | grep zz
+3
+$ git status --short (after cleanup)
+(end)

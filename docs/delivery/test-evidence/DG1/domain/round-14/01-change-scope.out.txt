@@ -1,0 +1,242 @@
+== full stat 08cbd12..985d0fa
+ apps/api/src/architecture.test.ts                  |   25 +-
+ apps/api/src/architecture.testkit.ts               |   12 +-
+ docs/delivery/assignments/DG1/round-13/audit.md    |   24 +
+ .../DG1/round-13/review-code-security-reviewer.md  |   11 +
+ .../assignments/DG1/round-13/review-common.md      |   16 +
+ .../DG1/round-13/review-domain-reviewer.md         |   12 +
+ .../assignments/DG1/round-13/review-qa-verifier.md |   17 +
+ .../assignments/DG1/round-14/T-DG1-BE15.md         |   21 +
+ .../candidates/DG1/00f1498cd5e9a166.manifest.json  | 1973 ++++++++++++++++++++
+ docs/delivery/findings.json                        |  105 +-
+ .../T-DG1-BE15-backend-workflow-engineer.md        |  154 ++
+ .../round-13/code-security-reviewer.findings.json  |   36 +
+ .../DG1/round-13/code-security-reviewer.json       |  460 +++++
+ .../reviews/DG1/round-13/code-security-reviewer.md |   55 +
+ .../code-security-reviewer.verifications.json      |   19 +
+ .../reviews/DG1/round-13/domain-reviewer.json      |  352 ++++
+ .../reviews/DG1/round-13/domain-reviewer.md        |   21 +
+ .../round-13/domain-reviewer.verifications.json    |   16 +
+ .../delivery/reviews/DG1/round-13/qa-verifier.json |  387 ++++
+ docs/delivery/reviews/DG1/round-13/qa-verifier.md  |   37 +
+ .../DG1/round-13/qa-verifier.verifications.json    |   33 +
+ .../meta.json                                      |   52 +
+ .../result.json                                    |    3 +
+ .../sandbox.json                                   |   59 +
+ .../settings.json                                  |   48 +
+ .../stderr.log                                     |    1 +
+ .../transcript.jsonl.gz                            |  Bin 0 -> 28143 bytes
+ .../meta.json                                      |  136 ++
+ .../result.json                                    |    3 +
+ .../sandbox.json                                   |   49 +
+ .../settings.json                                  |   88 +
+ .../stderr.log                                     |    1 +
+ .../transcript.jsonl.gz                            |  Bin 0 -> 715221 bytes
+ .../meta.json                                      |  180 ++
+ .../result.json                                    |    3 +
+ .../sandbox.json                                   |   51 +
+ .../settings.json                                  |   86 +
+ .../stderr.log                                     |    1 +
+ .../transcript.jsonl.gz                            |  Bin 0 -> 540211 bytes
+ .../meta.json                                      |  177 ++
+ .../result.json                                    |    3 +
+ .../sandbox.json                                   |   50 +
+ .../settings.json                                  |   88 +
+ .../stderr.log                                     |    1 +
+ .../transcript.jsonl.gz                            |  Bin 0 -> 173513 bytes
+ docs/delivery/stages.json                          |   22 +-
+ .../round-13/00-candidate-identity.log             |   26 +
+ .../round-13/01-F-DG1-134-reproof-probe.log        |   53 +
+ .../02-architecture-test-and-real-tree.log         |   12 +
+ .../round-13/03-test-name-allowance-gap.log        |   47 +
+ .../code-security/round-13/10-pnpm_-r_build.log    |   45 +
+ .../round-13/10-pnpm_-r_typecheck.log              |   17 +
+ .../round-13/10-pnpm_check_no-cdn.log              |    7 +
+ .../round-13/10-pnpm_format_check.log              |    8 +
+ .../DG1/code-security/round-13/10-pnpm_lint.log    |    6 +
+ .../round-13/10-pnpm_openapi_lint.log              |    7 +
+ .../DG1/code-security/round-13/10-pnpm_test.log    |   46 +
+ .../code-security/round-13/12-node24-pnpm_test.log |   51 +
+ .../code-security/round-13/20-integration-run1.log |   41 +
+ .../code-security/round-13/20-integration-run2.log |   44 +
+ .../round-13/21-integration-node24.log             |   45 +
+ .../round-13/30-gates-agents-tests.log             |  650 +++++++
+ .../round-13/31-deploy-scripts-tests.log           |  412 ++++
+ .../round-13/32-install-sandbox-suite.log          |   17 +
+ .../round-13/32c-ac1-registry-BLOCKED.log          |   14 +
+ .../round-13/32d-real-repo-frozen-install.log      |   17 +
+ .../DG1/code-security/round-13/33-sbom-check.log   |    3 +
+ .../code-security/round-13/34-dg0-historical.log   |    3 +
+ .../code-security/round-13/35-ci-yml-identity.log  |   11 +
+ .../DG1/code-security/round-13/40-requirements.log |   25 +
+ .../DG1/code-security/round-13/50-cleanup.log      |   13 +
+ .../round-13/zz-r13-probe.test.ts.txt              |   56 +
+ .../domain/round-13/00-candidate-and-diff.out.txt  |  355 ++++
+ .../domain/round-13/01-unit-full-node22.out.txt    |   33 +
+ .../domain/round-13/01-unit-full-node24.out.txt    |   33 +
+ .../round-13/02-walk-scope-probe-node22.out.txt    |   61 +
+ .../round-13/02-walk-scope-probe-node24.out.txt    |   61 +
+ .../domain/round-13/02-walk-scope-probe.test.ts    |  106 ++
+ .../02b-walk-probe-against-round12-testkit.out.txt |   16 +
+ .../03-architecture-verbose-node22.out.txt         |  139 ++
+ .../03-architecture-verbose-node24.out.txt         |  139 ++
+ .../DG1/domain/round-13/04-integration-run.sh      |   31 +
+ .../round-13/04-integration-run1-node22.out.txt    |  221 +++
+ .../round-13/04-integration-run2-node24.out.txt    |  221 +++
+ .../DG1/domain/round-13/07-build.out.txt           |   45 +
+ .../DG1/domain/round-13/07-live-scenario.mjs       |  409 ++++
+ .../DG1/domain/round-13/07-live-scenario.out.txt   |  133 ++
+ .../DG1/domain/round-13/07-live-stack.sh           |   47 +
+ .../DG1/domain/round-13/08-static-checks.out.txt   |   51 +
+ .../DG1/domain/round-13/09-register-rows.out.txt   |   80 +
+ .../DG1/domain/round-13/09-register-rows.py        |   32 +
+ .../DG1/domain/round-13/10-source-fidelity.out.txt |   25 +
+ .../domain/round-13/11-f216-d055-wording.out.txt   |   19 +
+ .../DG1/domain/round-13/50-cleanup.out.txt         |   14 +
+ .../DG1/domain/round-13/screens/ar-01-shell.png    |  Bin 0 -> 91294 bytes
+ .../round-13/screens/ar-02-edit-no-closed.png      |  Bin 0 -> 112404 bytes
+ .../domain/round-13/screens/ar-03-detail-audit.png |  Bin 0 -> 185050 bytes
+ .../round-13/screens/ar-04-lead-derived-audit.png  |  Bin 0 -> 220829 bytes
+ .../screens/ar-05-office-derived-audit.png         |  Bin 0 -> 220431 bytes
+ .../screens/ar-06-lead-ui-create-no-reload.png     |  Bin 0 -> 209316 bytes
+ .../DG1/domain/round-13/screens/en-01-shell.png    |  Bin 0 -> 96610 bytes
+ .../round-13/screens/en-02-edit-no-closed.png      |  Bin 0 -> 121704 bytes
+ .../domain/round-13/screens/en-03-detail-audit.png |  Bin 0 -> 183646 bytes
+ .../round-13/screens/en-04-lead-derived-audit.png  |  Bin 0 -> 216641 bytes
+ .../screens/en-05-office-derived-audit.png         |  Bin 0 -> 217840 bytes
+ .../screens/en-06-lead-ui-create-no-reload.png     |  Bin 0 -> 204056 bytes
+ .../test-evidence/DG1/qa/round-13/00-candidate.log |   17 +
+ .../DG1/qa/round-13/00b-head-moved.log             |    8 +
+ .../test-evidence/DG1/qa/round-13/01-install.log   |   29 +
+ .../DG1/qa/round-13/01b-candidate-diff-r12-r13.log |   73 +
+ .../test-evidence/DG1/qa/round-13/02-build.log     |   46 +
+ .../DG1/qa/round-13/02-check_no-cdn.log            |    8 +
+ .../test-evidence/DG1/qa/round-13/02-contrast.log  |   65 +
+ .../DG1/qa/round-13/02-format_check.log            |    9 +
+ .../test-evidence/DG1/qa/round-13/02-lint.log      |    7 +
+ .../DG1/qa/round-13/02-openapi_lint.log            |    8 +
+ .../test-evidence/DG1/qa/round-13/02-typecheck.log |   18 +
+ .../DG1/qa/round-13/03-unit-node22.log             |   44 +
+ .../DG1/qa/round-13/04-unit-node24.log             |   43 +
+ .../DG1/qa/round-13/05-unit-node-v22.22.2.log      |  220 +++
+ .../DG1/qa/round-13/05-unit-node-v24.21.0.log      |  223 +++
+ .../DG1/qa/round-13/05-unit-web-v22.22.2.log       |  120 ++
+ .../DG1/qa/round-13/05-unit-web-v24.21.0.log       |  123 ++
+ .../round-13/06-r13-file-scope-probe-v22.22.2.log  |   35 +
+ .../round-13/06-r13-file-scope-probe-v24.21.0.log  |   38 +
+ .../round-13/07-probe-negative-control-prefix.log  |   27 +
+ .../DG1/qa/round-13/08-f134-arch-extract.log       |   17 +
+ .../DG1/qa/round-13/09-f216-d055-check.log         |   15 +
+ .../DG1/qa/round-13/10-int-run1-pg.log             |  187 ++
+ .../DG1/qa/round-13/10-int-run1-v22.22.2.log       |   43 +
+ .../DG1/qa/round-13/10-int-run2-pg.log             |  187 ++
+ .../DG1/qa/round-13/10-int-run2-v22.22.2.log       |   42 +
+ .../DG1/qa/round-13/10-int-run3-pg.log             |  187 ++
+ .../DG1/qa/round-13/10-int-run3-v24.21.0.log       |   45 +
+ .../DG1/qa/round-13/11-audit-trigger-probe.sh      |   18 +
+ .../qa/round-13/11-contract-and-audit-probe.log    |   73 +
+ .../DG1/qa/round-13/12-e2e-node22.log              |   43 +
+ .../DG1/qa/round-13/12-e2e-node24.log              |   46 +
+ .../DG1/qa/round-13/13-f210-independent-spec.log   |   25 +
+ .../DG1/qa/round-13/14-a18-clean-start.log         |  102 +
+ .../DG1/qa/round-13/15-a20-token-propagation.log   |   31 +
+ .../DG1/qa/round-13/16-a12-a13-a14-extract.log     |   15 +
+ .../DG1/qa/round-13/17-req-dlv-042-installer.log   |   25 +
+ .../DG1/qa/round-13/17b-ac1-effect-BLOCKED.log     |    9 +
+ .../DG1/qa/round-13/18-validate-pipeline.log       |    4 +
+ .../DG1/qa/round-13/18-validate-reconcile.log      |   46 +
+ .../DG1/qa/round-13/18-validate-registerDG1.log    |    4 +
+ .../DG1/qa/round-13/19-requirements-evidence.log   |   21 +
+ .../DG1/qa/round-13/20-ci-needs-fonts-wordmark.log |   14 +
+ .../test-evidence/DG1/qa/round-13/50-cleanup.log   |    7 +
+ .../DG1/qa/round-13/screenshots/ar/01-sign-in.png  |  Bin 0 -> 64264 bytes
+ .../DG1/qa/round-13/screenshots/ar/05-detail.png   |  Bin 0 -> 185268 bytes
+ .../screenshots/ar/17-lead-audit-trail.png         |  Bin 0 -> 204601 bytes
+ .../screenshots/ar/17a-lead-created-controls.png   |  Bin 0 -> 204601 bytes
+ .../qa/round-13/screenshots/ar/axe-summary.json    |   47 +
+ .../DG1/qa/round-13/screenshots/en/01-sign-in.png  |  Bin 0 -> 61031 bytes
+ .../DG1/qa/round-13/screenshots/en/05-detail.png   |  Bin 0 -> 180606 bytes
+ .../screenshots/en/17-lead-audit-trail.png         |  Bin 0 -> 200333 bytes
+ .../screenshots/en/17a-lead-created-controls.png   |  Bin 0 -> 200230 bytes
+ .../qa/round-13/screenshots/en/axe-summary.json    |   47 +
+ .../DG1/qa/tests/dg1-r13-file-scope-probe.test.ts  |   75 +
+ 161 files changed, 11357 insertions(+), 14 deletions(-)
+== product/contract/source paths (expect empty)
+== docs outside delivery (expect empty)
+== code diff
+diff --git a/apps/api/src/architecture.test.ts b/apps/api/src/architecture.test.ts
+index 78cce18..a72bc64 100644
+--- a/apps/api/src/architecture.test.ts
++++ b/apps/api/src/architecture.test.ts
+@@ -760,16 +760,37 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
+     }
+   });
+ 
+-  it("F-DG1-134: *.test.<ext> is a test for every extension (vitest/testkit allowance), other files are not", () => {
++  it("F-DG1-135: only *.test.ts/*.test.tsx (build-excluded) get the test allowance; *.test.mts etc. get full rules", () => {
+     const src = `import { describe } from "vitest";\nimport { moduleViolations } from "../../architecture.testkit.ts";`;
++    // .test.ts/.test.tsx are excluded from the build (tsconfig.build.json), so the vitest/testkit allowance applies.
++    for (const ext of ["ts", "tsx"]) expect(planted("kpi", src, `kpi.test.${ext}`), ext).toEqual([]);
++    // Every other test-looking extension is never run as a test and ships in dist: a plain module file.
++    for (const ext of CODE_EXTS.filter((e) => e !== "ts" && e !== "tsx")) {
++      expect(planted("kpi", src, `kpi.test.${ext}`).join("\n"), ext).toMatch(
++        /imports package vitest[\s\S]*composition root/,
++      );
++    }
+     for (const ext of CODE_EXTS) {
+-      expect(planted("kpi", src, `kpi.test.${ext}`), ext).toEqual([]);
+       expect(planted("kpi", src, `kpi.${ext}`).join("\n"), ext).toMatch(
+         /imports package vitest[\s\S]*composition root/,
+       );
+     }
+   });
+ 
++  it("F-DG1-135: zz.test.mts importing ../../modules.ts or vitest is a violation; zz.test.ts doing so is allowed", () => {
++    const at = (name: string) => join(MODULES_DIR, "kpi", name);
++    const modulesImport = `import { API_MODULES } from "../../modules.ts";\nexport const n = API_MODULES;`;
++    const vitestImport = `import { it } from "vitest";\nexport const t = it;`;
++    expect(fileViolations("kpi", at("zz.test.mts"), modulesImport)).toEqual([
++      "modules/kpi/zz.test.mts: imports ../../modules.ts outside src/modules (composition root)",
++    ]);
++    expect(fileViolations("kpi", at("zz.test.mts"), vitestImport)).toEqual([
++      "modules/kpi/zz.test.mts: imports package vitest",
++    ]);
++    expect(fileViolations("kpi", at("zz.test.ts"), modulesImport)).toEqual([]);
++    expect(fileViolations("kpi", at("zz.test.ts"), vitestImport)).toEqual([]);
++  });
++
+   it("scanSource reports what it saw (paths resolve relative to the planted file)", () => {
+     const rel = relative(MODULES_DIR, resolve(join(MODULES_DIR, "transformations"), "../access/policy.ts"));
+     expect(rel.split("/")).toEqual(["access", "policy.ts"]);
+diff --git a/apps/api/src/architecture.testkit.ts b/apps/api/src/architecture.testkit.ts
+index 315cb00..8da47b9 100644
+--- a/apps/api/src/architecture.testkit.ts
++++ b/apps/api/src/architecture.testkit.ts
+@@ -4,7 +4,11 @@
+ // FILE SCOPE (F-DG1-134): walk() collects EVERY buildable JS/TS module file, `/\.[cm]?[jt]sx?$/` (.ts .tsx .mts .cts
+ // .js .jsx .mjs .cjs), so no module code evades the lint by its extension (a `.mts` file typechecks and ships in dist as
+ // `.mjs`). All of them get the same rules 1-5 and boundary checks; `.tsx`/`.jsx` are parsed as TSX, the rest as TS (a
+-// superset of JS); `*.test.<ext>` is a test.
++// superset of JS).
++// TEST CLASSIFICATION (F-DG1-135): the test-only allowances (importing `modules.ts`/`architecture.testkit.ts`, and
++// `vitest`) apply ONLY to `*.test.ts`/`*.test.tsx` (TEST_FILE) - exactly the test extensions tsconfig.build.json
++// excludes. Any other test-looking file (`*.test.mts`, `*.test.js`, ...) is not run by vitest and ships in dist, so it
++// is a NON-test module file: still scanned by walk(), with the full boundary rules and no test exemption.
+ // It walks the TypeScript AST of each file (F-DG1-109: `ts.preProcessFile` saw only literal specifiers) and reports:
+ //  - every static import / export-from / `import x = require()` / type-only import specifier, and every
+ //    `import("...")` / `require("...")` with a string-literal specifier - each checked against the module boundary;
+@@ -171,10 +175,12 @@ const TEST_SUPPORT_FILES = new Set(["modules.ts", "architecture.testkit.ts"]);
+ /**
+  * F-DG1-134: every buildable JS/TS module file - .ts .tsx .mts .cts .js .jsx .mjs .cjs. Matching only .ts/.tsx let a
+  * `.mts` module file (typechecks under NodeNext + allowImportingTsExtensions, ships in dist as `.mjs`) evade every rule
+- * and the boundary check. `*.test.<ext>` of any of these is a test (TEST_FILE).
++ * and the boundary check.
++ * F-DG1-135: only `*.test.ts`/`*.test.tsx` is a test (TEST_FILE) - the extensions tsconfig.build.json excludes. A
++ * `*.test.mts`/`.test.js`/... is never run as a test yet compiles into dist, so it gets the full boundary rules.
+  */
+ const CODE_FILE = /\.[cm]?[jt]sx?$/;
+-const TEST_FILE = /\.test\.[cm]?[jt]sx?$/;
++const TEST_FILE = /\.test\.tsx?$/;
+ /** JSX-capable files are parsed as TSX (a TS-kind parse of JSX text such as `a'b {require(x)}` swallows code). */
+ const scriptKindOf = (fileName: string) => (/\.[jt]sx$/.test(fileName) ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
+ 

@@ -11565,7 +11565,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-13/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T16:46:33Z",
@@ -11576,10 +11576,104 @@
           "at": "2026-10-01T16:56:03Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at fbc9ba6a6606396e149b3138a1fc731fff7cbb62"
+        },
+        {
+          "at": "2026-10-01T17:12:49Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 14: PASS"
+        },
+        {
+          "at": "2026-10-01T17:20:29Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 14: PASS"
+        },
+        {
+          "at": "2026-10-01T17:21:17Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 14: PASS"
         }
       ],
       "fix_revision": "fbc9ba6a6606396e149b3138a1fc731fff7cbb62",
-      "fix_summary": "TEST_FILE narrowed to /\\.test\\.tsx?$/ to match tsconfig.build.json's test exclusion; a *.test.mts/.test.js module file is now a non-test (full boundary rules, no modules.ts/testkit/vitest exemption) and still scanned by walk(). Real module test files are all .test.ts. architecture 128/128; full unit 321/321 Node 22+24."
+      "fix_summary": "TEST_FILE narrowed to /\\.test\\.tsx?$/ to match tsconfig.build.json's test exclusion; a *.test.mts/.test.js module file is now a non-test (full boundary rules, no modules.ts/testkit/vitest exemption) and still scanned by walk(). Real module test files are all .test.ts. architecture 128/128; full unit 321/321 Node 22+24.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-QA-R14-qa-verifier-20261001T170044Z-34d396b6",
+          "session_id": "34d396b6-d7b9-4716-aea9-ff2f6fa95266"
+        },
+        "at": "2026-10-01T17:21:17Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/qa/tests/dg1-r14-test-classification-probe.test.ts",
+          "docs/delivery/test-evidence/DG1/qa/round-14/06-r14-probe-and-architecture-v22.22.2.log",
+          "docs/delivery/test-evidence/DG1/qa/round-14/06-r14-probe-and-architecture-v24.21.0.log",
+          "docs/delivery/test-evidence/DG1/qa/round-14/07-build-vitest-alignment.log",
+          "docs/delivery/test-evidence/DG1/qa/round-14/08-f135-scope.log",
+          "docs/delivery/test-evidence/DG1/qa/round-14/03-unit-node22.log",
+          "docs/delivery/test-evidence/DG1/qa/round-14/04-unit-node24.log",
+          "apps/api/src/architecture.testkit.ts",
+          "apps/api/src/architecture.test.ts"
+        ],
+        "note": "Verified on frozen candidate sha256:dd747fe1df62d876a74101caa826542b90d3eb36cedb1de14f299b0b6de8c559 (freeze 985d0fa; the ID recomputes identically in a full disposable clone, before and after all runs). The fix (fbc9ba6, T-DG1-BE15) is test-only. Relative to the r13 candidate (08cbd12), the product tree changes only apps/api/src/architecture.testkit.ts (excluded from the build by tsconfig.build.json 'src/**/*.testkit.ts') and architecture.test.ts. The only code change is TEST_FILE /\\.test\\.[cm]?[jt]sx?$/ -> /\\.test\\.tsx?$/; CODE_FILE stays /\\.[cm]?[jt]sx?$/, so every buildable file is still walked. My independent probe (qa/tests/dg1-r14-test-classification-probe.test.ts, 22/22 on Node v22.22.2 and v24.21.0) plants files into the REAL src/modules/transformations directory and calls the production moduleViolations(). Files zz.test.{mts,cts,js,jsx,mjs,cjs} that import vitest, ../../modules.ts or architecture.testkit.ts are all flagged as non-tests (imports package vitest / outside src/modules), and still get rules 1-5 (process.kill, crypto namespace). zz.test.ts/.test.tsx with the same imports give 0 violations (exemption kept) but are still flagged for a deep cross-module import. Near-miss names (.test.ts.mts, .TEST.ts, zztest.ts, .tests.ts) are non-tests. Empirically (07-build-vitest-alignment.log): a planted .test.mts is emitted into apps/api/dist and is NOT collected by vitest (so the non-test classification is right); .test.ts is collected and not emitted; .test.tsx is neither emitted nor collected (its exemption is therefore harmless). The candidate's own F-DG1-135 self-checks and architecture.test.ts pass 128/128 on both runtimes. Nothing regressed: unit 321/321 on both runtimes (unit-web 110/110, unit-node 211/211), integration 200/200 x3 (Node 22 x2, Node 24 x1), e2e 22/22 EN+AR on both runtimes. F-DG1-009/210/214 re-confirmed as checks in qa-verifier.json (not re-verified here, to keep their original closure provenance)."
+      }
+    },
+    {
+      "id": "F-DG1-136",
+      "stage_id": "DG1",
+      "requirement": "REQ-S19-004",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Integration teardown can exceed vitest's default 10 s hookTimeout under host contention. In apps/api/test/integration/access-derived-race.test.ts:73-79, afterAll runs three DDL statements (DROP TRIGGER on scoped_assignment, DROP FUNCTION, DROP TABLE), api.close() and dropScratchDatabase(). That helper (packages/db/test/global-setup.ts:116) has its OWN 10 s wait budget (timeoutMs ?? 10_000) for other backends to disconnect. vitest.config.ts:49 raises only testTimeout (30_000) for the integration project, and no hookTimeout is set anywhere, so the whole hook gets vitest's default 10 000 ms. One required full integration run failed this way in round 14.",
+      "reproduction": "Candidate sha256:dd747fe1...c559, full disposable clone at 985d0fa, Node v22.22.2, PostgreSQL 16.13 disposable cluster on 127.0.0.1:5491. The host was shared with two other reviewers' concurrent runs: 4 CPUs, load average ~10. Command: QA_PG_PORT=5491 tests/qa/support/with-pg.sh pnpm test:integration. Run 1: Tests 200 passed (200), but Test Files 1 failed | 18 passed, exit 1, 'FAIL apps/api/test/integration/access-derived-race.test.ts ... Error: Hook timed out in 10000ms' at :73:1 (afterAll). The whole run took 221.77 s (transform 14.08 s), and this file alone took 58.7 s. Runs 2 and 3 (Node 22) and a Node 24 run were each 19/19 files and 200/200 tests, exit 0, at 27.8 s / 29.5 s / 31.8 s, with this file at ~1 s. In isolation, 5 runs unloaded and 5 runs with 6 CPU-burn processes all passed (22-race-file-flake-probe.log), so it did not reproduce on demand. The root cause is not isolated beyond 'teardown exceeded 10 s on a ~8x slowed host'. The candidates are the DROP TRIGGER lock wait (it needs a ShareRowExclusive lock on scoped_assignment) and the dropScratchDatabase wait. Either way, the hook budget (10 s) is no larger than one of its own internal waits (10 s). The same pattern (afterAll with dropScratchDatabase, no hookTimeout) is in 6 integration files: access-derived-race, oidc, bootstrap, migrate, scratch-drop, a13-job-idempotency.",
+      "expected": "A required check is deterministic: a teardown that is allowed to wait up to 10 s internally runs under a hook budget comfortably larger than that, e.g. hookTimeout >= 30_000 in the integration project, matching testTimeout, or an explicit timeout argument on these afterAll hooks. On a slow or contended CI runner it should not turn a 200/200 run red.",
+      "actual": "The integration project inherits vitest's default hookTimeout of 10 000 ms. Under heavy host load, the afterAll of access-derived-race.test.ts timed out once in 3 full Node 22 runs, and the suite exited 1 although every test passed. No product behaviour is affected: all assertions passed. This is test-harness reliability in the F-DG1-009 area, a different mechanism from F-DG1-009 (that was concurrent files and an unhandled 57P01). Rated Low and non-mandatory: no data integrity, access-control, calculation or portability impact, and it needs severe host contention to trigger.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-14/20-integration-run1.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-14/20-integration-run2.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-14/20-integration-run3.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-14/21-integration-node24.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-14/22-race-file-flake-probe.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-14/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T17:20:29Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG1 round 14 (session 21949e8c) after full integration run 1 exited 1 on an afterAll hook timeout with 200/200 tests passed. Low and non-mandatory: test-harness robustness under host contention, with no product impact. Suggested fix: set hookTimeout (e.g. 30_000) on the integration project in vitest.config.ts. The ID is proposed from the code-security F-DG1-1xx block; the orchestrator may re-allocate it."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-217",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Module lint crashes with an opaque TypeScript 'Debug Failure' on a declaration-file name (*.d.ts / *.d.mts / *.d.cts) instead of reporting a diagnostic. walk() collects every name matching CODE_FILE = /\\.[cm]?[jt]sx?$/ (apps/api/src/architecture.testkit.ts:182), so a module file such as types.d.ts is scanned; fileViolations() -> syntaxErrors() (:449-450) calls ts.transpileModule(source, { fileName }) and TypeScript throws 'Debug Failure. Output generation failed' for a declaration-file name. moduleViolations() therefore throws, and architecture.test.ts errors instead of listing violations. Fail-closed (CI goes red, nothing slips through), pre-existing since r5 (42b3dda introduced syntaxErrors), and outside the F-DG1-135 change.",
+      "reproduction": "Candidate sha256:dd747fe1...c8559, full disposable clone at 985d0fa, Node v22.22.2. (1) fileViolations(\"transformations\", <MODULES_DIR>/transformations/zz.d.ts | zz.d.mts | zz.d.cts | zz.test.d.ts, any source) throws Error 'Debug Failure. Output generation failed' at architecture.testkit.ts:450 (ts.transpileModule). (2) Planting apps/api/src/modules/transformations/zz-qa-r14.d.ts with `export declare const x: number;` makes moduleViolations(\"transformations\") throw the same error. Pinned by the OBSERVATION cases in docs/delivery/test-evidence/DG1/qa/tests/dg1-r14-test-classification-probe.test.ts (3 cases, green on Node 22 and 24 = the throw reproduces). First observed when my near-miss case used the name zz.test.d.mts (log 06-r14-probe-and-architecture-*.log header).",
+      "expected": "A declaration file in a module is either skipped explicitly (it emits no JS) or scanned with a mode that works for declaration files (e.g. ts.createSourceFile + parseDiagnostics instead of transpileModule), and a self-check pins the choice. A violation should surface as a named lint diagnostic, never as an internal compiler assertion.",
+      "actual": "Any *.d.ts / *.d.mts / *.d.cts under apps/api/src/modules makes the whole module-boundary check crash with 'Debug Failure. Output generation failed', with no file name in the message. Today the real tree has no declaration file (0 violations, all module files .ts), so no current check is red.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r14-test-classification-probe.test.ts",
+        "docs/delivery/test-evidence/DG1/qa/round-14/06-r14-probe-and-architecture-v22.22.2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-14/06-r14-probe-and-architecture-v24.21.0.log",
+        "apps/api/src/architecture.testkit.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-14/qa-verifier.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T17:21:17Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG1 round 14 while independently probing the F-DG1-135 test classification. Rated Low and non-mandatory: fail-closed (the lint crashes red, nothing passes unchecked), and declaration files emit no runtime code. No access-control, integrity, calculation or portability impact; it is a developer-experience/robustness defect of a static test-only check. Pre-existing since r5, not introduced by F-DG1-135. Proposed ID F-DG1-217 (next free number in the 2xx range); the orchestrator may renumber. It does not block DG1 on its own; the orchestrator may route it as a repair or accept it as an observation."
+        }
+      ]
     }
   ]
 }

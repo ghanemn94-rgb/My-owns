@@ -1,0 +1,81 @@
+$ QA_PG_PORT=5491 tests/qa/support/with-pg.sh pnpm test:integration   # run 1, clone @985d0fa, node v22.22.2, /usr/lib/postgresql/16/bin/postgres postgres (PostgreSQL) 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+> mobily-transformation-hub@0.1.0 test:integration /var/tmp/mth-run.Plsx4I/claude-0/review-r14
+> vitest run --project integration
+
+
+[1m[46m RUN [49m[22m [36mv3.2.4 [39m[90m/var/tmp/mth-run.Plsx4I/claude-0/review-r14[39m
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mupsbjpy_1afc51fb; applied 8 migrations to a fresh database
+ [32m✓[39m [30m[45m integration [49m[39m apps/api/test/integration/transformations.test.ts [2m([22m[2m30 tests[22m[2m)[22m[33m 893[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m apps/api/test/integration/oidc.test.ts [2m([22m[2m19 tests[22m[2m)[22m[33m 578[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m apps/api/test/integration/access-scope.test.ts [2m([22m[2m18 tests[22m[2m)[22m[33m 796[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m apps/api/test/integration/admin.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 3720[2mms[22m[39m
+   [33m[2m✓[22m[39m users[2m > [22mdisables a user with If-Match, revoking all their sessions in the same transaction; audited [33m 453[2mms[22m[39m
+   [33m[2m✓[22m[39m role and permission catalogue[2m > [22mlists roles with permissions equal to the seeded catalogue (role.read), 403 without it [33m 2472[2mms[22m[39m
+ [31m❯[39m [30m[45m integration [49m[39m apps/api/test/integration/access-derived-race.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 58737[2mms[22m[39m
+   [33m[2m✓[22m[39m a create racing the revocation of its source BU grant leaves no active derived assignment (F-DG1-115)[2m > [22mA. revoke first: the create waits for the revoke, sees the source revoked and is refused (nothing persists) [33m 14987[2mms[22m[39m
+   [33m[2m✓[22m[39m a create racing the revocation of its source BU grant leaves no active derived assignment (F-DG1-115)[2m > [22mB. create first: the revoke waits for the create and its cascade revokes the new derived assignment [33m 549[2mms[22m[39m
+   [33m[2m✓[22m[39m a create racing the revocation of its source BU grant leaves no active derived assignment (F-DG1-115)[2m > [22mC. one of two source grants revoked concurrently: the create succeeds and derives only from the survivor [33m 313[2mms[22m[39m
+   [32m✓[39m a create racing the revocation of its source BU grant leaves no active derived assignment (F-DG1-115)[2m > [22mD. the only source revoked concurrently, another (approval-holding, non-source) grant still authorizes create[32m 180[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m apps/api/test/integration/contract/contract.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 7171[2mms[22m[39m
+   [33m[2m✓[22m[39m every operation, validated against the contract and the zod mirrors[2m > [22mauth + me [33m 1735[2mms[22m[39m
+   [33m[2m✓[22m[39m every operation, validated against the contract and the zod mirrors[2m > [22morganizations and business units [33m 1138[2mms[22m[39m
+   [33m[2m✓[22m[39m every operation, validated against the contract and the zod mirrors[2m > [22musers, roles, permissions and assignments [33m 1551[2mms[22m[39m
+   [33m[2m✓[22m[39m every operation, validated against the contract and the zod mirrors[2m > [22mtransformations and audit [33m 729[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m apps/api/test/integration/identity.test.ts [2m([22m[2m13 tests[22m[2m)[22m[33m 4328[2mms[22m[39m
+   [33m[2m✓[22m[39m dev login (AUTH_MODE=dev)[2m > [22mrotates the session: a login presented with an existing session revokes it [33m 978[2mms[22m[39m
+   [33m[2m✓[22m[39m PUT /api/v1/me/preferences[2m > [22mpersists the language and time zone with If-Match (428, 409, 200) and audits the change [33m 657[2mms[22m[39m
+   [33m[2m✓[22m[39m logout[2m > [22muses the __Host- cookie with Secure on an https base URL [33m 828[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m tests/qa/integration/a12-cross-scope.test.ts [2m([22m[2m14 tests[22m[2m)[22m[33m 2515[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m tests/qa/integration/a13-job-idempotency.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 7826[2mms[22m[39m
+   [33m[2m✓[22m[39m A13 create with Idempotency-Key: a retried request is one record and one outbox event[2m > [22mreplays the original 201 and writes nothing new; the same key with another body is 422 [33m 361[2mms[22m[39m
+   [33m[2m✓[22m[39m A13 transformation.created handler: processed twice = one ledger effect[2m > [22mconcurrent deliveries of the same message produce exactly one effect [33m 347[2mms[22m[39m
+   [33m[2m✓[22m[39m A13 running worker: a duplicate delivery is a no-op[2m > [22mconsumes the event once; an extra job with the same message completes as 'duplicate' [33m 2809[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m apps/worker/test/integration/outbox.test.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 7765[2mms[22m[39m
+   [33m[2m✓[22m[39m outbox relay idempotency[2m > [22mnever double-publishes with concurrent relays (FOR UPDATE SKIP LOCKED) [33m 534[2mms[22m[39m
+   [33m[2m✓[22m[39m worker runtime: end to end, restarts and the dead-letter queue[2m > [22mrelays and handles a created transformation, and survives a restart without losing the job [33m 3893[2mms[22m[39m
+   [33m[2m✓[22m[39m worker runtime: end to end, restarts and the dead-letter queue[2m > [22mmoves a job that keeps failing to ops.failed after the bounded retries [33m 663[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m apps/api/test/integration/organizations.test.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 519[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m tests/qa/integration/a14-concurrency.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 774[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m packages/db/test/integration/protection.test.ts [2m([22m[2m17 tests[22m[2m)[22m[33m 576[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m apps/api/test/integration/platform.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 2025[2mms[22m[39m
+   [33m[2m✓[22m[39m health and readiness[2m > [22mreports 503 not_ready/pending when the build ships a migration the database lacks, and fail on checksum drift [33m 304[2mms[22m[39m
+   [33m[2m✓[22m[39m rate limiting (ADR-0007 T-3)[2m > [22mlimits general API traffic per session, never the health endpoints [33m 986[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m packages/db/test/integration/catalogue.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 72[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m packages/db/test/integration/bootstrap.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 7837[2mms[22m[39m
+   [33m[2m✓[22m[39m mth-db bootstrap[2m > [22mcreates the first organization and a technical/access admin with no business permission, fully audited [33m 891[2mms[22m[39m
+   [33m[2m✓[22m[39m mth-db bootstrap[2m > [22mrefuses to run twice [33m 945[2mms[22m[39m
+   [33m[2m✓[22m[39m mth-db bootstrap[2m > [22mvalidates its input and refuses the dev-login issuer [33m 1208[2mms[22m[39m
+   [33m[2m✓[22m[39m mth-db seed-dev (synthetic, development only)[2m > [22mseeds synthetic users bound to urn:mth:dev-local once, idempotently [33m 2906[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m packages/db/test/integration/migrate.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 1183[2mms[22m[39m
+   [33m[2m✓[22m[39m mth-db migrate on a fresh database[2m > [22mapplies every shipped migration, then reports up to date [33m 358[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m apps/worker/test/integration/maintenance.test.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 387[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m packages/db/test/integration/scratch-drop.test.ts [2m([22m[2m3 tests[22m[2m)[22m[33m 11464[2mms[22m[39m
+   [33m[2m✓[22m[39m dropScratchDatabase never terminates a live client (F-DG1-009)[2m > [22ma drop right after pool.end() raises no 57P01 on the closing pool (40 rounds, 8 clients each) [33m 10938[2mms[22m[39m
+   [33m[2m✓[22m[39m dropScratchDatabase never terminates a live client (F-DG1-009)[2m > [22ma client that is still connected is NOT terminated: the drop refuses, names it, and succeeds once it ends [33m 525[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Suites 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m [30m[45m integration [49m[39m apps/api/test/integration/access-derived-race.test.ts[2m [ apps/api/test/integration/access-derived-race.test.ts ][22m
+[31m[1mError[22m: Hook timed out in 10000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".[39m
+[36m [2m❯[22m apps/api/test/integration/access-derived-race.test.ts:[2m73:1[22m[39m
+    [90m 71| [39m  [35mawait[39m api[33m.[39mowner[33m.[39m[34mquery[39m([32m"DELETE FROM f115_hook"[39m)[33m;[39m
+    [90m 72| [39m})[33m;[39m
+    [90m 73| [39m[34mafterAll[39m([35masync[39m () [33m=>[39m {
+    [90m   | [39m[31m^[39m
+    [90m 74| [39m  await api.owner.query("DROP TRIGGER IF EXISTS f115_park ON scoped_as…
+    [90m 75| [39m  [35mawait[39m api[33m.[39mowner[33m.[39m[34mquery[39m([32m"DROP FUNCTION IF EXISTS f115_park()"[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m18 passed[39m[22m[90m (19)[39m
+[2m      Tests [22m [1m[32m200 passed[39m[22m[90m (200)[39m
+[2m   Start at [22m 17:05:02
+[2m   Duration [22m 221.77s[2m (transform 14.08s, setup 0ms, collect 38.38s, tests 119.17s, environment 0ms, prepare 64ms)[22m
+
+ ELIFECYCLE  Command failed with exit code 1.
+exit=1

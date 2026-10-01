@@ -1,0 +1,83 @@
+// F-DG1-135 re-proof probe (code-security-reviewer, round 14). Disposable clone only - never in the candidate tree.
+import { describe, expect, it, afterAll } from "vitest";
+import { writeFileSync, rmSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import * as NEW from "./architecture.testkit.ts";
+import * as OLD from "./architecture.testkit.r13old.ts";
+import { API_MODULES } from "./modules.ts";
+
+const KPI = join(NEW.MODULES_DIR, "kpi");
+const SRC_MODULES = `import { API_MODULES } from "../../modules.ts";\nexport const n = API_MODULES;\n`;
+const SRC_VITEST = `import { it } from "vitest";\nexport const t = it;\n`;
+const SRC_BOTH = `import { describe } from "vitest";\nimport { moduleViolations } from "../../architecture.testkit.ts";\nexport const x = [describe, moduleViolations];\n`;
+const planted: string[] = [];
+const plant = (name: string, src: string) => { const p = join(KPI, name); writeFileSync(p, src); planted.push(p); return p; };
+afterAll(() => { for (const p of planted) rmSync(p, { force: true }); });
+
+describe("F-DG1-135 re-proof", () => {
+  it("fileViolations: zz.test.mts flagged (no exemption) under NEW; allowed under OLD; zz.test.ts allowed under both", () => {
+    const at = (n: string) => join(KPI, n);
+    for (const [label, src] of [["modules.ts", SRC_MODULES], ["vitest", SRC_VITEST], ["both", SRC_BOTH]] as const) {
+      const nm = NEW.fileViolations("kpi", at("zz.test.mts"), src);
+      const om = OLD.fileViolations("kpi", at("zz.test.mts"), src);
+      const nt = NEW.fileViolations("kpi", at("zz.test.ts"), src);
+      const ntx = NEW.fileViolations("kpi", at("zz.test.tsx"), src);
+      console.log(`[${label}] NEW zz.test.mts ->`, JSON.stringify(nm));
+      console.log(`[${label}] OLD zz.test.mts ->`, JSON.stringify(om));
+      console.log(`[${label}] NEW zz.test.ts  ->`, JSON.stringify(nt));
+      console.log(`[${label}] NEW zz.test.tsx ->`, JSON.stringify(ntx));
+      expect(nm.length).toBeGreaterThan(0);
+      expect(om).toEqual([]);
+      expect(nt).toEqual([]);
+      expect(ntx).toEqual([]);
+    }
+  });
+
+  it("every non-.ts/.tsx test-looking extension is flagged under NEW", () => {
+    for (const ext of ["mts", "cts", "js", "jsx", "mjs", "cjs"]) {
+      const v = NEW.fileViolations("kpi", join(KPI, `zz.test.${ext}`), SRC_BOTH);
+      console.log(`NEW zz.test.${ext} ->`, JSON.stringify(v));
+      expect(v.join("\n")).toMatch(/imports package vitest/);
+      expect(v.join("\n")).toMatch(/architecture\.testkit\.ts outside src\/modules \(composition root\)/);
+    }
+  });
+
+  it("planted on disk: moduleViolations(kpi) flags zz.test.mts and not zz.test.ts", () => {
+    const before = NEW.moduleViolations("kpi");
+    console.log("baseline moduleViolations(kpi) =", JSON.stringify(before));
+    expect(before).toEqual([]);
+    plant("zz.test.mts", SRC_BOTH);
+    plant("zz.test.ts", SRC_BOTH);
+    const after = NEW.moduleViolations("kpi");
+    console.log("planted moduleViolations(kpi) NEW =", JSON.stringify(after));
+    console.log("planted moduleViolations(kpi) OLD =", JSON.stringify(OLD.moduleViolations("kpi")));
+    expect(after.some((v) => v.startsWith("modules/kpi/zz.test.mts:"))).toBe(true);
+    expect(after.some((v) => v.startsWith("modules/kpi/zz.test.ts:"))).toBe(false);
+    expect(OLD.moduleViolations("kpi")).toEqual([]);
+    for (const p of planted.splice(0)) rmSync(p, { force: true });
+    expect(NEW.moduleViolations("kpi")).toEqual([]);
+  });
+
+  it("TEST_FILE extensions == tsconfig.build.json test exclude globs", () => {
+    const cfg = JSON.parse(readFileSync(join(NEW.SRC, "..", "tsconfig.build.json"), "utf8"));
+    const testGlobs = (cfg.exclude as string[]).filter((g) => /\.test\./.test(g));
+    console.log("tsconfig.build.json test excludes =", JSON.stringify(testGlobs));
+    const exts = testGlobs.map((g) => g.replace(/^.*\.test\./, "")).sort();
+    expect(exts).toEqual(["ts", "tsx"]);
+    const kit = readFileSync(join(NEW.SRC, "architecture.testkit.ts"), "utf8");
+    const m = kit.match(/^const TEST_FILE = (.*);$/m);
+    console.log("TEST_FILE source =", m?.[1]);
+    expect(m?.[1]).toBe("/\\.test\\.tsx?$/");
+    const re = /\.test\.tsx?$/;
+    for (const e of ["ts", "tsx"]) expect(re.test(`a.test.${e}`)).toBe(true);
+    for (const e of ["mts", "cts", "js", "jsx", "mjs", "cjs", "d.ts"]) expect(re.test(`a.test.${e}`), e).toBe(false);
+  });
+
+  it("real module tree: zero moduleViolations under NEW", () => {
+    for (const mod of Object.keys(API_MODULES) as (keyof typeof API_MODULES)[]) {
+      const v = NEW.moduleViolations(mod);
+      console.log(`moduleViolations(${mod}) =`, v.length);
+      expect(v).toEqual([]);
+    }
+  });
+});

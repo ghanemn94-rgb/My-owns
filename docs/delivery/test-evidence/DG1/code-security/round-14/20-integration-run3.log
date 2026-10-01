@@ -1,0 +1,42 @@
+$ QA_PG_PORT=5491 tests/qa/support/with-pg.sh pnpm test:integration   # run 3 (Node 22), load before: 5.25 8.57 6.19
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+> mobily-transformation-hub@0.1.0 test:integration /var/tmp/mth-run.Plsx4I/claude-0/review-r14
+> vitest run --project integration
+
+
+[1m[46m RUN [49m[22m [36mv3.2.4 [39m[90m/var/tmp/mth-run.Plsx4I/claude-0/review-r14[39m
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mupslrcb_a5448f86; applied 8 migrations to a fresh database
+ [32m✓[39m [30m[45m integration [49m[39m packages/db/test/integration/scratch-drop.test.ts [2m([22m[2m3 tests[22m[2m)[22m[33m 5800[2mms[22m[39m
+   [33m[2m✓[22m[39m dropScratchDatabase never terminates a live client (F-DG1-009)[2m > [22ma drop right after pool.end() raises no 57P01 on the closing pool (40 rounds, 8 clients each) [33m 5344[2mms[22m[39m
+   [33m[2m✓[22m[39m dropScratchDatabase never terminates a live client (F-DG1-009)[2m > [22ma client that is still connected is NOT terminated: the drop refuses, names it, and succeeds once it ends [33m 452[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m apps/worker/test/integration/outbox.test.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 5234[2mms[22m[39m
+   [33m[2m✓[22m[39m worker runtime: end to end, restarts and the dead-letter queue[2m > [22mrelays and handles a created transformation, and survives a restart without losing the job [33m 3708[2mms[22m[39m
+   [33m[2m✓[22m[39m worker runtime: end to end, restarts and the dead-letter queue[2m > [22mmoves a job that keeps failing to ops.failed after the bounded retries [33m 1052[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m tests/qa/integration/a13-job-idempotency.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 3273[2mms[22m[39m
+   [33m[2m✓[22m[39m A13 running worker: a duplicate delivery is a no-op[2m > [22mconsumes the event once; an extra job with the same message completes as 'duplicate' [33m 2632[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m apps/api/test/integration/access-derived-race.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 815[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m packages/db/test/integration/bootstrap.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 1043[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m apps/api/test/integration/transformations.test.ts [2m([22m[2m30 tests[22m[2m)[22m[33m 901[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m apps/api/test/integration/contract/contract.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 827[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m apps/api/test/integration/access-scope.test.ts [2m([22m[2m18 tests[22m[2m)[22m[33m 911[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m apps/api/test/integration/oidc.test.ts [2m([22m[2m19 tests[22m[2m)[22m[33m 798[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m apps/api/test/integration/admin.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 724[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m packages/db/test/integration/migrate.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 484[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m tests/qa/integration/a12-cross-scope.test.ts [2m([22m[2m14 tests[22m[2m)[22m[33m 696[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m apps/api/test/integration/organizations.test.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 527[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m apps/worker/test/integration/maintenance.test.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 331[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m apps/api/test/integration/identity.test.ts [2m([22m[2m13 tests[22m[2m)[22m[33m 365[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m tests/qa/integration/a14-concurrency.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 302[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m apps/api/test/integration/platform.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 224[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m packages/db/test/integration/protection.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 152[2mms[22m[39m
+ [32m✓[39m [30m[45m integration [49m[39m packages/db/test/integration/catalogue.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 40[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m19 passed[39m[22m[90m (19)[39m
+[2m      Tests [22m [1m[32m200 passed[39m[22m[90m (200)[39m
+[2m   Start at [22m 17:12:58
+[2m   Duration [22m 29.48s[2m (transform 1.36s, setup 0ms, collect 4.83s, tests 23.45s, environment 0ms, prepare 128ms)[22m
+
+exit=0
+load after: 3.84 7.91 6.05

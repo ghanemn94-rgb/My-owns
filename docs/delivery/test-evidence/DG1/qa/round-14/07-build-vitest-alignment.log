@@ -1,0 +1,17 @@
+$ node --version: v22.22.2
+# plant zz-qa-r14-a.test.ts, zz-qa-r14-b.test.tsx, zz-qa-r14-c.test.mts (each a vitest test) into apps/api/src/modules/transformations, build the api, list dist and vitest's collected files
+$ pnpm --filter @mth/api build
+> @mth/api@0.1.0 build /var/tmp/mth-run.ntrkW1/claude-0/review-qa/apps/api
+> tsc -p tsconfig.build.json
+
+exit=0
+$ ls apps/api/dist/modules/transformations | grep zz-qa-r14
+zz-qa-r14-c.test.d.mts
+zz-qa-r14-c.test.d.mts.map
+zz-qa-r14-c.test.mjs
+zz-qa-r14-c.test.mjs.map
+$ npx vitest list --project unit-node --filesOnly | grep zz-qa-r14
+[unit-node] apps/api/src/modules/transformations/zz-qa-r14-a.test.ts
+$ cleanup + rebuild
+rebuild exit=0
+0

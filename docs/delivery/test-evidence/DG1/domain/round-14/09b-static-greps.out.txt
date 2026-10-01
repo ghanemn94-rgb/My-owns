@@ -1,0 +1,34 @@
+clone HEAD 985d0fa6d05e0b63f53ad67f641910dab34f50ca. Supersedes the empty grep sections of 09-static-checks.out.txt (the pnpm checks there are valid).
+== provenance (non-test)
+packages/shared/src/schemas/branding.ts:2:// operation getBrandingTokens); keep both in lockstep. `provenance` stays "provisional" while the seeded §15 tokens
+packages/shared/src/schemas/branding.ts:18:  provenance: brandingProvenance,
+apps/api/src/modules/admin/branding.ts:17: * Maps the token source to the contract shape. Fails safe: provenance is "official" only when the source says the
+apps/api/src/modules/admin/branding.ts:29:  return brandingTokens.parse({ provenance: provisional ? "provisional" : "official", tokens });
+== seeded token provenance value
+packages/shared/src/schemas/branding.ts:2:// operation getBrandingTokens); keep both in lockstep. `provenance` stays "provisional" while the seeded §15 tokens
+packages/shared/src/schemas/branding.ts:6:export const brandingProvenance = z.enum(["provisional", "official"]);
+== official/certified in i18n (expect only negations)
+apps/web/src/i18n/en/common.json:5:    "provisionalHint": "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.",
+apps/web/src/i18n/en/common.json:6:    "provisionalNotice": "Branding is provisional: the text wordmark and colours are placeholders, not official Mobily brand assets."
+apps/web/src/i18n/en/common.json:120:    "brandBody": "No official Mobily logo or verified brand colours have been supplied. The header shows a provisional text wordmark, and the colours (including #0078FF) are provisional design tokens that can be replaced through Branding Settings once official values are approved.",
+apps/web/src/i18n/en/common.json:123:    "methodBody": "The product operationalizes the Business Transformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with custom extensions. It is not an official PMI standard, and this product is not certified by PMI or any other body.",
+apps/web/src/i18n/ar/common.json:5:    "provisionalHint": "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة.",
+apps/web/src/i18n/ar/common.json:6:    "provisionalNotice": "الهوية البصرية مؤقتة: الشعار النصي والألوان بدائل مؤقتة وليست أصولًا رسمية لعلامة موبايلي."
+apps/web/src/i18n/ar/common.json:117:    "brandBody": "لم يُقدَّم شعار رسمي لموبايلي ولا ألوان علامة معتمدة. يعرض الترويسة شعارًا نصيًا مؤقتًا، والألوان (ومنها #0078FF) رموز تصميم مؤقتة يمكن استبدالها من إعدادات الهوية البصرية بعد اعتماد القيم الرسمية.",
+apps/web/src/i18n/ar/common.json:120:    "methodBody": "يطبّق المنتج دليل تحوّل الأعمال الإصدار 1.0، وهو خلاصة عملية مستوحاة من ممارسات PMI وBrightline وBRM مع إضافات مخصصة. وهو ليس معيارًا رسميًا من PMI، وهذا المنتج غير معتمد من PMI أو من أي جهة أخرى.",
+== DG0-7 in product i18n catalogues (expect none)
+grep exit=1
+== PMI in product i18n
+apps/web/src/i18n/en/common.json:123:    "methodBody": "The product operationalizes the Business Transformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with custom extensions. It is not an official PMI standard, and this product is not certified by PMI or any other body.",
+apps/web/src/i18n/ar/common.json:120:    "methodBody": "يطبّق المنتج دليل تحوّل الأعمال الإصدار 1.0، وهو خلاصة عملية مستوحاة من ممارسات PMI وBrightline وBRM مع إضافات مخصصة. وهو ليس معيارًا رسميًا من PMI، وهذا المنتج غير معتمد من PMI أو من أي جهة أخرى.",
+== Decimal for money/rates in calc
+/usr/bin/grep: packages/calc/src: No such file or directory
+/usr/bin/grep: packages/calc/src: No such file or directory
+== end
+== packages/calc contents
+packages/calc/README.md
+== money/rate column types in migrations (expect numeric, never float/real/double)
+== decimal libs referenced
+apps/web/src/lib/format.ts
+apps/web/src/lib/lib.test.ts
+== git diff 08cbd12..985d0fa on any of these (expect empty)

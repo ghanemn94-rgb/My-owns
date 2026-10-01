@@ -1,0 +1,62 @@
+$ npx vitest run --project unit-node apps/api/src/zz-r14-probe.test.ts   # disposable clone @985d0fa, node v22.22.2; OLD = git show 08cbd12:apps/api/src/architecture.testkit.ts
+
+[1m[46m RUN [49m[22m [36mv3.2.4 [39m[90m/var/tmp/mth-run.Plsx4I/claude-0/review-r14[39m
+
+[90mstdout[2m | apps/api/src/zz-r14-probe.test.ts[2m > [22m[2mF-DG1-135 re-proof[2m > [22m[2mfileViolations: zz.test.mts flagged (no exemption) under NEW; allowed under OLD; zz.test.ts allowed under both
+[22m[39m[modules.ts] NEW zz.test.mts -> ["modules/kpi/zz.test.mts: imports ../../modules.ts outside src/modules (composition root)"]
+[modules.ts] OLD zz.test.mts -> []
+[modules.ts] NEW zz.test.ts  -> []
+[modules.ts] NEW zz.test.tsx -> []
+[vitest] NEW zz.test.mts -> ["modules/kpi/zz.test.mts: imports package vitest"]
+[vitest] OLD zz.test.mts -> []
+[vitest] NEW zz.test.ts  -> []
+[vitest] NEW zz.test.tsx -> []
+[both] NEW zz.test.mts -> ["modules/kpi/zz.test.mts: imports package vitest","modules/kpi/zz.test.mts: imports ../../architecture.testkit.ts outside src/modules (composition root)"]
+[both] OLD zz.test.mts -> []
+[both] NEW zz.test.ts  -> []
+[both] NEW zz.test.tsx -> []
+
+[90mstdout[2m | apps/api/src/zz-r14-probe.test.ts[2m > [22m[2mF-DG1-135 re-proof[2m > [22m[2mevery non-.ts/.tsx test-looking extension is flagged under NEW
+[22m[39mNEW zz.test.mts -> ["modules/kpi/zz.test.mts: imports package vitest","modules/kpi/zz.test.mts: imports ../../architecture.testkit.ts outside src/modules (composition root)"]
+NEW zz.test.cts -> ["modules/kpi/zz.test.cts: imports package vitest","modules/kpi/zz.test.cts: imports ../../architecture.testkit.ts outside src/modules (composition root)"]
+NEW zz.test.js -> ["modules/kpi/zz.test.js: imports package vitest","modules/kpi/zz.test.js: imports ../../architecture.testkit.ts outside src/modules (composition root)"]
+NEW zz.test.jsx -> ["modules/kpi/zz.test.jsx: imports package vitest","modules/kpi/zz.test.jsx: imports ../../architecture.testkit.ts outside src/modules (composition root)"]
+NEW zz.test.mjs -> ["modules/kpi/zz.test.mjs: imports package vitest","modules/kpi/zz.test.mjs: imports ../../architecture.testkit.ts outside src/modules (composition root)"]
+NEW zz.test.cjs -> ["modules/kpi/zz.test.cjs: imports package vitest","modules/kpi/zz.test.cjs: imports ../../architecture.testkit.ts outside src/modules (composition root)"]
+
+[90mstdout[2m | apps/api/src/zz-r14-probe.test.ts[2m > [22m[2mF-DG1-135 re-proof[2m > [22m[2mplanted on disk: moduleViolations(kpi) flags zz.test.mts and not zz.test.ts
+[22m[39mbaseline moduleViolations(kpi) = []
+planted moduleViolations(kpi) NEW = ["modules/kpi/zz.test.mts: imports package vitest","modules/kpi/zz.test.mts: imports ../../architecture.testkit.ts outside src/modules (composition root)"]
+planted moduleViolations(kpi) OLD = []
+
+[90mstdout[2m | apps/api/src/zz-r14-probe.test.ts[2m > [22m[2mF-DG1-135 re-proof[2m > [22m[2mTEST_FILE extensions == tsconfig.build.json test exclude globs
+[22m[39mtsconfig.build.json test excludes = ["src/**/*.test.ts","src/**/*.test.tsx"]
+TEST_FILE source = /\.test\.tsx?$/
+
+[90mstdout[2m | apps/api/src/zz-r14-probe.test.ts[2m > [22m[2mF-DG1-135 re-proof[2m > [22m[2mreal module tree: zero moduleViolations under NEW
+[22m[39mmoduleViolations(platform) = [33m0[39m
+moduleViolations(audit) = [33m0[39m
+moduleViolations(identity) = [33m0[39m
+moduleViolations(access) = [33m0[39m
+moduleViolations(organization) = [33m0[39m
+moduleViolations(transformations) = [33m0[39m
+moduleViolations(methodology) = [33m0[39m
+moduleViolations(workflows) = [33m0[39m
+moduleViolations(kpi) = [33m0[39m
+moduleViolations(reporting) = [33m0[39m
+moduleViolations(evidence) = [33m0[39m
+moduleViolations(jobs) = [33m0[39m
+moduleViolations(admin) = [33m0[39m
+
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/zz-r14-probe.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 925[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG1-135 re-proof[2m > [22mreal module tree: zero moduleViolations under NEW [33m 655[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m5 passed[39m[22m[90m (5)[39m
+[2m   Start at [22m 17:02:33
+[2m   Duration [22m 1.98s[2m (transform 151ms, setup 0ms, collect 683ms, tests 925ms, environment 0ms, prepare 74ms)[22m
+
+exit=0
+$ git status --short (clone, after probe)
+?? apps/api/src/architecture.testkit.r13old.ts
+?? apps/api/src/zz-r14-probe.test.ts

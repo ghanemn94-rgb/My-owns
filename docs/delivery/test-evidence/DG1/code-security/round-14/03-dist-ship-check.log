@@ -1,0 +1,17 @@
+--- dist ship check after pnpm -r build (clone @985d0fa, node v22.22.2)
+$ (cd apps/api && pnpm build)
+> @mth/api@0.1.0 build /var/tmp/mth-run.Plsx4I/claude-0/review-r14/apps/api
+> tsc -p tsconfig.build.json
+
+build_exit=0
+$ ls apps/api/dist/modules/kpi | grep zz
+zz.test.d.mts
+zz.test.d.mts.map
+zz.test.mjs
+zz.test.mjs.map
+$ npx vitest list --project unit-node --filesOnly | grep 'modules/kpi/zz'
+[unit-node] apps/api/src/modules/kpi/zz.test.ts
+4
+$ git status --short
+(end)
+post-note: stale dist zz.* removed from clone (tsc does not delete outputs of removed sources)

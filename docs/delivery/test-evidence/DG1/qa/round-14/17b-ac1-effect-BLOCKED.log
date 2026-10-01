@@ -1,0 +1,8 @@
+# AC-1 (effect) reason check: same fixture as the test (is-number 7.0.0); create resolves it from the registry; this sandbox has no network (D-025)
+$ echo {..."is-number":"7.0.0"...} > $TMPDIR/ac1p/package.json
+$ npm_config_store_dir=$TMPDIR/store/v10 timeout 120 tools/deps/install-sandbox.sh --root $TMPDIR/ac1p create
+ WARN  GET https://registry.npmjs.org/is-number error (ECONNREFUSED). Will retry in 10 seconds. 2 retries left.
+ WARN  GET https://registry.npmjs.org/is-number error (ECONNREFUSED). Will retry in 1 minute. 1 retries left.
+ ERR_PNPM_META_FETCH_FAIL  GET https://registry.npmjs.org/is-number: request to https://registry.npmjs.org/is-number failed, reason: connect ECONNREFUSED 127.0.0.1:3128
+exit=1
+result: BLOCKED (no registry network in the reviewer sandbox); orchestrator-run log install-sandbox-acceptance.log has AC-1 (effect) PASS, 14/14, unchanged since r13

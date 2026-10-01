@@ -1,0 +1,17 @@
+$ N=5 QA_PG_PORT=5491 tests/qa/support/with-pg.sh $TMPDIR/loop.sh   # unloaded-by-me (other agents may run), load: 5.26 9.77 6.06
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m [2m   Duration [22m 2.95s[2m (transform 585ms, setup 0ms, collect 1.28s, tests 864ms, environment 0ms, prepare 69ms)[22m  [iter 1]
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m [2m   Duration [22m 3.61s[2m (transform 656ms, setup 0ms, collect 1.55s, tests 1000ms, environment 0ms, prepare 98ms)[22m  [iter 2]
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m [2m   Duration [22m 4.31s[2m (transform 723ms, setup 0ms, collect 1.83s, tests 1.07s, environment 0ms, prepare 136ms)[22m  [iter 3]
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m [2m   Duration [22m 4.08s[2m (transform 820ms, setup 0ms, collect 1.73s, tests 1.09s, environment 0ms, prepare 109ms)[22m  [iter 4]
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m [2m   Duration [22m 4.71s[2m (transform 898ms, setup 0ms, collect 1.95s, tests 1.28s, environment 0ms, prepare 120ms)[22m  [iter 5]
+exit=0
+$ same, with 6 CPU-burn processes (for 4 CPUs) for the duration: (yes > /dev/null &)x6
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m [2m   Duration [22m 8.98s[2m (transform 1.96s, setup 0ms, collect 5.21s, tests 1.43s, environment 0ms, prepare 192ms)[22m  [iter 1]
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m [2m   Duration [22m 10.07s[2m (transform 2.15s, setup 0ms, collect 5.34s, tests 1.43s, environment 0ms, prepare 280ms)[22m  [iter 2]
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m [2m   Duration [22m 7.01s[2m (transform 1.48s, setup 0ms, collect 3.72s, tests 1.45s, environment 0ms, prepare 192ms)[22m  [iter 3]
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m [2m   Duration [22m 10.27s[2m (transform 2.53s, setup 0ms, collect 5.58s, tests 2.31s, environment 0ms, prepare 177ms)[22m  [iter 4]
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m [2m   Duration [22m 14.33s[2m (transform 5.21s, setup 0ms, collect 9.11s, tests 2.35s, environment 0ms, prepare 473ms)[22m  [iter 5]
+exit=0
+note: the outer shell exited 143 because 'pkill -f' matched the parent shell's own command line; both loops had completed (exit=0 each) and no burner/postgres process remained (checked with pgrep).
