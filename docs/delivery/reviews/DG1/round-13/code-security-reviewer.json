@@ -1,0 +1,460 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG1",
+  "round": 13,
+  "candidate_id": "sha256:00f1498cd5e9a166db501452f699a3270ffca82455593fe9c0ab84a83e01c80b",
+  "source_commit": "08cbd12f00c5c0561f9718900e71c9baf3d8e0c1",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG1-T-DG1-REV-SEC-R13-code-security-reviewer-20261001T163248Z-f45f1ee4",
+    "session_id": "f45f1ee4-2751-4ee7-87d6-97b7df7705c1"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "frontend-ux-engineer",
+    "backend-workflow-engineer",
+    "devops-engineer",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (code-security-reviewer, session f45f1ee4) authored none of the DG1 implementation or the round-13 repairs. Those are e71f3d0 (F-DG1-134, T-DG1-BE14, backend-workflow-engineer) and 85af2e6 (F-DG1-216, D-055 text); 08cbd12 is orchestrator metadata. I raised F-DG1-134 in round 12 and verify it here as its originating reviewer. At start the real-repo HEAD was ed2160d, not the freeze commit 08cbd12. ed2160d is a direct child of 08cbd12 and adds only candidate-excluded metadata: round-13 assignments, the 00f1498c manifest and stages.json. The recomputed candidate ID is 00f1498c...c80b in the real repo and in a full (not shallow) disposable clone at 08cbd12 (00-candidate-identity.log). Candidate identity is the content hash, and the commit is a traceability pointer (CLAUDE.md), so I proceeded, as in rounds 11-12. During my run HEAD advanced to ae769af, the runner's auto-commit of the domain reviewer's round-13 run. I checked only its directory NAMES (reviews/DG1/round-13, runs/, test-evidence/DG1/domain/round-13), and the ID is still 00f1498c (50-cleanup.log). I formed this verdict before, and without, reading any other reviewer's round-13 record. I did not open any of them."
+  },
+  "assignment": "docs/delivery/assignments/DG1/round-13/review-code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-DLV-025",
+    "REQ-DLV-033",
+    "REQ-DLV-042",
+    "REQ-S16-001",
+    "REQ-S16-003",
+    "REQ-S16-004",
+    "REQ-S19-004",
+    "REQ-S19-006"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-R13-00",
+      "procedure": "Confirm HEAD and that freeze..HEAD is metadata only. Recompute the candidate ID in the real repo and in a full clone at the freeze commit. Diff the round-12 freeze (e77be1a) against the round-13 freeze on all source paths.",
+      "command": "git rev-parse HEAD; git merge-base --is-ancestor 08cbd12 HEAD; git diff --stat 08cbd12 ed2160d; node tools/gates/candidate.mjs --stage DG1 (real repo; clone @08cbd12); git diff --stat e77be1a 08cbd12 -- apps packages tools deploy scripts e2e tests licenses .github package.json pnpm-lock.yaml",
+      "environment": "real repo (read-only) + disposable full clone under $TMPDIR; node v22.22.2 and v24.21.0",
+      "expected": "ID sha256:00f1498c...c80b in both; freeze..HEAD contains only candidate-excluded metadata; source delta limited to the F-DG1-134 repair",
+      "actual": "HEAD ed2160d is a child of 08cbd12 and adds only assignments, the manifest and stages.json. ID 00f1498c...c80b (391 files) in both; the clone is not shallow. The source delta e77be1a..08cbd12 is only apps/api/src/architecture.testkit.ts (+20/-5) and architecture.test.ts (+97/-2); decisions.md changes only the D-055 wording.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-13/00-candidate-identity.log"
+      ]
+    },
+    {
+      "id": "SEC-R13-01",
+      "procedure": "Re-prove F-DG1-134: a probe compares the fixed testkit with the round-12 testkit (git show e77be1a) on planted zz.{mts,mjs,cts,cjs,js,jsx} + nested zzsub/deep.mts in the clone's real transformations/ module dir, each with `import * as c from \"node:crypto\"` and a deep cross-module import. Also: a TSX plant with JSX text + require(), and the real module tree under the new testkit.",
+      "command": "npx vitest run --project unit-node apps/api/src/zz-r13-probe.test.ts",
+      "environment": "disposable clone @08cbd12, node v22.22.2, vitest 3.2.4",
+      "expected": "New walk(MODULES_DIR) includes every plant and the old walk none. Old moduleViolations = 0; new flags the rule-5 binding + deep import for each. The .tsx require is seen with no parse error. The real tree has 0 violations.",
+      "actual": "4/4 probe cases pass. Old transformations violations: 0. New: every one of the 7 plants has both 'node:crypto namespace/default binding' and 'only access/index.ts is public'. zzj.tsx `<a href=\"x\">it's {require(\"y\")}</a>` gives 'module loader via require' + 'imports package y', with no unparseable error. All P1 modules have 0 real violations. (The first run's nested-file assertion failed because of a probe bug, a wrong relative path that resolved inside the same module; the corrected run is logged.)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-003",
+        "REQ-S16-001"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-13/01-F-DG1-134-reproof-probe.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-13/zz-r13-probe.test.ts.txt"
+      ]
+    },
+    {
+      "id": "SEC-R13-02",
+      "procedure": "architecture.test.ts on the candidate, and confirm the real module tree contains no non-.ts/.tsx file",
+      "command": "npx vitest run --project unit-node apps/api/src/architecture.test.ts; find apps/api/src/modules -type f ! -name '*.ts' ! -name '*.tsx'",
+      "environment": "disposable clone @08cbd12, node v22.22.2",
+      "expected": "about 127/127 pass; find output empty",
+      "actual": "127 passed (127); find output empty, count=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-13/02-architecture-test-and-real-tree.log"
+      ]
+    },
+    {
+      "id": "SEC-R13-03",
+      "procedure": "Adversarial check of the new TEST_FILE classification (testkit :177/:461) against the build exclusion (apps/api/tsconfig.build.json:10) and the vitest include (vitest.config.ts:21). Plant modules/kpi/zzgap.test.mts importing ../../modules.ts, lint it, build it, import it from dist, list vitest tests; control with the same content as zzgap.mts.",
+      "command": "vitest moduleViolations(\"kpi\") probe; (apps/api) pnpm build; ls dist/modules/kpi; node -e import(dist/modules/kpi/zzgap.test.mjs); npx vitest list --project unit-node | grep -c zzgap",
+      "environment": "disposable clone @08cbd12, node v22.22.2, after pnpm -r build",
+      "expected": "A file that ships in dist and is not run by vitest gets no test exemption, so a composition-root import is flagged",
+      "actual": "moduleViolations(kpi)=0 for zzgap.test.mts; build exit 0; dist contains zzgap.test.mjs; runtime import OK (moduleCount=13); vitest lists it 0 times. Control zzgap.mts: 'imports ../../modules.ts outside src/modules (composition root)'. Raised as F-DG1-135 (Low, non-mandatory). Rules 1-5 still apply to such files.",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": [
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-13/03-test-name-allowance-gap.log"
+      ]
+    },
+    {
+      "id": "SEC-R13-10a",
+      "procedure": "Repository typecheck",
+      "command": "pnpm -r typecheck",
+      "environment": "disposable clone @08cbd12, node v22.22.2, pnpm 10.33.0, offline install from a copy of the local store",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-033",
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-13/10-pnpm_-r_typecheck.log"
+      ]
+    },
+    {
+      "id": "SEC-R13-10b",
+      "procedure": "Repository build",
+      "command": "pnpm -r build",
+      "environment": "disposable clone @08cbd12, node v22.22.2",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-033"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-13/10-pnpm_-r_build.log"
+      ]
+    },
+    {
+      "id": "SEC-R13-10c",
+      "procedure": "ESLint, zero warnings",
+      "command": "pnpm lint",
+      "environment": "disposable clone @08cbd12, node v22.22.2",
+      "expected": "exit 0",
+      "actual": "eslint . --max-warnings=0, exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-13/10-pnpm_lint.log"
+      ]
+    },
+    {
+      "id": "SEC-R13-10d",
+      "procedure": "OpenAPI document validation",
+      "command": "pnpm openapi:lint",
+      "environment": "disposable clone @08cbd12, node v22.22.2",
+      "expected": "exit 0",
+      "actual": "PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 33 operations; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S19-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-13/10-pnpm_openapi_lint.log"
+      ]
+    },
+    {
+      "id": "SEC-R13-10e",
+      "procedure": "Portability: no public CDN references",
+      "command": "pnpm check:no-cdn",
+      "environment": "disposable clone @08cbd12, node v22.22.2",
+      "expected": "exit 0",
+      "actual": "PASS no-cdn: scanned apps, packages; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-13/10-pnpm_check_no-cdn.log"
+      ]
+    },
+    {
+      "id": "SEC-R13-10f",
+      "procedure": "Prettier check",
+      "command": "pnpm format:check",
+      "environment": "disposable clone @08cbd12, node v22.22.2 (probe files moved out of the clone first)",
+      "expected": "exit 0",
+      "actual": "All matched files use Prettier code style; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-13/10-pnpm_format_check.log"
+      ]
+    },
+    {
+      "id": "SEC-R13-10g",
+      "procedure": "Unit suites (unit-node + unit-web)",
+      "command": "pnpm test",
+      "environment": "disposable clone @08cbd12, node v22.22.2",
+      "expected": "all pass",
+      "actual": "21 files, 320 passed (320); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-001",
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-13/10-pnpm_test.log"
+      ]
+    },
+    {
+      "id": "SEC-R13-12",
+      "procedure": "Unit suites on Node 24",
+      "command": "PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH pnpm test",
+      "environment": "disposable clone @08cbd12, node v24.21.0",
+      "expected": "all pass",
+      "actual": "21 files, 320 passed (320); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-13/12-node24-pnpm_test.log"
+      ]
+    },
+    {
+      "id": "SEC-R13-20a",
+      "procedure": "Integration suite on a disposable PostgreSQL 16 cluster (run 1 of 2, F-DG1-009)",
+      "command": "QA_PG_PORT=5491 tests/qa/support/with-pg.sh pnpm test:integration",
+      "environment": "disposable clone @08cbd12, node v22.22.2, PostgreSQL 16.13 disposable cluster on 127.0.0.1:5491",
+      "expected": "all pass",
+      "actual": "19 files, 200 passed (200); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-004",
+        "REQ-S19-004",
+        "REQ-S19-006",
+        "REQ-DLV-033"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-13/20-integration-run1.log"
+      ]
+    },
+    {
+      "id": "SEC-R13-20b",
+      "procedure": "Integration suite on a disposable PostgreSQL 16 cluster (run 2 of 2, F-DG1-009)",
+      "command": "QA_PG_PORT=5491 tests/qa/support/with-pg.sh pnpm test:integration",
+      "environment": "disposable clone @08cbd12, node v22.22.2, fresh PostgreSQL 16.13 disposable cluster on 127.0.0.1:5491",
+      "expected": "all pass again (no cross-run state)",
+      "actual": "19 files, 200 passed (200); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-004",
+        "REQ-S19-004"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-13/20-integration-run2.log"
+      ]
+    },
+    {
+      "id": "SEC-R13-21",
+      "procedure": "Integration suite on Node 24",
+      "command": "PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH QA_PG_PORT=5491 tests/qa/support/with-pg.sh pnpm test:integration",
+      "environment": "disposable clone @08cbd12, node v24.21.0, PostgreSQL 16.13 disposable cluster",
+      "expected": "all pass",
+      "actual": "200 passed (200); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-13/21-integration-node24.log"
+      ]
+    },
+    {
+      "id": "SEC-R13-30",
+      "procedure": "Gate tooling and agent tooling tests",
+      "command": "node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs",
+      "environment": "disposable clone @08cbd12, node v22.22.2",
+      "expected": "0 failures",
+      "actual": "pass 105, fail 0; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-13/30-gates-agents-tests.log"
+      ]
+    },
+    {
+      "id": "SEC-R13-31",
+      "procedure": "Deploy script tests (including CI needs and negative cases)",
+      "command": "node --test deploy/scripts/tests/*.test.mjs",
+      "environment": "disposable clone @08cbd12, node v22.22.2",
+      "expected": "0 failures",
+      "actual": "pass 59, fail 0; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-025"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-13/31-deploy-scripts-tests.log"
+      ]
+    },
+    {
+      "id": "SEC-R13-32",
+      "procedure": "install-sandbox acceptance suite AC-1..AC-10, using a writable copy of the local pnpm store",
+      "command": "npm_config_store_dir=$TMPDIR/pnpm-store/v10 bash tools/deps/tests/install-sandbox.test.sh",
+      "environment": "disposable clone @08cbd12, node v22.22.2, bubblewrap, no network (proxy refuses registry)",
+      "expected": "every case passes except AC-1 (effect), which needs registry metadata for an unlocked fixture",
+      "actual": "13 passed, 1 failed. The only failure is AC-1 (effect), whose cause is shown in SEC-R13-32c (registry unreachable). AC-1 (read-only), AC-2..AC-10 pass. Suite exit 1 solely because of AC-1 (effect).",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-042"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-13/32-install-sandbox-suite.log"
+      ]
+    },
+    {
+      "id": "SEC-R13-32c",
+      "procedure": "Reproduce AC-1 (effect): a sandboxed `create` of the AC-1 fixture (is-number 7.0.0, no lockfile)",
+      "command": "npm_config_store_dir=$TMPDIR/pnpm-store/v10 tools/deps/install-sandbox.sh --root $TMPDIR/ac1p create; curl https://registry.npmjs.org/is-number",
+      "environment": "disposable clone @08cbd12, node v22.22.2, sandbox without network",
+      "expected": "node_modules/is-number populated (needs registry metadata resolution)",
+      "actual": "ERR_PNPM_META_FETCH_FAIL GET https://registry.npmjs.org/is-number: ECONNREFUSED 127.0.0.1:3128; curl exit 7. The tarball is in the store, but `create` must resolve metadata from the registry. BLOCKED: no registry access in this sandbox.",
+      "exit_status": 1,
+      "result": "BLOCKED",
+      "requirements": [
+        "REQ-DLV-042"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-13/32c-ac1-registry-BLOCKED.log"
+      ]
+    },
+    {
+      "id": "SEC-R13-32d",
+      "procedure": "Real-repo frozen install through the sandboxed installer (the repo's own lockfile), offline from a copy of the local store",
+      "command": "npm_config_store_dir=$TMPDIR/pnpm-store/v10 tools/deps/install-sandbox.sh --root $TMPDIR/rv frozen",
+      "environment": "disposable clone @08cbd12 (stands in for the real repo), node v22.22.2, bubblewrap, no network",
+      "expected": "frozen install completes under the sandbox",
+      "actual": "Done in 1.9s using pnpm v10.33.0; exit 0 (every locked package was in the store, so no registry fetch was needed)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-042"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-13/32d-real-repo-frozen-install.log"
+      ]
+    },
+    {
+      "id": "SEC-R13-33",
+      "procedure": "SBOM / licence inventory consistency",
+      "command": "node licenses/generate-sbom.mjs --check",
+      "environment": "disposable clone @08cbd12, node v22.22.2",
+      "expected": "exit 0",
+      "actual": "OK: packages=422 runtime=112 bundled=17 development=293 containers=4 shipped-without-licence-id=0; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-13/33-sbom-check.log"
+      ]
+    },
+    {
+      "id": "SEC-R13-34",
+      "procedure": "Previous gate still validates",
+      "command": "node tools/gates/validate.mjs --stage DG0 --historical",
+      "environment": "disposable clone @08cbd12 and real repo, node v22.22.2",
+      "expected": "PASS",
+      "actual": "PASS gate DG0 (historical), exit 0 in both",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-13/34-dg0-historical.log"
+      ]
+    },
+    {
+      "id": "SEC-R13-35",
+      "procedure": "The three ci.yml copies are byte-identical; CI needs check",
+      "command": "sha256sum .github/workflows/ci.yml deploy/ci/ci.yml docs/architecture/ci/ci.yml; cmp ...; node deploy/scripts/check-ci-needs.mjs",
+      "environment": "disposable clone @08cbd12, node v22.22.2",
+      "expected": "identical hashes; check OK",
+      "actual": "all three 8b5b1106...76ce, IDENTICAL; OK: 5 jobs, delivery-gates first, every other job depends on it",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-025"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-13/35-ci-yml-identity.log"
+      ]
+    },
+    {
+      "id": "SEC-R13-40",
+      "procedure": "For the 8 assigned requirements: register row (final_gate DG1, status, every evidence path exists), cross-checked against this round's logs",
+      "command": "python3 csv check of docs/delivery/requirements.csv",
+      "environment": "disposable clone @08cbd12",
+      "expected": "all 8 IMPLEMENTED, final_gate DG1, no missing evidence",
+      "actual": "All 8 IMPLEMENTED, final_gate DG1, missing evidence = [] for each. Behaviour re-confirmed by SEC-R13-02/10*/20*/31/32*/35.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-025",
+        "REQ-DLV-033",
+        "REQ-DLV-042",
+        "REQ-S16-001",
+        "REQ-S16-003",
+        "REQ-S16-004",
+        "REQ-S19-004",
+        "REQ-S19-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-13/40-requirements.log"
+      ]
+    },
+    {
+      "id": "SEC-R13-50",
+      "procedure": "Remove the disposable clone, store copy and scratch; confirm no cluster is left, the real repo source paths are untouched and the candidate ID is unchanged",
+      "command": "rm -rf $TMPDIR/{rv,pnpm-store,ac1p,ev,probe}; pgrep -af 'postgres -D'; ss -ltn | grep :5491; git status --short -- <source dirs>; node tools/gates/candidate.mjs --stage DG1",
+      "environment": "real repo (read-only) + $TMPDIR",
+      "expected": "scratch removed, no postgres, sources unchanged, ID 00f1498c",
+      "actual": "Scratch removed; pgrep matched only its own shell (no postgres); port 5491 free; git status empty for source paths. HEAD is now ae769af (the domain reviewer's runner auto-commit; names only checked). ID still 00f1498c...c80b.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-13/50-cleanup.log"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG1-135"
+  ],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG1/code-security/round-13/00-candidate-identity.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-13/01-F-DG1-134-reproof-probe.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-13/zz-r13-probe.test.ts.txt",
+    "docs/delivery/test-evidence/DG1/code-security/round-13/02-architecture-test-and-real-tree.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-13/03-test-name-allowance-gap.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-13/10-pnpm_-r_typecheck.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-13/10-pnpm_-r_build.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-13/10-pnpm_lint.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-13/10-pnpm_openapi_lint.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-13/10-pnpm_check_no-cdn.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-13/10-pnpm_format_check.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-13/10-pnpm_test.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-13/12-node24-pnpm_test.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-13/20-integration-run1.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-13/20-integration-run2.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-13/21-integration-node24.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-13/30-gates-agents-tests.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-13/31-deploy-scripts-tests.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-13/32-install-sandbox-suite.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-13/32c-ac1-registry-BLOCKED.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-13/32d-real-repo-frozen-install.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-13/33-sbom-check.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-13/34-dg0-historical.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-13/35-ci-yml-identity.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-13/40-requirements.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-13/50-cleanup.log"
+  ],
+  "reviewed_at": "2026-10-01T16:46:33Z",
+  "summary": "PASS. F-DG1-134 is verified CLOSED_VERIFIED (fix e71f3d0). walk() now covers every buildable JS/TS extension, and a planted .mts/.mjs/.cts/.cjs/.js/.jsx (and a nested .mts) in a real module directory is flagged for the rule-5 binding and the deep import. The round-12 testkit gave 0 on the same plants. .tsx is parsed as TSX (a require inside JSX text is still caught). The real tree has no non-.ts/.tsx module file and 0 violations. New: F-DG1-135 (Low, non-mandatory, introduced by the fix but not a regression). The lint now treats *.test.mts/.cts/.js/.mjs/.cjs/.jsx as tests, granting the composition-root/vitest import allowance. But the build excludes only *.test.ts/.tsx and vitest runs only *.test.ts, so such a file ships in dist and runs from there. Rules 1-5 still apply to it. All required checks were run: typecheck, build, lint, openapi, no-cdn and format pass; unit 320/320 on Node 22 and 24; architecture.test 127/127; integration 200/200 twice on Node 22 plus once on Node 24; gates/agents 105/105; deploy 59/59; install sandbox 13/14, with AC-1 (effect) BLOCKED (no registry) and the real-repo frozen sandboxed install passing offline; SBOM OK; DG0 historical PASS; ci.yml x3 identical. All 8 requirements are complete. No Critical/High/mandatory finding is open. Two checks are not PASS, by fact: SEC-R13-03 (FAIL; it found F-DG1-135) and SEC-R13-32c (BLOCKED, no registry).",
+  "narrative": "docs/delivery/reviews/DG1/round-13/code-security-reviewer.md"
+}

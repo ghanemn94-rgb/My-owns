@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG1-135",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Module lint test classification is wider than the build exclusion and the vitest include. apps/api/src/architecture.testkit.ts:177 sets TEST_FILE = /\\.test\\.[cm]?[jt]sx?$/, and :461 isTest = TEST_FILE.test(file) grants the test allowances: :471 import of the composition-root files modules.ts / architecture.testkit.ts, and :480 import of vitest. But apps/api/tsconfig.build.json:10 excludes only src/**/*.test.ts, *.test.tsx and *.testkit.ts, and vitest.config.ts:21 collects only apps/api/src/**/*.test.ts. So a module file named *.test.mts / .test.cts (also .test.js/.mjs/.cjs/.jsx) is never run as a test, is compiled into dist, yet gets test-only exemptions from the boundary check. This is introduced by the F-DG1-134 fix (e71f3d0), and architecture.test.ts:763 pins the behaviour as intended. It is not a regression: before the fix such files were not scanned at all.",
+      "reproduction": "Candidate sha256:00f1498c...c80b, full disposable clone at 08cbd12, Node v22.22.2, after pnpm -r build. I planted apps/api/src/modules/kpi/zzgap.test.mts containing `import { API_MODULES } from \"../../modules.ts\"; export const moduleCount: number = Object.keys(API_MODULES).length;`. Results: (1) moduleViolations(\"kpi\") = 0. (2) cd apps/api && pnpm build exits 0, and dist/modules/kpi/ contains zzgap.test.mjs (+ .d.mts). (3) node: import(\"./dist/modules/kpi/zzgap.test.mjs\") gives moduleCount = 13, so it runs from the production artefact. (4) `vitest list --project unit-node` lists it 0 times, so it is not a test. (5) Control: the same content as zzgap.mts gives `modules/kpi/zzgap.mts: imports ../../modules.ts outside src/modules (composition root)`. The same exemption also admits `import ... from \"vitest\"` (a devDependency). Rules 1-5 (banned names, computed keys, runtime roots, syntax, node:crypto named-only) still apply to such files: the exemption is only the 2 composition-root files + vitest. Logs: docs/delivery/test-evidence/DG1/code-security/round-13/03-test-name-allowance-gap.log and 01-F-DG1-134-reproof-probe.log (GAP probe case).",
+      "expected": "A module file gets test allowances only if it is really a test: excluded from the build AND collected by vitest. Either narrow TEST_FILE to the extensions the build excludes and vitest runs (today .test.ts; .test.tsx is excluded from the build and so also harmless), or widen tsconfig.build.json `exclude` (and, if wanted, the vitest include) to src/**/*.test.{ts,tsx,mts,cts,js,jsx,mjs,cjs}. architecture.test.ts:763 should assert the chosen invariant, for example that a *.test.mts which the build would emit gets no exemption.",
+      "actual": "A production-shipped module file named *.test.mts (or .test.cts/.js/.mjs/.cjs/.jsx) may import apps/api/src/modules.ts, apps/api/src/architecture.testkit.ts (which tsc then pulls into the build, dragging in the typescript devDependency) and vitest with 0 lint violations, though it is never run as a test.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-13/03-test-name-allowance-gap.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-13/01-F-DG1-134-reproof-probe.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-13/zz-r13-probe.test.ts.txt",
+        "apps/api/src/architecture.testkit.ts",
+        "apps/api/src/architecture.test.ts",
+        "apps/api/tsconfig.build.json",
+        "vitest.config.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-13/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T16:46:33Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG1 round 13 while verifying the F-DG1-134 fix. Rated Low and non-mandatory: the exemption reaches only the declarative module map (data, no capability), the test-only lint and vitest. Rules 1-5 still apply to the file, so no loader, native or crypto-enumeration route opens. No access-control, integrity, calculation or portability impact. The lint is static defence-in-depth over human-reviewed code. Exploitation needs a contributor to commit an unusually named file past review, and the real tree has none. Same precedent as F-DG1-134/132/130. Proposed ID F-DG1-135 (next free number in the code-security 1xx range); the orchestrator may renumber. Does not block DG1."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "verifications": [
+    {
+      "finding_id": "F-DG1-134",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by the originating reviewer on candidate sha256:00f1498c...c80b. The freeze commit is 08cbd12; HEAD at start was ed2160d, which adds only candidate-excluded metadata. The ID is identical in the real repo and in a full disposable clone at 08cbd12. The fix is e71f3d0. apps/api/src/architecture.testkit.ts:176 sets CODE_FILE = /\\.[cm]?[jt]sx?$/ and :185 walk() uses it; :179 scriptKindOf gives TSX for .tsx/.jsx and TS otherwise, used by scanSource at :307; :461 isTest uses TEST_FILE (:177). Re-proof (01-F-DG1-134-reproof-probe.log, probe zz-r13-probe.test.ts.txt): the probe imports BOTH the fixed testkit and the round-12 testkit (git show e77be1a) and plants files into the clone's real module directory transformations/. Planted: zz.mts, zz.mjs, zz.cts, zz.cjs, zz.js, zz.jsx and nested zzsub/deep.mts, each with `import * as c from \"node:crypto\"` plus a deep cross-module import of access/policy.ts. The new walk(MODULES_DIR) contains all 7, and the old walk contains none. Old moduleViolations(\"transformations\") = 0. New moduleViolations flags every one of the 7 with BOTH the rule-5 namespace-binding violation and 'only access/index.ts is public'. TSX check: zzj.tsx with `<a href=\"x\">it's {require(\"y\")}</a>` (JSX text with an apostrophe) gives 'module loader via require' and 'imports package y', with no unparseable-source error, so the JSX is not swallowed. Real tree: `find apps/api/src/modules -type f ! -name '*.ts' ! -name '*.tsx'` is empty (count=0), and moduleViolations is 0 for every P1 module under the new testkit. architecture.test.ts passes 127/127, and the full unit suite 320/320 on Node 22.22.2 and on 24.21.0. The fix closes the file-scope gap. Side note: a new, narrower Low inconsistency in the test classification is raised separately as F-DG1-135. It does not reopen F-DG1-134, because every buildable module file is now scanned against rules 1-5.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-13/00-candidate-identity.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-13/01-F-DG1-134-reproof-probe.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-13/zz-r13-probe.test.ts.txt",
+        "docs/delivery/test-evidence/DG1/code-security/round-13/02-architecture-test-and-real-tree.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-13/10-pnpm_test.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-13/12-node24-pnpm_test.log"
+      ]
+    }
+  ]
+}
