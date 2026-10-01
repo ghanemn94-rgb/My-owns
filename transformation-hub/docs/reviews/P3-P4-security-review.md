@@ -335,5 +335,8 @@ documentation commit `a493f34`).
 | SEC-P34-06 | **Fixed** | The TSA charge and its basis are shown only when `finance.record.read` holds with the finance-domain clearance and the reach over the TSA's workstream (`canSeeCharge` = the finance module's rule); otherwise redacted → `apps/api/src/modules/readiness/tsa.service.ts` | `p34-sec-registers.spec.ts` "SEC-P34-06 (fixed, regression): the tech lead (finance.record.read on one workstream only) does not see the charge of a project-level TSA" |
 | SEC-P34-08 | **Fixed** | A TSA PATCH whose resulting classification exceeds the editor's clearance is 403 `readiness.classification_above_clearance` (record unchanged), as at creation → `tsa.service.ts` (`update`); refusal text en + ar. `readiness-isolation.spec.ts` now raises the classification with a cleared editor (as the review recommended) | `p34-sec-registers.spec.ts` "SEC-P34-08 (fixed, regression): PATCH may not raise the classification above the editor's clearance (403, record unchanged)"; `readiness/readiness-isolation.spec.ts` |
 
-Results of the final verification (full API suite, domain unit tests, Playwright specs touched) are in the implementer's
-hand-off report.
+Verification (implementer's branch at `46e75ab` + `5fd43ca`): `pnpm lint` / `pnpm typecheck` pass; full API suite 116 files,
+950 passed + 9 expected fail (none of them in this section's scope: SEC-P34-01 (CP), -02, -03, -04, -09, -12, -13, DOM-P2F-02,
+-04); Playwright full suite 315/316 (one navigation timeout in `p3-readiness.spec.ts`, passed on re-run, 3/3), with e2e
+`p3-carveout.spec.ts` (c) adapted to SEC-P34-05 (`5fd43ca`: the functional approver is not offered the assessment; a second
+Legal member makes it); secret scan (tree) PASS.

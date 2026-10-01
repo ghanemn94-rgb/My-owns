@@ -553,5 +553,13 @@ The rules are written down in `docs/governance/business-gates.md` §1 rule 8, §
 | DOM-P3-I1, DOM-P3-I2 | Info — not changed | — | — |
 
 Schema: `cutover_decision_record.actor_user_id` nullable, `tsa_service.pre_breach_status`; the single migration
-`0000_initial_schema.sql` was regenerated and the data dictionary re-generated. The results of the final verification (full
-API suite, domain unit tests, Playwright specs touched) are in the implementer's hand-off report.
+`0000_initial_schema.sql` was regenerated and the data dictionary re-generated.
+
+Verification on the implementer's branch at `46e75ab` (+ `5fd43ca`, e2e only), own databases `hub_test_p3fix*`:
+`pnpm lint` and `pnpm typecheck` pass; domain unit tests 22 files, 451/451; full API suite 116 files, **950 passed + 9
+expected fail** (the 9 are `DEFECT` probes outside this assignment: SEC-P34-01 (CP), -02, -03, -04, -09, -12, -13 and the
+known DOM-P2F-02 / -04); `P3D_PROBE_PLAIN=1` on the five `p3-domain-*` files 18/18; Playwright (own stack, production web
+build) `p3-carveout.spec.ts` + `p3-readiness.spec.ts` 7/7, full suite 315/316 — the one failure (`p3-readiness.spec.ts`
+"REQ-SET-004 / AT-10 (DOM-P4-09) …": the register row showed the expected `expired_unresolved`, the click on its link did not
+reach the detail page within 15 s, 28 minutes into the run) passed on the re-run of that file (3/3); secret scan (tree) PASS.
+`5fd43ca` adapts e2e `p3-carveout.spec.ts` (c) to SEC-P34-05 (the assessment is made by a second Legal member).
