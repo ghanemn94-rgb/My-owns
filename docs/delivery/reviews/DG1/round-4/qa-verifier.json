@@ -1,0 +1,394 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG1",
+  "round": 4,
+  "candidate_id": "sha256:3b76021be348356f6cead57bff8fce358fac7acbfe9da42bdd8262f143308fb1",
+  "source_commit": "016433db8bb24e870fa4190856a2f188b30bd70d",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG1-T-DG1-REV-QA-R4-qa-verifier-20261001T102915Z-a504e866",
+    "session_id": "a504e866-a66e-46a1-a1b4-9c903960fc22"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "frontend-ux-engineer",
+    "devops-engineer",
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "qa-verifier authored none of the round-4 repairs (BE5, FE5, DEVOPS4, orchestrator F-DG1-118) and none of the reviewed product implementation. Before earlier freezes, qa-verifier authored the acceptance suites under tests/qa/** and e2e/** (A12, A13, A14, A18, A20); these are test code, not product code. The new round-4 tests are under docs/delivery/test-evidence/DG1/qa/tests/, outside the candidate. I formed this verdict before reading any other round-4 reviewer record, and I read none. After all my checks had run, `git log` showed a commit subject for another reviewer's auto-committed evidence (HEAD moved from e8ed6e29 to 30379e7, candidate-excluded files only; the candidate ID was recomputed unchanged). I did not open that record or its evidence."
+  },
+  "assignment": "docs/delivery/assignments/DG1/round-4/review-qa-verifier.md",
+  "requirements_checked": [
+    "REQ-DLV-025",
+    "REQ-DLV-033",
+    "REQ-DLV-042",
+    "REQ-S15-002",
+    "REQ-S15-005",
+    "REQ-S15-006",
+    "REQ-S16-001",
+    "REQ-S16-002",
+    "REQ-S16-003",
+    "REQ-S16-004",
+    "REQ-S19-004",
+    "REQ-S19-006"
+  ],
+  "checks_run": [
+    {
+      "id": "QA4-00-candidate",
+      "procedure": "Confirm HEAD, the freeze diff, the recomputed candidate ID and the --diff match, in the repository and in a full disposable clone",
+      "command": "git rev-parse HEAD; git diff --stat 016433d e8ed6e2; node tools/gates/candidate.mjs --stage DG1; node tools/gates/candidate.mjs --stage DG1 --diff; git rev-parse --is-shallow-repository",
+      "environment": "/home/user/My-owns and a git clone under $TMPDIR/review-qa @ e8ed6e29; node v22.22.2",
+      "expected": "candidate_id sha256:3b76021b...; freeze diff metadata only; matches=true; not shallow",
+      "actual": "HEAD e8ed6e29 (freeze commit). Its diff from 016433d touches only round-4 assignments, the candidate manifest and stages.json. The ID is sha256:3b76021be348356f... (390 files) in the repository and in the clone; matches=true, added/removed/changed empty; is-shallow false. Re-checked at the end (HEAD 30379e7, review evidence only): ID unchanged.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-4/README.md"
+      ]
+    },
+    {
+      "id": "QA4-01-install",
+      "procedure": "Frozen offline install is a no-op on the lockfile",
+      "command": "pnpm install --frozen-lockfile --offline --store-dir $TMPDIR/pstore-root/v10",
+      "environment": "disposable clone @ e8ed6e29; pnpm 10.33.0; scratch copy of the read-only local store; no network",
+      "expected": "exit 0, lockfile up to date, git status clean",
+      "actual": "Lockfile is up to date; 371 packages reused, 0 downloaded; exit 0; git status --porcelain empty. Two WARNs about the mth-db bin (dist not built yet), which are harmless.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-033"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-4/01-install.log"
+      ]
+    },
+    {
+      "id": "QA4-02-static",
+      "procedure": "Typecheck, build, lint, OpenAPI lint, no-CDN, format check (F-DG1-119), contrast",
+      "command": "pnpm -r typecheck; pnpm -r build; pnpm lint; pnpm openapi:lint; pnpm check:no-cdn; pnpm format:check; pnpm --filter @mth/design-tokens run check:contrast",
+      "environment": "disposable clone @ e8ed6e29; node v22.22.2; pnpm 10.33.0",
+      "expected": "all exit 0; OpenAPI 3.1.1 with 33 operations; format:check green",
+      "actual": "Every command exits 0. openapi: 'PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 33 operations'. no-cdn PASS. format:check: 'All matched files use Prettier code style!'. contrast: 50 pairs meet WCAG AA, and 3 prohibited pairs fail as documented.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-002",
+        "REQ-S19-006",
+        "REQ-S15-005",
+        "REQ-DLV-033"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-4/02-typecheck.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/03-build.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/04-lint.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/05-openapi-lint.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/06-no-cdn.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/06b-format-check.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/07-contrast.log"
+      ]
+    },
+    {
+      "id": "QA4-03-unit",
+      "procedure": "Unit suites (unit-node + unit-web), including the module dependency lint and the new F-DG1-210 component tests",
+      "command": "pnpm test",
+      "environment": "disposable clone @ e8ed6e29 (built); node v22.22.2",
+      "expected": "all pass, exit 0",
+      "actual": "21 files, 247/247 passed, exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-003",
+        "REQ-S16-002"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-4/08-unit.log"
+      ]
+    },
+    {
+      "id": "QA4-04-integration-x3",
+      "procedure": "Integration project (real disposable PostgreSQL, fresh cluster per run), 3 runs, for determinism (F-DG1-009). Migrations 0001-0008 on a fresh database; contract vs OpenAPI including getBrandingTokens; A12/A13/A14",
+      "command": "QA_PG_PORT=5492 tests/qa/support/with-pg.sh pnpm test:integration   (x3)",
+      "environment": "disposable clone @ e8ed6e29; PostgreSQL 16.13 via unshare uid 1000, port 5492, a new cluster per run",
+      "expected": "each run: exit 0, 200/200, no 57P01/Unhandled",
+      "actual": "Run 1: 19 files, 200/200, exit 0. Run 2: 200/200, exit 0. Run 3: 200/200, exit 0. Each run applies 8 migrations to a fresh database. contract.test.ts 9/9 (asserts 33 operations; getBrandingTokens exercised). a12 14/14, a13 5/5, a14 5/5, scratch-drop 3/3 in every run. No Unhandled, 57P01 or 'terminating connection' output: the only match is the scratch-drop test's title.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S19-004",
+        "REQ-S19-006",
+        "REQ-S16-003",
+        "REQ-S16-004",
+        "REQ-DLV-033",
+        "REQ-S15-002"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-4/09-integration-run1.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/09-integration-run2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/09-integration-run3.log"
+      ]
+    },
+    {
+      "id": "QA4-05-serial-probe",
+      "procedure": "Independent probe that integration files never run concurrently (F-DG1-009 mechanism), with a negative control on the round-3 config shape",
+      "command": "QA_PG_PORT=5492 tests/qa/support/with-pg.sh npx vitest run --project integration tests/qa/integration/dg1-r4-serial-probe (probe files copied into the clone only); repeated with pool/singleFork removed from vitest.config.ts in the clone",
+      "environment": "disposable clone @ e8ed6e29; PostgreSQL 16.13 port 5492",
+      "expected": "candidate config: 2/2 pass, same pid, sequential; negative control: overlap detected",
+      "actual": "Candidate config: 2/2 passed, exit 0. Journal: a start/end pid=99, then b start/end pid=99, strictly sequential. Negative control: 1 failed, exit 1. Journal: 'b OVERLAP pid=286 ... lock=a pid=285'. vitest.config.ts restored, 0 modified.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S19-004"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-4/10-serial-probe.log",
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r4-serial-probe-a.test.ts",
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r4-serial-probe-b.test.ts"
+      ]
+    },
+    {
+      "id": "QA4-06-schema-probe",
+      "procedure": "psql probe of a fresh database migrated by the built CLI: 8 migrations, 0007/0008 schema, and audit_event append-only (trigger plus privileges)",
+      "command": "QA_E2E_PG_PORT=5493 e2e/support/qa-stack.sh bash docs/delivery/test-evidence/DG1/qa/tests/dg1-r2-schema-probe.sh",
+      "environment": "disposable clone @ e8ed6e29 (built); PostgreSQL 16.13 port 5493; synthetic seed",
+      "expected": "all PASS lines; owner and app UPDATE/DELETE on audit_event rejected",
+      "actual": "Applying 0001..0008 (8). Every probe line PASSes. Owner UPDATE/DELETE: 'audit_event is append-only: UPDATE/DELETE is not allowed'. App: permission denied. Audit rows unchanged (15). exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S19-004",
+        "REQ-S16-004",
+        "REQ-DLV-033"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-4/11-schema-probe.log"
+      ]
+    },
+    {
+      "id": "QA4-07-e2e-full",
+      "procedure": "Full real-stack e2e, EN and AR, including the BU-Lead create -> Edit/Archive journey without a reload (F-DG1-210), plus axe",
+      "command": "PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers QA_E2E_PG_PORT=5493 e2e/support/qa-stack.sh npx playwright test --workers=1",
+      "environment": "disposable clone @ e8ed6e29 (built); pre-installed chromium-1194 (no playwright install); PostgreSQL 16.13 port 5493; synthetic seed",
+      "expected": "all pass in chromium-en and chromium-ar, 0 skipped; no serious/critical axe violations",
+      "actual": "22 passed (48.2 s), 0 failed, 0 skipped, exit 0: 9 journeys and 2 A20 specs per language. Axe: 0 violations of any impact, 15 pages per language. No test.skip/fixme/only in the specs. The BU-Lead journey asserts the window marker and contains no page.reload().",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-033",
+        "REQ-S15-005",
+        "REQ-S15-006",
+        "REQ-S16-002"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-4/12-e2e.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/screenshots/journeys/en/axe-summary.json",
+        "docs/delivery/test-evidence/DG1/qa/round-4/screenshots/journeys/ar/axe-summary.json",
+        "docs/delivery/test-evidence/DG1/qa/round-4/screenshots/journeys/ar/17a-lead-created-controls.png",
+        "docs/delivery/test-evidence/DG1/qa/round-4/screenshots/journeys/en/17a-lead-created-controls.png"
+      ]
+    },
+    {
+      "id": "QA4-08-lead-no-reload",
+      "procedure": "Independent F-DG1-210 spec (EN+AR): BU Lead create -> Edit/save -> Archive with no document reload; the refreshed /me adds only the new record's transformation-scope grant; server cross-check. Plus the round-3 derived-audit spec unchanged (F-DG1-005/008 regression)",
+      "command": "PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers QA_E2E_PG_PORT=5493 e2e/support/qa-stack.sh npx playwright test e2e/qa-r4 --workers=1 (specs copied into the clone only)",
+      "environment": "disposable clone @ e8ed6e29 (built); chromium-1194; PostgreSQL 16.13 port 5493",
+      "expected": "4/4 pass; no reload; added grants == [{transformation, <new id>}]",
+      "actual": "4 passed, exit 0. EN and AR: /me read after 201 = 1; added grants = [{type: transformation, id: <new id>}]; documentLoads after the form = 0; the edited name and archivedAt are confirmed via the API. The round-3 spec's pre-reload probe now reads auditTrailRegions=1, editLinks=1 (round 3: 0/0).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-033"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-4/13-lead-no-reload.log",
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r4-lead-create-edit-archive-no-reload.spec.ts",
+        "docs/delivery/test-evidence/DG1/qa/round-4/screenshots/lead-no-reload/ar-01-after-create.png",
+        "docs/delivery/test-evidence/DG1/qa/round-4/screenshots/lead-no-reload/en-02-after-edit-archive.png"
+      ]
+    },
+    {
+      "id": "QA4-09-lead-no-reload-negative-control",
+      "procedure": "Mutation check of the F-DG1-210 spec: remove the refreshEffectivePermissions call in the clone, rebuild the web app, re-run; then restore and rebuild",
+      "command": "sed (clone only) TransformationCreatePage.tsx; pnpm --filter ./apps/web build; qa-stack.sh npx playwright test e2e/qa-r4/dg1-r4-lead-create-edit-archive-no-reload.spec.ts --workers=1",
+      "environment": "disposable clone @ e8ed6e29; chromium-1194; PostgreSQL 16.13 port 5493",
+      "expected": "the spec FAILS without the fix (it detects the defect); the clone is restored clean afterwards",
+      "actual": "2 failed (EN and AR: Edit link toBeVisible, element not found), Playwright exit 1, as expected. Restored and rebuilt; 0 modified files under apps/.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-4/14-lead-no-reload-negative-control.log"
+      ]
+    },
+    {
+      "id": "QA4-10-a18-clean-start",
+      "procedure": "A18 clean start from a fresh checkout of the source commit with a real frozen offline install",
+      "command": "npm_config_store_dir=$TMPDIR/pstore-root/v10 QA_A18_PG_PORT=5494 e2e/clean-start/a18-clean-start.sh --commit 016433db8bb24e870fa4190856a2f188b30bd70d --install",
+      "environment": "disposable clone @ e8ed6e29; PostgreSQL 16.13 port 5494; offline scratch store",
+      "expected": "A18 CLEAN START: PASS",
+      "actual": "21 PASS lines, 0 FAIL; 'A18 CLEAN START: PASS (commit 016433db...; total 37.9 s)'; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S19-004",
+        "REQ-DLV-033",
+        "REQ-S16-001",
+        "REQ-S16-004"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-4/15-a18-clean-start.log"
+      ]
+    },
+    {
+      "id": "QA4-11-a20-token-propagation",
+      "procedure": "A20: a design-token change propagates to the rendered CSS (in a copy; restored)",
+      "command": "PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers QA_E2E_PG_PORT=5493 e2e/support/a20-token-propagation.sh $TMPDIR/review-qa brand.deep=#6B1D5C",
+      "environment": "disposable clone @ e8ed6e29; chromium-1194; PostgreSQL 16.13 port 5493",
+      "expected": "PASS: brand.deep rendered as #6B1D5C; tree restored",
+      "actual": "2 passed (EN, AR); 'A20 token propagation: PASS (brand.deep rendered as #6B1D5C, original #003B73)'; exit 0; no tracked file modified",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S15-002"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-4/16-a20-token-propagation.log"
+      ]
+    },
+    {
+      "id": "QA4-12-branding-fonts-wordmark",
+      "procedure": "Round-1 spec, unchanged (EN+AR): the branding tokens API is 401 unauthenticated and returns the 7 tokens with provenance=provisional when signed in; no external requests; bundled Plex fonts; provisional text wordmark",
+      "command": "PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers QA_E2E_PG_PORT=5493 e2e/support/qa-stack.sh npx playwright test e2e/qa-r1 --workers=1",
+      "environment": "disposable clone @ e8ed6e29 (built); chromium-1194; PostgreSQL 16.13 port 5493",
+      "expected": "6/6 pass",
+      "actual": "6 passed, exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S15-002",
+        "REQ-S15-005",
+        "REQ-S15-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-4/22-branding-fonts-wordmark.log"
+      ]
+    },
+    {
+      "id": "QA4-13-ci-needs",
+      "procedure": "REQ-DLV-025: check-ci-needs and pin-images self-tests; check-ci-needs on the installed ci.yml",
+      "command": "node --test deploy/scripts/tests/check-ci-needs.test.mjs deploy/scripts/tests/pin-images.test.mjs; node deploy/scripts/check-ci-needs.mjs",
+      "environment": "disposable clone @ e8ed6e29; node v22.22.2",
+      "expected": "all self-tests pass; ci.yml OK with every job depending on delivery-gates",
+      "actual": "59/59 pass, exit 0. 'OK: .github/workflows/ci.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it with no status-function if:'. Exit 0. (pin-images --check is non-zero only on the disclosed keycloak BLOCKED digest, D-049; recorded in the log.)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-025"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-4/19-ci-needs-selftests.log"
+      ]
+    },
+    {
+      "id": "QA4-14-installer-acceptance",
+      "procedure": "REQ-DLV-042: install-sandbox acceptance suite under the wrapper on this candidate (writable scratch store). The 12 cases that need no registry network: AC-1 read-only, AC-2 x2, AC-3 x2, AC-4, AC-5, AC-6 x2, AC-7 (F-DG1-113), AC-8 (F-DG1-114), AC-9 (F-DG1-118)",
+      "command": "npm_config_store_dir=$TMPDIR/pstore2/v10 tools/deps/tests/install-sandbox.test.sh",
+      "environment": "disposable clone @ 016433db (installer files identical to the candidate); bwrap /usr/bin/bwrap; scratch copy of the local pnpm store; no registry network",
+      "expected": "the 12 network-free cases PASS",
+      "actual": "12 PASS. The script exits 1 because of its 13th case, AC-1 (effect), which needs registry metadata for is-number (ECONNREFUSED here; 20-install-sandbox-tests.log). That case is covered by QA4-15. With the default store under read-only HOME, only 8 cases can run (EROFS), as logged in file 20.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-042"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-4/20b-install-sandbox-tests-scratch-store.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/20-install-sandbox-tests.log"
+      ]
+    },
+    {
+      "id": "QA4-15-installer-ac1-effect-offline",
+      "procedure": "AC-1 (effect) property without network: the unchanged wrapper's `create` populates node_modules in the target tree. Fixture inputs: the suite's package.json, plus a pnpm-lock.yaml with is-number@7.0.0's published integrity (matching the local store index) and .npmrc offline=true",
+      "command": "npm_config_store_dir=$TMPDIR/pstore2/v10 tools/deps/install-sandbox.sh --root $TMPDIR/ac1off create; test -d $TMPDIR/ac1off/node_modules/is-number",
+      "environment": "disposable clone @ 016433db; bwrap; scratch store copy; no network",
+      "expected": "wrapper exit 0; node_modules/is-number present; lockfile unchanged",
+      "actual": "'Packages: +1 ... reused 1, downloaded 0, added 1'; wrapper exit 0; node_modules/is-number 7.0.0 present; lockfile sha256 unchanged (88818e6e51b71df8)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-042"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-4/20b-install-sandbox-tests-scratch-store.log"
+      ]
+    },
+    {
+      "id": "QA4-16-worker-stop",
+      "procedure": "REQ-S16-001: start the built worker against the stack, SIGTERM it, then probe the API",
+      "command": "QA_E2E_PG_PORT=5493 e2e/support/qa-stack.sh bash $TMPDIR/worker-probe.sh (script inlined in the log)",
+      "environment": "disposable clone @ e8ed6e29 (built); PostgreSQL 16.13 port 5493; API AUTH_MODE=dev",
+      "expected": "worker exits 0 on SIGTERM; API /readyz 200 before and after",
+      "actual": "Worker alive after 5 s; readyz 200 with the worker running; worker exit 0 after SIGTERM ('mth-worker shutting down'); readyz after the stop {\"status\":\"ready\",...} http=200; healthz 200; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-001"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-4/21-worker-stop-api-probe.log"
+      ]
+    },
+    {
+      "id": "QA4-17-validator",
+      "procedure": "Register, pipeline and reconcile validation for DG1",
+      "command": "node tools/gates/validate.mjs --register DG1; --pipeline DG1; --reconcile DG1",
+      "environment": "/home/user/My-owns @ e8ed6e29 (read-only use); node v22.22.2",
+      "expected": "PASS, exit 0 each",
+      "actual": "'PASS register rules at DG1', 'PASS pipeline (active stage: DG1 REVIEWING)', 'PASS reconcile (structure)'; exit 0 each. Reconcile lists round-4 reviews still missing, which is expected during the review.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-4/17-validate-register.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/17-validate-pipeline.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/17-validate-reconcile.log"
+      ]
+    },
+    {
+      "id": "QA4-18-requirements-evidence",
+      "procedure": "The 12 DG1-final rows: status IMPLEMENTED, final gate DG1, every cited evidence file exists; each acceptance compared with the checks above",
+      "command": "python3 check of docs/delivery/requirements.csv (inlined in the log)",
+      "environment": "/home/user/My-owns @ e8ed6e29",
+      "expected": "12 rows IMPLEMENTED/DG1, 0 missing evidence files",
+      "actual": "All 12 IMPLEMENTED, final_gate DG1, 0 missing evidence files, problems: 0. Acceptance is covered by QA4-02..QA4-17. REQ-DLV-042 cites an outdated installer log; the behaviour itself passes on this candidate (QA4-14/15): Low finding F-DG1-211.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-4/18-req-evidence.log"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG1-211"
+  ],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG1/qa/round-4/README.md",
+    "docs/delivery/test-evidence/DG1/qa/round-4/09-integration-run1.log",
+    "docs/delivery/test-evidence/DG1/qa/round-4/09-integration-run2.log",
+    "docs/delivery/test-evidence/DG1/qa/round-4/09-integration-run3.log",
+    "docs/delivery/test-evidence/DG1/qa/round-4/10-serial-probe.log",
+    "docs/delivery/test-evidence/DG1/qa/round-4/12-e2e.log",
+    "docs/delivery/test-evidence/DG1/qa/round-4/13-lead-no-reload.log",
+    "docs/delivery/test-evidence/DG1/qa/round-4/14-lead-no-reload-negative-control.log",
+    "docs/delivery/test-evidence/DG1/qa/round-4/06b-format-check.log",
+    "docs/delivery/test-evidence/DG1/qa/round-4/18-req-evidence.log",
+    "docs/delivery/test-evidence/DG1/qa/round-4/20b-install-sandbox-tests-scratch-store.log",
+    "docs/delivery/reviews/DG1/round-4/qa-verifier.verifications.json",
+    "docs/delivery/reviews/DG1/round-4/qa-verifier.findings.json"
+  ],
+  "reviewed_at": "2026-10-01T10:50:30Z",
+  "summary": "PASS on candidate 3b76021be348356f. The three assigned fixes verify: F-DG1-009 (integration 3x on fresh clusters, 200/200, exit 0, no 57P01; an independent serial probe with a negative control shows the singleFork config serializes files), F-DG1-210 (full e2e 22/22 EN+AR, axe clean; an independent create -> edit -> archive spec runs without a reload, with no over-grant, and a mutation control proves it detects the defect) and F-DG1-119 (format:check green). All required static, unit, integration, e2e and acceptance checks (A12/A13/A14/A18/A20) ran and passed. The 12 requirements are complete. One new Low, non-mandatory finding: F-DG1-211 (the REQ-DLV-042 register evidence is an outdated 7-case installer log; the current 13-case behaviour passes in this review). This is an engineering verification only, not a business, Finance or IT approval, and it says nothing about product gates G1-G6."
+}

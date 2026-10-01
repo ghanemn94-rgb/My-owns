@@ -1,0 +1,47 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG1-009",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fix 8f73c84/45328ec is in candidate sha256:3b76021b... (recomputed in the repository and in a full disposable clone of e8ed6e29; the freeze diff from 016433d is metadata only). Determinism: `QA_PG_PORT=5492 tests/qa/support/with-pg.sh pnpm test:integration` 3 times, each on a FRESH PostgreSQL 16.13 cluster. Every run: 8 migrations, 19 files, 200/200, exit 0. No Unhandled error, 57P01 or 'terminating connection' in any log; the only grep hit is the new scratch-drop test's title. Mechanism, checked independently: vitest.config.ts puts the integration project on pool 'forks' with poolOptions.forks.singleFork. My probe (dg1-r4-serial-probe-{a,b}.test.ts, an O_EXCL lock per file) shows both files in ONE pid, strictly one after the other. As a negative control I removed the pool/singleFork lines (the round-3 config shape), and the two files then ran concurrently in two pids: OVERLAP, exit 1. So the probe detects concurrency, and the fix is what serializes the files. Teardown: dropScratchDatabase now polls pg_stat_activity until no other backend remains and throws ScratchDatabaseInUse instead of terminating a live client. WITH (FORCE) remains only for a racing connection. The new scratch-drop.test.ts (40 rounds x 8 clients with an error spy; the live-client refusal case; the name guard) passes 3/3 in every run. The harness owner pool now has an error listener. A12 (14), A13 (5) and A14 (5) are green in all 3 runs, including the a12 'denied create wrote a row' case that was red in round 3.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-4/09-integration-run1.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/09-integration-run2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/09-integration-run3.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/10-serial-probe.log",
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r4-serial-probe-a.test.ts",
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r4-serial-probe-b.test.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-210",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fix 0025328/c3fffd2 is in the candidate. TransformationCreatePage now awaits refreshEffectivePermissions (invalidateQueries keys.me with refetchType 'all', raced against a 5 s timeout, never rejecting) before navigating. Real stack, EN and AR (PG 5493, --workers=1): (1) The full e2e passes 22/22, including the frontend journey 'a business-unit Lead creates a record: Edit/Archive and the audit trail appear without a reload'. That journey no longer calls page.reload(); it asserts a window marker. The only page.reload() left in journeys.spec.ts is the language-persistence step. (2) My independent spec dg1-r4-lead-create-edit-archive-no-reload.spec.ts passes 2/2. As dev.lead (TL at SYN-RETAIL only): create, then Edit/Archive/audit trail visible at once, then Edit and save, then Archive with a reason. No document reload happened (the marker survived; 0 load events after the form opened). The server confirms the edited name and archivedAt. No over-grant: the /me read after the 201 adds exactly one grant, scope {type: transformation, id: <new id>} with inheritsDownward false. (3) Negative control: I removed the refresh call in the clone and rebuilt the web app. The same spec then fails in EN and AR (Edit link not found), so it detects the defect. (4) My round-3 spec dg1-r3-derived-audit-localized, run unchanged, now records auditTrailRegions=1 and editLinks=1 before any reload (0/0 in round 3). The derived row is still localized in both languages (F-DG1-005/008: no regression). Axe: 0 violations, 15 pages per language, including the new lead-created-controls page.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-4/12-e2e.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/13-lead-no-reload.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/14-lead-no-reload-negative-control.log",
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r4-lead-create-edit-archive-no-reload.spec.ts",
+        "docs/delivery/test-evidence/DG1/qa/round-4/screenshots/lead-no-reload/ar-01-after-create.png",
+        "docs/delivery/test-evidence/DG1/qa/round-4/screenshots/lead-no-reload/en-01-after-create.png",
+        "docs/delivery/test-evidence/DG1/qa/round-4/screenshots/lead-no-reload/ar-02-after-edit-archive.png",
+        "docs/delivery/test-evidence/DG1/qa/round-4/screenshots/lead-no-reload/en-02-after-edit-archive.png",
+        "docs/delivery/test-evidence/DG1/qa/round-4/screenshots/journeys/ar/axe-summary.json",
+        "docs/delivery/test-evidence/DG1/qa/round-4/screenshots/journeys/en/axe-summary.json"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-119",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fix 39284cd/dab46b7 is in the candidate. `pnpm format:check` on the disposable clone reports 'All matched files use Prettier code style!', exit 0 (the round-3 failure was on deploy/images.lock.json). The fix is the finding's own option (b): .prettierignore lists deploy/images.lock.json, with the rationale recorded inline (a generated lock written by pin-images.mjs, also at CI runtime). `prettier --file-info deploy/images.lock.json` reports ignored=true. The ignore is a single path, so the rest of the product tree is still format-checked. The lock stays structurally validated by pin-images.mjs: its self-tests pass within the 59/59 run. `pin-images --check` still fails, but only on the keycloak digest, the disclosed environment-bound test-only residual (D-049); format:check is unrelated to it. ci.yml:62 still runs `pnpm format:check` in the verify job, and the other verify steps (lint, typecheck, build, test, openapi:lint, check:no-cdn) also pass here.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-4/06b-format-check.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/19-ci-needs-selftests.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/README.md"
+      ]
+    }
+  ]
+}

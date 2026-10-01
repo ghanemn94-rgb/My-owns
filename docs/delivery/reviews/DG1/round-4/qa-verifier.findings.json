@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG1-211",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-042",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "REQ-DLV-042 cites a stale installer acceptance log: the 7-case run predates the 13-case suite (AC-5..AC-9 for F-DG1-113/114/118), and the implementer recorded no run of the current suite",
+      "reproduction": "Candidate 3b76021be348356f (commit 016433d). In docs/delivery/requirements.csv, row REQ-DLV-042 cites docs/delivery/test-evidence/DG1/orchestrator/install-sandbox-acceptance.log as its execution evidence. That file holds 8 lines: AC-1..AC-4, '7 passed, 0 failed'. The candidate's tools/deps/tests/install-sandbox.test.sh now has 13 cases: AC-5 control paths read-only, AC-6 environment, AC-7 control-path escape (F-DG1-113), AC-8 config surfaces (F-DG1-114), AC-9 planted non-member node_modules not copied back (F-DG1-118). Commit ecaf66f's message claims 'Acceptance 13/13', but `grep -rl 'AC-9' docs/delivery` finds no recorded run log before this review. In this reviewer sandbox, with the default store, 8 cases PASS and 5 fail only on environment (EROFS on the pnpm store under read-only HOME; 20-install-sandbox-tests.log). With a writable scratch copy of the store, 12/13 PASS, including AC-2, AC-3 would-change, AC-7, AC-8 and AC-9 (20b-install-sandbox-tests-scratch-store.log). The suite's AC-1 (effect) needs registry metadata (no network here). Its property passes in an offline equivalent: unchanged wrapper, fixture lockfile and offline .npmrc, same log.",
+      "expected": "The register row's execution evidence is a recorded run of the CURRENT acceptance suite (13 cases incl. AC-9) on the DG1 candidate, made in an environment with the store and registry access the installer needs (orchestrator), with the log committed under docs/delivery/test-evidence/ and cited by REQ-DLV-042.",
+      "actual": "The register cites only the round-1 suite's log (7 cases). Apart from this QA review's own logs, the F-DG1-113/114/118 acceptance cases have no recorded run in the repository; only a commit message states 13/13. On this candidate, every case passes in my runs (12 as written plus the AC-1 effect offline equivalent), so the behaviour is not in doubt. F-DG1-118 itself is verified by code-security-reviewer, not by this finding. This is a register evidence and traceability gap, not a product defect. Fix: cite a current 13-case run (the orchestrator's, with registry access, or this review's 20b log) in REQ-DLV-042.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-4/20-install-sandbox-tests.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/20b-install-sandbox-tests-scratch-store.log",
+        "docs/delivery/test-evidence/DG1/orchestrator/install-sandbox-acceptance.log",
+        "tools/deps/tests/install-sandbox.test.sh",
+        "docs/delivery/requirements.csv"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-4/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T10:46:00Z",
+          "status": "OPEN",
+          "note": "Reported in DG1 round-4 QA verification. ID proposed in the qa-verifier 2xx range; the orchestrator may renumber."
+        }
+      ]
+    }
+  ]
+}
