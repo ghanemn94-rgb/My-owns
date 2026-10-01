@@ -1,0 +1,35 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG1-136",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on frozen candidate sha256:76d8b3049d22d414a4c036bd3dd1af6e0c3609baedb096e2d2ecf4180bf07846 (freeze f27b5a6f; the ID recomputes identically in a full disposable clone). qa-verifier did not author the fix (22f3054, T-DG1-BE16, backend-workflow-engineer) and did not raise the finding (code-security-reviewer did). Fix: vitest.config.ts integration project hookTimeout: 30_000 (test configuration only). (a) Direct proof that the setting takes effect (07-f136-hooktimeout-probe.log): my probe qa/tests/dg1-r15-hooktimeout-probe.test.ts has a 12 s afterAll and runs in the integration project. With the candidate config it passes (exit 0). The control, the same probe with only the hookTimeout line removed from a scratch copy of vitest.config.ts (= the round-14 config), fails with 'Error: Hook timed out in 10000ms.' (exit 1). (b) The full integration suite ran 4 times on real disposable PostgreSQL 16.13: Node 22 x2, Node 24 x1, and once on Node 22 under CPU contention (2 x nproc busy loops). Every run was 200/200, exit 0, zero 'Hook timed out', zero 57P01/'terminating connection' in the server logs, and access-derived-race.test.ts was green each time (754-1037 ms).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r15-hooktimeout-probe.test.ts",
+        "docs/delivery/test-evidence/DG1/qa/round-15/07-f136-hooktimeout-probe.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/10-int-run1-v22.22.2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/10-int-run2-v22.22.2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/10-int-run3-v24.21.0.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/10-int-run4-contended-v22.22.2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/08-f136-f217-scope.log",
+        "vitest.config.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-217",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on frozen candidate sha256:76d8b3049d22d414a4c036bd3dd1af6e0c3609baedb096e2d2ecf4180bf07846 (freeze f27b5a6f). qa-verifier raised the finding in round 14 and did not author the fix (22f3054, backend-workflow-engineer). The change is test-only: apps/api/src/architecture.testkit.ts (excluded from the build by tsconfig.build.json 'src/**/*.testkit.ts'; no architecture file in apps/api/dist) and architecture.test.ts. syntaxErrors() now routes /\\.d\\.[cm]?ts$/ names to declarationSyntaxErrors(), a no-emit one-file ts.createProgram plus getSyntacticDiagnostics. My independent probe (qa/tests/dg1-r15-dts-probe.test.ts) plants files into the REAL src/modules/transformations directory and calls the production moduleViolations(). For .d.ts/.d.mts/.d.cts on Node v22.22.2 and v24.21.0, every file is walked; a valid file gives 0 violations with no throw; a nested deep type import, an inline import() type query and a node:child_process type import are each flagged; and a syntax error gives a named 'unparseable source' diagnostic, never 'Debug Failure'. The original round-14 reproduction names (zz.test.d.ts, zz.d.ts, zz.d.mts, zz.d.cts) report the boundary violation and do not throw (09-f217-name-variants.log). The candidate's own F-DG1-217 self-checks pass: architecture.test.ts 130/130 on both runtimes. Residual: arbitrary-extension declaration names (*.d.css.ts, *.d.json.ts) still throw. That narrower name class is outside this finding's stated reproduction, so it is raised separately as Low, non-mandatory F-DG1-218, and it fails closed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r15-dts-probe.test.ts",
+        "docs/delivery/test-evidence/DG1/qa/round-15/06-r15-dts-probe-and-architecture-v22.22.2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/06-r15-dts-probe-and-architecture-v24.21.0.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/09-f217-name-variants.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/08-f136-f217-scope.log",
+        "apps/api/src/architecture.testkit.ts",
+        "apps/api/src/architecture.test.ts"
+      ]
+    }
+  ]
+}

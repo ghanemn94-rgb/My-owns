@@ -1,0 +1,354 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG1",
+  "round": 15,
+  "candidate_id": "sha256:76d8b3049d22d414a4c036bd3dd1af6e0c3609baedb096e2d2ecf4180bf07846",
+  "source_commit": "f27b5a6f80f2b1146bc8f3de35d284991e4213f8",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG1-T-DG1-REV-QA-R15-qa-verifier-20261001T173655Z-44d2422f",
+    "session_id": "44d2422f-49d4-45ea-bb2e-21fbbc1a75b0"
+  },
+  "implementation_author": ["backend-workflow-engineer", "frontend-ux-engineer", "delivery-orchestrator"],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "qa-verifier authored no implementation in the reviewed scope. backend-workflow-engineer (T-DG1-BE16, commit 22f3054) authored the F-DG1-136 and F-DG1-217 changes to vitest.config.ts, architecture.testkit.ts and architecture.test.ts. The status update (f27b5a6f) and the freeze (c7edc14) are orchestrator commits. My only writes are QA evidence under docs/delivery/test-evidence/DG1/qa/ (round-15 logs and screenshots, plus two probe files, qa/tests/dg1-r15-dts-probe.test.ts and qa/tests/dg1-r15-hooktimeout-probe.test.ts) and this round's qa-verifier review files. All code ran in a disposable clone under $TMPDIR, which I removed afterwards (50-cleanup.log). I formed this verdict before reading any other round-15 reviewer record, and I have not read any. During my run the runner auto-committed the domain-reviewer round-15 run (HEAD c7edc14 -> 5d5e8a2). I saw only its file names (00b-head-moved.log), and the candidate ID was unchanged. The earlier-round records I read, for procedure and format only, were my own round-14 qa-verifier record and its findings/verifications sidecars, round-14 qa evidence logs (commands only), and the F-DG1-009/136/210/214/217 statuses in findings.json."
+  },
+  "assignment": "docs/delivery/assignments/DG1/round-15/review-qa-verifier.md",
+  "requirements_checked": [
+    "REQ-DLV-025",
+    "REQ-DLV-033",
+    "REQ-DLV-042",
+    "REQ-S15-002",
+    "REQ-S15-005",
+    "REQ-S15-006",
+    "REQ-S16-001",
+    "REQ-S16-002",
+    "REQ-S16-003",
+    "REQ-S16-004",
+    "REQ-S19-004",
+    "REQ-S19-006"
+  ],
+  "checks_run": [
+    {
+      "id": "QA15-00-candidate",
+      "procedure": "Confirm the frozen candidate. Check that the diff from the freeze commit to HEAD is metadata-only, then recompute the candidate ID in the working repo and in a full disposable clone at f27b5a6f. Re-check after HEAD moved mid-run.",
+      "command": "git rev-parse HEAD; git diff --stat f27b5a6f HEAD; node tools/gates/candidate.mjs --stage DG1; git clone /home/user/My-owns $TMPDIR/review-qa && git checkout f27b5a6f && node tools/gates/candidate.mjs --stage DG1",
+      "environment": "Working repo /home/user/My-owns (HEAD c7edc14, later 5d5e8a2); disposable clone under $TMPDIR; Node v24.21.0",
+      "expected": "candidate_id sha256:76d8b304…07846 (391 files) in both places; HEAD adds only candidate-excluded metadata",
+      "actual": "HEAD c7edc14 = f27b5a6f plus 7 metadata files (round-15 assignments, the 76d8b304 manifest, stages.json). The recomputed ID is sha256:76d8b3049d22d414a4c036bd3dd1af6e0c3609baedb096e2d2ecf4180bf07846 (391 files) in the repo and in the clone. HEAD later moved to 5d5e8a2 through one runner auto-commit of the domain-reviewer round-15 run (review/run/evidence files only), and the ID is unchanged.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-15/00-candidate.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/00b-head-moved.log"
+      ]
+    },
+    {
+      "id": "QA15-01-install",
+      "procedure": "Offline frozen install in the disposable clone. The read-only HOME pnpm store was copied to $TMPDIR/store/v10 first.",
+      "command": "cp -r /root/.local/share/pnpm/store/v10 $TMPDIR/store/ && pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/store/v10",
+      "environment": "disposable clone at f27b5a6f; Node v22.22.2; pnpm 10.33.0; no network",
+      "expected": "exit 0, lockfile unchanged",
+      "actual": "Lockfile up to date, packages linked from the store, exit 0 (mth-db bin warnings only, before the build)",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-15/01-install.log"]
+    },
+    {
+      "id": "QA15-02-static",
+      "procedure": "Build and static checks: typecheck, build, lint, OpenAPI lint, no-CDN check, format check, token contrast",
+      "command": "pnpm typecheck; pnpm build; pnpm lint; pnpm openapi:lint; pnpm check:no-cdn; pnpm format:check; pnpm --filter @mth/design-tokens run check:contrast",
+      "environment": "disposable clone at f27b5a6f; Node v22.22.2; pnpm 10.33.0",
+      "expected": "all exit 0; OpenAPI 3.1.1 with 33 operations; contrast pairs pass and prohibited pairs fail as documented",
+      "actual": "All 7 exit 0. openapi-lint: 'PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 33 operations'. Contrast: '50 pairs meet WCAG AA; 3 prohibited pairs fail as documented'. Lint passes with --max-warnings=0. no-CDN and Prettier are clean.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033", "REQ-S15-002", "REQ-S16-002", "REQ-S19-006"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-15/02-typecheck.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/02-build.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/02-lint.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/02-openapi_lint.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/02-check_no-cdn.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/02-format_check.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/02-contrast.log"
+      ]
+    },
+    {
+      "id": "QA15-03-unit-node22",
+      "procedure": "Full unit suite (unit-node + unit-web) on Node 22, plus per-project runs",
+      "command": "PATH=/opt/node22/bin:$PATH pnpm test; pnpm exec vitest run --project unit-node; pnpm exec vitest run --project unit-web",
+      "environment": "disposable clone at f27b5a6f; Node v22.22.2",
+      "expected": "323 passed; unit-node 213, unit-web 110",
+      "actual": "21 files, 323/323 passed, exit 0. unit-node 213/213, unit-web 110/110.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-001", "REQ-S16-002", "REQ-S16-003"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-15/03-unit-node22.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/05-unit-node-v22.22.2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/05-unit-web-v22.22.2.log"
+      ]
+    },
+    {
+      "id": "QA15-04-unit-node24",
+      "procedure": "Full unit suite on Node 24, plus per-project runs; re-confirm F-DG1-214 (unit-web green on Node 24)",
+      "command": "PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH pnpm test; pnpm exec vitest run --project unit-node; pnpm exec vitest run --project unit-web",
+      "environment": "disposable clone at f27b5a6f; Node v24.21.0",
+      "expected": "323 passed; unit-web 110/110",
+      "actual": "21 files, 323/323 passed, exit 0. unit-node 213/213, unit-web 110/110. F-DG1-214 holds.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-002"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-15/04-unit-node24.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/05-unit-node-v24.21.0.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/05-unit-web-v24.21.0.log"
+      ]
+    },
+    {
+      "id": "QA15-05-f217-probe",
+      "procedure": "Independent F-DG1-217 probe, run separately from architecture.test.ts. It plants .d.ts/.d.mts/.d.cts files (valid, deep type import, inline import() type query, node:child_process type import, syntax error) into the REAL module directory and calls the production moduleViolations(). An exploratory edge case covers zz.d.css.ts. Then the candidate's architecture.test.ts.",
+      "command": "cp qa/tests/dg1-r15-dts-probe.test.ts apps/api/src/ && npx vitest run --project unit-node apps/api/src/dg1-r15-dts-probe.test.ts; npx vitest run --project unit-node apps/api/src/architecture.test.ts",
+      "environment": "disposable clone at f27b5a6f; Node v22.22.2 and v24.21.0",
+      "expected": "No throw for any declaration file; violations named; syntax errors give 'unparseable source'; architecture.test.ts 130/130",
+      "actual": "16/16 F-DG1-217 cases pass on both runtimes: walked, no throw, deep/type-query/child_process imports flagged, and a named 'unparseable source' with no 'Debug Failure'. The exploratory zz.d.css.ts case (outside F-DG1-217's stated scope) fails on both runtimes ('Debug Failure. Output generation failed'), raised as finding F-DG1-218 (Low). The probe file exits 1 only because of that edge case. The PASS here covers the expected F-DG1-217 scope. architecture.test.ts 130/130, exit 0, on both runtimes, including both F-DG1-217 self-checks.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-S16-003"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r15-dts-probe.test.ts",
+        "docs/delivery/test-evidence/DG1/qa/round-15/06-r15-dts-probe-and-architecture-v22.22.2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/06-r15-dts-probe-and-architecture-v24.21.0.log"
+      ]
+    },
+    {
+      "id": "QA15-06-f217-name-variants",
+      "procedure": "Call the candidate's fileViolations() for declaration-file name variants (the round-14 reproduction names plus arbitrary-extension names) with a deep cross-module type import",
+      "command": "cd apps/api && node $TMPDIR/r15-names.mts (script inlined in the log)",
+      "environment": "disposable clone at f27b5a6f; Node v24.21.0 (native type stripping)",
+      "expected": "zz.test.d.ts, zz.d.ts, zz.d.mts and zz.d.cts report the boundary violation and do not throw",
+      "actual": "zz.test.d.ts, zz.d.ts, zz.d.mts, zz.d.cts, zz.d.html.mts and zz.d.tsx: OK, violation reported. zz.d.css.ts and zz.d.json.ts: THROW 'Debug Failure. Output generation failed' (residual F-DG1-218).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-003"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-15/09-f217-name-variants.log"]
+    },
+    {
+      "id": "QA15-07-f136-hooktimeout-probe",
+      "procedure": "Prove the integration project's hook budget is above the 10 s default: run a probe with a 12 s afterAll in the integration project under the candidate config, then a control with only the hookTimeout line removed from a scratch copy of vitest.config.ts (restored afterwards; git diff empty)",
+      "command": "QA_PG_PORT=5492 tests/qa/support/with-pg.sh npx vitest run --project integration tests/qa/integration/dg1-r15-hooktimeout-probe.test.ts (candidate, then control)",
+      "environment": "disposable clone at f27b5a6f; Node v22.22.2; disposable PostgreSQL 16.13 on port 5492",
+      "expected": "candidate: pass; control: 'Hook timed out in 10000ms'",
+      "actual": "candidate: 1/1, afterAll 12006 ms, exit 0. control: 'Error: Hook timed out in 10000ms.', exit 1. The config was restored, with git diff empty.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S19-004"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r15-hooktimeout-probe.test.ts",
+        "docs/delivery/test-evidence/DG1/qa/round-15/07-f136-hooktimeout-probe.log"
+      ]
+    },
+    {
+      "id": "QA15-08-repair-scope",
+      "procedure": "Confirm the F-DG1-136/217 repairs are test-only: product-tree diff since the round-14 import, testkit build exclusion, built output",
+      "command": "git diff --stat d280a43 f27b5a6f -- . ':!docs/delivery'; grep -rln architecture.testkit apps packages; grep exclude apps/api/tsconfig.build.json; find apps/api/dist -name '*architecture*'",
+      "environment": "disposable clone at f27b5a6f after build",
+      "expected": "only vitest.config.ts, architecture.test.ts and architecture.testkit.ts change; the testkit is imported only by tests and excluded from the build",
+      "actual": "3 files (+76/-5): apps/api/src/architecture.test.ts, apps/api/src/architecture.testkit.ts, vitest.config.ts. The testkit is imported only by *.test.ts files. tsconfig.build.json excludes 'src/**/*.testkit.ts', and there are 0 architecture files in apps/api/dist.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-003", "REQ-S19-004"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-15/08-f136-f217-scope.log"]
+    },
+    {
+      "id": "QA15-09-integration-x4",
+      "procedure": "Full integration suite on a real disposable PostgreSQL 4 times: Node 22 x2, Node 24 x1, and Node 22 under CPU contention (2 x nproc busy loops). Check exit status, 'Hook timed out' (F-DG1-136), 57P01/'terminating connection' (F-DG1-009) in test and server logs, and 8 migrations applied to a fresh database.",
+      "command": "QA_PG_PORT=5492 tests/qa/support/with-pg.sh bash -c 'pnpm test:integration; ...'",
+      "environment": "disposable clone at f27b5a6f; PostgreSQL 16.13 (Ubuntu) disposable cluster on 127.0.0.1:5492; Node v22.22.2 / v24.21.0",
+      "expected": "200/200 each run, exit 0, no 'Hook timed out', no 57P01, 8 migrations applied",
+      "actual": "Runs 1-4: 200/200, exit 0 each. 'Hook timed out' 0, 57P01/terminating-connection 0 in all 4 server logs (the only text match is the F-DG1-009 test title). 'applied 8 migrations to a fresh database'. access-derived-race 4/4 every run. The contended run took 56.95 s. F-DG1-009 holds.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-004", "REQ-S19-004"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-15/10-int-run1-v22.22.2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/10-int-run1-pg.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/10-int-run2-v22.22.2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/10-int-run2-pg.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/10-int-run3-v24.21.0.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/10-int-run3-pg.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/10-int-run4-contended-v22.22.2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/10-int-run4-contended-pg.log"
+      ]
+    },
+    {
+      "id": "QA15-10-migrations-audit-contract",
+      "procedure": "Fresh-database migration plus append-only audit trigger probe (superuser, owner and app roles), and contract conformance including getBrandingTokens",
+      "command": "QA_PG_PORT=5492 tests/qa/support/with-pg.sh bash 11-audit-trigger-probe.sh (unchanged from round 14); grep contract.test.ts result; grep -c operationId docs/api/openapi.yaml",
+      "environment": "disposable clone at f27b5a6f; PostgreSQL 16.13 on port 5492; Node v22.22.2",
+      "expected": "migrations 0001-0008 applied; UPDATE/DELETE/TRUNCATE rejected; app DELETE denied; contract tests green; 33 operationIds",
+      "actual": "8 migrations 0001-0008 recorded in schema_migration. UPDATE, DELETE and TRUNCATE rejected by audit_event_immutable() for superuser and owner, app DELETE gets 'permission denied', and the row count is unchanged (1). contract.test.ts 9/9 including 'branding tokens (getBrandingTokens)'. 33 operationIds.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-004", "REQ-S19-004", "REQ-S19-006"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-15/11-audit-trigger-probe.sh",
+        "docs/delivery/test-evidence/DG1/qa/round-15/11-contract-and-audit-probe.log"
+      ]
+    },
+    {
+      "id": "QA15-11-e2e",
+      "procedure": "Full Playwright e2e (EN LTR and AR RTL projects) against a real local stack, on both runtimes. Includes the BU-Lead create -> Edit/Archive/audit trail without reload (F-DG1-210), A20 bilingual shell and token propagation, and axe checks. Screenshots inspected.",
+      "command": "PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers QA_E2E_PG_PORT=5493 E2E_SCREENSHOT_DIR=$TMPDIR/shotsNN e2e/support/qa-stack.sh npx playwright test --workers=1 --reporter=list",
+      "environment": "disposable clone at f27b5a6f (built); pre-installed Chromium 1194; PostgreSQL 16.13 on port 5493; Node v22.22.2 and v24.21.0",
+      "expected": "22/22 on each runtime; F-DG1-210 journey green EN and AR; axe 0 violations",
+      "actual": "Node 22: 22 passed (52.4 s), exit 0. Node 24: 22 passed (46.6 s), exit 0. The F-DG1-210 journey passes in chromium-en and chromium-ar on both. Screenshots show Edit/Archive and a 2-row audit trail (create + derived Lead grant, localized) without a reload. axe-summary has 0 violations on every page (AR and EN). The reporter gives different line numbers on Node 24, a source-mapping artefact also seen in round 14; the tree was unchanged (git status clean). F-DG1-210 holds.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033", "REQ-S15-002", "REQ-S15-005", "REQ-S15-006", "REQ-S16-002"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-15/12-e2e-node22.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/12-e2e-node24.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/screenshots/ar/17a-lead-created-controls.png",
+        "docs/delivery/test-evidence/DG1/qa/round-15/screenshots/en/17a-lead-created-controls.png",
+        "docs/delivery/test-evidence/DG1/qa/round-15/screenshots/ar/17-lead-audit-trail.png",
+        "docs/delivery/test-evidence/DG1/qa/round-15/screenshots/en/17-lead-audit-trail.png",
+        "docs/delivery/test-evidence/DG1/qa/round-15/screenshots/ar/01-sign-in.png",
+        "docs/delivery/test-evidence/DG1/qa/round-15/screenshots/en/01-sign-in.png",
+        "docs/delivery/test-evidence/DG1/qa/round-15/screenshots/ar/axe-summary.json",
+        "docs/delivery/test-evidence/DG1/qa/round-15/screenshots/en/axe-summary.json"
+      ]
+    },
+    {
+      "id": "QA15-12-a18-clean-start",
+      "procedure": "A18 clean start: fresh checkout of the freeze commit, offline install, documented build, fresh PostgreSQL, migrate (idempotent), API + worker in production configuration, health/readiness, restart, unmigrated-DB negative",
+      "command": "npm_config_store_dir=$TMPDIR/store/v10 QA_A18_PG_PORT=5494 QA_A18_PORT=3181 e2e/clean-start/a18-clean-start.sh --commit f27b5a6f80f2b1146bc8f3de35d284991e4213f8 --install",
+      "environment": "Node v22.22.2; PostgreSQL 16.13 on port 5494; API on 3181; no network",
+      "expected": "A18 CLEAN START: PASS",
+      "actual": "Every step PASS: 8 migrations, second migrate a no-op, /healthz 200, /readyz 200, SPA lang=ar dir=rtl, dev login 404 in production, /api/v1/me 401, worker alive, ready after restart, unmigrated DB live 200 / ready 503. 'A18 CLEAN START: PASS (... total 29.4 s)', exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033", "REQ-S16-001", "REQ-S16-004", "REQ-S19-004"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-15/14-a18-clean-start.log"]
+    },
+    {
+      "id": "QA15-13-acceptance-a12-a13-a14-a20",
+      "procedure": "Extract the acceptance suites A12 (cross-scope), A13 (job idempotency), A14 (concurrency) from the 4 integration runs and A20 (bilingual shell and tokens) from both e2e runs",
+      "command": "grep -E 'a1[234]-|a20-' 10-int-run*.log 12-e2e-node*.log",
+      "environment": "evidence from QA15-09 and QA15-11",
+      "expected": "A12 14/14, A13 5/5, A14 5/5 in every run; A20 4/4 per e2e run",
+      "actual": "A12 14/14, A13 5/5 and A14 5/5 in all 4 integration runs. A20 bilingual shell + token propagation, 4 tests (EN and AR), green on Node 22 and Node 24.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S15-002", "REQ-S16-002", "REQ-S16-004"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-15/16-a12-a13-a14-a20-extract.log"]
+    },
+    {
+      "id": "QA15-14-ci-needs-fonts-wordmark",
+      "procedure": "REQ-DLV-025 CI dependency check; REQ-S15-005 bundled fonts and licence inventory; REQ-S15-006 provisional wordmark",
+      "command": "node deploy/scripts/check-ci-needs.mjs; find apps/web -name '*.woff2'; ls licenses; grep -rln -i provisional apps/web/src --include=*.tsx",
+      "environment": "disposable clone at f27b5a6f (built); Node v22.22.2",
+      "expected": "every CI job depends on delivery-gates; fonts bundled locally with a licence inventory; Wordmark labelled provisional",
+      "actual": "check-ci-needs OK: 5 jobs, delivery-gates first, every other job transitively dependent with no status-function if:, exit 0. IBM Plex Sans (Latin + Arabic) woff2 bundled in apps/web/dist/assets. licenses/inventory.csv and sbom present. Wordmark.tsx, Shell.tsx and LoginPage.tsx carry 'provisional', and the screenshots show the 'Provisional' badge.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-025", "REQ-S15-005", "REQ-S15-006"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-15/20-ci-needs-fonts-wordmark.log"]
+    },
+    {
+      "id": "QA15-15-req-dlv-042-installer",
+      "procedure": "REQ-DLV-042: confirm tools/deps and the orchestrator-run install-sandbox acceptance log are unchanged since the round-14 candidate, and syntax-check the installer",
+      "command": "git diff --stat 985d0fa f27b5a6f -- tools/deps/ docs/delivery/test-evidence/DG1/orchestrator/install-sandbox-acceptance.log; bash -n tools/deps/install-sandbox.sh",
+      "environment": "disposable clone at f27b5a6f",
+      "expected": "unchanged; acceptance log 14 passed, 0 failed; bash -n exit 0",
+      "actual": "Empty diff (unchanged). Acceptance log: 'install-sandbox acceptance: 14 passed, 0 failed'. bash -n exit 0. This check covers only what is listed here. A live re-run of the installer's registry-fetch effect (AC-1) was NOT performed in this round. It is BLOCKED in the reviewer sandbox, which has no package-registry network (D-025; round 14 attempted it and got ECONNREFUSED). For that effect, REQ-DLV-042 rests on the orchestrator-run acceptance log, which is unchanged.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-042"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-15/17-req-dlv-042-installer.log"]
+    },
+    {
+      "id": "QA15-17-validators",
+      "procedure": "Gate validator: register, pipeline and reconcile modes",
+      "command": "node tools/gates/validate.mjs --register DG1; node tools/gates/validate.mjs --pipeline DG1; node tools/gates/validate.mjs --reconcile DG1",
+      "environment": "repo working tree (HEAD 5d5e8a2 in this run's private staging view); Node v24.21.0",
+      "expected": "all PASS, exit 0",
+      "actual": "'PASS register rules at DG1' exit 0. 'PASS pipeline (active stage: DG1 REVIEWING)' exit 0. 'PASS reconcile (structure)' exit 0, with round-15 records listed as missing, as expected before write-back.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-15/18-validate-register.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/18-validate-pipeline.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/18-validate-reconcile.log"
+      ]
+    },
+    {
+      "id": "QA15-18-requirements-evidence",
+      "procedure": "For each of the 12 DG1-final requirements, check register status/final_gate and that every evidence path exists as a file",
+      "command": "python3 (inline; see log)",
+      "environment": "repo working tree; Python 3",
+      "expected": "12 rows IMPLEMENTED, final_gate DG1, 0 missing evidence paths",
+      "actual": "12/12 IMPLEMENTED with final_gate DG1 and 0 missing evidence paths (RESULT: PASS)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-025",
+        "REQ-DLV-033",
+        "REQ-DLV-042",
+        "REQ-S15-002",
+        "REQ-S15-005",
+        "REQ-S15-006",
+        "REQ-S16-001",
+        "REQ-S16-002",
+        "REQ-S16-003",
+        "REQ-S16-004",
+        "REQ-S19-004",
+        "REQ-S19-006"
+      ],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-15/19-requirements-evidence.log"]
+    },
+    {
+      "id": "QA15-19-cleanup",
+      "procedure": "Remove the disposable clone, pnpm store copy, screenshots scratch and probe scratch; confirm the candidate tree is untouched; scan evidence logs for secrets",
+      "command": "rm -rf $TMPDIR/review-qa $TMPDIR/store ...; git status --short -- apps packages tests e2e vitest.config.ts; grep -rnicE 'password=|secret=|://user:pass@|BEGIN PRIVATE|ghp_|sk-' round-15/*.log",
+      "environment": "reviewer sandbox",
+      "expected": "no scratch left; candidate tree unchanged; no secrets",
+      "actual": "0 scratch entries remain; git status is empty for the product paths; the secret-pattern grep found no matches (exit 1)",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-15/50-cleanup.log"]
+    }
+  ],
+  "findings": ["F-DG1-218"],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG1/qa/round-15/00-candidate.log",
+    "docs/delivery/test-evidence/DG1/qa/round-15/00b-head-moved.log",
+    "docs/delivery/test-evidence/DG1/qa/round-15/03-unit-node22.log",
+    "docs/delivery/test-evidence/DG1/qa/round-15/04-unit-node24.log",
+    "docs/delivery/test-evidence/DG1/qa/round-15/06-r15-dts-probe-and-architecture-v22.22.2.log",
+    "docs/delivery/test-evidence/DG1/qa/round-15/06-r15-dts-probe-and-architecture-v24.21.0.log",
+    "docs/delivery/test-evidence/DG1/qa/round-15/07-f136-hooktimeout-probe.log",
+    "docs/delivery/test-evidence/DG1/qa/round-15/08-f136-f217-scope.log",
+    "docs/delivery/test-evidence/DG1/qa/round-15/09-f217-name-variants.log",
+    "docs/delivery/test-evidence/DG1/qa/round-15/10-int-run1-v22.22.2.log",
+    "docs/delivery/test-evidence/DG1/qa/round-15/10-int-run4-contended-v22.22.2.log",
+    "docs/delivery/test-evidence/DG1/qa/round-15/11-contract-and-audit-probe.log",
+    "docs/delivery/test-evidence/DG1/qa/round-15/12-e2e-node22.log",
+    "docs/delivery/test-evidence/DG1/qa/round-15/12-e2e-node24.log",
+    "docs/delivery/test-evidence/DG1/qa/round-15/14-a18-clean-start.log",
+    "docs/delivery/test-evidence/DG1/qa/round-15/16-a12-a13-a14-a20-extract.log",
+    "docs/delivery/test-evidence/DG1/qa/round-15/19-requirements-evidence.log",
+    "docs/delivery/test-evidence/DG1/qa/round-15/50-cleanup.log",
+    "docs/delivery/test-evidence/DG1/qa/tests/dg1-r15-dts-probe.test.ts",
+    "docs/delivery/test-evidence/DG1/qa/tests/dg1-r15-hooktimeout-probe.test.ts",
+    "docs/delivery/reviews/DG1/round-15/qa-verifier.verifications.json",
+    "docs/delivery/reviews/DG1/round-15/qa-verifier.findings.json"
+  ],
+  "reviewed_at": "2026-10-01T17:52:00Z",
+  "summary": "PASS on candidate sha256:76d8b304…07846 (freeze f27b5a6f). F-DG1-136 verified: hookTimeout 30_000 takes effect (a 12 s afterAll passes, and the control without the line fails with 'Hook timed out in 10000ms'). Integration was 200/200 in 4 runs (Node 22 x2, Node 24, Node 22 under CPU contention) with 0 hook timeouts and 0 57P01. F-DG1-217 verified: .d.ts/.d.mts/.d.cts are scanned, imports flagged, syntax errors named, no throw, and the change is test-only. Residual arbitrary-extension names (*.d.css.ts) still throw, raised as F-DG1-218 (Low, non-mandatory, fails closed). No regression: static checks clean (33 ops), unit 323/323 on Node 22 and 24 (unit-web 110/110, F-DG1-214 holds), e2e 22/22 EN+AR on both runtimes (F-DG1-210 holds), A12/A13/A14/A18/A20 green, migrations 0001-0008 with append-only audit, contract incl. getBrandingTokens. All 12 requirements complete with existing evidence. Not performed (BLOCKED in this sandbox, no registry network): a live re-run of the installer's registry-fetch effect. REQ-DLV-042 rests on the unchanged orchestrator acceptance log (14/14).",
+  "narrative": "docs/delivery/reviews/DG1/round-15/qa-verifier.md"
+}
