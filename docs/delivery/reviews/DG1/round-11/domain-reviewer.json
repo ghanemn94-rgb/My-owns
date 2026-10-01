@@ -1,0 +1,369 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG1",
+  "round": 11,
+  "candidate_id": "sha256:e5cc6ef982ba7d53ed80138c0cbaa0119bcfe8dcaad4e324b5dafdb6431afeb8",
+  "source_commit": "32e6478de3c49b2c80d044b8a2d5d89f88c35f65",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG1-T-DG1-REV-DOM-R11-domain-reviewer-20261001T151913Z-8e429fc0",
+    "session_id": "8e429fc0-cdec-4413-ab19-f8d702bcc7a9"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "frontend-ux-engineer",
+    "devops-engineer",
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am domain-reviewer, run T-DG1-REV-DOM-R11. I authored no implementation, register text or decision in the DG1 scope. The round-11 repairs were made by others: the F-DG1-214 web test environment (T-DG1-FE3, frontend-ux-engineer), the F-DG1-132/215 lint comments and residual self-check (T-DG1-BE12, backend-workflow-engineer), and the F-DG1-011 rewording of D-055 plus the Node 24 member-audit log (delivery-orchestrator). I raised F-DG1-011 in round 10, so as the originating reviewer I verify it here. I formed this verdict before reading any other reviewer's round-11 record, and none was visible to me: docs/delivery/reviews/DG1/round-11 did not exist when I wrote this record. The earlier review material I used is my own role's round-10 record and harness scripts (re-used as round-11 copies, with only headers, ports, diff ranges and the findings list changed), the findings.json entries, D-055, and the orchestrator's Node 24 audit log. I grant no business, Finance or IT approval. Product gate G6 is not engineering gate DG7."
+  },
+  "assignment": "docs/delivery/assignments/DG1/round-11/review-domain-reviewer.md (sha256 635e22bd46c3594501bffd91fa73b6b85641ccd90e158c5b9d1a02b71009ee3b) with review-common.md",
+  "requirements_checked": [
+    "REQ-S15-002",
+    "REQ-S15-005",
+    "REQ-S15-006",
+    "REQ-S16-001",
+    "REQ-S16-002",
+    "REQ-S16-004",
+    "REQ-S19-004",
+    "REQ-S19-006",
+    "REQ-S16-003",
+    "REQ-PB-001",
+    "REQ-PB-003",
+    "REQ-PB-012",
+    "REQ-PB-014",
+    "REQ-PB-029",
+    "REQ-S15-001",
+    "REQ-S15-003",
+    "REQ-S15-004",
+    "REQ-S15-007",
+    "REQ-S15-008",
+    "REQ-S15-010",
+    "REQ-S15-011",
+    "REQ-S15-012",
+    "REQ-S15-013",
+    "REQ-S16-005",
+    "REQ-S16-006",
+    "REQ-S16-007",
+    "REQ-S16-008",
+    "REQ-S16-009",
+    "REQ-S16-010",
+    "REQ-S16-011",
+    "REQ-S16-012",
+    "REQ-S16-022",
+    "REQ-S16-023",
+    "REQ-S16-026",
+    "REQ-S16-027",
+    "REQ-S16-030",
+    "REQ-S16-031",
+    "REQ-S16-032"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-R11-01-candidate",
+      "procedure": "Confirm the frozen candidate. Check HEAD, that the repository is not shallow, and the recomputed candidate ID, both in the repository and in a full disposable clone checked out at the freeze commit 32e6478. Check that HEAD differs from the freeze commit only in candidate-excluded metadata, and that both fix commits are ancestors of the freeze commit.",
+      "command": "git rev-parse HEAD; git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG1; git clone . $TMPDIR/rev && git checkout 32e6478 && node tools/gates/candidate.mjs --stage DG1; git diff --stat 32e6478 HEAD; git merge-base --is-ancestor 7c3ebb2 32e6478; git merge-base --is-ancestor d54c151 32e6478",
+      "environment": "Linux sandbox, pnpm 10.33.0; repository /home/user/My-owns (HEAD d8eb695) and a full disposable clone under $TMPDIR (removed afterwards)",
+      "expected": "candidate_id sha256:e5cc6ef9…afeb8 (391 files) in every computation; HEAD..32e6478 limited to excluded metadata; the fix commits are ancestors",
+      "actual": "Both computations give sha256:e5cc6ef982ba7d53ed80138c0cbaa0119bcfe8dcaad4e324b5dafdb6431afeb8 (391 files). Neither tree is shallow. HEAD d8eb695 adds only the round-11 assignments, the candidate manifest and stages.json, all of which the candidate excludes. 7c3ebb2 (F-DG1-011) and d54c151 (F-DG1-214/132/215) are both ancestors of 32e6478.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-11/00-candidate-and-diff.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R11-02-change-scope",
+      "procedure": "Confirm the round-11 repairs changed no product or runtime behaviour, API contract, data model or i18n string. Diff the round-10 freeze 265af7e against the round-11 freeze 32e6478, excluding delivery metadata and evidence. Then diff packages/, apps/api/src/modules, apps/web/src, docs/api, docs/architecture and docs/source. Also check the non-comment lines changed in the lint files.",
+      "command": "git diff --stat 265af7e 32e6478 -- . ':!docs/delivery/<metadata>'; git diff --stat 265af7e 32e6478 -- packages/ apps/api/src/modules apps/web/src docs/architecture docs/source; git diff 265af7e 32e6478 -- apps/api/src/architecture.testkit.ts apps/api/src/architecture.test.ts | grep -v comments",
+      "environment": "repository /home/user/My-owns",
+      "expected": "Only the test harness (apps/web/test/*, vitest.config.ts, tsconfig include), the test-only lint files and the decisions.md text change. Product source, contract, i18n and db are untouched.",
+      "actual": "Six files changed: architecture.test.ts (+4 residual-(a) self-checks E1-E4 and comments), architecture.testkit.ts (comment and JSDoc text only, no code), the new apps/web/test/jsdom-native-abort-environment.ts, apps/web/tsconfig.json (include 'test'), apps/web/vitest.config.ts (environment path) and decisions.md (D-055). The diff over packages/, modules, web src, architecture and source is empty, so no product, contract, data or i18n change was made.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-001",
+        "REQ-S16-002",
+        "REQ-S19-004",
+        "REQ-S19-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-11/00-candidate-and-diff.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R11-03-F-DG1-011-D-055-accuracy",
+      "procedure": "Verify F-DG1-011. Phrase-scan the D-055 row at 32e6478 for the removed overclaims and the required runtime statements. Read the member-audit sentence in full, and check that the evidence it cites exists in the candidate and that the claims match that evidence and my own re-run (checks 04-06).",
+      "command": "git show 32e6478:docs/delivery/decisions.md | grep '^| D-055' > d055.txt; grep -o -F <phrases> d055.txt | wc -l; git ls-tree 32e6478 docs/delivery/test-evidence/DG1/orchestrator/node24-member-audit.log; grep -n -i 'MEMBER AUDIT|v22|v24|exhaustive' architecture.testkit.ts",
+      "environment": "repository /home/user/My-owns at the freeze commit",
+      "expected": "'closes the whole' and 'prevents further' are gone. The default-deny claim is limited to module imports and process members, and the member-enumeration reach is named as residual (a). The audit runtime (Node 22.22.2) and the Node 24.21.0 re-audit are named, with evidence that exists. Any remaining 'exhaustive' is only a quote of the superseded D-053/D-054 framing.",
+      "actual": "'closes the whole' = 0 and 'prevents further' = 0. The row now says the default-deny 'structurally closes the module-IMPORT and process-MEMBER loader/exec classes version-independently'. It says this does NOT cover a native-loader MEMBER of an allow-listed module (F-DG1-130) nor its runtime-enumeration reach (F-DG1-132/215, residual (a)), and that 'default-deny is not a claim that no further adjacent route exists'. The audit is 'performed on Node v22.22.2 (the build-sandbox floor) and re-run … on Node v24.21.0 (the production target, ADR-0001)'. The cited log is committed in the candidate. Both remaining 'exhaustive' hits are quotes of the superseded D-053/D-054 framing. The claims match my own evidence. On the member scan, setEngine is the only loader member on both runtimes (check 05). On process members, every spelled, aliased, destructured and enumerated form is flagged (check 06). On lint behaviour, 109/109 on both runtimes (check 04). The F-DG1-010/011 pattern of a version-detached claim is resolved, not repeated. Observation only, not a finding: the Rationale/evidence column still cites the round-9 counts 101/101 and 294/294, which are decision-time evidence. F-DG1-011 listed that refresh as optional.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-11/04-D055-accuracy.out.txt",
+        "docs/delivery/test-evidence/DG1/orchestrator/node24-member-audit.log",
+        "docs/delivery/decisions.md"
+      ]
+    },
+    {
+      "id": "DOM-R11-04-unit-and-architecture-node22-node24",
+      "procedure": "Run the full unit suite (unit-node + unit-web) and the verbose architecture suite on the frozen candidate in the disposable clone, on both Node 22 and Node 24. Count the web and node tests, and look for the F-DG1-214 AbortSignal error.",
+      "command": "PATH=<node bin>:$PATH node node_modules/vitest/vitest.mjs run --project unit-node --project unit-web; ... run --project unit-node apps/api/src/architecture.test.ts --reporter=verbose  (for /opt/node22/bin and /opt/nvm/versions/node/v24.21.0/bin)",
+      "environment": "disposable clone of 32e6478 under $TMPDIR; node v22.22.2 and node v24.21.0; dependencies copied from the repository's install (lockfile byte-identical)",
+      "expected": "All pass on both runtimes, with 0 'instance of AbortSignal' errors; architecture includes S1-S3 (setEngine banned) and E1-E4 (residual (a) pinned, not flagged)",
+      "actual": "Node 22.22.2: 21 files, 302/302 (web 110, node 192), exit 0. Node 24.21.0: 21 files, 302/302 (web 110, node 192), exit 0. AbortSignal errors: 0 on both. Architecture: 109/109 on both runtimes, exit 0. S1-S3 setEngine are violations, DD1-DD16 default-deny controls pass, and E1-E4 enumeration forms are 'NOT flagged (accepted static-lint residual)'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-002",
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-11/01-unit-full-node22.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-11/01-unit-full-node24.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-11/03-architecture-verbose-node22.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-11/03-architecture-verbose-node24.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R11-05-F-DG1-214-negative-control",
+      "procedure": "No-regression sanity check of the harness fix (F-DG1-214 belongs to qa; I do not verify it here). In the disposable clone only, revert apps/web/vitest.config.ts to the built-in 'jsdom' environment, run unit-web on Node 24, then restore the file and recompute the candidate ID.",
+      "command": "sed -i 's#\"./test/jsdom-native-abort-environment.ts\"#\"jsdom\"#' apps/web/vitest.config.ts; node vitest.mjs run --project unit-web; git checkout apps/web/vitest.config.ts; node tools/gates/candidate.mjs --stage DG1",
+      "environment": "disposable clone, node v24.21.0",
+      "expected": "With built-in jsdom the round-10 failure reproduces (12 'Expected signal … AbortSignal'). With the candidate's environment it passes (check 04), so the custom environment is the cause of the fix and no product change was needed.",
+      "actual": "Tests 12 failed | 98 passed (110), with 12 x 'RequestInit: Expected signal (\"AbortSignal {}\") to be an instance of AbortSignal'. After the restore: 0 changes, and the candidate ID is again sha256:e5cc6ef9…afeb8.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-002"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-11/02-negative-control-node24-builtin-jsdom.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R11-06-member-audit-node22-node24",
+      "procedure": "Independently re-run my round-10 member-name scan of the 7 allow-listed built-ins, plus a presence check of the dangerous process members, on both Node 22.22.2 and Node 24.21.0. This tests the D-055 claim that the Node 24 re-audit gives an identical result.",
+      "command": "node 05-member-name-scan.mjs (node22 and node24); node -e '<presence of binding,_linkedBinding,dlopen,execve,kill,_kill,_debugProcess,getBuiltinModule,abort,reallyExit>'",
+      "environment": "repository read-only; node v22.22.2 (OpenSSL 3.5.5) and node v24.21.0 (OpenSSL 3.5.8)",
+      "expected": "crypto.setEngine is the only loader member on both runtimes; any Node 24-only name match is benign; the process members listed in the orchestrator log are present on both",
+      "actual": "Both runtimes give the same name matches. The one exception is Node 24's util.convertProcessSignalToExitCode, a pure signal-to-exit-code mapping and not a loader, and Node 22's util.isNullOrUndefined. crypto.setEngine is the only native loader on both. os.constants.dlopen is a plain object of RTLD numbers. util.debug/debuglog are logging helpers. All 10 dangerous process members are present on both runtimes, and none is in SAFE_PROCESS_MEMBERS. This agrees with docs/delivery/test-evidence/DG1/orchestrator/node24-member-audit.log.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-11/05-member-name-scan.mjs",
+        "docs/delivery/test-evidence/DG1/domain/round-11/05-member-name-scan.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R11-07-process-member-claim-probe",
+      "procedure": "Test D-055's revised wording that the default-deny 'structurally closes the module-IMPORT and process-MEMBER loader/exec classes'. My own probe (copied temporarily into the clone, then removed) feeds fileViolations() these forms: process.kill, destructuring, globalThis.process, a literal computed key, an alias, Reflect.get with a built key, Object.entries(process), node:child_process, dynamic import('node:vm') and node:module createRequire. It also feeds two allowed controls.",
+      "command": "cp 06-process-member-form-probe.test.ts apps/api/src/zz-dom-r11-probe.test.ts; node vitest.mjs run --project unit-node apps/api/src/zz-dom-r11-probe.test.ts (node22, node24); rm the probe",
+      "environment": "disposable clone; node v22.22.2 and v24.21.0",
+      "expected": "Every process-member and module form gives at least 1 violation; process.env and node:crypto randomUUID give 0",
+      "actual": "P1-P7 and M1-M3 are all flagged, with 'process used as a value', 'computed member of process', 'globalThis.process', 'reflection via Reflect' and 'imports non-allow-listed node built-in'. OK1 process.env = 0 and OK2 randomUUID = 0. The results are identical on both runtimes (12/12). The process-member class is closed syntactically, including aliasing and enumeration, because process cannot be used as a value. The D-055 wording is accurate.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-11/06-process-member-form-probe.test.ts",
+        "docs/delivery/test-evidence/DG1/domain/round-11/06-process-member-form-probe.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R11-08-integration-x2",
+      "procedure": "Run the full integration project twice, each time against a fresh throwaway PostgreSQL 16 cluster: run 1 on Node 22 and run 2 on Node 24. The project covers the closure rule (422/G6), scoped access, identity, cursor pagination, the contract and the audit triggers.",
+      "command": "PATH=<node bin>:$PATH bash 04-integration-run.sh <port>  (54401 on node22, 54402 on node24)",
+      "environment": "disposable clone; PostgreSQL 16.13 throwaway clusters under $TMPDIR (removed); node v22.22.2 / v24.21.0",
+      "expected": "200/200 on both runs, no leftover databases, no FATAL/57P01",
+      "actual": "Run 1 (node 22): 19 files, 200/200, exit 0. Run 2 (node 24): 19 files, 200/200, exit 0. Leftover databases: only postgres, template0 and template1. pg.log FATAL/57P01 lines: none. The suites passed include closure refused (F-DG1-001, 422 citing G6), cross-scope read and write denial, BU-scoped creator (F-DG1-106), revocation, cursor pagination and binding, and the contract for every operation.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-004",
+        "REQ-S19-004",
+        "REQ-S19-006",
+        "REQ-S16-001"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-11/04-integration-run.sh",
+        "docs/delivery/test-evidence/DG1/domain/round-11/04-integration-run1-node22.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-11/04-integration-run2-node24.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R11-09-live-shell-ar-en",
+      "procedure": "Build the clone (pnpm -r build) and start a disposable stack: a throwaway PostgreSQL 16, migrate, seed-dev with SYNTHETIC users, and the API serving the built web on Node 24 (production target). Then run my live scenario (unchanged from round 10 except the header). It covers A closure 422/G6; B the BU-scoped Lead creator; C provisional branding tokens; D-H rendered shell, edit, detail and audit in Arabic and English, with derived audit entries localized and UI create without reload; I cursor pagination over all six sorts and cursor tamper and binding; J identity routes. I inspect the screens visually.",
+      "command": "pnpm -r build; PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH bash 07-live-stack.sh <evidence dir>",
+      "environment": "disposable clone; node v24.21.0; PostgreSQL 16 throwaway; AUTH_MODE=dev with synthetic users; Playwright chromium from /opt/pw-browsers",
+      "expected": "Build exit 0; all scenario checks PASS; AR screens RTL and EN screens LTR; Unknown shown for missing data; provisional wordmark; Planned labels; no closed status offered",
+      "actual": "Build exit 0. readyz is ready (database ok, migrations ok). 108/108 PASS, 0 FAIL, exit 0. A3: active->closed returns 422 urn:mth:problem:invalid-transition, citing G6, with no row or audit write. B: the lead creates (201), reads its own record (200), the derived TL grant holds no approval permission, and a foreign record returns 404. C: tokens need authentication (401); #0078FF has provenance provisional. I1-I8: six sorts page with no duplicates or gaps; a reused or tampered cursor returns 400; an unknown sort returns 400, never 500; the scoped list shows only the lead's own record. J1-J9: no-cookie, unknown-session and prototype-cookie requests return 401; logout invalidates; OIDC callback in dev mode returns 404. I viewed the screens. ar-03 shows RTL Arabic with 'غير معروف' (Unknown) for missing health data, the 'مؤقت' provisional badge, glossary terms and a localized audit trail. en-02 shows LTR English, a provisional wordmark, no 'Closed' status option and the G6 hint, and Planned modules.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S15-002",
+        "REQ-S15-005",
+        "REQ-S15-006",
+        "REQ-S16-001",
+        "REQ-S16-002",
+        "REQ-S16-004",
+        "REQ-S19-004",
+        "REQ-S19-006",
+        "REQ-PB-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-11/07-build.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-11/07-live-stack.sh",
+        "docs/delivery/test-evidence/DG1/domain/round-11/07-live-scenario.mjs",
+        "docs/delivery/test-evidence/DG1/domain/round-11/07-live-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-11/screens/ar-03-detail-audit.png",
+        "docs/delivery/test-evidence/DG1/domain/round-11/screens/en-02-edit-no-closed.png",
+        "docs/delivery/test-evidence/DG1/domain/round-11/screens/ar-01-shell.png",
+        "docs/delivery/test-evidence/DG1/domain/round-11/screens/en-01-shell.png"
+      ]
+    },
+    {
+      "id": "DOM-R11-10-static-invariants",
+      "procedure": "Run the static checks on the clone: no-CDN, OpenAPI lint, typecheck (the web tsconfig now includes test/), eslint and prettier. Scan for brand-token provenance and for 'official'/'certified' wording in both i18n catalogues.",
+      "command": "pnpm -s check:no-cdn; pnpm -s openapi:lint; pnpm -s typecheck; pnpm -s lint; pnpm -s format:check; grep provenance packages/shared/src; grep -i official|certified|رسمي|معتمد apps/web/src/i18n",
+      "environment": "disposable clone; node v24.21.0; pnpm 10.33.0",
+      "expected": "All exit 0; provenance enum provisional/official with provisional seeded; i18n mentions of 'official' only as negations",
+      "actual": "no-cdn PASS; OpenAPI 3.1.1 with 33 operations PASS; typecheck exit 0; lint exit 0; prettier clean. The branding schema says '#0078FF is a provisional brand token, not a verified Mobily colour'. Every EN and AR 'official/رسمي/معتمد' string is a negation ('no official logo has been supplied', 'not official Mobily brand assets', 'inspired by PMI, Brightline and BRM').",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S15-002",
+        "REQ-S15-006",
+        "REQ-S19-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-11/08-static-checks.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R11-11-register",
+      "procedure": "Check the register. The 8 assigned DG1-final rows (and all 12 DG1-final rows) must be IMPLEMENTED, with every cited evidence file present. The REQ-PB/§15/§16 rows with a P1 increment but a later final gate must not be over-claimed. Also list the finding states and any open Critical/High/mandatory finding.",
+      "command": "python3 docs/delivery/test-evidence/DG1/domain/round-11/09-register-rows.py",
+      "environment": "repository /home/user/My-owns at HEAD d8eb695 (register identical at 32e6478)",
+      "expected": "Register unchanged since round 10; 12/12 DG1-final rows IMPLEMENTED with 0 missing evidence; P1-increment rows SPECIFIED; no open Critical/High/mandatory",
+      "actual": "The register diffs 265af7e..32e6478 and 32e6478..HEAD are both empty. All 8 assigned rows and all 12 DG1-final rows are IMPLEMENTED with 0 missing evidence files. The 29 P1-increment rows with a later final gate are all SPECIFIED, so none is over-claimed. Open Critical/High/mandatory: []. The only non-closed DG1 findings are F-DG1-011, F-DG1-132, F-DG1-214 and F-DG1-215 (FIXED_PENDING_VERIFICATION).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S15-002",
+        "REQ-S15-005",
+        "REQ-S15-006",
+        "REQ-S16-001",
+        "REQ-S16-002",
+        "REQ-S16-004",
+        "REQ-S19-004",
+        "REQ-S19-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-11/09-register-rows.py",
+        "docs/delivery/test-evidence/DG1/domain/round-11/09-register-rows.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R11-12-prior-closures-hold",
+      "procedure": "Re-confirm that the round-9/10 domain closures (F-DG1-001/002/003/004/005/006/105/007/008/207/009/210/131) hold on this candidate. Use their findings.json status, the empty product diff (check 02) and the live and integration behaviour that exercises them.",
+      "command": "see checks 02, 04, 08, 09, 11",
+      "environment": "as in those checks",
+      "expected": "All CLOSED_VERIFIED, with nothing in the round-11 diff touching their code, and their behaviour reproduced",
+      "actual": "All 13 are CLOSED_VERIFIED. The product diff is empty. Each is re-exercised. F-DG1-001: closure 422/G6 (live A3, integration). F-DG1-004/210: the lead creator reads its record and sees Edit/Archive without reload (live B, H). F-DG1-003: glossary terms in AR and the glossary test passes. F-DG1-005/008: the localized derived audit entry (live E/F). F-DG1-009: no 57P01 in 2 fresh runs. F-DG1-002/105/007/207/006: register and module suites unchanged and complete. F-DG1-131: the D-055 usage statement is unchanged.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-11/09-register-rows.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-11/07-live-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-11/04-integration-run1-node22.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R11-13-source-fidelity",
+      "procedure": "Check the G6 closure rule and its wording against the playbook: G6 = Sustain ('Is value embedded in BAU?') and 'Benefits before closure' (B0014). Confirm the product and engineering gate separation in the code comment and the UI hint.",
+      "command": "grep -n 'G6|Closure' docs/source/playbook.md; grep G6 apps/api/src/modules/transformations/*.ts apps/web/src/i18n/*/*.json",
+      "environment": "repository read-only",
+      "expected": "The rule cites G6 Sustain and B0014, states that G6 is a product gate unrelated to DG0-DG7, and invents no source requirement",
+      "actual": "The playbook defines G6 as 'Sustain | Is value embedded in BAU? | Benefits evidence, ownership transfer, controls…' and B0014 as 'Benefits before closure'. routes.ts cites B0014/M0092/REQ-S03-003/REQ-PB-009 and says 'This is a PRODUCT gate (G6), unrelated to the engineering delivery gates DG0-DG7'. The EN hint says closing needs the G6 (Sustain) business approval, 'available in a later release', so the honest Planned classification holds.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-001",
+        "REQ-PB-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-11/10-source-fidelity.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R11-14-cleanup",
+      "procedure": "Remove the disposable clone and any throwaway clusters. Confirm no stack processes remain, the candidate tree is untouched and the candidate ID is unchanged.",
+      "command": "pgrep -af 'postgres -D $TMPDIR|apps/api/dist/main.js'; rm -rf $TMPDIR/rev; git status --short --untracked-files=no; node tools/gates/candidate.mjs --stage DG1",
+      "environment": "repository /home/user/My-owns",
+      "expected": "No leftover processes, clone removed, 0 tracked changes, candidate ID unchanged",
+      "actual": "pgrep matched only its own shell, so no postgres or API process remains (the scripts' traps stopped them). The clone is removed. There are 0 tracked changes in the repository. The candidate is still sha256:e5cc6ef982ba7d53ed80138c0cbaa0119bcfe8dcaad4e324b5dafdb6431afeb8 (391 files). The only new files are my evidence under docs/delivery/test-evidence/DG1/domain/round-11/.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-11/50-cleanup.out.txt"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG1/domain/round-11/00-candidate-and-diff.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-11/01-unit-full-node22.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-11/01-unit-full-node24.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-11/02-negative-control-node24-builtin-jsdom.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-11/03-architecture-verbose-node22.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-11/03-architecture-verbose-node24.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-11/04-D055-accuracy.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-11/04-integration-run.sh",
+    "docs/delivery/test-evidence/DG1/domain/round-11/04-integration-run1-node22.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-11/04-integration-run2-node24.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-11/05-member-name-scan.mjs",
+    "docs/delivery/test-evidence/DG1/domain/round-11/05-member-name-scan.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-11/06-process-member-form-probe.test.ts",
+    "docs/delivery/test-evidence/DG1/domain/round-11/06-process-member-form-probe.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-11/07-build.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-11/07-live-stack.sh",
+    "docs/delivery/test-evidence/DG1/domain/round-11/07-live-scenario.mjs",
+    "docs/delivery/test-evidence/DG1/domain/round-11/07-live-scenario.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-11/08-static-checks.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-11/09-register-rows.py",
+    "docs/delivery/test-evidence/DG1/domain/round-11/09-register-rows.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-11/10-source-fidelity.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-11/50-cleanup.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-11/screens/ar-01-shell.png",
+    "docs/delivery/test-evidence/DG1/domain/round-11/screens/ar-02-edit-no-closed.png",
+    "docs/delivery/test-evidence/DG1/domain/round-11/screens/ar-03-detail-audit.png",
+    "docs/delivery/test-evidence/DG1/domain/round-11/screens/ar-04-lead-derived-audit.png",
+    "docs/delivery/test-evidence/DG1/domain/round-11/screens/ar-05-office-derived-audit.png",
+    "docs/delivery/test-evidence/DG1/domain/round-11/screens/ar-06-lead-ui-create-no-reload.png",
+    "docs/delivery/test-evidence/DG1/domain/round-11/screens/en-01-shell.png",
+    "docs/delivery/test-evidence/DG1/domain/round-11/screens/en-02-edit-no-closed.png",
+    "docs/delivery/test-evidence/DG1/domain/round-11/screens/en-03-detail-audit.png",
+    "docs/delivery/test-evidence/DG1/domain/round-11/screens/en-04-lead-derived-audit.png",
+    "docs/delivery/test-evidence/DG1/domain/round-11/screens/en-05-office-derived-audit.png",
+    "docs/delivery/test-evidence/DG1/domain/round-11/screens/en-06-lead-ui-create-no-reload.png"
+  ],
+  "reviewed_at": "2026-10-01T15:26:30Z",
+  "summary": "PASS with no new finding. F-DG1-011 is verified closed. D-055 drops 'closes the whole … class' and 'prevents further adjacent-route findings', limits the default-deny to module imports and process members, names the enumeration reach as residual (a), names the audit runtime Node 22.22.2, and records the Node 24.21.0 re-audit with committed evidence. My own scans on both runtimes agree: setEngine is the only loader member, and every process-member form is flagged. No regression: the round-11 product-tree change is the web test harness, test-only lint comments and self-checks, and decision text, with no product, contract, data or i18n change. On the frozen candidate sha256:e5cc6ef9…afeb8, on both Node 22.22.2 and Node 24.21.0: unit 302/302 (web 110/110 on Node 24; the negative control reproduces the 12 AbortSignal failures with built-in jsdom); architecture 109/109; integration 200/200 on each runtime. The live AR/EN scenario passes 108/108 on Node 24, covering closure 422/G6, scoped access, identity, cursor pagination, provisional branding and Unknown states. Static checks are clean, the register is unchanged and complete, and the prior domain closures hold.",
+  "narrative": "docs/delivery/reviews/DG1/round-11/domain-reviewer.md"
+}

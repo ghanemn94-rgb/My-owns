@@ -1,0 +1,19 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG1-011",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by domain-reviewer, the originating reviewer and a non-author: the delivery-orchestrator wrote the fix in commit 7c3ebb2. That commit is an ancestor of the freeze commit 32e6478 and is in the frozen candidate sha256:e5cc6ef982ba7d53ed80138c0cbaa0119bcfe8dcaad4e324b5dafdb6431afeb8, whose ID recomputes identically in a full disposable clone. Every element of the finding's 'expected' is now met. (1) The overclaim is gone: 'closes the whole' and 'prevents further' each appear 0 times in D-055. The row now says the default-deny 'structurally closes the module-IMPORT and process-MEMBER loader/exec classes version-independently', does NOT cover a native-loader member of an allow-listed module (F-DG1-130) or its runtime-enumeration reach (F-DG1-132/215, residual (a)), and that 'default-deny is not a claim that no further adjacent route exists'. My probe confirms the process-member part. Every process.kill/_debugProcess form (dotted, destructured, globalThis, literal key, alias, Reflect.get, Object.entries(process)) is flagged on both Node 22.22.2 and Node 24.21.0, and process.env plus node:crypto randomUUID stay allowed. (2) The runtime is named: the audit was 'performed on Node v22.22.2 (the build-sandbox floor) and re-run … on Node v24.21.0 (the production target, ADR-0001)'. The cited evidence, docs/delivery/test-evidence/DG1/orchestrator/node24-member-audit.log, is committed in the candidate. My own member-name scan on both runtimes reproduces its conclusion. crypto.setEngine is the only loader member. The one new Node 24 name match, util.convertProcessSignalToExitCode, is a pure mapping and not a loader. All 10 dangerous process members are present and none is allow-listed. The architecture suite gives 109/109 on both runtimes. (3) The word 'exhaustive' now appears only in quotes of the superseded D-053/D-054 framing. The F-DG1-010/011 pattern of a version-detached exhaustiveness claim is resolved, not repeated. The optional part of 'expected' (refreshing the round-9 counts 101/101 and 294/294 in the Rationale/evidence column) was not done. Those counts are decision-time evidence and are not inaccurate, so this is an observation only, not a reason to keep the finding open.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-11/04-D055-accuracy.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-11/05-member-name-scan.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-11/06-process-member-form-probe.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-11/03-architecture-verbose-node24.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-11/00-candidate-and-diff.out.txt",
+        "docs/delivery/test-evidence/DG1/orchestrator/node24-member-audit.log",
+        "docs/delivery/decisions.md"
+      ]
+    }
+  ]
+}
