@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "verifications": [
+    {
+      "finding_id": "F-DG1-137",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by the originating reviewer (code-security-reviewer; I did not author the repair f7d9707, T-DG1-BE17) on candidate sha256:56f3eb88...2b4c. The freeze commit is aa7d9a8 and the base is 13418b8, and the ID is identical in the real repo and in a full disposable clone. Code: apps/api/src/architecture.testkit.ts:452 isDeclarationFileName() returns ts.createSourceFile(name, '', Latest, false, TS).isDeclarationFile. That is an empty in-memory parse, and the parser sets the flag from the file name alone, with no I/O. syntaxErrors() :492 uses it in place of the removed DECLARATION_FILE regex (0 references remain), so every TS declaration name goes to the no-emit declarationSyntaxErrors() (:466-481: one-file program, noLib/noResolve/types:[], no-op writeFile, getSyntacticDiagnostics only), and only non-declaration names reach ts.transpileModule (:494). scanSource still runs on every file. Re-proof (zz-r16-probe.test.ts.txt; 8/8 on Node 22 and Node 24) loads the pre-fix testkit from 873f48e next to the candidate's. For styles.d.css.ts, data.d.json.ts and x.d.ts.ts, ts.transpileModule and the pre-fix fileViolations throw 'Debug Failure. Output generation failed', while the candidate returns [] without throwing. The body 'export declare const x: = ;' gives the named 'modules/transformations/<name>: unparseable source: Type expected. (line 1) ...' and does not match /Debug Failure/. Declaration files are still scanned: for .d.ts, .d.mts, .d.cts and the 3 arbitrary names, a deep access/internal type import, an undeclared kpi re-export, a package type import and typeof import('../workflows') are all flagged. Nothing is emitted, written or executed: transpileModule provably always throws for these names, yet fileViolations never throws; the temp dir stays empty; and a globalThis assignment in the body never runs. The public SourceFile.isDeclarationFile (TS and TSX kinds) equals the @internal ts.isDeclarationFileName and the helper for all 31 names, including every positive and negative form in the self-check. A fuzz of 19 CODE_FILE names with 4 bodies throws 0 times. The F-DG1-217 behaviour (.d.ts/.d.mts/.d.cts) is unchanged. End to end (02-): planting modules/transformations/zz-r16.d.css.ts gives a green run for a valid body, the named 'only access/index.ts is public' violation for a deep import, and the named 'unparseable source' for a broken body. No run shows 'Debug Failure'. architecture.test.ts passes 132/132 on Node 22 and Node 24, the real tree has 0 moduleViolations (13 modules, 41 files), and a mutant restoring the old regex fails exactly the 2 new tests (05-). Fix confirmed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-16/00-candidate-identity.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-16/zz-r16-probe.test.ts.txt",
+        "docs/delivery/test-evidence/DG1/code-security/round-16/01-F-DG1-137-218-reproof-probe-node22.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-16/01b-F-DG1-137-218-reproof-probe-node24.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-16/02-planted-d-css-ts-architecture.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-16/04-architecture-verbose-node22.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-16/04-architecture-verbose-node24.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-16/05-mutant-old-regex.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-218",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by a qualified non-author: code-security-reviewer, while qa-verifier raised the finding, and I did not author the repair f7d9707. Same root cause and same fix as F-DG1-137, on candidate sha256:56f3eb88...2b4c. The *.d.<ext>.ts files that walk() collects through CODE_FILE (architecture.testkit.ts:182) are now classified as declarations by TypeScript's own rule (isDeclarationFileName, :452, used at :492), and never reach ts.transpileModule. For zz-style names (styles.d.css.ts, data.d.json.ts, x.d.ts.ts, plus a.d.mts.ts, x.d..ts, dir/x.d.y.z.ts) the lint returns [] or named diagnostics and never throws 'Debug Failure' (01-/01b- on Node 22 and 24). A planted module file runs end to end with named violations (02-). architecture.test.ts passes 132/132 on both Node versions (04-), and the old-regex mutant fails the 2 new self-checks (05-). Fix confirmed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-16/zz-r16-probe.test.ts.txt",
+        "docs/delivery/test-evidence/DG1/code-security/round-16/01-F-DG1-137-218-reproof-probe-node22.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-16/01b-F-DG1-137-218-reproof-probe-node24.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-16/02-planted-d-css-ts-architecture.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-16/04-architecture-verbose-node22.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-16/04-architecture-verbose-node24.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-16/05-mutant-old-regex.log"
+      ]
+    }
+  ]
+}
