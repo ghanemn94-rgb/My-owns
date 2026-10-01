@@ -11072,14 +11072,21 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-10/domain-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-01T14:38:45Z",
           "status": "OPEN",
           "note": "Raised by domain-reviewer in DG1 round 10 while checking, as assigned, whether D-055 is now an accurate description of the evidence (F-DG1-131). It is Low and non-mandatory: documentation accuracy only, with no runtime, contract, data or capability impact. The usage/minimality claim that F-DG1-131 targeted is now accurate, and I verify F-DG1-131 separately. The proposed ID is the next free number in the domain 0xx range (after F-DG1-010); the orchestrator may renumber. It is a reasonable ACCEPTED_OBSERVATION candidate once D-055 names the audited runtime (Node 22.22.2), records Node 24 as not yet audited, and drops or qualifies the 'prevents further adjacent-route findings' sentence."
+        },
+        {
+          "at": "2026-10-01T15:07:09Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 7c3ebb2976eb880ef470b49d45b6057986d77d1f"
         }
-      ]
+      ],
+      "fix_revision": "7c3ebb2976eb880ef470b49d45b6057986d77d1f",
+      "fix_summary": "D-055 corrected: dropped the 'closes whole class/prevents further findings' overclaim; named the member-audit runtime (Node 22.22.2 floor) and recorded the orchestrator's Node 24.21.0 (production target) re-audit with identical results + evidence node24-member-audit.log; enumeration reach noted as residual (a)."
     },
     {
       "id": "F-DG1-132",
@@ -11103,14 +11110,26 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-10/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-01T14:44:39Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG1 round 10 while re-proving F-DG1-130. It is a new syntactic route (value-level enumeration of an allow-listed namespace), not one of the three forms F-DG1-130 reported, which are all now caught. The proposed ID is the next free number in the code-security 1xx range; the orchestrator may renumber. An ACCEPTED_OBSERVATION would be reasonable once the header and D-055 stop claiming 'every form' and either close the namespace-as-value route for node:crypto or name it under residual (a)."
+        },
+        {
+          "at": "2026-10-01T15:12:13Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 7c3ebb2976eb880ef470b49d45b6057986d77d1f"
+        },
+        {
+          "at": "2026-10-01T15:13:18Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at d54c151c44e20810e75d637784c33875959e71a3"
         }
-      ]
+      ],
+      "fix_revision": "d54c151c44e20810e75d637784c33875959e71a3",
+      "fix_summary": "setEngine ban is spelled-name-based; reaching crypto.setEngine by runtime enumeration of the node:crypto namespace is documented+pinned as residual (a); 'every form'->'every SPELLED form'. architecture 109/109."
     },
     {
       "id": "F-DG1-214",
@@ -11134,14 +11153,26 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG1/round-10/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-01T14:56:30Z",
           "status": "OPEN",
           "note": "Raised by qa-verifier in DG1 round 10. Node v24.21.0 appeared on this sandbox's PATH mid-run (/opt/nvm created 14:43:16Z), not by any action of mine. Every earlier DG1 round recorded Node 24 as unavailable. I reproduced the failure in a fresh clone installed, built and tested entirely under Node 24 (twice), and confirmed it is absent on Node 22.22.2 for the same tree. The proposed ID is the next free number in the qa 2xx range, and the orchestrator may renumber it. I rate it Medium, not High: the user-facing workflow is intact on Node 24 (integration and e2e green), but the delivered CI cannot pass on its own target leg."
+        },
+        {
+          "at": "2026-10-01T15:12:13Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 7c3ebb2976eb880ef470b49d45b6057986d77d1f"
+        },
+        {
+          "at": "2026-10-01T15:13:18Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at d54c151c44e20810e75d637784c33875959e71a3"
         }
-      ]
+      ],
+      "fix_revision": "d54c151c44e20810e75d637784c33875959e71a3",
+      "fix_summary": "Custom vitest environment apps/web/test/jsdom-native-abort-environment.ts: jsdom + Node's native AbortController/AbortSignal (same realm as undici Request). unit-web 110/110 + full unit 302/302 on Node 22.22.2 AND 24.21.0; harness-only."
     },
     {
       "id": "F-DG1-215",
@@ -11165,14 +11196,26 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG1/round-10/qa-verifier.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-01T14:56:30Z",
           "status": "OPEN",
           "note": "Raised by qa-verifier in DG1 round 10 while verifying F-DG1-130. As the common assignment requires, I checked this against the header's member audit: it is not a member the audit missed (setEngine is the audited and banned member, and my Node 22 and 24 enumerations find no other loader). It is a route around the name ban, which none of residuals (a)-(c) covers. ACCEPTED_OBSERVATION would be reasonable if the implementer names it as a residual and corrects the 'every form' / 'every syntactic route' wording, consistent with the class's Low severity. The proposed ID follows F-DG1-214, and the orchestrator may renumber."
+        },
+        {
+          "at": "2026-10-01T15:12:13Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 7c3ebb2976eb880ef470b49d45b6057986d77d1f"
+        },
+        {
+          "at": "2026-10-01T15:13:18Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at d54c151c44e20810e75d637784c33875959e71a3"
         }
-      ]
+      ],
+      "fix_revision": "d54c151c44e20810e75d637784c33875959e71a3",
+      "fix_summary": "setEngine ban is spelled-name-based; reaching crypto.setEngine by runtime enumeration of the node:crypto namespace is documented+pinned as residual (a); 'every form'->'every SPELLED form'. architecture 109/109."
     }
   ]
 }
