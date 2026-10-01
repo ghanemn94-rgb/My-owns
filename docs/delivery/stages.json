@@ -683,7 +683,7 @@
       "id": "DG1",
       "stage": "P1",
       "name": "Architecture and working foundation",
-      "state": "VERIFYING",
+      "state": "APPROVED",
       "depends_on": [
         "DG0"
       ],
@@ -808,6 +808,11 @@
           "state": "VERIFYING",
           "at": "2026-10-01T23:40:00Z",
           "note": "Round 4 (gate round): domain PASS, code-security PASS (F-DG1-147 CLOSED_VERIFIED), qa PASS on candidate 6e0c0db1. No new findings, no BLOCKED checks. All 14 DG1 findings CLOSED_VERIFIED; zero unresolved Critical/High; zero unresolved mandatory (F-DG1-140/141 Medium mandatory verified). Live-registry (D-057) and live-CI A24 (D-058) are documented environmental residuals. Handing to release-auditor."
+        },
+        {
+          "state": "APPROVED",
+          "at": "2026-10-01T23:50:00Z",
+          "note": "DG1 APPROVED. Clean re-gate (D-056 path C): a fresh base preceding any DG1 review evidence, driven through a single mechanically-valid gate in 4 rounds, with the 16-round dev history preserved in git (branch claude/mobily-transformation-platform-kwcc4i; tag dg1-dev-history-d1cb245). Round-4 gate: 3x PASS (domain, code-security, qa) + release-auditor PASS on candidate sha256:6e0c0db1 (395 files, source 642e6bfb). Genuine bugs found and fixed across the re-gate: F-DG1-140/141 (Medium mandatory product bugs — BU re-parent cycle-under-concurrency via migration 0009 DB guard + advisory lock, and destination-parent authz), F-DG1-142 (rate-limit cookie bypass → token-hash/IP keying), plus Low docs/deps/flaky-test/typecheck-coverage items; all 14 findings CLOSED_VERIFIED by non-authors. Zero unresolved Critical/High; zero unresolved mandatory. All 12 DG1-final requirements IMPLEMENTED and verified. Live-registry install effect (REQ-DLV-042 AC-1, D-057), live GitHub-Actions run (REQ-DLV-025 A24, D-058) and keycloak pinning (D-049) are documented environmental residuals with verified offline surfaces, never BLOCKED gate checks. validate.mjs --stage DG1 exit 0. This engineering gate grants no business, Finance or IT approval and implies nothing about product gates G1-G6. DG2 is now unblocked."
         }
       ]
     },

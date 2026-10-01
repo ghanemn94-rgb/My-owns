@@ -1,0 +1,37 @@
+# 2026-10-01T23:44:07Z release-auditor T-DG1-AUDIT-R4 node=v24.21.0
+$ git rev-parse HEAD; git rev-parse --is-shallow-repository
+422c6da4910b061c70c3bdbf67036c328d878a2a
+false
+$ node tools/gates/candidate.mjs --stage DG1
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:6e0c0db1a8bea33cd81f05ea8c795d8ede4bfb7f380dfe146556cb4875a6f827","files":395}
+# exit=0
+$ node tools/gates/candidate.mjs --stage DG1 --ref 642e6bfb2c905d2c3382035032fa56c84672dcab
+{"stage":"DG1","source":"642e6bfb2c905d2c3382035032fa56c84672dcab","candidate_id":"sha256:6e0c0db1a8bea33cd81f05ea8c795d8ede4bfb7f380dfe146556cb4875a6f827","files":395}
+# exit=0
+$ node tools/gates/candidate.mjs --stage DG1 --ref 91936e63348dae6a9ae6c10eb52568e841196b27
+{"stage":"DG1","source":"91936e63348dae6a9ae6c10eb52568e841196b27","candidate_id":"sha256:6e0c0db1a8bea33cd81f05ea8c795d8ede4bfb7f380dfe146556cb4875a6f827","files":395}
+# exit=0
+$ node tools/gates/candidate.mjs --stage DG1 --diff
+{
+  "frozen": "sha256:6e0c0db1a8bea33cd81f05ea8c795d8ede4bfb7f380dfe146556cb4875a6f827",
+  "working_tree": "sha256:6e0c0db1a8bea33cd81f05ea8c795d8ede4bfb7f380dfe146556cb4875a6f827",
+  "matches": true,
+  "added": [],
+  "removed": [],
+  "changed": []
+}
+# exit=0
+$ sha256sum docs/delivery/candidates/DG1/6e0c0db1a8bea33c.manifest.json; head manifest
+950990cb5d0569ec2bcd04595d1d0b1028681f7385400af030e5e574879432d3  docs/delivery/candidates/DG1/6e0c0db1a8bea33c.manifest.json
+{
+ "stage_id": "DG1",
+ "candidate_id": "sha256:6e0c0db1a8bea33cd81f05ea8c795d8ede4bfb7f380dfe146556cb4875a6f827",
+ "hash_algorithm": "mth-candidate-v2",
+ "source_commit": "642e6bfb2c905d2c3382035032fa56c84672dcab",
+ "frozen_at": "2026-10-01T23:13:23Z",
+$ node tools/gates/validate.mjs --historical --stage DG0
+PASS gate DG0 (historical)
+# exit=0
+$ node tools/gates/validate.mjs --register DG1
+PASS register rules at DG1
+# exit=0
