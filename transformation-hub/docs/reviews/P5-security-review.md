@@ -412,3 +412,105 @@ Why this does not lock up:
 - `docs/reviews/P5-security-review.md`: this report.
 
 Probe convention: a `DEFECT` is `it.fails` asserting the required behaviour. Once fixed it turns red; the implementer then renames it "… (fixed, regression)" and turns it into a plain `it`.
+
+---
+
+## Fix status (implementer, separate context)
+
+Written by the `ai-runtime-engineer` in implementation mode, in its own worktree and context, after this review. The
+reviewer's text above is unchanged. Base: the lead's head `2e03a23` (this review merged; `origin` was an ancestor, so the
+merge was a no-op). Own databases `hub_test_p5fix` and `hub_test_p5fix_boot` (`pg-init-roles.sh`); no other database was
+touched. Only the Simulated mock provider was exercised; the OpenAI-compatible and Anthropic adapters stay **Not
+configured** and were never contacted (the redirect regressions use loopback listeners only).
+
+Commits: `df7809e` (API), `ef7af52` (probes as regressions + new regressions), `b7df9bd` (web, en + ar), `0980cec`
+(recipient named in the refusal audit; "send financials" regression), `ab6f799` (docs, access matrix, evaluation
+re-run, requirement status, regenerated P5 e2e screenshots), merge of `origin` `c6dae79` (`f7632f7`, documentation only, no
+conflict), and the commit that adds this section.
+
+### Per finding
+
+| ID | Status | What changed (file) | Evidence (executed) |
+|---|---|---|---|
+| **SEC-P5-01** (High) | **FIXED** | `ai-proposals.service.ts` `recipientAllowed(…, content)` now also requires the recipient to read **every record the run sent to the model** (`AiKnowledgeService.inputsVisible` → `refVisibleSql`, the per-type rules of the AI knowledge sources and of `visibleSql` rule 2; a targetless message is judged on its inputs; unknown inputs fail closed). Checked at **creation** (runtime passes `prep.sent`; refusal audited `DESTINATION_NOT_APPROVED` with the recipient id, reason `recipient_not_cleared_for_content`), at **approval** (422 `ai.recipient_not_cleared`, proposal invalidated in the autonomous transaction + `AI_APPROVAL_INVALIDATED`), at **revision** (422) and at **execution** (invalidated, nothing sent — also under autopilot). A draft (delivered to the delegating user's AI workspace) requires the delegating user to still read its target and inputs at execution (`requester_not_cleared_for_content`). Web: refusal and reasons en + ar; the approve dialog of a message states the rule. | Probes renamed `SEC-P5-01 (fixed, regression) (policy-limited autopilot)` and `(assisted, AIT-07)` — plain `it`, assertions unchanged, pass (`autopilot proposal none; … carrying the confidential canary: 0; assisted: approve → null, delivered []`). New `apps/api/test/ai/p5-sec-fixes.spec.ts`: creation refusal (run report + audit naming the recipient id, no canary), approval (422 + invalidated + one audit row by the approver), execution (invalidated, 0 notifications), revision (422), "send financials" (an approved confidential figure the model saw is never proposed to a member without `finance.record.read`), CONTROL (empty-input message to an internal-cleared member still executes). |
+| SEC-P5-02 (Medium) | **FIXED** | Phase 2 of `executeJob` locks the proposal (`FOR UPDATE`) and, under the lock, re-reads status (must be `proposed`/`approved`), version (unchanged since phase 1), approval (`valid`), the emergency stop (`ai_project_settings` read after the lock), mode / autopilot policy / daily limit (`assertActionExecutable`); the final update is conditional on status + version (effect and state change in one transaction). `reject()` and `revise()` lock the proposal first and write only at the reviewed version (`reject` 409 `ai.proposal_not_pending` otherwise); the kill switch cancels proposals before invalidating approvals; `invalidate()` / `invalidateDetached()` write the proposal first — one lock order (proposal → approval) everywhere, so a stop and an execution never deadlock. | Probe `SEC-P5-02 (fixed, regression)` passes (`after the job: {"finalStatus":"cancelled","notifications":0,"executeAudit":0}`). New: a **rejection** and a **revision** landing between phase 1 and phase 2 (the reviewer's "stated from the code" variant) → `rejected` / `proposed`, 0 notifications, 0 execute audits. |
+| SEC-P5-03 (Medium) | **FIXED** | `ai-knowledge.service.ts` `decisionsAwaiting` reads, per action, its decision's, that decision's committee's and its meeting's committee's classification; `ai-detections.service.ts` sets `meta.classification = derivedClassification('internal', parents)` (`packages/domain/src/ai.ts`, max of the parents, fail closed: a missing / unknown parent → `strictly_confidential`). `action_item` removed from the register defaults; unknown detection types and items without a classification default to `strictly_confidential` (`ai-tools.service.ts`, `ai-gateway.service.ts`). | Probe `SEC-P5-03 (fixed, regression)` passes (snapshot `classification: restricted, sentToProvider: false`; no context item carries the canary). New: a meeting action (no decision) takes the committee's classification and is withheld under an `internal` ceiling. Domain unit test of `derivedClassification`. |
+| SEC-P5-04 (Medium) | **FIXED** | `providers/http.providers.ts`: both adapters call one helper `egressFetch` — allowlist check of the hop, `redirect: 'manual'`, any 3xx refused as `ProviderConfigError('EGRESS_REDIRECT_REFUSED')` (body discarded); the runtime audits `EGRESS_*` adapter refusals as `AI_EGRESS_BLOCKED`. The credential header and the context never leave for a non-allowlisted host. | Probes `SEC-P5-04 (fixed, regression)` ×3 pass (`generate rejected: ProviderConfigError; approved host hits 1; unapproved host hits 0` for 307 and 302, and for the OpenAI-compatible 307). |
+| SEC-P5-05 (Low) | **FIXED** | `ai-runtime.service.ts` stores, in the run's evidence snapshot (never returned), the source each stale-source warning names and the index from which prepared requests are model-written; `ai-ops.service.ts` `getRun` drops warnings whose source the reader can no longer see and the model-written prepared requests unless the reader may still read every run input. A failed run's headline is its status text (it could be a source-naming warning before). Executed drafts are stored with their target **and the run inputs** as `sourceRefs` (read-time re-check and `document.changed` invalidation). | Probe `SEC-P5-05 (fixed, regression)` passes. New: an executed draft written from a memo is hidden after the memo is reclassified (its `source_refs` contain the memo); a model-written prepared request quoting a memo disappears from `GET /ai/runs/:id` after the reclassification (the reviewer's "stated from the code" draft variant, now executed). |
+| SEC-P5-06 (Low) | **FIXED** | Autopilot phase 2 takes `pg_advisory_xact_lock(hashtextextended('hub_ai_autopilot:' || projectId, 0))` before the proposal lock and counts today's autopilot executions under it. | Probe `SEC-P5-06 (fixed, regression)` passes (`before 0, limit 1, after 1`; the second concurrent execution → `invalidated ai.rate_limited`). Multi-replica deployment: still not run (one process, two concurrent executors, as in the probe). |
+| SEC-P5-I1 | **FIXED** | `invalidateDetached` (and `invalidate`) update the proposal only at the version that was checked (`eq(version, p.version)`), then its approvals; no audit row when nothing was invalidated. | New regression: a revision committing between the approver's read and the detached write is kept (`proposed`, 0 `AI_APPROVAL_INVALIDATED`); the approver still gets 409 `ai.approval_invalidated`. Lead-fix CONTROLs of this review still pass. |
+| SEC-P5-I2 | **FIXED** | `GET …/ai/status`: `lastRun` is the caller's own last run; health still uses the project's latest run status and error code only. Web label "My last run in this project" (en + ar). | New regression: the PM sees their latest run, the sponsor (no run) `null`. |
+| SEC-P5-I3 | RECORDED — owner decision | No change: project-level `ai.settings.manage` sets the ceiling up to the provider's hard maximum; moving ceilings to the organisation-level `ai.provider.configure` is for the owner. | — |
+| SEC-P5-I4 | RECORDED | No change. With SEC-P5-04 fixed, private-mode egress control for AI is the allowlist checked at save time, in preflight and on every adapter hop, with no redirect following. A runtime consumer of `HUB_PRIVATE_MODE` belongs to P7 (private mode). | — |
+| SEC-P5-I5 | RECORDED — owner decision | No organisation-wide emergency stop added (per-project stop only). | — |
+| SEC-P5-I6 | RECORDED | Not changed (not a small change): synchronous asks still hold their request transaction up to 25 s; the circuit breaker bounds repeated failures. Async-by-default or releasing the transaction during the provider call is a design change for the lead. | — |
+| SEC-P5-I7 | **FIXED** | The platform prefixes the delivered AI message title with "AI-generated (Simulated): " for the mock ("AI-generated: " otherwise; Arabic for an Arabic run) — never left to the model. | New regression: the executed message's title is `AI-generated (Simulated): Reminder (P5FIX control)`. |
+| OBS-P5-01 | DOCUMENTED | Checked against the access matrix: an AI proposal carries no workstream and the proposals list is a project-level register, so under §2.2's strict rule a workstream-only `ai.proposal.*` grant reaches no proposal (403). Recorded in access-matrix §2.2 and `docs/ai/tool-permissions.md`; a workstream-scoped proposals view is an owner decision. The `OBSERVED` test is unchanged and passes. | — |
+
+**Test set-up change (CONTROL, assertions unchanged).** In `p5-sec-ai.spec.ts` › "P4 C1 — SEC-P34R-05 re-verification", the
+input-probe message from the secretary's run (which sent a **restricted** document to the model) was addressed to the
+contributor (cleared `internal`). With SEC-P5-01 fixed that proposal is refused at creation — the fix itself — so the
+set-up now addresses it to the sponsor (cleared for the document). The CONTROL's assertions (hidden from the PM, shown to
+the sponsor, PM approve → 404, no canary in the PM's list) are unchanged and pass.
+
+**Not done / limits.**
+- C-33 body minimisation ("sent bodies contain a reference only", optional in the recommendation) is not applied: an AI
+  message still carries the model's title and body (≤ 500 characters); its recipient must now be cleared for every input.
+- The recipient check covers the records the run sent to the model, not the delegating user's own question text.
+- No real model or provider was run; multi-replica workers were not run; the full Playwright suite was not run (no shared
+  web component changed; the AI PM journey and the axe scans of the AI screens were run, see below).
+- REQ-PLN-023 ("AI response schema rejects a delay probability", assigned to this role for the P5 review cycle in
+  `docs/phases/P2-P4-requirement-disposition.md`) is outside this finding list and was not changed.
+
+### Commands run and real results
+
+All vitest runs used `TEST_DATABASE_URL=postgres://hub_app:…@127.0.0.1:5432/hub_test_p5fix` and
+`TEST_DATABASE_MIGRATION_URL=postgres://hub_owner:…@127.0.0.1:5432/hub_test_p5fix`.
+
+```
+$ git fetch origin claude/mobily-transformation-hub          → origin bb8a373 is an ancestor of 2e03a23 (merge: no-op)
+  (after the session restart) git merge FETCH_HEAD c6dae79   → f7632f7, documentation only, no conflict
+$ HUB_DATABASES="hub_test_p5fix hub_test_p5fix_boot" bash scripts/dev/pg-init-roles.sh  → databases ready
+$ pnpm install --frozen-lockfile --prefer-offline            → Done in 3.4s;  pnpm build:packages → exit 0
+
+Baseline before any change: npx vitest run test/ai test/reviews/p5-sec-ai.spec.ts test/reviews/p5-sec-egress.spec.ts
+  Test Files 11 passed (11); Tests 94 passed | 9 expected fail (103)
+After the fixes: the same + p34-sec-re-jv-ai.spec.ts + p34-sec-re-fixes.spec.ts + test/ai/p5-sec-fixes.spec.ts
+  Test Files 14 passed (14); Tests 138 passed (138)            (no expected fail left in these files)
+  p5-sec-fixes.spec.ts, final version (with the creation and "send financials" cases): Tests 15 passed (15)
+  Probe output after the fixes:
+    SEC-P5-01 observed: autopilot proposal none; messages to the internal-cleared member carrying the confidential canary: 0 [];
+      assisted: approve → null, delivered []
+    SEC-P5-02 observed: kill switch → 201; proposal status right after the stop: cancelled;
+      after the job: {"finalStatus":"cancelled","notifications":0,"executeAudit":0}
+    SEC-P5-03 observed: action item in the run snapshot [{…,"type":"action_item","classification":"restricted","sentToProvider":false}];
+      context items carrying the action title: []
+    SEC-P5-04 observed (anthropic, 307): generate rejected: ProviderConfigError; approved host hits 1; unapproved host hits 0;
+      (anthropic, 302): unapproved host hits 0; (openai_compatible, 307): unapproved host hits 0
+    SEC-P5-06 observed: before 0, limit 1, after 1; results [{"status":"invalidated","reason":"ai.rate_limited"},{"status":"executed",…}]
+Mutation check (every fix disabled in the source at once, then restored from git): npx vitest run test/ai/p5-sec-fixes.spec.ts
+  Tests 7 failed | 1 passed | 4 skipped (12) — the pass is the SEC-P5-05 CONTROL; the SEC-P5-01 block failed at its set-up
+  assertion (the revision to an uncleared recipient was accepted), so its tests were skipped
+$ (packages/domain) npx vitest run                          → Test Files 23 passed; Tests 475 passed (475)
+$ pnpm lint                                                  → exit 0 (module boundary check passed; i18n check passed:
+                                                               6853 keys per language, 27 AI refusal codes; hard-coded string check passed)
+$ pnpm typecheck                                             → exit 0
+$ free -g → 12–14 GB available before each full run (one other agent's e2e stack ran during run 1)
+Full API suite, run 1 (HEAD 0980cec): (apps/api) pnpm test (tsc build + vitest run), HUB_AI_EVAL_OUT=<scratchpad>/ai-eval
+  Test Files 141 passed (141); Tests 1098 passed | 2 expected fail (1100); 1655.70 s; exit 0
+Full API suite, run 2 (merged tree f7632f7, after the session restart):
+  Test Files 141 passed (141); Tests 1098 passed | 2 expected fail (1100); 1379.28 s; exit 0
+  The 2 expected fails are the open Low probes DOM-P2F-02 and DOM-P2F-04 (`p2-domain-final.spec.ts`); every P5 probe runs as a
+  plain regression.
+$ node test/ai/summarize-evals.mjs <scratchpad>/ai-eval      → 67 cases, 67 pass, 0 fail (both runs)
+$ python3 scripts/requirements/apply_status.py --check      → OK (265 entries); apply → 394 requirements, AT coverage 30/30
+  (REQ-AI-036 and REQ-SEC-018 → Tested; re-applied after the merge: no change)
+Playwright, own stack (database hub_test_p5fix_e2e migrated + Demo seed; API :4561 and worker from apps/api/dist; production
+web build with HUB_API_URL=http://127.0.0.1:4561, next start :3561; HUB_WEB_URL=http://127.0.0.1:3561):
+  playwright test tests/p5-ai.spec.ts                        → 6 passed (1.8 m)   (seed: "ai: pending proposal … awaiting human approval")
+  playwright test tests/a11y.spec.ts --grep "] ai-"          → first attempt killed by the container restart (exit 137);
+                                                               re-run on the restarted stack: 22 passed (1.5 m)
+  The stack was stopped by PID after each run (the first one by the lead after the restart).
+$ GITLEAKS=<scratchpad>/gl/bin-8.30.1/gitleaks bash scripts/ops/secret-scan.sh tree
+  → tree: 1173 committed files at HEAD f7632f7; no leaks found; SECRET SCAN (tree): PASS   (repeated after this section)
+```
