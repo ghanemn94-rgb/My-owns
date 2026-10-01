@@ -9341,7 +9341,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-2/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-01T08:26:50Z",
@@ -9357,10 +9357,15 @@
           "at": "2026-10-01T09:57:42Z",
           "status": "OPEN",
           "note": "verified by code-security-reviewer round 3: FAIL"
+        },
+        {
+          "at": "2026-10-01T10:05:48Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at ecaf66f"
         }
       ],
-      "fix_revision": "5cf99d6",
-      "fix_summary": "Control-path escape closed: repo read-only in the sandbox, so parent-rename of a protected subtree, appending to the installer, and delivery-record writes are all refused and the real repo is unchanged (AC-7). D-051.",
+      "fix_revision": "ecaf66f",
+      "fix_summary": "Re-closed: the copy-back escape (F-DG1-118) that reopened this is fixed; the installer sandbox + restricted copy-back leave the repo controls immutable (AC-7/AC-9).",
       "verification": {
         "by_role": "code-security-reviewer",
         "invocation_reference": {
@@ -9395,7 +9400,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-2/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-01T08:26:50Z",
@@ -9411,10 +9416,15 @@
           "at": "2026-10-01T09:57:42Z",
           "status": "OPEN",
           "note": "verified by code-security-reviewer round 3: FAIL"
+        },
+        {
+          "at": "2026-10-01T10:05:48Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at ecaf66f"
         }
       ],
-      "fix_revision": "5cf99d6",
-      "fix_summary": "Agent-config surfaces (CLAUDE.local.md, .mcp.json, nested CLAUDE.md, .vscode) can no longer be created inside the installer sandbox — the repo is read-only (AC-8). D-051.",
+      "fix_revision": "ecaf66f",
+      "fix_summary": "Re-closed with F-DG1-118: no path outside the trusted workspace-member node_modules is copied back, so config surfaces cannot be planted via the copy-back either (AC-8/AC-9).",
       "verification": {
         "by_role": "code-security-reviewer",
         "invocation_reference": {
@@ -9767,14 +9777,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-3/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-01T09:57:42Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG1 round 3 (new mechanism of the F-DG1-113/F-DG1-114 root cause after the D-051 redesign); reproduced in a scratch project under $TMPDIR with the candidate's installer."
+        },
+        {
+          "at": "2026-10-01T10:05:48Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at ecaf66f"
         }
-      ]
+      ],
+      "fix_revision": "ecaf66f",
+      "fix_summary": "Copy-back enumerates workspace members from the trusted real tree and copies only their node_modules (NUL-safe, non-symlink); a planted non-member node_modules is ignored (AC-9); destinations stay under REPO_ROOT. 13/13 ACs."
     },
     {
       "id": "F-DG1-119",
