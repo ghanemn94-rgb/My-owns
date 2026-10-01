@@ -1,0 +1,65 @@
+# F-DG1-107 re-test: check-ci-needs.mjs against variants of the candidate's .github/workflows/ci.yml (clone f32c705)
+$ node deploy/scripts/check-ci-needs.mjs   # unmodified
+OK: .github/workflows/ci.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it with no status-function if:; installs only via ci-install-deps.sh
+  verify <- delivery-gates
+EXIT=0
+
+### variant A-pre-step-tampers-validator:
+    36a37
+    >       - run: echo "process.exit(0)" > tools/gates/validate.mjs
+$ node deploy/scripts/check-ci-needs.mjs <variant>
+FAIL: delivery-gates: validate step must be exactly "node tools/gates/validate.mjs --pipeline", got: "echo \"process.exit(0)\" > tools/gates/validate.mjs"
+EXIT=1
+
+### variant B-NODE_OPTIONS-env-on-validate-step:
+    38a39,40
+    >         env:
+    >           NODE_OPTIONS: "--import=data:text/javascript,process.exit(0)"
+$ node deploy/scripts/check-ci-needs.mjs <variant>
+OK: /var/tmp/mth-run.aODKS7/claude-0/ci107/B-NODE_OPTIONS-env-on-validate-step.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it with no status-function if:; installs only via ci-install-deps.sh
+  verify <- delivery-gates
+EXIT=0
+
+### variant C-working-directory-decoy:
+    38a39
+    >         working-directory: decoy
+$ node deploy/scripts/check-ci-needs.mjs <variant>
+OK: /var/tmp/mth-run.aODKS7/claude-0/ci107/C-working-directory-decoy.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it with no status-function if:; installs only via ci-install-deps.sh
+  verify <- delivery-gates
+EXIT=0
+
+### variant D-shell-override:
+    38a39
+    >         shell: "true {0}"
+$ node deploy/scripts/check-ci-needs.mjs <variant>
+OK: /var/tmp/mth-run.aODKS7/claude-0/ci107/D-shell-override.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it with no status-function if:; installs only via ci-install-deps.sh
+  verify <- delivery-gates
+EXIT=0
+
+### variant E-defaults-working-directory:
+    26a27,30
+    > defaults:
+    >   run:
+    >     working-directory: decoy
+    > 
+$ node deploy/scripts/check-ci-needs.mjs <variant>
+OK: /var/tmp/mth-run.aODKS7/claude-0/ci107/E-defaults-working-directory.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it with no status-function if:; installs only via ci-install-deps.sh
+  verify <- delivery-gates
+EXIT=0
+
+### original F-DG1-107 vectors (expect FAIL):
+$ job verify 'if: always()'
+FAIL: job "verify": job-level if: "always()" uses a status function, so it can run after delivery-gates failed
+EXIT=1
+$ job verify 'if: ${{ !cancelled() }}'
+FAIL: job "verify": job-level if: "${{ !cancelled() }}" uses a status function, so it can run after delivery-gates failed
+EXIT=1
+$ job verify 'if: Failure ()'
+FAIL: job "verify": job-level if: "Failure ()" uses a status function, so it can run after delivery-gates failed
+EXIT=1
+$ validate '|| true'
+FAIL: delivery-gates does not run exactly "node tools/gates/validate.mjs --pipeline"
+EXIT=1
+$ plain pnpm install
+FAIL: verify: dependency install outside deploy/scripts/ci-install-deps.sh (REQ-DLV-042): pnpm install --frozen-lockfile
+EXIT=1

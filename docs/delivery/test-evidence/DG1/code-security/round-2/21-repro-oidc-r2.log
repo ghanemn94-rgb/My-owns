@@ -1,0 +1,29 @@
+$ withpg.sh npx vitest run --project integration apps/api/test/integration/repro-oidc-login-csrf-r2.test.ts  (clone f32c705)
+chown: changing ownership of '/var/tmp/mth-run.aODKS7/claude-0/pg5451': Invalid argument
+# disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+ RUN  v3.2.4 /var/tmp/mth-run.aODKS7/claude-0/review-sec-r2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mup9e7fh_037db556; applied 8 migrations to a fresh database
+stdout | apps/api/test/integration/repro-oidc-login-csrf-r2.test.ts > R2-1: the login cookie is HttpOnly, SameSite=Lax, Path=/ and short-lived
+[r2] /auth/login Set-Cookie: mth_login=_qHWJ41o6j01T1Os0dePqvBYRdy80faO5H9zmk6Pzfs; Max-Age=600; Path=/; HttpOnly; SameSite=Lax
+
+stdout | apps/api/test/integration/repro-oidc-login-csrf-r2.test.ts > R2-2: the round-1 attack is refused: the victim's browser stays signed in as the victim, nothing is consumed
+[r2] victim-browser callback: [33m302[39m /login?error=state_invalid set-cookie: [
+  [32m'mth_login=; Max-Age=0; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax'[39m
+]
+
+stdout | apps/api/test/integration/repro-oidc-login-csrf-r2.test.ts > R2-2: the round-1 attack is refused: the victim's browser stays signed in as the victim, nothing is consumed
+[r2] login_failed audit reasons: [
+  [32m'OIDC callback refused: no login cookie (the state is not bound to this browser)'[39m,
+  [32m'OIDC callback refused: the login state is bound to a different browser'[39m
+]
+
+ ✓ |integration| apps/api/test/integration/repro-oidc-login-csrf-r2.test.ts (4 tests) 474ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  08:15:13
+   Duration  2.30s (transform 487ms, setup 0ms, collect 1.05s, tests 474ms, environment 0ms, prepare 53ms)
+
+EXIT=0

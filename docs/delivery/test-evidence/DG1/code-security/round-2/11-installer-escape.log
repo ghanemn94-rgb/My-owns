@@ -1,0 +1,57 @@
+$ docs/delivery/test-evidence/DG1/code-security/round-2/repro-installer-escape.sh $TMPDIR/esc   # fresh disposable clone at f32c705, bwrap 0.9.0, run at 2026-10-01T08:13:04Z
+== clone HEAD f32c705898cf0a393ed87d7f45a570df9bc09a17
+== host-side before: tools/ entries: agents deps gates source 
+-- [env] names visible inside: CI HOME HTTPS_PROXY HTTP_PROXY NODE_EXTRA_CA_CERTS NO_PROXY PATH PNPM_HOME PWD SHLVL SSL_CERT_FILE XDG_CACHE_HOME XDG_DATA_HOME XDG_STATE_HOME _ http_proxy https_proxy no_proxy npm_config_registry npm_config_store_dir 
+-- [env] FAKE_ORCH_SECRET set inside? no
+-- [caps] CapEff: 0000000000000000 CapBnd: 000001ffffffffff  uid=0
+-- direct writes into control paths (expected: refused)
+refused   .git/hooks/pre-commit
+refused   .claude/x
+refused   .github/workflows/x.yml
+refused   tools/gates/x
+refused   tools/agents/run-agent.sh
+refused   tools/deps/install-sandbox.sh
+refused   docs/delivery/x
+refused   CLAUDE.md (append)
+refused   mv .git (mountpoint)
+refused   mount remount rw
+refused   umount tools/gates
+-- Claude/IDE config surfaces that D-025 denies to agents (absent in the tree)
+WRITABLE  create CLAUDE.local.md
+WRITABLE  create .mcp.json
+WRITABLE  create apps/api/CLAUDE.md (nested memory)
+WRITABLE  create .vscode/tasks.json
+-- BYPASS: rename the writable PARENT of a read-only control path, then recreate it
+WRITABLE  mv tools -> tools.orig; recreate tools/deps/install-sandbox.sh + tools/agents/run-agent.sh + tools/gates/validate.mjs
+WRITABLE  mv docs -> docs.orig; recreate docs/delivery/gates/DG1.json
+rc(sandbox)=0
+== host-side after (outside the sandbox, as the orchestrator would see the tree):
+.mcp.json
+.vscode/tasks.json
+CLAUDE.local.md
+apps/api/CLAUDE.md
+docs.orig
+tools.orig
+-- host: head -2 tools/deps/install-sandbox.sh
+#!/bin/bash
+echo PWNED-UNSANDBOXED-INSTALLER >&2; exec pnpm "$@"
+-- host: tools/agents/run-agent.sh
+#!/bin/bash
+echo PWNED-RUNNER
+-- host: tools/gates/validate.mjs
+process.exit(0)
+-- host: docs/delivery/gates/DG1.json
+{"forged":true}
+-- host: is .git/hooks/pre-commit present? no
+-- host: git status --short (top)
+ M tools/agents/run-agent.sh
+ M tools/deps/install-sandbox.sh
+ M tools/gates/validate.mjs
+?? .mcp.json
+?? .vscode/
+?? CLAUDE.local.md
+?? apps/api/CLAUDE.md
+?? docs.orig/
+?? docs/delivery/gates/DG1.json
+?? tools.orig/
+EXIT=0

@@ -1,0 +1,25 @@
+$ node tools/gates/validate.mjs --stage DG0 --historical   (clone f32c705, complete clone)
+PASS gate DG0 (historical)
+EXIT=0
+
+# DG0 gate source_commit: 1e4c0226fc50dc6cc928ce4f16cbf7507afed1ac; DG0 verdict: APPROVED
+$ git diff --stat 1e4c0226fc50dc6cc928ce4f16cbf7507afed1ac..f32c705 -- tools/gates tools/agents .claude .github/workflows/delivery-gates.yml
+ tools/agents/agent_settings.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+(end of diff stat)
+$ git log --format='%h %an %s' 1e4c0226fc50dc6cc928ce4f16cbf7507afed1ac..f32c705 -- tools/gates tools/agents .claude .github/workflows/delivery-gates.yml
+1ec0db4 DG1(REQ-DLV-042): complete the sandboxed installer — allow-list script policy, acceptance tests, guard, D-046
+$ git diff 1e4c0226..f32c705 -- tools/agents/agent_settings.py
+diff --git a/tools/agents/agent_settings.py b/tools/agents/agent_settings.py
+index 2eda66f..3c737bf 100644
+--- a/tools/agents/agent_settings.py
++++ b/tools/agents/agent_settings.py
+@@ -32,7 +32,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
+ # Protected for every role, relative to the repository and to each of its worktrees.
+ COMMON_DENY = [
+     ".git", ".claude", ".mcp.json", "CLAUDE.md", "CLAUDE.local.md", ".gitignore", ".gitattributes", ".github",
+-    "tools/gates", "tools/agents", "tools/source", "docs/source", "trading_agent",
++    "tools/gates", "tools/agents", "tools/deps", "tools/source", "docs/source", "trading_agent",
+     "docs/delivery/reviews", "docs/delivery/gates", "docs/delivery/runs", "docs/delivery/candidates",
+     "docs/delivery/assignments", "docs/delivery/findings.json", "docs/delivery/stages.json",
+ ]

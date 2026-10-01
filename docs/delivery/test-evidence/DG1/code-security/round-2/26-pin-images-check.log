@@ -1,0 +1,85 @@
+$ node deploy/scripts/pin-images.mjs --check   (clone f32c705)
+PINNED     node-runtime (production) node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+PINNED     postgres (production) postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722
+BLOCKED    keycloak (test-ci) quay.io/keycloak/keycloak:26.4: BLOCKED: --resolve at 2026-10-01T07:30:37.561Z could not reach the registry: ERROR: failed to do request: Head "https://quay.io/v2/keycloak/keycloak/manifests/26.4": Forbidden
+PINNED     playwright (test-ci) mcr.microsoft.com/playwright:v1.56.1-noble@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+FAIL: keycloak (quay.io/keycloak/keycloak:26.4): BLOCKED, not pinned — BLOCKED: --resolve at 2026-10-01T07:30:37.561Z could not reach the registry: ERROR: failed to do request: Head "https://quay.io/v2/keycloak/keycloak/manifests/26.4": Forbidden
+FAIL: deploy/compose/compose.yaml: quay.io/keycloak/keycloak:26.4 has no digest
+2 problem(s). Pin with (registry access; orchestrator/IT): node deploy/scripts/pin-images.mjs --resolve && node deploy/scripts/pin-images.mjs --apply
+EXIT=1
+
+$ cat deploy/images.lock.json
+{
+  "$comment": "Container images used by the build, Compose and CI (ADR-0011/0012/0005). Every reference must be pinned BY DIGEST: `node deploy/scripts/pin-images.mjs --resolve [id...]` (needs registry access; an ORCHESTRATOR/IT step, D-049 — agent sandboxes have no network) fills `digest` + `verifiedAt`, `--apply` rewrites every file in `usedIn`, and `--check` (offline) fails while any digest is missing, any file disagrees with this lock, or a scanned file references an image not listed here. A null digest means NOT PINNED; it is never a pass. `blockedReason` (null unless set by --resolve) records a registry the environment's network policy denies: the image is reported BLOCKED, still not pinned, and --check still fails. Never fabricate a digest. `scope`: production = shipped/run in production (mth-app base image, product database); test-ci = test IdP and CI-only images. Tags and support windows are [UNVERIFIED] until --resolve records `verifiedAt`.",
+  "images": [
+    {
+      "id": "node-runtime",
+      "ref": "node",
+      "tag": "24-bookworm-slim",
+      "scope": "production",
+      "digest": "sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6",
+      "verifiedAt": "2026-10-01T07:30:34.637Z",
+      "blockedReason": null,
+      "license": "MIT (Node.js); Debian packages under their own licences",
+      "role": "base image of mth-app (build and runtime stages)",
+      "usedIn": [
+        "deploy/docker/Dockerfile"
+      ]
+    },
+    {
+      "id": "postgres",
+      "ref": "postgres",
+      "tag": "18",
+      "scope": "production",
+      "digest": "sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722",
+      "verifiedAt": "2026-10-01T07:30:37.169Z",
+      "blockedReason": null,
+      "license": "PostgreSQL",
+      "role": "product database for Compose and CI (ADR-0003)",
+      "usedIn": [
+        "deploy/compose/compose.yaml",
+        ".github/workflows/ci.yml"
+      ]
+    },
+    {
+      "id": "keycloak",
+      "ref": "quay.io/keycloak/keycloak",
+      "tag": "26.4",
+      "scope": "test-ci",
+      "digest": null,
+      "verifiedAt": null,
+      "blockedReason": "BLOCKED: --resolve at 2026-10-01T07:30:37.561Z could not reach the registry: ERROR: failed to do request: Head \"https://quay.io/v2/keycloak/keycloak/manifests/26.4\": Forbidden",
+      "license": "Apache-2.0",
+      "role": "TEST identity provider only (Compose profile test-idp); production uses Mobily's corporate IdP (ADR-0005)",
+      "usedIn": [
+        "deploy/compose/compose.yaml"
+      ]
+    },
+    {
+      "id": "playwright",
+      "ref": "mcr.microsoft.com/playwright",
+      "tag": "v1.56.1-noble",
+      "scope": "test-ci",
+      "digest": "sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a",
+      "verifiedAt": "2026-10-01T07:30:39.136Z",
+      "blockedReason": null,
+      "license": "Apache-2.0 (Playwright); browsers under their own licences",
+      "role": "CI e2e container with baked-in browsers matching @playwright/test 1.56.1 (ADR-0012)",
+      "usedIn": [
+        ".github/workflows/ci.yml"
+      ]
+    }
+  ]
+}
+
+$ grep -rn 'image:\|FROM\|ARG NODE_IMAGE' deploy/compose/compose.yaml deploy/docker/Dockerfile .github/workflows/ci.yml
+deploy/compose/compose.yaml:25:  image: ${MTH_APP_IMAGE:-mth-app:local}
+deploy/compose/compose.yaml:39:    image: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722
+deploy/compose/compose.yaml:127:    image: quay.io/keycloak/keycloak:26.4
+deploy/docker/Dockerfile:23:# Base image: pinned by digest through deploy/images.lock.json (`node deploy/scripts/pin-images.mjs --check`).
+deploy/docker/Dockerfile:24:ARG NODE_IMAGE=node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+deploy/docker/Dockerfile:27:FROM ${NODE_IMAGE} AS build
+deploy/docker/Dockerfile:62:FROM ${NODE_IMAGE} AS runtime
+.github/workflows/ci.yml:75:        image: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722 # devops-engineer: pin by digest (ADR-0003/ADR-0011)
+.github/workflows/ci.yml:108:      image: mcr.microsoft.com/playwright:v1.56.1-noble@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a # devops-engineer: pin by digest
+.github/workflows/ci.yml:117:        image: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722 # devops-engineer: pin by digest

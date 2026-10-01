@@ -1,0 +1,24 @@
+# F-DG1-202: the runtime closure step of deploy/scripts/assemble-runtime.sh (lines 47-84, extracted verbatim) run on the clone at f32c705
+$ grep design-tokens apps/api/package.json
+28:    "@mth/design-tokens": "workspace:*",
+$ grep -rn "from \"@mth/design-tokens" apps/api/src --include=*.ts | grep -v test
+apps/api/src/modules/admin/branding.ts:2:// Settings (editing) is P5. The token source is injected by the composition root (server.ts reads @mth/design-tokens,
+apps/api/src/modules/admin/branding.ts:8:/** Structural view of `@mth/design-tokens` (`colorTokens`, `tokensAreProvisional`). */
+apps/api/src/server.ts:20:import { colorTokens, tokensAreProvisional } from "@mth/design-tokens";
+$ node closure.cjs . apps/api apps/worker packages/db
+pkg apps/api
+pkg apps/worker
+pkg packages/config
+pkg packages/db
+pkg packages/design-tokens
+file packages/design-tokens/src/tokens.json
+pkg packages/shared
+EXIT=0
+
+# The pre-fix hand-kept list (round-1 candidate 85e5bbd), for comparison:
+26:for f in apps/api/dist/main.js apps/worker/dist/main.js packages/db/dist/cli.js apps/web/dist/index.html; do
+41:for p in apps/api apps/worker packages/config packages/db packages/shared; do
+45:cp -a "$WS/packages/db/migrations" "$OUT/packages/db/"
+52:for f in apps/api/dist/main.js apps/worker/dist/main.js packages/db/dist/cli.js apps/web/dist/index.html \
+56:ls "$OUT"/packages/db/migrations/*.sql >/dev/null
+57:[ ! -e "$OUT/packages/db/seeds" ] || { echo "layout check failed: dev seeds present" >&2; exit 1; }

@@ -1,0 +1,28 @@
+$ withpg.sh npx vitest run --project integration apps/api/test/integration/repro-derived-assignment-race.test.ts  (clone f32c705; run 2, fresh cluster)
+chown: changing ownership of '/var/tmp/mth-run.aODKS7/claude-0/pg5451': Invalid argument
+# disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+ RUN  v3.2.4 /var/tmp/mth-run.aODKS7/claude-0/review-sec-r2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mup9h99y_8d3634b1; applied 8 migrations to a fresh database
+stdout | apps/api/test/integration/repro-derived-assignment-race.test.ts > an overlapping create keeps an ACTIVE derived assignment after its source BU grant is revoked
+[race] revoke: [33m200[39m  create: [33m201[39m
+
+stdout | apps/api/test/integration/repro-derived-assignment-race.test.ts > an overlapping create keeps an ACTIVE derived assignment after its source BU grant is revoked
+[race] lead's assignments after both committed: [{"id":"01a0f68a-5f61-740f-a68d-3e5222e31b8a","scope_type":"business_unit","revoked_at":"2026-10-01T08:17:38.689Z","derived_from_assignment_id":null,"source_revoked_at":null},{"id":"01a0f68a-6122-7195-8c06-67f3fa99abff","scope_type":"transformation","revoked_at":null,"derived_from_assignment_id":"01a0f68a-5f61-740f-a68d-3e5222e31b8a","source_revoked_at":"2026-10-01T08:17:38.689Z"}]
+
+stdout | apps/api/test/integration/repro-derived-assignment-race.test.ts > an overlapping create keeps an ACTIVE derived assignment after its source BU grant is revoked
+[race] old session after the revocation: [33m401[39m
+
+stdout | apps/api/test/integration/repro-derived-assignment-race.test.ts > an overlapping create keeps an ACTIVE derived assignment after its source BU grant is revoked
+[race] lead (signed in again) reads the new transformation after the revocation: [33m200[39m
+
+ ✓ |integration| apps/api/test/integration/repro-derived-assignment-race.test.ts (1 test) 1857ms
+   ✓ an overlapping create keeps an ACTIVE derived assignment after its source BU grant is revoked  1662ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  08:17:36
+   Duration  4.12s (transform 538ms, setup 0ms, collect 1.26s, tests 1.86s, environment 0ms, prepare 75ms)
+
+EXIT=0

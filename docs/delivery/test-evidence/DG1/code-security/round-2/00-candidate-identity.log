@@ -1,0 +1,31 @@
+$ git rev-parse HEAD (repo)
+18c1e61f5388b7e21b3989c71b286829327ea34b
+$ git log --oneline f32c705..HEAD
+18c1e61 DG1 r2: freeze the repaired candidate (991d32417f16984e) and author round-2 review assignments
+ docs/delivery/assignments/DG1/round-2/audit.md     |   28 +
+ .../DG1/round-2/review-code-security-reviewer.md   |   23 +
+ .../assignments/DG1/round-2/review-common.md       |   26 +
+ .../DG1/round-2/review-domain-reviewer.md          |   22 +
+ .../assignments/DG1/round-2/review-qa-verifier.md  |   22 +
+ .../candidates/DG1/991d32417f16984e.manifest.json  | 1958 ++++++++++++++++++++
+ docs/delivery/stages.json                          |   20 +-
+ 7 files changed, 2095 insertions(+), 4 deletions(-)
+$ git rev-parse --is-shallow-repository
+false
+$ node tools/gates/candidate.mjs --stage DG1 (repo)
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:991d32417f16984e47da7bb0767bd2e432e2d88b9fb066513dd7fa1761fea8fc","files":388}
+exit=0
+$ node tools/gates/candidate.mjs --stage DG1 --diff (repo)
+{
+  "frozen": "sha256:991d32417f16984e47da7bb0767bd2e432e2d88b9fb066513dd7fa1761fea8fc",
+  "working_tree": "sha256:991d32417f16984e47da7bb0767bd2e432e2d88b9fb066513dd7fa1761fea8fc",
+  "matches": true,
+  "added": [],
+  "removed": [],
+  "changed": []
+}
+exit=0
+$ (clone at f32c705) git rev-parse HEAD; candidate.mjs --stage DG1
+f32c705898cf0a393ed87d7f45a570df9bc09a17
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:991d32417f16984e47da7bb0767bd2e432e2d88b9fb066513dd7fa1761fea8fc","files":388}
+exit=0

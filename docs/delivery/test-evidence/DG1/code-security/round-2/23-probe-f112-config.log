@@ -1,0 +1,25 @@
+$ node --experimental-strip-types probe112.mts  (clone f32c705)
+import { loadConfig } from "./packages/config/src/load.ts";
+const base = { NODE_ENV: "production", AUTH_MODE: "oidc", DATABASE_URL: "postgresql://u@h/db", OIDC_ISSUER_URL: "https://idp.example.test", OIDC_CLIENT_ID: "x", OIDC_CLIENT_SECRET: "y", SESSION_SECRET: "z".repeat(48) };
+for (const u of ["http://app.example.com", "http://localhost.evil.example", "http://LOCALHOST:3000", "http://127.0.0.1:3000", "http://[::1]:3000", "https://app.example.com", "http://10.0.0.5"]) {
+  for (const env of ["production", "development"]) {
+    try { const c = loadConfig("api", { ...base, NODE_ENV: env, APP_BASE_URL: u }); console.log(env.padEnd(12), u.padEnd(32), "ACCEPTED", c.appBaseUrl?.protocol); }
+    catch (e) { console.log(env.padEnd(12), u.padEnd(32), "REFUSED ", String((e as Error).message).replace(/\n/g," | ").slice(0,160)); }
+  }
+}
+--- output
+production   http://app.example.com           REFUSED  Invalid configuration: |   - APP_BASE_URL must use https when NODE_ENV=production (plain http is accepted only for a loopback host: localhost, 127.0.0.1 or [::1
+development  http://app.example.com           ACCEPTED http:
+production   http://localhost.evil.example    REFUSED  Invalid configuration: |   - APP_BASE_URL must use https when NODE_ENV=production (plain http is accepted only for a loopback host: localhost, 127.0.0.1 or [::1
+development  http://localhost.evil.example    ACCEPTED http:
+production   http://LOCALHOST:3000            ACCEPTED http:
+development  http://LOCALHOST:3000            ACCEPTED http:
+production   http://127.0.0.1:3000            ACCEPTED http:
+development  http://127.0.0.1:3000            ACCEPTED http:
+production   http://[::1]:3000                ACCEPTED http:
+development  http://[::1]:3000                ACCEPTED http:
+production   https://app.example.com          ACCEPTED https:
+development  https://app.example.com          ACCEPTED https:
+production   http://10.0.0.5                  REFUSED  Invalid configuration: |   - APP_BASE_URL must use https when NODE_ENV=production (plain http is accepted only for a loopback host: localhost, 127.0.0.1 or [::1
+development  http://10.0.0.5                  ACCEPTED http:
+EXIT=0

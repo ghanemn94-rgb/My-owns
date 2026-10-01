@@ -1,0 +1,31 @@
+$ withpg.sh runapi.sh   (assembled runtime tree from 30-assemble-runtime-noprune; script below)
+#!/bin/bash
+# Inside withpg.sh: create roles/db (trust auth, synthetic), migrate with the ASSEMBLED tree's CLI, start the ASSEMBLED API.
+A=postgresql://postgres@127.0.0.1:5451/postgres
+psql -q $A -c "CREATE ROLE mth_owner LOGIN; CREATE ROLE mth_app LOGIN;" -c "CREATE DATABASE mth OWNER mth_owner;" -c "GRANT CONNECT ON DATABASE mth TO mth_app;"
+cd $TMPDIR/asm-out
+echo "--- migrate (assembled packages/db/dist/cli.js)"
+DATABASE_OWNER_URL=postgresql://mth_owner@127.0.0.1:5451/mth NODE_ENV=production node packages/db/dist/cli.js migrate 2>&1 | tail -3
+echo "--- start assembled API: NODE_ENV=production AUTH_MODE=oidc (IdP unreachable on purpose), APP_BASE_URL=http://localhost:3153"
+NODE_ENV=production AUTH_MODE=oidc APP_BASE_URL=http://localhost:3153 PORT=3153 DATABASE_URL=postgresql://mth_app@127.0.0.1:5451/mth \
+  OIDC_ISSUER_URL=https://idp.invalid.example OIDC_CLIENT_ID=c OIDC_CLIENT_SECRET=s LOG_LEVEL=warn node apps/api/dist/main.js > $TMPDIR/api.log 2>&1 & P=$!
+for i in $(seq 1 40); do curl -s -o /dev/null http://127.0.0.1:3153/healthz && break; sleep 0.5; done
+echo "GET /healthz -> $(curl -s -w ' [%{http_code}]' http://127.0.0.1:3153/healthz)"
+echo "GET /readyz  -> $(curl -s -w ' [%{http_code}]' http://127.0.0.1:3153/readyz)"
+echo "GET /api/v1/branding/tokens (design-tokens import path) -> $(curl -s -o /dev/null -w '[%{http_code}]' http://127.0.0.1:3153/api/v1/branding/tokens)"
+echo "process alive: $(kill -0 $P 2>/dev/null && echo yes || echo NO)"; kill $P; wait $P 2>/dev/null
+echo "--- api log (tail)"; tail -5 $TMPDIR/api.log
+--- output
+chown: changing ownership of '/var/tmp/mth-run.aODKS7/claude-0/pg5451': Invalid argument
+# disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+--- migrate (assembled packages/db/dist/cli.js)
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applied 8 migration(s)
+--- start assembled API: NODE_ENV=production AUTH_MODE=oidc (IdP unreachable on purpose), APP_BASE_URL=http://localhost:3153
+GET /healthz -> {"status":"ok"} [200]
+GET /readyz  -> {"status":"ready","checks":{"database":"ok","migrations":"ok"}} [200]
+GET /api/v1/branding/tokens (design-tokens import path) -> [401]
+process alive: yes
+--- api log (tail)
+EXIT=0
