@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "verifications": [
+    {
+      "finding_id": "F-DG1-118",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "The copy-back escape is closed on 016433d. tools/deps/install-sandbox.sh:144-153 now enumerates destinations from the REAL (read-only to package code) tree with find -print0 / read -d '', derives every destination as <real member>/node_modules, and copies only a non-symlink directory. Re-running the round-3 repro unchanged: installer exit 0, all 8 planted control-path files (.claude/{rules,skills,commands,agents}, .git/hooks, tools/gates, docs/delivery, .vscode) ABSENT from the real root, git status shows only the new lockfile, and the sibling victim/node_modules OUTSIDE the root is intact (11-r3-repro-rerun.log). The extended round-4 repro adds a forged member (tools/gates/package.json planted in the copy), a newline-named member ('n\\nl'), a 'h\\n../victim' path, a member node_modules replaced by a symlink to a dir outside the root, a hard link to a real-root file (EXDEV) and a direct write (EROFS): none reaches the real root; the only new path in the real root is pnpm-lock.yaml; everything outside the root is byte-identical (12-r4-repro.log). install-sandbox.test.sh: 12 PASS incl. AC-9, the 13th (AC-1 effect) BLOCKED only by the reviewer sandbox having no registry access (10/10b logs); create and frozen still populate the root and member node_modules (18-create-frozen-positive-workspace.log). Residual (not part of this finding): a symlink inside the root node_modules is copied as a symlink (not followed) - inherent to installing package content. The unrepaired 'Secondary' (acceptance-test cleanup deleting real-repo files) is split out as F-DG1-122 (Medium); copy-error handling and the on-disk member enumeration as F-DG1-123 (Low).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-4/11-r3-repro-rerun.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/12-r4-repro.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/repro-copyback-escape-r4.sh",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/10b-install-sandbox-test-privstore.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/18-create-frozen-positive-workspace.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-113",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Run mode: AC-5/AC-7 PASS (parent rename, installer append, delivery-record write refused; repo unchanged). create/frozen: the copy-back mechanism (F-DG1-118) no longer lets dependency code write any control path (.git, tools/gates, docs/delivery, .claude) in the real tree; verified with the round-3 and extended round-4 repros.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-4/10b-install-sandbox-test-privstore.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/11-r3-repro-rerun.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/12-r4-repro.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-114",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "AC-8 PASS (CLAUDE.local.md, .mcp.json, nested CLAUDE.md, .vscode not creatable in run mode), and through create the planted .vscode/node_modules and .claude/*/node_modules are not copied back (11, 12 logs).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-4/10b-install-sandbox-test-privstore.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/12-r4-repro.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-009",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Three full integration runs, each on a FRESH disposable PostgreSQL 16.13 cluster (127.0.0.1:5491): 19 files / 200 tests passed, exit 0 every time; no uncaught exception; server log 0 FATAL/57P01 lines; a12-cross-scope 14/14 in all runs. Summed test time < wall time (20.0s/24.6s, 21.0/25.6, 24.1/28.8), consistent with serial files (vitest.config.ts poolOptions.forks.singleFork). Mutation in a disposable clone (dropScratchDatabase no longer waits) makes scratch-drop.test.ts fail ('expected null to be an instance of ScratchDatabaseInUse') and produces a 57P01 in the server log, so the new test guards the fix (the 40-round race case alone did not trip under the mutation here; the leaked-client case does). Harness owner pool has an error listener (apps/api/test/support/harness.ts:82); worker support now uses the shared dropScratchDatabase.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-4/20-integration-run1.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/20-integration-run2.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/20-integration-run3.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/21-scratch-drop-mutation.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/withpg.sh.txt"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-121",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "All four reported aliased forms (const alias of (async()=>{}).constructor, destructured { constructor: F }, Reflect.construct(f.constructor,...), Object.getPrototypeOf(...).constructor) plus an assignment-pattern destructure and Reflect.get(fn, \"constructor\") are now reported by scanSource; clean controls (class constructor declaration, plain code) stay clean; a real planted aliased loader in modules/access makes architecture.test.ts fail (1 failed / 53 passed, exit 1). A NEW route with a constructed key (f[\"constr\"+\"uctor\"]) still evades and is raised separately as F-DG1-124 (Low).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-4/22-plant-f121.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/plant-f121.test.ts",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/plant-f121.sh"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-120",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "check-ci-needs.mjs:83-113 allow-lists the gate checkout/setup-node with: inputs with literal-value predicates. Installed ci.yml: OK, exit 0. Mutations of a copy: checkout with.ref (round-3 R4), with.repository (R5), path, token, sparse-checkout, fetch-depth expression, setup-node node-version-file, node-version expression, a scalar-expression with:, and a duplicate with: key all exit 1. node --test check-ci-needs.test.mjs 46/46.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-4/24-check-ci-needs-probes.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/25-check-ci-needs-test.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-107",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Status-function bypasses are rejected (if: always(), ${{ !cancelled() }}, ${{ Always ( ) }} on verify: exit 1), and the remaining round-3 FAIL reason (gate checkout ref/repository could validate a different tree) is closed via F-DG1-120.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-4/24-check-ci-needs-probes.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/09-deploy-scripts-tests.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-119",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "pnpm format:check on the committed tree (disposable clone 016433d): 'All matched files use Prettier code style!', exit 0. deploy/images.lock.json is listed in .prettierignore as a generated lock with a recorded rationale; its validity remains enforced by pin-images.mjs.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-4/06-format-check.log"
+      ]
+    }
+  ]
+}

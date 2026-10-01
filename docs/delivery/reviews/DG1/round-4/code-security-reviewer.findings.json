@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG1-122",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-042",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The required installer acceptance test deletes a developer's pre-existing files in the repo it runs in (rm -rf of CLAUDE.local.md, .mcp.json, apps/api/CLAUDE.md, .vscode/): the 'Secondary' part of F-DG1-118 was not repaired",
+      "reproduction": "tools/deps/tests/install-sandbox.test.sh:139 `for p in CLAUDE.local.md .mcp.json apps/api/CLAUDE.md .vscode; do rm -rf \"$ROOT/$p\" 2>/dev/null; done` runs on the HOST (outside the sandbox) against ROOT = the repository containing the test, unconditionally, whether or not the test created those paths; line 124 likewise mv's \"$ROOT/tools.mth-ac7\" onto \"$ROOT/tools\". Neither file changed in this round (git diff 5204179..016433d touches only the AC-9 block). Disposable clone 016433d (log 17-test-cleanup-deletes-dev-files.log): seed .vscode/settings.json, CLAUDE.local.md, .mcp.json, apps/api/CLAUDE.md -> `bash tools/deps/tests/install-sandbox.test.sh` -> all four are gone afterwards. The orchestrator runs this test in the real repository as a required DG1 check, so a developer's untracked editor/agent configuration there is irrecoverably deleted.",
+      "expected": "As stated in F-DG1-118's expected outcome: the acceptance test must not rm -rf/mv pre-existing paths of the real repo. E.g. run AC-7/AC-8 against a disposable copy (--root <scratch>) or record which paths existed before and remove only what the probe itself created.",
+      "actual": "Pre-existing CLAUDE.local.md, .mcp.json, apps/api/CLAUDE.md and .vscode/ are deleted by every run of the test.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-4/17-test-cleanup-deletes-dev-files.log",
+        "tools/deps/tests/install-sandbox.test.sh"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-4/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T10:48:36Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG1 round 4; reproduced in a disposable clone. Split out of F-DG1-118 (whose primary escape is CLOSED_VERIFIED) so its severity is tracked honestly."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-123",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-042",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "install-sandbox.sh copy-back hardening: copy errors are ignored (installer exits 0 after a failed/partial cp), and the destination set is 'any package.json at depth <= 4 on disk' rather than the pnpm-workspace.yaml members its comment claims",
+      "reproduction": "Static, tools/deps/install-sandbox.sh @016433d. (a) Lines 150-151 `rm -rf \"$dest\"; cp -a \"$wsnm\" \"$dest\"` have no error check and line 155 is an unconditional `exit 0`: if cp fails (ENOSPC from a dependency that fills the disposable copy, I/O error), the real member's node_modules has already been deleted or is partial and the installer still reports success. F-DG1-118's expected outcome asked to 'fail (non-zero) on any copy error'. A dynamic attempt (an unreadable directory planted in node_modules) was stopped earlier by pnpm itself (EACCES, exit 243), so this part is not reproduced dynamically. (b) Line 153 enumerates `find \"$REPO_ROOT\" -maxdepth 4 -name package.json -not -path '*/node_modules/*'` on the real FILESYSTEM (tracked and untracked), while the comment (lines 138-143) says 'the root and every committed package.json directory' and pnpm-workspace.yaml declares only apps/* and packages/*. Today the two sets are identical (8 paths, verified), so there is no current exploit; but any future package.json at depth <= 4 outside the workspace (e.g. a test fixture such as tools/gates/fixtures/package.json, or an untracked one) silently becomes a copy-back destination where dependency code can plant a node_modules that scripts in that directory would resolve.",
+      "expected": "Fail non-zero on any rm/cp error in the copy-back; derive the destinations from pnpm-workspace.yaml globs (plus the root) resolved on the real tree, or from `git ls-files` package.json entries, matching the documented contract.",
+      "actual": "cp failures are swallowed; destinations follow the on-disk package.json set.",
+      "evidence": [
+        "tools/deps/install-sandbox.sh",
+        "pnpm-workspace.yaml",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/12-r4-repro.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-4/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T10:48:36Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG1 round 4 (static hardening note on the F-DG1-118 repair)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-124",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The module dependency-lint still misses the Function/AsyncFunction constructor reached through a constructed (non-literal) key, e.g. f[\"constr\" + \"uctor\"] or Reflect.get(f, \"constr\".concat(\"uctor\")) (follow-on to F-DG1-121)",
+      "reproduction": "apps/api/src/architecture.testkit.ts @016433d: element access is checked only when literalText(key) === \"constructor\" (line ~187), and the string-value rule (lines ~233-242) only matches the literal \"constructor\". Plant (plant-f121.sh / plant-f121.test.ts, disposable clone, log 22-plant-f121.log): scanSource reports NO evasion for `f[\"constr\" + \"uctor\"]`, `Reflect.get(fn, \"constr\".concat(\"uctor\"))`, a template-literal key and an Object.getOwnPropertyNames(...).find(...) key; a real file apps/api/src/modules/access/zz-planted.ts using `const F = f[\"constr\" + \"uctor\"]; F(\"s\",\"return import(s)\")(\"../transformations/routes.ts\")` leaves architecture.test.ts green (54/54, exit 0). Runtime probe in Node 22.22.2 (23-f121-computed-key-runtime.log): the same form performs a dynamic import of another file ('internal-of-other-module').",
+      "expected": "The lint's documented claim ('the rules close every syntactic route') holds, or the residual is recorded: e.g. report element access with a non-literal key whose receiver is a function expression/identifier bound to a function, or ban Reflect.get/getOwnPropertyNames on functions in module code, or document constructed-key evaluation as an accepted residual of a static lint in ADR-0002.",
+      "actual": "A one-line constructed-key loader bypasses the module-interface check undetected.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-4/22-plant-f121.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/23-f121-computed-key-runtime.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/plant-f121.test.ts",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/plant-f121.sh",
+        "apps/api/src/architecture.testkit.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-4/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T10:48:36Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG1 round 4; planted in a disposable clone and confirmed at runtime."
+        }
+      ]
+    }
+  ]
+}
