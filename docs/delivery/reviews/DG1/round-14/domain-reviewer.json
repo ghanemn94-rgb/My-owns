@@ -1,0 +1,367 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG1",
+  "round": 14,
+  "candidate_id": "sha256:dd747fe1df62d876a74101caa826542b90d3eb36cedb1de14f299b0b6de8c559",
+  "source_commit": "985d0fa6d05e0b63f53ad67f641910dab34f50ca",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG1-T-DG1-REV-DOM-R14-domain-reviewer-20261001T170044Z-a6772d9a",
+    "session_id": "a6772d9a-c632-4126-adf2-41be7eb4496d"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "frontend-ux-engineer",
+    "devops-engineer",
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (domain-reviewer) authored no implementation in the DG1 candidate. backend-workflow-engineer wrote the round-14 repair for F-DG1-135 (T-DG1-BE15, commit fbc9ba6). code-security-reviewer raised F-DG1-135 in round 13; I did not. I formed this verdict before reading any other reviewer's round-14 record, and I read none of them. The only earlier-round records I read were my own role's round-13 record and scripts, to reuse its procedures, plus the F-DG1-135 entry in findings.json."
+  },
+  "assignment": "docs/delivery/assignments/DG1/round-14/review-domain-reviewer.md (sha256 1d6c2fec4bc71d181b6971c2bc24c575d4a0f7f41f393cc6f3cd8e605fcb7fa4) with review-common.md",
+  "requirements_checked": [
+    "REQ-S15-002",
+    "REQ-S15-005",
+    "REQ-S15-006",
+    "REQ-S16-001",
+    "REQ-S16-002",
+    "REQ-S16-004",
+    "REQ-S19-004",
+    "REQ-S19-006",
+    "REQ-S16-003",
+    "REQ-PB-001",
+    "REQ-PB-003",
+    "REQ-PB-012",
+    "REQ-PB-014",
+    "REQ-PB-029",
+    "REQ-S15-001",
+    "REQ-S15-003",
+    "REQ-S15-004",
+    "REQ-S15-007",
+    "REQ-S15-008",
+    "REQ-S15-010",
+    "REQ-S15-011",
+    "REQ-S15-012",
+    "REQ-S15-013",
+    "REQ-S16-005",
+    "REQ-S16-006",
+    "REQ-S16-007",
+    "REQ-S16-008",
+    "REQ-S16-009",
+    "REQ-S16-010",
+    "REQ-S16-011",
+    "REQ-S16-012",
+    "REQ-S16-022",
+    "REQ-S16-023",
+    "REQ-S16-026",
+    "REQ-S16-027",
+    "REQ-S16-030",
+    "REQ-S16-031",
+    "REQ-S16-032"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-R14-01-candidate",
+      "procedure": "Confirm the frozen candidate. Check HEAD, that the repository is not shallow, and the recomputed candidate ID, both in the repository and in a full disposable clone checked out at the freeze commit 985d0fa. Check that HEAD (6a3e3b2) differs from the freeze commit only by candidate-excluded metadata.",
+      "command": "git rev-parse HEAD; git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG1; git diff --stat 985d0fa HEAD; git clone -q . $TMPDIR/rev && git checkout 985d0fa && node tools/gates/candidate.mjs --stage DG1",
+      "environment": "repo /home/user/My-owns at 6a3e3b2; disposable clone $TMPDIR/rev at 985d0fa; Node v24.21.0",
+      "expected": "candidate_id sha256:dd747fe1…c559 (391 files) in the repo and in the clone; not shallow; HEAD = freeze commit + candidate-excluded metadata only",
+      "actual": "HEAD is 6a3e3b2d663a…, not shallow. Both computations give sha256:dd747fe1df62d876a74101caa826542b90d3eb36cedb1de14f299b0b6de8c559 with 391 files. 985d0fa..HEAD touches only the round-14 assignments, the candidate manifest and stages.json, all of them excluded from the candidate. HEAD is not the freeze commit, but the candidate ID (the binding identity) matches. The assignment names 985d0fa as the freeze commit and 6a3e3b2 as the metadata commit that freezes it.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-14/00-candidate-and-diff.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R14-02-change-scope",
+      "procedure": "Confirm that the round-14 repair changed no product or runtime behaviour, API contract, data model, ADR, source or i18n string. Diff the round-13 freeze 08cbd12 against the round-14 freeze 985d0fa, first in full, then restricted to the product, runtime, contract, build-config and source paths. Read the full code diff.",
+      "command": "git diff --stat 08cbd12 985d0fa; git diff --stat 08cbd12 985d0fa -- packages/ apps/web apps/worker docs/api docs/architecture docs/source apps/api/src/modules apps/api/src/server.ts apps/api/src/main.ts apps/api/src/modules.ts apps/api/migrations apps/api/tsconfig.build.json apps/api/package.json vitest.config.ts package.json; git diff --stat 08cbd12 985d0fa -- docs/ ':!docs/delivery'; git diff 08cbd12 985d0fa -- apps/",
+      "environment": "repo /home/user/My-owns (read-only git)",
+      "expected": "Only apps/api/src/architecture.testkit.ts and architecture.test.ts (both test-only and excluded from the build) change in code. Everything else is delivery metadata. Both restricted diffs are empty.",
+      "actual": "Code diff: architecture.testkit.ts changes TEST_FILE from /\\.test\\.[cm]?[jt]sx?$/ to /\\.test\\.tsx?$/ and updates its header and JSDoc comments; CODE_FILE (/\\.[cm]?[jt]sx?$/) is unchanged. architecture.test.ts rewrites the F-DG1-134 classification self-check to the F-DG1-135 invariant and adds one F-DG1-135 fileViolations self-check. Both restricted diffs (product, runtime, contract, migrations, build config, ADR, OpenAPI, source, i18n) are empty. apps/api/dist after a build contains no test, testkit or probe file.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-001",
+        "REQ-S16-002",
+        "REQ-S16-003",
+        "REQ-S16-004",
+        "REQ-S19-004",
+        "REQ-S19-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-14/01-change-scope.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-14/07-build.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R14-03-classification-scope",
+      "procedure": "Check that the new TEST_FILE equals the build exclusion and covers what vitest collects. Read tsconfig.build.json and the vitest include. Inventory the real module tree by extension. Find every test-like file under apps/api/src that is not .test.ts or .test.tsx. Read the TEST_FILE, CODE_FILE and isTest uses.",
+      "command": "cat apps/api/tsconfig.build.json; grep -nE 'include|test\\.' vitest.config.ts; find apps/api/src/modules -type f | sed 's/.*\\.//' | sort | uniq -c; find apps/api/src/modules -name '*.test.*'; find apps/api/src -name '*.test.*' ! -name '*.test.ts' ! -name '*.test.tsx'; grep -nE 'TEST_FILE|isTest|CODE_FILE|TEST_SUPPORT' apps/api/src/architecture.testkit.ts",
+      "environment": "disposable clone at 985d0fa",
+      "expected": "The build excludes src/**/*.test.ts, src/**/*.test.tsx and *.testkit.ts. TEST_FILE is /\\.test\\.tsx?$/ and is used only for isTest. walk() still uses the broad CODE_FILE. Every real module test file is .test.ts. No other test-like file exists.",
+      "actual": "tsconfig.build.json excludes [src/**/*.test.ts, src/**/*.test.tsx, src/**/*.testkit.ts]. The vitest unit-node include is apps/api/src/**/*.test.ts. The module tree holds 41 files, all .ts, and its 7 test files are all .test.ts. No .test.<other ext> file exists in apps/api/src. TEST_FILE = /\\.test\\.tsx?$/ (line 183) is used only at line 467, isTest, which gates the TEST_SUPPORT_FILES (line 477) and vitest (line 486) allowances. walk() uses CODE_FILE (line 191). One observation, not a defect: .test.tsx keeps the allowance although vitest collects only .test.ts. Such a file is excluded from the build, so it never ships. The finding's own 'expected' calls that case harmless.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-14/02-test-classification-scope.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R14-04-unit-node22-node24",
+      "procedure": "Run the full unit projects (unit-node and unit-web) on Node 22 and on Node 24 in the disposable clone.",
+      "command": "PATH=<node bin>:$PATH node node_modules/vitest/vitest.mjs run --project unit-node --project unit-web  (for /opt/node22/bin and /opt/nvm/versions/node/v24.21.0/bin)",
+      "environment": "disposable clone $TMPDIR/rev at 985d0fa; Node v22.22.2 and v24.21.0. node_modules were copied from the workspace (pnpm-lock.yaml is byte-identical).",
+      "expected": "All unit test files pass on both Node versions",
+      "actual": "Node 22.22.2: 21 files and 321 tests passed. Node 24.21.0: 21 files and 321 tests passed. Exit 0 on both.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-001",
+        "REQ-S16-002",
+        "REQ-S16-003",
+        "REQ-S15-002",
+        "REQ-S15-005",
+        "REQ-S15-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-14/03-unit-full-node22.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-14/03-unit-full-node24.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R14-05-architecture-verbose",
+      "procedure": "Run the architecture suite verbosely on both Node versions. Confirm the real-tree boundary checks and both F-DG1-135 self-checks pass.",
+      "command": "PATH=<node bin>:$PATH node node_modules/vitest/vitest.mjs run --project unit-node apps/api/src/architecture.test.ts --reporter=verbose",
+      "environment": "disposable clone at 985d0fa; Node v22.22.2 and v24.21.0",
+      "expected": "architecture.test.ts green on both versions, including the two F-DG1-135 tests",
+      "actual": "128/128 passed on Node 22.22.2 and on Node 24.21.0. Both 'F-DG1-135: only *.test.ts/*.test.tsx (build-excluded) get the test allowance…' and 'F-DG1-135: zz.test.mts importing ../../modules.ts or vitest is a violation; zz.test.ts doing so is allowed' pass, and so do the F-DG1-134 tests.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-001",
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-14/04-architecture-verbose-node22.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-14/04-architecture-verbose-node24.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R14-06-F-DG1-135-probe",
+      "procedure": "Independent end-to-end probe (reviewer-authored, temporarily copied into the clone and then removed). Q1: every real module test file is .test.ts (readdir inventory). Q2: moduleViolations() is [] for all 13 declared modules. Q3: the 7 real module tests that import vitest keep their allowance. Q4/Q5: a file planted on disk at modules/kpi/zz-dom14.test.<mts|js|cts|mjs|cjs|jsx> that imports vitest and ../../modules.ts is reported by moduleViolations('kpi') with both violations, while the same content as zz-dom14.test.ts gives []. Control: the same probe pointed at the round-13 testkit (08cbd12). The first probe run failed only Q2, because of a probe bug (I iterated API_MODULES, an object, as an array). I fixed the probe (v2), and the outputs here are from v2.",
+      "command": "cp 05-test-classification-probe.test.ts apps/api/src/zz-dom-r14-probe.test.ts; PATH=<node bin>:$PATH node node_modules/vitest/vitest.mjs run --project unit-node apps/api/src/zz-dom-r14-probe.test.ts --reporter=verbose; control: git show 08cbd12:apps/api/src/architecture.testkit.ts > zz-old.testkit.ts and the probe re-pointed at it (Node 22); rm the probe files; git status --short",
+      "environment": "disposable clone at 985d0fa; Node v22.22.2 and v24.21.0",
+      "expected": "Fixed testkit: 8/8 on both Node versions. Every non-.ts/.tsx .test.* plant is flagged with 'imports package vitest' and 'imports ../../modules.ts outside src/modules (composition root)', and the kpi module is back to [] after removal. Round-13 testkit: Q4/Q5 fail (the plants were exempt), which proves the probe discriminates.",
+      "actual": "Fixed testkit: 8/8 passed on Node 22.22.2 and 24.21.0. For each of .test.mts/.js/.cts/.mjs/.cjs/.jsx, moduleViolations('kpi') = ['modules/kpi/zz-dom14.test.<ext>: imports package vitest', 'modules/kpi/zz-dom14.test.<ext>: imports ../../modules.ts outside src/modules (composition root)']. The .test.ts twin gives [], and kpi is [] after cleanup. All 13 modules give [], and all 7 real tests import vitest without a violation. Round-13 control: Q1 and Q2 pass, and all 6 Q4/Q5 cases fail with \"expected '' to match /…imports package vitest/\", which reproduces the original gap. The clone's git status was clean afterwards.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-003",
+        "REQ-S16-001"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-14/05-test-classification-probe.test.ts",
+        "docs/delivery/test-evidence/DG1/domain/round-14/05-test-classification-probe-node22.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-14/05-test-classification-probe-node24.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-14/05b-probe-against-round13-testkit.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R14-07-integration",
+      "procedure": "Run the full integration project against a fresh throwaway PostgreSQL 16 cluster (initdb under $TMPDIR, private port, removed afterwards): once on Node 22 and once on Node 24. The Node 24 run reported 1 FATAL/57P01 line in pg.log, a count that was 0 in round 13. I ran Node 24 twice more with a script variant that prints the matching lines.",
+      "command": "PATH=<node bin>:$PATH bash 06-integration-run.sh <port>  (54521 on Node 22, 54522 on Node 24); PATH=<node24 bin>:$PATH bash 06b-integration-run-show-fatal.sh <port>  (54531, 54532)",
+      "environment": "disposable clone at 985d0fa; PostgreSQL 16.13; Node v22.22.2 and v24.21.0",
+      "expected": "All integration tests pass on both Node versions: G6 closure refused with 422 invalid-transition, record unchanged; cross-scope reads and writes denied (404/403); revocation takes effect; OIDC and identity routes; cursor pagination binding and tamper refusal. No leftover databases. Any pg.log FATAL is unrelated to the product.",
+      "actual": "Run 1 (Node 22): 19 files and 200/200 tests passed, 0 FATAL. Run 2 (Node 24): 200/200 passed, 1 FATAL. Runs 3 and 4 (Node 24, FATAL lines printed): 200/200 passed each. Run 3 had 0 FATAL. Run 4 had 1 FATAL, 'FATAL: the database system is starting up', which is the script's own psql readiness poll hitting the cluster while it starts. It is not a product or test error. Run 3 took 217 s, almost all of it collection time (142 s collect) from host contention; no test failed. Every run left only postgres/template0/template1. The suites include 'closure is not a status edit (F-DG1-001…)' (3 cases), the access-scope and A12 cross-scope suites, the F-DG1-106 creator assignment, the OIDC callback/login CSRF/logout cases, and 'list: filters, sorting and cursor pagination' (3 cases).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-001",
+        "REQ-S16-004",
+        "REQ-S19-004",
+        "REQ-S19-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-14/06-integration-run.sh",
+        "docs/delivery/test-evidence/DG1/domain/round-14/06-integration-run1-node22.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-14/06-integration-run2-node24.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-14/06b-integration-run-show-fatal.sh",
+        "docs/delivery/test-evidence/DG1/domain/round-14/06b-integration-run3-node24-fatal-lines.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-14/06b-integration-run4-node24-fatal-lines.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R14-08-live-shell-ar-en",
+      "procedure": "Build, then run a disposable stack on private ports: throwaway PostgreSQL 16, migrate, seed SYNTHETIC dev users, and the API serving the built web app. Then run the reviewer live scenario, unchanged from round 13 apart from its header: (A) closure refused 422/G6; (B) BU-scoped TL creator; (C) provisional branding tokens; (D) rendered shell/edit/detail in ar and en; (E/F) localized derived-assignment audit entry; (G) marked fallback for untranslated codes; (H) UI create with no reload; (I) live cursor pagination with binding and tamper refusal; (J) identity cookie handling. I inspected the screenshots myself.",
+      "command": "pnpm -r build; PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH bash 08-live-stack.sh <evidence dir>",
+      "environment": "disposable clone at 985d0fa; Node v24.21.0 (production target); PostgreSQL 16.13 on private port 54934; API on port 3458; Playwright Chromium (/opt/pw-browsers); SYNTHETIC dev users, AUTH_MODE=dev",
+      "expected": "Every scenario check PASS, with the same check set as round 13. ar renders RTL and en renders LTR. The closed status is never offered, and the G6 hint is shown. Missing data shows Unknown. Branding is provisional with provenance=provisional.",
+      "actual": "The build exits 0. readyz reports ready (database ok, migrations ok). 108 PASS and 0 FAIL, exit 0. The check names are identical to round 13's 108. Key results: A3, active->closed refused 422 urn:mth:problem:invalid-transition citing G6 (Sustain), with no audit row and no closed record. C2, tokens 200 with #0078FF and provenance provisional, never official. D1, html dir rtl (ar) and ltr (en). D2, provisional wordmark marker. D3, the edit form offers only active/on_hold. D4, the G6 hint is shown. D9, Unknown and never 0 or green. I2-I7, cursor bound to sort and filter, tampered cursor 400, unknown sort 400. J1-J4, /me and prototype-named cookies give 401. In the screenshots, ar-02 is RTL, has no closed option, and shows the G6 hint in Arabic. en-03 is LTR, shows 'Unknown' chips with the explanatory note, the phases Diagnose→Realize and the audit trail.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S15-002",
+        "REQ-S15-005",
+        "REQ-S15-006",
+        "REQ-S16-002",
+        "REQ-S19-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-14/07-build.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-14/08-live-stack.sh",
+        "docs/delivery/test-evidence/DG1/domain/round-14/08-live-scenario.mjs",
+        "docs/delivery/test-evidence/DG1/domain/round-14/08-live-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-14/screens/ar-01-shell.png",
+        "docs/delivery/test-evidence/DG1/domain/round-14/screens/ar-02-edit-no-closed.png",
+        "docs/delivery/test-evidence/DG1/domain/round-14/screens/ar-03-detail-audit.png",
+        "docs/delivery/test-evidence/DG1/domain/round-14/screens/en-01-shell.png",
+        "docs/delivery/test-evidence/DG1/domain/round-14/screens/en-02-edit-no-closed.png",
+        "docs/delivery/test-evidence/DG1/domain/round-14/screens/en-03-detail-audit.png",
+        "docs/delivery/test-evidence/DG1/domain/round-14/screens/ar-06-lead-ui-create-no-reload.png",
+        "docs/delivery/test-evidence/DG1/domain/round-14/screens/en-06-lead-ui-create-no-reload.png"
+      ]
+    },
+    {
+      "id": "DOM-R14-09-static-invariants",
+      "procedure": "Run the static checks (no-CDN, OpenAPI lint, typecheck, lint, format) and grep the unchanged invariants: branding provenance, official/certified wording, DG gate names in product catalogues, PMI wording, and decimal money. The grep section of the first combined run came out empty for reasons I could not identify. I re-ran the greps on their own with /usr/bin/grep (09b), and 09b supersedes them. The pnpm results in 09 are valid.",
+      "command": "pnpm -s check:no-cdn; pnpm -s openapi:lint; pnpm -s typecheck; pnpm -s lint; pnpm -s format:check; /usr/bin/grep -rn provenance packages/shared/src packages/design-tokens/src apps/api/src/modules/admin packages/db/src; /usr/bin/grep -rniE 'official|certified|رسمي|معتمد' apps/web/src/i18n --include=*.json; /usr/bin/grep -rnE '\\bDG[0-7]\\b' apps/web/src/i18n --include=*.json; /usr/bin/grep -rniE '\\bPMI\\b' apps/web/src/i18n --include=*.json; money column types; git diff --stat 08cbd12 985d0fa -- packages apps/api/migrations",
+      "environment": "disposable clone at 985d0fa; Node v22.22.2",
+      "expected": "All five pnpm checks exit 0. Provenance defaults to provisional, and 'official' requires an explicit source. Every official/certified/PMI mention in the catalogues is a negation. No DG0-DG7 in the product catalogues. No float money; nothing changed.",
+      "actual": "All five pnpm checks exit 0. branding.ts maps provenance to 'provisional' unless the source explicitly says otherwise (fail-safe), and the live C2 check confirmed provenance provisional. All 8 official/certified hits (en+ar common.json) are negations: no official logo was supplied; the colours are provisional, not verified Mobily values; not an official PMI standard; not certified. The PMI mentions say 'inspired by PMI, Brightline and BRM … not an official PMI standard'. DG[0-7] in the catalogues: none (grep exit 1). DG1 has no money columns, packages/calc holds only a README (planned), and nothing uses float or real. The packages and migrations diff is empty.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S15-002",
+        "REQ-S15-006",
+        "REQ-S16-002",
+        "REQ-S19-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-14/09-static-checks.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-14/09b-static-greps.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R14-10-register",
+      "procedure": "Check the register and findings read-only. The 8 assigned DG1-final rows must be IMPLEMENTED with existing evidence files. All DG1-final rows are checked the same way. The REQ-PB/S15/S16 P1-increment rows that are not DG1-final must not be over-claimed. Then the status of the round-12/13 closures plus F-DG1-135, and any open Critical/High/mandatory finding.",
+      "command": "python3 docs/delivery/test-evidence/DG1/domain/round-14/10-register-rows.py",
+      "environment": "repo /home/user/My-owns at 6a3e3b2 (read-only); Python 3",
+      "expected": "Register unchanged since round 13. The 8 assigned rows and all 12 DG1-final rows are IMPLEMENTED with 0 missing evidence. Every later-gate P1-increment row is SPECIFIED, with no evidence claimed. The listed closures are CLOSED_VERIFIED. F-DG1-135 is the only non-closed DG1 finding. No open Critical/High/mandatory finding.",
+      "actual": "register diff 08cbd12..985d0fa and 985d0fa..HEAD: no change. The assigned rows REQ-S15-002/005/006, S16-001/002/004, S19-004/006 are all IMPLEMENTED with 0 missing evidence (5/7/4/8/5/11/16/5 paths). All 12 DG1-final rows (also DLV-025/033/042 and S16-003) are IMPLEMENTED with 0 missing. All 29 later-gate REQ-PB/S15/S16 P1-increment rows are SPECIFIED with 0 evidence claimed, so nothing is over-claimed. F-DG1-001/002/003/004/005/006/105/007/008/207/009/210/131/011/132/133/134/216 are CLOSED_VERIFIED. F-DG1-135 is Low, non-mandatory and FIXED_PENDING_VERIFICATION. Open Critical/High/mandatory: [].",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S15-002",
+        "REQ-S15-005",
+        "REQ-S15-006",
+        "REQ-S16-001",
+        "REQ-S16-002",
+        "REQ-S16-004",
+        "REQ-S19-004",
+        "REQ-S19-006",
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-14/10-register-rows.py",
+        "docs/delivery/test-evidence/DG1/domain/round-14/10-register-rows.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R14-11-prior-closures-hold",
+      "procedure": "Re-confirm the round-12/13 domain closures against this candidate through the checks above. F-DG1-001: G6 closure 422 (07, 08-A). F-DG1-002/105/131/011/132/133/134: module lint and boundaries (05, 06). F-DG1-003: glossary test (04). F-DG1-004/210: BU creator and UI create without reload (07, 08-B/H). F-DG1-005/008: localized derived audit entry (08-E/F). F-DG1-006/207: OpenAPI lint and contract (09, 07). F-DG1-007/009: data model and scratch-drop 57P01 (07). F-DG1-216: D-055 text is unchanged since the round-13 freeze (delivery metadata only in the diff).",
+      "command": "see checks DOM-R14-02, 04, 05, 06, 07, 08, 09 and 10",
+      "environment": "as in the referenced checks",
+      "expected": "No regression of any listed closure",
+      "actual": "All of them hold. Closure is refused with 422 invalid-transition naming G6 in the API, the integration tests and both rendered locales. moduleViolations is [] for all 13 modules, and every lint self-check passes. The glossary test passes. The BU-scoped creator flow and the derived assignment pass live and in integration. The derived audit entry is localized in ar and en with no raw codes. OpenAPI lint is clean. The scratch-drop F-DG1-009 test passes (40 rounds, no 57P01). No product file changed between the round-13 and round-14 freezes.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-001",
+        "REQ-S16-003",
+        "REQ-S19-004",
+        "REQ-S19-006",
+        "REQ-S15-002"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-14/01-change-scope.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-14/06-integration-run1-node22.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-14/08-live-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-14/10-register-rows.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R14-12-source-fidelity",
+      "procedure": "Check the source anchors that the transformation close rule and the phase model rely on. Confirm docs/source is unchanged.",
+      "command": "grep -nE 'G6 - Sustain|Benefits before closure|BAU ownership defined before closure' docs/source/playbook.md; grep -nE '^\\| *G[1-6] - ' docs/source/playbook.md; grep -n 'Diagnose → Define' docs/source/playbook.md; grep -n -A8 TRANSFORMATION_STATUS_TRANSITIONS packages/shared/src/constants.ts; grep -n G6 apps/api/src/modules/transformations/routes.ts apps/web/src/i18n/*/transformations.json; sha256sum docs/source/*; git diff --stat 08cbd12 985d0fa -- docs/source",
+      "environment": "repo /home/user/My-owns (read-only)",
+      "expected": "The close rule is grounded in B0014 'Benefits before closure' and the G6 - Sustain gate row. The phases match B0158. The route refuses closure by status edit and names G6 as a PRODUCT gate, separate from DG0-DG7. The .docx hash is 2584a352…548ad2, and docs/source is unchanged.",
+      "actual": "playbook.md:52 is B0014 'Benefits before closure'. :104 is the 'G6 - Sustain | Is value embedded in BAU?' row. :719 is the health check '22. Is BAU ownership defined before closure?'. :99-104 hold G1-G6. :756 is B0158 'Diagnose → Define → Design → Mobilize → Transform → Realize', which matches the en catalogue phase labels. routes.ts:61-65 cites B0014/M0092/REQ-S03-003 and says 'This is a PRODUCT gate (G6), unrelated to the engineering delivery gates DG0-DG7'. routes.ts:299 holds the 422 message. The shared transition map lists closed as a target only behind the route's 422 G6 guard (unchanged since round 13, F-DG1-001 closed). The .docx SHA-256 is 2584a35282804e…b34548ad2, and the docs/source diff is empty.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-001",
+        "REQ-S16-001"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-14/11-source-fidelity.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R14-13-cleanup",
+      "procedure": "Make sure no stack process remains, remove the disposable clone, and confirm the candidate tree is untouched and its ID is unchanged.",
+      "command": "pgrep -af 'postgres -D|apps/api/dist/main.js'; rm -rf $TMPDIR/rev; git status --short --untracked-files=no; node tools/gates/candidate.mjs --stage DG1",
+      "environment": "repo /home/user/My-owns; $TMPDIR",
+      "expected": "No postgres or API process. Clone removed. No tracked change. candidate_id unchanged.",
+      "actual": "pgrep matched only its own invoking shell (the pattern text is in the command line), with no postgres -D and no apps/api/dist/main.js process. The clone is removed, git status shows no tracked change, and candidate_id is still sha256:dd747fe1…c559 with 391 files.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-14/50-cleanup.out.txt"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG1/domain/round-14/00-candidate-and-diff.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-14/01-change-scope.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-14/02-test-classification-scope.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-14/03-unit-full-node22.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-14/03-unit-full-node24.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-14/04-architecture-verbose-node22.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-14/04-architecture-verbose-node24.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-14/05-test-classification-probe.test.ts",
+    "docs/delivery/test-evidence/DG1/domain/round-14/05-test-classification-probe-node22.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-14/05-test-classification-probe-node24.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-14/05b-probe-against-round13-testkit.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-14/06-integration-run.sh",
+    "docs/delivery/test-evidence/DG1/domain/round-14/06-integration-run1-node22.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-14/06-integration-run2-node24.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-14/06b-integration-run-show-fatal.sh",
+    "docs/delivery/test-evidence/DG1/domain/round-14/06b-integration-run3-node24-fatal-lines.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-14/06b-integration-run4-node24-fatal-lines.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-14/07-build.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-14/08-live-stack.sh",
+    "docs/delivery/test-evidence/DG1/domain/round-14/08-live-scenario.mjs",
+    "docs/delivery/test-evidence/DG1/domain/round-14/08-live-scenario.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-14/09-static-checks.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-14/09b-static-greps.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-14/10-register-rows.py",
+    "docs/delivery/test-evidence/DG1/domain/round-14/10-register-rows.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-14/11-source-fidelity.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-14/50-cleanup.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-14/screens/ar-02-edit-no-closed.png",
+    "docs/delivery/test-evidence/DG1/domain/round-14/screens/en-03-detail-audit.png"
+  ],
+  "reviewed_at": "2026-10-01T17:12:49Z",
+  "summary": "PASS. The F-DG1-135 fix verifies. TEST_FILE = /\\.test\\.tsx?$/ exactly matches the build exclusion. On disk, a planted *.test.<mts|js|cts|mjs|cjs|jsx> that imports vitest or ../../modules.ts is now flagged. The .test.ts twin is not, and the round-13 testkit misses all six, which confirms the original gap and that the probe discriminates. The verdict on the real tree is unchanged: 13 modules with [] violations, 7 real .test.ts files that keep their vitest allowance, and architecture 128/128 on Node 22 and 24. No product, contract, data-model, i18n or source file changed. Unit 321/321 on both Nodes; integration 200/200 in 4 runs (Node 22 and 24); live AR-RTL/EN-LTR shell 108/108 with the G6 closure 422, scoped access, identity and cursor pagination intact. All invariants hold. The register is unchanged and complete. No open Critical/High/mandatory finding. No new findings."
+}

@@ -1,0 +1,21 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG1-135",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by domain-reviewer, a non-author. code-security-reviewer raised the finding in round 13. backend-workflow-engineer wrote the fix in commit fbc9ba6, an ancestor of the freeze commit 985d0fa in candidate sha256:dd747fe1df62d876a74101caa826542b90d3eb36cedb1de14f299b0b6de8c559, and that ID recomputes identically in the repository and in a full disposable clone. The finding's 'expected' is met. (1) TEST_FILE is narrowed to /\\.test\\.tsx?$/ (architecture.testkit.ts:183). That is exactly what apps/api/tsconfig.build.json excludes (src/**/*.test.ts, src/**/*.test.tsx), so test allowances go only to files that never ship. The allowances are the TEST_SUPPORT_FILES modules.ts/architecture.testkit.ts and vitest. CODE_FILE stays broad, so every buildable file is still scanned. .test.tsx keeps the allowance although vitest collects only .test.ts. It is build-excluded and never ships, which the finding itself calls harmless. (2) architecture.test.ts asserts the chosen invariant: two F-DG1-135 tests, including 'zz.test.mts importing ../../modules.ts or vitest is a violation; zz.test.ts doing so is allowed'. The suite passes 128/128 on Node 22.22.2 and 24.21.0. (3) My independent end-to-end probe planted files on disk in modules/kpi. For each of .test.mts/.js/.cts/.mjs/.cjs/.jsx, moduleViolations('kpi') reports both 'imports package vitest' and 'imports ../../modules.ts outside src/modules (composition root)'. The same content as .test.ts gives [], and kpi is [] after removal. 8/8 pass on both Node versions. The same probe against the round-13 testkit fails all six plant cases, which reproduces the original gap. (4) Nothing changes on the real tree: all 7 module test files are .test.ts, moduleViolations is [] for all 13 modules, and the real tests' vitest imports are still allowed. No product, runtime, contract or i18n file changed (08cbd12..985d0fa). The build emits no test or testkit file into dist.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-14/01-change-scope.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-14/02-test-classification-scope.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-14/04-architecture-verbose-node22.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-14/04-architecture-verbose-node24.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-14/05-test-classification-probe.test.ts",
+        "docs/delivery/test-evidence/DG1/domain/round-14/05-test-classification-probe-node22.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-14/05-test-classification-probe-node24.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-14/05b-probe-against-round13-testkit.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-14/07-build.out.txt"
+      ]
+    }
+  ]
+}
