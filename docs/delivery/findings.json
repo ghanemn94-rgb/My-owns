@@ -10421,14 +10421,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-5/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-01T11:40:31Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG1 round 5 while verifying F-DG1-124; reproduced in a disposable clone (lint, real module tree, Node runtime). ID proposed as the next free number in the 1xx range; the orchestrator may renumber."
+        },
+        {
+          "at": "2026-10-01T12:11:55Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 83b12da02529b0e330158a3dd7f2b82d915dedf0"
         }
-      ]
+      ],
+      "fix_revision": "83b12da02529b0e330158a3dd7f2b82d915dedf0",
+      "fix_summary": "architecture.testkit.ts adds process/node:process to LOADER_BUILTINS so any import of the process module in src/modules is a specifier violation (imports package node:process), closing the default/namespace/named import route past rule 3; rule 3 still covers the global process. Self-check X6-X8 added; architecture.test.ts 77/77; @mth/api typecheck/eslint/prettier clean; no module imports process."
     },
     {
       "id": "F-DG1-126",
