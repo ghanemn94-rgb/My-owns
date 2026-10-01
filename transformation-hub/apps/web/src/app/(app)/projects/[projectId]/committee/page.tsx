@@ -123,9 +123,8 @@ export default function CommitteeHubPage() {
   const implPending = useCount('decisions', { status: 'implementation_pending' });
   const openActions = useCount('actions', { status: 'open' });
   const overdue = useCount('actions', { overdue: 'true' });
-  const escOpen = useCount('escalations', { status: 'open' });
-  const escRequested = useCount('escalations', { status: 'decision_requested' });
-  const escalations = escOpen === null || escRequested === null ? null : escOpen === undefined || escRequested === undefined ? undefined : escOpen + escRequested;
+  // Unresolved = open or decision requested: one filtered list, so the tile's number is that list's total (REQ-UX-024).
+  const escalations = useCount('escalations', { unresolved: 'true' });
 
   const columns: Column<Committee>[] = [
     {
@@ -203,12 +202,12 @@ export default function CommitteeHubPage() {
           {t('governance.hub.metrics.title')}
         </h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-testid="gov-metrics">
-          <MetricCard label={t('governance.hub.metrics.underReview')} value={underReview} href={`${base}/decisions?status=under_review`} />
-          <MetricCard label={t('governance.hub.metrics.recommended')} value={recommended} href={`${base}/decisions?status=recommended`} />
-          <MetricCard label={t('governance.hub.metrics.implementationPending')} value={implPending} href={`${base}/decisions?status=implementation_pending`} />
-          <MetricCard label={t('governance.hub.metrics.openActions')} value={openActions} href={`${base}/actions?status=open`} />
-          <MetricCard label={t('governance.hub.metrics.overdueActions')} value={overdue} href={`${base}/actions?overdue=true`} />
-          <MetricCard label={t('governance.hub.metrics.escalations')} value={escalations} href={`${base}/escalations`} />
+          <MetricCard metric="underReview" label={t('governance.hub.metrics.underReview')} value={underReview} href={`${base}/decisions?status=under_review`} />
+          <MetricCard metric="recommended" label={t('governance.hub.metrics.recommended')} value={recommended} href={`${base}/decisions?status=recommended`} />
+          <MetricCard metric="implementationPending" label={t('governance.hub.metrics.implementationPending')} value={implPending} href={`${base}/decisions?status=implementation_pending`} />
+          <MetricCard metric="openActions" label={t('governance.hub.metrics.openActions')} value={openActions} href={`${base}/actions?status=open`} />
+          <MetricCard metric="overdueActions" label={t('governance.hub.metrics.overdueActions')} value={overdue} href={`${base}/actions?overdue=true`} />
+          <MetricCard metric="escalations" label={t('governance.hub.metrics.escalations')} value={escalations} href={`${base}/escalations?unresolved=true`} />
         </div>
       </section>
 

@@ -27,7 +27,7 @@ import { Tabs, useTabParam } from '@/components/planning/Tabs';
 import { WorkstreamProgress, WorkstreamTasks } from '@/components/planning/workstream';
 import { DeliverablesTab, MilestonesTab } from '@/components/planning/plan/RegisterTabs';
 import { StatusUpdatesPanel } from '@/components/planning/updates';
-import { RaidRegister } from '@/components/planning/raid';
+import { RAID_OPEN_GROUP, RaidRegister } from '@/components/planning/raid';
 
 const WS_TABS = ['overview', 'tasks', 'deliverables', 'milestones', 'updates', 'risks', 'issues', 'progress'] as const;
 type WsTab = (typeof WS_TABS)[number];
@@ -178,9 +178,9 @@ function WorkstreamScreen() {
             {t('project.metrics.title')}
           </h2>
           <div className="grid gap-3 sm:grid-cols-3">
-            <MetricCard label={t('project.metrics.tasks')} value={w.counts.tasks} href={`${base}?tab=tasks`} />
-            <MetricCard label={t('project.metrics.deliverables')} value={w.counts.deliverables} href={`${base}?tab=deliverables`} />
-            <MetricCard label={t('portfolio.openRisks')} value={w.counts.openRisks} href={`${base}?tab=risks`} />
+            <MetricCard metric="tasks" label={t('project.metrics.tasks')} value={w.counts.tasks} href={`${base}?tab=tasks`} />
+            <MetricCard metric="deliverables" label={t('project.metrics.deliverables')} value={w.counts.deliverables} href={`${base}?tab=deliverables`} />
+            <MetricCard metric="openRisks" label={t('portfolio.openRisks')} value={w.counts.openRisks} href={`${base}?tab=risks&status=${RAID_OPEN_GROUP}`} />
           </div>
         </section>
 

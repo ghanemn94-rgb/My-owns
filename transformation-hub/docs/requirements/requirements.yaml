@@ -2278,8 +2278,8 @@
   security_rule: "Views read through scoped APIs only"
   acceptance_tests: ["E2E: status change in Kanban reflected in Gantt and table"]
   phase: P2
-  status: Implemented
-  evidence: ['WBS table and Gantt timeline over the same persisted data: e2e p2-planning.spec.ts "(a) PM confirms a Draft task into the plan, reports progress, and a stale version gets 409 ... review" and "(c) cockpit tile, workstream workspace and timeline render; screenshots in English, Arabic (RTL) and 390px mobile" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'gap: no Kanban view exists; the AT (status change in Kanban reflected in Gantt and table) is not built']
+  status: Tested
+  evidence: ['WBS table and Gantt timeline over the same persisted data: e2e p2-planning.spec.ts "(a) PM confirms a Draft task into the plan, reports progress, and a stale version gets 409 ... review" and "(c) cockpit tile, workstream workspace and timeline render; screenshots in English, Arabic (RTL) and 390px mobile" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'Kanban tab of the Integrated Plan (components/planning/plan/KanbanTab.tsx): one column per task status over the same tasks as the WBS table and the timeline; a move is the task status command (CommandConfirmDialog, expectedVersion, audited), from the keyboard ("Move" on each card) or by dragging onto a column: e2e p2-residuals.spec.ts "(a) REQ-PLN-002 Kanban: a card moved with the keyboard runs the task status command and the WBS table and the Gantt show the new status; a dragged card goes through the same confirmation; Arabic RTL board" — the start command moves the card, the WBS row and the Gantt bar show In progress, the audit history has planning.task.start by the PM; a drag runs the block command; Arabic RTL board (first column on the right), untranslated-text detector and axe on the move dialog, no horizontal page scroll at 1360 and 390 px; run 2026-10-01 at d24ca45 on a fresh database: full Playwright suite 415 passed, 1 skipped (env-gated qa-p34 J1 expiry), 0 failed']
 - id: REQ-PLN-003
   section: "9"
   title: "Single accountable owner plus RACI"
@@ -2729,8 +2729,8 @@
   security_rule: "Scope-filtered"
   acceptance_tests: ["E2E: overview renders charter version and baseline"]
   phase: P2
-  status: Implemented
-  evidence: ['project charter screen (charter/page.tsx): objective, programme, legal entities (parties), phases; charter edit with optimistic concurrency: e2e p1-smoke.spec.ts "(e) charter edit with a stale version gets the real 409 ... state (no data changed)" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'gap: the screen does not show the committee charter version or the approved baseline, so the AT (overview renders charter version and baseline) is not met']
+  status: Tested
+  evidence: ['project charter screen (charter/page.tsx): objective, programme, legal entities (parties), phases; charter edit with optimistic concurrency: e2e p1-smoke.spec.ts "(e) charter edit with a stale version gets the real 409 ... state (no data changed)" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'Program Overview & Charter shows each committee charter version with its approval state and the approved baseline (version, approval date, approver, approver role at the approval time, basis, frozen scope), a pending proposal, and explicit none-yet and restricted states: e2e p2-residuals.spec.ts "(b) REQ-UX-006 Program Overview & Charter renders the committee charter version with its approval state and the approved baseline (version, approval date, approver role); none-yet and restricted states" (DEMO-DC values compared with the API; DEMO-TRANSFORM none-yet; Portfolio Admin restricted committee part, never requested; Arabic detector, 390 px); run 2026-10-01 at d24ca45 on a fresh database: full Playwright suite 415 passed, 1 skipped (env-gated qa-p34 J1 expiry), 0 failed', 'approver role at approval (BaselineDto approvedByName, approverRoles — project-level memberships valid at approvedAt): planning p2r-drilldown-overview.spec.ts "a proposal has no approver; the approved version names the approver and the sponsor role held then — a role granted or revoked later does not change it"']
 - id: REQ-UX-007
   section: "10"
   title: "Screen 4: Committee Hub"
@@ -2745,8 +2745,8 @@
   security_rule: "Committee membership ABAC"
   acceptance_tests: ["AT-04", "E2E: decision lifecycle executed from Committee Hub"]
   phase: P2
-  status: Implemented
-  evidence: ['Committee Hub (committee/*): charter, members, meetings, packs, voting, decisions, actions, escalations: e2e p2-governance.spec.ts "a decision goes from draft to a server-computed outcome through the UI; a recused vote is refused and shown"', 'the evidence picker (external approval) and the matrix approval-document / verification actions: e2e p2-web-followups.spec.ts "(a) recusals on behalf; external approval rests on evidence verified by a second person" and "(b) a loaded authority matrix needs an approval document and stays pending until a second person verifies it"', 'the decision lifecycle with the P2 authority rules driven from the Committee Hub in English and Arabic (QA final re-review): e2e qa-p2-final-authority-ui.spec.ts "subject, paper evidence, conflict declaration, chair closing the vote, assessor-confirmed cost — refused paths and the authorized approval"', 'gap: AT-04 in the UI (a reserved decision shown Recommended — pending external authority with its escalation) is shown only as a Committee Hub metric; assigned to the P2 residuals (docs/phases/P2-P4-requirement-disposition.md, Update at the P2 gate)']
+  status: Tested
+  evidence: ['Committee Hub (committee/*): charter, members, meetings, packs, voting, decisions, actions, escalations: e2e p2-governance.spec.ts "a decision goes from draft to a server-computed outcome through the UI; a recused vote is refused and shown"', 'the evidence picker (external approval) and the matrix approval-document / verification actions: e2e p2-web-followups.spec.ts "(a) recusals on behalf; external approval rests on evidence verified by a second person" and "(b) a loaded authority matrix needs an approval document and stays pending until a second person verifies it"', 'the decision lifecycle with the P2 authority rules driven from the Committee Hub in English and Arabic (QA final re-review): e2e qa-p2-final-authority-ui.spec.ts "subject, paper evidence, conflict declaration, chair closing the vote, assessor-confirmed cost — refused paths and the authorized approval"', 'AT-04 driven from the Committee Hub: e2e p2-residuals.spec.ts "(e) REQ-UX-007 / AT-04 from the Committee Hub: a reserved decision type passing its vote is shown Recommended — pending external authority with its escalation, never Approved" (hub tile → filtered register → decision; the outcome recorded in the UI is Recommended with Pending external authority and the reserved body named; its system escalation is listed as Decision requested; the decision is counted under the Recommended tile; never Approved); run 2026-10-01 at d24ca45 on a fresh database: full Playwright suite 415 passed, 1 skipped (env-gated qa-p34 J1 expiry), 0 failed']
 - id: REQ-UX-008
   section: "10"
   title: "Screen 5: Integrated Plan"
@@ -2761,8 +2761,8 @@
   security_rule: "Scope-filtered"
   acceptance_tests: ["AT-15", "E2E: Gantt renders critical path and baseline variance"]
   phase: P2
-  status: Implemented
-  evidence: ['Integrated Plan tabs: WBS, timeline (Gantt), milestones, deliverables, dependencies, baselines, look-ahead, what-if, health: e2e p2-planning.spec.ts "(a) PM confirms a Draft task into the plan, reports progress, and a stale version gets 409 ... review"; "(b) change request lifecycle and re-baseline: PM raises and assesses, Sponsor approves; PM proposes baseline, Sponsor approves"; "(c) cockpit tile, workstream workspace and timeline render; screenshots in English, Arabic (RTL) and 390px mobile" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'gap: no test asserts the critical path or baseline variance on the Gantt (AT); cross-project dependency and prerequisite screens: e2e p2-web-followups.spec.ts "(c) cross-project dependency" and "(d) a prerequisite blocks starting a task"']
+  status: Tested
+  evidence: ['Integrated Plan tabs: WBS, timeline (Gantt), milestones, deliverables, dependencies, baselines, look-ahead, what-if, health: e2e p2-planning.spec.ts "(a) PM confirms a Draft task into the plan, reports progress, and a stale version gets 409 ... review"; "(b) change request lifecycle and re-baseline: PM raises and assesses, Sponsor approves; PM proposes baseline, Sponsor approves"; "(c) cockpit tile, workstream workspace and timeline render; screenshots in English, Arabic (RTL) and 390px mobile" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'cross-project dependency and prerequisite screens: e2e p2-web-followups.spec.ts "(c) cross-project dependency" and "(d) a prerequisite blocks starting a task"', 'critical path and baseline variance on the Gantt: e2e p2-residuals.spec.ts "(f) REQ-UX-008 the Gantt renders the critical path and the baseline variance" (driving network of a milestone with a complete schedule: the critical path is listed in order and drawn critical; each row carries its variance in calendar days against the baseline finish, compared with the API schedule); run 2026-10-01 at d24ca45 on a fresh database: full Playwright suite 415 passed, 1 skipped (env-gated qa-p34 J1 expiry), 0 failed']
 - id: REQ-UX-009
   section: "10"
   title: "Screen 6: Workstream Workspace"
@@ -2777,8 +2777,8 @@
   security_rule: "Workstream-level role scoping"
   acceptance_tests: ["E2E: lead submits update from workspace"]
   phase: P2
-  status: Implemented
-  evidence: ['Workstream Workspace with tasks, deliverables, updates, risks and readiness tabs: e2e p2-planning.spec.ts "(c) cockpit tile, workstream workspace and timeline render; screenshots in English, Arabic (RTL) and 390px mobile" (tasks tab) (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'gap: no E2E of a lead submitting an update from the workspace (AT)']
+  status: Tested
+  evidence: ['Workstream Workspace with tasks, deliverables, updates, risks and readiness tabs: e2e p2-planning.spec.ts "(c) cockpit tile, workstream workspace and timeline render; screenshots in English, Arabic (RTL) and 390px mobile" (tasks tab) (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'a workstream lead submits an update from the workspace: e2e p2-residuals.spec.ts "(g) REQ-UX-009 a workstream lead submits a status update from the workstream workspace" (Demo Operations Lead, WS07 updates tab: draft created, submitted for review; API shows submitted by the lead); run 2026-10-01 at d24ca45 on a fresh database: full Playwright suite 415 passed, 1 skipped (env-gated qa-p34 J1 expiry), 0 failed']
 - id: REQ-UX-010
   section: "10"
   title: "Screen 7: Perimeter & Transfers"
@@ -2873,8 +2873,8 @@
   security_rule: "Scope-filtered"
   acceptance_tests: ["AT-07", "E2E: raise CR from risk"]
   phase: P2
-  status: Implemented
-  evidence: ['RAID & Change Control screen: e2e p2-planning.spec.ts "(b) change request lifecycle and re-baseline: PM raises and assesses, Sponsor approves; PM proposes baseline, Sponsor approves" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'gap: raising a change request from a risk (AT) is not tested; the costImpact money field: e2e p2-web-followups.spec.ts "(a) recusals on behalf" and p3-carveout.spec.ts "(a) AT-07" (a cost impact typed only as text cannot be approved)']
+  status: Tested
+  evidence: ['RAID & Change Control screen: e2e p2-planning.spec.ts "(b) change request lifecycle and re-baseline: PM raises and assesses, Sponsor approves; PM proposes baseline, Sponsor approves" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'the costImpact money field on the change-request forms: e2e p2-web-followups.spec.ts "(a) recusals on behalf"', 'raise a change request from a risk: e2e p2-residuals.spec.ts "(h) REQ-UX-015 a change request raised from a risk stays linked to it" (Raise change request on the risk page; the change request is created with the risk as its subject, links back to it, and is listed under the risk); run 2026-10-01 at d24ca45 on a fresh database: full Playwright suite 415 passed, 1 skipped (env-gated qa-p34 J1 expiry), 0 failed', 'AT-07: e2e p3-carveout.spec.ts "(a) AT-07: an addition after baseline is held Pending with an impact assessment and enters scope only once its change request is approved and applied"']
 - id: REQ-UX-016
   section: "10"
   title: "Screen 13: Document & Evidence Center"
@@ -2985,8 +2985,8 @@
   security_rule: "Restricted state rendered from 404 without detail"
   acceptance_tests: ["E2E: each screen renders all four states"]
   phase: P2
-  status: Implemented
-  evidence: ['shared loading / empty / error / restricted components (SectionGuard, ApiErrorNotice, restricted state from 404): e2e p1-smoke.spec.ts "(c) Demo PM — Project B opening the DC project URL sees the restricted state" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'gap: no E2E renders all four states on each screen (AT)']
+  status: Tested
+  evidence: ['shared loading / empty / error / restricted components (SectionGuard, ApiErrorNotice, restricted state from 404): e2e p1-smoke.spec.ts "(c) Demo PM — Project B opening the DC project URL sees the restricted state" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'all four states per screen: e2e p2-residuals.spec.ts "(i) REQ-UX-022 each P1 and P2 screen, the AI PM Center and Administration render their loading, empty, error and restricted states (restricted reveals no title or count)" — Portfolio Home, DC Executive Cockpit, Program Overview & Charter, Committee Hub, Integrated Plan (WBS and Kanban), Workstream Workspace, RAID & Change Control, Document & Evidence Center, My Work, setup wizard, AI PM Center and Administration: loading (held response), empty, error with a working Try again, restricted (404) without titles or counts; plus a Project-B user on every DEMO-DC screen URL; run 2026-10-01 at d24ca45 on a fresh database: full Playwright suite 415 passed, 1 skipped (env-gated qa-p34 J1 expiry), 0 failed', 'the P3 / P4 screens (Perimeter & Transfers, NewCo & Regulatory Readiness, Day-1 & TSA Center, Finance & Value, JV & Diligence): e2e qa-p34-states.spec.ts', 'scope note: Reports (P6) is a placeholder screen without data until P6']
 - id: REQ-UX-023
   section: "10"
   title: "Activity history and source links"
@@ -3001,8 +3001,8 @@
   security_rule: "History filtered by record ACL"
   acceptance_tests: ["E2E: edit shows in record history with actor and reason"]
   phase: P2
-  status: Implemented
-  evidence: ['ActivityHistory on project, record and decision pages: e2e p2-governance.spec.ts "a decision goes from draft to a server-computed outcome through the UI; a recused vote is refused and shown" (decision history lists each command) (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'gap: no E2E edits a record and checks the history entry with actor and reason (AT)']
+  status: Tested
+  evidence: ['ActivityHistory on project, record and decision pages: e2e p2-governance.spec.ts "a decision goes from draft to a server-computed outcome through the UI; a recused vote is refused and shown" (decision history lists each command) (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'an edit in the record history with actor and reason: e2e p2-residuals.spec.ts "(j) REQ-UX-023 an edit shows in the record history with its actor and reason (the reason for audit readers)" (task owner set with a reason: the editor sees who and what, the Auditor also the reason; a committee charter amendment with a reason in the committee history); run 2026-10-01 at d24ca45 on a fresh database: full Playwright suite 415 passed, 1 skipped (env-gated qa-p34 J1 expiry), 0 failed', 'scope note: the activity feed returns free-text reasons only to audit readers (audit.event.read), by design (reasons may carry sensitive detail)']
 - id: REQ-UX-024
   section: "10"
   title: "Metric drill-down to contributing records"
@@ -3017,8 +3017,8 @@
   security_rule: "Contributors limited to scope; restricted contributors counted only if authorized"
   acceptance_tests: ["E2E: click KPI tile opens filtered list matching the count"]
   phase: P2
-  status: Implemented
-  evidence: ['metric links to filtered lists (Committee Hub metrics, workstream metric cards): e2e p2-governance.spec.ts "a decision goes from draft to a server-computed outcome through the UI; a recused vote is refused and shown" (hub metric link visible) (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'gap: no E2E clicks a KPI tile and compares the opened list with the count (AT); the metric contributors API is not built']
+  status: Tested
+  evidence: ['metric links to filtered lists (Committee Hub metrics, workstream metric cards): e2e p2-governance.spec.ts "a decision goes from draft to a server-computed outcome through the UI; a recused vote is refused and shown" (hub metric link visible) (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'every Committee Hub tile, every cockpit metric card, the cockpit committee-ask counts and the Portfolio Home counts open the list filtered so its total equals the number; the row count across pages equals the number for the Demo PM and the Demo Contributor (a restricted paper with an overdue action is part of the fixture): e2e p2-residuals.spec.ts "(c) REQ-UX-024 Committee Hub, cockpit and Portfolio Home metric tiles open a filtered list whose row count equals the tile number, for a full and a partial reader"; run 2026-10-01 at d24ca45 on a fresh database: full Playwright suite 415 passed, 1 skipped (env-gated qa-p34 J1 expiry), 0 failed', 'counts in the list scope (visibility, grant, linked-decision classification, workstream reach) and the escalation unresolved filter: planning p2r-drilldown-overview.spec.ts "overdue committee actions: the project count equals the actions list overdue=true; an action of a restricted decision counts only for a reader cleared for it"; "open risks: the project count equals the RAID register status=open,monitoring,escalated for a project-wide and a workstream-only reader"; "unresolved escalations: unresolved=true lists exactly the open and decision-requested ones, false the rest; any other value is 400" (negative probe: without the linked-decision classification filter the overdue-actions test fails, PM count 2 vs list 1)', 'AT variance: no separate GET .../metrics/{metricKey}/contributors endpoint; each metric opens its contributing records through the filtered list endpoint, whose total is computed in the same scope as the metric; Finance & Value KPI tiles (P4) are not part of this E2E']
 - id: REQ-UX-025
   section: "10"
   title: "Desktop, tablet and mobile browsers"
@@ -6359,8 +6359,8 @@
   security_rule: "Authority inactive until approved"
   acceptance_tests: ["AT-04", "E2E: wizard committee step leaves matrix pending approval"]
   phase: P2
-  status: Implemented
-  evidence: ['committee, authority matrix (draft, approve, second-person verification) and quorum rules are set up in the Committee Hub; project setup gaps list committee and authority_matrix until an active committee and an approved matrix exist: P1 qa-p1-sec016-injection.spec.ts "setup gaps reflect current records: DEMO-DC has an active committee and an approved authority matrix"', 'gap: no setup-wizard step 5 (POST .../setup/steps/committee not built); no E2E (AT)']
+  status: Tested
+  evidence: ['committee, authority matrix (draft, approve, second-person verification) and quorum rules are set up in the Committee Hub; project setup gaps list committee and authority_matrix until an active committee and an approved matrix exist: P1 qa-p1-sec016-injection.spec.ts "setup gaps reflect current records: DEMO-DC has an active committee and an approved authority matrix"', 'setup wizard step 5 (projects/[projectId]/setup, step "committee"): create or select the committee (Draft), load the quorum, threshold, tie rule and delegation table (JSON file or text, validated with AuthorityPolicySchema) as a DRAFT authority-matrix version; nothing is approved — the version shows Draft — pending approval, no matrix in force, setup gaps still committee and authority_matrix: e2e p2-residuals.spec.ts "(d) REQ-SET-013 / REQ-SET-014 setup wizard: step 5 creates the committee and loads a draft delegation that stays pending approval; step 6 proposes a draft baseline and shows the gate list; nothing is approved" (fresh non-demo project; server state checked through the API; Arabic detector, axe on the dialog, 390 px); run 2026-10-01 at d24ca45 on a fresh database: full Playwright suite 415 passed, 1 skipped (env-gated qa-p34 J1 expiry), 0 failed', 'AT variance: no dedicated POST .../setup/steps/committee endpoint — the wizard step uses the existing audited commands (createCommittee, createAuthorityMatrixVersion); charter approval, activation and matrix approval / verification stay on the Committee Hub']
 - id: REQ-SET-014
   section: "21"
   title: "Wizard step 6: baseline and gates"
@@ -6375,8 +6375,8 @@
   security_rule: "Baseline approval per authority matrix"
   acceptance_tests: ["E2E: wizard baseline step creates draft baseline"]
   phase: P2
-  status: Implemented
-  evidence: [baseline proposal and approval in the Integrated Plan (planning at-16-baseline-concurrency.spec.ts "a PM proposes baseline v1 with a frozen snapshot and hash; only one proposal can be pending"); gates G0–G7 reviewed on the gates screen; setup gaps list baseline until one is approved, 'gap: no setup-wizard step 6 (POST .../setup/steps/baseline not built); no E2E (AT)']
+  status: Tested
+  evidence: [baseline proposal and approval in the Integrated Plan (planning at-16-baseline-concurrency.spec.ts "a PM proposes baseline v1 with a frozen snapshot and hash; only one proposal can be pending"); gates G0–G7 reviewed on the gates screen; setup gaps list baseline until one is approved, 'setup wizard step 6 (step "baseline"): preview of the frozen scope, "Propose draft baseline" creates baseline version 1 awaiting approval (status proposed, approvedBy null), the gate list with status, approver role and open blockers; nothing is approved here: e2e p2-residuals.spec.ts "(d) REQ-SET-013 / REQ-SET-014 setup wizard: step 5 creates the committee and loads a draft delegation that stays pending approval; step 6 proposes a draft baseline and shows the gate list; nothing is approved"; run 2026-10-01 at d24ca45 on a fresh database: full Playwright suite 415 passed, 1 skipped (env-gated qa-p34 J1 expiry), 0 failed', 'AT variance: the "draft baseline" is the baseline version in status proposed (the baseline model has no persisted draft before a proposal; it is not approved and not the reference until approved on the Integrated Plan); no dedicated POST .../setup/steps/baseline endpoint — the step uses proposeBaseline']
 - id: REQ-SET-015
   section: "21"
   title: "Wizard step 7: confidentiality, retention, integrations and AI mode"

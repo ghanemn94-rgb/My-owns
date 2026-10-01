@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { and, asc, count, desc, eq, ilike, inArray, isNotNull, notInArray, or, sql, SQL } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gt, ilike, inArray, isNotNull, isNull, lte, notInArray, or, sql, SQL } from 'drizzle-orm';
 import type { PgColumn, PgTable } from 'drizzle-orm/pg-core';
 import { schema } from '@hub/db';
 import {
@@ -25,6 +25,7 @@ import {
   baselineBudgetAmount,
   evaluateDelegatedApproval,
   matrixUsable,
+  type RoleKey,
 } from '@hub/domain';
 import type { z } from 'zod';
 import type { ChangeRequestListQuery, CreateChangeRequestBody, UpdateChangeRequestBody, ImpactsSchema } from '@hub/contracts';
@@ -149,8 +150,33 @@ export class ChangeControlService {
     };
   }
 
+  /**
+   * The project-level roles the approver held in this project at the approval time (REQ-UX-006: "approver role"): the
+   * memberships valid at `approvedAt` and not revoked by then. Read in the request transaction (RLS applies).
+   */
+  private async approverRolesAt(projectId: string, userId: string | null, at: Date | null): Promise<RoleKey[]> {
+    if (!userId || !at) return [];
+    const M = schema.projectMembership;
+    const rows = await this.tx
+      .selectDistinct({ role: M.role })
+      .from(M)
+      .where(
+        and(
+          eq(M.projectId, projectId),
+          eq(M.userId, userId),
+          isNull(M.workstreamId),
+          lte(M.validFrom, at),
+          or(isNull(M.validTo), gt(M.validTo, at)),
+          or(isNull(M.revokedAt), gt(M.revokedAt, at)),
+        ),
+      )
+      .orderBy(asc(M.role));
+    return rows.map((r) => r.role as RoleKey);
+  }
+
   private async baselineDto(b: Baseline, scope?: { workstreamId: string; perimeterItemIds: string[] }) {
-    const names = await this.s.userNames([b.proposedBy]);
+    const names = await this.s.userNames([b.proposedBy, b.approvedBy]);
+    const approverRoles = await this.approverRolesAt(b.projectId, b.approvedBy, b.approvedAt);
     const full = b.snapshot as unknown as BaselineSnapshot;
     // A workstream-scoped caller sees the baseline through its workstream only (counts included — ARCH-14).
     const snap: BaselineSnapshot = scope
@@ -173,6 +199,8 @@ export class ChangeControlService {
       proposedBy: b.proposedBy,
       proposedByName: b.proposedBy ? (names.get(b.proposedBy) ?? null) : null,
       approvedBy: b.approvedBy,
+      approvedByName: b.approvedBy ? (names.get(b.approvedBy) ?? null) : null,
+      approverRoles,
       approvedAt: iso(b.approvedAt),
       rejectedBy: b.rejectedBy,
       rejectedAt: iso(b.rejectedAt),

@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+import { ChevronRight } from 'lucide-react';
 import { ActivityHistory } from '@/components/ActivityHistory';
 import { MetricCard } from '@/components/MetricCard';
 import { DelayImpactTile } from '@/components/planning/DelayImpactTile';
@@ -30,13 +32,14 @@ export default function ProjectOverviewPage() {
     return sectionAppliesTo(def, project.templateKind) && can(def.permissions);
   };
 
-  const metrics: { key: string; label: string; value: number | null | undefined; section: SectionKey }[] = [
-    { key: 'workstreams', label: t('project.metrics.workstreams'), value: project.counts.workstreams, section: 'workstreams' },
-    { key: 'tasks', label: t('project.metrics.tasks'), value: project.counts.tasks, section: 'plan' },
-    { key: 'milestones', label: t('project.metrics.milestones'), value: project.counts.milestones, section: 'plan' },
-    { key: 'deliverables', label: t('project.metrics.deliverables'), value: project.counts.deliverables, section: 'plan' },
-    { key: 'openRisks', label: t('portfolio.openRisks'), value: project.openRisks, section: 'raid' },
-    { key: 'overdueActions', label: t('portfolio.overdueActions'), value: project.overdueActions, section: 'committee' },
+  // REQ-UX-024: each metric opens the list filtered so that its total is the metric's number (same scope on the server).
+  const metrics: { key: string; label: string; value: number | null | undefined; section: SectionKey; href: string }[] = [
+    { key: 'workstreams', label: t('project.metrics.workstreams'), value: project.counts.workstreams, section: 'workstreams', href: sectionHref(projectId, 'workstreams') },
+    { key: 'tasks', label: t('project.metrics.tasks'), value: project.counts.tasks, section: 'plan', href: `${sectionHref(projectId, 'plan')}?tab=wbs` },
+    { key: 'milestones', label: t('project.metrics.milestones'), value: project.counts.milestones, section: 'plan', href: `${sectionHref(projectId, 'plan')}?tab=milestones` },
+    { key: 'deliverables', label: t('project.metrics.deliverables'), value: project.counts.deliverables, section: 'plan', href: `${sectionHref(projectId, 'plan')}?tab=deliverables` },
+    { key: 'openRisks', label: t('portfolio.openRisks'), value: project.openRisks, section: 'raid', href: `${sectionHref(projectId, 'raid')}?tab=risks&status=open,monitoring,escalated` },
+    { key: 'overdueActions', label: t('portfolio.overdueActions'), value: project.overdueActions, section: 'committee', href: `${sectionHref(projectId, 'committee')}/actions?overdue=true` },
   ];
   // Only show a metric the caller can see AND whose contributing records they can open.
   const visibleMetrics = metrics.filter((m) => m.value !== undefined && m.value !== null && canOpen(m.section));
@@ -134,7 +137,7 @@ export default function ProjectOverviewPage() {
             </h2>
             <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-6">
               {visibleMetrics.map((m) => (
-                <MetricCard key={m.key} label={m.label} value={m.value} href={sectionHref(projectId, m.section)} />
+                <MetricCard key={m.key} metric={m.key} label={m.label} value={m.value} href={m.href} />
               ))}
             </div>
           </section>
@@ -153,6 +156,10 @@ export default function ProjectOverviewPage() {
                 </li>
               ))}
             </ul>
+            <Link href={`/projects/${projectId}/setup`} className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline" data-testid="setup-open">
+              {t('project.setupWizard.open')}
+              <ChevronRight aria-hidden="true" className="size-4 rtl:rotate-180" />
+            </Link>
           </section>
         ) : null}
 

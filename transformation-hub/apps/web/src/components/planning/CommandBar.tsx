@@ -60,72 +60,91 @@ export function CommandBar({
   onReload: () => void;
   className?: string;
 }) {
-  const { t } = useI18n();
   const { can } = useProjectContext();
-  const toast = useToast();
   const [open, setOpen] = useState<CommandSpec | null>(null);
-  const [extra, setExtra] = useState('');
-  const visible = commands.filter((c) => allowed.includes(c.key) && !c.hidden && can(c.permission));
+  const visible = usableCommands(commands, allowed, can);
   if (visible.length === 0) return null;
 
-  const extraMissing = !!open?.extra?.required && extra.trim() === '';
   return (
     <div className={className}>
       <div className="flex flex-wrap gap-2" data-testid="command-bar">
         {visible.map((c) => (
-          <button
-            key={c.key}
-            type="button"
-            className={c.danger ? btn.secondary : c.primary ? btn.primary : btn.secondary}
-            data-command={c.key}
-            onClick={() => {
-              setExtra(c.extra?.defaultValue ?? '');
-              setOpen(c);
-            }}
-          >
+          <button key={c.key} type="button" className={c.danger ? btn.secondary : c.primary ? btn.primary : btn.secondary} data-command={c.key} onClick={() => setOpen(c)}>
             {c.label}
           </button>
         ))}
       </div>
-      {open ? (
-        <ConfirmCommandDialog
-          open
-          onClose={() => setOpen(null)}
-          title={open.label}
-          confirmLabel={open.label}
-          consequences={[...open.effects, t('common.command.audited')]}
-          noteMode={open.noteMode}
-          noteLabel={open.noteLabel}
-          danger={open.danger}
-          expectedVersion={expectedVersion}
-          confirmDisabled={extraMissing}
-          onReload={() => {
-            onReload();
-            setOpen(null);
-          }}
-          onConfirm={async ({ note }) => {
-            await open.run({ note, expectedVersion, extra: extra.trim() });
-            await onDone();
-            toast.show('success', t('planning.common.commandDone', { action: open.label }));
-            setOpen(null);
-          }}
-        >
-          {open.extra?.kind === 'custom' ? (
-            open.extra.render(extra, setExtra)
-          ) : open.extra ? (
-            <TextField
-              label={open.extra.label}
-              type={open.extra.kind}
-              required={open.extra.required}
-              min={open.extra.min}
-              max={open.extra.max}
-              value={extra}
-              onChange={(e) => setExtra(e.target.value)}
-              dir="ltr"
-            />
-          ) : null}
-        </ConfirmCommandDialog>
-      ) : null}
+      {open ? <CommandConfirmDialog command={open} expectedVersion={expectedVersion} onClose={() => setOpen(null)} onDone={onDone} onReload={onReload} /> : null}
     </div>
+  );
+}
+
+/** The commands a record offers this caller: allowed by the state machine, not hidden, and granted (UI hint; the API decides). */
+export function usableCommands(commands: CommandSpec[], allowed: readonly string[], can: (permission: string | readonly string[]) => boolean): CommandSpec[] {
+  return commands.filter((c) => allowed.includes(c.key) && !c.hidden && can(c.permission));
+}
+
+/**
+ * Confirmation of one domain command (consequences, note, command-specific input), sent with `expectedVersion`. Used by
+ * the command bar of a record and by the Kanban board (REQ-PLN-002), so a move there is the same audited command.
+ */
+export function CommandConfirmDialog({
+  command,
+  expectedVersion,
+  onClose,
+  onDone,
+  onReload,
+  context,
+}: {
+  command: CommandSpec;
+  expectedVersion: number;
+  onClose: () => void;
+  onDone: () => Promise<unknown> | void;
+  onReload: () => void;
+  /** Extra consequence lines shown first (e.g. which record and which column a Kanban move targets). */
+  context?: ReactNode[];
+}) {
+  const { t } = useI18n();
+  const toast = useToast();
+  const [extra, setExtra] = useState(command.extra?.defaultValue ?? '');
+  const extraMissing = !!command.extra?.required && extra.trim() === '';
+  return (
+    <ConfirmCommandDialog
+      open
+      onClose={onClose}
+      title={command.label}
+      confirmLabel={command.label}
+      consequences={[...(context ?? []), ...command.effects, t('common.command.audited')]}
+      noteMode={command.noteMode}
+      noteLabel={command.noteLabel}
+      danger={command.danger}
+      expectedVersion={expectedVersion}
+      confirmDisabled={extraMissing}
+      onReload={() => {
+        onReload();
+        onClose();
+      }}
+      onConfirm={async ({ note }) => {
+        await command.run({ note, expectedVersion, extra: extra.trim() });
+        await onDone();
+        toast.show('success', t('planning.common.commandDone', { action: command.label }));
+        onClose();
+      }}
+    >
+      {command.extra?.kind === 'custom' ? (
+        command.extra.render(extra, setExtra)
+      ) : command.extra ? (
+        <TextField
+          label={command.extra.label}
+          type={command.extra.kind}
+          required={command.extra.required}
+          min={command.extra.min}
+          max={command.extra.max}
+          value={extra}
+          onChange={(e) => setExtra(e.target.value)}
+          dir="ltr"
+        />
+      ) : null}
+    </ConfirmCommandDialog>
   );
 }

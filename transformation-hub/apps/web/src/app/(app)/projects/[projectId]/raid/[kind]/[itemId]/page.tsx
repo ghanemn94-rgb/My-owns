@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { Pencil, TriangleAlert, UserCog } from 'lucide-react';
+import { FilePlus2, Pencil, TriangleAlert, UserCog } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { planningRoutes as P } from '@hub/contracts';
@@ -23,10 +23,11 @@ import { useRaidCommands } from '@/components/planning/commands';
 import { BackLink } from '@/components/planning/DetailShell';
 import { DateText, Fact, Section } from '@/components/planning/bits';
 import { OwnerDialog } from '@/components/planning/dialogs';
-import { RaidFormDialog } from '@/components/planning/raid';
+import { ChangeRequestFormDialog, RaidFormDialog } from '@/components/planning/raid';
+import { DataTable } from '@/components/DataTable';
 import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
-import { pk, RAID_KIND_PATHS, raidHref, useRefreshPlanning, type RaidItem, type RaidKindPath } from '@/lib/planning';
+import { changeRequestHref, pk, RAID_KIND_PATHS, raidHref, useRefreshPlanning, type RaidItem, type RaidKindPath } from '@/lib/planning';
 import { useProjectContext } from '@/lib/project-context';
 
 function RaiseIssueDialog({ open, onClose, risk }: { open: boolean; onClose: () => void; risk: RaidItem }) {
@@ -64,6 +65,52 @@ function RaiseIssueDialog({ open, onClose, risk }: { open: boolean; onClose: () 
   );
 }
 
+/** Change requests raised from this risk (their subject is the risk) — REQ-UX-015. */
+function RiskChangeRequests({ risk }: { risk: RaidItem }) {
+  const { t, formatDateTime } = useI18n();
+  const { projectId } = useProjectContext();
+  const query = { page: 1, pageSize: 20, subjectType: 'risk', subjectId: risk.id };
+  const q = useQuery({ queryKey: pk.changeRequests(projectId, query), queryFn: ({ signal }) => api(P.listChangeRequests, { params: { projectId }, query, signal }) });
+  return (
+    <Section id="r-crs" title={t('planning.cr.fromRiskSection')} className="mt-4">
+      <DataTable
+        caption={t('planning.cr.fromRiskSection')}
+        rows={q.data?.items}
+        rowKey={(c) => c.id}
+        isLoading={q.isLoading}
+        error={q.error}
+        onRetry={() => q.refetch()}
+        emptyTitle={t('planning.cr.fromRiskEmpty')}
+        testId="risk-change-requests"
+        columns={[
+          {
+            key: 'code',
+            header: t('planning.common.code'),
+            isRowHeader: true,
+            cell: (c) => (
+              <Link href={changeRequestHref(projectId, c.id)} className={btn.link} dir="ltr" data-testid="risk-change-request-link">
+                {c.code}
+              </Link>
+            ),
+          },
+          // A change request title is free text typed by the requester: shown as entered (data-user-text).
+          {
+            key: 'title',
+            header: t('planning.common.title'),
+            cell: (c) => (
+              <span dir="auto" data-user-text>
+                {c.title}
+              </span>
+            ),
+          },
+          { key: 'status', header: t('planning.common.status'), cell: (c) => <StatusBadge enumName="changeRequestStatuses" value={c.status} /> },
+          { key: 'created', header: t('planning.baseline.createdAt'), cell: (c) => <span className="tabular">{formatDateTime(c.createdAt)}</span> },
+        ]}
+      />
+    </Section>
+  );
+}
+
 export default function RaidItemPage() {
   const { t, formatNumber } = useI18n();
   const params = useParams<{ kind: string; itemId: string }>();
@@ -76,6 +123,8 @@ export default function RaidItemPage() {
   const [edit, setEdit] = useState(false);
   const [owner, setOwner] = useState(false);
   const [raise, setRaise] = useState(false);
+  const [raiseCr, setRaiseCr] = useState(false);
+  const router = useRouter();
   if (!valid) return <RestrictedState />;
   if (q.isLoading) return <LoadingState />;
   if (q.error || !q.data) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
@@ -102,6 +151,12 @@ export default function RaidItemPage() {
         }
         actions={
           <>
+            {r.kind === 'risk' && !['closed', 'cancelled'].includes(r.status) && can('planning.change_request.create') ? (
+              <button type="button" className={btn.secondary} onClick={() => setRaiseCr(true)} data-testid="risk-raise-cr">
+                <FilePlus2 aria-hidden="true" className="size-4" />
+                {t('planning.cr.raiseFromRisk')}
+              </button>
+            ) : null}
             {r.kind === 'risk' && open && can('planning.raid.manage') ? (
               <button type="button" className={btn.secondary} onClick={() => setRaise(true)}>
                 <TriangleAlert aria-hidden="true" className="size-4" />
@@ -205,9 +260,18 @@ export default function RaidItemPage() {
           </dl>
         </Section>
       </div>
+      {r.kind === 'risk' ? <RiskChangeRequests risk={r} /> : null}
       <ActivityHistory className="mt-6" projectId={projectId} entityType={r.kind === 'dependency' ? 'raid_dependency' : r.kind} entityId={r.id} />
       <RaidFormDialog open={edit} onClose={() => setEdit(false)} kind={kind} item={r} />
       {r.kind === 'risk' ? <RaiseIssueDialog open={raise} onClose={() => setRaise(false)} risk={r} /> : null}
+      {r.kind === 'risk' ? (
+        <ChangeRequestFormDialog
+          open={raiseCr}
+          onClose={() => setRaiseCr(false)}
+          source={{ type: 'risk', id: r.id, code: r.code, title: r.title }}
+          onCreated={(id) => router.push(changeRequestHref(projectId, id))}
+        />
+      ) : null}
       <OwnerDialog
         open={owner}
         onClose={() => setOwner(false)}

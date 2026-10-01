@@ -100,7 +100,13 @@ export function DataTable<T>({
   else if (sorted.length === 0) body = <EmptyState title={emptyTitle} hint={emptyHint} />;
 
   return (
-    <div className={cx(card, 'overflow-hidden', className)} data-testid={testId}>
+    <div
+      className={cx(card, 'overflow-hidden', className)}
+      data-testid={testId}
+      // State and the list total (the server total when paginated) for drill-down checks (REQ-UX-022 / REQ-UX-024).
+      data-state={isLoading && !rows ? 'loading' : error ? 'error' : sorted.length === 0 ? 'empty' : 'ready'}
+      data-total={isLoading && !rows ? undefined : error ? undefined : (pagination?.total ?? sorted.length)}
+    >
       {body ?? (
         <ScrollRegion label={caption} className="relative overflow-x-auto">
           <table className="w-full border-collapse text-sm">

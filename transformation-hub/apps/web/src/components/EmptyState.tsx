@@ -18,7 +18,7 @@ export function EmptyState({
   className?: string;
 }) {
   return (
-    <div className={cx('flex flex-col items-center gap-2 px-4 py-10 text-center', className)}>
+    <div className={cx('flex flex-col items-center gap-2 px-4 py-10 text-center', className)} data-testid="empty-state">
       <Icon aria-hidden="true" className="size-8 text-muted" />
       <p className="font-medium text-ink">{title}</p>
       {hint ? <p className="max-w-prose text-sm text-muted">{hint}</p> : null}

@@ -2,6 +2,7 @@
 
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { planningRoutes as P } from '@hub/contracts';
 import { CHANGE_REQUEST_STATUSES, RAID_STATUSES } from '@hub/domain';
@@ -82,12 +83,18 @@ export function RiskHeatMap({ workstreamId }: { workstreamId?: string }) {
   );
 }
 
+/** Open RAID items (open, monitoring or escalated) — what the "open risks" metrics count (REQ-UX-024). */
+export const RAID_OPEN_GROUP = 'open,monitoring,escalated';
+const raidStatusFromUrl = (v: string | null): string => (v === RAID_OPEN_GROUP || (v && (RAID_STATUSES as readonly string[]).includes(v)) ? v : '');
+
 export function RaidRegister({ kind, workstreamId: fixedWs }: { kind: RaidKindPath; workstreamId?: string }) {
   const { t, tStatus, locale } = useI18n();
   const { projectId, can } = useProjectContext();
   const ws = useWorkstreams(projectId);
+  const params = useSearchParams();
   const [q, setQ] = useState('');
-  const [status, setStatus] = useState('');
+  // A metric opens the register pre-filtered (`?status=`): the list total then equals the metric's number.
+  const [status, setStatus] = useState(() => raidStatusFromUrl(params.get('status')));
   const [wsId, setWsId] = useState(fixedWs ?? '');
   const [overdue, setOverdue] = useState(false);
   const [mine, setMine] = useState(false);
@@ -129,8 +136,9 @@ export function RaidRegister({ kind, workstreamId: fixedWs }: { kind: RaidKindPa
     <div className="space-y-3" data-testid={`raid-${kind}`}>
       <div className="flex flex-wrap items-end gap-3">
         <SearchInput className="w-full sm:w-64" label={t('planning.raid.search')} value={q} onChange={setQ} />
-        <FilterSelect label={t('planning.common.status')} value={status} onChange={setStatus} className="w-full sm:w-44">
+        <FilterSelect label={t('planning.common.status')} value={status} onChange={setStatus} className="w-full sm:w-44" testId={`raid-filter-status-${kind}`}>
           <option value="">{t('planning.common.allStatuses')}</option>
+          <option value={RAID_OPEN_GROUP}>{t('planning.raid.statusOpenGroup')}</option>
           {RAID_STATUSES.map((s) => (
             <option key={s} value={s}>
               {tStatus('raidStatuses', s)}
@@ -325,7 +333,7 @@ export function ChangeRequestsPanel() {
   const query = { page, pageSize: PAGE, q: q || undefined, status: status || undefined };
   const list = useQuery({ queryKey: pk.changeRequests(projectId, query), queryFn: ({ signal }) => api(P.listChangeRequests, { params: { projectId }, query, signal }), placeholderData: keepPreviousData });
   const columns: Column<ChangeRequest>[] = [
-    { key: 'code', header: t('planning.common.code'), isRowHeader: true, cell: (c) => <CodeLink href={changeRequestHref(projectId, c.id)} code={c.code} title={c.title} /> },
+    { key: 'code', header: t('planning.common.code'), isRowHeader: true, cell: (c) => <CodeLink href={changeRequestHref(projectId, c.id)} code={c.code} title={c.title} userText /> },
     { key: 'status', header: t('planning.common.status'), cell: (c) => <StatusBadge enumName="changeRequestStatuses" value={c.status} /> },
     { key: 'rebaseline', header: t('planning.cr.rebaseline'), cell: (c) => (c.rebaseline ? t('planning.common.yes') : t('planning.common.no')) },
     { key: 'cost', header: t('planning.cr.costImpact'), cell: (c) => (c.costImpact ? <MoneyText value={c.costImpact} /> : c.impacts.cost ? <span className="text-xs text-warning">{t('planning.cr.costNotQuantifiedShort')}</span> : <span className="text-muted">—</span>) },
@@ -375,7 +383,15 @@ export const IMPACT_KEYS = ['time', 'cost', 'scope', 'readiness', 'transaction',
 export type ImpactKey = (typeof IMPACT_KEYS)[number];
 
 /** Create a change request (Draft) or edit a Draft: rationale, alternatives, impacts, re-baselining flag. */
-export function ChangeRequestFormDialog({ open, onClose, cr }: { open: boolean; onClose: () => void; cr?: ChangeRequest }) {
+/** The record a new change request is raised from (REQ-UX-015: a risk); sent as its subject. */
+export interface ChangeRequestSource {
+  type: 'risk';
+  id: string;
+  code: string;
+  title: string;
+}
+
+export function ChangeRequestFormDialog({ open, onClose, cr, source, onCreated }: { open: boolean; onClose: () => void; cr?: ChangeRequest; source?: ChangeRequestSource; onCreated?: (id: string) => void }) {
   const { t } = useI18n();
   const { projectId } = useProjectContext();
   const refresh = useRefreshPlanning(projectId);
@@ -384,9 +400,12 @@ export function ChangeRequestFormDialog({ open, onClose, cr }: { open: boolean; 
   const [cost, setCost] = useState<MoneyInput>(() => moneyInputOf(cr?.costImpact));
   useEffect(() => {
     if (!open) return;
-    setF({ title: cr?.title ?? '', rationale: cr?.rationale ?? '', alternatives: (cr?.alternatives ?? []).join('\n'), rebaseline: cr?.rebaseline ?? false, impacts: { ...(cr?.impacts ?? {}) } });
+    // Raised from a risk: the title names the risk (editable); the rationale is the requester's own text.
+    const title = cr?.title ?? (source ? t('planning.cr.fromRiskTitle', { code: source.code, title: source.title }).slice(0, 300) : '');
+    setF({ title, rationale: cr?.rationale ?? '', alternatives: (cr?.alternatives ?? []).join('\n'), rebaseline: cr?.rebaseline ?? false, impacts: { ...(cr?.impacts ?? {}) } });
     setCost(moneyInputOf(cr?.costImpact));
-  }, [open, cr]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, cr, source?.id]);
   const money = parseMoney(cost);
   // Omitted = unchanged (edit) / none (create); emptying a recorded amount clears it.
   const costImpact = money === 'invalid' ? undefined : money === null ? (cr?.costImpact ? null : undefined) : money;
@@ -410,13 +429,25 @@ export function ChangeRequestFormDialog({ open, onClose, cr }: { open: boolean; 
           });
           toast.show('success', t('planning.common.saved'));
         } else {
-          const r = await api(P.createChangeRequest, { params: { projectId }, body: { title: f.title.trim(), rationale: f.rationale.trim(), alternatives: alts, impacts, ...(costImpact ? { costImpact } : {}), rebaseline: f.rebaseline } });
+          const r = await api(P.createChangeRequest, {
+            params: { projectId },
+            body: { title: f.title.trim(), rationale: f.rationale.trim(), alternatives: alts, impacts, ...(costImpact ? { costImpact } : {}), rebaseline: f.rebaseline, ...(source ? { subjectType: source.type, subjectId: source.id } : {}) },
+          });
           toast.show('success', t('planning.common.createdCode', { code: r.code ?? '' }));
+          await refresh();
+          onClose();
+          onCreated?.(r.id);
+          return;
         }
         await refresh();
         onClose();
       }}
     >
+      {source ? (
+        <p className="rounded-md border border-info/40 bg-info-soft p-2 text-sm text-ink" data-testid="cr-form-source">
+          {t('planning.cr.fromRiskNote', { code: source.code })}
+        </p>
+      ) : null}
       <TextField label={t('planning.common.title')} required value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} maxLength={300} />
       <TextAreaField label={t('planning.cr.rationale')} required value={f.rationale} onChange={(e) => setF({ ...f, rationale: e.target.value })} rows={3} maxLength={4000} />
       <TextAreaField label={t('planning.cr.alternatives')} value={f.alternatives} onChange={(e) => setF({ ...f, alternatives: e.target.value })} rows={3} hint={t('planning.cr.alternativesHint')} />
