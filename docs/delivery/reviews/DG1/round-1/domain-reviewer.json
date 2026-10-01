@@ -1,0 +1,298 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG1",
+  "round": 1,
+  "candidate_id": "sha256:25c97340b6047e87e82642c28e90dea72cdd07b5bbd5d81986f497e5e863061b",
+  "source_commit": "37ec37453a5e8ce8bebba102a85df4f5c4b0ef8b",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG1-T-DG1-REV-DOM-R1-domain-reviewer-20261001T201758Z-9ed0992f",
+    "session_id": "9ed0992f-925f-40d2-ac40-0ed3d4d6e46b"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "frontend-ux-engineer",
+    "devops-engineer",
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (domain-reviewer, session 9ed0992f-925f-40d2-ac40-0ed3d4d6e46b) authored no implementation in the DG1 scope. I reviewed the frozen candidate only, in a disposable clone under $TMPDIR, and formed this verdict without reading any other reviewer's DG1 round-1 record."
+  },
+  "assignment": "docs/delivery/assignments/DG1/round-1/domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-S15-002",
+    "REQ-S15-005",
+    "REQ-S15-006",
+    "REQ-S16-001",
+    "REQ-S16-002",
+    "REQ-S16-004",
+    "REQ-S19-004",
+    "REQ-S19-006",
+    "REQ-PB-003"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-R1-00-candidate",
+      "procedure": "Confirm HEAD and recompute the candidate ID in the repository and again in the disposable clone",
+      "command": "git rev-parse HEAD && node tools/gates/candidate.mjs --stage DG1",
+      "environment": "/home/user/My-owns and $TMPDIR/review-dg1 (git clone, checkout 2c22c275ea28d1e848c0f225ceda56b47b747cac); Node 24.21.0",
+      "expected": "candidate_id sha256:25c97340b6047e87e82642c28e90dea72cdd07b5bbd5d81986f497e5e863061b, 391 files",
+      "actual": "HEAD 2c22c275ea28d1e848c0f225ceda56b47b747cac (freeze commit on top of source_commit 37ec374). candidate_id sha256:25c97340…061b, files 391, in both trees",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/candidates/DG1/25c97340b6047e87.manifest.json"
+      ]
+    },
+    {
+      "id": "DOM-R1-01-typecheck",
+      "procedure": "Recursive TypeScript type check of all workspace packages",
+      "command": "pnpm -r typecheck",
+      "environment": "Disposable clone; Node 22.22.2; pnpm 10.33.0; node_modules copied from the repository install, because the offline pnpm store lacks tarballs and `pnpm install --offline` could not run",
+      "expected": "exit 0, zero type errors",
+      "actual": "All packages Done, EXIT=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-002"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-1/02-typecheck.log"
+      ]
+    },
+    {
+      "id": "DOM-R1-02-build",
+      "procedure": "Recursive build (api, worker, web, db, design-tokens, shared, config)",
+      "command": "pnpm -r build",
+      "environment": "Disposable clone; Node 22.22.2",
+      "expected": "exit 0",
+      "actual": "EXIT=0; apps/api, apps/worker and apps/web build Done",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-001",
+        "REQ-S16-002"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-1/03-build.log"
+      ]
+    },
+    {
+      "id": "DOM-R1-03-lint",
+      "procedure": "ESLint over the repository with zero warnings allowed",
+      "command": "pnpm lint",
+      "environment": "Disposable clone; Node 22.22.2",
+      "expected": "exit 0",
+      "actual": "EXIT=0, no output from eslint . --max-warnings=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-1/04-lint.log"
+      ]
+    },
+    {
+      "id": "DOM-R1-04-test-node22",
+      "procedure": "Unit suites (unit-node + unit-web), including architecture.test.ts (ADR-0002 dependency lint) and the workflows/kpi/reporting scaffold suites",
+      "command": "pnpm test",
+      "environment": "Disposable clone; Node 22.22.2",
+      "expected": "all tests pass",
+      "actual": "Test Files 21 passed (21); Tests 325 passed (325); architecture.test.ts 132 tests; EXIT=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-001",
+        "REQ-S15-002",
+        "REQ-S15-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-1/05-test-node22.log"
+      ]
+    },
+    {
+      "id": "DOM-R1-05-test-node24",
+      "procedure": "The same unit suites on the production Node line (ADR-0001)",
+      "command": "PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH pnpm test",
+      "environment": "Disposable clone; Node 24.21.0",
+      "expected": "all tests pass",
+      "actual": "Test Files 21 passed (21); Tests 325 passed (325); EXIT=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-1/06-test-node24.log"
+      ]
+    },
+    {
+      "id": "DOM-R1-06-contrast",
+      "procedure": "WCAG contrast check of the provisional design tokens",
+      "command": "pnpm --filter @mth/design-tokens run check:contrast",
+      "environment": "Disposable clone; Node 22.22.2",
+      "expected": "exit 0; every used pair meets AA; prohibited pairs documented",
+      "actual": "PASS contrast: 50 pairs meet WCAG AA; 3 prohibited pairs fail as documented (white on #0078FF 4.09:1 is never used for small text); EXIT=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S15-002"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-1/07-contrast.log"
+      ]
+    },
+    {
+      "id": "DOM-R1-07-nocdn-openapi",
+      "procedure": "No public CDN references in apps/packages; OpenAPI document validation",
+      "command": "pnpm check:no-cdn; pnpm openapi:lint",
+      "environment": "Disposable clone; Node 22.22.2; no network",
+      "expected": "both exit 0",
+      "actual": "PASS no-cdn: scanned apps, packages (EXIT=0); PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 33 operations (EXIT=0). Not assigned, so not counted: pnpm deps:verify did not finish within 300 s offline and was terminated. It is not reported as PASS.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S15-005",
+        "REQ-S19-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-1/08-nocdn-openapi-deps.log"
+      ]
+    },
+    {
+      "id": "DOM-R1-08-integration-contract",
+      "procedure": "Integration suites on a disposable PostgreSQL 16 cluster: migrations on a fresh database, the catalogue, and the contract suite (33 operations, each validated against openapi.yaml and the zod mirrors)",
+      "command": "QA_PG_PORT=54393 tests/qa/support/with-pg.sh pnpm test:integration",
+      "environment": "Disposable clone; Node 22.22.2; PostgreSQL 16.13 (user namespace, 127.0.0.1 only)",
+      "expected": "applied 8 migrations to a fresh database; all integration tests pass, including contract.test.ts",
+      "actual": "applied 8 migrations to a fresh database; Test Files 19 passed (19); Tests 200 passed (200); contract.test.ts 9 tests passed; migrate.test.ts 7 and catalogue.test.ts 9 passed; EXIT=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S19-004",
+        "REQ-S19-006",
+        "REQ-S16-004"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-1/09-integration-node22.log"
+      ]
+    },
+    {
+      "id": "DOM-R1-09-live-scenario",
+      "procedure": "Live stack: fresh PostgreSQL, migrate (twice), seed SYNTHETIC dev users, start the API (AUTH_MODE=dev) and the worker as separate processes, then run the HTTP probe (01a). It covers: the close rule (draft/active/on_hold→closed refused 422, record and version unchanged, a combined close+rename refused atomically, no audit event for a refused close, refusal text names product gate G6 and never DG7 or an approval); defaults Asia/Riyadh and SAR, and configurability; End-to-End starts in Diagnose and Modular enters at the selected phase; If-Match 428/409; CSRF 403; scoped access (TL out-of-scope 404, TL list filtered, ADM_ACCESS/ADM_TECH see no business records, AUD read-only 403, no-role user empty); cursor pagination (complete ordered walk, cursor bound to the filter, tamper and limit 400); branding tokens; preferences; outbox consumed by the worker. Then SIGTERM the worker and probe the API.",
+      "command": "PATH=/opt/node22/bin:$PATH $TMPDIR/scn/run.sh docs/delivery/test-evidence/DG1/domain/round-1 (script copied to 01b-run.sh.txt; probe 01a-probe.mjs.txt)",
+      "environment": "Disposable clone at 2c22c27; Node 22.22.2; PostgreSQL 16.13; API on localhost:3000; synthetic data only",
+      "expected": "every probe assertion passes; worker exits cleanly; API stays ready after the worker stops",
+      "actual": "SUMMARY pass=34 fail=0 (probe exit=0). Refused close: 422 urn:mth:problem:invalid-transition 'Closure requires the G6 (Sustain) business approval with validated benefits, which is not available in this release.'; record stays active, same version. Audit: create + 2 updates, nothing for refused attempts. Outbox transformation.created 7/7 published. Worker SIGTERM exit=0; API alive; /readyz 200 afterwards. The wrapper's own final exit status is 1 only because its trailing `grep -c` of API errors counted 0 matches.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-001",
+        "REQ-S16-004",
+        "REQ-S15-002",
+        "REQ-S19-004",
+        "REQ-PB-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-1/01-runtime-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-1/01a-probe.mjs.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-1/01b-run.sh.txt"
+      ]
+    },
+    {
+      "id": "DOM-R1-10-bilingual-screens",
+      "procedure": "Headless Chromium 1194 (pre-installed, no download) against the live stack: login page, My Work and the transformations register, for dev.office (preferred ar, locale ar-SA) and dev.auditor (preferred en, locale en-US). Record lang/dir, visible text, loaded fonts and every non-localhost request, and inspect the screenshots.",
+      "command": "PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers node zz-screens.mjs <evidence dir> (script 01c-screens.mjs.txt; run inside run.sh)",
+      "environment": "Disposable clone; Node 22.22.2; Playwright 1.56.1 chromium; timezone Asia/Riyadh",
+      "expected": "Arabic RTL by default and English LTR after the preference; provisional text wordmark with badge and no logo image; planned modules labelled Planned; IBM Plex fonts bundled; zero non-localhost requests",
+      "actual": "Login: lang=ar dir=rtl (Arabic default). Office shell and register: ar/rtl; auditor: en/ltr. Wordmark 'منصة موبايلي للتحوّل / Mobily Transformation Hub' + 'مؤقت/Provisional' with a disclaimer (no official logo; colours are provisional tokens). Unbuilt modules are badged مخطط/Planned. Dates show '… Asia/Riyadh' (Europe/London for the configured record). Fonts loaded: IBM Plex Sans Arabic and IBM Plex Sans. foreignRequests=[] in both locales. AR/EN i18n key parity: 460 keys, 0 mismatches; the About text states it is not an official PMI standard and not certified, in both languages.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S15-005",
+        "REQ-S15-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-1/01-runtime-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-1/01c-screens.mjs.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-1/screen-login-ar.png",
+        "docs/delivery/test-evidence/DG1/domain/round-1/screen-login-en.png",
+        "docs/delivery/test-evidence/DG1/domain/round-1/screen-home-ar.png",
+        "docs/delivery/test-evidence/DG1/domain/round-1/screen-home-en.png",
+        "docs/delivery/test-evidence/DG1/domain/round-1/screen-transformations-ar.png",
+        "docs/delivery/test-evidence/DG1/domain/round-1/screen-transformations-en.png"
+      ]
+    },
+    {
+      "id": "DOM-R1-11-source-fidelity",
+      "procedure": "Static comparison with the playbook and master prompt. PHASES vs B0021; modes vs B0009; product gates G1–G6 vs B0023 (workflows/index.ts PRODUCT_GATES, CLOSURE_GATE=G6, labelled 'Not the engineering gates DG0-DG7'); close rule vs B0014 'Benefits before closure'; the edit form excludes 'closed' (TransformationEditPage P1_GOVERNED_STATUSES). Honesty grep for official-PMI, certified or brand-compliance claims outside docs/source and docs/delivery. ADR-0002 module map (apps/api/src/modules.ts). Decimal and Unknown handling (apps/web/src/lib/format.ts, components/Badges.tsx). Logo assets (git ls-files for svg/png/logo).",
+      "command": "grep/sed inspection of packages/shared/src/constants.ts, apps/api/src/modules.ts, apps/api/src/modules/{workflows,kpi,reporting}/index.ts, apps/web/src/lib/format.ts, apps/web/src/i18n/*/common.json; git grep -i 'official pmi|certified|pmi standard|official mobily|brand compliant'",
+      "environment": "Disposable clone at 2c22c27",
+      "expected": "Faithful phase, gate and mode vocabulary; no official PMI, certification or official Mobily brand claim; the eight P1-active modules plus declared dependency directions; workflows/kpi/reporting register no routes; decimal money and rates; missing values show Unknown",
+      "actual": "Phases diagnose/define/design/mobilize/transform/realize = B0021. Modes end_to_end/modular = B0009. G1–G6 kept separate from DG0–DG7. Every PMI or brand mention is a disclaimer. modules.ts declares platform, audit, identity, access, organization, transformations, jobs, admin with acyclic dependsOn. workflows/kpi/reporting are P1 scaffolds with routes=[] (D-048, which supersedes the 'declared-but-reserved' wording of D-047 cited in the assignment). methodology/evidence are reserved names. formatDecimal/formatMoney use decimal.js and return null so the UI shows Unknown. No logo image in the repository.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-001",
+        "REQ-S15-006",
+        "REQ-PB-003"
+      ],
+      "evidence": [
+        "docs/source/playbook.md#B0021",
+        "apps/api/src/modules.ts",
+        "apps/api/src/modules/workflows/index.ts",
+        "apps/web/src/lib/format.ts",
+        "apps/web/src/i18n/en/common.json",
+        "apps/web/src/i18n/ar/common.json"
+      ]
+    },
+    {
+      "id": "DOM-R1-12-schema-docs",
+      "procedure": "Compare the relations of the migrated fresh database with erd.md and data-dictionary.md, and check the operator clean-start guide against the observed migration count",
+      "command": "psql … information_schema.tables (in run.sh); grep -c <relation> docs/architecture/erd.md docs/architecture/data-dictionary.md; grep -n '6 migrations' docs/operations/clean-start.md",
+      "environment": "Disposable clone; PostgreSQL 16.13",
+      "expected": "Every migrated relation is documented; the operator guide states the current migration count",
+      "actual": "All 18 base tables are documented. Views actor_display, business_unit_closure and scope_node are undocumented (F-DG1-001, Low). clean-start.md:91 says 'applies 6 migrations' but the candidate applies 8 (F-DG1-002, Low).",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": [
+        "REQ-S19-004"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-1/01-runtime-scenario.out.txt",
+        "docs/architecture/erd.md",
+        "docs/architecture/data-dictionary.md",
+        "docs/operations/clean-start.md"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG1-001",
+    "F-DG1-002",
+    "F-DG1-003"
+  ],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG1/domain/round-1/01-runtime-scenario.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-1/01a-probe.mjs.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-1/01b-run.sh.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-1/01c-screens.mjs.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-1/02-typecheck.log",
+    "docs/delivery/test-evidence/DG1/domain/round-1/03-build.log",
+    "docs/delivery/test-evidence/DG1/domain/round-1/04-lint.log",
+    "docs/delivery/test-evidence/DG1/domain/round-1/05-test-node22.log",
+    "docs/delivery/test-evidence/DG1/domain/round-1/06-test-node24.log",
+    "docs/delivery/test-evidence/DG1/domain/round-1/07-contrast.log",
+    "docs/delivery/test-evidence/DG1/domain/round-1/08-nocdn-openapi-deps.log",
+    "docs/delivery/test-evidence/DG1/domain/round-1/09-integration-node22.log",
+    "docs/delivery/test-evidence/DG1/domain/round-1/screen-login-ar.png",
+    "docs/delivery/test-evidence/DG1/domain/round-1/screen-login-en.png",
+    "docs/delivery/test-evidence/DG1/domain/round-1/screen-home-ar.png",
+    "docs/delivery/test-evidence/DG1/domain/round-1/screen-home-en.png",
+    "docs/delivery/test-evidence/DG1/domain/round-1/screen-transformations-ar.png",
+    "docs/delivery/test-evidence/DG1/domain/round-1/screen-transformations-en.png",
+    "docs/delivery/reviews/DG1/round-1/domain-reviewer.findings.json"
+  ],
+  "reviewed_at": "2026-10-01T20:36:00Z",
+  "summary": "PASS. The DG1 candidate sha256:25c97340… is faithful to the playbook and master prompt for the P1 scope. Closure is refused with 422 and attributed to product gate G6, never DG7. Scoped access, identity, CSRF, optimistic concurrency and cursor pagination behave correctly on a live stack. The API survives a worker stop. Rendering is Arabic RTL by default and English LTR, with bundled fonts and no external requests. The wordmark and the seven tokens are provisional, and nothing claims official PMI status, certification or Mobily brand compliance. All required checks ran and passed on Node 22 and Node 24. Three Low, non-mandatory documentation and traceability findings: F-DG1-001, F-DG1-002, F-DG1-003.",
+  "narrative": "docs/delivery/reviews/DG1/round-1/domain-reviewer.md"
+}

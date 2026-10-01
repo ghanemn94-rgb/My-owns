@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG1-001",
+      "stage_id": "DG1",
+      "requirement": "REQ-S19-004",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "ERD and data dictionary omit the three database views created by the P1 migrations (actor_display, business_unit_closure, scope_node)",
+      "reproduction": "Migrate a fresh PostgreSQL 16 database with the candidate (docs/delivery/test-evidence/DG1/domain/round-1/01-runtime-scenario.out.txt lists the public relations). Then: grep -c 'actor_display\\|business_unit_closure\\|scope_node' docs/architecture/erd.md docs/architecture/data-dictionary.md returns 0 for both files. The views are created in packages/db/migrations/0001_identity_access.sql:62 (actor_display), :93 (business_unit_closure) and 0002_transformation.sql:48 (scope_node), and granted to mth_app.",
+      "expected": "REQ-S19-004 acceptance: 'the ERD matches the migrated schema'. Derived relations that the runtime role reads (scope resolution, BU hierarchy closure, actor display) are listed, at least in the data dictionary, with their definition and purpose.",
+      "actual": "All 18 base tables are documented. The three views used for scope evaluation and display are not mentioned in erd.md or data-dictionary.md. This is a documentation gap only: no stored data, behaviour or integrity is affected.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-1/01-runtime-scenario.out.txt",
+        "packages/db/migrations/0001_identity_access.sql",
+        "packages/db/migrations/0002_transformation.sql",
+        "docs/architecture/erd.md",
+        "docs/architecture/data-dictionary.md"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/domain-reviewer.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T20:33:41Z",
+          "status": "OPEN",
+          "note": "Reported in DG1 round 1 domain review (clean re-gate, candidate sha256:25c97340…)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-002",
+      "stage_id": "DG1",
+      "requirement": "REQ-S19-004",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Operator clean-start guide still says the migration step applies 6 migrations; the candidate applies 8",
+      "reproduction": "docs/operations/clean-start.md line 91 (path B step table, A1–A2): '`mth migrate` applies 6 migrations'. Running the candidate's `node packages/db/dist/cli.js migrate` on a fresh database prints 'applied 8 migration(s)' (0001–0008), and the integration global setup reports 'applied 8 migrations to a fresh database' (docs/delivery/test-evidence/DG1/domain/round-1/09-integration-node22.log).",
+      "expected": "The IT-facing clean-start guide states the current migration count (8), or no fixed count, so that an operator who checks the documented outcome isn't misled.",
+      "actual": "It states 6. The dated timing table (line 101) is a historical measurement and is acceptable as such; line 91 describes the expected current behaviour.",
+      "evidence": [
+        "docs/operations/clean-start.md",
+        "docs/delivery/test-evidence/DG1/domain/round-1/01-runtime-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-1/09-integration-node22.log"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/domain-reviewer.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T20:33:41Z",
+          "status": "OPEN",
+          "note": "Reported in DG1 round 1 domain review (clean re-gate)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-003",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-001",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "REQ-S16-001 register note cites a domain round-1 evidence file that was absent from the frozen candidate (it exists only on the dev-history tag)",
+      "reproduction": "In the frozen candidate (commit 2c22c27 / manifest 25c97340b6047e87), the REQ-S16-001 notes column says 'The DG1 round-1 domain reviewer checked it manually (worker exit 0 on SIGTERM, then /readyz 200; docs/delivery/test-evidence/DG1/domain/round-1/01-runtime-scenario.out.txt)'. Before this review ran, `ls docs/delivery/test-evidence/DG1/domain/round-1` failed with 'No such file or directory'. The file is present only on tag dg1-dev-history-d1cb245 (`git ls-tree -r --name-only dg1-dev-history-d1cb245 -- docs/delivery/test-evidence/DG1/domain/round-1/`). The clean re-gate's round 1 reuses the same path, which now holds this round's evidence.",
+      "expected": "A register note that relies on evidence from the preserved development history cites it unambiguously (for example as 'dg1-dev-history-d1cb245:<path>'), so that a clean-round path collision cannot make a pre-existing claim appear to be supported by evidence produced later.",
+      "actual": "The citation is ambiguous. On its merits the claim holds: this round's live check reproduced it (worker exit=0 on SIGTERM, API process alive, /readyz 200 after the worker stopped). The register also discloses honestly that no automated test covers it.",
+      "evidence": [
+        "docs/delivery/requirements.csv",
+        "docs/delivery/test-evidence/DG1/domain/round-1/01-runtime-scenario.out.txt"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/domain-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T20:33:41Z",
+          "status": "OPEN",
+          "note": "Reported in DG1 round 1 domain review (clean re-gate)."
+        }
+      ]
+    }
+  ]
+}
