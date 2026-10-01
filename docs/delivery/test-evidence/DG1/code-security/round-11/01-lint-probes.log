@@ -1,0 +1,162 @@
+$ npx vitest run --project unit-node apps/api/src/zz-r11-probe.test.ts apps/api/src/architecture.test.ts   # node v22.22.2, clone @d8eb695
+SPELLED | S1 named import | n=2 | ["native loader via setEngine (line 1) bypasses the module-interface check","native loader via setEngine (line 2) bypasses the module-interface check"]
+SPELLED | S2 namespace member | n=1 | ["native loader via .setEngine() (line 2) bypasses the module-interface check"]
+SPELLED | S3 string key | n=1 | ["native loader via [\"setEngine\"] (line 2) bypasses the module-interface check"]
+SPELLED | S4 aliased named import | n=1 | ["native loader via setEngine (line 1) bypasses the module-interface check"]
+SPELLED | S5 destructured alias | n=1 | ["native loader via a destructured setEngine (line 2) bypasses the module-interface check"]
+SPELLED | S6 default member | n=1 | ["native loader via .setEngine() (line 2) bypasses the module-interface check"]
+SPELLED | S7 unicode-escaped identifier | n=1 | ["native loader via .setEngine() (line 2) bypasses the module-interface check"]
+SPELLED | S8 escaped string key | n=1 | ["native loader via [\"setEngine\"] (line 2) bypasses the module-interface check"]
+SPELLED | S9 template key | n=1 | ["native loader via [\"setEngine\"] (line 2) bypasses the module-interface check"]
+SPELLED | S10 re-export | n=1 | ["native loader via setEngine (line 1) bypasses the module-interface check"]
+SPELLED | S11 optional chain | n=1 | ["native loader via .setEngine() (line 2) bypasses the module-interface check"]
+SPELLED | S12 dynamic literal import | n=1 | ["native loader via .setEngine() (line 1) bypasses the module-interface check"]
+SPELLED | S13 bare string literal | n=1 | ["native loader via the \"setEngine\" key as a value (line 1) bypasses the module-interface check"]
+SPELLED | S14 renamed re-export | n=1 | ["native loader via setEngine (line 1) bypasses the module-interface check"]
+SPELLED | S15 concatenated computed key (rule 2) | n=1 | ["computed member with a non-literal key (line 2) bypasses the module-interface check"]
+SPELLED | S16 computed destructuring key (rule 2) | n=1 | ["computed property name with a non-literal key (line 3) bypasses the module-interface check"]
+ENUM | E1 Object.values(ns).find by fn.name | n=0 | []
+ENUM | E2 new Map(Object.entries(ns)).get(built key) | n=0 | []
+ENUM | E3 Object.entries(ns).find by regex | n=0 | []
+ENUM | E4 for-of Object.entries(default) | n=0 | []
+ENUM | E5 dynamic import then enumerate | n=0 | []
+POSITIVE | P1 randomUUID/createHash | n=0 | []
+POSITIVE | P2 namespace import alone | n=0 | []
+POSITIVE | P3 Map(Object.entries(obj)).get(name) on a plain object | n=0 | []
+   × SEC-R11 F-DG1-132/215 probe > feasibility of a NARROW static closure: no module file uses node:crypto other than via named imports 1ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (109 tests) 1172ms
+ FAIL  |unit-node| apps/api/src/zz-r11-probe.test.ts > SEC-R11 F-DG1-132/215 probe > real module tree: zero moduleViolations
+     51|   it("feasibility of a NARROW static closure: no module file uses node…
+ FAIL  |unit-node| apps/api/src/zz-r11-probe.test.ts > SEC-R11 F-DG1-132/215 probe > feasibility of a NARROW static closure: no module file uses node:crypto other than via named imports
+ Test Files  1 failed | 1 passed (2)
+      Tests  2 failed | 133 passed (135)
+exit=1
+$ npx vitest run --project unit-node apps/api/src/zz-r11-probe.test.ts apps/api/src/architecture.test.ts   # node v24.21.0, clone @d8eb695
+SPELLED | S1 named import | n=2 | ["native loader via setEngine (line 1) bypasses the module-interface check","native loader via setEngine (line 2) bypasses the module-interface check"]
+SPELLED | S2 namespace member | n=1 | ["native loader via .setEngine() (line 2) bypasses the module-interface check"]
+SPELLED | S3 string key | n=1 | ["native loader via [\"setEngine\"] (line 2) bypasses the module-interface check"]
+SPELLED | S4 aliased named import | n=1 | ["native loader via setEngine (line 1) bypasses the module-interface check"]
+SPELLED | S5 destructured alias | n=1 | ["native loader via a destructured setEngine (line 2) bypasses the module-interface check"]
+SPELLED | S6 default member | n=1 | ["native loader via .setEngine() (line 2) bypasses the module-interface check"]
+SPELLED | S7 unicode-escaped identifier | n=1 | ["native loader via .setEngine() (line 2) bypasses the module-interface check"]
+SPELLED | S8 escaped string key | n=1 | ["native loader via [\"setEngine\"] (line 2) bypasses the module-interface check"]
+SPELLED | S9 template key | n=1 | ["native loader via [\"setEngine\"] (line 2) bypasses the module-interface check"]
+SPELLED | S10 re-export | n=1 | ["native loader via setEngine (line 1) bypasses the module-interface check"]
+SPELLED | S11 optional chain | n=1 | ["native loader via .setEngine() (line 2) bypasses the module-interface check"]
+SPELLED | S12 dynamic literal import | n=1 | ["native loader via .setEngine() (line 1) bypasses the module-interface check"]
+SPELLED | S13 bare string literal | n=1 | ["native loader via the \"setEngine\" key as a value (line 1) bypasses the module-interface check"]
+SPELLED | S14 renamed re-export | n=1 | ["native loader via setEngine (line 1) bypasses the module-interface check"]
+SPELLED | S15 concatenated computed key (rule 2) | n=1 | ["computed member with a non-literal key (line 2) bypasses the module-interface check"]
+SPELLED | S16 computed destructuring key (rule 2) | n=1 | ["computed property name with a non-literal key (line 3) bypasses the module-interface check"]
+ENUM | E1 Object.values(ns).find by fn.name | n=0 | []
+ENUM | E2 new Map(Object.entries(ns)).get(built key) | n=0 | []
+ENUM | E3 Object.entries(ns).find by regex | n=0 | []
+ENUM | E4 for-of Object.entries(default) | n=0 | []
+ENUM | E5 dynamic import then enumerate | n=0 | []
+POSITIVE | P1 randomUUID/createHash | n=0 | []
+POSITIVE | P2 namespace import alone | n=0 | []
+POSITIVE | P3 Map(Object.entries(obj)).get(name) on a plain object | n=0 | []
+   × SEC-R11 F-DG1-132/215 probe > feasibility of a NARROW static closure: no module file uses node:crypto other than via named imports 0ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (109 tests) 1297ms
+ FAIL  |unit-node| apps/api/src/zz-r11-probe.test.ts > SEC-R11 F-DG1-132/215 probe > real module tree: zero moduleViolations
+     51|   it("feasibility of a NARROW static closure: no module file uses node…
+ FAIL  |unit-node| apps/api/src/zz-r11-probe.test.ts > SEC-R11 F-DG1-132/215 probe > feasibility of a NARROW static closure: no module file uses node:crypto other than via named imports
+ Test Files  1 failed | 1 passed (2)
+      Tests  2 failed | 133 passed (135)
+exit=1
+### probe harness defect in the first run: API_MODULES is an object keyed by module, not an array (iterating it threw), so 'real module tree' and 'narrow closure' failed for a probe reason. Corrected probe (Object.keys(API_MODULES)) re-run:
+$ npx vitest run --project unit-node apps/api/src/zz-r11-probe.test.ts apps/api/src/architecture.test.ts   # node v22.22.2, clone @d8eb695
+ENUM | E1 Object.values(ns).find by fn.name | n=0 | []
+ENUM | E2 new Map(Object.entries(ns)).get(built key) | n=0 | []
+ENUM | E3 Object.entries(ns).find by regex | n=0 | []
+ENUM | E4 for-of Object.entries(default) | n=0 | []
+ENUM | E5 dynamic import then enumerate | n=0 | []
+REAL-TREE modules [33m13[39m violations [33m0[39m
+   × SEC-R11 F-DG1-132/215 probe > feasibility of a NARROW static closure: no module file uses node:crypto other than via named imports 6ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (109 tests) 1254ms
+ FAIL  |unit-node| apps/api/src/zz-r11-probe.test.ts > SEC-R11 F-DG1-132/215 probe > feasibility of a NARROW static closure: no module file uses node:crypto other than via named imports
+Error: ENOENT: no such file or directory, open 'cursor.ts'
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 134 passed (135)
+exit=1
+$ npx vitest run --project unit-node apps/api/src/zz-r11-probe.test.ts apps/api/src/architecture.test.ts   # node v24.21.0, clone @d8eb695
+ENUM | E1 Object.values(ns).find by fn.name | n=0 | []
+ENUM | E2 new Map(Object.entries(ns)).get(built key) | n=0 | []
+ENUM | E3 Object.entries(ns).find by regex | n=0 | []
+ENUM | E4 for-of Object.entries(default) | n=0 | []
+ENUM | E5 dynamic import then enumerate | n=0 | []
+REAL-TREE modules [33m13[39m violations [33m0[39m
+   × SEC-R11 F-DG1-132/215 probe > feasibility of a NARROW static closure: no module file uses node:crypto other than via named imports 5ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (109 tests) 1395ms
+ FAIL  |unit-node| apps/api/src/zz-r11-probe.test.ts > SEC-R11 F-DG1-132/215 probe > feasibility of a NARROW static closure: no module file uses node:crypto other than via named imports
+Error: ENOENT: no such file or directory, open 'cursor.ts'
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 134 passed (135)
+exit=1
+### second probe harness defect: moduleFiles() returns paths relative to the module dir; corrected to join(MODULES_DIR, m, f). Re-run:
+$ npx vitest run --project unit-node apps/api/src/zz-r11-probe.test.ts apps/api/src/architecture.test.ts   # node v22.22.2, clone @d8eb695
+SPELLED | S1 named import | n=2 | ["native loader via setEngine (line 1) bypasses the module-interface check","native loader via setEngine (line 2) bypasses the module-interface check"]
+SPELLED | S2 namespace member | n=1 | ["native loader via .setEngine() (line 2) bypasses the module-interface check"]
+SPELLED | S3 string key | n=1 | ["native loader via [\"setEngine\"] (line 2) bypasses the module-interface check"]
+SPELLED | S4 aliased named import | n=1 | ["native loader via setEngine (line 1) bypasses the module-interface check"]
+SPELLED | S5 destructured alias | n=1 | ["native loader via a destructured setEngine (line 2) bypasses the module-interface check"]
+SPELLED | S6 default member | n=1 | ["native loader via .setEngine() (line 2) bypasses the module-interface check"]
+SPELLED | S7 unicode-escaped identifier | n=1 | ["native loader via .setEngine() (line 2) bypasses the module-interface check"]
+SPELLED | S8 escaped string key | n=1 | ["native loader via [\"setEngine\"] (line 2) bypasses the module-interface check"]
+SPELLED | S9 template key | n=1 | ["native loader via [\"setEngine\"] (line 2) bypasses the module-interface check"]
+SPELLED | S10 re-export | n=1 | ["native loader via setEngine (line 1) bypasses the module-interface check"]
+SPELLED | S11 optional chain | n=1 | ["native loader via .setEngine() (line 2) bypasses the module-interface check"]
+SPELLED | S12 dynamic literal import | n=1 | ["native loader via .setEngine() (line 1) bypasses the module-interface check"]
+SPELLED | S13 bare string literal | n=1 | ["native loader via the \"setEngine\" key as a value (line 1) bypasses the module-interface check"]
+SPELLED | S14 renamed re-export | n=1 | ["native loader via setEngine (line 1) bypasses the module-interface check"]
+SPELLED | S15 concatenated computed key (rule 2) | n=1 | ["computed member with a non-literal key (line 2) bypasses the module-interface check"]
+SPELLED | S16 computed destructuring key (rule 2) | n=1 | ["computed property name with a non-literal key (line 3) bypasses the module-interface check"]
+ENUM | E1 Object.values(ns).find by fn.name | n=0 | []
+ENUM | E2 new Map(Object.entries(ns)).get(built key) | n=0 | []
+ENUM | E3 Object.entries(ns).find by regex | n=0 | []
+ENUM | E4 for-of Object.entries(default) | n=0 | []
+ENUM | E5 dynamic import then enumerate | n=0 | []
+POSITIVE | P1 randomUUID/createHash | n=0 | []
+POSITIVE | P2 namespace import alone | n=0 | []
+POSITIVE | P3 Map(Object.entries(obj)).get(name) on a plain object | n=0 | []
+REAL-TREE modules 13 violations 0
+stdout | apps/api/src/zz-r11-probe.test.ts > SEC-R11 F-DG1-132/215 probe > feasibility of a NARROW static closure: no module file uses node:crypto other than via named imports
+NARROW-CLOSURE scan files 41 namespace/default/dynamic/export* uses of node:crypto: []
+ ✓ |unit-node| apps/api/src/zz-r11-probe.test.ts (26 tests) 891ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (109 tests) 1425ms
+ Test Files  2 passed (2)
+      Tests  135 passed (135)
+exit=0
+$ npx vitest run --project unit-node apps/api/src/zz-r11-probe.test.ts apps/api/src/architecture.test.ts   # node v24.21.0, clone @d8eb695
+SPELLED | S1 named import | n=2 | ["native loader via setEngine (line 1) bypasses the module-interface check","native loader via setEngine (line 2) bypasses the module-interface check"]
+SPELLED | S2 namespace member | n=1 | ["native loader via .setEngine() (line 2) bypasses the module-interface check"]
+SPELLED | S3 string key | n=1 | ["native loader via [\"setEngine\"] (line 2) bypasses the module-interface check"]
+SPELLED | S4 aliased named import | n=1 | ["native loader via setEngine (line 1) bypasses the module-interface check"]
+SPELLED | S5 destructured alias | n=1 | ["native loader via a destructured setEngine (line 2) bypasses the module-interface check"]
+SPELLED | S6 default member | n=1 | ["native loader via .setEngine() (line 2) bypasses the module-interface check"]
+SPELLED | S7 unicode-escaped identifier | n=1 | ["native loader via .setEngine() (line 2) bypasses the module-interface check"]
+SPELLED | S8 escaped string key | n=1 | ["native loader via [\"setEngine\"] (line 2) bypasses the module-interface check"]
+SPELLED | S9 template key | n=1 | ["native loader via [\"setEngine\"] (line 2) bypasses the module-interface check"]
+SPELLED | S10 re-export | n=1 | ["native loader via setEngine (line 1) bypasses the module-interface check"]
+SPELLED | S11 optional chain | n=1 | ["native loader via .setEngine() (line 2) bypasses the module-interface check"]
+SPELLED | S12 dynamic literal import | n=1 | ["native loader via .setEngine() (line 1) bypasses the module-interface check"]
+SPELLED | S13 bare string literal | n=1 | ["native loader via the \"setEngine\" key as a value (line 1) bypasses the module-interface check"]
+SPELLED | S14 renamed re-export | n=1 | ["native loader via setEngine (line 1) bypasses the module-interface check"]
+SPELLED | S15 concatenated computed key (rule 2) | n=1 | ["computed member with a non-literal key (line 2) bypasses the module-interface check"]
+SPELLED | S16 computed destructuring key (rule 2) | n=1 | ["computed property name with a non-literal key (line 3) bypasses the module-interface check"]
+ENUM | E1 Object.values(ns).find by fn.name | n=0 | []
+ENUM | E2 new Map(Object.entries(ns)).get(built key) | n=0 | []
+ENUM | E3 Object.entries(ns).find by regex | n=0 | []
+ENUM | E4 for-of Object.entries(default) | n=0 | []
+ENUM | E5 dynamic import then enumerate | n=0 | []
+POSITIVE | P1 randomUUID/createHash | n=0 | []
+POSITIVE | P2 namespace import alone | n=0 | []
+POSITIVE | P3 Map(Object.entries(obj)).get(name) on a plain object | n=0 | []
+REAL-TREE modules 13 violations 0
+stdout | apps/api/src/zz-r11-probe.test.ts > SEC-R11 F-DG1-132/215 probe > feasibility of a NARROW static closure: no module file uses node:crypto other than via named imports
+NARROW-CLOSURE scan files 41 namespace/default/dynamic/export* uses of node:crypto: []
+ ✓ |unit-node| apps/api/src/zz-r11-probe.test.ts (26 tests) 753ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (109 tests) 1279ms
+ Test Files  2 passed (2)
+      Tests  135 passed (135)
+exit=0

@@ -1,0 +1,69 @@
+# F-DG1-214: round-10 failing files on Node 24 with the candidate harness
+$ npx vitest run --project unit-web --reporter=verbose src/app/app.test.tsx src/pages/transformations/transformations.test.tsx (node v24.21.0)
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /var/tmp/mth-run.WSSlKH/claude-0/review-qa
+
+ ✓ |unit-web| src/app/app.test.tsx > bilingual shell > renders Arabic RTL by default with the provisional wordmark 100ms
+ ✓ |unit-web| src/app/app.test.tsx > bilingual shell > switches to English LTR and persists the preference with If-Match 194ms
+ ✓ |unit-web| src/app/app.test.tsx > bilingual shell > shows all fourteen areas to an administrator 186ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > after create (F-DG1-004) > shows the created record when the server lets the creator read it 473ms
+ ✓ |unit-web| src/app/app.test.tsx > bilingual shell > hides Administration from a Workstream Lead, and the admin route shows no-permission 122ms
+ ✓ |unit-web| src/app/app.test.tsx > bilingual shell > marks planned areas as planned instead of pretending they work 46ms
+ ✓ |unit-web| src/app/app.test.tsx > bilingual shell > redirects to sign-in when there is no session 21ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > after create (F-DG1-004) > explains, in English, that the draft was created but cannot be opened (server 404), instead of 'Not found' 174ms
+ ✓ |unit-web| src/app/app.test.tsx > sign-in > shows the development form only when the server has the dev-login route (400 on an empty probe) 48ms
+ ✓ |unit-web| src/app/app.test.tsx > sign-in > hides the development form when the route answers 404 (OIDC mode) 18ms
+ ✓ |unit-web| src/app/app.test.tsx > sign-in > only follows same-origin relative return paths 0ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > after create (F-DG1-004) > explains the same in Arabic (RTL), using the glossary term for Transformation 137ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > after create (F-DG1-004) > treats a 403 for the just-created record the same way 102ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > truly out-of-scope records keep the correct localized message > 404 without a just-created record: 'Not found' (en) / 'غير موجود' (ar), nothing disclosed 61ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > truly out-of-scope records keep the correct localized message > 403: 'You do not have access' rather than 'Not found' 26ms
+ ✓ |unit-web| src/app/app.test.tsx > transformations > lists transformations with a sortable code column and removable filter chips 248ms
+ ✓ |unit-web| src/app/app.test.tsx > transformations > shows the empty state (not zero rows) when nothing is visible 43ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > truly out-of-scope records keep the correct localized message > router state for a different id does not turn a 404 into the created message 48ms
+ ✓ |unit-web| src/app/app.test.tsx > transformations > detail shows the workspace header with Unknown for data from later stages 83ms
+ ✓ |unit-web| src/app/app.test.tsx > transformations > detail shows the no-permission state for a 404 35ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > audit trail changes (F-DG1-005) > English: field and value labels, not raw keys or enum codes 126ms
+ ✓ |unit-web| src/app/app.test.tsx > transformations > edit: a 409 writes nothing, shows compare, and re-applies on the current version 118ms
+ ✓ |unit-web| src/app/app.test.tsx > transformations > builds the create payload for both modes 1ms
+ ✓ |unit-web| src/app/app.test.tsx > transformations > sends only changed fields, with null for cleared optional values 0ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > audit trail changes (F-DG1-005) > Arabic: the same changes with Arabic labels in the RTL layout 103ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > P1 close rule in the edit form (F-DG1-001, T-DG1-FE3) > governs exactly `closed`, mirroring the API's GOVERNED_TARGET_STATUSES 1ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > P1 close rule in the edit form (F-DG1-001, T-DG1-FE3) > offers only the P1 transitions plus the current status; never `closed` 1ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > P1 close rule in the edit form (F-DG1-001, T-DG1-FE3) > the status hint no longer promises a close transition and names the G6 approval (en and ar) 0ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > P1 close rule in the edit form (F-DG1-001, T-DG1-FE3) > en: the rendered status select for an active record has no Closed option 42ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > P1 close rule in the edit form (F-DG1-001, T-DG1-FE3) > ar: the rendered status select for an active record has no Closed option 48ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > derived creator assignment on the audit trail (F-DG1-008) > English: localized action, fields, role, user and scope; nothing raw or marked untranslated 88ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > derived creator assignment on the audit trail (F-DG1-008) > Arabic (RTL): the same event with Arabic labels and the glossary role name 98ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > derived creator assignment on the audit trail (F-DG1-008) > an action the catalogue does not know stays readable and is explicitly marked (en and ar) 148ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > effective permissions refresh after create (F-DG1-210) > English: Edit, Archive and the audit trail appear after create, without a reload 369ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > effective permissions refresh after create (F-DG1-210) > Arabic (RTL): the same controls and the audit trail appear after create, without a reload 362ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > effective permissions refresh after create (F-DG1-210) > does not over-grant: if the refreshed server answer adds nothing, Archive and the audit trail stay hidden 202ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > effective permissions refresh after create (F-DG1-210) > a failed /me refresh never blocks the navigation; the UI stays fail-safe (no controls offered) 3118ms
+
+ Test Files  2 passed (2)
+      Tests  37 passed (37)
+   Start at  15:32:01
+   Duration  7.28s (transform 699ms, setup 0ms, collect 1.59s, tests 7.00s, environment 909ms, prepare 200ms)
+
+exit=0
+
+# NEGATIVE CONTROL (disposable clone only): revert vitest environment to built-in 'jsdom' and re-run on Node 24
+ apps/web/vitest.config.ts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+      1       Tests  12 failed | 98 passed (110)
+      1      → RequestInit: Expected signal ("AbortSignal {}") to be an instance of AbortSignal.
+      1  Test Files  2 failed | 6 passed (8)
+     12 TypeError: RequestInit: Expected signal ("AbortSignal {}") to be an instance of AbortSignal.
+      1 ⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+AbortSignal-error-lines=13
+restored: 0 modified files
+# same control on Node 22
+node v22.22.2, environment jsdom:
+ Test Files  8 passed (8)
+      Tests  110 passed (110)
+restored: 0 modified files
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:e5cc6ef982ba7d53ed80138c0cbaa0119bcfe8dcaad4e324b5dafdb6431afeb8","files":391}

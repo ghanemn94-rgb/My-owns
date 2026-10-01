@@ -1,0 +1,27 @@
+== D-055 row phrase scan (candidate 32e6478)
+"closes the whole"                            0
+"prevents further"                            0
+"exhaustive"                                  2
+"v22.22.2"                                    1
+"v24.21.0"                                    1
+"production target"                           1
+"residual (a)"                                2
+"F-DG1-132/215"                               2
+"not a claim that no"                         1
+"node24-member-audit.log"                     1
+"version-independently"                       1
+"re-run when the Node floor/target changes"   1
+"101/101"                                     1
+"294/294"                                     1
+== evidence file cited exists in candidate?
+100644 blob 97161352e5d2204fcf725468841f0b5af80e42a4	docs/delivery/test-evidence/DG1/orchestrator/node24-member-audit.log
+== testkit header lines mentioning audit/Node version/exhaustive
+19://  1. BANNED NAMES, in every SPELLED form outside type positions - identifier, `.member`, `["key"]`, string
+46:// version the lint runs on (production targets Node 24, the supported floor is Node 22.18+): a new built-in or
+50:// MEMBER AUDIT (Node v22.22.2 / OpenSSL 3.5.5, every own property of node:{crypto, fs, fs/promises, os, path, url,
+53:// `crypto.setEngine`, which rule 1 now bans in every SPELLED form (identifier, `.member`, `["literal"]`, destructured,
+69://      built-ins (`crypto.setEngine`) is additionally name-banned (rule 1, every spelled form); reaching it by
+99: * member audit in the header (F-DG1-130), they expose no member that loads, evaluates or executes code, opens a
+108:/** F-DG1-124: dynamic-code primitives, banned in every SPELLED form (rule 1), by the kind of bypass they give. */
+== D-055 sentence on member audit
+The default-deny decides which built-in MODULES a module may import; the MEMBERS of an allow-listed module are covered by a recorded member-audit in the testkit header (F-DG1-130): the only member of the seven that loads/executes/natively-loads code is `crypto.setEngine` (a native `dlopen`), now banned by rule 1 (every spelled form; reaching it by namespace enumeration is residual (a), F-DG1-132/215). The audit was performed on Node v22.22.2 (the build-sandbox floor) and re-run by the orchestrator on Node v24.21.0 (the production target, ADR-0001) in round 11 with the identical result — `crypto.setEngine` the only native-loader member, all dangerous `process.*` members denied by default-deny, and the static lint behaving identically (it parses the AST, independent of the Node runtime); evidence `docs/delivery/test-evidence/DG1/orchestrator/node24-member-audit.log`. It is re-run when the Node floor/target changes. The lint remains static defence-in-depth for the ADR-0002 module boundaries over human-reviewed code in a read-only production source tree — not a runtime security boundary. | DG1 round 8: all three reviewers PASS on candidate `sha256:e27eaf5f…`; the open items (F-DG1-010/129/213) were Low/non-ma

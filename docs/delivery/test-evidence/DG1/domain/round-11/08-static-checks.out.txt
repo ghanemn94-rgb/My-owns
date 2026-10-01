@@ -1,0 +1,31 @@
+== pnpm check:no-cdn (node v24.21.0)
+PASS no-cdn: scanned apps, packages
+exit=0
+== pnpm openapi:lint (node v24.21.0)
+PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 33 operations
+exit=0
+== pnpm typecheck (node v24.21.0)
+exit=0
+== pnpm lint (node v24.21.0)
+exit=0
+== pnpm format:check (node v24.21.0)
+Checking formatting...
+All matched files use Prettier code style!
+exit=0
+== web typecheck covers test/ (tsconfig include)
+  "include": ["src", "test", "vite.config.ts", "vitest.config.ts"]
+== brand tokens provenance
+packages/shared/src/schemas/branding.ts:2:// operation getBrandingTokens); keep both in lockstep. `provenance` stays "provisional" while the seeded §15 tokens
+packages/shared/src/schemas/branding.ts:3:// are unverified. #0078FF is a provisional brand token, not a verified Mobily colour.
+packages/shared/src/schemas/branding.ts:6:export const brandingProvenance = z.enum(["provisional", "official"]);
+packages/shared/src/schemas/branding.ts:7:export type BrandingProvenance = z.infer<typeof brandingProvenance>;
+packages/shared/src/schemas/branding.ts:18:  provenance: brandingProvenance,
+== official/certified claims in i18n (expect only negations)
+apps/web/src/i18n/en/common.json:5:    "provisionalHint": "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.",
+apps/web/src/i18n/en/common.json:6:    "provisionalNotice": "Branding is provisional: the text wordmark and colours are placeholders, not official Mobily brand assets."
+apps/web/src/i18n/en/common.json:120:    "brandBody": "No official Mobily logo or verified brand colours have been supplied. The header shows a provisional text wordmark, and the colours (including #0078FF) are provision
+apps/web/src/i18n/en/common.json:123:    "methodBody": "The product operationalizes the Business Transformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with custom extensions. It
+apps/web/src/i18n/ar/common.json:5:    "provisionalHint": "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي ا
+apps/web/src/i18n/ar/common.json:6:    "provisionalNotice": "الهوية البصرية مؤقتة: الشعار النصي والألوان بدائل مؤقتة وليست أصولًا رسمية لعلامة موبا
+apps/web/src/i18n/ar/common.json:117:    "brandBody": "لم يُقدَّم شعار رسمي لموبايلي ولا ألوان علامة معتمدة. يعرض الترويسة شعارًا نصيًا مؤقتًا، و
+apps/web/src/i18n/ar/common.json:120:    "methodBody": "يطبّق المنتج دليل تحوّل الأعمال الإصدار 1.0، وهو خلاصة عملية مستوحاة من ممارسات PMI وBrightline وB

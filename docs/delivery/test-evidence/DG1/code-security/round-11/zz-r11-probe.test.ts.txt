@@ -1,0 +1,59 @@
+// Round-11 code-security probe (disposable clone only; never in the candidate tree).
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { MODULES_DIR, fileViolations, moduleFiles, moduleViolations } from "./architecture.testkit.ts";
+import { API_MODULES, type ApiModule } from "./modules.ts";
+
+const FILE = join(MODULES_DIR, "transformations", "zz-planted.ts");
+const plant = (src: string) => fileViolations("transformations", FILE, src);
+const log = (tag: string, name: string, v: string[]) =>
+  console.log(`${tag} | ${name} | n=${v.length} | ${JSON.stringify(v.map((s) => s.replace(/^.*?: /, "")))}`);
+
+const SPELLED: [string, string][] = [
+  ["S1 named import", `import { setEngine } from "node:crypto";\nsetEngine("/x.so");`],
+  ["S2 namespace member", `import * as c from "node:crypto";\nc.setEngine("/x.so");`],
+  ["S3 string key", `import crypto from "node:crypto";\n(crypto as any)["setEngine"]("/x.so");`],
+  ["S4 aliased named import", `import { setEngine as s } from "node:crypto";\ns("/x.so");`],
+  ["S5 destructured alias", `import * as c from "node:crypto";\nconst { setEngine: s } = c;\ns("/x.so");`],
+  ["S6 default member", `import crypto from "node:crypto";\ncrypto.setEngine("/x.so");`],
+  ["S7 unicode-escaped identifier", `import * as c from "node:crypto";\nc.set\\u0045ngine("/x.so");`],
+  ["S8 escaped string key", `import * as c from "node:crypto";\n(c as any)["set\\x45ngine"]("/x.so");`],
+  ["S9 template key", "import * as c from \"node:crypto\";\n(c as any)[`setEngine`](\"/x.so\");"],
+  ["S10 re-export", `export { setEngine } from "node:crypto";`],
+  ["S11 optional chain", `import * as c from "node:crypto";\n(c as any).default?.setEngine?.("/x.so");`],
+  ["S12 dynamic literal import", `export const f = async () => (await import("node:crypto")).setEngine("/x.so");`],
+  ["S13 bare string literal", `export const k = "setEngine";`],
+  ["S14 renamed re-export", `export { setEngine as s } from "node:crypto";`],
+  ["S15 concatenated computed key (rule 2)", `import * as c from "node:crypto";\n(c as any)["set" + "Engine"]("/x.so");`],
+  ["S16 computed destructuring key (rule 2)", `import * as c from "node:crypto";\nconst k = "set".concat("Engine");\nconst { [k]: f } = c as any;\nf("/x.so");`],
+];
+const ENUM: [string, string][] = [
+  ["E1 Object.values(ns).find by fn.name", `import * as c from "node:crypto";\nconst f = Object.values(c).find((x) => typeof x === "function" && x.name === "set" + "Engine") as (p: string) => void;\nf("/x.so");`],
+  ["E2 new Map(Object.entries(ns)).get(built key)", `import * as c from "node:crypto";\n(new Map(Object.entries(c)).get("set".concat("Engine")) as (p: string) => void)("/x.so");`],
+  ["E3 Object.entries(ns).find by regex", `import * as c from "node:crypto";\n(Object.entries(c).find(([k]) => /^setEng/.test(k))![1] as (p: string) => void)("/x.so");`],
+  ["E4 for-of Object.entries(default)", `import crypto from "node:crypto";\nfor (const [k, f] of Object.entries(crypto)) if (k.startsWith("set") && k.endsWith("Engine")) (f as (p: string) => void)("/x.so");`],
+  ["E5 dynamic import then enumerate", `export const g = async () => { const c = await import("node:crypto"); for (const [k, f] of Object.entries(c)) if (k.startsWith("setE")) (f as (p: string) => void)("/x.so"); };`],
+];
+const POSITIVE: [string, string][] = [
+  ["P1 randomUUID/createHash", `import { randomUUID, createHash } from "node:crypto";\nexport const a = randomUUID() + createHash("sha256").update("x").digest("hex");`],
+  ["P2 namespace import alone", `import * as nodeCrypto from "node:crypto";\nexport const h = nodeCrypto.createHash("sha256");`],
+  ["P3 Map(Object.entries(obj)).get(name) on a plain object", `const PERMS = { a: 1, b: 2 };\nexport const get = (n: string) => new Map(Object.entries(PERMS)).get(n);`],
+];
+
+describe("SEC-R11 F-DG1-132/215 probe", () => {
+  it.each(SPELLED)("SPELLED %s is a violation", (name, src) => { const v = plant(src); log("SPELLED", name, v); expect(v.length).toBeGreaterThan(0); });
+  it.each(ENUM)("ENUM %s is NOT flagged (residual (a))", (name, src) => { const v = plant(src); log("ENUM", name, v); expect(v).toEqual([]); });
+  it.each(POSITIVE)("POSITIVE %s is clean", (name, src) => { const v = plant(src); log("POSITIVE", name, v); expect(v).toEqual([]); });
+  it("real module tree: zero moduleViolations", () => {
+    const all = (Object.keys(API_MODULES) as ApiModule[]).flatMap((m) => moduleViolations(m)); console.log("REAL-TREE modules", Object.keys(API_MODULES).length, "violations", all.length); expect(all).toEqual([]);
+  });
+  it("feasibility of a NARROW static closure: no module file uses node:crypto other than via named imports", () => {
+    const hits: string[] = []; let files = 0;
+    for (const m of Object.keys(API_MODULES) as ApiModule[]) for (const f of moduleFiles(m)) {
+      files++; const s = readFileSync(join(MODULES_DIR, m, f), "utf8");
+      if (/import\s+\*\s+as\s+\w+\s+from\s+["'](node:)?crypto["']|import\s+\w+\s*(,|from)\s*[^;]*["'](node:)?crypto["']|import\(\s*["'](node:)?crypto["']\s*\)|export\s+\*\s+(as\s+\w+\s+)?from\s+["'](node:)?crypto["']/.test(s)) hits.push(f);
+    }
+    console.log("NARROW-CLOSURE scan files", files, "namespace/default/dynamic/export* uses of node:crypto:", JSON.stringify(hits)); expect(hits).toEqual([]);
+  });
+});

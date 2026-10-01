@@ -11072,7 +11072,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-10/domain-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T14:38:45Z",
@@ -11083,10 +11083,35 @@
           "at": "2026-10-01T15:07:09Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 7c3ebb2976eb880ef470b49d45b6057986d77d1f"
+        },
+        {
+          "at": "2026-10-01T15:26:30Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 11: PASS"
         }
       ],
       "fix_revision": "7c3ebb2976eb880ef470b49d45b6057986d77d1f",
-      "fix_summary": "D-055 corrected: dropped the 'closes whole class/prevents further findings' overclaim; named the member-audit runtime (Node 22.22.2 floor) and recorded the orchestrator's Node 24.21.0 (production target) re-audit with identical results + evidence node24-member-audit.log; enumeration reach noted as residual (a)."
+      "fix_summary": "D-055 corrected: dropped the 'closes whole class/prevents further findings' overclaim; named the member-audit runtime (Node 22.22.2 floor) and recorded the orchestrator's Node 24.21.0 (production target) re-audit with identical results + evidence node24-member-audit.log; enumeration reach noted as residual (a).",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-DOM-R11-domain-reviewer-20261001T151913Z-8e429fc0",
+          "session_id": "8e429fc0-cdec-4413-ab19-f8d702bcc7a9"
+        },
+        "at": "2026-10-01T15:26:30Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/domain/round-11/04-D055-accuracy.out.txt",
+          "docs/delivery/test-evidence/DG1/domain/round-11/05-member-name-scan.out.txt",
+          "docs/delivery/test-evidence/DG1/domain/round-11/06-process-member-form-probe.out.txt",
+          "docs/delivery/test-evidence/DG1/domain/round-11/03-architecture-verbose-node24.out.txt",
+          "docs/delivery/test-evidence/DG1/domain/round-11/00-candidate-and-diff.out.txt",
+          "docs/delivery/test-evidence/DG1/orchestrator/node24-member-audit.log",
+          "docs/delivery/decisions.md"
+        ],
+        "note": "Verified by domain-reviewer, the originating reviewer and a non-author: the delivery-orchestrator wrote the fix in commit 7c3ebb2. That commit is an ancestor of the freeze commit 32e6478 and is in the frozen candidate sha256:e5cc6ef982ba7d53ed80138c0cbaa0119bcfe8dcaad4e324b5dafdb6431afeb8, whose ID recomputes identically in a full disposable clone. Every element of the finding's 'expected' is now met. (1) The overclaim is gone: 'closes the whole' and 'prevents further' each appear 0 times in D-055. The row now says the default-deny 'structurally closes the module-IMPORT and process-MEMBER loader/exec classes version-independently', does NOT cover a native-loader member of an allow-listed module (F-DG1-130) or its runtime-enumeration reach (F-DG1-132/215, residual (a)), and that 'default-deny is not a claim that no further adjacent route exists'. My probe confirms the process-member part. Every process.kill/_debugProcess form (dotted, destructured, globalThis, literal key, alias, Reflect.get, Object.entries(process)) is flagged on both Node 22.22.2 and Node 24.21.0, and process.env plus node:crypto randomUUID stay allowed. (2) The runtime is named: the audit was 'performed on Node v22.22.2 (the build-sandbox floor) and re-run … on Node v24.21.0 (the production target, ADR-0001)'. The cited evidence, docs/delivery/test-evidence/DG1/orchestrator/node24-member-audit.log, is committed in the candidate. My own member-name scan on both runtimes reproduces its conclusion. crypto.setEngine is the only loader member. The one new Node 24 name match, util.convertProcessSignalToExitCode, is a pure mapping and not a loader. All 10 dangerous process members are present and none is allow-listed. The architecture suite gives 109/109 on both runtimes. (3) The word 'exhaustive' now appears only in quotes of the superseded D-053/D-054 framing. The F-DG1-010/011 pattern of a version-detached exhaustiveness claim is resolved, not repeated. The optional part of 'expected' (refreshing the round-9 counts 101/101 and 294/294 in the Rationale/evidence column) was not done. Those counts are decision-time evidence and are not inaccurate, so this is an observation only, not a reason to keep the finding open."
+      }
     },
     {
       "id": "F-DG1-132",
@@ -11110,7 +11135,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-10/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "ACCEPTED_OBSERVATION",
       "history": [
         {
           "at": "2026-10-01T14:44:39Z",
@@ -11126,10 +11151,31 @@
           "at": "2026-10-01T15:13:18Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at d54c151c44e20810e75d637784c33875959e71a3"
+        },
+        {
+          "at": "2026-10-01T15:34:01Z",
+          "status": "ACCEPTED_OBSERVATION",
+          "note": "verified by code-security-reviewer round 11: PASS"
         }
       ],
       "fix_revision": "d54c151c44e20810e75d637784c33875959e71a3",
-      "fix_summary": "setEngine ban is spelled-name-based; reaching crypto.setEngine by runtime enumeration of the node:crypto namespace is documented+pinned as residual (a); 'every form'->'every SPELLED form'. architecture 109/109."
+      "fix_summary": "setEngine ban is spelled-name-based; reaching crypto.setEngine by runtime enumeration of the node:crypto namespace is documented+pinned as residual (a); 'every form'->'every SPELLED form'. architecture 109/109.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-SEC-R11-code-security-reviewer-20261001T151913Z-38ae0562",
+          "session_id": "38ae0562-e606-480c-850b-ef621894a774"
+        },
+        "at": "2026-10-01T15:34:01Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/code-security/round-11/00-candidate-identity.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-11/01-lint-probes.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-11/zz-r11-probe.test.ts.txt"
+        ],
+        "note": "Verified by the originating reviewer on candidate sha256:e5cc6ef9...feb8 (freeze commit 32e6478, HEAD d8eb695). The ID is identical in the real repo and in a full disposable clone at both commits (00-candidate-identity.log). The fix is d54c151. In round 10 I asked for one of two things: close the node:crypto namespace-as-value route, or stop claiming 'every form' and name the route under residual (a). The second was done. apps/api/src/architecture.testkit.ts:19-22, :53-56, :64-74 and :100-101, and architecture.test.ts:15-16, now say 'every SPELLED form' and name runtime enumeration as residual (a). architecture.test.ts:530-556 pins E1-E4 as non-violations. D-055 says the same. I re-proved this on Node 22.22.2 AND Node 24.21.0 (01-lint-probes.log). All 16 spelled and computed forms are violations: named, namespace member, string key, aliased, destructured alias, default member, unicode-escaped, escaped key, template key, re-export, optional chain, dynamic-literal import, bare string, renamed re-export, concatenated key (rule 2) and computed destructuring key (rule 2). The enumeration forms E1-E4, plus my E5 (dynamic import() then enumerate), give 0 violations, as documented. Positive controls are clean: randomUUID/createHash, the namespace import alone, and Map(Object.entries(plainObject)).get. The real 13-module tree has 0 moduleViolations. architecture.test.ts passes 109/109 on both runtimes. The route is now documented and deliberate, a Low and non-mandatory static-lint residual, so I accept it as an observation (the release-auditor must also accept it). One inaccuracy in the stated justification remains: the header says the route is 'not closable statically' and that a namespace ban 'would break' identity/routes.ts and access/rules.ts, which actually enumerate plain objects. I raise that separately as F-DG1-133 (Low, non-mandatory). It does not reopen this finding."
+      }
     },
     {
       "id": "F-DG1-214",
@@ -11153,7 +11199,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG1/round-10/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T14:56:30Z",
@@ -11169,10 +11215,37 @@
           "at": "2026-10-01T15:13:18Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at d54c151c44e20810e75d637784c33875959e71a3"
+        },
+        {
+          "at": "2026-10-01T15:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 11: PASS"
         }
       ],
       "fix_revision": "d54c151c44e20810e75d637784c33875959e71a3",
-      "fix_summary": "Custom vitest environment apps/web/test/jsdom-native-abort-environment.ts: jsdom + Node's native AbortController/AbortSignal (same realm as undici Request). unit-web 110/110 + full unit 302/302 on Node 22.22.2 AND 24.21.0; harness-only."
+      "fix_summary": "Custom vitest environment apps/web/test/jsdom-native-abort-environment.ts: jsdom + Node's native AbortController/AbortSignal (same realm as undici Request). unit-web 110/110 + full unit 302/302 on Node 22.22.2 AND 24.21.0; harness-only.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-QA-R11-qa-verifier-20261001T151913Z-387e17fe",
+          "session_id": "387e17fe-9331-4641-949b-1e3ed79db865"
+        },
+        "at": "2026-10-01T15:45:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/qa/round-11/04-unit-node24.log",
+          "docs/delivery/test-evidence/DG1/qa/round-11/05-unit-web-v24.21.0.log",
+          "docs/delivery/test-evidence/DG1/qa/round-11/03-unit-node22.log",
+          "docs/delivery/test-evidence/DG1/qa/round-11/05-unit-web-v22.22.2.log",
+          "docs/delivery/test-evidence/DG1/qa/round-11/06-f214-node24-files-and-negative-control.log",
+          "docs/delivery/test-evidence/DG1/qa/round-11/01b-candidate-diff-r10-r11.log",
+          "docs/delivery/test-evidence/DG1/qa/round-11/12-e2e-node24.log",
+          "apps/web/test/jsdom-native-abort-environment.ts",
+          "apps/web/vitest.config.ts"
+        ],
+        "note": "Verified on frozen candidate sha256:e5cc6ef982ba7d53ed80138c0cbaa0119bcfe8dcaad4e324b5dafdb6431afeb8 (freeze commit 32e6478; the ID recomputes identically in a full disposable clone). Fix d54c151 (T-DG1-FE3) is harness-only: the r10->r11 manifest diff adds apps/web/test/jsdom-native-abort-environment.ts and changes apps/web/vitest.config.ts (environment -> the custom env) and apps/web/tsconfig.json (include test). No product source changed. On Node v24.21.0, the ADR-0001 target and a CI unit-matrix leg (ci.yml node ['24','22']): pnpm test gives 302/302, unit-web 110/110, unit-node 192/192, and 0 'Expected signal to be an instance of AbortSignal'. The round-10 failing files app.test.tsx and transformations.test.tsx are 37/37 green on Node 24, including the F-DG1-004 and F-DG1-210 EN/AR/fail-safe regression tests. On Node v22.22.2 the result is the same, 302/302 with unit-web 110/110. Negative control, in the disposable clone only: reverting the environment to built-in 'jsdom' reproduces exactly the round-10 failure on Node 24 (12 failed | 98 passed, all 'RequestInit: Expected signal (\"AbortSignal {}\") to be an instance of AbortSignal') and stays 110/110 on Node 22. The custom environment is therefore what fixes it, and the finding's expected outcome (the required unit check passes on every declared runtime, in particular Node 24) is met. e2e (real Chromium, where AbortSignal and Request always share a realm) is 22/22 on both runtimes."
+      }
     },
     {
       "id": "F-DG1-215",
@@ -11196,7 +11269,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG1/round-10/qa-verifier.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T14:56:30Z",
@@ -11212,10 +11285,71 @@
           "at": "2026-10-01T15:13:18Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at d54c151c44e20810e75d637784c33875959e71a3"
+        },
+        {
+          "at": "2026-10-01T15:34:01Z",
+          "status": "ACCEPTED_OBSERVATION",
+          "note": "verified by code-security-reviewer round 11: PASS"
+        },
+        {
+          "at": "2026-10-01T15:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 11: PASS"
         }
       ],
       "fix_revision": "d54c151c44e20810e75d637784c33875959e71a3",
-      "fix_summary": "setEngine ban is spelled-name-based; reaching crypto.setEngine by runtime enumeration of the node:crypto namespace is documented+pinned as residual (a); 'every form'->'every SPELLED form'. architecture 109/109."
+      "fix_summary": "setEngine ban is spelled-name-based; reaching crypto.setEngine by runtime enumeration of the node:crypto namespace is documented+pinned as residual (a); 'every form'->'every SPELLED form'. architecture 109/109.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-QA-R11-qa-verifier-20261001T151913Z-387e17fe",
+          "session_id": "387e17fe-9331-4641-949b-1e3ed79db865"
+        },
+        "at": "2026-10-01T15:45:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/qa/round-11/07-f215-arch-selfcheck-extract.log",
+          "docs/delivery/test-evidence/DG1/qa/round-11/19-f215-wording-check.log",
+          "docs/delivery/test-evidence/DG1/qa/round-11/08-r11-setengine-probe-v22.22.2.log",
+          "docs/delivery/test-evidence/DG1/qa/round-11/08-r11-setengine-probe-v24.21.0.log",
+          "docs/delivery/test-evidence/DG1/qa/round-11/08-r11-setengine-probe-v22.22.2.attempt1.log",
+          "docs/delivery/test-evidence/DG1/qa/tests/dg1-r11-setengine-probe.test.ts",
+          "apps/api/src/architecture.testkit.ts",
+          "apps/api/src/architecture.test.ts"
+        ],
+        "note": "Verified on frozen candidate sha256:e5cc6ef9…afeb8 (freeze 32e6478). The finding's expected outcome lists 'name enumeration of an allow-listed namespace as a stated residual and correct the every form / every syntactic route wording' as an acceptable closure, and the implementer (T-DG1-BE12) chose that one. Checked: (1) architecture.testkit.ts. Rule 1, the member audit, the SAFE_NODE_BUILTINS doc and BANNED_PRIMITIVES now say 'every SPELLED form'. Residual (a) explicitly names enumeration of an allow-listed built-in's namespace/default binding via Object.entries/Object.values/Map/find/regex with a runtime-built key, with setEngine examples. It now reads 'Rules 1-2 remove every SPELLED route inside module source, not every runtime route'. D-055 references F-DG1-132/215 residual (a) (19-f215-wording-check.log). (2) architecture.test.ts pins E1-E4 as 0 violations ('is NOT flagged (accepted static-lint residual)') and keeps S1-S3 as violations: 109/109 on Node 22 and on Node 24. (3) My independent probe, 31/31 on both runtimes: all 20 spelled forms are flagged 'native loader'. E1-E4 and the extra X2 (spread of values + fn.name regex) reach crypto.setEngine (runtime identity true; nothing loaded) with 0 violations, which is the documented residual, so no undocumented route remains in that class. The extra X1 (getOwnPropertyDescriptors) is flagged as reflection, stricter than the residual. My attempt-1 probe wrongly expected X1 to be unflagged; those logs are kept. The justification holds: access/rules.ts and identity/routes.ts really use new Map(Object.entries(...)). Per the round-11 common instructions, a namespace-enumeration reach of an allow-listed member is the documented residual (a), not a new finding. F-DG1-132 (code-security) is the same route; this verification covers the shared evidence, but I leave 132's closure to its reporter."
+      }
+    },
+    {
+      "id": "F-DG1-133",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Module lint header: the residual (a) justification for not closing the node:crypto namespace-enumeration route is partly inaccurate. The header calls the route 'not closable statically' and says banning namespace-as-value use 'would break legitimate code (new Map(Object.entries(x)).get(name) in identity/routes.ts, access/rules.ts)'. Those two call sites enumerate plain objects (request.cookies, PERMISSIONS), not a module namespace. Every one of the 41 module files imports node:crypto through named imports only. A narrow static rule would therefore close E1-E5 without breaking any current module code: allow only named imports from node:crypto, and flag namespace/default import, dynamic import() and export * of it. Accepting the route is a legitimate choice. It is just not a forced one, and the documentation should say so.",
+      "reproduction": "Candidate sha256:e5cc6ef9...feb8 (freeze 32e6478, HEAD d8eb695), full disposable clone, Node v22.22.2 and v24.21.0. (1) Static reading: apps/api/src/architecture.testkit.ts:63 '(stated and ACCEPTED, not closable statically)' and :72-74 'banning all namespace-as-value use or all dynamic reads would break legitimate code (`new Map(Object.entries(x)).get(name)` in identity/routes.ts, access/rules.ts)'. architecture.test.ts:533 says the same ('banning namespace-as-value use or Object.entries/Map lookups would break legitimate module code'). apps/api/src/modules/identity/routes.ts:35 is `new Map(Object.entries(request.cookies)).get(name)` and apps/api/src/modules/access/rules.ts:55 is `new Map(Object.entries(PERMISSIONS))`. Neither uses a node:crypto (or any module) namespace as a value. (2) Probe (docs/delivery/test-evidence/DG1/code-security/round-11/zz-r11-probe.test.ts.txt, output in 01-lint-probes.log): scanning every file of the 13 modules (41 files) for `import * as X from \"node:crypto\"`, a default import, `import(\"node:crypto\")` or `export * from \"node:crypto\"` finds none ('NARROW-CLOSURE ... []'), on both Node versions. The cited Map/Object.entries idiom on a plain object (positive control P3) is independent of such a rule. (3) The enumeration forms E1-E4 pinned by the candidate, plus E5 (dynamic import() then enumerate), all give 0 violations. Each needs a namespace or default binding, or a dynamic import of node:crypto, so the narrow rule would cover all five.",
+      "expected": "The residual (a) text is honest about why the route stays open. Either the lint closes it with the narrow rule (named imports only for node:crypto, since that module carries a banned member), or the header and the E-case comment say the route is accepted BY CHOICE (defence-in-depth lint over reviewed code). In that case they would not call it 'not closable statically' or cite identity/routes.ts and access/rules.ts as code a namespace ban would break. Those files would only be broken by a blanket ban on Object.entries/Map dynamic reads, which nobody proposed.",
+      "actual": "The header's 'every SPELLED form' correction is accurate: 16/16 spelled and computed forms are flagged, the real tree has 0 violations and architecture.test.ts passes 109/109. The enumeration reach is named and pinned, as F-DG1-132 asked. Only the stated reason for leaving the route open overstates the cost of closing it. This is a documentation-accuracy defect in a test-side lint (static defence-in-depth, not a runtime boundary). It is Low and non-mandatory, and I would accept it as an observation if the auditor agrees.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-11/01-lint-probes.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-11/zz-r11-probe.test.ts.txt",
+        "apps/api/src/architecture.testkit.ts",
+        "apps/api/src/architecture.test.ts",
+        "apps/api/src/modules/identity/routes.ts",
+        "apps/api/src/modules/access/rules.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-11/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T15:34:01Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG1 round 11 while verifying F-DG1-132/215. My assignment asked me to confirm that the residual framing is honest and to check the identity/access files. The enumeration reach itself is the documented residual (a) and is NOT what this finding is about. This finding concerns only the accuracy of the stated justification. Proposed ID: the next free number in the code-security 1xx range (F-DG1-133); the orchestrator may renumber. Low and non-mandatory, so it does not block DG1."
+        }
+      ]
     }
   ]
 }

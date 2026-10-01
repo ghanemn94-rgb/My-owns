@@ -1,0 +1,39 @@
+### A) custom env (candidate config) + probe, node v24.21.0
+ ✓ |unit-web| src/components/States.test.tsx (15 tests) 410ms
+ ✓ |unit-web| src/lib/lib.test.ts (18 tests) 48ms
+ ✓ |unit-web| src/app/app.test.tsx (16 tests) 2088ms
+   ✓ transformations > lists transformations with a sortable code column and removable filter chips  423ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts (15 tests) 21ms
+ ✓ |unit-web| src/i18n/i18n.test.ts (11 tests) 22ms
+ ✓ |unit-web| src/i18n/glossary.test.ts (8 tests) 8ms
+ ✓ |unit-web| src/styles/styles.test.ts (6 tests) 7ms
+   × SEC-R11 probe: abort realm in the custom env > AbortSignal is Node's native one and Request accepts it; jsdom document still present 12ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx (21 tests) 6774ms
+   ✓ after create (F-DG1-004) > shows the created record when the server lets the creator read it  658ms
+   ✓ after create (F-DG1-004) > explains, in English, that the draft was created but cannot be opened (server 404), instead of 'Not found'  301ms
+   ✓ effective permissions refresh after create (F-DG1-210) > English: Edit, Archive and the audit trail appear after create, without a reload  463ms
+   ✓ effective permissions refresh after create (F-DG1-210) > Arabic (RTL): the same controls and the audit trail appear after create, without a reload  384ms
+   ✓ effective permissions refresh after create (F-DG1-210) > a failed /me refresh never blocks the navigation; the UI stays fail-safe (no controls offered)  3150ms
+ FAIL  |unit-web| src/zz-sec-r11-abort-probe.test.ts > SEC-R11 probe: abort realm in the custom env > AbortSignal is Node's native one and Request accepts it; jsdom document still present
+      9|     console.log("probe node", process.version, "AbortSignal native:", …
+ Test Files  1 failed | 8 passed (9)
+      Tests  1 failed | 110 passed (111)
+### B) NEGATIVE CONTROL: environment reverted to built-in 'jsdom' (disposable edit), node v24.21.0
+1:// Web unit tests (ADR-0012): jsdom environment, referenced by the root vitest.config.ts as project "unit-web".
+11:      // Node's `Request` on Node 24 as well as Node 22 (F-DG1-214; see test/jsdom-native-abort-environment.ts).
+12:      environment: "jsdom",
+      1       Tests  13 failed | 98 passed (111)
+      2      → RequestInit: Expected signal ("AbortSignal {}") to be an instance of AbortSignal.
+      1  Test Files  3 failed | 6 passed (9)
+     13 TypeError: RequestInit: Expected signal ("AbortSignal {}") to be an instance of AbortSignal.
+### restored:
+### earlier probe variant asserted String(AbortSignal) contains '[native code]' - wrong premise (Node's AbortSignal is a JS class in lib/internal/abort_controller.js), so that 1 failure was a probe defect; corrected probe:
+### A) candidate config + corrected probe, node v24.21.0
+probe node v24.21.0 AbortSignal src head: class AbortSignal extends EventTarget { /** * @param {
+ Test Files  9 passed (9)
+      Tests  111 passed (111)
+### A) candidate config + corrected probe, node v22.22.2
+probe node v22.22.2 AbortSignal src head: class AbortSignal extends EventTarget { /** * @param {
+ Test Files  9 passed (9)
+      Tests  111 passed (111)
+(clean)

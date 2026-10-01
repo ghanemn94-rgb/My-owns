@@ -1,0 +1,30 @@
+# F-DG1-215 wording check at candidate 32e6478 (git show; residual (a) + 'every form' / 'every syntactic route' overclaims)
+== $ git show 32e6478:apps/api/src/architecture.testkit.ts | grep -niE 'every (syntactic )?(form|route)|every SPELLED|residual \(a\)'
+19://  1. BANNED NAMES, in every SPELLED form outside type positions - identifier, `.member`, `["key"]`, string
+22://     enumeration of an allow-listed namespace - is NOT statically visible; that is residual (a) below):
+53:// `crypto.setEngine`, which rule 1 now bans in every SPELLED form (identifier, `.member`, `["literal"]`, destructured,
+55:// namespace/default binding, without writing the name, is residual (a) (F-DG1-132/215). Name matches checked and
+69://      built-ins (`crypto.setEngine`) is additionally name-banned (rule 1, every spelled form); reaching it by
+72://      architecture.test.ts self-check). Rules 1-2 remove every SPELLED route inside module source, not every
+100: * debugger, or loads native objects EXCEPT `crypto.setEngine` (a native loader), which rule 1 bans in every SPELLED
+101: * form (reaching it by runtime enumeration of the namespace is residual (a)); residuals (a)-(c)
+108:/** F-DG1-124: dynamic-code primitives, banned in every SPELLED form (rule 1), by the kind of bypass they give. */
+== $ git show 32e6478:apps/api/src/architecture.test.ts | grep -niE 'every (syntactic )?(form|route)|every SPELLED|residual \(a\)'
+15://     member `setEngine` of the allow-listed node:crypto (rule 1, every SPELLED form; reaching it by runtime
+16://     enumeration of the namespace is the accepted residual (a), pinned by a self-check, F-DG1-132/215);
+395:    // SPELLED form (enumeration without the name is residual (a), pinned below). "missed" here = 0 violations with
+530:  // F-DG1-132 / F-DG1-215 - ACCEPTED RESIDUAL (a), deliberately NOT a violation case. Rule 1 bans `setEngine` only
+534:  // would break legitimate module code. See residual (a) in the architecture.testkit.ts header. This test pins the
+554:  ])("F-DG1-132/215 residual (a): %s is NOT flagged (accepted static-lint residual)", (_case, source) => {
+== $ git show 32e6478:docs/delivery/decisions.md | grep -niE 'every (syntactic )?(form|route)|every SPELLED|residual \(a\)'
+7:| D-055 | 2026-10-01 | delivery-orchestrator | **DG1 round-9 (F-DG1-129/213/010, all Low/non-mandatory): flip the module lint's Node-built-in and `process.*` checks from DENYLISTS to DEFAULT-DENY ALLOW-LISTS — superseding the "closed as found / exhaustive 
+10:| D-052 | 2026-10-01 | delivery-orchestrator | **DG1 round-6 repairs (both DG1 round-5 findings were Low/non-mandatory; fixed rather than accepted because each is a correctness gap in a security control with a precise, bounded fix).** (1) **F-DG1-125 (code-
+== decisions.md rows mentioning F-DG1-215/132
+7:| D-055 | 2026-10-01 | delivery-orchestrator | **DG1 round-9 (F-DG1-129/213/010, all Low/non-mandatory): flip the module lint's Node-built-in and `process.*` checks from DENYLISTS to DEFAULT-DENY ALLOW-LISTS — superseding the "closed as found / exhaustive for the pinned Node" framing of D-053/D-054.** Rounds 4–8 closed loader/exec routes one at a time (`eval`/`constructor`/`Reflect` F-DG1-12
+== diff 265af7e..32e6478 decisions.md (stat)
+ docs/delivery/decisions.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+| **DG1 round-9 (F-DG1-129/213/010, all Low/non-mandatory): flip the module lint's Node-built-in and `process.*` checks from DENYLISTS to DEFAULT-DENY ALLOW-LISTS — superseding the "closed as found / exhaustive for the pinned Node" framing of D-053/D-054.** Rounds 4–8 closed loader/exec routes one at a time (`eval`/`constructor`/`Reflect` F-DG1-124; `node:process` F-DG1-125; `node:sqlite` F-DG1-127; `node:t
+s(pid)` (start the in-process V8 inspector — the capability of the banned `node:inspector` — F-DG1-129 code-security and F-DG1-213 qa, the same route found independently), while F-DG1-010 showed the "exhaustive for the pinned Node 22" claim named the wrong runtime (production is Node 24; the sweep ran on Node 22). A denylist over Node's evolving surface cannot converge or be version-independent. **Decision:
+F-DG1-129/213). It does NOT by itself cover a native-loader MEMBER of an allow-listed module (F-DG1-130, `crypto.setEngine`, name-banned by rule 1) nor the runtime-enumeration reach of such a member (F-DG1-132/215, residual (a)); default-deny is not a claim that no further adjacent route exists. The allow-lists were validated against the real module tree (`moduleViolations` zero): module source imports fou
+130): the only member of the seven that loads/executes/natively-loads code is `crypto.setEngine` (a native `dlopen`), now banned by rule 1 (every spelled form; reaching it by namespace enumeration is residual (a), F-DG1-132/215). The audit was performed on Node v22.22.2 (the build-sandbox floor) and re-run by the orchestrator on Node v24.21.0 (the production target, ADR-0001) in round 11 with the identical re

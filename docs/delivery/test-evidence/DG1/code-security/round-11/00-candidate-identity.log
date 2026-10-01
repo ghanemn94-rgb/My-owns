@@ -1,0 +1,53 @@
+$ git rev-parse HEAD; git rev-parse --is-shallow-repository   # real repo (read-only)
+d8eb695eedf8db6b520a6de544ef91f049f80b05
+false
+$ git log --oneline 32e6478^..HEAD; git merge-base --is-ancestor 32e6478 HEAD
+d8eb695 DG1 r11: freeze candidate e5cc6ef9 + round-11 review assignments
+32e6478 DG1 r11: mark F-DG1-214/132/215 FIXED_PENDING_VERIFICATION (fix d54c151)
+32e6478 is an ancestor of HEAD
+$ git diff --stat 32e6478 HEAD   # freeze..HEAD: candidate-excluded metadata only
+ docs/delivery/assignments/DG1/round-11/audit.md    |   24 +
+ .../DG1/round-11/review-code-security-reviewer.md  |   12 +
+ .../assignments/DG1/round-11/review-common.md      |   17 +
+ .../DG1/round-11/review-domain-reviewer.md         |   11 +
+ .../assignments/DG1/round-11/review-qa-verifier.md |   18 +
+ .../candidates/DG1/e5cc6ef982ba7d53.manifest.json  | 1973 ++++++++++++++++++++
+ docs/delivery/stages.json                          |   22 +-
+ 7 files changed, 2072 insertions(+), 5 deletions(-)
+$ node tools/gates/candidate.mjs --stage DG1   # real repo, node v22.22.2
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:e5cc6ef982ba7d53ed80138c0cbaa0119bcfe8dcaad4e324b5dafdb6431afeb8","files":391}
+$ (clone) git checkout 32e6478 && node tools/gates/candidate.mjs --stage DG1
+32e6478de3c49b2c80d044b8a2d5d89f88c35f65
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:e5cc6ef982ba7d53ed80138c0cbaa0119bcfe8dcaad4e324b5dafdb6431afeb8","files":391}
+$ (clone) git checkout d8eb695 && node tools/gates/candidate.mjs --stage DG1
+d8eb695eedf8db6b520a6de544ef91f049f80b05
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:e5cc6ef982ba7d53ed80138c0cbaa0119bcfe8dcaad4e324b5dafdb6431afeb8","files":391}
+$ git diff --stat 265af7e 32e6478 -- apps packages tools deploy scripts e2e tests licenses .github package.json pnpm-lock.yaml   # source delta since round-10 candidate
+ apps/api/src/architecture.test.ts               | 36 ++++++++++++++++++++++---
+ apps/api/src/architecture.testkit.ts            | 30 +++++++++++++++------
+ apps/web/test/jsdom-native-abort-environment.ts | 30 +++++++++++++++++++++
+ apps/web/tsconfig.json                          |  2 +-
+ apps/web/vitest.config.ts                       |  4 ++-
+ 5 files changed, 89 insertions(+), 13 deletions(-)
+$ git diff 265af7e 32e6478 --name-only -- apps/web   # F-DG1-214 confined to harness?
+apps/web/test/jsdom-native-abort-environment.ts
+apps/web/tsconfig.json
+apps/web/vitest.config.ts
+$ manifest diff 18fee161 (round 10) -> e5cc6ef9 (round 11)
+added: []
+removed: []
+changed: ['candidate_id', 'entries', 'frozen_at', 'source_commit']
+$ manifest entries diff 18fee161 (round 10, 390) -> e5cc6ef9 (round 11, 391)
+added: ['apps/web/test/jsdom-native-abort-environment.ts']
+removed: []
+changed: ['apps/api/src/architecture.test.ts', 'apps/api/src/architecture.testkit.ts', 'apps/web/tsconfig.json', 'apps/web/vitest.config.ts', 'docs/delivery/decisions.md']
+$ git log --oneline d8eb695..HEAD; git diff --stat d8eb695 HEAD | tail -1; candidate-included paths changed?
+d58454c run: DG1-T-DG1-REV-DOM-R11-domain-reviewer-20261001T151913Z-8e429fc0 (review evidence, auto-committed by run-agent.sh)
+docs/delivery/reviews/DG1/round-11/<file>
+docs/delivery/runs/DG1/DG1-T-DG1-REV-DOM-R11-domain-reviewer-20261001T151913Z-8e429fc0/meta.json
+docs/delivery/runs/DG1/DG1-T-DG1-REV-DOM-R11-domain-reviewer-20261001T151913Z-8e429fc0/result.json
+docs/delivery/runs/DG1/DG1-T-DG1-REV-DOM-R11-domain-reviewer-20261001T151913Z-8e429fc0/sandbox.json
+docs/delivery/runs/DG1/DG1-T-DG1-REV-DOM-R11-domain-reviewer-20261001T151913Z-8e429fc0/settings.json
+docs/delivery/runs/DG1/DG1-T-DG1-REV-DOM-R11-domain-reviewer-20261001T151913Z-8e429fc0/stderr.log
+docs/delivery/runs/DG1/DG1-T-DG1-REV-DOM-R11-domain-reviewer-20261001T151913Z-8e429fc0/transcript.jsonl.gz
+ 9 files changed, 699 insertions(+)

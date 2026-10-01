@@ -1,0 +1,28 @@
+== node v22.22.2
+P1 process.kill => 2 violation(s): modules/transformations/zz.ts: non-allow-listed process.kill member (line 1) bypasses the module-interface check
+P2 destructure const {kill} = process => 1 violation(s): modules/transformations/zz.ts: process used as a value (line 1) bypasses the module-interface check
+P3 globalThis.process.kill => 1 violation(s): modules/transformations/zz.ts: globalThis.process (line 1) bypasses the module-interface check
+P4 process['_debugProcess'] literal key => 1 violation(s): modules/transformations/zz.ts: computed member of process (line 1) bypasses the module-interface check
+P5 alias const p = process; p.kill => 1 violation(s): modules/transformations/zz.ts: process used as a value (line 1) bypasses the module-interface check
+P6 Reflect.get(process, built key) => 2 violation(s): modules/transformations/zz.ts: reflection via Reflect (line 1) bypasses the module-interface check
+P7 Object.values(process).find => 1 violation(s): modules/transformations/zz.ts: process used as a value (line 1) bypasses the module-interface check
+M1 import node:child_process => 1 violation(s): modules/transformations/zz.ts: imports non-allow-listed node built-in node:child_process
+M2 dynamic import literal node:vm => 1 violation(s): modules/transformations/zz.ts: imports non-allow-listed node built-in node:vm
+M3 require-less createRequire via node:module => 2 violation(s): modules/transformations/zz.ts: module loader via createRequire (line 1) bypasses the module-interface check
+OK1 process.env read (allowed) => 0 violation(s)
+OK2 node:crypto randomUUID (allowed) => 0 violation(s)
+      Tests  12 passed (12)
+== node v24.21.0
+P1 process.kill => 2 violation(s): modules/transformations/zz.ts: non-allow-listed process.kill member (line 1) bypasses the module-interface check
+P2 destructure const {kill} = process => 1 violation(s): modules/transformations/zz.ts: process used as a value (line 1) bypasses the module-interface check
+P3 globalThis.process.kill => 1 violation(s): modules/transformations/zz.ts: globalThis.process (line 1) bypasses the module-interface check
+P4 process['_debugProcess'] literal key => 1 violation(s): modules/transformations/zz.ts: computed member of process (line 1) bypasses the module-interface check
+P5 alias const p = process; p.kill => 1 violation(s): modules/transformations/zz.ts: process used as a value (line 1) bypasses the module-interface check
+P6 Reflect.get(process, built key) => 2 violation(s): modules/transformations/zz.ts: reflection via Reflect (line 1) bypasses the module-interface check
+P7 Object.values(process).find => 1 violation(s): modules/transformations/zz.ts: process used as a value (line 1) bypasses the module-interface check
+M1 import node:child_process => 1 violation(s): modules/transformations/zz.ts: imports non-allow-listed node built-in node:child_process
+M2 dynamic import literal node:vm => 1 violation(s): modules/transformations/zz.ts: imports non-allow-listed node built-in node:vm
+M3 require-less createRequire via node:module => 2 violation(s): modules/transformations/zz.ts: module loader via createRequire (line 1) bypasses the module-interface check
+OK1 process.env read (allowed) => 0 violation(s)
+OK2 node:crypto randomUUID (allowed) => 0 violation(s)
+      Tests  12 passed (12)
