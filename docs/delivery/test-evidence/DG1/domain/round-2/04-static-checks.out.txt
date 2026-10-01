@@ -1,0 +1,25 @@
+$ pnpm check:no-cdn
+PASS no-cdn: scanned apps, packages
+exit=0
+
+$ pnpm openapi:lint
+PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 33 operations
+exit=0
+
+$ grep -c operationId: docs/api/openapi.yaml
+33
+
+$ pnpm --filter @mth/web typecheck
+
+> @mth/web@0.1.0 typecheck /var/tmp/mth-run.CIB5xQ/claude-0/review-dom-r2/apps/web
+> tsc -p tsconfig.json
+
+exit=0
+
+$ font sources
+apps/web/src/main.tsx:4:import "@fontsource/ibm-plex-sans-arabic/arabic-400.css";
+apps/web/src/main.tsx:5:import "@fontsource/ibm-plex-sans-arabic/arabic-500.css";
+apps/web/src/main.tsx:6:import "@fontsource/ibm-plex-sans-arabic/arabic-600.css";
+apps/web/src/main.tsx:7:import "@fontsource/ibm-plex-sans/latin-400.css";
+apps/web/src/main.tsx:8:import "@fontsource/ibm-plex-sans/latin-500.css";
+apps/web/src/main.tsx:9:import "@fontsource/ibm-plex-sans/latin-600.css";

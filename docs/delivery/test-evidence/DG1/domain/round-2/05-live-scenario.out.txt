@@ -1,0 +1,55 @@
+# env: disposable clone of f32c705 (pnpm -r build), PostgreSQL 16 throwaway cluster, API AUTH_MODE=dev on :3317, SYNTHETIC dev seed, Chromium 1194 headless (/opt/pw-browsers)
+cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applied 8 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+readyz: {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+PASS A0 dev.office login 204 :: 204
+PASS A1 create 201 draft :: 201 draft
+PASS A2 draft->active 200 :: 200
+PASS A3 active->closed (status only) refused 422 invalid-transition citing G6 :: 422 urn:mth:problem:invalid-transition :: A transformation cannot be closed by a status edit. Closure requires the G6 (Sustain) business approval with validated benefits, which is not available in this release.
+PASS A3 active->closed (mixed with rename) refused 422 invalid-transition citing G6 :: 422 urn:mth:problem:invalid-transition :: A transformation cannot be closed by a status edit. Closure requires the G6 (Sustain) business approval with validated benefits, which is not available in this release.
+PASS A4 record unchanged (active, v2, name) :: active|2|SYNTHETIC domain-review closure probe
+PASS A5 no audit row written by the refused close :: 2 -> 2
+PASS A6 no transformation is closed in the database :: 0
+PASS B1 dev.lead (TL @ SYN-RETAIL) create 201 :: 201
+PASS B2 dev.lead GET own record 200 (no dead not-found) :: 200
+PASS B3 derived assignment is TL @ transformation, linked to source :: TL|transformation|true
+PASS B4 the carried-over TL role holds no gate approval permission :: 0
+PASS B5 dev.lead still cannot read a record it did not create (404) :: 404
+C0 GET /api/v1/branding/tokens -> 200 {"provenance":"provisional","tokens":[{"name":"brand.primary","value":"#0078FF","purpose":"Primary accents and selected elements","provisional":true},{"name":"brand.deep","value":"#003B73","purpose":"Stronger blue surfaces and text where suitable","provisional":true},{"name":"surface.page","value":"#F5F8FC","purpose":"Page background","provisional":true},{"name":"surface.card","value":"#FFFFFF","purpose":"Content surfaces","provisional":true},{"name":"text.primary","value":"#142438","purpose":"Main text","provisional":true},{"name":"text.secondary","value":"#526174","purpose":"Secondary text","provisional":true},{"name":"border.default","value":"#DCE5EF","purpose":"Dividers and field boundaries","provisional":true}]}
+PASS C1 tokens unauthenticated -> 401
+PASS C2 tokens include #0078FF and no 'official' provenance
+PASS D1 ar: html dir :: rtl
+PASS D2 ar: provisional wordmark marker :: منصة موبايلي للتحوّل مؤقت شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتم
+PASS D3 ar: edit form status options exclude closed :: active=نشط, on_hold=معلّق
+PASS D4 ar: status hint names the G6 business approval
+PASS D5 ar: detail shows Transformation glossary term
+PASS D6 ar: no 'مبادرة التحو' conflation
+PASS D7 ar: audit trail shows no raw keys (status/current_phase/business_unit_id)
+PASS D8 ar: audit trail shows localized status label
+PASS D9 ar: no request outside the stack origin (fonts bundled, no CDN)
+PASS D10 ar: bundled IBM Plex faces loaded :: IBM Plex Sans Arabic, IBM Plex Sans
+PASS D1 en: html dir :: ltr
+PASS D2 en: provisional wordmark marker :: Mobily Transformation Hub Provisional Provisional wordmark: no official logo has been supplied. Colours are provisional 
+PASS D3 en: edit form status options exclude closed :: active=Active, on_hold=On hold
+PASS D4 en: status hint names the G6 business approval
+PASS D5 en: detail shows Transformation glossary term
+PASS D6 en: no 'مبادرة التحو' conflation
+PASS D7 en: audit trail shows no raw keys (status/current_phase/business_unit_id)
+PASS D8 en: audit trail shows localized status label
+PASS D9 en: no request outside the stack origin (fonts bundled, no CDN)
+PASS D10 en: bundled IBM Plex faces loaded :: IBM Plex Sans Arabic, IBM Plex Sans
+PASS E1 ar: dev.lead opens its own created record (heading = record, no not-found state) :: TR-0002 SYNTHETIC lead-created transformation | notFoundStates=0
+E2 ar: audit trail of the lead-created record: raw action code 'scoped_assignment.create' shown=true; fields marked 'حقل بلا ترجمة'=5
+PASS E1 en: dev.lead opens its own created record (heading = record, no not-found state) :: TR-0002 SYNTHETIC lead-created transformation | notFoundStates=0
+E2 en: audit trail of the lead-created record: raw action code 'scoped_assignment.create' shown=true; fields marked 'field without a translation'=5
+SUMMARY failures=0
+exit=0

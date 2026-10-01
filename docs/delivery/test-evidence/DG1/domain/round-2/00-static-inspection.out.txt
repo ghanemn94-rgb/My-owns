@@ -1,0 +1,181 @@
+# DG1 round-2 domain static inspections - candidate sha256:991d32417f16984e47da7bb0767bd2e432e2d88b9fb066513dd7fa1761fea8fc (commit f32c705; HEAD 18c1e61 = freeze commit, metadata only)
+
+$ git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG1; --ref f32c705
+18c1e61f5388b7e21b3989c71b286829327ea34b
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:991d32417f16984e47da7bb0767bd2e432e2d88b9fb066513dd7fa1761fea8fc","files":388}
+{"stage":"DG1","source":"f32c705898cf0a393ed87d7f45a570df9bc09a17","candidate_id":"sha256:991d32417f16984e47da7bb0767bd2e432e2d88b9fb066513dd7fa1761fea8fc","files":388}
+  "matches": true,
+$ git diff --stat f32c705 HEAD
+ docs/delivery/assignments/DG1/round-2/audit.md     |   28 +
+ .../DG1/round-2/review-code-security-reviewer.md   |   23 +
+ .../assignments/DG1/round-2/review-common.md       |   26 +
+ .../DG1/round-2/review-domain-reviewer.md          |   22 +
+ .../assignments/DG1/round-2/review-qa-verifier.md  |   22 +
+ .../candidates/DG1/991d32417f16984e.manifest.json  | 1958 ++++++++++++++++++++
+ docs/delivery/stages.json                          |   20 +-
+ 7 files changed, 2095 insertions(+), 4 deletions(-)
+
+## F-DG1-001 close refusal
+17:export const TRANSFORMATION_STATUS_TRANSITIONS: Readonly<
+18-  Record<TransformationStatus, readonly TransformationStatus[]>
+19-> = {
+20-  draft: ["active"],
+21-  active: ["on_hold", "closed"],
+22-  on_hold: ["active", "closed"],
+23-  closed: [],
+24-};
+25-
+/**
+ * Statuses that an ordinary status edit can NEVER set (F-DG1-001). Closure is terminal and is the outcome of the
+ * product's G6 (Sustain) business approval with validated benefits and a sustainment owner (playbook B0014
+ * "Benefits before closure"; M0092; REQ-S03-003, REQ-PB-009). Neither G6 nor the benefit register exists in P1, and an
+ * API edit must never stand in for a business approval, so P1 refuses every client-driven close (422
+ * invalid-transition) and the record keeps its prior state. The governed close lands with the G6 workflow (P2+/P4).
+ * This is a PRODUCT gate (G6), unrelated to the engineering delivery gates DG0-DG7.
+ */
+export const GOVERNED_TARGET_STATUSES: ReadonlySet<TransformationStatus> = new Set<TransformationStatus>(["closed"]);
+
+export function isAllowedTransition(from: TransformationStatus, to: TransformationStatus): boolean {
+  if (from === to) return true;
+  if (GOVERNED_TARGET_STATUSES.has(to)) return false;
+  return TRANSFORMATION_STATUS_TRANSITIONS[from].includes(to);
+        if (current.archived_at !== null)
+          throw problems.businessRule("transformation.archived", "Archived transformations are read-only.");
+        const from = current.status as TransformationStatus;
+        if (body.status !== undefined && !isAllowedTransition(from, body.status)) {
+          if (GOVERNED_TARGET_STATUSES.has(body.status))
+            throw problems.invalidTransition(
+              "A transformation cannot be closed by a status edit. Closure requires the G6 (Sustain) business " +
+                "approval with validated benefits, which is not available in this release.",
+            );
+          throw problems.invalidTransition(`A transformation cannot move from ${from} to ${body.status}.`);
+        `mode`, `entryPhase` and `currentPhase` are not editable here: phase progression is gate-controlled
+        from P2. Status changes must follow the explicit transitions available in P1 (draft→active,
+        active→on_hold, on_hold→active); anything else is 422 `invalid-transition`. Closing a transformation
+        (`→closed`) is a governed, terminal transition that requires the G6 business approval (delivered in P2+)
+        and is refused here with 422 `invalid-transition` in P1. Archived records are read-only (422).
+      security:
+/**
+ * Target statuses the API refuses as a status edit in P1 (F-DG1-001). Mirrors `GOVERNED_TARGET_STATUSES` in
+ * apps/api/src/modules/transformations/routes.ts: `→closed` returns 422 `invalid-transition`, because closing a
+ * transformation is governed by the G6 (Sustain) business approval, which arrives in P2+. The web must not offer a
+ * transition the API refuses. TODO(P2): lift this shared source of truth into `@mth/shared` and import it here.
+ */
+export const P1_GOVERNED_STATUSES: readonly TransformationStatus[] = ["closed"];
+
+/**
+ * The statuses the edit form offers: the current status (always, so even a defensively-handled already-closed record
+ * renders its own value) plus the allowed next statuses, minus the governed targets the API refuses in P1.
+ */
+export function offeredStatusOptions(current: TransformationStatus): TransformationStatus[] {
+  return [current, ...TRANSFORMATION_STATUS_TRANSITIONS[current].filter((s) => !P1_GOVERNED_STATUSES.includes(s))];
+}
+apps/web/src/i18n/ar/transformations.json:77:    "statusHint": "لا تُعرض إلا الحالات التالية المسموح بها: مسودة ← نشط؛ نشط ← معلّق؛ معلّق ← نشط. يتطلّب إغلاق التحوّل اعتماد الأعمال في البوابة 6 - الاستدامة، وسيتاح ذلك في إصدار لاحق.",
+apps/web/src/i18n/en/transformations.json:77:    "statusHint": "Only the allowed next statuses are offered: draft → active; active → on hold; on hold → active. Closing a transformation needs the G6 (Sustain) business approval, which is available in a later release.",
+28:  status: transformationStatus,
+74:    status: transformationStatus,
+86:  status: z.union([transformationStatus, z.array(transformationStatus).max(4)]).optional(),
+
+## F-DG1-003 glossary
+15:| Modular mode | النمط المعياري (الدخول الجزئي) | النمط الجزئي المرن (الدخول عند المرحلة المناسبة) | "معياري" usually reads as "standard/normative". |
+33:| Transformation | التحوّل | An enterprise or business-unit change effort managed through the six phases, with outcomes, TOM, portfolio and benefits. | B0008, B0009 |
+35:| Modular mode | النمط الجزئي المرن (الدخول عند المرحلة المناسبة) | Enter an underway transformation at the relevant phase, complete the minimum mandatory templates, then reconnect to outcomes and benefits. | B0009 |
+43:| Transform | التحويل والتنفيذ | Phase 5: execute and govern (operating system, workstreams, decisions, adoption). | B0021, B0091 |
+115:| Initiative | مبادرة | A vehicle that closes target-state gaps. | B0059, B0072 |
+4:  "detailTitle": "التحوّل",
+43:    "modular": "النمط الجزئي المرن (الدخول عند المرحلة المناسبة)"
+50:    "transform": "التحويل والتنفيذ",
+67:      "modular": "يدخل التحوّل عند المرحلة المناسبة، مثلًا لإنتاج مُخرَج مستقل واحد."
+83:    "transformation": "التحوّل",
+86:    "initiative": "المبادرة",
+
+## F-DG1-105/002 modules
+index.ts
+workflows.test.ts
+index.ts
+kpi.test.ts
+index.ts
+reporting.test.ts
+/**
+ * Modules that exist in P1 (each with a public index.ts and, for the §16 business modules, its own test suite).
+ * `workflows`, `kpi` and `reporting` are P1 SCAFFOLDS (D-048): boundary, public interface, wiring hook and suite exist
+ * now, their business behaviour lands in P2 / P4 / P5, and their hooks register no routes yet. `methodology` and
+ * `evidence` remain reserved names (no directory yet), so later stages add code, not new boundaries.
+ */
+export const P1_MODULES: readonly ApiModule[] = [
+  "platform",
+  "audit",
+  "identity",
+  "access",
+  "organization",
+  "transformations",
+  "jobs",
+  "admin",
+  "workflows",
+  "kpi",
+  "reporting",
+];
+
+/** The six §16 business modules (master prompt M0308; REQ-S16-003 / A12): each exists with its own test suite. */
+export const SECTION16_MODULES = {
+  "identity/access": ["identity", "access"],
+  transformations: ["transformations"],
+  workflows: ["workflows"],
+  "formulas/KPI": ["kpi"],
+  reporting: ["reporting"],
+  admin: ["admin"],
+} as const satisfies Record<string, readonly ApiModule[]>;
+
+/** P1 scaffolds: they exist, but deliver behaviour in a later stage and register no routes in P1 (D-048). */
+export const P1_SCAFFOLD_MODULES = ["workflows", "kpi", "reporting"] as const satisfies readonly ApiModule[];
+
+## register
+REQ-PB-009 | SPECIFIED | DG4 | ACC: A11: an initiative with delivery=Complete and no validated benefit cannot be closed (API 422 invalid-transition); UI shows 'Delivered — value validation pending' | NOTES: Playbook (B0014): the principle 'Benefits before closure'. Master-prompt additions (§3 M0092, §11 M0218): separate delivery, value-realization and sustainment statuses, and the documented transition decision. Interpretations: the closure rule (validated benefits plus a sustainment owner, or a transition decision), enforced as API 409.
+REQ-S16-001 | IMPLEMENTED | DG1 | ACC: A13;A22: an ADR records the choice; the deployment starts one API and one worker process, and stopping the worker does not stop the API | NOTES: DG1 analyst check (T-DG1-REG; re-checked T-DG1-ANALYST2): API and worker are separate processes of one codebase (separate compose services; separate entry points apps/api/src/main.ts and apps/worker/src/main.ts), and the API suites run with no worker process. The criterion 'stopping the worker does not stop the API' rests on that process separation and is NOT yet covered by an automated test: no test stops a running worker and then probes the API (a18-clean-start.sh restarts the API only). The DG1 round-1 domain reviewer checked it manually (worker exit 0 on SIGTERM, then /readyz 200; docs/delivery/test-evidence/DG1/domain/round-1/01-runtime-scenario.out.txt).
+REQ-S16-003 | IMPLEMENTED | DG1 | ACC: A12: the six modules exist with separate test suites; a dependency-lint check fails on imports that bypass a module interface | NOTES: D-048 (supersedes D-047 part 1): all six §16 business modules exist as module directories with a public index.ts and their own test suites: identity/access (modules identity and access; access/rules.test.ts plus the identity and OIDC integration suites); transformations (transitions.test.ts); workflows (workflows.test.ts); formulas/KPI (module kpi; kpi.test.ts); reporting (reporting.test.ts); admin (branding.test.ts). workflows, kpi and reporting are P1 scaffolds (P1_SCAFFOLD_MODULES): a typed public interface and a register hook that registers no route; their business behaviour lands in P2 (workflows), P4 (formulas/KPI) and P5 (reporting) under their own requirement rows. modules.ts P1_MODULES lists eleven modules: the business modules above plus the platform, audit, organization and jobs infrastructure modules; SECTION16_MODULES maps the six §16 areas to them; methodology and evidence remain reserved names with no directory. architecture.test.ts is the dependency-lint: it requires index.ts for every P1 module, checks the six-area mapping, and fails on planted interface-bypass and undeclared-dependency imports. DG1 analyst check (T-DG1-ANALYST2): vitest unit-node run of the workflows, kpi, reporting, access, transformations and admin suites plus architecture.test.ts: 7 files, 62/62 passed.
+REQ-S16-004 | IMPLEMENTED | DG1 | ACC: A18;A19: a restore of the PostgreSQL backup alone (plus evidence bytes) recovers records, configuration, snapshots and job state | NOTES: DG1 analyst check (T-DG1-REG; re-checked T-DG1-ANALYST2 against migrations 0001-0008): all P1 persistent state (records, roles/permissions and scoped-assignment configuration, OIDC login state, audit, outbox and pg-boss job state) is in PostgreSQL through migrations. What DG1 delivers is the persistence part of the acceptance. The A19 restore drill is not demonstrated at DG1; REQ-S19-012/REQ-S20-019 (DG7) own it. Reporting snapshots do not exist yet (P5).
+REQ-S16-023 | SPECIFIED | DG6 | ACC: A08;A07: deleting an approved gate decision or its evidence returns 409; an illegal status transition returns 422 invalid-transition (ADR-0007); a duplicate unique key returns 409 | NOTES: 
+REQ-S19-004 | IMPLEMENTED | DG1 | ACC: A18: migrations apply cleanly to an empty PostgreSQL database; the ERD matches the migrated schema | NOTES: DG1 analyst check (T-DG1-REG): migrations 0001-0006 apply to a fresh database (migrate.test.ts, 7 tests, in the QA integration log).
+REQ-S19-006 | IMPLEMENTED | DG1 | ACC: A12: the OpenAPI document validates, and the P1 endpoints pass contract tests against it | NOTES: DG1 analyst check (T-DG1-ANALYST2): pnpm openapi:lint PASS (OpenAPI 3.1.1, 33 operations, including getBrandingTokens) in the analyst's own run. Contract suite: 9/9 passed with all 33 operations exercised and none unmatched, per the T-DG1-BE3 focused run (docs/delivery/handbacks/DG1/round-2/T-DG1-BE3-backend-workflow-engineer.md). The analyst could not re-run it (no PostgreSQL cluster available to the analyst run).
+
+## migrations vs data dictionary / ERD
+0001_identity_access.sql
+0002_transformation.sql
+0003_audit_event.sql
+0004_outbox_jobs.sql
+0005_seed_roles_permissions.sql
+0006_pgboss_schema_v25.sql
+0007_oidc_login_browser_binding.sql
+0008_scoped_assignment_derived_from.sql
+docs/architecture/data-dictionary.md:167:| browser_binding_hash | bytea | NOT NULL, `octet_length = 32` (SHA-256 of a random `__Host-`/HttpOnly/`SameSite=Lax` pre-session cookie set by `GET /auth/login`) — migration 0007, F-DG1-103 |
+docs/architecture/data-dictionary.md:171:- **Browser-bound (CSRF, RFC 6749 §10.12 / OIDC Core §3.1.2.1):** the callback consumes a state only when the presenting browser's cookie hashes to `browser_binding_hash`; a callback URL captured from another browser is refused and the state is not consumed. Only the SHA-256 is stored, never the cookie value.
+docs/architecture/data-dictionary.md:229:| derived_from_assignment_id | uuid | NULL FK → scoped_assignment (`ON DELETE/UPDATE RESTRICT`); `CHECK (derived_from_assignment_id IS DISTINCT FROM id)` and `CHECK (… IS NULL OR scope_type = 'transformation')` — migration 0008, F-DG1-106 |
+docs/architecture/data-dictionary.md:236:- `(derived_from_assignment_id) WHERE derived_from_assignment_id IS NOT NULL AND revoked_at IS NULL`;
+docs/architecture/data-dictionary.md:241:- **Derived creator assignment (F-DG1-106):** when a business-unit-scoped grant *without* downward inheritance (e.g. TL) creates a transformation, the API gives the creator an explicit, audited `transformation`-scope assignment of the same role (never a role holding an approval permission), with the source grant's `effective_to`; `derived_from_assignment_id` links it to the source so revoking the source revokes the derived row in the same transaction. NULL for every directly granted row.
+# Entity-relationship model
+
+- **Task:** T-DG1-ARCH-01 (solution-architect), 2026-09-30.
+- **Covers:** master prompt §16 "Minimum domain entities", all twelve groups (REQ-S16-011…022).
+- **Detail:** the physical columns of the tables P1 implements are in `data-dictionary.md`.
+- **Marking:**
+
+## branding/honesty
+2:  "$comment": "Single design-token source (ADR-0009). PROVISIONAL values from master prompt §15 (REQ-S15-002). They are NOT verified or official Mobily colours; #0078FF is a provisional brand token. Replace only through the Branding Settings flow (REQ-S15-004) once official values are supplied.",
+3:  "provisional": true,
+5:    "brand.primary": { "value": "#0078FF", "purpose": "Primary accents and selected elements", "provisional": true },
+7:      "value": "#003B73",
+9:      "provisional": true
+11:    "surface.page": { "value": "#F5F8FC", "purpose": "Page background", "provisional": true },
+12:    "surface.card": { "value": "#FFFFFF", "purpose": "Content surfaces", "provisional": true },
+13:    "text.primary": { "value": "#142438", "purpose": "Main text", "provisional": true },
+14:    "text.secondary": { "value": "#526174", "purpose": "Secondary text", "provisional": true },
+15:    "border.default": { "value": "#DCE5EF", "purpose": "Dividers and field boundaries", "provisional": true }
+apps/web/src/i18n/ar/common.json:117:    "brandBody": "لم يُقدَّم شعار رسمي لموبايلي ولا ألوان علامة معتمدة. يعرض الترويسة شعارًا نصيًا مؤقتًا، والألوان (ومنها #0078FF) رموز تصميم مؤقتة يمكن استبدالها من إعدادات الهوية البصرية بعد اعتماد القيم الرسمية.",
+apps/web/src/i18n/ar/common.json:120:    "methodBody": "يطبّق المنتج دليل تحوّل الأعمال الإصدار 1.0، وهو خلاصة عملية مستوحاة من ممارسات PMI وBrightline وBRM مع إضافات مخصصة. وهو ليس معيارًا رسميًا من PMI، وهذا المنتج غير معتمد من PMI أو من أي جهة أخرى.",
+apps/web/src/i18n/en/common.json:120:    "brandBody": "No official Mobily logo or verified brand colours have been supplied. The header shows a provisional text wordmark, and the colours (including #0078FF) are provisional design tokens that can be replaced through Branding Settings once official values are approved.",
+apps/web/src/i18n/en/common.json:123:    "methodBody": "The product operationalizes the Business Transformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with custom extensions. It is not an official PMI standard, and this product is not certified by PMI or any other body.",
+
+## DG mixing in UI catalogues (expect none)
+apps/web/src/i18n/glossary.test.ts:1:// Domain terms in the UI catalogues follow the approved DG0 glossary (F-DG1-003, REQ-PB-003).
+apps/web/src/i18n/glossary.test.ts:2:// Source: docs/analysis/glossary.md (T-DG0-AN-01, revised T-DG0-AN-05). The test parses the glossary tables directly,
+apps/web/src/i18n/glossary.test.ts:71:  it("parses the DG0 glossary with distinct Transformation and Initiative terms", () => {
