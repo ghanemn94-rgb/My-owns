@@ -12,7 +12,8 @@ import {
   withheldImpactEntry,
   type ImpactInput,
 } from './perimeter';
-import { TSA_MESSAGES_EN, tsaEscalationI18n, tsaEscalationText } from './readiness';
+import { CUTOVER_HISTORY_MESSAGES_EN, TSA_MESSAGES_EN, cutoverHistoryI18n, cutoverHistoryText, tsaEscalationI18n, tsaEscalationText } from './readiness';
+import { NEWCO_HISTORY_MESSAGES_EN, legalEntityHistoryReason, legalEntityHistoryReasonI18n } from './newco';
 
 /**
  * QA-P34-01 (docs/reviews/P3-P4-qa-review.md) [REQ-UX-001, REQ-UX-002]: the carve-out and TSA sentences the server computes
@@ -23,6 +24,8 @@ const placeholders = (s: string) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1
 /** Record codes, enum values, keys and dates as the server writes them. */
 const CODE_PARAMS: Record<string, string> = {
   code: 'TSA-002',
+  check: 'connectivity-dc-link',
+  status: 'incorporated',
   cr: 'CR-004',
   item: 'PI-003',
   aspect: 'economic',
@@ -42,6 +45,8 @@ describe('QA-P34-01 — stored sentences: codes recovered from the template they
   for (const [label, table, parse] of [
     ['perimeter history reasons', PERIMETER_HISTORY_MESSAGES_EN, perimeterHistoryReasonI18n],
     ['TSA escalation texts', TSA_MESSAGES_EN, tsaEscalationI18n],
+    ['cutover plan system rationales', CUTOVER_HISTORY_MESSAGES_EN, (t: string) => cutoverHistoryI18n('go_flagged', t).concat(cutoverHistoryI18n('check_bound', t)).slice(0, 1)],
+    ['legal-entity history reasons', NEWCO_HISTORY_MESSAGES_EN, legalEntityHistoryReasonI18n],
   ] as const) {
     it(`${label}: every template round-trips (render → parse gives the same code and parameters)`, () => {
       for (const [code, template] of Object.entries(table)) {
@@ -75,6 +80,16 @@ describe('QA-P34-01 — stored sentences: codes recovered from the template they
     expect(perimeterHistoryReasonI18n('Edited by hand')).toEqual([]);
     expect(perimeterHistoryReasonI18n(null)).toEqual([]);
     expect(tsaEscalationI18n('Free text typed by a committee secretary')).toEqual([]);
+  });
+
+  it('cutover history: only system-written kinds are parsed; a person\'s rationale is shown as entered', () => {
+    const text = cutoverHistoryText('cutover.history.check_bound', { check: 'RC-007', reason: 'moved to the DR site plan (synthetic)' });
+    expect(text).toBe('RC-007 now gates this transition: moved to the DR site plan (synthetic)');
+    expect(cutoverHistoryI18n('check_bound', text)).toEqual([serverMessage('cutover.history.check_bound', { check: 'RC-007', reason: 'moved to the DR site plan (synthetic)' })]);
+    expect(cutoverHistoryI18n('no_go', text)).toEqual([]);
+    expect(cutoverHistoryText('cutover.history.go_flagged.test_failed_note', { check: 'RC-001', note: 'link down (retest 2)' })).toBe('RC-001: a test of this gating check failed after the GO (link down (retest 2))');
+    expect(legalEntityHistoryReason('newco.history.incorporation_recorded', { status: 'incorporated' })).toBe('Incorporation recorded: incorporated');
+    expect(legalEntityHistoryReasonI18n('Incorporation verified')).toEqual([serverMessage('newco.history.incorporation_verified')]);
   });
 
   it('writers render the sentences the API stored before the codes existed (stored rows stay recognised)', () => {

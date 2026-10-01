@@ -193,6 +193,11 @@ export const CutoverDecisionRecordDto = z.object({
   /** Null for entries recorded by the system (a GO flagged by the evidence reaction — DOM-P3-09). */
   actorUserId: Uuid.nullable(),
   rationale: z.string().nullable(),
+  /**
+   * Present only on entries whose rationale the SYSTEM wrote (GO flagged, check bound / unbound): the rationale as codes +
+   * parameters. A person's rationale has no codes (it is their own text, shown as entered).
+   */
+  rationaleI18n: z.array(ServerMessageSchema).optional(),
   goDecisionId: Uuid.nullable(),
   evaluation: z.object({ blockers: z.array(GoBlockerDto), missing: z.array(z.string()) }).nullable(),
   createdAt: z.string(),

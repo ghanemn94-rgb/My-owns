@@ -23,6 +23,8 @@ import {
   DecisionUseRecord,
   DomainError,
   GoEvaluation,
+  cutoverHistoryI18n,
+  SYSTEM_CUTOVER_HISTORY_KINDS,
 } from '@hub/domain';
 import type { RequestContext } from '../../platform/context';
 import { assertVersion, likeContains, loadInProject, nextCode, offsetOf, pageOf, updateVersioned } from '../../platform/helpers';
@@ -651,6 +653,7 @@ function recordDto(r: RecordRow) {
     toStatus: r.toStatus,
     actorUserId: r.actorUserId,
     rationale: r.rationale,
+    ...((SYSTEM_CUTOVER_HISTORY_KINDS as readonly string[]).includes(r.kind) ? { rationaleI18n: cutoverHistoryI18n(r.kind, r.rationale) } : {}),
     goDecisionId: r.goDecisionId,
     evaluation: (r.evaluation as { blockers: { id: string; title: string; titleAr?: string | null; status: never; blocker: boolean }[]; missing: string[] } | null) ?? null,
     createdAt: r.createdAt.toISOString(),

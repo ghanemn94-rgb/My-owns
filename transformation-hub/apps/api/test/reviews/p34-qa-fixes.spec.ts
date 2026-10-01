@@ -1,9 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { PARTNER_REQUESTER_LABEL, PERIMETER_MESSAGES_EN, TSA_MESSAGES_EN, renderMessagesEn, type ServerMessage } from '@hub/domain';
+import { NEWCO_HISTORY_MESSAGES_EN, PARTNER_REQUESTER_LABEL, PERIMETER_MESSAGES_EN, READINESS_MESSAGES_EN, TSA_MESSAGES_EN, renderMessagesEn, type ServerMessage } from '@hub/domain';
 import { closeApp, closePools, loginAs, owner, projectIdByCode, Client, DC } from '../helpers';
 import { setupFinance } from '../finance/finance-kit';
+import { check, completePlan, createCheck, insertSite, plan } from '../readiness/readiness-kit';
 
 /**
  * Regression tests of the P3/P4 QA review fixes (docs/reviews/P3-P4-qa-review.md, "Fix status") — the server half of
@@ -17,6 +18,10 @@ const P = (pid: string) => `/api/v1/projects/${pid}`;
 const AR = /[؀-ۿ]/;
 let dc: string;
 let pm: Client;
+/** One fresh synthetic DC project for the tests that write (project setup signs in every persona: the public-route rate
+ * limit allows one setup per file). */
+let fresh: Awaited<ReturnType<typeof setupFinance>> | null = null;
+const freshProject = async () => (fresh ??= await setupFinance(`QA34-FIX-${Date.now().toString(36).slice(-5).toUpperCase()}`));
 
 beforeAll(async () => {
   dc = await projectIdByCode(DC);
@@ -126,8 +131,8 @@ describe('QA-P34-01h — a template KPI returns the template Arabic definition w
   it('definitionAr = template Arabic; null for a KPI defined by the team or whose definition differs from the template', async () => {
     const template = JSON.parse(readFileSync(join(__dirname, '..', '..', '..', '..', 'packages', 'db', 'seed', 'templates', 'dc-carveout.v1.json'), 'utf8')) as { kpis: { key: string; definition: { en: string; ar: string } }[] };
     const tpl = template.kpis.find((k) => k.key === 'action_closure_time')!;
-    const { projectId } = await setupFinance(`QA34-KPI-${Date.now().toString(36).slice(-5).toUpperCase()}`);
-    const fin = await loginAs('finance');
+    const { projectId, p } = await freshProject();
+    const fin = p.finance;
     const list = (await fin.get(`${P(projectId)}/kpis?pageSize=100`).expect(200)).body.items as { id: string; key: string; definition: string; definitionAr: string | null }[];
     const k = list.find((x) => x.key === 'action_closure_time')!;
     expect(k).toMatchObject({ definition: tpl.definition.en, definitionAr: tpl.definition.ar });
@@ -151,5 +156,40 @@ describe('QA-P34-01h — a template KPI returns the template Arabic definition w
     // later change) loses the template Arabic — the Arabic UI then shows the definition as recorded.
     await owner().query(`update kpi set definition = definition || ' (amended)' where id = $1`, [k.id]);
     expect((await fin.get(`${P(projectId)}/kpis/${k.id}`).expect(200)).body.definitionAr).toBeNull();
+  });
+});
+
+describe('QA-P34-01 (same class, found while re-checking) — system history entries of a cutover plan and a legal entity carry codes', () => {
+  it('rebind: the check_unbound / check_bound rationales and the entity history reasons are recovered as codes; a person\'s rationale is not', async () => {
+    const { projectId, p } = await freshProject();
+    const siteId = await insertSite(projectId, 'S-QA34');
+    const a = await completePlan(p.pm, projectId, { siteId, accountableUserId: p.pm.userId, title: 'QA34 transition A (synthetic)' });
+    const b = await completePlan(p.pm, projectId, { title: 'QA34 transition B (synthetic)' });
+    const checkId = await createCheck(p.pm, projectId, { area: 'connectivity', title: 'QA34 link tested (synthetic)', mandatory: true, blocker: true, signoffRole: 'functional_approver', cutoverPlanId: a, siteId });
+    const c = await check(p.pm, projectId, checkId);
+    const reason = 'Belongs to transition B (synthetic: test input)';
+    await p.pm.post(`${P(projectId)}/readiness-checks/${checkId}/rebind`, { expectedVersion: c.version, cutoverPlanId: b, reason }).expect(201);
+    type Entry = { kind: string; rationale: string | null; rationaleI18n?: ServerMessage[] };
+    const unbound = ((await plan(p.pm, projectId, a)).decisionHistory as Entry[]).find((h) => h.kind === 'check_unbound')!;
+    const bound = ((await plan(p.pm, projectId, b)).decisionHistory as Entry[]).find((h) => h.kind === 'check_bound')!;
+    expect(unbound.rationaleI18n).toEqual([{ code: 'cutover.history.check_unbound', params: { check: c.code, reason } }]);
+    expect(bound.rationaleI18n).toEqual([{ code: 'cutover.history.check_bound', params: { check: c.code, reason } }]);
+    for (const h of [unbound, bound]) expect(rendered(h.rationaleI18n!, READINESS_MESSAGES_EN)).toBe(h.rationale);
+    // Every other entry (rehearsal, communications…) is a person's text: no codes at all.
+    const others = ((await plan(p.pm, projectId, a)).decisionHistory as Entry[]).filter((h) => h.kind !== 'check_unbound');
+    expect(others.length).toBeGreaterThan(0);
+    for (const h of others) expect(h).not.toHaveProperty('rationaleI18n');
+
+    const entities = (await p.pm.get(`${P(projectId)}/legal-entities`).expect(200)).body.items as { id: string; role: string }[];
+    const newco = entities.find((e) => e.role === 'newco')!;
+    const before = (await p.pm.get(`${P(projectId)}/legal-entities/${newco.id}`).expect(200)).body as { version: number };
+    await p.pm.patch(`${P(projectId)}/legal-entities/${newco.id}`, { expectedVersion: before.version, jurisdiction: 'TBD (synthetic test input)' }).expect(200);
+    const history = (await p.pm.get(`${P(projectId)}/legal-entities/${newco.id}`).expect(200)).body.history as { reason: string; reasonI18n: ServerMessage[] }[];
+    expect(history.length).toBeGreaterThan(0);
+    for (const h of history) {
+      expect(h.reasonI18n.length, h.reason).toBe(1);
+      expect(rendered(h.reasonI18n, NEWCO_HISTORY_MESSAGES_EN)).toBe(h.reason);
+    }
+    expect(history.map((h) => h.reasonI18n[0]!.code)).toContain('newco.history.descriptive_update');
   });
 });

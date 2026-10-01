@@ -212,8 +212,10 @@ export default function ReadinessChecksPage() {
       sortValue: (c) => localized(c.title, c.titleAr),
       cell: (c) => (
         <span className="flex flex-col gap-0.5">
-          {/* QA-P34-01d: template checks carry their Arabic title. */}
-          <span dir="auto">{localized(c.title, c.titleAr)}</span>
+          {/* QA-P34-01d: template checks carry their Arabic title; a check without one was typed by a person (data-user-text). */}
+          <span dir="auto" data-user-text={c.titleAr ? undefined : true}>
+            {localized(c.title, c.titleAr)}
+          </span>
           <span className="text-xs text-muted">{tStatus('readinessAreas', c.area)}</span>
         </span>
       ),

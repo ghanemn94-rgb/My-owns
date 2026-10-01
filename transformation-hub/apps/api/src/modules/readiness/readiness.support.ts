@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { schema } from '@hub/db';
-import { forbidden, invalid, linkedDecisionIssue, linkedDecisionIssueCode, notFound, readinessCheckAppliesToPlan, Classification, CutoverStatus, LinkedDecision, ReadinessStatus, RoleKey } from '@hub/domain';
+import { cutoverHistoryText, forbidden, invalid, linkedDecisionIssue, linkedDecisionIssueCode, notFound, readinessCheckAppliesToPlan, Classification, CutoverStatus, LinkedDecision, ReadinessStatus, RoleKey } from '@hub/domain';
 import { newId } from '../../platform/ids';
 import { DbService } from '../../platform/db.service';
 import { PolicyService } from '../../platform/policy.service';
@@ -194,19 +194,21 @@ export class ReadinessSupport {
    * itself is not changed (it is a recorded decision); recording the execution is refused until the check is cleared /
    * waived or the GO is withdrawn for a new decision (`CutoverService.recordExecution`, `return_to_planning`).
    */
-  async flagGoPlans(ctx: RequestContext, projectId: string, check: { id: string; code: string; title: string; titleAr?: string | null; status: ReadinessStatus; blocker: boolean; mandatory: boolean; cutoverPlanId: string | null; siteId: string | null }, why: string) {
+  async flagGoPlans(ctx: RequestContext, projectId: string, check: { id: string; code: string; title: string; titleAr?: string | null; status: ReadinessStatus; blocker: boolean; mandatory: boolean; cutoverPlanId: string | null; siteId: string | null }, why: { code: string; note?: string | null }) {
     if (!check.blocker && !check.mandatory) return [];
     const plans = (await this.plansGatedBy(projectId, check)).filter((p) => p.status === 'approved_go');
+    // QA-P34-01: the rationale is written from CUTOVER_HISTORY_MESSAGES_EN (the plan history returns its codes).
+    const rationale = cutoverHistoryText(why.code, { check: check.code, ...(why.note ? { note: why.note } : {}) });
     for (const plan of plans) {
       const blocker = { id: check.id, title: `${check.code} — ${check.title}`, titleAr: check.titleAr ? `${check.code} — ${check.titleAr}` : null, status: check.status, blocker: check.blocker };
-      await this.recordPlanHistory(ctx, plan, projectId, 'go_flagged', `${check.code}: ${why}`, { blockers: [blocker], missing: [] });
+      await this.recordPlanHistory(ctx, plan, projectId, 'go_flagged', rationale, { blockers: [blocker], missing: [] });
       await this.audit.record({
         action: 'readiness.cutover.go_flagged',
         entityType: 'cutover_plan',
         entityId: plan.id,
         projectId,
         after: { status: plan.status, flagged: true, checkId: check.id, checkCode: check.code, checkStatus: check.status },
-        reason: `${check.code}: ${why} — the GO is flagged for re-decision; execution is refused until the check is cleared or the GO is withdrawn`,
+        reason: `${rationale} — the GO is flagged for re-decision; execution is refused until the check is cleared or the GO is withdrawn`,
       });
       await this.outbox.emit({ type: 'readiness.changed', projectId, aggregateType: 'cutover_plan', aggregateId: plan.id, payload: { reason: 'readiness:go_flagged', checkId: check.id } });
     }

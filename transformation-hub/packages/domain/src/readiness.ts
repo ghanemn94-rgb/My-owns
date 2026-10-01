@@ -474,6 +474,39 @@ export function tsaEscalationI18n(text: string | null | undefined): ServerMessag
   return m ? [m] : [];
 }
 
+/**
+ * English templates of the rationale the SYSTEM records in a cutover plan's go/no-go history (cutover_decision_record,
+ * plain text): a GO flagged by a gating check that is open again (DOM-P3-04 / DOM-P3-09) and a check bound to / unbound from
+ * the plan (DOM-P3-01 rebind). `{check}` is the check code; `{note}` / `{reason}` are the user's own text. Web catalogue:
+ * `readiness.messages.cutover.*` (en + ar). Rationales typed by a person are never parsed.
+ */
+export const CUTOVER_HISTORY_MESSAGES_EN: Readonly<Record<string, string>> = {
+  'cutover.history.go_flagged.test_failed': '{check}: a test of this gating check failed after the GO',
+  'cutover.history.go_flagged.test_failed_note': '{check}: a test of this gating check failed after the GO ({note})',
+  'cutover.history.go_flagged.reopened': '{check}: the specialist reopened this gating check after the GO ({note})',
+  'cutover.history.go_flagged.evidence_invalidated': '{check}: the evidence of this signed-off gating check was rejected, superseded or contested after the GO',
+  'cutover.history.check_unbound': '{check} no longer gates this transition: {reason}',
+  'cutover.history.check_bound': '{check} now gates this transition: {reason}',
+};
+
+/** History kinds whose rationale the system writes from {@link CUTOVER_HISTORY_MESSAGES_EN}. */
+export const SYSTEM_CUTOVER_HISTORY_KINDS = ['go_flagged', 'check_bound', 'check_unbound'] as const;
+
+/** English system rationale of a cutover plan history entry. */
+export function cutoverHistoryText(code: string, params: Record<string, string | number>): string {
+  return renderMessageEn(code, params, CUTOVER_HISTORY_MESSAGES_EN);
+}
+
+/** Codes + parameters of a system-written history rationale; empty for a person's rationale or an unknown text. */
+export function cutoverHistoryI18n(kind: string, rationale: string | null | undefined): ServerMessage[] {
+  if (!(SYSTEM_CUTOVER_HISTORY_KINDS as readonly string[]).includes(kind)) return [];
+  const m = parseRenderedMessage(rationale, CUTOVER_HISTORY_MESSAGES_EN, ['check']);
+  return m ? [m] : [];
+}
+
+/** Every server message the readiness module returns (web `readiness.messages`, checked by apps/web/scripts/check-i18n.mjs). */
+export const READINESS_MESSAGES_EN: Readonly<Record<string, string>> = { ...TSA_MESSAGES_EN, ...CUTOVER_HISTORY_MESSAGES_EN };
+
 /** REQ-TSA-001 (proposed test "a TSA without exit milestones cannot be Approved"): approval needs a complete record. */
 export function assertTsaApprovable(t: {
   ownerUserId: string | null;

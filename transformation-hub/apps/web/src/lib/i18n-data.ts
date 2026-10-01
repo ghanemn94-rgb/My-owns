@@ -47,6 +47,7 @@ const ENUM_PARAMS: Readonly<Record<string, Readonly<Record<string, StatusEnum>>>
   'perimeter.history.change_request_raised': { disposition: 'perimeterDispositions' },
   'perimeter.history.transferability': { transferClass: 'contractTransferClasses' },
   'perimeter.history.transfer': { from: 'transferStatuses', to: 'transferStatuses' },
+  'newco.history.incorporation_recorded': { status: 'incorporationStatuses' },
 };
 
 /**
@@ -92,18 +93,29 @@ const ROUTED_PREFIXES: readonly (readonly [string, string])[] = [
   ['authority.', 'governance'],
   ['perimeter.', 'carveout'],
   ['tsa.', 'readiness'],
+  ['cutover.', 'readiness'],
+  ['newco.', 'newco'],
 ];
 
 /**
  * Catalogue of a server message code: `plan.*` → `planning.messages`, `authority.*` → `governance.messages`,
- * `perimeter.*` → `carveout.messages`, `tsa.*` → `readiness.messages`, every other code (status dimensions, gate
- * blockers, JV) → `gates.messages`. apps/web/scripts/check-i18n.mjs checks each catalogue against the domain's English
- * templates (PLANNING_MESSAGES_EN, AUTHORITY_MESSAGES_EN, PERIMETER_MESSAGES_EN, TSA_MESSAGES_EN, …).
+ * `perimeter.*` → `carveout.messages`, `tsa.*` / `cutover.*` → `readiness.messages`, `newco.*` → `newco.messages`, every
+ * other code (status dimensions, gate blockers, JV) → `gates.messages`. apps/web/scripts/check-i18n.mjs checks each
+ * catalogue against the domain's English templates (PLANNING_MESSAGES_EN, AUTHORITY_MESSAGES_EN, PERIMETER_MESSAGES_EN,
+ * READINESS_MESSAGES_EN, NEWCO_HISTORY_MESSAGES_EN, …).
  */
 export function serverMessageKey(code: string): MessageKey {
   const ns = ROUTED_PREFIXES.find(([prefix]) => code.startsWith(prefix))?.[1] ?? 'gates';
   return `${ns}.messages.${code}` as MessageKey;
 }
+
+/**
+ * Codes whose parameters carry recorded data (record names, committee names, the user's justification…) that is often
+ * Latin text with its own punctuation. In the Arabic UI each parameter is wrapped in a first-strong isolate
+ * (U+2068 … U+2069) so its direction and parentheses do not reorder the Arabic sentence around it (QA-P34-01b).
+ */
+const ISOLATED_PREFIXES = ['perimeter.', 'tsa.', 'cutover.', 'newco.'];
+const isolate = (v: string) => `⁨${v}⁩`;
 
 /**
  * Renders server messages in the active locale: `(messages, englishFallback) => text`. Returns the English fallback when
@@ -127,6 +139,7 @@ export function useServerMessages() {
               }
               if (DATE_PARAMS[m.code]?.includes(k)) return [k, formatDate(String(v))];
               if (WEEKDAY_PARAMS[m.code]?.includes(k)) return [k, weekdayNames(locale, formatList, String(v))];
+              if (typeof v === 'string' && locale === 'ar' && ISOLATED_PREFIXES.some((p) => m.code.startsWith(p))) return [k, isolate(v)];
               return [k, typeof v === 'number' ? formatNumber(v) : v];
             }),
           );

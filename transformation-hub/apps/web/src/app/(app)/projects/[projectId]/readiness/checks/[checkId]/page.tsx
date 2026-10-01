@@ -242,7 +242,10 @@ export default function ReadinessCheckPage() {
         }
         title={
           <span>
-            <span dir="ltr">{c.code}</span> — <span dir="auto">{localized(c.title, c.titleAr)}</span>
+            <span dir="ltr">{c.code}</span> —{' '}
+            <span dir="auto" data-user-text={c.titleAr ? undefined : true}>
+              {localized(c.title, c.titleAr)}
+            </span>
           </span>
         }
         documentTitle={`${c.code} — ${localized(c.title, c.titleAr)}`}
