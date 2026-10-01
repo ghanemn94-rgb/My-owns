@@ -10,6 +10,7 @@ export const PERSONAS = {
   sponsor: 'Demo Sponsor',
   secretary: 'Demo Secretary / CPMO',
   cleanTeam: 'Demo Clean Team Member',
+  legal: 'Demo Legal Member',
   contributorB: 'Demo Contributor — Project B',
 } as const;
 

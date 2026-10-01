@@ -407,11 +407,9 @@ test.describe('QA P3/P4 — critical journeys through the UI [AT-09, AT-10, AT-2
       await s.reload();
       await expect(s.getByTestId('dd-detail')).toHaveAttribute('data-status', 'released');
       found.push(...(await checkArabic(s, testInfo, SHOTS, 'j3-dd-request-released', bs, { strict: false })));
-      // QA-P34-01c (recorded by its own DEFECT test in qa-p34-arabic-rtl.spec.ts): the server stores the requester of a
-      // partner-raised question as the English literal "Counterparty". Only that documented string is set aside here.
-      const known = found.filter((x) => x.includes('English UI message shown: "Counterparty"'));
-      console.log(`J3 Arabic: ${found.length} problem(s), of which known QA-P34-01c: ${known.length}`);
-      expect(found.filter((x) => !known.includes(x)), found.join('\n')).toEqual([]);
+      // QA-P34-01c (the partner requester label shown as the English literal "Counterparty") is fixed: nothing is set aside.
+      console.log(`J3 Arabic: ${found.length} problem(s)`);
+      expect(found, found.join('\n')).toEqual([]);
       for (const x of [partner, pm, legal, sponsor]) expect(x.problems(), x.problems().join('\n')).toEqual([]);
     } finally {
       await partner.close();
@@ -421,7 +419,7 @@ test.describe('QA P3/P4 — critical journeys through the UI [AT-09, AT-10, AT-2
     }
   });
 
-  test('OBSERVED QA-P34-07: a row link clicked within the 300 ms search debounce is undone when the navigation outlasts the debounce (the cause of two run-B failures)', async ({ browser, baseURL }) => {
+  test('QA-P34-07: a row link clicked within the 300 ms search debounce reaches the detail page even when the navigation outlasts the debounce (fixed, regression)', async ({ browser, baseURL }) => {
     test.setTimeout(120_000);
     const pm = await asPersona(browser, baseURL!, P.pm);
     try {
@@ -446,9 +444,10 @@ test.describe('QA P3/P4 — critical journeys through the UI [AT-09, AT-10, AT-2
       const url = new URL(page.url());
       console.log(`QA-P34-07: after the click the page is ${url.pathname}${url.search}; TSA detail shown: ${await page.getByTestId('tsa-detail').count()}`);
       await page.unrouteAll({ behavior: 'ignoreErrors' });
-      // Current behaviour: back on the filtered register, the navigation lost.
-      expect(url.pathname).toMatch(/\/readiness\/tsa$/);
-      expect(url.searchParams.get('q')).toBe('Legacy monitoring bridge');
+      // Fixed (SearchInput cancels the pending debounced update when a link to another page is followed): the navigation
+      // started by the click is kept — the detail page, not the filtered register. (Before the fix: /readiness/tsa?q=….)
+      expect(url.pathname).toMatch(/\/readiness\/tsa\/[0-9a-f-]{36}$/);
+      await expect(page.getByTestId('tsa-detail')).toBeVisible();
     } finally {
       await pm.close();
     }

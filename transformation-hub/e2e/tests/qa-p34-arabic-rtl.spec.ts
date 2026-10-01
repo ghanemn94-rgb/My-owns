@@ -271,21 +271,16 @@ interface Found {
 
 /**
  * Classification of the detector's Arabic problems after manual review at 5bf274b (docs/reviews/P3-P4-qa-review.md §5):
- * each entry is either a documented defect (its own DEFECT test below) or text verified to be DATA (user-entered or
- * demo-seed values, source labels stored as found), which the convention shows as entered. Anything else fails.
+ * each entry is text verified to be DATA (user-entered or demo-seed values, source labels stored as found), which the
+ * convention shows as entered. Anything else fails. The documented defects QA-P34-01a…h were classified here while open;
+ * they are fixed ("Fix status" of the review) and their entries removed, so a recurrence fails this crawler.
  */
 const CLASSIFIED: { id: string; test: RegExp }[] = [
   { id: 'DATA (demo-seed value "Assessment pending — specialist (DEMO)")', test: /"Assessment pending( — specialist)?" in (span|textarea[^ ]*) "Assessment pending — specialist \(DEMO\)"/ },
-  { id: 'QA-P34-01a', test: /No transfer mechanism and\/or planned effective date/ },
   { id: 'DATA (readiness check created by a test, no Arabic source)', test: /readiness-[a-z-]*: English [^:]*: "[^"]*" in (span|a) "[^"]*\(synthetic\)"$/ },
-  { id: 'QA-P34-01d/01e (template readiness-check titles shown in English)', test: /readiness-(checks|check|plan|plan-sponsor)[^:]*: English (half of a bilingual API field|UI message fragment) shown: "(?!QA )[^"]*" in (span|a) "(?!QA )/ },
-  { id: 'QA-P34-01f', test: /perimeter-item(-legal)?: English UI message fragment shown: "(Assessment pending — specialist|Assessment pending|Change request)"/ },
-  { id: 'QA-P34-01g', test: /readiness-tsa-detail: English half of a bilingual API field shown: "Operations, Continuity & TSA"/ },
   { id: 'DATA (agreement type stored as the source label, REQ-AGR-002)', test: /perimeter-agreements: English UI message shown: "TSA" \(span\)/ },
   { id: 'DATA (demo-seed text)', test: /in span "DEMO — / },
   { id: 'DATA (benefit baseline / target value "TBD")', test: /finance-benefits?: English UI message shown: "TBD" \(span\)/ },
-  { id: 'QA-P34-01h', test: /finance-kpi: English UI message fragment shown: "working days" in span "Average working days/ },
-  { id: 'QA-P34-01c', test: /jv-dd-request: English UI message shown: "Counterparty"/ },
 ];
 function classify(f: Found) {
   const rest: string[] = [];
@@ -418,11 +413,9 @@ async function runMobile(browser: Browser, baseURL: string, screens: Screen[]): 
       await ctx.close();
     }
   }
-  // QA-P34-03 (documented, its own DEFECT test): the perimeter item page overflows at 390 px.
-  const known = problems.filter((x) => /\] perimeter-item(-legal)?: page-level horizontal overflow/.test(x));
-  const rest = problems.filter((x) => !known.includes(x));
-  console.log(`[ar-390] ${screens.length} screens; CLASSIFIED QA-P34-03 (${known.length}): ${JSON.stringify(known)}; UNCLASSIFIED PROBLEMS (${rest.length}):\n  ${rest.join('\n  ')}`);
-  return rest;
+  // QA-P34-03 (the perimeter item page overflowed at 390 px) is fixed: an overflow on any screen now fails.
+  console.log(`[ar-390] ${screens.length} screens; PROBLEMS (${problems.length}):\n  ${problems.join('\n  ')}`);
+  return problems;
 }
 
 test.describe('QA P3/P4 — Arabic (RTL) / English (LTR) / 390 px on every P3 and P4 screen and dialog [REQ-UX-001, REQ-UX-002, REQ-UX-010, REQ-UX-011, REQ-UX-012, REQ-UX-013, REQ-UX-014, REQ-ARC-008]', () => {
@@ -475,8 +468,10 @@ test.describe('QA P3/P4 — Arabic (RTL) / English (LTR) / 390 px on every P3 an
  * QA-P34-01 (docs/reviews/P3-P4-qa-review.md): English is shown on Arabic P3/P4 screens where Arabic exists or should exist —
  * server-composed sentences without translation codes (a, b, c, f: the shared detector cannot see them, the DTO fields have no
  * `<field>Ar` / `<field>I18n` sibling) and template texts whose Arabic exists but is not returned or not used (d, e, g, h).
- * Each is asserted against the API's own text. QA-P34-03: the perimeter item page at 390 px. Recorded with `test.fail()` while the defect is open; when fixed the
- * test turns red — rename it "(fixed, regression)" and drop `test.fail()`.
+ * Each is asserted against the API's own text. QA-P34-03: the perimeter item page at 390 px. Recorded with `test.fail()` while the defect was open;
+ * fixed (docs/reviews/P3-P4-qa-review.md "Fix status"): each test is now a plain regression "(fixed, regression)" with its
+ * assertion unchanged; its screenshot is written as `fixed-qa-p34-*.png` (the committed `defect-qa-p34-*.png` are the
+ * review's evidence of the defect).
  */
 async function arabicAs(page: Page, baseURL: string, persona: string): Promise<string> {
   await loginAs(page, persona);
@@ -485,8 +480,7 @@ async function arabicAs(page: Page, baseURL: string, persona: string): Promise<s
 }
 
 test.describe('QA P3/P4 — English on Arabic screens where Arabic exists or should exist; 390 px [REQ-UX-001, REQ-UX-002, REQ-UX-010, REQ-UX-012, REQ-UX-013, REQ-UX-014]', () => {
-  test('DEFECT QA-P34-01a: the Arabic reconciliation screen shows the server\'s English finding sentences in its Details column', async ({ page, baseURL }, testInfo) => {
-    test.fail();
+  test('QA-P34-01a: the Arabic reconciliation screen shows no English server finding sentence in its Details column (fixed, regression)', async ({ page, baseURL }, testInfo) => {
     await loginAs(page, PERSONA.pm);
     await page.context().addCookies([{ name: 'hub_locale', value: 'ar', url: baseURL! }]);
     const dc = ((await (await page.request.get('/api/v1/projects?pageSize=100')).json()).items as { id: string; code: string }[]).find((p) => p.code === 'DEMO-DC')!.id;
@@ -496,7 +490,7 @@ test.describe('QA P3/P4 — English on Arabic screens where Arabic exists or sho
     await page.goto(`/projects/${dc}/perimeter?tab=reconciliation`);
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     await expect(page.getByTestId('recon-findings').locator('tbody tr').first()).toBeVisible();
-    await page.getByTestId('recon-findings').screenshot({ path: join(SHOTS, 'defect-qa-p34-01a-ar-reconciliation-findings.png') });
+    await page.getByTestId('recon-findings').screenshot({ path: join(SHOTS, 'fixed-qa-p34-01a-ar-reconciliation-findings.png') });
     const shown = await page.getByTestId('recon-findings').innerText();
     const leaked = english.filter((m) => shown.includes(m));
     console.log(`QA-P34-01a: English finding sentences visible on the Arabic reconciliation screen (${leaked.length}/${english.length}): ${JSON.stringify(leaked)}`);
@@ -504,8 +498,7 @@ test.describe('QA P3/P4 — English on Arabic screens where Arabic exists or sho
     expect(leaked).toEqual([]);
   });
 
-  test('DEFECT QA-P34-01c: the Arabic DD request page shows the requester of a partner-raised question as the English literal "Counterparty"', async ({ page, baseURL }) => {
-    test.fail();
+  test('QA-P34-01c: the Arabic DD request page does not show the requester of a partner-raised question as the English literal "Counterparty" (fixed, regression)', async ({ page, baseURL }) => {
     await loginAs(page, PERSONA.pm);
     await page.context().addCookies([{ name: 'hub_locale', value: 'ar', url: baseURL! }]);
     const dc = ((await (await page.request.get('/api/v1/projects?pageSize=100')).json()).items as { id: string; code: string }[]).find((p) => p.code === 'DEMO-DC')!.id;
@@ -516,12 +509,11 @@ test.describe('QA P3/P4 — English on Arabic screens where Arabic exists or sho
     await page.goto(`/projects/${dc}/jv/diligence/requests/${partnerRaised.id}`);
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     await expect(page.getByTestId('dd-detail')).toBeVisible();
-    await page.screenshot({ path: join(SHOTS, 'defect-qa-p34-01c-ar-dd-request.png'), fullPage: true });
+    await page.screenshot({ path: join(SHOTS, 'fixed-qa-p34-01c-ar-dd-request.png'), fullPage: true });
     await expect(page.getByTestId('dd-detail')).not.toContainText('Counterparty');
   });
 
-  test('DEFECT QA-P34-01d: the Arabic readiness-check register shows template check titles in English although the API returns their Arabic title', async ({ page, baseURL }) => {
-    test.fail();
+  test('QA-P34-01d: the Arabic readiness-check register shows no template check title in English when the API returns its Arabic title (fixed, regression)', async ({ page, baseURL }) => {
     const dc = await arabicAs(page, baseURL!, PERSONA.pm);
     const checks = (await (await page.request.get(`/api/v1/projects/${dc}/readiness-checks?pageSize=100`)).json()).items as { title: string; titleAr: string | null }[];
     const bilingual = checks.filter((c) => c.titleAr);
@@ -535,8 +527,7 @@ test.describe('QA P3/P4 — English on Arabic screens where Arabic exists or sho
     expect(english).toEqual([]);
   });
 
-  test('DEFECT QA-P34-01e: the Arabic cutover plan lists its gating checks in English — the plan DTO carries no Arabic title', async ({ page, baseURL }) => {
-    test.fail();
+  test('QA-P34-01e: the Arabic cutover plan lists no template gating check in English — the plan DTO carries the Arabic title (fixed, regression)', async ({ page, baseURL }) => {
     const dc = await arabicAs(page, baseURL!, PERSONA.pm);
     const plans = (await (await page.request.get(`/api/v1/projects/${dc}/cutover-plans?pageSize=100`)).json()).items as { id: string; title: string }[];
     const plan = plans.find((x) => /Day-1 go-live — DEMO/.test(x.title))!;
@@ -551,8 +542,7 @@ test.describe('QA P3/P4 — English on Arabic screens where Arabic exists or sho
     expect(english).toBe(0);
   });
 
-  test('DEFECT QA-P34-01f: the Arabic perimeter item shows the impact assessment and its history as English server sentences', async ({ page, baseURL }) => {
-    test.fail();
+  test('QA-P34-01f: the Arabic perimeter item shows its impact assessment and history without English server sentences (fixed, regression)', async ({ page, baseURL }) => {
     const dc = await arabicAs(page, baseURL!, PERSONA.pm);
     const items = (await (await page.request.get(`/api/v1/projects/${dc}/perimeter-items?pageSize=100`)).json()).items as { id: string; code: string }[];
     const it = items.find((x) => x.code === 'PI-003')!;
@@ -567,8 +557,7 @@ test.describe('QA P3/P4 — English on Arabic screens where Arabic exists or sho
     expect(leaked).toEqual([]);
   });
 
-  test('DEFECT QA-P34-01g: the Arabic TSA page shows the workstream name in English although the workstream has an Arabic name', async ({ page, baseURL }) => {
-    test.fail();
+  test('QA-P34-01g: the Arabic TSA page does not show the workstream name in English when the workstream has an Arabic name (fixed, regression)', async ({ page, baseURL }) => {
     const dc = await arabicAs(page, baseURL!, PERSONA.pm);
     const ws = (await (await page.request.get(`/api/v1/projects/${dc}/workstreams`)).json()).items as { code: string; name: string; nameAr: string | null }[];
     const ws07 = ws.find((w) => w.code === 'WS07')!;
@@ -581,8 +570,7 @@ test.describe('QA P3/P4 — English on Arabic screens where Arabic exists or sho
     expect(shown).not.toContain(ws07.name);
   });
 
-  test('DEFECT QA-P34-01h: the Arabic KPI page shows the template KPI definition in English — the KPI DTO has no Arabic definition although the template has one', async ({ page, baseURL }) => {
-    test.fail();
+  test('QA-P34-01h: the Arabic KPI page does not show the template KPI definition in English — the KPI DTO carries the template Arabic definition (fixed, regression)', async ({ page, baseURL }) => {
     await loginAs(page, PERSONA.finance);
     await page.context().addCookies([{ name: 'hub_locale', value: 'ar', url: baseURL! }]);
     const dc = ((await (await page.request.get('/api/v1/projects?pageSize=100')).json()).items as { id: string; code: string }[]).find((p) => p.code === 'DEMO-DC')!.id;
@@ -594,8 +582,7 @@ test.describe('QA P3/P4 — English on Arabic screens where Arabic exists or sho
     await expect(page.getByTestId('kpi-detail')).not.toContainText(String(kpi.definition));
   });
 
-  test('DEFECT QA-P34-03: at 390 px the perimeter item page scrolls horizontally (page wider than the viewport)', async ({ browser, baseURL }) => {
-    test.fail();
+  test('QA-P34-03: at 390 px the perimeter item page does not scroll horizontally (fixed, regression)', async ({ browser, baseURL }) => {
     const ctx = await browser.newContext({ viewport: MOBILE });
     try {
       const page = await ctx.newPage();
@@ -616,7 +603,7 @@ test.describe('QA P3/P4 — English on Arabic screens where Arabic exists or sho
           return { overflow: document.documentElement.scrollWidth - vw, widest };
         });
         console.log(`QA-P34-03 [${locale}] overflow ${r.overflow}px; widest element ${JSON.stringify(r.widest)}`);
-        await page.screenshot({ path: join(SHOTS, `defect-qa-p34-03-${locale}-390-perimeter-item.png`) });
+        await page.screenshot({ path: join(SHOTS, `fixed-qa-p34-03-${locale}-390-perimeter-item.png`) });
         expect(r.overflow, locale).toBeLessThanOrEqual(1);
       }
     } finally {
@@ -624,8 +611,7 @@ test.describe('QA P3/P4 — English on Arabic screens where Arabic exists or sho
     }
   });
 
-  test('DEFECT QA-P34-01b: the Arabic TSA page shows the escalation\'s English requested action and routing target', async ({ page, baseURL }, testInfo) => {
-    test.fail();
+  test('QA-P34-01b: the Arabic TSA page shows the escalation\'s requested action and routing target without their English text (fixed, regression)', async ({ page, baseURL }, testInfo) => {
     await loginAs(page, PERSONA.pm);
     await page.context().addCookies([{ name: 'hub_locale', value: 'ar', url: baseURL! }]);
     const dc = ((await (await page.request.get('/api/v1/projects?pageSize=100')).json()).items as { id: string; code: string }[]).find((p) => p.code === 'DEMO-DC')!.id;
@@ -637,7 +623,7 @@ test.describe('QA P3/P4 — English on Arabic screens where Arabic exists or sho
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     const esc = page.getByTestId('tsa-escalation');
     await expect(esc).toBeVisible();
-    await esc.screenshot({ path: join(SHOTS, 'defect-qa-p34-01b-ar-tsa-escalation.png') });
+    await esc.screenshot({ path: join(SHOTS, 'fixed-qa-p34-01b-ar-tsa-escalation.png') });
     const shown = await esc.innerText();
     const leaked = [t.escalation.requestedAction as string, t.escalation.target as string].filter((s) => /[A-Za-z]{3}.*\s[A-Za-z]{3}/.test(s) && shown.includes(s));
     console.log(`QA-P34-01b: English escalation texts visible on the Arabic TSA page: ${JSON.stringify(leaked)}`);
