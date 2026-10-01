@@ -82,6 +82,10 @@ permission, exactly like their own modules (`grantSql(…, {})`, `assertProjectW
 reader no longer sees their code / title / state there (`apps/api/src/platform/record-visibility.ts`, rule `ws: <read>, wsCol: null`).
 Tests: `apps/api/test/reviews/p34-sec-jv.spec.ts` (SEC-P34-12, agreement prerequisite) and
 `apps/api/test/reviews/p34-sec-fixes.spec.ts` (decision prerequisite and decision events in the activity feed).
+The same rule covers the P3 records without a workstream column (SEC-P34R-01, P3/P4 security re-check): **legal entity**
+events need a project-wide `newco.register.read`, **perimeter version** and **perimeter category review** events a
+project-wide `carveout.register.read`, as in their modules; they are no longer shown to every activity reader. Test: the
+`SEC-P34R-01 (fixed, regression)` probe in `apps/api/test/reviews/p34-sec-re-registers.spec.ts`.
 
 #### 2.2.1 Project-level read exceptions for workstream-scoped grants
 
@@ -181,10 +185,25 @@ SEC-P34-11` test in `apps/api/test/reviews/p34-sec-registers.spec.ts`.
   coverage for document chunks (a workstream-scoped reader reaches room-less documents only). Tests:
   `p34-sec-registers.spec.ts` (SEC-P34-02, SEC-P34-03) and `p34-sec-fixes.spec.ts` (TSA reach, valuations, decisions,
   room documents).
+- **AI proposals follow their target and their run's inputs (SEC-P34R-05, P3/P4 security re-check).** The proposals list,
+  its total and the detail apply, inside SQL (`AiProposalsService.visibleSql`, `AiKnowledgeService.refVisibleSql`): the
+  reader can read the proposal's **target** (the same per-type rules as the AI knowledge sources above); the reader can
+  read **every record the proposal's run sent to the model** (the run's evidence snapshot); and a proposal without a target
+  (a free draft) is shown only to a reader whose base and finance-domain clearance are at least the delegating user's
+  (recorded in the run snapshot) or to its requester. A hidden proposal answers 404 to detail, approve, reject and revise,
+  like an unknown id. Tests: the `SEC-P34R-05 (fixed, regression)` probes in `p34-sec-re-jv-ai.spec.ts` and
+  `p34-sec-re-fixes.spec.ts`.
+- **Commands answer 404 before 403 (SEC-P34R-02).** The readiness rebind and cutover plan site change load the record with
+  the caller's readiness visibility, and the JV checklist-item and CP commands require project-wide deal reach (or the
+  command permission project-wide) before any 403 check, so an unreadable record answers like an unknown id. The cutover
+  site-change refusal names only the failed checks the caller may read and counts the others; the TSA extension refusal
+  does not name the other TSA (SEC-P34R-08).
 
 ### 2.6 Derived data
 
 A report snapshot, export, meeting pack, AI answer, AI summary, notification or email body takes classification = **max** of its inputs, `room_id` = the input room (if exactly one; more than one room means the item is **not shareable** outside the intersection of grants), and `clean_team` = OR of the inputs. Access to the derived item is re-checked on every read, export and send (master prompt §11 and §12.1).
+An AI proposal is derived from its run: it is readable only by a reader who can read every input its run sent to the model
+and its target, and an untargeted draft only by a reader cleared at least as high as the delegating user (§2.5, SEC-P34R-05).
 
 ### 2.7 AI usage flag (`ai`)
 
@@ -292,6 +311,20 @@ satisfied" (with the recorder of the outcome — `newco/regulatory.service.ts`),
 `carveout/transfers.service.ts`). The specialist "transfer not applicable" determination on an in-scope item
 (`carveout.transfer.verify`, DOM-P3-05) is not by the item's owner or creator. `newco.regulatory.verify` is held by the
 Legal role only (REQ-AGR-004, SEC-P34-05): applicability determinations, outcomes and conditions are recorded by Legal.
+
+**One definition of the evidence "self" (SEC-P34R-03, P3/P4 security re-check).** For every verification above (P3 and
+P4: readiness sign-off, NewCo incorporation / regulatory, carve-out transfer, CP verify, closing deliverable acceptance,
+post-close obligation verify, benefit realization verify, action closure verify) the evidence "self" is everyone who linked
+an active or conflicting evidence record of the target **and** everyone who uploaded one of the document versions those
+links point to — the same people `documents.evidence.verify` treats as self for the link (`evidenceSelfIds` /
+`evidenceSelfSql` in `apps/api/src/platform/helpers.ts`, used by every module's `evidenceLinkers`). The refusal codes are
+unchanged; their texts say "linked or uploaded". My Work offers the action-closure verification to nobody who is self for
+it — the owner, a linker or an uploader of its evidence (SEC-P34R-04, `apps/api/src/modules/planning/my-work.service.ts`).
+A CP with conflicting evidence is not verified until the conflict is resolved (422 `jv.cp.evidence_conflicting`), as the
+readiness and NewCo verifications (SEC-P34R-09). Tests: `apps/api/test/reviews/p34-sec-re-fixes.spec.ts` and the
+`SEC-P34R-03 / -04 (fixed, regression)` probes in `p34-sec-re-jv-ai.spec.ts`. Recorded, not changed (SEC-P34R-06):
+`jv.cp.verify` is held by roles without `jv.deal.read` (the functional approver verifies a CP it cannot list) — a domain
+decision for the JV owner.
 
 Quorum, majority, recusal and tie rules are computed **on the server** from committee membership at the vote timestamp. Historical votes are never recomputed when membership or delegation changes later (master prompt §4.2).
 
@@ -553,6 +586,15 @@ other target types the link checks the RBAC grant of the target permission; thei
 own commands. On a **decision** in `draft` or `submitted` only the paper's requester links evidence (403
 `governance.decision.not_requester`, an unknown requester fails closed): the paper's evidence is part of the paper
 (DOM-P2-14) and the paper is written by its requester only (SEC-P2-02, residual SEC-P34-13).
+**Superseding** an evidence link and **flagging a conflict** on it change what the target rests on, so both apply exactly the
+link's authorization of the target (SEC-P34R-07, P3/P4 security re-check; `EvidenceService.assertTargetWrite`): the
+target's work permission (for example `carveout.transfer.manage` on transfer evidence, `newco.incorporation.manage` on
+incorporation evidence, `readiness.tsa.manage` on TSA evidence), the gate criterion's owner rule and the requester-only
+rule on a draft / submitted decision paper — 403 `evidence.target_permission` / `governance.decision.not_requester`
+otherwise. Verify and reject of an evidence record are the review function (`documents.evidence.verify`, with its own
+`not_self`) and keep their permission; there is no withdraw route. Tests: the `SEC-P34R-07 (fixed, regression)` probes in
+`apps/api/test/reviews/p34-sec-re-jv-ai.spec.ts` and `p34-sec-re-fixes.spec.ts` (incorporation, TSA, gate-criterion and
+transfer variants).
 
 #### Reporting (`reports.*`, 5 permissions)
 
