@@ -1,0 +1,50 @@
+// Domain-reviewer screens (DG1 round 2). Synthetic data only. Headless Chromium 1194 (pre-installed).
+import { chromium } from "@playwright/test";
+const OUT = process.argv[2];
+const BASE = "http://localhost:3000";
+const OPS = "01920000-0000-7000-9000-000000000101", RETAIL = "01920000-0000-7000-9000-000000000102";
+const browser = await chromium.launch();
+const res = [];
+const settle = async (page) => { await page.waitForLoadState("networkidle"); await page.waitForTimeout(800); };
+for (const [user, locale] of [["dev.office", "ar-SA"], ["dev.auditor", "en-US"]]) {
+  const ctx = await browser.newContext({ locale, timezoneId: "Asia/Riyadh", viewport: { width: 1366, height: 860 } });
+  const page = await ctx.newPage(); const foreign = [];
+  page.on("request", (r) => { const u = new URL(r.url()); if (u.hostname !== "localhost") foreign.push(r.url()); });
+  const tag = locale.slice(0, 2);
+  await page.goto(BASE + "/login"); await settle(page);
+  const loginAttrs = await page.evaluate(() => ({ lang: document.documentElement.lang, dir: document.documentElement.dir, text: document.body.innerText.slice(0, 600) }));
+  await page.screenshot({ path: `${OUT}/screen-login-${tag}.png`, fullPage: true });
+  await page.evaluate(async (u) => { await fetch("/api/v1/auth/dev-login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ username: u }) }); }, user);
+  await page.goto(BASE + "/"); await settle(page);
+  const shell = await page.evaluate(() => ({ lang: document.documentElement.lang, dir: document.documentElement.dir, text: document.body.innerText.slice(0, 1500), imgs: document.querySelectorAll("header img, header svg").length, font: getComputedStyle(document.body).fontFamily }));
+  await page.screenshot({ path: `${OUT}/screen-home-${tag}.png`, fullPage: true });
+  await page.goto(BASE + "/transformations"); await settle(page);
+  const list = await page.evaluate(() => ({ dir: document.documentElement.dir, text: document.body.innerText.slice(0, 2000) }));
+  await page.screenshot({ path: `${OUT}/screen-transformations-${tag}.png`, fullPage: true });
+  const fontsLoaded = await page.evaluate(async () => { await document.fonts.ready; return [...document.fonts].filter((f) => f.status === "loaded").map((f) => f.family); });
+  res.push({ user, locale, loginAttrs, shell, list, fontsLoaded: [...new Set(fontsLoaded)], foreignRequests: foreign });
+  await ctx.close();
+}
+// BU cycle refusal through the admin UI, as dev.admin (ADM_TECH, org scope), English then Arabic.
+for (const [pref, locale] of [["en", "en-US"], ["ar", "ar-SA"]]) {
+  const ctx = await browser.newContext({ locale, timezoneId: "Asia/Riyadh", viewport: { width: 1366, height: 860 } });
+  const page = await ctx.newPage(); const foreign = [];
+  page.on("request", (r) => { const u = new URL(r.url()); if (u.hostname !== "localhost") foreign.push(r.url()); });
+  await page.goto(BASE + "/login"); await settle(page);
+  await page.evaluate(async (p) => {
+    await fetch("/api/v1/auth/dev-login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ username: "dev.admin" }) });
+    const me = await fetch("/api/v1/me"); const body = await me.json();
+    await fetch("/api/v1/me/preferences", { method: "PUT", headers: { "content-type": "application/json", "if-match": me.headers.get("etag"), "x-csrf-token": body.csrfToken }, body: JSON.stringify({ preferredLocale: p }) });
+  }, pref);
+  await page.goto(`${BASE}/admin/business-units/${OPS}`); await settle(page);
+  await page.selectOption("form select >> nth=0", RETAIL);
+  await page.click("form button[type=submit]");
+  await page.waitForTimeout(1500);
+  const r = await page.evaluate(() => ({ lang: document.documentElement.lang, dir: document.documentElement.dir, alerts: [...document.querySelectorAll('[role=alert]')].map((e) => e.innerText), parentValue: document.querySelector("form select")?.value }));
+  await page.screenshot({ path: `${OUT}/screen-bu-cycle-${pref}.png`, fullPage: true });
+  const after = await page.evaluate(async (id) => (await (await fetch(`/api/v1/business-units/${id}`)).json()).parentBusinessUnitId, OPS);
+  res.push({ scenario: `bu-cycle-ui-${pref}`, ...r, serverParentAfter: after, foreignRequests: foreign });
+  await ctx.close();
+}
+await browser.close();
+console.log(JSON.stringify(res, null, 2));

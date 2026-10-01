@@ -1,0 +1,106 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - link "Skip to main content" [ref=e4] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e5]:
+    - 'link "Mobily Transformation Hub Provisional Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values." [ref=e6] [cursor=pointer]':
+      - /url: /
+      - generic [ref=e7]: Mobily Transformation Hub
+      - 'generic "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values." [ref=e8]': Provisional
+      - generic [ref=e9]: "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values."
+    - button "Switch language to العربية" [ref=e11] [cursor=pointer]: العربية
+    - generic [ref=e12]:
+      - generic [ref=e13]: Synthetic Transformation Office
+      - generic [ref=e14]: Synthetic Dev Organization
+    - button "Sign out" [ref=e15] [cursor=pointer]:
+      - img [ref=e16]
+      - text: Sign out
+  - generic [ref=e18]:
+    - navigation "Primary navigation" [ref=e19]:
+      - list [ref=e20]:
+        - listitem [ref=e21]:
+          - link "My Work" [ref=e22] [cursor=pointer]:
+            - /url: /my-work
+            - generic [ref=e23]: My Work
+        - listitem [ref=e24]:
+          - link "Executive Overview Planned" [ref=e25] [cursor=pointer]:
+            - /url: /executive-overview
+            - generic [ref=e26]: Executive Overview
+            - generic [ref=e27]: Planned
+        - listitem [ref=e28]:
+          - link "Transformations" [ref=e29] [cursor=pointer]:
+            - /url: /transformations
+            - generic [ref=e30]: Transformations
+        - listitem [ref=e31]:
+          - link "Playbook and Procedures Planned" [ref=e32] [cursor=pointer]:
+            - /url: /playbook
+            - generic [ref=e33]: Playbook and Procedures
+            - generic [ref=e34]: Planned
+        - listitem [ref=e35]:
+          - link "Strategy and KPIs Planned" [ref=e36] [cursor=pointer]:
+            - /url: /strategy-kpis
+            - generic [ref=e37]: Strategy and KPIs
+            - generic [ref=e38]: Planned
+        - listitem [ref=e39]:
+          - link "Target Operating Model Planned" [ref=e40] [cursor=pointer]:
+            - /url: /target-operating-model
+            - generic [ref=e41]: Target Operating Model
+            - generic [ref=e42]: Planned
+        - listitem [ref=e43]:
+          - link "Initiatives and Roadmaps Planned" [ref=e44] [cursor=pointer]:
+            - /url: /initiatives-roadmaps
+            - generic [ref=e45]: Initiatives and Roadmaps
+            - generic [ref=e46]: Planned
+        - listitem [ref=e47]:
+          - link "Governance Planned" [ref=e48] [cursor=pointer]:
+            - /url: /governance
+            - generic [ref=e49]: Governance
+            - generic [ref=e50]: Planned
+        - listitem [ref=e51]:
+          - link "Risks and Actions Planned" [ref=e52] [cursor=pointer]:
+            - /url: /risks-actions
+            - generic [ref=e53]: Risks and Actions
+            - generic [ref=e54]: Planned
+        - listitem [ref=e55]:
+          - link "Benefits and Finance Planned" [ref=e56] [cursor=pointer]:
+            - /url: /benefits-finance
+            - generic [ref=e57]: Benefits and Finance
+            - generic [ref=e58]: Planned
+        - listitem [ref=e59]:
+          - link "Change and Adoption Planned" [ref=e60] [cursor=pointer]:
+            - /url: /change-adoption
+            - generic [ref=e61]: Change and Adoption
+            - generic [ref=e62]: Planned
+        - listitem [ref=e63]:
+          - link "Evidence and Reports Planned" [ref=e64] [cursor=pointer]:
+            - /url: /evidence-reports
+            - generic [ref=e65]: Evidence and Reports
+            - generic [ref=e66]: Planned
+        - listitem [ref=e67]:
+          - link "BAU and Improvement Planned" [ref=e68] [cursor=pointer]:
+            - /url: /bau-improvement
+            - generic [ref=e69]: BAU and Improvement
+            - generic [ref=e70]: Planned
+      - paragraph [ref=e71]:
+        - link "About this product" [ref=e72] [cursor=pointer]:
+          - /url: /about
+    - main [ref=e73]:
+      - generic [ref=e74]:
+        - generic [ref=e77]:
+          - heading "Welcome, Synthetic Transformation Office" [level=1] [ref=e78]
+          - paragraph [ref=e79]: Your actions, drafts, reviews and deadlines in one place.
+        - generic [ref=e80]:
+          - region "Start here" [ref=e81]:
+            - heading "Start here" [level=2] [ref=e82]
+            - paragraph [ref=e83]:
+              - link "Open the transformations register" [ref=e84] [cursor=pointer]:
+                - /url: /transformations
+          - region "Planned" [ref=e85]:
+            - heading "Planned" [level=2] [ref=e86]:
+              - generic [ref=e87]:
+                - img [ref=e88]
+                - text: Planned
+            - paragraph [ref=e90]: Assigned actions, drafts, reviews, approvals, missing updates and upcoming deadlines.
+```

@@ -1,0 +1,96 @@
+# cmd: tests/qa/support/with-pg.sh bash /home/user/My-owns/docs/delivery/test-evidence/DG1/qa/round-2/12-db-probe.sh
+# cwd: <disposable clone of candidate e6979e12 @ 485e91f> ; node v22.22.2 ; date 2026-10-01T21:47:02Z
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+== migrate (fresh database)
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applied 9 migration(s)
+migrate exit=0
+== migrate again (idempotent)
+mth-db migrate: database is up to date
+migrate2 exit=0
+== schema_migration rows
+0001_identity_access.sql
+0002_transformation.sql
+0003_audit_event.sql
+0004_outbox_jobs.sql
+0005_seed_roles_permissions.sql
+0006_pgboss_schema_v25.sql
+0007_oidc_login_browser_binding.sql
+0008_scoped_assignment_derived_from.sql
+0009_business_unit_hierarchy_guard.sql
+== insert one audit row as mth_app
+1
+INSERT 0 1
+insert exit=0
+[mth_app] UPDATE audit_event SET reason='tamper' -> exit=1 :: ERROR:  permission denied for table audit_event
+[mth_app] DELETE FROM audit_event -> exit=1 :: ERROR:  permission denied for table audit_event
+[mth_app] TRUNCATE audit_event -> exit=1 :: ERROR:  permission denied for table audit_event
+[mth_owner] UPDATE audit_event SET reason='tamper' -> exit=1 :: ERROR:  audit_event is append-only: UPDATE is not allowed
+CONTEXT:  PL/pgSQL function audit_event_immutable() line 3 at RAISE
+[mth_owner] DELETE FROM audit_event -> exit=1 :: ERROR:  audit_event is append-only: DELETE is not allowed
+CONTEXT:  PL/pgSQL function audit_event_immutable() line 3 at RAISE
+[mth_owner] TRUNCATE audit_event -> exit=1 :: ERROR:  audit_event is append-only: TRUNCATE is not allowed
+CONTEXT:  PL/pgSQL function audit_event_immutable() line 3 at RAISE
+[postgres(superuser)] UPDATE audit_event SET reason='tamper' -> exit=1 :: ERROR:  audit_event is append-only: UPDATE is not allowed
+CONTEXT:  PL/pgSQL function audit_event_immutable() line 3 at RAISE
+[postgres(superuser)] DELETE FROM audit_event -> exit=1 :: ERROR:  audit_event is append-only: DELETE is not allowed
+CONTEXT:  PL/pgSQL function audit_event_immutable() line 3 at RAISE
+[postgres(superuser)] TRUNCATE audit_event -> exit=1 :: ERROR:  audit_event is append-only: TRUNCATE is not allowed
+CONTEXT:  PL/pgSQL function audit_event_immutable() line 3 at RAISE
+== audit rows remaining (expect 1|<null>)
+1|<null>
+== BU guard: setup (synthetic org QAPROBE, roots A B C, then C under B) as mth_app
+setup exit=0
+== BU guard: direct cycle (B under C while C is under B) -> expect 23514 business_unit_acyclic
+exit=1 :: ERROR:  23514: business unit 00000000-0000-4000-8000-0000000000bb cannot be placed under its own descendant 00000000-0000-4000-8000-0000000000cc
+CONTEXT:  PL/pgSQL function business_unit_hierarchy_guard() line 25 at RAISE
+TABLE NAME:  business_unit
+CONSTRAINT NAME:  business_unit_acyclic
+LOCATION:  exec_stmt_raise, pl_exec.c:3897
+== BU guard: concurrent race. T1: A under C (holds tx 3s). T2 (starts 0.5s later): B under A. Without a DB guard both commit -> A->C->B->A
+-- T1:
+BEGIN
+UPDATE 1
+
+COMMIT
+T1 exit=0
+-- T2:
+BEGIN
+ERROR:  23514: business unit 00000000-0000-4000-8000-0000000000bb cannot be placed under its own descendant 00000000-0000-4000-8000-0000000000aa
+CONTEXT:  PL/pgSQL function business_unit_hierarchy_guard() line 25 at RAISE
+TABLE NAME:  business_unit
+CONSTRAINT NAME:  business_unit_acyclic
+LOCATION:  exec_stmt_raise, pl_exec.c:3897
+T2 exit=1
+== hierarchy after race (expect no cycle rows)
+ERROR:  ORDER BY "code" is ambiguous
+LINE 1: ...tion_id='00000000-0000-4000-8000-0000000000a0' ORDER BY code
+                                                                   ^
+cycle_rows=0
+== BU guard: depth. chain D1..D10 (10 levels) ok; D11 under D10 -> expect business_unit_max_depth
+D1 insert exit=0 :: INSERT 0 1
+D2 insert exit=0 :: INSERT 0 1
+D3 insert exit=0 :: INSERT 0 1
+D4 insert exit=0 :: INSERT 0 1
+D5 insert exit=0 :: INSERT 0 1
+D6 insert exit=0 :: INSERT 0 1
+D7 insert exit=0 :: INSERT 0 1
+D8 insert exit=0 :: INSERT 0 1
+D9 insert exit=0 :: INSERT 0 1
+D10 insert exit=0 :: INSERT 0 1
+D11 insert exit=1 :: ERROR:  23514: business unit 00000000-0000-4000-8000-000000000111 would be nested deeper than 10 levels
+CONTEXT:  PL/pgSQL function business_unit_hierarchy_guard() line 30 at RAISE
+TABLE NAME:  business_unit
+CONSTRAINT NAME:  business_unit_max_depth
+LOCATION:  exec_stmt_raise, pl_exec.c:3897
+== closure max depth in org (expect 9)
+9
+# exit=0

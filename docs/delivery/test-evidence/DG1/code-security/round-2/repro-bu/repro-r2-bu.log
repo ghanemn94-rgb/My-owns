@@ -1,0 +1,44 @@
+# cmd (attempt 2): TEST_DATABASE_ADMIN_URL=postgresql://postgres@127.0.0.1:54865/postgres npx vitest run --project integration apps/api/test/integration/zz-review-r2-bu.test.ts; node v22.22.2; clone @ 485e91f50eabe236b12d67f45d1bf1d246a97e4a
+# pg: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+ RUN  v3.2.4 /var/tmp/mth-run.KJ9Bt5/claude-0/review-r2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muq2nclp_7b36e539; applied 9 migrations to a fresh database
+stdout | apps/api/test/integration/zz-review-r2-bu.test.ts > F-DG1-140 re-verification > R2-2 sequential: B under A after A under C is a friendly 422 business_unit.cycle
+R2-2 sequential: [33m422[39m {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A business unit cannot be moved under itself or one of its descendants.","code":"business_unit.cycle","requestId":"01a0f975-f2a0-73a9-a3b9-54e8ab125d9b"}
+
+stdout | apps/api/test/integration/zz-review-r2-bu.test.ts > F-DG1-140 re-verification > R2-1 API concurrent round-1 interleaving: second PATCH waits on the hierarchy lock, then 422; no cycle
+waiting lock types before release: advisory,advisory
+
+stdout | apps/api/test/integration/zz-review-r2-bu.test.ts > F-DG1-140 re-verification > R2-1 API concurrent round-1 interleaving: second PATCH waits on the hierarchy lock, then 422; no cycle
+R2-1 statuses: A->C [33m200[39m | B->A [33m422[39m business_unit.cycle | cycles: [33m0[39m
+
+stdout | apps/api/test/integration/zz-review-r2-bu.test.ts > F-DG1-140 re-verification > R2-3/4 DB-only as mth_app at READ COMMITTED: the concurrent cycle is refused by the trigger
+waiting lock types before release: advisory,transactionid
+
+stdout | apps/api/test/integration/zz-review-r2-bu.test.ts > F-DG1-140 re-verification > R2-3/4 DB-only as mth_app at READ COMMITTED: the concurrent cycle is refused by the trigger
+R2-3/4 READ COMMITTED: T1 fulfilled | T2 rejected 23514 business_unit_acyclic | cycles: [33m0[39m
+
+stdout | apps/api/test/integration/zz-review-r2-bu.test.ts > F-DG1-140 re-verification > R2-3/4 DB-only as mth_app at REPEATABLE READ: the concurrent cycle is refused by the trigger
+waiting lock types before release: advisory,transactionid
+
+stdout | apps/api/test/integration/zz-review-r2-bu.test.ts > F-DG1-140 re-verification > R2-3/4 DB-only as mth_app at REPEATABLE READ: the concurrent cycle is refused by the trigger
+R2-3/4 REPEATABLE READ: T1 fulfilled | T2 rejected 40001 [90mundefined[39m | cycles: [33m0[39m
+
+stdout | apps/api/test/integration/zz-review-r2-bu.test.ts > F-DG1-140 re-verification > R2-5 DB-only: one multi-row UPDATE putting two roots under each other is refused (23514)
+R2-5 single-statement 2-cycle: 23514 business_unit_acyclic | cycles: [33m0[39m
+
+stdout | apps/api/test/integration/zz-review-r2-bu.test.ts > F-DG1-140 re-verification > R2-6 mth_app cannot disable the guard
+R2-6 replication_role: 42501 | disable trigger: 42501 | replace fn: 42501
+
+stdout | apps/api/test/integration/zz-review-r2-bu.test.ts > F-DG1-141 re-verification > R2-7 a1-scoped manager: sibling 403 (audited), top-level 403, other-org 422, in-scope 200; no exposure
+R2-7 sibling: [33m403[39m forbidden | deep sibling: [33m403[39m | top: [33m403[39m | other org: [33m422[39m business_unit.parent_invalid | missing: [33m422[39m business_unit.parent_invalid | denial audits on a2: [33m1[39m PATCH /api/v1/business-units/:businessUnitId requires business_unit.manage | parent still a1: [33mtrue[39m | V read: [33m404[39m | in-scope move: [33m200[39m
+
+ ✓ |integration| apps/api/test/integration/zz-review-r2-bu.test.ts (7 tests) 892ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  21:54:09
+   Duration  2.91s (transform 484ms, setup 0ms, collect 1.11s, tests 892ms, environment 0ms, prepare 77ms)
+
+EXIT=0

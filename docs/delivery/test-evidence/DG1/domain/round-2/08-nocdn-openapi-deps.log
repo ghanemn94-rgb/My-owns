@@ -1,0 +1,21 @@
+# node v22.22.2, commit 309be8def2a4294377aa26c4586819bfa53991a2, 2026-10-01T21:51:18Z
+$ pnpm check:no-cdn
+> node scripts/check-no-cdn.mjs
+
+PASS no-cdn: scanned apps, packages
+exit=0
+$ pnpm openapi:lint
+> node scripts/openapi-lint.mjs docs/api/openapi.yaml
+
+PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 33 operations
+exit=0
+$ pnpm deps:verify -> NOT RUN / BLOCKED: script runs 'npm view' against the registry (scripts/verify-dependency-pins.mjs:2-3,44); this reviewer sandbox has no network. First attempt hung and was stopped. Not an assigned domain check.
+$ grep -rniE "official (pmi|mobily)|pmi[- ]certified|certified by pmi|mobily[- ]approved" apps packages --include=*.ts --include=*.tsx --include=*.json --include=*.html --include=*.css (excl node_modules, dist)
+apps/web/src/components/Wordmark.tsx:1:// Provisional TEXT wordmark (REQ-S15-006, ADR-0009 §5). No official Mobily logo has been supplied, so the header
+apps/web/src/i18n/en/common.json:6:    "provisionalNotice": "Branding is provisional: the text wordmark and colours are placeholders, not official Mobily brand assets."
+apps/web/src/i18n/en/common.json:120:    "brandBody": "No official Mobily logo or verified brand colours have been supplied. The header shows a provisional text wordmark, and the colours (including #0078FF) are provisional design tokens that can be replaced through Branding Settings once official values are approved.",
+apps/web/src/i18n/en/common.json:123:    "methodBody": "The product operationalizes the Business Transformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with custom extensions. It is not an official PMI standard, and this product is not certified by PMI or any other body.",
+apps/api/src/modules/admin/branding.test.ts:58:    // No response claims official Mobily brand compliance.
+packages/shared/src/permissions.ts:2:// These are a CONFIGURABLE STARTING POINT, not a Mobily-approved access policy. The database is the runtime
+packages/design-tokens/src/tokens.json:2:  "$comment": "Single design-token source (ADR-0009). PROVISIONAL values from master prompt §15 (REQ-S15-002). They are NOT verified or official Mobily colours; #0078FF is a provisional brand token. Replace only through the Branding Settings flow (REQ-S15-004) once official values are supplied.",
+grep exit=0 (1 = no matches)

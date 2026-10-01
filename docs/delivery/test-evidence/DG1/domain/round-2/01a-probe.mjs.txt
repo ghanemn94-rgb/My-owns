@@ -1,0 +1,177 @@
+// Domain-reviewer live probe (DG1 round 2). Synthetic data only.
+const BASE = "http://localhost:3000";
+const ORIGIN = BASE;
+const RETAIL = "01920000-0000-7000-9000-000000000102";
+const FIN = "01920000-0000-7000-9000-000000000103";
+let pass = 0, fail = 0;
+function check(name, cond, detail) { if (cond) { pass++; console.log(`PASS ${name}${detail ? " :: " + detail : ""}`); } else { fail++; console.log(`FAIL ${name}${detail ? " :: " + detail : ""}`); } }
+async function login(username) {
+  const r = await fetch(`${BASE}/api/v1/auth/dev-login`, { method: "POST", headers: { "content-type": "application/json", origin: ORIGIN }, body: JSON.stringify({ username }) });
+  const cookie = (r.headers.getSetCookie?.() ?? []).map((c) => c.split(";")[0]).join("; ");
+  const me = await fetch(`${BASE}/api/v1/me`, { headers: { cookie } });
+  const meBody = await me.json();
+  return { status: r.status, cookie, csrf: meBody.csrfToken, me: meBody };
+}
+async function call(s, method, path, body, extra = {}) {
+  const headers = { origin: ORIGIN, ...extra };
+  if (s) { headers.cookie = s.cookie; if (method !== "GET") headers["x-csrf-token"] = s.csrf; }
+  if (body !== undefined) headers["content-type"] = "application/json";
+  const r = await fetch(BASE + path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
+  const text = await r.text();
+  let json; try { json = JSON.parse(text); } catch { json = text; }
+  return { status: r.status, etag: r.headers.get("etag"), json, ctype: r.headers.get("content-type") };
+}
+const anon = await call(null, "GET", "/api/v1/me");
+check("unauthenticated GET /me is 401 (problem+json)", anon.status === 401, `${anon.status} ${anon.ctype}`);
+
+const office = await login("dev.office");
+check("dev.office dev-login 204", office.status === 204, String(office.status));
+console.log("me(office):", JSON.stringify({ locale: office.me.preferredLocale ?? office.me.locale, roles: office.me.roles ?? office.me.assignments }).slice(0, 400));
+
+const c1 = await call(office, "POST", "/api/v1/transformations", { businessUnitId: RETAIL, name: "Roaming revenue uplift (synthetic)", mode: "end_to_end" });
+check("TO creates end-to-end transformation 201", c1.status === 201, `${c1.status} ${JSON.stringify(c1.json).slice(0, 300)}`);
+const t = c1.json;
+check("defaults: timezone Asia/Riyadh, currency SAR, phase diagnose, status draft", t.timezone === "Asia/Riyadh" && t.currency === "SAR" && t.currentPhase === "diagnose" && t.status === "draft", `${t.timezone} ${t.currency} ${t.currentPhase} ${t.status}`);
+
+const c2 = await call(office, "POST", "/api/v1/transformations", { businessUnitId: RETAIL, name: "Modular TOM (synthetic)", mode: "modular", entryPhase: "design", timezone: "Europe/London", currency: "USD" });
+check("modular entry at selected phase + configurable tz/currency", c2.status === 201 && c2.json.currentPhase === "design" && c2.json.timezone === "Europe/London" && c2.json.currency === "USD", `${c2.status} ${c2.json.currentPhase} ${c2.json.timezone} ${c2.json.currency}`);
+const cm = await call(office, "POST", "/api/v1/transformations", { businessUnitId: RETAIL, name: "Modular no phase (synthetic)", mode: "modular" });
+check("modular without entryPhase is refused (400/422)", cm.status === 400 || cm.status === 422, String(cm.status));
+
+let g = await call(office, "GET", `/api/v1/transformations/${t.id}`);
+const noIfMatch = await call(office, "PATCH", `/api/v1/transformations/${t.id}`, { status: "active" });
+check("PATCH without If-Match is 428", noIfMatch.status === 428, String(noIfMatch.status));
+const toClosedFromDraft = await call(office, "PATCH", `/api/v1/transformations/${t.id}`, { status: "closed" }, { "if-match": g.etag });
+check("draft -> closed refused 422", toClosedFromDraft.status === 422, `${toClosedFromDraft.status} ${JSON.stringify(toClosedFromDraft.json).slice(0, 300)}`);
+const act = await call(office, "PATCH", `/api/v1/transformations/${t.id}`, { status: "active" }, { "if-match": g.etag });
+check("draft -> active 200", act.status === 200 && act.json.status === "active", `${act.status} v${act.json.version}`);
+const stale = await call(office, "PATCH", `/api/v1/transformations/${t.id}`, { name: "stale write" }, { "if-match": g.etag });
+check("stale If-Match is 409/412", stale.status === 409 || stale.status === 412, String(stale.status));
+const close1 = await call(office, "PATCH", `/api/v1/transformations/${t.id}`, { status: "closed" }, { "if-match": act.etag });
+check("active -> closed refused 422 (closure needs product gate G6)", close1.status === 422, `${close1.status} ${JSON.stringify(close1.json)}`);
+const afterClose = await call(office, "GET", `/api/v1/transformations/${t.id}`);
+check("record unchanged after refused close (status active, same version)", afterClose.json.status === "active" && afterClose.json.version === act.json.version, `${afterClose.json.status} v${afterClose.json.version}`);
+const hold = await call(office, "PATCH", `/api/v1/transformations/${t.id}`, { status: "on_hold" }, { "if-match": afterClose.etag });
+const close2 = await call(office, "PATCH", `/api/v1/transformations/${t.id}`, { status: "closed" }, { "if-match": hold.etag });
+check("on_hold -> closed refused 422", hold.status === 200 && close2.status === 422, `${hold.status} ${close2.status}`);
+const mixed = await call(office, "PATCH", `/api/v1/transformations/${t.id}`, { status: "closed", name: "sneaky rename" }, { "if-match": hold.etag });
+const afterMixed = await call(office, "GET", `/api/v1/transformations/${t.id}`);
+check("close + rename in one PATCH refused atomically", mixed.status === 422 && afterMixed.json.name === "Roaming revenue uplift (synthetic)", `${mixed.status} name=${afterMixed.json.name}`);
+const msg = JSON.stringify(close1.json);
+check("refusal message does not claim engineering DG7 or a real approval", !/DG7|approved/i.test(msg), msg.slice(0, 200));
+
+const audit = await call(office, "GET", `/api/v1/transformations/${t.id}/audit`);
+const actions = (audit.json.items ?? []).map((i) => i.action);
+check("audit trail: one event per successful mutation, none for refused close", audit.status === 200 && actions.filter((a) => a === "transformation.update").length === 2 && actions.includes("transformation.create"), JSON.stringify(actions));
+
+// Scope
+const fin = await call(office, "POST", "/api/v1/transformations", { businessUnitId: FIN, name: "Finance BU record (synthetic)", mode: "end_to_end" });
+check("TO (org scope) creates in SYN-FIN", fin.status === 201, String(fin.status));
+const lead = await login("dev.lead");
+const leadOwn = await call(lead, "POST", "/api/v1/transformations", { businessUnitId: RETAIL, name: "Lead's record (synthetic)", mode: "end_to_end" });
+check("TL (SYN-RETAIL) creates in own BU", leadOwn.status === 201, String(leadOwn.status));
+const leadFin = await call(lead, "GET", `/api/v1/transformations/${fin.json.id}`);
+check("TL cannot read out-of-scope SYN-FIN record (404, no existence leak)", leadFin.status === 404, String(leadFin.status));
+const leadFinCreate = await call(lead, "POST", "/api/v1/transformations", { businessUnitId: FIN, name: "x", mode: "end_to_end" });
+check("TL cannot create in SYN-FIN (403/404)", leadFinCreate.status === 403 || leadFinCreate.status === 404, String(leadFinCreate.status));
+const leadList = await call(lead, "GET", "/api/v1/transformations?limit=100");
+const leadIds = (leadList.json.items ?? []).map((i) => i.id);
+check("TL list excludes SYN-FIN record and includes own", !leadIds.includes(fin.json.id) && leadIds.includes(leadOwn.json.id), `n=${leadIds.length}`);
+const adm = await login("dev.admin");
+const admList = await call(adm, "GET", "/api/v1/transformations");
+check("access/technical admin sees no business records", admList.status === 403 || (admList.status === 200 && admList.json.items.length === 0), `${admList.status} ${JSON.stringify(admList.json).slice(0, 120)}`);
+const admRead = await call(adm, "GET", `/api/v1/transformations/${t.id}`);
+check("admin cannot read a transformation (403/404)", admRead.status === 403 || admRead.status === 404, String(admRead.status));
+const nobody = await login("dev.nobody");
+const nb = await call(nobody, "GET", "/api/v1/transformations");
+check("user without roles: list 403 or empty", nb.status === 403 || (nb.status === 200 && nb.json.items.length === 0), String(nb.status));
+const aud = await login("dev.auditor");
+const audPatch = await call(aud, "GET", `/api/v1/transformations/${t.id}`);
+const audW = await call(aud, "PATCH", `/api/v1/transformations/${t.id}`, { name: "auditor edit" }, { "if-match": audPatch.etag });
+check("auditor reads but cannot update (403)", audPatch.status === 200 && audW.status === 403, `${audPatch.status} ${audW.status}`);
+const noCsrf = await fetch(`${BASE}/api/v1/transformations`, { method: "POST", headers: { cookie: office.cookie, origin: ORIGIN, "content-type": "application/json" }, body: JSON.stringify({ businessUnitId: RETAIL, name: "nocsrf", mode: "end_to_end" }) });
+check("mutation without CSRF token refused 403", noCsrf.status === 403, String(noCsrf.status));
+
+// Pagination
+for (let i = 0; i < 3; i++) await call(office, "POST", "/api/v1/transformations", { businessUnitId: RETAIL, name: `Paging ${i} (synthetic)`, mode: "end_to_end" });
+const all = await call(office, "GET", "/api/v1/transformations?limit=100&sort=name:asc");
+const seen = []; let cursor; let pages = 0;
+do { const p = await call(office, "GET", `/api/v1/transformations?limit=2&sort=name:asc${cursor ? "&cursor=" + encodeURIComponent(cursor) : ""}`); seen.push(...p.json.items.map((i) => i.id)); cursor = p.json.nextCursor; pages++; } while (cursor && pages < 20);
+check("cursor pagination walks every row exactly once in order", JSON.stringify(seen) === JSON.stringify(all.json.items.map((i) => i.id)), `rows=${seen.length} pages=${pages}`);
+const p1 = await call(office, "GET", "/api/v1/transformations?limit=2&sort=name:asc");
+const reuse = await call(office, "GET", `/api/v1/transformations?limit=2&sort=name:desc&cursor=${encodeURIComponent(p1.json.nextCursor)}`);
+check("cursor reused with a different sort/filter is rejected 400", reuse.status === 400, String(reuse.status));
+const tamper = await call(office, "GET", `/api/v1/transformations?limit=2&cursor=${encodeURIComponent(p1.json.nextCursor.slice(0, -2) + "xx")}`);
+check("tampered cursor rejected 400", tamper.status === 400, String(tamper.status));
+const big = await call(office, "GET", "/api/v1/transformations?limit=1000");
+check("limit above maximum rejected 400", big.status === 400, String(big.status));
+
+// Branding
+const br = await call(office, "GET", "/api/v1/branding/tokens");
+console.log("branding:", JSON.stringify(br.json));
+const toks = br.json.tokens ?? br.json.items ?? br.json;
+const arr = Array.isArray(toks) ? toks : Object.entries(toks).map(([k, v]) => ({ name: k, ...v }));
+const want = { "brand.primary": "#0078FF", "brand.deep": "#003B73", "surface.page": "#F5F8FC", "surface.card": "#FFFFFF", "text.primary": "#142438", "text.secondary": "#526174", "border.default": "#DCE5EF" };
+// Contract (openapi BrandingTokens): set-level provenance + per-token provisional flag.
+const okTok = br.json.provenance === "provisional" && Object.entries(want).every(([k, v]) => arr.some((x) => x.name === k && String(x.value).toUpperCase() === v && x.provisional === true));
+check("branding tokens: 7 seeded values, provenance=provisional", br.status === 200 && okTok, `${br.status} n=${arr.length}`);
+
+// Preferences / locale
+const me0 = await call(office, "GET", "/api/v1/me");
+const prefNoMatch = await call(office, "PUT", "/api/v1/me/preferences", { preferredLocale: "en" });
+check("PUT /me/preferences without If-Match is 428", prefNoMatch.status === 428, String(prefNoMatch.status));
+const pref = await call(office, "PUT", "/api/v1/me/preferences", { preferredLocale: "en" }, { "if-match": me0.etag });
+const meEn = await call(office, "GET", "/api/v1/me");
+check("PUT /me/preferences persists locale (en)", pref.status === 200 && meEn.json.user?.preferredLocale === "en", `${pref.status} ${meEn.json.user?.preferredLocale}`);
+const prefAr = await call(office, "PUT", "/api/v1/me/preferences", { preferredLocale: "ar" }, { "if-match": meEn.etag ?? pref.etag });
+check("locale reset to ar", prefAr.status === 200, String(prefAr.status));
+
+// ---------------- Round 2: BU re-parent cycle guard + destination authorization (F-DG1-140/141) -------------
+const ORG = "01920000-0000-7000-9000-000000000001";
+const OPS = "01920000-0000-7000-9000-000000000101";
+const mkBu = async (s, code, parent) => call(s, "POST", `/api/v1/organizations/${ORG}/business-units`, { code, nameEn: `${code} (synthetic)`, nameAr: `${code} (اصطناعي)`, ...(parent ? { parentBusinessUnitId: parent } : {}) });
+const A = await mkBu(adm, "R2-A"); const B = await mkBu(adm, "R2-B", A.json.id); const C = await mkBu(adm, "R2-C", B.json.id);
+check("ADM_TECH (org) creates chain A > B > C", A.status === 201 && B.status === 201 && C.status === 201, `${A.status} ${B.status} ${C.status}`);
+let a = await call(adm, "GET", `/api/v1/business-units/${A.json.id}`);
+const cyc = await call(adm, "PATCH", `/api/v1/business-units/${A.json.id}`, { parentBusinessUnitId: C.json.id }, { "if-match": a.etag });
+check("move A under its descendant C refused 422 business_unit.cycle", cyc.status === 422 && cyc.json.code === "business_unit.cycle", `${cyc.status} ${JSON.stringify(cyc.json).slice(0, 220)}`);
+const self = await call(adm, "PATCH", `/api/v1/business-units/${A.json.id}`, { parentBusinessUnitId: A.json.id }, { "if-match": a.etag });
+check("move A under itself refused 422 business_unit.cycle", self.status === 422 && self.json.code === "business_unit.cycle", `${self.status}`);
+const a2 = await call(adm, "GET", `/api/v1/business-units/${A.json.id}`);
+check("A unchanged after refused moves (parent null, same version)", a2.json.parentBusinessUnitId === null && a2.json.version === a.json.version, `parent=${a2.json.parentBusinessUnitId} v${a2.json.version}`);
+let c = await call(adm, "GET", `/api/v1/business-units/${C.json.id}`);
+const cTop = await call(adm, "PATCH", `/api/v1/business-units/${C.json.id}`, { parentBusinessUnitId: null }, { "if-match": c.etag });
+check("ADM_TECH (org) moves C to top level 200 (destination = organization)", cTop.status === 200 && cTop.json.parentBusinessUnitId === null, `${cTop.status} v${cTop.json.version}`);
+const cBack = await call(adm, "PATCH", `/api/v1/business-units/${C.json.id}`, { parentBusinessUnitId: OPS }, { "if-match": cTop.etag });
+check("ADM_TECH (org) moves C under SYN-OPS 200", cBack.status === 200 && cBack.json.parentBusinessUnitId === OPS, `${cBack.status}`);
+const aNoMatch = await call(adm, "PATCH", `/api/v1/business-units/${A.json.id}`, { parentBusinessUnitId: OPS });
+check("BU PATCH without If-Match is 428", aNoMatch.status === 428, String(aNoMatch.status));
+
+// Destination authz: dev.nobody receives ADM_TECH on X only (ADM_TECH does not inherit downward).
+const X = await mkBu(adm, "R2-X"); const Y = await mkBu(adm, "R2-Y");
+const NOBODY = "01920000-0000-7000-9000-000000000205";
+const gY = await call(adm, "POST", "/api/v1/role-assignments", { userId: NOBODY, roleCode: "ADM_TECH", scope: { type: "business_unit", id: Y.json.id }, reason: "DG1 r2 domain review: synthetic destination-authz probe" });
+check("ADM_ACCESS grants dev.nobody ADM_TECH on BU Y", gY.status === 201, `${gY.status} ${JSON.stringify(gY.json).slice(0, 200)}`);
+const nb2 = await login("dev.nobody");
+let y = await call(nb2, "GET", `/api/v1/business-units/${Y.json.id}`);
+const yUnderX = await call(nb2, "PATCH", `/api/v1/business-units/${Y.json.id}`, { parentBusinessUnitId: X.json.id }, { "if-match": y.etag });
+check("manager of Y only cannot move Y under X (no manage on destination) 403", yUnderX.status === 403, `${yUnderX.status} ${JSON.stringify(yUnderX.json).slice(0, 160)}`);
+const yUnderFin = await call(nb2, "PATCH", `/api/v1/business-units/${Y.json.id}`, { parentBusinessUnitId: FIN }, { "if-match": y.etag });
+check("manager of Y only cannot move Y under SYN-FIN 403", yUnderFin.status === 403, String(yUnderFin.status));
+const y1 = await call(nb2, "GET", `/api/v1/business-units/${Y.json.id}`);
+check("Y unchanged after refused moves", y1.json.parentBusinessUnitId === null && y1.json.version === y.json.version, `parent=${y1.json.parentBusinessUnitId} v${y1.json.version}`);
+const rename = await call(nb2, "PATCH", `/api/v1/business-units/${Y.json.id}`, { nameEn: "R2-Y renamed (synthetic)" }, { "if-match": y1.etag });
+check("manager of Y can still edit Y itself (no regression) 200", rename.status === 200, String(rename.status));
+const gX = await call(adm, "POST", "/api/v1/role-assignments", { userId: NOBODY, roleCode: "ADM_TECH", scope: { type: "business_unit", id: X.json.id }, reason: "DG1 r2 domain review: synthetic destination-authz probe" });
+const nb3 = await login("dev.nobody");
+y = await call(nb3, "GET", `/api/v1/business-units/${Y.json.id}`);
+const yUnderX2 = await call(nb3, "PATCH", `/api/v1/business-units/${Y.json.id}`, { parentBusinessUnitId: X.json.id }, { "if-match": y.etag });
+check("with manage on X as well, Y under X succeeds 200", gX.status === 201 && yUnderX2.status === 200 && yUnderX2.json.parentBusinessUnitId === X.json.id, `${gX.status} ${yUnderX2.status}`);
+const yTop = await call(nb3, "PATCH", `/api/v1/business-units/${Y.json.id}`, { parentBusinessUnitId: null }, { "if-match": yUnderX2.etag });
+check("BU-scoped manager cannot move Y to top level (destination = organization) 403", yTop.status === 403, String(yTop.status));
+// transformations still visible to the TO under the moved hierarchy (no domain regression)
+const offList = await call(office, "GET", "/api/v1/transformations?limit=100");
+check("TO list unaffected by BU moves", offList.status === 200 && offList.json.items.length >= 6, `${offList.status} n=${offList.json.items?.length}`);
+console.log(`\nSUMMARY pass=${pass} fail=${fail}`);
+console.log(JSON.stringify({ tId: t.id, A: A.json.id, C: C.json.id, X: X.json.id, Y: Y.json.id }));
+process.exit(fail ? 1 : 0);

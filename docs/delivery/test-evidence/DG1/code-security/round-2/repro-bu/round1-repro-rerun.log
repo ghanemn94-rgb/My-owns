@@ -1,0 +1,62 @@
+# cmd: TEST_DATABASE_ADMIN_URL=postgresql://postgres@127.0.0.1:54863/postgres npx vitest run --project integration apps/api/test/integration/zz-review-bu-hierarchy.test.ts (round-1 repro UNCHANGED; expected: its vulnerable-outcome assertions now FAIL); node v22.22.2; clone @ 485e91f50eabe236b12d67f45d1bf1d246a97e4a
+# pg: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+ RUN  v3.2.4 /var/tmp/mth-run.KJ9Bt5/claude-0/review-r2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muq2lnzd_8a425e19; applied 9 migrations to a fresh database
+stdout | apps/api/test/integration/zz-review-bu-hierarchy.test.ts > SEC-1 concurrent re-parenting creates a business-unit cycle > A->C and B->A (with C already under B) both return 200 and the committed hierarchy has a cycle A->C->B->A
+SEC-1 sequential control (B under A after A under C): [33m422[39m {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A business unit cannot be moved under itself or one of its descendants.","code":"business_unit.cycle","requestId":"01a0f974-c532-721d-9edb-7a498475454a"}
+
+stdout | apps/api/test/integration/zz-review-bu-hierarchy.test.ts > SEC-2 re-parenting does not authorize the destination parent > a manager scoped to BU a1 moves a1x under sibling a2 (no rights on a2); a2's inheriting users gain a1x records
+SEC-2 control: U PATCH a2 -> [33m404[39m
+
+stdout | apps/api/test/integration/zz-review-bu-hierarchy.test.ts > SEC-2 re-parenting does not authorize the destination parent > a manager scoped to BU a1 moves a1x under sibling a2 (no rights on a2); a2's inheriting users gain a1x records
+SEC-2 V read before: [33m404[39m | U move a1x->a2: [33m403[39m | V read after: [33m404[39m | U read a1x after: [33m200[39m
+
+ ❯ |integration| apps/api/test/integration/zz-review-bu-hierarchy.test.ts (2 tests | 2 failed) 11850ms
+   × SEC-1 concurrent re-parenting creates a business-unit cycle > A->C and B->A (with C already under B) both return 200 and the committed hierarchy has a cycle A->C->B->A 10632ms
+     → timed out waiting for a row-lock waiter
+   × SEC-2 re-parenting does not authorize the destination parent > a manager scoped to BU a1 moves a1x under sibling a2 (no rights on a2); a2's inheriting users gain a1x records 122ms
+     → expected 403 to be 200 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-review-bu-hierarchy.test.ts > SEC-1 concurrent re-parenting creates a business-unit cycle > A->C and B->A (with C already under B) both return 200 and the committed hierarchy has a cycle A->C->B->A
+Error: timed out waiting for a row-lock waiter
+ ❯ waitForRowWaiter apps/api/test/integration/zz-review-bu-hierarchy.test.ts:79:9
+     77|     await new Promise((r) => setTimeout(r, 25));
+     78|   }
+     79|   throw new Error("timed out waiting for a row-lock waiter");
+       |         ^
+     80| }
+     81| 
+ ❯ apps/api/test/integration/zz-review-bu-hierarchy.test.ts:116:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-review-bu-hierarchy.test.ts > SEC-2 re-parenting does not authorize the destination parent > a manager scoped to BU a1 moves a1x under sibling a2 (no rights on a2); a2's inheriting users gain a1x records
+AssertionError: expected 403 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 403[39m
+
+ ❯ apps/api/test/integration/zz-review-bu-hierarchy.test.ts:173:26
+    171|     console.log("SEC-2 V read before:", before.status, "| U move a1x->…
+    172|     expect(before.status).toBe(404);
+    173|     expect(moved.status).toBe(200);
+       |                          ^
+    174|     expect(after.status).toBe(200);
+    175|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  21:52:50
+   Duration  14.75s (transform 580ms, setup 0ms, collect 1.42s, tests 11.85s, environment 0ms, prepare 147ms)
+
+EXIT=1

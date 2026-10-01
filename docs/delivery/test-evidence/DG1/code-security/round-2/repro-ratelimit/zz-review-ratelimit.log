@@ -1,0 +1,45 @@
+# cmd: TEST_DATABASE_ADMIN_URL=postgresql://postgres@127.0.0.1:54866/postgres npx vitest run --project integration apps/api/test/integration/zz-review-ratelimit.test.ts; node v22.22.2; clone @ 485e91f50eabe236b12d67f45d1bf1d246a97e4a
+# pg: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+ RUN  v3.2.4 /var/tmp/mth-run.KJ9Bt5/claude-0/review-r2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muq2ojdw_e0706a2e; applied 9 migrations to a fresh database
+stdout | apps/api/test/integration/zz-review-ratelimit.test.ts > SEC-3 global rate limit is bypassed by rotating an invalid session cookie > control: without a cookie the 4th request from one IP is 429
+SEC-3 control (no cookie, same IP): 401,401,401,429,429,429
+
+stdout | apps/api/test/integration/zz-review-ratelimit.test.ts > SEC-3 global rate limit is bypassed by rotating an invalid session cookie > bypass: 50 requests from the SAME IP with a fresh random 43-char cookie each are never 429
+SEC-3 bypass (random cookie per request, same IP) status counts: {"429":50}
+
+ ❯ |integration| apps/api/test/integration/zz-review-ratelimit.test.ts (2 tests | 1 failed) 104ms
+   ✓ SEC-3 global rate limit is bypassed by rotating an invalid session cookie > control: without a cookie the 4th request from one IP is 429 23ms
+   × SEC-3 global rate limit is bypassed by rotating an invalid session cookie > bypass: 50 requests from the SAME IP with a fresh random 43-char cookie each are never 429 30ms
+     → expected true to be false // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-review-ratelimit.test.ts > SEC-3 global rate limit is bypassed by rotating an invalid session cookie > bypass: 50 requests from the SAME IP with a fresh random 43-char cookie each are never 429
+AssertionError: expected true to be false // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- false[39m
+[31m+ true[39m
+
+ ❯ apps/api/test/integration/zz-review-ratelimit.test.ts:33:33
+     31|     const counts = codes.reduce<Record<number, number>>((m, c) => ({ .…
+     32|     console.log("SEC-3 bypass (random cookie per request, same IP) sta…
+     33|     expect(codes.includes(429)).toBe(false);
+       |                                 ^
+     34|   });
+     35| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  21:55:04
+   Duration  2.44s (transform 516ms, setup 0ms, collect 1.20s, tests 104ms, environment 0ms, prepare 100ms)
+
+EXIT=1

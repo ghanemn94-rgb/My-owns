@@ -7792,7 +7792,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-1/domain-reviewer.json",
       "owner": "solution-architect",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T20:33:41Z",
@@ -7803,10 +7803,34 @@
           "at": "2026-10-01T21:38:32Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 12bf33f9ac88bed17e172d00dcac8d203b046254"
+        },
+        {
+          "at": "2026-10-01T21:58:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "12bf33f9ac88bed17e172d00dcac8d203b046254",
-      "fix_summary": "ERD and data dictionary now document the three P1 views (actor_display, business_unit_closure, scope_node)."
+      "fix_summary": "ERD and data dictionary now document the three P1 views (actor_display, business_unit_closure, scope_node).",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-DOM-R2-domain-reviewer-20261001T214241Z-81903f52",
+          "session_id": "81903f52-72e6-4262-8d2f-193134ba0198"
+        },
+        "at": "2026-10-01T21:58:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/domain/round-2/01-runtime-scenario.out.txt",
+          "docs/delivery/test-evidence/DG1/domain/round-2/09-integration-node22.log",
+          "docs/architecture/erd.md",
+          "docs/architecture/data-dictionary.md",
+          "packages/db/migrations/0001_identity_access.sql",
+          "packages/db/migrations/0002_transformation.sql"
+        ],
+        "note": "Fixed on this candidate. docs/architecture/erd.md (lines 197-200) lists the three views as read models with their source migration, and docs/architecture/data-dictionary.md has a new 'Views (read models)' section with one subsection per view: actor_display (0001), business_unit_closure (0001) and scope_node (0002). Each gives its columns, types, purpose and source query. I migrated a fresh PostgreSQL 16 database with the candidate and compared it with the docs. information_schema.views returns exactly actor_display, business_unit_closure and scope_node. Their columns and types (actor_display user_id uuid and display_name text; business_unit_closure ancestor_id, descendant_id and organization_id uuid, depth integer; scope_node scope_type text, scope_id, organization_id, business_unit_id and transformation_id uuid) match the dictionary tables exactly. mth_app has SELECT only on all three, as documented. The documented definitions match the SQL in 0001_identity_access.sql:62 and :93 (recursion capped at depth < 10) and 0002_transformation.sql:48 (UNION ALL of organization, business_unit and transformation). The claim that the views are pinned also holds: packages/db/src/schema.ts:282 VIEW_NAMES, and catalogue.test.ts asserts it ('marks exactly the views as views', which passed in the integration run). The ERD also documents the new 0009 trigger business_unit_hierarchy_guard (erd.md:201), which I observed installed on business_unit."
+      }
     },
     {
       "id": "F-DG1-002",
@@ -7826,7 +7850,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-1/domain-reviewer.json",
       "owner": "devops-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T20:33:41Z",
@@ -7837,10 +7861,31 @@
           "at": "2026-10-01T21:38:32Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 12bf33f9ac88bed17e172d00dcac8d203b046254"
+        },
+        {
+          "at": "2026-10-01T21:58:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "12bf33f9ac88bed17e172d00dcac8d203b046254",
-      "fix_summary": "Operator clean-start guide updated to every shipped migration (currently 0001-0009)."
+      "fix_summary": "Operator clean-start guide updated to every shipped migration (currently 0001-0009).",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-DOM-R2-domain-reviewer-20261001T214241Z-81903f52",
+          "session_id": "81903f52-72e6-4262-8d2f-193134ba0198"
+        },
+        "at": "2026-10-01T21:58:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/operations/clean-start.md",
+          "docs/delivery/test-evidence/DG1/domain/round-2/01-runtime-scenario.out.txt",
+          "docs/delivery/test-evidence/DG1/domain/round-2/09-integration-node22.log"
+        ],
+        "note": "Fixed on this candidate. docs/operations/clean-start.md:91 (path B, A1-A2) now says '`mth migrate` applies every shipped migration in `packages/db/migrations/` (currently 9: `0001`-`0009`), a re-run is a no-op'. That matches the candidate: packages/db/migrations holds 0001-0009. On a fresh database the live run printed 'applied 9 migration(s)', the re-run printed 'database is up to date', and schema_migration records 9 rows. The integration global setup reports 'applied 9 migrations to a fresh database'. The timing table (line 101) now labels its 6 migrations as 'the count at the time of measurement', so the historical figure is clearly separated from current behaviour."
+      }
     },
     {
       "id": "F-DG1-003",
@@ -7859,7 +7904,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-1/domain-reviewer.json",
       "owner": "transformation-analyst",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T20:33:41Z",
@@ -7870,10 +7915,32 @@
           "at": "2026-10-01T21:38:32Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 12bf33f9ac88bed17e172d00dcac8d203b046254"
+        },
+        {
+          "at": "2026-10-01T21:58:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "12bf33f9ac88bed17e172d00dcac8d203b046254",
-      "fix_summary": "REQ-S16-001 register note rewritten to cite stable clean-candidate facts (no dev-history round evidence reference)."
+      "fix_summary": "REQ-S16-001 register note rewritten to cite stable clean-candidate facts (no dev-history round evidence reference).",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-DOM-R2-domain-reviewer-20261001T214241Z-81903f52",
+          "session_id": "81903f52-72e6-4262-8d2f-193134ba0198"
+        },
+        "at": "2026-10-01T21:58:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/requirements.csv",
+          "docs/delivery/test-evidence/DG1/domain/round-2/01-runtime-scenario.out.txt",
+          "docs/delivery/test-evidence/DG1/domain/round-2/05-test-node22.log",
+          "docs/delivery/test-evidence/DG1/domain/round-2/06-test-node24.log"
+        ],
+        "note": "Fixed on this candidate. The REQ-S16-001 notes column no longer cites 'docs/delivery/test-evidence/DG1/domain/round-1/01-runtime-scenario.out.txt' or any dev-history evidence. A grep of the REQ-S16-001 row for 'dev-history|test-evidence/DG1/domain' finds 0 matches, and the whole register has no round-scoped domain evidence path. The old wording on the round-1 candidate 37ec374 contained the ambiguous citation. The note now gives stable facts checkable on the candidate: separate compose services and entry points (apps/api/src/main.ts, apps/worker/src/main.ts), the eight P1-active modules in apps/api/src/modules.ts enforced by architecture.test.ts, and the API suites running with no worker process. I re-established the substantive claim live on this candidate. After SIGTERM the worker exits 0, the API process stays alive, and /readyz still answers 200 'ready'. architecture.test.ts passed in both the Node 22 and Node 24 unit runs."
+      }
     },
     {
       "id": "F-DG1-140",
@@ -7896,7 +7963,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T20:39:05Z",
@@ -7907,10 +7974,34 @@
           "at": "2026-10-01T21:38:31Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 12bf33f9ac88bed17e172d00dcac8d203b046254"
+        },
+        {
+          "at": "2026-10-01T22:10:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "12bf33f9ac88bed17e172d00dcac8d203b046254",
-      "fix_summary": "Migration 0009 adds a DB hierarchy-guard trigger + pg_advisory_xact_lock + locking ancestor walk + pre-check; the API takes the same lock before its cycle/depth checks. A cycle cannot commit even under concurrency. New integration test proves it; reviewer repro now fails."
+      "fix_summary": "Migration 0009 adds a DB hierarchy-guard trigger + pg_advisory_xact_lock + locking ancestor walk + pre-check; the API takes the same lock before its cycle/depth checks. A cycle cannot commit even under concurrency. New integration test proves it; reviewer repro now fails.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-SEC-R2-code-security-reviewer-20261001T214241Z-14876631",
+          "session_id": "14876631-a899-43a8-afbf-de1a8cb6fe11"
+        },
+        "at": "2026-10-01T22:10:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/code-security/round-2/repro-bu/round1-repro-rerun.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-2/repro-bu/zz-review-r2-bu.test.ts",
+          "docs/delivery/test-evidence/DG1/code-security/round-2/repro-bu/repro-r2-bu.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-2/repro-bu/repro-r2-bu-attempt1-harness-wait-too-narrow.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-2/integration-run1.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-2/integration-run2.log"
+        ],
+        "note": "Fixed on candidate e6979e12 (source 485e91f). packages/db/migrations/0009_business_unit_hierarchy_guard.sql:38-92 adds an AFTER INSERT OR UPDATE OF parent_business_unit_id, organization_id row trigger. It takes pg_advisory_xact_lock(730219, hashtext(organization_id)) and walks the parent chain with SELECT ... FOR SHARE, raising 23514 business_unit_acyclic / business_unit_max_depth. apps/api/src/modules/organization/routes.ts:364 takes the same lock (repository.ts:80-84) BEFORE the FOR UPDATE read and the friendly checks, and :424 maps a trigger refusal to the existing 422 problems. A composite FK (0001:86-87) already rules out cross-organization parents, so a per-organization lock key is sufficient. Re-ran my round-1 repro UNCHANGED (repro-bu/round1-repro-rerun.log): SEC-1 no longer reaches its vulnerable outcome; it times out waiting for a row-lock waiter because the second PATCH now queues on the hierarchy advisory lock. My adversarial round-2 repro (repro-bu/zz-review-r2-bu.test.ts, 7/7 PASS in repro-r2-bu.log) results: (R2-1) the exact round-1 API interleaving gives A->C 200 and B->A 422 business_unit.cycle, with 0 cycles in business_unit_closure; (R2-2) the sequential friendly 422 still holds; (R2-3) direct SQL as mth_app at READ COMMITTED with no API lock gives the loser 23514 business_unit_acyclic; (R2-4) at REPEATABLE READ with the snapshot taken before the winner commits, the loser gets 40001 from the guard's FOR SHARE walk; (R2-5) one multi-row UPDATE putting two roots under each other gives 23514; (R2-6) mth_app cannot SET session_replication_role, ALTER TABLE ... DISABLE TRIGGER or replace the function (42501 x3). The attempt-1 log is kept: my harness waited only for advisory waiters, but at DB level the loser queues on the winner's FOR SHARE row lock. That was a harness fault, not a product fault; the unhandled 40001 in that log already showed fail-closed behaviour. The new bu-hierarchy-guard.test.ts (7) and migrate.test.ts (9 migrations) pass in both integration runs. Residuals (not findings): the REPEATABLE READ depth-only residual is stated in the migration header; a direct-SQL writer that interleaves a row lock with the trigger can hit 40P01, which fails closed."
+      }
     },
     {
       "id": "F-DG1-141",
@@ -7931,7 +8022,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T20:39:05Z",
@@ -7942,10 +8033,31 @@
           "at": "2026-10-01T21:38:31Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 12bf33f9ac88bed17e172d00dcac8d203b046254"
+        },
+        {
+          "at": "2026-10-01T22:10:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "12bf33f9ac88bed17e172d00dcac8d203b046254",
-      "fix_summary": "Re-parent now authorizes business_unit.manage on the destination parent (or the organization for a top-level move) in addition to the moved unit; 403 + denied-mutation audit. Negative test proves the cross-branch exposure is gone."
+      "fix_summary": "Re-parent now authorizes business_unit.manage on the destination parent (or the organization for a top-level move) in addition to the moved unit; 403 + denied-mutation audit. Negative test proves the cross-branch exposure is gone.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-SEC-R2-code-security-reviewer-20261001T214241Z-14876631",
+          "session_id": "14876631-a899-43a8-afbf-de1a8cb6fe11"
+        },
+        "at": "2026-10-01T22:10:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/code-security/round-2/repro-bu/round1-repro-rerun.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-2/repro-bu/zz-review-r2-bu.test.ts",
+          "docs/delivery/test-evidence/DG1/code-security/round-2/repro-bu/repro-r2-bu.log"
+        ],
+        "note": "Fixed. apps/api/src/modules/organization/routes.ts now calls requireAction(business_unit.manage) on the destination: on the organization for a top-level move (:370-377) and on the new parent business unit (:389-398). This runs before the cycle/depth checks; the moved unit is still authorized at :359. Re-ran my round-1 repro UNCHANGED (repro-bu/round1-repro-rerun.log). SEC-2 no longer reaches its vulnerable outcome: the a1-scoped manager's move of a1x under sibling a2 is 403, the a2 auditor still reads 404, and the vulnerable expectation 'expected 403 to be 200' fails. Round-2 repro R2-7 (repro-r2-bu.log): sibling a2 403 forbidden with exactly 1 authorization.denied audit row on a2 ('requires business_unit.manage'); a unit deeper in the sibling branch 403; top level 403; parent unchanged (still a1, version 1); the a2 auditor still 404; the legitimate in-scope move under a1x 200. A destination in another organization gives 422 business_unit.parent_invalid, identical to a nonexistent id, so there is no cross-organization existence oracle."
+      }
     },
     {
       "id": "F-DG1-142",
@@ -7966,7 +8078,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T20:39:05Z",
@@ -7977,10 +8089,31 @@
           "at": "2026-10-01T21:38:31Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 12bf33f9ac88bed17e172d00dcac8d203b046254"
+        },
+        {
+          "at": "2026-10-01T22:10:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "12bf33f9ac88bed17e172d00dcac8d203b046254",
-      "fix_summary": "Rate limiter keys on u:<userId> for a validated session (SHA-256 of the token in a bounded TTL map written only by the identity module) else ip:<request.ip> (TRUST_PROXY-aware); never a raw cookie. Test proves cookie rotation no longer resets the bucket."
+      "fix_summary": "Rate limiter keys on u:<userId> for a validated session (SHA-256 of the token in a bounded TTL map written only by the identity module) else ip:<request.ip> (TRUST_PROXY-aware); never a raw cookie. Test proves cookie rotation no longer resets the bucket.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-SEC-R2-code-security-reviewer-20261001T214241Z-14876631",
+          "session_id": "14876631-a899-43a8-afbf-de1a8cb6fe11"
+        },
+        "at": "2026-10-01T22:10:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/code-security/round-2/repro-ratelimit/zz-review-ratelimit.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-2/repro-ratelimit/zz-review-r2-ratelimit.test.ts",
+          "docs/delivery/test-evidence/DG1/code-security/round-2/repro-ratelimit/zz-review-r2-ratelimit.log"
+        ],
+        "note": "Fixed. apps/api/src/server.ts keyGenerator returns u:<userId> only when RateLimitSubjects.subjectOf(token) finds the token. Only the identity hook fills that map, after resolveSession succeeds (identity/routes.ts remember/forget). Otherwise it returns ip:<request.ip>; Fastify derives the IP and applies TRUST_PROXY. rate-limit-subjects.ts keys entries by SHA-256 of the token, bounds them (50,000, oldest evicted) with a TTL equal to the idle timeout, and forgets a token on failed resolution, logout or rotation. Re-ran my round-1 repro UNCHANGED (repro-ratelimit/zz-review-ratelimit.log): the bypass test now sees {\"429\":50}, so its 'never 429' expectation fails. Round-2 repro (zz-review-r2-ratelimit.log, 4/4 PASS, RATE_LIMIT_PER_MINUTE=3): RL-1 a fresh random cookie per request from one IP gives 401,401,401 then 429 x17; RL-2 rotating X-Forwarded-For without TRUST_PROXY still gives 429 from the 4th request; RL-3 two sessions of one user from two IPs share one u: bucket (the 4th request is 429); RL-4 a fake-cookie flood that exhausts an IP's bucket does not starve a valid session from that IP (200); RL-5 a logged-out cookie falls back to the IP bucket (401 x3, then 429)."
+      }
     },
     {
       "id": "F-DG1-143",
@@ -8004,7 +8137,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T20:39:05Z",
@@ -8015,10 +8148,32 @@
           "at": "2026-10-01T21:38:31Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 12bf33f9ac88bed17e172d00dcac8d203b046254"
+        },
+        {
+          "at": "2026-10-01T22:10:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "12bf33f9ac88bed17e172d00dcac8d203b046254",
-      "fix_summary": "ajv/ajv-formats/yaml moved to devDependencies (verified first-party test-only; they remain transitive fastify runtime deps, documented); module-source imports now flagged by the lint. Testkit header states the first-party scope (D-055); self-check added."
+      "fix_summary": "ajv/ajv-formats/yaml moved to devDependencies (verified first-party test-only; they remain transitive fastify runtime deps, documented); module-source imports now flagged by the lint. Testkit header states the first-party scope (D-055); self-check added.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-SEC-R2-code-security-reviewer-20261001T214241Z-14876631",
+          "session_id": "14876631-a899-43a8-afbf-de1a8cb6fe11"
+        },
+        "at": "2026-10-01T22:10:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/code-security/round-2/repro-ajv/repro-ajv-rerun.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-2/repro-ajv/variants.mjs",
+          "docs/delivery/test-evidence/DG1/code-security/round-2/repro-ajv/variants.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-2/sbom-check.log"
+        ],
+        "note": "Fixed. apps/api/package.json moves ajv 8.17.1, ajv-formats 3.0.1 and yaml 2.8.1 to devDependencies. architecture.testkit.ts THIRD_PARTY = dependencies only; TEST_ONLY_THIRD_PARTY (devDependencies minus @types, plus vitest) is allowed only for *.test.ts/*.test.tsx. The SCOPE header honestly limits the lint to first-party source. Re-ran my round-1 plant UNCHANGED in the disposable clone (repro-ajv/repro-ajv-rerun.log): fileViolations reports 'imports package ajv' twice, and the real ADR-0002 suite now FAILS with the plant present (exit 1), so pnpm test / CI refuses it. The import still executes locally only because the dev install contains ajv. That is expected, because the control is the lint gate. 13 import-form variants (static, subpath, dynamic, template dynamic, export *, named re-export, type-only, import = require, require(), ajv-formats, yaml, @fastify/ajv-compiler, and a *.test.mts that ships in dist) are all flagged (variants.log, UNFLAGGED=0). Framing check: pnpm-lock.yaml confirms ajv and ajv-formats remain transitive RUNTIME deps of fastify@5.6.1 (via @fastify/ajv-compiler 4.0.6 and fast-json-stringify 6.4.0), and licenses/inventory.csv keeps them 'runtime, apps/api (dev)'. That is honest. yaml is NOT a fastify runtime dep (only vite/vitest use it), and the inventory correctly reclassifies it as 'development'; the assignment's shorthand 'they remain transitive fastify runtime deps' is accurate only for ajv/ajv-formats. SBOM --check is OK (sbom-check.log)."
+      }
     },
     {
       "id": "F-DG1-144",
@@ -8039,7 +8194,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T20:39:05Z",
@@ -8050,10 +8205,31 @@
           "at": "2026-10-01T21:38:31Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 12bf33f9ac88bed17e172d00dcac8d203b046254"
+        },
+        {
+          "at": "2026-10-01T22:10:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "12bf33f9ac88bed17e172d00dcac8d203b046254",
-      "fix_summary": "Web test findByRole/findBy* timeouts raised and the post-create settling awaited; the assertion no longer flakes on the 1s default. Verified green over repeated runs."
+      "fix_summary": "Web test findByRole/findBy* timeouts raised and the post-create settling awaited; the assertion no longer flakes on the 1s default. Verified green over repeated runs.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-SEC-R2-code-security-reviewer-20261001T214241Z-14876631",
+          "session_id": "14876631-a899-43a8-afbf-de1a8cb6fe11"
+        },
+        "at": "2026-10-01T22:10:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/code-security/round-2/web-flake-stress.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-2/unit-node22.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-2/unit-node24.log"
+        ],
+        "note": "Fixed. In apps/web/src/pages/transformations/transformations.test.tsx, every wait that depends on the async create, navigation and /me-refresh chain now has an explicit 5 s timeout, and each of the three tests has a 20 s timeout. The assertions are unchanged; the over-grant negatives still use queryBy after the settled draft message. This is robust under load rather than strictly deterministic, which is the appropriate fix for a timing-only flake. Stress run (web-flake-stress.log): 3 rounds x 6 parallel runs of the file while pnpm -r build loads the 4-CPU host gave 18/18 runs with 21/21 tests (FAILED_RUNS=0). The round-1 failure was 1 in 4 under lighter load. Full unit suites on Node 22 and Node 24 are also green (326/326 each)."
+      }
     },
     {
       "id": "F-DG1-145",
@@ -8076,7 +8252,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
       "owner": "solution-architect",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T20:39:05Z",
@@ -8087,10 +8263,32 @@
           "at": "2026-10-01T21:38:32Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 12bf33f9ac88bed17e172d00dcac8d203b046254"
+        },
+        {
+          "at": "2026-10-01T22:10:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "12bf33f9ac88bed17e172d00dcac8d203b046254",
-      "fix_summary": "The three read-model views (actor_display, business_unit_closure, scope_node) documented in data-dictionary and ERD; schema.ts comment cites the real packages/db/test/integration/catalogue.test.ts."
+      "fix_summary": "The three read-model views (actor_display, business_unit_closure, scope_node) documented in data-dictionary and ERD; schema.ts comment cites the real packages/db/test/integration/catalogue.test.ts.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-SEC-R2-code-security-reviewer-20261001T214241Z-14876631",
+          "session_id": "14876631-a899-43a8-afbf-de1a8cb6fe11"
+        },
+        "at": "2026-10-01T22:10:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/code-security/round-2/dd-views-vs-schema.mjs",
+          "docs/delivery/test-evidence/DG1/code-security/round-2/dd-views-vs-schema.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-2/dd-vs-schema.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-2/integration-run1.log"
+        ],
+        "note": "Fixed. docs/architecture/data-dictionary.md has a new '## Views' section with '### actor_display', '### business_unit_closure' and '### scope_node' (column tables, purpose, source). erd.md lists the three views and the 0009 trigger. packages/db/src/schema.ts now cites catalogue.test.ts, which exists and pins SCHEMA_COLUMNS, including the views, and VIEW_NAMES to information_schema; it passed in both integration runs. My round-2 checker (dd-views-vs-schema.mjs) gives MATCH for all three views with 0 mismatches, and no source file still references schema.test.ts. Note: re-running my round-1 dd-vs-schema.mjs (dd-vs-schema.log) still prints 'no data-dictionary section' for the views. That is a false negative of my round-1 parser, which reads only '## ' headings, while the views are documented as '### ' subsections; the round-2 checker reads them."
+      }
     },
     {
       "id": "F-DG1-146",
@@ -8112,7 +8310,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T20:39:05Z",
@@ -8123,10 +8321,31 @@
           "at": "2026-10-01T21:38:32Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 12bf33f9ac88bed17e172d00dcac8d203b046254"
+        },
+        {
+          "at": "2026-10-01T22:10:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "12bf33f9ac88bed17e172d00dcac8d203b046254",
-      "fix_summary": "D-057 corrected to 13/14 offline (AC-1 effect needs a live registry); the live-registry effect is the disclosed residual."
+      "fix_summary": "D-057 corrected to 13/14 offline (AC-1 effect needs a live registry); the live-registry effect is the disclosed residual.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-SEC-R2-code-security-reviewer-20261001T214241Z-14876631",
+          "session_id": "14876631-a899-43a8-afbf-de1a8cb6fe11"
+        },
+        "at": "2026-10-01T22:10:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/code-security/round-2/install-sandbox.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-2/install-sandbox-offline-assert.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-2/install-sandbox-ac1-effect-registry.log"
+        ],
+        "note": "Fixed. docs/delivery/decisions.md D-057 now says the install-sandbox suite 'passes 13 of its 14 acceptance checks offline', names AC-1 (effect) as the one live-registry check, and carries '(Corrected per F-DG1-146: the offline figure is 13/14, not 14/14.)'. Independently re-run: install-sandbox.test.sh with a writable copy of the host pnpm store gives exactly 13 PASS, with the sole FAIL being 'AC-1 (effect)' (install-sandbox-offline-assert.log). The cause was reproduced directly: ERR_PNPM_META_FETCH_FAIL, registry.npmjs.org ECONNREFUSED via the proxy (install-sandbox-ac1-effect-registry.log). The statement now matches the evidence."
+      }
     },
     {
       "id": "F-DG1-230",
@@ -8149,7 +8368,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG1/round-1/qa-verifier.json",
       "owner": "solution-architect",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T21:05:00Z",
@@ -8159,10 +8378,31 @@
           "at": "2026-10-01T21:38:32Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 12bf33f9ac88bed17e172d00dcac8d203b046254"
+        },
+        {
+          "at": "2026-10-01T22:02:07Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 2: PASS"
         }
       ],
       "fix_revision": "12bf33f9ac88bed17e172d00dcac8d203b046254",
-      "verification": null,
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-QA-R2-qa-verifier-20261001T214241Z-80d81177",
+          "session_id": "80d81177-5880-471b-9153-ecc9dd312872"
+        },
+        "at": "2026-10-01T22:02:07Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/qa/round-2/26-views-vs-dictionary.log",
+          "docs/delivery/test-evidence/DG1/qa/round-2/26-views-vs-dictionary.sh",
+          "docs/architecture/data-dictionary.md#views-read-models",
+          "docs/architecture/erd.md#L197-L201"
+        ],
+        "note": "Verified on candidate sha256:e6979e12… (disposable clone at 485e91f). docs/architecture/data-dictionary.md now has a 'Views (read models)' section with one subsection per view (actor_display 0001/identity, business_unit_closure 0001/organization, scope_node 0002/access), giving columns, types, purpose, source, owner mth_owner and SELECT-only for mth_app; the closure view's depth cap (recursion stops at depth < 10, so 0-10) is stated together with the migration-0009 invariant. docs/architecture/erd.md lists all three views (with their columns) and the business_unit_hierarchy_guard trigger under 'Also created in P1'. Independent live check: 26-views-vs-dictionary.sh migrates a fresh PostgreSQL 16 database (9 migrations), reads every view in schema public from pg_class/information_schema and compares it with the dictionary tables: 3 views, 11 columns, every column and type matches, every view is named in the ERD, owner mth_owner, grants mth_app SELECT only (exit 0). Fix complete."
+      },
       "fix_summary": "Same as F-DG1-145/001: the three views are documented in the data dictionary and ERD."
     },
     {
@@ -8185,7 +8425,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG1/round-1/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T21:05:00Z",
@@ -8195,11 +8435,67 @@
           "at": "2026-10-01T21:38:32Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 12bf33f9ac88bed17e172d00dcac8d203b046254"
+        },
+        {
+          "at": "2026-10-01T22:02:07Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 2: PASS"
         }
       ],
       "fix_revision": "12bf33f9ac88bed17e172d00dcac8d203b046254",
-      "verification": null,
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-QA-R2-qa-verifier-20261001T214241Z-80d81177",
+          "session_id": "80d81177-5880-471b-9153-ecc9dd312872"
+        },
+        "at": "2026-10-01T22:02:07Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/requirements.csv",
+          "docs/delivery/test-evidence/DG1/qa/round-2/10-integration-run1.log",
+          "docs/delivery/test-evidence/DG1/qa/round-2/11-integration-run2.log",
+          "docs/delivery/test-evidence/DG1/qa/round-2/18-a18-clean-start.log",
+          "docs/delivery/test-evidence/DG1/qa/round-2/21-validate-register.log"
+        ],
+        "note": "Verified on candidate sha256:e6979e12… (requirements.csv is a candidate file). The REQ-DLV-033 and REQ-S19-004 rows no longer cite candidate 991d3241 / commit f32c705 evidence, and contain no conditional IMPLEMENTED wording (grep -c -E '991d3241|f32c705|stands only if|F-DG1-(108|203|208)' over the whole register = 0). Their evidence now lists stable candidate files only (REQ-DLV-033: 16 files; REQ-S19-004: 14 files incl. migrations 0001-0009, migrate.test.ts and catalogue.test.ts); all 30 exist. No docs/delivery/test-evidence/DG1/*/round-2/ file is tracked at the candidate commit, so the carried dev-history logs are gone. The notes' factual claims hold on this candidate in my own runs: 9 migrations apply to a fresh PostgreSQL 16 database (A18 clean start, DB probe), the integration suite incl. the contract suite with getBrandingTokens is 209/209 in two runs with no 57P01 or hook timeout, and the three views are documented (F-DG1-230). validate.mjs --register DG1 PASS. Fix complete."
+      },
       "fix_summary": "REQ-DLV-033 and REQ-S19-004 register evidence/notes no longer cite dev-history candidate 991d3241 round-2 logs; they cite stable files verified on the clean candidate (migrations 0001-0009, integration 209/209); carried round-2 logs removed."
+    },
+    {
+      "id": "F-DG1-232",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-033",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Non-deterministic e2e journey: 'shell: navigation, language persistence and My Work' presses Tab before the shell has mounted after page.reload(), so the skip-link toBeFocused assertion intermittently fails (1 of 29 normal runs; 1 of 15 under CPU load) and, because the spec is serial, skips the remaining 7 journeys of that locale",
+      "reproduction": "Disposable clone of candidate sha256:e6979e12… (commit 485e91f), Node v22.22.2, PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers. (1) E2E_PG_PORT=55941 apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e --workers=1 --reporter=list -> 1 failed, 7 did not run, 10 passed, exit 1 ([chromium-en] journeys.spec.ts:156, line 172: expect(getByRole('link', {name: 'Skip to main content'})).toBeFocused() -> Received: inactive, 9x over 5000 ms). (2) With three parallel `pnpm test` runs as CPU load on the 4-CPU host: apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e/journeys.spec.ts -g 'shell: navigation' --project=chromium-en --repeat-each=15 --workers=1 -> 1 failed / 14 passed, same assertion. Without load: two more full suite runs 18/18, the qa-stack run 22/22, and --repeat-each=10 over both locales 20/20. Root cause (test synchronisation, not a product defect): after `await page.reload()` the test only waits for `html[lang]`, but `public/locale-boot.js` sets <html lang dir> before first paint, i.e. before React has mounted the shell. The Tab keypress can therefore land while no focusable element exists; in the failure snapshot the skip link (first focusable element) is present afterwards but unfocused (screenshot shows the fully rendered My Work page with nothing focused).",
+      "expected": "A required gate check (master prompt §0: required checks run and pass; playwright.config.ts retries: 0, so CI is red on any flake) that is deterministic: after the reload, wait for a post-mount signal (e.g. the primary navigation or the My Work heading to be visible) before pressing Tab, as the earlier part of the same test already does after sign-in.",
+      "actual": "Intermittent failure of the required e2e journeys check (first run of this review: exit 1, 7 EN journeys not executed). The product behaviour itself is correct in every run where the shell had mounted (skip link is the first focusable element; 28 of 29 unloaded runs and 14 of 15 loaded runs pass).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-2/14-e2e-journeys.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/14b-e2e-journeys-rerun2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/14c-e2e-journeys-rerun3.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/14d-e2e-shell-repeat10.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/14e-e2e-shell-repeat15-under-load.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/14e-shell-skiplink-focus-fail-error-context.md",
+        "docs/delivery/test-evidence/DG1/qa/round-2/screenshots/14e-shell-skiplink-focus-fail-en.png",
+        "docs/delivery/test-evidence/DG1/qa/round-2/15-e2e-qa-acceptance.log",
+        "apps/web/e2e/journeys.spec.ts#L166-L172",
+        "apps/web/src/i18n/index.ts#L4"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-2/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T22:02:07Z",
+          "status": "OPEN",
+          "note": "raised by qa-verifier DG1 round 2 (proposed ID in the qa 2xx range after F-DG1-231; the orchestrator may renumber)"
+        }
+      ]
     }
   ]
 }

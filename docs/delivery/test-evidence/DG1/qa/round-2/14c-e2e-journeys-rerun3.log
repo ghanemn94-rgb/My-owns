@@ -1,0 +1,38 @@
+# cmd: apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e --workers=1 --reporter=list --output=/var/tmp/mth-run.V9K59k/claude-0/pw-r3
+# cwd: <disposable clone of candidate e6979e12 @ 485e91f> ; node v22.22.2 ; date 2026-10-01T21:50:06Z
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applied 9 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+{"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+
+Running 18 tests using 1 worker
+
+  ✓   1 [chromium-en] › apps/web/e2e/journeys.spec.ts:134:1 › sign-in page: Arabic RTL by default, provisional wordmark, dev form in dev mode (1.1s)
+  ✓   2 [chromium-en] › apps/web/e2e/journeys.spec.ts:156:1 › shell: navigation, language persistence and My Work (Transformation Office) (1.6s)
+  ✓   3 [chromium-en] › apps/web/e2e/journeys.spec.ts:182:1 › create a modular transformation with an entry phase (2.8s)
+  ✓   4 [chromium-en] › apps/web/e2e/journeys.spec.ts:222:1 › list: sort, filter chips, column selection and pagination controls (2.8s)
+  ✓   5 [chromium-en] › apps/web/e2e/journeys.spec.ts:262:1 › edit: a concurrent change gives a 409 conflict with compare and re-apply (2.1s)
+  ✓   6 [chromium-en] › apps/web/e2e/journeys.spec.ts:296:1 › archive with a mandatory reason makes the record read-only (2.2s)
+  ✓   7 [chromium-en] › apps/web/e2e/journeys.spec.ts:317:1 › administration screens (access + technical administrator) (4.4s)
+  ✓   8 [chromium-en] › apps/web/e2e/journeys.spec.ts:355:1 › a user without roles sees no Administration and no business records (1.5s)
+  ✓   9 [chromium-en] › apps/web/e2e/journeys.spec.ts:371:1 › a business-unit Lead creates a record: Edit/Archive and the audit trail appear without a reload (F-DG1-210), the derived grant localized (F-DG1-008) (3.0s)
+  ✓  10 [chromium-ar] › apps/web/e2e/journeys.spec.ts:134:1 › sign-in page: Arabic RTL by default, provisional wordmark, dev form in dev mode (988ms)
+  ✓  11 [chromium-ar] › apps/web/e2e/journeys.spec.ts:156:1 › shell: navigation, language persistence and My Work (Transformation Office) (1.5s)
+  ✓  12 [chromium-ar] › apps/web/e2e/journeys.spec.ts:182:1 › create a modular transformation with an entry phase (2.6s)
+  ✓  13 [chromium-ar] › apps/web/e2e/journeys.spec.ts:222:1 › list: sort, filter chips, column selection and pagination controls (2.6s)
+  ✓  14 [chromium-ar] › apps/web/e2e/journeys.spec.ts:262:1 › edit: a concurrent change gives a 409 conflict with compare and re-apply (1.9s)
+  ✓  15 [chromium-ar] › apps/web/e2e/journeys.spec.ts:296:1 › archive with a mandatory reason makes the record read-only (2.2s)
+  ✓  16 [chromium-ar] › apps/web/e2e/journeys.spec.ts:317:1 › administration screens (access + technical administrator) (4.4s)
+  ✓  17 [chromium-ar] › apps/web/e2e/journeys.spec.ts:355:1 › a user without roles sees no Administration and no business records (1.6s)
+  ✓  18 [chromium-ar] › apps/web/e2e/journeys.spec.ts:371:1 › a business-unit Lead creates a record: Edit/Archive and the audit trail appear without a reload (F-DG1-210), the derived grant localized (F-DG1-008) (3.0s)
+
+  18 passed (45.0s)
+# exit=0

@@ -1,0 +1,41 @@
+# cmd: tests/qa/support/with-pg.sh bash /home/user/My-owns/docs/delivery/test-evidence/DG1/qa/round-2/26-views-vs-dictionary.sh
+# cwd: <disposable clone of candidate e6979e12 @ 485e91f> ; node v22.22.2 ; date 2026-10-01T21:58:18Z
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+mth-db migrate: applied 9 migration(s)
+== live views (schema public)
+actor_display|v|mth_owner
+business_unit_closure|v|mth_owner
+scope_node|v|mth_owner
+== grants on views
+actor_display|mth_app|SELECT
+business_unit_closure|mth_app|SELECT
+scope_node|mth_app|SELECT
+== live view columns
+actor_display|user_id|uuid
+actor_display|display_name|text
+business_unit_closure|ancestor_id|uuid
+business_unit_closure|descendant_id|uuid
+business_unit_closure|organization_id|uuid
+business_unit_closure|depth|integer
+scope_node|scope_type|text
+scope_node|scope_id|uuid
+scope_node|organization_id|uuid
+scope_node|business_unit_id|uuid
+scope_node|transformation_id|uuid
+== compare with data-dictionary.md
+OK       actor_display.user_id uuid
+OK       actor_display.display_name text
+OK       actor_display mentioned in erd.md
+OK       business_unit_closure.ancestor_id uuid
+OK       business_unit_closure.descendant_id uuid
+OK       business_unit_closure.organization_id uuid
+OK       business_unit_closure.depth integer
+OK       business_unit_closure mentioned in erd.md
+OK       scope_node.scope_type text
+OK       scope_node.scope_id uuid
+OK       scope_node.organization_id uuid
+OK       scope_node.business_unit_id uuid
+OK       scope_node.transformation_id uuid
+OK       scope_node mentioned in erd.md
+RESULT: every live view, column and type is documented; every view is in the ERD
+# exit=0

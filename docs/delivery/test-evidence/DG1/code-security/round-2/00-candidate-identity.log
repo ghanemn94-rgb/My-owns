@@ -1,0 +1,36 @@
+# 2026-10-01T22:03:42Z main checkout (read-only)
+$ git rev-parse HEAD
+98cb7aa3e06041ab442aeaf311659896bd9b6543
+$ git log --oneline 485e91f..HEAD
+98cb7aa run: DG1-T-DG1-REV-DOM-R2-domain-reviewer-20261001T214241Z-81903f52 (review evidence, auto-committed by run-agent.sh)
+309be8d DG1 re-gate r2: record round-1 + freeze candidate e6979e12 + round-2 gate assignments (state REVIEWING)
+$ git diff --name-only 485e91f HEAD   (all paths are in META_EXCLUDES: assignments/, candidates/, stages.json)
+docs/delivery/assignments/DG1/round-2/code-security-reviewer.md
+docs/delivery/assignments/DG1/round-2/domain-reviewer.md
+docs/delivery/assignments/DG1/round-2/qa-verifier.md
+docs/delivery/assignments/DG1/round-2/release-auditor.md
+docs/delivery/candidates/DG1/e6979e12111aeb14.manifest.json
+docs/delivery/reviews/DG1/round-2/domain-reviewer.json
+docs/delivery/reviews/DG1/round-2/domain-reviewer.md
+docs/delivery/reviews/DG1/round-2/domain-reviewer.verifications.json
+docs/delivery/runs/DG1/DG1-T-DG1-REV-DOM-R2-domain-reviewer-20261001T214241Z-81903f52/meta.json
+docs/delivery/runs/DG1/DG1-T-DG1-REV-DOM-R2-domain-reviewer-20261001T214241Z-81903f52/result.json
+docs/delivery/runs/DG1/DG1-T-DG1-REV-DOM-R2-domain-reviewer-20261001T214241Z-81903f52/sandbox.json
+docs/delivery/runs/DG1/DG1-T-DG1-REV-DOM-R2-domain-reviewer-20261001T214241Z-81903f52/settings.json
+docs/delivery/runs/DG1/DG1-T-DG1-REV-DOM-R2-domain-reviewer-20261001T214241Z-81903f52/stderr.log
+docs/delivery/runs/DG1/DG1-T-DG1-REV-DOM-R2-domain-reviewer-20261001T214241Z-81903f52/transcript.jsonl.gz
+docs/delivery/stages.json
+$ node tools/gates/candidate.mjs --stage DG1
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:e6979e12111aeb1456f591d66f8437d9f491c7e8e58215ea7c5a9f233cbfe71d","files":394}
+$ node tools/gates/candidate.mjs --stage DG1 --ref 485e91f50eabe236b12d67f45d1bf1d246a97e4a
+{"stage":"DG1","source":"485e91f50eabe236b12d67f45d1bf1d246a97e4a","candidate_id":"sha256:e6979e12111aeb1456f591d66f8437d9f491c7e8e58215ea7c5a9f233cbfe71d","files":394}
+$ node tools/gates/candidate.mjs --stage DG1 --ref HEAD
+{"stage":"DG1","source":"HEAD","candidate_id":"sha256:e6979e12111aeb1456f591d66f8437d9f491c7e8e58215ea7c5a9f233cbfe71d","files":394}
+$ (disposable clone at 485e91f) node tools/gates/candidate.mjs --stage DG1
+485e91f50eabe236b12d67f45d1bf1d246a97e4a
+?? apps/api/test/integration/zz-review-bu-hierarchy.test.ts
+?? apps/api/test/integration/zz-review-r2-bu.test.ts
+?? apps/api/test/integration/zz-review-r2-ratelimit.test.ts
+?? apps/api/test/integration/zz-review-ratelimit.test.ts
+{"stage":"DG1","source":"HEAD","candidate_id":"sha256:e6979e12111aeb1456f591d66f8437d9f491c7e8e58215ea7c5a9f233cbfe71d","files":394}
+expected: sha256:e6979e12111aeb1456f591d66f8437d9f491c7e8e58215ea7c5a9f233cbfe71d (manifest docs/delivery/candidates/DG1/e6979e12111aeb14.manifest.json, source_commit 485e91f)

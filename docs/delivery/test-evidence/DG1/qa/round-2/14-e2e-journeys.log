@@ -1,0 +1,82 @@
+# cmd: apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e --workers=1 --reporter=list
+# cwd: <disposable clone of candidate e6979e12 @ 485e91f> ; node v22.22.2 ; date 2026-10-01T21:47:24Z
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applied 9 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+{"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+
+Running 18 tests using 1 worker
+
+  ✓   1 [chromium-en] › apps/web/e2e/journeys.spec.ts:134:1 › sign-in page: Arabic RTL by default, provisional wordmark, dev form in dev mode (1.7s)
+  ✘   2 [chromium-en] › apps/web/e2e/journeys.spec.ts:156:1 › shell: navigation, language persistence and My Work (Transformation Office) (6.7s)
+  -   3 [chromium-en] › apps/web/e2e/journeys.spec.ts:182:1 › create a modular transformation with an entry phase
+  -   4 [chromium-en] › apps/web/e2e/journeys.spec.ts:222:1 › list: sort, filter chips, column selection and pagination controls
+  -   5 [chromium-en] › apps/web/e2e/journeys.spec.ts:262:1 › edit: a concurrent change gives a 409 conflict with compare and re-apply
+  -   6 [chromium-en] › apps/web/e2e/journeys.spec.ts:296:1 › archive with a mandatory reason makes the record read-only
+  -   7 [chromium-en] › apps/web/e2e/journeys.spec.ts:317:1 › administration screens (access + technical administrator)
+  -   8 [chromium-en] › apps/web/e2e/journeys.spec.ts:355:1 › a user without roles sees no Administration and no business records
+  -   9 [chromium-en] › apps/web/e2e/journeys.spec.ts:371:1 › a business-unit Lead creates a record: Edit/Archive and the audit trail appear without a reload (F-DG1-210), the derived grant localized (F-DG1-008)
+  ✓  10 [chromium-ar] › apps/web/e2e/journeys.spec.ts:134:1 › sign-in page: Arabic RTL by default, provisional wordmark, dev form in dev mode (1.4s)
+  ✓  11 [chromium-ar] › apps/web/e2e/journeys.spec.ts:156:1 › shell: navigation, language persistence and My Work (Transformation Office) (1.5s)
+  ✓  12 [chromium-ar] › apps/web/e2e/journeys.spec.ts:182:1 › create a modular transformation with an entry phase (2.8s)
+  ✓  13 [chromium-ar] › apps/web/e2e/journeys.spec.ts:222:1 › list: sort, filter chips, column selection and pagination controls (2.8s)
+  ✓  14 [chromium-ar] › apps/web/e2e/journeys.spec.ts:262:1 › edit: a concurrent change gives a 409 conflict with compare and re-apply (1.9s)
+  ✓  15 [chromium-ar] › apps/web/e2e/journeys.spec.ts:296:1 › archive with a mandatory reason makes the record read-only (1.9s)
+  ✓  16 [chromium-ar] › apps/web/e2e/journeys.spec.ts:317:1 › administration screens (access + technical administrator) (4.3s)
+  ✓  17 [chromium-ar] › apps/web/e2e/journeys.spec.ts:355:1 › a user without roles sees no Administration and no business records (1.6s)
+  ✓  18 [chromium-ar] › apps/web/e2e/journeys.spec.ts:371:1 › a business-unit Lead creates a record: Edit/Archive and the audit trail appear without a reload (F-DG1-210), the derived grant localized (F-DG1-008) (3.4s)
+
+
+  1) [chromium-en] › apps/web/e2e/journeys.spec.ts:156:1 › shell: navigation, language persistence and My Work (Transformation Office) 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeFocused[2m([22m[2m)[22m failed
+
+    Locator:  getByRole('link', { name: 'Skip to main content', exact: true })
+    Expected: focused
+    Received: inactive
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toBeFocused" with timeout 5000ms[22m
+    [2m  - waiting for getByRole('link', { name: 'Skip to main content', exact: true })[22m
+    [2m    9 × locator resolved to <a href="#main" class="skip-link">Skip to main content</a>[22m
+    [2m      - unexpected value "inactive"[22m
+
+
+      170 |   // Keyboard: the skip link is the first focusable element and moves focus to <main>.
+      171 |   await page.keyboard.press("Tab");
+    > 172 |   await expect(page.getByRole("link", { name: tr(lang, "common.a11y.skipToContent"), exact: true })).toBeFocused();
+          |                                                                                                      ^
+      173 |   // A planned area is labelled planned.
+      174 |   await navLink(nav, lang, "governance").click();
+      175 |   await expect(
+        at /var/tmp/mth-run.V9K59k/claude-0/review-qa/apps/web/e2e/journeys.spec.ts:172:102
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-journeys-shel-fc4a0-Work-Transformation-Office--chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/apps-web-e2e-journeys-shel-fc4a0-Work-Transformation-Office--chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-journeys-shel-fc4a0-Work-Transformation-Office--chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-journeys-shel-fc4a0-Work-Transformation-Office--chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium-en] › apps/web/e2e/journeys.spec.ts:156:1 › shell: navigation, language persistence and My Work (Transformation Office) 
+  7 did not run
+  10 passed (33.7s)
+---- api.log (tail)
+# exit=1

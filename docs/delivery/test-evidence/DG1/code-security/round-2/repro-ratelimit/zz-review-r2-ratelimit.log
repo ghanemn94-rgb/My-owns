@@ -1,0 +1,26 @@
+# cmd: TEST_DATABASE_ADMIN_URL=postgresql://postgres@127.0.0.1:54866/postgres npx vitest run --project integration apps/api/test/integration/zz-review-r2-ratelimit.test.ts; node v22.22.2; clone @ 485e91f50eabe236b12d67f45d1bf1d246a97e4a
+# pg: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+ RUN  v3.2.4 /var/tmp/mth-run.KJ9Bt5/claude-0/review-r2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muq2omyn_7b13aeb9; applied 9 migrations to a fresh database
+stdout | apps/api/test/integration/zz-review-r2-ratelimit.test.ts > F-DG1-142 re-verification > RL-1 random cookie per request from one IP: 429 from the 4th request
+RL-1 rotating fake cookies, one IP: 401,401,401,429,429,429,429,429,429,429,429,429,429,429,429,429,429,429,429,429
+
+stdout | apps/api/test/integration/zz-review-r2-ratelimit.test.ts > F-DG1-142 re-verification > RL-2 rotating X-Forwarded-For without TRUST_PROXY does not open fresh buckets
+RL-2 rotating XFF + fake cookie, one socket IP: 401,401,401,429,429,429,429,429
+
+stdout | apps/api/test/integration/zz-review-r2-ratelimit.test.ts > F-DG1-142 re-verification > RL-3/4/5 valid sessions share a per-user bucket; fake-cookie flood does not starve it; logout falls back to IP
+RL-4 flooded IP fake: [33m429[39m | valid session from flooded IP: [33m200[39m | RL-3 user 4th req (other session, other IP): [33m429[39m
+
+stdout | apps/api/test/integration/zz-review-r2-ratelimit.test.ts > F-DG1-142 re-verification > RL-5 a logged-out cookie maps back to the IP bucket
+RL-5 logout: [33m200[39m | revoked cookie from fresh IP: 401,401,401,429,429
+
+ ✓ |integration| apps/api/test/integration/zz-review-r2-ratelimit.test.ts (4 tests) 242ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  21:55:09
+   Duration  2.49s (transform 508ms, setup 0ms, collect 1.23s, tests 242ms, environment 0ms, prepare 70ms)
+
+EXIT=0

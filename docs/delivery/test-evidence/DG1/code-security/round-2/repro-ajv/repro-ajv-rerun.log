@@ -1,0 +1,22 @@
+# round-1 repro-ajv re-run UNCHANGED in disposable clone @ 485e91f50eabe236b12d67f45d1bf1d246a97e4a; node v22.22.2; 2026-10-01T21:55:30Z
+## 1) node --conditions=@mth/source run-repro.mjs (fileViolations + import)
+LINT violations for planted file: ["modules/transformations/zz-ajv-planted.ts: imports package ajv","modules/transformations/zz-ajv-planted.ts: imports package ajv"]
+child_process.execFileSync reachable: function
+deep import of access/policy.ts exports: authorize,businessUnitAncestry,denialOf,holdsAnywhere,loadGrants,organizationsWith,requireAction,requireRead,resolveTarget,scopeFilter,targetFor
+# exit=0
+## 2) the real architecture suite with the plant present
+   ✓ API module boundaries (ADR-0002) > has only mapped module directories, and every P1 module has a public index.ts 3ms
+   ✓ API module boundaries (ADR-0002) > the six §16 business modules all exist, each with its own test suite (A12; D-048) 5ms
+   × API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages 782ms
+   ✓ API module boundaries (ADR-0002) > the declared module graph is acyclic, and audit/access depend on no business module 8ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > A static deep import is a violation 2ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > A2 type-only deep import is a violation 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > B dynamic import, literal is a violation 2ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > B2 dynamic import, template literal is a violation 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > C re-export is a violation 2ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > D createRequire is a violation 2ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > D2 node:module itself is a violation 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > D3 createRequire via namespace is a violation 1ms
+# exit=1
+## 3) eslint on the plant
+# eslint exit=0
