@@ -1,7 +1,9 @@
 // identity routes (ADR-0005): authentication hook (session -> principal), CSRF/Origin checks, dev login (only when
 // AUTH_MODE=dev), OIDC login/callback, logout, GET /me and PUT /me/preferences.
+import { randomBytes } from "node:crypto";
 import type {} from "@fastify/cookie";
 import type {} from "@fastify/rate-limit";
+import { secureOriginAllowed } from "@mth/config";
 import { DEV_ISSUER, type Db } from "@mth/db";
 import type { Permission, ScopeType } from "@mth/shared";
 import { devLoginRequest, preferencesUpdate } from "@mth/shared/schemas";
@@ -12,7 +14,7 @@ import { activeAssignmentsOf, auditContextOf, loadGrants, principalOf } from "..
 import { record } from "../audit/index.ts";
 import { findOrganization, toOrganization } from "../organization/index.ts";
 import { parseBody, parseQuery, problems, requireIfMatch, sendVersioned, type ModuleDeps } from "../platform/index.ts";
-import { OidcService, resolveOidcUser } from "./oidc.ts";
+import { LOGIN_STATE_TTL_MINUTES, loginCookieName, OidcService, resolveOidcUser } from "./oidc.ts";
 import {
   createSession,
   csrfMatches,
@@ -59,6 +61,10 @@ export function registerIdentity(
   options: IdentityOptions = {},
 ): void {
   if (!config.appBaseUrl) throw new Error("APP_BASE_URL is required by the API");
+  // Defence in depth for F-DG1-112 (the loader already refuses this): never issue non-Secure, non-__Host- session
+  // cookies in production because of a plain-http origin, even with a hand-built configuration.
+  if (!secureOriginAllowed(config.appBaseUrl, config.nodeEnv))
+    throw new Error("refusing to start: APP_BASE_URL must use https when NODE_ENV=production (loopback excepted)");
   const appOrigin = config.appBaseUrl.origin;
   const cookieName = sessionCookieName(config.appBaseUrl);
   const secureCookie = config.appBaseUrl.protocol === "https:";
@@ -79,6 +85,11 @@ export function registerIdentity(
     });
   const clearSessionCookie = (reply: FastifyReply) =>
     reply.clearCookie(cookieName, { httpOnly: true, secure: secureCookie, sameSite: "lax", path: "/" });
+  // Pre-session login cookie (F-DG1-103): binds the OIDC state to the browser that started the login. SameSite=Lax
+  // (the IdP returns with a top-level cross-site GET, which Strict would drop), HttpOnly, Secure + __Host- on https,
+  // and it lives no longer than the login state itself.
+  const loginCookie = loginCookieName(config.appBaseUrl);
+  const loginCookieOptions = { httpOnly: true, secure: secureCookie, sameSite: "lax", path: "/" } as const;
 
   app.decorateRequest("principal", null);
   app.decorateRequest("session", null);
@@ -221,7 +232,9 @@ export function registerIdentity(
       async (request, reply) => {
         const { returnTo } = parseQuery(loginQuery, request.query);
         try {
-          const url = await db.transaction().execute((tx) => oidc.startLogin(tx, returnTo ?? "/"));
+          const binding = randomBytes(32).toString("base64url");
+          const url = await db.transaction().execute((tx) => oidc.startLogin(tx, returnTo ?? "/", binding));
+          reply.setCookie(loginCookie, binding, { ...loginCookieOptions, maxAge: LOGIN_STATE_TTL_MINUTES * 60 });
           return reply.redirect(url.toString(), 302);
         } catch (err) {
           request.log.warn({ err }, "OIDC login could not start");
@@ -239,12 +252,28 @@ export function registerIdentity(
       "/api/v1/auth/callback",
       { config: { access: { public: true }, rateLimit: authRateLimit } },
       async (request, reply) => {
+        // The login cookie is single use: cleared on every callback outcome.
+        const browserBinding = request.cookies[loginCookie];
+        reply.clearCookie(loginCookie, loginCookieOptions);
         const fail = (code: string) => reply.redirect(`/login?error=${code}`, 302);
         const q = callbackQuery.safeParse(request.query);
         if (!q.success || !q.data.state) return fail("invalid_request");
         const state = q.data.state;
-        const stored = await db.transaction().execute((tx) => oidc.consumeState(tx, state));
-        if (!stored) return fail("state_invalid");
+        const stored = await db.transaction().execute((tx) => oidc.consumeState(tx, state, browserBinding));
+        if (!stored.ok) {
+          if (stored.reason === "browser_mismatch") {
+            // Login CSRF / leaked callback URL: a live state presented by a browser that did not start the login.
+            // Refused and audited; the presenting browser's own session (if any) is left untouched.
+            await auditLoginFailure(request, {
+              userId: null,
+              organizationId: null,
+              reason: browserBinding
+                ? "OIDC callback refused: the login state is bound to a different browser"
+                : "OIDC callback refused: no login cookie (the state is not bound to this browser)",
+            });
+          }
+          return fail("state_invalid");
+        }
         if (q.data.error || !q.data.code) return fail("idp_denied"); // IdP error text is never rendered verbatim
         let claims: Awaited<ReturnType<OidcService["exchange"]>>;
         try {

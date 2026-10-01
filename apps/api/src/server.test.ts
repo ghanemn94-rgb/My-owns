@@ -54,3 +54,63 @@ describe("route registration", () => {
     );
   });
 });
+
+describe("session cookie security in production (F-DG1-112)", () => {
+  const prodEnv = {
+    ...base,
+    NODE_ENV: "production",
+    AUTH_MODE: "oidc",
+    OIDC_ISSUER_URL: "https://idp.example.invalid/realms/x",
+    OIDC_CLIENT_ID: "c",
+    OIDC_CLIENT_SECRET: "s",
+  };
+
+  it("the loader fails closed at startup on a plain-http, non-loopback APP_BASE_URL", () => {
+    expect(() => loadConfig("api", { ...prodEnv, APP_BASE_URL: "http://hub.example.internal" })).toThrow(
+      /APP_BASE_URL must use https when NODE_ENV=production/,
+    );
+  });
+
+  it("the API refuses to start even with a hand-built configuration that bypassed the loader", async () => {
+    const good = loadConfig("api", { ...prodEnv, APP_BASE_URL: "https://hub.example.internal" });
+    const config = { ...good, appBaseUrl: new URL("http://hub.example.internal") };
+    const pool = createPool(config.databaseUrl!);
+    try {
+      await expect(buildServer({ config, pool, logger: false, webRoot: null })).rejects.toThrow(
+        /APP_BASE_URL must use https when NODE_ENV=production/,
+      );
+    } finally {
+      await pool.end();
+    }
+  });
+
+  it("an https production origin starts", async () => {
+    const config = loadConfig("api", { ...prodEnv, APP_BASE_URL: "https://hub.example.internal" });
+    const pool = createPool(config.databaseUrl!);
+    try {
+      const { app } = await buildServer({ config, pool, logger: false, webRoot: null });
+      await app.close();
+    } finally {
+      await pool.end();
+    }
+  });
+});
+
+describe("module composition (D-048)", () => {
+  it("wires the workflows, kpi and reporting scaffolds, which register no routes in P1", async () => {
+    const config = loadConfig("api", { ...base, AUTH_MODE: "dev" });
+    const pool = createPool(config.databaseUrl!);
+    try {
+      const { app, modules, routes } = await buildServer({ config, pool, logger: false, webRoot: null });
+      await app.close();
+      expect(modules.map((m) => [m.module, m.status, m.deliversIn, m.routes.length])).toEqual([
+        ["workflows", "scaffold", "P2", 0],
+        ["kpi", "scaffold", "P4", 0],
+        ["reporting", "scaffold", "P5", 0],
+      ]);
+      expect(routes.filter((r) => /workflow|kpi|formula|report/i.test(r.url))).toEqual([]);
+    } finally {
+      await pool.end();
+    }
+  });
+});

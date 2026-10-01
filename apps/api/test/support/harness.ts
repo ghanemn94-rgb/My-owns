@@ -308,6 +308,15 @@ export async function auditOf(db: Db, recordId: string) {
   return db.selectFrom("audit_event").selectAll().where("record_id", "=", recordId).orderBy("seq").execute();
 }
 
+/** Audit rows written by one request (scope-local; never a global count, F-DG1-110). */
+export async function auditOfRequest(db: Db, requestId: string) {
+  return db.selectFrom("audit_event").selectAll().where("request_id", "=", requestId).orderBy("seq").execute();
+}
+
+/**
+ * GLOBAL audit row count. Do not use it for "nothing was written" assertions: any concurrent or late write elsewhere
+ * changes it (F-DG1-110). Prefer auditOf(recordId) or auditOfRequest(requestId). Kept for existing QA suites.
+ */
 export async function auditCount(db: Db): Promise<number> {
   const r = await db
     .selectFrom("audit_event")

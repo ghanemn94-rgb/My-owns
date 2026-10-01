@@ -2,7 +2,7 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ConfigError, loadConfig } from "./index.ts";
+import { ConfigError, isLoopbackHost, loadConfig, secureOriginAllowed } from "./index.ts";
 
 const base = {
   NODE_ENV: "test",
@@ -42,6 +42,48 @@ describe("loadConfig", () => {
   it("requires OIDC settings when AUTH_MODE=oidc for the api", () => {
     const problems = problemsOf(() => loadConfig("api", { ...base, AUTH_MODE: "oidc" }));
     expect(problems.join("\n")).toMatch(/OIDC_ISSUER_URL, OIDC_CLIENT_ID, OIDC_CLIENT_SECRET are required/);
+  });
+
+  describe("APP_BASE_URL in production (F-DG1-112: Secure + __Host- session cookies cannot be silently lost)", () => {
+    const prod = {
+      ...base,
+      NODE_ENV: "production",
+      AUTH_MODE: "oidc",
+      OIDC_ISSUER_URL: "https://idp.example.internal/realms/mth",
+      OIDC_CLIENT_ID: "mth",
+      OIDC_CLIENT_SECRET: "s",
+    };
+    const message =
+      "APP_BASE_URL must use https when NODE_ENV=production (plain http is accepted only for a loopback host: " +
+      "localhost, 127.0.0.1 or [::1])";
+
+    it.each(["http://hub.example.internal", "http://10.0.0.5:3000", "http://hub.localhost.example.com"])(
+      "refuses a plain-http origin %s at startup",
+      (url) => {
+        expect(problemsOf(() => loadConfig("api", { ...prod, APP_BASE_URL: url }))).toContain(message);
+      },
+    );
+
+    it.each(["https://hub.example.internal", "http://localhost:3000", "http://127.0.0.1:3000", "http://[::1]:3000"])(
+      "accepts %s (https, or plain http only on a loopback host)",
+      (url) => {
+        expect(loadConfig("api", { ...prod, APP_BASE_URL: url }).appBaseUrl?.origin).toBe(new URL(url).origin);
+      },
+    );
+
+    it("leaves non-production environments unchanged (http allowed)", () => {
+      expect(loadConfig("api", { ...base, APP_BASE_URL: "http://hub.example.internal" }).appBaseUrl?.protocol).toBe(
+        "http:",
+      );
+    });
+
+    it("exposes the same rule for the API session setup (defence in depth)", () => {
+      expect(secureOriginAllowed(new URL("http://hub.example.internal"), "production")).toBe(false);
+      expect(secureOriginAllowed(new URL("http://hub.example.internal"), "development")).toBe(true);
+      expect(secureOriginAllowed(new URL("https://hub.example.internal"), "production")).toBe(true);
+      expect(isLoopbackHost(new URL("http://LOCALHOST:8080"))).toBe(true);
+      expect(isLoopbackHost(new URL("http://localhost.evil.example"))).toBe(false);
+    });
   });
 
   it("requires https issuers in production", () => {

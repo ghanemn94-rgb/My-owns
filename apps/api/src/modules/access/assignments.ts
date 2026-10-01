@@ -8,7 +8,7 @@ import { v7 as uuidv7 } from "uuid";
 import { record, type AuditContext } from "../audit/index.ts";
 import { decodeCursor, filterHash, iso, isoOrNull, paginate, problems } from "../platform/index.ts";
 import { authorize, requireAction, requireRead, resolveTarget, scopeFilter, type Principal } from "./policy.ts";
-import type { TargetLevel } from "./rules.ts";
+import { decide, grantApplies, isApprovalPermission, type ResolvedTarget, type TargetLevel } from "./rules.ts";
 
 const selectAssignment = (db: DbOrTx) =>
   db
@@ -236,6 +236,35 @@ export async function revokeAssignment(
     reason,
     changes: { revokedAt: { from: null, to: "now" } },
   });
+  // F-DG1-106: creator assignments derived from this grant never outlive it (same transaction, one audit event each).
+  const derivedReason = `Source assignment ${id} revoked: ${reason}`.slice(0, 1000);
+  const derived = await tx
+    .updateTable("scoped_assignment")
+    .set({
+      revoked_at: sql<Date>`now()`,
+      revoked_by: principal.userId,
+      revoke_reason: derivedReason,
+      version: sql<number>`version + 1`,
+      updated_at: sql<Date>`now()`,
+      updated_by: principal.userId,
+    })
+    .where("derived_from_assignment_id", "=", id)
+    .where("revoked_at", "is", null)
+    .returning(["id", "version", "organization_id", "scope_id"])
+    .execute();
+  for (const d of derived) {
+    await record(tx, audit, {
+      action: "scoped_assignment.revoke",
+      recordType: "scoped_assignment",
+      recordId: d.id,
+      organizationId: d.organization_id,
+      transformationId: d.scope_id,
+      priorVersion: d.version - 1,
+      newVersion: d.version,
+      reason: derivedReason,
+      changes: { revokedAt: { from: null, to: "now" } },
+    });
+  }
   return toRoleAssignment(await selectAssignment(tx).where("a.id", "=", id).executeTakeFirstOrThrow());
 }
 
@@ -388,4 +417,91 @@ export async function grantCreatorAdminRoles(
       },
     });
   }
+}
+
+/**
+ * F-DG1-106 (ADR-0006): a role granted at BUSINESS-UNIT scope without downward inheritance (TL by default) may create
+ * a transformation in that unit, but on its own it never covers the transformation record, so the creator would get
+ * 201 and then 404 on the record it just created. When - and only when - none of the creator's grants lets them read
+ * the new record, each grant that authorized the create is carried over as an EXPLICIT transformation-scope assignment
+ * of the same role: one row and one audit event each, reason recorded, `effective_to` of the source grant, and
+ * linked to the source (derived_from_assignment_id) so revoking the source revokes it too (revokeAssignment).
+ * Never broader than the source role, and never a role that holds an approval permission (an API create must not
+ * manufacture a G1-G6 / Finance approver; ADR-0006 SoD). Grants still come only from scoped_assignment rows.
+ * Call inside the create transaction, after the transformation row exists (scope_node resolves it).
+ */
+export async function grantCreatorTransformationRoles(
+  tx: Tx,
+  principal: Principal,
+  audit: AuditContext,
+  created: { transformationId: string; organizationId: string; code: string },
+  businessUnitTarget: ResolvedTarget,
+): Promise<string[]> {
+  if (principal.kind !== "user" || !principal.userId) return [];
+  const recordTarget: ResolvedTarget = {
+    ...businessUnitTarget,
+    level: "transformation",
+    transformationId: created.transformationId,
+  };
+  if (decide(principal, "transformation.read", recordTarget).allowed) return [];
+  const sources = principal.grants.filter(
+    (g) =>
+      g.scopeType === "business_unit" &&
+      grantApplies(g, "transformation.create", businessUnitTarget) &&
+      g.permissions.has("transformation.read") &&
+      ![...g.permissions].some(isApprovalPermission),
+  );
+  if (sources.length === 0) return [];
+  const rows = await tx
+    .selectFrom("scoped_assignment as a")
+    .innerJoin("role as r", "r.id", "a.role_id")
+    .select(["a.id", "a.role_id", "a.effective_to", "r.code", "r.kind"])
+    .where(
+      "a.id",
+      "in",
+      sources.map((g) => g.assignmentId),
+    )
+    .where("a.revoked_at", "is", null)
+    .where("r.kind", "<>", "technical_admin")
+    .execute();
+  const created_: string[] = [];
+  for (const src of rows) {
+    const id = uuidv7();
+    const reason = `Creator of transformation ${created.code}: ${src.code} carried over from business-unit assignment ${src.id}`;
+    await tx
+      .insertInto("scoped_assignment")
+      .values({
+        id,
+        organization_id: created.organizationId,
+        user_id: principal.userId,
+        role_id: src.role_id,
+        scope_type: "transformation",
+        scope_id: created.transformationId,
+        effective_to: src.effective_to,
+        reason,
+        granted_by: principal.userId,
+        derived_from_assignment_id: src.id,
+        created_by: principal.userId,
+        updated_by: principal.userId,
+      })
+      .execute();
+    await record(tx, audit, {
+      action: "scoped_assignment.create",
+      recordType: "scoped_assignment",
+      recordId: id,
+      organizationId: created.organizationId,
+      transformationId: created.transformationId,
+      newVersion: 1,
+      reason,
+      changes: {
+        userId: { from: null, to: principal.userId },
+        roleCode: { from: null, to: src.code },
+        scope: { from: null, to: { type: "transformation", id: created.transformationId } },
+        derivedFromAssignmentId: { from: null, to: src.id },
+        effectiveTo: { from: null, to: src.effective_to ? src.effective_to.toISOString() : null },
+      },
+    });
+    created_.push(id);
+  }
+  return created_;
 }

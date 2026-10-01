@@ -7,6 +7,7 @@
 //     problem bodies parse with the problem mirror.
 import {
   auditEvent,
+  brandingTokens,
   businessUnit,
   logoutResult,
   me,
@@ -63,6 +64,7 @@ const ZOD_MIRRORS: Record<string, z.ZodType> = {
   updateTransformation: transformation,
   archiveTransformation: transformation,
   listTransformationAudit: page(auditEvent),
+  getBrandingTokens: brandingTokens,
   logout: logoutResult,
 };
 
@@ -149,8 +151,27 @@ describe("every operation, validated against the contract and the zod mirrors", 
     });
     await mirrored("GET", "/api/v1/me");
     const login = await mirrored("GET", "/api/v1/auth/login?returnTo=%2F");
-    const { code, state } = idp.issueCode(String(login.headers["location"]), { sub: `contract-${uniq("s")}` });
-    await mirrored("GET", `/api/v1/auth/callback?code=${code}&state=${state}`);
+    // An existing (issuer, subject) binding, so the sign-in does not depend on how many organizations the shared run
+    // database holds (just-in-time provisioning needs exactly one).
+    const sub = `contract-${uniq("s")}`;
+    await api.db
+      .insertInto("user_identity")
+      .values({ id: crypto.randomUUID(), user_id: w.office.id, issuer: idp.issuer, subject: sub })
+      .execute();
+    const { code, state } = idp.issueCode(String(login.headers["location"]), { sub });
+    // The browser that started the login presents its binding cookie (F-DG1-103), so this is a real sign-in.
+    const setCookie = [login.headers["set-cookie"] ?? []].flat().map(String);
+    const binding = setCookie.find((c) => c.startsWith("mth_login="))!.split(";")[0]!;
+    const cb = await mirrored("GET", `/api/v1/auth/callback?code=${code}&state=${state}`, {
+      headers: { cookie: binding },
+    });
+    expect([cb.status, cb.headers["location"]]).toEqual([302, "/"]);
+    expect(
+      [cb.headers["set-cookie"] ?? []]
+        .flat()
+        .map(String)
+        .some((c) => c.startsWith("mth_session=")),
+    ).toBe(true);
   });
 
   it("organizations and business units", async () => {
@@ -235,11 +256,13 @@ describe("every operation, validated against the contract and the zod mirrors", 
       body: { description: "Synthetic description", sponsorUserId: null },
     });
     await mirrored("PATCH", `/api/v1/transformations/${t.body.id}`, { session: office, body: { name: "no if-match" } });
-    await mirrored("PATCH", `/api/v1/transformations/${t.body.id}`, {
+    // F-DG1-001: closure is the G6 business decision (absent in P1), so a status edit to closed is a declared 422.
+    const close = await mirrored("PATCH", `/api/v1/transformations/${t.body.id}`, {
       session: office,
       headers: { "if-match": '"2"' },
       body: { status: "closed" },
     });
+    expect([close.status, (close.body as unknown as { code: string }).code]).toEqual([422, "invalid_transition"]);
     await mirrored("POST", `/api/v1/transformations/${t.body.id}/archive`, {
       session: office,
       headers: { "if-match": '"2"' },
@@ -247,6 +270,21 @@ describe("every operation, validated against the contract and the zod mirrors", 
     });
     await mirrored("GET", `/api/v1/transformations/${t.body.id}/audit?limit=2`, { session: office });
     await mirrored("POST", "/api/v1/auth/logout", { session: office });
+  });
+
+  it("branding tokens (getBrandingTokens): authenticated-only, provisional provenance, contract + zod valid", async () => {
+    const anonymous = await mirrored("GET", "/api/v1/branding/tokens");
+    expect(anonymous.status).toBe(401);
+    const res = await mirrored<{ provenance: string; tokens: { name: string; value: string; provisional: boolean }[] }>(
+      "GET",
+      "/api/v1/branding/tokens",
+      { session: admin },
+    );
+    expect(res.status).toBe(200);
+    // #0078FF is a provisional brand token, not a verified Mobily colour: the API must never call the set official.
+    expect(res.body.provenance).toBe("provisional");
+    expect(res.body.tokens.length).toBeGreaterThan(0);
+    expect(res.body.tokens.some((t) => t.value.toUpperCase() === "#0078FF" && t.provisional)).toBe(true);
   });
 
   it("covers every operation with at least one success and every successful body with its zod mirror", () => {
@@ -258,6 +296,6 @@ describe("every operation, validated against the contract and the zod mirrors", 
     expect(noSuccess).toEqual([]);
     const mirrorsNotChecked = Object.keys(ZOD_MIRRORS).filter((id) => !zodChecked.has(id));
     expect(mirrorsNotChecked).toEqual([]);
-    expect(operations).toHaveLength(32);
+    expect(operations).toHaveLength(33);
   });
 });

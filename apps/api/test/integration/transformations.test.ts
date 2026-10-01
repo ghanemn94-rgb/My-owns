@@ -1,10 +1,11 @@
 // Transformation CRUD (REQ-PB-003 increment, REQ-S16-026, REQ-S16-032, REQ-S12-004 outbox, first cases of A14).
 // Each mutation is checked for: authorization (positive + negative), validation, optimistic concurrency, exactly
 // one audit event with the right versions, and (create) exactly one outbox event in the same transaction.
+import { sql } from "@mth/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
-  auditCount,
   auditOf,
+  auditOfRequest,
   call,
   seedWorld,
   signIn,
@@ -113,11 +114,29 @@ describe("create", () => {
   it("rolls back record, audit and outbox together when a rule fails (duplicate code -> 409)", async () => {
     const first = await create({ businessUnitId: w.a1, name: "Coded", mode: "end_to_end", code: "SYN-DUP-1" });
     expect(first.status).toBe(201);
-    const before = await auditCount(api.db);
     const dup = await create({ businessUnitId: w.a1, name: "Coded again", mode: "end_to_end", code: "SYN-DUP-1" });
     expect(dup.status).toBe(409);
     expect(dup.body).toMatchObject({ type: "urn:mth:problem:duplicate", code: "duplicate.code" });
-    expect(await auditCount(api.db)).toBe(before);
+    // Scope-local assertions (F-DG1-110): only what THIS request could have written is counted, so a concurrent or
+    // late audit write elsewhere (e.g. another test's denial audit) cannot make the check flaky.
+    const dupRequestId = (dup.body as { requestId?: string }).requestId;
+    expect(dupRequestId).toBeTruthy();
+    expect(await auditOfRequest(api.db, dupRequestId!)).toEqual([]);
+    const sameCode = await api.db
+      .selectFrom("transformation")
+      .select(["id", "name"])
+      .where("organization_id", "=", w.orgA.id)
+      .where("code", "=", "SYN-DUP-1")
+      .execute();
+    expect(sameCode).toEqual([{ id: first.body.id, name: "Coded" }]);
+    expect((await auditOf(api.db, first.body.id)).map((a) => a.action)).toEqual(["transformation.create"]);
+    const outbox = await api.db
+      .selectFrom("outbox_event")
+      .select("aggregate_id")
+      .where("organization_id", "=", w.orgA.id)
+      .where(sql<boolean>`payload->>'transformationId' NOT IN (SELECT id::text FROM transformation)`)
+      .execute();
+    expect(outbox).toEqual([]);
   });
 
   it.each([
@@ -279,6 +298,50 @@ describe("update with optimistic concurrency (A14)", () => {
   it("denies an update without transformation.update (auditor: 403) before looking at If-Match", async () => {
     const res = await patch(id, { name: "x" }, undefined, auditor);
     expect(res.status).toBe(403);
+  });
+});
+
+describe("closure is not a status edit (F-DG1-001: closure needs the G6 business approval, absent in P1)", () => {
+  it.each(["active", "on_hold"] as const)(
+    "refuses %s -> closed with 422 invalid-transition; the record keeps its state, version and audit trail",
+    async (prior) => {
+      const t = (await create({ businessUnitId: w.a1, name: `Close attempt from ${prior}`, mode: "end_to_end" })).body;
+      expect((await patch(t.id, { status: "active" }, '"1"')).status).toBe(200);
+      let version = 2;
+      if (prior === "on_hold") {
+        expect((await patch(t.id, { status: "on_hold" }, '"2"')).status).toBe(200);
+        version = 3;
+      }
+      const auditBefore = await auditOf(api.db, t.id);
+
+      const res = await patch(t.id, { status: "closed" }, `"${version}"`);
+      expect([res.status, res.body.type, (res.body as { code?: string }).code]).toEqual([
+        422,
+        "urn:mth:problem:invalid-transition",
+        "invalid_transition",
+      ]);
+      expect((res.body as { detail?: string }).detail).toMatch(/G6/);
+      // The same refusal when the close rides along with an otherwise valid edit: nothing at all is written.
+      const mixed = await patch(t.id, { name: "Renamed while closing", status: "closed" }, `"${version}"`);
+      expect(mixed.status).toBe(422);
+
+      const row = await api.db
+        .selectFrom("transformation")
+        .select(["status", "version", "name"])
+        .where("id", "=", t.id)
+        .executeTakeFirstOrThrow();
+      expect(row).toEqual({ status: prior, version, name: `Close attempt from ${prior}` });
+      // A rejected business rule is not an authorization event: no audit row (existing 422 pattern), no change.
+      expect(await auditOf(api.db, t.id)).toEqual(auditBefore);
+      const read = await call<T>(api.app, "GET", `/api/v1/transformations/${t.id}`, { session: office });
+      expect([read.body.status, read.body.version]).toEqual([prior, version]);
+    },
+  );
+
+  it("refuses a close from draft as well (no path to closed exists in P1)", async () => {
+    const t = (await create({ businessUnitId: w.a1, name: "Draft close attempt", mode: "end_to_end" })).body;
+    const res = await patch(t.id, { status: "closed" }, '"1"');
+    expect([res.status, res.body.type]).toEqual([422, "urn:mth:problem:invalid-transition"]);
   });
 });
 

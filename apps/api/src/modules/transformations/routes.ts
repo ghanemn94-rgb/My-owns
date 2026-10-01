@@ -14,7 +14,15 @@ import {
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { auditContextOf, principalOf, requireAction, requireRead, scopeFilter, targetFor } from "../access/index.ts";
+import {
+  auditContextOf,
+  grantCreatorTransformationRoles,
+  principalOf,
+  requireAction,
+  requireRead,
+  scopeFilter,
+  targetFor,
+} from "../access/index.ts";
 import { listTransformationAudit, record } from "../audit/index.ts";
 import { enqueueOutboxEvent } from "../jobs/index.ts";
 import { findBusinessUnit, findOrganization } from "../organization/index.ts";
@@ -48,8 +56,20 @@ const idParams = z.strictObject({ transformationId: uuid });
 const listQuery = z.strictObject({ ...transformationListQuery.shape, cursor: cursorSchema, limit: limitSchema });
 const auditQuery = z.strictObject({ cursor: cursorSchema, limit: limitSchema });
 
+/**
+ * Statuses that an ordinary status edit can NEVER set (F-DG1-001). Closure is terminal and is the outcome of the
+ * product's G6 (Sustain) business approval with validated benefits and a sustainment owner (playbook B0014
+ * "Benefits before closure"; M0092; REQ-S03-003, REQ-PB-009). Neither G6 nor the benefit register exists in P1, and an
+ * API edit must never stand in for a business approval, so P1 refuses every client-driven close (422
+ * invalid-transition) and the record keeps its prior state. The governed close lands with the G6 workflow (P2+/P4).
+ * This is a PRODUCT gate (G6), unrelated to the engineering delivery gates DG0-DG7.
+ */
+export const GOVERNED_TARGET_STATUSES: ReadonlySet<TransformationStatus> = new Set<TransformationStatus>(["closed"]);
+
 export function isAllowedTransition(from: TransformationStatus, to: TransformationStatus): boolean {
-  return from === to || TRANSFORMATION_STATUS_TRANSITIONS[from].includes(to);
+  if (from === to) return true;
+  if (GOVERNED_TARGET_STATUSES.has(to)) return false;
+  return TRANSFORMATION_STATUS_TRANSITIONS[from].includes(to);
 }
 
 const SORTS = {
@@ -193,6 +213,15 @@ export function registerTransformationRoutes(app: FastifyInstance, { db }: Modul
               ...TRANSFORMATION_AUDIT_FIELDS,
             ]),
           });
+          // F-DG1-106: a creator authorized only by a non-inheriting business-unit grant (TL) gets an explicit,
+          // audited transformation-scope assignment, so create and the following read resolve the same scope.
+          await grantCreatorTransformationRoles(
+            tx,
+            principal,
+            audit,
+            { transformationId: id, organizationId: org.id, code },
+            target,
+          );
           await enqueueOutboxEvent(tx, {
             organizationId: org.id,
             aggregateType: "transformation",
@@ -258,6 +287,11 @@ export function registerTransformationRoutes(app: FastifyInstance, { db }: Modul
           throw problems.businessRule("transformation.archived", "Archived transformations are read-only.");
         const from = current.status as TransformationStatus;
         if (body.status !== undefined && !isAllowedTransition(from, body.status)) {
+          if (GOVERNED_TARGET_STATUSES.has(body.status))
+            throw problems.invalidTransition(
+              "A transformation cannot be closed by a status edit. Closure requires the G6 (Sustain) business " +
+                "approval with validated benefits, which is not available in this release.",
+            );
           throw problems.invalidTransition(`A transformation cannot move from ${from} to ${body.status}.`);
         }
         const named = [body.sponsorUserId, body.leadUserId].filter((v): v is string => typeof v === "string");

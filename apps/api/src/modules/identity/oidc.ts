@@ -48,8 +48,13 @@ export class OidcService {
     return this.configuration;
   }
 
-  /** Persist a single-use login state and return the IdP authorization URL. */
-  async startLogin(tx: Tx, returnTo: string): Promise<URL> {
+  /**
+   * Persist a single-use login state bound to the initiating browser and return the IdP authorization URL.
+   * `browserBinding` is the random value the caller puts in the HttpOnly pre-session login cookie; only its SHA-256
+   * is stored (F-DG1-103). The PKCE verifier and nonce stay server-side and are released only to that browser.
+   */
+  async startLogin(tx: Tx, returnTo: string, browserBinding: string): Promise<URL> {
+    if (browserBinding.length < 32) throw new Error("OIDC login: the browser binding must be a high-entropy value");
     const config = await this.configuration_();
     const state = client.randomState();
     const nonce = client.randomNonce();
@@ -61,6 +66,7 @@ export class OidcService {
         code_verifier: codeVerifier,
         nonce,
         return_to: returnTo,
+        browser_binding_hash: sha256(browserBinding),
         expires_at: sql<Date>`now() + make_interval(mins => ${LOGIN_STATE_TTL_MINUTES})`,
       })
       .execute();
@@ -75,14 +81,31 @@ export class OidcService {
     });
   }
 
-  /** Consume the login state (DELETE ... RETURNING: single use; expired rows are ignored). */
-  async consumeState(tx: Tx, state: string) {
-    return tx
-      .deleteFrom("oidc_login_state")
-      .where("state_hash", "=", sha256(state))
+  /**
+   * Consume the login state (DELETE ... RETURNING: single use; expired rows are ignored) - but ONLY for the browser
+   * it is bound to (F-DG1-103; RFC 6749 §10.12). A valid state presented by another browser (no login cookie, or a
+   * different one) is refused as `browser_mismatch` and is NOT consumed, so a leaked callback URL can neither sign
+   * the presenting browser in nor burn the legitimate user's login.
+   */
+  async consumeState(tx: Tx, state: string, browserBinding: string | undefined): Promise<ConsumedLoginState> {
+    const stateHash = sha256(state);
+    if (browserBinding) {
+      const row = await tx
+        .deleteFrom("oidc_login_state")
+        .where("state_hash", "=", stateHash)
+        .where("browser_binding_hash", "=", sha256(browserBinding))
+        .where("expires_at", ">", sql<Date>`now()`)
+        .returning(["code_verifier", "nonce", "return_to"])
+        .executeTakeFirst();
+      if (row) return { ok: true, ...row };
+    }
+    const pending = await tx
+      .selectFrom("oidc_login_state")
+      .select("state_hash")
+      .where("state_hash", "=", stateHash)
       .where("expires_at", ">", sql<Date>`now()`)
-      .returning(["code_verifier", "nonce", "return_to"])
       .executeTakeFirst();
+    return { ok: false, reason: pending ? "browser_mismatch" : "state_invalid" };
   }
 
   /** Exchange the code and validate the ID token (issuer, audience, nonce, expiry, PKCE). Returns its claims. */
@@ -113,6 +136,15 @@ export class OidcService {
       return null;
     }
   }
+}
+
+export type ConsumedLoginState =
+  | { ok: true; code_verifier: string; nonce: string; return_to: string }
+  | { ok: false; reason: "state_invalid" | "browser_mismatch" };
+
+/** Pre-session login cookie (F-DG1-103): `__Host-` prefixed on https, like the session cookie (ADR-0005 §3). */
+export function loginCookieName(appBaseUrl: URL): string {
+  return appBaseUrl.protocol === "https:" ? "__Host-mth_login" : "mth_login";
 }
 
 export type ResolvedLogin =

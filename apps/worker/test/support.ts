@@ -10,6 +10,7 @@ import {
   roleUrl,
   testDatabase,
 } from "../../../packages/db/test/helpers.ts";
+import type PgBoss from "pg-boss";
 import { createBoss } from "../src/queues.ts";
 
 export interface WorkerEnv {
@@ -19,28 +20,78 @@ export interface WorkerEnv {
   close(): Promise<void>;
 }
 
+/** Every pg-boss instance a test created, with the database URL it uses. */
+const openBosses = new Map<PgBoss, string>();
+
+/**
+ * Waits until no client is connected to `database` any more (a closed pool's backends exit asynchronously), so the
+ * DROP ... WITH (FORCE) never terminates a live connection (F-DG1-110: unhandled 57P01 "terminating connection due to
+ * administrator command"). A connection that is still there after the timeout is a LEAK: it fails the teardown with
+ * its application_name instead of surfacing later as a flaky unhandled error.
+ */
+async function waitForNoConnections(adminUrl: string, database: string, timeoutMs = 10_000): Promise<void> {
+  const admin = new pg.Client({ connectionString: adminUrl });
+  await admin.connect();
+  try {
+    const until = Date.now() + timeoutMs;
+    for (;;) {
+      const { rows } = await admin.query<{ application_name: string; state: string | null }>(
+        "SELECT application_name, state FROM pg_stat_activity WHERE datname = $1 AND pid <> pg_backend_pid()",
+        [database],
+      );
+      if (rows.length === 0) return;
+      if (Date.now() > until)
+        throw new Error(
+          `worker test teardown: ${rows.length} connection(s) to ${database} still open before the drop: ` +
+            rows.map((r) => `${r.application_name || "?"} (${r.state ?? "?"})`).join(", "),
+        );
+      await new Promise((r) => setTimeout(r, 50));
+    }
+  } finally {
+    await admin.end();
+  }
+}
+
 export async function workerEnv(): Promise<WorkerEnv> {
   const { adminUrl } = testDatabase();
   const name = await createScratchDatabase(adminUrl, "mth_wrk");
   await migrate(roleUrl(adminUrl, name, "mth_owner"));
   const appUrl = roleUrl(adminUrl, name, "mth_app");
-  const db = createDb(createPool(appUrl, { max: 5 }));
+  const db = createDb(createPool(appUrl, { max: 5, applicationName: "worker-test-db" }));
   const ownerUrl = new URL(roleUrl(adminUrl, name, null));
-  const owner = new pg.Pool({ connectionString: ownerUrl.toString(), options: "-c role=mth_owner", max: 2 });
+  const owner = new pg.Pool({
+    connectionString: ownerUrl.toString(),
+    options: "-c role=mth_owner",
+    max: 2,
+    application_name: "worker-test-owner",
+  });
+  // Like createPool: an idle client's error must not become an unhandled 'error' event.
+  owner.on("error", () => undefined);
   return {
     appUrl,
     db,
     owner,
     async close() {
+      // 1. every pg-boss instance on THIS database that a test left running (e.g. after a failed assertion)
+      for (const [boss, url] of [...openBosses]) {
+        if (url !== appUrl) continue;
+        await boss.stop({ graceful: false, wait: true, timeout: 5000 }).catch(() => undefined);
+        openBosses.delete(boss);
+      }
+      // 2. the test's own pools, 3. wait until the server has no client left, 4. only then drop the database.
       await db.destroy();
       await owner.end();
+      await waitForNoConnections(adminUrl, name);
       await dropScratchDatabase(adminUrl, name);
     },
   };
 }
 
-export function bossFor(appUrl: string) {
-  return createBoss(appUrl, { schedule: true, supervise: false, applicationName: "worker-test" });
+export function bossFor(appUrl: string): PgBoss {
+  const boss = createBoss(appUrl, { schedule: true, supervise: false, applicationName: "worker-test-boss" });
+  // Tracked so workerEnv.close() can stop it if the test did not (stop() on a stopped boss returns at once).
+  openBosses.set(boss, appUrl);
+  return boss;
 }
 
 /** A synthetic organization, BU, user and transformation plus its outbox event, as the API would write them. */

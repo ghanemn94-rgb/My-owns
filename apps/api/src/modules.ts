@@ -56,7 +56,12 @@ export const API_MODULES = {
 
 export type ApiModule = keyof typeof API_MODULES;
 
-/** Modules delivered in P1; the rest are reserved names so later stages add code, not new boundaries. */
+/**
+ * Modules that exist in P1 (each with a public index.ts and, for the §16 business modules, its own test suite).
+ * `workflows`, `kpi` and `reporting` are P1 SCAFFOLDS (D-048): boundary, public interface, wiring hook and suite exist
+ * now, their business behaviour lands in P2 / P4 / P5, and their hooks register no routes yet. `methodology` and
+ * `evidence` remain reserved names (no directory yet), so later stages add code, not new boundaries.
+ */
 export const P1_MODULES: readonly ApiModule[] = [
   "platform",
   "audit",
@@ -66,4 +71,20 @@ export const P1_MODULES: readonly ApiModule[] = [
   "transformations",
   "jobs",
   "admin",
+  "workflows",
+  "kpi",
+  "reporting",
 ];
+
+/** The six §16 business modules (master prompt M0308; REQ-S16-003 / A12): each exists with its own test suite. */
+export const SECTION16_MODULES = {
+  "identity/access": ["identity", "access"],
+  transformations: ["transformations"],
+  workflows: ["workflows"],
+  "formulas/KPI": ["kpi"],
+  reporting: ["reporting"],
+  admin: ["admin"],
+} as const satisfies Record<string, readonly ApiModule[]>;
+
+/** P1 scaffolds: they exist, but deliver behaviour in a later stage and register no routes in P1 (D-048). */
+export const P1_SCAFFOLD_MODULES = ["workflows", "kpi", "reporting"] as const satisfies readonly ApiModule[];

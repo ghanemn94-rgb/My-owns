@@ -1,46 +1,31 @@
-// Architecture test (ADR-0002). Parses every import (including type-only and re-exports) and fails when:
+// Architecture test (ADR-0002). Parses every import (including type-only, re-exports, dynamic import() and require)
+// with the AST lint in architecture.testkit.ts and fails when:
 //  1. a module imports anything other than its own files, the index.ts of a module in its `dependsOn`, the shared
 //     packages (@mth/shared, @mth/config, @mth/db), node: built-ins or a third-party dependency of @mth/api;
-//  2. a module reaches into the composition root (server.ts, main.ts, index.ts, modules.ts);
-//  3. a module directory is not in the module map, or a P1 module has no index.ts;
-//  4. the declared module graph has a cycle, or audit/access depend on a business module;
-//  5. the package dependency direction is broken (db -> config, shared; config -> shared; shared -> none;
+//  2. a module reaches into the composition root (server.ts, main.ts, index.ts, modules.ts) - except that a module's
+//     own *.test.ts may read the module map and the lint itself;
+//  3. a module evades the check: computed import()/require() specifiers, createRequire, or node:module (F-DG1-109);
+//  4. a module directory is not in the module map, a P1 module has no index.ts, or a §16 business module has no
+//     test suite of its own (A12, D-048);
+//  5. the declared module graph has a cycle, or audit/access depend on a business module;
+//  6. the package dependency direction is broken (db -> config, shared; config -> shared; shared -> none;
 //     apps/web never imports @mth/db or @mth/config).
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { dirname, join, relative, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
-import ts from "typescript";
+import { existsSync, readdirSync, statSync } from "node:fs";
+import { join, relative, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { API_MODULES, P1_MODULES, type ApiModule } from "./modules.ts";
+import {
+  bareAllowed,
+  fileViolations,
+  importsOf,
+  MODULES_DIR,
+  moduleViolations,
+  scanSource,
+  SRC,
+  walk,
+} from "./architecture.testkit.ts";
+import { API_MODULES, P1_MODULES, P1_SCAFFOLD_MODULES, SECTION16_MODULES, type ApiModule } from "./modules.ts";
 
-const SRC = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(SRC, "../../..");
-const MODULES_DIR = join(SRC, "modules");
-const apiPkg = JSON.parse(readFileSync(join(SRC, "../package.json"), "utf8")) as {
-  dependencies: Record<string, string>;
-};
-
-function walk(dir: string): string[] {
-  if (!existsSync(dir)) return [];
-  return readdirSync(dir).flatMap((name) => {
-    const p = join(dir, name);
-    return statSync(p).isDirectory() ? walk(p) : /\.(ts|tsx)$/.test(name) ? [p] : [];
-  });
-}
-
-function importsOf(file: string): string[] {
-  return ts.preProcessFile(readFileSync(file, "utf8"), true, true).importedFiles.map((f) => f.fileName);
-}
-
-const THIRD_PARTY = new Set(Object.keys(apiPkg.dependencies).filter((d) => !d.startsWith("@mth/")));
-const SHARED_ALLOWED = new Set(["@mth/shared", "@mth/shared/schemas", "@mth/config", "@mth/db"]);
-
-function bareAllowed(spec: string): boolean {
-  if (spec.startsWith("node:")) return true;
-  if (SHARED_ALLOWED.has(spec)) return true;
-  const pkg = spec.startsWith("@") ? spec.split("/").slice(0, 2).join("/") : spec.split("/")[0]!;
-  return THIRD_PARTY.has(pkg);
-}
 
 describe("API module boundaries (ADR-0002)", () => {
   const moduleDirs = readdirSync(MODULES_DIR).filter((d) => statSync(join(MODULES_DIR, d)).isDirectory());
@@ -48,35 +33,28 @@ describe("API module boundaries (ADR-0002)", () => {
   it("has only mapped module directories, and every P1 module has a public index.ts", () => {
     expect(moduleDirs.filter((d) => !(d in API_MODULES))).toEqual([]);
     for (const m of P1_MODULES) expect(existsSync(join(MODULES_DIR, m, "index.ts")), m).toBe(true);
+    expect([...moduleDirs].sort()).toEqual([...P1_MODULES].sort());
+  });
+
+  it("the six §16 business modules all exist, each with its own test suite (A12; D-048)", () => {
+    // A module's suite = a *.test.ts in its own directory, or an integration suite named after it.
+    const integrationDir = join(SRC, "../test/integration");
+    const suitesOf = (m: ApiModule) => [
+      ...walk(join(MODULES_DIR, m)).filter((f) => f.endsWith(".test.ts")),
+      ...walk(integrationDir).filter((f) => f.endsWith(".test.ts") && relative(integrationDir, f).startsWith(m)),
+    ];
+    expect(Object.keys(SECTION16_MODULES)).toHaveLength(6);
+    for (const [area, mods] of Object.entries(SECTION16_MODULES)) {
+      for (const m of mods) {
+        expect(P1_MODULES, `${area}: ${m} is a P1 module`).toContain(m);
+        expect(suitesOf(m).length, `${area}: ${m} has its own test suite`).toBeGreaterThan(0);
+      }
+    }
+    for (const m of P1_SCAFFOLD_MODULES) expect(existsSync(join(MODULES_DIR, m, `${m}.test.ts`)), m).toBe(true);
   });
 
   it("every import respects dependsOn, public surfaces and allowed packages", () => {
-    const violations: string[] = [];
-    for (const mod of moduleDirs as ApiModule[]) {
-      const allowedDeps = new Set<string>(API_MODULES[mod].dependsOn);
-      for (const file of walk(join(MODULES_DIR, mod))) {
-        const where = relative(SRC, file);
-        for (const spec of importsOf(file)) {
-          if (spec.startsWith(".")) {
-            const target = resolve(dirname(file), spec);
-            const rel = relative(MODULES_DIR, target);
-            if (rel.startsWith("..")) {
-              violations.push(`${where}: imports ${spec} outside src/modules (composition root)`);
-              continue;
-            }
-            const [targetMod, ...rest] = rel.split("/");
-            if (targetMod === mod) continue;
-            if (!allowedDeps.has(targetMod!))
-              violations.push(`${where}: module ${mod} may not import module ${targetMod}`);
-            else if (rest.join("/") !== "index.ts")
-              violations.push(`${where}: imports ${spec}; only ${targetMod}/index.ts is public`);
-          } else if (!bareAllowed(spec) && !(spec === "vitest" && file.endsWith(".test.ts"))) {
-            violations.push(`${where}: imports package ${spec}`);
-          }
-        }
-      }
-    }
-    expect(violations).toEqual([]);
+    expect((moduleDirs as ApiModule[]).flatMap((m) => moduleViolations(m))).toEqual([]);
   });
 
   it("the declared module graph is acyclic, and audit/access depend on no business module", () => {
@@ -93,13 +71,99 @@ describe("API module boundaries (ADR-0002)", () => {
     expect([...API_MODULES.access.dependsOn].sort()).toEqual(["audit", "platform"]);
     expect(API_MODULES.platform.dependsOn).toEqual([]);
   });
+});
 
-  it("detects a violation (self-check of the checker)", () => {
-    // The checker must flag a deep import: prove the path logic on a synthetic case.
+describe("the checker itself catches planted violations (self-check, incl. F-DG1-109)", () => {
+  const planted = (mod: ApiModule, source: string, name = "planted.ts") =>
+    fileViolations(mod, join(MODULES_DIR, mod, name), source);
+
+  it.each([
+    ["A static deep import", `import { authorize } from "../access/policy.ts";`, /only access\/index\.ts is public/],
+    [
+      "A2 type-only deep import",
+      `import type { Grant } from "../access/rules.ts";`,
+      /only access\/index\.ts is public/,
+    ],
+    ["B dynamic import, literal", `const m = await import("../access/policy.ts");`, /only access\/index\.ts is public/],
+    ["B2 dynamic import, template literal", "const m = await import(`../access/policy.ts`);", /only access\/index/],
+    ["C re-export", `export * from "../access/rules.ts";`, /only access\/index\.ts is public/],
+    [
+      "D createRequire",
+      `import { createRequire } from "node:module";\nconst p = createRequire(import.meta.url)("../access/policy.ts");`,
+      /createRequire .* bypasses the module-interface check/,
+    ],
+    ["D2 node:module itself", `import * as m from "node:module";`, /imports package node:module/],
+    [
+      "D3 createRequire via namespace",
+      `import mod from "module";\nconst r = mod.createRequire(import.meta.url);`,
+      /createRequire .* bypasses/,
+    ],
+    [
+      "E computed import()",
+      "const p = 'policy';\nconst m = await import(`../access/${p}.ts`);",
+      /computed import\(\) specifier .* bypasses/,
+    ],
+    ["E2 computed import() via variable", `const s = "../access/policy.ts";\nawait import(s);`, /computed import\(\)/],
+    ["F require literal", `const p = require("../access/policy.ts");`, /only access\/index\.ts is public/],
+    ["F2 require computed", `const p = require(["..", "access", "policy.ts"].join("/"));`, /computed require\(\)/],
+    ["G import-equals require", `import p = require("../access/policy.ts");`, /only access\/index\.ts is public/],
+    ["H import type()", `let g: import("../access/rules.ts").Grant;`, /only access\/index\.ts is public/],
+    [
+      "I composition root",
+      `import { buildServer } from "../../server.ts";`,
+      /outside src\/modules \(composition root\)/,
+    ],
+    ["J undeclared module (via its index)", `import { x } from "../reporting/index.ts";`, /may not import module/],
+    ["K unknown package", `import x from "left-pad";`, /imports package left-pad/],
+  ])("%s is a violation", (_case, source, message) => {
+    const v = planted("transformations", source);
+    expect(v.length, `${_case}: ${JSON.stringify(v)}`).toBeGreaterThan(0);
+    expect(v.join("\n")).toMatch(message);
+  });
+
+  it("allowed forms stay clean (public index of a declared dependency, shared packages, own files)", () => {
+    const clean = [
+      `import { authorize } from "../access/index.ts";`,
+      `import type { Grant } from "../access/index.ts";`,
+      `const a = await import("../access/index.ts");`,
+      `import { sql } from "@mth/db";`,
+      `import { randomBytes } from "node:crypto";`,
+      `import { toTransformation } from "./repository.ts";`,
+      `export { x } from "./routes.ts";`,
+    ].join("\n");
+    expect(planted("transformations", clean)).toEqual([]);
+  });
+
+  it("a module's own test may read the module map and the lint, but its runtime files may not", () => {
+    const src = `import { API_MODULES } from "../../modules.ts";\nimport { moduleViolations } from "../../architecture.testkit.ts";`;
+    expect(planted("kpi", src, "kpi.test.ts")).toEqual([]);
+    expect(planted("kpi", src, "index.ts").join("\n")).toMatch(/composition root/);
+    expect(planted("kpi", `import { buildServer } from "../../server.ts";`, "kpi.test.ts").join("\n")).toMatch(
+      /composition root/,
+    );
+  });
+
+  it("a scaffold may not reach a business module it does not declare (reporting -> workflows)", () => {
+    expect(planted("reporting", `import { PRODUCT_GATES } from "../workflows/index.ts";`).join("\n")).toMatch(
+      /module reporting may not import module workflows/,
+    );
+    expect(planted("access", `import { KPI_MODULE } from "../kpi/index.ts";`).join("\n")).toMatch(
+      /module access may not import module kpi/,
+    );
+  });
+
+  it("scanSource reports what it saw (paths resolve relative to the planted file)", () => {
     const rel = relative(MODULES_DIR, resolve(join(MODULES_DIR, "transformations"), "../access/policy.ts"));
     expect(rel.split("/")).toEqual(["access", "policy.ts"]);
+    expect(scanSource("x.ts", `import "a"; export * from "b"; await import("c"); require("d");`).specifiers).toEqual([
+      "a",
+      "b",
+      "c",
+      "d",
+    ]);
     expect(bareAllowed("@mth/web")).toBe(false);
     expect(bareAllowed("fastify")).toBe(true);
+    expect(bareAllowed("node:module")).toBe(false);
   });
 });
 
