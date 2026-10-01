@@ -39,8 +39,17 @@ export default defineConfig({
           ],
           // One disposable database per run; created/dropped by the global setup owned by backend-workflow-engineer.
           globalSetup: ["packages/db/test/global-setup.ts"],
+          // Integration files MUST run serially: they share the disposable database, and project-level
+          // `fileParallelism` is not honored by this vitest (F-DG1-009). `poolOptions.forks.singleFork` IS honored
+          // per project and runs every file of this project in a single fork, one after another, so no two integration
+          // files run concurrently (no cross-file row pollution, and a forced database drop never races another file).
+          pool: "forks",
+          poolOptions: { forks: { singleFork: true } },
           fileParallelism: false,
           testTimeout: 30_000,
+          // F-DG1-136: hooks get the same budget as tests. A teardown afterAll (DDL + api.close() + dropScratchDatabase(),
+          // which itself waits up to 10s for other backends to disconnect) must not hit vitest's default 10_000 ms hookTimeout.
+          hookTimeout: 30_000,
         },
       },
     ],

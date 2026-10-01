@@ -161,6 +161,16 @@ export function loadConfig(service: Service, env: Env = process.env): AppConfig 
     .map((s) => s.trim())
     .filter((s) => s.length > 0);
 
+  // ADR-0005 §3 / F-DG1-112: the session cookie is Secure and __Host- prefixed only on an https origin, so production
+  // fails closed on a plain-http APP_BASE_URL instead of silently issuing weaker cookies. The only exception is an
+  // explicit loopback host (the local Compose stack), which no other machine's browser can reach.
+  if (appBaseUrl && nodeEnv === "production" && !secureOriginAllowed(appBaseUrl, nodeEnv)) {
+    problems.push(
+      "APP_BASE_URL must use https when NODE_ENV=production (plain http is accepted only for a loopback host: " +
+        "localhost, 127.0.0.1 or [::1])",
+    );
+  }
+
   // ADR-0005: the dev login must never be reachable in production.
   if (authMode === "dev" && nodeEnv === "production") {
     problems.push("AUTH_MODE=dev is refused when NODE_ENV=production");
@@ -221,4 +231,21 @@ export function loadConfig(service: Service, env: Env = process.env): AppConfig 
 /** Names of the variables a service reads that are secrets (for redaction and for `.env.example`). */
 export function secretVariableNames(): EnvVarName[] {
   return (Object.keys(ENV_VARS) as EnvVarName[]).filter((n) => ENV_VARS[n].secret);
+}
+
+const LOOPBACK_HOSTS: ReadonlySet<string> = new Set(["localhost", "127.0.0.1", "[::1]"]);
+
+/** True for the loopback hosts a plain-http origin is tolerated on in production (local Compose stack only). */
+export function isLoopbackHost(url: URL): boolean {
+  return LOOPBACK_HOSTS.has(url.hostname.toLowerCase());
+}
+
+/**
+ * The application origin's cookie-security rule (ADR-0005 §3, F-DG1-112): outside production any http(s) origin is
+ * fine; in production it must be https, or plain http on a loopback host. Used by the loader and, as defence in
+ * depth, by the API's session setup.
+ */
+export function secureOriginAllowed(appBaseUrl: URL, nodeEnv: string): boolean {
+  if (nodeEnv !== "production") return true;
+  return appBaseUrl.protocol === "https:" || isLoopbackHost(appBaseUrl);
 }

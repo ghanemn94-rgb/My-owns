@@ -10,7 +10,13 @@
 // the organization's units, users and assignments. Business-record permissions (transformation.*, audit.read, and
 // every approval permission) never cross scope boundaries without inheritance. Grants never apply across siblings,
 // and a job title never implies access (grants come only from scoped_assignment).
-import { APPROVAL_CATEGORIES, PERMISSIONS, type Permission, type ScopeType } from "@mth/shared";
+import {
+  APPROVAL_CATEGORIES,
+  PERMISSIONS,
+  type Permission,
+  type PermissionCategory,
+  type ScopeType,
+} from "@mth/shared";
 
 export interface Grant {
   readonly assignmentId: string;
@@ -45,8 +51,12 @@ export const STRUCTURAL_PERMISSIONS: ReadonlySet<Permission> = new Set<Permissio
   "access.assign",
 ]);
 
+/** Permission -> category as a Map: module source looks up runtime keys only through a Map (F-DG1-124). */
+const PERMISSION_CATEGORY: ReadonlyMap<string, PermissionCategory> = new Map(Object.entries(PERMISSIONS));
+
 export function isApprovalPermission(permission: Permission): boolean {
-  return APPROVAL_CATEGORIES.includes(PERMISSIONS[permission]);
+  const category = PERMISSION_CATEGORY.get(permission);
+  return category !== undefined && APPROVAL_CATEGORIES.includes(category);
 }
 
 export function appliesDownward(grant: Grant, permission: Permission): boolean {

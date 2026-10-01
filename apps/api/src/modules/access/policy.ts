@@ -149,7 +149,8 @@ export async function requireRead(
   return d.target;
 }
 
-function denialOf(permission: Permission, t: ResolvedTarget) {
+/** Denial details for the failed-mutation audit (denials.ts); also used by the creator-derive step (F-DG1-115). */
+export function denialOf(permission: Permission, t: ResolvedTarget) {
   const recordId =
     t.level === "organization"
       ? t.organizationId

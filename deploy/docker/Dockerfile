@@ -21,7 +21,7 @@
 # at build time. `RUN --mount=type=secret` is supported by the Dockerfile frontend built into BuildKit (Docker 23+).
 #
 # Base image: pinned by digest through deploy/images.lock.json (`node deploy/scripts/pin-images.mjs --check`).
-ARG NODE_IMAGE=node:24-bookworm-slim
+ARG NODE_IMAGE=node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
 
 # --------------------------------------------------------------------------------------------------------------------
 FROM ${NODE_IMAGE} AS build

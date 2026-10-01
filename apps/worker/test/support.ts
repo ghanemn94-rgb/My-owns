@@ -10,6 +10,7 @@ import {
   roleUrl,
   testDatabase,
 } from "../../../packages/db/test/helpers.ts";
+import type PgBoss from "pg-boss";
 import { createBoss } from "../src/queues.ts";
 
 export interface WorkerEnv {
@@ -19,28 +20,50 @@ export interface WorkerEnv {
   close(): Promise<void>;
 }
 
+/** Every pg-boss instance a test created, with the database URL it uses. */
+const openBosses = new Map<PgBoss, string>();
+
 export async function workerEnv(): Promise<WorkerEnv> {
   const { adminUrl } = testDatabase();
   const name = await createScratchDatabase(adminUrl, "mth_wrk");
   await migrate(roleUrl(adminUrl, name, "mth_owner"));
   const appUrl = roleUrl(adminUrl, name, "mth_app");
-  const db = createDb(createPool(appUrl, { max: 5 }));
+  const db = createDb(createPool(appUrl, { max: 5, applicationName: "worker-test-db" }));
   const ownerUrl = new URL(roleUrl(adminUrl, name, null));
-  const owner = new pg.Pool({ connectionString: ownerUrl.toString(), options: "-c role=mth_owner", max: 2 });
+  const owner = new pg.Pool({
+    connectionString: ownerUrl.toString(),
+    options: "-c role=mth_owner",
+    max: 2,
+    application_name: "worker-test-owner",
+  });
+  // Like createPool: an idle client's error must not become an unhandled 'error' event.
+  owner.on("error", () => undefined);
   return {
     appUrl,
     db,
     owner,
     async close() {
+      // 1. every pg-boss instance on THIS database that a test left running (e.g. after a failed assertion)
+      for (const [boss, url] of [...openBosses]) {
+        if (url !== appUrl) continue;
+        await boss.stop({ graceful: false, wait: true, timeout: 5000 }).catch(() => undefined);
+        openBosses.delete(boss);
+      }
+      // 2. the test's own pools, 3. drop the database once the server has no client of it left.
       await db.destroy();
       await owner.end();
+      // dropScratchDatabase waits until the server has no client of the database left (F-DG1-110/F-DG1-009), so the
+      // forced drop never terminates a live connection; a leaked connection fails the teardown with its name.
       await dropScratchDatabase(adminUrl, name);
     },
   };
 }
 
-export function bossFor(appUrl: string) {
-  return createBoss(appUrl, { schedule: true, supervise: false, applicationName: "worker-test" });
+export function bossFor(appUrl: string): PgBoss {
+  const boss = createBoss(appUrl, { schedule: true, supervise: false, applicationName: "worker-test-boss" });
+  // Tracked so workerEnv.close() can stop it if the test did not (stop() on a stopped boss returns at once).
+  openBosses.set(boss, appUrl);
+  return boss;
 }
 
 /** A synthetic organization, BU, user and transformation plus its outbox event, as the API would write them. */

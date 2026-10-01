@@ -1,6 +1,15 @@
 # Product CI (ADR-0013, REQ-DLV-025). Install verbatim as .github/workflows/ci.yml (devops-engineer owns it).
 # The first job re-runs the delivery-gate pipeline check; every product job depends on it, so a failed or
 # unapproved gate stops the pipeline. delivery-gates.yml itself is protected and is not modified.
+# No product job may carry a job-level `if:` with a status function (always(), failure(), cancelled()): that would run
+# it after delivery-gates FAILED. deploy/scripts/check-ci-needs.mjs enforces this (F-DG1-107).
+#
+# Dependency installs (REQ-DLV-042, D-046, F-DG1-104): every job installs ONLY through
+# `deploy/scripts/ci-install-deps.sh` -> `tools/deps/install-sandbox.sh frozen` (bubblewrap sandbox, frozen lockfile).
+# There is no fallback: if bubblewrap is missing or cannot create its sandbox on the runner, the step exits 65
+# (BLOCKED) and the job fails. pnpm is provisioned as a real binary at the packageManager version (not a Corepack
+# shim: the sandbox clears HOME, so a shim would re-download pnpm inside it). check-ci-needs.mjs fails any other
+# install command in this workflow.
 name: ci
 
 on:
@@ -40,10 +49,16 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ matrix.node }}
-      - name: Activate pinned pnpm (packageManager field) via Corepack
-        run: corepack enable && pnpm --version
-      - name: Install (frozen lockfile; lifecycle scripts disabled by pnpm 10 default)
-        run: pnpm install --frozen-lockfile
+      - name: pnpm at the packageManager version (real binary on PATH; no install scripts)
+        run: npm install --global --ignore-scripts "$(node -p 'require("./package.json").packageManager.split("+")[0]')"
+      - name: bubblewrap for the sandboxed installer (ephemeral runner; allow unprivileged user namespaces for bwrap)
+        run: |
+          sudo apt-get update -q && sudo apt-get install -y -q --no-install-recommends bubblewrap
+          if [ -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]; then
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
+      - name: Install (sandboxed, frozen lockfile; BLOCKED without bubblewrap - never an unsandboxed fallback)
+        run: deploy/scripts/ci-install-deps.sh
       - run: pnpm format:check
       - run: pnpm lint
       - run: pnpm typecheck
@@ -57,7 +72,7 @@ jobs:
     runs-on: ubuntu-24.04
     services:
       postgres:
-        image: postgres:18 # devops-engineer: pin by digest (ADR-0003/ADR-0011)
+        image: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722 # devops-engineer: pin by digest (ADR-0003/ADR-0011)
         env:
           POSTGRES_USER: mth_ci_admin
           POSTGRES_PASSWORD: ci-only-not-a-secret
@@ -72,8 +87,16 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "24"
-      - run: corepack enable
-      - run: pnpm install --frozen-lockfile
+      - name: pnpm at the packageManager version (real binary on PATH; no install scripts)
+        run: npm install --global --ignore-scripts "$(node -p 'require("./package.json").packageManager.split("+")[0]')"
+      - name: bubblewrap for the sandboxed installer (ephemeral runner; allow unprivileged user namespaces for bwrap)
+        run: |
+          sudo apt-get update -q && sudo apt-get install -y -q --no-install-recommends bubblewrap
+          if [ -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]; then
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
+      - name: Install (sandboxed, frozen lockfile; BLOCKED without bubblewrap - never an unsandboxed fallback)
+        run: deploy/scripts/ci-install-deps.sh
       - run: pnpm -r build
       - run: pnpm test:integration
 
@@ -82,10 +105,16 @@ jobs:
     runs-on: ubuntu-24.04
     # CF-2 (ADR-0012): browsers come baked into the version-matched Playwright image; `playwright install` is never run.
     container:
-      image: mcr.microsoft.com/playwright:v1.56.1-noble # devops-engineer: pin by digest
+      image: mcr.microsoft.com/playwright:v1.56.1-noble@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a # devops-engineer: pin by digest
+      # The sandboxed installer (bubblewrap) needs mount/pid namespaces inside this ephemeral CI container: as root it
+      # uses CAP_SYS_ADMIN directly (no user namespace). Docker's default AppArmor/seccomp profiles and masked /proc
+      # paths refuse those, so they are relaxed for THIS CI container only. Without them ci-install-deps.sh is BLOCKED.
+      options: >-
+        --cap-add SYS_ADMIN --security-opt apparmor=unconfined --security-opt seccomp=unconfined
+        --security-opt systempaths=unconfined
     services:
       postgres:
-        image: postgres:18 # devops-engineer: pin by digest
+        image: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722 # devops-engineer: pin by digest
         env:
           POSTGRES_USER: mth_ci_admin
           POSTGRES_PASSWORD: ci-only-not-a-secret
@@ -97,15 +126,92 @@ jobs:
       TEST_DATABASE_ADMIN_URL: postgres://mth_ci_admin:ci-only-not-a-secret@postgres:5432/postgres
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - run: corepack enable
-      - run: pnpm install --frozen-lockfile
+      - name: pnpm at the packageManager version (real binary on PATH; no install scripts)
+        run: npm install --global --ignore-scripts "$(node -p 'require("./package.json").packageManager.split("+")[0]')"
+      - name: bubblewrap for the sandboxed installer (container runs as root; see container options)
+        run: apt-get update -q && apt-get install -y -q --no-install-recommends bubblewrap
+      - name: Install (sandboxed, frozen lockfile; BLOCKED without bubblewrap - never an unsandboxed fallback)
+        run: deploy/scripts/ci-install-deps.sh
       - run: pnpm -r build
       # devops-engineer (T-DG1-DEVOPS) adds: start migrate + api (AUTH_MODE=dev, NODE_ENV=test) against the service DB,
       # wait for /readyz, then run the suite.
-      - run: pnpm e2e
+      - name: Start the e2e stack (fresh DB, migrate, SYNTHETIC dev users, API on :3000 with NODE_ENV=test AUTH_MODE=dev)
+        run: node deploy/scripts/ci-e2e-stack.mjs
+      # --workers=1: the chromium-en and chromium-ar projects sign in as the SAME synthetic users and persist per-user
+      # preferences (language), so parallel workers race (reproduced: 1 failed with 2 workers, 16 passed with 1).
+      - run: pnpm e2e --workers=1
       - if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2 - devops-engineer: re-verify pin
         with:
           name: playwright-report
           path: playwright-report/
           retention-days: 14
+
+  # devops-engineer (T-DG1-DEVOPS, ADR-0011/ADR-0013): packaging checks, the one application image, and the Compose
+  # clean-start / test-IdP login / no-egress smoke. Depends on delivery-gates through integration and e2e.
+  images:
+    needs: [integration, e2e]
+    runs-on: ubuntu-24.04
+    env:
+      MTH_APP_IMAGE: mth-app:ci-${{ github.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+      - name: pnpm at the packageManager version (real binary on PATH; no install scripts)
+        run: npm install --global --ignore-scripts "$(node -p 'require("./package.json").packageManager.split("+")[0]')"
+      - name: bubblewrap for the sandboxed installer (ephemeral runner; allow unprivileged user namespaces for bwrap)
+        run: |
+          sudo apt-get update -q && sudo apt-get install -y -q --no-install-recommends bubblewrap
+          if [ -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]; then
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
+      - name: Install (sandboxed, frozen lockfile; BLOCKED without bubblewrap - never an unsandboxed fallback)
+        run: deploy/scripts/ci-install-deps.sh
+      - name: Deploy tooling self-tests (check-ci-needs negatives incl. status-function and gate-context bypasses; pin-images BLOCKED and --missing paths)
+        run: node --test deploy/scripts/tests/check-ci-needs.test.mjs deploy/scripts/tests/pin-images.test.mjs
+      - name: CI structure (gated on delivery-gates success; sandboxed installs only; actions pinned by SHA)
+        run: node deploy/scripts/check-ci-needs.mjs
+      - name: .env.example equals the ENV_VARS catalogue (names only, no values)
+        run: node deploy/scripts/generate-env-example.mjs --check
+      - name: SBOM and licence inventory match the lockfile
+        run: node licenses/generate-sbom.mjs --check
+      # F-DG1-108/F-DG1-203, D-049: the committed lock records the TEST-ONLY keycloak image (Compose profile test-idp)
+      # as BLOCKED (null digest) because the build environment's egress policy denies quay.io. GitHub-hosted runners
+      # reach quay.io, so this step resolves ONLY images still missing a digest, live, and applies the digest to the
+      # workspace copy. Where the registry is unreachable it exits 1 (BLOCKED) and the job fails: no digest is ever
+      # fabricated and --check never passes on a null digest. The resolved lock is kept in the stack-evidence artifact
+      # so IT can review and commit the pin.
+      - name: Resolve and pin images still missing a digest (live registry lookup; test-only keycloak)
+        run: |
+          node deploy/scripts/pin-images.mjs --resolve --missing
+          node deploy/scripts/pin-images.mjs --apply
+          mkdir -p stack-evidence
+          cp deploy/images.lock.json stack-evidence/images.lock.ci-resolved.json
+      - name: Container images pinned by digest (deploy/images.lock.json)
+        run: node deploy/scripts/pin-images.mjs --check
+      - name: Build the application image (non-root; api | worker | migrate)
+        run: deploy/scripts/build-image.sh --tag "$MTH_APP_IMAGE"
+      - name: Compose clean start, Keycloak test-IdP login smoke, no-egress smoke
+        run: deploy/scripts/verify-stack.sh --skip-build --evidence-dir stack-evidence
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2 - same pin as e2e; re-verify
+        with:
+          name: stack-evidence
+          path: stack-evidence/
+          retention-days: 14
+      # Push only from protected branches, and only when Mobily IT's registry is configured (repository variable
+      # MTH_REGISTRY, secrets MTH_REGISTRY_USER / MTH_REGISTRY_PASSWORD). Nothing is pushed to a public registry.
+      - name: Push to IT's registry (protected branches only)
+        if: github.event_name == 'push' && github.ref_protected && vars.MTH_REGISTRY != ''
+        env:
+          REGISTRY: ${{ vars.MTH_REGISTRY }}
+          REGISTRY_USER: ${{ secrets.MTH_REGISTRY_USER }}
+          REGISTRY_PASSWORD: ${{ secrets.MTH_REGISTRY_PASSWORD }}
+          SHA: ${{ github.sha }}
+        run: |
+          printf '%s' "$REGISTRY_PASSWORD" | docker login "$REGISTRY" -u "$REGISTRY_USER" --password-stdin
+          docker tag "$MTH_APP_IMAGE" "$REGISTRY/mth-app:$SHA"
+          docker push "$REGISTRY/mth-app:$SHA"
+          docker logout "$REGISTRY"

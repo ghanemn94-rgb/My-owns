@@ -1,8 +1,19 @@
+# install-sandbox acceptance suite (14-case suite: AC-1..AC-10, incl. the F-DG1-113/114/118 escape ACs, F-DG1-122 non-destructive cleanup, and F-DG1-126 AC-10 pnpm-member copy-back). Regenerated 2026-10-01T12:47:24Z for F-DG1-212 against the post-F-DG1-126 installer (fix 3037ce2).
+# command: bash tools/deps/tests/install-sandbox.test.sh
+
 PASS  AC-1 write to /etc is refused read-only under the sandbox
-PASS  AC-1 (control) a write inside the target tree succeeds
+PASS  AC-1 (effect) create populates node_modules in the target tree
 PASS  AC-2 a non-allow-listed dependency's postinstall did not run
 PASS  AC-2 an allow-listed dependency's postinstall did run
 PASS  AC-3 frozen install without a committed lockfile fails non-zero
 PASS  AC-3 frozen install that would change the lockfile fails non-zero
 PASS  AC-4 a missing bubblewrap exits 65 (BLOCKED), never an unsandboxed install
-install-sandbox acceptance: 7 passed, 0 failed
+PASS  AC-5 control paths (.git, tools/gates) are read-only inside the sandbox
+PASS  AC-6 a host environment variable (secret) does not cross into the sandbox
+PASS  AC-6 (control) PATH is set inside the sandbox (install is usable)
+PASS  AC-7 control-path escape (parent-rename, installer append, delivery write) is refused; real repo unchanged
+PASS  AC-8 agent-config surfaces (CLAUDE.local.md, .mcp.json, nested CLAUDE.md, .vscode) cannot be created
+PASS  AC-9 a planted non-member node_modules (evil-ctrl/node_modules) is not copied back
+PASS  AC-10 a '!'-excluded package and a non-`packages:` list entry are not copy-back destinations
+install-sandbox acceptance: 14 passed, 0 failed
+exit=0

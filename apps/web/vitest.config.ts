@@ -7,7 +7,9 @@ export default mergeConfig(
   defineProject({
     test: {
       name: "unit-web",
-      environment: "jsdom",
+      // jsdom, with Node's native AbortController/AbortSignal so react-router's request signal is accepted by
+      // Node's `Request` on Node 24 as well as Node 22 (F-DG1-214; see test/jsdom-native-abort-environment.ts).
+      environment: "./test/jsdom-native-abort-environment.ts",
       include: ["src/**/*.test.{ts,tsx}"],
     },
   }),

@@ -14,6 +14,7 @@ import { buildServer, type RouteRecord, type ServerOptions } from "../../src/ser
 import type { OidcService } from "../../src/modules/identity/index.ts";
 import { assertAcceptedRequest, assertContract } from "./contract.ts";
 import type {} from "../../../../packages/db/test/global-setup.ts";
+import { roleUrl } from "../../../../packages/db/test/helpers.ts";
 
 export const APP_ORIGIN = "http://localhost:3000";
 
@@ -46,9 +47,18 @@ export async function startApi(
     env?: Record<string, string>;
     oidc?: OidcService | null;
     migrationFiles?: ServerOptions["migrationFiles"];
+    /**
+     * Run against this (already migrated) scratch database of the run's cluster instead of the shared per-run
+     * database - for suites that must change shared data (e.g. the role catalogue) or add timing hooks, because the
+     * integration files of one run may execute concurrently.
+     */
+    database?: string;
   } = {},
 ): Promise<TestApi> {
-  const config = testConfig(options.env);
+  const { adminUrl } = inject("mthDb");
+  const config = testConfig(
+    options.database ? { DATABASE_URL: roleUrl(adminUrl, options.database, "mth_app"), ...options.env } : options.env,
+  );
   const pool = createPool(config.databaseUrl!, { max: 5, applicationName: "api-test" });
   const { app, db, routes } = await buildServer({
     config,
@@ -59,10 +69,17 @@ export async function startApi(
     ...(options.migrationFiles ? { migrationFiles: options.migrationFiles } : {}),
   });
   const owner = new pg.Pool({
-    connectionString: inject("mthDb").ownerUrl.replace(/\?.*$/, ""),
+    connectionString: (options.database ? roleUrl(adminUrl, options.database, null) : inject("mthDb").ownerUrl).replace(
+      /\?.*$/,
+      "",
+    ),
     options: "-c role=mth_owner",
     max: 2,
+    application_name: "api-test-owner",
   });
+  // Like createPool: an error on an idle client (e.g. a backend terminated while the suite tears down) must never
+  // become an unhandled 'error' event that fails a green run (F-DG1-009).
+  owner.on("error", () => undefined);
   return {
     app,
     routes,
@@ -308,6 +325,15 @@ export async function auditOf(db: Db, recordId: string) {
   return db.selectFrom("audit_event").selectAll().where("record_id", "=", recordId).orderBy("seq").execute();
 }
 
+/** Audit rows written by one request (scope-local; never a global count, F-DG1-110). */
+export async function auditOfRequest(db: Db, requestId: string) {
+  return db.selectFrom("audit_event").selectAll().where("request_id", "=", requestId).orderBy("seq").execute();
+}
+
+/**
+ * GLOBAL audit row count. Do not use it for "nothing was written" assertions: any concurrent or late write elsewhere
+ * changes it (F-DG1-110). Prefer auditOf(recordId) or auditOfRequest(requestId). Kept for existing QA suites.
+ */
 export async function auditCount(db: Db): Promise<number> {
   const r = await db
     .selectFrom("audit_event")

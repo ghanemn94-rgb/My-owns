@@ -56,12 +56,21 @@ const containerComponent = (img) => ({
   "bom-ref": `container:${img.id}`,
   name: img.ref,
   version: img.digest ? `${img.tag}@${img.digest}` : img.tag,
-  scope: img.id === "keycloak" || img.id === "playwright" ? "excluded" : "required",
+  // deploy/images.lock.json `scope`: production images ship/run in production; test-ci images (test IdP, CI browser
+  // container) never do.
+  scope: img.scope === "production" ? "required" : "excluded",
   licenses: [{ expression: "NOASSERTION" }],
   properties: [
     { name: "mth:role", value: img.role },
     { name: "mth:license-note", value: img.license },
-    { name: "mth:digest-pinned", value: img.digest ? "yes" : "NO (not yet pinned; see deploy/images.lock.json)" },
+    {
+      name: "mth:digest-pinned",
+      value: img.digest
+        ? "yes"
+        : img.blockedReason
+          ? `NO - ${img.blockedReason}`
+          : "NO (not yet pinned; see deploy/images.lock.json)",
+    },
   ],
 });
 

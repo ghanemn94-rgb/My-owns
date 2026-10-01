@@ -33,11 +33,17 @@ export function BusinessUnitName({ id, index }: { id: string; index: ReadonlyMap
   );
 }
 
-/** A user's display name; "Not assigned" for null, Unknown when the caller may not read the user. */
+/**
+ * A user's display name; "Not assigned" for null, Unknown when the caller may not read the user. The signed-in user's
+ * own name comes from the session (no user.read needed), e.g. the creator in a derived-assignment audit event.
+ */
 export function UserName({ id }: { id: string | null }) {
   const { t } = useTranslation();
-  const q = useUser(id);
+  const me = useMe();
+  const self = id !== null && id === me.user.id;
+  const q = useUser(self ? null : id);
   if (!id) return <span className="muted">{t("common.value.notAssigned")}</span>;
+  if (self) return <span>{me.user.displayName}</span>;
   if (q.isPending) return <span className="muted">{t("common.state.loading")}</span>;
   if (q.data) return <span>{q.data.displayName}</span>;
   return <Unknown hint={t("common.value.notVisible")} />;

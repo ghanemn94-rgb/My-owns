@@ -1,46 +1,53 @@
-// Architecture test (ADR-0002). Parses every import (including type-only and re-exports) and fails when:
+// Architecture test (ADR-0002). Parses every import (including type-only, re-exports, dynamic import() and require)
+// with the AST lint in architecture.testkit.ts and fails when:
 //  1. a module imports anything other than its own files, the index.ts of a module in its `dependsOn`, the shared
-//     packages (@mth/shared, @mth/config, @mth/db), node: built-ins or a third-party dependency of @mth/api;
-//  2. a module reaches into the composition root (server.ts, main.ts, index.ts, modules.ts);
-//  3. a module directory is not in the module map, or a P1 module has no index.ts;
-//  4. the declared module graph has a cycle, or audit/access depend on a business module;
-//  5. the package dependency direction is broken (db -> config, shared; config -> shared; shared -> none;
+//     packages (@mth/shared, @mth/config, @mth/db), an ALLOW-LISTED node: built-in or a third-party dependency of
+//     @mth/api (D-055: every other node: built-in is denied by default);
+//  2. a module reaches into the composition root (server.ts, main.ts, index.ts, modules.ts) - except that a module's
+//     own *.test.ts may read the module map and the lint itself;
+//  3. a module evades the check: computed import()/require() specifiers, createRequire, or node:module (F-DG1-109);
+//     process.getBuiltinModule / computed members of process or globalThis, Function/eval/.constructor() code
+//     evaluation, or node:vm / worker_threads (F-DG1-117); and, since F-DG1-124, ANY occurrence of a dynamic-code
+//     primitive name (eval, Function & co., constructor, require, createRequire, Reflect, getPrototypeOf, ...) in any
+//     syntactic form, and any computed key that is not a literal (a constructed key can spell any of them); since
+//     D-055 (F-DG1-129/213), any member of the global process outside the allow-list (process.kill, _debugProcess,
+//     execve, binding, ...) - default-deny, independent of the Node version; since F-DG1-130, the native-loader
+//     member `setEngine` of the allow-listed node:crypto (rule 1, every SPELLED form); and since F-DG1-132/133,
+//     any namespace/default binding of node:crypto (rule 5, named imports only), which closes the route of reaching
+//     setEngine by runtime enumeration of the namespace;
+//  4. a module directory is not in the module map, a P1 module has no index.ts, or a §16 business module has no
+//     test suite of its own (A12, D-048);
+//  5. the declared module graph has a cycle, or audit/access depend on a business module;
+//  6. the package dependency direction is broken (db -> config, shared; config -> shared; shared -> none;
 //     apps/web never imports @mth/db or @mth/config).
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { dirname, join, relative, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { basename, join, relative, resolve } from "node:path";
 import ts from "typescript";
 import { describe, expect, it } from "vitest";
-import { API_MODULES, P1_MODULES, type ApiModule } from "./modules.ts";
+import {
+  bareAllowed,
+  fileViolations,
+  importsOf,
+  isDeclarationFileName,
+  MODULES_DIR,
+  moduleViolations,
+  scanSource,
+  SRC,
+  walk,
+} from "./architecture.testkit.ts";
+import { API_MODULES, P1_MODULES, P1_SCAFFOLD_MODULES, SECTION16_MODULES, type ApiModule } from "./modules.ts";
 
-const SRC = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(SRC, "../../..");
-const MODULES_DIR = join(SRC, "modules");
-const apiPkg = JSON.parse(readFileSync(join(SRC, "../package.json"), "utf8")) as {
-  dependencies: Record<string, string>;
-};
-
-function walk(dir: string): string[] {
-  if (!existsSync(dir)) return [];
-  return readdirSync(dir).flatMap((name) => {
-    const p = join(dir, name);
-    return statSync(p).isDirectory() ? walk(p) : /\.(ts|tsx)$/.test(name) ? [p] : [];
-  });
-}
-
-function importsOf(file: string): string[] {
-  return ts.preProcessFile(readFileSync(file, "utf8"), true, true).importedFiles.map((f) => f.fileName);
-}
-
-const THIRD_PARTY = new Set(Object.keys(apiPkg.dependencies).filter((d) => !d.startsWith("@mth/")));
-const SHARED_ALLOWED = new Set(["@mth/shared", "@mth/shared/schemas", "@mth/config", "@mth/db"]);
-
-function bareAllowed(spec: string): boolean {
-  if (spec.startsWith("node:")) return true;
-  if (SHARED_ALLOWED.has(spec)) return true;
-  const pkg = spec.startsWith("@") ? spec.split("/").slice(0, 2).join("/") : spec.split("/")[0]!;
-  return THIRD_PARTY.has(pkg);
-}
 
 describe("API module boundaries (ADR-0002)", () => {
   const moduleDirs = readdirSync(MODULES_DIR).filter((d) => statSync(join(MODULES_DIR, d)).isDirectory());
@@ -48,35 +55,28 @@ describe("API module boundaries (ADR-0002)", () => {
   it("has only mapped module directories, and every P1 module has a public index.ts", () => {
     expect(moduleDirs.filter((d) => !(d in API_MODULES))).toEqual([]);
     for (const m of P1_MODULES) expect(existsSync(join(MODULES_DIR, m, "index.ts")), m).toBe(true);
+    expect([...moduleDirs].sort()).toEqual([...P1_MODULES].sort());
+  });
+
+  it("the six §16 business modules all exist, each with its own test suite (A12; D-048)", () => {
+    // A module's suite = a *.test.ts in its own directory, or an integration suite named after it.
+    const integrationDir = join(SRC, "../test/integration");
+    const suitesOf = (m: ApiModule) => [
+      ...walk(join(MODULES_DIR, m)).filter((f) => f.endsWith(".test.ts")),
+      ...walk(integrationDir).filter((f) => f.endsWith(".test.ts") && relative(integrationDir, f).startsWith(m)),
+    ];
+    expect(Object.keys(SECTION16_MODULES)).toHaveLength(6);
+    for (const [area, mods] of Object.entries(SECTION16_MODULES)) {
+      for (const m of mods) {
+        expect(P1_MODULES, `${area}: ${m} is a P1 module`).toContain(m);
+        expect(suitesOf(m).length, `${area}: ${m} has its own test suite`).toBeGreaterThan(0);
+      }
+    }
+    for (const m of P1_SCAFFOLD_MODULES) expect(existsSync(join(MODULES_DIR, m, `${m}.test.ts`)), m).toBe(true);
   });
 
   it("every import respects dependsOn, public surfaces and allowed packages", () => {
-    const violations: string[] = [];
-    for (const mod of moduleDirs as ApiModule[]) {
-      const allowedDeps = new Set<string>(API_MODULES[mod].dependsOn);
-      for (const file of walk(join(MODULES_DIR, mod))) {
-        const where = relative(SRC, file);
-        for (const spec of importsOf(file)) {
-          if (spec.startsWith(".")) {
-            const target = resolve(dirname(file), spec);
-            const rel = relative(MODULES_DIR, target);
-            if (rel.startsWith("..")) {
-              violations.push(`${where}: imports ${spec} outside src/modules (composition root)`);
-              continue;
-            }
-            const [targetMod, ...rest] = rel.split("/");
-            if (targetMod === mod) continue;
-            if (!allowedDeps.has(targetMod!))
-              violations.push(`${where}: module ${mod} may not import module ${targetMod}`);
-            else if (rest.join("/") !== "index.ts")
-              violations.push(`${where}: imports ${spec}; only ${targetMod}/index.ts is public`);
-          } else if (!bareAllowed(spec) && !(spec === "vitest" && file.endsWith(".test.ts"))) {
-            violations.push(`${where}: imports package ${spec}`);
-          }
-        }
-      }
-    }
-    expect(violations).toEqual([]);
+    expect((moduleDirs as ApiModule[]).flatMap((m) => moduleViolations(m))).toEqual([]);
   });
 
   it("the declared module graph is acyclic, and audit/access depend on no business module", () => {
@@ -93,13 +93,814 @@ describe("API module boundaries (ADR-0002)", () => {
     expect([...API_MODULES.access.dependsOn].sort()).toEqual(["audit", "platform"]);
     expect(API_MODULES.platform.dependsOn).toEqual([]);
   });
+});
 
-  it("detects a violation (self-check of the checker)", () => {
-    // The checker must flag a deep import: prove the path logic on a synthetic case.
+describe("the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)", () => {
+  const planted = (mod: ApiModule, source: string, name = "planted.ts") =>
+    fileViolations(mod, join(MODULES_DIR, mod, name), source);
+
+  it.each([
+    ["A static deep import", `import { authorize } from "../access/policy.ts";`, /only access\/index\.ts is public/],
+    [
+      "A2 type-only deep import",
+      `import type { Grant } from "../access/rules.ts";`,
+      /only access\/index\.ts is public/,
+    ],
+    ["B dynamic import, literal", `const m = await import("../access/policy.ts");`, /only access\/index\.ts is public/],
+    ["B2 dynamic import, template literal", "const m = await import(`../access/policy.ts`);", /only access\/index/],
+    ["C re-export", `export * from "../access/rules.ts";`, /only access\/index\.ts is public/],
+    [
+      "D createRequire",
+      `import { createRequire } from "node:module";\nconst p = createRequire(import.meta.url)("../access/policy.ts");`,
+      /createRequire .* bypasses the module-interface check/,
+    ],
+    [
+      "D2 node:module itself",
+      `import * as m from "node:module";`,
+      /imports non-allow-listed node built-in node:module/,
+    ],
+    [
+      "D3 createRequire via namespace",
+      `import mod from "module";\nconst r = mod.createRequire(import.meta.url);`,
+      /module loader via \.createRequire\(\) .* bypasses/,
+    ],
+    [
+      "E computed import()",
+      "const p = 'policy';\nconst m = await import(`../access/${p}.ts`);",
+      /computed import\(\) specifier .* bypasses/,
+    ],
+    ["E2 computed import() via variable", `const s = "../access/policy.ts";\nawait import(s);`, /computed import\(\)/],
+    ["F require literal", `const p = require("../access/policy.ts");`, /only access\/index\.ts is public/],
+    ["F2 require computed", `const p = require(["..", "access", "policy.ts"].join("/"));`, /computed require\(\)/],
+    ["G import-equals require", `import p = require("../access/policy.ts");`, /only access\/index\.ts is public/],
+    ["H import type()", `let g: import("../access/rules.ts").Grant;`, /only access\/index\.ts is public/],
+    [
+      "I composition root",
+      `import { buildServer } from "../../server.ts";`,
+      /outside src\/modules \(composition root\)/,
+    ],
+    ["J undeclared module (via its index)", `import { x } from "../reporting/index.ts";`, /may not import module/],
+    ["K unknown package", `import x from "left-pad";`, /imports package left-pad/],
+    // F-DG1-117: obfuscated loaders (process.getBuiltinModule with computed members, code evaluation).
+    [
+      "L getBuiltinModule + computed member",
+      `const m = (process.getBuiltinModule("node:module") as any)["create" + "Require"](import.meta.url)("../access/policy.ts");`,
+      /module loader via \.getBuiltinModule\(\) .* bypasses the module-interface check/,
+    ],
+    [
+      "L2 computed member of process",
+      `const g = (process as any)["getBuiltin" + "Module"]("node:module");`,
+      /computed member of process .* bypasses/,
+    ],
+    [
+      "L3 loader name as a string key",
+      `const g = (proc as any)["getBuiltinModule"];`,
+      /module loader via \["getBuiltinModule"\] .* bypasses/,
+    ],
+    ["L4 process aliased", `const p: any = process;\nconst g = p[k];`, /process used as a value .* bypasses/],
+    ["L5 process destructured", `const { env, ...rest } = process;`, /process used as a value/],
+    [
+      "L6 computed member of globalThis",
+      `const p = (globalThis as any)["pro" + "cess"];`,
+      /computed member of globalThis/,
+    ],
+    ["L7 globalThis.process", `const g = globalThis.process.env;`, /globalThis\.process .* bypasses/],
+    [
+      "M new Function dynamic import",
+      `const m = new Function("s", "return import(s)")("../access/policy.ts");`,
+      /code evaluation via Function .* bypasses/,
+    ],
+    [
+      "M2 Function() call",
+      `const m = Function("return import('../access/policy.ts')")();`,
+      /code evaluation via Function/,
+    ],
+    ["M3 Function aliased", `const F = Function;\nnew F("return 1");`, /code evaluation via Function/],
+    ["M4 globalThis.Function", `const F = globalThis.Function;`, /code evaluation via \.Function/],
+    ["M5 eval", `const m = eval("import('../access/policy.ts')");`, /code evaluation via eval/],
+    [
+      "M6 AsyncFunction via .constructor",
+      `const m = (async () => {}).constructor("return import('../access/policy.ts')")();`,
+      /code evaluation via \.constructor\(\)/,
+    ],
+    ["M7 ['constructor'] member", `const C = (() => 0)["constructor"];`, /code evaluation via \["constructor"\]/],
+    // F-DG1-121: the Function/AsyncFunction/GeneratorFunction constructor reached through an ALIASED `.constructor`
+    // (round-3 code-security plants first; each was missed by the round-3 lint).
+    [
+      "N1 AsyncFunction via aliased .constructor",
+      `const C = (async () => {}).constructor as any;\nawait C("s", "return import(s)")("../access/policy.ts");`,
+      /code evaluation via \.constructor \(aliased\)/,
+    ],
+    [
+      "N2 constructor destructured",
+      `const { constructor: F } = (async () => {}) as any;\nawait F("s", "return import(s)")("../access/policy.ts");`,
+      /code evaluation via a destructured constructor/,
+    ],
+    [
+      "N3 Reflect.construct of .constructor",
+      `const f = Reflect.construct((async () => {}).constructor, ["s", "return import(s)"]);\nawait f("../access/policy.ts");`,
+      /code evaluation via \.constructor \(aliased\)/,
+    ],
+    [
+      "N4 getPrototypeOf(...).constructor aliased",
+      `const AF = Object.getPrototypeOf(async function () {}).constructor;\nawait AF("s", "return import(s)")("../access/policy.ts");`,
+      /code evaluation via \.constructor \(aliased\)/,
+    ],
+    [
+      "N5 generator constructor, shorthand destructuring",
+      `const { constructor } = function* () {} as any;\nconstructor("return import('../access/policy.ts')")().next();`,
+      /code evaluation via a destructured constructor/,
+    ],
+    [
+      "N6 destructuring assignment with a string key",
+      `let G: any;\n({ "constructor": G } = async function* () {});`,
+      /code evaluation via constructor as an object key/,
+    ],
+    [
+      "N7 computed constructor key in a binding pattern",
+      `const { ["constructor"]: H } = (() => 0) as any;`,
+      /code evaluation via a destructured constructor/,
+    ],
+    [
+      "N8 constructor key as a string value",
+      `const C = Reflect.get(async () => {}, "constructor");`,
+      /code evaluation via the "constructor" key as a value/,
+    ],
+    ["M8 node:vm", `import vm from "node:vm";`, /imports non-allow-listed node built-in node:vm/],
+    ["M9 worker_threads", `import { Worker } from "worker_threads";`, /imports package worker_threads/],
+  ])("%s is a violation", (_case, source, message) => {
+    const v = planted("transformations", source);
+    expect(v.length, `${_case}: ${JSON.stringify(v)}`).toBeGreaterThan(0);
+    expect(v.join("\n")).toMatch(message);
+  });
+
+  // F-DG1-124: blanket ban. The third column records what the round-4 lint (HEAD e080c0d) did with the same plant:
+  // "missed" = no violation at all; "caught" = flagged (a prior form, kept as a regression guard). Verified by
+  // running this table against the round-4 lint (handback T-DG1-BE6).
+  it.each([
+    [
+      'P1 constructed key f["constr" + "uctor"]',
+      `const f = async () => {};\nconst C = (f as any)["constr" + "uctor"];\nawait C("s", "return import(s)")("../access/policy.ts");`,
+      /computed member with a non-literal key/,
+      "missed",
+    ],
+    [
+      'P2 Reflect.get(fn, "constructor")',
+      `const C = Reflect.get(async () => {}, "constructor");\nawait C("s", "return import(s)")("../access/policy.ts");`,
+      /reflection via Reflect /,
+      "caught",
+    ],
+    [
+      "P3 Reflect.get with a constructed key",
+      `const C = Reflect.get(async () => {}, "constr".concat("uctor"));\nawait C("s", "return import(s)")("../access/policy.ts");`,
+      /reflection via Reflect /,
+      "missed",
+    ],
+    [
+      "P4 constructed key held in a variable",
+      `const k = ["constr", "uctor"].join("");\nconst C = ((async () => {}) as any)[k];`,
+      /computed member with a non-literal key/,
+      "missed",
+    ],
+    [
+      "P5 template-literal key",
+      "const C = ((async () => {}) as any)[`constr${'uctor'}`];",
+      /non-literal key/,
+      "missed",
+    ],
+    [
+      "P6 optional-chain constructed key",
+      `const C = ((async () => {}) as any)?.["constr" + "uctor"];`,
+      /non-literal/,
+      "missed",
+    ],
+    [
+      "P7 constructed key in a destructuring pattern",
+      `const k = "constr" + "uctor";\nconst { [k]: C } = (async () => {}) as any;`,
+      /computed property name with a non-literal key/,
+      "missed",
+    ],
+    [
+      "P8 descriptors: the constructor without its name",
+      `const d = Object.getOwnPropertyDescriptors(Object.getPrototypeOf(async () => {}));\nconst C = Object.values(d)[0]!.value;`,
+      /reflection via \.getOwnPropertyDescriptors\(\)/,
+      "missed",
+    ],
+    [
+      "P9 own property names, then a variable key",
+      `const proto = Object.getPrototypeOf(async () => {});\nconst k = Object.getOwnPropertyNames(proto)[0]!;\nconst C = proto[k];`,
+      /reflection via \.getOwnPropertyNames\(\)[\s\S]*non-literal key/,
+      "missed",
+    ],
+    ["P10 __proto__", `const P = ((async () => {}) as any).__proto__;`, /reflection via \.__proto__/, "missed"],
+    [
+      "P11 loader name as a string handed to a helper",
+      `declare function pick(o: unknown, k: string): any;\nconst r = pick(lib, "createRequire");`,
+      /module loader via the "createRequire" key as a value/,
+      "missed",
+    ],
+    [
+      "P12 process.binding",
+      `const fs = (process as any).binding("fs");`,
+      /non-allow-listed process\.binding member/,
+      "missed",
+    ],
+    [
+      "P13 node:inspector (in-process evaluation)",
+      `import { Session } from "node:inspector";`,
+      /non-allow-listed node built-in node:inspector/,
+      "missed",
+    ],
+    [
+      "P14 node:child_process",
+      `import { execFileSync } from "node:child_process";`,
+      /non-allow-listed node built-in node:child_process/,
+      "missed",
+    ],
+    [
+      "P15 look-alike member o.eval (was an allowed form)",
+      `const o = { eval: (s: string) => s };\no.eval("x");`,
+      /code evaluation via \.eval\(\)/,
+      "missed",
+    ],
+    [
+      "P16 constructor as an object key, fed to a keyed reader (was an allowed form)",
+      `declare const shape: (s: object) => { parse(v: unknown): any };\nconst C = shape({ constructor: 1 }).parse(Object.getPrototypeOf(async () => {}));`,
+      /code evaluation via constructor as an object key/,
+      "missed",
+    ],
+    [
+      "P20 a syntax error fails closed (parser recovery hid P4's key)",
+      `const k = "constr" + "uctor";\nconst C = (async () => {} as any)[k];`,
+      /unparseable source: '\)' expected/,
+      "missed",
+    ],
+    // F-DG1-125: an import of the process module aliased it past rule 3 (which only knows the global identifier
+    // `process`). Importing `process` / `node:process` is now itself a specifier violation (D-055: not allow-listed).
+    [
+      "X6 node:process default import .dlopen",
+      `import proc from "node:process";\nproc.dlopen({ exports: {} } as any, "/tmp/x.node");`,
+      /imports non-allow-listed node built-in node:process/,
+      "missed",
+    ],
+    [
+      "X7 node:process default import .binding",
+      `import proc from "node:process";\nconst fs = (proc as any).binding("fs");`,
+      /imports non-allow-listed node built-in node:process/,
+      "missed",
+    ],
+    [
+      "X8 node:process named import dlopen",
+      `import { dlopen } from "node:process";\ndlopen({ exports: {} } as any, "/tmp/x.node");`,
+      /imports non-allow-listed node built-in node:process/,
+      "missed",
+    ],
+    // F-DG1-127 A1: node:sqlite's loadExtension loads a native shared object (same class as process.dlopen), so
+    // `node:sqlite` is denied (D-055: not allow-listed). A2 (write a file with node:fs, then `import("./gen.mjs")`) is
+    // NOT a case here: it is the stated, accepted residual of this static lint (architecture.testkit.ts header).
+    [
+      "A1 node:sqlite loadExtension",
+      `import { DatabaseSync } from "node:sqlite";\nnew DatabaseSync(":memory:", { allowExtension: true }).loadExtension("/tmp/x.so");`,
+      /imports non-allow-listed node built-in node:sqlite/,
+      "missed",
+    ],
+    // F-DG1-128: the last two concrete loader/exec routes of the pinned Node version (round-7 builtinModules +
+    // process.* sweep). R1: node:test `run({ files, isolation: "none" })` imports a runtime-computed path IN-PROCESS
+    // (a loader built-in, no code generation), now denied by default (D-055). R2: the global
+    // `process.execve` replaces the process with an arbitrary executable (the child_process/cluster class), so
+    // `execve` is denied by default (D-055, rule 3). "missed" = 0 violations before this fix.
+    [
+      "R1 node:test in-process run",
+      `import { run } from "node:test";\nconst p = ["../access/", "policy.ts"].join("");\nfor await (const _ of run({ files: [new URL(p, import.meta.url).pathname], isolation: "none" })) {}`,
+      /imports non-allow-listed node built-in node:test/,
+      "missed",
+    ],
+    [
+      "R2 process.execve",
+      `process.execve("/bin/sh", ["sh", "-c", "id"]);`,
+      /non-allow-listed process\.execve member/,
+      "missed",
+    ],
+    // Prior forms (F-DG1-117/121), still caught: regression guards for the blanket rules.
+    ["P17 module.constructor", `const M = module.constructor;`, /module used as a value[\s\S]*\.constructor/, "caught"],
+    [
+      "P18 aliased AsyncFunction constructor (F-DG1-121 N1)",
+      `const C = (async () => {}).constructor as any;\nawait C("s", "return import(s)")("../access/policy.ts");`,
+      /code evaluation via \.constructor \(aliased\)/,
+      "caught",
+    ],
+    [
+      "P19 new Function (F-DG1-117 M)",
+      `new Function("s", "return import(s)");`,
+      /code evaluation via Function /,
+      "caught",
+    ],
+  ])("%s is a violation (round-4 lint: $3)", (_case, source, message, _before) => {
+    const v = planted("transformations", source);
+    expect(v.length, `${_case}: ${JSON.stringify(v)}`).toBeGreaterThan(0);
+    expect(v.join("\n")).toMatch(message);
+  });
+
+  // F-DG1-124 blanket ban extended by F-DG1-130 (same 4-column shape; the 4th column is the round-9 lint's result).
+  it.each([
+    // F-DG1-130: `crypto.setEngine(path)` dlopen()s an arbitrary shared object (native loader) although `node:crypto`
+    // itself is allow-listed (default-deny covers modules, not members). Rule 1 now bans the `setEngine` name in every
+    // SPELLED form (enumeration without the name is closed by rule 5, below). "missed" here = 0 violations with
+    // the round-9 lint (HEAD 8ec95a6; handback T-DG1-BE11). Importing node:crypto stays allowed (D-055 positive
+    // control below).
+    [
+      "S1 crypto.setEngine (named import)",
+      `import { setEngine } from "node:crypto";\nsetEngine("/tmp/x.so");`,
+      /native loader via setEngine \(line 2\)/,
+      "missed",
+    ],
+    [
+      "S2 crypto.setEngine (namespace import)",
+      `import * as c from "node:crypto";\nc.setEngine("/tmp/x.so");`,
+      /native loader via \.setEngine\(\)/,
+      "missed",
+    ],
+    [
+      'S3 crypto["setEngine"] (string key)',
+      `import crypto from "node:crypto";\n(crypto as any)["setEngine"]("/tmp/x.so");`,
+      /native loader via \["setEngine"\]/,
+      "missed",
+    ],
+  ])("%s is a violation (round-9 lint: $3)", (_case, source, message, _before) => {
+    const v = planted("transformations", source);
+    expect(v.length, `${_case}: ${JSON.stringify(v)}`).toBeGreaterThan(0);
+    expect(v.join("\n")).toMatch(message);
+  });
+
+  // D-055 / F-DG1-129, F-DG1-213, F-DG1-010: DEFAULT-DENY for node: built-ins and process.* members. The third column
+  // records what the round-8 lint (HEAD ed43620, denylists LOADER_BUILTINS / PROCESS_LOADERS) did with the same plant:
+  // "missed" = 0 violations; "caught" = flagged by the old denylist (kept as a regression guard).
+  it.each([
+    [
+      "DD1 process.kill(self, SIGUSR1) starts the inspector (F-DG1-129 N1)",
+      `process.kill(process.pid, "SIGUSR1");`,
+      /non-allow-listed process\.kill member/,
+      "missed",
+    ],
+    [
+      "DD2 process._debugProcess(self) (F-DG1-129 N2 / F-DG1-213 D2)",
+      `process._debugProcess(process.pid);`,
+      /non-allow-listed process\._debugProcess member/,
+      "missed",
+    ],
+    [
+      "DD3 process._kill",
+      `(process as any)._kill(process.pid, 10);`,
+      /non-allow-listed process\._kill member/,
+      "missed",
+    ],
+    [
+      "DD4 F-DG1-213 D1 full route as module source",
+      `process._debugProcess(process.pid);\nconst l = await (await fetch("http://127.0.0.1:9229/json/list")).json();\nconst ws = new WebSocket(l[0].webSocketDebuggerUrl);\nws.send(JSON.stringify({ id: 1, method: "Runtime.evaluate", params: { expression: "1" } }));`,
+      /non-allow-listed process\._debugProcess member/,
+      "missed",
+    ],
+    ["DD5 process.execve", `process.execve("/bin/sh", ["sh"]);`, /non-allow-listed process\.execve member/, "caught"],
+    ["DD6 process.binding", `(process as any).binding("fs");`, /non-allow-listed process\.binding member/, "caught"],
+    [
+      "DD7 process.dlopen",
+      `process.dlopen({ exports: {} } as any, "/tmp/x.node");`,
+      /process\.dlopen member/,
+      "caught",
+    ],
+    ["DD8 process.abort", `process.abort();`, /non-allow-listed process\.abort member/, "missed"],
+    [
+      "DD9 optional-chained process?.kill",
+      `process?.kill(process.pid, "SIGUSR1");`,
+      /non-allow-listed process\.kill member/,
+      "missed",
+    ],
+    [
+      "DD10 node:inspector",
+      `import { Session } from "node:inspector";`,
+      /imports non-allow-listed node built-in node:inspector/,
+      "caught",
+    ],
+    [
+      "DD11 node:inspector/promises",
+      `import { Session } from "node:inspector/promises";`,
+      /non-allow-listed node built-in node:inspector\/promises/,
+      "caught",
+    ],
+    [
+      "DD12 node:sqlite",
+      `import { DatabaseSync } from "node:sqlite";`,
+      /imports non-allow-listed node built-in node:sqlite/,
+      "caught",
+    ],
+    [
+      "DD13 node:test",
+      `import { run } from "node:test";`,
+      /imports non-allow-listed node built-in node:test/,
+      "caught",
+    ],
+    ["DD14 node:vm", `import vm from "node:vm";`, /imports non-allow-listed node built-in node:vm/, "caught"],
+    [
+      "DD15 node:worker_threads",
+      `import { Worker } from "node:worker_threads";`,
+      /imports non-allow-listed node built-in node:worker_threads/,
+      "caught",
+    ],
+    ["DD16 node:wasi", `import { WASI } from "node:wasi";`, /non-allow-listed node built-in node:wasi/, "missed"],
+    ["DD17 node:v8", `import v8 from "node:v8";`, /non-allow-listed node built-in node:v8/, "missed"],
+    ["DD18 node:http", `import { request } from "node:http";`, /non-allow-listed node built-in node:http/, "missed"],
+    ["DD19 node:net", `import { connect } from "node:net";`, /non-allow-listed node built-in node:net/, "missed"],
+    [
+      "DD20 a built-in a later Node version might add",
+      `const x = await import("node:some-future-builtin");`,
+      /non-allow-listed node built-in node:some-future-builtin/,
+      "missed",
+    ],
+  ])("%s is a violation (default-deny; round-8 lint: $3)", (_case, source, message, _before) => {
+    const v = planted("transformations", source);
+    expect(v.length, `${_case}: ${JSON.stringify(v)}`).toBeGreaterThan(0);
+    expect(v.join("\n")).toMatch(message);
+  });
+
+  it("default-deny keeps the allow-listed built-ins and process members clean (D-055 positive controls)", () => {
+    const allowed = [
+      `import { randomUUID } from "node:crypto";`,
+      `import { readFileSync } from "node:fs";`,
+      `import { readFile } from "node:fs/promises";`,
+      `import { join } from "node:path";`,
+      `import { pathToFileURL } from "node:url";`,
+      `import { EOL } from "node:os";`,
+      `import { inspect } from "node:util";`,
+      `const e = process.env.X;`,
+      `const argv = process.argv;`,
+      `process.once("SIGTERM", () => process.exit(0));`,
+      `if (!e) process.exit(1);`,
+      `export const id = randomUUID() + readFileSync(join("a", "b"), "utf8") + pathToFileURL("/x").href;`,
+    ].join("\n");
+    expect(planted("transformations", allowed)).toEqual([]);
+  });
+
+  // F-DG1-132 / F-DG1-133 - rule 5, NAMED IMPORTS ONLY for node:crypto. Rule 1 bans `setEngine` only where the name
+  // is SPELLED; the forms E1-E5 reached `crypto.setEngine` at runtime by ENUMERATING the node:crypto namespace/default
+  // binding with a key built at runtime. Each needs such a binding, so each is now a violation AT THE IMPORT. The
+  // fourth column is the round-11 lint's result ("missed" = 0 violations, pinned then as residual (a)).
+  it.each([
+    [
+      "E1 Object.values(ns).find by fn.name",
+      `import * as c from "node:crypto";\nconst f = Object.values(c).find((x) => typeof x === "function" && x.name === "set" + "Engine") as (p: string) => void;\nf("/tmp/x.so");`,
+      /node:crypto namespace\/default binding via import \* as/,
+      "missed",
+    ],
+    [
+      "E2 new Map(Object.entries(ns)).get(built key)",
+      `import * as c from "node:crypto";\n(new Map(Object.entries(c)).get("set".concat("Engine")) as (p: string) => void)("/tmp/x.so");`,
+      /node:crypto namespace\/default binding via import \* as/,
+      "missed",
+    ],
+    [
+      "E3 Object.entries(ns).find by regex over keys",
+      `import * as c from "node:crypto";\n(Object.entries(c).find(([k]) => /^setEng/.test(k))![1] as (p: string) => void)("/tmp/x.so");`,
+      /node:crypto namespace\/default binding via import \* as/,
+      "missed",
+    ],
+    [
+      "E4 for-of over Object.entries(default binding)",
+      `import crypto from "node:crypto";\nconst p = "/tmp/x.so";\nfor (const [k, f] of Object.entries(crypto)) if (k.startsWith("set") && k.endsWith("Engine")) (f as (p: string) => void)(p);`,
+      /node:crypto namespace\/default binding via a default import/,
+      "missed",
+    ],
+    [
+      "E5 dynamic import() then enumerate",
+      `const c = await import("node:crypto");\n(new Map(Object.entries(c)).get("set".concat("Engine")) as (p: string) => void)("/tmp/x.so");`,
+      /node:crypto namespace\/default binding via a dynamic import\(\)/,
+      "missed",
+    ],
+    // The binding forms on their own (no enumeration needed for the violation).
+    ["N1 namespace import", `import * as c from "node:crypto";`, /via import \* as/, "missed"],
+    ["N2 default import", `import c from "node:crypto";`, /via a default import/, "missed"],
+    [
+      "N3 default + named import",
+      `import c, { randomUUID } from "node:crypto";`,
+      /node:crypto namespace\/default binding via a default import/,
+      "missed",
+    ],
+    ["N4 named default import", `import { default as c } from "node:crypto";`, /via import \{ default \}/, "missed"],
+    [
+      "N5 export star",
+      `export * from "node:crypto";`,
+      /node:crypto namespace\/default binding via export \*/,
+      "missed",
+    ],
+    ["N6 export star as", `export * as c from "node:crypto";`, /via export \* as/, "missed"],
+    ["N7 re-export default", `export { default as c } from "node:crypto";`, /via export \{ default \}/, "missed"],
+    ["N8 import-equals require", `import c = require("node:crypto");`, /via import = require\(\)/, "missed"],
+    [
+      "N9 dynamic import() literal",
+      `const c = await import("node:crypto");`,
+      /node:crypto namespace\/default binding via a dynamic import\(\)/,
+      "missed",
+    ],
+    [
+      "N10 require() literal",
+      `const c = require("node:crypto");`,
+      /node:crypto namespace\/default binding via require\(\)/,
+      "caught",
+    ],
+  ])("F-DG1-132/133 rule 5: %s is a violation (round-11 lint: $3)", (_case, source, message, _before) => {
+    const v = planted("transformations", source);
+    expect(v.length, `${_case}: ${JSON.stringify(v)}`).toBeGreaterThan(0);
+    expect(v.join("\n")).toMatch(message);
+  });
+
+  it("F-DG1-130/132: named node:crypto imports and their members stay allowed (positive control)", () => {
+    const allowed = [
+      `import { randomUUID, createHash } from "node:crypto";`,
+      `import { type Hash, randomBytes as rb } from "node:crypto";`,
+      `export { randomUUID as uuid } from "node:crypto";`,
+      `type C = typeof import("node:crypto");`,
+      `export const id = randomUUID() + createHash("sha256").update("x").digest("hex") + rb(4).toString("hex");`,
+    ].join("\n");
+    expect(planted("transformations", allowed)).toEqual([]);
+  });
+
+  it("F-DG1-133: enumerating a PLAIN object stays allowed (identity/routes.ts, access/rules.ts idiom)", () => {
+    const allowed = [
+      `export function cookie(request: { cookies: Record<string, string> }, name: string) {`,
+      `  return new Map(Object.entries(request.cookies)).get(name);`,
+      `}`,
+      `const PERMISSIONS = { read: ["a"], write: ["b"] } as const;`,
+      `export const byName = new Map(Object.entries(PERMISSIONS));`,
+      `export const vals = Object.values(PERMISSIONS).flat();`,
+    ].join("\n");
+    expect(planted("transformations", allowed)).toEqual([]);
+  });
+
+  it("rule 5 applies only to node:crypto: namespace/default imports of other allow-listed built-ins stay allowed", () => {
+    const allowed = [
+      `import * as path from "node:path";`,
+      `import fs from "node:fs";`,
+      `export const j = path.join("a") + typeof fs;`,
+    ].join("\n");
+    expect(planted("transformations", allowed)).toEqual([]);
+  });
+
+  it("allowed forms stay clean (public index of a declared dependency, shared packages, own files)", () => {
+    const clean = [
+      `import { authorize } from "../access/index.ts";`,
+      `import type { Grant } from "../access/index.ts";`,
+      `const a = await import("../access/index.ts");`,
+      `import { sql } from "@mth/db";`,
+      `import { randomBytes } from "node:crypto";`,
+      `import { toTransformation } from "./repository.ts";`,
+      `export { x } from "./routes.ts";`,
+      // F-DG1-117 rules must not flag ordinary code: member reads of process, look-alike property names, types.
+      `const tz = process.env.TZ;`,
+      `const n = (process as NodeJS.Process).env.TZ;`,
+      `const o = { process: 1, env: 2 };\nconst e = o.process + o.env;`,
+      `let t: typeof process.env | undefined;`,
+      `class K { constructor() {} }\nconst k = new K();`,
+      // A class's own constructor declaration and type positions stay clean (F-DG1-121, F-DG1-124).
+      `class P { constructor(private readonly n: number) {} }`,
+      `interface I { constructor: string; eval(): void; require: boolean }`,
+      `type R = typeof Reflect;\nlet k: "constructor" | "getPrototypeOf" = "x" as never;`,
+      // F-DG1-124 rule 2 allows keys it can read: literals and numeric-by-construction expressions.
+      `const xs = [1, 2];\nconst last = xs[xs.length - 1];\nconst first = xs[0];\nconst h = { a: 1 }["a"];`,
+      `const m = new Map([["a", 1]]);\nconst v = m.get(String(xs));`,
+      `const mod = { module: "kpi" };\nconst n = mod.module;`,
+    ].join("\n");
+    expect(planted("transformations", clean)).toEqual([]);
+  });
+
+  it("a module's own test may read the module map and the lint, but its runtime files may not", () => {
+    const src = `import { API_MODULES } from "../../modules.ts";\nimport { moduleViolations } from "../../architecture.testkit.ts";`;
+    expect(planted("kpi", src, "kpi.test.ts")).toEqual([]);
+    expect(planted("kpi", src, "index.ts").join("\n")).toMatch(/composition root/);
+    expect(planted("kpi", `import { buildServer } from "../../server.ts";`, "kpi.test.ts").join("\n")).toMatch(
+      /composition root/,
+    );
+  });
+
+  it("a scaffold may not reach a business module it does not declare (reporting -> workflows)", () => {
+    expect(planted("reporting", `import { PRODUCT_GATES } from "../workflows/index.ts";`).join("\n")).toMatch(
+      /module reporting may not import module workflows/,
+    );
+    expect(planted("access", `import { KPI_MODULE } from "../kpi/index.ts";`).join("\n")).toMatch(
+      /module access may not import module kpi/,
+    );
+  });
+
+  // F-DG1-134: walk() used to collect only /\.(ts|tsx)$/, so a module file named .mts/.cts/.mjs/.cjs/.js/.jsx evaded
+  // every rule and the boundary check (a .mts file typechecks and ships in dist as .mjs). Now every buildable JS/TS
+  // module file is scanned.
+  const CODE_EXTS = ["ts", "tsx", "mts", "cts", "js", "jsx", "mjs", "cjs"] as const;
+  const EVASIVE = [
+    `import * as c from "node:crypto";`,
+    `import { authorize } from "../access/policy.ts";`,
+    `export const f = new Map(Object.entries(c)).get("set".concat("Engine")) as unknown;`,
+    `export const g = typeof authorize;`,
+  ].join("\n");
+
+  it("F-DG1-134: walk() collects every buildable JS/TS file (.[cm]?[jt]sx?), incl. nested ones, and no other file", () => {
+    const dir = mkdtempSync(join(tmpdir(), "mth-walk-"));
+    try {
+      mkdirSync(join(dir, "nested"));
+      for (const ext of CODE_EXTS) writeFileSync(join(dir, "nested", `zz-planted.${ext}`), EVASIVE);
+      for (const other of ["README.md", "data.json", "schema.sql", "x.tsbuildinfo", "y.mts.map"])
+        writeFileSync(join(dir, other), "");
+      expect(
+        walk(dir)
+          .map((f) => relative(dir, f))
+          .sort(),
+      ).toEqual(CODE_EXTS.map((ext) => join("nested", `zz-planted.${ext}`)).sort());
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("F-DG1-134: a planted non-.ts module file (zz-planted.mts etc.) is linted like a .ts one, end to end", () => {
+    // moduleViolations = walk(module dir) -> fileViolations(each file); a temp dir stands in for the module directory
+    // so nothing is written into the real tree. Before the fix this list was [] for every extension except ts/tsx.
+    const dir = mkdtempSync(join(tmpdir(), "mth-walk-"));
+    try {
+      for (const ext of CODE_EXTS) writeFileSync(join(dir, `zz-planted.${ext}`), EVASIVE);
+      const seen = walk(dir).map((f) => ({
+        name: basename(f),
+        v: fileViolations(
+          "transformations",
+          join(MODULES_DIR, "transformations", basename(f)),
+          readFileSync(f, "utf8"),
+        ),
+      }));
+      expect(seen.map((s) => s.name).sort()).toEqual(CODE_EXTS.map((ext) => `zz-planted.${ext}`).sort());
+      for (const { name, v } of seen) {
+        expect(v.join("\n"), name).toMatch(/imports the node:crypto namespace\/default binding/);
+        expect(v.join("\n"), name).toMatch(/only access\/index\.ts is public/);
+      }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("F-DG1-134: zz-planted.mts via fileViolations yields the rule-5 and deep-import violations", () => {
+    const v = fileViolations("transformations", join(MODULES_DIR, "transformations", "zz-planted.mts"), EVASIVE);
+    expect(v).toHaveLength(2);
+    expect(v.join("\n")).toMatch(/imports the node:crypto namespace\/default binding/);
+    expect(v.join("\n")).toMatch(/only access\/index\.ts is public/);
+  });
+
+  it("F-DG1-134: JSX in a .tsx/.jsx module file is parsed as JSX, so its imports are still seen and not mis-parsed", () => {
+    const jsx = `import { authorize } from "../access/policy.ts";\nexport const X = () => <div>{typeof authorize}</div>;`;
+    // Under a TS-kind parse the apostrophe in the JSX text opened a string literal that swallowed `require(...)`.
+    const swallowed = `export const X = () => <div>a'b {require("node:vm")}</div>;`;
+    for (const name of ["zz-planted.tsx", "zz-planted.jsx"]) {
+      expect(planted("transformations", swallowed, name).join("\n"), name).toMatch(
+        /imports non-allow-listed node built-in node:vm/,
+      );
+      expect(planted("transformations", jsx, name), name).toEqual([
+        `modules/transformations/${name}: imports ../access/policy.ts; only access/index.ts is public`,
+      ]);
+    }
+  });
+
+  it("F-DG1-135: only *.test.ts/*.test.tsx (build-excluded) get the test allowance; *.test.mts etc. get full rules", () => {
+    const src = `import { describe } from "vitest";\nimport { moduleViolations } from "../../architecture.testkit.ts";`;
+    // .test.ts/.test.tsx are excluded from the build (tsconfig.build.json), so the vitest/testkit allowance applies.
+    for (const ext of ["ts", "tsx"]) expect(planted("kpi", src, `kpi.test.${ext}`), ext).toEqual([]);
+    // Every other test-looking extension is never run as a test and ships in dist: a plain module file.
+    for (const ext of CODE_EXTS.filter((e) => e !== "ts" && e !== "tsx")) {
+      expect(planted("kpi", src, `kpi.test.${ext}`).join("\n"), ext).toMatch(
+        /imports package vitest[\s\S]*composition root/,
+      );
+    }
+    for (const ext of CODE_EXTS) {
+      expect(planted("kpi", src, `kpi.${ext}`).join("\n"), ext).toMatch(
+        /imports package vitest[\s\S]*composition root/,
+      );
+    }
+  });
+
+  it("F-DG1-135: zz.test.mts importing ../../modules.ts or vitest is a violation; zz.test.ts doing so is allowed", () => {
+    const at = (name: string) => join(MODULES_DIR, "kpi", name);
+    const modulesImport = `import { API_MODULES } from "../../modules.ts";\nexport const n = API_MODULES;`;
+    const vitestImport = `import { it } from "vitest";\nexport const t = it;`;
+    expect(fileViolations("kpi", at("zz.test.mts"), modulesImport)).toEqual([
+      "modules/kpi/zz.test.mts: imports ../../modules.ts outside src/modules (composition root)",
+    ]);
+    expect(fileViolations("kpi", at("zz.test.mts"), vitestImport)).toEqual([
+      "modules/kpi/zz.test.mts: imports package vitest",
+    ]);
+    expect(fileViolations("kpi", at("zz.test.ts"), modulesImport)).toEqual([]);
+    expect(fileViolations("kpi", at("zz.test.ts"), vitestImport)).toEqual([]);
+  });
+
+  it("F-DG1-217: a module declaration file (.d.ts/.d.mts/.d.cts) is linted without throwing, imports still checked", () => {
+    const at = (name: string) => join(MODULES_DIR, "transformations", name);
+    // Before the fix syntaxErrors() ran ts.transpileModule on a declaration-file name and it threw
+    // "Debug Failure. Output generation failed", so moduleViolations() errored instead of reporting.
+    for (const name of ["zz.d.ts", "zz.d.mts", "zz.d.cts"]) {
+      expect(() => fileViolations("transformations", at(name), "export declare const x: number;"), name).not.toThrow();
+      expect(fileViolations("transformations", at(name), "export declare const x: number;"), name).toEqual([]);
+      // Chosen behaviour: declaration files are scanned (not skipped), so a deep cross-module TYPE import is flagged.
+      const deepType = `import type { Actor } from "../access/policy.ts";\nexport declare const a: Actor;`;
+      expect(fileViolations("transformations", at(name), deepType), name).toEqual([
+        `modules/transformations/${name}: imports ../access/policy.ts; only access/index.ts is public`,
+      ]);
+      // A genuine syntax error surfaces as a named diagnostic, never as an internal compiler assertion.
+      const broken = "export declare const x: = ;";
+      expect(() => fileViolations("transformations", at(name), broken), name).not.toThrow();
+      const v = fileViolations("transformations", at(name), broken).join("\n");
+      expect(v, name).toMatch(/unparseable source: Type expected\. \(line 1\) bypasses the module-interface check/);
+      expect(v, name).not.toMatch(/Debug Failure/);
+    }
+  });
+
+  it("F-DG1-137/F-DG1-218: an arbitrary-extension declaration file (*.d.<ext>.ts) is linted without throwing", () => {
+    // The declaration-file branch follows TypeScript's own classification, not a hand-rolled regex. Pin it, so a
+    // refactor that drops it (or a TS release that changes it) is caught here. ts.isDeclarationFileName is
+    // @internal (not in the public typings); the public SourceFile.isDeclarationFile carries its result.
+    const tsSays = (name: string) => ts.createSourceFile(name, "", ts.ScriptTarget.Latest).isDeclarationFile;
+    for (const name of ["zz.d.ts", "zz.d.mts", "zz.d.cts", "styles.d.css.ts", "data.d.json.ts", "x.d.ts.ts"]) {
+      expect(tsSays(name), name).toBe(true);
+      expect(isDeclarationFileName(name), name).toBe(true);
+    }
+    for (const name of ["a.ts", "a.mts", "a.tsx", "a.d.tsx", "zz-planted.mts", "dir.d.x/a.ts"]) {
+      expect(tsSays(name), name).toBe(false);
+      expect(isDeclarationFileName(name), name).toBe(false);
+    }
+    const at = (name: string) => join(MODULES_DIR, "transformations", name);
+    // Before the fix these failed the /\.d\.[cm]?ts$/ guard, reached ts.transpileModule and threw
+    // "Debug Failure. Output generation failed" with no file name in the message.
+    for (const name of ["styles.d.css.ts", "data.d.json.ts", "x.d.ts.ts"]) {
+      const ok = "export declare const x: number;";
+      expect(() => fileViolations("transformations", at(name), ok), name).not.toThrow();
+      expect(fileViolations("transformations", at(name), ok), name).toEqual([]);
+      const broken = "export declare const x: = ;";
+      expect(() => fileViolations("transformations", at(name), broken), name).not.toThrow();
+      const v = fileViolations("transformations", at(name), broken).join("\n");
+      expect(v, name).toMatch(
+        new RegExp(
+          `modules/transformations/${name.replace(/\./g, "\\.")}: unparseable source: Type expected\\. \\(line 1\\)`,
+        ),
+      );
+      expect(v, name).not.toMatch(/Debug Failure/);
+    }
+  });
+
+  it("F-DG1-137/F-DG1-218: a planted styles.d.css.ts in a module directory is walked and linted end to end", () => {
+    const dir = mkdtempSync(join(tmpdir(), "mth-dxts-"));
+    try {
+      writeFileSync(join(dir, "styles.d.css.ts"), "export declare const x: = ;");
+      const files = walk(dir);
+      expect(files.map((f) => basename(f))).toEqual(["styles.d.css.ts"]);
+      const run = () =>
+        files.flatMap((f) =>
+          fileViolations("transformations", join(MODULES_DIR, "transformations", basename(f)), readFileSync(f, "utf8")),
+        );
+      expect(run).not.toThrow();
+      const v = run().join("\n");
+      expect(v).toMatch(/modules\/transformations\/styles\.d\.css\.ts: unparseable source: Type expected\./);
+      expect(v).not.toMatch(/Debug Failure/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("F-DG1-217: a planted .d.ts in a module directory is walked and linted end to end without throwing", () => {
+    const dir = mkdtempSync(join(tmpdir(), "mth-dts-"));
+    try {
+      writeFileSync(join(dir, "zz.d.ts"), `import type { Actor } from "../access/policy.ts";\nexport type A = Actor;`);
+      const files = walk(dir);
+      expect(files.map((f) => basename(f))).toEqual(["zz.d.ts"]);
+      const v = files.flatMap((f) =>
+        fileViolations("transformations", join(MODULES_DIR, "transformations", basename(f)), readFileSync(f, "utf8")),
+      );
+      expect(v).toEqual([
+        "modules/transformations/zz.d.ts: imports ../access/policy.ts; only access/index.ts is public",
+      ]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("scanSource reports what it saw (paths resolve relative to the planted file)", () => {
     const rel = relative(MODULES_DIR, resolve(join(MODULES_DIR, "transformations"), "../access/policy.ts"));
     expect(rel.split("/")).toEqual(["access", "policy.ts"]);
+    expect(scanSource("x.ts", `import "a"; export * from "b"; await import("c"); require("d");`).specifiers).toEqual([
+      "a",
+      "b",
+      "c",
+      "d",
+    ]);
     expect(bareAllowed("@mth/web")).toBe(false);
     expect(bareAllowed("fastify")).toBe(true);
+    expect(bareAllowed("node:module")).toBe(false);
+    // D-055 default-deny: allow-listed node: built-ins pass, everything else (incl. unknown future ones) does not.
+    expect(bareAllowed("node:crypto")).toBe(true);
+    expect(bareAllowed("node:fs/promises")).toBe(true);
+    expect(bareAllowed("node:inspector")).toBe(false);
+    expect(bareAllowed("node:http")).toBe(false);
+    expect(bareAllowed("node:some-future-builtin")).toBe(false);
+    expect(bareAllowed("fs")).toBe(false);
   });
 });
 

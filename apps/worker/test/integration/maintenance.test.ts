@@ -43,11 +43,23 @@ describe("purgeExpired", () => {
     await session(revokedRecent, hour, 10 * hour, -hour);
     await env.db
       .insertInto("oidc_login_state")
-      .values({ state_hash: Buffer.alloc(32, 7), code_verifier: "v", nonce: "n", expires_at: new Date(now - 1000) })
+      .values({
+        state_hash: Buffer.alloc(32, 7),
+        code_verifier: "v",
+        nonce: "n",
+        browser_binding_hash: Buffer.alloc(32, 9),
+        expires_at: new Date(now - 1000),
+      })
       .execute();
     await env.db
       .insertInto("oidc_login_state")
-      .values({ state_hash: Buffer.alloc(32, 8), code_verifier: "v", nonce: "n", expires_at: new Date(now + 600_000) })
+      .values({
+        state_hash: Buffer.alloc(32, 8),
+        code_verifier: "v",
+        nonce: "n",
+        browser_binding_hash: Buffer.alloc(32, 9),
+        expires_at: new Date(now + 600_000),
+      })
       .execute();
     await env.owner.query(
       "INSERT INTO idempotency_record (user_id, key, request_hash, response_status, response_body, created_at, expires_at) VALUES ($1, 'expired-key-1', $2, 201, '{}', now() - interval '2 days', now() - interval '1 day')",

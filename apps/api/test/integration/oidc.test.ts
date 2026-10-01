@@ -49,6 +49,14 @@ afterAll(async () => {
   await dropScratchDatabase(adminUrl, dbName);
 });
 
+/** The login cookie ("mth_login=<binding>") each started login set in "its" browser, keyed by the state it bound. */
+const loginCookieOf = new Map<string, string>();
+
+function setCookies(res: { headers: Record<string, unknown> }): string[] {
+  const h = res.headers["set-cookie"];
+  return h === undefined ? [] : Array.isArray(h) ? h.map(String) : [String(h)];
+}
+
 async function startLogin(returnTo?: string) {
   const res = await call(
     api.app,
@@ -56,8 +64,23 @@ async function startLogin(returnTo?: string) {
     `/api/v1/auth/login${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`,
   );
   expect(res.status).toBe(302);
-  return String(res.headers["location"]);
+  const location = String(res.headers["location"]);
+  const login = setCookies(res).find((c) => c.startsWith("mth_login="));
+  expect(login, "GET /auth/login sets the browser-binding login cookie").toBeTruthy();
+  loginCookieOf.set(new URL(location).searchParams.get("state")!, login!.split(";")[0]!);
+  return location;
 }
+
+/** The callback as the browser that started the login (it presents its login cookie). */
+function callback(query: string, state: string, extraCookie?: string) {
+  const cookie = [loginCookieOf.get(state), extraCookie].filter(Boolean).join("; ");
+  return call(api.app, "GET", `/api/v1/auth/callback?${query}`, { headers: cookie ? { cookie } : {} });
+}
+
+const sessionCookieOf = (res: { headers: Record<string, unknown> }) =>
+  setCookies(res)
+    .find((c) => c.startsWith("mth_session="))
+    ?.split(";")[0] ?? null;
 
 async function completeLogin(
   claims: Parameters<FakeIdp["issueCode"]>[1],
@@ -66,8 +89,8 @@ async function completeLogin(
 ) {
   const authUrl = await startLogin(returnTo);
   const { code, state } = idp.issueCode(authUrl, claims, opts);
-  const cb = await call(api.app, "GET", `/api/v1/auth/callback?code=${code}&state=${state}`);
-  return { cb, state, cookie: cb.headers["set-cookie"] ? String(cb.headers["set-cookie"]).split(";")[0]! : null };
+  const cb = await callback(`code=${code}&state=${state}`, state);
+  return { cb, state, cookie: sessionCookieOf(cb) };
 }
 
 describe("GET /api/v1/auth/login", () => {
@@ -193,10 +216,8 @@ describe("GET /api/v1/auth/callback", () => {
   it("uses each state once, and rejects unknown or expired states", async () => {
     const authUrl = await startLogin();
     const { code, state } = idp.issueCode(authUrl, { sub: "sub-state" });
-    expect((await call(api.app, "GET", `/api/v1/auth/callback?code=${code}&state=${state}`)).headers["location"]).toBe(
-      "/",
-    );
-    const replay = await call(api.app, "GET", `/api/v1/auth/callback?code=${code}&state=${state}`);
+    expect((await callback(`code=${code}&state=${state}`, state)).headers["location"]).toBe("/");
+    const replay = await callback(`code=${code}&state=${state}`, state);
     expect(replay.headers["location"]).toBe("/login?error=state_invalid");
     expect((await call(api.app, "GET", "/api/v1/auth/callback?code=x&state=unknown")).headers["location"]).toBe(
       "/login?error=state_invalid",
@@ -209,11 +230,110 @@ describe("GET /api/v1/auth/callback", () => {
       .set({ expires_at: new Date(Date.now() - 1000) })
       .where("state_hash", "=", createHash("sha256").update(expired.state).digest())
       .execute();
-    expect(
-      (await call(api.app, "GET", `/api/v1/auth/callback?code=${expired.code}&state=${expired.state}`)).headers[
-        "location"
-      ],
-    ).toBe("/login?error=state_invalid");
+    expect((await callback(`code=${expired.code}&state=${expired.state}`, expired.state)).headers["location"]).toBe(
+      "/login?error=state_invalid",
+    );
+  });
+
+  describe("login CSRF: the state is bound to the browser that started the login (F-DG1-103)", () => {
+    const auditFor = (requestId: string) =>
+      api.db.selectFrom("audit_event").selectAll().where("request_id", "=", requestId).execute();
+
+    it("refuses an attacker's live callback in the victim's browser; the victim stays signed in as themself", async () => {
+      // The victim's browser holds its own valid OIDC session.
+      const victim = await completeLogin({ sub: "csrf-victim", name: "Synthetic victim" });
+      expect(victim.cookie).toMatch(/^mth_session=/);
+      // The attacker starts a login in THEIR browser, authenticates at the IdP as themself and stops before the callback.
+      const attackerAuthUrl = await startLogin();
+      const attacker = idp.issueCode(attackerAuthUrl, { sub: "csrf-attacker" });
+      const query = `code=${attacker.code}&state=${attacker.state}`;
+
+      // (a) the victim's browser opens the captured callback URL: it has a session but no login cookie for this state
+      const noBinding = await call(api.app, "GET", `/api/v1/auth/callback?${query}`, {
+        headers: { cookie: victim.cookie!, "x-request-id": "csrf-test-no-binding" },
+      });
+      expect(noBinding.status).toBe(302);
+      expect(noBinding.headers["location"]).toBe("/login?error=state_invalid");
+      expect(sessionCookieOf(noBinding)).toBeNull();
+      // (b) ...or the victim's browser has its OWN pending login (a different binding)
+      const victimAuthUrl = await startLogin();
+      const victimBinding = loginCookieOf.get(new URL(victimAuthUrl).searchParams.get("state")!)!;
+      const otherBinding = await call(api.app, "GET", `/api/v1/auth/callback?${query}`, {
+        headers: { cookie: `${victim.cookie!}; ${victimBinding}`, "x-request-id": "csrf-test-other-binding" },
+      });
+      expect(otherBinding.headers["location"]).toBe("/login?error=state_invalid");
+      expect(sessionCookieOf(otherBinding)).toBeNull();
+
+      // Nobody was signed in as the attacker, and the victim's session was NOT revoked (still the victim).
+      expect(
+        await api.db.selectFrom("user_identity").select("id").where("subject", "=", "csrf-attacker").execute(),
+      ).toEqual([]);
+      const me = await call<{ user: { displayName: string } }>(api.app, "GET", "/api/v1/me", {
+        session: { cookie: victim.cookie!, csrf: "", userId: "" },
+      });
+      expect([me.status, me.body.user.displayName]).toEqual([200, "Synthetic victim"]);
+      // Both refusals are audited as failed sign-ins.
+      const [a] = await auditFor("csrf-test-no-binding");
+      expect(a).toMatchObject({ action: "session.login_failed", record_type: "session", actor_type: "system" });
+      expect(a!.reason).toMatch(/not bound to this browser/);
+      const [b] = await auditFor("csrf-test-other-binding");
+      expect(b!.reason).toMatch(/bound to a different browser/);
+
+      // The refused attempts did not consume the state: the browser that started the login can still finish it.
+      const own = await callback(query, attacker.state);
+      expect(own.headers["location"]).toBe("/");
+      expect(sessionCookieOf(own)).toMatch(/^mth_session=/);
+    });
+
+    it("sets a short-lived HttpOnly SameSite=Lax login cookie, stores only its hash, and clears it at the callback", async () => {
+      const res = await call(api.app, "GET", "/api/v1/auth/login");
+      const cookie = setCookies(res).find((c) => c.startsWith("mth_login="))!;
+      expect(cookie).toMatch(/; Max-Age=600(;|$)/);
+      expect(cookie).toMatch(/; Path=\/(;|$)/);
+      expect(cookie).toMatch(/; HttpOnly(;|$)/);
+      expect(cookie).toMatch(/; SameSite=Lax(;|$)/);
+      const binding = cookie.split(";")[0]!.slice("mth_login=".length);
+      expect(binding.length).toBeGreaterThanOrEqual(43); // 32 random bytes, base64url
+      const state = new URL(String(res.headers["location"])).searchParams.get("state")!;
+      const row = await api.db
+        .selectFrom("oidc_login_state")
+        .select("browser_binding_hash")
+        .where("state_hash", "=", createHash("sha256").update(state).digest())
+        .executeTakeFirstOrThrow();
+      expect(row.browser_binding_hash.equals(createHash("sha256").update(binding).digest())).toBe(true);
+      expect(row.browser_binding_hash.toString("utf8")).not.toContain(binding);
+
+      const cb = await call(api.app, "GET", `/api/v1/auth/callback?error=access_denied&state=${state}`, {
+        headers: { cookie: cookie.split(";")[0]! },
+      });
+      expect(cb.headers["location"]).toBe("/login?error=idp_denied");
+      const cleared = setCookies(cb).find((c) => c.startsWith("mth_login="))!;
+      expect(cleared).toMatch(/^mth_login=;/);
+      expect(cleared).toMatch(/Expires=Thu, 01 Jan 1970/);
+    });
+
+    it("uses the __Host- prefix and Secure on an https origin", async () => {
+      const httpsApi = await startApi({
+        env: {
+          AUTH_MODE: "oidc",
+          APP_BASE_URL: "https://hub.example.invalid",
+          OIDC_ISSUER_URL: idp.issuer,
+          OIDC_CLIENT_ID: idp.clientId,
+          OIDC_CLIENT_SECRET: idp.clientSecret,
+          DATABASE_URL: roleUrl(adminUrl, dbName, "mth_app"),
+        },
+      });
+      try {
+        const res = await call(httpsApi.app, "GET", "/api/v1/auth/login");
+        const cookie = setCookies(res).find((c) => c.startsWith("__Host-mth_login="))!;
+        expect(cookie).toBeTruthy();
+        expect(cookie).toMatch(/; Secure(;|$)/);
+        expect(cookie).toMatch(/; Path=\/(;|$)/);
+        expect(cookie).not.toMatch(/Domain=/i);
+      } finally {
+        await httpsApi.close();
+      }
+    });
   });
 
   it("rejects a wrong nonce and a PKCE mismatch (token_invalid), and IdP errors (idp_denied), all without a session", async () => {
@@ -223,7 +343,7 @@ describe("GET /api/v1/auth/callback", () => {
     expect([pkce.cb.headers["location"], pkce.cookie]).toEqual(["/login?error=token_invalid", null]);
     const authUrl = await startLogin();
     const state = new URL(authUrl).searchParams.get("state")!;
-    const denied = await call(api.app, "GET", `/api/v1/auth/callback?error=access_denied&state=${state}`);
+    const denied = await callback(`error=access_denied&state=${state}`, state);
     expect(denied.headers["location"]).toBe("/login?error=idp_denied");
     expect(
       await api.db.selectFrom("user_identity").select("id").where("subject", "in", ["sub-nonce", "sub-pkce"]).execute(),

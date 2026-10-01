@@ -164,9 +164,11 @@ Bookkeeping for the migration runner (ADR-0003).
 | return_to | text | NOT NULL DEFAULT '/', must start with a single `/` |
 | created_at | timestamptz | NOT NULL DEFAULT now() |
 | expires_at | timestamptz | NOT NULL (created_at + 10 min) |
+| browser_binding_hash | bytea | NOT NULL, `octet_length = 32` (SHA-256 of a random `__Host-`/HttpOnly/`SameSite=Lax` pre-session cookie set by `GET /auth/login`) — migration 0007, F-DG1-103 |
 
 **Invariants:**
 - Single use: the callback deletes the row with `DELETE … RETURNING` inside the callback transaction (`mth_app` may `DELETE`).
+- **Browser-bound (CSRF, RFC 6749 §10.12 / OIDC Core §3.1.2.1):** the callback consumes a state only when the presenting browser's cookie hashes to `browser_binding_hash`; a callback URL captured from another browser is refused and the state is not consumed. Only the SHA-256 is stored, never the cookie value.
 - Expired rows are purged.
 
 ## role
@@ -224,16 +226,19 @@ Bookkeeping for the migration runner (ADR-0003).
 | revoked_at | timestamptz | NULL |
 | revoked_by | uuid | NULL FK → app_user |
 | revoke_reason | text | NULL; `CHECK ((revoked_at IS NULL) = (revoked_by IS NULL) AND (revoked_at IS NULL) = (revoke_reason IS NULL))` |
+| derived_from_assignment_id | uuid | NULL FK → scoped_assignment (`ON DELETE/UPDATE RESTRICT`); `CHECK (derived_from_assignment_id IS DISTINCT FROM id)` and `CHECK (… IS NULL OR scope_type = 'transformation')` — migration 0008, F-DG1-106 |
 | version, stamps | | standard |
 
 **Indexes:**
 - `(user_id) WHERE revoked_at IS NULL`;
 - `(scope_type, scope_id) WHERE revoked_at IS NULL`;
 - `(organization_id, role_id)`;
+- `(derived_from_assignment_id) WHERE derived_from_assignment_id IS NOT NULL AND revoked_at IS NULL`;
 - `UNIQUE (user_id, role_id, scope_type, scope_id) WHERE revoked_at IS NULL`, so there are no duplicate active grants (a duplicate gives 409).
 
 **Invariants:**
 - `scope_id` is polymorphic, so the API verifies that it exists and belongs to `organization_id`: `organization_id = scope_id` when `scope_type = 'organization'`.
+- **Derived creator assignment (F-DG1-106):** when a business-unit-scoped grant *without* downward inheritance (e.g. TL) creates a transformation, the API gives the creator an explicit, audited `transformation`-scope assignment of the same role (never a role holding an approval permission), with the source grant's `effective_to`; `derived_from_assignment_id` links it to the source so revoking the source revokes the derived row in the same transaction. NULL for every directly granted row.
 - Revocation never deletes the row.
 - A user's home organization does not limit which organizations they can be granted in.
 

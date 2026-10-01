@@ -738,8 +738,10 @@ paths:
       summary: Update a transformation (transformation.update). Needs If-Match.
       description: |
         `mode`, `entryPhase` and `currentPhase` are not editable here: phase progression is gate-controlled
-        from P2. Status changes must follow the explicit transitions (draft→active, active→on_hold|closed,
-        on_hold→active|closed); anything else is 422 `invalid-transition`. Archived records are read-only (422).
+        from P2. Status changes must follow the explicit transitions available in P1 (draft→active,
+        active→on_hold, on_hold→active); anything else is 422 `invalid-transition`. Closing a transformation
+        (`→closed`) is a governed, terminal transition that requires the G6 business approval (delivered in P2+)
+        and is refused here with 422 `invalid-transition` in P1. Archived records are read-only (422).
       security:
         - sessionCookie: []
           csrfToken: []

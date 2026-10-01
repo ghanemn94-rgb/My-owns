@@ -7,8 +7,16 @@ import type { RoleAssignment, RoleAssignmentCreate } from "@mth/shared/schemas";
 import { v7 as uuidv7 } from "uuid";
 import { record, type AuditContext } from "../audit/index.ts";
 import { decodeCursor, filterHash, iso, isoOrNull, paginate, problems } from "../platform/index.ts";
-import { authorize, requireAction, requireRead, resolveTarget, scopeFilter, type Principal } from "./policy.ts";
-import type { TargetLevel } from "./rules.ts";
+import {
+  authorize,
+  denialOf,
+  requireAction,
+  requireRead,
+  resolveTarget,
+  scopeFilter,
+  type Principal,
+} from "./policy.ts";
+import { decide, grantApplies, isApprovalPermission, type ResolvedTarget, type TargetLevel } from "./rules.ts";
 
 const selectAssignment = (db: DbOrTx) =>
   db
@@ -236,6 +244,35 @@ export async function revokeAssignment(
     reason,
     changes: { revokedAt: { from: null, to: "now" } },
   });
+  // F-DG1-106: creator assignments derived from this grant never outlive it (same transaction, one audit event each).
+  const derivedReason = `Source assignment ${id} revoked: ${reason}`.slice(0, 1000);
+  const derived = await tx
+    .updateTable("scoped_assignment")
+    .set({
+      revoked_at: sql<Date>`now()`,
+      revoked_by: principal.userId,
+      revoke_reason: derivedReason,
+      version: sql<number>`version + 1`,
+      updated_at: sql<Date>`now()`,
+      updated_by: principal.userId,
+    })
+    .where("derived_from_assignment_id", "=", id)
+    .where("revoked_at", "is", null)
+    .returning(["id", "version", "organization_id", "scope_id"])
+    .execute();
+  for (const d of derived) {
+    await record(tx, audit, {
+      action: "scoped_assignment.revoke",
+      recordType: "scoped_assignment",
+      recordId: d.id,
+      organizationId: d.organization_id,
+      transformationId: d.scope_id,
+      priorVersion: d.version - 1,
+      newVersion: d.version,
+      reason: derivedReason,
+      changes: { revokedAt: { from: null, to: "now" } },
+    });
+  }
   return toRoleAssignment(await selectAssignment(tx).where("a.id", "=", id).executeTakeFirstOrThrow());
 }
 
@@ -388,4 +425,112 @@ export async function grantCreatorAdminRoles(
       },
     });
   }
+}
+
+/**
+ * F-DG1-106 (ADR-0006): a role granted at BUSINESS-UNIT scope without downward inheritance (TL by default) may create
+ * a transformation in that unit, but on its own it never covers the transformation record, so the creator would get
+ * 201 and then 404 on the record it just created. When - and only when - none of the creator's grants lets them read
+ * the new record, each grant that authorized the create is carried over as an EXPLICIT transformation-scope assignment
+ * of the same role: one row and one audit event each, reason recorded, `effective_to` of the source grant, and
+ * linked to the source (derived_from_assignment_id) so revoking the source revokes it too (revokeAssignment).
+ * Never broader than the source role, and never a role that holds an approval permission (an API create must not
+ * manufacture a G1-G6 / Finance approver; ADR-0006 SoD). Grants still come only from scoped_assignment rows.
+ * Call inside the create transaction, after the transformation row exists (scope_node resolves it).
+ */
+export async function grantCreatorTransformationRoles(
+  tx: Tx,
+  principal: Principal,
+  audit: AuditContext,
+  created: { transformationId: string; organizationId: string; code: string },
+  businessUnitTarget: ResolvedTarget,
+): Promise<string[]> {
+  if (principal.kind !== "user" || !principal.userId) return [];
+  const recordTarget: ResolvedTarget = {
+    ...businessUnitTarget,
+    level: "transformation",
+    transformationId: created.transformationId,
+  };
+  if (decide(principal, "transformation.read", recordTarget).allowed) return [];
+  const sources = principal.grants.filter(
+    (g) =>
+      g.scopeType === "business_unit" &&
+      grantApplies(g, "transformation.create", businessUnitTarget) &&
+      g.permissions.has("transformation.read") &&
+      ![...g.permissions].some(isApprovalPermission),
+  );
+  if (sources.length === 0) return [];
+  // F-DG1-115: the source grants were read (loadGrants) without a lock, so a revoke of a source can be in flight.
+  // Lock every source row FOR SHARE and re-read it inside this transaction: FOR SHARE conflicts with the revoke's
+  // FOR UPDATE / UPDATE, so either (a) the revoke committed first - under READ COMMITTED the locked row is re-read in
+  // its latest version, we see revoked_at and derive nothing from it - or (b) we lock first, the revoke waits until
+  // this transaction commits, and its cascade (a new statement snapshot) then sees and revokes the derived row.
+  // Sorted ids give a stable lock order. The lock is taken on the assignment rows only (OF a), not on role rows.
+  const sourceIds = [...new Set(sources.map((g) => g.assignmentId))].sort();
+  const locked = await tx
+    .selectFrom("scoped_assignment as a")
+    .innerJoin("role as r", "r.id", "a.role_id")
+    .select(["a.id", "a.role_id", "a.effective_to", "a.revoked_at", "r.code", "r.kind"])
+    .where("a.id", "in", sourceIds)
+    .orderBy("a.id")
+    .forShare("a")
+    .execute();
+  const rows = locked.filter((r) => r.revoked_at === null && r.kind !== "technical_admin");
+  const revokedMeanwhile = sourceIds.filter((sid) => !locked.some((r) => r.id === sid && r.revoked_at === null));
+  if (rows.length === 0 && revokedMeanwhile.length > 0) {
+    // Every grant that authorized this create has been revoked concurrently (the revoke is serialized before us).
+    // If no other grant of the principal authorizes the create either, the create itself is no longer authorized:
+    // fail it (the caller's transaction rolls back, so no transformation and no derived assignment are left).
+    const stillAuthorized = principal.grants.some(
+      (g) => !revokedMeanwhile.includes(g.assignmentId) && grantApplies(g, "transformation.create", businessUnitTarget),
+    );
+    if (!stillAuthorized) {
+      principal.tracker.decisions += 1;
+      // Audited like any failed authorization of a mutation (denials.ts, outside the rolled-back transaction).
+      throw problems
+        .forbidden("The assignment that authorized this create has been revoked.")
+        .withDenial(denialOf("transformation.create", businessUnitTarget));
+    }
+    return [];
+  }
+  const created_: string[] = [];
+  for (const src of rows) {
+    const id = uuidv7();
+    const reason = `Creator of transformation ${created.code}: ${src.code} carried over from business-unit assignment ${src.id}`;
+    await tx
+      .insertInto("scoped_assignment")
+      .values({
+        id,
+        organization_id: created.organizationId,
+        user_id: principal.userId,
+        role_id: src.role_id,
+        scope_type: "transformation",
+        scope_id: created.transformationId,
+        effective_to: src.effective_to,
+        reason,
+        granted_by: principal.userId,
+        derived_from_assignment_id: src.id,
+        created_by: principal.userId,
+        updated_by: principal.userId,
+      })
+      .execute();
+    await record(tx, audit, {
+      action: "scoped_assignment.create",
+      recordType: "scoped_assignment",
+      recordId: id,
+      organizationId: created.organizationId,
+      transformationId: created.transformationId,
+      newVersion: 1,
+      reason,
+      changes: {
+        userId: { from: null, to: principal.userId },
+        roleCode: { from: null, to: src.code },
+        scope: { from: null, to: { type: "transformation", id: created.transformationId } },
+        derivedFromAssignmentId: { from: null, to: src.id },
+        effectiveTo: { from: null, to: src.effective_to ? src.effective_to.toISOString() : null },
+      },
+    });
+    created_.push(id);
+  }
+  return created_;
 }
