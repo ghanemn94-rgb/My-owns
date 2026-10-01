@@ -7771,6 +7771,689 @@
           "release-auditor"
         ]
       }
+    },
+    {
+      "id": "F-DG1-001",
+      "stage_id": "DG1",
+      "requirement": "REQ-S03-003",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "P1 lets a transformation be closed (terminal, irreversible) by a plain status edit, with no G6 approval, no validated value and no reason",
+      "reproduction": "Disposable stack (e2e/support/qa-stack.sh, candidate 85e5bbd, SYNTHETIC dev users). As dev.office (TO): POST /api/v1/transformations {mode:end_to_end}; PATCH status draft->active (If-Match \"1\") -> 200; PATCH status active->closed (If-Match \"2\") -> 200, status=closed, currentPhase still 'diagnose'; PATCH closed->active -> 422 invalid_transition. The UI edit form (en/ar) offers 'Closed'/'مغلقة' next to Active. Source: packages/shared/src/constants.ts TRANSFORMATION_STATUS_TRANSITIONS {active:[on_hold,closed], on_hold:[active,closed], closed:[]}; apps/web/src/i18n/*/transformations.json form.statusHint.",
+      "expected": "Playbook B0014 'Benefits before closure' and M0092 (delivery, adoption, validated value and transformation closure are separate statuses). The register specifies the control: REQ-S03-003 'close-transformation: TL after G6 approval' and 'the API rejects a closure request while validated value is pending'; REQ-PB-009 'closure requires validated benefits and sustainment owner'. Until G6 and the benefit register exist (P2/P4), P1 must not offer transformation closure at all (or must block it), so no record can be shown as Closed without the governed evidence.",
+      "actual": "Any holder of transformation.update (TL at transformation scope, TO) closes a transformation from phase 1 Diagnose with no gate, no benefits, no Finance validation and no reason (audit reason=null). Closure is terminal: it cannot be reopened, so the record shows 'Closed' with phase Diagnose and Unknown value permanently. This pre-empts the specified closure control and contradicts a mandatory source principle.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-1/02-closure-db-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-1/02-closure-db-scenario.sh",
+        "docs/delivery/test-evidence/DG1/domain/round-1/screenshots/en-03-edit-active-status-options.png",
+        "docs/delivery/test-evidence/DG1/domain/round-1/screenshots/ar-04-detail-closed.png",
+        "docs/delivery/test-evidence/DG1/domain/round-1/screenshots/en-04-detail-closed.png",
+        "docs/delivery/test-evidence/DG1/domain/round-1/00-static-checks.txt"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/domain-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:31:26Z",
+          "status": "OPEN",
+          "note": "Reported by domain-reviewer in DG1 round 1. Suggested repair: remove 'closed' from the P1 transition table (and the UI options/hint), keep 'closed' as a reserved status value, and add a test that active->closed and on_hold->closed are rejected until the G6/benefits closure rule lands (REQ-S03-003, DG4). Frontend strings need the matching change (frontend-ux-engineer)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-002",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "DG1-final rows REQ-S16-003 and REQ-S16-004 are marked IMPLEMENTED although their own recorded acceptance criteria are not met",
+      "reproduction": "docs/delivery/requirements.csv. REQ-S16-003 acceptance: 'A12: the six modules exist with separate test suites'. apps/api/src/modules/ has no workflows/, kpi/ or reporting/ directory (architecture.test.ts only requires index.ts for P1_MODULES), and the row's own note says these suites 'land in those stages'. REQ-S16-004 acceptance: 'A18;A19: a restore of the PostgreSQL backup alone recovers records, configuration, snapshots and job state'; its note says 'The A19 restore drill is not demonstrated at DG1; REQ-S19-012/REQ-S20-019 (DG7) own it. Reporting snapshots do not exist yet (P5).' Both rows: status IMPLEMENTED, final_gate DG1.",
+      "expected": "A row is IMPLEMENTED only when its acceptance holds. My D-047 judgement: the DG1 module architecture (all boundaries declared in modules.ts, an enforced dependency-lint, and 8 P1-active modules implemented and tested) is a faithful P1 increment of M0308, and deferring workflows to P2+, kpi/formulas to P4 and reporting to P5 is correct. But M0308 asks for the modules themselves, and the register's acceptance asks for their suites. The honest classification is either (a) move REQ-S16-003's final_gate to DG5 (P1 increment = architecture) or (b) record a decision that amends the acceptance text to the P1 scope and cites the later rows that build the modules. REQ-S16-004 is the same case: amend its acceptance to the P1-verifiable part (all state in PostgreSQL through migrations) by a recorded decision that points the restore criterion to REQ-S19-012/REQ-S20-019, or move its final gate.",
+      "actual": "Both rows claim completion at DG1 while their acceptance text is not satisfied; D-047 covers REQ-S16-003 only as a reviewer question, and nothing covers REQ-S16-004's deferred restore criterion.",
+      "evidence": [
+        "docs/delivery/requirements.csv",
+        "docs/delivery/decisions.md",
+        "apps/api/src/modules.ts",
+        "apps/api/src/architecture.test.ts"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/domain-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:31:26Z",
+          "status": "OPEN",
+          "note": "Reported by domain-reviewer in DG1 round 1 (D-047 assessment). No code change needed; register/decision reconciliation only."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-003",
+      "stage_id": "DG1",
+      "requirement": "REQ-PB-003",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Arabic UI domain terms deviate from the approved DG0 glossary and conflate Transformation with Initiative",
+      "reproduction": "apps/web/src/i18n/ar/transformations.json and nav.json, admin.json, problems.json, common.json; screenshots ar-04/ar-05. Compare with docs/analysis/glossary.md (DG0).",
+      "expected": "The glossary gives Transformation = 'التحوّل' and Initiative = 'مبادرة'. It gives Modular mode = 'النمط الجزئي المرن' and explicitly notes that 'معياري' reads as standard/normative. It gives Phase 5 Transform = 'التحويل والتنفيذ'. The source keeps transformation and initiative as distinct levels with separate statuses (M0092), so the Arabic UI, where Arabic is the default locale, must not label a transformation as an initiative.",
+      "actual": "Transformation is rendered as 'مبادرة التحول' / 'مبادرات التحول' ('transformation initiative(s)') throughout the list, detail, create, admin scope and error strings, so it collides with the Initiatives area ('المبادرات وخرائط الطريق'). Modular is 'معياري'. Phase 5 is 'التحول', the same word as Transformation. The About text calls the playbook 'دليل التحول المؤسسي', where the glossary has 'دليل تحوّل الأعمال'.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-1/screenshots/ar-05-create-form.png",
+        "docs/delivery/test-evidence/DG1/domain/round-1/screenshots/ar-04-detail-closed.png",
+        "docs/delivery/test-evidence/DG1/domain/round-1/screenshots/ar-02-about.png",
+        "docs/analysis/glossary.md",
+        "apps/web/src/i18n/ar/transformations.json"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:31:26Z",
+          "status": "OPEN",
+          "note": "Reported by domain-reviewer in DG1 round 1. Align the ar catalogues with docs/analysis/glossary.md (Arabic-language owner confirmation still pending per the glossary)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-004",
+      "stage_id": "DG1",
+      "requirement": "REQ-S10-002",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "A Transformation Lead with a business-unit grant can create a transformation but is immediately shown 'Not found' for it",
+      "reproduction": "Disposable stack; dev.lead (TL at business_unit SYN-RETAIL, non-inheriting per ADR-0006). POST /api/v1/transformations in SYN-RETAIL -> 201; GET/PATCH /api/v1/transformations/{id} -> 404; the UI detail page after create shows 'Not found' / 'غير موجود'.",
+      "expected": "The scoping itself is correct: access comes only from scoped assignments, and naming the lead does not grant access. But the real user outcome should not be a dead end. Either the create flow explains before and after creation that the creator will need a transformation-scope assignment (and routes the request to an access administrator), or the seed/default TL grant is placed where the TL can follow up on what they create.",
+      "actual": "The creator lands on a generic 'record does not exist, or your role assignments do not allow you to see it' page for the record they just created.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-1/01-runtime-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-1/screenshots/en-06-tl-after-create.png",
+        "docs/delivery/test-evidence/DG1/domain/round-1/screenshots/ar-06-tl-after-create.png"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:31:26Z",
+          "status": "OPEN",
+          "note": "Reported by domain-reviewer in DG1 round 1 as a Low observation."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-005",
+      "stage_id": "DG1",
+      "requirement": "REQ-S15-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The audit-trail 'Changes' column shows raw field keys and enum codes, not localized labels, in both Arabic and English",
+      "reproduction": "Transformation detail page > Audit trail (en/ar). For example 'closed ← active :status', 'end_to_end ← ∅ :mode', 'diagnose ← ∅ :current_phase', 'business_unit_id' shown as a raw UUID.",
+      "expected": "M0302: key workflows support both languages. Technical identifiers may stay readable, but domain values that have catalogue labels (status, mode, phase, field names) should be shown with them.",
+      "actual": "Raw snake_case keys and enum codes appear inside the Arabic RTL layout and in the English layout.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-1/screenshots/ar-04-detail-closed.png",
+        "docs/delivery/test-evidence/DG1/domain/round-1/screenshots/en-04-detail-closed.png"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:31:26Z",
+          "status": "OPEN",
+          "note": "Reported by domain-reviewer in DG1 round 1 as a Low observation."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-006",
+      "stage_id": "DG1",
+      "requirement": "REQ-S19-006",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Register text inaccuracies: stale operation count, 409-vs-422 transition contract, untested worker-stop criterion",
+      "reproduction": "requirements.csv: REQ-S19-006 note says 'openapi:lint PASS (OpenAPI 3.1.1, 32 operations)', but pnpm openapi:lint reports 33 operations (getBrandingTokens was added). REQ-S16-023 acceptance says 'an illegal status transition returns 409', but ADR/data-dictionary and the implementation return 422 invalid_transition (observed). REQ-S16-001 note says no test stops a running worker and then probes the API.",
+      "expected": "Register evidence notes match the candidate. One contract for illegal transitions (pick 409 or 422 and align the register with the ADR). An automated check for the REQ-S16-001 acceptance 'stopping the worker does not stop the API'. I verified this manually: the worker ran, exited 0 on SIGTERM, and /readyz then returned 200.",
+      "actual": "Three small inconsistencies between the register and the candidate.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-1/00-static-checks.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-1/01-runtime-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-1/02-closure-db-scenario.out.txt",
+        "docs/delivery/requirements.csv"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/domain-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:31:26Z",
+          "status": "OPEN",
+          "note": "Reported by domain-reviewer in DG1 round 1 as a Low observation."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-101",
+      "stage_id": "DG1",
+      "requirement": "REQ-S19-006",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "The integration suite fails on the frozen candidate: the contract test does not exercise getBrandingTokens (33rd operation), and the cited contract-test evidence predates it",
+      "reproduction": "Disposable clone at 85e5bbd (candidate sha256:7fcc4943 recomputed), fresh PostgreSQL 16.13 cluster: `TEST_DATABASE_ADMIN_URL=postgresql://postgres@127.0.0.1:54391/postgres pnpm test:integration` -> exit 1 in 3/3 runs. apps/api/test/integration/contract/contract.test.ts:252-254 `covers every operation with at least one success...` fails: `expected [ 'getBrandingTokens' ] to deeply equal []`. Commit 0b42847 added the operation (docs/api/openapi.yaml, apps/api/src/modules/admin/branding.ts:32-37) and states 'Integration contract test (DB) verified by the reviewers', i.e. the integration suite was not run after the change. The register evidence for REQ-S19-006 ('32 operations; contract tests 8/8') and for REQ-DLV-033/REQ-S19-004 (docs/delivery/test-evidence/DG1/qa/T-DG1-QA-authoring/02-pnpm-test-integration.log, committed 2026-09-30 23:54, before 0b42847 at 2026-10-01 06:13) predates the frozen contract. The CI `integration` job would fail on this candidate.",
+      "expected": "Every P1 operation in the frozen OpenAPI contract (33) passes the contract test against the implementation; `pnpm test:integration` exits 0 on the frozen candidate, and the register cites evidence produced on it.",
+      "actual": "`pnpm test:integration` exits 1 (1 failed / 180 passed, deterministic); getBrandingTokens is never called through the contract-validating harness; register evidence is stale (32 operations).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/integration.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/integration-run2.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/integration-run3.log",
+        "apps/api/test/integration/contract/contract.test.ts",
+        "apps/api/src/modules/admin/branding.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:36:40Z",
+          "status": "OPEN",
+          "note": "Raised in DG1 round 1 by code-security-reviewer; reproduced 3/3 on a disposable PostgreSQL."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-102",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-042",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "The sandboxed installer does not contain dependency code: the orchestrator's full environment (credentials) is passed in with host network, and the repository's control paths (.git/hooks, .claude, tools/gates, .github) are writable",
+      "reproduction": "tools/deps/install-sandbox.sh:76-96 builds the bwrap argv without --clearenv (and without --unshare-user/--cap-drop), and :82 binds the WHOLE repository writable. Probe (disposable clone, writable pnpm store in $TMPDIR): `FAKE_ORCH_SECRET=... tools/deps/install-sandbox.sh --root <clone> run -- bash -c 'env; grep CapEff /proc/self/status; echo > .git/hooks/pre-commit; echo > .claude/x; echo > tools/gates/x; echo > .github/workflows/x'`. Result: FAKE_ORCH_SECRET and the host's GH_TOKEN, GITHUB_TOKEN, AWS_SECRET_ACCESS_KEY, CLOUDSDK_AUTH_ACCESS_TOKEN, CLAUDE_CODE_MESSAGING_TOKEN are all visible inside (names recorded only, values never printed); uid 0 with CapEff 000001ffffffffff; all four control paths are WRITABLE (a new tmpfs mount also succeeds; a remount of / rw was refused in this container). Failure scenario: an allow-listed lifecycle script, or any package code executed by `run` (D-046: build/typecheck/lint/test 'only inside the sandbox' -- vitest, eslint, vite plugins), reads the orchestrator's credentials and either sends them over the shared host network (an allow-listed host such as the GitHub API or the package registry suffices) or writes .git/hooks/pre-commit, which then executes UNSANDBOXED with the orchestrator's privileges at the next commit, or edits tools/gates/** or .claude/** to weaken the delivery controls. This defeats the stated purpose (D-046: 'a dependency's install script would otherwise run against the real filesystem and secrets').",
+      "expected": "REQ-DLV-042: the orchestrator never runs package code with its own privileges. Inside the sandbox: a cleared environment (only the variables pnpm/node need), only the dependency target trees (node_modules, build outputs) and the package store writable, with .git, .claude, tools/gates, tools/agents, tools/deps, .github and other control paths re-bound read-only (or a separate working copy), capabilities dropped (--unshare-user or --cap-drop ALL), and acceptance tests that prove each of these.",
+      "actual": "All host environment variables, including credentials, reach dependency code; .git/hooks, .claude, tools/gates and .github are writable from inside; the process keeps the full root capability set.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/install-sandbox-probe.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/install-sandbox-caps-probe.log",
+        "tools/deps/install-sandbox.sh",
+        "docs/delivery/decisions.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:36:40Z",
+          "status": "OPEN",
+          "note": "Raised in DG1 round 1 by code-security-reviewer; probe reproduced in a disposable clone."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-103",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-007",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "OIDC login CSRF: the `state` is not bound to the browser that started the login, so a callback URL obtained by one user signs another browser in as that user",
+      "reproduction": "apps/api/src/modules/identity/routes.ts:218-231 (GET /auth/login) stores state/nonce/verifier server-side (oidc.ts:52-76) but sets NO browser-binding cookie; routes.ts:238-276 (GET /auth/callback) accepts any request carrying a valid unexpired state (oidc.ts:79-86), revokes the presenting browser's current session (routes.ts:130) and starts a new one. Repro docs/delivery/test-evidence/DG1/code-security/round-1/repro-oidc-login-csrf.test.ts (fake IdP harness, real openid-client validation): attacker calls /auth/login, authenticates at the IdP as attacker-sub, and stops; the victim's browser (holding its own valid session) opens /auth/callback?code=..&state=.. -> 302, /auth/login Set-Cookie = null, victim's browser now signed in as `attacker-sub`, victim's original session -> 401. PKCE does not help because the verifier is looked up by state on the server.",
+      "expected": "RFC 6749 §10.12 / OIDC Core §3.1.2.1: the state (or a separate value) is bound to the initiating user-agent, e.g. an HttpOnly, Secure, SameSite=Lax, __Host- prefixed, short-lived login cookie whose hash is stored with oidc_login_state and required (and cleared) at the callback; a callback without the matching cookie is refused and audited, and the presenting browser's existing session is not revoked.",
+      "actual": "Any browser that presents a valid code+state completes the login as the IdP user who authenticated, and loses its own session.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/repro-oidc-login-csrf.test.ts",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/repro-oidc-login-csrf.log",
+        "apps/api/src/modules/identity/routes.ts",
+        "apps/api/src/modules/identity/oidc.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:36:40Z",
+          "status": "OPEN",
+          "note": "Raised in DG1 round 1 by code-security-reviewer; reproduced with the fake-IdP harness."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-104",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-042",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "CI installs dependencies without the sandboxed installer (register: 'invoked by the orchestrator (and by CI) for every dependency install')",
+      "reproduction": ".github/workflows/ci.yml:46, :76, :101 and :130 run a plain `pnpm install --frozen-lockfile` in the verify, integration, e2e and images jobs; none calls tools/deps/install-sandbox.sh. The register row for REQ-DLV-042 (automation column) requires the wrapper for every dependency install, by the orchestrator AND by CI. The images job later receives registry secrets (ci.yml:151-162) in the same job whose installed packages already ran build steps.",
+      "expected": "Every CI dependency install goes through tools/deps/install-sandbox.sh frozen (bubblewrap installed on the runner, or the image/container equivalent), or the register/ADR records a reviewed, accepted CI-specific alternative.",
+      "actual": "CI relies only on pnpm 10's default lifecycle-script blocking; no sandbox, no read-only root.",
+      "evidence": [
+        ".github/workflows/ci.yml",
+        "docs/delivery/requirements.csv",
+        "tools/deps/install-sandbox.sh"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:36:40Z",
+          "status": "OPEN",
+          "note": "Raised in DG1 round 1 by code-security-reviewer (source review)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-105",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "REQ-S16-003 is marked IMPLEMENTED with final gate DG1, but three of the six modules its acceptance (A12) requires — workflows, formulas, reporting — do not exist",
+      "reproduction": "A12 (requirements.csv, REQ-S16-003): 'the six modules exist with separate test suites; a dependency-lint check fails on imports that bypass a module interface'. apps/api/src/modules/ contains access, admin, audit, identity, jobs, organization, platform, transformations only; workflows, kpi (formulas) and reporting are names in apps/api/src/modules.ts:34-45 with no directory, code or suite; packages/calc and packages/reporting contain only README.md. D-047 reads the DG1 deliverable as the architecture. What IS met (verified): the dependency-lint fails on static, dynamic and re-export deep imports and on a disallowed module (plant-module-boundary.log, cases A-C), and the eight P1-active modules have suites.",
+      "expected": "Either the requirement's final_gate moves to the stage where the last named module lands (P5/DG5), with the P1 increment 'boundaries + enforced lint + P1-active modules' recorded and the status not IMPLEMENTED at DG1, or the modules are delivered now. Building P2-P5 modules early is NOT recommended; the register should be re-staged.",
+      "actual": "Status IMPLEMENTED at DG1 for a requirement whose acceptance is only partly satisfiable until P5 (planned work labelled as delivered).",
+      "evidence": [
+        "docs/delivery/requirements.csv",
+        "apps/api/src/modules.ts",
+        "docs/delivery/decisions.md",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/plant-module-boundary.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:36:40Z",
+          "status": "OPEN",
+          "note": "Raised in DG1 round 1 by code-security-reviewer as the requested judgement on D-047."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-106",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-033",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "A Transformation Lead granted at business-unit scope can create a transformation (201) but cannot read, update or archive what it just created (404)",
+      "reproduction": "Policy rules (apps/api/src/modules/access/rules.ts:76-91): TL does not inherit downward, so a TL grant at BU a1 matches the BU target used by create (transformations/routes.ts:130-136, requireAction transformation.create on the BU) but never a transformation target (routes.ts:239, :376). Repro docs/delivery/test-evidence/DG1/code-security/round-1/repro-scope-consistency.test.ts, last case: TL@BU a1 POST /api/v1/transformations {businessUnitId: a1} -> 201; GET /api/v1/transformations/{newId} by the same user -> 404. The UI navigates to the new record after create, so the user meets a not-found page for a record they just created.",
+      "expected": "Create and subsequent read are consistent for the same grant: either transformation.create at BU scope also grants access to the created record (e.g. an automatic transformation-scope TL assignment for the creator, audited), or create requires the same scope rule that read uses, so the 201 is never followed by a 404.",
+      "actual": "201 on create, then 404 on read/update/archive for the creator.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/repro-scope-consistency.test.ts",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/repro-scope-consistency.log",
+        "apps/api/src/modules/access/rules.ts",
+        "apps/api/src/modules/transformations/routes.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:36:40Z",
+          "status": "OPEN",
+          "note": "Raised in DG1 round 1 by code-security-reviewer; reproduced on a disposable PostgreSQL."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-107",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-025",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "check-ci-needs.mjs can be bypassed: a job-level `if: always()` / `if: ${{ !cancelled() }}` makes a product job run after delivery-gates FAILED, and the check still reports OK",
+      "reproduction": "deploy/scripts/check-ci-needs.mjs:33-52 only verifies that every job reaches delivery-gates through `needs:`. In GitHub Actions a job-level status-check function (always(), !cancelled(), failure()) overrides the implicit success() and runs the job even when a needed job failed. Disposable clone: add `if: always()` under `verify:` (or `if: ${{ !cancelled() }}` under `images:`, which pushes images on protected branches) -> `node deploy/scripts/check-ci-needs.mjs` prints OK and exits 0 (check-ci-needs-negative.log N4, N5). The checker correctly rejects a removed `needs`, a rogue job and an unknown need (N1-N3). The current ci.yml is compliant.",
+      "expected": "The REQ-DLV-025 structural check fails any job (or the job chain to it) whose `if:` uses always(), !cancelled(), failure() or other status functions, or otherwise proves that each product job runs only when delivery-gates succeeded.",
+      "actual": "Status-function conditions pass the check unnoticed, so a later CI edit could silently re-enable product jobs after a failed gate.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/check-ci-needs-negative.log",
+        "deploy/scripts/check-ci-needs.mjs",
+        ".github/workflows/ci.yml"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:36:40Z",
+          "status": "OPEN",
+          "note": "Raised in DG1 round 1 by code-security-reviewer; bypass reproduced in a disposable clone."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-108",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-033",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The CI `images` job cannot pass on the candidate: image digests are unpinned (pin-images --check: 10 problems) and the SBOM check is stale after the lockfile change in 0b42847",
+      "reproduction": "Disposable clone at 85e5bbd: `node deploy/scripts/pin-images.mjs --check` -> exit 1 (postgres:18 in compose.yaml and ci.yml x2, quay.io/keycloak/keycloak:26.4 and mcr.microsoft.com/playwright:v1.56.1-noble not pinned in deploy/images.lock.json); `node licenses/generate-sbom.mjs --check` -> exit 1 'STALE' (only metadata drifts: mth:lockfile-sha256 3c94b771... -> f199a0e1... and the derived serialNumber, because 0b42847 added the @mth/design-tokens workspace link to apps/api without regenerating the SBOM; the package inventory is otherwise unchanged). Both run in .github/workflows/ci.yml:131-138, so the images job (clean start, test-IdP login and no-egress smoke) fails before it builds anything.",
+      "expected": "The CI pipeline defined for DG1 can pass on the frozen candidate: base and service images pinned by digest (ADR-0011), SBOM regenerated with every lockfile change.",
+      "actual": "pin-images --check exit 1 (10 problems); generate-sbom --check exit 1 (stale lockfile hash).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/ci-structure-checks.log",
+        "deploy/images.lock.json",
+        "licenses/sbom.cdx.json"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:36:40Z",
+          "status": "OPEN",
+          "note": "Raised in DG1 round 1 by code-security-reviewer. SBOM part: the lockfile change was the orchestrator's integration of 0b42847."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-109",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The module dependency-lint misses createRequire() and computed import() specifiers",
+      "reproduction": "apps/api/src/architecture.test.ts:100-102 relies on ts.preProcessFile, which sees only literal specifiers. Planted in a disposable clone as apps/api/src/modules/transformations/planted.ts: (D) `createRequire(import.meta.url)(\"../access/policy.ts\")` and (E) ``import(`../access/${p}.ts`)`` -> architecture.test.ts 9/9 PASS (not detected), while static, dynamic-literal, re-export and disallowed-module imports are detected (plant-module-boundary.log A-C).",
+      "expected": "The lint also rejects createRequire/require calls and non-literal import() inside src/modules (e.g. an AST walk or an ESLint no-restricted-syntax rule), so the boundary cannot be evaded by syntax.",
+      "actual": "Both evasion forms pass the lint.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/plant-module-boundary.log",
+        "apps/api/src/architecture.test.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:36:40Z",
+          "status": "OPEN",
+          "note": "Raised in DG1 round 1 by code-security-reviewer."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-110",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-033",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Flaky integration tests: a global audit-count assertion fails intermittently, and a worker test leaves a connection that the database drop terminates",
+      "reproduction": "Run 1 of 3 of `pnpm test:integration` (integration.log): apps/api/test/integration/transformations.test.ts:113-121 'rolls back record, audit and outbox together ... (duplicate code -> 409)' failed with `expected 13 to be 11`. It compares auditCount() (harness.ts, a count over the WHOLE audit_event table), so any concurrent or late audit write elsewhere breaks it. The same run reported an unhandled error 57P01 'terminating connection due to administrator command' originating in apps/worker/test/integration/maintenance.test.ts (a pg client still open when its scratch database is dropped WITH (FORCE)). Runs 2 and 3 did not show either.",
+      "expected": "Rollback assertions scoped to the request (e.g. audit rows with the duplicate request's request_id or record id, outbox rows for that code) and worker tests that close every pool before dropping their database; deterministic suite results.",
+      "actual": "1/3 runs fail on the audit-count assertion; 1/3 runs report an unhandled error.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/integration.log",
+        "apps/api/test/integration/transformations.test.ts",
+        "apps/worker/test/integration/maintenance.test.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:36:40Z",
+          "status": "OPEN",
+          "note": "Raised in DG1 round 1 by code-security-reviewer."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-111",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-042",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Installer acceptance tests AC-2 (negative) and AC-3 (would-change) pass vacuously when the preceding install step itself fails",
+      "reproduction": "tools/deps/tests/install-sandbox.test.sh:48-51 and :68-73 ignore the exit status of the `create` step. In this review's environment the default pnpm store was read-only, so every `create` failed (EROFS, rc 226): AC-2 'non-allow-listed postinstall did not run' still reported PASS (no install happened at all), and AC-3 'frozen install that would change the lockfile fails' still reported PASS (it failed for the missing lockfile, not for divergence); only the positive AC-2 case exposed the problem (install-sandbox-test.log, 6 pass / 1 fail). With a writable store the suite passes 7/7 (install-sandbox-test-writable-store.log).",
+      "expected": "Each negative case first asserts that its setup install succeeded (exit 0, lockfile present, fixture linked), so a negative result cannot come from an unrelated failure.",
+      "actual": "Two negative checks can pass without exercising the property they claim.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/install-sandbox-test.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/install-sandbox-test-writable-store.log",
+        "tools/deps/tests/install-sandbox.test.sh"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:36:40Z",
+          "status": "OPEN",
+          "note": "Raised in DG1 round 1 by code-security-reviewer."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-112",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "NODE_ENV=production accepts an http APP_BASE_URL, which silently drops the Secure flag and the __Host- prefix from the session cookie",
+      "reproduction": "packages/config/src/load.ts:129-145 accepts http: or https: for APP_BASE_URL regardless of NODE_ENV; apps/api/src/modules/identity/sessions.ts:277-279 and routes.ts:63-64 derive the cookie name and `secure` from that protocol. deploy/compose/compose.yaml:76-78 runs the api with NODE_ENV=production and a default APP_BASE_URL of http://localhost:3000. A production deployment with a mistyped http:// origin behind a TLS-terminating proxy would therefore issue a non-Secure, non-__Host- session cookie, contrary to ADR-0005 §3 ('HttpOnly; Secure; SameSite=Lax; Path=/, with the __Host- prefix in HTTPS deployments').",
+      "expected": "With NODE_ENV=production, APP_BASE_URL must be https (as OIDC_ISSUER_URL already is, load.ts:192-194), except for an explicit loopback host (localhost/127.0.0.1) used by the local Compose stack.",
+      "actual": "Any http origin is accepted in production.",
+      "evidence": [
+        "packages/config/src/load.ts",
+        "apps/api/src/modules/identity/sessions.ts",
+        "deploy/compose/compose.yaml"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:36:40Z",
+          "status": "OPEN",
+          "note": "Raised in DG1 round 1 by code-security-reviewer (source review)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-201",
+      "stage_id": "DG1",
+      "requirement": "REQ-S19-006",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "Integration contract suite fails on the frozen candidate: getBrandingTokens is never exercised, so the contract-coverage test (and CI job 'integration') is red",
+      "reproduction": "Disposable clone at 85e5bbd; fresh PostgreSQL 16 cluster; TEST_DATABASE_ADMIN_URL=postgresql://postgres@127.0.0.1:54371/postgres pnpm test:integration (repeated on a second fresh cluster with --reporter=verbose: same result). apps/api/test/integration/contract/contract.test.ts:254 'covers every operation with at least one success and every successful body with its zod mirror' fails with: expected [ 'getBrandingTokens' ] to deeply equal []. Commit 0b42847 added the operation/route and a unit test but did not add the operation to the integration contract suite; its message says 'Integration contract test (DB) verified by the reviewers', i.e. it was not run before the freeze.",
+      "expected": "REQ-S19-006 acceptance: 'the P1 endpoints pass contract tests against it'. pnpm test:integration exits 0 with all 33 operations exercised (incl. getBrandingTokens 200 + 401) and every success body validated against docs/api/openapi.yaml and its zod mirror. CI job 'integration' (.github/workflows/ci.yml, runs pnpm test:integration) is green.",
+      "actual": "Test Files 1 failed | 16 passed (17); Tests 1 failed | 180 passed (181); exit 1. The CI 'integration' job would fail and the downstream 'images' job (needs: [integration, e2e]) would be skipped. The branding response IS contract-valid at unit level (apps/api/src/modules/admin/branding.test.ts, ajv against components.schemas.BrandingTokens) and my black-box e2e confirms the values, so the product behaviour is correct; the defect is the red required contract suite.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-1/09-integration.log",
+        "docs/delivery/test-evidence/DG1/qa/round-1/09b-integration-verbose.log",
+        "apps/api/test/integration/contract/contract.test.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/qa-verifier.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:46:01Z",
+          "status": "OPEN",
+          "note": "Reported in DG1 round-1 QA gate verification."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-202",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-033",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "Production runtime / container image cannot start the API: assemble-runtime.sh omits packages/design-tokens, which apps/api now imports at runtime",
+      "reproduction": "(a) MTH_PNPM_STORE=$TMPDIR/pstore/v10 MTH_PNPM_OFFLINE=1 deploy/scripts/clean-start-local.sh (devops' documented container-free clean start, same layout as the image) -> step A3 'mth api with AUTH_MODE=dev: exit 1, expected 78' with ERR_MODULE_NOT_FOUND: Cannot find package '@mth/design-tokens' imported from .../app/apps/api/dist/server.js. (b) Minimal repro on a disposable copy: bash deploy/scripts/assemble-runtime.sh --store-dir <store> <ws> <out> (the exact step deploy/docker/Dockerfile:59 runs) exits 0, but <out>/packages contains only config, db, shared; <out>/apps/api/node_modules/@mth/design-tokens is a dangling symlink; node -e 'await import(\"./apps/api/dist/server.js\")' in <out> fails with ERR_MODULE_NOT_FOUND; the same import from the workspace build succeeds. Cause: assemble-runtime.sh line 41 copies 'apps/api apps/worker packages/config packages/db packages/shared' only; commit 0b42847 added @mth/design-tokens (workspace:*) as an apps/api runtime dependency (server.ts imports colorTokens) without updating the runtime assembly; the assembler's layout check does not test module resolution.",
+      "expected": "The assembled runtime tree and the mth-app image start the API (clean-start-local.sh passes all phases; image entrypoint 'mth api' starts and serves /healthz and /readyz). DG1 evidence 'clean startup' holds for the shipped artifact, not only for the dev workspace.",
+      "actual": "The API process crashes at import time in the production runtime layout; therefore the container image built by deploy/docker/Dockerfile would crash too (Compose path not executable here: Docker daemon not accessible, so the image itself was not built - the defect is shown on the identical assembled tree). The workspace-based clean start (e2e/clean-start/a18-clean-start.sh, which runs from the built workspace) passes and did not catch it.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-1/22-devops-clean-start-local.log",
+        "docs/delivery/test-evidence/DG1/qa/round-1/23-runtime-image-layout-repro.log",
+        "deploy/scripts/assemble-runtime.sh",
+        "deploy/docker/Dockerfile"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/qa-verifier.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:46:01Z",
+          "status": "OPEN",
+          "note": "Reported in DG1 round-1 QA gate verification. Introduced by the orchestrator integration in 0b42847; the fix belongs in deploy/scripts/assemble-runtime.sh (copy packages/design-tokens package.json + dist + the src/tokens.json export, or bundle) plus a resolvability check in its layout verification."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-203",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-033",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "CI 'images' job fails deterministically: container images are not pinned by digest (pin-images --check reports 10 problems)",
+      "reproduction": "node deploy/scripts/pin-images.mjs --check (the step 'Container images pinned by digest' of the images job in .github/workflows/ci.yml) in the clone at 85e5bbd.",
+      "expected": "The committed CI workflow can pass on the candidate: either the images are pinned (deploy/images.lock.json + digests in compose.yaml and ci.yml) or the step is explicitly non-blocking under a recorded decision until registry access is available.",
+      "actual": "exit 1: postgres:18 (compose.yaml, ci.yml x2), quay.io/keycloak/keycloak:26.4 and mcr.microsoft.com/playwright:v1.56.1-noble have no digest - 10 problem(s). Known and flagged in the T-DG1-DEVOPS handback; pinning needs registry access, which the sandbox lacks. As committed, the images job (packaging, image build, Compose clean-start smoke) can never go green.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-1/19-packaging-checks.log",
+        ".github/workflows/ci.yml"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/qa-verifier.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:46:01Z",
+          "status": "OPEN",
+          "note": "Reported in DG1 round-1 QA gate verification."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-204",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-033",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "SBOM records a stale lockfile hash after the lockfile change in 0b42847 (generate-sbom --check reports STALE)",
+      "reproduction": "node licenses/generate-sbom.mjs --check in the clone at 85e5bbd -> 'STALE ... licenses/sbom.cdx.json or licenses/inventory.csv is out of date', exit 1. Regenerating in the disposable clone changes only the lockfile SHA-256 property in licenses/sbom.cdx.json (3c94b771... -> f199a0e1...); inventory.csv and the package list are unchanged.",
+      "expected": "licenses/sbom.cdx.json matches the committed pnpm-lock.yaml so the CI images-job step 'SBOM and licence inventory match the lockfile' passes.",
+      "actual": "Only the recorded lockfile hash is stale; the licence inventory content is accurate. The CI step fails.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-1/19-packaging-checks.log",
+        "docs/delivery/test-evidence/DG1/qa/round-1/19b-sbom-stale-diff.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:46:01Z",
+          "status": "OPEN",
+          "note": "Reported in DG1 round-1 QA gate verification."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-205",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-025",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "docs/architecture/ci/ci.yml has drifted from the installed .github/workflows/ci.yml",
+      "reproduction": "diff .github/workflows/ci.yml docs/architecture/ci/ci.yml",
+      "expected": "The architecture copy described as 'installed at .github/workflows/ci.yml' is identical to the installed workflow, or is explicitly marked as a historical design copy.",
+      "actual": "The architecture copy lacks the e2e stack start step and '--workers=1', and the whole 'images' job (packaging checks, image build, Compose smoke, registry push). check-ci-needs.mjs passes on the installed workflow (5 jobs, all reaching delivery-gates) and fails a injected job without needs, so REQ-DLV-025 itself holds; only the documentation copy is stale.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-1/18-ci-needs.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/qa-verifier.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:46:01Z",
+          "status": "OPEN",
+          "note": "Reported in DG1 round-1 QA gate verification."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-206",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-042",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Installer acceptance tests pass their negative cases vacuously when every install fails",
+      "reproduction": "Run tools/deps/tests/install-sandbox.test.sh where the pnpm store is not writable (reviewer sandbox, run 1): every '--root ... create' install fails with EROFS, yet 'AC-2 a non-allow-listed dependency's postinstall did not run' and both AC-3 cases PASS; only the positive AC-2 case fails. With a writable store (run 2) all 7 pass, and my independent check confirms install exit 0 + fixture installed + marker absent (not allow-listed) / present (allow-listed).",
+      "expected": "AC-2 negative asserts that the install succeeded and the dependency is present before concluding the script did not run; AC-3 asserts the failure is the lockfile error (e.g. ERR_PNPM_OUTDATED_LOCKFILE / no lockfile), not any failure.",
+      "actual": "The negative assertions only check 'marker absent' / 'non-zero exit', so an environment that breaks every install would still report them as PASS.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-1/20-install-sandbox-tests.log",
+        "docs/delivery/test-evidence/DG1/qa/round-1/20b-install-sandbox-tests-writable-store.log",
+        "tools/deps/tests/install-sandbox.test.sh"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:46:01Z",
+          "status": "OPEN",
+          "note": "Reported in DG1 round-1 QA gate verification."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-207",
+      "stage_id": "DG1",
+      "requirement": "REQ-S19-006",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Register rows carry stale or reinterpreted acceptance: REQ-S19-006 notes cite 32 operations and 'contract tests 8/8'; REQ-S16-003 literal acceptance ('the six modules exist with separate test suites') is met only via D-047",
+      "reproduction": "Read docs/delivery/requirements.csv rows REQ-S19-006 and REQ-S16-003 at 85e5bbd; compare with pnpm openapi:lint (33 operations) and the integration run (contract suite failing, F-DG1-201); compare REQ-S16-003 acceptance with apps/api/src/modules (8 P1 modules; workflows/kpi/reporting declared in modules.ts with no code or suites).",
+      "expected": "Register notes reflect the candidate's actual evidence; where a requirement's acceptance is partly deferred (REQ-S16-003 workflows P2, formulas/kpi P4, reporting P5), the acceptance text or increments/final_gate are amended through the register (with D-047 referenced) rather than only reinterpreted in notes.",
+      "actual": "REQ-S19-006 notes are pre-branding (32 ops, 8/8) and its cited QA log predates getBrandingTokens. REQ-S16-003: the module architecture, the dependency-lint (my two injected bypass imports both made architecture.test.ts fail) and the 8 P1 modules with tests are in place, which I judge sufficient for DG1 under D-047; but the register still states an acceptance that is literally unmet at DG1.",
+      "evidence": [
+        "docs/delivery/requirements.csv",
+        "docs/delivery/test-evidence/DG1/qa/round-1/05-openapi-lint.log",
+        "docs/delivery/test-evidence/DG1/qa/round-1/24-dependency-lint-negative.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/qa-verifier.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:46:01Z",
+          "status": "OPEN",
+          "note": "Reported in DG1 round-1 QA gate verification."
+        }
+      ]
     }
   ]
 }
