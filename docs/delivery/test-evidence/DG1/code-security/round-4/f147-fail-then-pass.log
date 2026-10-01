@@ -1,0 +1,75 @@
+# 2026-10-01T23:18:03Z clone=/var/tmp/mth-run.uTfYQa/claude-0/review-r4 HEAD=642e6bfb2c905d2c3382035032fa56c84672dcab node=v22.22.2 pnpm=10.33.0 tsc=Version 6.0.2
+## A. files compiled by apps/web/tsconfig.e2e.json (non-node_modules)
+$ cd apps/web && tsc -p tsconfig.e2e.json --listFilesOnly | grep -v node_modules
+/var/tmp/mth-run.uTfYQa/claude-0/review-r4/apps/web/e2e/journeys.spec.ts
+/var/tmp/mth-run.uTfYQa/claude-0/review-r4/playwright.config.ts
+# exit_status=0
+## B. baseline
+$ pnpm --filter @mth/web typecheck
+
+> @mth/web@0.1.0 typecheck /var/tmp/mth-run.uTfYQa/claude-0/review-r4/apps/web
+> tsc -p tsconfig.json && tsc -p tsconfig.e2e.json
+
+# exit_status=0
+## C. inject a type error into apps/web/e2e/journeys.spec.ts
+ apps/web/e2e/journeys.spec.ts | 3 +++
+ 1 file changed, 3 insertions(+)
+$ pnpm --filter @mth/web typecheck
+
+> @mth/web@0.1.0 typecheck /var/tmp/mth-run.uTfYQa/claude-0/review-r4/apps/web
+> tsc -p tsconfig.json && tsc -p tsconfig.e2e.json
+
+e2e/journeys.spec.ts(474,7): error TS2322: Type 'string' is not assignable to type 'number'.
+/var/tmp/mth-run.uTfYQa/claude-0/review-r4/apps/web:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @mth/web@0.1.0 typecheck: `tsc -p tsconfig.json && tsc -p tsconfig.e2e.json`
+Exit status 2
+# exit_status=2
+## C2. same tree: pnpm -r typecheck (the CI/gate command)
+packages/config typecheck: Done
+apps/web typecheck: e2e/journeys.spec.ts(474,7): error TS2322: Type 'string' is not assignable to type 'number'.
+apps/web typecheck: Failed
+/var/tmp/mth-run.uTfYQa/claude-0/review-r4/apps/web:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @mth/web@0.1.0 typecheck: `tsc -p tsconfig.json && tsc -p tsconfig.e2e.json`
+Exit status 2
+# exit_status=2
+## D. reverted
+$ pnpm --filter @mth/web typecheck
+
+> @mth/web@0.1.0 typecheck /var/tmp/mth-run.uTfYQa/claude-0/review-r4/apps/web
+> tsc -p tsconfig.json && tsc -p tsconfig.e2e.json
+
+# exit_status=0
+## E. inject a type error into the root playwright.config.ts
+ playwright.config.ts | 3 +++
+ 1 file changed, 3 insertions(+)
+
+> @mth/web@0.1.0 typecheck /var/tmp/mth-run.uTfYQa/claude-0/review-r4/apps/web
+> tsc -p tsconfig.json && tsc -p tsconfig.e2e.json
+
+../../playwright.config.ts(32,7): error TS2322: Type 'number' is not assignable to type 'string'.
+/var/tmp/mth-run.uTfYQa/claude-0/review-r4/apps/web:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @mth/web@0.1.0 typecheck: `tsc -p tsconfig.json && tsc -p tsconfig.e2e.json`
+Exit status 2
+# exit_status=2
+## F. reverted
+
+> @mth/web@0.1.0 typecheck /var/tmp/mth-run.uTfYQa/claude-0/review-r4/apps/web
+> tsc -p tsconfig.json && tsc -p tsconfig.e2e.json
+
+# exit_status=0
+## G. a Playwright API misuse in the spec (non-existent Locator method)
+
+> @mth/web@0.1.0 typecheck /var/tmp/mth-run.uTfYQa/claude-0/review-r4/apps/web
+> tsc -p tsconfig.json && tsc -p tsconfig.e2e.json
+
+e2e/journeys.spec.ts(475,68): error TS2339: Property 'notARealMethod' does not exist on type 'Locator'.
+/var/tmp/mth-run.uTfYQa/claude-0/review-r4/apps/web:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @mth/web@0.1.0 typecheck: `tsc -p tsconfig.json && tsc -p tsconfig.e2e.json`
+Exit status 2
+# exit_status=2
+## H. reverted
+
+> @mth/web@0.1.0 typecheck /var/tmp/mth-run.uTfYQa/claude-0/review-r4/apps/web
+> tsc -p tsconfig.json && tsc -p tsconfig.e2e.json
+
+# exit_status=0

@@ -1,0 +1,214 @@
+== env: 2026-10-01T23:17:55Z node v22.22.2 postgres (PostgreSQL) 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) commit 91936e63348dae6a9ae6c10eb52568e841196b27
+== migrate (fresh db)
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applied 9 migration(s)
+exit=0
+== migrate again (no-op)
+mth-db migrate: database is up to date
+exit=0
+ERROR:  column "version" does not exist
+LINE 1: ...ct count(*)||' migrations recorded: '||string_agg(version::t...
+                                                             ^
+9 migrations recorded
+== public views:
+actor_display business_unit_closure scope_node 
+== view columns (compare with data-dictionary.md 'Views'):
+actor_display.user_id:uuid actor_display.display_name:text business_unit_closure.ancestor_id:uuid business_unit_closure.descendant_id:uuid business_unit_closure.organization_id:uuid business_unit_closure.depth:integer scope_node.scope_type:text scope_node.scope_id:uuid scope_node.organization_id:uuid scope_node.business_unit_id:uuid scope_node.transformation_id:uuid 
+== mth_app privileges on views:
+actor_display:SELECT business_unit_closure:SELECT scope_node:SELECT 
+== trigger on business_unit:
+business_unit_hierarchy_guard 
+== seed-dev (SYNTHETIC)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+exit=0
+== /healthz: {"status":"ok"}
+== /readyz: {"status":"ready","checks":{"database":"ok","migrations":"ok"}} 200
+== index.html head:
+<!doctype html>
+<!-- Arabic RTL is the default; /locale-boot.js applies the stored language before first paint (ADR-0009). -->
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light" />
+    <title>Mobily Transformation Hub</title>
+    <script src="/locale-boot.js"></script>
+    <script type="module" crossorigin src="/assets/index-PYaLHjCH.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-react-CsJgKse7.js">
+    <link rel="modulepreload" 
+
+== API probe
+PASS unauthenticated GET /me is 401 (problem+json) :: 401 application/problem+json; charset=utf-8
+PASS dev.office dev-login 204 :: 204
+me(office): {"roles":[{"id":"01a0f9c2-9d35-760d-9b42-bc22f2ed943b","organizationId":"01920000-0000-7000-9000-000000000001","userId":"01920000-0000-7000-9000-000000000202","roleCode":"TO","scope":{"type":"organization","id":"01920000-0000-7000-9000-000000000001"},"effectiveFrom":"2026-10-01T23:17:56.120Z","effectiveTo":null,"reason":"mth-db seed-dev: SYNTHETIC development data","grantedBy":"01920000-0000-7000-
+PASS TO creates end-to-end transformation 201 :: 201 {"id":"01a0f9c2-a03b-7103-bf9b-8ec4669d6a88","organizationId":"01920000-0000-7000-9000-000000000001","businessUnitId":"01920000-0000-7000-9000-000000000102","code":"TR-0001","name":"Roaming revenue uplift (synthetic)","description":null,"mode":"end_to_end","entryPhase":null,"standaloneDeliverableTyp
+PASS defaults: timezone Asia/Riyadh, currency SAR, phase diagnose, status draft :: Asia/Riyadh SAR diagnose draft
+PASS modular entry at selected phase + configurable tz/currency :: 201 design Europe/London USD
+PASS modular without entryPhase is refused (400/422) :: 400
+PASS PATCH without If-Match is 428 :: 428
+PASS draft -> closed refused 422 :: 422 {"type":"urn:mth:problem:invalid-transition","title":"Invalid transition","status":422,"detail":"A transformation cannot be closed by a status edit. Closure requires the G6 (Sustain) business approval with validated benefits, which is not available in this release.","code":"invalid_transition","requ
+PASS draft -> active 200 :: 200 v2
+PASS stale If-Match is 409/412 :: 409
+PASS active -> closed refused 422 (closure needs product gate G6) :: 422 {"type":"urn:mth:problem:invalid-transition","title":"Invalid transition","status":422,"detail":"A transformation cannot be closed by a status edit. Closure requires the G6 (Sustain) business approval with validated benefits, which is not available in this release.","code":"invalid_transition","requestId":"01a0f9c2-a094-7258-a335-14a966b208dd"}
+PASS record unchanged after refused close (status active, same version) :: active v2
+PASS on_hold -> closed refused 422 :: 200 422
+PASS close + rename in one PATCH refused atomically :: 422 name=Roaming revenue uplift (synthetic)
+PASS refusal message does not claim engineering DG7 or a real approval :: {"type":"urn:mth:problem:invalid-transition","title":"Invalid transition","status":422,"detail":"A transformation cannot be closed by a status edit. Closure requires the G6 (Sustain) business approval
+PASS audit trail: one event per successful mutation, none for refused close :: ["transformation.update","transformation.update","transformation.create"]
+PASS TO (org scope) creates in SYN-FIN :: 201
+PASS TL (SYN-RETAIL) creates in own BU :: 201
+PASS TL cannot read out-of-scope SYN-FIN record (404, no existence leak) :: 404
+PASS TL cannot create in SYN-FIN (403/404) :: 404
+PASS TL list excludes SYN-FIN record and includes own :: n=1
+PASS access/technical admin sees no business records :: 200 {"items":[],"nextCursor":null}
+PASS admin cannot read a transformation (403/404) :: 404
+PASS user without roles: list 403 or empty :: 200
+PASS auditor reads but cannot update (403) :: 200 403
+PASS mutation without CSRF token refused 403 :: 403
+PASS cursor pagination walks every row exactly once in order :: rows=7 pages=4
+PASS cursor reused with a different sort/filter is rejected 400 :: 400
+PASS tampered cursor rejected 400 :: 400
+PASS limit above maximum rejected 400 :: 400
+branding: {"provenance":"provisional","tokens":[{"name":"brand.primary","value":"#0078FF","purpose":"Primary accents and selected elements","provisional":true},{"name":"brand.deep","value":"#003B73","purpose":"Stronger blue surfaces and text where suitable","provisional":true},{"name":"surface.page","value":"#F5F8FC","purpose":"Page background","provisional":true},{"name":"surface.card","value":"#FFFFFF","purpose":"Content surfaces","provisional":true},{"name":"text.primary","value":"#142438","purpose":"Main text","provisional":true},{"name":"text.secondary","value":"#526174","purpose":"Secondary text","provisional":true},{"name":"border.default","value":"#DCE5EF","purpose":"Dividers and field boundaries","provisional":true}]}
+PASS branding tokens: 7 seeded values, provenance=provisional :: 200 n=7
+PASS PUT /me/preferences without If-Match is 428 :: 428
+PASS PUT /me/preferences persists locale (en) :: 200 en
+PASS locale reset to ar :: 200
+PASS ADM_TECH (org) creates chain A > B > C :: 201 201 201
+PASS move A under its descendant C refused 422 business_unit.cycle :: 422 {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A business unit cannot be moved under itself or one of its descendants.","code":"business_unit.cycle","requestId":"01a0f9c2-a1c
+PASS move A under itself refused 422 business_unit.cycle :: 422
+PASS A unchanged after refused moves (parent null, same version) :: parent=null v1
+PASS ADM_TECH (org) moves C to top level 200 (destination = organization) :: 200 v2
+PASS ADM_TECH (org) moves C under SYN-OPS 200 :: 200
+PASS BU PATCH without If-Match is 428 :: 428
+PASS ADM_ACCESS grants dev.nobody ADM_TECH on BU Y :: 201 {"id":"01a0f9c2-a20a-74bb-9615-a45b060e4f1d","organizationId":"01920000-0000-7000-9000-000000000001","userId":"01920000-0000-7000-9000-000000000205","roleCode":"ADM_TECH","scope":{"type":"business_uni
+PASS manager of Y only cannot move Y under X (no manage on destination) 403 :: 403 {"type":"urn:mth:problem:forbidden","title":"Forbidden","status":403,"detail":"You do not have permission for this action.","code":"forbidden","requestId":"01a0
+PASS manager of Y only cannot move Y under SYN-FIN 403 :: 403
+PASS Y unchanged after refused moves :: parent=null v1
+PASS manager of Y can still edit Y itself (no regression) 200 :: 200
+PASS with manage on X as well, Y under X succeeds 200 :: 201 200
+PASS BU-scoped manager cannot move Y to top level (destination = organization) 403 :: 403
+PASS TO list unaffected by BU moves :: 200 n=7
+
+SUMMARY pass=49 fail=0
+{"tId":"01a0f9c2-a03b-7103-bf9b-8ec4669d6a88","A":"01a0f9c2-a1ab-70a1-ada3-2026fa7ccc3a","C":"01a0f9c2-a1bd-76a7-b480-bfe84fc1012a","X":"01a0f9c2-a1fa-727f-835c-cb36569cd246","Y":"01a0f9c2-a200-720c-a978-77a206c537f3"}
+probe exit=0
+== DB-level cycle guard (owner role bypasses the API): direct UPDATE making SYN-OPS a child of its descendant SYN-RETAIL
+ERROR:  business unit 01920000-0000-7000-9000-000000000101 cannot be placed under its own descendant 01920000-0000-7000-9000-000000000102
+CONTEXT:  PL/pgSQL function business_unit_hierarchy_guard() line 25 at RAISE
+psql exit=1
+== audit events for BU moves and denials:
+authorization.denied|5 business_unit.create|8 business_unit.update|4 scoped_assignment.create|8 
+authorization.denied|organization|PATCH /api/v1/business-units/:businessUnitId requires business_unit.manage 
+authorization.denied|business_unit|PATCH /api/v1/business-units/:businessUnitId requires business_unit.manage 
+authorization.denied|business_unit|PATCH /api/v1/business-units/:businessUnitId requires business_unit.manage 
+== closure view has no self-cycles: 0
+== outbox after worker run:
+transformation.created|7|7
+
+== worker stop test: SIGTERM worker pid 96
+worker exit=0
+API alive: yes
+/readyz after worker stopped: {"status":"ready","checks":{"database":"ok","migrations":"ok"}} 200
+worker log tail:
+{"level":"info","msg":"job handled","queue":"transformation.created","jobId":"01a0f9c2-a044-7299-b391-64e609b6d645","outcome":"done"}
+{"level":"info","msg":"job handled","queue":"transformation.created","jobId":"01a0f9c2-a058-7777-b69a-f4520ff577e4","outcome":"done"}
+{"level":"info","msg":"mth-worker shutting down","signal":"SIGTERM"}
+
+== rate-limit keying: second API instance on :3001 with RATE_LIMIT_PER_MINUTE=20
+PASS two synthetic users sign in from the same IP :: 204 204
+PASS a signed-in user's normal traffic (15 req < limit 20) is served :: 200x15
+PASS rotating forged cookies share the IP bucket and are throttled (429 seen) :: {"401":20,"429":20}
+PASS 429 is problem+json (rate_limited) :: application/problem+json; charset=utf-8 {"type":"urn:mth:problem:rate-limited","title":"Too many requests","status":429,"code":"rate_limited","requestId":"01a0f9c2-b62a-725d-8a62-59319e1873ba"}
+PASS anonymous request from the throttled IP is also 429 :: 429
+PASS validated users on the same IP are keyed by their own subject: still served after the IP flood :: 200 200
+PASS /readyz is never rate limited :: 200
+
+SUMMARY pass=7 fail=0
+ratelimit exit=0
+
+== AR/EN screens
+[
+  {
+    "user": "dev.office",
+    "locale": "ar-SA",
+    "loginAttrs": {
+      "lang": "ar",
+      "dir": "rtl",
+      "text": "منصة موبايلي للتحوّل\nمؤقت\nشعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة.\nEnglish\nتسجيل الدخول\n\nسجّل الدخول بحسابك المؤسسي للمتابعة.\n\nتسجيل الدخول بالحساب المؤسسي\n\nستُحوَّل إلى مزوّد الهوية الخاص بجهتك.\n\nتسجيل دخول بيئة التطوير\n\n لوضع التطوير فقط: يسجّل دخول مستخدم اصطناعي مُعدّ مسبقًا. غير متاح في بيئة الإنتاج.\n\nاسم المستخدم الاصطناعي\nتسجيل الدخول (بيئة التطوير)\n\nالهوية البصرية مؤقتة: الشعار النصي والألوان بدائل مؤقتة وليست أصولًا رسمية لعلامة موبايلي."
+    },
+    "shell": {
+      "lang": "ar",
+      "dir": "rtl",
+      "text": "انتقل إلى المحتوى الرئيسي\nمنصة موبايلي للتحوّل\nمؤقت\nشعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة.\nEnglish\nSynthetic Transformation Office\nمؤسسة تطوير تجريبية (بيانات اصطناعية)\nتسجيل الخروج\nعملي\nالنظرة التنفيذية\nمخطط\nالتحوّلات\nالدليل والإجراءات\nمخطط\nالاستراتيجية ومؤشرات الأداء\nمخطط\nنموذج التشغيل المستهدف\nمخطط\nالمبادرات وخرائط الطريق\nمخطط\nالحوكمة\nمخطط\nالمخاطر والإجراءات\nمخطط\nالمنافع والمالية\nمخطط\nالتغيير والتبنّي\nمخطط\nالأدلة والتقارير\nمخطط\nالعمليات الاعتيادية والتحسين\nمخطط\n\nحول هذا المنتج\n\nمرحبًا، Synthetic Transformation Office\n\nإجراءاتك ومسوداتك ومراجعاتك ومواعيدك النهائية في مكان واحد.\n\nابدأ من هنا\n\nافتح سجل التحوّلات\n\nمخطط\n\nالإجراءات المسندة، والمسودات، والمراجعات، والاعتمادات، والتحديثات الناقصة، والمواعيد النهائية القادمة.",
+      "imgs": 2,
+      "font": "\"IBM Plex Sans Arabic\", \"IBM Plex Sans\", system-ui, sans-serif"
+    },
+    "list": {
+      "dir": "rtl",
+      "text": "انتقل إلى المحتوى الرئيسي\nمنصة موبايلي للتحوّل\nمؤقت\nشعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة.\nEnglish\nSynthetic Transformation Office\nمؤسسة تطوير تجريبية (بيانات اصطناعية)\nتسجيل الخروج\nعملي\nالنظرة التنفيذية\nمخطط\nالتحوّلات\nالدليل والإجراءات\nمخطط\nالاستراتيجية ومؤشرات الأداء\nمخطط\nنموذج التشغيل المستهدف\nمخطط\nالمبادرات وخرائط الطريق\nمخطط\nالحوكمة\nمخطط\nالمخاطر والإجراءات\nمخطط\nالمنافع والمالية\nمخطط\nالتغيير والتبنّي\nمخطط\nالأدلة والتقارير\nمخطط\nالعمليات الاعتيادية والتحسين\nمخطط\n\nحول هذا المنتج\n\nالتحوّلات\n\nالتحوّلات المسموح لك برؤيتها ضمن نطاق إسناداتك الوظيفية.\n\nتحوّل جديد\nبحث\nتطبيق\nالحالة\nمسودة – لم تُقدَّم\nنشط\nمعلّق\nمغلق\nالنمط\nالكل\nالنمط الشامل (من البداية إلى النهاية)\nالنمط الجزئي المرن (الدخول عند المرحلة المناسبة)\nالمرحلة\nالكل\nالتشخيص\nالتحديد (تحديد التوجّه)\nالتصميم\nالتعبئة (حشد الموارد والتهيئة للتنفيذ)\nالتحويل والتنفيذ\nتحقيق القيمة\nوحدة العمل\nالكل\nR2-A (اصطناعي) (R2-A)\nR2-B (اصطناعي) (R2-B)\nR2-C (اصطناعي) (R2-C)\nR2-X (اصطناعي) (R2-X)\nR2-Y (اصطناعي) (R2-Y)\nالمالية (اصطناعي) (SYN-FIN)\nالعمليات (اصطناعي) (SYN-OPS)\nالتجزئة (اصطناعي) (SYN-RETAIL)\nتضمين المؤرشفة\nالأعمدة\nالتحوّلات\nالرمز\nغير مرتّب\n\tالاسم\nغير مرتّب\n\tوحدة العمل\tالنمط\tالمرحلة\tالحالة\tآخر تحديث\nمرتّب تنازليًا\n\nTR-0007\tPaging 2 (synthetic)\tالتجزئة (اصطناعي) SYN-RETAIL\tالنمط الشامل (من البداية إلى النهاية)\tالتشخيص\t\nمسودة – لم تُقدَّم\n\t02‏/10‏/2026 02:17 Asia/Riyadh\nTR-0006\tPaging 1 (synthetic)\tالتجزئة (اصطناعي) SYN-RETAIL\tالنمط الشامل (من البداية إلى النهاية)\tالتشخيص\t\nمسودة – لم تُقدَّم\n\t02‏/10‏/2026 02:17 Asia/Riyadh\nTR-0005\tPaging 0 (synthetic)\tالتجزئة (اصطناعي) SYN-RETAIL\tالنمط الشامل (من البداية إلى النهاية)\tالتشخيص\t\nمسودة – لم تُقدَّم\n\t02‏/10‏/2026 02:17 Asia/Riyadh\nTR-0004\tLead's record (synthetic)\tالتجزئة (اصطناعي) SYN-RETAIL\tالنمط الشامل (من البداية إلى النهاية)\tالتشخيص\t\nمسودة – لم تُقدَّم\n\t02‏/10‏/2026 02:17 Asia/Riyadh\nTR-0003\tFinance BU record (synthetic)\tالمالية (اصطناعي) SYN-FIN\tالنمط الشامل (من البداية إلى النهاية)\tالتشخيص\t\nمسودة – لم تُقدَّم\n\t02‏/1"
+    },
+    "fontsLoaded": [
+      "IBM Plex Sans Arabic",
+      "IBM Plex Sans"
+    ],
+    "foreignRequests": []
+  },
+  {
+    "user": "dev.auditor",
+    "locale": "en-US",
+    "loginAttrs": {
+      "lang": "ar",
+      "dir": "rtl",
+      "text": "منصة موبايلي للتحوّل\nمؤقت\nشعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة.\nEnglish\nتسجيل الدخول\n\nسجّل الدخول بحسابك المؤسسي للمتابعة.\n\nتسجيل الدخول بالحساب المؤسسي\n\nستُحوَّل إلى مزوّد الهوية الخاص بجهتك.\n\nتسجيل دخول بيئة التطوير\n\n لوضع التطوير فقط: يسجّل دخول مستخدم اصطناعي مُعدّ مسبقًا. غير متاح في بيئة الإنتاج.\n\nاسم المستخدم الاصطناعي\nتسجيل الدخول (بيئة التطوير)\n\nالهوية البصرية مؤقتة: الشعار النصي والألوان بدائل مؤقتة وليست أصولًا رسمية لعلامة موبايلي."
+    },
+    "shell": {
+      "lang": "en",
+      "dir": "ltr",
+      "text": "Skip to main content\nMobily Transformation Hub\nProvisional\nProvisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.\nالعربية\nSynthetic Auditor\nSynthetic Dev Organization\nSign out\nMy Work\nExecutive Overview\nPlanned\nTransformations\nPlaybook and Procedures\nPlanned\nStrategy and KPIs\nPlanned\nTarget Operating Model\nPlanned\nInitiatives and Roadmaps\nPlanned\nGovernance\nPlanned\nRisks and Actions\nPlanned\nBenefits and Finance\nPlanned\nChange and Adoption\nPlanned\nEvidence and Reports\nPlanned\nBAU and Improvement\nPlanned\nAdministration\n\nAbout this product\n\nWelcome, Synthetic Auditor\n\nYour actions, drafts, reviews and deadlines in one place.\n\nStart here\n\nOpen the transformations register\n\nPlanned\n\nAssigned actions, drafts, reviews, approvals, missing updates and upcoming deadlines.",
+      "imgs": 2,
+      "font": "\"IBM Plex Sans\", \"IBM Plex Sans Arabic\", system-ui, sans-serif"
+    },
+    "list": {
+      "dir": "ltr",
+      "text": "Skip to main content\nMobily Transformation Hub\nProvisional\nProvisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.\nالعربية\nSynthetic Auditor\nSynthetic Dev Organization\nSign out\nMy Work\nExecutive Overview\nPlanned\nTransformations\nPlaybook and Procedures\nPlanned\nStrategy and KPIs\nPlanned\nTarget Operating Model\nPlanned\nInitiatives and Roadmaps\nPlanned\nGovernance\nPlanned\nRisks and Actions\nPlanned\nBenefits and Finance\nPlanned\nChange and Adoption\nPlanned\nEvidence and Reports\nPlanned\nBAU and Improvement\nPlanned\nAdministration\n\nAbout this product\n\nTransformations\n\nTransformations you are allowed to see, scoped by your role assignments.\n\nSearch\nApply\nStatus\nDraft – not submitted\nActive\nOn hold\nClosed\nMode\nAny\nEnd-to-End\nModular\nPhase\nAny\nDiagnose\nDefine\nDesign\nMobilize\nTransform\nRealize\nBusiness unit\nAny\nR2-A (synthetic) (R2-A)\nR2-B (synthetic) (R2-B)\nR2-C (synthetic) (R2-C)\nR2-X (synthetic) (R2-X)\nR2-Y renamed (synthetic) (R2-Y)\nSynthetic Finance (SYN-FIN)\nSynthetic Operations (SYN-OPS)\nSynthetic Retail (SYN-RETAIL)\nInclude archived\nColumns\nTransformations\nCode\nnot sorted\n\tName\nnot sorted\n\tBusiness unit\tMode\tPhase\tStatus\tLast updated\nsorted descending\n\nTR-0007\tPaging 2 (synthetic)\tSynthetic Retail SYN-RETAIL\tEnd-to-End\tDiagnose\t\nDraft – not submitted\n\t2 Oct 2026, 02:17 Asia/Riyadh\nTR-0006\tPaging 1 (synthetic)\tSynthetic Retail SYN-RETAIL\tEnd-to-End\tDiagnose\t\nDraft – not submitted\n\t2 Oct 2026, 02:17 Asia/Riyadh\nTR-0005\tPaging 0 (synthetic)\tSynthetic Retail SYN-RETAIL\tEnd-to-End\tDiagnose\t\nDraft – not submitted\n\t2 Oct 2026, 02:17 Asia/Riyadh\nTR-0004\tLead's record (synthetic)\tSynthetic Retail SYN-RETAIL\tEnd-to-End\tDiagnose\t\nDraft – not submitted\n\t2 Oct 2026, 02:17 Asia/Riyadh\nTR-0003\tFinance BU record (synthetic)\tSynthetic Finance SYN-FIN\tEnd-to-End\tDiagnose\t\nDraft – not submitted\n\t2 Oct 2026, 02:17 Asia/Riyadh\nTR-0001\tRoaming revenue uplift (synthetic)\tSynthetic Retail SYN-RETAIL\tEnd-to-End\tDiagnose\t\nOn h"
+    },
+    "fontsLoaded": [
+      "IBM Plex Sans Arabic",
+      "IBM Plex Sans"
+    ],
+    "foreignRequests": []
+  },
+  {
+    "scenario": "bu-cycle-ui-en",
+    "lang": "en",
+    "dir": "ltr",
+    "alerts": [
+      "A business unit cannot be its own ancestor."
+    ],
+    "parentValue": "01920000-0000-7000-9000-000000000102",
+    "serverParentAfter": null,
+    "foreignRequests": []
+  },
+  {
+    "scenario": "bu-cycle-ui-ar",
+    "lang": "ar",
+    "dir": "rtl",
+    "alerts": [
+      "لا يمكن أن تكون وحدة العمل أصلًا لنفسها."
+    ],
+    "parentValue": "01920000-0000-7000-9000-000000000102",
+    "serverParentAfter": null,
+    "foreignRequests": []
+  }
+]
+screens exit=0
+== api.log error/fatal lines: 0

@@ -1,0 +1,48 @@
+# cmd: git diff 40dbd24 642e6bfb -- . ':!docs/delivery'   (round-3 qa clone commit -> round-4 candidate commit, non-delivery-record paths)
+# plus: candidate recompute in clone and in repo; HEAD of repo = 91936e63348dae6a9ae6c10eb52568e841196b27 (freeze-metadata-only commit after 642e6bf)
+ apps/web/package.json      |  2 +-
+ apps/web/tsconfig.e2e.json | 13 +++++++++++++
+ 2 files changed, 14 insertions(+), 1 deletion(-)
+diff --git a/apps/web/package.json b/apps/web/package.json
+index af5bdef..7b6065a 100644
+--- a/apps/web/package.json
++++ b/apps/web/package.json
+@@ -8,7 +8,7 @@
+   "scripts": {
+     "dev": "vite",
+     "build": "tsc -p tsconfig.json && vite build",
+-    "typecheck": "tsc -p tsconfig.json",
++    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.e2e.json",
+     "preview": "vite preview",
+     "test": "vitest run --config vitest.config.ts",
+     "e2e": "cd ../.. && apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e --workers=1"
+diff --git a/apps/web/tsconfig.e2e.json b/apps/web/tsconfig.e2e.json
+new file mode 100644
+index 0000000..81c4982
+--- /dev/null
++++ b/apps/web/tsconfig.e2e.json
+@@ -0,0 +1,13 @@
++{
++  "extends": "../../tsconfig.base.json",
++  "_comment": "F-DG1-147: type-checks the Playwright journeys (e2e/**) and the root playwright.config.ts. Node runtime (fs/path/url) plus DOM lib because page.evaluate callbacks run in the browser. Isolated from tsconfig.json (vite/client, React, Vitest globals) so the two type environments never collide. Run by `typecheck`, hence by `pnpm -r typecheck`.",
++  "compilerOptions": {
++    "lib": ["ES2023", "DOM", "DOM.Iterable"],
++    "types": ["node"],
++    "rootDir": "../..",
++    "declaration": false,
++    "declarationMap": false,
++    "noEmit": true
++  },
++  "include": ["e2e/**/*.ts", "../../playwright.config.ts"]
++}
+## repo HEAD vs candidate commit:
+ .../DG1/round-4/code-security-reviewer.md          |   15 +
+ .../assignments/DG1/round-4/domain-reviewer.md     |   11 +
+ .../assignments/DG1/round-4/qa-verifier.md         |   13 +
+ .../assignments/DG1/round-4/release-auditor.md     |   19 +
+ .../candidates/DG1/6e0c0db1a8bea33c.manifest.json  | 1993 ++++++++++++++++++++
+ docs/delivery/stages.json                          |   30 +-
+ 6 files changed, 2077 insertions(+), 4 deletions(-)
+## candidate recompute (clone @642e6bfb):
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:6e0c0db1a8bea33cd81f05ea8c795d8ede4bfb7f380dfe146556cb4875a6f827","files":395}
+# exit=0

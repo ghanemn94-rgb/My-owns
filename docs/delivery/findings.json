@@ -8551,7 +8551,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-3/code-security-reviewer.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T22:36:54Z",
@@ -8562,10 +8562,34 @@
           "at": "2026-10-01T23:13:02Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at ac4a13c56e172a601b2b9eada5d4e5eafa857c9d"
+        },
+        {
+          "at": "2026-10-01T23:24:43Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 4: PASS"
         }
       ],
       "fix_revision": "ac4a13c56e172a601b2b9eada5d4e5eafa857c9d",
-      "fix_summary": "New apps/web/tsconfig.e2e.json type-checks apps/web/e2e/**/*.ts and the root playwright.config.ts (extends the strict base, node types, isolated from vitest/vite); apps/web typecheck now runs tsc -p tsconfig.json && tsc -p tsconfig.e2e.json, so pnpm -r typecheck (and CI) covers the e2e specs. Fail-then-pass proof: a deliberate type error in an e2e spec is now caught. No real type errors existed. No product change; e2e tests still run green."
+      "fix_summary": "New apps/web/tsconfig.e2e.json type-checks apps/web/e2e/**/*.ts and the root playwright.config.ts (extends the strict base, node types, isolated from vitest/vite); apps/web typecheck now runs tsc -p tsconfig.json && tsc -p tsconfig.e2e.json, so pnpm -r typecheck (and CI) covers the e2e specs. Fail-then-pass proof: a deliberate type error in an e2e spec is now caught. No real type errors existed. No product change; e2e tests still run green.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-SEC-R4-code-security-reviewer-20261001T231504Z-8436c755",
+          "session_id": "8436c755-8e8e-4fdd-9291-b2f7d73094a9"
+        },
+        "at": "2026-10-01T23:24:43Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/code-security/round-4/f147-fail-then-pass.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-4/typecheck.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-4/00-candidate-identity.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-4/root-e2e-typecheck-adhoc.log",
+          "apps/web/tsconfig.e2e.json",
+          "apps/web/package.json#L11"
+        ],
+        "note": "Verified on candidate sha256:6e0c0db1a8bea33cd81f05ea8c795d8ede4bfb7f380dfe146556cb4875a6f827. The ID was recomputed on the main working tree and on a disposable clone at the manifest source_commit 642e6bf (395 files). The fix is exactly 2 files since the round-3 candidate 4f312cc: (1) a new apps/web/tsconfig.e2e.json, which extends tsconfig.base.json (strict, noUncheckedIndexedAccess, exactOptionalPropertyTypes, etc.), uses lib ES2023+DOM+DOM.Iterable and types node, and includes e2e/**/*.ts and ../../playwright.config.ts; (2) the apps/web typecheck script changed to `tsc -p tsconfig.json && tsc -p tsconfig.e2e.json`. The root `typecheck` script is `pnpm -r typecheck`, and ci.yml runs `pnpm typecheck`, so CI covers the files. `tsc --listFilesOnly` shows that the project compiles exactly apps/web/e2e/journeys.spec.ts and playwright.config.ts (plus library typings). Fail-then-pass (Node 22.22.2, tsc 6.0.2, disposable clone): baseline exit 0. Injecting `const x: number = \"...\"` into journeys.spec.ts made `pnpm --filter @mth/web typecheck` exit 2 with TS2322, and made `pnpm -r typecheck` fail too; after the revert it exits 0. The same injection into the root playwright.config.ts gave exit 2 (TS2322 at ../../playwright.config.ts), and the revert gave exit 0. Calling a non-existent Locator method gave exit 2 (TS2339 'notARealMethod' does not exist on type 'Locator'), so Playwright's types really resolve and are not `any`; the revert gave exit 0. The full `pnpm -r typecheck` on the unmodified candidate passes (exit 0) and shows the new tsconfig.e2e.json step. The fix is complete for the finding's stated scope. Residual observation, not a finding: the qa-owned root e2e/a20-bilingual-shell.spec.ts is still in no typecheck project. The assignment scoped it out; it type-checks cleanly ad hoc (see the round-4 narrative)."
+      }
     }
   ]
 }

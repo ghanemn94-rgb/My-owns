@@ -1,0 +1,13 @@
+$ git diff --stat 4f312cc 91936e6 -- . ':!docs/delivery'
+ apps/web/package.json      |  2 +-
+ apps/web/tsconfig.e2e.json | 13 +++++++++++++
+ 2 files changed, 14 insertions(+), 1 deletion(-)
+$ git diff --stat 4f312cc 91936e6 -- docs/source packages/shared apps/web/src apps/api/src packages/db
+(empty = unchanged)
+$ grep phases/gates constants
+packages/shared/src/schemas/common.ts:7:  PHASES,
+packages/shared/src/schemas/common.ts:37:export const phase = z.enum(PHASES);
+packages/shared/src/constants.ts:5:export const PHASES = ["diagnose", "define", "design", "mobilize", "transform", "realize"] as const;
+packages/shared/src/constants.ts:6:export type Phase = (typeof PHASES)[number];
+$ sha256sum docs/source/Business_Transformation_Playbook.docx
+2584a35282804e639a697478eae75a55a43cfb8c551345dfc7636b9b34548ad2  docs/source/Business_Transformation_Playbook.docx

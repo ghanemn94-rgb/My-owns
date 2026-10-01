@@ -1,0 +1,58 @@
+# cmd: bash docs/delivery/test-evidence/DG1/qa/round-4/22-ci-offline.sh $TMPDIR/ci-qa   (same script as round 3; throwaway clone @642e6bf with pnpm install --frozen-lockfile --offline)
+# clone: $TMPDIR/ci-qa @ 642e6bfb2c905d2c3382035032fa56c84672dcab; node v22.22.2; 2026-10-01T23:33:58Z
+## 1. CI workflow copies identical
+8b5b11068ac3a49798cbb24393996a5d3f54125626a4f81ec06396b58db476ce  .github/workflows/ci.yml
+8b5b11068ac3a49798cbb24393996a5d3f54125626a4f81ec06396b58db476ce  deploy/ci/ci.yml
+IDENTICAL exit=0
+## 2. check-ci-needs on the candidate
+OK: .github/workflows/ci.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it with no status-function if:; installs only via ci-install-deps.sh
+  verify <- delivery-gates
+  integration <- verify
+  e2e <- verify
+  images <- integration, e2e
+exit=0
+## 3. dependency-script unit tests
+1..46
+# tests 46
+# suites 0
+# pass 46
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4942.317869
+exit=0
+## 4. negative mutations of .github/workflows/ci.yml (each must exit non-zero)
+### a: verify job loses 'needs: delivery-gates'
+ 1 file changed, 1 deletion(-)
+FAIL: job "verify" does not depend on delivery-gates
+FAIL: job "integration" does not depend on delivery-gates
+FAIL: job "e2e" does not depend on delivery-gates
+FAIL: job "images" does not depend on delivery-gates
+exit=1 (non-zero expected)
+### b: e2e job gets 'if: always()'
+ 1 file changed, 1 insertion(+)
+FAIL: job "e2e": job-level if: "always()" uses a status function, so it can run after delivery-gates failed
+exit=1 (non-zero expected)
+### c: delivery-gates job no longer runs validate.mjs --pipeline
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+FAIL: delivery-gates does not run exactly "node tools/gates/validate.mjs --pipeline"
+FAIL: delivery-gates step 3 ("Delivery gate pipeline state (no stage advanced past an unapproved gate)"): only the validate step may run commands in delivery-gates: "echo skipped"
+exit=1 (non-zero expected)
+### control (unmodified)
+OK: .github/workflows/ci.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it with no status-function if:; installs only via ci-install-deps.sh
+  verify <- delivery-gates
+  integration <- verify
+  e2e <- verify
+  images <- integration, e2e
+exit=0 (0 expected)
+## 5. A24 first half, simulated locally: a tampered approved gate record makes the delivery-gates command fail
+FAIL pipeline (active stage: DG1 REVIEWING) (3 problems)
+  - DG0: review release-auditor (docs/delivery/reviews/DG0/round-29/release-auditor.json): invocation DG0-T-DG0-AUDIT-R29-release-auditor-20260930T154133Z-f810a559: docs/delivery/gates/DG0.json differs from what the run wrote (edited after the run?)
+  - DG0: review release-auditor (docs/delivery/reviews/DG0/round-29/release-auditor.json): invocation DG0-T-DG0-AUDIT-R29-release-auditor-20260930T154133Z-f810a559: docs/delivery/gates/DG0.json differs from the replay of this run's transcript
+  - DG0: history: working-tree docs/delivery/gates/DG0.json differs from the approved version
+validate --pipeline with a tampered DG0 gate record: exit=1 (non-zero expected)
+PASS pipeline (active stage: DG1 REVIEWING)
+restored: exit=0
+## 6. not reproducible here (residual D-058): a live GitHub-Actions run showing dependent jobs skipped
+# exit=0

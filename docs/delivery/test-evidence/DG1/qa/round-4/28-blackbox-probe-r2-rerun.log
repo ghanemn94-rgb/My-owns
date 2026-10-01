@@ -1,0 +1,39 @@
+# cmd: e2e/support/qa-stack.sh node /home/user/My-owns/docs/delivery/test-evidence/DG1/qa/tests/dg1-r2-blackbox-probe.mjs
+# cwd: <disposable clone $TMPDIR/review-qa @ 642e6bf, candidate 6e0c0db1> ; node v22.22.2 ; date 2026-10-01T23:38:01Z
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applied 9 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+PASS branding tokens unauthenticated -> 401 :: 401
+PASS dev-login dev.admin -> 204 :: 204
+branding body: {"provenance":"provisional","tokens":[{"name":"brand.primary","value":"#0078FF","purpose":"Primary accents and selected elements","provisional":true},{"name":"brand.deep","value":"#003B73","purpose":"Stronger blue surfaces and text where suitable","provisional":true},{"name":"surface.page","value":"#F5F8FC","purpose":"Page background","provisional":true},{"name":"surface.card","value":"#FFFFFF","purpose":"Content surfaces","provisional":true},{"name":"text.primary","value":"#142438","purpose":"Main text","provisional":true},{"name":"text.secondary","value":"#526174","purpose":"Secondary text","provisional":true},{"name":"border.default","value":"#DCE5EF","purpose":"Dividers and field boundaries","provisional":true}]}
+PASS branding tokens authenticated -> 200 :: 200
+PASS token brand.primary = #0078FF :: got #0078FF
+PASS token brand.deep = #003B73 :: got #003B73
+PASS token surface.page = #F5F8FC :: got #F5F8FC
+PASS token surface.card = #FFFFFF :: got #FFFFFF
+PASS token text.primary = #142438 :: got #142438
+PASS token text.secondary = #526174 :: got #526174
+PASS token border.default = #DCE5EF :: got #DCE5EF
+PASS provenance is 'provisional' (and nothing else) :: ["provisional"]
+PASS no claim of official/verified Mobily brand compliance in the response
+PASS admin can create a business unit :: 201 {"id":"01a0f9d5-09e9-709b-9bfb-79e02581f6e8","organizationId":"01920000-0000-7000-9000-000000000001","parentBusinessUnitId":null,"code":"QAMUQ6CYXT1","nameEn":"QA probe QAMUQ6CYXT1 (synthetic)","nameA
+PASS API direct cycle (A under its child B) -> 422 :: 422 urn:mth:problem:validation business_unit.cycle
+race outcomes (PATCH A->C / PATCH B->A): {"200/422":21,"422/200":4}
+PASS concurrent re-parent race x25: never both committed :: bothCommitted=0
+PASS concurrent re-parent race x25: no committed cycle :: cycles=0
+level 11 refused: {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"Business units can be nested at most 10 levels deep.","code":"validation","requestId":"01a0f9d5-0f6c-75aa-aea6-7b7136ac280c","errors":[{"pointer":"/parentBusinessUnitId","code":"business_unit.depth_exceeded","mes
+PASS API depth: levels 1-10 created (201) :: [201,201,201,201,201,201,201,201,201,201,400]
+PASS API depth: level 11 refused (400/422, not 201/500) :: 400
+R2 BLACK-BOX PROBE: PASS
+# exit=0

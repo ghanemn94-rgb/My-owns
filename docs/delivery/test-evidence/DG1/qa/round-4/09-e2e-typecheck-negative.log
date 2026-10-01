@@ -1,0 +1,26 @@
+# clone @ 642e6bfb2c905d2c3382035032fa56c84672dcab; node v22.22.2; 2026-10-01T23:26:48Z
+## e2e files covered by tsconfig.e2e.json (tsc --listFilesOnly, project files only)
+$TMPDIR/review-qa/apps/web/e2e/journeys.spec.ts
+$TMPDIR/review-qa/playwright.config.ts
+## control: pnpm --filter @mth/web typecheck
+control exit=0 (0 expected)
+## mutation 1: append a type error to apps/web/e2e/journeys.spec.ts
+e2e/journeys.spec.ts(474,7): error TS2322: Type 'string' is not assignable to type 'number'.
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @mth/web@0.1.0 typecheck: `tsc -p tsconfig.json && tsc -p tsconfig.e2e.json`
+mutation1 exit=2 (non-zero expected)
+## mutation 2: type error in root playwright.config.ts
+../../playwright.config.ts(32,7): error TS2322: Type 'number' is not assignable to type 'string'.
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @mth/web@0.1.0 typecheck: `tsc -p tsconfig.json && tsc -p tsconfig.e2e.json`
+mutation2 exit=2 (non-zero expected)
+## mutation 3: same error via the root entry point pnpm -r typecheck (spec file)
+apps/web typecheck: e2e/journeys.spec.ts(474,7): error TS2322: Type 'string' is not assignable to type 'number'.
+mutation3 pnpm -r typecheck exit=2 (non-zero expected)
+## restored; git status (expect clean):
+restored pnpm -r typecheck exit=0 (0 expected)
+## informational: QA root e2e/** specs are outside tsconfig.e2e.json scope; ad-hoc tsc check of them
+error TS6053: File 'e2e/support/*.ts' not found.
+  The file is in the program because:
+    Root file specified for compilation
+adhoc root-e2e tsc exit=2 (informational)
+## informational (corrected glob): ad-hoc tsc of QA-authored root e2e/*.spec.ts (outside tsconfig.e2e.json scope by design)
+adhoc root-e2e tsc exit=0 (informational)

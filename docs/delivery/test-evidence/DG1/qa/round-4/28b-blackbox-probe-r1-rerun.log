@@ -1,0 +1,48 @@
+# cmd: e2e/support/qa-stack.sh node /home/user/My-owns/docs/delivery/test-evidence/DG1/qa/tests/dg1-r1-blackbox-probe.mjs
+# cwd: <disposable clone $TMPDIR/review-qa @ 642e6bf, candidate 6e0c0db1> ; node v22.22.2 ; date 2026-10-01T23:38:05Z
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applied 9 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+PASS unauthenticated list is 401 problem+json :: 401 application/problem+json; charset=utf-8
+PASS dev-login without Origin refused (403) :: 403
+PASS dev-login with invalid username is 400 :: 400
+PASS dev-login dev.office is 204 and /me returns csrfToken :: 204
+PASS office can list business units of its organization :: 200 items=3
+PASS create without CSRF token is 403 :: 403
+PASS create with valid CSRF token but foreign Origin is 403 :: 403
+PASS modular create without entryPhase is 400 :: 400 urn:mth:problem:validation
+PASS create with unknown property is 400 :: 400
+PASS create with empty name is 400 :: 400
+PASS rejected creates wrote nothing :: 0 -> 0
+PASS create is 201 with version 1, ETag and Location :: 201 v=1 etag="1"
+PASS defaults: timezone Asia/Riyadh, currency SAR :: Asia/Riyadh SAR
+PASS Arabic name round-trips unchanged :: QA probe تحول تجريبي
+PASS PATCH without If-Match is 428 :: 428
+PASS 5 concurrent PATCHes on v1: exactly one 200, four 409 :: 200,409,409,409,409
+PASS version bumped exactly once (2) :: v=2
+PASS stale If-Match is 409 with currentVersion 2 :: 409 2
+PASS archive without reason is 400 :: 400
+PASS archive with reason is 200 and bumps version to 3 :: 200 v=3
+PASS editing an archived record is refused (422) :: 422
+PASS audit lists create, update and archive with version steps :: transformation.archive:2->3 | transformation.update:1->2 | transformation.create:-->1
+PASS DELETE transformation is not offered (404/405) :: 404
+PASS auditor cannot create (403/404) :: 403
+PASS user without roles sees no business records :: 200 items=0
+PASS user without roles cannot read the record by id (404, not disclosed) :: 404
+PASS access administrator has no business-record access (403/404) :: 404
+PASS branding tokens: 401 unauthenticated, 200 authenticated :: 401/200
+PASS branding tokens mark #0078FF as provisional :: {"provenance":"provisional","tokens":[{"name":"brand.primary","value":"#0078FF","purpose":"Primary accents and selected elements","provisional":true},{"name":"b
+PASS logout then /me with the old cookie is 401 :: 200 -> 401
+BLACKBOX PROBE: PASS
+# exit=0

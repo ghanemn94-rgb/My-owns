@@ -1,0 +1,27 @@
+// Domain-reviewer rate-limit keying probe (DG1 round 3, F-DG1-142). Synthetic users only.
+// API instance started with RATE_LIMIT_PER_MINUTE=20 (global) on port 3001. All clients share IP 127.0.0.1.
+const BASE = "http://localhost:3001"; const ORIGIN = BASE;
+let pass = 0, fail = 0;
+const check = (n, c, d) => { c ? pass++ : fail++; console.log(`${c ? "PASS" : "FAIL"} ${n}${d ? " :: " + d : ""}`); };
+async function login(username) {
+  const r = await fetch(`${BASE}/api/v1/auth/dev-login`, { method: "POST", headers: { "content-type": "application/json", origin: ORIGIN }, body: JSON.stringify({ username }) });
+  return { status: r.status, cookie: (r.headers.getSetCookie?.() ?? []).map((c) => c.split(";")[0]).join("; ") };
+}
+const get = (cookie, path = "/api/v1/me") => fetch(BASE + path, { headers: cookie ? { cookie, origin: ORIGIN } : { origin: ORIGIN } });
+const office = await login("dev.office"); const lead = await login("dev.lead");
+check("two synthetic users sign in from the same IP", office.status === 204 && lead.status === 204, `${office.status} ${lead.status}`);
+const cookieName = office.cookie.split("=")[0];
+let ok = 0; for (let i = 0; i < 15; i++) if ((await get(office.cookie)).status === 200) ok++;
+check("a signed-in user's normal traffic (15 req < limit 20) is served", ok === 15, `200x${ok}`);
+// Flood with fabricated session cookies: each is a new value, previously each opened a fresh bucket.
+const codes = {}; let lastBody = null, lastType = null;
+for (let i = 0; i < 40; i++) { const r = await get(`${cookieName}=forged-${i}-${Math.random().toString(36).slice(2)}`); codes[r.status] = (codes[r.status] ?? 0) + 1; if (r.status === 429) { lastType = r.headers.get("content-type"); lastBody = await r.text(); } else await r.text(); }
+check("rotating forged cookies share the IP bucket and are throttled (429 seen)", (codes[429] ?? 0) > 0, JSON.stringify(codes));
+check("429 is problem+json (rate_limited)", /problem\+json/.test(lastType ?? "") && /rate_limited|rate/i.test(lastBody ?? ""), `${lastType} ${String(lastBody).slice(0, 160)}`);
+const anon = await get(null);
+check("anonymous request from the throttled IP is also 429", anon.status === 429, String(anon.status));
+const off2 = await get(office.cookie); const lead2 = await get(lead.cookie);
+check("validated users on the same IP are keyed by their own subject: still served after the IP flood", off2.status === 200 && lead2.status === 200, `${off2.status} ${lead2.status}`);
+const hz = await fetch(BASE + "/readyz");
+check("/readyz is never rate limited", hz.status === 200, String(hz.status));
+console.log(`\nSUMMARY pass=${pass} fail=${fail}`); process.exit(fail ? 1 : 0);

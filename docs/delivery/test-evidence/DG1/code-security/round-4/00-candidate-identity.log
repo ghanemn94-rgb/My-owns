@@ -1,0 +1,71 @@
+# 2026-10-01T23:24:12Z
+$ git rev-parse HEAD (main checkout)
+b476223abc0ab77706b72bb34862657f300609bc
+$ git log --oneline 642e6bf..HEAD; git diff --stat 642e6bf..HEAD
+b476223 run: DG1-T-DG1-REV-DOM-R4-domain-reviewer-20261001T231504Z-609c0775 (review evidence, auto-committed by run-agent.sh)
+91936e6 DG1 re-gate r4: freeze candidate 6e0c0db1 + round-4 gate assignments (state REVIEWING)
+ .../DG1/round-4/code-security-reviewer.md          |   15 +
+ .../assignments/DG1/round-4/domain-reviewer.md     |   11 +
+ .../assignments/DG1/round-4/qa-verifier.md         |   13 +
+ .../assignments/DG1/round-4/release-auditor.md     |   19 +
+ .../candidates/DG1/6e0c0db1a8bea33c.manifest.json  | 1993 ++++++++++++++++++++
+ .../reviews/DG1/round-4/domain-reviewer.json       |  213 +++
+ .../meta.json                                      |   94 +
+ .../result.json                                    |    3 +
+ .../sandbox.json                                   |   47 +
+ .../settings.json                                  |   88 +
+ .../stderr.log                                     |    1 +
+ .../transcript.jsonl.gz                            |  Bin 0 -> 630983 bytes
+ docs/delivery/stages.json                          |   30 +-
+ 13 files changed, 2523 insertions(+), 4 deletions(-)
+$ node tools/gates/candidate.mjs --stage DG1 (main checkout, node v24.21.0)
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:6e0c0db1a8bea33cd81f05ea8c795d8ede4bfb7f380dfe146556cb4875a6f827","files":395}
+$ (disposable clone @642e6bf) node tools/gates/candidate.mjs --stage DG1 --ref HEAD
+642e6bfb2c905d2c3382035032fa56c84672dcab
+{"stage":"DG1","source":"HEAD","candidate_id":"sha256:6e0c0db1a8bea33cd81f05ea8c795d8ede4bfb7f380dfe146556cb4875a6f827","files":395}
+## manifest diff round-3 (18e150714d29fa67) -> round-4 (6e0c0db1a8bea33c)
+entries 394 -> 395
+added ['apps/web/tsconfig.e2e.json']
+removed []
+changed ['apps/web/package.json']
+## source diff 4f312cc..642e6bf outside docs/delivery
+ apps/web/package.json      |  2 +-
+ apps/web/tsconfig.e2e.json | 13 +++++++++++++
+ 2 files changed, 14 insertions(+), 1 deletion(-)
+diff --git a/apps/web/package.json b/apps/web/package.json
+index af5bdef..7b6065a 100644
+--- a/apps/web/package.json
++++ b/apps/web/package.json
+@@ -8,7 +8,7 @@
+   "scripts": {
+     "dev": "vite",
+     "build": "tsc -p tsconfig.json && vite build",
+-    "typecheck": "tsc -p tsconfig.json",
++    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.e2e.json",
+     "preview": "vite preview",
+     "test": "vitest run --config vitest.config.ts",
+     "e2e": "cd ../.. && apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e --workers=1"
+diff --git a/apps/web/tsconfig.e2e.json b/apps/web/tsconfig.e2e.json
+new file mode 100644
+index 0000000..81c4982
+--- /dev/null
++++ b/apps/web/tsconfig.e2e.json
+@@ -0,0 +1,13 @@
++{
++  "extends": "../../tsconfig.base.json",
++  "_comment": "F-DG1-147: type-checks the Playwright journeys (e2e/**) and the root playwright.config.ts. Node runtime (fs/path/url) plus DOM lib because page.evaluate callbacks run in the browser. Isolated from tsconfig.json (vite/client, React, Vitest globals) so the two type environments never collide. Run by `typecheck`, hence by `pnpm -r typecheck`.",
++  "compilerOptions": {
++    "lib": ["ES2023", "DOM", "DOM.Iterable"],
++    "types": ["node"],
++    "rootDir": "../..",
++    "declaration": false,
++    "declarationMap": false,
++    "noEmit": true
++  },
++  "include": ["e2e/**/*.ts", "../../playwright.config.ts"]
++}
+## round-2 product fix surfaces unchanged since round-3 candidate (BU hierarchy guard + migration 0009, destination authz, rate-limit keying)
+$ git diff --stat 4f312cc..642e6bf -- apps packages ':!apps/web/package.json' ':!apps/web/tsconfig.e2e.json'
+(empty = no change)
+packages/db/migrations/0009_business_unit_hierarchy_guard.sql
+# exit_status=0

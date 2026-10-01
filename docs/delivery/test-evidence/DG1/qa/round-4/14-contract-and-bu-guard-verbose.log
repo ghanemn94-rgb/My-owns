@@ -1,0 +1,30 @@
+# cmd: tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/contract apps/api/test/integration/bu-hierarchy-guard.test.ts --reporter=verbose
+# cwd: <disposable clone $TMPDIR/review-qa @ 642e6bf, candidate 6e0c0db1> ; node v22.22.2 ; date 2026-10-01T23:29:14Z
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+ RUN  v3.2.4 $TMPDIR/review-qa
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muq61nm5_0f7ad437; applied 9 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/bu-hierarchy-guard.test.ts > F-DG1-140 concurrent re-parenting through the API never commits a cycle > A->C and B->A (with C under B) interleaved: one 200, the other 422 business_unit.cycle; no cycle persists 99ms
+ ✓ |integration| apps/api/test/integration/bu-hierarchy-guard.test.ts > F-DG1-140 concurrent re-parenting through the API never commits a cycle > the sequential control is still the friendly 422 business_unit.cycle 27ms
+ ✓ |integration| apps/api/test/integration/bu-hierarchy-guard.test.ts > F-DG1-140 the database guard (migration 0009) fails closed on its own > refuses a direct cycle and an over-deep chain with 23514 and the named constraint 29ms
+ ✓ |integration| apps/api/test/integration/bu-hierarchy-guard.test.ts > F-DG1-140 the database guard (migration 0009) fails closed on its own > READ COMMITTED: two raw transactions forming A->C->B->A - the second fails with 23514 after the first commits 23ms
+ ✓ |integration| apps/api/test/integration/bu-hierarchy-guard.test.ts > F-DG1-140 the database guard (migration 0009) fails closed on its own > REPEATABLE READ with a snapshot older than the first commit: the second fails (40001 or 23514), no cycle 22ms
+ ✓ |integration| apps/api/test/integration/bu-hierarchy-guard.test.ts > F-DG1-140 the database guard (migration 0009) fails closed on its own > READ COMMITTED depth race: a move that makes a subtree 10 deep and a concurrent child insert below it 53ms
+ ✓ |integration| apps/api/test/integration/bu-hierarchy-guard.test.ts > F-DG1-141 re-parenting authorizes the destination parent too > a manager scoped to BU a1 cannot move a1 units under sibling a2 or to the top level (403, audited); in-scope moves work 94ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > route coverage > maps every governed Fastify route to an OpenAPI operation with the same method, and back 1ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > route coverage > declares access on every governed route (public or a permission) 1ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > health 9ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > auth + me 133ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > organizations and business units 112ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > users, roles, permissions and assignments 115ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > transformations and audit 119ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > branding tokens (getBrandingTokens): authenticated-only, provisional provenance, contract + zod valid 8ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > covers every operation with at least one success and every successful body with its zod mirror 1ms
+
+ Test Files  2 passed (2)
+      Tests  16 passed (16)
+   Start at  23:29:15
+   Duration  3.77s (transform 491ms, setup 0ms, collect 1.30s, tests 1.54s, environment 0ms, prepare 60ms)
+
+# exit=0

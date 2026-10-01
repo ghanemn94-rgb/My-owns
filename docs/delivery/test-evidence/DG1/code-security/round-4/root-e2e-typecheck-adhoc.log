@@ -1,0 +1,25 @@
+# 2026-10-01T23:19:17Z clone=/var/tmp/mth-run.uTfYQa/claude-0/review-r4 HEAD=642e6bfb2c905d2c3382035032fa56c84672dcab node=v22.22.2; disposable tsconfig (outside the candidate) mirroring apps/web/tsconfig.e2e.json but including root e2e/**/*.ts
+{ "extends": "/var/tmp/mth-run.uTfYQa/claude-0/review-r4/tsconfig.base.json",
+  "compilerOptions": { "lib": ["ES2023","DOM","DOM.Iterable"], "types": ["node"], "rootDir": "/var/tmp/mth-run.uTfYQa/claude-0/review-r4", "declaration": false, "declarationMap": false, "noEmit": true },
+  "include": ["/var/tmp/mth-run.uTfYQa/claude-0/review-r4/e2e/**/*.ts"] }
+$ cd apps/web && pnpm exec tsc -p $TMPDIR/tsconfig.root-e2e-review.json --listFilesOnly | grep -v node_modules
+error TS2688: Cannot find type definition file for 'node'.
+  The file is in the program because:
+    Entry point of type library 'node' specified in compilerOptions
+/var/tmp/mth-run.uTfYQa/claude-0/review-r4/e2e/a20-bilingual-shell.spec.ts
+$ cd apps/web && pnpm exec tsc -p $TMPDIR/tsconfig.root-e2e-review.json
+error TS2688: Cannot find type definition file for 'node'.
+  The file is in the program because:
+    Entry point of type library 'node' specified in compilerOptions
+# exit_status=2
+## is root e2e/** in any typecheck project in the candidate?
+./apps/web/tsconfig.e2e.json
+## retry: the first attempt failed with TS2688 only because types:[node] resolves relative to the tsconfig's directory ($TMPDIR); the probe tsconfig is now placed in the disposable clone's apps/web (untracked, removed afterwards)
+# 2026-10-01T23:19:28Z root package.json:     "typecheck": "pnpm -r typecheck",
+{ "extends": "../../tsconfig.base.json",
+  "compilerOptions": { "lib": ["ES2023","DOM","DOM.Iterable"], "types": ["node"], "rootDir": "../..", "declaration": false, "declarationMap": false, "noEmit": true },
+  "include": ["../../e2e/**/*.ts"] }
+$ cd apps/web && pnpm exec tsc -p tsconfig.root-e2e-review.json --listFilesOnly | grep -v node_modules
+/var/tmp/mth-run.uTfYQa/claude-0/review-r4/e2e/a20-bilingual-shell.spec.ts
+$ cd apps/web && pnpm exec tsc -p tsconfig.root-e2e-review.json
+# exit_status=0
