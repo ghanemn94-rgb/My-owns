@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { financeRoutes } from '@hub/contracts';
-import { FINANCE_DEFAULT_CLASSIFICATION, KPI_DIRECTIONS, type Classification } from '@hub/domain';
+import { FINANCE_DEFAULT_CLASSIFICATION, KPI_DIRECTIONS, ROLE_KEYS, type Classification, type RoleKey } from '@hub/domain';
 import { SelectField, TextAreaField, TextField } from '@/components/Field';
 import { useToast } from '@/components/Toast';
 import { UserPicker, type PickedUser } from '@/components/UserPicker';
@@ -250,6 +250,7 @@ export function CreateKpiDialog({ open, onClose, onCreated }: { open: boolean; o
     unit: '',
     period: '',
     owner: null as PickedUser | null,
+    ownerRole: '' as RoleKey | '',
     benefitId: '',
     source: '',
     target: '',
@@ -266,7 +267,9 @@ export function CreateKpiDialog({ open, onClose, onCreated }: { open: boolean; o
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
   const req = [f.name, f.definition, f.formula, f.unit, f.period, f.source, f.green, f.amber, f.red, f.frequency];
-  const valid = KPI_KEY.test(f.key.trim()) && req.every((x) => x.trim());
+  // REQ-RPT-013: every KPI has an owner — a project member, a role, or both.
+  const hasOwner = !!f.owner || !!f.ownerRole;
+  const valid = KPI_KEY.test(f.key.trim()) && req.every((x) => x.trim()) && hasOwner;
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF((x) => ({ ...x, [k]: e.target.value }));
   return (
     <FinFormDialog
@@ -289,6 +292,7 @@ export function CreateKpiDialog({ open, onClose, onCreated }: { open: boolean; o
             unit: f.unit.trim(),
             period: f.period.trim(),
             ownerUserId: f.owner?.id ?? null,
+            ownerRole: f.ownerRole || null,
             benefitId: f.benefitId || null,
             source: f.source.trim(),
             target: f.target.trim() || null,
@@ -334,7 +338,20 @@ export function CreateKpiDialog({ open, onClose, onCreated }: { open: boolean; o
         <TextField label={t('finance.kpis.red')} required maxLength={100} value={f.red} onChange={set('red')} />
       </fieldset>
       <TextAreaField label={t('finance.kpis.source')} required rows={2} maxLength={2000} value={f.source} onChange={set('source')} />
-      <UserPicker label={t('finance.kpis.owner')} value={f.owner} onChange={(owner) => setF({ ...f, owner })} />
+      <div className="grid gap-3 sm:grid-cols-2">
+        <UserPicker label={t('finance.kpis.owner')} value={f.owner} onChange={(owner) => setF({ ...f, owner })} />
+        <SelectField label={t('finance.kpis.ownerRole')} value={f.ownerRole} onChange={set('ownerRole')} data-testid="kpi-owner-role">
+          <option value="">{t('finance.kpis.noOwnerRole')}</option>
+          {KPI_OWNER_ROLES.map((r) => (
+            <option key={r} value={r}>
+              {tStatus('roleKeys', r)}
+            </option>
+          ))}
+        </SelectField>
+      </div>
+      <p className={hasOwner ? hint : 'text-xs font-medium text-danger'} data-testid="kpi-owner-hint">
+        {t('finance.kpis.ownerRequired')}
+      </p>
       <div className="grid gap-3 sm:grid-cols-2">
         <SelectField label={t('finance.kpis.benefit')} value={f.benefitId} onChange={set('benefitId')}>
           <option value="">{t('finance.kpis.noBenefit')}</option>
@@ -349,6 +366,9 @@ export function CreateKpiDialog({ open, onClose, onCreated }: { open: boolean; o
     </FinFormDialog>
   );
 }
+
+/** Roles that can own a KPI (project roles; room-only and organization-only roles excluded). */
+const KPI_OWNER_ROLES: readonly RoleKey[] = ROLE_KEYS.filter((r) => !['platform_admin', 'portfolio_admin', 'clean_team', 'external_partner_limited', 'auditor'].includes(r));
 
 /** Append-only KPI observation with its source (a correction is a new observation). */
 export function RecordObservationDialog({ kpi, open, onClose }: { kpi: KpiDetail; open: boolean; onClose: () => void }) {

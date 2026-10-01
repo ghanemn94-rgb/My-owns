@@ -106,6 +106,9 @@ export default function NewProjectPage() {
   if (!allowed) return <Main><RestrictedState /></Main>;
 
   const template = templates.data?.items.find((x) => x.id === form.templateVersionId);
+  // A new project starts on the LATEST published version of each template (REQ-ENT-009): an earlier version stays published
+  // for the projects pinned to it, which move only through an approved template upgrade.
+  const latest = (templates.data?.items ?? []).filter((x, _, all) => !all.some((y) => y.templateId === x.templateId && y.versionNo > x.versionNo));
   // Mirrors the API: a self-declared status is never "confirmed" at setup.
   const newcoVerification = form.newcoStatus === 'unconfirmed' ? 'unknown' : 'proposed';
   const errors: Partial<Record<'template' | 'code' | 'name' | 'pm' | 'newcoName', string>> = {};
@@ -218,7 +221,7 @@ export default function NewProjectPage() {
             <fieldset>
               <legend className="mb-2 text-sm text-muted">{t('portfolio.wizard.templateHint')}</legend>
               <div className="grid gap-3 sm:grid-cols-2">
-                {(templates.data?.items ?? []).map((tpl: Template) => (
+                {latest.map((tpl: Template) => (
                   <label
                     key={tpl.id}
                     className={cx(

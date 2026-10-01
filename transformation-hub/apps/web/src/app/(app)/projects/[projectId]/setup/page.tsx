@@ -12,14 +12,17 @@ import { btn, card, cx } from '@/components/ui';
 import { useI18n } from '@/i18n/provider';
 import { useProjectContext } from '@/lib/project-context';
 import { sectionAppliesTo, sectionByKey, sectionHref, type SectionKey } from '@/lib/sections';
+import { useSetup } from '@/lib/config';
 import { StepBaseline } from './_components/StepBaseline';
 import { StepCommittee } from './_components/StepCommittee';
+import { StepLaunch } from './_components/StepLaunch';
+import { StepSettings } from './_components/StepSettings';
 
-/** The eight steps of the actual-project setup wizard (spec §21). Steps 5 and 6 are run here; the others link to the
+/** The eight steps of the actual-project setup wizard (spec §21). Steps 5–8 are run here; the others link to the
  * screen where that step is done today (no state is claimed for them unless the server's setup gaps say so). */
 const STEPS = ['program', 'newco', 'sources', 'perimeter', 'committee', 'baseline', 'settings', 'launch'] as const;
 type Step = (typeof STEPS)[number];
-const IN_PAGE: readonly Step[] = ['committee', 'baseline'];
+const IN_PAGE: readonly Step[] = ['committee', 'baseline', 'settings', 'launch'];
 /** Server setup gaps (portfolio setupGaps, computed from current records) that belong to each step. */
 const STEP_GAPS: Partial<Record<Step, readonly string[]>> = {
   perimeter: ['perimeter', 'owners'],
@@ -52,11 +55,22 @@ function SetupScreen() {
     return `${sectionHref(projectId, screen.section)}${screen.suffix}`;
   };
   const stepGaps = (s: Step) => (STEP_GAPS[s] ?? []).filter((g) => gaps.includes(g));
+  // Steps 7–8 (REQ-SET-015/-016): state from the onboarding checklist (current records).
+  const setup = useSetup(projectId);
+  const setupOpen = (s: Step): number | null => {
+    const d = setup.data;
+    if (!d) return null;
+    if (s === 'settings') return d.policies.reviewedAt ? 0 : 1;
+    if (s === 'launch') return d.status === 'setup' ? d.checklist.blockingGaps.length : 0;
+    return null;
+  };
   const go = (s: Step) => router.replace(`${pathname}?step=${s}`, { scroll: false });
 
   let body: ReactNode = null;
   if (step === 'committee') body = <StepCommittee />;
   if (step === 'baseline') body = <StepBaseline />;
+  if (step === 'settings') body = <StepSettings />;
+  if (step === 'launch') body = <StepLaunch />;
 
   return (
     <>
@@ -93,6 +107,18 @@ function SetupScreen() {
                         <span className="mt-0.5 flex items-center gap-1 text-xs text-success">
                           <Check aria-hidden="true" className="size-3.5 shrink-0" />
                           {t('project.setupWizard.noGap')}
+                        </span>
+                      )
+                    ) : setupOpen(s) !== null ? (
+                      setupOpen(s)! > 0 ? (
+                        <span className="mt-0.5 flex items-center gap-1 text-xs text-warning">
+                          <CircleAlert aria-hidden="true" className="size-3.5 shrink-0" />
+                          {t('project.setupWizard.gapsOpen', { count: setupOpen(s)! })}
+                        </span>
+                      ) : (
+                        <span className="mt-0.5 flex items-center gap-1 text-xs text-success">
+                          <Check aria-hidden="true" className="size-3.5 shrink-0" />
+                          {s === 'launch' ? t('config.setup.launch.stepLaunched') : t('project.setupWizard.noGap')}
                         </span>
                       )
                     ) : !inPage ? (
@@ -147,8 +173,10 @@ function SetupScreen() {
 
 /**
  * Project setup wizard (spec §21): steps 5 (committee, delegation and quorum — REQ-SET-013) and 6 (baseline and gates —
- * REQ-SET-014) run here through the existing, audited commands. The wizard records drafts and proposals only; every
- * approval stays with the authorized approvers on the Committee Hub and the Integrated Plan.
+ * REQ-SET-014) run here through the existing, audited commands; step 7 (confidentiality, retention, integrations and AI
+ * mode — REQ-SET-015) and step 8 (launch monitoring with the gap list — REQ-SET-016, onboarding approvals REQ-SET-007)
+ * use the configuration module. The wizard records drafts and proposals only; every approval stays with the authorized
+ * approvers on their own screens.
  */
 export default function SetupPage() {
   return (

@@ -25,7 +25,7 @@ type Observation = KpiDetail['observations'][number];
 /** A KPI definition (spec §11) and its observations — append-only: a correction is a new observation. */
 export default function KpiPage() {
   const { kpiId } = useParams<{ kpiId: string }>();
-  const { t, tStatus, formatDateTime } = useI18n();
+  const { t, tStatus, hasStatus, formatDateTime } = useI18n();
   const { projectId, can } = useProjectContext();
   const loc = useLocalized();
   const q = useKpi(kpiId);
@@ -35,6 +35,24 @@ export default function KpiPage() {
   if (q.error) return isApiError(q.error) && (q.error.status === 404 || q.error.status === 403) ? <RestrictedState /> : <ErrorState error={q.error} onRetry={() => q.refetch()} />;
   const k = q.data!;
   const name = loc(k.name, k.nameAr);
+  /**
+   * QA-P5-07: a template KPI shows the Arabic of its template formula, source and thresholds (pinned template version 2+);
+   * without one (edited by a person, user-defined KPI, project on template version 1) the text is shown as recorded and
+   * marked as such. Unit, period and frequency are fixed vocabularies translated here; a free value is shown as entered.
+   */
+  const recorded = (en: string | null | undefined, ar: string | null | undefined, multiline = false) => (
+    <span data-user-text={ar ? undefined : true}>
+      <UText value={loc(en ?? '', ar) || en} multiline={multiline} />
+    </span>
+  );
+  const vocab = (enumName: 'kpiUnits' | 'kpiPeriods' | 'kpiFrequencies', v: string) =>
+    hasStatus(enumName, v) ? (
+      tStatus(enumName, v)
+    ) : (
+      <span data-user-text>
+        <UText value={v} />
+      </span>
+    );
   const columns: Column<Observation>[] = [
     { key: 'period', header: t('finance.snapshots.period'), isRowHeader: true, cell: (o) => <span dir="ltr">{o.period}</span> },
     { key: 'value', header: t('finance.kpis.observe.valueColumn'), cell: (o) => <span dir="ltr" className="tabular">{o.value ?? EM_DASH}</span> },
@@ -103,16 +121,16 @@ export default function KpiPage() {
                 ),
                 wide: true,
               },
-              { label: t('finance.kpis.formula'), value: <UText value={k.formula} multiline />, wide: true },
-              { label: t('finance.kpis.unit'), value: <UText value={k.unit} /> },
-              { label: t('finance.kpis.period'), value: <UText value={k.period} /> },
-              { label: t('finance.kpis.frequency'), value: <UText value={k.frequency} /> },
+              { label: t('finance.kpis.formula'), value: recorded(k.formula, k.formulaAr, true), wide: true },
+              { label: t('finance.kpis.unit'), value: vocab('kpiUnits', k.unit) },
+              { label: t('finance.kpis.period'), value: vocab('kpiPeriods', k.period) },
+              { label: t('finance.kpis.frequency'), value: vocab('kpiFrequencies', k.frequency) },
               { label: t('finance.kpis.direction'), value: tStatus('kpiDirections', k.direction) },
-              { label: t('finance.kpis.target'), value: <UText value={k.target} /> },
-              { label: t('finance.kpis.source'), value: <UText value={k.source} multiline />, wide: true },
-              { label: t('finance.kpis.green'), value: <UText value={k.thresholds.green} /> },
-              { label: t('finance.kpis.amber'), value: <UText value={k.thresholds.amber} /> },
-              { label: t('finance.kpis.red'), value: <UText value={k.thresholds.red} /> },
+              { label: t('finance.kpis.target'), value: <span data-user-text><UText value={k.target} /></span> },
+              { label: t('finance.kpis.source'), value: recorded(k.source, k.sourceAr, true), wide: true },
+              { label: t('finance.kpis.green'), value: recorded(k.thresholds.green, k.thresholdsAr?.green) },
+              { label: t('finance.kpis.amber'), value: recorded(k.thresholds.amber, k.thresholdsAr?.amber) },
+              { label: t('finance.kpis.red'), value: recorded(k.thresholds.red, k.thresholdsAr?.red) },
               { label: t('finance.kpis.owner'), value: k.ownerUserId ? <Person id={k.ownerUserId} people={k.people} /> : k.ownerRole ? tStatus('roleKeys', k.ownerRole) : EM_DASH },
               { label: t('finance.kpis.computation'), value: <UText value={k.computation} /> },
               {

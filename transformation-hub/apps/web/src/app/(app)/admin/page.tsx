@@ -15,6 +15,8 @@ import { cx } from '@/components/ui';
 import { useI18n, type MessageKey } from '@/i18n/provider';
 import { api } from '@/lib/api';
 import { canInOrg, qk, useMe } from '@/lib/queries';
+import { DeploymentTab } from './_components/DeploymentTab';
+import { TemplatesTab } from './_components/TemplatesTab';
 
 type AdminUser = RouteResponse<typeof identityRoutes.listUsers>['items'][number];
 const PAGE_SIZE = 25;
@@ -22,10 +24,10 @@ const PAGE_SIZE = 25;
 const TABS: { key: string; label: MessageKey; phase: string | null }[] = [
   { key: 'users', label: 'admin.tabs.users', phase: null },
   { key: 'permissions', label: 'admin.tabs.permissions', phase: 'P7' },
-  { key: 'templates', label: 'admin.tabs.templates', phase: 'P6' },
+  { key: 'templates', label: 'admin.tabs.templates', phase: null },
   { key: 'integrations', label: 'admin.tabs.integrations', phase: 'P7' },
   { key: 'identity', label: 'admin.tabs.identity', phase: 'P7' },
-  { key: 'deployment', label: 'admin.tabs.deployment', phase: 'P7' },
+  { key: 'deployment', label: 'admin.tabs.deployment', phase: null },
 ];
 
 function UsersTab() {
@@ -153,6 +155,10 @@ export default function AdminPage() {
           ) : (
             <RestrictedState showHomeLink={false} />
           )
+        ) : current.key === 'templates' ? (
+          <TemplatesTab allowed={canInOrg(me.data, 'config.template.read')} />
+        ) : current.key === 'deployment' ? (
+          <DeploymentTab allowed={canInOrg(me.data, 'admin.org_settings.manage')} />
         ) : (
           <NotImplementedYet phase={current.phase ?? ''} feature={t(current.label)} />
         )}

@@ -20,6 +20,32 @@ const str = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? 
 const int = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null);
 
 export const REFUSAL_KEYS: Readonly<Record<string, Entry>> = {
+  // Project configuration: RAG thresholds (REQ-PLN-019), template upgrades (REQ-ENT-009), setup steps 7–8 (REQ-SET-015/-016)
+  'config.rag_thresholds.amber_below_green': 'config.refusal.codes.rag_amber_below_green',
+  'config.rag_thresholds.negative': 'config.refusal.codes.rag_negative',
+  'config.rag_thresholds.slip_out_of_range': 'config.refusal.codes.rag_slip_out_of_range',
+  'config.rag_thresholds.stale_out_of_range': 'config.refusal.codes.rag_stale_out_of_range',
+  'config.rag_thresholds.not_integer': 'config.refusal.codes.rag_not_integer',
+  'config.rag_thresholds.unchanged': 'config.refusal.codes.rag_unchanged',
+  'config.rag_thresholds.proposal_pending': 'config.refusal.codes.rag_proposal_pending',
+  'config.rag_thresholds.basis_changed': 'config.refusal.codes.rag_basis_changed',
+  'config.rag_thresholds.not_proposer': 'config.refusal.codes.rag_not_proposer',
+  'config.rag_thresholds.payload_changed': 'config.refusal.codes.rag_payload_changed',
+  'rag_thresholds.invalid_transition': 'config.refusal.codes.rag_invalid_transition',
+  'config.template_upgrade.proposal_pending': 'config.refusal.codes.upgrade_proposal_pending',
+  'config.template_upgrade.preview_changed': 'config.refusal.codes.upgrade_preview_changed',
+  'config.template_upgrade.preview_stale': 'config.refusal.codes.upgrade_preview_stale',
+  'config.template_upgrade.invalid_transition': 'config.refusal.codes.upgrade_invalid_transition',
+  'config.template_upgrade.not_newer': 'config.refusal.codes.upgrade_not_newer',
+  'config.template_upgrade.not_published': 'config.refusal.codes.upgrade_not_published',
+  'config.template_upgrade.other_template': 'config.refusal.codes.upgrade_other_template',
+  'setup.launch_blocked': 'config.refusal.codes.setup_launch_blocked',
+  'setup.gaps_not_acknowledged': 'config.refusal.codes.setup_gaps_not_acknowledged',
+  'setup.not_in_setup': 'config.refusal.codes.setup_not_in_setup',
+  'setup.policies_after_launch': 'config.refusal.codes.setup_policies_after_launch',
+  'setup.retention_out_of_range': 'config.refusal.codes.setup_retention_out_of_range',
+  'setup.classification_lowered_reason_required': 'config.refusal.codes.setup_classification_lowered_reason_required',
+  'setup.pm_clearance_too_low': 'config.refusal.codes.setup_pm_clearance_too_low',
   // External authority decision (DOM-P2-12)
   'governance.external.evidence_required': 'governance.refusal.codes.external_evidence_required',
   'governance.external.evidence_other_target': 'governance.refusal.codes.external_evidence_other_target',

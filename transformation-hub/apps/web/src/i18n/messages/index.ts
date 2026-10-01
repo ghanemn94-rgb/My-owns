@@ -23,6 +23,7 @@ import enJv from './en/jv.json';
 import enFinance from './en/finance.json';
 import enAi from './en/ai.json';
 import enReports from './en/reports.json';
+import enConfig from './en/config.json';
 import arCommon from './ar/common.json';
 import arNav from './ar/nav.json';
 import arAuth from './ar/auth.json';
@@ -43,6 +44,7 @@ import arJv from './ar/jv.json';
 import arFinance from './ar/finance.json';
 import arAi from './ar/ai.json';
 import arReports from './ar/reports.json';
+import arConfig from './ar/config.json';
 
 const en = {
   common: enCommon,
@@ -65,6 +67,7 @@ const en = {
   finance: enFinance,
   ai: enAi,
   reports: enReports,
+  config: enConfig,
 };
 
 export type Messages = typeof en;
@@ -91,6 +94,7 @@ const ar = {
   finance: arFinance,
   ai: arAi,
   reports: arReports,
+  config: arConfig,
 } satisfies DeepShape<Messages>;
 
 type DeepShape<T> = { [K in keyof T]: T[K] extends string ? string : DeepShape<T[K]> };

@@ -18,6 +18,7 @@ import {
   ListChecks,
   Network,
   ShieldAlert,
+  SlidersHorizontal,
   Users,
   Wallet,
   type LucideIcon,
@@ -45,6 +46,7 @@ const ICONS: Record<SectionKey, LucideIcon> = {
   documents: FolderOpen,
   ai: Bot,
   reports: ChartColumn,
+  settings: SlidersHorizontal,
   members: Users,
 };
 

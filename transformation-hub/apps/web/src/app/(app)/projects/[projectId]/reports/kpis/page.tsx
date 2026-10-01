@@ -18,7 +18,7 @@ import { Callout } from '../_components/rp';
  * source outside the caller's access reveals nothing.
  */
 export default function KpiCataloguePage() {
-  const { t, tStatus, locale, formatDate, formatDateTime } = useI18n();
+  const { t, tStatus, hasStatus, locale, formatDate, formatDateTime } = useI18n();
   const { projectId, project, can } = useProjectContext();
   const cat = useKpiCatalogue();
   const L = useReportLabels(project.timezone);
@@ -59,8 +59,8 @@ export default function KpiCataloguePage() {
           </span>
           <span className="text-xs text-muted">
             {t('reports.kpis.labels.formula')}:{' '}
-            <span dir="auto" data-user-text="">
-              {k.formula}
+            <span dir="auto" data-user-text={k.formulaAr ? undefined : ''}>
+              {loc(k.formula, k.formulaAr)}
             </span>
           </span>
         </span>
@@ -70,18 +70,23 @@ export default function KpiCataloguePage() {
       key: 'unit',
       header: t('reports.kpis.columns.unit'),
       cell: (k) => (
-        <span className="flex flex-col text-sm" data-user-text="">
-          <span dir="auto">{k.unit}</span>
-          <span className="text-xs text-muted" dir="auto">
-            {k.period}
-          </span>
+        <span className="flex flex-col text-sm">
+          {/* QA-P5-07: fixed vocabularies are translated; a free value is shown as entered. */}
+          {hasStatus('kpiUnits', k.unit) ? <span>{tStatus('kpiUnits', k.unit)}</span> : <span dir="auto" data-user-text="">{k.unit}</span>}
+          {hasStatus('kpiPeriods', k.period) ? (
+            <span className="text-xs text-muted">{tStatus('kpiPeriods', k.period)}</span>
+          ) : (
+            <span className="text-xs text-muted" dir="auto" data-user-text="">
+              {k.period}
+            </span>
+          )}
         </span>
       ),
     },
     { key: 'owner', header: t('reports.kpis.columns.owner'), cell: (k) => (k.ownerRole ? tStatus('roleKeys', k.ownerRole) : <span className="text-muted">{EM_DASH}</span>) },
     { key: 'source', header: t('reports.kpis.columns.source'), cell: (k) => (
-        <span dir="auto" data-user-text="">
-          {k.source}
+        <span dir="auto" data-user-text={k.sourceAr ? undefined : ''}>
+          {loc(k.source, k.sourceAr)}
         </span>
       ),
     },
@@ -101,8 +106,8 @@ export default function KpiCataloguePage() {
             {(['green', 'amber', 'red'] as const).map((band) => (
               <span key={band}>
                 {t(`reports.kpis.labels.${band}`)}:{' '}
-                <bdi dir="auto" data-user-text="">
-                  {k.thresholds[band]}
+                <bdi dir="auto" data-user-text={k.thresholdsAr ? undefined : ''}>
+                  {loc(k.thresholds[band], k.thresholdsAr?.[band] ?? null)}
                 </bdi>
               </span>
             ))}
@@ -111,11 +116,14 @@ export default function KpiCataloguePage() {
       ),
     },
     { key: 'direction', header: t('reports.kpis.columns.direction'), cell: (k) => tStatus('kpiDirections', k.direction) },
-    { key: 'frequency', header: t('reports.kpis.columns.frequency'), cell: (k) => (
-        <span dir="auto" data-user-text="">
-          {k.frequency}
-        </span>
-      ),
+    { key: 'frequency', header: t('reports.kpis.columns.frequency'), cell: (k) =>
+        hasStatus('kpiFrequencies', k.frequency) ? (
+          tStatus('kpiFrequencies', k.frequency)
+        ) : (
+          <span dir="auto" data-user-text="">
+            {k.frequency}
+          </span>
+        ),
     },
     {
       key: 'verified',

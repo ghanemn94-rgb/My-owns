@@ -21,6 +21,7 @@ export type SectionKey =
   | 'documents'
   | 'ai'
   | 'reports'
+  | 'settings'
   | 'members';
 
 export interface SectionDef {
@@ -56,6 +57,13 @@ export const PROJECT_SECTIONS: readonly SectionDef[] = [
     phase: null,
   },
   { key: 'reports', segment: 'reports', permissions: ['reports.snapshot.read', 'reports.report.generate'], phase: null },
+  // Project configuration: RAG thresholds and template upgrades (REQ-PLN-019, REQ-ENT-009).
+  {
+    key: 'settings',
+    segment: 'settings',
+    permissions: ['config.project_settings.manage', 'config.project_settings.approve', 'config.template.read', 'config.template_migration.propose', 'config.template_migration.approve'],
+    phase: null,
+  },
   { key: 'members', segment: 'members', permissions: ['admin.role_assignment.read'], phase: null },
 ];
 
