@@ -1,0 +1,18 @@
+$ bash round-3/repro-copyback-escape.sh /var/tmp/mth-run.9nMXXZ/claude-0/review-sec-r4/tools/deps/install-sandbox.sh   # disposable clone @016433d, private store copy, no network
+== git status before: 0 line(s)
+== victim before: keep.txt
+== in-sandbox direct write to the real root (control): bash: line 1: .claude/rules-direct: Read-only file system rc=1 
+== installer create exit=0
+== planted paths now present in the REAL root (host side, after the installer exited):
+   absent   .claude/rules/node_modules/injected.md
+   absent   .claude/skills/node_modules/SKILL.md
+   absent   .claude/commands/node_modules/pwn.md
+   absent   .claude/agents/node_modules/evil.md
+   absent   .git/hooks/node_modules/x
+   absent   tools/gates/node_modules/x
+   absent   docs/delivery/node_modules/x
+   absent   .vscode/node_modules/x
+== git status after: 1 line(s)  (planted files are git-ignored):
+   ?? pnpm-lock.yaml
+== victim (outside the root) after: total 12 drwxr-xr-x 2 root root 4096 Oct  1 10:34 . drwxr-xr-x 3 root root 4096 Oct  1 10:34 .. -rw-r--r-- 1 root root    5 Oct  1 10:34 keep.txt 
+EXIT=0

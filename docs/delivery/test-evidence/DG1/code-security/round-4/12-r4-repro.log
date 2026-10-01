@@ -1,0 +1,45 @@
+$ bash round-4/repro-copyback-escape-r4.sh /var/tmp/mth-run.9nMXXZ/claude-0/review-sec-r4/tools/deps/install-sandbox.sh
+== installer: /var/tmp/mth-run.9nMXXZ/claude-0/review-sec-r4/tools/deps/install-sandbox.sh
+== installer create exit=0
+== plant log (inside the sandbox, copied back as part of the root node_modules):
+   planted ".claude/rules/node_modules/injected.md"
+   planted ".claude/skills/node_modules/SKILL.md"
+   planted ".claude/commands/node_modules/pwn.md"
+   planted ".claude/agents/node_modules/evil.md"
+   planted ".git/hooks/node_modules/x"
+   planted "tools/gates/node_modules/x"
+   planted "docs/delivery/node_modules/x"
+   planted ".vscode/node_modules/x"
+   planted "h\n../victim/node_modules/x"
+   planted "tools/gates/package.json"
+   planted "n\nl/package.json"
+   planted "n\nl/node_modules/x"
+   symlink zz-out -> OUTSIDE
+   packages/a/node_modules -> OUTSIDE
+   hardlink-failed EXDEV
+   direct-write-refused EROFS
+== V1 planted paths in the REAL root:
+   absent   .claude/rules/node_modules
+   absent   .claude/skills/node_modules
+   absent   .claude/commands/node_modules
+   absent   .claude/agents/node_modules
+   absent   .git/hooks/node_modules
+   absent   tools/gates/node_modules
+   absent   docs/delivery/node_modules
+   absent   .vscode/node_modules
+== V2 forged member: tools/gates/package.json absent
+== V3 newline member: 0 top-level 'n' entries; 0 newline dirs
+== V4 root node_modules/zz-out: symlink -> /var/tmp/mth-run.9nMXXZ/claude-0/cbx4.uytVFA/outside (copied as a link, not followed)
+== V5 packages/a/node_modules: absent (symlink source skipped)
+== V6 hardlink: absent
+== REAL root: paths new since before (excluding .git, root node_modules, packages/a/node_modules):
+   14a15
+   > ./pnpm-lock.yaml
+   (end of diff)
+== git status after:
+   ?? pnpm-lock.yaml
+   !! node_modules/
+== outside the root (victim/, outside/, siblings): changes:
+   NONE (byte-identical)
+   victim: keep.txt   outside: sentinel.txt 
+EXIT=0

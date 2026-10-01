@@ -1,0 +1,13 @@
+# scratch pnpm workspace (root + member packages/a), local file: deps only (no network)
+$ install-sandbox.sh --root <scratch> create
+create exit=0
+node_modules/lib
+packages/a/node_modules/lib
+root require(lib) = 42
+member require(lib) = 42
+$ install-sandbox.sh --root <scratch> frozen   (after deleting node_modules)
+frozen exit=0
+node_modules/lib
+packages/a/node_modules/lib
+member require(lib) = 42
+lockfile unchanged by frozen

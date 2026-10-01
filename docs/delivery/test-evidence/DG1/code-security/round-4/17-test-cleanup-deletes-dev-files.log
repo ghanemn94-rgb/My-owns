@@ -1,0 +1,18 @@
+# disposable clone 016433d: seed a developer's pre-existing untracked files, then run the acceptance test
+before:
+-rw-r--r-- 1 root root 18 Oct  1 10:41 .mcp.json
+-rw-r--r-- 1 root root 21 Oct  1 10:41 .vscode/settings.json
+-rw-r--r-- 1 root root 17 Oct  1 10:41 CLAUDE.local.md
+-rw-r--r-- 1 root root 12 Oct  1 10:41 apps/api/CLAUDE.md
+$ bash tools/deps/tests/install-sandbox.test.sh
+PASS  AC-8 agent-config surfaces (CLAUDE.local.md, .mcp.json, nested CLAUDE.md, .vscode) cannot be created
+PASS  AC-9 a planted non-member node_modules (evil-ctrl/node_modules) is not copied back
+install-sandbox acceptance: 12 passed, 1 failed
+after:
+ls: cannot access '.vscode/settings.json': No such file or directory
+ls: cannot access 'CLAUDE.local.md': No such file or directory
+ls: cannot access '.mcp.json': No such file or directory
+ls: cannot access 'apps/api/CLAUDE.md': No such file or directory
+source lines:
+124:[ -d "$ROOT/tools.mth-ac7" ] && mv "$ROOT/tools.mth-ac7" "$ROOT/tools" 2>/dev/null
+139:for p in CLAUDE.local.md .mcp.json apps/api/CLAUDE.md .vscode; do rm -rf "$ROOT/$p" 2>/dev/null; done

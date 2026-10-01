@@ -1,0 +1,7 @@
+$ node probe.mjs   # node v22.22.2, scratch dir
+loaded via computed-key AsyncFunction: internal-of-other-module
+EXIT=0
+const f = async () => {};
+const F = f["constr" + "uctor"];                       // the computed-key form the lint misses
+const m = await F("s", "return import(s)")(new URL("./other.mjs", import.meta.url).href);
+console.log("loaded via computed-key AsyncFunction:", m.secret);

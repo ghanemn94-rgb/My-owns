@@ -1,0 +1,33 @@
+$ bash round-4/plant-f121.sh $TMPDIR/review-sec-r4
+# clone HEAD 016433db8bb24e870fa4190856a2f188b30bd70d
+stdout | apps/api/src/zz-plant-f121.test.ts > F-DG1-121 plants (round 4) > reports every loader variant, and no clean control
+CAUGHT  r3-alias-const  ["code evaluation via .constructor (aliased) (line 1)"]
+CAUGHT  r3-destructure  ["code evaluation via a destructured constructor (line 1)"]
+CAUGHT  r3-reflect-construct  ["code evaluation via .constructor (aliased) (line 1)"]
+CAUGHT  r3-getPrototypeOf  ["code evaluation via .constructor (aliased) (line 1)"]
+CAUGHT  r4-assign-pattern  ["code evaluation via a destructured constructor (line 1)"]
+CAUGHT  r4-reflect-get-literal  ["code evaluation via the \"constructor\" key as a value (line 1)"]
+MISSED  r4-computed-concat-key  []
+MISSED  r4-reflect-get-concat  []
+MISSED  r4-template-key  []
+MISSED  r4-descriptor-scan  []
+clean   class-ctor-decl  []
+clean   plain-code  []
+   × F-DG1-121 plants (round 4) > reports every loader variant, and no clean control 28ms
+     → expected [ 'r4-computed-concat-key', …(3) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |unit-node| apps/api/src/zz-plant-f121.test.ts > F-DG1-121 plants (round 4) > reports every loader variant, and no clean control
+AssertionError: expected [ 'r4-computed-concat-key', …(3) ] to deeply equal []
+      Tests  1 failed (1)
+plant-f121.test.ts exit=1
+# planted apps/api/src/modules/access/zz-planted.ts (alias) -> architecture.test.ts must FAIL:
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+[31m+   "modules/access/zz-planted.ts: code evaluation via .constructor (aliased) (line 2) bypasses the module-interface check",[39m
+      Tests  1 failed | 53 passed (54)
+architecture.test.ts with alias plant: exit=1
+# planted apps/api/src/modules/access/zz-planted.ts (computed-concat) -> architecture.test.ts must FAIL:
+      Tests  54 passed (54)
+architecture.test.ts with computed-concat plant: exit=0
+      Tests  54 passed (54)
+architecture.test.ts after removing plants: exit=0
+EXIT=0
