@@ -1,0 +1,50 @@
+# 2026-10-01T22:28:56Z clone=/var/tmp/mth-run.j1hofw/claude-0/review-r3 HEAD=4f312cc24bb091bd917a1a001a5643176a9eb76d node=v24.21.0 pnpm=10.33.0
+$ pnpm test
+
+> mobily-transformation-hub@0.1.0 test /var/tmp/mth-run.j1hofw/claude-0/review-r3
+> vitest run --project unit-node --project unit-web
+
+
+ RUN  v3.2.4 /var/tmp/mth-run.j1hofw/claude-0/review-r3
+
+ ✓ |unit-web| src/components/States.test.tsx (15 tests) 682ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts (15 tests) 24ms
+ ✓ |unit-web| src/app/app.test.tsx (16 tests) 2641ms
+   ✓ bilingual shell > switches to English LTR and persists the preference with If-Match  363ms
+   ✓ bilingual shell > shows all fourteen areas to an administrator  417ms
+   ✓ bilingual shell > hides Administration from a Workstream Lead, and the admin route shows no-permission  367ms
+   ✓ transformations > lists transformations with a sortable code column and removable filter chips  400ms
+ ✓ |unit-web| src/lib/lib.test.ts (18 tests) 47ms
+ ✓ |unit-web| src/i18n/i18n.test.ts (11 tests) 17ms
+ ✓ |unit-web| src/i18n/glossary.test.ts (8 tests) 7ms
+ ✓ |unit-web| src/styles/styles.test.ts (6 tests) 16ms
+ ✓ |unit-node| apps/api/src/server.test.ts (6 tests) 158ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (133 tests) 1939ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  1080ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)  327ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reporting.test.ts (4 tests) 120ms
+ ✓ |unit-node| apps/api/src/modules/kpi/kpi.test.ts (5 tests) 177ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx (21 tests) 8424ms
+   ✓ after create (F-DG1-004) > shows the created record when the server lets the creator read it  888ms
+   ✓ after create (F-DG1-004) > explains, in English, that the draft was created but cannot be opened (server 404), instead of 'Not found'  321ms
+   ✓ derived creator assignment on the audit trail (F-DG1-008) > an action the catalogue does not know stays readable and is explicitly marked (en and ar)  337ms
+   ✓ effective permissions refresh after create (F-DG1-210) > English: Edit, Archive and the audit trail appear after create, without a reload  606ms
+   ✓ effective permissions refresh after create (F-DG1-210) > Arabic (RTL): the same controls and the audit trail appear after create, without a reload  862ms
+   ✓ effective permissions refresh after create (F-DG1-210) > does not over-grant: if the refreshed server answer adds nothing, Archive and the audit trail stay hidden  398ms
+   ✓ effective permissions refresh after create (F-DG1-210) > a failed /me refresh never blocks the navigation; the UI stays fail-safe (no controls offered)  3222ms
+ ✓ |unit-node| apps/api/src/modules/workflows/workflows.test.ts (5 tests) 128ms
+ ✓ |unit-node| packages/config/src/load.test.ts (17 tests) 79ms
+ ✓ |unit-node| packages/design-tokens/src/tokens.test.ts (15 tests) 80ms
+ ✓ |unit-node| packages/shared/src/schemas/schemas.test.ts (2 tests) 9ms
+ ✓ |unit-node| apps/api/src/modules/admin/branding.test.ts (4 tests) 42ms
+ ✓ |unit-node| packages/db/src/seed.test.ts (4 tests) 12ms
+ ✓ |unit-node| apps/api/src/modules/access/rules.test.ts (12 tests) 7ms
+ ✓ |unit-node| apps/api/src/modules/platform/platform.test.ts (7 tests) 17ms
+ ✓ |unit-node| apps/api/src/modules/transformations/transitions.test.ts (2 tests) 4ms
+
+ Test Files  21 passed (21)
+      Tests  326 passed (326)
+   Start at  22:28:57
+   Duration  12.69s (transform 2.53s, setup 0ms, collect 9.97s, tests 14.63s, environment 5.45s, prepare 2.13s)
+
+# exit_status=0

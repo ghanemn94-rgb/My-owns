@@ -1,0 +1,9 @@
+# cmd: tools/deps/install-sandbox.sh --root $TMPDIR/ac1 create   (AC-1 effect reproduced standalone to identify the failure cause; package.json = {dependencies: {is-number: 7.0.0}})
+# cwd: <disposable clone of candidate 18e15071 @ 40dbd24> ; node v22.22.2 ; 2026-10-01T22:59:41Z
+# note: is-number@7.0.0 IS present in the offline pnpm store copy, but 'create' resolves metadata from the live registry, which is unreachable from the reviewer sandbox (residual D-057)
+ WARN  GET https://registry.npmjs.org/is-number error (ECONNREFUSED). Will retry in 10 seconds. 2 retries left.
+ WARN  GET https://registry.npmjs.org/is-number error (ECONNREFUSED). Will retry in 1 minute. 1 retries left.
+ ERR_PNPM_META_FETCH_FAIL  GET https://registry.npmjs.org/is-number: request to https://registry.npmjs.org/is-number failed, reason: connect ECONNREFUSED 127.0.0.1:3128
+
+This error happened while installing a direct dependency of $TMPDIR/mth-ws.5XkvGF
+# exit=1

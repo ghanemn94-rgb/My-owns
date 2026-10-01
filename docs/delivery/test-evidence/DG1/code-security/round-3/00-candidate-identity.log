@@ -1,0 +1,76 @@
+# 2026-10-01T22:34:32Z main checkout (read-only) and disposable clone
+$ git rev-parse HEAD
+4f312cc24bb091bd917a1a001a5643176a9eb76d
+$ node tools/gates/candidate.mjs --stage DG1   (main checkout)
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:18e150714d29fa67aeaf28e817bb500d2db6191c88cde3ea680b3a64c8056f5b","files":394}
+$ (clone @4f312cc) node tools/gates/candidate.mjs --stage DG1
+{"stage":"DG1","source":"HEAD","candidate_id":"sha256:18e150714d29fa67aeaf28e817bb500d2db6191c88cde3ea680b3a64c8056f5b","files":394}
+$ manifest diff: round-2 e6979e12111aeb14 vs round-3 18e150714d29fa67 (path,sha256,mode)
+entries 394 394
+CHANGED apps/web/e2e/journeys.spec.ts
+$ git diff --stat 485e91f..4f312cc -- . ":!docs/delivery"
+ apps/web/e2e/journeys.spec.ts | 31 ++++++++++++++++++++++++++++++-
+ 1 file changed, 30 insertions(+), 1 deletion(-)
+$ git diff 485e91f..4f312cc -- apps/web/e2e/journeys.spec.ts
+diff --git a/apps/web/e2e/journeys.spec.ts b/apps/web/e2e/journeys.spec.ts
+index af651b4..4717d48 100644
+--- a/apps/web/e2e/journeys.spec.ts
++++ b/apps/web/e2e/journeys.spec.ts
+@@ -115,6 +115,28 @@ async function signIn(page: Page, lang: Lang, username: string) {
+   await ensureLanguage(page, lang);
+ }
+ 
++/**
++ * Waits until the shell has (re)mounted after a document load and can take keyboard input deterministically
++ * (F-DG1-232): the primary navigation and the page heading are visible, the document has the focus, and no element
++ * is focused yet, so the next Tab starts at the top of the document. Nothing is clicked (a click would move the
++ * sequential-focus starting point), and no assertion about the focus order is weakened.
++ */
++async function expectShellReadyForKeyboard(page: Page, lang: Lang, nav: Locator) {
++  await expect(page.getByTestId("wordmark")).toBeVisible();
++  await expect(nav).toBeVisible();
++  await expect(navLink(nav, lang, "myWork")).toHaveAttribute("aria-current", "page");
++  await expect(page.locator("main#main h1")).toBeVisible();
++  await page.bringToFront();
++  await expect
++    .poll(() =>
++      page.evaluate(() => ({
++        hasFocus: document.hasFocus(),
++        nothingFocused: document.activeElement === null || document.activeElement === document.body,
++      })),
++    )
++    .toEqual({ hasFocus: true, nothingFocused: true });
++}
++
+ async function signOut(page: Page, lang: Lang) {
+   await page.getByRole("button", { name: tr(lang, "auth.signOut"), exact: true }).click();
+   await page.waitForURL("**/login**");
+@@ -168,8 +190,15 @@ test("shell: navigation, language persistence and My Work (Transformation Office
+   await page.reload();
+   await expect(page.locator("html")).toHaveAttribute("lang", lang);
+   // Keyboard: the skip link is the first focusable element and moves focus to <main>.
++  // F-DG1-232: after the reload the shell mounts asynchronously (session and profile requests). A Tab pressed before
++  // it has mounted lands nowhere and the assertion below raced. Wait until the shell is mounted again and the
++  // document holds the focus with nothing focused yet, so the first Tab starts from the top of the document.
++  await expectShellReadyForKeyboard(page, lang, nav);
+   await page.keyboard.press("Tab");
+-  await expect(page.getByRole("link", { name: tr(lang, "common.a11y.skipToContent"), exact: true })).toBeFocused();
++  const skipLink = page.getByRole("link", { name: tr(lang, "common.a11y.skipToContent"), exact: true });
++  await expect(skipLink).toBeFocused();
++  await page.keyboard.press("Enter");
++  await expect(page.locator("main#main")).toBeFocused();
+   // A planned area is labelled planned.
+   await navLink(nav, lang, "governance").click();
+   await expect(
+# exit_status=0
+$ node tools/gates/candidate.mjs --stage DG1 --ref 40dbd2400c0f0dfbc6704c7fc40d23be714239d6  (manifest source_commit)
+{"stage":"DG1","source":"40dbd2400c0f0dfbc6704c7fc40d23be714239d6","candidate_id":"sha256:18e150714d29fa67aeaf28e817bb500d2db6191c88cde3ea680b3a64c8056f5b","files":394}
+$ git diff --stat 40dbd24 4f312cc  (only META_EXCLUDES paths: assignments/, candidates/, stages.json)
+ .../DG1/round-3/code-security-reviewer.md          |   19 +
+ .../assignments/DG1/round-3/domain-reviewer.md     |   16 +
+ .../assignments/DG1/round-3/qa-verifier.md         |   19 +
+ .../assignments/DG1/round-3/release-auditor.md     |   23 +
+ .../candidates/DG1/18e150714d29fa67.manifest.json  | 1988 ++++++++++++++++++++
+ docs/delivery/stages.json                          |   30 +-
+ 6 files changed, 2091 insertions(+), 4 deletions(-)
+# exit_status=0

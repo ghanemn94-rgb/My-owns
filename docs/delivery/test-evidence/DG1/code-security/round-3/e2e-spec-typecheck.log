@@ -1,0 +1,8 @@
+# 2026-10-01T22:35:06Z clone @4f312cc24bb091bd917a1a001a5643176a9eb76d node=v22.22.2
+# reviewer-added ad-hoc check: apps/web/e2e/ is outside apps/web/tsconfig.json include, so pnpm -r typecheck does not cover the changed spec. Disposable tsconfig (in $TMPDIR, not in the candidate); DOM lib added because page.evaluate callbacks run in the browser:
+{ "extends": "/var/tmp/mth-run.j1hofw/claude-0/review-r3/tsconfig.base.json", "compilerOptions": { "noEmit": true, "lib": ["ES2023", "DOM", "DOM.Iterable"], "types": ["node"], "typeRoots": ["/var/tmp/mth-run.j1hofw/claude-0/review-r3/node_modules/@types"], "rootDir": "/var/tmp/mth-run.j1hofw/claude-0/review-r3" }, "include": ["/var/tmp/mth-run.j1hofw/claude-0/review-r3/apps/web/e2e/**/*.ts", "/var/tmp/mth-run.j1hofw/claude-0/review-r3/playwright.config.ts"] }
+$ node_modules/.bin/tsc -p $TMPDIR/tsconfig.e2e-review.json --listFilesOnly | grep -v node_modules
+/var/tmp/mth-run.j1hofw/claude-0/review-r3/apps/web/e2e/journeys.spec.ts
+/var/tmp/mth-run.j1hofw/claude-0/review-r3/playwright.config.ts
+$ node_modules/.bin/tsc -p $TMPDIR/tsconfig.e2e-review.json
+# exit_status=0

@@ -8488,7 +8488,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG1/round-2/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T22:02:07Z",
@@ -8499,10 +8499,66 @@
           "at": "2026-10-01T22:23:18Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at ee2dfcf91f2fdb421295ae269fc9848ee901dee7"
+        },
+        {
+          "at": "2026-10-01T23:05:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 3: PASS"
         }
       ],
       "fix_revision": "ee2dfcf91f2fdb421295ae269fc9848ee901dee7",
-      "fix_summary": "e2e shell journey now waits for the shell to remount and the document to hold focus (nothing focused) after page.reload() before pressing Tab, so the skip-link focus assertion is deterministic; the assertion is strengthened (Tab->skip link, Enter->main#main focused), not weakened. Test-only. Verified: 120 green repeats (Node22, Node22-under-load, Node24) + full e2e EN+AR; unit 326/326."
+      "fix_summary": "e2e shell journey now waits for the shell to remount and the document to hold focus (nothing focused) after page.reload() before pressing Tab, so the skip-link focus assertion is deterministic; the assertion is strengthened (Tab->skip link, Enter->main#main focused), not weakened. Test-only. Verified: 120 green repeats (Node22, Node22-under-load, Node24) + full e2e EN+AR; unit 326/326.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-QA-R3-qa-verifier-20261001T222556Z-616f0029",
+          "session_id": "616f0029-ec84-4c78-95ba-09df8b88d037"
+        },
+        "at": "2026-10-01T23:05:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/qa/round-3/00-f232-fix-diff.txt",
+          "docs/delivery/test-evidence/DG1/qa/round-3/14-e2e-journeys-run1.log",
+          "docs/delivery/test-evidence/DG1/qa/round-3/14b-e2e-shell-repeat20-both-locales.log",
+          "docs/delivery/test-evidence/DG1/qa/round-3/14c-e2e-shell-repeat20-both-locales-run2-noload.log",
+          "docs/delivery/test-evidence/DG1/qa/round-3/14d-e2e-shell-repeat20-both-locales-under-load.log",
+          "docs/delivery/test-evidence/DG1/qa/round-3/14e-CONTROL-prefix-spec-shell-repeat20-under-load.log",
+          "docs/delivery/test-evidence/DG1/qa/round-3/screenshots/14e-CONTROL-prefix-spec-skiplink-focus-fail-en.png",
+          "docs/delivery/test-evidence/DG1/qa/round-3/14f-e2e-journeys-run2.log",
+          "docs/delivery/test-evidence/DG1/qa/round-3/14g-e2e-journeys-full-under-load.log",
+          "docs/delivery/test-evidence/DG1/qa/round-3/15-e2e-qa-acceptance.log",
+          "apps/web/e2e/journeys.spec.ts#L118-L138"
+        ],
+        "note": "Verified on candidate sha256:18e150714d29fa67aeaf28e817bb500d2db6191c88cde3ea680b3a64c8056f5b (disposable clone at 40dbd24; ID recomputed there and on the working tree). Fix inspected: between round-2 candidate 485e91f and 40dbd24 the ONLY non-delivery-record change is apps/web/e2e/journeys.spec.ts. After page.reload() the test now calls expectShellReadyForKeyboard(): wordmark + primary nav visible, My Work link aria-current=page, main#main h1 visible, then polls until document.hasFocus() and nothing is focused, before pressing Tab. Nothing is clicked, so the focus starting point is unchanged. The assertion is strengthened, not weakened: Tab -> skip link toBeFocused, then Enter -> main#main toBeFocused. Execution (Node 22, PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers, retries 0, --workers=1): full EN+AR journeys 18/18 three times (one of them under CPU load), 0 skipped / 0 'did not run'; qa-stack e2e 22/22; shell journey --repeat-each=20 over both locales 40/40 (unloaded), 40/40 (second unloaded run), and 40/40 under real CPU load (4 parallel unit-suite loops on 4 CPUs, loadavg 17-20, monitored in the log). In total, 128 executions of the fixed shell journey (42 of them loaded) with 0 failures. Sensitivity control: the PRE-FIX spec from 485e91f, run temporarily in the disposable clone under the same load and the same 20x/both-locale settings, failed 1/40 at the original toBeFocused assertion (line 172). So this harness and load still expose the race, and the fixed spec does not show it. The clone was restored afterwards and the candidate ID re-verified. The fix is complete. Note: one intended loaded run (14c) turned out unloaded because the background load had been reaped; it is labelled as such in its log and counted as unloaded."
+      }
+    },
+    {
+      "id": "F-DG1-147",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-033",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The Playwright e2e specs (apps/web/e2e/**, playwright.config.ts) are outside every typecheck target, so the changed journeys.spec.ts is never type-checked by any gate or CI step",
+      "reproduction": "apps/web/tsconfig.json:14 has \"include\": [\"src\", \"test\", \"vite.config.ts\", \"vitest.config.ts\"]. There is no root tsconfig.json (only tsconfig.base.json) and no apps/web/e2e/tsconfig*.json, so `pnpm -r typecheck` (which runs `tsc -p tsconfig.json` per package) never compiles apps/web/e2e/journeys.spec.ts or playwright.config.ts. Playwright transpiles specs without type-checking, and ESLint (which does cover the file) does not report type errors. Failure scenario: a spec change such as passing a wrong type to a helper (e.g. `expectShellReadyForKeyboard(page, nav, lang)` with arguments swapped, or calling a non-existent Locator method on a branch not reached in a given run) passes typecheck, lint and the CI typecheck job, and is only caught (or not) at e2e run time. The reviewer type-checked the round-3 change with a disposable tsconfig outside the candidate (ES2023 + DOM lib, types node): it passes (exit 0), so this is a coverage gap, not a current defect. Evidence: docs/delivery/test-evidence/DG1/code-security/round-3/e2e-spec-typecheck.log.",
+      "expected": "The e2e specs and playwright.config.ts are type-checked by `pnpm -r typecheck` and so by CI, e.g. through an apps/web/e2e/tsconfig.json (lib ES2023 + DOM, types node) referenced from apps/web's typecheck script or from a root typecheck step.",
+      "actual": "No typecheck target includes apps/web/e2e/**. A type error in the e2e specs passes every static gate check. The current spec type-checks cleanly when the reviewer checks it ad hoc.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-3/e2e-spec-typecheck.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-3/typecheck.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-3/diff-scope-scan.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-3/code-security-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T22:36:54Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG1 round 3 (T-DG1-REV-SEC-R3). Pre-existing coverage gap noticed while reviewing the test-only F-DG1-232 change, not a regression. Proposed ID in the code-security range; the orchestrator may renumber."
+        }
+      ]
     }
   ]
 }

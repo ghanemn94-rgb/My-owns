@@ -1,0 +1,48 @@
+# cmd: apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e --workers=1 --reporter=list --output=$TMPDIR/pw-r6
+# cwd: <disposable clone of candidate 18e15071 @ 40dbd24> ; node v22.22.2 ; date 2026-10-01T22:49:12Z
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applied 9 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+{"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+
+Running 18 tests using 1 worker
+
+  ✓   1 [chromium-en] › apps/web/e2e/journeys.spec.ts:156:1 › sign-in page: Arabic RTL by default, provisional wordmark, dev form in dev mode (2.3s)
+  ✓   2 [chromium-en] › apps/web/e2e/journeys.spec.ts:178:1 › shell: navigation, language persistence and My Work (Transformation Office) (3.2s)
+  ✓   3 [chromium-en] › apps/web/e2e/journeys.spec.ts:211:1 › create a modular transformation with an entry phase (5.3s)
+  ✓   4 [chromium-en] › apps/web/e2e/journeys.spec.ts:251:1 › list: sort, filter chips, column selection and pagination controls (4.4s)
+  ✓   5 [chromium-en] › apps/web/e2e/journeys.spec.ts:291:1 › edit: a concurrent change gives a 409 conflict with compare and re-apply (3.1s)
+  ✓   6 [chromium-en] › apps/web/e2e/journeys.spec.ts:325:1 › archive with a mandatory reason makes the record read-only (3.6s)
+  ✓   7 [chromium-en] › apps/web/e2e/journeys.spec.ts:346:1 › administration screens (access + technical administrator) (8.2s)
+  ✓   8 [chromium-en] › apps/web/e2e/journeys.spec.ts:384:1 › a user without roles sees no Administration and no business records (2.8s)
+  ✓   9 [chromium-en] › apps/web/e2e/journeys.spec.ts:400:1 › a business-unit Lead creates a record: Edit/Archive and the audit trail appear without a reload (F-DG1-210), the derived grant localized (F-DG1-008) (5.3s)
+  ✓  10 [chromium-ar] › apps/web/e2e/journeys.spec.ts:156:1 › sign-in page: Arabic RTL by default, provisional wordmark, dev form in dev mode (2.0s)
+  ✓  11 [chromium-ar] › apps/web/e2e/journeys.spec.ts:178:1 › shell: navigation, language persistence and My Work (Transformation Office) (3.2s)
+  ✓  12 [chromium-ar] › apps/web/e2e/journeys.spec.ts:211:1 › create a modular transformation with an entry phase (5.0s)
+  ✓  13 [chromium-ar] › apps/web/e2e/journeys.spec.ts:251:1 › list: sort, filter chips, column selection and pagination controls (4.8s)
+  ✓  14 [chromium-ar] › apps/web/e2e/journeys.spec.ts:291:1 › edit: a concurrent change gives a 409 conflict with compare and re-apply (3.2s)
+  ✓  15 [chromium-ar] › apps/web/e2e/journeys.spec.ts:325:1 › archive with a mandatory reason makes the record read-only (3.7s)
+  ✓  16 [chromium-ar] › apps/web/e2e/journeys.spec.ts:346:1 › administration screens (access + technical administrator) (8.4s)
+  ✓  17 [chromium-ar] › apps/web/e2e/journeys.spec.ts:384:1 › a user without roles sees no Administration and no business records (2.8s)
+  ✓  18 [chromium-ar] › apps/web/e2e/journeys.spec.ts:400:1 › a business-unit Lead creates a record: Edit/Archive and the audit trail appear without a reload (F-DG1-210), the derived grant localized (F-DG1-008) (5.1s)
+
+  18 passed (1.4m)
+# exit=0
+## CPU load monitor
+22:48:52 loadavg 7.73 14.73 11.20 vitest_procs=3
+22:49:07 loadavg 9.59 14.79 11.28 vitest_procs=22
+22:49:22 loadavg 11.79 15.02 11.41 vitest_procs=19
+22:49:37 loadavg 13.17 15.15 11.51 vitest_procs=23
+22:49:52 loadavg 15.50 15.57 11.70 vitest_procs=22
+22:50:07 loadavg 16.38 15.77 11.83 vitest_procs=7
+22:50:22 loadavg 17.64 16.09 12.00 vitest_procs=21
+22:50:37 loadavg 17.75 16.18 12.10 vitest_procs=22
+## completed load-loop iterations: 14

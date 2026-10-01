@@ -1,0 +1,10 @@
+# 2026-10-01T22:35:48Z clone @4f312cc24bb091bd917a1a001a5643176a9eb76d node=v22.22.2
+$ node_modules/.bin/eslint --max-warnings=0 --format stylish apps/web/e2e/journeys.spec.ts
+# eslint exit_status=0
+$ node -e "(eslint) calculateConfigForFile ignored?"
+isPathIgnored(apps/web/e2e/journeys.spec.ts)= false
+$ git diff 485e91f..4f312cc -- apps/web/e2e/journeys.spec.ts | grep -nE "^\+" | grep -iE "https?://|secret|password|token|api[_-]?key|eval\(|innerHTML|child_process|exec\(" || true
+# matches above (none expected); grep exit_status=1 (1 = no match)
+$ git diff --name-only 485e91f..4f312cc -- apps packages deploy scripts tools licenses .github docs/api docs/architecture
+apps/web/e2e/journeys.spec.ts
+# exit_status=0

@@ -1,0 +1,48 @@
+# commit 4f312cc24bb091bd917a1a001a5643176a9eb76d 2026-10-01T22:33:16Z
+$ git diff --stat 485e91f 40dbd24 -- . ":!docs/delivery"
+ apps/web/e2e/journeys.spec.ts | 31 ++++++++++++++++++++++++++++++-
+ 1 file changed, 30 insertions(+), 1 deletion(-)
+$ grep PHASES/PRODUCT_GATES/CLOSURE_GATE packages/shared/src/constants.ts
+5:export const PHASES = ["diagnose", "define", "design", "mobilize", "transform", "realize"] as const;
+6:export type Phase = (typeof PHASES)[number];
+$ grep playbook.md B0009 B0014 B0021 B0023
+33:<!-- B0009 table -->
+52:Benefits before closure: an initiative is not complete when delivered; it is complete when value is realized and sustained. <!-- B0014 -->
+83:<!-- B0021 table -->
+96:<!-- B0023 table -->
+$ grep -c 0078FF packages/design-tokens/src/tokens.json
+2:  "$comment": "Single design-token source (ADR-0009). PROVISIONAL values from master prompt §15 (REQ-S15-002). They are NOT verified or official Mobily colours; #0078FF is a provisional brand token
+5:    "brand.primary": { "value": "#0078FF", "purpose": "Primary accents and selected elements", "provisional": true },
+18:    "$comment": "Derived from the seeded tokens by a rule (REQ-S15-003). `value` is the result of the rule and a test re-derives it, so a change to a seed without regenerating fails. #0078FF itself
+220:        "why": "white small text on #0078FF is about 4.09:1; action buttons use action.primary instead"
+$ grep -rn PRODUCT_GATES|CLOSURE_GATE apps packages (src)
+apps/api/src/modules/transformations/routes.ts:65: * This is a PRODUCT gate (G6), unrelated to the engineering delivery gates DG0-DG7.
+apps/api/src/modules/workflows/index.ts:10:// delivery gates DG0-DG7 (G6 never implies DG7, and the reverse). Until the G6 workflow exists, the transformations
+apps/api/src/modules/workflows/index.ts:15:/** The playbook's product gates (business approvals), in order. Not the engineering gates DG0-DG7. */
+apps/api/src/modules/workflows/index.ts:16:export const PRODUCT_GATES = ["G1", "G2", "G3", "G4", "G5", "G6"] as const;
+apps/api/src/modules/workflows/index.ts:17:export type ProductGate = (typeof PRODUCT_GATES)[number];
+apps/api/src/modules/workflows/index.ts:20:export const CLOSURE_GATE: ProductGate = "G6";
+$ playbook B0021/B0023 tables
+<!-- B0021 table -->
+| 1 | DIAGNOSE | Establish fact base | Current state, root causes, value pools |
+|---|---|---|---|
+| 2 | DEFINE | Set direction | North Star, outcomes, KPIs, guardrails |
+| 3 | DESIGN | Create target state | Target Operating Model, capabilities, journeys |
+| 4 | MOBILIZE | Build execution portfolio | Initiatives, business cases, roadmap, resourcing |
+| 5 | TRANSFORM | Execute & govern | Operating system, workstreams, decisions, adoption |
+| 6 | REALIZE | Prove & sustain value | Benefits, BAU handover, continuous improvement |
+
+
+Stage gates <!-- B0022 -->
+
+
+<!-- B0023 table -->
+| Gate | Decision question | Evidence required |
+|---|---|---|
+| G1 - Case for Change | Do we agree on the problem/opportunity and value at stake? | Diagnostic, baseline, root causes, value pools. |
+| G2 - Direction | Are outcomes specific enough to steer decisions? | North Star, outcome tree, KPI definitions, guardrails. |
+| G3 - Target State | Do we know what must be different operationally? | Target Operating Model, capability gaps, future journeys. |
+| G4 - Mobilization | Is the portfolio executable and value-backed? | Initiative cards, business cases, roadmap, owners, capacity. |
+| G5 - Scale | Are pilots/results sufficient to scale? | Performance evidence, adoption, risk closure, decision log. |
+| G6 - Sustain | Is value embedded in BAU? | Benefits evidence, ownership transfer, controls, continuous improvement backlog. |
+

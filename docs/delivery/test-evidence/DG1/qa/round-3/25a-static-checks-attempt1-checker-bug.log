@@ -1,0 +1,97 @@
+# VOID for REQ-S15-002 only (qa-verifier checker bug): the token walker looked for a nested path, but tokens.json keys are flat under "color" ("brand.primary": {...}); the BAD lines are the checker, not the product. Fixed script rerun: 25-static-requirement-checks.log.
+# static requirement checks; clone @ 40dbd2400c0f0dfbc6704c7fc40d23be714239d6; 2026-10-01T23:01:24Z
+## REQ-S15-006: image/logo assets tracked (excluding trading_agent/, docs/delivery/test-evidence/)
+(end of list)
+## REQ-S15-006: files named *logo* / *mobily*
+(end)
+## REQ-S15-006: Wordmark component is text (no <img>/<svg>) and labelled provisional
+files: apps/web/src/components/Wordmark.tsx
+img/svg matches: 0
+1:// Provisional TEXT wordmark (REQ-S15-006, ADR-0009 §5). No official Mobily logo has been supplied, so the header
+2:// shows the configurable product name as plain text with a visible "Provisional" badge. No logo image, glyph or
+21:        className="badge badge--provisional"
+22:        title={t("common.brand.provisionalHint")}
+23:        data-testid="provisional-badge"
+## REQ-S15-002: seeded token values (expect the seven exact values, provenance provisional)
+BAD brand.primary #0078FF :: null
+BAD brand.deep #003B73 :: null
+BAD surface.page #F5F8FC :: null
+BAD surface.card #FFFFFF :: null
+BAD text.primary #142438 :: null
+BAD text.secondary #526174 :: null
+BAD border.default #DCE5EF :: null
+provisional mentions in tokens.json: 52
+exit=1
+## REQ-S15-002: positive claims of official/certified Mobily brand compliance in web locale strings (expect none; only negations)
+apps/web/src/i18n/en/auth.json:12:    "token_invalid": "The sign-in could not be verified. Please try again.",
+apps/web/src/i18n/en/common.json:5:    "provisionalHint": "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.",
+apps/web/src/i18n/en/common.json:6:    "provisionalNotice": "Branding is provisional: the text wordmark and colours are placeholders, not official Mobily brand assets."
+apps/web/src/i18n/en/common.json:120:    "brandBody": "No official Mobily logo or verified brand colours have been supplied. The header shows a provisional text wordmark, and the colours (including #0078FF) are provisional design tokens that can be replaced through Branding Settings once official values are approved.",
+apps/web/src/i18n/en/common.json:123:    "methodBody": "The product operationalizes the Business Transformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with custom extensions. It is not an official PMI standard, and this product is not certified by PMI or any other body.",
+## REQ-S15-005: fonts bundled locally, no font CDN
+17:    "@fontsource/ibm-plex-sans": "5.2.6",
+18:    "@fontsource/ibm-plex-sans-arabic": "5.2.6",
+woff2 files in built bundle: 6
+font CDN references in source/dist: 0
+licence inventory mentions: docs/delivery/handbacks/DG1/T-DG1-FE-frontend-ux-engineer.md docs/delivery/handbacks/DG1/T-DG1-REG-transformation-analyst.md docs/delivery/handbacks/DG1/T-DG1-DEVOPS-devops-engineer.md docs/delivery/handbacks/DG1/T-DG1-ARCH-01-solution-architect.md docs/delivery/requirements.csv 
+docs/operations/restricted-network.md:83:- `/app/licenses/THIRD-PARTY-NOTICES.md` in the image: licence texts of every shipped package, including the OFL
+docs/architecture/discovery/p1-stack-discovery.md:12:  - `curl` to registry.npmjs.org, nodejs.org, endoflife.date, postgresql.org, GitHub and quay.io all returned `000` (no connection).
+docs/architecture/discovery/p1-stack-discovery.md:163:| @fontsource/ibm-plex-sans(-arabic) | 5.2.6 | MIT (package), **OFL-1.1** (fonts) | UNVERIFIED | ship OFL text in the image |
+## REQ-S16-001: API and worker are two processes of one codebase; ADR-0002 module boundaries
+apps/api
+apps/worker
+apps/api/package.json:19:    "start": "node dist/main.js"
+apps/worker/package.json:19:    "start": "node dist/main.js"
+# ADR-0002: Modular monolith, module boundaries and package ownership
+
+- **Status:** Proposed for DG1. **Date:** 2026-09-30. **Author:** solution-architect.
+- **Requirements:** REQ-S16-001, REQ-S16-003, REQ-S16-005, REQ-S19-002.
+
+## REQ-S16-002: TypeScript + React frontend, strict mode, ADR-0009
+apps/web/package.json:25:    "react": "19.2.0",
+package.json:35:    "typescript": "6.0.2",
+web tsconfig strict: undefined extends: ../../tsconfig.base.json
+tsconfig.base.json:19:    "strict": true,
+## REQ-S16-003: explicit API modules (identity/access, transformations, workflows, formulas/kpi, reporting, admin), each with index + tests
+apps/api/src/modules/access/             index:1 tests:1
+apps/api/src/modules/admin/              index:1 tests:1
+apps/api/src/modules/audit/              index:1 tests:0
+apps/api/src/modules/identity/           index:1 tests:0
+apps/api/src/modules/jobs/               index:1 tests:0
+apps/api/src/modules/kpi/                index:1 tests:1
+apps/api/src/modules/organization/       index:1 tests:0
+apps/api/src/modules/platform/           index:1 tests:1
+apps/api/src/modules/reporting/          index:1 tests:1
+apps/api/src/modules/transformations/    index:1 tests:1
+apps/api/src/modules/workflows/          index:1 tests:1
+8:§16 asks for a maintainable modular monolith with a separate background worker, "before considering microservices". The API needs explicit modules for identity/access, transformation records, workflows, formulas, reporting and administration. The shared-record rules also apply: one decision model, one dependency record shared by T08 and RAID, and one benefit register with allocations. They mean the modules must share one database and one transaction boundary, not copy data between services.
+33:| `methodology` | methodology, form and formula versions (ADR-0014) | P2/P5 |
+## REQ-S16-004: persistence only in PostgreSQL via migrations (no other DB drivers / local file stores in apps)
+0001_identity_access.sql
+0002_transformation.sql
+0003_audit_event.sql
+0004_outbox_jobs.sql
+0005_seed_roles_permissions.sql
+0006_pgboss_schema_v25.sql
+0007_oidc_login_browser_binding.sql
+0008_scoped_assignment_derived_from.sql
+0009_business_unit_hierarchy_guard.sql
+other DB drivers in package.json files: 0
+## REQ-S19-006: OpenAPI versioned, auth described
+1:openapi: 3.1.1
+4:  version: 1.0.0-p1
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-mth_session
+      description: |
+        Opaque server-side session ID (256-bit random; only its SHA-256 is stored). HttpOnly, Secure,
+        SameSite=Lax, Path=/. Named `mth_session` (without the `__Host-` prefix) only for an http://localhost base URL in development.
+        Idle timeout SESSION_IDLE_MINUTES (default 30), absolute SESSION_ABSOLUTE_HOURS (default 10).
+    csrfToken:
+      type: apiKey
+      in: header
+## REQ-S19-004: ERD + data dictionary present
+docs/architecture/data-dictionary.md
+docs/architecture/erd.md
