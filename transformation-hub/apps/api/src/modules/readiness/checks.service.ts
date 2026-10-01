@@ -376,8 +376,9 @@ export class ReadinessChecksService implements OnModuleInit {
   /**
    * DOM-P3-01: re-bind the transition a check gates (cutover plan / site) — a scope change with a reason, under the
    * readiness lock. Refused for a FAILED gating check (it keeps gating the transition it was raised for until cleared)
-   * and for an open gating check that would leave a plan under go/no-go decision or with a GO. Every plan the check leaves
-   * or enters gets an entry in its decision history.
+   * and for an open gating check that would leave a plan under go/no-go decision or with a GO; an open gating check that
+   * enters a plan with a GO flags that GO (DOM-P34R-07). Every plan the check leaves or enters gets an entry in its decision
+   * history.
    */
   async rebind(ctx: RequestContext, projectId: string, checkId: string, body: { expectedVersion: number; siteId?: string | null; cutoverPlanId?: string | null; reason: string }) {
     await this.s.lockReadiness(projectId);
@@ -393,10 +394,20 @@ export class ReadinessChecksService implements OnModuleInit {
     const after = await this.s.plansGatedBy(projectId, next);
     const leaving = before.filter((p) => !after.some((a) => a.id === p.id));
     const entering = after.filter((p) => !before.some((b) => b.id === p.id));
-    assertReadinessCheckRebind({ checkCode: c.code, status: c.status, gating: c.blocker || c.mandatory, cleared: await this.isCleared(projectId, c), leaving, reason: body.reason });
+    const cleared = await this.isCleared(projectId, c);
+    assertReadinessCheckRebind({ checkCode: c.code, status: c.status, gating: c.blocker || c.mandatory, cleared, leaving, reason: body.reason });
     const row = (await updateVersioned(this.s.db, schema.readinessCheck, { id: c.id, projectId, expectedVersion: body.expectedVersion }, next)) as CheckRow;
     for (const plan of leaving) await this.s.recordPlanHistory(ctx, plan, projectId, 'check_unbound', `${c.code} no longer gates this transition: ${body.reason}`, null);
     for (const plan of entering) await this.s.recordPlanHistory(ctx, plan, projectId, 'check_bound', `${c.code} now gates this transition: ${body.reason}`, null);
+    // DOM-P34R-07: an open gating check that ENTERS a plan with a GO flags that GO (as a check failing after the GO does —
+    // DOM-P3-04); the execution record then re-evaluates and refuses until it is cleared or the GO is withdrawn.
+    if ((c.blocker || c.mandatory) && !cleared) {
+      const blocker = { id: c.id, title: `${c.code} — ${c.title}`, status: c.status, blocker: c.blocker };
+      for (const plan of entering.filter((x) => x.status === 'approved_go')) {
+        await this.s.recordPlanHistory(ctx, plan, projectId, 'go_flagged', `${c.code}: an open gating check was bound to this transition after the GO (${body.reason})`, { blockers: [blocker], missing: [] });
+        await this.s.audit.record({ action: 'readiness.cutover.go_flagged', entityType: 'cutover_plan', entityId: plan.id, projectId, after: { status: plan.status, flagged: true, checkId: c.id, checkCode: c.code, checkStatus: c.status }, reason: `${c.code} was bound to this transition after the GO — execution is refused until it is cleared or the GO is withdrawn` });
+      }
+    }
     await this.s.audit.record({
       action: 'readiness.check.rebind',
       entityType: 'readiness_check',

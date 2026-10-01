@@ -149,3 +149,32 @@ describe('DOM-P34R-02 — "not applicable" never releases a failed gating check 
     expect(allowed.body.status).toBe('not_applicable');
   });
 });
+
+describe('DOM-P34R-07 — an open gating check bound to a plan with a GO flags that GO [AT-09, business-gates.md §5 rule 1]', () => {
+  it('rebind into a plan at approved_go: check_bound and go_flagged entries; the execution record is refused', async () => {
+    const siteId = await insertSite(projectId, 'S-P34RF-6');
+    const planId = await completePlan(p.pm, projectId, { siteId, accountableUserId: p.pm.userId, title: 'Hall J transition (synthetic)' });
+    const gate = await createCheck(p.pm, projectId, { area: 'connectivity', title: 'Hall J connectivity tested (synthetic)', mandatory: true, blocker: true, signoffRole: 'functional_approver', cutoverPlanId: planId, siteId, failureContingency: 'Keep the current carrier path (synthetic)' });
+    await clearCheck(p, projectId, gate);
+    const d = await decisionOfType(projectId, p, gov, 'day1_go_no_go');
+    let v = await plan(p.pm, projectId, planId);
+    expect((await p.pm.post(`${P(projectId)}/cutover-plans/${planId}/go-decision`, { expectedVersion: v.version, decisionId: d.id })).status).toBe(201);
+    v = await plan(p.pm, projectId, planId);
+    expect((await p.pm.post(`${P(projectId)}/cutover-plans/${planId}/submit-for-decision`, { expectedVersion: v.version })).status).toBe(201);
+    v = await plan(p.pm, projectId, planId);
+    const go = await p.sponsor.post(`${P(projectId)}/cutover-plans/${planId}/go-no-go`, { expectedVersion: v.version, outcome: 'go', rationale: 'GO (synthetic)' });
+    expect(go.status, JSON.stringify(go.body)).toBe(201);
+    // An open check (not started) of another, unrelated site is bound to the plan after the GO.
+    const other = await insertSite(projectId, 'S-P34RF-6B');
+    const open = await siteBlocker(other, 'Hall K connectivity');
+    const c = await check(p.pm, projectId, open);
+    const rb = await p.pm.post(`${P(projectId)}/readiness-checks/${open}/rebind`, { expectedVersion: c.version, cutoverPlanId: planId, reason: 'The hall K link is part of this transition (synthetic)' });
+    expect(rb.status, JSON.stringify(rb.body)).toBe(201);
+    const after = await plan(p.pm, projectId, planId);
+    const kinds = (after.decisionHistory as { kind: string }[]).map((h) => h.kind);
+    expect(kinds).toEqual(expect.arrayContaining(['check_bound', 'go_flagged']));
+    const exec = await p.pm.post(`${P(projectId)}/cutover-plans/${planId}/execution`, { expectedVersion: after.version, note: 'Executed (synthetic)' });
+    expect(exec.status, JSON.stringify(exec.body)).toBe(422);
+    expect(exec.body.code).toBe('readiness.execution_blocked');
+  });
+});

@@ -26,6 +26,7 @@ import {
   assertSigningGatePassed,
   assessCpLongStop,
   conflict,
+  forbidden,
   eventBlockers,
   notFound,
   parseMoney,
@@ -749,6 +750,11 @@ export class TransactionsService implements OnModuleInit {
     const project = await this.s.project(projectId);
     this.s.assertListable(ctx, projectId, 'jv.cp.manage');
     this.s.policy.assert(ctx, 'jv.cp.manage', { projectId });
+    // DOM-P34R-08 (DOM-P4-03 at creation; business-gates.md §7): that a condition precedent does NOT block the closing is a
+    // Legal specialist determination (`jv.cp.set_waivability`) — the CP manager creates conditions blocking.
+    if (body.blocking === false && !this.s.policy.canInProject(ctx, 'jv.cp.set_waivability', projectId)) {
+      throw forbidden('jv.cp.non_blocking_requires_specialist', 'Only the Legal specialist determines that a condition precedent does not block the closing: create it blocking (Legal records the determination)');
+    }
     const e = await loadInProject(this.s.db, schema.closing, projectId, body.closingId);
     if (e.kind !== 'closing') throw ruleViolation('jv.cp.closing_only', 'Conditions precedent belong to a closing (a signing has its own checklist)');
     await this.assertEventOpen(e);

@@ -62,7 +62,9 @@ function RefusalBlockers({ blockers }: { blockers: EventBlocker[] }) {
 
 function EventDialogs({ e, pending, onClose }: { e: TxEventDetail; pending: Pending; onClose: () => void }) {
   const { t, tStatus } = useI18n();
-  const { projectId } = useProjectContext();
+  const { projectId, can } = useProjectContext();
+  // DOM-P34R-08: only the Legal specialist (jv.cp.set_waivability) may create a non-blocking condition.
+  const canSetNonBlocking = can('jv.cp.set_waivability');
   const refresh = useJvRefresh();
   const toast = useToast();
   const refusal = useRefusal();
@@ -216,9 +218,10 @@ function EventDialogs({ e, pending, onClose }: { e: TxEventDetail; pending: Pend
           <UserPicker label={t('jv.cp.fields.owner')} required value={owner} onChange={setOwner} />
           <TextField label={t('jv.cp.fields.parties')} value={parties} maxLength={1000} onChange={(x) => setParties(x.target.value)} />
           <label className="inline-flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={blocking} onChange={(x) => setBlocking(x.target.checked)} />
+            <input type="checkbox" checked={blocking} disabled={!canSetNonBlocking} onChange={(x) => setBlocking(x.target.checked)} data-testid="cp-blocking" />
             {t('jv.cp.fields.blockingCheckbox')}
           </label>
+          {!canSetNonBlocking ? <p className="text-xs text-muted">{t('jv.cp.fields.blockingLegalOnly')}</p> : null}
           <div className="grid gap-4 sm:grid-cols-2">
             <TextField label={t('jv.cp.fields.validTo')} type="date" value={validTo} onChange={(x) => setValidTo(x.target.value)} />
             <TextField label={t('jv.cp.fields.longStop')} type="date" value={longStop} onChange={(x) => setLongStop(x.target.value)} />

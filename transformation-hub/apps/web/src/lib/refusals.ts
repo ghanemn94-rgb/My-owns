@@ -230,6 +230,8 @@ export const REFUSAL_KEYS: Readonly<Record<string, Entry>> = {
   'jv.signing.g5_under_reassessment': 'jv.refusal.codes.signing_g5_under_reassessment',
   'jv.signing.decision_not_g5': 'jv.refusal.codes.signing_decision_not_g5',
   'jv.cp.blocking_release_not_allowed': (d) => ({ key: d?.['waivable'] === true ? 'jv.refusal.codes.cp_blocking_release_waivable' : 'jv.refusal.codes.cp_blocking_release_non_waivable' }),
+  // DOM-P34R-08: a non-blocking CP is created by the Legal specialist only
+  'jv.cp.non_blocking_requires_specialist': 'jv.refusal.codes.cp_non_blocking_requires_specialist',
   'jv.cp.validity_locked': 'jv.refusal.codes.cp_validity_locked',
   'jv.cp.long_stop_extension_required': 'jv.refusal.codes.cp_long_stop_extension_required',
   'jv.cp.extension_invalid_state': 'jv.refusal.codes.cp_extension_invalid_state',

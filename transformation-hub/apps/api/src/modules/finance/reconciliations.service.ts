@@ -233,8 +233,16 @@ export class ReconciliationsService {
   async reconcile(ctx: RequestContext, projectId: string, id: string, body: { expectedVersion: number; note?: string }) {
     const r = await loadInProject(this.s.db, T, projectId, id);
     this.s.assert(ctx, 'finance.snapshot.approve', { projectId, classification: r.classification, requesterUserId: r.preparedBy, withinAuthority: true });
-    // DOM-P4-16: independent of the last preparer AND of the person who recorded the balance.
-    assertReconcilable({ our: this.our(r), their: this.their(r), status: r.status as ReconciliationStatus, explanation: r.explanation, preparedBy: r.preparedBy, createdBy: r.createdBy }, actorOf(ctx));
+    // DOM-P4-16 / DOM-P34R-09: independent of the person who recorded the balance and of EVERY person who edited it (the
+    // record history of its creation and edits), not only the last preparer.
+    const editors = await this.s.db.query<{ changed_by: string }>(
+      `select distinct changed_by from record_version where entity_type = 'intercompany_reconciliation' and entity_id = $1 and reason in ('created', 'updated') and changed_by is not null`,
+      [r.id],
+    );
+    assertReconcilable(
+      { our: this.our(r), their: this.their(r), status: r.status as ReconciliationStatus, explanation: r.explanation, preparedBy: r.preparedBy, createdBy: r.createdBy, editorUserIds: editors.rows.map((x) => x.changed_by) },
+      actorOf(ctx),
+    );
     return this.setStatus(ctx, r, 'reconciled', body.expectedVersion, { reviewerUserId: ctx.principal.userId, reviewedAt: this.s.clock.now() }, body.note ?? null);
   }
 
