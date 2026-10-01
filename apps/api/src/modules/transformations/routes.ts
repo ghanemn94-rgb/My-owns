@@ -69,17 +69,23 @@ export const GOVERNED_TARGET_STATUSES: ReadonlySet<TransformationStatus> = new S
 export function isAllowedTransition(from: TransformationStatus, to: TransformationStatus): boolean {
   if (from === to) return true;
   if (GOVERNED_TARGET_STATUSES.has(to)) return false;
-  return TRANSFORMATION_STATUS_TRANSITIONS[from].includes(to);
+  return STATUS_TRANSITIONS.get(from)?.includes(to) ?? false;
 }
 
-const SORTS = {
-  "updatedAt:desc": { col: "t.updated_at", dir: "desc" },
-  "updatedAt:asc": { col: "t.updated_at", dir: "asc" },
-  "name:asc": { col: "t.name", dir: "asc" },
-  "name:desc": { col: "t.name", dir: "desc" },
-  "code:asc": { col: "t.code", dir: "asc" },
-  "code:desc": { col: "t.code", dir: "desc" },
-} as const;
+// Runtime-keyed lookups go through a Map (F-DG1-124: module source has no computed member with a non-literal key).
+const STATUS_TRANSITIONS: ReadonlyMap<string, readonly TransformationStatus[]> = new Map(
+  Object.entries(TRANSFORMATION_STATUS_TRANSITIONS),
+);
+
+type SortSpec = { readonly col: "t.updated_at" | "t.name" | "t.code"; readonly dir: "asc" | "desc" };
+const SORTS: ReadonlyMap<string, SortSpec> = new Map<string, SortSpec>([
+  ["updatedAt:desc", { col: "t.updated_at", dir: "desc" }],
+  ["updatedAt:asc", { col: "t.updated_at", dir: "asc" }],
+  ["name:asc", { col: "t.name", dir: "asc" }],
+  ["name:desc", { col: "t.name", dir: "desc" }],
+  ["code:asc", { col: "t.code", dir: "asc" }],
+  ["code:desc", { col: "t.code", dir: "desc" }],
+]);
 
 export function registerTransformationRoutes(app: FastifyInstance, { db }: ModuleDeps): void {
   // ---------------------------------------------------------------- list (scope-filtered in SQL)
@@ -90,7 +96,8 @@ export function registerTransformationRoutes(app: FastifyInstance, { db }: Modul
       query.status === undefined ? undefined : Array.isArray(query.status) ? query.status : [query.status];
     const hash = filterHash({ ...query, status: statuses?.slice().sort() });
     const after = decodeCursor(query.cursor, hash, 2);
-    const sort = SORTS[query.sort];
+    const sort = SORTS.get(query.sort);
+    if (sort === undefined) throw new Error(`unmapped sort ${query.sort}`); // unreachable: listQuery enumerates SORTS
     const keyExpr =
       sort.col === "t.updated_at"
         ? sql<string>`to_char(t.updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`

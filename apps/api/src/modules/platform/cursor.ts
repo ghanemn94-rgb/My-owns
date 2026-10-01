@@ -12,9 +12,10 @@ function canonical(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(canonical);
   if (value && typeof value === "object") {
     return Object.fromEntries(
-      Object.keys(value as Record<string, unknown>)
-        .sort()
-        .map((k) => [k, canonical((value as Record<string, unknown>)[k])]),
+      // Same order as Object.keys(...).sort() (UTF-16 code units); entries avoid a runtime-keyed read (F-DG1-124).
+      Object.entries(value as Record<string, unknown>)
+        .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+        .map(([k, v]) => [k, canonical(v)]),
     );
   }
   return value;

@@ -27,6 +27,14 @@ import {
 } from "./sessions.ts";
 import { loadUser, updatePreferences } from "./users.ts";
 
+/**
+ * One request cookie by name. Read from the cookie jar's own entries rather than `request.cookies[name]`: module
+ * source has no computed member with a non-literal key (F-DG1-124), and own entries never reach the prototype chain.
+ */
+function cookieValue(request: FastifyRequest, name: string): string | undefined {
+  return new Map(Object.entries(request.cookies)).get(name);
+}
+
 declare module "fastify" {
   interface FastifyRequest {
     session: ActiveSession | null;
@@ -101,7 +109,7 @@ export function registerIdentity(
     request.session = null;
     const access = request.routeOptions.config?.access;
     if (!access) return; // unknown route: the not-found handler answers
-    const token = request.cookies[cookieName];
+    const token = cookieValue(request, cookieName);
     if (token) {
       const session = await resolveSession(db, token);
       if (session) {
@@ -253,7 +261,7 @@ export function registerIdentity(
       { config: { access: { public: true }, rateLimit: authRateLimit } },
       async (request, reply) => {
         // The login cookie is single use: cleared on every callback outcome.
-        const browserBinding = request.cookies[loginCookie];
+        const browserBinding = cookieValue(request, loginCookie);
         reply.clearCookie(loginCookie, loginCookieOptions);
         const fail = (code: string) => reply.redirect(`/login?error=${code}`, 302);
         const q = callbackQuery.safeParse(request.query);

@@ -51,8 +51,8 @@ describe("kpi module (P1 scaffold, D-048)", () => {
   it("its declared boundary holds, and a planted bypass or undeclared dependency would be caught", () => {
     expect(moduleViolations("kpi")).toEqual([]);
     const plant = (source: string) => fileViolations("kpi", join(MODULES_DIR, "kpi", "planted.ts"), source).join("\n");
-    expect(plant(`const r = createRequire(import.meta.url)("../transformations/routes.ts");`)).toContain(
-      "createRequire",
+    expect(plant(`const r = createRequire(import.meta.url)("../transformations/routes.ts");`)).toMatch(
+      /createRequire/, // a regex: the string literal "createRequire" is itself banned in module source (F-DG1-124)
     );
     expect(plant(`import { WORKFLOWS_MODULE } from "../workflows/index.ts";`)).toContain(
       "module kpi may not import module workflows",
