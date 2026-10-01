@@ -112,7 +112,13 @@ $ gitleaks dir <scratch>/glcheck --config scripts/ops/gitleaks.toml --redact=100
   INF scanned ~83236 bytes (83.24 KB) in 45ms
   INF no leaks found
 After committing (committed tree of HEAD, project script):
-TREESCAN_RESULT_PLACEHOLDER
+$ GITLEAKS=<scratchpad>/gitleaks-8.30.1 bash scripts/ops/secret-scan.sh tree
+  tree: 1171 committed files at HEAD 1f36462
+  INF scanned ~14858393 bytes (14.86 MB) in 1.62s
+  INF no leaks found
+  PASS  tree: no findings
+  SECRET SCAN (tree): PASS
+(1f36462 is the review commit with the probes and this report; the only later change is this result block.)
 ```
 
 ---
