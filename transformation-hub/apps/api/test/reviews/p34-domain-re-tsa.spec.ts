@@ -12,7 +12,10 @@ import { decisionVersion, vote } from '../governance/gov-fixtures';
  * `DEFECT …` is declared with `it.fails` while open (`P34DRE_PROBE_PLAIN=1` runs it plain); `CONTROL …` is a plain test.
  * All data is synthetic.
  */
+// Implementer (fix of the P3/P4 domain re-review): the DEFECT probe of this file is fixed and renamed `… (fixed, regression)` —
+// a plain `it`, assertion unchanged. The alias stays so that P34DRE_PROBE_PLAIN=1 keeps working for any probe added later.
 const defect = process.env['P34DRE_PROBE_PLAIN'] ? it : it.fails;
+void defect;
 
 let projectId: string;
 let p: Personas;
@@ -80,7 +83,7 @@ describe('P3/P4 domain re-review — what an approved TSA extension decision aut
     expect(direct.body.code).toBe('tsa.extension.terms_bound');
   });
 
-  defect('DEFECT DOM-P34R-04: re-linking the request to another decision D2 and then back to the approved D1 with "to Y" clears the binding — the TSA is recorded as extended to Y on D1', async () => {
+  it('DOM-P34R-04: re-linking the request to another decision D2 and then back to the approved D1 with "to Y" clears the binding — the TSA is recorded as extended to Y on D1 (fixed, regression)', async () => {
     // A second tsa_approval_or_extension paper (any one still pending will do) is linked with Y, then D1 again with Y.
     const d2 = (await decisionOfType(projectId, p, gov, 'tsa_approval_or_extension', { vote: false })).id;
     let t = await tsa(p.pm, projectId, id);

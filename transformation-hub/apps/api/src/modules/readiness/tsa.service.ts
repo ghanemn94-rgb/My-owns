@@ -12,6 +12,7 @@ import {
   assertDecisionLinkable,
   assertExtensionEndDateAhead,
   assertExtensionRequestValid,
+  assertExtensionTermsRecordable,
   assertTsaActivatable,
   clearanceAllows,
   extensionTermsBinding,
@@ -503,22 +504,26 @@ export class TsaService {
     assertDecisionLinkable(this.s.linked(d), TSA_DECISION_TYPE_KEYS, 'A TSA extension');
     const today = this.s.today(await this.s.project(projectId));
     assertExtensionRequestValid({ status: t.status, currentEndDate: t.endDate, proposedEndDate: body.proposedEndDate, continuityPlan: body.continuityPlan, today });
-    // DOM-P3-06: once the linked decision left draft, the requested terms are bound to it — a new date needs a new decision;
-    // repeating the bound terms changes nothing.
-    const linked = t.extensionDecisionId === d.id ? d : null;
+    // DOM-P3-06 / DOM-P34R-04: the terms are bound to the DECISION (one TSA, one end date, one continuity plan per decision),
+    // not to the TSA row's current link — re-linking through another decision never releases them. The decision row is read
+    // FOR SHARE so a concurrent submission of the paper waits for (or is seen by) this request.
+    const locked = await this.s.db.query<{ status: string }>(`select status from decision where project_id = $1 and id = $2 for share`, [projectId, d.id]);
+    const decisionStatus = (locked.rows[0]?.status ?? d.status) as DecisionRow['status'];
+    const ET = schema.tsaExtensionTerms;
+    const [bound] = await this.s.db.tx().select().from(ET).where(and(eq(ET.projectId, projectId), eq(ET.decisionId, d.id))).for('update');
+    const requested = { tsaServiceId: t.id, proposedEndDate: body.proposedEndDate, continuityPlan: body.continuityPlan };
+    // DOM-P2F-09: the decision-use registry (and the external evidence) decide first — a decision already consumed by a
+    // recorded extension, or used for another TSA, is refused as such; the decision may still be pending here.
+    await this.extensionReliance(projectId, t.id, d, false);
     const binding = extensionTermsBinding({
-      linkedDecisionId: t.extensionDecisionId,
-      requestedDecisionId: d.id,
-      linkedDecisionStatus: linked?.status ?? null,
-      bound: { proposedEndDate: t.proposedEndDate, continuityPlan: t.continuityPlan },
-      requested: { proposedEndDate: body.proposedEndDate, continuityPlan: body.continuityPlan },
+      decisionStatus,
+      bound: bound ? { tsaServiceId: bound.tsaServiceId, proposedEndDate: bound.proposedEndDate, continuityPlan: bound.continuityPlan } : null,
+      requested,
     });
-    if (binding === 'same') {
+    if (binding === 'same' && t.extensionDecisionId === d.id && t.proposedEndDate === body.proposedEndDate && (t.continuityPlan ?? '') === body.continuityPlan) {
       assertVersion(t, body.expectedVersion, 'TSA service');
       return { id: t.id, status: t.status, version: t.version };
     }
-    // DOM-P2F-09: the decision-use registry (and the external evidence) decide — the decision may still be pending here.
-    await this.extensionReliance(projectId, t.id, d, false);
     const row = (await updateVersioned(this.s.db, schema.tsaService, { id: t.id, projectId, expectedVersion: body.expectedVersion }, {
       extensionDecisionId: d.id,
       proposedEndDate: body.proposedEndDate,
@@ -526,8 +531,21 @@ export class TsaService {
       extensionRequestedBy: ctx.principal.userId,
       extensionRequestedAt: this.s.clock.now(),
     })) as TsaRow;
+    if (binding === 'new') {
+      await this.s.db.tx().insert(ET).values({ id: newId(), orgId: ctx.principal.orgId, projectId, decisionId: d.id, ...requested, requestedBy: ctx.principal.userId!, isDemo: t.isDemo });
+    } else if (binding === 'rebind') {
+      await updateVersioned(this.s.db, ET, { id: bound!.id, projectId, expectedVersion: bound!.version }, { ...requested, requestedBy: ctx.principal.userId! });
+    }
     await this.s.versions.snapshot({ projectId, entityType: 'tsa_service', entityId: t.id, versionNo: row.version, snapshot: row, reason: 'extension requested' });
-    await this.s.audit.record({ action: 'readiness.tsa.request_extension', entityType: 'tsa_service', entityId: t.id, projectId, after: { decisionId: d.id, decisionStatus: d.status, proposedEndDate: body.proposedEndDate }, reason: body.note ?? null });
+    await this.s.audit.record({
+      action: 'readiness.tsa.request_extension',
+      entityType: 'tsa_service',
+      entityId: t.id,
+      projectId,
+      before: { decisionId: t.extensionDecisionId, proposedEndDate: t.proposedEndDate, decisionTerms: bound ? { tsaServiceId: bound.tsaServiceId, proposedEndDate: bound.proposedEndDate } : null },
+      after: { decisionId: d.id, decisionStatus, proposedEndDate: body.proposedEndDate, decisionTerms: binding },
+      reason: body.note ?? null,
+    });
     return { id: t.id, status: row.status, version: row.version };
   }
 
@@ -546,6 +564,13 @@ export class TsaService {
       }
       throw e;
     }
+    // DOM-P34R-04: only the terms bound to the linked decision are recorded (the TSA's stored request must be exactly those).
+    const [bound] = await this.s.db.tx().select().from(schema.tsaExtensionTerms).where(and(eq(schema.tsaExtensionTerms.projectId, projectId), eq(schema.tsaExtensionTerms.decisionId, d!.id)));
+    assertExtensionTermsRecordable({
+      decisionCode: d!.code,
+      bound: bound ? { tsaServiceId: bound.tsaServiceId, proposedEndDate: bound.proposedEndDate, continuityPlan: bound.continuityPlan } : null,
+      stored: { tsaServiceId: t.id, proposedEndDate: t.proposedEndDate, continuityPlan: t.continuityPlan ?? '' },
+    });
     // DOM-P3-07: the requested end date must still be ahead when the extension is recorded (a passed date needs a new request).
     assertExtensionEndDateAhead(t.proposedEndDate, this.s.today(await this.s.project(projectId)));
     // DOM-P2F-09: the FINAL decision (checked above) authorizes this one extension — evidence re-checked, registry pre-check,

@@ -186,7 +186,9 @@ describe('DOM-P3-06 / DOM-P3-13 / DOM-P3-07 — what an approved extension decis
     const ok = await cmd(id, 'request-extension', { expectedVersion: t.version, decisionId: ext.id, proposedEndDate: plusDays(2), continuityPlan: 'x (synthetic)' });
     expect(ok.status, JSON.stringify(ok.body)).toBe(201);
     // Owner pool (setup): the requested date passes before the extension is recorded (the app clock would expire the session).
+    // The terms bound to the decision (DOM-P34R-04) carry the same date, as they would after time passed.
     await owner().query(`update tsa_service set proposed_end_date = $2 where id = $1`, [id, plusDays(-1)]);
+    await owner().query(`update tsa_extension_terms set proposed_end_date = $2 where decision_id = $1`, [ext.id, plusDays(-1)]);
     t = await tsa(p.pm, projectId, id);
     const rec = await cmd(id, 'record-extension', { expectedVersion: t.version });
     expect(rec.status).toBe(422);

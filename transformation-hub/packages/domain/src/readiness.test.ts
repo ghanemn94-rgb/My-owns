@@ -19,6 +19,7 @@ import {
   assertCutoverPlanSiteChange,
   assertTsaActivatable,
   extensionTermsBinding,
+  assertExtensionTermsRecordable,
   statusAfterRemedy,
   assertCutoverSubmittable,
   assertDecisionLinkable,
@@ -363,13 +364,21 @@ describe('TSA (REQ-TSA-001..006, AT-10, D-25)', () => {
     expect(codeOf(() => assertExtensionEndDateAhead('2026-09-30', today))).toBe('rule_violation:tsa.extension.end_date_past');
   });
   it('DOM-P3-06: the extension terms are bound to their decision once it left draft; the same terms are idempotent', () => {
-    const base = { linkedDecisionId: 'd1', requestedDecisionId: 'd1', linkedDecisionStatus: 'under_review' as const, bound: { proposedEndDate: '2027-01-19', continuityPlan: 'Keep the bridge' }, requested: { proposedEndDate: '2027-01-19', continuityPlan: 'Keep the bridge' } };
+    const terms = { tsaServiceId: 't1', proposedEndDate: '2027-01-19', continuityPlan: 'Keep the bridge' };
+    const base = { decisionStatus: 'under_review' as const, bound: terms, requested: terms };
     expect(extensionTermsBinding(base)).toBe('same');
-    expect(codeOf(() => extensionTermsBinding({ ...base, requested: { proposedEndDate: '2036-09-28', continuityPlan: 'Keep the bridge' } }))).toBe('rule_violation:tsa.extension.terms_bound');
-    expect(codeOf(() => extensionTermsBinding({ ...base, linkedDecisionStatus: 'approved', requested: { proposedEndDate: '2027-01-19', continuityPlan: 'Another plan' } }))).toBe('rule_violation:tsa.extension.terms_bound');
-    expect(extensionTermsBinding({ ...base, linkedDecisionStatus: 'draft', requested: { proposedEndDate: '2027-02-19', continuityPlan: 'x' } })).toBe('free');
-    expect(extensionTermsBinding({ ...base, requestedDecisionId: 'd2', requested: { proposedEndDate: '2036-09-28', continuityPlan: 'x' } })).toBe('free');
-    expect(extensionTermsBinding({ ...base, bound: { proposedEndDate: null, continuityPlan: null } })).toBe('free');
+    expect(codeOf(() => extensionTermsBinding({ ...base, requested: { ...terms, proposedEndDate: '2036-09-28' } }))).toBe('rule_violation:tsa.extension.terms_bound');
+    expect(codeOf(() => extensionTermsBinding({ ...base, decisionStatus: 'approved', requested: { ...terms, continuityPlan: 'Another plan' } }))).toBe('rule_violation:tsa.extension.terms_bound');
+    expect(extensionTermsBinding({ ...base, decisionStatus: 'draft', requested: { ...terms, proposedEndDate: '2027-02-19' } })).toBe('rebind');
+    expect(extensionTermsBinding({ ...base, bound: null })).toBe('new');
+  });
+  it('DOM-P34R-04: the terms are bound per DECISION — another TSA is refused, and record-extension applies only the bound terms', () => {
+    const terms = { tsaServiceId: 't1', proposedEndDate: '2027-01-19', continuityPlan: 'Keep the bridge' };
+    expect(codeOf(() => extensionTermsBinding({ decisionStatus: 'approved', bound: terms, requested: { ...terms, tsaServiceId: 't2' } }))).toBe('rule_violation:tsa.extension.decision_other_tsa');
+    expect(() => assertExtensionTermsRecordable({ decisionCode: 'DEC-1', bound: terms, stored: terms })).not.toThrow();
+    expect(codeOf(() => assertExtensionTermsRecordable({ decisionCode: 'DEC-1', bound: terms, stored: { ...terms, proposedEndDate: '2036-09-28' } }))).toBe('rule_violation:tsa.extension.terms_mismatch');
+    expect(codeOf(() => assertExtensionTermsRecordable({ decisionCode: 'DEC-1', bound: terms, stored: { ...terms, tsaServiceId: 't2' } }))).toBe('rule_violation:tsa.extension.terms_mismatch');
+    expect(codeOf(() => assertExtensionTermsRecordable({ decisionCode: 'DEC-1', bound: null, stored: terms }))).toBe('rule_violation:tsa.extension.terms_mismatch');
   });
   it('DOM-P3-17: activation needs the start date reached; a remedied breach returns to the status before the breach; a breach may accelerate the exit', () => {
     expect(codeOf(() => assertTsaActivatable({ startDate: '2026-10-05', today: '2026-09-30' }))).toBe('rule_violation:tsa.activate.not_started');

@@ -1,7 +1,7 @@
 # Data dictionary
 
 > Generated from the live PostgreSQL schema by `packages/db/src/cli/data-dictionary.ts` — do not edit by hand.
-> Tables: 121. RLS enabled: 116.
+> Tables: 122. RLS enabled: 117.
 
 ## Spec §14 entity coverage
 
@@ -486,7 +486,7 @@ Foreign keys:
 
 ### `legal_entity`
 
-RLS: enabled (hub_legal_entity_owner_update, hub_legal_entity_owner_insert, hub_org_isolation) · Triggers: hub_legal_entity_owner_immutable, hub_scope_immutable
+RLS: enabled (hub_org_isolation, hub_legal_entity_owner_update, hub_legal_entity_owner_insert) · Triggers: hub_legal_entity_owner_immutable, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -2594,6 +2594,33 @@ Foreign keys:
 - `operating_model_decision_fk`: (project_id,decision_id) → `decision`(project_id,id) — composite project-scoped FK
 - `operating_model_definition_project_id_project_id_fk`: (project_id) → `project`(id)
 
+### `tsa_extension_terms`
+
+RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | uuid | no | `gen_random_uuid()` |
+| `org_id` | uuid | no |  |
+| `project_id` | uuid | no |  |
+| `decision_id` | uuid | no |  |
+| `tsa_service_id` | uuid | no |  |
+| `proposed_end_date` | date | no |  |
+| `continuity_plan` | text | no |  |
+| `requested_by` | uuid | no |  |
+| `is_demo` | boolean | no | `false` |
+| `created_at` | timestamp with time zone | no | `now()` |
+| `updated_at` | timestamp with time zone | no | `now()` |
+| `version` | integer | no | `1` |
+
+Foreign keys:
+
+- `hub_opfk_tsa_extension_terms`: (org_id,project_id) → `project`(org_id,id)
+- `hub_ufk_tsa_extension_terms_requested_by`: (org_id,requested_by) → `app_user`(org_id,id)
+- `tsa_extension_terms_decision_fk`: (project_id,decision_id) → `decision`(project_id,id) — composite project-scoped FK
+- `tsa_extension_terms_project_id_project_id_fk`: (project_id) → `project`(id)
+- `tsa_extension_terms_tsa_fk`: (project_id,tsa_service_id) → `tsa_service`(project_id,id) — composite project-scoped FK
+
 ## Finance
 
 ### `financial_snapshot`
@@ -4056,7 +4083,7 @@ Foreign keys:
 
 ### `notification`
 
-RLS: enabled (hub_notification_update, hub_notification_write, hub_notification_read) · Triggers: hub_same_project_source, hub_scope_immutable
+RLS: enabled (hub_notification_write, hub_notification_update, hub_notification_read) · Triggers: hub_same_project_source, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|

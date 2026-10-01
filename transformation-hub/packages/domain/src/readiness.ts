@@ -429,27 +429,49 @@ export function assertTsaActivatable(t: { startDate: string | null; today: strin
 /** Whether a TSA's terms are approved (its descriptive terms are then part of the approval — DOM-P3-15). */
 export const TSA_TERMS_OPEN_STATUSES: readonly TsaStatus[] = ['proposed', 'negotiating'];
 
+/** The extension a `tsa_approval_or_extension` decision carries: one TSA, one end date, one continuity plan. */
+export interface ExtensionTerms {
+  tsaServiceId: string;
+  proposedEndDate: string;
+  continuityPlan: string;
+}
+
+const sameTerms = (a: ExtensionTerms, b: ExtensionTerms) => a.tsaServiceId === b.tsaServiceId && a.proposedEndDate === b.proposedEndDate && a.continuityPlan === b.continuityPlan;
+
 /**
- * DOM-P3-06: the terms of an extension request (end date, continuity plan) are bound to the decision they were linked to
- * once that decision has left `draft` (the paper went to the committee with them): a different end date or continuity plan
- * needs a NEW decision. Returns `same` when the request repeats the bound terms (idempotent), `free` when they may change.
+ * DOM-P3-06 / DOM-P34R-04: the terms of an extension request (TSA, end date, continuity plan) are bound to the DECISION — one
+ * set of terms per decision (`tsa_extension_terms`), whatever the TSA row links later — so re-linking the request through
+ * another decision never releases them. While the decision is a draft its terms may change (the paper is not yet before the
+ * committee); once it has left draft a different end date or continuity plan needs a NEW decision, and the decision never
+ * carries another TSA's extension. Returns `new` (no terms bound yet — these become the decision's terms), `same` (the
+ * request repeats the bound terms) or `rebind` (draft decision: its terms change).
  */
-export function extensionTermsBinding(i: {
-  linkedDecisionId: string | null;
-  requestedDecisionId: string;
-  linkedDecisionStatus: DecisionStatus | null;
-  bound: { proposedEndDate: string | null; continuityPlan: string | null };
-  requested: { proposedEndDate: string; continuityPlan: string };
-}): 'free' | 'same' {
-  if (!i.linkedDecisionId || i.linkedDecisionId !== i.requestedDecisionId || !i.bound.proposedEndDate) return 'free';
-  const same = i.bound.proposedEndDate === i.requested.proposedEndDate && (i.bound.continuityPlan ?? '') === i.requested.continuityPlan;
-  if (same) return 'same';
-  if (i.linkedDecisionStatus === 'draft') return 'free';
+export function extensionTermsBinding(i: { decisionStatus: DecisionStatus; bound: ExtensionTerms | null; requested: ExtensionTerms }): 'new' | 'same' | 'rebind' {
+  if (!i.bound) return 'new';
+  if (sameTerms(i.bound, i.requested)) return 'same';
+  if (i.decisionStatus === 'draft') return 'rebind';
+  if (i.bound.tsaServiceId !== i.requested.tsaServiceId) {
+    throw ruleViolation('tsa.extension.decision_other_tsa', 'This decision carries the extension of another TSA; a decision about one TSA does not back another TSA', { boundTsaServiceId: i.bound.tsaServiceId });
+  }
   throw ruleViolation(
     'tsa.extension.terms_bound',
     `The extension requested on this decision (end date ${i.bound.proposedEndDate}) is before the committee: a different end date or continuity plan needs a new decision`,
     { boundEndDate: i.bound.proposedEndDate, requestedEndDate: i.requested.proposedEndDate },
   );
+}
+
+/**
+ * DOM-P34R-04: `record-extension` applies only the terms bound to the linked decision — the TSA's stored request must be
+ * exactly those terms (business-gates.md §6 rule 5 "record-extension applies the end date the decision saw").
+ */
+export function assertExtensionTermsRecordable(i: { decisionCode: string; bound: ExtensionTerms | null; stored: ExtensionTerms }): void {
+  if (!i.bound || !sameTerms(i.bound, i.stored)) {
+    throw ruleViolation(
+      'tsa.extension.terms_mismatch',
+      `Decision ${i.decisionCode} does not carry this extension (TSA, end date ${i.stored.proposedEndDate} and continuity plan): request the extension again on the decision that approved these terms, or on a new decision`,
+      { boundEndDate: i.bound?.proposedEndDate ?? null, requestedEndDate: i.stored.proposedEndDate },
+    );
+  }
 }
 
 /** DOM-P3-07: an extension ends after "today" (project timezone) — an expired TSA is never "extended" into the past. */
