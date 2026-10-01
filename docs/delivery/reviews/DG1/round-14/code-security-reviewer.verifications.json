@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "verifications": [
+    {
+      "finding_id": "F-DG1-135",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by the originating reviewer on candidate sha256:dd747fe1...c559. The freeze commit is 985d0fa. HEAD at start was 6a3e3b2, which adds only candidate-excluded metadata (round-14 assignments, the dd747fe1 manifest, stages.json). The ID is identical in the real repo and in a full disposable clone at 985d0fa (00-candidate-identity.log). The fix is fbc9ba6. Source diff 08cbd12..985d0fa touches only apps/api/src/architecture.testkit.ts and architecture.test.ts. apps/api/src/architecture.testkit.ts:183 now sets TEST_FILE = /\\.test\\.tsx?$/, and :182 CODE_FILE = /\\.[cm]?[jt]sx?$/ is unchanged, so walk() still scans every buildable file. :467 isTest = TEST_FILE.test(file) gates both exemptions: :477 (modules.ts / architecture.testkit.ts) and :486 (vitest). Re-proof (01-F-DG1-135-reproof-probe.log, probe zz-r14-probe.test.ts.txt): the probe loads both the fixed testkit and the round-13 testkit (git show 08cbd12). (a) fileViolations('kpi', kpi/zz.test.mts, import ../../modules.ts) -> ['modules/kpi/zz.test.mts: imports ../../modules.ts outside src/modules (composition root)']. The vitest import gives 'imports package vitest'. Under the round-13 testkit both were []. kpi/zz.test.ts and zz.test.tsx with the same imports give [] (test exemption kept). (b) Every other test-looking extension (.test.mts/.cts/.js/.jsx/.mjs/.cjs) is flagged for both vitest and architecture.testkit.ts. (c) Planted on disk in modules/kpi/: moduleViolations('kpi') flags zz.test.mts (2 violations) and not zz.test.ts; the old testkit gave []; baseline and post-removal are []. (d) The tsconfig.build.json:10 test excludes are exactly src/**/*.test.ts and src/**/*.test.tsx, and the extensions are ts and tsx, equal to TEST_FILE. (e) Real tree: moduleViolations = 0 for all 13 modules. Dist side (03-dist-ship-check.log, after pnpm -r build): a planted zz.test.mts ships as dist/modules/kpi/zz.test.mjs and is not collected by vitest; zz.test.ts is collected and not shipped. So the classification now matches build and vitest. architecture.test.ts: 128/128 passed (02). `find apps/api/src/modules -name '*.test.*' ! -name '*.test.ts'` is empty (count=0); 7 module test files, all .test.ts. Full unit suite: 321/321 on Node 22.22.2 and 24.21.0. Fix confirmed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-14/00-candidate-identity.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-14/01-F-DG1-135-reproof-probe.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-14/zz-r14-probe.test.ts.txt",
+        "docs/delivery/test-evidence/DG1/code-security/round-14/02-architecture-test-and-real-tree.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-14/03-dist-ship-check.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-14/10-pnpm_test.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-14/12-node24-pnpm_test.log"
+      ]
+    }
+  ]
+}
