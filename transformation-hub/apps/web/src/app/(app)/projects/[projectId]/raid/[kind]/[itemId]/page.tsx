@@ -93,7 +93,16 @@ function RiskChangeRequests({ risk }: { risk: RaidItem }) {
               </Link>
             ),
           },
-          { key: 'title', header: t('planning.common.title'), cell: (c) => <span dir="auto">{c.title}</span> },
+          // A change request title is free text typed by the requester: shown as entered (data-user-text).
+          {
+            key: 'title',
+            header: t('planning.common.title'),
+            cell: (c) => (
+              <span dir="auto" data-user-text>
+                {c.title}
+              </span>
+            ),
+          },
           { key: 'status', header: t('planning.common.status'), cell: (c) => <StatusBadge enumName="changeRequestStatuses" value={c.status} /> },
           { key: 'created', header: t('planning.baseline.createdAt'), cell: (c) => <span className="tabular">{formatDateTime(c.createdAt)}</span> },
         ]}

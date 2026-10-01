@@ -266,6 +266,20 @@ test.describe('P2 residuals — screens and end-to-end acceptance', () => {
       expect(first!.x, 'RTL: the first column is to the right of the second').toBeGreaterThan(second!.x);
       await checkArabic(ar.page, testInfo, SHOTS, 'p2r-kanban', bilingual);
       await noSideScroll(ar.page, ar.page.getByTestId('kanban-board'), 'ar-p2r-kanban');
+      // The move confirmation in Arabic: opened from the card's "Move" list, checked, cancelled — nothing moves.
+      await ar.page.goto(`/projects/${dc}/plan?tab=kanban`);
+      await ar.page.getByTestId('kanban-tab').getByRole('searchbox').fill(RUN);
+      const arCard = ar.page.locator(`[data-testid="kanban-column"][data-status="blocked"] [data-testid="kanban-card"][data-task-id="${task.id}"]`);
+      await expect(arCard).toBeVisible();
+      await arCard.getByTestId('kanban-move').click();
+      await arCard.getByTestId('kanban-move-to').first().click();
+      const arDialog = ar.page.getByRole('dialog');
+      await expect(arDialog).toContainText(task.wbsCode);
+      await checkArabic(ar.page, testInfo, SHOTS, 'p2r-kanban-move-dialog', bilingual, { scope: arDialog });
+      await checkDialogA11y(ar.page, arDialog, 'kanban-move-dialog-ar');
+      await ar.page.keyboard.press('Escape');
+      await expect(arDialog).toBeHidden();
+      await expect(arCard).toBeVisible();
       expect(ar.problems(), ar.problems().join('\n')).toEqual([]);
     } finally {
       await ar.close();
@@ -469,6 +483,24 @@ test.describe('P2 residuals — screens and end-to-end acceptance', () => {
       { key: 'e2e_reserved_matter', name: { en: 'Reserved matter (synthetic)', ar: 'مسألة محجوزة (اصطناعية)' }, maxAmount: null, currency: 'SAR', unitScale: 1, withinCommitteeAuthority: false, escalateTo: 'Board of Directors — to be confirmed' },
     ];
 
+    // Arabic (RTL) committee dialog of step 5 before anything exists: opened, checked, cancelled — nothing is created.
+    const secPre = await asPersona(browser, baseURL!, P.secretary, 'ar');
+    try {
+      const bilingual = watchBilingual(secPre.page);
+      await secPre.page.goto(`/projects/${np}/setup`);
+      await secPre.page.getByTestId('wizard-committee-name').fill(committeeName);
+      await secPre.page.getByTestId('wizard-committee-create-submit').click();
+      const d = secPre.page.getByRole('dialog');
+      await checkArabic(secPre.page, testInfo, SHOTS, 'p2r-wizard-committee-dialog', bilingual, { scope: d });
+      await checkDialogA11y(secPre.page, d, 'wizard-committee-dialog-ar');
+      await secPre.page.keyboard.press('Escape');
+      await expect(d).toBeHidden();
+      await expect(secPre.page.getByTestId('wizard-committee-summary')).toHaveCount(0);
+      expect(secPre.problems(), secPre.problems().join('\n')).toEqual([]);
+    } finally {
+      await secPre.close();
+    }
+
     // --- Step 5 (secretariat).
     const sec = await asPersona(browser, baseURL!, P.secretary);
     try {
@@ -482,6 +514,7 @@ test.describe('P2 residuals — screens and end-to-end acceptance', () => {
       await page.getByTestId('wizard-committee-create-submit').click();
       let dialog = page.getByRole('dialog');
       await expect(dialog).toContainText('The committee is created as a draft.');
+      await checkDialogA11y(page, dialog, 'wizard-committee-dialog');
       await confirm(page, 'Create');
       await expect(page.getByTestId('wizard-committee-summary')).toContainText(committeeName);
       await expect(page.getByTestId('wizard-committee-status')).toHaveAttribute('data-status', 'draft');
@@ -538,6 +571,19 @@ test.describe('P2 residuals — screens and end-to-end acceptance', () => {
       await expect(secAr.page.locator('[data-testid="wizard-matrix-status"][data-version="1"]')).toHaveAttribute('data-state', 'pending_approval');
       await checkArabic(secAr.page, testInfo, SHOTS, 'p2r-wizard-step5', bilingual);
       await noSideScroll(secAr.page, secAr.page.getByTestId('wizard-matrices-table'), 'ar-p2r-wizard-step5');
+      // The delegation confirmation in Arabic: opened, checked, cancelled — no second version is saved.
+      await secAr.page.getByTestId('wizard-quorum-members').fill('3');
+      await secAr.page.getByTestId('wizard-quorum-percent').fill('50');
+      await secAr.page.getByTestId('wizard-delegation-file').setInputFiles({ name: 'delegation.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(decisionTypes)) });
+      await expect(secAr.page.getByTestId('wizard-delegation-preview').locator('tbody tr')).toHaveCount(2);
+      await secAr.page.getByTestId('wizard-delegation-submit').click();
+      const d = secAr.page.getByRole('dialog');
+      await checkArabic(secAr.page, testInfo, SHOTS, 'p2r-wizard-delegation-dialog', bilingual, { scope: d });
+      await checkDialogA11y(secAr.page, d, 'wizard-delegation-dialog-ar');
+      await secAr.page.keyboard.press('Escape');
+      await expect(d).toBeHidden();
+      await expect(secAr.page.locator('[data-testid="wizard-matrix-status"]')).toHaveCount(1);
+      expect(secAr.problems(), secAr.problems().join('\n')).toEqual([]);
     } finally {
       await secAr.close();
     }
@@ -548,6 +594,24 @@ test.describe('P2 residuals — screens and end-to-end acceptance', () => {
       gates: (await c.get<{ items: unknown[] }>(`/api/v1/projects/${np}/gates`)).items.length,
     }));
     expect(counts.milestones, 'the template creates milestones').toBeGreaterThan(0);
+    // Arabic (RTL) propose dialog of step 6 before any baseline exists: opened, checked, cancelled — nothing is proposed.
+    const pmPre = await asPersona(browser, baseURL!, P.pm, 'ar');
+    try {
+      const bilingual = watchBilingual(pmPre.page);
+      await pmPre.page.goto(`/projects/${np}/setup?step=baseline`);
+      await expect(pmPre.page.getByTestId('wizard-baseline-status')).toHaveAttribute('data-status', 'none');
+      await expect(pmPre.page.getByTestId('wizard-baseline-propose')).toBeEnabled();
+      await pmPre.page.getByTestId('wizard-baseline-propose').click();
+      const d = pmPre.page.getByRole('dialog');
+      await checkArabic(pmPre.page, testInfo, SHOTS, 'p2r-wizard-baseline-dialog', bilingual, { scope: d });
+      await checkDialogA11y(pmPre.page, d, 'wizard-baseline-dialog-ar');
+      await pmPre.page.keyboard.press('Escape');
+      await expect(d).toBeHidden();
+      await expect(pmPre.page.getByTestId('wizard-baseline-status')).toHaveAttribute('data-status', 'none');
+      expect(pmPre.problems(), pmPre.problems().join('\n')).toEqual([]);
+    } finally {
+      await pmPre.close();
+    }
     const pm = await asPersona(browser, baseURL!, P.pm);
     try {
       const page = pm.page;
@@ -778,7 +842,7 @@ test.describe('P2 residuals — screens and end-to-end acceptance', () => {
     }
   });
 
-  test('(h) REQ-UX-015 a change request raised from a risk stays linked to it', async ({ browser, baseURL }) => {
+  test('(h) REQ-UX-015 a change request raised from a risk stays linked to it', async ({ browser, baseURL }, testInfo) => {
     test.setTimeout(120_000);
     const riskTitle = `E2E vendor capacity risk ${RUN} (synthetic)`;
     const risk = await withClient(baseURL!, P.pm, async (pm) => {
@@ -817,6 +881,24 @@ test.describe('P2 residuals — screens and end-to-end acceptance', () => {
       });
     } finally {
       await s.close();
+    }
+    // Arabic (RTL): the risk page with its change requests, and the raise dialog (opened, checked, cancelled).
+    const ar = await asPersona(browser, baseURL!, P.pm, 'ar');
+    try {
+      const bilingual = watchBilingual(ar.page);
+      await ar.page.goto(`/projects/${dc}/raid/risks/${risk.id}`);
+      await expect(ar.page.getByTestId('risk-change-requests')).toHaveAttribute('data-state', 'ready');
+      await checkArabic(ar.page, testInfo, SHOTS, 'p2r-risk-change-requests', bilingual);
+      await ar.page.getByTestId('risk-raise-cr').click();
+      const d = ar.page.getByRole('dialog');
+      await expect(d.getByTestId('cr-form-source')).toContainText(risk.code);
+      await checkArabic(ar.page, testInfo, SHOTS, 'p2r-raise-cr-dialog', bilingual, { scope: d });
+      await checkDialogA11y(ar.page, d, 'raise-cr-from-risk-ar');
+      await ar.page.keyboard.press('Escape');
+      await expect(d).toBeHidden();
+      expect(ar.problems(), ar.problems().join('\n')).toEqual([]);
+    } finally {
+      await ar.close();
     }
   });
 
@@ -1115,7 +1197,8 @@ test.describe('P2 residuals — screens and end-to-end acceptance', () => {
       boardUrl = new URL(sec.page.url()).pathname;
       await sec.page.getByRole('button', { name: 'Amend charter' }).click();
       const dialog = sec.page.getByRole('dialog');
-      await dialog.getByLabel(/^Purpose/).fill(`Synthetic purpose of the NewCo board (E2E ${RUN})`);
+      // The seeded purpose kept, with a marker (no UI catalogue wording: later Arabic checks of this demo board stay valid).
+      await dialog.getByLabel(/^Purpose/).fill(`DEMO — Statutory board of the fictional NewCo; separate from the programme steering committee. Wording amended by the E2E history check ${RUN} (synthetic).`);
       await dialog.getByLabel(/^Reason/).fill(charterReason);
       await confirm(sec.page, 'Save version');
       expect(sec.problems(), sec.problems().join('\n')).toEqual([]);

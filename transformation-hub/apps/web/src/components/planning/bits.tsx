@@ -141,14 +141,15 @@ export function DateText({ value, overdue = false }: { value: string | null | un
   );
 }
 
-export function CodeLink({ href, code, title, testId }: { href: string; code: string; title?: string; testId?: string }) {
+/** `userText`: the title is free text typed by a person (no Arabic counterpart) and is shown as entered (data-user-text). */
+export function CodeLink({ href, code, title, testId, userText }: { href: string; code: string; title?: string; testId?: string; userText?: boolean }) {
   return (
     <Link href={href} className="group inline-flex min-w-0 flex-col" data-testid={testId}>
       <span className="font-medium text-primary group-hover:underline" dir="ltr">
         {code}
       </span>
       {title ? (
-        <span className="text-sm text-ink group-hover:text-primary" dir="auto">
+        <span className="text-sm text-ink group-hover:text-primary" dir="auto" data-user-text={userText ? true : undefined}>
           {title}
         </span>
       ) : null}

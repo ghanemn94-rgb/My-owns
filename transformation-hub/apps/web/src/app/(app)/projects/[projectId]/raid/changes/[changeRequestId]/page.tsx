@@ -108,7 +108,12 @@ export default function ChangeRequestPage() {
       <BackLink href={`/projects/${projectId}/raid?tab=changes`} label={t('planning.cr.back')} />
       <PageHeader
         eyebrow={<span dir="ltr">{c.code}</span>}
-        title={<span dir="auto">{c.title}</span>}
+        title={
+          // Free text typed by the requester: shown as entered (data-user-text).
+          <span dir="auto" data-user-text>
+            {c.title}
+          </span>
+        }
         documentTitle={`${c.code} — ${c.title}`}
         badges={
           <>

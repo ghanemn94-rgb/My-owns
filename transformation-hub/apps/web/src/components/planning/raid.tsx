@@ -333,7 +333,7 @@ export function ChangeRequestsPanel() {
   const query = { page, pageSize: PAGE, q: q || undefined, status: status || undefined };
   const list = useQuery({ queryKey: pk.changeRequests(projectId, query), queryFn: ({ signal }) => api(P.listChangeRequests, { params: { projectId }, query, signal }), placeholderData: keepPreviousData });
   const columns: Column<ChangeRequest>[] = [
-    { key: 'code', header: t('planning.common.code'), isRowHeader: true, cell: (c) => <CodeLink href={changeRequestHref(projectId, c.id)} code={c.code} title={c.title} /> },
+    { key: 'code', header: t('planning.common.code'), isRowHeader: true, cell: (c) => <CodeLink href={changeRequestHref(projectId, c.id)} code={c.code} title={c.title} userText /> },
     { key: 'status', header: t('planning.common.status'), cell: (c) => <StatusBadge enumName="changeRequestStatuses" value={c.status} /> },
     { key: 'rebaseline', header: t('planning.cr.rebaseline'), cell: (c) => (c.rebaseline ? t('planning.common.yes') : t('planning.common.no')) },
     { key: 'cost', header: t('planning.cr.costImpact'), cell: (c) => (c.costImpact ? <MoneyText value={c.costImpact} /> : c.impacts.cost ? <span className="text-xs text-warning">{t('planning.cr.costNotQuantifiedShort')}</span> : <span className="text-muted">—</span>) },
