@@ -447,3 +447,90 @@ G1 decision …" (`422 perimeter.version.decision_no_subject`), lead-confirmed, 
 - The P3 domain findings other than DOM-P3-01/-06/-09 and every P3/P4 security finding: cross-referenced, not re-verified.
 - Screen-reader / manual assistive-technology testing: not performed (axe covers a subset of WCAG).
 - Arabic screens of P3/P4 records created by other e2e specs were not individually inspected beyond the crawler's classification.
+
+## 12. Fix status (implementer, separate context)
+
+Written by the implementer (`ux-frontend-engineer`, implementation mode) in its own context; the reviewer's text above is
+unchanged. Base: `9a93951` (branch head, with the P3 fixes merged after `5bf274b`); every finding was re-checked on that
+code before it was fixed. Commits on `worktree-agent-a5f28ccb181c2315d`: `f413c83`, `7743e14`, `1fa5a4f`, `340bb70`,
+`ca91e00`, `f35de39`, `bd37df9`, and the documentation commit that adds this section.
+
+How the server texts are made translatable (module guide §2): a sentence computed on read (reconciliation finding) or stored
+in a JSON column (impact entries) carries its codes (`<field>I18n`). Sentences stored as **plain text in tables shared by
+modules** — record-history reasons (`record_version.reason`, platform), system escalation texts (`escalation`, governance),
+cutover history rationales — are now written from one English template table per module and their codes are recovered on
+read from the same table (`parseRenderedMessage`, `packages/domain/src/messages.ts`; code / enum / date parameters match a
+single token so free text next to them may contain the template's punctuation). No schema change; rows written before keep
+working because the templates reproduce the earlier sentences word for word; a text that matches no template is shown as
+stored. The web routes codes by prefix (`perimeter.` → `carveout.messages`, `tsa.` / `cutover.` → `readiness.messages`,
+`newco.` → `newco.messages`; `apps/web/src/lib/i18n-data.ts`) and `apps/web/scripts/check-i18n.mjs` checks each catalogue
+against the domain table (en + ar, placeholders, no stale code). In Arabic, recorded data inside these sentences (a TSA or
+committee name, the user's justification) is wrapped in first-strong isolates so Latin text with parentheses does not
+reorder the sentence.
+
+| Finding | Status | Rule → file | Tests |
+|---|---|---|---|
+| **QA-P34-01a** | **Fixed** | Reconciliation findings return `messageI18n` (`RECON_MESSAGES_EN`, English unchanged) → `packages/domain/src/{carveout,perimeter}.ts`, `packages/contracts/src/carveout.ts` (`ReconciliationDto`); Details column translated → `apps/web/src/components/carveout/panels.tsx` | domain `qa-p34-messages.test.ts`; API `test/reviews/p34-qa-fixes.spec.ts` "a: every reconciliation finding has codes …"; e2e "QA-P34-01a: … (fixed, regression)" (0/4 English sentences shown) |
+| **QA-P34-01b** | **Fixed** | Requested action and routing target written from `TSA_MESSAGES_EN` (`tsaEscalationText`) and returned as `requestedActionI18n` / `targetI18n` (`tsaEscalationI18n`) → `packages/domain/src/readiness.ts`, `apps/api/src/modules/readiness/tsa.service.ts`, `TsaEscalationDto`; TSA page → `readiness/tsa/[tsaServiceId]/page.tsx` | API "the demo TSA issue: expiry escalation text and routing target …"; e2e "QA-P34-01b: … (fixed, regression)" |
+| **QA-P34-01c** | **Fixed** | `PARTNER_REQUESTER_LABEL` (`packages/domain/src/jv.ts`) stored for partner-raised questions; the DD request page shows `jv.dd.requesterCounterparty` (en + ar) for them → `jv/diligence/requests/[requestId]/page.tsx` | API "origin partner ⇒ requesterLabel = PARTNER_REQUESTER_LABEL"; e2e "QA-P34-01c: … (fixed, regression)"; J3 no longer sets the string aside |
+| **QA-P34-01d** | **Fixed** | Register and check page show `titleAr` (`localized`); the register search also matches the Arabic title → `readiness/checks/page.tsx`, `readiness/checks/[checkId]/page.tsx`, `apps/api/src/modules/readiness/checks.service.ts` | e2e "QA-P34-01d: … (fixed, regression)" (31 template checks: 0 shown in English); API search assertion in "the cutover plan returns titleAr …" |
+| **QA-P34-01e** | **Fixed** | `CutoverCheckDto.titleAr`; GO blockers carry `titleAr` ("code — Arabic title", through `goDecisionBlockers`), stored history evaluations get it on read while the check's title is the recorded one → `packages/domain/src/carveout.ts`, `apps/api/src/modules/readiness/{cutover.service,readiness.support}.ts`; plan page → `readiness/cutover/[planId]/page.tsx` | API "the cutover plan returns titleAr for its checks and its GO blockers …" (31/31, 28 blockers); e2e "QA-P34-01e: … (fixed, regression)" (0 of 31) |
+| **QA-P34-01f** | **Fixed** | Impact entries store `summaryI18n` (`IMPACT_MESSAGES_EN`, `withheldImpactEntry`); item history reasons written from `PERIMETER_HISTORY_MESSAGES_EN` and returned with `reasonI18n` → `packages/domain/src/perimeter.ts`, `apps/api/src/modules/carveout/{perimeter,transfers}.service.ts`; `components/carveout/bits.tsx`, `perimeter/items/[itemId]/page.tsx` | domain round-trip of every template; API "f: impact summaries and the record-history reasons of every demo item carry codes …" (48 summaries, 18 reasons); e2e "QA-P34-01f: … (fixed, regression)" (0/13) |
+| **QA-P34-01g** | **Fixed** | Workstream labels of the readiness screens and forms localized (`useScopeLabels`) → `readiness/_components/{rd,plan-form,tsa-form}.tsx`, `readiness/checks/page.tsx` | e2e "QA-P34-01g: … (fixed, regression)" |
+| **QA-P34-01h** | **Fixed** | `KpiDto.definitionAr` = the pinned template version's Arabic while the stored definition is the template's English (as gate purposes; KPI definitions have no edit route) → `apps/api/src/modules/finance/kpis.service.ts`, `packages/contracts/src/finance.ts`; KPI page → `finance/kpis/[kpiId]/page.tsx` | API "definitionAr = template Arabic; null for a KPI defined by the team or whose definition differs from the template"; e2e "QA-P34-01h: … (fixed, regression)" |
+| QA-P34-01, same class (found on re-check; absent from the demo data the crawler visited) | **Fixed** | Cutover plan history: the rationales the system writes (GO flagged, check bound / unbound) from `CUTOVER_HISTORY_MESSAGES_EN`, returned with `rationaleI18n` only on those entries (a person's rationale has no codes and is marked `data-user-text`); legal-entity history reasons from `NEWCO_HISTORY_MESSAGES_EN` with `reasonI18n` → `readiness/{checks.service,cutover.service,readiness.support}.ts`, `newco/legal-entities.service.ts`, `newco/entities/[entityId]/page.tsx` | API "rebind: the check_unbound / check_bound rationales and the entity history reasons are recovered as codes …"; domain round-trip |
+| **QA-P34-02** | **Fixed** | 27 P3 screen states added to `e2e/tests/a11y.spec.ts` (the 8 perimeter tabs, item and item at 390 px, agreement, NewCo tabs / entity / requirement, readiness overview / checks / check / cutover / plan as PM and sponsor / TSA register / TSA and TSA at 390 px / waivers, the perimeter-create and record-test dialogs); both locales. Not added: the figure, reconciliation and model-version details of P4 — the demo sandbox has none and the scan is read-only (covered by this review's crawler on a fresh project) | a11y.spec.ts: 54 P3 scans passed (single run) — see the runs below |
+| **QA-P34-03** | **Fixed** | The item page grids use `grid-cols-1` (`minmax(0, 1fr)`): the consents table scrolls inside its own region instead of growing the implicit `auto` track → `perimeter/items/[itemId]/page.tsx` | e2e "QA-P34-03: … (fixed, regression)" (overflow 0 px in ar and en); the crawler's 390 px pass no longer sets the page aside (63 screens, 0 overflow) |
+| **QA-P34-04** | **Fixed** | `docs/requirements/status-evidence.yaml`: REQ-UX-010 → **Tested** (AT-07 + J5 "add perimeter item and see reconciliation update"); REQ-LCY-007 stays Tested with the cockpit E2E it lacked — new `p3-carveout.spec.ts` "(e) REQ-LCY-007 / AT-06: the cockpit shows the NewCo incorporated …" (cockpit: incorporation `incorporated_verified` next to perimeter transfer `transfer_in_progress`); REQ-SET-012 lowered to **Implemented** (no E2E drives the perimeter approval; gap stated); REQ-PHS-005 evidence refreshed (P3 screens now in the axe scan, reviews run; stays Implemented until the P3 gate report); REQ-ARC-008 / REQ-UX-002 notes | `apply_status.py --check` / apply (see below) |
+| QA-P34-05 | Recorded | Coverage notes; J1 / J2 / J5 remain the UI evidence of the worker expiry, the access + incident blockers and the reconciliation update | — |
+| **QA-P34-06** | **Fixed** | The aggregate dialog gives the focus back to Run when the request ends, if the run was started from it and the focus fell to `<body>` → `finance/_components/aggregate.tsx` | J4 now prints `focus after the refused run (ar): inside the dialog` |
+| **QA-P34-07** | **Fixed** | `SearchInput` cancels its pending debounced update when the user follows a link to another URL (capture-phase click) or traverses the history; `useUrlState.set` does not navigate when the query string is unchanged → `components/SearchInput.tsx`, `committee/_components/gov.tsx` (shared by the P2/P3/P4 registers) | `qa-p34-journeys.spec.ts` "QA-P34-07: a row link clicked within the 300 ms search debounce reaches the detail page even when the navigation outlasts the debounce (fixed, regression)" (detail navigation delayed 1.5 s: ends on `/readiness/tsa/<id>`); `p3-readiness.spec.ts` REQ-SET-004 test unchanged, 5/5 with `--repeat-each=5` |
+
+The crawler (`qa-p34-arabic-rtl.spec.ts`) no longer classifies QA-P34-01a…h (a recurrence is now an unclassified problem);
+only the DATA classes remain.
+
+Observations, not changed: the Committee Hub escalation register (a P2 screen, governance module) still shows the stored
+English requested action and target of TSA-raised escalations — `tsaEscalationI18n` can be applied there; the cockpit's
+dimension badge truncates "Incorporated — evidence verified" visually at 1360 px (`StatusBadge` uses `truncate`, no
+tooltip; the text is in the DOM for assistive technology) — visible in
+`e2e/screenshots/p3/cockpit-incorporated-transfer-in-progress-en.png`.
+
+### Verification of the fixes (implementer's worktree; own databases `hub_test_qafix` / `hub_test_qafix_e2e`; API :4581, web :3581)
+
+```
+$ pnpm lint                         → exit 0 (i18n check: 230 server message codes incl. carve-out, readiness, NewCo;
+                                      hard-coded strings; module boundaries)
+$ pnpm typecheck                    → exit 0
+$ (packages/domain) npx vitest run  → Test Files 23 passed; Tests 463 passed   (qa-p34-messages.test.ts: 10)
+$ (packages/contracts) npx vitest run → Test Files 3 passed; Tests 105 passed
+$ (apps/api) TEST_DATABASE_URL=…/hub_test_qafix TEST_DATABASE_MIGRATION_URL=…/hub_test_qafix pnpm test   (API code of f35de39)
+  Test Files  121 passed (121)
+       Tests  985 passed | 2 expected fail (987)         Duration 1209.56s   EXIT 0
+  (2 expected fails = the open DOM-P2F-02/04 probes; test/reviews/p34-qa-fixes.spec.ts 7/7 inside)
+$ node apps/api/dist/cli/openapi.js …  → 514 operations
+```
+
+Playwright, stack as in the CI e2e job (schema dropped, `api-entrypoint.cjs migrate`, demo seed; API `dist/main.js` with
+`HUB_RATE_LIMIT_PUBLIC_PER_MINUTE=1000` + worker `dist/worker.js`; production web build with `HUB_API_URL` of the API;
+`QA_P34_DB_OWNER_URL` set so J1 runs with the worker):
+
+```
+$ (full suite, fresh database, at f35de39) playwright test --reporter=list
+  396 passed (41.8m)   EXIT 0
+  a11y.spec.ts 298 (incl. the 54 new P3 scans); p3-carveout (a)–(e); p3-readiness incl. REQ-SET-004;
+  qa-p34-arabic-rtl: [ar] P3 UNCLASSIFIED 0 (CLASSIFIED 11, all DATA), [en] P3 0, [ar] P4 UNCLASSIFIED 0 (CLASSIFIED 10, DATA),
+  [en] P4 0, [ar-390] 63 screens, 0 problems; the 9 regressions passed;
+  qa-p34-journeys: J1 (worker: expired_unresolved + escalation), J2, J3 ("J3 Arabic: 0 problem(s)"), J4 ("focus after the
+  refused run (ar): inside the dialog"), J5, QA-P34-07 regression ("…/readiness/tsa/<id>; TSA detail shown: 1"); qa-p34-states 4/4
+$ (after bd37df9 — table header labels; fresh database) playwright test a11y.spec.ts p3-carveout.spec.ts qa-p34-arabic-rtl.spec.ts
+  317 passed (29.0m)   EXIT 0      docs/test-evidence/a11y-report.md regenerated: 294 scans, 0 serious/critical
+$ playwright test p3-readiness.spec.ts -g "REQ-SET-004" --repeat-each=5   → 5 passed (test unchanged)
+$ python3 scripts/requirements/apply_status.py --check → status-evidence.yaml OK (263 entries)
+$ python3 scripts/requirements/apply_status.py         → applied 263 status updates; rendered 394 requirements; AT coverage 30/30
+$ GITLEAKS=…/gitleaks bash scripts/ops/secret-scan.sh tree → PASS
+```
+
+Screenshots: the regenerated tracked screenshots were restored; committed are the new `fixed-qa-p34-*.png` (5),
+`p3/cockpit-incorporated-transfer-in-progress-en.png` and `p3/perimeter-reconciliation-ar.png` (now with Arabic details).
+Not executed: CI on this branch (local runs only); manual screen-reader testing.
+
