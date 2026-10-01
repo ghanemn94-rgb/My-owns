@@ -17,10 +17,13 @@ export interface ObjectStorage {
 export const OBJECT_STORAGE = Symbol('OBJECT_STORAGE');
 
 const UUID = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
-/** `<area>/<projectUuid>/<objectUuid>` — the only key shape the adapters accept (defence against traversal). */
-export const STORAGE_KEY_PATTERN = new RegExp(`^(documents|quarantine)/${UUID}/${UUID}$`);
+/**
+ * `<area>/<projectUuid>/<objectUuid>` — the only key shape the adapters accept (defence against traversal). Areas: documents,
+ * quarantine, and reports (rendered report exports — P6 reporting, ADR-0011).
+ */
+export const STORAGE_KEY_PATTERN = new RegExp(`^(documents|quarantine|reports)/${UUID}/${UUID}$`);
 
-export function storageKey(area: 'documents' | 'quarantine', projectId: string, objectId: string): string {
+export function storageKey(area: 'documents' | 'quarantine' | 'reports', projectId: string, objectId: string): string {
   const key = `${area}/${projectId.toLowerCase()}/${objectId.toLowerCase()}`;
   assertStorageKey(key);
   return key;
