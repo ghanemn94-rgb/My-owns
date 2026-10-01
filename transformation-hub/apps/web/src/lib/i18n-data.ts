@@ -115,7 +115,7 @@ export function serverMessageKey(code: string): MessageKey {
  * (U+2068 … U+2069) so its direction and parentheses do not reorder the Arabic sentence around it (QA-P34-01b).
  */
 const ISOLATED_PREFIXES = ['perimeter.', 'tsa.', 'cutover.', 'newco.'];
-const isolate = (v: string) => `⁨${v}⁩`;
+const isolate = (v: string) => `\u2068${v}\u2069`;
 
 /**
  * Renders server messages in the active locale: `(messages, englishFallback) => text`. Returns the English fallback when
