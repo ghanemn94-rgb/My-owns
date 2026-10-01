@@ -1,38 +1,40 @@
 #!/usr/bin/env bash
-# Sandboxed dependency installation (REQ-DLV-042, D-027, threat-model residual 3).
+# Sandboxed dependency installation (REQ-DLV-042, D-027/D-046, threat-model residual 3).
 #
 # Agent shells have no network (D-025), so dependency installation is an ORCHESTRATOR step. The orchestrator must never
-# run a package manager with its own unconfined privileges: a malicious or compromised dependency's install/postinstall
-# script would then run against the real filesystem and secrets. This wrapper runs the package manager inside bubblewrap:
-#   - the root filesystem is READ-ONLY; only the target tree (the repo) and the package store are writable, and the
-#     repo's control paths (.git, .claude, .github, tools/{gates,agents,deps,source}, docs/{source,delivery}, …) are
-#     re-bound READ-ONLY so a dependency script cannot tamper with git internals, delivery controls or CI config;
+# run a package manager with its own unconfined privileges: a malicious or compromised dependency's install/build
+# script would then run against the real filesystem and secrets. This wrapper runs the package manager inside
+# bubblewrap, and — the key control (F-DG1-113/F-DG1-114) — the real repository is bound READ-ONLY and is NEVER
+# writable inside the sandbox:
+#   - `create`/`frozen` run the package manager inside a DISPOSABLE, writable COPY of the source tree (no node_modules,
+#     no .git). A dependency build script can therefore write only that throwaway copy and the package store; it cannot
+#     touch the installer, the gate/agent tooling, git, CI config, the sources or any agent-config surface in the real
+#     repo. Afterwards the orchestrator copies back ONLY node_modules (and, in `create`, pnpm-lock.yaml) — nothing else;
+#   - `run` executes an arbitrary command with the real repo bound READ-ONLY (used by the tests and the escape probes);
+#   - the root filesystem is read-only; package lifecycle scripts are DISABLED unless a package is on the reviewed
+#     allow-list in the root package.json `pnpm.onlyBuiltDependencies`;
 #   - the process runs with ALL capabilities dropped and from a CLEARED environment (only PATH/HOME/XDG/PNPM/registry and
-#     the proxy's TLS vars are set) so the orchestrator's own environment — which may hold credentials — never crosses in;
-#   - package lifecycle scripts (install/preinstall/postinstall/prepare/…) are DISABLED unless a package is on the
-#     reviewed allow-list in the root package.json `pnpm.onlyBuiltDependencies`;
-#   - the lockfile is enforced: the default mode refuses to install without a committed lockfile or to change it
-#     (`--frozen-lockfile`); the explicit `create` mode is the only one that may write a new lockfile;
+#     the proxy's TLS vars are set), so the orchestrator's own environment — which may hold credentials — never crosses
+#     in (F-DG1-102);
+#   - the lockfile is enforced: `frozen` fails if the lockfile is absent or would change; `create` is the only mode that
+#     writes a new lockfile;
 #   - a missing bubblewrap makes the wrapper exit non-zero (BLOCKED) — it never falls back to an unsandboxed install.
 #
-# Network: the sandbox shares the host network namespace so the package manager can reach the package registry. Egress
-# is bounded by the environment's own outbound network policy (the managed proxy allow-list, which permits the package
-# registries and denies the rest) and by pnpm being configured with only the registry as a source; bubblewrap cannot
-# itself filter egress by host without privileges this container does not grant (documented in D-027 / threat-model
-# residual 3). The wrapper adds NO network reach beyond what the environment already allows.
+# Network: the sandbox shares the host network so the package manager can reach the registry. Egress is bounded by the
+# environment's own outbound network policy (the managed proxy allow-list) and by pnpm's registry-only config; bubblewrap
+# cannot itself filter egress by host without privileges this container does not grant (D-027 / threat-model residual 3).
 #
 # Usage:
-#   tools/deps/install-sandbox.sh create        # first install: create/refresh and write pnpm-lock.yaml
-#   tools/deps/install-sandbox.sh frozen         # CI/repeat install: --frozen-lockfile (default; fails if lockfile absent or would change)
-#   tools/deps/install-sandbox.sh run -- <cmd…>  # run an arbitrary command under the same sandbox (used by the tests)
+#   tools/deps/install-sandbox.sh create         # first install: resolve and write pnpm-lock.yaml, then populate node_modules
+#   tools/deps/install-sandbox.sh frozen          # CI/repeat install: --frozen-lockfile (default; fails if the lockfile is absent or would change)
+#   tools/deps/install-sandbox.sh run -- <cmd…>   # run an arbitrary command with the real repo read-only (used by the tests)
 #
 # Exit codes: 0 ok; 65 bubblewrap unavailable (BLOCKED); 64 usage; other = the package manager's own non-zero.
 set -uo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 # Optional --root <dir>: operate on another tree (the acceptance tests use disposable scratch projects). Only the
-# orchestrator invokes this wrapper, so the override is not an escalation; it never widens what is writable beyond the
-# named tree and the package store.
+# orchestrator invokes this wrapper, so the override is not an escalation; it never widens what is writable.
 if [ "${1:-}" = "--root" ]; then REPO_ROOT="$(cd "$2" && pwd)"; shift 2; fi
 MODE="${1:-frozen}"
 shift || true
@@ -47,8 +49,7 @@ PNPM_STORE="$(pnpm store path 2>/dev/null | tail -1)"
 [ -n "$PNPM_STORE" ] || fail "cannot resolve the pnpm store path"
 mkdir -p "$PNPM_STORE"
 
-# A private, writable cache/state area for pnpm and node, so the only host-persistent writable path is the store; a fresh
-# tmpfs is mounted over it inside the sandbox, so nothing the install writes there survives or escapes the target tree.
+# A private, writable cache/state area for pnpm and node; a fresh tmpfs is mounted over /tmp inside the sandbox.
 SBX_TMP="/tmp/mth-install.$$"
 
 # Lifecycle-script policy (REQ-DLV-042). A DEPENDENCY's install/build script runs only if the package is on the reviewed
@@ -58,9 +59,7 @@ SBX_TMP="/tmp/mth-install.$$"
 pnpm_args=(--config.enable-pre-post-scripts=false)
 case "$MODE" in
   create)
-    # The only mode permitted to write/update the lockfile. `--config.frozen-lockfile=false` is required because CI=1
-    # (set below to disable interactive prompts) otherwise defaults pnpm to a frozen install and refuses to update it.
-    # Still deterministic: exact versions (.npmrc save-exact), no lifecycle scripts.
+    # `--config.frozen-lockfile=false` is required because CI=1 (set below) otherwise defaults pnpm to a frozen install.
     pnpm_args+=(install --config.frozen-lockfile=false --config.confirmModulesPurge=false)
     ;;
   frozen)
@@ -74,35 +73,21 @@ case "$MODE" in
   *) echo "usage: $0 {create|frozen|run -- <cmd...>}" >&2; exit 64 ;;
 esac
 
-# bubblewrap: read-only root; writable only the repo (target tree) and the pnpm store; private /tmp, /dev, /proc; own
-# ipc/pid/uts/cgroup namespaces; all capabilities dropped; host network shared (registry reachability, bounded by the env
-# policy). The container has no unprivileged user namespaces for nesting (so no --unshare-user), but bwrap itself runs
-# fine as root here and --cap-drop ALL confines the install's process (see D-030).
-bwrap_args=(
+# bubblewrap base: read-only root; private /tmp, /dev, /proc, /run; own ipc/pid/uts/cgroup namespaces; all capabilities
+# dropped; a cleared environment with only what the install needs; host network shared (registry reachability, bounded
+# by the env policy). The pnpm store is the only host-persistent writable path. No --unshare-user (the container has no
+# unprivileged user namespaces), but bwrap runs fine as root here and --cap-drop ALL confines the process (D-030).
+base_args=(
   --ro-bind / /
   --dev /dev
   --proc /proc
   --tmpfs /tmp
   --tmpfs /run
-  --bind "$REPO_ROOT" "$REPO_ROOT"
   --bind "$PNPM_STORE" "$PNPM_STORE"
-)
-# Re-bind the repository's control paths READ-ONLY on top of the writable target tree, so a dependency's install script
-# cannot tamper with git internals, delivery controls, CI config or the sources even though the tree itself is writable
-# (F-DG1-102). Only paths that actually exist are bound — the disposable scratch trees used under --root have none of
-# them, so the loop is a no-op there.
-for ctrl in .git .claude .github .gitignore .gitattributes CLAUDE.md CLAUDE.local.md \
-            tools/gates tools/agents tools/deps tools/source docs/source docs/delivery; do
-  [ -e "$REPO_ROOT/$ctrl" ] && bwrap_args+=(--ro-bind "$REPO_ROOT/$ctrl" "$REPO_ROOT/$ctrl")
-done
-bwrap_args+=(
   --unshare-ipc --unshare-pid --unshare-uts --unshare-cgroup
   --cap-drop ALL
   --die-with-parent
   --new-session
-  --chdir "$REPO_ROOT"
-  # Start from an EMPTY environment, then set only what the install needs: the orchestrator's own environment
-  # (which may hold credentials/secrets) must not cross into code that runs a package manager (F-DG1-102).
   --clearenv
   --setenv PATH "$PATH"
   --setenv HOME "$SBX_TMP"
@@ -118,30 +103,48 @@ bwrap_args+=(
 # sets them); nothing else — no credentials — crosses in. Each is forwarded only when non-empty.
 for v in HTTPS_PROXY HTTP_PROXY NO_PROXY https_proxy http_proxy no_proxy \
          NODE_EXTRA_CA_CERTS SSL_CERT_FILE SSL_CERT_DIR; do
-  [ -n "${!v:-}" ] && bwrap_args+=(--setenv "$v" "${!v}")
+  [ -n "${!v:-}" ] && base_args+=(--setenv "$v" "${!v}")
 done
-# Recreate the private tmp inside the sandbox before the command runs.
 prelude='mkdir -p "$HOME" "$XDG_CACHE_HOME" "$XDG_STATE_HOME" "$XDG_DATA_HOME" "$PNPM_HOME";'
 
+# ---- run: an arbitrary command with the REAL repo read-only (escape probes, misc checks) -------------------------
 if [ "$MODE" = "run" ]; then
-  exec bwrap "${bwrap_args[@]}" -- /usr/bin/env bash -c "$prelude exec \"\$@\"" bash "$@"
+  exec bwrap "${base_args[@]}" --chdir "$REPO_ROOT" -- /usr/bin/env bash -c "$prelude exec \"\$@\"" bash "$@"
 fi
 
-# In 'create'/'frozen', run pnpm and then assert the lockfile did not change unexpectedly in frozen mode (belt-and-braces
-# on top of --frozen-lockfile), and that a lockfile now exists in create mode.
-before=""
-[ -f "$REPO_ROOT/pnpm-lock.yaml" ] && before="$(sha256sum "$REPO_ROOT/pnpm-lock.yaml" | cut -d' ' -f1)"
+# ---- create / frozen: run pnpm in a DISPOSABLE writable COPY of the source; copy back only node_modules (+ lockfile) --
+WS="$(mktemp -d "${TMPDIR:-/var/tmp}/mth-ws.XXXXXX")"
+cleanup() { rm -rf "$WS"; }
+trap cleanup EXIT
+# Copy the source tree into the throwaway workspace, excluding node_modules (rebuilt here) and .git (never needed and
+# must stay out of the dependency manager's reach).
+tar -C "$REPO_ROOT" --exclude='./.git' --exclude=node_modules -cf - . | tar -C "$WS" -xf -
+[ -f "$WS/package.json" ] || fail "no package.json in $REPO_ROOT"
 
-bwrap "${bwrap_args[@]}" -- /usr/bin/env bash -c "$prelude exec pnpm \"\$@\"" bash "${pnpm_args[@]}"
+bwrap "${base_args[@]}" --bind "$WS" "$WS" --chdir "$WS" -- /usr/bin/env bash -c "$prelude exec pnpm \"\$@\"" bash "${pnpm_args[@]}"
 rc=$?
+[ "$rc" -eq 0 ] || exit "$rc"
 
-after=""
-[ -f "$REPO_ROOT/pnpm-lock.yaml" ] && after="$(sha256sum "$REPO_ROOT/pnpm-lock.yaml" | cut -d' ' -f1)"
+# Lockfile: create writes it; frozen must not change it.
+if [ "$MODE" = "create" ]; then
+  [ -f "$WS/pnpm-lock.yaml" ] || fail "'create' produced no pnpm-lock.yaml"
+  cp "$WS/pnpm-lock.yaml" "$REPO_ROOT/pnpm-lock.yaml"
+elif [ "$MODE" = "frozen" ]; then
+  if ! cmp -s "$WS/pnpm-lock.yaml" "$REPO_ROOT/pnpm-lock.yaml"; then
+    fail "the lockfile changed under a frozen install — refusing"
+  fi
+fi
 
-if [ "$rc" -eq 0 ] && [ "$MODE" = "frozen" ] && [ "$before" != "$after" ]; then
-  fail "the lockfile changed under a frozen install (before=$before after=$after) — refusing"
-fi
-if [ "$rc" -eq 0 ] && [ "$MODE" = "create" ] && [ -z "$after" ]; then
-  fail "'create' produced no pnpm-lock.yaml"
-fi
-exit "$rc"
+# Copy back ONLY node_modules, at every workspace level, from the disposable copy to the real repo. Nothing else from
+# the copy is trusted or propagated. Each destination is removed first and recreated with `cp -a`, so the real
+# node_modules is replaced wholesale (no stale entries) and symlinks are preserved; the relative symlinks inside
+# node_modules (the pnpm virtual store and the workspace package links) resolve correctly against the real repo.
+while IFS= read -r nm; do
+  rel="${nm#"$WS"/}"
+  dest="$REPO_ROOT/$rel"
+  mkdir -p "$(dirname "$dest")"
+  rm -rf "$dest"
+  cp -a "$nm" "$dest"
+done < <(find "$WS" -type d -name node_modules -prune)
+
+exit 0
