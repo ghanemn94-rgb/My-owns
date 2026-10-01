@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG1-127",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Module lint: two loader routes outside LOADER_BUILTINS remain open — node:sqlite DatabaseSync.loadExtension (native shared-library load, same class as the process.dlopen route closed by F-DG1-125) and runtime code generation via node:fs + a literal same-module import()",
+      "reproduction": "Candidate a7b46fbc (commit 0026a7b), disposable clone. apps/api/src/architecture.testkit.ts:58-70 bans the specifiers module, vm, worker_threads, inspector(/promises), repl, child_process, cluster and process (with/without node:); bareAllowed() (117-123) returns true for every other `node:` built-in. Plants through fileViolations('transformations', .../planted.ts) (22-plant-f125.log, 'adjacent routes'): A1 `import { DatabaseSync } from \"node:sqlite\"; const db = new DatabaseSync(\":memory:\", { allowExtension: true }); db.loadExtension(\"/tmp/x.so\");` -> 0 violations. A2 `import { writeFileSync } from \"node:fs\"; writeFileSync(new URL(\"./gen.mjs\", import.meta.url), \"...\"); await import(\"./gen.mjs\");` -> 0 violations (the literal relative specifier resolves inside the module's own directory, so the boundary check accepts it). Runtime, Node 22.22.2 (23-adjacent-routes-runtime.log): A1 `db.loadExtension` is a function; loading /lib/x86_64-linux-gnu/libm.so.6 opens the real shared object and fails only at the symbol lookup ('undefined symbol: sqlite3_m_init'), i.e. it is a dlopen. A2 the generated file runs `(await import('node:child_process')).execSync(...)` and prints 'generated-code-ran'; the generated source is never seen by the lint. No current module source uses node:fs or node:sqlite (only admin/branding.test.ts imports node:fs).",
+      "expected": "The LOADER_BUILTINS rationale ('built-ins that hand out an unchecked loader or evaluate code; a module never needs them') and the header claim that rules 1-4 'remove every syntactic route inside module source' cover these too: add `sqlite` to LOADER_BUILTINS (a module persists through @mth/db/PostgreSQL per ADR-0003 and never needs it), and either ban node:fs write APIs in non-test module source or record runtime code generation through the filesystem as a stated residual next to the existing one in the testkit header / ADR-0002. Add A1/A2 to the self-check table.",
+      "actual": "Both routes pass the lint with zero violations. Impact is limited, as for F-DG1-125: this is a static architecture lint (defence in depth for ADR-0002 module boundaries, enforced against code that is also reviewed), not a runtime security boundary; A1 needs a native .so on disk and an explicit allowExtension:true; A2 needs a writable module directory at runtime (the production image's source tree is expected to be read-only). Neither is used by any module today. Hence Low, not mandatory; it does not reopen F-DG1-125, whose process-module route is fully closed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-6/22-plant-f125.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-6/23-adjacent-routes-runtime.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-6/plant-f125.test.ts",
+        "apps/api/src/architecture.testkit.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-6/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T12:35:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG1 round 6 while verifying F-DG1-125 (adjacent-route probes A1/A2); reproduced in a disposable clone (lint) and in Node 22.22.2 (runtime). ID proposed as the next free number in the code-security 1xx range; the orchestrator may renumber."
+        }
+      ]
+    }
+  ]
+}
