@@ -1,10 +1,13 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useState } from 'react';
 import { identityRoutes, type RouteResponse } from '@hub/contracts';
 import { DataTable, type Column } from '@/components/DataTable';
 import { DemoBadge } from '@/components/DemoBadge';
+import { IntegrationsAdmin } from '@/components/integrations/IntegrationsAdmin';
+import { LoadingState } from '@/components/LoadingState';
 import { Main } from '@/components/Main';
 import { NotImplementedYet } from '@/components/NotImplementedYet';
 import { PageHeader } from '@/components/PageHeader';
@@ -23,7 +26,7 @@ const TABS: { key: string; label: MessageKey; phase: string | null }[] = [
   { key: 'users', label: 'admin.tabs.users', phase: null },
   { key: 'permissions', label: 'admin.tabs.permissions', phase: 'P7' },
   { key: 'templates', label: 'admin.tabs.templates', phase: 'P6' },
-  { key: 'integrations', label: 'admin.tabs.integrations', phase: 'P7' },
+  { key: 'integrations', label: 'admin.tabs.integrations', phase: null },
   { key: 'identity', label: 'admin.tabs.identity', phase: 'P7' },
   { key: 'deployment', label: 'admin.tabs.deployment', phase: 'P7' },
 ];
@@ -100,11 +103,13 @@ function UsersTab() {
   );
 }
 
-export default function AdminPage() {
+function AdminScreen() {
   const { t } = useI18n();
   const me = useMe();
-  const [tab, setTab] = useState('users');
+  const params = useSearchParams();
+  const [tab, setTab] = useState(TABS.some((x) => x.key === params.get('tab')) ? params.get('tab')! : 'users');
   const canUsers = canInOrg(me.data, 'admin.users.read');
+  const canIntegrations = canInOrg(me.data, 'integrations.connection.read');
   const current = TABS.find((x) => x.key === tab) ?? TABS[0]!;
 
   return (
@@ -153,10 +158,25 @@ export default function AdminPage() {
           ) : (
             <RestrictedState showHomeLink={false} />
           )
+        ) : current.key === 'integrations' ? (
+          canIntegrations ? (
+            <IntegrationsAdmin canManage={canInOrg(me.data, 'integrations.connection.manage')} canDisable={canInOrg(me.data, 'integrations.connection.disable')} />
+          ) : (
+            <RestrictedState showHomeLink={false} />
+          )
         ) : (
           <NotImplementedYet phase={current.phase ?? ''} feature={t(current.label)} />
         )}
       </div>
     </Main>
+  );
+}
+
+/** Administration (screen 16b administration parts): users, and the integrations registry for platform administrators. */
+export default function AdminPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <AdminScreen />
+    </Suspense>
   );
 }

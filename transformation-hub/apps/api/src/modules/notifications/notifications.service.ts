@@ -381,7 +381,7 @@ export class NotificationsService {
       kind: 'integration.alert',
       code: 'notifications.integration.alert',
       params: { adapter: String(job.payload['adapterKey'] ?? ''), problem: String(job.payload['problem'] ?? 'failure') },
-      link: '/admin/integrations',
+      link: '/admin?tab=integrations',
       projectId: null,
       sourceType: null,
       sourceId: null,

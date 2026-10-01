@@ -206,7 +206,7 @@ export class ImportPlanner {
     const byCode = new Map(visible.map((x) => [x.code.toLowerCase(), x]));
     const byTitle = new Map(visible.map((x) => [normalizeKey(x.title), x]));
     const ws = await this.workstreams(projectId);
-    this.markDuplicate(rows, (r) => (asText(r.values['code']) ? `code:${asText(r.values['code'])!.toLowerCase()}` : r.values['title'] ? `title:${normalizeKey(String(r.values['title']))}` : null), 'code / title');
+    this.markDuplicate(rows, (r) => (asText(r.values['code']) ? `code:${asText(r.values['code'])!.toLowerCase()}` : r.values['title'] ? `title:${normalizeKey(String(r.values['title']))}` : null), 'code_or_title');
     for (const r of rows) {
       if (r.action === 'error') continue;
       if (!this.resolveWorkstream(r, ws)) continue;
@@ -267,7 +267,7 @@ export class ImportPlanner {
       : new Set<string>();
     const baselined = await this.approvedBaselineTaskIds(projectId);
     const ws = await this.workstreams(projectId);
-    this.markDuplicate(rows, (r) => (asText(r.values['wbsCode']) ? asText(r.values['wbsCode'])!.toLowerCase() : null), 'WBS code');
+    this.markDuplicate(rows, (r) => (asText(r.values['wbsCode']) ? asText(r.values['wbsCode'])!.toLowerCase() : null), 'wbs_code');
     for (const r of rows) {
       if (r.action === 'error') continue;
       if (!this.resolveWorkstream(r, ws)) continue;
@@ -324,7 +324,7 @@ export class ImportPlanner {
           .where(and(eq(D.projectId, projectId), this.policy.visibilitySql(viewer, projectId, { classification: D.classification }), this.policy.reachSql(viewer, 'governance.decision.read', projectId, sql`null::uuid`)))
       : [];
     const byCode = new Map(visible.map((x) => [x.code.toLowerCase(), x]));
-    this.markDuplicate(rows, (r) => (asText(r.values['code']) ? asText(r.values['code'])!.toLowerCase() : null), 'code');
+    this.markDuplicate(rows, (r) => (asText(r.values['code']) ? asText(r.values['code'])!.toLowerCase() : null), 'decision_code');
     for (const r of rows) {
       if (r.action === 'error') continue;
       const code = asText(r.values['code'])!;
@@ -388,7 +388,7 @@ export class ImportPlanner {
     this.markDuplicate(
       rows,
       (r) => `${normalizeKey(String(r.values['subject'] ?? ''))}|${r.values['targetType'] ?? ''}|${(asText(r.values['targetCode']) ?? '').toLowerCase()}|${r.values['field'] ?? ''}`,
-      'subject / record / field',
+      'subject_record_field',
     );
     for (const r of rows) {
       if (r.action === 'error') continue;

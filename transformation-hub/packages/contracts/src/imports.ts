@@ -87,6 +87,8 @@ export const ImportBatchDetail = ImportBatchSummary.extend({
   rolledBackAt: z.string().nullable(),
   rollbackReason: z.string().nullable(),
   outputs: z.array(ImportOutputDto),
+  /** Row numbers an approver may accept (planned create / proposed change / change request), for item-by-item review. */
+  applicableRows: z.array(z.number().int()),
   /** What the caller may do now (UI hints — the server re-checks every command). */
   canMap: z.boolean(),
   canSubmit: z.boolean(),

@@ -184,6 +184,14 @@ export class ImportsService {
     }
     const [src] = b.sourceId ? await this.db.tx().select({ code: schema.sourceRecord.code }).from(schema.sourceRecord).where(and(eq(schema.sourceRecord.id, b.sourceId), eq(schema.sourceRecord.projectId, b.projectId))) : [];
     const outputs = await this.db.tx().select().from(schema.importOutput).where(and(eq(schema.importOutput.batchId, b.id), eq(schema.importOutput.projectId, b.projectId))).orderBy(asc(schema.importOutput.rowNo), asc(schema.importOutput.createdAt));
+    const applicableRows = (
+      await this.db
+        .tx()
+        .select({ n: schema.importRow.rowNo })
+        .from(schema.importRow)
+        .where(and(eq(schema.importRow.batchId, b.id), eq(schema.importRow.projectId, b.projectId), inArray(schema.importRow.action, ['create', 'update', 'conflict'])))
+        .orderBy(asc(schema.importRow.rowNo))
+    ).map((r) => r.n);
     const uploader = ctx.principal.userId === b.createdBy;
     const res = { projectId: b.projectId, classification: b.classification as Classification };
     const applicable = (b.summary?.['create'] ?? 0) + (b.summary?.['update'] ?? 0) + (b.summary?.['conflict'] ?? 0);
@@ -215,6 +223,7 @@ export class ImportsService {
       rolledBackBy: b.rolledBackBy,
       rolledBackAt: iso(b.rolledBackAt),
       rollbackReason: b.rollbackReason,
+      applicableRows,
       outputs: outputs.map((o) => ({ rowNo: o.rowNo, recordType: o.recordType as 'risk' | 'task' | 'source_claim' | 'change_request', recordId: o.recordId, recordCode: o.recordCode, rolledBack: !!o.rolledBackAt })),
       canMap: uploader && !isDocumentTarget(target) && (b.status === 'parsed' || b.status === 'validated') && this.policy.can(ctx, 'imports.batch.create', res),
       canSubmit: uploader && b.status === 'validated' && applicable > 0 && this.policy.can(ctx, 'imports.batch.create', res),

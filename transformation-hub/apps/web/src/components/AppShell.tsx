@@ -11,6 +11,7 @@ import { DemoModeBanner } from './DemoModeBanner';
 import { ErrorState } from './ErrorState';
 import { LoadingState } from './LoadingState';
 import { LocaleSwitch } from './LocaleSwitch';
+import { NotificationBell } from './NotificationBell';
 import { UserMenu } from './UserMenu';
 import { cx } from './ui';
 
@@ -105,6 +106,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Wordmark />
           <TopNav me={me.data} />
           <div className="ms-auto flex items-center gap-1">
+            <NotificationBell />
             <LocaleSwitch authenticated />
             <UserMenu me={me.data} />
           </div>

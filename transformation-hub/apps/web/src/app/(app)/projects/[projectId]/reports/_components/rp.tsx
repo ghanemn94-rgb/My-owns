@@ -26,6 +26,9 @@ const TABS = [
   { key: 'snapshots', segment: '', permission: 'reports.snapshot.read' },
   { key: 'kpis', segment: '/kpis', permission: 'reports.report.generate' },
   { key: 'bi', segment: '/bi', permission: 'admin.clearance.grant' },
+  // Screen 16b, imports and integrations parts (P6): the import wizard and the honest connector list.
+  { key: 'imports', segment: '/imports', permission: 'imports.batch.read' },
+  { key: 'integrations', segment: '/integrations', permission: 'integrations.connection.read' },
 ] as const;
 
 export function ReportsTabs() {

@@ -38,8 +38,8 @@ const PERMISSION_FLAG = process.allowedNodeEnvironmentFlags.has('--permission') 
  * Network isolation at OS level (separate container / namespace without network, seccomp, non-root) is a deployment
  * control — Not configured in this build (docs/security/imports-and-integrations.md).
  */
-export function runSandboxedParse(bytes: Buffer, kind: 'xlsx' | 'csv' | 'docx', limits: Partial<typeof IMPORT_LIMITS> = {}): Promise<SandboxOutcome> {
-  const l = { ...IMPORT_LIMITS, ...limits };
+export function runSandboxedParse(bytes: Buffer, kind: 'xlsx' | 'csv' | 'docx', limits: Partial<Record<keyof typeof IMPORT_LIMITS, number>> = {}): Promise<SandboxOutcome> {
+  const l: Record<keyof typeof IMPORT_LIMITS, number> = { ...IMPORT_LIMITS, ...limits };
   const parserLimits: ParserLimits = {
     maxSheets: l.maxSheets,
     maxRows: l.maxRows,
