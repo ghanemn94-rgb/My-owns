@@ -1,0 +1,33 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG1-134",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on frozen candidate sha256:00f1498cd5e9a166db501452f699a3270ffca82455593fe9c0ab84a83e01c80b (freeze 08cbd12; the ID recomputes identically in a full disposable clone). Fix e71f3d0 (T-DG1-BE14) is test-only: the r12->r13 manifest diff changes only apps/api/src/architecture.testkit.ts, architecture.test.ts and docs/delivery/decisions.md. walk() now matches CODE_FILE = /\\.[cm]?[jt]sx?$/. scanSource parses .tsx/.jsx as TSX and the rest as TS, and isTest uses TEST_FILE = /\\.test\\.[cm]?[jt]sx?$/. The candidate's five F-DG1-134 self-checks are green, and architecture.test.ts passes 127/127 on Node v22.22.2 and v24.21.0. My independent probe (qa/tests/dg1-r13-file-scope-probe.test.ts) plants files into the REAL src/modules/transformations directory, top level and nested, and calls the production entry point moduleViolations(). It runs 21/21 on both runtimes. Every one of .mts .cts .js .jsx .mjs .cjs .ts .tsx is flagged for a deep import, a node:vm require, rule-3 process.kill and the rule-5 crypto namespace. A cross-module ../access/index.mts import is rejected. A .test.mts may use vitest and a non-test .mts may not. Non-code files are ignored. The negative control is the same probe against the pre-fix round-12 testkit: it fails 14/21, exactly the non-ts cases, so the probe detects the original defect. The real module tree has 0 non-.ts/.tsx files and zero moduleViolations before and after. Nothing regressed: unit 320/320 on both runtimes (unit-web 110/110), integration 200/200 x3 (Node 22 x2, Node 24 x1), e2e 22/22 on both runtimes.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r13-file-scope-probe.test.ts",
+        "docs/delivery/test-evidence/DG1/qa/round-13/06-r13-file-scope-probe-v22.22.2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-13/06-r13-file-scope-probe-v24.21.0.log",
+        "docs/delivery/test-evidence/DG1/qa/round-13/07-probe-negative-control-prefix.log",
+        "docs/delivery/test-evidence/DG1/qa/round-13/08-f134-arch-extract.log",
+        "docs/delivery/test-evidence/DG1/qa/round-13/01b-candidate-diff-r12-r13.log",
+        "docs/delivery/test-evidence/DG1/qa/round-13/03-unit-node22.log",
+        "docs/delivery/test-evidence/DG1/qa/round-13/04-unit-node24.log",
+        "apps/api/src/architecture.testkit.ts",
+        "apps/api/src/architecture.test.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-216",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "I raised this finding in round 12, and I verify it on candidate sha256:00f1498c…c80b (freeze 08cbd12). The command grep -n \"residual (a).*F-DG1-132/215\" docs/delivery/decisions.md finds nothing at 08cbd12 or in the working tree (exit 1). Both D-055 mentions now say the node:crypto namespace-enumeration route is closed by rule 5: 'that route is closed by rule 5 (named-imports-only for node:crypto, F-DG1-133)' and 'since rule 5 (F-DG1-132/133), unreachable by namespace enumeration'. That matches the testkit header (lines 26, 67, 82, 112) and the lint behaviour, since the rule-5 namespace violation is also flagged by my F-DG1-134 probe on every extension. The only remaining 'residual (a)' hit in decisions.md or apps/api/src is a historical comment, architecture.test.ts:544 ('pinned then as residual (a)'), which is accurate as history.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-13/09-f216-d055-check.log",
+        "docs/delivery/test-evidence/DG1/qa/round-13/01b-candidate-diff-r12-r13.log",
+        "docs/delivery/decisions.md"
+      ]
+    }
+  ]
+}
