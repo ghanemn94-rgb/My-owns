@@ -1,4 +1,5 @@
-// Self-test of deploy/scripts/check-ci-needs.mjs (REQ-DLV-025, REQ-DLV-042; F-DG1-107, F-DG1-104, F-DG1-116).
+// Self-test of deploy/scripts/check-ci-needs.mjs (REQ-DLV-025, REQ-DLV-042; F-DG1-107, F-DG1-104, F-DG1-116,
+// F-DG1-120).
 // Each case mutates the staged workflow deploy/ci/ci.yml (or the installed .github/workflows/ci.yml when the staged
 // copy is absent) in memory, writes it to a temp dir and runs the checker on it. N4/N5 are the exact round-1 bypasses
 // of F-DG1-107 (check-ci-needs-negative.log), which the old checker reported as OK. N19-N22 are the exact round-2
@@ -204,4 +205,44 @@ passes("P4 validate step with a name and an id (only name/id/run)", (wf) => {
 passes("P5 product job (verify) with its own job-level env and defaults (does not reach the gate)", (wf) => {
   wf.jobs.verify.env = { CI_EXAMPLE: "1" };
   wf.jobs.verify.defaults = { run: { shell: "bash" } };
+});
+
+// --- F-DG1-120 (closes F-DG1-107's residual): the gate's checkout/setup-node `with:` inputs are allow-listed, so
+// validate.mjs cannot be pointed at a different tree (ref/repository/path) or toolchain than the product jobs use.
+// All of N30-N38 were reported as OK by the round-3 checker (no `with:` restriction).
+const gateCheckout = (wf) => wf.jobs["delivery-gates"].steps.find((s) => /^actions\/checkout@/.test(s.uses ?? ""));
+const gateSetupNode = (wf) => wf.jobs["delivery-gates"].steps.find((s) => /^actions\/setup-node@/.test(s.uses ?? ""));
+for (const [id, k, v] of [
+  ["N30", "ref", "refs/heads/approved-looking-branch"],
+  ["N31", "repository", "attacker/forked-gates"],
+  ["N32", "path", "elsewhere"],
+  ["N33", "token", "${{ secrets.OTHER_TOKEN }}"],
+  ["N34", "sparse-checkout", "docs/delivery"],
+  ["N35", "submodules", "recursive"],
+])
+  fails(
+    `${id} delivery-gates checkout with.${k} override`,
+    (wf) => (gateCheckout(wf).with[k] = v),
+    new RegExp(`delivery-gates step 1: with\\.${k} is not allowed on checkout`),
+  );
+fails(
+  "N36 delivery-gates checkout with.fetch-depth as an expression",
+  (wf) => (gateCheckout(wf).with["fetch-depth"] = "${{ github.event.inputs.depth }}"),
+  /delivery-gates step 1: with\.fetch-depth has a disallowed value/,
+);
+fails(
+  "N37 delivery-gates setup-node with.node-version-file",
+  (wf) => (gateSetupNode(wf).with["node-version-file"] = "decoy/.nvmrc"),
+  /delivery-gates step 2: with\.node-version-file is not allowed on setup-node/,
+);
+fails(
+  "N38 delivery-gates checkout with: is a string, not a mapping",
+  (wf) => (gateCheckout(wf).with = "ref=main"),
+  /delivery-gates step 1: with: must be a mapping/,
+);
+passes("P6 delivery-gates checkout with persist-credentials: false (allow-listed)", (wf) => {
+  gateCheckout(wf).with["persist-credentials"] = false;
+});
+passes("P7 delivery-gates checkout without with: (defaults to the triggering commit)", (wf) => {
+  delete gateCheckout(wf).with;
 });
