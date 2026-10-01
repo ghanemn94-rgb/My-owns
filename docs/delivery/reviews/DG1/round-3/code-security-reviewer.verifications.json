@@ -1,0 +1,127 @@
+{
+ "schema_version": 1,
+ "verifications": [
+  {
+   "finding_id": "F-DG1-102",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "The F-DG1-102-specific defects are fixed: the installer runs with --clearenv (only PATH/HOME/XDG/PNPM/registry/CI and the proxy/TLS variables cross; FAKE_ORCH_SECRET and every other host variable absent), CapEff 0000000000000000, real repo bound read-only (all direct control-path writes, remount and umount refused). AC-6 passes. The remaining control-path exposure is a different mechanism (copy-back from the disposable copy) and is tracked as F-DG1-118 (High, mandatory, OPEN) together with F-DG1-113/114.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-3/11-installer-escape-r2-rerun.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-3/10-install-sandbox-test.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG1-113",
+   "result": "FAIL",
+   "status_after": "OPEN",
+   "note": "The round-2 vectors are closed: re-running repro-installer-escape.sh on a fresh disposable clone, the parent rename (tools/, docs/), installer append, delivery-record write and all direct control-path writes are refused and the clone is unchanged; AC-7 passes. But the finding's expected outcome ('every other repo path ... immutable, and no new control/config file can be planted') still does not hold: in create/frozen the installer copies back every directory named node_modules from the writable disposable copy, so dependency code plants files under .git/, tools/gates/, docs/delivery/ and .claude/ (and can make the installer rm -rf outside the root). New mechanism raised as F-DG1-118 (High, mandatory). AC-7/AC-8 exercise only `run` mode, never the create/frozen copy-back.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-3/11-installer-escape-r2-rerun.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-3/13-copyback-escape.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-3/repro-copyback-escape.sh"
+   ]
+  },
+  {
+   "finding_id": "F-DG1-114",
+   "result": "FAIL",
+   "status_after": "OPEN",
+   "note": "CLAUDE.local.md, .mcp.json, nested CLAUDE.md and .vscode/tasks.json can no longer be created in `run` mode (AC-8 passes; round-2 probe refused). The finding's expected outcome ('configuration surfaces that influence later agent/CLI behaviour cannot be created by dependency code') still fails through the create/frozen copy-back: .claude/rules/node_modules/*.md, .claude/skills/node_modules/SKILL.md, .claude/commands/node_modules/*.md, .claude/agents/node_modules/*.md and .vscode/ are created in the real tree, git-ignored and invisible to git status. See F-DG1-118.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-3/13-copyback-escape.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-3/11-installer-escape-r2-rerun.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG1-115",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "grantCreatorTransformationRoles (access/assignments.ts:463-495) locks the source grants FOR SHARE in id order and re-reads revoked_at; revokeAssignment takes FOR UPDATE then cascades in a separate statement (READ COMMITTED default). access-derived-race.test.ts A-D green in 3 runs on fresh PostgreSQL 16 clusters; the reviewer's own interleaving E (the revoke COMMITS between the create's authorization/INSERT and its derive step) -> create 403 'assignment ... revoked', no transformation, no active assignment, one authorization.denied audit on the business unit; F (15 unhooked concurrent create/revoke rounds x3 runs) -> zero active derived assignments with a revoked source. F-DG1-106 behaviour intact (see F-DG1-106).",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-3/22-f115-race-run1.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-3/22-f115-race-run2.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-3/22-f115-race-run3.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-3/repro-f115-own-interleavings.test.ts"
+   ]
+  },
+  {
+   "finding_id": "F-DG1-117",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "The reported loaders are now caught: process.getBuiltinModule (direct and computed member), new Function, process aliasing and globalThis computed members are violations of the current lint, while the round-2 lint (18c1e61) did not report the F-DG1-117-specific forms (fail-before/pass-after; the two harness assertion failures are an artefact of the plant also containing createRequire, explained in the log). A real planted module file makes architecture.test.ts fail (exit 1) and removing it restores 46/46. Residual aliased-.constructor forms raised as F-DG1-121 (Low).",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-3/14-plant-f117.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-3/plant-f117.test.ts",
+    "docs/delivery/test-evidence/DG1/code-security/round-3/plant-f117.sh"
+   ]
+  },
+  {
+   "finding_id": "F-DG1-116",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "The installed .github/workflows/ci.yml (identical to deploy/ci/ci.yml) passes check-ci-needs; all round-2 and assignment vectors are rejected with exit 1: gate-step env NODE_OPTIONS, working-directory, shell, workflow-level defaults and env, gate-job env/defaults/container/services/if. check-ci-needs.test.mjs + pin-images.test.mjs + other deploy tests 48/48. New, different gaps raised separately (F-DG1-120; F-DG1-107 reopened).",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-3/15-check-ci-needs-probes.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-3/08-deploy-scripts-tests.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG1-107",
+   "result": "FAIL",
+   "status_after": "OPEN",
+   "note": "always()/!cancelled()/failure() are rejected, but check-ci-needs.mjs:129 deliberately exempts success() ('success() is allowed; it is the default', :9). Per GitHub Actions semantics any status-check function in a job-level if: replaces the implicit success() check, so `if: ${{ success() || true }}`, `if: ${{ !success() }}` or `if: success() || github.event_name == 'push'` run the job after delivery-gates FAILED; all three pass the checker with OK/exit 0 (probes R1-R3). The finding's expected outcome ('fails any job whose if: uses ... other status functions, or otherwise proves each product job runs only when delivery-gates succeeded') is not met. Fix direction: reject any status function in a product job's if: except a bare `success()` / `success() && <expr>` form, or require no status function at all. (Static analysis; GitHub runtime behaviour per its documented expression semantics, not executed.)",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-3/15-check-ci-needs-probes.log",
+    "deploy/scripts/check-ci-needs.mjs"
+   ]
+  },
+  {
+   "finding_id": "F-DG1-108",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "node:24-bookworm-slim, postgres:18 and mcr.microsoft.com/playwright:v1.56.1-noble are pinned by digest in deploy/images.lock.json and consistently in Dockerfile, compose.yaml and ci.yml; `pin-images --check` exits 1 locally ONLY for quay.io/keycloak/keycloak:26.4 (test-only, scope test-ci, blockedReason recorded: quay.io Forbidden; D-049) - the honest residual; the CI images job runs --resolve --missing, --apply, then --check (never fabricates); pin-images tests 13/13; SBOM --check and .env.example --check pass. NOTE: the pipeline still cannot go green on this candidate for a different reason - the committed lock fails `pnpm format:check` in the verify job - raised as F-DG1-119 (Medium).",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-3/16-pin-images.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-3/17-images-job-offline-checks.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG1-203",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Same evidence as F-DG1-108: every image pinned by digest except the disclosed test-only keycloak residual (blockedReason set), which the CI images job resolves live and then --check verifies. The separate format:check failure of the lock is F-DG1-119.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-3/16-pin-images.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG1-106",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "The unchanged round-1 repro (repro-scope-consistency.test.ts) on a fresh cluster: TL@BU a1 create -> 201, read-back of its own record -> 200 (was 404), create in sibling BU a2 -> 404; list == per-record read for all 10 grant shapes (11/11). The derived assignment never covers approval roles and is revoked with its source (F-DG1-115 suite).",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-3/23-f106-scope-consistency.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-3/22-f115-race-run2.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG1-112",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "The assembled production API with NODE_ENV=production refuses http://mth.example.com, http://10.0.0.5:3000 and http://localhost.example.com at startup (exit 78, 'APP_BASE_URL must use https when NODE_ENV=production ... loopback host'); https and loopback http start; development http is accepted.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-3/31-assembled-api-start-and-f112.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG1-202",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "assemble-runtime.sh (the step the Dockerfile runs) on a disposable copy of the built clone derives the shipped workspace packages (now incl. packages/design-tokens), verifies module resolution for all six, and exits 0; the assembled tree migrates a fresh database (8 migrations) and the assembled API starts: /healthz 200, /readyz 200 (database ok, migrations ok), process alive. The image itself was not built (no Docker daemon access in the reviewer sandbox); the assembled tree is the image's layout.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-3/28-assemble-runtime.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-3/31-assembled-api-start-and-f112.log"
+   ]
+  }
+ ]
+}

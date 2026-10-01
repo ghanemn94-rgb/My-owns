@@ -1,0 +1,116 @@
+{
+ "schema_version": 1,
+ "findings": [
+  {
+   "id": "F-DG1-118",
+   "stage_id": "DG1",
+   "requirement": "REQ-DLV-042",
+   "severity": "High",
+   "mandatory_violation": true,
+   "title": "install-sandbox.sh copy-back escape: every directory NAMED node_modules anywhere in the disposable workspace is copied into the real repo at the same path, so sandboxed dependency code can plant files under .claude/, .git/, tools/gates/, docs/delivery/ and create new config directories; a newline in a directory name also makes the installer rm -rf / mkdir outside the repo root",
+   "reproduction": "tools/deps/install-sandbox.sh:142-148 (D-051): `while IFS= read -r nm; do rel=\"${nm#\"$WS\"/}\"; dest=\"$REPO_ROOT/$rel\"; mkdir -p \"$(dirname \"$dest\")\"; rm -rf \"$dest\"; cp -a \"$nm\" \"$dest\"; done < <(find \"$WS\" -type d -name node_modules -prune)`. The disposable copy $WS is fully writable by package code during create/frozen (line 124), and the loop trusts its layout. Reproduction (docs/delivery/test-evidence/DG1/code-security/round-3/repro-copyback-escape.sh, log 13-copyback-escape.log): a scratch git project with .claude/, tools/gates/, docs/delivery/ and ONE allow-listed local dependency (pnpm.onlyBuiltDependencies = [\"evil\"], exactly the case the sandbox exists to contain) whose postinstall writes, inside $WS, .claude/rules/node_modules/injected.md, .claude/skills/node_modules/SKILL.md, .claude/commands/node_modules/pwn.md, .claude/agents/node_modules/evil.md, .git/hooks/node_modules/x, tools/gates/node_modules/x, docs/delivery/node_modules/x, .vscode/node_modules/x and a directory named 'h\\n..' containing victim/node_modules. Control: a direct write to the real root from inside the sandbox is refused (Read-only file system). Result of `install-sandbox.sh --root <scratch> create`: exit 0; on the HOST, after the installer exited, all 8 planted files are PRESENT in the real root; `git status --porcelain` shows only the new pnpm-lock.yaml (the planted paths are git-ignored by `node_modules/`, so AC-7's git-status check cannot see them); and the sibling directory <scratch>/../victim/node_modules (OUTSIDE --root) was DELETED: find printed the 'h\\n..' path as two lines, the second ('../victim/node_modules') became rel, so the installer ran mkdir -p / rm -rf on $REPO_ROOT/../victim/node_modules; the following cp failed ('cannot stat'), but the loop ignores cp failures and the installer still exits 0. Secondary: tools/deps/tests/install-sandbox.test.sh:124-125,139 cleans up with `rm -rf \"$ROOT/CLAUDE.local.md\" \"$ROOT/.mcp.json\" \"$ROOT/.vscode\" ...` and `mv` on the REAL repo, so running the acceptance test deletes a developer's own pre-existing .vscode/ or CLAUDE.local.md. Precondition today: pnpm.onlyBuiltDependencies is [] in the root package.json, so no third-party lifecycle script runs in the real repo now; the defect is in the control that is meant to contain such a script as soon as one is allow-listed (and any workspace package's own install script runs in $WS too).",
+   "expected": "REQ-DLV-042 / D-051: dependency code running under the installer can change ONLY the dependency target trees (the node_modules of the workspace's actual packages) and, in create, pnpm-lock.yaml; no file can appear under .claude/, .git/, tools/, docs/delivery/, .github/ or any other control/config path, and nothing outside the repo root is touched. Suggested direction: copy back only the node_modules of the known workspace package directories (root + the pnpm-workspace.yaml package globs resolved on the HOST from the real tree), read paths NUL-delimited (find -print0 / read -d ''), refuse any rel path containing '..' or a newline or resolving outside REPO_ROOT, fail (non-zero) on any copy error, and add acceptance cases that run the planted lifecycle script through create/frozen (not only `run`) and assert no file outside the expected node_modules set changed (including git-ignored ones). The acceptance test must not rm -rf/mv pre-existing paths of the real repo.",
+   "actual": "Dependency code can create arbitrary files under every protected path of the real repository (including Claude Code rules/skills/commands/agents directories that later agent and orchestrator sessions load, and inside .git/), invisibly to git status, and can make the orchestrator delete directories outside the repo root; the installer reports success (exit 0).",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-3/13-copyback-escape.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-3/repro-copyback-escape.sh",
+    "docs/delivery/test-evidence/DG1/code-security/round-3/10-install-sandbox-test.log",
+    "tools/deps/install-sandbox.sh",
+    "tools/deps/tests/install-sandbox.test.sh"
+   ],
+   "reported_by": "code-security-reviewer",
+   "reported_in": "docs/delivery/reviews/DG1/round-3/code-security-reviewer.json",
+   "owner": "delivery-orchestrator",
+   "status": "OPEN",
+   "history": [
+    {
+     "at": "2026-10-01T09:57:42Z",
+     "status": "OPEN",
+     "note": "Raised by code-security-reviewer in DG1 round 3 (new mechanism of the F-DG1-113/F-DG1-114 root cause after the D-051 redesign); reproduced in a scratch project under $TMPDIR with the candidate's installer."
+    }
+   ]
+  },
+  {
+   "id": "F-DG1-119",
+   "stage_id": "DG1",
+   "requirement": "REQ-DLV-033",
+   "severity": "Medium",
+   "mandatory_violation": false,
+   "title": "The CI verify job fails deterministically at `pnpm format:check`: the committed deploy/images.lock.json is not Prettier-formatted (pin-images.mjs writes it with JSON.stringify), so integration, e2e and images never run",
+   "reproduction": "Disposable clone at 4f486b9 (candidate f0baa87d): `pnpm format:check` -> '[warn] deploy/images.lock.json ... Code style issues found', exit 1 (06b-format-check.log). .github/workflows/ci.yml:62 runs `pnpm format:check` in the verify job (both node matrix legs) right after the install; integration needs verify, e2e and images need integration/e2e, so the whole product pipeline stops there. Cause: deploy/scripts/pin-images.mjs:145 writes the lock as `JSON.stringify(lock, null, 2)` (multi-line `usedIn` arrays), which Prettier reformats to single-line arrays; deploy/images.lock.json is not in .prettierignore. The lock was last written by 3eaab6c (the F-DG1-108 pinning commit). All other verify steps pass locally (lint, typecheck, build, test, openapi:lint, check:no-cdn).",
+   "expected": "The CI pipeline defined for DG1 can pass on the frozen candidate (the premise of F-DG1-108/F-DG1-203): format:check is green, e.g. pin-images.mjs writes Prettier-compatible JSON (or runs the formatter) and the committed lock is reformatted, or the generated lock is excluded from formatting by a recorded decision.",
+   "actual": "verify fails at format:check on every push/PR; no downstream product job can go green.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-3/06b-format-check.log",
+    ".github/workflows/ci.yml",
+    "deploy/scripts/pin-images.mjs",
+    "deploy/images.lock.json"
+   ],
+   "reported_by": "code-security-reviewer",
+   "reported_in": "docs/delivery/reviews/DG1/round-3/code-security-reviewer.json",
+   "owner": "devops-engineer",
+   "status": "OPEN",
+   "history": [
+    {
+     "at": "2026-10-01T09:57:42Z",
+     "status": "OPEN",
+     "note": "Raised by code-security-reviewer in DG1 round 3; reproduced in a disposable clone."
+    }
+   ]
+  },
+  {
+   "id": "F-DG1-120",
+   "stage_id": "DG1",
+   "requirement": "REQ-DLV-025",
+   "severity": "Low",
+   "mandatory_violation": false,
+   "title": "check-ci-needs.mjs does not restrict the `with:` inputs of the delivery-gates checkout step, so `ref:` or `repository:` can make validate.mjs check a different tree than the one the product jobs build",
+   "reproduction": "deploy/scripts/check-ci-needs.mjs:78-86 allow-lists the gate job's action steps by action name and keys (uses/with/name/id) but never inspects the `with` values. Probe (15-check-ci-needs-probes.log, mutation of a copy of the installed ci.yml): R4 delivery-gates checkout `with.ref: <an older commit>` -> checker prints OK, exit 0; R5 `with.repository: someone/fork` -> OK, exit 0. Failure scenario: a later CI edit pins the gate job's checkout to an older commit whose gate records pass (or another repository); validate.mjs --pipeline then evaluates that tree and succeeds, while verify/integration/e2e/images check out the pushed commit and build/push it although its own gate state would fail. (Static analysis of documented actions/checkout inputs; not executed on GitHub.)",
+   "expected": "The gate job's checkout cannot change what validate.mjs evaluates: allow-list the `with` keys of the gate's checkout (e.g. only fetch-depth) and of setup-node (node-version), and fail on ref/repository/path/sparse-checkout and the like; add negative self-tests.",
+   "actual": "Both mutations pass the checker.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-3/15-check-ci-needs-probes.log",
+    "deploy/scripts/check-ci-needs.mjs"
+   ],
+   "reported_by": "code-security-reviewer",
+   "reported_in": "docs/delivery/reviews/DG1/round-3/code-security-reviewer.json",
+   "owner": "devops-engineer",
+   "status": "OPEN",
+   "history": [
+    {
+     "at": "2026-10-01T09:57:42Z",
+     "status": "OPEN",
+     "note": "Raised by code-security-reviewer in DG1 round 3 (gate-tooling hardening, follow-on to F-DG1-116)."
+    }
+   ]
+  },
+  {
+   "id": "F-DG1-121",
+   "stage_id": "DG1",
+   "requirement": "REQ-S16-003",
+   "severity": "Low",
+   "mandatory_violation": false,
+   "title": "The module dependency-lint misses the AsyncFunction/Function constructor when `.constructor` is aliased instead of called directly (follow-on to F-DG1-117)",
+   "reproduction": "apps/api/src/architecture.testkit.ts:154 and :163-167 flag `x[\"constructor\"]` and `.constructor` only when it is the callee of a call/new; :105 treats a destructured `{ constructor: F }` property name as a non-value. Plant (14-plant-f117.log, plant-f117.test.ts, in a disposable clone): fileViolations('access', modules/access/zz-planted.ts, src) returns NO violation for each of: `const C = (async () => {}).constructor; await C(\"s\",\"return import(s)\")(\"../transformations/routes.ts\")`; `const { constructor: F } = (async () => {}); ...`; `Reflect.construct((async () => {}).constructor, [\"s\",\"return import(s)\"])`; `Object.getPrototypeOf(async function () {}).constructor` assigned then called. A runtime probe in Node 22 (same log) shows the aliased form really performs a dynamic import of another file ('loaded via AsyncFunction alias: internal-of-other-module').",
+   "expected": "Any value use of a `.constructor` member of a function (or the destructured `constructor` key) is reported, as the direct call already is, so the lint closes every syntactic route to code evaluation.",
+   "actual": "Four aliased forms evade the lint; a module could reach another module's internals through them without architecture.test.ts failing.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-3/14-plant-f117.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-3/plant-f117.test.ts",
+    "docs/delivery/test-evidence/DG1/code-security/round-3/plant-f117.sh",
+    "apps/api/src/architecture.testkit.ts"
+   ],
+   "reported_by": "code-security-reviewer",
+   "reported_in": "docs/delivery/reviews/DG1/round-3/code-security-reviewer.json",
+   "owner": "backend-workflow-engineer",
+   "status": "OPEN",
+   "history": [
+    {
+     "at": "2026-10-01T09:57:42Z",
+     "status": "OPEN",
+     "note": "Raised by code-security-reviewer in DG1 round 3; planted in a disposable clone."
+    }
+   ]
+  }
+ ]
+}
