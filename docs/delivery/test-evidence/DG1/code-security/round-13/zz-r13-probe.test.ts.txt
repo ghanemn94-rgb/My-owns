@@ -1,0 +1,56 @@
+// R13 code-security probe (disposable clone only). Plants files INTO the clone's real module dirs.
+import { mkdirSync, rmSync, writeFileSync, existsSync } from "node:fs";
+import { join, relative } from "node:path";
+import { afterAll, describe, expect, it } from "vitest";
+import * as NEW from "./architecture.testkit.ts";
+import * as OLD from "./zz-old.testkit.ts";
+import { P1_MODULES } from "./modules.ts";
+
+const T = join(NEW.MODULES_DIR, "transformations");
+const K = join(NEW.MODULES_DIR, "kpi");
+const EVIL = `import * as c from "node:crypto";\nimport { authorize } from "../access/policy.ts";\nexport const a = [c, authorize];\n`;
+const planted: string[] = [];
+const plant = (dir: string, name: string, src: string) => { const p = join(dir, name); writeFileSync(p, src); planted.push(p); return p; };
+afterAll(() => { for (const p of planted) rmSync(p, { force: true }); rmSync(join(T, "zzsub"), { recursive: true, force: true }); });
+
+describe("R13 F-DG1-134 re-proof", () => {
+  it("baseline: real module tree is clean under NEW for every P1 module", () => {
+    for (const m of P1_MODULES) { const v = NEW.moduleViolations(m); console.log(`real ${m}: ${v.length}`); expect(v).toEqual([]); }
+  });
+  it("planted .mts/.mjs/.cts/.cjs/.js/.jsx (+nested .mts): OLD=0, NEW flags rule5 + deep import", () => {
+    mkdirSync(join(T, "zzsub"), { recursive: true });
+    const files = ["mts", "mjs", "cts", "cjs", "js", "jsx"].map((e) => plant(T, `zz.${e}`, EVIL));
+    files.push(plant(join(T, "zzsub"), "deep.mts", EVIL.replace("../access/", "../../access/"))); planted.push(join(T, "zzsub", "deep.mts"));
+    const walked = NEW.walk(NEW.MODULES_DIR);
+    for (const f of files) expect(walked, f).toContain(f);
+    const oldWalked = OLD.walk(OLD.MODULES_DIR);
+    for (const f of files) expect(oldWalked, f).not.toContain(f);
+    const nv = NEW.moduleViolations("transformations"), ov = OLD.moduleViolations("transformations");
+    console.log("OLD transformations violations:", ov.length); console.log("NEW transformations violations:\n" + nv.join("\n"));
+    expect(ov).toEqual([]);
+    for (const f of files) {
+      const rel = relative(NEW.SRC, f);
+      expect(nv.filter((x) => x.startsWith(rel + ":")).join("\n"), rel).toMatch(/node:crypto namespace\/default binding/);
+      expect(nv.filter((x) => x.startsWith(rel + ":")).join("\n"), rel).toMatch(/only access\/index\.ts is public/);
+    }
+  });
+  it(".tsx plant parsed as TSX: JSX text with apostrophe does not swallow require()", () => {
+    const f = plant(T, "zzj.tsx", `export const X = () => <a href="x">it's {require("y")}</a>;\n`);
+    const v = NEW.moduleViolations("transformations").filter((x) => x.includes("zzj.tsx"));
+    console.log("tsx:\n" + v.join("\n"));
+    expect(v.join("\n")).toMatch(/module loader via require/);
+    expect(v.join("\n")).toMatch(/imports package y/);
+    expect(v.join("\n")).not.toMatch(/unparseable/);
+    rmSync(f);
+  });
+  it("GAP probe: *.test.mts gets test allowances (vitest + composition root) though build ships it and vitest never runs it", () => {
+    const src = `import { describe } from "vitest";\nimport { API_MODULES } from "../../modules.ts";\nexport const n = [describe, API_MODULES];\n`;
+    plant(K, "zzgap.test.mts", src);
+    plant(K, "zzgap.mts", src);
+    const v = NEW.moduleViolations("kpi");
+    console.log("kpi violations:\n" + v.join("\n"));
+    expect(v.filter((x) => x.includes("zzgap.test.mts"))).toEqual([]);
+    expect(v.filter((x) => x.includes("zzgap.mts")).length).toBe(2);
+    // leave the two kpi plants for the build step (removed in afterAll? no — keep: recreate below)
+  });
+});

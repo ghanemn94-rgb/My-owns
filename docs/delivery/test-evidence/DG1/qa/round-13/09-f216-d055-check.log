@@ -1,0 +1,15 @@
+$ grep -n "residual (a).*F-DG1-132/215" docs/delivery/decisions.md  (candidate @08cbd12)
+exit=1 (1 = no match, expected)
+$ same grep on working tree
+exit=1
+$ grep -o "closed by rule 5[^;]*" / "since rule 5[^—]*" in D-055
+closed by rule 5 (named-imports-only for node:crypto, F-DG1-133)
+since rule 5 (F-DG1-132/133), unreachable by namespace enumeration 
+$ testkit header rule-5 wording
+26://     banned MEMBER of an allow-listed built-in, `crypto.setEngine`, the enumeration route is closed by rule 5):
+67:// namespace/default binding, without writing the name, is CLOSED by rule 5 (named imports only: no such binding can
+82://      no longer be namespace- or default-bound (rule 5, F-DG1-132/133), so the former enumeration route
+112: * form and rule 5 keeps unreachable by enumeration (named imports only for node:crypto); residuals (a)-(c)
+350:      // Type space only (`typeof import("node:crypto")` is erased), so rule 5 does not apply.
+$ git grep -n "residual (a)" 08cbd12 -- docs/delivery/decisions.md apps/api/src
+08cbd12f00c5c0561f9718900e71c9baf3d8e0c1:apps/api/src/architecture.test.ts:544:  // fourth column is the round-11 lint's result ("missed" = 0 violations, pinned then as residual (a)).

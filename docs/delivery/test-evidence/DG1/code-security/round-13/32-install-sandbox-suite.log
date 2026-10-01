@@ -1,0 +1,17 @@
+$ npm_config_store_dir=$TMPDIR/pnpm-store/v10 bash tools/deps/tests/install-sandbox.test.sh   # node v22.22.2, clone @08cbd12
+PASS  AC-1 write to /etc is refused read-only under the sandbox
+FAIL  AC-1 (effect) create did not populate node_modules in the target tree
+PASS  AC-2 a non-allow-listed dependency's postinstall did not run
+PASS  AC-2 an allow-listed dependency's postinstall did run
+PASS  AC-3 frozen install without a committed lockfile fails non-zero
+PASS  AC-3 frozen install that would change the lockfile fails non-zero
+PASS  AC-4 a missing bubblewrap exits 65 (BLOCKED), never an unsandboxed install
+PASS  AC-5 control paths (.git, tools/gates) are read-only inside the sandbox
+PASS  AC-6 a host environment variable (secret) does not cross into the sandbox
+PASS  AC-6 (control) PATH is set inside the sandbox (install is usable)
+PASS  AC-7 control-path escape (parent-rename, installer append, delivery write) is refused; real repo unchanged
+PASS  AC-8 agent-config surfaces (CLAUDE.local.md, .mcp.json, nested CLAUDE.md, .vscode) cannot be created
+PASS  AC-9 a planted non-member node_modules (evil-ctrl/node_modules) is not copied back
+PASS  AC-10 a '!'-excluded package and a non-`packages:` list entry are not copy-back destinations
+install-sandbox acceptance: 13 passed, 1 failed
+exit=1

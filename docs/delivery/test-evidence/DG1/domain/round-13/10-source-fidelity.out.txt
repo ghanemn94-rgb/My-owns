@@ -1,0 +1,25 @@
+$ grep -n 'G6 - Sustain|Benefits before closure|BAU ownership defined before closure' docs/source/playbook.md
+52:Benefits before closure: an initiative is not complete when delivered; it is complete when value is realized and sustained. <!-- B0014 -->
+104:| G6 - Sustain | Is value embedded in BAU? | Benefits evidence, ownership transfer, controls, continuous improvement backlog. |
+719:| ☐ 21. Are benefits validated with evidence? | ☐ 22. Is BAU ownership defined before closure? |
+$ grep -n G6 apps/api/src/modules/transformations/routes.ts apps/web/src/i18n/*/transformations.json
+apps/api/src/modules/transformations/routes.ts:61: * product's G6 (Sustain) business approval with validated benefits and a sustainment owner (playbook B0014
+apps/api/src/modules/transformations/routes.ts:62: * "Benefits before closure"; M0092; REQ-S03-003, REQ-PB-009). Neither G6 nor the benefit register exists in P1, and an
+apps/api/src/modules/transformations/routes.ts:64: * invalid-transition) and the record keeps its prior state. The governed close lands with the G6 workflow (P2+/P4).
+apps/api/src/modules/transformations/routes.ts:65: * This is a PRODUCT gate (G6), unrelated to the engineering delivery gates DG0-DG7.
+apps/api/src/modules/transformations/routes.ts:299:              "A transformation cannot be closed by a status edit. Closure requires the G6 (Sustain) business " +
+apps/web/src/i18n/en/transformations.json:77:    "statusHint": "Only the allowed next statuses are offered: draft → active; active → on hold; on hold → active. Closing a transformation needs the G6 (Sustain) business approval, which is available in a later release.",
+$ grep -n -A8 TRANSFORMATION_STATUS_TRANSITIONS packages/shared/src/constants.ts
+17:export const TRANSFORMATION_STATUS_TRANSITIONS: Readonly<
+18-  Record<TransformationStatus, readonly TransformationStatus[]>
+19-> = {
+20-  draft: ["active"],
+21-  active: ["on_hold", "closed"],
+22-  on_hold: ["active", "closed"],
+23-  closed: [],
+24-};
+25-
+$ sha256sum docs/source/playbook.md docs/source/Business_Transformation_Playbook.docx; git diff --stat 987ae02 08cbd12 -- docs/source (expect empty)
+5468e5e0b1174e70df080d2146bd4586b254a59e7548da56955490daf4981378  docs/source/playbook.md
+2584a35282804e639a697478eae75a55a43cfb8c551345dfc7636b9b34548ad2  docs/source/Business_Transformation_Playbook.docx
+(end)

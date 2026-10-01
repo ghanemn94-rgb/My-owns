@@ -1,0 +1,47 @@
+# Part 1: lint + build with UNBUILT workspace deps (build exit 2 is the pre-existing @mth/* dist absence, not the plant). Part 2 (after pnpm -r build): clean build exit 0.
+$ cat apps/api/src/modules/kpi/zzgap.test.mts
+import { API_MODULES } from "../../modules.ts";
+export const moduleCount: number = Object.keys(API_MODULES).length;
+$ (lint) moduleViolations("kpi") via vitest probe
+kpi violations=0
+      Tests  1 passed (1)
+$ (cd apps/api && pnpm typecheck && pnpm build)
+typecheck-exit=0
+build-exit=2
+$ ls apps/api/dist/modules/kpi | grep zzgap
+zzgap.test.d.mts
+zzgap.test.d.mts.map
+zzgap.test.mjs
+zzgap.test.mjs.map
+$ node -e import(dist/modules/kpi/zzgap.test.mjs)
+runtime import OK, moduleCount = 13
+node-exit=0
+$ npx vitest list --project unit-node | grep -c zzgap.test.mts
+0
+$ same content as zzgap.mts (non-test name)
+kpi violations=1
+modules/kpi/zzgap.mts: imports ../../modules.ts outside src/modules (composition root)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
++   "modules/kpi/zzgap.mts: imports ../../modules.ts outside src/modules (composition root)",
+      Tests  1 failed (1)
+cleaned
+?? apps/api/src/zz-old.testkit.ts
+?? apps/api/src/zz-r13-probe.test.ts
+$ (workspace already built by pnpm -r build) plant apps/api/src/modules/kpi/zzgap.test.mts:
+import { API_MODULES } from "../../modules.ts";
+export const moduleCount: number = Object.keys(API_MODULES).length;
+$ cd apps/api && pnpm build
+> @mth/api@0.1.0 build /var/tmp/mth-run.fxy6nx/claude-0/rv/apps/api
+> tsc -p tsconfig.build.json
+
+build-exit=0
+$ ls apps/api/dist/modules/kpi | grep zzgap
+zzgap.test.d.mts
+zzgap.test.d.mts.map
+zzgap.test.mjs
+zzgap.test.mjs.map
+runtime import OK, moduleCount = 13
+node-exit=0
+$ grep -c "zzgap" <(vitest list --project unit-node)
+0
+rebuild-clean-exit=0

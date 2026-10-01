@@ -1,0 +1,73 @@
+$ node --version: v22.22.2
+$ QA_PG_PORT=5492 tests/qa/support/with-pg.sh bash -c 'npx vitest run --project integration apps/api/test/integration/contract --reporter=verbose; bash 11-audit-trigger-probe.sh'
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+ RUN  v3.2.4 /var/tmp/mth-run.eeIoja/claude-0/review-qa
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mupreu22_359ef280; applied 8 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > route coverage > maps every governed Fastify route to an OpenAPI operation with the same method, and back 2ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > route coverage > declares access on every governed route (public or a permission) 1ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > health 21ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > auth + me 177ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > organizations and business units 124ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > users, roles, permissions and assignments 129ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > transformations and audit 134ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > branding tokens (getBrandingTokens): authenticated-only, provisional provenance, contract + zod valid 9ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > covers every operation with at least one success and every successful body with its zod mirror 1ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  16:39:36
+   Duration  2.81s (transform 502ms, setup 0ms, collect 1.15s, tests 777ms, environment 0ms, prepare 75ms)
+
+contract-exit=0
+ERROR:  role "mth_owner" already exists
+ERROR:  role "mth_app" already exists
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applied 8 migration(s)
+migrate exit=0
+schema_migration
+1 0001_identity_access.sql
+2 0002_transformation.sql
+3 0003_audit_event.sql
+4 0004_outbox_jobs.sql
+5 0005_seed_roles_permissions.sql
+6 0006_pgboss_schema_v25.sql
+7 0007_oidc_login_browser_binding.sql
+8 0008_scoped_assignment_derived_from.sql
+--- probe: app INSERT
+INSERT 0 1
+exit=0
+1 audit rows before probe
+--- probe: superuser UPDATE audit_event
+ERROR:  audit_event is append-only: UPDATE is not allowed
+CONTEXT:  PL/pgSQL function audit_event_immutable() line 3 at RAISE
+exit=1
+--- probe: superuser DELETE audit_event
+ERROR:  audit_event is append-only: DELETE is not allowed
+CONTEXT:  PL/pgSQL function audit_event_immutable() line 3 at RAISE
+exit=1
+--- probe: owner UPDATE
+ERROR:  audit_event is append-only: UPDATE is not allowed
+CONTEXT:  PL/pgSQL function audit_event_immutable() line 3 at RAISE
+exit=1
+--- probe: owner DELETE
+ERROR:  audit_event is append-only: DELETE is not allowed
+CONTEXT:  PL/pgSQL function audit_event_immutable() line 3 at RAISE
+exit=1
+--- probe: superuser TRUNCATE
+ERROR:  audit_event is append-only: TRUNCATE is not allowed
+CONTEXT:  PL/pgSQL function audit_event_immutable() line 3 at RAISE
+exit=1
+--- probe: app DELETE
+ERROR:  permission denied for table audit_event
+exit=1
+1 audit rows after probe
+exit=0

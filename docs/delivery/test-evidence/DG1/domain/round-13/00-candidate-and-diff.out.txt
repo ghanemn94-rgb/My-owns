@@ -1,0 +1,355 @@
+## $ git rev-parse HEAD; is-shallow; candidate.mjs
+ed2160d758c011af4ba1464a467f035b23f1953f
+false
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:00f1498cd5e9a166db501452f699a3270ffca82455593fe9c0ab84a83e01c80b","files":391}
+exit=0
+## $ git diff --stat 08cbd12 HEAD  (freeze -> HEAD; expect candidate-excluded metadata only)
+ docs/delivery/assignments/DG1/round-13/audit.md    |   24 +
+ .../DG1/round-13/review-code-security-reviewer.md  |   11 +
+ .../assignments/DG1/round-13/review-common.md      |   16 +
+ .../DG1/round-13/review-domain-reviewer.md         |   12 +
+ .../assignments/DG1/round-13/review-qa-verifier.md |   17 +
+ .../candidates/DG1/00f1498cd5e9a166.manifest.json  | 1973 ++++++++++++++++++++
+ docs/delivery/stages.json                          |   22 +-
+ 7 files changed, 2070 insertions(+), 5 deletions(-)
+## $ git diff --stat 987ae02 08cbd12  (round-12 freeze -> round-13 freeze)
+ apps/api/src/architecture.test.ts                  |   97 +-
+ apps/api/src/architecture.testkit.ts               |   20 +-
+ docs/delivery/assignments/DG1/round-12/audit.md    |   24 +
+ .../DG1/round-12/review-code-security-reviewer.md  |   12 +
+ .../assignments/DG1/round-12/review-common.md      |   15 +
+ .../DG1/round-12/review-domain-reviewer.md         |   12 +
+ .../assignments/DG1/round-12/review-qa-verifier.md |   16 +
+ .../assignments/DG1/round-13/T-DG1-BE14.md         |   23 +
+ .../candidates/DG1/619d74ffa4e66893.manifest.json  | 1973 ++++++++++++++++++++
+ docs/delivery/decisions.md                         |    2 +-
+ docs/delivery/findings.json                        |  143 +-
+ .../T-DG1-BE14-backend-workflow-engineer.md        |  281 +++
+ .../round-12/code-security-reviewer.findings.json  |   33 +
+ .../DG1/round-12/code-security-reviewer.json       |  369 ++++
+ .../reviews/DG1/round-12/code-security-reviewer.md |   92 +
+ .../code-security-reviewer.verifications.json      |   29 +
+ .../reviews/DG1/round-12/domain-reviewer.json      |  340 ++++
+ .../reviews/DG1/round-12/domain-reviewer.md        |   60 +
+ .../round-12/domain-reviewer.verifications.json    |   18 +
+ .../reviews/DG1/round-12/qa-verifier.findings.json |   33 +
+ .../delivery/reviews/DG1/round-12/qa-verifier.json |  366 ++++
+ docs/delivery/reviews/DG1/round-12/qa-verifier.md  |   34 +
+ .../DG1/round-12/qa-verifier.verifications.json    |   36 +
+ .../meta.json                                      |   50 +
+ .../result.json                                    |    3 +
+ .../sandbox.json                                   |   59 +
+ .../settings.json                                  |   48 +
+ .../stderr.log                                     |    1 +
+ .../transcript.jsonl.gz                            |  Bin 0 -> 86628 bytes
+ .../meta.json                                      |  141 ++
+ .../result.json                                    |    3 +
+ .../sandbox.json                                   |   49 +
+ .../settings.json                                  |   88 +
+ .../stderr.log                                     |    1 +
+ .../transcript.jsonl.gz                            |  Bin 0 -> 729535 bytes
+ .../meta.json                                      |  182 ++
+ .../result.json                                    |    3 +
+ .../sandbox.json                                   |   52 +
+ .../settings.json                                  |   86 +
+ .../stderr.log                                     |    1 +
+ .../transcript.jsonl.gz                            |  Bin 0 -> 627767 bytes
+ .../meta.json                                      |  176 ++
+ .../result.json                                    |    3 +
+ .../sandbox.json                                   |   50 +
+ .../settings.json                                  |   88 +
+ .../stderr.log                                     |    1 +
+ .../transcript.jsonl.gz                            |  Bin 0 -> 224553 bytes
+ docs/delivery/stages.json                          |   22 +-
+ .../round-12/00-candidate-identity.log             |   29 +
+ .../DG1/code-security/round-12/01-rule5-probes.log |   88 +
+ .../round-12/02-lint-file-scope-mts.log            |   63 +
+ .../code-security/round-12/10-pnpm_-r_build.log    |   46 +
+ .../round-12/10-pnpm_-r_typecheck.log              |   18 +
+ .../round-12/10-pnpm_check_no-cdn.log              |    8 +
+ .../round-12/10-pnpm_format_check.log              |    9 +
+ .../DG1/code-security/round-12/10-pnpm_lint.log    |    7 +
+ .../round-12/10-pnpm_openapi_lint.log              |    8 +
+ .../DG1/code-security/round-12/10-pnpm_test.log    |   53 +
+ .../code-security/round-12/12-node24-pnpm_test.log |   46 +
+ .../code-security/round-12/20-integration-run1.log |   42 +
+ .../code-security/round-12/20-integration-run2.log |   41 +
+ .../round-12/21-integration-node24.log             |   45 +
+ .../round-12/30-gates-agents-tests.log             |  651 +++++++
+ .../round-12/31-deploy-scripts-tests.log           |  413 ++++
+ .../round-12/32-install-sandbox-suite.log          |   18 +
+ .../round-12/32b-install-sandbox-suite-store.log   |   18 +
+ .../round-12/32c-ac1-registry-BLOCKED.log          |   12 +
+ .../DG1/code-security/round-12/33-sbom-check.log   |    4 +
+ .../code-security/round-12/34-dg0-historical.log   |    4 +
+ .../code-security/round-12/35-ci-yml-identity.log  |    4 +
+ .../DG1/code-security/round-12/40-requirements.log |   33 +
+ .../DG1/code-security/round-12/50-cleanup.log      |   32 +
+ .../round-12/zz-r12-probe.test.ts.txt              |   62 +
+ .../round-12/zz-reach-builtins.mjs.txt             |   20 +
+ .../code-security/round-12/zz-reach-deps.mjs.txt   |   14 +
+ .../domain/round-12/00-candidate-and-diff.out.txt  |  242 +++
+ .../domain/round-12/01-unit-full-node22.out.txt    |   46 +
+ .../domain/round-12/01-unit-full-node24.out.txt    |   43 +
+ .../round-12/02-rule5-scope-probe-node22.out.txt   |   43 +
+ .../round-12/02-rule5-scope-probe-node24.out.txt   |   43 +
+ .../domain/round-12/02-rule5-scope-probe.test.ts   |   61 +
+ .../03-architecture-verbose-node22.out.txt         |  133 ++
+ .../03-architecture-verbose-node24.out.txt         |  133 ++
+ .../DG1/domain/round-12/04-integration-run.sh      |   31 +
+ .../round-12/04-integration-run1-node22.out.txt    |  221 +++
+ .../round-12/04-integration-run2-node24.out.txt    |  221 +++
+ .../DG1/domain/round-12/07-build.out.txt           |   45 +
+ .../DG1/domain/round-12/07-live-scenario.mjs       |  409 ++++
+ .../DG1/domain/round-12/07-live-scenario.out.txt   |  133 ++
+ .../DG1/domain/round-12/07-live-stack.sh           |   47 +
+ .../DG1/domain/round-12/08-static-checks.out.txt   |   39 +
+ .../DG1/domain/round-12/09-register-rows.out.txt   |   82 +
+ .../DG1/domain/round-12/09-register-rows.py        |   32 +
+ .../DG1/domain/round-12/10-source-fidelity.out.txt |   34 +
+ .../DG1/domain/round-12/50-cleanup.out.txt         |    8 +
+ .../DG1/domain/round-12/screens/ar-01-shell.png    |  Bin 0 -> 91294 bytes
+ .../round-12/screens/ar-02-edit-no-closed.png      |  Bin 0 -> 112404 bytes
+ .../domain/round-12/screens/ar-03-detail-audit.png |  Bin 0 -> 184265 bytes
+ .../round-12/screens/ar-04-lead-derived-audit.png  |  Bin 0 -> 219501 bytes
+ .../screens/ar-05-office-derived-audit.png         |  Bin 0 -> 220105 bytes
+ .../screens/ar-06-lead-ui-create-no-reload.png     |  Bin 0 -> 209436 bytes
+ .../DG1/domain/round-12/screens/en-01-shell.png    |  Bin 0 -> 96610 bytes
+ .../round-12/screens/en-02-edit-no-closed.png      |  Bin 0 -> 121704 bytes
+ .../domain/round-12/screens/en-03-detail-audit.png |  Bin 0 -> 183278 bytes
+ .../round-12/screens/en-04-lead-derived-audit.png  |  Bin 0 -> 214640 bytes
+ .../screens/en-05-office-derived-audit.png         |  Bin 0 -> 215943 bytes
+ .../screens/en-06-lead-ui-create-no-reload.png     |  Bin 0 -> 203864 bytes
+ .../test-evidence/DG1/qa/round-12/00-candidate.log |   18 +
+ .../DG1/qa/round-12/00b-head-moved.log             |    9 +
+ .../test-evidence/DG1/qa/round-12/01-install.log   |   29 +
+ .../DG1/qa/round-12/01b-candidate-diff-r11-r12.log |  164 ++
+ .../test-evidence/DG1/qa/round-12/02-build.log     |   46 +
+ .../DG1/qa/round-12/02-check_no-cdn.log            |    8 +
+ .../test-evidence/DG1/qa/round-12/02-contrast.log  |   65 +
+ .../DG1/qa/round-12/02-format_check.log            |    9 +
+ .../test-evidence/DG1/qa/round-12/02-lint.log      |    7 +
+ .../DG1/qa/round-12/02-openapi_lint.log            |    8 +
+ .../test-evidence/DG1/qa/round-12/02-typecheck.log |   18 +
+ .../DG1/qa/round-12/03-unit-node22.log             |   44 +
+ .../DG1/qa/round-12/04-unit-node24.log             |   43 +
+ .../DG1/qa/round-12/05-unit-node-v22.22.2.log      |  217 +++
+ .../DG1/qa/round-12/05-unit-node-v24.21.0.log      |  220 +++
+ .../DG1/qa/round-12/05-unit-web-v22.22.2.log       |  122 ++
+ .../DG1/qa/round-12/05-unit-web-v24.21.0.log       |  125 ++
+ .../qa/round-12/07-f132-arch-selfcheck-extract.log |   54 +
+ .../qa/round-12/08-r12-rule5-probe-v22.22.2.log    |  176 ++
+ .../qa/round-12/08-r12-rule5-probe-v24.21.0.log    |  179 ++
+ .../DG1/qa/round-12/09-int-run1-pg.log             |  187 ++
+ .../DG1/qa/round-12/09-int-run1-v22.22.2.log       |   44 +
+ .../DG1/qa/round-12/09-int-run2-pg.log             |  187 ++
+ .../DG1/qa/round-12/09-int-run2-v22.22.2.log       |   43 +
+ .../DG1/qa/round-12/09-int-run3-pg.log             |  187 ++
+ .../DG1/qa/round-12/09-int-run3-v24.21.0.log       |   43 +
+ .../DG1/qa/round-12/10-audit-trigger-probe.sh      |   18 +
+ .../qa/round-12/10-contract-and-audit-probe.log    |   73 +
+ .../DG1/qa/round-12/11-e2e-node22.log              |   43 +
+ .../DG1/qa/round-12/12-e2e-node24.log              |   46 +
+ .../DG1/qa/round-12/13-f210-independent-spec.log   |   25 +
+ .../DG1/qa/round-12/14-a18-clean-start.log         |  102 +
+ .../15-a20-token-propagation.attempt1-no-clone.log |    4 +
+ .../DG1/qa/round-12/15-a20-token-propagation.log   |   31 +
+ .../DG1/qa/round-12/16-a12-a13-a14-extract.log     |   15 +
+ .../DG1/qa/round-12/17-req-dlv-042-installer.log   |   26 +
+ .../DG1/qa/round-12/17b-ac1-effect-BLOCKED.log     |   10 +
+ .../DG1/qa/round-12/18-validate-pipeline.log       |    4 +
+ .../DG1/qa/round-12/18-validate-reconcile.log      |   43 +
+ .../DG1/qa/round-12/18-validate-registerDG1.log    |    4 +
+ .../DG1/qa/round-12/19-f133-wording-check.log      |   27 +
+ .../DG1/qa/round-12/19-requirements-evidence.log   |   15 +
+ .../DG1/qa/round-12/20-ci-needs-fonts-wordmark.log |   14 +
+ .../test-evidence/DG1/qa/round-12/50-cleanup.log   |    5 +
+ .../DG1/qa/round-12/screenshots/ar/01-sign-in.png  |  Bin 0 -> 64264 bytes
+ .../DG1/qa/round-12/screenshots/ar/05-detail.png   |  Bin 0 -> 185015 bytes
+ .../screenshots/ar/17-lead-audit-trail.png         |  Bin 0 -> 204123 bytes
+ .../screenshots/ar/17a-lead-created-controls.png   |  Bin 0 -> 204123 bytes
+ .../qa/round-12/screenshots/ar/axe-summary.json    |   47 +
+ .../DG1/qa/round-12/screenshots/en/01-sign-in.png  |  Bin 0 -> 61031 bytes
+ .../DG1/qa/round-12/screenshots/en/05-detail.png   |  Bin 0 -> 180430 bytes
+ .../screenshots/en/17-lead-audit-trail.png         |  Bin 0 -> 200114 bytes
+ .../screenshots/en/17a-lead-created-controls.png   |  Bin 0 -> 199994 bytes
+ .../qa/round-12/screenshots/en/axe-summary.json    |   47 +
+ .../DG1/qa/tests/dg1-r12-rule5-probe.test.ts       |  187 ++
+ 162 files changed, 11985 insertions(+), 22 deletions(-)
+## $ same, restricted to product/runtime/contract/i18n/source paths
+(end; empty = no change)
+## $ git diff 987ae02 08cbd12 -- apps/api/src/architecture.testkit.ts apps/api/src/architecture.test.ts
+diff --git a/apps/api/src/architecture.test.ts b/apps/api/src/architecture.test.ts
+index af2d269..78cce18 100644
+--- a/apps/api/src/architecture.test.ts
++++ b/apps/api/src/architecture.test.ts
+@@ -20,8 +20,18 @@
+ //  5. the declared module graph has a cycle, or audit/access depend on a business module;
+ //  6. the package dependency direction is broken (db -> config, shared; config -> shared; shared -> none;
+ //     apps/web never imports @mth/db or @mth/config).
+-import { existsSync, readdirSync, statSync } from "node:fs";
+-import { join, relative, resolve } from "node:path";
++import {
++  existsSync,
++  mkdirSync,
++  mkdtempSync,
++  readdirSync,
++  readFileSync,
++  rmSync,
++  statSync,
++  writeFileSync,
++} from "node:fs";
++import { tmpdir } from "node:os";
++import { basename, join, relative, resolve } from "node:path";
+ import { describe, expect, it } from "vitest";
+ import {
+   bareAllowed,
+@@ -677,6 +687,89 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
+     );
+   });
+ 
++  // F-DG1-134: walk() used to collect only /\.(ts|tsx)$/, so a module file named .mts/.cts/.mjs/.cjs/.js/.jsx evaded
++  // every rule and the boundary check (a .mts file typechecks and ships in dist as .mjs). Now every buildable JS/TS
++  // module file is scanned.
++  const CODE_EXTS = ["ts", "tsx", "mts", "cts", "js", "jsx", "mjs", "cjs"] as const;
++  const EVASIVE = [
++    `import * as c from "node:crypto";`,
++    `import { authorize } from "../access/policy.ts";`,
++    `export const f = new Map(Object.entries(c)).get("set".concat("Engine")) as unknown;`,
++    `export const g = typeof authorize;`,
++  ].join("\n");
++
++  it("F-DG1-134: walk() collects every buildable JS/TS file (.[cm]?[jt]sx?), incl. nested ones, and no other file", () => {
++    const dir = mkdtempSync(join(tmpdir(), "mth-walk-"));
++    try {
++      mkdirSync(join(dir, "nested"));
++      for (const ext of CODE_EXTS) writeFileSync(join(dir, "nested", `zz-planted.${ext}`), EVASIVE);
++      for (const other of ["README.md", "data.json", "schema.sql", "x.tsbuildinfo", "y.mts.map"])
++        writeFileSync(join(dir, other), "");
++      expect(
++        walk(dir)
++          .map((f) => relative(dir, f))
++          .sort(),
++      ).toEqual(CODE_EXTS.map((ext) => join("nested", `zz-planted.${ext}`)).sort());
++    } finally {
++      rmSync(dir, { recursive: true, force: true });
++    }
++  });
++
++  it("F-DG1-134: a planted non-.ts module file (zz-planted.mts etc.) is linted like a .ts one, end to end", () => {
++    // moduleViolations = walk(module dir) -> fileViolations(each file); a temp dir stands in for the module directory
++    // so nothing is written into the real tree. Before the fix this list was [] for every extension except ts/tsx.
++    const dir = mkdtempSync(join(tmpdir(), "mth-walk-"));
++    try {
++      for (const ext of CODE_EXTS) writeFileSync(join(dir, `zz-planted.${ext}`), EVASIVE);
++      const seen = walk(dir).map((f) => ({
++        name: basename(f),
++        v: fileViolations(
++          "transformations",
++          join(MODULES_DIR, "transformations", basename(f)),
++          readFileSync(f, "utf8"),
++        ),
++      }));
++      expect(seen.map((s) => s.name).sort()).toEqual(CODE_EXTS.map((ext) => `zz-planted.${ext}`).sort());
++      for (const { name, v } of seen) {
++        expect(v.join("\n"), name).toMatch(/imports the node:crypto namespace\/default binding/);
++        expect(v.join("\n"), name).toMatch(/only access\/index\.ts is public/);
++      }
++    } finally {
++      rmSync(dir, { recursive: true, force: true });
++    }
++  });
++
++  it("F-DG1-134: zz-planted.mts via fileViolations yields the rule-5 and deep-import violations", () => {
++    const v = fileViolations("transformations", join(MODULES_DIR, "transformations", "zz-planted.mts"), EVASIVE);
++    expect(v).toHaveLength(2);
++    expect(v.join("\n")).toMatch(/imports the node:crypto namespace\/default binding/);
++    expect(v.join("\n")).toMatch(/only access\/index\.ts is public/);
++  });
++
++  it("F-DG1-134: JSX in a .tsx/.jsx module file is parsed as JSX, so its imports are still seen and not mis-parsed", () => {
++    const jsx = `import { authorize } from "../access/policy.ts";\nexport const X = () => <div>{typeof authorize}</div>;`;
++    // Under a TS-kind parse the apostrophe in the JSX text opened a string literal that swallowed `require(...)`.
++    const swallowed = `export const X = () => <div>a'b {require("node:vm")}</div>;`;
++    for (const name of ["zz-planted.tsx", "zz-planted.jsx"]) {
++      expect(planted("transformations", swallowed, name).join("\n"), name).toMatch(
++        /imports non-allow-listed node built-in node:vm/,
++      );
++      expect(planted("transformations", jsx, name), name).toEqual([
++        `modules/transformations/${name}: imports ../access/policy.ts; only access/index.ts is public`,
++      ]);
++    }
++  });
++
++  it("F-DG1-134: *.test.<ext> is a test for every extension (vitest/testkit allowance), other files are not", () => {
++    const src = `import { describe } from "vitest";\nimport { moduleViolations } from "../../architecture.testkit.ts";`;
++    for (const ext of CODE_EXTS) {
++      expect(planted("kpi", src, `kpi.test.${ext}`), ext).toEqual([]);
++      expect(planted("kpi", src, `kpi.${ext}`).join("\n"), ext).toMatch(
++        /imports package vitest[\s\S]*composition root/,
++      );
++    }
++  });
++
+   it("scanSource reports what it saw (paths resolve relative to the planted file)", () => {
+     const rel = relative(MODULES_DIR, resolve(join(MODULES_DIR, "transformations"), "../access/policy.ts"));
+     expect(rel.split("/")).toEqual(["access", "policy.ts"]);
+diff --git a/apps/api/src/architecture.testkit.ts b/apps/api/src/architecture.testkit.ts
+index 3d1b427..315cb00 100644
+--- a/apps/api/src/architecture.testkit.ts
++++ b/apps/api/src/architecture.testkit.ts
+@@ -1,6 +1,10 @@
+ // Module dependency-lint (ADR-0002), shared by architecture.test.ts and every module's own suite (D-048). Test-only:
+ // excluded from the build (tsconfig.build.json `*.testkit.ts`) and never imported by runtime code.
+ //
++// FILE SCOPE (F-DG1-134): walk() collects EVERY buildable JS/TS module file, `/\.[cm]?[jt]sx?$/` (.ts .tsx .mts .cts
++// .js .jsx .mjs .cjs), so no module code evades the lint by its extension (a `.mts` file typechecks and ships in dist as
++// `.mjs`). All of them get the same rules 1-5 and boundary checks; `.tsx`/`.jsx` are parsed as TSX, the rest as TS (a
++// superset of JS); `*.test.<ext>` is a test.
+ // It walks the TypeScript AST of each file (F-DG1-109: `ts.preProcessFile` saw only literal specifiers) and reports:
+ //  - every static import / export-from / `import x = require()` / type-only import specifier, and every
+ //    `import("...")` / `require("...")` with a string-literal specifier - each checked against the module boundary;
+@@ -164,11 +168,21 @@ const NUMERIC_OPERATORS = new Set([
+ /** Composition-root files a module's OWN TEST may read: the declarative module map and this lint (D-048). */
+ const TEST_SUPPORT_FILES = new Set(["modules.ts", "architecture.testkit.ts"]);
+ 
++/**
++ * F-DG1-134: every buildable JS/TS module file - .ts .tsx .mts .cts .js .jsx .mjs .cjs. Matching only .ts/.tsx let a
++ * `.mts` module file (typechecks under NodeNext + allowImportingTsExtensions, ships in dist as `.mjs`) evade every rule
++ * and the boundary check. `*.test.<ext>` of any of these is a test (TEST_FILE).
++ */
++const CODE_FILE = /\.[cm]?[jt]sx?$/;
++const TEST_FILE = /\.test\.[cm]?[jt]sx?$/;
++/** JSX-capable files are parsed as TSX (a TS-kind parse of JSX text such as `a'b {require(x)}` swallows code). */
++const scriptKindOf = (fileName: string) => (/\.[jt]sx$/.test(fileName) ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
++
+ export function walk(dir: string): string[] {
+   if (!existsSync(dir)) return [];
+   return readdirSync(dir).flatMap((name) => {
+     const p = join(dir, name);
+-    return statSync(p).isDirectory() ? walk(p) : /\.(ts|tsx)$/.test(name) ? [p] : [];
++    return statSync(p).isDirectory() ? walk(p) : CODE_FILE.test(name) ? [p] : [];
+   });
+ }
+ 
+@@ -290,7 +304,7 @@ function occurrence(node: ts.Identifier | ts.PrivateIdentifier | ts.StringLitera
+ 
+ /** Parse `source` (as if it were `fileName`) and collect what it loads. */
+ export function scanSource(fileName: string, source: string): ScanResult {
+-  const sf = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
++  const sf = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true, scriptKindOf(fileName));
+   const specifiers: string[] = [];
+   const evasions: string[] = [];
+   const at = (n: ts.Node) => `line ${sf.getLineAndCharacterOfPosition(n.getStart(sf)).line + 1}`;
+@@ -444,7 +458,7 @@ function syntaxErrors(fileName: string, source: string): string[] {
+ export function fileViolations(mod: ApiModule, file: string, source: string): string[] {
+   const violations: string[] = [];
+   const where = relative(SRC, file);
+-  const isTest = file.endsWith(".test.ts");
++  const isTest = TEST_FILE.test(file);
+   const allowedDeps = new Set<string>(API_MODULES[mod].dependsOn);
+   const { specifiers, evasions } = scanSource(file, source);
+   for (const e of [...syntaxErrors(file, source), ...evasions])
+## clone at 08cbd12: candidate.mjs -> sha256:00f1498c…80b (391 files), is-shallow=false; node_modules copied from workspace (pnpm-lock.yaml identical, pnpm install --offline unavailable: read-only store)
+## $ git diff --stat 987ae02 08cbd12 -- docs/ ':!docs/delivery' apps/web packages   (ADRs, ERD/data dictionary, OpenAPI, web, i18n, shared/db packages)
+(end; empty = unchanged)

@@ -1,0 +1,19 @@
+## F-DG1-216: D-055 wording at the round-13 freeze (08cbd12f00c5c0561f9718900e71c9baf3d8e0c1)
+$ git show 08cbd12f00c5c0561f9718900e71c9baf3d8e0c1:docs/delivery/decisions.md | grep -c 'reaching it by namespace enumeration is residual (a)'   (expect 0)
+0
+$ git show 987ae02:docs/delivery/decisions.md | grep -c 'reaching it by namespace enumeration is residual (a)'   (round-12 freeze: expect 1, the finding)
+1
+$ git show 08cbd12f00c5c0561f9718900e71c9baf3d8e0c1:docs/delivery/decisions.md | sed -n 7p | grep -oE '.{0,80}(rule 5|residual \(a\)|enumerat)[^|]{0,160}'   (every mention in D-055)
+is therefore **version-independent** (fixes F-DG1-010's root cause: no per-Node enumeration/sweep) and structurally closes the module-IMPORT and process-MEMBER loader/exec classes version-independently (fixes F-DG1-129/213). It does NOT by itself c
+DG1-130, `crypto.setEngine`, name-banned by rule 1) nor, by itself, the runtime-enumeration reach of such a member (F-DG1-132/215) — that route is closed by rule 5 (named-imports-only for node:crypto, F-DG1-133); default-deny is not a claim that no
+gine` (a native `dlopen`), now banned by rule 1 (every spelled form) and, since rule 5 (F-DG1-132/133), unreachable by namespace enumeration — a module may import node:crypto through named imports only, so its namespace/default binding never beco
+$ git grep -nE 'residual \(a\)' 08cbd12f00c5c0561f9718900e71c9baf3d8e0c1 -- . ':!docs/delivery/reviews' ':!docs/delivery/test-evidence' ':!docs/delivery/runs' ':!docs/delivery/findings.json' ':!docs/delivery/assignments' ':!docs/delivery/handbacks' | cut -c1-260
+08cbd12f00c5c0561f9718900e71c9baf3d8e0c1:apps/api/src/architecture.test.ts:544:  // fourth column is the round-11 lint's result ("missed" = 0 violations, pinned then as residual (a)).
+08cbd12f00c5c0561f9718900e71c9baf3d8e0c1:docs/delivery/stages.json:841:          "note": "DG1 round 11: re-review after the round-10 BLOCK (qa FAIL). Verify F-DG1-214 (Medium — the unit-web suite now passes on Node 24 as well as Node 22, via a custom jsdom environment that keeps Node's native AbortController/AbortSig
+08cbd12f00c5c0561f9718900e71c9baf3d8e0c1:docs/delivery/stages.json:853:          "note": "DG1 round 12: re-review after the round-11 all-PASS that raised one Low finding. Verify F-DG1-132/133 — the module lint now CLOSES the node:crypto namespace-enumeration route via rule 5 (named-imports-only for allow-listed built
+## testkit header statements for comparison
+$ grep -nE 'CLOSED by rule 5|closed by rule 5|Residual limits|\(a\) ' apps/api/src/architecture.testkit.ts
+26://     banned MEMBER of an allow-listed built-in, `crypto.setEngine`, the enumeration route is closed by rule 5):
+67:// namespace/default binding, without writing the name, is CLOSED by rule 5 (named imports only: no such binding can
+75:// Residual limits (stated and ACCEPTED by choice: this is a defence-in-depth lint over human-reviewed code):
+76://  (a) runtime DATA FLOW over PLAIN OBJECTS and third-party readers: a plain object or a third-party value passed to

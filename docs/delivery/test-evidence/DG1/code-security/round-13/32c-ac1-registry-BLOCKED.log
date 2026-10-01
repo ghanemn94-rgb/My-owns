@@ -1,0 +1,14 @@
+$ npm_config_store_dir=$TMPDIR/pnpm-store/v10 tools/deps/install-sandbox.sh --root $TMPDIR/ac1p create
+ WARN  GET https://registry.npmjs.org/is-number error (ECONNREFUSED). Will retry in 10 seconds. 2 retries left.
+ WARN  GET https://registry.npmjs.org/is-number error (ECONNREFUSED). Will retry in 1 minute. 1 retries left.
+ ERR_PNPM_META_FETCH_FAIL  GET https://registry.npmjs.org/is-number: request to https://registry.npmjs.org/is-number failed, reason: connect ECONNREFUSED 127.0.0.1:3128
+
+This error happened while installing a direct dependency of /var/tmp/mth-run.fxy6nx/claude-0/mth-ws.PGjA9B
+exit=1
+$ ls $TMPDIR/pnpm-store/v10/index | head; grep -rl "is-number" store index?
+/var/tmp/mth-run.fxy6nx/claude-0/pnpm-store/v10/index/e3/50a27e483a7bc4f2952a5db53a5e2d532abd20445734edb47bc4443ef8d7ea-is-number@7.0.0.json
+is-number-in-store-index=1
+$ curl -sS -m 10 -o /dev/null -w "%{http_code}" https://registry.npmjs.org/is-number
+curl: (7) Failed to connect to localhost port 3128 after 0 ms: Couldn't connect to server
+000
+curl-exit=7

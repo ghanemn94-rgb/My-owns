@@ -1,0 +1,17 @@
+== architecture.test.ts in 05-unit-node-v22.22.2.log
+passed: 127  failed: 0
+F-DG1-134: walk() collects every buildable JS/TS file (.[cm]?[jt]sx?), incl. nested ones, and no other file 6ms
+F-DG1-134: a planted non-.ts module file (zz-planted.mts etc.) is linted like a .ts one, end to end 26ms
+F-DG1-134: zz-planted.mts via fileViolations yields the rule-5 and deep-import violations 3ms
+F-DG1-134: JSX in a .tsx/.jsx module file is parsed as JSX, so its imports are still seen and not mis-parsed 19ms
+is a test for every extension (vitest/testkit allowance), other files are not 39ms
+== architecture.test.ts in 05-unit-node-v24.21.0.log
+passed: 127  failed: 0
+F-DG1-134: walk() collects every buildable JS/TS file (.[cm]?[jt]sx?), incl. nested ones, and no other file 6ms
+F-DG1-134: a planted non-.ts module file (zz-planted.mts etc.) is linted like a .ts one, end to end 34ms
+F-DG1-134: zz-planted.mts via fileViolations yields the rule-5 and deep-import violations 3ms
+F-DG1-134: JSX in a .tsx/.jsx module file is parsed as JSX, so its imports are still seen and not mis-parsed 10ms
+is a test for every extension (vitest/testkit allowance), other files are not 42ms
+
+$ find apps/api/src/modules -type f | grep -vcE "\.(ts|tsx)$"   (clone @08cbd12)
+0

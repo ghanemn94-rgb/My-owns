@@ -11433,7 +11433,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-12/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T16:16:07Z",
@@ -11444,10 +11444,43 @@
           "at": "2026-10-01T16:27:54Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at e71f3d0e1ad115a4d48f2cef704424ac3836fa40"
+        },
+        {
+          "at": "2026-10-01T16:46:33Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 13: PASS"
+        },
+        {
+          "at": "2026-10-01T16:50:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 13: PASS"
         }
       ],
       "fix_revision": "e71f3d0e1ad115a4d48f2cef704424ac3836fa40",
-      "fix_summary": "walk() broadened to CODE_FILE=/\\.[cm]?[jt]sx?$/ (ts/tsx/mts/cts/js/jsx/mjs/cjs) so every buildable module file is linted (no extension evasion); scanSource parses tsx/jsx as TSX; isTest uses TEST_FILE. Real module tree has 0 non-ts/tsx files; planted .mts self-check flags violations. architecture 127/127; full unit 320/320 Node 22+24."
+      "fix_summary": "walk() broadened to CODE_FILE=/\\.[cm]?[jt]sx?$/ (ts/tsx/mts/cts/js/jsx/mjs/cjs) so every buildable module file is linted (no extension evasion); scanSource parses tsx/jsx as TSX; isTest uses TEST_FILE. Real module tree has 0 non-ts/tsx files; planted .mts self-check flags violations. architecture 127/127; full unit 320/320 Node 22+24.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-QA-R13-qa-verifier-20261001T163248Z-2e8c8150",
+          "session_id": "2e8c8150-ac88-43c7-8c17-ecee530b2ccb"
+        },
+        "at": "2026-10-01T16:50:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/qa/tests/dg1-r13-file-scope-probe.test.ts",
+          "docs/delivery/test-evidence/DG1/qa/round-13/06-r13-file-scope-probe-v22.22.2.log",
+          "docs/delivery/test-evidence/DG1/qa/round-13/06-r13-file-scope-probe-v24.21.0.log",
+          "docs/delivery/test-evidence/DG1/qa/round-13/07-probe-negative-control-prefix.log",
+          "docs/delivery/test-evidence/DG1/qa/round-13/08-f134-arch-extract.log",
+          "docs/delivery/test-evidence/DG1/qa/round-13/01b-candidate-diff-r12-r13.log",
+          "docs/delivery/test-evidence/DG1/qa/round-13/03-unit-node22.log",
+          "docs/delivery/test-evidence/DG1/qa/round-13/04-unit-node24.log",
+          "apps/api/src/architecture.testkit.ts",
+          "apps/api/src/architecture.test.ts"
+        ],
+        "note": "Verified on frozen candidate sha256:00f1498cd5e9a166db501452f699a3270ffca82455593fe9c0ab84a83e01c80b (freeze 08cbd12; the ID recomputes identically in a full disposable clone). Fix e71f3d0 (T-DG1-BE14) is test-only: the r12->r13 manifest diff changes only apps/api/src/architecture.testkit.ts, architecture.test.ts and docs/delivery/decisions.md. walk() now matches CODE_FILE = /\\.[cm]?[jt]sx?$/. scanSource parses .tsx/.jsx as TSX and the rest as TS, and isTest uses TEST_FILE = /\\.test\\.[cm]?[jt]sx?$/. The candidate's five F-DG1-134 self-checks are green, and architecture.test.ts passes 127/127 on Node v22.22.2 and v24.21.0. My independent probe (qa/tests/dg1-r13-file-scope-probe.test.ts) plants files into the REAL src/modules/transformations directory, top level and nested, and calls the production entry point moduleViolations(). It runs 21/21 on both runtimes. Every one of .mts .cts .js .jsx .mjs .cjs .ts .tsx is flagged for a deep import, a node:vm require, rule-3 process.kill and the rule-5 crypto namespace. A cross-module ../access/index.mts import is rejected. A .test.mts may use vitest and a non-test .mts may not. Non-code files are ignored. The negative control is the same probe against the pre-fix round-12 testkit: it fails 14/21, exactly the non-ts cases, so the probe detects the original defect. The real module tree has 0 non-.ts/.tsx files and zero moduleViolations before and after. Nothing regressed: unit 320/320 on both runtimes (unit-web 110/110), integration 200/200 x3 (Node 22 x2, Node 24 x1), e2e 22/22 on both runtimes."
+      }
     },
     {
       "id": "F-DG1-216",
@@ -11468,7 +11501,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG1/round-12/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T16:20:00Z",
@@ -11479,10 +11512,67 @@
           "at": "2026-10-01T16:22:41Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 85af2e6eddc735a8e183962734b2a4dad3511182"
+        },
+        {
+          "at": "2026-10-01T16:40:25Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 13: PASS"
+        },
+        {
+          "at": "2026-10-01T16:50:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 13: PASS"
         }
       ],
       "fix_revision": "85af2e6eddc735a8e183962734b2a4dad3511182",
-      "fix_summary": "D-055 corrected: the node:crypto namespace-enumeration route is now CLOSED by rule 5 (named-imports-only), not residual (a); both stale 'residual (a), F-DG1-132/215' mentions updated to reflect the rule-5 closure. D-055 no longer contradicts the testkit header."
+      "fix_summary": "D-055 corrected: the node:crypto namespace-enumeration route is now CLOSED by rule 5 (named-imports-only), not residual (a); both stale 'residual (a), F-DG1-132/215' mentions updated to reflect the rule-5 closure. D-055 no longer contradicts the testkit header.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-QA-R13-qa-verifier-20261001T163248Z-2e8c8150",
+          "session_id": "2e8c8150-ac88-43c7-8c17-ecee530b2ccb"
+        },
+        "at": "2026-10-01T16:50:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/qa/round-13/09-f216-d055-check.log",
+          "docs/delivery/test-evidence/DG1/qa/round-13/01b-candidate-diff-r12-r13.log",
+          "docs/delivery/decisions.md"
+        ],
+        "note": "I raised this finding in round 12, and I verify it on candidate sha256:00f1498c…c80b (freeze 08cbd12). The command grep -n \"residual (a).*F-DG1-132/215\" docs/delivery/decisions.md finds nothing at 08cbd12 or in the working tree (exit 1). Both D-055 mentions now say the node:crypto namespace-enumeration route is closed by rule 5: 'that route is closed by rule 5 (named-imports-only for node:crypto, F-DG1-133)' and 'since rule 5 (F-DG1-132/133), unreachable by namespace enumeration'. That matches the testkit header (lines 26, 67, 82, 112) and the lint behaviour, since the rule-5 namespace violation is also flagged by my F-DG1-134 probe on every extension. The only remaining 'residual (a)' hit in decisions.md or apps/api/src is a historical comment, architecture.test.ts:544 ('pinned then as residual (a)'), which is accurate as history."
+      }
+    },
+    {
+      "id": "F-DG1-135",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Module lint test classification is wider than the build exclusion and the vitest include. apps/api/src/architecture.testkit.ts:177 sets TEST_FILE = /\\.test\\.[cm]?[jt]sx?$/, and :461 isTest = TEST_FILE.test(file) grants the test allowances: :471 import of the composition-root files modules.ts / architecture.testkit.ts, and :480 import of vitest. But apps/api/tsconfig.build.json:10 excludes only src/**/*.test.ts, *.test.tsx and *.testkit.ts, and vitest.config.ts:21 collects only apps/api/src/**/*.test.ts. So a module file named *.test.mts / .test.cts (also .test.js/.mjs/.cjs/.jsx) is never run as a test, is compiled into dist, yet gets test-only exemptions from the boundary check. This is introduced by the F-DG1-134 fix (e71f3d0), and architecture.test.ts:763 pins the behaviour as intended. It is not a regression: before the fix such files were not scanned at all.",
+      "reproduction": "Candidate sha256:00f1498c...c80b, full disposable clone at 08cbd12, Node v22.22.2, after pnpm -r build. I planted apps/api/src/modules/kpi/zzgap.test.mts containing `import { API_MODULES } from \"../../modules.ts\"; export const moduleCount: number = Object.keys(API_MODULES).length;`. Results: (1) moduleViolations(\"kpi\") = 0. (2) cd apps/api && pnpm build exits 0, and dist/modules/kpi/ contains zzgap.test.mjs (+ .d.mts). (3) node: import(\"./dist/modules/kpi/zzgap.test.mjs\") gives moduleCount = 13, so it runs from the production artefact. (4) `vitest list --project unit-node` lists it 0 times, so it is not a test. (5) Control: the same content as zzgap.mts gives `modules/kpi/zzgap.mts: imports ../../modules.ts outside src/modules (composition root)`. The same exemption also admits `import ... from \"vitest\"` (a devDependency). Rules 1-5 (banned names, computed keys, runtime roots, syntax, node:crypto named-only) still apply to such files: the exemption is only the 2 composition-root files + vitest. Logs: docs/delivery/test-evidence/DG1/code-security/round-13/03-test-name-allowance-gap.log and 01-F-DG1-134-reproof-probe.log (GAP probe case).",
+      "expected": "A module file gets test allowances only if it is really a test: excluded from the build AND collected by vitest. Either narrow TEST_FILE to the extensions the build excludes and vitest runs (today .test.ts; .test.tsx is excluded from the build and so also harmless), or widen tsconfig.build.json `exclude` (and, if wanted, the vitest include) to src/**/*.test.{ts,tsx,mts,cts,js,jsx,mjs,cjs}. architecture.test.ts:763 should assert the chosen invariant, for example that a *.test.mts which the build would emit gets no exemption.",
+      "actual": "A production-shipped module file named *.test.mts (or .test.cts/.js/.mjs/.cjs/.jsx) may import apps/api/src/modules.ts, apps/api/src/architecture.testkit.ts (which tsc then pulls into the build, dragging in the typescript devDependency) and vitest with 0 lint violations, though it is never run as a test.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-13/03-test-name-allowance-gap.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-13/01-F-DG1-134-reproof-probe.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-13/zz-r13-probe.test.ts.txt",
+        "apps/api/src/architecture.testkit.ts",
+        "apps/api/src/architecture.test.ts",
+        "apps/api/tsconfig.build.json",
+        "vitest.config.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-13/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T16:46:33Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG1 round 13 while verifying the F-DG1-134 fix. Rated Low and non-mandatory: the exemption reaches only the declarative module map (data, no capability), the test-only lint and vitest. Rules 1-5 still apply to the file, so no loader, native or crypto-enumeration route opens. No access-control, integrity, calculation or portability impact. The lint is static defence-in-depth over human-reviewed code. Exploitation needs a contributor to commit an unusually named file past review, and the real tree has none. Same precedent as F-DG1-134/132/130. Proposed ID F-DG1-135 (next free number in the code-security 1xx range); the orchestrator may renumber. Does not block DG1."
+        }
+      ]
     }
   ]
 }

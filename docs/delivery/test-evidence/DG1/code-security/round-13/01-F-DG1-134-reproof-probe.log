@@ -1,0 +1,53 @@
+$ npx vitest run --project unit-node apps/api/src/zz-r13-probe.test.ts   # node v22.22.2, disposable clone @08cbd12; probe imports the fixed testkit (NEW) and the round-12 testkit from e77be1a (OLD, saved as zz-old.testkit.ts) and plants files into the clone real module dirs
+
+ RUN  v3.2.4 /var/tmp/mth-run.fxy6nx/claude-0/rv
+
+stdout | apps/api/src/zz-r13-probe.test.ts > R13 F-DG1-134 re-proof > baseline: real module tree is clean under NEW for every P1 module
+real platform: 0
+real audit: 0
+real identity: 0
+real access: 0
+real organization: 0
+real transformations: 0
+real jobs: 0
+real admin: 0
+real workflows: 0
+real kpi: 0
+real reporting: 0
+
+stdout | apps/api/src/zz-r13-probe.test.ts > R13 F-DG1-134 re-proof > planted .mts/.mjs/.cts/.cjs/.js/.jsx (+nested .mts): OLD=0, NEW flags rule5 + deep import
+OLD transformations violations: 0
+NEW transformations violations:
+modules/transformations/zz.cjs: imports the node:crypto namespace/default binding via import * as; only named imports are allowed (it carries a rule-1-banned member) (line 1) bypasses the module-interface check
+modules/transformations/zz.cjs: imports ../access/policy.ts; only access/index.ts is public
+modules/transformations/zz.cts: imports the node:crypto namespace/default binding via import * as; only named imports are allowed (it carries a rule-1-banned member) (line 1) bypasses the module-interface check
+modules/transformations/zz.cts: imports ../access/policy.ts; only access/index.ts is public
+modules/transformations/zz.js: imports the node:crypto namespace/default binding via import * as; only named imports are allowed (it carries a rule-1-banned member) (line 1) bypasses the module-interface check
+modules/transformations/zz.js: imports ../access/policy.ts; only access/index.ts is public
+modules/transformations/zz.jsx: imports the node:crypto namespace/default binding via import * as; only named imports are allowed (it carries a rule-1-banned member) (line 1) bypasses the module-interface check
+modules/transformations/zz.jsx: imports ../access/policy.ts; only access/index.ts is public
+modules/transformations/zz.mjs: imports the node:crypto namespace/default binding via import * as; only named imports are allowed (it carries a rule-1-banned member) (line 1) bypasses the module-interface check
+modules/transformations/zz.mjs: imports ../access/policy.ts; only access/index.ts is public
+modules/transformations/zz.mts: imports the node:crypto namespace/default binding via import * as; only named imports are allowed (it carries a rule-1-banned member) (line 1) bypasses the module-interface check
+modules/transformations/zz.mts: imports ../access/policy.ts; only access/index.ts is public
+modules/transformations/zzsub/deep.mts: imports the node:crypto namespace/default binding via import * as; only named imports are allowed (it carries a rule-1-banned member) (line 1) bypasses the module-interface check
+modules/transformations/zzsub/deep.mts: imports ../../access/policy.ts; only access/index.ts is public
+
+stdout | apps/api/src/zz-r13-probe.test.ts > R13 F-DG1-134 re-proof > .tsx plant parsed as TSX: JSX text with apostrophe does not swallow require()
+tsx:
+modules/transformations/zzj.tsx: module loader via require (line 1) bypasses the module-interface check
+modules/transformations/zzj.tsx: imports package y
+
+stdout | apps/api/src/zz-r13-probe.test.ts > R13 F-DG1-134 re-proof > GAP probe: *.test.mts gets test allowances (vitest + composition root) though build ships it and vitest never runs it
+kpi violations:
+modules/kpi/zzgap.mts: imports package vitest
+modules/kpi/zzgap.mts: imports ../../modules.ts outside src/modules (composition root)
+
+ ✓ |unit-node| apps/api/src/zz-r13-probe.test.ts (4 tests) 1005ms
+   ✓ R13 F-DG1-134 re-proof > baseline: real module tree is clean under NEW for every P1 module  811ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  16:35:29
+   Duration  2.20s (transform 147ms, setup 0ms, collect 674ms, tests 1.01s, environment 0ms, prepare 131ms)
+

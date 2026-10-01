@@ -1,0 +1,26 @@
+$ git rev-parse HEAD   # real repo at start
+ae769af6258e640490632f759df6a532d5b26ee6
+$ git merge-base --is-ancestor 08cbd12f00c5c0561f9718900e71c9baf3d8e0c1 HEAD && echo ancestor
+ancestor
+$ git log --oneline 08cbd12..HEAD
+ed2160d DG1 r13: freeze candidate 00f1498c + round-13 review assignments
+$ git diff --stat 08cbd12 ed2160d
+ docs/delivery/assignments/DG1/round-13/audit.md    |   24 +
+ .../DG1/round-13/review-code-security-reviewer.md  |   11 +
+ .../assignments/DG1/round-13/review-common.md      |   16 +
+ .../DG1/round-13/review-domain-reviewer.md         |   12 +
+ .../assignments/DG1/round-13/review-qa-verifier.md |   17 +
+ .../candidates/DG1/00f1498cd5e9a166.manifest.json  | 1973 ++++++++++++++++++++
+ docs/delivery/stages.json                          |   22 +-
+ 7 files changed, 2070 insertions(+), 5 deletions(-)
+$ node tools/gates/candidate.mjs --stage DG1   # real repo, node 24.21.0 (PATH default)
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:00f1498cd5e9a166db501452f699a3270ffca82455593fe9c0ab84a83e01c80b","files":391}
+$ (clone @08cbd12f00c5..., not shallow) node tools/gates/candidate.mjs --stage DG1   # node 22.22.2
+08cbd12f00c5c0561f9718900e71c9baf3d8e0c1
+false
+0
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:00f1498cd5e9a166db501452f699a3270ffca82455593fe9c0ab84a83e01c80b","files":391}
+$ git diff --stat e77be1a 08cbd12 -- apps packages tools deploy scripts e2e tests licenses .github package.json pnpm-lock.yaml   # round-12 freeze -> round-13 freeze, source paths
+ apps/api/src/architecture.test.ts    | 97 +++++++++++++++++++++++++++++++++++-
+ apps/api/src/architecture.testkit.ts | 20 ++++++--
+ 2 files changed, 112 insertions(+), 5 deletions(-)
