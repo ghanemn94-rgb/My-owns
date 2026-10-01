@@ -1,0 +1,101 @@
+$ npx vitest run --project unit-node apps/api/src/zz-r16-probe.test.ts   # disposable clone @aa7d9a86 (+ probe file + pre-fix testkit from 873f48e as zz-prefix.testkit.ts), node v22.22.2, typescript 6.0.2
+
+ RUN  v3.2.4 /var/tmp/mth-run.thdgZ8/claude-0/review-r16
+
+stdout | apps/api/src/zz-r16-probe.test.ts > R16 re-proof F-DG1-137/218 > root cause: transpileModule throws Debug Failure for *.d.<ext>.ts; old regex misses them
+[probe] transpileModule styles.d.css.ts -> "Debug Failure. Output generation failed"
+[probe] transpileModule data.d.json.ts -> "Debug Failure. Output generation failed"
+[probe] transpileModule x.d.ts.ts -> "Debug Failure. Output generation failed"
+
+stdout | apps/api/src/zz-r16-probe.test.ts > R16 re-proof F-DG1-137/218 > BEFORE (pre-fix testkit @873f48e): fileViolations throws
+[probe] BEFORE fileViolations styles.d.css.ts -> "Debug Failure. Output generation failed"
+[probe] BEFORE fileViolations data.d.json.ts -> "Debug Failure. Output generation failed"
+[probe] BEFORE fileViolations x.d.ts.ts -> "Debug Failure. Output generation failed"
+
+stdout | apps/api/src/zz-r16-probe.test.ts > R16 re-proof F-DG1-137/218 > AFTER (candidate): no throw, [] for valid; named diagnostic for real syntax error
+[probe] AFTER ok styles.d.css.ts -> []
+[probe] AFTER broken styles.d.css.ts -> ["modules/transformations/styles.d.css.ts: unparseable source: Type expected. (line 1) bypasses the module-interface check","modules/transformations/styles.d.css.ts: unparseable source: Expression expected. (line 1) bypasses the module-interface check"]
+[probe] AFTER ok data.d.json.ts -> []
+[probe] AFTER broken data.d.json.ts -> ["modules/transformations/data.d.json.ts: unparseable source: Type expected. (line 1) bypasses the module-interface check","modules/transformations/data.d.json.ts: unparseable source: Expression expected. (line 1) bypasses the module-interface check"]
+[probe] AFTER ok x.d.ts.ts -> []
+[probe] AFTER broken x.d.ts.ts -> ["modules/transformations/x.d.ts.ts: unparseable source: Type expected. (line 1) bypasses the module-interface check","modules/transformations/x.d.ts.ts: unparseable source: Expression expected. (line 1) bypasses the module-interface check"]
+
+stdout | apps/api/src/zz-r16-probe.test.ts > R16 re-proof F-DG1-137/218 > declaration files are still SCANNED: deep / forbidden cross-module type imports flagged
+[probe] SCAN zz.d.ts {"deep":["modules/transformations/zz.d.ts: imports ../access/internal/x.js; only access/index.ts is public"],"forbidden":["modules/transformations/zz.d.ts: module transformations may not import module kpi"],"pkg":["modules/transformations/zz.d.ts: imports package left-pad"],"dyn":["modules/transformations/zz.d.ts: module transformations may not import module workflows"]}
+[probe] SCAN zz.d.mts {"deep":["modules/transformations/zz.d.mts: imports ../access/internal/x.js; only access/index.ts is public"],"forbidden":["modules/transformations/zz.d.mts: module transformations may not import module kpi"],"pkg":["modules/transformations/zz.d.mts: imports package left-pad"],"dyn":["modules/transformations/zz.d.mts: module transformations may not import module workflows"]}
+[probe] SCAN zz.d.cts {"deep":["modules/transformations/zz.d.cts: imports ../access/internal/x.js; only access/index.ts is public"],"forbidden":["modules/transformations/zz.d.cts: module transformations may not import module kpi"],"pkg":["modules/transformations/zz.d.cts: imports package left-pad"],"dyn":["modules/transformations/zz.d.cts: module transformations may not import module workflows"]}
+[probe] SCAN styles.d.css.ts {"deep":["modules/transformations/styles.d.css.ts: imports ../access/internal/x.js; only access/index.ts is public"],"forbidden":["modules/transformations/styles.d.css.ts: module transformations may not import module kpi"],"pkg":["modules/transformations/styles.d.css.ts: imports package left-pad"],"dyn":["modules/transformations/styles.d.css.ts: module transformations may not import module workflows"]}
+[probe] SCAN data.d.json.ts {"deep":["modules/transformations/data.d.json.ts: imports ../access/internal/x.js; only access/index.ts is public"],"forbidden":["modules/transformations/data.d.json.ts: module transformations may not import module kpi"],"pkg":["modules/transformations/data.d.json.ts: imports package left-pad"],"dyn":["modules/transformations/data.d.json.ts: module transformations may not import module workflows"]}
+[probe] SCAN x.d.ts.ts {"deep":["modules/transformations/x.d.ts.ts: imports ../access/internal/x.js; only access/index.ts is public"],"forbidden":["modules/transformations/x.d.ts.ts: module transformations may not import module kpi"],"pkg":["modules/transformations/x.d.ts.ts: imports package left-pad"],"dyn":["modules/transformations/x.d.ts.ts: module transformations may not import module workflows"]}
+
+stdout | apps/api/src/zz-r16-probe.test.ts > R16 re-proof F-DG1-137/218 > nothing emitted/executed: decl names never reach transpileModule (it would throw); no file written; body not run
+[probe] dir contents after linting decl names: [] PWNED: undefined
+
+stdout | apps/api/src/zz-r16-probe.test.ts > R16 re-proof F-DG1-137/218 > public SourceFile.isDeclarationFile == @internal ts.isDeclarationFileName == testkit helper (extended name set)
+[probe] CLASSIFY {"n":"zz.d.ts","internal":true,"pub":true,"pubTSX":true,"helper":true}
+[probe] CLASSIFY {"n":"zz.d.mts","internal":true,"pub":true,"pubTSX":true,"helper":true}
+[probe] CLASSIFY {"n":"zz.d.cts","internal":true,"pub":true,"pubTSX":true,"helper":true}
+[probe] CLASSIFY {"n":"styles.d.css.ts","internal":true,"pub":true,"pubTSX":true,"helper":true}
+[probe] CLASSIFY {"n":"data.d.json.ts","internal":true,"pub":true,"pubTSX":true,"helper":true}
+[probe] CLASSIFY {"n":"x.d.ts.ts","internal":true,"pub":true,"pubTSX":true,"helper":true}
+[probe] CLASSIFY {"n":"a.ts","internal":false,"pub":false,"pubTSX":false,"helper":false}
+[probe] CLASSIFY {"n":"a.mts","internal":false,"pub":false,"pubTSX":false,"helper":false}
+[probe] CLASSIFY {"n":"a.tsx","internal":false,"pub":false,"pubTSX":false,"helper":false}
+[probe] CLASSIFY {"n":"a.d.tsx","internal":false,"pub":false,"pubTSX":false,"helper":false}
+[probe] CLASSIFY {"n":"zz-planted.mts","internal":false,"pub":false,"pubTSX":false,"helper":false}
+[probe] CLASSIFY {"n":"dir.d.x/a.ts","internal":false,"pub":false,"pubTSX":false,"helper":false}
+[probe] CLASSIFY {"n":"a.D.ts","internal":false,"pub":false,"pubTSX":false,"helper":false}
+[probe] CLASSIFY {"n":"a.d.TS","internal":false,"pub":false,"pubTSX":false,"helper":false}
+[probe] CLASSIFY {"n":"a.d.css.mts","internal":false,"pub":false,"pubTSX":false,"helper":false}
+[probe] CLASSIFY {"n":"a.d.css.cts","internal":false,"pub":false,"pubTSX":false,"helper":false}
+[probe] CLASSIFY {"n":"a.d.json.tsx","internal":false,"pub":false,"pubTSX":false,"helper":false}
+[probe] CLASSIFY {"n":"a.d.js","internal":false,"pub":false,"pubTSX":false,"helper":false}
+[probe] CLASSIFY {"n":"a.d.mjs","internal":false,"pub":false,"pubTSX":false,"helper":false}
+[probe] CLASSIFY {"n":".d.ts","internal":true,"pub":true,"pubTSX":true,"helper":true}
+[probe] CLASSIFY {"n":"x.d..ts","internal":true,"pub":true,"pubTSX":true,"helper":true}
+[probe] CLASSIFY {"n":"a.d.ts.d.ts","internal":true,"pub":true,"pubTSX":true,"helper":true}
+[probe] CLASSIFY {"n":"a.d.mts.ts","internal":true,"pub":true,"pubTSX":true,"helper":true}
+[probe] CLASSIFY {"n":"d.ts","internal":false,"pub":false,"pubTSX":false,"helper":false}
+[probe] CLASSIFY {"n":"a.dts","internal":false,"pub":false,"pubTSX":false,"helper":false}
+[probe] CLASSIFY {"n":"dir/x.d.y.z.ts","internal":true,"pub":true,"pubTSX":true,"helper":true}
+[probe] CLASSIFY {"n":"/abs/modules/t/x.d.css.ts","internal":true,"pub":true,"pubTSX":true,"helper":true}
+[probe] CLASSIFY {"n":"a.d.ts.mts","internal":false,"pub":false,"pubTSX":false,"helper":false}
+[probe] CLASSIFY {"n":"a.d.ts.cts","internal":false,"pub":false,"pubTSX":false,"helper":false}
+[probe] CLASSIFY {"n":"a.d.","internal":false,"pub":false,"pubTSX":false,"helper":false}
+[probe] CLASSIFY {"n":"a.d.cjs","internal":false,"pub":false,"pubTSX":false,"helper":false}
+
+stdout | apps/api/src/zz-r16-probe.test.ts > R16 re-proof F-DG1-137/218 > fuzz: no CODE_FILE-matching name makes fileViolations throw (valid and broken body)
+[probe] FUZZ {
+ "a.D.ts": "ok;ok;ok;ok;",
+ "a.d.tsx": "ok;ok;ok;ok;",
+ "a.d.css.mts": "ok;ok;ok;ok;",
+ "a.d.css.cts": "ok;ok;ok;ok;",
+ "a.d.json.tsx": "ok;ok;ok;ok;",
+ "a.d.js": "ok;ok;ok;ok;",
+ "a.d.mjs": "ok;ok;ok;ok;",
+ "a.d.cjs": "ok;ok;ok;ok;",
+ "a.d.jsx": "ok;ok;ok;ok;",
+ ".d.ts": "ok;ok;ok;ok;",
+ "x.d..ts": "ok;ok;ok;ok;",
+ "a.d.ts.d.ts": "ok;ok;ok;ok;",
+ "a.d.mts.ts": "ok;ok;ok;ok;",
+ "a.d.ts.mts": "ok;ok;ok;ok;",
+ "a.d.ts.cts": "ok;ok;ok;ok;",
+ "x.d.y.z.ts": "ok;ok;ok;ok;",
+ "a.ts": "ok;ok;ok;ok;",
+ "a.tsx": "ok;ok;ok;ok;",
+ "a.mjs": "ok;ok;ok;ok;"
+}
+
+stdout | apps/api/src/zz-r16-probe.test.ts > R16 re-proof F-DG1-137/218 > real module tree: zero moduleViolations for every API module
+[probe] modules: 13 files: 41 violations: []
+
+ ✓ |unit-node| apps/api/src/zz-r16-probe.test.ts (8 tests) 990ms
+   ✓ R16 re-proof F-DG1-137/218 > real module tree: zero moduleViolations for every API module  754ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  18:12:16
+   Duration  2.15s (transform 162ms, setup 0ms, collect 743ms, tests 990ms, environment 0ms, prepare 135ms)
+
+exit=0

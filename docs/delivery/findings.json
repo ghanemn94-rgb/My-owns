@@ -11780,7 +11780,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-15/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T17:49:11Z",
@@ -11791,10 +11791,43 @@
           "at": "2026-10-01T18:06:48Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at f7d9707234ddef3bba6ef9ebd6a90f9d9f1c3cb4"
+        },
+        {
+          "at": "2026-10-01T18:20:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 16: PASS"
+        },
+        {
+          "at": "2026-10-01T18:26:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 16: PASS"
+        },
+        {
+          "at": "2026-10-01T18:21:40Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 16: PASS"
         }
       ],
       "fix_revision": "f7d9707234ddef3bba6ef9ebd6a90f9d9f1c3cb4",
-      "fix_summary": "Declaration-file branch in syntaxErrors() now follows TypeScript's own classification via the public SourceFile.isDeclarationFile (new isDeclarationFileName helper), covering allowArbitraryExtensions *.d.<ext>.ts (styles.d.css.ts/data.d.json.ts/x.d.ts.ts); none reach ts.transpileModule. Self-checks pin the classification and walk end-to-end. Unit 325/325 Node 22+24; architecture 132/132."
+      "fix_summary": "Declaration-file branch in syntaxErrors() now follows TypeScript's own classification via the public SourceFile.isDeclarationFile (new isDeclarationFileName helper), covering allowArbitraryExtensions *.d.<ext>.ts (styles.d.css.ts/data.d.json.ts/x.d.ts.ts); none reach ts.transpileModule. Self-checks pin the classification and walk end-to-end. Unit 325/325 Node 22+24; architecture 132/132.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-QA-R16-qa-verifier-20261001T181001Z-87c1983c",
+          "session_id": "87c1983c-ff8e-41b5-825f-12520b512d52"
+        },
+        "at": "2026-10-01T18:21:40Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/qa/tests/round-16/qa-r16-declaration-file-probe.test.ts",
+          "docs/delivery/test-evidence/DG1/qa/round-16/06-r16-probe-and-architecture-v22.22.2.log",
+          "docs/delivery/test-evidence/DG1/qa/round-16/06-r16-probe-and-architecture-v24.21.0.log",
+          "docs/delivery/test-evidence/DG1/qa/round-16/07-mutation-old-regex.log",
+          "docs/delivery/test-evidence/DG1/qa/round-16/08-f137-f218-scope.log"
+        ],
+        "note": "Verified on frozen candidate sha256:56f3eb885c6cf3db406e280d232e48ebcefddad173107a744bb9b8ca74fc2b4c. F-DG1-137 (raised by code-security-reviewer in round 15) shares its root cause with F-DG1-218: an arbitrary-extension declaration file (*.d.<ext>.ts) reached ts.transpileModule and threw an unnamed 'Debug Failure'. qa-verifier did not author the fix (f7d9707, backend-workflow-engineer) and verifies it as another qualified non-author. Same evidence as F-DG1-218. styles.d.css.ts, data.d.json.ts and x.d.ts.ts, plus *.d.html.ts, *.d.x.y.ts, *.d.mts.ts and *.spec.d.css.ts, are classified exactly as TypeScript classifies them, are walked and linted without throwing, and give a named 'unparseable source' diagnostic for a real syntax error. The planted styles.d.css.ts walk test passes end to end. The mutation control proves that the self-checks catch a regression to the regex. The change is test-only, and it passes on Node 22 and Node 24."
+      }
     },
     {
       "id": "F-DG1-218",
@@ -11816,7 +11849,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG1/round-15/qa-verifier.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T17:50:00Z",
@@ -11827,10 +11860,47 @@
           "at": "2026-10-01T18:06:49Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at f7d9707234ddef3bba6ef9ebd6a90f9d9f1c3cb4"
+        },
+        {
+          "at": "2026-10-01T18:20:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 16: PASS"
+        },
+        {
+          "at": "2026-10-01T18:26:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 16: PASS"
+        },
+        {
+          "at": "2026-10-01T18:21:40Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 16: PASS"
         }
       ],
       "fix_revision": "f7d9707234ddef3bba6ef9ebd6a90f9d9f1c3cb4",
-      "fix_summary": "Same root cause as F-DG1-137: arbitrary-extension declaration files (*.d.<ext>.ts) no longer reach ts.transpileModule (which threw 'Debug Failure. Output generation failed'); the declaration-file branch now follows TS classification and surfaces a named 'unparseable source' diagnostic. Verified by new end-to-end self-check; unit 325/325 Node 22+24."
+      "fix_summary": "Same root cause as F-DG1-137: arbitrary-extension declaration files (*.d.<ext>.ts) no longer reach ts.transpileModule (which threw 'Debug Failure. Output generation failed'); the declaration-file branch now follows TS classification and surfaces a named 'unparseable source' diagnostic. Verified by new end-to-end self-check; unit 325/325 Node 22+24.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-QA-R16-qa-verifier-20261001T181001Z-87c1983c",
+          "session_id": "87c1983c-ff8e-41b5-825f-12520b512d52"
+        },
+        "at": "2026-10-01T18:21:40Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/qa/tests/round-16/qa-r16-declaration-file-probe.test.ts",
+          "docs/delivery/test-evidence/DG1/qa/round-16/06-r16-probe-and-architecture-v22.22.2.log",
+          "docs/delivery/test-evidence/DG1/qa/round-16/06-r16-probe-and-architecture-v24.21.0.log",
+          "docs/delivery/test-evidence/DG1/qa/round-16/07-mutation-old-regex.log",
+          "docs/delivery/test-evidence/DG1/qa/round-16/08-f137-f218-scope.log",
+          "docs/delivery/test-evidence/DG1/qa/round-16/03-unit-node22.log",
+          "docs/delivery/test-evidence/DG1/qa/round-16/04-unit-node24.log",
+          "apps/api/src/architecture.testkit.ts",
+          "apps/api/src/architecture.test.ts"
+        ],
+        "note": "Verified on frozen candidate sha256:56f3eb885c6cf3db406e280d232e48ebcefddad173107a744bb9b8ca74fc2b4c (base 13418b8, freeze aa7d9a8; the ID recomputes identically in a full disposable clone). qa-verifier raised this finding in round 15 and did not author the fix (f7d9707, T-DG1-BE17, backend-workflow-engineer). Fix: architecture.testkit.ts replaces the regex /\\.d\\.[cm]?ts$/ with isDeclarationFileName(), which reads TypeScript's public SourceFile.isDeclarationFile. syntaxErrors() sends every such name to the no-emit declarationSyntaxErrors(), and none reaches ts.transpileModule. (a) My independent probe (qa/tests/round-16/qa-r16-declaration-file-probe.test.ts) covers a generated 125-name matrix. isDeclarationFileName equals both SourceFile.isDeclarationFile and the runtime @internal ts.isDeclarationFileName (TS 6.0.2) for every name. For all 112 names walk() collects, fileViolations() does not throw, never yields 'Debug Failure', and a syntax error gives '<modules/transformations/NAME>: unparseable source: ...'. This holds on Node v22.22.2 and v24.21.0 (246/246, exit 0). (b) Mutation control: restoring the old regex in the clone reddens the 2 new architecture self-checks and 11 probe cases with 'Error: Debug Failure. Output generation failed' (exit 1). The fix is what makes them green. (c) The change is test-only: 2 files, vitest.config.ts and every product, config and API path untouched, and the testkit is excluded from the runtime build (tsconfig.build.json; no architecture file in apps/api/dist). (d) architecture.test.ts is 132/132 and unit tests 325/325 on both runtimes. The real modules tree has 0 arbitrary-extension declaration files (latent) and lints clean."
+      }
     }
   ]
 }

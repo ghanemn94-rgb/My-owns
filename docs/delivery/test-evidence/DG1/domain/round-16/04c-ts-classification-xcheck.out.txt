@@ -1,0 +1,34 @@
+$ node zz-xcheck.mjs (apps/api of clone 13418b8; same expression as isDeclarationFileName() in architecture.testkit.ts)
+import ts from "typescript";
+const names = ["a.ts","a.mts","a.cts","a.tsx","a.d.ts","a.d.mts","a.d.cts","a.d.tsx","styles.d.css.ts","data.d.json.ts","x.d.ts.ts","x.d.html.ts","x.d.mts.ts","x.d.css.mts","x.d.css.tsx","x.dx.ts","d.ts","x.D.TS","x.d.ts.tsx","dir.d.x/a.ts","a.d..ts","a.d.a.b.ts"];
+const pub = (n) => ts.createSourceFile(n, "", ts.ScriptTarget.Latest, false, ts.ScriptKind.TS).isDeclarationFile;
+let mism = 0;
+console.log("typescript", ts.version, "internal isDeclarationFileName present:", typeof ts.isDeclarationFileName);
+for (const n of names) { const i = ts.isDeclarationFileName(n), p = pub(n); if (i !== p) mism++; console.log(n.padEnd(18), "internal", i, "public SourceFile.isDeclarationFile", p, i === p ? "" : "MISMATCH"); }
+console.log("mismatches:", mism);
+----
+typescript 6.0.2 internal isDeclarationFileName present: function
+a.ts               internal false public SourceFile.isDeclarationFile false 
+a.mts              internal false public SourceFile.isDeclarationFile false 
+a.cts              internal false public SourceFile.isDeclarationFile false 
+a.tsx              internal false public SourceFile.isDeclarationFile false 
+a.d.ts             internal true public SourceFile.isDeclarationFile true 
+a.d.mts            internal true public SourceFile.isDeclarationFile true 
+a.d.cts            internal true public SourceFile.isDeclarationFile true 
+a.d.tsx            internal false public SourceFile.isDeclarationFile false 
+styles.d.css.ts    internal true public SourceFile.isDeclarationFile true 
+data.d.json.ts     internal true public SourceFile.isDeclarationFile true 
+x.d.ts.ts          internal true public SourceFile.isDeclarationFile true 
+x.d.html.ts        internal true public SourceFile.isDeclarationFile true 
+x.d.mts.ts         internal true public SourceFile.isDeclarationFile true 
+x.d.css.mts        internal false public SourceFile.isDeclarationFile false 
+x.d.css.tsx        internal false public SourceFile.isDeclarationFile false 
+x.dx.ts            internal false public SourceFile.isDeclarationFile false 
+d.ts               internal false public SourceFile.isDeclarationFile false 
+x.D.TS             internal false public SourceFile.isDeclarationFile false 
+x.d.ts.tsx         internal false public SourceFile.isDeclarationFile false 
+dir.d.x/a.ts       internal false public SourceFile.isDeclarationFile false 
+a.d..ts            internal true public SourceFile.isDeclarationFile true 
+a.d.a.b.ts         internal true public SourceFile.isDeclarationFile true 
+mismatches: 0
+exit=0

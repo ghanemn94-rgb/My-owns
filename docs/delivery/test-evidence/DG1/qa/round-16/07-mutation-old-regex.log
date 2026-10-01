@@ -1,0 +1,60 @@
+# mutation: in the DISPOSABLE clone only, revert syntaxErrors() to the round-15 regex /\.d\.[cm]?ts$/ and re-run
+$ git diff apps/api/src/architecture.testkit.ts
+diff --git a/apps/api/src/architecture.testkit.ts b/apps/api/src/architecture.testkit.ts
+index d64ef60..30f99d0 100644
+--- a/apps/api/src/architecture.testkit.ts
++++ b/apps/api/src/architecture.testkit.ts
+@@ -489,7 +489,7 @@ function declarationSyntaxErrors(fileName: string, source: string): readonly ts.
+  * so no declaration-file name ever reaches `ts.transpileModule`.
+  */
+ function syntaxErrors(fileName: string, source: string): string[] {
+-  const diagnostics = isDeclarationFileName(fileName)
++  const diagnostics = /\.d\.[cm]?ts$/.test(fileName)
+     ? declarationSyntaxErrors(fileName, source)
+     : (ts.transpileModule(source, {
+         fileName,
+$ npx vitest run --project unit-node apps/api/src/architecture.test.ts apps/api/src/qa-r16-declaration-file-probe.test.ts
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-137/F-DG1-218: an arbitrary-extension declaration file (*.d.<ext>.ts) is linted without throwing 46ms
+     → styles.d.css.ts: expected [Function] to not throw an error but 'Error: Debug Failure. Output generati…' was thrown
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-137/F-DG1-218: a planted styles.d.css.ts in a module directory is walked and linted end to end 6ms
+     → expected [Function run] to not throw an error but 'Error: Debug Failure. Output generati…' was thrown
+   × QA r16: no collected name crashes the lint; syntax errors are named > n.d.css.ts 8ms
+     → expected [Function] to not throw an error but 'Error: Debug Failure. Output generati…' was thrown
+   × QA r16: no collected name crashes the lint; syntax errors are named > n.d.json.ts 2ms
+     → expected [Function] to not throw an error but 'Error: Debug Failure. Output generati…' was thrown
+   × QA r16: no collected name crashes the lint; syntax errors are named > n.d.ts.ts 1ms
+     → expected [Function] to not throw an error but 'Error: Debug Failure. Output generati…' was thrown
+   × QA r16: no collected name crashes the lint; syntax errors are named > n.d.mts.ts 3ms
+     → expected [Function] to not throw an error but 'Error: Debug Failure. Output generati…' was thrown
+   × QA r16: no collected name crashes the lint; syntax errors are named > n.d.html.ts 4ms
+     → expected [Function] to not throw an error but 'Error: Debug Failure. Output generati…' was thrown
+   × QA r16: no collected name crashes the lint; syntax errors are named > n.d.x.y.ts 8ms
+     → expected [Function] to not throw an error but 'Error: Debug Failure. Output generati…' was thrown
+   × QA r16: no collected name crashes the lint; syntax errors are named > n.d..ts 2ms
+     → expected [Function] to not throw an error but 'Error: Debug Failure. Output generati…' was thrown
+   × QA r16: no collected name crashes the lint; syntax errors are named > n.spec.d.css.ts 2ms
+     → expected [Function] to not throw an error but 'Error: Debug Failure. Output generati…' was thrown
+   × QA r16: no collected name crashes the lint; syntax errors are named > styles.d.css.ts 2ms
+     → expected [Function] to not throw an error but 'Error: Debug Failure. Output generati…' was thrown
+   × QA r16: no collected name crashes the lint; syntax errors are named > data.d.json.ts 2ms
+     → expected [Function] to not throw an error but 'Error: Debug Failure. Output generati…' was thrown
+   × QA r16: no collected name crashes the lint; syntax errors are named > x.d.ts.ts 1ms
+     → expected [Function] to not throw an error but 'Error: Debug Failure. Output generati…' was thrown
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-137/F-DG1-218: an arbitrary-extension declaration file (*.d.<ext>.ts) is linted without throwing
+AssertionError: styles.d.css.ts: expected [Function] to not throw an error but 'Error: Debug Failure. Output generati…' was thrown
+"Error: Debug Failure. Output generation failed"
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-137/F-DG1-218: a planted styles.d.css.ts in a module directory is walked and linted end to end
+AssertionError: expected [Function run] to not throw an error but 'Error: Debug Failure. Output generati…' was thrown
+"Error: Debug Failure. Output generation failed"
+ FAIL  |unit-node| apps/api/src/qa-r16-declaration-file-probe.test.ts > QA r16: no collected name crashes the lint; syntax errors are named > n.d.css.ts
+ FAIL  |unit-node| apps/api/src/qa-r16-declaration-file-probe.test.ts > QA r16: no collected name crashes the lint; syntax errors are named > n.d.json.ts
+ FAIL  |unit-node| apps/api/src/qa-r16-declaration-file-probe.test.ts > QA r16: no collected name crashes the lint; syntax errors are named > n.d.ts.ts
+ FAIL  |unit-node| apps/api/src/qa-r16-declaration-file-probe.test.ts > QA r16: no collected name crashes the lint; syntax errors are named > n.d.mts.ts
+ FAIL  |unit-node| apps/api/src/qa-r16-declaration-file-probe.test.ts > QA r16: no collected name crashes the lint; syntax errors are named > n.d.html.ts
+ FAIL  |unit-node| apps/api/src/qa-r16-declaration-file-probe.test.ts > QA r16: no collected name crashes the lint; syntax errors are named > n.d.x.y.ts
+ FAIL  |unit-node| apps/api/src/qa-r16-declaration-file-probe.test.ts > QA r16: no collected name crashes the lint; syntax errors are named > n.d..ts
+exit(pipe-status vitest)=1
+$ git checkout -- apps/api/src/architecture.testkit.ts (restored)
+?? apps/api/src/qa-r16-declaration-file-probe.test.ts
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:43c90b99db4c03a97166052acbbee51a55f7a5224165d0620029231b8db4a802","files":392}

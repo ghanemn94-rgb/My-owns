@@ -1,0 +1,39 @@
+$ date -u; git rev-parse HEAD; git log --oneline 13418b8d..HEAD; git diff --stat 13418b8d..HEAD
+Thu Oct  1 18:20:54 UTC 2026
+925a48b1840e9adfdbc05c903cae4415ebfbbc44
+925a48b run: DG1-T-DG1-REV-DOM-R16-domain-reviewer-20261001T181001Z-c1704dc0 (review evidence, auto-committed by run-agent.sh)
+aa7d9a8 DG1 r16: freeze candidate 56f3eb88 + round-16 review assignments
+ docs/delivery/assignments/DG1/round-16/audit.md    |   25 +
+ .../DG1/round-16/review-code-security-reviewer.md  |   16 +
+ .../assignments/DG1/round-16/review-common.md      |   18 +
+ .../DG1/round-16/review-domain-reviewer.md         |   11 +
+ .../assignments/DG1/round-16/review-qa-verifier.md |   16 +
+ .../candidates/DG1/56f3eb885c6cf3db.manifest.json  | 1973 ++++++++++++++++++++
+ .../reviews/DG1/round-16/domain-reviewer.json      |  291 +++
+ .../reviews/DG1/round-16/domain-reviewer.md        |   49 +
+ .../round-16/domain-reviewer.verifications.json    |   33 +
+ .../meta.json                                      |  124 ++
+ .../result.json                                    |    3 +
+ .../sandbox.json                                   |   49 +
+ .../settings.json                                  |   88 +
+ .../stderr.log                                     |    1 +
+ .../transcript.jsonl.gz                            |  Bin 0 -> 664213 bytes
+ docs/delivery/stages.json                          |    8 +-
+ .../round-16/04-dts-arbitrary-ext-probe.test.ts    |   80 +
+ 17 files changed, 2781 insertions(+), 4 deletions(-)
+$ node tools/gates/candidate.mjs --stage DG1 (real repo; node v24.21.0)
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:56f3eb885c6cf3db406e280d232e48ebcefddad173107a744bb9b8ca74fc2b4c","files":391}
+exit=0
+$ (disposable full clone $TMPDIR/review-r16 @aa7d9a86) git rev-parse HEAD; git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG1
+aa7d9a86d7bd0b4b989a16b2f3e9ab021dedfb86
+false
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:56f3eb885c6cf3db406e280d232e48ebcefddad173107a744bb9b8ca74fc2b4c","files":391}
+exit=0
+$ git diff --stat f27b5a6f..13418b8d -- apps packages tools deploy tests scripts e2e .github licenses vitest.config.ts package.json pnpm-lock.yaml eslint.config.js tsconfig.base.json
+ apps/api/src/architecture.test.ts    | 53 ++++++++++++++++++++++++++++++++++++
+ apps/api/src/architecture.testkit.ts | 30 ++++++++++++++------
+ 2 files changed, 75 insertions(+), 8 deletions(-)
+$ git grep -n DECLARATION_FILE -- apps packages tools tests (count)
+0
+$ find apps/api/src -name '*.d.*' | wc -l
+0

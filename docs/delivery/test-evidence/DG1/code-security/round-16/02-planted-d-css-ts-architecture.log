@@ -1,0 +1,25 @@
+$ printf '%s' 'export declare const x: number;' > apps/api/src/modules/transformations/zz-r16.d.css.ts; npx vitest run --project unit-node apps/api/src/architecture.test.ts   # clone @aa7d9a86, node v22.22.2
+ Test Files  1 passed (1)
+      Tests  132 passed (132)
+exit=0
+
+$ printf '%s' 'import type { A } from "../access/policy.js";
+export declare const a: A;' > apps/api/src/modules/transformations/zz-r16.d.css.ts; npx vitest run --project unit-node apps/api/src/architecture.test.ts   # clone @aa7d9a86, node v22.22.2
+   × API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages 667ms
+     → expected [ Array(1) ] to deeply equal []
++   "modules/transformations/zz-r16.d.css.ts: imports ../access/policy.js; only access/index.ts is public",
+ Test Files  1 failed (1)
+      Tests  1 failed | 131 passed (132)
+exit=1
+
+$ printf '%s' 'export declare const x: = ;' > apps/api/src/modules/transformations/zz-r16.d.css.ts; npx vitest run --project unit-node apps/api/src/architecture.test.ts   # clone @aa7d9a86, node v22.22.2
+   × API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages 654ms
+     → expected [ …(2) ] to deeply equal []
++   "modules/transformations/zz-r16.d.css.ts: unparseable source: Type expected. (line 1) bypasses the module-interface check",
++   "modules/transformations/zz-r16.d.css.ts: unparseable source: Expression expected. (line 1) bypasses the module-interface check",
+ Test Files  1 failed (1)
+      Tests  1 failed | 131 passed (132)
+exit=1
+
+$ rm apps/api/src/modules/transformations/zz-r16.d.css.ts; git status --short ->
+(empty = clone clean)

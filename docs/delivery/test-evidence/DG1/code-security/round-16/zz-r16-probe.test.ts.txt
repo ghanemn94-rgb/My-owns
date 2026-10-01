@@ -1,0 +1,107 @@
+// DISPOSABLE review probe (code-security-reviewer, DG1 round 16). Lives only in a $TMPDIR clone.
+import { existsSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import ts from "typescript";
+import { describe, expect, it, vi } from "vitest";
+import * as after from "./architecture.testkit.js";
+import * as before from "./zz-prefix.testkit.js";
+
+const ARB = ["styles.d.css.ts", "data.d.json.ts", "x.d.ts.ts"];
+const at = (n: string) => join(after.MODULES_DIR, "transformations", n);
+const OK = "export declare const x: number;";
+const BROKEN = "export declare const x: = ;";
+const log = (...a: unknown[]) => console.log("[probe]", ...a);
+
+describe("R16 re-proof F-DG1-137/218", () => {
+  it("root cause: transpileModule throws Debug Failure for *.d.<ext>.ts; old regex misses them", () => {
+    for (const n of ARB) {
+      let msg = "";
+      try { ts.transpileModule(OK, { fileName: n, reportDiagnostics: true }); } catch (e) { msg = String((e as Error).message); }
+      log("transpileModule", n, "->", JSON.stringify(msg.split("\n")[0]));
+      expect(msg).toMatch(/Debug Failure\. Output generation failed/);
+      expect(/\.d\.[cm]?ts$/.test(n)).toBe(false);
+    }
+  });
+  it("BEFORE (pre-fix testkit @873f48e): fileViolations throws", () => {
+    for (const n of ARB) {
+      let msg = "";
+      try { before.fileViolations("transformations", at(n), OK); } catch (e) { msg = String((e as Error).message); }
+      log("BEFORE fileViolations", n, "->", JSON.stringify(msg.split("\n")[0]));
+      expect(msg).toMatch(/Debug Failure/);
+    }
+  });
+  it("AFTER (candidate): no throw, [] for valid; named diagnostic for real syntax error", () => {
+    for (const n of ARB) {
+      const ok = after.fileViolations("transformations", at(n), OK);
+      log("AFTER ok", n, "->", JSON.stringify(ok));
+      expect(ok).toEqual([]);
+      const bad = after.fileViolations("transformations", at(n), BROKEN);
+      log("AFTER broken", n, "->", JSON.stringify(bad));
+      expect(bad.join("\n")).toMatch(new RegExp(`modules/transformations/${n.replace(/\./g, "\\.")}: unparseable source: `));
+      expect(bad.join("\n")).not.toMatch(/Debug Failure/);
+    }
+  });
+  it("declaration files are still SCANNED: deep / forbidden cross-module type imports flagged", () => {
+    for (const n of ["zz.d.ts", "zz.d.mts", "zz.d.cts", ...ARB]) {
+      const deep = after.fileViolations("transformations", at(n), 'import type { A } from "../access/internal/x.js";\nexport declare const a: A;');
+      const forbidden = after.fileViolations("transformations", at(n), 'export type { K } from "../kpi/index.js";');
+      const pkg = after.fileViolations("transformations", at(n), 'import type { Z } from "left-pad";\nexport declare const z: Z;');
+      const dyn = after.fileViolations("transformations", at(n), 'export declare const t: typeof import("../workflows/index.js");');
+      log("SCAN", n, JSON.stringify({ deep, forbidden, pkg, dyn }));
+      expect(deep.join()).toMatch(/only access\/index\.ts is public/);
+      expect(forbidden.join()).toMatch(/module transformations may not import module kpi/);
+      expect(pkg.join()).toMatch(/imports package left-pad/);
+      expect(dyn.join()).toMatch(/may not import module workflows/);
+    }
+  });
+  it("nothing emitted/executed: decl names never reach transpileModule (it would throw); no file written; body not run", () => {
+    // ts exports are non-configurable (vi.spyOn fails), so prove non-call by contradiction: transpileModule ALWAYS
+    // throws "Debug Failure" for these names (case 1 + re-checked here), and fileViolations does not throw.
+    const dir = mkdtempSync(join(tmpdir(), "r16-noemit-"));
+    try {
+      for (const n of ["zz.d.ts", "zz.d.mts", "zz.d.cts", ...ARB]) {
+        const f = join(dir, n);
+        expect(() => ts.transpileModule(OK, { fileName: f })).toThrow(/Debug Failure/);
+        expect(() => after.fileViolations("transformations", f, "globalThis.PWNED_R16 = 1; export declare const x: number;")).not.toThrow();
+        expect(() => after.fileViolations("transformations", f, OK)).not.toThrow();
+      }
+      log("dir contents after linting decl names:", JSON.stringify(readdirSync(dir)), "PWNED:", (globalThis as any).PWNED_R16);
+      expect(readdirSync(dir)).toEqual([]);
+      expect((globalThis as any).PWNED_R16).toBeUndefined();
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+  it("public SourceFile.isDeclarationFile == @internal ts.isDeclarationFileName == testkit helper (extended name set)", () => {
+    const internal = (ts as unknown as { isDeclarationFileName: (n: string) => boolean }).isDeclarationFileName;
+    expect(typeof internal).toBe("function");
+    const names = ["zz.d.ts", "zz.d.mts", "zz.d.cts", "styles.d.css.ts", "data.d.json.ts", "x.d.ts.ts",
+      "a.ts", "a.mts", "a.tsx", "a.d.tsx", "zz-planted.mts", "dir.d.x/a.ts",
+      "a.D.ts", "a.d.TS", "a.d.css.mts", "a.d.css.cts", "a.d.json.tsx", "a.d.js", "a.d.mjs", ".d.ts", "x.d..ts", "a.d.ts.d.ts",
+      "a.d.mts.ts", "d.ts", "a.dts", "dir/x.d.y.z.ts", "/abs/modules/t/x.d.css.ts", "a.d.ts.mts", "a.d.ts.cts", "a.d.", "a.d.cjs"];
+    const rows = names.map((n) => {
+      const pub = ts.createSourceFile(n, "", ts.ScriptTarget.Latest).isDeclarationFile;
+      const pubTSX = ts.createSourceFile(n, "", ts.ScriptTarget.Latest, false, ts.ScriptKind.TSX).isDeclarationFile;
+      return { n, internal: internal(n), pub, pubTSX, helper: after.isDeclarationFileName(n) };
+    });
+    for (const r of rows) log("CLASSIFY", JSON.stringify(r));
+    for (const r of rows) { expect(r.pub, r.n).toBe(r.internal); expect(r.helper, r.n).toBe(r.internal); expect(r.pubTSX, r.n).toBe(r.internal); }
+  });
+  it("fuzz: no CODE_FILE-matching name makes fileViolations throw (valid and broken body)", () => {
+    const names = ["a.D.ts", "a.d.tsx", "a.d.css.mts", "a.d.css.cts", "a.d.json.tsx", "a.d.js", "a.d.mjs", "a.d.cjs", "a.d.jsx",
+      ".d.ts", "x.d..ts", "a.d.ts.d.ts", "a.d.mts.ts", "a.d.ts.mts", "a.d.ts.cts", "x.d.y.z.ts", "a.ts", "a.tsx", "a.mjs"];
+    const out: Record<string, string> = {};
+    for (const n of names) for (const body of [OK, BROKEN, "export const y = 1;", "export const y = ;"]) {
+      try { after.fileViolations("transformations", at(n), body); out[n] = (out[n] ?? "") + "ok;"; }
+      catch (e) { out[n] = (out[n] ?? "") + "THROW:" + String((e as Error).message).split("\n")[0] + ";"; }
+    }
+    log("FUZZ", JSON.stringify(out, null, 1));
+    expect(Object.values(out).join()).not.toMatch(/THROW/);
+  });
+  it("real module tree: zero moduleViolations for every API module", async () => {
+    const { API_MODULES } = await import("./modules.js");
+    const mods = Object.keys(API_MODULES) as (keyof typeof API_MODULES)[];
+    const all = mods.flatMap((m) => after.moduleViolations(m as any));
+    log("modules:", mods.length, "files:", mods.reduce((a, m) => a + after.moduleFiles(m as any).length, 0), "violations:", JSON.stringify(all));
+    expect(all).toEqual([]);
+  });
+});

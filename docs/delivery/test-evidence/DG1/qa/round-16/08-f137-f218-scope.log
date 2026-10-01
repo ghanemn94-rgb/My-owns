@@ -1,0 +1,150 @@
+$ rm probe; git status --short; node tools/gates/candidate.mjs --stage DG1
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:56f3eb885c6cf3db406e280d232e48ebcefddad173107a744bb9b8ca74fc2b4c","files":391}
+
+# F-DG1-137/218 scope: files changed between round-15 import (dc1e847) and candidate base (13418b8)
+$ git diff --stat dc1e847 13418b8 -- . ":!docs/delivery"
+ apps/api/src/architecture.test.ts    | 53 ++++++++++++++++++++++++++++++++++++
+ apps/api/src/architecture.testkit.ts | 30 ++++++++++++++------
+ 2 files changed, 75 insertions(+), 8 deletions(-)
+$ git diff --stat dc1e847 13418b8 -- vitest.config.ts apps/*/vitest* packages tsconfig.base.json package.json pnpm-lock.yaml apps/web apps/worker docs/api
+(empty above = untouched)
+$ git diff dc1e847 13418b8 -- apps/api/src/architecture.testkit.ts apps/api/src/architecture.test.ts
+diff --git a/apps/api/src/architecture.test.ts b/apps/api/src/architecture.test.ts
+index 3411209..0905a5b 100644
+--- a/apps/api/src/architecture.test.ts
++++ b/apps/api/src/architecture.test.ts
+@@ -32,11 +32,13 @@ import {
+ } from "node:fs";
+ import { tmpdir } from "node:os";
+ import { basename, join, relative, resolve } from "node:path";
++import ts from "typescript";
+ import { describe, expect, it } from "vitest";
+ import {
+   bareAllowed,
+   fileViolations,
+   importsOf,
++  isDeclarationFileName,
+   MODULES_DIR,
+   moduleViolations,
+   scanSource,
+@@ -812,6 +814,57 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
+     }
+   });
+ 
++  it("F-DG1-137/F-DG1-218: an arbitrary-extension declaration file (*.d.<ext>.ts) is linted without throwing", () => {
++    // The declaration-file branch follows TypeScript's own classification, not a hand-rolled regex. Pin it, so a
++    // refactor that drops it (or a TS release that changes it) is caught here. ts.isDeclarationFileName is
++    // @internal (not in the public typings); the public SourceFile.isDeclarationFile carries its result.
++    const tsSays = (name: string) => ts.createSourceFile(name, "", ts.ScriptTarget.Latest).isDeclarationFile;
++    for (const name of ["zz.d.ts", "zz.d.mts", "zz.d.cts", "styles.d.css.ts", "data.d.json.ts", "x.d.ts.ts"]) {
++      expect(tsSays(name), name).toBe(true);
++      expect(isDeclarationFileName(name), name).toBe(true);
++    }
++    for (const name of ["a.ts", "a.mts", "a.tsx", "a.d.tsx", "zz-planted.mts", "dir.d.x/a.ts"]) {
++      expect(tsSays(name), name).toBe(false);
++      expect(isDeclarationFileName(name), name).toBe(false);
++    }
++    const at = (name: string) => join(MODULES_DIR, "transformations", name);
++    // Before the fix these failed the /\.d\.[cm]?ts$/ guard, reached ts.transpileModule and threw
++    // "Debug Failure. Output generation failed" with no file name in the message.
++    for (const name of ["styles.d.css.ts", "data.d.json.ts", "x.d.ts.ts"]) {
++      const ok = "export declare const x: number;";
++      expect(() => fileViolations("transformations", at(name), ok), name).not.toThrow();
++      expect(fileViolations("transformations", at(name), ok), name).toEqual([]);
++      const broken = "export declare const x: = ;";
++      expect(() => fileViolations("transformations", at(name), broken), name).not.toThrow();
++      const v = fileViolations("transformations", at(name), broken).join("\n");
++      expect(v, name).toMatch(
++        new RegExp(
++          `modules/transformations/${name.replace(/\./g, "\\.")}: unparseable source: Type expected\\. \\(line 1\\)`,
++        ),
++      );
++      expect(v, name).not.toMatch(/Debug Failure/);
++    }
++  });
++
++  it("F-DG1-137/F-DG1-218: a planted styles.d.css.ts in a module directory is walked and linted end to end", () => {
++    const dir = mkdtempSync(join(tmpdir(), "mth-dxts-"));
++    try {
++      writeFileSync(join(dir, "styles.d.css.ts"), "export declare const x: = ;");
++      const files = walk(dir);
++      expect(files.map((f) => basename(f))).toEqual(["styles.d.css.ts"]);
++      const run = () =>
++        files.flatMap((f) =>
++          fileViolations("transformations", join(MODULES_DIR, "transformations", basename(f)), readFileSync(f, "utf8")),
++        );
++      expect(run).not.toThrow();
++      const v = run().join("\n");
++      expect(v).toMatch(/modules\/transformations\/styles\.d\.css\.ts: unparseable source: Type expected\./);
++      expect(v).not.toMatch(/Debug Failure/);
++    } finally {
++      rmSync(dir, { recursive: true, force: true });
++    }
++  });
++
+   it("F-DG1-217: a planted .d.ts in a module directory is walked and linted end to end without throwing", () => {
+     const dir = mkdtempSync(join(tmpdir(), "mth-dts-"));
+     try {
+diff --git a/apps/api/src/architecture.testkit.ts b/apps/api/src/architecture.testkit.ts
+index a9a04d5..d64ef60 100644
+--- a/apps/api/src/architecture.testkit.ts
++++ b/apps/api/src/architecture.testkit.ts
+@@ -441,16 +441,27 @@ export function scanSource(fileName: string, source: string): ScanResult {
+   return { specifiers, evasions: [...new Set(evasions)] };
+ }
+ 
+-/** A declaration file (.d.ts/.d.mts/.d.cts): TypeScript parses it with isDeclarationFile = true. */
+-const DECLARATION_FILE = /\.d\.[cm]?ts$/;
++/**
++ * F-DG1-137 / F-DG1-218: is `fileName` a declaration file, by TypeScript's OWN classification (no hand-rolled regex
++ * to keep in sync): `.d.ts`/`.d.mts`/`.d.cts` AND the `allowArbitraryExtensions` form `<name>.d.<ext>.ts`
++ * (`styles.d.css.ts`, `data.d.json.ts`, `x.d.ts.ts`). `ts.isDeclarationFileName` is the function the compiler uses,
++ * but it is `@internal` (absent from the public typings, so `tsc` rejects it); the parser assigns its result to the
++ * PUBLIC `SourceFile.isDeclarationFile` from the file name alone, so read it from an empty parse (no text, nothing
++ * resolved or executed).
++ */
++export function isDeclarationFileName(fileName: string): boolean {
++  return ts.createSourceFile(fileName, "", ts.ScriptTarget.Latest, false, ts.ScriptKind.TS).isDeclarationFile;
++}
+ 
+ /**
+  * F-DG1-217: `ts.transpileModule` emits, and emitting a declaration-file name throws an internal
+- * `Debug Failure. Output generation failed` - so a module `.d.ts` crashed the lint instead of being checked. For a
+- * declaration file, take the syntactic diagnostics WITHOUT emit through the public API: a one-file program (no lib, no
+- * resolution, nothing type-checked or executed) and `getSyntacticDiagnostics`. The file is still scanned by
+- * `scanSource` (its type imports stay boundary-checked), and a real syntax error still surfaces as a named
+- * `unparseable source` diagnostic.
++ * `Debug Failure. Output generation failed` - so a module `.d.ts` crashed the lint instead of being checked.
++ * F-DG1-137 / F-DG1-218: every name TypeScript classifies as a declaration file (`isDeclarationFileName` above,
++ * incl. `*.d.<ext>.ts`) comes here, never to `transpileModule`. For a declaration file (any form - never TSX, so
++ * `ScriptKind.TS` is right for all of them), take the syntactic diagnostics WITHOUT emit through the public API: a
++ * one-file program (no lib, no resolution, nothing type-checked or executed) and `getSyntacticDiagnostics`. The file
++ * is still scanned by `scanSource` (its type imports stay boundary-checked), and a real syntax error still surfaces as
++ * a named `unparseable source` diagnostic.
+  */
+ function declarationSyntaxErrors(fileName: string, source: string): readonly ts.Diagnostic[] {
+   const sf = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+@@ -473,9 +484,12 @@ function declarationSyntaxErrors(fileName: string, source: string): readonly ts.
+  * Rule 4, fail closed: syntax errors in a module file. On a syntax error the parser's recovery can turn code into
+  * something else (`(async () => {} as any)[k]` reads `[k]` as a binding pattern), so the rules would inspect a
+  * different program from the one written. Syntactic diagnostics only (no type check, nothing executed).
++ * F-DG1-137 / F-DG1-218: the declaration-file branch follows TypeScript's own classification
++ * (`isDeclarationFileName`, i.e. `SourceFile.isDeclarationFile`; incl. `allowArbitraryExtensions` `*.d.<ext>.ts`),
++ * so no declaration-file name ever reaches `ts.transpileModule`.
+  */
+ function syntaxErrors(fileName: string, source: string): string[] {
+-  const diagnostics = DECLARATION_FILE.test(fileName)
++  const diagnostics = isDeclarationFileName(fileName)
+     ? declarationSyntaxErrors(fileName, source)
+     : (ts.transpileModule(source, {
+         fileName,
+$ grep -rn "architecture.testkit" apps packages --include=*.ts | grep -v "architecture.test.ts"
+apps/api/src/modules/reporting/reporting.test.ts:7:import { fileViolations, moduleFiles, moduleViolations, MODULES_DIR } from "../../architecture.testkit.ts";
+apps/api/src/modules/workflows/workflows.test.ts:7:import { fileViolations, moduleFiles, moduleViolations, MODULES_DIR } from "../../architecture.testkit.ts";
+apps/api/src/modules/kpi/kpi.test.ts:7:import { fileViolations, moduleFiles, moduleViolations, MODULES_DIR } from "../../architecture.testkit.ts";
+apps/api/src/architecture.testkit.ts:8:// TEST CLASSIFICATION (F-DG1-135): the test-only allowances (importing `modules.ts`/`architecture.testkit.ts`, and
+apps/api/src/architecture.testkit.ts:173:const TEST_SUPPORT_FILES = new Set(["modules.ts", "architecture.testkit.ts"]);
+(only importers listed; none = testkit not used by runtime code)
+$ grep exclude apps/api/tsconfig.build.json; find apps/api/dist -name "*architecture*"
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/**/*.testkit.ts"]
+(no output above = testkit not emitted into the runtime build)

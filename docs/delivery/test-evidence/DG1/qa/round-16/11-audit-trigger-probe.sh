@@ -1,0 +1,18 @@
+set -u
+A="$TEST_DATABASE_ADMIN_URL"
+psql "$A" -qc "CREATE ROLE mth_owner NOLOGIN" -c "CREATE ROLE mth_app NOLOGIN"
+psql "$A" -qc "CREATE DATABASE qa_probe OWNER mth_owner"
+D="postgresql://postgres@127.0.0.1:5492/qa_probe"
+NODE_ENV=test DATABASE_OWNER_URL="$D?options=-c%20role%3Dmth_owner" node packages/db/dist/cli.js migrate; echo "migrate exit=$?"
+psql "$D" -Atc "select table_name from information_schema.tables where table_schema='public' and table_name ilike '%migration%'"
+T=$(psql "$D" -Atc "select table_name from information_schema.tables where table_schema='public' and table_name ilike '%migration%' limit 1")
+psql "$D" -Atc "select id||' '||name from $T order by id"
+echo "--- probe: app INSERT"; psql "$D?options=-c%20role%3Dmth_app" -Atc "insert into audit_event(id,actor_type,action,record_type,record_id,source) values (gen_random_uuid(),'system','qa.probe','qa_probe',gen_random_uuid(),'cli')"; echo "exit=$?"
+psql "$D" -Atc "select count(*) || ' audit rows before probe' from audit_event"
+echo "--- probe: superuser UPDATE audit_event"; psql "$D" -Atc "update audit_event set occurred_at = occurred_at"; echo "exit=$?"
+echo "--- probe: superuser DELETE audit_event"; psql "$D" -Atc "delete from audit_event"; echo "exit=$?"
+echo "--- probe: owner UPDATE"; psql "$D?options=-c%20role%3Dmth_owner" -Atc "update audit_event set occurred_at = occurred_at"; echo "exit=$?"
+echo "--- probe: owner DELETE"; psql "$D?options=-c%20role%3Dmth_owner" -Atc "delete from audit_event"; echo "exit=$?"
+echo "--- probe: superuser TRUNCATE"; psql "$D" -Atc "truncate audit_event"; echo "exit=$?"
+echo "--- probe: app DELETE"; psql "$D?options=-c%20role%3Dmth_app" -Atc "delete from audit_event"; echo "exit=$?"
+psql "$D" -Atc "select count(*) || ' audit rows after probe' from audit_event"

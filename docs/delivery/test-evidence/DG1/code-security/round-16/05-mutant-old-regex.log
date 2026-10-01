@@ -1,0 +1,28 @@
+$ (mutant: syntaxErrors() branch reverted to the old /\.d\.[cm]?ts$/ regex) npx vitest run --project unit-node apps/api/src/architecture.test.ts   # node v22.22.2
+diff --git a/apps/api/src/architecture.testkit.ts b/apps/api/src/architecture.testkit.ts
+index d64ef60..30f99d0 100644
+--- a/apps/api/src/architecture.testkit.ts
++++ b/apps/api/src/architecture.testkit.ts
+@@ -489,7 +489,7 @@ function declarationSyntaxErrors(fileName: string, source: string): readonly ts.
+  * so no declaration-file name ever reaches `ts.transpileModule`.
+  */
+ function syntaxErrors(fileName: string, source: string): string[] {
+-  const diagnostics = isDeclarationFileName(fileName)
++  const diagnostics = /\.d\.[cm]?ts$/.test(fileName)
+     ? declarationSyntaxErrors(fileName, source)
+     : (ts.transpileModule(source, {
+         fileName,
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-137/F-DG1-218: an arbitrary-extension declaration file (*.d.<ext>.ts) is linted without throwing 14ms
+     → styles.d.css.ts: expected [Function] to not throw an error but 'Error: Debug Failure. Output generati…' was thrown
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-137/F-DG1-218: a planted styles.d.css.ts in a module directory is walked and linted end to end 3ms
+     → expected [Function run] to not throw an error but 'Error: Debug Failure. Output generati…' was thrown
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-137/F-DG1-218: an arbitrary-extension declaration file (*.d.<ext>.ts) is linted without throwing
+AssertionError: styles.d.css.ts: expected [Function] to not throw an error but 'Error: Debug Failure. Output generati…' was thrown
+"Error: Debug Failure. Output generation failed"
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-137/F-DG1-218: a planted styles.d.css.ts in a module directory is walked and linted end to end
+AssertionError: expected [Function run] to not throw an error but 'Error: Debug Failure. Output generati…' was thrown
+"Error: Debug Failure. Output generation failed"
+ Test Files  1 failed (1)
+      Tests  2 failed | 130 passed (132)
+exit=1

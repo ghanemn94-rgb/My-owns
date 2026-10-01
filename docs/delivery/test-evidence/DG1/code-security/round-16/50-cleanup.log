@@ -1,0 +1,29 @@
+$ git -C $TMPDIR/review-r16 status --short (before removal)
+$ git -C $TMPDIR/rv status --short (before removal)
+$ rm -rf $TMPDIR/review-r16 $TMPDIR/rv $TMPDIR/pnpm-store $TMPDIR/ev $TMPDIR/tk.bak
+exit=0
+remaining in scratch:
+-home-user-My-owns
+bash-edit-diff
+cache-break-state-8a789466-2699-4d35-915a-36639645ad54.json
+cfg-FqPwwW
+cfg-LWsOOS
+cfg-jms5B1
+guard-fixture-P73GNW
+guard-home-2zup2S
+guard-link-mP06v9
+guard-nested-LKvKvU
+guard-norepo-C6DqJU
+guard-othertmp-3D8KM7
+guard-proc-auxHQC
+guard-runtmp-L2eCb9
+guard-wt-oNNZ29
+guard-wt-sibling-wn61vo
+marker-w9Nt64
+node-compile-cache
+scratch-XYlsJV
+$ ls /tmp | grep -c 'r16-noemit-\|mth-dxts-\|mth-dts-' (probe temp dirs left behind; vitest uses os.tmpdir() = $TMPDIR)
+0
+$ pg_isready -p 5491 (disposable cluster should be gone)
+127.0.0.1:5491 - no response
+exit=2

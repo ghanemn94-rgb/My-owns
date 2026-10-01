@@ -1,0 +1,46 @@
+$ pnpm test   # clone @aa7d9a86, node v24.21.0
+
+> mobily-transformation-hub@0.1.0 test /var/tmp/mth-run.thdgZ8/claude-0/review-r16
+> vitest run --project unit-node --project unit-web
+
+
+ RUN  v3.2.4 /var/tmp/mth-run.thdgZ8/claude-0/review-r16
+
+ ✓ |unit-web| src/components/States.test.tsx (15 tests) 566ms
+ ✓ |unit-web| src/lib/lib.test.ts (18 tests) 82ms
+ ✓ |unit-web| src/app/app.test.tsx (16 tests) 2609ms
+   ✓ bilingual shell > shows all fourteen areas to an administrator  311ms
+   ✓ transformations > lists transformations with a sortable code column and removable filter chips  644ms
+   ✓ transformations > edit: a 409 writes nothing, shows compare, and re-applies on the current version  329ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts (15 tests) 27ms
+ ✓ |unit-web| src/i18n/i18n.test.ts (11 tests) 20ms
+ ✓ |unit-web| src/i18n/glossary.test.ts (8 tests) 11ms
+ ✓ |unit-web| src/styles/styles.test.ts (6 tests) 8ms
+ ✓ |unit-node| apps/api/src/modules/kpi/kpi.test.ts (5 tests) 155ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (132 tests) 1779ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  943ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)  335ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx (21 tests) 7220ms
+   ✓ after create (F-DG1-004) > shows the created record when the server lets the creator read it  635ms
+   ✓ after create (F-DG1-004) > explains, in English, that the draft was created but cannot be opened (server 404), instead of 'Not found'  310ms
+   ✓ effective permissions refresh after create (F-DG1-210) > English: Edit, Archive and the audit trail appear after create, without a reload  523ms
+   ✓ effective permissions refresh after create (F-DG1-210) > Arabic (RTL): the same controls and the audit trail appear after create, without a reload  386ms
+   ✓ effective permissions refresh after create (F-DG1-210) > a failed /me refresh never blocks the navigation; the UI stays fail-safe (no controls offered)  3186ms
+ ✓ |unit-node| apps/api/src/server.test.ts (6 tests) 195ms
+ ✓ |unit-node| apps/api/src/modules/workflows/workflows.test.ts (5 tests) 169ms
+ ✓ |unit-node| packages/config/src/load.test.ts (17 tests) 95ms
+ ✓ |unit-node| packages/design-tokens/src/tokens.test.ts (15 tests) 98ms
+ ✓ |unit-node| packages/shared/src/schemas/schemas.test.ts (2 tests) 9ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reporting.test.ts (4 tests) 142ms
+ ✓ |unit-node| apps/api/src/modules/admin/branding.test.ts (4 tests) 36ms
+ ✓ |unit-node| packages/db/src/seed.test.ts (4 tests) 11ms
+ ✓ |unit-node| apps/api/src/modules/platform/platform.test.ts (7 tests) 16ms
+ ✓ |unit-node| apps/api/src/modules/access/rules.test.ts (12 tests) 6ms
+ ✓ |unit-node| apps/api/src/modules/transformations/transitions.test.ts (2 tests) 3ms
+
+ Test Files  21 passed (21)
+      Tests  325 passed (325)
+   Start at  18:13:52
+   Duration  11.42s (transform 2.00s, setup 0ms, collect 9.01s, tests 13.26s, environment 4.31s, prepare 1.93s)
+
+exit=0
