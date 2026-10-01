@@ -1,0 +1,33 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG1-137",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by domain-reviewer, a non-author who did not raise this finding. backend-workflow-engineer wrote the fix in commit f7d9707, an ancestor of 13418b8 in candidate sha256:56f3eb885c6cf3db406e280d232e48ebcefddad173107a744bb9b8ca74fc2b4c, and that ID recomputes identically in the repository and in a full disposable clone. The finding's 'expected' is met. (1) syntaxErrors() no longer uses the /\\.d\\.[cm]?ts$/ regex. It calls isDeclarationFileName(), which reads the public SourceFile.isDeclarationFile from an empty parse. Over 22 names that agrees with TypeScript 6.0.2's internal ts.isDeclarationFileName, with 0 mismatches, so every TS declaration-file name goes to the no-emit declarationSyntaxErrors() and none reaches ts.transpileModule. (2) There is no boundary-coverage gap. CODE_FILE, walk() and scanSource() are unchanged, and my end-to-end probe planted real kpi/zz-dom16.d.css.ts, .d.json.ts, .d.ts.ts and .d.html.ts files (plus the classic forms) and linted them through moduleViolations(). Each deep type import is reported, e.g. 'modules/kpi/zz-dom16.d.css.ts: imports ../access/policy.ts; only access/index.ts is public', and so is each composition-root import. A syntax error yields '<file>: unparseable source: Type expected. (line 1)' with no Debug Failure. A clean file yields [] and its removal restores []. A non-declaration look-alike is still reported. 30/30 pass on Node 22.22.2 and 24.21.0. (3) Against the round-15 testkit the same probe fails exactly the 16 arbitrary-extension cases with 'Debug Failure. Output generation failed', which reproduces the defect. (4) The two new architecture self-checks pass, and the suite is 132/132 on both Node versions. Only architecture.testkit.ts and architecture.test.ts changed; there is no product, runtime, API, data, i18n or config change.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-16/00-candidate-and-scope.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-16/03-architecture-verbose-node22.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-16/03-architecture-verbose-node24.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-16/04-dts-arbitrary-ext-probe.test.ts",
+        "docs/delivery/test-evidence/DG1/domain/round-16/04-dts-probe-node22.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-16/04-dts-probe-node24.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-16/04b-dts-probe-against-round15-testkit.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-16/04c-ts-classification-xcheck.out.txt"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-218",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by domain-reviewer, a non-author who did not raise this finding. It has the same root cause as F-DG1-137 and the same fix (commit f7d9707, candidate sha256:56f3eb885c6cf3db406e280d232e48ebcefddad173107a744bb9b8ca74fc2b4c). The module lint no longer crashes on an arbitrary-extension declaration file (*.d.<ext>.ts, e.g. zz.d.css.ts or zz.d.json.ts). Planted files of those forms go through moduleViolations() without throwing on Node 22.22.2 and 24.21.0 (30/30). Their forbidden imports are still reported, and a syntax error in them is a named 'unparseable source' diagnostic rather than an anonymous 'Debug Failure'. The round-15 testkit fails the same 16 cases with 'Debug Failure. Output generation failed'. The classification matches TypeScript's internal ts.isDeclarationFileName (0 mismatches over 22 names). Architecture is 132/132 on both Node versions. The change is test-only.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-16/04-dts-arbitrary-ext-probe.test.ts",
+        "docs/delivery/test-evidence/DG1/domain/round-16/04-dts-probe-node22.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-16/04-dts-probe-node24.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-16/04b-dts-probe-against-round15-testkit.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-16/04c-ts-classification-xcheck.out.txt"
+      ]
+    }
+  ]
+}
