@@ -17,7 +17,8 @@ import { createDb, listMigrationFiles, type Db, type MigrationFile } from "@mth/
 import Fastify, { type FastifyInstance, type FastifyRequest } from "fastify";
 import type pg from "pg";
 import { registerDeniedMutationAudit } from "./modules/access/index.ts";
-import { registerAdminRoutes } from "./modules/admin/index.ts";
+import { colorTokens, tokensAreProvisional } from "@mth/design-tokens";
+import { registerAdminRoutes, registerBrandingRoutes } from "./modules/admin/index.ts";
 import { registerIdentity, sessionCookieName, sha256, type OidcService } from "./modules/identity/index.ts";
 import { registerOrganizationRoutes } from "./modules/organization/index.ts";
 import { genReqId, problems, registerHealthRoutes, registerPlatformHooks } from "./modules/platform/index.ts";
@@ -130,6 +131,7 @@ export async function buildServer(
   registerOrganizationRoutes(app, deps);
   registerTransformationRoutes(app, deps);
   registerAdminRoutes(app, deps);
+  registerBrandingRoutes(app, { colorTokens, tokensAreProvisional });
 
   if (webRoot) {
     await app.register(fastifyStatic, { root: webRoot, wildcard: false, index: ["index.html"] });
