@@ -32,11 +32,13 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join, relative, resolve } from "node:path";
+import ts from "typescript";
 import { describe, expect, it } from "vitest";
 import {
   bareAllowed,
   fileViolations,
   importsOf,
+  isDeclarationFileName,
   MODULES_DIR,
   moduleViolations,
   scanSource,
@@ -809,6 +811,57 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
       const v = fileViolations("transformations", at(name), broken).join("\n");
       expect(v, name).toMatch(/unparseable source: Type expected\. \(line 1\) bypasses the module-interface check/);
       expect(v, name).not.toMatch(/Debug Failure/);
+    }
+  });
+
+  it("F-DG1-137/F-DG1-218: an arbitrary-extension declaration file (*.d.<ext>.ts) is linted without throwing", () => {
+    // The declaration-file branch follows TypeScript's own classification, not a hand-rolled regex. Pin it, so a
+    // refactor that drops it (or a TS release that changes it) is caught here. ts.isDeclarationFileName is
+    // @internal (not in the public typings); the public SourceFile.isDeclarationFile carries its result.
+    const tsSays = (name: string) => ts.createSourceFile(name, "", ts.ScriptTarget.Latest).isDeclarationFile;
+    for (const name of ["zz.d.ts", "zz.d.mts", "zz.d.cts", "styles.d.css.ts", "data.d.json.ts", "x.d.ts.ts"]) {
+      expect(tsSays(name), name).toBe(true);
+      expect(isDeclarationFileName(name), name).toBe(true);
+    }
+    for (const name of ["a.ts", "a.mts", "a.tsx", "a.d.tsx", "zz-planted.mts", "dir.d.x/a.ts"]) {
+      expect(tsSays(name), name).toBe(false);
+      expect(isDeclarationFileName(name), name).toBe(false);
+    }
+    const at = (name: string) => join(MODULES_DIR, "transformations", name);
+    // Before the fix these failed the /\.d\.[cm]?ts$/ guard, reached ts.transpileModule and threw
+    // "Debug Failure. Output generation failed" with no file name in the message.
+    for (const name of ["styles.d.css.ts", "data.d.json.ts", "x.d.ts.ts"]) {
+      const ok = "export declare const x: number;";
+      expect(() => fileViolations("transformations", at(name), ok), name).not.toThrow();
+      expect(fileViolations("transformations", at(name), ok), name).toEqual([]);
+      const broken = "export declare const x: = ;";
+      expect(() => fileViolations("transformations", at(name), broken), name).not.toThrow();
+      const v = fileViolations("transformations", at(name), broken).join("\n");
+      expect(v, name).toMatch(
+        new RegExp(
+          `modules/transformations/${name.replace(/\./g, "\\.")}: unparseable source: Type expected\\. \\(line 1\\)`,
+        ),
+      );
+      expect(v, name).not.toMatch(/Debug Failure/);
+    }
+  });
+
+  it("F-DG1-137/F-DG1-218: a planted styles.d.css.ts in a module directory is walked and linted end to end", () => {
+    const dir = mkdtempSync(join(tmpdir(), "mth-dxts-"));
+    try {
+      writeFileSync(join(dir, "styles.d.css.ts"), "export declare const x: = ;");
+      const files = walk(dir);
+      expect(files.map((f) => basename(f))).toEqual(["styles.d.css.ts"]);
+      const run = () =>
+        files.flatMap((f) =>
+          fileViolations("transformations", join(MODULES_DIR, "transformations", basename(f)), readFileSync(f, "utf8")),
+        );
+      expect(run).not.toThrow();
+      const v = run().join("\n");
+      expect(v).toMatch(/modules\/transformations\/styles\.d\.css\.ts: unparseable source: Type expected\./);
+      expect(v).not.toMatch(/Debug Failure/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
     }
   });
 

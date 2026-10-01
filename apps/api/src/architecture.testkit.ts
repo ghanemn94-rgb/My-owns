@@ -441,16 +441,27 @@ export function scanSource(fileName: string, source: string): ScanResult {
   return { specifiers, evasions: [...new Set(evasions)] };
 }
 
-/** A declaration file (.d.ts/.d.mts/.d.cts): TypeScript parses it with isDeclarationFile = true. */
-const DECLARATION_FILE = /\.d\.[cm]?ts$/;
+/**
+ * F-DG1-137 / F-DG1-218: is `fileName` a declaration file, by TypeScript's OWN classification (no hand-rolled regex
+ * to keep in sync): `.d.ts`/`.d.mts`/`.d.cts` AND the `allowArbitraryExtensions` form `<name>.d.<ext>.ts`
+ * (`styles.d.css.ts`, `data.d.json.ts`, `x.d.ts.ts`). `ts.isDeclarationFileName` is the function the compiler uses,
+ * but it is `@internal` (absent from the public typings, so `tsc` rejects it); the parser assigns its result to the
+ * PUBLIC `SourceFile.isDeclarationFile` from the file name alone, so read it from an empty parse (no text, nothing
+ * resolved or executed).
+ */
+export function isDeclarationFileName(fileName: string): boolean {
+  return ts.createSourceFile(fileName, "", ts.ScriptTarget.Latest, false, ts.ScriptKind.TS).isDeclarationFile;
+}
 
 /**
  * F-DG1-217: `ts.transpileModule` emits, and emitting a declaration-file name throws an internal
- * `Debug Failure. Output generation failed` - so a module `.d.ts` crashed the lint instead of being checked. For a
- * declaration file, take the syntactic diagnostics WITHOUT emit through the public API: a one-file program (no lib, no
- * resolution, nothing type-checked or executed) and `getSyntacticDiagnostics`. The file is still scanned by
- * `scanSource` (its type imports stay boundary-checked), and a real syntax error still surfaces as a named
- * `unparseable source` diagnostic.
+ * `Debug Failure. Output generation failed` - so a module `.d.ts` crashed the lint instead of being checked.
+ * F-DG1-137 / F-DG1-218: every name TypeScript classifies as a declaration file (`isDeclarationFileName` above,
+ * incl. `*.d.<ext>.ts`) comes here, never to `transpileModule`. For a declaration file (any form - never TSX, so
+ * `ScriptKind.TS` is right for all of them), take the syntactic diagnostics WITHOUT emit through the public API: a
+ * one-file program (no lib, no resolution, nothing type-checked or executed) and `getSyntacticDiagnostics`. The file
+ * is still scanned by `scanSource` (its type imports stay boundary-checked), and a real syntax error still surfaces as
+ * a named `unparseable source` diagnostic.
  */
 function declarationSyntaxErrors(fileName: string, source: string): readonly ts.Diagnostic[] {
   const sf = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
@@ -473,9 +484,12 @@ function declarationSyntaxErrors(fileName: string, source: string): readonly ts.
  * Rule 4, fail closed: syntax errors in a module file. On a syntax error the parser's recovery can turn code into
  * something else (`(async () => {} as any)[k]` reads `[k]` as a binding pattern), so the rules would inspect a
  * different program from the one written. Syntactic diagnostics only (no type check, nothing executed).
+ * F-DG1-137 / F-DG1-218: the declaration-file branch follows TypeScript's own classification
+ * (`isDeclarationFileName`, i.e. `SourceFile.isDeclarationFile`; incl. `allowArbitraryExtensions` `*.d.<ext>.ts`),
+ * so no declaration-file name ever reaches `ts.transpileModule`.
  */
 function syntaxErrors(fileName: string, source: string): string[] {
-  const diagnostics = DECLARATION_FILE.test(fileName)
+  const diagnostics = isDeclarationFileName(fileName)
     ? declarationSyntaxErrors(fileName, source)
     : (ts.transpileModule(source, {
         fileName,
