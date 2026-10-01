@@ -155,7 +155,7 @@ describe('SEC-P34R-01 — other project-level registers stay visible in the acti
     expect((await j.p.pm.get(`${P(pid)}/activity?entityType=perimeter_category_review&pageSize=100`).expect(200)).body.total).toBeGreaterThan(0);
   });
 
-  it.fails('DEFECT SEC-P34R-01: the activity feed never lists legal-entity or perimeter category-review events to a reader the owning module refuses (total 0)', async () => {
+  it('SEC-P34R-01 (fixed, regression): the activity feed never lists legal-entity or perimeter category-review events to a reader the owning module refuses (total 0)', async () => {
     const le = (await feed(wsl, 'legal_entity', entityId).expect(200)).body;
     const cr = (await wsl.get(`${P(pid)}/activity?entityType=perimeter_category_review&pageSize=100`).expect(200)).body;
     console.log(`SEC-P34R-01 observed: workstream-only reader — legal_entity events ${le.total} ${JSON.stringify(le.items.map((x: { action: string }) => x.action))}; category-review events ${cr.total} ${JSON.stringify(cr.items.map((x: { action: string }) => x.action))}`);
@@ -193,7 +193,7 @@ describe('New P3/P4 routes — authorization, 404 vs 403, audit of denied attemp
     expect([403, 404]).toContain(sg.status);
   });
 
-  it.fails('DEFECT SEC-P34R-02: rebind — a WS2 check the WS1 lead cannot read answers 404 like an unknown id (no existence oracle)', async () => {
+  it('SEC-P34R-02 (fixed, regression): rebind — a WS2 check the WS1 lead cannot read answers 404 like an unknown id (no existence oracle)', async () => {
     const body = { expectedVersion: ws2Check.version, siteId: null, reason: 'Probe (synthetic)' };
     const existing = await wsl.post(`${P(pid)}/readiness-checks/${ws2Check.id}/rebind`, body);
     const unknown = await wsl.post(`${P(pid)}/readiness-checks/${UNKNOWN}/rebind`, body);
@@ -203,7 +203,7 @@ describe('New P3/P4 routes — authorization, 404 vs 403, audit of denied attemp
     expect(existing.body.code).toBe(unknown.body.code);
   });
 
-  it.fails('DEFECT SEC-P34R-02: site change — a WS2 plan the WS1 lead cannot read answers 404 like an unknown id', async () => {
+  it('SEC-P34R-02 (fixed, regression): site change — a WS2 plan the WS1 lead cannot read answers 404 like an unknown id', async () => {
     const body = { expectedVersion: ws2Plan.version, siteId: null, reason: 'Probe (synthetic)' };
     const existing = await wsl.post(`${P(pid)}/cutover-plans/${ws2Plan.id}/site`, body);
     const unknown = await wsl.post(`${P(pid)}/cutover-plans/${UNKNOWN}/site`, body);
@@ -212,7 +212,7 @@ describe('New P3/P4 routes — authorization, 404 vs 403, audit of denied attemp
     expect(existing.status).toBe(404);
   });
 
-  it.fails('DEFECT SEC-P34R-02: not-required decide — a checklist item the workstream-scoped approver cannot read (no jv.deal.read) answers 404 like an unknown id', async () => {
+  it('SEC-P34R-02 (fixed, regression): not-required decide — a checklist item the workstream-scoped approver cannot read (no jv.deal.read) answers 404 like an unknown id', async () => {
     const existing = await fapWs1.post(`${P(pid)}/checklist-items/${itemId}/not-required/decide`, { expectedVersion: 1, decision: 'confirm' });
     const unknown = await fapWs1.post(`${P(pid)}/checklist-items/${UNKNOWN}/not-required/decide`, { expectedVersion: 1, decision: 'confirm' });
     console.log(`SEC-P34R-02 observed (decide): unreadable existing item → ${existing.status} ${existing.body.code}; unknown id → ${unknown.status} ${unknown.body.code}`);

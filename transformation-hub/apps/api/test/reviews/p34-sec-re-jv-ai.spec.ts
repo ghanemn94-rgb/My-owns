@@ -61,7 +61,9 @@ describe('SEC-P34-01 re-check — "the person who recorded the evidence" in vari
     expect(v.status).toBe('verified');
   });
 
-  it('OBSERVED SEC-P34R-03: the UPLOADER of the only evidence document verifies the CP on it (201) although documents.evidence.verify treats the same person as "self" for that link (403)', async () => {
+  // OBSERVED SEC-P34R-03 (at 4fde3ec): the uploader verified the CP on its only evidence document (201). Updated with the fix:
+  // the uploaders of the linked versions are "self" for every §5.1 verification, as for documents.evidence.verify.
+  it('SEC-P34R-03 (fixed, regression): the UPLOADER of the only evidence document cannot verify the CP on it (403), as documents.evidence.verify treats the same person as "self" for that link (403); another verifier can', async () => {
     const c = await cp(`${TAG} board approval CP (synthetic)`);
     const d = await doc(j.p.legal, pid, `${TAG} board resolution authored by Legal (synthetic)`); // uploaded_by = Legal
     const link = await ok(await j.p.pm.post(`${P(pid)}/evidence`, { targetType: 'closing_condition', targetId: c.id, documentId: d.id, note: 'Linked by the PM (synthetic)' }));
@@ -73,8 +75,11 @@ describe('SEC-P34-01 re-check — "the person who recorded the evidence" in vari
     expect(evVerify.status).toBe(403); // the documents module: linker AND version uploader are self (access-matrix §5.1)
     const r = await j.p.legal.post(`${P(pid)}/closing-conditions/${c.id}/verify`, { expectedVersion: sub.version, outcome: 'verify' });
     console.log(`SEC-P34R-03 observed: CP verify by the uploader of its only evidence document → ${r.status} ${JSON.stringify(r.body)}`);
-    expect(r.status).toBe(201);
-    expect(r.body.status).toBe('verified');
+    expect(r.status).toBe(403);
+    expect(r.body.code).toBe('jv.cp.self_verification');
+    expect((await owner().query(`select status from closing_condition where id = $1`, [c.id])).rows[0].status).toBe(sub.status);
+    const v = await ok(await j.p.approver.post(`${P(pid)}/closing-conditions/${c.id}/verify`, { expectedVersion: sub.version, outcome: 'verify' }));
+    expect(v.status).toBe('verified');
   });
 });
 
@@ -99,7 +104,7 @@ describe('SEC-P34R-04 — My Work offers a verification the command refuses to t
     expect(other.items.some((i: { type: string; entityId: string }) => i.type === 'action_closure_verification' && i.entityId === actionId)).toBe(true);
   });
 
-  it.fails('DEFECT SEC-P34R-04: My Work never offers the closure verification of an action to the person who linked its evidence (the command would refuse them)', async () => {
+  it('SEC-P34R-04 (fixed, regression): My Work never offers the closure verification of an action to the person who linked its evidence (the command would refuse them)', async () => {
     const mine = (await j.p.secretary.get('/api/v1/me/work').expect(200)).body;
     const offered = mine.items.filter((i: { type: string; entityId: string }) => i.type === 'action_closure_verification' && i.entityId === actionId);
     console.log(`SEC-P34R-04 observed: My Work of the linking secretary → ${JSON.stringify(offered.map((i: { type: string; title: string }) => [i.type, i.title]))}`);
@@ -144,7 +149,7 @@ describe('SEC-P34R-05 — the AI proposals list shows proposals about P3/P4 reco
     }
   });
 
-  it.fails('DEFECT SEC-P34R-05: GET /ai/proposals never lists a proposal whose target the reader cannot read (no CP title, id or count)', async () => {
+  it('SEC-P34R-05 (fixed, regression): GET /ai/proposals never lists a proposal whose target the reader cannot read (no CP title, id or count)', async () => {
     const l = (await j.p.secretary.get(`${P(pid)}/ai/proposals?pageSize=100`).expect(200)).body;
     const leaked = l.items.filter((x: { id: string }) => x.id === proposalId);
     console.log(`SEC-P34R-05 observed: secretary's proposal list → total ${l.total}; proposal about the CP: ${JSON.stringify(leaked.map((x: { targetType: string; payload: { title: string } }) => ({ targetType: x.targetType, title: x.payload.title })))}`);
@@ -201,7 +206,7 @@ describe('P4 exit criterion re-check — financial data only with the finance-do
     expect(JSON.stringify(ask.body)).not.toContain('5555.0000');
   });
 
-  it.fails('DEFECT SEC-P34R-05 (finance): a draft proposal Finance\'s AI run writes from that figure is never listed to a reader refused the figure (the PM) — derived classification / reach of AI proposals (access-matrix §2.6)', async () => {
+  it('SEC-P34R-05 (fixed, regression) (finance): a draft proposal Finance\'s AI run writes from that figure is never listed to a reader refused the figure (the PM) — derived classification / reach of AI proposals (access-matrix §2.6)', async () => {
     // The runtime's path for a model tool call (createFromTool, as Finance in Finance's own transaction): a decision-paper draft
     // without a target whose content quotes the approved figure Finance retrieved — what a (non-mock) provider drafts.
     const { contexts, db, runtime, proposals, app } = await serviceHandles();
@@ -264,7 +269,7 @@ describe('SEC-P34R-07 — evidence supersede / flag-conflict skip the target\'s 
     expect(d.body.code).toBe('governance.decision.not_requester');
   });
 
-  it.fails('DEFECT SEC-P34R-07: a contributor without any transfer permission cannot supersede the evidence a VERIFIED transfer relies on (403) — today it does, and the svc-carveout reaction un-verifies both aspects', async () => {
+  it('SEC-P34R-07 (fixed, regression): a contributor without any transfer permission cannot supersede the evidence a VERIFIED transfer relies on (403) — today it does, and the svc-carveout reaction un-verifies both aspects', async () => {
     const lv = (await owner().query(`select version from evidence_link where id = $1`, [transferLinkId])).rows[0].version as number;
     const r = await j.p.contributor.post(`${P(pid)}/evidence/${transferLinkId}/supersede`, { expectedVersion: lv, note: 'Superseded by a contributor without transfer rights (probe, synthetic)' });
     await runWorker();
@@ -275,7 +280,7 @@ describe('SEC-P34R-07 — evidence supersede / flag-conflict skip the target\'s 
     expect(after).toEqual({ transfer_status: 'transferred_verified', economic_transfer_status: 'transferred_verified' });
   });
 
-  it.fails('DEFECT SEC-P34R-07: another voting member cannot supersede the requester\'s supporting evidence on the draft paper (403 governance.decision.not_requester), as for linking', async () => {
+  it('SEC-P34R-07 (fixed, regression): another voting member cannot supersede the requester\'s supporting evidence on the draft paper (403 governance.decision.not_requester), as for linking', async () => {
     const lv = (await owner().query(`select version from evidence_link where id = $1`, [paperLinkId])).rows[0].version as number;
     const r = await j.p.finance.post(`${P(pid)}/evidence/${paperLinkId}/supersede`, { expectedVersion: lv, note: 'Removed by another voting member (probe, synthetic)' });
     const row = (await owner().query(`select status from evidence_link where id = $1`, [paperLinkId])).rows[0];
