@@ -1,0 +1,1058 @@
+diff --git a/apps/web/e2e/journeys.spec.ts b/apps/web/e2e/journeys.spec.ts
+index 9fd7d8c..ace6218 100644
+--- a/apps/web/e2e/journeys.spec.ts
++++ b/apps/web/e2e/journeys.spec.ts
+@@ -6,7 +6,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+ import { dirname, join } from "node:path";
+ import { fileURLToPath } from "node:url";
+ import AxeBuilder from "@axe-core/playwright";
+-import { expect, test, type Page, type TestInfo } from "@playwright/test";
++import { expect, test, type Locator, type Page, type TestInfo } from "@playwright/test";
+ 
+ const HERE = dirname(fileURLToPath(import.meta.url));
+ const SHOTS = process.env["E2E_SCREENSHOT_DIR"] ?? join(HERE, "screenshots");
+@@ -33,6 +33,25 @@ function tr(lang: Lang, key: string, vars: Record<string, string> = {}): string
+ const langOf = (info: TestInfo): Lang => (info.project.name.endsWith("-ar") ? "ar" : "en");
+ const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+ 
++// Name matching (F-DG1-208). Playwright matches a string `name`/text as a case-insensitive SUBSTRING by default, and
++// an unanchored RegExp likewise matches anywhere. Localized labels can contain one another (Arabic 'عملي' is inside
++// 'العمليات الاعتيادية والتحسين'), so every locator below matches the WHOLE accessible name or text: plain strings
++// use `exact: true`, and names that legitimately carry extra text are spelled out completely and anchored.
++/** The whole name/text is exactly this string (whitespace at the ends ignored). */
++const exactly = (s: string) => new RegExp(`^\\s*${escape(s)}\\s*$`);
++/** A form control's label: the catalogue label, optionally followed by the "(required)" marker (Form.tsx). */
++function fieldLabelSource(lang: Lang, key: string): string {
++  return `${escape(tr(lang, key))}(?:\\s*\\(${escape(tr(lang, "common.form.required"))}\\))?`;
++}
++const fieldLabel = (lang: Lang, key: string) => new RegExp(`^${fieldLabelSource(lang, key)}$`);
++/** A primary-navigation link (Shell.tsx): the area label, optionally followed by the "planned" tag. */
++function navLink(nav: Locator, lang: Lang, area: string): Locator {
++  const label = escape(tr(lang, `nav.areas.${area}.label`));
++  return nav.getByRole("link", { name: new RegExp(`^${label}(?:\\s+${escape(tr(lang, "nav.planned"))})?$`) });
++}
++/** The language switch (LanguageSwitch.tsx) is named in the CURRENT language after the target language. */
++const LANGUAGE_NAMES: Record<Lang, string> = { ar: "العربية", en: "English" };
++
+ const axeSummary: Record<string, { violations: { id: string; impact: string | null; nodes: number }[] }> = {};
+ 
+ async function shot(page: Page, lang: Lang, name: string) {
+@@ -68,7 +87,13 @@ function trackRequests(page: Page): string[] {
+ async function ensureLanguage(page: Page, lang: Lang) {
+   const current = await page.locator("html").getAttribute("lang");
+   if (current !== lang) {
+-    await page.getByRole("button", { name: lang === "en" ? /English/ : /العربية/ }).click();
++    const from: Lang = lang === "en" ? "ar" : "en";
++    await page
++      .getByRole("button", {
++        name: tr(from, "common.language.switchTo", { language: LANGUAGE_NAMES[lang] }),
++        exact: true,
++      })
++      .click();
+   }
+   await expect(page.locator("html")).toHaveAttribute("lang", lang);
+   await expect(page.locator("html")).toHaveAttribute("dir", lang === "ar" ? "rtl" : "ltr");
+@@ -76,8 +101,9 @@ async function ensureLanguage(page: Page, lang: Lang) {
+ 
+ async function signIn(page: Page, lang: Lang, username: string) {
+   await page.goto("/login");
++  // The page language is not known yet (Arabic by default, or the remembered choice): accept either label exactly.
+   const field = page.getByLabel(
+-    new RegExp(`${escape(tr("ar", "auth.dev.username"))}|${escape(tr("en", "auth.dev.username"))}`),
++    new RegExp(`^(?:${fieldLabelSource("ar", "auth.dev.username")}|${fieldLabelSource("en", "auth.dev.username")})$`),
+   );
+   await expect(field).toBeVisible();
+   await field.fill(username);
+@@ -90,7 +116,7 @@ async function signIn(page: Page, lang: Lang, username: string) {
+ }
+ 
+ async function signOut(page: Page, lang: Lang) {
+-  await page.getByRole("button", { name: tr(lang, "auth.signOut") }).click();
++  await page.getByRole("button", { name: tr(lang, "auth.signOut"), exact: true }).click();
+   await page.waitForURL("**/login**");
+ }
+ 
+@@ -114,8 +140,8 @@ test("sign-in page: Arabic RTL by default, provisional wordmark, dev form in dev
+   await expect(page.getByTestId("provisional-badge")).toHaveText(tr("ar", "common.brand.provisional"));
+   await ensureLanguage(page, lang);
+   await expect(page.getByTestId("provisional-badge")).toHaveText(tr(lang, "common.brand.provisional"));
+-  await expect(page.getByRole("link", { name: tr(lang, "auth.oidcButton") })).toBeVisible();
+-  await expect(page.getByLabel(tr(lang, "auth.dev.username"))).toBeVisible();
++  await expect(page.getByRole("link", { name: tr(lang, "auth.oidcButton"), exact: true })).toBeVisible();
++  await expect(page.getByLabel(fieldLabel(lang, "auth.dev.username"))).toBeVisible();
+   await shot(page, lang, "01-sign-in");
+   await expectAccessible(page, lang, "sign-in");
+   // Fonts come from the bundle: the Plex face for this language is loaded, from the same origin.
+@@ -131,14 +157,11 @@ test("shell: navigation, language persistence and My Work (Transformation Office
+   const lang = langOf(info);
+   const foreign = trackRequests(page);
+   await signIn(page, lang, "dev.office");
+-  const nav = page.getByRole("navigation", { name: tr(lang, "nav.primary") });
++  const nav = page.getByRole("navigation", { name: tr(lang, "nav.primary"), exact: true });
+   // The Transformation Office holds no administration permission: 13 areas, no Administration.
+   await expect(nav.locator("a[data-area]")).toHaveCount(13);
+-  await expect(nav.getByRole("link", { name: tr(lang, "nav.areas.admin.label") })).toHaveCount(0);
+-  await expect(nav.getByRole("link", { name: new RegExp(escape(tr(lang, "nav.areas.myWork.label"))) })).toHaveAttribute(
+-    "aria-current",
+-    "page",
+-  );
++  await expect(navLink(nav, lang, "admin")).toHaveCount(0);
++  await expect(navLink(nav, lang, "myWork")).toHaveAttribute("aria-current", "page");
+   await shot(page, lang, "02-my-work");
+   await expectAccessible(page, lang, "my-work");
+   // The language survives a reload (persisted to the profile and to localStorage).
+@@ -146,10 +169,12 @@ test("shell: navigation, language persistence and My Work (Transformation Office
+   await expect(page.locator("html")).toHaveAttribute("lang", lang);
+   // Keyboard: the skip link is the first focusable element and moves focus to <main>.
+   await page.keyboard.press("Tab");
+-  await expect(page.getByRole("link", { name: tr(lang, "common.a11y.skipToContent") })).toBeFocused();
++  await expect(page.getByRole("link", { name: tr(lang, "common.a11y.skipToContent"), exact: true })).toBeFocused();
+   // A planned area is labelled planned.
+-  await nav.getByRole("link", { name: new RegExp(escape(tr(lang, "nav.areas.governance.label"))) }).click();
+-  await expect(page.getByRole("heading", { level: 1, name: tr(lang, "nav.areas.governance.label") })).toBeVisible();
++  await navLink(nav, lang, "governance").click();
++  await expect(
++    page.getByRole("heading", { level: 1, name: tr(lang, "nav.areas.governance.label"), exact: true }),
++  ).toBeVisible();
+   await shot(page, lang, "03-planned-area");
+   expect(foreign).toEqual([]);
+ });
+@@ -159,26 +184,33 @@ test("create a modular transformation with an entry phase", async ({ page }, inf
+   const foreign = trackRequests(page);
+   await signIn(page, lang, "dev.office");
+   await page.goto("/transformations/new");
+-  await expect(page.getByRole("heading", { level: 1, name: tr(lang, "transformations.createTitle") })).toBeVisible();
++  await expect(
++    page.getByRole("heading", { level: 1, name: tr(lang, "transformations.createTitle"), exact: true }),
++  ).toBeVisible();
+   // Validation (shared zod schema) in the selected language.
+-  await page.getByRole("button", { name: tr(lang, "transformations.form.create") }).click();
+-  await expect(page.getByText(tr(lang, "problems.validation__required")).first()).toBeVisible();
++  await page.getByRole("button", { name: tr(lang, "transformations.form.create"), exact: true }).click();
++  await expect(page.getByText(tr(lang, "problems.validation__required"), { exact: true }).first()).toBeVisible();
+   await shot(page, lang, "04-create-validation");
+   await expectAccessible(page, lang, "create-validation");
+ 
+   await page
+-    .getByLabel(tr(lang, "transformations.field.businessUnit"))
++    .getByLabel(fieldLabel(lang, "transformations.field.businessUnit"))
+     .selectOption({ label: lang === "ar" ? "العمليات (اصطناعي) (SYN-OPS)" : "Synthetic Operations (SYN-OPS)" });
++  await page.getByLabel(fieldLabel(lang, "transformations.field.name")).fill(`Synthetic ${lang.toUpperCase()} journey`);
++  // A mode radio is named by its label followed by its help text (TransformationCreatePage.tsx).
+   await page
+-    .getByLabel(new RegExp(`^${escape(tr(lang, "transformations.field.name"))}`))
+-    .fill(`Synthetic ${lang.toUpperCase()} journey`);
+-  await page.getByRole("radio", { name: new RegExp(escape(tr(lang, "transformations.mode.modular"))) }).check();
+-  await page.getByLabel(new RegExp(`^${escape(tr(lang, "transformations.field.entryPhase"))}`)).selectOption("design");
+-  await page.getByRole("button", { name: tr(lang, "transformations.form.create") }).click();
++    .getByRole("radio", {
++      name: new RegExp(
++        `^${escape(tr(lang, "transformations.mode.modular"))}\\s+${escape(tr(lang, "transformations.form.modeHelp.modular"))}$`,
++      ),
++    })
++    .check();
++  await page.getByLabel(fieldLabel(lang, "transformations.field.entryPhase")).selectOption("design");
++  await page.getByRole("button", { name: tr(lang, "transformations.form.create"), exact: true }).click();
+   await page.waitForURL(/\/transformations\/[0-9a-f-]{36}$/);
+   createdId = page.url().split("/").pop()!;
+   await expect(page.getByRole("status").filter({ hasText: tr(lang, "transformations.created") })).toBeVisible();
+-  await expect(page.getByText(tr(lang, "transformations.workspace.gateReadiness"))).toBeVisible();
++  await expect(page.getByText(tr(lang, "transformations.workspace.gateReadiness"), { exact: true })).toBeVisible();
+   await expect(page.locator("[aria-current='step']")).toContainText(tr(lang, "transformations.phase.design"));
+   createdCode = (await page.locator("h1 bdi").first().textContent())!.trim();
+   expect(createdCode).toMatch(/^TR-\d{4}$/);
+@@ -192,28 +224,36 @@ test("list: sort, filter chips, column selection and pagination controls", async
+   const foreign = trackRequests(page);
+   await signIn(page, lang, "dev.office");
+   await page.goto("/transformations");
+-  await expect(page.getByRole("link", { name: createdCode })).toBeVisible();
++  await expect(page.getByRole("link", { name: createdCode, exact: true })).toBeVisible();
+   await shot(page, lang, "06-list");
+   await expectAccessible(page, lang, "list");
++  // A sortable header is named by its label followed by the (visually hidden) sort state (DataTable.tsx).
++  const sortStates = ["notSorted", "sortedAsc", "sortedDesc"].map((k) => escape(tr(lang, `common.table.${k}`)));
+   const codeHeader = page.getByRole("columnheader", {
+-    name: new RegExp(escape(tr(lang, "transformations.field.code"))),
++    name: new RegExp(`^${escape(tr(lang, "transformations.field.code"))}\\s+(?:${sortStates.join("|")})$`),
+   });
+   await codeHeader.getByRole("button").click();
+   await expect(codeHeader).toHaveAttribute("aria-sort", "ascending");
+   // Filters live in the URL; the router applies them asynchronously, so assert the settled state.
+-  const draft = page.getByRole("checkbox", { name: tr(lang, "transformations.status.draft") });
++  const draft = page.getByRole("checkbox", { name: tr(lang, "transformations.status.draft"), exact: true });
+   await draft.click();
+   await expect(draft).toBeChecked();
+   await expect(page).toHaveURL(/status=draft/);
++  // The removable filter chip: "<Status>: <Draft>" followed by the hidden "remove filter" text.
++  const chipLabel = `${tr(lang, "transformations.field.status")}: ${tr(lang, "transformations.status.draft")}`;
+   await expect(
+-    page.getByRole("button", { name: new RegExp(escape(tr(lang, "transformations.status.draft"))) }).first(),
++    page.getByRole("group", { name: tr(lang, "common.filter.active"), exact: true }).getByRole("button", {
++      name: new RegExp(`^${escape(chipLabel)}\\s+${escape(tr(lang, "common.filter.remove"))}$`),
++    }),
+   ).toBeVisible();
+-  await page.getByRole("button", { name: tr(lang, "common.table.columns") }).click();
+-  const modeColumn = page.getByRole("checkbox", { name: tr(lang, "transformations.field.mode") });
++  await page.getByRole("button", { name: tr(lang, "common.table.columns"), exact: true }).click();
++  const modeColumn = page.getByRole("checkbox", { name: tr(lang, "transformations.field.mode"), exact: true });
+   await modeColumn.click();
+   await expect(modeColumn).not.toBeChecked();
+-  await expect(page.getByRole("columnheader", { name: tr(lang, "transformations.field.mode") })).toHaveCount(0);
+-  await expect(page.getByRole("navigation", { name: tr(lang, "common.table.pagination") })).toBeVisible();
++  await expect(
++    page.getByRole("columnheader", { name: tr(lang, "transformations.field.mode"), exact: true }),
++  ).toHaveCount(0);
++  await expect(page.getByRole("navigation", { name: tr(lang, "common.table.pagination"), exact: true })).toBeVisible();
+   await shot(page, lang, "07-list-filtered");
+   await expectAccessible(page, lang, "list-filtered");
+   expect(foreign).toEqual([]);
+@@ -224,7 +264,7 @@ test("edit: a concurrent change gives a 409 conflict with compare and re-apply",
+   const foreign = trackRequests(page);
+   await signIn(page, lang, "dev.office");
+   await page.goto(`/transformations/${createdId}/edit`);
+-  const name = page.getByLabel(new RegExp(`^${escape(tr(lang, "transformations.field.name"))}`));
++  const name = page.getByLabel(fieldLabel(lang, "transformations.field.name"));
+   await name.fill(`Synthetic ${lang.toUpperCase()} journey (my edit)`);
+   // Someone else saves first (same session cookie, through the real API with CSRF + If-Match).
+   const me = await (await page.request.get("/api/v1/me")).json();
+@@ -234,19 +274,21 @@ test("edit: a concurrent change gives a 409 conflict with compare and re-apply",
+     data: { description: "Changed concurrently by another session (synthetic)" },
+   });
+   expect(other.status()).toBe(200);
+-  await page.getByRole("button", { name: tr(lang, "common.action.save") }).click();
++  await page.getByRole("button", { name: tr(lang, "common.action.save"), exact: true }).click();
+   const conflict = page.locator("[data-state='conflict']");
+   await expect(conflict).toBeVisible();
+   await expect(conflict).toContainText(tr(lang, "common.conflict.title"));
+   await shot(page, lang, "08-conflict");
+   await expectAccessible(page, lang, "conflict");
+-  await conflict.getByRole("button", { name: tr(lang, "common.conflict.reapply") }).click();
++  await conflict.getByRole("button", { name: tr(lang, "common.conflict.reapply"), exact: true }).click();
+   await page.waitForURL(new RegExp(`/transformations/${createdId}$`));
+   await expect(page.getByRole("heading", { level: 1 })).toContainText("(my edit)");
+   // The other session's change is kept.
+   await expect(page.locator("dd", { hasText: "Changed concurrently by another session (synthetic)" })).toBeVisible();
+   // ...and both changes are in the audit trail.
+-  await expect(page.getByRole("region", { name: tr(lang, "transformations.audit.title") })).toContainText("(my edit)");
++  await expect(page.getByRole("region", { name: tr(lang, "transformations.audit.title"), exact: true })).toContainText(
++    "(my edit)",
++  );
+   await shot(page, lang, "08b-after-reapply");
+   expect(foreign).toEqual([]);
+ });
+@@ -256,18 +298,18 @@ test("archive with a mandatory reason makes the record read-only", async ({ page
+   const foreign = trackRequests(page);
+   await signIn(page, lang, "dev.office");
+   await page.goto(`/transformations/${createdId}`);
+-  await page.getByRole("button", { name: tr(lang, "transformations.archive.action") }).click();
++  await page.getByRole("button", { name: tr(lang, "transformations.archive.action"), exact: true }).click();
+   const dialog = page.getByRole("dialog");
+   await expect(dialog).toBeVisible();
+-  await dialog.getByRole("button", { name: tr(lang, "transformations.archive.confirm") }).click();
+-  await expect(dialog.getByText(tr(lang, "problems.validation__too_small"))).toBeVisible();
++  await dialog.getByRole("button", { name: tr(lang, "transformations.archive.confirm"), exact: true }).click();
++  await expect(dialog.getByText(tr(lang, "problems.validation__too_small"), { exact: true })).toBeVisible();
+   await shot(page, lang, "09-archive-dialog");
+   await expectAccessible(page, lang, "archive-dialog");
+-  await dialog.getByLabel(new RegExp(escape(tr(lang, "common.form.reason")))).fill("Synthetic journey finished");
+-  await dialog.getByRole("button", { name: tr(lang, "transformations.archive.confirm") }).click();
++  await dialog.getByLabel(fieldLabel(lang, "common.form.reason")).fill("Synthetic journey finished");
++  await dialog.getByRole("button", { name: tr(lang, "transformations.archive.confirm"), exact: true }).click();
+   await expect(dialog).toHaveCount(0);
+   await expect(page.getByRole("note")).toContainText("Synthetic journey finished");
+-  await expect(page.getByRole("link", { name: new RegExp(escape(tr(lang, "common.action.edit"))) })).toHaveCount(0);
++  await expect(page.getByRole("link", { name: exactly(tr(lang, "common.action.edit")) })).toHaveCount(0);
+   await shot(page, lang, "10-archived");
+   expect(foreign).toEqual([]);
+ });
+@@ -276,34 +318,36 @@ test("administration screens (access + technical administrator)", async ({ page
+   const lang = langOf(info);
+   const foreign = trackRequests(page);
+   await signIn(page, lang, "dev.admin");
+-  const nav = page.getByRole("navigation", { name: tr(lang, "nav.primary") });
++  const nav = page.getByRole("navigation", { name: tr(lang, "nav.primary"), exact: true });
+   await expect(nav.locator("a[data-area]")).toHaveCount(14);
+-  await nav.getByRole("link", { name: tr(lang, "nav.areas.admin.label") }).click();
+-  await expect(page.getByRole("heading", { level: 1, name: tr(lang, "nav.areas.admin.label") })).toBeVisible();
++  await navLink(nav, lang, "admin").click();
++  await expect(
++    page.getByRole("heading", { level: 1, name: tr(lang, "nav.areas.admin.label"), exact: true }),
++  ).toBeVisible();
+   await shot(page, lang, "11-admin");
+   await expectAccessible(page, lang, "admin");
+ 
+-  await page.getByRole("link", { name: tr(lang, "admin.organizations.title") }).click();
+-  await page.getByRole("link", { name: "SYN-DEV" }).click();
+-  await expect(page.getByRole("heading", { name: tr(lang, "admin.businessUnits.title") })).toBeVisible();
+-  await expect(page.getByRole("link", { name: "SYN-RETAIL" })).toBeVisible();
++  await page.getByRole("link", { name: tr(lang, "admin.organizations.title"), exact: true }).click();
++  await page.getByRole("link", { name: "SYN-DEV", exact: true }).click();
++  await expect(page.getByRole("heading", { name: tr(lang, "admin.businessUnits.title"), exact: true })).toBeVisible();
++  await expect(page.getByRole("link", { name: "SYN-RETAIL", exact: true })).toBeVisible();
+   await shot(page, lang, "12-organization");
+   await expectAccessible(page, lang, "organization");
+ 
+   await page.goto("/admin/users");
+-  await expect(page.getByRole("link", { name: "Synthetic Transformation Lead" })).toBeVisible();
++  await expect(page.getByRole("link", { name: "Synthetic Transformation Lead", exact: true })).toBeVisible();
+   await shot(page, lang, "13-users");
+   await expectAccessible(page, lang, "users");
+ 
+   await page.goto("/admin/assignments");
+   await expect(page.getByRole("table")).toBeVisible();
+-  await page.getByRole("button", { name: tr(lang, "admin.assignments.new") }).click();
+-  await expect(page.getByLabel(new RegExp(escape(tr(lang, "admin.assignments.role"))))).toBeVisible();
++  await page.getByRole("button", { name: tr(lang, "admin.assignments.new"), exact: true }).click();
++  await expect(page.getByLabel(fieldLabel(lang, "admin.assignments.role"))).toBeVisible();
+   await shot(page, lang, "14-assignments");
+   await expectAccessible(page, lang, "assignments");
+   // A technical administrator has no business-record access: the transformations register is empty for them.
+   await page.goto("/transformations");
+-  await expect(page.getByText(tr(lang, "transformations.emptyTitle"))).toBeVisible();
++  await expect(page.getByText(tr(lang, "transformations.emptyTitle"), { exact: true })).toBeVisible();
+   await signOut(page, lang);
+   expect(foreign).toEqual([]);
+ });
+@@ -312,14 +356,75 @@ test("a user without roles sees no Administration and no business records", asyn
+   const lang = langOf(info);
+   const foreign = trackRequests(page);
+   await signIn(page, lang, "dev.nobody");
+-  const nav = page.getByRole("navigation", { name: tr(lang, "nav.primary") });
+-  await expect(nav.getByRole("link", { name: tr(lang, "nav.areas.admin.label") })).toHaveCount(0);
++  const nav = page.getByRole("navigation", { name: tr(lang, "nav.primary"), exact: true });
++  await expect(navLink(nav, lang, "admin")).toHaveCount(0);
+   await page.goto(`/transformations/${createdId}`);
+   await expect(page.locator("[data-state='no-permission']")).toBeVisible();
+   await shot(page, lang, "15-no-permission");
+   await expectAccessible(page, lang, "no-permission");
+   await page.goto("/transformations");
+-  await expect(page.getByText(tr(lang, "transformations.emptyTitle"))).toBeVisible();
++  await expect(page.getByText(tr(lang, "transformations.emptyTitle"), { exact: true })).toBeVisible();
+   await shot(page, lang, "16-empty");
+   expect(foreign).toEqual([]);
+ });
++
++test("a business-unit Lead creates a record; its audit trail shows the derived access grant localized (F-DG1-008)", async ({
++  page,
++}, info) => {
++  const lang = langOf(info);
++  const foreign = trackRequests(page);
++  // dev.lead holds TL at SYN-RETAIL only (business-unit scope, no downward inheritance): creating a record adds the
++  // audited, derived transformation-scope TL assignment (F-DG1-106) to the new record's own audit trail.
++  await signIn(page, lang, "dev.lead");
++  await page.goto("/transformations/new");
++  await page
++    .getByLabel(fieldLabel(lang, "transformations.field.businessUnit"))
++    .selectOption({ label: lang === "ar" ? "التجزئة (اصطناعي) (SYN-RETAIL)" : "Synthetic Retail (SYN-RETAIL)" });
++  await page
++    .getByLabel(fieldLabel(lang, "transformations.field.name"))
++    .fill(`Synthetic ${lang.toUpperCase()} lead-created record`);
++  await page.getByRole("button", { name: tr(lang, "transformations.form.create"), exact: true }).click();
++  await page.waitForURL(/\/transformations\/[0-9a-f-]{36}$/);
++  // Open the record afresh (as the reviewers' reproduction does): the session's grants, read at sign-in, do not yet
++  // include the derived assignment, and the audit trail needs audit.read on the record (reported in the T-DG1-FE4
++  // handback as a separate observation; not part of F-DG1-008).
++  await page.reload();
++  const trail = page.getByRole("region", { name: tr(lang, "transformations.audit.title"), exact: true });
++  const derivedLabel = tr(lang, "transformations.audit.actions.scoped_assignment_create_derived");
++  const row = trail.getByRole("row").filter({ has: page.getByRole("cell", { name: derivedLabel, exact: true }) });
++  await expect(row).toHaveCount(1);
++  const changes = row.getByRole("cell").nth(4);
++  const none = tr(lang, "common.value.none");
++  for (const [field, value] of [
++    ["user_id", "Synthetic Transformation Lead"],
++    ["role_code", tr(lang, "transformations.audit.role.TL")],
++    [
++      "scope",
++      `${tr(lang, "admin.scopeType.transformation")}: ${tr(lang, "transformations.audit.value.thisTransformation")}`,
++    ],
++    ["effective_to", none],
++  ] as const) {
++    await expect(changes).toContainText(`${tr(lang, `transformations.audit.field.${field}`)}: ${none}`);
++    await expect(changes).toContainText(value);
++  }
++  await expect(changes).toContainText(tr(lang, "transformations.audit.field.derived_from_assignment_id"));
++  // No raw action code, camelCase key, JSON or role code, and nothing marked "without a translation".
++  const text = (await trail.textContent()) ?? "";
++  for (const raw of [
++    "scoped_assignment",
++    "userId",
++    "roleCode",
++    "effectiveTo",
++    "derivedFromAssignmentId",
++    '"type"',
++    tr(lang, "transformations.audit.untranslatedField"),
++    tr(lang, "transformations.audit.untranslatedValue"),
++    tr(lang, "transformations.audit.untranslatedAction"),
++  ]) {
++    expect(text).not.toContain(raw);
++  }
++  await trail.scrollIntoViewIfNeeded();
++  await shot(page, lang, "17-lead-audit-trail");
++  await expectAccessible(page, lang, "lead-audit-trail");
++  expect(foreign).toEqual([]);
++});
+diff --git a/apps/web/src/i18n/ar/transformations.json b/apps/web/src/i18n/ar/transformations.json
+index 8be10e5..f0e2d3a 100644
+--- a/apps/web/src/i18n/ar/transformations.json
++++ b/apps/web/src/i18n/ar/transformations.json
+@@ -113,7 +113,10 @@
+       "transformation_update": "تحديث",
+       "transformation_archive": "أرشفة",
+       "transformation_starter_automation_requested": "طُلبت الأتمتة الأولية",
+-      "authorization_denied": "رُفض الوصول"
++      "authorization_denied": "رُفض الوصول",
++      "scoped_assignment_create": "إسناد دور",
++      "scoped_assignment_create_derived": "إسناد دور لمُنشئ السجل (منقول من إسناد على مستوى وحدة العمل)",
++      "scoped_assignment_revoke": "سحب دور"
+     },
+     "actorType": {
+       "user": "مستخدم",
+@@ -135,10 +138,38 @@
+       "currency": "العملة",
+       "business_unit_id": "وحدة العمل",
+       "archived_at": "تاريخ الأرشفة",
+-      "archive_reason": "سبب الأرشفة"
++      "archive_reason": "سبب الأرشفة",
++      "user_id": "المستخدم",
++      "role_code": "الدور",
++      "scope": "النطاق",
++      "effective_from": "يسري من",
++      "effective_to": "يسري حتى",
++      "derived_from_assignment_id": "منقول من الإسناد",
++      "revoked_at": "تاريخ السحب"
++    },
++    "role": {
++      "SP": "الراعي التنفيذي",
++      "TL": "قائد التحوّل",
++      "BO": "المالك التشغيلي للأعمال",
++      "WL": "قائد مسار العمل",
++      "FIN": "الإدارة المالية / مكتب القيمة",
++      "TO": "مكتب التحوّل",
++      "KDS": "أمين بيانات مؤشرات الأداء",
++      "TD": "مساهم التقنية والبيانات",
++      "CM": "عضو اللجنة",
++      "SEC": "أمين سر اللجنة",
++      "AUD": "مدقق (قراءة فقط)",
++      "ADM_TECH": "المسؤول التقني",
++      "ADM_ACCESS": "مسؤول الصلاحيات",
++      "ADM_METHOD": "مسؤول المنهجية"
++    },
++    "value": {
++      "eventTime": "وقت هذا الحدث",
++      "thisTransformation": "هذا التحوّل"
+     },
+     "untranslatedField": "حقل بلا ترجمة",
+-    "untranslatedValue": "قيمة بلا ترجمة"
++    "untranslatedValue": "قيمة بلا ترجمة",
++    "untranslatedAction": "إجراء بلا ترجمة"
+   },
+   "createdNotVisible": {
+     "title": "أُنشئ التحوّل، لكن لا يمكنك فتحه",
+diff --git a/apps/web/src/i18n/en/transformations.json b/apps/web/src/i18n/en/transformations.json
+index 52c4dc4..14181e1 100644
+--- a/apps/web/src/i18n/en/transformations.json
++++ b/apps/web/src/i18n/en/transformations.json
+@@ -113,7 +113,10 @@
+       "transformation_update": "Updated",
+       "transformation_archive": "Archived",
+       "transformation_starter_automation_requested": "Starter automation requested",
+-      "authorization_denied": "Access denied"
++      "authorization_denied": "Access denied",
++      "scoped_assignment_create": "Role granted",
++      "scoped_assignment_create_derived": "Role granted to the creator (carried over from a business-unit assignment)",
++      "scoped_assignment_revoke": "Role revoked"
+     },
+     "actorType": {
+       "user": "User",
+@@ -135,10 +138,38 @@
+       "currency": "Currency",
+       "business_unit_id": "Business unit",
+       "archived_at": "Archived on",
+-      "archive_reason": "Archive reason"
++      "archive_reason": "Archive reason",
++      "user_id": "User",
++      "role_code": "Role",
++      "scope": "Scope",
++      "effective_from": "Effective from",
++      "effective_to": "Effective until",
++      "derived_from_assignment_id": "Carried over from assignment",
++      "revoked_at": "Revoked on"
++    },
++    "role": {
++      "SP": "Executive Sponsor",
++      "TL": "Transformation Lead",
++      "BO": "Business Owner",
++      "WL": "Workstream Lead",
++      "FIN": "Finance / Value Office",
++      "TO": "Transformation Office",
++      "KDS": "KPI/Data Steward",
++      "TD": "Tech/Data Contributor",
++      "CM": "Committee Member",
++      "SEC": "Committee Secretary",
++      "AUD": "Read-only Auditor",
++      "ADM_TECH": "Technical Administrator",
++      "ADM_ACCESS": "Access Administrator",
++      "ADM_METHOD": "Methodology Administrator"
++    },
++    "value": {
++      "eventTime": "at the time of this event",
++      "thisTransformation": "this transformation"
+     },
+     "untranslatedField": "field without a translation",
+-    "untranslatedValue": "value without a translation"
++    "untranslatedValue": "value without a translation",
++    "untranslatedAction": "action without a translation"
+   },
+   "createdNotVisible": {
+     "title": "Transformation created, but you cannot open it",
+diff --git a/apps/web/src/lib/auditChanges.test.ts b/apps/web/src/lib/auditChanges.test.ts
+index 4410216..2bbad89 100644
+--- a/apps/web/src/lib/auditChanges.test.ts
++++ b/apps/web/src/lib/auditChanges.test.ts
+@@ -1,8 +1,21 @@
+-// Audit-trail changes are shown with localized labels in Arabic and English (F-DG1-005, REQ-S15-007, M0302).
++// Audit-trail changes are shown with localized labels in Arabic and English (F-DG1-005, F-DG1-008, REQ-S15-007, M0302).
+ import { describe, expect, it } from "vitest";
+-import { PHASES, STANDALONE_DELIVERABLE_TYPES, TRANSFORMATION_MODES, TRANSFORMATION_STATUSES } from "@mth/shared";
++import {
++  PHASES,
++  ROLE_CODES,
++  STANDALONE_DELIVERABLE_TYPES,
++  TRANSFORMATION_MODES,
++  TRANSFORMATION_STATUSES,
++} from "@mth/shared";
+ import { createI18n } from "../i18n/index.ts";
+-import { auditFieldKey, describeAuditChange, describeAuditChanges, describeAuditValue } from "./auditChanges.ts";
++import {
++  auditActionKey,
++  auditFieldKey,
++  describeAuditAction,
++  describeAuditChange,
++  describeAuditChanges,
++  describeAuditValue,
++} from "./auditChanges.ts";
+ 
+ const en = createI18n("en").t;
+ const ar = createI18n("ar").t;
+@@ -137,3 +150,92 @@ describe("audit values", () => {
+     expect(order).toEqual(["code", "status", "business_unit_id", "zzz"]);
+   });
+ });
++
++// F-DG1-008: the derived creator assignment (F-DG1-106) is written on the new transformation's own trail, exactly in
++// the shape apps/api/src/modules/access/assignments.ts (grantCreatorTransformationRoles) records it.
++describe("role-assignment events on a transformation's trail (F-DG1-008)", () => {
++  const SRC = "01920000-0000-7000-8000-0000000000b1";
++  const TR = "01920000-0000-7000-9000-000000000301";
++  const USER = "01920000-0000-7000-8000-0000000000u1";
++  const derived = {
++    userId: { from: null, to: USER },
++    roleCode: { from: null, to: "TL" },
++    scope: { from: null, to: { type: "transformation", id: TR } },
++    derivedFromAssignmentId: { from: null, to: SRC },
++    effectiveTo: { from: null, to: null },
++  };
++
++  it("labels the action in both languages, the derived grant differently from a manual one", () => {
++    expect(describeAuditAction(en, "scoped_assignment.create", derived)).toBe(
++      "Role granted to the creator (carried over from a business-unit assignment)",
++    );
++    expect(describeAuditAction(ar, "scoped_assignment.create", derived)).toBe(
++      "إسناد دور لمُنشئ السجل (منقول من إسناد على مستوى وحدة العمل)",
++    );
++    expect(describeAuditAction(en, "scoped_assignment.create", { userId: derived.userId })).toBe("Role granted");
++    expect(describeAuditAction(ar, "scoped_assignment.create", null)).toBe("إسناد دور");
++    expect(describeAuditAction(en, "scoped_assignment.revoke", null)).toBe("Role revoked");
++    expect(describeAuditAction(ar, "scoped_assignment.revoke", null)).toBe("سحب دور");
++    expect(describeAuditAction(en, "transformation.create", null)).toBe("Created");
++    expect(auditActionKey("scoped_assignment.create", derived)).toBe(
++      "transformations.audit.actions.scoped_assignment_create_derived",
++    );
++  });
++
++  it("falls back (null -> raw code, marked by the caller) for an unknown or malformed action", () => {
++    expect(describeAuditAction(en, "kpi.recalculate", null)).toBeNull();
++    expect(describeAuditAction(ar, "kpi.recalculate", null)).toBeNull();
++    // An action can never address another catalogue entry.
++    expect(auditActionKey("../audit.title", null)).toBeNull();
++    expect(describeAuditAction(en, "Audit.Title", null)).toBeNull();
++  });
++
++  it("English: every field and value of the derived event is localized, none raw", () => {
++    const c = describeAuditChanges(en, derived);
++    expect(c.map((x) => x.label)).toEqual(["User", "Role", "Scope", "Effective until", "Carried over from assignment"]);
++    const by = Object.fromEntries(c.map((x) => [x.field, x.to]));
++    expect(by["userId"]).toEqual({ kind: "user", id: USER });
++    expect(by["roleCode"]).toEqual({ kind: "label", text: "Transformation Lead", code: "TL" });
++    expect(by["scope"]).toEqual({ kind: "scope", scopeType: "transformation", id: TR });
++    expect(by["effectiveTo"]).toEqual({ kind: "none" });
++    expect(by["derivedFromAssignmentId"]).toEqual({ kind: "code", text: SRC });
++    for (const x of c) expect(x.to.kind).not.toBe("untranslated");
++  });
++
++  it("Arabic: the same fields and the role with Arabic (glossary) labels", () => {
++    const c = describeAuditChanges(ar, derived);
++    expect(c.map((x) => x.label)).toEqual(["المستخدم", "الدور", "النطاق", "يسري حتى", "منقول من الإسناد"]);
++    const role = c.find((x) => x.field === "roleCode")!.to;
++    expect(role).toEqual({ kind: "label", text: "قائد التحوّل", code: "TL" });
++    for (const x of c) expect(x.to.kind).not.toBe("untranslated");
++  });
++
++  it("has a role label for every role code, and the revocation time 'now' reads as the event time", () => {
++    for (const t of [en, ar])
++      for (const code of ROLE_CODES) expect(describeAuditValue(t, "roleCode", code).kind).toBe("label");
++    expect(describeAuditValue(en, "revokedAt", "now")).toMatchObject({
++      kind: "label",
++      text: "at the time of this event",
++    });
++    expect(describeAuditValue(ar, "revokedAt", "now")).toMatchObject({ kind: "label", text: "وقت هذا الحدث" });
++    expect(describeAuditValue(en, "effectiveTo", "2027-01-01T00:00:00.000Z")).toEqual({
++      kind: "datetime",
++      iso: "2027-01-01T00:00:00.000Z",
++    });
++  });
++
++  it("keeps the marked fallback for unexpected role codes and malformed scopes", () => {
++    expect(describeAuditValue(en, "roleCode", "NEW_ROLE")).toEqual({ kind: "untranslated", raw: "NEW_ROLE" });
++    expect(describeAuditValue(ar, "roleCode", "tl")).toEqual({ kind: "untranslated", raw: "tl" });
++    expect(describeAuditValue(en, "scope", { type: "galaxy", id: "x" })).toEqual({
++      kind: "untranslated",
++      raw: '{"type":"galaxy","id":"x"}',
++    });
++    expect(describeAuditValue(en, "scope", "transformation")).toEqual({ kind: "untranslated", raw: "transformation" });
++    expect(describeAuditValue(en, "scope", { type: "business_unit", id: "b" })).toEqual({
++      kind: "scope",
++      scopeType: "business_unit",
++      id: "b",
++    });
++  });
++});
+diff --git a/apps/web/src/lib/auditChanges.ts b/apps/web/src/lib/auditChanges.ts
+index 278b2d4..5d58d54 100644
+--- a/apps/web/src/lib/auditChanges.ts
++++ b/apps/web/src/lib/auditChanges.ts
+@@ -3,6 +3,10 @@
+ // ISO timestamps). This module turns each change into a localized field label and typed values so the screen shows
+ // catalogue labels for domain values. Anything without a catalogue label falls back to the raw key/code, LTR-isolated
+ // and explicitly marked "without a translation": never blank, never a guessed label.
++//
++// F-DG1-008: a transformation's trail also carries the role-assignment events written on it (`scoped_assignment.*`,
++// e.g. the derived creator assignment of F-DG1-106: userId, roleCode, scope, effectiveTo, derivedFromAssignmentId),
++// so their action, fields and values (user, role, scope) have catalogue labels too.
+ import type { TFunction } from "i18next";
+ 
+ /** How one side (from / to) of a change is shown. */
+@@ -18,8 +22,14 @@ export type AuditValue =
+   | { readonly kind: "code"; readonly text: string }
+   | { readonly kind: "user"; readonly id: string }
+   | { readonly kind: "businessUnit"; readonly id: string }
++  /** The scope of a role assignment ({ type, id }): shown as the scope type plus the scope's name. */
++  | { readonly kind: "scope"; readonly scopeType: ScopeType; readonly id: string }
+   | { readonly kind: "datetime"; readonly iso: string };
+ 
++/** Scope types a role assignment can carry (ADR-0006; packages/shared assignment schema). */
++export const AUDIT_SCOPE_TYPES = ["organization", "business_unit", "transformation"] as const;
++export type ScopeType = (typeof AUDIT_SCOPE_TYPES)[number];
++
+ export interface AuditFieldChange {
+   /** The field key as recorded by the API. */
+   readonly field: string;
+@@ -31,7 +41,7 @@ export interface AuditFieldChange {
+ 
+ type ValueKind =
+   | { readonly kind: "enum"; readonly prefix: string }
+-  | { readonly kind: "text" | "code" | "user" | "businessUnit" | "datetime" };
++  | { readonly kind: "text" | "code" | "user" | "businessUnit" | "datetime" | "role" | "scope" };
+ 
+ /** Audited transformation fields (apps/api transformations repository) and how their values are presented. */
+ const FIELDS: Readonly<Record<string, ValueKind>> = {
+@@ -50,8 +60,41 @@ const FIELDS: Readonly<Record<string, ValueKind>> = {
+   business_unit_id: { kind: "businessUnit" },
+   archived_at: { kind: "datetime" },
+   archive_reason: { kind: "text" },
++  // Role-assignment events (apps/api access/assignments.ts) shown on the transformation they were written on.
++  user_id: { kind: "user" },
++  role_code: { kind: "role" },
++  scope: { kind: "scope" },
++  effective_from: { kind: "datetime" },
++  effective_to: { kind: "datetime" },
++  derived_from_assignment_id: { kind: "code" },
++  revoked_at: { kind: "datetime" },
+ };
+ 
++/** Catalogue key of an audit action ("transformation.create" -> "...actions.transformation_create"), or null. */
++export function auditActionKey(action: string, changes?: Readonly<Record<string, unknown>> | null): string | null {
++  // Only a plain dotted code may become a catalogue key (it must not address another catalogue entry).
++  if (!/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$/.test(action)) return null;
++  // The creator assignment carried over from a business-unit grant (F-DG1-106) reads differently from a manual grant.
++  const derived =
++    action === "scoped_assignment.create" &&
++    changes !== null &&
++    changes !== undefined &&
++    "derivedFromAssignmentId" in changes;
++  return `transformations.audit.actions.${action.replace(/\./g, "_")}${derived ? "_derived" : ""}`;
++}
++
++/** Localized action label, or null when the catalogue has none (the caller shows the raw code, marked). */
++export function describeAuditAction(
++  t: TFunction,
++  action: string,
++  changes?: Readonly<Record<string, unknown>> | null,
++): string | null {
++  const key = auditActionKey(action, changes);
++  return key ? t(key, { defaultValue: "" }) || null : null;
++}
++
++const ROLE_CODE = /^[A-Z][A-Z_]*$/;
++
+ /** `archivedAt` -> `archived_at`; snake_case keys are returned unchanged. */
+ export function auditFieldKey(field: string): string {
+   return field.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
+@@ -85,9 +128,26 @@ export function describeAuditValue(t: TFunction, field: string, value: unknown):
+         ? { kind: "businessUnit", id: value }
+         : { kind: "untranslated", raw: raw(value) };
+     case "datetime":
++      // The API records a revocation time as "now" (the event's own time, shown in the "When" column).
++      if (value === "now") return { kind: "label", text: t("transformations.audit.value.eventTime"), code: "now" };
+       return typeof value === "string" && !Number.isNaN(Date.parse(value))
+         ? { kind: "datetime", iso: value }
+         : { kind: "untranslated", raw: raw(value) };
++    case "role": {
++      if (typeof value !== "string" || !ROLE_CODE.test(value)) return { kind: "untranslated", raw: raw(value) };
++      const text = t(`transformations.audit.role.${value}`, { defaultValue: "" });
++      return text ? { kind: "label", text, code: value } : { kind: "untranslated", raw: value };
++    }
++    case "scope": {
++      const v = value as { type?: unknown; id?: unknown };
++      return typeof v === "object" &&
++        typeof v.type === "string" &&
++        (AUDIT_SCOPE_TYPES as readonly string[]).includes(v.type) &&
++        typeof v.id === "string" &&
++        v.id !== ""
++        ? { kind: "scope", scopeType: v.type as ScopeType, id: v.id }
++        : { kind: "untranslated", raw: raw(value) };
++    }
+   }
+ }
+ 
+diff --git a/apps/web/src/pages/transformations/TransformationDetailPage.tsx b/apps/web/src/pages/transformations/TransformationDetailPage.tsx
+index 639c6da..91e2c6b 100644
+--- a/apps/web/src/pages/transformations/TransformationDetailPage.tsx
++++ b/apps/web/src/pages/transformations/TransformationDetailPage.tsx
+@@ -2,13 +2,13 @@
+ // readiness, North Star, owners, outcome health, benefits, key decisions, next required action. Elements whose records
+ // arrive in later stages show Unknown (never 0 or green). Archive needs a reason and If-Match.
+ import { useQueryClient } from "@tanstack/react-query";
+-import { useState } from "react";
++import { useState, type ReactNode } from "react";
+ import { useTranslation } from "react-i18next";
+ import { Link, useLocation, useParams } from "react-router";
+ import { ApiError, api } from "../../api/client.ts";
+ import { keys, useTransformation, useTransformationAudit } from "../../api/queries.ts";
+ import type { Transformation } from "../../api/types.ts";
+-import { useForwardArrow, useLocale } from "../../app/locale.ts";
++import { localName, useForwardArrow, useLocale } from "../../app/locale.ts";
+ import { ancestryOf, canOn, type PermissionTarget } from "../../auth/permissions.ts";
+ import { useMe } from "../../auth/session.tsx";
+ import { HealthChip, LifecycleChip, Unknown } from "../../components/Badges.tsx";
+@@ -17,7 +17,7 @@ import { Icon } from "../../components/Icon.tsx";
+ import { PageHeader, usePageTitle } from "../../components/Page.tsx";
+ import { ReasonDialog } from "../../components/ReasonDialog.tsx";
+ import { EmptyState, NoPermissionState, QueryState } from "../../components/States.tsx";
+-import { describeAuditChanges, type AuditValue } from "../../lib/auditChanges.ts";
++import { describeAuditAction, describeAuditChanges, type AuditValue } from "../../lib/auditChanges.ts";
+ import { formatDateTime } from "../../lib/format.ts";
+ import { isNoPermission } from "../../lib/problem.ts";
+ import { BusinessUnitName, PhaseStepper, UserName, useBusinessUnitIndex } from "./common.tsx";
+@@ -381,12 +381,13 @@ function AuditTrail({ tr }: { tr: Transformation }) {
+                     <tr key={e.id}>
+                       <td>{formatDateTime(e.occurredAt, locale, tr.timezone)}</td>
+                       <td>
+-                        {t(`transformations.audit.actions.${e.action.replace(/\./g, "_")}`, {
+-                          defaultValue: "",
+-                        }) || (
+-                          <bdi dir="ltr" className="code">
+-                            {e.action}
+-                          </bdi>
++                        {describeAuditAction(t, e.action, e.changes) ?? (
++                          <>
++                            <bdi dir="ltr" className="code">
++                              {e.action}
++                            </bdi>{" "}
++                            <span className="muted small">({t("transformations.audit.untranslatedAction")})</span>
++                          </>
+                         )}
+                       </td>
+                       <td>
+@@ -414,8 +415,8 @@ function AuditTrail({ tr }: { tr: Transformation }) {
+                                     </span>
+                                   </>
+                                 )}
+-                                : <AuditValueView value={c.from} tz={tr.timezone} /> {arrow}{" "}
+-                                <AuditValueView value={c.to} tz={tr.timezone} />
++                                : <AuditValueView value={c.from} tz={tr.timezone} transformationId={tr.id} /> {arrow}{" "}
++                                <AuditValueView value={c.to} tz={tr.timezone} transformationId={tr.id} />
+                               </li>
+                             ))}
+                           </ul>
+@@ -449,9 +450,19 @@ function AuditTrail({ tr }: { tr: Transformation }) {
+ }
+ 
+ /** One side of an audited change, localized (F-DG1-005). Untranslated codes stay visible, LTR-isolated and marked. */
+-export function AuditValueView({ value, tz }: { value: AuditValue; tz: string }) {
++export function AuditValueView({
++  value,
++  tz,
++  transformationId,
++}: {
++  value: AuditValue;
++  tz: string;
++  /** The transformation whose trail this is: a scope on it reads "this transformation". */
++  transformationId?: string;
++}) {
+   const { t } = useTranslation();
+   const locale = useLocale();
++  const me = useMe();
+   const bu = useBusinessUnitIndex();
+   switch (value.kind) {
+     case "none":
+@@ -479,6 +490,30 @@ export function AuditValueView({ value, tz }: { value: AuditValue; tz: string })
+       );
+     case "datetime":
+       return <bdi>{formatDateTime(value.iso, locale, tz) ?? value.iso}</bdi>;
++    case "scope": {
++      const type = t(`admin.scopeType.${value.scopeType}`);
++      let name: ReactNode;
++      if (value.scopeType === "business_unit") name = <BusinessUnitName id={value.id} index={bu.byId} />;
++      else if (value.scopeType === "organization")
++        name =
++          value.id === me.organization.id ? (
++            localName(me.organization, locale)
++          ) : (
++            <Unknown hint={t("common.value.notVisible")} />
++          );
++      else if (value.id === transformationId) name = t("transformations.audit.value.thisTransformation");
++      else
++        name = (
++          <bdi dir="ltr" className="code">
++            {value.id}
++          </bdi>
++        );
++      return (
++        <bdi>
++          {type}: {name}
++        </bdi>
++      );
++    }
+     case "untranslated":
+       return (
+         <span>
+diff --git a/apps/web/src/pages/transformations/common.tsx b/apps/web/src/pages/transformations/common.tsx
+index 079d1a0..d2f4967 100644
+--- a/apps/web/src/pages/transformations/common.tsx
++++ b/apps/web/src/pages/transformations/common.tsx
+@@ -33,11 +33,17 @@ export function BusinessUnitName({ id, index }: { id: string; index: ReadonlyMap
+   );
+ }
+ 
+-/** A user's display name; "Not assigned" for null, Unknown when the caller may not read the user. */
++/**
++ * A user's display name; "Not assigned" for null, Unknown when the caller may not read the user. The signed-in user's
++ * own name comes from the session (no user.read needed), e.g. the creator in a derived-assignment audit event.
++ */
+ export function UserName({ id }: { id: string | null }) {
+   const { t } = useTranslation();
+-  const q = useUser(id);
++  const me = useMe();
++  const self = id !== null && id === me.user.id;
++  const q = useUser(self ? null : id);
+   if (!id) return <span className="muted">{t("common.value.notAssigned")}</span>;
++  if (self) return <span>{me.user.displayName}</span>;
+   if (q.isPending) return <span className="muted">{t("common.state.loading")}</span>;
+   if (q.data) return <span>{q.data.displayName}</span>;
+   return <Unknown hint={t("common.value.notVisible")} />;
+diff --git a/apps/web/src/pages/transformations/transformations.test.tsx b/apps/web/src/pages/transformations/transformations.test.tsx
+index 3702c2e..3b806c0 100644
+--- a/apps/web/src/pages/transformations/transformations.test.tsx
++++ b/apps/web/src/pages/transformations/transformations.test.tsx
+@@ -3,11 +3,13 @@
+ //    localized "created, but you cannot open it" explanation instead of a dead "Not found" (Arabic RTL and English);
+ //    a plain 404 / 403 without a just-created record still shows the correct localized message.
+ //  - F-DG1-005: the audit trail's Changes column shows localized field and value labels, not raw keys or enum codes.
++//  - F-DG1-008: the derived creator assignment (F-DG1-106) on a new record's trail shows a localized action, field,
++//    role, user and scope labels in English and Arabic, with no raw action code, camelCase key, JSON or role code.
+ //  - F-DG1-001 (T-DG1-FE3): the edit form never offers `closed` (the API refuses it in P1; G6 governs closure), and
+ //    the status hint no longer promises a close transition (English LTR and Arabic RTL).
+ import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
+ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+-import { TRANSFORMATION_STATUS_TRANSITIONS, type Permission, type TransformationStatus } from "@mth/shared";
++import { ROLES, TRANSFORMATION_STATUS_TRANSITIONS, type Permission, type TransformationStatus } from "@mth/shared";
+ import type { AuditEvent } from "../../api/types.ts";
+ import { catalogues, createI18n } from "../../i18n/index.ts";
+ import {
+@@ -174,6 +176,9 @@ describe("truly out-of-scope records keep the correct localized message", () =>
+   });
+ });
+ 
++/** A different user than the signed-in one (USER_ID), so the name is fetched from /users/{id}. */
++const LEAD_ID = "01920000-0000-7000-9000-000000000202";
++
+ function auditEvent(overrides: Partial<AuditEvent>): AuditEvent {
+   return {
+     id: "01920000-0000-7000-9000-0000000005a1",
+@@ -209,7 +214,7 @@ const AUDIT = [
+     action: "transformation.update",
+     priorVersion: 1,
+     newVersion: 2,
+-    changes: { status: { from: "active", to: "closed" }, lead_user_id: { from: null, to: USER_ID } },
++    changes: { status: { from: "active", to: "closed" }, lead_user_id: { from: null, to: LEAD_ID } },
+   }),
+   auditEvent({
+     changes: {
+@@ -227,7 +232,7 @@ function renderAuditTrail(locale: "en" | "ar") {
+   mockApi(
+     meRoute(makeMe(OFFICE_GRANTS, { preferredLocale: locale })),
+     buRoute,
+-    route("GET", new RegExp(`/api/v1/users/${USER_ID}$`), () => ({
++    route("GET", new RegExp(`/api/v1/users/${LEAD_ID}$`), () => ({
+       status: 200,
+       body: { ...makeMe([]).user, displayName: "Synthetic Lead" },
+     })),
+@@ -343,3 +348,136 @@ describe("P1 close rule in the edit form (F-DG1-001, T-DG1-FE3)", () => {
+     });
+   }
+ });
++
++// The exact event apps/api access/assignments.ts (grantCreatorTransformationRoles) writes on the new record's trail
++// when a business-unit-scoped Transformation Lead creates it (F-DG1-106), followed by the transformation's own create.
++const SOURCE_ASSIGNMENT_ID = "01920000-0000-7000-8000-0000000000b1";
++const LEAD_CREATED_AUDIT = [
++  auditEvent({
++    id: "01920000-0000-7000-9000-0000000005b2",
++    seq: "2",
++    action: "scoped_assignment.create",
++    recordType: "scoped_assignment",
++    recordId: "01920000-0000-7000-9000-0000000006a1",
++    reason: `Creator of transformation TR-0001: TL carried over from business-unit assignment ${SOURCE_ASSIGNMENT_ID}`,
++    changes: {
++      userId: { from: null, to: USER_ID },
++      roleCode: { from: null, to: "TL" },
++      scope: { from: null, to: { type: "transformation", id: TR_ID } },
++      derivedFromAssignmentId: { from: null, to: SOURCE_ASSIGNMENT_ID },
++      effectiveTo: { from: null, to: null },
++    },
++  }),
++  auditEvent({
++    id: "01920000-0000-7000-9000-0000000005b1",
++    changes: { code: { from: null, to: "TR-0001" }, status: { from: null, to: "draft" } },
++  }),
++];
++
++function renderLeadCreatedTrail(locale: "en" | "ar") {
++  // The real TL role (packages/shared ROLES.TL, incl. audit.read), granted at the business unit only.
++  // The real TL role (packages/shared ROLES.TL, incl. audit.read) at the business unit, plus the derived
++  // transformation-scope TL assignment that this very event records (it is what lets the creator open the record).
++  const tl = [...ROLES.TL.permissions] as Permission[];
++  const me = makeMe(
++    [
++      { ...TL_BU_GRANTS[0]!, permissions: tl },
++      { scope: { type: "transformation" as const, id: TR_ID }, inheritsDownward: false, permissions: tl },
++    ],
++    { preferredLocale: locale },
++  );
++  const users = vi.fn(() => ({ status: 403, body: problem(403, "forbidden") }));
++  mockApi(
++    meRoute(me),
++    buRoute,
++    route("GET", /\/api\/v1\/users\//, users),
++    route("GET", /\/audit/, () => ({ status: 200, body: { items: LEAD_CREATED_AUDIT, nextCursor: null } })),
++    route("GET", /\/api\/v1\/transformations\/[^/?]+$/, () => ({ status: 200, body: makeTransformation() })),
++  );
++  renderApp(`/transformations/${TR_ID}`, { i18n: createI18n(locale) });
++  return { users };
++}
++
++async function auditRows(title: string): Promise<{ action: string; changes: string }[]> {
++  const region = await screen.findByRole("region", { name: title });
++  await waitFor(() => expect(within(region).getAllByRole("row").length).toBe(3));
++  return within(region)
++    .getAllByRole("row")
++    .slice(1)
++    .map((row) => {
++      const cells = row.querySelectorAll("td");
++      return { action: cells[1]!.textContent ?? "", changes: cells[4]!.textContent ?? "" };
++    });
++}
++
++const RAW_ASSIGNMENT_TOKENS = [
++  "scoped_assignment",
++  "userId",
++  "roleCode",
++  "effectiveTo",
++  "derivedFromAssignmentId",
++  '"type"',
++  "{",
++  USER_ID,
++  TR_ID,
++];
++
++describe("derived creator assignment on the audit trail (F-DG1-008)", () => {
++  it("English: localized action, fields, role, user and scope; nothing raw or marked untranslated", async () => {
++    const { users } = renderLeadCreatedTrail("en");
++    const [assignment, create] = await auditRows("Audit trail");
++    expect(assignment!.action).toBe("Role granted to the creator (carried over from a business-unit assignment)");
++    expect(create!.action).toBe("Created");
++    const c = assignment!.changes;
++    expect(c).toContain("User: None → Synthetic Test User");
++    expect(c).toContain("Role: None → Transformation Lead");
++    expect(c).toContain("Scope: None → Transformation: this transformation");
++    expect(c).toContain("Effective until: None → None");
++    expect(c).toContain(`Carried over from assignment: None → ${SOURCE_ASSIGNMENT_ID}`);
++    expect(c).not.toMatch(/without a translation/);
++    for (const raw of [...RAW_ASSIGNMENT_TOKENS, ": None → TL"])
++      expect(`${assignment!.action}\n${c}`).not.toContain(raw);
++    // The creator's own name comes from the session: a BU-scoped Lead holds no user.read.
++    expect(users).not.toHaveBeenCalled();
++  });
++
++  it("Arabic (RTL): the same event with Arabic labels and the glossary role name", async () => {
++    renderLeadCreatedTrail("ar");
++    const [assignment, create] = await auditRows("سجل التدقيق");
++    expect(document.documentElement.dir).toBe("rtl");
++    expect(assignment!.action).toBe("إسناد دور لمُنشئ السجل (منقول من إسناد على مستوى وحدة العمل)");
++    expect(create!.action).toBe("إنشاء");
++    const c = assignment!.changes;
++    expect(c).toContain("المستخدم: لا يوجد ← Synthetic Test User");
++    expect(c).toContain("الدور: لا يوجد ← قائد التحوّل");
++    expect(c).toContain("النطاق: لا يوجد ← التحوّل: هذا التحوّل");
++    expect(c).toContain("يسري حتى: لا يوجد ← لا يوجد");
++    expect(c).toContain(`منقول من الإسناد: لا يوجد ← ${SOURCE_ASSIGNMENT_ID}`);
++    expect(c).not.toMatch(/بلا ترجمة/);
++    for (const raw of [...RAW_ASSIGNMENT_TOKENS, "← TL"]) expect(`${assignment!.action}\n${c}`).not.toContain(raw);
++  });
++
++  it("an action the catalogue does not know stays readable and is explicitly marked (en and ar)", async () => {
++    for (const [locale, title, marker] of [
++      ["en", "Audit trail", "(action without a translation)"],
++      ["ar", "سجل التدقيق", "(إجراء بلا ترجمة)"],
++    ] as const) {
++      const me = makeMe(OFFICE_GRANTS, { preferredLocale: locale });
++      mockApi(
++        meRoute(me),
++        buRoute,
++        route("GET", /\/audit/, () => ({
++          status: 200,
++          body: { items: [auditEvent({ action: "future_record.reopen" })], nextCursor: null },
++        })),
++        route("GET", /\/api\/v1\/transformations\/[^/?]+$/, () => ({ status: 200, body: makeTransformation() })),
++      );
++      renderApp(`/transformations/${TR_ID}`, { i18n: createI18n(locale) });
++      const region = await screen.findByRole("region", { name: title });
++      await waitFor(() => expect(within(region).getAllByRole("row").length).toBe(2));
++      const action = within(region).getAllByRole("row")[1]!.querySelectorAll("td")[1]!.textContent;
++      expect(action).toBe(`future_record.reopen ${marker}`);
++      cleanup();
++    }
++  });
++});

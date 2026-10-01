@@ -3,6 +3,10 @@
 // ISO timestamps). This module turns each change into a localized field label and typed values so the screen shows
 // catalogue labels for domain values. Anything without a catalogue label falls back to the raw key/code, LTR-isolated
 // and explicitly marked "without a translation": never blank, never a guessed label.
+//
+// F-DG1-008: a transformation's trail also carries the role-assignment events written on it (`scoped_assignment.*`,
+// e.g. the derived creator assignment of F-DG1-106: userId, roleCode, scope, effectiveTo, derivedFromAssignmentId),
+// so their action, fields and values (user, role, scope) have catalogue labels too.
 import type { TFunction } from "i18next";
 
 /** How one side (from / to) of a change is shown. */
@@ -18,7 +22,13 @@ export type AuditValue =
   | { readonly kind: "code"; readonly text: string }
   | { readonly kind: "user"; readonly id: string }
   | { readonly kind: "businessUnit"; readonly id: string }
+  /** The scope of a role assignment ({ type, id }): shown as the scope type plus the scope's name. */
+  | { readonly kind: "scope"; readonly scopeType: ScopeType; readonly id: string }
   | { readonly kind: "datetime"; readonly iso: string };
+
+/** Scope types a role assignment can carry (ADR-0006; packages/shared assignment schema). */
+export const AUDIT_SCOPE_TYPES = ["organization", "business_unit", "transformation"] as const;
+export type ScopeType = (typeof AUDIT_SCOPE_TYPES)[number];
 
 export interface AuditFieldChange {
   /** The field key as recorded by the API. */
@@ -31,7 +41,7 @@ export interface AuditFieldChange {
 
 type ValueKind =
   | { readonly kind: "enum"; readonly prefix: string }
-  | { readonly kind: "text" | "code" | "user" | "businessUnit" | "datetime" };
+  | { readonly kind: "text" | "code" | "user" | "businessUnit" | "datetime" | "role" | "scope" };
 
 /** Audited transformation fields (apps/api transformations repository) and how their values are presented. */
 const FIELDS: Readonly<Record<string, ValueKind>> = {
@@ -50,7 +60,40 @@ const FIELDS: Readonly<Record<string, ValueKind>> = {
   business_unit_id: { kind: "businessUnit" },
   archived_at: { kind: "datetime" },
   archive_reason: { kind: "text" },
+  // Role-assignment events (apps/api access/assignments.ts) shown on the transformation they were written on.
+  user_id: { kind: "user" },
+  role_code: { kind: "role" },
+  scope: { kind: "scope" },
+  effective_from: { kind: "datetime" },
+  effective_to: { kind: "datetime" },
+  derived_from_assignment_id: { kind: "code" },
+  revoked_at: { kind: "datetime" },
 };
+
+/** Catalogue key of an audit action ("transformation.create" -> "...actions.transformation_create"), or null. */
+export function auditActionKey(action: string, changes?: Readonly<Record<string, unknown>> | null): string | null {
+  // Only a plain dotted code may become a catalogue key (it must not address another catalogue entry).
+  if (!/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$/.test(action)) return null;
+  // The creator assignment carried over from a business-unit grant (F-DG1-106) reads differently from a manual grant.
+  const derived =
+    action === "scoped_assignment.create" &&
+    changes !== null &&
+    changes !== undefined &&
+    "derivedFromAssignmentId" in changes;
+  return `transformations.audit.actions.${action.replace(/\./g, "_")}${derived ? "_derived" : ""}`;
+}
+
+/** Localized action label, or null when the catalogue has none (the caller shows the raw code, marked). */
+export function describeAuditAction(
+  t: TFunction,
+  action: string,
+  changes?: Readonly<Record<string, unknown>> | null,
+): string | null {
+  const key = auditActionKey(action, changes);
+  return key ? t(key, { defaultValue: "" }) || null : null;
+}
+
+const ROLE_CODE = /^[A-Z][A-Z_]*$/;
 
 /** `archivedAt` -> `archived_at`; snake_case keys are returned unchanged. */
 export function auditFieldKey(field: string): string {
@@ -85,9 +128,26 @@ export function describeAuditValue(t: TFunction, field: string, value: unknown):
         ? { kind: "businessUnit", id: value }
         : { kind: "untranslated", raw: raw(value) };
     case "datetime":
+      // The API records a revocation time as "now" (the event's own time, shown in the "When" column).
+      if (value === "now") return { kind: "label", text: t("transformations.audit.value.eventTime"), code: "now" };
       return typeof value === "string" && !Number.isNaN(Date.parse(value))
         ? { kind: "datetime", iso: value }
         : { kind: "untranslated", raw: raw(value) };
+    case "role": {
+      if (typeof value !== "string" || !ROLE_CODE.test(value)) return { kind: "untranslated", raw: raw(value) };
+      const text = t(`transformations.audit.role.${value}`, { defaultValue: "" });
+      return text ? { kind: "label", text, code: value } : { kind: "untranslated", raw: value };
+    }
+    case "scope": {
+      const v = value as { type?: unknown; id?: unknown };
+      return typeof v === "object" &&
+        typeof v.type === "string" &&
+        (AUDIT_SCOPE_TYPES as readonly string[]).includes(v.type) &&
+        typeof v.id === "string" &&
+        v.id !== ""
+        ? { kind: "scope", scopeType: v.type as ScopeType, id: v.id }
+        : { kind: "untranslated", raw: raw(value) };
+    }
   }
 }
 
