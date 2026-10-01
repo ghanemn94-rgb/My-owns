@@ -683,7 +683,7 @@
       "id": "DG1",
       "stage": "P1",
       "name": "Architecture and working foundation",
-      "state": "REVIEWING",
+      "state": "VERIFYING",
       "depends_on": [
         "DG0"
       ],
@@ -887,6 +887,18 @@
             "qa-verifier": "docs/delivery/reviews/DG1/round-15/qa-verifier.json"
           },
           "note": "DG1 round 15: re-review after the round-14 all-PASS that raised two Low findings. Verify F-DG1-136 (the integration project now sets hookTimeout=30_000, so the afterAll teardown — DDL + api.close() + dropScratchDatabase's own 10s wait — no longer hits vitest's default 10s hook budget under host contention) and F-DG1-217 (the lint's syntaxErrors() is declaration-file-safe: a no-emit one-file program + getSyntacticDiagnostics for .d.ts/.d.mts/.d.cts, so the lint no longer throws a transpile Debug Failure and .d.ts files stay scanned). Re-confirm no regression on Node 22 and Node 24; plus the 12 DG1-final requirements, on the same candidate."
+        },
+        {
+          "round": 16,
+          "candidate_id": "sha256:56f3eb885c6cf3db406e280d232e48ebcefddad173107a744bb9b8ca74fc2b4c",
+          "frozen_at": "2026-10-01T18:07:03Z",
+          "source_commit": "13418b8db10aa045c466a1c9d2d06dc03f92cedd",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG1/round-16/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG1/round-16/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG1/round-16/qa-verifier.json"
+          },
+          "note": "DG1 round 16 (gate round): re-review after the round-15 all-PASS that raised two Low findings (F-DG1-137, F-DG1-218; single root cause). Verify the module lint declaration-file branch now follows TypeScript own classification via the public SourceFile.isDeclarationFile (isDeclarationFileName helper), covering allowArbitraryExtensions *.d.<ext>.ts (styles.d.css.ts/data.d.json.ts/x.d.ts.ts); the hand-rolled DECLARATION_FILE regex removed; no declaration-file name reaches ts.transpileModule. All three PASS on candidate 56f3eb88; F-DG1-137/218 CLOSED_VERIFIED by domain, code-security and qa; no new findings. Re-confirmed on Node 22 and Node 24 plus the 12 DG1-final requirements."
         }
       ],
       "gate_record": "docs/delivery/gates/DG1.json",
@@ -905,6 +917,11 @@
           "state": "REVIEWING",
           "at": "2026-10-01T06:25:00Z",
           "note": "P1 implementation integrated (solution-architect ADRs/ERD/OpenAPI/skeleton; backend API/auth/audit/worker + branding endpoint; frontend bilingual shell/tokens; devops Docker/Compose/CI/Keycloak; qa acceptance suites; analyst register). Orchestrator: REQ-DLV-042 installer (D-046), A26 first defect drill, vitest/ci/prettier integration, register IMPLEMENTED (12/12) + D-047. Prefreeze all PASS. Candidate frozen sha256:7fcc4943 (source 85e5bbd) for review round 1."
+        },
+        {
+          "state": "VERIFYING",
+          "at": "2026-10-01T18:20:00Z",
+          "note": "Round 16 (gate round): domain PASS, code-security PASS (verified F-DG1-137/218 CLOSED_VERIFIED, 0 new), qa PASS (verified F-DG1-137/218 CLOSED_VERIFIED, 0 new) on candidate sha256:56f3eb88 (source 13418b8). All DG1 findings terminal: F-DG1-137/218 CLOSED_VERIFIED; only the three DG0 ACCEPTED_OBSERVATION remain (previous gate). Handing to release-auditor."
         }
       ]
     },
