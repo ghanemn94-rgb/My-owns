@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG1-230",
+      "stage_id": "DG1",
+      "requirement": "REQ-S19-004",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Three database views created by the P1 migrations (actor_display, business_unit_closure, scope_node) are not documented in the data dictionary or the ERD",
+      "reproduction": "In a disposable clone of candidate sha256:25c97340… (commit 37ec374): tests/qa/support/with-pg.sh bash docs/delivery/test-evidence/DG1/qa/round-1/26-schema-vs-dictionary.sh. This migrates a fresh PostgreSQL 16 database and compares information_schema.columns (schema public) with the '## <table>' sections of docs/architecture/data-dictionary.md. Then run: grep -niE 'closure|view|scope_node|actor_display' docs/architecture/data-dictionary.md docs/architecture/erd.md. The views are created in packages/db/migrations/0001_identity_access.sql:62 (actor_display) and :93 (business_unit_closure, a recursive view capped at depth < 10), and in 0002_transformation.sql:48 (scope_node, GRANT SELECT to mth_app). The access policy uses business_unit_closure and scope_node (apps/api/src/modules/access/policy.ts, assignments.ts).",
+      "expected": "REQ-S19-004 (IT handover data design; A18: 'the ERD matches the migrated schema'): every schema object the migrations create appears in the ERD/data dictionary. That includes the read-model views the authorization policy depends on, with their purpose, owner module, grants and the depth-10 limit of the closure view.",
+      "actual": "Every public table and column is documented. The apparent column differences in the probe output are parser artefacts, explained in the log. Neither data-dictionary.md nor erd.md mentions the three views. Only routes.ts and the migration comments describe the closure depth limit (MAX_BU_DEPTH = 9). The data dictionary states 'depth is limited to 10' without naming the view.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-1/26-schema-vs-dictionary.log",
+        "docs/delivery/test-evidence/DG1/qa/round-1/26-schema-vs-dictionary.sh",
+        "packages/db/migrations/0001_identity_access.sql",
+        "packages/db/migrations/0002_transformation.sql",
+        "docs/architecture/data-dictionary.md",
+        "docs/architecture/erd.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/qa-verifier.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T21:05:00Z",
+          "status": "OPEN"
+        }
+      ],
+      "fix_revision": null,
+      "verification": null
+    },
+    {
+      "id": "F-DG1-231",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-033",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Register rows REQ-DLV-033 and REQ-S19-004 cite evidence from another candidate (991d3241, development history) and make IMPLEMENTED conditional on findings that do not exist in this findings register",
+      "reproduction": "grep -E '^(REQ-DLV-033|REQ-S19-004),' docs/delivery/requirements.csv. Both rows list evidence under docs/delivery/test-evidence/DG1/qa/round-2/ produced on candidate 991d3241 (commit f32c705), not on the frozen clean re-gate candidate 25c97340. The REQ-DLV-033 notes say: 'Not yet green on that candidate: the real-stack e2e suite (11-e2e.log: 1 failed …), F-DG1-208 (High, open) … CI images job (F-DG1-108/F-DG1-203, open) … This row's IMPLEMENTED status stands only if DG1 round 3 closes those findings.' Then: node -e 'const f=require(\"./docs/delivery/findings.json\");console.log(f.findings.filter(x=>x.stage_id===\"DG1\").length)' prints 0, so the findings register has no F-DG1-108/203/208 record whose closure could satisfy that condition.",
+      "expected": "On the clean re-gate, the register's evidence and notes for DG1 rows point at evidence for the frozen candidate (for example this round's QA evidence) and contain no conditions that depend on findings which are absent from docs/delivery/findings.json. Alternatively, the decision record states that development-history findings are out of scope for this register.",
+      "actual": "The conditional wording and the cross-candidate evidence remain. On the frozen candidate the substance is green: e2e is 18/18 for the journeys in EN and AR, integration is 200/200 in two runs, and A18 PASS (this round's logs 14, 10, 11 and 18). So this is a traceability defect in the delivery record, not a product defect. The CI images job's test-only keycloak digest (D-049) belongs to DG7 and was not checked here.",
+      "evidence": [
+        "docs/delivery/requirements.csv",
+        "docs/delivery/findings.json",
+        "docs/delivery/test-evidence/DG1/qa/round-1/14-e2e-journeys.log",
+        "docs/delivery/test-evidence/DG1/qa/round-1/10-integration-run1.log",
+        "docs/delivery/test-evidence/DG1/qa/round-1/18-a18-clean-start.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T21:05:00Z",
+          "status": "OPEN"
+        }
+      ],
+      "fix_revision": null,
+      "verification": null
+    }
+  ]
+}
