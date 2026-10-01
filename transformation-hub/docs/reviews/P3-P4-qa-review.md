@@ -453,7 +453,8 @@ G1 decision …" (`422 perimeter.version.decision_no_subject`), lead-confirmed, 
 Written by the implementer (`ux-frontend-engineer`, implementation mode) in its own context; the reviewer's text above is
 unchanged. Base: `9a93951` (branch head, with the P3 fixes merged after `5bf274b`); every finding was re-checked on that
 code before it was fixed. Commits on `worktree-agent-a5f28ccb181c2315d`: `f413c83`, `7743e14`, `1fa5a4f`, `340bb70`,
-`ca91e00`, `f35de39`, `bd37df9`, and the documentation commit that adds this section.
+`ca91e00`, `f35de39`, `bd37df9`, `33024b7` (this section), the merge of the P3/P4 re-review fixes `939f4e8` and the
+final documentation commit.
 
 How the server texts are made translatable (module guide §2): a sentence computed on read (reconciliation finding) or stored
 in a JSON column (impact entries) carries its codes (`<field>I18n`). Sentences stored as **plain text in tables shared by
@@ -478,7 +479,7 @@ reorder the sentence.
 | **QA-P34-01f** | **Fixed** | Impact entries store `summaryI18n` (`IMPACT_MESSAGES_EN`, `withheldImpactEntry`); item history reasons written from `PERIMETER_HISTORY_MESSAGES_EN` and returned with `reasonI18n` → `packages/domain/src/perimeter.ts`, `apps/api/src/modules/carveout/{perimeter,transfers}.service.ts`; `components/carveout/bits.tsx`, `perimeter/items/[itemId]/page.tsx` | domain round-trip of every template; API "f: impact summaries and the record-history reasons of every demo item carry codes …" (48 summaries, 18 reasons); e2e "QA-P34-01f: … (fixed, regression)" (0/13) |
 | **QA-P34-01g** | **Fixed** | Workstream labels of the readiness screens and forms localized (`useScopeLabels`) → `readiness/_components/{rd,plan-form,tsa-form}.tsx`, `readiness/checks/page.tsx` | e2e "QA-P34-01g: … (fixed, regression)" |
 | **QA-P34-01h** | **Fixed** | `KpiDto.definitionAr` = the pinned template version's Arabic while the stored definition is the template's English (as gate purposes; KPI definitions have no edit route) → `apps/api/src/modules/finance/kpis.service.ts`, `packages/contracts/src/finance.ts`; KPI page → `finance/kpis/[kpiId]/page.tsx` | API "definitionAr = template Arabic; null for a KPI defined by the team or whose definition differs from the template"; e2e "QA-P34-01h: … (fixed, regression)" |
-| QA-P34-01, same class (found on re-check; absent from the demo data the crawler visited) | **Fixed** | Cutover plan history: the rationales the system writes (GO flagged, check bound / unbound) from `CUTOVER_HISTORY_MESSAGES_EN`, returned with `rationaleI18n` only on those entries (a person's rationale has no codes and is marked `data-user-text`); legal-entity history reasons from `NEWCO_HISTORY_MESSAGES_EN` with `reasonI18n` → `readiness/{checks.service,cutover.service,readiness.support}.ts`, `newco/legal-entities.service.ts`, `newco/entities/[entityId]/page.tsx` | API "rebind: the check_unbound / check_bound rationales and the entity history reasons are recovered as codes …"; domain round-trip |
+| QA-P34-01, same class (found on re-check; absent from the demo data the crawler visited) | **Fixed** | Cutover plan history: the rationales the system writes (GO flagged, check bound / unbound, site changed) from `CUTOVER_HISTORY_MESSAGES_EN`, returned with `rationaleI18n` only on those entries (a person's rationale has no codes and is marked `data-user-text`); legal-entity history reasons from `NEWCO_HISTORY_MESSAGES_EN` with `reasonI18n` → `readiness/{checks.service,cutover.service,readiness.support}.ts`, `newco/legal-entities.service.ts`, `newco/entities/[entityId]/page.tsx`. After merging the P3/P4 re-review fixes (merge `939f4e8`): their new stored texts use the same mechanism — the system transfer notes (evidence reaction DOM-P34R-06, scope-entry reset DOM-P34R-05: `TRANSFER_NOTE_MESSAGES_EN`, `noteI18n` only on those records, item page transfer history), the item history "Transfer evidence invalidated: …", the plan history `site_changed` and the GO flagged by binding an open check (with the blocker's Arabic title) | API "rebind: the check_unbound / check_bound rationales and the entity history reasons are recovered as codes …"; domain round-trip of every table (incl. the transfer notes, parsed only when the system wrote them) |
 | **QA-P34-02** | **Fixed** | 27 P3 screen states added to `e2e/tests/a11y.spec.ts` (the 8 perimeter tabs, item and item at 390 px, agreement, NewCo tabs / entity / requirement, readiness overview / checks / check / cutover / plan as PM and sponsor / TSA register / TSA and TSA at 390 px / waivers, the perimeter-create and record-test dialogs); both locales. Not added: the figure, reconciliation and model-version details of P4 — the demo sandbox has none and the scan is read-only (covered by this review's crawler on a fresh project) | a11y.spec.ts: 54 P3 scans passed (single run) — see the runs below |
 | **QA-P34-03** | **Fixed** | The item page grids use `grid-cols-1` (`minmax(0, 1fr)`): the consents table scrolls inside its own region instead of growing the implicit `auto` track → `perimeter/items/[itemId]/page.tsx` | e2e "QA-P34-03: … (fixed, regression)" (overflow 0 px in ar and en); the crawler's 390 px pass no longer sets the page aside (63 screens, 0 overflow) |
 | **QA-P34-04** | **Fixed** | `docs/requirements/status-evidence.yaml`: REQ-UX-010 → **Tested** (AT-07 + J5 "add perimeter item and see reconciliation update"); REQ-LCY-007 stays Tested with the cockpit E2E it lacked — new `p3-carveout.spec.ts` "(e) REQ-LCY-007 / AT-06: the cockpit shows the NewCo incorporated …" (cockpit: incorporation `incorporated_verified` next to perimeter transfer `transfer_in_progress`); REQ-SET-012 lowered to **Implemented** (no E2E drives the perimeter approval; gap stated); REQ-PHS-005 evidence refreshed (P3 screens now in the axe scan, reviews run; stays Implemented until the P3 gate report); REQ-ARC-008 / REQ-UX-002 notes | `apply_status.py --check` / apply (see below) |
@@ -532,5 +533,21 @@ $ GITLEAKS=…/gitleaks bash scripts/ops/secret-scan.sh tree → PASS
 
 Screenshots: the regenerated tracked screenshots were restored; committed are the new `fixed-qa-p34-*.png` (5),
 `p3/cockpit-incorporated-transfer-in-progress-en.png` and `p3/perimeter-reconciliation-ar.png` (now with Arabic details).
+After merging the P3/P4 re-review fixes (`939f4e8`, conflicts in `perimeter.service.ts`, `checks.service.ts` and the
+evidence overlay resolved keeping both sides; their new stored texts moved onto the templates), everything was run again on
+the merged tree:
+
+```
+$ pnpm lint → exit 0 (237 server message codes); pnpm typecheck → exit 0
+$ (packages/domain) npx vitest run → Tests 470 passed; (packages/contracts) → Tests 105 passed
+$ (apps/api) … pnpm test   (at 939f4e8)
+  Test Files  130 passed (130)
+       Tests  1014 passed | 2 expected fail (1016)         Duration 1172.80s   EXIT 0
+$ (full Playwright suite, fresh database, at 939f4e8, same stack and J1 with the worker)
+  396 passed (43.3m)   EXIT 0      crawler: P3 [ar] 0 unclassified (11 DATA), P4 [ar] 0 unclassified (10 DATA), [en] 0,
+  390 px 0; J1–J5 and the QA-P34-07 regression passed; a11y-report.md regenerated identical (294 scans, 0 serious/critical)
+$ apply_status.py --check → OK (263 entries); apply → AT coverage 30/30;  secret scan (tree) → PASS
+```
+
 Not executed: CI on this branch (local runs only); manual screen-reader testing.
 
