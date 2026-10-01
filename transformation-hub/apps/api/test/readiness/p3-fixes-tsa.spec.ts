@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { closeApp, closePools, owner } from '../helpers';
-import { P, check, clock, createCheck, decisionOfType, drainWorker, insertSite, plusDays, runExpirySchedule, setupGovernance, setupProject, tsa, Gov, Personas } from './readiness-kit';
+import { P, approveTabledDecision, check, clock, createCheck, decisionOfType, drainWorker, insertSite, plusDays, runExpirySchedule, setupGovernance, setupProject, tsa, Gov, Personas } from './readiness-kit';
 
 /**
  * Fixes of the P3 domain review for TSA services and Day-1 descriptive fields (docs/reviews/P3-domain-review.md):
@@ -84,9 +84,11 @@ describe('DOM-P3-17 — TSA guards (code review; tests first) [REQ-TSA-002, busi
 
   it('a remedied breach returns the TSA to the state it had before the breach (extended stays extended)', async () => {
     const { id } = await approvedTsa('Extended bridge (synthetic)', plusDays(-60), plusDays(20));
-    const ext = await decisionOfType(projectId, p, gov, 'tsa_approval_or_extension');
+    // Extension flow (DOM-P34R2-01): the paper is tabled, the extension requested on it, then the paper is approved.
+    const ext = await decisionOfType(projectId, p, gov, 'tsa_approval_or_extension', { vote: false });
     let t = await tsa(p.pm, projectId, id);
     expect((await cmd(id, 'request-extension', { expectedVersion: t.version, decisionId: ext.id, proposedEndDate: plusDays(120), continuityPlan: 'Keep the bridge (synthetic)' })).status).toBe(201);
+    await approveTabledDecision(projectId, p, ext);
     t = await tsa(p.pm, projectId, id);
     expect((await cmd(id, 'record-extension', { expectedVersion: t.version })).status).toBe(201);
     t = await tsa(p.pm, projectId, id);
@@ -144,31 +146,43 @@ describe('DOM-P3-06 / DOM-P3-13 / DOM-P3-07 — what an approved extension decis
     expect(moved.body.code).toBe('tsa.extension.terms_bound');
     // The same terms again are accepted (idempotent); another decision may carry another date.
     expect((await cmd(id, 'request-extension', { expectedVersion: t.version, decisionId: d1.id, proposedEndDate: plusDays(120), continuityPlan: 'Keep the bridge (synthetic)' })).status).toBe(201);
-    const d2 = await decisionOfType(projectId, p, gov, 'tsa_approval_or_extension');
+    const d2 = await decisionOfType(projectId, p, gov, 'tsa_approval_or_extension', { vote: false });
     t = await tsa(p.pm, projectId, id);
     expect((await cmd(id, 'request-extension', { expectedVersion: t.version, decisionId: d2.id, proposedEndDate: plusDays(150), continuityPlan: 'Keep the bridge (synthetic)' })).status).toBe(201);
+    await approveTabledDecision(projectId, p, d2);
     t = await tsa(p.pm, projectId, id);
     const rec = await cmd(id, 'record-extension', { expectedVersion: t.version });
     expect(rec.status, JSON.stringify(rec.body)).toBe(201);
     expect((await tsa(p.pm, projectId, id)).endDate).toBe(plusDays(150));
   });
 
-  it('DOM-P3-13 (conservative, governance owner to confirm): the decision that approved the terms of TSA A does not back an extension of TSA B — nor the reverse', async () => {
+  // Implementer (DOM-P34R2-01): this test asserted the former rule 6 ("the same decision extends A itself" — the terms
+  // decision of A backed one extension of A). Rule 6 as amended (business-gates.md §6 rules 5–6): a decision that already
+  // has an outcome binds no extension terms, so A's terms decision backs no extension of A either; the extension of A is
+  // decided on its own paper. Renamed accordingly; the B and "reverse" parts are unchanged.
+  it('DOM-P3-13 / DOM-P34R2-01 (conservative, governance owner to confirm): the decision that approved the terms of TSA A backs no extension — of TSA B, nor afterwards of A — and a decision used for an extension of A approves no other TSA\'s terms', async () => {
     const a = await approvedTsa('Service A (synthetic)', plusDays(-30), plusDays(40));
     const b = await approvedTsa('Service B (synthetic)', plusDays(-30), plusDays(45));
     let t = await tsa(p.pm, projectId, b.id);
     const r = await cmd(b.id, 'request-extension', { expectedVersion: t.version, decisionId: a.termsDecisionId, proposedEndDate: plusDays(200), continuityPlan: 'Continuity for B (synthetic)' });
     expect(r.status).toBe(422);
     expect(r.body.code).toBe('tsa.extension.decision_other_tsa');
-    // The same decision extends A itself.
+    // A's terms decision was final before any extension was requested on it: it backs no extension of A either.
     t = await tsa(p.pm, projectId, a.id);
-    expect((await cmd(a.id, 'request-extension', { expectedVersion: t.version, decisionId: a.termsDecisionId, proposedEndDate: plusDays(200), continuityPlan: 'Continuity for A (synthetic)' })).status).toBe(201);
+    const own = await cmd(a.id, 'request-extension', { expectedVersion: t.version, decisionId: a.termsDecisionId, proposedEndDate: plusDays(200), continuityPlan: 'Continuity for A (synthetic)' });
+    expect(own.status, JSON.stringify(own.body)).toBe(422);
+    expect(own.body.code).toBe('tsa.extension.terms_after_outcome');
+    // A's extension on its own paper (tabled, requested, approved, recorded).
+    const ext = await decisionOfType(projectId, p, gov, 'tsa_approval_or_extension', { vote: false });
+    t = await tsa(p.pm, projectId, a.id);
+    expect((await cmd(a.id, 'request-extension', { expectedVersion: t.version, decisionId: ext.id, proposedEndDate: plusDays(200), continuityPlan: 'Continuity for A (synthetic)' })).status).toBe(201);
+    await approveTabledDecision(projectId, p, ext);
     // The reverse: a decision used for an extension of A does not approve the terms of another TSA.
     t = await tsa(p.pm, projectId, a.id);
     expect((await cmd(a.id, 'record-extension', { expectedVersion: t.version })).status).toBe(201);
     const c = await p.pm.post(`${P(projectId)}/tsa-services`, { name: 'Service C (synthetic)', scope: 'x (synthetic)', startDate: plusDays(-5), endDate: plusDays(90), ownerUserId: p.approver.userId, replacementService: 'y (synthetic)', exitMilestones: [{ title: 'z (synthetic)' }] });
     const neg = await cmd(c.body.id, 'transition', { expectedVersion: 1, command: 'start_negotiation' });
-    const ap = await cmd(c.body.id, 'approve', { expectedVersion: neg.body.version, decisionId: a.termsDecisionId });
+    const ap = await cmd(c.body.id, 'approve', { expectedVersion: neg.body.version, decisionId: ext.id });
     expect(ap.status).toBe(422);
     expect(['tsa.approve.decision_other_tsa', 'tsa.approve.decision_already_used']).toContain(ap.body.code);
   });
@@ -178,13 +192,14 @@ describe('DOM-P3-06 / DOM-P3-13 / DOM-P3-07 — what an approved extension decis
     await runExpirySchedule(projectId);
     let t = await tsa(p.pm, projectId, id);
     expect(t.status).toBe('expired_unresolved');
-    const ext = await decisionOfType(projectId, p, gov, 'tsa_approval_or_extension');
+    const ext = await decisionOfType(projectId, p, gov, 'tsa_approval_or_extension', { vote: false });
     const past = await cmd(id, 'request-extension', { expectedVersion: t.version, decisionId: ext.id, proposedEndDate: plusDays(-5), continuityPlan: 'x (synthetic)' });
     expect(past.status).toBe(422);
     expect(past.body.code).toBe('tsa.extension.end_date_past');
     // A request made while the date was still ahead is refused at the record once that date has passed.
     const ok = await cmd(id, 'request-extension', { expectedVersion: t.version, decisionId: ext.id, proposedEndDate: plusDays(2), continuityPlan: 'x (synthetic)' });
     expect(ok.status, JSON.stringify(ok.body)).toBe(201);
+    await approveTabledDecision(projectId, p, ext);
     // Owner pool (setup): the requested date passes before the extension is recorded (the app clock would expire the session).
     // The terms bound to the decision (DOM-P34R-04) carry the same date, as they would after time passed.
     await owner().query(`update tsa_service set proposed_end_date = $2 where id = $1`, [id, plusDays(-1)]);

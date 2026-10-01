@@ -384,6 +384,15 @@ describe('TSA (REQ-TSA-001..006, AT-10, D-25)', () => {
     expect(extensionTermsBinding({ ...base, decisionStatus: 'draft', requested: { ...terms, proposedEndDate: '2027-02-19' } })).toBe('rebind');
     expect(extensionTermsBinding({ ...base, bound: null })).toBe('new');
   });
+  it('DOM-P34R2-01: terms are bound for the FIRST time only while the paper is before the committee (draft / submitted / under review)', () => {
+    const terms = { tsaServiceId: 't1', proposedEndDate: '2027-01-19', continuityPlan: 'Keep the bridge' };
+    for (const decisionStatus of ['draft', 'submitted', 'under_review'] as const) expect(extensionTermsBinding({ decisionStatus, bound: null, requested: terms })).toBe('new');
+    for (const decisionStatus of ['recommended', 'approved', 'implementation_pending', 'rejected', 'deferred', 'superseded'] as const) {
+      expect(codeOf(() => extensionTermsBinding({ decisionStatus, bound: null, requested: terms })), decisionStatus).toBe('rule_violation:tsa.extension.terms_after_outcome');
+    }
+    // Terms bound before the outcome stay usable after it (same terms).
+    expect(extensionTermsBinding({ decisionStatus: 'approved', bound: terms, requested: terms })).toBe('same');
+  });
   it('DOM-P34R-04: the terms are bound per DECISION — another TSA is refused, and record-extension applies only the bound terms', () => {
     const terms = { tsaServiceId: 't1', proposedEndDate: '2027-01-19', continuityPlan: 'Keep the bridge' };
     expect(codeOf(() => extensionTermsBinding({ decisionStatus: 'approved', bound: terms, requested: { ...terms, tsaServiceId: 't2' } }))).toBe('rule_violation:tsa.extension.decision_other_tsa');

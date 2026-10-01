@@ -58,15 +58,25 @@ export async function decisionOfType(projectId: string, p: Personas, gov: Gov, d
   const a = p as unknown as Actors;
   const d = await tabledDecision(projectId, a, p.pm, gov.committeeId, gov.meetingId, { decisionTypeKey, requiredAuthority: 'Per the DEMO authority matrix (synthetic)' });
   if (opts.vote === false) return { id: d.id, code: d.code, status: 'under_review' };
-  const v = await decisionVersion(p.chair, projectId, d.id);
+  return approveTabledDecision(projectId, p, d);
+}
+
+/**
+ * Complete the committee's vote and outcome on a decision tabled with `decisionOfType(…, { vote: false })` (under review).
+ * The real extension flow (DOM-P34R2-01, business-gates.md §6 rule 5): table the extension paper, request the extension on it
+ * while it is before the committee (the request binds its terms to the paper), THEN approve it, then record the extension.
+ */
+export async function approveTabledDecision(projectId: string, p: Personas, d: { id: string; code: string }) {
+  const decisionId = d.id;
+  const v = await decisionVersion(p.chair, projectId, decisionId);
   for (const k of ['chair', 'sponsor', 'finance', 'legal'] as const) {
-    const r = await vote(projectId, p[k], d.id, 'approve', v);
+    const r = await vote(projectId, p[k], decisionId, 'approve', v);
     expect(r.status, JSON.stringify(r.body)).toBe(201);
   }
-  const out = await p.secretary.post(`${P(projectId)}/decisions/${d.id}/record-outcome`, { expectedVersion: v });
+  const out = await p.secretary.post(`${P(projectId)}/decisions/${decisionId}/record-outcome`, { expectedVersion: v });
   expect(out.status, JSON.stringify(out.body)).toBe(201);
   expect(out.body.status).toBe('approved');
-  return { id: d.id, code: d.code, status: out.body.status as string };
+  return { id: decisionId, code: d.code, status: out.body.status as string };
 }
 
 /** Evidence through the DOCUMENTS module API (it owns evidence_link writes). */
