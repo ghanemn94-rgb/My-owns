@@ -35,9 +35,11 @@ function Count({ value, href, metric }: { value: number | null; href?: string; m
     );
   }
   // REQ-UX-024: the count opens its contributing records — the list filtered so its total is this number.
+  // Not prefetched: two count links per project row would double the background route prefetches on the
+  // portfolio page for a click that is rarely made.
   if (href) {
     return (
-      <Link href={href} className="tabular text-primary hover:underline" data-testid="portfolio-count" data-metric={metric} data-value={value}>
+      <Link href={href} prefetch={false} className="tabular text-primary hover:underline" data-testid="portfolio-count" data-metric={metric} data-value={value}>
         {formatNumber(value)}
         <span className="sr-only"> — {t('common.actions.viewRecords')}</span>
       </Link>

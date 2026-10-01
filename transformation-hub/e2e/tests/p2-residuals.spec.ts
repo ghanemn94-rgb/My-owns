@@ -18,7 +18,8 @@ import { checkArabic, checkDialogA11y, watchBilingual } from './qa-rtl-detector'
  *  (f) REQ-UX-008    Gantt: critical path and baseline variance;
  *  (g) REQ-UX-009    a workstream lead submits a status update from the workspace;
  *  (h) REQ-UX-015    a change request raised from a risk stays linked to it;
- *  (i) REQ-UX-022    loading, empty, error and restricted states on each P2 screen (route interception + a real outsider);
+ *  (i) REQ-UX-022    loading, empty, error and restricted states on each P1 / P2 screen, the AI PM Center and Administration
+ *                    (route interception + a real outsider; the P3/P4 screens: qa-p34-states.spec.ts);
  *  (j) REQ-UX-023    an edit shows in the record history with its actor and reason.
  * All data is synthetic. Screenshots: e2e/screenshots/p2r.
  */
@@ -174,7 +175,7 @@ test.describe('P2 residuals — screens and end-to-end acceptance', () => {
     test.setTimeout(240_000);
     const title = `E2E Kanban task ${RUN} (synthetic)`;
     const task = await withClient(baseURL!, P.pm, async (pm) => {
-      const t = await pm.post<{ id: string }>(`/api/v1/projects/${dc}/tasks`, { workstreamId: ws.get('WS01'), title, durationDays: 3, plannedStart: '2026-11-01', plannedFinish: '2026-11-03' });
+      const t = await pm.post<{ id: string }>(`/api/v1/projects/${dc}/tasks`, { workstreamId: ws.get('WS01'), title, titleAr: `مهمة كانبان للاختبار ${RUN} (اصطناعية)`, durationDays: 3, plannedStart: '2026-11-01', plannedFinish: '2026-11-03' });
       return pm.get<{ id: string; wbsCode: string; status: string }>(`/api/v1/projects/${dc}/tasks/${t.id}`);
     });
     expect(task.status).toBe('not_started');
@@ -608,7 +609,7 @@ test.describe('P2 residuals — screens and end-to-end acceptance', () => {
           decisionTypeKey: 'jv_signing_authorization',
           issue: 'Synthetic E2E issue: authorize the signing of the JV agreement.',
           whyNow: 'Synthetic: the signing window opens soon.',
-          alternatives: [{ title: 'Authorize' }, { title: 'Defer' }],
+          alternatives: [{ title: 'Authorize the signing (synthetic)' }, { title: 'Defer the signing (synthetic)' }],
           recommendation: 'Recommend authorization by the reserved body.',
           impacts: { financial: 'None identified (synthetic)', operational: 'None identified', schedule: 'None identified' },
           amount: null,
@@ -819,7 +820,7 @@ test.describe('P2 residuals — screens and end-to-end acceptance', () => {
     }
   });
 
-  test('(i) REQ-UX-022 each P2 screen renders its loading, empty, error and restricted states (restricted reveals no title or count)', async ({ browser, baseURL }) => {
+  test('(i) REQ-UX-022 each P1 and P2 screen, the AI PM Center and Administration render their loading, empty, error and restricted states (restricted reveals no title or count)', async ({ browser, baseURL }) => {
     test.setTimeout(480_000);
     interface Screen {
       name: string;
@@ -836,6 +837,8 @@ test.describe('P2 residuals — screens and end-to-end acceptance', () => {
       /** A title the restricted state must not reveal. */
       secret?: string;
       emptyBody?: (json: Record<string, unknown>) => Record<string, unknown>;
+      /** Persona (default: the Demo Project Manager). */
+      persona?: string;
     }
     const ws01 = ws.get('WS01')!;
     const emptyPaged = (j: Record<string, unknown>) => ({ ...j, items: [], total: 0 });
@@ -949,61 +952,97 @@ test.describe('P2 residuals — screens and end-to-end acceptance', () => {
         restricted: (p) => p.locator('main').getByTestId('restricted-state'),
         secret: STEERING,
       },
+      // Screens of the other phases that the P3/P4 states spec (qa-p34-states.spec.ts) does not cover.
+      {
+        name: 'portfolio-home',
+        path: '/',
+        api: /\/api\/v1\/projects\?/,
+        scope: (p) => p.locator('main'),
+        ready: (p) => p.getByTestId('project-card').first(),
+        empty: (p) => p.locator('main').getByTestId('empty-state'),
+        error: (p) => p.locator('main').getByTestId('error-state'),
+        restricted: (p) => p.locator('main').getByTestId('restricted-state'),
+        secret: 'Demo DC Carve-out',
+      },
+      {
+        name: 'ai-pm-center',
+        path: `/projects/${dc}/ai/proposals`,
+        api: /\/api\/v1\/projects\/[^/]+\/ai\/proposals\?/,
+        scope: testId('proposals-table'),
+        ready: (p) => p.locator('[data-testid="proposals-table"][data-state="ready"]'),
+        empty: inScope('proposals-table', 'empty-state'),
+        error: inScope('proposals-table', 'error-state'),
+        restricted: inScope('proposals-table', 'restricted-state'),
+      },
+      {
+        name: 'administration',
+        persona: P.admin,
+        path: '/admin',
+        api: /\/api\/v1\/admin\/users\?/,
+        scope: testId('admin-users'),
+        ready: (p) => p.locator('[data-testid="admin-users"][data-state="ready"]'),
+        empty: inScope('admin-users', 'empty-state'),
+        error: inScope('admin-users', 'error-state'),
+        restricted: inScope('admin-users', 'restricted-state'),
+        secret: P.pm,
+      },
     ];
 
-    const s = await asPersona(browser, baseURL!, P.pm);
-    const page = s.page;
-    try {
-      for (const sc of screens) {
-        // Loading: the list answer is held back until the loading state has been seen.
-        let release!: () => void;
-        const held = new Promise<void>((r) => (release = r));
-        const hold = async (route: Route) => {
-          await held;
-          await route.continue();
-        };
-        await page.route(sc.api, hold);
-        await page.goto(sc.path);
-        await expect(sc.scope(page).getByTestId('loading-state').first(), `${sc.name}: loading`).toBeVisible();
-        release();
-        await expect(sc.ready(page), `${sc.name}: ready`).toBeVisible({ timeout: 30_000 });
-        await page.unroute(sc.api, hold);
+    for (const persona of [...new Set(screens.map((x) => x.persona ?? P.pm))]) {
+      const s = await asPersona(browser, baseURL!, persona);
+      const page = s.page;
+      try {
+        for (const sc of screens.filter((x) => (x.persona ?? P.pm) === persona)) {
+          // Loading: the list answer is held back until the loading state has been seen.
+          let release!: () => void;
+          const held = new Promise<void>((r) => (release = r));
+          const hold = async (route: Route) => {
+            await held;
+            await route.continue();
+          };
+          await page.route(sc.api, hold);
+          await page.goto(sc.path);
+          await expect(sc.scope(page).getByTestId('loading-state').first(), `${sc.name}: loading`).toBeVisible();
+          release();
+          await expect(sc.ready(page), `${sc.name}: ready`).toBeVisible({ timeout: 30_000 });
+          await page.unroute(sc.api, hold);
 
-        // Empty: the same answer with no rows.
-        const empty = async (route: Route) => {
-          const res = await route.fetch();
-          const json = (await res.json()) as Record<string, unknown>;
-          await route.fulfill({ response: res, json: (sc.emptyBody ?? emptyPaged)(json) });
-        };
-        await page.route(sc.api, empty);
-        await page.goto(sc.path);
-        await expect(sc.empty(page).first(), `${sc.name}: empty`).toBeVisible({ timeout: 30_000 });
-        await page.unroute(sc.api, empty);
+          // Empty: the same answer with no rows.
+          const empty = async (route: Route) => {
+            const res = await route.fetch();
+            const json = (await res.json()) as Record<string, unknown>;
+            await route.fulfill({ response: res, json: (sc.emptyBody ?? emptyPaged)(json) });
+          };
+          await page.route(sc.api, empty);
+          await page.goto(sc.path);
+          await expect(sc.empty(page).first(), `${sc.name}: empty`).toBeVisible({ timeout: 30_000 });
+          await page.unroute(sc.api, empty);
 
-        // Error: a failing list → an error with "Try again", never zeros; retrying recovers.
-        let fail = true;
-        const error = async (route: Route) => (fail ? route.fulfill(problem(500, 'Internal Server Error')) : route.continue());
-        await page.route(sc.api, error);
-        await page.goto(sc.path);
-        await expect(sc.error(page).first(), `${sc.name}: error`).toBeVisible({ timeout: 30_000 });
-        fail = false;
-        await sc.error(page).first().getByRole('button', { name: 'Try again' }).click();
-        await expect(sc.ready(page), `${sc.name}: recovered`).toBeVisible({ timeout: 30_000 });
-        await page.unroute(sc.api, error);
+          // Error: a failing list → an error with "Try again", never zeros; retrying recovers.
+          let fail = true;
+          const error = async (route: Route) => (fail ? route.fulfill(problem(500, 'Internal Server Error')) : route.continue());
+          await page.route(sc.api, error);
+          await page.goto(sc.path);
+          await expect(sc.error(page).first(), `${sc.name}: error`).toBeVisible({ timeout: 30_000 });
+          fail = false;
+          await sc.error(page).first().getByRole('button', { name: 'Try again' }).click();
+          await expect(sc.ready(page), `${sc.name}: recovered`).toBeVisible({ timeout: 30_000 });
+          await page.unroute(sc.api, error);
 
-        // Restricted: the API answers 404 (not visible to the caller) → the restricted state, with no title or count.
-        const hidden = async (route: Route) => route.fulfill(problem(404, 'Not Found'));
-        await page.route(sc.api, hidden);
-        await page.goto(sc.path);
-        await expect(sc.restricted(page).first(), `${sc.name}: restricted`).toBeVisible({ timeout: 30_000 });
-        if (sc.secret) await expect(sc.scope(page)).not.toContainText(sc.secret);
-        await expect(sc.scope(page).locator('[data-total]')).toHaveCount(0);
-        await page.screenshot({ path: join(SHOTS, `states-restricted-${sc.name}.png`) });
-        await page.unroute(sc.api, hidden);
+          // Restricted: the API answers 404 (not visible to the caller) → the restricted state, with no title or count.
+          const hidden = async (route: Route) => route.fulfill(problem(404, 'Not Found'));
+          await page.route(sc.api, hidden);
+          await page.goto(sc.path);
+          await expect(sc.restricted(page).first(), `${sc.name}: restricted`).toBeVisible({ timeout: 30_000 });
+          if (sc.secret) await expect(sc.scope(page)).not.toContainText(sc.secret);
+          await expect(sc.scope(page).locator('[data-total]')).toHaveCount(0);
+          await page.screenshot({ path: join(SHOTS, `states-restricted-${sc.name}.png`) });
+          await page.unroute(sc.api, hidden);
+        }
+        expect(s.problems(), s.problems().join('\n')).toEqual([]);
+      } finally {
+        await s.close();
       }
-      expect(s.problems(), s.problems().join('\n')).toEqual([]);
-    } finally {
-      await s.close();
     }
 
     // Restricted for real: a Project-B user opening the DEMO-DC screens gets the neutral restricted state (the API answers
@@ -1025,7 +1064,7 @@ test.describe('P2 residuals — screens and end-to-end acceptance', () => {
   test('(j) REQ-UX-023 an edit shows in the record history with its actor and reason (the reason for audit readers)', async ({ browser, baseURL }) => {
     test.setTimeout(180_000);
     const reason = `E2E reassignment reason ${RUN}: the contributor takes it over (synthetic)`;
-    const task = await withClient(baseURL!, P.pm, (pm) => pm.post<{ id: string }>(`/api/v1/projects/${dc}/tasks`, { workstreamId: ws.get('WS01'), title: `E2E history task ${RUN} (synthetic)` }));
+    const task = await withClient(baseURL!, P.pm, (pm) => pm.post<{ id: string }>(`/api/v1/projects/${dc}/tasks`, { workstreamId: ws.get('WS01'), title: `E2E history task ${RUN} (synthetic)`, titleAr: `مهمة سجل التعديلات للاختبار ${RUN} (اصطناعية)` }));
     const s = await asPersona(browser, baseURL!, P.pm);
     try {
       const page = s.page;

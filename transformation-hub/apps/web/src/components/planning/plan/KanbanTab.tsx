@@ -286,13 +286,13 @@ export function KanbanTab() {
                   onDragLeave={() => setDropTarget((d) => (d === status ? null : d))}
                   onDrop={onDrop(status)}
                 >
-                  <h3 id={headingId} className="flex items-center justify-between gap-2 border-b border-line px-2.5 py-2 text-sm font-semibold">
+                  <h2 id={headingId} className="flex items-center justify-between gap-2 border-b border-line px-2.5 py-2 text-sm font-semibold">
                     <StatusBadge enumName="taskStatuses" value={status} />
                     <span className="tabular text-muted" aria-hidden="true">
                       {formatNumber(items.length)}
                     </span>
                     <span className="sr-only">{t('planning.kanban.columnCount', { count: formatNumber(items.length) })}</span>
-                  </h3>
+                  </h2>
                   {items.length === 0 ? (
                     <p className="px-2.5 py-3 text-xs text-muted" data-testid="kanban-column-empty">
                       {t('planning.kanban.columnEmpty')}

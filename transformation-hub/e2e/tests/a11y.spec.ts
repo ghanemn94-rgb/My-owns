@@ -692,8 +692,9 @@ test.describe('REQ-ARC-008 keyboard operability', () => {
         await selected.focus();
         await expect(selected).toHaveAttribute('data-tab', 'wbs');
         await page.keyboard.press(locale === 'ar' ? 'ArrowLeft' : 'ArrowRight');
-        await expect(page.locator('[role="tab"][data-tab="timeline"]')).toBeFocused();
-        await expect(page.locator('[role="tab"][data-tab="timeline"]')).toHaveAttribute('aria-selected', 'true');
+        // The tab after the WBS is the Kanban board (REQ-PLN-002).
+        await expect(page.locator('[role="tab"][data-tab="kanban"]')).toBeFocused();
+        await expect(page.locator('[role="tab"][data-tab="kanban"]')).toHaveAttribute('aria-selected', 'true');
         await page.keyboard.press('End');
         await expect(page.locator('[role="tab"][data-tab="health"]')).toBeFocused();
         await page.keyboard.press('Home');
