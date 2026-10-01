@@ -80,6 +80,25 @@ export interface RagThresholds {
 
 export const DEFAULT_RAG_THRESHOLDS: RagThresholds = { greenMaxSlipDays: 0, amberMaxSlipDays: 10, staleAfterDays: 14 };
 
+/**
+ * Which threshold set a calculated RAG used (REQ-PLN-019, DOM-P2-08): the project's approved threshold version, or the
+ * proposed default of the pinned template version while no project version was approved. Named in every explanation that
+ * compared a value against a threshold.
+ */
+export interface RagThresholdsRef {
+  source: 'approved' | 'template_default';
+  /** Project threshold version number (source `approved`), else null. */
+  versionNo: number | null;
+  /** Version number of the pinned template whose default applies (source `template_default`). */
+  templateVersionNo: number;
+}
+
+export function ragThresholdsRefMessage(ref: RagThresholdsRef): ServerMessage {
+  return ref.source === 'approved' && ref.versionNo !== null
+    ? planMessage('plan.rag.thresholds_approved', { version: ref.versionNo })
+    : planMessage('plan.rag.thresholds_template_default', { templateVersion: ref.templateVersionNo });
+}
+
 export interface RagInput {
   baselineFinish: string | null;
   forecastFinish: string | null;
@@ -87,6 +106,8 @@ export interface RagInput {
   today: string;
   hasOpenBlocker: boolean;
   thresholds?: RagThresholds;
+  /** The threshold set `thresholds` comes from; when given, the explanation names it (REQ-PLN-019). */
+  thresholdsRef?: RagThresholdsRef;
   calendar?: WorkingCalendar;
 }
 
@@ -98,25 +119,30 @@ export interface RagResult {
   slipDays: number | null;
 }
 
-const rag = (status: RagStatus, slipDays: number | null, code: string, params: Record<string, string | number> = {}): RagResult => {
-  const explanationI18n = [planMessage(code, params)];
+const rag = (status: RagStatus, slipDays: number | null, code: string, params: Record<string, string | number> = {}, ref?: RagThresholdsRef): RagResult => {
+  const explanationI18n = [planMessage(code, params), ...(ref ? [ragThresholdsRefMessage(ref)] : [])];
   return { status, explanation: planningEn(explanationI18n), explanationI18n, slipDays };
 };
 
-/** Rule 4 & 5: configurable thresholds; unknown/stale/not updated are never green. */
+/**
+ * Rule 4 & 5: configurable thresholds; unknown/stale/not updated are never green. Every result that consulted a threshold
+ * (freshness window, slip limits) names the threshold set it used when `thresholdsRef` is given; an open blocker and a
+ * missing update are decided before any threshold applies.
+ */
 export function calculateRag(input: RagInput): RagResult {
   const t = input.thresholds ?? DEFAULT_RAG_THRESHOLDS;
   const cal = input.calendar ?? DEFAULT_CALENDAR;
+  const ref = input.thresholdsRef;
   // A known open blocker is always red — data-quality labels must never hide it (P0 review D-10).
   if (input.hasOpenBlocker) return rag('red', null, 'plan.rag.open_blocker');
   if (!input.lastUpdatedOn) return rag('not_updated', null, 'plan.rag.not_updated');
   const ageDays = Math.round((Date.parse(input.today) - Date.parse(input.lastUpdatedOn)) / 86_400_000);
-  if (ageDays > t.staleAfterDays) return rag('stale', null, 'plan.rag.stale', { age: ageDays, limit: t.staleAfterDays });
-  if (!input.baselineFinish || !input.forecastFinish) return rag('unknown', null, 'plan.rag.unknown');
+  if (ageDays > t.staleAfterDays) return rag('stale', null, 'plan.rag.stale', { age: ageDays, limit: t.staleAfterDays }, ref);
+  if (!input.baselineFinish || !input.forecastFinish) return rag('unknown', null, 'plan.rag.unknown', {}, ref);
   const slip = workingDaySlip(input.baselineFinish, input.forecastFinish, cal);
-  if (slip <= t.greenMaxSlipDays) return rag('green', slip, 'plan.rag.green', { slip });
-  if (slip <= t.amberMaxSlipDays) return rag('amber', slip, 'plan.rag.amber', { slip, limit: t.amberMaxSlipDays });
-  return rag('red', slip, 'plan.rag.red', { slip, limit: t.amberMaxSlipDays });
+  if (slip <= t.greenMaxSlipDays) return rag('green', slip, 'plan.rag.green', { slip }, ref);
+  if (slip <= t.amberMaxSlipDays) return rag('amber', slip, 'plan.rag.amber', { slip, limit: t.amberMaxSlipDays }, ref);
+  return rag('red', slip, 'plan.rag.red', { slip, limit: t.amberMaxSlipDays }, ref);
 }
 
 const SEVERITY: Record<RagStatus, number> = { green: 0, amber: 1, unknown: 2, not_updated: 2, stale: 2, red: 3 };

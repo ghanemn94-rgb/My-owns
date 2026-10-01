@@ -175,6 +175,10 @@ export const KpiCatalogueEntryDto = z.object({
   definition: z.string(),
   definitionAr: z.string().nullable(),
   formula: z.string(),
+  /** QA-P5-07: Arabic of the template formula / source / thresholds while unchanged (pinned template version 2+); else null. */
+  formulaAr: z.string().nullable(),
+  sourceAr: z.string().nullable(),
+  thresholdsAr: z.object({ green: z.string(), amber: z.string(), red: z.string() }).nullable(),
   unit: z.string(),
   period: z.string(),
   ownerRole: z.string().nullable(),

@@ -928,6 +928,8 @@ const EffectiveRagDto = z.object({
 export const ProgressDto = z.object({
   today: z.string(),
   thresholds: z.object({ greenMaxSlipDays: z.number().int(), amberMaxSlipDays: z.number().int(), staleAfterDays: z.number().int() }),
+  /** REQ-PLN-019: which threshold set the calculated RAGs used (approved project version or the template's proposed default). */
+  thresholdsRef: z.object({ source: z.enum(['approved', 'template_default']), versionNo: z.number().int().nullable(), templateVersionNo: z.number().int() }),
   baseline: z.object({ id: Uuid, versionNo: z.number().int() }).nullable(),
   project: z.object({
     progress: WeightedProgressDto,

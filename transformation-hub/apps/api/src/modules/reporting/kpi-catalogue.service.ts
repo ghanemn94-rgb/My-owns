@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { KPI_SOURCE_PERMISSION, type KpiCalculatorKey } from '@hub/domain';
+import { KPI_SOURCE_PERMISSION, kpiTemplateArabic, type KpiCalculatorKey } from '@hub/domain';
 import type { KpiCatalogueEntry } from '@hub/contracts';
 import type { RequestContext } from '../../platform/context';
 import { ReportAccess } from './report-access';
 import { SnapshotsService } from './snapshots.service';
-import { KpiEngine, templateKpiDefinitions, visibleKpis } from './collect/kpi.collector';
+import { KpiEngine, templateKpis, visibleKpis } from './collect/kpi.collector';
 
 /**
  * Proposed KPI catalogue (spec §11, REQ-RPT-012..014): the project's KPI definitions (instantiated from the template —
@@ -23,12 +23,12 @@ export class KpiCatalogueService {
     this.access.assertProjectReader(ctx, projectId, 'reports.report.generate');
     const g = await this.snapshots.gen(ctx, projectId, null);
     const defs = await visibleKpis(g);
-    const ar = await templateKpiDefinitions(g);
+    const tpl = await templateKpis(g);
     const engine = new KpiEngine(g);
     const items: KpiCatalogueEntry[] = [];
     for (const k of defs) {
       const v = await engine.compute(k.key);
-      const tpl = ar.get(k.key);
+      const ar = kpiTemplateArabic(tpl.get(k.key), k);
       const state = v.access === 'restricted' ? 'restricted' : v.access === 'no_calculator' ? 'no_calculator' : v.state;
       const shown = state === 'computed';
       items.push({
@@ -37,8 +37,11 @@ export class KpiCatalogueService {
         name: k.name,
         nameAr: k.nameAr,
         definition: k.definition,
-        definitionAr: tpl && tpl.ar && tpl.en === k.definition ? tpl.ar : null,
+        definitionAr: ar.definitionAr,
         formula: k.formula,
+        formulaAr: ar.formulaAr,
+        sourceAr: ar.sourceAr,
+        thresholdsAr: ar.thresholdsAr,
         unit: k.unit,
         period: k.period,
         ownerRole: k.ownerRole,

@@ -1,6 +1,6 @@
 // Validates the Transformation Hub project templates (P0 carveout-domain-analyst deliverable check).
 // Usage: node packages/db/scripts/validate-templates.mjs   (also run by `pnpm --filter @hub/db validate:templates`)
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
@@ -73,7 +73,8 @@ function validate(file, expect) {
   const tpl = JSON.parse(readFileSync(`${DIR}/${file}`, "utf8"));
   const p = file;
   ok(JSON.stringify(Object.keys(tpl)) === JSON.stringify(TOP_KEYS), `${p}: top-level keys differ: ${Object.keys(tpl).join(",")}`);
-  ok(tpl.key === expect.key && tpl.kind === expect.kind && tpl.version === 1, `${p}: key/kind/version mismatch`);
+  const fileVersion = Number(/\.v(\d+)\.json$/.exec(file)?.[1]);
+  ok(tpl.key === expect.key && tpl.kind === expect.kind && tpl.version === fileVersion, `${p}: key/kind/version mismatch (file name says v${fileVersion})`);
   bi(tpl.name, `${p}.name`); bi(tpl.description, `${p}.description`);
 
   // status dimensions
@@ -199,11 +200,26 @@ function validate(file, expect) {
     ok(["green", "amber", "red"].every((t) => typeof k.thresholds?.[t] === "string" && k.thresholds[t]), `${kp}: thresholds`);
     ok(typeof k.formula === "string" && k.formula && typeof k.source === "string" && k.source && typeof k.frequency === "string", `${kp}: formula/source/frequency`);
     role(k.ownerRole, `${kp}.ownerRole`);
+    // Version 2 and later carry the Arabic of the formula, source and thresholds (QA-P5-07): a translation of the English
+    // text, in Arabic script, with no Latin words left untranslated.
+    if (tpl.version >= 2) {
+      const arabicOnly = (v, path) => ok(typeof v === "string" && ARABIC.test(v) && !/[A-Za-z]/.test(v), `${path}: missing or not an Arabic-only translation`);
+      arabicOnly(k.formulaAr, `${kp}.formulaAr`);
+      arabicOnly(k.sourceAr, `${kp}.sourceAr`);
+      for (const t of ["green", "amber", "red"]) arabicOnly(k.thresholdsAr?.[t], `${kp}.thresholdsAr.${t}`);
+    } else {
+      ok(!("formulaAr" in k) && !("sourceAr" in k) && !("thresholdsAr" in k), `${kp}: Arabic KPI texts belong to version 2 and later (version 1 is published and immutable)`);
+    }
   }
 
   // RAG
   ok(JSON.stringify(tpl.ragPolicy.rules.map((r) => r.status)) === JSON.stringify(["green", "amber", "red", "unknown", "stale"]), `${p}: ragPolicy statuses`);
   ok(Number.isInteger(tpl.ragPolicy.staleAfterDays) && tpl.ragPolicy.staleAfterDays > 0, `${p}: staleAfterDays`);
+  if (tpl.ragPolicy.thresholds !== undefined) {
+    const t = tpl.ragPolicy.thresholds;
+    ok(JSON.stringify(Object.keys(t)) === JSON.stringify(["greenMaxSlipDays", "amberMaxSlipDays"]), `${p}: ragPolicy.thresholds keys`);
+    ok(Number.isInteger(t.greenMaxSlipDays) && Number.isInteger(t.amberMaxSlipDays) && t.greenMaxSlipDays >= 0 && t.amberMaxSlipDays >= t.greenMaxSlipDays, `${p}: ragPolicy.thresholds must be integers with 0 ≤ green ≤ amber`);
+  }
 
   // vocabularies
   ok(JSON.stringify(tpl.tsaStates) === JSON.stringify(expect.tsa), `${p}: tsaStates`);
@@ -225,11 +241,17 @@ function validate(file, expect) {
   return { tpl, gEdges };
 }
 
-const dc = validate("dc-carveout.v1.json", {
+const DC_EXPECT = {
   key: "dc-carveout", kind: "dc_carveout", dims: DIMS, gates: ["G0", "G1", "G2", "G3", "G4", "G5", "G6", "G7"],
   minCrit: 3, maxCrit: 12, phases: 8, ws: 12, wsNames: DC_WS_NAMES, minWbs: 80, maxWbs: 400, readiness: READINESS,
   minKpi: 12, maxKpi: 40, tsa: TSA, partner: PARTNER,
-});
+};
+// Every published version file of a template is validated (projects pin versions; a newer version is applied to a project
+// only through an approved template upgrade — REQ-ENT-009, AT-26).
+const versionsOf = (key) => readdirSync(DIR).filter((f) => new RegExp(`^${key}\\.v\\d+\\.json$`).test(f)).sort();
+ok(JSON.stringify(readdirSync(DIR).filter((f) => f.endsWith(".json")).sort()) === JSON.stringify([...versionsOf("dc-carveout"), ...versionsOf("general-transformation")].sort()), "templates: an unexpected file in the templates directory");
+const dcAll = versionsOf("dc-carveout").map((f) => validate(f, DC_EXPECT));
+const dc = dcAll[0];
 const G5c = closure("G5", dc.gEdges);
 ok(!G5c.has("G3") && !G5c.has("G4"), `dc: G5 must not (transitively) require G3/G4; requires ${[...G5c]}`);
 ok(closure("G6", dc.gEdges).has("G5"), "dc: G6 must depend on G5");
@@ -270,11 +292,18 @@ ok(leak.length === 0, `dc: JV signing (WS12-A06) transitively depends on G3/G4 a
   console.log(`source map dc-carveout.v1: ${headingClaims.length} reference headings → ${new Set(map.claims.flatMap((c) => c.workstreams)).size} workstreams, ${map.claims.flatMap((c) => c.wbs ?? []).length} WBS activities`);
 }
 
-const gen = validate("general-transformation.v1.json", {
+const GEN_EXPECT = {
   key: "general-transformation", kind: "general_transformation", dims: [], gates: ["T0", "T1", "T2", "T3"],
   minCrit: 3, maxCrit: 5, phases: 4, ws: 4, wsNames: ["Governance & PMO", "Process & Organization", "Technology Enablement", "Change & Adoption"],
   minWbs: 14, maxWbs: 20, readiness: [], minKpi: 5, maxKpi: 5, tsa: [], partner: [],
-});
+};
+const genAll = versionsOf("general-transformation").map((f) => validate(f, GEN_EXPECT));
+const gen = genAll[0];
+// Consecutive versions: numbered 1..n without gaps.
+for (const [key, all] of [["dc-carveout", dcAll], ["general-transformation", genAll]]) {
+  all.forEach((v, i) => ok(v.tpl.version === i + 1, `${key}: versions must be numbered 1..n (found v${v.tpl.version} at position ${i + 1})`));
+  console.log(`${key}: versions ${all.map((v) => v.tpl.version).join(", ")}`);
+}
 
 const per = {}; for (const a of dc.tpl.wbs) per[a.workstreamKey] = (per[a.workstreamKey] || 0) + 1;
 console.log(`dc-carveout.v1.json: gates=${dc.tpl.gates.length} workstreams=${dc.tpl.workstreams.length} wbs=${dc.tpl.wbs.length} kpis=${dc.tpl.kpis.length} readinessAreas=${dc.tpl.readinessAreas.length}`);

@@ -17,6 +17,16 @@ export const PLANNING_MESSAGES_EN: Readonly<Record<string, string>> = {
   'plan.rag.green': 'Forecast within tolerance (slip {slip} working days).',
   'plan.rag.amber': 'Forecast slip of {slip} working days (amber ≤ {limit}).',
   'plan.rag.red': 'Forecast slip of {slip} working days exceeds {limit}.',
+  // The threshold set a calculated RAG used (REQ-PLN-019)
+  'plan.rag.thresholds_approved': 'Thresholds: project version {version} (approved).',
+  'plan.rag.thresholds_template_default': 'Thresholds: proposed default of template version {templateVersion} (no project version approved).',
+  // The rule of each calculated status under a threshold set (spec §9 rule 4, project configuration screen)
+  'plan.rag.rule.green': 'Green: forecast slip of at most {green} working days, an accepted update within the last {stale} days and no open blocker.',
+  'plan.rag.rule.amber': 'Amber: forecast slip above {green} and at most {amber} working days.',
+  'plan.rag.rule.red': 'Red: forecast slip above {amber} working days, or any open blocker.',
+  'plan.rag.rule.stale': 'Data stale: no accepted update within the last {stale} days — never shown as green.',
+  'plan.rag.rule.unknown': 'Unknown: the baseline or forecast finish is missing — never shown as green.',
+  'plan.rag.rule.not_updated': 'Not updated: no accepted update recorded yet — never shown as green.',
   'plan.rag.aggregate_empty': 'No items to aggregate.',
   'plan.rag.aggregate': 'Worst-of {count} item(s): {status}. {red} critical red, {gaps} with data-quality gaps.',
   // Manual overrides (rule 6, DOM-P2-10)

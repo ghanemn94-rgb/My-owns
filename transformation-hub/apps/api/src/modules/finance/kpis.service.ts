@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { and, asc, count, desc, eq, ilike, inArray, or, SQL } from 'drizzle-orm';
 import Decimal from 'decimal.js';
 import { schema } from '@hub/db';
-import { invalid, parseFinancialPeriod, FINANCE_DEFAULT_CLASSIFICATION, type ProjectTemplateDefinition } from '@hub/domain';
+import { invalid, kpiTemplateArabic, parseFinancialPeriod, FINANCE_DEFAULT_CLASSIFICATION, type ProjectTemplateDefinition, type TemplateKpi } from '@hub/domain';
 import type { RouteInput, financeRoutes } from '@hub/contracts';
 import type { RequestContext } from '../../platform/context';
 import { likeContains, loadInProject, offsetOf, pageOf } from '../../platform/helpers';
@@ -43,11 +43,12 @@ export class KpisService {
   }
 
   /**
-   * QA-P34-01h: Arabic KPI definitions of the project's pinned template version, by KPI key (as gate purposes): a template
-   * KPI keeps its template Arabic while its stored definition is still the template's English; an edited or user-defined
-   * KPI has none (its definition is shown as entered).
+   * QA-P34-01h / QA-P5-07: the KPIs of the project's pinned template version, by KPI key (as gate purposes): a template KPI
+   * keeps its template Arabic definition, formula, source and thresholds while the stored English is still the template's;
+   * an edited field or a user-defined KPI has none (shown as entered). Template version 1 has Arabic for the definition
+   * only; version 2 adds the formula, source and thresholds (applied to a project through an approved template upgrade).
    */
-  private async templateDefinitions(p: { templateVersionId: string | null }): Promise<Map<string, { en: string; ar: string }>> {
+  private async templateKpis(p: { templateVersionId: string | null }): Promise<Map<string, TemplateKpi>> {
     if (!p.templateVersionId) return new Map();
     const [tv] = await this.s.db
       .tx()
@@ -55,19 +56,22 @@ export class KpisService {
       .from(schema.projectTemplateVersion)
       .where(eq(schema.projectTemplateVersion.id, p.templateVersionId));
     const def = tv?.definition as unknown as ProjectTemplateDefinition | undefined;
-    return new Map((def?.kpis ?? []).map((k) => [k.key, k.definition]));
+    return new Map((def?.kpis ?? []).map((k) => [k.key, k]));
   }
 
-  private dto(k: KpiRow, latest: ObsRow | null, isDemo: boolean, templates: Map<string, { en: string; ar: string }>) {
-    const tpl = templates.get(k.key);
+  private dto(k: KpiRow, latest: ObsRow | null, isDemo: boolean, templates: Map<string, TemplateKpi>) {
+    const ar = kpiTemplateArabic(templates.get(k.key), k);
     return {
       id: k.id,
       key: k.key,
       name: k.name,
       nameAr: k.nameAr,
       definition: k.definition,
-      definitionAr: tpl && tpl.ar && tpl.en === k.definition ? tpl.ar : null,
+      definitionAr: ar.definitionAr,
       formula: k.formula,
+      formulaAr: ar.formulaAr,
+      sourceAr: ar.sourceAr,
+      thresholdsAr: ar.thresholdsAr,
       unit: k.unit,
       period: k.period,
       ownerRole: k.ownerRole,
@@ -112,7 +116,7 @@ export class KpisService {
       projectId,
       rows.map((r) => r.id),
     );
-    const templates = await this.templateDefinitions(p);
+    const templates = await this.templateKpis(p);
     return pageOf(
       rows.map((k) => this.dto(k, latest.get(k.id) ?? null, p.isDemo, templates)),
       Number(total),
@@ -125,13 +129,16 @@ export class KpisService {
     this.s.assertReadable(ctx, projectId, k);
     const p = await this.s.project(projectId);
     const obs = await this.s.db.tx().select().from(O).where(and(eq(O.projectId, projectId), eq(O.kpiId, k.id))).orderBy(desc(O.computedAt), desc(O.id)).limit(100);
-    return { ...this.dto(k, obs[0] ?? null, p.isDemo, await this.templateDefinitions(p)), observations: obs.map((o) => this.obsDto(o)), people: await this.s.people([k.ownerUserId, k.createdBy, ...obs.map((o) => o.recordedBy)]) };
+    return { ...this.dto(k, obs[0] ?? null, p.isDemo, await this.templateKpis(p)), observations: obs.map((o) => this.obsDto(o)), people: await this.s.people([k.ownerUserId, k.createdBy, ...obs.map((o) => o.recordedBy)]) };
   }
 
   async create(ctx: RequestContext, projectId: string, body: RouteInput<R['createKpi']>['body']) {
     const classification = body.classification ?? FINANCE_DEFAULT_CLASSIFICATION.kpi;
     this.s.assertClassificationWritable(ctx, projectId, classification);
     this.s.assert(ctx, 'finance.kpi.manage', { projectId, classification });
+    // REQ-RPT-013: every KPI has an owner — a member of the project or a role (the contract refuses neither; checked again
+    // here so no other caller can create an ownerless KPI).
+    if (!body.ownerUserId && !body.ownerRole) throw invalid('finance.kpi.owner_required', 'A KPI needs an owner: a project member or a role');
     if (body.ownerUserId) await this.s.assertMember(projectId, body.ownerUserId, 'ownerUserId');
     if (body.benefitId) {
       const b = await loadInProject(this.s.db, schema.benefit, projectId, body.benefitId);
@@ -153,6 +160,7 @@ export class KpisService {
         unit: body.unit,
         period: body.period,
         ownerUserId: body.ownerUserId ?? null,
+        ownerRole: body.ownerRole ?? null,
         benefitId: body.benefitId ?? null,
         source: body.source,
         target: body.target ?? null,
@@ -164,7 +172,7 @@ export class KpisService {
       })
       .returning();
     await this.s.snapshotVersion(projectId, 'kpi', row!, 'created');
-    await this.s.audit.record({ action: 'finance.kpi.create', entityType: 'kpi', entityId: id, projectId, after: { key: body.key, name: body.name, unit: body.unit, benefitId: body.benefitId ?? null } });
+    await this.s.audit.record({ action: 'finance.kpi.create', entityType: 'kpi', entityId: id, projectId, after: { key: body.key, name: body.name, unit: body.unit, benefitId: body.benefitId ?? null, ownerUserId: body.ownerUserId ?? null, ownerRole: body.ownerRole ?? null } });
     return { id, version: 1 };
   }
 

@@ -289,7 +289,7 @@ Nobody can assign a role they could not be assigned by the table. A role assignm
 | `governance.agenda_request.screen` | requester |
 | `governance.minutes.approve` | minutes drafter |
 | `governance.charter.approve`, `governance.authority_matrix.approve`, `gates.definition.approve`, `carveout.perimeter.approve`, `config.template.publish`, `ai.autopilot_policy.approve` | author(s) of the version being approved |
-| `config.template_migration.approve`, `planning.baseline.approve`, `planning.change_request.approve` | proposer / requester |
+| `config.template_migration.approve`, `config.project_settings.approve`, `planning.baseline.approve`, `planning.change_request.approve` | proposer / requester |
 | `planning.deliverable.accept` | deliverable owner, submitter |
 | `planning.rag_override.review`, `planning.status_update.review` | override setter / update submitter |
 | `gates.assessment.review`, `gates.assessment.decide` | assessment submitter. As implemented (DOM-P2-16): a criterion review — the criterion's evidence submitter(s) or not-applicable proposer; the **gate-level review** — the person who started the cycle (and the submitter of the cycle must not be the endorsing gate reviewer, checked at mark-ready); `decide` — the submitter **and** the gate reviewer |
@@ -366,19 +366,19 @@ Quorum, majority, recusal and tie rules are computed **on the server** from comm
 
 ## 6. Role × permission matrix (generated)
 
-- Permission keys: **190** across **18** modules.
+- Permission keys: **192** across **18** modules.
 - Roles: **14**; service principals: **3** (not roles).
-- Permissions carrying at least one ABAC condition: **162**.
-  - `classification`: 141
+- Permissions carrying at least one ABAC condition: **164**.
+  - `classification`: 142
   - `room`: 33
   - `clean_team`: 21
-  - `not_self`: 54
+  - `not_self`: 55
   - `authority`: 25
   - `own_workstream`: 14
-- AI usage: `retrieve` 18, `propose` 19, `none` 153.
+- AI usage: `retrieve` 18, `propose` 19, `none` 155.
 - Audited reads (`auditRead`): `jv.room.read`, `jv.disclosure.view`, `jv.disclosure.download`, `documents.document.download`, `reports.snapshot.export`, `audit.event.export`.
 - Project-level reads for workstream-scoped grants (`projectLevelRead`, §2.2.1, pending confirmation by Mobily data governance): `portfolio.project.read`, `gates.gate.read`, `documents.document.read`, `documents.document.download`.
-- Permissions per role: PLA 25, PFA 25, SPO 75, CHR 37, SEC 63, PM 97, WSL 54, CON 27, FAP 39, FIN 58, LEG 74, CLT 10, AUD 35, EXT 7.
+- Permissions per role: PLA 25, PFA 26, SPO 77, CHR 39, SEC 65, PM 97, WSL 56, CON 27, FAP 39, FIN 58, LEG 76, CLT 10, AUD 35, EXT 7.
 
 #### Identity & administration (`admin.*`, 11 permissions)
 
@@ -409,7 +409,7 @@ Quorum, majority, recusal and tie rules are computed **on the server** from comm
 | `portfolio.dashboard.read` | C | R |  | ● | ● | ● | ● |  |  |  |  |  |  |  | ● |  |
 | `portfolio.cross_dependency.manage` | C | – |  |  |  |  |  | ● |  |  |  |  |  |  |  |  |
 
-#### Project configuration & templates (`config.*`, 6 permissions)
+#### Project configuration & templates (`config.*`, 7 permissions)
 
 | Permission | Cond. | AI | PLA | PFA | SPO | CHR | SEC | PM | WSL | CON | FAP | FIN | LEG | CLT | AUD | EXT |
 |---|---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
@@ -419,6 +419,7 @@ Quorum, majority, recusal and tie rules are computed **on the server** from comm
 | `config.template_migration.propose` | – | – |  | ● |  |  |  | ● |  |  |  |  |  |  |  |  |
 | `config.template_migration.approve` | S,A | – |  |  | ● |  |  |  |  |  |  |  |  |  |  |  |
 | `config.project_settings.manage` | – | – |  |  |  |  |  | ● |  |  |  |  |  |  |  |  |
+| `config.project_settings.approve` | S | – |  | ● |  |  |  |  |  |  |  |  |  |  |  |  |
 
 #### Governance (committees, meetings, decisions, actions) (`governance.*`, 25 permissions)
 
@@ -689,7 +690,7 @@ transfer variants).
 ## 7. Permission descriptions and source of truth
 
 - Each key's description, conditions, `ai` flag and `auditRead` flag live **once**, in the JSON block (§11), one line per key. This avoids two copies drifting apart.
-- The tables in §6 and the JSON in §11 were generated from a single definition and cross-checked: 190 rows, 0 mismatches between the table cells and the JSON role lists.
+- The tables in §6 and the JSON in §11 were generated from a single definition and cross-checked: 192 rows, 0 mismatches between the table cells and the JSON role lists.
 - Once `packages/domain/src/policy/` exists, **that TypeScript module becomes the source of truth**. This document should then be regenerated from it (or checked against it by SEC-T-35) and must not be hand-edited on its own.
 
 ---
@@ -784,7 +785,8 @@ If the lead rejects an extension, drop it here and move the equivalent rule into
     "config.template.publish": {"description": "Publish a template version (publisher must not be its author).", "conditions": ["not_self"], "ai": "none"},
     "config.template_migration.propose": {"description": "Preview and propose moving a project to a newer template version (AT-26).", "conditions": [], "ai": "none"},
     "config.template_migration.approve": {"description": "Approve a previewed template migration for a project.", "conditions": ["not_self", "authority"], "ai": "none"},
-    "config.project_settings.manage": {"description": "Project settings: working calendar and holidays, RAG thresholds, default classification, retention defaults, quiet hours.", "conditions": [], "ai": "none"},
+    "config.project_settings.manage": {"description": "Project settings: working calendar and holidays, RAG threshold proposals (in force only once approved), default classification, retention defaults, quiet hours; setup wizard step 7 (confidentiality, retention) and the launch of monitoring (step 8).", "conditions": [], "ai": "none"},
+    "config.project_settings.approve": {"description": "Approve or reject a proposed change of the project settings that change how status is computed (RAG thresholds); the approver is never the proposer.", "conditions": ["not_self"], "ai": "none"},
     "governance.committee.read": {"description": "View committees, charter versions and membership.", "conditions": ["classification"], "ai": "retrieve"},
     "governance.committee.manage": {"description": "Create committees; draft charter versions; manage membership, quorum, voting and recusal rules (draft).", "conditions": ["classification"], "ai": "none"},
     "governance.charter.approve": {"description": "Approve a committee charter version.", "conditions": ["classification", "not_self", "authority"], "ai": "none"},
@@ -960,7 +962,7 @@ If the lead rejects an extension, drop it here and move the equivalent rule into
     },
     "portfolio_admin": {
       "scopeTypes": ["organization", "portfolio"],
-      "permissions": ["admin.directory.search", "admin.users.read", "admin.role_assignment.read", "admin.role_assignment.manage", "portfolio.portfolio.read", "portfolio.portfolio.manage", "portfolio.project.create", "portfolio.project.read", "portfolio.project.archive", "portfolio.dashboard.read", "config.template.read", "config.template.manage", "config.template.publish", "config.template_migration.propose", "planning.plan.read", "gates.gate.read", "reports.report.generate", "reports.snapshot.read", "integrations.connection.read", "ai.settings.manage", "ai.killswitch.activate", "ai.killswitch.release", "ai.operations.read", "notifications.inbox.read", "notifications.preferences.manage_own"],
+      "permissions": ["admin.directory.search", "admin.users.read", "admin.role_assignment.read", "admin.role_assignment.manage", "portfolio.portfolio.read", "portfolio.portfolio.manage", "portfolio.project.create", "portfolio.project.read", "portfolio.project.archive", "portfolio.dashboard.read", "config.template.read", "config.template.manage", "config.template.publish", "config.template_migration.propose", "config.project_settings.approve", "planning.plan.read", "gates.gate.read", "reports.report.generate", "reports.snapshot.read", "integrations.connection.read", "ai.settings.manage", "ai.killswitch.activate", "ai.killswitch.release", "ai.operations.read", "notifications.inbox.read", "notifications.preferences.manage_own"],
       "defaultClearance": "internal"
     },
     "sponsor": {

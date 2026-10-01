@@ -36,6 +36,8 @@ const PM_GRANTABLE: RoleKey[] = ['workstream_lead', 'contributor', 'functional_a
  */
 const ACTIVITY_ENTITY_PERMISSION: Record<string, string> = {
   project: 'portfolio.project.read',
+  // Template upgrades of the project (REQ-ENT-009): visible to template readers (the record's visibility is the project's).
+  project_template_migration: 'config.template.read',
   workstream: 'planning.plan.read',
   project_membership: 'admin.role_assignment.read',
   task: 'planning.plan.read',

@@ -13,6 +13,10 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'modules
 
 /** module → files (relative to the module, without extension) other modules may import. */
 const PUBLISHED = {
+  config: [
+    'config.module',
+    'rag-thresholds.reader', // the RAG thresholds in force, read by the planning measurement (REQ-PLN-019)
+  ],
   documents: [
     'documents.module',
     'documents.service', // documents referenced by other modules' records (approval documents, room disclosures)
@@ -38,7 +42,11 @@ const PUBLISHED = {
     'planning.module',
     'change-control.service', // perimeter changes after baseline go through planning change requests (AT-07)
   ],
-  portfolio: ['portfolio.service'], // demo seeds create projects through the portfolio service
+  portfolio: [
+    'portfolio.module',
+    'portfolio.service', // demo seeds create projects through the portfolio service
+    'project-factory.service', // an approved template upgrade adds the new elements with the same builders (REQ-ENT-009)
+  ],
 };
 
 const PLATFORM = join(ROOT, '..', 'platform');

@@ -10,6 +10,7 @@ import { CrossProjectDependencyService } from './cross-project.service';
 import { PrerequisiteService } from './prerequisites.service';
 import { PlanningWbsController, PlanningScheduleController, PlanningChangeController, PlanningRaidController, PlanningHealthController, PlanningLinksController } from './planning.controller';
 import { GatesModule } from '../gates/gates.module';
+import { ConfigModule } from '../config/config.module';
 
 /**
  * WBS/tasks, milestones, deliverables, dependencies, schedule, baselines, change requests, RAID, status updates, my work.
@@ -18,7 +19,8 @@ import { GatesModule } from '../gates/gates.module';
  */
 @Module({
   // GatesModule: My Work asks the gates module for pending gate-level reviews (DOM-P2-16).
-  imports: [GatesModule],
+  // ConfigModule: the RAG thresholds in force (approved project version or template default — REQ-PLN-019).
+  imports: [GatesModule, ConfigModule],
   controllers: [PlanningWbsController, PlanningScheduleController, PlanningChangeController, PlanningRaidController, PlanningHealthController, PlanningLinksController],
   providers: [PlanningSupport, WbsService, ScheduleService, ChangeControlService, RaidService, HealthService, MyWorkService, CrossProjectDependencyService, PrerequisiteService],
   exports: [ChangeControlService, ScheduleService, HealthService, WbsService],

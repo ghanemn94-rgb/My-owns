@@ -5,7 +5,6 @@ import {
   STATUS_UPDATE_MACHINE,
   UpdateStatus,
   RagStatus,
-  DEFAULT_RAG_THRESHOLDS,
   RAG_OVERRIDE_MAX_DAYS,
   allowedCommands,
   transition,
@@ -41,6 +40,7 @@ import { newId } from '../../platform/ids';
 import { PlanningSupport, ProjectInfo } from './planning-support';
 import { ScheduleService } from './schedule.service';
 import type { BaselineSnapshot } from './change-control.service';
+import { RagThresholdsReader } from '../config/rag-thresholds.reader';
 
 type StatusUpdate = typeof schema.statusUpdate.$inferSelect;
 type Override = typeof schema.ragOverride.$inferSelect;
@@ -81,6 +81,7 @@ export class HealthService {
     private readonly audit: AuditService,
     private readonly outbox: OutboxService,
     private readonly versions: RecordVersionService,
+    private readonly ragThresholds: RagThresholdsReader,
   ) {}
 
   private get tx() {
@@ -108,7 +109,9 @@ export class HealthService {
   async computeHealth(p: ProjectInfo, assume?: { workstreamId: string | null; periodEnd: string; ragReported: RagStatus | null }) {
     const today = this.s.today(p);
     const cal = await this.s.calendar(p);
-    const thresholds = DEFAULT_RAG_THRESHOLDS;
+    // REQ-PLN-019 (DOM-P2-08): the project's APPROVED threshold version, else the pinned template version's proposed
+    // default — never a proposal awaiting approval. Every calculated RAG names the threshold set it used.
+    const { thresholds, ref: thresholdsRef } = await this.ragThresholds.inForce(p.id);
     const workstreams = await this.tx.select().from(schema.workstream).where(eq(schema.workstream.projectId, p.id)).orderBy(asc(schema.workstream.sortOrder));
     const names = await this.s.userNames(workstreams.map((w) => w.leadUserId));
     const tasks = await this.tx
@@ -170,7 +173,7 @@ export class HealthService {
         ...issues.filter((i) => i.ws === w.id && isBlockingIssue({ status: i.status as RaidStatus, severity: i.severity })).map((i) => ({ id: i.id, type: 'issue' as const, code: i.code, title: i.title })),
       ];
       const f = freshness(w.id);
-      const calc = calculateRag({ baselineFinish, forecastFinish, lastUpdatedOn: f.date, today, hasOpenBlocker: blockers.length > 0, thresholds, calendar: cal });
+      const calc = calculateRag({ baselineFinish, forecastFinish, lastUpdatedOn: f.date, today, hasOpenBlocker: blockers.length > 0, thresholds, thresholdsRef, calendar: cal });
       const ov = overrides.get(`workstream:${w.id}`) ?? null;
       const eff = effectiveRag(calc, ov ? { overrideStatus: ov.overrideStatus as RagStatus, reason: ov.reason, expiresOn: ov.expiresOn, reviewerUserId: ov.reviewerUserId, approved: ov.approved } : null, today);
       const counts: Record<string, number> = {};
@@ -254,6 +257,7 @@ export class HealthService {
     return {
       today,
       thresholds,
+      thresholdsRef,
       baseline: baseline ? { id: baseline.id, versionNo: baseline.versionNo } : null,
       project: {
         progress: projectProgress,
@@ -407,7 +411,7 @@ export class HealthService {
         const h = await this.computeHealth(p, { workstreamId: u.workstreamId, periodEnd: u.periodEnd, ragReported: (u.ragReported as RagStatus | null) ?? null });
         const hs = this.healthFor(h, u.workstreamId);
         extra.ragCalculated = (u.workstreamId ? h.workstreams.find((w) => w.id === u.workstreamId)!.rag.calculated.status : h.project.rag.calculated.status) as RagStatus;
-        extra.frozenSnapshot = JSON.parse(JSON.stringify({ computedAt: new Date().toISOString(), today: h.today, thresholds: h.thresholds, baseline: h.baseline, ...hs }));
+        extra.frozenSnapshot = JSON.parse(JSON.stringify({ computedAt: new Date().toISOString(), today: h.today, thresholds: h.thresholds, thresholdsRef: h.thresholdsRef, baseline: h.baseline, ...hs }));
       }
     }
     const row = await updateVersioned(this.s.db, schema.statusUpdate, { id, projectId, expectedVersion: body.expectedVersion }, { ...extra, status: to });

@@ -11,6 +11,7 @@ import {
   OUTPUT_MEASURES,
   RECONCILIATION_FLAGS,
   RECONCILIATION_STATUSES,
+  ROLE_KEYS,
   SEPARATION_COST_CATEGORIES,
   SOURCE_TYPES,
   VALUE_BASES,
@@ -641,6 +642,14 @@ export const KpiDto = z.object({
   /** Arabic definition from the pinned template while the definition is still the template's (QA-P34-01h); else null. */
   definitionAr: z.string().nullable(),
   formula: z.string(),
+  /**
+   * QA-P5-07: Arabic formula / source / thresholds from the pinned template version while the stored English is still the
+   * template's (template version 2 and later carry them); null once a person changed the field or for a user-defined KPI.
+   * Unit, period and frequency are fixed vocabularies translated by the web.
+   */
+  formulaAr: z.string().nullable(),
+  sourceAr: z.string().nullable(),
+  thresholdsAr: z.object({ green: z.string(), amber: z.string(), red: z.string() }).nullable(),
   unit: z.string(),
   period: z.string(),
   ownerRole: z.string().nullable(),
@@ -676,7 +685,9 @@ export const CreateKpiBody = z
     formula: RequiredText(2000),
     unit: RequiredText(32),
     period: RequiredText(32),
+    /** REQ-RPT-013: every KPI has an owner — a project member (`ownerUserId`) or a role (`ownerRole`), at least one. */
     ownerUserId: Uuid.nullable().optional(),
+    ownerRole: z.enum(ROLE_KEYS).nullable().optional(),
     benefitId: Uuid.nullable().optional(),
     source: RequiredText(2000),
     target: Text(200).nullable().optional(),
@@ -685,7 +696,8 @@ export const CreateKpiBody = z
     frequency: RequiredText(32),
     classification: ClassificationSchema.optional(),
   })
-  .strict();
+  .strict()
+  .refine((b) => !!b.ownerUserId || !!b.ownerRole, { message: 'A KPI needs an owner: a project member or a role', path: ['ownerUserId'] });
 
 export const RecordKpiObservationBody = z
   .object({

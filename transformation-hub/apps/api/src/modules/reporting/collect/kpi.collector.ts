@@ -25,6 +25,7 @@ import {
   type KpiCalculatorKey,
   type KpiComputation,
   type ProjectTemplateDefinition,
+  type TemplateKpi,
 } from '@hub/domain';
 import type { ReportSectionAccess } from '@hub/db';
 import { figure, section, table, type StoredSection } from '../report-model';
@@ -59,12 +60,15 @@ export async function visibleKpis(g: Gen): Promise<KpiRow[]> {
     .orderBy(asc(K.key), asc(K.id));
 }
 
-/** Arabic definitions of the pinned template (kept while the stored definition is still the template's — QA-P34-01h). */
-export async function templateKpiDefinitions(g: Gen): Promise<Map<string, { en: string; ar: string }>> {
+/**
+ * The KPIs of the pinned template version by key: their Arabic texts are kept while the stored English is still the
+ * template's (definition — QA-P34-01h; formula, source and thresholds from template version 2 — QA-P5-07).
+ */
+export async function templateKpis(g: Gen): Promise<Map<string, TemplateKpi>> {
   if (!g.project.templateVersionId) return new Map();
   const [tv] = await g.db.tx().select({ definition: schema.projectTemplateVersion.definition }).from(schema.projectTemplateVersion).where(eq(schema.projectTemplateVersion.id, g.project.templateVersionId));
   const def = tv?.definition as unknown as ProjectTemplateDefinition | undefined;
-  return new Map((def?.kpis ?? []).map((k) => [k.key, k.definition]));
+  return new Map((def?.kpis ?? []).map((k) => [k.key, k]));
 }
 
 /**

@@ -162,8 +162,15 @@
    "ai": "none"
   },
   "config.project_settings.manage": {
-   "description": "Project settings: working calendar and holidays, RAG thresholds, default classification, retention defaults, quiet hours.",
+   "description": "Project settings: working calendar and holidays, RAG threshold proposals (in force only once approved), default classification, retention defaults, quiet hours; setup wizard step 7 (confidentiality, retention) and the launch of monitoring (step 8).",
    "conditions": [],
+   "ai": "none"
+  },
+  "config.project_settings.approve": {
+   "description": "Approve or reject a proposed change of the project settings that change how status is computed (RAG thresholds); the approver is never the proposer.",
+   "conditions": [
+    "not_self"
+   ],
    "ai": "none"
   },
   "governance.committee.read": {
@@ -1487,6 +1494,7 @@
     "config.template.manage",
     "config.template.publish",
     "config.template_migration.propose",
+    "config.project_settings.approve",
     "planning.plan.read",
     "gates.gate.read",
     "reports.report.generate",

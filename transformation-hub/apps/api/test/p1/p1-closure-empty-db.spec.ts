@@ -195,7 +195,8 @@ describe('P1 closure — PLT-004 / SET-006 / SET-008: production bootstrap on an
     }
     // Templates are definitions only: bilingual structure, no dates/years, amounts, percentages, e-mail addresses or names.
     const tpl = (await p.query<{ definition: unknown; status: string }>('select definition, status::text from project_template_version')).rows;
-    expect(tpl.map((t) => t.status)).toEqual(['published', 'published']);
+    // Every version file of the two templates is published (P6: version 2 of each adds the Arabic KPI texts — QA-P5-07).
+    expect(tpl.map((t) => t.status)).toEqual(['published', 'published', 'published', 'published']);
     const strings = tpl.flatMap((t) => jsonStrings(t.definition));
     expect(strings.length).toBeGreaterThan(500);
     const offending = strings.filter((s) => /\b(19|20)\d{2}\b|\bSAR\s*\d|\d\s*(SAR|USD|EUR)\b|%|@|\b(Mr|Mrs|Ms|Dr|Eng)\.\s/.test(s));

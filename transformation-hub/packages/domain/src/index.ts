@@ -23,3 +23,4 @@ export * from './readiness';
 export * from './jv';
 export * from './finance';
 export * from './reporting';
+export * from './config';
