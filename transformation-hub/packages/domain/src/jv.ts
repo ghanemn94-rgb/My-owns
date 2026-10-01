@@ -53,6 +53,11 @@ export type RoomAccessEventKind = (typeof ROOM_ACCESS_EVENT_KINDS)[number];
 export const ASSESSMENT_BASES = ['fact', 'judgement'] as const;
 export type AssessmentBasis = (typeof ASSESSMENT_BASES)[number];
 export const DD_REQUEST_ORIGINS = ['internal', 'partner'] as const;
+/**
+ * Requester label the server stores on a question raised by the counterparty in its room (data shown in English on
+ * exports / AI context); the web shows its translated label for partner-raised questions (QA-P34-01c).
+ */
+export const PARTNER_REQUESTER_LABEL = 'Counterparty';
 export const DD_DOMAINS = ['legal', 'finance', 'tax', 'technical', 'commercial', 'hr', 'regulatory', 'operations', 'other'] as const;
 export type DdDomain = (typeof DD_DOMAINS)[number];
 /** What the counterparty sees of a DD request (external projection — never drafts, assignees or reviewers). */

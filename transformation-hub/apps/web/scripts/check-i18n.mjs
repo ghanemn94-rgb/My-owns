@@ -13,6 +13,8 @@
  *     QA-P2-04: planning explanations (PLANNING_MESSAGES_EN, `planning.messages.plan.*`) and authority reasons
  *     (AUTHORITY_MESSAGES_EN, `governance.messages.authority.*`) — the web routes `plan.*` / `authority.*` codes to those
  *     catalogues (lib/i18n-data.ts `serverMessageKey`), so no other catalogue may use these prefixes;
+ *     QA-P34-01: carve-out reconciliation findings, impact summaries and history reasons (PERIMETER_MESSAGES_EN,
+ *     `carveout.messages.perimeter.*`) and TSA escalation texts (TSA_MESSAGES_EN, `readiness.messages.tsa.*`);
  *  6. every AI refusal code raised in apps/api/src/modules/ai has `ai.errors.<code>` in en and ar, and every AI detection
  *     code / proposable action has its label;
  *  7. every refusal code the gates module raises (apps/api/src/modules/gates, packages/domain/src/gates.ts) has a
@@ -98,14 +100,22 @@ const { FINANCE_MESSAGES_EN } = require('@hub/domain/dist/finance.js');
 const { PLANNING_MESSAGES_EN } = require('@hub/domain/dist/planning-messages.js');
 const { AUTHORITY_MESSAGES_EN } = require('@hub/domain/dist/governance.js');
 const { JV_MESSAGES_EN } = jv;
+const { PERIMETER_MESSAGES_EN } = require('@hub/domain/dist/perimeter.js');
+const { TSA_MESSAGES_EN } = require('@hub/domain/dist/readiness.js');
 const serverCatalogues = {
   gates: { ...DIMENSION_MESSAGES_EN, ...GATE_MESSAGES_EN, ...JV_MESSAGES_EN },
   finance: FINANCE_MESSAGES_EN,
   planning: PLANNING_MESSAGES_EN,
   governance: AUTHORITY_MESSAGES_EN,
+  carveout: PERIMETER_MESSAGES_EN,
+  readiness: TSA_MESSAGES_EN,
 };
 // Code prefixes routed to a catalogue other than `gates` by useServerMessages (lib/i18n-data.ts serverMessageKey).
-const ROUTED_PREFIXES = { planning: 'plan.', governance: 'authority.' };
+const ROUTED_PREFIXES = { planning: 'plan.', governance: 'authority.', carveout: 'perimeter.', readiness: 'tsa.' };
+const i18nDataSrc = readFileSync(join(here, '..', 'src', 'lib', 'i18n-data.ts'), 'utf8');
+for (const [ns, prefix] of Object.entries(ROUTED_PREFIXES)) {
+  if (!i18nDataSrc.includes(`['${prefix}', '${ns}']`)) errors.push(`lib/i18n-data.ts ROUTED_PREFIXES does not route "${prefix}" to ${ns}.messages`);
+}
 for (const [ns, prefix] of Object.entries(ROUTED_PREFIXES)) {
   if (!serverCatalogues[ns] || Object.keys(serverCatalogues[ns]).length === 0) errors.push(`server message catalogue ${ns} is empty or missing`);
   for (const code of Object.keys(serverCatalogues[ns] ?? {})) if (!code.startsWith(prefix)) errors.push(`${ns} server message code ${code} must start with "${prefix}" (routed by prefix)`);
@@ -192,5 +202,5 @@ if (errors.length) {
   process.exit(1);
 }
 console.log(
-  `i18n check passed: ${namespaces.length} namespaces, ${count} keys per language, ${enumValues} enum values translated in en and ar, ${serverCodeCount} server message codes (gates incl. JV, finance, planning, governance), ${aiCodes.size} AI refusal codes, ${gateCodes.size} gate refusal codes, ${auditActionCount} governance / finance history labels.`,
+  `i18n check passed: ${namespaces.length} namespaces, ${count} keys per language, ${enumValues} enum values translated in en and ar, ${serverCodeCount} server message codes (gates incl. JV, finance, planning, governance, carve-out, TSA), ${aiCodes.size} AI refusal codes, ${gateCodes.size} gate refusal codes, ${auditActionCount} governance / finance history labels.`,
 );

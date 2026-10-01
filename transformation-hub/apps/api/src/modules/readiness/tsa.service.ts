@@ -31,6 +31,8 @@ import {
   notFound,
   ruleViolation,
   transition,
+  tsaEscalationI18n,
+  tsaEscalationText,
   tsaExpiryAction,
   TSA_ESCALATION_OPTIONS,
   Classification,
@@ -280,7 +282,17 @@ export class TsaService {
       exitApprovedAt: iso(t.exitApprovedAt),
       evidence: await this.s.visibleEvidence(ctx, projectId, 'tsa_service', t.id), // display: SEC-P1R-05
       escalation: esc
-        ? { id: esc.id, code: esc.code, status: esc.status, requestedAction: esc.requestedAction, decisionDeadline: esc.decisionDeadline, options: esc.options, target: esc.target }
+        ? {
+            id: esc.id,
+            code: esc.code,
+            status: esc.status,
+            requestedAction: esc.requestedAction,
+            requestedActionI18n: tsaEscalationI18n(esc.requestedAction),
+            decisionDeadline: esc.decisionDeadline,
+            options: esc.options,
+            target: esc.target,
+            targetI18n: tsaEscalationI18n(esc.target),
+          }
         : null,
       extensionDecision: this.s.decisionSummary(ctx, projectId, d, TSA_DECISION_TYPE_KEYS, 'a TSA extension'),
       allowedCommands: allowedCommands(TSA_MACHINE, t.status),
@@ -469,7 +481,7 @@ export class TsaService {
     const escalationId = await this.raiseEscalation(ctx, p, t, {
       reason: 'replacement_failure',
       title: `TSA ${t.code} — replacement service failed: continuity / extension decision required`,
-      requestedAction: `The replacement for TSA ${t.code} (${t.name}) failed: ${body.failureSummary}. Decide on continuity: extension of the TSA (requires an approved decision; never automatic) or an alternative interim arrangement. Continuity plan: ${body.continuityPlan}`,
+      requestedAction: tsaEscalationText('tsa.escalation.replacement_failure', { code: t.code, name: t.name, failureSummary: body.failureSummary, continuityPlan: body.continuityPlan }),
       decisionDeadline: body.decisionDeadline,
     });
     await this.invalidatePendingExit(t, 'replacement failure reported');
@@ -680,10 +692,12 @@ export class TsaService {
       if (!types.length) continue;
       const dt = types[0]!;
       return dt.withinCommitteeAuthority
-        ? { target: `${name} — within its delegated authority (${dt.key}, matrix v${m.versionNo})`, committeeId: m.committeeId }
-        : { target: `${dt.escalateTo ?? 'Delegating authority — to be confirmed'} (${dt.key}, matrix v${m.versionNo})`, committeeId: m.committeeId };
+        ? { target: tsaEscalationText('tsa.routing.within_authority', { committee: name, decisionType: dt.key, matrixVersion: m.versionNo }), committeeId: m.committeeId }
+        : dt.escalateTo
+          ? { target: tsaEscalationText('tsa.routing.escalate_to', { escalateTo: dt.escalateTo, decisionType: dt.key, matrixVersion: m.versionNo }), committeeId: m.committeeId }
+          : { target: tsaEscalationText('tsa.routing.delegating_authority_tbc', { decisionType: dt.key, matrixVersion: m.versionNo }), committeeId: m.committeeId };
     }
-    return { target: 'Authorized body — to be confirmed (no approved authority matrix covers TSA decisions)', committeeId: null };
+    return { target: tsaEscalationText('tsa.routing.no_matrix'), committeeId: null };
   }
 
   /** Idempotent: one open escalation per TSA at a time (reused while open / decision requested). */
@@ -726,7 +740,7 @@ export class TsaService {
     return {
       reason: 'expired_unresolved' as const,
       title: `TSA ${t.code} expired without an accepted replacement — escalation`,
-      requestedAction: `TSA ${t.code} (${t.name}) reached its end date ${t.endDate} without an accepted replacement service. This is NOT an exit. Decide on continuity: an extension (approved decision required; never automatic) or an alternative arrangement.`,
+      requestedAction: tsaEscalationText('tsa.escalation.expired_unresolved', { code: t.code, name: t.name, endDate: t.endDate ?? '' }),
       decisionDeadline: null,
     };
   }

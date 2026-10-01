@@ -92,7 +92,8 @@ export default function KpiPage() {
         <Panel title={t('finance.kpis.definitionTitle')}>
           <Facts
             items={[
-              { label: t('finance.kpis.definition'), value: <UText value={k.definition} multiline />, wide: true },
+              // QA-P34-01h: a template KPI shows its template Arabic definition (null once the definition was edited).
+              { label: t('finance.kpis.definition'), value: <UText value={loc(k.definition, k.definitionAr)} multiline />, wide: true },
               { label: t('finance.kpis.formula'), value: <UText value={k.formula} multiline />, wide: true },
               { label: t('finance.kpis.unit'), value: <UText value={k.unit} /> },
               { label: t('finance.kpis.period'), value: <UText value={k.period} /> },

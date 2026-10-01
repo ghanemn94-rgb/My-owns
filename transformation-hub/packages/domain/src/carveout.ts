@@ -304,14 +304,41 @@ export interface ReconFinding {
   itemId: string;
   code: string;
   issue: 'no_transfer_plan' | 'no_evidence' | 'pending_disposition' | 'consent_outstanding' | 'transfer_not_applicable';
+  /** English sentence (audit, AI context). */
   message: string;
+  /** The same sentence as codes + parameters, translated by the client (QA-P34-01a; web `carveout.messages`). */
+  messageI18n: ServerMessage[];
+}
+
+/**
+ * English templates of the perimeter reconciliation findings (REQ-PER-003 / REQ-PER-006). The web catalogue
+ * `carveout.messages.perimeter.recon.*` (en + ar) carries the same codes and placeholders. `{missing}` is a comma-separated
+ * list of Day-1 position gap keys (translated one by one by the client).
+ */
+export const RECON_MESSAGES_EN: Readonly<Record<string, string>> = {
+  'perimeter.recon.pending_disposition': 'Disposition (included/excluded/shared) not decided',
+  'perimeter.recon.no_transfer_plan': 'No transfer mechanism and/or planned effective date',
+  'perimeter.recon.not_applicable_both': 'Included / shared item with neither a legal nor an economic transfer — reclassify it through the scope change or plan the transfer',
+  'perimeter.recon.not_applicable_legal': 'Legal transfer determined not applicable — the item transfers on the other aspect only',
+  'perimeter.recon.not_applicable_economic': 'Economic transfer determined not applicable — the item transfers on the other aspect only',
+  'perimeter.recon.no_evidence': 'Reported transferred without acceptance evidence',
+  'perimeter.recon.consent_outstanding': 'Consent required, not granted, and no interim arrangement',
+  'perimeter.recon.pending_without_resolution': 'Pending item without owner, resolution path and target resolution gate (G1-C03)',
+  'perimeter.recon.day1_position_incomplete': 'Day-1 contract position incomplete: {missing}',
+  'perimeter.recon.change_request_pending': 'A scope change awaits change-request decision',
+};
+
+/** A finding with its English sentence and its codes, rendered from {@link RECON_MESSAGES_EN}. */
+export function reconFinding<I extends string>(itemId: string, code: string, issue: I, messageCode: string, params: Record<string, string | number> = {}) {
+  const msg = serverMessage(messageCode, params);
+  return { itemId, code, issue, message: renderMessagesEn([msg], RECON_MESSAGES_EN), messageI18n: [msg] };
 }
 
 export function reconcilePerimeter(items: PerimeterReconItem[]): ReconFinding[] {
   const out: ReconFinding[] = [];
   for (const it of items) {
     if (it.disposition === 'pending') {
-      out.push({ itemId: it.id, code: it.code, issue: 'pending_disposition', message: 'Disposition (included/excluded/shared) not decided' });
+      out.push(reconFinding(it.id, it.code, 'pending_disposition', 'perimeter.recon.pending_disposition'));
       continue;
     }
     if (it.disposition === 'excluded') continue;
@@ -319,27 +346,22 @@ export function reconcilePerimeter(items: PerimeterReconItem[]): ReconFinding[] 
     const economic = it.economicTransferStatus ?? 'not_started'; // N-01: omitted → fails closed
     const combined = combinedTransferStatus(legal, economic);
     if (combined !== 'not_applicable' && (!it.transferMechanism || !it.plannedEffectiveDate)) {
-      out.push({ itemId: it.id, code: it.code, issue: 'no_transfer_plan', message: 'No transfer mechanism and/or planned effective date' });
+      out.push(reconFinding(it.id, it.code, 'no_transfer_plan', 'perimeter.recon.no_transfer_plan'));
     }
     // DOM-P3-05: an in-scope item with a "not applicable" aspect is reported — it never reads as transferred on that aspect;
     // with both aspects not applicable nothing transfers at all (reclassify it through the scope change).
     if (legal === 'not_applicable' || economic === 'not_applicable') {
       const both = legal === 'not_applicable' && economic === 'not_applicable';
-      out.push({
-        itemId: it.id,
-        code: it.code,
-        issue: 'transfer_not_applicable',
-        message: both
-          ? 'Included / shared item with neither a legal nor an economic transfer — reclassify it through the scope change or plan the transfer'
-          : `${legal === 'not_applicable' ? 'Legal' : 'Economic'} transfer determined not applicable — the item transfers on the other aspect only`,
-      });
+      out.push(
+        reconFinding(it.id, it.code, 'transfer_not_applicable', both ? 'perimeter.recon.not_applicable_both' : legal === 'not_applicable' ? 'perimeter.recon.not_applicable_legal' : 'perimeter.recon.not_applicable_economic'),
+      );
     }
     const reported = (s: TransferStatus) => s === 'transferred_pending_evidence' || s === 'transferred_verified';
     if ((reported(legal) || reported(economic)) && it.evidenceCount === 0) {
-      out.push({ itemId: it.id, code: it.code, issue: 'no_evidence', message: 'Reported transferred without acceptance evidence' });
+      out.push(reconFinding(it.id, it.code, 'no_evidence', 'perimeter.recon.no_evidence'));
     }
     if (it.consentRequired && !it.consentGranted && !it.hasInterimArrangement) {
-      out.push({ itemId: it.id, code: it.code, issue: 'consent_outstanding', message: 'Consent required, not granted, and no interim arrangement' });
+      out.push(reconFinding(it.id, it.code, 'consent_outstanding', 'perimeter.recon.consent_outstanding'));
     }
   }
   return out;
@@ -403,13 +425,21 @@ export function assertDay1ContractPosition(c: {
  * contested is listed with `evidenceInvalid: true`.
  */
 export function goDecisionBlockers(
-  checks: { id: string; title: string; mandatory: boolean; blocker: boolean; status: ReadinessStatus; waivable?: boolean; hasApprovedWaiver?: boolean; signoffEvidenceValid?: boolean }[],
+  checks: { id: string; title: string; titleAr?: string | null; mandatory: boolean; blocker: boolean; status: ReadinessStatus; waivable?: boolean; hasApprovedWaiver?: boolean; signoffEvidenceValid?: boolean }[],
 ) {
   const cleared = (c: (typeof checks)[number]) =>
     (c.status === 'passed' && c.signoffEvidenceValid === true) || c.status === 'not_applicable' || (c.status === 'waived' && c.waivable === true && c.hasApprovedWaiver === true);
   return checks
     .filter((c) => (c.blocker || c.mandatory) && !cleared(c))
-    .map((c) => ({ id: c.id, title: c.title, status: c.status, blocker: c.blocker, ...(c.status === 'passed' ? { evidenceInvalid: true } : {}) }));
+    .map((c) => ({
+      id: c.id,
+      title: c.title,
+      // QA-P34-01e: the Arabic title travels with the blocker (shown by the Arabic UI; English stays the evaluated text).
+      ...(c.titleAr !== undefined ? { titleAr: c.titleAr } : {}),
+      status: c.status,
+      blocker: c.blocker,
+      ...(c.status === 'passed' ? { evidenceInvalid: true } : {}),
+    }));
 }
 
 /**

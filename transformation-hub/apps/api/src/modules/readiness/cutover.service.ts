@@ -154,6 +154,7 @@ export class CutoverService {
     const inputs = checks.map((x) => ({
       id: x.id,
       title: `${x.code} — ${x.title}`,
+      titleAr: x.titleAr ? `${x.code} — ${x.titleAr}` : null,
       mandatory: x.mandatory,
       blocker: x.blocker,
       status: x.status,
@@ -210,6 +211,7 @@ export class CutoverService {
           code: x.code,
           area: x.area,
           title: x.title,
+          titleAr: x.titleAr,
           mandatory: x.mandatory,
           blocker: x.blocker,
           status: x.status,
@@ -220,10 +222,37 @@ export class CutoverService {
         };
       }),
       goDecision: this.s.decisionSummary(ctx, projectId, d, GO_DECISION_TYPE_KEYS, 'a go-live'),
-      decisionHistory: history.map(recordDto),
+      decisionHistory: await this.withArabicBlockerTitles(projectId, history.map(recordDto)),
       acceptanceEvidence: await this.s.visibleEvidence(ctx, projectId, 'cutover_plan', plan.id), // display: SEC-P1R-05
       people: await this.s.people([plan.accountableUserId, plan.submittedForDecisionBy, plan.goNoGoDecidedBy, plan.executedBy, plan.postTransitionAcceptedBy, plan.createdBy, ...history.map((h) => h.actorUserId)]),
     };
+  }
+
+  /**
+   * QA-P34-01e: history entries recorded before blockers carried their Arabic title get it from the check — only while the
+   * check's current "<code> — <title>" is still the recorded English title (an edited check keeps the recorded text only).
+   */
+  private async withArabicBlockerTitles(projectId: string, entries: ReturnType<typeof recordDto>[]) {
+    const ids = [...new Set(entries.flatMap((e) => (e.evaluation?.blockers ?? []).filter((b) => b.titleAr === undefined).map((b) => b.id)))];
+    if (!ids.length) return entries;
+    const c = schema.readinessCheck;
+    const rows = await this.s.db.tx().select({ id: c.id, code: c.code, title: c.title, titleAr: c.titleAr }).from(c).where(and(eq(c.projectId, projectId), inArray(c.id, ids)));
+    const byId = new Map(rows.map((r) => [r.id, r]));
+    return entries.map((e) =>
+      e.evaluation
+        ? {
+            ...e,
+            evaluation: {
+              ...e.evaluation,
+              blockers: e.evaluation.blockers.map((b) => {
+                if (b.titleAr !== undefined) return b;
+                const x = byId.get(b.id);
+                return { ...b, titleAr: x && x.titleAr && `${x.code} — ${x.title}` === b.title ? `${x.code} — ${x.titleAr}` : null };
+              }),
+            },
+          }
+        : e,
+    );
   }
 
   // ---------------------------------------------------------------------------------------------------------
@@ -623,7 +652,7 @@ function recordDto(r: RecordRow) {
     actorUserId: r.actorUserId,
     rationale: r.rationale,
     goDecisionId: r.goDecisionId,
-    evaluation: (r.evaluation as { blockers: { id: string; title: string; status: never; blocker: boolean }[]; missing: string[] } | null) ?? null,
+    evaluation: (r.evaluation as { blockers: { id: string; title: string; titleAr?: string | null; status: never; blocker: boolean }[]; missing: string[] } | null) ?? null,
     createdAt: r.createdAt.toISOString(),
   };
 }

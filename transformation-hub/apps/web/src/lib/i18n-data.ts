@@ -42,6 +42,26 @@ const ENUM_PARAMS: Readonly<Record<string, Readonly<Record<string, StatusEnum>>>
   'plan.red.override_not_hiding': { status: 'ragStatuses' },
   'plan.work.rag_override_workstream': { status: 'ragStatuses', calculated: 'ragStatuses' },
   'plan.work.rag_override_project': { status: 'ragStatuses', calculated: 'ragStatuses' },
+  // Carve-out (QA-P34-01a/f)
+  'perimeter.impact.change.add': { disposition: 'perimeterDispositions' },
+  'perimeter.history.change_request_raised': { disposition: 'perimeterDispositions' },
+  'perimeter.history.transferability': { transferClass: 'contractTransferClasses' },
+  'perimeter.history.transfer': { from: 'transferStatuses', to: 'transferStatuses' },
+};
+
+/**
+ * Message parameters that carry a vocabulary key translated with a catalogue entry `<prefix>.<value>` (a comma-separated
+ * list is translated item by item and joined as a list). Values outside `values` are shown as given.
+ */
+const KEY_PARAMS: Readonly<Record<string, Readonly<Record<string, { prefix: string; values: readonly string[] }>>>> = {
+  'perimeter.recon.day1_position_incomplete': {
+    missing: { prefix: 'carveout.day1.missing', values: ['specialistClassification', 'interimArrangement', 'serviceAccountableOwner', 'billingAccountableOwner', 'slaAccountableOwner', 'remediationPlan'] },
+  },
+  'perimeter.history.aspect_not_applicable_requested': { aspect: { prefix: 'carveout.aspect', values: ['legal', 'economic'] } },
+  'perimeter.history.transfer': {
+    aspect: { prefix: 'carveout.aspect', values: ['legal', 'economic'] },
+    command: { prefix: 'carveout.transfer.cmd', values: ['plan', 'start', 'report_transferred', 'verify', 'reject_evidence', 'block', 'unblock', 'mark_not_applicable', 'determine_not_applicable'] },
+  },
 };
 
 /** Message parameters that carry a business date (YYYY-MM-DD): formatted for the active locale. */
@@ -50,6 +70,7 @@ const DATE_PARAMS: Readonly<Record<string, readonly string[]>> = {
   'plan.red.milestone_overdue': ['date'],
   'plan.work.status_update_workstream': ['date'],
   'plan.work.status_update_project': ['date'],
+  'tsa.escalation.expired_unresolved': ['endDate'],
 };
 
 /** Message parameters that carry a comma-separated list of weekday numbers (0 = Sunday): shown as weekday names. */
@@ -65,13 +86,22 @@ function weekdayNames(locale: Locale, list: (items: string[]) => string, value: 
   return list(days.map((d) => fmt.format(new Date(Date.UTC(2026, 9, 4 + Number(d))))));
 }
 
+/** Code prefix → catalogue (`<namespace>.messages`); any other code → `gates.messages`. Mirrored in check-i18n.mjs. */
+const ROUTED_PREFIXES: readonly (readonly [string, string])[] = [
+  ['plan.', 'planning'],
+  ['authority.', 'governance'],
+  ['perimeter.', 'carveout'],
+  ['tsa.', 'readiness'],
+];
+
 /**
- * Catalogue of a server message code: `plan.*` → `planning.messages`, `authority.*` → `governance.messages`, every other
- * code (status dimensions, gate blockers, JV) → `gates.messages`. apps/web/scripts/check-i18n.mjs checks each catalogue
- * against the domain's English templates (PLANNING_MESSAGES_EN, AUTHORITY_MESSAGES_EN, …).
+ * Catalogue of a server message code: `plan.*` → `planning.messages`, `authority.*` → `governance.messages`,
+ * `perimeter.*` → `carveout.messages`, `tsa.*` → `readiness.messages`, every other code (status dimensions, gate
+ * blockers, JV) → `gates.messages`. apps/web/scripts/check-i18n.mjs checks each catalogue against the domain's English
+ * templates (PLANNING_MESSAGES_EN, AUTHORITY_MESSAGES_EN, PERIMETER_MESSAGES_EN, TSA_MESSAGES_EN, …).
  */
 export function serverMessageKey(code: string): MessageKey {
-  const ns = code.startsWith('plan.') ? 'planning' : code.startsWith('authority.') ? 'governance' : 'gates';
+  const ns = ROUTED_PREFIXES.find(([prefix]) => code.startsWith(prefix))?.[1] ?? 'gates';
   return `${ns}.messages.${code}` as MessageKey;
 }
 
@@ -90,6 +120,11 @@ export function useServerMessages() {
             Object.entries(m.params).map(([k, v]) => {
               const e = ENUM_PARAMS[m.code]?.[k];
               if (e) return [k, tStatus(e, String(v))];
+              const vocabulary = KEY_PARAMS[m.code]?.[k];
+              if (vocabulary) {
+                const items = String(v).split(',').map((x) => x.trim()).filter(Boolean);
+                return [k, formatList(items.map((x) => (vocabulary.values.includes(x) ? t(`${vocabulary.prefix}.${x}` as MessageKey) : x)))];
+              }
               if (DATE_PARAMS[m.code]?.includes(k)) return [k, formatDate(String(v))];
               if (WEEKDAY_PARAMS[m.code]?.includes(k)) return [k, weekdayNames(locale, formatList, String(v))];
               return [k, typeof v === 'number' ? formatNumber(v) : v];

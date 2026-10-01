@@ -6,6 +6,7 @@ import { TSA_MACHINE } from './workflows';
 import type { Machine } from './workflows';
 import { goDecisionBlockers, missingCutoverPrerequisites } from './carveout';
 import type { CutoverPrerequisites, TsaExpiryAssessment } from './carveout';
+import { parseRenderedMessage, renderMessageEn, type ServerMessage } from './messages';
 
 /**
  * Day-1 readiness, cutover / go-no-go and TSA rules (spec §7.3, §7.4; AT-09, AT-10; REQ-RDY-*, REQ-TSA-*).
@@ -440,6 +441,38 @@ export const TSA_ESCALATION_OPTIONS = [
   { key: 'replan', title: 'Accelerate / re-plan the replacement service', impact: 'Exit only after the replacement is accepted with evidence and the exit approved' },
 ] as const;
 export type TsaEscalationOptionKey = (typeof TSA_ESCALATION_OPTIONS)[number]['key'];
+
+/**
+ * English templates of the texts the TSA escalation stores on the governance escalation record (QA-P34-01b): the requested
+ * action and the routing target. They are persisted as plain text (the escalation table is shared with the committee
+ * escalations), so the API recovers the codes with {@link tsaEscalationI18n}. `{endDate}` is a business date; `{name}`,
+ * `{failureSummary}`, `{continuityPlan}`, `{committee}` and `{escalateTo}` are recorded data (shown as entered);
+ * `{decisionType}` is a decision-type key. Web catalogue: `readiness.messages.tsa.*` (en + ar).
+ */
+export const TSA_MESSAGES_EN: Readonly<Record<string, string>> = {
+  'tsa.escalation.expired_unresolved':
+    'TSA {code} ({name}) reached its end date {endDate} without an accepted replacement service. This is NOT an exit. Decide on continuity: an extension (approved decision required; never automatic) or an alternative arrangement.',
+  'tsa.escalation.replacement_failure':
+    'The replacement for TSA {code} ({name}) failed: {failureSummary}. Decide on continuity: extension of the TSA (requires an approved decision; never automatic) or an alternative interim arrangement. Continuity plan: {continuityPlan}',
+  'tsa.routing.within_authority': '{committee} — within its delegated authority ({decisionType}, matrix v{matrixVersion})',
+  'tsa.routing.delegating_authority_tbc': 'Delegating authority — to be confirmed ({decisionType}, matrix v{matrixVersion})',
+  'tsa.routing.escalate_to': '{escalateTo} ({decisionType}, matrix v{matrixVersion})',
+  'tsa.routing.no_matrix': 'Authorized body — to be confirmed (no approved authority matrix covers TSA decisions)',
+};
+
+/** Parameters of the TSA escalation texts that are codes / keys / numbers / dates (parsed as single tokens). */
+const TSA_MESSAGE_TOKENS = ['code', 'endDate', 'decisionType', 'matrixVersion'] as const;
+
+/** English TSA escalation text rendered from {@link TSA_MESSAGES_EN} (what the escalation record stores). */
+export function tsaEscalationText(code: string, params: Record<string, string | number> = {}): string {
+  return renderMessageEn(code, params, TSA_MESSAGES_EN);
+}
+
+/** Codes + parameters of a stored TSA escalation text; empty when it matches no template (shown as stored). */
+export function tsaEscalationI18n(text: string | null | undefined): ServerMessage[] {
+  const m = parseRenderedMessage(text, TSA_MESSAGES_EN, TSA_MESSAGE_TOKENS);
+  return m ? [m] : [];
+}
 
 /** REQ-TSA-001 (proposed test "a TSA without exit milestones cannot be Approved"): approval needs a complete record. */
 export function assertTsaApprovable(t: {

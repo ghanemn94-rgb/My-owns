@@ -15,6 +15,7 @@ import {
   conflict,
   forbidden,
   isInScope,
+  perimeterHistoryReason,
   ruleViolation,
 } from '@hub/domain';
 import type { z } from 'zod';
@@ -138,7 +139,7 @@ export class TransfersService {
       recordedBy: ctx.principal.userId!,
     });
     const version = row['version'] as number;
-    await this.versions.snapshot({ projectId: p.id, entityType: 'perimeter_item', entityId: item.id, versionNo: version, snapshot: row, reason: `Transfer (${rec.aspect}) ${rec.command}: ${rec.from} → ${rec.to}` });
+    await this.versions.snapshot({ projectId: p.id, entityType: 'perimeter_item', entityId: item.id, versionNo: version, snapshot: row, reason: perimeterHistoryReason('perimeter.history.transfer', { aspect: rec.aspect, command: rec.command, from: rec.from, to: rec.to }) });
     await this.audit.record({
       action: `carveout.transfer.${rec.command}`,
       entityType: 'perimeter_item',

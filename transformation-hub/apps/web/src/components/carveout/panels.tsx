@@ -8,6 +8,7 @@ import { carveoutRoutes as C, governanceRoutes as G } from '@hub/contracts';
 import type { PerimeterItemType } from '@hub/domain';
 import { EM_DASH, useI18n, type MessageKey } from '@/i18n/provider';
 import { api, isApiError } from '@/lib/api';
+import { useServerMessages } from '@/lib/i18n-data';
 import { ck, itemHref, useRefreshCarveout, type Day1Positions, type PerimeterVersion, type Reconciliation, type Site, type TransferRecord } from '@/lib/carveout';
 import { useProjectContext } from '@/lib/project-context';
 import { ConfirmCommandDialog } from '../ConfirmCommandDialog';
@@ -37,6 +38,7 @@ export function ReconciliationPanel() {
   const { t, tStatus } = useI18n();
   const { projectId, can } = useProjectContext();
   const q = useQuery({ queryKey: ck.reconciliation(projectId), queryFn: ({ signal }) => api(C.reconciliation, { params: { projectId }, signal }) });
+  const serverText = useServerMessages();
   const [review, setReview] = useState<Reconciliation['categories'][number] | null>(null);
   if (q.isLoading) return <LoadingState />;
   if (q.error || !q.data) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
@@ -62,7 +64,8 @@ export function ReconciliationPanel() {
           columns={[
             { key: 'code', header: t('carveout.common.item'), isRowHeader: true, sortValue: (f) => f.code, cell: (f) => <CodeLink href={itemHref(projectId, f.itemId)} code={f.code} /> },
             { key: 'issue', header: t('carveout.recon.issueCol'), sortValue: (f) => f.issue, cell: (f) => <span data-issue={f.issue}>{issueLabel(f.issue)}</span> },
-            { key: 'msg', header: t('carveout.recon.detail'), cell: (f) => <span className="text-muted" dir="ltr">{f.message}</span> },
+            // QA-P34-01a: the server's sentence is translated from its codes (the English is shown only for rows without codes).
+            { key: 'msg', header: t('carveout.recon.detail'), cell: (f) => <span className="text-muted">{serverText(f.messageI18n, f.message)}</span> },
           ]}
           rows={r.findings}
           rowKey={(f) => `${f.itemId}-${f.issue}`}

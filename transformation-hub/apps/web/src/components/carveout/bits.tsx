@@ -3,6 +3,7 @@
 import { CircleCheck, CircleX } from 'lucide-react';
 import { EM_DASH, useI18n } from '@/i18n/provider';
 import type { Day1Position, ImpactEntry } from '@/lib/carveout';
+import { useServerMessages } from '@/lib/i18n-data';
 import { StatusBadge, type Tone } from '../StatusBadge';
 import { cx } from '../ui';
 
@@ -116,6 +117,7 @@ const IMPACT_TONE: Record<ImpactEntry['status'], Tone> = { identified: 'info', a
 /** REQ-PER-004: impact entries across modules; figures are never computed — specialist assessment is shown as pending. */
 export function ImpactEntries({ entries, narrative }: { entries: ImpactEntry[]; narrative?: Record<string, string> }) {
   const { t } = useI18n();
+  const serverText = useServerMessages();
   return (
     <ul className="grid gap-2 md:grid-cols-2" data-testid="impact-entries">
       {entries.map((e) => (
@@ -124,8 +126,9 @@ export function ImpactEntries({ entries, narrative }: { entries: ImpactEntry[]; 
             <span className="text-sm font-semibold">{t(`carveout.impact.area.${e.area}`)}</span>
             <StatusBadge enumName="applicabilityStatuses" value={e.status} tone={IMPACT_TONE[e.status]} label={t(`carveout.impact.status.${e.status}`)} />
           </div>
-          <p className="mt-1 text-sm text-ink" dir="auto">
-            {e.summary}
+          {/* QA-P34-01f: the derived summary is translated from its codes (entries stored before the codes show the English). */}
+          <p className="mt-1 text-sm text-ink" dir={e.summaryI18n.length ? undefined : 'auto'}>
+            {serverText(e.summaryI18n, e.summary)}
           </p>
           {e.references.length ? (
             <p className="mt-1 text-xs text-muted" dir="ltr">

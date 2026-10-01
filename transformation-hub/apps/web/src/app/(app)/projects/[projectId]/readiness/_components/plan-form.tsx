@@ -71,7 +71,7 @@ export function planBody(f: PlanForm, mode: 'edit' | null) {
 
 export function PlanFields({ form, onChange }: { form: PlanForm; onChange: (f: PlanForm) => void }) {
   const { t } = useI18n();
-  const { sites, workstreams, siteName } = useScopeLabels();
+  const { sites, workstreams, siteName, wsName } = useScopeLabels();
   const set = <K extends keyof PlanForm>(k: K, v: PlanForm[K]) => onChange({ ...form, [k]: v });
   return (
     <div className="grid gap-4 sm:grid-cols-2">
@@ -88,7 +88,7 @@ export function PlanFields({ form, onChange }: { form: PlanForm; onChange: (f: P
         <option value="">{t('readiness.common.notSet')}</option>
         {workstreams.map((w) => (
           <option key={w.id} value={w.id}>
-            {w.code} — {w.name}
+            {wsName(w.id)}
           </option>
         ))}
       </SelectField>

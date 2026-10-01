@@ -167,7 +167,7 @@ export class ReadinessSupport {
     projectId: string,
     kind: 'go_flagged' | 'execution_blocked' | 'check_bound' | 'check_unbound',
     rationale: string,
-    evaluation: { blockers: { id: string; title: string; status: ReadinessStatus; blocker: boolean; evidenceInvalid?: boolean }[]; missing: string[] } | null,
+    evaluation: { blockers: { id: string; title: string; titleAr?: string | null; status: ReadinessStatus; blocker: boolean; evidenceInvalid?: boolean }[]; missing: string[] } | null,
   ) {
     await this.db
       .tx()
@@ -194,11 +194,11 @@ export class ReadinessSupport {
    * itself is not changed (it is a recorded decision); recording the execution is refused until the check is cleared /
    * waived or the GO is withdrawn for a new decision (`CutoverService.recordExecution`, `return_to_planning`).
    */
-  async flagGoPlans(ctx: RequestContext, projectId: string, check: { id: string; code: string; title: string; status: ReadinessStatus; blocker: boolean; mandatory: boolean; cutoverPlanId: string | null; siteId: string | null }, why: string) {
+  async flagGoPlans(ctx: RequestContext, projectId: string, check: { id: string; code: string; title: string; titleAr?: string | null; status: ReadinessStatus; blocker: boolean; mandatory: boolean; cutoverPlanId: string | null; siteId: string | null }, why: string) {
     if (!check.blocker && !check.mandatory) return [];
     const plans = (await this.plansGatedBy(projectId, check)).filter((p) => p.status === 'approved_go');
     for (const plan of plans) {
-      const blocker = { id: check.id, title: `${check.code} — ${check.title}`, status: check.status, blocker: check.blocker };
+      const blocker = { id: check.id, title: `${check.code} — ${check.title}`, titleAr: check.titleAr ? `${check.code} — ${check.titleAr}` : null, status: check.status, blocker: check.blocker };
       await this.recordPlanHistory(ctx, plan, projectId, 'go_flagged', `${check.code}: ${why}`, { blockers: [blocker], missing: [] });
       await this.audit.record({
         action: 'readiness.cutover.go_flagged',

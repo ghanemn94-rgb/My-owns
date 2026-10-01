@@ -4,6 +4,7 @@ import { schema } from '@hub/db';
 import {
   DD_RELEASE_MACHINE,
   FINDING_MACHINE,
+  PARTNER_REQUESTER_LABEL,
   allowedCommands,
   assertDdEvidencePinned,
   assertDdReleaseAllowed,
@@ -413,7 +414,7 @@ export class DiligenceService {
     await this.s.assertLevel(ctx, room, 'contribute');
     // The counterparty's question is classified at most at its own clearance (so it can always see its own question).
     const classification: Classification = clearanceAllows(ctx.principal.clearance, 'confidential') ? 'confidential' : ctx.principal.clearance;
-    return this.insertRequest(ctx, room, { question: body.question, domain: body.domain, origin: 'partner', requesterLabel: 'Counterparty', dueDate: null, classification });
+    return this.insertRequest(ctx, room, { question: body.question, domain: body.domain, origin: 'partner', requesterLabel: PARTNER_REQUESTER_LABEL, dueDate: null, classification });
   }
 
   // ---------------------------------------------------------------------------------------------------------

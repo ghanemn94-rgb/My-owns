@@ -21,6 +21,7 @@ import { useToast } from '@/components/Toast';
 import { btn, card, cx } from '@/components/ui';
 import { EM_DASH, useI18n, type MessageKey } from '@/i18n/provider';
 import { api, isApiError } from '@/lib/api';
+import { useLocalized } from '@/lib/i18n-data';
 import { useProjectContext } from '@/lib/project-context';
 import { rdHref, rk, useReadinessRefresh, type CutoverPlanDetail } from '@/lib/readiness';
 import { ButtonRow, Callout, CmdButton, DecisionIssue, DecisionSelect, Facts, Panel, Person, RdCommandDialog, Tick, UText, useScopeLabels } from '../../_components/rd';
@@ -215,6 +216,7 @@ function PlanDialogs({ p, cmd, onClose }: { p: CutoverPlanDetail; cmd: Cmd; onCl
 
 function GoEvaluation({ p }: { p: CutoverPlanDetail }) {
   const { t, tStatus } = useI18n();
+  const localized = useLocalized();
   const missingLabel = useMissingLabel();
   const { projectId } = useProjectContext();
   const ev = p.goEvaluation;
@@ -238,7 +240,7 @@ function GoEvaluation({ p }: { p: CutoverPlanDetail }) {
                 </span>
                 <span className="min-w-0">
                   <Link className={cx(btn.link, 'break-words')} href={`${rdHref(projectId)}/checks/${b.id}`} dir="auto">
-                    {b.title}
+                    {localized(b.title, b.titleAr)}
                   </Link>
                   <span className="block text-xs text-muted">{b.blocker ? t('readiness.plan.go.blockerLabel') : t('readiness.plan.go.mandatoryLabel')}</span>
                   {b.evidenceInvalid ? (
@@ -269,6 +271,7 @@ function GoEvaluation({ p }: { p: CutoverPlanDetail }) {
 
 function DecisionHistory({ p }: { p: CutoverPlanDetail }) {
   const { t, tStatus, formatDateTime } = useI18n();
+  const localized = useLocalized();
   const missingLabel = useMissingLabel();
   return (
     <Panel title={t('readiness.plan.history.title')} testId="decision-history">
@@ -299,7 +302,7 @@ function DecisionHistory({ p }: { p: CutoverPlanDetail }) {
                       <ul className="list-disc ps-4">
                         {h.evaluation.blockers.map((b, i) => (
                           <li key={i}>
-                            <span dir="auto">{b.title}</span> ({tStatus('readinessStatuses', b.status)})
+                            <span dir="auto">{localized(b.title, b.titleAr)}</span> ({tStatus('readinessStatuses', b.status)})
                           </li>
                         ))}
                       </ul>
@@ -326,6 +329,7 @@ export default function CutoverPlanPage() {
   const { t, tStatus, formatDateTime } = useI18n();
   const { projectId, can, me } = useProjectContext();
   const { siteName, wsName } = useScopeLabels();
+  const localized = useLocalized();
   const [cmd, setCmd] = useState<Cmd>(null);
   const q = useQuery({ queryKey: rk.plan(projectId, planId), queryFn: ({ signal }) => api(readinessRoutes.getCutoverPlan, { params: { projectId, planId }, signal }) });
   const base = rdHref(projectId);
@@ -431,9 +435,10 @@ export default function CutoverPlanPage() {
               {
                 key: 'title',
                 header: t('readiness.checks.columns.title'),
+                // QA-P34-01e: template checks carry their Arabic title.
                 cell: (c) => (
                   <span className="flex flex-col">
-                    <span dir="auto">{c.title}</span>
+                    <span dir="auto">{localized(c.title, c.titleAr)}</span>
                     <span className="text-xs text-muted">{tStatus('readinessAreas', c.area)}</span>
                   </span>
                 ),

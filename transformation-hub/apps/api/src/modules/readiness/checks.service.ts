@@ -110,7 +110,8 @@ export class ReadinessChecksService implements OnModuleInit {
       q.workstreamId ? eq(c.workstreamId, q.workstreamId) : undefined,
       q.cutoverPlanId ? eq(c.cutoverPlanId, q.cutoverPlanId) : undefined,
       q.blocker ? eq(c.blocker, q.blocker === 'true') : undefined,
-      q.q ? or(ilike(c.title, likeContains(q.q)), ilike(c.code, likeContains(q.q))) : undefined,
+      // The Arabic title is searchable too (the Arabic register shows it — QA-P34-01d).
+      q.q ? or(ilike(c.title, likeContains(q.q)), ilike(c.titleAr, likeContains(q.q)), ilike(c.code, likeContains(q.q))) : undefined,
     );
     const tx = this.s.db.tx();
     const [{ total }] = (await tx.select({ total: count() }).from(c).where(where)) as [{ total: number }];
