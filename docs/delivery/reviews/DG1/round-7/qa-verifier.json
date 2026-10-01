@@ -1,0 +1,565 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG1",
+  "round": 7,
+  "candidate_id": "sha256:d3743a352912a357b0a81124794561cea5f06f5dbc31542b9623c68c47649ab7",
+  "source_commit": "a6bdea00f8ee9d75926bc08b089d9a895b1f810f",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG1-T-DG1-REV-QA-R7-qa-verifier-20261001T125644Z-5b3f1b08",
+    "session_id": "5b3f1b08-482f-4d0a-9e65-be1172895023"
+  },
+  "implementation_author": [
+    "backend-workflow-engineer",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "qa-verifier authored no implementation in the reviewed scope. backend-workflow-engineer (T-DG1-BE8) authored the F-DG1-127 testkit fix, and the orchestrator regenerated the F-DG1-212 log. My only writes are QA evidence under docs/delivery/test-evidence/DG1/qa/ and this round's qa-verifier review files. I formed this verdict before reading any other round-7 reviewer record, and I have not read any."
+  },
+  "assignment": "docs/delivery/assignments/DG1/round-7/review-qa-verifier.md",
+  "requirements_checked": [
+    "REQ-DLV-025",
+    "REQ-DLV-033",
+    "REQ-DLV-042",
+    "REQ-S15-002",
+    "REQ-S15-005",
+    "REQ-S15-006",
+    "REQ-S16-001",
+    "REQ-S16-002",
+    "REQ-S16-003",
+    "REQ-S16-004",
+    "REQ-S19-004",
+    "REQ-S19-006"
+  ],
+  "checks_run": [
+    {
+      "id": "QA7-00-candidate",
+      "procedure": "Confirm the frozen candidate. Check HEAD, recompute the candidate ID, confirm the freeze-to-HEAD diff contains metadata only, and confirm the clone is complete.",
+      "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG1; git diff --stat a6bdea0 HEAD; git clone /home/user/My-owns $TMPDIR/review-qa-r7 && git checkout 2cfbf4f && git rev-parse --is-shallow-repository && node tools/gates/candidate.mjs --stage DG1",
+      "environment": "Repository working tree and disposable clone at $TMPDIR/review-qa-r7 (agent OS sandbox, no network)",
+      "expected": "candidate_id sha256:d3743a35...49ab7 in both places, a non-shallow clone, and only candidate-excluded metadata between a6bdea0 and HEAD",
+      "actual": "HEAD is 2cfbf4f (the freeze commit; a6bdea0..2cfbf4f touches only assignments, the candidate manifest and stages.json). Recomputed candidate_id sha256:d3743a352912a357b0a81124794561cea5f06f5dbc31542b9623c68c47649ab7 (390 files) in the repository and in the clone. is-shallow=false.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/candidates/DG1/d3743a352912a357.manifest.json"
+      ]
+    },
+    {
+      "id": "QA7-01-install",
+      "procedure": "Offline frozen install in the disposable clone, using a scratch copy of the local pnpm store",
+      "command": "pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/store/v10",
+      "environment": "Disposable clone at 2cfbf4f, pnpm 10.33.0, no network",
+      "expected": "exit 0 with the lockfile unchanged",
+      "actual": "371 packages reused from the store; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-7/01-install.log"
+      ]
+    },
+    {
+      "id": "QA7-02-typecheck",
+      "procedure": "Typecheck every workspace package",
+      "command": "pnpm -r typecheck",
+      "environment": "Disposable clone at 2cfbf4f",
+      "expected": "exit 0",
+      "actual": "7 of 8 projects Done; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-001",
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-7/02-pnpm_-r_typecheck.log"
+      ]
+    },
+    {
+      "id": "QA7-03-build",
+      "procedure": "Build every workspace package",
+      "command": "pnpm -r build",
+      "environment": "Disposable clone at 2cfbf4f",
+      "expected": "exit 0",
+      "actual": "All builds Done; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-001",
+        "REQ-S19-004"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-7/02-pnpm_-r_build.log"
+      ]
+    },
+    {
+      "id": "QA7-04-lint",
+      "procedure": "ESLint with zero warnings allowed",
+      "command": "pnpm lint",
+      "environment": "Disposable clone at 2cfbf4f",
+      "expected": "exit 0",
+      "actual": "eslint . --max-warnings=0; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-7/02-pnpm_lint.log"
+      ]
+    },
+    {
+      "id": "QA7-05-openapi",
+      "procedure": "Lint the OpenAPI contract and count its operations",
+      "command": "pnpm openapi:lint",
+      "environment": "Disposable clone at 2cfbf4f",
+      "expected": "PASS with 33 operations",
+      "actual": "PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 33 operations; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-004"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-7/02-pnpm_openapi_lint.log"
+      ]
+    },
+    {
+      "id": "QA7-06-no-cdn",
+      "procedure": "Check that the shipped sources reference no public CDN",
+      "command": "pnpm check:no-cdn",
+      "environment": "Disposable clone at 2cfbf4f",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-002"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-7/02-pnpm_check_no-cdn.log"
+      ]
+    },
+    {
+      "id": "QA7-07-format",
+      "procedure": "Prettier formatting check",
+      "command": "pnpm format:check",
+      "environment": "Disposable clone at 2cfbf4f",
+      "expected": "exit 0",
+      "actual": "All matched files use Prettier code style; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-7/02-pnpm_format_check.log"
+      ]
+    },
+    {
+      "id": "QA7-08-contrast",
+      "procedure": "Design-token contrast check",
+      "command": "pnpm --filter @mth/design-tokens run check:contrast",
+      "environment": "Disposable clone at 2cfbf4f",
+      "expected": "exit 0",
+      "actual": "Contrast pairs pass; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S15-002",
+        "REQ-S15-005"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-7/02-pnpm_contrast.log"
+      ]
+    },
+    {
+      "id": "QA7-09-deps-verify",
+      "procedure": "Dependency-pin verification. This check is not assigned; I attempted it for completeness.",
+      "command": "pnpm deps:verify",
+      "environment": "Disposable clone at 2cfbf4f, no registry network",
+      "expected": "A verdict, or BLOCKED without network",
+      "actual": "scripts/verify-dependency-pins.mjs needs npm registry access ('npm view'). It produced no verdict within the 600 s timeout, and I terminated it. Not counted as PASS.",
+      "exit_status": null,
+      "result": "BLOCKED",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-7/02-pnpm_deps_verify.log"
+      ]
+    },
+    {
+      "id": "QA7-10-unit",
+      "procedure": "Unit suites (unit-node and unit-web), including the architecture self-check with A1",
+      "command": "pnpm test",
+      "environment": "Disposable clone at 2cfbf4f, vitest 3.2.4",
+      "expected": "271 passed, exit 0",
+      "actual": "Test Files 21 passed; Tests 271 passed (271). apps/api/src/architecture.test.ts 78 tests. exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-7/03-unit.log"
+      ]
+    },
+    {
+      "id": "QA7-11-integration-run1",
+      "procedure": "Integration run 1 against a disposable PostgreSQL 16.13 on port 5492: migrations 0001-0008, A12/A13/A14 and the contract test. The server log is captured.",
+      "command": "QA_PG_PORT=5492 tests/qa/support/with-pg.sh bash -c 'pnpm test:integration; cp $TMPDIR/qa-pg.*/pg.log <evidence>'",
+      "environment": "Disposable clone at 2cfbf4f; disposable PG 16.13 cluster (user namespace uid 1000), 127.0.0.1:5492",
+      "expected": "exit 0 with no 57P01 in the test or server log",
+      "actual": "Applied 8 migrations to a fresh database. 19 files, 200/200 tests passed, including a12-cross-scope 14, a13-job-idempotency 5, a14-concurrency 5 and contract 9. exit 0. The PG log has 0 lines matching 57P01 or 'terminating connection'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-001",
+        "REQ-S16-004",
+        "REQ-DLV-033"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-7/04-int-run1.log",
+        "docs/delivery/test-evidence/DG1/qa/round-7/04-int-run1-pg.log"
+      ]
+    },
+    {
+      "id": "QA7-12-integration-run2",
+      "procedure": "Integration run 2 (determinism, F-DG1-009) on a fresh disposable cluster",
+      "command": "QA_PG_PORT=5492 tests/qa/support/with-pg.sh bash -c 'pnpm test:integration; cp $TMPDIR/qa-pg.*/pg.log <evidence>'",
+      "environment": "Disposable clone at 2cfbf4f; new disposable PG 16.13 cluster on port 5492",
+      "expected": "exit 0 with no 57P01",
+      "actual": "200/200 passed; exit 0. The PG log has 0 lines matching 57P01 or 'terminating connection'. The F-DG1-009 scratch-drop tests pass (40 rounds of 8 clients each).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-001"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-7/04-int-run2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-7/04-int-run2-pg.log"
+      ]
+    },
+    {
+      "id": "QA7-13-audit-trigger",
+      "procedure": "Migrate a fresh database with mth-db, then probe whether audit_event is append-only for the superuser, owner and app roles",
+      "command": "QA_PG_PORT=5492 tests/qa/support/with-pg.sh bash docs/delivery/test-evidence/DG1/qa/round-7/05-audit-trigger-probe.sh",
+      "environment": "Disposable clone at 2cfbf4f; disposable PG 16.13",
+      "expected": "Migrations 0001-0008 are recorded. The app can INSERT. UPDATE, DELETE and TRUNCATE are rejected for the superuser and the owner, the app's DELETE is denied, and the row count is unchanged.",
+      "actual": "schema_migration lists 1-8 (0001..0008). App INSERT succeeds. Superuser and owner UPDATE and DELETE, and superuser TRUNCATE, fail with 'audit_event is append-only'. App DELETE fails with 'permission denied'. 1 row before and 1 row after.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-001"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-7/05-audit-trigger-probe.log",
+        "docs/delivery/test-evidence/DG1/qa/round-7/05-audit-trigger-probe.sh"
+      ]
+    },
+    {
+      "id": "QA7-14-contract",
+      "procedure": "Contract test in verbose mode: every route maps to an OpenAPI operation, including getBrandingTokens",
+      "command": "QA_PG_PORT=5492 tests/qa/support/with-pg.sh pnpm vitest run --project integration apps/api/test/integration/contract --reporter=verbose",
+      "environment": "Disposable clone at 2cfbf4f; disposable PG 16.13",
+      "expected": "9/9, including the getBrandingTokens case",
+      "actual": "9 passed, including 'branding tokens (getBrandingTokens): authenticated-only, provisional provenance, contract + zod valid' and route-coverage both ways; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-004",
+        "REQ-S15-005"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-7/05b-contract-verbose.log"
+      ]
+    },
+    {
+      "id": "QA7-15-e2e",
+      "procedure": "Full Playwright e2e in English and Arabic on the pre-installed Chromium with a single worker, including the BU-Lead create, Edit and Archive journey without a reload (F-DG1-210)",
+      "command": "PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers QA_E2E_PG_PORT=5493 e2e/support/qa-stack.sh npx playwright test --workers=1 --reporter=list",
+      "environment": "Disposable clone at 2cfbf4f; Chromium 1194 from /opt/pw-browsers; disposable PG 16.13 on port 5493; synthetic dev users",
+      "expected": "All journeys pass in chromium-en and chromium-ar",
+      "actual": "22 passed (48.8s), including tests 9 and 20 (F-DG1-210 in EN and AR) and A20 bilingual shell and tokens in both projects; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S15-002",
+        "REQ-S15-005",
+        "REQ-S15-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-7/06-e2e-run1.log"
+      ]
+    },
+    {
+      "id": "QA7-16-f210-independent",
+      "procedure": "Re-run my independent round-4 F-DG1-210 spec, copied into the clone's e2e/ and then removed",
+      "command": "PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers QA_E2E_PG_PORT=5493 e2e/support/qa-stack.sh npx playwright test e2e/dg1-r4-lead-create-edit-archive-no-reload.spec.ts --workers=1 --reporter=list",
+      "environment": "Disposable clone at 2cfbf4f; Chromium; disposable PG on port 5493",
+      "expected": "2/2 (EN and AR)",
+      "actual": "2 passed; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-7/09-f210-independent-spec.log",
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r4-lead-create-edit-archive-no-reload.spec.ts"
+      ]
+    },
+    {
+      "id": "QA7-17-a18",
+      "procedure": "A18 clean start: fresh checkout of the frozen commit, documented offline install, build, migrate, start, health and readiness, restart, and an unmigrated database reporting not ready",
+      "command": "npm_config_store_dir=$TMPDIR/store/v10 QA_A18_PG_PORT=5494 QA_A18_PORT=3181 e2e/clean-start/a18-clean-start.sh --commit 2cfbf4fab018e433f80fc36d8384da28a219f0f6 --install",
+      "environment": "Disposable clone; disposable PG on port 5494; API on port 3181",
+      "expected": "A18 CLEAN START: PASS",
+      "actual": "A18 CLEAN START: PASS (commit 2cfbf4f; install step pnpm install --frozen-lockfile --offline; 27.0 s). healthz and readyz return 200, the SPA has lang=ar dir=rtl, dev login returns 404 in production, readiness after restart is 200, and an unmigrated database returns 503 with migrations pending.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S19-004",
+        "REQ-S19-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-7/07-a18-clean-start.log"
+      ]
+    },
+    {
+      "id": "QA7-18-a20",
+      "procedure": "A20 token propagation: change brand.deep in a fresh clone, rebuild, and confirm the rendered CSS follows in EN and AR",
+      "command": "PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers QA_E2E_PG_PORT=5495 e2e/support/a20-token-propagation.sh $TMPDIR/review-qa-r7-a20",
+      "environment": "Fresh clone of 2cfbf4f with an offline install and pnpm -r build; Chromium; disposable PG on port 5495",
+      "expected": "A20 token propagation: PASS",
+      "actual": "2 passed; 'A20 token propagation: PASS (brand.deep rendered as #6B1D5C, original #003B73)'; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S15-002",
+        "REQ-S15-005"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-7/08-a20-token-propagation.log"
+      ]
+    },
+    {
+      "id": "QA7-19-f127-probe",
+      "procedure": "F-DG1-127: an independent probe of 16 cases over every syntactic route to the sqlite built-in, plus regressions and a control, run through the candidate's fileViolations() and bareAllowed()",
+      "command": "cp docs/delivery/test-evidence/DG1/qa/tests/dg1-r7-sqlite-import-probe.test.ts apps/api/src/ && pnpm vitest run --project unit-node apps/api/src/dg1-r7-sqlite-import-probe.test.ts --reporter=verbose",
+      "environment": "Disposable clone at 2cfbf4f (probe file removed afterwards)",
+      "expected": "16/16: all sqlite forms reported, regressions still caught, the control clean",
+      "actual": "16 passed; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-7/10-f127-probe.log",
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r7-sqlite-import-probe.test.ts"
+      ]
+    },
+    {
+      "id": "QA7-20-f127-negative-control",
+      "procedure": "F-DG1-127 negative control: run the frozen architecture.test.ts against the pre-fix testkit (5dceadc), then restore",
+      "command": "git show 5dceadc:apps/api/src/architecture.testkit.ts > apps/api/src/architecture.testkit.ts && pnpm vitest run --project unit-node apps/api/src/architecture.test.ts; git checkout -- apps/api/src/architecture.testkit.ts && rerun",
+      "environment": "Disposable clone at 2cfbf4f",
+      "expected": "Pre-fix: only A1 fails. Restored: 78/78.",
+      "actual": "Pre-fix: 1 failed (A1 node:sqlite loadExtension, 'expected 0 to be greater than 0') and 77 passed, exit 1, as expected. Restored: 78/78, exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-7/11-f127-negative-control.log"
+      ]
+    },
+    {
+      "id": "QA7-21-f127-plant",
+      "procedure": "F-DG1-127 end to end: run the self-check names in verbose mode, then plant a real node:sqlite import in the module tree",
+      "command": "pnpm vitest run --project unit-node apps/api/src/architecture.test.ts --reporter=verbose; plant apps/api/src/modules/access/zz-qa-planted.ts (import { DatabaseSync } from \"node:sqlite\"); rerun; remove; rerun",
+      "environment": "Disposable clone at 2cfbf4f; Node v22.22.2",
+      "expected": "A1, X6-X8 and P12 pass. With the plant the module-tree check fails with 'imports package node:sqlite'. Without it, 78/78.",
+      "actual": "A1, X6, X7, X8 and P12 all pass, and 78/78. Planted: 1 failed of 78 with 'modules/access/zz-qa-planted.ts: imports package node:sqlite', exit 1 (expected). Removed: 78/78, exit 0. Host Node exposes DatabaseSync.prototype.loadExtension (a function).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-7/12-f127-arch-verbose-and-plant.log"
+      ]
+    },
+    {
+      "id": "QA7-22-f127-scope",
+      "procedure": "F-DG1-127 scope: diff the round-6 and round-7 candidate manifests, find the testkit importers, and look for sqlite use in src",
+      "command": "python3 diff of manifest entries a7b46fbc29db6bb8 vs d3743a352912a357; git diff --stat f03a9fa HEAD -- apps packages tests e2e scripts tools docs/api; grep -rln architecture.testkit apps packages tests e2e scripts tools",
+      "environment": "Repository (read-only)",
+      "expected": "Only test-only files change in code, and the testkit is imported only by tests",
+      "actual": "Manifest delta: apps/api/src/architecture.test.ts, apps/api/src/architecture.testkit.ts and docs/delivery/decisions.md. Importers: architecture.test.ts and the modules' reporting/workflows/kpi *.test.ts. No sqlite import in apps or packages src.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/candidates/DG1/d3743a352912a357.manifest.json",
+        "docs/delivery/candidates/DG1/a7b46fbc29db6bb8.manifest.json"
+      ]
+    },
+    {
+      "id": "QA7-23-f212-log",
+      "procedure": "F-DG1-212: compare the cited installer log with the frozen suite's ok labels, and confirm it was regenerated after the F-DG1-126 fix",
+      "command": "git diff 3037ce2 2cfbf4f -- tools/deps/; extract ok \"...\" labels from tools/deps/tests/install-sandbox.test.sh; diff them against the PASS lines of docs/delivery/test-evidence/DG1/orchestrator/install-sandbox-acceptance.log",
+      "environment": "Repository (read-only)",
+      "expected": "14 identical labels, 0 FAIL, '14 passed, 0 failed', exit=0, and the installer unchanged since 3037ce2",
+      "actual": "tools/deps diff is 0 lines. 14 frozen labels against 14 log PASS labels, diff exit 0. 0 FAIL lines. '14 passed, 0 failed', exit=0. Regenerated in cc0198e at 12:49Z, after 3037ce2 at 12:07Z.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-042"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-7/13-f212-log-vs-suite.log",
+        "docs/delivery/test-evidence/DG1/orchestrator/install-sandbox-acceptance.log"
+      ]
+    },
+    {
+      "id": "QA7-24-installer-suite",
+      "procedure": "Independent run of the frozen installer acceptance suite (14 cases) under bubblewrap",
+      "command": "npm_config_store_dir=$TMPDIR/store/v10 tools/deps/tests/install-sandbox.test.sh",
+      "environment": "Disposable clone at 2cfbf4f; /usr/bin/bwrap; scratch copy of the local pnpm store; no registry network",
+      "expected": "14/14, with AC-1 (effect) BLOCKED only if there is no registry",
+      "actual": "13 passed and 1 failed. AC-1 through AC-10 pass, AC-10 included. The single failure is AC-1 (effect), and its cause is registry unavailability (see QA7-25), so the suite exits 1 in this sandbox. I record the whole-suite result as BLOCKED, not PASS. All 13 cases that can run here pass. A first attempt without npm_config_store_dir (default store under the read-only HOME) failed on its setup steps only; it is kept as 14a and is not a product result.",
+      "exit_status": 1,
+      "result": "BLOCKED",
+      "requirements": [
+        "REQ-DLV-042"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-7/14-install-sandbox-tests.log",
+        "docs/delivery/test-evidence/DG1/qa/round-7/14a-install-sandbox-tests-default-store.log"
+      ]
+    },
+    {
+      "id": "QA7-25-ac1-effect",
+      "procedure": "AC-1 (effect): the cause of the failure, plus an offline equivalent through the unchanged wrapper",
+      "command": "npm_config_store_dir=$TMPDIR/store/v10 tools/deps/install-sandbox.sh --root $TMPDIR/ac1net create; same with the offline fixture $TMPDIR/ac1off (.npmrc offline=true and a pnpm-lock.yaml pinning is-number@7.0.0)",
+      "environment": "Disposable clone at 2cfbf4f; no registry network",
+      "expected": "The live registry case is BLOCKED by the network. The offline equivalent populates node_modules/is-number and leaves the lockfile unchanged.",
+      "actual": "Registry case: ERR_PNPM_META_FETCH_FAIL ECONNREFUSED (registry.npmjs.org through the proxy), wrapper exit 1, so it is BLOCKED by the environment. Offline equivalent: wrapper exit 0, is-number 7.0.0 populated, lockfile sha256 prefix 88818e6e51b71df8 before and after.",
+      "exit_status": null,
+      "result": "BLOCKED",
+      "requirements": [
+        "REQ-DLV-042"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-7/15-ac1-effect-offline-equivalent.log"
+      ]
+    },
+    {
+      "id": "QA7-26-validate-register",
+      "procedure": "Validator register rules at DG1",
+      "command": "node tools/gates/validate.mjs --register DG1",
+      "environment": "Disposable clone at 2cfbf4f",
+      "expected": "PASS, exit 0",
+      "actual": "PASS register rules at DG1; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-025"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-7/16-validate___register_DG1.log"
+      ]
+    },
+    {
+      "id": "QA7-27-validate-pipeline",
+      "procedure": "Validator pipeline check",
+      "command": "node tools/gates/validate.mjs --pipeline",
+      "environment": "Disposable clone at 2cfbf4f",
+      "expected": "PASS, exit 0",
+      "actual": "PASS pipeline (active stage: DG1 REVIEWING); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-7/16-validate___pipeline.log"
+      ]
+    },
+    {
+      "id": "QA7-28-validate-reconcile",
+      "procedure": "Validator reconcile check",
+      "command": "node tools/gates/validate.mjs --reconcile",
+      "environment": "Disposable clone at 2cfbf4f",
+      "expected": "PASS (structure), exit 0",
+      "actual": "PASS reconcile (structure); exit 0. Round-7 review records are listed as missing, as expected while the round runs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-7/16-validate___reconcile.log"
+      ]
+    },
+    {
+      "id": "QA7-29-requirements",
+      "procedure": "For each of the 12 DG1-final requirements: the register row exists, the stage is DG1, the status is IMPLEMENTED, and every cited evidence path exists in the frozen tree",
+      "command": "python3 check over docs/delivery/requirements.csv (script inline; output in log)",
+      "environment": "Disposable clone at 2cfbf4f",
+      "expected": "All 12 are IMPLEMENTED with existing evidence",
+      "actual": "All 12 are present at DG1 and IMPLEMENTED, with 0 missing evidence paths (evidence counts 4/21/4/5/7/4/8/5/13/11/16/5)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-025",
+        "REQ-DLV-033",
+        "REQ-DLV-042",
+        "REQ-S15-002",
+        "REQ-S15-005",
+        "REQ-S15-006",
+        "REQ-S16-001",
+        "REQ-S16-002",
+        "REQ-S16-003",
+        "REQ-S16-004",
+        "REQ-S19-004",
+        "REQ-S19-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-7/17-requirements-evidence.log"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG1/round-7/qa-verifier.verifications.json",
+    "docs/delivery/reviews/DG1/round-7/qa-verifier.md",
+    "docs/delivery/test-evidence/DG1/qa/round-7/01-install.log",
+    "docs/delivery/test-evidence/DG1/qa/round-7/02-pnpm_-r_typecheck.log",
+    "docs/delivery/test-evidence/DG1/qa/round-7/02-pnpm_-r_build.log",
+    "docs/delivery/test-evidence/DG1/qa/round-7/02-pnpm_lint.log",
+    "docs/delivery/test-evidence/DG1/qa/round-7/02-pnpm_openapi_lint.log",
+    "docs/delivery/test-evidence/DG1/qa/round-7/02-pnpm_check_no-cdn.log",
+    "docs/delivery/test-evidence/DG1/qa/round-7/02-pnpm_format_check.log",
+    "docs/delivery/test-evidence/DG1/qa/round-7/02-pnpm_contrast.log",
+    "docs/delivery/test-evidence/DG1/qa/round-7/02-pnpm_deps_verify.log",
+    "docs/delivery/test-evidence/DG1/qa/round-7/03-unit.log",
+    "docs/delivery/test-evidence/DG1/qa/round-7/04-int-run1.log",
+    "docs/delivery/test-evidence/DG1/qa/round-7/04-int-run1-pg.log",
+    "docs/delivery/test-evidence/DG1/qa/round-7/04-int-run2.log",
+    "docs/delivery/test-evidence/DG1/qa/round-7/04-int-run2-pg.log",
+    "docs/delivery/test-evidence/DG1/qa/round-7/05-audit-trigger-probe.log",
+    "docs/delivery/test-evidence/DG1/qa/round-7/05-audit-trigger-probe.sh",
+    "docs/delivery/test-evidence/DG1/qa/round-7/05b-contract-verbose.log",
+    "docs/delivery/test-evidence/DG1/qa/round-7/06-e2e-run1.log",
+    "docs/delivery/test-evidence/DG1/qa/round-7/07-a18-clean-start.log",
+    "docs/delivery/test-evidence/DG1/qa/round-7/08-a20-token-propagation.log",
+    "docs/delivery/test-evidence/DG1/qa/round-7/09-f210-independent-spec.log",
+    "docs/delivery/test-evidence/DG1/qa/round-7/10-f127-probe.log",
+    "docs/delivery/test-evidence/DG1/qa/round-7/11-f127-negative-control.log",
+    "docs/delivery/test-evidence/DG1/qa/round-7/12-f127-arch-verbose-and-plant.log",
+    "docs/delivery/test-evidence/DG1/qa/round-7/13-f212-log-vs-suite.log",
+    "docs/delivery/test-evidence/DG1/qa/round-7/14-install-sandbox-tests.log",
+    "docs/delivery/test-evidence/DG1/qa/round-7/14a-install-sandbox-tests-default-store.log",
+    "docs/delivery/test-evidence/DG1/qa/round-7/15-ac1-effect-offline-equivalent.log",
+    "docs/delivery/test-evidence/DG1/qa/round-7/16-validate___register_DG1.log",
+    "docs/delivery/test-evidence/DG1/qa/round-7/16-validate___pipeline.log",
+    "docs/delivery/test-evidence/DG1/qa/round-7/16-validate___reconcile.log",
+    "docs/delivery/test-evidence/DG1/qa/round-7/17-requirements-evidence.log",
+    "docs/delivery/test-evidence/DG1/qa/tests/dg1-r7-sqlite-import-probe.test.ts",
+    "docs/delivery/test-evidence/DG1/qa/tests/dg1-r4-lead-create-edit-archive-no-reload.spec.ts"
+  ],
+  "reviewed_at": "2026-10-01T13:18:46Z",
+  "summary": "PASS on candidate sha256:d3743a35...49ab7 (freeze commit a6bdea0, HEAD 2cfbf4f; metadata-only difference). I verified both assigned fixes and closed them as CLOSED_VERIFIED: F-DG1-127, the node:sqlite loader route (probe 16/16, the negative control fails exactly A1, the module-tree plant turns the check red, 78/78), and F-DG1-212, the 14-case log whose labels match the frozen suite exactly. Every assigned check ran: build and static checks green, openapi 33 operations, unit 271/271, integration 200/200 twice with no 57P01, audit trigger append-only, contract including getBrandingTokens, e2e 22/22 in EN and AR including F-DG1-210, my independent F-DG1-210 spec 2/2, A12/A13/A14 in integration, A18 PASS, A20 PASS, and the validator in register, pipeline and reconcile modes. Three checks are BLOCKED by the environment (no registry network): the whole installer suite run (13/14 here, with AC-10 passing), the live-registry AC-1 (effect), whose offline equivalent passes, and the unassigned deps:verify. The 12 DG1-final requirements are IMPLEMENTED with existing evidence. No new findings."
+}

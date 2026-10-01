@@ -1,0 +1,33 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG1-127",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fix 3e0316d is in the frozen candidate sha256:d3743a35...49ab7. I checked out commit 2cfbf4f in a disposable clone, and the recomputed candidate ID matches. Code: LOADER_BUILTINS in apps/api/src/architecture.testkit.ts now includes 'sqlite', so bareAllowed() rejects both 'sqlite' and 'node:sqlite'. The testkit header records residual (b) (runtime code generation followed by a dynamic import of a literal same-module path) and residual (c) (the enumerated denylist cannot be proven exhaustive) as stated and ACCEPTED (D-053). Self-check: the frozen architecture.test.ts passes 78/78, and A1 node:sqlite loadExtension, X6, X7, X8 and P12 all pass (12-f127-arch-verbose-and-plant.log; unit total 271/271 in 03-unit.log). Negative control: with the pre-fix testkit from 5dceadc and the frozen test, exactly A1 fails, with 1 failed and 77 passed ('expected 0 to be greater than 0', 11-f127-negative-control.log). The new self-check therefore detects the defect. End-to-end plant: a real file apps/api/src/modules/access/zz-qa-planted.ts that imports DatabaseSync from node:sqlite turns the module-tree check red ('imports package node:sqlite'; 1 failed of 78). With the plant removed, the result returns to 78/78. My independent probe (dg1-r7-sqlite-import-probe.test.ts) passes 16/16 (10-f127-probe.log). It covers named, bare 'sqlite', namespace, default, require, dynamic import, re-export, TS import-equals, side-effect, type-only and 'export * from \"sqlite\"' forms, all of which are reported. bareAllowed() rejects both specifiers. The node:process and node:vm imports and the global process.dlopen are still caught. A benign node:crypto/node:path/process.env control stays clean. Context: host Node v22.22.2 exposes DatabaseSync.prototype.loadExtension, so this route was real. Scope: since the round-6 freeze f03a9fa, the only candidate-manifest changes are architecture.testkit.ts, architecture.test.ts and decisions.md. The testkit is imported only by *.test.ts files. Unit 271/271, integration 200/200 (twice) and e2e 22/22 are unaffected. Cosmetic observation, not a finding: the generated self-check title for A1 reads \"(round-4 lint: 'missed')\", the same template wording previously noted for X6-X8.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-7/03-unit.log",
+        "docs/delivery/test-evidence/DG1/qa/round-7/10-f127-probe.log",
+        "docs/delivery/test-evidence/DG1/qa/round-7/11-f127-negative-control.log",
+        "docs/delivery/test-evidence/DG1/qa/round-7/12-f127-arch-verbose-and-plant.log",
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r7-sqlite-import-probe.test.ts",
+        "apps/api/src/architecture.testkit.ts",
+        "apps/api/src/architecture.test.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-212",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "The cited REQ-DLV-042 log docs/delivery/test-evidence/DG1/orchestrator/install-sandbox-acceptance.log was regenerated in cc0198e (2026-10-01T12:49Z), after the F-DG1-126 installer fix 3037ce2 (12:07Z). tools/deps/ is byte-identical between 3037ce2 and the frozen HEAD 2cfbf4f (0 diff lines). The log records the 14-case suite AC-1..AC-10: 14 PASS lines, 0 FAIL lines, 'install-sandbox acceptance: 14 passed, 0 failed' and exit=0. I extracted the 14 ok \"...\" labels from the frozen tools/deps/tests/install-sandbox.test.sh and compared them with the log's PASS labels. The two lists are identical (diff exit 0; 13-f212-log-vs-suite.log). The register's REQ-DLV-042 row cites this log, and the file exists. Independent run of the frozen suite in a disposable clone, using a scratch copy of the local pnpm store (14-install-sandbox-tests.log): 13 PASS, including AC-10. The single failure is AC-1 (effect), which I record as BLOCKED, not as a product failure. My sandbox has no registry, and the wrapper's own output shows ERR_PNPM_META_FETCH_FAIL ECONNREFUSED for registry.npmjs.org (15-ac1-effect-offline-equivalent.log part 1). Its offline equivalent passes (part 2): the same fixture, the unchanged wrapper, a lockfile pinning is-number@7.0.0 to an integrity hash whose decoded digest matches the local store index entry, node_modules/is-number 7.0.0 populated, and the lockfile unchanged. So the 14/14 log is consistent with everything I can reproduce. A first attempt without npm_config_store_dir failed on its setup steps only because the default store sits under the read-only HOME. It is kept for transparency as 14a-install-sandbox-tests-default-store.log and is not a product result. Observation, not a finding: the REQ-DLV-042 notes cell still contains the historical analyst remark 'DG1 analyst check (T-DG1-REG): acceptance suite 7/7'. It is a dated task note, not the cited evidence.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/orchestrator/install-sandbox-acceptance.log",
+        "docs/delivery/test-evidence/DG1/qa/round-7/13-f212-log-vs-suite.log",
+        "docs/delivery/test-evidence/DG1/qa/round-7/14-install-sandbox-tests.log",
+        "docs/delivery/test-evidence/DG1/qa/round-7/15-ac1-effect-offline-equivalent.log",
+        "tools/deps/tests/install-sandbox.test.sh",
+        "tools/deps/install-sandbox.sh"
+      ]
+    }
+  ]
+}
