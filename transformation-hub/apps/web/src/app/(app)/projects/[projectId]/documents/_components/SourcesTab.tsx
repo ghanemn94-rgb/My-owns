@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { Plus } from 'lucide-react';
+import { FileUp, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { documentsRoutes } from '@hub/contracts';
 import { EXTRACTION_STATUSES, SOURCE_TYPES, type Classification } from '@hub/domain';
@@ -19,6 +19,7 @@ import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
 import { assignableClassifications, dqk, type Source } from '@/lib/documents';
 import { useProjectContext } from '@/lib/project-context';
+import { sectionHref } from '@/lib/sections';
 import { ClassificationBadge } from './bits';
 
 const PAGE_SIZE = 25;
@@ -181,6 +182,13 @@ export function SourcesTab() {
       <p className="text-sm text-muted">{t('documents.sources.intro')}</p>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <SearchInput className="sm:flex-1" label={t('documents.sources.search')} value={q} onChange={(v) => { setQ(v); setPage(1); }} />
+        {can('imports.batch.create') && can(['reports.snapshot.read', 'reports.report.generate']) ? (
+          // Spreadsheets, trackers and minutes are brought in through the import wizard (kept as a source with its hash).
+          <Link href={`${sectionHref(projectId, 'reports')}/imports`} className={btn.secondary} data-testid="source-import">
+            <FileUp aria-hidden="true" className="size-4" />
+            {t('imports.fromSources')}
+          </Link>
+        ) : null}
         {can('documents.source.manage') ? (
           <button type="button" className={btn.primary} onClick={() => setCreateOpen(true)} data-testid="source-create">
             <Plus aria-hidden="true" className="size-4" />

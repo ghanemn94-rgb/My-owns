@@ -17,6 +17,8 @@
  *     `carveout.messages.perimeter.*`), TSA escalation texts and system history rationales of cutover plans
  *     (READINESS_MESSAGES_EN, `readiness.messages.tsa.*` / `readiness.messages.cutover.*`) and legal-entity history reasons
  *     (NEWCO_HISTORY_MESSAGES_EN, `newco.messages.newco.*`);
+ *     P6: import row / file findings (IMPORT_MESSAGES_EN, `imports.messages.imports.*`) and notification texts
+ *     (NOTIFICATION_MESSAGES_EN, `notifications.messages.notifications.*`) — translated by their own screens, not routed;
  *  6. every AI refusal code raised in apps/api/src/modules/ai has `ai.errors.<code>` in en and ar, and every AI detection
  *     code / proposable action has its label; QA-P5-04: the rules-only detection explanations (AI_DETECTION_MESSAGES_EN,
  *     `ai.messages.ai.detection.*`) are checked as in 5, and the Arabic texts the server uses for the model context of an
@@ -108,6 +110,8 @@ const { PERIMETER_MESSAGES_EN } = require('@hub/domain/dist/perimeter.js');
 const { READINESS_MESSAGES_EN } = require('@hub/domain/dist/readiness.js');
 const { NEWCO_HISTORY_MESSAGES_EN } = require('@hub/domain/dist/newco.js');
 const { AI_DETECTION_MESSAGES_EN, AI_DETECTION_MESSAGES_AR, AI_STATUS_AR, AI_DETECTION_ENUM_PARAMS } = require('@hub/domain/dist/ai/detection-messages.js');
+const { IMPORT_MESSAGES_EN } = require('@hub/domain/dist/imports.js');
+const { NOTIFICATION_MESSAGES_EN } = require('@hub/domain/dist/notifications.js');
 const serverCatalogues = {
   gates: { ...DIMENSION_MESSAGES_EN, ...GATE_MESSAGES_EN, ...JV_MESSAGES_EN },
   finance: FINANCE_MESSAGES_EN,
@@ -117,6 +121,8 @@ const serverCatalogues = {
   readiness: READINESS_MESSAGES_EN,
   newco: NEWCO_HISTORY_MESSAGES_EN,
   ai: AI_DETECTION_MESSAGES_EN,
+  imports: IMPORT_MESSAGES_EN,
+  notifications: NOTIFICATION_MESSAGES_EN,
 };
 // Code prefixes routed to a catalogue other than `gates` by useServerMessages (lib/i18n-data.ts serverMessageKey).
 const ROUTED_PREFIXES = { planning: ['plan.'], governance: ['authority.'], carveout: ['perimeter.'], readiness: ['tsa.', 'cutover.'], newco: ['newco.'], ai: ['ai.'] };

@@ -1,0 +1,152 @@
+{
+  "title": "Integrations",
+  "subtitle": "Every connector with its honest status and the manual alternative to use meanwhile. Configuration and connectivity checks are done by platform administrators.",
+  "honesty": "No connector is shown as connected unless a real connectivity check succeeded. While no connector is verified and authorised, nothing is sent outside this hub: notifications stay in-app and files are uploaded or exported by hand.",
+  "scopes": "Permissions requested (OAuth scopes):",
+  "missing": "Not available yet — missing: {items}",
+  "endpoint": "Endpoint host:",
+  "lastCheck": "Last check {when}: {result}",
+  "failures": "{n} failure(s) in the last 24 hours",
+  "manualPrefix": "Meanwhile:",
+  "groups": {
+    "read": "Read-only connectors",
+    "readHint": "These connectors can only bring information in. They hold no permission to send or write, and the hub refuses any send through them.",
+    "send": "Send and write connectors",
+    "sendHint": "Kept apart from read-only connectors. Even when verified, nothing is sent without an approved sending authority and an approved destination.",
+    "future": "Future integrations (documented only)",
+    "futureHint": "Described for later phases; no adapter exists and none can be configured in this build."
+  },
+  "adapters": {
+    "m365_outlook_mail_send": {
+      "name": "Outlook e-mail (send)",
+      "purpose": "Would send notification e-mails through Microsoft 365 to approved recipients."
+    },
+    "m365_teams_message_send": {
+      "name": "Teams channel messages (send)",
+      "purpose": "Would post notifications to an approved Microsoft Teams channel."
+    },
+    "m365_teams_meetings_read": {
+      "name": "Teams meetings (read)",
+      "purpose": "Would read meeting details so minutes can be prepared in the hub."
+    },
+    "m365_sharepoint_read": {
+      "name": "SharePoint libraries (read)",
+      "purpose": "Would read documents from selected SharePoint sites as sources."
+    },
+    "m365_sharepoint_write": {
+      "name": "SharePoint library (write)",
+      "purpose": "Would file approved exports into one approved SharePoint site."
+    },
+    "inbound_webhook": {
+      "name": "Signed inbound webhooks",
+      "purpose": "Receives events from an approved sender: signature, timestamp window and delivery id are checked; a delivery is processed once."
+    },
+    "erp_finance": {
+      "name": "ERP / Finance system",
+      "purpose": "Future: budget and actuals feed for the finance module."
+    },
+    "hr_people": {
+      "name": "HR system",
+      "purpose": "Future: people and organisation data for transfers and readiness."
+    },
+    "itsm_service_desk": {
+      "name": "ITSM / service desk",
+      "purpose": "Future: incidents and changes linked to cut-over and transitional services."
+    },
+    "dcim_inventory": {
+      "name": "DCIM inventory",
+      "purpose": "Future: data-centre asset inventory for the carve-out perimeter."
+    },
+    "vdr_external": {
+      "name": "External virtual data room",
+      "purpose": "Future: exchange with an external data room for due diligence."
+    }
+  },
+  "prerequisites": {
+    "endpoint": "an approved endpoint",
+    "data_contract": "an agreed data contract",
+    "approval": "security and owner approval",
+    "tenant_consent": "tenant administrator consent",
+    "sending_authority": "an approved sending authority"
+  },
+  "manual": {
+    "in_app_notifications": "people are notified in the hub (bell and inbox); share by your usual channel if needed.",
+    "upload_documents": "upload the documents in the Documents area; they are kept as sources.",
+    "import_wizard": "export a file from the source system and bring it in with the import wizard.",
+    "export_and_upload": "export from the hub and upload the file to the destination yourself.",
+    "manual_entry": "record the information in the hub by hand."
+  },
+  "checkCodes": {
+    "ok": "connection verified",
+    "unknown": "result not recorded",
+    "egress_url_invalid": "the address is not valid",
+    "egress_scheme_not_allowed": "only https addresses are allowed",
+    "egress_credentials_in_url": "credentials inside an address are refused",
+    "egress_port_not_allowed": "only the standard https port is allowed",
+    "egress_internal_address": "internal, private or metadata addresses are refused",
+    "egress_host_not_allowlisted": "the host is not on the egress allow-list",
+    "egress_dns_failed": "the host name could not be resolved",
+    "egress_timeout": "the endpoint did not answer in time",
+    "egress_unreachable": "the endpoint could not be reached",
+    "egress_redirect_refused": "the endpoint redirected (redirects are never followed)",
+    "egress_http_error": "the endpoint answered with an error"
+  },
+  "operations": {
+    "configure": "Configuration saved",
+    "test": "Connectivity check",
+    "enable": "Enabled",
+    "disable": "Disabled",
+    "retry": "Delivery retried",
+    "receive": "Delivery received",
+    "process": "Delivery processed",
+    "reconcile": "Reconciliation",
+    "send": "Send attempt"
+  },
+  "admin": {
+    "hint": "Configure a connector with its endpoint and a reference to its secret, then run the connectivity check. Only a successful check marks it Verified; a verified connector still sends nothing without an approved sending authority.",
+    "allowlist": "Egress allow-list:",
+    "allowlistEmpty": "empty — no outbound connection is possible",
+    "configure": "Configure",
+    "test": "Run check",
+    "enable": "Enable",
+    "disable": "Disable",
+    "logs": "Execution log",
+    "done": "Done.",
+    "reason": "Reason",
+    "save": "Save configuration",
+    "saved": "Configuration saved — not verified until a check succeeds.",
+    "configureTitle": "Configure {name}",
+    "configureHint": "Saving changes the status to Configured — not verified and disables the connector until a new check succeeds. Secrets are never entered here: give the name of the secret-store entry.",
+    "endpoint": "Endpoint address (https)",
+    "endpointHint": "Must be on the egress allow-list. Internal, private, link-local and metadata addresses are refused.",
+    "secretRef": "Secret reference",
+    "secretRefHint": "The name of the secret-store entry (HUB_INTEGRATION_SECRET_<NAME>) — never the secret itself.",
+    "testTitle": "Check the connection of {name}",
+    "testC1": "One request is sent to the configured endpoint through the egress guard; the result is recorded in the execution log.",
+    "enableTitle": "Enable {name}",
+    "enableC1": "The connector becomes available; sending still requires an approved sending authority and destination.",
+    "disableTitle": "Disable {name}",
+    "disableC1": "Nothing is sent or received through this connector until it is configured and checked again.",
+    "logsTitle": "Execution log — {name}",
+    "noLogs": "No operation recorded yet.",
+    "deliveries": "Inbound deliveries",
+    "noDeliveries": "No delivery received yet."
+  },
+  "refusals": {
+    "not_configured": "Configure the connector first.",
+    "inbound_check": "An inbound connector is verified by a signed ping from its sender, not by an outbound check.",
+    "not_verified": "Only a verified connector can be enabled or used.",
+    "read_only_connector": "A read-only connector cannot send or write.",
+    "disabled": "The connector is disabled.",
+    "send_authority_missing": "No approved sending authority exists for this connector.",
+    "destination_not_approved": "The destination is not approved.",
+    "documented_only": "This integration is documented for a later phase and cannot be configured.",
+    "scope_not_declared": "A requested permission is not declared by this connector.",
+    "endpoint_required": "This connector needs an endpoint address.",
+    "endpoint_not_applicable": "This connector has no outbound endpoint.",
+    "secret_ref_required": "A signed inbound connector needs the reference of its signing secret.",
+    "secret_ref_invalid": "Give the name of a secret-store entry (HUB_INTEGRATION_SECRET_<NAME>), never the secret itself.",
+    "retry_not_failed": "Only a failed delivery can be retried.",
+    "egress": "The endpoint was refused by the egress guard: only https on the standard port, on the allow-list, never an internal address."
+  }
+}

@@ -18,6 +18,13 @@ import { useChannels, useNotificationText, useNotifications, useNotificationsRef
 
 const PAGE_SIZE = 25;
 
+/** Kinds with a label; anything else (a future producer) is shown as a generic notification rather than a raw code. */
+const KINDS = new Set(['agenda_request_screened', 'change_request_decided', 'decision_outcome', 'import_awaiting_approval', 'import_decided', 'integration_alert', 'ai_action', 'ai_briefing', 'gate_reassessment_requested']);
+const kindKey = (kind: string) => {
+  const k = kind.replace(/\./g, '_');
+  return KINDS.has(k) ? k : 'other';
+};
+
 /**
  * Notifications inbox (REQ-PLT-008, REQ-INT-012): the reader's in-app notifications, newest first. The API lists only
  * notifications whose source the reader can still see (re-checked now); the text of module notifications is composed from
@@ -99,7 +106,7 @@ export default function NotificationsPage() {
                       </p>
                       <p className="mt-0.5 text-xs text-muted">
                         {n.projectCode ? <span className="me-2">{n.projectCode}</span> : null}
-                        {t(`notifications.kinds.${n.kind.replace(/\./g, '_')}` as MessageKey)} · {formatDateTime(n.createdAt)}
+                        {t(`notifications.kinds.${kindKey(n.kind)}` as MessageKey)} · {formatDateTime(n.createdAt)}
                       </p>
                     </div>
                     <div className="flex shrink-0 flex-wrap items-center gap-2">
@@ -130,7 +137,7 @@ export default function NotificationsPage() {
             {(channels.data?.items ?? []).map((c) => (
               <li key={c.channel} className="flex items-center justify-between gap-2" data-channel={c.channel} data-status={c.status}>
                 <span>{t(`notifications.channels.${c.channel}` as MessageKey)}</span>
-                {c.status === 'enabled' ? <StatusBadge enumName="notificationReadStates" value="enabled" tone="success" /> : <StatusBadge enumName="integrationStatuses" value={c.status} tone={c.status === 'verified' ? 'success' : 'neutral'} />}
+                <StatusBadge enumName="notificationChannelStatuses" value={c.status} tone={c.status === 'enabled' || c.status === 'verified' ? 'success' : 'neutral'} />
               </li>
             ))}
           </ul>

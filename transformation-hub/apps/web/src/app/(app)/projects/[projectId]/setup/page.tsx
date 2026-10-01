@@ -45,6 +45,12 @@ function SetupScreen() {
   const gaps = Array.isArray(project.setupState.gaps) ? (project.setupState.gaps as unknown[]).filter((g): g is string => typeof g === 'string') : [];
 
   const screenHref = (s: Step): string | null => {
+    // Step 3 (REQ-SET-011): the import wizard — files kept as sources with their hash, extracted claims reviewed and
+    // approved by a second person — when the role may use it; otherwise the source register in Documents.
+    if (s === 'sources' && can('imports.batch.read')) {
+      const reports = sectionByKey('reports');
+      if (sectionAppliesTo(reports, project.templateKind) && can(reports.permissions)) return `${sectionHref(projectId, 'reports')}/imports`;
+    }
     const screen = STEP_SCREEN[s];
     if (!screen) return null;
     const def = sectionByKey(screen.section);
