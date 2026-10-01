@@ -145,7 +145,9 @@ $ python3 <scratchpad>/reqmap.py   (lists, per P5 requirement, the test files an
 $ gitleaks dir <scratch copy of the 4 new text files> --config scripts/ops/gitleaks.toml --redact=100
   INF scanned ~170130 bytes (170.13 KB) in 50.2ms;  INF no leaks found
 $ GITLEAKS=<scratchpad>/gl/bin-8.30.1/gitleaks bash scripts/ops/secret-scan.sh tree   (after the commit)
-  __TREE_SCAN__
+  tree: 1221 committed files at HEAD 7594d6b (the review commit); INF scanned ~15139291 bytes (15.14 MB) in 994ms;
+  INF no leaks found; PASS tree: no findings; SECRET SCAN (tree): PASS
+  (the only later change is this result block)
 ```
 
 ---
