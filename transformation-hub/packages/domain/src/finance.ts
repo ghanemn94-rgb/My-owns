@@ -751,7 +751,7 @@ export function assertBenefitVerifiable(
   if (!b.verificationSource?.trim()) throw ruleViolation('finance.benefit.verification_source_required', 'A benefit realization needs its verification source');
   // access-matrix §5.1 (SEC-P34-01): the owner, the reporter of the realization and whoever linked its active evidence.
   if (actor.userId === b.ownerUserId || actor.userId === b.realizationRecordedBy || (!!actor.userId && b.evidenceLinkerUserIds.includes(actor.userId))) {
-    throw forbidden('finance.benefit.verify_self', 'Separation of duties: the benefit owner, the person who reported the realization or who linked its evidence cannot verify it');
+    throw forbidden('finance.benefit.verify_self', 'Separation of duties: the benefit owner, the person who reported the realization or who linked or uploaded its evidence cannot verify it');
   }
 }
 

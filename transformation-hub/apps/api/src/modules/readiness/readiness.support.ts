@@ -8,7 +8,7 @@ import { PolicyService } from '../../platform/policy.service';
 import { AuditService } from '../../platform/audit.service';
 import { OutboxService } from '../../platform/outbox.service';
 import { Clock } from '../../platform/clock';
-import { RecordVersionService, activeEvidenceCount, loadInProject, visibleEvidenceCounts } from '../../platform/helpers';
+import { RecordVersionService, activeEvidenceCount, evidenceSelfIds, loadInProject, visibleEvidenceCounts } from '../../platform/helpers';
 import type { RequestContext } from '../../platform/context';
 
 export type ProjectRow = typeof schema.project.$inferSelect;
@@ -113,14 +113,11 @@ export class ReadinessSupport {
   }
 
   /**
-   * DOM-P3-10 / SEC-P34-01 (access-matrix §5.1: "the person who recorded the status/evidence" is self): the people who
-   * linked the target's CURRENT evidence (active or conflicting links — rejected / superseded ones are no longer relied on).
+   * DOM-P3-10 / SEC-P34-01 (access-matrix §5.1: "the person who recorded the status/evidence" is self): the linkers of the
+   * target's CURRENT evidence and the uploaders of the linked versions — one definition, `evidenceSelfIds` (SEC-P34R-03).
    */
-  async evidenceLinkers(projectId: string, targetType: 'readiness_check' | 'tsa_service' | 'cutover_plan', targetId: string): Promise<string[]> {
-    const r = await this.db.tx().execute<{ added_by: string }>(sql`
-      select distinct added_by from evidence_link
-       where project_id = ${projectId} and target_type = ${targetType} and target_id = ${targetId} and status in ('active', 'conflicting')`);
-    return r.rows.map((x) => x.added_by);
+  evidenceLinkers(projectId: string, targetType: 'readiness_check' | 'tsa_service' | 'cutover_plan', targetId: string): Promise<string[]> {
+    return evidenceSelfIds(this.db, projectId, targetType, targetId);
   }
 
   /**

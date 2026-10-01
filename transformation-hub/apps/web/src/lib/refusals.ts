@@ -252,6 +252,7 @@ export const REFUSAL_KEYS: Readonly<Record<string, Entry>> = {
   // P3/P4 security review fixes: the evidence linker is "self" for a verification (SEC-P34-01); "not required" on a
   // checklist item is decided by a second person (SEC-P34-10); only the requester shapes the paper (SEC-P34-13).
   'jv.cp.self_verification': 'jv.refusal.codes.cp_self_verification',
+  'jv.cp.evidence_conflicting': 'jv.refusal.codes.cp_evidence_conflicting',
   'jv.obligation.self_verification': 'jv.refusal.codes.obligation_self_verification',
   'jv.checklist_item.self_acceptance': 'jv.refusal.codes.checklist_self_acceptance',
   'jv.checklist_item.not_required_self': 'jv.refusal.codes.checklist_not_required_self',

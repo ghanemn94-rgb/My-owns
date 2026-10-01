@@ -6,7 +6,7 @@ import { DbService } from '../../platform/db.service';
 import { PolicyService, ResourceAttrs } from '../../platform/policy.service';
 import { Clock } from '../../platform/clock';
 import type { RequestContext } from '../../platform/context';
-import { visibleEvidenceCounts } from '../../platform/helpers';
+import { evidenceSelfIds, visibleEvidenceCounts } from '../../platform/helpers';
 
 export interface CarveoutProject {
   id: string;
@@ -136,17 +136,11 @@ export class CarveoutSupport {
   }
 
   /**
-   * DOM-P3-10 / SEC-P34-01 (access-matrix §5.1): the people who linked the target's CURRENT evidence (active or conflicting
-   * links) — "self" for a verification that relies on that evidence.
+   * DOM-P3-10 / SEC-P34-01 (access-matrix §5.1): "self" for a verification that relies on the target's evidence — the
+   * linkers of its CURRENT evidence and the uploaders of the linked versions (one definition, `evidenceSelfIds`; SEC-P34R-03).
    */
-  async evidenceLinkers(projectId: string, targetType: string, targetId: string): Promise<string[]> {
-    const E = schema.evidenceLink;
-    const rows = await this.db
-      .tx()
-      .selectDistinct({ by: E.addedBy })
-      .from(E)
-      .where(and(eq(E.projectId, projectId), eq(E.targetType, targetType), eq(E.targetId, targetId), inArray(E.status, ['active', 'conflicting'])));
-    return rows.map((r) => r.by);
+  evidenceLinkers(projectId: string, targetType: string, targetId: string): Promise<string[]> {
+    return evidenceSelfIds(this.db, projectId, targetType, targetId);
   }
 
 

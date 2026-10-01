@@ -7,6 +7,7 @@ import type { RequestContext } from '../../platform/context';
 import { isFullScope } from '../../platform/context';
 import { PlanningSupport, ProjectInfo } from './planning-support';
 import { RecordVisibility } from '../../platform/record-visibility';
+import { evidenceSelfSql } from '../../platform/helpers';
 import { GatesService } from '../gates/gates.service';
 
 type WorkType = (typeof MY_WORK_TYPES)[number];
@@ -264,12 +265,21 @@ export class MyWorkService {
       }
     }
 
-    // Committee actions reported done, awaiting my closure verification (not the person who reported them done).
+    // Committee actions reported done, awaiting my closure verification — offered only when the command would accept me
+    // (SEC-P2-03 rule): not the person who reported them done (policy below), not their owner, and not a person who linked
+    // their evidence or uploaded a linked version (SEC-P34R-04; the command refuses them, 403 governance.action.linker_verification).
     const acts2 = await tx
       .select({ a: A, classification: schema.decision.classification })
       .from(A)
       .leftJoin(schema.decision, and(eq(schema.decision.id, A.decisionId), eq(schema.decision.projectId, A.projectId)))
-      .where(and(inArray(A.projectId, pids), eq(A.status, 'done_pending_verification')));
+      .where(
+        and(
+          inArray(A.projectId, pids),
+          eq(A.status, 'done_pending_verification'),
+          sql`${A.ownerUserId} is distinct from ${ctx.principal.userId!}::uuid`,
+          sql`not ${evidenceSelfSql(A.projectId, 'action_item', A.id, ctx.principal.userId!)}`,
+        ),
+      );
     for (const { a, classification } of acts2) {
       const p = byId.get(a.projectId)!;
       if (!this.s.policy.can(ctx, 'governance.action.verify_closure', { projectId: p.id, classification: (classification as Classification | null) ?? null, requesterUserId: a.reportedDoneBy, ownerUserIds: [a.ownerUserId, a.createdBy] })) continue;

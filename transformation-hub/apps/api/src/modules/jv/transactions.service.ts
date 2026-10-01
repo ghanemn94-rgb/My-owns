@@ -574,9 +574,19 @@ export class TransactionsService implements OnModuleInit {
     return { id, code, version: 1 };
   }
 
+  /**
+   * SEC-P34R-02: JV closing records carry no workstream, so a workstream-scoped grant covers none of them. A caller who can
+   * neither read the deal register (project-wide `jv.deal.read`) nor holds the command permission project-wide gets 404 —
+   * the same answer as an unknown id — before any 403 check (no existence oracle).
+   */
+  private assertReachable(ctx: RequestContext, projectId: string, permission: string) {
+    if (!this.s.policy.permissionReach(ctx, 'jv.deal.read', projectId).all && !this.s.policy.permissionReach(ctx, permission, projectId).all) throw notFound();
+  }
+
   private async loadItem(ctx: RequestContext, projectId: string, id: string, permission: string) {
     if (this.s.policy.isRoomOnly(ctx.principal, projectId)) throw notFound();
     const i = await loadInProject(this.s.db, schema.closingDeliverable, projectId, id);
+    this.assertReachable(ctx, projectId, permission);
     this.s.policy.assertGranted(ctx, permission, { projectId }); // role-level; acceptance asserts not_self with the deliverer
     const e = await loadInProject(this.s.db, schema.closing, projectId, i.closingId);
     return { i, e };
@@ -687,6 +697,7 @@ export class TransactionsService implements OnModuleInit {
   private async loadCp(ctx: RequestContext, projectId: string, id: string, permission: string, extra: Record<string, unknown> = {}): Promise<CpRow> {
     if (this.s.policy.isRoomOnly(ctx.principal, projectId)) throw notFound();
     const c = await loadInProject(this.s.db, schema.closingCondition, projectId, id);
+    this.assertReachable(ctx, projectId, permission); // SEC-P34R-02
     this.s.policy.assertGranted(ctx, permission, { projectId, ...extra }); // role-level; verify asserts not_self with the submitter
     return c;
   }
@@ -995,7 +1006,7 @@ export class TransactionsService implements OnModuleInit {
     const linkers = cmd === 'verify' ? await this.s.evidenceLinkers(projectId, 'closing_condition', c.id) : [];
     try {
       this.s.policy.assertApproval(ctx, 'jv.cp.verify', { projectId, requesterUserId: c.evidenceSubmittedBy }, () => {
-        if (cmd === 'verify') assertCpVerifiable({ activeEvidence: ev.active, verifierUserId: ctx.principal.userId!, ownerUserId: c.ownerUserId, evidenceSubmittedBy: c.evidenceSubmittedBy, evidenceLinkerUserIds: linkers });
+        if (cmd === 'verify') assertCpVerifiable({ activeEvidence: ev.active, conflictingEvidence: ev.conflicting, verifierUserId: ctx.principal.userId!, ownerUserId: c.ownerUserId, evidenceSubmittedBy: c.evidenceSubmittedBy, evidenceLinkerUserIds: linkers });
         transition('closing_condition', CONDITION_MACHINE, c.status, cmd);
       });
     } catch (e) {

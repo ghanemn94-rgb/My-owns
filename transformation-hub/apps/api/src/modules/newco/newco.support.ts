@@ -6,7 +6,7 @@ import { DbService } from '../../platform/db.service';
 import { PolicyService } from '../../platform/policy.service';
 import { Clock } from '../../platform/clock';
 import type { RequestContext } from '../../platform/context';
-import { visibleEvidenceCounts } from '../../platform/helpers';
+import { evidenceSelfIds, visibleEvidenceCounts } from '../../platform/helpers';
 
 export interface NewcoProject {
   id: string;
@@ -116,17 +116,11 @@ export class NewcoSupport {
     return new Map(rows.map((r) => [r.id, { active: Number(r.active), conflicting: Number(r.conflicting) }]));
   }
   /**
-   * DOM-P3-10 / SEC-P34-01 (access-matrix §5.1: "the person who recorded the status/evidence" is self): the people who linked
-   * the target's CURRENT evidence (active or conflicting links) in this project.
+   * DOM-P3-10 / SEC-P34-01 (access-matrix §5.1: "the person who recorded the status/evidence" is self): the linkers of the
+   * target's CURRENT evidence in this project and the uploaders of the linked versions (`evidenceSelfIds`; SEC-P34R-03).
    */
-  async evidenceLinkers(projectId: string, targetType: 'legal_entity' | 'regulatory_requirement', targetId: string): Promise<string[]> {
-    const E = schema.evidenceLink;
-    const rows = await this.db
-      .tx()
-      .selectDistinct({ by: E.addedBy })
-      .from(E)
-      .where(and(eq(E.projectId, projectId), eq(E.targetType, targetType), eq(E.targetId, targetId), inArray(E.status, ['active', 'conflicting'])));
-    return rows.map((r) => r.by);
+  evidenceLinkers(projectId: string, targetType: 'legal_entity' | 'regulatory_requirement', targetId: string): Promise<string[]> {
+    return evidenceSelfIds(this.db, projectId, targetType, targetId);
   }
 
   /** not_self against every subject (fails closed when there is none), after the project-wide grant check. */

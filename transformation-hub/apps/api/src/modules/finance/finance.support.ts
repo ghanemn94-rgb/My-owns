@@ -21,7 +21,7 @@ import { PolicyService, ResourceAttrs } from '../../platform/policy.service';
 import { AuditService } from '../../platform/audit.service';
 import { OutboxService } from '../../platform/outbox.service';
 import { Clock } from '../../platform/clock';
-import { RecordVersionService, activeEvidenceCount, loadInProject, visibleEvidenceCounts } from '../../platform/helpers';
+import { RecordVersionService, activeEvidenceCount, evidenceSelfIds, loadInProject, visibleEvidenceCounts } from '../../platform/helpers';
 import type { RequestContext } from '../../platform/context';
 import { newId, payloadHash } from '../../platform/ids';
 
@@ -288,14 +288,12 @@ export class FinanceSupport {
   }
 
   /**
-   * FOR RULES (SEC-P34-01, access-matrix §5.1): the people who linked the ACTIVE evidence of a record — "the person who
-   * recorded the evidence" is self for its verification. Every link counts, visible to the caller or not.
+   * FOR RULES (SEC-P34-01, access-matrix §5.1): "the person who recorded the evidence" is self for its verification — the
+   * linkers of the record's CURRENT evidence and the uploaders of the linked versions (one definition, `evidenceSelfIds`;
+   * SEC-P34R-03 / -09). Every link counts, visible to the caller or not.
    */
-  async evidenceLinkers(projectId: string, targetType: 'benefit' | 'financial_snapshot', targetId: string): Promise<string[]> {
-    const r = await this.db.tx().execute<{ added_by: string }>(sql`
-      select distinct added_by::text as added_by from evidence_link
-       where project_id = ${projectId} and target_type = ${targetType} and target_id = ${targetId} and status = 'active'`);
-    return r.rows.map((x) => x.added_by);
+  evidenceLinkers(projectId: string, targetType: 'benefit' | 'financial_snapshot', targetId: string): Promise<string[]> {
+    return evidenceSelfIds(this.db, projectId, targetType, targetId);
   }
 
   /**

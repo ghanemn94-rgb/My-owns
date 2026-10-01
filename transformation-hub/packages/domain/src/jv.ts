@@ -522,11 +522,20 @@ export function isEvidenceLinker(actorUserId: string, evidenceLinkerUserIds: rea
  * verifyCP: evidence is mandatory and the verifier is neither the CP owner, nor the person who submitted the evidence for
  * verification, nor anyone who linked active evidence of the condition (SEC-P34-01).
  */
-export function assertCpVerifiable(i: { activeEvidence: number; verifierUserId: string; ownerUserId: string | null; evidenceSubmittedBy: string | null; evidenceLinkerUserIds: readonly string[] }): void {
+export function assertCpVerifiable(i: {
+  activeEvidence: number;
+  /** SEC-P34R-09: contested evidence must be resolved first (as readiness sign-off and NewCo verifications require). */
+  conflictingEvidence: number;
+  verifierUserId: string;
+  ownerUserId: string | null;
+  evidenceSubmittedBy: string | null;
+  evidenceLinkerUserIds: readonly string[];
+}): void {
   if (i.activeEvidence <= 0) throw ruleViolation('jv.cp.evidence_required', 'A condition cannot be verified without linked evidence');
+  if (i.conflictingEvidence > 0) throw ruleViolation('jv.cp.evidence_conflicting', 'The condition has conflicting evidence; resolve it before verification');
   if (i.verifierUserId === i.ownerUserId) throw forbidden('jv.cp.self_verification', 'The owner of a condition cannot verify it');
   if (i.verifierUserId === i.evidenceSubmittedBy) throw forbidden('jv.cp.self_verification', 'The person who submitted the evidence cannot verify the condition');
-  if (isEvidenceLinker(i.verifierUserId, i.evidenceLinkerUserIds)) throw forbidden('jv.cp.self_verification', 'The person who linked evidence of the condition cannot verify it');
+  if (isEvidenceLinker(i.verifierUserId, i.evidenceLinkerUserIds)) throw forbidden('jv.cp.self_verification', 'Whoever linked or uploaded evidence of the condition cannot verify it');
 }
 
 /**
@@ -771,7 +780,7 @@ export function assertChecklistItemAcceptable(i: { status: string; executedVersi
   if (i.status !== 'delivered') throw ruleViolation('jv.checklist_item.not_delivered', `Only a delivered item can be accepted (current state: ${i.status})`);
   if (i.executedVersionUsable !== true) throw ruleViolation('jv.checklist_item.executed_document_required', 'Acceptance requires the executed document (a stored, usable version)');
   if (i.acceptorUserId === i.ownerUserId || i.acceptorUserId === i.deliveredBy) throw forbidden('jv.checklist_item.self_acceptance', 'The owner or deliverer of a checklist item cannot accept it');
-  if (isEvidenceLinker(i.acceptorUserId, i.evidenceLinkerUserIds)) throw forbidden('jv.checklist_item.self_acceptance', 'The person who linked evidence of a checklist item cannot accept it');
+  if (isEvidenceLinker(i.acceptorUserId, i.evidenceLinkerUserIds)) throw forbidden('jv.checklist_item.self_acceptance', 'Whoever linked or uploaded evidence of a checklist item cannot accept it');
 }
 
 /** Checklist states from which an item may still be set "not required" (it is open: nothing was accepted yet). */
@@ -846,7 +855,7 @@ export function assessObligationOverdue(i: { status: PostCloseStatus; dueDate: s
 export function assertObligationVerifiable(i: { activeEvidence: number; verifierUserId: string; ownerUserId: string | null; reportedBy: string | null; evidenceLinkerUserIds: readonly string[] }): void {
   if (i.activeEvidence <= 0) throw ruleViolation('jv.obligation.evidence_required', 'An obligation cannot be verified without linked evidence');
   if (i.verifierUserId === i.ownerUserId || i.verifierUserId === i.reportedBy) throw forbidden('jv.obligation.self_verification', 'The owner or reporter of an obligation cannot verify it');
-  if (isEvidenceLinker(i.verifierUserId, i.evidenceLinkerUserIds)) throw forbidden('jv.obligation.self_verification', 'The person who linked evidence of an obligation cannot verify it');
+  if (isEvidenceLinker(i.verifierUserId, i.evidenceLinkerUserIds)) throw forbidden('jv.obligation.self_verification', 'Whoever linked or uploaded evidence of an obligation cannot verify it');
 }
 
 // ---------------------------------------------------------------------------------------------------------

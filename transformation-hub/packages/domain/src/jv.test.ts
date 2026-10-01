@@ -229,14 +229,17 @@ describe('REQ-JV-011 — findings', () => {
 
 describe('REQ-JV-013 / AT-12 / AT-13 — conditions precedent', () => {
   it('verifyCP without evidence is rejected; the owner / evidence submitter cannot verify', () => {
-    expect(code(() => assertCpVerifiable({ activeEvidence: 0, verifierUserId: 'legal', ownerUserId: 'pm', evidenceSubmittedBy: 'pm', evidenceLinkerUserIds: [] }))).toBe('jv.cp.evidence_required');
-    expect(code(() => assertCpVerifiable({ activeEvidence: 1, verifierUserId: 'pm', ownerUserId: 'pm', evidenceSubmittedBy: 'x', evidenceLinkerUserIds: [] }))).toBe('jv.cp.self_verification');
-    expect(code(() => assertCpVerifiable({ activeEvidence: 1, verifierUserId: 'x', ownerUserId: 'pm', evidenceSubmittedBy: 'x', evidenceLinkerUserIds: [] }))).toBe('jv.cp.self_verification');
-    expect(code(() => assertCpVerifiable({ activeEvidence: 1, verifierUserId: 'legal', ownerUserId: 'pm', evidenceSubmittedBy: 'pm', evidenceLinkerUserIds: ['pm'] }))).toBe('no error');
+    expect(code(() => assertCpVerifiable({ activeEvidence: 0, conflictingEvidence: 0, verifierUserId: 'legal', ownerUserId: 'pm', evidenceSubmittedBy: 'pm', evidenceLinkerUserIds: [] }))).toBe('jv.cp.evidence_required');
+    expect(code(() => assertCpVerifiable({ activeEvidence: 1, conflictingEvidence: 0, verifierUserId: 'pm', ownerUserId: 'pm', evidenceSubmittedBy: 'x', evidenceLinkerUserIds: [] }))).toBe('jv.cp.self_verification');
+    expect(code(() => assertCpVerifiable({ activeEvidence: 1, conflictingEvidence: 0, verifierUserId: 'x', ownerUserId: 'pm', evidenceSubmittedBy: 'x', evidenceLinkerUserIds: [] }))).toBe('jv.cp.self_verification');
+    expect(code(() => assertCpVerifiable({ activeEvidence: 1, conflictingEvidence: 0, verifierUserId: 'legal', ownerUserId: 'pm', evidenceSubmittedBy: 'pm', evidenceLinkerUserIds: ['pm'] }))).toBe('no error');
     expect(() => transition('closing_condition', CONDITION_MACHINE, 'open', 'verify')).toThrow();
   });
+  it('SEC-P34R-09: a CP with conflicting evidence is not verified until the conflict is resolved', () => {
+    expect(code(() => assertCpVerifiable({ activeEvidence: 1, conflictingEvidence: 1, verifierUserId: 'legal', ownerUserId: 'pm', evidenceSubmittedBy: 'pm', evidenceLinkerUserIds: ['pm'] }))).toBe('jv.cp.evidence_conflicting');
+  });
   it('SEC-P34-01: whoever linked active evidence of a CP / deliverable / obligation cannot verify or accept it', () => {
-    expect(code(() => assertCpVerifiable({ activeEvidence: 1, verifierUserId: 'legal', ownerUserId: 'pm', evidenceSubmittedBy: 'pm', evidenceLinkerUserIds: ['pm', 'legal'] }))).toBe('jv.cp.self_verification');
+    expect(code(() => assertCpVerifiable({ activeEvidence: 1, conflictingEvidence: 0, verifierUserId: 'legal', ownerUserId: 'pm', evidenceSubmittedBy: 'pm', evidenceLinkerUserIds: ['pm', 'legal'] }))).toBe('jv.cp.self_verification');
     expect(code(() => assertChecklistItemAcceptable({ status: 'delivered', executedVersionUsable: true, acceptorUserId: 'legal', ownerUserId: 'x', deliveredBy: 'pm', evidenceLinkerUserIds: ['legal'] }))).toBe('jv.checklist_item.self_acceptance');
     expect(code(() => assertObligationVerifiable({ activeEvidence: 1, verifierUserId: 'legal', ownerUserId: 'pm', reportedBy: 'pm', evidenceLinkerUserIds: ['legal'] }))).toBe('jv.obligation.self_verification');
     expect(code(() => assertObligationVerifiable({ activeEvidence: 1, verifierUserId: 'legal', ownerUserId: 'pm', reportedBy: 'pm', evidenceLinkerUserIds: ['pm'] }))).toBe('no error');
