@@ -82,6 +82,13 @@ permission, exactly like their own modules (`grantSql(…, {})`, `assertProjectW
 reader no longer sees their code / title / state there (`apps/api/src/platform/record-visibility.ts`, rule `ws: <read>, wsCol: null`).
 Tests: `apps/api/test/reviews/p34-sec-jv.spec.ts` (SEC-P34-12, agreement prerequisite) and
 `apps/api/test/reviews/p34-sec-fixes.spec.ts` (decision prerequisite and decision events in the activity feed).
+**AI proposals register (OBS-P5-01, P5 security review).** `ai.proposal.read`, `ai.proposal.approve` and
+`ai.proposal.reject` are granted to `workstream_lead` on its workstream, but an AI proposal carries no workstream and the
+proposals list is a project-level register: under the strict rule above a workstream-only grant reaches no proposal, so
+`GET …/ai/proposals` answers 403 and approve / reject are refused (403, or 404 when the target is outside the lead's reach).
+This is consistent with this section and is not a leak. A workstream-scoped proposals view (proposals whose target lies in
+the lead's workstreams) is an owner decision — recorded, not implemented. Pinned by the `OBSERVED` test in
+`apps/api/test/reviews/p5-sec-ai.spec.ts`.
 The same rule covers the P3 records without a workstream column (SEC-P34R-01, P3/P4 security re-check): **legal entity**
 events need a project-wide `newco.register.read`, **perimeter version** and **perimeter category review** events a
 project-wide `carveout.register.read`, as in their modules; they are no longer shown to every activity reader. Test: the
@@ -193,6 +200,16 @@ SEC-P34-11` test in `apps/api/test/reviews/p34-sec-registers.spec.ts`.
   (recorded in the run snapshot) or to its requester. A hidden proposal answers 404 to detail, approve, reject and revise,
   like an unknown id. Tests: the `SEC-P34R-05 (fixed, regression)` probes in `p34-sec-re-jv-ai.spec.ts` and
   `p34-sec-re-fixes.spec.ts`.
+- **AI message content follows the recipient (SEC-P5-01, P5 security review; AIT-07).** An AI message — and every AI
+  proposal that delivers content to a person — is proposed, approved, revised and executed only for a recipient who may
+  read its **target and every record its run sent to the model**, each under the same per-type rule as the AI knowledge
+  sources (`AiKnowledgeService.inputsVisible` → `refVisibleSql`); a message without a target is judged on those inputs. An
+  uncleared recipient is refused at creation (audited `DESTINATION_NOT_APPROVED`), at approval and revision (422
+  `ai.recipient_not_cleared`; the proposal is invalidated and audited `AI_APPROVAL_INVALIDATED`) and at execution
+  (invalidated, nothing sent) — also under policy-limited autopilot. An executed draft is delivered only to the
+  delegating user, who must still read its target and inputs; it is keyed to those inputs and re-checked on every read
+  (SEC-P5-05). Tests: the `SEC-P5-01 (fixed, regression)` probes in `apps/api/test/reviews/p5-sec-ai.spec.ts` and
+  `apps/api/test/ai/p5-sec-fixes.spec.ts`.
 - **Commands answer 404 before 403 (SEC-P34R-02).** The readiness rebind, the cutover plan site change and the TSA
   extension request / record load the record with the caller's readiness visibility, and the JV checklist-item and CP commands require project-wide deal reach (or the
   command permission project-wide) before any 403 check, so an unreadable record answers like an unknown id. The cutover
@@ -204,6 +221,10 @@ SEC-P34-11` test in `apps/api/test/reviews/p34-sec-registers.spec.ts`.
 A report snapshot, export, meeting pack, AI answer, AI summary, notification or email body takes classification = **max** of its inputs, `room_id` = the input room (if exactly one; more than one room means the item is **not shareable** outside the intersection of grants), and `clean_team` = OR of the inputs. Access to the derived item is re-checked on every read, export and send (master prompt §11 and §12.1).
 An AI proposal is derived from its run: it is readable only by a reader who can read every input its run sent to the model
 and its target, and an untargeted draft only by a reader cleared at least as high as the delegating user (§2.5, SEC-P34R-05).
+The derived content of an AI message is its target and every input its run sent to the model: each recipient passes read
+authorization for all of them at creation, approval and send (§2.5, §5.2, SEC-P5-01). For the AI provider ceiling a
+committee action takes the highest classification of its decision, that decision's committee and its meeting's committee;
+an unknown classification counts as `strictly_confidential` (SEC-P5-03).
 
 ### 2.7 AI usage flag (`ai`)
 
@@ -336,7 +357,7 @@ Quorum, majority, recusal and tie rules are computed **on the server** from comm
 | Decision, gate, waiver, baseline, CR, perimeter, go/no-go, TSA exit, CP waiver, signing, closing, finance approval, partner contact, template migration, disposal, project archive | Active approved `AuthorityMatrixVersion` authorises the actor/committee for this decision type and amount (same currency and unit_scale) |
 | `admin.role_assignment.manage`, `jv.room.grant_access` | Assignability table (§4) |
 | `admin.clearance.grant` | Target clearance ≤ grantor's effective clearance; expiry set |
-| `notifications.message.send` | Destination is on the project's approved destination list, send authority is active (`integrations.send_authority.approve`), and every recipient passes read authorization for the derived content (§2.6). Partner/external destinations are never reachable from an AI proposal. |
+| `notifications.message.send` | Destination is on the project's approved destination list, send authority is active (`integrations.send_authority.approve`), and every recipient passes read authorization for the derived content (§2.6) — for an AI message its target and every record its run sent to the model, checked at creation, approval and execution (SEC-P5-01). Partner/external destinations are never reachable from an AI proposal. |
 | `integrations.send_authority.approve` | Destinations ⊆ organisation-approved destination list configured by platform_admin |
 | `ai.proposal.approve` | The approver passes `authorize(approver, proposal.actionPermission, proposal.target)` at approval time; the worker re-checks at execution time |
 | `ai.autopilot_policy.approve` | Allowlist ⊆ permissions with `ai = propose`; limits ≤ organisation caps; expiry set |

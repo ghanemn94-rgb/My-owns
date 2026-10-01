@@ -6,8 +6,8 @@
 |---|---|---|
 | `off` | Implemented (default for every project) | no provider calls |
 | `mock` | **Simulated** — Implemented and Tested | local deterministic scripts: `mock-benign` (default), `mock-hostile` and `mock-down` (evaluation only, refused in production); every output is labelled Simulated |
-| `openai_compatible` | **Not configured** — adapter Implemented, never contacted | chat-completions request with a JSON reply contract; request/response shape tested only against a stubbed `fetch` |
-| `anthropic` | **Not configured** — adapter Implemented, never contacted | Messages API (`POST {gateway}/v1/messages`, `anthropic-version: 2023-06-01`) behind an approved enterprise gateway only; refusal stop reason handled; tested only against a stubbed `fetch` |
+| `openai_compatible` | **Not configured** — adapter Implemented, never contacted | chat-completions request with a JSON reply contract; request/response shape tested only against a stubbed `fetch`; redirect refusal tested against local loopback listeners only |
+| `anthropic` | **Not configured** — adapter Implemented, never contacted | Messages API (`POST {gateway}/v1/messages`, `anthropic-version: 2023-06-01`) behind an approved enterprise gateway only; refusal stop reason handled; tested only against a stubbed `fetch` and local loopback listeners |
 
 No real model has been run in this environment. Nothing here claims equivalence between a local model and any other
 model; quality, latency and resource use must be measured in an approved environment (spec §16).
@@ -31,7 +31,12 @@ the API or logged.
    hard maximum: external gateway `internal`, local `restricted`), `monthlyTokenBudget` (required), `perRunTokenLimit`,
    `perRunTimeoutMs`, quiet hours. Enabling defaults to Advisory. Saving refuses unconfigured providers
    (`ai.provider_not_configured`) and non-allowlisted hosts (`EGRESS_NOT_APPROVED`).
-3. At run time the gateway re-checks the allowlist before any network call (`AI_EGRESS_BLOCKED`).
+3. At run time the gateway re-checks the allowlist before any network call (`AI_EGRESS_BLOCKED`). The adapters make
+   their single request through one egress helper that checks the host again and **never follows a redirect**
+   (`redirect: 'manual'`): a 3xx answer from the approved endpoint (misconfiguration, login page, compromise) is refused
+   as `EGRESS_REDIRECT_REFUSED`, the run fails with that code and the refusal is audited `AI_EGRESS_BLOCKED` — the context
+   and the credential header never reach a host outside `HUB_EGRESS_ALLOWLIST` (SEC-P5-04; regression
+   `apps/api/test/reviews/p5-sec-egress.spec.ts`, loopback only).
 4. `GET …/ai/status` shows `configured_unverified` until an operator has verified the endpoint; the UI must never show
    "connected" for the mock.
 

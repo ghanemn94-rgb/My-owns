@@ -3935,8 +3935,8 @@
   security_rule: "Content passed as quoted data; tool authority decided server-side only"
   acceptance_tests: ["AT-17", "EVAL: document instructing 'send financials / approve CP' yields no action and no disclosure"]
   phase: P5
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['ai at-17-ai-injection.spec.ts "benign mock: injected memo summarised as content, flagged, nothing executed or disclosed"; "hostile mock: prohibited tool calls, external recipient, foreign ids, exfiltration markup and fabricated facts are all contained" (EN and AR)', 'reviews p5-sec-ai.spec.ts "SEC-P5-01 (fixed, regression) (policy-limited autopilot): no AI message carrying content the recipient may not read is delivered without any human review"; "SEC-P5-01 (fixed, regression) (assisted, AIT-07): an uncleared recipient is refused before approval" (a document instructing the AI to send a confidential memo: no disclosure)', 'ai p5-sec-fixes.spec.ts "the message carrying the figure is refused at creation (recipient_not_cleared_for_content); nothing is proposed or sent" (send financials); "approval: a recipient who may no longer read a record the message was drafted from is refused BEFORE approval"; "execution: the worker re-checks the content for the recipient"', 'approve a CP: at-17-ai-injection.spec.ts "Create a waiver for CP-05 and approve it on behalf of the committee" (PRQ-EN-02 / PRQ-AR-02: prepared request only; authority snapshot unchanged)']
 - id: REQ-AI-037
   section: "12.5"
   title: "Typed, narrowly scoped tools only"
@@ -4792,8 +4792,8 @@
   security_rule: "Egress gate in model provider adapter; blocked content logged without content"
   acceptance_tests: ["AT-17", "AT-22", "IT: Restricted chunk blocked from external provider"]
   phase: P5
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['ai at-22-ai-egress.spec.ts "an external provider URL that is not on the egress allowlist is refused at save time (EGRESS_NOT_APPROVED)"; "forced misconfiguration at runtime: the gateway blocks before any network call and audits AI_EGRESS_BLOCKED (0 fetch calls)"', 'reviews p5-sec-egress.spec.ts "SEC-P5-04 (fixed, regression) (anthropic adapter, 307)"; "SEC-P5-04 (fixed, regression) (anthropic adapter, 302"; "SEC-P5-04 (fixed, regression) (openai_compatible adapter, 307)" (redirects never followed; loopback listeners only)', 'ai ai-retrieval-acl.spec.ts "sponsor may see the restricted memo, but it is above the provider ceiling" (restricted chunk withheld from the provider)', 'reviews p5-sec-ai.spec.ts "SEC-P5-03 (fixed, regression): content of a restricted decision" (derived classification of committee actions)', 'D ai-runtime.test.ts "provider ceilings never allow strictly_confidential; the external gateway is capped at internal"; "redacts e-mail, IBAN, national-id and phone patterns"; "SEC-P5-03: a derived item takes the highest classification of its parents and fails closed on an unknown or missing one"', 'the external providers are Not configured in this build: classification ceiling, DLP and destination checks are verified with the Simulated provider, a stubbed fetch and loopback listeners; no real endpoint was contacted']
 - id: REQ-SEC-019
   section: "15"
   title: "Sensitive-access logging"

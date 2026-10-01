@@ -45,9 +45,19 @@ A model-issued call to any retrieval tool is refused (`retrieval_is_runtime_cont
 
 Execution rules (worker, `ai.execute_proposal`): kill switch → mode (`assertActionExecutable`) → requester still holds
 the permission and `ai.assistant.use` → approver still holds `ai.proposal.approve` + the underlying permission and is not
-the requester → payload hash, target version, expiry (`isApprovalStillValid`) → recipients still authorised → quiet
-hours (deferred) → ONE transaction: effect + approval consumed + proposal executed + audit. Messages are in-app only;
-e-mail / Teams / SMS are recorded in the delivery ledger as `disabled`.
+the requester → payload hash, target version, expiry (`isApprovalStillValid`) → the message recipient may still read the
+target AND every record the run sent to the model (a draft: the delegating user may) → quiet hours (deferred) → ONE
+transaction as the accountable human: (autopilot: per-project advisory lock `hub_ai_autopilot:<projectId>`) → proposal row
+lock → re-check of status, version, approval, emergency stop, mode / autopilot policy / daily limit → effect + approval
+consumed + proposal executed (only while still pending at the checked version) + audit (SEC-P5-02, SEC-P5-06). Messages
+are in-app only; e-mail / Teams / SMS are recorded in the delivery ledger as `disabled`. The delivered title carries the
+platform's marker "AI-generated:" ("AI-generated (Simulated):" for the mock; Arabic for an Arabic run) — never left to
+the model (SEC-P5-I7).
+
+Content follows the recipient (SEC-P5-01, AIT-07; see `knowledge-sources.md`): a message is proposed, approved and sent
+only to a recipient who may read its target and every record its run gave the model — refused at creation (audited
+`DESTINATION_NOT_APPROVED`), at approval and revision (422 `ai.recipient_not_cleared`, the proposal invalidated and
+audited), and at execution (invalidated, nothing sent). Autopilot never sends such content.
 
 Approval (`ai.proposal.approve`): the approver must hold the underlying permission (authority) and must not be the
 person on whose behalf the AI proposed (separation of duties). The AI is never an approver.
@@ -68,9 +78,9 @@ audited `AI_PROHIBITED_ACTION_REQUESTED`; a user request for them yields only a 
 | `POST …/ai/autopilot-policy/revoke` | `ai.settings.manage` |
 | `POST …/ai/killswitch/activate` / `release` | `ai.killswitch.activate` / `ai.killswitch.release` (not the activator) |
 | `POST …/ai/ask`, `GET …/ai/tools`, `GET …/ai/artifacts`, `POST …/ai/proposals/:id/revise` | `ai.assistant.use` (revise: requester only) |
-| `GET …/ai/runs`, `GET …/ai/runs/:id`, `GET …/ai/status` | `ai.run.read` (runs: own only) |
+| `GET …/ai/runs`, `GET …/ai/runs/:id`, `GET …/ai/status` | `ai.run.read` (runs: own only; the status shows the caller's own last run — SEC-P5-I2) |
 | `GET …/ai/costs` | `ai.operations.read` |
-| `GET …/ai/proposals` | `ai.proposal.read` |
+| `GET …/ai/proposals` | `ai.proposal.read` held **project-wide** (a project-level register, access-matrix §2.2 strict rule — a workstream-only grant gets 403, OBS-P5-01); rows filtered by the reader's visibility of the target and the run inputs (SEC-P34R-05) |
 | `POST …/ai/proposals/:id/approve` / `reject` | `ai.proposal.approve` / `ai.proposal.reject` |
 | `GET/POST …/ai/briefings` | `ai.briefing.subscribe` |
 | `GET …/ai/detections` | `planning.plan.read` (rules only; works with AI off) |

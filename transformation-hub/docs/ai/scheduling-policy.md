@@ -6,7 +6,7 @@
 |---|---|---|---|
 | `ai.briefing` | `scheduled_job` (cron + IANA timezone, default `30 7 * * *` Asia/Riyadh; weekly default `0 8 * * 0`) owned by the subscriber | `JobContextFactory.forUser(owner, project)` before AND after the provider call; `null` → run recorded `skipped` (`owner_access_revoked`), nothing sent | one run per `schedule:<id>:<slot>` (re-delivery returns `already_ran`); notification dedupe key `ai-briefing:<schedule>:<slot>` |
 | `ai.run` | `POST …/ai/ask` with `async: true` | `forUser(requester)` before and after the provider call | job key `ai-run:<runId>` |
-| `ai.execute_proposal` | human approval (or autopilot) | phase 1 service principal (checks) → phase 2 the approver (or, under autopilot, the delegating user) | job key `ai-exec:<proposal>:<approval>`; effect + approval consumed + proposal executed in ONE transaction; notification dedupe key `ai-proposal:<id>` |
+| `ai.execute_proposal` | human approval (or autopilot) | phase 1 service principal (checks) → phase 2 the approver (or, under autopilot, the delegating user), which locks the proposal (autopilot: first the project's advisory lock `hub_ai_autopilot:<projectId>`) and re-checks status, version, approval, emergency stop, mode, autopilot policy and daily limit before the effect (SEC-P5-02, SEC-P5-06) | job key `ai-exec:<proposal>:<approval>`; effect + approval consumed + proposal executed in ONE transaction, the final update only while the proposal is still pending at the checked version; notification dedupe key `ai-proposal:<id>` |
 | `ai.invalidate_derived` | outbox `permission.changed`, `document.changed`, `evidence.changed` | service principal `svc-ai-pm` (no domain permissions) | per outbox event |
 
 Briefings are delivered **to the subscriber only** (policy choice for AIQ-02: per-recipient generation under each
@@ -24,14 +24,19 @@ recipient's ACL by each recipient subscribing; no shared briefing across clearan
 Autopilot policy: proposed in settings by an `ai.settings.manage` holder, approved by a different person holding
 `ai.autopilot_policy.approve`; allowlist ⊆ `create_internal_notification, request_update_from_owner,
 draft_status_summary, flag_risk`; 1–50 actions/day; expiry required, ≤ 90 days; revocable at once (mode drops to
-Assisted).
+Assisted). The daily limit is counted and consumed under the project's advisory lock, so concurrent executors (several worker
+replicas) never exceed it (SEC-P5-06).
 
 ## Guards
 
 * **Kill switch** (`ai.killswitch.activate`; release by someone else): blocks asks, cancels queued `ai.run`,
   `ai.briefing`, `ai.execute_proposal` jobs, invalidates valid approvals, cancels pending proposals, cancels queued AI
-  delivery-ledger rows; checked again before every tool call, after the provider call (output discarded) and before
-  every execution. History is preserved (rows are marked, never deleted). AI in-app notifications are only written at
+  delivery-ledger rows; checked again before every tool call, after the provider call (output discarded), before every
+  execution and once more under the execution's proposal lock right before the effect — a stop (or a rejection, or a
+  revision) that commits before that lock wins and nothing is sent; one that commits later waits for the execution and
+  then skips the executed proposal (SEC-P5-02). Every writer locks a proposal before its approvals (the stop updates
+  proposals first, then approvals), so a stop and an execution never deadlock. History is preserved (rows are marked,
+  never deleted). AI in-app notifications are only written at
   execution time, so "unsent" AI messages are exactly the queued jobs/proposals that are cancelled.
 * **Budgets**: monthly token budget required to enable AI; per-run token limit (context trimmed); optional monthly cost
   budget with currency. Exhaustion → run status `budget_exceeded`, audit `AI_BUDGET_EXHAUSTED`, no provider call.
@@ -45,7 +50,8 @@ Assisted).
 ## Operations
 
 `GET …/ai/status`: mode, provider label (Simulated / Not configured / …), health (`off`, `ok`, `degraded`,
-`circuit_open`, `budget_exhausted`, `kill_switch`, `not_configured`), failure reason, last run, next run, circuit state,
+`circuit_open`, `budget_exhausted`, `kill_switch`, `not_configured`), failure reason, the caller's own last run (runs are
+never shared; health uses the project's latest run status and error code only — SEC-P5-I2), next run, circuit state,
 budget used this month, manual fallback text. `GET …/ai/costs`: tokens and estimated cost per month (estimates only).
 Every run stores trigger, requester, evidence snapshot (items with id, version, classification, sent-to-provider flag,
 cited ids), output, tokens, cost estimate, policy version and status. Logs/audit carry ids and codes only, never prompts
