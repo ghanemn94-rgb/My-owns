@@ -1,0 +1,106 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG1-001",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified at runtime on candidate 991d3241 (commit f32c705). On a disposable stack (PostgreSQL 16.13, AUTH_MODE=dev, SYNTHETIC seed) dev.office tried active->closed twice: once as a status-only edit and once mixed with a rename. Both returned 422 urn:mth:problem:invalid-transition with the detail 'Closure requires the G6 (Sustain) business approval with validated benefits, which is not available in this release.' The row stayed active|v2|original name, there was no new audit row (2 -> 2), and the database holds zero closed transformations. The integration suite 'closure is not a status edit' (active, on_hold and draft -> closed) passes against a real database, as does the unit test of isAllowedTransition. The create schema accepts no status field, so no other write path sets closed. Web: offeredStatusOptions removes the governed target, and the rendered select offers only active/on_hold in Arabic (نشط/معلّق) and English. The status hint names the G6 business approval ('البوابة 6 - الاستدامة' / 'G6 (Sustain)'). OpenAPI updateTransformation prose states that ->closed is governed by G6 (P2+) and refused with 422. The shared transition table still lists closed as a later-stage target, but the API overrides it through GOVERNED_TARGET_STATUSES, documented in the code. DG/G separation holds: workflows.PRODUCT_GATES = G1-G6 (no DG*); CLOSURE_GATE = G6; the workflows scaffold registers no route; no UI catalogue string contains DG0-DG7. No engineering path grants a G6 approval.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-2/05-live-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-2/03-integration-full.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-2/02-unit-domain-focused.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-2/00-static-inspection.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-2/screens/ar-02-edit-no-closed.png",
+        "docs/delivery/test-evidence/DG1/domain/round-2/screens/en-02-edit-no-closed.png",
+        "apps/api/src/modules/transformations/routes.ts#GOVERNED_TARGET_STATUSES",
+        "apps/web/src/pages/transformations/TransformationEditPage.tsx#offeredStatusOptions",
+        "docs/api/openapi.yaml#L742"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-003",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "The AR catalogue matches docs/analysis/glossary.md. Transformation = التحوّل (shadda spelling consistent; no unshadded تحول remains). Initiative = مبادرة / scope label المبادرة, distinct from التحوّل. Modular = النمط الجزئي المرن (الدخول عند المرحلة المناسبة), and معياري appears nowhere. Phase 5 = التحويل والتنفيذ, which differs from the Transformation term. Executive Sponsor = الراعي التنفيذي and Transformation Lead = قائد التحوّل. No 'مبادرة/مبادرات التحوّل' conflation exists anywhere in the catalogue. glossary.test.ts parses the glossary tables directly, so drift on either side fails the test; it passed (8 tests). The rendered Arabic list, detail and edit screens on the live stack use التحوّل and show no conflation. The glossary itself still marks its Arabic terms as proposals pending a Mobily Arabic-language owner's review, which is honest.",
+      "evidence": [
+        "apps/web/src/i18n/glossary.test.ts",
+        "docs/delivery/test-evidence/DG1/domain/round-2/02-unit-domain-focused.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-2/05-live-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-2/screens/ar-03-detail-audit.png",
+        "docs/analysis/glossary.md"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-002",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "REQ-S16-003: the six section-16 modules now literally exist (D-048 builds them; it does not reinterpret the acceptance). workflows, kpi (formulas/KPI) and reporting each have index.ts plus their own *.test.ts, are in P1_MODULES and P1_SCAFFOLD_MODULES, and are mapped in SECTION16_MODULES. architecture.test.ts requires index.ts for every P1 module and catches planted bypass imports. Each scaffold registers no routes, and each states honestly that its behaviour lands in P2/P4/P5. I accept D-048 as a faithful P1 increment of M0308: building the full business behaviour early would be wrong, and the boundaries plus the enforced lint are what A12 tests. REQ-S16-004: the row now states that DG1 delivers the persistence architecture (all P1 state in PostgreSQL via migrations 0001-0008, which applied cleanly on a fresh cluster in my run), and D-050 assigns the A19 restore drill to the DG7 rows REQ-S19-012/REQ-S20-019. I accept D-050, because reporting snapshots do not exist yet and a restore drill is an operational handover test. The row's acceptance text still names A19, but the note discloses the split honestly, so the row no longer overclaims.",
+      "evidence": [
+        "docs/delivery/requirements.csv",
+        "docs/delivery/decisions.md",
+        "apps/api/src/modules.ts",
+        "docs/delivery/test-evidence/DG1/domain/round-2/01-unit-full.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-2/05-live-scenario.out.txt"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-105",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "apps/api/src/modules/{workflows,kpi,reporting}/ exist on the candidate, each with index.ts plus its own suite (workflows.test.ts, kpi.test.ts with 5 tests, reporting.test.ts with 4 tests). All three are listed in P1_MODULES (11 entries) and covered by architecture.test.ts (the acyclic graph and the six-area mapping). The full unit run had 21 files, 210/210 passed. The scaffolds carry no misleading behaviour. workflows names only G1-G6 product gates and says nothing can grant an approval. kpi exposes VALUE_FRESHNESS unknown/stale/current and computes nothing, so nothing can show zero or green. 'methodology' and 'evidence' stay reserved names. That is fine, because §16 does not list them among the six.",
+      "evidence": [
+        "apps/api/src/modules/workflows/workflows.test.ts",
+        "apps/api/src/modules/kpi/kpi.test.ts",
+        "apps/api/src/modules/reporting/reporting.test.ts",
+        "apps/api/src/architecture.test.ts",
+        "docs/delivery/test-evidence/DG1/domain/round-2/01-unit-full.out.txt"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-006",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "All three items named in the finding are corrected. (1) REQ-S19-006 now says 33 operations; pnpm openapi:lint in my run reports 'OpenAPI 3.1.1, 33 operations' and the file has 33 operationIds. (2) REQ-S16-023 acceptance now says an illegal transition returns 422 invalid-transition (ADR-0007), which matches the observed 422. (3) REQ-S16-001 states honestly that the worker-stop criterion rests on process separation and that no automated test covers it, citing my round-1 manual check. One residual 409 wording sits in a row the finding did not name (REQ-PB-009 notes), and a stale migration range sits in REQ-S19-004; both are raised separately as F-DG1-007 (Low), so they do not reopen this finding.",
+      "evidence": [
+        "docs/delivery/requirements.csv",
+        "docs/delivery/test-evidence/DG1/domain/round-2/04-static-checks.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-2/00-static-inspection.out.txt"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-207",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "REQ-S19-006 notes cite 33 operations and a 9/9 contract suite. I confirmed both by running the suite myself: the integration project against PostgreSQL 16.13 passed 17 files and 193/193 tests. contract.test.ts has 9 tests, all passed, and asserts that operations has length 33 with every operation exercised. REQ-S16-003's literal acceptance (six modules with separate suites) is now met by the built scaffolds (D-048), not by a reinterpretation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-2/03-integration-full.out.txt",
+        "docs/delivery/requirements.csv",
+        "apps/api/test/integration/contract/contract.test.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-004",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Real user outcome checked live. dev.lead (TL at business unit SYN-RETAIL, non-inheriting) created a Modular transformation and got 201; GET of the record returned 200. In Chromium, Arabic and English, the detail page heading is the record itself ('TR-0002 SYNTHETIC lead-created transformation') and no not-found or no-permission state appears. Access comes from one explicit, audited TL assignment at transformation scope, linked to its source grant, and the TL role holds no gate.* approval permission. dev.lead still gets 404 for a record it did not create, so access scoping is preserved. If a creator truly cannot read, the web shows a localized 'created, but you cannot open it' explanation, not a dead 'Not found' (unit tests en and ar). Side effect: the derived assignment now appears in the transformation's audit trail without localization; it is raised separately as F-DG1-008 (Low).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-2/05-live-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-2/screens/ar-04-lead-own-record.png",
+        "docs/delivery/test-evidence/DG1/domain/round-2/screens/en-04-lead-own-record.png",
+        "docs/delivery/test-evidence/DG1/domain/round-2/03-integration-full.out.txt"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-005",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "The cases in the finding's reproduction are fixed. In the transformation audit trail, field names (Status/الحالة, Mode/النمط, Phase/المرحلة, Business unit/وحدة العمل …) and enum values (Draft – not submitted, Modular, Design / مسودة – لم تُقدَّم, النمط الجزئي المرن, التصميم) render with catalogue labels in both languages. The business unit renders as its name, not a raw UUID. Action labels are localized (Created/إنشاء). auditChanges.test.ts and the AR/EN page tests pass, and the live screens show no raw current_phase, business_unit_id or end_to_end keys. Untranslated keys fall back explicitly, marked 'field without a translation'. A new event type that the fix did not cover (the derived scoped_assignment.create shown on the same trail) is raised separately as F-DG1-008.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-2/05-live-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-2/screens/en-03-detail-audit.png",
+        "docs/delivery/test-evidence/DG1/domain/round-2/screens/ar-03-detail-audit.png",
+        "docs/delivery/test-evidence/DG1/domain/round-2/02-unit-domain-focused.out.txt"
+      ]
+    }
+  ]
+}

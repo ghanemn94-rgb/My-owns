@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG1-007",
+      "stage_id": "DG1",
+      "requirement": "REQ-S19-004",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Register residuals after the round-2 reconciliation: REQ-PB-009 notes still say 'enforced as API 409'; REQ-S19-004 notes and evidence still describe migrations 0001-0006",
+      "reproduction": "Read docs/delivery/requirements.csv at candidate 991d3241 (commit f32c705). REQ-PB-009: acceptance says 'cannot be closed (API 422 invalid-transition)', but notes end 'Interpretations: the closure rule ... enforced as API 409.' REQ-S19-004 (DG1-final, IMPLEMENTED): notes say 'migrations 0001-0006 apply to a fresh database (migrate.test.ts, 7 tests, in the QA integration log)', and the evidence list cites only 0001 and 0006 plus a round-1 QA log. The candidate ships 0001-0008: 0007 adds oidc_login_state.browser_binding_hash and 0008 adds scoped_assignment.derived_from_assignment_id. My run applied all 8 to a fresh PostgreSQL 16.13 cluster ('applied 8 migration(s)'; migrate.test.ts and catalogue.test.ts pass). data-dictionary.md documents both new columns. erd.md's P1 mermaid entities omit them, which is acceptable because erd.md defers physical columns to the data dictionary.",
+      "expected": "One transition contract across the register: 422 invalid-transition per ADR-0007 and REQ-S16-023, which F-DG1-006 said was 'fixed across rows'. A DG1-final row's notes and evidence describe the frozen candidate (migrations 0001-0008, current evidence).",
+      "actual": "REQ-PB-009 contradicts itself (422 in acceptance, 409 in notes). REQ-S19-004's note and evidence predate migrations 0007/0008. The behaviour itself is correct, so this is documentation accuracy only.",
+      "evidence": [
+        "docs/delivery/requirements.csv",
+        "docs/delivery/test-evidence/DG1/domain/round-2/00-static-inspection.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-2/03-integration-full.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-2/05-live-scenario.out.txt"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-2/domain-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T08:24:00Z",
+          "status": "OPEN",
+          "note": "Reported by domain-reviewer in DG1 round 2 as a Low, non-mandatory register-accuracy observation."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-008",
+      "stage_id": "DG1",
+      "requirement": "REQ-S15-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The derived creator assignment (F-DG1-106) appears in the transformation audit trail with a raw action code and five untranslated fields (raw JSON and UUIDs) in Arabic and English",
+      "reproduction": "Disposable stack of f32c705 (PostgreSQL 16.13, AUTH_MODE=dev, SYNTHETIC seed, Chromium 1194). Sign in as dev.lead (TL at SYN-RETAIL), create a transformation, then open /transformations/<id> in ar and en. The first audit-trail row has Action 'scoped_assignment.create' (raw code; the transformation row next to it says Created/إنشاء). Its Changes are scope, userId, roleCode, effectiveTo and derivedFromAssignmentId, each marked 'field without a translation' / 'حقل بلا ترجمة'. Values include raw JSON {\"id\":\"…\",\"type\":\"transformation\"} and UUIDs marked 'value without a translation'. This happens for every BU-scoped TL creator, the exact path F-DG1-004/F-DG1-106 opened.",
+      "expected": "M0302 (both languages for key workflows) and the F-DG1-005 standard: audit entries that a normal workflow puts on a transformation's own trail show localized action and field labels, for example 'Access granted (carried over from business-unit assignment)', with role and user names rather than ids. The marked fallback is the safety net for unexpected keys, not the normal rendering of a routine event.",
+      "actual": "The fallback is safe and honestly marked, and nothing is hidden or misstated. But the first thing a lead sees on the audit trail of a newly created transformation is technical identifiers in both languages.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-2/screens/en-04-lead-own-record.png",
+        "docs/delivery/test-evidence/DG1/domain/round-2/screens/ar-04-lead-own-record.png",
+        "docs/delivery/test-evidence/DG1/domain/round-2/05-live-scenario.out.txt"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-2/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T08:24:00Z",
+          "status": "OPEN",
+          "note": "Reported by domain-reviewer in DG1 round 2 as a Low, non-mandatory localization observation (interaction of F-DG1-106 with F-DG1-005)."
+        }
+      ]
+    }
+  ]
+}
