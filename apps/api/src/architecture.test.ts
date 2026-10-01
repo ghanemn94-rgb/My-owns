@@ -1,14 +1,17 @@
 // Architecture test (ADR-0002). Parses every import (including type-only, re-exports, dynamic import() and require)
 // with the AST lint in architecture.testkit.ts and fails when:
 //  1. a module imports anything other than its own files, the index.ts of a module in its `dependsOn`, the shared
-//     packages (@mth/shared, @mth/config, @mth/db), node: built-ins or a third-party dependency of @mth/api;
+//     packages (@mth/shared, @mth/config, @mth/db), an ALLOW-LISTED node: built-in or a third-party dependency of
+//     @mth/api (D-055: every other node: built-in is denied by default);
 //  2. a module reaches into the composition root (server.ts, main.ts, index.ts, modules.ts) - except that a module's
 //     own *.test.ts may read the module map and the lint itself;
 //  3. a module evades the check: computed import()/require() specifiers, createRequire, or node:module (F-DG1-109);
 //     process.getBuiltinModule / computed members of process or globalThis, Function/eval/.constructor() code
 //     evaluation, or node:vm / worker_threads (F-DG1-117); and, since F-DG1-124, ANY occurrence of a dynamic-code
 //     primitive name (eval, Function & co., constructor, require, createRequire, Reflect, getPrototypeOf, ...) in any
-//     syntactic form, and any computed key that is not a literal (a constructed key can spell any of them);
+//     syntactic form, and any computed key that is not a literal (a constructed key can spell any of them); since
+//     D-055 (F-DG1-129/213), any member of the global process outside the allow-list (process.kill, _debugProcess,
+//     execve, binding, ...) - default-deny, independent of the Node version;
 //  4. a module directory is not in the module map, a P1 module has no index.ts, or a §16 business module has no
 //     test suite of its own (A12, D-048);
 //  5. the declared module graph has a cycle, or audit/access depend on a business module;
@@ -96,7 +99,11 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
       `import { createRequire } from "node:module";\nconst p = createRequire(import.meta.url)("../access/policy.ts");`,
       /createRequire .* bypasses the module-interface check/,
     ],
-    ["D2 node:module itself", `import * as m from "node:module";`, /imports package node:module/],
+    [
+      "D2 node:module itself",
+      `import * as m from "node:module";`,
+      /imports non-allow-listed node built-in node:module/,
+    ],
     [
       "D3 createRequire via namespace",
       `import mod from "module";\nconst r = mod.createRequire(import.meta.url);`,
@@ -204,7 +211,7 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
       `const C = Reflect.get(async () => {}, "constructor");`,
       /code evaluation via the "constructor" key as a value/,
     ],
-    ["M8 node:vm", `import vm from "node:vm";`, /imports package node:vm/],
+    ["M8 node:vm", `import vm from "node:vm";`, /imports non-allow-listed node built-in node:vm/],
     ["M9 worker_threads", `import { Worker } from "worker_threads";`, /imports package worker_threads/],
   ])("%s is a violation", (_case, source, message) => {
     const v = planted("transformations", source);
@@ -280,19 +287,19 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
     [
       "P12 process.binding",
       `const fs = (process as any).binding("fs");`,
-      /module loader via process\.binding/,
+      /non-allow-listed process\.binding member/,
       "missed",
     ],
     [
       "P13 node:inspector (in-process evaluation)",
       `import { Session } from "node:inspector";`,
-      /package node:inspector/,
+      /non-allow-listed node built-in node:inspector/,
       "missed",
     ],
     [
       "P14 node:child_process",
       `import { execFileSync } from "node:child_process";`,
-      /package node:child_process/,
+      /non-allow-listed node built-in node:child_process/,
       "missed",
     ],
     [
@@ -314,49 +321,49 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
       "missed",
     ],
     // F-DG1-125: an import of the process module aliased it past rule 3 (which only knows the global identifier
-    // `process`). Importing `process` / `node:process` is now itself a specifier violation (LOADER_BUILTINS).
+    // `process`). Importing `process` / `node:process` is now itself a specifier violation (D-055: not allow-listed).
     [
       "X6 node:process default import .dlopen",
       `import proc from "node:process";\nproc.dlopen({ exports: {} } as any, "/tmp/x.node");`,
-      /imports package node:process/,
+      /imports non-allow-listed node built-in node:process/,
       "missed",
     ],
     [
       "X7 node:process default import .binding",
       `import proc from "node:process";\nconst fs = (proc as any).binding("fs");`,
-      /imports package node:process/,
+      /imports non-allow-listed node built-in node:process/,
       "missed",
     ],
     [
       "X8 node:process named import dlopen",
       `import { dlopen } from "node:process";\ndlopen({ exports: {} } as any, "/tmp/x.node");`,
-      /imports package node:process/,
+      /imports non-allow-listed node built-in node:process/,
       "missed",
     ],
     // F-DG1-127 A1: node:sqlite's loadExtension loads a native shared object (same class as process.dlopen), so
-    // `sqlite` / `node:sqlite` is in LOADER_BUILTINS. A2 (write a file with node:fs, then `import("./gen.mjs")`) is
+    // `node:sqlite` is denied (D-055: not allow-listed). A2 (write a file with node:fs, then `import("./gen.mjs")`) is
     // NOT a case here: it is the stated, accepted residual of this static lint (architecture.testkit.ts header).
     [
       "A1 node:sqlite loadExtension",
       `import { DatabaseSync } from "node:sqlite";\nnew DatabaseSync(":memory:", { allowExtension: true }).loadExtension("/tmp/x.so");`,
-      /imports package node:sqlite/,
+      /imports non-allow-listed node built-in node:sqlite/,
       "missed",
     ],
     // F-DG1-128: the last two concrete loader/exec routes of the pinned Node version (round-7 builtinModules +
     // process.* sweep). R1: node:test `run({ files, isolation: "none" })` imports a runtime-computed path IN-PROCESS
-    // (a loader built-in, no code generation), so `test` / `node:test` is in LOADER_BUILTINS. R2: the global
+    // (a loader built-in, no code generation), now denied by default (D-055). R2: the global
     // `process.execve` replaces the process with an arbitrary executable (the child_process/cluster class), so
-    // `execve` is in PROCESS_LOADERS (rule 3). "missed" = 0 violations before this fix.
+    // `execve` is denied by default (D-055, rule 3). "missed" = 0 violations before this fix.
     [
       "R1 node:test in-process run",
       `import { run } from "node:test";\nconst p = ["../access/", "policy.ts"].join("");\nfor await (const _ of run({ files: [new URL(p, import.meta.url).pathname], isolation: "none" })) {}`,
-      /imports package node:test/,
+      /imports non-allow-listed node built-in node:test/,
       "missed",
     ],
     [
       "R2 process.execve",
       `process.execve("/bin/sh", ["sh", "-c", "id"]);`,
-      /module loader via process\.execve/,
+      /non-allow-listed process\.execve member/,
       "missed",
     ],
     // Prior forms (F-DG1-117/121), still caught: regression guards for the blanket rules.
@@ -379,6 +386,114 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
     expect(v.join("\n")).toMatch(message);
   });
 
+  // D-055 / F-DG1-129, F-DG1-213, F-DG1-010: DEFAULT-DENY for node: built-ins and process.* members. The third column
+  // records what the round-8 lint (HEAD ed43620, denylists LOADER_BUILTINS / PROCESS_LOADERS) did with the same plant:
+  // "missed" = 0 violations; "caught" = flagged by the old denylist (kept as a regression guard).
+  it.each([
+    [
+      "DD1 process.kill(self, SIGUSR1) starts the inspector (F-DG1-129 N1)",
+      `process.kill(process.pid, "SIGUSR1");`,
+      /non-allow-listed process\.kill member/,
+      "missed",
+    ],
+    [
+      "DD2 process._debugProcess(self) (F-DG1-129 N2 / F-DG1-213 D2)",
+      `process._debugProcess(process.pid);`,
+      /non-allow-listed process\._debugProcess member/,
+      "missed",
+    ],
+    [
+      "DD3 process._kill",
+      `(process as any)._kill(process.pid, 10);`,
+      /non-allow-listed process\._kill member/,
+      "missed",
+    ],
+    [
+      "DD4 F-DG1-213 D1 full route as module source",
+      `process._debugProcess(process.pid);\nconst l = await (await fetch("http://127.0.0.1:9229/json/list")).json();\nconst ws = new WebSocket(l[0].webSocketDebuggerUrl);\nws.send(JSON.stringify({ id: 1, method: "Runtime.evaluate", params: { expression: "1" } }));`,
+      /non-allow-listed process\._debugProcess member/,
+      "missed",
+    ],
+    ["DD5 process.execve", `process.execve("/bin/sh", ["sh"]);`, /non-allow-listed process\.execve member/, "caught"],
+    ["DD6 process.binding", `(process as any).binding("fs");`, /non-allow-listed process\.binding member/, "caught"],
+    [
+      "DD7 process.dlopen",
+      `process.dlopen({ exports: {} } as any, "/tmp/x.node");`,
+      /process\.dlopen member/,
+      "caught",
+    ],
+    ["DD8 process.abort", `process.abort();`, /non-allow-listed process\.abort member/, "missed"],
+    [
+      "DD9 optional-chained process?.kill",
+      `process?.kill(process.pid, "SIGUSR1");`,
+      /non-allow-listed process\.kill member/,
+      "missed",
+    ],
+    [
+      "DD10 node:inspector",
+      `import { Session } from "node:inspector";`,
+      /imports non-allow-listed node built-in node:inspector/,
+      "caught",
+    ],
+    [
+      "DD11 node:inspector/promises",
+      `import { Session } from "node:inspector/promises";`,
+      /non-allow-listed node built-in node:inspector\/promises/,
+      "caught",
+    ],
+    [
+      "DD12 node:sqlite",
+      `import { DatabaseSync } from "node:sqlite";`,
+      /imports non-allow-listed node built-in node:sqlite/,
+      "caught",
+    ],
+    [
+      "DD13 node:test",
+      `import { run } from "node:test";`,
+      /imports non-allow-listed node built-in node:test/,
+      "caught",
+    ],
+    ["DD14 node:vm", `import vm from "node:vm";`, /imports non-allow-listed node built-in node:vm/, "caught"],
+    [
+      "DD15 node:worker_threads",
+      `import { Worker } from "node:worker_threads";`,
+      /imports non-allow-listed node built-in node:worker_threads/,
+      "caught",
+    ],
+    ["DD16 node:wasi", `import { WASI } from "node:wasi";`, /non-allow-listed node built-in node:wasi/, "missed"],
+    ["DD17 node:v8", `import v8 from "node:v8";`, /non-allow-listed node built-in node:v8/, "missed"],
+    ["DD18 node:http", `import { request } from "node:http";`, /non-allow-listed node built-in node:http/, "missed"],
+    ["DD19 node:net", `import { connect } from "node:net";`, /non-allow-listed node built-in node:net/, "missed"],
+    [
+      "DD20 a built-in a later Node version might add",
+      `const x = await import("node:some-future-builtin");`,
+      /non-allow-listed node built-in node:some-future-builtin/,
+      "missed",
+    ],
+  ])("%s is a violation (default-deny; round-8 lint: $3)", (_case, source, message, _before) => {
+    const v = planted("transformations", source);
+    expect(v.length, `${_case}: ${JSON.stringify(v)}`).toBeGreaterThan(0);
+    expect(v.join("\n")).toMatch(message);
+  });
+
+  it("default-deny keeps the allow-listed built-ins and process members clean (D-055 positive controls)", () => {
+    const allowed = [
+      `import { randomUUID } from "node:crypto";`,
+      `import { readFileSync } from "node:fs";`,
+      `import { readFile } from "node:fs/promises";`,
+      `import { join } from "node:path";`,
+      `import { pathToFileURL } from "node:url";`,
+      `import { EOL } from "node:os";`,
+      `import { inspect } from "node:util";`,
+      `const e = process.env.X;`,
+      `const argv = process.argv;`,
+      `process.once("SIGTERM", () => process.exit(0));`,
+      `if (!e) process.exit(1);`,
+      `export const id = randomUUID() + readFileSync(join("a", "b"), "utf8") + pathToFileURL("/x").href;`,
+    ].join("\n");
+    expect(planted("transformations", allowed)).toEqual([]);
+  });
+
   it("allowed forms stay clean (public index of a declared dependency, shared packages, own files)", () => {
     const clean = [
       `import { authorize } from "../access/index.ts";`,
@@ -390,7 +505,7 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
       `export { x } from "./routes.ts";`,
       // F-DG1-117 rules must not flag ordinary code: member reads of process, look-alike property names, types.
       `const tz = process.env.TZ;`,
-      `const n = (process as NodeJS.Process).pid;`,
+      `const n = (process as NodeJS.Process).env.TZ;`,
       `const o = { process: 1, env: 2 };\nconst e = o.process + o.env;`,
       `let t: typeof process.env | undefined;`,
       `class K { constructor() {} }\nconst k = new K();`,
@@ -436,6 +551,13 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
     expect(bareAllowed("@mth/web")).toBe(false);
     expect(bareAllowed("fastify")).toBe(true);
     expect(bareAllowed("node:module")).toBe(false);
+    // D-055 default-deny: allow-listed node: built-ins pass, everything else (incl. unknown future ones) does not.
+    expect(bareAllowed("node:crypto")).toBe(true);
+    expect(bareAllowed("node:fs/promises")).toBe(true);
+    expect(bareAllowed("node:inspector")).toBe(false);
+    expect(bareAllowed("node:http")).toBe(false);
+    expect(bareAllowed("node:some-future-builtin")).toBe(false);
+    expect(bareAllowed("fs")).toBe(false);
   });
 });
 

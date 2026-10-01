@@ -4,12 +4,12 @@
 // It walks the TypeScript AST of each file (F-DG1-109: `ts.preProcessFile` saw only literal specifiers) and reports:
 //  - every static import / export-from / `import x = require()` / type-only import specifier, and every
 //    `import("...")` / `require("...")` with a string-literal specifier - each checked against the module boundary;
-//  - a computed `import(expr)` / `require(expr)` (the target cannot be checked), and any import of the built-ins that
-//    hand out a loader or evaluate code (`module`, `vm`, `worker_threads`, `inspector`, `repl`, `child_process`,
-//    `cluster`, `process`, `sqlite`, `test`; with or without `node:`). F-DG1-125: importing `process` /
-//    `node:process` is itself banned (an imported binding aliases the process object past rule 3; the global is a Node
-//    global, no module imports it). F-DG1-127: `sqlite` / `node:sqlite` (`loadExtension` loads a native shared
-//    object). F-DG1-128: `test` / `node:test` (`run({ files, isolation: "none" })` imports a computed path in-process).
+//  - a computed `import(expr)` / `require(expr)` (the target cannot be checked);
+//  - DEFAULT-DENY for Node built-ins (D-055; F-DG1-129/213, F-DG1-010): a `node:` specifier is allowed only when it
+//    is in SAFE_NODE_BUILTINS (the small set module source legitimately uses); every other built-in - module, vm,
+//    worker_threads, inspector, repl, child_process, cluster, process, sqlite, test, wasi, v8, net, http, ... and any
+//    built-in a later Node version adds - is a violation. A bare built-in name without `node:` (`"fs"`) is not a
+//    dependency of @mth/api and stays a violation as before.
 //
 // F-DG1-124 - BLANKET BAN of the dynamic-code-loading primitives in module source. F-DG1-117 and F-DG1-121 matched
 // ever more spellings of the same thing (`.constructor()`, aliased `.constructor`, destructured `constructor`, ...)
@@ -30,31 +30,26 @@
 //     constructed key can spell any banned name, so the key itself is the violation. Dictionary lookups use a `Map`
 //     (a Map returns only what was put in it and never reaches the prototype chain).
 //  3. RUNTIME ROOTS `process`, `globalThis`, `global`: used other than as `root.member` (aliased, passed,
-//     destructured), indexed at all (`process["x"]`), `globalThis.<root|primitive>`, and the native loaders
-//     `process.binding` / `process._linkedBinding` / `process.dlopen`, and the exec method `process.execve`
-//     (F-DG1-128: replaces the process with an arbitrary executable, the child_process/cluster class); the CommonJS
-//     free variable `module` as a value.
+//     destructured), indexed at all (`process["x"]`), `globalThis.<root|primitive>`; the CommonJS free variable
+//     `module` as a value; and DEFAULT-DENY for `process.<member>` (D-055): only the members in SAFE_PROCESS_MEMBERS
+//     are allowed. Everything else - kill, _kill, _debugProcess (both start the in-process V8 inspector, F-DG1-129 /
+//     F-DG1-213), execve, binding, _linkedBinding, dlopen, getBuiltinModule, abort, reallyExit, ... and any member a
+//     later Node version adds - is a violation.
 //     Rule 3 covers the GLOBAL `process`; an IMPORTED process object (`import p from "node:process"`, a namespace or
-//     a named `{ dlopen }` import) is closed by the specifier check instead, which bans `process`/`node:process`.
+//     a named `{ dlopen }` import) is closed by the specifier check instead (`node:process` is not allow-listed).
 //  4. FAIL CLOSED: a file with a syntax error is a violation (the AST the rules see would not be the code written).
-// Nothing is executed. Residual limits (stated and ACCEPTED, not closable statically):
-//  (a) a string computed at RUNTIME and handed to third-party code that itself reads `input[key]` (e.g. a schema
-//      library given `Object.fromEntries([[k, ...]])`) is data flow the lint cannot follow; rules 1-2 remove every
-//      syntactic route inside module source.
-//  (b) F-DG1-127: runtime code GENERATION followed by a dynamic import of a literal same-module path (write a file,
-//      e.g. with `node:fs`, then `import("./local.mjs")`): the specifier is a legal own-module path and the bytes
-//      exist only at runtime, so the lint never sees them. `node:fs` is deliberately NOT banned (tests read files and
-//      a module may legitimately read files; a write-API-only ban would be brittle).
-//  (c) the loader/eval denylist is ENUMERATED (rule-1 primitives, rule-3 roots and loaders, LOADER_BUILTINS). For
-//      the PINNED Node version (22.x) the concrete loader/exec built-ins and `process.*` methods are now enumerated
-//      exhaustively, as validated by the round-7 code-security sweep of `builtinModules` + `process.*` (F-DG1-128):
-//      built-ins module, vm, worker_threads, inspector, repl, child_process, cluster, process, sqlite, test; and
-//      process.binding, _linkedBinding, dlopen, execve (closed as found: `process.dlopen` F-DG1-125, `node:sqlite`
-//      loadExtension F-DG1-127, `node:test` run / `process.execve` F-DG1-128). Residual (c) is therefore narrowed to
-//      genuinely FUTURE/UNKNOWN built-ins or `process.*` methods of a later Node version, and `WebAssembly` /
-//      `node:wasi` instantiation (a wasm exec, not a JS-module loader). A later hardening could switch module-source
-//      `node:` imports to a default-deny allow-list (module source uses only node:crypto/fs/path/url); that is
-//      deferred (bigger blast radius, not P1).
+// Both built-in checks are allow-lists, not enumerations of known-bad routes, so they do not depend on the Node
+// version the lint runs on (production targets Node 24, the supported floor is Node 22.18+): a new built-in or
+// `process` member is denied until someone deliberately reviews it and adds it here. Nothing is executed.
+// Residual limits (stated and ACCEPTED, not closable statically):
+//  (a) runtime DATA FLOW: a string computed at runtime and handed to third-party code that itself reads
+//      `input[key]` (e.g. a schema library given `Object.fromEntries([[k, ...]])`); rules 1-2 remove every syntactic
+//      route inside module source.
+//  (b) F-DG1-127: runtime code GENERATION followed by a dynamic import of a literal same-module path (an allowed
+//      built-in such as `node:fs` writes a file, then `import("./local.mjs")`): the specifier is a legal own-module
+//      path and the bytes exist only at runtime, so the lint never sees them. Irreducible for a static lint;
+//      `node:fs` stays allowed (a module may legitimately read files; a write-API-only ban would be brittle).
+//  (c) `WebAssembly` global instantiation (a wasm exec, not a JS-module loader).
 // Rationale: this is static defence-in-depth for the ADR-0002 module boundaries, enforced against human-reviewed code
 // that runs with a read-only production source tree; it is NOT a runtime security boundary.
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
@@ -72,30 +67,14 @@ const apiPkg = JSON.parse(readFileSync(join(SRC, "../package.json"), "utf8")) as
 const THIRD_PARTY = new Set(Object.keys(apiPkg.dependencies).filter((d) => !d.startsWith("@mth/")));
 const SHARED_ALLOWED = new Set(["@mth/shared", "@mth/shared/schemas", "@mth/config", "@mth/db"]);
 /**
- * Built-ins that hand out an unchecked loader or evaluate code; a module never needs them. F-DG1-125: `process` too -
- * an imported process object (default, namespace or named `{ dlopen }`/`{ binding }`) is a local binding that rule 3's
- * `process.<loader>` check cannot see, so the import itself is the violation. The global `process` stays under rule 3.
- * F-DG1-127: `sqlite` too - `new DatabaseSync(p, { allowExtension: true }).loadExtension(so)` loads a native shared
- * object (the `process.dlopen` class); a module never needs SQLite (persistence is `@mth/db`/PostgreSQL, ADR-0003).
- * F-DG1-128: `test` too - `run({ files: [<computed path>], isolation: "none" })` loads and runs a file named by a
- * runtime-computed path in the SAME process (a computed import without code generation). No runtime module uses
- * `node:test` (tests use vitest).
+ * D-055 DEFAULT-DENY allow-list of `node:` built-ins (without the prefix) that module source may import. Seeded from
+ * what module source imports (crypto, fs, path, url) plus the read/utility built-ins fs/promises, os and util. None of
+ * them loads, evaluates or executes code, opens a debugger, or loads native objects. NEVER add a code-loading, exec,
+ * native or debug built-in (module, vm, worker_threads, inspector, repl, child_process, cluster, process, sqlite, test,
+ * wasi, v8, net, http, https, dgram, async_hooks, ...): those routes were closed one by one by F-DG1-109/117/125/127/128
+ * and are now denied by default. Network I/O belongs to the composition root, not module source.
  */
-const LOADER_BUILTINS = new Set(
-  [
-    "module",
-    "vm",
-    "worker_threads",
-    "inspector",
-    "inspector/promises",
-    "repl",
-    "child_process",
-    "cluster",
-    "process",
-    "sqlite",
-    "test",
-  ].flatMap((b) => [b, `node:${b}`]),
-);
+const SAFE_NODE_BUILTINS: ReadonlySet<string> = new Set(["crypto", "fs", "fs/promises", "os", "path", "url", "util"]);
 /** F-DG1-124: dynamic-code primitives, banned in every syntactic form (rule 1), by the kind of bypass they give. */
 const BANNED_PRIMITIVES: ReadonlyMap<string, string> = new Map([
   ...["eval", "Function", "AsyncFunction", "GeneratorFunction", "AsyncGeneratorFunction", "constructor"].map(
@@ -116,10 +95,12 @@ const BANNED_PRIMITIVES: ReadonlyMap<string, string> = new Map([
 /** Global objects through which the runtime (and its loaders) can be reached. */
 const RUNTIME_ROOTS = new Set(["process", "globalThis", "global"]);
 /**
- * Native-code loaders and the exec method on `process` (rule 3). F-DG1-128: `execve` replaces the process with an
- * arbitrary executable (the class of the banned `child_process` / `cluster`).
+ * D-055 DEFAULT-DENY allow-list of members of the global `process` that module source may use (rule 3): reading the
+ * environment and arguments, and the lifecycle calls exit/once. NEVER add kill, _kill, _debugProcess, _debugEnd,
+ * execve, binding, _linkedBinding, dlopen, getBuiltinModule, abort, reallyExit, setSourceMapsEnabled, ... (signal /
+ * debugger / exec / native-loader routes, F-DG1-125/128/129/213).
  */
-const PROCESS_LOADERS = new Set(["binding", "_linkedBinding", "dlopen", "execve"]);
+const SAFE_PROCESS_MEMBERS: ReadonlySet<string> = new Set(["env", "exit", "argv", "once"]);
 /** Binary operators whose result is always a number/bigint, so the key can never spell a property name. */
 const NUMERIC_OPERATORS = new Set([
   ts.SyntaxKind.MinusToken,
@@ -146,8 +127,7 @@ export function walk(dir: string): string[] {
 }
 
 export function bareAllowed(spec: string): boolean {
-  if (LOADER_BUILTINS.has(spec)) return false;
-  if (spec.startsWith("node:")) return true;
+  if (spec.startsWith("node:")) return SAFE_NODE_BUILTINS.has(spec.slice("node:".length));
   if (SHARED_ALLOWED.has(spec)) return true;
   const pkg = spec.startsWith("@") ? spec.split("/").slice(0, 2).join("/") : spec.split("/")[0]!;
   return THIRD_PARTY.has(pkg);
@@ -333,8 +313,8 @@ export function scanSource(fileName: string, source: string): ScanResult {
         const name = node.name.text;
         if ((root === "globalThis" || root === "global") && (RUNTIME_ROOTS.has(name) || name === "module"))
           evasions.push(`${root}.${name} (${at(node)})`);
-        if (root === "process" && PROCESS_LOADERS.has(name))
-          evasions.push(`module loader via process.${name} (${at(node)})`);
+        if (root === "process" && !SAFE_PROCESS_MEMBERS.has(name))
+          evasions.push(`non-allow-listed process.${name} member (${at(node)})`);
       }
       if (ts.isIdentifier(node) && isValueReference(node)) {
         if (node.text === "module") evasions.push(`module used as a value (${at(node)})`);
@@ -405,7 +385,11 @@ export function fileViolations(mod: ApiModule, file: string, source: string): st
       else if (rest.join("/") !== "index.ts")
         violations.push(`${where}: imports ${spec}; only ${targetMod}/index.ts is public`);
     } else if (!bareAllowed(spec) && !(spec === "vitest" && isTest)) {
-      violations.push(`${where}: imports package ${spec}`);
+      violations.push(
+        spec.startsWith("node:")
+          ? `${where}: imports non-allow-listed node built-in ${spec}`
+          : `${where}: imports package ${spec}`,
+      );
     }
   }
   return violations;
