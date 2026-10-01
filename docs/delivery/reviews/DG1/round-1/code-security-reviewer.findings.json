@@ -1,0 +1,208 @@
+{
+  "findings": [
+    {
+      "id": "F-DG1-140",
+      "stage_id": "DG1",
+      "requirement": "REQ-S19-004",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "Concurrent business-unit re-parenting commits a hierarchy cycle (A->C->B->A) through the API: the 'no cycles' rule is an unserialized API check with no database guard",
+      "reproduction": "apps/api/src/modules/organization/routes.ts:335 locks only the MOVED unit (findBusinessUnit(tx, id, true)); :348 checks isDescendant() (repository.ts:59, a read of the business_unit_closure view) under READ COMMITTED; :371-376 then UPDATEs parent_business_unit_id. packages/db/migrations/0001_identity_access.sql:68 states 'no cycles: API check' and there is no trigger/constraint behind it (only business_unit_not_own_parent, a 1-cycle check). Inputs: BUs B (root), C (child of B), A (root) in one organization; an org-level business_unit.manage holder sends PATCH /api/v1/business-units/A {parentBusinessUnitId: C} and, concurrently, PATCH /api/v1/business-units/B {parentBusinessUnitId: A} (If-Match \"1\" each). The second request's FOR UPDATE row (B) is not locked by the first, so its cycle check reads the committed hierarchy (A is still a root) and passes; only its FK check then waits on A, AFTER the check. Deterministic reproduction through the real API on a disposable PostgreSQL 16 (test-only advisory-lock parking trigger, same technique as access-derived-race.test.ts): docs/delivery/test-evidence/DG1/code-security/round-1/repro-bu/zz-review-bu-hierarchy.test.ts (SEC-1), log repro-bu/repro-bu.log. The sequential control is correctly refused (422 business_unit.cycle). A 2-cycle (X->Y with Y->X) happens to be serialized by the FK's KEY SHARE lock on the new parent (repro-bu/repro-bu-attempt1-2cycle-serialized.log); a 3-cycle is not.",
+      "expected": "At most one of the two moves succeeds; the other is refused with 422 business_unit.cycle (or 409), and the committed hierarchy stays a forest. Fix options: serialize hierarchy moves per organization (e.g. SELECT ... FOR UPDATE on the organization row or pg_advisory_xact_lock(org) before the cycle/depth checks), or enforce acyclicity in the database (constraint trigger on business_unit that walks the parent chain), plus a concurrency test.",
+      "actual": "Both PATCHes return 200 and the committed rows are parent(A)=C, parent(C)=B, parent(B)=A. business_unit_closure then yields 11 rows with A as descendant, truncated at depth 10. The three units are detached from any root, and downward-inheriting grants on any of them (e.g. TO/AUD at B) now apply to all three, including A's records, which were never under B. The depth limit (MAX_BU_DEPTH) races the same way.",
+      "evidence": [
+        "apps/api/src/modules/organization/routes.ts:335-376",
+        "apps/api/src/modules/organization/repository.ts:50-67",
+        "packages/db/migrations/0001_identity_access.sql:68-100",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/repro-bu/zz-review-bu-hierarchy.test.ts",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/repro-bu/repro-bu.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/repro-bu/repro-bu-attempt1-2cycle-serialized.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T20:39:05Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer DG1 round 1; reproduced through the API on a disposable PostgreSQL 16 (proposed ID; the orchestrator may renumber)"
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-141",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-033",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "Business-unit re-parenting authorizes only the moved unit, never the destination parent: a unit-scoped manager moves a unit into a sibling branch it has no rights on, exposing its records to that branch",
+      "reproduction": "apps/api/src/modules/organization/routes.ts:329-333 runs requireRead(business_unit.read) + requireAction(business_unit.manage) on the unit being moved; :338-365 validate the new parent (same organization, no cycle, depth) but never call authorize/requireAction on the destination parent. Inputs (seedWorld: org A with sibling BUs a1 (child a1x) and a2): user U holds ADM_TECH (business_unit.manage, structural so it applies downward) at BU a1 only; user V holds AUD (inherits downward, transformation.read) at BU a2 only; a transformation exists under a1x. U PATCH /api/v1/business-units/{a2} -> 404 (control: U has no rights on a2). V GET /api/v1/transformations/{tx} -> 404. U PATCH /api/v1/business-units/{a1x} {parentBusinessUnitId: a2} If-Match \"1\" -> 200. V GET /api/v1/transformations/{tx} -> 200; U GET /api/v1/business-units/{a1x} -> 404. Reproduction (real API, disposable PostgreSQL 16): docs/delivery/test-evidence/DG1/code-security/round-1/repro-bu/zz-review-bu-hierarchy.test.ts (SEC-2), log repro-bu/repro-bu.log.",
+      "expected": "A move needs business_unit.manage on the destination parent as well as on the moved unit (or organization-scope business_unit.manage for any move), refused 403/404 otherwise with an audited authorization.denied, consistent with ADR-0006 'grants never apply across siblings' and the CLAUDE.md rule that every mutation is authorized server-side on what it changes.",
+      "actual": "The move succeeds (200). A manager scoped to a1 writes into a2's subtree, which it has no rights on. a2's inheriting users gain read access to a1x's transformation records (404 -> 200), and a1's own grant holders lose access, all without any authorization on a2.",
+      "evidence": [
+        "apps/api/src/modules/organization/routes.ts:320-376",
+        "apps/api/src/modules/access/rules.ts:47-80",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/repro-bu/zz-review-bu-hierarchy.test.ts",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/repro-bu/repro-bu.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T20:39:05Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer DG1 round 1; reproduced through the API (proposed ID; the orchestrator may renumber)"
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-142",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-033",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Global rate limit is bypassed by rotating an invalid session cookie: the limiter keys on any presented cookie value, so each fake cookie gets a fresh bucket",
+      "reproduction": "apps/api/src/server.ts:128-131 keyGenerator returns `s:${sha256(cookie)}` whenever a session cookie is present, without checking that it is a live session, and falls back to the IP only when no cookie is sent. Inputs: RATE_LIMIT_PER_MINUTE=3; one client IP (203.0.113.7). Six GET /api/v1/me without a cookie -> 401,401,401,429,429,429 (control). Fifty GET /api/v1/me from the same IP, each with Cookie: mth_session=<fresh random 43-char base64url> -> 50 x 401, never 429. Each such request passes the token-format regex and performs a session lookup in PostgreSQL (identity/routes.ts:107-122, sessions.ts:76). Reproduction: docs/delivery/test-evidence/DG1/code-security/round-1/repro-ratelimit/zz-review-ratelimit.test.ts, log repro-ratelimit/repro-ratelimit.log. The auth routes' own limiter (identity/routes.ts:80-84, keyed by IP) is NOT affected.",
+      "expected": "An unauthenticated client cannot escape the per-IP budget: key by session only after the session resolved (e.g. a per-IP pre-limit, or key = IP for requests whose cookie does not resolve to a live session), so a flood of fake cookies is limited like cookieless traffic.",
+      "actual": "Unlimited unauthenticated requests per IP (each costing a SHA-256 and a DB query), contrary to the ADR-0007 rate-limit control described in server.ts:6 and the identity hook comment 'floods are rejected before any DB lookup'.",
+      "evidence": [
+        "apps/api/src/server.ts:121-134",
+        "apps/api/src/modules/identity/routes.ts:105-122",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/repro-ratelimit/zz-review-ratelimit.test.ts",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/repro-ratelimit/repro-ratelimit.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T20:39:05Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer DG1 round 1 (proposed ID; the orchestrator may renumber)"
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-143",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Module dependency-lint bypass via the allow-listed third-party dependency ajv: its public codegen tag `_` evaluates arbitrary JS (deep import past access/index.ts, non-allow-listed built-ins) with zero lint violations; ajv/ajv-formats/yaml are test-only yet are runtime dependencies",
+      "reproduction": "apps/api/src/architecture.testkit.ts:106-109 allow-lists EVERY runtime dependency of @mth/api (THIRD_PARTY) with any subpath (bareAllowed :195-200). The F-DG1-124 blanket ban (header :22-27, 'every way to reach a primitive needs one of them') and the member audit (:64-78) cover only Node built-ins. ajv (apps/api/package.json:30) compiles validators with new Function, and its exported `_` tag emits the raw literal parts of a template as code. A module file with `import Ajv, { _ } from \"ajv\"; ajv.addKeyword({ keyword: \"x\", code(cxt) { cxt.gen.code(_`globalThis.__r = { cp: typeof process.getBuiltinModule(\"node:child_process\").execFileSync, deep: import(${deepPath}) }`) } }); ajv.compile({ x: true })(1);` gives fileViolations() -> []. The real architecture suite stays green (132/132), eslint and the @mth/api typecheck are clean, and at runtime it reaches child_process.execFileSync and deep-imports access/policy.ts (exports authorize, loadGrants, ...). Files: docs/delivery/test-evidence/DG1/code-security/round-1/repro-ajv/zz-ajv-planted.ts and run-repro.mjs, log repro-ajv/repro-ajv.log (planted only in a disposable copy). grep shows ajv, ajv-formats and yaml are imported only by tests (apps/api/test/support/contract.ts, src/modules/admin/branding.test.ts), yet they are `dependencies`, so they are on the module allow-list and are installed into the production image (deploy/scripts/assemble-runtime.sh:40 `--prod`).",
+      "expected": "Either the testkit header lists third-party code generators as a stated residual, or (better) ajv/ajv-formats/yaml move to devDependencies (off the module allow-list and out of the production image), and the third-party allow-list becomes per-package reviewed (the same default-deny and member-audit treatment as node: built-ins).",
+      "actual": "A route to arbitrary code evaluation and cross-module deep imports that is neither caught nor a stated residual (the D-053 reopen criterion), plus three test-only packages shipped as production runtime dependencies. Same class and calibration as F-DG1-124..133 (Low): static defence-in-depth over human-reviewed code, not a runtime boundary.",
+      "evidence": [
+        "apps/api/src/architecture.testkit.ts:22-27",
+        "apps/api/src/architecture.testkit.ts:106-110",
+        "apps/api/src/architecture.testkit.ts:195-200",
+        "apps/api/package.json:30-38",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/repro-ajv/zz-ajv-planted.ts",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/repro-ajv/run-repro.mjs",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/repro-ajv/repro-ajv.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T20:39:05Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer DG1 round 1 (proposed ID; the orchestrator may renumber)"
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-144",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-033",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Non-deterministic web unit test: 'English: Edit, Archive and the audit trail appear after create' failed 1 of 4 Node 22 runs (findByRole default 1 s timeout)",
+      "reproduction": "pnpm test on Node v22.22.2 in a disposable clone of 2c22c27, first run (executed while other checks loaded the 4-CPU host): apps/web/src/pages/transformations/transformations.test.tsx:528 `await screen.findByRole(\"link\", { name: \"Edit\" })` -> TestingLibraryElementError: Unable to find role=\"link\" and name \"Edit\" (324/325 passed, exit 1). Three later Node 22 reruns and one Node 24 run: 325/325. 6 parallel runs of the file: 21/21 each. The test chains create -> /me refresh -> navigation -> detail fetch -> permission-gated render, then waits with the default 1000 ms findBy timeout (the sibling fail-safe test uses ME_REFRESH_TIMEOUT_MS + 1000).",
+      "expected": "A required check that is deterministic: an explicit timeout on the post-navigation findBy* waits (as the sibling test does), or fake timers.",
+      "actual": "Intermittent failure of the required `pnpm test` check under load (1 of 4 Node 22 runs).",
+      "evidence": [
+        "apps/web/src/pages/transformations/transformations.test.tsx:523-536",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/unit-node22.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/unit-node22-rerun2.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/web-flake-under-load.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T20:39:05Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer DG1 round 1 (proposed ID; the orchestrator may renumber)"
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-145",
+      "stage_id": "DG1",
+      "requirement": "REQ-S19-004",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "P1 data design omits the three views the authorization model depends on (scope_node, business_unit_closure, actor_display); schema.ts cites a non-existent schema.test.ts",
+      "reproduction": "Cross-check of docs/architecture/data-dictionary.md against SCHEMA_COLUMNS in packages/db/src/schema.ts (which catalogue.test.ts pins to information_schema): all 17 base tables and their columns match, but the views business_unit_closure (0001_identity_access.sql:93), actor_display (0001:62) and scope_node (0002_transformation.sql:48) have no section, and `grep -rn` finds none of the three names anywhere under docs/architecture or docs/api. Script and log: docs/delivery/test-evidence/DG1/code-security/round-1/dd-vs-schema.mjs, dd-vs-schema.log. Separately, packages/db/src/schema.ts:2-3 says 'packages/db/test/integration/schema.test.ts compares every table and column ... with information_schema'; that file does not exist (the check lives in catalogue.test.ts).",
+      "expected": "REQ-S19-004 ('the ERD matches the migrated schema'): the ERD/data dictionary describe every relation the migrations create, especially the read models ADR-0006 policy resolution is built on (closure depth limit 10, scope_node levels, mth_app privileges); comments point at the real test.",
+      "actual": "Three security-relevant relations are undocumented in the data design, and the drift-test reference is wrong.",
+      "evidence": [
+        "docs/architecture/data-dictionary.md",
+        "docs/architecture/erd.md",
+        "packages/db/src/schema.ts:1-4",
+        "packages/db/test/integration/catalogue.test.ts:15-33",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/dd-vs-schema.mjs",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/dd-vs-schema.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T20:39:05Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer DG1 round 1 (proposed ID; the orchestrator may renumber)"
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-146",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-042",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "D-057 overstates the offline installer evidence: the install-sandbox suite is 13/14 offline, not 14/14; AC-1 (effect) needs a live registry",
+      "reproduction": "tools/deps/tests/install-sandbox.test.sh:41-47 (AC-1 effect) runs `install-sandbox.sh create` on a fixture depending on is-number@7.0.0, which must be resolved from https://registry.npmjs.org. In this reviewer sandbox (no registry; HOME read-only, so a writable COPY of the host pnpm store was supplied via npm_config_store_dir): 13 PASS, 1 FAIL = AC-1 (effect), with ERR_PNPM_META_FETCH_FAIL ... ECONNREFUSED (install-sandbox-ac1-effect-registry.log). docs/delivery/decisions.md D-057 (line 7) states the suite 'exercises all 14 acceptance checks ... offline' and the evidence is '14/14 offline', while the same entry names the registry-dependent AC-1 effect (SEC-R16-32c) as the residual.",
+      "expected": "D-057 (and the REQ-DLV-042 register notes) state precisely that 13 ACs are verifiable offline and AC-1 (effect) is the online-registry residual.",
+      "actual": "The recorded evidence claim does not reproduce offline; the residual is larger than described by one acceptance check (the only one that proves `create` populates node_modules from a registry inside the sandbox).",
+      "evidence": [
+        "docs/delivery/decisions.md",
+        "tools/deps/tests/install-sandbox.test.sh:41-47",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/install-sandbox-writable-store.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/install-sandbox-ac1-effect-registry.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/install-sandbox-offline-assert.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T20:39:05Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer DG1 round 1 (proposed ID; the orchestrator may renumber)"
+        }
+      ]
+    }
+  ]
+}

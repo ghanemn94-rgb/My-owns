@@ -1,0 +1,392 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG1",
+  "round": 1,
+  "candidate_id": "sha256:25c97340b6047e87e82642c28e90dea72cdd07b5bbd5d81986f497e5e863061b",
+  "source_commit": "37ec37453a5e8ce8bebba102a85df4f5c4b0ef8b",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG1-T-DG1-REV-SEC-R1-code-security-reviewer-20261001T201758Z-17dc36ed",
+    "session_id": "17dc36ed-b52b-4122-803b-e9e511a427a6"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "frontend-ux-engineer",
+    "backend-workflow-engineer",
+    "devops-engineer"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (code-security-reviewer, session 17dc36ed) authored no implementation in the DG1 scope; the implementation owners are solution-architect, frontend-ux-engineer, backend-workflow-engineer and devops-engineer. I formed this verdict from my own source review and my own executed checks on the frozen candidate, and I did not open any other reviewer's round-1 record or evidence. The only thing I saw of another run was the subject line of the domain reviewer's auto-commit 3c85e91 in `git log`."
+  },
+  "assignment": "docs/delivery/assignments/DG1/round-1/code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-DLV-025",
+    "REQ-DLV-033",
+    "REQ-DLV-042",
+    "REQ-S16-001",
+    "REQ-S16-003",
+    "REQ-S16-004",
+    "REQ-S19-004",
+    "REQ-S19-006"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-R1-00-candidate-identity",
+      "procedure": "Confirm the frozen candidate before reviewing: HEAD of the main checkout, the recomputed candidate ID and the manifest; check that the manifest source commit 37ec374, the freeze commit 2c22c27 and the later HEAD 3c85e91 (another run's auto-commit) differ only in delivery metadata",
+      "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG1; (disposable clone) git checkout 37ec374 && node tools/gates/candidate.mjs --stage DG1; git diff --stat 37ec374 2c22c27; git diff --stat 2c22c27 3c85e91",
+      "environment": "main checkout /home/user/My-owns (read-only) and a disposable clone under $TMPDIR; node v24.21.0 / v22.22.2; git",
+      "expected": "candidate_id sha256:25c97340b6047e87e82642c28e90dea72cdd07b5bbd5d81986f497e5e863061b (391 files) at HEAD and at the manifest source commit",
+      "actual": "At start, HEAD was 2c22c275 and the candidate ID was sha256:25c97340...863061b (391 files), equal to the manifest. Mid-review HEAD moved to 3c85e91 (the domain reviewer's run evidence only); the candidate ID was unchanged. The clone at 37ec374 gives the same ID. 37ec374..2c22c27 changes only assignments, the candidate manifest and stages.json.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-1/00-candidate-identity.log"]
+    },
+    {
+      "id": "SEC-R1-01-typecheck",
+      "procedure": "Workspace typecheck",
+      "command": "pnpm -r typecheck",
+      "environment": "disposable clone of 2c22c27 under $TMPDIR, node_modules copied from the candidate checkout (installed from the committed lockfile); Node v22.22.2, pnpm 10.33.0",
+      "expected": "exit 0",
+      "actual": "every workspace package: Done; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033", "REQ-S16-003"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-1/typecheck.log"]
+    },
+    {
+      "id": "SEC-R1-02-build",
+      "procedure": "Workspace build",
+      "command": "pnpm -r build",
+      "environment": "disposable clone of 2c22c27; Node v22.22.2, pnpm 10.33.0",
+      "expected": "exit 0; api, worker, db and web dist produced",
+      "actual": "every package build: Done; exit 0 (the dist output was later used by the worker-stop check)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033", "REQ-S16-001"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-1/build.log"]
+    },
+    {
+      "id": "SEC-R1-03-lint",
+      "procedure": "ESLint over the repo with zero warnings allowed",
+      "command": "pnpm lint",
+      "environment": "disposable clone of 2c22c27; Node v22.22.2",
+      "expected": "exit 0",
+      "actual": "eslint . --max-warnings=0, exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-1/lint.log"]
+    },
+    {
+      "id": "SEC-R1-04-openapi-lint",
+      "procedure": "Validate the OpenAPI v1 contract",
+      "command": "pnpm openapi:lint",
+      "environment": "disposable clone of 2c22c27; Node v22.22.2",
+      "expected": "PASS, OpenAPI 3.1.1, 33 operations",
+      "actual": "PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 33 operations; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S19-006"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-1/openapi-lint.log"]
+    },
+    {
+      "id": "SEC-R1-05-no-cdn",
+      "procedure": "Portability: no public CDN or builder-hosted runtime references in apps/ and packages/; also checked by hand that the CSP is self-only (server.ts:102-117) and that the web source has no dangerouslySetInnerHTML/innerHTML/eval sinks",
+      "command": "pnpm check:no-cdn; grep -rn 'dangerouslySetInnerHTML|innerHTML|eval(|new Function' apps/web/src",
+      "environment": "disposable clone of 2c22c27; Node v22.22.2",
+      "expected": "PASS; no XSS sinks",
+      "actual": "PASS no-cdn: scanned apps, packages; exit 0. The grep found no sinks, and the CSP is default-src/script-src/style-src 'self', object-src 'none', frame-ancestors 'none'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-1/no-cdn.log"]
+    },
+    {
+      "id": "SEC-R1-06-format-check",
+      "procedure": "Prettier check",
+      "command": "pnpm format:check",
+      "environment": "disposable clone of 2c22c27; Node v22.22.2",
+      "expected": "All matched files use Prettier code style",
+      "actual": "All matched files use Prettier code style!; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-1/format-check.log"]
+    },
+    {
+      "id": "SEC-R1-07a-unit-node22-run1",
+      "procedure": "Unit suites (unit-node + unit-web) on Node 22, first run (executed while the other static checks were also running on the 4-CPU host)",
+      "command": "pnpm test",
+      "environment": "disposable clone of 2c22c27; Node v22.22.2, vitest 3.2.4",
+      "expected": "325/325 pass, exit 0",
+      "actual": "324/325. FAIL apps/web/src/pages/transformations/transformations.test.tsx: 'effective permissions refresh after create (F-DG1-210) > English: Edit, Archive and the audit trail appear after create, without a reload' (Unable to find role=link name=Edit). Exit 1. Non-deterministic: see SEC-R1-07b and finding F-DG1-144.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "requirements": ["REQ-DLV-033", "REQ-S16-003"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-1/unit-node22.log"]
+    },
+    {
+      "id": "SEC-R1-07b-unit-node22-reruns",
+      "procedure": "Unit suites on Node 22, three sequential reruns, plus 6 parallel runs of the failing file under CPU load to characterise the failure",
+      "command": "pnpm test (x3); 6 x npx vitest run --project unit-web apps/web/src/pages/transformations/transformations.test.tsx in parallel",
+      "environment": "disposable clone of 2c22c27; Node v22.22.2",
+      "expected": "325/325 each run",
+      "actual": "Reruns 2, 3 and 4: 325/325, exit 0 each. The 6 parallel runs of the file: 21/21 each. The run-1 failure did not reproduce, so it is intermittent (1 of 4 full Node 22 runs); recorded as F-DG1-144.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033", "REQ-S16-003"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/unit-node22-rerun2.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/unit-node22-rerun3.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/unit-node22-rerun4.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/web-flake-under-load.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-08-unit-node24",
+      "procedure": "Unit suites on Node 24 (the production target)",
+      "command": "PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH pnpm test",
+      "environment": "disposable clone of 2c22c27; Node v24.21.0",
+      "expected": "325/325, exit 0",
+      "actual": "Test Files 21 passed (21); Tests 325 passed (325); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033", "REQ-S16-003"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-1/unit-node24.log"]
+    },
+    {
+      "id": "SEC-R1-09-integration-x2",
+      "procedure": "Integration suite (incl. the contract suite, migrate-on-fresh-database, catalogue/schema, audit append-only trigger, worker outbox/runtime) on a disposable PostgreSQL 16 cluster (initdb in a nested user namespace, TCP 127.0.0.1:54731, trust auth, removed afterwards), run twice for determinism",
+      "command": "TEST_DATABASE_ADMIN_URL=postgresql://postgres@127.0.0.1:54731/postgres pnpm test:integration (x2)",
+      "environment": "disposable clone of 2c22c27; Node v22.22.2; PostgreSQL 16.13 (Ubuntu) scratch cluster",
+      "expected": "all tests pass in both runs; 8 migrations applied to a fresh database; no leftover databases",
+      "actual": "Run 1: 19 files, 200/200, exit 0. Run 2: 19 files, 200/200, exit 0. Each run logged 'applied 8 migrations to a fresh database'. contract.test.ts 9/9 and migrate.test.ts 7/7 passed; the protection tests show UPDATE/DELETE/TRUNCATE on audit_event refused for mth_app (42501) and by the owner (trigger audit_event_immutable). After both runs only postgres/template0/template1 remained.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-004", "REQ-S19-004", "REQ-S19-006", "REQ-DLV-033"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/integration-run1.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/integration-run2.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/summary-integration.txt",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/postgres-version.txt"
+      ]
+    },
+    {
+      "id": "SEC-R1-10-gate-agent-tooling-tests",
+      "procedure": "Gate and agent tooling self-tests",
+      "command": "node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs",
+      "environment": "disposable clone of 2c22c27; Node v22.22.2",
+      "expected": "all pass",
+      "actual": "tests 105, pass 105, fail 0; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-025"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-1/gates-agents-tests.log"]
+    },
+    {
+      "id": "SEC-R1-11-deploy-script-tests",
+      "procedure": "Deploy tooling tests (check-ci-needs negatives incl. status-function and gate-context bypasses, pin-images)",
+      "command": "node --test deploy/scripts/tests/*.test.mjs",
+      "environment": "disposable clone of 2c22c27; Node v22.22.2",
+      "expected": "all pass",
+      "actual": "tests 59, pass 59, fail 0; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-025"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-1/deploy-scripts-tests.log"]
+    },
+    {
+      "id": "SEC-R1-12-ci-needs-and-identical-copies",
+      "procedure": "REQ-DLV-025: run the CI dependency checker on all three ci.yml copies and confirm that they are byte-identical",
+      "command": "node deploy/scripts/check-ci-needs.mjs <each of .github/workflows/ci.yml deploy/ci/ci.yml docs/architecture/ci/ci.yml>; sha256sum + cmp of the three files",
+      "environment": "disposable clone of 2c22c27; Node v22.22.2",
+      "expected": "OK for each; identical sha256",
+      "actual": "OK for all three: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; verify<-delivery-gates, integration<-verify, e2e<-verify, images<-integration,e2e; no status-function if:. All three files have sha256 8b5b1106...db476ce; cmp exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-025"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/check-ci-needs.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/ci-yml-identical.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-13-install-sandbox-offline",
+      "procedure": "REQ-DLV-042: run the install-sandbox acceptance suite offline, then assert that every acceptance check verifiable without a package registry passes. The reviewer sandbox has a read-only HOME, so a writable COPY of the host pnpm store was supplied (npm_config_store_dir=$TMPDIR/...). A first run against the read-only store failed 6 install-dependent ACs with EROFS, an artefact of the reviewer sandbox (install-sandbox.log).",
+      "command": "npm_config_store_dir=$TMPDIR/pnpm-store/v10 tools/deps/tests/install-sandbox.test.sh; assertion over its log (13 PASS, sole FAIL = AC-1 (effect)); install-sandbox.sh --root <is-number fixture> create to show the AC-1 (effect) cause",
+      "environment": "disposable clone of 2c22c27; bubblewrap 0.9.0; pnpm 10.33.0; Node v22.22.2; no package registry reachable",
+      "expected": "every offline-verifiable acceptance check passes",
+      "actual": "13/14 PASS: AC-1 (write outside the target refused), AC-2 x2 (lifecycle scripts gated by the allow-list), AC-3 x2 (no lockfile / would-change refused), AC-4 (missing bwrap gives exit 65), AC-5, AC-6 x2, AC-7, AC-8, AC-9, AC-10. The assertion exits 0. The only failure is AC-1 (effect): `create` of is-number@7.0.0 fails with ERR_PNPM_META_FETCH_FAIL (registry.npmjs.org ECONNREFUSED via proxy 127.0.0.1:3128), so the online-registry install effect was NOT verified. Per D-057 (user-chosen path G, D-056) this is recorded as the disclosed environmental residual, not as a gate check. Note: D-057's '14/14 offline' does not reproduce (F-DG1-146).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-042"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/install-sandbox-writable-store.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/install-sandbox-offline-assert.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/install-sandbox-ac1-effect-registry.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/install-sandbox.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-14-sbom-check",
+      "procedure": "SBOM and licence inventory consistency with the lockfile",
+      "command": "node licenses/generate-sbom.mjs --check",
+      "environment": "disposable clone of 2c22c27; Node v22.22.2",
+      "expected": "OK, exit 0",
+      "actual": "OK: packages=422 runtime=112 bundled=17 development=293 containers=4 shipped-without-licence-id=0; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-1/sbom-check.log"]
+    },
+    {
+      "id": "SEC-R1-15-validate-historical-DG0",
+      "procedure": "Historical validation of the previous approved gate",
+      "command": "node tools/gates/validate.mjs --historical --stage DG0",
+      "environment": "disposable clone of 2c22c27 and the main checkout (read-only); Node v22.22.2 / v24.21.0",
+      "expected": "PASS gate DG0 (historical), exit 0",
+      "actual": "PASS gate DG0 (historical); exit 0 in both",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/validate-historical-DG0.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/validate-historical-DG0-repo.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-16-secrets-and-image-pins",
+      "procedure": "Scan for secrets in tracked files; check that images are pinned by digest (D-049)",
+      "command": "git grep for private keys, AWS/GitHub/Slack/sk- tokens and literal password/secret assignments (excluding trading_agent); inspect deploy/images.lock.json, compose.yaml image lines and realm-mth-test.json",
+      "environment": "disposable clone of 2c22c27",
+      "expected": "no real secrets; node and postgres pinned by digest; keycloak the disclosed test-only residual",
+      "actual": "No strong-pattern hits. The only literal hits are synthetic test values (identity.test.ts 'synthetic-test-secret', fake-idp.ts) and psql variable references. The realm uses ${...} placeholders. node:24-bookworm-slim and postgres:18 are pinned by sha256 digest; quay.io keycloak:26.4 (profile test-idp) is unpinned with a recorded blockedReason, the disclosed D-049 test-only residual.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-1/secrets-scan.log"]
+    },
+    {
+      "id": "SEC-R1-17-worker-stop-api-survives",
+      "procedure": "REQ-S16-001 (A13/A22): start the built API and worker as two processes in production configuration against a freshly migrated disposable database, stop the worker (SIGTERM) and check that the API stays live and ready",
+      "command": "ADMIN=postgresql://postgres@127.0.0.1:54731/postgres API_PORT=3197 bash docs/delivery/test-evidence/DG1/code-security/round-1/worker-stop-api-survives.sh",
+      "environment": "built disposable clone of 2c22c27; Node v22.22.2; PostgreSQL 16.13 scratch cluster",
+      "expected": "two PIDs; after the worker stops, /healthz 200 and /readyz 200",
+      "actual": "8 migrations applied. api pid 36 and worker pid 37 (separate processes); worker exit 0 on SIGTERM ('mth-worker shutting down'). The API process was still alive afterwards; /healthz 200 and /readyz 200 {ready, database ok, migrations ok}. RESULT PASS.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-001", "REQ-S16-004"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/worker-stop-api-survives.sh",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/worker-stop-api-survives.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-18-module-lint-soundness",
+      "procedure": "ADR-0002 module boundaries: source review of modules.ts, architecture.testkit.ts and architecture.test.ts (fail-closed rules, declaration-file branch, default-deny built-ins/process members, rule 5), then an attempt to bypass the lint through an allow-listed third-party dependency, planted only in a disposable copy",
+      "command": "node repro-ajv/run-repro.mjs (candidate's own fileViolations() on the plant + importing it); npx vitest run --project unit-node apps/api/src/architecture.test.ts; eslint; tsc -p apps/api/tsconfig.json",
+      "environment": "disposable copy of 2c22c27 with repro-ajv/zz-ajv-planted.ts at apps/api/src/modules/transformations/; Node v22.22.2",
+      "expected": "the lint fails closed on any module file that evaluates code or deep-imports another module",
+      "actual": "The built-in rules are sound as documented: the declaration-file branch follows ts SourceFile.isDeclarationFile, syntax errors fail closed, and node: built-ins and process.* members are default-deny. BUT the ajv plant gives fileViolations() = [], architecture.test.ts 132/132 green, and eslint and tsc exit 0, while at runtime it reaches child_process.execFileSync and deep-imports access/policy.ts. ajv/ajv-formats/yaml are test-only runtime dependencies. Recorded as F-DG1-143 (Low).",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": ["REQ-S16-003"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/repro-ajv/repro-ajv.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/repro-ajv/zz-ajv-planted.ts",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/repro-ajv/run-repro.mjs"
+      ]
+    },
+    {
+      "id": "SEC-R1-19-bu-hierarchy-integrity-and-authz",
+      "procedure": "Mutation review of business-unit re-parenting: a deterministic concurrency test (advisory-lock parking trigger, same technique as access-derived-race.test.ts) and a destination-scope authorization test, both through the real API on a scratch database of the disposable cluster",
+      "command": "TEST_DATABASE_ADMIN_URL=... npx vitest run --project integration apps/api/test/integration/zz-review-bu-hierarchy.test.ts (copied from repro-bu/ into a disposable copy only)",
+      "environment": "disposable copy of 2c22c27; Node v22.22.2; PostgreSQL 16.13 scratch cluster",
+      "expected": "concurrent moves cannot commit a cycle; a move needs rights on the destination parent",
+      "actual": "SEC-1: the sequential control is refused 422 business_unit.cycle, but the concurrent A->C / B->A moves both return 200 and commit a cycle A->C->B->A (F-DG1-140). SEC-2: a manager scoped to BU a1 (404 on sibling a2) moves a1x under a2 with 200, and a2's auditor goes from 404 to 200 on a1x's transformation (F-DG1-141). The test asserts the defects, so its exit 0 confirms them.",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": ["REQ-DLV-033", "REQ-S19-004"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/repro-bu/repro-bu.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/repro-bu/zz-review-bu-hierarchy.test.ts",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/repro-bu/repro-bu-attempt1-2cycle-serialized.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-20-rate-limit",
+      "procedure": "Rate-limit review: check that the global limiter cannot be escaped by an unauthenticated client",
+      "command": "TEST_DATABASE_ADMIN_URL=... npx vitest run --project integration apps/api/test/integration/zz-review-ratelimit.test.ts (copied from repro-ratelimit/ into a disposable copy only)",
+      "environment": "disposable copy of 2c22c27; Node v22.22.2; PostgreSQL 16.13 scratch cluster; RATE_LIMIT_PER_MINUTE=3",
+      "expected": "requests from one IP are limited whether or not they carry a (fake) session cookie",
+      "actual": "Without a cookie: 401,401,401,429,429,429. With a fresh random 43-char cookie per request from the same IP: 50 x 401, never 429 (F-DG1-142). The test asserts the bypass, so its exit 0 confirms it.",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": ["REQ-DLV-033"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/repro-ratelimit/repro-ratelimit.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/repro-ratelimit/zz-review-ratelimit.test.ts"
+      ]
+    },
+    {
+      "id": "SEC-R1-21-data-design-vs-schema",
+      "procedure": "REQ-S19-004: cross-check the data dictionary (ERD physical columns are deferred to it) against SCHEMA_COLUMNS, which catalogue.test.ts pins to information_schema in the integration runs",
+      "command": "node --conditions=@mth/source docs/delivery/test-evidence/DG1/code-security/round-1/dd-vs-schema.mjs; grep -rn 'scope_node|business_unit_closure|actor_display' docs/architecture docs/api",
+      "environment": "disposable clone of 2c22c27; Node v22.22.2",
+      "expected": "every migrated relation and column is documented",
+      "actual": "All 17 base tables and their columns match. The three views business_unit_closure, actor_display and scope_node are undocumented anywhere in docs/architecture or docs/api (grep exit 1). Also, schema.ts names a non-existent schema.test.ts (F-DG1-145, Low).",
+      "exit_status": 1,
+      "result": "FAIL",
+      "requirements": ["REQ-S19-004"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/dd-vs-schema.mjs",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/dd-vs-schema.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-22-mutation-and-authz-source-review",
+      "procedure": "Line-by-line review of every P1 mutation path for a server-side authorization check, validation, optimistic concurrency and an audit event: transformations/routes.ts, access/assignments.ts + policy.ts + rules.ts, organization/routes.ts, admin/routes.ts, identity/routes.ts + sessions.ts, platform/hooks.ts + idempotency.ts, access/denials.ts, audit/index.ts, migration 0003",
+      "command": "source review (Read) of the files named above",
+      "environment": "main checkout at the candidate (read-only)",
+      "expected": "each mutation is authorized, validated, If-Match-guarded and audited in one transaction; reads are scope-filtered in SQL; sessions/CSRF sound",
+      "actual": "Transformation create/update/archive: requireRead then requireAction, If-Match (428/409) under a row lock, one audit event, outbox on create; lists use scopeFilter in SQL; the onSend guard fails closed when no policy decision was made. Assignments: self-grant refused, technical-admin approval SoD, revoke cascades derived grants under FOR SHARE/UPDATE. Sessions: 32-byte tokens hashed, HMAC CSRF + Origin on unsafe methods, rotation on login. Failed mutation authorization is audited. Exceptions found: F-DG1-140 (BU re-parent race), F-DG1-141 (destination parent not authorized), F-DG1-142 (rate-limit key). Not a defect: an Idempotency-Key replay returns the caller's stored original response without re-authorizing (same user, same key, 24 h).",
+      "exit_status": null,
+      "result": "FAIL",
+      "requirements": ["REQ-DLV-033", "REQ-S16-003", "REQ-S16-004"],
+      "evidence": ["docs/delivery/reviews/DG1/round-1/code-security-reviewer.findings.json"]
+    }
+  ],
+  "findings": [
+    "F-DG1-140",
+    "F-DG1-141",
+    "F-DG1-142",
+    "F-DG1-143",
+    "F-DG1-144",
+    "F-DG1-145",
+    "F-DG1-146"
+  ],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG1/code-security/round-1/00-candidate-identity.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-1/summary-static.txt",
+    "docs/delivery/test-evidence/DG1/code-security/round-1/summary-integration.txt",
+    "docs/delivery/test-evidence/DG1/code-security/round-1/integration-run1.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-1/integration-run2.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-1/unit-node22.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-1/unit-node24.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-1/repro-bu/repro-bu.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-1/repro-bu/zz-review-bu-hierarchy.test.ts",
+    "docs/delivery/test-evidence/DG1/code-security/round-1/repro-ratelimit/repro-ratelimit.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-1/repro-ajv/repro-ajv.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-1/dd-vs-schema.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-1/install-sandbox-offline-assert.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-1/worker-stop-api-survives.log",
+    "docs/delivery/reviews/DG1/round-1/code-security-reviewer.findings.json"
+  ],
+  "reviewed_at": "2026-10-01T20:39:05Z",
+  "summary": "FAIL. Every required check ran: typecheck, build, lint, openapi:lint (33 ops), no-cdn, format, unit on Node 24 (325/325) and Node 22 (1 intermittent failure in 4 runs), integration twice on a disposable PostgreSQL 16 (200/200 each), gate/agent tooling (105/105), deploy tooling (59/59), installer offline ACs (13/14; AC-1 effect needs a registry, the D-057 residual), SBOM, historical DG0 validation, and the three ci.yml copies are identical. The review reproduced two mandatory-violation defects through the real API: concurrent business-unit re-parenting commits a hierarchy cycle (F-DG1-140, Medium) and re-parenting never authorizes the destination parent, so a unit-scoped manager can expose records to a sibling branch (F-DG1-141, Medium). Also a global rate-limit bypass (F-DG1-142, Medium) and four Low items (F-DG1-143 ajv lint bypass + test-only runtime deps; F-DG1-144 flaky web test; F-DG1-145 undocumented views; F-DG1-146 D-057 overstates 14/14 offline).",
+  "narrative": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.md"
+}
