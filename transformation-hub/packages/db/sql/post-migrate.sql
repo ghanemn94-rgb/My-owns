@@ -1259,3 +1259,31 @@ BEGIN
 END
 $jvappend$;
 
+-- 24. Reporting: snapshot exports (P6 — REQ-RPT-007..010, REQ-RPT-017, REQ-INT-011, ADR-0011) -----------------------------
+-- A report snapshot is append-only (§4). An export row moves queued → rendering → ready | failed | cancelled and is then
+-- frozen: its file reference, checksum and the sections it contains never change, and the row is never deleted (it is the
+-- record of what was rendered for whom). The requester, snapshot, format and language of an export never change.
+CREATE OR REPLACE FUNCTION hub_report_export_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF NEW.snapshot_id IS DISTINCT FROM OLD.snapshot_id OR NEW.format IS DISTINCT FROM OLD.format
+     OR NEW.locale IS DISTINCT FROM OLD.locale OR NEW.created_by IS DISTINCT FROM OLD.created_by THEN
+    RAISE EXCEPTION 'report_export_immutable: the snapshot, format, language and requester of an export never change' USING ERRCODE = 'P0001';
+  END IF;
+  IF OLD.status IN ('ready', 'failed', 'cancelled') THEN
+    RAISE EXCEPTION 'report_export_final: export % is % and can no longer change', OLD.id, OLD.status USING ERRCODE = 'P0001';
+  END IF;
+  RETURN NEW;
+END
+$$;
+DROP TRIGGER IF EXISTS hub_report_export_guard ON report_export;
+CREATE TRIGGER hub_report_export_guard BEFORE UPDATE ON report_export FOR EACH ROW EXECUTE FUNCTION hub_report_export_guard();
+DROP TRIGGER IF EXISTS hub_report_export_no_delete ON report_export;
+CREATE TRIGGER hub_report_export_no_delete BEFORE DELETE ON report_export FOR EACH ROW EXECUTE FUNCTION hub_reject_mutation();
+DO $rptgrants$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'hub_app') THEN
+    EXECUTE 'REVOKE DELETE ON report_export FROM hub_app';
+  END IF;
+END
+$rptgrants$;
+

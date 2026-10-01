@@ -486,7 +486,7 @@ Foreign keys:
 
 ### `legal_entity`
 
-RLS: enabled (hub_org_isolation, hub_legal_entity_owner_update, hub_legal_entity_owner_insert) · Triggers: hub_legal_entity_owner_immutable, hub_scope_immutable
+RLS: enabled (hub_org_isolation, hub_legal_entity_owner_insert, hub_legal_entity_owner_update) · Triggers: hub_legal_entity_owner_immutable, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -3980,6 +3980,8 @@ RLS: enabled (hub_project_isolation) · Triggers: hub_append_only, hub_scope_imm
 | `content_hash` | character varying | no |  |
 | `previous_snapshot_id` | uuid | yes |  |
 | `includes_demo_data` | jsonb | no | `'false'::jsonb` |
+| `schema_version` | character varying | yes |  |
+| `sections` | jsonb | no | `'[]'::jsonb` |
 | `generated_by` | uuid | yes |  |
 | `created_at` | timestamp with time zone | no | `now()` |
 
@@ -3993,7 +3995,7 @@ Foreign keys:
 
 ### `report_export`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable
+RLS: enabled (hub_project_isolation) · Triggers: hub_report_export_guard, hub_report_export_no_delete, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -4002,12 +4004,21 @@ RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable
 | `project_id` | uuid | no |  |
 | `snapshot_id` | uuid | no |  |
 | `format` | enum export_format | no |  |
-| `storage_key` | text | no |  |
-| `filename` | text | no |  |
-| `size_bytes` | bigint | no |  |
-| `sha256` | character varying | no |  |
-| `created_by` | uuid | yes |  |
+| `locale` | character varying | no | `'en'::character varying` |
+| `status` | character varying | no | `'queued'::character varying` |
+| `storage_key` | text | yes |  |
+| `filename` | text | yes |  |
+| `mime_type` | character varying | yes |  |
+| `size_bytes` | bigint | yes |  |
+| `sha256` | character varying | yes |  |
+| `included_sections` | jsonb | no | `'[]'::jsonb` |
+| `content_classification` | enum classification | yes |  |
+| `error_code` | character varying | yes |  |
+| `created_by` | uuid | no |  |
 | `created_at` | timestamp with time zone | no | `now()` |
+| `completed_at` | timestamp with time zone | yes |  |
+| `updated_at` | timestamp with time zone | no | `now()` |
+| `version` | integer | no | `1` |
 
 Foreign keys:
 
@@ -4083,7 +4094,7 @@ Foreign keys:
 
 ### `notification`
 
-RLS: enabled (hub_notification_write, hub_notification_update, hub_notification_read) · Triggers: hub_same_project_source, hub_scope_immutable
+RLS: enabled (hub_notification_read, hub_notification_write, hub_notification_update) · Triggers: hub_same_project_source, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|

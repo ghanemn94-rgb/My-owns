@@ -2181,12 +2181,16 @@ erDiagram
     uuid project_id
     uuid snapshot_id
     export_format format
+    varchar locale
+    varchar status
     text storage_key
     text filename
+    varchar mime_type
     int8 size_bytes
     varchar sha256
-    uuid created_by
-    timestamptz created_at
+    jsonb included_sections
+    classification content_classification
+    more more_columns
   }
   import_batch {
     uuid id
