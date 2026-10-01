@@ -1,0 +1,24 @@
+$ npm_config_store_dir=$TMPDIR/pnpm-store tools/deps/tests/install-sandbox.test.sh   # disposable clone at 4f486b962b0bee2c3a6cabf65696b678be712a34; bubblewrap 0.9.0; pnpm 10.33.0; store=/var/tmp/mth-run.O3Pyrz/claude-0/pnpm-store/v10
+PASS  AC-1 write to /etc is refused read-only under the sandbox
+FAIL  AC-1 (effect) create did not populate node_modules in the target tree
+PASS  AC-2 a non-allow-listed dependency's postinstall did not run
+PASS  AC-2 an allow-listed dependency's postinstall did run
+PASS  AC-3 frozen install without a committed lockfile fails non-zero
+PASS  AC-3 frozen install that would change the lockfile fails non-zero
+PASS  AC-4 a missing bubblewrap exits 65 (BLOCKED), never an unsandboxed install
+PASS  AC-5 control paths (.git, tools/gates) are read-only inside the sandbox
+PASS  AC-6 a host environment variable (secret) does not cross into the sandbox
+PASS  AC-6 (control) PATH is set inside the sandbox (install is usable)
+PASS  AC-7 control-path escape (parent-rename, installer append, delivery write) is refused; real repo unchanged
+PASS  AC-8 agent-config surfaces (CLAUDE.local.md, .mcp.json, nested CLAUDE.md, .vscode) cannot be created
+install-sandbox acceptance: 11 passed, 1 failed
+EXIT=1
+git status after (clone):
+# Reviewer diagnosis of the AC-1 (effect) failure: environment, not product. Re-running that exact case by hand
+# (scratch project depending on is-number@7.0.0, `install-sandbox.sh --root <scratch> create`) fails with
+#   ERR_PNPM_META_FETCH_FAIL GET https://registry.npmjs.org/is-number: connect ECONNREFUSED 127.0.0.1:3128
+# and `curl https://registry.npmjs.org/is-number` from the reviewer shell fails the same way (no network in the reviewer
+# sandbox, D-025). AC-1 (effect) is therefore BLOCKED here, not PASS. Independent evidence that create/frozen populate
+# node_modules: AC-2 (create with a local file: dependency) passed above; 12-frozen-install-real-repo.log (frozen install
+# of the candidate from a copied store: node_modules at every workspace level, lockfile hash unchanged); 13-copyback-escape.log
+# (create with a local dependency, exit 0). Result: 11 PASS, 1 BLOCKED (AC-1 effect), 0 product failures.

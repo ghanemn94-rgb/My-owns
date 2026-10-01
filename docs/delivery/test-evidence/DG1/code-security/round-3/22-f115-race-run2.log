@@ -1,0 +1,22 @@
+$ withpg.sh pnpm exec vitest run --project integration apps/api/test/integration/access-derived-race.test.ts apps/api/test/integration/zz-f115-reviewer.test.ts apps/api/test/integration/access   # run 2; clone 4f486b9; reviewer file copied from repro-f115-own-interleavings.test.ts; fresh PG16 cluster 127.0.0.1:5471
+chown: changing ownership of '/var/tmp/mth-run.O3Pyrz/claude-0/pg5471': Invalid argument
+# disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+ RUN  v3.2.4 /var/tmp/mth-run.O3Pyrz/claude-0/rv
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mupcwmrw_4545fcd2; applied 8 migrations to a fresh database
+stdout | apps/api/test/integration/zz-f115-reviewer.test.ts > F-DG1-115 reviewer interleavings > E. revoke fully commits between the create's authorization and its derive step -> 403, rollback, audited
+[E] revoke status 200 (completed while the create was parked)
+stdout | apps/api/test/integration/zz-f115-reviewer.test.ts > F-DG1-115 reviewer interleavings > E. revoke fully commits between the create's authorization and its derive step -> 403, rollback, audited
+[E] create status 403 body {"type":"urn:mth:problem:forbidden","title":"Forbidden","status":403,"detail":"The assignment that authorized this create has been revoked.","code":"forbidden",
+stdout | apps/api/test/integration/zz-f115-reviewer.test.ts > F-DG1-115 reviewer interleavings > E. revoke fully commits between the create's authorization and its derive step -> 403, rollback, audited
+[E] audit for the lead: [{"action":"authorization.denied","record_type":"business_unit"}]
+ ✓ |integration| apps/api/test/integration/access-derived-race.test.ts (4 tests) 1079ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts (18 tests) 1048ms
+stdout | apps/api/test/integration/zz-f115-reviewer.test.ts > F-DG1-115 reviewer interleavings > F. 15 unhooked concurrent create/revoke rounds never leave an active derived assignment with a revoked source
+[F] outcome tally: {"create=403 revoke=200":15}
+ ✓ |integration| apps/api/test/integration/zz-f115-reviewer.test.ts (2 tests) 1267ms
+   ✓ F-DG1-115 reviewer interleavings > F. 15 unhooked concurrent create/revoke rounds never leave an active derived assignment with a revoked source  576ms
+ Test Files  3 passed (3)
+      Tests  24 passed (24)
+   Start at  09:53:32
+   Duration  3.44s (transform 673ms, setup 0ms, collect 3.83s, tests 3.39s, environment 1ms, prepare 270ms)
+EXIT=0

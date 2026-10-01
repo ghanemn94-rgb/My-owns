@@ -1,0 +1,10 @@
+$ git rev-parse HEAD (at review start) -> 4f486b962b0bee2c3a6cabf65696b678be712a34 (freeze commit; source_commit 520417922c46d465a19433440bb41faf2bef319a + metadata only: assignments, manifest, stages.json)
+$ git diff --stat 5204179 4f486b9 -> only docs/delivery/assignments/DG1/round-3/*, docs/delivery/candidates/DG1/f0baa87d0163560f.manifest.json, docs/delivery/stages.json
+$ node tools/gates/candidate.mjs --stage DG1 (start)
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:f0baa87d0163560fc05119a310c73ed365564833697c74bfa3a1c7f8795595a8","files":389}
+$ node tools/gates/candidate.mjs --stage DG1 --diff -> matches: true, added/removed/changed: []
+$ disposable clone $TMPDIR/rv at 4f486b9: candidate.mjs --stage DG1 -> sha256:f0baa87d0163560fc05119a310c73ed365564833697c74bfa3a1c7f8795595a8 (389 files)
+$ (end of run) git rev-parse HEAD -> 6465ecf8bac4217af38f59e1f461619812159e1b: other reviewers' auto-committed run evidence only (git log 4f486b9..HEAD: d4bd7f2, 6eb9410, ff4257b, 6465ecf); not read by this reviewer
+$ node tools/gates/candidate.mjs --stage DG1 (end)
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:f0baa87d0163560fc05119a310c73ed365564833697c74bfa3a1c7f8795595a8","files":389}
+EXIT=0

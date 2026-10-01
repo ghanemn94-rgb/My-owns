@@ -1,0 +1,18 @@
+# check-ci-needs probes (reviewer, round 3). Clone 4f486b9. Each line: mutation -> checker exit + first message.
+# Expected: every mutation is REJECTED (exit 1). R* = new reviewer probes; C* = round-2 / assignment vectors (controls).
+R1 verify if: success() || true                            exit=0  OK: /var/tmp/mth-run.O3Pyrz/claude-0/ciprobe/wf.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it with
+R2 images if: !success()                                   exit=0  OK: /var/tmp/mth-run.O3Pyrz/claude-0/ciprobe/wf.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it with
+R3 verify if: success() || github.event_name == 'push'     exit=0  OK: /var/tmp/mth-run.O3Pyrz/claude-0/ciprobe/wf.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it with
+R4 gate checkout with.ref = an old approved commit         exit=0  OK: /var/tmp/mth-run.O3Pyrz/claude-0/ciprobe/wf.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it with
+R5 gate checkout with.repository = a fork                  exit=0  OK: /var/tmp/mth-run.O3Pyrz/claude-0/ciprobe/wf.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it with
+C1 control: verify if: always()                            exit=1  FAIL: job "verify": job-level if: "${{ always() }}" uses a status function, so it can run after delivery-gates failed
+C2 control: gate step env NODE_OPTIONS                     exit=1  FAIL: delivery-gates step 3: a validate.mjs step must not set env: {"NODE_OPTIONS":"--import=./x.mjs"} (only name/id/run)
+C3 control: workflow defaults shell                        exit=1  FAIL: workflow-level defaults: is not allowed (it reaches the delivery-gates validate step): {"run":{"shell":"true {0}"}}
+C4 control: gate step working-directory                    exit=1  FAIL: delivery-gates step 3: a validate.mjs step must not set working-directory: "decoy" (only name/id/run)
+C5 control: gate job container                             exit=1  FAIL: delivery-gates: job key "container" is not allowed (it could change how the validate step runs)
+C6 control: gate job if                                    exit=1  FAIL: delivery-gates: job key "if" is not allowed (it could change how the validate step runs)
+C7 control: gate step shell                                exit=1  FAIL: delivery-gates step 3: a validate.mjs step must not set shell: "true {0}" (only name/id/run)
+C8 control: workflow env NODE_OPTIONS                      exit=1  FAIL: workflow-level env: is not allowed (it reaches the delivery-gates validate step): {"NODE_OPTIONS":"--import=./x.mjs"}
+C9 control: gate job services                              exit=1  FAIL: delivery-gates: job key "services" is not allowed (it could change how the validate step runs)
+C10 control: gate job env                                  exit=1  FAIL: delivery-gates: job key "env" is not allowed (it could change how the validate step runs)
+C11 control: gate job defaults                             exit=1  FAIL: delivery-gates: job key "defaults" is not allowed (it could change how the validate step runs)

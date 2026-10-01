@@ -1,0 +1,17 @@
+$ withpg.sh pnpm exec vitest run --project integration apps/api/test/integration/zz-scope.test.ts   # round-1 repro-scope-consistency.test.ts unchanged, in clone 4f486b9
+chown: changing ownership of '/var/tmp/mth-run.O3Pyrz/claude-0/pg5471': Invalid argument
+# disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+ RUN  v3.2.4 /var/tmp/mth-run.O3Pyrz/claude-0/rv
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mupcyj1l_7ae91b5d; applied 8 migrations to a fresh database
+stdout | apps/api/test/integration/zz-scope.test.ts > list (SQL scopeFilter) == per-record read (decide); siblings never cross > TL@BU a1 may create in a1 — and can the creator read back what it created?
+[repro] TL@BU create status: [33m201[39m
+stdout | apps/api/test/integration/zz-scope.test.ts > list (SQL scopeFilter) == per-record read (decide); siblings never cross > TL@BU a1 may create in a1 — and can the creator read back what it created?
+[repro] TL@BU read-back of own created record status: [33m200[39m
+stdout | apps/api/test/integration/zz-scope.test.ts > list (SQL scopeFilter) == per-record read (decide); siblings never cross > TL@BU a1 may create in a1 — and can the creator read back what it created?
+[repro] TL@BU a1 create in sibling a2 status: [33m404[39m
+ ✓ |integration| apps/api/test/integration/zz-scope.test.ts (11 tests) 993ms
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+   Start at  09:55:00
+   Duration  2.98s (transform 507ms, setup 0ms, collect 1.17s, tests 993ms, environment 0ms, prepare 58ms)
+EXIT=0

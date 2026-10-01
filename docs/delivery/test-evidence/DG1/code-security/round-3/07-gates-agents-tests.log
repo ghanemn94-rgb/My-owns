@@ -1,0 +1,123 @@
+$ node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs   # clone 4f486b9
+# Subtest: reviewers may write only review records and evidence
+# Subtest: qa-verifier may add tests under tests/qa and e2e but not product code
+# Subtest: implementers cannot edit gate rules, agent definitions, sources or gate records
+# Subtest: release-auditor writes gate decisions but not implementation
+# Subtest: transformation-analyst is limited to analysis outputs and the register
+# Subtest: unknown roles are denied and scratch space outside a repo is allowed
+# Subtest: the hook entry point blocks with exit code 2 and allows with 0
+# Subtest: implementers cannot write reviewer test evidence
+# Subtest: F-DG0-105: Claude configuration surfaces and the unrelated project are protected from implementers
+# Subtest: F-DG0-105: writes through a symlink into a protected path are blocked
+# Subtest: F-DG0-105: protected-path matching is case-insensitive
+# Subtest: F-DG0-111: a planted nested .git cannot move the guarded root; .git paths are never writable
+# Subtest: the production guard root is this repository
+# Subtest: F-DG0-134: the repository's worktrees are guarded too, from any working directory
+# Subtest: F-DG0-134: every role's hook command takes the guard from MTH_GUARD_ROOT and fails closed without it
+# Subtest: F-DG0-135: the guard fails closed when the guarded roots cannot be determined
+# Subtest: F-DG0-136: only the temporary directory is scratch; home and system configuration are never writable
+# Subtest: F-DG0-136: the home directory is never scratch, even when HOME lies inside the temp directory
+# Subtest: F-DG0-144: a reviewer may not write another reviewer's record, sidecars or evidence
+# Subtest: F-DG0-144: only the run's own private temporary directory is scratch, never the shared /tmp
+# Subtest: F-DG0-143: writes that resolve through /proc, /sys or /dev, or whose real path cannot be determined, are blocked
+# Subtest: F-DG0-145: a confined reviewer's whole process writes only its own evidence and its own new review files
+# Subtest: F-DG0-145: a symlink swapped between the guard's check and the write never lets a write land outside the role's scope
+# without the process sandbox: 45 of 60 allowed writes landed in /var/tmp/mth-run.O3Pyrz/claude-0/psbx-E6NUJD/repo/tools/gates/tests
+# code-security-reviewer -> /var/tmp/mth-run.O3Pyrz/claude-0/psbx-E6NUJD/var-tmp/mth-run.GVKMbg/clone/tests: 72 allowed by the hook, 58 of them refused by the kernel, 0 landed
+# code-security-reviewer -> /var/tmp/mth-run.O3Pyrz/claude-0/psbx-E6NUJD/repo/docs/delivery/test-evidence/DG0/qa: 73 allowed by the hook, 51 of them refused by the kernel, 0 landed
+# qa-verifier -> /var/tmp/mth-run.O3Pyrz/claude-0/psbx-E6NUJD/repo/tools/gates/tests: 77 allowed by the hook, 52 of them refused by the kernel, 0 landed
+# backend-workflow-engineer -> /var/tmp/mth-run.O3Pyrz/claude-0/psbx-E6NUJD/repo/tools/gates/tests: 83 allowed by the hook, 58 of them refused by the kernel, 0 landed
+# backend-workflow-engineer -> /var/tmp/mth-run.O3Pyrz/claude-0/psbx-E6NUJD/repo/.git/hooks: 69 allowed by the hook, 43 of them refused by the kernel, 0 landed
+# Subtest: D-030: only CAP_SETFCAP remains, and neither the process nor a nested user namespace can unlock the read-only binds
+# Subtest: D-030: implementers write product paths; existing protected paths stay read-only
+# Subtest: D-030: the analyst's register is replaced atomically in staging and copied back, unless it changed concurrently
+# Subtest: D-030: the auditor's gate record for its own stage is copied back; another stage's is not
+# Subtest: D-030: the process sandbox binds the host procfs and creates no PID namespace (so nested bwrap works)
+# Subtest: F-DG0-145 (round 16): a file another run commits to the real dir between prepare and finish is not a false discard
+# Subtest: F-DG0-150/238: an own-role file already present in the real tree is a write-once discard, not an unhandled crash
+# Subtest: F-DG0-152: a per-run Landlock domain stops a run reaching or signalling another run via /proc/<peer>/root|cwd (D-033)
+# without Landlock: {"viaProcRoot":"WROTE","viaProcCwd":"WROTE","viaProcRootTmp":"WROTE","ownEvidence":"WROTE","ownTmp":"WROTE","signal":"allowed","nested":"works"}
+# with Landlock: {"viaProcRoot":"refused","viaProcCwd":"refused","viaProcRootTmp":"refused","ownEvidence":"WROTE","ownTmp":"WROTE","signal":"refused","nested":"works"}
+# Subtest: F-DG0-140: modules planted in the repository root are never imported by the runner's helpers
+# Subtest: D-026: zero-length untracked sandbox stubs are not reported as configuration changes
+# Subtest: D-026: configuration with content, a symlink, or a truncated tracked file is still reported (exit 71, no auto-commit)
+# Subtest: F-DG0-012/F-DG0-234: an untracked or ignored configuration file that is deleted or truncated to zero length is reported as removed
+# Subtest: F-DG0-144: every run gets its own private TMPDIR, exported to the agent and removed when the run ends
+# Subtest: F-DG0-236: the runner pre-creates the stage's evidence directories and the gate-record directory
+# Subtest: F-DG0-145: the runner runs the whole agent inside the process sandbox and records it
+# Subtest: D-030: a review run whose staging copy holds another role's file exits 73 and commits nothing
+# Subtest: sandbox-run: requires bubblewrap (a missing sandbox is a failure, not a pass)
+# Subtest: F-DG0-229: ignored or untracked files in the working tree never reach the sandboxed clone
+# Subtest: F-DG0-140: inside the sandbox the source repository is read-only, there is no network, and cwd is not on sys.path
+# Subtest: sandbox-run: the command's exit status is returned
+# Subtest: D-030: candidate code runs with /proc/sys read-only (kernel tunables cannot be changed)
+# Subtest: F-DG0-141: the clone, checkout and command run inside the sandbox, in a work area no other process can see
+# Subtest: a fully evidenced DG0 gate passes in current and historical mode
+# Subtest: A24: a missing specialist reviewer fails the gate
+# Subtest: A23: a reviewer who authored the scope, or who is an owner, is rejected
+# Subtest: A23: reviewers sharing one invocation are not independent
+# Subtest: A24 / F-DG0-102: fabricated or incomplete provenance is rejected
+# Subtest: F-DG0-201: a review bound to an unrelated run of the same role is rejected
+# Subtest: A24: failed or BLOCKED checks and non-PASS verdicts fail the gate
+# Subtest: A24: unresolved blocking findings fail the gate; owners cannot verify their own fix
+# Subtest: F-DG0-101: findings cannot escape by relabelling, dropping or downgrading
+# Subtest: A24 / F-DG0-106 / F-DG0-202: incomplete requirements, placeholder evidence and coverage gaps fail
+# Subtest: A25: a source change invalidates the approval; review metadata does not
+# Subtest: A25 / F-DG0-103: symlinks are part of the candidate identity; submodules are refused
+# Subtest: F-DG0-104: the manifest spec must equal the stage spec and the approved policy
+# Subtest: A25: a tampered manifest or a stale review candidate is detected
+# Subtest: F-DG0-102: approval records are immutable after approval (historical mode)
+# Subtest: the gate record must be written by the audited release-auditor invocation
+# Subtest: A24: the pipeline cannot advance past a gate that is not APPROVED
+# Subtest: illegal stage transitions are rejected
+# Subtest: an APPROVED gate with a BLOCKED decision or blocking conditions fails
+# Subtest: F-DG0-107: the CSV parser rejects text after a closing quote and ragged rows
+# Subtest: F-DG0-110 / F-DG0-204: closure comes from the reviewer's own verification sidecar and bound run
+# Subtest: F-DG0-101 residual: deleting an earlier review round is detected
+# Subtest: F-DG0-205: evidence that is a symlink to a file outside the repository is rejected
+# Subtest: F-DG0-112 / F-DG0-206: file mode and entry type are part of the candidate identity
+# Subtest: F-DG0-115: reviewer artefacts cannot be edited after the run, committed or not
+# Subtest: F-DG0-208: round metadata must match the committed manifest of its candidate
+# Subtest: F-DG0-102 residual: a verifying record must be the round's listed, schema-valid record
+# Subtest: F-DG0-117: observations are accepted only through specialist and auditor sidecars
+# Subtest: F-DG0-116: with core.fileMode=false tracked modes come from the index
+# Subtest: F-DG0-115 residual: an evil merge cannot rewrite committed evidence
+# Subtest: F-DG0-118: skip-worktree / assume-unchanged cannot hide edited evidence
+# Subtest: F-DG0-119: only content replayed from the run's own successful Write/Edit calls is bound
+# Subtest: F-DG0-121 / F-DG0-211: the gate file must be what the auditor run wrote
+# Subtest: F-DG0-212: a round manifest must describe its source commit; runs start from a commit containing it
+# Subtest: F-DG0-115 residual: a back-dated side branch merged in cannot replace committed evidence
+# Subtest: F-DG0-115 defence in depth: meta.tool_authored cannot vouch for content the transcript never wrote
+# Subtest: D-022: only a CLI-replayed prompt binds a transcript to its run; the same text in a tool result does not
+# Subtest: F-DG0-132: an empty or newline-only transcript fails every transcript check
+# Subtest: F-DG0-133: the assignment named in the replayed prompt must be the one recorded in meta
+# Subtest: F-DG0-223: a genuine prompt binds when the checkout path contains spaces
+# Subtest: F-DG0-224: the validator loads its schemas from a path with spaces and non-ASCII characters
+# Subtest: D-024: a run that changed configuration outside the candidate is rejected
+# Subtest: D-025: gate records must come from Bash-sandboxed runs
+# Subtest: F-DG0-145/D-030: gate records must come from runs whose whole agent process was confined to the role's own areas
+# Subtest: F-DG0-230: the sandbox deny list must protect the run's own repository, not some other directory
+# Subtest: F-DG0-233: meta.cwd is bound to the transcript (the CLI init line and the replayed prompt)
+# Subtest: F-DG0-146/F-DG0-236: concurrent sandbox mount stubs do not perturb the working-tree candidate; anything else still does
+# Subtest: D-035: findManifest tolerates a pruned (missing) source_commit but still enforces entries self-consistency
+# Subtest: D-036: a gate whose source_commit does not exist is rejected in current mode too (F-DG0-240/155)
+# Subtest: D-037 / F-DG0-241: a gate source_commit that exists but is OFF this branch is rejected (D-036 only checked resolvability)
+# Subtest: D-039/D-040 / F-DG0-164/166/246/249: checkClosure binds the fix to the verifying run's head, not forgeable round metadata
+# Subtest: D-044 / F-DG0-250: a fix_revision that is an annotated tag object (not a commit) is rejected
+# Subtest: D-044 / F-DG0-251: a head_commit_at_start that is an annotated tag object (not a commit) is rejected
+# Subtest: D-045 / F-DG0-171 / F-DG0-251: a review round's source_commit that is an annotated tag object (not a commit) is rejected
+# Subtest: D-042 / F-DG0-169: a closure verified in a round whose source_commit is absent is rejected (anchor 1 is unconditional)
+# Subtest: D-039 / F-DG0-164: checkInvocation requires a present head_commit_at_start that contains the manifest -- no absent-round escape
+# Subtest: D-039 / F-DG0-165: a later-round findings sidecar cannot reclassify a finding's immutable fields
+# Subtest: D-039 / F-DG0-248: validateGate refuses a shallow clone
+# Subtest: D-038 / F-DG0-158: every finding a sidecar raises must be in findings.json; the record-less drop exemption is withdrawn
+# Subtest: D-038 / F-DG0-163: the schema subset validator rejects extra keys named after Object.prototype members
+# tests 105
+# suites 0
+# pass 105
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 58366.390669
+EXIT=0

@@ -1,0 +1,20 @@
+$ npm_config_store_dir=$TMPDIR/pstore bash repro-copyback-escape.sh $TMPDIR/rv/tools/deps/install-sandbox.sh   # installer from disposable clone at 4f486b9 (candidate f0baa87d); scratch project under $TMPDIR; run 2 (baseline commit fixed)
+== git status before: 0 line(s)
+== victim before: keep.txt
+== in-sandbox direct write to the real root (control): bash: line 1: .claude/rules-direct: Read-only file system rc=1 
+== installer create exit=0
+   stderr: cp: cannot stat '/var/tmp/mth-run.O3Pyrz/claude-0/mth-ws.8lDqLQ/h': No such file or directory
+   stderr: cp: cannot stat '../victim/node_modules': No such file or directory
+== planted paths now present in the REAL root (host side, after the installer exited):
+   PRESENT  .claude/rules/node_modules/injected.md  (PLANTED: instruction text auto-loaded as project memory)
+   PRESENT  .claude/skills/node_modules/SKILL.md  (---)
+   PRESENT  .claude/commands/node_modules/pwn.md  (PLANTED command)
+   PRESENT  .claude/agents/node_modules/evil.md  (PLANTED agent definition)
+   PRESENT  .git/hooks/node_modules/x  (PLANTED inside .git)
+   PRESENT  tools/gates/node_modules/x  (PLANTED inside tools/gates)
+   PRESENT  docs/delivery/node_modules/x  (PLANTED inside docs/delivery)
+   PRESENT  .vscode/node_modules/x  (PLANTED: creates .vscode/)
+== git status after: 1 line(s)  (planted files are git-ignored):
+   ?? pnpm-lock.yaml
+== victim (outside the root) after: ls: cannot access '/var/tmp/mth-run.O3Pyrz/claude-0/cbx.pldoGO/victim/node_modules': No such file or directory 
+EXIT=0

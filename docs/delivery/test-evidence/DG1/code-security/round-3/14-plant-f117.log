@@ -1,0 +1,117 @@
+$ bash plant-f117.sh $TMPDIR/rv
+# clone HEAD 4f486b962b0bee2c3a6cabf65696b678be712a34; current lint = candidate apps/api/src/architecture.testkit.ts; round-2 lint = 18c1e61
+
+ RUN  v3.2.4 /var/tmp/mth-run.O3Pyrz/claude-0/rv
+
+stdout | apps/api/src/zz-plant-f117.test.ts > F-DG1-117 plants > FIXED form is caught now: getBuiltinModule computed member
+[current] getBuiltinModule computed member: 2 violation(s) ["modules/access/zz-planted.ts: computed member of process (line 1) bypasses the module-interface check","modules/access/zz-planted.ts: createRequire (line 1) bypasses the module-interface check"]
+
+stdout | apps/api/src/zz-plant-f117.test.ts > F-DG1-117 plants > FIXED form was missed by the round-2 lint (fail-before): getBuiltinModule computed member
+[round2] getBuiltinModule computed member: 1 violation(s) ["modules/access/zz-planted.ts: createRequire (line 1) bypasses the module-interface check"]
+
+stdout | apps/api/src/zz-plant-f117.test.ts > F-DG1-117 plants > FIXED form is caught now: getBuiltinModule direct
+[current] getBuiltinModule direct: 2 violation(s) ["modules/access/zz-planted.ts: getBuiltinModule (line 1) bypasses the module-interface check","modules/access/zz-planted.ts: createRequire (line 1) bypasses the module-interface check"]
+
+stdout | apps/api/src/zz-plant-f117.test.ts > F-DG1-117 plants > FIXED form was missed by the round-2 lint (fail-before): getBuiltinModule direct
+[round2] getBuiltinModule direct: 1 violation(s) ["modules/access/zz-planted.ts: createRequire (line 1) bypasses the module-interface check"]
+
+stdout | apps/api/src/zz-plant-f117.test.ts > F-DG1-117 plants > FIXED form is caught now: new Function
+[current] new Function: 1 violation(s) ["modules/access/zz-planted.ts: code evaluation via Function (line 1) bypasses the module-interface check"]
+
+stdout | apps/api/src/zz-plant-f117.test.ts > F-DG1-117 plants > FIXED form was missed by the round-2 lint (fail-before): new Function
+[round2] new Function: 0 violation(s) []
+
+stdout | apps/api/src/zz-plant-f117.test.ts > F-DG1-117 plants > FIXED form is caught now: process alias
+[current] process alias: 1 violation(s) ["modules/access/zz-planted.ts: process used as a value (line 1) bypasses the module-interface check"]
+
+stdout | apps/api/src/zz-plant-f117.test.ts > F-DG1-117 plants > FIXED form was missed by the round-2 lint (fail-before): process alias
+[round2] process alias: 0 violation(s) []
+
+stdout | apps/api/src/zz-plant-f117.test.ts > F-DG1-117 plants > FIXED form is caught now: globalThis computed
+[current] globalThis computed: 2 violation(s) ["modules/access/zz-planted.ts: computed member of globalThis (line 1) bypasses the module-interface check","modules/access/zz-planted.ts: getBuiltinModule (line 1) bypasses the module-interface check"]
+
+stdout | apps/api/src/zz-plant-f117.test.ts > F-DG1-117 plants > FIXED form was missed by the round-2 lint (fail-before): globalThis computed
+[round2] globalThis computed: 0 violation(s) []
+
+stdout | apps/api/src/zz-plant-f117.test.ts > F-DG1-117 plants > RESIDUAL probe (records the outcome; passes either way): constructor via alias (AsyncFunction)
+[current] RESIDUAL constructor via alias (AsyncFunction): MISSED []
+
+stdout | apps/api/src/zz-plant-f117.test.ts > F-DG1-117 plants > RESIDUAL probe (records the outcome; passes either way): constructor via destructuring
+[current] RESIDUAL constructor via destructuring: MISSED []
+
+stdout | apps/api/src/zz-plant-f117.test.ts > F-DG1-117 plants > RESIDUAL probe (records the outcome; passes either way): constructor via Reflect.construct
+[current] RESIDUAL constructor via Reflect.construct: MISSED []
+
+stdout | apps/api/src/zz-plant-f117.test.ts > F-DG1-117 plants > RESIDUAL probe (records the outcome; passes either way): constructor via getPrototypeOf
+[current] RESIDUAL constructor via getPrototypeOf: MISSED []
+
+ ❯ |unit-node| apps/api/src/zz-plant-f117.test.ts (14 tests | 2 failed) 34ms
+   ✓ F-DG1-117 plants > FIXED form is caught now: getBuiltinModule computed member 10ms
+   × F-DG1-117 plants > FIXED form was missed by the round-2 lint (fail-before): getBuiltinModule computed member 8ms
+     → expected 1 to be +0 // Object.is equality
+   ✓ F-DG1-117 plants > FIXED form is caught now: getBuiltinModule direct 1ms
+   × F-DG1-117 plants > FIXED form was missed by the round-2 lint (fail-before): getBuiltinModule direct 2ms
+     → expected 1 to be +0 // Object.is equality
+   ✓ F-DG1-117 plants > FIXED form is caught now: new Function 1ms
+   ✓ F-DG1-117 plants > FIXED form was missed by the round-2 lint (fail-before): new Function 1ms
+   ✓ F-DG1-117 plants > FIXED form is caught now: process alias 1ms
+   ✓ F-DG1-117 plants > FIXED form was missed by the round-2 lint (fail-before): process alias 1ms
+   ✓ F-DG1-117 plants > FIXED form is caught now: globalThis computed 2ms
+   ✓ F-DG1-117 plants > FIXED form was missed by the round-2 lint (fail-before): globalThis computed 1ms
+   ✓ F-DG1-117 plants > RESIDUAL probe (records the outcome; passes either way): constructor via alias (AsyncFunction) 2ms
+   ✓ F-DG1-117 plants > RESIDUAL probe (records the outcome; passes either way): constructor via destructuring 1ms
+   ✓ F-DG1-117 plants > RESIDUAL probe (records the outcome; passes either way): constructor via Reflect.construct 1ms
+   ✓ F-DG1-117 plants > RESIDUAL probe (records the outcome; passes either way): constructor via getPrototypeOf 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| apps/api/src/zz-plant-f117.test.ts > F-DG1-117 plants > FIXED form was missed by the round-2 lint (fail-before): getBuiltinModule computed member
+ FAIL  |unit-node| apps/api/src/zz-plant-f117.test.ts > F-DG1-117 plants > FIXED form was missed by the round-2 lint (fail-before): getBuiltinModule direct
+AssertionError: expected 1 to be +0 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 0[39m
+[31m+ 1[39m
+
+ ❯ apps/api/src/zz-plant-f117.test.ts:39:24
+     37|       const v = round2("access", FILE, src);
+     38|       console.log(`[round2] ${name}: ${v.length} violation(s) ${JSON.s…
+     39|       expect(v.length).toBe(0);
+       |                        ^
+     40|     });
+     41|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 12 passed (14)
+   Start at  09:50:42
+   Duration  918ms (transform 119ms, setup 0ms, collect 598ms, tests 34ms, environment 0ms, prepare 62ms)
+
+# planted architecture.test.ts (candidate suite) with a real planted module file - must FAIL:
+   ✓ API module boundaries (ADR-0002) > has only mapped module directories, and every P1 module has a public index.ts 2ms
+   ✓ API module boundaries (ADR-0002) > the six §16 business modules all exist, each with its own test suite (A12; D-048) 4ms
+   × API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages 187ms
+   ✓ API module boundaries (ADR-0002) > the declared module graph is acyclic, and audit/access depend on no business module 2ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109 and F-DG1-117) > A static deep import is a violation 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109 and F-DG1-117) > A2 type-only deep import is a violation 0ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109 and F-DG1-117) > B dynamic import, literal is a violation 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109 and F-DG1-117) > B2 dynamic import, template literal is a violation 0ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109 and F-DG1-117) > C re-export is a violation 0ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109 and F-DG1-117) > D createRequire is a violation 0ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109 and F-DG1-117) > D2 node:module itself is a violation 0ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109 and F-DG1-117) > D3 createRequire via namespace is a violation 0ms
+architecture.test.ts with plant: exit=1
+      Tests  46 passed (46)
+architecture.test.ts after removing plant: exit=0
+EXIT=1
+loaded via AsyncFunction alias: internal-of-other-module
+runtime probe exit=0
+# Reviewer note: the 2 "fail-before" test failures for the getBuiltinModule plants are an artefact of the plant text,
+# which also contained `createRequire` (already caught in round 2, F-DG1-109). The F-DG1-117-specific detections
+# ("computed member of process", "getBuiltinModule") appear only in the [current] output, so fail-before/pass-after holds.
+# RESIDUAL: the 4 aliased `.constructor` forms (AsyncFunction constructor not called directly) are MISSED by the current
+# lint, and the runtime probe above shows that form performs a dynamic import in Node 22 (new Low finding).

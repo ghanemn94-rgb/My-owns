@@ -1,0 +1,152 @@
+$ node deploy/scripts/pin-images.mjs --check   # clone 4f486b9 (no registry access in reviewer sandbox)
+PINNED     node-runtime (production) node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+PINNED     postgres (production) postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722
+BLOCKED    keycloak (test-ci) quay.io/keycloak/keycloak:26.4: BLOCKED: --resolve at 2026-10-01T07:30:37.561Z could not reach the registry: ERROR: failed to do request: Head "https://quay.io/v2/keycloak/keycloak/manifests/26.4": Forbidden
+PINNED     playwright (test-ci) mcr.microsoft.com/playwright:v1.56.1-noble@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+FAIL: keycloak (quay.io/keycloak/keycloak:26.4): BLOCKED, not pinned — BLOCKED: --resolve at 2026-10-01T07:30:37.561Z could not reach the registry: ERROR: failed to do request: Head "https://quay.io/v2/keycloak/keycloak/manifests/26.4": Forbidden
+FAIL: deploy/compose/compose.yaml: quay.io/keycloak/keycloak:26.4 has no digest
+2 problem(s). Pin with (registry access; orchestrator/IT): node deploy/scripts/pin-images.mjs --resolve && node deploy/scripts/pin-images.mjs --apply
+EXIT=1
+
+$ node -e (print deploy/images.lock.json entries)
+{
+ "$comment": "Container images used by the build, Compose and CI (ADR-0011/0012/0005). Every reference must be pinned BY DIGEST: `node deploy/scripts/pin-images.mjs --resolve [id...]` (needs registry access; an ORCHESTRATOR/IT step, D-049 — agent sandboxes have no network) fills `digest` + `verifiedAt`, `--apply` rewrites every file in `usedIn`, and `--check` (offline) fails while any digest is missing, any file disagrees with this lock, or a scanned file references an image not listed here. A null digest means NOT PINNED; it is never a pass. `blockedReason` (null unless set by --resolve) records a registry the environment's network policy denies: the image is reported BLOCKED, still not pinned, and --check still fails. Never fabricate a digest. `scope`: production = shipped/run in production (mth-app base image, product database); test-ci = test IdP and CI-only images. Tags and support windows are [UNVERIFIED] until --resolve records `verifiedAt`.",
+ "images": [
+  {
+   "id": "node-runtime",
+   "ref": "node",
+   "tag": "24-bookworm-slim",
+   "scope": "production",
+   "digest": "sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6",
+   "verifiedAt": "2026-10-01T07:30:34.637Z",
+   "blockedReason": null,
+   "license": "MIT (Node.js); Debian packages under their own licences",
+   "role": "base image of mth-app (build and runtime stages)",
+   "usedIn": [
+    "deploy/docker/Dockerfile"
+   ]
+  },
+  {
+   "id": "postgres",
+   "ref": "postgres",
+   "tag": "18",
+   "scope": "production",
+   "digest": "sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722",
+   "verifiedAt": "2026-10-01T07:30:37.169Z",
+   "blockedReason": null,
+   "license": "PostgreSQL",
+   "role": "product database for Compose and CI (ADR-0003)",
+   "usedIn": [
+    "deploy/compose/compose.yaml",
+    ".github/workflows/ci.yml"
+   ]
+  },
+  {
+   "id": "keycloak",
+   "ref": "quay.io/keycloak/keycloak",
+   "tag": "26.4",
+   "scope": "test-ci",
+   "digest": null,
+   "verifiedAt": null,
+   "blockedReason": "BLOCKED: --resolve at 2026-10-01T07:30:37.561Z could not reach the registry: ERROR: failed to do request: Head \"https://quay.io/v2/keycloak/keycloak/manifests/26.4\": Forbidden",
+   "license": "Apache-2.0",
+   "role": "TEST identity provider only (Compose profile test-idp); production uses Mobily's corporate IdP (ADR-0005)",
+   "usedIn": [
+    "deploy/compose/compose.yaml"
+   ]
+  },
+  {
+   "id": "playwright",
+   "ref": "mcr.microsoft.com/playwright",
+   "tag": "v1.56.1-noble",
+   "scope": "test-ci",
+   "digest": "sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a",
+   "verifiedAt": "2026-10-01T07:30:39.136Z",
+   "blockedReason": null,
+   "license": "Apache-2.0 (Playwright); browsers under their own licences",
+   "role": "CI e2e container with baked-in browsers matching @playwright/test 1.56.1 (ADR-0012)",
+   "usedIn": [
+    ".github/workflows/ci.yml"
+   ]
+  }
+ ]
+}
+
+$ grep -n image: deploy/compose/compose.yaml .github/workflows/ci.yml deploy/docker/Dockerfile; grep -n FROM deploy/docker/Dockerfile
+deploy/compose/compose.yaml:25:  image: ${MTH_APP_IMAGE:-mth-app:local}
+deploy/compose/compose.yaml:39:    image: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722
+deploy/compose/compose.yaml:127:    image: quay.io/keycloak/keycloak:26.4
+.github/workflows/ci.yml:75:        image: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722 # devops-engineer: pin by digest (ADR-0003/ADR-0011)
+.github/workflows/ci.yml:108:      image: mcr.microsoft.com/playwright:v1.56.1-noble@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a # devops-engineer: pin by digest
+.github/workflows/ci.yml:117:        image: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722 # devops-engineer: pin by digest
+24:ARG NODE_IMAGE=node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+27:FROM ${NODE_IMAGE} AS build
+62:FROM ${NODE_IMAGE} AS runtime
+
+$ node --test deploy/scripts/tests/pin-images.test.mjs
+# tests 13
+# pass 13
+# fail 0
+EXIT=0
+
+--- CI images job (pin steps):
+  images:
+    needs: [integration, e2e]
+    runs-on: ubuntu-24.04
+    env:
+      MTH_APP_IMAGE: mth-app:ci-${{ github.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+      - name: pnpm at the packageManager version (real binary on PATH; no install scripts)
+        run: npm install --global --ignore-scripts "$(node -p 'require("./package.json").packageManager.split("+")[0]')"
+      - name: bubblewrap for the sandboxed installer (ephemeral runner; allow unprivileged user namespaces for bwrap)
+        run: |
+          sudo apt-get update -q && sudo apt-get install -y -q --no-install-recommends bubblewrap
+          if [ -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]; then
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
+      - name: Install (sandboxed, frozen lockfile; BLOCKED without bubblewrap - never an unsandboxed fallback)
+        run: deploy/scripts/ci-install-deps.sh
+      - name: Deploy tooling self-tests (check-ci-needs negatives incl. status-function and gate-context bypasses; pin-images BLOCKED and --missing paths)
+        run: node --test deploy/scripts/tests/check-ci-needs.test.mjs deploy/scripts/tests/pin-images.test.mjs
+      - name: CI structure (gated on delivery-gates success; sandboxed installs only; actions pinned by SHA)
+        run: node deploy/scripts/check-ci-needs.mjs
+      - name: .env.example equals the ENV_VARS catalogue (names only, no values)
+        run: node deploy/scripts/generate-env-example.mjs --check
+      - name: SBOM and licence inventory match the lockfile
+        run: node licenses/generate-sbom.mjs --check
+      # F-DG1-108/F-DG1-203, D-049: the committed lock records the TEST-ONLY keycloak image (Compose profile test-idp)
+      # as BLOCKED (null digest) because the build environment's egress policy denies quay.io. GitHub-hosted runners
+      # reach quay.io, so this step resolves ONLY images still missing a digest, live, and applies the digest to the
+      # workspace copy. Where the registry is unreachable it exits 1 (BLOCKED) and the job fails: no digest is ever
+      # fabricated and --check never passes on a null digest. The resolved lock is kept in the stack-evidence artifact
+      # so IT can review and commit the pin.
+      - name: Resolve and pin images still missing a digest (live registry lookup; test-only keycloak)
+        run: |
+          node deploy/scripts/pin-images.mjs --resolve --missing
+          node deploy/scripts/pin-images.mjs --apply
+          mkdir -p stack-evidence
+          cp deploy/images.lock.json stack-evidence/images.lock.ci-resolved.json
+      - name: Container images pinned by digest (deploy/images.lock.json)
+        run: node deploy/scripts/pin-images.mjs --check
+      - name: Build the application image (non-root; api | worker | migrate)
+        run: deploy/scripts/build-image.sh --tag "$MTH_APP_IMAGE"
+      - name: Compose clean start, Keycloak test-IdP login smoke, no-egress smoke
+        run: deploy/scripts/verify-stack.sh --skip-build --evidence-dir stack-evidence
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2 - same pin as e2e; re-verify
+        with:
+          name: stack-evidence
+          path: stack-evidence/
+          retention-days: 14
+      # Push only from protected branches, and only when Mobily IT's registry is configured (repository variable
+      # MTH_REGISTRY, secrets MTH_REGISTRY_USER / MTH_REGISTRY_PASSWORD). Nothing is pushed to a public registry.
+      - name: Push to IT's registry (protected branches only)
+        if: github.event_name == 'push' && github.ref_protected && vars.MTH_REGISTRY != ''
+        env:
+          REGISTRY: ${{ vars.MTH_REGISTRY }}
+          REGISTRY_USER: ${{ secrets.MTH_REGISTRY_USER }}
+          REGISTRY_PASSWORD: ${{ secrets.MTH_REGISTRY_PASSWORD }}
