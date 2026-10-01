@@ -275,7 +275,7 @@ test.describe('P6 project configuration — template upgrade, RAG thresholds, se
   test('(b) REQ-PLN-019 / DOM-P2-08: a RAG threshold change proposed by the project manager is not in force until the portfolio administrator approves it; the Health tab names the threshold version in force', async ({ browser, baseURL }, testInfo) => {
     test.setTimeout(240_000);
     const v2 = await templateVersion(baseURL!, 'general-transformation', 2);
-    const np = await newProject(baseURL!, `P6R-${RUN}`, v2, `E2E RAG thresholds project ${RUN} (synthetic)`);
+    const np = await newProject(baseURL!, `P6R-${RUN}`, v2, `E2E P6R project ${RUN} (synthetic)`);
     const health = async (page: Page) => {
       await page.goto(`/projects/${np}/plan?tab=health`);
       await expect(page.getByTestId('health-tab')).toBeVisible();
@@ -369,7 +369,7 @@ test.describe('P6 project configuration — template upgrade, RAG thresholds, se
   test('(c) REQ-SET-015 / REQ-SET-016 / REQ-SET-007: wizard step 7 records confidentiality and retention with AI Off and the real integration status; step 8 refuses the launch while a required approval is open, the onboarding checklist tracks each approval given through its own command, and monitoring launches with the remaining gaps acknowledged', async ({ browser, baseURL }, testInfo) => {
     test.setTimeout(420_000);
     const v2 = await templateVersion(baseURL!, 'general-transformation', 2);
-    const np = await newProject(baseURL!, `P6W-${RUN}`, v2, `E2E launch project ${RUN} (synthetic)`);
+    const np = await newProject(baseURL!, `P6W-${RUN}`, v2, `E2E P6W project ${RUN} (synthetic)`);
     const base = `/api/v1/projects/${np}`;
     const setupState = () => withClient(baseURL!, P.pm, (c) => c.get<{ status: string; version: number; integrations: { status: string }[]; checklist: { blockingGaps: string[]; warnings: string[] }; launch: { acknowledgedGaps: string[] } | null }>(`${base}/setup`));
     const integrations = (await setupState()).integrations;
@@ -526,14 +526,14 @@ test.describe('P6 project configuration — template upgrade, RAG thresholds, se
       await launchButton.click();
       const dialog = page.getByRole('dialog');
       await expect(dialog).toContainText('The project leaves setup and becomes Active.');
-      await expect(dialog).toContainText('Recorded with the launch as acknowledged gaps: No source registered and Retention to be confirmed.');
+      await expect(dialog).toContainText('Recorded with the launch as acknowledged gaps: No source registered, Retention to be confirmed.');
       await checkDialogA11y(page, dialog, 'p6w-launch-dialog');
       await dialog.getByLabel(/^Note/).fill(`Sources and retention to be completed after launch (E2E ${RUN}, synthetic)`);
       await confirm(page, 'Launch monitoring');
       const launched = page.getByTestId('wizard-launched');
       await expect(launched).toContainText('Monitoring launched');
       await expect(launched).toContainText('Launched by Demo Project Manager');
-      await expect(launched).toContainText('Acknowledged gaps at launch: No source registered and Retention to be confirmed');
+      await expect(launched).toContainText('Acknowledged gaps at launch: No source registered, Retention to be confirmed');
       await expect(page.getByTestId('wizard-launch')).toHaveCount(0);
       await page.screenshot({ path: join(SHOTS, 'p6w-launched-en.png'), fullPage: true });
       expect(launch.problems(), launch.problems().join('\n')).toEqual([]);

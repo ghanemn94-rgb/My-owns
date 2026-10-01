@@ -303,3 +303,32 @@ describe('AT-26 / QA-P5-07 — the shipped general-transformation version 2 (Ara
     expect({ ...after, version: before.version }).toEqual(before); // no record created, changed or removed
   });
 });
+
+describe('REQ-ENT-008 — a project stays on its template version when a newer version is published [AT-26]', () => {
+  it('UT: publishing new version leaves existing project on old version — nothing in the project changes; the version is only offered as an upgrade', async () => {
+    // A second synthetic template with only version 1 published; a project is created on it, THEN version 2 is published.
+    const org = (await owner().query(`select org_id from project where code = $1`, [DC])).rows[0].org_id as string;
+    const t = (await owner().query(`insert into project_template (id, org_id, key, kind, name, description) values (gen_random_uuid(), $1, 'zz-test-publish', 'general_transformation', 'Publish test template (synthetic)', 'REQ-ENT-008 integration test') returning id`, [org])).rows[0].id as string;
+    const ins = async (n: number, def: unknown) =>
+      (
+        await owner().query(
+          `insert into project_template_version (id, org_id, template_id, version_no, status, definition, definition_hash, change_summary, published_at)
+           values (gen_random_uuid(), $1, $2, $3, 'published'::template_version_status, $4, $5, 'synthetic test version', now()) returning id`,
+          [org, t, n, JSON.stringify(def), `test-publish-hash-${n}`],
+        )
+      ).rows[0].id as string;
+    const v1 = { ...structuredClone(gen1), key: 'zz-test-publish' } as ProjectTemplateDefinition;
+    const p1 = await ins(1, v1);
+    const pid = await newProject('ENT8-PUB', p1);
+    const before = await snapshot(pid);
+    const p2 = await ins(2, v2Of(v1));
+    const after = await snapshot(pid);
+    expect(after).toEqual(before);
+    expect(after.version).toBe(p1);
+    const list = (await pm.get(`/api/v1/projects/${pid}/template-upgrades`).expect(200)).body;
+    expect(list.current).toMatchObject({ templateKey: 'zz-test-publish', versionNo: 1, versionId: p1 });
+    expect(list.available.map((v: { versionId: string }) => v.versionId)).toEqual([p2]);
+    expect(list.items).toEqual([]);
+    expect((await pm.get(`/api/v1/projects/${pid}`).expect(200)).body.templateVersionNo).toBe(1);
+  });
+});

@@ -62,7 +62,10 @@ export function DeploymentTab({ allowed }: { allowed: boolean }) {
       </p>
       <Group title={t('config.admin.deployment.platform')} testId="deployment-platform">
         <Row label={t('config.admin.deployment.appName')}>
-          <span dir="auto">{d.appName}</span>
+          {/* The configured value (HUB_APP_NAME), shown as configured — not a UI text. */}
+          <span dir="auto" data-user-text>
+            {d.appName}
+          </span>
         </Row>
         <Row label={t('config.admin.deployment.mode')} testId="deployment-mode">
           <StatusBadge enumName="deploymentModes" value={d.mode} tone={d.mode === 'demo' ? 'warning' : 'info'} />
