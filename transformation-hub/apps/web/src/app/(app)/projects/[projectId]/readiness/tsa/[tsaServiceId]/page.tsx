@@ -20,6 +20,7 @@ import { useToast } from '@/components/Toast';
 import { btn } from '@/components/ui';
 import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api, isApiError } from '@/lib/api';
+import { useServerMessages } from '@/lib/i18n-data';
 import { useProjectContext } from '@/lib/project-context';
 import { rdHref, rk, useReadinessRefresh, type TsaServiceDetail } from '@/lib/readiness';
 import { ButtonRow, Callout, CmdButton, DecisionIssue, DecisionSelect, Facts, Money, Panel, Person, RdCommandDialog, UText, useScopeLabels } from '../../_components/rd';
@@ -77,7 +78,7 @@ function TsaDialogs({ x, cmd, onClose }: { x: TsaServiceDetail; cmd: Cmd; onClos
           {...common}
           title={t('readiness.tsaDetail.transition.title')}
           confirmLabel={t('readiness.tsaDetail.transition.confirm')}
-          noteMode={command === 'record_breach' || command === 'remedy_breach' ? 'required' : 'optional'}
+          noteMode={command === 'record_breach' || command === 'remedy_breach' || command === 'accelerate_exit' ? 'required' : 'optional'}
           confirmDisabled={!command}
           consequences={[t('readiness.tsaDetail.transition.effect'), t('common.command.audited')]}
           onConfirm={async ({ note }) => {
@@ -228,6 +229,7 @@ export default function TsaServicePage() {
   const { t, tStatus, formatDate, formatDateTime } = useI18n();
   const { projectId, can, me } = useProjectContext();
   const { wsName } = useScopeLabels();
+  const serverText = useServerMessages();
   const [cmd, setCmd] = useState<Cmd>(null);
   const q = useQuery({ queryKey: rk.tsa(projectId, tsaServiceId), queryFn: ({ signal }) => api(readinessRoutes.getTsaService, { params: { projectId, tsaServiceId }, signal }) });
   const base = rdHref(projectId);
@@ -294,12 +296,18 @@ export default function TsaServicePage() {
                   </Link>
                   <StatusBadge enumName="escalationStatuses" value={x.escalation.status} />
                 </p>
-                <p dir="auto" className="whitespace-pre-wrap">
-                  {x.escalation.requestedAction}
+                {/* QA-P34-01b: the server's requested action and routing target are translated from their codes; the recorded data
+                    inside them (TSA name, committee, failure summary) is shown as entered. */}
+                <p dir={x.escalation.requestedActionI18n.length ? undefined : 'auto'} className="whitespace-pre-wrap" data-testid="tsa-escalation-action">
+                  {serverText(x.escalation.requestedActionI18n, x.escalation.requestedAction)}
                 </p>
                 <Facts
                   items={[
-                    { label: t('readiness.tsaDetail.escalation.target'), value: <UText value={x.escalation.target} />, wide: true },
+                    {
+                      label: t('readiness.tsaDetail.escalation.target'),
+                      value: x.escalation.targetI18n.length ? <span data-testid="tsa-escalation-target">{serverText(x.escalation.targetI18n, x.escalation.target)}</span> : <UText value={x.escalation.target} />,
+                      wide: true,
+                    },
                     { label: t('readiness.tsaDetail.escalation.deadline'), value: <span className="tabular">{formatDate(x.escalation.decisionDeadline)}</span> },
                   ]}
                 />

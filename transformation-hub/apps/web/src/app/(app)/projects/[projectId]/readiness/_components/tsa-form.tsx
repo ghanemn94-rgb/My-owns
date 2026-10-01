@@ -121,7 +121,7 @@ export function tsaBody(f: TsaForm, original: TsaServiceDetail | null) {
 
 export function TsaFields({ form, onChange, datesLocked = false, chargeRedacted = false }: { form: TsaForm; onChange: (f: TsaForm) => void; datesLocked?: boolean; chargeRedacted?: boolean }) {
   const { t } = useI18n();
-  const { workstreams } = useScopeLabels();
+  const { workstreams, wsName } = useScopeLabels();
   const set = <K extends keyof TsaForm>(k: K, v: TsaForm[K]) => onChange({ ...form, [k]: v });
   const text = (k: keyof TsaForm, label: string, area = false, testId?: string) =>
     area ? (
@@ -141,7 +141,7 @@ export function TsaFields({ form, onChange, datesLocked = false, chargeRedacted 
         <option value="">{t('readiness.common.notSet')}</option>
         {workstreams.map((w) => (
           <option key={w.id} value={w.id}>
-            {w.code} — {w.name}
+            {wsName(w.id)}
           </option>
         ))}
       </SelectField>
@@ -158,9 +158,11 @@ export function TsaFields({ form, onChange, datesLocked = false, chargeRedacted 
       {text('terminationTerms', t('readiness.tsa.fields.terminationTerms'), true)}
       {text('residualRisks', t('readiness.tsa.fields.residualRisks'), true)}
       <label className="inline-flex items-center gap-2 text-sm sm:col-span-2">
-        <input type="checkbox" checked={form.isEnduringArrangement} onChange={(e) => set('isEnduringArrangement', e.target.checked)} />
+        {/* DOM-P3-15: part of the approved terms — locked with the dates once the terms are approved. */}
+        <input type="checkbox" checked={form.isEnduringArrangement} disabled={datesLocked} onChange={(e) => set('isEnduringArrangement', e.target.checked)} />
         {t('readiness.tsa.fields.enduring')}
       </label>
+      {datesLocked ? <p className="text-xs text-muted sm:col-span-2">{t('readiness.tsa.fields.enduringLocked')}</p> : null}
     </div>
   );
 }

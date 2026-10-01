@@ -18,6 +18,7 @@ import {
   type AgreementCommandInput,
   type RegisterReconItem,
   type TransferCommandInput,
+  scopeEntryTransferReset,
 } from './perimeter';
 import { assertDay1ContractPosition, computeStatusDimensions, perimeterChangeRequiresChangeRequest, reconcilePerimeter } from './carveout';
 
@@ -27,6 +28,7 @@ const transfer = (o: Partial<TransferCommandInput>): TransferCommandInput => ({
   command: 'plan',
   aspect: 'legal',
   current: 'not_started',
+  otherAspect: 'not_started',
   disposition: 'included',
   itemType: 'asset',
   mechanism: 'Asset transfer agreement (proposed)',
@@ -283,5 +285,14 @@ describe('REQ-AGR-001/002/003 — agreements', () => {
     expect(() => assertAgreementCommand(a({ signingDate: '2027-01-01' }))).toThrow(/future/);
     expect(() => assertAgreementCommand(a({ command: 'record_effective', stage: 'signed', effectiveDate: '2026-10-01' }))).toThrow(/precede/);
     expect(() => assertAgreementCommand(a({ command: 'record_signing', stage: 'drafting' }))).toThrow(/Cannot record_signing/);
+  });
+});
+
+describe('DOM-P34R-05 — "not applicable" set out of scope does not enter the transferring scope', () => {
+  it('entering the scope resets every not-applicable aspect; staying in / out of scope resets nothing', () => {
+    expect(scopeEntryTransferReset({ fromDisposition: 'excluded', toDisposition: 'included', legal: 'not_applicable', economic: 'not_applicable' })).toEqual(['legal', 'economic']);
+    expect(scopeEntryTransferReset({ fromDisposition: 'pending', toDisposition: 'shared', legal: 'not_started', economic: 'not_applicable' })).toEqual(['economic']);
+    expect(scopeEntryTransferReset({ fromDisposition: 'shared', toDisposition: 'included', legal: 'not_applicable', economic: 'not_started' })).toEqual([]);
+    expect(scopeEntryTransferReset({ fromDisposition: 'excluded', toDisposition: 'pending', legal: 'not_applicable', economic: 'not_applicable' })).toEqual([]);
   });
 });

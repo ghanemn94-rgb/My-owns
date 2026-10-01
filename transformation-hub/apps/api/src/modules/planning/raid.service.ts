@@ -25,6 +25,7 @@ import type {
   UpdateIssueBody,
   CreateAssumptionBody,
   UpdateAssumptionBody,
+  SetAssumptionVerificationBody,
   CreateRaidDependencyBody,
   UpdateRaidDependencyBody,
   RaiseIssueBody,
@@ -280,8 +281,33 @@ export class RaidService {
     const c = this.commonChanges(body);
     if (body.basis !== undefined) c['basis'] = body.basis;
     if (body.validationPlan !== undefined) c['validationPlan'] = body.validationPlan;
-    if (body.verificationStatus !== undefined) c['verificationStatus'] = body.verificationStatus;
     return this.finishUpdate(projectId, k, r, body.expectedVersion, c);
+  }
+
+  /**
+   * REQ-DAT-013: the verification status of an assumption (assumed / proposed / confirmed / conflicting / unknown) is set by
+   * this command with a reason — never by the generic PATCH. Same permission and reach as editing the assumption.
+   */
+  async setAssumptionVerification(ctx: RequestContext, projectId: string, id: string, body: z.infer<typeof SetAssumptionVerificationBody>) {
+    const p = await this.s.project(ctx, projectId);
+    const k = KINDS.assumptions;
+    const r = (await this.s.lockInProject(schema.assumption, projectId, id)) as unknown as AnyRaidRow & { verificationStatus: string };
+    this.s.assert(ctx, 'planning.raid.manage', p, { workstreamId: r.workstreamId, ownerUserIds: [r.ownerUserId, r.createdBy] });
+    this.s.assertVersion(r, body.expectedVersion, k.kind);
+    if (['closed', 'cancelled'].includes(r.status)) throw ruleViolation('raid.not_editable', `A ${r.status} item cannot be edited — reopen it first`);
+    if (r.verificationStatus === body.verificationStatus) throw ruleViolation('planning.assumption.verification_unchanged', `The assumption is already ${body.verificationStatus}`);
+    const row = await updateVersioned(this.s.db, schema.assumption, { id, projectId, expectedVersion: body.expectedVersion }, { verificationStatus: body.verificationStatus });
+    await this.audit.record({
+      action: 'planning.assumption.verification',
+      entityType: k.entityType,
+      entityId: id,
+      projectId,
+      before: { verificationStatus: r.verificationStatus },
+      after: { verificationStatus: body.verificationStatus },
+      reason: body.reason,
+    });
+    await this.versions.snapshot({ projectId, entityType: k.entityType, entityId: id, versionNo: row['version'] as number, snapshot: row, reason: body.reason });
+    return { id, verificationStatus: body.verificationStatus, version: row['version'] as number };
   }
 
   async updateDependency(ctx: RequestContext, projectId: string, id: string, body: z.infer<typeof UpdateRaidDependencyBody>) {

@@ -22,12 +22,14 @@ import { BackLink, Notice } from '@/components/planning/DetailShell';
 import { CodeLink, Fact, Section } from '@/components/planning/bits';
 import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
+import { useServerMessages } from '@/lib/i18n-data';
 import { ck, requirementHref, useFollowEvidence } from '@/lib/carveout';
 import { useProjectContext } from '@/lib/project-context';
 
 /** Legal entity: incorporation recorded vs verified (AT-06), evidence, linked approvals and history. */
 export default function LegalEntityPage() {
   const { t, tStatus, formatDateTime } = useI18n();
+  const serverText = useServerMessages();
   const { entityId } = useParams<{ entityId: string }>();
   const { projectId, can, me } = useProjectContext();
   useFollowEvidence(projectId);
@@ -169,7 +171,7 @@ export default function LegalEntityPage() {
               <ol className="space-y-1.5 text-sm" data-testid="entity-history">
                 {[...e.history].reverse().map((h) => (
                   <li key={h.versionNo}>
-                    <span className="font-medium tabular">{t('documents.versions.label', { version: h.versionNo })}</span> <span dir="auto">{h.reason ?? EM_DASH}</span>{' '}
+                    <span className="font-medium tabular">{t('documents.versions.label', { version: h.versionNo })}</span> <span dir={h.reasonI18n.length ? undefined : 'auto'}>{serverText(h.reasonI18n, h.reason) ?? EM_DASH}</span>{' '}
                     <span className="text-muted">
                       · <span dir="auto">{h.changedByName ?? EM_DASH}</span> · {formatDateTime(h.changedAt)}
                     </span>

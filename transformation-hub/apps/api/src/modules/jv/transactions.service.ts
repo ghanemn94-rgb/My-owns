@@ -17,11 +17,16 @@ import {
   assertCpDatesEditable,
   assertCpLongStopExtension,
   assertCpVerifiable,
+  assertChecklistNotRequiredDecision,
+  assertChecklistNotRequiredRequest,
+  CHECKLIST_NOT_REQUIRED_ACTION,
+  CHECKLIST_NOT_REQUIRED_FROM,
   assertCpWaivabilityDetermination,
   assertEventConfirmable,
   assertSigningGatePassed,
   assessCpLongStop,
   conflict,
+  forbidden,
   eventBlockers,
   notFound,
   parseMoney,
@@ -46,7 +51,7 @@ import { newId } from '../../platform/ids';
 import { nextCronRun } from '../../platform/jobs/worker.service';
 import { assertCurrentDecisionReliance, lockDecisionAndRecheck, registerDecisionUse, type RelianceRule } from '../governance/decision-reliance';
 import { WaiverService, WaiverRecord } from '../gates/waiver.service';
-import { JvSupport, ProjectRow, iso, money, versionUsable } from './jv.support';
+import { ApprovalRequestRow, JvSupport, ProjectRow, iso, money, versionUsable } from './jv.support';
 
 type Q<K extends keyof typeof jvRoutes> = RouteInput<(typeof jvRoutes)[K]>;
 type EventRow = typeof schema.closing.$inferSelect;
@@ -135,7 +140,8 @@ export class TransactionsService implements OnModuleInit {
     };
   }
 
-  private itemDto(i: ItemRow, evidence: { active: number; conflicting: number }) {
+  private itemDto(i: ItemRow, evidence: { active: number; conflicting: number }, notRequired: Map<string, ApprovalRequestRow> = new Map()) {
+    const nr = notRequired.get(i.id);
     return {
       id: i.id,
       eventId: i.closingId,
@@ -154,9 +160,26 @@ export class TransactionsService implements OnModuleInit {
       verifiedAt: iso(i.verifiedAt),
       statusNote: i.statusNote,
       evidence,
+      // SEC-P34-10: shown only while it applies to the item as it is now (same version, still open).
+      notRequiredRequest: nr && nr.subjectVersion === i.version && CHECKLIST_NOT_REQUIRED_FROM.includes(i.status) ? { requestId: nr.id, requestedBy: nr.requestedBy, requestedAt: nr.createdAt.toISOString(), reason: nr.note } : null,
       isDemo: i.isDemo,
       version: i.version,
     };
+  }
+
+  /** Pending "not required" requests of checklist items (SEC-P34-10), latest per item. */
+  private async notRequiredRequests(projectId: string, itemIds: string[]): Promise<Map<string, ApprovalRequestRow>> {
+    const out = new Map<string, ApprovalRequestRow>();
+    if (!itemIds.length) return out;
+    const A = schema.approvalRequest;
+    const rows = await this.s.db
+      .tx()
+      .select()
+      .from(A)
+      .where(and(eq(A.projectId, projectId), eq(A.subjectType, 'closing_deliverable'), inArray(A.subjectId, itemIds), eq(A.action, CHECKLIST_NOT_REQUIRED_ACTION), eq(A.status, 'pending')))
+      .orderBy(asc(A.createdAt), asc(A.id));
+    for (const r of rows) out.set(r.subjectId, r);
+    return out;
   }
 
   private cpDto(c: CpRow, evidence: { active: number; conflicting: number }, waiverEffective: boolean) {
@@ -363,6 +386,7 @@ export class TransactionsService implements OnModuleInit {
     const decision = await this.s.decisionRow(projectId, e.confirmationDecisionId);
     // Blockers use every piece of evidence (r.*Evidence); the displayed counters only what the caller may see.
     const itemEv = await this.s.visibleEvidenceMap(ctx, projectId, 'closing_deliverable', r.items.map((i) => i.id));
+    const itemNr = await this.notRequiredRequests(projectId, r.items.map((i) => i.id));
     const cpEv = await this.s.visibleEvidenceMap(ctx, projectId, 'closing_condition', r.cps.map((c) => c.id));
     const g5 = kind === 'signing' ? await this.s.gateCycle(projectId, SIGNING_GATE_KEY) : null;
     return {
@@ -380,11 +404,11 @@ export class TransactionsService implements OnModuleInit {
       allowedCommands: allowedCommands(CLOSING_MACHINE, e.status).filter((c) => c !== 'confirm'),
       blockers: r.blockers,
       ready: r.blockers.length === 0,
-      checklist: r.items.map((i) => this.itemDto(i, itemEv.get(i.id) ?? { active: 0, conflicting: 0 })),
+      checklist: r.items.map((i) => this.itemDto(i, itemEv.get(i.id) ?? { active: 0, conflicting: 0 }, itemNr)),
       conditions: r.cps.map((c) => this.cpDto(c, cpEv.get(c.id) ?? { active: 0, conflicting: 0 }, r.waiverOk.get(c.id) ?? false)),
       fundsFlows: flows.map((f) => this.flowDto(f)),
       closings: closings.map((c) => ({ id: c.id, code: c.code, status: c.status })),
-      people: await this.s.people([e.createdBy, e.confirmedBy, req?.requestedBy, ...r.items.flatMap((i) => [i.ownerUserId, i.deliveredBy, i.verifiedBy]), ...r.cps.flatMap((c) => [c.ownerUserId, c.verifiedBy, c.evidenceSubmittedBy])]),
+      people: await this.s.people([e.createdBy, e.confirmedBy, req?.requestedBy, ...r.items.flatMap((i) => [i.ownerUserId, i.deliveredBy, i.verifiedBy, itemNr.get(i.id)?.requestedBy]), ...r.cps.flatMap((c) => [c.ownerUserId, c.verifiedBy, c.evidenceSubmittedBy])]),
     };
   }
 
@@ -392,7 +416,8 @@ export class TransactionsService implements OnModuleInit {
     const e = await this.loadEvent(ctx, projectId, eventId, kind);
     const items = await this.s.db.tx().select().from(schema.closingDeliverable).where(and(eq(schema.closingDeliverable.projectId, projectId), eq(schema.closingDeliverable.closingId, e.id))).orderBy(asc(schema.closingDeliverable.code), asc(schema.closingDeliverable.id));
     const ev = await this.s.visibleEvidenceMap(ctx, projectId, 'closing_deliverable', items.map((i) => i.id));
-    return { eventId: e.id, kind: e.kind, items: items.map((i) => this.itemDto(i, ev.get(i.id) ?? { active: 0, conflicting: 0 })) };
+    const nr = await this.notRequiredRequests(projectId, items.map((i) => i.id));
+    return { eventId: e.id, kind: e.kind, items: items.map((i) => this.itemDto(i, ev.get(i.id) ?? { active: 0, conflicting: 0 }, nr)) };
   }
 
   async transitionEvent(ctx: RequestContext, projectId: string, eventId: string, body: Q<'transitionEvent'>['body']) {
@@ -549,9 +574,19 @@ export class TransactionsService implements OnModuleInit {
     return { id, code, version: 1 };
   }
 
+  /**
+   * SEC-P34R-02: JV closing records carry no workstream, so a workstream-scoped grant covers none of them. A caller who can
+   * neither read the deal register (project-wide `jv.deal.read`) nor holds the command permission project-wide gets 404 —
+   * the same answer as an unknown id — before any 403 check (no existence oracle).
+   */
+  private assertReachable(ctx: RequestContext, projectId: string, permission: string) {
+    if (!this.s.policy.permissionReach(ctx, 'jv.deal.read', projectId).all && !this.s.policy.permissionReach(ctx, permission, projectId).all) throw notFound();
+  }
+
   private async loadItem(ctx: RequestContext, projectId: string, id: string, permission: string) {
     if (this.s.policy.isRoomOnly(ctx.principal, projectId)) throw notFound();
     const i = await loadInProject(this.s.db, schema.closingDeliverable, projectId, id);
+    this.assertReachable(ctx, projectId, permission);
     this.s.policy.assertGranted(ctx, permission, { projectId }); // role-level; acceptance asserts not_self with the deliverer
     const e = await loadInProject(this.s.db, schema.closing, projectId, i.closingId);
     return { i, e };
@@ -579,21 +614,80 @@ export class TransactionsService implements OnModuleInit {
       const [d] = await this.s.db.tx().select({ deletedAt: schema.document.deletedAt }).from(schema.document).where(and(eq(schema.document.id, i.documentId), eq(schema.document.projectId, projectId)));
       usable = !!v && !!d && !d.deletedAt && versionUsable(v.scanStatus, this.s.config.storage.allowUnscanned);
     }
-    // Role → state (delivered, executed document usable: 422) → separation from the deliverer (not_self, I-R3).
+    // Role → state (delivered, executed document usable: 422) → separation from the owner, the deliverer (not_self, I-R3) and
+    // whoever linked active evidence of the item (SEC-P34-01).
+    const linkers = await this.s.evidenceLinkers(projectId, 'closing_deliverable', i.id);
     this.s.policy.assertApproval(ctx, 'jv.cp.verify', { projectId, requesterUserId: i.deliveredBy }, () =>
-      assertChecklistItemAcceptable({ status: i.status, executedVersionUsable: usable, acceptorUserId: ctx.principal.userId!, ownerUserId: i.ownerUserId, deliveredBy: i.deliveredBy }),
+      assertChecklistItemAcceptable({ status: i.status, executedVersionUsable: usable, acceptorUserId: ctx.principal.userId!, ownerUserId: i.ownerUserId, deliveredBy: i.deliveredBy, evidenceLinkerUserIds: linkers }),
     );
     const row = (await updateVersioned(this.s.db, schema.closingDeliverable, { id, projectId, expectedVersion: body.expectedVersion }, { status: 'verified', verifiedBy: ctx.principal.userId, verifiedAt: this.s.clock.now(), statusNote: body.note ?? i.statusNote })) as ItemRow;
     await this.s.audit.record({ action: 'jv.checklist_item.accept', entityType: 'closing_deliverable', entityId: id, projectId, before: { status: i.status }, after: { status: 'verified', executedVersionId: i.executedVersionId }, reason: body.note ?? null });
     return { id, status: row.status, version: row.version };
   }
 
+  /**
+   * SEC-P34-10: setting a deliverable "not required" removes its blocker, so one person only REQUESTS it (documented reason,
+   * bound to the item's current version); the item keeps its state and blocker until a second person holding `jv.cp.verify`
+   * confirms it (`decideItemNotRequired`). A request left pending on an earlier version of the item is invalidated here.
+   */
   async itemNotRequired(ctx: RequestContext, projectId: string, id: string, body: Q<'setChecklistItemNotRequired'>['body']) {
+    this.s.assertHuman(ctx, 'Requesting that a checklist item be set not required');
     const { i, e } = await this.loadItem(ctx, projectId, id, 'jv.closing_checklist.manage');
     await this.assertEventOpen(e);
-    if (i.status !== 'pending' && i.status !== 'delivered') throw ruleViolation('jv.checklist_item.invalid_state', `The item is ${i.status}`);
-    const row = (await updateVersioned(this.s.db, schema.closingDeliverable, { id, projectId, expectedVersion: body.expectedVersion }, { status: 'not_required', statusNote: body.reason })) as ItemRow;
-    await this.s.audit.record({ action: 'jv.checklist_item.not_required', entityType: 'closing_deliverable', entityId: id, projectId, before: { status: i.status }, after: { status: 'not_required' }, reason: body.reason });
+    assertVersion(i, body.expectedVersion, 'checklist item');
+    // Serialize concurrent requests on the same item (one pending request per item): row lock before the pending check.
+    await this.s.db.query('select 1 from closing_deliverable where id = $1 and project_id = $2 for update', [i.id, projectId]);
+    let pending = (await this.notRequiredRequests(projectId, [i.id])).get(i.id) ?? null;
+    if (pending && pending.subjectVersion !== i.version) {
+      await this.s.invalidateApproval(projectId, pending, 'the item changed after the request');
+      pending = null;
+    }
+    assertChecklistNotRequiredRequest({ status: i.status, reason: body.reason, pendingRequest: !!pending });
+    const approvalRequestId = await this.s.createApprovalRequest(ctx, projectId, {
+      subjectType: 'closing_deliverable',
+      subjectId: i.id,
+      subjectVersion: i.version,
+      action: CHECKLIST_NOT_REQUIRED_ACTION,
+      requiredPermission: 'jv.cp.verify',
+      payload: { itemId: i.id, code: i.code, eventId: e.id, status: i.status, reason: body.reason },
+      note: body.reason,
+    });
+    await this.s.audit.record({ action: 'jv.checklist_item.request_not_required', entityType: 'closing_deliverable', entityId: id, projectId, before: { status: i.status }, after: { status: i.status, approvalRequestId }, reason: body.reason });
+    return { id, status: i.status, version: i.version, approvalRequestId };
+  }
+
+  /**
+   * SEC-P34-10: the second person's decision — role (`jv.cp.verify`, human) → state (a pending request on the unchanged, still
+   * open item: 422) → separation of duties (never the requester: 403; unknown requester fails closed, I-R3). Confirming sets
+   * the item not required (its blocker goes); rejecting closes the request and leaves the item as it is.
+   */
+  async decideItemNotRequired(ctx: RequestContext, projectId: string, id: string, body: Q<'decideChecklistItemNotRequired'>['body']) {
+    this.s.assertHuman(ctx, 'Deciding on a "not required" request');
+    const { i, e } = await this.loadItem(ctx, projectId, id, 'jv.cp.verify');
+    await this.assertEventOpen(e);
+    const req = (await this.notRequiredRequests(projectId, [i.id])).get(i.id) ?? null;
+    this.s.policy.assertApproval(ctx, 'jv.cp.verify', { projectId, requesterUserId: req?.requestedBy ?? null }, () =>
+      assertChecklistNotRequiredDecision({
+        status: i.status,
+        requestPending: !!req,
+        requestedVersion: req?.subjectVersion ?? null,
+        currentVersion: i.version,
+        deciderUserId: ctx.principal.userId!,
+        requestedBy: req?.requestedBy ?? null,
+        decision: body.decision,
+        note: body.note,
+      }),
+    );
+    assertVersion(i, body.expectedVersion, 'checklist item');
+    const authority = 'jv.cp.verify — second person, not the requester (SEC-P34-10)';
+    if (body.decision === 'reject') {
+      await this.s.decideApproval(ctx, projectId, req!, 'reject', body.note ?? null, authority);
+      await this.s.audit.record({ action: 'jv.checklist_item.reject_not_required', entityType: 'closing_deliverable', entityId: id, projectId, before: { status: i.status }, after: { status: i.status, approvalRequestId: req!.id, requestedBy: req!.requestedBy }, reason: body.note ?? null });
+      return { id, status: i.status, version: i.version };
+    }
+    const row = (await updateVersioned(this.s.db, schema.closingDeliverable, { id, projectId, expectedVersion: body.expectedVersion }, { status: 'not_required', statusNote: req!.note })) as ItemRow;
+    await this.s.decideApproval(ctx, projectId, req!, 'approve', body.note ?? null, authority);
+    await this.s.audit.record({ action: 'jv.checklist_item.not_required', entityType: 'closing_deliverable', entityId: id, projectId, before: { status: i.status }, after: { status: 'not_required', approvalRequestId: req!.id, requestedBy: req!.requestedBy }, reason: req!.note });
     return { id, status: row.status, version: row.version };
   }
 
@@ -603,6 +697,7 @@ export class TransactionsService implements OnModuleInit {
   private async loadCp(ctx: RequestContext, projectId: string, id: string, permission: string, extra: Record<string, unknown> = {}): Promise<CpRow> {
     if (this.s.policy.isRoomOnly(ctx.principal, projectId)) throw notFound();
     const c = await loadInProject(this.s.db, schema.closingCondition, projectId, id);
+    this.assertReachable(ctx, projectId, permission); // SEC-P34R-02
     this.s.policy.assertGranted(ctx, permission, { projectId, ...extra }); // role-level; verify asserts not_self with the submitter
     return c;
   }
@@ -666,6 +761,11 @@ export class TransactionsService implements OnModuleInit {
     const project = await this.s.project(projectId);
     this.s.assertListable(ctx, projectId, 'jv.cp.manage');
     this.s.policy.assert(ctx, 'jv.cp.manage', { projectId });
+    // DOM-P34R-08 (DOM-P4-03 at creation; business-gates.md §7): that a condition precedent does NOT block the closing is a
+    // Legal specialist determination (`jv.cp.set_waivability`) — the CP manager creates conditions blocking.
+    if (body.blocking === false && !this.s.policy.canInProject(ctx, 'jv.cp.set_waivability', projectId)) {
+      throw forbidden('jv.cp.non_blocking_requires_specialist', 'Only the Legal specialist determines that a condition precedent does not block the closing: create it blocking (Legal records the determination)');
+    }
     const e = await loadInProject(this.s.db, schema.closing, projectId, body.closingId);
     if (e.kind !== 'closing') throw ruleViolation('jv.cp.closing_only', 'Conditions precedent belong to a closing (a signing has its own checklist)');
     await this.assertEventOpen(e);
@@ -894,7 +994,8 @@ export class TransactionsService implements OnModuleInit {
 
   /**
    * verifyCP: role → evidence and state (a refusal is logged against the CP) → separation of duties from the evidence
-   * submitter and the owner (policy not_self, fail-closed when the submitter is unknown — I-R3).
+   * submitter, the owner and every person who linked active evidence of the CP (SEC-P34-01) — policy not_self, fail-closed
+   * when the submitter is unknown (I-R3).
    */
   async verify(ctx: RequestContext, projectId: string, id: string, body: Q<'verifyCondition'>['body']) {
     this.s.assertHuman(ctx, 'Verifying a condition');
@@ -902,9 +1003,10 @@ export class TransactionsService implements OnModuleInit {
     await this.assertCpEditable(c);
     const cmd = body.outcome === 'reject_evidence' ? 'reject_evidence' : 'verify';
     const ev = await this.s.evidence(projectId, 'closing_condition', c.id);
+    const linkers = cmd === 'verify' ? await this.s.evidenceLinkers(projectId, 'closing_condition', c.id) : [];
     try {
       this.s.policy.assertApproval(ctx, 'jv.cp.verify', { projectId, requesterUserId: c.evidenceSubmittedBy }, () => {
-        if (cmd === 'verify') assertCpVerifiable({ activeEvidence: ev.active, verifierUserId: ctx.principal.userId!, ownerUserId: c.ownerUserId, evidenceSubmittedBy: c.evidenceSubmittedBy });
+        if (cmd === 'verify') assertCpVerifiable({ activeEvidence: ev.active, conflictingEvidence: ev.conflicting, verifierUserId: ctx.principal.userId!, ownerUserId: c.ownerUserId, evidenceSubmittedBy: c.evidenceSubmittedBy, evidenceLinkerUserIds: linkers });
         transition('closing_condition', CONDITION_MACHINE, c.status, cmd);
       });
     } catch (e) {

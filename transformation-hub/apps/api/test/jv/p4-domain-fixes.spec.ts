@@ -178,10 +178,23 @@ describe('DOM-P4-03 — only Legal determines CP blocking status and waivability
     expect(release2.status).toBe(422);
     expect(release2.body.details).toMatchObject({ waivable: true });
     expect((await event('closings', closing)).blockers.map((b: { ref: string }) => b.ref)).toContain(c.code);
-    const nb = await ok(await j.p.pm.post(`${P(pid)}/closing-conditions`, { closingId: closing, title: 'Information condition (synthetic)', ownerUserId: j.p.pm.userId, blocking: false }));
+    // DOM-P34R-08: a non-blocking CP is created by the Legal specialist (the CP manager creates conditions blocking).
+    const nb = await ok(await j.p.legal.post(`${P(pid)}/closing-conditions`, { closingId: closing, title: 'Information condition (synthetic)', ownerUserId: j.p.pm.userId, blocking: false }));
     await ok(await j.p.legal.post(`${P(pid)}/closing-conditions/${nb.id}/determine-waivability`, { expectedVersion: 1, blocking: true, waivable: false, waiverAuthorityRole: null, basis: 'A condition to closing per the agreement (test)' }));
     expect(await cpOf(nb.id)).toMatchObject({ blocking: true, waivabilityDeterminedBy: j.p.legal.userId });
     expect((await auditRows(pid, 'jv.cp.determine_waivability', nb.id)).map((a) => a.outcome)).toEqual(['success']);
+  });
+
+  it('DOM-P34R-08: the CP manager creates conditions blocking — a non-blocking CP is created only by the Legal specialist (403 for the PM, nothing created)', async () => {
+    const before = (await owner().query(`select count(*)::int as n from closing_condition where project_id = $1`, [pid])).rows[0].n as number;
+    const r = await j.p.pm.post(`${P(pid)}/closing-conditions`, { closingId: closing, title: 'Informational condition (synthetic, PM)', ownerUserId: j.p.pm.userId, blocking: false });
+    expect(r.status, JSON.stringify(r.body)).toBe(403);
+    expect(r.body.code).toBe('jv.cp.non_blocking_requires_specialist');
+    expect((await owner().query(`select count(*)::int as n from closing_condition where project_id = $1`, [pid])).rows[0].n).toBe(before);
+    const blocking = await ok(await j.p.pm.post(`${P(pid)}/closing-conditions`, { closingId: closing, title: 'Landlord consent (synthetic, PM)', ownerUserId: j.p.pm.userId }));
+    expect(await cpOf(blocking.id)).toMatchObject({ blocking: true, waivable: false });
+    const byLegal = await ok(await j.p.legal.post(`${P(pid)}/closing-conditions`, { closingId: closing, title: 'Informational condition (synthetic, Legal)', ownerUserId: j.p.pm.userId, blocking: false }));
+    expect(await cpOf(byLegal.id)).toMatchObject({ blocking: false });
   });
 });
 

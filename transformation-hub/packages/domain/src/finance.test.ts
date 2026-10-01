@@ -280,10 +280,12 @@ describe('REQ-FIN-009 — benefits realisation needs a verification source and a
     expect(code(() => assertRealizationRecordable({ actualValue: '12', realizedOn: '2026-10-01', verificationSource: 'Billing report (synthetic)', today: '2026-09-30' }))).toBe('rule_violation:finance.benefit.realized_in_future');
     expect(code(() => assertRealizationRecordable({ actualValue: '12', realizedOn: '2026-09-01', verificationSource: 'Billing report (synthetic)', today: '2026-09-30' }))).toBe('no error');
   });
-  it('the owner and the reporter cannot verify; service identities never verify', () => {
-    const b = { status: 'realized_unverified' as const, ownerUserId: 'owner', realizationRecordedBy: 'rep', verificationSource: 'Billing report (synthetic)' };
+  it('the owner, the reporter and the evidence linker cannot verify; service identities never verify', () => {
+    const b = { status: 'realized_unverified' as const, ownerUserId: 'owner', realizationRecordedBy: 'rep', verificationSource: 'Billing report (synthetic)', evidenceLinkerUserIds: ['linker'] };
     expect(code(() => assertBenefitVerifiable(b, { kind: 'user', userId: 'owner' }))).toBe('forbidden:finance.benefit.verify_self');
     expect(code(() => assertBenefitVerifiable(b, { kind: 'user', userId: 'rep' }))).toBe('forbidden:finance.benefit.verify_self');
+    // SEC-P34-01: whoever linked active evidence of the realization is "self" as well (access-matrix §5.1).
+    expect(code(() => assertBenefitVerifiable(b, { kind: 'user', userId: 'linker' }))).toBe('forbidden:finance.benefit.verify_self');
     expect(code(() => assertBenefitVerifiable(b, { kind: 'service', userId: null }))).toBe('forbidden:finance.human_required');
     expect(code(() => assertBenefitVerifiable({ ...b, status: 'tracking' }, { kind: 'user', userId: 'v' }))).toBe('rule_violation:finance.benefit.not_realized');
     expect(code(() => assertBenefitVerifiable(b, { kind: 'user', userId: 'v' }))).toBe('no error');

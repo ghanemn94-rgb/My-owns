@@ -353,6 +353,11 @@ export class JvController {
     return this.tx.itemNotRequired(ctx, i.params.projectId, i.params.itemId, i.body);
   }
 
+  @ApiRoute(R.decideChecklistItemNotRequired)
+  decideChecklistItemNotRequired(@Ctx() ctx: RequestContext, @Input() i: I<typeof R.decideChecklistItemNotRequired>) {
+    return this.tx.decideItemNotRequired(ctx, i.params.projectId, i.params.itemId, i.body);
+  }
+
   // ---- conditions precedent
   @ApiRoute(R.listConditions)
   listConditions(@Ctx() ctx: RequestContext, @Input() i: I<typeof R.listConditions>) {

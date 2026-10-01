@@ -77,6 +77,20 @@ export const REFUSAL_KEYS: Readonly<Record<string, Entry>> = {
   'governance.decision.subject_not_open': 'governance.refusal.codes.decision_subject_not_open',
   'governance.decision.subject_incomplete': 'governance.refusal.codes.decision_subject_incomplete',
   'governance.decision.incomplete_paper': 'governance.refusal.codes.decision_incomplete_paper',
+  // Agenda screening outcomes (REQ-GOV-012) and proposed meetings from the cadence (REQ-GOV-009)
+  'governance.agenda.merge_self': 'governance.refusal.codes.agenda_merge_self',
+  'governance.agenda.merge_other_committee': 'governance.refusal.codes.agenda_merge_other_committee',
+  'governance.agenda.merge_meeting_required': 'governance.refusal.codes.agenda_merge_meeting_required',
+  'governance.agenda.merge_other_meeting': 'governance.refusal.codes.agenda_merge_other_meeting',
+  'governance.agenda.merge_target_closed': 'governance.refusal.codes.agenda_merge_target_closed',
+  'governance.agenda.merge_decision_conflict': 'governance.refusal.codes.agenda_merge_decision_conflict',
+  'governance.agenda.merge_target_required': 'governance.refusal.codes.agenda_merge_target_required',
+  'governance.agenda.reason_required': 'governance.refusal.codes.agenda_reason_required',
+  'governance.agenda.meeting_proposed': 'governance.refusal.codes.agenda_meeting_proposed',
+  'governance.cadence.not_configured': 'governance.refusal.codes.cadence_not_configured',
+  'governance.cadence.monthly_day_unsupported': 'governance.refusal.codes.cadence_monthly_day_unsupported',
+  'governance.cadence.invalid_count': 'governance.refusal.codes.cadence_invalid_count',
+  'governance.cadence.start_in_past': 'governance.refusal.codes.cadence_start_in_past',
   // Change control within delegated authority (DOM-P2-03, DOM-P2R-02/-03/-04)
   'change_control.decision_no_subject': 'planning.refusal.codes.change_control_decision_no_subject',
   'change_control.decision_other_subject': 'planning.refusal.codes.change_control_decision_other_subject',
@@ -107,6 +121,13 @@ export const REFUSAL_KEYS: Readonly<Record<string, Entry>> = {
   'perimeter.version.decision_other_subject': 'carveout.versions.refusal.decisionOtherSubject',
   // DOM-P2F-08: a G1 paper must be raised for the perimeter version it approves
   'perimeter.version.decision_no_subject': 'carveout.versions.refusal.decisionNoSubject',
+  // "Transfer not applicable" on an in-scope item (DOM-P3-05), consent need (DOM-P3-15), legal reviewer (DOM-P3-17)
+  'transfer.not_applicable_specialist': 'carveout.transfer.refusal.notApplicableSpecialist',
+  'transfer.not_applicable_in_scope': 'carveout.transfer.refusal.notApplicableInScope',
+  'transfer.not_applicable_after_baseline': 'carveout.transfer.refusal.notApplicableAfterBaseline',
+  'transfer.not_applicable_not_in_scope': 'carveout.transfer.refusal.notApplicableNotInScope',
+  'perimeter.consent_required_by_class': 'carveout.item.refusal.consentRequiredByClass',
+  'agreement.legal_reviewer_not_legal': 'carveout.agreements.refusal.legalReviewerNotLegal',
   // Readiness decisions on the decision-use registry and the external-evidence re-check (DOM-P2F-09)
   'tsa.approve.decision_already_used': 'readiness.refusal.codes.tsa_approve_decision_already_used',
   'tsa.approve.decision_evidence_invalid': 'readiness.refusal.codes.tsa_approve_decision_evidence_invalid',
@@ -117,6 +138,25 @@ export const REFUSAL_KEYS: Readonly<Record<string, Entry>> = {
   'readiness.go_no_go.decision_already_used': 'readiness.refusal.codes.go_decision_already_used',
   'readiness.go_no_go.decision_evidence_invalid': 'readiness.refusal.codes.go_decision_evidence_invalid',
   'readiness.go_no_go.decision_other_subject': 'readiness.refusal.codes.go_decision_other_subject',
+  // Day-1 blockers keep blocking go-live (P3 domain review: DOM-P3-01, -02, -04)
+  'readiness.check.rebind_failed': 'readiness.refusal.codes.rebind_failed',
+  'readiness.check.rebind_plan_locked': 'readiness.refusal.codes.rebind_plan_locked',
+  'readiness.check.rebind_reason_required': 'readiness.refusal.codes.rebind_reason_required',
+  'readiness.determination.release_not_allowed': 'readiness.refusal.codes.determination_release_not_allowed',
+  'readiness.signoff.na_release_not_allowed': 'readiness.refusal.codes.signoff_na_release_not_allowed',
+  'readiness.execution_blocked': 'readiness.refusal.codes.execution_blocked',
+  // The plan's site is a scope command too (P3/P4 domain re-review: DOM-P34R-01)
+  'readiness.cutover.site_change_failed_check': 'readiness.refusal.codes.site_change_failed_check',
+  'readiness.cutover.site_reason_required': 'readiness.refusal.codes.site_reason_required',
+  // TSA extensions and guards (DOM-P3-06, -07, -13, -15, -17; SEC-P34-08)
+  'tsa.extension.terms_bound': 'readiness.refusal.codes.extension_terms_bound',
+  'tsa.extension.terms_mismatch': 'readiness.refusal.codes.extension_terms_mismatch',
+  'tsa.extension.end_date_past': 'readiness.refusal.codes.extension_end_date_past',
+  'tsa.extension.decision_other_tsa': 'readiness.refusal.codes.tsa_decision_other_tsa',
+  'tsa.approve.decision_other_tsa': 'readiness.refusal.codes.tsa_decision_other_tsa',
+  'tsa.activate.not_started': 'readiness.refusal.codes.activate_not_started',
+  'tsa.enduring_locked': 'readiness.refusal.codes.enduring_locked',
+  'readiness.classification_above_clearance': 'readiness.refusal.codes.classification_above_clearance',
   'gates.decide.decision_evidence_invalid': 'gates.refusal.decisionEvidenceInvalid',
   'gates.assessment.review_stale': 'gates.refusal.reviewStale',
   'gates.decide.decision_reused': 'gates.refusal.decisionReused',
@@ -190,6 +230,8 @@ export const REFUSAL_KEYS: Readonly<Record<string, Entry>> = {
   'jv.signing.g5_under_reassessment': 'jv.refusal.codes.signing_g5_under_reassessment',
   'jv.signing.decision_not_g5': 'jv.refusal.codes.signing_decision_not_g5',
   'jv.cp.blocking_release_not_allowed': (d) => ({ key: d?.['waivable'] === true ? 'jv.refusal.codes.cp_blocking_release_waivable' : 'jv.refusal.codes.cp_blocking_release_non_waivable' }),
+  // DOM-P34R-08: a non-blocking CP is created by the Legal specialist only
+  'jv.cp.non_blocking_requires_specialist': 'jv.refusal.codes.cp_non_blocking_requires_specialist',
   'jv.cp.validity_locked': 'jv.refusal.codes.cp_validity_locked',
   'jv.cp.long_stop_extension_required': 'jv.refusal.codes.cp_long_stop_extension_required',
   'jv.cp.extension_invalid_state': 'jv.refusal.codes.cp_extension_invalid_state',
@@ -207,6 +249,18 @@ export const REFUSAL_KEYS: Readonly<Record<string, Entry>> = {
   'jv.signing.decision_evidence_invalid': 'jv.refusal.codes.signing_decision_evidence_invalid',
   'jv.cp.decision_evidence_invalid': 'jv.refusal.codes.cp_decision_evidence_invalid',
   'jv.negotiation.decision_evidence_invalid': 'jv.refusal.codes.negotiation_decision_evidence_invalid',
+  // P3/P4 security review fixes: the evidence linker is "self" for a verification (SEC-P34-01); "not required" on a
+  // checklist item is decided by a second person (SEC-P34-10); only the requester shapes the paper (SEC-P34-13).
+  'jv.cp.self_verification': 'jv.refusal.codes.cp_self_verification',
+  'jv.cp.evidence_conflicting': 'jv.refusal.codes.cp_evidence_conflicting',
+  'jv.obligation.self_verification': 'jv.refusal.codes.obligation_self_verification',
+  'jv.checklist_item.self_acceptance': 'jv.refusal.codes.checklist_self_acceptance',
+  'jv.checklist_item.not_required_self': 'jv.refusal.codes.checklist_not_required_self',
+  'jv.checklist_item.not_required_stale': 'jv.refusal.codes.checklist_not_required_stale',
+  'jv.checklist_item.not_required_pending': 'jv.refusal.codes.checklist_not_required_pending',
+  'jv.checklist_item.no_not_required_request': 'jv.refusal.codes.checklist_no_not_required_request',
+  'governance.action.linker_verification': 'governance.refusal.codes.action_linker_verification',
+  'governance.decision.not_requester': 'governance.refusal.codes.decision_not_requester',
 };
 
 /** `(error) => translated explanation | null` for the active locale. */

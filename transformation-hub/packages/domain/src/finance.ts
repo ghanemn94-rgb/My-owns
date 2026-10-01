@@ -483,7 +483,19 @@ export function reconciliationState(r: { code: string; our: Money; their: Money 
  * Marking a reconciliation reconciled: the counterparty balance is recorded in the same currency and unit; a non-zero
  * difference needs an explanation (reconciling items); the reviewer is a human who did not prepare it.
  */
-export function assertReconcilable(r: { our: Money; their: Money | null; status: ReconciliationStatus; explanation: string | null; preparedBy: string | null; createdBy?: string | null }, actor: Actor): void {
+export function assertReconcilable(
+  r: {
+    our: Money;
+    their: Money | null;
+    status: ReconciliationStatus;
+    explanation: string | null;
+    preparedBy: string | null;
+    createdBy?: string | null;
+    /** DOM-P34R-09: every person who created or edited the reconciliation (its record history) — none of them reviews it. */
+    editorUserIds?: readonly (string | null)[];
+  },
+  actor: Actor,
+): void {
   assertHumanActor(actor, 'Reconciliation review');
   if (r.status === 'reconciled') throw ruleViolation('finance.recon.already_reconciled', 'The reconciliation is already reconciled');
   if (!r.their) throw ruleViolation('finance.recon.counterparty_missing', 'Record the counterparty balance before reconciling');
@@ -494,6 +506,9 @@ export function assertReconcilable(r: { our: Money; their: Money | null; status:
   if (actor.userId === r.preparedBy) throw forbidden('finance.recon.self', 'Separation of duties: the preparer cannot review the reconciliation');
   // DOM-P4-16: `preparedBy` is the LAST editor; the person who recorded the balance prepared it too and is never its reviewer.
   if (r.createdBy && actor.userId === r.createdBy) throw forbidden('finance.recon.self', 'Separation of duties: the person who recorded the balance cannot review the reconciliation');
+  if (actor.userId && (r.editorUserIds ?? []).includes(actor.userId)) {
+    throw forbidden('finance.recon.self', 'Separation of duties: a person who edited the reconciliation cannot review it');
+  }
 }
 
 // ---------------------------------------------------------------------------------------------------------
@@ -727,12 +742,16 @@ export function assertRealizationRecordable(r: { actualValue: string | null | un
 }
 
 /** Verification: a human who is neither the benefit owner nor the person who reported the realization; source present. */
-export function assertBenefitVerifiable(b: { status: BenefitStatus; ownerUserId: string | null; realizationRecordedBy: string | null; verificationSource: string | null }, actor: Actor): void {
+export function assertBenefitVerifiable(
+  b: { status: BenefitStatus; ownerUserId: string | null; realizationRecordedBy: string | null; verificationSource: string | null; evidenceLinkerUserIds: readonly string[] },
+  actor: Actor,
+): void {
   assertHumanActor(actor, 'Benefit verification');
   if (b.status !== 'realized_unverified') throw ruleViolation('finance.benefit.not_realized', `Only a reported realization can be verified (the benefit is ${b.status})`, { status: b.status });
   if (!b.verificationSource?.trim()) throw ruleViolation('finance.benefit.verification_source_required', 'A benefit realization needs its verification source');
-  if (actor.userId === b.ownerUserId || actor.userId === b.realizationRecordedBy) {
-    throw forbidden('finance.benefit.verify_self', 'Separation of duties: the benefit owner or the person who reported the realization cannot verify it');
+  // access-matrix §5.1 (SEC-P34-01): the owner, the reporter of the realization and whoever linked its active evidence.
+  if (actor.userId === b.ownerUserId || actor.userId === b.realizationRecordedBy || (!!actor.userId && b.evidenceLinkerUserIds.includes(actor.userId))) {
+    throw forbidden('finance.benefit.verify_self', 'Separation of duties: the benefit owner, the person who reported the realization or who linked or uploaded its evidence cannot verify it');
   }
 }
 

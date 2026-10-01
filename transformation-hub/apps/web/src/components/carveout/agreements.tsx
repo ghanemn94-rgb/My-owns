@@ -55,7 +55,7 @@ export function AgreementsRegister() {
     { key: 'draft', header: t('carveout.agreements.draft'), cell: (a) => <span dir="ltr">{a.currentDraftVersion ?? EM_DASH}</span> },
     { key: 'signed', header: t('carveout.agreements.signingDate'), cell: (a) => <DateText value={a.signingDate} /> },
     { key: 'cls', header: t('carveout.common.classification'), cell: (a) => tStatus('classifications', a.classification) },
-    { key: 'demo', header: '', cell: (a) => (a.isDemo ? <DemoBadge /> : null) },
+    { key: 'demo', header: t('common.table.demoColumn'), headerHidden: true, cell: (a) => (a.isDemo ? <DemoBadge /> : null) },
   ];
   return (
     <div className="space-y-3" data-testid="agreements">

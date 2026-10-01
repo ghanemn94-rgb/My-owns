@@ -6,6 +6,7 @@ import { carveoutRoutes as C, newcoRoutes as N } from '@hub/contracts';
 import { CONTRACT_TRANSFER_CLASSES, PERIMETER_DISPOSITIONS, type ContractTransferClass, type PerimeterDisposition } from '@hub/domain';
 import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
+import { useServerMessages } from '@/lib/i18n-data';
 import { ck, localToday, useRefreshCarveout, type PerimeterDetail, type TransferAspect, type TransferCmd, type TransferRecord } from '@/lib/carveout';
 import { useProjectContext } from '@/lib/project-context';
 import { ConfirmCommandDialog } from '../ConfirmCommandDialog';
@@ -32,8 +33,10 @@ export function TransferSection({ item }: { item: Item }) {
   const { can, me } = useProjectContext();
   const [cmd, setCmd] = useState<{ aspect: TransferAspect; command: TransferCmd } | null>(null);
   const [review, setReview] = useState<{ record: TransferRecord; kind: 'verify' | 'reject' } | null>(null);
+  const [determine, setDetermine] = useState<TransferAspect | null>(null);
   const canManage = can('carveout.transfer.manage');
   const canVerify = can('carveout.transfer.verify');
+  const inScope = item.disposition === 'included' || item.disposition === 'shared';
   // Only the latest report of each aspect can be reviewed, and only while that aspect awaits evidence review.
   const latestReport = (aspect: TransferAspect) => item.transfers.find((r) => r.aspect === aspect && r.command === 'report_transferred');
   return (
@@ -41,7 +44,13 @@ export function TransferSection({ item }: { item: Item }) {
       <TransferView transfer={item.transfer} />
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         {(['legal', 'economic'] as const).map((aspect) => {
-          const allowed = item.allowedTransferCommands[aspect].filter((c) => (ASPECT_CMDS as readonly string[]).includes(c)) as TransferCmd[];
+          const other = aspect === 'legal' ? item.transfer.economic : item.transfer.legal;
+          const machine = item.allowedTransferCommands[aspect].filter((c) => (ASPECT_CMDS as readonly string[]).includes(c)) as TransferCmd[];
+          // DOM-P3-05: on an included / shared item "not applicable" is never offered on both aspects; it is a change request
+          // (transfer manager) once the item is in the approved baseline, before that a specialist determination.
+          const naPossible = machine.includes('mark_not_applicable') && !(inScope && other === 'not_applicable');
+          const allowed = machine.filter((c) => c !== 'mark_not_applicable' || (naPossible && (!inScope || item.inApprovedBaseline)));
+          const specialistNa = naPossible && inScope && !item.inApprovedBaseline && canVerify;
           const report = latestReport(aspect);
           const status = aspect === 'legal' ? item.transfer.legal : item.transfer.economic;
           const reviewable = report && (status === 'transferred_pending_evidence' || status === 'transferred_verified');
@@ -74,6 +83,11 @@ export function TransferSection({ item }: { item: Item }) {
                       </button>
                     ))
                   : null}
+                {specialistNa ? (
+                  <button type="button" className={btn.secondary} data-command={`${aspect}:determine_not_applicable`} onClick={() => setDetermine(aspect)}>
+                    {t('carveout.transfer.cmd.determine_not_applicable')}
+                  </button>
+                ) : null}
                 {reviewable && canVerify && report.recordedBy !== me.user.id ? (
                   <>
                     {status === 'transferred_pending_evidence' ? (
@@ -94,7 +108,35 @@ export function TransferSection({ item }: { item: Item }) {
       </div>
       {cmd ? <TransferCommandDialog item={item} aspect={cmd.aspect} command={cmd.command} onClose={() => setCmd(null)} /> : null}
       {review ? <TransferReviewDialog item={item} record={review.record} kind={review.kind} onClose={() => setReview(null)} /> : null}
+      {determine ? <DetermineNotApplicableDialog item={item} aspect={determine} onClose={() => setDetermine(null)} /> : null}
     </Section>
+  );
+}
+
+/** DOM-P3-05: specialist determination that one aspect of an included / shared item (not yet in a baseline) does not transfer. */
+function DetermineNotApplicableDialog({ item, aspect, onClose }: { item: Item; aspect: TransferAspect; onClose: () => void }) {
+  const { t } = useI18n();
+  const { projectId } = useProjectContext();
+  const refresh = useRefreshCarveout(projectId);
+  const toast = useToast();
+  return (
+    <ConfirmCommandDialog
+      open
+      onClose={onClose}
+      title={t('carveout.transfer.dialogTitle', { aspect: t(`carveout.aspect.${aspect}`), code: item.code })}
+      confirmLabel={t('carveout.transfer.cmd.determine_not_applicable')}
+      expectedVersion={item.version}
+      noteMode="required"
+      noteLabel={t('carveout.transfer.basis')}
+      consequences={[t('carveout.transfer.effect.determine_not_applicable', { aspect: t(`carveout.aspect.${aspect}`) }), t('carveout.transfer.notApplicableSpecialist'), t('common.command.audited')]}
+      onReload={() => void refresh()}
+      onConfirm={async ({ note }) => {
+        await api(C.determineTransferNotApplicable, { params: { projectId, itemId: item.id }, body: { expectedVersion: item.version, aspect, basis: note ?? '' } });
+        await refresh();
+        toast.show('success', t('carveout.transfer.done'));
+        onClose();
+      }}
+    />
   );
 }
 
@@ -106,6 +148,8 @@ function TransferCommandDialog({ item, aspect, command, onClose }: { item: Item;
   const needsDate = command === 'plan' || command === 'report_transferred';
   const needsMechanism = needsDate;
   const noteRequired = command === 'block' || command === 'mark_not_applicable';
+  // DOM-P3-05: on an included / shared item in the approved baseline, "not applicable" raises a change request.
+  const viaChangeRequest = command === 'mark_not_applicable' && (item.disposition === 'included' || item.disposition === 'shared') && item.inApprovedBaseline;
   const [mechanism, setMechanism] = useState(item.transferMechanism ?? '');
   const [date, setDate] = useState(command === 'report_transferred' ? localToday() : '');
   return (
@@ -119,15 +163,19 @@ function TransferCommandDialog({ item, aspect, command, onClose }: { item: Item;
       noteLabel={noteRequired ? t('carveout.common.reason') : undefined}
       danger={command === 'block'}
       confirmDisabled={(needsDate && !date) || (needsMechanism && !mechanism.trim())}
-      consequences={[t(`carveout.transfer.effect.${command}`, { aspect: t(`carveout.aspect.${aspect}`) }), t('carveout.transfer.otherAspectUnchanged'), t('common.command.audited')]}
+      consequences={[
+        viaChangeRequest ? t('carveout.transfer.effect.mark_not_applicable_change_request', { aspect: t(`carveout.aspect.${aspect}`) }) : t(`carveout.transfer.effect.${command}`, { aspect: t(`carveout.aspect.${aspect}`) }),
+        t('carveout.transfer.otherAspectUnchanged'),
+        t('common.command.audited'),
+      ]}
       onReload={() => void refresh()}
       onConfirm={async ({ note }) => {
-        await api(C.recordTransfer, {
+        const r = await api(C.recordTransfer, {
           params: { projectId },
           body: { perimeterItemId: item.id, aspect, command, expectedVersion: item.version, ...(needsMechanism ? { mechanism: mechanism.trim() } : {}), ...(needsDate ? { effectiveDate: date } : {}), ...(note ? { note } : {}) },
         });
         await refresh();
-        toast.show('success', t('carveout.transfer.done'));
+        toast.show('success', r.changeRequest ? t('carveout.transfer.changeRequested', { code: r.changeRequest.code }) : t('carveout.transfer.done'));
         onClose();
       }}
     >
@@ -181,6 +229,7 @@ function TransferReviewDialog({ item, record, kind, onClose }: { item: Item; rec
 
 export function TransferHistory({ item }: { item: Item }) {
   const { t, formatDateTime } = useI18n();
+  const serverText = useServerMessages();
   return (
     <Section id="transfer-history" title={t('carveout.transfer.historyTitle')} hint={t('carveout.transfer.historyExplain')}>
       {item.transfers.length === 0 ? (
@@ -202,7 +251,7 @@ export function TransferHistory({ item }: { item: Item }) {
                 ) : null}
               </div>
               <p className="mt-1 text-xs text-muted">
-                <span dir="auto">{r.recordedByName ?? EM_DASH}</span> · {formatDateTime(r.recordedAt)} · {t('carveout.transfer.evidenceCount', { count: r.evidenceCount })}
+                <span dir="auto">{r.recordedBy ? (r.recordedByName ?? EM_DASH) : t('carveout.transfer.system')}</span> · {formatDateTime(r.recordedAt)} · {t('carveout.transfer.evidenceCount', { count: r.evidenceCount })}
                 {r.mechanism ? (
                   <>
                     {' '}· <span dir="auto">{r.mechanism}</span>
@@ -210,8 +259,10 @@ export function TransferHistory({ item }: { item: Item }) {
                 ) : null}
               </p>
               {r.note ? (
-                <p className="mt-1 text-xs" dir="auto">
-                  {r.note}
+                // A note written by the system (evidence reaction, scope-entry reset) is translated from its codes; a person's
+                // note is shown as entered (data-user-text).
+                <p className="mt-1 text-xs" dir={r.noteI18n?.length ? undefined : 'auto'} data-user-text={r.noteI18n?.length ? undefined : true}>
+                  {serverText(r.noteI18n, r.note)}
                 </p>
               ) : null}
             </li>

@@ -36,11 +36,41 @@ export interface DimensionInput {
   partners?: { stage: PartnerStage }[];
   /** The current cycle of gate G5 (JV Signing Readiness) is approved and not flagged for reassessment. */
   signingGatePassed?: boolean;
-  /** TSAs and approved enduring arrangements affect the independence picture (spec §3, D-15). */
-  tsas?: { status: TsaStatus; isEnduringArrangement: boolean }[];
+  /**
+   * TSAs and approved enduring arrangements affect the independence picture (spec §3, D-15). `exitEvidenceValid` (DOM-P34R-06,
+   * the DOM-P3-09 residual): an accepted exit whose acceptance evidence is no longer active (rejected, superseded, contested)
+   * does not count as exited. Omitted = valid.
+   */
+  tsas?: { status: TsaStatus; isEnduringArrangement: boolean; exitEvidenceValid?: boolean }[];
   /** Whether the approved definition of operational independence exists (spec §3). */
   independenceDefinitionApproved?: boolean;
+  /**
+   * DOM-P3-12 (business-gates.md §1 "What moves it"): an approved perimeter version exists (the perimeter is approved).
+   * Omitted = not approved.
+   */
+  perimeterApproved?: boolean;
+  /**
+   * DOM-P3-12: the project's transition (cutover) plans — the Day-1 GO and the post-transition acceptance move the
+   * operational dimension. `goFlagged` = the plan is at approved_go while one of its gating checks is open again
+   * (DOM-P3-04). Omitted = no plan (no GO).
+   */
+  cutoverPlans?: { status: CutoverPlanStatus; goFlagged: boolean }[];
 }
+
+/** Cutover-plan status values (mirrors CUTOVER_STATUSES; kept local to avoid a dependency cycle with readiness.ts). */
+type CutoverPlanStatus = 'planning' | 'rehearsal' | 'ready_for_decision' | 'approved_go' | 'no_go' | 'executed' | 'accepted' | 'rolled_back';
+
+/**
+ * The state vocabulary of each dimension — business-gates.md §1 and the dc-carveout template `statusDimensions` carry the
+ * same keys (DOM-P3-12; `p3-domain-dimensions.spec.ts` / `rules.test.ts` check that the rule produces only these and can
+ * produce each of them). `blocked` is an exception state shown instead of the progression while a blocker is open.
+ */
+export const DIMENSION_STATES = {
+  incorporation: ['not_started', 'unconfirmed', 'in_progress', 'incorporated_evidence_pending', 'incorporated_verified', 'not_applicable'],
+  perimeter_transfer: ['perimeter_draft', 'not_started', 'perimeter_approved', 'transfer_in_progress', 'partially_transferred', 'transferred_evidence_pending', 'transferred_verified', 'blocked'],
+  operational_readiness: ['not_assessed', 'readiness_in_progress', 'day1_go_approved', 'operating_with_transitional_services', 'standalone_accepted', 'transitional_services_exited', 'blocked'],
+  jv_transaction: ['not_started', 'partner_preparation', 'diligence_and_negotiation', 'signing_ready', 'signed', 'closing_conditions_in_progress', 'partially_closed', 'closed', 'terminated'],
+} as const satisfies Record<'incorporation' | 'perimeter_transfer' | 'operational_readiness' | 'jv_transaction', readonly string[]>;
 
 export interface DimensionState {
   key: 'incorporation' | 'perimeter_transfer' | 'operational_readiness' | 'jv_transaction';
@@ -68,6 +98,10 @@ export const DIMENSION_MESSAGES_EN: Readonly<Record<string, string>> = {
   'dimension.perimeter.verified': 'All in-scope items transferred with verified evidence.',
   'dimension.perimeter.in_progress': '{verified} of {inScope} in-scope items verified; {pending} item(s) with pending disposition.',
   'dimension.perimeter.not_started': '{inScope} in-scope items; none transferred.',
+  'dimension.perimeter.approved': 'Perimeter version approved; {inScope} in-scope item(s), transfer not started.',
+  'dimension.perimeter.evidence_pending': 'All {inScope} in-scope items reported transferred; {pendingEvidence} awaiting evidence verification.',
+  'dimension.perimeter.not_applicable_in_scope': '{notApplicable} in-scope item(s) with neither a legal nor an economic transfer — reclassify them or plan the transfer.',
+  'dimension.perimeter.aspect_not_applicable': '{aspects} in-scope item(s) with one transfer aspect determined not applicable.',
   'dimension.readiness.standalone_accepted': 'Standalone operations accepted (G4).',
   'dimension.readiness.standalone_reassessment': 'The standalone acceptance (G4) is under controlled reassessment: evidence it relied upon changed.',
   'dimension.readiness.tsa_blocked': '{tsaProblems} TSA(s) breached or expired without an accepted exit.',
@@ -75,7 +109,13 @@ export const DIMENSION_MESSAGES_EN: Readonly<Record<string, string>> = {
   'dimension.readiness.blockers_failed': '{failedBlockers} blocking readiness check(s) failed or improperly waived.',
   'dimension.readiness.all_passed': 'All mandatory readiness checks passed.',
   'dimension.readiness.in_progress': '{passed} of {required} mandatory/blocking checks cleared.',
+  'dimension.readiness.go_pending': '{go} of {plans} transition plan(s) with an approved Day-1 GO.',
+  'dimension.readiness.go_flagged': '{flagged} GO decision(s) flagged: a gating readiness check is open again.',
+  'dimension.readiness.go_approved': 'Day-1 GO approved for every transition plan ({plans}).',
+  'dimension.readiness.operating': 'Every transition executed and accepted ({plans}); operating until standalone acceptance (G4).',
+  'dimension.readiness.services_exited': 'No transitional service left to exit.',
   'dimension.readiness.dependencies': 'Dependencies: {active} transitional service(s) not yet exited, {enduring} approved enduring arrangement(s).',
+  'dimension.readiness.exit_evidence_invalid': '{exits} accepted TSA exit(s) whose acceptance evidence is no longer valid — not counted as exited.',
   'dimension.readiness.definition_pending': 'The definition of operational independence is not yet approved.',
   'dimension.jv.closed': 'All {closings} closing(s) confirmed.',
   'dimension.jv.partially_closed': '{confirmed} of {closings} closing(s) confirmed.',
@@ -115,32 +155,50 @@ export function combinedTransferStatus(legal: TransferStatus, economic: Transfer
 
 export function computeStatusDimensions(input: DimensionInput): DimensionState[] {
   const m = serverMessage;
+  // DOM-P3-12: the states of business-gates.md §1 / the template (`DIMENSION_STATES`).
   const inc: DimensionState = (() => {
-    if (!input.newcoIncorporation) return dimension('incorporation', 'unconfirmed', [m('dimension.incorporation.no_entity')]);
+    if (!input.newcoIncorporation) return dimension('incorporation', 'not_started', [m('dimension.incorporation.no_entity')]);
     const { status, evidenceVerified } = input.newcoIncorporation;
     if (status === 'incorporated' && evidenceVerified) return dimension('incorporation', 'incorporated_verified', [m('dimension.incorporation.verified')]);
-    if (status === 'incorporated') return dimension('incorporation', 'incorporated_unverified', [m('dimension.incorporation.unverified')]);
-    return dimension('incorporation', status, [m('dimension.incorporation.status', { status })]);
+    if (status === 'incorporated') return dimension('incorporation', 'incorporated_evidence_pending', [m('dimension.incorporation.unverified')]);
+    const state = status === 'incorporation_in_progress' ? 'in_progress' : status; // unconfirmed | not_applicable
+    return dimension('incorporation', state, [m('dimension.incorporation.status', { status })]);
   })();
 
-  const inScope = input.perimeter
-    .filter((p) => p.disposition === 'included' || p.disposition === 'shared')
-    .map((p) => ({ ...p, transferStatus: combinedTransferStatus(p.transferStatus ?? 'not_started', p.economicTransferStatus ?? 'not_started') }));
+  const inScopeRaw = input.perimeter.filter((p) => p.disposition === 'included' || p.disposition === 'shared');
+  const inScope = inScopeRaw.map((p) => ({ ...p, transferStatus: combinedTransferStatus(p.transferStatus ?? 'not_started', p.economicTransferStatus ?? 'not_started') }));
   const counts: Record<string, number> = {};
   for (const p of inScope) counts[p.transferStatus] = (counts[p.transferStatus] ?? 0) + 1;
   const pending = input.perimeter.filter((p) => p.disposition === 'pending').length;
   const verified = counts['transferred_verified'] ?? 0;
+  const pendingEvidence = counts['transferred_pending_evidence'] ?? 0;
   const blocked = counts['blocked'] ?? 0;
-  const naCount = counts['not_applicable'] ?? 0;
+  // DOM-P3-05: an in-scope item with no transfer at all (both aspects "not applicable") never counts as transferred; one
+  // aspect not applicable is disclosed.
+  const naInScope = counts['not_applicable'] ?? 0;
+  const oneAspectNa = inScopeRaw.filter((p) => (p.transferStatus === 'not_applicable') !== (p.economicTransferStatus === 'not_applicable')).length;
+  const naNotes: ServerMessage[] = [
+    ...(naInScope > 0 ? [m('dimension.perimeter.not_applicable_in_scope', { notApplicable: naInScope })] : []),
+    ...(oneAspectNa > 0 ? [m('dimension.perimeter.aspect_not_applicable', { aspects: oneAspectNa })] : []),
+  ];
   const perimeter: DimensionState = (() => {
     const k = 'perimeter_transfer' as const;
-    if (inScope.length === 0) return dimension(k, 'perimeter_not_defined', [m('dimension.perimeter.not_defined')], counts);
-    if (blocked > 0) return dimension(k, 'blocked', [m('dimension.perimeter.blocked', { blocked })], counts);
-    if (verified + naCount === inScope.length && pending === 0) return dimension(k, 'transferred_verified', [m('dimension.perimeter.verified')], counts);
-    if (verified > 0 || (counts['transferred_pending_evidence'] ?? 0) > 0 || (counts['in_progress'] ?? 0) > 0) {
-      return dimension(k, 'in_progress', [m('dimension.perimeter.in_progress', { verified, inScope: inScope.length, pending })], counts);
+    if (inScope.length === 0) return dimension(k, 'perimeter_draft', [m('dimension.perimeter.not_defined')], counts);
+    if (blocked > 0) return dimension(k, 'blocked', [m('dimension.perimeter.blocked', { blocked }), ...naNotes], counts);
+    if (verified === inScope.length && pending === 0) return dimension(k, 'transferred_verified', [m('dimension.perimeter.verified'), ...naNotes], counts);
+    if (verified + pendingEvidence === inScope.length && pending === 0) {
+      return dimension(k, 'transferred_evidence_pending', [m('dimension.perimeter.evidence_pending', { inScope: inScope.length, pendingEvidence }), ...naNotes], counts);
     }
-    return dimension(k, 'not_started', [m('dimension.perimeter.not_started', { inScope: inScope.length })], counts);
+    // Some in-scope items transferred (reported or verified), others not yet → partially transferred; transfer work started
+    // (in progress) but nothing transferred yet → transfer in progress.
+    if (verified > 0 || pendingEvidence > 0) {
+      return dimension(k, 'partially_transferred', [m('dimension.perimeter.in_progress', { verified, inScope: inScope.length, pending }), ...naNotes], counts);
+    }
+    if ((counts['in_progress'] ?? 0) > 0) {
+      return dimension(k, 'transfer_in_progress', [m('dimension.perimeter.in_progress', { verified, inScope: inScope.length, pending }), ...naNotes], counts);
+    }
+    if (input.perimeterApproved === true) return dimension(k, 'perimeter_approved', [m('dimension.perimeter.approved', { inScope: inScope.length }), ...naNotes], counts);
+    return dimension(k, 'not_started', [m('dimension.perimeter.not_started', { inScope: inScope.length }), ...naNotes], counts);
   })();
 
   // Blockers count even when not flagged mandatory (D-15b); "waived" counts only as a valid waiver (D-02).
@@ -150,19 +208,42 @@ export function computeStatusDimensions(input: DimensionInput): DimensionState[]
   const passed = required.filter(cleared).length;
   const tsas = input.tsas ?? [];
   const tsaProblems = tsas.filter((t) => t.status === 'breached' || t.status === 'expired_unresolved').length;
-  const tsaActive = tsas.filter((t) => !t.isEnduringArrangement && ['approved', 'active', 'exit_in_progress', 'extended', 'breached', 'expired_unresolved'].includes(t.status)).length;
-  const enduring = tsas.filter((t) => t.isEnduringArrangement).length;
-  const dep: ServerMessage[] = tsas.length ? [m('dimension.readiness.dependencies', { active: tsaActive, enduring })] : [];
+  // DOM-P34R-06: an accepted exit resting on evidence that is no longer valid is not an exit.
+  const exitEvidenceInvalid = tsas.filter((t) => !t.isEnduringArrangement && t.status === 'exit_accepted' && t.exitEvidenceValid === false).length;
+  const tsaActive = tsas.filter((t) => !t.isEnduringArrangement && ['approved', 'active', 'exit_in_progress', 'extended', 'breached', 'expired_unresolved'].includes(t.status)).length + exitEvidenceInvalid;
+  // DOM-P3-15: an enduring arrangement counts as APPROVED only once its terms are approved (not while proposed / negotiating).
+  const enduring = tsas.filter((t) => t.isEnduringArrangement && t.status !== 'proposed' && t.status !== 'negotiating').length;
+  const dep: ServerMessage[] = tsas.length
+    ? [m('dimension.readiness.dependencies', { active: tsaActive, enduring }), ...(exitEvidenceInvalid ? [m('dimension.readiness.exit_evidence_invalid', { exits: exitEvidenceInvalid })] : [])]
+    : [];
   const def: ServerMessage[] = input.independenceDefinitionApproved === false ? [m('dimension.readiness.definition_pending')] : [];
   const reassess: ServerMessage[] = input.standaloneAccepted && input.standaloneUnderReassessment ? [m('dimension.readiness.standalone_reassessment')] : [];
+  const tsaMsg: ServerMessage[] = tsaProblems > 0 ? [m('dimension.readiness.tsa_blocked', { tsaProblems })] : [];
+  // DOM-P3-12: the Day-1 GO and the post-transition acceptance move the dimension ("never Day-1 ready without a GO").
+  const plans = input.cutoverPlans ?? [];
+  const flagged = plans.filter((p) => p.goFlagged).length;
+  const withGo = plans.filter((p) => !p.goFlagged && (p.status === 'approved_go' || p.status === 'executed' || p.status === 'accepted')).length;
+  const accepted = plans.filter((p) => p.status === 'accepted').length;
+  const goMsg: ServerMessage[] = [...(plans.length ? [m('dimension.readiness.go_pending', { go: withGo, plans: plans.length })] : []), ...(flagged ? [m('dimension.readiness.go_flagged', { flagged })] : [])];
   const ops: DimensionState = (() => {
     const k = 'operational_readiness' as const;
-    if (input.standaloneAccepted && !input.standaloneUnderReassessment) return dimension(k, 'standalone_accepted', [m('dimension.readiness.standalone_accepted'), ...dep]);
-    if (tsaProblems > 0) return dimension(k, 'blocked', [...reassess, m('dimension.readiness.tsa_blocked', { tsaProblems }), ...dep]);
+    if (input.standaloneAccepted && !input.standaloneUnderReassessment) {
+      // DOM-P3-11: after G4 an expired-unresolved or breached TSA stays visible and keeps the carve-out incomplete; the
+      // terminal state needs every transitional service exited (approved enduring arrangements excepted).
+      if (tsaProblems > 0 || tsaActive > 0) return dimension(k, 'standalone_accepted', [m('dimension.readiness.standalone_accepted'), ...tsaMsg, ...dep]);
+      return dimension(k, 'transitional_services_exited', [m('dimension.readiness.standalone_accepted'), m('dimension.readiness.services_exited'), ...dep]);
+    }
+    if (tsaProblems > 0) return dimension(k, 'blocked', [...reassess, ...tsaMsg, ...dep]);
     if (required.length === 0) return dimension(k, 'not_assessed', [...reassess, m('dimension.readiness.no_checks'), ...dep, ...def]);
-    if (failedBlockers > 0) return dimension(k, 'blocked', [...reassess, m('dimension.readiness.blockers_failed', { failedBlockers }), ...dep]);
-    if (passed === required.length) return dimension(k, 'day1_ready', [...reassess, m('dimension.readiness.all_passed'), ...dep, ...def]);
-    return dimension(k, 'in_progress', [...reassess, m('dimension.readiness.in_progress', { passed, required: required.length }), ...dep, ...def]);
+    if (failedBlockers > 0) return dimension(k, 'blocked', [...reassess, m('dimension.readiness.blockers_failed', { failedBlockers }), ...goMsg, ...dep]);
+    if (passed === required.length && plans.length > 0 && accepted === plans.length) {
+      return dimension(k, 'operating_with_transitional_services', [...reassess, m('dimension.readiness.operating', { plans: plans.length }), ...dep, ...def]);
+    }
+    if (passed === required.length && plans.length > 0 && withGo === plans.length) {
+      return dimension(k, 'day1_go_approved', [...reassess, m('dimension.readiness.all_passed'), m('dimension.readiness.go_approved', { plans: plans.length }), ...dep, ...def]);
+    }
+    if (passed === required.length) return dimension(k, 'readiness_in_progress', [...reassess, m('dimension.readiness.all_passed'), ...goMsg, ...dep, ...def]);
+    return dimension(k, 'readiness_in_progress', [...reassess, m('dimension.readiness.in_progress', { passed, required: required.length }), ...goMsg, ...dep, ...def]);
   })();
 
   const jv: DimensionState = (() => {
@@ -195,13 +276,17 @@ export function computeStatusDimensions(input: DimensionInput): DimensionState[]
   return [inc, perimeter, ops, jv];
 }
 
-/** AT-06: the carve-out is complete only when every dimension reaches its terminal state. */
+/**
+ * AT-06: the carve-out is complete only when every dimension reaches its terminal state — incorporation verified, the
+ * perimeter transferred with verified evidence, and standalone operation accepted with every transitional service exited
+ * (DOM-P3-11 / DOM-P3-12: never while a TSA is still running, breached or expired without an accepted exit).
+ */
 export function isCarveOutComplete(dims: DimensionState[]): boolean {
   const s = Object.fromEntries(dims.map((d) => [d.key, d.state]));
   return (
     s['incorporation'] === 'incorporated_verified' &&
     s['perimeter_transfer'] === 'transferred_verified' &&
-    s['operational_readiness'] === 'standalone_accepted'
+    s['operational_readiness'] === 'transitional_services_exited'
   );
 }
 
@@ -227,15 +312,42 @@ export interface PerimeterReconItem {
 export interface ReconFinding {
   itemId: string;
   code: string;
-  issue: 'no_transfer_plan' | 'no_evidence' | 'pending_disposition' | 'consent_outstanding';
+  issue: 'no_transfer_plan' | 'no_evidence' | 'pending_disposition' | 'consent_outstanding' | 'transfer_not_applicable';
+  /** English sentence (audit, AI context). */
   message: string;
+  /** The same sentence as codes + parameters, translated by the client (QA-P34-01a; web `carveout.messages`). */
+  messageI18n: ServerMessage[];
+}
+
+/**
+ * English templates of the perimeter reconciliation findings (REQ-PER-003 / REQ-PER-006). The web catalogue
+ * `carveout.messages.perimeter.recon.*` (en + ar) carries the same codes and placeholders. `{missing}` is a comma-separated
+ * list of Day-1 position gap keys (translated one by one by the client).
+ */
+export const RECON_MESSAGES_EN: Readonly<Record<string, string>> = {
+  'perimeter.recon.pending_disposition': 'Disposition (included/excluded/shared) not decided',
+  'perimeter.recon.no_transfer_plan': 'No transfer mechanism and/or planned effective date',
+  'perimeter.recon.not_applicable_both': 'Included / shared item with neither a legal nor an economic transfer — reclassify it through the scope change or plan the transfer',
+  'perimeter.recon.not_applicable_legal': 'Legal transfer determined not applicable — the item transfers on the other aspect only',
+  'perimeter.recon.not_applicable_economic': 'Economic transfer determined not applicable — the item transfers on the other aspect only',
+  'perimeter.recon.no_evidence': 'Reported transferred without acceptance evidence',
+  'perimeter.recon.consent_outstanding': 'Consent required, not granted, and no interim arrangement',
+  'perimeter.recon.pending_without_resolution': 'Pending item without owner, resolution path and target resolution gate (G1-C03)',
+  'perimeter.recon.day1_position_incomplete': 'Day-1 contract position incomplete: {missing}',
+  'perimeter.recon.change_request_pending': 'A scope change awaits change-request decision',
+};
+
+/** A finding with its English sentence and its codes, rendered from {@link RECON_MESSAGES_EN}. */
+export function reconFinding<I extends string>(itemId: string, code: string, issue: I, messageCode: string, params: Record<string, string | number> = {}) {
+  const msg = serverMessage(messageCode, params);
+  return { itemId, code, issue, message: renderMessagesEn([msg], RECON_MESSAGES_EN), messageI18n: [msg] };
 }
 
 export function reconcilePerimeter(items: PerimeterReconItem[]): ReconFinding[] {
   const out: ReconFinding[] = [];
   for (const it of items) {
     if (it.disposition === 'pending') {
-      out.push({ itemId: it.id, code: it.code, issue: 'pending_disposition', message: 'Disposition (included/excluded/shared) not decided' });
+      out.push(reconFinding(it.id, it.code, 'pending_disposition', 'perimeter.recon.pending_disposition'));
       continue;
     }
     if (it.disposition === 'excluded') continue;
@@ -243,14 +355,22 @@ export function reconcilePerimeter(items: PerimeterReconItem[]): ReconFinding[] 
     const economic = it.economicTransferStatus ?? 'not_started'; // N-01: omitted → fails closed
     const combined = combinedTransferStatus(legal, economic);
     if (combined !== 'not_applicable' && (!it.transferMechanism || !it.plannedEffectiveDate)) {
-      out.push({ itemId: it.id, code: it.code, issue: 'no_transfer_plan', message: 'No transfer mechanism and/or planned effective date' });
+      out.push(reconFinding(it.id, it.code, 'no_transfer_plan', 'perimeter.recon.no_transfer_plan'));
+    }
+    // DOM-P3-05: an in-scope item with a "not applicable" aspect is reported — it never reads as transferred on that aspect;
+    // with both aspects not applicable nothing transfers at all (reclassify it through the scope change).
+    if (legal === 'not_applicable' || economic === 'not_applicable') {
+      const both = legal === 'not_applicable' && economic === 'not_applicable';
+      out.push(
+        reconFinding(it.id, it.code, 'transfer_not_applicable', both ? 'perimeter.recon.not_applicable_both' : legal === 'not_applicable' ? 'perimeter.recon.not_applicable_legal' : 'perimeter.recon.not_applicable_economic'),
+      );
     }
     const reported = (s: TransferStatus) => s === 'transferred_pending_evidence' || s === 'transferred_verified';
     if ((reported(legal) || reported(economic)) && it.evidenceCount === 0) {
-      out.push({ itemId: it.id, code: it.code, issue: 'no_evidence', message: 'Reported transferred without acceptance evidence' });
+      out.push(reconFinding(it.id, it.code, 'no_evidence', 'perimeter.recon.no_evidence'));
     }
     if (it.consentRequired && !it.consentGranted && !it.hasInterimArrangement) {
-      out.push({ itemId: it.id, code: it.code, issue: 'consent_outstanding', message: 'Consent required, not granted, and no interim arrangement' });
+      out.push(reconFinding(it.id, it.code, 'consent_outstanding', 'perimeter.recon.consent_outstanding'));
     }
   }
   return out;
@@ -307,14 +427,28 @@ export function assertDay1ContractPosition(c: {
 // ---------------------------------------------------------------------------------------------------------
 // Day-1 go/no-go (AT-09)
 
+/**
+ * Open gating checks of a GO. DOM-P3-09 (business-gates.md §4 rule 9 applied to Day-1 sign-offs; REQ-RDY-001 "signed off on
+ * evidence"): a `passed` check counts as cleared only while its sign-off evidence is still ACTIVE and not conflicting
+ * (`signoffEvidenceValid === true` — anything else fails closed); a passed check whose evidence was rejected, superseded or
+ * contested is listed with `evidenceInvalid: true`.
+ */
 export function goDecisionBlockers(
-  checks: { id: string; title: string; mandatory: boolean; blocker: boolean; status: ReadinessStatus; waivable?: boolean; hasApprovedWaiver?: boolean }[],
+  checks: { id: string; title: string; titleAr?: string | null; mandatory: boolean; blocker: boolean; status: ReadinessStatus; waivable?: boolean; hasApprovedWaiver?: boolean; signoffEvidenceValid?: boolean }[],
 ) {
   const cleared = (c: (typeof checks)[number]) =>
-    c.status === 'passed' || c.status === 'not_applicable' || (c.status === 'waived' && c.waivable === true && c.hasApprovedWaiver === true);
+    (c.status === 'passed' && c.signoffEvidenceValid === true) || c.status === 'not_applicable' || (c.status === 'waived' && c.waivable === true && c.hasApprovedWaiver === true);
   return checks
     .filter((c) => (c.blocker || c.mandatory) && !cleared(c))
-    .map((c) => ({ id: c.id, title: c.title, status: c.status, blocker: c.blocker }));
+    .map((c) => ({
+      id: c.id,
+      title: c.title,
+      // QA-P34-01e: the Arabic title travels with the blocker (shown by the Arabic UI; English stays the evaluated text).
+      ...(c.titleAr !== undefined ? { titleAr: c.titleAr } : {}),
+      status: c.status,
+      blocker: c.blocker,
+      ...(c.status === 'passed' ? { evidenceInvalid: true } : {}),
+    }));
 }
 
 /**

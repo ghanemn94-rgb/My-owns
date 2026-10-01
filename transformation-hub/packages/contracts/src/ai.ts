@@ -161,7 +161,7 @@ export const UpdateAiSettingsBody = z.object({
     .nullable()
     .optional(),
   reason: Text(1000).optional(),
-});
+}).strict(); // REQ-DAT-013: a generic update refuses unknown fields (400) instead of dropping them.
 
 export const KillSwitchBody = z.object({ reason: RequiredText(1000) });
 export const AutopilotApproveBody = z.object({ expectedVersion: ExpectedVersion, note: Text(1000).optional() });

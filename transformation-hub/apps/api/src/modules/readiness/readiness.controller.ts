@@ -48,6 +48,11 @@ export class ReadinessController {
     return this.checks.update(ctx, i.params.projectId, i.params.checkId, i.body);
   }
 
+  @ApiRoute(R.rebindReadinessCheck)
+  rebindCheck(@Ctx() ctx: RequestContext, @Input() i: RouteInput<typeof R.rebindReadinessCheck>) {
+    return this.checks.rebind(ctx, i.params.projectId, i.params.checkId, i.body);
+  }
+
   @ApiRoute(R.determineReadinessCheck)
   determine(@Ctx() ctx: RequestContext, @Input() i: RouteInput<typeof R.determineReadinessCheck>) {
     return this.checks.determine(ctx, i.params.projectId, i.params.checkId, i.body);
@@ -107,6 +112,11 @@ export class ReadinessController {
   @ApiRoute(R.updateCutoverPlan)
   updatePlan(@Ctx() ctx: RequestContext, @Input() i: RouteInput<typeof R.updateCutoverPlan>) {
     return this.cutover.update(ctx, i.params.projectId, i.params.planId, i.body);
+  }
+
+  @ApiRoute(R.changeCutoverPlanSite)
+  changePlanSite(@Ctx() ctx: RequestContext, @Input() i: RouteInput<typeof R.changeCutoverPlanSite>) {
+    return this.cutover.changeSite(ctx, i.params.projectId, i.params.planId, i.body);
   }
 
   @ApiRoute(R.recordCutoverRehearsal)

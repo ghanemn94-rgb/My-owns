@@ -7,11 +7,15 @@ import { OBLIGATION_OVERDUE_JOB, PostCloseService } from './postclose.service';
 import { CP_LONG_STOP_JOB, TransactionsService } from './transactions.service';
 
 /**
- * Explicit permission allowlist of the JV service identity (deny by default — ARCH-09). The overdue scan reads the
- * post-close register and records the overdue state + escalation; the CP long-stop scan (DOM-P4-04) records the lapsed
- * state + escalation. They never verify, waive, extend, confirm or notify externally (those are human-only commands).
+ * Explicit permission allowlists of the JV service identity, ONE PER JOB (deny by default — ARCH-09; SEC-P34-17: each job
+ * holds only what it uses). The overdue scan reads the post-close register and records the overdue state + escalation
+ * (`jv.closing_checklist.manage`, asserted by `PostCloseService.scanOverdue`); the CP long-stop scan (DOM-P4-04) records the
+ * lapsed state + escalation (`jv.cp.manage`, asserted by `TransactionsService.scanLongStops`). Neither job reads the deal
+ * register through the API (`jv.deal.read` is not needed), and neither ever verifies, waives, extends, confirms or notifies
+ * externally (human-only commands).
  */
-export const JV_SERVICE_PERMISSIONS = ['jv.deal.read', 'jv.closing_checklist.manage', 'jv.cp.manage'];
+export const JV_OBLIGATION_SCAN_PERMISSIONS: readonly string[] = ['jv.closing_checklist.manage'];
+export const JV_LONG_STOP_SCAN_PERMISSIONS: readonly string[] = ['jv.cp.manage'];
 
 /** Register this module's job handlers (called by src/jobs.ts in the worker). */
 export function registerJvJobs(app: INestApplicationContext): void {
@@ -25,7 +29,7 @@ export function registerJvJobs(app: INestApplicationContext): void {
   registry.register(OBLIGATION_OVERDUE_JOB, async (job: ClaimedJob) => {
     if (!job.project_id) return { skipped: 'schedule without project' };
     const projectId = job.project_id;
-    const ctx = contexts.forService(job, 'svc-jv', JV_SERVICE_PERMISSIONS);
+    const ctx = contexts.forService(job, 'svc-jv', [...JV_OBLIGATION_SCAN_PERMISSIONS]);
     return db.run(ctx, () => post.scanOverdue(ctx, projectId));
   });
 
@@ -34,7 +38,7 @@ export function registerJvJobs(app: INestApplicationContext): void {
   registry.register(CP_LONG_STOP_JOB, async (job: ClaimedJob) => {
     if (!job.project_id) return { skipped: 'schedule without project' };
     const projectId = job.project_id;
-    const ctx = contexts.forService(job, 'svc-jv', JV_SERVICE_PERMISSIONS);
+    const ctx = contexts.forService(job, 'svc-jv', [...JV_LONG_STOP_SCAN_PERMISSIONS]);
     return db.run(ctx, () => tx.scanLongStops(ctx, projectId));
   });
 }

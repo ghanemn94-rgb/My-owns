@@ -21,6 +21,7 @@ import { useToast } from '@/components/Toast';
 import { btn } from '@/components/ui';
 import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api, isApiError } from '@/lib/api';
+import { useLocalized } from '@/lib/i18n-data';
 import { useProjectContext } from '@/lib/project-context';
 import { rdHref, rk, useReadinessRefresh, type ReadinessCheckDetail } from '@/lib/readiness';
 import { ButtonRow, Callout, CmdButton, CriticalityBadges, Facts, Panel, Person, RdCommandDialog, UText, useScopeLabels } from '../../_components/rd';
@@ -216,7 +217,8 @@ function CheckDialogs({ c, cmd, onClose }: { c: ReadinessCheckDetail; cmd: Cmd; 
 
 export default function ReadinessCheckPage() {
   const { checkId } = useParams<{ checkId: string }>();
-  const { t, tStatus, formatDate, formatDateTime } = useI18n();
+  const { t, tStatus, formatDate, formatDateTime, locale } = useI18n();
+  const localized = useLocalized();
   const { projectId, can, me } = useProjectContext();
   const { siteName, wsName, projectLevel } = useScopeLabels();
   const [cmd, setCmd] = useState<Cmd>(null);
@@ -240,10 +242,13 @@ export default function ReadinessCheckPage() {
         }
         title={
           <span>
-            <span dir="ltr">{c.code}</span> — <span dir="auto">{c.title}</span>
+            <span dir="ltr">{c.code}</span> —{' '}
+            <span dir="auto" data-user-text={c.titleAr ? undefined : true}>
+              {localized(c.title, c.titleAr)}
+            </span>
           </span>
         }
-        documentTitle={`${c.code} — ${c.title}`}
+        documentTitle={`${c.code} — ${localized(c.title, c.titleAr)}`}
         badges={
           <>
             <StatusBadge enumName="readinessStatuses" value={c.status} size="md" />
@@ -251,7 +256,8 @@ export default function ReadinessCheckPage() {
             {c.isDemo ? <DemoBadge /> : null}
           </>
         }
-        description={c.titleAr ? <span dir="rtl">{c.titleAr}</span> : undefined}
+        // QA-P34-01d: the Arabic UI shows the Arabic title as the heading; the English UI keeps the Arabic title beside it.
+        description={locale === 'en' && c.titleAr ? <span dir="rtl" lang="ar">{c.titleAr}</span> : undefined}
       />
       <div className="space-y-6" data-testid="check-detail" data-status={c.status}>
         <Panel

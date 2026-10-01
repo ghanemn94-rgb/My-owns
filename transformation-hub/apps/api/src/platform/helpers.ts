@@ -147,6 +147,37 @@ export async function visibleEvidenceCounts(
   return new Map(r.rows.map((x) => [x.target_id, { active: Number(x.active), conflicting: Number(x.conflicting) }]));
 }
 
+/**
+ * "The person who recorded the evidence" of a record (access-matrix §5.1) — ONE definition for every verification
+ * (SEC-P34-01, SEC-P34R-03, SEC-P34R-09): every person who linked the record's CURRENT evidence (active or conflicting
+ * links; rejected / superseded ones are no longer relied on) and every uploader of a document version those links rely on
+ * — the same "self" as `documents.evidence.verify`. FOR RULES: read under the request's RLS, where a full project member
+ * (every verifier is one) sees every link and version of the project, whatever the caller may open.
+ */
+export async function evidenceSelfIds(db: DbService, projectId: string, targetType: string, targetId: string): Promise<string[]> {
+  const r = await db.tx().execute<{ who: string }>(sql`
+    select distinct who::text as who from (
+      select e.added_by as who from evidence_link e
+       where e.project_id = ${projectId} and e.target_type = ${targetType} and e.target_id = ${targetId} and e.status in ('active', 'conflicting')
+      union
+      select v.uploaded_by as who from evidence_link e
+        join document_version v on v.id = e.document_version_id and v.project_id = e.project_id
+       where e.project_id = ${projectId} and e.target_type = ${targetType} and e.target_id = ${targetId} and e.status in ('active', 'conflicting')
+    ) s where who is not null`);
+  return r.rows.map((x) => x.who);
+}
+
+/**
+ * SQL form of {@link evidenceSelfIds} for lists (e.g. My Work, SEC-P34R-04): TRUE when `userId` linked the target's current
+ * evidence or uploaded a linked version — the verification command would refuse that person.
+ */
+export function evidenceSelfSql(projectId: PgColumn | SQL, targetType: string, targetId: PgColumn | SQL, userId: string): SQL {
+  return sql`exists (select 1 from evidence_link hub_es
+      left join document_version hub_esv on hub_esv.id = hub_es.document_version_id and hub_esv.project_id = hub_es.project_id
+     where hub_es.project_id = ${projectId} and hub_es.target_type = ${targetType} and hub_es.target_id = ${targetId}
+       and hub_es.status in ('active', 'conflicting') and (hub_es.added_by = ${userId}::uuid or hub_esv.uploaded_by = ${userId}::uuid))`;
+}
+
 /** Count active evidence links for a target — FOR RULES (shared read used by gates, CPs, readiness, transfers…). */
 export async function activeEvidenceCount(db: DbService, projectId: string, targetType: string, targetId: string): Promise<{ active: number; conflicting: number }> {
   const r = await db.tx().execute<{ active: number; conflicting: number }>(sql`

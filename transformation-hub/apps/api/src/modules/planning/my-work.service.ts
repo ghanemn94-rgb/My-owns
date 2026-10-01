@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { and, eq, inArray, isNull, or, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNotNull, isNull, ne, or, sql } from 'drizzle-orm';
 import { schema } from '@hub/db';
-import { Classification, CRITERION_EDITABLE_GATE_STATUSES, EVIDENCE_TARGET_READ_PERMISSION, NO_HUMAN_REQUESTER, RoleKey, ServerMessage, isOverdue, planText, separationSubject } from '@hub/domain';
+import { Classification, CRITERION_EDITABLE_GATE_STATUSES, EVIDENCE_TARGET_READ_PERMISSION, NO_HUMAN_REQUESTER, RoleKey, ServerMessage, isOverdue, localDate, planText, separationSubject } from '@hub/domain';
 import type { MY_WORK_TYPES } from '@hub/contracts';
 import type { RequestContext } from '../../platform/context';
 import { isFullScope } from '../../platform/context';
 import { PlanningSupport, ProjectInfo } from './planning-support';
 import { RecordVisibility } from '../../platform/record-visibility';
+import { evidenceSelfSql } from '../../platform/helpers';
 import { GatesService } from '../gates/gates.service';
 
 type WorkType = (typeof MY_WORK_TYPES)[number];
@@ -264,12 +265,21 @@ export class MyWorkService {
       }
     }
 
-    // Committee actions reported done, awaiting my closure verification (not the person who reported them done).
+    // Committee actions reported done, awaiting my closure verification — offered only when the command would accept me
+    // (SEC-P2-03 rule): not the person who reported them done (policy below), not their owner, and not a person who linked
+    // their evidence or uploaded a linked version (SEC-P34R-04; the command refuses them, 403 governance.action.linker_verification).
     const acts2 = await tx
       .select({ a: A, classification: schema.decision.classification })
       .from(A)
       .leftJoin(schema.decision, and(eq(schema.decision.id, A.decisionId), eq(schema.decision.projectId, A.projectId)))
-      .where(and(inArray(A.projectId, pids), eq(A.status, 'done_pending_verification')));
+      .where(
+        and(
+          inArray(A.projectId, pids),
+          eq(A.status, 'done_pending_verification'),
+          sql`${A.ownerUserId} is distinct from ${ctx.principal.userId!}::uuid`,
+          sql`not ${evidenceSelfSql(A.projectId, 'action_item', A.id, ctx.principal.userId!)}`,
+        ),
+      );
     for (const { a, classification } of acts2) {
       const p = byId.get(a.projectId)!;
       if (!this.s.policy.can(ctx, 'governance.action.verify_closure', { projectId: p.id, classification: (classification as Classification | null) ?? null, requesterUserId: a.reportedDoneBy, ownerUserIds: [a.ownerUserId, a.createdBy] })) continue;
@@ -287,6 +297,61 @@ export class MyWorkService {
       const p = byId.get(m.projectId)!;
       if (!this.s.policy.can(ctx, 'governance.minutes.approve', { projectId: p.id, classification: classification as Classification, requesterUserId: m.minutesDraftedBy })) continue;
       push(p, { type: 'minutes_approval', entityId: m.id, code: `#${m.number}`, title: m.title, status: m.status, dueDate: null, overdue: false, linkPath: `/projects/${p.id}/committee/meetings/${m.id}` }, m.isDemo);
+    }
+
+    // ---- REQ-UX-018 (DOM-P2-09 residual): agenda screening, external-authority recording, claim reviews. Each is offered
+    // only when the command would accept the caller: the same permission, classification and separation-of-duties inputs.
+
+    // Agenda requests awaiting screening (requested / deferred): the secretariat, never the requester (not_self).
+    const AG = schema.agendaItem;
+    const screening = await tx
+      .select({ a: AG, classification: schema.committee.classification, meetingAt: MT.scheduledAt })
+      .from(AG)
+      .innerJoin(schema.committee, and(eq(schema.committee.id, AG.committeeId), eq(schema.committee.projectId, AG.projectId)))
+      .leftJoin(MT, and(eq(MT.id, AG.meetingId), eq(MT.projectId, AG.projectId)))
+      .where(and(inArray(AG.projectId, pids), inArray(AG.screeningStatus, ['requested', 'deferred'])));
+    for (const { a, classification, meetingAt } of screening) {
+      const p = byId.get(a.projectId)!;
+      if (!this.s.policy.can(ctx, 'governance.agenda_request.screen', { projectId: p.id, classification: classification as Classification, requesterUserId: a.requestedBy })) continue;
+      // Due by the preferred meeting's date (project timezone) when the request names one.
+      const due = meetingAt ? localDate(meetingAt, p.timezone) : null;
+      const link = `/projects/${p.id}/committee/meetings?aStatus=${a.screeningStatus}&aq=${encodeURIComponent(a.title.slice(0, 100))}`;
+      push(p, { type: 'agenda_screening', entityId: a.id, code: null, title: a.title, status: a.screeningStatus, dueDate: due, overdue: isOverdue(due, today(p.id), true), linkPath: link }, p.isDemo);
+    }
+
+    // Recommendations whose external authority decision can be recorded: the recording role, not the requester, not the
+    // recorder of the recommendation, and only once an active evidence link on the decision was verified by someone else
+    // than the caller (the command refuses without it) — a link the caller can see.
+    const DEC = schema.decision;
+    const recommended = await tx.select().from(DEC).where(and(inArray(DEC.projectId, pids), eq(DEC.status, 'recommended')));
+    const E2 = schema.evidenceLink;
+    for (const d of recommended) {
+      const p = byId.get(d.projectId)!;
+      const attrs = { projectId: p.id, classification: d.classification as Classification };
+      if (!this.s.policy.can(ctx, 'governance.decision.record_external_approval', { ...attrs, requesterUserId: d.requesterUserId })) continue;
+      if (d.recommendationRecordedBy && d.recommendationRecordedBy === me) continue;
+      const vis = new RecordVisibility(this.s.policy, ctx, p.id, { reach: true, readPermission: (t) => (EVIDENCE_TARGET_READ_PERMISSION as Record<string, string>)[t] });
+      const links = await tx
+        .select({ reviewedBy: E2.reviewedBy })
+        .from(E2)
+        .where(and(eq(E2.projectId, p.id), eq(E2.targetType, 'decision'), eq(E2.targetId, d.id), eq(E2.status, 'active'), isNotNull(E2.reviewedBy), vis.exists('evidence_link', E2.id)));
+      if (!links.some((l) => this.s.policy.can(ctx, 'governance.decision.record_external_approval', { ...attrs, requesterUserId: l.reviewedBy }))) continue;
+      push(p, { type: 'external_approval_recording', entityId: d.id, code: d.code, title: d.title, status: d.status, dueDate: d.latestSafeDate, overdue: isOverdue(d.latestSafeDate, today(p.id), true), linkPath: `/projects/${p.id}/committee/decisions/${d.id}` }, d.isDemo);
+    }
+
+    // Source claims awaiting review: never reviewed (and not confirmed), or flagged conflicting — offered to a verifier who is
+    // not the claim's author (not_self; an unknown author fails closed, as in the review command).
+    const SC = schema.sourceClaim;
+    const SR = schema.sourceRecord;
+    const claims = await tx
+      .select({ c: SC, classification: SR.classification })
+      .from(SC)
+      .innerJoin(SR, and(eq(SR.id, SC.sourceId), eq(SR.projectId, SC.projectId)))
+      .where(and(inArray(SC.projectId, pids), or(and(isNull(SC.reviewerUserId), ne(SC.verificationStatus, 'confirmed')), eq(SC.verificationStatus, 'conflicting'))));
+    for (const { c, classification } of claims) {
+      const p = byId.get(c.projectId)!;
+      if (!this.s.policy.can(ctx, 'documents.claim.verify', { projectId: p.id, classification: classification as Classification, requesterUserId: c.createdBy })) continue;
+      push(p, { type: 'claim_review', entityId: c.id, code: null, title: c.subject, status: c.verificationStatus, dueDate: null, overdue: false, linkPath: `/projects/${p.id}/documents/sources/${c.sourceId}` }, c.isDemo);
     }
 
     items.sort((a, b) => Number(b.overdue) - Number(a.overdue) || (a.dueDate ?? '9999').localeCompare(b.dueDate ?? '9999') || a.type.localeCompare(b.type) || a.title.localeCompare(b.title));

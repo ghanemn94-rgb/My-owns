@@ -24,7 +24,7 @@ import { PERSONAS, apiSessionAs, loginAs } from './helpers';
  */
 
 type Locale = 'en' | 'ar';
-type PersonaKey = 'pm' | 'pmB' | 'portfolioAdmin' | 'partnerAlpha' | 'finance' | 'contributor' | 'sponsor' | 'cleanTeam';
+type PersonaKey = 'pm' | 'pmB' | 'portfolioAdmin' | 'partnerAlpha' | 'finance' | 'contributor' | 'sponsor' | 'cleanTeam' | 'legal';
 const LOCALES: readonly Locale[] = ['en', 'ar'];
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] as const;
 const FAILING_IMPACTS = new Set(['serious', 'critical']);
@@ -51,6 +51,14 @@ interface Ids {
   gate: string;
   document: string;
   source: string;
+  // Carve-out & NewCo (P3; QA-P34-02).
+  perimeterItem: string;
+  agreement: string;
+  newcoEntity: string;
+  requirement: string;
+  readinessCheck: string;
+  cutoverPlan: string;
+  tsa: string;
   jvPartner: string;
   jvRoom: string;
   jvCleanRoom: string;
@@ -241,6 +249,54 @@ const SCREENS: readonly Screen[] = [
   { id: 'documents-sources', persona: 'pm', path: (i) => `/projects/${i.dc}/documents?tab=sources` },
   { id: 'document-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/documents/${i.document}`, ready: visible('[data-testid="versions-table"]') },
   { id: 'source-detail-claims', persona: 'pm', path: (i) => `/projects/${i.dc}/documents/sources/${i.source}` },
+  // Perimeter & Transfers (screen 7), NewCo & Regulatory (screen 8), Day-1 & TSA Center (screen 9) — QA-P34-02: every tab,
+  // the detail views (the contract item with its consents, an agreement, the NewCo entity, a regulatory requirement, a
+  // failed readiness check, the Day-1 cutover plan, the expired demo TSA), two command / create dialogs and 390 px.
+  ...(['register', 'reconciliation', 'transfers', 'day1', 'versions', 'sites', 'agreements', 'consents'] as const).map(
+    (tab): Screen => ({ id: `perimeter-${tab}`, persona: 'pm', path: (i) => `/projects/${i.dc}/perimeter?tab=${tab}`, ready: visible(`[role="tab"][data-tab="${tab}"][aria-selected="true"]`) }),
+  ),
+  {
+    // New perimeter item form (nothing is submitted).
+    id: 'perimeter-create-dialog-open',
+    persona: 'pm',
+    path: (i) => `/projects/${i.dc}/perimeter`,
+    ready: visible('[data-testid="perimeter-create"]'),
+    prepare: async (page) => {
+      await page.getByTestId('perimeter-create').click();
+      await expect(page.getByRole('dialog')).toBeVisible();
+      await expect(page.getByTestId('perimeter-create-form')).toBeVisible();
+    },
+  },
+  { id: 'perimeter-item-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/perimeter/items/${i.perimeterItem}`, ready: visible('[data-testid="item-history"]') },
+  { id: 'perimeter-item-detail-390', persona: 'pm', path: (i) => `/projects/${i.dc}/perimeter/items/${i.perimeterItem}`, ready: visible('[data-testid="item-history"]'), viewport: MOBILE },
+  { id: 'perimeter-agreement-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/perimeter/agreements/${i.agreement}`, ready: visible('[data-testid="command-bar"]') },
+  ...(['entities', 'requirements'] as const).map(
+    (tab): Screen => ({ id: `newco-${tab}`, persona: 'legal', path: (i) => `/projects/${i.dc}/newco?tab=${tab}`, ready: visible(`[role="tab"][data-tab="${tab}"][aria-selected="true"]`) }),
+  ),
+  { id: 'newco-entity-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/newco/entities/${i.newcoEntity}`, ready: visible('[data-testid="incorporation"]') },
+  { id: 'newco-requirement-detail', persona: 'legal', path: (i) => `/projects/${i.dc}/newco/requirements/${i.requirement}`, ready: visible('[data-testid="applicability"]') },
+  { id: 'readiness-overview', persona: 'pm', path: (i) => `/projects/${i.dc}/readiness`, ready: visible('[data-testid="readiness-summary"]') },
+  { id: 'readiness-checks', persona: 'pm', path: (i) => `/projects/${i.dc}/readiness/checks`, ready: visible('[data-testid="checks-table"] table') },
+  { id: 'readiness-check-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/readiness/checks/${i.readinessCheck}`, ready: visible('[data-testid="check-detail"]') },
+  {
+    // "Record a test" command dialog with its result select (nothing is submitted).
+    id: 'readiness-check-test-dialog-open',
+    persona: 'pm',
+    path: (i) => `/projects/${i.dc}/readiness/checks/${i.readinessCheck}`,
+    ready: visible('[data-testid="cmd-test"]'),
+    prepare: async (page) => {
+      await page.getByTestId('cmd-test').click();
+      await expect(page.getByRole('dialog')).toBeVisible();
+      await expect(page.getByTestId('test-result')).toBeVisible();
+    },
+  },
+  { id: 'readiness-cutover', persona: 'pm', path: (i) => `/projects/${i.dc}/readiness/cutover`, ready: visible('[data-testid="plans-table"] table') },
+  { id: 'readiness-plan-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/readiness/cutover/${i.cutoverPlan}`, ready: visible('[data-testid="plan-checks"] table') },
+  { id: 'readiness-plan-detail-sponsor', persona: 'sponsor', path: (i) => `/projects/${i.dc}/readiness/cutover/${i.cutoverPlan}`, ready: visible('[data-testid="go-evaluation"]') },
+  { id: 'readiness-tsa', persona: 'pm', path: (i) => `/projects/${i.dc}/readiness/tsa`, ready: visible('[data-testid="tsa-table"] table') },
+  { id: 'readiness-tsa-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/readiness/tsa/${i.tsa}`, ready: visible('[data-testid="tsa-escalation"]') },
+  { id: 'readiness-tsa-detail-390', persona: 'pm', path: (i) => `/projects/${i.dc}/readiness/tsa/${i.tsa}`, ready: visible('[data-testid="tsa-escalation"]'), viewport: MOBILE },
+  { id: 'readiness-waivers', persona: 'pm', path: (i) => `/projects/${i.dc}/readiness/waivers`, ready: visible('[data-testid="waivers-table"]') },
   // JV & Diligence (screen 11): every tab, the detail views, a restricted room, a command dialog and 390 px.
   { id: 'jv-overview', persona: 'pm', path: (i) => `/projects/${i.dc}/jv`, ready: visible('[data-testid="jv-metrics"]') },
   { id: 'jv-overview-390', persona: 'pm', path: (i) => `/projects/${i.dc}/jv`, ready: visible('[data-testid="jv-metrics"]'), viewport: MOBILE },
@@ -429,6 +485,14 @@ async function lookupIds(baseURL: string): Promise<Ids> {
       gate: await findId(api, `${p}/gates`, 'key', 'G1'),
       document: await findId(api, `${p}/documents?pageSize=100`, 'title', 'Demo — charter excerpt'),
       source: await findId(api, `${p}/sources?pageSize=100`, 'code', 'SRC-001'),
+      // The demo contract item (consents, Day-1 position) and the other P3 demo records, by their seeded codes / names.
+      perimeterItem: await findId(api, `${p}/perimeter-items?pageSize=100`, 'code', 'PI-003'),
+      agreement: String((await listItems(api, `${p}/agreements?pageSize=100`))[0]!.id),
+      newcoEntity: await findId(api, `${p}/legal-entities`, 'role', 'newco'),
+      requirement: String((await listItems(api, `${p}/regulatory-requirements?pageSize=100`))[0]!.id),
+      readinessCheck: String((await listItems(api, `${p}/readiness-checks?pageSize=100&status=failed`))[0]!.id),
+      cutoverPlan: await findId(api, `${p}/cutover-plans?pageSize=100`, 'title', /^Day-1 go-live — DEMO/),
+      tsa: await findId(api, `${p}/tsa-services?pageSize=100`, 'name', 'Legacy monitoring bridge — DEMO TSA issue (synthetic)'),
       jvPartner: await findId(api, `${p}/partners?pageSize=100`, 'code', 'DEMO-PA'),
       jvRoom: await findId(api, `${p}/partner-rooms?pageSize=100`, 'name', 'Demo — Partner Alpha data room (fictional)'),
       jvCleanRoom: await findId(api, `${p}/partner-rooms?pageSize=100`, 'type', 'clean_team'),
@@ -514,7 +578,7 @@ function summarise(results: Awaited<ReturnType<AxeBuilder['analyze']>>): Finding
 test.describe('REQ-ARC-008 accessibility (axe-core, WCAG 2.1 A/AA)', () => {
   test.beforeAll(async ({ browser, baseURL }) => {
     ids = await lookupIds(baseURL!);
-    for (const persona of ['pm', 'pmB', 'portfolioAdmin', 'partnerAlpha', 'finance', 'contributor', 'sponsor', 'cleanTeam'] as const) {
+    for (const persona of ['pm', 'pmB', 'portfolioAdmin', 'partnerAlpha', 'finance', 'contributor', 'sponsor', 'cleanTeam', 'legal'] as const) {
       const ctx = await browser.newContext();
       const page = await ctx.newPage();
       await loginAs(page, PERSONAS[persona]);

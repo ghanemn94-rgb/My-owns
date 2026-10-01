@@ -2,8 +2,10 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { and, asc, count, desc, eq, ilike, inArray, isNull, or, sql, SQL } from 'drizzle-orm';
 import { schema } from '@hub/db';
 import {
+  GO_DECIDED_PLAN_STATUSES,
   READINESS_CHECK_MACHINE,
   assertAssignedSpecialist,
+  assertReadinessCheckRebind,
   assertReadinessDetermination,
   assertReadinessSignoffAllowed,
   assertReadinessWaiverAllowed,
@@ -18,6 +20,7 @@ import {
   ReadinessArea,
   ReadinessStatus,
   RoleKey,
+  cutoverHistoryText,
 } from '@hub/domain';
 import type { RequestContext } from '../../platform/context';
 import { likeContains, loadInProject, nextCode, offsetOf, pageOf, updateVersioned, visibleEvidenceCounts } from '../../platform/helpers';
@@ -108,7 +111,8 @@ export class ReadinessChecksService implements OnModuleInit {
       q.workstreamId ? eq(c.workstreamId, q.workstreamId) : undefined,
       q.cutoverPlanId ? eq(c.cutoverPlanId, q.cutoverPlanId) : undefined,
       q.blocker ? eq(c.blocker, q.blocker === 'true') : undefined,
-      q.q ? or(ilike(c.title, likeContains(q.q)), ilike(c.code, likeContains(q.q))) : undefined,
+      // The Arabic title is searchable too (the Arabic register shows it — QA-P34-01d).
+      q.q ? or(ilike(c.title, likeContains(q.q)), ilike(c.titleAr, likeContains(q.q)), ilike(c.code, likeContains(q.q))) : undefined,
     );
     const tx = this.s.db.tx();
     const [{ total }] = (await tx.select({ total: count() }).from(c).where(where)) as [{ total: number }];
@@ -219,6 +223,7 @@ export class ReadinessChecksService implements OnModuleInit {
     const p = await this.s.project(projectId);
     // For a create the actor is the creator; a workstream-scoped grant covers only its own workstream.
     this.s.policy.assert(ctx, 'readiness.check.manage', { projectId, workstreamId: body.workstreamId ?? null, ownerUserIds: [ctx.principal.userId] });
+    await this.s.lockReadiness(projectId); // DOM-P3-03: a new check may gate a plan under decision
     await this.s.assertRefs(ctx, projectId, { siteId: body.siteId, workstreamId: body.workstreamId, cutoverPlanId: body.cutoverPlanId });
     if (body.ownerUserId) await this.s.assertMember(projectId, body.ownerUserId, 'ownerUserId');
     const id = newId();
@@ -262,6 +267,7 @@ export class ReadinessChecksService implements OnModuleInit {
   async instantiate(ctx: RequestContext, projectId: string, body: { siteId?: string | null; workstreamId?: string | null; cutoverPlanId?: string | null; areas?: ReadinessArea[] }) {
     const p = await this.s.project(projectId);
     this.s.policy.assert(ctx, 'readiness.check.manage', { projectId, workstreamId: body.workstreamId ?? null, ownerUserIds: [ctx.principal.userId] });
+    await this.s.lockReadiness(projectId); // DOM-P3-03
     await this.s.assertRefs(ctx, projectId, { siteId: body.siteId, workstreamId: body.workstreamId, cutoverPlanId: body.cutoverPlanId });
     const [tv] = await this.s.db
       .tx()
@@ -330,11 +336,15 @@ export class ReadinessChecksService implements OnModuleInit {
     return { created, existing, areas: areas.map((a) => a.key as ReadinessArea), uncoveredAreas: uncovered };
   }
 
+  /**
+   * Descriptive fields only. Which transition the check gates (`siteId`, `cutoverPlanId`) changes through `rebind` (DOM-P3-01)
+   * and the recorded test result through a test run (DOM-P3-15) — the contract refuses both here (400).
+   */
   async update(
     ctx: RequestContext,
     projectId: string,
     checkId: string,
-    body: { expectedVersion: number; title?: string; titleAr?: string | null; siteId?: string | null; workstreamId?: string | null; cutoverPlanId?: string | null; ownerUserId?: string | null; testResult?: string | null; failureContingency?: string | null; dueDate?: string | null },
+    body: { expectedVersion: number; title?: string; titleAr?: string | null; workstreamId?: string | null; ownerUserId?: string | null; failureContingency?: string | null; dueDate?: string | null },
   ) {
     const c = await loadInProject(this.s.db, schema.readinessCheck, projectId, checkId);
     this.assertManage(ctx, projectId, c);
@@ -350,7 +360,7 @@ export class ReadinessChecksService implements OnModuleInit {
       // Moving a check into a workstream requires manage rights there too.
       this.s.policy.assert(ctx, 'readiness.check.manage', { projectId, workstreamId: effective['workstreamId'] as string, ownerUserIds: [c.ownerUserId, c.createdBy] });
     }
-    await this.s.assertRefs(ctx, projectId, { siteId: effective['siteId'] as string | undefined, workstreamId: effective['workstreamId'] as string | undefined, cutoverPlanId: effective['cutoverPlanId'] as string | undefined });
+    await this.s.assertRefs(ctx, projectId, { workstreamId: effective['workstreamId'] as string | undefined });
     if (effective['ownerUserId']) await this.s.assertMember(projectId, effective['ownerUserId'] as string, 'ownerUserId');
     const row = (await updateVersioned(this.s.db, schema.readinessCheck, { id: c.id, projectId, expectedVersion }, effective)) as CheckRow;
     await this.s.audit.record({
@@ -361,8 +371,68 @@ export class ReadinessChecksService implements OnModuleInit {
       before: Object.fromEntries(Object.keys(effective).map((k) => [k, current[k]])),
       after: effective,
     });
-    if ('siteId' in effective || 'cutoverPlanId' in effective || 'workstreamId' in effective) await this.s.enqueueDimensions(ctx, projectId, `check:${c.id}:${row.version}`);
+    if ('workstreamId' in effective) await this.s.enqueueDimensions(ctx, projectId, `check:${c.id}:${row.version}`);
     return { id: c.id, version: row.version };
+  }
+
+  /**
+   * DOM-P3-01: re-bind the transition a check gates (cutover plan / site) — a scope change with a reason, under the
+   * readiness lock. Refused for a FAILED gating check (it keeps gating the transition it was raised for until cleared)
+   * and for an open gating check that would leave a plan under go/no-go decision or with a GO; an open gating check that
+   * enters a plan with a GO flags that GO (DOM-P34R-07). Every plan the check leaves or enters gets an entry in its decision
+   * history.
+   */
+  async rebind(ctx: RequestContext, projectId: string, checkId: string, body: { expectedVersion: number; siteId?: string | null; cutoverPlanId?: string | null; reason: string }) {
+    await this.s.lockReadiness(projectId);
+    // SEC-P34R-02: the module's read rule first (a check the caller cannot read is 404, like an unknown id), then the command.
+    const c = await this.loadReadable(ctx, projectId, checkId);
+    this.assertManage(ctx, projectId, c);
+    const next = { siteId: body.siteId !== undefined ? body.siteId : c.siteId, cutoverPlanId: body.cutoverPlanId !== undefined ? body.cutoverPlanId : c.cutoverPlanId };
+    if (next.siteId === c.siteId && next.cutoverPlanId === c.cutoverPlanId) {
+      if (c.version !== body.expectedVersion) throw conflict('concurrency.version_mismatch', 'The readiness check was changed by someone else — reload and review', { expectedVersion: body.expectedVersion, currentVersion: c.version });
+      return { id: c.id, version: c.version };
+    }
+    await this.s.assertRefs(ctx, projectId, { siteId: next.siteId, cutoverPlanId: next.cutoverPlanId });
+    const before = await this.s.plansGatedBy(projectId, c);
+    const after = await this.s.plansGatedBy(projectId, next);
+    const leaving = before.filter((p) => !after.some((a) => a.id === p.id));
+    const entering = after.filter((p) => !before.some((b) => b.id === p.id));
+    const cleared = await this.isCleared(projectId, c);
+    assertReadinessCheckRebind({ checkCode: c.code, status: c.status, gating: c.blocker || c.mandatory, cleared, leaving, reason: body.reason });
+    const row = (await updateVersioned(this.s.db, schema.readinessCheck, { id: c.id, projectId, expectedVersion: body.expectedVersion }, next)) as CheckRow;
+    for (const plan of leaving) await this.s.recordPlanHistory(ctx, plan, projectId, 'check_unbound', cutoverHistoryText('cutover.history.check_unbound', { check: c.code, reason: body.reason }), null);
+    for (const plan of entering) await this.s.recordPlanHistory(ctx, plan, projectId, 'check_bound', cutoverHistoryText('cutover.history.check_bound', { check: c.code, reason: body.reason }), null);
+    // DOM-P34R-07: an open gating check that ENTERS a plan with a GO flags that GO (as a check failing after the GO does —
+    // DOM-P3-04); the execution record then re-evaluates and refuses until it is cleared or the GO is withdrawn.
+    if ((c.blocker || c.mandatory) && !cleared) {
+      const blocker = { id: c.id, title: `${c.code} — ${c.title}`, titleAr: c.titleAr ? `${c.code} — ${c.titleAr}` : null, status: c.status, blocker: c.blocker };
+      for (const plan of entering.filter((x) => x.status === 'approved_go')) {
+        await this.s.recordPlanHistory(ctx, plan, projectId, 'go_flagged', cutoverHistoryText('cutover.history.go_flagged.bound_after_go', { check: c.code, note: body.reason }), { blockers: [blocker], missing: [] });
+        await this.s.audit.record({ action: 'readiness.cutover.go_flagged', entityType: 'cutover_plan', entityId: plan.id, projectId, after: { status: plan.status, flagged: true, checkId: c.id, checkCode: c.code, checkStatus: c.status }, reason: `${c.code} was bound to this transition after the GO — execution is refused until it is cleared or the GO is withdrawn` });
+      }
+    }
+    await this.s.audit.record({
+      action: 'readiness.check.rebind',
+      entityType: 'readiness_check',
+      entityId: c.id,
+      projectId,
+      before: { siteId: c.siteId, cutoverPlanId: c.cutoverPlanId, gates: before.map((p) => p.code) },
+      after: { siteId: next.siteId, cutoverPlanId: next.cutoverPlanId, gates: after.map((p) => p.code), status: c.status },
+      reason: body.reason,
+    });
+    await this.s.enqueueDimensions(ctx, projectId, `check:${c.id}:${row.version}`);
+    return { id: c.id, version: row.version };
+  }
+
+  /** Cleared for the GO rule: passed with valid sign-off evidence, not applicable, or waived with an effective waiver. */
+  private async isCleared(projectId: string, c: CheckRow): Promise<boolean> {
+    if (c.status === 'not_applicable') return true;
+    if (c.status === 'passed') return (await this.s.signoffEvidenceValid(projectId, [c.id])).get(c.id) === true;
+    if (c.status === 'waived' && c.waiverId) {
+      const [w] = await this.s.db.tx().select().from(schema.waiver).where(and(eq(schema.waiver.projectId, projectId), eq(schema.waiver.id, c.waiverId)));
+      return waiverEffectiveFor(c, w, this.s.today(await this.s.project(projectId)));
+    }
+    return false;
   }
 
   /** Specialist determination of criticality and waivability (spec §3; the waiver authority role is set here). */
@@ -372,8 +442,10 @@ export class ReadinessChecksService implements OnModuleInit {
     checkId: string,
     body: { expectedVersion: number; mandatory: boolean; blocker: boolean; waivable: boolean; waiverAuthorityRole: RoleKey | null; basis: string },
   ) {
+    await this.s.lockReadiness(projectId); // DOM-P3-03
     const c = await loadInProject(this.s.db, schema.readinessCheck, projectId, checkId);
     this.s.policy.assert(ctx, 'readiness.check.signoff', { projectId, workstreamId: c.workstreamId, requesterUserId: c.createdBy });
+    const gatesDecidedPlan = (await this.s.plansGatedBy(projectId, c)).some((p) => GO_DECIDED_PLAN_STATUSES.includes(p.status));
     assertReadinessDetermination({
       checkCode: c.code,
       signoffRole: c.signoffRole,
@@ -383,6 +455,12 @@ export class ReadinessChecksService implements OnModuleInit {
       waivable: body.waivable,
       waiverAuthorityRole: body.waiverAuthorityRole,
       basis: body.basis,
+      // DOM-P3-02: a determination never releases an open gating check (the waiver register does). A "passed" check whose
+      // sign-off evidence is no longer valid is open (DOM-P3-09).
+      status: c.status === 'passed' && !(await this.isCleared(projectId, c)) ? 'in_progress' : c.status,
+      current: { mandatory: c.mandatory, blocker: c.blocker },
+      next: { mandatory: body.mandatory, blocker: body.blocker },
+      gatesDecidedPlan,
     });
     if (c.status === 'waived' && !body.waivable) {
       throw ruleViolation('readiness.determination.waived_check', `${c.code} is waived; reopen it before determining it non-waivable`);
@@ -411,6 +489,7 @@ export class ReadinessChecksService implements OnModuleInit {
 
   /** Append a test run (the run table is append-only in the database). A failed blocker blocks GO (AT-09). */
   async recordTest(ctx: RequestContext, projectId: string, checkId: string, body: { expectedVersion: number; result: 'passed' | 'failed'; note?: string }) {
+    await this.s.lockReadiness(projectId); // DOM-P3-03: a GO evaluating this check waits for (or sees) this result
     const c = await loadInProject(this.s.db, schema.readinessCheck, projectId, checkId);
     this.assertManage(ctx, projectId, c);
     const to = statusAfterTestRun(c.status, body.result);
@@ -434,22 +513,34 @@ export class ReadinessChecksService implements OnModuleInit {
       reason: body.note ?? null,
     });
     if (to !== c.status) await this.s.enqueueDimensions(ctx, projectId, `check:${c.id}:${row.version}`);
+    // DOM-P3-04: a gating check that fails after the GO flags the GO of the plan(s) it gates.
+    if (to === 'failed') await this.s.flagGoPlans(ctx, projectId, { ...c, status: to }, body.note ? { code: 'cutover.history.go_flagged.test_failed_note', note: body.note } : { code: 'cutover.history.go_flagged.test_failed' });
     return { id: c.id, status: to, version: row.version, testRunId: runId, seq };
   }
 
   /** REQ-RDY-001: specialist sign-off (assigned role; not the owner / latest recorder; evidence-based). */
   async signOff(ctx: RequestContext, projectId: string, checkId: string, body: { expectedVersion: number; outcome: 'passed' | 'not_applicable'; note?: string }) {
+    await this.s.lockReadiness(projectId); // DOM-P3-03
     const c = await loadInProject(this.s.db, schema.readinessCheck, projectId, checkId);
     const latest = await this.latestRun(c.id);
     this.s.policy.assert(ctx, 'readiness.check.signoff', { projectId, workstreamId: c.workstreamId, requesterUserId: latest?.recordedBy ?? c.createdBy });
+    // DOM-P3-10 / SEC-P34-01 (access-matrix §5.1): whoever linked the check's current evidence is "self" as well — not_self
+    // is evaluated against each of them (fails closed) and the domain rule lists them.
+    const linkers = await this.s.evidenceLinkers(projectId, 'readiness_check', c.id);
+    for (const linker of linkers) this.s.policy.assert(ctx, 'readiness.check.signoff', { projectId, workstreamId: c.workstreamId, requesterUserId: linker });
     const ev = await this.s.evidence(projectId, 'readiness_check', c.id);
+    // DOM-P34R-02: "not applicable" never releases a failed gating check, nor one gating a plan under decision / with a GO.
+    const gatesDecidedPlan = (await this.s.plansGatedBy(projectId, c)).some((p) => GO_DECIDED_PLAN_STATUSES.includes(p.status));
     assertReadinessSignoffAllowed({
+      status: c.status,
+      gating: c.blocker || c.mandatory,
+      gatesDecidedPlan,
       checkCode: c.code,
       outcome: body.outcome,
       signoffRole: c.signoffRole,
       actorRoles: this.s.rolesOf(ctx, projectId, c.workstreamId),
       actorUserId: ctx.principal.userId!,
-      selfUserIds: [c.ownerUserId, c.createdBy, latest?.recordedBy],
+      selfUserIds: [c.ownerUserId, c.createdBy, latest?.recordedBy, ...linkers],
       latestTestResult: latest?.result ?? null,
       activeEvidenceCount: ev.active,
       conflictingEvidenceCount: ev.conflicting,
@@ -476,6 +567,7 @@ export class ReadinessChecksService implements OnModuleInit {
   }
 
   async reopen(ctx: RequestContext, projectId: string, checkId: string, body: { expectedVersion: number; note: string }) {
+    await this.s.lockReadiness(projectId); // DOM-P3-03
     const c = await loadInProject(this.s.db, schema.readinessCheck, projectId, checkId);
     // Reopening is not an approval of someone's request: role-level check (no separation-of-duties subject), I-R3.
     this.s.policy.assertGranted(ctx, 'readiness.check.signoff', { projectId, workstreamId: c.workstreamId });
@@ -489,7 +581,37 @@ export class ReadinessChecksService implements OnModuleInit {
     })) as CheckRow;
     await this.s.audit.record({ action: 'readiness.check.reopen', entityType: 'readiness_check', entityId: c.id, projectId, before: { status: c.status, waiverId: c.waiverId, signedOffBy: c.signedOffBy }, after: { status: to }, reason: body.note });
     await this.s.enqueueDimensions(ctx, projectId, `check:${c.id}:${row.version}`);
+    await this.s.flagGoPlans(ctx, projectId, { ...c, status: to }, { code: 'cutover.history.go_flagged.reopened', note: body.note }); // DOM-P3-04
     return { id: c.id, status: to, version: row.version };
+  }
+
+  /**
+   * DOM-P3-09 — evidence reaction (worker, `evidence.changed` on a readiness check; business-gates.md §4 rule 9 applied to
+   * Day-1 sign-offs): a PASSED check whose evidence no longer supports the sign-off (no active link left, or a conflicting
+   * one) returns to `in_progress` for a fresh sign-off — the earlier sign-off stays in the audit trail and the record
+   * history — and flags the GO of every plan it gates that is at `approved_go` (DOM-P3-04 treatment). Idempotent.
+   */
+  async processEvidenceChange(ctx: RequestContext, projectId: string, checkId: string): Promise<{ reopened: boolean; flaggedPlans: string[] }> {
+    await this.s.lockReadiness(projectId);
+    const [c] = await this.s.db.tx().select().from(schema.readinessCheck).where(and(eq(schema.readinessCheck.projectId, projectId), eq(schema.readinessCheck.id, checkId)));
+    if (!c || c.status !== 'passed') return { reopened: false, flaggedPlans: [] };
+    if ((await this.s.signoffEvidenceValid(projectId, [c.id])).get(c.id) === true) return { reopened: false, flaggedPlans: [] };
+    this.s.policy.assert(ctx, 'readiness.check.manage', { projectId, workstreamId: c.workstreamId });
+    const ev = await this.s.evidence(projectId, 'readiness_check', c.id);
+    const to = transition('readiness_check', READINESS_CHECK_MACHINE, c.status, 'reopen');
+    const row = (await updateVersioned(this.s.db, schema.readinessCheck, { id: c.id, projectId, expectedVersion: c.version }, { status: to, signedOffBy: null, signedOffAt: null })) as CheckRow;
+    await this.s.audit.record({
+      action: 'readiness.check.evidence_invalidated',
+      entityType: 'readiness_check',
+      entityId: c.id,
+      projectId,
+      before: { status: c.status, signedOffBy: c.signedOffBy, signedOffAt: iso(c.signedOffAt) },
+      after: { status: to, activeEvidence: ev.active, conflictingEvidence: ev.conflicting },
+      reason: 'The evidence the sign-off relied on is no longer active (rejected, superseded or conflicting) — a fresh sign-off on valid evidence is required',
+    });
+    await this.s.enqueueDimensions(ctx, projectId, `check:${c.id}:${row.version}`);
+    const flaggedPlans = await this.s.flagGoPlans(ctx, projectId, { ...c, status: to }, { code: 'cutover.history.go_flagged.evidence_invalidated' });
+    return { reopened: true, flaggedPlans };
   }
 
   // ---------------------------------------------------------------------------------------------------------
@@ -519,6 +641,7 @@ export class ReadinessChecksService implements OnModuleInit {
   }
 
   async approveWaiver(ctx: RequestContext, projectId: string, waiverId: string, body: { expectedVersion: number; note?: string }) {
+    await this.s.lockReadiness(projectId); // DOM-P3-03: the waiver application changes a gating input
     const w = await this.waivers.approve(ctx, projectId, waiverId, body, 'readiness_check');
     return this.waiverResult(projectId, w);
   }

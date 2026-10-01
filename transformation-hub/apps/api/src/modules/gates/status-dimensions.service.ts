@@ -4,6 +4,7 @@ import { schema } from '@hub/db';
 import {
   computeStatusDimensions,
   isCarveOutComplete,
+  readinessCheckAppliesToPlan,
   waiverIsEffective,
   APPROVED_GATE_STATUSES,
   SIGNING_GATE_KEY,
@@ -13,6 +14,9 @@ import {
   StatusDimensionKey,
   ProjectTemplateDefinition,
   IncorporationStatus,
+  PerimeterDisposition,
+  TransferStatus,
+  TsaStatus,
 } from '@hub/domain';
 import { DbService } from '../../platform/db.service';
 import { PolicyService } from '../../platform/policy.service';
@@ -95,15 +99,30 @@ export class StatusDimensionsService {
     if (!project) throw notFound();
     const today = this.clock.today(project.timezone);
 
-    const newco = await tx.execute<{ status: IncorporationStatus; verification: string }>(sql`
-      select le.incorporation_status as status, le.incorporation_verification as verification
+    // DOM-P3-08: a confirmed verification counts only while the evidence it relied on is still active and uncontested (in the
+    // owning project — linked projects cannot see that evidence and rely on the owner's recorded verification, which the
+    // NewCo evidence reaction returns to "proposed" when the evidence is invalidated).
+    const newco = await tx.execute<{ status: IncorporationStatus; verification: string; owned: boolean; active: number; conflicting: number }>(sql`
+      select le.incorporation_status as status, le.incorporation_verification as verification, le.owner_project_id = ${projectId} as owned,
+             (select count(*) from evidence_link e where e.project_id = ${projectId} and e.target_type = 'legal_entity' and e.target_id = le.id and e.status = 'active')::int as active,
+             (select count(*) from evidence_link e where e.project_id = ${projectId} and e.target_type = 'legal_entity' and e.target_id = le.id and e.status = 'conflicting')::int as conflicting
         from project_entity pe join legal_entity le on le.id = pe.legal_entity_id
        where pe.project_id = ${projectId} and pe.role = 'newco'
        order by pe.created_at limit 1`);
-    const perimeter = await tx
-      .select({ disposition: schema.perimeterItem.disposition, transferStatus: schema.perimeterItem.transferStatus, economicTransferStatus: schema.perimeterItem.economicTransferStatus })
-      .from(schema.perimeterItem)
-      .where(eq(schema.perimeterItem.projectId, projectId));
+    // DOM-P34R-06 (the DOM-P3-08 / DOM-P3-09 rule for transfers): an aspect counts as verified only while the item's transfer
+    // evidence is still active and uncontested — otherwise it is shown as awaiting evidence until the carve-out evidence
+    // reaction returns it to in progress.
+    const perimeterRows = await tx.execute<{ disposition: PerimeterDisposition; transfer_status: TransferStatus; economic_transfer_status: TransferStatus; active: number; conflicting: number }>(sql`
+      select pi.disposition, pi.transfer_status, pi.economic_transfer_status,
+             (select count(*) from evidence_link e where e.project_id = ${projectId} and e.target_type = 'transfer' and e.target_id = pi.id and e.status = 'active')::int as active,
+             (select count(*) from evidence_link e where e.project_id = ${projectId} and e.target_type = 'transfer' and e.target_id = pi.id and e.status = 'conflicting')::int as conflicting
+        from perimeter_item pi
+       where pi.project_id = ${projectId}`);
+    const perimeter = perimeterRows.rows.map((r) => {
+      const evidenceValid = Number(r.active) > 0 && Number(r.conflicting) === 0;
+      const v = (st: TransferStatus): TransferStatus => (st === 'transferred_verified' && !evidenceValid ? 'transferred_pending_evidence' : st);
+      return { disposition: r.disposition, transferStatus: v(r.transfer_status), economicTransferStatus: v(r.economic_transfer_status) };
+    });
     const readiness = await tx
       .select({ r: schema.readinessCheck, w: schema.waiver })
       .from(schema.readinessCheck)
@@ -126,15 +145,36 @@ export class StatusDimensionsService {
       .from(schema.gateAssessment)
       .innerJoin(schema.gateDefinition, eq(schema.gateDefinition.id, schema.gateAssessment.gateId))
       .where(and(eq(schema.gateAssessment.projectId, projectId), eq(schema.gateDefinition.key, SIGNING_GATE_KEY), eq(schema.gateAssessment.isCurrent, true)));
-    const tsas = await tx
-      .select({ status: schema.tsaService.status, isEnduringArrangement: schema.tsaService.isEnduringArrangement })
-      .from(schema.tsaService)
-      .where(eq(schema.tsaService.projectId, projectId));
+    // DOM-P34R-06: an accepted exit counts only while its acceptance evidence is still active and uncontested.
+    const tsaRows = await tx.execute<{ status: TsaStatus; is_enduring_arrangement: boolean; active: number; conflicting: number }>(sql`
+      select t.status, t.is_enduring_arrangement,
+             (select count(*) from evidence_link e where e.project_id = ${projectId} and e.target_type = 'tsa_service' and e.target_id = t.id and e.status = 'active')::int as active,
+             (select count(*) from evidence_link e where e.project_id = ${projectId} and e.target_type = 'tsa_service' and e.target_id = t.id and e.status = 'conflicting')::int as conflicting
+        from tsa_service t
+       where t.project_id = ${projectId}`);
+    const tsas = tsaRows.rows.map((t) => ({
+      status: t.status,
+      isEnduringArrangement: t.is_enduring_arrangement,
+      ...(t.status === 'exit_accepted' ? { exitEvidenceValid: Number(t.active) > 0 && Number(t.conflicting) === 0 } : {}),
+    }));
     const defs = await tx.select({ status: schema.operatingModelDefinition.status }).from(schema.operatingModelDefinition).where(eq(schema.operatingModelDefinition.projectId, projectId));
+    // DOM-P3-12: the approved perimeter version and the Day-1 GO / post-transition acceptance of the transition plans.
+    const [approvedVersion] = await tx
+      .select({ id: schema.perimeterVersion.id })
+      .from(schema.perimeterVersion)
+      .where(and(eq(schema.perimeterVersion.projectId, projectId), eq(schema.perimeterVersion.status, 'approved')))
+      .limit(1);
+    const plans = await tx.select({ id: schema.cutoverPlan.id, siteId: schema.cutoverPlan.siteId, status: schema.cutoverPlan.status }).from(schema.cutoverPlan).where(eq(schema.cutoverPlan.projectId, projectId));
+    const checkCleared = ({ r, w }: (typeof readiness)[number]) => r.status === 'passed' || r.status === 'not_applicable' || (r.status === 'waived' && r.waivable && waiverIsEffective(w, today));
+    const cutoverPlans = plans.map((plan) => ({
+      status: plan.status,
+      // A GO whose gating check is open again (DOM-P3-04) does not count as an approved Day-1 GO.
+      goFlagged: plan.status === 'approved_go' && readiness.some((x) => (x.r.mandatory || x.r.blocker) && readinessCheckAppliesToPlan(x.r, plan) && !checkCleared(x)),
+    }));
 
     const n = newco.rows[0];
     return {
-      newcoIncorporation: n ? { status: n.status, evidenceVerified: n.verification === 'confirmed' } : null,
+      newcoIncorporation: n ? { status: n.status, evidenceVerified: n.verification === 'confirmed' && (!n.owned || (Number(n.active) > 0 && Number(n.conflicting) === 0)) } : null,
       perimeter,
       readiness: readiness.map(({ r, w }) => ({
         mandatory: r.mandatory,
@@ -150,6 +190,8 @@ export class StatusDimensionsService {
       signingGatePassed: g5.some((a) => APPROVED_GATE_STATUSES.includes(a.status) && (a.evaluation as { needsReassessment?: boolean } | null)?.needsReassessment !== true),
       tsas,
       independenceDefinitionApproved: defs.length ? defs.some((d) => d.status === 'approved') : undefined,
+      perimeterApproved: !!approvedVersion,
+      cutoverPlans,
     };
   }
 
@@ -159,6 +201,10 @@ export class StatusDimensionsService {
    * Service method other modules/jobs may call inside a project-scoped context.
    */
   async recomputeDimensions(projectId: string): Promise<{ changed: StatusDimensionKey[] }> {
+    // DOM-P3-14: one recompute of a project's dimensions at a time (HTTP commands and the worker job) — the transaction-
+    // scoped advisory lock `hub_dimensions:<projectId>` is taken before any register is read, so a recompute never stores
+    // a state computed from an older snapshot after a newer one, and history rows are never dropped by a concurrent writer.
+    await this.db.query(`select pg_advisory_xact_lock(hashtextextended('hub_dimensions:' || $1, 0))`, [projectId]);
     const tx = this.db.tx();
     const [tv] = await tx
       .select({ definition: schema.projectTemplateVersion.definition, orgId: schema.project.orgId })

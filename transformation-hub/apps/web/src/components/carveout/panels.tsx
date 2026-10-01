@@ -8,6 +8,7 @@ import { carveoutRoutes as C, governanceRoutes as G } from '@hub/contracts';
 import type { PerimeterItemType } from '@hub/domain';
 import { EM_DASH, useI18n, type MessageKey } from '@/i18n/provider';
 import { api, isApiError } from '@/lib/api';
+import { useServerMessages } from '@/lib/i18n-data';
 import { ck, itemHref, useRefreshCarveout, type Day1Positions, type PerimeterVersion, type Reconciliation, type Site, type TransferRecord } from '@/lib/carveout';
 import { useProjectContext } from '@/lib/project-context';
 import { ConfirmCommandDialog } from '../ConfirmCommandDialog';
@@ -30,13 +31,14 @@ const perimeterHref = (pid: string, q: string) => `/projects/${pid}/perimeter?${
 // Reconciliation (REQ-PER-003, REQ-PER-006)
 
 type Issue = Reconciliation['findings'][number]['issue'];
-const ISSUES = ['no_transfer_plan', 'no_evidence', 'pending_disposition', 'consent_outstanding', 'pending_without_resolution', 'day1_position_incomplete', 'change_request_pending'] as const;
+const ISSUES = ['no_transfer_plan', 'no_evidence', 'pending_disposition', 'consent_outstanding', 'transfer_not_applicable', 'pending_without_resolution', 'day1_position_incomplete', 'change_request_pending'] as const;
 const CATEGORY_TONE: Record<Reconciliation['categories'][number]['status'], Tone> = { items_registered: 'success', reviewed_none_in_perimeter: 'info', unassessed: 'danger' };
 
 export function ReconciliationPanel() {
   const { t, tStatus } = useI18n();
   const { projectId, can } = useProjectContext();
   const q = useQuery({ queryKey: ck.reconciliation(projectId), queryFn: ({ signal }) => api(C.reconciliation, { params: { projectId }, signal }) });
+  const serverText = useServerMessages();
   const [review, setReview] = useState<Reconciliation['categories'][number] | null>(null);
   if (q.isLoading) return <LoadingState />;
   if (q.error || !q.data) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
@@ -62,7 +64,8 @@ export function ReconciliationPanel() {
           columns={[
             { key: 'code', header: t('carveout.common.item'), isRowHeader: true, sortValue: (f) => f.code, cell: (f) => <CodeLink href={itemHref(projectId, f.itemId)} code={f.code} /> },
             { key: 'issue', header: t('carveout.recon.issueCol'), sortValue: (f) => f.issue, cell: (f) => <span data-issue={f.issue}>{issueLabel(f.issue)}</span> },
-            { key: 'msg', header: t('carveout.recon.detail'), cell: (f) => <span className="text-muted" dir="ltr">{f.message}</span> },
+            // QA-P34-01a: the server's sentence is translated from its codes (the English is shown only for rows without codes).
+            { key: 'msg', header: t('carveout.recon.detail'), cell: (f) => <span className="text-muted">{serverText(f.messageI18n, f.message)}</span> },
           ]}
           rows={r.findings}
           rowKey={(f) => `${f.itemId}-${f.issue}`}
@@ -81,7 +84,8 @@ export function ReconciliationPanel() {
             { key: 'conclusion', header: t('carveout.recon.conclusion'), cell: (c) => <span dir="auto">{c.conclusion ?? EM_DASH}</span> },
             {
               key: 'act',
-              header: '',
+              header: t('carveout.common.actionsColumn'),
+              headerHidden: true,
               cell: (c) =>
                 can('carveout.perimeter.manage') && c.items === 0 ? (
                   <button type="button" className={btn.ghost} onClick={() => setReview(c)} data-testid={`review-${c.category}`}>
@@ -229,7 +233,7 @@ export function TransfersPanel({ initialAspect }: { initialAspect?: string }) {
     },
     { key: 'date', header: t('carveout.transfer.effectiveDate'), cell: (r) => <DateText value={r.effectiveDate} /> },
     { key: 'ev', header: t('carveout.transfer.evidenceAtTime'), cell: (r) => <span className="tabular">{r.evidenceCount}</span> },
-    { key: 'by', header: t('carveout.transfer.recordedBy'), cell: (r) => <span dir="auto">{r.recordedByName ?? EM_DASH}</span> },
+    { key: 'by', header: t('carveout.transfer.recordedBy'), cell: (r) => <span dir="auto">{r.recordedBy ? (r.recordedByName ?? EM_DASH) : t('carveout.transfer.system')}</span> },
   ];
   return (
     <div className="space-y-3" data-testid="transfers-history">
@@ -254,7 +258,7 @@ export function TransfersPanel({ initialAspect }: { initialAspect?: string }) {
   );
 }
 
-const COMMANDS = ['plan', 'start', 'report_transferred', 'verify', 'reject_evidence', 'block', 'unblock', 'mark_not_applicable'] as const;
+const COMMANDS = ['plan', 'start', 'report_transferred', 'verify', 'reject_evidence', 'block', 'unblock', 'mark_not_applicable', 'scope_reset'] as const;
 export function CommandLabel({ command }: { command: string }) {
   const { t } = useI18n();
   return <>{(COMMANDS as readonly string[]).includes(command) ? t(`carveout.transfer.cmd.${command as (typeof COMMANDS)[number]}`) : command}</>;
@@ -280,7 +284,8 @@ export function PerimeterVersionsPanel() {
     { key: 'warn', header: t('carveout.versions.warnings'), cell: (v) => (v.warnings.length ? <span className="text-xs text-warning">{t('carveout.versions.warningCount', { count: v.warnings.length })}</span> : EM_DASH) },
     {
       key: 'act',
-      header: '',
+      header: t('carveout.common.actionsColumn'),
+      headerHidden: true,
       cell: (v) =>
         v.status === 'proposed' && can('carveout.perimeter.approve') && v.proposedBy !== me.user.id ? (
           <span className="flex flex-wrap gap-2">
@@ -424,11 +429,12 @@ export function SitesPanel() {
     { key: 'name', header: t('carveout.sites.name'), sortValue: (s) => s.name, cell: (s) => <span dir="auto">{s.name}</span> },
     { key: 'city', header: t('carveout.sites.city'), cell: (s) => <span dir="auto">{s.city ?? EM_DASH}</span> },
     { key: 'kind', header: t('carveout.sites.kind'), cell: (s) => (SITE_KINDS.includes(s.kind as SiteKind) ? siteKindLabel(t, s.kind as SiteKind) : s.kind) },
-    { key: 'items', header: '', cell: (s) => <Link className={btn.link} href={perimeterHref(projectId, `tab=register&siteId=${s.id}`)}>{t('carveout.sites.items')}</Link> },
-    { key: 'demo', header: '', cell: (s) => (s.isDemo ? <DemoBadge /> : null) },
+    { key: 'items', header: t('carveout.sites.items'), headerHidden: true, cell: (s) => <Link className={btn.link} href={perimeterHref(projectId, `tab=register&siteId=${s.id}`)}>{t('carveout.sites.items')}</Link> },
+    { key: 'demo', header: t('common.table.demoColumn'), headerHidden: true, cell: (s) => (s.isDemo ? <DemoBadge /> : null) },
     {
       key: 'edit',
-      header: '',
+      header: t('carveout.common.actionsColumn'),
+      headerHidden: true,
       cell: (s) =>
         can('carveout.perimeter.manage') ? (
           <button type="button" className={btn.ghost} onClick={() => setEdit(s)} aria-label={t('carveout.sites.editTitle', { code: s.code })}>

@@ -76,7 +76,7 @@ export function PerimeterRegister({ initial = {} }: { initial?: { type?: string;
           <span className="text-xs text-muted">{EM_DASH}</span>
         ),
     },
-    { key: 'demo', header: '', cell: (r) => (r.isDemo ? <DemoBadge /> : null) },
+    { key: 'demo', header: t('common.table.demoColumn'), headerHidden: true, cell: (r) => (r.isDemo ? <DemoBadge /> : null) },
   ];
 
   return (

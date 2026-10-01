@@ -1,7 +1,7 @@
 # Data dictionary
 
 > Generated from the live PostgreSQL schema by `packages/db/src/cli/data-dictionary.ts` — do not edit by hand.
-> Tables: 121. RLS enabled: 116.
+> Tables: 122. RLS enabled: 117.
 
 ## Spec §14 entity coverage
 
@@ -79,7 +79,7 @@
 | `action_item_status` | open, in_progress, done_pending_verification, verified_closed, cancelled |
 | `actor_kind` | user, service, system |
 | `agenda_item_kind` | decision, information, discussion, escalation |
-| `agenda_screening_status` | requested, accepted, returned, deferred, withdrawn |
+| `agenda_screening_status` | requested, accepted, returned, deferred, withdrawn, merged, rejected |
 | `agreement_stage` | identified, drafting, negotiating, agreed_in_principle, signed, effective, terminated, expired |
 | `ai_mode` | off, advisory, assisted, autopilot |
 | `ai_proposal_status` | proposed, approved, rejected, invalidated, executing, executed, failed, expired, cancelled |
@@ -135,7 +135,7 @@
 | `job_status` | queued, running, succeeded, failed, dead, cancelled |
 | `kpi_direction` | higher_is_better, lower_is_better |
 | `materiality` | low, medium, high, critical |
-| `meeting_status` | planned, agenda_published, in_session, held, minutes_draft, minutes_approved, cancelled |
+| `meeting_status` | proposed, planned, agenda_published, in_session, held, minutes_draft, minutes_approved, cancelled |
 | `milestone_status` | planned, at_risk, achieved_pending_evidence, achieved_verified, missed, cancelled |
 | `model_case` | base, downside, upside |
 | `model_kind` | business_plan, valuation |
@@ -486,7 +486,7 @@ Foreign keys:
 
 ### `legal_entity`
 
-RLS: enabled (hub_legal_entity_owner_update, hub_legal_entity_owner_insert, hub_org_isolation) · Triggers: hub_legal_entity_owner_immutable, hub_scope_immutable
+RLS: enabled (hub_org_isolation, hub_legal_entity_owner_update, hub_legal_entity_owner_insert) · Triggers: hub_legal_entity_owner_immutable, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -1347,6 +1347,7 @@ RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable
 | `minutes_approved_by` | uuid | yes |  |
 | `minutes_approved_at` | timestamp with time zone | yes |  |
 | `authority_matrix_version_id` | uuid | yes |  |
+| `cadence_charter_version_no` | integer | yes |  |
 | `is_demo` | boolean | no | `false` |
 | `created_at` | timestamp with time zone | no | `now()` |
 | `created_by` | uuid | yes |  |
@@ -1383,6 +1384,7 @@ RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable
 | `screening_status` | enum agenda_screening_status | no | `'requested'::agenda_screening_status` |
 | `screening_note` | text | yes |  |
 | `screened_by` | uuid | yes |  |
+| `merged_into_agenda_item_id` | uuid | yes |  |
 | `presenter_user_id` | uuid | yes |  |
 | `minutes_note` | text | yes |  |
 | `sort_order` | integer | no | `0` |
@@ -1396,6 +1398,7 @@ Foreign keys:
 - `agenda_item_committee_fk`: (project_id,committee_id) → `committee`(project_id,id) — composite project-scoped FK
 - `agenda_item_decision_fk`: (project_id,decision_id) → `decision`(project_id,id) — composite project-scoped FK
 - `agenda_item_meeting_fk`: (project_id,meeting_id) → `meeting`(project_id,id) — composite project-scoped FK
+- `agenda_item_merged_into_fk`: (project_id,merged_into_agenda_item_id) → `agenda_item`(project_id,id) — composite project-scoped FK
 - `agenda_item_project_id_project_id_fk`: (project_id) → `project`(id)
 - `hub_opfk_agenda_item`: (org_id,project_id) → `project`(org_id,id)
 - `hub_ufk_agenda_item_created_by`: (org_id,created_by) → `app_user`(org_id,id)
@@ -1685,6 +1688,7 @@ RLS: enabled (hub_project_isolation) · Triggers: hub_append_only, hub_scope_imm
 | `comment` | text | yes |  |
 | `authority_basis` | text | yes |  |
 | `payload_hash` | text | no |  |
+| `method` | character varying | no | `'internal_electronic'::character varying` |
 | `created_at` | timestamp with time zone | no | `now()` |
 
 Foreign keys:
@@ -2047,7 +2051,7 @@ RLS: enabled (hub_project_isolation) · Triggers: hub_append_only, hub_scope_imm
 | `note` | text | yes |  |
 | `evidence_count` | integer | no | `0` |
 | `reviews_record_id` | uuid | yes |  |
-| `recorded_by` | uuid | no |  |
+| `recorded_by` | uuid | yes |  |
 | `created_at` | timestamp with time zone | no | `now()` |
 
 Foreign keys:
@@ -2248,6 +2252,7 @@ RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable
 | `residual_risks` | text | yes |  |
 | `is_enduring_arrangement` | boolean | no | `false` |
 | `status` | enum tsa_status | no | `'proposed'::tsa_status` |
+| `pre_breach_status` | enum tsa_status | yes |  |
 | `escalation_id` | uuid | yes |  |
 | `approval_decision_id` | uuid | yes |  |
 | `extension_decision_id` | uuid | yes |  |
@@ -2543,7 +2548,7 @@ RLS: enabled (hub_project_isolation) · Triggers: hub_append_only, hub_scope_imm
 | `kind` | character varying | no |  |
 | `from_status` | enum cutover_status | yes |  |
 | `to_status` | enum cutover_status | yes |  |
-| `actor_user_id` | uuid | no |  |
+| `actor_user_id` | uuid | yes |  |
 | `rationale` | text | yes |  |
 | `go_decision_id` | uuid | yes |  |
 | `evaluation` | jsonb | yes |  |
@@ -2588,6 +2593,33 @@ Foreign keys:
 - `hub_ufk_operating_model_definition_created_by`: (org_id,created_by) → `app_user`(org_id,id)
 - `operating_model_decision_fk`: (project_id,decision_id) → `decision`(project_id,id) — composite project-scoped FK
 - `operating_model_definition_project_id_project_id_fk`: (project_id) → `project`(id)
+
+### `tsa_extension_terms`
+
+RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | uuid | no | `gen_random_uuid()` |
+| `org_id` | uuid | no |  |
+| `project_id` | uuid | no |  |
+| `decision_id` | uuid | no |  |
+| `tsa_service_id` | uuid | no |  |
+| `proposed_end_date` | date | no |  |
+| `continuity_plan` | text | no |  |
+| `requested_by` | uuid | no |  |
+| `is_demo` | boolean | no | `false` |
+| `created_at` | timestamp with time zone | no | `now()` |
+| `updated_at` | timestamp with time zone | no | `now()` |
+| `version` | integer | no | `1` |
+
+Foreign keys:
+
+- `hub_opfk_tsa_extension_terms`: (org_id,project_id) → `project`(org_id,id)
+- `hub_ufk_tsa_extension_terms_requested_by`: (org_id,requested_by) → `app_user`(org_id,id)
+- `tsa_extension_terms_decision_fk`: (project_id,decision_id) → `decision`(project_id,id) — composite project-scoped FK
+- `tsa_extension_terms_project_id_project_id_fk`: (project_id) → `project`(id)
+- `tsa_extension_terms_tsa_fk`: (project_id,tsa_service_id) → `tsa_service`(project_id,id) — composite project-scoped FK
 
 ## Finance
 
@@ -4051,7 +4083,7 @@ Foreign keys:
 
 ### `notification`
 
-RLS: enabled (hub_notification_update, hub_notification_write, hub_notification_read) · Triggers: hub_same_project_source, hub_scope_immutable
+RLS: enabled (hub_notification_write, hub_notification_update, hub_notification_read) · Triggers: hub_same_project_source, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|

@@ -80,7 +80,7 @@ export function RequirementsRegister() {
     { key: 'conditions', header: t('newco.req.conditionsCol'), cell: (r) => <ConditionsBadge value={r.conditionsState} /> },
     { key: 'owner', header: t('newco.common.owner'), cell: (r) => <PersonText person={r.owner} /> },
     { key: 'gate', header: t('newco.req.gate'), cell: (r) => <span dir="ltr">{r.gateKey ?? EM_DASH}</span> },
-    { key: 'demo', header: '', cell: (r) => (r.isDemo ? <DemoBadge /> : null) },
+    { key: 'demo', header: t('common.table.demoColumn'), headerHidden: true, cell: (r) => (r.isDemo ? <DemoBadge /> : null) },
   ];
   return (
     <div className="space-y-3" data-testid="requirements-register">

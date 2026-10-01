@@ -26,7 +26,8 @@
     "yes": "Yes",
     "no": "No",
     "classification": "Classification",
-    "note": "Note"
+    "note": "Note",
+    "actionsColumn": "Actions"
   },
   "aspect": {
     "legal": "Legal",
@@ -76,7 +77,10 @@
     "historyHint": "Every change to the item is kept as a numbered version.",
     "created": "Created",
     "editTitle": "Edit {code}",
-    "editHint": "Descriptive fields only. Disposition, site and entities change through a scope change (change-controlled after baseline); transfer status changes through transfer commands."
+    "editHint": "Descriptive fields only. Disposition, site and entities change through a scope change (change-controlled after baseline); transfer status changes through transfer commands.",
+    "refusal": {
+      "consentRequiredByClass": "The specialist classified this contract as needing a consent or novation: the consent need follows that class. Re-assess the transferability to change it."
+    }
   },
   "scope": {
     "heldForChange": "Held as Pending — change request {code} raised for approval.",
@@ -147,7 +151,9 @@
       "reject_evidence": "Reject evidence",
       "block": "Block",
       "unblock": "Unblock",
-      "mark_not_applicable": "Mark not applicable"
+      "mark_not_applicable": "Mark not applicable",
+      "determine_not_applicable": "Determine not applicable",
+      "scope_reset": "Reset on entering the scope"
     },
     "title": "Transfer (legal vs economic)",
     "hint": "Two independent aspects: a legal transfer does not imply the economic one, or the reverse.",
@@ -161,7 +167,9 @@
       "report_transferred": "The {aspect} transfer is reported as done and waits for evidence verification by someone else.",
       "block": "The {aspect} transfer is marked blocked with your reason.",
       "unblock": "The {aspect} transfer returns to Planned.",
-      "mark_not_applicable": "The {aspect} transfer is recorded as not applicable, with your reason."
+      "mark_not_applicable": "The {aspect} transfer is recorded as not applicable, with your reason.",
+      "determine_not_applicable": "Specialist determination: the {aspect} transfer of this included / shared item is not applicable. Your basis is recorded; the item still transfers on the other aspect.",
+      "mark_not_applicable_change_request": "The item is in the approved baseline: a change request is raised with its impact assessment. The {aspect} transfer changes only once the approved request is applied."
     },
     "otherAspectUnchanged": "The other aspect is not changed.",
     "done": "Transfer updated.",
@@ -173,7 +181,17 @@
     "evidenceNow": "Active evidence linked now: {count}",
     "rejectEffect": "The transfer returns to In progress; the reporter must provide better evidence.",
     "historyTitle": "Transfer history",
-    "evidenceCount": "{count} evidence"
+    "evidenceCount": "{count} evidence",
+    "notApplicableSpecialist": "That one aspect of an included / shared item does not transfer is a specialist determination (Finance, Legal or the functional approver — not the item owner). An item that does not transfer at all is reclassified.",
+    "basis": "Basis of the determination",
+    "changeRequested": "Change request {code} raised — the transfer changes once it is approved and applied.",
+    "refusal": {
+      "notApplicableSpecialist": "That an aspect of an included / shared item does not transfer is a specialist determination (Finance, Legal or the functional approver, not the item owner) — or, for an item that does not transfer at all, a reclassification.",
+      "notApplicableInScope": "The other aspect is already not applicable: an included / shared item always transfers on at least one aspect. Reclassify the item (Excluded) through the scope change instead.",
+      "notApplicableAfterBaseline": "The item is in the approved baseline: the transfer manager raises this as a change request (impact assessment, approval, then apply).",
+      "notApplicableNotInScope": "The item is not included or shared: its transfer commands are the transfer manager's."
+    },
+    "system": "System (evidence no longer valid)"
   },
   "day1": {
     "missing": {
@@ -229,7 +247,8 @@
       "consent_outstanding": "Consent outstanding",
       "pending_without_resolution": "Pending without a resolution path",
       "day1_position_incomplete": "Day-1 position incomplete",
-      "change_request_pending": "Change request pending"
+      "change_request_pending": "Change request pending",
+      "transfer_not_applicable": "Transfer not applicable on an in-scope item"
     },
     "categoriesTitle": "Category coverage",
     "categoriesHint": "Every category must either have items or a recorded review concluding none belong in the perimeter.",
@@ -426,6 +445,96 @@
     "expansion": "Expansion",
     "basis": "Basis",
     "versionLabel": "Version label",
-    "versionHint": "Versions are append-only; link the draft document as evidence."
+    "versionHint": "Versions are append-only; link the draft document as evidence.",
+    "refusal": {
+      "legalReviewerNotLegal": "The legal reviewer of an agreement must hold a legal role in this project."
+    }
+  },
+  "messages": {
+    "perimeter": {
+      "recon": {
+        "pending_disposition": "Disposition (included / excluded / shared) not decided.",
+        "no_transfer_plan": "No transfer mechanism and/or planned effective date.",
+        "not_applicable_both": "Included / shared item with neither a legal nor an economic transfer — reclassify it through a scope change or plan the transfer.",
+        "not_applicable_legal": "Legal transfer determined not applicable — the item transfers on the economic aspect only.",
+        "not_applicable_economic": "Economic transfer determined not applicable — the item transfers on the legal aspect only.",
+        "no_evidence": "Reported transferred without acceptance evidence.",
+        "consent_outstanding": "Consent required and not granted, with no interim arrangement.",
+        "pending_without_resolution": "Pending item without an owner, a resolution path and a target resolution gate (G1-C03).",
+        "day1_position_incomplete": "Day-1 contract position incomplete: {missing}.",
+        "change_request_pending": "A scope change awaits the change-request decision."
+      },
+      "impact": {
+        "change": {
+          "add": "The change adds {item} ({disposition});",
+          "attributes": "The change modifies the scope attributes of {item};",
+          "into_scope": "The change moves {item} into the transferring scope;",
+          "out_of_scope": "The change moves {item} out of the transferring scope;"
+        },
+        "financial": {
+          "reassess": "the carve-out financial statements / reporting perimeter must be reassessed — Assessment pending — specialist (Finance).",
+          "reassess_balance_sheet": "the carve-out financial statements / reporting perimeter (balance-sheet item) must be reassessed — Assessment pending — specialist (Finance)."
+        },
+        "no_scope_change": "No change to the transferring scope.",
+        "valuation": {
+          "pending": "Valuation assumptions may change — Assessment pending — specialist (Finance / Corporate Development)."
+        },
+        "agreements": {
+          "not_visible": "Agreement register not visible to you.",
+          "linked": "Linked agreements / consents to review: {codes}.",
+          "no_instrument": "No transfer instrument linked yet — TBD.",
+          "none": "No linked agreement."
+        },
+        "tsa": {
+          "not_visible": "TSA register not visible to you.",
+          "linked": "TSA services linked through the item's agreement: {codes}.",
+          "shared": "Shared item: a TSA or an approved enduring arrangement is required — TBD (Assessment pending — specialist).",
+          "none": "No TSA dependency identified."
+        },
+        "readiness": {
+          "not_visible": "Readiness register not visible to you.",
+          "linked": "Day-1 readiness checks of the same site to revisit: {codes}.",
+          "no_checks": "No Day-1 readiness checks exist for this site yet — checklist to be defined.",
+          "none": "No readiness check linked."
+        },
+        "schedule": {
+          "not_visible": "Plan not visible to you.",
+          "linked": "Milestones of the item's workstream that may move: {codes}.",
+          "none": "No open milestone in the workstream.",
+          "no_workstream": "No workstream assigned — schedule impact TBD."
+        },
+        "budget": {
+          "not_visible": "Budget not visible to you.",
+          "linked": "Budget lines of the item's workstream to review: {codes}.",
+          "pending": "Separation / standalone cost effect — Assessment pending — specialist (Finance).",
+          "none": "No budget effect identified."
+        },
+        "transaction": {
+          "pending": "Transaction perimeter (JV scope, CPs, signing / closing documents) — Assessment pending — specialist (Legal / Corporate Development).",
+          "none": "No change to the transaction perimeter."
+        },
+        "withheld": "Not visible to you."
+      },
+      "history": {
+        "created": "Created",
+        "created_pending": "Created — held Pending under change control",
+        "change_request_raised": "Change request {cr} raised (requested: {disposition})",
+        "descriptive_update": "Descriptive update",
+        "change_requested": "Change requested ({cr}): {justification}",
+        "aspect_not_applicable_requested": "Change requested ({cr}): {aspect} transfer not applicable — {note}",
+        "classified": "Classified: {justification}",
+        "applied": "Applied: {cr}",
+        "closed_without_change": "Closed without change: {cr}",
+        "transferability": "Transferability: {transferClass}",
+        "day1_updated": "Day-1 position updated",
+        "transfer": "Transfer ({aspect}): {command} — {from} → {to}",
+        "transfer_evidence_invalidated": "Transfer evidence invalidated: {aspects} verified → in progress"
+      },
+      "transfer_note": {
+        "evidence_invalidated": "The transfer evidence was rejected, superseded or contested after verification (active {active}, contested {conflicting}) — report the transfer again on valid evidence for a new verification.",
+        "scope_reset": "The item entered the transferring scope ({from} → {to}); \"not applicable\" was recorded while it was {from} — plan the transfer or have the specialist determine it.",
+        "scope_reset_cr": "{cr}: the item entered the transferring scope ({from} → {to}); \"not applicable\" was recorded while it was {from} — plan the transfer or have the specialist determine it."
+      }
+    }
   }
 }

@@ -8,7 +8,11 @@ import {
   AI_MESSAGE_ACTIONS,
   aiFlagOf,
   assertActionExecutable,
+  clearanceAllows,
+  CLASSIFICATIONS,
   conflict,
+  financeDomainClearance,
+  type Classification,
   DomainError,
   forbidden,
   isApprovalStillValid,
@@ -222,7 +226,7 @@ export class AiProposalsService {
   }
 
   async approve(ctx: RequestContext, projectId: string, proposalId: string, body: { expectedVersion: number; note?: string }) {
-    const p = await this.loadProposal(projectId, proposalId);
+    const p = await this.loadVisible(ctx, projectId, proposalId); // SEC-P34R-05: nobody approves what they may not see
     const perm = AI_ACTION_PERMISSION[p.actionType as AiProposableAction];
     if (!perm) throw ruleViolation('ai.not_executable', 'This proposal type is a prepared request and cannot be executed');
     const requester = await this.requesterOf(p);
@@ -238,12 +242,12 @@ export class AiProposalsService {
     if (s.killSwitch) throw ruleViolation('ai.kill_switch', 'AI emergency stop is active');
     if (s.mode !== 'assisted' && s.mode !== 'autopilot') throw ruleViolation('ai.mode_forbids_execution', `AI mode "${s.mode}" does not allow executing proposals`);
     if (payloadHash(p.payload) !== p.payloadHash) {
-      await this.invalidate(p, null, 'payload_changed');
+      await this.invalidateDetached(ctx, p, 'payload_changed');
       throw conflict('ai.approval_invalidated', 'The proposal payload no longer matches its hash — a fresh proposal is required');
     }
     const tv = await this.knowledge.targetVersion(projectId, p.targetType, p.targetId);
     if (tv === 'missing' || tv !== p.targetVersion) {
-      await this.invalidate(p, null, 'target_version_changed');
+      await this.invalidateDetached(ctx, p, 'target_version_changed');
       throw conflict('ai.approval_invalidated', 'The target record changed after the proposal was prepared — a fresh review is required');
     }
     const recipient = (p.payload as { recipientUserId?: string }).recipientUserId;
@@ -269,7 +273,7 @@ export class AiProposalsService {
   }
 
   async reject(ctx: RequestContext, projectId: string, proposalId: string, body: { expectedVersion: number; note: string }) {
-    const p = await this.loadProposal(projectId, proposalId);
+    const p = await this.loadVisible(ctx, projectId, proposalId); // SEC-P34R-05
     this.policy.assert(ctx, 'ai.proposal.reject', { projectId });
     if (p.version !== body.expectedVersion) throw conflict('concurrency.version_mismatch', 'The proposal was changed — reload and review');
     if (p.status !== 'proposed' && p.status !== 'approved') throw conflict('ai.proposal_not_pending', `The proposal is ${p.status}`);
@@ -285,7 +289,7 @@ export class AiProposalsService {
 
   /** Requester revises the payload → new hash, existing approvals invalidated, fresh review required (AT-18). */
   async revise(ctx: RequestContext, projectId: string, proposalId: string, body: { expectedVersion: number; payload: Record<string, unknown>; note?: string }) {
-    const p = await this.loadProposal(projectId, proposalId);
+    const p = await this.loadVisible(ctx, projectId, proposalId); // SEC-P34R-05
     this.policy.assert(ctx, 'ai.assistant.use', { projectId });
     const requester = await this.requesterOf(p);
     if (!requester || requester !== ctx.principal.userId) throw forbidden('ai.not_requester', 'Only the person on whose behalf the proposal was prepared can revise it');
@@ -334,6 +338,26 @@ export class AiProposalsService {
     return r.length;
   }
 
+  /**
+   * The same invalidation when the caller then REFUSES the request (409 ai.approval_invalidated): the refusal rolls the
+   * request transaction back, so the invalidation and its AI_APPROVAL_INVALIDATED audit row are written in an autonomous
+   * transaction (as the refused cutover GO, readiness module) — otherwise the proposal stayed "proposed" with nothing
+   * recorded. Safe here: approve() has not written or locked the proposal or its approvals before this point.
+   */
+  private async invalidateDetached(ctx: RequestContext, p: ProposalRow, reason: string) {
+    await this.db.runDetached(ctx, async (tx) => {
+      await tx
+        .update(schema.aiActionApproval)
+        .set({ status: 'invalidated', invalidatedReason: reason })
+        .where(and(eq(schema.aiActionApproval.proposalId, p.id), eq(schema.aiActionApproval.projectId, p.projectId), eq(schema.aiActionApproval.status, 'valid')));
+      await tx
+        .update(schema.aiProposal)
+        .set({ status: 'invalidated', invalidatedReason: reason, updatedAt: this.clock.now(), version: sql`${schema.aiProposal.version} + 1` })
+        .where(and(eq(schema.aiProposal.id, p.id), eq(schema.aiProposal.projectId, p.projectId), inArray(schema.aiProposal.status, ['proposed', 'approved', 'executing'])));
+    });
+    await this.audit.recordDetached(ctx, { action: 'AI_APPROVAL_INVALIDATED', entityType: 'ai_proposal', entityId: p.id, projectId: p.projectId, outcome: 'rejected', reason });
+  }
+
   /** Marks the proposal (and its valid approvals) invalidated and audits AI_APPROVAL_INVALIDATED. Current transaction. */
   private async invalidate(p: ProposalRow, approval: ApprovalRow | null, reason: string) {
     await this.invalidateApprovals(p.id, p.projectId, reason);
@@ -349,14 +373,22 @@ export class AiProposalsService {
   // Reads
 
   async get(ctx: RequestContext, projectId: string, proposalId: string) {
-    const p = await this.loadProposal(projectId, proposalId);
+    const p = await this.loadVisible(ctx, projectId, proposalId);
     const [dto] = await this.toDtos(projectId, [p]);
     return dto!;
   }
 
+  /** A proposal the reader may see (404 otherwise, like an unknown id) — SEC-P34R-05. */
+  private async loadVisible(ctx: RequestContext, projectId: string, proposalId: string): Promise<ProposalRow> {
+    const p = await this.loadProposal(projectId, proposalId);
+    const [ok] = await this.db.tx().select({ id: schema.aiProposal.id }).from(schema.aiProposal).where(and(eq(schema.aiProposal.id, p.id), eq(schema.aiProposal.projectId, projectId), this.visibleSql(ctx, projectId)));
+    if (!ok) throw notFound();
+    return p;
+  }
+
   async list(ctx: RequestContext, projectId: string, q: { page: number; pageSize: number; status?: string; sort?: RouteInput<typeof aiRoutes.listProposals>['query']['sort'] }) {
     this.policy.assert(ctx, 'ai.proposal.read', { projectId });
-    const conds: SQL[] = [eq(schema.aiProposal.projectId, projectId), this.targetVisibleSql(ctx, projectId)];
+    const conds: SQL[] = [eq(schema.aiProposal.projectId, projectId), this.visibleSql(ctx, projectId)];
     if (q.status) conds.push(eq(schema.aiProposal.status, q.status as ProposalRow['status']));
     const where = and(...conds);
     const [{ n }] = (await this.db.tx().select({ n: sql<number>`count(*)::int` }).from(schema.aiProposal).where(where)) as [{ n: number }];
@@ -378,14 +410,34 @@ export class AiProposalsService {
     return { items: await this.toDtos(projectId, rows), page: q.page, pageSize: q.pageSize, total: n };
   }
 
-  /** Proposals are listed only when their target is visible to the reader (classification / workstream reach in SQL). */
-  private targetVisibleSql(ctx: RequestContext, projectId: string): SQL {
-    const decVis = this.policy.visibilitySql(ctx, projectId, { classification: schema.decision.classification });
-    const taskReach = this.policy.reachSql(ctx, 'planning.plan.read', projectId, schema.task.workstreamId);
-    return sql`(${schema.aiProposal.targetType} is null
-      or (${schema.aiProposal.targetType} = 'decision' and exists (select 1 from decision where decision.id = ${schema.aiProposal.targetId} and decision.project_id = ${projectId} and ${decVis}))
-      or (${schema.aiProposal.targetType} = 'task' and exists (select 1 from task where task.id = ${schema.aiProposal.targetId} and task.project_id = ${projectId} and ${taskReach}))
-      or ${schema.aiProposal.targetType} not in ('decision', 'task'))`;
+  /**
+   * SEC-P34R-05 (access-matrix §2.5 / §2.6): a proposal is derived data — shown (list, total, every command response) only to a
+   * reader who may see what it is about and what it was drafted from, inside SQL:
+   *  1. its TARGET under the target type's own read rule (the AI citation re-check: classification, finance-domain clearance,
+   *     workstream reach, project-wide registers — `AiKnowledgeService.refVisibleSql`);
+   *  2. every record its run GAVE THE MODEL (the run's evidence snapshot items sent to the provider) under the same rules —
+   *     the model drafted the payload from those records only;
+   *  3. a proposal WITHOUT a target (a free draft: agenda, minutes, decision paper, status summary) may carry anything the
+   *     delegating user's run retrieved or the user typed: only readers whose clearance AND finance-domain clearance are at
+   *     least the delegating user's at the time of the run (recorded in the snapshot); without that record, only the requester.
+   */
+  private visibleSql(ctx: RequestContext, projectId: string): SQL {
+    const P = schema.aiProposal;
+    const me = ctx.principal.userId ?? '00000000-0000-0000-0000-000000000000';
+    const target = sql`(${P.targetType} is null or ${this.knowledge.refVisibleSql(ctx, projectId, sql`${P.targetType}`, sql`${P.targetId}::text`)})`;
+    const items = sql`(case when jsonb_typeof(hub_pr.evidence_snapshot->'items') = 'array' then hub_pr.evidence_snapshot->'items' else '[]'::jsonb end)`;
+    const inputs = sql`not exists (select 1 from ai_run hub_pr cross join lateral jsonb_array_elements(${items}) hub_it
+       where hub_pr.id = ${P.runId} and hub_pr.project_id = ${projectId} and coalesce((hub_it->>'sentToProvider')::boolean, true)
+         and not ${this.knowledge.refVisibleSql(ctx, projectId, sql`(hub_it->>'type')`, sql`(hub_it->>'id')`)})`;
+    const scope = ctx.principal.projects.get(projectId);
+    const base = ctx.principal.clearance;
+    const fin = scope ? financeDomainClearance(base, scope.roles) : base;
+    const within = (c: Classification) => sql.join(CLASSIFICATIONS.filter((x) => clearanceAllows(c, x)).map((x) => sql`${x}`), sql`, `);
+    const draft = sql`(${P.targetType} is not null or exists (select 1 from ai_run hub_pd where hub_pd.id = ${P.runId} and hub_pd.project_id = ${projectId} and (
+        (hub_pd.evidence_snapshot->'delegate'->>'clearance' in (${within(base)})
+          and coalesce(hub_pd.evidence_snapshot->'delegate'->>'financeClearance', hub_pd.evidence_snapshot->'delegate'->>'clearance') in (${within(fin)}))
+        or (hub_pd.evidence_snapshot->'delegate' is null and hub_pd.requested_by = ${me}::uuid))))`;
+    return and(target, inputs, draft)!;
   }
 
   private async toDtos(projectId: string, rows: ProposalRow[]) {

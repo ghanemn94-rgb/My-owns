@@ -139,6 +139,7 @@ export class PlanningRaidController {
   @ApiRoute(R.updateRisk) updateRisk(@Ctx() c: C, @Input() i: RouteInput<typeof R.updateRisk>) { return this.svc.updateRisk(c, i.params.projectId, i.params.itemId, i.body); }
   @ApiRoute(R.updateIssue) updateIssue(@Ctx() c: C, @Input() i: RouteInput<typeof R.updateIssue>) { return this.svc.updateIssue(c, i.params.projectId, i.params.itemId, i.body); }
   @ApiRoute(R.updateAssumption) updateAssumption(@Ctx() c: C, @Input() i: RouteInput<typeof R.updateAssumption>) { return this.svc.updateAssumption(c, i.params.projectId, i.params.itemId, i.body); }
+  @ApiRoute(R.setAssumptionVerification) setAssumptionVerification(@Ctx() c: C, @Input() i: RouteInput<typeof R.setAssumptionVerification>) { return this.svc.setAssumptionVerification(c, i.params.projectId, i.params.itemId, i.body); }
   @ApiRoute(R.updateRaidDependency) updateDependency(@Ctx() c: C, @Input() i: RouteInput<typeof R.updateRaidDependency>) { return this.svc.updateDependency(c, i.params.projectId, i.params.itemId, i.body); }
   @ApiRoute(R.raiseIssueFromRisk) raise(@Ctx() c: C, @Input() i: RouteInput<typeof R.raiseIssueFromRisk>) { return this.svc.raiseIssueFromRisk(c, i.params.projectId, i.params.itemId, i.body); }
   @ApiRoute(R.listRaid) list(@Ctx() c: C, @Input() i: RouteInput<typeof R.listRaid>) { return this.svc.list(c, i.params.projectId, i.params.kind, i.query); }

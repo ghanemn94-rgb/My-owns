@@ -6,7 +6,7 @@ import { DbService } from '../../platform/db.service';
 import { PolicyService } from '../../platform/policy.service';
 import { Clock } from '../../platform/clock';
 import type { RequestContext } from '../../platform/context';
-import { visibleEvidenceCounts } from '../../platform/helpers';
+import { evidenceSelfIds, visibleEvidenceCounts } from '../../platform/helpers';
 
 export interface NewcoProject {
   id: string;
@@ -115,6 +115,20 @@ export class NewcoSupport {
       .groupBy(E.targetId);
     return new Map(rows.map((r) => [r.id, { active: Number(r.active), conflicting: Number(r.conflicting) }]));
   }
+  /**
+   * DOM-P3-10 / SEC-P34-01 (access-matrix §5.1: "the person who recorded the status/evidence" is self): the linkers of the
+   * target's CURRENT evidence in this project and the uploaders of the linked versions (`evidenceSelfIds`; SEC-P34R-03).
+   */
+  evidenceLinkers(projectId: string, targetType: 'legal_entity' | 'regulatory_requirement', targetId: string): Promise<string[]> {
+    return evidenceSelfIds(this.db, projectId, targetType, targetId);
+  }
+
+  /** not_self against every subject (fails closed when there is none), after the project-wide grant check. */
+  assertNotSelf(ctx: RequestContext, p: NewcoProject, permission: string, classification: Classification, subjects: (string | null | undefined)[]) {
+    const ids = [...new Set(subjects.filter((x): x is string => !!x))];
+    for (const id of ids.length ? ids : [null]) this.assertManage(ctx, p, permission, { classification, requesterUserId: id });
+  }
+
   /** Counters FOR DISPLAY: the evidence list's visibility (SEC-P1R-05). `evidenceCounts` above stays for rules. */
   visibleEvidenceCounts(ctx: RequestContext, projectId: string, targetType: string, ids: string[]): Promise<Map<string, { active: number; conflicting: number }>> {
     return visibleEvidenceCounts(this.db, this.policy, ctx, projectId, targetType, ids);

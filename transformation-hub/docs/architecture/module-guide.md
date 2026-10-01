@@ -61,7 +61,8 @@ Enum values already exist in `packages/domain/src/enums.ts` for all modules — 
 ### Outbox events (from `OUTBOX_EVENT_TYPES`)
 `task.overdue, source.updated, approval.pending, cp.changed, tsa.expiring, gate.blocked, decision.status_changed,
 evidence.changed, perimeter.changed, permission.changed, document.changed, report.generated, baseline.approved,
-change_request.decided, readiness.changed, legal_entity.changed`. Emit them from your
+change_request.decided, readiness.changed, legal_entity.changed, agenda_request.screened` (the last: ids + outcome of a
+screening, for the requester's notification in P6). Emit them from your
 commands; subscribe in `<module>.jobs.ts` (`registry.subscribe(eventType, jobKind)`; `registry.register(jobKind, handler)`).
 Job handlers receive ids only and must open their own context through `JobContextFactory` (never build a principal by
 hand): `db.run(jobs.forService(job, 'svc-<module>', ['<permission>', ...]), ...)` — a service principal is **deny-all
@@ -139,8 +140,8 @@ human principal at execution time and returns `null` when access was revoked (AT
   | Approved valuation / ownership values of a model version | `financial_model_version` | `if_set` | `finance.model` |
   | Approved budget of a line (+ its stated amount, fail closed: `finance.budget.decision_amount_missing`) | `budget_line` | `none` (a budget decision is raised for the change request / baseline it approves; the line records that approval's amount) | `finance.budget` |
   | Figure / opening-balance approval | none (no kind for figures yet) | `none` | `finance.approval` |
-  | TSA terms approval (DOM-P2F-09) | `tsa_service` | `if_set` | `tsa.approve` |
-  | TSA extension: linked at the request (`requireFinal: false`), consumed when recorded; replaces the former per-TSA check — a decision that authorized an extension of this TSA or another is refused (`tsa.extension.decision_already_used`) | `tsa_extension` (record type `tsa_service`) | `if_set` | `tsa.extension` |
+  | TSA terms approval (DOM-P2F-09); a decision already used for another TSA (its terms or its extension) is refused (`tsa.approve.decision_other_tsa`, DOM-P3-13) | `tsa_service` | `if_set` | `tsa.approve` |
+  | TSA extension: linked at the request (`requireFinal: false`), consumed when recorded; replaces the former per-TSA check — a decision that authorized an extension of this TSA or another is refused (`tsa.extension.decision_already_used`); a decision used for the terms of ANOTHER TSA is refused (`tsa.extension.decision_other_tsa`, DOM-P3-13, conservative option — governance owner to confirm); once the decision left draft the requested end date / continuity plan are bound to it (`tsa.extension.terms_bound`, DOM-P3-06) | `tsa_extension` (record type `tsa_service`) | `if_set` | `tsa.extension` |
   | GO of a cutover plan: linked (`requireFinal: false`), consumed at the GO; a plan that goes to GO again after a rollback needs a new decision; a NO-GO relies on none | `cutover_plan` | `if_set` | `readiness.go_no_go` |
   | Perimeter version approval (G1 paper) | `perimeter_version` | `required` since DOM-P2F-08 (a G1 paper must name the version it approves) | `perimeter.version` |
 
@@ -175,6 +176,28 @@ human principal at execution time and returns `null` when access was revoked (AT
   gate order; without the lock it and the worker's refresh could lock the same rows in opposite orders (PostgreSQL
   "deadlock detected" → 409 `db.serialization_failure`). A new gate write path must take the lock first; reads do not.
   Regression: `apps/api/test/gates/gate-lock-order.spec.ts`.
+- **One writer of a project's Day-1 readiness state at a time (DOM-P3-03):** the GO, the execution record and every command
+  that changes a gating input of a GO (check creation / instantiation, test run, sign-off, determination, reopen, waiver
+  application, re-binding, the plan's site change, the `evidence.changed` reaction) take the transaction-scoped advisory lock
+  `hub_readiness:<projectId>` (`ReadinessSupport.lockReadiness`) FIRST, before they read the checks. Lock order:
+  `hub_readiness` → decision row (`lockDecisionAndRecheck`). TSA commands do not take it. A new command that changes what a
+  GO evaluates must take it. Regression: `apps/api/test/reviews/p3-domain-readiness-race.spec.ts`.
+- **One recompute of a project's status dimensions at a time (DOM-P3-14):** `StatusDimensionsService.recomputeDimensions`
+  takes the transaction-scoped advisory lock `hub_dimensions:<projectId>` before it reads its inputs, so a recompute with an
+  older snapshot never commits last and no `record_version` row is dropped. It is taken last (after any module lock of the
+  calling command). Regression: `apps/api/test/gates/p3-dimension-lock.spec.ts`.
+- **Evidence a rule relied on (DOM-P3-08, DOM-P3-09, DOM-P34R-06):** a record verified, signed off or accepted on evidence
+  reacts to `evidence.changed` (service-principal job with an explicit permission allowlist — access-matrix §9): a readiness
+  check passed on evidence that is no longer active returns to `in_progress` and flags the GOs it gated, and a TSA
+  replacement acceptance whose evidence is no longer valid is withdrawn (`readiness.check_evidence_changed` job); a
+  confirmed incorporation returns to "proposed" verification (`newco.incorporation_evidence_changed`); a verified transfer
+  aspect returns to `in_progress` through `reject_evidence` (`carveout.transfer_evidence_changed`, system entry with a null
+  `recorded_by`). The rules that read these records fail closed meanwhile (GO evaluation, status dimension). History is
+  kept; the change is audited. A new consumer of evidence follows the same pattern.
+- **The decision a record relied on carries its terms (DOM-P34R-04):** when a decision authorizes specific values of a
+  record (e.g. a TSA extension's end date and continuity plan), bind those values to the DECISION (a per-decision row, here
+  `tsa_extension_terms`) — never only to the record's current link, which the requester can switch through another
+  decision.
 - **Workstream-scoped reach:** when a list or count is structured by workstream, filter it with
   `policy.reachSql(ctx, '<permission>', projectId, table.workstreamId)` — a workstream-only role (e.g. a lead without a
   project role) sees only its workstreams; `policy.permissionReach(...)` tells you whether the grant is project-wide.

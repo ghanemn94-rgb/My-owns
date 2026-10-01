@@ -24,7 +24,7 @@ import { BlockerList, ButtonRow, Callout, CmdButton, DecisionSelect, DocumentLin
 
 type EventCommand = 'start_preparation' | 'mark_ready' | 'back_to_preparation' | 'abort';
 const EVENT_COMMANDS: readonly EventCommand[] = ['start_preparation', 'mark_ready', 'back_to_preparation', 'abort'];
-type Pending = { kind: 'transition'; command: EventCommand } | { kind: 'request' } | { kind: 'confirm' } | { kind: 'item' } | { kind: 'cp' } | { kind: 'deliver' | 'accept' | 'notRequired'; item: ChecklistItem } | null;
+type Pending = { kind: 'transition'; command: EventCommand } | { kind: 'request' } | { kind: 'confirm' } | { kind: 'item' } | { kind: 'cp' } | { kind: 'deliver' | 'accept' | 'notRequired' | 'notRequiredConfirm' | 'notRequiredReject'; item: ChecklistItem } | null;
 
 /** Unique references of the conditions that block (unmet / unverified / not effectively waived / lapsed). */
 function blockingCpRefs(blockers: readonly EventBlocker[]): string[] {
@@ -62,7 +62,9 @@ function RefusalBlockers({ blockers }: { blockers: EventBlocker[] }) {
 
 function EventDialogs({ e, pending, onClose }: { e: TxEventDetail; pending: Pending; onClose: () => void }) {
   const { t, tStatus } = useI18n();
-  const { projectId } = useProjectContext();
+  const { projectId, can } = useProjectContext();
+  // DOM-P34R-08: only the Legal specialist (jv.cp.set_waivability) may create a non-blocking condition.
+  const canSetNonBlocking = can('jv.cp.set_waivability');
   const refresh = useJvRefresh();
   const toast = useToast();
   const refusal = useRefusal();
@@ -216,9 +218,10 @@ function EventDialogs({ e, pending, onClose }: { e: TxEventDetail; pending: Pend
           <UserPicker label={t('jv.cp.fields.owner')} required value={owner} onChange={setOwner} />
           <TextField label={t('jv.cp.fields.parties')} value={parties} maxLength={1000} onChange={(x) => setParties(x.target.value)} />
           <label className="inline-flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={blocking} onChange={(x) => setBlocking(x.target.checked)} />
+            <input type="checkbox" checked={blocking} disabled={!canSetNonBlocking} onChange={(x) => setBlocking(x.target.checked)} data-testid="cp-blocking" />
             {t('jv.cp.fields.blockingCheckbox')}
           </label>
+          {!canSetNonBlocking ? <p className="text-xs text-muted">{t('jv.cp.fields.blockingLegalOnly')}</p> : null}
           <div className="grid gap-4 sm:grid-cols-2">
             <TextField label={t('jv.cp.fields.validTo')} type="date" value={validTo} onChange={(x) => setValidTo(x.target.value)} />
             <TextField label={t('jv.cp.fields.longStop')} type="date" value={longStop} onChange={(x) => setLongStop(x.target.value)} />
@@ -268,13 +271,43 @@ function EventDialogs({ e, pending, onClose }: { e: TxEventDetail; pending: Pend
           noteMode="required"
           noteLabel={t('jv.common.reason')}
           expectedVersion={pending.item.version}
-          consequences={[t('jv.checklist.notRequired.effect'), t('common.command.audited')]}
+          consequences={[t('jv.checklist.notRequired.effect'), t('jv.checklist.notRequired.sod'), t('common.command.audited')]}
           onConfirm={async ({ note }) => {
             await api(jvRoutes.setChecklistItemNotRequired, { params: { projectId, itemId: pending.item.id }, body: { expectedVersion: pending.item.version, reason: note } });
             await done(t('jv.common.saved'));
           }}
         />
       );
+    // SEC-P34-10: the second person (jv.cp.verify, not the requester) confirms or rejects the pending request.
+    case 'notRequiredConfirm':
+    case 'notRequiredReject': {
+      const confirming = pending.kind === 'notRequiredConfirm';
+      return (
+        <JvCommandDialog
+          open
+          onClose={onClose}
+          title={confirming ? t('jv.checklist.notRequired.confirmTitle') : t('jv.checklist.notRequired.rejectTitle')}
+          confirmLabel={confirming ? t('jv.checklist.notRequired.confirmConfirm') : t('jv.checklist.notRequired.rejectConfirm')}
+          danger={!confirming}
+          noteMode={confirming ? 'optional' : 'required'}
+          noteLabel={confirming ? undefined : t('jv.common.reason')}
+          expectedVersion={pending.item.version}
+          consequences={[
+            ...(pending.item.notRequiredRequest?.reason ? [t('jv.checklist.notRequired.reason', { reason: pending.item.notRequiredRequest.reason })] : []),
+            confirming ? t('jv.checklist.notRequired.confirmEffect') : t('jv.checklist.notRequired.rejectEffect'),
+            t('jv.checklist.notRequired.sod'),
+            t('common.command.audited'),
+          ]}
+          onConfirm={async ({ note }) => {
+            await api(jvRoutes.decideChecklistItemNotRequired, {
+              params: { projectId, itemId: pending.item.id },
+              body: { expectedVersion: pending.item.version, decision: confirming ? 'confirm' : 'reject', ...(note ? { note } : {}) },
+            });
+            await done(t('jv.common.saved'));
+          }}
+        />
+      );
+    }
     default:
       return null;
   }
@@ -494,7 +527,20 @@ export function EventDetailScreen({ kind, eventId }: { kind: EventKind; eventId:
               },
               { key: 'owner', header: t('jv.checklist.fields.owner'), cell: (i) => <Person id={i.ownerUserId} people={people} /> },
               { key: 'due', header: t('jv.checklist.fields.dueDate'), cell: (i) => <span className="tabular">{formatDate(i.dueDate)}</span> },
-              { key: 'status', header: t('jv.common.status'), cell: (i) => <StatusBadge enumName="closingDeliverableStatuses" value={i.status} /> },
+              {
+                key: 'status',
+                header: t('jv.common.status'),
+                cell: (i) => (
+                  <span className="flex flex-col gap-1">
+                    <StatusBadge enumName="closingDeliverableStatuses" value={i.status} />
+                    {i.notRequiredRequest ? (
+                      <span className="text-xs text-warning" data-testid="not-required-pending">
+                        {t('jv.checklist.notRequired.pending')} <Person id={i.notRequiredRequest.requestedBy} people={people} />
+                      </span>
+                    ) : null}
+                  </span>
+                ),
+              },
               {
                 key: 'doc',
                 header: t('jv.checklist.fields.executed'),
@@ -524,7 +570,13 @@ export function EventDetailScreen({ kind, eventId }: { kind: EventKind; eventId:
                     <ButtonRow>
                       {canManage && i.status === 'pending' ? <CmdButton label={t('jv.checklist.deliver.action')} onClick={() => setPending({ kind: 'deliver', item: i })} testId="cmd-deliver" /> : null}
                       {can('jv.cp.verify') && i.status === 'delivered' && i.deliveredBy !== me.user.id && i.ownerUserId !== me.user.id ? <CmdButton label={t('jv.checklist.accept.action')} onClick={() => setPending({ kind: 'accept', item: i })} testId="cmd-accept" /> : null}
-                      {canManage && (i.status === 'pending' || i.status === 'delivered') ? <CmdButton label={t('jv.checklist.notRequired.action')} onClick={() => setPending({ kind: 'notRequired', item: i })} testId="cmd-not-required" /> : null}
+                      {canManage && (i.status === 'pending' || i.status === 'delivered') && !i.notRequiredRequest ? <CmdButton label={t('jv.checklist.notRequired.action')} onClick={() => setPending({ kind: 'notRequired', item: i })} testId="cmd-not-required" /> : null}
+                      {can('jv.cp.verify') && i.notRequiredRequest && i.notRequiredRequest.requestedBy !== me.user.id ? (
+                        <>
+                          <CmdButton label={t('jv.checklist.notRequired.confirmAction')} onClick={() => setPending({ kind: 'notRequiredConfirm', item: i })} testId="cmd-not-required-confirm" />
+                          <CmdButton label={t('jv.checklist.notRequired.rejectAction')} onClick={() => setPending({ kind: 'notRequiredReject', item: i })} testId="cmd-not-required-reject" />
+                        </>
+                      ) : null}
                     </ButtonRow>
                   ),
               },

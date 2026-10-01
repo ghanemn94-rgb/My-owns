@@ -53,6 +53,11 @@ export type RoomAccessEventKind = (typeof ROOM_ACCESS_EVENT_KINDS)[number];
 export const ASSESSMENT_BASES = ['fact', 'judgement'] as const;
 export type AssessmentBasis = (typeof ASSESSMENT_BASES)[number];
 export const DD_REQUEST_ORIGINS = ['internal', 'partner'] as const;
+/**
+ * Requester label the server stores on a question raised by the counterparty in its room (data shown in English on
+ * exports / AI context); the web shows its translated label for partner-raised questions (QA-P34-01c).
+ */
+export const PARTNER_REQUESTER_LABEL = 'Counterparty';
 export const DD_DOMAINS = ['legal', 'finance', 'tax', 'technical', 'commercial', 'hr', 'regulatory', 'operations', 'other'] as const;
 export type DdDomain = (typeof DD_DOMAINS)[number];
 /** What the counterparty sees of a DD request (external projection — never drafts, assignees or reviewers). */
@@ -509,11 +514,33 @@ export function assertFindingRemediation(f: { materiality: string; remediationOw
 // ---------------------------------------------------------------------------------------------------------
 // Conditions precedent (REQ-JV-013, AT-12, AT-13)
 
-/** verifyCP: evidence is mandatory and the verifier is neither the CP owner nor the person who submitted the evidence. */
-export function assertCpVerifiable(i: { activeEvidence: number; verifierUserId: string; ownerUserId: string | null; evidenceSubmittedBy: string | null }): void {
+/**
+ * The person who LINKED active evidence of a record is "self" for its verification (access-matrix §5.1: "record owner and
+ * the person who recorded the status/evidence"; SEC-P34-01): pass the `added_by` of every active evidence link of the
+ * target. A verifier who supplied any of the evidence it is asked to verify is refused, whoever ran the status command.
+ */
+export function isEvidenceLinker(actorUserId: string, evidenceLinkerUserIds: readonly string[]): boolean {
+  return evidenceLinkerUserIds.includes(actorUserId);
+}
+
+/**
+ * verifyCP: evidence is mandatory and the verifier is neither the CP owner, nor the person who submitted the evidence for
+ * verification, nor anyone who linked active evidence of the condition (SEC-P34-01).
+ */
+export function assertCpVerifiable(i: {
+  activeEvidence: number;
+  /** SEC-P34R-09: contested evidence must be resolved first (as readiness sign-off and NewCo verifications require). */
+  conflictingEvidence: number;
+  verifierUserId: string;
+  ownerUserId: string | null;
+  evidenceSubmittedBy: string | null;
+  evidenceLinkerUserIds: readonly string[];
+}): void {
   if (i.activeEvidence <= 0) throw ruleViolation('jv.cp.evidence_required', 'A condition cannot be verified without linked evidence');
+  if (i.conflictingEvidence > 0) throw ruleViolation('jv.cp.evidence_conflicting', 'The condition has conflicting evidence; resolve it before verification');
   if (i.verifierUserId === i.ownerUserId) throw forbidden('jv.cp.self_verification', 'The owner of a condition cannot verify it');
   if (i.verifierUserId === i.evidenceSubmittedBy) throw forbidden('jv.cp.self_verification', 'The person who submitted the evidence cannot verify the condition');
+  if (isEvidenceLinker(i.verifierUserId, i.evidenceLinkerUserIds)) throw forbidden('jv.cp.self_verification', 'Whoever linked or uploaded evidence of the condition cannot verify it');
 }
 
 /**
@@ -754,10 +781,50 @@ export function assertEventConfirmable(i: {
 // Closing checklist items / deliverables (REQ-JV-012, REQ-JV-014)
 
 /** Acceptance requires the executed document (a usable stored version) and a person other than the owner/deliverer. */
-export function assertChecklistItemAcceptable(i: { status: string; executedVersionUsable: boolean | null; acceptorUserId: string; ownerUserId: string | null; deliveredBy: string | null }): void {
+export function assertChecklistItemAcceptable(i: { status: string; executedVersionUsable: boolean | null; acceptorUserId: string; ownerUserId: string | null; deliveredBy: string | null; evidenceLinkerUserIds: readonly string[] }): void {
   if (i.status !== 'delivered') throw ruleViolation('jv.checklist_item.not_delivered', `Only a delivered item can be accepted (current state: ${i.status})`);
   if (i.executedVersionUsable !== true) throw ruleViolation('jv.checklist_item.executed_document_required', 'Acceptance requires the executed document (a stored, usable version)');
   if (i.acceptorUserId === i.ownerUserId || i.acceptorUserId === i.deliveredBy) throw forbidden('jv.checklist_item.self_acceptance', 'The owner or deliverer of a checklist item cannot accept it');
+  if (isEvidenceLinker(i.acceptorUserId, i.evidenceLinkerUserIds)) throw forbidden('jv.checklist_item.self_acceptance', 'Whoever linked or uploaded evidence of a checklist item cannot accept it');
+}
+
+/** Checklist states from which an item may still be set "not required" (it is open: nothing was accepted yet). */
+export const CHECKLIST_NOT_REQUIRED_FROM: readonly string[] = ['pending', 'delivered'];
+/** `approval_request.action` of a "not required" request on a checklist item (SEC-P34-10). */
+export const CHECKLIST_NOT_REQUIRED_ACTION = 'jv.checklist_item.not_required';
+
+/**
+ * SEC-P34-10 (REQ-JV-012 / REQ-JV-014): marking a signing or closing deliverable "not required" removes it from the event's
+ * blockers, so it is a two-person act. The checklist manager (`jv.closing_checklist.manage`) REQUESTS it with a documented
+ * reason — the item keeps its state and its blocker; a second person holding `jv.cp.verify` (never the requester) then
+ * confirms it against the unchanged item, or rejects it. One pending request per item.
+ */
+export function assertChecklistNotRequiredRequest(i: { status: string; reason: string | null | undefined; pendingRequest: boolean }): void {
+  if (!CHECKLIST_NOT_REQUIRED_FROM.includes(i.status)) throw ruleViolation('jv.checklist_item.invalid_state', `Only a pending or delivered item can be set not required (it is ${i.status})`);
+  if (!i.reason?.trim()) throw ruleViolation('jv.checklist_item.reason_required', 'A documented reason is required to set an item not required');
+  if (i.pendingRequest) throw ruleViolation('jv.checklist_item.not_required_pending', 'A request to set this item not required is already awaiting a second person');
+}
+
+/**
+ * The second person's decision on a "not required" request (SEC-P34-10): a pending request must exist for the item as it
+ * is now (the item unchanged since the request — same version — and still open); the decider is not the requester; a
+ * rejection states its reason.
+ */
+export function assertChecklistNotRequiredDecision(i: {
+  status: string;
+  requestPending: boolean;
+  requestedVersion: number | null;
+  currentVersion: number;
+  deciderUserId: string;
+  requestedBy: string | null;
+  decision: 'confirm' | 'reject';
+  note: string | null | undefined;
+}): void {
+  if (!i.requestPending) throw ruleViolation('jv.checklist_item.no_not_required_request', 'No request to set this item not required is pending');
+  if (!CHECKLIST_NOT_REQUIRED_FROM.includes(i.status)) throw ruleViolation('jv.checklist_item.invalid_state', `The item is ${i.status}; the request no longer applies`);
+  if (i.requestedVersion !== i.currentVersion) throw ruleViolation('jv.checklist_item.not_required_stale', 'The item changed after the request; the checklist manager requests it again');
+  if (!i.requestedBy || i.requestedBy === i.deciderUserId) throw forbidden('jv.checklist_item.not_required_self', 'A second person decides: the requester cannot confirm or reject their own "not required" request');
+  if (i.decision === 'reject' && !i.note?.trim()) throw ruleViolation('jv.checklist_item.reason_required', 'A rejection states its reason');
 }
 
 // ---------------------------------------------------------------------------------------------------------
@@ -790,9 +857,10 @@ export function assessObligationOverdue(i: { status: PostCloseStatus; dueDate: s
   return { overdue: true, daysOverdue: Math.round((Date.parse(i.today) - Date.parse(i.dueDate)) / 86_400_000) };
 }
 
-export function assertObligationVerifiable(i: { activeEvidence: number; verifierUserId: string; ownerUserId: string | null; reportedBy: string | null }): void {
+export function assertObligationVerifiable(i: { activeEvidence: number; verifierUserId: string; ownerUserId: string | null; reportedBy: string | null; evidenceLinkerUserIds: readonly string[] }): void {
   if (i.activeEvidence <= 0) throw ruleViolation('jv.obligation.evidence_required', 'An obligation cannot be verified without linked evidence');
   if (i.verifierUserId === i.ownerUserId || i.verifierUserId === i.reportedBy) throw forbidden('jv.obligation.self_verification', 'The owner or reporter of an obligation cannot verify it');
+  if (isEvidenceLinker(i.verifierUserId, i.evidenceLinkerUserIds)) throw forbidden('jv.obligation.self_verification', 'Whoever linked or uploaded evidence of an obligation cannot verify it');
 }
 
 // ---------------------------------------------------------------------------------------------------------

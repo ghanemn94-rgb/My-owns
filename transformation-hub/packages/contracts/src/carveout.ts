@@ -18,6 +18,7 @@ import {
   PageQuery,
   ProjectParams,
   RequiredText,
+  ServerMessageSchema,
   SortParam,
   Text,
   Uuid,
@@ -25,6 +26,9 @@ import {
   idParams,
   paged,
 } from './common';
+
+/** Server-computed sentence as codes + parameters (web `carveout.messages`; module guide §2). */
+const Messages = z.array(ServerMessageSchema);
 
 /**
  * Carve-out: transaction perimeter register, sites, transfers (legal/economic), reconciliation, perimeter versions,
@@ -52,7 +56,15 @@ export const GateKeySchema = z.string().trim().regex(/^G[0-9]{1,2}$/, 'Gate key 
 const VersionResult = z.object({ id: Uuid, version: z.number().int() });
 const Person = z.object({ userId: Uuid, name: z.string().nullable() }).nullable();
 const EvidenceCounts = z.object({ active: z.number().int(), conflicting: z.number().int() });
-const HistoryEntry = z.object({ versionNo: z.number().int(), reason: z.string().nullable(), changedByName: z.string().nullable(), changedAt: z.string() });
+const HistoryEntry = z.object({
+  versionNo: z.number().int(),
+  /** English reason as recorded (audit / AI context). */
+  reason: z.string().nullable(),
+  /** The same reason as codes + parameters (QA-P34-01f); empty when it matches no known template (shown as recorded). */
+  reasonI18n: Messages,
+  changedByName: z.string().nullable(),
+  changedAt: z.string(),
+});
 
 // ---------------------------------------------------------------------------------------------------------
 // Sites
@@ -106,6 +118,8 @@ export const ImpactEntryDto = z.object({
   area: ImpactAreaSchema,
   status: z.enum(['identified', 'assessment_pending', 'none_identified', 'not_visible']),
   summary: z.string(),
+  /** The same summary as codes + parameters (QA-P34-01f); empty for entries stored before the codes existed. */
+  summaryI18n: Messages,
   references: z.array(ImpactRefDto),
 });
 /** Optional specialist narrative per impact area (kept beside the derived entries). */
@@ -147,9 +161,11 @@ export const TransferRecordDto = z.object({
   mechanism: z.string().nullable(),
   effectiveDate: z.string().nullable(),
   note: z.string().nullable(),
+  /** Present only on a note the SYSTEM wrote (evidence reaction, scope-entry reset): the note as codes + parameters. */
+  noteI18n: Messages.optional(),
   evidenceCount: z.number().int(),
   reviewsRecordId: Uuid.nullable(),
-  recordedBy: Uuid,
+  recordedBy: Uuid.nullable(),
   recordedByName: z.string().nullable(),
   recordedAt: z.string(),
 });
@@ -333,21 +349,29 @@ export const RecordTransferBody = z
   })
   .strict();
 export const VerifyTransferBody = z.object({ expectedVersion: ExpectedVersion, note: Text(2000).optional() }).strict();
+/** DOM-P3-05: specialist determination that one aspect of an Included / Shared item does not transfer (basis required). */
+export const TransferNotApplicableBody = z.object({ expectedVersion: ExpectedVersion, aspect: TransferAspectSchema, basis: RequiredText(2000) }).strict();
 export const RejectTransferEvidenceBody = z.object({ expectedVersion: ExpectedVersion, reason: RequiredText(2000) }).strict();
 export const TransferResult = z.object({
-  id: Uuid,
+  /** The transfer record written — null when the command raised a change request instead (DOM-P3-05, AT-07). */
+  id: Uuid.nullable(),
   perimeterItemId: Uuid,
   aspect: TransferAspectSchema,
   status: TransferStatusSchema,
   transfer: TransferViewDto,
   itemVersion: z.number().int(),
+  /**
+   * DOM-P3-05: "not applicable" on an aspect of an Included / Shared item that is in the approved baseline is raised as a
+   * change request (the aspect is unchanged until the approved request is applied); null otherwise.
+   */
+  changeRequest: z.object({ id: Uuid, code: z.string(), status: z.string() }).nullable(),
 });
 
 // ---------------------------------------------------------------------------------------------------------
 // Reconciliation, categories, Day-1 positions
 
 export const ReconciliationDto = z.object({
-  findings: z.array(z.object({ itemId: Uuid, code: z.string(), issue: z.string(), message: z.string() })),
+  findings: z.array(z.object({ itemId: Uuid, code: z.string(), issue: z.string(), message: z.string(), messageI18n: Messages })),
   categories: z.array(
     z.object({
       category: PerimeterItemTypeSchema,
@@ -638,7 +662,31 @@ export const carveoutRoutes = registerRoutes({
 
   // Transfers --------------------------------------------------------------------------------------------
   listTransfers: defineRoute({ id: 'carveout.listTransfers', method: 'GET', path: p('/transfers'), summary: 'Transfer history (legal and economic aspects)', tags: T, access: 'carveout.register.read', params: ProjectParams, query: TransferListQuery, response: paged(TransferRecordDto) }),
-  recordTransfer: defineRoute({ id: 'carveout.recordTransfer', method: 'POST', path: p('/transfers'), summary: 'Record a transfer command on the legal or economic aspect of an item', tags: T, access: 'carveout.transfer.manage', command: true, params: ProjectParams, body: RecordTransferBody, response: TransferResult }),
+  recordTransfer: defineRoute({
+    id: 'carveout.recordTransfer',
+    method: 'POST',
+    path: p('/transfers'),
+    summary:
+      'Record a transfer command on the legal or economic aspect of an item. "not applicable" on an Included / Shared item raises a change request once the item is in the approved baseline; before, it is a specialist determination (DOM-P3-05)',
+    tags: T,
+    access: 'carveout.transfer.manage',
+    command: true,
+    params: ProjectParams,
+    body: RecordTransferBody,
+    response: TransferResult,
+  }),
+  determineTransferNotApplicable: defineRoute({
+    id: 'carveout.determineTransferNotApplicable',
+    method: 'POST',
+    path: p('/perimeter-items/:itemId/transfer-not-applicable'),
+    summary: 'Specialist determination (basis required; not the item owner or creator) that one aspect of an Included / Shared item not yet in an approved baseline does not transfer — never both aspects (DOM-P3-05)',
+    tags: T,
+    access: 'carveout.transfer.verify',
+    command: true,
+    params: ItemP,
+    body: TransferNotApplicableBody,
+    response: TransferResult,
+  }),
   verifyTransfer: defineRoute({ id: 'carveout.verifyTransfer', method: 'POST', path: p('/transfers/:transferId/verify'), summary: 'verifyTransfer: accept a reported transfer with active evidence (not the reporter)', tags: T, access: 'carveout.transfer.verify', command: true, params: TransferP, body: VerifyTransferBody, response: TransferResult }),
   rejectTransferEvidence: defineRoute({ id: 'carveout.rejectTransferEvidence', method: 'POST', path: p('/transfers/:transferId/reject-evidence'), summary: 'Reject the evidence of a reported transfer (reason required; not the reporter)', tags: T, access: 'carveout.transfer.verify', command: true, params: TransferP, body: RejectTransferEvidenceBody, response: TransferResult }),
 

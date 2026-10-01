@@ -8,13 +8,14 @@ import {
   READINESS_AREAS,
   READINESS_STATUSES,
   ROLE_KEYS,
+  TSA_SIMPLE_COMMANDS,
   TSA_STATUSES,
   WAIVER_STATUSES,
   APPROVAL_REQUEST_STATUSES,
   LINKED_DECISION_ISSUE_CODES,
 } from '@hub/domain';
 import { defineRoute, registerRoutes } from './route';
-import { ClassificationSchema, ExpectedVersion, IsoDate, IsoInstant, MoneySchema, NoSort, PageQuery, ProjectParams, RequiredText, SortParam, Text, Uuid, paged } from './common';
+import { ClassificationSchema, ExpectedVersion, IsoDate, IsoInstant, MoneySchema, NoSort, PageQuery, ProjectParams, RequiredText, ServerMessageSchema, SortParam, Text, Uuid, paged } from './common';
 
 /**
  * Day-1 readiness checks, cutover plans / go-no-go and TSA services (spec §7.3, §7.4; AT-09, AT-10; REQ-RDY-*,
@@ -119,7 +120,17 @@ export const ReadinessCheckDetailDto = ReadinessCheckDto.extend({
 
 const CheckCommandResult = z.object({ id: Uuid, status: RStatus, version: z.number().int() });
 
-export const GoBlockerDto = z.object({ id: Uuid, title: z.string(), status: RStatus, blocker: z.boolean() });
+export const GoBlockerDto = z.object({
+  id: Uuid,
+  /** "<code> — <title>" (English / primary text, as evaluated). */
+  title: z.string(),
+  /** "<code> — <Arabic title>" when the check has an Arabic title (QA-P34-01e); absent on entries recorded before. */
+  titleAr: z.string().nullable().optional(),
+  status: RStatus,
+  blocker: z.boolean(),
+  /** DOM-P3-09: a `passed` check whose sign-off evidence is no longer active (rejected / superseded / conflicting). */
+  evidenceInvalid: z.boolean().optional(),
+});
 export const GoEvaluationDto = z.object({
   allowed: z.boolean(),
   blockers: z.array(GoBlockerDto),
@@ -162,6 +173,8 @@ export const CutoverCheckDto = z.object({
   code: z.string(),
   area: Area,
   title: z.string(),
+  /** Arabic title (template checks; null when there is no Arabic source) — QA-P34-01e. */
+  titleAr: z.string().nullable(),
   mandatory: z.boolean(),
   blocker: z.boolean(),
   status: RStatus,
@@ -177,8 +190,14 @@ export const CutoverDecisionRecordDto = z.object({
   kind: z.string(),
   fromStatus: CStatus.nullable(),
   toStatus: CStatus.nullable(),
-  actorUserId: Uuid,
+  /** Null for entries recorded by the system (a GO flagged by the evidence reaction — DOM-P3-09). */
+  actorUserId: Uuid.nullable(),
   rationale: z.string().nullable(),
+  /**
+   * Present only on entries whose rationale the SYSTEM wrote (GO flagged, check bound / unbound): the rationale as codes +
+   * parameters. A person's rationale has no codes (it is their own text, shown as entered).
+   */
+  rationaleI18n: z.array(ServerMessageSchema).optional(),
   goDecisionId: Uuid.nullable(),
   evaluation: z.object({ blockers: z.array(GoBlockerDto), missing: z.array(z.string()) }).nullable(),
   createdAt: z.string(),
@@ -260,10 +279,15 @@ export const TsaEscalationDto = z.object({
   id: Uuid,
   code: z.string(),
   status: z.enum(ESCALATION_STATUSES),
+  /** English text as stored on the escalation record (shared with the committee escalations). */
   requestedAction: z.string(),
+  /** The same text as codes + parameters (QA-P34-01b; web `readiness.messages`); empty when it matches no known template. */
+  requestedActionI18n: z.array(ServerMessageSchema),
   decisionDeadline: z.string().nullable(),
   options: z.array(z.object({ title: z.string(), impact: z.string().optional() })),
   target: z.string().nullable(),
+  /** Routing target as codes + parameters (QA-P34-01b); empty when it matches no known template. */
+  targetI18n: z.array(ServerMessageSchema),
 });
 
 export const TsaServiceDetailDto = TsaServiceDto.extend({
@@ -355,11 +379,29 @@ export const CreateReadinessCheckBody = z.object({
   signoffRole: Role.nullable().optional(),
 }).strict(); // unknown fields (e.g. status, waivable) are a 400 (QA-P1-12)
 
+/**
+ * Descriptive fields only (DOM-P3-01 / DOM-P3-15): which transition a check gates (`siteId`, `cutoverPlanId`) changes only
+ * through the re-binding command, and the recorded test result only through a test run — both are a 400 here.
+ */
+const { siteId: _siteId, cutoverPlanId: _cutoverPlanId, testResult: _testResult, ...checkEditable } = checkDescriptive;
+void _siteId;
+void _cutoverPlanId;
+void _testResult;
 export const UpdateReadinessCheckBody = z
   .object({
     expectedVersion: ExpectedVersion,
-    ...checkDescriptive,
+    ...checkEditable,
     title: RequiredText(300).optional(),
+  })
+  .strict();
+
+/** DOM-P3-01: re-bind the transition a check gates (plan / site), with a reason; the rules refuse it for open blockers. */
+export const RebindReadinessCheckBody = z
+  .object({
+    expectedVersion: ExpectedVersion,
+    siteId: Uuid.nullable().optional(),
+    cutoverPlanId: Uuid.nullable().optional(),
+    reason: RequiredText(4000),
   })
   .strict();
 
@@ -379,7 +421,15 @@ const planDescriptive = {
 };
 
 export const CreateCutoverPlanBody = z.object(planDescriptive).strict();
-export const UpdateCutoverPlanBody = z.object({ expectedVersion: ExpectedVersion, ...planDescriptive, title: RequiredText(300).optional() }).strict();
+/**
+ * DOM-P34R-01: the plan's site decides which checks gate it (with each check's own binding) — it is a scope attribute, changed
+ * only through `changeCutoverPlanSite` (reason, refused while a failed gating check would stop gating the plan). A PATCH
+ * carrying `siteId` is a 400.
+ */
+const { siteId: _planSite, ...planEditable } = planDescriptive;
+void _planSite;
+export const UpdateCutoverPlanBody = z.object({ expectedVersion: ExpectedVersion, ...planEditable, title: RequiredText(300).optional() }).strict();
+export const ChangeCutoverPlanSiteBody = z.object({ expectedVersion: ExpectedVersion, siteId: Uuid.nullable(), reason: RequiredText(4000) }).strict();
 
 const tsaDescriptive = {
   name: RequiredText(300),
@@ -497,6 +547,19 @@ export const readinessRoutes = registerRoutes({
     access: 'readiness.check.manage',
     params: CheckParams,
     body: UpdateReadinessCheckBody,
+    response: VersionResult,
+  }),
+  rebindReadinessCheck: defineRoute({
+    id: 'readiness.rebindCheck',
+    method: 'POST',
+    path: `${P}/readiness-checks/:checkId/rebind`,
+    summary:
+      'Re-bind the transition (cutover plan / site) a check gates, with a reason — refused for a failed gating check and for an open one gating a plan under go/no-go decision or with a GO (DOM-P3-01)',
+    tags,
+    access: 'readiness.check.manage',
+    command: true,
+    params: CheckParams,
+    body: RebindReadinessCheckBody,
     response: VersionResult,
   }),
   determineReadinessCheck: defineRoute({
@@ -646,6 +709,19 @@ export const readinessRoutes = registerRoutes({
     params: PlanParams,
     body: UpdateCutoverPlanBody,
     response: VersionResult,
+  }),
+  changeCutoverPlanSite: defineRoute({
+    id: 'readiness.changeCutoverPlanSite',
+    method: 'POST',
+    path: `${P}/cutover-plans/:planId/site`,
+    summary:
+      'Change the site of a transition plan (null = project-wide), with a reason — before the go/no-go only; refused while a failed gating check of its current scope would stop gating it; recorded in the decision history (DOM-P34R-01)',
+    tags,
+    access: 'readiness.cutover.manage',
+    command: true,
+    params: PlanParams,
+    body: ChangeCutoverPlanSiteBody,
+    response: CutoverCommandResult,
   }),
   recordCutoverRehearsal: defineRoute({
     id: 'readiness.recordRehearsal',
@@ -805,12 +881,12 @@ export const readinessRoutes = registerRoutes({
     id: 'readiness.transitionTsaService',
     method: 'POST',
     path: `${P}/tsa-services/:tsaServiceId/transition`,
-    summary: 'State-machine command: start_negotiation | activate | start_exit | record_breach | remedy_breach (illegal transitions → 422)',
+    summary: 'State-machine command: start_negotiation | activate (start date reached) | start_exit | record_breach | remedy_breach (back to the status before the breach) | accelerate_exit (after a breach) — illegal transitions → 422',
     tags,
     access: 'readiness.tsa.manage',
     command: true,
     params: TsaParams,
-    body: z.object({ expectedVersion: ExpectedVersion, command: z.enum(['start_negotiation', 'activate', 'start_exit', 'record_breach', 'remedy_breach']), note: Text(4000).optional() }),
+    body: z.object({ expectedVersion: ExpectedVersion, command: z.enum(TSA_SIMPLE_COMMANDS), note: Text(4000).optional() }),
     response: TsaCommandResult,
   }),
   approveTsaTerms: defineRoute({

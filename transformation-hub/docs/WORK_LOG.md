@@ -5,31 +5,35 @@
 ## Current state — 2026-09-30
 
 - **Branch:** `claude/mobily-transformation-hub` (repository `My-owns`, project directory `transformation-hub/`).
-- **Checkpoint revision:** `b41fe6e` plus the QA follow-up commit on top of it (see `git log`).
+- **Checkpoint revision:** `3735be4`.
 
 ### Phases
 
 - **P0:** PASS.
 - **P1:** gate PASS WITH CONDITIONS at `65b53e9` (`docs/phases/P1-gate-report.json`). The P2 reviews confirmed every P1 closure.
-- **P2:** all findings of the three P2 reviews are fixed and merged.
+- **P2:** gate **PASS WITH CONDITIONS** at `bddb637` (`docs/phases/P2-gate-report.json`; CI run 50 green: API 871 passed + 14 expected fail, Playwright 314 passed). Conditions: the P2 residuals (19 musts) before the P3 gate; the domain part of C2 in the P3 domain review; Low items with owners; governance-owner questions.
+  All findings of the three P2 reviews are fixed and merged.
+  - P2 residuals, governance/planning part merged: GOV-002, GOV-019 (422/409 variance recorded), GOV-027, GOV-009, DAT-013, WS-003, UX-018 → Tested; GOV-008 (retention, P7) and GOV-012 (requester notification, P6) stay Implemented. P2 musts: 68 Tested, 15 Implemented, 2 Deferred. The screens part (Kanban, overview, drill-down, wizard steps 5–6, E2E acceptance tests) is still to finish.
   - Security review: PASS WITH CONDITIONS. Access-matrix §2.2 option B is in place: the strict rule, plus 4 project-level read exceptions pending Mobily data governance (AMQ-09). The governance lists apply the grant filter.
   - Domain final review (`docs/reviews/P2-domain-final-review.md`): PASS WITH CONDITIONS. DOM-P2F-01 and -03 fixed by the lead; DOM-P2F-08 and -09 fixed with the P4 decision-reuse fixes (part 2). The Low items DOM-P2F-02, -04, -05, -06, -07, -10 and DOM-P2R-06, -08 go to the P2 gate report with owners.
   - QA final re-review (`docs/reviews/P2-qa-final-review.md`): PASS WITH CONDITIONS. QA-P2F-02, QA-P2F-03 and the QA-P2-05 residual are fixed; C1 (disposition of the 23 P2 musts still Implemented) and C4 addressed; C2 goes into the P3/P4 reviews.
-  - Next: the P2 gate report on a revision with a green CI run.
   - Open questions for the governance owner: Q-40, Q-43, O-1, A-50/52/53, DOM-P2R-06/08; from P4: the 30-day long-stop warning, an extension decision type, and whether a decision paper can name a closing / model version / TSA / cutover plan (subject rule `required`).
+- **P3 and P4 security review** (`docs/reviews/P3-P4-security-review.md`, at `5bf274b`): P3 PASS WITH CONDITIONS (Medium SEC-P34-01 P3 part, -02, -05, -07 to fix before the P3 gate), P4 PASS WITH CONDITIONS (Medium SEC-P34-01 P4 part, -03, -04 before the P4 gate); the P2 closure re-check (C2) confirmed SEC-P2-02/03/05/06 and SEC-P2-01 with Low residuals SEC-P34-12/13. P4 / AI / governance part fixed and merged (SEC-P34-01 for CPs, closing deliverables, obligations, benefits and action closure; -02, -03 — the P4 finance exit criterion now holds in the AI channel; -04, -09, -10 two-person "not required"; -12, -13, -17; -11 documented). The P3-module part (SEC-P34-01 readiness/NewCo, -05 to -08) is in the P3 fixes package.
+- **P3 domain review** (`docs/reviews/P3-domain-review.md`, at `5bf274b`): **FAIL** — 4 High (DOM-P3-01 a field edit moves a failed blocker to another plan; -05 "not applicable" transfer aspects read as transferred; -06 an extension decision is not bound to its end date; -09 rejected sign-off evidence leaves a blocker passed), 8 Medium, 5 Low. Exit criteria "blockers prevent go-live" and "extensions await an approved decision" not met. The P2 closure re-check (C2) is CONFIRMED for all five domain probe files. All P3 domain findings (DOM-P3-01 … -17) and the P3-module security findings (SEC-P34-01 P3 part, -05, -06, -07, -08) are fixed and merged (readiness rebind command, evidence reactions, per-project readiness and dimension locks, transfer "not applicable" determination, extension terms bound to the decision, documented dimension vocabulary, Legal-only regulatory verification). Open owner questions recorded (Q-P3-*). Focused domain re-review (`docs/reviews/P3-P4-domain-rereview.md`, at `9a93951`): P3 FAIL — 2 High equivalent-path bypasses of the new rules (DOM-P34R-01 a plan's siteId PATCH moves it away from its failed blocker; -04 extension terms bound only to the currently linked decision), 4 Medium (-02 sign-off "not applicable" of a failed non-waivable blocker by one specialist, -03 no dimension recompute on GO/withdrawal/execution, -05 N/A aspects survive classify to Included, -06 transfer evidence rejection not reflected in the dimension); P4 PASS WITH CONDITIONS (all DOM-P4 fixes verified; Lows -07/-08/-09 and documented DOM-P4-13/-14 funds-flow/-15). All nine DOM-P34R findings fixed and merged at `4fde3ec` (plan site change as a guarded command; extension terms bound per decision in `tsa_extension_terms`; dimension recompute on every cutover step; transfer evidence reactions; non-blocking CPs Legal-only; reconciliation reviewer excludes every editor): the re-review probes pass plain (13/13); the implementer's full API run 129 files, 1007 passed + 2 expected fail. Security re-check (`docs/reviews/P3-P4-security-recheck.md`, at `4fde3ec`): P3 and P4 PASS WITH CONDITIONS — every SEC-P34 Medium/Low fixed with regression tests; new Medium SEC-P34R-07 (superseding / flagging evidence skips the link permission checks) and SEC-P34R-05 (AI proposals list ignores the reader's visibility; the P4 finance rule is not met in that list until fixed); Lows SEC-P34R-01..-04. All fixed and merged at `2ed5d55` (supersede/flag apply the link permission checks; AI proposals list and detail apply the reader's visibility of the target and of the run inputs; one "self" definition for evidence — linkers and uploaders; 404 before 403 on the new routes); full API suite 132 files, 1042 passed + 2 expected fail. Domain reviewer's re-check of the DOM-P34R fixes (§9 of `docs/reviews/P3-P4-domain-rereview.md`, at `2ed5d55`): seven of nine fully fixed; P3 still FAIL on one new High, DOM-P34R2-01 (extension terms can be bound for the first time to a decision that is already final, e.g. the TSA's own terms decision, with any end date); "blockers prevent go-live" is now met. P4 PASS WITH CONDITIONS confirmed. Fix (first binding only while the paper is before the committee) assigned with the test refactor it needs.
+- **P3/P4 QA review** (`docs/reviews/P3-P4-qa-review.md`, at `5bf274b`): P3 FAIL (AT-09 and AT-10 failed through DOM-P3-01/-06/-09, since fixed), P4 PASS WITH CONDITIONS. Open: QA-P34-01 (Medium, English left on Arabic P3/P4 screens, items a–h), QA-P34-02/03/04/07 (Low; -07 is a debounce race in list row clicks that explains the intermittent `p3-readiness.spec.ts` REQ-SET-004 failure), -05/-06 Info. Fixed and merged (Arabic: server texts carry I18n codes, stored English sentences are matched back to their templates on read; 390 px; debounce race in SearchInput; P3 screens in the axe scan; requirement evidence corrected — REQ-UX-010 Tested, REQ-SET-012 lowered to Implemented with its gap stated). Full Playwright suite on the QA-fix branch: 396 passed.
 - **P3:** backends and web screens merged. DOM-P2R-05, DOM-P2F-08 and DOM-P2F-09 fixed (readiness now uses the shared decision-use registry: kinds `tsa_service`, `tsa_extension`, `cutover_plan`). Reviews not run.
 - **P4:**
   - Backends and web screens merged.
   - Domain review FAIL (`docs/reviews/P4-domain-review.md`). All its High findings are fixed: part 1 (DOM-P4-02/03/04/05/09 and Lows) and part 2 (DOM-P4-01/06/07/08 on the decision-use registry). The lowered requirements are Tested again with regression evidence.
   - Security and QA reviews not run.
-- **P5:** AI backend and AI PM web screens merged (mock provider labelled Simulated); reviews not run. To check in the P5 review: `ai-proposals.service.ts` `approve()` may audit and invalidate before a throw that rolls them back.
+- **P5:** AI backend and AI PM web screens merged (mock provider labelled Simulated); reviews not run. Fixed before the review: `ai-proposals.service.ts` `approve()` wrote the invalidation (payload / target version changed) and its audit row and then threw 409, so the rollback discarded them; they are now written in an autonomous transaction (`invalidateDetached`), with tests in `at-18-ai-approval-binding.spec.ts` that fail without the fix.
 - **P6–P8:** not started.
 
 ### Verified
 
 - **Gates deadlock fixed:** a gate command and the worker's evaluation refresh could lock the same `gate_assessment` rows in opposite orders ("deadlock detected" → 409, seen once in the full Playwright run). Every gate writer now takes the per-project advisory lock `hub_gates:<projectId>` first (module guide, "One writer of a project's gate state at a time"). Regression `apps/api/test/gates/gate-lock-order.spec.ts` reproduces the 409 without the lock and passes with it.
-- **API integration suite:** 100 files, 847 passed + 2 expected fail (DOM-P2F-02/04 probes) at `b41fe6e`. Domain 424/424, contracts 100/100, `pnpm typecheck` clean.
-- **CI:** run 34 fully green at `4fadf91`. Run 38 at `40fac20` was red (shellcheck and an RTL-detector false positive), fixed in `a58218b`.
+- **API integration suite:** 101 files, 856 passed + 2 expected fail (DOM-P2F-02/04 probes) at `3735be4`. Domain 424/424, contracts 100/100, `pnpm typecheck` clean.
+- **CI:** run 48 at `5bf274b`: every job green except one API test — the P2 QA race probe was written before the DOM-P2F-08 fix (a G1 paper must name the perimeter version) and met it at the merge; the fixture now raises the paper for the version, and the second concurrent G1 decide is asserted as 422 `gate_assessment.invalid_transition` (the gate lock makes it behave as a sequential second attempt). Playwright passed in run 48. Earlier: run 34 fully green at `4fadf91`. Run 38 at `40fac20` was red (shellcheck and an RTL-detector false positive), fixed in `a58218b`.
 - **Lint:** root `pnpm lint` passes. Secret scan: tree and history pass.
 
 ## Done in this session (highlights)
@@ -76,6 +80,11 @@
   - PLN-002.
   The domain re-review will say which of them block the P2 gate.
 - **Low findings carried** in `docs/phases/P1-gate-report.json`: QA-P1-09, QA-P1R-04/05, SEC-P1S-05/06/08.
+- **Build-machine capacity:** 4 cores and 15 GB shared by the lead and every agent. On 2026-09-30 the session process was
+  restarted after memory ran out, with five agents running full API suites and two e2e stacks at once, and the whole
+  container restarted again with four (PostgreSQL then needs `pnpm db:start`). Keep at most TWO agents with test runs in
+  parallel; an agent starts a full suite or a Playwright run only with at least 6 GB free, never both at once, and stops
+  its e2e stack by PID when done.
 - **Environment limits:**
   - The reference image and Excel workbook are not available (image extraction NOT performed).
   - There is no Docker daemon here: images, Compose and Helm are validated only in CI, and Helm install is NOT EXECUTED.
@@ -83,10 +92,11 @@
 
 ## Next action
 
-1. Merge the P2 QA focused re-review; fix what it finds.
-2. Write `docs/phases/P2-gate-report.json`.
-3. P3 reviews (domain, security, QA) → P3 gate. P4 reviews → P4 gate.
-4. Merge the AI UI → P5 reviews → P6 → P7 → P8.
+1. Finish the P2 residuals, the P3 domain review, the P3/P4 QA review and the P3/P4 security fixes (agents; at most two
+   running tests at once).
+2. P3 and P4 gate reports.
+3. P5 security and QA reviews (briefs ready), then P6 in three packages (reporting/exports; imports/integrations/
+   notifications; configuration/setup wizard), P7 (enterprise readiness), P8 (pilot and handover).
 
 Before every push:
 - run the full API suite and `pnpm lint`;

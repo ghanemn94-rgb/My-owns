@@ -80,11 +80,16 @@ const PLAN = 'planning.plan.read';
 const CARVEOUT = 'carveout.register.read';
 const READINESS = 'readiness.register.read';
 const FIN = 'finance.record.read';
+const DECISION = 'governance.decision.read';
+const NEWCO = 'newco.register.read';
 
 /** Every entity type that carries a record-level visibility rule (activity feed types and evidence target types). */
 const RULES: Record<string, Rule> = {
-  // own classification / room
-  agreement: own('agreement', { c: true }),
+  // own classification / room. Project-level registers (SEC-P34-12, access-matrix §2.2 strict rule): `ws: <read>, wsCol:
+  // null` — with `reach`, only a PROJECT-WIDE grant of the module's read permission reaches them, exactly like the owning
+  // module (carve-out `assertProjectWide`, NewCo `assertProjectRead`, governance `grantSql(…, {})`): a workstream-only reader
+  // never sees their code / title as a prerequisite, an evidence target or an activity-feed entry.
+  agreement: own('agreement', { c: true, ws: CARVEOUT, wsCol: null }),
   // finance records: finance-domain clearance and the reach of finance.record.read, exactly like FinanceSupport.visibleSql
   budget_line: own('budget_line', { c: true, ws: FIN, domain: 'finance' }),
   financial_snapshot: own('financial_snapshot', { c: true, ws: FIN, domain: 'finance' }),
@@ -94,9 +99,9 @@ const RULES: Record<string, Rule> = {
   benefit: own('benefit', { c: true, ws: FIN, domain: 'finance' }),
   kpi: own('kpi', { c: true, ws: FIN, wsCol: null, domain: 'finance' }),
   committee: own('committee', { c: true }),
-  consent: own('consent', { c: true }),
+  consent: own('consent', { c: true, ws: CARVEOUT, wsCol: null }),
   deal_scenario: own('deal_scenario', { c: true }),
-  decision: own('decision', { c: true }),
+  decision: own('decision', { c: true, ws: DECISION, wsCol: null }),
   diligence_finding: own('diligence_finding', { c: true, r: true }), // room derived from its DD request (ARCH-22)
   diligence_request: own('diligence_request', { c: true, r: true }),
   document: own('document', { c: true, r: true }),
@@ -105,7 +110,13 @@ const RULES: Record<string, Rule> = {
   partner_room: own('partner_room', { c: true }),
   perimeter_item: own('perimeter_item', { c: true, ws: CARVEOUT }),
   transfer: own('perimeter_item', { c: true, ws: CARVEOUT }), // evidence target: transfer status lives on the perimeter item
-  regulatory_requirement: own('regulatory_requirement', { c: true }),
+  regulatory_requirement: own('regulatory_requirement', { c: true, ws: NEWCO, wsCol: null }),
+  // SEC-P34R-01 (SEC-P34-12 residual): more project-level registers whose modules require a project-wide read — the
+  // organization-level legal entity (NewCo assertProjectRead), perimeter versions and category reviews (carve-out
+  // assertProjectWide, shown only in the project-level reconciliation / version register).
+  legal_entity: own('legal_entity', { ws: NEWCO, wsCol: null }),
+  perimeter_version: own('perimeter_version', { ws: CARVEOUT, wsCol: null }),
+  perimeter_category_review: own('perimeter_category_review', { ws: CARVEOUT, wsCol: null }),
   report_snapshot: own('report_snapshot', { c: true }),
   room_grant: own('room_grant', { r: true }),
   room_disclosure: own('room_disclosure', { r: true }),
@@ -254,4 +265,4 @@ export class RecordVisibility {
 }
 
 /** Polymorphic target types that have no record-level rule (visibility = type-level read permission only). */
-const UNRULED_TARGET_TYPES = ['gate_criterion', 'closing_condition', 'legal_entity', 'post_close_obligation', 'closing_deliverable', 'project', 'gate_assessment', 'document_chunk', 'baseline_version', 'change_request', 'perimeter_version'];
+const UNRULED_TARGET_TYPES = ['gate_criterion', 'closing_condition', 'post_close_obligation', 'closing_deliverable', 'project', 'gate_assessment', 'document_chunk', 'baseline_version', 'change_request'];

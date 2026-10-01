@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Calculator, Plus, Scale, Trash2 } from 'lucide-react';
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { financeRoutes } from '@hub/contracts';
 import { APPROVAL_STATES, FINANCIAL_CATEGORIES, FINANCIAL_KINDS } from '@hub/domain';
 import { ApiErrorNotice } from '@/components/ApiErrorNotice';
@@ -41,11 +41,22 @@ export function AggregatePanel({ snapshotIds, testId = 'aggregate-panel', framed
   const [result, setResult] = useState<AggregateResult | null>(null);
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
+  // QA-P34-06: the Run button is disabled while the request runs, which drops the keyboard focus to <body>; it is given
+  // back to the button when the run ends (only if the run was started from it and the focus has not moved elsewhere).
+  const runRef = useRef<HTMLButtonElement>(null);
+  const refocusRun = useRef(false);
+  useEffect(() => {
+    if (busy || !refocusRun.current) return;
+    refocusRun.current = false;
+    const active = document.activeElement;
+    if (!active || active === document.body) runRef.current?.focus();
+  }, [busy]);
 
   const ready = (byIds ? (snapshotIds?.length ?? 0) > 0 : !!kind) && (!targetCurrency || currencyValid(targetCurrency)) && conversions.every(conversionComplete);
   const setConv = (i: number, patch: Partial<ConversionBasis>) => setConversions((cs) => cs.map((c, j) => (j === i ? { ...c, ...patch } : c)));
 
   const run = async () => {
+    refocusRun.current = document.activeElement === runRef.current;
     setBusy(true);
     setError(null);
     setResult(null);
@@ -179,7 +190,7 @@ export function AggregatePanel({ snapshotIds, testId = 'aggregate-panel', framed
           </button>
         </fieldset>
 
-        <button type="submit" className={btn.primary} disabled={!ready || busy} aria-busy={busy} data-testid="aggregate-run">
+        <button ref={runRef} type="submit" className={btn.primary} disabled={!ready || busy} aria-busy={busy} data-testid="aggregate-run">
           <Calculator aria-hidden="true" className="size-4" />
           {busy ? t('common.actions.working') : t('finance.aggregate.run')}
         </button>

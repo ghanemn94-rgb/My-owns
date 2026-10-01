@@ -21,15 +21,18 @@ import { useToast } from '@/components/Toast';
 import { btn, card, cx } from '@/components/ui';
 import { EM_DASH, useI18n, type MessageKey } from '@/i18n/provider';
 import { api, isApiError } from '@/lib/api';
+import { useLocalized, useServerMessages } from '@/lib/i18n-data';
 import { useProjectContext } from '@/lib/project-context';
 import { rdHref, rk, useReadinessRefresh, type CutoverPlanDetail } from '@/lib/readiness';
 import { ButtonRow, Callout, CmdButton, DecisionIssue, DecisionSelect, Facts, Panel, Person, RdCommandDialog, Tick, UText, useScopeLabels } from '../../_components/rd';
 import { PlanFields, planBody, planFormOf, type PlanForm } from '../../_components/plan-form';
 
-type Cmd = 'edit' | 'rehearsal' | 'comms' | 'link' | 'submit' | 'back' | 'decide' | 'execute' | 'rollback' | 'accept' | null;
+type Cmd = 'edit' | 'site' | 'rehearsal' | 'comms' | 'link' | 'submit' | 'back' | 'decide' | 'execute' | 'rollback' | 'accept' | null;
 const EDITABLE = ['planning', 'rehearsal'];
 const PREREQ_KEYS = ['hasRunbook', 'hasRollbackPlan', 'communicationsApproved', 'hasWindow', 'hasServiceImpact', 'hasAccountableOwner', 'testingDone', 'hasApprovedGoDecision'] as const;
-const HISTORY_KINDS = ['submitted', 'returned_to_planning', 'rehearsal', 'go', 'no_go', 'go_blocked', 'executed', 'rolled_back', 'accepted'];
+const HISTORY_KINDS = ['submitted', 'returned_to_planning', 'rehearsal', 'go', 'no_go', 'go_blocked', 'executed', 'rolled_back', 'accepted', 'go_flagged', 'execution_blocked', 'check_bound', 'check_unbound', 'site_changed'];
+/** History entries that report a refusal or a flag (shown in the danger tone). */
+const DANGER_KINDS = ['go_blocked', 'no_go', 'rolled_back', 'go_flagged', 'execution_blocked'];
 /** Server labels of missing §7.4 prerequisites (domain `missingCutoverPrerequisites`) → translated prerequisite names. */
 const MISSING_KEY: Record<string, (typeof PREREQ_KEYS)[number]> = {
   runbook: 'hasRunbook',
@@ -55,6 +58,8 @@ function PlanDialogs({ p, cmd, onClose }: { p: CutoverPlanDetail; cmd: Cmd; onCl
   const [text, setText] = useState('');
   const [decisionId, setDecisionId] = useState(p.goDecisionId ?? '');
   const [outcome, setOutcome] = useState<'go' | 'no_go'>('go');
+  const [siteId, setSiteId] = useState(p.siteId ?? '');
+  const { sites, siteName } = useScopeLabels();
   const params = { projectId, planId: p.id };
   const done = async (msg: string) => {
     await refresh();
@@ -71,7 +76,7 @@ function PlanDialogs({ p, cmd, onClose }: { p: CutoverPlanDetail; cmd: Cmd; onCl
       noteLabel={t('readiness.common.reason')}
       expectedVersion={p.version}
       danger={key === 'rollback'}
-      consequences={[t(`readiness.plan.${key}.effect`), t('common.command.audited')]}
+      consequences={[t(`readiness.plan.${key}.effect`), ...(key === 'back' && p.status === 'approved_go' ? [t('readiness.plan.back.goEffect')] : []), t('common.command.audited')]}
       onConfirm={async ({ note }) => {
         await api(route, { params, body: { expectedVersion: p.version, note } });
         await done(t(`readiness.plan.${key}.done`));
@@ -95,7 +100,35 @@ function PlanDialogs({ p, cmd, onClose }: { p: CutoverPlanDetail; cmd: Cmd; onCl
             await done(r.version === p.version ? t('readiness.common.noChanges') : t('readiness.common.saved'));
           }}
         >
-          <PlanFields form={form} onChange={setForm} />
+          <PlanFields form={form} onChange={setForm} siteLocked />
+        </RdCommandDialog>
+      );
+    case 'site':
+      // DOM-P34R-01: the site decides which checks gate the plan — a scope command with a reason, recorded in the history.
+      return (
+        <RdCommandDialog
+          open
+          onClose={onClose}
+          title={t('readiness.plan.site.title')}
+          confirmLabel={t('readiness.plan.site.confirm')}
+          noteMode="required"
+          noteLabel={t('readiness.common.reason')}
+          expectedVersion={p.version}
+          confirmDisabled={(siteId || null) === (p.siteId ?? null)}
+          consequences={[t('readiness.plan.site.effect'), t('readiness.plan.site.failedRule'), t('common.command.audited')]}
+          onConfirm={async ({ note }) => {
+            await api(readinessRoutes.changeCutoverPlanSite, { params, body: { expectedVersion: p.version, siteId: siteId || null, reason: note } });
+            await done(t('readiness.plan.site.done'));
+          }}
+        >
+          <SelectField label={t('readiness.cutover.fields.site')} value={siteId} onChange={(e) => setSiteId(e.target.value)} data-testid="plan-site-change">
+            <option value="">{t('readiness.cutover.projectWide')}</option>
+            {sites.map((x) => (
+              <option key={x.id} value={x.id}>
+                {siteName(x.id)}
+              </option>
+            ))}
+          </SelectField>
         </RdCommandDialog>
       );
     case 'rehearsal':
@@ -213,6 +246,7 @@ function PlanDialogs({ p, cmd, onClose }: { p: CutoverPlanDetail; cmd: Cmd; onCl
 
 function GoEvaluation({ p }: { p: CutoverPlanDetail }) {
   const { t, tStatus } = useI18n();
+  const localized = useLocalized();
   const missingLabel = useMissingLabel();
   const { projectId } = useProjectContext();
   const ev = p.goEvaluation;
@@ -220,6 +254,11 @@ function GoEvaluation({ p }: { p: CutoverPlanDetail }) {
     <section className={cx(card, 'p-4', ev.allowed ? 'border-success/40' : 'border-danger/50')} data-testid="go-evaluation" data-allowed={ev.allowed ? 'true' : 'false'}>
       <h2 className="mb-2 text-lg font-semibold text-ink">{t('readiness.plan.go.title')}</h2>
       <Callout tone={ev.allowed ? 'info' : 'danger'}>{ev.allowed ? t('readiness.plan.go.allowed') : t('readiness.plan.go.blocked')}</Callout>
+      {p.status === 'approved_go' && ev.blockers.length ? (
+        <div className="mt-2" data-testid="go-flagged">
+          <Callout tone="danger">{t('readiness.plan.go.flagged')}</Callout>
+        </div>
+      ) : null}
       {ev.blockers.length ? (
         <div className="mt-3">
           <h3 className="text-sm font-semibold text-ink">{t('readiness.plan.go.blockers')}</h3>
@@ -230,10 +269,16 @@ function GoEvaluation({ p }: { p: CutoverPlanDetail }) {
                   <StatusBadge enumName="readinessStatuses" value={b.status} />
                 </span>
                 <span className="min-w-0">
-                  <Link className={cx(btn.link, 'break-words')} href={`${rdHref(projectId)}/checks/${b.id}`} dir="auto">
-                    {b.title}
+                  {/* A check without an Arabic title was typed by a person: shown as entered (data-user-text). */}
+                  <Link className={cx(btn.link, 'break-words')} href={`${rdHref(projectId)}/checks/${b.id}`} dir="auto" data-user-text={b.titleAr ? undefined : true}>
+                    {localized(b.title, b.titleAr)}
                   </Link>
                   <span className="block text-xs text-muted">{b.blocker ? t('readiness.plan.go.blockerLabel') : t('readiness.plan.go.mandatoryLabel')}</span>
+                  {b.evidenceInvalid ? (
+                    <span className="block text-xs text-danger" data-testid="go-blocker-evidence-invalid">
+                      {t('readiness.plan.go.evidenceInvalid')}
+                    </span>
+                  ) : null}
                 </span>
               </li>
             ))}
@@ -257,6 +302,8 @@ function GoEvaluation({ p }: { p: CutoverPlanDetail }) {
 
 function DecisionHistory({ p }: { p: CutoverPlanDetail }) {
   const { t, tStatus, formatDateTime } = useI18n();
+  const localized = useLocalized();
+  const serverText = useServerMessages();
   const missingLabel = useMissingLabel();
   return (
     <Panel title={t('readiness.plan.history.title')} testId="decision-history">
@@ -265,17 +312,20 @@ function DecisionHistory({ p }: { p: CutoverPlanDetail }) {
       <ol className="space-y-3 border-s border-line ps-4">
         {p.decisionHistory.map((h) => {
           const known = HISTORY_KINDS.includes(h.kind);
-          const tone = h.kind === 'go' || h.kind === 'accepted' ? 'text-success' : h.kind === 'go_blocked' || h.kind === 'no_go' || h.kind === 'rolled_back' ? 'text-danger' : 'text-ink';
+          const tone = h.kind === 'go' || h.kind === 'accepted' ? 'text-success' : DANGER_KINDS.includes(h.kind) ? 'text-danger' : 'text-ink';
           return (
             <li key={h.id} data-testid="history-entry" data-kind={h.kind} className="text-sm">
               <p className={cx('font-semibold', tone)}>{known ? t(`readiness.plan.history.kinds.${h.kind}` as MessageKey) : h.kind}</p>
               <p className="text-xs text-muted">
-                <span className="tabular">{formatDateTime(h.createdAt)}</span> · <Person id={h.actorUserId} people={p.people} />
+                <span className="tabular">{formatDateTime(h.createdAt)}</span> ·{' '}
+                {h.actorUserId ? <Person id={h.actorUserId} people={p.people} /> : <span>{t('readiness.plan.history.system')}</span>}
                 {h.toStatus ? <> · {tStatus('cutoverStatuses', h.toStatus)}</> : null}
               </p>
               {h.rationale ? (
-                <p className="mt-1 whitespace-pre-wrap" dir="auto">
-                  {h.rationale}
+                // A rationale written by the system (GO flagged, check bound / unbound) is translated from its codes; a person's
+                // rationale is shown as entered.
+                <p className="mt-1 whitespace-pre-wrap" dir={h.rationaleI18n?.length ? undefined : 'auto'} data-user-text={h.rationaleI18n?.length ? undefined : true}>
+                  {serverText(h.rationaleI18n, h.rationale)}
                 </p>
               ) : null}
               {h.evaluation && (h.evaluation.blockers.length || h.evaluation.missing.length) ? (
@@ -286,7 +336,10 @@ function DecisionHistory({ p }: { p: CutoverPlanDetail }) {
                       <ul className="list-disc ps-4">
                         {h.evaluation.blockers.map((b, i) => (
                           <li key={i}>
-                            <span dir="auto">{b.title}</span> ({tStatus('readinessStatuses', b.status)})
+                            <span dir="auto" data-user-text={b.titleAr ? undefined : true}>
+                              {localized(b.title, b.titleAr)}
+                            </span>{' '}
+                            ({tStatus('readinessStatuses', b.status)})
                           </li>
                         ))}
                       </ul>
@@ -313,6 +366,7 @@ export default function CutoverPlanPage() {
   const { t, tStatus, formatDateTime } = useI18n();
   const { projectId, can, me } = useProjectContext();
   const { siteName, wsName } = useScopeLabels();
+  const localized = useLocalized();
   const [cmd, setCmd] = useState<Cmd>(null);
   const q = useQuery({ queryKey: rk.plan(projectId, planId), queryFn: ({ signal }) => api(readinessRoutes.getCutoverPlan, { params: { projectId, planId }, signal }) });
   const base = rdHref(projectId);
@@ -331,11 +385,13 @@ export default function CutoverPlanPage() {
   add(manage && EDITABLE.includes(st), 'rehearsal', t('readiness.plan.rehearsal.action'));
   add(manage && EDITABLE.includes(st), 'comms', t('readiness.plan.comms.action'));
   add(manage && ['planning', 'rehearsal', 'ready_for_decision'].includes(st), 'link', t('readiness.plan.decision.link'));
-  add(manage && ['ready_for_decision', 'no_go', 'rolled_back'].includes(st), 'back', t('readiness.plan.back.action'));
+  // DOM-P3-04: a GO (e.g. one flagged because a gating check is open again) can be withdrawn for a new decision.
+  add(manage && ['ready_for_decision', 'no_go', 'rolled_back', 'approved_go'].includes(st), 'back', t('readiness.plan.back.action'));
   add(manage && st === 'approved_go', 'execute', t('readiness.plan.execute.action'), 'primary');
   add(manage && (st === 'approved_go' || st === 'executed'), 'rollback', t('readiness.plan.rollback.action'), 'danger');
   add(manage && st === 'executed', 'accept', t('readiness.plan.accept.action'), 'primary');
   add(manage && EDITABLE.includes(st), 'edit', t('readiness.common.edit'));
+  add(manage && EDITABLE.includes(st), 'site', t('readiness.plan.site.action'));
   const whenBy = (at: string | null, by: string | null) =>
     at ? (
       <span>
@@ -417,9 +473,12 @@ export default function CutoverPlanPage() {
               {
                 key: 'title',
                 header: t('readiness.checks.columns.title'),
+                // QA-P34-01e: template checks carry their Arabic title.
                 cell: (c) => (
                   <span className="flex flex-col">
-                    <span dir="auto">{c.title}</span>
+                    <span dir="auto" data-user-text={c.titleAr ? undefined : true}>
+                      {localized(c.title, c.titleAr)}
+                    </span>
                     <span className="text-xs text-muted">{tStatus('readinessAreas', c.area)}</span>
                   </span>
                 ),
@@ -459,7 +518,16 @@ export default function CutoverPlanPage() {
               { label: t('readiness.plan.facts.rollback'), value: <UText value={p.rollbackPlan} multiline />, wide: true },
               { label: t('readiness.plan.facts.submitted'), value: whenBy(p.submittedForDecisionAt, p.submittedForDecisionBy) },
               { label: t('readiness.plan.facts.decided'), value: whenBy(p.goNoGoDecidedAt, p.goNoGoDecidedBy) },
-              { label: t('readiness.plan.facts.rationale'), value: <UText value={p.goNoGoRationale} multiline />, wide: true },
+              {
+                label: t('readiness.plan.facts.rationale'),
+                // The go/no-go rationale is the decider's own text (data-user-text).
+                value: (
+                  <span data-user-text>
+                    <UText value={p.goNoGoRationale} multiline />
+                  </span>
+                ),
+                wide: true,
+              },
               { label: t('readiness.plan.facts.executed'), value: p.executedAt ? <span>{whenBy(p.executedAt, p.executedBy)} <UText value={p.executionNote} /></span> : EM_DASH, wide: true },
               { label: t('readiness.plan.facts.accepted'), value: p.postTransitionAccepted ? <span>{whenBy(p.postTransitionAcceptedAt, p.postTransitionAcceptedBy)} <UText value={p.postTransitionAcceptanceNote} /></span> : EM_DASH, wide: true },
             ]}

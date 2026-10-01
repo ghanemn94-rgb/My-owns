@@ -230,7 +230,7 @@ test.describe.serial('P3 carve-out & NewCo', () => {
     expect(problems(), problems().join('\n')).toEqual([]);
   });
 
-  test('(c) approvals register: new entries start "Assessment pending — specialist"; the registrant is refused (403 reason shown), another specialist assesses', async ({ page, browser }) => {
+  test('(c) approvals register: new entries start "Assessment pending — specialist"; the registrant is refused (403 reason shown), another specialist assesses (Legal only: the functional approver is not offered it — SEC-P34-05)', async ({ browser, baseURL }) => {
     const title = `E2E synthetic approval ${Date.now()}`;
     const legal = await newSession(browser, LEGAL);
     const problems = watchConsole(legal.page);
@@ -264,22 +264,52 @@ test.describe.serial('P3 carve-out & NewCo', () => {
     await expect(legal.page.getByTestId('applicability')).toHaveAttribute('data-value', 'assessment_pending');
     await legal.ctx.close();
 
-    // Another specialist (functional approver) records the assessment with its basis.
-    const approver = await newSession(browser, APPROVER);
-    await approver.page.goto(reqUrl);
-    await approver.page.getByTestId('requirement-assess').click();
-    const assess2 = approver.page.getByRole('dialog', { name: /^Applicability of/ });
-    await assess2.getByTestId('applicability-select').selectOption('applicable');
-    await assess2.locator('textarea').last().fill('E2E: synthetic specialist basis (demo only, not a real determination).');
-    await assess2.getByRole('button', { name: 'Assess applicability', exact: true }).click();
-    await expect(assess2).toBeHidden();
-    await expect(approver.page.getByTestId('applicability')).toHaveAttribute('data-value', 'applicable');
-    await expect(approver.page.getByTestId('applicability')).toContainText(APPROVER);
-    await approver.page.screenshot({ path: join(SHOTS, 'newco-requirement-assessed-en.png'), fullPage: true });
-    await approver.page.goto(`/projects/${dcId}/newco?tab=requirements`);
-    await expect(approver.page.getByTestId('requirements-table')).toContainText('Assessment pending — specialist');
-    await approver.page.screenshot({ path: join(SHOTS, 'newco-requirements-en.png'), fullPage: true });
-    await approver.ctx.close();
+    // SEC-P34-05 (REQ-AGR-004): regulatory determinations are Legal's only — the functional approver (no legal role) is
+    // not offered the assessment.
+    const plainApprover = await newSession(browser, APPROVER);
+    const approverProblems = watchConsole(plainApprover.page);
+    await plainApprover.page.goto(reqUrl);
+    await expect(plainApprover.page.getByTestId('applicability')).toHaveAttribute('data-value', 'assessment_pending');
+    await expect(plainApprover.page.getByTestId('requirement-assess')).toHaveCount(0);
+    await plainApprover.ctx.close();
+    expect(approverProblems(), approverProblems().join('\n')).toEqual([]);
+
+    // Another Legal member records the assessment with its basis. The demo has one Legal persona, so the Portfolio Admin
+    // grants the Legal role to the approver persona for this test only (synthetic, audited) and revokes it afterwards.
+    const admin = await apiSessionAs(baseURL!, PERSONAS.portfolioAdmin);
+    const csrf = (await admin.storageState()).cookies.find((c) => c.name === 'hub_csrf')?.value ?? '';
+    const users = (await (await admin.get('/api/v1/auth/demo-users')).json()).items as { id: string; displayName: string }[];
+    const approverId = users.find((u) => u.displayName === APPROVER)!.id;
+    const granted = await admin.post(`/api/v1/projects/${dcId}/members`, {
+      data: { userId: approverId, role: 'legal_restricted', reason: 'E2E (synthetic): second Legal member for the separation-of-duties check; revoked by the test' },
+      headers: { 'x-csrf-token': csrf },
+    });
+    expect(granted.ok(), `grant legal_restricted → HTTP ${granted.status()} ${await granted.text()}`).toBeTruthy();
+    const membershipId = ((await granted.json()) as { id: string }).id;
+    try {
+      const approver = await newSession(browser, APPROVER);
+      await approver.page.goto(reqUrl);
+      await approver.page.getByTestId('requirement-assess').click();
+      const assess2 = approver.page.getByRole('dialog', { name: /^Applicability of/ });
+      await assess2.getByTestId('applicability-select').selectOption('applicable');
+      await assess2.locator('textarea').last().fill('E2E: synthetic specialist basis (demo only, not a real determination).');
+      await assess2.getByRole('button', { name: 'Assess applicability', exact: true }).click();
+      await expect(assess2).toBeHidden();
+      await expect(approver.page.getByTestId('applicability')).toHaveAttribute('data-value', 'applicable');
+      await expect(approver.page.getByTestId('applicability')).toContainText(APPROVER);
+      await approver.page.screenshot({ path: join(SHOTS, 'newco-requirement-assessed-en.png'), fullPage: true });
+      await approver.page.goto(`/projects/${dcId}/newco?tab=requirements`);
+      await expect(approver.page.getByTestId('requirements-table')).toContainText('Assessment pending — specialist');
+      await approver.page.screenshot({ path: join(SHOTS, 'newco-requirements-en.png'), fullPage: true });
+      await approver.ctx.close();
+    } finally {
+      const revoked = await admin.post(`/api/v1/projects/${dcId}/members/${membershipId}/revoke`, {
+        data: { reason: 'E2E (synthetic): end of the separation-of-duties check' },
+        headers: { 'x-csrf-token': csrf },
+      });
+      expect(revoked.ok(), `revoke → HTTP ${revoked.status()}`).toBeTruthy();
+      await admin.dispose();
+    }
     expect(problems(), problems().join('\n')).toEqual([]);
   });
 
@@ -340,6 +370,49 @@ test.describe.serial('P3 carve-out & NewCo', () => {
     } finally {
       await setSavedLocale(page, 'en');
     }
+    expect(problems(), problems().join('\n')).toEqual([]);
+  });
+
+  test('(e) REQ-LCY-007 / AT-06: the cockpit shows the NewCo incorporated (verified, test b) alongside the perimeter transfer in progress — each dimension separately, never the carve-out as complete', async ({ page, baseURL }) => {
+    const problems = watchConsole(page);
+    await loginAs(page, PERSONAS.pm);
+    await setSavedLocale(page, 'en');
+    // An in-scope demo item whose legal and economic transfers are planned: the PM starts both through the item page (the
+    // combined status of the item — the less advanced aspect — is then in progress).
+    const api = await apiSessionAs(baseURL!, PERSONAS.pm);
+    const items = (await (await api.get(`/api/v1/projects/${dcId}/perimeter-items?pageSize=100`)).json()).items as { id: string; code: string; disposition: string; transfer: { legal: string; economic: string } }[];
+    await api.dispose();
+    const item = items.find((x) => x.disposition === 'included' && ['planned', 'in_progress'].includes(x.transfer.legal) && ['planned', 'in_progress'].includes(x.transfer.economic));
+    expect(item, 'an included demo item with both transfer aspects planned (PI-001 in the demo seed)').toBeTruthy();
+    await page.goto(`/projects/${dcId}/perimeter/items/${item!.id}`);
+    for (const aspect of ['legal', 'economic'] as const) {
+      if (item!.transfer[aspect] === 'in_progress') continue;
+      await page.locator(`[data-command="${aspect}:start"]`).click();
+      const dialog = page.locator('dialog[open]');
+      await dialog.getByRole('button', { name: 'Start', exact: true }).click();
+      await expect(dialog).toHaveCount(0);
+      await expect(page.getByTestId('transfer-view').first()).toHaveAttribute(`data-${aspect}`, 'in_progress');
+    }
+
+    // The cockpit (status dimensions are recomputed by the worker after the perimeter change).
+    await page.goto(`/projects/${dcId}`);
+    await expect(page.getByTestId('dimension-cards').locator('[data-dimension]')).toHaveCount(4);
+    await expect
+      .poll(
+        async () => {
+          await page.reload();
+          await expect(dimensionState(page, 'perimeter_transfer')).toBeVisible();
+          return dimensionState(page, 'perimeter_transfer').getAttribute('data-status');
+        },
+        { timeout: 60_000, intervals: [2_000] },
+      )
+      .toBe('transfer_in_progress');
+    await expect(dimensionState(page, 'incorporation')).toHaveAttribute('data-status', 'incorporated_verified');
+    await expect(page.locator('[data-testid="dimension-cards"] [data-dimension="incorporation"]')).toContainText('Incorporated — evidence verified');
+    await expect(page.locator('[data-testid="dimension-cards"] [data-dimension="perimeter_transfer"]')).toContainText('Transfer in progress');
+    // Operational readiness is not at its terminal state, so the carve-out is not complete (AT-06): no dimension reads "complete".
+    await expect(dimensionState(page, 'operational_readiness')).not.toHaveAttribute('data-status', 'transitional_services_exited');
+    await page.screenshot({ path: join(SHOTS, 'cockpit-incorporated-transfer-in-progress-en.png'), fullPage: true });
     expect(problems(), problems().join('\n')).toEqual([]);
   });
 });

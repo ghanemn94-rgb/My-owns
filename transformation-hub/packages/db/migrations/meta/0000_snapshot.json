@@ -1,5 +1,5 @@
 {
-  "id": "159a5051-39a9-4b10-88e6-71efc3739111",
+  "id": "ac1bc1fe-d61a-40b9-96bd-d4f01affeee7",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -6016,6 +6016,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "merged_into_agenda_item_id": {
+          "name": "merged_into_agenda_item_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "presenter_user_id": {
           "name": "presenter_user_id",
           "type": "uuid",
@@ -6145,6 +6151,21 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
+        },
+        "agenda_item_merged_into_fk": {
+          "name": "agenda_item_merged_into_fk",
+          "tableFrom": "agenda_item",
+          "tableTo": "agenda_item",
+          "columnsFrom": [
+            "project_id",
+            "merged_into_agenda_item_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -6159,7 +6180,12 @@
         }
       },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "agenda_item_merged_ck": {
+          "name": "agenda_item_merged_ck",
+          "value": "(\"agenda_item\".\"screening_status\" = 'merged') = (\"agenda_item\".\"merged_into_agenda_item_id\" is not null)"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.approval_record": {
@@ -6221,6 +6247,13 @@
           "primaryKey": false,
           "notNull": true
         },
+        "method": {
+          "name": "method",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'internal_electronic'"
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -6263,7 +6296,12 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "approval_record_method_ck": {
+          "name": "approval_record_method_ck",
+          "value": "\"approval_record\".\"method\" = 'internal_electronic'"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.approval_request": {
@@ -8341,6 +8379,12 @@
         "authority_matrix_version_id": {
           "name": "authority_matrix_version_id",
           "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cadence_charter_version_no": {
+          "name": "cadence_charter_version_no",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
@@ -10755,7 +10799,7 @@
           "name": "actor_user_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "rationale": {
           "name": "rationale",
@@ -13373,7 +13417,7 @@
           "name": "recorded_by",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "created_at": {
           "name": "created_at",
@@ -13464,9 +13508,180 @@
         },
         "transfer_record_command_ck": {
           "name": "transfer_record_command_ck",
-          "value": "\"transfer_record\".\"command\" in ('plan', 'start', 'report_transferred', 'verify', 'reject_evidence', 'block', 'unblock', 'mark_not_applicable')"
+          "value": "\"transfer_record\".\"command\" in ('plan', 'start', 'report_transferred', 'verify', 'reject_evidence', 'block', 'unblock', 'mark_not_applicable', 'scope_reset')"
         }
       },
+      "isRLSEnabled": false
+    },
+    "public.tsa_extension_terms": {
+      "name": "tsa_extension_terms",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "project_id": {
+          "name": "project_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "decision_id": {
+          "name": "decision_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tsa_service_id": {
+          "name": "tsa_service_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "proposed_end_date": {
+          "name": "proposed_end_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "continuity_plan": {
+          "name": "continuity_plan",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "requested_by": {
+          "name": "requested_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_demo": {
+          "name": "is_demo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "tsa_extension_terms_decision_uq": {
+          "name": "tsa_extension_terms_decision_uq",
+          "columns": [
+            {
+              "expression": "decision_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "tsa_extension_terms_tsa_idx": {
+          "name": "tsa_extension_terms_tsa_idx",
+          "columns": [
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "tsa_service_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "tsa_extension_terms_project_id_project_id_fk": {
+          "name": "tsa_extension_terms_project_id_project_id_fk",
+          "tableFrom": "tsa_extension_terms",
+          "tableTo": "project",
+          "columnsFrom": [
+            "project_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "tsa_extension_terms_decision_fk": {
+          "name": "tsa_extension_terms_decision_fk",
+          "tableFrom": "tsa_extension_terms",
+          "tableTo": "decision",
+          "columnsFrom": [
+            "project_id",
+            "decision_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "tsa_extension_terms_tsa_fk": {
+          "name": "tsa_extension_terms_tsa_fk",
+          "tableFrom": "tsa_extension_terms",
+          "tableTo": "tsa_service",
+          "columnsFrom": [
+            "project_id",
+            "tsa_service_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.tsa_service": {
@@ -13696,6 +13911,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'proposed'"
+        },
+        "pre_breach_status": {
+          "name": "pre_breach_status",
+          "type": "tsa_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
         },
         "escalation_id": {
           "name": "escalation_id",
@@ -25296,7 +25518,9 @@
         "accepted",
         "returned",
         "deferred",
-        "withdrawn"
+        "withdrawn",
+        "merged",
+        "rejected"
       ]
     },
     "public.agreement_stage": {
@@ -25933,6 +26157,7 @@
       "name": "meeting_status",
       "schema": "public",
       "values": [
+        "proposed",
         "planned",
         "agenda_published",
         "in_session",

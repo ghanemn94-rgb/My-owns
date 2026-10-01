@@ -32,6 +32,8 @@ type Consent = typeof schema.consent.$inferSelect;
 const A = schema.agreement;
 const C = schema.consent;
 const READ = 'carveout.register.read';
+/** Roles that may act as the legal reviewer of an agreement (DOM-P3-17; for Legal to confirm). */
+const LEGAL_REVIEWER_ROLES = ['legal_restricted'] as const;
 
 /**
  * Agreement register (REQ-AGR-001/002/003) and consent tracking (REQ-AGR-008). Agreements and consents are
@@ -143,7 +145,14 @@ export class AgreementsService {
 
   private async validateAgreementRefs(p: CarveoutProject, b: { ownerUserId?: string | null; legalReviewerUserId?: string | null; parties?: { legalEntityId?: string }[] }) {
     if (b.ownerUserId) await this.s.assertMember(p.id, b.ownerUserId, 'owner');
-    if (b.legalReviewerUserId) await this.s.assertMember(p.id, b.legalReviewerUserId, 'legal reviewer');
+    if (b.legalReviewerUserId) {
+      await this.s.assertMember(p.id, b.legalReviewerUserId, 'legal reviewer');
+      // DOM-P3-17 (Legal to confirm): the legal reviewer — who clears agree-in-principle / signing and may confirm what an
+      // abbreviation stands for — holds a legal role in the project; the agreement manager cannot name any member (themself).
+      if (!(await this.s.holdsRole(p.id, b.legalReviewerUserId, LEGAL_REVIEWER_ROLES))) {
+        throw ruleViolation('agreement.legal_reviewer_not_legal', 'The legal reviewer of an agreement must hold a legal role in this project', { roles: LEGAL_REVIEWER_ROLES });
+      }
+    }
     for (const party of b.parties ?? []) if (party.legalEntityId) await this.s.assertEntityInProject(p.id, party.legalEntityId, 'party entity');
   }
 

@@ -701,7 +701,7 @@ erDiagram
     agenda_screening_status screening_status
     text screening_note
     uuid screened_by
-    uuid presenter_user_id
+    uuid merged_into_agenda_item_id
     more more_columns
   }
   attendance {
@@ -819,6 +819,7 @@ erDiagram
     text comment
     text authority_basis
     text payload_hash
+    varchar method
     timestamptz created_at
   }
   conflict_declaration {
@@ -870,6 +871,7 @@ erDiagram
   committee ||--o{ agenda_item : "committee_id"
   decision ||--o{ agenda_item : "decision_id"
   meeting ||--o{ agenda_item : "meeting_id"
+  agenda_item ||--o{ agenda_item : "merged_into_agenda_item_id"
   app_user ||--o{ agenda_item : "org_id,created_by"
   app_user ||--o{ agenda_item : "org_id,presenter_user_id"
   app_user ||--o{ agenda_item : "org_id,requested_by"
@@ -1279,6 +1281,20 @@ erDiagram
     uuid created_by
     more more_columns
   }
+  tsa_extension_terms {
+    uuid id
+    uuid org_id
+    uuid project_id
+    uuid decision_id
+    uuid tsa_service_id
+    date proposed_end_date
+    text continuity_plan
+    uuid requested_by
+    bool is_demo
+    timestamptz created_at
+    timestamptz updated_at
+    int4 version
+  }
   app_user ||--o{ perimeter_item : "org_id,billing_accountable_user_id"
   app_user ||--o{ perimeter_item : "org_id,created_by"
   app_user ||--o{ perimeter_item : "org_id,owner_user_id"
@@ -1372,6 +1388,9 @@ erDiagram
   app_user ||--o{ operating_model_definition : "org_id,approved_by"
   app_user ||--o{ operating_model_definition : "org_id,created_by"
   decision ||--o{ operating_model_definition : "decision_id"
+  app_user ||--o{ tsa_extension_terms : "org_id,requested_by"
+  decision ||--o{ tsa_extension_terms : "decision_id"
+  tsa_service ||--o{ tsa_extension_terms : "tsa_service_id"
 ```
 
 ## Finance

@@ -1,7 +1,7 @@
 CREATE TYPE "public"."action_item_status" AS ENUM('open', 'in_progress', 'done_pending_verification', 'verified_closed', 'cancelled');--> statement-breakpoint
 CREATE TYPE "public"."actor_kind" AS ENUM('user', 'service', 'system');--> statement-breakpoint
 CREATE TYPE "public"."agenda_item_kind" AS ENUM('decision', 'information', 'discussion', 'escalation');--> statement-breakpoint
-CREATE TYPE "public"."agenda_screening_status" AS ENUM('requested', 'accepted', 'returned', 'deferred', 'withdrawn');--> statement-breakpoint
+CREATE TYPE "public"."agenda_screening_status" AS ENUM('requested', 'accepted', 'returned', 'deferred', 'withdrawn', 'merged', 'rejected');--> statement-breakpoint
 CREATE TYPE "public"."agreement_stage" AS ENUM('identified', 'drafting', 'negotiating', 'agreed_in_principle', 'signed', 'effective', 'terminated', 'expired');--> statement-breakpoint
 CREATE TYPE "public"."ai_mode" AS ENUM('off', 'advisory', 'assisted', 'autopilot');--> statement-breakpoint
 CREATE TYPE "public"."ai_proposal_status" AS ENUM('proposed', 'approved', 'rejected', 'invalidated', 'executing', 'executed', 'failed', 'expired', 'cancelled');--> statement-breakpoint
@@ -57,7 +57,7 @@ CREATE TYPE "public"."integration_status" AS ENUM('not_configured', 'configured_
 CREATE TYPE "public"."job_status" AS ENUM('queued', 'running', 'succeeded', 'failed', 'dead', 'cancelled');--> statement-breakpoint
 CREATE TYPE "public"."kpi_direction" AS ENUM('higher_is_better', 'lower_is_better');--> statement-breakpoint
 CREATE TYPE "public"."materiality" AS ENUM('low', 'medium', 'high', 'critical');--> statement-breakpoint
-CREATE TYPE "public"."meeting_status" AS ENUM('planned', 'agenda_published', 'in_session', 'held', 'minutes_draft', 'minutes_approved', 'cancelled');--> statement-breakpoint
+CREATE TYPE "public"."meeting_status" AS ENUM('proposed', 'planned', 'agenda_published', 'in_session', 'held', 'minutes_draft', 'minutes_approved', 'cancelled');--> statement-breakpoint
 CREATE TYPE "public"."milestone_status" AS ENUM('planned', 'at_risk', 'achieved_pending_evidence', 'achieved_verified', 'missed', 'cancelled');--> statement-breakpoint
 CREATE TYPE "public"."model_case" AS ENUM('base', 'downside', 'upside');--> statement-breakpoint
 CREATE TYPE "public"."model_kind" AS ENUM('business_plan', 'valuation');--> statement-breakpoint
@@ -791,6 +791,7 @@ CREATE TABLE "agenda_item" (
 	"screening_status" "agenda_screening_status" DEFAULT 'requested' NOT NULL,
 	"screening_note" text,
 	"screened_by" uuid,
+	"merged_into_agenda_item_id" uuid,
 	"presenter_user_id" uuid,
 	"minutes_note" text,
 	"sort_order" integer DEFAULT 0 NOT NULL,
@@ -798,7 +799,8 @@ CREATE TABLE "agenda_item" (
 	"created_by" uuid,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"version" integer DEFAULT 1 NOT NULL,
-	CONSTRAINT "agenda_item_pid_uq" UNIQUE("project_id","id")
+	CONSTRAINT "agenda_item_pid_uq" UNIQUE("project_id","id"),
+	CONSTRAINT "agenda_item_merged_ck" CHECK (("agenda_item"."screening_status" = 'merged') = ("agenda_item"."merged_into_agenda_item_id" is not null))
 );
 --> statement-breakpoint
 CREATE TABLE "approval_record" (
@@ -811,7 +813,9 @@ CREATE TABLE "approval_record" (
 	"comment" text,
 	"authority_basis" text,
 	"payload_hash" text NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+	"method" varchar(32) DEFAULT 'internal_electronic' NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "approval_record_method_ck" CHECK ("approval_record"."method" = 'internal_electronic')
 );
 --> statement-breakpoint
 CREATE TABLE "approval_request" (
@@ -1044,6 +1048,7 @@ CREATE TABLE "meeting" (
 	"minutes_approved_by" uuid,
 	"minutes_approved_at" timestamp with time zone,
 	"authority_matrix_version_id" uuid,
+	"cadence_charter_version_no" integer,
 	"is_demo" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"created_by" uuid,
@@ -1302,7 +1307,7 @@ CREATE TABLE "cutover_decision_record" (
 	"kind" varchar(32) NOT NULL,
 	"from_status" "cutover_status",
 	"to_status" "cutover_status",
-	"actor_user_id" uuid NOT NULL,
+	"actor_user_id" uuid,
 	"rationale" text,
 	"go_decision_id" uuid,
 	"evaluation" jsonb,
@@ -1585,11 +1590,26 @@ CREATE TABLE "transfer_record" (
 	"note" text,
 	"evidence_count" integer DEFAULT 0 NOT NULL,
 	"reviews_record_id" uuid,
-	"recorded_by" uuid NOT NULL,
+	"recorded_by" uuid,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "transfer_record_pid_uq" UNIQUE("project_id","id"),
 	CONSTRAINT "transfer_record_aspect_ck" CHECK ("transfer_record"."aspect" in ('legal', 'economic')),
-	CONSTRAINT "transfer_record_command_ck" CHECK ("transfer_record"."command" in ('plan', 'start', 'report_transferred', 'verify', 'reject_evidence', 'block', 'unblock', 'mark_not_applicable'))
+	CONSTRAINT "transfer_record_command_ck" CHECK ("transfer_record"."command" in ('plan', 'start', 'report_transferred', 'verify', 'reject_evidence', 'block', 'unblock', 'mark_not_applicable', 'scope_reset'))
+);
+--> statement-breakpoint
+CREATE TABLE "tsa_extension_terms" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"project_id" uuid NOT NULL,
+	"decision_id" uuid NOT NULL,
+	"tsa_service_id" uuid NOT NULL,
+	"proposed_end_date" date NOT NULL,
+	"continuity_plan" text NOT NULL,
+	"requested_by" uuid NOT NULL,
+	"is_demo" boolean DEFAULT false NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"version" integer DEFAULT 1 NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "tsa_service" (
@@ -1629,6 +1649,7 @@ CREATE TABLE "tsa_service" (
 	"residual_risks" text,
 	"is_enduring_arrangement" boolean DEFAULT false NOT NULL,
 	"status" "tsa_status" DEFAULT 'proposed' NOT NULL,
+	"pre_breach_status" "tsa_status",
 	"escalation_id" uuid,
 	"approval_decision_id" uuid,
 	"extension_decision_id" uuid,
@@ -2991,6 +3012,7 @@ ALTER TABLE "agenda_item" ADD CONSTRAINT "agenda_item_project_id_project_id_fk" 
 ALTER TABLE "agenda_item" ADD CONSTRAINT "agenda_item_committee_fk" FOREIGN KEY ("project_id","committee_id") REFERENCES "public"."committee"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "agenda_item" ADD CONSTRAINT "agenda_item_meeting_fk" FOREIGN KEY ("project_id","meeting_id") REFERENCES "public"."meeting"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "agenda_item" ADD CONSTRAINT "agenda_item_decision_fk" FOREIGN KEY ("project_id","decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "agenda_item" ADD CONSTRAINT "agenda_item_merged_into_fk" FOREIGN KEY ("project_id","merged_into_agenda_item_id") REFERENCES "public"."agenda_item"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "approval_record" ADD CONSTRAINT "approval_record_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "approval_record" ADD CONSTRAINT "approval_record_request_fk" FOREIGN KEY ("project_id","approval_request_id") REFERENCES "public"."approval_request"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "approval_request" ADD CONSTRAINT "approval_request_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -3103,6 +3125,9 @@ ALTER TABLE "regulatory_requirement" ADD CONSTRAINT "regulatory_requirement_lega
 ALTER TABLE "transfer_record" ADD CONSTRAINT "transfer_record_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "transfer_record" ADD CONSTRAINT "transfer_record_item_fk" FOREIGN KEY ("project_id","perimeter_item_id") REFERENCES "public"."perimeter_item"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "transfer_record" ADD CONSTRAINT "transfer_record_reviews_fk" FOREIGN KEY ("project_id","reviews_record_id") REFERENCES "public"."transfer_record"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "tsa_extension_terms" ADD CONSTRAINT "tsa_extension_terms_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "tsa_extension_terms" ADD CONSTRAINT "tsa_extension_terms_decision_fk" FOREIGN KEY ("project_id","decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "tsa_extension_terms" ADD CONSTRAINT "tsa_extension_terms_tsa_fk" FOREIGN KEY ("project_id","tsa_service_id") REFERENCES "public"."tsa_service"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "tsa_service" ADD CONSTRAINT "tsa_service_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "tsa_service" ADD CONSTRAINT "tsa_service_provider_entity_id_legal_entity_id_fk" FOREIGN KEY ("provider_entity_id") REFERENCES "public"."legal_entity"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "tsa_service" ADD CONSTRAINT "tsa_service_recipient_entity_id_legal_entity_id_fk" FOREIGN KEY ("recipient_entity_id") REFERENCES "public"."legal_entity"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -3338,6 +3363,8 @@ CREATE INDEX "readiness_check_status_idx" ON "readiness_check" USING btree ("pro
 CREATE UNIQUE INDEX "readiness_test_run_seq_uq" ON "readiness_test_run" USING btree ("readiness_check_id","seq");--> statement-breakpoint
 CREATE UNIQUE INDEX "regulatory_requirement_code_uq" ON "regulatory_requirement" USING btree ("project_id","code");--> statement-breakpoint
 CREATE INDEX "transfer_record_item_idx" ON "transfer_record" USING btree ("perimeter_item_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "tsa_extension_terms_decision_uq" ON "tsa_extension_terms" USING btree ("decision_id");--> statement-breakpoint
+CREATE INDEX "tsa_extension_terms_tsa_idx" ON "tsa_extension_terms" USING btree ("project_id","tsa_service_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "tsa_service_code_uq" ON "tsa_service" USING btree ("project_id","code");--> statement-breakpoint
 CREATE INDEX "tsa_service_status_idx" ON "tsa_service" USING btree ("project_id","status");--> statement-breakpoint
 CREATE UNIQUE INDEX "benefit_code_uq" ON "benefit" USING btree ("project_id","code");--> statement-breakpoint

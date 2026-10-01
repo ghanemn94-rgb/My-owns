@@ -129,8 +129,31 @@ describe('AT-18 — approval bound to payload hash, target version, approver and
       const r = await approve('secretary', f.dcId, second.proposalId);
       expect(r.status).toBe(409);
       expect(r.body.code).toBe('ai.approval_invalidated');
+      // The refusal rolls the request back, but the invalidation is kept (autonomous transaction) and audited: the proposal
+      // no longer shows as pending, and a second approval attempt is refused as not pending.
+      const q = await proposalRow(second.proposalId);
+      expect(q.status).toBe('invalidated');
+      expect(q.invalidated_reason).toBe('target_version_changed');
+      const audited = await owner().query(`select count(*)::int n from audit_event where entity_id = $1 and action = 'AI_APPROVAL_INVALIDATED'`, [second.proposalId]);
+      expect(audited.rows[0].n).toBe(1);
     }),
   );
+
+  it('payload changed before approval → 409, and the invalidation is kept and audited although the request is refused', async () => {
+    const { proposalId } = await briefingProposal(pmId, f.dcId);
+    await owner().query(`update ai_proposal set payload = jsonb_set(payload, '{tampered}', 'true'::jsonb) where id = $1`, [proposalId]);
+    const r = await approve('secretary', f.dcId, proposalId);
+    expect(r.status).toBe(409);
+    expect(r.body.code).toBe('ai.approval_invalidated');
+    const p = await proposalRow(proposalId);
+    expect(p.status).toBe('invalidated');
+    expect(p.invalidated_reason).toBe('payload_changed');
+    const audited = await owner().query(`select count(*)::int n from audit_event where entity_id = $1 and action = 'AI_APPROVAL_INVALIDATED'`, [proposalId]);
+    expect(audited.rows[0].n).toBe(1);
+    const again = await approve('secretary', f.dcId, proposalId);
+    expect(again.status).toBe(409);
+    expect(again.body.code).toBe('ai.proposal_not_pending');
+  });
 
   it(
     'expired approval → invalidated; approver who lost the role before execution → invalidated',

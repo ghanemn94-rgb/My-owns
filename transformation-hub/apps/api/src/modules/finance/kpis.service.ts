@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { and, asc, count, desc, eq, ilike, inArray, or, SQL } from 'drizzle-orm';
 import Decimal from 'decimal.js';
 import { schema } from '@hub/db';
-import { invalid, parseFinancialPeriod, FINANCE_DEFAULT_CLASSIFICATION } from '@hub/domain';
+import { invalid, parseFinancialPeriod, FINANCE_DEFAULT_CLASSIFICATION, type ProjectTemplateDefinition } from '@hub/domain';
 import type { RouteInput, financeRoutes } from '@hub/contracts';
 import type { RequestContext } from '../../platform/context';
 import { likeContains, loadInProject, offsetOf, pageOf } from '../../platform/helpers';
@@ -42,13 +42,31 @@ export class KpisService {
     };
   }
 
-  private dto(k: KpiRow, latest: ObsRow | null, isDemo: boolean) {
+  /**
+   * QA-P34-01h: Arabic KPI definitions of the project's pinned template version, by KPI key (as gate purposes): a template
+   * KPI keeps its template Arabic while its stored definition is still the template's English; an edited or user-defined
+   * KPI has none (its definition is shown as entered).
+   */
+  private async templateDefinitions(p: { templateVersionId: string | null }): Promise<Map<string, { en: string; ar: string }>> {
+    if (!p.templateVersionId) return new Map();
+    const [tv] = await this.s.db
+      .tx()
+      .select({ definition: schema.projectTemplateVersion.definition })
+      .from(schema.projectTemplateVersion)
+      .where(eq(schema.projectTemplateVersion.id, p.templateVersionId));
+    const def = tv?.definition as unknown as ProjectTemplateDefinition | undefined;
+    return new Map((def?.kpis ?? []).map((k) => [k.key, k.definition]));
+  }
+
+  private dto(k: KpiRow, latest: ObsRow | null, isDemo: boolean, templates: Map<string, { en: string; ar: string }>) {
+    const tpl = templates.get(k.key);
     return {
       id: k.id,
       key: k.key,
       name: k.name,
       nameAr: k.nameAr,
       definition: k.definition,
+      definitionAr: tpl && tpl.ar && tpl.en === k.definition ? tpl.ar : null,
       formula: k.formula,
       unit: k.unit,
       period: k.period,
@@ -94,8 +112,9 @@ export class KpisService {
       projectId,
       rows.map((r) => r.id),
     );
+    const templates = await this.templateDefinitions(p);
     return pageOf(
-      rows.map((k) => this.dto(k, latest.get(k.id) ?? null, p.isDemo)),
+      rows.map((k) => this.dto(k, latest.get(k.id) ?? null, p.isDemo, templates)),
       Number(total),
       q,
     );
@@ -106,7 +125,7 @@ export class KpisService {
     this.s.assertReadable(ctx, projectId, k);
     const p = await this.s.project(projectId);
     const obs = await this.s.db.tx().select().from(O).where(and(eq(O.projectId, projectId), eq(O.kpiId, k.id))).orderBy(desc(O.computedAt), desc(O.id)).limit(100);
-    return { ...this.dto(k, obs[0] ?? null, p.isDemo), observations: obs.map((o) => this.obsDto(o)), people: await this.s.people([k.ownerUserId, k.createdBy, ...obs.map((o) => o.recordedBy)]) };
+    return { ...this.dto(k, obs[0] ?? null, p.isDemo, await this.templateDefinitions(p)), observations: obs.map((o) => this.obsDto(o)), people: await this.s.people([k.ownerUserId, k.createdBy, ...obs.map((o) => o.recordedBy)]) };
   }
 
   async create(ctx: RequestContext, projectId: string, body: RouteInput<R['createKpi']>['body']) {
