@@ -580,3 +580,22 @@ second pass above is the result.
 escalations' texts in Arabic (carried P2 remainder); no real model was run (Simulated mock only; `openai_compatible` and
 `anthropic` stay Not configured); the full Playwright suite was not re-run (the three P5 specs and the AI / escalation a11y
 screens were).
+
+---
+
+## Fix status — QA-P5-07 (P6 configuration package, 2026-10-01)
+
+Implementer: backend-data-engineer (P6 configuration), worktree branch on top of `a44fca0`.
+
+| Finding | Status | Rule → where | Regression / new tests |
+|---|---|---|---|
+| QA-P5-07 (Low) | **Fixed** | Translation only, no new number. Template version 2 files (`packages/db/seed/templates/dc-carveout.v2.json`, `general-transformation.v2.json`; the version 1 files are unchanged — a published version is immutable) carry `formulaAr`, `sourceAr` and `thresholdsAr` for every template KPI (`validate-templates.mjs` checks them). The KPI DTO of finance and of the Reports KPI catalogue returns the Arabic of a field only while the KPI's text still equals the text of its pinned template version (`kpiTemplateArabic`, `packages/domain/src/templates.ts`; field by field, independent of key order); a text edited by a person, a user-defined KPI or a project still on version 1 has none, and the web shows that text as recorded (marked `data-user-text`). Unit, period and frequency are translated from the web vocabularies `statuses.kpiUnits / kpiPeriods / kpiFrequencies` (a free value is shown as entered). The demo projects are created on version 2; an existing version-1 project gets the texts only through an approved template upgrade (AT-26, `p6-config.spec.ts` (a)). | `qa-p5-p34-recheck.spec.ts` › "QA-P5-07 regression: the Arabic KPI page shows no English template KPI text …" — it REPLACES `OBSERVED QA-P5-07` (stated in the test): all 15 DEMO-DC template KPIs, the template English absent, the Arabic formula / source / thresholds and the translated unit / period / frequency present, strict detector (no allowance); API `config/kpi-owner-arabic.spec.ts` › "every DEMO-DC template KPI returns the Arabic formula, source and thresholds of its pinned template version; a user KPI returns none", "the KPI catalogue of the Reports screen carries the same Arabic texts"; D `config.test.ts` › "UT: unedited template KPI → Arabic of each field; an edited field → null for that field only". |
+
+Assertion changed because it pinned the old behaviour: `OBSERVED QA-P5-07` expected at least 5 English template texts on the
+Arabic `cps_verified` KPI page; it is replaced by the regression above. The QA-P34-01h re-check keeps its allowance for
+template English but now reports 0 such findings.
+
+Run (own stack: database `hub_test_p6cfg_e2e` migrated and demo-seeded, API + `dist/worker.js` + production web build):
+`playwright test tests/qa-p5-p34-recheck.spec.ts` → 8 passed (2.9 m); "QA-P5-07 regression: 15 KPI(s), 15 with the template
+Arabic texts"; "QA-P34-01h re-check: detector problems classified QA-P5-07 (template KPI texts with no Arabic in the
+template): 0". The full Playwright suite result of the package is in its hand-over report.
