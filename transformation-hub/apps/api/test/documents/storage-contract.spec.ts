@@ -2,7 +2,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Readable } from 'node:stream';
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { LocalFsStorage } from '../../src/modules/documents/storage/local-fs.storage';
 import { S3CompatibleStorage, S3Settings } from '../../src/modules/documents/storage/s3-compatible.storage';
@@ -137,16 +137,16 @@ describe('S3-compatible adapter specifics', () => {
       NODE_ENV: 'production',
       HUB_COOKIE_SECURE: 'true',
       HUB_AI_ALLOW_MOCK: 'false',
-      DATABASE_URL: 'postgres://hub_app:x@db.internal:5432/hub',
+      DATABASE_URL: 'postgres://hub_app:x@db.internal:5432/hub?sslmode=verify-full',
       HUB_OIDC_ISSUER: 'https://idp.example.invalid',
       HUB_OIDC_CLIENT_ID: 'hub',
       HUB_OIDC_REDIRECT_URI: 'https://hub.example.invalid/api/v1/auth/oidc/callback',
-      HUB_COOKIE_SECRET: 'Zq8#pL2!vN5@rT9$wX3%yB6^cF1&hJ4*',
+      HUB_COOKIE_SECRET: randomBytes(48).toString('base64'), // SEC-P1S-05: generated at run time
       HUB_STORAGE_DRIVER: 's3',
     } as NodeJS.ProcessEnv;
     expect(() => loadConfig(prod)).toThrow(/HUB_STORAGE_DRIVER=s3 needs HUB_S3_ENDPOINT/);
     // (I-R2 / I-R4: production also refuses default or very short S3 credentials and objects without SSE — see below.)
-    const full = { ...prod, HUB_S3_BUCKET: 'hub-documents', HUB_S3_ACCESS_KEY_ID: 'hub-documents-writer', HUB_S3_SECRET_ACCESS_KEY: 'k8s-secret-ref-7fQ2mZx9LwP4', HUB_S3_SSE: 'AES256' };
+    const full = { ...prod, HUB_S3_BUCKET: 'hub-documents', HUB_S3_ACCESS_KEY_ID: 'hub-documents-writer', HUB_S3_SECRET_ACCESS_KEY: randomBytes(24).toString('base64url'), HUB_S3_SSE: 'AES256' };
     expect(() => loadConfig({ ...full, HUB_S3_ENDPOINT: 'http://objects.example.invalid' })).toThrow(/HUB_S3_ENDPOINT must use https/);
     expect(() => loadConfig({ ...full, HUB_S3_ENDPOINT: 'https://objects.example.invalid' })).toThrow(/HUB_S3_ENDPOINT host objects\.example\.invalid is not on HUB_EGRESS_ALLOWLIST/);
     const ok = loadConfig({ ...full, HUB_S3_ENDPOINT: 'https://objects.example.invalid', HUB_EGRESS_ALLOWLIST: 'objects.example.invalid' });

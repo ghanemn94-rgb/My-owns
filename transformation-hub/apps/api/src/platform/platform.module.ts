@@ -15,6 +15,8 @@ import { RecordVersionService } from './helpers';
 import { JobContextFactory } from './jobs/job-context';
 import { DeliveryService } from './delivery.service';
 import { RateLimiter } from './rate-limiter';
+import { AuditExportService } from './audit-export.service';
+import { TelemetryService } from './telemetry.service';
 
 const providers = [
   { provide: APP_CONFIG, useFactory: () => loadConfig() },
@@ -33,6 +35,8 @@ const providers = [
   JobContextFactory,
   DeliveryService,
   RateLimiter,
+  AuditExportService,
+  TelemetryService,
 ];
 
 /** Cross-cutting platform services shared by all modules. */

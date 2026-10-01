@@ -4,6 +4,7 @@ import { sql } from 'drizzle-orm';
 import type { Pool } from 'pg';
 import { DbService } from '../db.service';
 import { DeliveryService } from '../delivery.service';
+import { AuditExportService, AUDIT_EXPORT_KIND } from '../audit-export.service';
 import { OrgService } from '../org.service';
 import { JobContextFactory } from './job-context';
 import { JobRegistry } from './job-registry';
@@ -18,6 +19,9 @@ export const PLATFORM_SCHEDULES = [
   { kind: 'platform.audit.checkpoint', name: 'Audit hash-chain checkpoint', cron: '*/15 * * * *' },
   // Turns deliveries stuck in `sending` (worker crashed mid-send) into `uncertain` — never auto-resent (AT-20).
   { kind: 'platform.delivery.reconcile', name: 'Reconcile unconfirmed external deliveries', cron: '*/10 * * * *' },
+  // Ships the audit chain to the independent log repository when HUB_AUDIT_EXPORT is file / syslog (REQ-DAT-007); the
+  // schedule row also holds the export cursor. With the export off the run records "not configured".
+  { kind: AUDIT_EXPORT_KIND, name: 'Audit export to the independent log repository', cron: '*/5 * * * *' },
 ] as const;
 
 export function registerPlatformJobs(app: INestApplicationContext) {
@@ -38,6 +42,12 @@ export function registerPlatformJobs(app: INestApplicationContext) {
   });
 
   registry.register('platform.delivery.reconcile', async () => ({ markedUncertain: await delivery.reconcileStale(10) }));
+
+  const auditExport = app.get(AuditExportService);
+  registry.register(AUDIT_EXPORT_KIND, async (job) => {
+    const r = await auditExport.run(job.org_id, (job.payload?.['scheduledJobId'] as string | undefined) ?? null);
+    return { ...r };
+  });
 }
 
 /** Idempotently create the platform schedules for one organization (serialized by an advisory lock). */

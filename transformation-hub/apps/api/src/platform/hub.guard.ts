@@ -11,7 +11,7 @@ import { PolicyService } from './policy.service';
 import { OrgService } from './org.service';
 import { APP_CONFIG, AppConfig } from './config';
 import { RequestContext, withDbScope } from './context';
-import { RateLimiter } from './rate-limiter';
+import { HEAVY_ROUTE_IDS, RateLimiter, type RateClass } from './rate-limiter';
 import { AuditService } from './audit.service';
 import { Logger } from '@nestjs/common';
 import type { Classification } from '@hub/domain';
@@ -73,7 +73,7 @@ export class HubGuard implements CanActivate {
     const locale: 'en' | 'ar' = req.cookies?.hub_locale === 'ar' ? 'ar' : 'en';
 
     if (route.access === 'public') {
-      if (!this.limiter.hit(ip ?? 'unknown', 'public')) throw new HttpException({ message: 'Too many requests', code: 'rate_limited' }, 429);
+      if (!this.limiter.hit(ip ?? 'unknown', 'public')) this.tooMany(res, ip ?? 'unknown', 'public');
       const orgId = await this.orgs.defaultOrgId();
       req.hubCtx = {
         principal: {
@@ -105,10 +105,17 @@ export class HubGuard implements CanActivate {
     const mutating = !SAFE_METHODS.has(req.method);
     // SEC-P1R-01: the per-session limiter runs BEFORE anything is written for the request (including the CSRF security
     // event below), so one session can never produce more work — or audit rows — than its mutation budget allows.
-    if (!this.limiter.hit(session.sessionId, mutating ? 'mutation' : 'read')) {
+    // REQ-DAT-016: per session, then per identity across all of the user's sessions, then the heavy class per identity.
+    const checks: [string, RateClass][] = [
+      [session.sessionId, mutating ? 'mutation' : 'read'],
+      [`user:${session.userId}`, mutating ? 'user_mutation' : 'user_read'],
+    ];
+    if (route.upload || HEAVY_ROUTE_IDS.has(route.id)) checks.push([`user:${session.userId}`, 'heavy']);
+    for (const [key, kind] of checks) {
+      if (this.limiter.hit(key, kind)) continue;
       // Not audited per request (would let a client flood the audit chain); logged with the session for SIEM correlation.
-      this.log.warn(`rate limit exceeded: session=${session.sessionId} route=${route.id} correlation=${correlationId}`);
-      throw new HttpException({ message: 'Too many requests', code: 'rate_limited' }, 429);
+      this.log.warn(`rate limit exceeded (${kind}): session=${session.sessionId} user=${session.userId} route=${route.id} correlation=${correlationId}`);
+      this.tooMany(res, key, kind);
     }
     if (mutating && !this.sessions.verifyCsrf(session, req.headers[SessionService.CSRF_HEADER] as string | undefined)) {
       // Security event (SEC-P1-11), coalesced per session and minute (SEC-P1R-01): the first denial of every window is
@@ -168,6 +175,12 @@ export class HubGuard implements CanActivate {
 
     this.validate(route, req);
     return true;
+  }
+
+  /** 429 problem+json with Retry-After (seconds until the window of the exhausted class ends). */
+  private tooMany(res: Response, key: string, kind: RateClass): never {
+    res.setHeader('Retry-After', String(this.limiter.retryAfterSeconds(key, kind)));
+    throw new HttpException({ message: `Too many requests (${kind.replace('_', ' ')} limit) — retry later`, code: 'rate_limited' }, 429);
   }
 
   private validate(route: RouteDef, req: HubRequest) {

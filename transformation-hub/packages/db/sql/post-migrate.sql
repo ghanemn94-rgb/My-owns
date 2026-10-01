@@ -323,6 +323,33 @@ BEGIN
 END
 $$;
 
+-- Audit export to an independent log repository (REQ-DAT-007, ADR-0014): the next rows of the organization's chain
+-- after p_after, in chain order, MINIMISED — identifiers, action, outcome, chain links, and SHA-256 digests of the
+-- reason / before / after content instead of the content itself (C-11: no business data leaves through the export).
+-- Same organization guard as the checkpoint: the runtime role exports only its session organization.
+CREATE OR REPLACE FUNCTION hub_audit_export(p_org uuid, p_after bigint, p_limit int)
+RETURNS TABLE (chain_pos bigint, id uuid, created_at timestamptz, project_id uuid, actor_user_id uuid, actor_kind text,
+               action text, entity_type text, entity_id uuid, outcome text, correlation_id text, ip text, prev_hash text,
+               hash text, reason_sha256 text, before_sha256 text, after_sha256 text)
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = pg_catalog, public, pg_temp AS $$
+BEGIN
+  IF p_org IS DISTINCT FROM app_org_id() AND (app_org_id() IS NOT NULL OR session_user = 'hub_app') THEN
+    RAISE EXCEPTION 'audit_export_forbidden: can only export the session organization' USING ERRCODE = 'P0001';
+  END IF;
+  RETURN QUERY
+    SELECT a.chain_pos, a.id, a.created_at, a.project_id, a.actor_user_id, a.actor_kind::text, a.action::text,
+           a.entity_type::text, a.entity_id, a.outcome::text, a.correlation_id::text, a.ip::text, a.prev_hash::text,
+           a.hash::text,
+           CASE WHEN a.reason IS NULL THEN NULL ELSE encode(digest(a.reason, 'sha256'), 'hex') END,
+           CASE WHEN a.before IS NULL THEN NULL ELSE encode(digest(a.before::text, 'sha256'), 'hex') END,
+           CASE WHEN a.after IS NULL THEN NULL ELSE encode(digest(a.after::text, 'sha256'), 'hex') END
+      FROM audit_event a
+     WHERE a.org_id = p_org AND a.chain_pos IS NOT NULL AND a.chain_pos > p_after
+     ORDER BY a.chain_pos
+     LIMIT greatest(1, least(p_limit, 10000));
+END
+$$;
+
 -- 6. Retention / legal hold guard (AT-27) --------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION hub_document_guard() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
@@ -367,6 +394,7 @@ REVOKE ALL ON FUNCTION hub_auth_org_by_slug(text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION hub_auth_session(text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION hub_audit_verify(uuid) FROM PUBLIC;
 REVOKE ALL ON FUNCTION hub_audit_checkpoint(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION hub_audit_export(uuid, bigint, int) FROM PUBLIC;
 DO $fgrants$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'hub_app') THEN
@@ -374,6 +402,7 @@ BEGIN
     EXECUTE 'GRANT EXECUTE ON FUNCTION hub_auth_session(text) TO hub_app';
     EXECUTE 'GRANT EXECUTE ON FUNCTION hub_audit_verify(uuid) TO hub_app';
     EXECUTE 'GRANT EXECUTE ON FUNCTION hub_audit_checkpoint(uuid) TO hub_app';
+    EXECUTE 'GRANT EXECUTE ON FUNCTION hub_audit_export(uuid, bigint, int) TO hub_app';
   END IF;
 END
 $fgrants$;

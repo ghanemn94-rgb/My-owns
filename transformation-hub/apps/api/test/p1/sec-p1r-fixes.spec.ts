@@ -339,19 +339,19 @@ describe('I-R2 / I-R4 — production configuration', () => {
   const prod = {
     NODE_ENV: 'production',
     HUB_MODE: 'standard',
-    DATABASE_URL: 'postgres://hub_app:strong-secret@db:5432/hub',
+    DATABASE_URL: `postgres://hub_app:${randomBytes(18).toString('hex')}@db:5432/hub?sslmode=verify-full`,
     HUB_COOKIE_SECURE: 'true',
     HUB_STORAGE_DRIVER: 's3',
     HUB_S3_ENDPOINT: 'https://objects.example.invalid',
     HUB_S3_BUCKET: 'hub-objects',
     HUB_S3_ACCESS_KEY_ID: 'hub-app',
-    HUB_S3_SECRET_ACCESS_KEY: 'from-a-kubernetes-secret',
+    HUB_S3_SECRET_ACCESS_KEY: randomBytes(24).toString('base64url'),
     HUB_S3_SSE: 'AES256',
     HUB_EGRESS_ALLOWLIST: 'objects.example.invalid',
     HUB_OIDC_ISSUER: 'https://idp.example.invalid',
     HUB_OIDC_CLIENT_ID: 'hub',
     HUB_OIDC_REDIRECT_URI: 'https://hub.example.invalid/api/v1/auth/oidc/callback',
-    HUB_COOKIE_SECRET: 'q7Vd2LxP9rTb4NwZ8kHs3JmC6yFa1GeU5oRi0XpQ',
+    HUB_COOKIE_SECRET: randomBytes(48).toString('base64'), // SEC-P1S-05: generated at run time
     HUB_AI_ALLOW_MOCK: 'false',
   };
 

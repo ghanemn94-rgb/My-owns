@@ -12,6 +12,9 @@ export interface FakeIdpUser {
   email?: string;
   /** Defaults to true when an email is present. */
   emailVerified?: boolean;
+  /** Authentication methods / context the IdP asserts (REQ-SEC-008), e.g. amr ['pwd','mfa'], acr 'urn:mfa'. */
+  amr?: string[];
+  acr?: string;
 }
 
 export class FakeOidcIdp {
@@ -21,6 +24,8 @@ export class FakeOidcIdp {
   tamperNextToken: 'nonce' | 'signature' | 'audience' | 'issuer' | 'expired' | null = null;
   /** Number of token requests rejected (for assertions). */
   rejectedTokenRequests = 0;
+  /** The `acr_values` the last authorization request asked for (REQ-SEC-008). */
+  lastAcrValues: string | null = null;
   private server: Server | null = null;
   private readonly privateKey: KeyObject;
   private readonly jwk: Record<string, unknown>;
@@ -84,6 +89,7 @@ export class FakeOidcIdp {
         return this.json(400, { error: 'invalid_request' });
       }
       if (!this.nextUser) return this.json(400, { error: 'no test user selected' });
+      this.lastAcrValues = q.get('acr_values');
       const code = randomBytes(16).toString('base64url');
       this.codes.set(code, { clientId: this.clientId, redirectUri: q.get('redirect_uri')!, challenge: q.get('code_challenge')!, nonce: q.get('nonce') ?? '', user: this.nextUser });
       const back = new URL(q.get('redirect_uri')!);
@@ -115,7 +121,7 @@ export class FakeOidcIdp {
       }
       this.codes.delete(form.get('code')!); // single use
       const now = Math.floor(Date.now() / 1000);
-      const claims: Record<string, unknown> = { iss: this.issuer, sub: entry.user.sub, aud: this.clientId, iat: now, exp: now + 300, nonce: entry.nonce, ...(entry.user.email ? { email: entry.user.email, email_verified: entry.user.emailVerified ?? true } : {}) };
+      const claims: Record<string, unknown> = { iss: this.issuer, sub: entry.user.sub, aud: this.clientId, iat: now, exp: now + 300, nonce: entry.nonce, ...(entry.user.email ? { email: entry.user.email, email_verified: entry.user.emailVerified ?? true } : {}), ...(entry.user.amr ? { amr: entry.user.amr } : {}), ...(entry.user.acr ? { acr: entry.user.acr } : {}) };
       const t = this.tamperNextToken;
       this.tamperNextToken = null;
       if (t === 'nonce') claims.nonce = 'attacker-nonce';

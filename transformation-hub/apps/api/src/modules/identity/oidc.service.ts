@@ -103,6 +103,8 @@ export class OidcService {
       code_challenge_method: 'S256',
       state,
       nonce,
+      // REQ-SEC-008: ask the IdP for the required authentication context (the ID token is still checked on return).
+      ...(this.config.mfa.requiredAcr.length ? { acr_values: this.config.mfa.requiredAcr.join(' ') } : {}),
     });
     return { url: url.href, cookie: this.seal({ state, verifier, nonce, exp: Date.now() + 10 * 60_000 }) };
   }
@@ -119,6 +121,7 @@ export class OidcService {
     });
     const claims = tokens.claims();
     if (!claims?.sub || !claims.iss) throw forbidden('oidc.no_subject', 'The identity provider did not return a subject');
+    this.assertMfa(claims);
     const orgId = await this.orgs.defaultOrgId();
     type UserRow = { id: string; org_id: string; is_active: boolean; is_demo: boolean; is_service_account: boolean; locale: string };
     let user: UserRow | undefined = (await this.db.pool.query<UserRow>(`select * from hub_auth_user_by_subject($1, $2)`, [claims.iss, claims.sub])).rows[0];
@@ -141,6 +144,24 @@ export class OidcService {
     const s = await this.sessions.create({ userId: user.id, orgId: user.org_id, authMethod: 'oidc', ip: meta.ip, userAgent: meta.userAgent });
     await this.db.query(`update app_user set last_login_at = now() where id = $1`, [user.id]);
     return { ...s, userId: user.id, orgId: user.org_id, locale: user.locale };
+  }
+
+  /**
+   * REQ-SEC-008: MFA is performed by the IdP; when the deployment requires evidence of it (HUB_OIDC_REQUIRED_AMR — any of
+   * the listed `amr` methods, e.g. `mfa,otp,hwk`; HUB_OIDC_REQUIRED_ACR — one of the listed `acr` values), a sign-in whose
+   * ID token carries none of them is refused (403 `oidc.mfa_required`, audited as a denied login). Either list suffices
+   * when both are set. Without configuration the IdP policy alone applies (a startup warning says so in production).
+   */
+  private assertMfa(claims: Record<string, unknown>) {
+    const { requiredAmr, requiredAcr } = this.config.mfa;
+    if (!requiredAmr.length && !requiredAcr.length) return;
+    const amr = Array.isArray(claims.amr) ? claims.amr.map(String) : [];
+    const acr = typeof claims.acr === 'string' ? claims.acr : null;
+    const ok = (requiredAmr.length > 0 && amr.some((m) => requiredAmr.includes(m))) || (requiredAcr.length > 0 && acr !== null && requiredAcr.includes(acr));
+    if (!ok) {
+      this.log.warn(`OIDC login refused at ${String(claims.iss)}: no required MFA claim (amr=${amr.join('+') || '-'} acr=${acr ?? '-'})`);
+      throw forbidden('oidc.mfa_required', 'The identity provider did not confirm multi-factor authentication for this sign-in');
+    }
   }
 
   /**
