@@ -529,6 +529,22 @@ paths:
                   items: { type: array, items: { $ref: "#/components/schemas/PermissionEntry" } }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "403": { $ref: "#/components/responses/Forbidden" }
+  /api/v1/branding/tokens:
+    get:
+      tags: [admin]
+      operationId: getBrandingTokens
+      summary: The provisional design tokens with values and provenance (REQ-S15-002).
+      description: |
+        Returns the seeded §15 brand design tokens with their values and `provenance=provisional`. Read-only at DG1;
+        editing tokens is Branding Settings (P5). `#0078FF` is a provisional token, not a verified Mobily colour, and
+        no response implies official Mobily brand compliance.
+      responses:
+        "200":
+          description: The brand design tokens.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BrandingTokens" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
   /api/v1/role-assignments:
     get:
       tags: [access]
@@ -1322,6 +1338,28 @@ components:
       properties:
         code: { $ref: "#/components/schemas/PermissionCode" }
         category: { type: string, enum: [read, write, configure, business_approval, finance_validation] }
+
+    BrandingTokens:
+      type: object
+      required: [provenance, tokens]
+      additionalProperties: false
+      properties:
+        provenance:
+          type: string
+          enum: [provisional, official]
+          description: "'provisional' at DG1 — the seeds are not verified Mobily colours."
+        tokens:
+          type: array
+          description: The seeded §15 design tokens.
+          items:
+            type: object
+            required: [name, value, provisional]
+            additionalProperties: false
+            properties:
+              name: { type: string, example: "brand.primary" }
+              value: { type: string, example: "#0078FF" }
+              purpose: { type: string }
+              provisional: { type: boolean }
 
     RoleAssignment:
       type: object
