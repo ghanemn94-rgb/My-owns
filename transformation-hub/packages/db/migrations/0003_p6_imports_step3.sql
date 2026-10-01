@@ -1,0 +1,2 @@
+ALTER TABLE "import_batch" DROP CONSTRAINT "import_batch_file_type_ck";--> statement-breakpoint
+ALTER TABLE "import_batch" ADD CONSTRAINT "import_batch_file_type_ck" CHECK ("import_batch"."file_type" in ('xlsx', 'csv', 'docx', 'pdf', 'png', 'jpeg', 'unknown'));
