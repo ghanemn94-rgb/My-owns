@@ -6,9 +6,10 @@
 //    `import("...")` / `require("...")` with a string-literal specifier - each checked against the module boundary;
 //  - a computed `import(expr)` / `require(expr)` (the target cannot be checked), and any import of the built-ins that
 //    hand out a loader or evaluate code (`module`, `vm`, `worker_threads`, `inspector`, `repl`, `child_process`,
-//    `cluster`, `process`, `sqlite`; with or without `node:`). F-DG1-125: importing `process` / `node:process` is
-//    itself banned (an imported binding aliases the process object past rule 3; the global is a Node global, no module
-//    imports it). F-DG1-127: `sqlite` / `node:sqlite` (`loadExtension` loads a native shared object).
+//    `cluster`, `process`, `sqlite`, `test`; with or without `node:`). F-DG1-125: importing `process` /
+//    `node:process` is itself banned (an imported binding aliases the process object past rule 3; the global is a Node
+//    global, no module imports it). F-DG1-127: `sqlite` / `node:sqlite` (`loadExtension` loads a native shared
+//    object). F-DG1-128: `test` / `node:test` (`run({ files, isolation: "none" })` imports a computed path in-process).
 //
 // F-DG1-124 - BLANKET BAN of the dynamic-code-loading primitives in module source. F-DG1-117 and F-DG1-121 matched
 // ever more spellings of the same thing (`.constructor()`, aliased `.constructor`, destructured `constructor`, ...)
@@ -30,7 +31,9 @@
 //     (a Map returns only what was put in it and never reaches the prototype chain).
 //  3. RUNTIME ROOTS `process`, `globalThis`, `global`: used other than as `root.member` (aliased, passed,
 //     destructured), indexed at all (`process["x"]`), `globalThis.<root|primitive>`, and the native loaders
-//     `process.binding` / `process._linkedBinding` / `process.dlopen`; the CommonJS free variable `module` as a value.
+//     `process.binding` / `process._linkedBinding` / `process.dlopen`, and the exec method `process.execve`
+//     (F-DG1-128: replaces the process with an arbitrary executable, the child_process/cluster class); the CommonJS
+//     free variable `module` as a value.
 //     Rule 3 covers the GLOBAL `process`; an IMPORTED process object (`import p from "node:process"`, a namespace or
 //     a named `{ dlopen }` import) is closed by the specifier check instead, which bans `process`/`node:process`.
 //  4. FAIL CLOSED: a file with a syntax error is a violation (the AST the rules see would not be the code written).
@@ -42,10 +45,16 @@
 //      e.g. with `node:fs`, then `import("./local.mjs")`): the specifier is a legal own-module path and the bytes
 //      exist only at runtime, so the lint never sees them. `node:fs` is deliberately NOT banned (tests read files and
 //      a module may legitimately read files; a write-API-only ban would be brittle).
-//  (c) the loader/eval denylist is ENUMERATED (rule-1 primitives, rule-3 roots and loaders, LOADER_BUILTINS) and
-//      cannot be proven exhaustive over every host capability that could load or generate code at runtime (a future
-//      Node built-in, `WebAssembly` instantiation, ...). Known native loaders are closed as found (`process.dlopen`
-//      F-DG1-125, `node:sqlite` loadExtension F-DG1-127).
+//  (c) the loader/eval denylist is ENUMERATED (rule-1 primitives, rule-3 roots and loaders, LOADER_BUILTINS). For
+//      the PINNED Node version (22.x) the concrete loader/exec built-ins and `process.*` methods are now enumerated
+//      exhaustively, as validated by the round-7 code-security sweep of `builtinModules` + `process.*` (F-DG1-128):
+//      built-ins module, vm, worker_threads, inspector, repl, child_process, cluster, process, sqlite, test; and
+//      process.binding, _linkedBinding, dlopen, execve (closed as found: `process.dlopen` F-DG1-125, `node:sqlite`
+//      loadExtension F-DG1-127, `node:test` run / `process.execve` F-DG1-128). Residual (c) is therefore narrowed to
+//      genuinely FUTURE/UNKNOWN built-ins or `process.*` methods of a later Node version, and `WebAssembly` /
+//      `node:wasi` instantiation (a wasm exec, not a JS-module loader). A later hardening could switch module-source
+//      `node:` imports to a default-deny allow-list (module source uses only node:crypto/fs/path/url); that is
+//      deferred (bigger blast radius, not P1).
 // Rationale: this is static defence-in-depth for the ADR-0002 module boundaries, enforced against human-reviewed code
 // that runs with a read-only production source tree; it is NOT a runtime security boundary.
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
@@ -68,6 +77,9 @@ const SHARED_ALLOWED = new Set(["@mth/shared", "@mth/shared/schemas", "@mth/conf
  * `process.<loader>` check cannot see, so the import itself is the violation. The global `process` stays under rule 3.
  * F-DG1-127: `sqlite` too - `new DatabaseSync(p, { allowExtension: true }).loadExtension(so)` loads a native shared
  * object (the `process.dlopen` class); a module never needs SQLite (persistence is `@mth/db`/PostgreSQL, ADR-0003).
+ * F-DG1-128: `test` too - `run({ files: [<computed path>], isolation: "none" })` loads and runs a file named by a
+ * runtime-computed path in the SAME process (a computed import without code generation). No runtime module uses
+ * `node:test` (tests use vitest).
  */
 const LOADER_BUILTINS = new Set(
   [
@@ -81,6 +93,7 @@ const LOADER_BUILTINS = new Set(
     "cluster",
     "process",
     "sqlite",
+    "test",
   ].flatMap((b) => [b, `node:${b}`]),
 );
 /** F-DG1-124: dynamic-code primitives, banned in every syntactic form (rule 1), by the kind of bypass they give. */
@@ -102,8 +115,11 @@ const BANNED_PRIMITIVES: ReadonlyMap<string, string> = new Map([
 ]);
 /** Global objects through which the runtime (and its loaders) can be reached. */
 const RUNTIME_ROOTS = new Set(["process", "globalThis", "global"]);
-/** Native-code loaders on `process` (rule 3). */
-const PROCESS_LOADERS = new Set(["binding", "_linkedBinding", "dlopen"]);
+/**
+ * Native-code loaders and the exec method on `process` (rule 3). F-DG1-128: `execve` replaces the process with an
+ * arbitrary executable (the class of the banned `child_process` / `cluster`).
+ */
+const PROCESS_LOADERS = new Set(["binding", "_linkedBinding", "dlopen", "execve"]);
 /** Binary operators whose result is always a number/bigint, so the key can never spell a property name. */
 const NUMERIC_OPERATORS = new Set([
   ts.SyntaxKind.MinusToken,

@@ -342,6 +342,23 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
       /imports package node:sqlite/,
       "missed",
     ],
+    // F-DG1-128: the last two concrete loader/exec routes of the pinned Node version (round-7 builtinModules +
+    // process.* sweep). R1: node:test `run({ files, isolation: "none" })` imports a runtime-computed path IN-PROCESS
+    // (a loader built-in, no code generation), so `test` / `node:test` is in LOADER_BUILTINS. R2: the global
+    // `process.execve` replaces the process with an arbitrary executable (the child_process/cluster class), so
+    // `execve` is in PROCESS_LOADERS (rule 3). "missed" = 0 violations before this fix.
+    [
+      "R1 node:test in-process run",
+      `import { run } from "node:test";\nconst p = ["../access/", "policy.ts"].join("");\nfor await (const _ of run({ files: [new URL(p, import.meta.url).pathname], isolation: "none" })) {}`,
+      /imports package node:test/,
+      "missed",
+    ],
+    [
+      "R2 process.execve",
+      `process.execve("/bin/sh", ["sh", "-c", "id"]);`,
+      /module loader via process\.execve/,
+      "missed",
+    ],
     // Prior forms (F-DG1-117/121), still caught: regression guards for the blanket rules.
     ["P17 module.constructor", `const M = module.constructor;`, /module used as a value[\s\S]*\.constructor/, "caught"],
     [
