@@ -1,0 +1,157 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG1",
+  "decision": "APPROVED",
+  "candidate_id": "sha256:6e0c0db1a8bea33cd81f05ea8c795d8ede4bfb7f380dfe146556cb4875a6f827",
+  "source_commit": "642e6bfb2c905d2c3382035032fa56c84672dcab",
+  "manifest_path": "docs/delivery/candidates/DG1/6e0c0db1a8bea33c.manifest.json",
+  "previous_gate": "DG0",
+  "reviews": {
+    "domain-reviewer": "docs/delivery/reviews/DG1/round-4/domain-reviewer.json",
+    "code-security-reviewer": "docs/delivery/reviews/DG1/round-4/code-security-reviewer.json",
+    "qa-verifier": "docs/delivery/reviews/DG1/round-4/qa-verifier.json"
+  },
+  "release_audit": "docs/delivery/reviews/DG1/round-4/release-auditor.json",
+  "requirements": {
+    "final_gate_ids": [
+      "REQ-DLV-025",
+      "REQ-DLV-033",
+      "REQ-DLV-042",
+      "REQ-S15-002",
+      "REQ-S15-005",
+      "REQ-S15-006",
+      "REQ-S16-001",
+      "REQ-S16-002",
+      "REQ-S16-003",
+      "REQ-S16-004",
+      "REQ-S19-004",
+      "REQ-S19-006"
+    ],
+    "notes": "All 12 register rows with final_gate DG1 are IMPLEMENTED. qa-verifier checked all 12; domain-reviewer checked S15-002/005/006, S16-001/002/004 and S19-004/006; code-security-reviewer checked DLV-025/033/042, S16-001/003/004 and S19-004/006. validate --register DG1 PASS. Documented environmental residuals with verified offline surfaces: live-registry install effect (REQ-DLV-042 AC-1, D-057), live GitHub-Actions run (REQ-DLV-025 A24, D-058), keycloak image pinning (D-049)."
+  },
+  "tests": [
+    {
+      "name": "Candidate recomputation (working tree, 642e6bf, 91936e6, diff) and complete-clone check",
+      "command": "git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG1 [--ref <commit> | --diff]",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/audit/round-4/01-candidate-and-validators.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/00-candidate-identity.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/00-delta-and-candidate.txt"
+      ]
+    },
+    {
+      "name": "Previous gate DG0 historical validation",
+      "command": "node tools/gates/validate.mjs --historical --stage DG0",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/audit/round-4/01-candidate-and-validators.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/validate-historical-DG0.log"
+      ]
+    },
+    {
+      "name": "Workspace typecheck including the apps/web e2e project (F-DG1-147)",
+      "command": "pnpm -r typecheck",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-4/02-typecheck.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/typecheck.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/f147-fail-then-pass.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/09-e2e-typecheck-negative.log"
+      ]
+    },
+    {
+      "name": "Build, lint, format, OpenAPI lint, no-CDN scan",
+      "command": "pnpm -r build; pnpm lint; pnpm format:check; openapi lint; no-cdn scan",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-4/03-build.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/04-lint.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/05-openapi-lint.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/06-no-cdn.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/07-format-check.log"
+      ]
+    },
+    {
+      "name": "Unit tests on Node 22 and Node 24 (326/326 each)",
+      "command": "pnpm test (vitest unit-node + unit-web) under node 22 and node 24",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-4/10-unit-node22.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/11-unit-node24.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/unit-node22.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/unit-node24.log"
+      ]
+    },
+    {
+      "name": "Integration on fresh disposable PostgreSQL 16 (209/209, 9 migrations incl. 0009, bu-hierarchy-guard 7/7), repeated",
+      "command": "pnpm test:integration (disposable PG16 cluster), twice",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-4/12-integration-run1.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/13-integration-run2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/14-contract-and-bu-guard-verbose.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/integration-run1.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/integration-run2.log"
+      ]
+    },
+    {
+      "name": "E2E journeys EN+AR (18/18, no skips) and QA acceptance e2e (22/22)",
+      "command": "npx playwright test apps/web/e2e --workers=1; npx playwright test e2e apps/web/e2e --workers=1",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-4/17-e2e-journeys-run1.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/18-e2e-qa-acceptance.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/19-a20-token-propagation.log"
+      ]
+    },
+    {
+      "name": "A18 clean start at the candidate commit",
+      "command": "fresh checkout, offline frozen install, pnpm -r build, fresh PG16 migrate + seed, start stack",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-4/20-a18-clean-start.log"
+      ]
+    },
+    {
+      "name": "Install-sandbox offline acceptance (13/14; only AC-1 effect needs the live registry, D-057) and CI offline surface (A24, D-058)",
+      "command": "bash tools/deps/tests/install-sandbox.test.sh + offline assertion; offline ci.yml surface",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-4/install-sandbox.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/install-sandbox-offline-assert.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/22-ci-offline.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/ci-yml-config.log"
+      ]
+    },
+    {
+      "name": "Gate tooling, agent runner and deploy-script test suites; SBOM currency",
+      "command": "node --test tools/gates/tests tools/agents/tests; deploy script tests; sbom check",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-4/gates-agents-tests.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/deploy-scripts-tests.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/sbom-check.log"
+      ]
+    },
+    {
+      "name": "Register, provenance, findings and requirement coverage audit",
+      "command": "node tools/gates/validate.mjs --register DG1; inline audit over runs/, reviews/, findings.json, requirements.csv",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/audit/round-4/02-provenance-findings-requirements.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/21-validate-register.log"
+      ]
+    }
+  ],
+  "blocking_conditions": [],
+  "accepted_observations": [],
+  "decided_at": "2026-10-01T23:46:30Z",
+  "decided_by": "release-auditor",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG1-T-DG1-AUDIT-R4-release-auditor-20261001T234146Z-876e1050",
+    "session_id": "876e1050-518c-4f07-862f-2153bc58bbe4"
+  },
+  "notes": "DG1 engineering delivery gate only. It grants no real business, Finance or IT approval, and implies nothing about product gates G1-G6. All 14 DG1 findings are CLOSED_VERIFIED; there are no DG1 accepted observations. The DG0 accepted observations F-DG0-015/147/149 remain with gate DG0."
+}
