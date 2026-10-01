@@ -11638,14 +11638,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-14/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-01T17:20:29Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG1 round 14 (session 21949e8c) after full integration run 1 exited 1 on an afterAll hook timeout with 200/200 tests passed. Low and non-mandatory: test-harness robustness under host contention, with no product impact. Suggested fix: set hookTimeout (e.g. 30_000) on the integration project in vitest.config.ts. The ID is proposed from the code-security F-DG1-1xx block; the orchestrator may re-allocate it."
+        },
+        {
+          "at": "2026-10-01T17:32:11Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 22f3054108b775da5d24339da9b123fcd701bf5a"
         }
-      ]
+      ],
+      "fix_revision": "22f3054108b775da5d24339da9b123fcd701bf5a",
+      "fix_summary": "r15: vitest.config.ts integration hookTimeout=30_000 (F-DG1-136, teardown no longer hits the 10s default); syntaxErrors() uses a no-emit declarationSyntaxErrors() for .d.ts/.d.mts/.d.cts so the lint no longer throws a transpile Debug Failure and .d.ts stay scanned (F-DG1-217). architecture 130/130; full unit 323/323 Node 22+24; integration 200/200 no hook timeout."
     },
     {
       "id": "F-DG1-217",
@@ -11666,14 +11673,21 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG1/round-14/qa-verifier.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-01T17:21:17Z",
           "status": "OPEN",
           "note": "Raised by qa-verifier in DG1 round 14 while independently probing the F-DG1-135 test classification. Rated Low and non-mandatory: fail-closed (the lint crashes red, nothing passes unchecked), and declaration files emit no runtime code. No access-control, integrity, calculation or portability impact; it is a developer-experience/robustness defect of a static test-only check. Pre-existing since r5, not introduced by F-DG1-135. Proposed ID F-DG1-217 (next free number in the 2xx range); the orchestrator may renumber. It does not block DG1 on its own; the orchestrator may route it as a repair or accept it as an observation."
+        },
+        {
+          "at": "2026-10-01T17:32:11Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 22f3054108b775da5d24339da9b123fcd701bf5a"
         }
-      ]
+      ],
+      "fix_revision": "22f3054108b775da5d24339da9b123fcd701bf5a",
+      "fix_summary": "r15: vitest.config.ts integration hookTimeout=30_000 (F-DG1-136, teardown no longer hits the 10s default); syntaxErrors() uses a no-emit declarationSyntaxErrors() for .d.ts/.d.mts/.d.cts so the lint no longer throws a transpile Debug Failure and .d.ts stay scanned (F-DG1-217). architecture 130/130; full unit 323/323 Node 22+24; integration 200/200 no hook timeout."
     }
   ]
 }
