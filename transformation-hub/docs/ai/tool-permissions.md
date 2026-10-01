@@ -48,7 +48,8 @@ the permission and `ai.assistant.use` → approver still holds `ai.proposal.appr
 the requester → payload hash, target version, expiry (`isApprovalStillValid`) → the message recipient may still read the
 target AND every record the run sent to the model (a draft: the delegating user may) → quiet hours (deferred) → ONE
 transaction as the accountable human: (autopilot: per-project advisory lock `hub_ai_autopilot:<projectId>`) → proposal row
-lock (after the per-key deduplication lock `hub_ai_dedupe:<key>`) → re-check of status, version, approval, emergency stop, mode /
+lock (after the per-key deduplication lock `hub_ai_dedupe:<key>`; the audit-chain lock comes last — `scheduling-policy.md`,
+SEC-P5R-01) → re-check of status, version, approval, emergency stop, mode /
 autopilot policy / daily limit, and that no twin was executed within the project's cooldown (QA-P5-01,
 `scheduling-policy.md`) → effect + approval
 consumed + proposal executed (only while still pending at the checked version) + audit (SEC-P5-02, SEC-P5-06). Messages

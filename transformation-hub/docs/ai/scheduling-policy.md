@@ -48,12 +48,21 @@ replicas) never exceed it (SEC-P5-06).
   off): every proposal carries a deduplication key (`aiDedupeKey`) — for a message the action, the target and the
   recipient (whichever run, schedule or delegating user prepared it and however it is worded); for a draft, task or risk
   the action, the target and the delegating user; without a target, the identical payload. A proposal is not created
-  when a twin awaits review or execution, or was executed within the window — the tool call is refused
-  (`duplicate_within_cooldown`, audited `AI_ACTION_DEDUPLICATED`, listed in the run's refused tool calls); a revision into
-  such a twin is refused (422 `ai.duplicate_within_cooldown`); and the execution re-checks, under a per-key advisory lock
-  (`hub_ai_dedupe:<key>`, taken after the autopilot lock and before the proposal row lock), that no twin was executed
-  within the window — otherwise the proposal is invalidated `duplicate_within_cooldown` and nothing is sent. A rejected,
-  invalidated, cancelled or expired twin does not count. Retries of one execution stay exactly-once (AT-20).
+  when a twin was created (and still awaits review or execution) or was executed within the window — the tool call is
+  refused (`duplicate_within_cooldown`, audited `AI_ACTION_DEDUPLICATED`, listed in the run's refused tool calls); a
+  revision into such a twin is refused (422 `ai.duplicate_within_cooldown`); and the execution re-checks, under a per-key
+  advisory lock (`hub_ai_dedupe:<key>`, taken after the autopilot lock and before the proposal row lock), that no twin was
+  executed within the window — otherwise the proposal is invalidated `duplicate_within_cooldown` and nothing is sent. A
+  rejected, invalidated, cancelled or expired twin does not count, nor a pending twin older than the window (SEC-P5R-02).
+  Retries of one execution stay exactly-once (AT-20).
+  - **Lock order** (SEC-P5R-01): autopilot → dedupe key → proposal row → approval → audit chain. Every `audit_event`
+    insert takes the organisation's audit-chain lock (`hub_audit:<org>`) and holds it until commit, so a transaction that
+    has already written an audit row must not wait for any of the earlier locks. The execution and the revision write
+    their audit rows last and wait for the key; a run (whose transaction has written audit rows before its tool calls)
+    only TRIES the key — when another transaction holds it, a twin is being prepared, revised or executed right now and
+    the tool call is refused as a duplicate.
+  - The refusal names the twin (id and state) only to a delegating user who may read that proposal (`ai.proposal.read`
+    and the proposal's visibility rule); anyone else gets a generic reason without its id or state (SEC-P5R-02).
 * **Tool-call cap**: 12 model tool calls per run; the rest are refused (`tool_call_limit`).
 * Scheduled slots missed during an outage are not replayed in bulk (ADR-0004); the next briefing covers the period.
 

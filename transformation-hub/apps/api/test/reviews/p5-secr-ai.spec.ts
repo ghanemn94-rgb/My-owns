@@ -466,11 +466,11 @@ describe('QA-P5-01 — a proposal the delegating user may NOT see suppresses the
     expect(revise.code).toBe('ai.duplicate_within_cooldown');
   });
 
-  it.fails('DEFECT SEC-P5R-02 (run output): the refusal does not name a proposal the delegating user may not see', () => {
+  it('DEFECT SEC-P5R-02 (run output): the refusal does not name a proposal the delegating user may not see (fixed, regression)', () => {
     expect(refused.map((x) => x.reason).join(' ')).not.toContain(hidden);
   });
 
-  it.fails('DEFECT SEC-P5R-02 (revision, 422 details): the refusal does not name a proposal the requester may not see', () => {
+  it('DEFECT SEC-P5R-02 (revision, 422 details): the refusal does not name a proposal the requester may not see (fixed, regression)', () => {
     expect(revise.body).not.toContain(hidden);
   });
 });
@@ -557,15 +557,21 @@ describe('QA-P5-01 lock order — the dedupe-key lock and the audit-chain lock a
     console.log(`QA-P5-01 lock order: interleaving ${JSON.stringify(interleaving)}; execution ${JSON.stringify(exec)}; second run ${JSON.stringify(askOut)}`);
   }, 300_000);
 
-  it('CONTROL: the interleaving was reached (the execution held the key; the run waited on an advisory lock) and the approved reminder was executed exactly once', () => {
-    expect(interleaving).toEqual({ executionHeldKey: true, runWaitedOnAdvisory: true });
+  it('CONTROL: the interleaving was reached (the execution held the key while the run prepared the twin) and the approved reminder was executed exactly once', () => {
+    // Before the SEC-P5R-01 fix this control also asserted `runWaitedOnAdvisory: true` (the run blocked on the key while holding
+    // the audit-chain lock — the deadlock). The fix makes the run TRY the key instead of waiting for it, so it no longer waits;
+    // the interleaving is still reached because the execution held the key when the run asked for it.
+    expect(interleaving.executionHeldKey).toBe(true);
     expect(exec.status).toBe('executed');
     expect(exec.notes).toBe(1);
   });
 
-  it.fails('DEFECT SEC-P5R-01: a run that prepares the twin of an action being executed waits for it and completes (its twin refused) — no deadlock aborts the run or the execution', () => {
+  it('DEFECT SEC-P5R-01: a run that prepares the twin of an action being executed waits for it and completes (its twin refused) — no deadlock aborts the run or the execution (fixed, regression)', () => {
     expect(exec.error).toBeNull();
     expect(askOut.status).toBe(201);
+    // The fix: the twin is refused at once as a duplicate in progress (the other, new reminder is prepared).
+    expect(askOut.proposals).toBe(1);
+    expect(askOut.refused).toEqual([expect.stringContaining('duplicate_within_cooldown')]);
   });
 });
 

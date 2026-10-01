@@ -181,9 +181,14 @@ export class AiProposalsService {
     // cooldown window, is not created again (refused + audited). Serialised per key so two runs cannot both pass the check.
     const dedupeKey = aiDedupeKey(action, payload, run.requestedBy);
     if (s.actionCooldownHours > 0) {
-      await this.lockDedupe(dedupeKey);
+      const same = `the same action for the same target${(AI_MESSAGE_ACTIONS as string[]).includes(action) ? ' and recipient' : ''}`;
+      // SEC-P5R-01: the run has already written audit rows, so it holds the organisation's audit-chain lock (taken by the
+      // audit_event trigger, held to commit); an execution or a revision holding this key writes its audit row last. Waiting
+      // for the key here would invert that order (deadlock): the run only TRIES the key — held means a twin is being
+      // created, revised or executed right now, which is a duplicate either way.
+      if (!(await this.tryLockDedupe(dedupeKey))) return refuse(`${DUPLICATE_WITHIN_COOLDOWN}: ${same} is being prepared, revised or executed right now`, 'AI_ACTION_DEDUPLICATED');
       const dup = await this.duplicateOf(projectId, dedupeKey, s.actionCooldownHours, null);
-      if (dup) return refuse(`${DUPLICATE_WITHIN_COOLDOWN}: the same action for the same target${(AI_MESSAGE_ACTIONS as string[]).includes(action) ? ' and recipient' : ''} is ${dup.status === 'executed' ? `already executed within the ${s.actionCooldownHours}-hour cooldown` : 'already awaiting review or execution'} (proposal ${dup.id})`, 'AI_ACTION_DEDUPLICATED');
+      if (dup) return refuse(`${DUPLICATE_WITHIN_COOLDOWN}: ${same} ${await this.twinText(ctx, projectId, dup, s.actionCooldownHours)}`, 'AI_ACTION_DEDUPLICATED');
     }
     const [inserted] = await tx
       .insert(schema.aiProposal)
@@ -412,7 +417,11 @@ export class AiProposalsService {
     if (s.actionCooldownHours > 0) {
       await this.lockDedupe(dedupeKey);
       const dup = await this.duplicateOf(projectId, dedupeKey, s.actionCooldownHours, proposalId);
-      if (dup) throw ruleViolation('ai.duplicate_within_cooldown', `The same action for the same target is ${dup.status === 'executed' ? `already executed within the ${s.actionCooldownHours}-hour cooldown` : 'already awaiting review or execution'}`, { duplicateOf: dup.id });
+      if (dup) {
+        // SEC-P5R-02: the twin is named only to a requester who may read it.
+        const named = await this.twinVisible(ctx, projectId, dup.id);
+        throw ruleViolation('ai.duplicate_within_cooldown', `The same action for the same target ${await this.twinText(ctx, projectId, dup, s.actionCooldownHours)}`, named ? { duplicateOf: dup.id } : undefined);
+      }
     }
     // Lock order proposal → approvals (as the execution and reject), then write only at the reviewed version (SEC-P5-02).
     const cur = await this.lockProposal(projectId, proposalId);
@@ -448,21 +457,48 @@ export class AiProposalsService {
     return r.rows[0] ?? null;
   }
 
-  /** Transaction-scoped lock of one deduplication key (lock order: autopilot → dedupe key → proposal row → approval). */
+  /**
+   * Transaction-scoped lock of one deduplication key (lock order: autopilot → dedupe key → proposal row → approval → audit
+   * chain). Only a transaction that has written no audit row yet may WAIT for it (execution, revision); a run uses
+   * `tryLockDedupe` (SEC-P5R-01).
+   */
   private async lockDedupe(key: string): Promise<void> {
     await this.db.query(`select pg_advisory_xact_lock(hashtextextended('hub_ai_dedupe:' || $1, 0))`, [key]);
   }
 
+  /** The same lock without waiting: false when another transaction holds the key. */
+  private async tryLockDedupe(key: string): Promise<boolean> {
+    const r = await this.db.query<{ ok: boolean }>(`select pg_try_advisory_xact_lock(hashtextextended('hub_ai_dedupe:' || $1, 0)) as ok`, [key]);
+    return r.rows[0]?.ok === true;
+  }
+
+  /** Whether the user may read that proposal (`ai.proposal.read` in the project and the row's visibility — SEC-P34R-05). */
+  private async twinVisible(ctx: RequestContext, projectId: string, proposalId: string): Promise<boolean> {
+    if (!this.policy.canInProject(ctx, 'ai.proposal.read', projectId)) return false;
+    const [ok] = await this.db.tx().select({ id: schema.aiProposal.id }).from(schema.aiProposal).where(and(eq(schema.aiProposal.id, proposalId), eq(schema.aiProposal.projectId, projectId), this.visibleSql(ctx, projectId)));
+    return !!ok;
+  }
+
   /**
-   * Another proposal with the same deduplication key that is awaiting review / execution, or was executed within the last
-   * `hours` (QA-P5-01). `executedOnly`: only executed ones count (execution re-check — a pending twin is not yet delivered).
+   * The refusal text for a twin (SEC-P5R-02): its state and id only when the user may read it; otherwise a generic statement
+   * that discloses neither which proposal it is nor whether it is pending or executed.
+   */
+  private async twinText(ctx: RequestContext, projectId: string, dup: { id: string; status: string }, hours: number): Promise<string> {
+    if (!(await this.twinVisible(ctx, projectId, dup.id))) return `already exists (awaiting review or execution, or executed within the ${hours}-hour cooldown)`;
+    return `is ${dup.status === 'executed' ? `already executed within the ${hours}-hour cooldown` : 'already awaiting review or execution'} (proposal ${dup.id})`;
+  }
+
+  /**
+   * Another proposal with the same deduplication key that is awaiting review / execution, or was executed, within the last
+   * `hours` (QA-P5-01; a pending twin older than the window no longer suppresses the action — SEC-P5R-02). `executedOnly`:
+   * only executed ones count (execution re-check — a pending twin is not yet delivered).
    */
   private async duplicateOf(projectId: string, key: string, hours: number, exceptId: string | null, executedOnly = false): Promise<{ id: string; status: string } | null> {
     const since = new Date(this.clock.now().getTime() - hours * 3_600_000);
     const r = await this.db.query<{ id: string; status: string }>(
       `select id, status from ai_proposal
         where project_id = $1 and dedupe_key = $2 and ($3::uuid is null or id <> $3::uuid)
-          and ((status = 'executed' and executed_at > $4) or (not $5 and status in ('proposed', 'approved', 'executing')))
+          and ((status = 'executed' and executed_at > $4) or (not $5 and status in ('proposed', 'approved', 'executing') and created_at > $4))
         order by created_at desc, id desc limit 1`,
       [projectId, key, exceptId, since, executedOnly],
     );

@@ -261,3 +261,20 @@ so a hidden pending twin does not suppress indefinitely. Keep the probes as regr
 
 Probe convention: a `DEFECT` is `it.fails` asserting the required behaviour; once fixed it turns red and the implementer renames it
 "… (fixed, regression)" and makes it a plain `it`.
+
+---
+
+## Fix status (lead, 2026-10-01)
+
+| Finding | Status | Change | Regression |
+|---|---|---|---|
+| **SEC-P5R-01** (Low) | **Fixed** | `ai-proposals.service.ts` `createFromTool`: the run, whose transaction already holds the audit-chain lock, only TRIES the dedupe key (`tryLockDedupe`, `pg_try_advisory_xact_lock`); a held key means a twin is being prepared, revised or executed right now → the tool call is refused `duplicate_within_cooldown` (audited `AI_ACTION_DEDUPLICATED`). Execution phase 2 and revision keep waiting for the key (they have written no audit row before it). Lock order documented with the audit chain last (`docs/ai/scheduling-policy.md` "Lock order", `docs/ai/tool-permissions.md`). | `p5-secr-ai.spec.ts` › "DEFECT SEC-P5R-01: … (fixed, regression)" — plain `it`, the two original assertions unchanged, plus: the twin is refused as a duplicate and the other reminder is prepared. The CONTROL of that block asserted `runWaitedOnAdvisory: true` (the run blocked on the key — the deadlock's precondition); with the fix the run no longer waits, so the CONTROL now asserts only that the execution held the key when the run asked for it (stated in the test). |
+| **SEC-P5R-02** (Low) | **Fixed** | The twin's id and state are named only when the delegating user may read it (`twinVisible`: `ai.proposal.read` in the project and the proposal visibility rule of SEC-P34R-05); otherwise a generic reason ("already exists (awaiting review or execution, or executed within the N-hour cooldown)") and no `details.duplicateOf` in the revision 422. A pending twin counts only while it was created within the cooldown window, so a hidden pending twin no longer suppresses the action indefinitely. | `p5-secr-ai.spec.ts` › "DEFECT SEC-P5R-02 (run output) … (fixed, regression)", "(revision, 422 details) … (fixed, regression)" — plain `it`, assertions unchanged; the block's CONTROL unchanged and passing. |
+| SEC-P5R-I1 | Owner decision | Recorded for the AI / data-governance owner with SEC-P5-I5 (P5 gate report). | — |
+| SEC-P5R-I2 | Accepted | The re-check's content-rule probes stay as the SEC-P5-01 regressions. | `p5-secr-ai.spec.ts` |
+| SEC-P5R-I3 | Recorded | Carried to the P5 gate report (worker `finalize` failure leaves a run `running`). | — |
+| SEC-P5R-I4 | Recorded | Carried to the P5 gate report (cooldown 0 needs no reason). | — |
+
+Verification (lead): `(apps/api) npx tsc -p tsconfig.build.json` → exit 0; `npx vitest run test/reviews/p5-secr-ai.spec.ts
+test/reviews/p5-qa-ai.spec.ts` → 2 files, 38 passed; `npx vitest run test/ai test/reviews/p5-sec-ai.spec.ts
+test/reviews/p5-sec-egress.spec.ts` → 13 files, 131 passed (own database `hub_test_lock`). Full API suite: see docs/WORK_LOG.md.
