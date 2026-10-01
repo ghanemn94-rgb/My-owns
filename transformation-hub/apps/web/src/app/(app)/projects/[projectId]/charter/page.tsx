@@ -21,6 +21,7 @@ import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
 import { useProjectContext, type ProjectDetail } from '@/lib/project-context';
 import { qk } from '@/lib/queries';
+import { useLocalized } from '@/lib/i18n-data';
 import { ApprovedBaseline, CommitteeCharters } from './_components/GovernanceBaseline';
 
 type Entity = ProjectDetail['entities'][number];
@@ -119,6 +120,7 @@ function EditCharterForm({ project, onDone }: { project: ProjectDetail; onDone: 
 
 export default function CharterPage() {
   const { t, tStatus, formatDate, locale, formatList } = useI18n();
+  const loc = useLocalized();
   const { project, projectId, can } = useProjectContext();
   const [editing, setEditing] = useState(false);
   const canEdit = can('portfolio.project.update');
@@ -221,7 +223,8 @@ export default function CharterPage() {
             emptyTitle={t('project.phases.empty')}
             columns={[
               { key: 'order', header: '#', cell: (p) => <span className="tabular">{project.phases.indexOf(p) + 1}</span> },
-              { key: 'name', header: t('project.phases.name'), isRowHeader: true, cell: (p) => <span dir="auto">{p.name}</span> },
+              // Template-seeded phase names are bilingual (QA-P1-14): shown in the active language.
+              { key: 'name', header: t('project.phases.name'), isRowHeader: true, cell: (p) => <span dir="auto">{loc(p.name, p.nameAr)}</span> },
               { key: 'gates', header: t('project.phases.gates'), cell: (p) => <span dir="ltr">{p.gateKeys.join(', ') || EM_DASH}</span> },
             ]}
           />

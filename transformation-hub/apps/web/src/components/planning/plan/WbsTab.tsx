@@ -207,7 +207,11 @@ export function WbsTab() {
           <p className="border-t border-line px-3 py-2 text-xs text-muted">{t('planning.wbs.progressLegend')}</p>
         </ScrollRegion>
       )}
-      {tasks.data ? <p className="text-xs text-muted">{t('planning.wbs.total', { count: tasks.data.total })}</p> : null}
+      {tasks.data ? (
+        <p className="text-xs text-muted" data-testid="wbs-total" data-total={tasks.data.total}>
+          {t('planning.wbs.total', { count: tasks.data.total })}
+        </p>
+      ) : null}
       <TaskFormDialog open={createOpen} onClose={() => setCreateOpen(false)} defaultWorkstreamId={workstreamId || undefined} />
       {activate ? <ActivateAllDialog open onClose={() => setActivate(null)} ws={activate.ws} drafts={activate.drafts} /> : null}
     </div>

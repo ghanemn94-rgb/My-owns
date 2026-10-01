@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { ChevronDown, GripVertical } from 'lucide-react';
-import { useEffect, useId, useMemo, useRef, useState, type DragEvent, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type DragEvent, type KeyboardEvent } from 'react';
 import { TASK_MACHINE, TASK_STATUSES, type TaskStatus } from '@hub/domain';
 import { useI18n } from '@/i18n/provider';
 import { taskHref, useAllTasks, useRefreshPlanning, type Task } from '@/lib/planning';
@@ -72,10 +72,12 @@ function KanbanCard({
   const toggleRef = useRef<HTMLButtonElement | null>(null);
   // After a move the card re-renders in its new column: focus follows it (keyboard users keep their place).
   useEffect(() => {
-    if (focusMe) {
+    if (!focusMe) return;
+    const raf = requestAnimationFrame(() => {
       linkRef.current?.focus();
       onFocused();
-    }
+    });
+    return () => cancelAnimationFrame(raf);
   }, [focusMe, onFocused]);
   const title = locale === 'ar' && task.titleAr ? task.titleAr : task.title;
   const onMenuKey = (e: KeyboardEvent<HTMLElement>) => {
@@ -109,7 +111,8 @@ function KanbanCard({
             <span className="block text-xs font-semibold text-primary group-hover:underline" dir="ltr">
               {task.wbsCode}
             </span>
-            <span className="block text-sm text-ink" dir="auto">
+            {/* A title typed by a planner (no template activity) is shown as entered; template titles are bilingual. */}
+            <span className="block text-sm text-ink" dir="auto" data-user-text={task.templateActivityId ? undefined : ''}>
               {title}
             </span>
           </Link>
@@ -189,6 +192,8 @@ export function KanbanTab() {
   const [dragging, setDragging] = useState<Task | null>(null);
   const [dropTarget, setDropTarget] = useState<TaskStatus | null>(null);
   const [focusId, setFocusId] = useState<string | null>(null);
+  const moved = useRef<string | null>(null);
+  const focused = useCallback(() => setFocusId(null), []);
   const query = { q: q || undefined, workstreamId: workstreamId || undefined, overdue: overdue ? ('true' as const) : undefined, ownerUserId: mine ? 'me' : undefined, sort: 'wbs' as const };
   const tasks = useAllTasks(projectId, query);
   const dragMoves = useMoves(dragging ?? undefined);
@@ -283,7 +288,7 @@ export function KanbanTab() {
                           task={x}
                           wsLabel={x.workstreamId ? (wsCode.get(x.workstreamId) ?? x.workstreamCode) : null}
                           focusMe={focusId === x.id}
-                          onFocused={() => setFocusId(null)}
+                          onFocused={focused}
                           onMove={startMove}
                           onDragStart={setDragging}
                           onDragEnd={() => {
@@ -317,9 +322,14 @@ export function KanbanTab() {
           command={pending.move.command}
           expectedVersion={pending.task.version}
           context={[t('planning.kanban.moveContext', { code: pending.task.wbsCode, from: tStatus('taskStatuses', pending.task.status), to: tStatus('taskStatuses', pending.move.to) })]}
-          onClose={() => setPending(null)}
+          onClose={() => {
+            // Focus moves to the card only once the modal dialog is gone (the page behind a modal is inert).
+            if (moved.current) setFocusId(moved.current);
+            moved.current = null;
+            setPending(null);
+          }}
           onDone={async () => {
-            setFocusId(pending.task.id);
+            moved.current = pending.task.id;
             await refresh();
           }}
           onReload={() => void tasks.refetch()}
