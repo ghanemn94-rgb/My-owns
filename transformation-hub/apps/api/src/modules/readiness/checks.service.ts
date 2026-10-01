@@ -515,7 +515,12 @@ export class ReadinessChecksService implements OnModuleInit {
     const linkers = await this.s.evidenceLinkers(projectId, 'readiness_check', c.id);
     for (const linker of linkers) this.s.policy.assert(ctx, 'readiness.check.signoff', { projectId, workstreamId: c.workstreamId, requesterUserId: linker });
     const ev = await this.s.evidence(projectId, 'readiness_check', c.id);
+    // DOM-P34R-02: "not applicable" never releases a failed gating check, nor one gating a plan under decision / with a GO.
+    const gatesDecidedPlan = (await this.s.plansGatedBy(projectId, c)).some((p) => GO_DECIDED_PLAN_STATUSES.includes(p.status));
     assertReadinessSignoffAllowed({
+      status: c.status,
+      gating: c.blocker || c.mandatory,
+      gatesDecidedPlan,
       checkCode: c.code,
       outcome: body.outcome,
       signoffRole: c.signoffRole,

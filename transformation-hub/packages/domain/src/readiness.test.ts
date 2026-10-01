@@ -144,6 +144,9 @@ describe('Readiness checks (REQ-RDY-001/002, AT-09)', () => {
     activeEvidenceCount: 1,
     conflictingEvidenceCount: 0,
     note: null,
+    status: 'in_progress' as const,
+    gating: true,
+    gatesDecidedPlan: false,
   };
   it('REQ-RDY-001: sign-off by a non-assigned role is rejected (403)', () => {
     expect(() => assertReadinessSignoffAllowed(so)).not.toThrow();
@@ -157,6 +160,15 @@ describe('Readiness checks (REQ-RDY-001/002, AT-09)', () => {
     expect(codeOf(() => assertReadinessSignoffAllowed({ ...so, latestTestResult: 'failed' }))).toBe('rule_violation:readiness.signoff.latest_test_failed');
     expect(codeOf(() => assertReadinessSignoffAllowed({ ...so, outcome: 'not_applicable', activeEvidenceCount: 0 }))).toBe('rule_violation:readiness.signoff.na_basis_required');
     expect(() => assertReadinessSignoffAllowed({ ...so, outcome: 'not_applicable', activeEvidenceCount: 0, note: 'Site has no generator' })).not.toThrow();
+  });
+  it('DOM-P34R-02: "not applicable" never releases a failed gating check, nor an open one gating a plan under decision / with a GO', () => {
+    const na = { ...so, outcome: 'not_applicable' as const, activeEvidenceCount: 0, note: 'Not part of this transition' };
+    expect(codeOf(() => assertReadinessSignoffAllowed({ ...na, status: 'failed', latestTestResult: 'failed' }))).toBe('rule_violation:readiness.signoff.na_release_not_allowed');
+    expect(codeOf(() => assertReadinessSignoffAllowed({ ...na, status: 'in_progress', latestTestResult: 'failed' }))).toBe('rule_violation:readiness.signoff.na_release_not_allowed');
+    expect(codeOf(() => assertReadinessSignoffAllowed({ ...na, gatesDecidedPlan: true }))).toBe('rule_violation:readiness.signoff.na_release_not_allowed');
+    // A non-gating check, or an open gating check of a transition still in planning, may be determined not applicable.
+    expect(() => assertReadinessSignoffAllowed({ ...na, status: 'failed', latestTestResult: 'failed', gating: false })).not.toThrow();
+    expect(() => assertReadinessSignoffAllowed(na)).not.toThrow();
   });
   it('waivability determination: assigned specialist, not the author, authority role for waivable checks, basis', () => {
     const d = {

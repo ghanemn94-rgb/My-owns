@@ -109,3 +109,43 @@ describe('DOM-P34R-01 — the site of a transition plan changes only through the
     expect(r.body.code).toBe('readiness.cutover.locked');
   });
 });
+
+describe('DOM-P34R-02 — "not applicable" never releases a failed gating check [AT-09, AT-13, business-gates.md §5 rule 3]', () => {
+  const naSignoff = async (checkId: string) => {
+    const c = await check(p.pm, projectId, checkId);
+    return p.approver.post(`${P(projectId)}/readiness-checks/${checkId}/sign-off`, { expectedVersion: c.version, outcome: 'not_applicable', note: 'Not part of this transition (synthetic)' });
+  };
+
+  it('a FAILED blocker: the specialist\'s "not applicable" is refused (422), the check stays failed and the GO stays blocked', async () => {
+    const siteId = await insertSite(projectId, 'S-P34RF-4');
+    const planId = await completePlan(p.pm, projectId, { siteId, accountableUserId: p.pm.userId, title: 'Hall G transition (synthetic)' });
+    const checkId = await createCheck(p.pm, projectId, { area: 'physical_access', title: 'Hall G badge access tested (synthetic)', mandatory: true, blocker: true, signoffRole: 'functional_approver', cutoverPlanId: planId, siteId, failureContingency: 'Escorted access (synthetic)' });
+    await failTest(checkId);
+    const r = await naSignoff(checkId);
+    expect(r.status, JSON.stringify(r.body)).toBe(422);
+    expect(r.body.code).toBe('readiness.signoff.na_release_not_allowed');
+    expect((await check(p.pm, projectId, checkId)).status).toBe('failed');
+    expect(((await plan(p.pm, projectId, planId)).goEvaluation.blockers as { id: string }[]).map((b) => b.id)).toContain(checkId);
+  });
+
+  it('an open blocker gating a plan under go/no-go decision: refused (422); the same open blocker of a plan in planning may be determined not applicable', async () => {
+    const siteId = await insertSite(projectId, 'S-P34RF-5');
+    const planId = await completePlan(p.pm, projectId, { siteId, accountableUserId: p.pm.userId, title: 'Hall H transition (synthetic)' });
+    const cleared = await createCheck(p.pm, projectId, { area: 'connectivity', title: 'Hall H connectivity tested (synthetic)', mandatory: true, blocker: true, signoffRole: 'functional_approver', cutoverPlanId: planId, siteId, failureContingency: 'Keep the current carrier path (synthetic)' });
+    await clearCheck(p, projectId, cleared);
+    const open = await createCheck(p.pm, projectId, { area: 'incident_management', title: 'Hall H incident runbook tested (synthetic)', mandatory: true, blocker: true, signoffRole: 'functional_approver', cutoverPlanId: planId, siteId, failureContingency: 'Current operator handles incidents (synthetic)' });
+    const d = await decisionOfType(projectId, p, gov, 'day1_go_no_go');
+    let v = await plan(p.pm, projectId, planId);
+    expect((await p.pm.post(`${P(projectId)}/cutover-plans/${planId}/go-decision`, { expectedVersion: v.version, decisionId: d.id })).status).toBe(201);
+    v = await plan(p.pm, projectId, planId);
+    expect((await p.pm.post(`${P(projectId)}/cutover-plans/${planId}/submit-for-decision`, { expectedVersion: v.version })).status).toBe(201);
+    const refused = await naSignoff(open);
+    expect(refused.status, JSON.stringify(refused.body)).toBe(422);
+    expect(refused.body.code).toBe('readiness.signoff.na_release_not_allowed');
+    v = await plan(p.pm, projectId, planId);
+    expect((await p.pm.post(`${P(projectId)}/cutover-plans/${planId}/return-to-planning`, { expectedVersion: v.version, note: 'Re-planning (synthetic)' })).status).toBe(201);
+    const allowed = await naSignoff(open);
+    expect(allowed.status, JSON.stringify(allowed.body)).toBe(201);
+    expect(allowed.body.status).toBe('not_applicable');
+  });
+});

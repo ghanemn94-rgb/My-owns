@@ -143,6 +143,7 @@ export const REFUSAL_KEYS: Readonly<Record<string, Entry>> = {
   'readiness.check.rebind_plan_locked': 'readiness.refusal.codes.rebind_plan_locked',
   'readiness.check.rebind_reason_required': 'readiness.refusal.codes.rebind_reason_required',
   'readiness.determination.release_not_allowed': 'readiness.refusal.codes.determination_release_not_allowed',
+  'readiness.signoff.na_release_not_allowed': 'readiness.refusal.codes.signoff_na_release_not_allowed',
   'readiness.execution_blocked': 'readiness.refusal.codes.execution_blocked',
   // The plan's site is a scope command too (P3/P4 domain re-review: DOM-P34R-01)
   'readiness.cutover.site_change_failed_check': 'readiness.refusal.codes.site_change_failed_check',

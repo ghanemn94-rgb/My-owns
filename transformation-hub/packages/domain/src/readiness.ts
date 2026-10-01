@@ -73,6 +73,12 @@ export function assertAssignedSpecialist(what: string, checkCode: string, signof
  * recorder of the latest test run AND every person who linked the check's current (active / conflicting) evidence
  * (DOM-P3-10 / SEC-P34-01). A "passed" sign-off needs active, non-conflicting evidence and a latest test run that did not
  * fail; "not applicable" needs a documented basis.
+ *
+ * DOM-P34R-02 (the rule of DOM-P3-02 applied to the sign-off path; business-gates.md §5 rule 3): "not applicable" never
+ * RELEASES an open gating (mandatory / blocker) check — refused while the check has FAILED (status or latest test), and while
+ * it gates a plan under go/no-go decision or with a GO. A failed check is cleared by a passing test and sign-off, or — if
+ * waivable — through the waiver register; one raised for the wrong transition is re-bound before it fails or after it is
+ * cleared. A non-waivable failed blocker cannot be released (owner question Q-P3-02).
  */
 export function assertReadinessSignoffAllowed(i: {
   checkCode: string;
@@ -85,12 +91,24 @@ export function assertReadinessSignoffAllowed(i: {
   activeEvidenceCount: number;
   conflictingEvidenceCount: number;
   note: string | null | undefined;
+  /** Current status and criticality of the check, and whether it gates a plan at ready_for_decision / approved_go (REQUIRED). */
+  status: ReadinessStatus;
+  gating: boolean;
+  gatesDecidedPlan: boolean;
 }): void {
   assertAssignedSpecialist('sign-off', i.checkCode, i.signoffRole, i.actorRoles);
   if (i.selfUserIds.some((u) => !!u && u === i.actorUserId)) {
     throw forbidden('readiness.signoff.self', 'Separation of duties: the owner of the check or the person who recorded its latest status/evidence cannot sign it off');
   }
   if (i.outcome === 'not_applicable') {
+    const failed = i.status === 'failed' || i.latestTestResult === 'failed';
+    if (i.gating !== false && (failed || i.gatesDecidedPlan !== false)) {
+      throw ruleViolation(
+        'readiness.signoff.na_release_not_allowed',
+        `${i.checkCode} is ${failed ? 'a failed' : 'an open'} gating check${failed ? '' : ' of a transition under go/no-go decision or with a GO'}: a "not applicable" sign-off cannot release it — clear it with a passing test and sign-off, or (if waivable) through the waiver register`,
+        { status: i.status, latestTest: i.latestTestResult, gatesDecidedPlan: i.gatesDecidedPlan },
+      );
+    }
     if (!i.note?.trim()) throw ruleViolation('readiness.signoff.na_basis_required', 'A "not applicable" determination requires a documented basis');
     return;
   }

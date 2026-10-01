@@ -12,7 +12,10 @@ import { P, check, completePlan, createCheck, decisionOfType, drainWorker, inser
  * green; the probe turns red once fixed — then rename it `… (fixed, regression)` and make it a plain `it`).
  * `P34DRE_PROBE_PLAIN=1` runs them as plain tests to show the failure message. `CONTROL …` are plain tests. All data is synthetic.
  */
+// Implementer (fix of the P3/P4 domain re-review): every DEFECT probe of this file is fixed and renamed `… (fixed, regression)`
+// — plain `it`, assertions unchanged. The alias stays so that P34DRE_PROBE_PLAIN=1 keeps working for any probe added later.
 const defect = process.env['P34DRE_PROBE_PLAIN'] ? it : it.fails;
+void defect;
 
 let projectId: string;
 let p: Personas;
@@ -101,7 +104,7 @@ describe('P3/P4 domain re-review — which transition a FAILED blocker gates [AT
 });
 
 describe('P3/P4 domain re-review — a FAILED non-waivable blocker released by one specialist [AT-09, AT-13, business-gates.md §5 rule 3, A-P3-02]', () => {
-  defect('DEFECT DOM-P34R-02: the sign-off specialist alone determines a FAILED non-waivable blocker "not applicable" and the GO is accepted', async () => {
+  it('DOM-P34R-02: the sign-off specialist alone determines a FAILED non-waivable blocker "not applicable" and the GO is accepted (fixed, regression)', async () => {
     const siteId = await insertSite(projectId, 'S-P34R-2');
     const planId = await completePlan(p.pm, projectId, { siteId, accountableUserId: p.pm.userId, title: 'Transition of hall C (synthetic)' });
     const checkId = await createCheck(p.pm, projectId, {
