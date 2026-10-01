@@ -8504,7 +8504,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
       "owner": "devops-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-01T06:36:40Z",
@@ -8520,10 +8520,15 @@
           "at": "2026-10-01T08:26:50Z",
           "status": "OPEN",
           "note": "verified by code-security-reviewer round 2: FAIL"
+        },
+        {
+          "at": "2026-10-01T09:08:03Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 13dbb45"
         }
       ],
-      "fix_revision": "3eaab6c",
-      "fix_summary": "Image digests pinned: node:24, postgres:18 (docker.io) and mcr playwright resolved+applied; quay.io/keycloak (test-only) BLOCKED by the environment egress policy, recorded honestly (D-049), never fabricated. SBOM regenerated; pin-images self-tests 31/31.",
+      "fix_revision": "13dbb45",
+      "fix_summary": "CI images job runs pin-images --resolve --missing then --apply then --check, pinning keycloak live where quay.io is reachable; node/postgres/playwright pinned in the committed lock; keycloak blockedReason is the disclosed D-049 residual (test-only, quay denied here).",
       "verification": {
         "by_role": "code-security-reviewer",
         "invocation_reference": {
@@ -8861,7 +8866,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG1/round-1/qa-verifier.json",
       "owner": "devops-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-01T06:46:01Z",
@@ -8877,10 +8882,15 @@
           "at": "2026-10-01T08:26:50Z",
           "status": "OPEN",
           "note": "verified by code-security-reviewer round 2: FAIL"
+        },
+        {
+          "at": "2026-10-01T09:08:03Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 13dbb45"
         }
       ],
-      "fix_revision": "3eaab6c",
-      "fix_summary": "Container images pinned by digest where reachable; pin-images --check stays honest (fails on the environment-BLOCKED keycloak, test-only, per D-049). Tooling + self-tests corrected.",
+      "fix_revision": "13dbb45",
+      "fix_summary": "Same as F-DG1-108: images pinned by digest where reachable; CI resolves the missing test-only keycloak at runtime; --check stays honest locally (D-049).",
       "verification": {
         "by_role": "code-security-reviewer",
         "invocation_reference": {
@@ -9242,14 +9252,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-2/code-security-reviewer.json",
       "owner": "devops-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-01T08:26:50Z",
           "status": "OPEN",
           "note": "Reported by code-security-reviewer in DG1 round 2. Transcribed by the orchestrator from the reviewer's result and committed evidence; the agent's own write was blocked by a safety classifier. Full reproduction is in the cited evidence log."
+        },
+        {
+          "at": "2026-10-01T09:08:03Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 13dbb45"
         }
-      ]
+      ],
+      "fix_revision": "13dbb45",
+      "fix_summary": "check-ci-needs.mjs allow-lists the gate job and validate steps; rejects defaults/env/container/services/if and env(NODE_OPTIONS)/shell/working-directory; 11 new fail-before self-test cases (N19-N29)."
     },
     {
       "id": "F-DG1-117",
