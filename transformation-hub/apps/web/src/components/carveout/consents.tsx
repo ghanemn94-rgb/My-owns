@@ -57,10 +57,11 @@ export function ConsentsRegister({ perimeterItemId }: { perimeterItemId?: string
     { key: 'due', header: t('carveout.consents.due'), cell: (c) => <DateText value={c.dueDate} overdue={c.overdue} /> },
     { key: 'resp', header: t('carveout.consents.response'), cell: (c) => (c.respondedOn ? <span className="text-sm"><DateText value={c.respondedOn} /> · <PersonText person={c.responseRecordedBy} /></span> : c.requestedOn ? <span className="text-sm text-muted">{t('carveout.consents.requestedOn')} <DateText value={c.requestedOn} /></span> : EM_DASH) },
     { key: 'owner', header: t('carveout.common.owner'), cell: (c) => <PersonText person={c.owner} /> },
-    { key: 'demo', header: '', cell: (c) => (c.isDemo ? <DemoBadge /> : null) },
+    { key: 'demo', header: t('common.table.demoColumn'), headerHidden: true, cell: (c) => (c.isDemo ? <DemoBadge /> : null) },
     {
       key: 'act',
-      header: '',
+      header: t('carveout.common.actionsColumn'),
+      headerHidden: true,
       cell: (c) =>
         canManage && NEXT[c.status].length ? (
           <button type="button" className={btn.ghost} onClick={() => setRespond(c)} data-testid="consent-respond">
