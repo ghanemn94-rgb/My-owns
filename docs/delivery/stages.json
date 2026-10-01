@@ -702,10 +702,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:00f1498cd5e9a166db501452f699a3270ffca82455593fe9c0ab84a83e01c80b",
-        "source_commit": "08cbd12f00c5c0561f9718900e71c9baf3d8e0c1",
-        "frozen_at": "2026-10-01T16:30:54Z",
-        "manifest_path": "docs/delivery/candidates/DG1/00f1498cd5e9a166.manifest.json"
+        "candidate_id": "sha256:dd747fe1df62d876a74101caa826542b90d3eb36cedb1de14f299b0b6de8c559",
+        "source_commit": "985d0fa6d05e0b63f53ad67f641910dab34f50ca",
+        "frozen_at": "2026-10-01T16:58:56Z",
+        "manifest_path": "docs/delivery/candidates/DG1/dd747fe1df62d876.manifest.json"
       },
       "review_rounds": [
         {
@@ -862,7 +862,19 @@
             "code-security-reviewer": "docs/delivery/reviews/DG1/round-13/code-security-reviewer.json",
             "qa-verifier": "docs/delivery/reviews/DG1/round-13/qa-verifier.json"
           },
-          "note": "DG1 round 13: re-review after the round-12 all-PASS that raised two Low findings. Verify F-DG1-134 (the module lint's walk() now scans every buildable module file — .ts/.tsx/.mts/.cts/.js/.jsx/.mjs/.cjs — so no module code evades it by extension; a planted .mts self-check flags violations; real tree has 0 non-ts/tsx module files) and F-DG1-216 (D-055 synced with rule 5: the node:crypto namespace route is CLOSED, not residual). Re-confirm no regression on Node 22 and Node 24; plus the 12 DG1-final requirements, on the same candidate."
+          "note": "DG1 round 13: re-review after the round-12 all-PASS that raised two Low findings. Verify F-DG1-134 (the module lint's walk() now scans every buildable module file — .ts/.tsx/.mts/.cts/.js/.jsx/.mjs/.cjs — so no module code evades it by extension; a planted .mts self-check flags violations; real tree has 0 non-ts/tsx module files) and F-DG1-216 (D-055 synced with rule 5: the node:crypto namespace route is CLOSED, not residual). Re-confirm no regression on Node 22 and Node 24; plus the 12 DG1-final requirements, on the same candidate. OUTCOME: all three PASS; F-DG1-134/216 CLOSED; raised F-DG1-135 (lint TEST_FILE classification wider than the build exclusion)."
+        },
+        {
+          "round": 14,
+          "candidate_id": "sha256:dd747fe1df62d876a74101caa826542b90d3eb36cedb1de14f299b0b6de8c559",
+          "frozen_at": "2026-10-01T16:52:40Z",
+          "source_commit": "985d0fa6d05e0b63f53ad67f641910dab34f50ca",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG1/round-14/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG1/round-14/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG1/round-14/qa-verifier.json"
+          },
+          "note": "DG1 round 14: re-review after the round-13 all-PASS that raised one Low finding. Verify F-DG1-135 — the module lint's TEST_FILE is narrowed to /\\.test\\.tsx?$/ (exactly the test extensions tsconfig.build.json excludes), so a *.test.mts/.test.js module file is a NON-test (full boundary rules, no test exemption) while still scanned by walk(); real module test files are all .test.ts. Re-confirm no regression on Node 22 and Node 24; plus the 12 DG1-final requirements, on the same candidate."
         }
       ],
       "gate_record": "docs/delivery/gates/DG1.json",
