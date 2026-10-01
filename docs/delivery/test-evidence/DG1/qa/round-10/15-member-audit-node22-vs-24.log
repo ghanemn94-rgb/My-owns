@@ -1,0 +1,61 @@
+# Member enumeration of the 7 allow-listed built-ins (own + enumerable, one nested level; 'constants' not descended), Node 22 vs Node 24
+$ /opt/node22/bin/node enum2.mjs   -> v22.22.2 openssl 3.5.5: 420 entries
+$ /opt/nvm/versions/node/v24.21.0/bin/node enum2.mjs -> v24.21.0 openssl 3.5.8: 413 entries
+--- enum2.mjs:
+const out = [];
+for (const m of ["crypto","fs","fs/promises","os","path","url","util"]) {
+  const ns = await import("node:" + m); const root = ns.default ?? ns; const seen = new Set();
+  const visit = (o, pre, d) => { for (const k of new Set([...Object.keys(o), ...Object.getOwnPropertyNames(o)])) {
+    if (seen.has(pre+k)) continue; seen.add(pre+k); let v; try { v = o[k]; } catch { continue; }
+    out.push(`${m}.${pre}${k}${typeof v === "function" ? "()" : ""}`);
+    if (d < 1 && v && typeof v === "object" && k !== "constants") visit(v, pre + k + ".", d + 1); } };
+  visit(root, "", 0);
+}
+console.log(out.sort().join("\n"));
+--- diff members-22.txt members-24.txt:
+2d1
+< crypto.Cipher
+4d2
+< crypto.Decipher
+14a13,14
+> crypto.argon2()
+> crypto.argon2Sync()
+29a30
+> crypto.decapsulate()
+30a32
+> crypto.encapsulate()
+60a63
+> crypto.randomUUIDv7()
+79a83
+> fs.Utf8Stream()
+131a136
+> fs.mkdtempDisposableSync()
+153a159
+> fs.promises.mkdtempDisposable()
+224a231
+> fs/promises.mkdtempDisposable()
+316a324
+> url.URLPattern()
+337a346
+> util.convertProcessSignalToExitCode()
+344d352
+< util.getCallSite()
+352,354d359
+< util.isBoolean()
+< util.isBuffer()
+< util.isDate()
+356,367d360
+< util.isError()
+< util.isFunction()
+< util.isNull()
+< util.isNullOrUndefined()
+< util.isNumber()
+< util.isObject()
+< util.isPrimitive()
+< util.isRegExp()
+< util.isString()
+< util.isSymbol()
+< util.isUndefined()
+< util.log()
+diff exit=1
+--- setEngine present: node22=1 node24=1

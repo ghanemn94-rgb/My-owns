@@ -1,0 +1,32 @@
+# Real-file plant in the disposable clone (commit 265af7e). Plant source:
+import * as c from "node:crypto";
+
+// qa-verifier round-10 plant (disposable clone only): reaches crypto.setEngine without writing its name.
+export const load = (p: string): void => {
+  const m = new Map(Object.entries(c));
+  (m.get("set".concat("Engine")) as (path: string) => void)(p);
+};
+
+$ gcc -shared -fPIC -o $TMPDIR/qa-marker.so 12-qa-marker-engine.c.txt (as C)
+exit=0
+
+$ pnpm vitest run --project unit-node apps/api/src/architecture.test.ts -t 'every import respects' --reporter=verbose   (real module-tree check WITH the plant)
+ ✓ |unit-node| apps/api/src/architecture.test.ts > API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages 612ms
+      Tests  1 passed | 104 skipped (105)
+exit=0
+
+$ node --experimental-strip-types --input-type=module -e "<import plant; load(\$TMPDIR/qa-marker.so)>"   (runtime, WITH the plant)
+QA-R10-NATIVE-CONSTRUCTOR-RAN
+QA-R10-NATIVE-CONSTRUCTOR-RAN
+setEngine threw after load: ERR_CRYPTO_ENGINE_UNKNOWN Engine "/var/tmp/mth-run.l3oGAK/claude-0/qa-marker.so" was not found
+exit=0
+
+$ control: same plant but with the name written (m.get("setEngine"))
+6:  (m.get("setEngine") as (path: string) => void)(p);
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+[31m+   "modules/transformations/zz-qa-r10-enum-engine.ts: native loader via the \"setEngine\" key as a value (line 6) bypasses the module-interface check",[39m
+      Tests  1 failed | 104 skipped (105)
+exit=1
+
+$ plant removed; git status --short:
+(end)

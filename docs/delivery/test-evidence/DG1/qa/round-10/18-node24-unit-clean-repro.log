@@ -1,0 +1,57 @@
+# Clean reproduction ENTIRELY under node v24.21.0 (PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH): fresh clone of 265af7e, offline frozen install, build, pnpm test (twice), then unit-web alone
+$ which node: /opt/nvm/versions/node/v24.21.0/bin/node
+$ pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/store/v10
+ WARN  Failed to create bin at /var/tmp/mth-run.l3oGAK/claude-0/review-qa-n24/apps/worker/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/var/tmp/mth-run.l3oGAK/claude-0/review-qa-n24/apps/worker/node_modules/@mth/db/dist/cli.js'
+Done in 1.1s using pnpm v10.33.0
+exit=0
+$ pnpm -r build
+exit=0
+$ pnpm test   (run 1)
+      1       Tests  12 failed | 286 passed (298)
+      1      → RequestInit: Expected signal ("AbortSignal {}") to be an instance of AbortSignal.
+      1  FAIL  |unit-web| src/app/app.test.tsx > bilingual shell > redirects to sign-in when there is no session
+      1  FAIL  |unit-web| src/app/app.test.tsx > transformations > edit: a 409 writes nothing, shows compare, and re-applies on the current version
+      1  FAIL  |unit-web| src/app/app.test.tsx > transformations > lists transformations with a sortable code column and removable filter chips
+      1  FAIL  |unit-web| src/pages/transformations/transformations.test.tsx > after create (F-DG1-004) > explains the same in Arabic (RTL), using the glossary term for Transformation
+      1  FAIL  |unit-web| src/pages/transformations/transformations.test.tsx > after create (F-DG1-004) > explains, in English, that the draft was created but cannot be opened (server 404), instead of 'Not found'
+      1  FAIL  |unit-web| src/pages/transformations/transformations.test.tsx > after create (F-DG1-004) > shows the created record when the server lets the creator read it
+      1  FAIL  |unit-web| src/pages/transformations/transformations.test.tsx > after create (F-DG1-004) > treats a 403 for the just-created record the same way
+      1  FAIL  |unit-web| src/pages/transformations/transformations.test.tsx > effective permissions refresh after create (F-DG1-210) > Arabic (RTL): the same controls and the audit trail appear after create, without a reload
+      1  FAIL  |unit-web| src/pages/transformations/transformations.test.tsx > effective permissions refresh after create (F-DG1-210) > English: Edit, Archive and the audit trail appear after create, without a reload
+      1  FAIL  |unit-web| src/pages/transformations/transformations.test.tsx > effective permissions refresh after create (F-DG1-210) > a failed /me refresh never blocks the navigation; the UI stays fail-safe (no controls offered)
+      1  FAIL  |unit-web| src/pages/transformations/transformations.test.tsx > effective permissions refresh after create (F-DG1-210) > does not over-grant: if the refreshed server answer adds nothing, Archive and the audit trail stay hidden
+      1  FAIL  |unit-web| src/pages/transformations/transformations.test.tsx > truly out-of-scope records keep the correct localized message > router state for a different id does not turn a 404 into the created message
+      1  Test Files  2 failed | 19 passed (21)
+     11  ❯ Object.RequestInit node:internal/deps/undici/undici:5152:21
+     12 TypeError: RequestInit: Expected signal ("AbortSignal {}") to be an instance of AbortSignal.
+      1 ⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+exit=1
+$ pnpm test   (run 2)
+      1       Tests  12 failed | 286 passed (298)
+      1      → RequestInit: Expected signal ("AbortSignal {}") to be an instance of AbortSignal.
+      1  FAIL  |unit-web| src/app/app.test.tsx > bilingual shell > redirects to sign-in when there is no session
+      1  FAIL  |unit-web| src/app/app.test.tsx > transformations > edit: a 409 writes nothing, shows compare, and re-applies on the current version
+      1  FAIL  |unit-web| src/app/app.test.tsx > transformations > lists transformations with a sortable code column and removable filter chips
+      1  FAIL  |unit-web| src/pages/transformations/transformations.test.tsx > after create (F-DG1-004) > explains the same in Arabic (RTL), using the glossary term for Transformation
+      1  FAIL  |unit-web| src/pages/transformations/transformations.test.tsx > after create (F-DG1-004) > explains, in English, that the draft was created but cannot be opened (server 404), instead of 'Not found'
+      1  FAIL  |unit-web| src/pages/transformations/transformations.test.tsx > after create (F-DG1-004) > shows the created record when the server lets the creator read it
+      1  FAIL  |unit-web| src/pages/transformations/transformations.test.tsx > after create (F-DG1-004) > treats a 403 for the just-created record the same way
+      1  FAIL  |unit-web| src/pages/transformations/transformations.test.tsx > effective permissions refresh after create (F-DG1-210) > Arabic (RTL): the same controls and the audit trail appear after create, without a reload
+      1  FAIL  |unit-web| src/pages/transformations/transformations.test.tsx > effective permissions refresh after create (F-DG1-210) > English: Edit, Archive and the audit trail appear after create, without a reload
+      1  FAIL  |unit-web| src/pages/transformations/transformations.test.tsx > effective permissions refresh after create (F-DG1-210) > a failed /me refresh never blocks the navigation; the UI stays fail-safe (no controls offered)
+      1  FAIL  |unit-web| src/pages/transformations/transformations.test.tsx > effective permissions refresh after create (F-DG1-210) > does not over-grant: if the refreshed server answer adds nothing, Archive and the audit trail stay hidden
+      1  FAIL  |unit-web| src/pages/transformations/transformations.test.tsx > truly out-of-scope records keep the correct localized message > router state for a different id does not turn a 404 into the created message
+      1  Test Files  2 failed | 19 passed (21)
+     11  ❯ Object.RequestInit node:internal/deps/undici/undici:5152:21
+     12 TypeError: RequestInit: Expected signal ("AbortSignal {}") to be an instance of AbortSignal.
+      1 ⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+exit=1
+$ pnpm vitest run --project unit-web
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed | 6 passed (8)
+      Tests  12 failed | 98 passed (110)
+exit=1
+$ pnpm vitest run --project unit-node
+ Test Files  13 passed (13)
+      Tests  188 passed (188)
+exit=0

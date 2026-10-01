@@ -1,0 +1,27 @@
+# Supplementary run on the PRODUCTION-TARGET runtime: PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH; node v24.21.0, openssl 3.5.8. Frozen candidate tree (265af7e) in the disposable clone.
+
+$ pnpm vitest run --project unit-node apps/api/src/architecture.test.ts
+ Test Files  1 passed (1)
+      Tests  105 passed (105)
+exit=0
+
+$ pnpm vitest run --project unit-node apps/api/src/dg1-r10-setengine-probe.test.ts --reporter=verbose
+R2 E1 Object.values + name built at runtime: lint 0 violation(s) []; runtime selects crypto.setEngine: true
+R2 E2 Map(Object.entries) + get(concat): lint 0 violation(s) []; runtime selects crypto.setEngine: true
+R2 E3 Object.entries + regex on the key, numeric index: lint 0 violation(s) []; runtime selects crypto.setEngine: true
+R2 E4 default export enumerated, for-of over entries: lint 0 violation(s) []; runtime selects crypto.setEngine: true
+R2 SUMMARY: 4/4 enumeration forms pass the lint: ["E1 Object.values + name built at runtime","E2 Map(Object.entries) + get(concat)","E3 Object.entries + regex on the key, numeric index","E4 default export enumerated, for-of over entries"]
+R3 node v24.21.0 openssl 3.5.8; screen hits: ["crypto.setEngine","os.getPriority","os.loadavg","os.setPriority","util.convertProcessSignalToExitCode","util.debug","util.debuglog","util.inspect","util.setTraceSigInt","util.transferableAbortSignal","util.types.isModuleNamespaceObject","util.types.isNativeError"]
+R3 unclassified: []
+      Tests  30 passed (30)
+exit=0
+
+$ real-file plant (same source as 12-real-plant-enumeration.log); pnpm vitest run --project unit-node apps/api/src/architecture.test.ts -t 'every import respects'
+      Tests  1 passed | 104 skipped (105)
+exit=0
+$ node --experimental-strip-types --input-type=module -e "<import plant; load($TMPDIR/qa-marker.so)>"
+QA-R10-NATIVE-CONSTRUCTOR-RAN
+QA-R10-NATIVE-CONSTRUCTOR-RAN
+setEngine threw after load: ERR_CRYPTO_ENGINE_UNKNOWN Engine "/var/tmp/mth-run.l3oGAK/claude-0/qa-marker.so" was not found
+exit=0
+$ plant removed; git status --short: []

@@ -1,0 +1,57 @@
+== repo
+241a3773cbcd78372921e0a5a394be4cb2ed79f1
+false
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:18fee1617d617cfd719aeaebe3c37904bd116c47eaafb5be52e7bd779c6e8807","files":390}
+== clone
+265af7e65a6a66f1dabcc678d9bf1adb1415f601
+false
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:18fee1617d617cfd719aeaebe3c37904bd116c47eaafb5be52e7bd779c6e8807","files":390}
+== manifest
+ "candidate_id": "sha256:18fee1617d617cfd719aeaebe3c37904bd116c47eaafb5be52e7bd779c6e8807",
+== HEAD vs freeze
+ docs/delivery/assignments/DG1/round-10/audit.md    |   23 +
+ .../DG1/round-10/review-code-security-reviewer.md  |   12 +
+ .../assignments/DG1/round-10/review-common.md      |   16 +
+ .../DG1/round-10/review-domain-reviewer.md         |   12 +
+ .../assignments/DG1/round-10/review-qa-verifier.md |   15 +
+ .../candidates/DG1/18fee1617d617cfd.manifest.json  | 1968 ++++++++++++++++++++
+ docs/delivery/stages.json                          |   20 +-
+ 7 files changed, 2062 insertions(+), 4 deletions(-)
+== META_EXCLUDES
+9:export const META_EXCLUDES = [
+10-  "docs/delivery/reviews/**",
+11-  "docs/delivery/gates/**",
+12-  "docs/delivery/test-evidence/**",
+13-  "docs/delivery/runs/**",
+14-  "docs/delivery/candidates/**",
+15-  "docs/delivery/handbacks/**",
+16-  "docs/delivery/assignments/**",
+17-  "docs/delivery/findings.json",
+18-  "docs/delivery/progress.md",
+19-  "docs/delivery/stages.json",
+20-];
+21-
+--
+68:  const exclude = [...(spec.exclude || []), ...META_EXCLUDES];
+69-  return paths.filter((p) => matchesAny(p, include) && !matchesAny(p, exclude)).sort();
+70-}
+71-
+72-/**
+73- * A transient mount stub of a concurrently running agent's OS sandbox (F-DG0-146, F-DG0-236): bubblewrap creates an
+74- * empty, read-only (0444) regular file where it mounts over a denied path that does not exist, and removes nothing
+75- * visible afterwards until the command ends. Such a file is untracked, zero-length and unwritable. It is skipped by the
+76- * working-tree manifest only: a frozen candidate always comes from committed content (manifestFromRef), so skipping an
+77- * untracked empty file can never change what is frozen or approved.
+78- */
+== product-tree diff since round-9 freeze 273d21f
+ apps/api/src/architecture.test.ts    | 42 +++++++++++++++++++++++++++++++++++-
+ apps/api/src/architecture.testkit.ts | 22 +++++++++++++++++--
+ 2 files changed, 61 insertions(+), 3 deletions(-)
+== runtime/contract/data/i18n/token diff (expect empty)
+[end]
+== build exclude
+10:  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/**/*.testkit.ts"]
+== fix commits are ancestors
+74c9e4a-ancestor
+99f3447-ancestor
+exit=0

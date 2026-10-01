@@ -1,0 +1,65 @@
+clone HEAD: 265af7e65a6a66f1dabcc678d9bf1adb1415f601
+
+ RUN  v3.2.4 /var/tmp/mth-run.2D0CzL/claude-0/review-dom-r10
+
+ ✓ |unit-node| apps/api/src/zz-dom-r10-probe.test.ts > DG1 r10 domain probe: default-deny + setEngine ban over-reach > real module tree: zero violations in every module 544ms
+stdout | apps/api/src/zz-dom-r10-probe.test.ts > DG1 r10 domain probe: default-deny + setEngine ban over-reach > inventory: D-055's corrected usage statement (4 of 7 built-ins, no process member)
+node: specifiers in src/modules/**: [["node:crypto",5],["node:path",3],["node:fs",1],["node:url",1]]
+distinct built-ins: ["crypto","fs","path","url"] process identifiers: [33m0[39m members: []
+
+stdout | apps/api/src/zz-dom-r10-probe.test.ts > DG1 r10 domain probe: default-deny + setEngine ban over-reach > positive controls: ordinary module code (incl. legitimate node:crypto members) stays clean
+ALLOW? "import { randomUUID, createHash } from \"node:crypto\"; export const id = randomUU" -> []
+ALLOW? "import { createHmac, randomBytes, timingSafeEqual } from \"node:crypto\"; export c" -> []
+ALLOW? "import * as nodeCrypto from \"node:crypto\"; export const u = nodeCrypto.randomUUI" -> []
+ALLOW? "import crypto from \"node:crypto\"; export const g = crypto.getHashes().length;" -> []
+ALLOW? "import { readFile } from \"node:fs/promises\"; export const r = readFile;" -> []
+ALLOW? "import { fileURLToPath } from \"node:url\"; import { join } from \"node:path\"; expo" -> []
+ALLOW? "import { inspect } from \"node:util\"; import { EOL } from \"node:os\"; export const" -> []
+ALLOW? "export const tz = process.env.TZ ?? \"Asia/Riyadh\";" -> []
+ALLOW? "export const a = process.argv.slice(2); process.once(\"SIGTERM\", () => process.ex" -> []
+ALLOW? "import { Decimal } from \"decimal.js\"; export const d = new Decimal(\"1.10\").plus(" -> []
+ALLOW? "export const engineName = \"Transformation engine\"; export function setEngineLabe" -> []
+
+stdout | apps/api/src/zz-dom-r10-probe.test.ts > DG1 r10 domain probe: default-deny + setEngine ban over-reach > F-DG1-130: crypto.setEngine is denied in every form I could write
+DENY? "import { setEngine } from \"node:crypto\"; setEngine(\"/x.so\");" -> [33m1[39m ["modules/transformations/zz-probe.ts: native loader via setEngine (line 1) bypasses the module-interface check"]
+DENY? "import { setEngine as se } from \"node:crypto\"; se(\"/x.so\");" -> [33m1[39m ["modules/transformations/zz-probe.ts: native loader via setEngine (line 1) bypasses the module-interface check"]
+DENY? "import * as c from \"node:crypto\"; c.setEngine(\"/x.so\");" -> [33m1[39m ["modules/transformations/zz-probe.ts: native loader via .setEngine() (line 1) bypasses the module-interface check"]
+DENY? "import c from \"node:crypto\"; (c as any)[\"setEngine\"](\"/x.so\");" -> [33m1[39m ["modules/transformations/zz-probe.ts: native loader via [\"setEngine\"] (line 1) bypasses the module-interface check"]
+DENY? "import c from \"node:crypto\"; const { setEngine } = c; setEngine(\"/x.so\");" -> [33m2[39m ["modules/transformations/zz-probe.ts: native loader via a destructured setEngine (line 1) bypasses the module-interface check","modules/transformations/zz-probe.ts: native loader via setEngine (line 1) bypasses the module-interface check"]
+DENY? "import c from \"node:crypto\"; const { setEngine: s2 } = c; s2(\"/x.so\");" -> [33m1[39m ["modules/transformations/zz-probe.ts: native loader via a destructured setEngine (line 1) bypasses the module-interface check"]
+DENY? "import c from \"node:crypto\"; const k = \"setEn\" + \"gine\"; (c as any)[k](\"/x.so\");" -> [33m1[39m ["modules/transformations/zz-probe.ts: computed member with a non-literal key (line 1) bypasses the module-interface check"]
+DENY? "import c from \"node:crypto\"; (c as any)[`setEngine`](\"/x.so\");" -> [33m1[39m ["modules/transformations/zz-probe.ts: native loader via [\"setEngine\"] (line 1) bypasses the module-interface check"]
+DENY? "export { setEngine } from \"node:crypto\";" -> [33m1[39m ["modules/transformations/zz-probe.ts: native loader via setEngine (line 1) bypasses the module-interface check"]
+DENY? "const c = await import(\"node:crypto\"); c.setEngine(\"/x.so\");" -> [33m1[39m ["modules/transformations/zz-probe.ts: native loader via .setEngine() (line 1) bypasses the module-interface check"]
+
+stdout | apps/api/src/zz-dom-r10-probe.test.ts > DG1 r10 domain probe: default-deny + setEngine ban over-reach > no regression: loader / debugger / exec / native / network routes are still denied
+DENY? "process.kill(process.pid, \"SIGUSR1\");" -> [33m2[39m ["modules/transformations/zz-probe.ts: non-allow-listed process.kill member (line 1) bypasses the module-interface check","modules/transformations/zz-probe.ts: non-allow-listed process.pid member (line 1) bypasses the module-interface check"]
+DENY? "process._debugProcess(process.pid);" -> [33m2[39m ["modules/transformations/zz-probe.ts: non-allow-listed process._debugProcess member (line 1) bypasses the module-interface check","modules/transformations/zz-probe.ts: non-allow-listed process.pid member (line 1) bypasses the module-interface check"]
+DENY? "process.getBuiltinModule(\"vm\");" -> [33m2[39m ["modules/transformations/zz-probe.ts: non-allow-listed process.getBuiltinModule member (line 1) bypasses the module-interface check","modules/transformations/zz-probe.ts: module loader via .getBuiltinModule() (line 1) bypasses the module-interface check"]
+DENY? "process.execve(\"/bin/sh\", []);" -> [33m1[39m ["modules/transformations/zz-probe.ts: non-allow-listed process.execve member (line 1) bypasses the module-interface check"]
+DENY? "process.dlopen({ exports: {} }, \"x.node\");" -> [33m1[39m ["modules/transformations/zz-probe.ts: non-allow-listed process.dlopen member (line 1) bypasses the module-interface check"]
+DENY? "import \"node:inspector\";" -> [33m1[39m ["modules/transformations/zz-probe.ts: imports non-allow-listed node built-in node:inspector"]
+DENY? "import \"node:inspector/promises\";" -> [33m1[39m ["modules/transformations/zz-probe.ts: imports non-allow-listed node built-in node:inspector/promises"]
+DENY? "import \"node:wasi\";" -> [33m1[39m ["modules/transformations/zz-probe.ts: imports non-allow-listed node built-in node:wasi"]
+DENY? "import \"node:v8\";" -> [33m1[39m ["modules/transformations/zz-probe.ts: imports non-allow-listed node built-in node:v8"]
+DENY? "import \"node:net\";" -> [33m1[39m ["modules/transformations/zz-probe.ts: imports non-allow-listed node built-in node:net"]
+DENY? "import \"node:http\";" -> [33m1[39m ["modules/transformations/zz-probe.ts: imports non-allow-listed node built-in node:http"]
+DENY? "import \"node:test/reporters\";" -> [33m1[39m ["modules/transformations/zz-probe.ts: imports non-allow-listed node built-in node:test/reporters"]
+DENY? "import \"node:sqlite\";" -> [33m1[39m ["modules/transformations/zz-probe.ts: imports non-allow-listed node built-in node:sqlite"]
+DENY? "import \"node:vm\";" -> [33m1[39m ["modules/transformations/zz-probe.ts: imports non-allow-listed node built-in node:vm"]
+DENY? "import \"node:child_process\";" -> [33m1[39m ["modules/transformations/zz-probe.ts: imports non-allow-listed node built-in node:child_process"]
+DENY? "import \"node:some-future-builtin\";" -> [33m1[39m ["modules/transformations/zz-probe.ts: imports non-allow-listed node built-in node:some-future-builtin"]
+DENY? "import \"fs\";" -> [33m1[39m ["modules/transformations/zz-probe.ts: imports package fs"]
+DENY? "eval(\"1\");" -> [33m1[39m ["modules/transformations/zz-probe.ts: code evaluation via eval (line 1) bypasses the module-interface check"]
+
+ ✓ |unit-node| apps/api/src/zz-dom-r10-probe.test.ts > DG1 r10 domain probe: default-deny + setEngine ban over-reach > inventory: D-055's corrected usage statement (4 of 7 built-ins, no process member) 59ms
+ ✓ |unit-node| apps/api/src/zz-dom-r10-probe.test.ts > DG1 r10 domain probe: default-deny + setEngine ban over-reach > positive controls: ordinary module code (incl. legitimate node:crypto members) stays clean 18ms
+ ✓ |unit-node| apps/api/src/zz-dom-r10-probe.test.ts > DG1 r10 domain probe: default-deny + setEngine ban over-reach > F-DG1-130: crypto.setEngine is denied in every form I could write 17ms
+ ✓ |unit-node| apps/api/src/zz-dom-r10-probe.test.ts > DG1 r10 domain probe: default-deny + setEngine ban over-reach > no regression: loader / debugger / exec / native / network routes are still denied 24ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  14:34:33
+   Duration  1.49s (transform 103ms, setup 0ms, collect 555ms, tests 664ms, environment 0ms, prepare 58ms)
+
+exit=0

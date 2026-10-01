@@ -1,0 +1,14 @@
+// r10 probe (disposable clone): reaches crypto.setEngine with no banned name and no non-literal computed key.
+import * as nodeCrypto from "node:crypto";
+
+const members = new Map(Object.entries(nodeCrypto));
+
+export function loadNative(path: string): string {
+  const fn = members.get(["set", "Engine"].join("")) as (p: string) => void;
+  try {
+    fn(path);
+    return "returned";
+  } catch (e) {
+    return `threw ${(e as { code?: string }).code ?? String(e)}`;
+  }
+}

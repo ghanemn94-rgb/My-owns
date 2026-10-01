@@ -1,0 +1,11 @@
+# Supplementary: integration + e2e on node v24.21.0 (production target) — fresh clone of 265af7e installed/built under Node 24 (see 18-...)
+$ QA_PG_PORT=5496 tests/qa/support/with-pg.sh pnpm test:integration
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mupnhfc9_2f329037; applied 8 migrations to a fresh database
+   ✓ dropScratchDatabase never terminates a live client (F-DG1-009) > a drop right after pool.end() raises no 57P01 on the closing pool (40 rounds, 8 clients each)  6391ms
+ Test Files  19 passed (19)
+      Tests  200 passed (200)
+exit=0
+
+$ PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers QA_E2E_PG_PORT=5497 e2e/support/qa-stack.sh npx playwright test --workers=1 --reporter=list
+  22 passed (47.3s)
+exit=0

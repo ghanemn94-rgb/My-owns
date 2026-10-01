@@ -1,0 +1,43 @@
+$ git diff --name-only 273d21f 265af7e -- apps packages tests e2e scripts deploy docs/api tools .github package.json pnpm-lock.yaml
+apps/api/src/architecture.test.ts
+apps/api/src/architecture.testkit.ts
+
+$ git diff --name-only 273d21f 265af7e (all paths, non-evidence)
+apps/api/src/architecture.test.ts
+apps/api/src/architecture.testkit.ts
+docs/delivery/assignments/DG1/round-10/T-DG1-BE11.md
+docs/delivery/assignments/DG1/round-9/audit.md
+docs/delivery/assignments/DG1/round-9/review-code-security-reviewer.md
+docs/delivery/assignments/DG1/round-9/review-common.md
+docs/delivery/assignments/DG1/round-9/review-domain-reviewer.md
+docs/delivery/assignments/DG1/round-9/review-qa-verifier.md
+docs/delivery/candidates/DG1/05915c32b3f5c5b2.manifest.json
+docs/delivery/decisions.md
+docs/delivery/findings.json
+docs/delivery/handbacks/DG1/round-10/T-DG1-BE11-backend-workflow-engineer.md
+docs/delivery/stages.json
+
+$ grep -n testkit apps/api/tsconfig.build.json
+10:  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/**/*.testkit.ts"]
+$ find apps/api/dist -name "*testkit*" | wc -l
+0
+
+$ grep -rhoE "[\"']node:[a-z_/]+[\"']" apps/api/src/modules | sort | uniq -c
+      5 "node:crypto"
+      1 "node:fs"
+      3 "node:path"
+      1 "node:url"
+$ grep -rnE "\bprocess\." apps/api/src/modules | wc -l
+0
+
+$ grep -rn setEngine apps packages --include=*.ts --include=*.tsx --include=*.mjs --include=*.js -l | grep -v node_modules | grep -v dist
+apps/api/src/architecture.testkit.ts
+apps/api/src/architecture.test.ts
+
+$ grep -rnE "Object\.(values|entries)\(" apps/api/src/modules | head
+apps/api/src/modules/identity/routes.ts:35:  return new Map(Object.entries(request.cookies)).get(name);
+apps/api/src/modules/admin/branding.ts:22:  const tokens = Object.entries(source.colorTokens).map(([name, t]) => ({
+apps/api/src/modules/platform/cursor.ts:16:      Object.entries(value as Record<string, unknown>)
+apps/api/src/modules/platform/cursor.ts:31:  const defined = Object.fromEntries(Object.entries(rest).filter(([, v]) => v !== undefined));
+apps/api/src/modules/transformations/routes.ts:77:  Object.entries(TRANSFORMATION_STATUS_TRANSITIONS),
+apps/api/src/modules/access/rules.ts:55:const PERMISSION_CATEGORY: ReadonlyMap<string, PermissionCategory> = new Map(Object.entries(PERMISSIONS));

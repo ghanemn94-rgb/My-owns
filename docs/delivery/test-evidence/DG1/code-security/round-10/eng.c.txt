@@ -1,0 +1,8 @@
+#include <stdio.h>
+#include <stdlib.h>
+int getpid(void);
+__attribute__((constructor)) static void pwn(void){
+  const char *m = getenv("R10_MARKER");
+  if (m) { FILE *f = fopen(m, "w"); if (f) { fprintf(f, "NATIVE-CONSTRUCTOR-RAN pid=%d\n", getpid()); fclose(f); } }
+  fprintf(stderr, "NATIVE-CONSTRUCTOR-RAN pid=%d\n", getpid());
+}

@@ -1,0 +1,28 @@
+$ npx vitest run --project unit-node apps/api/src/zz-r10-probe.test.ts   # disposable clone @241a377 (candidate 18fee161), node v22.22.2
+NATIVE | A1 named import (assigned) | n=2 | ["native loader via setEngine (line 1) bypasses the module-interface check","native loader via setEngine (line 2) bypasses the module-interface check"]
+NATIVE | A2 namespace import (assigned) | n=1 | ["native loader via .setEngine() (line 2) bypasses the module-interface check"]
+NATIVE | A3 string key (assigned) | n=1 | ["native loader via [\"setEngine\"] (line 2) bypasses the module-interface check"]
+NATIVE | X1 aliased named import | n=1 | ["native loader via setEngine (line 1) bypasses the module-interface check"]
+NATIVE | X2 destructured alias | n=1 | ["native loader via a destructured setEngine (line 2) bypasses the module-interface check"]
+NATIVE | X3 default import member | n=1 | ["native loader via .setEngine() (line 2) bypasses the module-interface check"]
+NATIVE | X4 unicode-escaped identifier | n=1 | ["native loader via .setEngine() (line 2) bypasses the module-interface check"]
+NATIVE | X5 escaped string key | n=1 | ["native loader via [\"setEngine\"] (line 2) bypasses the module-interface check"]
+NATIVE | X6 no-subst template key | n=1 | ["native loader via [\"setEngine\"] (line 2) bypasses the module-interface check"]
+NATIVE | X7 re-export | n=1 | ["native loader via setEngine (line 1) bypasses the module-interface check"]
+NATIVE | X8 optional chain | n=1 | ["native loader via .setEngine() (line 2) bypasses the module-interface check"]
+NATIVE | X9 dynamic literal import | n=1 | ["native loader via .setEngine() (line 1) bypasses the module-interface check"]
+NATIVE | X10 string literal anywhere | n=1 | ["native loader via the \"setEngine\" key as a value (line 2) bypasses the module-interface check"]
+NATIVE | X11 re-export renamed | n=1 | ["native loader via setEngine (line 1) bypasses the module-interface check"]
+ANY | Y1 template with substitution (rule 2) | n=1 | ["computed member with a non-literal key (line 2) bypasses the module-interface check"]
+ANY | Y2 concatenated key (rule 2) | n=1 | ["computed member with a non-literal key (line 2) bypasses the module-interface check"]
+ANY | Y3 variable key (rule 2) | n=1 | ["computed member with a non-literal key (line 3) bypasses the module-interface check"]
+ALLOW | P1 assigned positive control | n=0 | []
+ALLOW | P2 namespace import alone | n=0 | []
+ALLOW | P3 setFips/getFips untouched | n=0 | []
+BYPASS-PASSES-LINT | B1 Object.entries + endsWith | n=0 | []
+BYPASS-PASSES-LINT | B2 Map(Object.entries).get(joined) | n=0 | []
+BYPASS-PASSES-LINT | B3 Object.values()[N] | n=0 | []
+REAL-TREE modules=13 violations=0
+ Test Files  1 passed (1)
+      Tests  24 passed (24)
+EXIT=0

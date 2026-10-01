@@ -1,0 +1,14 @@
+# Node 24 member-audit + architecture lint re-run (F-DG1-011): the F-DG1-130 member-audit and the module lint, re-run on the PRODUCTION target Node 24.21.0 by the delivery-orchestrator in DG1 round 11.
+# Date: 2026-10-01T14:44:48Z. Node: v24.21.0. (The build-sandbox floor audit ran on Node v22.22.2; see the testkit header and T-DG1-BE11 handback.)
+
+## Loader-like members of the 7 allow-listed built-ins on Node 24.21.0 (name-regex scan, then hand-classified):
+node:crypto: setEngine
+node:os: loadavg
+node:util: debug, debuglog
+# Classification: crypto.setEngine = native dlopen loader (BANNED by rule 1). os.loadavg = system load-average numbers (NOT a loader). util.debug/util.debuglog = logging helpers, no debugger/loader (NOT loaders). => crypto.setEngine is the ONLY native loader member on Node 24 too, and it is banned. Same result as Node 22.22.2.
+
+## Dangerous process.* members present on Node 24.21.0 (all DENIED by default-deny, none in SAFE_PROCESS_MEMBERS={env,exit,argv,once}):
+binding, _linkedBinding, dlopen, execve, kill, _kill, _debugProcess, getBuiltinModule, abort, reallyExit
+
+## architecture.test.ts under Node 24.21.0:
+Tests 105 passed (105) — the static lint behaves identically to Node 22.22.2 (it parses the TypeScript AST; it does not depend on the Node runtime).

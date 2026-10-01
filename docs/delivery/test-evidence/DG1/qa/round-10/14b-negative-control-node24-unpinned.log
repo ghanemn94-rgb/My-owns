@@ -1,0 +1,67 @@
+# NOTE: this run used Node v24.21.0, which appeared on PATH (/opt/nvm, created 14:43:16Z) mid-run; see 14-negative-control.log for the Node-22-pinned run. The R3 failure here is util.convertProcessSignalToExitCode (Node 24 only, unclassified by the QA screen), not a testkit effect.
+# Negative control: the probe against the PRE-FIX testkit (round-9 candidate 273d21f), in the disposable clone
+$ git show 273d21f:apps/api/src/architecture.testkit.ts > apps/api/src/architecture.testkit.ts; pnpm vitest run --project unit-node apps/api/src/dg1-r10-setengine-probe.test.ts --reporter=verbose
+R1 named import: 0 violation(s) []
+R1 aliased named import: 0 violation(s) []
+R1 namespace member: 0 violation(s) []
+R1 default-export member: 0 violation(s) []
+R1 namespace .default member: 0 violation(s) []
+R1 optional chain: 0 violation(s) []
+R1 string key: 0 violation(s) []
+R1 template key: 0 violation(s) []
+R1 unicode-escaped string key: 0 violation(s) []
+R1 unicode-escaped identifier: 0 violation(s) []
+R1 destructuring: 0 violation(s) []
+R1 destructuring rename: 0 violation(s) []
+ × |unit-node| apps/api/src/dg1-r10-setengine-probe.test.ts > R1 rule-1 spellings of setEngine are flagged (native loader) > named import 52ms
+ × |unit-node| apps/api/src/dg1-r10-setengine-probe.test.ts > R1 rule-1 spellings of setEngine are flagged (native loader) > aliased named import 5ms
+ × |unit-node| apps/api/src/dg1-r10-setengine-probe.test.ts > R1 rule-1 spellings of setEngine are flagged (native loader) > namespace member 5ms
+ × |unit-node| apps/api/src/dg1-r10-setengine-probe.test.ts > R1 rule-1 spellings of setEngine are flagged (native loader) > default-export member 3ms
+ × |unit-node| apps/api/src/dg1-r10-setengine-probe.test.ts > R1 rule-1 spellings of setEngine are flagged (native loader) > namespace .default member 4ms
+ × |unit-node| apps/api/src/dg1-r10-setengine-probe.test.ts > R1 rule-1 spellings of setEngine are flagged (native loader) > optional chain 4ms
+ × |unit-node| apps/api/src/dg1-r10-setengine-probe.test.ts > R1 rule-1 spellings of setEngine are flagged (native loader) > string key 5ms
+ × |unit-node| apps/api/src/dg1-r10-setengine-probe.test.ts > R1 rule-1 spellings of setEngine are flagged (native loader) > template key 4ms
+ × |unit-node| apps/api/src/dg1-r10-setengine-probe.test.ts > R1 rule-1 spellings of setEngine are flagged (native loader) > unicode-escaped string key 4ms
+ × |unit-node| apps/api/src/dg1-r10-setengine-probe.test.ts > R1 rule-1 spellings of setEngine are flagged (native loader) > unicode-escaped identifier 4ms
+ × |unit-node| apps/api/src/dg1-r10-setengine-probe.test.ts > R1 rule-1 spellings of setEngine are flagged (native loader) > destructuring 5ms
+R1 string-key destructuring: 0 violation(s) []
+R1 export-from: 0 violation(s) []
+R1 export-from rename: 0 violation(s) []
+R1 dynamic import: 0 violation(s) []
+R1 then() destructuring: 0 violation(s) []
+R1 'in' probe: 0 violation(s) []
+R2 SUMMARY: 4/4 enumeration forms pass the lint: ["E1 Object.values + name built at runtime","E2 Map(Object.entries) + get(concat)","E3 Object.entries + regex on the key, numeric index","E4 default export enumerated, for-of over entries"]
+ × |unit-node| apps/api/src/dg1-r10-setengine-probe.test.ts > R1 rule-1 spellings of setEngine are flagged (native loader) > destructuring rename 5ms
+ × |unit-node| apps/api/src/dg1-r10-setengine-probe.test.ts > R1 rule-1 spellings of setEngine are flagged (native loader) > string-key destructuring 4ms
+ × |unit-node| apps/api/src/dg1-r10-setengine-probe.test.ts > R1 rule-1 spellings of setEngine are flagged (native loader) > export-from 6ms
+ × |unit-node| apps/api/src/dg1-r10-setengine-probe.test.ts > R1 rule-1 spellings of setEngine are flagged (native loader) > export-from rename 3ms
+ × |unit-node| apps/api/src/dg1-r10-setengine-probe.test.ts > R1 rule-1 spellings of setEngine are flagged (native loader) > dynamic import 5ms
+ × |unit-node| apps/api/src/dg1-r10-setengine-probe.test.ts > R1 rule-1 spellings of setEngine are flagged (native loader) > then() destructuring 4ms
+ × |unit-node| apps/api/src/dg1-r10-setengine-probe.test.ts > R1 rule-1 spellings of setEngine are flagged (native loader) > 'in' probe 5ms
+ ✓ |unit-node| apps/api/src/dg1-r10-setengine-probe.test.ts > R2 setEngine reached by enumeration, without its name in source > E1 Object.values + name built at runtime 6ms
+ ✓ |unit-node| apps/api/src/dg1-r10-setengine-probe.test.ts > R2 setEngine reached by enumeration, without its name in source > E2 Map(Object.entries) + get(concat) 8ms
+ ✓ |unit-node| apps/api/src/dg1-r10-setengine-probe.test.ts > R2 setEngine reached by enumeration, without its name in source > E3 Object.entries + regex on the key, numeric index 5ms
+ ✓ |unit-node| apps/api/src/dg1-r10-setengine-probe.test.ts > R2 setEngine reached by enumeration, without its name in source > E4 default export enumerated, for-of over entries 4ms
+ ✓ |unit-node| apps/api/src/dg1-r10-setengine-probe.test.ts > R2 setEngine reached by enumeration, without its name in source > summary: forms that reach crypto.setEngine with 0 lint violations 0ms
+ × |unit-node| apps/api/src/dg1-r10-setengine-probe.test.ts > R3 independent member audit of the 7 allow-listed built-ins (running Node) > every screen hit is either the banned native loader or QA-cleared 8ms
+ ✓ |unit-node| apps/api/src/dg1-r10-setengine-probe.test.ts > R4 positive controls stay clean > crypto named 3ms
+ ✓ |unit-node| apps/api/src/dg1-r10-setengine-probe.test.ts > R4 positive controls stay clean > crypto namespace 2ms
+ ✓ |unit-node| apps/api/src/dg1-r10-setengine-probe.test.ts > R4 positive controls stay clean > crypto default 2ms
+ ✓ |unit-node| apps/api/src/dg1-r10-setengine-probe.test.ts > R4 positive controls stay clean > fs/path/url 3ms
+ ✓ |unit-node| apps/api/src/dg1-r10-setengine-probe.test.ts > R4 positive controls stay clean > os/util/fs.promises 2ms
+ ✓ |unit-node| apps/api/src/dg1-r10-setengine-probe.test.ts > R4 positive controls stay clean > setFips read 2ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 19 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  19 failed | 11 passed (30)
+exit=1
+
+$ (pre-fix testkit) pnpm vitest run --project unit-node apps/api/src/architecture.test.ts -t "setEngine"
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > S1 crypto.setEngine (named import) is a violation (round-9 lint: 'missed') 47ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > S2 crypto.setEngine (namespace import) is a violation (round-9 lint: 'missed') 5ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > S3 crypto["setEngine"] (string key) is a violation (round-9 lint: 'missed') 5ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-130: only setEngine is banned - node:crypto and its other members stay allowed (positive control) 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 1 passed | 101 skipped (105)
+exit=1
+
+$ restored; git status --short: []
+tree identical to 265af7e

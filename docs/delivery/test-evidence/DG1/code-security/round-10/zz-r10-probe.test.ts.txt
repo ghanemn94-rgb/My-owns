@@ -1,0 +1,70 @@
+// Round-10 code-security probe (disposable clone only; never in the candidate tree).
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { MODULES_DIR, fileViolations, moduleViolations } from "./architecture.testkit.ts";
+import { API_MODULES, type ApiModule } from "./modules.ts";
+
+const FILE = join(MODULES_DIR, "transformations", "zz-planted.ts");
+const plant = (src: string) => fileViolations("transformations", FILE, src);
+const log = (tag: string, name: string, v: string[]) =>
+  console.log(`${tag} | ${name} | n=${v.length} | ${JSON.stringify(v.map((s) => s.replace(/^.*?: /, "")))}`);
+
+const MUST_FLAG_NATIVE: [string, string][] = [
+  ["A1 named import (assigned)", `import { setEngine } from "node:crypto";\nsetEngine("/x.so");`],
+  ["A2 namespace import (assigned)", `import * as c from "node:crypto";\nc.setEngine("/x.so");`],
+  ["A3 string key (assigned)", `import crypto from "node:crypto";\n(crypto as any)["setEngine"]("/x.so");`],
+  ["X1 aliased named import", `import { setEngine as s } from "node:crypto";\ns("/x.so");`],
+  ["X2 destructured alias", `import * as c from "node:crypto";\nconst { setEngine: s } = c;\ns("/x.so");`],
+  ["X3 default import member", `import crypto from "node:crypto";\ncrypto.setEngine("/x.so");`],
+  ["X4 unicode-escaped identifier", `import * as c from "node:crypto";\nc.set\\u0045ngine("/x.so");`],
+  ["X5 escaped string key", `import * as c from "node:crypto";\n(c as any)["set\\x45ngine"]("/x.so");`],
+  ["X6 no-subst template key", "import * as c from \"node:crypto\";\n(c as any)[`setEngine`](\"/x.so\");"],
+  ["X7 re-export", `export { setEngine } from "node:crypto";`],
+  ["X8 optional chain", `import * as c from "node:crypto";\n(c as any).default?.setEngine?.("/x.so");`],
+  ["X9 dynamic literal import", `export const f = async () => (await import("node:crypto")).setEngine("/x.so");`],
+  ["X10 string literal anywhere", `import * as c from "node:crypto";\nexport const k = "setEngine";`],
+  ["X11 re-export renamed", `export { setEngine as s } from "node:crypto";`],
+];
+const MUST_FLAG_ANY: [string, string][] = [
+  ["Y1 template with substitution (rule 2)", "import * as c from \"node:crypto\";\n(c as any)[`set${\"Engine\"}`](\"/x.so\");"],
+  ["Y2 concatenated key (rule 2)", `import * as c from "node:crypto";\n(c as any)["set" + "Engine"]("/x.so");`],
+  ["Y3 variable key (rule 2)", `import * as c from "node:crypto";\nconst k = "set" + "Engine";\n(c as any)[k]("/x.so");`],
+];
+const MUST_ALLOW: [string, string][] = [
+  ["P1 assigned positive control", `import { randomUUID, createHash } from "node:crypto";\nexport const h = randomUUID() + createHash("sha256").update("x").digest("hex");`],
+  ["P2 namespace import alone", `import * as c from "node:crypto";\nexport const id = c.randomUUID();`],
+  ["P3 setFips/getFips untouched", `import { getFips } from "node:crypto";\nexport const f = getFips();`],
+];
+// Candidate bypasses: enumeration of an allow-listed namespace (no banned name, no non-literal computed key).
+const PROBE_BYPASS: [string, string][] = [
+  ["B1 Object.entries + endsWith", `import * as c from "node:crypto";\nfor (const [k, v] of Object.entries(c)) if (k.startsWith("setE")) (v as (p: string) => void)("/x.so");`],
+  ["B2 Map(Object.entries).get(joined)", `import * as c from "node:crypto";\nconst m = new Map(Object.entries(c));\n(m.get(["set", "Engine"].join("")) as (p: string) => void)("/x.so");`],
+  ["B3 Object.values()[N]", `import * as c from "node:crypto";\nconst all = Object.values(c);\n(all[42] as (p: string) => void)("/x.so");`],
+];
+
+describe("r10 F-DG1-130 probes", () => {
+  it.each(MUST_FLAG_NATIVE)("%s flagged as native loader", (name, src) => {
+    const v = plant(src);
+    log("NATIVE", name, v);
+    expect(v.join("\n")).toMatch(/native loader via .*setEngine|native loader via \["setEngine"\]|native loader via the "setEngine" key/);
+  });
+  it.each(MUST_FLAG_ANY)("%s flagged", (name, src) => {
+    const v = plant(src);
+    log("ANY", name, v);
+    expect(v.length).toBeGreaterThan(0);
+  });
+  it.each(MUST_ALLOW)("%s allowed", (name, src) => {
+    const v = plant(src);
+    log("ALLOW", name, v);
+    expect(v).toEqual([]);
+  });
+  it.each(PROBE_BYPASS)("%s (record result)", (name, src) => {
+    const v = plant(src);
+    log(v.length === 0 ? "BYPASS-PASSES-LINT" : "BYPASS-CAUGHT", name, v);
+  });
+  it("real module tree: zero moduleViolations", () => {
+    const all = (Object.keys(API_MODULES) as ApiModule[]).flatMap((m) => moduleViolations(m));
+    console.log(`REAL-TREE modules=${Object.keys(API_MODULES).length} violations=${all.length}`);
+    expect(all).toEqual([]);
+  });
+});

@@ -1,0 +1,18 @@
+// Enumerate own properties of the 7 allow-listed built-ins and named sub-namespaces; flag name matches for review.
+import * as crypto from "node:crypto"; import * as fs from "node:fs"; import * as fsp from "node:fs/promises";
+import * as os from "node:os"; import * as path from "node:path"; import * as url from "node:url"; import * as util from "node:util";
+const roots = { crypto, fs, "fs/promises": fsp, os, path, url, util,
+  "fs.promises": fs.promises, "path.posix": path.posix, "path.win32": path.win32, "util.types": util.types,
+  "crypto.webcrypto": crypto.webcrypto, "crypto.subtle": crypto.subtle, "crypto.constants": crypto.constants, "os.constants": os.constants };
+const RX = /load|engine|exec|spawn|eval|dlopen|native|module|require|import|debug|inspect|binding|wasm|compil|script|fips|provider|worker|vm|run|addon|plugin|link|open|proc|call|shell|fork/i;
+console.log(`node ${process.version} openssl ${process.versions.openssl} platform ${process.platform}`);
+let total = 0;
+for (const [name, obj] of Object.entries(roots)) {
+  const keys = [...new Set([...Reflect.ownKeys(obj), ...(name === "crypto.subtle" || name === "crypto.webcrypto" ? Reflect.ownKeys(Object.getPrototypeOf(obj)) : [])])].map(String).filter(k => k !== "default").sort();
+  total += keys.length;
+  const flagged = keys.filter(k => RX.test(k));
+  console.log(`\n== ${name}: ${keys.length} members`);
+  console.log(`   all: ${keys.join(", ")}`);
+  console.log(`   NAME-MATCH (${flagged.length}): ${flagged.map(k => `${k}:${typeof obj[k]}`).join(", ")}`);
+}
+console.log(`\nTOTAL members enumerated: ${total}`);

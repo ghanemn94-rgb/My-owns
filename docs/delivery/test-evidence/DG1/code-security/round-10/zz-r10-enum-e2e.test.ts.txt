@@ -1,0 +1,13 @@
+import { existsSync, readFileSync } from "node:fs";
+import { expect, it } from "vitest";
+import { moduleViolations } from "./architecture.testkit.ts";
+import { loadNative } from "./modules/transformations/zz-enum.ts";
+
+it("enumeration route: lint verdict + runtime effect", () => {
+  const v = moduleViolations("transformations");
+  console.log(`LINT transformations violations=${v.length} ${JSON.stringify(v)}`);
+  const marker = process.env.R10_MARKER!;
+  console.log(`RUNTIME loadNative -> ${loadNative(process.env.R10_SO!)}`);
+  console.log(`MARKER exists=${existsSync(marker)} content=${existsSync(marker) ? readFileSync(marker, "utf8").trim() : ""}`);
+  expect(v).toEqual([]);
+});

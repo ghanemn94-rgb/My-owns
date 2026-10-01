@@ -1,0 +1,46 @@
+== pnpm run check:no-cdn
+> mobily-transformation-hub@0.1.0 check:no-cdn /var/tmp/mth-run.2D0CzL/claude-0/review-dom-r10
+> node scripts/check-no-cdn.mjs
+
+PASS no-cdn: scanned apps, packages
+exit=0
+== pnpm run openapi:lint
+> mobily-transformation-hub@0.1.0 openapi:lint /var/tmp/mth-run.2D0CzL/claude-0/review-dom-r10
+> node scripts/openapi-lint.mjs docs/api/openapi.yaml
+
+PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 33 operations
+exit=0
+== pnpm -r typecheck
+apps/api typecheck$ tsc -p tsconfig.json
+apps/worker typecheck$ tsc -p tsconfig.json
+apps/worker typecheck: Done
+apps/api typecheck: Done
+exit=0
+== pnpm run lint
+
+> mobily-transformation-hub@0.1.0 lint /var/tmp/mth-run.2D0CzL/claude-0/review-dom-r10
+> eslint . --max-warnings=0
+
+exit=0
+== npx prettier --check apps/api/src/architecture.testkit.ts apps/api/src/architecture.test.ts
+Checking formatting...
+All matched files use Prettier code style!
+exit=0
+== contract/i18n/db/arch/tokens diff 273d21f..265af7e (expect empty)
+[end]
+== invariants
+3:  "provisional": true,
+5:    "brand.primary": { "value": "#0078FF", "purpose": "Primary accents and selected elements", "provisional": true },
+9:      "provisional": true
+17: * Maps the token source to the contract shape. Fails safe: provenance is "official" only when the source says the
+29:  return brandingTokens.parse({ provenance: provisional ? "provisional" : "official", tokens });
+    "provisionalHint": "Provisional wordmark: no official logo has been supplied. Colours are provisional design toke
+sional: the text wordmark and colours are placeholders, not official Mobily brand assets."
+    "brandBody": "No official Mobily logo or verified brand colours have been supplied. T
+ tokens that can be replaced through Branding Settings once official values are approved.",
+sformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with custom extensions. It is 
+not an official PMI standard, and this product is not certified by PMI or any other body.",
+وّل الأعمال الإصدار 1.0، وهو خلاصة عملية مستوحاة من ممارسات PMI وBrightline وBRM مع إضافات مخصصة. وهو ليس معيارًا رسميًا من
+ PMI، وهذا المنتج غير معتمد من PMI أو من أي جهة أخرى.",
+apps/api/package.json:32:    "decimal.js": "10.6.0",
+packages/shared/package.json:25:    "decimal.js": "10.6.0",

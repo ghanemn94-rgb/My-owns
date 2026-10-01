@@ -1,0 +1,50 @@
+$ git rev-parse HEAD; git rev-parse --is-shallow-repository   # real repo (read-only)
+ff83817eb3f29e0b259ebb872042e8d0036a517e
+false
+$ git log --oneline 265af7e^..HEAD; git merge-base --is-ancestor 265af7e HEAD
+ff83817 run: DG1-T-DG1-REV-DOM-R10-domain-reviewer-20261001T143212Z-e2a85e66 (review evidence, auto-committed by run-agent.sh)
+241a377 DG1 r10: freeze candidate 18fee161 + round-10 review assignments
+265af7e DG1 r10: mark F-DG1-130 FIXED_PENDING_VERIFICATION
+265af7e is an ancestor of HEAD
+$ git diff --stat 265af7e HEAD   # freeze..HEAD: candidate-excluded metadata only
+ docs/delivery/assignments/DG1/round-10/audit.md    |   23 +
+ .../DG1/round-10/review-code-security-reviewer.md  |   12 +
+ .../assignments/DG1/round-10/review-common.md      |   16 +
+ .../DG1/round-10/review-domain-reviewer.md         |   12 +
+ .../assignments/DG1/round-10/review-qa-verifier.md |   15 +
+ .../candidates/DG1/18fee1617d617cfd.manifest.json  | 1968 ++++++++++++++++++++
+ .../DG1/round-10/domain-reviewer.findings.json     |   35 +
+ .../reviews/DG1/round-10/domain-reviewer.json      |  351 ++++
+ .../reviews/DG1/round-10/domain-reviewer.md        |   44 +
+ .../round-10/domain-reviewer.verifications.json    |   17 +
+ .../meta.json                                      |  113 ++
+ .../result.json                                    |    3 +
+ .../sandbox.json                                   |   50 +
+ .../settings.json                                  |   88 +
+ .../stderr.log                                     |    1 +
+ .../transcript.jsonl.gz                            |  Bin 0 -> 721123 bytes
+ docs/delivery/stages.json                          |   20 +-
+ 17 files changed, 2764 insertions(+), 4 deletions(-)
+$ git diff --stat 273d21f 265af7e -- apps packages tools deploy scripts e2e tests   # source delta since the round-9 candidate
+ apps/api/src/architecture.test.ts    | 42 +++++++++++++++++++++++++++++++++++-
+ apps/api/src/architecture.testkit.ts | 22 +++++++++++++++++--
+ 2 files changed, 61 insertions(+), 3 deletions(-)
+$ node tools/gates/candidate.mjs --stage DG1   # real repo @HEAD
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:18fee1617d617cfd719aeaebe3c37904bd116c47eaafb5be52e7bd779c6e8807","files":390}
+$ (cd $TMPDIR/review-r10 && git checkout -q 265af7e && node tools/gates/candidate.mjs --stage DG1)   # disposable full clone, freeze commit
+265af7e65a6a66f1dabcc678d9bf1adb1415f601
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:18fee1617d617cfd719aeaebe3c37904bd116c47eaafb5be52e7bd779c6e8807","files":390}
+clone back at 241a377
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:18fee1617d617cfd719aeaebe3c37904bd116c47eaafb5be52e7bd779c6e8807","files":390}
+note: stages.json gives candidate.frozen_at 2026-10-01T14:30:22Z but the round-10 review_rounds entry gives frozen_at 2026-10-01T13:52:40Z (metadata inconsistency, informational; not candidate content)
+EXIT=0
+
+# during this run HEAD advanced (runner auto-commit of another reviewer's round-10 run; files listed by name only, not opened):
+$ git log --oneline -2; git diff --stat 241a377 HEAD; node tools/gates/candidate.mjs --stage DG1
+ff83817 run: DG1-T-DG1-REV-DOM-R10-domain-reviewer-20261001T143212Z-e2a85e66 (review evidence, auto-committed by run-agent.sh)
+241a377 DG1 r10: freeze candidate 18fee161 + round-10 review assignments
+ 10 files changed, 702 insertions(+)
+docs/delivery/reviews/DG1/round-10
+docs/delivery/runs/DG1/DG1-T-DG1-REV-DOM-R10-domain-reviewer-20261001T143212Z-e2a85e66
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:18fee1617d617cfd719aeaebe3c37904bd116c47eaafb5be52e7bd779c6e8807","files":390}
+EXIT=0
