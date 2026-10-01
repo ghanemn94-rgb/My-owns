@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG1-128",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Module lint: two loader/exec routes in today's Node 22 pass with 0 violations and are not a stated residual. node:test run({ files:[<computed path>], isolation:'none' }) is an in-process import from a computed path (no code generation). Global process.execve runs an arbitrary executable (same class as the banned child_process/cluster).",
+      "reproduction": "Candidate d3743a35 (commit a6bdea0/2cfbf4f), disposable clone, Node 22.22.2 (the version the repo pins). In apps/api/src/architecture.testkit.ts, bareAllowed() (132-134) allows every `node:` built-in that is not in LOADER_BUILTINS (72-85). That list has no `test`, and PROCESS_LOADERS (106) is binding/_linkedBinding/dlopen only. Two plants go through fileViolations('transformations', .../planted.ts) (22-plant-f127-a1.log, 'adjacent probes'). R1 `import { run } from \"node:test\"; const p = [\"../access/\", \"policy.ts\"].join(\"\"); for await (const _ of run({ files: [new URL(p, import.meta.url).pathname], isolation: \"none\" })) {}` gives 0 violations. R2 `process.execve(\"/bin/sh\", [\"sh\", \"-c\", \"id\"]);` gives 0 violations. Runtime (23-adjacent-routes-runtime.log): R1 imports a file named only by a runtime-computed path into the SAME process, and the target sets globalThis.__LOADED with the runner's pid. This is the computed import(expr) that the lint bans by rule, without residual (b)'s code generation. R2 prints 'execve-ran-arbitrary-binary', so typeof process.execve is 'function' on this Node. The same lint flags a control plant of process.dlopen.",
+      "expected": "D-053 and the testkit header (37-50) say known native loaders/loader built-ins are 'closed as found', and residual (c) covers only the unprovable rest ('a future Node built-in, WebAssembly instantiation'). D-053's reopen criterion is 'a reviewer demonstrates a native/loader route that a module could reach and that is NOT a stated residual (then it is closed like sqlite)'. Both routes exist today, so expected: add `test` to LOADER_BUILTINS (giving `test` and `node:test`; no runtime module uses node:test, tests use vitest) and `execve` to PROCESS_LOADERS. Add self-check cases. The alternative is to name these two routes explicitly as accepted residuals in the header and D-053.",
+      "actual": "Both routes pass the lint with zero violations, and the header names neither of them. Impact is limited, as with F-DG1-125/127. This is a static defence-in-depth lint for the ADR-0002 module boundaries over human-reviewed code, not a runtime security boundary. No module uses node:test or process.execve today. R1 can load only code that already exists on disk. R2 replaces the whole process, which is visible and terminal. Hence Low, not mandatory, and not blocking. It does not reopen F-DG1-127.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-7/22-plant-f127-a1.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-7/23-adjacent-routes-runtime.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-7/plant-r7.test.ts.txt",
+        "apps/api/src/architecture.testkit.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-7/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T13:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG1 round 7 while assessing the D-053 residual framing, as the assignment asked (a concrete loader route not covered by a stated residual). It was reproduced statically in a disposable clone and at runtime on Node 22.22.2. Proposed id is the next free number in the code-security 1xx range; the orchestrator may renumber. If the orchestrator and release-auditor read residual (c) as covering any demonstrated route, an ACCEPTED_OBSERVATION is reasonable, but the header text should then name these two routes."
+        }
+      ]
+    }
+  ]
+}
