@@ -88,7 +88,7 @@ matches the image. It then runs the image's `entrypoint.sh` with `MTH_APP_ROOT` 
 
 | Step | Checks |
 |---|---|
-| A1–A2 | `mth db status` = 3 (pending) on an empty DB. `mth migrate` applies 6 migrations, a re-run is a no-op, then status = 0 |
+| A1–A2 | `mth db status` = 3 (pending) on an empty DB. `mth migrate` applies every shipped migration in `packages/db/migrations/` (currently 9: `0001`–`0009`), a re-run is a no-op, then status = 0 |
 | A3 | `mth db seed-dev` is refused (64): dev seeds are not in the image. `AUTH_MODE=dev` with `NODE_ENV=production` exits 78 |
 | A4–A5 | api + worker in production mode (OIDC). `/healthz` and `/readyz` are ready. `GET /` serves the SPA. The dev login is 404. An unreachable IdP makes login redirect to `/login?error=idp_unavailable` without crashing. `/me` without a session is 401 |
 | A6 | `mth db bootstrap` creates the first organization and admin. A second bootstrap is refused |
@@ -98,7 +98,7 @@ matches the image. It then runs the image's `entrypoint.sh` with `MTH_APP_ROOT` 
 ## Measured timings (container-free path B)
 
 Recorded 2026-09-30 in the build sandbox: 4 vCPU, 15 GiB RAM, Node 22.22.2, pnpm 10.33.0, PostgreSQL 16.13 (local
-floor version; Compose uses 18). Offline install from a pre-populated store. Workload: one fresh clone, 6 migrations,
+floor version; Compose uses 18). Offline install from a pre-populated store. Workload: one fresh clone, 6 migrations (the count at the time of measurement),
 1 organization, 4 business units, 6 users, 1 transformation.
 
 | Step | Seconds |

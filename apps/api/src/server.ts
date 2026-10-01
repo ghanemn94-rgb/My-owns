@@ -3,7 +3,8 @@
 //
 // Order matters:
 //   1. platform hooks (request IDs, problem+json, route access declarations, fail-closed guard);
-//   2. security headers (helmet, strict same-origin CSP), cookies, rate limiting (per session or IP; stricter on auth);
+//   2. security headers (helmet, strict same-origin CSP), cookies, rate limiting (per validated-session subject or IP;
+//      stricter on auth);
 //   3. the failed-authorization audit hook, health routes, identity (authentication + CSRF hook), then the modules;
 //   4. the built SPA, when present, from the same origin (no CDN).
 import { existsSync } from "node:fs";
@@ -19,7 +20,7 @@ import type pg from "pg";
 import { registerDeniedMutationAudit } from "./modules/access/index.ts";
 import { colorTokens, tokensAreProvisional } from "@mth/design-tokens";
 import { registerAdminRoutes, registerBrandingRoutes } from "./modules/admin/index.ts";
-import { registerIdentity, sessionCookieName, sha256, type OidcService } from "./modules/identity/index.ts";
+import { RateLimitSubjects, registerIdentity, sessionCookieName, type OidcService } from "./modules/identity/index.ts";
 import { registerKpiModule } from "./modules/kpi/index.ts";
 import { registerOrganizationRoutes } from "./modules/organization/index.ts";
 import {
@@ -119,15 +120,21 @@ export async function buildServer(
   await app.register(cookie);
 
   const cookieName = sessionCookieName(config.appBaseUrl);
+  // F-DG1-142: the limiter never trusts a presented cookie value. Only a cookie the identity hook has RESOLVED to a
+  // live session (within the idle timeout) maps to the authenticated subject; everything else - no cookie, forged,
+  // expired or revoked - is keyed by the client IP, so rotating fake cookies cannot open fresh buckets.
+  const rateLimitSubjects = new RateLimitSubjects(config.session.idleMinutes * 60_000);
   await app.register(rateLimit, {
     global: true,
     max: config.rateLimit.perMinute,
     timeWindow: "1 minute",
-    // Keyed by session (hash of the cookie, never the raw value) or else the client IP (TRUST_PROXY decides which
-    // X-Forwarded-For hops count). In-process store (ADR-0007 T-3); a PostgreSQL store comes with multi-instance P6.
+    // Keyed by the authenticated subject (user id) of a validated session, or else the client IP (TRUST_PROXY decides
+    // which X-Forwarded-For hops count). Decided without a database lookup, so floods are refused before any query.
+    // In-process store (ADR-0007 T-3); a PostgreSQL store comes with multi-instance P6.
     keyGenerator: (request: FastifyRequest) => {
       const token = request.cookies?.[cookieName];
-      return token ? `s:${sha256(token).toString("hex")}` : `ip:${request.ip}`;
+      const subject = token ? rateLimitSubjects.subjectOf(token) : null;
+      return subject ? `u:${subject}` : `ip:${request.ip}`;
     },
     allowList: (request: FastifyRequest) => request.url === "/healthz" || request.url === "/readyz",
     errorResponseBuilder: () => problems.rateLimited(),
@@ -136,7 +143,10 @@ export async function buildServer(
   registerDeniedMutationAudit(app, db);
   registerHealthRoutes(app, pool, options.migrationFiles ?? listMigrationFiles());
   const deps = { db, config };
-  registerIdentity(app, deps, options.oidc !== undefined ? { oidc: options.oidc } : {});
+  registerIdentity(app, deps, {
+    rateLimitSubjects,
+    ...(options.oidc !== undefined ? { oidc: options.oidc } : {}),
+  });
   registerOrganizationRoutes(app, deps);
   registerTransformationRoutes(app, deps);
   registerAdminRoutes(app, deps);

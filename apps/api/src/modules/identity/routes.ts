@@ -25,6 +25,7 @@ import {
   touchSession,
   type ActiveSession,
 } from "./sessions.ts";
+import type { RateLimitSubjects } from "./rate-limit-subjects.ts";
 import { loadUser, updatePreferences } from "./users.ts";
 
 /**
@@ -61,6 +62,11 @@ export function sameOrigin(request: FastifyRequest, appOrigin: string): boolean 
 export interface IdentityOptions {
   /** Injected OIDC service (tests pass one bound to a local fake IdP); defaults to one built from config. */
   readonly oidc?: OidcService | null;
+  /**
+   * Validated-session subjects for the global rate limiter's key (F-DG1-142). The composition root shares one instance
+   * with the limiter; this module is its only writer.
+   */
+  readonly rateLimitSubjects?: RateLimitSubjects;
 }
 
 export function registerIdentity(
@@ -77,6 +83,7 @@ export function registerIdentity(
   const cookieName = sessionCookieName(config.appBaseUrl);
   const secureCookie = config.appBaseUrl.protocol === "https:";
   const oidc = options.oidc !== undefined ? options.oidc : config.oidc ? new OidcService(config) : null;
+  const subjects = options.rateLimitSubjects ?? null;
   const authRateLimit = {
     max: config.rateLimit.authPerMinute,
     timeWindow: "1 minute",
@@ -112,7 +119,9 @@ export function registerIdentity(
     const token = cookieValue(request, cookieName);
     if (token) {
       const session = await resolveSession(db, token);
+      if (!session) subjects?.forget(token);
       if (session) {
+        subjects?.remember(token, session.userId);
         await touchSession(db, session, config.session.idleMinutes);
         request.session = session;
         request.principal = {
@@ -146,7 +155,10 @@ export function registerIdentity(
   ) {
     const { sessionId, token } = await db.transaction().execute(async (tx) => {
       // Session rotation on login: a previous session presented by this browser is revoked.
-      if (request.session) await revokeSession(tx, request.session.id);
+      if (request.session) {
+        await revokeSession(tx, request.session.id);
+        subjects?.forget(request.session.token);
+      }
       const s = await createSession(tx, {
         userId,
         authMode: mode,
@@ -170,6 +182,7 @@ export function registerIdentity(
       return s;
     });
     setSessionCookie(reply, token);
+    subjects?.remember(token, userId);
     return sessionId;
   }
 
@@ -329,6 +342,7 @@ export function registerIdentity(
       });
     });
     clearSessionCookie(reply);
+    subjects?.forget(session.token);
     const endSessionUrl = session.authMode === "oidc" && oidc ? await oidc.endSessionUrl() : null;
     return { endSessionUrl };
   });

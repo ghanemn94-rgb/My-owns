@@ -1,0 +1,1244 @@
+diff --git a/apps/api/package.json b/apps/api/package.json
+index 5125c41..870227c 100644
+--- a/apps/api/package.json
++++ b/apps/api/package.json
+@@ -27,18 +27,18 @@
+     "@mth/db": "workspace:*",
+     "@mth/design-tokens": "workspace:*",
+     "@mth/shared": "workspace:*",
+-    "ajv": "8.17.1",
+-    "ajv-formats": "3.0.1",
+     "decimal.js": "10.6.0",
+     "fastify": "5.6.1",
+     "kysely": "0.28.7",
+     "openid-client": "6.8.1",
+     "pg": "8.16.3",
+     "uuid": "13.0.0",
+-    "yaml": "2.8.1",
+     "zod": "4.1.12"
+   },
+   "devDependencies": {
+-    "@types/pg": "8.15.5"
++    "@types/pg": "8.15.5",
++    "ajv": "8.17.1",
++    "ajv-formats": "3.0.1",
++    "yaml": "2.8.1"
+   }
+ }
+diff --git a/apps/api/src/architecture.test.ts b/apps/api/src/architecture.test.ts
+index 0905a5b..6796f96 100644
+--- a/apps/api/src/architecture.test.ts
++++ b/apps/api/src/architecture.test.ts
+@@ -793,6 +793,24 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
+     expect(fileViolations("kpi", at("zz.test.ts"), vitestImport)).toEqual([]);
+   });
+ 
++  it("F-DG1-143: test-only packages (ajv, ajv-formats, yaml) are violations in module source, allowed only in *.test.ts", () => {
++    const at = (name: string) => join(MODULES_DIR, "transformations", name);
++    const src = `import Ajv from "ajv/dist/2020.js";\nimport formats from "ajv-formats";\nimport { parse } from "yaml";\nexport const x = [Ajv, formats, parse];`;
++    expect(fileViolations("transformations", at("zz.ts"), src)).toEqual([
++      "modules/transformations/zz.ts: imports package ajv/dist/2020.js",
++      "modules/transformations/zz.ts: imports package ajv-formats",
++      "modules/transformations/zz.ts: imports package yaml",
++    ]);
++    // A non-test extension ships in dist: no test allowance.
++    expect(fileViolations("transformations", at("zz.test.mts"), src)).toHaveLength(3);
++    expect(fileViolations("transformations", at("zz.test.ts"), src)).toEqual([]);
++    // The code-security reviewer's planted codegen file (repro-ajv/zz-ajv-planted.ts) is now refused at the import.
++    const planted = `import Ajv, { _ } from "ajv";\nconst ajv = new Ajv();\nexport const r = [ajv, _];`;
++    expect(fileViolations("transformations", at("zz-ajv-planted.ts"), planted)).toEqual([
++      "modules/transformations/zz-ajv-planted.ts: imports package ajv",
++    ]);
++  });
++
+   it("F-DG1-217: a module declaration file (.d.ts/.d.mts/.d.cts) is linted without throwing, imports still checked", () => {
+     const at = (name: string) => join(MODULES_DIR, "transformations", name);
+     // Before the fix syntaxErrors() ran ts.transpileModule on a declaration-file name and it threw
+diff --git a/apps/api/src/architecture.testkit.ts b/apps/api/src/architecture.testkit.ts
+index d64ef60..bd7d073 100644
+--- a/apps/api/src/architecture.testkit.ts
++++ b/apps/api/src/architecture.testkit.ts
+@@ -6,7 +6,7 @@
+ // `.mjs`). All of them get the same rules 1-5 and boundary checks; `.tsx`/`.jsx` are parsed as TSX, the rest as TS (a
+ // superset of JS).
+ // TEST CLASSIFICATION (F-DG1-135): the test-only allowances (importing `modules.ts`/`architecture.testkit.ts`, and
+-// `vitest`) apply ONLY to `*.test.ts`/`*.test.tsx` (TEST_FILE) - exactly the test extensions tsconfig.build.json
++// `vitest` plus the @mth/api devDependencies, F-DG1-143) apply ONLY to `*.test.ts`/`*.test.tsx` (TEST_FILE) - exactly the test extensions tsconfig.build.json
+ // excludes. Any other test-looking file (`*.test.mts`, `*.test.js`, ...) is not run by vitest and ships in dist, so it
+ // is a NON-test module file: still scanned by walk(), with the full boundary rules and no test exemption.
+ // It walks the TypeScript AST of each file (F-DG1-109: `ts.preProcessFile` saw only literal specifiers) and reports:
+@@ -92,6 +92,14 @@
+ //      path and the bytes exist only at runtime, so the lint never sees them. Irreducible for a static lint;
+ //      `node:fs` stays allowed (a module may legitimately read files; a write-API-only ban would be brittle).
+ //  (c) `WebAssembly` global instantiation (a wasm exec, not a JS-module loader).
++// SCOPE: FIRST-PARTY SOURCE ONLY (F-DG1-143, D-055). The lint governs what first-party module source WRITES: its
++// specifiers, names, members and keys. It does not analyse, and makes no claim about, the INTERNAL behaviour of a
++// third-party package that module source may import. In particular a package's own code-generation API (for example
++// ajv's `_` codegen tag and `new Function` compilation) evaluates whatever it is given; such a package is governed by
++// keeping it OFF the third-party allow-list below (THIRD_PARTY = the `dependencies` of @mth/api, nothing else), not by
++// this lint. Test-only libraries therefore live in `devDependencies` (ajv, ajv-formats and yaml moved there for
++// F-DG1-143, so module source importing them is a violation), and adding a runtime dependency is a reviewed change
++// to apps/api/package.json. The rules above are not weakened by this statement.
+ // Rationale: this is static defence-in-depth for the ADR-0002 module boundaries, enforced against human-reviewed code
+ // that runs with a read-only production source tree; it is NOT a runtime security boundary.
+ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+@@ -105,8 +113,18 @@ export const MODULES_DIR = join(SRC, "modules");
+ 
+ const apiPkg = JSON.parse(readFileSync(join(SRC, "../package.json"), "utf8")) as {
+   dependencies: Record<string, string>;
++  devDependencies?: Record<string, string>;
+ };
+ const THIRD_PARTY = new Set(Object.keys(apiPkg.dependencies).filter((d) => !d.startsWith("@mth/")));
++/**
++ * F-DG1-143: packages a TEST file (TEST_FILE, excluded from the build) may import in addition to THIRD_PARTY: the
++ * `devDependencies` of @mth/api (ajv, ajv-formats, yaml, ...; type-only `@types/*` excluded) and `vitest`. Never
++ * allowed in non-test module source, which ships in dist.
++ */
++const TEST_ONLY_THIRD_PARTY: ReadonlySet<string> = new Set([
++  "vitest",
++  ...Object.keys(apiPkg.devDependencies ?? {}).filter((d) => !d.startsWith("@mth/") && !d.startsWith("@types/")),
++]);
+ const SHARED_ALLOWED = new Set(["@mth/shared", "@mth/shared/schemas", "@mth/config", "@mth/db"]);
+ /**
+  * D-055 DEFAULT-DENY allow-list of `node:` built-ins (without the prefix) that module source may import. Seeded from
+@@ -192,11 +210,18 @@ export function walk(dir: string): string[] {
+   });
+ }
+ 
++const packageOf = (spec: string) =>
++  spec.startsWith("@") ? spec.split("/").slice(0, 2).join("/") : spec.split("/")[0]!;
++
+ export function bareAllowed(spec: string): boolean {
+   if (spec.startsWith("node:")) return SAFE_NODE_BUILTINS.has(spec.slice("node:".length));
+   if (SHARED_ALLOWED.has(spec)) return true;
+-  const pkg = spec.startsWith("@") ? spec.split("/").slice(0, 2).join("/") : spec.split("/")[0]!;
+-  return THIRD_PARTY.has(pkg);
++  return THIRD_PARTY.has(packageOf(spec));
++}
++
++/** A test-only package import (F-DG1-143): only for TEST_FILE files, never a `node:` built-in. */
++function testOnlyAllowed(spec: string, isTest: boolean): boolean {
++  return isTest && !spec.startsWith("node:") && TEST_ONLY_THIRD_PARTY.has(packageOf(spec));
+ }
+ 
+ export interface ScanResult {
+@@ -527,7 +552,7 @@ export function fileViolations(mod: ApiModule, file: string, source: string): st
+       if (!allowedDeps.has(targetMod!)) violations.push(`${where}: module ${mod} may not import module ${targetMod}`);
+       else if (rest.join("/") !== "index.ts")
+         violations.push(`${where}: imports ${spec}; only ${targetMod}/index.ts is public`);
+-    } else if (!bareAllowed(spec) && !(spec === "vitest" && isTest)) {
++    } else if (!bareAllowed(spec) && !testOnlyAllowed(spec, isTest)) {
+       violations.push(
+         spec.startsWith("node:")
+           ? `${where}: imports non-allow-listed node built-in ${spec}`
+diff --git a/apps/api/src/modules/identity/index.ts b/apps/api/src/modules/identity/index.ts
+index 6af9d47..eb278b3 100644
+--- a/apps/api/src/modules/identity/index.ts
++++ b/apps/api/src/modules/identity/index.ts
+@@ -2,6 +2,7 @@
+ // session and oidc_login_state.
+ export { effectivePermissions, registerIdentity, sameOrigin, type IdentityOptions } from "./routes.ts";
+ export { OidcService, resolveOidcUser, LOGIN_STATE_TTL_MINUTES, loginCookieName } from "./oidc.ts";
++export { RateLimitSubjects } from "./rate-limit-subjects.ts";
+ export { csrfTokenFor, revokeUserSessions, sessionCookieName, sha256 } from "./sessions.ts";
+ export {
+   createUser,
+diff --git a/apps/api/src/modules/identity/routes.ts b/apps/api/src/modules/identity/routes.ts
+index 587ecb2..c28e31c 100644
+--- a/apps/api/src/modules/identity/routes.ts
++++ b/apps/api/src/modules/identity/routes.ts
+@@ -25,6 +25,7 @@ import {
+   touchSession,
+   type ActiveSession,
+ } from "./sessions.ts";
++import type { RateLimitSubjects } from "./rate-limit-subjects.ts";
+ import { loadUser, updatePreferences } from "./users.ts";
+ 
+ /**
+@@ -61,6 +62,11 @@ export function sameOrigin(request: FastifyRequest, appOrigin: string): boolean
+ export interface IdentityOptions {
+   /** Injected OIDC service (tests pass one bound to a local fake IdP); defaults to one built from config. */
+   readonly oidc?: OidcService | null;
++  /**
++   * Validated-session subjects for the global rate limiter's key (F-DG1-142). The composition root shares one instance
++   * with the limiter; this module is its only writer.
++   */
++  readonly rateLimitSubjects?: RateLimitSubjects;
+ }
+ 
+ export function registerIdentity(
+@@ -77,6 +83,7 @@ export function registerIdentity(
+   const cookieName = sessionCookieName(config.appBaseUrl);
+   const secureCookie = config.appBaseUrl.protocol === "https:";
+   const oidc = options.oidc !== undefined ? options.oidc : config.oidc ? new OidcService(config) : null;
++  const subjects = options.rateLimitSubjects ?? null;
+   const authRateLimit = {
+     max: config.rateLimit.authPerMinute,
+     timeWindow: "1 minute",
+@@ -112,7 +119,9 @@ export function registerIdentity(
+     const token = cookieValue(request, cookieName);
+     if (token) {
+       const session = await resolveSession(db, token);
++      if (!session) subjects?.forget(token);
+       if (session) {
++        subjects?.remember(token, session.userId);
+         await touchSession(db, session, config.session.idleMinutes);
+         request.session = session;
+         request.principal = {
+@@ -146,7 +155,10 @@ export function registerIdentity(
+   ) {
+     const { sessionId, token } = await db.transaction().execute(async (tx) => {
+       // Session rotation on login: a previous session presented by this browser is revoked.
+-      if (request.session) await revokeSession(tx, request.session.id);
++      if (request.session) {
++        await revokeSession(tx, request.session.id);
++        subjects?.forget(request.session.token);
++      }
+       const s = await createSession(tx, {
+         userId,
+         authMode: mode,
+@@ -170,6 +182,7 @@ export function registerIdentity(
+       return s;
+     });
+     setSessionCookie(reply, token);
++    subjects?.remember(token, userId);
+     return sessionId;
+   }
+ 
+@@ -329,6 +342,7 @@ export function registerIdentity(
+       });
+     });
+     clearSessionCookie(reply);
++    subjects?.forget(session.token);
+     const endSessionUrl = session.authMode === "oidc" && oidc ? await oidc.endSessionUrl() : null;
+     return { endSessionUrl };
+   });
+diff --git a/apps/api/src/modules/organization/repository.ts b/apps/api/src/modules/organization/repository.ts
+index 99df1e3..2e738fb 100644
+--- a/apps/api/src/modules/organization/repository.ts
++++ b/apps/api/src/modules/organization/repository.ts
+@@ -1,5 +1,5 @@
+ // organization module data access: the only writer of organization and business_unit.
+-import type { BusinessUnitRow, DbOrTx, OrganizationRow } from "@mth/db";
++import { sql, type BusinessUnitRow, type DbOrTx, type OrganizationRow } from "@mth/db";
+ import type { BusinessUnit, Organization } from "@mth/shared/schemas";
+ import { iso } from "../platform/index.ts";
+ 
+@@ -65,3 +65,29 @@ export async function isDescendant(db: DbOrTx, ancestorId: string, candidateId:
+     .executeTakeFirst();
+   return r !== undefined;
+ }
++
++/**
++ * Advisory-lock class of the business-unit hierarchy, shared with the database trigger business_unit_hierarchy_guard
++ * (migration 0009, F-DG1-140). Same (class, hashtext(organization_id)) key on both sides.
++ */
++export const HIERARCHY_LOCK_CLASS = 730219;
++
++/**
++ * Serialize hierarchy changes of one organization for the rest of the transaction (F-DG1-140). Taken BEFORE the
++ * friendly cycle/depth checks so that, under READ COMMITTED, they read what the previous holder committed. The
++ * trigger takes the same lock again (re-entrant) and re-checks the invariant, so it holds even without this call.
++ */
++export async function lockBusinessUnitHierarchy(db: DbOrTx, organizationId: string): Promise<void> {
++  await sql`SELECT pg_advisory_xact_lock(${HIERARCHY_LOCK_CLASS}::integer, hashtext(${organizationId}::text))`.execute(
++    db,
++  );
++}
++
++/** Which hierarchy invariant the database trigger refused (SQLSTATE 23514 + constraint name), if any. */
++export function hierarchyViolation(e: unknown): "cycle" | "depth" | null {
++  const err = e as { code?: string; constraint?: string };
++  if (err.code !== "23514") return null;
++  if (err.constraint === "business_unit_acyclic") return "cycle";
++  if (err.constraint === "business_unit_max_depth") return "depth";
++  return null;
++}
+diff --git a/apps/api/src/modules/organization/routes.ts b/apps/api/src/modules/organization/routes.ts
+index 9fa5247..2147787 100644
+--- a/apps/api/src/modules/organization/routes.ts
++++ b/apps/api/src/modules/organization/routes.ts
+@@ -40,7 +40,9 @@ import {
+ import {
+   findBusinessUnit,
+   findOrganization,
++  hierarchyViolation,
+   isDescendant,
++  lockBusinessUnitHierarchy,
+   subtreeHeight,
+   toBusinessUnit,
+   toOrganization,
+@@ -74,6 +76,32 @@ function uniqueCode(e: unknown, what: string): never {
+   throw e;
+ }
+ 
++const cycleRefused = () =>
++  problems.businessRule(
++    "business_unit.cycle",
++    "A business unit cannot be moved under itself or one of its descendants.",
++  );
++const depthExceeded = () =>
++  problems.businessRule(
++    "business_unit.depth_exceeded",
++    `Business units can be nested at most ${MAX_BU_DEPTH + 1} levels deep.`,
++  );
++// createBusinessUnit declares no 422 in the contract, so on create the depth rule surfaces as a 400 field error.
++const depthExceededOnCreate = () =>
++  problems.badRequest(
++    "business_unit.depth_exceeded",
++    `Business units can be nested at most ${MAX_BU_DEPTH + 1} levels deep.`,
++    "/parentBusinessUnitId",
++  );
++
++/** The database hierarchy guard (migration 0009) refused the write: the same problems as the API's own checks. */
++function hierarchyRule(e: unknown): never {
++  const v = hierarchyViolation(e);
++  if (v === "cycle") throw cycleRefused();
++  if (v === "depth") throw depthExceeded();
++  throw e;
++}
++
+ export function registerOrganizationRoutes(app: FastifyInstance, { db, config }: ModuleDeps): void {
+   // ---------------------------------------------------------------- organizations
+   app.get("/api/v1/organizations", { config: { access: { permission: "organization.read" } } }, async (request) => {
+@@ -253,6 +281,7 @@ export function registerOrganizationRoutes(app: FastifyInstance, { db, config }:
+         });
+         await requireAction(tx, principal, "business_unit.manage", target);
+         if (body.parentBusinessUnitId !== undefined) {
++          await lockBusinessUnitHierarchy(tx, organizationId); // F-DG1-140: depth check vs a concurrent move
+           const parent = await findBusinessUnit(tx, body.parentBusinessUnitId);
+           // createBusinessUnit declares no 422 in the contract, so these rules surface as 400 field errors.
+           if (!parent || parent.organization_id !== organizationId) {
+@@ -263,13 +292,7 @@ export function registerOrganizationRoutes(app: FastifyInstance, { db, config }:
+             );
+           }
+           const parentTarget = await targetFor(tx, "business_unit", { organizationId, businessUnitId: parent.id });
+-          if (parentTarget.businessUnitAncestry.length > MAX_BU_DEPTH) {
+-            throw problems.badRequest(
+-              "business_unit.depth_exceeded",
+-              `Business units can be nested at most ${MAX_BU_DEPTH + 1} levels deep.`,
+-              "/parentBusinessUnitId",
+-            );
+-          }
++          if (parentTarget.businessUnitAncestry.length > MAX_BU_DEPTH) throw depthExceededOnCreate();
+         }
+         const id = uuidv7();
+         const created = await tx
+@@ -286,7 +309,10 @@ export function registerOrganizationRoutes(app: FastifyInstance, { db, config }:
+           })
+           .returningAll()
+           .executeTakeFirstOrThrow()
+-          .catch((e: unknown) => uniqueCode(e, "business unit"));
++          .catch((e: unknown) => {
++            if (hierarchyViolation(e) === "depth") throw depthExceededOnCreate();
++            return uniqueCode(e, "business unit");
++          });
+         await record(tx, audit, {
+           action: "business_unit.create",
+           recordType: "business_unit",
+@@ -332,12 +358,24 @@ export function registerOrganizationRoutes(app: FastifyInstance, { db, config }:
+         });
+         await requireAction(tx, principal, "business_unit.manage", target);
+         const expected = requireIfMatch(request);
++        // F-DG1-140: a re-parent serializes on the organization's hierarchy lock BEFORE reading anything it checks, so
++        // two concurrent moves can never both pass the cycle/depth checks against the same committed hierarchy. The
++        // database trigger (migration 0009) re-checks under the same lock as the last line of defence.
++        if (body.parentBusinessUnitId !== undefined) await lockBusinessUnitHierarchy(tx, target.organizationId);
+         const current = await findBusinessUnit(tx, businessUnitId, true);
+         if (!current) throw problems.notFound();
+         if (current.version !== expected) throw problems.versionConflict(current.version);
+         if (body.parentBusinessUnitId !== undefined && body.parentBusinessUnitId !== current.parent_business_unit_id) {
+           const parentId = body.parentBusinessUnitId;
+-          if (parentId !== null) {
++          if (parentId === null) {
++            // F-DG1-141: the destination of a move to the top level is the organization itself.
++            await requireAction(
++              tx,
++              principal,
++              "business_unit.manage",
++              await targetFor(tx, "organization", { organizationId: current.organization_id }),
++            );
++          } else {
+             const parent = await findBusinessUnit(tx, parentId);
+             if (!parent || parent.organization_id !== current.organization_id) {
+               throw problems.businessRule(
+@@ -345,11 +383,20 @@ export function registerOrganizationRoutes(app: FastifyInstance, { db, config }:
+                 "The parent business unit must exist in the same organization.",
+               );
+             }
++            // F-DG1-141: a move writes into the destination branch, so the actor needs business_unit.manage on the
++            // destination parent as well as on the moved unit (ADR-0006: grants never apply across siblings).
++            // Refused 403 with an audited authorization.denied (denials.ts).
++            await requireAction(
++              tx,
++              principal,
++              "business_unit.manage",
++              await targetFor(tx, "business_unit", {
++                organizationId: parent.organization_id,
++                businessUnitId: parentId,
++              }),
++            );
+             if (parentId === businessUnitId || (await isDescendant(tx, businessUnitId, parentId))) {
+-              throw problems.businessRule(
+-                "business_unit.cycle",
+-                "A business unit cannot be moved under itself or one of its descendants.",
+-              );
++              throw cycleRefused();
+             }
+             const parentDepth = (
+               await targetFor(tx, "business_unit", {
+@@ -357,12 +404,7 @@ export function registerOrganizationRoutes(app: FastifyInstance, { db, config }:
+                 businessUnitId: parentId,
+               })
+             ).businessUnitAncestry.length;
+-            if (parentDepth + (await subtreeHeight(tx, businessUnitId)) > MAX_BU_DEPTH) {
+-              throw problems.businessRule(
+-                "business_unit.depth_exceeded",
+-                `Business units can be nested at most ${MAX_BU_DEPTH + 1} levels deep.`,
+-              );
+-            }
++            if (parentDepth + (await subtreeHeight(tx, businessUnitId)) > MAX_BU_DEPTH) throw depthExceeded();
+           }
+         }
+         const updated = await tx
+@@ -379,7 +421,8 @@ export function registerOrganizationRoutes(app: FastifyInstance, { db, config }:
+           .where("id", "=", businessUnitId)
+           .where("version", "=", expected)
+           .returningAll()
+-          .executeTakeFirstOrThrow();
++          .executeTakeFirstOrThrow()
++          .catch(hierarchyRule);
+         await record(tx, audit, {
+           action: "business_unit.update",
+           recordType: "business_unit",
+diff --git a/apps/api/src/server.ts b/apps/api/src/server.ts
+index 832ac83..d6e5279 100644
+--- a/apps/api/src/server.ts
++++ b/apps/api/src/server.ts
+@@ -3,7 +3,8 @@
+ //
+ // Order matters:
+ //   1. platform hooks (request IDs, problem+json, route access declarations, fail-closed guard);
+-//   2. security headers (helmet, strict same-origin CSP), cookies, rate limiting (per session or IP; stricter on auth);
++//   2. security headers (helmet, strict same-origin CSP), cookies, rate limiting (per validated-session subject or IP;
++//      stricter on auth);
+ //   3. the failed-authorization audit hook, health routes, identity (authentication + CSRF hook), then the modules;
+ //   4. the built SPA, when present, from the same origin (no CDN).
+ import { existsSync } from "node:fs";
+@@ -19,7 +20,7 @@ import type pg from "pg";
+ import { registerDeniedMutationAudit } from "./modules/access/index.ts";
+ import { colorTokens, tokensAreProvisional } from "@mth/design-tokens";
+ import { registerAdminRoutes, registerBrandingRoutes } from "./modules/admin/index.ts";
+-import { registerIdentity, sessionCookieName, sha256, type OidcService } from "./modules/identity/index.ts";
++import { RateLimitSubjects, registerIdentity, sessionCookieName, type OidcService } from "./modules/identity/index.ts";
+ import { registerKpiModule } from "./modules/kpi/index.ts";
+ import { registerOrganizationRoutes } from "./modules/organization/index.ts";
+ import {
+@@ -119,15 +120,21 @@ export async function buildServer(
+   await app.register(cookie);
+ 
+   const cookieName = sessionCookieName(config.appBaseUrl);
++  // F-DG1-142: the limiter never trusts a presented cookie value. Only a cookie the identity hook has RESOLVED to a
++  // live session (within the idle timeout) maps to the authenticated subject; everything else - no cookie, forged,
++  // expired or revoked - is keyed by the client IP, so rotating fake cookies cannot open fresh buckets.
++  const rateLimitSubjects = new RateLimitSubjects(config.session.idleMinutes * 60_000);
+   await app.register(rateLimit, {
+     global: true,
+     max: config.rateLimit.perMinute,
+     timeWindow: "1 minute",
+-    // Keyed by session (hash of the cookie, never the raw value) or else the client IP (TRUST_PROXY decides which
+-    // X-Forwarded-For hops count). In-process store (ADR-0007 T-3); a PostgreSQL store comes with multi-instance P6.
++    // Keyed by the authenticated subject (user id) of a validated session, or else the client IP (TRUST_PROXY decides
++    // which X-Forwarded-For hops count). Decided without a database lookup, so floods are refused before any query.
++    // In-process store (ADR-0007 T-3); a PostgreSQL store comes with multi-instance P6.
+     keyGenerator: (request: FastifyRequest) => {
+       const token = request.cookies?.[cookieName];
+-      return token ? `s:${sha256(token).toString("hex")}` : `ip:${request.ip}`;
++      const subject = token ? rateLimitSubjects.subjectOf(token) : null;
++      return subject ? `u:${subject}` : `ip:${request.ip}`;
+     },
+     allowList: (request: FastifyRequest) => request.url === "/healthz" || request.url === "/readyz",
+     errorResponseBuilder: () => problems.rateLimited(),
+@@ -136,7 +143,10 @@ export async function buildServer(
+   registerDeniedMutationAudit(app, db);
+   registerHealthRoutes(app, pool, options.migrationFiles ?? listMigrationFiles());
+   const deps = { db, config };
+-  registerIdentity(app, deps, options.oidc !== undefined ? { oidc: options.oidc } : {});
++  registerIdentity(app, deps, {
++    rateLimitSubjects,
++    ...(options.oidc !== undefined ? { oidc: options.oidc } : {}),
++  });
+   registerOrganizationRoutes(app, deps);
+   registerTransformationRoutes(app, deps);
+   registerAdminRoutes(app, deps);
+diff --git a/apps/api/test/integration/platform.test.ts b/apps/api/test/integration/platform.test.ts
+index 7b921fa..9ff94fc 100644
+--- a/apps/api/test/integration/platform.test.ts
++++ b/apps/api/test/integration/platform.test.ts
+@@ -1,6 +1,7 @@
+ // Platform behaviour: readiness (DB + migrations shipped with the build), rate limits with problem+json and
+ // Retry-After, body limits, malformed JSON, unknown routes, security headers (strict same-origin CSP), and the
+ // fail-closed authorization guard.
++import { randomBytes } from "node:crypto";
+ import { listMigrationFiles } from "@mth/db";
+ import Fastify from "fastify";
+ import { afterAll, beforeAll, describe, expect, it } from "vitest";
+@@ -77,6 +78,63 @@ describe("rate limiting (ADR-0007 T-3)", () => {
+       await limited.close();
+     }
+   });
++
++  // F-DG1-142 (reviewer repro: docs/delivery/test-evidence/DG1/code-security/round-1/repro-ratelimit/). The key is the
++  // subject of a VALIDATED session, else the client IP; a presented cookie value alone never opens a bucket.
++  it("does not reset the bucket when an unauthenticated client rotates fabricated session cookies", async () => {
++    const limited = await startApi({ env: { RATE_LIMIT_PER_MINUTE: "3" } });
++    try {
++      const fake = () => `mth_session=${randomBytes(32).toString("base64url")}`; // passes the token-format check
++      const me = (headers: Record<string, string>, ip: string) =>
++        limited.app.inject({ method: "GET", url: "/api/v1/me", headers, remoteAddress: ip });
++      const rotated: number[] = [];
++      for (let i = 0; i < 8; i++) rotated.push((await me({ cookie: fake() }, "203.0.113.7")).statusCode);
++      expect(rotated).toEqual([401, 401, 401, 429, 429, 429, 429, 429]);
++      // Mixing cookieless and fake-cookie requests shares the same IP bucket.
++      const mixed: number[] = [];
++      for (let i = 0; i < 4; i++)
++        mixed.push((await me(i % 2 === 0 ? {} : { cookie: fake() }, "203.0.113.8")).statusCode);
++      expect(mixed).toEqual([401, 401, 401, 429]);
++      // A different client IP has its own bucket (keying is per client, not global).
++      expect((await me({ cookie: fake() }, "203.0.113.9")).statusCode).toBe(401);
++    } finally {
++      await limited.close();
++    }
++  });
++
++  it("keys a validated session by its user, so it is not starved by an IP flood, and a revoked one falls back to the IP", async () => {
++    const limited = await startApi({ env: { RATE_LIMIT_PER_MINUTE: "3" } });
++    try {
++      const ip = "203.0.113.20";
++      const s = await signIn(limited.app, w.office.subject); // session validated at sign-in (inject IP 127.0.0.1)
++      const asUser = () =>
++        limited.app.inject({ method: "GET", url: "/api/v1/me", headers: { cookie: s.cookie }, remoteAddress: ip });
++      // An attacker on the same IP exhausts the IP bucket with fabricated cookies...
++      for (let i = 0; i < 4; i++)
++        await limited.app.inject({
++          method: "GET",
++          url: "/api/v1/me",
++          headers: { cookie: `mth_session=${randomBytes(32).toString("base64url")}` },
++          remoteAddress: ip,
++        });
++      // ...the real user's requests are counted under its own subject: signIn's /me was #1, so #2 and #3 pass.
++      expect([(await asUser()).statusCode, (await asUser()).statusCode]).toEqual([200, 200]);
++      expect((await asUser()).statusCode).toBe(429);
++      // After sign-out the same cookie value is no longer a validated session: it is keyed by the (exhausted) IP.
++      const s2 = await signIn(limited.app, w.auditor.subject);
++      const out = await call(limited.app, "POST", "/api/v1/auth/logout", { session: s2, contract: false });
++      expect(out.status).toBe(200);
++      const after = await limited.app.inject({
++        method: "GET",
++        url: "/api/v1/me",
++        headers: { cookie: s2.cookie },
++        remoteAddress: ip,
++      });
++      expect(after.statusCode).toBe(429);
++    } finally {
++      await limited.close();
++    }
++  });
+ });
+ 
+ describe("request hygiene", () => {
+diff --git a/docs/architecture/data-dictionary.md b/docs/architecture/data-dictionary.md
+index 13c738e..36a3e23 100644
+--- a/docs/architecture/data-dictionary.md
++++ b/docs/architecture/data-dictionary.md
+@@ -1,4 +1,4 @@
+-# Data dictionary: P1 tables
++# Data dictionary: P1 tables and views
+ 
+ - **Task:** T-DG1-ARCH-01 (solution-architect), 2026-09-30.
+ - **Contract for:** backend-workflow-engineer's P1 migrations (`packages/db/migrations/**`).
+@@ -82,7 +82,10 @@ Bookkeeping for the migration runner (ADR-0003).
+ 
+ **Invariants:**
+ - The parent is in the same organization. This is enforced by the composite FK `(organization_id, parent_business_unit_id) → business_unit(organization_id, id)`.
+-- No cycles: the API checks with a recursive CTE on update (422), and depth is limited to 10.
++- No cycles, and at most 10 levels below the organization (`MAX_BU_DEPTH = 9`, 0 = top-level unit). Enforced twice (F-DG1-140):
++  - **API (friendly path):** on create and re-parent the API takes the organization's hierarchy advisory lock, then checks the cycle and depth against `business_unit_closure`, and answers 422 `business_unit.cycle` / `business_unit.depth_exceeded` (400 field error on create).
++  - **Database (last line of defence, migration 0009):** the `AFTER INSERT OR UPDATE OF parent_business_unit_id, organization_id` trigger `business_unit_hierarchy_guard` takes the same transaction-scoped advisory lock `(730219, hashtext(organization_id))`, walks the parent chain with `SELECT … FOR SHARE` and checks the subtree height. It raises SQLSTATE `23514` with constraint name `business_unit_acyclic` or `business_unit_max_depth`, which the API maps to the same problems. Concurrent re-parents are therefore serialized per organization, and a cycle can never commit. Under REPEATABLE READ the locking walk turns a stale parent chain into a serialization failure (`40001`). The one residual is depth (not cycles) for a concurrent child insert into a moved subtree; the application uses READ COMMITTED, where that case is serialized too.
++- A re-parent needs `business_unit.manage` on the moved unit **and** on the destination: the new parent unit, or the organization for a move to the top level (F-DG1-141; 403 otherwise, audited `authorization.denied`).
+ - An inactive BU cannot receive new transformations (422).
+ 
+ ## app_user
+@@ -392,6 +395,45 @@ Bookkeeping for the migration runner (ADR-0003).
+ - The same key with a different `request_hash` gives 422.
+ - Expired rows are purged by the worker (`mth_app` may `DELETE` expired rows).
+ 
++## Views (read models)
++
++The P1 migrations create three views, owned by `mth_owner`. `mth_app` has `SELECT` only. They store nothing: every row is derived from the base tables above at query time. `packages/db/src/schema.ts` lists them in `VIEW_NAMES`, and `packages/db/test/integration/catalogue.test.ts` pins both their columns and the fact that they are views.
++
++### actor_display (migration 0001; owner module: identity)
++
++| Column | Type | Source |
++|---|---|---|
++| user_id | uuid | `app_user.id` |
++| display_name | text | `app_user.display_name` |
++
++- **Purpose:** the only user attribute other modules may read. The audit module uses it to show actor names (`LEFT JOIN actor_display`), so no other module reads `app_user` directly (ADR-0002 module boundaries).
++- **Source:** `SELECT id AS user_id, display_name FROM app_user`. One row per user, including disabled users, so historical audit events keep their actor name.
++
++### business_unit_closure (migration 0001; owner module: organization)
++
++| Column | Type | Meaning |
++|---|---|---|
++| ancestor_id | uuid | a business unit |
++| descendant_id | uuid | the ancestor itself (depth 0) or a unit below it |
++| organization_id | uuid | the descendant's organization |
++| depth | integer | levels from ancestor to descendant (0 = same unit) |
++
++- **Purpose:** the business-unit hierarchy as (ancestor, descendant) pairs. The policy function (ADR-0006) uses it to resolve a target's BU ancestry and to compile downward-inheriting grants into SQL list filters (`access/policy.ts`). The organization module uses it for the API cycle check and the subtree height.
++- **Source:** a `WITH RECURSIVE` over `business_unit.parent_business_unit_id`, seeded with every unit at depth 0. Recursion stops at `depth < 10`, so the view returns depths 0–10 and cannot loop even on corrupt data. The hierarchy invariant (no cycles, at most 10 levels) is enforced on `business_unit` itself (see above and migration 0009), so for valid data the cap never truncates a result.
++
++### scope_node (migration 0002; owner module: access)
++
++| Column | Type | Meaning |
++|---|---|---|
++| scope_type | text | `organization`, `business_unit` or `transformation` |
++| scope_id | uuid | id of the node at that level |
++| organization_id | uuid | the node's organization |
++| business_unit_id | uuid NULL | the node's business unit: NULL for an organization, the unit itself for a BU, the owning BU for a transformation |
++| transformation_id | uuid NULL | the transformation id for a transformation node; otherwise NULL |
++
++- **Purpose:** one row for every scope node that a `scoped_assignment` can point at in P1. The policy function and the assignment service resolve `(scope_type, scope_id)` to the node's position in the hierarchy (organization → business unit → transformation) through it.
++- **Source:** `UNION ALL` of `organization`, `business_unit` and `transformation`. Later stages add portfolio, workstream and other levels with a forward migration.
++
+ ## pg-boss schema (`pgboss.*`)
+ 
+ - Owned, created and migrated by pg-boss 11 itself (ADR-0008), installed by `mth-db migrate` as `mth_owner`.
+@@ -402,6 +444,6 @@ Bookkeeping for the migration runner (ADR-0003).
+ 
+ | Layer | What it checks |
+ |---|---|
+-| Database | Type, NOT NULL, CHECK, FK and UNIQUE constraints above. These are the last line of defence. |
++| Database | Type, NOT NULL, CHECK, FK and UNIQUE constraints above, plus the BU hierarchy trigger (no cycles, at most 10 levels; migration 0009). These are the last line of defence. |
+ | API (`@mth/shared/schemas`) | Shapes, lengths, formats and the mode/entry-phase rule |
+ | Service | Existence and scope of referenced IDs, status transitions, archived read-only, BU in the same organization, no BU cycles, SoD |
+diff --git a/docs/architecture/erd.md b/docs/architecture/erd.md
+index 7a0eb5e..8a8af25 100644
+--- a/docs/architecture/erd.md
++++ b/docs/architecture/erd.md
+@@ -194,6 +194,11 @@ erDiagram
+ ```
+ 
+ Also created in P1, not drawn above:
++- Three **views** (read models, `SELECT` only for `mth_app`; columns in the data dictionary, section "Views"). They store no data:
++  - `actor_display` (0001) is derived from `app_user` as `(user_id, display_name)`. Audit reads actor names through it.
++  - `business_unit_closure` (0001) is the recursive closure of `business_unit` `parent of`, as `(ancestor_id, descendant_id, organization_id, depth)` with depth 0–10. The policy function uses it for downward inheritance, and the organization module for cycle and depth checks.
++  - `scope_node` (0002) is the `UNION ALL` of `organization`, `business_unit` and `transformation`, as `(scope_type, scope_id, organization_id, business_unit_id, transformation_id)`. It resolves the scope that a `scoped_assignment` points at.
++- The `business_unit` self-relation is acyclic and at most 10 levels deep. The database enforces this with the trigger `business_unit_hierarchy_guard` (0009, F-DG1-140) in addition to the API check.
+ - `schema_migration`: migration bookkeeping.
+ - The `pgboss.*` schema: owned and migrated by pg-boss (ADR-0008). This is P1's "job tables as required by the queue choice", and the physical form of the §16 entity **Job**.
+ 
+diff --git a/docs/operations/clean-start.md b/docs/operations/clean-start.md
+index 3f717a7..872cd7a 100644
+--- a/docs/operations/clean-start.md
++++ b/docs/operations/clean-start.md
+@@ -88,7 +88,7 @@ matches the image. It then runs the image's `entrypoint.sh` with `MTH_APP_ROOT`
+ 
+ | Step | Checks |
+ |---|---|
+-| A1–A2 | `mth db status` = 3 (pending) on an empty DB. `mth migrate` applies 6 migrations, a re-run is a no-op, then status = 0 |
++| A1–A2 | `mth db status` = 3 (pending) on an empty DB. `mth migrate` applies every shipped migration in `packages/db/migrations/` (currently 9: `0001`–`0009`), a re-run is a no-op, then status = 0 |
+ | A3 | `mth db seed-dev` is refused (64): dev seeds are not in the image. `AUTH_MODE=dev` with `NODE_ENV=production` exits 78 |
+ | A4–A5 | api + worker in production mode (OIDC). `/healthz` and `/readyz` are ready. `GET /` serves the SPA. The dev login is 404. An unreachable IdP makes login redirect to `/login?error=idp_unavailable` without crashing. `/me` without a session is 401 |
+ | A6 | `mth db bootstrap` creates the first organization and admin. A second bootstrap is refused |
+@@ -98,7 +98,7 @@ matches the image. It then runs the image's `entrypoint.sh` with `MTH_APP_ROOT`
+ ## Measured timings (container-free path B)
+ 
+ Recorded 2026-09-30 in the build sandbox: 4 vCPU, 15 GiB RAM, Node 22.22.2, pnpm 10.33.0, PostgreSQL 16.13 (local
+-floor version; Compose uses 18). Offline install from a pre-populated store. Workload: one fresh clone, 6 migrations,
++floor version; Compose uses 18). Offline install from a pre-populated store. Workload: one fresh clone, 6 migrations (the count at the time of measurement),
+ 1 organization, 4 business units, 6 users, 1 transformation.
+ 
+ | Step | Seconds |
+diff --git a/licenses/inventory.csv b/licenses/inventory.csv
+index e05dfe0..5951cfe 100644
+--- a/licenses/inventory.csv
++++ b/licenses/inventory.csv
+@@ -166,9 +166,9 @@ acorn,8.18.0,MIT,development,,sha512-lGq+9yr1/GuAWaVYIHRjvvySG5/4VfKIvC8EWxStPdc
+ acorn-jsx,5.3.2,MIT,development,,sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==
+ agent-base,7.1.4,MIT,development,,sha512-MnA+YT8fwfJPgBx3m60MNqakm30XOkyIoH1y6huTQvC0PwZG7ki8NacLBcrPbNoo8vEZy7Jpuk7+jMO+CUovTQ==
+ ajv,6.15.0,MIT,development,,sha512-fgFx7Hfoq60ytK2c7DhnF8jIvzYgOMxfugjLOSMHjLIPgenqa7S7oaagATUq99mV6IYvN2tRmC0wnTYX6iPbMw==
+-ajv,8.17.1,MIT,runtime,apps/api,sha512-B/gBuNg5SiMTrPkC+A2+cW0RszwxYmn6VYxB/inlBStS5nx6xHIt/ehKRhIMhqusl7a8LjQoZnjCs5vhwxOQ1g==
++ajv,8.17.1,MIT,runtime,apps/api (dev),sha512-B/gBuNg5SiMTrPkC+A2+cW0RszwxYmn6VYxB/inlBStS5nx6xHIt/ehKRhIMhqusl7a8LjQoZnjCs5vhwxOQ1g==
+ ajv-draft-04,1.0.0,MIT,development,,sha512-mv00Te6nmYbRp5DCwclxtt7yV/joXJPGS7nM+97GdxvuttCOfgI3K4U25zboyeX0O+myI8ERluxQe5wljMmVIw==
+-ajv-formats,3.0.1,MIT,runtime,apps/api,sha512-8iUql50EUR+uUcdRQ3HDqa6EVyo3docL8g5WJ3FNcWmu62IbkGUue/pEyLBW8VGKKucTPgqeks4fIU1DA4yowQ==
++ajv-formats,3.0.1,MIT,runtime,apps/api (dev),sha512-8iUql50EUR+uUcdRQ3HDqa6EVyo3docL8g5WJ3FNcWmu62IbkGUue/pEyLBW8VGKKucTPgqeks4fIU1DA4yowQ==
+ ansi-regex,5.0.1,MIT,development,,sha512-quJQXlTSUGL2LH9SUXo8VwsY4soanhgo6LNSm84E1LBcE8s3O0wpdiRzyR9z/ZZJMlMWv37qOOb9pdJlMUEKFQ==
+ ansi-styles,5.2.0,MIT,development,,sha512-Cxwpt2SfTzTtXcfOlzGEee8O+c+MmUgGrNiBcXnuWxuFJHe6a5Hz7qwhwe5OgaSYI0IJvkLqWX1ASG+cJOkEiA==
+ argparse,2.0.1,Python-2.0,development,,sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==
+@@ -417,7 +417,7 @@ xml-name-validator,5.0.0,Apache-2.0,development,,sha512-EvGK8EJ3DhaHfbRlETOWAS5p
+ xmlchars,2.2.0,MIT,development,,sha512-JZnDKK8B0RCDw84FNdDAIpZK+JuJw+s7Lz8nksI7SIuU3UXJJslUthsi+uWBUYOwPFwW7W7PRLRfUKpxjtjFCw==
+ xtend,4.0.2,MIT,runtime,,sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==
+ yallist,3.1.1,ISC,development,,sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g==
+-yaml,2.8.1,ISC,runtime,apps/api,sha512-lcYcMxX2PO9XMGvAJkJ3OsNMw+/7FKes7/hgerGUYWIoWu5j/+YQqcZr5JnPZWzOsEBgMbSbiSTn/dv/69Mkpw==
++yaml,2.8.1,ISC,development,apps/api (dev),sha512-lcYcMxX2PO9XMGvAJkJ3OsNMw+/7FKes7/hgerGUYWIoWu5j/+YQqcZr5JnPZWzOsEBgMbSbiSTn/dv/69Mkpw==
+ yocto-queue,0.1.0,MIT,development,,sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==
+ zod,4.1.12,MIT,runtime,apps/api; apps/web; apps/worker; packages/config; packages/shared,sha512-JInaHOamG8pt5+Ey8kGmdcAcg3OL9reK8ltczgHTAwNhMys/6ThXHityHxVV2p3fkw/c+MAvBHFVYHFZDmjMCQ==
+ zod-validation-error,4.0.2,MIT,development,,sha512-Q6/nZLe6jxuU80qb/4uJ4t5v2VEZ44lzQjPDhYJNztRQ4wyWc6VF3D3Kb/fAuPetZQnhS3hnajCf9CsWesghLQ==
+diff --git a/packages/db/src/schema.ts b/packages/db/src/schema.ts
+index e96c642..5b2f129 100644
+--- a/packages/db/src/schema.ts
++++ b/packages/db/src/schema.ts
+@@ -1,6 +1,6 @@
+ // Kysely `Database` interface for the P1 tables (ADR-0003), written by hand from
+-// docs/architecture/data-dictionary.md. An integration test (packages/db/test/integration/schema.test.ts)
+-// compares every table and column here with information_schema after the migrations run, so a drift fails CI.
++// docs/architecture/data-dictionary.md. An integration test (packages/db/test/integration/catalogue.test.ts)
++// compares every table, view and column here with information_schema after the migrations run, so a drift fails CI.
+ //
+ // Type mapping (node-postgres defaults): timestamptz -> Date, bigint -> string, numeric -> string,
+ // bytea -> Buffer, jsonb -> parsed JSON, text[] -> string[].
+diff --git a/pnpm-lock.yaml b/pnpm-lock.yaml
+index 4e8938a..6a12b25 100644
+--- a/pnpm-lock.yaml
++++ b/pnpm-lock.yaml
+@@ -68,12 +68,6 @@ importers:
+       '@mth/shared':
+         specifier: workspace:*
+         version: link:../../packages/shared
+-      ajv:
+-        specifier: 8.17.1
+-        version: 8.17.1
+-      ajv-formats:
+-        specifier: 3.0.1
+-        version: 3.0.1(ajv@8.17.1)
+       decimal.js:
+         specifier: 10.6.0
+         version: 10.6.0
+@@ -92,9 +86,6 @@ importers:
+       uuid:
+         specifier: 13.0.0
+         version: 13.0.0
+-      yaml:
+-        specifier: 2.8.1
+-        version: 2.8.1
+       zod:
+         specifier: 4.1.12
+         version: 4.1.12
+@@ -102,6 +93,15 @@ importers:
+       '@types/pg':
+         specifier: 8.15.5
+         version: 8.15.5
++      ajv:
++        specifier: 8.17.1
++        version: 8.17.1
++      ajv-formats:
++        specifier: 3.0.1
++        version: 3.0.1(ajv@8.17.1)
++      yaml:
++        specifier: 2.8.1
++        version: 2.8.1
+ 
+   apps/web:
+     dependencies:
+diff --git a/packages/db/migrations/0009_business_unit_hierarchy_guard.sql b/packages/db/migrations/0009_business_unit_hierarchy_guard.sql
+new file mode 100644
+index 0000000..0ffdf9e
+--- /dev/null
++++ b/packages/db/migrations/0009_business_unit_hierarchy_guard.sql
+@@ -0,0 +1,95 @@
++-- 0009 database-level guard for the business-unit hierarchy (T-DG1-BE-R2, F-DG1-140; REQ-S19-004, ADR-0006).
++-- Until now "no cycles, depth <= 10" was only an API check (0001 business_unit comment). It ran under READ COMMITTED
++-- with no serialization, so two concurrent re-parents (A under C while B moves under A, with C under B) each passed
++-- the check against the committed hierarchy and together committed the cycle A -> C -> B -> A.
++--
++-- This trigger makes the database refuse such a row, whatever the client and however the writes interleave:
++--  1. SERIALIZE: every INSERT with a parent, and every change of parent_business_unit_id / organization_id, takes the
++--     transaction-scoped advisory lock (HIERARCHY_LOCK_CLASS, hashtext(organization_id)). The API takes the SAME lock
++--     before its own (friendly, 422) checks (organization/repository.ts lockBusinessUnitHierarchy), so in the
++--     application the checks and the write are serialized per organization. A hash collision between two
++--     organizations only serializes them more than needed; it never weakens the guard.
++--  2. RE-CHECK after the write is applied (AFTER ROW, so a multi-row statement is checked on its final state) and
++--     after the lock is held. Under READ COMMITTED every query below takes a fresh snapshot, so it sees what the
++--     previous lock holder committed.
++--  3. LOCKING WALK: the parent chain is walked with SELECT ... FOR SHARE. Under REPEATABLE READ / SERIALIZABLE (whose
++--     snapshot may predate the lock) a chain row that a concurrent transaction changed raises a serialization failure
++--     (40001) instead of being read stale, so the cycle check fails closed at every isolation level. The walk stops
++--     after 10 levels, so even a pre-existing loop cannot make it spin.
++--  Depth: parent levels + 1 + height of the moved subtree must stay <= 10 (MAX_BU_DEPTH = 9 below the organization in
++--  organization/routes.ts). The subtree height is read without row locks: under READ COMMITTED it is serialized by the
++--  lock (every insert with a parent takes it too); under REPEATABLE READ a concurrent child insert into the moved
++--  subtree is a stated residual for DEPTH only (no cycle is possible through an insert: the FK is not deferrable, so
++--  a new row can never be anyone's parent yet). The application uses READ COMMITTED.
++-- Errors: SQLSTATE 23514 (check_violation) with constraint name business_unit_acyclic or business_unit_max_depth; the
++-- API maps both to its existing business_unit.cycle / business_unit.depth_exceeded problems.
++
++-- Refuse to install over a hierarchy that is already broken (fail loudly; an operator must repair the data first).
++DO $$
++BEGIN
++  IF EXISTS (SELECT 1 FROM business_unit_closure WHERE ancestor_id = descendant_id AND depth > 0) THEN
++    RAISE EXCEPTION 'business_unit hierarchy already contains a cycle; repair it before applying 0009';
++  END IF;
++  IF EXISTS (SELECT 1 FROM business_unit_closure WHERE depth > 9) THEN
++    RAISE EXCEPTION 'business_unit hierarchy is already deeper than 10 levels; repair it before applying 0009';
++  END IF;
++END $$;
++
++CREATE FUNCTION business_unit_hierarchy_guard() RETURNS trigger
++LANGUAGE plpgsql
++SET search_path = pg_catalog, public
++AS $$
++DECLARE
++  -- Advisory-lock class shared with the API (organization/repository.ts HIERARCHY_LOCK_CLASS).
++  hierarchy_lock_class CONSTANT integer := 730219;
++  max_levels CONSTANT integer := 10;
++  cur uuid;
++  parent_levels integer := 0;
++  height integer;
++BEGIN
++  IF TG_OP = 'UPDATE'
++     AND NEW.parent_business_unit_id IS NOT DISTINCT FROM OLD.parent_business_unit_id
++     AND NEW.organization_id = OLD.organization_id THEN
++    RETURN NULL;
++  END IF;
++  -- A root unit cannot close a cycle, and its depth (1 + height) cannot exceed what it already had below a parent.
++  IF NEW.parent_business_unit_id IS NULL THEN
++    RETURN NULL;
++  END IF;
++
++  PERFORM pg_advisory_xact_lock(hierarchy_lock_class, hashtext(NEW.organization_id::text));
++
++  cur := NEW.parent_business_unit_id;
++  WHILE cur IS NOT NULL LOOP
++    IF cur = NEW.id THEN
++      RAISE EXCEPTION 'business unit % cannot be placed under its own descendant %', NEW.id, NEW.parent_business_unit_id
++        USING ERRCODE = 'check_violation', CONSTRAINT = 'business_unit_acyclic', TABLE = 'business_unit';
++    END IF;
++    parent_levels := parent_levels + 1;
++    IF parent_levels >= max_levels THEN
++      RAISE EXCEPTION 'business unit % would be nested deeper than % levels', NEW.id, max_levels
++        USING ERRCODE = 'check_violation', CONSTRAINT = 'business_unit_max_depth', TABLE = 'business_unit';
++    END IF;
++    SELECT b.parent_business_unit_id INTO cur FROM business_unit b WHERE b.id = cur FOR SHARE;
++  END LOOP;
++
++  WITH RECURSIVE sub (id, d) AS (
++    SELECT NEW.id, 0
++    UNION ALL
++    SELECT c.id, s.d + 1 FROM business_unit c JOIN sub s ON c.parent_business_unit_id = s.id WHERE s.d < max_levels
++  )
++  SELECT max(d) INTO height FROM sub;
++
++  IF parent_levels + 1 + height > max_levels THEN
++    RAISE EXCEPTION 'business unit % would be nested deeper than % levels', NEW.id, max_levels
++      USING ERRCODE = 'check_violation', CONSTRAINT = 'business_unit_max_depth', TABLE = 'business_unit';
++  END IF;
++  RETURN NULL;
++END $$;
++
++CREATE TRIGGER business_unit_hierarchy_guard
++  AFTER INSERT OR UPDATE OF parent_business_unit_id, organization_id ON business_unit
++  FOR EACH ROW EXECUTE FUNCTION business_unit_hierarchy_guard();
++
++COMMENT ON FUNCTION business_unit_hierarchy_guard() IS
++  'F-DG1-140: refuses a business_unit row that would close a cycle or nest deeper than 10 levels; serialized per organization by an advisory lock shared with the API.';
+diff --git a/apps/api/src/modules/identity/rate-limit-subjects.ts b/apps/api/src/modules/identity/rate-limit-subjects.ts
+new file mode 100644
+index 0000000..f789455
+--- /dev/null
++++ b/apps/api/src/modules/identity/rate-limit-subjects.ts
+@@ -0,0 +1,56 @@
++// Trustworthy rate-limit keys (F-DG1-142, ADR-0007 T-3). The global limiter runs on onRequest, BEFORE the session is
++// resolved in PostgreSQL, and must stay there so floods are refused without a database lookup. Keying it on the raw
++// cookie value let every fabricated cookie open a fresh bucket. Instead, the limiter asks this process-local map,
++// which only the identity hook fills, and only after a session cookie RESOLVED to a live session:
++//   - token seen valid within the TTL -> key `u:<userId>` (the authenticated subject: all of a user's sessions share it);
++//   - anything else (no cookie, unknown, forged, expired or revoked token) -> the caller falls back to the client IP,
++//     which Fastify derives from the socket or from X-Forwarded-For only through the configured TRUST_PROXY hops.
++// A token that fails to resolve is forgotten at once, so a revoked session drops back to the IP bucket on its next
++// request. Entries are keyed by SHA-256 of the token (never the raw value), bounded in number (oldest evicted first)
++// and expire after the session idle timeout. Only live sessions can add entries, so an anonymous client cannot grow it.
++import { sha256 } from "./sessions.ts";
++
++export class RateLimitSubjects {
++  private readonly entries = new Map<string, { readonly userId: string; readonly expiresAt: number }>();
++
++  private readonly ttlMs: number;
++  private readonly maxEntries: number;
++
++  constructor(ttlMs: number, maxEntries = 50_000) {
++    this.ttlMs = ttlMs;
++    this.maxEntries = maxEntries;
++  }
++
++  /** The authenticated subject for this cookie value, or null when it has not been validated recently. */
++  subjectOf(token: string, now: number = Date.now()): string | null {
++    const key = sha256(token).toString("hex");
++    const entry = this.entries.get(key);
++    if (!entry) return null;
++    if (entry.expiresAt <= now) {
++      this.entries.delete(key);
++      return null;
++    }
++    return entry.userId;
++  }
++
++  /** Called by the identity hook after `token` resolved to a live session of `userId` (and on sign-in). */
++  remember(token: string, userId: string, now: number = Date.now()): void {
++    const key = sha256(token).toString("hex");
++    this.entries.delete(key); // re-insert: Map order is the eviction order (least recently validated first)
++    this.entries.set(key, { userId, expiresAt: now + this.ttlMs });
++    while (this.entries.size > this.maxEntries) {
++      const oldest = this.entries.keys().next();
++      if (oldest.done === true) break;
++      this.entries.delete(oldest.value);
++    }
++  }
++
++  /** Called when `token` did not resolve (unknown, expired, revoked) or was revoked by sign-out/rotation. */
++  forget(token: string): void {
++    this.entries.delete(sha256(token).toString("hex"));
++  }
++
++  get size(): number {
++    return this.entries.size;
++  }
++}
+diff --git a/apps/api/test/integration/bu-hierarchy-guard.test.ts b/apps/api/test/integration/bu-hierarchy-guard.test.ts
+new file mode 100644
+index 0000000..5d46997
+--- /dev/null
++++ b/apps/api/test/integration/bu-hierarchy-guard.test.ts
+@@ -0,0 +1,331 @@
++// Business-unit hierarchy under concurrency and destination authorization (T-DG1-BE-R2; REQ-S19-004, REQ-DLV-033).
++//  F-DG1-140  two concurrent re-parents (A under C while B moves under A, with C under B) must never commit a cycle:
++//             - through the API, the loser is refused 422 business_unit.cycle (serialized on the hierarchy lock);
++//             - in the database alone (migration 0009 trigger), the loser fails with 23514 / 40001 under READ
++//               COMMITTED and REPEATABLE READ, so no client can commit a cycle or an over-deep tree.
++//  F-DG1-141  a re-parent needs business_unit.manage on the destination parent too (403, audited), not only on the
++//             moved unit; the legitimate in-scope move still succeeds.
++// Deterministic interleaving without sleeps: the same advisory-lock parking trigger the code-security reviewer used
++// (docs/delivery/test-evidence/DG1/code-security/round-1/repro-bu/zz-review-bu-hierarchy.test.ts, also the technique
++// of access-derived-race.test.ts). It runs on its own scratch database, because it adds a test-only trigger.
++import { migrate } from "@mth/db";
++import pg from "pg";
++import { afterAll, beforeAll, describe, expect, inject, it } from "vitest";
++import { createScratchDatabase, dropScratchDatabase, roleUrl } from "../../../../packages/db/test/helpers.ts";
++import {
++  auditOf,
++  call,
++  createBu,
++  createTransformationRow,
++  createUser,
++  grant,
++  seedWorld,
++  signIn,
++  startApi,
++  type Session,
++  type TestApi,
++  type World,
++} from "../support/harness.ts";
++
++let api: TestApi;
++let w: World;
++let admin: Session;
++let scratchDb: string;
++let appUrl: string;
++const HOOK_KEY = 990_141;
++
++beforeAll(async () => {
++  const { adminUrl } = inject("mthDb");
++  scratchDb = await createScratchDatabase(adminUrl, "mth_buguard");
++  await migrate(roleUrl(adminUrl, scratchDb, "mth_owner"));
++  appUrl = roleUrl(adminUrl, scratchDb, "mth_app");
++  api = await startApi({ database: scratchDb });
++  w = await seedWorld(api.db);
++  admin = await signIn(api.app, w.admin.subject); // ADM_TECH + ADM_ACCESS at organization A
++  await api.owner.query(`CREATE TABLE buguard_hook (bu_id uuid)`);
++  await api.owner.query(`GRANT SELECT ON buguard_hook TO mth_app`);
++  await api.owner.query(`
++    CREATE FUNCTION buguard_park() RETURNS trigger LANGUAGE plpgsql AS $$
++    BEGIN
++      IF OLD.parent_business_unit_id IS DISTINCT FROM NEW.parent_business_unit_id
++         AND EXISTS (SELECT 1 FROM buguard_hook WHERE bu_id = NEW.id) THEN
++        PERFORM pg_advisory_xact_lock(${HOOK_KEY});
++      END IF;
++      RETURN NEW;
++    END $$`);
++  // Fires after the row is written and after business_unit_hierarchy_guard (triggers fire in name order), i.e. while
++  // the parked transaction holds its row lock and the hierarchy lock, uncommitted.
++  await api.owner.query(
++    `CREATE TRIGGER zz_buguard_park AFTER UPDATE ON business_unit FOR EACH ROW EXECUTE FUNCTION buguard_park()`,
++  );
++});
++afterAll(async () => {
++  await api.close();
++  await dropScratchDatabase(inject("mthDb").adminUrl, scratchDb);
++});
++
++async function waiters(kind: "advisory" | "row"): Promise<number> {
++  const types = kind === "advisory" ? ["advisory"] : ["transactionid", "tuple"];
++  // Only waiters in this suite's scratch database (other integration files may run concurrently on the cluster).
++  const { rows } = await api.owner.query(
++    `SELECT count(*)::int AS n FROM pg_locks l JOIN pg_stat_activity a ON a.pid = l.pid
++     WHERE NOT l.granted AND l.locktype = ANY($1::text[]) AND a.datname = current_database()`,
++    [types],
++  );
++  return (rows[0] as { n: number }).n;
++}
++
++async function waitFor(kind: "advisory" | "row", n: number): Promise<void> {
++  for (let i = 0; i < 400; i++) {
++    if ((await waiters(kind)) >= n) return;
++    await new Promise((r) => setTimeout(r, 25));
++  }
++  throw new Error(`timed out waiting for ${n} ${kind} lock waiter(s)`);
++}
++
++async function parentsOf(ids: string[]): Promise<Map<string, string | null>> {
++  const { rows } = await api.owner.query(
++    "SELECT id, parent_business_unit_id AS parent FROM business_unit WHERE id = ANY($1::uuid[])",
++    [ids],
++  );
++  return new Map(rows.map((r: { id: string; parent: string | null }) => [r.id, r.parent]));
++}
++
++/** True when some unit is its own ancestor (the closure view stops at depth 10, so a loop shows as depth > 0). */
++async function anyCycle(): Promise<boolean> {
++  const { rows } = await api.owner.query(
++    "SELECT EXISTS (SELECT 1 FROM business_unit_closure WHERE ancestor_id = descendant_id AND depth > 0) AS c",
++  );
++  return (rows[0] as { c: boolean }).c;
++}
++
++const move = (session: Session, bu: string, parent: string | null, version = 1) =>
++  call(api.app, "PATCH", `/api/v1/business-units/${bu}`, {
++    session,
++    headers: { "if-match": `"${version}"` },
++    body: { parentBusinessUnitId: parent },
++  });
++
++async function appClient(): Promise<pg.Client> {
++  const c = new pg.Client({ connectionString: appUrl });
++  c.on("error", () => undefined);
++  await c.connect();
++  return c;
++}
++
++/** The error a promise rejects with (or null when it resolves). */
++const failure = (p: Promise<unknown>) =>
++  p.then(
++    () => null,
++    (e: { code?: string; constraint?: string }) => ({ code: e.code, constraint: e.constraint }),
++  );
++
++describe("F-DG1-140 concurrent re-parenting through the API never commits a cycle", () => {
++  it("A->C and B->A (with C under B) interleaved: one 200, the other 422 business_unit.cycle; no cycle persists", async () => {
++    const b = await createBu(api.db, w.orgA.id);
++    const c = await createBu(api.db, w.orgA.id, b);
++    const a = await createBu(api.db, w.orgA.id);
++
++    await api.owner.query("INSERT INTO buguard_hook (bu_id) VALUES ($1)", [a]);
++    const hold = await api.owner.connect();
++    await hold.query("SELECT pg_advisory_lock($1)", [HOOK_KEY]);
++    let r1, r2;
++    let released = false;
++    try {
++      const p1 = move(admin, a, c); // checks, updates A, parks holding the hierarchy lock (uncommitted)
++      await waitFor("advisory", 1);
++      // Before the fix this request read the committed hierarchy (A still a root), passed its cycle check and only
++      // then blocked on A's row; now it waits on the organization's hierarchy lock BEFORE checking anything.
++      const p2 = move(admin, b, a);
++      await waitFor("advisory", 2);
++      await hold.query("SELECT pg_advisory_unlock($1)", [HOOK_KEY]);
++      released = true;
++      [r1, r2] = await Promise.all([p1, p2]);
++    } finally {
++      if (!released) await hold.query("SELECT pg_advisory_unlock($1)", [HOOK_KEY]);
++      hold.release();
++      await api.owner.query("DELETE FROM buguard_hook");
++    }
++    expect(r1.status).toBe(200);
++    expect([r2.status, r2.body.code]).toEqual([422, "business_unit.cycle"]);
++    const parent = await parentsOf([a, b, c]);
++    expect([parent.get(a), parent.get(c), parent.get(b)]).toEqual([c, b, null]);
++    expect(await anyCycle()).toBe(false);
++  });
++
++  it("the sequential control is still the friendly 422 business_unit.cycle", async () => {
++    const b = await createBu(api.db, w.orgA.id);
++    const c = await createBu(api.db, w.orgA.id, b);
++    const a = await createBu(api.db, w.orgA.id);
++    expect((await move(admin, a, c)).status).toBe(200);
++    const r = await move(admin, b, a);
++    expect([r.status, r.body.code]).toEqual([422, "business_unit.cycle"]);
++  });
++});
++
++describe("F-DG1-140 the database guard (migration 0009) fails closed on its own", () => {
++  it("refuses a direct cycle and an over-deep chain with 23514 and the named constraint", async () => {
++    const x = await createBu(api.db, w.orgA.id);
++    const y = await createBu(api.db, w.orgA.id, x);
++    const z = await createBu(api.db, w.orgA.id, y);
++    const c = await appClient();
++    try {
++      expect(
++        await failure(c.query("UPDATE business_unit SET parent_business_unit_id = $1 WHERE id = $2", [z, x])),
++      ).toEqual({ code: "23514", constraint: "business_unit_acyclic" });
++      // One statement that closes a loop over several rows is checked on its final state too.
++      const p = await createBu(api.db, w.orgA.id);
++      const q = await createBu(api.db, w.orgA.id);
++      expect(
++        await failure(
++          c.query(
++            `UPDATE business_unit SET parent_business_unit_id = CASE id WHEN $1::uuid THEN $2::uuid ELSE $1::uuid END
++             WHERE id IN ($1::uuid, $2::uuid)`,
++            [p, q],
++          ),
++        ),
++      ).toMatchObject({ code: "23514" });
++      // Depth: 10 levels are allowed, the 11th is refused (inserting and moving).
++      let parent: string | null = null;
++      const chain: string[] = [];
++      for (let i = 0; i < 10; i++) chain.push((parent = await createBu(api.db, w.orgA.id, parent)));
++      expect(
++        await failure(
++          c.query(
++            `INSERT INTO business_unit (id, organization_id, parent_business_unit_id, code, name_en, name_ar)
++             VALUES (gen_random_uuid(), $1, $2, 'DEEP11', 'Too deep', 'عميق')`,
++            [w.orgA.id, chain[9]],
++          ),
++        ),
++      ).toEqual({ code: "23514", constraint: "business_unit_max_depth" });
++      const leafParent = await createBu(api.db, w.orgA.id);
++      await createBu(api.db, w.orgA.id, leafParent); // a 2-level subtree
++      expect(
++        await failure(
++          c.query("UPDATE business_unit SET parent_business_unit_id = $1 WHERE id = $2", [chain[8], leafParent]),
++        ),
++      ).toEqual({ code: "23514", constraint: "business_unit_max_depth" });
++    } finally {
++      await c.end();
++    }
++    expect(await anyCycle()).toBe(false);
++  });
++
++  it("READ COMMITTED: two raw transactions forming A->C->B->A - the second fails with 23514 after the first commits", async () => {
++    const b = await createBu(api.db, w.orgA.id);
++    const c = await createBu(api.db, w.orgA.id, b);
++    const a = await createBu(api.db, w.orgA.id);
++    const t1 = await appClient();
++    const t2 = await appClient();
++    try {
++      await t1.query("BEGIN");
++      await t2.query("BEGIN");
++      await t1.query("UPDATE business_unit SET parent_business_unit_id = $1 WHERE id = $2", [c, a]);
++      const second = failure(t2.query("UPDATE business_unit SET parent_business_unit_id = $1 WHERE id = $2", [a, b]));
++      await waitFor("row", 1).catch(() => waitFor("advisory", 1)); // t2 is blocked behind t1
++      await t1.query("COMMIT");
++      expect(await second).toEqual({ code: "23514", constraint: "business_unit_acyclic" });
++      await t2.query("ROLLBACK");
++    } finally {
++      await t1.end();
++      await t2.end();
++    }
++    const parent = await parentsOf([a, b, c]);
++    expect([parent.get(a), parent.get(c), parent.get(b)]).toEqual([c, b, null]);
++    expect(await anyCycle()).toBe(false);
++  });
++
++  it("REPEATABLE READ with a snapshot older than the first commit: the second fails (40001 or 23514), no cycle", async () => {
++    const b = await createBu(api.db, w.orgA.id);
++    const c = await createBu(api.db, w.orgA.id, b);
++    const a = await createBu(api.db, w.orgA.id);
++    const t1 = await appClient();
++    const t2 = await appClient();
++    try {
++      await t2.query("BEGIN ISOLATION LEVEL REPEATABLE READ");
++      await t2.query("SELECT count(*) FROM business_unit"); // takes t2's snapshot: A is a root here
++      await t1.query("UPDATE business_unit SET parent_business_unit_id = $1 WHERE id = $2", [c, a]); // autocommit
++      const err = await failure(
++        t2.query("UPDATE business_unit SET parent_business_unit_id = $1 WHERE id = $2", [a, b]),
++      );
++      expect(err).not.toBeNull();
++      expect(["40001", "23514"]).toContain(err!.code);
++      await t2.query("ROLLBACK");
++    } finally {
++      await t1.end();
++      await t2.end();
++    }
++    expect(await anyCycle()).toBe(false);
++  });
++
++  it("READ COMMITTED depth race: a move that makes a subtree 10 deep and a concurrent child insert below it", async () => {
++    // P1..P5 (5 levels) and S1..S5 (5 levels). Moving S1 under P5 gives exactly 10 levels; a child of S5 makes 11.
++    let p: string | null = null;
++    for (let i = 0; i < 5; i++) p = await createBu(api.db, w.orgA.id, p);
++    let s: string | null = null;
++    let s1 = "";
++    for (let i = 0; i < 5; i++) {
++      s = await createBu(api.db, w.orgA.id, s);
++      if (i === 0) s1 = s;
++    }
++    const t1 = await appClient();
++    const t2 = await appClient();
++    try {
++      await t1.query("BEGIN");
++      await t1.query("UPDATE business_unit SET parent_business_unit_id = $1 WHERE id = $2", [p, s1]);
++      const insert = failure(
++        t2.query(
++          `INSERT INTO business_unit (id, organization_id, parent_business_unit_id, code, name_en, name_ar)
++           VALUES (gen_random_uuid(), $1, $2, 'RACE11', 'Race', 'سباق')`,
++          [w.orgA.id, s],
++        ),
++      );
++      await waitFor("advisory", 1); // t2's guard waits on the hierarchy lock t1 holds
++      await t1.query("COMMIT");
++      expect(await insert).toEqual({ code: "23514", constraint: "business_unit_max_depth" });
++    } finally {
++      await t1.end();
++      await t2.end();
++    }
++    const { rows } = await api.owner.query("SELECT max(depth)::int AS d FROM business_unit_closure");
++    expect((rows[0] as { d: number }).d).toBeLessThanOrEqual(9);
++  });
++});
++
++describe("F-DG1-141 re-parenting authorizes the destination parent too", () => {
++  it("a manager scoped to BU a1 cannot move a1 units under sibling a2 or to the top level (403, audited); in-scope moves work", async () => {
++    // U: ADM_TECH (business_unit.manage, structural -> applies downward) at BU a1 only.
++    const u = await createUser(api.db, w.orgA.id);
++    await grant(api.db, w.grantor.id, u.id, "ADM_TECH", { type: "business_unit", id: w.a1 }, w.orgA.id);
++    const su = await signIn(api.app, u.subject);
++    // V: auditor (AUD, inherits downward) at sibling BU a2 only; a transformation under a fresh child of a1.
++    const v = await createUser(api.db, w.orgA.id);
++    await grant(api.db, w.grantor.id, v.id, "AUD", { type: "business_unit", id: w.a2 }, w.orgA.id);
++    const sv = await signIn(api.app, v.subject);
++    const moved = await createBu(api.db, w.orgA.id, w.a1);
++    const tx = await createTransformationRow(api.db, w.orgA.id, moved, w.leadA1.id);
++    expect((await call(api.app, "GET", `/api/v1/transformations/${tx}`, { session: sv })).status).toBe(404);
++
++    // Negative: into the sibling branch a2 (U holds nothing there).
++    const denied = await move(su, moved, w.a2);
++    expect([denied.status, denied.body.code]).toEqual([403, "forbidden"]);
++    const denials = (await auditOf(api.db, w.a2)).filter(
++      (e) => e.action === "authorization.denied" && e.actor_user_id === u.id,
++    );
++    expect(denials).toHaveLength(1);
++    expect(denials[0]!.reason).toMatch(/business_unit\.manage/);
++    // Negative: to the top level (the destination is the organization, where U holds nothing).
++    expect((await move(su, moved, null)).status).toBe(403);
++    // Nothing moved, nothing exposed.
++    expect((await parentsOf([moved])).get(moved)).toBe(w.a1);
++    expect((await call(api.app, "GET", `/api/v1/transformations/${tx}`, { session: sv })).status).toBe(404);
++
++    // Positive: a move inside U's own branch (under a1x, a descendant of a1) still succeeds.
++    const ok = await move(su, moved, w.a1x);
++    expect([ok.status, ok.body.parentBusinessUnitId]).toEqual([200, w.a1x]);
++    // Positive: an organization-scope manager may move across branches (and to the top level).
++    const across = await move(admin, moved, w.a2, 2);
++    expect([across.status, across.body.parentBusinessUnitId]).toEqual([200, w.a2]);
++    expect((await move(admin, moved, null, 3)).status).toBe(200);
++  });
++});

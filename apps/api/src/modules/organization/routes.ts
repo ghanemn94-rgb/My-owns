@@ -40,7 +40,9 @@ import {
 import {
   findBusinessUnit,
   findOrganization,
+  hierarchyViolation,
   isDescendant,
+  lockBusinessUnitHierarchy,
   subtreeHeight,
   toBusinessUnit,
   toOrganization,
@@ -71,6 +73,32 @@ const BU_AUDIT_FIELDS = ["name_en", "name_ar", "parent_business_unit_id", "statu
 function uniqueCode(e: unknown, what: string): never {
   const err = e as { code?: string };
   if (err.code === "23505") throw problems.duplicate("duplicate.code", `A ${what} with this code already exists.`);
+  throw e;
+}
+
+const cycleRefused = () =>
+  problems.businessRule(
+    "business_unit.cycle",
+    "A business unit cannot be moved under itself or one of its descendants.",
+  );
+const depthExceeded = () =>
+  problems.businessRule(
+    "business_unit.depth_exceeded",
+    `Business units can be nested at most ${MAX_BU_DEPTH + 1} levels deep.`,
+  );
+// createBusinessUnit declares no 422 in the contract, so on create the depth rule surfaces as a 400 field error.
+const depthExceededOnCreate = () =>
+  problems.badRequest(
+    "business_unit.depth_exceeded",
+    `Business units can be nested at most ${MAX_BU_DEPTH + 1} levels deep.`,
+    "/parentBusinessUnitId",
+  );
+
+/** The database hierarchy guard (migration 0009) refused the write: the same problems as the API's own checks. */
+function hierarchyRule(e: unknown): never {
+  const v = hierarchyViolation(e);
+  if (v === "cycle") throw cycleRefused();
+  if (v === "depth") throw depthExceeded();
   throw e;
 }
 
@@ -253,6 +281,7 @@ export function registerOrganizationRoutes(app: FastifyInstance, { db, config }:
         });
         await requireAction(tx, principal, "business_unit.manage", target);
         if (body.parentBusinessUnitId !== undefined) {
+          await lockBusinessUnitHierarchy(tx, organizationId); // F-DG1-140: depth check vs a concurrent move
           const parent = await findBusinessUnit(tx, body.parentBusinessUnitId);
           // createBusinessUnit declares no 422 in the contract, so these rules surface as 400 field errors.
           if (!parent || parent.organization_id !== organizationId) {
@@ -263,13 +292,7 @@ export function registerOrganizationRoutes(app: FastifyInstance, { db, config }:
             );
           }
           const parentTarget = await targetFor(tx, "business_unit", { organizationId, businessUnitId: parent.id });
-          if (parentTarget.businessUnitAncestry.length > MAX_BU_DEPTH) {
-            throw problems.badRequest(
-              "business_unit.depth_exceeded",
-              `Business units can be nested at most ${MAX_BU_DEPTH + 1} levels deep.`,
-              "/parentBusinessUnitId",
-            );
-          }
+          if (parentTarget.businessUnitAncestry.length > MAX_BU_DEPTH) throw depthExceededOnCreate();
         }
         const id = uuidv7();
         const created = await tx
@@ -286,7 +309,10 @@ export function registerOrganizationRoutes(app: FastifyInstance, { db, config }:
           })
           .returningAll()
           .executeTakeFirstOrThrow()
-          .catch((e: unknown) => uniqueCode(e, "business unit"));
+          .catch((e: unknown) => {
+            if (hierarchyViolation(e) === "depth") throw depthExceededOnCreate();
+            return uniqueCode(e, "business unit");
+          });
         await record(tx, audit, {
           action: "business_unit.create",
           recordType: "business_unit",
@@ -332,12 +358,24 @@ export function registerOrganizationRoutes(app: FastifyInstance, { db, config }:
         });
         await requireAction(tx, principal, "business_unit.manage", target);
         const expected = requireIfMatch(request);
+        // F-DG1-140: a re-parent serializes on the organization's hierarchy lock BEFORE reading anything it checks, so
+        // two concurrent moves can never both pass the cycle/depth checks against the same committed hierarchy. The
+        // database trigger (migration 0009) re-checks under the same lock as the last line of defence.
+        if (body.parentBusinessUnitId !== undefined) await lockBusinessUnitHierarchy(tx, target.organizationId);
         const current = await findBusinessUnit(tx, businessUnitId, true);
         if (!current) throw problems.notFound();
         if (current.version !== expected) throw problems.versionConflict(current.version);
         if (body.parentBusinessUnitId !== undefined && body.parentBusinessUnitId !== current.parent_business_unit_id) {
           const parentId = body.parentBusinessUnitId;
-          if (parentId !== null) {
+          if (parentId === null) {
+            // F-DG1-141: the destination of a move to the top level is the organization itself.
+            await requireAction(
+              tx,
+              principal,
+              "business_unit.manage",
+              await targetFor(tx, "organization", { organizationId: current.organization_id }),
+            );
+          } else {
             const parent = await findBusinessUnit(tx, parentId);
             if (!parent || parent.organization_id !== current.organization_id) {
               throw problems.businessRule(
@@ -345,11 +383,20 @@ export function registerOrganizationRoutes(app: FastifyInstance, { db, config }:
                 "The parent business unit must exist in the same organization.",
               );
             }
+            // F-DG1-141: a move writes into the destination branch, so the actor needs business_unit.manage on the
+            // destination parent as well as on the moved unit (ADR-0006: grants never apply across siblings).
+            // Refused 403 with an audited authorization.denied (denials.ts).
+            await requireAction(
+              tx,
+              principal,
+              "business_unit.manage",
+              await targetFor(tx, "business_unit", {
+                organizationId: parent.organization_id,
+                businessUnitId: parentId,
+              }),
+            );
             if (parentId === businessUnitId || (await isDescendant(tx, businessUnitId, parentId))) {
-              throw problems.businessRule(
-                "business_unit.cycle",
-                "A business unit cannot be moved under itself or one of its descendants.",
-              );
+              throw cycleRefused();
             }
             const parentDepth = (
               await targetFor(tx, "business_unit", {
@@ -357,12 +404,7 @@ export function registerOrganizationRoutes(app: FastifyInstance, { db, config }:
                 businessUnitId: parentId,
               })
             ).businessUnitAncestry.length;
-            if (parentDepth + (await subtreeHeight(tx, businessUnitId)) > MAX_BU_DEPTH) {
-              throw problems.businessRule(
-                "business_unit.depth_exceeded",
-                `Business units can be nested at most ${MAX_BU_DEPTH + 1} levels deep.`,
-              );
-            }
+            if (parentDepth + (await subtreeHeight(tx, businessUnitId)) > MAX_BU_DEPTH) throw depthExceeded();
           }
         }
         const updated = await tx
@@ -379,7 +421,8 @@ export function registerOrganizationRoutes(app: FastifyInstance, { db, config }:
           .where("id", "=", businessUnitId)
           .where("version", "=", expected)
           .returningAll()
-          .executeTakeFirstOrThrow();
+          .executeTakeFirstOrThrow()
+          .catch(hierarchyRule);
         await record(tx, audit, {
           action: "business_unit.update",
           recordType: "business_unit",

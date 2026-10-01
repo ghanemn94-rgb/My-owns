@@ -793,6 +793,24 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
     expect(fileViolations("kpi", at("zz.test.ts"), vitestImport)).toEqual([]);
   });
 
+  it("F-DG1-143: test-only packages (ajv, ajv-formats, yaml) are violations in module source, allowed only in *.test.ts", () => {
+    const at = (name: string) => join(MODULES_DIR, "transformations", name);
+    const src = `import Ajv from "ajv/dist/2020.js";\nimport formats from "ajv-formats";\nimport { parse } from "yaml";\nexport const x = [Ajv, formats, parse];`;
+    expect(fileViolations("transformations", at("zz.ts"), src)).toEqual([
+      "modules/transformations/zz.ts: imports package ajv/dist/2020.js",
+      "modules/transformations/zz.ts: imports package ajv-formats",
+      "modules/transformations/zz.ts: imports package yaml",
+    ]);
+    // A non-test extension ships in dist: no test allowance.
+    expect(fileViolations("transformations", at("zz.test.mts"), src)).toHaveLength(3);
+    expect(fileViolations("transformations", at("zz.test.ts"), src)).toEqual([]);
+    // The code-security reviewer's planted codegen file (repro-ajv/zz-ajv-planted.ts) is now refused at the import.
+    const planted = `import Ajv, { _ } from "ajv";\nconst ajv = new Ajv();\nexport const r = [ajv, _];`;
+    expect(fileViolations("transformations", at("zz-ajv-planted.ts"), planted)).toEqual([
+      "modules/transformations/zz-ajv-planted.ts: imports package ajv",
+    ]);
+  });
+
   it("F-DG1-217: a module declaration file (.d.ts/.d.mts/.d.cts) is linted without throwing, imports still checked", () => {
     const at = (name: string) => join(MODULES_DIR, "transformations", name);
     // Before the fix syntaxErrors() ran ts.transpileModule on a declaration-file name and it threw

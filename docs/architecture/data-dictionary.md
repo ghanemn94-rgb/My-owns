@@ -1,4 +1,4 @@
-# Data dictionary: P1 tables
+# Data dictionary: P1 tables and views
 
 - **Task:** T-DG1-ARCH-01 (solution-architect), 2026-09-30.
 - **Contract for:** backend-workflow-engineer's P1 migrations (`packages/db/migrations/**`).
@@ -82,7 +82,10 @@ Bookkeeping for the migration runner (ADR-0003).
 
 **Invariants:**
 - The parent is in the same organization. This is enforced by the composite FK `(organization_id, parent_business_unit_id) → business_unit(organization_id, id)`.
-- No cycles: the API checks with a recursive CTE on update (422), and depth is limited to 10.
+- No cycles, and at most 10 levels below the organization (`MAX_BU_DEPTH = 9`, 0 = top-level unit). Enforced twice (F-DG1-140):
+  - **API (friendly path):** on create and re-parent the API takes the organization's hierarchy advisory lock, then checks the cycle and depth against `business_unit_closure`, and answers 422 `business_unit.cycle` / `business_unit.depth_exceeded` (400 field error on create).
+  - **Database (last line of defence, migration 0009):** the `AFTER INSERT OR UPDATE OF parent_business_unit_id, organization_id` trigger `business_unit_hierarchy_guard` takes the same transaction-scoped advisory lock `(730219, hashtext(organization_id))`, walks the parent chain with `SELECT … FOR SHARE` and checks the subtree height. It raises SQLSTATE `23514` with constraint name `business_unit_acyclic` or `business_unit_max_depth`, which the API maps to the same problems. Concurrent re-parents are therefore serialized per organization, and a cycle can never commit. Under REPEATABLE READ the locking walk turns a stale parent chain into a serialization failure (`40001`). The one residual is depth (not cycles) for a concurrent child insert into a moved subtree; the application uses READ COMMITTED, where that case is serialized too.
+- A re-parent needs `business_unit.manage` on the moved unit **and** on the destination: the new parent unit, or the organization for a move to the top level (F-DG1-141; 403 otherwise, audited `authorization.denied`).
 - An inactive BU cannot receive new transformations (422).
 
 ## app_user
@@ -392,6 +395,45 @@ Bookkeeping for the migration runner (ADR-0003).
 - The same key with a different `request_hash` gives 422.
 - Expired rows are purged by the worker (`mth_app` may `DELETE` expired rows).
 
+## Views (read models)
+
+The P1 migrations create three views, owned by `mth_owner`. `mth_app` has `SELECT` only. They store nothing: every row is derived from the base tables above at query time. `packages/db/src/schema.ts` lists them in `VIEW_NAMES`, and `packages/db/test/integration/catalogue.test.ts` pins both their columns and the fact that they are views.
+
+### actor_display (migration 0001; owner module: identity)
+
+| Column | Type | Source |
+|---|---|---|
+| user_id | uuid | `app_user.id` |
+| display_name | text | `app_user.display_name` |
+
+- **Purpose:** the only user attribute other modules may read. The audit module uses it to show actor names (`LEFT JOIN actor_display`), so no other module reads `app_user` directly (ADR-0002 module boundaries).
+- **Source:** `SELECT id AS user_id, display_name FROM app_user`. One row per user, including disabled users, so historical audit events keep their actor name.
+
+### business_unit_closure (migration 0001; owner module: organization)
+
+| Column | Type | Meaning |
+|---|---|---|
+| ancestor_id | uuid | a business unit |
+| descendant_id | uuid | the ancestor itself (depth 0) or a unit below it |
+| organization_id | uuid | the descendant's organization |
+| depth | integer | levels from ancestor to descendant (0 = same unit) |
+
+- **Purpose:** the business-unit hierarchy as (ancestor, descendant) pairs. The policy function (ADR-0006) uses it to resolve a target's BU ancestry and to compile downward-inheriting grants into SQL list filters (`access/policy.ts`). The organization module uses it for the API cycle check and the subtree height.
+- **Source:** a `WITH RECURSIVE` over `business_unit.parent_business_unit_id`, seeded with every unit at depth 0. Recursion stops at `depth < 10`, so the view returns depths 0–10 and cannot loop even on corrupt data. The hierarchy invariant (no cycles, at most 10 levels) is enforced on `business_unit` itself (see above and migration 0009), so for valid data the cap never truncates a result.
+
+### scope_node (migration 0002; owner module: access)
+
+| Column | Type | Meaning |
+|---|---|---|
+| scope_type | text | `organization`, `business_unit` or `transformation` |
+| scope_id | uuid | id of the node at that level |
+| organization_id | uuid | the node's organization |
+| business_unit_id | uuid NULL | the node's business unit: NULL for an organization, the unit itself for a BU, the owning BU for a transformation |
+| transformation_id | uuid NULL | the transformation id for a transformation node; otherwise NULL |
+
+- **Purpose:** one row for every scope node that a `scoped_assignment` can point at in P1. The policy function and the assignment service resolve `(scope_type, scope_id)` to the node's position in the hierarchy (organization → business unit → transformation) through it.
+- **Source:** `UNION ALL` of `organization`, `business_unit` and `transformation`. Later stages add portfolio, workstream and other levels with a forward migration.
+
 ## pg-boss schema (`pgboss.*`)
 
 - Owned, created and migrated by pg-boss 11 itself (ADR-0008), installed by `mth-db migrate` as `mth_owner`.
@@ -402,6 +444,6 @@ Bookkeeping for the migration runner (ADR-0003).
 
 | Layer | What it checks |
 |---|---|
-| Database | Type, NOT NULL, CHECK, FK and UNIQUE constraints above. These are the last line of defence. |
+| Database | Type, NOT NULL, CHECK, FK and UNIQUE constraints above, plus the BU hierarchy trigger (no cycles, at most 10 levels; migration 0009). These are the last line of defence. |
 | API (`@mth/shared/schemas`) | Shapes, lengths, formats and the mode/entry-phase rule |
 | Service | Existence and scope of referenced IDs, status transitions, archived read-only, BU in the same organization, no BU cycles, SoD |

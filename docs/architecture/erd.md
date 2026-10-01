@@ -194,6 +194,11 @@ erDiagram
 ```
 
 Also created in P1, not drawn above:
+- Three **views** (read models, `SELECT` only for `mth_app`; columns in the data dictionary, section "Views"). They store no data:
+  - `actor_display` (0001) is derived from `app_user` as `(user_id, display_name)`. Audit reads actor names through it.
+  - `business_unit_closure` (0001) is the recursive closure of `business_unit` `parent of`, as `(ancestor_id, descendant_id, organization_id, depth)` with depth 0–10. The policy function uses it for downward inheritance, and the organization module for cycle and depth checks.
+  - `scope_node` (0002) is the `UNION ALL` of `organization`, `business_unit` and `transformation`, as `(scope_type, scope_id, organization_id, business_unit_id, transformation_id)`. It resolves the scope that a `scoped_assignment` points at.
+- The `business_unit` self-relation is acyclic and at most 10 levels deep. The database enforces this with the trigger `business_unit_hierarchy_guard` (0009, F-DG1-140) in addition to the API check.
 - `schema_migration`: migration bookkeeping.
 - The `pgboss.*` schema: owned and migrated by pg-boss (ADR-0008). This is P1's "job tables as required by the queue choice", and the physical form of the §16 entity **Job**.
 

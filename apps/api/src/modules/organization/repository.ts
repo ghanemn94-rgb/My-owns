@@ -1,5 +1,5 @@
 // organization module data access: the only writer of organization and business_unit.
-import type { BusinessUnitRow, DbOrTx, OrganizationRow } from "@mth/db";
+import { sql, type BusinessUnitRow, type DbOrTx, type OrganizationRow } from "@mth/db";
 import type { BusinessUnit, Organization } from "@mth/shared/schemas";
 import { iso } from "../platform/index.ts";
 
@@ -64,4 +64,30 @@ export async function isDescendant(db: DbOrTx, ancestorId: string, candidateId: 
     .where("descendant_id", "=", candidateId)
     .executeTakeFirst();
   return r !== undefined;
+}
+
+/**
+ * Advisory-lock class of the business-unit hierarchy, shared with the database trigger business_unit_hierarchy_guard
+ * (migration 0009, F-DG1-140). Same (class, hashtext(organization_id)) key on both sides.
+ */
+export const HIERARCHY_LOCK_CLASS = 730219;
+
+/**
+ * Serialize hierarchy changes of one organization for the rest of the transaction (F-DG1-140). Taken BEFORE the
+ * friendly cycle/depth checks so that, under READ COMMITTED, they read what the previous holder committed. The
+ * trigger takes the same lock again (re-entrant) and re-checks the invariant, so it holds even without this call.
+ */
+export async function lockBusinessUnitHierarchy(db: DbOrTx, organizationId: string): Promise<void> {
+  await sql`SELECT pg_advisory_xact_lock(${HIERARCHY_LOCK_CLASS}::integer, hashtext(${organizationId}::text))`.execute(
+    db,
+  );
+}
+
+/** Which hierarchy invariant the database trigger refused (SQLSTATE 23514 + constraint name), if any. */
+export function hierarchyViolation(e: unknown): "cycle" | "depth" | null {
+  const err = e as { code?: string; constraint?: string };
+  if (err.code !== "23514") return null;
+  if (err.constraint === "business_unit_acyclic") return "cycle";
+  if (err.constraint === "business_unit_max_depth") return "depth";
+  return null;
 }

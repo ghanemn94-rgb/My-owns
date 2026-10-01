@@ -1,6 +1,6 @@
 // Kysely `Database` interface for the P1 tables (ADR-0003), written by hand from
-// docs/architecture/data-dictionary.md. An integration test (packages/db/test/integration/schema.test.ts)
-// compares every table and column here with information_schema after the migrations run, so a drift fails CI.
+// docs/architecture/data-dictionary.md. An integration test (packages/db/test/integration/catalogue.test.ts)
+// compares every table, view and column here with information_schema after the migrations run, so a drift fails CI.
 //
 // Type mapping (node-postgres defaults): timestamptz -> Date, bigint -> string, numeric -> string,
 // bytea -> Buffer, jsonb -> parsed JSON, text[] -> string[].

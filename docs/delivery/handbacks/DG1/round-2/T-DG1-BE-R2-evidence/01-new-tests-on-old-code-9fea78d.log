@@ -1,0 +1,189 @@
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+ RUN  v3.2.4 /var/tmp/mth-run.2ueQyp/claude-0/old
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muq1mz4c_1bc413bd; applied 8 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/bu-hierarchy-guard.test.ts (7 tests | 6 failed) 43083ms
+   × F-DG1-140 concurrent re-parenting through the API never commits a cycle > A->C and B->A (with C under B) interleaved: one 200, the other 422 business_unit.cycle; no cycle persists 10704ms
+     → timed out waiting for 2 advisory lock waiter(s)
+   ✓ F-DG1-140 concurrent re-parenting through the API never commits a cycle > the sequential control is still the friendly 422 business_unit.cycle 47ms
+   × F-DG1-140 the database guard (migration 0009) fails closed on its own > refuses a direct cycle and an over-deep chain with 23514 and the named constraint 15ms
+     → expected null to deeply equal { code: '23514', …(1) }
+   × F-DG1-140 the database guard (migration 0009) fails closed on its own > READ COMMITTED: two raw transactions forming A->C->B->A - the second fails with 23514 after the first commits 21204ms
+     → timed out waiting for 1 advisory lock waiter(s)
+   × F-DG1-140 the database guard (migration 0009) fails closed on its own > REPEATABLE READ with a snapshot older than the first commit: the second fails (40001 or 23514), no cycle 23ms
+     → expected null not to be null
+   × F-DG1-140 the database guard (migration 0009) fails closed on its own > READ COMMITTED depth race: a move that makes a subtree 10 deep and a concurrent child insert below it 10640ms
+     → timed out waiting for 1 advisory lock waiter(s)
+   × F-DG1-141 re-parenting authorizes the destination parent too > a manager scoped to BU a1 cannot move a1 units under sibling a2 or to the top level (403, audited); in-scope moves work 72ms
+     → expected [ 200, 'BU5A0A58' ] to deeply equal [ 403, 'forbidden' ]
+ ❯ |integration| apps/api/test/integration/platform.test.ts (11 tests | 2 failed) 319ms
+   ✓ health and readiness > reports ready when the database answers and every shipped migration is applied 9ms
+   ✓ health and readiness > reports 503 not_ready/pending when the build ships a migration the database lacks, and fail on checksum drift 30ms
+   ✓ rate limiting (ADR-0007 T-3) > limits auth endpoints per IP with a 429 problem and Retry-After 31ms
+   ✓ rate limiting (ADR-0007 T-3) > limits general API traffic per session, never the health endpoints 86ms
+   × rate limiting (ADR-0007 T-3) > does not reset the bucket when an unauthenticated client rotates fabricated session cookies 27ms
+     → expected [ 401, 401, 401, 401, 401, 401, …(2) ] to deeply equal [ 401, 401, 401, 429, 429, 429, …(2) ]
+   × rate limiting (ADR-0007 T-3) > keys a validated session by its user, so it is not starved by an IP flood, and a revoked one falls back to the IP 60ms
+     → expected 401 to be 429 // Object.is equality
+   ✓ request hygiene > rejects malformed JSON, non-JSON bodies and bodies over 1 MiB with 400 problems 24ms
+   ✓ request hygiene > answers unknown API paths with a 404 problem 1ms
+   ✓ request hygiene > sends a strict same-origin Content-Security-Policy and other security headers 1ms
+   ✓ fail-closed guards (ADR-0006) > refuses to start with an /api route that declares no access 2ms
+   ✓ fail-closed guards (ADR-0006) > turns a success from a route that never consulted the policy function into a 500 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/bu-hierarchy-guard.test.ts > F-DG1-140 concurrent re-parenting through the API never commits a cycle > A->C and B->A (with C under B) interleaved: one 200, the other 422 business_unit.cycle; no cycle persists
+Error: timed out waiting for 2 advisory lock waiter(s)
+ ❯ waitFor apps/api/test/integration/bu-hierarchy-guard.test.ts:83:9
+     81|     await new Promise((r) => setTimeout(r, 25));
+     82|   }
+     83|   throw new Error(`timed out waiting for ${n} ${kind} lock waiter(s)`);
+       |         ^
+     84| }
+     85| 
+ ❯ apps/api/test/integration/bu-hierarchy-guard.test.ts:140:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  |integration| apps/api/test/integration/bu-hierarchy-guard.test.ts > F-DG1-140 the database guard (migration 0009) fails closed on its own > refuses a direct cycle and an over-deep chain with 23514 and the named constraint
+AssertionError: expected null to deeply equal { code: '23514', …(1) }
+
+- Expected: 
+{
+  "code": "23514",
+  "constraint": "business_unit_acyclic",
+}
+
++ Received: 
+null
+
+ ❯ apps/api/test/integration/bu-hierarchy-guard.test.ts:175:9
+    173|       expect(
+    174|         await failure(c.query("UPDATE business_unit SET parent_busines…
+    175|       ).toEqual({ code: "23514", constraint: "business_unit_acyclic" }…
+       |         ^
+    176|       // One statement that closes a loop over several rows is checked…
+    177|       const p = await createBu(api.db, w.orgA.id);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  |integration| apps/api/test/integration/bu-hierarchy-guard.test.ts > F-DG1-140 the database guard (migration 0009) fails closed on its own > READ COMMITTED: two raw transactions forming A->C->B->A - the second fails with 23514 after the first commits
+Error: timed out waiting for 1 advisory lock waiter(s)
+ ❯ waitFor apps/api/test/integration/bu-hierarchy-guard.test.ts:83:9
+     81|     await new Promise((r) => setTimeout(r, 25));
+     82|   }
+     83|   throw new Error(`timed out waiting for ${n} ${kind} lock waiter(s)`);
+       |         ^
+     84| }
+     85| 
+ ❯ apps/api/test/integration/bu-hierarchy-guard.test.ts:225:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  |integration| apps/api/test/integration/bu-hierarchy-guard.test.ts > F-DG1-140 the database guard (migration 0009) fails closed on its own > REPEATABLE READ with a snapshot older than the first commit: the second fails (40001 or 23514), no cycle
+AssertionError: expected null not to be null
+ ❯ apps/api/test/integration/bu-hierarchy-guard.test.ts:251:23
+    249|         t2.query("UPDATE business_unit SET parent_business_unit_id = $…
+    250|       );
+    251|       expect(err).not.toBeNull();
+       |                       ^
+    252|       expect(["40001", "23514"]).toContain(err!.code);
+    253|       await t2.query("ROLLBACK");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  |integration| apps/api/test/integration/bu-hierarchy-guard.test.ts > F-DG1-140 the database guard (migration 0009) fails closed on its own > READ COMMITTED depth race: a move that makes a subtree 10 deep and a concurrent child insert below it
+Error: timed out waiting for 1 advisory lock waiter(s)
+ ❯ waitFor apps/api/test/integration/bu-hierarchy-guard.test.ts:83:9
+     81|     await new Promise((r) => setTimeout(r, 25));
+     82|   }
+     83|   throw new Error(`timed out waiting for ${n} ${kind} lock waiter(s)`);
+       |         ^
+     84| }
+     85| 
+ ❯ apps/api/test/integration/bu-hierarchy-guard.test.ts:283:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  |integration| apps/api/test/integration/bu-hierarchy-guard.test.ts > F-DG1-141 re-parenting authorizes the destination parent too > a manager scoped to BU a1 cannot move a1 units under sibling a2 or to the top level (403, audited); in-scope moves work
+AssertionError: expected [ 200, 'BU5A0A58' ] to deeply equal [ 403, 'forbidden' ]
+
+- Expected
++ Received
+
+  [
+-   403,
+-   "forbidden",
++   200,
++   "BU5A0A58",
+  ]
+
+ ❯ apps/api/test/integration/bu-hierarchy-guard.test.ts:311:47
+    309|     // Negative: into the sibling branch a2 (U holds nothing there).
+    310|     const denied = await move(su, moved, w.a2);
+    311|     expect([denied.status, denied.body.code]).toEqual([403, "forbidden…
+       |                                               ^
+    312|     const denials = (await auditOf(api.db, w.a2)).filter(
+    313|       (e) => e.action === "authorization.denied" && e.actor_user_id ==…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  |integration| apps/api/test/integration/platform.test.ts > rate limiting (ADR-0007 T-3) > does not reset the bucket when an unauthenticated client rotates fabricated session cookies
+AssertionError: expected [ 401, 401, 401, 401, 401, 401, …(2) ] to deeply equal [ 401, 401, 401, 429, 429, 429, …(2) ]
+
+- Expected
++ Received
+
+  [
+    401,
+    401,
+    401,
+-   429,
+-   429,
+-   429,
+-   429,
+-   429,
++   401,
++   401,
++   401,
++   401,
++   401,
+  ]
+
+ ❯ apps/api/test/integration/platform.test.ts:92:23
+     90|       const rotated: number[] = [];
+     91|       for (let i = 0; i < 8; i++) rotated.push((await me({ cookie: fak…
+     92|       expect(rotated).toEqual([401, 401, 401, 429, 429, 429, 429, 429]…
+       |                       ^
+     93|       // Mixing cookieless and fake-cookie requests shares the same IP…
+     94|       const mixed: number[] = [];
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  |integration| apps/api/test/integration/platform.test.ts > rate limiting (ADR-0007 T-3) > keys a validated session by its user, so it is not starved by an IP flood, and a revoked one falls back to the IP
+AssertionError: expected 401 to be 429 // Object.is equality
+
+- Expected
++ Received
+
+- 429
++ 401
+
+ ❯ apps/api/test/integration/platform.test.ts:133:32
+    131|         remoteAddress: ip,
+    132|       });
+    133|       expect(after.statusCode).toBe(429);
+       |                                ^
+    134|     } finally {
+    135|       await limited.close();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  8 failed | 10 passed (18)
+   Start at  21:25:52
+   Duration  45.40s (transform 469ms, setup 0ms, collect 1.23s, tests 43.40s, environment 0ms, prepare 67ms)
+

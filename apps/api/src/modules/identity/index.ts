@@ -2,6 +2,7 @@
 // session and oidc_login_state.
 export { effectivePermissions, registerIdentity, sameOrigin, type IdentityOptions } from "./routes.ts";
 export { OidcService, resolveOidcUser, LOGIN_STATE_TTL_MINUTES, loginCookieName } from "./oidc.ts";
+export { RateLimitSubjects } from "./rate-limit-subjects.ts";
 export { csrfTokenFor, revokeUserSessions, sessionCookieName, sha256 } from "./sessions.ts";
 export {
   createUser,

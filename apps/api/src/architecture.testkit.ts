@@ -6,7 +6,7 @@
 // `.mjs`). All of them get the same rules 1-5 and boundary checks; `.tsx`/`.jsx` are parsed as TSX, the rest as TS (a
 // superset of JS).
 // TEST CLASSIFICATION (F-DG1-135): the test-only allowances (importing `modules.ts`/`architecture.testkit.ts`, and
-// `vitest`) apply ONLY to `*.test.ts`/`*.test.tsx` (TEST_FILE) - exactly the test extensions tsconfig.build.json
+// `vitest` plus the @mth/api devDependencies, F-DG1-143) apply ONLY to `*.test.ts`/`*.test.tsx` (TEST_FILE) - exactly the test extensions tsconfig.build.json
 // excludes. Any other test-looking file (`*.test.mts`, `*.test.js`, ...) is not run by vitest and ships in dist, so it
 // is a NON-test module file: still scanned by walk(), with the full boundary rules and no test exemption.
 // It walks the TypeScript AST of each file (F-DG1-109: `ts.preProcessFile` saw only literal specifiers) and reports:
@@ -92,6 +92,14 @@
 //      path and the bytes exist only at runtime, so the lint never sees them. Irreducible for a static lint;
 //      `node:fs` stays allowed (a module may legitimately read files; a write-API-only ban would be brittle).
 //  (c) `WebAssembly` global instantiation (a wasm exec, not a JS-module loader).
+// SCOPE: FIRST-PARTY SOURCE ONLY (F-DG1-143, D-055). The lint governs what first-party module source WRITES: its
+// specifiers, names, members and keys. It does not analyse, and makes no claim about, the INTERNAL behaviour of a
+// third-party package that module source may import. In particular a package's own code-generation API (for example
+// ajv's `_` codegen tag and `new Function` compilation) evaluates whatever it is given; such a package is governed by
+// keeping it OFF the third-party allow-list below (THIRD_PARTY = the `dependencies` of @mth/api, nothing else), not by
+// this lint. Test-only libraries therefore live in `devDependencies` (ajv, ajv-formats and yaml moved there for
+// F-DG1-143, so module source importing them is a violation), and adding a runtime dependency is a reviewed change
+// to apps/api/package.json. The rules above are not weakened by this statement.
 // Rationale: this is static defence-in-depth for the ADR-0002 module boundaries, enforced against human-reviewed code
 // that runs with a read-only production source tree; it is NOT a runtime security boundary.
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
@@ -105,8 +113,18 @@ export const MODULES_DIR = join(SRC, "modules");
 
 const apiPkg = JSON.parse(readFileSync(join(SRC, "../package.json"), "utf8")) as {
   dependencies: Record<string, string>;
+  devDependencies?: Record<string, string>;
 };
 const THIRD_PARTY = new Set(Object.keys(apiPkg.dependencies).filter((d) => !d.startsWith("@mth/")));
+/**
+ * F-DG1-143: packages a TEST file (TEST_FILE, excluded from the build) may import in addition to THIRD_PARTY: the
+ * `devDependencies` of @mth/api (ajv, ajv-formats, yaml, ...; type-only `@types/*` excluded) and `vitest`. Never
+ * allowed in non-test module source, which ships in dist.
+ */
+const TEST_ONLY_THIRD_PARTY: ReadonlySet<string> = new Set([
+  "vitest",
+  ...Object.keys(apiPkg.devDependencies ?? {}).filter((d) => !d.startsWith("@mth/") && !d.startsWith("@types/")),
+]);
 const SHARED_ALLOWED = new Set(["@mth/shared", "@mth/shared/schemas", "@mth/config", "@mth/db"]);
 /**
  * D-055 DEFAULT-DENY allow-list of `node:` built-ins (without the prefix) that module source may import. Seeded from
@@ -192,11 +210,18 @@ export function walk(dir: string): string[] {
   });
 }
 
+const packageOf = (spec: string) =>
+  spec.startsWith("@") ? spec.split("/").slice(0, 2).join("/") : spec.split("/")[0]!;
+
 export function bareAllowed(spec: string): boolean {
   if (spec.startsWith("node:")) return SAFE_NODE_BUILTINS.has(spec.slice("node:".length));
   if (SHARED_ALLOWED.has(spec)) return true;
-  const pkg = spec.startsWith("@") ? spec.split("/").slice(0, 2).join("/") : spec.split("/")[0]!;
-  return THIRD_PARTY.has(pkg);
+  return THIRD_PARTY.has(packageOf(spec));
+}
+
+/** A test-only package import (F-DG1-143): only for TEST_FILE files, never a `node:` built-in. */
+function testOnlyAllowed(spec: string, isTest: boolean): boolean {
+  return isTest && !spec.startsWith("node:") && TEST_ONLY_THIRD_PARTY.has(packageOf(spec));
 }
 
 export interface ScanResult {
@@ -527,7 +552,7 @@ export function fileViolations(mod: ApiModule, file: string, source: string): st
       if (!allowedDeps.has(targetMod!)) violations.push(`${where}: module ${mod} may not import module ${targetMod}`);
       else if (rest.join("/") !== "index.ts")
         violations.push(`${where}: imports ${spec}; only ${targetMod}/index.ts is public`);
-    } else if (!bareAllowed(spec) && !(spec === "vitest" && isTest)) {
+    } else if (!bareAllowed(spec) && !testOnlyAllowed(spec, isTest)) {
       violations.push(
         spec.startsWith("node:")
           ? `${where}: imports non-allow-listed node built-in ${spec}`

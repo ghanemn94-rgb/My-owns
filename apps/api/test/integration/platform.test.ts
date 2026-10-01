@@ -1,6 +1,7 @@
 // Platform behaviour: readiness (DB + migrations shipped with the build), rate limits with problem+json and
 // Retry-After, body limits, malformed JSON, unknown routes, security headers (strict same-origin CSP), and the
 // fail-closed authorization guard.
+import { randomBytes } from "node:crypto";
 import { listMigrationFiles } from "@mth/db";
 import Fastify from "fastify";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -73,6 +74,63 @@ describe("rate limiting (ADR-0007 T-3)", () => {
       const res = await call(limited.app, "GET", "/api/v1/me", { session: s, contract: false });
       expect(res.status).toBe(429);
       for (let i = 0; i < 5; i++) expect((await call(limited.app, "GET", "/healthz")).status).toBe(200);
+    } finally {
+      await limited.close();
+    }
+  });
+
+  // F-DG1-142 (reviewer repro: docs/delivery/test-evidence/DG1/code-security/round-1/repro-ratelimit/). The key is the
+  // subject of a VALIDATED session, else the client IP; a presented cookie value alone never opens a bucket.
+  it("does not reset the bucket when an unauthenticated client rotates fabricated session cookies", async () => {
+    const limited = await startApi({ env: { RATE_LIMIT_PER_MINUTE: "3" } });
+    try {
+      const fake = () => `mth_session=${randomBytes(32).toString("base64url")}`; // passes the token-format check
+      const me = (headers: Record<string, string>, ip: string) =>
+        limited.app.inject({ method: "GET", url: "/api/v1/me", headers, remoteAddress: ip });
+      const rotated: number[] = [];
+      for (let i = 0; i < 8; i++) rotated.push((await me({ cookie: fake() }, "203.0.113.7")).statusCode);
+      expect(rotated).toEqual([401, 401, 401, 429, 429, 429, 429, 429]);
+      // Mixing cookieless and fake-cookie requests shares the same IP bucket.
+      const mixed: number[] = [];
+      for (let i = 0; i < 4; i++)
+        mixed.push((await me(i % 2 === 0 ? {} : { cookie: fake() }, "203.0.113.8")).statusCode);
+      expect(mixed).toEqual([401, 401, 401, 429]);
+      // A different client IP has its own bucket (keying is per client, not global).
+      expect((await me({ cookie: fake() }, "203.0.113.9")).statusCode).toBe(401);
+    } finally {
+      await limited.close();
+    }
+  });
+
+  it("keys a validated session by its user, so it is not starved by an IP flood, and a revoked one falls back to the IP", async () => {
+    const limited = await startApi({ env: { RATE_LIMIT_PER_MINUTE: "3" } });
+    try {
+      const ip = "203.0.113.20";
+      const s = await signIn(limited.app, w.office.subject); // session validated at sign-in (inject IP 127.0.0.1)
+      const asUser = () =>
+        limited.app.inject({ method: "GET", url: "/api/v1/me", headers: { cookie: s.cookie }, remoteAddress: ip });
+      // An attacker on the same IP exhausts the IP bucket with fabricated cookies...
+      for (let i = 0; i < 4; i++)
+        await limited.app.inject({
+          method: "GET",
+          url: "/api/v1/me",
+          headers: { cookie: `mth_session=${randomBytes(32).toString("base64url")}` },
+          remoteAddress: ip,
+        });
+      // ...the real user's requests are counted under its own subject: signIn's /me was #1, so #2 and #3 pass.
+      expect([(await asUser()).statusCode, (await asUser()).statusCode]).toEqual([200, 200]);
+      expect((await asUser()).statusCode).toBe(429);
+      // After sign-out the same cookie value is no longer a validated session: it is keyed by the (exhausted) IP.
+      const s2 = await signIn(limited.app, w.auditor.subject);
+      const out = await call(limited.app, "POST", "/api/v1/auth/logout", { session: s2, contract: false });
+      expect(out.status).toBe(200);
+      const after = await limited.app.inject({
+        method: "GET",
+        url: "/api/v1/me",
+        headers: { cookie: s2.cookie },
+        remoteAddress: ip,
+      });
+      expect(after.statusCode).toBe(429);
     } finally {
       await limited.close();
     }

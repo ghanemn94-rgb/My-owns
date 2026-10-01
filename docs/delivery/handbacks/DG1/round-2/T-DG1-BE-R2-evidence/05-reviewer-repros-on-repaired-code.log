@@ -1,0 +1,89 @@
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+ RUN  v3.2.4 /var/tmp/mth-run.2ueQyp/claude-0/new
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muq1s93z_e368a57d; applied 9 migrations to a fresh database
+stdout | apps/api/test/integration/zz-review-bu-hierarchy.test.ts > SEC-1 concurrent re-parenting creates a business-unit cycle > A->C and B->A (with C already under B) both return 200 and the committed hierarchy has a cycle A->C->B->A
+SEC-1 sequential control (B under A after A under C): 422 {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A business unit cannot be moved under itself or one of its descendants.","code":"business_unit.cycle","requestId":"01a0f95f-cd88-738d-8486-f6fcdb5352f6"}
+
+stdout | apps/api/test/integration/zz-review-bu-hierarchy.test.ts > SEC-2 re-parenting does not authorize the destination parent > a manager scoped to BU a1 moves a1x under sibling a2 (no rights on a2); a2's inheriting users gain a1x records
+SEC-2 control: U PATCH a2 -> 404
+
+stdout | apps/api/test/integration/zz-review-bu-hierarchy.test.ts > SEC-2 re-parenting does not authorize the destination parent > a manager scoped to BU a1 moves a1x under sibling a2 (no rights on a2); a2's inheriting users gain a1x records
+SEC-2 V read before: 404 | U move a1x->a2: 403 | V read after: 404 | U read a1x after: 200
+
+ ❯ |integration| apps/api/test/integration/zz-review-bu-hierarchy.test.ts (2 tests | 2 failed) 10885ms
+   × SEC-1 concurrent re-parenting creates a business-unit cycle > A->C and B->A (with C already under B) both return 200 and the committed hierarchy has a cycle A->C->B->A 10466ms
+     → timed out waiting for a row-lock waiter
+   × SEC-2 re-parenting does not authorize the destination parent > a manager scoped to BU a1 moves a1x under sibling a2 (no rights on a2); a2's inheriting users gain a1x records 110ms
+     → expected 403 to be 200 // Object.is equality
+stdout | apps/api/test/integration/zz-review-ratelimit.test.ts > SEC-3 global rate limit is bypassed by rotating an invalid session cookie > control: without a cookie the 4th request from one IP is 429
+SEC-3 control (no cookie, same IP): 401,401,401,429,429,429
+
+stdout | apps/api/test/integration/zz-review-ratelimit.test.ts > SEC-3 global rate limit is bypassed by rotating an invalid session cookie > bypass: 50 requests from the SAME IP with a fresh random 43-char cookie each are never 429
+SEC-3 bypass (random cookie per request, same IP) status counts: {"429":50}
+
+ ❯ |integration| apps/api/test/integration/zz-review-ratelimit.test.ts (2 tests | 1 failed) 42ms
+   ✓ SEC-3 global rate limit is bypassed by rotating an invalid session cookie > control: without a cookie the 4th request from one IP is 429 4ms
+   × SEC-3 global rate limit is bypassed by rotating an invalid session cookie > bypass: 50 requests from the SAME IP with a fresh random 43-char cookie each are never 429 26ms
+     → expected true to be false // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-review-bu-hierarchy.test.ts > SEC-1 concurrent re-parenting creates a business-unit cycle > A->C and B->A (with C already under B) both return 200 and the committed hierarchy has a cycle A->C->B->A
+Error: timed out waiting for a row-lock waiter
+ ❯ waitForRowWaiter apps/api/test/integration/zz-review-bu-hierarchy.test.ts:79:9
+     77|     await new Promise((r) => setTimeout(r, 25));
+     78|   }
+     79|   throw new Error("timed out waiting for a row-lock waiter");
+       |         ^
+     80| }
+     81| 
+ ❯ apps/api/test/integration/zz-review-bu-hierarchy.test.ts:116:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-review-bu-hierarchy.test.ts > SEC-2 re-parenting does not authorize the destination parent > a manager scoped to BU a1 moves a1x under sibling a2 (no rights on a2); a2's inheriting users gain a1x records
+AssertionError: expected 403 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 403
+
+ ❯ apps/api/test/integration/zz-review-bu-hierarchy.test.ts:173:26
+    171|     console.log("SEC-2 V read before:", before.status, "| U move a1x->…
+    172|     expect(before.status).toBe(404);
+    173|     expect(moved.status).toBe(200);
+       |                          ^
+    174|     expect(after.status).toBe(200);
+    175|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-review-ratelimit.test.ts > SEC-3 global rate limit is bypassed by rotating an invalid session cookie > bypass: 50 requests from the SAME IP with a fresh random 43-char cookie each are never 429
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ apps/api/test/integration/zz-review-ratelimit.test.ts:33:33
+     31|     const counts = codes.reduce<Record<number, number>>((m, c) => ({ .…
+     32|     console.log("SEC-3 bypass (random cookie per request, same IP) sta…
+     33|     expect(codes.includes(429)).toBe(false);
+       |                                 ^
+     34|   });
+     35| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 1 passed (4)
+   Start at  21:29:58
+   Duration  12.82s (transform 437ms, setup 0ms, collect 1.21s, tests 10.93s, environment 0ms, prepare 59ms)
+

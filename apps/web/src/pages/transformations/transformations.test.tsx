@@ -73,7 +73,8 @@ const createRoute = route("POST", /\/api\/v1\/transformations$/, () => ({ status
 const auditEmpty = route("GET", /\/audit/, () => ({ status: 200, body: { items: [], nextCursor: null } }));
 
 async function submitCreateForm(labels: { unit: RegExp; name: RegExp; submit: string }) {
-  const unit = (await screen.findByLabelText(labels.unit)) as HTMLSelectElement;
+  // The form renders once the business units have loaded; wait generously for it under load (F-DG1-144).
+  const unit = (await screen.findByLabelText(labels.unit, undefined, { timeout: 5_000 })) as HTMLSelectElement;
   fireEvent.change(unit, { target: { value: BU_ID } });
   fireEvent.change(screen.getByLabelText(labels.name), { target: { value: "Synthetic new transformation" } });
   fireEvent.click(screen.getByRole("button", { name: labels.submit }));
@@ -520,46 +521,67 @@ describe("effective permissions refresh after create (F-DG1-210)", () => {
 
   const detailRoute = route("GET", /\/api\/v1\/transformations\/[^/?]+$/, () => ({ status: 200, body: created }));
 
-  it("English: Edit, Archive and the audit trail appear after create, without a reload", async () => {
-    const { meRoute: me, create } = scriptedMe("en", "derived");
-    const { requests } = mockApi(me, buRoute, create, detailRoute, auditEmpty);
-    const { router } = renderApp("/transformations/new", { i18n: createI18n("en") });
-    await submitCreateForm({ unit: /^Business unit/, name: /^Name/, submit: "Create transformation" });
-    await waitFor(() => expect(router.state.location.pathname).toBe(`/transformations/${NEW_ID}`));
-    expect(await screen.findByRole("link", { name: "Edit" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Archive" })).toBeTruthy();
-    expect(await screen.findByRole("heading", { name: "Audit trail" })).toBeTruthy();
-    // /me was re-read after the POST (the refreshed server answer), and the page was never reloaded (same router).
-    const postAt = requests.findIndex((r) => r.method === "POST");
-    expect(requests.slice(postAt + 1).some((r) => r.method === "GET" && r.url === "/api/v1/me")).toBe(true);
-    expect(document.documentElement.dir).toBe("ltr");
-  });
+  /**
+   * F-DG1-144: the controls below appear only after the async create, the navigation, the effective-permissions
+   * (GET /me) refresh and the detail/audit queries have all settled. Under CPU load that chain can exceed Testing
+   * Library's default 1 s, so every wait that depends on it gets an explicit, generous timeout. The assertions
+   * themselves are unchanged; the test timeout covers the sum of these waits.
+   */
+  const SETTLE = { timeout: 5_000 };
+  const SETTLED_TEST_TIMEOUT_MS = 20_000;
 
-  it("Arabic (RTL): the same controls and the audit trail appear after create, without a reload", async () => {
-    const { meRoute: me, create } = scriptedMe("ar", "derived");
-    mockApi(me, buRoute, create, detailRoute, auditEmpty);
-    const { router } = renderApp("/transformations/new", { i18n: createI18n("ar") });
-    await submitCreateForm({ unit: /^وحدة العمل/, name: /^الاسم/, submit: "إنشاء التحوّل" });
-    await waitFor(() => expect(router.state.location.pathname).toBe(`/transformations/${NEW_ID}`));
-    expect(await screen.findByRole("link", { name: "تعديل" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "أرشفة" })).toBeTruthy();
-    expect(await screen.findByRole("heading", { name: "سجل التدقيق" })).toBeTruthy();
-    expect(document.documentElement.dir).toBe("rtl");
-  });
+  it(
+    "English: Edit, Archive and the audit trail appear after create, without a reload",
+    async () => {
+      const { meRoute: me, create } = scriptedMe("en", "derived");
+      const { requests } = mockApi(me, buRoute, create, detailRoute, auditEmpty);
+      const { router } = renderApp("/transformations/new", { i18n: createI18n("en") });
+      await submitCreateForm({ unit: /^Business unit/, name: /^Name/, submit: "Create transformation" });
+      await waitFor(() => expect(router.state.location.pathname).toBe(`/transformations/${NEW_ID}`), SETTLE);
+      expect(await screen.findByRole("link", { name: "Edit" }, SETTLE)).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Archive" })).toBeTruthy();
+      expect(await screen.findByRole("heading", { name: "Audit trail" }, SETTLE)).toBeTruthy();
+      // /me was re-read after the POST (the refreshed server answer), and the page was never reloaded (same router).
+      const postAt = requests.findIndex((r) => r.method === "POST");
+      expect(requests.slice(postAt + 1).some((r) => r.method === "GET" && r.url === "/api/v1/me")).toBe(true);
+      expect(document.documentElement.dir).toBe("ltr");
+    },
+    SETTLED_TEST_TIMEOUT_MS,
+  );
 
-  it("does not over-grant: if the refreshed server answer adds nothing, Archive and the audit trail stay hidden", async () => {
-    const { meRoute: me, create } = scriptedMe("en", "unchanged");
-    const { requests } = mockApi(me, buRoute, create, detailRoute, auditEmpty);
-    const { router } = renderApp("/transformations/new", { i18n: createI18n("en") });
-    await submitCreateForm({ unit: /^Business unit/, name: /^Name/, submit: "Create transformation" });
-    await waitFor(() => expect(router.state.location.pathname).toBe(`/transformations/${NEW_ID}`));
-    expect(await screen.findByRole("heading", { level: 1 })).toBeTruthy();
-    await screen.findByText("Transformation created as a draft. It is not submitted or approved.");
-    expect(screen.queryByRole("link", { name: "Edit" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Archive" })).toBeNull();
-    expect(screen.queryByRole("heading", { name: "Audit trail" })).toBeNull();
-    expect(requests.some((r) => r.url.includes("/audit"))).toBe(false);
-  });
+  it(
+    "Arabic (RTL): the same controls and the audit trail appear after create, without a reload",
+    async () => {
+      const { meRoute: me, create } = scriptedMe("ar", "derived");
+      mockApi(me, buRoute, create, detailRoute, auditEmpty);
+      const { router } = renderApp("/transformations/new", { i18n: createI18n("ar") });
+      await submitCreateForm({ unit: /^وحدة العمل/, name: /^الاسم/, submit: "إنشاء التحوّل" });
+      await waitFor(() => expect(router.state.location.pathname).toBe(`/transformations/${NEW_ID}`), SETTLE);
+      expect(await screen.findByRole("link", { name: "تعديل" }, SETTLE)).toBeTruthy();
+      expect(screen.getByRole("button", { name: "أرشفة" })).toBeTruthy();
+      expect(await screen.findByRole("heading", { name: "سجل التدقيق" }, SETTLE)).toBeTruthy();
+      expect(document.documentElement.dir).toBe("rtl");
+    },
+    SETTLED_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "does not over-grant: if the refreshed server answer adds nothing, Archive and the audit trail stay hidden",
+    async () => {
+      const { meRoute: me, create } = scriptedMe("en", "unchanged");
+      const { requests } = mockApi(me, buRoute, create, detailRoute, auditEmpty);
+      const { router } = renderApp("/transformations/new", { i18n: createI18n("en") });
+      await submitCreateForm({ unit: /^Business unit/, name: /^Name/, submit: "Create transformation" });
+      await waitFor(() => expect(router.state.location.pathname).toBe(`/transformations/${NEW_ID}`), SETTLE);
+      expect(await screen.findByRole("heading", { level: 1 }, SETTLE)).toBeTruthy();
+      await screen.findByText("Transformation created as a draft. It is not submitted or approved.", undefined, SETTLE);
+      expect(screen.queryByRole("link", { name: "Edit" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Archive" })).toBeNull();
+      expect(screen.queryByRole("heading", { name: "Audit trail" })).toBeNull();
+      expect(requests.some((r) => r.url.includes("/audit"))).toBe(false);
+    },
+    SETTLED_TEST_TIMEOUT_MS,
+  );
 
   it("a failed /me refresh never blocks the navigation; the UI stays fail-safe (no controls offered)", async () => {
     const { meRoute: me, create } = scriptedMe("en", "error");
@@ -570,7 +592,7 @@ describe("effective permissions refresh after create (F-DG1-210)", () => {
     await waitFor(() => expect(router.state.location.pathname).toBe(`/transformations/${NEW_ID}`), {
       timeout: ME_REFRESH_TIMEOUT_MS + 1_000,
     });
-    await screen.findByText("Transformation created as a draft. It is not submitted or approved.");
+    await screen.findByText("Transformation created as a draft. It is not submitted or approved.", undefined, SETTLE);
     expect(screen.queryByRole("button", { name: "Archive" })).toBeNull();
     expect(screen.queryByRole("heading", { name: "Audit trail" })).toBeNull();
   }, 15_000);
