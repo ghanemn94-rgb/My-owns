@@ -11565,14 +11565,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-13/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-01T16:46:33Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG1 round 13 while verifying the F-DG1-134 fix. Rated Low and non-mandatory: the exemption reaches only the declarative module map (data, no capability), the test-only lint and vitest. Rules 1-5 still apply to the file, so no loader, native or crypto-enumeration route opens. No access-control, integrity, calculation or portability impact. The lint is static defence-in-depth over human-reviewed code. Exploitation needs a contributor to commit an unusually named file past review, and the real tree has none. Same precedent as F-DG1-134/132/130. Proposed ID F-DG1-135 (next free number in the code-security 1xx range); the orchestrator may renumber. Does not block DG1."
+        },
+        {
+          "at": "2026-10-01T16:56:03Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at fbc9ba6a6606396e149b3138a1fc731fff7cbb62"
         }
-      ]
+      ],
+      "fix_revision": "fbc9ba6a6606396e149b3138a1fc731fff7cbb62",
+      "fix_summary": "TEST_FILE narrowed to /\\.test\\.tsx?$/ to match tsconfig.build.json's test exclusion; a *.test.mts/.test.js module file is now a non-test (full boundary rules, no modules.ts/testkit/vitest exemption) and still scanned by walk(). Real module test files are all .test.ts. architecture 128/128; full unit 321/321 Node 22+24."
     }
   ]
 }
