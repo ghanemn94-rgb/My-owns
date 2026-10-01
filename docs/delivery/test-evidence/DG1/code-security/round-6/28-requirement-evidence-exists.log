@@ -1,0 +1,17 @@
+# requirement evidence existence (real repo @24fac7c); register status + every evidence path
+REQ-DLV-025 status=IMPLEMENTED final_gate=DG1 evidence=4 missing=[]
+REQ-DLV-033 status=IMPLEMENTED final_gate=DG1 evidence=21 missing=[]
+REQ-DLV-042 status=IMPLEMENTED final_gate=DG1 evidence=4 missing=[]
+REQ-S16-001 status=IMPLEMENTED final_gate=DG1 evidence=8 missing=[]
+REQ-S16-003 status=IMPLEMENTED final_gate=DG1 evidence=13 missing=[]
+REQ-S16-004 status=IMPLEMENTED final_gate=DG1 evidence=11 missing=[]
+REQ-S19-004 status=IMPLEMENTED final_gate=DG1 evidence=16 missing=[]
+REQ-S19-006 status=IMPLEMENTED final_gate=DG1 evidence=5 missing=[]
+total missing: 0
+$ node deploy/scripts/check-ci-needs.mjs   (REQ-DLV-025)
+OK: .github/workflows/ci.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it with no status-function if:; installs only via ci-install-deps.sh
+  verify <- delivery-gates
+  integration <- verify
+  e2e <- verify
+  images <- integration, e2e
+exit=0

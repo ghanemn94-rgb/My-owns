@@ -1,0 +1,28 @@
+clone HEAD: 0026a7bde8baced44e5786ddd64a00624bcfa021
+
+ RUN  v3.2.4 /var/tmp/mth-run.GzH4l4/claude-0/review-dom6
+
+stdout | apps/api/src/zz-dom6-probe.test.ts > F-DG1-125 over-reach probe (domain-reviewer r6) > (a) legitimate specifiers stay allowed
+real-tree bare specifiers: @fastify/cookie, @fastify/rate-limit, @mth/config, @mth/db, @mth/shared, @mth/shared/schemas, ajv/dist/2020.js, fastify, node:crypto, node:fs, node:path, node:url, openid-client, pg, uuid, vitest, yaml, zod
+checked 47 legitimate specifiers; rejected: []
+
+stdout | apps/api/src/zz-dom6-probe.test.ts > F-DG1-125 over-reach probe (domain-reviewer r6) > (b) the global process.env read in module source is still fine
+global process.env violations: []
+
+stdout | apps/api/src/zz-dom6-probe.test.ts > F-DG1-125 over-reach probe (domain-reviewer r6) > (c) every import route of the process module is a violation
+process import forms tested: 8; missed: []
+
+stdout | apps/api/src/zz-dom6-probe.test.ts > F-DG1-125 over-reach probe (domain-reviewer r6) > (d) the real module tree has zero violations
+real module tree violations: 0
+
+ ✓ |unit-node| apps/api/src/zz-dom6-probe.test.ts > F-DG1-125 over-reach probe (domain-reviewer r6) > (a) legitimate specifiers stay allowed 3ms
+ ✓ |unit-node| apps/api/src/zz-dom6-probe.test.ts > F-DG1-125 over-reach probe (domain-reviewer r6) > (b) the global process.env read in module source is still fine 23ms
+ ✓ |unit-node| apps/api/src/zz-dom6-probe.test.ts > F-DG1-125 over-reach probe (domain-reviewer r6) > (c) every import route of the process module is a violation 23ms
+ ✓ |unit-node| apps/api/src/zz-dom6-probe.test.ts > F-DG1-125 over-reach probe (domain-reviewer r6) > (d) the real module tree has zero violations 404ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  12:20:52
+   Duration  1.46s (transform 70ms, setup 0ms, collect 717ms, tests 455ms, environment 0ms, prepare 64ms)
+
+exit=0

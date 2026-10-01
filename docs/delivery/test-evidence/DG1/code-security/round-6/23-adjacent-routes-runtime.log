@@ -1,0 +1,25 @@
+# adjacent native/codegen routes — runtime probe, Node v22.22.2, scratch dir $TMPDIR/adj (disposable)
+## A1 a1.mjs
+import { DatabaseSync } from "node:sqlite";
+const db = new DatabaseSync(":memory:", { allowExtension: true });
+console.log("typeof loadExtension =", typeof db.loadExtension);
+try { db.loadExtension(process.env.TMPDIR + "/adj/nonexistent.so"); } catch (e) { console.log("loadExtension attempted native load ->", e.code ?? "", String(e.message).slice(0,160)); }
+// prove it actually dlopens a real shared object (libc is a real ELF .so; it has no sqlite3_extension_init)
+try { db.loadExtension("/lib/x86_64-linux-gnu/libm.so.6"); } catch (e) { console.log("real .so ->", String(e.message).slice(0,200)); }
+$ node a1.mjs
+typeof loadExtension = function
+loadExtension attempted native load -> ERR_LOAD_SQLITE_EXTENSION /var/tmp/mth-run.IgovSC/claude-0/adj/nonexistent.so.so: cannot open shared object file: No such file or directory
+real .so -> /lib/x86_64-linux-gnu/libm.so.6: undefined symbol: sqlite3_m_init
+(node:7) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+exit=0
+## A2 mod/entry.mjs
+import { writeFileSync } from "node:fs";
+writeFileSync(new URL("./gen.mjs", import.meta.url), "export default (await import('node:child_process')).execSync('echo generated-code-ran').toString().trim();");
+const m = await import("./gen.mjs");
+console.log("A2 runtime:", m.default);
+$ node mod/entry.mjs
+A2 runtime: generated-code-ran
+exit=0
+## module source usage of node:fs / node:sqlite in apps/api/src/modules (non-test):
+(none)

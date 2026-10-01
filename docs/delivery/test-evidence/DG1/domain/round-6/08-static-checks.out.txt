@@ -1,0 +1,35 @@
+clone HEAD: 0026a7bde8baced44e5786ddd64a00624bcfa021
+== product/runtime diff since round-5 candidate commit 5f83a33 (outside docs/delivery)
+ apps/api/src/architecture.test.ts        | 20 +++++++++
+ apps/api/src/architecture.testkit.ts     | 25 ++++++++---
+ tools/deps/install-sandbox.sh            | 76 ++++++++++++++++++++------------
+ tools/deps/tests/install-sandbox.test.sh | 54 +++++++++++++++++++++--
+ 4 files changed, 140 insertions(+), 35 deletions(-)
+== diff of runtime surfaces (apps/web, apps/worker, packages, docs/api, docs/architecture, apps/api excluding architecture.test*) — expect empty
+(end of runtime diff)
+== pnpm -s openapi:lint
+PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 33 operations
+exit=0
+== pnpm -s check:no-cdn
+PASS no-cdn: scanned apps, packages
+exit=0
+== typecheck api/web
+api=0
+web=0
+== dist contains no architecture testkit (excluded by tsconfig.build.json)
+0
+== design tokens provenance
+files with #0078FF: ['packages/design-tokens/src/tokens.json', 'packages/design-tokens/dist/tokens.json']
+non-provisional provenance values: []
+== honesty grep for official/certified claims (non-negated) in i18n
+(none)
+== DG[0-7] in i18n catalogues (product UI must not mention engineering gates)
+apps/web/src/i18n/glossary.test.ts:1:// Domain terms in the UI catalogues follow the approved DG0 glossary (F-DG1-003, REQ-PB-003).
+apps/web/src/i18n/glossary.test.ts:2:// Source: docs/analysis/glossary.md (T-DG0-AN-01, revised T-DG0-AN-05). The test parses the glossary tables directly,
+apps/web/src/i18n/glossary.test.ts:71:  it("parses the DG0 glossary with distinct Transformation and Initiative terms", () => {
+== design tokens: provisional flags (the source marks provenance with "provisional": true; the regex above looked for a 'provenance' key, of which there are 0 in the source file, so it is not evidence on its own)
+top-level provisional: true
+seed colour tokens: 7 not provisional: []
+brand.primary: {"value":"#0078FF","purpose":"Primary accents and selected elements","provisional":true}
+exit=0
+(the live API check C2 in 07-live-scenario.out.txt confirms GET /api/v1/branding/tokens reports provenance=provisional, never official)

@@ -1,0 +1,46 @@
+# 00 candidate identity (code-security-reviewer DG1 round 6)
+$ git rev-parse HEAD
+f03a9fa7a810871feb0bf6ca4a2db1afefe06dd6
+$ git log --oneline 0026a7b..HEAD
+f03a9fa DG1 r6: freeze candidate a7b46fbc + round-6 review assignments
+$ git diff --name-only 0026a7b HEAD
+docs/delivery/assignments/DG1/round-6/audit.md
+docs/delivery/assignments/DG1/round-6/review-code-security-reviewer.md
+docs/delivery/assignments/DG1/round-6/review-common.md
+docs/delivery/assignments/DG1/round-6/review-domain-reviewer.md
+docs/delivery/assignments/DG1/round-6/review-qa-verifier.md
+docs/delivery/candidates/DG1/a7b46fbc29db6bb8.manifest.json
+docs/delivery/stages.json
+$ git rev-parse --is-shallow-repository
+false
+$ node tools/gates/candidate.mjs --stage DG1   (real repo, HEAD f03a9fa)
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:a7b46fbc29db6bb855495593e43f2e859305dea9d6c403fe86f73619d9fb210d","files":390}
+exit=0
+$ node tools/gates/candidate.mjs --stage DG1 --diff
+{
+  "frozen": "sha256:a7b46fbc29db6bb855495593e43f2e859305dea9d6c403fe86f73619d9fb210d",
+  "working_tree": "sha256:a7b46fbc29db6bb855495593e43f2e859305dea9d6c403fe86f73619d9fb210d",
+  "matches": true,
+  "added": [],
+  "removed": [],
+  "changed": []
+}
+exit=0
+## disposable clone /var/tmp/mth-run.IgovSC/claude-0/rev checked out at 0026a7b (freeze commit)
+0026a7bde8baced44e5786ddd64a00624bcfa021
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:a7b46fbc29db6bb855495593e43f2e859305dea9d6c403fe86f73619d9fb210d","files":390}
+exit=0
+$ grep candidate_id docs/delivery/candidates/DG1/a7b46fbc29db6bb8.manifest.json
+ "candidate_id": "sha256:a7b46fbc29db6bb855495593e43f2e859305dea9d6c403fe86f73619d9fb210d",
+
+## re-check later in the run: real-repo HEAD advanced to 24fac7c = run-agent.sh auto-commit of the domain-reviewer round-6 run (review/run metadata only; not opened by this reviewer)
+$ git diff --name-only f03a9fa 24fac7c
+docs/delivery/reviews/DG1/round-6/domain-reviewer.json
+docs/delivery/runs/DG1/DG1-T-DG1-REV-DOM-R6-domain-reviewer-20261001T121845Z-5d56b045/meta.json
+docs/delivery/runs/DG1/DG1-T-DG1-REV-DOM-R6-domain-reviewer-20261001T121845Z-5d56b045/result.json
+docs/delivery/runs/DG1/DG1-T-DG1-REV-DOM-R6-domain-reviewer-20261001T121845Z-5d56b045/sandbox.json
+docs/delivery/runs/DG1/DG1-T-DG1-REV-DOM-R6-domain-reviewer-20261001T121845Z-5d56b045/settings.json
+docs/delivery/runs/DG1/DG1-T-DG1-REV-DOM-R6-domain-reviewer-20261001T121845Z-5d56b045/stderr.log
+docs/delivery/runs/DG1/DG1-T-DG1-REV-DOM-R6-domain-reviewer-20261001T121845Z-5d56b045/transcript.jsonl.gz
+$ node tools/gates/candidate.mjs --stage DG1
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:a7b46fbc29db6bb855495593e43f2e859305dea9d6c403fe86f73619d9fb210d","files":390}

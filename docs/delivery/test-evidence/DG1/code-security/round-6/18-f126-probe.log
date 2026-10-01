@@ -1,0 +1,52 @@
+# F-DG1-126 independent probe (offline). script: probe-f126.sh (copy in this directory)
+$ npm_config_store_dir=$TMPDIR/store-v10 bash probe-f126.sh $TMPDIR/rev
+## (1) real repo shape: (cd /var/tmp/mth-run.IgovSC/claude-0/rev && pnpm -r ls --depth -1 --json) -> paths
+/var/tmp/mth-run.IgovSC/claude-0/rev
+/var/tmp/mth-run.IgovSC/claude-0/rev/apps/api
+/var/tmp/mth-run.IgovSC/claude-0/rev/apps/web
+/var/tmp/mth-run.IgovSC/claude-0/rev/apps/worker
+/var/tmp/mth-run.IgovSC/claude-0/rev/packages/config
+/var/tmp/mth-run.IgovSC/claude-0/rev/packages/db
+/var/tmp/mth-run.IgovSC/claude-0/rev/packages/design-tokens
+/var/tmp/mth-run.IgovSC/claude-0/rev/packages/shared
+count=8
+dirs with package.json under apps/* packages/* (+ root):
+.
+apps/api
+apps/web
+apps/worker
+packages/config
+packages/db
+packages/design-tokens
+packages/shared
+## (2) scratch workspace /var/tmp/mth-run.IgovSC/claude-0/f126probe.FL5Ke6
+packages:
+  - 'apps/*'
+  - "packages/*"
+  - "!packages/legacy"   # excluded
+publicHoistPattern:
+  - "tools/x"
+ignoredBuiltDependencies:
+  - "tools/y"
+$ (cd D && pnpm -r ls --depth -1 --json) -> paths (relative)
+  <D>
+  <D>/apps/web
+  <D>/packages/real
+$ install-sandbox.sh --root D create
+create exit=0
+dependencies:
++ fx 1.0.0
+
+Done in 586ms using pnpm v10.33.0
+expected PRESENT (real members): root FX_RAN, apps/web lib1, packages/real PWNED (real member: whatever its sandbox node_modules held is copied, by design)
+  present  node_modules/FX_RAN
+  present  apps/web/node_modules/lib1/package.json
+  present  packages/real/node_modules/PWNED
+expected ABSENT (non-members):
+  absent   packages/legacy/node_modules
+  absent   tools/x/node_modules
+  absent   tools/y/node_modules
+  absent   docs/node_modules
+  absent   fixture/node_modules
+  absent   lib1/node_modules
+exit=0

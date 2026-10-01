@@ -1,0 +1,19 @@
+# F-DG1-126 fail-closed probe. script: probe-f126-failclosed.sh (copy in this directory)
+$ npm_config_store_dir=$TMPDIR/store-v10 bash probe-f126-failclosed.sh $TMPDIR/rev
+## LSMODE=outside
+create exit=1
+install-sandbox: refusing a non-repo member path reported by pnpm: /etc/evil
+install-sandbox: node_modules copy-back failed; the install is incomplete
+  root node_modules: present; apps/m node_modules: absent; /etc/evil/node_modules: absent
+## LSMODE=garbage
+create exit=1
+install-sandbox: could not parse the pnpm-workspace member list for the node_modules copy-back
+  root node_modules: absent; apps/m node_modules: absent; /etc/evil/node_modules: absent
+## LSMODE=fail
+create exit=1
+install-sandbox: could not resolve the pnpm-workspace members (pnpm -r ls) for the node_modules copy-back
+  root node_modules: absent; apps/m node_modules: absent; /etc/evil/node_modules: absent
+## LSMODE=stream
+create exit=0
+  root node_modules: present; apps/m node_modules: present; /etc/evil/node_modules: absent
+exit=0

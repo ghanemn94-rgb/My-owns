@@ -1,0 +1,93 @@
+# F-DG1-125 end-to-end: real files planted in apps/api/src/modules/access of the disposable clone @0026a7b (candidate a7b46fbc), then the candidate's architecture.test.ts (script: plant-tree.sh, inlined)
+## baseline (no plant)
+exit=0
+      Tests  77 passed (77)
+
+## plant R1 default import .dlopen -> apps/api/src/modules/access/zz-planted.ts:
+import proc from "node:process";
+export const load = (p: string) => proc.dlopen({ exports: {} } as never, p);
+$ pnpm vitest run --project unit-node apps/api/src/architecture.test.ts
+exit=1
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
++   "modules/access/zz-planted.ts: imports package node:process",
+      Tests  1 failed | 76 passed (77)
+
+## plant R2 default import .binding -> apps/api/src/modules/access/zz-planted.ts:
+import proc from "node:process";
+export const fsb = () => (proc as any).binding("fs");
+$ pnpm vitest run --project unit-node apps/api/src/architecture.test.ts
+exit=1
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
++   "modules/access/zz-planted.ts: imports package node:process",
+      Tests  1 failed | 76 passed (77)
+
+## plant R3 named import dlopen -> apps/api/src/modules/access/zz-planted.ts:
+import { dlopen } from "node:process";
+export const load = (p: string) => dlopen({ exports: {} } as never, p);
+$ pnpm vitest run --project unit-node apps/api/src/architecture.test.ts
+exit=1
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
++   "modules/access/zz-planted.ts: imports package node:process",
+      Tests  1 failed | 76 passed (77)
+
+## plant R4 namespace import -> apps/api/src/modules/access/zz-planted.ts:
+import * as proc from "node:process";
+export const load = (p: string) => proc.dlopen({ exports: {} } as never, p);
+$ pnpm vitest run --project unit-node apps/api/src/architecture.test.ts
+exit=1
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
++   "modules/access/zz-planted.ts: imports package node:process",
+      Tests  1 failed | 76 passed (77)
+
+## plant R5 import-equals require -> apps/api/src/modules/access/zz-planted.ts:
+import x = require("node:process");
+export const load = (p: string) => x.dlopen({ exports: {} } as never, p);
+$ pnpm vitest run --project unit-node apps/api/src/architecture.test.ts
+exit=1
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
++   "modules/access/zz-planted.ts: imports package node:process",
+      Tests  1 failed | 76 passed (77)
+
+## plant R6 dynamic import -> apps/api/src/modules/access/zz-planted.ts:
+export const load = async (p: string) => (await import("node:process")).default.dlopen({ exports: {} } as never, p);
+$ pnpm vitest run --project unit-node apps/api/src/architecture.test.ts
+exit=1
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
++   "modules/access/zz-planted.ts: imports package node:process",
+      Tests  1 failed | 76 passed (77)
+
+## plant R7 named binding (round-5 22b form) -> apps/api/src/modules/access/zz-planted.ts:
+import { binding } from "node:process";
+export const fsb = () => (binding as any)("fs");
+$ pnpm vitest run --project unit-node apps/api/src/architecture.test.ts
+exit=1
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
++   "modules/access/zz-planted.ts: imports package node:process",
+      Tests  1 failed | 76 passed (77)
+
+## plant P12 global process.binding -> apps/api/src/modules/access/zz-planted.ts:
+export const fsb = () => (process as any).binding("fs");
+$ pnpm vitest run --project unit-node apps/api/src/architecture.test.ts
+exit=1
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
++   "modules/access/zz-planted.ts: module loader via process.binding (line 1) bypasses the module-interface check",
+      Tests  1 failed | 76 passed (77)
+
+## after cleanup
+exit=0
+      Tests  77 passed (77)
+
+## CONTROL: round-5 testkit (f6ca108:apps/api/src/architecture.testkit.ts) temporarily restored in the clone, same R4/R3 plants
+import * as proc from "node:process";
+export const load = (p: string) => proc.dlopen({ exports: {} } as never, p);
+exit=1
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 74 passed (77)
+import { dlopen } from "node:process";
+export const load = (p: string) => dlopen({ exports: {} } as never, p);
+exit=1
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 74 passed (77)
+$ git status --short (after restore)
+(clean: untracked node_modules only are gitignored)
+## CONTROL interpretation: with the round-5 testkit the 3 failures are exactly the new self-check cases X6/X7/X8 ('round-4 lint: missed'); the module-tree test does NOT list zz-planted.ts (no 'zz-planted' line) -> the plant passes the old lint and is caught only by the fixed one. Testkit restored; git status clean afterwards.

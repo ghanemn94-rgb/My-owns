@@ -1,0 +1,21 @@
+# plant: apps/api/src/modules/access/zz-qa-planted.ts = import { binding } from "node:process"; export const fsb = (binding as any)("fs");
+$ pnpm vitest run --project unit-node apps/api/src/architecture.test.ts  (planted)
+   × API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages 643ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages
+[31m+   "modules/access/zz-qa-planted.ts: imports package node:process",[39m
+      Tests  1 failed | 76 passed (77)
+exit=1
+# negative control: architecture.testkit.ts reverted to pre-fix 83b12da^ (X6-X8 expected to FAIL)
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > X6 node:process default import .dlopen is a violation (round-4 lint: 'missed') 7ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > X7 node:process default import .binding is a violation (round-4 lint: 'missed') 2ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > X8 node:process named import dlopen is a violation (round-4 lint: 'missed') 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > X6 node:process default import .dlopen is a violation (round-4 lint: 'missed')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > X7 node:process default import .binding is a violation (round-4 lint: 'missed')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > X8 node:process named import dlopen is a violation (round-4 lint: 'missed')
+      Tests  3 failed | 74 passed (77)
+exit=1
+# restored; re-run clean:
+      Tests  77 passed (77)
+exit=0

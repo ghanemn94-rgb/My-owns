@@ -10421,7 +10421,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-5/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T11:40:31Z",
@@ -10432,10 +10432,39 @@
           "at": "2026-10-01T12:11:55Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 83b12da02529b0e330158a3dd7f2b82d915dedf0"
+        },
+        {
+          "at": "2026-10-01T12:40:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 6: PASS"
+        },
+        {
+          "at": "2026-10-01T12:46:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 6: PASS"
         }
       ],
       "fix_revision": "83b12da02529b0e330158a3dd7f2b82d915dedf0",
-      "fix_summary": "architecture.testkit.ts adds process/node:process to LOADER_BUILTINS so any import of the process module in src/modules is a specifier violation (imports package node:process), closing the default/namespace/named import route past rule 3; rule 3 still covers the global process. Self-check X6-X8 added; architecture.test.ts 77/77; @mth/api typecheck/eslint/prettier clean; no module imports process."
+      "fix_summary": "architecture.testkit.ts adds process/node:process to LOADER_BUILTINS so any import of the process module in src/modules is a specifier violation (imports package node:process), closing the default/namespace/named import route past rule 3; rule 3 still covers the global process. Self-check X6-X8 added; architecture.test.ts 77/77; @mth/api typecheck/eslint/prettier clean; no module imports process.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-QA-R6-qa-verifier-20261001T121845Z-cc2703da",
+          "session_id": "cc2703da-574d-4dae-8658-3dd2661d6aa7"
+        },
+        "at": "2026-10-01T12:46:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/qa/round-6/03-unit.log",
+          "docs/delivery/test-evidence/DG1/qa/round-6/10-f125-probe.log",
+          "docs/delivery/test-evidence/DG1/qa/round-6/11-f125-module-tree-plant.log",
+          "docs/delivery/test-evidence/DG1/qa/tests/dg1-r6-process-import-probe.test.ts",
+          "apps/api/src/architecture.testkit.ts",
+          "apps/api/src/architecture.test.ts"
+        ],
+        "note": "Fix 83b12da is in candidate sha256:a7b46fbc...210d (commit 0026a7b). Code: LOADER_BUILTINS in apps/api/src/architecture.testkit.ts now includes process (and node:process), so bareAllowed() rejects both specifiers. Rule 3, which catches the global process.<loader> form, is unchanged. Unit: architecture.test.ts passes 77/77, including X6-X8 and P12 (03-unit.log, 270/270). Negative control in a disposable clone: with the pre-fix testkit (83b12da^), exactly X6, X7 and X8 fail (3 failed, 74 passed), so the new self-checks detect the defect. End to end: a planted real file apps/api/src/modules/access/zz-qa-planted.ts (`import { binding } from \"node:process\"`) turns the module-tree check red ('imports package node:process', 1 failed of 77); with the plant removed it is 77/77 again (11-f125-module-tree-plant.log). My independent probe adds 12 cases (10-f125-probe.log, 12/12 PASS): a namespace import; bare 'process' default and named imports; require('node:process'); dynamic import('node:process'); a re-export `export { dlopen } from \"node:process\"`; TS import-equals; a side-effect import; and a named _linkedBinding import are all reported. Global process.dlopen and process._linkedBinding are still caught by rule 3, and a control (node:crypto plus process.env) stays clean. Test-only scope: the only non-metadata change since round 5 in apps/ is architecture.testkit.ts and architecture.test.ts. The testkit is imported only by *.test.ts files. Unit 270/270, integration 200/200 (twice) and e2e 22/22 are unaffected. Cosmetic observation, not a finding: the generated self-check titles for X6-X8 read \"(round-4 lint: 'missed')\", though these forms were missed by the round-5 lint."
+      }
     },
     {
       "id": "F-DG1-126",
@@ -10456,7 +10485,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-5/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T11:40:31Z",
@@ -10467,10 +10496,98 @@
           "at": "2026-10-01T12:07:43Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 3037ce2722bbfd94786a7468be8ad94cd9fab6c1"
+        },
+        {
+          "at": "2026-10-01T12:40:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 6: PASS"
+        },
+        {
+          "at": "2026-10-01T12:46:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 6: PASS"
         }
       ],
       "fix_revision": "3037ce2722bbfd94786a7468be8ad94cd9fab6c1",
-      "fix_summary": "install-sandbox.sh copy-back now enumerates members via pnpm's own resolution (pnpm -r ls), honoring packages: and ! exclusions and ignoring other list keys; parser merges pnpm's per-project arrays and refuses non-repo paths; AC-10 added; installer suite 14/14."
+      "fix_summary": "install-sandbox.sh copy-back now enumerates members via pnpm's own resolution (pnpm -r ls), honoring packages: and ! exclusions and ignoring other list keys; parser merges pnpm's per-project arrays and refuses non-repo paths; AC-10 added; installer suite 14/14.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-QA-R6-qa-verifier-20261001T121845Z-cc2703da",
+          "session_id": "cc2703da-574d-4dae-8658-3dd2661d6aa7"
+        },
+        "at": "2026-10-01T12:46:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/qa/round-6/12-install-sandbox-tests.log",
+          "docs/delivery/test-evidence/DG1/qa/round-6/13-ac1-effect-offline-equivalent.log",
+          "docs/delivery/test-evidence/DG1/qa/round-6/14-f126-negative-control.log",
+          "docs/delivery/test-evidence/DG1/qa/round-6/15-f126-member-probe.log",
+          "docs/delivery/test-evidence/DG1/qa/tests/dg1-r6-installer-members-probe.sh",
+          "tools/deps/install-sandbox.sh",
+          "tools/deps/tests/install-sandbox.test.sh"
+        ],
+        "note": "Fix 3037ce2 is in the candidate. Code: the copy-back member list now comes from `pnpm -r ls --depth -1 --json` run in the real REPO_ROOT, parsed by a string- and escape-aware array scanner. A path outside REPO_ROOT is refused and fails the install, and an empty or failed resolve fails the install. Frozen suite in a disposable clone (12-install-sandbox-tests.log): 13 PASS, including AC-10. The 14th case, AC-1 (effect), is BLOCKED only by registry access (ECONNREFUSED, 13-ac1-effect-offline-equivalent.log part 1). Its offline equivalent passes: same fixture, lockfile pinned to the store integrity, wrapper unchanged, and it exercises the new pnpm-ls path for a single-package root. So the claimed 14/14 is consistent with everything I can reproduce. Negative control (14-f126-negative-control.log): with the pre-fix installer (3037ce2^), AC-10 FAILS ('legacy=yes, toolsx=yes'), so the test detects the defect. AC-10 asserts only the root as a positive destination. My own probe (15-f126-member-probe.log, dg1-r6-installer-members-probe.sh, 5/5 PASS) therefore covers the rest. A NON-ROOT member with its own dependency receives node_modules. A '!'-excluded package and a publicHoistPattern directory receive nothing, although a build script planted node_modules there. A member whose name contains ']' and '\"' and a nested packages/deep/inner member both receive node_modules. A `packages:` pattern pointing outside the root (../outside/*) is listed by pnpm, but the wrapper refuses both out-of-root paths and exits 1, and the outside directory gets nothing. Observations, not findings: the parser `continue`s past an array it cannot JSON.parse, so a partial parse failure would skip a member rather than fail the install (fail-incomplete, not an escape). A repo with an out-of-tree file: dependency would make every install fail closed. Neither applies to the committed tree. F-DG1-009 and F-DG1-210 still hold: integration 200/200 twice with no 57P01 in either PostgreSQL log, and e2e F-DG1-210 green EN and AR in both the candidate journey and my independent r4 spec. The register evidence for REQ-DLV-042 is stale for this change; that is raised separately as F-DG1-212 (Low). It concerns the evidence record, not the fix."
+      }
+    },
+    {
+      "id": "F-DG1-127",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Module lint: two loader routes outside LOADER_BUILTINS remain open — node:sqlite DatabaseSync.loadExtension (native shared-library load, same class as the process.dlopen route closed by F-DG1-125) and runtime code generation via node:fs + a literal same-module import()",
+      "reproduction": "Candidate a7b46fbc (commit 0026a7b), disposable clone. apps/api/src/architecture.testkit.ts:58-70 bans the specifiers module, vm, worker_threads, inspector(/promises), repl, child_process, cluster and process (with/without node:); bareAllowed() (117-123) returns true for every other `node:` built-in. Plants through fileViolations('transformations', .../planted.ts) (22-plant-f125.log, 'adjacent routes'): A1 `import { DatabaseSync } from \"node:sqlite\"; const db = new DatabaseSync(\":memory:\", { allowExtension: true }); db.loadExtension(\"/tmp/x.so\");` -> 0 violations. A2 `import { writeFileSync } from \"node:fs\"; writeFileSync(new URL(\"./gen.mjs\", import.meta.url), \"...\"); await import(\"./gen.mjs\");` -> 0 violations (the literal relative specifier resolves inside the module's own directory, so the boundary check accepts it). Runtime, Node 22.22.2 (23-adjacent-routes-runtime.log): A1 `db.loadExtension` is a function; loading /lib/x86_64-linux-gnu/libm.so.6 opens the real shared object and fails only at the symbol lookup ('undefined symbol: sqlite3_m_init'), i.e. it is a dlopen. A2 the generated file runs `(await import('node:child_process')).execSync(...)` and prints 'generated-code-ran'; the generated source is never seen by the lint. No current module source uses node:fs or node:sqlite (only admin/branding.test.ts imports node:fs).",
+      "expected": "The LOADER_BUILTINS rationale ('built-ins that hand out an unchecked loader or evaluate code; a module never needs them') and the header claim that rules 1-4 'remove every syntactic route inside module source' cover these too: add `sqlite` to LOADER_BUILTINS (a module persists through @mth/db/PostgreSQL per ADR-0003 and never needs it), and either ban node:fs write APIs in non-test module source or record runtime code generation through the filesystem as a stated residual next to the existing one in the testkit header / ADR-0002. Add A1/A2 to the self-check table.",
+      "actual": "Both routes pass the lint with zero violations. Impact is limited, as for F-DG1-125: this is a static architecture lint (defence in depth for ADR-0002 module boundaries, enforced against code that is also reviewed), not a runtime security boundary; A1 needs a native .so on disk and an explicit allowExtension:true; A2 needs a writable module directory at runtime (the production image's source tree is expected to be read-only). Neither is used by any module today. Hence Low, not mandatory; it does not reopen F-DG1-125, whose process-module route is fully closed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-6/22-plant-f125.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-6/23-adjacent-routes-runtime.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-6/plant-f125.test.ts",
+        "apps/api/src/architecture.testkit.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-6/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T12:35:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG1 round 6 while verifying F-DG1-125 (adjacent-route probes A1/A2); reproduced in a disposable clone (lint) and in Node 22.22.2 (runtime). ID proposed as the next free number in the code-security 1xx range; the orchestrator may renumber."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-212",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-042",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "REQ-DLV-042's cited installer acceptance log predates the F-DG1-126 installer change; the claimed 14/14 run (incl. AC-10) is not recorded anywhere in the repository",
+      "reproduction": "Candidate sha256:a7b46fbc...210d (commit 0026a7b). docs/delivery/requirements.csv row REQ-DLV-042 cites docs/delivery/test-evidence/DG1/orchestrator/install-sandbox-acceptance.log. That log's header reads 'current 13-case suite: AC-1..AC-9 ... Regenerated 2026-10-01T11:02:10Z for F-DG1-211' and ends 'install-sandbox acceptance: 13 passed, 0 failed'. Its last commit is 3e142d6 (11:02:32Z), but tools/deps/install-sandbox.sh and tools/deps/tests/install-sandbox.test.sh were both changed afterwards by the F-DG1-126 fix 3037ce2 (12:07:43Z). Diffing the log's PASS labels against the ok-labels in the frozen test script shows exactly one missing label: 'AC-10 a '!'-excluded package and a non-`packages:` list entry are not copy-back destinations'. The F-DG1-126 fix_summary in findings.json and D-052 both state 'installer suite 14/14', but a repository-wide search finds no 14-case log outside this round's QA evidence. This is the same defect class as F-DG1-211 (closed in round 5), now reintroduced by the round-6 installer change.",
+      "expected": "An IMPLEMENTED row's cited evidence was produced against the frozen candidate's installer and suite, so here a 14-case log (AC-1..AC-10) run on the post-3037ce2 wrapper. The '14/14' claim in D-052 and in the F-DG1-126 fix_summary should be backed by a persisted log.",
+      "actual": "The cited log is the 13-case run of the pre-fix installer. The behaviour itself is correct on this candidate. My independent run of the frozen suite gave 13 PASS, including AC-10. The 14th case, AC-1 (effect), is BLOCKED only because this sandbox has no registry network (ECONNREFUSED) and passes in its offline equivalent. AC-10 fails on the pre-fix installer (negative control), and my own member probe passes 5/5. So only the evidence record is stale; the control is not defective.",
+      "evidence": [
+        "docs/delivery/requirements.csv",
+        "docs/delivery/test-evidence/DG1/orchestrator/install-sandbox-acceptance.log",
+        "tools/deps/tests/install-sandbox.test.sh",
+        "docs/delivery/test-evidence/DG1/qa/round-6/12-install-sandbox-tests.log",
+        "docs/delivery/test-evidence/DG1/qa/round-6/13-ac1-effect-offline-equivalent.log",
+        "docs/delivery/test-evidence/DG1/qa/round-6/14-f126-negative-control.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-6/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T12:45:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG1 round 6 while verifying F-DG1-126. ID proposed in the QA range (next after F-DG1-211); the orchestrator may re-allocate it."
+        }
+      ]
     }
   ]
 }

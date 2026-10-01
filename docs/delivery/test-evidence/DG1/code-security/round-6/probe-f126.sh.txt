@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# F-DG1-126 independent probe (code-security-reviewer, DG1 round 6). Offline. Usage: probe-f126.sh <candidate clone>
+# (1) pnpm's member resolution on the REAL repo shape; (2) a scratch workspace with a negated pattern, two non-`packages:`
+# list keys naming real dirs with package.json, a real NON-ROOT member that gets node_modules, and a planted dir with no
+# package.json; then the candidate installer's `create`, and a check of every destination.
+set -uo pipefail
+C="$1"; WRAP="$C/tools/deps/install-sandbox.sh"
+echo "## (1) real repo shape: (cd $C && pnpm -r ls --depth -1 --json) -> paths"
+(cd "$C" && pnpm -r ls --depth -1 --json) | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const m=[...s.matchAll(/"path":\s*"([^"]+)"/g)].map(x=>x[1]);console.log(m.join("\n"));console.log("count="+m.length)})'
+echo "dirs with package.json under apps/* packages/* (+ root):"; (cd "$C" && ls -d . apps/*/package.json packages/*/package.json | sed 's#/package.json##')
+D="$(mktemp -d "$TMPDIR/f126probe.XXXXXX")"
+mkdir -p "$D"/{fixture,lib1,apps/web,packages/real,packages/legacy,tools/x,tools/y,docs}
+cat > "$D/pnpm-workspace.yaml" <<'YAML'
+packages:
+  - 'apps/*'
+  - "packages/*"
+  - "!packages/legacy"   # excluded
+publicHoistPattern:
+  - "tools/x"
+ignoredBuiltDependencies:
+  - "tools/y"
+YAML
+echo '{ "name": "lib1", "version": "1.0.0" }' > "$D/lib1/package.json"
+echo '{ "name": "web", "version": "1.0.0", "private": true, "dependencies": { "lib1": "file:../../lib1" } }' > "$D/apps/web/package.json"
+echo '{ "name": "real", "version": "1.0.0", "private": true }' > "$D/packages/real/package.json"
+echo '{ "name": "legacy", "version": "1.0.0", "private": true, "dependencies": { "lib1": "file:../../lib1" } }' > "$D/packages/legacy/package.json"
+echo '{ "name": "toolsx", "version": "1.0.0", "private": true }' > "$D/tools/x/package.json"
+echo '{ "name": "toolsy", "version": "1.0.0", "private": true }' > "$D/tools/y/package.json"
+cat > "$D/fixture/package.json" <<'JSON'
+{ "name": "fx", "version": "1.0.0",
+  "scripts": { "postinstall": "node -e \"const fs=require('fs');const r=process.env.INIT_CWD;fs.mkdirSync(r+'/node_modules',{recursive:true});fs.writeFileSync(r+'/node_modules/FX_RAN','1');for(const d of ['packages/legacy','tools/x','tools/y','docs','packages/real']){const p=r+'/'+d+'/node_modules';fs.mkdirSync(p,{recursive:true});fs.writeFileSync(p+'/PWNED','1')}\"" } }
+JSON
+echo '{ "name": "probe-root", "version": "1.0.0", "private": true, "dependencies": { "fx": "file:./fixture" }, "pnpm": { "onlyBuiltDependencies": ["fx"] } }' > "$D/package.json"
+echo "## (2) scratch workspace $D"; cat "$D/pnpm-workspace.yaml"
+echo '$ (cd D && pnpm -r ls --depth -1 --json) -> paths (relative)'
+(cd "$D" && pnpm -r ls --depth -1 --json) | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{for(const x of s.matchAll(/"path":\s*"([^"]+)"/g))console.log("  "+(x[1].replace(process.argv[1],"<D>")))})' "$D"
+echo '$ install-sandbox.sh --root D create'
+"$WRAP" --root "$D" create > "$D.create.log" 2>&1; rc=$?; echo "create exit=$rc"; tail -4 "$D.create.log"
+chk() { if [ -e "$D/$1" ]; then echo "  present  $1"; else echo "  absent   $1"; fi; }
+echo "expected PRESENT (real members): root FX_RAN, apps/web lib1, packages/real PWNED (real member: whatever its sandbox node_modules held is copied, by design)"
+chk node_modules/FX_RAN; chk apps/web/node_modules/lib1/package.json; chk packages/real/node_modules/PWNED
+echo "expected ABSENT (non-members):"
+chk packages/legacy/node_modules; chk tools/x/node_modules; chk tools/y/node_modules; chk docs/node_modules; chk fixture/node_modules; chk lib1/node_modules
+rm -rf "$D" "$D.create.log"

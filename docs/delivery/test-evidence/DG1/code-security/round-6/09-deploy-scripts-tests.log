@@ -1,0 +1,413 @@
+# disposable clone $TMPDIR/rev @0026a7b (candidate a7b46fbc), node v22.22.2, pnpm 10.33.0
+$ bash -c node --test deploy/scripts/tests/*.test.mjs
+TAP version 13
+#   P0 deploy/ci/ci.yml as committed: exit 0
+#   P1 images: if: success() && github.event_name == 'push' (implicit-success semantics kept): exit 0
+#   P2 integration: if: github.event_name != 'schedule' (no status function): exit 0
+#   P3 step-level if: always() inside a gated product job (upload-artifact): exit 0
+#   N1 verify: needs removed: exit 1: FAIL: job "verify" does not depend on delivery-gates
+#   N2 rogue job without needs: exit 1: FAIL: job "rogue" does not depend on delivery-gates
+#   N3 unknown need: exit 1: FAIL: images needs unknown job "nope"
+#   N4 verify: if: always(): exit 1: FAIL: job "verify": job-level if: "always()" uses a status function, so it can run after delivery-gates failed
+#   N5 images: if: ${{ !cancelled() }}: exit 1: FAIL: job "images": job-level if: "${{ !cancelled() }}" uses a status function, so it can run after delivery-gates failed
+#   N6 integration: if: failure(): exit 1: FAIL: job "integration": job-level if: "failure()" uses a status function, so it can run after delivery-gates failed
+#   N7 e2e: if: ${{ always() && github.ref == 'refs/heads/main' }}: exit 1: FAIL: job "e2e": job-level if: "${{ always() && github.ref == 'refs/heads/main' }}" uses a status function, so it can run after delivery-gates failed
+#   N8 verify: if: Always ( ) (case/whitespace): exit 1: FAIL: job "verify": job-level if: "Always ( )" uses a status function, so it can run after delivery-gates failed
+#   N9 integration: if: success() || failure(): exit 1: FAIL: job "integration": job-level if: "success() || failure()" uses a status function, so it can run after delivery-gates failed
+#   N10 delivery-gates: continue-on-error: true: exit 1: FAIL: delivery-gates: job must not set continue-on-error (a failed gate would count as success)
+#   N11 validate step: continue-on-error: true: exit 1: FAIL: delivery-gates: validate step must not set continue-on-error
+#   N12 validate step: `|| true`: exit 1: FAIL: delivery-gates does not run exactly "node tools/gates/validate.mjs --pipeline"
+#   N13 validate step: if: false: exit 1: FAIL: delivery-gates: validate step must not have an if: ("false")
+#   N14 verify: plain pnpm install --frozen-lockfile instead of ci-install-deps.sh: exit 1: FAIL: verify: dependency install outside deploy/scripts/ci-install-deps.sh (REQ-DLV-042): pnpm install --frozen-lockfile
+#   N15 integration: ci-install-deps.sh step removed (pnpm used without any install): exit 1: FAIL: integration: runs pnpm before the sandboxed install (deploy/scripts/ci-install-deps.sh): pnpm -r build
+#   N16 images: extra `npm ci` step: exit 1: FAIL: images: dependency install outside deploy/scripts/ci-install-deps.sh (REQ-DLV-042): npm ci
+#   N17 e2e: corepack enable && pnpm install: exit 1: FAIL: e2e: dependency install outside deploy/scripts/ci-install-deps.sh (REQ-DLV-042): pnpm install
+#   N18 verify: fallback `ci-install-deps.sh || pnpm install`: exit 1: FAIL: verify: the sandboxed install must be the whole command, exactly deploy/scripts/ci-install-deps.sh: deploy/scripts/ci-install-deps.sh || pnpm install
+#   N19 validate step: env NODE_OPTIONS=--import=data:...process.exit(0): exit 1: FAIL: delivery-gates step 3: a validate.mjs step must not set env: {"NODE_OPTIONS":"--import=data:text/javascript,process.exit(0)"} (only name/id/run)
+#   N20 validate step: working-directory: decoy: exit 1: FAIL: delivery-gates step 3: a validate.mjs step must not set working-directory: "decoy" (only name/id/run)
+#   N21 validate step: shell: 'true {0}': exit 1: FAIL: delivery-gates step 3: a validate.mjs step must not set shell: "true {0}" (only name/id/run)
+#   N22 workflow-level defaults.run.working-directory: decoy: exit 1: FAIL: workflow-level defaults: is not allowed (it reaches the delivery-gates validate step): {"run":{"working-directory":"decoy"}}
+#   N23 workflow-level defaults.run.shell: exit 1: FAIL: workflow-level defaults: is not allowed (it reaches the delivery-gates validate step): {"run":{"shell":"true {0}"}}
+#   N24 workflow-level env NODE_OPTIONS: exit 1: FAIL: workflow-level env: is not allowed (it reaches the delivery-gates validate step): {"NODE_OPTIONS":"--import=data:text/javascript,process.exit(0)"}
+#   N25 delivery-gates job-level env NODE_OPTIONS: exit 1: FAIL: delivery-gates: job key "env" is not allowed (it could change how the validate step runs)
+#   N26 delivery-gates job-level defaults.run.working-directory: exit 1: FAIL: delivery-gates: job key "defaults" is not allowed (it could change how the validate step runs)
+#   N27 delivery-gates pre-step writes NODE_OPTIONS to $GITHUB_ENV: exit 1: FAIL: delivery-gates step 3: only the validate step may run commands in delivery-gates: "echo \\"NODE_OPTIONS=--import=data:text/javascript,process.exit(0)\\" >> \\"$GITHUB_ENV\\""
+#   N28 delivery-gates setup-node step with env: exit 1: FAIL: delivery-gates step 2: key "env" is not allowed
+#   N29 validate.mjs run in another job with NODE_OPTIONS: exit 1: FAIL: verify step 13: a validate.mjs step must not set env: {"NODE_OPTIONS":"--x"} (only name/id/run)
+#   P4 validate step with a name and an id (only name/id/run): exit 0
+#   P5 product job (verify) with its own job-level env and defaults (does not reach the gate): exit 0
+#   N30 delivery-gates checkout with.ref override: exit 1: FAIL: delivery-gates step 1: with.ref is not allowed on checkout in delivery-gates (allowed: fetch-depth, persist-credentials); it could make validate.mjs check a different tree or toolchain
+#   N31 delivery-gates checkout with.repository override: exit 1: FAIL: delivery-gates step 1: with.repository is not allowed on checkout in delivery-gates (allowed: fetch-depth, persist-credentials); it could make validate.mjs check a different tree or toolchain
+#   N32 delivery-gates checkout with.path override: exit 1: FAIL: delivery-gates step 1: with.path is not allowed on checkout in delivery-gates (allowed: fetch-depth, persist-credentials); it could make validate.mjs check a different tree or toolchain
+#   N33 delivery-gates checkout with.token override: exit 1: FAIL: delivery-gates step 1: with.token is not allowed on checkout in delivery-gates (allowed: fetch-depth, persist-credentials); it could make validate.mjs check a different tree or toolchain
+#   N34 delivery-gates checkout with.sparse-checkout override: exit 1: FAIL: delivery-gates step 1: with.sparse-checkout is not allowed on checkout in delivery-gates (allowed: fetch-depth, persist-credentials); it could make validate.mjs check a different tree or toolchain
+#   N35 delivery-gates checkout with.submodules override: exit 1: FAIL: delivery-gates step 1: with.submodules is not allowed on checkout in delivery-gates (allowed: fetch-depth, persist-credentials); it could make validate.mjs check a different tree or toolchain
+#   N36 delivery-gates checkout with.fetch-depth as an expression: exit 1: FAIL: delivery-gates step 1: with.fetch-depth has a disallowed value "${{ github.event.inputs.depth }}"
+#   N37 delivery-gates setup-node with.node-version-file: exit 1: FAIL: delivery-gates step 2: with.node-version-file is not allowed on setup-node in delivery-gates (allowed: node-version); it could make validate.mjs check a different tree or toolchain
+#   N38 delivery-gates checkout with: is a string, not a mapping: exit 1: FAIL: delivery-gates step 1: with: must be a mapping, got "ref=main"
+#   P6 delivery-gates checkout with persist-credentials: false (allow-listed): exit 0
+#   P7 delivery-gates checkout without with: (defaults to the triggering commit): exit 0
+# Subtest: POSITIVE P0 deploy/ci/ci.yml as committed
+ok 1 - POSITIVE P0 deploy/ci/ci.yml as committed
+  ---
+  duration_ms: 119.739256
+  type: 'test'
+  ...
+# Subtest: POSITIVE P1 images: if: success() && github.event_name == 'push' (implicit-success semantics kept)
+ok 2 - POSITIVE P1 images: if: success() && github.event_name == 'push' (implicit-success semantics kept)
+  ---
+  duration_ms: 111.418025
+  type: 'test'
+  ...
+# Subtest: POSITIVE P2 integration: if: github.event_name != 'schedule' (no status function)
+ok 3 - POSITIVE P2 integration: if: github.event_name != 'schedule' (no status function)
+  ---
+  duration_ms: 109.298885
+  type: 'test'
+  ...
+# Subtest: POSITIVE P3 step-level if: always() inside a gated product job (upload-artifact)
+ok 4 - POSITIVE P3 step-level if: always() inside a gated product job (upload-artifact)
+  ---
+  duration_ms: 119.837023
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N1 verify: needs removed
+ok 5 - NEGATIVE N1 verify: needs removed
+  ---
+  duration_ms: 118.803087
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N2 rogue job without needs
+ok 6 - NEGATIVE N2 rogue job without needs
+  ---
+  duration_ms: 117.006158
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N3 unknown need
+ok 7 - NEGATIVE N3 unknown need
+  ---
+  duration_ms: 110.135569
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N4 verify: if: always()
+ok 8 - NEGATIVE N4 verify: if: always()
+  ---
+  duration_ms: 121.648194
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N5 images: if: ${{ !cancelled() }}
+ok 9 - NEGATIVE N5 images: if: ${{ !cancelled() }}
+  ---
+  duration_ms: 123.919789
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N6 integration: if: failure()
+ok 10 - NEGATIVE N6 integration: if: failure()
+  ---
+  duration_ms: 92.713766
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N7 e2e: if: ${{ always() && github.ref == 'refs/heads/main' }}
+ok 11 - NEGATIVE N7 e2e: if: ${{ always() && github.ref == 'refs/heads/main' }}
+  ---
+  duration_ms: 98.467992
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N8 verify: if: Always ( ) (case/whitespace)
+ok 12 - NEGATIVE N8 verify: if: Always ( ) (case/whitespace)
+  ---
+  duration_ms: 103.468303
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N9 integration: if: success() || failure()
+ok 13 - NEGATIVE N9 integration: if: success() || failure()
+  ---
+  duration_ms: 93.975625
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N10 delivery-gates: continue-on-error: true
+ok 14 - NEGATIVE N10 delivery-gates: continue-on-error: true
+  ---
+  duration_ms: 95.433769
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N11 validate step: continue-on-error: true
+ok 15 - NEGATIVE N11 validate step: continue-on-error: true
+  ---
+  duration_ms: 100.064827
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N12 validate step: `|| true`
+ok 16 - NEGATIVE N12 validate step: `|| true`
+  ---
+  duration_ms: 109.119263
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N13 validate step: if: false
+ok 17 - NEGATIVE N13 validate step: if: false
+  ---
+  duration_ms: 93.561844
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N14 verify: plain pnpm install --frozen-lockfile instead of ci-install-deps.sh
+ok 18 - NEGATIVE N14 verify: plain pnpm install --frozen-lockfile instead of ci-install-deps.sh
+  ---
+  duration_ms: 109.346371
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N15 integration: ci-install-deps.sh step removed (pnpm used without any install)
+ok 19 - NEGATIVE N15 integration: ci-install-deps.sh step removed (pnpm used without any install)
+  ---
+  duration_ms: 92.683029
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N16 images: extra `npm ci` step
+ok 20 - NEGATIVE N16 images: extra `npm ci` step
+  ---
+  duration_ms: 94.521771
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N17 e2e: corepack enable && pnpm install
+ok 21 - NEGATIVE N17 e2e: corepack enable && pnpm install
+  ---
+  duration_ms: 95.879853
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N18 verify: fallback `ci-install-deps.sh || pnpm install`
+ok 22 - NEGATIVE N18 verify: fallback `ci-install-deps.sh || pnpm install`
+  ---
+  duration_ms: 89.122179
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N19 validate step: env NODE_OPTIONS=--import=data:...process.exit(0)
+ok 23 - NEGATIVE N19 validate step: env NODE_OPTIONS=--import=data:...process.exit(0)
+  ---
+  duration_ms: 94.854149
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N20 validate step: working-directory: decoy
+ok 24 - NEGATIVE N20 validate step: working-directory: decoy
+  ---
+  duration_ms: 93.7069
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N21 validate step: shell: 'true {0}'
+ok 25 - NEGATIVE N21 validate step: shell: 'true {0}'
+  ---
+  duration_ms: 102.474639
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N22 workflow-level defaults.run.working-directory: decoy
+ok 26 - NEGATIVE N22 workflow-level defaults.run.working-directory: decoy
+  ---
+  duration_ms: 97.42903
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N23 workflow-level defaults.run.shell
+ok 27 - NEGATIVE N23 workflow-level defaults.run.shell
+  ---
+  duration_ms: 100.06974
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N24 workflow-level env NODE_OPTIONS
+ok 28 - NEGATIVE N24 workflow-level env NODE_OPTIONS
+  ---
+  duration_ms: 96.596528
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N25 delivery-gates job-level env NODE_OPTIONS
+ok 29 - NEGATIVE N25 delivery-gates job-level env NODE_OPTIONS
+  ---
+  duration_ms: 99.012437
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N26 delivery-gates job-level defaults.run.working-directory
+ok 30 - NEGATIVE N26 delivery-gates job-level defaults.run.working-directory
+  ---
+  duration_ms: 94.944994
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N27 delivery-gates pre-step writes NODE_OPTIONS to $GITHUB_ENV
+ok 31 - NEGATIVE N27 delivery-gates pre-step writes NODE_OPTIONS to $GITHUB_ENV
+  ---
+  duration_ms: 95.939959
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N28 delivery-gates setup-node step with env
+ok 32 - NEGATIVE N28 delivery-gates setup-node step with env
+  ---
+  duration_ms: 84.787019
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N29 validate.mjs run in another job with NODE_OPTIONS
+ok 33 - NEGATIVE N29 validate.mjs run in another job with NODE_OPTIONS
+  ---
+  duration_ms: 102.140354
+  type: 'test'
+  ...
+# Subtest: POSITIVE P4 validate step with a name and an id (only name/id/run)
+ok 34 - POSITIVE P4 validate step with a name and an id (only name/id/run)
+  ---
+  duration_ms: 98.605435
+  type: 'test'
+  ...
+# Subtest: POSITIVE P5 product job (verify) with its own job-level env and defaults (does not reach the gate)
+ok 35 - POSITIVE P5 product job (verify) with its own job-level env and defaults (does not reach the gate)
+  ---
+  duration_ms: 101.426896
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N30 delivery-gates checkout with.ref override
+ok 36 - NEGATIVE N30 delivery-gates checkout with.ref override
+  ---
+  duration_ms: 96.511527
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N31 delivery-gates checkout with.repository override
+ok 37 - NEGATIVE N31 delivery-gates checkout with.repository override
+  ---
+  duration_ms: 99.256491
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N32 delivery-gates checkout with.path override
+ok 38 - NEGATIVE N32 delivery-gates checkout with.path override
+  ---
+  duration_ms: 99.930809
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N33 delivery-gates checkout with.token override
+ok 39 - NEGATIVE N33 delivery-gates checkout with.token override
+  ---
+  duration_ms: 109.50735
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N34 delivery-gates checkout with.sparse-checkout override
+ok 40 - NEGATIVE N34 delivery-gates checkout with.sparse-checkout override
+  ---
+  duration_ms: 107.206421
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N35 delivery-gates checkout with.submodules override
+ok 41 - NEGATIVE N35 delivery-gates checkout with.submodules override
+  ---
+  duration_ms: 96.548316
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N36 delivery-gates checkout with.fetch-depth as an expression
+ok 42 - NEGATIVE N36 delivery-gates checkout with.fetch-depth as an expression
+  ---
+  duration_ms: 102.880009
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N37 delivery-gates setup-node with.node-version-file
+ok 43 - NEGATIVE N37 delivery-gates setup-node with.node-version-file
+  ---
+  duration_ms: 102.114814
+  type: 'test'
+  ...
+# Subtest: NEGATIVE N38 delivery-gates checkout with: is a string, not a mapping
+ok 44 - NEGATIVE N38 delivery-gates checkout with: is a string, not a mapping
+  ---
+  duration_ms: 116.813741
+  type: 'test'
+  ...
+# Subtest: POSITIVE P6 delivery-gates checkout with persist-credentials: false (allow-listed)
+ok 45 - POSITIVE P6 delivery-gates checkout with persist-credentials: false (allow-listed)
+  ---
+  duration_ms: 103.816862
+  type: 'test'
+  ...
+# Subtest: POSITIVE P7 delivery-gates checkout without with: (defaults to the triggering commit)
+ok 46 - POSITIVE P7 delivery-gates checkout without with: (defaults to the triggering commit)
+  ---
+  duration_ms: 101.024096
+  type: 'test'
+  ...
+# Subtest: C1 an unpinned lock: --check exits 1 and reports every null digest as NOT PINNED (honest, never a pass)
+ok 47 - C1 an unpinned lock: --check exits 1 and reports every null digest as NOT PINNED (honest, never a pass)
+  ---
+  duration_ms: 60.585461
+  type: 'test'
+  ...
+# Subtest: C2 all digests recorded: --apply then --check exits 0; only image reference lines change
+ok 48 - C2 all digests recorded: --apply then --check exits 0; only image reference lines change
+  ---
+  duration_ms: 128.332451
+  type: 'test'
+  ...
+# Subtest: C3 keycloak BLOCKED (blockedReason, null digest), others pinned: --apply skips it, --check still exits 1
+ok 49 - C3 keycloak BLOCKED (blockedReason, null digest), others pinned: --apply skips it, --check still exits 1
+  ---
+  duration_ms: 124.883304
+  type: 'test'
+  ...
+# Subtest: C4 structure: blockedReason together with a digest is contradictory
+ok 50 - C4 structure: blockedReason together with a digest is contradictory
+  ---
+  duration_ms: 57.952098
+  type: 'test'
+  ...
+# Subtest: C5 structure: missing blockedReason field, bad scope, digest without verifiedAt, malformed digest
+ok 51 - C5 structure: missing blockedReason field, bad scope, digest without verifiedAt, malformed digest
+  ---
+  duration_ms: 65.27352
+  type: 'test'
+  ...
+# Subtest: C6 completeness: an image referenced in Compose but absent from the lock fails
+ok 52 - C6 completeness: an image referenced in Compose but absent from the lock fails
+  ---
+  duration_ms: 133.311084
+  type: 'test'
+  ...
+# Subtest: C7 completeness: a file using an image but missing from its usedIn fails
+ok 53 - C7 completeness: a file using an image but missing from its usedIn fails
+  ---
+  duration_ms: 133.740323
+  type: 'test'
+  ...
+# Subtest: C8 a file digest that differs from the lock fails
+ok 54 - C8 a file digest that differs from the lock fails
+  ---
+  duration_ms: 128.559187
+  type: 'test'
+  ...
+# Subtest: C9 --resolve with a denied registry (stub docker): reachable images recorded, quay.io BLOCKED, exit 1
+ok 55 - C9 --resolve with a denied registry (stub docker): reachable images recorded, quay.io BLOCKED, exit 1
+  ---
+  duration_ms: 280.606749
+  type: 'test'
+  ...
+# Subtest: C10 runner WITH quay.io: --resolve --missing pins ONLY keycloak, --apply, --check exits 0
+ok 56 - C10 runner WITH quay.io: --resolve --missing pins ONLY keycloak, --apply, --check exits 0
+  ---
+  duration_ms: 293.064519
+  type: 'test'
+  ...
+# Subtest: C11 runner WITHOUT quay.io: --resolve --missing exits 1, keycloak stays null/BLOCKED, --check still exits 1
+ok 57 - C11 runner WITHOUT quay.io: --resolve --missing exits 1, keycloak stays null/BLOCKED, --check still exits 1
+  ---
+  duration_ms: 248.507857
+  type: 'test'
+  ...
+# Subtest: C12 nothing missing: --resolve --missing calls no registry, leaves the lock byte-identical, exits 0
+ok 58 - C12 nothing missing: --resolve --missing calls no registry, leaves the lock byte-identical, exits 0
+  ---
+  duration_ms: 56.032576
+  type: 'test'
+  ...
+# Subtest: C13 CI images job: resolve --missing, then --apply, then --check, in that order
+ok 59 - C13 CI images job: resolve --missing, then --apply, then --check, in that order
+  ---
+  duration_ms: 0.383639
+  type: 'test'
+  ...
+1..59
+# tests 59
+# suites 0
+# pass 59
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4894.246097
+exit=0

@@ -1,0 +1,31 @@
+$ npm_config_store_dir=$TMPDIR/store/v10 bash docs/delivery/test-evidence/DG1/qa/tests/dg1-r6-installer-members-probe.sh   (cwd: disposable clone @ 0026a7b)
+--- wrapper create on Q1-Q3 workspace
+    "path": "<ws>",
+    "path": "<ws>/packages/deep",
+    "path": "<ws>/packages/deep/inner",
+    "path": "<ws>/packages/real",
+    "path": "<ws>/packages/we]ird\"name",
+dependencies:
++ qa-fixture 1.0.0
+
+Done in 603ms using pnpm v10.33.0
+wrapper exit=0
+PASS  Q1 non-root member packages/real received node_modules (qa-dep linked)
+PASS  Q1 '!'-excluded packages/legacy and publicHoistPattern tools/x received nothing (build script ran: root QA_RAN present)
+PASS  Q2 member with ']' and '"' in its name received node_modules
+PASS  Q3 nested member packages/deep/inner received node_modules
+--- pnpm's own view of the ws4 members
+    "path": "<scratch>/outside/dep4",
+    "path": "<scratch>/outside/pkg",
+    "path": "<scratch>/ws4",
+--- wrapper create on ws4
+Already up to date
+
+Done in 470ms using pnpm v10.33.0
+install-sandbox: refusing a non-repo member path reported by pnpm: <scratch>/outside/dep4
+install-sandbox: refusing a non-repo member path reported by pnpm: <scratch>/outside/pkg
+install-sandbox: node_modules copy-back failed; the install is incomplete
+wrapper exit=1
+PASS  Q4 the out-of-root directory received no node_modules (wrapper exit=1)
+qa r6 installer member probe: 5 passed, 0 failed
+exit=0

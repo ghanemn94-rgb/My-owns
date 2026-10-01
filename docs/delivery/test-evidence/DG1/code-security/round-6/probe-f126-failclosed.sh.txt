@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# F-DG1-126 fail-closed probe: a PATH shim `pnpm` delegates everything to the real pnpm except `-r ls`, whose output is
+# replaced per $LSMODE: outside (a path outside the root), garbage (not JSON), fail (exit 1), stream (two concatenated
+# arrays incl. a "[" inside a path string). Usage: probe-f126-failclosed.sh <candidate clone>
+set -uo pipefail
+C="$1"; WRAP="$C/tools/deps/install-sandbox.sh"; REAL="$(command -v pnpm)"
+S="$(mktemp -d "$TMPDIR/shim.XXXXXX")"
+cat > "$S/pnpm" <<SH
+#!/usr/bin/env bash
+if [ "\${1:-}" = "-r" ] && [ "\${2:-}" = "ls" ]; then
+  case "\$LSMODE" in
+    outside) printf '[{"name":"r","path":"%s"},{"name":"evil","path":"/etc/evil"}]\n' "\$PWD" ;;
+    garbage) echo 'not json at all' ;;
+    fail) echo boom >&2; exit 1 ;;
+    stream) printf '[{"name":"r","path":"%s"}]\n[{"name":"b","path":"%s/pk[g\\\\"x"},{"name":"m","path":"%s/apps/m"}]\n' "\$PWD" "\$PWD" "\$PWD" ;;
+  esac; exit 0
+fi
+exec "$REAL" "\$@"
+SH
+chmod +x "$S/pnpm"
+for mode in outside garbage fail stream; do
+  D="$(mktemp -d "$TMPDIR/fc.XXXXXX")"; mkdir -p "$D/apps/m" "$D/fixture"
+  echo 'packages: ["apps/*"]' > "$D/pnpm-workspace.yaml"
+  echo '{ "name": "m", "version": "1.0.0", "private": true, "dependencies": { "fx": "file:../../fixture" } }' > "$D/apps/m/package.json"
+  echo '{ "name": "fx", "version": "1.0.0" }' > "$D/fixture/package.json"
+  echo '{ "name": "r", "version": "1.0.0", "private": true, "dependencies": { "fx": "file:./fixture" } }' > "$D/package.json"
+  echo "## LSMODE=$mode"
+  LSMODE=$mode PATH="$S:$PATH" "$WRAP" --root "$D" create > "$D.log" 2>&1; rc=$?
+  echo "create exit=$rc"; grep -E "install-sandbox:" "$D.log" | sed "s#$D#<D>#g"
+  echo "  root node_modules: $([ -d "$D/node_modules" ] && echo present || echo absent); apps/m node_modules: $([ -d "$D/apps/m/node_modules" ] && echo present || echo absent); /etc/evil/node_modules: $([ -e /etc/evil/node_modules ] && echo PRESENT || echo absent)"
+  rm -rf "$D" "$D.log"
+done
+rm -rf "$S"
