@@ -193,4 +193,19 @@ The `DEFECT` tests must not be weakened; they turn red when the finding is fixed
 plain tests). Review commit and secret scan: §9.
 
 ### 9. Review commit
-COMMIT_PLACEHOLDER
+Review commit `42a26c0` (this document and the two probe specs, parent `983c1d5`). Before committing, the three new files were
+scanned with the repository's configuration (copies under the session scratchpad):
+```
+$ gitleaks dir <copy> --config scripts/ops/gitleaks.toml --redact=100   (gitleaks 8.30.1)
+  INF scanned ~80549 bytes (80.55 KB) … INF no leaks found
+```
+After the commit, with the repository's script:
+```
+$ GITLEAKS=…/gitleaks-8.30.1 bash scripts/ops/secret-scan.sh tree
+  tree: 1153 committed files at HEAD 42a26c0 … INF no leaks found  PASS  tree: no findings  SECRET SCAN (tree): PASS
+$ GITLEAKS=… bash scripts/ops/secret-scan.sh history
+  history: 329 commits reachable from HEAD 42a26c0 (whole repository) … INF 237 commits scanned. … INF no leaks found
+  PASS  history: no findings  SECRET SCAN (history): PASS
+```
+This section was filled in by a follow-up documentation commit. Nothing was pushed; every process started by the reviewer has
+ended (the first, early full-suite run was stopped by PID; the final run exited 0).
