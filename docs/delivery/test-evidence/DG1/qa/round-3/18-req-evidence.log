@@ -1,0 +1,42 @@
+# cwd: /home/user/My-owns @ 4f486b96 (read-only); node script (inline copy of $TMPDIR/reqcheck.cjs below the output)
+# cmd: node $TMPDIR/reqcheck.cjs
+REQ-DLV-025 final_gate=DG1 status=IMPLEMENTED evidence=4 missing=[]
+REQ-DLV-033 final_gate=DG1 status=IMPLEMENTED evidence=21 missing=[]
+REQ-DLV-042 final_gate=DG1 status=IMPLEMENTED evidence=4 missing=[]
+REQ-S15-002 final_gate=DG1 status=IMPLEMENTED evidence=5 missing=[]
+REQ-S15-005 final_gate=DG1 status=IMPLEMENTED evidence=7 missing=[]
+REQ-S15-006 final_gate=DG1 status=IMPLEMENTED evidence=4 missing=[]
+REQ-S16-001 final_gate=DG1 status=IMPLEMENTED evidence=8 missing=[]
+REQ-S16-002 final_gate=DG1 status=IMPLEMENTED evidence=5 missing=[]
+REQ-S16-003 final_gate=DG1 status=IMPLEMENTED evidence=13 missing=[]
+REQ-S16-004 final_gate=DG1 status=IMPLEMENTED evidence=11 missing=[]
+REQ-S19-004 final_gate=DG1 status=IMPLEMENTED evidence=16 missing=[]
+REQ-S19-006 final_gate=DG1 status=IMPLEMENTED evidence=5 missing=[]
+rows with final_gate=DG1: 12 REQ-DLV-025:IMPLEMENTED REQ-DLV-033:IMPLEMENTED REQ-DLV-042:IMPLEMENTED REQ-S15-002:IMPLEMENTED REQ-S15-005:IMPLEMENTED REQ-S15-006:IMPLEMENTED REQ-S16-001:IMPLEMENTED REQ-S16-002:IMPLEMENTED REQ-S16-003:IMPLEMENTED REQ-S16-004:IMPLEMENTED REQ-S19-004:IMPLEMENTED REQ-S19-006:IMPLEMENTED
+
+--- REQ-S19-004 
+EVIDENCE: docs/architecture/erd.md;docs/architecture/data-dictionary.md;packages/db/migrations/0001_identity_access.sql;packages/db/migrations/0002_transformation.sql;packages/db/migrations/0003_audit_event.sql;packages/db/migrations/0004_outbox_jobs.sql;packages/db/migrations/0005_seed_roles_permissions.sql;packages/db/migrations/0006_pgboss_schema_v25.sql;packages/db/migrations/0007_oidc_login_browser_binding.sql;packages/db/migrations/0008_scoped_assignment_derived_from.sql;packages/db/src/migrate.ts;packages/db/test/integration/migrate.test.ts;packages/db/test/integration/catalogue.test.ts;docs/delivery/test-evidence/DG1/qa/round-2/09-integration-run1.log;docs/delivery/test-evidence/DG1/qa/round-2/10-integration-run2.log;docs/delivery/test-evidence/DG1/qa/round-2/19-schema-probe.log 
+NOTES: DG1 analyst check (T-DG1-REG; updated by T-DG1-ANALYST3 for F-DG1-007/F-DG1-209): migrations 0001-0008 (0007 adds oidc_login_state.browser_binding_hash, 0008 adds scoped_assignment.derived_from_assignment_id) apply to a fresh PostgreSQL 16 database. Evidence from the DG1 round-2 QA run on candidate 991d3241 (commit f32c705): 'applied 8 migrations to a fresh database' with migrate.test.ts (7 tests) and catalogue.test.ts passing in two integration runs (193/193), and the schema probe confirms the 0007/0008 columns and constraints. packages/db/migrations is unchanged between f32c705 and the round-3 base 45d0297. The data dictionary documents both new columns; erd.md defers physical columns to it.
+
+--- REQ-DLV-033 
+EVIDENCE: package.json;pnpm-workspace.yaml;pnpm-lock.yaml;docs/architecture/adr/ADR-0002-modular-monolith-boundaries.md;docs/architecture/erd.md;docs/api/openapi.yaml;apps/api/src/main.ts;apps/worker/src/main.ts;apps/web/src/main.tsx;packages/db/migrations/0001_identity_access.sql;packages/db/test/integration/migrate.test.ts;apps/api/test/integration/transformations.test.ts;tests/qa/integration/a12-cross-scope.test.ts;e2e/clean-start/a18-clean-start.sh;packages/db/migrations/0007_oidc_login_browser_binding.sql;packages/db/migrations/0008_scoped_assignment_derived_from.sql;docs/delivery/test-evidence/DG1/qa/round-2/16-a18-clean-start.log;docs/delivery/test-evidence/DG1/qa/round-2/09-integration-run1.log;docs/delivery/test-evidence/DG1/qa/round-2/10-integration-run2.log;docs/delivery/test-evidence/DG1/qa/round-2/05-openapi-lint.log;docs/delivery/test-evidence/DG1/qa/round-2/11-e2e.log 
+NOTES: DG1 analyst check (T-DG1-REG; updated by T-DG1-ANALYST3 for F-DG1-209). Evidence from the DG1 round-2 QA run on candidate 991d3241 (commit f32c705): container-free A18 clean start PASS with a real frozen offline install (pnpm install --frozen-lockfile --offline); migrations 0001-0008 apply to a fresh database; integration 193/193 in two runs, including the contract suite (getBrandingTokens exercised) and a12 cross-scope 403s; OpenAPI 3.1.1 has 33 operations. Not yet green on that candidate: the real-stack e2e suite (11-e2e.log: 1 failed, 6 did not run, Arabic journeys), F-DG1-208 (High, open), which the round-3 frontend repair addresses and the round-3 reviewers must reverify; and the CI images job (F-DG1-108/F-DG1-203, open; keycloak test image unpinned, D-049). This row's IMPLEMENTED status stands only if DG1 round 3 closes those findings. Docker/Compose start BLOCKED (no daemon) belongs to REQ-S20-018 (DG7).
+
+RESULT: PASS all 12 IMPLEMENTED with existing evidence
+exit=0
+---- script
+const fs=require("fs");
+function parse(t){const rows=[];let row=[],f="",q=false;for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c==="\""){if(t[i+1]==="\""){f+="\"";i++}else q=false}else f+=c}else if(c==="\"")q=true;else if(c===","){row.push(f);f=""}else if(c==="\n"){row.push(f);rows.push(row);row=[];f=""}else if(c!=="\r")f+=c}if(f||row.length){row.push(f);rows.push(row)}return rows}
+const rows=parse(fs.readFileSync("docs/delivery/requirements.csv","utf8"));const h=rows[0];
+const ids=["REQ-DLV-025","REQ-DLV-033","REQ-DLV-042","REQ-S15-002","REQ-S15-005","REQ-S15-006","REQ-S16-001","REQ-S16-002","REQ-S16-003","REQ-S16-004","REQ-S19-004","REQ-S19-006"];
+let bad=0;
+for(const id of ids){const r=rows.find(r=>r[0]===id);const o=Object.fromEntries(h.map((k,i)=>[k,r[i]]));
+ const ev=(o.evidence||"").split(/[;|\s]+/).filter(Boolean);
+ const miss=ev.filter(p=>{try{return !fs.statSync(p.split("#")[0]).isFile()}catch{return true}});
+ if(o.status!=="IMPLEMENTED"||miss.length)bad++;
+ console.log(`${id} final_gate=${o.final_gate} status=${o.status} evidence=${ev.length} missing=${JSON.stringify(miss)}`);}
+// all IMPLEMENTED DG1 rows
+const dg1=rows.slice(1).filter(r=>r[h.indexOf("final_gate")]==="DG1");
+console.log("rows with final_gate=DG1:",dg1.length, dg1.map(r=>r[0]+":"+r[h.indexOf("status")]).join(" "));
+for(const id of ["REQ-S19-004","REQ-DLV-033"]){const r=rows.find(r=>r[0]===id);console.log("\n---",id,"\nEVIDENCE:",r[h.indexOf("evidence")],"\nNOTES:",r[h.indexOf("notes")]);}
+console.log(bad?`\nRESULT: FAIL (${bad})`:"\nRESULT: PASS all 12 IMPLEMENTED with existing evidence"); process.exit(bad?1:0);

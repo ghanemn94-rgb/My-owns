@@ -1,0 +1,23 @@
+# cwd: disposable clone @ 4f486b96 (built); round-2 spec copied UNCHANGED from docs/delivery/test-evidence/DG1/qa/tests/dg1-r2-web-repairs.spec.ts into the clone's e2e/qa-r2/ (regression of F-DG1-001/004/005 + cross-scope 404); PG 16 port 5473
+# cmd: QA_E2E_PG_PORT=5473 QA_EVIDENCE_DIR=<ev>/screenshots/web-repairs-r2spec e2e/support/qa-stack.sh npx playwright test e2e/qa-r2 --workers=1 --reporter=list
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applied 8 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+
+Running 2 tests using 1 worker
+
+  ✓  1 [chromium-en] › e2e/qa-r2/dg1-r2-web-repairs.spec.ts:69:1 › BU-scoped lead: create -> reachable detail; no governed 'closed'; localized audit trail (2.8s)
+  ✓  2 [chromium-ar] › e2e/qa-r2/dg1-r2-web-repairs.spec.ts:69:1 › BU-scoped lead: create -> reachable detail; no governed 'closed'; localized audit trail (2.4s)
+
+  2 passed (7.4s)
+exit=0

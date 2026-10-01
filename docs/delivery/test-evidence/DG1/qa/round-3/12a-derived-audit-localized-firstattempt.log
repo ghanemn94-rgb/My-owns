@@ -1,0 +1,135 @@
+# cwd: disposable clone @ 4f486b96 (built); spec copied from docs/delivery/test-evidence/DG1/qa/tests/dg1-r3-derived-audit-localized.spec.ts into the clone's e2e/qa-r3/ (clone only; candidate tree untouched); PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers; PG 16 port 5473
+# cmd: QA_E2E_PG_PORT=5473 QA_EVIDENCE_DIR=<ev>/screenshots/derived-audit e2e/support/qa-stack.sh npx playwright test e2e/qa-r3 --workers=1 --reporter=list
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applied 8 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+
+Running 2 tests using 1 worker
+
+[chromium-en] post-create before reload: auditTrailRegions=0, editLinks=0; after reload: auditTrailRegions=1, editLinks=1
+  ✘  1 [chromium-en] › e2e/qa-r3/dg1-r3-derived-audit-localized.spec.ts:59:1 › F-DG1-005/008: BU lead's derived creator assignment is localized on the record's audit trail (1.6s)
+[chromium-ar] post-create before reload: auditTrailRegions=0, editLinks=0; after reload: auditTrailRegions=1, editLinks=1
+  ✘  2 [chromium-ar] › e2e/qa-r3/dg1-r3-derived-audit-localized.spec.ts:59:1 › F-DG1-005/008: BU lead's derived creator assignment is localized on the record's audit trail (1.5s)
+
+
+  1) [chromium-en] › e2e/qa-r3/dg1-r3-derived-audit-localized.spec.ts:59:1 › F-DG1-005/008: BU lead's derived creator assignment is localized on the record's audit trail 
+
+    Error: a raw UUID in the audit trail
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mnot[2m.[22mtoMatch[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected pattern: not [32m/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i[39m
+    Received string:      [31m"Audit trail[39m
+    [31mAudit trail[39m
+    [31mWhen	Action	By	Version	Changes[39m
+    [31m1 Oct 2026, 12:35	Role granted to the creator (carried over from a business-unit assignment)	Synthetic Transformation Lead	— → 1	[39m
+    [31mUser: None → Synthetic Transformation Lead[39m
+    [31mRole: None → Transformation Lead[39m
+    [31mScope: None → Transformation: this transformation[39m
+    [31mEffective until: None → None[39m
+    [31mCarried over from assignment: None → [7m01a0f6d1-cf65-734f-9214-4639d1a40641[27m[39m
+    [31m[39m
+    [31m1 Oct 2026, 12:35	Created	Synthetic Transformation Lead	— → 1	[39m
+    [31mCode: None → TR-0001[39m
+    [31mName: None → QA r3 synthetic EN 1790847343388[39m
+    [31mMode: None → End-to-End[39m
+    [31mPhase: None → Diagnose[39m
+    [31mStatus: None → Draft – not submitted[39m
+    [31mTime zone: None → Asia/Riyadh[39m
+    [31mCurrency: None → SAR[39m
+    [31mBusiness unit: None → Synthetic Retail SYN-RETAIL[39m
+    [31mPage 1 · 2 shown[39m
+    [31mPrevious[39m
+    [31mNext"[39m
+
+      136 |     expect(text, `raw/untranslated '${raw}' in the audit trail`).not.toContain(raw);
+      137 |   }
+    > 138 |   expect(text, "a raw UUID in the audit trail").not.toMatch(UUID);
+          |                                                     ^
+      139 |   expect(text, "a bare role code TL in the audit trail").not.toMatch(/(^|[^A-Za-z])TL([^A-Za-z]|$)/);
+      140 |
+      141 |   // Direction: the trail inherits the document direction.
+        at /var/tmp/mth-run.CunKGJ/claude-0/review-qa/e2e/qa-r3/dg1-r3-derived-audit-localized.spec.ts:138:53
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-qa-r3-dg1-r3-derived-a-2105f-on-the-record-s-audit-trail-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-qa-r3-dg1-r3-derived-a-2105f-on-the-record-s-audit-trail-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-qa-r3-dg1-r3-derived-a-2105f-on-the-record-s-audit-trail-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-qa-r3-dg1-r3-derived-a-2105f-on-the-record-s-audit-trail-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-ar] › e2e/qa-r3/dg1-r3-derived-audit-localized.spec.ts:59:1 › F-DG1-005/008: BU lead's derived creator assignment is localized on the record's audit trail 
+
+    Error: a raw UUID in the audit trail
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mnot[2m.[22mtoMatch[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected pattern: not [32m/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i[39m
+    Received string:      [31m"سجل التدقيق[39m
+    [31mسجل التدقيق[39m
+    [31mالوقت	الإجراء	بواسطة	الإصدار	التغييرات[39m
+    [31m01‏/10‏/2026 12:35	إسناد دور لمُنشئ السجل (منقول من إسناد على مستوى وحدة العمل)	Synthetic Transformation Lead	— → 1	[39m
+    [31mالمستخدم: لا يوجد ← Synthetic Transformation Lead[39m
+    [31mالدور: لا يوجد ← قائد التحوّل[39m
+    [31mالنطاق: لا يوجد ← التحوّل: هذا التحوّل[39m
+    [31mيسري حتى: لا يوجد ← لا يوجد[39m
+    [31mمنقول من الإسناد: لا يوجد ← [7m01a0f6d1-cf65-734f-9214-4639d1a40641[27m[39m
+    [31m[39m
+    [31m01‏/10‏/2026 12:35	إنشاء	Synthetic Transformation Lead	— → 1	[39m
+    [31mالرمز: لا يوجد ← TR-0002[39m
+    [31mالاسم: لا يوجد ← QA r3 synthetic AR 1790847346290[39m
+    [31mالنمط: لا يوجد ← النمط الشامل (من البداية إلى النهاية)[39m
+    [31mالمرحلة: لا يوجد ← التشخيص[39m
+    [31mالحالة: لا يوجد ← مسودة – لم تُقدَّم[39m
+    [31mالمنطقة الزمنية: لا يوجد ← Asia/Riyadh[39m
+    [31mالعملة: لا يوجد ← SAR[39m
+    [31mوحدة العمل: لا يوجد ← التجزئة (اصطناعي) SYN-RETAIL[39m
+    [31mالصفحة 1 · المعروض 2[39m
+    [31mالسابق[39m
+    [31mالتالي"[39m
+
+      136 |     expect(text, `raw/untranslated '${raw}' in the audit trail`).not.toContain(raw);
+      137 |   }
+    > 138 |   expect(text, "a raw UUID in the audit trail").not.toMatch(UUID);
+          |                                                     ^
+      139 |   expect(text, "a bare role code TL in the audit trail").not.toMatch(/(^|[^A-Za-z])TL([^A-Za-z]|$)/);
+      140 |
+      141 |   // Direction: the trail inherits the document direction.
+        at /var/tmp/mth-run.CunKGJ/claude-0/review-qa/e2e/qa-r3/dg1-r3-derived-audit-localized.spec.ts:138:53
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-qa-r3-dg1-r3-derived-a-2105f-on-the-record-s-audit-trail-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-qa-r3-dg1-r3-derived-a-2105f-on-the-record-s-audit-trail-chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-qa-r3-dg1-r3-derived-a-2105f-on-the-record-s-audit-trail-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-qa-r3-dg1-r3-derived-a-2105f-on-the-record-s-audit-trail-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium-en] › e2e/qa-r3/dg1-r3-derived-audit-localized.spec.ts:59:1 › F-DG1-005/008: BU lead's derived creator assignment is localized on the record's audit trail 
+    [chromium-ar] › e2e/qa-r3/dg1-r3-derived-audit-localized.spec.ts:59:1 › F-DG1-005/008: BU lead's derived creator assignment is localized on the record's audit trail 
+---- api.log (tail)
+exit=1

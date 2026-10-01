@@ -1,0 +1,62 @@
+# cwd: disposable clone @ 4f486b96 (built); probe spec copied from docs/delivery/test-evidence/DG1/qa/tests/dg1-r3-stale-session-probe.spec.ts into the clone's e2e/qa-r3p/; PG 16 port 5473
+# cmd: QA_E2E_PG_PORT=5473 e2e/support/qa-stack.sh npx playwright test e2e/qa-r3p --workers=1 --project=chromium-en --reporter=list
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applied 8 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+
+Running 1 test using 1 worker
+
+[chromium-en] immediately after create: audit=0 edit=0; after 61 s + focus signal (no reload): audit=0 edit=0; /api/v1/me refetched after create: 0 time(s)
+  ✘  1 [chromium-en] › e2e/qa-r3p/dg1-r3-stale-session-probe.spec.ts:30:1 › stale session after a BU lead's create: immediate vs after 61 s + focus (no reload) (1.1m)
+
+
+  1) [chromium-en] › e2e/qa-r3p/dg1-r3-stale-session-probe.spec.ts:30:1 › stale session after a BU lead's create: immediate vs after 61 s + focus (no reload) 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  - 2[39m
+    [31m+ Received  + 2[39m
+
+    [2m  Object {[22m
+    [32m-   "audit": 1,[39m
+    [32m-   "edit": 1,[39m
+    [31m+   "audit": 0,[39m
+    [31m+   "edit": 0,[39m
+    [2m  }[22m
+
+      66 |   // Expected per the code reading (staleTime 60 s + refetchOnWindowFocus): hidden at first, shown after the refetch.
+      67 |   expect(immediate).toEqual({ audit: 0, edit: 0 });
+    > 68 |   expect(afterFocus).toEqual({ audit: 1, edit: 1 });
+         |                      ^
+      69 | });
+      70 |
+        at /var/tmp/mth-run.CunKGJ/claude-0/review-qa/e2e/qa-r3p/dg1-r3-stale-session-probe.spec.ts:68:22
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-qa-r3p-dg1-r3-stale-se-e2467-after-61-s-focus-no-reload--chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-qa-r3p-dg1-r3-stale-se-e2467-after-61-s-focus-no-reload--chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-qa-r3p-dg1-r3-stale-se-e2467-after-61-s-focus-no-reload--chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-qa-r3p-dg1-r3-stale-se-e2467-after-61-s-focus-no-reload--chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium-en] › e2e/qa-r3p/dg1-r3-stale-session-probe.spec.ts:30:1 › stale session after a BU lead's create: immediate vs after 61 s + focus (no reload) 
+---- api.log (tail)
+exit=1

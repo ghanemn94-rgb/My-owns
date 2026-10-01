@@ -1,0 +1,27 @@
+# cwd: disposable clone @ 4f486b96 (built); spec copied from docs/delivery/test-evidence/DG1/qa/tests/dg1-r3-derived-audit-localized.spec.ts (final version) into the clone's e2e/qa-r3/; PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers; PG 16 port 5473
+# cmd: QA_E2E_PG_PORT=5473 QA_EVIDENCE_DIR=<ev>/screenshots/derived-audit e2e/support/qa-stack.sh npx playwright test e2e/qa-r3 --workers=1 --reporter=list
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applied 8 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+
+Running 2 tests using 1 worker
+
+[chromium-en] post-create before reload: auditTrailRegions=0, editLinks=0; after in-app navigation list->record (no reload): auditTrailRegions=0, editLinks=0; after reload: auditTrailRegions=1, editLinks=1
+[chromium-en] source-assignment line: Carried over from assignment: None → 01a0f6d2-759f-762f-ae36-c3e6c00cf2c1
+  ✓  1 [chromium-en] › e2e/qa-r3/dg1-r3-derived-audit-localized.spec.ts:59:1 › F-DG1-005/008: BU lead's derived creator assignment is localized on the record's audit trail (1.7s)
+[chromium-ar] post-create before reload: auditTrailRegions=0, editLinks=0; after in-app navigation list->record (no reload): auditTrailRegions=0, editLinks=0; after reload: auditTrailRegions=1, editLinks=1
+[chromium-ar] source-assignment line: منقول من الإسناد: لا يوجد ← 01a0f6d2-759f-762f-ae36-c3e6c00cf2c1
+  ✓  2 [chromium-ar] › e2e/qa-r3/dg1-r3-derived-audit-localized.spec.ts:59:1 › F-DG1-005/008: BU lead's derived creator assignment is localized on the record's audit trail (1.6s)
+
+  2 passed (5.7s)
+exit=0
