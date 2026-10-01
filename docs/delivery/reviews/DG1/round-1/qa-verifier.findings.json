@@ -1,0 +1,191 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG1-201",
+      "stage_id": "DG1",
+      "requirement": "REQ-S19-006",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "Integration contract suite fails on the frozen candidate: getBrandingTokens is never exercised, so the contract-coverage test (and CI job 'integration') is red",
+      "reproduction": "Disposable clone at 85e5bbd; fresh PostgreSQL 16 cluster; TEST_DATABASE_ADMIN_URL=postgresql://postgres@127.0.0.1:54371/postgres pnpm test:integration (repeated on a second fresh cluster with --reporter=verbose: same result). apps/api/test/integration/contract/contract.test.ts:254 'covers every operation with at least one success and every successful body with its zod mirror' fails with: expected [ 'getBrandingTokens' ] to deeply equal []. Commit 0b42847 added the operation/route and a unit test but did not add the operation to the integration contract suite; its message says 'Integration contract test (DB) verified by the reviewers', i.e. it was not run before the freeze.",
+      "expected": "REQ-S19-006 acceptance: 'the P1 endpoints pass contract tests against it'. pnpm test:integration exits 0 with all 33 operations exercised (incl. getBrandingTokens 200 + 401) and every success body validated against docs/api/openapi.yaml and its zod mirror. CI job 'integration' (.github/workflows/ci.yml, runs pnpm test:integration) is green.",
+      "actual": "Test Files 1 failed | 16 passed (17); Tests 1 failed | 180 passed (181); exit 1. The CI 'integration' job would fail and the downstream 'images' job (needs: [integration, e2e]) would be skipped. The branding response IS contract-valid at unit level (apps/api/src/modules/admin/branding.test.ts, ajv against components.schemas.BrandingTokens) and my black-box e2e confirms the values, so the product behaviour is correct; the defect is the red required contract suite.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-1/09-integration.log",
+        "docs/delivery/test-evidence/DG1/qa/round-1/09b-integration-verbose.log",
+        "apps/api/test/integration/contract/contract.test.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/qa-verifier.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:46:01Z",
+          "status": "OPEN",
+          "note": "Reported in DG1 round-1 QA gate verification."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-202",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-033",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "Production runtime / container image cannot start the API: assemble-runtime.sh omits packages/design-tokens, which apps/api now imports at runtime",
+      "reproduction": "(a) MTH_PNPM_STORE=$TMPDIR/pstore/v10 MTH_PNPM_OFFLINE=1 deploy/scripts/clean-start-local.sh (devops' documented container-free clean start, same layout as the image) -> step A3 'mth api with AUTH_MODE=dev: exit 1, expected 78' with ERR_MODULE_NOT_FOUND: Cannot find package '@mth/design-tokens' imported from .../app/apps/api/dist/server.js. (b) Minimal repro on a disposable copy: bash deploy/scripts/assemble-runtime.sh --store-dir <store> <ws> <out> (the exact step deploy/docker/Dockerfile:59 runs) exits 0, but <out>/packages contains only config, db, shared; <out>/apps/api/node_modules/@mth/design-tokens is a dangling symlink; node -e 'await import(\"./apps/api/dist/server.js\")' in <out> fails with ERR_MODULE_NOT_FOUND; the same import from the workspace build succeeds. Cause: assemble-runtime.sh line 41 copies 'apps/api apps/worker packages/config packages/db packages/shared' only; commit 0b42847 added @mth/design-tokens (workspace:*) as an apps/api runtime dependency (server.ts imports colorTokens) without updating the runtime assembly; the assembler's layout check does not test module resolution.",
+      "expected": "The assembled runtime tree and the mth-app image start the API (clean-start-local.sh passes all phases; image entrypoint 'mth api' starts and serves /healthz and /readyz). DG1 evidence 'clean startup' holds for the shipped artifact, not only for the dev workspace.",
+      "actual": "The API process crashes at import time in the production runtime layout; therefore the container image built by deploy/docker/Dockerfile would crash too (Compose path not executable here: Docker daemon not accessible, so the image itself was not built - the defect is shown on the identical assembled tree). The workspace-based clean start (e2e/clean-start/a18-clean-start.sh, which runs from the built workspace) passes and did not catch it.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-1/22-devops-clean-start-local.log",
+        "docs/delivery/test-evidence/DG1/qa/round-1/23-runtime-image-layout-repro.log",
+        "deploy/scripts/assemble-runtime.sh",
+        "deploy/docker/Dockerfile"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/qa-verifier.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:46:01Z",
+          "status": "OPEN",
+          "note": "Reported in DG1 round-1 QA gate verification. Introduced by the orchestrator integration in 0b42847; the fix belongs in deploy/scripts/assemble-runtime.sh (copy packages/design-tokens package.json + dist + the src/tokens.json export, or bundle) plus a resolvability check in its layout verification."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-203",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-033",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "CI 'images' job fails deterministically: container images are not pinned by digest (pin-images --check reports 10 problems)",
+      "reproduction": "node deploy/scripts/pin-images.mjs --check (the step 'Container images pinned by digest' of the images job in .github/workflows/ci.yml) in the clone at 85e5bbd.",
+      "expected": "The committed CI workflow can pass on the candidate: either the images are pinned (deploy/images.lock.json + digests in compose.yaml and ci.yml) or the step is explicitly non-blocking under a recorded decision until registry access is available.",
+      "actual": "exit 1: postgres:18 (compose.yaml, ci.yml x2), quay.io/keycloak/keycloak:26.4 and mcr.microsoft.com/playwright:v1.56.1-noble have no digest - 10 problem(s). Known and flagged in the T-DG1-DEVOPS handback; pinning needs registry access, which the sandbox lacks. As committed, the images job (packaging, image build, Compose clean-start smoke) can never go green.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-1/19-packaging-checks.log",
+        ".github/workflows/ci.yml"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/qa-verifier.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:46:01Z",
+          "status": "OPEN",
+          "note": "Reported in DG1 round-1 QA gate verification."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-204",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-033",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "SBOM records a stale lockfile hash after the lockfile change in 0b42847 (generate-sbom --check reports STALE)",
+      "reproduction": "node licenses/generate-sbom.mjs --check in the clone at 85e5bbd -> 'STALE ... licenses/sbom.cdx.json or licenses/inventory.csv is out of date', exit 1. Regenerating in the disposable clone changes only the lockfile SHA-256 property in licenses/sbom.cdx.json (3c94b771... -> f199a0e1...); inventory.csv and the package list are unchanged.",
+      "expected": "licenses/sbom.cdx.json matches the committed pnpm-lock.yaml so the CI images-job step 'SBOM and licence inventory match the lockfile' passes.",
+      "actual": "Only the recorded lockfile hash is stale; the licence inventory content is accurate. The CI step fails.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-1/19-packaging-checks.log",
+        "docs/delivery/test-evidence/DG1/qa/round-1/19b-sbom-stale-diff.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:46:01Z",
+          "status": "OPEN",
+          "note": "Reported in DG1 round-1 QA gate verification."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-205",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-025",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "docs/architecture/ci/ci.yml has drifted from the installed .github/workflows/ci.yml",
+      "reproduction": "diff .github/workflows/ci.yml docs/architecture/ci/ci.yml",
+      "expected": "The architecture copy described as 'installed at .github/workflows/ci.yml' is identical to the installed workflow, or is explicitly marked as a historical design copy.",
+      "actual": "The architecture copy lacks the e2e stack start step and '--workers=1', and the whole 'images' job (packaging checks, image build, Compose smoke, registry push). check-ci-needs.mjs passes on the installed workflow (5 jobs, all reaching delivery-gates) and fails a injected job without needs, so REQ-DLV-025 itself holds; only the documentation copy is stale.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-1/18-ci-needs.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/qa-verifier.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:46:01Z",
+          "status": "OPEN",
+          "note": "Reported in DG1 round-1 QA gate verification."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-206",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-042",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Installer acceptance tests pass their negative cases vacuously when every install fails",
+      "reproduction": "Run tools/deps/tests/install-sandbox.test.sh where the pnpm store is not writable (reviewer sandbox, run 1): every '--root ... create' install fails with EROFS, yet 'AC-2 a non-allow-listed dependency's postinstall did not run' and both AC-3 cases PASS; only the positive AC-2 case fails. With a writable store (run 2) all 7 pass, and my independent check confirms install exit 0 + fixture installed + marker absent (not allow-listed) / present (allow-listed).",
+      "expected": "AC-2 negative asserts that the install succeeded and the dependency is present before concluding the script did not run; AC-3 asserts the failure is the lockfile error (e.g. ERR_PNPM_OUTDATED_LOCKFILE / no lockfile), not any failure.",
+      "actual": "The negative assertions only check 'marker absent' / 'non-zero exit', so an environment that breaks every install would still report them as PASS.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-1/20-install-sandbox-tests.log",
+        "docs/delivery/test-evidence/DG1/qa/round-1/20b-install-sandbox-tests-writable-store.log",
+        "tools/deps/tests/install-sandbox.test.sh"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:46:01Z",
+          "status": "OPEN",
+          "note": "Reported in DG1 round-1 QA gate verification."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-207",
+      "stage_id": "DG1",
+      "requirement": "REQ-S19-006",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Register rows carry stale or reinterpreted acceptance: REQ-S19-006 notes cite 32 operations and 'contract tests 8/8'; REQ-S16-003 literal acceptance ('the six modules exist with separate test suites') is met only via D-047",
+      "reproduction": "Read docs/delivery/requirements.csv rows REQ-S19-006 and REQ-S16-003 at 85e5bbd; compare with pnpm openapi:lint (33 operations) and the integration run (contract suite failing, F-DG1-201); compare REQ-S16-003 acceptance with apps/api/src/modules (8 P1 modules; workflows/kpi/reporting declared in modules.ts with no code or suites).",
+      "expected": "Register notes reflect the candidate's actual evidence; where a requirement's acceptance is partly deferred (REQ-S16-003 workflows P2, formulas/kpi P4, reporting P5), the acceptance text or increments/final_gate are amended through the register (with D-047 referenced) rather than only reinterpreted in notes.",
+      "actual": "REQ-S19-006 notes are pre-branding (32 ops, 8/8) and its cited QA log predates getBrandingTokens. REQ-S16-003: the module architecture, the dependency-lint (my two injected bypass imports both made architecture.test.ts fail) and the 8 P1 modules with tests are in place, which I judge sufficient for DG1 under D-047; but the register still states an acceptance that is literally unmet at DG1.",
+      "evidence": [
+        "docs/delivery/requirements.csv",
+        "docs/delivery/test-evidence/DG1/qa/round-1/05-openapi-lint.log",
+        "docs/delivery/test-evidence/DG1/qa/round-1/24-dependency-lint-negative.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/qa-verifier.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:46:01Z",
+          "status": "OPEN",
+          "note": "Reported in DG1 round-1 QA gate verification."
+        }
+      ]
+    }
+  ]
+}
