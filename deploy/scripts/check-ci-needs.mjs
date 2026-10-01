@@ -14,7 +14,9 @@
 //     rejected (it reaches the validate step: `defaults.run.shell`/`working-directory`, `NODE_OPTIONS`, PATH...); the
 //     delivery-gates job may only carry the keys in GATE_JOB_KEYS (no job `env:`, `defaults:`, `container:`,
 //     `services:`, `if:`, `strategy:`...); its steps may only be pinned actions/checkout + actions/setup-node (keys
-//     uses/with/name/id) and the validate step; and EVERY step anywhere that runs validate.mjs may only carry the keys
+//     uses/with/name/id; their `with:` inputs allow-listed per action, F-DG1-120: checkout only fetch-depth and
+//     persist-credentials, so no ref/repository/path override; setup-node only a literal node-version) and the
+//     validate step; and EVERY step anywhere that runs validate.mjs may only carry the keys
 //     name/id/run (no `env:` e.g. NODE_OPTIONS=--import=..., no `shell:` e.g. "true {0}", no `working-directory:`);
 //   - dependency installs go ONLY through deploy/scripts/ci-install-deps.sh (tools/deps/install-sandbox.sh frozen;
 //     REQ-DLV-042, F-DG1-104): any other install command (pnpm/npm/yarn install|i|ci|add, corepack) is a violation,
@@ -77,6 +79,14 @@ for (const k of Object.keys(jobs[GATE] ?? {}))
 //   $GITHUB_ENV / $GITHUB_PATH or tamper with tools/gates before validate runs);
 const GATE_ACTION = /^actions\/(checkout|setup-node)@[0-9a-f]{40}$/;
 const ACTION_STEP_KEYS = new Set(["uses", "with", "name", "id"]);
+// F-DG1-120: allowed `with:` inputs per gate action, each with a value predicate (literals only, no expressions).
+const GATE_WITH = {
+  checkout: {
+    "fetch-depth": (v) => Number.isInteger(v) && v >= 0,
+    "persist-credentials": (v) => typeof v === "boolean",
+  },
+  "setup-node": { "node-version": (v) => /^\d+(\.\d+){0,2}$/.test(String(v)) },
+};
 const RUN_STEP_KEYS = new Set(["name", "id", "run", "if", "continue-on-error"]); // if / c-o-e reported separately below
 for (const [i, s] of gateSteps.entries()) {
   const where = `${GATE} step ${i + 1}${s?.name ? ` (${JSON.stringify(s.name)})` : ""}`;
@@ -84,6 +94,23 @@ for (const [i, s] of gateSteps.entries()) {
     if (!GATE_ACTION.test(String(s.uses)))
       problems.push(`${where}: only pinned actions/checkout and actions/setup-node are allowed, got ${s.uses}`);
     for (const k of Object.keys(s)) if (!ACTION_STEP_KEYS.has(k)) problems.push(`${where}: key "${k}" is not allowed`);
+    // F-DG1-120: the action's `with:` inputs are allow-listed too (fail-closed), so the gate cannot validate a
+    // different tree than the product jobs build: no checkout `ref`/`repository`/`path`/`token`/`ssh-key`/
+    // `sparse-checkout`/`submodules`..., no setup-node `node-version-file`/`cache`/`registry-url`...
+    const action = GATE_ACTION.exec(String(s.uses))?.[1];
+    if (action && s.with !== undefined) {
+      if (s.with === null || typeof s.with !== "object" || Array.isArray(s.with))
+        problems.push(`${where}: with: must be a mapping, got ${JSON.stringify(s.with)}`);
+      else
+        for (const [k, v] of Object.entries(s.with)) {
+          const ok = GATE_WITH[action][k];
+          if (!ok)
+            problems.push(
+              `${where}: with.${k} is not allowed on ${action} in ${GATE} (allowed: ${Object.keys(GATE_WITH[action]).join(", ")}); it could make validate.mjs check a different tree or toolchain`,
+            );
+          else if (!ok(v)) problems.push(`${where}: with.${k} has a disallowed value ${JSON.stringify(v)}`);
+        }
+    }
   } else if (!/tools\/gates\/validate\.mjs/.test(String(s?.run ?? ""))) {
     problems.push(`${where}: only the validate step may run commands in ${GATE}: ${JSON.stringify(s?.run ?? s)}`);
   }
