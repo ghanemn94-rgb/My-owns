@@ -2051,7 +2051,7 @@ RLS: enabled (hub_project_isolation) · Triggers: hub_append_only, hub_scope_imm
 | `note` | text | yes |  |
 | `evidence_count` | integer | no | `0` |
 | `reviews_record_id` | uuid | yes |  |
-| `recorded_by` | uuid | no |  |
+| `recorded_by` | uuid | yes |  |
 | `created_at` | timestamp with time zone | no | `now()` |
 
 Foreign keys:

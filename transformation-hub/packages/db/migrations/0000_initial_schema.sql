@@ -1590,11 +1590,11 @@ CREATE TABLE "transfer_record" (
 	"note" text,
 	"evidence_count" integer DEFAULT 0 NOT NULL,
 	"reviews_record_id" uuid,
-	"recorded_by" uuid NOT NULL,
+	"recorded_by" uuid,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "transfer_record_pid_uq" UNIQUE("project_id","id"),
 	CONSTRAINT "transfer_record_aspect_ck" CHECK ("transfer_record"."aspect" in ('legal', 'economic')),
-	CONSTRAINT "transfer_record_command_ck" CHECK ("transfer_record"."command" in ('plan', 'start', 'report_transferred', 'verify', 'reject_evidence', 'block', 'unblock', 'mark_not_applicable'))
+	CONSTRAINT "transfer_record_command_ck" CHECK ("transfer_record"."command" in ('plan', 'start', 'report_transferred', 'verify', 'reject_evidence', 'block', 'unblock', 'mark_not_applicable', 'scope_reset'))
 );
 --> statement-breakpoint
 CREATE TABLE "tsa_extension_terms" (

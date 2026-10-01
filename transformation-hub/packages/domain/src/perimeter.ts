@@ -21,6 +21,18 @@ export function isInScope(d: PerimeterDisposition | null | undefined): boolean {
 }
 
 /**
+ * DOM-P34R-05 (A-P3-05; business-gates.md §1 rule 8): "not applicable" on an aspect of an Included / Shared item is a
+ * specialist determination (one aspect, a basis) — a "not applicable" recorded while the item was OUT of the transferring
+ * scope (Excluded / Pending) is not that determination. When the item ENTERS the scope (classification or an applied change
+ * request), every such aspect is reset to `not_started` (recorded in the transfer history), to be planned or determined by
+ * the specialist. Returns the aspects to reset (none when the item was already in scope or stays out of it).
+ */
+export function scopeEntryTransferReset(i: { fromDisposition: PerimeterDisposition; toDisposition: PerimeterDisposition; legal: TransferStatus; economic: TransferStatus }): ('legal' | 'economic')[] {
+  if (isInScope(i.fromDisposition) || !isInScope(i.toDisposition)) return [];
+  return (['legal', 'economic'] as const).filter((a) => (a === 'legal' ? i.legal : i.economic) === 'not_applicable');
+}
+
+/**
  * Categories every perimeter must assess (spec §7.1: assets, liabilities, receivables/payables, contracts, employees,
  * data, IP, licences, financing, guarantees and shared services — physical assets alone are not the perimeter).
  */

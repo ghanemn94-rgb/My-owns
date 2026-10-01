@@ -149,7 +149,7 @@ export const TransferRecordDto = z.object({
   note: z.string().nullable(),
   evidenceCount: z.number().int(),
   reviewsRecordId: Uuid.nullable(),
-  recordedBy: Uuid,
+  recordedBy: Uuid.nullable(),
   recordedByName: z.string().nullable(),
   recordedAt: z.string(),
 });

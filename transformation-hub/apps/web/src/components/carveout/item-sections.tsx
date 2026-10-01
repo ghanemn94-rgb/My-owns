@@ -249,7 +249,7 @@ export function TransferHistory({ item }: { item: Item }) {
                 ) : null}
               </div>
               <p className="mt-1 text-xs text-muted">
-                <span dir="auto">{r.recordedByName ?? EM_DASH}</span> · {formatDateTime(r.recordedAt)} · {t('carveout.transfer.evidenceCount', { count: r.evidenceCount })}
+                <span dir="auto">{r.recordedBy ? (r.recordedByName ?? EM_DASH) : t('carveout.transfer.system')}</span> · {formatDateTime(r.recordedAt)} · {t('carveout.transfer.evidenceCount', { count: r.evidenceCount })}
                 {r.mechanism ? (
                   <>
                     {' '}· <span dir="auto">{r.mechanism}</span>

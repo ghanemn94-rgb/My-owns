@@ -13,12 +13,13 @@ import { ReadinessChecksService } from './checks.service';
 export const READINESS_SERVICE_PERMISSIONS = ['readiness.register.read', 'readiness.tsa.manage'];
 
 /**
- * Allowlist of the evidence reaction (DOM-P3-09): it only returns a signed-off check whose evidence is no longer valid to
- * `in_progress` and flags the GO of the plans it gates — never a sign-off, a waiver or a GO decision.
+ * Allowlist of the evidence reaction (DOM-P3-09, DOM-P34R-06): it only returns a signed-off check whose evidence is no longer
+ * valid to `in_progress` and flags the GO of the plans it gates, and withdraws a TSA replacement acceptance whose evidence is
+ * no longer valid — never a sign-off, a waiver, a GO decision, an acceptance or an exit approval.
  */
-export const READINESS_EVIDENCE_SERVICE_PERMISSIONS = ['readiness.register.read', 'readiness.check.manage'];
+export const READINESS_EVIDENCE_SERVICE_PERMISSIONS = ['readiness.register.read', 'readiness.check.manage', 'readiness.tsa.manage'];
 
-/** Reacts to `evidence.changed` on a readiness check (rejected / superseded / conflicting sign-off evidence). */
+/** Reacts to `evidence.changed` on a readiness check or a TSA (rejected / superseded / conflicting evidence). */
 export const READINESS_EVIDENCE_JOB = 'readiness.check_evidence_changed';
 
 /** Register this module's job handlers (called by src/jobs.ts in the worker). */
@@ -41,11 +42,12 @@ export function registerReadinessJobs(app: INestApplicationContext): void {
   // DOM-P3-09: the evidence a Day-1 sign-off relied on was rejected / superseded / contested → controlled reopen.
   registry.register(READINESS_EVIDENCE_JOB, async (job: ClaimedJob) => {
     const p = (job.payload ?? {}) as { targetType?: string; targetId?: string };
-    if (!job.project_id || p.targetType !== 'readiness_check' || !p.targetId) return { skipped: 'not a readiness check' };
+    if (!job.project_id || !p.targetId || (p.targetType !== 'readiness_check' && p.targetType !== 'tsa_service')) return { skipped: 'not a readiness check or TSA' };
     const projectId = job.project_id;
-    const checkId = p.targetId;
+    const targetId = p.targetId;
     const ctx = contexts.forService(job, 'svc-readiness', READINESS_EVIDENCE_SERVICE_PERMISSIONS);
-    return db.run(ctx, () => checks.processEvidenceChange(ctx, projectId, checkId));
+    if (p.targetType === 'tsa_service') return db.run(ctx, () => tsa.processEvidenceChange(ctx, projectId, targetId));
+    return db.run(ctx, () => checks.processEvidenceChange(ctx, projectId, targetId));
   });
   registry.subscribe('evidence.changed', READINESS_EVIDENCE_JOB);
 }

@@ -224,6 +224,16 @@ describe('DOM-P3-11 / DOM-P3-12 — the dimension machines of business-gates.md 
     expect(isCarveOutComplete(exited)).toBe(true);
   });
 
+  it('DOM-P34R-06: an accepted TSA exit whose acceptance evidence is no longer valid is not an exit (the carve-out is not complete)', () => {
+    const g4 = { ...base, standaloneAccepted: true };
+    const invalid = computeStatusDimensions({ ...g4, tsas: [{ status: 'exit_accepted', isEnduringArrangement: false, exitEvidenceValid: false }] });
+    const o = invalid.find((d) => d.key === 'operational_readiness')!;
+    expect(o.state).toBe('standalone_accepted');
+    expect(o.explanationI18n.map((x) => x.code)).toContain('dimension.readiness.exit_evidence_invalid');
+    expect(isCarveOutComplete(invalid)).toBe(false);
+    expect(computeStatusDimensions({ ...g4, tsas: [{ status: 'exit_accepted', isEnduringArrangement: false, exitEvidenceValid: true }] }).find((d) => d.key === 'operational_readiness')!.state).toBe('transitional_services_exited');
+  });
+
   it('DOM-P3-15: an enduring arrangement counts as approved only once its terms are approved', () => {
     const d = computeStatusDimensions({ ...base, tsas: [{ status: 'negotiating', isEnduringArrangement: true }] }).find((x) => x.key === 'operational_readiness')!;
     expect(d.explanationI18n.find((m) => m.code === 'dimension.readiness.dependencies')!.params).toMatchObject({ enduring: 0 });

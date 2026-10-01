@@ -213,7 +213,11 @@ export const transferRecord = pgTable(
     evidenceCount: integer('evidence_count').notNull().default(0),
     /** For verify / reject_evidence: the `report_transferred` row being reviewed. */
     reviewsRecordId: uuid('reviews_record_id'),
-    recordedBy: uuid('recorded_by').notNull(),
+    /**
+     * Null for entries recorded by the system: the evidence reaction returning a verified aspect to in progress when its
+     * evidence is rejected / superseded / contested (DOM-P34R-06).
+     */
+    recordedBy: uuid('recorded_by'),
     recordedAt: createdAt(),
   },
   (t) => [
@@ -224,7 +228,8 @@ export const transferRecord = pgTable(
     check('transfer_record_aspect_ck', sql`${t.aspect} in ('legal', 'economic')`),
     check(
       'transfer_record_command_ck',
-      sql`${t.command} in ('plan', 'start', 'report_transferred', 'verify', 'reject_evidence', 'block', 'unblock', 'mark_not_applicable')`,
+      // `scope_reset`: a "not applicable" aspect reset when the item enters the transferring scope (DOM-P34R-05).
+      sql`${t.command} in ('plan', 'start', 'report_transferred', 'verify', 'reject_evidence', 'block', 'unblock', 'mark_not_applicable', 'scope_reset')`,
     ),
   ],
 );

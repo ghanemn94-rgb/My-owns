@@ -457,6 +457,40 @@ export class TsaService {
   }
 
   /**
+   * DOM-P34R-06 (the DOM-P3-09 residual for the TSA replacement acceptance; spec §3 controlled reopen): when the acceptance
+   * evidence of a TSA (target `tsa_service`) is no longer valid — no ACTIVE link left, or a contested one — an accepted
+   * replacement of a TSA not yet exited is withdrawn (audited, record history kept): the exit approval cannot rest on it, and
+   * a pending exit approval request no longer matches its bound payload. An exit already accepted stays recorded (terminal),
+   * but the status dimension no longer counts it as exited (`exitEvidenceValid`) and the change is audited.
+   */
+  async processEvidenceChange(ctx: RequestContext, projectId: string, id: string): Promise<{ withdrawn: boolean; exitEvidenceInvalid: boolean }> {
+    const [t] = await this.s.db.tx().select().from(schema.tsaService).where(and(eq(schema.tsaService.projectId, projectId), eq(schema.tsaService.id, id)));
+    if (!t || !t.replacementAccepted) return { withdrawn: false, exitEvidenceInvalid: false };
+    const ev = await this.s.evidence(projectId, 'tsa_service', t.id);
+    if (ev.active > 0 && ev.conflicting === 0) return { withdrawn: false, exitEvidenceInvalid: false };
+    this.s.policy.assert(ctx, 'readiness.tsa.manage', { projectId, workstreamId: t.workstreamId });
+    const reason = `The acceptance evidence of the replacement service is no longer valid (active ${ev.active}, contested ${ev.conflicting})`;
+    if (t.status === 'exit_accepted') {
+      await this.s.audit.record({ action: 'readiness.tsa.exit_evidence_invalidated', entityType: 'tsa_service', entityId: t.id, projectId, after: { status: t.status, activeEvidence: ev.active, conflictingEvidence: ev.conflicting }, reason: `${reason} — the accepted exit is no longer counted as an exit in the status dimension` });
+      await this.s.enqueueDimensions(ctx, projectId, `tsa:${t.id}:${t.version}:evidence`);
+      return { withdrawn: false, exitEvidenceInvalid: true };
+    }
+    const row = (await updateVersioned(this.s.db, schema.tsaService, { id: t.id, projectId, expectedVersion: t.version }, { replacementAccepted: false, replacementAcceptedBy: null, replacementAcceptedAt: null })) as TsaRow;
+    await this.s.versions.snapshot({ projectId, entityType: 'tsa_service', entityId: t.id, versionNo: row.version, snapshot: row, reason: 'replacement acceptance withdrawn: evidence no longer valid' });
+    await this.s.audit.record({
+      action: 'readiness.tsa.replacement_evidence_invalidated',
+      entityType: 'tsa_service',
+      entityId: t.id,
+      projectId,
+      before: { replacementAccepted: true, replacementAcceptedBy: t.replacementAcceptedBy },
+      after: { replacementAccepted: false, activeEvidence: ev.active, conflictingEvidence: ev.conflicting },
+      reason: `${reason} — the replacement must be accepted again on valid evidence`,
+    });
+    await this.s.enqueueDimensions(ctx, projectId, `tsa:${t.id}:${row.version}`);
+    return { withdrawn: true, exitEvidenceInvalid: false };
+  }
+
+  /**
    * REQ-TSA-004 / AT-10: a replacement failure withdraws any replacement acceptance, records the continuity plan and raises
    * an escalation (decision requested) with extension / continuity options routed per the authority matrix. Nothing is
    * extended — the extension needs its own approved decision.

@@ -14,7 +14,10 @@ import { Personas, base, carveoutProject, createItem, item, linkEvidence, ok, wo
  * `DEFECT …` probes assert the REQUIRED behaviour and are declared with `it.fails` while the defect is open;
  * `P34DRE_PROBE_PLAIN=1` runs them as plain tests. `CONTROL …` / `OBSERVED …` are plain tests. All data is synthetic.
  */
+// Implementer (fix of the P3/P4 domain re-review): every DEFECT probe of this file is fixed and renamed `… (fixed, regression)`
+// — plain `it`, assertions unchanged. The alias stays so that P34DRE_PROBE_PLAIN=1 keeps working for any probe added later.
 const defect = process.env['P34DRE_PROBE_PLAIN'] ? it : it.fails;
+void defect;
 
 let pid: string;
 let p: Personas;
@@ -57,7 +60,7 @@ describe('P3/P4 domain re-review — transfer evidence rejected after verificati
     expect(stateOf(await dims(), 'perimeter_transfer').state).toBe('transferred_verified');
   });
 
-  defect('DEFECT DOM-P34R-06: the only transfer evidence is rejected as defective — the perimeter still reads "All in-scope items transferred with verified evidence"', async () => {
+  it('DOM-P34R-06: the only transfer evidence is rejected as defective — the perimeter still reads "All in-scope items transferred with verified evidence" (fixed, regression)', async () => {
     const lv = (await owner().query(`select version from evidence_link where id = $1`, [linkId])).rows[0].version as number;
     const rej = await p.secretary.post(`${base(pid)}/evidence/${linkId}/verify`, { expectedVersion: lv, decision: 'reject', note: 'Record of another asset — defective (probe, synthetic)' });
     expect(rej.status, JSON.stringify(rej.body)).toBe(201);
@@ -74,7 +77,7 @@ describe('P3/P4 domain re-review — transfer evidence rejected after verificati
 describe('P3/P4 domain re-review — "not applicable" carried into the transferring scope by a reclassification [AT-07, A-P3-05, Q-P3-05]', () => {
   let itemId: string;
 
-  defect('DEFECT DOM-P34R-05: the transfer manager marks both aspects of an EXCLUDED item "not applicable", then classifies it INCLUDED — an in-scope item with no transfer at all, without the specialist determination', async () => {
+  it('DOM-P34R-05: the transfer manager marks both aspects of an EXCLUDED item "not applicable", then classifies it INCLUDED — an in-scope item with no transfer at all, without the specialist determination (fixed, regression)', async () => {
     const ws = await workstreamId(p.pm, pid, 'WS06');
     const x = await createItem(p.pm, pid, { type: 'contract', name: 'Probe maintenance contract (synthetic)', disposition: 'excluded', workstreamId: ws, ownerUserId: p.pm.userId });
     itemId = x.id;
@@ -95,14 +98,21 @@ describe('P3/P4 domain re-review — "not applicable" carried into the transferr
     ).toBe(false);
   });
 
-  it('OBSERVED DOM-P34R-05: such an item has no transfer command left ("not applicable" is terminal) although the dimension message says "reclassify them or plan the transfer"', async () => {
+  // Implementer (fix): the OBSERVED probe below pinned the reported behaviour; per the probe convention it was updated together
+  // with the fix (setup unchanged) and now pins the implemented rule — see the "Fix status" of the re-review.
+  it('DOM-P34R-05 (fixed): entering the scope resets the "not applicable" aspects — the item can be planned (or determined by the specialist), and the reset is in the transfer history', async () => {
     const after = await item(p.pm, pid, itemId);
-    // Current behaviour pinned (only meaningful while DOM-P34R-05 is open): included, both aspects not applicable, and the
-    // transfer machine offers nothing from not_applicable.
+    // Implemented: included, both aspects back to not_started with a `scope_reset` record each; the transfer can be planned.
     expect(after.disposition).toBe('included');
-    expect(after.transfer).toEqual({ legal: 'not_applicable', economic: 'not_applicable', combined: 'not_applicable' });
-    expect(after.allowedTransferCommands).toEqual({ legal: [], economic: [] });
+    expect(after.transfer).toEqual({ legal: 'not_started', economic: 'not_started', combined: 'not_started' });
+    expect(after.allowedTransferCommands.legal).toContain('plan');
+    expect(after.allowedTransferCommands.economic).toContain('plan');
+    const resets = (await owner().query(`select aspect, from_status::text, to_status::text from transfer_record where perimeter_item_id = $1 and command = 'scope_reset' order by aspect`, [itemId])).rows;
+    expect(resets).toEqual([
+      { aspect: 'economic', from_status: 'not_applicable', to_status: 'not_started' },
+      { aspect: 'legal', from_status: 'not_applicable', to_status: 'not_started' },
+    ]);
     const per = stateOf(await dims(), 'perimeter_transfer');
-    expect(per.explanation).toMatch(/neither a legal nor an economic transfer/);
+    expect(per.explanation).not.toMatch(/neither a legal nor an economic transfer/);
   });
 });

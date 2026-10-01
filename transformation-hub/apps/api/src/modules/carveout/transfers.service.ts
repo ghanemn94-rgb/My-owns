@@ -16,6 +16,8 @@ import {
   forbidden,
   isInScope,
   ruleViolation,
+  transition,
+  TRANSFER_MACHINE,
 } from '@hub/domain';
 import type { z } from 'zod';
 import type { RecordTransferBody, TransferListQuery } from '@hub/contracts';
@@ -83,7 +85,7 @@ export class TransfersService {
         evidenceCount: r.evidenceCount,
         reviewsRecordId: r.reviewsRecordId,
         recordedBy: r.recordedBy,
-        recordedByName: names.get(r.recordedBy) ?? null,
+        recordedByName: r.recordedBy ? (names.get(r.recordedBy) ?? null) : null,
         recordedAt: r.recordedAt.toISOString(),
       })),
       Number(n),
@@ -152,6 +154,58 @@ export class TransfersService {
     const legal = (rec.aspect === 'legal' ? rec.to : item.transferStatus) as TransferStatus;
     const economic = (rec.aspect === 'economic' ? rec.to : item.economicTransferStatus) as TransferStatus;
     return { id, perimeterItemId: item.id, aspect: rec.aspect, status: rec.to, transfer: { legal, economic, combined: combinedTransferStatus(legal, economic) }, itemVersion: version, changeRequest: null };
+  }
+
+  /**
+   * DOM-P34R-06 (the DOM-P3-08 / DOM-P3-09 reaction applied to transfers; spec §3 controlled reopen): when the transfer
+   * evidence of an item (target `transfer`) is no longer valid — no ACTIVE link left, or a contested one — every aspect
+   * verified on it returns to `in_progress` through `reject_evidence` (system entry in the transfer history, audited, record
+   * history kept), so the perimeter never reads "transferred with verified evidence" on rejected evidence. The transfer is then
+   * reported again on valid evidence and verified by someone other than the reporter and the evidence linkers.
+   */
+  async processEvidenceChange(ctx: RequestContext, projectId: string, itemId: string): Promise<{ reopened: TransferAspect[] }> {
+    const [item] = await this.tx.select().from(PI).where(and(eq(PI.projectId, projectId), eq(PI.id, itemId)));
+    if (!item) return { reopened: [] };
+    const verified = (['legal', 'economic'] as const).filter((a) => this.statusOf(item, a) === 'transferred_verified');
+    if (verified.length === 0) return { reopened: [] };
+    const ev = (await this.s.evidenceCounts(projectId, 'transfer', [item.id])).get(item.id) ?? { active: 0, conflicting: 0 };
+    if (ev.active > 0 && ev.conflicting === 0) return { reopened: [] };
+    this.s.policy.assert(ctx, 'carveout.transfer.manage', { projectId, workstreamId: item.workstreamId });
+    const u: Partial<typeof schema.perimeterItem.$inferInsert> = {};
+    for (const aspect of verified) u[aspect === 'legal' ? 'transferStatus' : 'economicTransferStatus'] = transition('transfer', TRANSFER_MACHINE, 'transferred_verified', 'reject_evidence');
+    const row = await updateVersioned(this.s.db, PI, { id: item.id, projectId, expectedVersion: item.version }, u);
+    const note = `The transfer evidence was rejected, superseded or contested after verification (active ${ev.active}, contested ${ev.conflicting}) — report the transfer again on valid evidence for a new verification`;
+    for (const aspect of verified) {
+      await this.tx.insert(TR).values({
+        id: newId(),
+        orgId: item.orgId,
+        projectId,
+        perimeterItemId: item.id,
+        aspect,
+        command: 'reject_evidence',
+        fromStatus: 'transferred_verified',
+        toStatus: 'in_progress',
+        mechanism: item.transferMechanism,
+        effectiveDate: null,
+        note,
+        evidenceCount: ev.active,
+        reviewsRecordId: null,
+        recordedBy: null,
+      });
+    }
+    const version = row['version'] as number;
+    await this.versions.snapshot({ projectId, entityType: 'perimeter_item', entityId: item.id, versionNo: version, snapshot: row, reason: `Transfer evidence invalidated: ${verified.join(', ')} verified → in progress` });
+    await this.audit.record({
+      action: 'carveout.transfer.evidence_invalidated',
+      entityType: 'perimeter_item',
+      entityId: item.id,
+      projectId,
+      before: { legal: item.transferStatus, economic: item.economicTransferStatus },
+      after: { legal: row['transferStatus'], economic: row['economicTransferStatus'], activeEvidence: ev.active, conflictingEvidence: ev.conflicting },
+      reason: note,
+    });
+    await this.outbox.emit({ type: 'perimeter.changed', projectId, aggregateType: 'perimeter_item', aggregateId: item.id, payload: { change: 'transfer_evidence_invalidated', aspects: verified } });
+    return { reopened: verified };
   }
 
   async record(ctx: RequestContext, projectId: string, body: z.infer<typeof RecordTransferBody>) {

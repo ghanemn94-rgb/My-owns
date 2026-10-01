@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { closeApp, closePools, owner } from '../helpers';
 import { decisionVersion, paper, vote } from '../governance/gov-fixtures';
-import { P, decisionOfType, drainWorker, plusDays, setupGovernance, setupProject, tsa, Gov, Personas } from './readiness-kit';
+import { P, addEvidence, decisionOfType, drainWorker, plusDays, setupGovernance, setupProject, tsa, Gov, Personas } from './readiness-kit';
 
 /**
  * DOM-P34R-04 (docs/reviews/P3-P4-domain-rereview.md; business-gates.md §6 rule 5): the extension terms are bound to the
@@ -120,5 +120,29 @@ describe('DOM-P34R-04 — the extension terms belong to the decision [AT-10, REQ
     const recB = await record(b);
     expect(recB.status, JSON.stringify(recB.body)).toBe(201);
     expect((await tsa(p.pm, projectId, b)).endDate).toBe(plusDays(95));
+  });
+});
+
+describe('DOM-P34R-06 — TSA replacement accepted on evidence that is later rejected (DOM-P3-09 residual) [AT-10, AT-14, REQ-TSA-006]', () => {
+  it('the evidence reaction withdraws the replacement acceptance (audited, by the service identity); it is accepted again only on valid evidence', async () => {
+    const id = await activeTsa('Ticketing bridge (synthetic)');
+    const link = (await p.pm.post(`${P(projectId)}/evidence`, { targetType: 'tsa_service', targetId: id, note: 'Replacement acceptance test report (synthetic)' })).body as { id: string };
+    expect(link.id).toBeTruthy();
+    let t = await tsa(p.pm, projectId, id);
+    const acc = await cmd(id, 'accept-replacement', { expectedVersion: t.version, note: 'Replacement accepted after a parallel run (synthetic)' });
+    expect(acc.status, JSON.stringify(acc.body)).toBe(201);
+    expect((await tsa(p.pm, projectId, id)).replacementAccepted).toBe(true);
+    const lv = (await owner().query(`select version from evidence_link where id = $1`, [link.id])).rows[0].version as number;
+    const rej = await p.secretary.post(`${P(projectId)}/evidence/${link.id}/verify`, { expectedVersion: lv, decision: 'reject', note: 'Report of another service — defective (synthetic)' });
+    expect(rej.status, JSON.stringify(rej.body)).toBe(201);
+    await drainWorker();
+    t = await tsa(p.pm, projectId, id);
+    expect(t).toMatchObject({ replacementAccepted: false, replacementAcceptedBy: null });
+    const audit = (await owner().query(`select actor_kind from audit_event where project_id = $1 and action = 'readiness.tsa.replacement_evidence_invalidated' and entity_id = $2`, [projectId, id])).rows;
+    expect(audit).toEqual([{ actor_kind: 'service' }]);
+    // The exit approval needs an accepted replacement (REQ-TSA-006): it is accepted again on new, valid evidence.
+    await addEvidence(p.pm, projectId, 'tsa_service', id, 'Corrected acceptance test report (synthetic)');
+    t = await tsa(p.pm, projectId, id);
+    expect((await cmd(id, 'accept-replacement', { expectedVersion: t.version, note: 'Accepted again on the corrected report (synthetic)' })).status).toBe(201);
   });
 });
