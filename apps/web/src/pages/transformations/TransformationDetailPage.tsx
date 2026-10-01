@@ -16,9 +16,24 @@ import { Pager, useCursorPager } from "../../components/DataTable.tsx";
 import { Icon } from "../../components/Icon.tsx";
 import { PageHeader, usePageTitle } from "../../components/Page.tsx";
 import { ReasonDialog } from "../../components/ReasonDialog.tsx";
-import { EmptyState, QueryState } from "../../components/States.tsx";
+import { EmptyState, NoPermissionState, QueryState } from "../../components/States.tsx";
+import { describeAuditChanges, type AuditValue } from "../../lib/auditChanges.ts";
 import { formatDateTime } from "../../lib/format.ts";
+import { isNoPermission } from "../../lib/problem.ts";
 import { BusinessUnitName, PhaseStepper, UserName, useBusinessUnitIndex } from "./common.tsx";
+
+/**
+ * Router state the create page passes to the detail page. It carries the code and name the API returned to the
+ * creator in the 201 response, so the creator is never left on a bare "Not found" for the record they just created.
+ */
+export interface CreatedNavigationState {
+  readonly created: { readonly id: string; readonly code: string; readonly name: string };
+}
+
+function createdState(state: unknown, id: string | undefined): CreatedNavigationState["created"] | null {
+  const created = (state as Partial<CreatedNavigationState> | null)?.created;
+  return created && typeof created === "object" && created.id === id ? created : null;
+}
 
 export function useTransformationTarget(t: Transformation | undefined): PermissionTarget | null {
   const bu = useBusinessUnitIndex();
@@ -37,8 +52,24 @@ export function TransformationDetailPage() {
   const { t } = useTranslation();
   const query = useTransformation(id);
   const location = useLocation();
-  const justCreated = (location.state as { created?: boolean } | null)?.created === true;
+  const created = createdState(location.state, id);
   usePageTitle(query.data ? `${query.data.code} · ${query.data.name}` : t("transformations.detailTitle"));
+  // 403/404 means "not visible to you": never keep showing a cached copy (labelled stale) after the server says so.
+  if (query.isError && isNoPermission(query.error)) {
+    if (created) {
+      return (
+        <div className="page">
+          <CreatedNotVisible created={created} />
+        </div>
+      );
+    }
+    return (
+      <div className="page">
+        <NoPermissionState error={query.error} />
+      </div>
+    );
+  }
+  const justCreated = created !== null;
   return (
     <div className="page">
       <QueryState query={query}>
@@ -54,6 +85,37 @@ export function TransformationDetailPage() {
         )}
       </QueryState>
     </div>
+  );
+}
+
+/**
+ * The creator got a 201 but may not read the record (F-DG1-004: e.g. a grant that covers create at a business unit
+ * but not reads of the new transformation). Instead of a dead "Not found", confirm what was saved — as a draft, not
+ * submitted or approved — and say what to do next. Nothing beyond the creator's own 201 response is disclosed.
+ */
+function CreatedNotVisible({ created }: { created: CreatedNavigationState["created"] }) {
+  const { t } = useTranslation();
+  return (
+    <>
+      <PageHeader
+        crumbs={[{ label: t("transformations.listTitle"), to: "/transformations" }, { label: created.code }]}
+        title={t("transformations.createdNotVisible.title")}
+      />
+      <div className="state state--no-permission" role="alert" data-state="created-not-visible">
+        <Icon name="lock" />
+        <div>
+          <p className="state__body">
+            {t("transformations.createdNotVisible.body", { code: created.code, name: created.name })}
+          </p>
+          <p className="state__body">{t("transformations.createdNotVisible.next")}</p>
+          <div className="state__action">
+            <Link to="/transformations" className="button button--secondary">
+              {t("transformations.createdNotVisible.back")}
+            </Link>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -340,12 +402,20 @@ function AuditTrail({ tr }: { tr: Transformation }) {
                       <td>
                         {e.changes ? (
                           <ul className="plain-list">
-                            {Object.entries(e.changes).map(([field, change]) => (
-                              <li key={field}>
-                                <bdi dir="ltr" className="code">
-                                  {field}
-                                </bdi>
-                                : <bdi>{display(change.from)}</bdi> {arrow} <bdi>{display(change.to)}</bdi>
+                            {describeAuditChanges(t, e.changes).map((c) => (
+                              <li key={c.field}>
+                                {c.label ?? (
+                                  <>
+                                    <bdi dir="ltr" className="code">
+                                      {c.field}
+                                    </bdi>{" "}
+                                    <span className="muted small">
+                                      ({t("transformations.audit.untranslatedField")})
+                                    </span>
+                                  </>
+                                )}
+                                : <AuditValueView value={c.from} tz={tr.timezone} /> {arrow}{" "}
+                                <AuditValueView value={c.to} tz={tr.timezone} />
                               </li>
                             ))}
                           </ul>
@@ -378,7 +448,45 @@ function AuditTrail({ tr }: { tr: Transformation }) {
   );
 }
 
-function display(value: unknown): string {
-  if (value === null || value === undefined) return "∅";
-  return typeof value === "string" ? value : JSON.stringify(value);
+/** One side of an audited change, localized (F-DG1-005). Untranslated codes stay visible, LTR-isolated and marked. */
+export function AuditValueView({ value, tz }: { value: AuditValue; tz: string }) {
+  const { t } = useTranslation();
+  const locale = useLocale();
+  const bu = useBusinessUnitIndex();
+  switch (value.kind) {
+    case "none":
+      return <span className="muted">{t("common.value.none")}</span>;
+    case "label":
+    case "text":
+      return <bdi>{value.text}</bdi>;
+    case "code":
+      return (
+        <bdi dir="ltr" className="code">
+          {value.text}
+        </bdi>
+      );
+    case "user":
+      return (
+        <bdi>
+          <UserName id={value.id} />
+        </bdi>
+      );
+    case "businessUnit":
+      return (
+        <bdi>
+          <BusinessUnitName id={value.id} index={bu.byId} />
+        </bdi>
+      );
+    case "datetime":
+      return <bdi>{formatDateTime(value.iso, locale, tz) ?? value.iso}</bdi>;
+    case "untranslated":
+      return (
+        <span>
+          <bdi dir="ltr" className="code">
+            {value.raw}
+          </bdi>{" "}
+          <span className="muted small">({t("transformations.audit.untranslatedValue")})</span>
+        </span>
+      );
+  }
 }
