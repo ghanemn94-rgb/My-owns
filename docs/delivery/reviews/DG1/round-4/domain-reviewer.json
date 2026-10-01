@@ -1,0 +1,290 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG1",
+  "round": 4,
+  "candidate_id": "sha256:3b76021be348356f6cead57bff8fce358fac7acbfe9da42bdd8262f143308fb1",
+  "source_commit": "016433db8bb24e870fa4190856a2f188b30bd70d",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG1-T-DG1-REV-DOM-R4-domain-reviewer-20261001T102915Z-e0dde6c0",
+    "session_id": "e0dde6c0-8716-4fb3-bc4f-d67bcf9b6686"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "frontend-ux-engineer",
+    "devops-engineer",
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am domain-reviewer, run T-DG1-REV-DOM-R4. I did not author any implementation, register text or decision in the DG1 scope or in the round-4 repairs, which were made by the backend-workflow-engineer, frontend-ux-engineer, devops-engineer and delivery-orchestrator. I formed this verdict before reading any other reviewer's round-4 record, and none was visible to me. The only earlier records I read were my own round-3 domain-reviewer record and sidecars, plus the findings.json entries for F-DG1-009 (which I reported) and F-DG1-210 (reported by qa-verifier, assigned to me as a non-author verifier). I grant no business, Finance or IT approval. Product gate G6 is not engineering gate DG7."
+  },
+  "assignment": "docs/delivery/assignments/DG1/round-4/review-domain-reviewer.md (sha256 dcad2c6a5fe74449abdb0f3fb09fef41b3282c81e4b7dee6180f6aa87cdff1bb) with review-common.md (sha256 d47580df0ac0bbaf5dc9e30e43166b5f1883e86e8ff60a38303e5f1a08bbacb3)",
+  "requirements_checked": [
+    "REQ-S15-002",
+    "REQ-S15-005",
+    "REQ-S15-006",
+    "REQ-S16-001",
+    "REQ-S16-002",
+    "REQ-S16-004",
+    "REQ-S19-004",
+    "REQ-S19-006",
+    "REQ-S16-003",
+    "REQ-S16-023",
+    "REQ-PB-001",
+    "REQ-PB-003",
+    "REQ-PB-009",
+    "REQ-S03-003",
+    "REQ-S15-007",
+    "REQ-S15-008",
+    "REQ-S15-011"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-R4-00-candidate",
+      "procedure": "Confirm the frozen candidate before reviewing: HEAD, full (non-shallow) clone, recomputed candidate id and diff against the frozen manifest, and that the freeze commit after the source commit touches only candidate-excluded metadata. Then make a disposable clone at the source commit (node_modules copied from the workspace members) and build it.",
+      "command": "git rev-parse HEAD; git rev-parse --is-shallow-repository; git diff --stat 016433d HEAD; node tools/gates/candidate.mjs --stage DG1; node tools/gates/candidate.mjs --stage DG1 --diff; git clone /home/user/My-owns $TMPDIR/review-dom-r4 && git checkout 016433db8bb24e870fa4190856a2f188b30bd70d; pnpm -r build",
+      "environment": "Repository /home/user/My-owns (HEAD e8ed6e2, the freeze commit); disposable clone under $TMPDIR (removed afterwards); Node v22.22.2, pnpm 10.33.0",
+      "expected": "candidate id sha256:3b76021be348356f...08fb1 recomputed and matching the frozen manifest; HEAD differs from the source commit only by candidate-excluded metadata; build green",
+      "actual": "HEAD e8ed6e2 ('freeze the re-repaired candidate'); not shallow; 016433d..HEAD changes only docs/delivery/assignments/DG1/round-4/*, candidates/DG1/3b76021be348356f.manifest.json and stages.json. candidate.mjs: candidate_id sha256:3b76021be348356f6cead57bff8fce358fac7acbfe9da42bdd8262f143308fb1, 390 files; --diff matches:true, added/removed/changed empty. Clone HEAD 016433db8bb24e870fa4190856a2f188b30bd70d; pnpm -r build exit 0.",
+      "exit_status": 0,
+      "result": "PASS"
+    },
+    {
+      "id": "DOM-R4-01-integration-run1-5",
+      "procedure": "F-DG1-009: run the full integration project 5 times from the clone root, each on a freshly initdb'd throwaway PostgreSQL 16 cluster (private port, removed afterwards). Per run, record the verdict, wall time against summed test time, leftover databases and the server log's FATAL/57P01 count. Then tally the suites behind REQ-S19-004/006 and REQ-DLV-033 and check that files ran one at a time (each file one contiguous block in the verbose output).",
+      "command": "for i in 1..5: bash docs/delivery/test-evidence/DG1/domain/round-4/03-integration-run.sh $((54392+i)) > 03-integration-run$i.out.txt; python3 contiguity check over the verbose lines; grep -c tallies (contract/contract.test.ts, migrate|catalogue, 'closure is not a status edit', access-derived-race, a12-cross-scope, scratch-drop)",
+      "environment": "Disposable clone of 016433d; PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) throwaway cluster per run; vitest --project integration; Node v22.22.2",
+      "expected": "Same green verdict every run: all files and tests passed, exit 0, no unhandled 57P01, a12 'denied create writes nothing' green, no scratch DB left, files serial",
+      "actual": "Runs 1-5: Test Files 19 passed (19), Tests 200 passed (200), exit 0 each. Durations 24.71/26.95/28.30/27.01/27.60 s with summed test times 19.99/22.16/23.43/22.13/22.69 s, always below wall time. All 19 files were contiguous in every run (no interleaving). No vitest Unhandled/Uncaught error. Only postgres/template0/template1 remain afterwards. Per run: contract 9/9, migrate+catalogue 16/16, closure refusal 3/3, F-DG1-115 race 4/4, a12 cross-scope 14/14, new scratch-drop 3/3, 0 failures. Server-log FATAL/57P01 count 0,0,0,0,1. Run 5's single server-side line was not client-visible (exit 0, no error reported); see DOM-R4-02.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S19-004",
+        "REQ-S19-006",
+        "REQ-S16-004",
+        "REQ-S16-001"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-4/03-integration-run.sh",
+        "docs/delivery/test-evidence/DG1/domain/round-4/03-integration-run1.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-4/03-integration-run2.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-4/03-integration-run3.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-4/03-integration-run4.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-4/03-integration-run5.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R4-02-integration-fatal-diag-run6-9",
+      "procedure": "Follow up run 5's single server-side FATAL line: 4 more full integration runs on fresh clusters, with log_line_prefix showing the database and application name, printing every FATAL line and its neighbours.",
+      "command": "for i in 1..4: bash docs/delivery/test-evidence/DG1/domain/round-4/04-integration-run-fatal-diag.sh $((54410+i)) >> 04-integration-fatal-diag.out.txt",
+      "environment": "Disposable clone of 016433d; PostgreSQL 16.13 throwaway cluster per run",
+      "expected": "200/200 and exit 0 each run; any server FATAL identified",
+      "actual": "4/4 runs: Tests 200 passed (200), exit 0, 0 FATAL lines in the server log, no leftover databases. Run 5's line did not recur and could not be identified (its log went with the cluster). It was server-side only, the client saw nothing and the verdict was green. Recorded as an observation in the F-DG1-009 verification, not as a defect.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S19-004"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-4/04-integration-run-fatal-diag.sh",
+        "docs/delivery/test-evidence/DG1/domain/round-4/04-integration-fatal-diag.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R4-03-unit-suites",
+      "procedure": "Run the full unit projects, then a focused verbose run of the transformations page tests (including the new F-DG1-210 cases), the audit-change localization tests and the i18n/glossary tests.",
+      "command": "npx vitest run --project unit-node --project unit-web; npx vitest run --project unit-web --reporter=verbose apps/web/src/pages/transformations/transformations.test.tsx apps/web/src/lib/auditChanges.test.ts apps/web/src/i18n",
+      "environment": "Disposable clone of 016433d after pnpm -r build; Node v22.22.2",
+      "expected": "All green, including 4 F-DG1-210 cases and the 8 glossary tests",
+      "actual": "Full: Test Files 21 passed (21), Tests 247 passed (247), exit 0. Focused: Tests 55 passed (55), exit 0. That includes 'effective permissions refresh after create (F-DG1-210)' 4/4 (EN, AR, no over-grant, failed refresh fail-safe) and glossary.test.ts 8/8.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S15-002",
+        "REQ-S15-005",
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-4/01-unit-full.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-4/02-unit-domain-focused.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R4-04-F210-live-no-reload",
+      "procedure": "F-DG1-210, live in Arabic and English: dev.lead (TL at SYN-RETAIL) warms the cached /me, creates a record through the UI form with a window marker set, and lands on the detail page. Check Edit, Archive and the audit trail without a reload, the /me refetch and the derived-grant row. Then use the shown Edit control to rename the record and check that the server persisted it and audited it.",
+      "command": "bash docs/delivery/test-evidence/DG1/domain/round-4/07-live-stack.sh <evidence-dir> (07-live-scenario.mjs section H)",
+      "environment": "Disposable stack from the clone: throwaway PostgreSQL 16.13, migrate + seed-dev (SYNTHETIC), AUTH_MODE=dev, API on a private port serving the built web; Playwright Chromium headless 1280x900",
+      "expected": "Edit/Archive/audit trail visible with no document reload in both languages; the edit is accepted by the server and audited",
+      "actual": "ar and en: H1 Edit visible about 140 ms after submit; H2 Archive visible; H3 audit-trail region visible; H4 window marker survived (no reload); H5 GET /me re-fetched once after the 201 (200); H6 the localized derived-grant row is already on the trail; H7 the rename through the Edit link persisted at version 2; H8 one transformation.update audit event; H9 still no reload. Screens ar-06/en-06 show the RTL/LTR layout with Edit/Archive and the localized trail.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S15-002",
+        "REQ-S15-005",
+        "REQ-PB-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-4/07-live-stack.sh",
+        "docs/delivery/test-evidence/DG1/domain/round-4/07-live-scenario.mjs",
+        "docs/delivery/test-evidence/DG1/domain/round-4/07-live-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-4/screens/ar-06-lead-ui-create-no-reload.png",
+        "docs/delivery/test-evidence/DG1/domain/round-4/screens/en-06-lead-ui-create-no-reload.png"
+      ]
+    },
+    {
+      "id": "DOM-R4-05-closure-refused-runtime",
+      "procedure": "Re-confirm F-DG1-001: as dev.office, try active->closed (status only, and mixed with a rename) on a live record. Expect 422 invalid-transition citing G6, an unchanged row, no audit event and zero closed records. The rendered edit form offers no 'closed' and its hint names the G6 business approval.",
+      "command": "07-live-scenario.mjs sections A and D (D3/D4)",
+      "environment": "Same disposable stack as DOM-R4-04",
+      "expected": "422 urn:mth:problem:invalid-transition with G6 detail; nothing written; no closed option in ar/en",
+      "actual": "A3 x2: 422 urn:mth:problem:invalid-transition, 'A transformation cannot be closed by a status edit. Closure requires the G6 (Sustain) business approval with validated benefits, which is not available in this release.' A4 active|2|unchanged name; A5 audit 2 -> 2; A6 0 closed. D3: options active=نشط, on_hold=معلّق / Active, On hold. D4: hint names البوابة 6 / G6 (Sustain). Integration 'closure is not a status edit' passed 3/3 in all 5 tallied runs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-023",
+        "REQ-PB-009",
+        "REQ-S03-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-4/07-live-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-4/screens/ar-02-edit-no-closed.png",
+        "docs/delivery/test-evidence/DG1/domain/round-4/screens/en-02-edit-no-closed.png"
+      ]
+    },
+    {
+      "id": "DOM-R4-06-creator-and-audit-localization",
+      "procedure": "Re-confirm F-DG1-004/005/008: the BU-scoped TL creator reads its record, while access stays scoped. The derived assignment is TL at transformation scope with no gate.* permission. The audit trail is localized for the creator and for the TO (role glossary terms, names not ids, honest Unknown). A synthetic untranslated action/field/value is marked and LTR-isolated, never blank.",
+      "command": "07-live-scenario.mjs sections B, E, F, G",
+      "environment": "Same disposable stack as DOM-R4-04 (the synthetic probe audit row is written only into the throwaway database)",
+      "expected": "All B/E/F/G checks pass in ar and en",
+      "actual": "B1-B6 pass: create 201, own GET 200, TL|transformation|true, 0 gate.* permissions for TL, 404 on a record dev.lead did not create, the derived grant is on the record's own trail. E0-E8 pass in ar/en: localized 'carried over' action, role قائد التحوّل / Transformation Lead, user by name, scope 'this transformation', no raw codes or camelCase keys. F1/F2 pass: the TO sees the localized row and the user by name or as an honest Unknown, never an id. G1-G4 pass: untranslated markers (إجراء/حقل/قيمة بلا ترجمة; action/field/value without a translation), raw code in bdi dir=ltr.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S15-002",
+        "REQ-S15-005",
+        "REQ-PB-001",
+        "REQ-S15-011"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-4/07-live-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-4/screens/ar-04-lead-derived-audit.png",
+        "docs/delivery/test-evidence/DG1/domain/round-4/screens/en-04-lead-derived-audit.png",
+        "docs/delivery/test-evidence/DG1/domain/round-4/screens/ar-05-office-derived-audit.png",
+        "docs/delivery/test-evidence/DG1/domain/round-4/screens/en-05-office-derived-audit.png",
+        "docs/delivery/test-evidence/DG1/domain/round-4/screens/ar-03-detail-audit.png",
+        "docs/delivery/test-evidence/DG1/domain/round-4/screens/en-03-detail-audit.png"
+      ]
+    },
+    {
+      "id": "DOM-R4-07-bilingual-branding-honesty",
+      "procedure": "Invariants: AR-RTL/EN-LTR, provisional wordmark, no request outside the stack origin (no CDN), bundled fonts, missing data shown as Unknown, /api/v1/branding/tokens provenance=provisional and 401 when unauthenticated, every design token flagged provisional, no official Mobily/PMI or certification claim, no DG0-DG7 in user-facing catalogues, and phase names matching playbook B0026/B0045/B0053/B0067/B0090/B0118.",
+      "command": "07-live-scenario.mjs sections C, D; python3 walk of packages/design-tokens/src/tokens.json; pnpm -s check:no-cdn; grep over apps/web/src/i18n and apps/{web,api}/src for certif/official/PMI/DG[0-7]; sed docs/source/playbook.md phase headings vs apps/web/src/i18n/en/transformations.json",
+      "environment": "Same disposable stack and clone of 016433d",
+      "expected": "All invariants hold",
+      "actual": "D1 dir rtl/ltr; D2 the مؤقت / Provisional badge with the 'no official logo' hint; D10 0 external requests in ar/en; D11 IBM Plex Sans Arabic + IBM Plex Sans loaded; D9 Unknown/غير معروف shown for missing data. C0: provenance 'provisional', all 7 tokens provisional:true, #0078FF present; C1 401 unauthenticated. tokens.json: 34 colour tokens, all provisional:true, top-level provisional true. no-cdn PASS. 'official'/'رسمي' appear only in negations; PMI only as 'inspired by PMI, Brightline and BRM practice'; no certification claim; no DG0-DG7 in catalogues. The workflows scaffold names only G1-G6 (CLOSURE_GATE G6) and states they are not DG0-DG7. Phase labels Diagnose/Define/Design/Mobilize/Transform/Realize match the playbook. Note: 08-static-checks.out.txt contains a Python KeyError from my own wrong token path and an empty packages/calc/src grep. Both probes were redone correctly in 09-register-modules.out.txt.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S15-002",
+        "REQ-S15-005",
+        "REQ-S15-006",
+        "REQ-S15-007",
+        "REQ-S15-008"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-4/07-live-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-4/08-static-checks.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-4/09-register-modules.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-4/screens/ar-01-shell.png",
+        "docs/delivery/test-evidence/DG1/domain/round-4/screens/en-01-shell.png"
+      ]
+    },
+    {
+      "id": "DOM-R4-08-static-contract-modules",
+      "procedure": "Static checks: OpenAPI lint, web typecheck, the eleven API modules (the §16 workflows/kpi/reporting scaffolds each with index.ts and their own test), no floating-point types in the migrations (decimal money; the catalogue test enforces it), D-048/D-050 present, and an Arabic glossary-conflation scan.",
+      "command": "pnpm -s openapi:lint; pnpm --filter ./apps/web -s typecheck; ls apps/api/src/modules/*; grep -E 'real|double precision|float' packages/db/migrations/*.sql; grep D-048|D-050 docs/delivery/decisions.md; grep -E 'مبادر(ة|ات) (ال)?تحو|معياري' apps/web/src/i18n/ar/*.json",
+      "environment": "Disposable clone of 016433d",
+      "expected": "Lint PASS with 33 operations; typecheck exit 0; modules present; no float types; decisions present; no conflation",
+      "actual": "openapi:lint 'PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 33 operations' exit 0; web typecheck exit 0; modules: access, admin, audit, identity, jobs, kpi, organization, platform, reporting, transformations, workflows (workflows/kpi/reporting each with index.ts plus their own .test.ts, green in 247/247). No float types in migrations 0001-0008, and the integration catalogue test 'uses timestamptz only ... and no floating point' passed every run. D-048 and D-050 present. Arabic conflation scan: none.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-001",
+        "REQ-S16-002",
+        "REQ-S16-003",
+        "REQ-S19-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-4/08-static-checks.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-4/09-register-modules.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R4-09-register-rows",
+      "procedure": "Register: diff requirements.csv since the round-3 candidate commit. For each assigned row read final_gate, increments and status, and check that every evidence entry exists. List all rows with final_gate DG1 and their statuses.",
+      "command": "git diff --stat 5204179 016433d -- docs/delivery/requirements.csv; python3 csv scan of docs/delivery/requirements.csv (09-register-modules.out.txt)",
+      "environment": "Disposable clone of 016433d",
+      "expected": "Register unchanged since round 3 (round-3 F-DG1-006/007/207 text closures intact). The 8 assigned DG1-final rows and REQ-S16-003 are IMPLEMENTED with existing evidence. The P1-increment rows are honestly SPECIFIED with later final gates (not claimed as delivered).",
+      "actual": "requirements.csv unchanged since 5204179. All 12 final_gate=DG1 rows are IMPLEMENTED. Evidence entries all exist: S15-002 5, S15-005 7, S15-006 4, S16-001 8, S16-002 5, S16-004 11, S19-004 16, S19-006 5, S16-003 13. P1-increment rows are SPECIFIED with later final gates: S16-023 DG6, PB-001 DG5, PB-003 DG2, PB-009 DG4, S03-003 DG4, S15-007 DG6, S15-008 DG4, S15-011 DG6. The REQ-S19-004 note covers 0001-0008; REQ-S19-006 cites 33 operations and contract 9/9, which my runs reproduce.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S15-002",
+        "REQ-S15-005",
+        "REQ-S15-006",
+        "REQ-S16-001",
+        "REQ-S16-002",
+        "REQ-S16-004",
+        "REQ-S19-004",
+        "REQ-S19-006",
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-4/09-register-modules.out.txt",
+        "docs/delivery/requirements.csv"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG1-009",
+    "F-DG1-210"
+  ],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG1/domain/round-4/01-unit-full.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-4/02-unit-domain-focused.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-4/03-integration-run.sh",
+    "docs/delivery/test-evidence/DG1/domain/round-4/03-integration-run1.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-4/03-integration-run2.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-4/03-integration-run3.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-4/03-integration-run4.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-4/03-integration-run5.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-4/04-integration-run-fatal-diag.sh",
+    "docs/delivery/test-evidence/DG1/domain/round-4/04-integration-fatal-diag.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-4/07-live-stack.sh",
+    "docs/delivery/test-evidence/DG1/domain/round-4/07-live-scenario.mjs",
+    "docs/delivery/test-evidence/DG1/domain/round-4/07-live-scenario.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-4/08-static-checks.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-4/09-register-modules.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-4/screens/ar-01-shell.png",
+    "docs/delivery/test-evidence/DG1/domain/round-4/screens/en-01-shell.png",
+    "docs/delivery/test-evidence/DG1/domain/round-4/screens/ar-02-edit-no-closed.png",
+    "docs/delivery/test-evidence/DG1/domain/round-4/screens/en-02-edit-no-closed.png",
+    "docs/delivery/test-evidence/DG1/domain/round-4/screens/ar-03-detail-audit.png",
+    "docs/delivery/test-evidence/DG1/domain/round-4/screens/en-03-detail-audit.png",
+    "docs/delivery/test-evidence/DG1/domain/round-4/screens/ar-04-lead-derived-audit.png",
+    "docs/delivery/test-evidence/DG1/domain/round-4/screens/en-04-lead-derived-audit.png",
+    "docs/delivery/test-evidence/DG1/domain/round-4/screens/ar-05-office-derived-audit.png",
+    "docs/delivery/test-evidence/DG1/domain/round-4/screens/en-05-office-derived-audit.png",
+    "docs/delivery/test-evidence/DG1/domain/round-4/screens/ar-06-lead-ui-create-no-reload.png",
+    "docs/delivery/test-evidence/DG1/domain/round-4/screens/en-06-lead-ui-create-no-reload.png",
+    "docs/delivery/reviews/DG1/round-4/domain-reviewer.verifications.json"
+  ],
+  "reviewed_at": "2026-10-01T10:42:00Z",
+  "summary": "PASS on candidate 3b76021be348356f (commit 016433d). F-DG1-009 CLOSED_VERIFIED: 9/9 full integration runs on fresh PostgreSQL 16.13 clusters were green (200/200, exit 0), files ran strictly serially, and there was no unhandled 57P01 and no leftover scratch DB. F-DG1-210 CLOSED_VERIFIED live in ar and en: after a UI create, the BU-scoped Lead sees Edit/Archive and the localized audit trail with no reload, and an edit through the new control is server-accepted and audited. The round-3 closures F-DG1-001/002/003/004/005/006/105/007/008/207 still hold: closure refused 422/G6 with nothing written; eleven modules including the §16 scaffolds; Arabic glossary; audit localization; register unchanged. The invariants hold: provisional branding, no official Mobily/PMI claim, RTL/LTR, no CDN, no float types, Unknown for missing data, G1-G6 separate from DG0-DG7. No new findings."
+}

@@ -1,0 +1,39 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG1-009",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate 3b76021be348356f (commit 016433d; fix 2b020cb). I ran the full integration project 9 times in a disposable clone. Each run used its own freshly initdb'd PostgreSQL 16.13 cluster on a private port, removed afterwards. Runs 1-5 (03-integration-run.sh) each gave 19/19 files, 200/200 tests and exit 0, with no 'Unhandled'/'Uncaught'/57P01 error reported by vitest and no leftover scratch database on the cluster after the run. Runs 6-9 (04-integration-run-fatal-diag.sh) also gave 200/200 and exit 0. The round-3 failure modes are gone. (1) Files now really run serially: in all 5 verbose runs every one of the 19 files appears as one contiguous block (no interleaving), and the summed test time is below the wall time (e.g. 19.99 s tests in 24.71 s), whereas round-3 run 2 had 24.4 s of tests in 17.0 s of wall time. That is consistent with vitest.config.ts now setting pool 'forks' with poolOptions.forks.singleFork for the integration project. (2) The a12 'denied create wrote a row' assertion passed 14/14 in every run. (3) dropScratchDatabase now waits until pg_stat_activity shows no other backend on the scratch DB before dropping. If a client is still connected after the timeout it throws ScratchDatabaseInUse naming it, never terminating a live client. It also refuses non-identifier names. The harness owner pool has an error listener. The new scratch-drop.test.ts (40 rounds x 8 clients drop-after-end with no 57P01; a live client is not terminated; name guard) passed 3/3 in every run. The suites behind my requirements were identical in all 5 tallied runs: migrate+catalogue 16/16, contract 9/9, closure refusal 3/3, F-DG1-115 race 4/4. One observation, not a defect: in run 5 the throwaway server's log contained a single line matching FATAL/57P01. The script counted it but did not print it, and it was gone with the cluster. It was not client-visible: vitest reported no error and exited 0. It did not recur in 4 later runs with full server-side FATAL logging (0 FATAL lines). A server-side FATAL is plausibly the drop's WITH (FORCE) guard against a connection racing in, which the fix documents as kept on purpose. Either way, the verdict was the same green in 9/9 runs.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-4/03-integration-run.sh",
+        "docs/delivery/test-evidence/DG1/domain/round-4/03-integration-run1.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-4/03-integration-run2.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-4/03-integration-run3.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-4/03-integration-run4.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-4/03-integration-run5.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-4/04-integration-run-fatal-diag.sh",
+        "docs/delivery/test-evidence/DG1/domain/round-4/04-integration-fatal-diag.out.txt",
+        "vitest.config.ts",
+        "packages/db/test/global-setup.ts",
+        "packages/db/test/integration/scratch-drop.test.ts",
+        "apps/api/test/support/harness.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-210",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified live on a disposable stack of commit 016433d (candidate 3b76021be348356f): PostgreSQL 16.13, AUTH_MODE=dev, SYNTHETIC seed, the API serving the built web, Chromium headless at 1280x900. I am not the reporter (qa-verifier) and not the author (frontend-ux-engineer). Scenario section H, in Arabic (RTL) and English (LTR): dev.lead (TL at SYN-RETAIL only) signed in, browsed the list first so GET /me was cached, opened the create page in-app (only SYN-RETAIL offered), set a window marker and created a record through the UI form. With no reload, the detail page showed the Edit link (about 140 ms after submit), the Archive button and the audit-trail region (H1-H3). The window marker survived, so there was no document reload, only SPA navigation (H4). GET /api/v1/me was re-fetched once after the 201 and returned 200 (H5). The trail already showed the localized derived grant row ('Role granted to the creator (carried over from a business-unit assignment)' / 'إسناد دور لمُنشئ السجل (منقول من إسناد على مستوى وحدة العمل)') (H6). The controls are real, not cosmetic: clicking Edit opened the edit form, and saving a rename was accepted by the server and persisted at version 2 (H7). It wrote exactly one transformation.update audit event (H8), still with no reload (H9). The fix only re-reads the server's own answer: refreshEffectivePermissions invalidates keys.me and waits at most 5 s, never rejects, and grants nothing client-side. Unit coverage on this candidate: 4/4 F-DG1-210 cases in transformations.test.tsx (EN and AR controls appear; no over-grant when the refreshed answer adds nothing; a failed refresh never blocks the navigation and stays fail-safe). The journey spec no longer works around the problem with page.reload() and asserts the no-reload marker.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-4/07-live-scenario.mjs",
+        "docs/delivery/test-evidence/DG1/domain/round-4/07-live-stack.sh",
+        "docs/delivery/test-evidence/DG1/domain/round-4/07-live-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-4/screens/ar-06-lead-ui-create-no-reload.png",
+        "docs/delivery/test-evidence/DG1/domain/round-4/screens/en-06-lead-ui-create-no-reload.png",
+        "docs/delivery/test-evidence/DG1/domain/round-4/02-unit-domain-focused.out.txt",
+        "apps/web/src/pages/transformations/TransformationCreatePage.tsx"
+      ]
+    }
+  ]
+}
