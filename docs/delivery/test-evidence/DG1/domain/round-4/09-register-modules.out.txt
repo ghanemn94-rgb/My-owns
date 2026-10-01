@@ -1,0 +1,75 @@
+== clone HEAD 016433db8bb24e870fa4190856a2f188b30bd70d
+== tokens: brand primary + provisional flags
+tokens 34 all provisional: True
+[('.color.brand.primary', '#0078FF')]
+== §16 modules with index + own test
+transformations: index.ts transitions.test.ts 
+workflows: index.ts workflows.test.ts 
+kpi: index.ts kpi.test.ts 
+reporting: index.ts reporting.test.ts 
+audit: index.ts 
+access: index.ts rules.test.ts 
+identity: index.ts 
+organization: index.ts 
+admin: branding.test.ts index.ts 
+jobs: index.ts 
+platform: index.ts platform.test.ts 
+== decimal money / no float: migrations
+(no float types)
+packages/db/migrations/0001_identity_access.sql:0
+packages/db/migrations/0002_transformation.sql:0
+packages/db/migrations/0003_audit_event.sql:0
+packages/db/migrations/0004_outbox_jobs.sql:0
+packages/db/migrations/0005_seed_roles_permissions.sql:0
+packages/db/migrations/0006_pgboss_schema_v25.sql:0
+packages/db/migrations/0007_oidc_login_browser_binding.sql:0
+packages/db/migrations/0008_scoped_assignment_derived_from.sql:0
+== decision records D-048 D-050
+40:| D-048 | 2026-10-01 | delivery-orchestrator | **DG1 round-1 reviewers rejected D-047's "architecture-only" reading of REQ-S16-003; the three reserved modules are BUILT now (supersedes D-047 part 1).** All three DG1 round-1 reviewers (domain F-DG1-105 Medium/mandatory; code-security; qa) read A12 ("the six modules exist with separate test suites + a dependency-lint check") **literally**: `workflows`, `kpi`/formulas and `reporting` must EXIST as modules with their own test suites at DG1, not merely as reserved names in `modules.ts`. D-047's revisit-when triggered. **Decision:** the three modules are promoted from reserved to **active P1 scaffolds** — each gets `apps/api/src/modules/<m>/index.ts` (a typed public interface and a `register<M>Module` wiring hook, no business behaviour yet), is listed in `P1_MODULES` with its dependency-direction rules in `modules.ts`, is covered by `architecture.test.ts`, and has its **own** test suite (`apps/api/src/modules/<m>/<m>.test.ts`) asserting the module is registered and its boundary is enforced. The six §16 business modules (identity/access, transformations, workflows, formulas/KPI, reporting, admin) therefore all exist with separate suites, meeting A12 **literally**. Their business behaviour still lands in its stage (workflows P2, formulas/KPI P4, reporting P5) — "later stages add code, not new boundaries" — but the module and its suite now exist. Implemented under T-DG1-BE3; the register (REQ-S16-003/004) is corrected by T-DG1-ANALYST2 to describe the six-module scaffold set (closes F-DG1-105, F-DG1-002, F-DG1-207's REQ-S16-003 item). | The round-1 reviewers' consensus; master prompt §16 ("explicit modules for identity/access, transformation records, workflows, formulas, reporting and administration"). **Evidence:** the three module dirs + `index.ts` + per-module `*.test.ts`; `modules.ts` `P1_MODULES` now eleven; `architecture.test.ts` dependency-lint green with a planted-violation check; the register rows corrected. | A reserved module's real behaviour arrives in its stage; the scaffold's interface is expected to grow, not its boundary. |
+43:| D-050 | 2026-10-01 | delivery-orchestrator | **REQ-S16-004's DG1 increment is the persistence ARCHITECTURE (all P1 state in one PostgreSQL via forward-only migrations), proven by the A18 clean start; the A19 restore DRILL is owned by DG7 (closes F-DG1-002's REQ-S16-004 item).** REQ-S16-004's acceptance is "A18;A19: a restore of the PostgreSQL backup alone (plus evidence bytes) recovers records, configuration, snapshots and job state." At DG1 the deliverable is that **every** P1 persistent state — records, roles/permissions configuration, audit, outbox and pg-boss job state — lives in PostgreSQL and is reconstructed from the committed forward-only migrations (`packages/db/migrations/0001..0008`), which **A18** (fresh build → migrate → start, `/healthz`+`/readyz` ready) demonstrates. The **A19 restore drill** (take a backup, restore it alone, confirm recovery) is an operational test owned by the DG7 rows **REQ-S19-012 / REQ-S20-019** (backup/restore + IT handover), not DG1 — reporting snapshots (P5) do not exist yet to be restored. REQ-S16-004 is therefore legitimately IMPLEMENTED at DG1 for its persistence-architecture increment; the register note records that A19's demonstration is DG7's. | The T-DG1-ANALYST2 round-2 reconciliation flagged that REQ-S16-004 was IMPLEMENTED while its acceptance text still named the restore drill (F-DG1-002). Master prompt §16 (one PostgreSQL system of record) and the existing DG7 backup/restore rows. **Evidence:** migrations 0001–0008 apply to a fresh DB; the A18 clean-start evidence; the DG7 rows that own A19. | A reviewer judges A19's restore drill itself to be DG1-scoped (then it is demonstrated at DG1, not DG7), or REQ-S16-004 is re-staged. |
+== register diff since round-3 candidate commit 5204179 (requirements.csv)
+(empty = unchanged)
+== source docs unchanged since 5204179
+(only listed files changed)
+== assigned register rows
+columns: ['req_id', 'class', 'title', 'source_ref', 'source_heading', 'template_id', 'input_fields', 'procedure', 'output', 'owner_roles', 'permissions', 'automation', 'screen_api', 'acceptance', 'increments', 'final_gate', 'status', 'evidence', 'notes']
+REQ-S15-002 | None | IMPLEMENTED | evidence entries 5 missing []
+REQ-S15-005 | None | IMPLEMENTED | evidence entries 7 missing []
+REQ-S15-006 | None | IMPLEMENTED | evidence entries 4 missing []
+REQ-S16-001 | None | IMPLEMENTED | evidence entries 8 missing []
+REQ-S16-002 | None | IMPLEMENTED | evidence entries 5 missing []
+REQ-S16-004 | None | IMPLEMENTED | evidence entries 11 missing []
+REQ-S19-004 | None | IMPLEMENTED | evidence entries 16 missing []
+REQ-S19-006 | None | IMPLEMENTED | evidence entries 5 missing []
+REQ-S16-003 | None | IMPLEMENTED | evidence entries 13 missing []
+REQ-S16-023 | None | SPECIFIED | evidence entries 0 missing []
+REQ-PB-001 | None | SPECIFIED | evidence entries 0 missing []
+REQ-PB-003 | None | SPECIFIED | evidence entries 0 missing []
+REQ-PB-009 | None | SPECIFIED | evidence entries 0 missing []
+REQ-S03-003 | None | SPECIFIED | evidence entries 0 missing []
+REQ-S15-007 | None | SPECIFIED | evidence entries 0 missing []
+REQ-S15-008 | None | SPECIFIED | evidence entries 0 missing []
+REQ-S15-011 | None | SPECIFIED | evidence entries 0 missing []
+== final_gate / increments of assigned rows
+REQ-S15-002 | final DG1 | incr P1 | IMPLEMENTED
+REQ-S15-005 | final DG1 | incr P1 | IMPLEMENTED
+REQ-S15-006 | final DG1 | incr P1 | IMPLEMENTED
+REQ-S16-001 | final DG1 | incr P1 | IMPLEMENTED
+REQ-S16-002 | final DG1 | incr P1 | IMPLEMENTED
+REQ-S16-004 | final DG1 | incr P1 | IMPLEMENTED
+REQ-S19-004 | final DG1 | incr P1 | IMPLEMENTED
+REQ-S19-006 | final DG1 | incr P1 | IMPLEMENTED
+REQ-S16-003 | final DG1 | incr P1 | IMPLEMENTED
+REQ-S16-023 | final DG6 | incr P1;P2;P3;P4;P5;P6 | SPECIFIED
+REQ-PB-001 | final DG5 | incr P1;P5 | SPECIFIED
+REQ-PB-003 | final DG2 | incr P1;P2 | SPECIFIED
+REQ-PB-009 | final DG4 | incr P3;P4 | SPECIFIED
+REQ-S03-003 | final DG4 | incr P3;P4 | SPECIFIED
+REQ-S15-007 | final DG6 | incr P1;P2;P3;P4;P5;P6 | SPECIFIED
+REQ-S15-008 | final DG4 | incr P1;P4 | SPECIFIED
+REQ-S15-011 | final DG6 | incr P1;P2;P3;P4;P5;P6 | SPECIFIED
+== all rows with final_gate DG1: 12 ['REQ-DLV-025', 'REQ-DLV-033', 'REQ-DLV-042', 'REQ-S15-002', 'REQ-S15-005', 'REQ-S15-006', 'REQ-S16-001', 'REQ-S16-002', 'REQ-S16-003', 'REQ-S16-004', 'REQ-S19-004', 'REQ-S19-006']
+statuses: {'REQ-DLV-025': 'IMPLEMENTED', 'REQ-DLV-033': 'IMPLEMENTED', 'REQ-DLV-042': 'IMPLEMENTED', 'REQ-S15-002': 'IMPLEMENTED', 'REQ-S15-005': 'IMPLEMENTED', 'REQ-S15-006': 'IMPLEMENTED', 'REQ-S16-001': 'IMPLEMENTED', 'REQ-S16-002': 'IMPLEMENTED', 'REQ-S16-003': 'IMPLEMENTED', 'REQ-S16-004': 'IMPLEMENTED', 'REQ-S19-004': 'IMPLEMENTED', 'REQ-S19-006': 'IMPLEMENTED'}
+-- REQ-S19-004 notes: DG1 analyst check (T-DG1-REG; updated by T-DG1-ANALYST3 for F-DG1-007/F-DG1-209): migrations 0001-0008 (0007 adds oidc_login_state.browser_binding_hash, 0008 adds scoped_assignment.derived_from_assignment_id) apply to a fresh PostgreSQL 16 database. Evidence from the DG1 round-2 QA run on candidate 991d3241 (commit f32c705): 'applied 8 migrations to a fresh database' with migrate.test.ts (7 tests) and catalogue.test.ts passing in two integration runs (193/193), and the schema probe confirms the 0007/0008 columns and constraints. packages/db/migrations is unchanged between f32c705 and the round
+-- REQ-S19-006 notes: DG1 analyst check (T-DG1-ANALYST2): pnpm openapi:lint PASS (OpenAPI 3.1.1, 33 operations, including getBrandingTokens) in the analyst's own run. Contract suite: 9/9 passed with all 33 operations exercised and none unmatched, per the T-DG1-BE3 focused run (docs/delivery/handbacks/DG1/round-2/T-DG1-BE3-backend-workflow-engineer.md). The analyst could not re-run it (no PostgreSQL cluster available to the analyst run).
+-- REQ-S15-006 notes: D-011. DG1 analyst check (T-DG1-REG): shell header wordmark with Provisional/مؤقت badge; the unit test asserts no img/svg. The report-header use comes with reports (REQ-S01-002, REQ-S15-004, DG5).

@@ -1,0 +1,60 @@
+== candidate (clone)
+016433db8bb24e870fa4190856a2f188b30bd70d
+== tokens.json provenance
+top-level provisional = True
+tokens not marked provisional: none
+Traceback (most recent call last):
+  File "<stdin>", line 12, in <module>
+KeyError: 'brand'
+== no-cdn
+PASS no-cdn: scanned apps, packages
+exit=0
+== openapi lint
+PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 33 operations
+exit=0
+== web typecheck
+exit=0
+== honesty grep (certif|official PMI|PMI standard|PMI-certified) in UI/i18n
+apps/web/src/i18n/en/common.json:123:    "methodBody": "The product operationalizes the Business Transformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with custom extensions. It is not an official PMI standard, and this product is not certified by PMI or any other body.",
+apps/web/src/i18n/ar/common.json:120:    "methodBody": "يطبّق المنتج دليل تحوّل الأعمال الإصدار 1.0، وهو خلاصة عملية مستوحاة من ممارسات PMI وBrightline وBRM مع إضافات مخصصة. وهو ليس معيارًا رسميًا من PMI، وهذا المنتج غير معتمد من PMI أو من أي جهة أخرى.",
+== 'official' mentions in UI catalogues (expect only negations)
+apps/web/src/i18n/ar/common.json:5:    "provisionalHint": "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علام
+apps/web/src/i18n/ar/common.json:6:    "provisionalNotice": "الهوية البصرية مؤقتة: الشعار النصي والألوان بدائل مؤقتة وليست أصولًا رسمية �
+apps/web/src/i18n/ar/common.json:117:    "brandBody": "لم يُقدَّم شعار رسمي لموبايلي ولا ألوان علامة معتمدة. يعرض الترويسة شعارًا نصيً
+apps/web/src/i18n/ar/common.json:120:    "methodBody": "يطبّق المنتج دليل تحوّل الأعمال الإصدار 1.0، وهو خلاصة عملية مستوحاة من ممارسات 
+apps/web/src/i18n/en/common.json:5:    "provisionalHint": "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.",
+apps/web/src/i18n/en/common.json:6:    "provisionalNotice": "Branding is provisional: the text wordmark and colours are placeholders, not official Mobily brand assets."
+apps/web/src/i18n/en/common.json:120:    "brandBody": "No official Mobily logo or verified brand colours have been supplied. The header shows a provisional text wordmark, and the colours (including #0
+apps/web/src/i18n/en/common.json:123:    "methodBody": "The product operationalizes the Business Transformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with c
+== DG0-DG7 in user-facing catalogues (expect none)
+(none)
+== G1-G6 workflow scaffold
+apps/api/src/modules/workflows/index.ts:1:// workflows (ADR-0002; master prompt §16 "workflows"): product gates G1-G6, approvals, decisions and
+apps/api/src/modules/workflows/index.ts:9:// G1-G6 are BUSINESS approvals inside the product, granted only by people; they are unrelated to the engineering
+apps/api/src/modules/workflows/index.ts:10:// delivery gates DG0-DG7 (G6 never implies DG7, and the reverse). Until the G6 workflow exists, the transformations
+apps/api/src/modules/workflows/index.ts:15:/** The playbook's product gates (business approvals), in order. Not the engineering gates DG0-DG7. */
+apps/api/src/modules/workflows/index.ts:16:export const PRODUCT_GATES = ["G1", "G2", "G3", "G4", "G5", "G6"] as const;
+apps/api/src/modules/workflows/index.ts:20:export const CLOSURE_GATE: ProductGate = "G6";
+apps/api/src/modules/workflows/workflows.test.ts:28:      "CLOSURE_GATE",
+apps/api/src/modules/workflows/workflows.test.ts:37:  it("names the product gates G1-G6 (business approvals), never the engineering gates DG0-DG7", () => {
+apps/api/src/modules/workflows/workflows.test.ts:38:    expect(mod.PRODUCT_GATES).toEqual(["G1", "G2", "G3", "G4", "G5", "G6"]);
+apps/api/src/modules/workflows/workflows.test.ts:40:    // Closure waits for G6; until this module delivers it, the transformations module refuses closure (F-DG1-001).
+access
+admin
+audit
+identity
+jobs
+kpi
+organization
+platform
+reporting
+transformations
+workflows
+== decimal money
+grep: packages/calc/src: No such file or directory
+== Unknown/Stale
+46:    "unknown": "Unknown",
+47:    "stale": "Stale"
+50:    "unknown": "Unknown",
+== conflation scan ar catalogues
+(none)
