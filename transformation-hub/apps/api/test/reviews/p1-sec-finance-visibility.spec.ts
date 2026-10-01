@@ -103,6 +103,7 @@ beforeAll(async () => {
         direction: 'higher_is_better',
         frequency: 'quarterly',
         classification: cls,
+        ownerRole: 'finance_restricted', // REQ-RPT-013: every KPI has an owner (role or member)
       }),
     );
     add(`kpi ${cls}`, 'kpi', id, `/kpis/${id}`);

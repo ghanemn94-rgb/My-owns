@@ -189,6 +189,14 @@ describe('QA-P5-07 — Arabic KPI texts: template value + Arabic, null once edit
     expect(kpiTemplateArabic(kpi('k'), row)).toMatchObject({ formulaAr: null, sourceAr: null, thresholdsAr: null });
     expect(kpiTemplateArabic(undefined, row)).toEqual({ definitionAr: null, formulaAr: null, sourceAr: null, thresholdsAr: null });
   });
+
+  it('UT: comparisons do not depend on key order (definitions and KPI rows read from jsonb are key-sorted)', () => {
+    const reordered = { ...row, thresholds: { red: 'many', amber: 'some', green: 'none' } };
+    expect(kpiTemplateArabic({ ...tpl, thresholds: { red: 'many', green: 'none', amber: 'some' } }, reordered).thresholdsAr).toEqual({ green: 'أ', amber: 'ب', red: 'ج' });
+    const a = base();
+    const reversedKeys = { ...a, gates: a.gates.map((g) => Object.fromEntries(Object.entries(g).reverse())) } as ProjectTemplateDefinition;
+    expect(templateUpgradePlan(a, reversedKeys, { templateKey: 't', fromVersionNo: 1, toVersionNo: 2 }, { gateKeys: [], workstreamKeys: [], activityIds: [], kpiKeys: [], hasApprovedRagThresholds: false }).diff.changedGates).toEqual([]);
+  });
 });
 
 describe('REQ-SET-007 / REQ-SET-015 / REQ-SET-016 — onboarding checklist, policies step and launch rule', () => {

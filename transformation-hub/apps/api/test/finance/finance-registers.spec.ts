@@ -344,6 +344,7 @@ describe('REQ-FIN-009 — benefits register: realization needs a verification so
       direction: 'higher_is_better',
       frequency: 'quarterly',
       benefitId: id,
+      ownerRole: 'finance_restricted', // REQ-RPT-013: every KPI has an owner (role or member)
     });
     expect(k.status, JSON.stringify(k.body)).toBe(201);
     expect((await p.finance.post(`${P(projectId)}/kpis/${k.body.id}/observations`, { period: '2026-Q3', numerator: '3', denominator: '0', sourceRef: 'x-ref' })).status).toBe(400);

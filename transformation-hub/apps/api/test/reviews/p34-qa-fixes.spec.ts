@@ -149,6 +149,7 @@ describe('QA-P34-01h — a template KPI returns the template Arabic definition w
         thresholds: { green: 'TBD', amber: 'TBD', red: 'TBD' },
         direction: 'higher_is_better',
         frequency: 'monthly',
+        ownerRole: 'finance_restricted', // REQ-RPT-013: every KPI has an owner (role or member)
       })
       .expect(201);
     expect((await fin.get(`${P(projectId)}/kpis/${own.body.id}`).expect(200)).body.definitionAr).toBeNull();

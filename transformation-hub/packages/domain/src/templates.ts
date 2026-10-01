@@ -1,3 +1,4 @@
+import { canonicalJson } from './canonical';
 import type { RoleKey, TemplateKind } from './enums';
 
 /** Bilingual text used in templates. */
@@ -160,7 +161,8 @@ export interface TemplateDiff {
   ragPolicyChanged: boolean;
 }
 
-const json = (v: unknown) => JSON.stringify(v ?? null);
+/** Key-order independent comparison (definitions read from jsonb do not keep the key order of the template file). */
+const json = (v: unknown) => canonicalJson(v ?? null);
 
 /** The English (structural) part of a template KPI: everything except its Arabic texts. */
 function kpiCore(k: TemplateKpi) {
@@ -237,11 +239,12 @@ export function kpiTemplateArabic(
   row: { definition: string; formula: string; source: string; thresholds: KpiThresholdTexts },
 ): { definitionAr: string | null; formulaAr: string | null; sourceAr: string | null; thresholdsAr: KpiThresholdTexts | null } {
   if (!tpl) return { definitionAr: null, formulaAr: null, sourceAr: null, thresholdsAr: null };
-  const same = (a: unknown, b: unknown) => json(a) === json(b);
+  // Field by field: both sides may come from jsonb, which does not keep the key order of the template file.
+  const sameThresholds = (['green', 'amber', 'red'] as const).every((k) => tpl.thresholds[k] === row.thresholds[k]);
   return {
     definitionAr: tpl.definition.ar && tpl.definition.en === row.definition ? tpl.definition.ar : null,
     formulaAr: tpl.formulaAr && tpl.formula === row.formula ? tpl.formulaAr : null,
     sourceAr: tpl.sourceAr && tpl.source === row.source ? tpl.sourceAr : null,
-    thresholdsAr: tpl.thresholdsAr && same(tpl.thresholds, { green: row.thresholds.green, amber: row.thresholds.amber, red: row.thresholds.red }) ? tpl.thresholdsAr : null,
+    thresholdsAr: tpl.thresholdsAr && sameThresholds ? { green: tpl.thresholdsAr.green, amber: tpl.thresholdsAr.amber, red: tpl.thresholdsAr.red } : null,
   };
 }
