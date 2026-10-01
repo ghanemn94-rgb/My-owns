@@ -141,7 +141,7 @@ human principal at execution time and returns `null` when access was revoked (AT
   | Approved budget of a line (+ its stated amount, fail closed: `finance.budget.decision_amount_missing`) | `budget_line` | `none` (a budget decision is raised for the change request / baseline it approves; the line records that approval's amount) | `finance.budget` |
   | Figure / opening-balance approval | none (no kind for figures yet) | `none` | `finance.approval` |
   | TSA terms approval (DOM-P2F-09); a decision already used for another TSA (its terms or its extension) is refused (`tsa.approve.decision_other_tsa`, DOM-P3-13) | `tsa_service` | `if_set` | `tsa.approve` |
-  | TSA extension: linked at the request (`requireFinal: false`), consumed when recorded; replaces the former per-TSA check — a decision that authorized an extension of this TSA or another is refused (`tsa.extension.decision_already_used`); a decision used for the terms of ANOTHER TSA is refused (`tsa.extension.decision_other_tsa`, DOM-P3-13, conservative option — governance owner to confirm); once the decision left draft the requested end date / continuity plan are bound to it (`tsa.extension.terms_bound`, DOM-P3-06) | `tsa_extension` (record type `tsa_service`) | `if_set` | `tsa.extension` |
+  | TSA extension: linked at the request (`requireFinal: false`), consumed when recorded; replaces the former per-TSA check — a decision that authorized an extension of this TSA or another is refused (`tsa.extension.decision_already_used`); a decision used for the terms of ANOTHER TSA is refused (`tsa.extension.decision_other_tsa`, DOM-P3-13, conservative option — governance owner to confirm); once the decision left draft the requested end date / continuity plan are bound to it (`tsa.extension.terms_bound`, DOM-P3-06); they are bound for the first time only while the decision has no outcome yet — draft / submitted / under review (`tsa.extension.terms_after_outcome`, DOM-P34R2-01) | `tsa_extension` (record type `tsa_service`) | `if_set` | `tsa.extension` |
   | GO of a cutover plan: linked (`requireFinal: false`), consumed at the GO; a plan that goes to GO again after a rollback needs a new decision; a NO-GO relies on none | `cutover_plan` | `if_set` | `readiness.go_no_go` |
   | Perimeter version approval (G1 paper) | `perimeter_version` | `required` since DOM-P2F-08 (a G1 paper must name the version it approves) | `perimeter.version` |
 
@@ -197,7 +197,8 @@ human principal at execution time and returns `null` when access was revoked (AT
 - **The decision a record relied on carries its terms (DOM-P34R-04):** when a decision authorizes specific values of a
   record (e.g. a TSA extension's end date and continuity plan), bind those values to the DECISION (a per-decision row, here
   `tsa_extension_terms`) — never only to the record's current link, which the requester can switch through another
-  decision.
+  decision — and bind them only while the decision has no outcome yet (DOM-P34R2-01), so the paper the committee decides
+  shows the values it approves.
 - **Workstream-scoped reach:** when a list or count is structured by workstream, filter it with
   `policy.reachSql(ctx, '<permission>', projectId, table.workstreamId)` — a workstream-only role (e.g. a lead without a
   project role) sees only its workstreams; `policy.permissionReach(...)` tells you whether the grant is project-wide.

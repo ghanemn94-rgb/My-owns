@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { closeApp, closePools, owner } from '../helpers';
 import { decisionOfType as decisionWith } from '../finance/finance-kit';
-import { P, completePlan, decisionOfType, drainWorker, insertSite, plan, plusDays, setupGovernance, setupProject, Gov, Personas } from './readiness-kit';
+import { P, approveTabledDecision, completePlan, decisionOfType, drainWorker, insertSite, plan, plusDays, setupGovernance, setupProject, Gov, Personas } from './readiness-kit';
 
 /**
  * P2 domain final review DOM-P2F-09 (docs/reviews/P2-domain-final-review.md; P3 scope, REQ-TSA-001, REQ-TSA-005,
@@ -106,14 +106,20 @@ describe('DOM-P2F-09 — TSA terms approval and extensions rely on the decision-
     expect(await uses(d.id)).toEqual([]);
   });
 
-  it('one decision authorizes one extension (kind tsa_extension): not a second TSA, not a further extension; the terms decision may authorize one extension', async () => {
+  // Implementer (DOM-P34R2-01): the last part asserted the former rule 6 ("the terms decision may authorize one extension").
+  // Rule 6 as amended (business-gates.md §6 rules 5–6): a decision that already has an outcome binds no extension terms, so
+  // the decision that approved Y's terms authorizes no extension. Renamed accordingly; the extension paper of X is now
+  // tabled, requested on and then approved (the real flow); the registry assertions are unchanged.
+  it('one decision authorizes one extension (kind tsa_extension): not a second TSA, not a further extension; the terms decision, final before any extension was requested on it, authorizes none (DOM-P34R2-01)', async () => {
     const terms1 = (await decisionOfType(projectId, p, gov, 'tsa_approval_or_extension')).id;
     const terms2 = (await decisionOfType(projectId, p, gov, 'tsa_approval_or_extension')).id;
     const x = await activeTsa('Extension TSA X (synthetic)', terms1);
     const y = await activeTsa('Extension TSA Y (synthetic)', terms2);
-    const e = (await decisionOfType(projectId, p, gov, 'tsa_approval_or_extension')).id;
+    const paper = await decisionOfType(projectId, p, gov, 'tsa_approval_or_extension', { vote: false });
+    const e = paper.id;
     const reqX = await cmd(x.id, 'request-extension', { expectedVersion: x.version, decisionId: e, proposedEndDate: plusDays(120), continuityPlan: 'Current operator continues (synthetic)' });
     expect(reqX.status, JSON.stringify(reqX.body)).toBe(201);
+    await approveTabledDecision(projectId, p, paper);
     const recX = await cmd(x.id, 'record-extension', { expectedVersion: reqX.body.version, note: 'Extension per approved decision (synthetic)' });
     expect(recX.status, JSON.stringify(recX.body)).toBe(201);
     expect(await uses(e)).toEqual([{ use_kind: 'tsa_extension', subject_type: 'tsa_service', subject_id: x.id }]);
@@ -124,14 +130,11 @@ describe('DOM-P2F-09 — TSA terms approval and extensions rely on the decision-
     const again = await cmd(x.id, 'request-extension', { expectedVersion: recX.body.version, decisionId: e, proposedEndDate: plusDays(200), continuityPlan: 'x (synthetic)' });
     expect(again.status).toBe(422);
     expect(again.body.code).toBe('tsa.extension.decision_already_used');
-    // The decision that approved Y's terms authorizes one extension (a different kind of use).
+    // The decision that approved Y's terms was final before any extension was requested on it: it authorizes none.
     const reqY = await cmd(y.id, 'request-extension', { expectedVersion: y.version, decisionId: terms2, proposedEndDate: plusDays(150), continuityPlan: 'Current operator continues (synthetic)' });
-    expect(reqY.status, JSON.stringify(reqY.body)).toBe(201);
-    expect((await cmd(y.id, 'record-extension', { expectedVersion: reqY.body.version })).status).toBe(201);
-    expect((await uses(terms2)).map((u) => [u.use_kind, u.subject_id])).toEqual([
-      ['tsa_service', y.id],
-      ['tsa_extension', y.id],
-    ]);
+    expect(reqY.status, JSON.stringify(reqY.body)).toBe(422);
+    expect(reqY.body.code).toBe('tsa.extension.terms_after_outcome');
+    expect((await uses(terms2)).map((u) => [u.use_kind, u.subject_id])).toEqual([['tsa_service', y.id]]);
   });
 });
 

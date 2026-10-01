@@ -4,6 +4,7 @@ import { addCalendarDays } from '@hub/domain';
 import {
   P,
   addEvidence,
+  approveTabledDecision,
   clock,
   decisionOfType,
   drainWorker,
@@ -187,9 +188,13 @@ describe('AT-10 — TSA end date is never an exit; escalation, approved extensio
     expect(t).toMatchObject({ status: 'expired_unresolved', proposedEndDate: plusDays(90), endDate: plusDays(10) });
     expect(t.extensionDecision).toMatchObject({ id: pendingDecision, status: 'under_review' });
 
-    const approved = (await decisionOfType(projectId, p, gov, 'tsa_approval_or_extension')).id;
+    // The extension paper is tabled, the extension requested on it (its terms bind to the paper), then the paper is approved
+    // (DOM-P34R2-01: a decision that already has an outcome carries no extension terms).
+    const paper = await decisionOfType(projectId, p, gov, 'tsa_approval_or_extension', { vote: false });
+    const approved = paper.id;
     const req2 = await cmd(p.pm, tsaId, 'request-extension', { expectedVersion: t.version, decisionId: approved, proposedEndDate: plusDays(90), continuityPlan: 'Current operator continues NOC monitoring under the TSA terms (synthetic)' });
     expect(req2.status, JSON.stringify(req2.body)).toBe(201);
+    await approveTabledDecision(projectId, p, paper);
     const ext = await cmd(p.pm, tsaId, 'record-extension', { expectedVersion: req2.body.version, note: 'Extension per approved decision (test)' });
     expect(ext.status, JSON.stringify(ext.body)).toBe(201);
     expect(ext.body.status).toBe('extended');

@@ -44,7 +44,9 @@ function isoDate(offsetDays: number): string {
 
 /**
  * A governance decision of the given type, tabled at a fresh DEMO committee meeting and voted through the governance
- * API (DEMO authority matrix). `vote: false` leaves it drafted (linkable, never a final approval).
+ * API (DEMO authority matrix). `vote: false` leaves it drafted (linkable, never a final approval) — `approveDecision`
+ * then tables and approves it (the real extension flow, DOM-P34R2-01: the extension is requested on the paper before
+ * the committee decides it).
  */
 async function governanceDecision(baseURL: string, pid: string, decisionTypeKey: string, vote = true): Promise<string> {
   const base = `/api/v1/projects/${pid}`;
@@ -71,7 +73,24 @@ async function governanceDecision(baseURL: string, pid: string, decisionTypeKey:
       evidenceNoneReason: 'Synthetic e2e paper: no supporting documents exist',
     };
     const d = await post(pm, `${base}/decisions`, paper);
-    if (!vote) return d.id;
+    if (vote) await approveDecision(baseURL, pid, d.id);
+    return d.id;
+  } finally {
+    await pm.dispose();
+    await sec.dispose();
+  }
+}
+
+/** Table a drafted decision at a fresh DEMO committee meeting, have the voting members approve it and record the outcome. */
+async function approveDecision(baseURL: string, pid: string, decisionId: string): Promise<void> {
+  const base = `/api/v1/projects/${pid}`;
+  const pm = await apiSessionAs(baseURL, P.pm);
+  const sec = await apiSessionAs(baseURL, P.secretary);
+  try {
+    const committees = (await get(sec, `${base}/committees?pageSize=100`)).items as { id: string; kind: string; status: string }[];
+    const committee = committees.find((c) => c.kind === 'program_steering' && c.status === 'active');
+    if (!committee) throw new Error('No active DEMO steering committee in the demo seed');
+    const d = await get(pm, `${base}/decisions/${decisionId}`);
     const detail = await get(sec, `${base}/committees/${committee.id}`);
     const members = (detail.memberships as { id: string; userId: string | null; voting: boolean; activeToday: boolean }[]).filter((m) => m.userId && m.activeToday);
     const m = await post(sec, `${base}/committees/${committee.id}/meetings`, { title: `E2E readiness meeting ${STAMP} (synthetic)`, scheduledAt: new Date().toISOString() });
@@ -92,9 +111,8 @@ async function governanceDecision(baseURL: string, pid: string, decisionTypeKey:
       await voter.dispose();
     }
     const out = await post(sec, `${base}/decisions/${d.id}/record-outcome`, { expectedVersion: (await get(sec, `${base}/decisions/${d.id}`)).version });
-    expect(out.status, `decision ${decisionTypeKey} outcome`).toBe('approved');
+    expect(out.status, `decision ${d.code} outcome`).toBe('approved');
     void r;
-    return d.id;
   } finally {
     await pm.dispose();
     await sec.dispose();
@@ -332,11 +350,10 @@ test.describe('P3 Day-1 & TSA Center', () => {
       await dialog(page).getByRole('button', { name: 'Cancel' }).click();
       await expect(detail).toHaveAttribute('data-status', 'active');
 
-      // With the approved decision the extension is recorded.
-      await page.getByTestId('cmd-requestExtension').click();
-      await dialog(page).getByTestId('decision-select').selectOption(tsaDecision);
-      await dialog(page).getByTestId('extension-end').fill(isoDate(90));
-      await dialog(page).getByRole('button', { name: 'Link decision', exact: true }).click();
+      // The committee then approves that paper, which carries the end date requested on it (DOM-P34R2-01: the decision that
+      // approved the TSA's own terms carries no extension) — API fixture; the extension is then recorded in the UI.
+      await approveDecision(baseURL!, pid, draftDecision);
+      await page.reload();
       await expect(page.getByTestId('extension-decision')).toContainText('Final approval');
       await page.getByTestId('cmd-recordExtension').click();
       await dialog(page).getByRole('button', { name: 'Record extension', exact: true }).click();

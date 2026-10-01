@@ -456,6 +456,9 @@ export function assertTsaActivatable(t: { startDate: string | null; today: strin
 /** Whether a TSA's terms are approved (its descriptive terms are then part of the approval — DOM-P3-15). */
 export const TSA_TERMS_OPEN_STATUSES: readonly TsaStatus[] = ['proposed', 'negotiating'];
 
+/** DOM-P34R2-01: decision statuses in which extension terms may be bound for the first time (no outcome yet). */
+export const EXTENSION_TERMS_BINDABLE_STATUSES: readonly DecisionStatus[] = ['draft', 'submitted', 'under_review'];
+
 /** The extension a `tsa_approval_or_extension` decision carries: one TSA, one end date, one continuity plan. */
 export interface ExtensionTerms {
   tsaServiceId: string;
@@ -474,7 +477,19 @@ const sameTerms = (a: ExtensionTerms, b: ExtensionTerms) => a.tsaServiceId === b
  * request repeats the bound terms) or `rebind` (draft decision: its terms change).
  */
 export function extensionTermsBinding(i: { decisionStatus: DecisionStatus; bound: ExtensionTerms | null; requested: ExtensionTerms }): 'new' | 'same' | 'rebind' {
-  if (!i.bound) return 'new';
+  if (!i.bound) {
+    // DOM-P34R2-01: terms are bound to a decision for the FIRST time only while its paper is still before the committee
+    // (no outcome yet) — otherwise the terms would carry an end date the committee never saw (e.g. the decision that
+    // approved the TSA's own terms, or an extension paper approved before it was linked).
+    if (!EXTENSION_TERMS_BINDABLE_STATUSES.includes(i.decisionStatus)) {
+      throw ruleViolation(
+        'tsa.extension.terms_after_outcome',
+        `This decision already has an outcome (${i.decisionStatus}) and carries no extension: link the extension request to a decision paper before the committee decides it, so that the paper carries the end date and continuity plan it approves`,
+        { decisionStatus: i.decisionStatus },
+      );
+    }
+    return 'new';
+  }
   if (sameTerms(i.bound, i.requested)) return 'same';
   if (i.decisionStatus === 'draft') return 'rebind';
   if (i.bound.tsaServiceId !== i.requested.tsaServiceId) {

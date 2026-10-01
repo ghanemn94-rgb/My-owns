@@ -12,7 +12,10 @@ import { P, decisionOfType, drainWorker, plusDays, setupGovernance, setupProject
  * `DEFECT …` probes assert the REQUIRED behaviour and are declared with `it.fails` while the defect is open;
  * `P34DRE_PROBE_PLAIN=1` runs them plain. All data is synthetic.
  */
+// Implementer (fix of DOM-P34R2-01): the DEFECT probes of this file are fixed and renamed `… (fixed, regression)` — plain
+// `it`, assertions unchanged. The alias stays so that P34DRE_PROBE_PLAIN=1 keeps working for any probe added later.
 const defect = process.env['P34DRE_PROBE_PLAIN'] ? it : it.fails;
+void defect;
 
 let projectId: string;
 let p: Personas;
@@ -65,7 +68,7 @@ async function requestAndRecord(id: string, decisionId: string, proposedEndDate:
 }
 
 describe('P3/P4 domain re-review, re-check — extension terms first bound AFTER the decision became final [AT-10, REQ-TSA-005, business-gates.md §6 rules 5-6]', () => {
-  defect('DEFECT DOM-P34R2-01a: the decision that approved the TSA\'s TERMS (no extension terms before the committee) backs an extension to an end date chosen after the vote', async () => {
+  it('DOM-P34R2-01a: the decision that approved the TSA\'s TERMS (no extension terms before the committee) backs an extension to an end date chosen after the vote (fixed, regression)', async () => {
     const { id, termsDecisionId } = await activeTsa('Monitoring bridge A (re-check probe, synthetic)', plusDays(-60), plusDays(20));
     const Y = plusDays(3650);
     const r = await requestAndRecord(id, termsDecisionId, Y);
@@ -79,7 +82,7 @@ describe('P3/P4 domain re-review, re-check — extension terms first bound AFTER
     ).not.toBe(Y);
   });
 
-  defect('DEFECT DOM-P34R2-01b: an extension paper approved BEFORE it was linked to the TSA gets its end date after the vote', async () => {
+  it('DOM-P34R2-01b: an extension paper approved BEFORE it was linked to the TSA gets its end date after the vote (fixed, regression)', async () => {
     const { id } = await activeTsa('Facility service B (re-check probe, synthetic)', plusDays(-30), plusDays(25));
     const ext = await decisionOfType(projectId, p, gov, 'tsa_approval_or_extension'); // voted and approved, no TSA linked yet
     const Y = plusDays(3000);
