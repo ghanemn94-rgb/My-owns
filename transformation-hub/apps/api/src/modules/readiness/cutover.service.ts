@@ -344,7 +344,8 @@ export class CutoverService {
    */
   async changeSite(ctx: RequestContext, projectId: string, planId: string, body: { expectedVersion: number; siteId: string | null; reason: string }) {
     await this.s.lockReadiness(projectId);
-    const plan = await loadInProject(this.s.db, schema.cutoverPlan, projectId, planId);
+    // SEC-P34R-02: the module's read rule first (a plan the caller cannot read is 404, like an unknown id), then the command.
+    const plan = await this.loadReadable(ctx, projectId, planId);
     this.assertManage(ctx, projectId, plan);
     if ((body.siteId ?? null) === plan.siteId) {
       assertVersion(plan, body.expectedVersion, 'cutover plan');
@@ -359,11 +360,15 @@ export class CutoverService {
     const leaving = before.filter((x) => !after.some((a) => a.id === x.id));
     const entering = after.filter((x) => !before.some((b) => b.id === x.id));
     const cleared = await this.clearedMap(projectId, leaving);
+    // SEC-P34R-08: the refusal names only the checks the caller may read (readiness reach); the rule weighs every check.
+    const reach = this.s.policy.permissionReach(ctx, 'readiness.register.read', projectId);
+    const readable = new Set(leaving.filter((x) => reach.all || (!!x.workstreamId && reach.workstreamIds.includes(x.workstreamId))).map((x) => x.id));
     assertCutoverPlanSiteChange({
       planCode: plan.code,
       planStatus: plan.status,
       reason: body.reason,
       leaving: leaving.map((x) => ({ id: x.id, code: x.code, status: x.status, gating: x.blocker || x.mandatory, cleared: cleared.get(x.id) === true })),
+      canRead: (id) => readable.has(id),
     });
     const row = (await updateVersioned(this.s.db, schema.cutoverPlan, { id: plan.id, projectId, expectedVersion: body.expectedVersion }, { siteId: body.siteId })) as PlanRow;
     const codes = (xs: CheckRow[]) => (xs.length ? xs.map((x) => x.code).join(', ') : '—');

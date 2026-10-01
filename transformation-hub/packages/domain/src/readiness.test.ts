@@ -431,4 +431,18 @@ describe('DOM-P34R-01 — the plan\'s site is a scope command', () => {
     expect(() => assertCutoverPlanSiteChange({ planCode: 'CO-1', planStatus: 'planning', reason: 'r', leaving: [{ ...failed, status: 'in_progress' }] })).not.toThrow();
     expect(() => assertCutoverPlanSiteChange({ planCode: 'CO-1', planStatus: 'planning', reason: 'r', leaving: [{ ...failed, gating: false }] })).not.toThrow();
   });
+  it('SEC-P34R-08: the refusal names only the failed checks the caller may read and counts the others; the rule weighs every check', () => {
+    const hidden = { ...failed, id: 'c2', code: 'RC-002' };
+    let err: unknown;
+    try {
+      assertCutoverPlanSiteChange({ planCode: 'CO-1', planStatus: 'planning', reason: 'r', leaving: [failed, hidden], canRead: (id) => id === 'c1' });
+    } catch (e) {
+      err = e;
+    }
+    const e = err as { code: string; message: string; details: Record<string, unknown> };
+    expect(e.code).toBe('readiness.cutover.site_change_failed_check');
+    expect(e.details).toEqual({ checks: [{ id: 'c1', code: 'RC-001', status: 'failed' }], otherFailedChecks: 1 });
+    expect(e.message).not.toContain('RC-002');
+    expect(codeOf(() => assertCutoverPlanSiteChange({ planCode: 'CO-1', planStatus: 'planning', reason: 'r', leaving: [hidden], canRead: () => false }))).toBe('rule_violation:readiness.cutover.site_change_failed_check');
+  });
 });

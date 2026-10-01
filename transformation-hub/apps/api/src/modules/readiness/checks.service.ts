@@ -382,7 +382,8 @@ export class ReadinessChecksService implements OnModuleInit {
    */
   async rebind(ctx: RequestContext, projectId: string, checkId: string, body: { expectedVersion: number; siteId?: string | null; cutoverPlanId?: string | null; reason: string }) {
     await this.s.lockReadiness(projectId);
-    const c = await loadInProject(this.s.db, schema.readinessCheck, projectId, checkId);
+    // SEC-P34R-02: the module's read rule first (a check the caller cannot read is 404, like an unknown id), then the command.
+    const c = await this.loadReadable(ctx, projectId, checkId);
     this.assertManage(ctx, projectId, c);
     const next = { siteId: body.siteId !== undefined ? body.siteId : c.siteId, cutoverPlanId: body.cutoverPlanId !== undefined ? body.cutoverPlanId : c.cutoverPlanId };
     if (next.siteId === c.siteId && next.cutoverPlanId === c.cutoverPlanId) {

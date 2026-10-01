@@ -291,6 +291,11 @@ export function assertCutoverPlanSiteChange(i: {
   reason: string | null | undefined;
   /** Checks gating the plan now that would no longer gate it after the change. */
   leaving: readonly { id: string; code: string; status: ReadinessStatus; gating: boolean; cleared: boolean }[];
+  /**
+   * SEC-P34R-08: the caller's readiness reach. The refusal names (code, id) only the failed checks the caller may read and
+   * counts the others — the rule itself always weighs every check. Omitted = every check is readable.
+   */
+  canRead?: (checkId: string) => boolean;
 }): void {
   if (!i.reason?.trim()) throw ruleViolation('readiness.cutover.site_reason_required', 'Changing the site of a transition plan requires a reason');
   if (!CUTOVER_EDITABLE_STATUSES.includes(i.planStatus)) {
@@ -298,10 +303,13 @@ export function assertCutoverPlanSiteChange(i: {
   }
   const failed = i.leaving.filter((c) => c.gating && !c.cleared && c.status === 'failed');
   if (failed.length) {
+    const shown = failed.filter((c) => !i.canRead || i.canRead(c.id));
+    const others = failed.length - shown.length;
+    const named = [shown.map((c) => c.code).join(', '), others ? `${others} failed check(s) outside your reach` : ''].filter(Boolean).join(' and ');
     throw ruleViolation(
       'readiness.cutover.site_change_failed_check',
-      `${failed.map((c) => c.code).join(', ')} failed and gate ${i.planCode} through its current site: a failed gating check keeps gating the transition it was raised for until it is cleared (passed, waived or not applicable)`,
-      { checks: failed.map((c) => ({ id: c.id, code: c.code, status: c.status })) },
+      `${named} failed and gate ${i.planCode} through its current site: a failed gating check keeps gating the transition it was raised for until it is cleared (passed, waived or not applicable)`,
+      { checks: shown.map((c) => ({ id: c.id, code: c.code, status: c.status })), ...(others ? { otherFailedChecks: others } : {}) },
     );
   }
 }
@@ -469,7 +477,8 @@ export function extensionTermsBinding(i: { decisionStatus: DecisionStatus; bound
   if (sameTerms(i.bound, i.requested)) return 'same';
   if (i.decisionStatus === 'draft') return 'rebind';
   if (i.bound.tsaServiceId !== i.requested.tsaServiceId) {
-    throw ruleViolation('tsa.extension.decision_other_tsa', 'This decision carries the extension of another TSA; a decision about one TSA does not back another TSA', { boundTsaServiceId: i.bound.tsaServiceId });
+    // SEC-P34R-08: the other TSA is not named (its id may be outside the caller's clearance / reach).
+    throw ruleViolation('tsa.extension.decision_other_tsa', 'This decision carries the extension of another TSA; a decision about one TSA does not back another TSA');
   }
   throw ruleViolation(
     'tsa.extension.terms_bound',

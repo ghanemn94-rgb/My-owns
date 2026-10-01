@@ -111,6 +111,12 @@ const RULES: Record<string, Rule> = {
   perimeter_item: own('perimeter_item', { c: true, ws: CARVEOUT }),
   transfer: own('perimeter_item', { c: true, ws: CARVEOUT }), // evidence target: transfer status lives on the perimeter item
   regulatory_requirement: own('regulatory_requirement', { c: true, ws: NEWCO, wsCol: null }),
+  // SEC-P34R-01 (SEC-P34-12 residual): more project-level registers whose modules require a project-wide read — the
+  // organization-level legal entity (NewCo assertProjectRead), perimeter versions and category reviews (carve-out
+  // assertProjectWide, shown only in the project-level reconciliation / version register).
+  legal_entity: own('legal_entity', { ws: NEWCO, wsCol: null }),
+  perimeter_version: own('perimeter_version', { ws: CARVEOUT, wsCol: null }),
+  perimeter_category_review: own('perimeter_category_review', { ws: CARVEOUT, wsCol: null }),
   report_snapshot: own('report_snapshot', { c: true }),
   room_grant: own('room_grant', { r: true }),
   room_disclosure: own('room_disclosure', { r: true }),
@@ -259,4 +265,4 @@ export class RecordVisibility {
 }
 
 /** Polymorphic target types that have no record-level rule (visibility = type-level read permission only). */
-const UNRULED_TARGET_TYPES = ['gate_criterion', 'closing_condition', 'legal_entity', 'post_close_obligation', 'closing_deliverable', 'project', 'gate_assessment', 'document_chunk', 'baseline_version', 'change_request', 'perimeter_version'];
+const UNRULED_TARGET_TYPES = ['gate_criterion', 'closing_condition', 'post_close_obligation', 'closing_deliverable', 'project', 'gate_assessment', 'document_chunk', 'baseline_version', 'change_request'];
