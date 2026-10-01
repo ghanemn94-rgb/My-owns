@@ -5,6 +5,7 @@ import {
   CUTOVER_EDITABLE_STATUSES,
   CUTOVER_MACHINE,
   GO_DECISION_TYPE_KEYS,
+  assertCutoverPlanSiteChange,
   assertCutoverSubmittable,
   assertDecisionLinkable,
   assertExecutionAllowed,
@@ -320,6 +321,67 @@ export class CutoverService {
     return { id: plan.id, version: row.version };
   }
 
+  /** Cleared for the GO rule (as `evaluation` computes it): passed with valid sign-off evidence, not applicable, or effectively waived. */
+  private async clearedMap(projectId: string, checks: CheckRow[]): Promise<Map<string, boolean>> {
+    const waiverIds = checks.map((x) => x.waiverId).filter((x): x is string => !!x);
+    const ws = waiverIds.length ? await this.s.db.tx().select().from(schema.waiver).where(and(eq(schema.waiver.projectId, projectId), inArray(schema.waiver.id, waiverIds))) : [];
+    const wBy = new Map(ws.map((w) => [w.id, w]));
+    const today = this.s.today(await this.s.project(projectId));
+    const evidenceValid = await this.s.signoffEvidenceValid(projectId, checks.filter((x) => x.status === 'passed').map((x) => x.id));
+    return new Map(
+      checks.map((x) => [
+        x.id,
+        x.status === 'not_applicable' || (x.status === 'passed' && evidenceValid.get(x.id) === true) || (x.status === 'waived' && waiverEffectiveFor(x, x.waiverId ? wBy.get(x.waiverId) : null, today)),
+      ]),
+    );
+  }
+
+  /**
+   * DOM-P34R-01: change the plan's site (null = project-wide) — a scope command like the check's re-binding: reason required,
+   * before the go/no-go only, refused while a FAILED gating check of the current scope would stop gating the plan; the decision
+   * history records the change with the checks that leave and enter the plan's scope. Taken under the readiness lock (the set of
+   * checks gating a GO changes).
+   */
+  async changeSite(ctx: RequestContext, projectId: string, planId: string, body: { expectedVersion: number; siteId: string | null; reason: string }) {
+    await this.s.lockReadiness(projectId);
+    const plan = await loadInProject(this.s.db, schema.cutoverPlan, projectId, planId);
+    this.assertManage(ctx, projectId, plan);
+    if ((body.siteId ?? null) === plan.siteId) {
+      assertVersion(plan, body.expectedVersion, 'cutover plan');
+      return { id: plan.id, status: plan.status, goNoGo: plan.goNoGo, version: plan.version };
+    }
+    await this.s.assertRefs(ctx, projectId, { siteId: body.siteId });
+    const c = schema.readinessCheck;
+    const all = await this.s.db.tx().select().from(c).where(eq(c.projectId, projectId)).orderBy(asc(c.code));
+    const next = { ...plan, siteId: body.siteId };
+    const before = all.filter((x) => readinessCheckAppliesToPlan(x, plan));
+    const after = all.filter((x) => readinessCheckAppliesToPlan(x, next));
+    const leaving = before.filter((x) => !after.some((a) => a.id === x.id));
+    const entering = after.filter((x) => !before.some((b) => b.id === x.id));
+    const cleared = await this.clearedMap(projectId, leaving);
+    assertCutoverPlanSiteChange({
+      planCode: plan.code,
+      planStatus: plan.status,
+      reason: body.reason,
+      leaving: leaving.map((x) => ({ id: x.id, code: x.code, status: x.status, gating: x.blocker || x.mandatory, cleared: cleared.get(x.id) === true })),
+    });
+    const row = (await updateVersioned(this.s.db, schema.cutoverPlan, { id: plan.id, projectId, expectedVersion: body.expectedVersion }, { siteId: body.siteId })) as PlanRow;
+    const codes = (xs: CheckRow[]) => (xs.length ? xs.map((x) => x.code).join(', ') : '—');
+    await this.s.recordPlanHistory(ctx, plan, projectId, 'site_changed', `${body.reason.trim()} — no longer gating: ${codes(leaving)}; now gating: ${codes(entering)}`, null);
+    await this.s.versions.snapshot({ projectId, entityType: 'cutover_plan', entityId: plan.id, versionNo: row.version, snapshot: row, reason: 'site changed' });
+    await this.s.audit.record({
+      action: 'readiness.cutover.change_site',
+      entityType: 'cutover_plan',
+      entityId: plan.id,
+      projectId,
+      before: { siteId: plan.siteId, gatingChecks: before.length },
+      after: { siteId: body.siteId, gatingChecks: after.length, leaving: leaving.map((x) => x.code), entering: entering.map((x) => x.code) },
+      reason: body.reason,
+    });
+    await this.s.enqueueDimensions(ctx, projectId, `plan:${plan.id}:${row.version}`);
+    return { id: plan.id, status: row.status, goNoGo: row.goNoGo, version: row.version };
+  }
+
   private async apply(ctx: RequestContext, plan: PlanRow, cmd: CutoverCommand, expectedVersion: number, values: Record<string, unknown>, rec: { kind: string; rationale?: string | null; evaluation?: GoEvaluation | null; goDecisionId?: string | null }) {
     const to = transition('cutover', CUTOVER_MACHINE, plan.status, cmd);
     const row = (await updateVersioned(this.s.db, schema.cutoverPlan, { id: plan.id, projectId: plan.projectId, expectedVersion }, { status: to, ...values })) as PlanRow;
@@ -334,6 +396,9 @@ export class CutoverService {
       after: { status: to, goNoGo: row.goNoGo, ...(rec.evaluation ? { blockers: rec.evaluation.blockers.length, missing: rec.evaluation.missing } : {}) },
       reason: rec.rationale ?? null,
     });
+    // DOM-P34R-03: the GO, its withdrawal, the execution, the rollback and the post-transition acceptance are inputs of the
+    // operational dimension (business-gates.md §1 rule 8) — the gates module recomputes it on `readiness.changed`.
+    await this.s.enqueueDimensions(ctx, plan.projectId, `plan:${plan.id}:${row.version}`);
     return { id: plan.id, status: to, goNoGo: row.goNoGo, version: row.version };
   }
 

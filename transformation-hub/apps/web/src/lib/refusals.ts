@@ -144,6 +144,9 @@ export const REFUSAL_KEYS: Readonly<Record<string, Entry>> = {
   'readiness.check.rebind_reason_required': 'readiness.refusal.codes.rebind_reason_required',
   'readiness.determination.release_not_allowed': 'readiness.refusal.codes.determination_release_not_allowed',
   'readiness.execution_blocked': 'readiness.refusal.codes.execution_blocked',
+  // The plan's site is a scope command too (P3/P4 domain re-review: DOM-P34R-01)
+  'readiness.cutover.site_change_failed_check': 'readiness.refusal.codes.site_change_failed_check',
+  'readiness.cutover.site_reason_required': 'readiness.refusal.codes.site_reason_required',
   // TSA extensions and guards (DOM-P3-06, -07, -13, -15, -17; SEC-P34-08)
   'tsa.extension.terms_bound': 'readiness.refusal.codes.extension_terms_bound',
   'tsa.extension.end_date_past': 'readiness.refusal.codes.extension_end_date_past',

@@ -51,10 +51,12 @@ export function planFormOf(p: CutoverPlanDetail): PlanForm {
 
 const orNull = (s: string) => (s.trim() ? s.trim() : null);
 
-/** Request body fields (create omits empty values; edit sends explicit nulls so a field can be cleared). */
+/**
+ * Request body fields (create omits empty values; edit sends explicit nulls so a field can be cleared). The site is sent at
+ * creation only: once created, it changes through the "Change site" command (DOM-P34R-01 — it decides which checks gate the plan).
+ */
 export function planBody(f: PlanForm, mode: 'edit' | null) {
   const v = {
-    siteId: f.siteId || null,
     workstreamId: f.workstreamId || null,
     accountableUserId: f.accountable?.id ?? null,
     runbookSummary: orNull(f.runbookSummary),
@@ -66,17 +68,24 @@ export function planBody(f: PlanForm, mode: 'edit' | null) {
     rollbackPlan: orNull(f.rollbackPlan),
   };
   if (mode === 'edit') return v;
-  return Object.fromEntries(Object.entries(v).filter(([, x]) => x !== null)) as Partial<typeof v>;
+  return Object.fromEntries(Object.entries({ ...v, siteId: f.siteId || null }).filter(([, x]) => x !== null)) as Partial<typeof v & { siteId: string | null }>;
 }
 
-export function PlanFields({ form, onChange }: { form: PlanForm; onChange: (f: PlanForm) => void }) {
+export function PlanFields({ form, onChange, siteLocked = false }: { form: PlanForm; onChange: (f: PlanForm) => void; siteLocked?: boolean }) {
   const { t } = useI18n();
   const { sites, workstreams, siteName } = useScopeLabels();
   const set = <K extends keyof PlanForm>(k: K, v: PlanForm[K]) => onChange({ ...form, [k]: v });
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <TextField className="sm:col-span-2" label={t('readiness.cutover.fields.title')} required value={form.title} maxLength={300} onChange={(e) => set('title', e.target.value)} data-testid="plan-title" />
-      <SelectField label={t('readiness.cutover.fields.site')} value={form.siteId} onChange={(e) => set('siteId', e.target.value)} data-testid="plan-site">
+      <SelectField
+        label={t('readiness.cutover.fields.site')}
+        value={form.siteId}
+        onChange={(e) => set('siteId', e.target.value)}
+        disabled={siteLocked}
+        hint={siteLocked ? t('readiness.cutover.fields.siteLocked') : undefined}
+        data-testid="plan-site"
+      >
         <option value="">{t('readiness.cutover.projectWide')}</option>
         {sites.map((s) => (
           <option key={s.id} value={s.id}>

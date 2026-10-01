@@ -13,7 +13,10 @@ import { P, clearCheck, completePlan, createCheck, decisionOfType, drainWorker, 
  * `DEFECT …` probes assert the REQUIRED behaviour and are declared with `it.fails` while the defect is open;
  * `P34DRE_PROBE_PLAIN=1` runs them as plain tests. `CONTROL …` are plain tests. All data is synthetic.
  */
+// Implementer (fix of the P3/P4 domain re-review): the DEFECT probes of this file are fixed and renamed `… (fixed, regression)`
+// — plain `it`, assertions unchanged. The alias stays so that P34DRE_PROBE_PLAIN=1 keeps working for any probe added later.
 const defect = process.env['P34DRE_PROBE_PLAIN'] ? it : it.fails;
+void defect;
 
 let projectId: string;
 let p: Personas;
@@ -65,7 +68,7 @@ describe('P3/P4 domain re-review — the Day-1 GO moves the operational dimensio
     expect(o.state, JSON.stringify(o)).toBe('readiness_in_progress');
   });
 
-  defect('DEFECT DOM-P34R-03a: after the GO is recorded (worker drained), the stored dimension still reads readiness_in_progress — the GO does not trigger a recompute', async () => {
+  it('DOM-P34R-03a: after the GO is recorded (worker drained), the stored dimension still reads readiness_in_progress — the GO does not trigger a recompute (fixed, regression)', async () => {
     const v = await plan(p.pm, projectId, planId);
     const g = await p.sponsor.post(`${P(projectId)}/cutover-plans/${planId}/go-no-go`, { expectedVersion: v.version, outcome: 'go', rationale: 'GO — the only blocker is cleared (probe)' });
     expect(g.status, JSON.stringify(g.body)).toBe(201);
@@ -81,7 +84,7 @@ describe('P3/P4 domain re-review — the Day-1 GO moves the operational dimensio
     expect(o.state, JSON.stringify(o)).toBe('day1_go_approved');
   });
 
-  defect('DEFECT DOM-P34R-03b: the GO is withdrawn (return to planning) — the stored dimension still says "Day-1 GO approved for every transition plan"', async () => {
+  it('DOM-P34R-03b: the GO is withdrawn (return to planning) — the stored dimension still says "Day-1 GO approved for every transition plan" (fixed, regression)', async () => {
     const v = await plan(p.pm, projectId, planId);
     expect(v.status).toBe('approved_go');
     const back = await p.pm.post(`${P(projectId)}/cutover-plans/${planId}/return-to-planning`, { expectedVersion: v.version, note: 'GO withdrawn for re-planning (probe, synthetic)' });

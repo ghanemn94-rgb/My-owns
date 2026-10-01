@@ -16,6 +16,7 @@ import {
   assertExecutionAllowed,
   assertExtensionEndDateAhead,
   assertReadinessCheckRebind,
+  assertCutoverPlanSiteChange,
   assertTsaActivatable,
   extensionTermsBinding,
   statusAfterRemedy,
@@ -394,5 +395,19 @@ describe('TSA (REQ-TSA-001..006, AT-10, D-25)', () => {
     expect(codeOf(() => assertReplacementAcceptable({ ...r, activeEvidenceCount: 0 }))).toBe('rule_violation:tsa.replacement.no_evidence');
     expect(codeOf(() => assertReplacementAcceptable({ ...r, status: 'proposed' }))).toBe('rule_violation:tsa.replacement.invalid_state');
     expect(codeOf(() => assertTsaExitStartable({ replacementService: null }))).toBe('rule_violation:tsa.exit.no_replacement_plan');
+  });
+});
+
+describe('DOM-P34R-01 — the plan\'s site is a scope command', () => {
+  const failed = { id: 'c1', code: 'RC-001', status: 'failed' as const, gating: true, cleared: false };
+  it('reason required; only before the go/no-go; refused while a FAILED gating check would stop gating the plan', () => {
+    expect(codeOf(() => assertCutoverPlanSiteChange({ planCode: 'CO-1', planStatus: 'planning', reason: ' ', leaving: [] }))).toBe('rule_violation:readiness.cutover.site_reason_required');
+    for (const planStatus of ['ready_for_decision', 'approved_go', 'executed'] as const) {
+      expect(codeOf(() => assertCutoverPlanSiteChange({ planCode: 'CO-1', planStatus, reason: 'r', leaving: [] }))).toBe('rule_violation:readiness.cutover.locked');
+    }
+    expect(codeOf(() => assertCutoverPlanSiteChange({ planCode: 'CO-1', planStatus: 'rehearsal', reason: 'r', leaving: [failed] }))).toBe('rule_violation:readiness.cutover.site_change_failed_check');
+    // An open (not failed) check, or a non-gating one, may leave a plan before its go/no-go.
+    expect(() => assertCutoverPlanSiteChange({ planCode: 'CO-1', planStatus: 'planning', reason: 'r', leaving: [{ ...failed, status: 'in_progress' }] })).not.toThrow();
+    expect(() => assertCutoverPlanSiteChange({ planCode: 'CO-1', planStatus: 'planning', reason: 'r', leaving: [{ ...failed, gating: false }] })).not.toThrow();
   });
 });

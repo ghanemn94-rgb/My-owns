@@ -114,6 +114,11 @@ export class ReadinessController {
     return this.cutover.update(ctx, i.params.projectId, i.params.planId, i.body);
   }
 
+  @ApiRoute(R.changeCutoverPlanSite)
+  changePlanSite(@Ctx() ctx: RequestContext, @Input() i: RouteInput<typeof R.changeCutoverPlanSite>) {
+    return this.cutover.changeSite(ctx, i.params.projectId, i.params.planId, i.body);
+  }
+
   @ApiRoute(R.recordCutoverRehearsal)
   rehearsal(@Ctx() ctx: RequestContext, @Input() i: RouteInput<typeof R.recordCutoverRehearsal>) {
     return this.cutover.recordRehearsal(ctx, i.params.projectId, i.params.planId, i.body);

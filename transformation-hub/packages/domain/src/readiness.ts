@@ -260,6 +260,35 @@ export function assertReadinessCheckRebind(i: { checkCode: string; status: Readi
 }
 
 /**
+ * DOM-P34R-01: the plan's site is the other side of the same scope relation (`readinessCheckAppliesToPlan`), so changing it is
+ * a scope command too — never a descriptive edit. A reason is required; the plan must be before its go/no-go (planning /
+ * rehearsal — never while a GO is pending or approved); and the change is refused while a FAILED gating check of the plan's
+ * current scope would stop gating it (a failed blocker keeps gating the transition it was raised for until cleared). Open
+ * (not failed) checks may leave a plan in planning, as with the check's own re-binding; the plan's decision history records
+ * the change with the checks that leave and enter its scope.
+ */
+export function assertCutoverPlanSiteChange(i: {
+  planCode: string;
+  planStatus: CutoverStatus;
+  reason: string | null | undefined;
+  /** Checks gating the plan now that would no longer gate it after the change. */
+  leaving: readonly { id: string; code: string; status: ReadinessStatus; gating: boolean; cleared: boolean }[];
+}): void {
+  if (!i.reason?.trim()) throw ruleViolation('readiness.cutover.site_reason_required', 'Changing the site of a transition plan requires a reason');
+  if (!CUTOVER_EDITABLE_STATUSES.includes(i.planStatus)) {
+    throw ruleViolation('readiness.cutover.locked', `The plan ${i.planCode} is ${i.planStatus}; its site changes only before the go/no-go (return it to planning first — earlier decisions stay in the history)`, { status: i.planStatus });
+  }
+  const failed = i.leaving.filter((c) => c.gating && !c.cleared && c.status === 'failed');
+  if (failed.length) {
+    throw ruleViolation(
+      'readiness.cutover.site_change_failed_check',
+      `${failed.map((c) => c.code).join(', ')} failed and gate ${i.planCode} through its current site: a failed gating check keeps gating the transition it was raised for until it is cleared (passed, waived or not applicable)`,
+      { checks: failed.map((c) => ({ id: c.id, code: c.code, status: c.status })) },
+    );
+  }
+}
+
+/**
  * DOM-P3-04 (AT-09 "a failed test blocks go-live according to the blocker"): recording that a transition was executed is
  * refused while a gating check of the plan is open again after the GO — until it is cleared / waived, or the GO is withdrawn
  * (return to planning) and a new GO is decided on a new decision.

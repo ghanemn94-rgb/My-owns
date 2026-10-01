@@ -26,10 +26,10 @@ import { rdHref, rk, useReadinessRefresh, type CutoverPlanDetail } from '@/lib/r
 import { ButtonRow, Callout, CmdButton, DecisionIssue, DecisionSelect, Facts, Panel, Person, RdCommandDialog, Tick, UText, useScopeLabels } from '../../_components/rd';
 import { PlanFields, planBody, planFormOf, type PlanForm } from '../../_components/plan-form';
 
-type Cmd = 'edit' | 'rehearsal' | 'comms' | 'link' | 'submit' | 'back' | 'decide' | 'execute' | 'rollback' | 'accept' | null;
+type Cmd = 'edit' | 'site' | 'rehearsal' | 'comms' | 'link' | 'submit' | 'back' | 'decide' | 'execute' | 'rollback' | 'accept' | null;
 const EDITABLE = ['planning', 'rehearsal'];
 const PREREQ_KEYS = ['hasRunbook', 'hasRollbackPlan', 'communicationsApproved', 'hasWindow', 'hasServiceImpact', 'hasAccountableOwner', 'testingDone', 'hasApprovedGoDecision'] as const;
-const HISTORY_KINDS = ['submitted', 'returned_to_planning', 'rehearsal', 'go', 'no_go', 'go_blocked', 'executed', 'rolled_back', 'accepted', 'go_flagged', 'execution_blocked', 'check_bound', 'check_unbound'];
+const HISTORY_KINDS = ['submitted', 'returned_to_planning', 'rehearsal', 'go', 'no_go', 'go_blocked', 'executed', 'rolled_back', 'accepted', 'go_flagged', 'execution_blocked', 'check_bound', 'check_unbound', 'site_changed'];
 /** History entries that report a refusal or a flag (shown in the danger tone). */
 const DANGER_KINDS = ['go_blocked', 'no_go', 'rolled_back', 'go_flagged', 'execution_blocked'];
 /** Server labels of missing §7.4 prerequisites (domain `missingCutoverPrerequisites`) → translated prerequisite names. */
@@ -57,6 +57,8 @@ function PlanDialogs({ p, cmd, onClose }: { p: CutoverPlanDetail; cmd: Cmd; onCl
   const [text, setText] = useState('');
   const [decisionId, setDecisionId] = useState(p.goDecisionId ?? '');
   const [outcome, setOutcome] = useState<'go' | 'no_go'>('go');
+  const [siteId, setSiteId] = useState(p.siteId ?? '');
+  const { sites, siteName } = useScopeLabels();
   const params = { projectId, planId: p.id };
   const done = async (msg: string) => {
     await refresh();
@@ -97,7 +99,35 @@ function PlanDialogs({ p, cmd, onClose }: { p: CutoverPlanDetail; cmd: Cmd; onCl
             await done(r.version === p.version ? t('readiness.common.noChanges') : t('readiness.common.saved'));
           }}
         >
-          <PlanFields form={form} onChange={setForm} />
+          <PlanFields form={form} onChange={setForm} siteLocked />
+        </RdCommandDialog>
+      );
+    case 'site':
+      // DOM-P34R-01: the site decides which checks gate the plan — a scope command with a reason, recorded in the history.
+      return (
+        <RdCommandDialog
+          open
+          onClose={onClose}
+          title={t('readiness.plan.site.title')}
+          confirmLabel={t('readiness.plan.site.confirm')}
+          noteMode="required"
+          noteLabel={t('readiness.common.reason')}
+          expectedVersion={p.version}
+          confirmDisabled={(siteId || null) === (p.siteId ?? null)}
+          consequences={[t('readiness.plan.site.effect'), t('readiness.plan.site.failedRule'), t('common.command.audited')]}
+          onConfirm={async ({ note }) => {
+            await api(readinessRoutes.changeCutoverPlanSite, { params, body: { expectedVersion: p.version, siteId: siteId || null, reason: note } });
+            await done(t('readiness.plan.site.done'));
+          }}
+        >
+          <SelectField label={t('readiness.cutover.fields.site')} value={siteId} onChange={(e) => setSiteId(e.target.value)} data-testid="plan-site-change">
+            <option value="">{t('readiness.cutover.projectWide')}</option>
+            {sites.map((x) => (
+              <option key={x.id} value={x.id}>
+                {siteName(x.id)}
+              </option>
+            ))}
+          </SelectField>
         </RdCommandDialog>
       );
     case 'rehearsal':
@@ -350,6 +380,7 @@ export default function CutoverPlanPage() {
   add(manage && (st === 'approved_go' || st === 'executed'), 'rollback', t('readiness.plan.rollback.action'), 'danger');
   add(manage && st === 'executed', 'accept', t('readiness.plan.accept.action'), 'primary');
   add(manage && EDITABLE.includes(st), 'edit', t('readiness.common.edit'));
+  add(manage && EDITABLE.includes(st), 'site', t('readiness.plan.site.action'));
   const whenBy = (at: string | null, by: string | null) =>
     at ? (
       <span>

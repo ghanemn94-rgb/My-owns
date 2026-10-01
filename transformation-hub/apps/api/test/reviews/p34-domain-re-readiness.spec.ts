@@ -75,7 +75,7 @@ describe('P3/P4 domain re-review — which transition a FAILED blocker gates [AT
     expect((r.body.details.blockers as { id: string }[]).map((b) => b.id)).toContain(checkId);
   });
 
-  defect('DEFECT DOM-P34R-01: a descriptive PATCH of the PLAN\'s siteId (planning / rehearsal) takes a FAILED site blocker out of the plan, and the GO is accepted', async () => {
+  it('DOM-P34R-01: a descriptive PATCH of the PLAN\'s siteId (planning / rehearsal) takes a FAILED site blocker out of the plan, and the GO is accepted (fixed, regression)', async () => {
     const siteA = await insertSite(projectId, 'S-P34R-1A');
     const siteB = await insertSite(projectId, 'S-P34R-1B');
     const planId = await completePlan(p.pm, projectId, { siteId: siteA, accountableUserId: p.pm.userId, title: 'Transition of hall A (synthetic)' });

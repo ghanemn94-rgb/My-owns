@@ -282,7 +282,8 @@
       "serviceImpact": "Service-impact assessment",
       "testing": "Testing summary",
       "contingency": "Contingency plan",
-      "rollback": "Rollback plan"
+      "rollback": "Rollback plan",
+      "siteLocked": "The site decides which readiness checks gate this transition — change it with \"Change site\" (reason required)."
     }
   },
   "plan": {
@@ -348,7 +349,8 @@
         "go_flagged": "GO flagged — a gating check is open again",
         "execution_blocked": "Execution record refused by the server",
         "check_bound": "Readiness check now gates this transition",
-        "check_unbound": "Readiness check no longer gates this transition"
+        "check_unbound": "Readiness check no longer gates this transition",
+        "site_changed": "Site of the transition changed"
       },
       "system": "System"
     },
@@ -443,7 +445,15 @@
       "effect": "Only while planning or rehearsing; never changes the status or the decision.",
       "locked": "The plan is locked in this state — return it to planning to change it."
     },
-    "acceptanceEvidence": "Post-transition acceptance evidence"
+    "acceptanceEvidence": "Post-transition acceptance evidence",
+    "site": {
+      "action": "Change site",
+      "title": "Change the site of this transition",
+      "confirm": "Change site",
+      "effect": "The readiness checks of the new site gate this transition; those of the current site no longer do. The decision history records the change with your reason.",
+      "failedRule": "Refused while a failed blocking or mandatory check of the current site would stop gating the transition.",
+      "done": "Site changed."
+    }
   },
   "tsa": {
     "title": "TSA register",
@@ -679,7 +689,9 @@
       "tsa_decision_other_tsa": "This decision already backs another TSA (its terms or its extension): a decision about one TSA does not back another TSA.",
       "activate_not_started": "The service start date has not been reached: the TSA is activated from its start date.",
       "enduring_locked": "Whether the service is an enduring arrangement is part of its approved terms and can no longer be changed.",
-      "classification_above_clearance": "You cannot classify a record above your own clearance."
+      "classification_above_clearance": "You cannot classify a record above your own clearance.",
+      "site_change_failed_check": "A failed blocking or mandatory check of the current site gates this transition: it keeps gating it until it is cleared (passed, waived or not applicable).",
+      "site_reason_required": "Changing the site of a transition requires a reason."
     }
   }
 }
