@@ -411,7 +411,9 @@ describe('Demo seed — governance scenario (spec §21)', () => {
     const m = await owner().query(`select status, pack_snapshot_id, minutes_approved_by from meeting where committee_id = $1 and number = 1`, [sc]);
     expect(m.rows[0].status).toBe('minutes_approved');
     expect(m.rows[0].pack_snapshot_id).toBeTruthy();
-    const d = await owner().query(`select status, authority_outcome, is_demo, gate_key, external_authority_reference from decision where committee_id = $1 order by code`, [sc]);
+    // Only the SEEDED decisions (titles 'Demo — …'): other specs add test decisions to the demo committee, and the file order
+    // of the suite is not fixed.
+    const d = await owner().query(`select status, authority_outcome, is_demo, gate_key, external_authority_reference from decision where committee_id = $1 and title like 'Demo — %' order by code`, [sc]);
     expect(d.rows.map((r) => r.status)).toEqual(['implementation_pending', 'recommended', 'submitted', 'approved', 'draft', 'approved']);
     expect(d.rows[1].authority_outcome).toBe('pending_external_authority');
     // (e) gate G0: recommended to the delegating authority, whose (synthetic) approval was then recorded
