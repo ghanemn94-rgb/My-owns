@@ -702,12 +702,37 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:25c97340b6047e87e82642c28e90dea72cdd07b5bbd5d81986f497e5e863061b",
-        "source_commit": "37ec37453a5e8ce8bebba102a85df4f5c4b0ef8b",
-        "frozen_at": "2026-10-01T20:15:35Z",
-        "manifest_path": "docs/delivery/candidates/DG1/25c97340b6047e87.manifest.json"
+        "candidate_id": "sha256:e6979e12111aeb1456f591d66f8437d9f491c7e8e58215ea7c5a9f233cbfe71d",
+        "source_commit": "485e91f50eabe236b12d67f45d1bf1d246a97e4a",
+        "frozen_at": "2026-10-01T21:39:42Z",
+        "manifest_path": "docs/delivery/candidates/DG1/e6979e12111aeb14.manifest.json"
       },
-      "review_rounds": [],
+      "review_rounds": [
+        {
+          "round": 1,
+          "candidate_id": "sha256:25c97340b6047e87e82642c28e90dea72cdd07b5bbd5d81986f497e5e863061b",
+          "frozen_at": "2026-10-01T20:15:35Z",
+          "source_commit": "37ec37453a5e8ce8bebba102a85df4f5c4b0ef8b",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG1/round-1/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG1/round-1/qa-verifier.json"
+          },
+          "note": "Clean re-gate round 1 on candidate 25c97340: domain PASS (3 Low doc findings), code-security FAIL (7 findings incl. 2 Medium mandatory product bugs F-DG1-140 BU re-parent cycle-under-concurrency and F-DG1-141 destination-parent authz, plus 142 rate-limit cookie bypass, 143 ajv deps/lint, 144 flaky web test, 145 views docs, 146 D-057 count), qa PASS (2 Low: 230 views, 231 register; 2 environmental checks BLOCKED — live-registry per D-057 and live-CI A24 per D-058). All 12 findings imported and repaired for round 2."
+        },
+        {
+          "round": 2,
+          "candidate_id": "sha256:e6979e12111aeb1456f591d66f8437d9f491c7e8e58215ea7c5a9f233cbfe71d",
+          "frozen_at": "2026-10-01T21:39:42Z",
+          "source_commit": "485e91f50eabe236b12d67f45d1bf1d246a97e4a",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG1/round-2/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG1/round-2/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG1/round-2/qa-verifier.json"
+          },
+          "note": "Clean re-gate round 2 (gate round) on candidate e6979e12: re-verify the 12 round-1 findings on the repaired candidate and re-run the full required-check suite. Live-registry (D-057) and live-CI A24 (D-058) are documented environmental residuals, recorded as the available-evidence PASS + a note, never as BLOCKED gate checks."
+        }
+      ],
       "gate_record": "docs/delivery/gates/DG1.json",
       "blockers": [],
       "history": [
@@ -724,6 +749,16 @@
           "state": "REVIEWING",
           "at": "2026-10-01T20:20:00Z",
           "note": "Clean re-gate (D-056 path C): the final, fully-remediated P1 product is integrated on a base that precedes any DG1 review evidence. Candidate frozen for a single clean DG1 gate round (round 1). Prefreeze sanity on this branch: pnpm -r typecheck clean, pnpm lint clean, pnpm test 325/325 (Node 22). Reviewers run the full required-check suite on the frozen candidate and verify the 12 DG1-final requirements."
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-10-01T21:40:00Z",
+          "note": "Round 1 (clean re-gate): 12 findings (2 Medium mandatory product bugs F-DG1-140/141, rate-limit 142; Low docs/deps/test/register/decision). Repaired: migration 0009 DB hierarchy guard + advisory lock (140), destination-parent authz (141), token-hash/IP rate-limit keying (142), ajv/ajv-formats/yaml -> devDeps + lint scope (143), deterministic web test (144), three views documented + schema.ts comment (145/001/230), clean-start migration count (002), register notes/evidence de-referenced from dev-history candidate 991d3241 (003/231), D-057->13/14 + D-058 CI-live residual (146). All 12 FIXED_PENDING_VERIFICATION at 12bf33f. Verified: typecheck/lint/prettier clean, unit 326/326 Node 22+24, integration 209/209."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-10-01T21:42:00Z",
+          "note": "Round-1 findings repaired and FIXED_PENDING_VERIFICATION at 12bf33f; candidate re-frozen as e6979e12 (394 files, source 485e91f) for the round-2 gate review."
         }
       ]
     },
