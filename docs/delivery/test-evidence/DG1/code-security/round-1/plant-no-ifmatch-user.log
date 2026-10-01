@@ -1,0 +1,96 @@
+
+ RUN  v3.2.4 /var/tmp/mth-run.JxJlkA/claude-0/review-sec
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mup5ptmg_862d2543; applied 6 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/contract/contract.test.ts (8 tests | 1 failed) 898ms
+   ✓ route coverage > maps every governed Fastify route to an OpenAPI operation with the same method, and back 2ms
+   ✓ route coverage > declares access on every governed route (public or a permission) 1ms
+   ✓ every operation, validated against the contract and the zod mirrors > health 21ms
+   ✓ every operation, validated against the contract and the zod mirrors > auth + me 199ms
+   ✓ every operation, validated against the contract and the zod mirrors > organizations and business units 154ms
+   ✓ every operation, validated against the contract and the zod mirrors > users, roles, permissions and assignments 167ms
+   ✓ every operation, validated against the contract and the zod mirrors > transformations and audit 155ms
+   × every operation, validated against the contract and the zod mirrors > covers every operation with at least one success and every successful body with its zod mirror 7ms
+     → expected [ 'getBrandingTokens' ] to deeply equal []
+ ❯ |integration| apps/api/test/integration/admin.test.ts (11 tests | 1 failed) 852ms
+   ✓ users > lists users of an organization for user.read holders only (403 otherwise), with search 57ms
+   ✓ users > pre-provisions a user with an identity binding (user.manage), 409 on duplicate e-mail or identity, audited 86ms
+   ✓ users > reads a user (self always; others need user.read on the home organization, else 404) 30ms
+   × users > disables a user with If-Match, revoking all their sessions in the same transaction; audited 52ms
+     → expected 200 to be 428 // Object.is equality
+   ✓ users > refuses to let an administrator disable themself (403 user.cannot_disable_self) 12ms
+   ✓ role and permission catalogue > lists roles with permissions equal to the seeded catalogue (role.read), 403 without it 41ms
+   ✓ scoped role assignments > grants a role at a transformation scope (access.assign), with a mandatory reason; audited; access follows 87ms
+   ✓ scoped role assignments > refuses self-grants, reserved scope types, unknown scopes and cross-organization scopes 25ms
+   ✓ scoped role assignments > never makes a technical administrator an approver: admin roles carry no approval permission 26ms
+   ✓ scoped role assignments > lists assignments (access.read) with filters; 403 for callers without access.read in that organization 29ms
+   ✓ scoped role assignments > revokes with If-Match and a reason (never deletes); the user loses access and their sessions end; audited 150ms
+ ✓ |integration| packages/db/test/integration/bootstrap.test.ts (5 tests) 1140ms
+   ✓ mth-db bootstrap > creates the first organization and a technical/access admin with no business permission, fully audited  306ms
+   ✓ mth-db bootstrap > refuses to run twice  302ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts (16 tests) 627ms
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts (10 tests) 5331ms
+   ✓ worker runtime: end to end, restarts and the dead-letter queue > relays and handles a created transformation, and survives a restart without losing the job  3718ms
+   ✓ worker runtime: end to end, restarts and the dead-letter queue > moves a job that keeps failing to ops.failed after the bounded retries  1053ms
+ ✓ |integration| tests/qa/integration/a13-job-idempotency.test.ts (5 tests) 3429ms
+   ✓ A13 running worker: a duplicate delivery is a no-op > consumes the event once; an extra job with the same message completes as 'duplicate'  2646ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts (27 tests) 845ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts (14 tests) 759ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts (10 tests) 688ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts (13 tests) 623ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts (7 tests) 348ms
+ ✓ |integration| tests/qa/integration/a14-concurrency.test.ts (5 tests) 463ms
+ ✓ |integration| apps/api/test/integration/platform.test.ts (9 tests) 324ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts (13 tests) 517ms
+ ✓ |integration| apps/worker/test/integration/maintenance.test.ts (2 tests) 281ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts (17 tests) 151ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts (9 tests) 46ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/admin.test.ts > users > disables a user with If-Match, revoking all their sessions in the same transaction; audited
+AssertionError: expected 200 to be 428 // Object.is equality
+
+- Expected
++ Received
+
+- 428
++ 200
+
+ ❯ apps/api/test/integration/admin.test.ts:125:106
+    123|       ).status,
+    124|     ).toBe(403);
+    125|     expect((await call(api.app, "PATCH", url, { session: admin, body: …
+       |                                                                                                          ^
+    126|     const res = await call(api.app, "PATCH", url, {
+    127|       session: admin,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > covers every operation with at least one success and every successful body with its zod mirror
+AssertionError: expected [ 'getBrandingTokens' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "getBrandingTokens",
++ ]
+
+ ❯ apps/api/test/integration/contract/contract.test.ts:254:21
+    252|   it("covers every operation with at least one success and every succe…
+    253|     const missing = operations.filter((o) => !exercised.has(o.operatio…
+    254|     expect(missing).toEqual([]);
+       |                     ^
+    255|     const noSuccess = operations
+    256|       .filter((o) => ![...exercised.get(o.operationId)!].some((s) => s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed | 15 passed (17)
+      Tests  2 failed | 179 passed (181)
+   Start at  06:32:17
+   Duration  11.16s (transform 1.05s, setup 0ms, collect 9.69s, tests 17.32s, environment 3ms, prepare 1.16s)
+

@@ -1,0 +1,42 @@
+# domain-reviewer static checks on disposable clone at 85e5bbd (env: Node v22.22.2, pnpm 10.33.0)
+## candidate id (repo HEAD 863505e69676e2898ae0b8103022683e69ec1618)
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:7fcc4943694dc9d7d207b18b53c42eab1efa131da46b898f733ae20298b39367","files":371}
+## DG0 historical
+PASS gate DG0 (historical)
+## openapi:lint
+PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 33 operations
+exit=0
+## check:no-cdn
+PASS no-cdn: scanned apps, packages
+## check:contrast
+PASS contrast: 50 pairs meet WCAG AA; 3 prohibited pairs fail as documented
+## i18n key parity
+admin.json en 80 ar 80 diff 0
+auth.json en 21 ar 21 diff 0
+common.json en 92 ar 92 diff 0
+nav.json en 48 ar 48 diff 0
+problems.json en 75 ar 75 diff 0
+transformations.json en 96 ar 96 diff 0
+## honesty grep (claims of official/PMI/certified, negations filtered)
+HEAD:apps/web/src/i18n/ar/common.json:120:    "methodBody": "يطبّق المنتج دليل التحول المؤسسي الإصدار 1.0، وهو خلاصة عملية مستوحاة من ممارسات PMI وBrightline وBRM مع إضافات مخصصة. وهو ليس معيارًا رسميًا من PMI، وهذا المنتج غير معتمد من PMI أو من أي جهة أخرى.",
+HEAD:docs/architecture/README.md:28:The playbook is a practical synthesis inspired by PMI, Brightline and BRM. Nothing here claims official PMI
+HEAD:docs/architecture/adr/ADR-0001-runtime-language-package-manager.md:11:The master prompt (§16) asks for a TypeScript web frontend, a TypeScript API and a durable worker, all maintainable by Mobily IT without the builder. The dependency versions must be checked against official support windows and licences. Four conflicts had to be resolved:
+(end)
+## status transitions
+/** Explicit status transitions (REQ-S16-023). Anything not listed is rejected server-side with 422. */
+export const TRANSFORMATION_STATUS_TRANSITIONS: Readonly<
+  Record<TransformationStatus, readonly TransformationStatus[]>
+> = {
+  draft: ["active"],
+  active: ["on_hold", "closed"],
+  on_hold: ["active", "closed"],
+  closed: [],
+};
+## tokens.json seven values
+brand.primary #0078FF true
+brand.deep #003B73 true
+surface.page #F5F8FC true
+surface.card #FFFFFF true
+text.primary #142438 true
+text.secondary #526174 true
+border.default #DCE5EF true

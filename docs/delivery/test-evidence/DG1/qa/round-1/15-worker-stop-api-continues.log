@@ -1,0 +1,21 @@
+# cmd: QA_E2E_PG_PORT=54364 e2e/support/qa-stack.sh bash 15-worker-stop-api-continues.sh (script copied into evidence)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applied 6 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+PASS worker running pid=93
+PASS worker stopped (SIGTERM); exit status: 0
+readyz after worker stop: 200 {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+dev-login 204
+create while worker is down: HTTP 201 {"id":"01a0f630-cfa4-767d-b0b7-1e922f01abcb","organizationId":"01920000-0000-7000-9000-000000000001","businessUnitId":"01920000-0000-7000-9000-000000000103","code":"TR-0001","name":"QA S16-001 synthet
+outbox pending: 1
+outbox pending after worker restart: 0
+RESULT PASS
+exit=0

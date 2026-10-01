@@ -1,0 +1,22 @@
+--- env leak:
+MAX_THINKING_TOKENS=<present>
+GH_TOKEN=<present>
+GITHUB_TOKEN=<present>
+CLOUDSDK_AUTH_ACCESS_TOKEN=<present>
+AWS_SECRET_ACCESS_KEY=<present>
+ANTHROPIC_BASE_URL=<present>
+FAKE_ORCH_SECRET=<present>
+CLAUDE_SESSION_INGRESS_TOKEN_FILE=<present>
+CLAUDE_CODE_MESSAGING_TOKEN=<present>
+--- caps:
+CapEff:	000001ffffffffff
+CapBnd:	000001ffffffffff
+0
+--- writes inside target tree outside node_modules:
+WRITABLE .git/hooks/pre-commit
+WRITABLE .claude/probe-settings.json
+WRITABLE tools/gates/probe.mjs
+WRITABLE .github/workflows/probe.yml
+--- remount attempt:
+       dmesg(1) may have more information after failed mount system call.
+mount rc=0

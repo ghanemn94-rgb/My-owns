@@ -1,0 +1,29 @@
+# cmd: (spec copied from docs/delivery/test-evidence/DG1/qa/tests/ into clone e2e/qa-dg1-r1/) PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers e2e/support/qa-stack.sh npx playwright test e2e/qa-dg1-r1 --workers=1
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applied 6 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+
+Running 6 tests using 1 worker
+
+  ✓  1 [chromium-en] › e2e/qa-dg1-r1/dg1-r1-branding-fonts-wordmark.spec.ts:41:3 › REQ-S15-002 branding tokens API › unauthenticated -> 401 (61ms)
+  ✓  2 [chromium-en] › e2e/qa-dg1-r1/dg1-r1-branding-fonts-wordmark.spec.ts:48:3 › REQ-S15-002 branding tokens API › signed-in user gets the seven seeded tokens, provenance=provisional (104ms)
+  ✓  3 [chromium-en] › e2e/qa-dg1-r1/dg1-r1-branding-fonts-wordmark.spec.ts:84:3 › REQ-S15-005/006 + honesty in the rendered shell › no external requests; bundled Plex fonts; provisional text wordmark; no official claims (AR and EN) (1.9s)
+  ✓  4 [chromium-ar] › e2e/qa-dg1-r1/dg1-r1-branding-fonts-wordmark.spec.ts:41:3 › REQ-S15-002 branding tokens API › unauthenticated -> 401 (65ms)
+  ✓  5 [chromium-ar] › e2e/qa-dg1-r1/dg1-r1-branding-fonts-wordmark.spec.ts:48:3 › REQ-S15-002 branding tokens API › signed-in user gets the seven seeded tokens, provenance=provisional (91ms)
+  ✓  6 [chromium-ar] › e2e/qa-dg1-r1/dg1-r1-branding-fonts-wordmark.spec.ts:84:3 › REQ-S15-005/006 + honesty in the rendered shell › no external requests; bundled Plex fonts; provisional text wordmark; no official claims (AR and EN) (1.9s)
+
+  6 passed (6.2s)
+
+To open last HTML report run:
+[36m[39m
+[36m  npx playwright show-report[39m
+[36m[39m
+exit=0

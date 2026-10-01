@@ -1,0 +1,23 @@
+# negative probe: access imports transformations internals (not in dependsOn, not via index) -> apps/api/src/modules/access/zz-qa-probe.ts
+   ✓ API module boundaries (ADR-0002) > has only mapped module directories, and every P1 module has a public index.ts 3ms
+   × API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages 40ms
+   ✓ API module boundaries (ADR-0002) > the declared module graph is acyclic, and audit/access depend on no business module 3ms
+   ✓ API module boundaries (ADR-0002) > detects a violation (self-check of the checker) 0ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/db imports only @mth/config and @mth/shared 5ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/config imports only @mth/shared 2ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/shared imports no workspace package 3ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets) 33ms
+exit=1 (expected non-zero)
+# negative probe: organization bypasses access/index.ts (deep import) -> apps/api/src/modules/organization/zz-qa-probe.ts
+   ✓ API module boundaries (ADR-0002) > has only mapped module directories, and every P1 module has a public index.ts 2ms
+   × API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages 33ms
+   ✓ API module boundaries (ADR-0002) > the declared module graph is acyclic, and audit/access depend on no business module 2ms
+   ✓ API module boundaries (ADR-0002) > detects a violation (self-check of the checker) 0ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/db imports only @mth/config and @mth/shared 4ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/config imports only @mth/shared 2ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/shared imports no workspace package 3ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets) 30ms
+exit=1 (expected non-zero)
+# control after removing probes
+      Tests  9 passed (9)
+exit=0

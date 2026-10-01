@@ -1,0 +1,14 @@
+# run 2: npm_config_store_dir=$TMPDIR/pstore/v10 (writable copy; host store is read-only in the reviewer sandbox -> run 1 AC-2 failure was EROFS on the store, see 20-install-sandbox-tests.log)
+# cmd: tools/deps/tests/install-sandbox.test.sh
+PASS  AC-1 write to /etc is refused read-only under the sandbox
+PASS  AC-1 (control) a write inside the target tree succeeds
+PASS  AC-2 a non-allow-listed dependency's postinstall did not run
+PASS  AC-2 an allow-listed dependency's postinstall did run
+PASS  AC-3 frozen install without a committed lockfile fails non-zero
+PASS  AC-3 frozen install that would change the lockfile fails non-zero
+PASS  AC-4 a missing bubblewrap exits 65 (BLOCKED), never an unsandboxed install
+install-sandbox acceptance: 7 passed, 0 failed
+exit=0
+# independent AC-2 check: install exit status + marker, non-allow-listed vs allow-listed
+allow-list=[] install-exit=0 node_modules/ac2-fixture=yes marker=absent
+allow-list=["ac2-fixture"] install-exit=0 node_modules/ac2-fixture=yes marker=PRESENT

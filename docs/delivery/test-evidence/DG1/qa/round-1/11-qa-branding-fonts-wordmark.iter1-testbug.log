@@ -1,0 +1,204 @@
+# cmd: (spec copied from docs/delivery/test-evidence/DG1/qa/tests/ into clone e2e/qa-dg1-r1/) PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers e2e/support/qa-stack.sh npx playwright test e2e/qa-dg1-r1 --workers=1
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applied 6 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+
+Running 6 tests using 1 worker
+
+  ✓  1 [chromium-en] › e2e/qa-dg1-r1/dg1-r1-branding-fonts-wordmark.spec.ts:38:3 › REQ-S15-002 branding tokens API › unauthenticated -> 401 (60ms)
+  ✓  2 [chromium-en] › e2e/qa-dg1-r1/dg1-r1-branding-fonts-wordmark.spec.ts:45:3 › REQ-S15-002 branding tokens API › signed-in user gets the seven seeded tokens, provenance=provisional (108ms)
+  ✘  3 [chromium-en] › e2e/qa-dg1-r1/dg1-r1-branding-fonts-wordmark.spec.ts:81:3 › REQ-S15-005/006 + honesty in the rendered shell › no external requests; bundled Plex fonts; provisional text wordmark; no official claims (AR and EN) (2.0s)
+  ✓  4 [chromium-ar] › e2e/qa-dg1-r1/dg1-r1-branding-fonts-wordmark.spec.ts:38:3 › REQ-S15-002 branding tokens API › unauthenticated -> 401 (64ms)
+  ✓  5 [chromium-ar] › e2e/qa-dg1-r1/dg1-r1-branding-fonts-wordmark.spec.ts:45:3 › REQ-S15-002 branding tokens API › signed-in user gets the seven seeded tokens, provenance=provisional (89ms)
+  ✘  6 [chromium-ar] › e2e/qa-dg1-r1/dg1-r1-branding-fonts-wordmark.spec.ts:81:3 › REQ-S15-005/006 + honesty in the rendered shell › no external requests; bundled Plex fonts; provisional text wordmark; no official claims (AR and EN) (2.0s)
+
+
+  1) [chromium-en] › e2e/qa-dg1-r1/dg1-r1-branding-fonts-wordmark.spec.ts:81:3 › REQ-S15-005/006 + honesty in the rendered shell › no external requests; bundled Plex fonts; provisional text wordmark; no official claims (AR and EN) 
+
+    Error: forbidden claim /معتمد\s+من\s+PMI/i
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mnot[2m.[22mtoMatch[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected pattern: not [32m/معتمد\s+من\s+PMI/i[39m
+    Received string:      [31m"انتقل إلى المحتوى الرئيسي[39m
+    [31mمنصة موبايلي للتحول[39m
+    [31mمؤقت[39m
+    [31mشعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة.[39m
+    [31mEnglish[39m
+    [31mSynthetic Transformation Office[39m
+    [31mمؤسسة تطوير تجريبية (بيانات اصطناعية)[39m
+    [31mتسجيل الخروج[39m
+    [31mعملي[39m
+    [31mالنظرة التنفيذية[39m
+    [31mمخطط[39m
+    [31mمبادرات التحول[39m
+    [31mالدليل والإجراءات[39m
+    [31mمخطط[39m
+    [31mالاستراتيجية ومؤشرات الأداء[39m
+    [31mمخطط[39m
+    [31mنموذج التشغيل المستهدف[39m
+    [31mمخطط[39m
+    [31mالمبادرات وخرائط الطريق[39m
+    [31mمخطط[39m
+    [31mالحوكمة[39m
+    [31mمخطط[39m
+    [31mالمخاطر والإجراءات[39m
+    [31mمخطط[39m
+    [31mالمنافع والمالية[39m
+    [31mمخطط[39m
+    [31mالتغيير والتبنّي[39m
+    [31mمخطط[39m
+    [31mالأدلة والتقارير[39m
+    [31mمخطط[39m
+    [31mالتشغيل المعتاد والتحسين[39m
+    [31mمخطط[39m
+    [31m[39m
+    [31mحول هذا المنتج[39m
+    [31m[39m
+    [31mحول هذا المنتج[39m
+    [31m[39m
+    [31mمنصة موبايلي للتحول[39m
+    [31m[39m
+    [31mهوية بصرية مؤقتة[39m
+    [31m[39m
+    [31mلم يُقدَّم شعار رسمي لموبايلي ولا ألوان علامة معتمدة. يعرض الترويسة شعارًا نصيًا مؤقتًا، والألوان (ومنها #0078FF) رموز تصميم مؤقتة يمكن استبدالها من إعدادات الهوية البصرية بعد اعتماد القيم الرسمية.[39m
+    [31m[39m
+    [31mتستخدم النصوص العربية واللاتينية خطَّي IBM Plex Sans Arabic وIBM Plex Sans (رخصة SIL Open Font 1.1) المضمّنين في التطبيق، دون أي خدمة خطوط عامة.[39m
+    [31m[39m
+    [31mالمنهجية[39m
+    [31m[39m
+    [31mيطبّق المنتج دليل التحول المؤسسي الإصدار 1.0، وهو خلاصة عملية مستوحاة من ممارسات PMI وBrightline وBRM مع إضافات مخصصة. وهو ليس معيارًا رسميًا من PMI، وهذا المنتج غير [7mمعتمد من PMI[27m أو من أي جهة أخرى.[39m
+    [31m[39m
+    [31mإعداداتك الافتراضية[39m
+    [31mالمنطقة الزمنية[39m
+    [31mAsia/Riyadh[39m
+    [31mالعملة[39m
+    [31mSAR"[39m
+
+      131 |       }
+      132 |     }
+    > 133 |     for (const t of texts) for (const re of FORBIDDEN_CLAIMS) expect(t, `forbidden claim ${re}`).not.toMatch(re);
+          |                                                                                                      ^
+      134 |     expect(external, "requests to non-local hosts").toEqual([]);
+      135 |     for (const f of fontUrls) expect(new URL(f).host).toBe(appHost);
+      136 |     expect(fontUrls.length, "at least one bundled font file fetched from the app origin").toBeGreaterThan(0);
+        at /var/tmp/mth-run.3sGBCB/claude-0/review-qa/e2e/qa-dg1-r1/dg1-r1-branding-fonts-wordmark.spec.ts:133:102
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-qa-dg1-r1-dg1-r1-brand-4b3f2--official-claims-AR-and-EN--chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-qa-dg1-r1-dg1-r1-brand-4b3f2--official-claims-AR-and-EN--chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-qa-dg1-r1-dg1-r1-brand-4b3f2--official-claims-AR-and-EN--chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-qa-dg1-r1-dg1-r1-brand-4b3f2--official-claims-AR-and-EN--chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-ar] › e2e/qa-dg1-r1/dg1-r1-branding-fonts-wordmark.spec.ts:81:3 › REQ-S15-005/006 + honesty in the rendered shell › no external requests; bundled Plex fonts; provisional text wordmark; no official claims (AR and EN) 
+
+    Error: forbidden claim /معتمد\s+من\s+PMI/i
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mnot[2m.[22mtoMatch[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected pattern: not [32m/معتمد\s+من\s+PMI/i[39m
+    Received string:      [31m"انتقل إلى المحتوى الرئيسي[39m
+    [31mمنصة موبايلي للتحول[39m
+    [31mمؤقت[39m
+    [31mشعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة.[39m
+    [31mEnglish[39m
+    [31mSynthetic Transformation Office[39m
+    [31mمؤسسة تطوير تجريبية (بيانات اصطناعية)[39m
+    [31mتسجيل الخروج[39m
+    [31mعملي[39m
+    [31mالنظرة التنفيذية[39m
+    [31mمخطط[39m
+    [31mمبادرات التحول[39m
+    [31mالدليل والإجراءات[39m
+    [31mمخطط[39m
+    [31mالاستراتيجية ومؤشرات الأداء[39m
+    [31mمخطط[39m
+    [31mنموذج التشغيل المستهدف[39m
+    [31mمخطط[39m
+    [31mالمبادرات وخرائط الطريق[39m
+    [31mمخطط[39m
+    [31mالحوكمة[39m
+    [31mمخطط[39m
+    [31mالمخاطر والإجراءات[39m
+    [31mمخطط[39m
+    [31mالمنافع والمالية[39m
+    [31mمخطط[39m
+    [31mالتغيير والتبنّي[39m
+    [31mمخطط[39m
+    [31mالأدلة والتقارير[39m
+    [31mمخطط[39m
+    [31mالتشغيل المعتاد والتحسين[39m
+    [31mمخطط[39m
+    [31m[39m
+    [31mحول هذا المنتج[39m
+    [31m[39m
+    [31mحول هذا المنتج[39m
+    [31m[39m
+    [31mمنصة موبايلي للتحول[39m
+    [31m[39m
+    [31mهوية بصرية مؤقتة[39m
+    [31m[39m
+    [31mلم يُقدَّم شعار رسمي لموبايلي ولا ألوان علامة معتمدة. يعرض الترويسة شعارًا نصيًا مؤقتًا، والألوان (ومنها #0078FF) رموز تصميم مؤقتة يمكن استبدالها من إعدادات الهوية البصرية بعد اعتماد القيم الرسمية.[39m
+    [31m[39m
+    [31mتستخدم النصوص العربية واللاتينية خطَّي IBM Plex Sans Arabic وIBM Plex Sans (رخصة SIL Open Font 1.1) المضمّنين في التطبيق، دون أي خدمة خطوط عامة.[39m
+    [31m[39m
+    [31mالمنهجية[39m
+    [31m[39m
+    [31mيطبّق المنتج دليل التحول المؤسسي الإصدار 1.0، وهو خلاصة عملية مستوحاة من ممارسات PMI وBrightline وBRM مع إضافات مخصصة. وهو ليس معيارًا رسميًا من PMI، وهذا المنتج غير [7mمعتمد من PMI[27m أو من أي جهة أخرى.[39m
+    [31m[39m
+    [31mإعداداتك الافتراضية[39m
+    [31mالمنطقة الزمنية[39m
+    [31mAsia/Riyadh[39m
+    [31mالعملة[39m
+    [31mSAR"[39m
+
+      131 |       }
+      132 |     }
+    > 133 |     for (const t of texts) for (const re of FORBIDDEN_CLAIMS) expect(t, `forbidden claim ${re}`).not.toMatch(re);
+          |                                                                                                      ^
+      134 |     expect(external, "requests to non-local hosts").toEqual([]);
+      135 |     for (const f of fontUrls) expect(new URL(f).host).toBe(appHost);
+      136 |     expect(fontUrls.length, "at least one bundled font file fetched from the app origin").toBeGreaterThan(0);
+        at /var/tmp/mth-run.3sGBCB/claude-0/review-qa/e2e/qa-dg1-r1/dg1-r1-branding-fonts-wordmark.spec.ts:133:102
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-qa-dg1-r1-dg1-r1-brand-4b3f2--official-claims-AR-and-EN--chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-qa-dg1-r1-dg1-r1-brand-4b3f2--official-claims-AR-and-EN--chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-qa-dg1-r1-dg1-r1-brand-4b3f2--official-claims-AR-and-EN--chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-qa-dg1-r1-dg1-r1-brand-4b3f2--official-claims-AR-and-EN--chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium-en] › e2e/qa-dg1-r1/dg1-r1-branding-fonts-wordmark.spec.ts:81:3 › REQ-S15-005/006 + honesty in the rendered shell › no external requests; bundled Plex fonts; provisional text wordmark; no official claims (AR and EN) 
+    [chromium-ar] › e2e/qa-dg1-r1/dg1-r1-branding-fonts-wordmark.spec.ts:81:3 › REQ-S15-005/006 + honesty in the rendered shell › no external requests; bundled Plex fonts; provisional text wordmark; no official claims (AR and EN) 
+  4 passed (6.6s)
+
+To open last HTML report run:
+[36m[39m
+[36m  npx playwright show-report[39m
+[36m[39m
+---- api.log (tail)
+exit=1

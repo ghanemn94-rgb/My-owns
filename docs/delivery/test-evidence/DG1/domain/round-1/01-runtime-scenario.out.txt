@@ -1,0 +1,70 @@
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applied 6 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+1 unauth branding: 401
+2 login dev.lead: 204
+3 branding tokens:
+{"provenance":"provisional","tokens":[{"name":"brand.primary","value":"#0078FF","purpose":"Primary accents and selected elements","provisional":true},{"name":"brand.deep","value":"#003B73","purpose":"Stronger blue surfaces and text where suitable","provisional":true},{"name":"surface.page","value":"#F5F8FC","purpose":"Page background","provisional":true},{"name":"surface.card","value":"#FFFFFF","purpose":"Content surfaces","provisional":true},{"name":"text.primary","value":"#142438","purpose":"Main text","provisional":true},{"name":"text.secondary","value":"#526174","purpose":"Secondary text","provisional":true},{"name":"border.default","value":"#DCE5EF","purpose":"Dividers and field boundaries","provisional":true}]}
+4 create E2E transformation (no tz/currency):
+{"id":"01a0f625-3fbd-7107-88b2-077950e6063d","organizationId":"01920000-0000-7000-9000-000000000001","businessUnitId":"01920000-0000-7000-9000-000000000102","code":"TR-0001","name":"Synthetic roaming review","description":null,"mode":"end_to_end","entryPhase":null,"standaloneDeliverableType":null,"status":"draft","currentPhase":"diagnose","sponsorUserId":null,"leadUserId":null,"timezone":"Asia/Riyadh","currency":"SAR","archivedAt":null,"archiveReason":null,"version":1,"createdAt":"2026-10-01T06:27:11.414Z","createdBy":"01920000-0000-7000-9000-000000000203","updatedAt":"2026-10-01T06:27:11.414Z","updatedBy":"01920000-0000-7000-9000-000000000203"}
+5 draft->active:
+{"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found","requestId":"01a0f625-3ff8-77fb-a2ea-fb200b95cc08"} HTTP=404
+6 active->closed (no G6, no benefits exist):
+{"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found","requestId":"01a0f625-4009-7772-aa4a-e61a256176d7"} HTTP=404
+7 closed->active (reopen):
+{"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found","requestId":"01a0f625-4018-73de-b730-2edc9eaed450"} HTTP=404
+8 illegal draft-type transition status code check done above
+9 audit trail:
+{"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found","requestId":"01a0f625-4027-7679-a46d-3f0186983120"}
+10 login dev.admin: 204
+11 admin GET transformation: 404
+12 admin list transformations:
+{"items":[],"nextCursor":null} HTTP=200
+13 admin self-grant SP at org:
+{"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"You cannot grant a role to yourself; another access administrator must do it.","code":"access.self_grant","requestId":"01a0f625-4084-75db-a281-f50c125e241c"} HTTP=422
+14 roles (kinds/perms):
+SP source business_unit.read,gate.decide,organization.read,role.read,transformation.read
+TL source audit.read,business_unit.read,organization.read,role.read,transformation.archive,transformation.create,transformation.read,transformation.update
+BO source business_unit.read,gate.decide,organization.read,role.read,transformation.read
+WL source business_unit.read,organization.read,role.read,transformation.read
+FIN source business_unit.read,finance.validate,organization.read,role.read,transformation.read
+TO source audit.read,business_unit.read,organization.read,role.read,transformation.archive,transformation.create,transformation.read,transformation.update
+KDS implementation business_unit.read,organization.read,role.read,transformation.read
+TD implementation business_unit.read,organization.read,role.read,transformation.read
+CM implementation business_unit.read,organization.read,role.read,transformation.read
+SEC implementation business_unit.read,organization.read,role.read,transformation.read
+AUD implementation access.read,audit.read,business_unit.read,organization.read,role.read,transformation.read,user.read
+ADM_TECH technical_admin business_unit.manage,business_unit.read,organization.manage,organization.read,role.read
+ADM_ACCESS technical_admin access.assign,access.read,business_unit.read,organization.read,role.read,user.manage,user.read
+ADM_METHOD technical_admin organization.read,role.read
+15 worker start/stop, API survives:
+   worker alive: yes
+   worker exit=0
+   readyz after worker stop: {"status":"ready","checks":{"database":"ok","migrations":"ok"}} HTTP=200
+   GET transformation after worker stop: 404
+   worker log:
+{"level":"info","msg":"mth-worker started","timeZone":"Asia/Riyadh"}
+{"level":"info","msg":"outbox relay","published":1,"failed":0}
+{"level":"info","msg":"job handled","queue":"transformation.created","jobId":"01a0f625-3fc3-73fa-ba88-fc8e79cb0d8f","outcome":"done"}
+{"level":"info","msg":"mth-worker shutting down","signal":"SIGTERM"}
+16 org defaults:
+psql: error: connection to server at "127.0.0.1", port 54377 failed: FATAL:  unrecognized configuration parameter "+role"
+connection to server at "127.0.0.1", port 54377 failed: FATAL:  unrecognized configuration parameter "+role"
+17 SoD trigger direct insert (owner):
+psql: error: connection to server at "127.0.0.1", port 54377 failed: FATAL:  unrecognized configuration parameter "+role"
+connection to server at "127.0.0.1", port 54377 failed: FATAL:  unrecognized configuration parameter "+role"
+18 numeric money cols present at P1:
+psql: error: connection to server at "127.0.0.1", port 54377 failed: FATAL:  unrecognized configuration parameter "+role"
+connection to server at "127.0.0.1", port 54377 failed: FATAL:  unrecognized configuration parameter "+role"
+19 tables:
+psql: error: connection to server at "127.0.0.1", port 54377 failed: FATAL:  unrecognized configuration parameter "+role"
+connection to server at "127.0.0.1", port 54377 failed: FATAL:  unrecognized configuration parameter "+role"
+---- api.log (tail)

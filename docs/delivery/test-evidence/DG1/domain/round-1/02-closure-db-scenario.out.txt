@@ -1,0 +1,42 @@
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applied 6 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+1 login dev.office: 204
+2 create: {"id":"01a0f625-ee05-778a-ba16-4e14fdad7ab3","organizationId":"01920000-0000-7000-9000-000000000001","businessUnitId":"01920000-0000-7000-9000-000000000102","code":"TR-0001","name":"Synthetic E2E closure probe","description":null,"mode":"end_to_end","entryPhase":null,"standaloneDeliverableType":null,"status":"draft","currentPhase":"diagnose","sponsorUserId":null,"leadUserId":null,"timezone":"Asia/Riyadh","currency":"SAR","archivedAt":null,"archiveReason":null,"version":1,"createdAt":"2026-10-01T06:27:56.028Z","createdBy":"01920000-0000-7000-9000-000000000202","updatedAt":"2026-10-01T06:27:56.028Z","updatedBy":"01920000-0000-7000-9000-000000000202"}
+3 draft->closed (illegal):
+{"type":"urn:mth:problem:invalid-transition","title":"Invalid transition","status":422,"detail":"A transformation cannot move from draft to closed.","code":"invalid_transition","requestId":"01a0f625-ee52-7648-8add-27ad16545009"} HTTP=422
+4 draft->active:
+{"id":"01a0f625-ee05-778a-ba16-4e14fdad7ab3","organizationId":"01920000-0000-7000-9000-000000000001","businessUnitId":"01920000-0000-7000-9000-000000000102","code":"TR-0001","name":"Synthetic E2E closure probe","description":null,"mode":"end_to_end","entryPhase":null,"standaloneDeliverableType":null,"status":"active","currentPhase":"diagnose","sponsorUserId":null,"leadUserId":null,"timezone":"Asia/Riyadh","currency":"SAR","archivedAt":null,"archiveReason":null,"version":2,"createdAt":"2026-10-01T06:27:56.028Z","createdBy":"01920000-0000-7000-9000-000000000202","updatedAt":"2026-10-01T06:27:56.137Z","updatedBy":"01920000-0000-7000-9000-000000000202"} HTTP=200
+5 active->closed (no G6, no benefit register exists):
+{"id":"01a0f625-ee05-778a-ba16-4e14fdad7ab3","organizationId":"01920000-0000-7000-9000-000000000001","businessUnitId":"01920000-0000-7000-9000-000000000102","code":"TR-0001","name":"Synthetic E2E closure probe","description":null,"mode":"end_to_end","entryPhase":null,"standaloneDeliverableType":null,"status":"closed","currentPhase":"diagnose","sponsorUserId":null,"leadUserId":null,"timezone":"Asia/Riyadh","currency":"SAR","archivedAt":null,"archiveReason":null,"version":3,"createdAt":"2026-10-01T06:27:56.028Z","createdBy":"01920000-0000-7000-9000-000000000202","updatedAt":"2026-10-01T06:27:56.153Z","updatedBy":"01920000-0000-7000-9000-000000000202"} HTTP=200
+6 closed->active (reopen):
+{"type":"urn:mth:problem:invalid-transition","title":"Invalid transition","status":422,"detail":"A transformation cannot move from closed to active.","code":"invalid_transition","requestId":"01a0f625-ee82-74f1-bd11-7d6978a65934"} HTTP=422
+7 currentPhase change attempt:
+{"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a0f625-ee8f-72c9-93af-48358abe0e45","errors":[{"pointer":"","code":"validation.unknown_field","message":"Unrecognized key: \"currentPhase\""}]} HTTP=400
+8 audit trail:
+{"nextCursor":null,"items":[{"id":"01a0f625-ee7b-7019-b4a8-b089cdada156","seq":"19","occurredAt":"2026-10-01T06:27:56.153Z","action":"transformation.update","recordType":"transformation","recordId":"01a0f625-ee05-778a-ba16-4e14fdad7ab3","transformationId":"01a0f625-ee05-778a-ba16-4e14fdad7ab3","actor":{"type":"user","userId":"01920000-0000-7000-9000-000000000202","displayName":"Synthetic Transformation Office"},"onBehalfOfUserId":null,"priorVersion":2,"newVersion":3,"reason":null,"requestId":"01a0f625-ee75-726a-a9e4-6c7fe3282bed","changes":{"status":{"to":"closed","from":"active"}}},{"id":"01a0f625-ee6d-745e-8fec-fbbfc33c08ea","seq":"18","occurredAt":"2026-10-01T06:27:56.137Z","action":"transformation.update","recordType":"transformation","recordId":"01a0f625-ee05-778a-ba16-4e14fdad7ab3","transformationId":"01a0f625-ee05-778a-ba16-4e14fdad7ab3","actor":{"type":"user","userId":"01920000-0000-7000-9000-000000000202","displayName":"Synthetic Transformation Office"},"onBehalfOfUserId":null,"priorVersion":1,"newVersion":2,"reason":null,"requestId":"01a0f625-ee66-753c-8b5e-d8f8fa28841c","changes":{"status":{"to":"active","from":"draft"}}},{"id":"01a0f625-ee09-7575-9ad1-acc42cf6cf29","seq":"17","occurredAt":"2026-10-01T06:27:56.028Z","action":"transformation.create","recordType":"transformation","recordId":"01a0f625-ee05-778a-ba16-4e14fdad7ab3","transformationId":"01a0f625-ee05-778a-ba16-4e14fdad7ab3","actor":{"type":"user","userId":"01920000-0000-7000-9000-000000000202","displayName":"Synthetic Transformation Office"},"onBehalfOfUserId":null,"priorVersion":null,"newVersion":1,"re
+9 modular standalone TOM at design:
+{"id":"01a0f625-eeb7-754d-8ad5-827a65bc76c4","organizationId":"01920000-0000-7000-9000-000000000001","businessUnitId":"01920000-0000-7000-9000-000000000101","code":"TR-0002","name":"Synthetic modular TOM","description":null,"mode":"modular","entryPhase":"design","standaloneDeliverableType":"target_operating_model","status":"draft","currentPhase":"design","sponsorUserId":null,"leadUserId":null,"timezone":"Europe/London","currency":"USD","archivedAt":null,"archiveReason":null,"version":1,"createdAt":"2026-10-01T06:27:56.208Z","createdBy":"01920000-0000-7000-9000-000000000202","updatedAt":"2026-10-01T06:27:56.208Z","updatedBy":"01920000-0000-7000-9000-000000000202"}
+10 modular without entryPhase:
+{"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a0f625-eec3-71f1-8891-b1545eeb29ca","errors":[{"pointer":"/entryPhase","code":"validation.required","message":"validation.required"}]}
+11 org defaults:
+Asia/Riyadh|SAR|ar
+12 SoD trigger (owner insert ADM_TECH+finance.validate):
+ERROR:  technical administrator role ADM_TECH cannot hold approval permission finance.validate (separation of duties)
+CONTEXT:  PL/pgSQL function role_permission_no_admin_approver() line 25 at RAISE
+13 float/money columns:
+0
+14 public tables:
+app_user,audit_event,business_unit,delegation,idempotency_record,oidc_login_state,organization,outbox_event,permission,processed_message,role,role_permission,schema_migration,scoped_assignment,session,transformation,user_identity
+15 ERD P1 tables vs DB:
+organization=t business_unit=t app_user=t user_identity=t session=t oidc_login_state=t role=t permission=t role_permission=t scoped_assignment=t delegation=t transformation=t audit_event=t outbox_event=t processed_message=t idempotency_record=t schema_migration=t 
+16 audit immutability as mth_app:
+SET

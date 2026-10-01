@@ -1,0 +1,130 @@
+# cmd: MTH_PNPM_STORE=$TMPDIR/pstore/v10 MTH_PNPM_OFFLINE=1 deploy/scripts/clean-start-local.sh (disposable clone @85e5bbd = HEAD of clone)
+
+==> environment facts
+  date (UTC):  2026-10-01T06:43:25Z
+  host:        Linux 6.18.44-fc-v50 x86_64; 4 vCPU; 15 GiB RAM
+  node:        v22.22.2;  pnpm: 10.33.0
+  postgres:    postgres (PostgreSQL) 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
+  repo HEAD:   85e5bbd601643d21b7420c704f99176d9e94b35a  (worktree overlay: 0)
+  lockfile:    sha256 f199a0e18472519b24d9eaf840ead45e42192d74187e22b6b03e9e8005708dd5
+<== ok (0.32 s)
+
+==> 1. fresh clone of the repository
+Note: switching to '85e5bbd601643d21b7420c704f99176d9e94b35a'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+<== ok (1.24 s)
+
+==> 2. install dependencies from the frozen lockfile (lifecycle scripts disabled; pnpm 10 default)
+  pnpm install --frozen-lockfile --store-dir /var/tmp/mth-run.3sGBCB/claude-0/pstore/v10 --offline
+ WARN  Failed to create bin at /var/tmp/mth-run.3sGBCB/claude-0/mth-clean-start.9jXsnk/src/apps/api/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/var/tmp/mth-run.3sGBCB/claude-0/mth-clean-start.9jXsnk/src/apps/api/node_modules/@mth/db/dist/cli.js'
+ WARN  Failed to create bin at /var/tmp/mth-run.3sGBCB/claude-0/mth-clean-start.9jXsnk/src/apps/worker/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/var/tmp/mth-run.3sGBCB/claude-0/mth-clean-start.9jXsnk/src/apps/worker/node_modules/@mth/db/dist/cli.js'
+Done in 1.2s using pnpm v10.33.0
+<== ok (1.34 s)
+
+==> 3. build (pnpm -r build)
+  build log: /var/tmp/mth-run.3sGBCB/claude-0/mth-clean-start.9jXsnk/build.log
+<== ok (14.39 s)
+
+==> 4. assemble the image runtime tree (same script as the Dockerfile)
+collect-notices: 129 shipped packages, 126 files, 3 without a licence file -> /var/tmp/mth-run.3sGBCB/claude-0/mth-clean-start.9jXsnk/app/licenses
+Scope: all 8 workspace projects
+Lockfile is up to date, resolution step is skipped
+Packages: -242
+--------------------------------------------------------------------------------
+
+devDependencies:
+- @apidevtools/swagger-parser 10.1.1
+- @axe-core/playwright 4.10.2
+- @playwright/test 1.56.1
+- @types/node 22.18.0
+- eslint 10.1.0
+- eslint-plugin-react-hooks 7.1.1
+- openapi-types 12.1.3
+- prettier 3.8.1
+- typescript 6.0.2
+- typescript-eslint 8.71.0
+- vitest 3.2.4
+
+Done in 1s using pnpm v10.33.0
+virtual store: 129 package directories, all in the shipped set (129 runtime+bundled)
+assemble-runtime: OK 129 packages, 100M -> /var/tmp/mth-run.3sGBCB/claude-0/mth-clean-start.9jXsnk/app
+<== ok (2.50 s)
+
+==> 5. disposable PostgreSQL cluster (password auth on TCP) + roles/database via deploy/compose/db-init
+PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+CREATE ROLE
+CREATE ROLE
+CREATE DATABASE
+REVOKE
+GRANT
+ALTER DATABASE
+mth: roles mth_owner, mth_app and database mth created
+<== ok (0.91 s)
+
+==> A1. mth db status on the empty database reports pending (exit 3)
+pending  0001_identity_access.sql
+pending  0002_transformation.sql
+pending  0003_audit_event.sql
+pending  0004_outbox_jobs.sql
+pending  0005_seed_roles_permissions.sql
+pending  0006_pgboss_schema_v25.sql
+mth-db status: 6 pending
+  mth db status: exit 3 (expected 3)
+<== ok (0.19 s)
+
+==> A2. mth migrate (fresh database), then again (idempotent)
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applied 6 migration(s)
+mth-db migrate: database is up to date
+applied  0001_identity_access.sql
+applied  0002_transformation.sql
+applied  0003_audit_event.sql
+applied  0004_outbox_jobs.sql
+applied  0005_seed_roles_permissions.sql
+applied  0006_pgboss_schema_v25.sql
+mth-db status: up to date (6 applied)
+  mth db status: exit 0 (expected 0)
+<== ok (0.70 s)
+
+==> A3. production refusals: seed-dev not in the image; AUTH_MODE=dev refused with NODE_ENV=production
+mth: seed-dev is not available in the production image
+  mth db seed-dev: exit 64 (expected 64)
+node:internal/modules/package_json_reader:314
+  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+        ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@mth/design-tokens' imported from /var/tmp/mth-run.3sGBCB/claude-0/mth-clean-start.9jXsnk/app/apps/api/dist/server.js
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:314:9)
+    at packageResolve (node:internal/modules/esm/resolve:768:81)
+    at moduleResolve (node:internal/modules/esm/resolve:855:18)
+    at defaultResolve (node:internal/modules/esm/resolve:985:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:731:20)
+    at ModuleLoader.resolve (node:internal/modules/esm/loader:708:38)
+    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:310:38)
+    at ModuleJob._link (node:internal/modules/esm/module_job:182:49) {
+  code: 'ERR_MODULE_NOT_FOUND'
+}
+
+Node.js v22.22.2
+FAIL: mth api with AUTH_MODE=dev: exit 1, expected 78
+exit=1

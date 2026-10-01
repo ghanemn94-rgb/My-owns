@@ -1,0 +1,28 @@
+### node deploy/scripts/check-ci-needs.mjs
+OK: .github/workflows/ci.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it
+  verify <- delivery-gates
+  integration <- verify
+  e2e <- verify
+  images <- integration, e2e
+EXIT=0
+### node deploy/scripts/generate-env-example.mjs --check
+OK: .env.example lists exactly the 21 ENV_VARS names, none with a value
+EXIT=0
+### node licenses/generate-sbom.mjs --check
+STALE: packages=422 runtime=112 bundled=17 development=293 containers=4 shipped-without-licence-id=0 lockfile-sha256=f199a0e18472519b24d9eaf840ead45e42192d74187e22b6b03e9e8005708dd5
+licenses/sbom.cdx.json or licenses/inventory.csv is out of date: run node licenses/generate-sbom.mjs
+EXIT=0
+### node deploy/scripts/pin-images.mjs --check
+FAIL: deploy/compose/compose.yaml: postgres:18 has no digest
+FAIL: .github/workflows/ci.yml: postgres:18 has no digest
+FAIL: .github/workflows/ci.yml: postgres:18 has no digest
+FAIL: keycloak (quay.io/keycloak/keycloak:26.4): NOT PINNED (no digest in deploy/images.lock.json)
+FAIL: deploy/compose/compose.yaml: quay.io/keycloak/keycloak:26.4 has no digest
+FAIL: playwright (mcr.microsoft.com/playwright:v1.56.1-noble): NOT PINNED (no digest in deploy/images.lock.json)
+FAIL: .github/workflows/ci.yml: mcr.microsoft.com/playwright:v1.56.1-noble has no digest
+10 problem(s). Pin with: node deploy/scripts/pin-images.mjs --resolve && node deploy/scripts/pin-images.mjs --apply
+EXIT=0
+node deploy/scripts/check-ci-needs.mjs -> EXIT=0
+node deploy/scripts/generate-env-example.mjs --check -> EXIT=0
+node licenses/generate-sbom.mjs --check -> EXIT=1
+node deploy/scripts/pin-images.mjs --check -> EXIT=1

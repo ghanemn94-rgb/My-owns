@@ -1,0 +1,100 @@
+# cmd: node deploy/scripts/check-ci-needs.mjs .github/workflows/ci.yml
+OK: .github/workflows/ci.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it
+  verify <- delivery-gates
+  integration <- verify
+  e2e <- verify
+  images <- integration, e2e
+exit=0
+# cmd: node deploy/scripts/check-ci-needs.mjs (default args)
+OK: .github/workflows/ci.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it
+  verify <- delivery-gates
+  integration <- verify
+  e2e <- verify
+  images <- integration, e2e
+exit=0
+# cmp installed workflow vs architecture copy
+.github/workflows/ci.yml docs/architecture/ci/ci.yml differ: char 4010, line 105
+# negative: job without needs injected into a scratch copy
+55:  rogue:
+56-    runs-on: ubuntu-latest
+57-    steps:
+58-      - run: echo hi
+node:fs:440
+    return binding.readFileUtf8(path, stringToFlags(options.flag));
+                   ^
+
+Error: ENOENT: no such file or directory, open '/var/tmp/mth-run.3sGBCB/claude-0/review-qa/var/tmp/mth-run.3sGBCB/claude-0/ci-neg.yml'
+    at readFileSync (node:fs:440:20)
+    at file:///var/tmp/mth-run.3sGBCB/claude-0/review-qa/deploy/scripts/check-ci-needs.mjs:21:23
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/var/tmp/mth-run.3sGBCB/claude-0/review-qa/var/tmp/mth-run.3sGBCB/claude-0/ci-neg.yml'
+}
+
+Node.js v22.22.2
+exit=1 (expected non-zero)
+# negative (repo-relative path): job 'rogue' without needs
+FAIL: job "rogue" does not depend on delivery-gates
+exit=1 (expected non-zero)
+# diff .github/workflows/ci.yml docs/architecture/ci/ci.yml
+105,109c105
+<       - name: Start the e2e stack (fresh DB, migrate, SYNTHETIC dev users, API on :3000 with NODE_ENV=test AUTH_MODE=dev)
+<         run: node deploy/scripts/ci-e2e-stack.mjs
+<       # --workers=1: the chromium-en and chromium-ar projects sign in as the SAME synthetic users and persist per-user
+<       # preferences (language), so parallel workers race (reproduced: 1 failed with 2 workers, 16 passed with 1).
+<       - run: pnpm e2e --workers=1
+---
+>       - run: pnpm e2e
+116,162d111
+< 
+<   # devops-engineer (T-DG1-DEVOPS, ADR-0011/ADR-0013): packaging checks, the one application image, and the Compose
+<   # clean-start / test-IdP login / no-egress smoke. Depends on delivery-gates through integration and e2e.
+<   images:
+<     needs: [integration, e2e]
+<     runs-on: ubuntu-24.04
+<     env:
+<       MTH_APP_IMAGE: mth-app:ci-${{ github.sha }}
+<     steps:
+<       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+<       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+<         with:
+<           node-version: "24"
+<       - run: corepack enable
+<       - run: pnpm install --frozen-lockfile
+<       - name: CI structure (every product job needs delivery-gates; actions pinned by SHA)
+<         run: node deploy/scripts/check-ci-needs.mjs
+<       - name: .env.example equals the ENV_VARS catalogue (names only, no values)
+<         run: node deploy/scripts/generate-env-example.mjs --check
+<       - name: SBOM and licence inventory match the lockfile
+<         run: node licenses/generate-sbom.mjs --check
+<       - name: Container images pinned by digest (deploy/images.lock.json)
+<         run: node deploy/scripts/pin-images.mjs --check
+<       - name: Build the application image (non-root; api | worker | migrate)
+<         run: deploy/scripts/build-image.sh --tag "$MTH_APP_IMAGE"
+<       - name: Compose clean start, Keycloak test-IdP login smoke, no-egress smoke
+<         run: deploy/scripts/verify-stack.sh --skip-build --evidence-dir stack-evidence
+<       - if: always()
+<         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2 - same pin as e2e; re-verify
+<         with:
+<           name: stack-evidence
+<           path: stack-evidence/
+<           retention-days: 14
+<       # Push only from protected branches, and only when Mobily IT's registry is configured (repository variable
+<       # MTH_REGISTRY, secrets MTH_REGISTRY_USER / MTH_REGISTRY_PASSWORD). Nothing is pushed to a public registry.
+<       - name: Push to IT's registry (protected branches only)
+<         if: github.event_name == 'push' && github.ref_protected && vars.MTH_REGISTRY != ''
+<         env:
+<           REGISTRY: ${{ vars.MTH_REGISTRY }}
+<           REGISTRY_USER: ${{ secrets.MTH_REGISTRY_USER }}
+<           REGISTRY_PASSWORD: ${{ secrets.MTH_REGISTRY_PASSWORD }}
+<           SHA: ${{ github.sha }}
+<         run: |
+<           printf '%s' "$REGISTRY_PASSWORD" | docker login "$REGISTRY" -u "$REGISTRY_USER" --password-stdin
+<           docker tag "$MTH_APP_IMAGE" "$REGISTRY/mth-app:$SHA"
+<           docker push "$REGISTRY/mth-app:$SHA"
+<           docker logout "$REGISTRY"
+diff exit=1

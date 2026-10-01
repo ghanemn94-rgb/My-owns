@@ -1,0 +1,16 @@
+### A static deep import: import { decide } from "../access/rules.ts"
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
++   "modules/transformations/planted.ts: imports ../access/rules.ts; only access/index.ts is public",
+      Tests  1 failed | 8 passed (9)
+### B dynamic deep import: import("../access/policy.ts")
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
++   "modules/transformations/planted.ts: imports ../access/policy.ts; only access/index.ts is public",
+      Tests  1 failed | 8 passed (9)
+### C disallowed module index: transformations -> identity/index.ts
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
++   "modules/transformations/planted.ts: module transformations may not import module identity",
+      Tests  1 failed | 8 passed (9)
+### D createRequire(import.meta.url)("../access/policy.ts")  [EVADES]
+      Tests  9 passed (9)
+### E computed import(`../access/${p}.ts`)  [EVADES]
+      Tests  9 passed (9)

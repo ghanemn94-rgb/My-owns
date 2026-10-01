@@ -1,0 +1,112 @@
+
+ RUN  v3.2.4 /var/tmp/mth-run.JxJlkA/claude-0/review-sec
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mup5osye_3996c383; applied 6 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/contract/contract.test.ts (8 tests | 1 failed) 783ms
+   ✓ route coverage > maps every governed Fastify route to an OpenAPI operation with the same method, and back 2ms
+   ✓ route coverage > declares access on every governed route (public or a permission) 1ms
+   ✓ every operation, validated against the contract and the zod mirrors > health 19ms
+   ✓ every operation, validated against the contract and the zod mirrors > auth + me 192ms
+   ✓ every operation, validated against the contract and the zod mirrors > organizations and business units 131ms
+   ✓ every operation, validated against the contract and the zod mirrors > users, roles, permissions and assignments 141ms
+   ✓ every operation, validated against the contract and the zod mirrors > transformations and audit 131ms
+   × every operation, validated against the contract and the zod mirrors > covers every operation with at least one success and every successful body with its zod mirror 8ms
+     → expected [ 'getBrandingTokens' ] to deeply equal []
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts (14 tests) 722ms
+ ✓ |integration| tests/qa/integration/a13-job-idempotency.test.ts (5 tests) 3460ms
+   ✓ A13 running worker: a duplicate delivery is a no-op > consumes the event once; an extra job with the same message completes as 'duplicate'  2613ms
+ ✓ |integration| packages/db/test/integration/bootstrap.test.ts (5 tests) 1107ms
+   ✓ mth-db bootstrap > creates the first organization and a technical/access admin with no business permission, fully audited  340ms
+   ✓ mth-db bootstrap > refuses to run twice  306ms
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts (10 tests) 4936ms
+   ✓ worker runtime: end to end, restarts and the dead-letter queue > relays and handles a created transformation, and survives a restart without losing the job  3696ms
+   ✓ worker runtime: end to end, restarts and the dead-letter queue > moves a job that keeps failing to ops.failed after the bounded retries  659ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts (11 tests) 811ms
+ ❯ |integration| apps/api/test/integration/transformations.test.ts (27 tests | 1 failed) 895ms
+   ✓ create > persists a draft End-to-End record in Diagnose with organization defaults (Asia/Riyadh, SAR) and a generated code 53ms
+   ✓ create > writes exactly one audit event and one outbox event, in the same transaction 15ms
+   ✓ create > rolls back record, audit and outbox together when a rule fails (duplicate code -> 409) 39ms
+   ✓ create > rejects invalid input {"businessUnitId":"not-a-uuid","name":"x","mode":"end_to_end"} with 400 and a field pointer 11ms
+   ✓ create > rejects invalid input {"name":"x","mode":"end_to_end"} with 400 and a field pointer 4ms
+   ✓ create > rejects invalid input {"businessUnitId":"01920000-0000-7000-8000-000000000001","name":"","mode":"end_to_end"} with 400 and a field pointer 4ms
+   ✓ create > rejects invalid input {"businessUnitId":"01920000-0000-7000-8000-000000000001","name":"x","mode":"modular"} with 400 and a field pointer 4ms
+   ✓ create > rejects invalid input {"businessUnitId":"01920000-0000-7000-8000-000000000001","name":"x","mode":"end_to_end","entryPhase":"design"} with 400 and a field pointer 3ms
+   ✓ create > rejects invalid input {"businessUnitId":"01920000-0000-7000-8000-000000000001","name":"x","mode":"end_to_end","timezone":"Mars/Base"} with 400 and a field pointer 3ms
+   ✓ create > rejects invalid input {"businessUnitId":"01920000-0000-7000-8000-000000000001","name":"x","mode":"end_to_end","currency":"sar"} with 400 and a field pointer 4ms
+   ✓ create > rejects invalid input {"businessUnitId":"01920000-0000-7000-8000-000000000001","name":"x","mode":"end_to_end","extra":1} with 400 and a field pointer 4ms
+   ✓ create > refuses an inactive business unit (422) and unknown sponsor/lead users (422) 21ms
+   ✓ create > requires a session (401) and CSRF + same Origin (403) on create 16ms
+   ✓ Idempotency-Key on create > replays the original 201 for the same key and body, creating one record, one audit event and one outbox event 30ms
+   ✓ Idempotency-Key on create > rejects the same key with a different body (422) and a malformed key (400) 29ms
+   ✓ update with optimistic concurrency (A14) > needs If-Match: missing -> 428, malformed -> 400 33ms
+   ✓ update with optimistic concurrency (A14) > applies a fresh update, bumps the version by exactly one and audits the field diff 25ms
+   ✓ update with optimistic concurrency (A14) > rejects a stale If-Match with 409 and currentVersion, writing nothing and auditing nothing 17ms
+   ✓ update with optimistic concurrency (A14) > serializes two simultaneous writers holding the same version: exactly one wins 15ms
+   ✓ update with optimistic concurrency (A14) > enforces explicit status transitions (422 invalid-transition) 7ms
+   ✓ update with optimistic concurrency (A14) > rejects fields that are not editable here (mode, currentPhase) with 400 9ms
+   ✓ update with optimistic concurrency (A14) > denies an update without transformation.update (auditor: 403) before looking at If-Match 8ms
+   × archive > needs a reason, If-Match and transformation.archive; archived records are read-only and hidden by default 81ms
+     → expected [] to have a length of 1 but got +0
+   ✓ list: filters, sorting and cursor pagination > pages through a stable order without duplicates or gaps 90ms
+   ✓ list: filters, sorting and cursor pagination > supports updatedAt ordering both ways and repeatable status filters 21ms
+   ✓ list: filters, sorting and cursor pagination > rejects a cursor reused with other filters, unknown query parameters and an out-of-range limit (400) 23ms
+   ✓ audit trail endpoint > lists events newest first with actor names, paginated; needs audit.read (TO yes, others 403/404) 84ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts (16 tests) 687ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts (7 tests) 393ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts (10 tests) 671ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts (13 tests) 634ms
+ ✓ |integration| apps/worker/test/integration/maintenance.test.ts (2 tests) 261ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts (13 tests) 531ms
+ ✓ |integration| tests/qa/integration/a14-concurrency.test.ts (5 tests) 539ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts (17 tests) 179ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts (9 tests) 47ms
+ ✓ |integration| apps/api/test/integration/platform.test.ts (9 tests) 349ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/transformations.test.ts > archive > needs a reason, If-Match and transformation.archive; archived records are read-only and hidden by default
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ apps/api/test/integration/transformations.test.ts:314:19
+    312|     expect(ok.body.archivedAt).not.toBeNull();
+    313|     const audit = (await auditOf(api.db, t.id)).filter((e) => e.action…
+    314|     expect(audit).toHaveLength(1);
+       |                   ^
+    315|     expect(audit[0]).toMatchObject({ reason: "Duplicate of another rec…
+    316| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > covers every operation with at least one success and every successful body with its zod mirror
+AssertionError: expected [ 'getBrandingTokens' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "getBrandingTokens",
++ ]
+
+ ❯ apps/api/test/integration/contract/contract.test.ts:254:21
+    252|   it("covers every operation with at least one success and every succe…
+    253|     const missing = operations.filter((o) => !exercised.has(o.operatio…
+    254|     expect(missing).toEqual([]);
+       |                     ^
+    255|     const noSuccess = operations
+    256|       .filter((o) => ![...exercised.get(o.operationId)!].some((s) => s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed | 15 passed (17)
+      Tests  2 failed | 179 passed (181)
+   Start at  06:31:29
+   Duration  11.02s (transform 967ms, setup 0ms, collect 9.52s, tests 17.01s, environment 3ms, prepare 1.22s)
+

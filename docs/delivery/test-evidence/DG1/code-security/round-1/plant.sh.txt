@@ -1,0 +1,10 @@
+#!/bin/bash
+# plant.sh <label> <file> <perl-substitution>  — apply in the clone, run the integration suite, report, revert.
+cd $TMPDIR/review-sec
+label="$1"; file="$2"; expr="$3"
+cp "$file" "$file.bak"
+perl -0pi -e "$expr" "$file"
+if cmp -s "$file" "$file.bak"; then echo "[$label] PLANT DID NOT APPLY"; mv "$file.bak" "$file"; exit 2; fi
+$TMPDIR/withpg.sh npx vitest run --project integration > $TMPDIR/ev/plant-$label.log 2>&1; rc=$?
+mv "$file.bak" "$file"
+echo "[$label] integration exit=$rc; failing tests:"; grep -E "^ FAIL" $TMPDIR/ev/plant-$label.log | grep -v "covers every operation" | sed 's/^/    /' | head -6

@@ -1,0 +1,39 @@
+### N1: remove 'needs: delivery-gates' from verify
+55:    needs: verify
+80:    needs: verify
+119:    needs: [integration, e2e]
+FAIL: job "verify" does not depend on delivery-gates
+FAIL: job "integration" does not depend on delivery-gates
+FAIL: job "e2e" does not depend on delivery-gates
+FAIL: job "images" does not depend on delivery-gates
+EXIT=1
+### N2: add a new job with no needs
+FAIL: job "rogue" does not depend on delivery-gates
+EXIT=1
+### N3: rogue job needing only a job that does not exist
+FAIL: rogue needs unknown job "nonexistent"
+FAIL: job "rogue" does not depend on delivery-gates
+EXIT=1
+### N4: verify keeps needs: delivery-gates but adds job-level 'if: always()' (runs even when delivery-gates FAILS)
+  verify:
+    needs: delivery-gates
+    if: always()
+    runs-on: ubuntu-24.04
+    strategy:
+OK: .github/workflows/ci.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it
+  verify <- delivery-gates
+  integration <- verify
+  e2e <- verify
+  images <- integration, e2e
+EXIT=0
+### N5: images job with 'if: ${{ !cancelled() }}'
+  images:
+    needs: [integration, e2e]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-24.04
+OK: .github/workflows/ci.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it
+  verify <- delivery-gates
+  integration <- verify
+  e2e <- verify
+  images <- integration, e2e
+EXIT=0

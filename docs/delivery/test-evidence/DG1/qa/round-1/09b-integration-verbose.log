@@ -1,0 +1,247 @@
+# cmd: with-pg.sh (fresh PG16 cluster 127.0.0.1:54373) pnpm test:integration --reporter=verbose  [second run]
+cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+> mobily-transformation-hub@0.1.0 test:integration /var/tmp/mth-run.3sGBCB/claude-0/review-qa
+> vitest run --project integration --reporter=verbose
+
+
+ RUN  v3.2.4 /var/tmp/mth-run.3sGBCB/claude-0/review-qa
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mup5ztea_245d3be0; applied 6 migrations to a fresh database
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts > pg-boss schema (installed by mth-db migrate) > migration 0006 is exactly pg-boss 11's construction plan without its transaction wrapper 2ms
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts > pg-boss schema (installed by mth-db migrate) > runs as mth_app with migrate=false (the version check passes; no DDL rights needed) 5ms
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts > outbox relay idempotency > publishes each event exactly once, even when relayed twice 39ms
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts > outbox relay idempotency > is safe after a crash between send and mark (the replayed send is a no-op) 17ms
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts > outbox relay idempotency > never double-publishes with concurrent relays (FOR UPDATE SKIP LOCKED) 47ms
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts > outbox relay idempotency > records an unroutable event as a relay failure instead of dropping it 9ms
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts > idempotent consumer (processed_message ledger) > processes a duplicate delivery once: one ledger row, one audit event 18ms
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts > idempotent consumer (processed_message ledger) > rejects a malformed envelope (so pg-boss retries it and finally dead-letters it) 1ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > route coverage > maps every governed Fastify route to an OpenAPI operation with the same method, and back 2ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > route coverage > declares access on every governed route (public or a permission) 1ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > health 20ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > auth + me 190ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > organizations and business units 126ms
+ ✓ |integration| tests/qa/integration/a13-job-idempotency.test.ts > A13 create with Idempotency-Key: a retried request is one record and one outbox event > replays the original 201 and writes nothing new; the same key with another body is 422 74ms
+ ✓ |integration| tests/qa/integration/a13-job-idempotency.test.ts > A13 outbox relay: publishing twice enqueues one job > a second relay pass is a no-op, and a replayed (un-marked) row does not create a second job 47ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > users, roles, permissions and assignments 143ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > transformations and audit 143ms
+ × |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > covers every operation with at least one success and every successful body with its zod mirror 7ms
+   → expected [ 'getBrandingTokens' ] to deeply equal []
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > create > persists a draft End-to-End record in Diagnose with organization defaults (Asia/Riyadh, SAR) and a generated code 50ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > create > writes exactly one audit event and one outbox event, in the same transaction 18ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > create > rolls back record, audit and outbox together when a rule fails (duplicate code -> 409) 42ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > create > rejects invalid input {"businessUnitId":"not-a-uuid","name":"x","mode":"end_to_end"} with 400 and a field pointer 9ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > create > rejects invalid input {"name":"x","mode":"end_to_end"} with 400 and a field pointer 5ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > create > rejects invalid input {"businessUnitId":"01920000-0000-7000-8000-000000000001","name":"","mode":"end_to_end"} with 400 and a field pointer 4ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > create > rejects invalid input {"businessUnitId":"01920000-0000-7000-8000-000000000001","name":"x","mode":"modular"} with 400 and a field pointer 4ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > create > rejects invalid input {"businessUnitId":"01920000-0000-7000-8000-000000000001","name":"x","mode":"end_to_end","entryPhase":"design"} with 400 and a field pointer 5ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > create > rejects invalid input {"businessUnitId":"01920000-0000-7000-8000-000000000001","name":"x","mode":"end_to_end","timezone":"Mars/Base"} with 400 and a field pointer 5ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > create > rejects invalid input {"businessUnitId":"01920000-0000-7000-8000-000000000001","name":"x","mode":"end_to_end","currency":"sar"} with 400 and a field pointer 4ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > create > rejects invalid input {"businessUnitId":"01920000-0000-7000-8000-000000000001","name":"x","mode":"end_to_end","extra":1} with 400 and a field pointer 6ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > create > refuses an inactive business unit (422) and unknown sponsor/lead users (422) 18ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > create > requires a session (401) and CSRF + same Origin (403) on create 13ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > Idempotency-Key on create > replays the original 201 for the same key and body, creating one record, one audit event and one outbox event 21ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > Idempotency-Key on create > rejects the same key with a different body (422) and a malformed key (400) 23ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > update with optimistic concurrency (A14) > needs If-Match: missing -> 428, malformed -> 400 21ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > update with optimistic concurrency (A14) > applies a fresh update, bumps the version by exactly one and audits the field diff 23ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > update with optimistic concurrency (A14) > rejects a stale If-Match with 409 and currentVersion, writing nothing and auditing nothing 13ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > update with optimistic concurrency (A14) > serializes two simultaneous writers holding the same version: exactly one wins 10ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > update with optimistic concurrency (A14) > enforces explicit status transitions (422 invalid-transition) 9ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > update with optimistic concurrency (A14) > rejects fields that are not editable here (mode, currentPhase) with 400 10ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > update with optimistic concurrency (A14) > denies an update without transformation.update (auditor: 403) before looking at If-Match 10ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > archive > needs a reason, If-Match and transformation.archive; archived records are read-only and hidden by default 98ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > list: filters, sorting and cursor pagination > pages through a stable order without duplicates or gaps 58ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > list: filters, sorting and cursor pagination > supports updatedAt ordering both ways and repeatable status filters 14ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > list: filters, sorting and cursor pagination > rejects a cursor reused with other filters, unknown query parameters and an out-of-range limit (400) 17ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > audit trail endpoint > lists events newest first with actor names, paginated; needs audit.read (TO yes, others 403/404) 73ms
+ ✓ |integration| tests/qa/integration/a13-job-idempotency.test.ts > A13 transformation.created handler: processed twice = one ledger effect > first run is 'done', the duplicate is 'duplicate'; one ledger row and one audit event 29ms
+ ✓ |integration| tests/qa/integration/a13-job-idempotency.test.ts > A13 transformation.created handler: processed twice = one ledger effect > concurrent deliveries of the same message produce exactly one effect 32ms
+ ✓ |integration| tests/qa/integration/a13-job-idempotency.test.ts > A13 running worker: a duplicate delivery is a no-op > consumes the event once; an extra job with the same message completes as 'duplicate' 2617ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts > users > lists users of an organization for user.read holders only (403 otherwise), with search 47ms
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts > worker runtime: end to end, restarts and the dead-letter queue > relays and handles a created transformation, and survives a restart without losing the job 3703ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts > users > pre-provisions a user with an identity binding (user.manage), 409 on duplicate e-mail or identity, audited 62ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts > users > reads a user (self always; others need user.read on the home organization, else 404) 29ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts > users > disables a user with If-Match, revoking all their sessions in the same transaction; audited 83ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts > users > refuses to let an administrator disable themself (403 user.cannot_disable_self) 7ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts > role and permission catalogue > lists roles with permissions equal to the seeded catalogue (role.read), 403 without it 25ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts > scoped role assignments > grants a role at a transformation scope (access.assign), with a mandatory reason; audited; access follows 74ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts > scoped role assignments > refuses self-grants, reserved scope types, unknown scopes and cross-organization scopes 26ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts > scoped role assignments > never makes a technical administrator an approver: admin roles carry no approval permission 25ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts > scoped role assignments > lists assignments (access.read) with filters; 403 for callers without access.read in that organization 22ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts > scoped role assignments > revokes with If-Match and a reason (never deletes); the user loses access and their sessions end; audited 114ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts > A12 cross-scope read is denied (404, existence not disclosed); in-scope read succeeds > probe 0: reads exactly its scope 55ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts > A12 cross-scope read is denied (404, existence not disclosed); in-scope read succeeds > probe 1: reads exactly its scope 34ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts > A12 cross-scope read is denied (404, existence not disclosed); in-scope read succeeds > probe 2: reads exactly its scope 40ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts > A12 cross-scope read is denied (404, existence not disclosed); in-scope read succeeds > probe 0: the list is scope-filtered (no foreign record, even when filtering for it) 32ms
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts > worker runtime: end to end, restarts and the dead-letter queue > moves a job that keeps failing to ops.failed after the bounded retries 1056ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts > A12 cross-scope read is denied (404, existence not disclosed); in-scope read succeeds > probe 1: the list is scope-filtered (no foreign record, even when filtering for it) 19ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts > A12 cross-scope read is denied (404, existence not disclosed); in-scope read succeeds > probe 2: the list is scope-filtered (no foreign record, even when filtering for it) 15ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts > A12 cross-scope write is denied and writes nothing; in-scope write succeeds > probe 0: PATCH and archive outside the scope are 404 and change nothing 82ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts > A12 cross-scope write is denied and writes nothing; in-scope write succeeds > probe 1: PATCH and archive outside the scope are 404 and change nothing 72ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts > A12 cross-scope write is denied and writes nothing; in-scope write succeeds > probe 2: PATCH and archive outside the scope are 404 and change nothing 98ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts > A12 cross-scope write is denied and writes nothing; in-scope write succeeds > probe 0: PATCH inside the scope succeeds and bumps the version 48ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts > A12 cross-scope write is denied and writes nothing; in-scope write succeeds > probe 1: PATCH inside the scope succeeds and bumps the version 23ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts > A12 cross-scope write is denied and writes nothing; in-scope write succeeds > probe 2: PATCH inside the scope succeeds and bumps the version 16ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts > A12 cross-scope write is denied and writes nothing; in-scope write succeeds > create is denied outside the caller's scope (no row), allowed inside it 76ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts > A12 the policy function itself decides the same way > authorize() allows read/update in scope and denies them out of scope, per scope level 52ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/login > redirects to the IdP with code flow, PKCE S256, state and nonce, storing only the state's hash 38ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/login > rejects returnTo=//evil.example/x (open redirect) with 400 8ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/login > rejects returnTo=https://evil.example/ (open redirect) with 400 1ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/login > rejects returnTo=relative (open redirect) with 400 1ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/login > rejects returnTo=/\evil (open redirect) with 400 1ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > provisions a first-time user just in time, WITHOUT any role, and signs them in (audited) 101ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > signs an existing (issuer, subject) back in to the same user 37ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > binds a pre-provisioned user by VERIFIED e-mail only 61ms
+ ✓ |integration| packages/db/test/integration/bootstrap.test.ts > mth-db bootstrap > creates the first organization and a technical/access admin with no business permission, fully audited 236ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > refuses a disabled user 22ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > uses each state once, and rejects unknown or expired states 33ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > rejects a wrong nonce and a PKCE mismatch (token_invalid), and IdP errors (idp_denied), all without a session 32ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > refuses just-in-time provisioning when several organizations exist (users must be pre-provisioned) 13ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > OIDC logout and configuration > returns the IdP end-session URL for OIDC sessions 28ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > OIDC logout and configuration > answers 404 on /auth/login and /auth/callback when OIDC is not configured 15ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > OIDC logout and configuration > redirects to /login?error=idp_unavailable when the IdP cannot be reached, and never fails startup 36ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > OIDC logout and configuration > keeps the IdP's token endpoint behind the server (the browser never receives tokens) 0ms
+ ✓ |integration| packages/db/test/integration/bootstrap.test.ts > mth-db bootstrap > refuses to run twice 222ms
+ ✓ |integration| packages/db/test/integration/bootstrap.test.ts > mth-db bootstrap > validates its input and refuses the dev-login issuer 190ms
+ ✓ |integration| packages/db/test/integration/bootstrap.test.ts > mth-db seed-dev (synthetic, development only) > refuses in production and outside AUTH_MODE=dev 0ms
+ ✓ |integration| packages/db/test/integration/bootstrap.test.ts > mth-db seed-dev (synthetic, development only) > seeds synthetic users bound to urn:mth:dev-local once, idempotently 317ms
+ ✓ |integration| tests/qa/integration/a14-concurrency.test.ts > A14 transformation PATCH > create returns version 1 with a strong ETag 42ms
+ ✓ |integration| tests/qa/integration/a14-concurrency.test.ts > A14 transformation PATCH > fresh If-Match succeeds and bumps version; stale If-Match is 409 with currentVersion; missing is 428 111ms
+ ✓ |integration| tests/qa/integration/a14-concurrency.test.ts > A14 transformation PATCH > two writers racing on the same version: exactly one 200, the rest 409, version bumped once 43ms
+ ✓ |integration| tests/qa/integration/a14-concurrency.test.ts > A14 transformation archive > stale If-Match is 409, missing is 428, fresh archives and bumps version 72ms
+ ✓ |integration| tests/qa/integration/a14-concurrency.test.ts > A14 own preferences (PUT /me/preferences) > missing If-Match is 428, stale is 409 with currentVersion, fresh succeeds 38ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts > organizations > lists only organizations in which the caller holds organization.read 19ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts > organizations > reads one organization with ETag; others are 404 27ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts > organizations > updates with If-Match (technical admin), 403 for a business role, 404 across organizations; audited 79ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts > organizations > creates an organization (organization.manage) and carries over only the creator's technical-admin roles 77ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts > business units > creates under an organization (business_unit.manage on the organization), with duplicate and cross-org checks 88ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts > business units > lists the organization's units for readers and 404s other organizations 26ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts > business units > rejects moving a unit under itself or its descendant (422 cycle) and keeps the hierarchy 29ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts > business units > re-parents and renames with If-Match; audited with a diff 45ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts > business units > limits nesting depth (400 on create, per the contract) 80ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts > business units > reads one unit (business_unit.read) and 404s outside scope 18ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts > cross-scope READ is denied by the policy function (404, existence not disclosed) > TO of organization A reads every transformation in A (inherits downward), none in B 62ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts > cross-scope READ is denied by the policy function (404, existence not disclosed) > TO of organization B cannot read organization A's records 14ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts > cross-scope READ is denied by the policy function (404, existence not disclosed) > TL granted at BU a1 (non-inheriting) sees no transformation below a1, and none in the sibling a2 19ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts > cross-scope READ is denied by the policy function (404, existence not disclosed) > a transformation-scope grant covers exactly that transformation 16ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts > dev login (AUTH_MODE=dev) > signs in a synthetic user: 204, HttpOnly SameSite=Lax cookie, only the SHA-256 of the token stored, audited 30ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts > dev login (AUTH_MODE=dev) > refuses unknown and disabled users with 401 and audits the failure 18ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts > dev login (AUTH_MODE=dev) > needs a same-origin Origin header (login CSRF) and a valid body 10ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts > dev login (AUTH_MODE=dev) > rotates the session: a login presented with an existing session revokes it 80ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts > cross-scope READ is denied by the policy function (404, existence not disclosed) > technical administrators cannot read business records at all 22ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts > cross-scope READ is denied by the policy function (404, existence not disclosed) > a user without grants sees nothing, and an unknown id is indistinguishable from a forbidden one 17ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts > list filtering happens in SQL through the same rules > returns exactly the readable set per principal 22ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts > cross-scope WRITE is denied (404 when unreadable, 403 when readable but not permitted) > TO of B cannot update or archive A's transformation, and nothing is written 29ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts > dev login (AUTH_MODE=dev) > does not exist (404) when AUTH_MODE=oidc 26ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts > GET /api/v1/me > returns the user, CSRF token, product name, home organization, active assignments and permissions per scope 34ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts > GET /api/v1/me > answers 401 without a session, with a forged cookie, after logout and after expiry 39ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts > cross-scope WRITE is denied (404 when unreadable, 403 when readable but not permitted) > an auditor can read but not update (403) and the denial itself is audited 19ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts > cross-scope WRITE is denied (404 when unreadable, 403 when readable but not permitted) > TL at BU a1 may create in a1 but not in the sibling a2 (BU unreadable -> 404) nor in org B 93ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts > cross-scope WRITE is denied (404 when unreadable, 403 when readable but not permitted) > an auditor can read the BU but may not create in it (403) 10ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts > revocation applies to the next request (grants are loaded per request) > revoking the TO grant removes access immediately 21ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts > revocation applies to the next request (grants are loaded per request) > future-dated and expired grants do not apply 22ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts > GET /api/v1/me > stops accepting a session as soon as its user is disabled 17ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts > PUT /api/v1/me/preferences > persists the language and time zone with If-Match (428, 409, 200) and audits the change 58ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts > PUT /api/v1/me/preferences > needs the CSRF token 15ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts > logout > needs CSRF, revokes the session, clears the cookie, audits, and returns no end-session URL in dev mode 39ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts > logout > uses the __Host- cookie with Secure on an https base URL 27ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts > request IDs > echoes a well-formed X-Request-Id and replaces a malformed one 4ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > applies every shipped migration, then reports up to date 184ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > is idempotent on an up-to-date database 8ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > records id, name, sha256, applied_at and applied_by = mth_owner 7ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > refuses to run when an applied file changed on disk 26ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > refuses to run when the database has a migration the build does not ship 24ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > applies a new forward migration atomically: a failing file leaves no trace 25ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate guards > refuses to run as the app role (objects must be owned by mth_owner) 148ms
+ ✓ |integration| apps/worker/test/integration/maintenance.test.ts > purgeExpired > deletes only expired or long-revoked rows 37ms
+ ✓ |integration| apps/worker/test/integration/maintenance.test.ts > schedule > registers the purge cron in the configured time zone, idempotently 60ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > lets mth_app INSERT and SELECT 3ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > rejects UPDATE by mth_app (no privilege) 2ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > rejects DELETE by mth_app (no privilege) 8ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > rejects TRUNCATE by mth_app 8ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > rejects UPDATE even by the owner (trigger audit_event_immutable) 12ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > rejects DELETE even by the owner (trigger audit_event_immutable) 7ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > rejects TRUNCATE even by the owner (trigger audit_event_immutable) 6ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > enforces the version step and the user-actor rule 10ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > rejects ADM_TECH + gate.decide and + finance.validate, even for the owner 11ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > rejects ADM_ACCESS + gate.decide and + finance.validate, even for the owner 15ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > rejects ADM_METHOD + gate.decide and + finance.validate, even for the owner 13ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > rejects re-classifying an approver role as technical_admin 7ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > rejects re-classifying a permission held by a technical admin as an approval 6ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > still allows approval permissions on business roles (positive case) 10ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > gives mth_app no way to write role_permission at all 5ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > seeded catalogue equals permissions.ts > permissions 5ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > seeded catalogue equals permissions.ts > roles and their permissions 3ms
+ ✓ |integration| apps/api/test/integration/platform.test.ts > health and readiness > reports ready when the database answers and every shipped migration is applied 23ms
+ ✓ |integration| apps/api/test/integration/platform.test.ts > health and readiness > reports 503 not_ready/pending when the build ships a migration the database lacks, and fail on checksum drift 34ms
+ ✓ |integration| apps/api/test/integration/platform.test.ts > rate limiting (ADR-0007 T-3) > limits auth endpoints per IP with a 429 problem and Retry-After 46ms
+ ✓ |integration| apps/api/test/integration/platform.test.ts > rate limiting (ADR-0007 T-3) > limits general API traffic per session, never the health endpoints 99ms
+ ✓ |integration| apps/api/test/integration/platform.test.ts > request hygiene > rejects malformed JSON, non-JSON bodies and bodies over 1 MiB with 400 problems 31ms
+ ✓ |integration| apps/api/test/integration/platform.test.ts > request hygiene > answers unknown API paths with a 404 problem 2ms
+ ✓ |integration| apps/api/test/integration/platform.test.ts > request hygiene > sends a strict same-origin Content-Security-Policy and other security headers 1ms
+ ✓ |integration| apps/api/test/integration/platform.test.ts > fail-closed guards (ADR-0006) > refuses to start with an /api route that declares no access 1ms
+ ✓ |integration| apps/api/test/integration/platform.test.ts > fail-closed guards (ADR-0006) > turns a success from a route that never consulted the policy function into a 500 3ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts > schema.ts matches the migrated database > has exactly the same relations and columns as public 18ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts > schema.ts matches the migrated database > marks exactly the views as views 2ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts > type and structure rules (ADR-0003, data dictionary global rules) > uses timestamptz only (no timestamp without time zone) and no floating point 3ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts > type and structure rules (ADR-0003, data dictionary global rules) > gives every base table a primary key and uuid ids without defaults 5ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts > type and structure rules (ADR-0003, data dictionary global rules) > gives every mutable business table a version column >= 1 defaulting to 1 4ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts > type and structure rules (ADR-0003, data dictionary global rules) > stores money-bearing currency as char(3) with a code check 3ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts > mth_app privileges are exactly the data dictionary's > matches per table 3ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts > mth_app privileges are exactly the data dictionary's > has no CREATE on public and owns nothing 2ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts > mth_app privileges are exactly the data dictionary's > can use the pg-boss schema without DDL 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > covers every operation with at least one success and every successful body with its zod mirror
+AssertionError: expected [ 'getBrandingTokens' ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "getBrandingTokens",[39m
+[31m+ ][39m
+
+ ❯ apps/api/test/integration/contract/contract.test.ts:254:21
+    252|   it("covers every operation with at least one success and every succe…
+    253|     const missing = operations.filter((o) => !exercised.has(o.operatio…
+    254|     expect(missing).toEqual([]);
+       |                     ^
+    255|     const noSuccess = operations
+    256|       .filter((o) => ![...exercised.get(o.operationId)!].some((s) => s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+error: terminating connection due to administrator command
+ ❯ parseErrorMessage node_modules/.pnpm/pg-protocol@1.16.1/node_modules/pg-protocol/src/parser.ts:395:9
+ ❯ Parser.handlePacket node_modules/.pnpm/pg-protocol@1.16.1/node_modules/pg-protocol/src/parser.ts:212:19
+ ❯ Parser.parse node_modules/.pnpm/pg-protocol@1.16.1/node_modules/pg-protocol/src/parser.ts:105:30
+ ❯ Socket.<anonymous> node_modules/.pnpm/pg-protocol@1.16.1/node_modules/pg-protocol/src/index.ts:7:48
+ ❯ Socket.emit node:events:519:28
+ ❯ addChunk node:internal/streams/readable:561:12
+ ❯ readableAddChunkPushByteMode node:internal/streams/readable:512:3
+ ❯ Socket.Readable.push node:internal/streams/readable:392:5
+ ❯ TCP.onStreamRead node:internal/stream_base_commons:189:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 116, severity: 'FATAL', code: '57P01', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'postgres.c', routine: 'ProcessInterrupts', client: { _events: { error: 'Function<anonymous>' }, _eventsCount: 1, _maxListeners: undefined, connectionParameters: { user: 'postgres', database: 'mth_wrk_mup6012f_b5386241', port: 54373, host: '127.0.0.1', password: null, binary: false, options: '-c role=mth_owner', ssl: false, client_encoding: '', replication: undefined, isDomainSocket: false, application_name: undefined, fallback_application_name: undefined, statement_timeout: false, lock_timeout: false, idle_in_transaction_session_timeout: false, query_timeout: false, connect_timeout: +0, constructor: 'Function<ConnectionParameters>', getLibpqConnectionString: 'Function<getLibpqConnectionString>' }, user: 'postgres', database: 'mth_wrk_mup6012f_b5386241', port: 54373, host: '127.0.0.1', password: null, replication: undefined, _Promise: 'Function<Promise>', _types: { _types: { getTypeParser: 'Function<getTypeParser>', setTypeParser: 'Function<setTypeParser>', arrayParser: { create: 'Function<create>' }, builtins: { BOOL: 16, BYTEA: 17, CHAR: 18, INT8: 20, INT2: 21, INT4: 23, REGPROC: 24, TEXT: 25, OID: 26, TID: 27, XID: 28, CID: 29, JSON: 114, XML: 142, PG_NODE_TREE: 194, SMGR: 210, PATH: 602, POLYGON: 604, CIDR: 650, FLOAT4: 700, FLOAT8: 701, ABSTIME: 702, RELTIME: 703, TINTERVAL: 704, CIRCLE: 718, MACADDR8: 774, MONEY: 790, MACADDR: 829, INET: 869, ACLITEM: 1033, BPCHAR: 1042, VARCHAR: 1043, DATE: 1082, TIME: 1083, TIMESTAMP: 1114, TIMESTAMPTZ: 1184, INTERVAL: 1186, TIMETZ: 1266, BIT: 1560, VARBIT: 1562, NUMERIC: 1700, REFCURSOR: 1790, REGPROCEDURE: 2202, REGOPER: 2203, REGOPERATOR: 2204, REGCLASS: 2205, REGTYPE: 2206, UUID: 2950, TXID_SNAPSHOT: 2970, PG_LSN: 3220, PG_NDISTINCT: 3361, PG_DEPENDENCIES: 3402, TSVECTOR: 3614, TSQUERY: 3615, GTSVECTOR: 3642, REGCONFIG: 3734, REGDICTIONARY: 3769, JSONB: 3802, REGNAMESPACE: 4089, REGROLE: 4096 } }, text: {}, binary: {}, constructor: 'Function<TypeOverrides>', getOverrides: 'Function<anonymous>', setTypeParser: 'Function<anonymous>', getTypeParser: 'Function<anonymous>' }, _ending: true, _ended: false, _connecting: false, _connected: true, _connectionError: false, _queryable: false, enableChannelBinding: false, connection: { _events: { newListener: 'Function<anonymous>', connect: 'Function<anonymous>', sslconnect: 'Function<anonymous>', authenticationCleartextPassword: 'Function<bound _handleAuthCleartextPassword>', authenticationMD5Password: 'Function<bound _handleAuthMD5Password>', authenticationSASL: 'Function<bound _handleAuthSASL>', authenticationSASLContinue: 'Function<bound _handleAuthSASLContinue>', authenticationSASLFinal: 'Function<bound _handleAuthSASLFinal>', backendKeyData: 'Function<bound _handleBackendKeyData>', error: 'Function<bound _handleErrorEvent>', errorMessage: 'Function<bound _handleErrorMessage>', readyForQuery: 'Function<bound _handleReadyForQuery>', notice: 'Function<bound _handleNotice>', rowDescription: 'Function<bound _handleRowDescription>', dataRow: 'Function<bound _handleDataRow>', portalSuspended: 'Function<bound _handlePortalSuspended>', emptyQuery: 'Function<bound _handleEmptyQuery>', commandComplete: 'Function<bound _handleCommandComplete>', parseComplete: 'Function<bound _handleParseComplete>', copyInResponse: 'Function<bound _handleCopyInResponse>', copyData: 'Function<bound _handleCopyData>', notification: 'Function<bound _handleNotification>', end: [ 'Function<bound onceWrapper>', 'Function<bound onceWrapper>', 'Function<bound onceWrapper>' ] }, _eventsCount: 23, _maxListeners: undefined, stream: { connecting: false, _hadError: false, _parent: null, _host: null, _closeAfterHandlingError: false, _events: { close: 'Function<anonymous>', error: 'Function<reportStreamError>', prefinish: undefined, finish: undefined, drain: undefined, data: 'Function<anonymous>', end: [ 'Function<onReadableStreamEnd>', 'Function<anonymous>' ], readable: undefined, connect: undefined }, _readableState: { highWaterMark: 65536, buffer: [], bufferIndex: +0, length: +0, pipes: [], awaitDrainWriters: null, constructor: 'Function<ReadableState>', objectMode: false, ended: false, endEmitted: false, reading: false, constructed: true, sync: false, needReadable: true, emittedReadable: false, readableListening: false, resumeScheduled: false, errorEmitted: false, emitClose: false, autoDestroy: true, destroyed: true, closed: true, closeEmitted: false, multiAwaitDrain: false, readingMore: false, dataEmitted: true, errored: null, defaultEncoding: 'utf8', decoder: null, encoding: null, flowing: true, pipesCount: +0, paused: false }, _writableState: { highWaterMark: 65536, length: +0, corked: +0, onwrite: 'Function<bound onwrite>', writelen: +0, bufferedIndex: +0, pendingcb: +0, constructor: 'Function<WritableState>', objectMode: false, finalCalled: true, needDrain: false, ending: true, ended: true, finished: true, destroyed: true, decodeStrings: false, writing: false, sync: false, bufferProcessing: false, constructed: true, prefinished: true, errorEmitted: false, emitClose: false, autoDestroy: true, closed: true, closeEmitted: false, allBuffers: true, allNoop: true, errored: null, writable: undefined, defaultEncoding: 'utf8', writecb: 'Function<nop>', afterWriteTickInfo: null, buffered: [], getBuffer: 'Function<getBuffer>', bufferedRequestCount: +0 }, allowHalfOpen: false, _maxListeners: undefined, _eventsCount: 4, _sockname: null, _pendingData: null, _pendingEncoding: '', server: null, _server: null, constructor: 'Function<Socket>', _unrefTimer: 'Function<_unrefTimer>', _final: 'Function<anonymous>', setTimeout: 'Function<setStreamTimeout>', _onTimeout: 'Function<anonymous>', setNoDelay: 'Function<anonymous>', setKeepAlive: 'Function<anonymous>', address: 'Function<anonymous>', _connecting: false, pending: true, readyState: 'closed', bufferSize: undefined, _read: 'Function<anonymous>', end: 'Function<anonymous>', resetAndDestroy: 'Function<anonymous>', pause: 'Function<anonymous>', resume: 'Function<anonymous>', read: 'Function<anonymous>', destroySoon: 'Function<anonymous>', _destroy: 'Function<anonymous>', _reset: 'Function<anonymous>', _getpeername: 'Function<anonymous>', bytesRead: 599, remoteAddress: undefined, remoteFamily: undefined, remotePort: undefined, _getsockname: 'Function<anonymous>', localAddress: undefined, localPort: undefined, localFamily: undefined, _writeGeneric: 'Function<anonymous>', _writev: 'Function<anonymous>', _write: 'Function<anonymous>', _bytesDispatched: 480, bytesWritten: 480, connect: 'Function<anonymous>', ref: 'Function<anonymous>', unref: 'Function<anonymous>', _handle: null, write: 'Function<anonymous>', cork: 'Function<anonymous>', uncork: 'Function<anonymous>', setDefaultEncoding: 'Function<setDefaultEncoding>', destroy: 'Function<anonymous>', writable: false, writableHighWaterMark: 65536, writableObjectMode: false, writableBuffer: [], writableLength: +0, writableFinished: true, writableCorked: +0, writableEnded: true, writableNeedDrain: false, destroyed: true, _undestroy: 'Function<undestroy>', push: 'Function<anonymous>', unshift: 'Function<anonymous>', isPaused: 'Function<anonymous>', setEncoding: 'Function<anonymous>', pipe: 'Function<anonymous>', unpipe: 'Function<anonymous>', on: 'Function<anonymous>', addListener: 'Function<anonymous>', removeListener: 'Function<anonymous>', off: 'Function<anonymous>', removeAllListeners: 'Function<anonymous>', wrap: 'Function<anonymous>', iterator: 'Function<anonymous>', readable: false, readableDidRead: true, readableAborted: true, readableHighWaterMark: 65536, readableBuffer: [], readableFlowing: true, readableLength: +0, readableObjectMode: false, readableEncoding: null, errored: null, closed: true, readableEnded: false, drop: 'Function<drop>', filter: 'Function<filter>', flatMap: 'Function<flatMap>', map: 'Function<map>', take: 'Function<take>', compose: 'Function<compose>', every: 'Function<every>', forEach: 'Function<forEach>', reduce: 'Function<reduce>', toArray: 'Function<toArray>', some: 'Function<some>', find: 'Function<find>', eventNames: 'Function<eventNames>', setMaxListeners: 'Function<setMaxListeners>', getMaxListeners: 'Function<getMaxListeners>', emit: 'Function<emit>', prependListener: 'Function<prependListener>', once: 'Function<once>', prependOnceListener: 'Function<prependOnceListener>', listeners: 'Function<listeners>', rawListeners: 'Function<rawListeners>', listenerCount: 'Function<listenerCount>' }, _keepAlive: false, _keepAliveInitialDelayMillis: +0, lastBuffer: false, parsedStatements: {}, ssl: false, _ending: true, _emitMessage: false, _connecting: true, constructor: 'Function<Connection>', connect: 'Function<connect>', attachListeners: 'Function<attachListeners>', requestSsl: 'Function<requestSsl>', startup: 'Function<startup>', cancel: 'Function<cancel>', password: 'Function<password>', sendSASLInitialResponseMessage: 'Function<sendSASLInitialResponseMessage>', sendSCRAMClientFinalMessage: 'Function<sendSCRAMClientFinalMessage>', _send: 'Function<_send>', query: 'Function<query>', parse: 'Function<parse>', bind: 'Function<bind>', execute: 'Function<execute>', flush: 'Function<flush>', sync: 'Function<sync>', ref: 'Function<ref>', unref: 'Function<unref>', end: 'Function<end>', close: 'Function<close>', describe: 'Function<describe>', sendCopyFromChunk: 'Function<sendCopyFromChunk>', endCopyFrom: 'Function<endCopyFrom>', sendCopyFail: 'Function<sendCopyFail>', setMaxListeners: 'Function<setMaxListeners>', getMaxListeners: 'Function<getMaxListeners>', emit: 'Function<emit>', addListener: 'Function<addListener>', on: 'Function<addListener>', prependListener: 'Function<prependListener>', once: 'Function<once>', prependOnceListener: 'Function<prependOnceListener>', removeListener: 'Function<removeListener>', off: 'Function<removeListener>', removeAllListeners: 'Function<removeAllListeners>', listeners: 'Function<listeners>', rawListeners: 'Function<rawListeners>', listenerCount: 'Function<listenerCount>', eventNames: 'Function<eventNames>' }, queryQueue: [], binary: false, processID: 524, secretKey: 1499611461, ssl: false, _connectionTimeoutMillis: +0, _connectionCallback: null, release: 'Function<anonymous>', activeQuery: null, readyForQuery: true, hasExecuted: true, _poolUseCount: 1, constructor: 'Function<Client>', _errorAllQueries: 'Function<_errorAllQueries>', _connect: 'Function<_connect>', connect: 'Function<connect>', _attachListeners: 'Function<_attachListeners>', _checkPgPass: 'Function<_checkPgPass>', _handleAuthCleartextPassword: 'Function<_handleAuthCleartextPassword>', _handleAuthMD5Password: 'Function<_handleAuthMD5Password>', _handleAuthSASL: 'Function<_handleAuthSASL>', _handleAuthSASLContinue: 'Function<_handleAuthSASLContinue>', _handleAuthSASLFinal: 'Function<_handleAuthSASLFinal>', _handleBackendKeyData: 'Function<_handleBackendKeyData>', _handleReadyForQuery: 'Function<_handleReadyForQuery>', _handleErrorWhileConnecting: 'Function<_handleErrorWhileConnecting>', _handleErrorEvent: 'Function<_handleErrorEvent>', _handleErrorMessage: 'Function<_handleErrorMessage>', _handleRowDescription: 'Function<_handleRowDescription>', _handleDataRow: 'Function<_handleDataRow>', _handlePortalSuspended: 'Function<_handlePortalSuspended>', _handleEmptyQuery: 'Function<_handleEmptyQuery>', _handleCommandComplete: 'Function<_handleCommandComplete>', _handleParseComplete: 'Function<_handleParseComplete>', _handleCopyInResponse: 'Function<_handleCopyInResponse>', _handleCopyData: 'Function<_handleCopyData>', _handleNotification: 'Function<_handleNotification>', _handleNotice: 'Function<_handleNotice>', getStartupConf: 'Function<getStartupConf>', cancel: 'Function<cancel>', setTypeParser: 'Function<setTypeParser>', getTypeParser: 'Function<getTypeParser>', escapeIdentifier: 'Function<escapeIdentifier>', escapeLiteral: 'Function<escapeLiteral>', _pulseQueryQueue: 'Function<_pulseQueryQueue>', query: 'Function<query>', ref: 'Function<ref>', unref: 'Function<unref>', end: 'Function<end>', setMaxListeners: 'Function<setMaxListeners>', getMaxListeners: 'Function<getMaxListeners>', emit: 'Function<emit>', addListener: 'Function<addListener>', on: 'Function<addListener>', prependListener: 'Function<prependListener>', once: 'Function<once>', prependOnceListener: 'Function<prependOnceListener>', removeListener: 'Function<removeListener>', off: 'Function<removeListener>', removeAllListeners: 'Function<removeAllListeners>', listeners: 'Function<listeners>', rawListeners: 'Function<rawListeners>', listenerCount: 'Function<listenerCount>', eventNames: 'Function<eventNames>' } }
+This error originated in "apps/worker/test/integration/maintenance.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  1 failed | 16 passed (17)
+      Tests  1 failed | 180 passed (181)
+     Errors  1 error
+   Start at  06:40:03
+   Duration  10.90s (transform 927ms, setup 0ms, collect 9.13s, tests 17.25s, environment 3ms, prepare 1.15s)
+
+ ELIFECYCLE  Command failed with exit code 1.
+exit=1

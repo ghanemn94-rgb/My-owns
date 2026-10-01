@@ -1,0 +1,21 @@
+
+ RUN  v3.2.4 /var/tmp/mth-run.JxJlkA/claude-0/review-sec
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mup5r51r_4c77c829; applied 6 migrations to a fresh database
+stdout | apps/api/test/integration/repro-scope-consistency.test.ts > list (SQL scopeFilter) == per-record read (decide); siblings never cross > TL@BU a1 may create in a1 — and can the creator read back what it created?
+[repro] TL@BU create status: 201
+
+stdout | apps/api/test/integration/repro-scope-consistency.test.ts > list (SQL scopeFilter) == per-record read (decide); siblings never cross > TL@BU a1 may create in a1 — and can the creator read back what it created?
+[repro] TL@BU read-back of own created record status: 404
+
+stdout | apps/api/test/integration/repro-scope-consistency.test.ts > list (SQL scopeFilter) == per-record read (decide); siblings never cross > TL@BU a1 may create in a1 — and can the creator read back what it created?
+[repro] TL@BU a1 create in sibling a2 status: 404
+
+ ✓ |integration| apps/api/test/integration/repro-scope-consistency.test.ts (11 tests) 971ms
+
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+   Start at  06:33:18
+   Duration  2.71s (transform 450ms, setup 0ms, collect 1.01s, tests 971ms, environment 0ms, prepare 56ms)
+
+EXIT=0

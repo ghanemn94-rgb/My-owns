@@ -1,0 +1,18 @@
+# repro (on a disposable copy of the built clone @85e5bbd): bash deploy/scripts/assemble-runtime.sh --store-dir $TMPDIR/pstore/v10 rt-ws rt-repro  (the step deploy/docker/Dockerfile:59 runs)
+assemble exit=0
+virtual store: 129 package directories, all in the shipped set (129 runtime+bundled)
+assemble-runtime: OK 129 packages, 100M -> /var/tmp/mth-run.3sGBCB/claude-0/rt-repro
+# ls runtime packages/:
+config
+db
+shared
+# apps/api/node_modules/@mth:
+config -> ../../../../packages/config
+db -> ../../../../packages/db
+design-tokens -> ../../../../packages/design-tokens
+shared -> ../../../../packages/shared
+design-tokens: DANGLING symlink (target not in runtime tree)
+# cmd (in runtime tree): node -e 'await import("./apps/api/dist/server.js")'
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@mth/design-tokens' imported from /var/tmp/mth-run.3sGBCB/claude-0/rt-repro/apps/api/dist/server.js
+# control (workspace build): node -e 'await import("./apps/api/dist/server.js")'
+server.js imported OK (workspace)
