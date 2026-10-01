@@ -152,7 +152,9 @@ export type AuthMode = (typeof AUTH_MODES)[number];
 // Validated loader over the catalogue above (T-DG1-BE).
 export {
   ConfigError,
+  isLoopbackHost,
   loadConfig,
+  secureOriginAllowed,
   secretVariableNames,
   LOG_LEVELS,
   NODE_ENVS,

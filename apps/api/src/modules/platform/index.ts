@@ -28,4 +28,4 @@ export {
   type RouteAccess,
 } from "./hooks.ts";
 export { registerHealthRoutes } from "./health.ts";
-export type { ModuleDeps } from "./deps.ts";
+export type { ModuleDeps, ModuleRegistration } from "./deps.ts";

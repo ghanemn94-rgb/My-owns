@@ -108,6 +108,8 @@ export interface OidcLoginStateTable {
   return_to: Generated<string>;
   created_at: TimestampDefault;
   expires_at: Timestamp;
+  /** SHA-256 of the browser-binding cookie set by GET /auth/login (migration 0007, F-DG1-103). */
+  browser_binding_hash: Buffer;
 }
 
 export interface RoleTable extends Stamps {
@@ -147,6 +149,8 @@ export interface ScopedAssignmentTable extends Stamps {
   revoked_at: NullableTimestamp;
   revoked_by: string | null;
   revoke_reason: string | null;
+  /** Source grant of a derived creator assignment (migration 0008, F-DG1-106); null for direct grants. */
+  derived_from_assignment_id: Generated<string | null>;
 }
 
 export interface DelegationTable extends Stamps {
@@ -359,7 +363,15 @@ export const SCHEMA_COLUMNS = {
     "revoked_at",
     "user_agent",
   ],
-  oidc_login_state: ["state_hash", "code_verifier", "nonce", "return_to", "created_at", "expires_at"],
+  oidc_login_state: [
+    "state_hash",
+    "code_verifier",
+    "nonce",
+    "return_to",
+    "created_at",
+    "expires_at",
+    "browser_binding_hash",
+  ],
   role: [
     "id",
     "code",
@@ -395,6 +407,7 @@ export const SCHEMA_COLUMNS = {
     "updated_at",
     "created_by",
     "updated_by",
+    "derived_from_assignment_id",
   ],
   delegation: [
     "id",

@@ -20,9 +20,18 @@ import { registerDeniedMutationAudit } from "./modules/access/index.ts";
 import { colorTokens, tokensAreProvisional } from "@mth/design-tokens";
 import { registerAdminRoutes, registerBrandingRoutes } from "./modules/admin/index.ts";
 import { registerIdentity, sessionCookieName, sha256, type OidcService } from "./modules/identity/index.ts";
+import { registerKpiModule } from "./modules/kpi/index.ts";
 import { registerOrganizationRoutes } from "./modules/organization/index.ts";
-import { genReqId, problems, registerHealthRoutes, registerPlatformHooks } from "./modules/platform/index.ts";
+import {
+  genReqId,
+  problems,
+  registerHealthRoutes,
+  registerPlatformHooks,
+  type ModuleRegistration,
+} from "./modules/platform/index.ts";
+import { registerReportingModule } from "./modules/reporting/index.ts";
 import { registerTransformationRoutes } from "./modules/transformations/index.ts";
+import { registerWorkflowsModule } from "./modules/workflows/index.ts";
 
 export const JSON_BODY_LIMIT_BYTES = 1_048_576;
 
@@ -54,7 +63,7 @@ export interface RouteRecord {
 
 export async function buildServer(
   options: ServerOptions,
-): Promise<{ app: FastifyInstance; db: Db; routes: readonly RouteRecord[] }> {
+): Promise<{ app: FastifyInstance; db: Db; routes: readonly RouteRecord[]; modules: readonly ModuleRegistration[] }> {
   const { config, pool } = options;
   if (!config.appBaseUrl) throw new Error("APP_BASE_URL is required by the API");
   const webRoot = options.webRoot === undefined ? defaultWebRoot() : options.webRoot;
@@ -132,11 +141,17 @@ export async function buildServer(
   registerTransformationRoutes(app, deps);
   registerAdminRoutes(app, deps);
   registerBrandingRoutes(app, { colorTokens, tokensAreProvisional });
+  // P1 scaffolds (D-048): wired like every module, registering no routes until their stage (P2 / P4 / P5).
+  const scaffolds: ModuleRegistration[] = [
+    registerWorkflowsModule(app, deps),
+    registerKpiModule(app, deps),
+    registerReportingModule(app, deps),
+  ];
 
   if (webRoot) {
     await app.register(fastifyStatic, { root: webRoot, wildcard: false, index: ["index.html"] });
   }
 
   await app.ready();
-  return { app, db, routes };
+  return { app, db, routes, modules: scaffolds };
 }

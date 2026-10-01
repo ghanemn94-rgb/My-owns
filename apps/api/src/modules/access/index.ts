@@ -38,5 +38,5 @@ export {
   type AssignmentListQuery,
 } from "./assignments.ts";
 export { auditContextOf, principalOf } from "./request.ts";
-export { grantCreatorAdminRoles } from "./assignments.ts";
+export { grantCreatorAdminRoles, grantCreatorTransformationRoles } from "./assignments.ts";
 export { registerDeniedMutationAudit } from "./denials.ts";

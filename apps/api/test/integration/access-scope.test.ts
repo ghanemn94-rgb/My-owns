@@ -6,6 +6,7 @@ import {
   auditOf,
   call,
   createTransformationRow,
+  createUser,
   grant,
   seedWorld,
   signIn,
@@ -200,5 +201,147 @@ describe("revocation applies to the next request (grants are loaded per request)
     expect((await get("nobody", trX)).status).toBe(404);
     await api.db.updateTable("scoped_assignment").set({ effective_to: null }).where("id", "=", id).execute();
     expect((await get("nobody", trX)).status).toBe(200);
+  });
+});
+
+describe("a business-unit-scoped creator can work on what it created, and nothing more (F-DG1-106)", () => {
+  const derivedOf = (userId: string) =>
+    api.db
+      .selectFrom("scoped_assignment as a")
+      .innerJoin("role as r", "r.id", "a.role_id")
+      .select(["a.id", "a.scope_id", "a.derived_from_assignment_id", "a.revoked_at", "a.effective_to", "r.code"])
+      .where("a.user_id", "=", userId)
+      .where("a.scope_type", "=", "transformation")
+      .execute();
+  const createAs = (session: Session, businessUnitId: string, name: string) =>
+    call<{ id: string; version: number }>(api.app, "POST", "/api/v1/transformations", {
+      session,
+      body: { businessUnitId, name, mode: "end_to_end" },
+    });
+
+  it("TL @ BU a1: create -> read -> list -> update -> audit -> archive all succeed (explicit, audited assignment)", async () => {
+    const lead = await createUser(api.db, w.orgA.id);
+    const source = await grant(api.db, w.grantor.id, lead.id, "TL", { type: "business_unit", id: w.a1 }, w.orgA.id);
+    const session = await signIn(api.app, lead.subject);
+
+    const created = await createAs(session, w.a1, "Lead's own transformation");
+    expect(created.status).toBe(201);
+    const id = created.body.id;
+    const read = await call(api.app, "GET", `/api/v1/transformations/${id}`, { session });
+    expect(read.status).toBe(200);
+    const listed = await call<{ items: { id: string }[] }>(api.app, "GET", "/api/v1/transformations?limit=100", {
+      session,
+    });
+    expect(listed.body.items.map((t) => t.id)).toContain(id);
+    const updated = await call<{ version: number }>(api.app, "PATCH", `/api/v1/transformations/${id}`, {
+      session,
+      headers: { "if-match": '"1"' },
+      body: { name: "Lead's own (renamed)", status: "active" },
+    });
+    expect([updated.status, updated.body.version]).toEqual([200, 2]);
+    expect((await call(api.app, "GET", `/api/v1/transformations/${id}/audit`, { session })).status).toBe(200);
+    const archived = await call(api.app, "POST", `/api/v1/transformations/${id}/archive`, {
+      session,
+      headers: { "if-match": '"2"' },
+      body: { reason: "Synthetic archive by its BU-scoped creator" },
+    });
+    expect(archived.status).toBe(200);
+
+    // The access comes from ONE explicit transformation-scope assignment of the same role, linked to the source.
+    const derived = await derivedOf(lead.id);
+    expect(derived).toEqual([
+      {
+        id: expect.any(String),
+        scope_id: id,
+        derived_from_assignment_id: source,
+        revoked_at: null,
+        effective_to: null,
+        code: "TL",
+      },
+    ]);
+    const events = await auditOf(api.db, derived[0]!.id);
+    expect(events.map((e) => e.action)).toEqual(["scoped_assignment.create"]);
+    expect(events[0]).toMatchObject({ actor_user_id: lead.id, transformation_id: id, new_version: 1 });
+    expect(events[0]!.reason).toMatch(/carried over from business-unit assignment/);
+    // ...written in the create's own request/transaction, next to the transformation.create event.
+    const createEvent = (await auditOf(api.db, id)).find((e) => e.action === "transformation.create")!;
+    expect(events[0]!.request_id).toBe(createEvent.request_id);
+  });
+
+  it("still denies the BU-scoped creator every OTHER transformation, cross-BU and cross-organization", async () => {
+    const lead = await createUser(api.db, w.orgA.id);
+    await grant(api.db, w.grantor.id, lead.id, "TL", { type: "business_unit", id: w.a1 }, w.orgA.id);
+    const session = await signIn(api.app, lead.subject);
+    expect((await createAs(session, w.a1, "Own")).status).toBe(201);
+    // Records it did not create - even in its own BU a1 - stay invisible (TL does not inherit downward).
+    for (const other of [trA1, trA1x, trA2, trB1]) {
+      expect((await call(api.app, "GET", `/api/v1/transformations/${other}`, { session })).status).toBe(404);
+      const patch = await call(api.app, "PATCH", `/api/v1/transformations/${other}`, {
+        session,
+        headers: { "if-match": '"1"' },
+        body: { name: "Not mine" },
+      });
+      expect(patch.status).toBe(404);
+      const archive = await call(api.app, "POST", `/api/v1/transformations/${other}/archive`, {
+        session,
+        headers: { "if-match": '"1"' },
+        body: { reason: "Not mine either" },
+      });
+      expect(archive.status).toBe(404);
+    }
+    for (const bu of [w.a2, w.b1]) expect((await createAs(session, bu, "Out of scope")).status).toBe(404);
+    expect(await derivedOf(lead.id)).toHaveLength(1);
+  });
+
+  it("adds no assignment when the creator can already read the record (TO inherits downward)", async () => {
+    const officeUser = await createUser(api.db, w.orgA.id);
+    await grant(api.db, w.grantor.id, officeUser.id, "TO", { type: "organization", id: w.orgA.id }, w.orgA.id);
+    const session = await signIn(api.app, officeUser.subject);
+    const created = await createAs(session, w.a1, "Office-created");
+    expect(created.status).toBe(201);
+    expect((await call(api.app, "GET", `/api/v1/transformations/${created.body.id}`, { session })).status).toBe(200);
+    expect(await derivedOf(officeUser.id)).toEqual([]);
+  });
+
+  it("never carries over a role that holds an approval permission (no approver is manufactured by a create)", async () => {
+    // Roles are configurable (the database is the runtime source of truth): give TL a G1-G6 business-approval
+    // permission for the duration of this test only, and restore the seed afterwards (other suites compare with it).
+    const tl = (await api.owner.query("SELECT id FROM role WHERE code = 'TL'")).rows[0].id as string;
+    await api.owner.query("INSERT INTO role_permission (role_id, permission_code) VALUES ($1, 'gate.decide')", [tl]);
+    try {
+      const lead = await createUser(api.db, w.orgA.id);
+      await grant(api.db, w.grantor.id, lead.id, "TL", { type: "business_unit", id: w.a1 }, w.orgA.id);
+      const session = await signIn(api.app, lead.subject);
+      const created = await createAs(session, w.a1, "Created by a role that can approve");
+      expect(created.status).toBe(201);
+      expect(await derivedOf(lead.id)).toEqual([]);
+      expect((await call(api.app, "GET", `/api/v1/transformations/${created.body.id}`, { session })).status).toBe(404);
+    } finally {
+      await api.owner.query("DELETE FROM role_permission WHERE role_id = $1 AND permission_code = 'gate.decide'", [tl]);
+    }
+  });
+
+  it("revoking the source BU grant also revokes the derived assignment (same transaction, audited)", async () => {
+    const lead = await createUser(api.db, w.orgA.id);
+    const source = await grant(api.db, w.grantor.id, lead.id, "TL", { type: "business_unit", id: w.a1 }, w.orgA.id);
+    const session = await signIn(api.app, lead.subject);
+    const id = (await createAs(session, w.a1, "Before revocation")).body.id;
+    expect((await call(api.app, "GET", `/api/v1/transformations/${id}`, { session })).status).toBe(200);
+
+    const revoke = await call(api.app, "POST", `/api/v1/role-assignments/${source}/revoke`, {
+      session: s["admin"]!,
+      headers: { "if-match": '"1"' },
+      body: { reason: "Synthetic: lead left the unit" },
+    });
+    expect(revoke.status).toBe(200);
+    const [derived] = await derivedOf(lead.id);
+    expect(derived!.revoked_at).not.toBeNull();
+    const events = await auditOf(api.db, derived!.id);
+    expect(events.map((e) => e.action)).toEqual(["scoped_assignment.create", "scoped_assignment.revoke"]);
+    expect(events[1]).toMatchObject({ actor_user_id: w.admin.id, prior_version: 1, new_version: 2 });
+    expect(events[1]!.reason).toContain(source);
+    // A revocation also ends the user's sessions; signed in again, the record is no longer readable.
+    const again = await signIn(api.app, lead.subject);
+    expect((await call(api.app, "GET", `/api/v1/transformations/${id}`, { session: again })).status).toBe(404);
   });
 });
