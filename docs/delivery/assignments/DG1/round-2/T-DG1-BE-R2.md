@@ -1,0 +1,31 @@
+# Assignment T-DG1-BE-R2: round-2 repairs (backend-workflow-engineer)
+
+- **Stage:** P1 / gate DG1 (clean re-gate, round-2 repair) on branch `claude/mobily-transformation-platform-regate`. **Base:** current `HEAD`. `node_modules` present; run **offline**; no `pnpm install` (if you change `package.json` deps, update `pnpm-lock.yaml` with `pnpm install --offline --lockfile-only` or the repo's documented offline lockfile step, and say exactly what you ran). A Node 24.21.0 binary is at `/opt/nvm/versions/node/v24.21.0/bin`.
+- Full finding text is in `docs/delivery/findings.json`. The round-1 code-security reviewer left **reproduction tests** under `docs/delivery/test-evidence/DG1/code-security/round-1/repro-bu/`, `.../repro-ratelimit/`, `.../repro-ajv/` — read and use them.
+- Edit product/runtime/doc code as needed for these findings. Do **not** edit `tools/gates/**`, `tools/agents/**`, `.claude/agents/**`, `docs/source/**`, reviews or gate records. Handback under `docs/delivery/handbacks/DG1/round-2/`.
+
+## F-DG1-140 (Medium, MANDATORY, REQ-S19-004): concurrent business-unit re-parenting can commit a hierarchy cycle
+`apps/api/src/modules/organization/routes.ts:335-376` + `repository.ts:50-67` check "no cycles" in application code with no serialization, so two concurrent re-parents (A→C and C→A, or A→C→B→A) each pass and commit a cycle; migration `packages/db/migrations/0001_identity_access.sql:68-100` has no guard. **Fix:** add a **database-level** guard so a cycle can never be committed even under concurrency — e.g. a `BEFORE UPDATE` trigger on `business_unit` (or the closure table) that rejects a `parent_id` change which would create a cycle, evaluated within the transaction with the right locking; or serialize the re-parent (e.g. `SELECT … FOR UPDATE` over the affected subtree / an advisory lock keyed on the tree) and re-check the invariant inside the transaction. Add a **new forward migration** (0009…) — do not edit 0001-0008. Add a test that reproduces the reviewer's concurrent-cycle scenario and proves it now fails closed (the losing transaction errors; no cycle persists). Keep the existing single-threaded "no cycles" API error for the friendly path.
+
+## F-DG1-141 (Medium, MANDATORY, REQ-DLV-033): re-parent authorizes only the moved unit, not the destination parent
+`apps/api/src/modules/organization/routes.ts:320-376` + `apps/api/src/modules/access/rules.ts:47-80`: re-parenting checks the actor's rights on the moved unit only, so a unit-scoped manager can move a unit under a destination branch it has no rights on, exposing the moved records there. **Fix:** require authorization on **both** the moved unit **and** the destination parent (the actor must be entitled to the destination branch/scope). Add a negative test: a unit-scoped manager moving a unit into a sibling branch it lacks rights on is rejected (403), and the legitimate in-scope move still succeeds.
+
+## F-DG1-142 (Medium, REQ-DLV-033): global rate limit bypassed by rotating an invalid session cookie
+`apps/api/src/server.ts:121-134` + `apps/api/src/modules/identity/routes.ts:105-122`: the limiter keys on any presented cookie value, so each fabricated cookie gets a fresh bucket. **Fix:** key the limiter on a trustworthy identifier — the authenticated subject when a **valid** session exists, else the client network identifier (respecting the deployment's trusted-proxy config) — never an unvalidated cookie value. Add a test proving cookie rotation no longer resets the bucket.
+
+## F-DG1-143 (Low, REQ-S16-003): ajv/ajv-formats/yaml are runtime deps but test-only; ajv codegen `_` is a lint-evasion vector
+`apps/api/package.json:30-38`. **Verify** whether `ajv`, `ajv-formats`, `yaml` are used by any runtime (non-test) code path. If test-only, move them to `devDependencies` (so they leave the production surface) and update the lockfile offline. If any is genuinely runtime, keep it and say where. For the lint point: the module dependency-lint (`architecture.testkit.ts`) governs **first-party** module source, not a third-party package's internal codegen API (D-055); state this scope explicitly in the testkit header comment (cite F-DG1-143). Do not weaken the lint.
+
+## F-DG1-145 / F-DG1-001 / F-DG1-230 (Low, REQ-S19-004 / REQ-S16-001): three DB views undocumented; schema.ts stale test reference
+The P1 migrations create three views the authorization model uses — `scope_node`, `business_unit_closure`, `actor_display` — but `docs/architecture/erd.md` and `docs/architecture/data-dictionary.md` omit them, and `packages/db/src/schema.ts:1-4` cites a non-existent `schema.test.ts`. **Fix:** document the three views (their purpose, columns, source tables) in the data dictionary and ERD; correct the `schema.ts` comment to a real reference (e.g. `packages/db/test/integration/catalogue.test.ts`). (These three findings are the same root cause — resolve all three.)
+
+## F-DG1-002 (Low, REQ-DLV-033): operator clean-start guide migration count is stale
+The operator clean-start guide says the migration step applies **6** migrations; the candidate applies **8** (`packages/db/migrations/0001…0008`). Locate the guide (see the F-DG1-002 evidence in findings.json; likely under `deploy/` or the operator docs) and correct the count and any enumerated list to 0001-0008.
+
+## Self-verification (real output; paste into the handback)
+- The new concurrency test (F-DG1-140) and authz test (F-DG1-141) and rate-limit test (F-DG1-142) — show them failing on the old code (or cite the reviewer repro) and passing now.
+- `pnpm -r typecheck`, `pnpm lint`, `pnpm exec prettier --check` the edited files, `pnpm test` (Node 22) and `PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH pnpm test` (Node 24) — green. The integration suite on a disposable PostgreSQL (unique port) — green, incl. the new migration and the re-parent tests.
+- If deps moved: `node licenses/generate-sbom.mjs --check` still OK; the lockfile change is offline and minimal.
+
+## Handback
+`docs/delivery/handbacks/DG1/round-2/T-DG1-BE-R2-backend-workflow-engineer.md` — exact diffs, the new migration, rationale for the cycle guard and the authz/rate-limit keys, and the real verification output (Node 22 + 24, integration).
