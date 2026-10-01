@@ -16,7 +16,7 @@ export function ErrorState({ error, onRetry, className }: { error: unknown; onRe
   const correlationId = isApiError(error) ? error.correlationId : undefined;
   const unavailable = isApiError(error) && (error.status === 0 || error.status >= 500);
   return (
-    <div role="alert" className={cx('flex flex-col items-center gap-2 px-4 py-10 text-center', className)}>
+    <div role="alert" className={cx('flex flex-col items-center gap-2 px-4 py-10 text-center', className)} data-testid="error-state">
       <CircleAlert aria-hidden="true" className="size-8 text-danger" />
       <p className="font-medium text-ink">{unavailable ? t('states.error.unavailableTitle') : t('states.error.title')}</p>
       <p className="max-w-prose text-sm text-muted">

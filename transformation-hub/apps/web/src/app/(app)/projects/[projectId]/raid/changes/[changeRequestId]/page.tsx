@@ -26,7 +26,7 @@ import { ChangeRequestFormDialog, IMPACT_KEYS, type ImpactKey } from '@/componen
 import { MoneyFields, MoneyText, moneyInputOf, parseMoney, type MoneyInput } from '@/components/planning/money';
 import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
-import { baselineHref, pk, useRefreshPlanning, type ChangeRequest } from '@/lib/planning';
+import { baselineHref, pk, raidHref, useRefreshPlanning, type ChangeRequest } from '@/lib/planning';
 import { useProjectContext } from '@/lib/project-context';
 import { DecisionPaperDialog } from '../../../committee/_components/dialogs';
 
@@ -182,6 +182,11 @@ export default function ChangeRequestPage() {
                 // Perimeter changes (AT-07): the decided outcome is applied from the item page.
                 <Link className={btn.link} href={`/projects/${projectId}/perimeter/items/${c.subjectId}`} data-testid="cr-subject-link" dir="ltr">
                   {c.subjectType}
+                </Link>
+              ) : c.subjectType === 'risk' && c.subjectId ? (
+                // Raised from a risk (REQ-UX-015).
+                <Link className={btn.link} href={raidHref(projectId, 'risks', c.subjectId)} data-testid="cr-subject-link" data-subject-type="risk">
+                  {t('planning.cr.openSourceRisk')}
                 </Link>
               ) : c.subjectType ? (
                 <span dir="ltr">{c.subjectType}</span>

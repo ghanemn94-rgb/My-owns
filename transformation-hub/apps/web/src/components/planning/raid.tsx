@@ -383,7 +383,15 @@ export const IMPACT_KEYS = ['time', 'cost', 'scope', 'readiness', 'transaction',
 export type ImpactKey = (typeof IMPACT_KEYS)[number];
 
 /** Create a change request (Draft) or edit a Draft: rationale, alternatives, impacts, re-baselining flag. */
-export function ChangeRequestFormDialog({ open, onClose, cr }: { open: boolean; onClose: () => void; cr?: ChangeRequest }) {
+/** The record a new change request is raised from (REQ-UX-015: a risk); sent as its subject. */
+export interface ChangeRequestSource {
+  type: 'risk';
+  id: string;
+  code: string;
+  title: string;
+}
+
+export function ChangeRequestFormDialog({ open, onClose, cr, source, onCreated }: { open: boolean; onClose: () => void; cr?: ChangeRequest; source?: ChangeRequestSource; onCreated?: (id: string) => void }) {
   const { t } = useI18n();
   const { projectId } = useProjectContext();
   const refresh = useRefreshPlanning(projectId);
@@ -392,9 +400,12 @@ export function ChangeRequestFormDialog({ open, onClose, cr }: { open: boolean; 
   const [cost, setCost] = useState<MoneyInput>(() => moneyInputOf(cr?.costImpact));
   useEffect(() => {
     if (!open) return;
-    setF({ title: cr?.title ?? '', rationale: cr?.rationale ?? '', alternatives: (cr?.alternatives ?? []).join('\n'), rebaseline: cr?.rebaseline ?? false, impacts: { ...(cr?.impacts ?? {}) } });
+    // Raised from a risk: the title names the risk (editable); the rationale is the requester's own text.
+    const title = cr?.title ?? (source ? t('planning.cr.fromRiskTitle', { code: source.code, title: source.title }).slice(0, 300) : '');
+    setF({ title, rationale: cr?.rationale ?? '', alternatives: (cr?.alternatives ?? []).join('\n'), rebaseline: cr?.rebaseline ?? false, impacts: { ...(cr?.impacts ?? {}) } });
     setCost(moneyInputOf(cr?.costImpact));
-  }, [open, cr]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, cr, source?.id]);
   const money = parseMoney(cost);
   // Omitted = unchanged (edit) / none (create); emptying a recorded amount clears it.
   const costImpact = money === 'invalid' ? undefined : money === null ? (cr?.costImpact ? null : undefined) : money;
@@ -418,13 +429,25 @@ export function ChangeRequestFormDialog({ open, onClose, cr }: { open: boolean; 
           });
           toast.show('success', t('planning.common.saved'));
         } else {
-          const r = await api(P.createChangeRequest, { params: { projectId }, body: { title: f.title.trim(), rationale: f.rationale.trim(), alternatives: alts, impacts, ...(costImpact ? { costImpact } : {}), rebaseline: f.rebaseline } });
+          const r = await api(P.createChangeRequest, {
+            params: { projectId },
+            body: { title: f.title.trim(), rationale: f.rationale.trim(), alternatives: alts, impacts, ...(costImpact ? { costImpact } : {}), rebaseline: f.rebaseline, ...(source ? { subjectType: source.type, subjectId: source.id } : {}) },
+          });
           toast.show('success', t('planning.common.createdCode', { code: r.code ?? '' }));
+          await refresh();
+          onClose();
+          onCreated?.(r.id);
+          return;
         }
         await refresh();
         onClose();
       }}
     >
+      {source ? (
+        <p className="rounded-md border border-info/40 bg-info-soft p-2 text-sm text-ink" data-testid="cr-form-source">
+          {t('planning.cr.fromRiskNote', { code: source.code })}
+        </p>
+      ) : null}
       <TextField label={t('planning.common.title')} required value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} maxLength={300} />
       <TextAreaField label={t('planning.cr.rationale')} required value={f.rationale} onChange={(e) => setF({ ...f, rationale: e.target.value })} rows={3} maxLength={4000} />
       <TextAreaField label={t('planning.cr.alternatives')} value={f.alternatives} onChange={(e) => setF({ ...f, alternatives: e.target.value })} rows={3} hint={t('planning.cr.alternativesHint')} />
