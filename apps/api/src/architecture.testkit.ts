@@ -4,7 +4,11 @@
 // FILE SCOPE (F-DG1-134): walk() collects EVERY buildable JS/TS module file, `/\.[cm]?[jt]sx?$/` (.ts .tsx .mts .cts
 // .js .jsx .mjs .cjs), so no module code evades the lint by its extension (a `.mts` file typechecks and ships in dist as
 // `.mjs`). All of them get the same rules 1-5 and boundary checks; `.tsx`/`.jsx` are parsed as TSX, the rest as TS (a
-// superset of JS); `*.test.<ext>` is a test.
+// superset of JS).
+// TEST CLASSIFICATION (F-DG1-135): the test-only allowances (importing `modules.ts`/`architecture.testkit.ts`, and
+// `vitest`) apply ONLY to `*.test.ts`/`*.test.tsx` (TEST_FILE) - exactly the test extensions tsconfig.build.json
+// excludes. Any other test-looking file (`*.test.mts`, `*.test.js`, ...) is not run by vitest and ships in dist, so it
+// is a NON-test module file: still scanned by walk(), with the full boundary rules and no test exemption.
 // It walks the TypeScript AST of each file (F-DG1-109: `ts.preProcessFile` saw only literal specifiers) and reports:
 //  - every static import / export-from / `import x = require()` / type-only import specifier, and every
 //    `import("...")` / `require("...")` with a string-literal specifier - each checked against the module boundary;
@@ -171,10 +175,12 @@ const TEST_SUPPORT_FILES = new Set(["modules.ts", "architecture.testkit.ts"]);
 /**
  * F-DG1-134: every buildable JS/TS module file - .ts .tsx .mts .cts .js .jsx .mjs .cjs. Matching only .ts/.tsx let a
  * `.mts` module file (typechecks under NodeNext + allowImportingTsExtensions, ships in dist as `.mjs`) evade every rule
- * and the boundary check. `*.test.<ext>` of any of these is a test (TEST_FILE).
+ * and the boundary check.
+ * F-DG1-135: only `*.test.ts`/`*.test.tsx` is a test (TEST_FILE) - the extensions tsconfig.build.json excludes. A
+ * `*.test.mts`/`.test.js`/... is never run as a test yet compiles into dist, so it gets the full boundary rules.
  */
 const CODE_FILE = /\.[cm]?[jt]sx?$/;
-const TEST_FILE = /\.test\.[cm]?[jt]sx?$/;
+const TEST_FILE = /\.test\.tsx?$/;
 /** JSX-capable files are parsed as TSX (a TS-kind parse of JSX text such as `a'b {require(x)}` swallows code). */
 const scriptKindOf = (fileName: string) => (/\.[jt]sx$/.test(fileName) ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
 

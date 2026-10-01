@@ -760,14 +760,35 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
     }
   });
 
-  it("F-DG1-134: *.test.<ext> is a test for every extension (vitest/testkit allowance), other files are not", () => {
+  it("F-DG1-135: only *.test.ts/*.test.tsx (build-excluded) get the test allowance; *.test.mts etc. get full rules", () => {
     const src = `import { describe } from "vitest";\nimport { moduleViolations } from "../../architecture.testkit.ts";`;
+    // .test.ts/.test.tsx are excluded from the build (tsconfig.build.json), so the vitest/testkit allowance applies.
+    for (const ext of ["ts", "tsx"]) expect(planted("kpi", src, `kpi.test.${ext}`), ext).toEqual([]);
+    // Every other test-looking extension is never run as a test and ships in dist: a plain module file.
+    for (const ext of CODE_EXTS.filter((e) => e !== "ts" && e !== "tsx")) {
+      expect(planted("kpi", src, `kpi.test.${ext}`).join("\n"), ext).toMatch(
+        /imports package vitest[\s\S]*composition root/,
+      );
+    }
     for (const ext of CODE_EXTS) {
-      expect(planted("kpi", src, `kpi.test.${ext}`), ext).toEqual([]);
       expect(planted("kpi", src, `kpi.${ext}`).join("\n"), ext).toMatch(
         /imports package vitest[\s\S]*composition root/,
       );
     }
+  });
+
+  it("F-DG1-135: zz.test.mts importing ../../modules.ts or vitest is a violation; zz.test.ts doing so is allowed", () => {
+    const at = (name: string) => join(MODULES_DIR, "kpi", name);
+    const modulesImport = `import { API_MODULES } from "../../modules.ts";\nexport const n = API_MODULES;`;
+    const vitestImport = `import { it } from "vitest";\nexport const t = it;`;
+    expect(fileViolations("kpi", at("zz.test.mts"), modulesImport)).toEqual([
+      "modules/kpi/zz.test.mts: imports ../../modules.ts outside src/modules (composition root)",
+    ]);
+    expect(fileViolations("kpi", at("zz.test.mts"), vitestImport)).toEqual([
+      "modules/kpi/zz.test.mts: imports package vitest",
+    ]);
+    expect(fileViolations("kpi", at("zz.test.ts"), modulesImport)).toEqual([]);
+    expect(fileViolations("kpi", at("zz.test.ts"), vitestImport)).toEqual([]);
   });
 
   it("scanSource reports what it saw (paths resolve relative to the planted file)", () => {
