@@ -38,10 +38,10 @@ const MODULES: Record<string, string[]> = {
     'room_disclosure', 'room_access_event',
   ],
   'Documents & sources': ['document', 'document_version', 'evidence_link', 'source_record', 'source_claim', 'document_chunk'],
-  'Reporting & imports': ['report_snapshot', 'report_export', 'bi_access_grant', 'import_batch', 'import_row'],
+  'Reporting & imports': ['report_snapshot', 'report_export', 'bi_access_grant', 'import_batch', 'import_sheet', 'import_row', 'import_output'],
   'Platform, jobs & audit': [
-    'notification', 'integration_connection', 'outbox_event', 'job', 'scheduled_job', 'delivery_record', 'audit_event', 'record_version',
-    'audit_checkpoint',
+    'notification', 'integration_connection', 'integration_execution_log', 'webhook_delivery', 'outbox_event', 'job', 'scheduled_job',
+    'delivery_record', 'audit_event', 'record_version', 'audit_checkpoint',
   ],
   'AI runtime': ['ai_project_settings', 'ai_run', 'ai_proposal', 'ai_action_approval', 'ai_derived_artifact'],
 };

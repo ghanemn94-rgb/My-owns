@@ -2218,9 +2218,19 @@ erDiagram
     int4 header_row
     jsonb mapping
     jsonb summary
-    jsonb errors
     uuid approved_by
+    timestamptz approved_at
     more more_columns
+  }
+  import_sheet {
+    uuid id
+    uuid org_id
+    uuid project_id
+    uuid batch_id
+    int4 sheet_no
+    text name
+    jsonb rows
+    timestamptz created_at
   }
   import_row {
     uuid id
@@ -2231,11 +2241,26 @@ erDiagram
     jsonb raw
     jsonb normalized
     import_row_action action
-    text message
-    varchar target_type
-    uuid target_id
-    jsonb before
-    jsonb after
+    jsonb errors
+    jsonb warnings
+    jsonb notes
+    jsonb formula_fields
+    varchar match_type
+    uuid match_id
+    more more_columns
+  }
+  import_output {
+    uuid id
+    uuid org_id
+    uuid project_id
+    uuid batch_id
+    int4 row_no
+    varchar record_type
+    uuid record_id
+    varchar record_code
+    int4 created_version
+    timestamptz rolled_back_at
+    timestamptz created_at
   }
   app_user ||--o{ report_snapshot : "org_id,generated_by"
   baseline_version ||--o{ report_snapshot : "baseline_version_id"
@@ -2246,9 +2271,14 @@ erDiagram
   app_user ||--o{ bi_access_grant : "org_id,revoked_by"
   app_user ||--o{ import_batch : "org_id,approved_by"
   app_user ||--o{ import_batch : "org_id,created_by"
+  app_user ||--o{ import_batch : "org_id,rejected_by"
+  app_user ||--o{ import_batch : "org_id,rolled_back_by"
+  document ||--o{ import_batch : "document_id"
   document_version ||--o{ import_batch : "document_version_id"
   source_record ||--o{ import_batch : "source_id"
+  import_batch ||--o{ import_sheet : "batch_id"
   import_batch ||--o{ import_row : "batch_id"
+  import_batch ||--o{ import_output : "batch_id"
 ```
 
 ## Platform, jobs & audit
@@ -2288,6 +2318,34 @@ erDiagram
     text last_check_result
     timestamptz created_at
     more more_columns
+  }
+  integration_execution_log {
+    uuid id
+    uuid org_id
+    varchar adapter_key
+    varchar operation
+    varchar outcome
+    varchar code
+    text detail
+    uuid actor_user_id
+    varchar correlation_id
+    timestamptz created_at
+  }
+  webhook_delivery {
+    uuid id
+    uuid org_id
+    varchar adapter_key
+    varchar delivery_id
+    varchar event_type
+    varchar payload_hash
+    jsonb payload
+    timestamptz sender_timestamp
+    varchar status
+    int4 attempts
+    text last_error
+    int4 duplicate_count
+    timestamptz created_at
+    timestamptz processed_at
   }
   outbox_event {
     uuid id
@@ -2392,6 +2450,7 @@ erDiagram
   app_user ||--o{ notification : "org_id,user_id"
   ai_proposal ||--o{ notification : "ai_proposal_id"
   app_user ||--o{ integration_connection : "org_id,created_by"
+  app_user ||--o{ integration_execution_log : "org_id,actor_user_id"
   app_user ||--o{ job : "org_id,requested_by"
   app_user ||--o{ scheduled_job : "org_id,created_by"
   app_user ||--o{ scheduled_job : "org_id,owner_user_id"

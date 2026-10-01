@@ -233,6 +233,61 @@ test.describe('P6 imports, integrations and notifications — wizard, refusals a
     }
   });
 
+  test('REQ-SET-011 (en): setup wizard step 3 opens the import wizard; a status tracker becomes claims shown for review — after approval they are historical-unverified claims of the preserved source', async ({ browser, baseURL }) => {
+    const stamp = Date.now().toString(36);
+    const subjects = [`E2E tracker item A ${stamp}`, `E2E tracker item B ${stamp}`];
+    const up = await asPersona(browser, baseURL!, PM, 'en');
+    let pid = '';
+    let batchId = '';
+    try {
+      const page = up.page;
+      pid = await dcId(page);
+      await page.goto(`/projects/${pid}/setup`);
+      const step = page.locator('[data-testid="setup-step"][data-step="sources"]');
+      await expect(step).toContainText('Sources and extracted claims');
+      await step.getByRole('link').click();
+      await expect(page).toHaveURL(new RegExp(`/projects/${pid}/reports/imports$`));
+      batchId = await uploadFromScreen(page, 'source_claims', {
+        name: `tracker-${stamp}.csv`,
+        mimeType: 'text/csv',
+        buffer: csv([
+          ['Subject', 'Value', 'Location'],
+          [subjects[0]!, 'Completed', 'Slide 3'],
+          [subjects[1]!, 'On Track', 'Slide 4'],
+        ]),
+      });
+      await expect(page.getByTestId('import-mapping')).toBeVisible({ timeout: 60_000 });
+      await page.getByTestId('import-validate').click();
+      const rows = page.locator('[data-testid="import-row"][data-action="create"]');
+      await expect(rows).toHaveCount(2);
+      await expect(rows.first()).toContainText('Becomes a claim in the source register for review; no record is changed');
+      await page.getByTestId('import-submit').click();
+      await page.locator('dialog[open]').getByRole('button', { name: 'Submit for approval', exact: true }).click();
+      await expect(page.locator('dialog[open]')).toHaveCount(0);
+      await shot(page, 'en-setup-claims-preview.png');
+      expect(up.problems(), up.problems().join('\n')).toEqual([]);
+    } finally {
+      await up.close();
+    }
+    const approver = await asPersona(browser, baseURL!, SECRETARY, 'en');
+    try {
+      const page = approver.page;
+      await page.goto(`/projects/${pid}/reports/imports/${batchId}`);
+      await page.getByTestId('import-approve').click();
+      await page.locator('dialog[open]').getByRole('button', { name: 'Approve accepted rows', exact: true }).click();
+      await expect(page.locator('dialog[open]')).toHaveCount(0);
+      await expect(page.locator('[data-testid="import-output"][data-type="source_claim"]')).toHaveCount(2);
+      // The claims sit on the preserved source, for review — historical and unverified, no record changed.
+      await page.getByTestId('import-source-link').click();
+      await expect(page).toHaveURL(/\/documents\/sources\/[0-9a-f-]{36}$/);
+      for (const s of subjects) await expect(page.locator(`[data-testid="claim-verification"][data-claim-subject="${s}"]`)).toContainText('Historical — unverified');
+      await shot(page, 'en-setup-claims-source.png');
+      expect(approver.problems(), approver.problems().join('\n')).toEqual([]);
+    } finally {
+      await approver.close();
+    }
+  });
+
   test('Refusals (en): a workbook declaring XML entities is refused by the isolated parser and the service keeps working; the egress guard refuses a metadata endpoint; no connector is shown Verified', async ({ browser, baseURL }) => {
     const pm = await asPersona(browser, baseURL!, PM, 'en');
     try {

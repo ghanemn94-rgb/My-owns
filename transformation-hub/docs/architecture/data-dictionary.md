@@ -1,7 +1,7 @@
 # Data dictionary
 
 > Generated from the live PostgreSQL schema by `packages/db/src/cli/data-dictionary.ts` — do not edit by hand.
-> Tables: 123. RLS enabled: 118.
+> Tables: 127. RLS enabled: 122.
 
 ## Spec §14 entity coverage
 
@@ -127,10 +127,10 @@
 | `gate_review_outcome` | endorse, return |
 | `go_no_go` | pending, go, no_go |
 | `import_row_action` | create, update, skip, conflict, error |
-| `import_status` | uploaded, mapped, validated, approved, applied, rolled_back, rejected, failed |
+| `import_status` | uploaded, parsed, validated, submitted, applied, rolled_back, rejected, cancelled, failed, quarantined |
 | `incorporation_status` | incorporated, incorporation_in_progress, unconfirmed, not_applicable |
 | `integration_direction` | read, write, send |
-| `integration_kind` | oidc, saml_gateway, smtp, teams, sharepoint, object_storage, llm_provider, power_bi, vdr, erp, hr, itsm, dcim, siem |
+| `integration_kind` | oidc, saml_gateway, smtp, teams, sharepoint, object_storage, llm_provider, power_bi, vdr, erp, hr, itsm, dcim, siem, webhook |
 | `integration_status` | not_configured, configured_unverified, verified, failed, disabled, simulated |
 | `job_status` | queued, running, succeeded, failed, dead, cancelled |
 | `kpi_direction` | higher_is_better, lower_is_better |
@@ -191,7 +191,7 @@ RLS: enabled (hub_org_self)
 
 ### `app_user`
 
-RLS: enabled (hub_org_isolation) · Triggers: hub_scope_immutable, hub_account_type_flip_guard
+RLS: enabled (hub_org_isolation) · Triggers: hub_account_type_flip_guard, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -247,7 +247,7 @@ Foreign keys:
 
 ### `org_role_assignment`
 
-RLS: enabled (hub_org_isolation) · Triggers: hub_scope_immutable, hub_account_type_guard
+RLS: enabled (hub_org_isolation) · Triggers: hub_account_type_guard, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -422,7 +422,7 @@ Foreign keys:
 
 ### `project`
 
-RLS: enabled (hub_bi_read, hub_project_self, hub_bi_guard) · Triggers: hub_scope_immutable
+RLS: enabled (hub_bi_guard, hub_bi_read, hub_project_self) · Triggers: hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -486,7 +486,7 @@ Foreign keys:
 
 ### `legal_entity`
 
-RLS: enabled (hub_org_isolation, hub_legal_entity_owner_insert, hub_legal_entity_owner_update) · Triggers: hub_legal_entity_owner_immutable, hub_scope_immutable
+RLS: enabled (hub_legal_entity_owner_update, hub_legal_entity_owner_insert, hub_org_isolation) · Triggers: hub_legal_entity_owner_immutable, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -655,7 +655,7 @@ Foreign keys:
 
 ### `task`
 
-RLS: enabled (hub_project_isolation, hub_bi_read, hub_bi_guard) · Triggers: hub_scope_immutable
+RLS: enabled (hub_bi_guard, hub_bi_read, hub_project_isolation) · Triggers: hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -720,7 +720,7 @@ Foreign keys:
 
 ### `milestone`
 
-RLS: enabled (hub_project_isolation, hub_bi_read, hub_bi_guard) · Triggers: hub_scope_immutable
+RLS: enabled (hub_bi_guard, hub_bi_read, hub_project_isolation) · Triggers: hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -811,7 +811,7 @@ Foreign keys:
 
 ### `dependency`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable, hub_same_project_predecessor, hub_same_project_successor
+RLS: enabled (hub_project_isolation) · Triggers: hub_same_project_predecessor, hub_same_project_successor, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -836,7 +836,7 @@ Foreign keys:
 
 ### `cross_project_dependency`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_same_project_local_item, hub_other_project_item, hub_scope_immutable
+RLS: enabled (hub_project_isolation) · Triggers: hub_other_project_item, hub_same_project_local_item, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -975,7 +975,7 @@ Foreign keys:
 
 ### `risk`
 
-RLS: enabled (hub_project_isolation, hub_bi_read, hub_bi_guard) · Triggers: hub_scope_immutable
+RLS: enabled (hub_bi_guard, hub_bi_read, hub_project_isolation) · Triggers: hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -1194,7 +1194,7 @@ Foreign keys:
 
 ### `record_dependency`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_same_project_successor, hub_same_project_predecessor, hub_scope_immutable
+RLS: enabled (hub_project_isolation) · Triggers: hub_same_project_predecessor, hub_same_project_successor, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -1255,7 +1255,7 @@ Foreign keys:
 
 ### `committee_membership`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable, hub_account_type_guard
+RLS: enabled (hub_project_isolation) · Triggers: hub_account_type_guard, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -1408,7 +1408,7 @@ Foreign keys:
 
 ### `attendance`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable, hub_attendance_guard
+RLS: enabled (hub_project_isolation) · Triggers: hub_attendance_guard, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -1433,7 +1433,7 @@ Foreign keys:
 
 ### `recusal`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable, hub_append_only
+RLS: enabled (hub_project_isolation) · Triggers: hub_append_only, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -1456,7 +1456,7 @@ Foreign keys:
 
 ### `decision`
 
-RLS: enabled (hub_project_isolation, hub_bi_read, hub_bi_guard) · Triggers: hub_scope_immutable, hub_same_project_subject
+RLS: enabled (hub_bi_guard, hub_bi_read, hub_project_isolation) · Triggers: hub_same_project_subject, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -1645,7 +1645,7 @@ Foreign keys:
 
 ### `approval_request`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable, hub_same_project_subject
+RLS: enabled (hub_project_isolation) · Triggers: hub_same_project_subject, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -1728,7 +1728,7 @@ Foreign keys:
 
 ### `decision_use`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable, hub_append_only, hub_same_project_subject
+RLS: enabled (hub_project_isolation) · Triggers: hub_append_only, hub_same_project_subject, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -1897,7 +1897,7 @@ Foreign keys:
 
 ### `waiver`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable, hub_same_project_target
+RLS: enabled (hub_project_isolation) · Triggers: hub_same_project_target, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -1931,7 +1931,7 @@ Foreign keys:
 
 ### `status_dimension`
 
-RLS: enabled (hub_project_isolation, hub_bi_read, hub_bi_guard) · Triggers: hub_scope_immutable
+RLS: enabled (hub_bi_guard, hub_bi_read, hub_project_isolation) · Triggers: hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -2034,7 +2034,7 @@ Foreign keys:
 
 ### `transfer_record`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable, hub_append_only
+RLS: enabled (hub_project_isolation) · Triggers: hub_append_only, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -2455,7 +2455,7 @@ Foreign keys:
 
 ### `perimeter_version`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable, hub_frozen_snapshot_guard
+RLS: enabled (hub_project_isolation) · Triggers: hub_frozen_snapshot_guard, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -2537,7 +2537,7 @@ Foreign keys:
 
 ### `cutover_decision_record`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable, hub_append_only
+RLS: enabled (hub_project_isolation) · Triggers: hub_append_only, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -2911,7 +2911,7 @@ Foreign keys:
 
 ### `kpi_observation`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable, hub_append_only
+RLS: enabled (hub_project_isolation) · Triggers: hub_append_only, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -3060,7 +3060,7 @@ Foreign keys:
 
 ### `room_grant`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_room_grant_guard, hub_scope_immutable, hub_account_type_guard
+RLS: enabled (hub_project_isolation) · Triggers: hub_account_type_guard, hub_room_grant_guard, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -3167,7 +3167,7 @@ Foreign keys:
 
 ### `diligence_request`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_dd_request_room_cascade, hub_same_project_evidence_version_ids, hub_scope_immutable, hub_same_project_evidence_document_ids
+RLS: enabled (hub_project_isolation) · Triggers: hub_dd_request_room_cascade, hub_same_project_evidence_document_ids, hub_same_project_evidence_version_ids, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -3268,7 +3268,7 @@ Foreign keys:
 
 ### `closing`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable, hub_closing_signing_guard
+RLS: enabled (hub_project_isolation) · Triggers: hub_closing_signing_guard, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -3312,7 +3312,7 @@ Foreign keys:
 
 ### `closing_condition`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable, hub_jv_event_link_guard
+RLS: enabled (hub_project_isolation) · Triggers: hub_jv_event_link_guard, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -3369,7 +3369,7 @@ Foreign keys:
 
 ### `closing_deliverable`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable, hub_jv_event_link_guard
+RLS: enabled (hub_project_isolation) · Triggers: hub_jv_event_link_guard, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -3639,7 +3639,7 @@ Foreign keys:
 
 ### `deal_scenario_version`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable, hub_append_only
+RLS: enabled (hub_project_isolation) · Triggers: hub_append_only, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -3706,7 +3706,7 @@ Foreign keys:
 
 ### `room_access_event`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable, hub_append_only
+RLS: enabled (hub_project_isolation) · Triggers: hub_append_only, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -3740,7 +3740,7 @@ Foreign keys:
 
 ### `document`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable, hub_document_current_version, hub_document_guard, hub_document_acl_cascade
+RLS: enabled (hub_project_isolation) · Triggers: hub_document_acl_cascade, hub_document_current_version, hub_document_guard, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -3810,7 +3810,7 @@ Foreign keys:
 
 ### `evidence_link`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable, hub_same_project_target, hub_document_child_room_sync
+RLS: enabled (hub_project_isolation) · Triggers: hub_document_child_room_sync, hub_same_project_target, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -3883,7 +3883,7 @@ Foreign keys:
 
 ### `source_claim`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable, hub_same_project_target
+RLS: enabled (hub_project_isolation) · Triggers: hub_same_project_target, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -3958,7 +3958,7 @@ Foreign keys:
 
 ### `report_snapshot`
 
-RLS: enabled (hub_project_isolation, hub_bi_read, hub_bi_guard) · Triggers: hub_scope_immutable, hub_append_only
+RLS: enabled (hub_bi_guard, hub_bi_read, hub_project_isolation) · Triggers: hub_append_only, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -3995,7 +3995,7 @@ Foreign keys:
 
 ### `report_export`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_report_export_no_delete, hub_scope_immutable, hub_report_export_guard
+RLS: enabled (hub_project_isolation) · Triggers: hub_report_export_guard, hub_report_export_no_delete, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -4029,7 +4029,7 @@ Foreign keys:
 
 ### `bi_access_grant`
 
-RLS: enabled (hub_project_isolation, hub_bi_read, hub_bi_guard) · Triggers: hub_scope_immutable
+RLS: enabled (hub_bi_guard, hub_bi_read, hub_project_isolation) · Triggers: hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -4064,34 +4064,77 @@ RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable
 | `kind` | character varying | no |  |
 | `source_id` | uuid | yes |  |
 | `document_version_id` | uuid | yes |  |
-| `filename` | text | yes |  |
+| `filename` | text | no |  |
 | `status` | enum import_status | no | `'uploaded'::import_status` |
 | `sheet` | text | yes |  |
 | `header_row` | integer | yes |  |
 | `mapping` | jsonb | yes |  |
-| `summary` | jsonb | yes |  |
-| `errors` | jsonb | no | `'[]'::jsonb` |
+| `summary` | jsonb | no | `'{}'::jsonb` |
 | `approved_by` | uuid | yes |  |
 | `approved_at` | timestamp with time zone | yes |  |
 | `applied_at` | timestamp with time zone | yes |  |
 | `rolled_back_at` | timestamp with time zone | yes |  |
 | `created_at` | timestamp with time zone | no | `now()` |
-| `created_by` | uuid | yes |  |
+| `created_by` | uuid | no |  |
 | `updated_at` | timestamp with time zone | no | `now()` |
 | `version` | integer | no | `1` |
+| `code` | character varying | no |  |
+| `file_type` | character varying | no |  |
+| `sha256` | character varying | no |  |
+| `size_bytes` | bigint | no |  |
+| `classification` | enum classification | no |  |
+| `document_id` | uuid | yes |  |
+| `quarantine_key` | text | yes |  |
+| `failure_code` | character varying | yes |  |
+| `failure_detail` | text | yes |  |
+| `sheets` | jsonb | no | `'[]'::jsonb` |
+| `headers` | jsonb | no | `'[]'::jsonb` |
+| `findings` | jsonb | no | `'[]'::jsonb` |
+| `preview_hash` | character varying | yes |  |
+| `submitted_at` | timestamp with time zone | yes |  |
+| `rejected_by` | uuid | yes |  |
+| `rejected_at` | timestamp with time zone | yes |  |
+| `decision_note` | text | yes |  |
+| `rolled_back_by` | uuid | yes |  |
+| `rollback_reason` | text | yes |  |
+| `is_demo` | boolean | no | `false` |
 
 Foreign keys:
 
 - `hub_opfk_import_batch`: (org_id,project_id) → `project`(org_id,id)
 - `hub_ufk_import_batch_approved_by`: (org_id,approved_by) → `app_user`(org_id,id)
 - `hub_ufk_import_batch_created_by`: (org_id,created_by) → `app_user`(org_id,id)
+- `hub_ufk_import_batch_rejected_by`: (org_id,rejected_by) → `app_user`(org_id,id)
+- `hub_ufk_import_batch_rolled_back_by`: (org_id,rolled_back_by) → `app_user`(org_id,id)
+- `import_batch_document_fk`: (project_id,document_id) → `document`(project_id,id) — composite project-scoped FK
 - `import_batch_docver_fk`: (project_id,document_version_id) → `document_version`(project_id,id) — composite project-scoped FK
 - `import_batch_project_id_project_id_fk`: (project_id) → `project`(id)
 - `import_batch_source_fk`: (project_id,source_id) → `source_record`(project_id,id) — composite project-scoped FK
 
+### `import_sheet`
+
+RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | uuid | no | `gen_random_uuid()` |
+| `org_id` | uuid | no |  |
+| `project_id` | uuid | no |  |
+| `batch_id` | uuid | no |  |
+| `sheet_no` | integer | no |  |
+| `name` | text | no |  |
+| `rows` | jsonb | no |  |
+| `created_at` | timestamp with time zone | no | `now()` |
+
+Foreign keys:
+
+- `hub_opfk_import_sheet`: (org_id,project_id) → `project`(org_id,id)
+- `import_sheet_batch_fk`: (project_id,batch_id) → `import_batch`(project_id,id) — composite project-scoped FK
+- `import_sheet_project_id_project_id_fk`: (project_id) → `project`(id)
+
 ### `import_row`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_same_project_target, hub_scope_immutable
+RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -4101,13 +4144,19 @@ RLS: enabled (hub_project_isolation) · Triggers: hub_same_project_target, hub_s
 | `batch_id` | uuid | no |  |
 | `row_no` | integer | no |  |
 | `raw` | jsonb | no |  |
-| `normalized` | jsonb | yes |  |
+| `normalized` | jsonb | no | `'{}'::jsonb` |
 | `action` | enum import_row_action | no |  |
-| `message` | text | yes |  |
-| `target_type` | character varying | yes |  |
-| `target_id` | uuid | yes |  |
-| `before` | jsonb | yes |  |
-| `after` | jsonb | yes |  |
+| `errors` | jsonb | no | `'[]'::jsonb` |
+| `warnings` | jsonb | no | `'[]'::jsonb` |
+| `notes` | jsonb | no | `'[]'::jsonb` |
+| `formula_fields` | jsonb | no | `'[]'::jsonb` |
+| `match_type` | character varying | yes |  |
+| `match_id` | uuid | yes |  |
+| `match_code` | character varying | yes |  |
+| `governed_reason` | character varying | yes |  |
+| `diff` | jsonb | no | `'[]'::jsonb` |
+| `duplicate_of_row` | integer | yes |  |
+| `decision` | character varying | yes |  |
 
 Foreign keys:
 
@@ -4115,11 +4164,35 @@ Foreign keys:
 - `import_row_batch_fk`: (project_id,batch_id) → `import_batch`(project_id,id) — composite project-scoped FK
 - `import_row_project_id_project_id_fk`: (project_id) → `project`(id)
 
+### `import_output`
+
+RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | uuid | no | `gen_random_uuid()` |
+| `org_id` | uuid | no |  |
+| `project_id` | uuid | no |  |
+| `batch_id` | uuid | no |  |
+| `row_no` | integer | no |  |
+| `record_type` | character varying | no |  |
+| `record_id` | uuid | no |  |
+| `record_code` | character varying | yes |  |
+| `created_version` | integer | no |  |
+| `rolled_back_at` | timestamp with time zone | yes |  |
+| `created_at` | timestamp with time zone | no | `now()` |
+
+Foreign keys:
+
+- `hub_opfk_import_output`: (org_id,project_id) → `project`(org_id,id)
+- `import_output_batch_fk`: (project_id,batch_id) → `import_batch`(project_id,id) — composite project-scoped FK
+- `import_output_project_id_project_id_fk`: (project_id) → `project`(id)
+
 ## Platform, jobs & audit
 
 ### `notification`
 
-RLS: enabled (hub_notification_read, hub_notification_write, hub_notification_update) · Triggers: hub_scope_immutable, hub_same_project_source
+RLS: enabled (hub_notification_update, hub_notification_write, hub_notification_read) · Triggers: hub_same_project_source, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -4139,6 +4212,8 @@ RLS: enabled (hub_notification_read, hub_notification_write, hub_notification_up
 | `ai_proposal_id` | uuid | yes |  |
 | `read_at` | timestamp with time zone | yes |  |
 | `created_at` | timestamp with time zone | no | `now()` |
+| `message_code` | character varying | yes |  |
+| `message_params` | jsonb | yes |  |
 
 Foreign keys:
 
@@ -4169,11 +4244,60 @@ RLS: enabled (hub_org_isolation) · Triggers: hub_scope_immutable
 | `created_by` | uuid | yes |  |
 | `updated_at` | timestamp with time zone | no | `now()` |
 | `version` | integer | no | `1` |
+| `adapter_key` | character varying | no |  |
+| `last_check_code` | character varying | yes |  |
 
 Foreign keys:
 
 - `hub_ufk_integration_connection_created_by`: (org_id,created_by) → `app_user`(org_id,id)
 - `integration_connection_org_id_organization_id_fk`: (org_id) → `organization`(id)
+
+### `integration_execution_log`
+
+RLS: enabled (hub_org_isolation) · Triggers: hub_append_only, hub_scope_immutable
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | uuid | no | `gen_random_uuid()` |
+| `org_id` | uuid | no |  |
+| `adapter_key` | character varying | no |  |
+| `operation` | character varying | no |  |
+| `outcome` | character varying | no |  |
+| `code` | character varying | yes |  |
+| `detail` | text | yes |  |
+| `actor_user_id` | uuid | yes |  |
+| `correlation_id` | character varying | yes |  |
+| `created_at` | timestamp with time zone | no | `now()` |
+
+Foreign keys:
+
+- `hub_ufk_integration_execution_log_actor_user_id`: (org_id,actor_user_id) → `app_user`(org_id,id)
+- `integration_execution_log_org_id_organization_id_fk`: (org_id) → `organization`(id)
+
+### `webhook_delivery`
+
+RLS: enabled (hub_org_isolation) · Triggers: hub_scope_immutable
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | uuid | no | `gen_random_uuid()` |
+| `org_id` | uuid | no |  |
+| `adapter_key` | character varying | no |  |
+| `delivery_id` | character varying | no |  |
+| `event_type` | character varying | no |  |
+| `payload_hash` | character varying | no |  |
+| `payload` | jsonb | no | `'{}'::jsonb` |
+| `sender_timestamp` | timestamp with time zone | no |  |
+| `status` | character varying | no | `'received'::character varying` |
+| `attempts` | integer | no | `0` |
+| `last_error` | text | yes |  |
+| `duplicate_count` | integer | no | `0` |
+| `created_at` | timestamp with time zone | no | `now()` |
+| `processed_at` | timestamp with time zone | yes |  |
+
+Foreign keys:
+
+- `webhook_delivery_org_id_organization_id_fk`: (org_id) → `organization`(id)
 
 ### `outbox_event`
 
@@ -4286,7 +4410,7 @@ Foreign keys:
 
 ### `audit_event`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_audit_chain, hub_append_only, hub_scope_immutable
+RLS: enabled (hub_project_isolation) · Triggers: hub_append_only, hub_audit_chain, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -4317,7 +4441,7 @@ Foreign keys:
 
 ### `record_version`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable, hub_append_only
+RLS: enabled (hub_project_isolation) · Triggers: hub_append_only, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -4339,7 +4463,7 @@ Foreign keys:
 
 ### `audit_checkpoint`
 
-RLS: enabled (hub_org_isolation) · Triggers: hub_scope_immutable, hub_append_only
+RLS: enabled (hub_org_isolation) · Triggers: hub_append_only, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -4432,7 +4556,7 @@ Foreign keys:
 
 ### `ai_proposal`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable, hub_same_project_target
+RLS: enabled (hub_project_isolation) · Triggers: hub_same_project_target, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|

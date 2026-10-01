@@ -162,8 +162,8 @@
   security_rule: "Worker re-checks recipient authorization before rendering content"
   acceptance_tests: ["AT-19", "IT: notification suppressed after recipient loses project access"]
   phase: P2
-  status: Deferred
-  evidence: ['target P6 (notifications module, review finding DOM-P2-11); owner integration-reporting-engineer (notifications) with backend-data-engineer; reason: re-phased by the lead — there is no notification read API, inbox or outbox-based delivery (packages/contracts/src/notifications.ts registers no route); the gates module inserts notification rows directly', AT-19 and the IT (notification suppressed after the recipient loses project access) are not built; AT-19 is covered for AI outputs in P5 (ai at-19-ai-revocation.spec.ts) and for partner-room downloads in P4 (REQ-JV-009)]
+  status: Tested
+  evidence: ['notifications notifications.spec.ts "UT: screened-out request records reason and requester notified — through the outbox, exactly once, with no reason text"; "IT: notification suppressed after recipient loses project access (re-checked by the worker at delivery; audited)"; "inbox: unread count, mark one read, mark all read — only the reader’s own notifications"; "channels: in-app enabled; e-mail and Teams follow their connectors (Not configured); no SMS adapter"', 'AT-19: notifications notifications.spec.ts "IT: recipient revoked after scheduling receives nothing — the import outcome to an uploader who lost access; the external send gate refuses (nothing sent)"', 'imports at-03-imports-notifications-isolation.spec.ts "IT: Project B user cannot obtain Project A data via notification — a forged event naming them is suppressed; their inbox shows only their own rows"', 'e2e p6-imports.spec.ts "Import wizard happy path (en): CSV of risks uploaded, mapped, previewed and submitted; the uploader cannot approve; a second person approves; risks created and linked; the uploader is notified in-app" (bell and inbox; the notification links to the record)', 'worker jobs from outbox events (agenda_request.screened, change_request.decided, decision.status_changed outcomes, approval.pending for import batches, import.decided, integration.alert) write the existing notification table with a code + parameters and a dedupe key per event, kind and recipient; read-time re-check in SQL; in-app is the only channel enabled (closes DOM-P2-11 for the notification read API, inbox and outbox delivery)', 'residual (gates module, not in this assignment): the gate reassessment notification (kind gate.reassessment_requested) is still inserted directly by gates.service.ts in the triggering transaction with English-only text — it is re-checked at read time like every other row; moving it to the outbox belongs to the gates owner']
 
 # ---------------------------------------------------------------- SRC
 
@@ -309,8 +309,8 @@
   security_rule: "Approval requires PMO/Project Manager; approver differs from uploader where policy requires"
   acceptance_tests: ["AT-01", "AT-14", "IT: merge preview lists diffs; previous source version retained"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['imports import-documents.spec.ts "IT: merge preview lists diffs; previous source version retained — accepted item by item"', 'imports import-governance.spec.ts "AT-01: source-reported ... become historical-unverified claims; a baselined task gets a change request; a new task is a Draft proposal"', 'AT-14: gates at-14-reassessment.spec.ts "on an approved gate: the approval is NOT modified — it is flagged for reassessment with an escalation and notifications" (an import never changes evidence relied upon: it adds a new source superseding the previous one, which is retained with its claims)', 'variance: approved minutes (DOCX) become paragraph claims for review, not a record-by-record comparison; AT-01 variance: executed with a spreadsheet status tracker; an IMAGE is validated, scanned and preserved as a source but nothing is extracted from it (no OCR engine is configured — Not configured, REQ-INT-004/005)']
 - id: REQ-SRC-010
   section: "2"
   title: "No sensitive Mobily files in unauthorized environments"
@@ -763,8 +763,8 @@
   security_rule: "Screening restricted to Secretary/CPMO"
   acceptance_tests: ["UT: screened-out request records reason and requester notified"]
   phase: P2
-  status: Implemented
-  evidence: ['governance p2r-residuals-governance.spec.ts "reject: a reason is required (400); with it the request is screened out, the reason recorded, the requester event emitted"; "merge: into another live request of the same meeting only, with a reason; the merged request gets no agenda number"; "a request for a decision paper merges only into a request for the same paper; the requester cannot screen (403)"', 'D governance.p2r.test.ts "every (screening status, outcome) pair: legal ones apply, the others are refused (agenda_request.invalid_transition)"; "refuses itself, another committee, no / another meeting, a closed target and a different decision paper"', governance decision-lifecycle.spec.ts "1. agenda request for a draft decision paper → secretariat screening onto a numbered agenda" (only the secretariat screens; return needs a reason), 'e2e p2r-governance-my-work.spec.ts "an agenda request is offered in the secretariat My Work (en + ar), not to the requester; screened out with a reason from its link"', 'gap: the requester is not yet NOTIFIED — every screening emits the outbox event agenda_request.screened (ids and outcome, tested above); its delivery as a notification is P6 with REQ-PLT-008']
+  status: Tested
+  evidence: ['governance p2r-residuals-governance.spec.ts "reject: a reason is required (400); with it the request is screened out, the reason recorded, the requester event emitted"; "merge: into another live request of the same meeting only, with a reason; the merged request gets no agenda number"; "a request for a decision paper merges only into a request for the same paper; the requester cannot screen (403)"', 'D governance.p2r.test.ts "every (screening status, outcome) pair: legal ones apply, the others are refused (agenda_request.invalid_transition)"; "refuses itself, another committee, no / another meeting, a closed target and a different decision paper"', governance decision-lifecycle.spec.ts "1. agenda request for a draft decision paper → secretariat screening onto a numbered agenda" (only the secretariat screens; return needs a reason), 'e2e p2r-governance-my-work.spec.ts "an agenda request is offered in the secretariat My Work (en + ar), not to the requester; screened out with a reason from its link"', 'requester notified: notifications notifications.spec.ts "UT: screened-out request records reason and requester notified — through the outbox, exactly once, with no reason text" (P6, closes the P2 gap: the outbox event agenda_request.screened is delivered as an in-app notification; the reason stays on the record)']
 - id: REQ-GOV-013
   section: "4.2"
   title: "Numbered agendas linked to issues and decisions"
@@ -2954,7 +2954,7 @@
   acceptance_tests: ["AT-24", "E2E: generate committee pack from reports screen"]
   phase: P6
   status: Implemented
-  evidence: ['reports part delivered and tested: e2e p6-reports.spec.ts "AT-24 (en): committee pack generated from the Reports screen; screen figures equal the snapshot; PPTX and PDF exported and downloaded as genuine files" (the AT: E2E generate committee pack from reports screen); "AT-24 (ar): Arabic Reports screens and dialogs pass the RTL detector and axe"; "a contributor reads the snapshots but is offered no export; the KPI catalogue tab is not offered"; reporting report-labels.spec.ts "the web catalogue reports.json content equals the file labels, and the enum labels equal statuses.json"', 'gap: the integrations and deployment-settings parts of screen 16b are other P6 assignments (integrations / configuration)']
+  evidence: ['reports part delivered and tested: e2e p6-reports.spec.ts "AT-24 (en): committee pack generated from the Reports screen; screen figures equal the snapshot; PPTX and PDF exported and downloaded as genuine files" (the AT: E2E generate committee pack from reports screen); "AT-24 (ar): Arabic Reports screens and dialogs pass the RTL detector and axe"; "a contributor reads the snapshots but is offered no export; the KPI catalogue tab is not offered"; reporting report-labels.spec.ts "the web catalogue reports.json content equals the file labels, and the enum labels equal statuses.json"', 'integrations part delivered and tested: e2e p6-imports.spec.ts "Refusals (en): a workbook declaring XML entities is refused by the isolated parser and the service keeps working; the egress guard refuses a metadata endpoint; no connector is shown Verified"; "Arabic (ar): import wizard, preview, refusal, notifications and integrations pass the RTL detector and axe"', 'gap: the deployment-settings part of screen 16b is the P6 configuration assignment']
 - id: REQ-UX-021
   section: "10"
   title: "Search and filtering on every screen"
@@ -4616,8 +4616,8 @@
   security_rule: "Worker sets RLS context per job; caches keyed by scope"
   acceptance_tests: ["AT-03", "IT: Project B user cannot obtain Project A data via search, report, AI, file or notification"]
   phase: P6
-  status: Implemented
-  evidence: ['reports and their worker path: reporting report-snapshots.spec.ts "AT-03: a Project B user gets 404 for Project A snapshots, by Project A’s path and by their own project’s path"; reporting report-exports.spec.ts "AT-03 worker path: a render job carrying a Project B identity for a Project A export renders nothing"; e2e p6-reports.spec.ts (files only for their requester)', 'search, AI, files: covered by the modules’ AT-03 tests (documents at-03-documents-isolation.spec.ts, ai ai-retrieval-acl.spec.ts, jv at-03-partner-room-isolation.spec.ts)', 'gap: notifications are a P6 notifications assignment (REQ-PLT-008); the requirement becomes Tested with its notification isolation test']
+  status: Tested
+  evidence: ['reports and their worker path: reporting report-snapshots.spec.ts "AT-03: a Project B user gets 404 for Project A snapshots, by Project A’s path and by their own project’s path"; reporting report-exports.spec.ts "AT-03 worker path: a render job carrying a Project B identity for a Project A export renders nothing"; e2e p6-reports.spec.ts (files only for their requester)', 'search, AI, files: covered by the modules’ AT-03 tests (documents at-03-documents-isolation.spec.ts, ai ai-retrieval-acl.spec.ts, jv at-03-partner-room-isolation.spec.ts)', 'notifications and jobs: imports at-03-imports-notifications-isolation.spec.ts "IT: Project B user cannot obtain Project A data via notification — a forged event naming them is suppressed; their inbox shows only their own rows"; "a Project B user gets 404 for Project A batches — by Project A’s path and by their own project’s path; nothing is listed or counted"; "worker path: a parse job carrying Project B for a Project A batch touches nothing"; "notification jobs re-resolve the recipient at execution: an import outcome for Project A is never delivered to a non-member"']
 - id: REQ-SEC-008
   section: "15"
   title: "Enterprise authentication and MFA via IdP"
@@ -4728,8 +4728,8 @@
   security_rule: "Server-generated storage keys; URL allowlist and private-IP deny for outbound fetch"
   acceptance_tests: ["AT-25", "IT: import referencing http://169.254.169.254 rejected"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['imports at-25-import-safety.spec.ts "IT: import referencing http://169.254.169.254 rejected (row blocked, never fetched)"; "formulas are never evaluated, harmful ones block their row, links are inert and URLs are never fetched (stub server: zero hits)"', 'integrations integrations.spec.ts "internal, private, metadata, non-https and non-allowlisted endpoints are refused before any connection (refusals logged)"; "UT: saved credentials without successful test show Not verified; ... DNS rebinding and redirects fail the check"', D integrations.test.ts "an internal address is refused even when someone allowlisted it"; "bracketed IPv6 (IPv4-mapped metadata address) is recognised as internal", 'e2e p6-imports.spec.ts "Refusals (en): a workbook declaring XML entities is refused by the isolated parser and the service keeps working; the egress guard refuses a metadata endpoint; no connector is shown Verified"']
 - id: REQ-SEC-015
   section: "15"
   title: "Sandboxed complex file conversion"
@@ -4744,8 +4744,8 @@
   security_rule: "Converter process with no network, CPU/memory/time limits"
   acceptance_tests: ["AT-25", "IT: zip-bomb / decompression bomb terminated without service disruption"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['imports at-25-import-safety.spec.ts "IT: zip-bomb / decompression bomb terminated without service disruption (declared ratio and lying sizes)"; "REQ-SEC-015: the isolated parser is stopped at its time and memory limits; the process keeps running"; "entity declarations (XXE / billion laughs) and path traversal in package relationships are refused"; "an oversized import is refused (413) and nothing is created"', 'e2e p6-imports.spec.ts "Refusals (en): a workbook declaring XML entities is refused by the isolated parser and the service keeps working; the egress guard refuses a metadata endpoint; no connector is shown Verified"', 'gap (Not configured): network isolation of the parser process at operating-system level is a deployment control (the parser runs as a child process with an empty environment, a heap cap, a timeout and the Node permission model) — docs/security/imports-and-integrations.md §2']
 - id: REQ-SEC-016
   section: "15"
   title: "CSRF, XSS, injection and IDOR protection"
@@ -5262,8 +5262,8 @@
   security_rule: "Import requires Project Manager/PMO role"
   acceptance_tests: ["IT: reviewed sample workbook imports with validation report", "UT: duplicate row flagged with matching record id"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['imports import-wizard.spec.ts "IT: reviewed sample workbook imports with validation report"; "UT: duplicate row flagged with matching record id"; "a CSV file uses the same mapping and checks (values are text; Arabic digits and day-first dates)"; "a mapping without a required field, with an unknown column or by someone other than the uploader is refused"', 'D imports.test.ts "REQ-INT-001 mapping and validation (values only)"; "UT: duplicate row flagged with matching record id — field differences against the current record"', 'e2e p6-imports.spec.ts "Import wizard happy path (en): CSV of risks uploaded, mapped, previewed and submitted; the uploader cannot approve; a second person approves; risks created and linked; the uploader is notified in-app"', 'e2e p6-imports.spec.ts "Arabic (ar): import wizard, preview, refusal, notifications and integrations pass the RTL detector and axe"', 'variance: the reference workbook was not available in the build environment (docs/source-register.md); the sample workbooks and CSV files are synthetic and built by the tests']
 - id: REQ-INT-002
   section: "17"
   title: "Source preservation, approval and batch history"
@@ -5278,8 +5278,8 @@
   security_rule: "Approver distinct from uploader where policy requires"
   acceptance_tests: ["AT-01", "IT: rows created only after approval and linked to batch"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['imports import-wizard.spec.ts "IT: rows created only after approval and linked to batch; the file is preserved as a source with its hash"; "the approval binds to the submitted preview: a record changed since submission → 409, the uploader re-validates"', 'imports import-governance.spec.ts "an approver whose role cannot create the records is refused before anything is applied (canApprove false, canReject true)"; "a submitted batch can be rejected by the approver with a reason (nothing applied); the uploader cannot reject their own"', 'imports import-governance.spec.ts "AT-01: source-reported ... become historical-unverified claims; a baselined task gets a change request; a new task is a Draft proposal"', 'e2e p6-imports.spec.ts "Import wizard happy path (en): CSV of risks uploaded, mapped, previewed and submitted; the uploader cannot approve; a second person approves; risks created and linked; the uploader is notified in-app"', 'batch history: status, mapping, findings, summary, approver, decision note and outputs per batch, every command audited; approval is not_self and applies with the approver’s own authority (importApplyPermissions)', 'AT-01 variance: executed with a spreadsheet status tracker; an IMAGE is validated, scanned and preserved as a source but nothing is extracted from it (no OCR engine is configured — Not configured, REQ-INT-004/005)']
 - id: REQ-INT-003
   section: "17"
   title: "Import rollback where feasible"
@@ -5294,8 +5294,8 @@
   security_rule: "Rollback blocked for records changed after import or under hold"
   acceptance_tests: ["IT: rollback restores previous versions"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['imports import-governance.spec.ts "IT: rollback restores previous versions — records created by the batch are cancelled, its claims removed; history kept"; "rollback is refused for records changed since the import, and while the preserved file is on legal hold"', 'variance: an import never updates an existing record (REQ-INT-015), so restoring the prior state means cancelling the risks / tasks it created (new task version recorded), withdrawing its change requests and removing its claims; feasible only when none of them changed or is referenced since, and the preserved file is not on legal hold (C-31)']
 - id: REQ-INT-004
   section: "17"
   title: "Safe image/PDF/DOCX import pipeline"
@@ -5310,8 +5310,8 @@
   security_rule: "Same file controls as uploads"
   acceptance_tests: ["AT-25", "IT: malicious PDF quarantined"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['imports at-25-import-safety.spec.ts "IT: malicious PDF quarantined (JavaScript / launch actions, also hex-escaped names)"; "a malware test signature is quarantined: held in the quarantine area, never stored as a document, never parsed; audited"; "REQ-SEC-015: the isolated parser is stopped at its time and memory limits; the process keeps running"', 'imports import-documents.spec.ts "DOCX minutes: extracted paragraphs become UNVERIFIED claims for review ..."; "PDF and images: no OCR / PDF text extractor is configured — stated honestly, the file is preserved as a source, nothing is extracted or applied"', 'gap (Not configured): no OCR engine and no PDF text extractor — images and PDFs are validated, scanned and preserved but not extracted; OS-level network isolation of the parser process is a deployment control; the built-in signature check is not an antivirus engine (docs/security/imports-and-integrations.md §2)']
 - id: REQ-INT-005
   section: "17"
   title: "Unclear OCR never populates official fields"
@@ -5326,8 +5326,8 @@
   security_rule: "Official fields writable only via reviewed claim promotion"
   acceptance_tests: ["AT-01", "UT: confidence below threshold creates claim, not field value"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['imports import-documents.spec.ts "UT: confidence below threshold creates claim, not field value — a low-confidence extracted status stays a claim; the record keeps its value"; "DOCX minutes: extracted paragraphs become UNVERIFIED claims for review ..."', 'imports import-governance.spec.ts "AT-01: source-reported ... become historical-unverified claims; a baselined task gets a change request; a new task is a Draft proposal"', 'AT-01 variance: executed with a spreadsheet status tracker; an IMAGE is validated, scanned and preserved as a source but nothing is extracted from it (no OCR engine is configured — Not configured, REQ-INT-004/005)']
 - id: REQ-INT-006
   section: "17"
   title: "Optional Microsoft 365 adapters with scopes and logs"
@@ -5342,8 +5342,8 @@
   security_rule: "Adapters disabled until configured and authorized"
   acceptance_tests: ["UT: adapter declares scopes; execution logged"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['integrations integrations.spec.ts "UT: adapter declares scopes; execution logged (configure, refusals, checks, enable, disable — no secrets)"; "UT: each unconfigured integration shows manual alternative — Microsoft 365 adapters defined but Not configured; future systems documented only"', 'D integrations.test.ts "UT: adapter declares scopes; read connectors hold no write/send scope; future integrations are documented only"', 'status of every adapter in this environment: Not configured — Outlook mail (send), Teams channel messages (send), Teams meetings (read), SharePoint (read) and SharePoint (write) are defined with least-privilege OAuth scopes and an append-only execution log; no Microsoft 365 tenant, consent or credential exists, nothing connects (docs/security/imports-and-integrations.md §4)']
 - id: REQ-INT-007
   section: "17"
   title: "Read-only connectors separate from write/send"
@@ -5358,8 +5358,8 @@
   security_rule: "Send capability requires separate authorization record"
   acceptance_tests: ["UT: read connector cannot invoke send operation"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['integrations integrations.spec.ts "UT: read connector cannot invoke send operation (REQ-INT-007); a send connector that is not verified + authorised sends nothing"', 'D integrations.test.ts "UT: read connector cannot invoke send operation"', 'distinct authorization: configuration needs integrations.connection.manage (platform administrators); a send additionally needs verified + enabled + an approved sending authority + an approved destination (none exists in this build)']
 - id: REQ-INT-008
   section: "17"
   title: "Future enterprise integrations documented only"
@@ -5374,8 +5374,8 @@
   security_rule: "n/a"
   acceptance_tests: ["REVIEW: integration documentation lists each with status Not configured"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['docs/security/imports-and-integrations.md §4 "Future integrations — documented only" (ERP / Finance, HR, ITSM, DCIM, external VDR: intended use, direction, what is missing before any access)', 'integrations integrations.spec.ts "REVIEW-equivalent: a documented-only integration cannot be configured (no endpoint, data contract or approval)"; "UT: each unconfigured integration shows manual alternative ..."', 'e2e p6-imports.spec.ts "Refusals (en): a workbook declaring XML entities is refused by the isolated parser and the service keeps working; the egress guard refuses a metadata endpoint; no connector is shown Verified" (the five future systems are listed with status Not configured and what is missing)', 'REVIEW pending: the acceptance test is a review of the integration documentation (P6 gate reviewer)']
 - id: REQ-INT-009
   section: "17"
   title: "Signed webhooks with replay protection"
@@ -5390,8 +5390,8 @@
   security_rule: "HMAC verification with rotating secret"
   acceptance_tests: ["IT: unsigned or replayed webhook rejected"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['integrations integrations.spec.ts "IT: unsigned or replayed webhook rejected — and a signed ping verifies the inbound connector"; "a disabled inbound connector receives nothing"', 'D integrations.test.ts "accepts within ±5 minutes, refuses stale, future and missing timestamps"', 'HMAC-SHA256 over <timestamp>.<delivery id>.<raw body>, ±300 s window, the delivery id is the replay nonce (unique index); tested with a local test sender only — no external service']
 - id: REQ-INT-010
   section: "17"
   title: "Idempotency, retries, reconciliation and monitoring"
@@ -5406,8 +5406,8 @@
   security_rule: "n/a"
   acceptance_tests: ["IT: duplicate delivery processed once; failure raises alert"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['integrations integrations.spec.ts "IT: duplicate delivery processed once; failure raises alert (retries with back-off, dead letter, reconciliation, manual retry)"', 'idempotency key per delivery, up to 4 attempts with exponential back-off, dead letter, a reconciliation schedule every 10 minutes, an integration.alert notification to platform administrators (failure monitoring)']
 - id: REQ-INT-011
   section: "17"
   title: "Exports never auto-send externally"
@@ -5438,8 +5438,8 @@
   security_rule: "Send pipeline re-evaluates policy per recipient"
   acceptance_tests: ["AT-19", "IT: recipient revoked after scheduling receives nothing"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['notifications notifications.spec.ts "IT: recipient revoked after scheduling receives nothing — the import outcome to an uploader who lost access; the external send gate refuses (nothing sent)"; "IT: notification suppressed after recipient loses project access (re-checked by the worker at delivery; audited)"; "REQ-INT-012: a notification whose source the reader can no longer see is withheld at read time (list and count agree)"', 'imports at-03-imports-notifications-isolation.spec.ts "notification jobs re-resolve the recipient at execution: an import outcome for Project A is never delivered to a non-member"', 'AT-19 for notifications: the recipient (active, member, roles, clearance) and the source visibility are re-checked at every send; e-mail / Teams pass the connector send gate and the delivery ledger (disabled — nothing sent)']
 - id: REQ-INT-013
   section: "17"
   title: "Validated connectivity status"
@@ -5454,8 +5454,8 @@
   security_rule: "Test runs server-side via allowlisted egress"
   acceptance_tests: ["UT: saved credentials without successful test show Not verified"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['integrations integrations.spec.ts "UT: saved credentials without successful test show Not verified; a real check (local stub transport) verifies; DNS rebinding and redirects fail the check"', 'D integrations.test.ts "UT: saved credentials without successful test show Not verified"', 'e2e p6-imports.spec.ts "Refusals (en): a workbook declaring XML entities is refused by the isolated parser and the service keeps working; the egress guard refuses a metadata endpoint; no connector is shown Verified"']
 - id: REQ-INT-014
   section: "17"
   title: "Unavailable integrations Disabled with manual alternatives"
@@ -5470,8 +5470,8 @@
   security_rule: "n/a"
   acceptance_tests: ["UT: each unconfigured integration shows manual alternative"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['integrations integrations.spec.ts "UT: each unconfigured integration shows manual alternative — Microsoft 365 adapters defined but Not configured; future systems documented only"', 'e2e p6-imports.spec.ts "Refusals (en): a workbook declaring XML entities is refused by the isolated parser and the service keeps working; the egress guard refuses a metadata endpoint; no connector is shown Verified" (11 connectors, each with its status and manual alternative)', 'e2e p6-imports.spec.ts "Arabic (ar): import wizard, preview, refusal, notifications and integrations pass the RTL detector and axe"']
 - id: REQ-INT-015
   section: "17"
   title: "Imports cannot overwrite governed records"
@@ -5486,8 +5486,8 @@
   security_rule: "Import commit skips governed records and proposes change requests instead"
   acceptance_tests: ["IT: import row targeting approved decision produces CR proposal, not update"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['imports import-governance.spec.ts "IT: import row targeting approved decision produces CR proposal, not update"', 'imports import-governance.spec.ts "AT-01: source-reported ... become historical-unverified claims; a baselined task gets a change request; a new task is a Draft proposal"', D imports.test.ts "decisions are always governed; baselined tasks are governed; risks are not"]
 
 # ---------------------------------------------------------------- AGT
 
@@ -6327,8 +6327,8 @@
   security_rule: "Same controls as imports"
   acceptance_tests: ["AT-01", "E2E: wizard source step shows claims for review"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['e2e p6-imports.spec.ts "REQ-SET-011 (en): setup wizard step 3 opens the import wizard; a status tracker becomes claims shown for review — after approval they are historical-unverified claims of the preserved source"', 'imports import-governance.spec.ts "AT-01: source-reported ... become historical-unverified claims; a baselined task gets a change request; a new task is a Draft proposal"', 'variance: there is no separate POST .../setup/steps/sources route — step 3 opens the import wizard (and the Documents source register for roles without imports), whose commands are the imports API with the same controls; AT-01 variance: executed with a spreadsheet status tracker; an IMAGE is validated, scanned and preserved as a source but nothing is extracted from it (no OCR engine is configured — Not configured, REQ-INT-004/005)']
 - id: REQ-SET-012
   section: "21"
   title: "Wizard step 4: approve perimeter, workstreams and owners"
