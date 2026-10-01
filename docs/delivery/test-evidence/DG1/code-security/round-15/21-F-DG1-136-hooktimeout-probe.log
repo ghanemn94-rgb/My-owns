@@ -1,0 +1,24 @@
+# probe file apps/api/test/integration/zz-r15-hook-probe.test.ts:
+// DG1 r15 code-security throwaway probe (disposable clone only): an afterAll that takes 12 s.
+// Under vitest's default hookTimeout (10_000 ms) this fails with "Hook timed out in 10000ms";
+// under the integration project's hookTimeout: 30_000 it passes.
+import { afterAll, expect, it } from "vitest";
+afterAll(async () => { await new Promise((r) => setTimeout(r, 12_000)); });
+it("trivial", () => { expect(1).toBe(1); });
+$ QA_PG_PORT=5491 tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/zz-r15-hook-probe.test.ts   # node v22.22.2, config as frozen (hookTimeout: 30_000)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+ RUN  v3.2.4 /var/tmp/mth-run.0sLLzk/claude-0/review-r15
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muptp9ld_29f10ca2; applied 8 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/zz-r15-hook-probe.test.ts (1 test) 12007ms
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  17:43:42
+   Duration  13.52s (transform 74ms, setup 0ms, collect 27ms, tests 12.01s, environment 0ms, prepare 85ms)
+exit=0
+$ (control) same command with the hookTimeout: 30_000 line removed from the clone's vitest.config.ts
+ FAIL  |integration| apps/api/test/integration/zz-r15-hook-probe.test.ts [ apps/api/test/integration/zz-r15-hook-probe.test.ts ]
+Error: Hook timed out in 10000ms.
+ Test Files  1 failed (1)
+      Tests  1 passed (1)
+exit=1
+$ git status --short (clone, after restore)

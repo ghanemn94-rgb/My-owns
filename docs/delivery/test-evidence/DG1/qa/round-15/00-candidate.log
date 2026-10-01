@@ -1,0 +1,21 @@
+$ git rev-parse HEAD
+c7edc144b336a63a4bce7952971e8d23f76dfa93
+$ git log --oneline -3
+c7edc14 DG1 r15: freeze candidate 76d8b304 + round-15 review assignments
+f27b5a6 DG1 r15: mark F-DG1-136/217 FIXED_PENDING_VERIFICATION
+22f3054 DG1 r15: F-DG1-136 (integration hookTimeout) + F-DG1-217 (lint .d.ts-safe) (T-DG1-BE16)
+$ git diff --stat f27b5a6f HEAD
+ docs/delivery/assignments/DG1/round-15/audit.md    |   23 +
+ .../DG1/round-15/review-code-security-reviewer.md  |   12 +
+ .../assignments/DG1/round-15/review-common.md      |   16 +
+ .../DG1/round-15/review-domain-reviewer.md         |   11 +
+ .../assignments/DG1/round-15/review-qa-verifier.md |   16 +
+ .../candidates/DG1/76d8b3049d22d414.manifest.json  | 1973 ++++++++++++++++++++
+ docs/delivery/stages.json                          |   22 +-
+ 7 files changed, 2068 insertions(+), 5 deletions(-)
+$ node tools/gates/candidate.mjs --stage DG1 (repo working tree)
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:76d8b3049d22d414a4c036bd3dd1af6e0c3609baedb096e2d2ecf4180bf07846","files":391}
+$ (disposable clone at f27b5a6f) node tools/gates/candidate.mjs --stage DG1
+f27b5a6f80f2b1146bc8f3de35d284991e4213f8
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:76d8b3049d22d414a4c036bd3dd1af6e0c3609baedb096e2d2ecf4180bf07846","files":391}
+expected sha256:76d8b3049d22d414a4c036bd3dd1af6e0c3609baedb096e2d2ecf4180bf07846

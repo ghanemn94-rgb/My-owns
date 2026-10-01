@@ -1,0 +1,50 @@
+$ pnpm test (node v22.22.2)
+
+> mobily-transformation-hub@0.1.0 test /var/tmp/mth-run.OFDHOr/claude-0/review-qa
+> vitest run --project unit-node --project unit-web
+
+
+ RUN  v3.2.4 /var/tmp/mth-run.OFDHOr/claude-0/review-qa
+
+ ✓ |unit-node| apps/api/src/modules/access/rules.test.ts (12 tests) 11ms
+ ✓ |unit-node| packages/config/src/load.test.ts (17 tests) 296ms
+ ✓ |unit-node| packages/design-tokens/src/tokens.test.ts (15 tests) 78ms
+ ✓ |unit-node| apps/api/src/modules/admin/branding.test.ts (4 tests) 81ms
+ ✓ |unit-node| apps/api/src/server.test.ts (6 tests) 194ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (130 tests) 2685ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  1426ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)  417ms
+ ✓ |unit-node| apps/api/src/modules/platform/platform.test.ts (7 tests) 26ms
+ ✓ |unit-node| packages/db/src/seed.test.ts (4 tests) 13ms
+ ✓ |unit-node| apps/api/src/modules/workflows/workflows.test.ts (5 tests) 111ms
+ ✓ |unit-node| apps/api/src/modules/kpi/kpi.test.ts (5 tests) 120ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reporting.test.ts (4 tests) 155ms
+ ✓ |unit-node| packages/shared/src/schemas/schemas.test.ts (2 tests) 11ms
+ ✓ |unit-node| apps/api/src/modules/transformations/transitions.test.ts (2 tests) 3ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts (15 tests) 41ms
+ ✓ |unit-web| src/lib/lib.test.ts (18 tests) 51ms
+ ✓ |unit-web| src/i18n/glossary.test.ts (8 tests) 7ms
+ ✓ |unit-web| src/app/app.test.tsx (16 tests) 2930ms
+   ✓ bilingual shell > shows all fourteen areas to an administrator  351ms
+   ✓ transformations > lists transformations with a sortable code column and removable filter chips  814ms
+   ✓ transformations > detail shows the workspace header with Unknown for data from later stages  397ms
+ ✓ |unit-web| src/i18n/i18n.test.ts (11 tests) 35ms
+ ✓ |unit-web| src/styles/styles.test.ts (6 tests) 6ms
+ ✓ |unit-web| src/components/States.test.tsx (15 tests) 462ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx (21 tests) 8548ms
+   ✓ after create (F-DG1-004) > shows the created record when the server lets the creator read it  598ms
+   ✓ after create (F-DG1-004) > explains, in English, that the draft was created but cannot be opened (server 404), instead of 'Not found'  483ms
+   ✓ after create (F-DG1-004) > explains the same in Arabic (RTL), using the glossary term for Transformation  522ms
+   ✓ after create (F-DG1-004) > treats a 403 for the just-created record the same way  351ms
+   ✓ truly out-of-scope records keep the correct localized message > router state for a different id does not turn a 404 into the created message  311ms
+   ✓ derived creator assignment on the audit trail (F-DG1-008) > English: localized action, fields, role, user and scope; nothing raw or marked untranslated  336ms
+   ✓ effective permissions refresh after create (F-DG1-210) > English: Edit, Archive and the audit trail appear after create, without a reload  600ms
+   ✓ effective permissions refresh after create (F-DG1-210) > Arabic (RTL): the same controls and the audit trail appear after create, without a reload  537ms
+   ✓ effective permissions refresh after create (F-DG1-210) > a failed /me refresh never blocks the navigation; the UI stays fail-safe (no controls offered)  3118ms
+
+ Test Files  21 passed (21)
+      Tests  323 passed (323)
+   Start at  17:38:37
+   Duration  18.40s (transform 2.95s, setup 0ms, collect 14.76s, tests 15.86s, environment 5.82s, prepare 3.30s)
+
+exit=0

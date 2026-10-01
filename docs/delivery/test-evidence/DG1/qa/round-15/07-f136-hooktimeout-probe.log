@@ -1,0 +1,50 @@
+$ node --version: v22.22.2
+## A) candidate config (hookTimeout: 30_000)
+$ QA_PG_PORT=5492 tests/qa/support/with-pg.sh npx vitest run --project integration tests/qa/integration/dg1-r15-hooktimeout-probe.test.ts
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+ RUN  v3.2.4 /var/tmp/mth-run.OFDHOr/claude-0/review-qa
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muptnlcs_cb1e74bc; applied 8 migrations to a fresh database
+ ✓ |integration| tests/qa/integration/dg1-r15-hooktimeout-probe.test.ts (1 test) 12006ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  17:42:24
+   Duration  13.09s (transform 60ms, setup 0ms, collect 16ms, tests 12.01s, environment 0ms, prepare 65ms)
+
+exit=0
+
+## B) control: same probe with the hookTimeout line removed from a scratch copy of vitest.config.ts (round-14 config) - expected to FAIL
+0
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+ RUN  v3.2.4 /var/tmp/mth-run.OFDHOr/claude-0/review-qa
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muptnwyg_c1e13cd4; applied 8 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/dg1-r15-hooktimeout-probe.test.ts (1 test) 10008ms
+   ✓ QA r15 F-DG1-136: integration hookTimeout covers a teardown slower than the 10s default > runs in the integration project (sanity) 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/dg1-r15-hooktimeout-probe.test.ts [ tests/qa/integration/dg1-r15-hooktimeout-probe.test.ts ]
+Error: Hook timed out in 10000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ tests/qa/integration/dg1-r15-hooktimeout-probe.test.ts:11:1
+      9| const SLOW_TEARDOWN_MS = 12_000;
+     10| 
+     11| afterAll(async () => {
+       | ^
+     12|   await new Promise((r) => setTimeout(r, SLOW_TEARDOWN_MS));
+     13| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 passed (1)
+   Start at  17:42:39
+   Duration  11.05s (transform 47ms, setup 0ms, collect 17ms, tests 10.01s, environment 0ms, prepare 68ms)
+
+exit=1
+$ git diff --stat vitest.config.ts (restored)

@@ -11638,7 +11638,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-14/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T17:20:29Z",
@@ -11649,10 +11649,46 @@
           "at": "2026-10-01T17:32:11Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 22f3054108b775da5d24339da9b123fcd701bf5a"
+        },
+        {
+          "at": "2026-10-01T17:46:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 15: PASS"
+        },
+        {
+          "at": "2026-10-01T17:49:11Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 15: PASS"
+        },
+        {
+          "at": "2026-10-01T17:52:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 15: PASS"
         }
       ],
       "fix_revision": "22f3054108b775da5d24339da9b123fcd701bf5a",
-      "fix_summary": "r15: vitest.config.ts integration hookTimeout=30_000 (F-DG1-136, teardown no longer hits the 10s default); syntaxErrors() uses a no-emit declarationSyntaxErrors() for .d.ts/.d.mts/.d.cts so the lint no longer throws a transpile Debug Failure and .d.ts stay scanned (F-DG1-217). architecture 130/130; full unit 323/323 Node 22+24; integration 200/200 no hook timeout."
+      "fix_summary": "r15: vitest.config.ts integration hookTimeout=30_000 (F-DG1-136, teardown no longer hits the 10s default); syntaxErrors() uses a no-emit declarationSyntaxErrors() for .d.ts/.d.mts/.d.cts so the lint no longer throws a transpile Debug Failure and .d.ts stay scanned (F-DG1-217). architecture 130/130; full unit 323/323 Node 22+24; integration 200/200 no hook timeout.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-QA-R15-qa-verifier-20261001T173655Z-44d2422f",
+          "session_id": "44d2422f-49d4-45ea-bb2e-21fbbc1a75b0"
+        },
+        "at": "2026-10-01T17:52:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/qa/tests/dg1-r15-hooktimeout-probe.test.ts",
+          "docs/delivery/test-evidence/DG1/qa/round-15/07-f136-hooktimeout-probe.log",
+          "docs/delivery/test-evidence/DG1/qa/round-15/10-int-run1-v22.22.2.log",
+          "docs/delivery/test-evidence/DG1/qa/round-15/10-int-run2-v22.22.2.log",
+          "docs/delivery/test-evidence/DG1/qa/round-15/10-int-run3-v24.21.0.log",
+          "docs/delivery/test-evidence/DG1/qa/round-15/10-int-run4-contended-v22.22.2.log",
+          "docs/delivery/test-evidence/DG1/qa/round-15/08-f136-f217-scope.log",
+          "vitest.config.ts"
+        ],
+        "note": "Verified on frozen candidate sha256:76d8b3049d22d414a4c036bd3dd1af6e0c3609baedb096e2d2ecf4180bf07846 (freeze f27b5a6f; the ID recomputes identically in a full disposable clone). qa-verifier did not author the fix (22f3054, T-DG1-BE16, backend-workflow-engineer) and did not raise the finding (code-security-reviewer did). Fix: vitest.config.ts integration project hookTimeout: 30_000 (test configuration only). (a) Direct proof that the setting takes effect (07-f136-hooktimeout-probe.log): my probe qa/tests/dg1-r15-hooktimeout-probe.test.ts has a 12 s afterAll and runs in the integration project. With the candidate config it passes (exit 0). The control, the same probe with only the hookTimeout line removed from a scratch copy of vitest.config.ts (= the round-14 config), fails with 'Error: Hook timed out in 10000ms.' (exit 1). (b) The full integration suite ran 4 times on real disposable PostgreSQL 16.13: Node 22 x2, Node 24 x1, and once on Node 22 under CPU contention (2 x nproc busy loops). Every run was 200/200, exit 0, zero 'Hook timed out', zero 57P01/'terminating connection' in the server logs, and access-derived-race.test.ts was green each time (754-1037 ms)."
+      }
     },
     {
       "id": "F-DG1-217",
@@ -11673,7 +11709,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG1/round-14/qa-verifier.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T17:21:17Z",
@@ -11684,10 +11720,103 @@
           "at": "2026-10-01T17:32:11Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 22f3054108b775da5d24339da9b123fcd701bf5a"
+        },
+        {
+          "at": "2026-10-01T17:46:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 15: PASS"
+        },
+        {
+          "at": "2026-10-01T17:49:11Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 15: PASS"
+        },
+        {
+          "at": "2026-10-01T17:52:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 15: PASS"
         }
       ],
       "fix_revision": "22f3054108b775da5d24339da9b123fcd701bf5a",
-      "fix_summary": "r15: vitest.config.ts integration hookTimeout=30_000 (F-DG1-136, teardown no longer hits the 10s default); syntaxErrors() uses a no-emit declarationSyntaxErrors() for .d.ts/.d.mts/.d.cts so the lint no longer throws a transpile Debug Failure and .d.ts stay scanned (F-DG1-217). architecture 130/130; full unit 323/323 Node 22+24; integration 200/200 no hook timeout."
+      "fix_summary": "r15: vitest.config.ts integration hookTimeout=30_000 (F-DG1-136, teardown no longer hits the 10s default); syntaxErrors() uses a no-emit declarationSyntaxErrors() for .d.ts/.d.mts/.d.cts so the lint no longer throws a transpile Debug Failure and .d.ts stay scanned (F-DG1-217). architecture 130/130; full unit 323/323 Node 22+24; integration 200/200 no hook timeout.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-QA-R15-qa-verifier-20261001T173655Z-44d2422f",
+          "session_id": "44d2422f-49d4-45ea-bb2e-21fbbc1a75b0"
+        },
+        "at": "2026-10-01T17:52:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/qa/tests/dg1-r15-dts-probe.test.ts",
+          "docs/delivery/test-evidence/DG1/qa/round-15/06-r15-dts-probe-and-architecture-v22.22.2.log",
+          "docs/delivery/test-evidence/DG1/qa/round-15/06-r15-dts-probe-and-architecture-v24.21.0.log",
+          "docs/delivery/test-evidence/DG1/qa/round-15/09-f217-name-variants.log",
+          "docs/delivery/test-evidence/DG1/qa/round-15/08-f136-f217-scope.log",
+          "apps/api/src/architecture.testkit.ts",
+          "apps/api/src/architecture.test.ts"
+        ],
+        "note": "Verified on frozen candidate sha256:76d8b3049d22d414a4c036bd3dd1af6e0c3609baedb096e2d2ecf4180bf07846 (freeze f27b5a6f). qa-verifier raised the finding in round 14 and did not author the fix (22f3054, backend-workflow-engineer). The change is test-only: apps/api/src/architecture.testkit.ts (excluded from the build by tsconfig.build.json 'src/**/*.testkit.ts'; no architecture file in apps/api/dist) and architecture.test.ts. syntaxErrors() now routes /\\.d\\.[cm]?ts$/ names to declarationSyntaxErrors(), a no-emit one-file ts.createProgram plus getSyntacticDiagnostics. My independent probe (qa/tests/dg1-r15-dts-probe.test.ts) plants files into the REAL src/modules/transformations directory and calls the production moduleViolations(). For .d.ts/.d.mts/.d.cts on Node v22.22.2 and v24.21.0, every file is walked; a valid file gives 0 violations with no throw; a nested deep type import, an inline import() type query and a node:child_process type import are each flagged; and a syntax error gives a named 'unparseable source' diagnostic, never 'Debug Failure'. The original round-14 reproduction names (zz.test.d.ts, zz.d.ts, zz.d.mts, zz.d.cts) report the boundary violation and do not throw (09-f217-name-variants.log). The candidate's own F-DG1-217 self-checks pass: architecture.test.ts 130/130 on both runtimes. Residual: arbitrary-extension declaration names (*.d.css.ts, *.d.json.ts) still throw. That narrower name class is outside this finding's stated reproduction, so it is raised separately as Low, non-mandatory F-DG1-218, and it fails closed."
+      }
+    },
+    {
+      "id": "F-DG1-137",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The F-DG1-217 repair handles only part of TypeScript's declaration-file names. apps/api/src/architecture.testkit.ts:445 has DECLARATION_FILE = /\\.d\\.[cm]?ts$/, so syntaxErrors() (:477-484) sends only *.d.ts / *.d.mts / *.d.cts to the no-emit declarationSyntaxErrors() (:455). TypeScript's own ts.isDeclarationFileName() is also true for the arbitrary-extension form <name>.d.<ext>.ts, e.g. styles.d.css.ts, data.d.json.ts or x.d.ts.ts (allowArbitraryExtensions declaration files). walk() still collects these names via CODE_FILE (:182), and they still reach ts.transpileModule, which throws the same internal 'Debug Failure. Output generation failed'. The lint therefore still crashes, with no file name in the message, on these declaration files.",
+      "reproduction": "Candidate sha256:76d8b304...7846, full disposable clone at f27b5a6f, Node v22.22.2 and v24.21.0, TypeScript 6.0.2. Probe docs/delivery/test-evidence/DG1/code-security/round-15/zz-r15-probe.test.ts.txt, copied into the clone as apps/api/src/zz-r15-probe.test.ts. (1) fileViolations('transformations', <MODULES_DIR>/transformations/zz.d.css.ts | zz.d.json.ts | zz.d.ts.ts, 'export declare const x: number;') throws 'Debug Failure. Output generation failed', and so does a deep cross-module type import. ts.isDeclarationFileName() returns true for all three names, and walk() returns all three from a planted directory (01-/01b- logs). Controls: zz.d.ts/.d.mts/.d.cts are handled correctly, and zz.d.tsx and zz.D.TS are not declaration names and are linted normally. (2) End to end: planting apps/api/src/modules/transformations/zz-r15.d.css.ts in the clone makes architecture.test.ts 'every import respects dependsOn, public surfaces and allowed packages' fail with '-> Debug Failure. Output generation failed', exit 1 (02-planted-d-css-ts-architecture.log). (3) After pnpm -r build, tsc -p apps/api/tsconfig.build.json emits nothing for that file (03-dts-emit-after-build.log), so it carries no runtime code into dist.",
+      "expected": "Every file TypeScript treats as a declaration file is linted without an internal compiler assertion, as F-DG1-217's expected result asks for 'a declaration file in a module'. A violation or syntax error should be a named lint diagnostic. Simplest fix: decide with ts.isDeclarationFileName(fileName) instead of the hand-written regex, or widen the regex to /\\.d\\.([cm]?ts|[^.]+\\.ts)$/. Add a self-check case for e.g. zz.d.css.ts.",
+      "actual": "The lint fails closed for <name>.d.<ext>.ts files: CI goes red and nothing slips past the boundary check. But the error is an opaque 'Debug Failure' instead of a named diagnostic, which is the defect class F-DG1-217 described. The real module tree has no declaration files (find apps/api/src -name '*.d.*' gives 0), so no current check is red. Rated Low and non-mandatory: lint-tooling robustness only, with no access-control, integrity, calculation or portability impact, and no way to bypass the check.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-15/zz-r15-probe.test.ts.txt",
+        "docs/delivery/test-evidence/DG1/code-security/round-15/01-F-DG1-217-reproof-probe-node22.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-15/01b-F-DG1-217-reproof-probe-node24.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-15/02-planted-d-css-ts-architecture.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-15/03-dts-emit-after-build.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-15/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T17:49:11Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG1 round 15 (session 32298593) while re-proving F-DG1-217. It is a residual of the same defect class, in names the F-DG1-217 reproduction did not list. Low and non-mandatory: fail-closed lint robustness, with no product impact. Suggested fix: use ts.isDeclarationFileName() in syntaxErrors(). The ID is proposed from the code-security F-DG1-1xx block (next after F-DG1-136); the orchestrator may re-allocate it."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-218",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Residual of F-DG1-217: the module lint still crashes with TypeScript 'Debug Failure. Output generation failed' on an arbitrary-extension declaration file (*.d.<ext>.ts, e.g. zz.d.css.ts / zz.d.json.ts). The fix's DECLARATION_FILE = /\\.d\\.[cm]?ts$/ (apps/api/src/architecture.testkit.ts:445) does not match these names, so syntaxErrors() still sends them to ts.transpileModule. TypeScript (>= 5.0, allowArbitraryExtensions) treats *.d.<ext>.ts as a declaration file, and the emit throws. The lint fails closed (it throws, so architecture.test.ts goes red and nothing slips through).",
+      "reproduction": "Candidate sha256:76d8b3049d22d414a4c036bd3dd1af6e0c3609baedb096e2d2ecf4180bf07846, full disposable clone at f27b5a6f. (1) Node v22.22.2 and v24.21.0: copy docs/delivery/test-evidence/DG1/qa/tests/dg1-r15-dts-probe.test.ts to apps/api/src/ and run `npx vitest run --project unit-node apps/api/src/dg1-r15-dts-probe.test.ts`. 16/17 pass (.d.ts/.d.mts/.d.cts are all fine). The edge case plants apps/api/src/modules/transformations/zz-qa-r15-arb.d.css.ts and calls the production moduleViolations('transformations'), which throws 'Debug Failure. Output generation failed'. (2) Node v24.21.0, apps/api of the clone: calling fileViolations('transformations', <MODULES_DIR>/transformations/<name>, deep type import) gives OK (violation reported) for zz.test.d.ts, zz.d.ts, zz.d.mts, zz.d.cts, zz.d.html.mts and zz.d.tsx, and THROW 'Debug Failure. Output generation failed' for zz.d.css.ts and zz.d.json.ts (09-f217-name-variants.log).",
+      "expected": "Every name that TypeScript treats as a declaration file (ts.isDeclarationFileName semantics, including *.d.<ext>.ts) goes through declarationSyntaxErrors() or is skipped explicitly, so the lint reports a named diagnostic or a boundary violation and never an internal compiler assertion. A self-check pins this, for example by adding zz.d.css.ts to the F-DG1-217 cases in architecture.test.ts.",
+      "actual": "zz.d.css.ts and zz.d.json.ts under apps/api/src/modules make moduleViolations() throw 'Debug Failure. Output generation failed', with no file name in the message. The real tree has no such file today (real-tree lint = 0 violations), so no current check is red.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r15-dts-probe.test.ts",
+        "docs/delivery/test-evidence/DG1/qa/round-15/06-r15-dts-probe-and-architecture-v22.22.2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/06-r15-dts-probe-and-architecture-v24.21.0.log",
+        "docs/delivery/test-evidence/DG1/qa/round-15/09-f217-name-variants.log",
+        "apps/api/src/architecture.testkit.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-15/qa-verifier.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T17:50:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG1 round 15 while independently verifying F-DG1-217. Rated Low and non-mandatory for the same reasons as F-DG1-217. The lint fails closed: it throws and goes red, so nothing passes unchecked. Declaration files emit no runtime code, an arbitrary-extension declaration file inside a backend API module is an unlikely layout, and there is no access-control, integrity, calculation or portability impact. F-DG1-217's own stated reproduction (.d.ts/.d.mts/.d.cts/.test.d.ts) is fixed and verified separately. This is a narrower residual name class. The proposed ID F-DG1-218 is the next free number after 217; the orchestrator may renumber it if another reviewer proposed the same number this round. It does not block DG1 on its own. The orchestrator may route it to a repair or accept it as an observation."
+        }
+      ]
     }
   ]
 }

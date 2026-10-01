@@ -1,0 +1,59 @@
+$ node --version: v22.22.2
+# probe and architecture.test.ts run in SEPARATE vitest invocations (the probe plants files into the real tree)
+$ npx vitest run --project unit-node apps/api/src/dg1-r15-dts-probe.test.ts --reporter=verbose
+
+ RUN  v3.2.4 /var/tmp/mth-run.OFDHOr/claude-0/review-qa
+
+ ✓ |unit-node| apps/api/src/dg1-r15-dts-probe.test.ts > QA r15 F-DG1-217: module declaration files are linted end to end without throwing (real tree) > baseline: the real transformations module tree lints to zero violations 226ms
+ ✓ |unit-node| apps/api/src/dg1-r15-dts-probe.test.ts > QA r15 F-DG1-217: module declaration files are linted end to end without throwing (real tree) > planted zz-qa-r15.d.ts (valid, no imports) is walked and yields no violation, no throw 215ms
+ ✓ |unit-node| apps/api/src/dg1-r15-dts-probe.test.ts > QA r15 F-DG1-217: module declaration files are linted end to end without throwing (real tree) > planted zz-qa-r15.d.mts (valid, no imports) is walked and yields no violation, no throw 142ms
+ ✓ |unit-node| apps/api/src/dg1-r15-dts-probe.test.ts > QA r15 F-DG1-217: module declaration files are linted end to end without throwing (real tree) > planted zz-qa-r15.d.cts (valid, no imports) is walked and yields no violation, no throw 152ms
+ ✓ |unit-node| apps/api/src/dg1-r15-dts-probe.test.ts > QA r15 F-DG1-217: module declaration files are linted end to end without throwing (real tree) > planted nested zz-qa-r15.d.ts with a deep cross-module TYPE import is flagged 81ms
+ ✓ |unit-node| apps/api/src/dg1-r15-dts-probe.test.ts > QA r15 F-DG1-217: module declaration files are linted end to end without throwing (real tree) > planted nested zz-qa-r15.d.mts with a deep cross-module TYPE import is flagged 54ms
+ ✓ |unit-node| apps/api/src/dg1-r15-dts-probe.test.ts > QA r15 F-DG1-217: module declaration files are linted end to end without throwing (real tree) > planted nested zz-qa-r15.d.cts with a deep cross-module TYPE import is flagged 46ms
+ ✓ |unit-node| apps/api/src/dg1-r15-dts-probe.test.ts > QA r15 F-DG1-217: module declaration files are linted end to end without throwing (real tree) > planted zz-qa-r15.d.ts with an inline import() type query to a deep path is flagged 66ms
+ ✓ |unit-node| apps/api/src/dg1-r15-dts-probe.test.ts > QA r15 F-DG1-217: module declaration files are linted end to end without throwing (real tree) > planted zz-qa-r15.d.mts with an inline import() type query to a deep path is flagged 49ms
+ ✓ |unit-node| apps/api/src/dg1-r15-dts-probe.test.ts > QA r15 F-DG1-217: module declaration files are linted end to end without throwing (real tree) > planted zz-qa-r15.d.cts with an inline import() type query to a deep path is flagged 43ms
+ ✓ |unit-node| apps/api/src/dg1-r15-dts-probe.test.ts > QA r15 F-DG1-217: module declaration files are linted end to end without throwing (real tree) > planted zz-qa-r15.d.ts with a syntax error yields a named unparseable diagnostic, never Debug Failure 90ms
+ ✓ |unit-node| apps/api/src/dg1-r15-dts-probe.test.ts > QA r15 F-DG1-217: module declaration files are linted end to end without throwing (real tree) > planted zz-qa-r15.d.mts with a syntax error yields a named unparseable diagnostic, never Debug Failure 88ms
+ ✓ |unit-node| apps/api/src/dg1-r15-dts-probe.test.ts > QA r15 F-DG1-217: module declaration files are linted end to end without throwing (real tree) > planted zz-qa-r15.d.cts with a syntax error yields a named unparseable diagnostic, never Debug Failure 103ms
+ ✓ |unit-node| apps/api/src/dg1-r15-dts-probe.test.ts > QA r15 F-DG1-217: module declaration files are linted end to end without throwing (real tree) > planted zz-qa-r15.d.ts importing a forbidden package (node:child_process) is flagged 46ms
+ ✓ |unit-node| apps/api/src/dg1-r15-dts-probe.test.ts > QA r15 F-DG1-217: module declaration files are linted end to end without throwing (real tree) > planted zz-qa-r15.d.mts importing a forbidden package (node:child_process) is flagged 42ms
+ ✓ |unit-node| apps/api/src/dg1-r15-dts-probe.test.ts > QA r15 F-DG1-217: module declaration files are linted end to end without throwing (real tree) > planted zz-qa-r15.d.cts importing a forbidden package (node:child_process) is flagged 34ms
+ × |unit-node| apps/api/src/dg1-r15-dts-probe.test.ts > QA r15 F-DG1-217: module declaration files are linted end to end without throwing (real tree) > edge: planted zz-qa-r15.d.css.ts (arbitrary-extension declaration file) does not crash the lint 44ms
+   → expected [Function] to not throw an error but 'Error: Debug Failure. Output generati…' was thrown
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| apps/api/src/dg1-r15-dts-probe.test.ts > QA r15 F-DG1-217: module declaration files are linted end to end without throwing (real tree) > edge: planted zz-qa-r15.d.css.ts (arbitrary-extension declaration file) does not crash the lint
+AssertionError: expected [Function] to not throw an error but 'Error: Debug Failure. Output generati…' was thrown
+
+[32m- Expected:[39m 
+undefined
+
+[31m+ Received:[39m 
+"Error: Debug Failure. Output generation failed"
+
+ ❯ apps/api/src/dg1-r15-dts-probe.test.ts:75:45
+     73|   it("edge: planted zz-qa-r15.d.css.ts (arbitrary-extension declaratio…
+     74|     plant(DIR, "zz-qa-r15-arb.d.css.ts", "declare const s: { [k: strin…
+     75|     expect(() => moduleViolations(MOD)).not.toThrow();
+       |                                             ^
+     76|   });
+     77| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 16 passed (17)
+   Start at  17:40:27
+   Duration  2.89s (transform 228ms, setup 0ms, collect 787ms, tests 1.57s, environment 0ms, prepare 109ms)
+
+exit=1
+$ npx vitest run --project unit-node apps/api/src/architecture.test.ts
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-217: a module declaration file (.d.ts/.d.mts/.d.cts) is linted without throwing, imports still checked 6ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-217: a planted .d.ts in a module directory is walked and linted end to end without throwing 18ms
+ Test Files  1 passed (1)
+      Tests  130 passed (130)
+exit=0

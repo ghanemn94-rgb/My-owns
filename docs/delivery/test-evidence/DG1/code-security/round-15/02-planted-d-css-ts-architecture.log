@@ -1,0 +1,8 @@
+# node v22.22.2, disposable full clone @f27b5a6f ($TMPDIR/review-r15); synthetic planted file
+$ planted apps/api/src/modules/transformations/zz-r15.d.css.ts = 'export declare const x: number;' ; npx vitest run apps/api/src/architecture.test.ts
+exit=1
+$ cd apps/api && npx tsc -p tsconfig.build.json --outDir $TMPDIR/dts-out && find $TMPDIR/dts-out -name 'zz-r15*'
+tsc-exit=2
+(empty above = nothing emitted for the planted declaration file)
+(clone clean after removal)
+(tsc output elided: the pre-build tsc run failed with TS2307 'Cannot find module @mth/*' because workspace packages were not built yet - emit re-checked after pnpm -r build in 03-dts-emit-after-build.log)

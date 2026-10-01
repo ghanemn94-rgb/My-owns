@@ -1,0 +1,33 @@
+clone HEAD f27b5a6f80f2b1146bc8f3de35d284991e4213f8; node v24.21.0; pnpm 10.33.0
+$ cp -r /root/.local/share/pnpm/store/v10 $TMPDIR/store/ ; pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/store/v10
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +371
+Progress: resolved 371, reused 371, downloaded 0, added 371, done
+Done in 1.6s using pnpm v10.33.0
+install exit=0
+$ pnpm -r build
+Scope: 7 of 8 workspace projects
+packages/design-tokens build$ tsc -p tsconfig.build.json && node src/cli.ts generate
+packages/shared build$ tsc -p tsconfig.build.json
+packages/design-tokens build: Done
+packages/shared build: Done
+apps/web build$ tsc -p tsconfig.json && vite build
+packages/config build$ tsc -p tsconfig.build.json
+packages/config build: Done
+apps/web build: vite v7.1.11 building for production...
+apps/web build: transforming...
+apps/web build: ✓ 255 modules transformed.
+apps/web build: rendering chunks...
+apps/web build: computing gzip size...
+apps/web build: dist/index.html                                                      1.11 kB │ gzip:  0.48 kB
+apps/web build: ✓ built in 3.10s
+apps/web build: Done
+packages/db build$ tsc -p tsconfig.build.json
+packages/db build: Done
+apps/api build$ tsc -p tsconfig.build.json
+apps/worker build$ tsc -p tsconfig.build.json
+apps/worker build: Done
+apps/api build: Done
+build exit=0
+## dist test/testkit/.d.ts files under apps/api/dist (expect none)
+end

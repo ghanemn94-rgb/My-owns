@@ -1,0 +1,31 @@
+clone HEAD: f27b5a6f80f2b1146bc8f3de35d284991e4213f8; node: v24.21.0
+==== A) candidate vitest.config.ts (1 x 'hookTimeout: 30_000'), expect PASS
+ RUN  v3.2.4 /var/tmp/mth-run.TtLowW/claude-0/rev
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muptoi91_f930d3a9; applied 8 migrations to a fresh database
+stdout | apps/api/test/integration/zz-dom-r15-hook.test.ts
+afterAll slept 12004 ms
+ ✓ |integration| apps/api/test/integration/zz-dom-r15-hook.test.ts (1 test) 12009ms
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  17:43:06
+   Duration  13.20s (transform 61ms, setup 0ms, collect 14ms, tests 12.01s, environment 0ms, prepare 73ms)
+A exit=0
+==== B) CONTROL round-14 vitest.config.ts (0 x hookTimeout), expect FAIL 'Hook timed out in 10000ms'
+ FAIL  |integration| apps/api/test/integration/zz-dom-r15-hook.test.ts [ apps/api/test/integration/zz-dom-r15-hook.test.ts ]
+Error: Hook timed out in 10000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ apps/api/test/integration/zz-dom-r15-hook.test.ts:14:1
+     12| });
+     13| 
+     14| afterAll(async () => {
+       | ^
+     15|   const t0 = Date.now();
+     16|   await new Promise((r) => setTimeout(r, 12_000));
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+ Test Files  1 failed (1)
+      Tests  1 passed (1)
+   Start at  17:43:20
+   Duration  10.90s (transform 44ms, setup 0ms, collect 15ms, tests 10.01s, environment 0ms, prepare 60ms)
+B exit=1
+---- restored: git status --short (expect empty)
+RESULT PASS (fixed config completes a 12 s hook; round-14 config times out)

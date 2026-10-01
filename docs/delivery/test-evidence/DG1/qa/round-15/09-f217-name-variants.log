@@ -1,0 +1,19 @@
+$ node --version: v24.21.0  (Node 24 native type stripping; cwd apps/api of the disposable clone at f27b5a6f)
+$ node /var/tmp/mth-run.OFDHOr/claude-0/r15-names.mts   # calls the candidate's fileViolations() for declaration-file name variants, source = a deep cross-module type import
+    | import { join } from "node:path";
+    | const tk = await import(process.cwd() + "/src/architecture.testkit.ts");
+    | const names = ["zz.test.d.ts", "zz.d.ts", "zz.d.mts", "zz.d.cts", "zz.d.css.ts", "zz.d.json.ts", "zz.d.html.mts", "zz.d.tsx"];
+    | for (const n of names) {
+    |   const f = join(tk.MODULES_DIR, "transformations", n);
+    |   try { const v = tk.fileViolations("transformations", f, `import type { Actor } from "../access/policy.ts";\nexport declare const a: Actor;`); console.log(n.padEnd(16), "OK  ", JSON.stringify(v)); }
+    |   catch (e) { console.log(n.padEnd(16), "THROW", String(e.message).split("\n")[0]); }
+    | }
+zz.test.d.ts     OK   ["modules/transformations/zz.test.d.ts: imports ../access/policy.ts; only access/index.ts is public"]
+zz.d.ts          OK   ["modules/transformations/zz.d.ts: imports ../access/policy.ts; only access/index.ts is public"]
+zz.d.mts         OK   ["modules/transformations/zz.d.mts: imports ../access/policy.ts; only access/index.ts is public"]
+zz.d.cts         OK   ["modules/transformations/zz.d.cts: imports ../access/policy.ts; only access/index.ts is public"]
+zz.d.css.ts      THROW Debug Failure. Output generation failed
+zz.d.json.ts     THROW Debug Failure. Output generation failed
+zz.d.html.mts    OK   ["modules/transformations/zz.d.html.mts: imports ../access/policy.ts; only access/index.ts is public"]
+zz.d.tsx         OK   ["modules/transformations/zz.d.tsx: imports ../access/policy.ts; only access/index.ts is public"]
+exit=0

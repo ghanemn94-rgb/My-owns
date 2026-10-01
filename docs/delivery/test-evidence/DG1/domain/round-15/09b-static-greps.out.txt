@@ -1,0 +1,33 @@
+clone HEAD f27b5a6f80f2b1146bc8f3de35d284991e4213f8
+== provenance (non-test)
+packages/shared/src/schemas/branding.ts:2:// operation getBrandingTokens); keep both in lockstep. `provenance` stays "provisional" while the seeded §15 tokens
+packages/shared/src/schemas/branding.ts:18:  provenance: brandingProvenance,
+apps/api/src/modules/admin/branding.ts:17: * Maps the token source to the contract shape. Fails safe: provenance is "official" only when the source says the
+apps/api/src/modules/admin/branding.ts:29:  return brandingTokens.parse({ provenance: provisional ? "provisional" : "official", tokens });
+== official/certified in i18n (expect only negations)
+apps/web/src/i18n/en/common.json:5:    "provisionalHint": "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.",
+apps/web/src/i18n/en/common.json:6:    "provisionalNotice": "Branding is provisional: the text wordmark and colours are placeholders, not official Mobily brand assets."
+apps/web/src/i18n/en/common.json:120:    "brandBody": "No official Mobily logo or verified brand colours have been supplied. The header shows a provisional text wordmark, and the colours (including #0078FF) are provisional design tokens that can be replaced th
+apps/web/src/i18n/en/common.json:123:    "methodBody": "The product operationalizes the Business Transformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with custom extensions. It is not an official PMI standard, and th
+apps/web/src/i18n/ar/common.json:5:    "provisionalHint": "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة.",
+apps/web/src/i18n/ar/common.json:6:    "provisionalNotice": "الهوية البصرية مؤقتة: الشعار النصي والألوان بدائل مؤقتة وليست أصولًا رسمية لعلامة موبايلي."
+apps/web/src/i18n/ar/common.json:117:    "brandBody": "لم يُقدَّم شعار رسمي لموبايلي ولا ألوان علامة معتمدة. يعرض الترويسة شعارًا نصيًا مؤقتًا، والألوان (ومنها #0078FF) رم
+apps/web/src/i18n/ar/common.json:120:    "methodBody": "يطبّق المنتج دليل تحوّل الأعمال الإصدار 1.0، وهو خلاصة عملية مستوحاة من ممارسات PMI وBrightline وBRM مع إضافات مخصصة. وهو 
+== DG0-7 in product i18n catalogues (expect none)
+grep exit=1
+== PMI in product i18n
+apps/web/src/i18n/en/common.json:123:    "methodBody": "The product operationalizes the Business Transformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with custom extensions. It is not an official PMI standard, and this product is not certified by PMI or any other body.",
+apps/web/src/i18n/ar/common.json:120:    "methodBody": "يطبّق المنتج دليل تحوّل الأعمال الإصدار 1.0، وهو خلاصة عملية مستوحاة من ممارسات PMI وBrightline وBRM مع إضافات مخصصة. وهو ليس معيارًا رسميًا من PMI، وهذا المنتج غير معتمد من PMI أو من أي جهة أخرى.",
+== money/rate column types in migrations (float/real/double expected none)
+packages/db/src/seed.test.ts:71:      expect(code, f.name).not.toMatch(/\bfloat|double precision|\breal\b/i);
+packages/db/test/integration/migrate.test.ts:1:// Migration runner against real PostgreSQL (ADR-0003, REQ-S19-004): fresh database, idempotent re-run, checksum
+packages/db/test/integration/bootstrap.test.ts:1:// `mth-db bootstrap` (safe production initialization) and `mth-db seed-dev` (synthetic, dev only) against real
+packages/db/test/integration/catalogue.test.ts:1:// Catalogue checks on the migrated per-run database: the Kysely types match the real columns, only timestamptz,
+packages/db/test/integration/catalogue.test.ts:38:       WHERE table_schema = 'public' AND data_type IN ('timestamp without time zone', 'real', 'double precision')`,
+packages/db/test/global-setup.ts:22:// relative to this file avoids that, and the migrations are applied by the REAL `mth-db migrate` CLI in a child
+packages/db/seeds/dev/synthetic-dev-users.json:2:  "_notice": "SYNTHETIC DEVELOPMENT DATA ONLY. Fictitious organization, business units and people for AUTH_MODE=dev sign-in. Not Mobily data, not Mobily people, not real performance. Never loaded in production: `mth-db seed-dev` refuses NODE_ENV=production and requires AUTH_MODE=dev, and the seeds/ directory is not part of the published package (package.json \"files\").",
+grep exit=0
+== any CDN URL in web index/dist
+grep exit=1
+== git diff 985d0fa..f27b5a6 on packages/, migrations, i18n, docs/api, docs/source (expect empty)
+== end

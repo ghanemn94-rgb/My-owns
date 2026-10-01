@@ -1,0 +1,17 @@
+## F-DG1-136/217 scope: files changed between round-14 import (d280a43) and candidate freeze (f27b5a6f), excluding docs/delivery
+$ git diff --stat d280a43 f27b5a6f -- . ':!docs/delivery'
+ apps/api/src/architecture.test.ts    | 38 ++++++++++++++++++++++++++++++++++
+ apps/api/src/architecture.testkit.ts | 40 +++++++++++++++++++++++++++++++-----
+ vitest.config.ts                     |  3 +++
+ 3 files changed, 76 insertions(+), 5 deletions(-)
+$ grep -rln architecture.testkit apps packages --include=*.ts --include=*.tsx | grep -v node_modules
+apps/api/src/modules/reporting/reporting.test.ts
+apps/api/src/modules/workflows/workflows.test.ts
+apps/api/src/modules/kpi/kpi.test.ts
+apps/api/src/architecture.testkit.ts
+apps/api/src/architecture.test.ts
+$ grep -n exclude apps/api/tsconfig*.json
+apps/api/tsconfig.build.json:10:  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/**/*.testkit.ts"]
+apps/api/tsconfig.build.json-11-}
+$ ls apps/api/dist | grep -c architecture (built output contains no architecture testkit)
+0
