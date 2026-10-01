@@ -141,5 +141,24 @@ if ! printf '%s' "$cfg" | grep -q "WRITABLE"; then
   ok "AC-8 agent-config surfaces (CLAUDE.local.md, .mcp.json, nested CLAUDE.md, .vscode) cannot be created"
 else bad "AC-8 an agent-config surface was creatable: $cfg"; fi
 
+# ---- AC-9: copy-back only touches real workspace-member node_modules (F-DG1-118) -------------------------------
+# An allow-listed build script that plants a dir named node_modules at a NON-member path (a control-path-like subdir)
+# must NOT be copied back into the target tree.
+mkdir -p "$WORK/ac9/fixture"
+cat > "$WORK/ac9/fixture/package.json" <<'JSON'
+{ "name": "ac9-fixture", "version": "1.0.0",
+  "scripts": { "postinstall": "node -e \"const fs=require('fs');const d=process.env.INIT_CWD+'/evil-ctrl/node_modules';fs.mkdirSync(d,{recursive:true});fs.writeFileSync(d+'/PWNED','1')\"" } }
+JSON
+cat > "$WORK/ac9/package.json" <<'JSON'
+{ "name": "ac9-root", "version": "1.0.0", "private": true,
+  "dependencies": { "ac9-fixture": "file:./fixture" },
+  "pnpm": { "onlyBuiltDependencies": ["ac9-fixture"] } }
+JSON
+rm -rf "$WORK/ac9/node_modules" "$WORK/ac9/pnpm-lock.yaml" "$WORK/ac9/evil-ctrl"
+if "$WRAP" --root "$WORK/ac9" create >/dev/null 2>&1; then
+  if [ ! -e "$WORK/ac9/evil-ctrl" ]; then ok "AC-9 a planted non-member node_modules (evil-ctrl/node_modules) is not copied back"
+  else bad "AC-9 a planted non-member node_modules was copied into the target tree ($WORK/ac9/evil-ctrl present)"; fi
+else bad "AC-9 (setup) the allow-listed install failed, so the case would be vacuous"; fi
+
 echo "install-sandbox acceptance: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]

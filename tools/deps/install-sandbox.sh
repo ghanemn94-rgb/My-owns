@@ -135,16 +135,21 @@ elif [ "$MODE" = "frozen" ]; then
   fi
 fi
 
-# Copy back ONLY node_modules, at every workspace level, from the disposable copy to the real repo. Nothing else from
-# the copy is trusted or propagated. Each destination is removed first and recreated with `cp -a`, so the real
-# node_modules is replaced wholesale (no stale entries) and symlinks are preserved; the relative symlinks inside
-# node_modules (the pnpm virtual store and the workspace package links) resolve correctly against the real repo.
-while IFS= read -r nm; do
-  rel="${nm#"$WS"/}"
-  dest="$REPO_ROOT/$rel"
-  mkdir -p "$(dirname "$dest")"
-  rm -rf "$dest"
-  cp -a "$nm" "$dest"
-done < <(find "$WS" -type d -name node_modules -prune)
+# Copy back node_modules ONLY at the real repository's own workspace-member directories — the root and every committed
+# package.json directory. The member list is enumerated from the REAL (trusted) tree, NEVER from the disposable copy, so
+# a dependency build script that plants a directory named `node_modules` at any other path (e.g. tools/gates/, .git/) —
+# or with a crafted name — is never copied into the real repo (F-DG1-118). Every destination is a path under
+# $REPO_ROOT derived from a trusted member directory, and the iteration is NUL-delimited, so a hostile file name cannot
+# make `rm -rf`/`cp` act on a path outside the repo. The source must be a real directory, not a symlink.
+while IFS= read -r -d '' pj; do
+  member="$(dirname "$pj")"
+  rel="${member#"$REPO_ROOT"}"; rel="${rel#/}"
+  wsnm="$WS${rel:+/$rel}/node_modules"
+  dest="$member/node_modules"
+  if [ -d "$wsnm" ] && [ ! -L "$wsnm" ]; then
+    rm -rf "$dest"
+    cp -a "$wsnm" "$dest"
+  fi
+done < <(find "$REPO_ROOT" -maxdepth 4 -name package.json -not -path '*/node_modules/*' -print0)
 
 exit 0
