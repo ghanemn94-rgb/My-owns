@@ -6,7 +6,9 @@
 //     own *.test.ts may read the module map and the lint itself;
 //  3. a module evades the check: computed import()/require() specifiers, createRequire, or node:module (F-DG1-109);
 //     process.getBuiltinModule / computed members of process or globalThis, Function/eval/.constructor() code
-//     evaluation, or node:vm / worker_threads (F-DG1-117);
+//     evaluation, or node:vm / worker_threads (F-DG1-117); and, since F-DG1-124, ANY occurrence of a dynamic-code
+//     primitive name (eval, Function & co., constructor, require, createRequire, Reflect, getPrototypeOf, ...) in any
+//     syntactic form, and any computed key that is not a literal (a constructed key can spell any of them);
 //  4. a module directory is not in the module map, a P1 module has no index.ts, or a §16 business module has no
 //     test suite of its own (A12, D-048);
 //  5. the declared module graph has a cycle, or audit/access depend on a business module;
@@ -75,7 +77,7 @@ describe("API module boundaries (ADR-0002)", () => {
   });
 });
 
-describe("the checker itself catches planted violations (self-check, incl. F-DG1-109 and F-DG1-117)", () => {
+describe("the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)", () => {
   const planted = (mod: ApiModule, source: string, name = "planted.ts") =>
     fileViolations(mod, join(MODULES_DIR, mod, name), source);
 
@@ -98,7 +100,7 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
     [
       "D3 createRequire via namespace",
       `import mod from "module";\nconst r = mod.createRequire(import.meta.url);`,
-      /createRequire .* bypasses/,
+      /module loader via \.createRequire\(\) .* bypasses/,
     ],
     [
       "E computed import()",
@@ -121,14 +123,18 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
     [
       "L getBuiltinModule + computed member",
       `const m = (process.getBuiltinModule("node:module") as any)["create" + "Require"](import.meta.url)("../access/policy.ts");`,
-      /getBuiltinModule .* bypasses the module-interface check/,
+      /module loader via \.getBuiltinModule\(\) .* bypasses the module-interface check/,
     ],
     [
       "L2 computed member of process",
       `const g = (process as any)["getBuiltin" + "Module"]("node:module");`,
       /computed member of process .* bypasses/,
     ],
-    ["L3 loader name as a string key", `const g = (proc as any)["getBuiltinModule"];`, /getBuiltinModule .* bypasses/],
+    [
+      "L3 loader name as a string key",
+      `const g = (proc as any)["getBuiltinModule"];`,
+      /module loader via \["getBuiltinModule"\] .* bypasses/,
+    ],
     ["L4 process aliased", `const p: any = process;\nconst g = p[k];`, /process used as a value .* bypasses/],
     ["L5 process destructured", `const { env, ...rest } = process;`, /process used as a value/],
     [
@@ -148,7 +154,7 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
       /code evaluation via Function/,
     ],
     ["M3 Function aliased", `const F = Function;\nnew F("return 1");`, /code evaluation via Function/],
-    ["M4 globalThis.Function", `const F = globalThis.Function;`, /globalThis\.Function/],
+    ["M4 globalThis.Function", `const F = globalThis.Function;`, /code evaluation via \.Function/],
     ["M5 eval", `const m = eval("import('../access/policy.ts')");`, /code evaluation via eval/],
     [
       "M6 AsyncFunction via .constructor",
@@ -186,7 +192,7 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
     [
       "N6 destructuring assignment with a string key",
       `let G: any;\n({ "constructor": G } = async function* () {});`,
-      /code evaluation via a destructured constructor/,
+      /code evaluation via constructor as an object key/,
     ],
     [
       "N7 computed constructor key in a binding pattern",
@@ -206,6 +212,127 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
     expect(v.join("\n")).toMatch(message);
   });
 
+  // F-DG1-124: blanket ban. The third column records what the round-4 lint (HEAD e080c0d) did with the same plant:
+  // "missed" = no violation at all; "caught" = flagged (a prior form, kept as a regression guard). Verified by
+  // running this table against the round-4 lint (handback T-DG1-BE6).
+  it.each([
+    [
+      'P1 constructed key f["constr" + "uctor"]',
+      `const f = async () => {};\nconst C = (f as any)["constr" + "uctor"];\nawait C("s", "return import(s)")("../access/policy.ts");`,
+      /computed member with a non-literal key/,
+      "missed",
+    ],
+    [
+      'P2 Reflect.get(fn, "constructor")',
+      `const C = Reflect.get(async () => {}, "constructor");\nawait C("s", "return import(s)")("../access/policy.ts");`,
+      /reflection via Reflect /,
+      "caught",
+    ],
+    [
+      "P3 Reflect.get with a constructed key",
+      `const C = Reflect.get(async () => {}, "constr".concat("uctor"));\nawait C("s", "return import(s)")("../access/policy.ts");`,
+      /reflection via Reflect /,
+      "missed",
+    ],
+    [
+      "P4 constructed key held in a variable",
+      `const k = ["constr", "uctor"].join("");\nconst C = ((async () => {}) as any)[k];`,
+      /computed member with a non-literal key/,
+      "missed",
+    ],
+    [
+      "P5 template-literal key",
+      "const C = ((async () => {}) as any)[`constr${'uctor'}`];",
+      /non-literal key/,
+      "missed",
+    ],
+    [
+      "P6 optional-chain constructed key",
+      `const C = ((async () => {}) as any)?.["constr" + "uctor"];`,
+      /non-literal/,
+      "missed",
+    ],
+    [
+      "P7 constructed key in a destructuring pattern",
+      `const k = "constr" + "uctor";\nconst { [k]: C } = (async () => {}) as any;`,
+      /computed property name with a non-literal key/,
+      "missed",
+    ],
+    [
+      "P8 descriptors: the constructor without its name",
+      `const d = Object.getOwnPropertyDescriptors(Object.getPrototypeOf(async () => {}));\nconst C = Object.values(d)[0]!.value;`,
+      /reflection via \.getOwnPropertyDescriptors\(\)/,
+      "missed",
+    ],
+    [
+      "P9 own property names, then a variable key",
+      `const proto = Object.getPrototypeOf(async () => {});\nconst k = Object.getOwnPropertyNames(proto)[0]!;\nconst C = proto[k];`,
+      /reflection via \.getOwnPropertyNames\(\)[\s\S]*non-literal key/,
+      "missed",
+    ],
+    ["P10 __proto__", `const P = ((async () => {}) as any).__proto__;`, /reflection via \.__proto__/, "missed"],
+    [
+      "P11 loader name as a string handed to a helper",
+      `declare function pick(o: unknown, k: string): any;\nconst r = pick(lib, "createRequire");`,
+      /module loader via the "createRequire" key as a value/,
+      "missed",
+    ],
+    [
+      "P12 process.binding",
+      `const fs = (process as any).binding("fs");`,
+      /module loader via process\.binding/,
+      "missed",
+    ],
+    [
+      "P13 node:inspector (in-process evaluation)",
+      `import { Session } from "node:inspector";`,
+      /package node:inspector/,
+      "missed",
+    ],
+    [
+      "P14 node:child_process",
+      `import { execFileSync } from "node:child_process";`,
+      /package node:child_process/,
+      "missed",
+    ],
+    [
+      "P15 look-alike member o.eval (was an allowed form)",
+      `const o = { eval: (s: string) => s };\no.eval("x");`,
+      /code evaluation via \.eval\(\)/,
+      "missed",
+    ],
+    [
+      "P16 constructor as an object key, fed to a keyed reader (was an allowed form)",
+      `declare const shape: (s: object) => { parse(v: unknown): any };\nconst C = shape({ constructor: 1 }).parse(Object.getPrototypeOf(async () => {}));`,
+      /code evaluation via constructor as an object key/,
+      "missed",
+    ],
+    [
+      "P20 a syntax error fails closed (parser recovery hid P4's key)",
+      `const k = "constr" + "uctor";\nconst C = (async () => {} as any)[k];`,
+      /unparseable source: '\)' expected/,
+      "missed",
+    ],
+    // Prior forms (F-DG1-117/121), still caught: regression guards for the blanket rules.
+    ["P17 module.constructor", `const M = module.constructor;`, /module used as a value[\s\S]*\.constructor/, "caught"],
+    [
+      "P18 aliased AsyncFunction constructor (F-DG1-121 N1)",
+      `const C = (async () => {}).constructor as any;\nawait C("s", "return import(s)")("../access/policy.ts");`,
+      /code evaluation via \.constructor \(aliased\)/,
+      "caught",
+    ],
+    [
+      "P19 new Function (F-DG1-117 M)",
+      `new Function("s", "return import(s)");`,
+      /code evaluation via Function /,
+      "caught",
+    ],
+  ])("%s is a violation (round-4 lint: $3)", (_case, source, message, _before) => {
+    const v = planted("transformations", source);
+    expect(v.length, `${_case}: ${JSON.stringify(v)}`).toBeGreaterThan(0);
+    expect(v.join("\n")).toMatch(message);
+  });
+
   it("allowed forms stay clean (public index of a declared dependency, shared packages, own files)", () => {
     const clean = [
       `import { authorize } from "../access/index.ts";`,
@@ -218,14 +345,17 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
       // F-DG1-117 rules must not flag ordinary code: member reads of process, look-alike property names, types.
       `const tz = process.env.TZ;`,
       `const n = (process as NodeJS.Process).pid;`,
-      `const o = { process: 1, eval: 2, Function: 3 };\nconst e = o.eval + o.process + o.Function;`,
+      `const o = { process: 1, env: 2 };\nconst e = o.process + o.env;`,
       `let t: typeof process.env | undefined;`,
       `class K { constructor() {} }\nconst k = new K();`,
-      // F-DG1-121 rules flag uses of the constructor, not definitions: a class constructor with parameter properties,
-      // a plain object literal (not a destructuring target) and a `constructor` type member stay clean.
+      // A class's own constructor declaration and type positions stay clean (F-DG1-121, F-DG1-124).
       `class P { constructor(private readonly n: number) {} }`,
-      `const spec = { constructor: "Cls", name: "x" };`,
-      `interface I { constructor: string }`,
+      `interface I { constructor: string; eval(): void; require: boolean }`,
+      `type R = typeof Reflect;\nlet k: "constructor" | "getPrototypeOf" = "x" as never;`,
+      // F-DG1-124 rule 2 allows keys it can read: literals and numeric-by-construction expressions.
+      `const xs = [1, 2];\nconst last = xs[xs.length - 1];\nconst first = xs[0];\nconst h = { a: 1 }["a"];`,
+      `const m = new Map([["a", 1]]);\nconst v = m.get(String(xs));`,
+      `const mod = { module: "kpi" };\nconst n = mod.module;`,
     ].join("\n");
     expect(planted("transformations", clean)).toEqual([]);
   });
