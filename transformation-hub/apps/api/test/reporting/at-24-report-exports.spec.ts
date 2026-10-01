@@ -70,7 +70,9 @@ describe('AT-24 / REQ-RPT-008 PDF reports with verified Arabic output (genuine P
       for (const sec of snap.sections) for (const fig of sec.figures) if (fig.value !== null) expect(pdf.latin).toContain(String(fig.value));
       for (let p = 0; p < pdf.pages; p++) {
         // "n / N" in an LTR span; pdf.js may return the two numbers of an RTL line in either order.
-        expect([`${p + 1}/${pdf.pages}`, `${pdf.pages}/${p + 1}`].some((x) => pdf.perPage[p]!.latin.includes(x)), `page ${p + 1} number`).toBe(true);
+        const okNum = [`${p + 1}/${pdf.pages}`, `${pdf.pages}/${p + 1}`].some((x) => pdf.perPage[p]!.latin.includes(x));
+        // The extracted lines go into the message: an intermittent miss on page 1 (one full-suite run of three) left no trace.
+        expect(okNum, `page ${p + 1} number (of ${pdf.pages}); last lines: ${JSON.stringify(pdf.perPage[p]!.lines.slice(-4))}`).toBe(true);
         expect(has(L.meta.classification, p), `page ${p + 1} classification`).toBe(true);
       }
     });
