@@ -1,0 +1,362 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG1",
+  "round": 2,
+  "candidate_id": "sha256:e6979e12111aeb1456f591d66f8437d9f491c7e8e58215ea7c5a9f233cbfe71d",
+  "source_commit": "485e91f50eabe236b12d67f45d1bf1d246a97e4a",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG1-T-DG1-REV-SEC-R2-code-security-reviewer-20261001T214241Z-14876631",
+    "session_id": "14876631-a899-43a8-afbf-de1a8cb6fe11"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "frontend-ux-engineer",
+    "backend-workflow-engineer",
+    "devops-engineer"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (code-security-reviewer, session 14876631) authored no implementation in the DG1 scope, including the round-2 repairs (T-DG1-BE-R2 and related). My role is limited to reviewing; the implementation owners are solution-architect, frontend-ux-engineer, backend-workflow-engineer and devops-engineer. I formed this verdict from my own source and diff review (37ec374..485e91f) and my own executed checks on the frozen candidate. I read only my own round-1 record and evidence. I did not open any other reviewer's round-2 record or evidence. During my run the main checkout's HEAD moved to 98cb7aa, an auto-commit of the domain reviewer's round-2 run; I saw only its file names in 'git diff --name-only' (00-candidate-identity.log), never their content. The first shell attempts of this session were refused by a permission-classifier outage; the run was resumed in the same session, and every check below was executed after the resume."
+  },
+  "assignment": "docs/delivery/assignments/DG1/round-2/code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-DLV-025",
+    "REQ-DLV-033",
+    "REQ-DLV-042",
+    "REQ-S16-001",
+    "REQ-S16-003",
+    "REQ-S16-004",
+    "REQ-S19-004",
+    "REQ-S19-006"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-R2-00-candidate-identity",
+      "procedure": "Confirm the frozen candidate before reviewing. Compare git HEAD with the manifest's source_commit, confirm that every path changed since then is metadata excluded from the candidate hash, and recompute the candidate ID from the working tree, from 485e91f, from HEAD and in the disposable clone.",
+      "command": "git rev-parse HEAD; git log --oneline 485e91f..HEAD; git diff --name-only 485e91f HEAD; node tools/gates/candidate.mjs --stage DG1 [--ref 485e91f|--ref HEAD]; (clone) node tools/gates/candidate.mjs --stage DG1 --ref HEAD",
+      "environment": "main checkout /home/user/My-owns (read-only) and a disposable clone under $TMPDIR checked out at 485e91f; node v24.21.0",
+      "expected": "candidate ID sha256:e6979e12...fe71d everywhere; any commits after 485e91f touch only META_EXCLUDES paths",
+      "actual": "Candidate ID matches the manifest (sha256:e6979e12111aeb1456f591d66f8437d9f491c7e8e58215ea7c5a9f233cbfe71d, 394 files) from the working tree, 485e91f, HEAD and the clone. HEAD was 309be8d at start and 98cb7aa at the end of my run (the freeze/assignment commit and the domain reviewer's auto-commit). Both change only docs/delivery/assignments, candidates, reviews, runs and stages.json, all of which the candidate hash excludes.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-2/00-candidate-identity.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-01-typecheck",
+      "procedure": "Typecheck every workspace package.",
+      "command": "pnpm -r typecheck",
+      "environment": "disposable clone of 485e91f under $TMPDIR; node_modules copied from the main checkout (the installed lock differs from pnpm-lock.yaml only in ajv/ajv-formats/yaml being dependencies vs devDependencies of apps/api; same versions and package set); Node v22.22.2, pnpm 10.33.0",
+      "expected": "exit 0",
+      "actual": "all packages: Done; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033", "REQ-S16-003"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-2/typecheck.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/node-version.txt"
+      ]
+    },
+    {
+      "id": "SEC-R2-02-build",
+      "procedure": "Build every workspace package.",
+      "command": "pnpm -r build",
+      "environment": "disposable clone of 485e91f; Node v22.22.2, pnpm 10.33.0",
+      "expected": "exit 0",
+      "actual": "all packages built; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033", "REQ-S16-001"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-2/build.log"]
+    },
+    {
+      "id": "SEC-R2-03-lint",
+      "procedure": "Run ESLint over the repository with zero warnings allowed.",
+      "command": "pnpm lint",
+      "environment": "disposable clone of 485e91f; Node v22.22.2",
+      "expected": "exit 0, no warnings",
+      "actual": "eslint . --max-warnings=0: exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-2/lint.log"]
+    },
+    {
+      "id": "SEC-R2-04-openapi-lint",
+      "procedure": "Lint the OpenAPI contract.",
+      "command": "pnpm openapi:lint",
+      "environment": "disposable clone of 485e91f; Node v22.22.2",
+      "expected": "PASS, exit 0",
+      "actual": "PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 33 operations; exit 0. Every integration call, including my repro requests (403/422 on PATCH business-units), is also asserted against the contract by the harness.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S19-006"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-2/openapi-lint.log"]
+    },
+    {
+      "id": "SEC-R2-05-no-cdn",
+      "procedure": "Check that no public CDN is referenced (portability).",
+      "command": "pnpm check:no-cdn",
+      "environment": "disposable clone of 485e91f; Node v22.22.2",
+      "expected": "PASS, exit 0",
+      "actual": "PASS no-cdn: scanned apps, packages; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-2/no-cdn.log"]
+    },
+    {
+      "id": "SEC-R2-06-format-check",
+      "procedure": "Check Prettier formatting across the repository.",
+      "command": "pnpm format:check",
+      "environment": "disposable clone of 485e91f; Node v22.22.2",
+      "expected": "All matched files use Prettier code style; exit 0",
+      "actual": "All matched files use Prettier code style!; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-2/format-check.log"]
+    },
+    {
+      "id": "SEC-R2-07-unit-node22",
+      "procedure": "Run the full unit suite (unit-node and unit-web, including the ADR-0002 architecture suite with the new F-DG1-143 self-check) on Node 22.",
+      "command": "pnpm test",
+      "environment": "disposable clone of 485e91f; Node v22.22.2, vitest 3.2.4",
+      "expected": "all tests pass",
+      "actual": "Test Files 21 passed (21); Tests 326 passed (326); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033", "REQ-S16-003"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-2/unit-node22.log"]
+    },
+    {
+      "id": "SEC-R2-08-unit-node24",
+      "procedure": "Run the full unit suite on Node 24, the production target.",
+      "command": "PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH pnpm test",
+      "environment": "disposable clone of 485e91f; Node v24.21.0 (confirmed in log)",
+      "expected": "all tests pass",
+      "actual": "Test Files 21 passed (21); Tests 326 passed (326); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033", "REQ-S16-003"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-2/unit-node24.log"]
+    },
+    {
+      "id": "SEC-R2-09-integration-x2",
+      "procedure": "Run the integration suite twice, each time on a fresh disposable PostgreSQL 16 cluster on its own unique port (54861, then 54862). The helper with-pg.sh runs initdb and postgres in a nested user namespace mapped to uid 1000, TCP-only, and removes the cluster afterwards. Each shell command has its own network namespace, so the cluster lives only for the duration of the command. The suite includes the new bu-hierarchy-guard.test.ts and migrate.test.ts with migration 0009.",
+      "command": "TEST_DATABASE_ADMIN_URL=postgresql://postgres@127.0.0.1:5486{1,2}/postgres $TMPDIR/with-pg.sh 5486{1,2} pnpm test:integration",
+      "environment": "disposable clone of 485e91f with no review files present; Node v22.22.2; PostgreSQL 16.13 (Ubuntu) scratch clusters",
+      "expected": "9 migrations applied to a fresh database; every integration test passes in both runs",
+      "actual": "Run 1 and run 2 both: applied 9 migrations to a fresh database; Test Files 20 passed (20); Tests 209 passed (209); bu-hierarchy-guard.test.ts 7/7, migrate.test.ts 7/7, catalogue.test.ts 9/9, platform.test.ts 11/11, worker outbox tests green; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S19-004", "REQ-S16-004", "REQ-S16-001", "REQ-DLV-033"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-2/integration-run1.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/integration-run2.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/postgres-version.txt",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/with-pg.sh"
+      ]
+    },
+    {
+      "id": "SEC-R2-10-gate-agent-tooling-tests",
+      "procedure": "Run the gate and agent tooling test suites.",
+      "command": "node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs",
+      "environment": "disposable clone of 485e91f; Node v22.22.2",
+      "expected": "all pass",
+      "actual": "tests 105, pass 105, fail 0; exit 0. The repair diff 37ec374..485e91f touches no tools/, .claude/, .github/, deploy/ci/ or docs/source/ file (secrets-and-tooling-scan.log), so the gate tooling is not weakened.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-025"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-2/gates-agents-tests.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/secrets-and-tooling-scan.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-11-deploy-script-tests",
+      "procedure": "Run the deploy script test suite.",
+      "command": "node --test deploy/scripts/tests/*.test.mjs",
+      "environment": "disposable clone of 485e91f; Node v22.22.2",
+      "expected": "all pass",
+      "actual": "tests 59, pass 59, fail 0; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-025"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-2/deploy-scripts-tests.log"]
+    },
+    {
+      "id": "SEC-R2-12-ci-config",
+      "procedure": "Confirm the three ci.yml copies are byte-identical, run check-ci-needs.mjs on each, and inspect the action pins. The live GitHub Actions execution is the disclosed environmental residual D-058; it is noted, not recorded as a check.",
+      "command": "sha256sum + cmp .github/workflows/ci.yml deploy/ci/ci.yml docs/architecture/ci/ci.yml; node deploy/scripts/check-ci-needs.mjs <each>; grep uses:",
+      "environment": "disposable clone of 485e91f; Node v22.22.2",
+      "expected": "identical SHA-256 and cmp exit 0; check-ci-needs OK for each copy; actions pinned by commit SHA",
+      "actual": "All three files have SHA-256 8b5b1106...76ce and cmp exits 0. check-ci-needs reports OK for each: 5 jobs, delivery-gates first and running validate.mjs --pipeline, every other job depending on it with no status-function if:, installs only via ci-install-deps.sh. Every uses: is pinned to a 40-hex commit SHA.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-025"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-2/ci-yml-config.log"]
+    },
+    {
+      "id": "SEC-R2-13-install-sandbox-offline",
+      "procedure": "Run the install-sandbox acceptance suite offline with a writable copy of the host pnpm store (HOME is read-only), and assert that every acceptance check passes except the registry-dependent AC-1 (effect). Reproduce that check's cause directly. The live-registry effect is the disclosed residual D-057; it is noted, not recorded as a check.",
+      "command": "npm_config_store_dir=$TMPDIR/pnpm-store/v10 tools/deps/tests/install-sandbox.test.sh; assertion over the log; tools/deps/install-sandbox.sh --root $TMPDIR/ac1 create (is-number@7.0.0 fixture)",
+      "environment": "disposable clone of 485e91f; bubblewrap 0.9.0; pnpm 10.33.0; Node v22.22.2; no package registry reachable",
+      "expected": "13 of 14 PASS offline; the only FAIL is AC-1 (effect), caused by registry access",
+      "actual": "PASS lines: 13 (AC-1 read-only /etc, AC-2 x2, AC-3 x2, AC-4, AC-5, AC-6 x2, AC-7, AC-8, AC-9, AC-10). The sole FAIL is 'AC-1 (effect) create did not populate node_modules'. Direct repro: ERR_PNPM_META_FETCH_FAIL GET https://registry.npmjs.org/is-number ECONNREFUSED 127.0.0.1:3128. The assertion exits 0. This matches the corrected D-057 (13/14).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-042"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-2/install-sandbox.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/install-sandbox-offline-assert.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/install-sandbox-ac1-effect-registry.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-14-sbom-check",
+      "procedure": "Check that the SBOM and licence inventory are consistent with the lockfile after the ajv/ajv-formats/yaml dependency move.",
+      "command": "node licenses/generate-sbom.mjs --check",
+      "environment": "disposable clone of 485e91f; Node v22.22.2",
+      "expected": "OK, exit 0",
+      "actual": "OK: packages=422 runtime=111 bundled=17 development=294 containers=4 shipped-without-licence-id=0 lockfile-sha256=4f63722a...e1703; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-2/sbom-check.log"]
+    },
+    {
+      "id": "SEC-R2-15-validate-historical-DG0",
+      "procedure": "Re-validate the previous approved gate (DG0) in historical mode.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG0",
+      "environment": "disposable clone of 485e91f (Node v22.22.2) and the main checkout (read-only, Node v24.21.0)",
+      "expected": "PASS gate DG0 (historical), exit 0",
+      "actual": "PASS gate DG0 (historical) in both trees; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-025"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-2/validate-historical-DG0.log"]
+    },
+    {
+      "id": "SEC-R2-16-bu-hierarchy-integrity-and-authz",
+      "procedure": "Re-verify F-DG1-140 and F-DG1-141. First, re-run my round-1 repro (round-1/repro-bu/zz-review-bu-hierarchy.test.ts) unchanged. Then run my new adversarial repro (round-2/repro-bu/zz-review-r2-bu.test.ts) on its own scratch database, in a disposable copy only. It covers: the API concurrent interleaving; the sequential 422; direct SQL as mth_app at READ COMMITTED and REPEATABLE READ; a single-statement 2-cycle; attempts to disable the trigger; and destination authorization (sibling, deep sibling, top level, other organization, nonexistent, in scope).",
+      "command": "TEST_DATABASE_ADMIN_URL=postgresql://postgres@127.0.0.1:5486{3,5}/postgres $TMPDIR/with-pg.sh 5486{3,5} npx vitest run --project integration apps/api/test/integration/{zz-review-bu-hierarchy,zz-review-r2-bu}.test.ts",
+      "environment": "disposable clone of 485e91f with the repro files copied into apps/api/test/integration/; Node v22.22.2; PostgreSQL 16.13 scratch clusters",
+      "expected": "The round-1 repro no longer reaches its vulnerable outcomes. In the round-2 repro: the concurrent cycle is refused (API 422; DB 23514 or 40001), the guard cannot be disabled by mth_app, out-of-scope destinations get 403 with an audit row, and in-scope moves get 200.",
+      "actual": "Round-1 repro (exit 1, as expected for a fixed defect): the SEC-1 interleaving times out waiting for a row-lock waiter, because the second PATCH queues on the hierarchy lock. The SEC-2 move is 403, with V still at 404. Round-2 repro attempt 2 (7/7, exit 0): R2-1 API concurrent A->C 200, B->A 422 business_unit.cycle, 0 cycles; R2-2 sequential 422; R2-3 READ COMMITTED loser 23514 business_unit_acyclic; R2-4 REPEATABLE READ loser 40001; R2-5 single-statement swap 23514; R2-6 replication_role, DISABLE TRIGGER and function replacement all 42501; R2-7 sibling 403 forbidden with 1 authorization.denied audit row, deep sibling 403, top level 403, other organization 422 parent_invalid identical to nonexistent, parent unchanged, V 404, in-scope 200. Attempt 1 failed R2-3/4 only because my harness waited for advisory waiters while the loser queued on the guard's FOR SHARE row lock (a harness fault, kept as evidence).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S19-004", "REQ-DLV-033", "REQ-S16-004"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-2/repro-bu/round1-repro-rerun.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/repro-bu/zz-review-r2-bu.test.ts",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/repro-bu/repro-r2-bu.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/repro-bu/repro-r2-bu-attempt1-harness-wait-too-narrow.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-17-rate-limit",
+      "procedure": "Re-verify F-DG1-142. Re-run my round-1 repro unchanged, then run my new repro, which gives each case its own remoteAddress: rotating fake cookies, rotating X-Forwarded-For, a shared per-user bucket across sessions and IPs, a fake-cookie flood versus a valid session on the same IP, and logout fallback.",
+      "command": "TEST_DATABASE_ADMIN_URL=postgresql://postgres@127.0.0.1:54866/postgres $TMPDIR/with-pg.sh 54866 npx vitest run --project integration apps/api/test/integration/{zz-review-ratelimit,zz-review-r2-ratelimit}.test.ts",
+      "environment": "disposable clone of 485e91f with the repro files copied in; Node v22.22.2; PostgreSQL 16.13 scratch cluster; RATE_LIMIT_PER_MINUTE=3",
+      "expected": "Cookie rotation and XFF rotation no longer reset the bucket; valid sessions are keyed per user; a revoked cookie falls back to the IP bucket.",
+      "actual": "Round-1 repro: the bypass test now sees {\"429\":50}, so its vulnerable expectation fails (exit 1, as expected). Round-2 repro 4/4 PASS (exit 0): RL-1 401 x3 then 429 x17; RL-2 429 from the 4th request despite rotating XFF; RL-3 the 4th request of one user across two sessions and IPs is 429; RL-4 the flooded IP returns 429 for fake cookies and 200 for a valid session; RL-5 after logout 401 x3 then 429.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-2/repro-ratelimit/zz-review-ratelimit.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/repro-ratelimit/zz-review-r2-ratelimit.test.ts",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/repro-ratelimit/zz-review-r2-ratelimit.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-18-module-lint-ajv",
+      "procedure": "Re-verify F-DG1-143. Re-plant my round-1 ajv codegen file in the disposable clone and run the candidate's fileViolations, the real architecture suite and eslint. Feed 13 import-form variants through fileViolations. Check the transitive-runtime framing against pnpm-lock.yaml and licenses/inventory.csv.",
+      "command": "node --conditions=@mth/source round-1/repro-ajv/run-repro.mjs; npx vitest run --project unit-node apps/api/src/architecture.test.ts; npx eslint <plant>; node --conditions=@mth/source round-2/repro-ajv/variants.mjs; lockfile/inventory inspection",
+      "environment": "disposable clone of 485e91f (the plant was removed afterwards); Node v22.22.2",
+      "expected": "The plant and every variant are flagged, and the architecture suite fails with the plant present. The framing matches the lockfile.",
+      "actual": "Plant: 2 violations ('imports package ajv'); the architecture suite fails with the plant (exit 1), so pnpm test and CI would refuse it. Plain eslint exits 0, as in round 1, because the boundary lint lives in the architecture suite. Variants: UNFLAGGED=0 of 13. ajv and ajv-formats remain transitive runtime deps of fastify@5.6.1 (via @fastify/ajv-compiler and fast-json-stringify), and the inventory keeps them as runtime. yaml is dev-only (vite/vitest) and is correctly reclassified as development.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-003", "REQ-S16-001"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-2/repro-ajv/repro-ajv-rerun.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/repro-ajv/variants.mjs",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/repro-ajv/variants.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-19-web-flake-stress",
+      "procedure": "Re-verify F-DG1-144: 3 rounds of 6 parallel runs of transformations.test.tsx while pnpm -r build loads the host.",
+      "command": "for r in 1..3: (pnpm -r build &); 6 x (npx vitest run --project unit-web apps/web/src/pages/transformations/transformations.test.tsx &); wait",
+      "environment": "disposable clone of 485e91f; Node v22.22.2; 4 vCPU",
+      "expected": "no failed run",
+      "actual": "18/18 runs exit 0, each with Tests 21 passed (21); FAILED_RUNS=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-2/web-flake-stress.log"]
+    },
+    {
+      "id": "SEC-R2-20-data-design-views",
+      "procedure": "Re-verify F-DG1-145. Compare the data dictionary's '## Views' subsections (actor_display, business_unit_closure, scope_node) with SCHEMA_COLUMNS and VIEW_NAMES, which catalogue.test.ts pins to information_schema. Check for stale schema.test.ts references. Also re-run my round-1 checker; it reads only '## ' headings and therefore reports the '### ' view sections as missing (a false negative of the old script).",
+      "command": "node --conditions=@mth/source round-2/dd-views-vs-schema.mjs; grep -rn schema.test.ts packages apps; node --conditions=@mth/source round-1/dd-vs-schema.mjs",
+      "environment": "disposable clone of 485e91f; Node v22.22.2",
+      "expected": "all three views documented with matching columns; no stale reference",
+      "actual": "MATCH for all 3 views, mismatches=0, exit 0. No schema.test.ts reference remains (grep exit 1). catalogue.test.ts 9/9 in both integration runs. The round-1 script prints 'no data-dictionary section' for the views because it parses only '## ' headings; the docs do have the 3 '### ' sections (count 3).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S19-004"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-2/dd-views-vs-schema.mjs",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/dd-views-vs-schema.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/dd-vs-schema.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-21-secrets-scan",
+      "procedure": "Scan the tracked tree (excluding trading_agent) for private keys and AWS, GitHub, Slack and sk- tokens. Scan the added lines of the repair diff for password, secret or token literals. Confirm the repair diff leaves the gate tooling, agent definitions, CI and sources untouched.",
+      "command": "git grep -n -I -E '<key/token patterns>' -- . ':!trading_agent' ':!pnpm-lock.yaml'; git diff 37ec374 485e91f | grep added secret literals; git diff --stat 37ec374 485e91f -- tools/ .claude/ .github/ deploy/ci/ docs/source/",
+      "environment": "disposable clone of 485e91f",
+      "expected": "no matches; empty tooling diff",
+      "actual": "no matches (grep exit 1, twice); the tooling/CI/sources diff is empty",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033", "REQ-DLV-025"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-2/secrets-and-tooling-scan.log"]
+    },
+    {
+      "id": "SEC-R2-22-repair-diff-source-review",
+      "procedure": "Direct source review of the repair diff 37ec374..485e91f and the full files it touches. Files: packages/db/migrations/0009_business_unit_hierarchy_guard.sql; apps/api/src/modules/organization/{routes,repository}.ts; apps/api/src/modules/identity/{rate-limit-subjects,routes,index}.ts; apps/api/src/server.ts; apps/api/src/architecture.{testkit,test}.ts; apps/api/package.json; pnpm-lock.yaml; licenses/inventory.csv; transformations.test.tsx; the data dictionary, ERD and schema.ts; decisions.md D-057.",
+      "environment": "main checkout at the candidate (read-only) and git diff",
+      "expected": "Every mutation keeps its authorization, validation, optimistic concurrency and audit. No new injection, IDOR, privilege escalation or portability issue is introduced.",
+      "actual": "No new defect found. The guard trigger runs as the caller with search_path pinned, uses no dynamic SQL, and mth_app cannot alter or disable it. The API takes the hierarchy lock before its FOR UPDATE row lock, so its own path does not deadlock with the trigger. Destination authorization precedes the cycle and depth checks, and the If-Match version check is unchanged. The rate-limit subject map only grows from validated sessions, is bounded, and stores hashed keys. Observations, not findings: (a) within one organization, an out-of-scope existing unit gives 403 while a nonexistent ID gives 422; with UUIDv7 IDs (74 random bits) this is not a practical enumeration oracle, and organizations remain indistinguishable. (b) A direct-SQL writer can deadlock against the trigger (40P01), which fails closed. (c) The REPEATABLE READ depth-only residual is stated in the migration header.",
+      "exit_status": null,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033", "REQ-S19-004", "REQ-S16-003", "REQ-S16-004"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-2/repro-bu/repro-r2-bu.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/repro-ratelimit/zz-review-r2-ratelimit.log"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG1/round-2/code-security-reviewer.verifications.json",
+    "docs/delivery/test-evidence/DG1/code-security/round-2/00-candidate-identity.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-2/integration-run1.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-2/integration-run2.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-2/repro-bu/repro-r2-bu.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-2/repro-ratelimit/zz-review-r2-ratelimit.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-2/repro-ajv/variants.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-2/install-sandbox-offline-assert.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-2/ci-yml-config.log"
+  ],
+  "reviewed_at": "2026-10-01T22:10:00Z",
+  "summary": "PASS on candidate sha256:e6979e12 (source 485e91f). All seven round-1 code-security findings were adversarially re-verified as fixed and are closed in the verifications sidecar: F-DG1-140 and F-DG1-141 (Medium, mandatory), F-DG1-142 (Medium), and F-DG1-143 to F-DG1-146 (Low). Every assigned check ran and passed on Node 22, and the unit suite also on Node 24. The integration suite passed twice (209/209, 9 migrations) on fresh disposable PostgreSQL 16 clusters. No new findings. The live-registry install effect (D-057) and the live GitHub Actions run (D-058) are disclosed environmental residuals: the offline install-sandbox suite (13/14) and the CI configuration checks ran and passed. No engineering or business approval beyond this DG1 engineering review is implied."
+}

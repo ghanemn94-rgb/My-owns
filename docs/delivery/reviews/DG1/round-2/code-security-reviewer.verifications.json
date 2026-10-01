@@ -1,0 +1,86 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG1-140",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fixed on candidate e6979e12 (source 485e91f). packages/db/migrations/0009_business_unit_hierarchy_guard.sql:38-92 adds an AFTER INSERT OR UPDATE OF parent_business_unit_id, organization_id row trigger. It takes pg_advisory_xact_lock(730219, hashtext(organization_id)) and walks the parent chain with SELECT ... FOR SHARE, raising 23514 business_unit_acyclic / business_unit_max_depth. apps/api/src/modules/organization/routes.ts:364 takes the same lock (repository.ts:80-84) BEFORE the FOR UPDATE read and the friendly checks, and :424 maps a trigger refusal to the existing 422 problems. A composite FK (0001:86-87) already rules out cross-organization parents, so a per-organization lock key is sufficient. Re-ran my round-1 repro UNCHANGED (repro-bu/round1-repro-rerun.log): SEC-1 no longer reaches its vulnerable outcome; it times out waiting for a row-lock waiter because the second PATCH now queues on the hierarchy advisory lock. My adversarial round-2 repro (repro-bu/zz-review-r2-bu.test.ts, 7/7 PASS in repro-r2-bu.log) results: (R2-1) the exact round-1 API interleaving gives A->C 200 and B->A 422 business_unit.cycle, with 0 cycles in business_unit_closure; (R2-2) the sequential friendly 422 still holds; (R2-3) direct SQL as mth_app at READ COMMITTED with no API lock gives the loser 23514 business_unit_acyclic; (R2-4) at REPEATABLE READ with the snapshot taken before the winner commits, the loser gets 40001 from the guard's FOR SHARE walk; (R2-5) one multi-row UPDATE putting two roots under each other gives 23514; (R2-6) mth_app cannot SET session_replication_role, ALTER TABLE ... DISABLE TRIGGER or replace the function (42501 x3). The attempt-1 log is kept: my harness waited only for advisory waiters, but at DB level the loser queues on the winner's FOR SHARE row lock. That was a harness fault, not a product fault; the unhandled 40001 in that log already showed fail-closed behaviour. The new bu-hierarchy-guard.test.ts (7) and migrate.test.ts (9 migrations) pass in both integration runs. Residuals (not findings): the REPEATABLE READ depth-only residual is stated in the migration header; a direct-SQL writer that interleaves a row lock with the trigger can hit 40P01, which fails closed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-2/repro-bu/round1-repro-rerun.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/repro-bu/zz-review-r2-bu.test.ts",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/repro-bu/repro-r2-bu.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/repro-bu/repro-r2-bu-attempt1-harness-wait-too-narrow.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/integration-run1.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/integration-run2.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-141",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fixed. apps/api/src/modules/organization/routes.ts now calls requireAction(business_unit.manage) on the destination: on the organization for a top-level move (:370-377) and on the new parent business unit (:389-398). This runs before the cycle/depth checks; the moved unit is still authorized at :359. Re-ran my round-1 repro UNCHANGED (repro-bu/round1-repro-rerun.log). SEC-2 no longer reaches its vulnerable outcome: the a1-scoped manager's move of a1x under sibling a2 is 403, the a2 auditor still reads 404, and the vulnerable expectation 'expected 403 to be 200' fails. Round-2 repro R2-7 (repro-r2-bu.log): sibling a2 403 forbidden with exactly 1 authorization.denied audit row on a2 ('requires business_unit.manage'); a unit deeper in the sibling branch 403; top level 403; parent unchanged (still a1, version 1); the a2 auditor still 404; the legitimate in-scope move under a1x 200. A destination in another organization gives 422 business_unit.parent_invalid, identical to a nonexistent id, so there is no cross-organization existence oracle.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-2/repro-bu/round1-repro-rerun.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/repro-bu/zz-review-r2-bu.test.ts",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/repro-bu/repro-r2-bu.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-142",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fixed. apps/api/src/server.ts keyGenerator returns u:<userId> only when RateLimitSubjects.subjectOf(token) finds the token. Only the identity hook fills that map, after resolveSession succeeds (identity/routes.ts remember/forget). Otherwise it returns ip:<request.ip>; Fastify derives the IP and applies TRUST_PROXY. rate-limit-subjects.ts keys entries by SHA-256 of the token, bounds them (50,000, oldest evicted) with a TTL equal to the idle timeout, and forgets a token on failed resolution, logout or rotation. Re-ran my round-1 repro UNCHANGED (repro-ratelimit/zz-review-ratelimit.log): the bypass test now sees {\"429\":50}, so its 'never 429' expectation fails. Round-2 repro (zz-review-r2-ratelimit.log, 4/4 PASS, RATE_LIMIT_PER_MINUTE=3): RL-1 a fresh random cookie per request from one IP gives 401,401,401 then 429 x17; RL-2 rotating X-Forwarded-For without TRUST_PROXY still gives 429 from the 4th request; RL-3 two sessions of one user from two IPs share one u: bucket (the 4th request is 429); RL-4 a fake-cookie flood that exhausts an IP's bucket does not starve a valid session from that IP (200); RL-5 a logged-out cookie falls back to the IP bucket (401 x3, then 429).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-2/repro-ratelimit/zz-review-ratelimit.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/repro-ratelimit/zz-review-r2-ratelimit.test.ts",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/repro-ratelimit/zz-review-r2-ratelimit.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-143",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fixed. apps/api/package.json moves ajv 8.17.1, ajv-formats 3.0.1 and yaml 2.8.1 to devDependencies. architecture.testkit.ts THIRD_PARTY = dependencies only; TEST_ONLY_THIRD_PARTY (devDependencies minus @types, plus vitest) is allowed only for *.test.ts/*.test.tsx. The SCOPE header honestly limits the lint to first-party source. Re-ran my round-1 plant UNCHANGED in the disposable clone (repro-ajv/repro-ajv-rerun.log): fileViolations reports 'imports package ajv' twice, and the real ADR-0002 suite now FAILS with the plant present (exit 1), so pnpm test / CI refuses it. The import still executes locally only because the dev install contains ajv. That is expected, because the control is the lint gate. 13 import-form variants (static, subpath, dynamic, template dynamic, export *, named re-export, type-only, import = require, require(), ajv-formats, yaml, @fastify/ajv-compiler, and a *.test.mts that ships in dist) are all flagged (variants.log, UNFLAGGED=0). Framing check: pnpm-lock.yaml confirms ajv and ajv-formats remain transitive RUNTIME deps of fastify@5.6.1 (via @fastify/ajv-compiler 4.0.6 and fast-json-stringify 6.4.0), and licenses/inventory.csv keeps them 'runtime, apps/api (dev)'. That is honest. yaml is NOT a fastify runtime dep (only vite/vitest use it), and the inventory correctly reclassifies it as 'development'; the assignment's shorthand 'they remain transitive fastify runtime deps' is accurate only for ajv/ajv-formats. SBOM --check is OK (sbom-check.log).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-2/repro-ajv/repro-ajv-rerun.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/repro-ajv/variants.mjs",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/repro-ajv/variants.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/sbom-check.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-144",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fixed. In apps/web/src/pages/transformations/transformations.test.tsx, every wait that depends on the async create, navigation and /me-refresh chain now has an explicit 5 s timeout, and each of the three tests has a 20 s timeout. The assertions are unchanged; the over-grant negatives still use queryBy after the settled draft message. This is robust under load rather than strictly deterministic, which is the appropriate fix for a timing-only flake. Stress run (web-flake-stress.log): 3 rounds x 6 parallel runs of the file while pnpm -r build loads the 4-CPU host gave 18/18 runs with 21/21 tests (FAILED_RUNS=0). The round-1 failure was 1 in 4 under lighter load. Full unit suites on Node 22 and Node 24 are also green (326/326 each).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-2/web-flake-stress.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/unit-node22.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/unit-node24.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-145",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fixed. docs/architecture/data-dictionary.md has a new '## Views' section with '### actor_display', '### business_unit_closure' and '### scope_node' (column tables, purpose, source). erd.md lists the three views and the 0009 trigger. packages/db/src/schema.ts now cites catalogue.test.ts, which exists and pins SCHEMA_COLUMNS, including the views, and VIEW_NAMES to information_schema; it passed in both integration runs. My round-2 checker (dd-views-vs-schema.mjs) gives MATCH for all three views with 0 mismatches, and no source file still references schema.test.ts. Note: re-running my round-1 dd-vs-schema.mjs (dd-vs-schema.log) still prints 'no data-dictionary section' for the views. That is a false negative of my round-1 parser, which reads only '## ' headings, while the views are documented as '### ' subsections; the round-2 checker reads them.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-2/dd-views-vs-schema.mjs",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/dd-views-vs-schema.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/dd-vs-schema.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/integration-run1.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-146",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fixed. docs/delivery/decisions.md D-057 now says the install-sandbox suite 'passes 13 of its 14 acceptance checks offline', names AC-1 (effect) as the one live-registry check, and carries '(Corrected per F-DG1-146: the offline figure is 13/14, not 14/14.)'. Independently re-run: install-sandbox.test.sh with a writable copy of the host pnpm store gives exactly 13 PASS, with the sole FAIL being 'AC-1 (effect)' (install-sandbox-offline-assert.log). The cause was reproduced directly: ERR_PNPM_META_FETCH_FAIL, registry.npmjs.org ECONNREFUSED via the proxy (install-sandbox-ac1-effect-registry.log). The statement now matches the evidence.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-2/install-sandbox.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/install-sandbox-offline-assert.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/install-sandbox-ac1-effect-registry.log"
+      ]
+    }
+  ]
+}
