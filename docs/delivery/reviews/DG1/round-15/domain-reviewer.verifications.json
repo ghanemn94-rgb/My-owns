@@ -1,0 +1,33 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG1-217",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by domain-reviewer, a non-author. qa-verifier raised the finding in round 14. backend-workflow-engineer wrote the fix in commit 22f3054108b775da5d24339da9b123fcd701bf5a, an ancestor of the freeze commit f27b5a6 in candidate sha256:76d8b3049d22d414a4c036bd3dd1af6e0c3609baedb096e2d2ecf4180bf07846, and that ID recomputes identically in the repository and in a full disposable clone. The finding's 'expected' is met by its second option: declaration files are scanned with a mode that works for them. (1) syntaxErrors() routes /\\.d\\.[cm]?ts$/ to declarationSyntaxErrors(), a no-emit one-file ts.createProgram (noLib, noResolve) plus getSyntacticDiagnostics. Every other file keeps the unchanged ts.transpileModule path. CODE_FILE, TEST_FILE, walk() and scanSource() are unchanged, so there is no boundary-coverage gap. (2) Two self-checks in architecture.test.ts pin the choice, and the suite is 130/130 on Node 22.22.2 and 24.21.0. (3) My independent end-to-end probe planted real files in modules/kpi and linted them through moduleViolations(). For .d.ts/.d.mts/.d.cts it reports the deep TYPE import ('imports ../access/policy.ts; only access/index.ts is public') and the composition-root import ('imports ../../modules.ts outside src/modules'). A syntax error yields 'unparseable source: Type expected. (line 1) bypasses the module-interface check' and no Debug Failure. A clean declaration file yields [], and removal restores []. 13/13 pass on both Node versions. The same probe against the round-14 testkit fails all 12 plant cases with 'Debug Failure. Output generation failed', which reproduces the original defect. The real tree is unchanged: 0 violations for every module. No product, runtime, contract or i18n file changed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-15/01-change-scope.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-15/04-architecture-verbose-node22.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-15/04-architecture-verbose-node24.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-15/05-dts-probe.test.ts",
+        "docs/delivery/test-evidence/DG1/domain/round-15/05-dts-probe-node22.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-15/05-dts-probe-node24.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-15/05b-dts-probe-against-round14-testkit.out.txt"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-136",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by domain-reviewer, a non-author. qa-verifier raised the finding in round 14. backend-workflow-engineer wrote the fix in commit 22f3054108b775da5d24339da9b123fcd701bf5a, an ancestor of the freeze commit f27b5a6 in candidate sha256:76d8b3049d22d414a4c036bd3dd1af6e0c3609baedb096e2d2ecf4180bf07846. The finding's 'expected' is met: the integration project in vitest.config.ts now sets hookTimeout: 30_000, matching testTimeout, and this is the only change to the file. Because it is project-level, it covers all 6 integration files with a dropScratchDatabase teardown. Behavioural proof against a throwaway PostgreSQL 16.13 on Node 24.21.0: an integration-project probe whose afterAll takes 12 s completes with the candidate config (afterAll slept 12004 ms, 1/1 passed, exit 0). With the round-14 config the same probe fails with 'Error: Hook timed out in 10000ms.' (exit 1). The full integration project is 19/19 files and 200/200 tests on Node 22.22.2 (27.6 s) and on Node 24.21.0 (29.1 s), with no leftover database. The change only affects tests, with no product or runtime effect. Nondeterminism under heavy host contention cannot be proven absent by finite runs, but the specific cause the finding describes, a 10 s hook budget no larger than the hook's own internal 10 s wait, is removed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-15/01-change-scope.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-15/06c-hook-budget-probe.test.ts",
+        "docs/delivery/test-evidence/DG1/domain/round-15/06c-hook-budget-run.sh",
+        "docs/delivery/test-evidence/DG1/domain/round-15/06c-hook-budget-node24.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-15/06-integration-run1-node22.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-15/06-integration-run2-node24.out.txt"
+      ]
+    }
+  ]
+}
