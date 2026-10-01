@@ -1,0 +1,19 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG1-010",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by the originating reviewer (domain-reviewer, who raised it in round 8). The fix 7525b11 is an ancestor of the round-9 freeze commit 273d21f (git merge-base --is-ancestor exit 0). It is in the frozen candidate sha256:05915c32b3f5c5b2a9e14324a70fbf5cd16e76a48bc3235d6cc30b290591babd, whose id recomputes identically in a full disposable clone. HEAD 07f1a54 adds only META_EXCLUDES metadata. The defect was a mis-stated validation scope: 'exhaustive for the PINNED Node version (22.x)', while production pins Node 24. The fix removes its root cause rather than rewording it. apps/api/src/architecture.testkit.ts no longer contains any 'exhaustive', 'closed as found' or 'pinned' claim. Built-ins are now checked by bareAllowed = SAFE_NODE_BUILTINS.has(name) for every node: specifier, and process.<member> by SAFE_PROCESS_MEMBERS (rule 3), so anything any Node version adds is denied without a per-version sweep. My negative control 'node:some-future-builtin' is denied. The header's only version mention is factual context ('production targets Node 24, the supported floor is Node 22.18+'), which matches .nvmrc=24, engines '>=22.18.0 <25', the node:24 Dockerfile image and ADR-0001. D-055 supersedes the D-053/D-054 framing. There is no over-reach: the real module tree has zero violations, and an independent AST inventory finds only node:crypto/path/fs/url and no process members, all allow-listed. Unit 294/294, architecture 101/101, my probe 4/4, integration 200/200 twice, live AR/EN 108/108. Limitation: I could not run the lint on Node 24 (this sandbox has only Node 20/21/22 and no network), but the fixed claim no longer depends on the runtime version.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-9/10-f010-version-and-honesty.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-9/03-default-deny-overreach-probe.test.ts",
+        "docs/delivery/test-evidence/DG1/domain/round-9/03-default-deny-overreach-probe.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-9/02-architecture-focused.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-9/01-unit-full.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-9/00-candidate-and-diff.out.txt",
+        "apps/api/src/architecture.testkit.ts"
+      ]
+    }
+  ]
+}
