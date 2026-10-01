@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG1",
+  "decision": "BLOCKED",
+  "candidate_id": "sha256:56f3eb885c6cf3db406e280d232e48ebcefddad173107a744bb9b8ca74fc2b4c",
+  "source_commit": "13418b8db10aa045c466a1c9d2d06dc03f92cedd",
+  "manifest_path": "docs/delivery/candidates/DG1/56f3eb885c6cf3db.manifest.json",
+  "previous_gate": "DG0",
+  "reviews": {
+    "domain-reviewer": "docs/delivery/reviews/DG1/round-16/domain-reviewer.json",
+    "code-security-reviewer": "docs/delivery/reviews/DG1/round-16/code-security-reviewer.json",
+    "qa-verifier": "docs/delivery/reviews/DG1/round-16/qa-verifier.json"
+  },
+  "release_audit": "docs/delivery/reviews/DG1/round-16/release-auditor.json",
+  "requirements": {
+    "final_gate_ids": [
+      "REQ-DLV-025",
+      "REQ-DLV-033",
+      "REQ-DLV-042",
+      "REQ-S15-002",
+      "REQ-S15-005",
+      "REQ-S15-006",
+      "REQ-S16-001",
+      "REQ-S16-002",
+      "REQ-S16-003",
+      "REQ-S16-004",
+      "REQ-S19-004",
+      "REQ-S19-006"
+    ],
+    "notes": "All 12 register rows with final_gate DG1 are IMPLEMENTED and have 0 missing evidence files. Each is in qa-verifier's requirements_checked and in domain-reviewer's or code-security-reviewer's. validate.mjs --register DG1 passes. Requirement completeness is not among the blocking conditions."
+  },
+  "tests": [
+    {
+      "name": "Complete-clone check and candidate recomputation (live tree, --ref source commit, --diff, disposable full clone)",
+      "command": "git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG1 [--ref 13418b8d… | --diff]",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/audit/round-16/01-candidate-dg0-register.log"
+      ]
+    },
+    {
+      "name": "Previous gate DG0 validates historically",
+      "command": "node tools/gates/validate.mjs --stage DG0 --historical",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/audit/round-16/01-candidate-dg0-register.log"
+      ]
+    },
+    {
+      "name": "Register rules at DG1 and the 12 DG1-final requirement rows",
+      "command": "node tools/gates/validate.mjs --register DG1",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/audit/round-16/01-candidate-dg0-register.log",
+        "docs/delivery/test-evidence/DG1/audit/round-16/02-specialists-runs-findings-requirements.log"
+      ]
+    },
+    {
+      "name": "Specialist checks all PASS in the gate round (rule: anything BLOCKED fails the gate)",
+      "command": "scan of checks_run[].result in the three round-16 specialist records",
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/audit/round-16/02-specialists-runs-findings-requirements.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-16/32c-ac1-registry-BLOCKED.log"
+      ]
+    },
+    {
+      "name": "Gate validator dry run with a draft gate record (disposable clone): only this run's own errors allowed",
+      "command": "(clone) node tools/gates/validate.mjs --stage DG1",
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/audit/round-16/03-validate-dry-run-with-draft-gate.log"
+      ]
+    }
+  ],
+  "blocking_conditions": [
+    "Rule 4: code-security-reviewer round-16 check SEC-R16-32c (installer AC-1 effect with the registry, plus the real-repo online install, REQ-DLV-042) has result BLOCKED, exit 7, because the reviewer sandbox has no registry. The validator also rejects it ('check SEC-R16-32c is BLOCKED'). The orchestrator-run 14/14 log and earlier offline equivalents are context, not a substitute: the auditor cannot waive a BLOCKED check. Resolution needs one of: an independent reviewer verification of the effect, or a recorded decision that removes it from the gate-round specialist's checks, in a record the validator accepts.",
+    "Round-16 domain-reviewer record: `assignment` is an annotated string ('docs/delivery/assignments/DG1/round-16/review-domain-reviewer.md (sha256 6004a352…) with review-common.md'), not a repository path. The validator reports 'assignment file not found' and an invocation/assignment mismatch.",
+    "Round-16 code-security-reviewer record lists findings [F-DG1-137, F-DG1-218], but docs/delivery/reviews/DG1/round-16/code-security-reviewer.findings.json is missing. The validator reports 'record lists findings but its .findings.json sidecar is missing'.",
+    "Closure provenance of mandatory findings: the round-2 code-security-reviewer record fails the review schema (54 errors: missing environment/expected/actual/exit_status; free-text result values), so its verifications sidecar is invalid. F-DG1-103 and F-DG1-104 (Medium, mandatory), F-DG1-109, F-DG1-111 and F-DG1-206 are therefore 'CLOSED_VERIFIED but no reviewer verifications sidecar verifies it'. Zero unresolved mandatory violations cannot be established mechanically.",
+    "D-018 findings mirror diverges from the reviewer sidecars for about 25 findings (F-DG1-005, 008, 119, 122, 125-137, 213, 215, 216, 217, 218). findings.json `verification` is qa-verifier's, while the validator's latest sidecar entry is another role's ('verification by qa-verifier, sidecar by …', 'evidence differs', 'not the verifying reviewer's own run'). F-DG1-215 is CLOSED_VERIFIED in findings.json but ACCEPTED_OBSERVATION in the latest code-security sidecar (round 11).",
+    "About 40 CLOSED_VERIFIED DG1 findings lack a full 40-hex fix_revision commit id, including mandatory F-DG1-001, 101, 102, 105, 113, 115, 118, 201, 202 and 208.",
+    "Verification invocation provenance: the domain-reviewer runs of rounds 3, 10, 11 and 13 and the round-3 code-security run cite annotated assignment strings that the validator cannot resolve. The round-12 code-security run (verifying F-DG1-132/133) started at 16:01:09Z, before that candidate froze at 16:02:40Z.",
+    "Review-round metadata: in stages.json, rounds 7-15 have frozen_at/source_commit values that differ from their committed manifests. The round-4 domain-reviewer record lists findings without a .findings.json sidecar.",
+    "Net: node tools/gates/validate.mjs --stage DG1 reports errors that do not concern this in-flight release-auditor run (201 of 202 in the dry run). Per the assignment, any such error makes the decision BLOCKED."
+  ],
+  "accepted_observations": [],
+  "decided_at": "2026-10-01T18:46:00Z",
+  "decided_by": "release-auditor",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG1-T-DG1-AUDIT-R16-release-auditor-20261001T183443Z-4a21e619",
+    "session_id": "4a21e619-720e-406b-8c9d-6312d2d3ccef"
+  },
+  "notes": "Engineering delivery gate DG1 only. It grants no business, Finance or IT approval and implies nothing about product gates G1-G6. The substantive engineering audit holds. The candidate recomputes in a complete clone. DG0 is APPROVED and validates. Three distinct, successful, sandboxed, non-author specialist PASS runs exist on 56f3eb88. F-DG1-137 and F-DG1-218 are CLOSED_VERIFIED on 56f3eb88 by domain, code-security and qa. The 12 DG1-final requirements are complete. Unit tests are green on Node 22 and Node 24. The module-lint final state is as specified (0 DECLARATION_FILE references; TS classification via the public SourceFile.isDeclarationFile). The keycloak digest is an honest, disclosed D-049 BLOCKED test-only residual, not fabricated. D-048 to D-055 are recorded with rationales. The blockers are one BLOCKED gate-round specialist check plus delivery-record and closure-provenance integrity defects that the gate validator rejects. No new product findings are raised. The previous-gate observations F-DG0-147/149/015 belong to DG0 and are not re-accepted here."
+}

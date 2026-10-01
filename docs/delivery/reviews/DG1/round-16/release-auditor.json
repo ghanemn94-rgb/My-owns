@@ -1,0 +1,187 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG1",
+  "round": 16,
+  "candidate_id": "sha256:56f3eb885c6cf3db406e280d232e48ebcefddad173107a744bb9b8ca74fc2b4c",
+  "source_commit": "13418b8db10aa045c466a1c9d2d06dc03f92cedd",
+  "reviewer_role": "release-auditor",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG1-T-DG1-AUDIT-R16-release-auditor-20261001T183443Z-4a21e619",
+    "session_id": "4a21e619-720e-406b-8c9d-6312d2d3ccef"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "frontend-ux-engineer",
+    "backend-workflow-engineer",
+    "devops-engineer",
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (release-auditor, session 4a21e619) authored no implementation in the DG1 candidate and did not author the round-16 repair f7d9707 (T-DG1-BE17, backend-workflow-engineer). I read the three round-16 specialist records only after they were complete and committed. I reproduced the key checks myself, in the live tree and in disposable full clones under my run's TMPDIR. This is an engineering delivery-gate audit (DG1) only. It grants no business, Finance or IT approval and implies nothing about product gates G1-G6."
+  },
+  "assignment": "docs/delivery/assignments/DG1/round-16/audit.md",
+  "requirements_checked": [
+    "REQ-DLV-025",
+    "REQ-DLV-033",
+    "REQ-DLV-042",
+    "REQ-S15-002",
+    "REQ-S15-005",
+    "REQ-S15-006",
+    "REQ-S16-001",
+    "REQ-S16-002",
+    "REQ-S16-003",
+    "REQ-S16-004",
+    "REQ-S19-004",
+    "REQ-S19-006"
+  ],
+  "checks_run": [
+    {
+      "id": "AUD16-1-complete-clone-and-candidate",
+      "procedure": "Confirm the repository is a complete clone. Recompute the DG1 candidate in the live tree (plain, --ref at the source commit, and --diff) and in a disposable full clone checked out at the source commit.",
+      "command": "git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG1 [--ref 13418b8d… | --diff]; (clone) git checkout 13418b8d… && node tools/gates/candidate.mjs --stage DG1",
+      "environment": "live repo HEAD 1883f67 (metadata-only commits after the freeze); disposable git clone in the run TMPDIR; node v24.21.0",
+      "expected": "shallow=false; sha256:56f3eb88…2b4c with 391 files everywhere; --diff matches=true",
+      "actual": "shallow=false in the live repo and in the clone. Every computation prints sha256:56f3eb885c6cf3db406e280d232e48ebcefddad173107a744bb9b8ca74fc2b4c (391 files): working tree, --ref HEAD, --ref 13418b8d, and the clone at 13418b8d. --diff reports matches=true with empty added/removed/changed.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/audit/round-16/01-candidate-dg0-register.log",
+        "docs/delivery/candidates/DG1/56f3eb885c6cf3db.manifest.json"
+      ]
+    },
+    {
+      "id": "AUD16-2-previous-gate",
+      "procedure": "Confirm the previous gate DG0 is APPROVED and still validates historically.",
+      "command": "node tools/gates/validate.mjs --stage DG0 --historical",
+      "environment": "live repo HEAD 1883f67, node v24.21.0",
+      "expected": "PASS, exit 0; gates/DG0.json decision APPROVED",
+      "actual": "PASS gate DG0 (historical), exit 0. gates/DG0.json decision APPROVED; stages.json DG0 state APPROVED.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/audit/round-16/01-candidate-dg0-register.log",
+        "docs/delivery/gates/DG0.json"
+      ]
+    },
+    {
+      "id": "AUD16-3-specialist-records-and-provenance",
+      "procedure": "Check all three round-16 specialist records: same candidate, verdict PASS, independence declaration, not an implementation author. Then check each invocation_reference resolves to a distinct, successful, sandboxed round-16 run: meta.json exit/subtype, sandbox.json SHA-256 against meta.process_sandbox_sha256, transcript hash. Spot-check each transcript for real commands and for cross-reads of other round-16 records.",
+      "command": "node (record + meta.json + sandbox.json/transcript sha256 checks); zcat transcript.jsonl.gz | node (tool_use scan)",
+      "environment": "live repo, docs/delivery/runs/DG1/*R16*, node v24.21.0",
+      "expected": "3 PASS records on 56f3eb88; 3 distinct sessions; exit 0/success; sandbox and transcript hashes match; no reviewer authored the repair; no cross-reads",
+      "actual": "All three records are PASS on 56f3eb88 with source 13418b8d. reviewer_authored_reviewed_scope=false; none lists itself as an author, and none is a DG1 implementation owner. Sessions c1704dc0 (domain), 8a789466 (code-security) and 87c1983c (qa) are distinct. All runs ended exit 0/success, bash_sandbox=true, and sandbox.json and transcript SHA-256 match meta. The repair run is T-DG1-BE17 (backend-workflow-engineer, session 9d9b2060), and fix commit f7d9707 touches only architecture.testkit.ts/architecture.test.ts plus its run files. Transcripts show 26/46/41 real Bash calls, including Node 22 and Node 24 vitest runs, with 0 tool calls touching another role's round-16 record. DEFECTS: (a) the domain record's `assignment` is an annotated string ('…review-domain-reviewer.md (sha256 6004a352…) with review-common.md'), not a repository path, and the validator rejects it. (b) The code-security record lists findings [F-DG1-137, F-DG1-218], but code-security-reviewer.findings.json does not exist, which the validator rejects.",
+      "exit_status": 0,
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/audit/round-16/02-specialists-runs-findings-requirements.log",
+        "docs/delivery/test-evidence/DG1/audit/round-16/03-validate-dry-run-with-draft-gate.log"
+      ]
+    },
+    {
+      "id": "AUD16-4-required-checks-ran-and-passed",
+      "procedure": "Look for any non-PASS check in the three round-16 specialist records, and assess it against the rule that anything BLOCKED fails the gate.",
+      "command": "node (scan checks_run[].result across the three records)",
+      "environment": "live repo, node v24.21.0",
+      "expected": "every check in every gate-round specialist record is PASS",
+      "actual": "code-security-reviewer SEC-R16-32c is result BLOCKED (exit 7): 'AC-1 effect (create with registry) and the real-repo online install', because the reviewer sandbox has no registry. The validator's own rule rejects it ('check SEC-R16-32c is BLOCKED'). Context: the installer (tools/deps, last changed 3037ce2) has an orchestrator-run 14/14 acceptance log (cc0198e). Independent offline AC-1-effect equivalents passed in earlier rounds (e.g. QA rounds 8-10), and every sandbox property (AC-1 read-only through AC-10) passed again this round (SEC-R16-32). Even so, a BLOCKED check in a gate-round specialist record fails this condition. I cannot waive it. The orchestrator must either have the registry-dependent effect independently verified, or obtain a recorded decision that removes it from the specialist's required checks, with a record the validator accepts.",
+      "exit_status": 7,
+      "result": "FAIL",
+      "requirements": [
+        "REQ-DLV-042"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-16/32c-ac1-registry-BLOCKED.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-16/32-install-sandbox-suite.log",
+        "docs/delivery/test-evidence/DG1/orchestrator/install-sandbox-acceptance.log"
+      ]
+    },
+    {
+      "id": "AUD16-5-findings-state",
+      "procedure": "Census findings.json. Confirm F-DG1-137/218 are CLOSED_VERIFIED on 56f3eb88 by reviewer sidecars, that no DG1 finding is OPEN/FIXED_PENDING_VERIFICATION, and that the only ACCEPTED_OBSERVATION findings are F-DG0-147/149/015.",
+      "command": "node (findings.json census; round-16 *.verifications.json)",
+      "environment": "live repo, node v24.21.0",
+      "expected": "186 CLOSED_VERIFIED + 3 DG0 ACCEPTED_OBSERVATION; F-DG1-137/218 CLOSED_VERIFIED by domain, code-security and qa round-16 sidecars",
+      "actual": "Census: 186 CLOSED_VERIFIED, 3 ACCEPTED_OBSERVATION (F-DG0-147/149/015, Low, non-mandatory, previous gate); no OPEN or FIXED_PENDING_VERIFICATION. F-DG1-137 and F-DG1-218 are PASS/CLOSED_VERIFIED in all three round-16 sidecars, verified by non-authors on 56f3eb88. On the substance, zero unresolved Critical/High findings are recorded.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/audit/round-16/02-specialists-runs-findings-requirements.log",
+        "docs/delivery/findings.json"
+      ]
+    },
+    {
+      "id": "AUD16-6-findings-closure-provenance-validator",
+      "procedure": "Dry-run the gate validator in a disposable clone with a draft DG1 gate record (clone only), and classify every error that does not concern this in-flight run.",
+      "command": "(clone @1883f67 + draft gates/DG1.json) node tools/gates/validate.mjs --stage DG1",
+      "environment": "disposable full clone in the run TMPDIR, node v24.21.0",
+      "expected": "only errors about this run's own not-yet-committed release-auditor record",
+      "actual": "202 errors; only 1 concerns this run ('release-auditor.json file not found'). The other 201 are record-integrity and closure-provenance failures. (1) The round-2 code-security record fails the review schema (54 errors), so its verifications sidecar is invalid. F-DG1-103 and F-DG1-104 (Medium, mandatory), F-DG1-109, F-DG1-111 and F-DG1-206 are therefore 'CLOSED_VERIFIED but no reviewer verifications sidecar verifies it'. (2) The D-018 mirror diverges for about 25 findings (F-DG1-005, 008, 119, 122, 125-137, 213, 215-218): findings.json verification is qa-verifier's while the latest sidecar entry is another role's. F-DG1-215 is CLOSED_VERIFIED in findings.json but ACCEPTED_OBSERVATION in the latest code-security sidecar (round 11). (3) About 40 CLOSED_VERIFIED findings have no full 40-hex fix_revision. Mandatory ones include F-DG1-001, 101, 102, 105, 113, 115, 118, 201, 202 and 208. (4) Verifications from domain runs (rounds 3, 10, 11, 13) and the round-3 code-security run cite annotated assignment strings. The round-12 code-security run (F-DG1-132/133 verification) started before that candidate froze. (5) stages.json rounds 7-15 frozen_at/source_commit differ from their committed manifests. The round-4 domain record lists findings without a findings sidecar. (6) The round-16 items from AUD16-3 and AUD16-4.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/audit/round-16/03-validate-dry-run-with-draft-gate.log"
+      ]
+    },
+    {
+      "id": "AUD16-7-requirements",
+      "procedure": "For each of the 12 final_gate=DG1 rows: status, evidence files exist as regular files, and coverage by QA plus domain or code-security in round 16. Run the register validator.",
+      "command": "node (requirements.csv RFC4180 parse); node tools/gates/validate.mjs --register DG1",
+      "environment": "live repo, node v24.21.0",
+      "expected": "12 rows IMPLEMENTED, 0 missing evidence, each in QA and in domain or code-security; register PASS",
+      "actual": "12 rows, all IMPLEMENTED, 0 missing evidence files. Each is in qa-verifier.requirements_checked and in domain or code-security (REQ-DLV-025/033/042 via code-security; REQ-S15-002/005/006 and REQ-S16-002 via domain; the rest via both). PASS register rules at DG1, exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-025",
+        "REQ-DLV-033",
+        "REQ-DLV-042",
+        "REQ-S15-002",
+        "REQ-S15-005",
+        "REQ-S15-006",
+        "REQ-S16-001",
+        "REQ-S16-002",
+        "REQ-S16-003",
+        "REQ-S16-004",
+        "REQ-S19-004",
+        "REQ-S19-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/audit/round-16/02-specialists-runs-findings-requirements.log",
+        "docs/delivery/test-evidence/DG1/audit/round-16/01-candidate-dg0-register.log",
+        "docs/delivery/requirements.csv"
+      ]
+    },
+    {
+      "id": "AUD16-8-evidence-spot-check",
+      "procedure": "Spot-check evidence content behind the key claims: QA unit on Node 22 and Node 24; code-security F-DG1-137/218 re-proof, planted walk and mutation; testkit final state; image pinning (D-049) and module-lint residuals.",
+      "command": "tail/grep of the cited logs; grep architecture.testkit.ts; node deploy/scripts/pin-images.mjs --check",
+      "environment": "live repo, node v24.21.0",
+      "expected": "the evidence content supports each claim",
+      "actual": "QA 03-unit-node22.log (v22.22.2) and 04-unit-node24.log (v24.21.0): 21 files, 325/325 tests, exit 0 on both. Code-security 01b re-proof (Node 24): 8/8. 02 planted zz-r16.d.css.ts gives named diagnostics ('unparseable source…', 'imports ../access/policy.js…') and no 'Debug Failure'. 05 mutant (old regex) gives 2 failed with 'Debug Failure', which shows the self-checks discriminate. Testkit: DECLARATION_FILE has 0 references, and isDeclarationFileName() reads the public SourceFile.isDeclarationFile and gates syntaxErrors() before ts.transpileModule. Header: default-deny, setEngine rule 1 + rule 5, residuals (a)/(b)/(c) stated; the Node 24 member audit is recorded under F-DG1-011/D-055. pin-images --check: node-runtime, postgres and playwright are PINNED by digest. keycloak (test-ci, quay.io) is BLOCKED with blockedReason, digest null and not fabricated; the check exits 1 honestly, and CI resolves missing digests (--resolve --missing) per D-049. Decisions D-048 to D-055 are each present with a rationale and a revisit trigger.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-16/03-unit-node22.log",
+        "docs/delivery/test-evidence/DG1/qa/round-16/04-unit-node24.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-16/01b-F-DG1-137-218-reproof-probe-node24.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-16/02-planted-d-css-ts-architecture.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-16/05-mutant-old-regex.log",
+        "docs/delivery/test-evidence/DG1/audit/round-16/01-candidate-dg0-register.log",
+        "deploy/images.lock.json",
+        "docs/delivery/decisions.md"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "BLOCKED",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG1/audit/round-16/01-candidate-dg0-register.log",
+    "docs/delivery/test-evidence/DG1/audit/round-16/02-specialists-runs-findings-requirements.log",
+    "docs/delivery/test-evidence/DG1/audit/round-16/03-validate-dry-run-with-draft-gate.log"
+  ],
+  "reviewed_at": "2026-10-01T18:45:00Z",
+  "summary": "Audit BLOCKED for DG1 round 16 on candidate sha256:56f3eb88…2b4c (source 13418b8d). The substantive engineering checks hold. The candidate recomputes in a complete clone, and DG0 is APPROVED and validates historically. The three specialist PASS records come from distinct, successful, sandboxed runs by non-authors. F-DG1-137 and F-DG1-218 are CLOSED_VERIFIED on 56f3eb88. All 12 DG1-final requirements are IMPLEMENTED and covered, unit tests are green on Node 22 and Node 24, and keycloak is an honest D-049 BLOCKED residual. The gate still cannot be approved. (1) The code-security record carries check SEC-R16-32c with result BLOCKED, and anything BLOCKED fails the gate. (2) The round-16 domain record cites an annotated assignment string, and the code-security record lists findings without a .findings.json sidecar. (3) The gate validator reports 201 errors that do not concern this in-flight run. They are review-round and closure-provenance defects, including mandatory findings F-DG1-103 and F-DG1-104, whose only verifying sidecar belongs to a schema-invalid round-2 record. Per the assignment, any error other than this run's own makes the decision BLOCKED. I raise no new product findings. The blockers are delivery-record integrity, plus one BLOCKED specialist check."
+}
