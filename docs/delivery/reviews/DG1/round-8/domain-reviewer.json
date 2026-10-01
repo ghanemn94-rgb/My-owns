@@ -1,0 +1,209 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG1",
+  "round": 8,
+  "candidate_id": "sha256:e27eaf5fb5ada8640c4463b8e3c9d5f64e5aa629fa78b49cfd2861bdc7544876",
+  "source_commit": "11bc4c4a6f1e5eba58b0a0e0e9fdabbd62b22391",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG1-T-DG1-REV-DOM-R8-domain-reviewer-20261001T133105Z-0c955dd3",
+    "session_id": "0c955dd3-6a46-4661-9b6a-856aa268dfba"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "frontend-ux-engineer",
+    "devops-engineer",
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am domain-reviewer, run T-DG1-REV-DOM-R8. I authored no implementation, register text or decision in the DG1 scope. I also did not author the round-8 repair: the F-DG1-128 lint change is backend-workflow-engineer work (T-DG1-BE9), and D-054 was written by the orchestrator. I formed this verdict before reading any other reviewer's round-8 record, and none was visible to me. The earlier review material I used was my own round-7 domain-reviewer record and harness scripts (re-used here as round-8 copies), the round-7 code-security F-DG1-128 findings sidecar (to see the claim's basis), and the findings.json status entries for the findings my assignment names. I grant no business, Finance or IT approval. Product gate G6 is not engineering gate DG7."
+  },
+  "assignment": "docs/delivery/assignments/DG1/round-8/review-domain-reviewer.md (sha256 069ac207ad395efbb3838291853d9a0a2b705f41184d4246d31a0395a82afc1b) with review-common.md (sha256 13234c4974cb149839a408cdc4404cd42a5bfb4092d776ad1480b2686016fa4c)",
+  "requirements_checked": [
+    "REQ-S15-002",
+    "REQ-S15-005",
+    "REQ-S15-006",
+    "REQ-S16-001",
+    "REQ-S16-002",
+    "REQ-S16-004",
+    "REQ-S19-004",
+    "REQ-S19-006",
+    "REQ-S16-003",
+    "REQ-PB-001",
+    "REQ-PB-003",
+    "REQ-S03-003",
+    "REQ-S15-007",
+    "REQ-S15-008",
+    "REQ-S15-011",
+    "REQ-S16-023"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-R8-01-candidate",
+      "procedure": "Confirm the frozen candidate. Check HEAD, that the repository is not shallow, and the recomputed candidate id at the working tree, at the freeze commit and against the frozen manifest. Check that HEAD differs from the freeze commit only by candidate-excluded metadata, and that a full disposable clone at 11bc4c4 recomputes the same id with an identical lockfile.",
+      "command": "git rev-parse HEAD; git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG1; node tools/gates/candidate.mjs --stage DG1 --ref 11bc4c4; node tools/gates/candidate.mjs --stage DG1 --diff; git diff --stat 11bc4c4 HEAD; git clone /home/user/My-owns $TMPDIR/review-dom8 && git checkout 11bc4c4 && node tools/gates/candidate.mjs --stage DG1 && cmp pnpm-lock.yaml",
+      "environment": "Linux sandbox, node v22.22.2, pnpm 10.33.0; candidate tree /home/user/My-owns (HEAD 6cb3813) and a disposable full clone under $TMPDIR (removed afterwards)",
+      "expected": "candidate_id sha256:e27eaf5f…544876 in every computation; --diff matches with no changes; HEAD..11bc4c4 differs only in assignments, the candidate manifest and stages.json",
+      "actual": "Every computation gives sha256:e27eaf5fb5ada8640c4463b8e3c9d5f64e5aa629fa78b49cfd2861bdc7544876 (390 files), and --diff reports matches=true with none added, removed or changed. HEAD 6cb3813 adds only round-8 assignments, the manifest and stages.json. The repository is not shallow, and the clone's lockfile is identical.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG1/domain/round-8/00-candidate-and-diff.out.txt"]
+    },
+    {
+      "id": "DOM-R8-02-change-scope",
+      "procedure": "Establish what changed since the round-7 candidate commit a6bdea0. Diff everything outside docs/delivery, then every runtime and contract surface (apps/web, apps/worker, packages, docs/api, docs/architecture, docs/source, and apps/api excluding architecture.test*), then the register and the i18n catalogues. Confirm that the build excludes *.test.ts and *.testkit.ts and that dist has no architecture files.",
+      "command": "git diff --stat a6bdea0 11bc4c4 -- . ':!docs/delivery'; git diff --stat a6bdea0 11bc4c4 -- apps/web apps/worker packages docs/api docs/architecture docs/source apps/api ':!apps/api/src/architecture.test.ts' ':!apps/api/src/architecture.testkit.ts'; git diff --stat a6bdea0 11bc4c4 -- docs/delivery/requirements.csv apps/web/src/i18n; cat apps/api/tsconfig.build.json; find apps/api/dist -iname '*architecture*' | wc -l",
+      "environment": "Candidate tree plus a disposable clone at 11bc4c4 after pnpm -r build (exit 0)",
+      "expected": "Only apps/api/src/architecture.test.ts and architecture.testkit.ts change. Runtime, contract, register and i18n diffs are empty, and the build excludes the lint.",
+      "actual": "Exactly 2 files changed outside docs/delivery: architecture.test.ts (+17) and architecture.testkit.ts (+26/-10). The runtime/contract diff, the register diff and the i18n diff are all empty. tsconfig.build.json excludes src/**/*.test.ts and src/**/*.testkit.ts, and dist has 0 architecture files. No product or runtime behaviour, API contract, data model or i18n string changed.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-003"],
+      "evidence": ["docs/delivery/test-evidence/DG1/domain/round-8/00-candidate-and-diff.out.txt"]
+    },
+    {
+      "id": "DOM-R8-03-unit",
+      "procedure": "Run the full unit projects in the disposable clone. Then do a focused verbose run of the module lint (architecture.test.ts, including the new R1/R2 self-checks and the real module-tree check), the access rules, the transformation transitions and platform.",
+      "command": "npx vitest run --project unit-node --project unit-web; npx vitest run --project unit-node --reporter=verbose apps/api/src/architecture.test.ts apps/api/src/modules/access/rules.test.ts apps/api/src/modules/transformations/transitions.test.ts apps/api/src/modules/platform/platform.test.ts",
+      "environment": "Disposable clone at 11bc4c4. node_modules was copied from the repository's installed tree because the shell has no network, and pnpm-lock.yaml is identical.",
+      "expected": "All green. 273 = round-7's 271 plus the 2 new self-checks. R1 and R2 are reported as violations, and the real module tree passes.",
+      "actual": "Full run: 21 files, 273/273 passed, exit 0 (includes glossary.test.ts 8/8 for F-DG1-003). Focused run: 101/101 passed, exit 0. 'R1 node:test in-process run is a violation' and 'R2 process.execve is a violation' both pass. 'every import respects dependsOn, public surfaces and allowed packages' passes on the real tree, and so does 'the six §16 business modules all exist, each with its own test suite'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-001", "REQ-S16-002", "REQ-S16-003", "REQ-PB-003"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-8/01-unit-full.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-8/02-unit-focused.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R8-04-f128-overreach",
+      "procedure": "Check that the F-DG1-128 fix does not over-reach, using a reviewer-authored probe on the candidate's own testkit. The round-7 testkit (a6bdea0) is copied in as zz-r7.testkit.ts for a differential. (a) 47 legitimate specifiers stay allowed: the real tree's bare specifiers (collected with the lint's own importsOf), common node: built-ins, the @mth packages and every api dependency. (b) Specifier differential over 164 specifiers: every builtinModules entry, bare and node:, plus the prefix-only modules. (c) process-member differential over all 109 own and prototype keys of the live process object, each as `process.<m>`; ordinary members stay clean. (d) 15 import and call forms of node:test and process.execve. (e) The real module tree has 0 violations.",
+      "command": "git show a6bdea0:apps/api/src/architecture.testkit.ts > apps/api/src/zz-r7.testkit.ts; cp 03-f128-overreach-probe.test.ts apps/api/src/zz-dom8-probe.test.ts; npx vitest run --project unit-node --reporter=verbose apps/api/src/zz-dom8-probe.test.ts; rm both probe files",
+      "environment": "Disposable clone at 11bc4c4, node v22.22.2. The probe files are removed afterwards and git status is clean.",
+      "expected": "No legitimate specifier is rejected. The only specifier verdict change from round 7 is node:test; bare `test` was already rejected because a bare non-node: specifier must be a declared dependency. The only newly flagged process member is execve. Every node:test and execve form is caught, and the real tree has 0 violations.",
+      "actual": "(a) 0 of 47 rejected. (b) The only verdict change across 164 specifiers is 'node:test: r7=true r8=false'. (c) Across 109 members, only [\"execve\"] is newly flagged. _linkedBinding, binding, constructor, dlopen and getBuiltinModule were flagged in both versions, and env, cwd, hrtime, nextTick, platform, version, pid, uptime, memoryUsage, on, emitWarning and exitCode stay clean. (d) 0 of 15 forms missed. (e) 0 violations. 5/5 passed, exit 0. Run 1 is kept in *.run1-probe-bug.out.txt: it took its corpus from builtinModules alone, which on Node 22 omits the prefix-only node:test, node:sqlite and node:sea, so (b) wrongly saw no change. That was a probe bug, not a candidate defect, and run 2 adds those modules explicitly.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-003", "REQ-S16-001"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-8/03-f128-overreach-probe.test.ts",
+        "docs/delivery/test-evidence/DG1/domain/round-8/03-f128-overreach-probe.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-8/03-f128-overreach-probe.run1-probe-bug.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R8-05-d054-honesty",
+      "procedure": "Read the testkit header and D-054, and check that the exhaustive-enumeration claim honestly describes a defence-in-depth lint. The text must not claim a runtime security boundary, must name the residuals, and must state its validation scope correctly. Compare the 'pinned Node version (22.x)' statement with the repository's actual runtime pins: .nvmrc, engines, the production Dockerfile image, the CI matrix and ADR-0001. Before raising anything, check it against the stated residual (c).",
+      "command": "git diff a6bdea0 11bc4c4 -- apps/api/src/architecture.testkit.ts; grep '| D-054 |' docs/delivery/decisions.md; grep -n 'NOT a runtime security boundary' apps/api/src/architecture.testkit.ts; cat .nvmrc; grep '\"node\"' package.json; grep '^ARG NODE_IMAGE' deploy/docker/Dockerfile; grep 'node: \\[' deploy/ci/ci.yml; sed -n 19,24p docs/architecture/adr/ADR-0001-runtime-language-package-manager.md; ls -d /opt/node2*",
+      "environment": "Candidate tree at 11bc4c4 content (HEAD 6cb3813, identical candidate)",
+      "expected": "The claim is honest. It is a static defence-in-depth lint and not a runtime boundary, it is not a user-facing change, and its exhaustiveness is stated for the runtime it was validated on.",
+      "actual": "Mostly honest. The header keeps 'it is NOT a runtime security boundary', residuals (a), (b) and (c) are named, wasi/WebAssembly and the deferred default-deny allow-list are disclosed, and nothing user-facing changed. One misstatement: the claim calls 22.x 'the PINNED Node version'. In fact .nvmrc is 24, the production image is node:24-bookworm-slim@sha256:0e0ff40c…, and ADR-0001 sets the target runtime to Node 24 LTS with 22.18+ only as the floor. The validating sweep ran on 22.22.2 only, and residual (c) covers only 'a LATER Node version', not the current target. I could not sweep Node 24: the sandbox has no Node 24 binary and no network. Raised as Low and not mandatory (F-DG1-010): it is documentation accuracy, not a demonstrated route.",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": ["REQ-S16-003"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-8/10-d054-honesty.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-8/11-node-pin.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R8-06-integration",
+      "procedure": "Run the full integration project twice from the clone root, each time on a freshly initdb'd throwaway PostgreSQL 16 cluster on a private port that is removed afterwards. This covers closure refusal (422/G6, F-DG1-001), scoped access (A12, F-DG1-004/106), cursor pagination and binding, identity/OIDC routes, the catalogue (no floating point, timestamptz, version columns) and race/idempotency suites (F-DG1-009 determinism).",
+      "command": "for i in 1 2: bash docs/delivery/test-evidence/DG1/domain/round-8/04-integration-run.sh $((54800+i)) > 04-integration-run$i.out.txt",
+      "environment": "Disposable clone at 11bc4c4; PostgreSQL 16 under $TMPDIR (unshare user mapping), ports 54801/54802",
+      "expected": "200/200 on both runs, exit 0, no leftover databases and no FATAL/57P01 lines",
+      "actual": "Run 1: 19 files, 200/200 passed, exit 0. Run 2: 200/200 passed, exit 0. After each run only postgres, template0 and template1 remain, with 0 FATAL/57P01 lines. Includes 'refuses active -> closed with 422 invalid-transition', 'refuses on_hold -> closed', 'refuses a close from draft', the cross-scope 404/403 suites, the BU-scoped creator suite, cursor reuse and tamper refusal, and the catalogue rules.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-004", "REQ-S19-004", "REQ-S19-006", "REQ-S03-003"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-8/04-integration-run.sh",
+        "docs/delivery/test-evidence/DG1/domain/round-8/04-integration-run1.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-8/04-integration-run2.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R8-07-live",
+      "procedure": "Run the full live scenario (the round-7 script, unchanged apart from its header) on a disposable running stack built from the candidate. The stack runs migrations, the SYNTHETIC dev seed and the API serving the built web, and Chromium headless renders it in ar and en. Sections: A closure refused with 422/G6 and no audit row; B BU-scoped TL creator; C provisional tokens; D rendered shell, edit and detail (dir, provisional wordmark, no 'closed' option, the G6 hint, the glossary term, Unknown instead of 0/green, bundled fonts, no off-origin request); E/F localized derived audit entry; G marked fallback for untranslated codes; H UI create with no reload; I cursor pagination over every sort, binding and tamper refusal, scoped list; J identity cookie handling and logout. I inspected the rendered screens visually.",
+      "command": "cd $CLONE && bash docs/delivery/test-evidence/DG1/domain/round-8/07-live-stack.sh docs/delivery/test-evidence/DG1/domain/round-8 > 07-live-scenario.out.txt",
+      "environment": "Disposable clone at 11bc4c4 after pnpm -r build; throwaway PostgreSQL 16 on port 54824, API on 3438, AUTH_MODE=dev with SYNTHETIC users; Playwright Chromium from /opt/pw-browsers",
+      "expected": "Every live check passes (108, as in round 7), readyz is ready, and the ar screens are RTL and the en screens LTR",
+      "actual": "108 PASS, 0 FAIL, exit 0; readyz {database: ok, migrations: ok}. Visual inspection: ar-02-edit-no-closed shows an RTL form whose status options exclude closed, with the G6 business-approval hint, and the provisional badge 'مؤقت'. en-03-detail-audit shows LTR, the six playbook phases (Diagnose…Realize), Unknown chips with the 'never shown as zero or as on track' note, a localized audit trail, a provisional wordmark and modules marked 'Planned'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S15-002", "REQ-S15-005", "REQ-S15-006", "REQ-S15-007", "REQ-S15-008", "REQ-S15-011", "REQ-S16-023", "REQ-PB-001", "REQ-PB-003", "REQ-S03-003"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-8/07-live-stack.sh",
+        "docs/delivery/test-evidence/DG1/domain/round-8/07-live-scenario.mjs",
+        "docs/delivery/test-evidence/DG1/domain/round-8/07-live-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-8/screens/ar-01-shell.png",
+        "docs/delivery/test-evidence/DG1/domain/round-8/screens/ar-02-edit-no-closed.png",
+        "docs/delivery/test-evidence/DG1/domain/round-8/screens/ar-03-detail-audit.png",
+        "docs/delivery/test-evidence/DG1/domain/round-8/screens/ar-04-lead-derived-audit.png",
+        "docs/delivery/test-evidence/DG1/domain/round-8/screens/ar-05-office-derived-audit.png",
+        "docs/delivery/test-evidence/DG1/domain/round-8/screens/ar-06-lead-ui-create-no-reload.png",
+        "docs/delivery/test-evidence/DG1/domain/round-8/screens/en-01-shell.png",
+        "docs/delivery/test-evidence/DG1/domain/round-8/screens/en-02-edit-no-closed.png",
+        "docs/delivery/test-evidence/DG1/domain/round-8/screens/en-03-detail-audit.png",
+        "docs/delivery/test-evidence/DG1/domain/round-8/screens/en-04-lead-derived-audit.png",
+        "docs/delivery/test-evidence/DG1/domain/round-8/screens/en-05-office-derived-audit.png",
+        "docs/delivery/test-evidence/DG1/domain/round-8/screens/en-06-lead-ui-create-no-reload.png"
+      ]
+    },
+    {
+      "id": "DOM-R8-08-static-invariants",
+      "procedure": "Check the unchanged invariants statically in the clone: OpenAPI lint, the no-CDN check, api/web typecheck, and eslint plus prettier on the two changed files. Check the provisional flag on every design-token colour, including brand.primary #0078FF. Grep the i18n catalogues for unnegated official or certified claims (Mobily, PMI) and for any DG0–DG7 gate, and grep the migrations for floating-point column types. The first token check used a wrong path (ENOENT, a reviewer error) and was rerun on packages/design-tokens/src/tokens.json; both runs are in the output.",
+      "command": "pnpm -s openapi:lint; pnpm -s check:no-cdn; pnpm --filter ./apps/api -s typecheck; pnpm --filter ./apps/web -s typecheck; npx eslint <2 files>; npx prettier --check <2 files>; node -e '<walk tokens.json colour tokens>'; grep -rniE 'certified|official (pmi|mobily)|pmi standard|…' apps/web/src/i18n --include=*.json | grep -viE '<negations>'; grep -rnE '\\bDG[0-7]\\b' apps/web/src/i18n --include=*.json; grep -rniE '\\b(real|double precision|float[48]?)\\b' packages/db/migrations",
+      "environment": "Disposable clone at 11bc4c4",
+      "expected": "Lint, no-CDN, typecheck, eslint and prettier all exit 0. All colour tokens are provisional. There is no unnegated official or certified claim, no DG gate in the UI catalogues and no float column.",
+      "actual": "openapi:lint PASS (OpenAPI 3.1.1, 33 operations), exit 0. no-cdn PASS, exit 0. typecheck api=0, web=0. eslint=0, prettier=0. Tokens: top-level provisional true, 34 colour tokens with 0 not provisional, brand.primary #0078FF provisional=true. Honesty grep: none unnegated. DG[0-7] in the i18n json: none. Float or real columns in migrations: none.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S15-002", "REQ-S15-006", "REQ-S19-006", "REQ-S19-004", "REQ-S16-002"],
+      "evidence": ["docs/delivery/test-evidence/DG1/domain/round-8/08-static-checks.out.txt"]
+    },
+    {
+      "id": "DOM-R8-09-register-closures",
+      "procedure": "Check the register rows. The 8 assigned DG1-final rows (and all 12 DG1-final rows) must be IMPLEMENTED, with every evidence path an existing file. The REQ-PB/§15/§16 P1-increment rows must carry their later final gates, with no over-claim. Re-confirm the 12 round-7 domain closures, both in findings.json status and against this round's behavioural and register evidence: F-DG1-001 (live A3/A5, int 422), 002/105/207 (S16-003/004 acceptance, the six modules), 003 (glossary test, live D5/D6), 004 (live B, int BU creator), 005/008 (live E/F/G), 006/007/207 (register text: 33 operations, no '8/8', no 'enforced as API 409', no 'migrations 0001-0006'), 009 (2 deterministic integration runs), 210 (live H).",
+      "command": "python3 <register + findings check> > 09-register-rows.out.txt",
+      "environment": "Candidate tree (the register is identical at a6bdea0, 11bc4c4 and HEAD)",
+      "expected": "The assigned rows are IMPLEMENTED with 0 missing evidence. No later-gate row is over-claimed. The 12 closures are CLOSED_VERIFIED and still hold in behaviour. There is no unresolved DG1 Critical/High or mandatory finding.",
+      "actual": "The register is unchanged since a6bdea0. All 8 assigned rows are DG1/IMPLEMENTED with 0 missing evidence (5/7/4/8/5/11/16/5 paths), and all 12 DG1-final rows are IMPLEMENTED with 0 missing evidence. 29 P1-increment rows remain SPECIFIED at DG2–DG7, so there are 0 over-claims. All 12 closures are CLOSED_VERIFIED, and their behaviour and text still hold (see checks 03, 06 and 07, and the register-text recheck). F-DG1-128 is FIXED_PENDING_VERIFICATION and belongs to code-security; I confirmed only that it does not over-reach. Unresolved DG1 Critical/High: []. Unresolved mandatory: [].",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S15-002", "REQ-S15-005", "REQ-S15-006", "REQ-S16-001", "REQ-S16-002", "REQ-S16-004", "REQ-S19-004", "REQ-S19-006", "REQ-PB-001", "REQ-PB-003", "REQ-S15-007", "REQ-S15-008", "REQ-S15-011", "REQ-S16-023"],
+      "evidence": ["docs/delivery/test-evidence/DG1/domain/round-8/09-register-rows.out.txt"]
+    }
+  ],
+  "findings": ["F-DG1-010"],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG1/domain/round-8/00-candidate-and-diff.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-8/01-unit-full.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-8/02-unit-focused.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-8/03-f128-overreach-probe.test.ts",
+    "docs/delivery/test-evidence/DG1/domain/round-8/03-f128-overreach-probe.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-8/03-f128-overreach-probe.run1-probe-bug.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-8/04-integration-run.sh",
+    "docs/delivery/test-evidence/DG1/domain/round-8/04-integration-run1.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-8/04-integration-run2.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-8/07-live-stack.sh",
+    "docs/delivery/test-evidence/DG1/domain/round-8/07-live-scenario.mjs",
+    "docs/delivery/test-evidence/DG1/domain/round-8/07-live-scenario.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-8/08-static-checks.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-8/09-register-rows.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-8/10-d054-honesty.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-8/11-node-pin.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-8/screens/ar-02-edit-no-closed.png",
+    "docs/delivery/test-evidence/DG1/domain/round-8/screens/en-03-detail-audit.png",
+    "docs/delivery/reviews/DG1/round-8/domain-reviewer.findings.json",
+    "docs/delivery/reviews/DG1/round-8/domain-reviewer.md"
+  ],
+  "reviewed_at": "2026-10-01T13:42:00Z",
+  "summary": "PASS with one new Low, non-mandatory finding (F-DG1-010). Candidate e27eaf5f is confirmed: freeze commit 11bc4c4, and HEAD 6cb3813 adds only metadata. Since round 7 only the module lint and its self-test changed, and both are excluded from the build. There is no product, runtime, API, data-model, register or i18n change. The F-DG1-128 fix does not over-reach. Across 164 specifiers (every builtinModules entry plus the prefix-only modules) the only verdict change is node:test. Across all 109 process members the only newly flagged member is execve. All 47 legitimate specifiers stay allowed, and the real module tree has 0 violations. There is no domain regression: 273/273 unit tests, 2 x 200/200 integration runs with no leftovers, and 108/108 live checks in ar and en. These cover the G6 closure refused with 422, scoped access, cursor binding, identity routes, provisional branding, Unknown shown instead of zero, and the localized audit. All 12 round-7 domain closures still hold. The 8 assigned rows are IMPLEMENTED with all evidence present, and no P1-increment row is over-claimed. Finding: D-054 and the testkit call 22.x 'the PINNED Node version' and declare the enumeration exhaustive for it. But the repository's target runtime is Node 24 (ADR-0001, .nvmrc, the digest-pinned production image), and residual (c) covers only later versions. The exhaustiveness claim is therefore validated on the floor/sandbox version, not on the shipped runtime. This is documentation accuracy only. I demonstrated no route, and I could not sweep Node 24 here because the sandbox has no Node 24 binary and no network."
+}

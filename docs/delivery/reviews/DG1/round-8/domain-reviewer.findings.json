@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG1-010",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The D-054 and module-lint testkit statement that the loader/exec enumeration is 'exhaustive for the PINNED Node version (22.x)' names the wrong pinned runtime. ADR-0001, .nvmrc and the digest-pinned production image all target Node 24. Node 22 is only the supported floor and the build-sandbox version, and the round-7 sweep that backs the claim ran on Node 22.22.2 only.",
+      "reproduction": "Candidate e27eaf5f (freeze commit 11bc4c4). apps/api/src/architecture.testkit.ts:48-50 says: 'For the PINNED Node version (22.x) the concrete loader/exec built-ins and process.* methods are now enumerated exhaustively, as validated by the round-7 code-security sweep'. D-054 in docs/delivery/decisions.md says 'EXHAUSTIVE for the pinned Node version' and 'enumerated exhaustively for the pinned Node 22'. The repository pins Node 24 as the runtime: .nvmrc = 24; deploy/docker/Dockerfile:24 ARG NODE_IMAGE=node:24-bookworm-slim@sha256:0e0ff40c…; ADR-0001 §1 says 'Target runtime: the Node.js 24 LTS line in every container image', with Node 22.18+ only the 'Supported floor'; and the deploy/ci/ci.yml verify matrix is ['24','22']. package.json engines is '>=22.18.0 <25'. Evidence: docs/delivery/test-evidence/DG1/domain/round-8/11-node-pin.out.txt. The F-DG1-128 report itself calls Node 22.22.2 'the version the repo pins'.",
+      "expected": "The exhaustiveness statement names the version it was actually validated on (the Node 22.22.2 build sandbox, the supported floor). For the production target, Node 24, there are two options. (a) Sweep Node 24's builtinModules (including the prefix-only node: modules, which builtinModules omits) and its process.* members the same way, then state the claim for both. (b) Say explicitly that the Node 24 target is not yet swept and falls under residual (c) until it is. D-054's reopen criterion ('a later Node version adds …') should also cover the current target runtime, not only a future one.",
+      "actual": "The claim describes Node 22 as 'the pinned version', but production runs Node 24. Residual (c) is narrowed to 'genuinely FUTURE/UNKNOWN built-ins … of a LATER Node version'. Node 24 is already the shipped runtime, not a future one, so a Node-24-only loader route would fall outside both the claimed exhaustive set and the narrowed residual. I could not sweep Node 24 myself: this sandbox has only /opt/node20, /opt/node21 and /opt/node22, and no network. I therefore do not claim that such a route exists, only that the claim's validation scope is misstated. Impact is limited. This is a static defence-in-depth lint for ADR-0002 module boundaries over human-reviewed code, explicitly 'NOT a runtime security boundary'. No module uses any such route, and the CI matrix runs the lint on 24 as well, although the lint can only flag what it enumerates. Hence Low and not mandatory. It is a documentation-honesty defect, not a product or runtime defect. An ACCEPTED_OBSERVATION with a wording fix in the next stage would be reasonable.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-8/11-node-pin.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-8/10-d054-honesty.out.txt",
+        "apps/api/src/architecture.testkit.ts",
+        "docs/architecture/adr/ADR-0001-runtime-language-package-manager.md",
+        "deploy/docker/Dockerfile"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-8/domain-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T13:40:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG1 round 8 while checking, as the assignment asked, that the D-054 exhaustive-enumeration claim is an honest description. It is not a new loader route. It is a mis-stated validation scope: the 'pinned' version is Node 24, not 22.x. Checked against the testkit residuals first. Residual (c) covers only future or later Node versions, not the current target runtime. Proposed id is the next free number in the domain 0xx range (F-DG1-001..009 are taken); the orchestrator may renumber."
+        }
+      ]
+    }
+  ]
+}
