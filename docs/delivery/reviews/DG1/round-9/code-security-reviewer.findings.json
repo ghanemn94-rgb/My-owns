@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG1-130",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Module lint: the allow-listed built-in node:crypto still exposes a native-code loader. crypto.setEngine(<path>) dlopen()s an arbitrary shared object, and its ELF constructor runs before the call throws. That is the process.dlopen / node:sqlite loadExtension class, and the lint reports 0 violations. The testkit header's claim that no allow-listed built-in 'loads native objects' is false on Node 22.",
+      "reproduction": "Candidate sha256:05915c32…babd (freeze commit 273d21f, HEAD 07f1a54), disposable full clone, Node v22.22.2 (OpenSSL 3.5.5). (1) Static: in apps/api/src/architecture.testkit.ts:77 SAFE_NODE_BUILTINS includes 'crypto', and bareAllowed (129-130) allows `node:crypto`. `setEngine` is not in BANNED_PRIMITIVES (79-94), so neither rule 1 nor rule 3 sees it. Planted through fileViolations('transformations', <MODULES_DIR>/transformations/zz-planted.ts, src): `import { setEngine } from \"node:crypto\"; export const f = (p: string) => setEngine(p);` gives 0 violations, and the namespace form `import * as c from \"node:crypto\"; … c.setEngine(p)` also gives 0 (test-evidence/DG1/code-security/round-9/01-lint-probes.log, 'MEMBER PASSES-LINT'). (2) End to end (02-setengine-e2e.log): a real module file src/modules/transformations/zz-engine.ts calling setEngine(path) gives moduleViolations('transformations') = [] (0). Called at runtime with a gcc-built shared object whose __attribute__((constructor)) prints a marker (source setengine-eng.c.txt), it prints 'NATIVE-CONSTRUCTOR-RAN', so native code ran in the API process. setEngine then throws ERR_CRYPTO_ENGINE_UNKNOWN, but only after the library was loaded. The standalone probe (setengine-probe.mjs.txt) shows the same. The .so can be produced by the also allow-listed node:fs, so no non-allow-listed import is needed. No module uses setEngine today (grep of apps/ and packages/ is empty). Not checked on Node 24, the production target: no Node 24 binary in this environment (BLOCKED for that runtime).",
+      "expected": "D-055 and the testkit header (architecture.testkit.ts:70-75) state that none of the allow-listed built-ins 'loads, evaluates or executes code, opens a debugger, or loads native objects', and D-055 says the switch 'closes the whole loader/exec class at once … and prevents further adjacent-route findings'. Either the native-load member of an allowed built-in is denied too (for example `setEngine` added to BANNED_PRIMITIVES, so rule 1 catches it in every syntactic form, as with getBuiltinModule; plus a self-check row), or it is named as a stated residual. Either way, the header should say that default-deny applies to which built-in modules may be imported, not to the members of allowed modules. Those members still depend on the Node version: a later Node could add a loader member to crypto/fs/util.",
+      "actual": "`import { setEngine } from \"node:crypto\"; setEngine(path)` in module source passes the lint with 0 violations and loads and runs native code (Node 22.22.2). The header's 'none of them … loads native objects' sentence and D-055's 'whole class closed' claim are inaccurate. Residuals (a)-(c) do not cover it: it is not data flow, not a JS import of generated code, and not WebAssembly.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-9/01-lint-probes.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-9/02-setengine-e2e.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-9/zz-r9-probe.test.ts.txt",
+        "docs/delivery/test-evidence/DG1/code-security/round-9/setengine-eng.c.txt",
+        "docs/delivery/test-evidence/DG1/code-security/round-9/setengine-probe.mjs.txt",
+        "apps/api/src/architecture.testkit.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-9/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T14:15:29Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG1 round 9 during the adversarial review of the allow-list that the assignment asked for. Severity is Low and non-mandatory, consistent with the same class (F-DG1-125 process.dlopen, F-DG1-127 node:sqlite loadExtension, F-DG1-129). The lint is static defence-in-depth over human-reviewed code, not a runtime boundary. The proposed ID is the next free number in the code-security 1xx range; the orchestrator may renumber. An ACCEPTED_OBSERVATION would be reasonable once the header and D-055 stop claiming that no allow-listed built-in loads native objects and either deny setEngine or name it as a residual."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-131",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "D-055 states that the allow-lists equal real usage ('the only node built-ins module source imports are the seven listed and the only process members are the four listed'). That is false: module source imports 4 of the 7 built-ins and uses none of the 4 process members, so the allow-lists are not the minimal set.",
+      "reproduction": "Candidate 05915c32 (HEAD 07f1a54). Every node: specifier in apps/api/src/modules (all import forms): grep -rnoE \"[\\\"']node:[a-z_/]+[\\\"']\" apps/api/src/modules gives crypto (5), path (3), fs (1), url (1). It gives no fs/promises, os or util, and no bare built-in specifiers. Every `process` token in apps/api/src/modules: the only hit is a comment in admin/branding.ts:33, so there are zero process.env/exit/argv/once uses. The testkit's own comment (architecture.testkit.ts:70-71) is accurate: 'Seeded from what module source imports (crypto, fs, path, url) plus … fs/promises, os and util'. Commands and output are recorded in this record's check SEC-R9-03.",
+      "expected": "The decision record describes the evidence accurately, and the allow-lists are the minimal set the module tree needs, as the default-deny rationale implies. Each speculative entry is either dropped or explicitly justified as headroom.",
+      "actual": "docs/delivery/decisions.md:7 (D-055) claims the seven built-ins and the four process members were validated as the module tree's actual usage. Three of the seven built-ins (fs/promises, os, util) and all four process members (env, exit, argv, once) are unused headroom. None of these entries carries a code-loading, exec, native or debug capability I could find (fs/promises shares the residual-(b) write capability of fs), so this is a documentation-accuracy and minimality issue, not an open route.",
+      "evidence": [
+        "docs/delivery/decisions.md",
+        "apps/api/src/architecture.testkit.ts",
+        "docs/delivery/test-evidence/DG1/code-security/round-9/01-lint-probes.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-9/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T14:15:29Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG1 round 9 while cross-checking the allow-lists against the real module source, as the assignment asked. Low and non-mandatory. No capability risk was found in the extra entries. This is a candidate for ACCEPTED_OBSERVATION once D-055's wording matches the evidence (or the unused entries are removed)."
+        }
+      ]
+    }
+  ]
+}

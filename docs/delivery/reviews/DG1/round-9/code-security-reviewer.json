@@ -1,0 +1,409 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG1",
+  "round": 9,
+  "candidate_id": "sha256:05915c32b3f5c5b2a9e14324a70fbf5cd16e76a48bc3235d6cc30b290591babd",
+  "source_commit": "273d21f78b8ee4369ed7e864d5a1fe76cc4e3de1",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG1-T-DG1-REV-SEC-R9-code-security-reviewer-20261001T140344Z-ac7e08c7",
+    "session_id": "ac7e08c7-ee1e-43fd-80ce-9a8e485e812d"
+  },
+  "implementation_author": [
+    "delivery-orchestrator",
+    "backend-workflow-engineer",
+    "devops-engineer",
+    "frontend-ux-engineer"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (code-security-reviewer, session ac7e08c7) authored none of the DG1 implementation or the round-9 repair. backend-workflow-engineer made it in 7525b11 (T-DG1-BE10, D-055). I reported F-DG1-129 in round 8 and verify it as its originating reviewer. I verify F-DG1-213 (qa-verifier) and F-DG1-010 as a qualified non-author, as the assignment directs. At start the real-repo HEAD was 07f1a54, one commit past the freeze commit 273d21f, adding only candidate-excluded metadata: the round-9 assignments, the manifest and stages.json. The recomputed ID is 05915c32 at both commits. During my run HEAD advanced to 39cfc4e, the runner's auto-commit of the domain reviewer's round-9 run. That commit changes only reviews/DG1/round-9, runs/ and test-evidence/DG1/domain/round-9, and the ID stays 05915c32 (50-cleanup.log). I formed this verdict before, and without, reading any other reviewer's round-9 record. I did not open the domain-reviewer files."
+  },
+  "assignment": "docs/delivery/assignments/DG1/round-9/review-code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-DLV-025",
+    "REQ-DLV-033",
+    "REQ-DLV-042",
+    "REQ-S16-001",
+    "REQ-S16-003",
+    "REQ-S16-004",
+    "REQ-S19-004",
+    "REQ-S19-006"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-R9-00-candidate-identity",
+      "procedure": "Confirm HEAD, check that the freeze..HEAD diff is metadata only and that the source delta since round 8 is only the module lint, then recompute the candidate ID in the real repo and in a full disposable clone at the freeze commit and at HEAD",
+      "command": "git rev-parse HEAD; git diff --stat 273d21f..07f1a54; git diff --stat 3bde225..273d21f -- apps packages tools deploy scripts e2e tests; node tools/gates/candidate.mjs --stage DG1 (real repo; clone @07f1a54 and @273d21f)",
+      "environment": "real repo (read-only) @07f1a54; disposable clone $TMPDIR/review-sec, not shallow; node v22.22.2",
+      "expected": "sha256:05915c32…babd everywhere; HEAD differs from 273d21f only in candidate-excluded metadata",
+      "actual": "All three computations give sha256:05915c32b3f5c5b2a9e14324a70fbf5cd16e76a48bc3235d6cc30b290591babd (390 files). 273d21f..07f1a54 touches only assignments/DG1/round-9/*, the manifest and stages.json. The only source change since the round-8 import (3bde225) is apps/api/src/architecture.testkit.ts and architecture.test.ts. After the review the ID is unchanged in the real repo, including at HEAD 39cfc4e, the domain reviewer's auto-commit (50-cleanup.log).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-9/00-candidate-identity.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-9/50-cleanup.log"
+      ]
+    },
+    {
+      "id": "SEC-R9-01-default-deny-negative-controls",
+      "procedure": "Plant each assigned route, plus extra adversarial variants, into a transformations module file through fileViolations('transformations', <MODULES_DIR>/transformations/zz-planted.ts, src), and assert that each one is a violation",
+      "command": "npx vitest run --project unit-node apps/api/src/zz-r9-probe.test.ts (clone only; source saved as zz-r9-probe.test.ts.txt)",
+      "environment": "disposable clone @07f1a54, node v22.22.2, vitest 3.2.4",
+      "expected": "Every route is a violation: process.kill SIGUSR1, process._debugProcess, process.getBuiltinModule('node:vm'), node:inspector, node:net, node:http, node:sqlite, node:test, node:vm, node:worker_threads, process.execve, (process as any).binding('fs')",
+      "actual": "37/37 routes are violations, including the 12 assigned ones. The 25 extra variants: node:process/module/child_process/v8/wasi/tls/async_hooks; dynamic import('node:vm'); type-only import; export * from node:vm; node:fs/../vm and node:crypto/../vm; NODE:vm; bare fs/vm; process.dlopen/abort/_linkedBinding/mainModule/on; process?.kill; globalThis.process; aliased and destructured process; process['kill']. Messages are 'imports non-allow-listed node built-in node:X' or 'non-allow-listed process.X member'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-9/01-lint-probes.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-9/zz-r9-probe.test.ts.txt"
+      ]
+    },
+    {
+      "id": "SEC-R9-02-default-deny-positive-controls",
+      "procedure": "Plant the allow-listed built-ins and process members into a module file and check that they produce no violation; check that the real module tree has 0 moduleViolations",
+      "command": "same probe test (MUST_ALLOW block and the real-tree test)",
+      "environment": "disposable clone @07f1a54, node v22.22.2",
+      "expected": "node:crypto randomUUID, node:fs, node:fs/promises, node:path, node:url, node:util, node:os, process.env, process.exit(0), process.argv, process.once(...) all produce 0 violations; the real tree has 0 violations",
+      "actual": "11/11 positive controls produce 0 violations. REAL-TREE modules=13 violations=0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-9/01-lint-probes.log"
+      ]
+    },
+    {
+      "id": "SEC-R9-03-allow-list-adversarial-and-minimality",
+      "procedure": "Adversarial review of SAFE_NODE_BUILTINS and SAFE_PROCESS_MEMBERS: look for any code-loading, exec, native or debug capability reachable through an allowed entry, and cross-check the lists against the module source's actual node: imports and process.* uses",
+      "command": "grep -rnoE \"[\\\"']node:[a-z_/]+[\\\"']\" apps/api/src/modules | sort | uniq -c; grep -rnw process apps/api/src/modules; gcc -shared -fPIC eng.c; node setengine-probe.mjs eng.so; planted module zz-engine.ts using setEngine + moduleViolations('transformations') + runtime call (clone only)",
+      "environment": "real repo (read-only grep); disposable clone @07f1a54; node v22.22.2 / OpenSSL 3.5.5; gcc",
+      "expected": "No allowed entry carries a code-loading, exec, native or debug capability; the lists are the minimal set the module tree uses",
+      "actual": "FOUND a route. node:crypto's setEngine(path) dlopen()s an arbitrary .so, and its constructor printed NATIVE-CONSTRUCTOR-RAN inside the vitest process. A real module file calling it has moduleViolations = 0 (02-setengine-e2e.log). This is new Low finding F-DG1-130. The members of process are all benign (env, exit, argv, once). Minimality: module source imports only crypto(5), path(3), fs(1) and url(1), and uses no process member at all (the only `process` token is a comment in admin/branding.ts:33). D-055's claim that all seven built-ins and all four members are in use is false: new Low finding F-DG1-131. No legitimate module import or member is wrongly denied (no regression).",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": [
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-9/01-lint-probes.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-9/02-setengine-e2e.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-9/setengine-eng.c.txt",
+        "docs/delivery/test-evidence/DG1/code-security/round-9/setengine-probe.mjs.txt"
+      ]
+    },
+    {
+      "id": "SEC-R9-04-version-independence",
+      "procedure": "Check that the lint no longer claims to be 'exhaustive for Node 22/24' and no longer enumerates per Node version (F-DG1-010)",
+      "command": "grep -n -i 'exhaustive|PINNED Node|Node 22.x|for the pinned' apps/api/src/architecture.testkit.ts apps/api/src/architecture.test.ts; read testkit header 1-54 and D-055",
+      "environment": "real repo (read-only)",
+      "expected": "No exhaustiveness or per-version claim; default-deny for unknown built-ins and members",
+      "actual": "The testkit has none of these. The only hit is architecture.test.ts:352, a historical comment on the F-DG1-128 rows. Header lines 41-43 state that the check is version-independent (production Node 24, floor 22.18+). Self-check DD20 denies `node:some-future-builtin`. The module-level check is version-independent. Members of allowed modules are not: see F-DG1-130.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "apps/api/src/architecture.testkit.ts",
+        "docs/delivery/decisions.md"
+      ]
+    },
+    {
+      "id": "SEC-R9-05-node24-runtime",
+      "procedure": "Repeat the setEngine and inspector probes on Node 24 (production target)",
+      "environment": "this sandbox: only /opt/node20, node21, node22 present",
+      "expected": "Probe results on Node 24",
+      "actual": "Not run: no Node 24 binary and no network to fetch one. All runtime claims in this record are for Node v22.22.2 only.",
+      "exit_status": null,
+      "result": "BLOCKED"
+    },
+    {
+      "id": "SEC-R9-10-typecheck",
+      "procedure": "Workspace typecheck",
+      "command": "pnpm -r typecheck",
+      "environment": "disposable clone @07f1a54, node v22.22.2, pnpm 10.33.0, offline frozen install from a scratch copy of the local store",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-9/10-pnpm_-r_typecheck.log"
+      ]
+    },
+    {
+      "id": "SEC-R9-11-build",
+      "procedure": "Workspace build",
+      "command": "pnpm -r build",
+      "environment": "disposable clone @07f1a54, node v22.22.2",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-9/10-pnpm_-r_build.log"
+      ]
+    },
+    {
+      "id": "SEC-R9-12-lint",
+      "procedure": "ESLint, zero warnings",
+      "command": "pnpm lint",
+      "environment": "disposable clone @07f1a54, node v22.22.2",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-9/10-pnpm_lint.log"
+      ]
+    },
+    {
+      "id": "SEC-R9-13-openapi-lint",
+      "procedure": "OpenAPI document validation",
+      "command": "pnpm openapi:lint",
+      "environment": "disposable clone @07f1a54, node v22.22.2",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S19-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-9/10-pnpm_openapi_lint.log"
+      ]
+    },
+    {
+      "id": "SEC-R9-14-no-cdn",
+      "procedure": "Portability: no public CDN references",
+      "command": "pnpm check:no-cdn",
+      "environment": "disposable clone @07f1a54, node v22.22.2",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-9/10-pnpm_check_no-cdn.log"
+      ]
+    },
+    {
+      "id": "SEC-R9-15-format",
+      "procedure": "Prettier check",
+      "command": "pnpm format:check",
+      "environment": "disposable clone @07f1a54, node v22.22.2",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-9/10-pnpm_format_check.log"
+      ]
+    },
+    {
+      "id": "SEC-R9-16-unit",
+      "procedure": "Unit suites (unit-node and unit-web), plus architecture.test.ts on its own",
+      "command": "pnpm test; npx vitest run --project unit-node apps/api/src/architecture.test.ts",
+      "environment": "disposable clone @07f1a54 (probe test removed first), node v22.22.2",
+      "expected": "All pass; architecture.test.ts about 101/101",
+      "actual": "21 files, 294/294 passed, exit 0. architecture.test.ts 101/101, exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-9/10-pnpm_test.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-9/11-architecture-test.log"
+      ]
+    },
+    {
+      "id": "SEC-R9-20-integration-twice",
+      "procedure": "Integration suite on a disposable PostgreSQL cluster, run twice (F-DG1-009)",
+      "command": "QA_PG_PORT=5491 tests/qa/support/with-pg.sh pnpm test:integration (x2)",
+      "environment": "disposable clone @07f1a54, PostgreSQL 16.13 disposable cluster on port 5491 in $TMPDIR, node v22.22.2",
+      "expected": "Both runs pass; 8 migrations apply to a fresh database; no 57P01",
+      "actual": "Run 1: 19 files, 200/200, exit 0. Run 2: 19 files, 200/200, exit 0. Both runs report 'applied 8 migrations to a fresh database', and migrate (7), contract (9), transformations (30), a12-cross-scope (14) and scratch-drop (F-DG1-009) pass.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-033",
+        "REQ-S16-004",
+        "REQ-S19-004",
+        "REQ-S19-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-9/20-integration-run1.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-9/20-integration-run2.log"
+      ]
+    },
+    {
+      "id": "SEC-R9-30-gates-agents-tests",
+      "procedure": "Gate tooling and agent tooling tests",
+      "command": "node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs",
+      "environment": "disposable clone @07f1a54, node v22.22.2",
+      "expected": "All pass",
+      "actual": "tests 105, pass 105, fail 0, exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-9/30-gates-agents-tests.log"
+      ]
+    },
+    {
+      "id": "SEC-R9-31-deploy-scripts-tests",
+      "procedure": "Deploy script tests",
+      "command": "node --test deploy/scripts/tests/*.test.mjs",
+      "environment": "disposable clone @07f1a54, node v22.22.2",
+      "expected": "All pass",
+      "actual": "tests 59, pass 59, fail 0, exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-025"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-9/31-deploy-scripts-tests.log"
+      ]
+    },
+    {
+      "id": "SEC-R9-32-install-sandbox",
+      "procedure": "Install-sandbox acceptance suite AC-1..AC-10",
+      "command": "npm_config_store_dir=$TMPDIR/store/v10 bash tools/deps/tests/install-sandbox.test.sh",
+      "environment": "disposable clone @07f1a54, bubblewrap, scratch copy of the local pnpm store, no registry network",
+      "expected": "AC-1..AC-10 pass; AC-1 effect needs is-number@7.0.0 from the registry",
+      "actual": "AC-1 (read-only /etc), AC-2 (both), AC-3 (both), AC-4, AC-5, AC-6 (both), AC-7, AC-8, AC-9 and AC-10 PASS. AC-1 (effect) FAIL, so the suite exits 1, only because is-number cannot be fetched: ERR_PNPM_META_FETCH_FAIL, ECONNREFUSED 127.0.0.1:3128 (32c-ac1-registry-BLOCKED.log). This is the same as round 8. AC-1 effect and a real-repo registry install are BLOCKED on the environment, not failed on the code.",
+      "exit_status": 1,
+      "result": "BLOCKED",
+      "requirements": [
+        "REQ-DLV-042"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-9/32-install-sandbox-suite.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-9/32c-ac1-registry-BLOCKED.log"
+      ]
+    },
+    {
+      "id": "SEC-R9-33-sbom",
+      "procedure": "SBOM up-to-date check",
+      "command": "node licenses/generate-sbom.mjs --check",
+      "environment": "disposable clone @07f1a54, node v22.22.2",
+      "expected": "OK, exit 0",
+      "actual": "OK: packages=422 runtime=112 bundled=17 development=293 containers=4 shipped-without-licence-id=0; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-9/33-sbom-check.log"
+      ]
+    },
+    {
+      "id": "SEC-R9-34-dg0-historical",
+      "procedure": "Validate the previous approved gate",
+      "command": "node tools/gates/validate.mjs --stage DG0 --historical",
+      "environment": "disposable clone @07f1a54, node v22.22.2",
+      "expected": "PASS",
+      "actual": "PASS gate DG0 (historical); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-9/34-dg0-historical.log"
+      ]
+    },
+    {
+      "id": "SEC-R9-35-ci-yml-identity",
+      "procedure": "The three ci.yml copies are byte-identical, and every product job reaches delivery-gates",
+      "command": "git ls-files | grep ci.yml | xargs sha256sum; node deploy/scripts/check-ci-needs.mjs .github/workflows/ci.yml",
+      "environment": "disposable clone @07f1a54",
+      "expected": "1 distinct hash; check-ci-needs exit 0",
+      "actual": "All three files (.github/workflows, deploy/ci, docs/architecture/ci) are 8b5b1106…76ce, 1 distinct hash. check-ci-needs: verify <- delivery-gates, integration/e2e <- verify, images <- integration, e2e; exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-025"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-9/35-ci-yml-identity.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-9/36-check-ci-needs.log"
+      ]
+    },
+    {
+      "id": "SEC-R9-40-requirements",
+      "procedure": "For each of the 8 assigned requirements, check register status, final_gate and that every listed evidence path exists. Re-check behaviour against this round's runs; the only source delta since round 8 is the module lint.",
+      "command": "node script over docs/delivery/requirements.csv (output in log)",
+      "environment": "real repo (read-only), node v22.22.2",
+      "expected": "IMPLEMENTED, DG1, 0 missing evidence",
+      "actual": "All 8 are IMPLEMENTED with final_gate DG1, and 0 of 82 evidence paths are missing. Behaviour is re-confirmed by this round's runs: REQ-DLV-025 (ci.yml identity, check-ci-needs, deploy tests 59/59), REQ-DLV-033 (build, integration 200/200 x2 incl. transformations CRUD and a12 cross-scope 403), REQ-DLV-042 (AC-1 sandbox and AC-2..AC-10 pass; AC-1 effect BLOCKED, no registry), REQ-S16-001 and REQ-S16-003 (13-module tree, architecture 101/101, real tree 0 violations), REQ-S16-004 and REQ-S19-004 (8 migrations on a fresh PostgreSQL 16, migrate 7/7), REQ-S19-006 (openapi:lint, contract 9/9). The notes' open items (A19 restore drill at DG7; worker-stop not automated) are unchanged and pre-existing.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-025",
+        "REQ-DLV-033",
+        "REQ-DLV-042",
+        "REQ-S16-001",
+        "REQ-S16-003",
+        "REQ-S16-004",
+        "REQ-S19-004",
+        "REQ-S19-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-9/40-requirement-evidence-exists.log"
+      ]
+    },
+    {
+      "id": "SEC-R9-50-cleanup",
+      "procedure": "Remove the disposable clone, store copy, probe .so and scratch projects; confirm the real repo is untouched and the candidate ID is unchanged",
+      "command": "rm -rf $TMPDIR/{review-sec,store,eng,ev-eng.so,ac1p}; git status --short --untracked-files=no; node tools/gates/candidate.mjs --stage DG1",
+      "environment": "real repo (read-only) and $TMPDIR",
+      "expected": "Scratch removed; no tracked change from this run; ID 05915c32",
+      "actual": "All scratch was removed. The only tracked-file differences are round-9 domain-reviewer files, committed by the runner in 39cfc4e and absent from my private staging view; they are not my changes. ID 05915c32 unchanged.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-9/50-cleanup.log"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG1-130",
+    "F-DG1-131"
+  ],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG1/code-security/round-9/00-candidate-identity.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-9/01-lint-probes.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-9/02-setengine-e2e.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-9/zz-r9-probe.test.ts.txt",
+    "docs/delivery/test-evidence/DG1/code-security/round-9/setengine-eng.c.txt",
+    "docs/delivery/test-evidence/DG1/code-security/round-9/setengine-probe.mjs.txt",
+    "docs/delivery/test-evidence/DG1/code-security/round-9/10-pnpm_-r_typecheck.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-9/10-pnpm_-r_build.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-9/10-pnpm_lint.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-9/10-pnpm_openapi_lint.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-9/10-pnpm_check_no-cdn.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-9/10-pnpm_format_check.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-9/10-pnpm_test.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-9/11-architecture-test.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-9/20-integration-run1.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-9/20-integration-run2.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-9/30-gates-agents-tests.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-9/31-deploy-scripts-tests.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-9/32-install-sandbox-suite.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-9/32c-ac1-registry-BLOCKED.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-9/33-sbom-check.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-9/34-dg0-historical.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-9/35-ci-yml-identity.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-9/36-check-ci-needs.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-9/40-requirement-evidence-exists.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-9/50-cleanup.log",
+    "docs/delivery/reviews/DG1/round-9/code-security-reviewer.findings.json",
+    "docs/delivery/reviews/DG1/round-9/code-security-reviewer.verifications.json",
+    "docs/delivery/reviews/DG1/round-9/code-security-reviewer.md"
+  ],
+  "reviewed_at": "2026-10-01T14:15:29Z",
+  "summary": "PASS. The D-055 default-deny fix verifies. All 12 assigned routes and 25 extra variants are now violations. All 11 positive controls are allowed. architecture.test.ts passes 101/101 and the real module tree has 0 violations. F-DG1-129, F-DG1-213 and F-DG1-010 are CLOSED_VERIFIED. The adversarial review of the allow-list found two new Low, non-mandatory issues. F-DG1-130: node:crypto setEngine(path) dlopen()s and runs a native .so and passes the lint, so the header's 'none loads native objects' claim is false. F-DG1-131: D-055's claim that the allow-lists equal real usage is false (module source uses 4 of the 7 built-ins and none of the 4 process members). Every required check passed except two BLOCKED on the environment: AC-1 effect (no registry) and the Node 24 runtime probe (no binary). All 8 requirements are complete with existing evidence. No Critical/High/mandatory finding is open."
+}

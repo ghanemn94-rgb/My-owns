@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "verifications": [
+    {
+      "finding_id": "F-DG1-129",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:05915c32…babd (freeze commit 273d21f, HEAD 07f1a54; the ID is identical in the real repo and in a full disposable clone at both commits, 00-candidate-identity.log). The fix is 7525b11 (T-DG1-BE10, D-055). apps/api/src/architecture.testkit.ts:103 sets SAFE_PROCESS_MEMBERS = {env, exit, argv, once}, and rule 3 (316-317) flags every `process.<member>` outside it. Re-proof via fileViolations('transformations', …/zz-planted.ts) in the clone (01-lint-probes.log). `process.kill(process.pid, \"SIGUSR1\")` is flagged ('non-allow-listed process.kill member', and process.pid too), and so are `(process as any)._debugProcess(process.pid)` and the optional-chained `process?.kill(...)`. The aliasing variants are caught by the existing rules: `const p = process` / destructured `{ kill } = process` ('process used as a value'), `process[\"kill\"]` ('computed member of process') and `globalThis.process`. The old route (the in-process V8 inspector from round 8's N1/N2) is closed. architecture.test.ts passes 101/101, including the DD1-DD20 default-deny controls (11-architecture-test.log). The real 13-module tree has 0 moduleViolations. The unit suite is 294/294. During the adversarial review of the allow-list I found a separate native-load route through a member of the allow-listed node:crypto (setEngine). It is a different route and class, and does not reopen this finding, which is closed. I raised it as new Low finding F-DG1-130."
+    },
+    {
+      "finding_id": "F-DG1-213",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Same route as F-DG1-129, raised independently by qa-verifier. I am a qualified non-author (I authored no implementation in DG1), and the round-9 assignment gives me this verification. On candidate 05915c32 in a disposable clone (01-lint-probes.log), the global `process._debugProcess(process.pid)` and `process.kill(process.pid, 'SIGUSR1')` are now violations ('non-allow-listed process._debugProcess member' / 'process.kill member'), because rule 3 is default-deny over SAFE_PROCESS_MEMBERS (architecture.testkit.ts:103, 316-317). The self-check DD4 covers the full _debugProcess, fetch /json/list, WebSocket Runtime.evaluate chain as module source, and architecture.test.ts passes 101/101. `node:inspector` and `node:inspector/promises` are also denied, through bareAllowed (129-130) and DD10/DD11. Closed."
+    },
+    {
+      "finding_id": "F-DG1-010",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "The defect was the D-054 / testkit claim that the loader/exec enumeration is 'exhaustive for the PINNED Node version (22.x)', which named the wrong runtime. On candidate 05915c32 the testkit has no 'exhaustive', 'PINNED Node' or per-version enumeration. A grep of architecture.testkit.ts and architecture.test.ts for exhaustive|PINNED Node|Node 22.x|for the pinned finds only architecture.test.ts:352, a historical comment that explains why F-DG1-128's R1/R2 rows exist, not an exhaustiveness claim. The header (41-43) now says both checks are allow-lists that 'do not depend on the Node version' and names Node 24 as production and Node 22.18+ as the floor. D-055 supersedes the D-053/D-054 framing. I re-proved the module-level default-deny in a disposable clone (01-lint-probes.log): node:vm, worker_threads, inspector, net, http, sqlite, test, process, module, child_process, v8, wasi, tls, async_hooks, path-trick specifiers such as node:fs/../vm and node:crypto/../vm, dynamic import(), type-only imports and `export * from` are all violations. Self-check DD20 (`node:some-future-builtin`) shows that an unknown future built-in is denied. The version-naming defect is therefore dissolved. Caveat, tracked separately in F-DG1-130 rather than reopening this finding: version-independence covers which built-in modules may be imported, not the members of the allowed modules (crypto/fs/util), and those members can still change between Node versions."
+    }
+  ]
+}
