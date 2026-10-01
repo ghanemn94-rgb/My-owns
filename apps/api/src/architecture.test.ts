@@ -791,6 +791,44 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
     expect(fileViolations("kpi", at("zz.test.ts"), vitestImport)).toEqual([]);
   });
 
+  it("F-DG1-217: a module declaration file (.d.ts/.d.mts/.d.cts) is linted without throwing, imports still checked", () => {
+    const at = (name: string) => join(MODULES_DIR, "transformations", name);
+    // Before the fix syntaxErrors() ran ts.transpileModule on a declaration-file name and it threw
+    // "Debug Failure. Output generation failed", so moduleViolations() errored instead of reporting.
+    for (const name of ["zz.d.ts", "zz.d.mts", "zz.d.cts"]) {
+      expect(() => fileViolations("transformations", at(name), "export declare const x: number;"), name).not.toThrow();
+      expect(fileViolations("transformations", at(name), "export declare const x: number;"), name).toEqual([]);
+      // Chosen behaviour: declaration files are scanned (not skipped), so a deep cross-module TYPE import is flagged.
+      const deepType = `import type { Actor } from "../access/policy.ts";\nexport declare const a: Actor;`;
+      expect(fileViolations("transformations", at(name), deepType), name).toEqual([
+        `modules/transformations/${name}: imports ../access/policy.ts; only access/index.ts is public`,
+      ]);
+      // A genuine syntax error surfaces as a named diagnostic, never as an internal compiler assertion.
+      const broken = "export declare const x: = ;";
+      expect(() => fileViolations("transformations", at(name), broken), name).not.toThrow();
+      const v = fileViolations("transformations", at(name), broken).join("\n");
+      expect(v, name).toMatch(/unparseable source: Type expected\. \(line 1\) bypasses the module-interface check/);
+      expect(v, name).not.toMatch(/Debug Failure/);
+    }
+  });
+
+  it("F-DG1-217: a planted .d.ts in a module directory is walked and linted end to end without throwing", () => {
+    const dir = mkdtempSync(join(tmpdir(), "mth-dts-"));
+    try {
+      writeFileSync(join(dir, "zz.d.ts"), `import type { Actor } from "../access/policy.ts";\nexport type A = Actor;`);
+      const files = walk(dir);
+      expect(files.map((f) => basename(f))).toEqual(["zz.d.ts"]);
+      const v = files.flatMap((f) =>
+        fileViolations("transformations", join(MODULES_DIR, "transformations", basename(f)), readFileSync(f, "utf8")),
+      );
+      expect(v).toEqual([
+        "modules/transformations/zz.d.ts: imports ../access/policy.ts; only access/index.ts is public",
+      ]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it("scanSource reports what it saw (paths resolve relative to the planted file)", () => {
     const rel = relative(MODULES_DIR, resolve(join(MODULES_DIR, "transformations"), "../access/policy.ts"));
     expect(rel.split("/")).toEqual(["access", "policy.ts"]);

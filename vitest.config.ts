@@ -47,6 +47,9 @@ export default defineConfig({
           poolOptions: { forks: { singleFork: true } },
           fileParallelism: false,
           testTimeout: 30_000,
+          // F-DG1-136: hooks get the same budget as tests. A teardown afterAll (DDL + api.close() + dropScratchDatabase(),
+          // which itself waits up to 10s for other backends to disconnect) must not hit vitest's default 10_000 ms hookTimeout.
+          hookTimeout: 30_000,
         },
       },
     ],

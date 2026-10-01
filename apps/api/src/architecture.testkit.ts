@@ -441,17 +441,47 @@ export function scanSource(fileName: string, source: string): ScanResult {
   return { specifiers, evasions: [...new Set(evasions)] };
 }
 
+/** A declaration file (.d.ts/.d.mts/.d.cts): TypeScript parses it with isDeclarationFile = true. */
+const DECLARATION_FILE = /\.d\.[cm]?ts$/;
+
+/**
+ * F-DG1-217: `ts.transpileModule` emits, and emitting a declaration-file name throws an internal
+ * `Debug Failure. Output generation failed` - so a module `.d.ts` crashed the lint instead of being checked. For a
+ * declaration file, take the syntactic diagnostics WITHOUT emit through the public API: a one-file program (no lib, no
+ * resolution, nothing type-checked or executed) and `getSyntacticDiagnostics`. The file is still scanned by
+ * `scanSource` (its type imports stay boundary-checked), and a real syntax error still surfaces as a named
+ * `unparseable source` diagnostic.
+ */
+function declarationSyntaxErrors(fileName: string, source: string): readonly ts.Diagnostic[] {
+  const sf = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const options: ts.CompilerOptions = { noLib: true, noResolve: true, types: [] };
+  const host: ts.CompilerHost = {
+    getSourceFile: (name) => (name === fileName ? sf : undefined),
+    getDefaultLibFileName: () => "lib.d.ts",
+    writeFile: () => {},
+    getCurrentDirectory: () => dirname(fileName),
+    getCanonicalFileName: (name) => name,
+    useCaseSensitiveFileNames: () => true,
+    getNewLine: () => "\n",
+    fileExists: (name) => name === fileName,
+    readFile: (name) => (name === fileName ? source : undefined),
+  };
+  return ts.createProgram([fileName], options, host).getSyntacticDiagnostics(sf);
+}
+
 /**
  * Rule 4, fail closed: syntax errors in a module file. On a syntax error the parser's recovery can turn code into
  * something else (`(async () => {} as any)[k]` reads `[k]` as a binding pattern), so the rules would inspect a
  * different program from the one written. Syntactic diagnostics only (no type check, nothing executed).
  */
 function syntaxErrors(fileName: string, source: string): string[] {
-  const { diagnostics = [] } = ts.transpileModule(source, {
-    fileName,
-    reportDiagnostics: true,
-    compilerOptions: { jsx: ts.JsxEmit.Preserve },
-  });
+  const diagnostics = DECLARATION_FILE.test(fileName)
+    ? declarationSyntaxErrors(fileName, source)
+    : (ts.transpileModule(source, {
+        fileName,
+        reportDiagnostics: true,
+        compilerOptions: { jsx: ts.JsxEmit.Preserve },
+      }).diagnostics ?? []);
   return diagnostics
     .filter((d) => d.category === ts.DiagnosticCategory.Error)
     .map((d) => {
