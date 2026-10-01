@@ -2,6 +2,25 @@
 
 > Resumption: read this file, then `git log --oneline -15`, then follow "Next action". See CLAUDE.md → Resumption procedure.
 
+## Paused — 2026-10-01 (at the user's request)
+
+Work stopped at `562fa2e` (pushed). Nothing is running. To resume:
+- **CI:** the run on `562fa2e` was not awaited. Check it; when green, write the P5 gate report with
+  `scratchpad/p5-gate.py <rev> <ci run> <api result> <e2e result>` (draft prepared; if the scratchpad is gone, model it on
+  `docs/phases/P4-gate-report.json`: P5 PASS WITH CONDITIONS — both re-checks PASS WITH CONDITIONS, four exit criteria met with
+  Simulated providers, 30 of 44 P5 musts Tested once REQ-PHS-007 moves with the gate; conditions C1 P5 residuals, C2
+  re-verification of SEC-P5R-01/-02 and the PDF-browser offline fix, C3 owner decisions).
+- **Unfinished agent work, saved as WIP branches on the remote (not verified, not merged):**
+  - `claude/wip-p6-imports`: P6 imports / integrations / notifications (10 commits; the agent was starting its full API suite).
+  - `claude/wip-p6-config`: P6 configuration — RAG thresholds, template upgrade, wizard steps 7–8, QA-P5-07, REQ-RPT-013 (WIP checkpoint).
+  - `claude/wip-p7-devops`: P7 enterprise readiness — fresh install, private mode, encrypted backup / restore (WIP checkpoint).
+  - P5 residuals (QA-P5R-03 Medium first, QA-P5R-01/-02, REQ-SEC-021 revocation matrix, the 11 Implemented + 3 Planned P5 musts):
+    not started — brief `scratchpad/impl-p5-residuals.md`.
+  Resume each package from its branch (merge the main branch first), finish, verify (lint, typecheck, full API suite, its
+  e2e specs, secret scan), then merge. After the three P6 packages: the P6 reviews (security / architecture and QA).
+- Known open item: one intermittent miss of the page number on page 1 of the Arabic committee pack PDF test (one full run
+  of three); the assertion message now prints the extracted lines.
+
 ## Current state — 2026-09-30
 
 - **Branch:** `claude/mobily-transformation-hub` (repository `My-owns`, project directory `transformation-hub/`).
