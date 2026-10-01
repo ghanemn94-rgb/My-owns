@@ -234,3 +234,107 @@ printf '{"digest":"sha256:%064d"}\\n' "$d"
   assert.match(r2.out, /existing pin sha256:0+2 KEPT/);
   assert.match(lockOf(t).images.find((i) => i.id === "postgres").digest, /^sha256:0+2$/);
 });
+
+// --- F-DG1-108 / F-DG1-203: the CI `images` job resolves-and-pins any image still missing a digest AT RUNTIME
+// (`--resolve --missing`, then `--apply`, then `--check`). The committed lock keeps keycloak BLOCKED (honest where
+// quay.io is denied); a runner that reaches quay.io pins it live. Stub docker logs every image it is asked about.
+function committedLikeTree() {
+  const t = tree();
+  const l = lockOf(t);
+  pinAll(l, ["keycloak"]);
+  l.images.find((i) => i.id === "keycloak").blockedReason = "BLOCKED: quay.io denied by the environment egress policy";
+  writeLock(t, l);
+  assert.equal(pin(t, ["--apply"]).status, 0);
+  return t;
+}
+function stubDocker(quayReachable) {
+  const bin = join(scratch, `bin-m${++n}`);
+  mkdirSync(bin);
+  const log = join(bin, "calls.log");
+  writeFileSync(
+    join(bin, "docker"),
+    `#!/bin/sh
+echo "$4" >> "${log}"
+case "$4" in
+  quay.io/*) ${quayReachable ? 'printf \'{"digest":"sha256:%064d"}\\n\' 7; exit 0' : 'echo "ERROR: Head \\"https://quay.io/v2/...\\": Forbidden (CONNECT 403)" >&2; exit 1'} ;;
+esac
+printf '{"digest":"sha256:%064d"}\\n' 9
+`,
+  );
+  chmodSync(join(bin, "docker"), 0o755);
+  return {
+    env: { PATH: `${bin}:${process.env.PATH}` },
+    calls: () => (existsSync(log) ? readFileSync(log, "utf8") : ""),
+  };
+}
+
+test("C10 runner WITH quay.io: --resolve --missing pins ONLY keycloak, --apply, --check exits 0", () => {
+  const t = committedLikeTree();
+  const before = lockOf(t);
+  assert.equal(pin(t, ["--check"]).status, 1, "committed-like state must fail --check before resolution");
+  const d = stubDocker(true);
+  const r = pin(t, ["--resolve", "--missing"], d.env);
+  assert.equal(r.status, 0, r.out);
+  assert.equal(d.calls().trim(), "quay.io/keycloak/keycloak:26.4", "only the missing image is resolved");
+  const l = lockOf(t);
+  const kc = l.images.find((i) => i.id === "keycloak");
+  assert.match(kc.digest, /^sha256:0+7$/);
+  assert.equal(kc.blockedReason, null);
+  assert.ok(kc.verifiedAt);
+  for (const img of l.images.filter((i) => i.id !== "keycloak"))
+    assert.deepEqual(
+      img,
+      before.images.find((i) => i.id === img.id),
+      `${img.id} must be untouched`,
+    );
+  assert.equal(pin(t, ["--apply"]).status, 0);
+  const c = pin(t, ["--check"]);
+  assert.equal(c.status, 0, c.out);
+  assert.match(c.out, /^OK: 4 images pinned by digest/m);
+});
+
+test("C11 runner WITHOUT quay.io: --resolve --missing exits 1, keycloak stays null/BLOCKED, --check still exits 1", () => {
+  const t = committedLikeTree();
+  const d = stubDocker(false);
+  const r = pin(t, ["--resolve", "--missing"], d.env);
+  assert.equal(r.status, 1, r.out);
+  assert.equal(d.calls().trim(), "quay.io/keycloak/keycloak:26.4");
+  const kc = lockOf(t).images.find((i) => i.id === "keycloak");
+  assert.equal(kc.digest, null, "never fabricated");
+  assert.match(kc.blockedReason, /^BLOCKED: --resolve at .*CONNECT 403/);
+  assert.equal(pin(t, ["--apply"]).status, 0);
+  const c = pin(t, ["--check"]);
+  assert.equal(c.status, 1, c.out);
+  assert.match(c.out, /^BLOCKED +keycloak/m);
+});
+
+test("C12 nothing missing: --resolve --missing calls no registry, leaves the lock byte-identical, exits 0", () => {
+  const t = tree();
+  const l = lockOf(t);
+  pinAll(l);
+  writeLock(t, l);
+  const bytes = readFileSync(join(t, "deploy/images.lock.json"), "utf8");
+  const d = stubDocker(false);
+  const r = pin(t, ["--resolve", "--missing"], d.env);
+  assert.equal(r.status, 0, r.out);
+  assert.equal(d.calls(), "");
+  assert.equal(readFileSync(join(t, "deploy/images.lock.json"), "utf8"), bytes);
+});
+
+// Checks the staged deploy/ci/ci.yml when present (implementers cannot write .github/; the orchestrator installs it
+// verbatim), else the installed .github/workflows/ci.yml — the same base selection as check-ci-needs.test.mjs.
+test("C13 CI images job: resolve --missing, then --apply, then --check, in that order", () => {
+  for (const f of [existsSync(join(root, "deploy/ci/ci.yml")) ? "deploy/ci/ci.yml" : ".github/workflows/ci.yml"]) {
+    const text = readFileSync(join(root, f), "utf8");
+    const jobStart = text.indexOf("\n  images:\n");
+    assert.ok(jobStart > 0, `${f}: images job`);
+    const job = text.slice(jobStart);
+    const iRes = job.indexOf("node deploy/scripts/pin-images.mjs --resolve --missing");
+    const iApply = job.indexOf("node deploy/scripts/pin-images.mjs --apply");
+    const iCheck = job.indexOf("node deploy/scripts/pin-images.mjs --check");
+    assert.ok(
+      iRes > 0 && iApply > iRes && iCheck > iApply,
+      `${f}: order resolve(${iRes}) < apply(${iApply}) < check(${iCheck})`,
+    );
+  }
+});

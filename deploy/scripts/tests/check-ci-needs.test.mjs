@@ -1,7 +1,8 @@
-// Self-test of deploy/scripts/check-ci-needs.mjs (REQ-DLV-025, REQ-DLV-042; F-DG1-107, F-DG1-104).
+// Self-test of deploy/scripts/check-ci-needs.mjs (REQ-DLV-025, REQ-DLV-042; F-DG1-107, F-DG1-104, F-DG1-116).
 // Each case mutates the staged workflow deploy/ci/ci.yml (or the installed .github/workflows/ci.yml when the staged
 // copy is absent) in memory, writes it to a temp dir and runs the checker on it. N4/N5 are the exact round-1 bypasses
-// of F-DG1-107 (check-ci-needs-negative.log), which the old checker reported as OK.
+// of F-DG1-107 (check-ci-needs-negative.log), which the old checker reported as OK. N19-N22 are the exact round-2
+// bypasses of F-DG1-116 (code-security/round-2/25-check-ci-needs-bypass.log, variants B-E), also reported as OK before.
 //
 //   node --test deploy/scripts/tests/check-ci-needs.test.mjs
 import assert from "node:assert/strict";
@@ -135,3 +136,72 @@ fails(
   (wf) => (step(wf, "verify", /ci-install-deps\.sh/).run = "deploy/scripts/ci-install-deps.sh || pnpm install"),
   /verify: dependency install outside/,
 );
+
+// --- F-DG1-116: the gate step's execution context must not be altered (round-2 variants B-E, verbatim values)
+const validateStep = (wf) => step(wf, "delivery-gates", /validate\.mjs/);
+fails(
+  "N19 validate step: env NODE_OPTIONS=--import=data:...process.exit(0)",
+  (wf) => (validateStep(wf).env = { NODE_OPTIONS: "--import=data:text/javascript,process.exit(0)" }),
+  /delivery-gates step \d+: a validate\.mjs step must not set env:/,
+);
+fails(
+  "N20 validate step: working-directory: decoy",
+  (wf) => (validateStep(wf)["working-directory"] = "decoy"),
+  /delivery-gates step \d+: a validate\.mjs step must not set working-directory:/,
+);
+fails(
+  "N21 validate step: shell: 'true {0}'",
+  (wf) => (validateStep(wf).shell = "true {0}"),
+  /delivery-gates step \d+: a validate\.mjs step must not set shell:/,
+);
+fails(
+  "N22 workflow-level defaults.run.working-directory: decoy",
+  (wf) => (wf.defaults = { run: { "working-directory": "decoy" } }),
+  /workflow-level defaults: is not allowed/,
+);
+// Same vectors moved one level up / sideways (also accepted by the old checker)
+fails(
+  "N23 workflow-level defaults.run.shell",
+  (wf) => (wf.defaults = { run: { shell: "true {0}" } }),
+  /workflow-level defaults: is not allowed/,
+);
+fails(
+  "N24 workflow-level env NODE_OPTIONS",
+  (wf) => (wf.env = { NODE_OPTIONS: "--import=data:text/javascript,process.exit(0)" }),
+  /workflow-level env: is not allowed/,
+);
+fails(
+  "N25 delivery-gates job-level env NODE_OPTIONS",
+  (wf) => (wf.jobs["delivery-gates"].env = { NODE_OPTIONS: "--require=/dev/null" }),
+  /delivery-gates: job key "env" is not allowed/,
+);
+fails(
+  "N26 delivery-gates job-level defaults.run.working-directory",
+  (wf) => (wf.jobs["delivery-gates"].defaults = { run: { "working-directory": "decoy" } }),
+  /delivery-gates: job key "defaults" is not allowed/,
+);
+fails(
+  "N27 delivery-gates pre-step writes NODE_OPTIONS to $GITHUB_ENV",
+  (wf) =>
+    wf.jobs["delivery-gates"].steps.splice(2, 0, {
+      run: 'echo "NODE_OPTIONS=--import=data:text/javascript,process.exit(0)" >> "$GITHUB_ENV"',
+    }),
+  /delivery-gates step 3: only the validate step may run commands/,
+);
+fails(
+  "N28 delivery-gates setup-node step with env",
+  (wf) => (wf.jobs["delivery-gates"].steps[1].env = { NODE_OPTIONS: "--require=/dev/null" }),
+  /delivery-gates step 2.*key "env" is not allowed/,
+);
+fails(
+  "N29 validate.mjs run in another job with NODE_OPTIONS",
+  (wf) => wf.jobs.verify.steps.push({ run: "node tools/gates/validate.mjs --pipeline", env: { NODE_OPTIONS: "--x" } }),
+  /verify step \d+: a validate\.mjs step must not set env:/,
+);
+passes("P4 validate step with a name and an id (only name/id/run)", (wf) => {
+  validateStep(wf).id = "gate";
+});
+passes("P5 product job (verify) with its own job-level env and defaults (does not reach the gate)", (wf) => {
+  wf.jobs.verify.env = { CI_EXAMPLE: "1" };
+  wf.jobs.verify.defaults = { run: { shell: "bash" } };
+});
