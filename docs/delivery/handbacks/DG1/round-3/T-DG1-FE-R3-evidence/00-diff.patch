@@ -1,0 +1,50 @@
+diff --git a/apps/web/e2e/journeys.spec.ts b/apps/web/e2e/journeys.spec.ts
+index af651b4..4717d48 100644
+--- a/apps/web/e2e/journeys.spec.ts
++++ b/apps/web/e2e/journeys.spec.ts
+@@ -115,6 +115,28 @@ async function signIn(page: Page, lang: Lang, username: string) {
+   await ensureLanguage(page, lang);
+ }
+ 
++/**
++ * Waits until the shell has (re)mounted after a document load and can take keyboard input deterministically
++ * (F-DG1-232): the primary navigation and the page heading are visible, the document has the focus, and no element
++ * is focused yet, so the next Tab starts at the top of the document. Nothing is clicked (a click would move the
++ * sequential-focus starting point), and no assertion about the focus order is weakened.
++ */
++async function expectShellReadyForKeyboard(page: Page, lang: Lang, nav: Locator) {
++  await expect(page.getByTestId("wordmark")).toBeVisible();
++  await expect(nav).toBeVisible();
++  await expect(navLink(nav, lang, "myWork")).toHaveAttribute("aria-current", "page");
++  await expect(page.locator("main#main h1")).toBeVisible();
++  await page.bringToFront();
++  await expect
++    .poll(() =>
++      page.evaluate(() => ({
++        hasFocus: document.hasFocus(),
++        nothingFocused: document.activeElement === null || document.activeElement === document.body,
++      })),
++    )
++    .toEqual({ hasFocus: true, nothingFocused: true });
++}
++
+ async function signOut(page: Page, lang: Lang) {
+   await page.getByRole("button", { name: tr(lang, "auth.signOut"), exact: true }).click();
+   await page.waitForURL("**/login**");
+@@ -168,8 +190,15 @@ test("shell: navigation, language persistence and My Work (Transformation Office
+   await page.reload();
+   await expect(page.locator("html")).toHaveAttribute("lang", lang);
+   // Keyboard: the skip link is the first focusable element and moves focus to <main>.
++  // F-DG1-232: after the reload the shell mounts asynchronously (session and profile requests). A Tab pressed before
++  // it has mounted lands nowhere and the assertion below raced. Wait until the shell is mounted again and the
++  // document holds the focus with nothing focused yet, so the first Tab starts from the top of the document.
++  await expectShellReadyForKeyboard(page, lang, nav);
+   await page.keyboard.press("Tab");
+-  await expect(page.getByRole("link", { name: tr(lang, "common.a11y.skipToContent"), exact: true })).toBeFocused();
++  const skipLink = page.getByRole("link", { name: tr(lang, "common.a11y.skipToContent"), exact: true });
++  await expect(skipLink).toBeFocused();
++  await page.keyboard.press("Enter");
++  await expect(page.locator("main#main")).toBeFocused();
+   // A planned area is labelled planned.
+   await navLink(nav, lang, "governance").click();
+   await expect(
