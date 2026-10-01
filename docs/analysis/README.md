@@ -82,8 +82,8 @@ Every SOURCE row cites at least one playbook block. USER and ENGINEERING rows ci
 
 | Status | Rows |
 |---|---|
-| IMPLEMENTED | 19 |
-| SPECIFIED | 393 |
+| IMPLEMENTED | 31 |
+| SPECIFIED | 381 |
 
 `VERIFIED` is never written to the register. Verification is derived by the validator from PASS review records.
 
