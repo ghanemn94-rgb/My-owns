@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG1-210",
+      "stage_id": "DG1",
+      "requirement": "REQ-S10-002",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "After a business-unit-scoped Lead creates a transformation, its detail page hides the Edit/Archive controls and the audit trail until a full page reload (stale cached /api/v1/me grants)",
+      "reproduction": "Disposable clone of candidate f0baa87d0163560f (4f486b96), `pnpm -r build`, then `QA_E2E_PG_PORT=5473 e2e/support/qa-stack.sh npx playwright test e2e/qa-r3 --workers=1` with docs/delivery/test-evidence/DG1/qa/tests/dg1-r3-derived-audit-localized.spec.ts. Sign in as dev.lead (TL at SYN-RETAIL only), create a record in SYN-RETAIL, land on /transformations/<id>. Measured in EN and AR: immediately after create, audit-trail regions = 0 and Edit links = 0. After in-app (client-side) navigation to the list and back, still 0 and 0. After page.reload(), 1 and 1. A second probe (dg1-r3-stale-session-probe.spec.ts, 19-stale-session-probe.log) waits 61 s and dispatches visibilitychange+focus: still 0 and 0, and /api/v1/me is never re-fetched after the create. Cause (code reading): apps/web/src/api/queries.ts:49 caches `me` with staleTime 60 s. TransformationCreatePage.tsx:119 invalidates only ['transformations'], not keys.me, so the derived transformation-scope grant that the server adds on create (F-DG1-106) is absent from the client's grants, and `canOn(me, ...)` is false for the new record. The FE4 handback §4 reports the same observation. It is not registered in findings.json, and the journey spec works around it with page.reload().",
+      "expected": "A BU-scoped Lead who has just created a record sees the controls their (server-granted) access allows on it (Edit, Archive, audit trail) without a manual browser reload. For example, invalidate or refetch the `me` query after a successful create (or derive the grant from the 201 response). F-DG1-004 and F-DG1-106 opened this path, and the server already authorizes it.",
+      "actual": "The post-create page shows the record without Edit/Archive and without its audit trail. In-app navigation doesn't fix it, and neither did a 61 s wait with a focus signal. Only a full reload or a new sign-in restores it. No hint is shown. It is fail-safe: the UI under-represents access, nothing is leaked or over-granted, the server stays authoritative and there's no data impact. It degrades the BU lead's create -> edit/archive workflow, so it is not optional polish. A real user's tab switch may refetch differently from the synthetic focus signal; that was not tested.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-3/12-derived-audit-localized.log",
+        "docs/delivery/test-evidence/DG1/qa/round-3/19-stale-session-probe.log",
+        "docs/delivery/test-evidence/DG1/qa/round-3/screenshots/derived-audit/chromium-en--01-post-create-before-reload.png",
+        "docs/delivery/test-evidence/DG1/qa/round-3/screenshots/derived-audit/chromium-ar--01b-post-create-spa-navigation.png",
+        "docs/delivery/test-evidence/DG1/qa/round-3/screenshots/derived-audit/chromium-ar--02-derived-audit-localized.png",
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r3-derived-audit-localized.spec.ts",
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r3-stale-session-probe.spec.ts",
+        "apps/web/src/api/queries.ts",
+        "apps/web/src/pages/transformations/TransformationCreatePage.tsx",
+        "docs/delivery/handbacks/DG1/round-3/T-DG1-FE4-frontend-ux-engineer.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-3/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T09:42:41Z",
+          "status": "OPEN",
+          "note": "Reported in DG1 round-3 QA verification. Reproduced in EN and AR (2/2), plus a 61 s focus probe. Independent of the FE4 handback observation, which it confirms."
+        }
+      ]
+    }
+  ]
+}

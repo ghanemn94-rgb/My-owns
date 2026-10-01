@@ -1,0 +1,66 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG1-208",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fix 6e7f360 is in candidate sha256:f0baa87d... (recomputed in the repository and in a full disposable clone of 4f486b96; the freeze diff from 5204179 is metadata only). Full real-stack e2e (`PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers QA_E2E_PG_PORT=5473 e2e/support/qa-stack.sh npx playwright test --workers=1`, pre-installed chromium-1194, fresh PG 16.13, 8 migrations, synthetic seed): 22 passed, 0 failed, 0 skipped, exit 0. Both projects pass all 9 journeys and both A20 specs, including the 6 Arabic journeys (create, list, edit-409, archive, administration, no-roles) that did not run in round 2. Axe: 0 violations of any impact on 14 pages per language. The fix doesn't weaken the spec: there is no test.skip/fixme/only, the expect calls went from 63 to 69, there are still 6 axe uses, and a 9th journey was added. All name locators are now exact (`exact: true` x40, or regexes anchored with ^...$: exactly(), fieldLabel(), navLink()). The round-2 ambiguity (AR 'عملي' inside 'العمليات الاعتيادية والتحسين') can no longer match two links.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-3/11-e2e.log",
+        "docs/delivery/test-evidence/DG1/qa/round-3/screenshots/journeys/ar/axe-summary.json",
+        "docs/delivery/test-evidence/DG1/qa/round-3/screenshots/journeys/en/axe-summary.json",
+        "docs/delivery/test-evidence/DG1/qa/round-3/screenshots/journeys/ar/02-my-work.png",
+        "docs/delivery/test-evidence/DG1/qa/round-3/screenshots/journeys/ar/08-conflict.png",
+        "docs/delivery/test-evidence/DG1/qa/round-3/screenshots/journeys/ar/11-admin.png"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-209",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fix 1a9d62e. REQ-S19-004 now cites migrations 0001-0008 plus the round-2 integration runs and schema probe, and its note says 'migrations 0001-0008' (8 applied). REQ-DLV-033 cites 0007/0008 and the round-2 A18, integration, openapi (33 ops) and e2e logs. Its note honestly states that e2e was red on that candidate and that IMPLEMENTED depends on round 3 closing F-DG1-208, which this round verifies (11-e2e.log, 22/22). Neither row cites the 181-test pre-repair log (T-DG1-QA-authoring/02-...) any more. grep finds no '0001-0006', '32 op' or '181 tests' residuals in requirements.csv. The note's claim that packages/db/migrations is unchanged since f32c705 holds (git diff f32c705..5204179 is empty for it). On this candidate the behaviour matches: 8/8 migrations on fresh clusters (09/10, 13, 15). Every evidence file of both rows exists (18-req-evidence.log).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-3/18-req-evidence.log",
+        "docs/delivery/test-evidence/DG1/qa/round-3/09-integration-run1.log",
+        "docs/delivery/test-evidence/DG1/qa/round-3/13-schema-probe.log",
+        "docs/delivery/requirements.csv"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-005",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fix 6e7f360. My round-2 FAIL was the unlocalized derived-assignment event on a BU lead's record. Re-tested on the real stack in EN and AR. (1) My round-2 spec (dg1-r2-web-repairs.spec.ts), run UNCHANGED: its soft assertions (no 'field/value without a translation', no raw 'scoped_assignment.create') now pass, 2/2. (2) A new independent spec with hard assertions (dg1-r3-derived-audit-localized.spec.ts), 2/2. It cross-checks the API (/audit holds scoped_assignment.create with derivedFromAssignmentId for the new record). The trail row's action is the localized label ('Role granted to the creator (carried over from a business-unit assignment)' / 'إسناد دور لمُنشئ السجل (منقول من إسناد على مستوى وحدة العمل)'). Its fields are localized (User, Role, Scope, Effective until, Carried over from assignment), with the user's display name, the role name ('Transformation Lead' / 'قائد التحوّل') and 'Transformation: this transformation'. The whole trail contains no scoped_assignment, transformation.create, camelCase key, JSON, end_to_end, business_unit_id, bare 'TL' or untranslated marker. The direction is rtl in AR and ltr in EN. The only id left is the source assignment's UUID, a technical identifier with no catalogue label, which the F-DG1-005 standard allows. It is LTR-isolated in AR and not marked untranslated. The transformation's own create row stays localized.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-3/12-derived-audit-localized.log",
+        "docs/delivery/test-evidence/DG1/qa/round-3/14-r2-spec-regression.log",
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r3-derived-audit-localized.spec.ts",
+        "docs/delivery/test-evidence/DG1/qa/round-3/screenshots/derived-audit/chromium-ar--02-derived-audit-localized.png",
+        "docs/delivery/test-evidence/DG1/qa/round-3/screenshots/derived-audit/chromium-en--02-derived-audit-localized.png",
+        "docs/delivery/test-evidence/DG1/qa/round-3/screenshots/web-repairs-r2spec/chromium-ar--03-audit-trail-localized.png"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-008",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Cross-check by a qualified non-author (qa-verifier did not author fix 6e7f360). This is the same fix and evidence as F-DG1-005, run on the exact reproduction F-DG1-008 describes (dev.lead, TL at SYN-RETAIL, creates a record, opens /transformations/<id> in ar and en). The first trail row now has a localized action, not 'scoped_assignment.create'. scope, userId, roleCode, effectiveTo and derivedFromAssignmentId are rendered as localized field labels, with the user's name and role name instead of IDs, and with no 'field/value without a translation' marker. The FE journey 'a business-unit Lead creates a record...' also passes in EN and AR (11-e2e.log #9/#20), with axe clean. Separately: seeing this trail right after the create needs a reload. That is a different defect (stale session grants), raised as F-DG1-210. It doesn't affect the localization verified here.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-3/12-derived-audit-localized.log",
+        "docs/delivery/test-evidence/DG1/qa/round-3/11-e2e.log",
+        "docs/delivery/test-evidence/DG1/qa/round-3/screenshots/journeys/ar/17-lead-audit-trail.png",
+        "docs/delivery/test-evidence/DG1/qa/round-3/screenshots/journeys/en/17-lead-audit-trail.png"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-110",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on this candidate (it was already CLOSED_VERIFIED in round 2). The rollback test (apps/api/test/integration/transformations.test.ts:115-142) is still scope-local: there is no auditCount comparison, and auditOfRequest(dupRequestId) is []. auditCount is only re-exported by tests/qa/support/api.ts and never used. The worker tests stop pg-boss before the drop (maintenance.test.ts:96, afterAll env.close). Two full integration runs on separate fresh PG 16.13 clusters (port 5472) both give 18 files, 197/197, exit 0, with the same test set (only the order differs) and no 'Unhandled', 57P01 or 'terminating connection' in either log.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-3/09-integration-run1.log",
+        "docs/delivery/test-evidence/DG1/qa/round-3/10-integration-run2.log"
+      ]
+    }
+  ]
+}
