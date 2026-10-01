@@ -236,5 +236,5 @@ if (errors.length) {
   process.exit(1);
 }
 console.log(
-  `i18n check passed: ${namespaces.length} namespaces, ${count} keys per language, ${enumValues} enum values translated in en and ar, ${serverCodeCount} server message codes (gates incl. JV, finance, planning, governance, carve-out, readiness, NewCo, AI detections), ${aiCodes.size} AI refusal codes, ${gateCodes.size} gate refusal codes, ${auditActionCount} governance / finance history labels.`,
+  `i18n check passed: ${namespaces.length} namespaces, ${count} keys per language, ${enumValues} enum values translated in en and ar, ${serverCodeCount} server message codes (gates incl. JV, finance, planning, governance, carve-out, readiness, NewCo, AI detections, imports, notifications), ${aiCodes.size} AI refusal codes, ${gateCodes.size} gate refusal codes, ${auditActionCount} governance / finance history labels.`,
 );
