@@ -333,6 +333,15 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
       /imports package node:process/,
       "missed",
     ],
+    // F-DG1-127 A1: node:sqlite's loadExtension loads a native shared object (same class as process.dlopen), so
+    // `sqlite` / `node:sqlite` is in LOADER_BUILTINS. A2 (write a file with node:fs, then `import("./gen.mjs")`) is
+    // NOT a case here: it is the stated, accepted residual of this static lint (architecture.testkit.ts header).
+    [
+      "A1 node:sqlite loadExtension",
+      `import { DatabaseSync } from "node:sqlite";\nnew DatabaseSync(":memory:", { allowExtension: true }).loadExtension("/tmp/x.so");`,
+      /imports package node:sqlite/,
+      "missed",
+    ],
     // Prior forms (F-DG1-117/121), still caught: regression guards for the blanket rules.
     ["P17 module.constructor", `const M = module.constructor;`, /module used as a value[\s\S]*\.constructor/, "caught"],
     [

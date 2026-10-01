@@ -6,8 +6,9 @@
 //    `import("...")` / `require("...")` with a string-literal specifier - each checked against the module boundary;
 //  - a computed `import(expr)` / `require(expr)` (the target cannot be checked), and any import of the built-ins that
 //    hand out a loader or evaluate code (`module`, `vm`, `worker_threads`, `inspector`, `repl`, `child_process`,
-//    `cluster`, `process`; with or without `node:`). F-DG1-125: importing `process` / `node:process` is itself banned
-//    (an imported binding aliases the process object past rule 3; the global is a Node global, no module imports it).
+//    `cluster`, `process`, `sqlite`; with or without `node:`). F-DG1-125: importing `process` / `node:process` is
+//    itself banned (an imported binding aliases the process object past rule 3; the global is a Node global, no module
+//    imports it). F-DG1-127: `sqlite` / `node:sqlite` (`loadExtension` loads a native shared object).
 //
 // F-DG1-124 - BLANKET BAN of the dynamic-code-loading primitives in module source. F-DG1-117 and F-DG1-121 matched
 // ever more spellings of the same thing (`.constructor()`, aliased `.constructor`, destructured `constructor`, ...)
@@ -33,9 +34,20 @@
 //     Rule 3 covers the GLOBAL `process`; an IMPORTED process object (`import p from "node:process"`, a namespace or
 //     a named `{ dlopen }` import) is closed by the specifier check instead, which bans `process`/`node:process`.
 //  4. FAIL CLOSED: a file with a syntax error is a violation (the AST the rules see would not be the code written).
-// Nothing is executed. Residual limit (stated, not closable statically): a string computed at RUNTIME and handed to
-// third-party code that itself reads `input[key]` (e.g. a schema library given `Object.fromEntries([[k, ...]])`) is
-// data flow the lint cannot follow; rules 1-2 remove every syntactic route inside module source.
+// Nothing is executed. Residual limits (stated and ACCEPTED, not closable statically):
+//  (a) a string computed at RUNTIME and handed to third-party code that itself reads `input[key]` (e.g. a schema
+//      library given `Object.fromEntries([[k, ...]])`) is data flow the lint cannot follow; rules 1-2 remove every
+//      syntactic route inside module source.
+//  (b) F-DG1-127: runtime code GENERATION followed by a dynamic import of a literal same-module path (write a file,
+//      e.g. with `node:fs`, then `import("./local.mjs")`): the specifier is a legal own-module path and the bytes
+//      exist only at runtime, so the lint never sees them. `node:fs` is deliberately NOT banned (tests read files and
+//      a module may legitimately read files; a write-API-only ban would be brittle).
+//  (c) the loader/eval denylist is ENUMERATED (rule-1 primitives, rule-3 roots and loaders, LOADER_BUILTINS) and
+//      cannot be proven exhaustive over every host capability that could load or generate code at runtime (a future
+//      Node built-in, `WebAssembly` instantiation, ...). Known native loaders are closed as found (`process.dlopen`
+//      F-DG1-125, `node:sqlite` loadExtension F-DG1-127).
+// Rationale: this is static defence-in-depth for the ADR-0002 module boundaries, enforced against human-reviewed code
+// that runs with a read-only production source tree; it is NOT a runtime security boundary.
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -54,6 +66,8 @@ const SHARED_ALLOWED = new Set(["@mth/shared", "@mth/shared/schemas", "@mth/conf
  * Built-ins that hand out an unchecked loader or evaluate code; a module never needs them. F-DG1-125: `process` too -
  * an imported process object (default, namespace or named `{ dlopen }`/`{ binding }`) is a local binding that rule 3's
  * `process.<loader>` check cannot see, so the import itself is the violation. The global `process` stays under rule 3.
+ * F-DG1-127: `sqlite` too - `new DatabaseSync(p, { allowExtension: true }).loadExtension(so)` loads a native shared
+ * object (the `process.dlopen` class); a module never needs SQLite (persistence is `@mth/db`/PostgreSQL, ADR-0003).
  */
 const LOADER_BUILTINS = new Set(
   [
@@ -66,6 +80,7 @@ const LOADER_BUILTINS = new Set(
     "child_process",
     "cluster",
     "process",
+    "sqlite",
   ].flatMap((b) => [b, `node:${b}`]),
 );
 /** F-DG1-124: dynamic-code primitives, banned in every syntactic form (rule 1), by the kind of bypass they give. */
