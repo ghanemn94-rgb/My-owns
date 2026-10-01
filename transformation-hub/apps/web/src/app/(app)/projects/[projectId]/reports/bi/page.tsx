@@ -34,7 +34,7 @@ export default function BiAccessPage() {
   const [revoking, setRevoking] = useState<BiGrant | null>(null);
   if (!can('admin.clearance.grant')) return <RestrictedState showHomeLink={false} />;
   const data = bi.data;
-  const active = data?.items.find((g) => g.active) ?? null;
+  const active = data?.grants.find((g) => g.active) ?? null;
   const columns: Column<BiGrant>[] = [
     { key: 'classification', header: t('reports.bi.columns.classification'), cell: (g) => <StatusBadge enumName="classifications" value={g.maxClassification} tone="neutral" /> },
     { key: 'reason', header: t('reports.bi.columns.reason'), cell: (g) => <span dir="auto" className="whitespace-pre-wrap">{g.reason}</span> },
@@ -127,7 +127,7 @@ export default function BiAccessPage() {
           <h2 id="bi-history-title" className="text-lg font-semibold text-ink">
             {t('reports.bi.history')}
           </h2>
-          <DataTable caption={t('reports.bi.caption')} columns={columns} rows={data?.items} rowKey={(g) => g.id} isLoading={bi.isLoading} error={bi.error} onRetry={() => bi.refetch()} emptyTitle={t('reports.bi.empty')} testId="bi-grants" />
+          <DataTable caption={t('reports.bi.caption')} columns={columns} rows={data?.grants} rowKey={(g) => g.id} isLoading={bi.isLoading} error={bi.error} onRetry={() => bi.refetch()} emptyTitle={t('reports.bi.empty')} testId="bi-grants" />
         </section>
       </div>
       <GrantDialog open={grantOpen} onClose={() => setGrantOpen(false)} />

@@ -34,7 +34,9 @@ Permissions are re-checked on every snapshot view/export.
 - **Fonts and PDF.** IBM Plex Sans / IBM Plex Sans Arabic (SIL OFL, `@fontsource/*`) are embedded into the HTML as data
   URLs; Chromium runs offline (every request aborted). Production needs the `api-chromium` image (`HUB_CHROMIUM_PATH`) for
   the worker; without it PDF requests are refused with `report.export_format_unavailable` (422) — never a fake file.
-  Glyphs outside the bundled subsets (e.g. "→") fall back to a system font.
+  Glyphs outside the bundled subsets (e.g. "→") fall back to a system font. The executive summary stays on one page
+  whatever the data: while the printed file has more than one page, fewer rows are kept per table (3 → 2 → 1, each
+  shortened table saying "Showing n of m rows"), then the page is zoomed uniformly (never below 75 %).
 - **Labels.** Files and the Reports screen use the same texts: `apps/api/src/modules/reporting/render/labels.ts` and
   `apps/web/src/i18n/messages/{en,ar}/reports.json` (`content`) are kept identical by `report-labels.spec.ts`.
 - **BI.** Read-only `bi` views for a restricted `hub_bi` database role, exposed per project by its sponsor

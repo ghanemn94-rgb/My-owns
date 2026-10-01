@@ -26,7 +26,7 @@ export type ReportExport = RouteResponse<R['getReportExport']>;
 export type KpiCatalogue = RouteResponse<R['getKpiCatalogue']>;
 export type KpiEntry = KpiCatalogue['items'][number];
 export type BiAccess = RouteResponse<R['getBiAccess']>;
-export type BiGrant = BiAccess['items'][number];
+export type BiGrant = BiAccess['grants'][number];
 
 export const rk = {
   root: (pid: string) => ['reports', pid] as const,

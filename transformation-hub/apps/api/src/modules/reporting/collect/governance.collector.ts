@@ -99,7 +99,7 @@ async function visibleActions(g: Gen, extra?: SQL) {
 }
 
 /** Committee actions: open, overdue, awaiting verification (committee pack). */
-export async function actionsSection(g: Gen, key = 'actions', extra?: SQL): Promise<StoredSection> {
+export async function actionsSection(g: Gen, key = 'actions', extra?: SQL, sourceOf: { type: string; id: string | null; label: string }[] = []): Promise<StoredSection> {
   const all = await visibleActions(g, extra);
   const rows = key === 'actions' ? all.filter((r) => OPEN_ACTION.includes(r.a.status)) : all;
   const names = await displayNames(g, rows.map((r) => r.a.ownerUserId));
@@ -126,7 +126,7 @@ export async function actionsSection(g: Gen, key = 'actions', extra?: SQL): Prom
         60,
       ),
     ],
-    sourceRefs: rows.map((r) => ({ type: 'action_item', id: r.a.id, label: r.a.code })),
+    sourceRefs: [...sourceOf, ...rows.map((r) => ({ type: 'action_item', id: r.a.id, label: r.a.code }))],
   });
 }
 
@@ -194,6 +194,7 @@ export async function meetingSections(g: Gen, meetingId: string): Promise<Stored
   const names = await displayNames(g, [...attendance.map((a) => a.userId), m.minutesDraftedBy, m.minutesApprovedBy]);
   attendance.sort((a, b) => ((a.userId ? (names.get(a.userId) ?? '') : '') < (b.userId ? (names.get(b.userId) ?? '') : '') ? -1 : 1));
   const meetingAccess = g.access.flat('meeting', ['governance.meeting.read'], [c.classification]);
+  const meetingRef = { type: 'meeting', id: m.id, label: `#${m.number}` };
   const meeting = section('meeting', meetingAccess, {
     figures: [figure('attendees_present', attendance.filter((a) => a.status === 'present' || a.status === 'remote' || a.status === 'delegated').length), figure('agenda_items', agenda.length)],
     tables: [
@@ -226,7 +227,7 @@ export async function meetingSections(g: Gen, meetingId: string): Promise<Stored
       table('minutes_text', [['text', 'text']], [{ text: m.minutesText }]),
     ],
     notes: [serverMessage(m.status === 'minutes_approved' ? 'report.minutes_approved_internal' : 'report.minutes_not_approved'), serverMessage('report.internal_approval_label')],
-    sourceRefs: [{ type: 'meeting', id: m.id, label: `#${m.number}` }],
+    sourceRefs: [meetingRef],
   });
   const decisionsOfMeeting = await decisions(g, eq(schema.decision.meetingId, m.id));
   const dn = await displayNames(g, decisionsOfMeeting.map((d) => d.requesterUserId));
@@ -234,10 +235,11 @@ export async function meetingSections(g: Gen, meetingId: string): Promise<Stored
     figures: [figure('decisions_at_meeting', decisionsOfMeeting.length)],
     tables: [table('minutes_decisions', [...decisionColumns, ['outcomeRecordedAt', 'text']], decisionsOfMeeting.map((d) => ({ ...decisionRow(d, dn), outcomeRecordedAt: iso(d.outcomeRecordedAt) })))],
     notes: [serverMessage('report.internal_approval_label')],
-    sourceRefs: decisionsOfMeeting.map((d) => ({ type: 'decision', id: d.id, label: d.code })),
+    // The meeting is the source of its decisions and actions, also when there are none.
+    sourceRefs: [meetingRef, ...decisionsOfMeeting.map((d) => ({ type: 'decision', id: d.id, label: d.code }))],
   });
   const ids = decisionsOfMeeting.map((d) => d.id);
-  const actions = await actionsSection(g, 'minutes_actions', or(eq(schema.actionItem.meetingId, m.id), ids.length ? inArray(schema.actionItem.decisionId, ids) : sql`false`));
+  const actions = await actionsSection(g, 'minutes_actions', or(eq(schema.actionItem.meetingId, m.id), ids.length ? inArray(schema.actionItem.decisionId, ids) : sql`false`), [meetingRef]);
   return [meeting, decided, actions];
 }
 

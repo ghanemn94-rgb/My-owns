@@ -234,7 +234,8 @@ export const BiAccessDto = z.object({
   views: z.array(z.string()),
   /** Status of the BI connection itself: the platform never claims a connected BI tool (it does not see one). */
   connection: z.literal('not_verified'),
-  items: z.array(BiAccessGrantDto),
+  /** Every grant of the project, active and withdrawn, newest first (a history, not a paged list). */
+  grants: z.array(BiAccessGrantDto),
 });
 export const GrantBiAccessBody = z.object({ maxClassification: z.enum(['internal', 'confidential', 'restricted']), reason: z.string().trim().min(3).max(2000) }).strict();
 export const RevokeBiAccessBody = z.object({ expectedVersion: z.number().int().positive(), reason: z.string().trim().min(3).max(2000) }).strict();
@@ -344,6 +345,8 @@ export const reportingRoutes = registerRoutes({
     tags,
     access: 'admin.clearance.grant',
     params: ProjectParams,
+    // Grants newest first (fixed order).
+    query: z.object({ sort: NoSort }),
     response: BiAccessDto,
   }),
   grantBiAccess: defineRoute({
@@ -378,6 +381,8 @@ export const reportingRoutes = registerRoutes({
     tags,
     access: 'reports.report.generate',
     params: ProjectParams,
+    // KPIs in key order (fixed order).
+    query: z.object({ sort: NoSort }),
     response: KpiCatalogueDto,
   }),
 });

@@ -33,7 +33,7 @@ function ReportTableView({ table, L }: { table: SnapshotTable; L: ReportLabels }
   const title = L.table(table.key);
   return (
     <div className="space-y-1.5" data-testid="report-table" data-table={table.key} data-rows={table.rows.length} data-total={table.totalRows}>
-      <h4 className="text-sm font-semibold text-ink">{title}</h4>
+      <h3 className="text-sm font-semibold text-ink">{title}</h3>
       {table.rows.length === 0 ? (
         <p className="text-sm text-muted">{L.meta('noRows')}</p>
       ) : (
@@ -84,9 +84,9 @@ export function SnapshotSectionView({ section, L }: { section: SnapshotSection; 
   return (
     <section aria-labelledby={`${id}-title`} id={id} className={cx(card, 'scroll-mt-4 space-y-4 p-4')} data-testid="report-section" data-section={section.key} data-included={section.included}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 id={`${id}-title`} className="text-base font-semibold text-ink">
+        <h2 id={`${id}-title`} className="text-base font-semibold text-ink">
           {L.section(section.key)}
-        </h3>
+        </h2>
         {section.included && section.classification ? (
           <StatusBadge enumName="classifications" value={section.classification} tone="neutral" label={L.meta('sectionClassification', { classification: tStatus('classifications', section.classification) })} />
         ) : null}
@@ -114,7 +114,7 @@ export function SnapshotSectionView({ section, L }: { section: SnapshotSection; 
           ))}
           {section.notes.length ? (
             <div>
-              <h4 className="text-sm font-semibold text-ink">{L.meta('notesTitle')}</h4>
+              <h3 className="text-sm font-semibold text-ink">{L.meta('notesTitle')}</h3>
               <ul className="mt-1 list-disc space-y-0.5 ps-5 text-sm text-ink" data-testid="section-notes">
                 {section.notes.map((n, i) => (
                   <li key={`${n.code}-${i}`} data-code={n.code}>
@@ -126,7 +126,7 @@ export function SnapshotSectionView({ section, L }: { section: SnapshotSection; 
           ) : null}
           {section.unverified.length ? (
             <div>
-              <h4 className="text-sm font-semibold text-ink">{L.meta('unverifiedData')}</h4>
+              <h3 className="text-sm font-semibold text-ink">{L.meta('unverifiedData')}</h3>
               <ul className="mt-1 space-y-0.5 text-sm" data-testid="section-unverified">
                 {section.unverified.map((u, i) => (
                   <li key={`${u.id ?? u.label}-${i}`} className="flex flex-wrap items-center gap-2">

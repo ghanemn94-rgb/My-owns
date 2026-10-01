@@ -47,7 +47,7 @@ describe('REQ-RPT-011 BI-ready views for a restricted service account', () => {
 
   it('only the project sponsor lists a project for BI, never above their own clearance; the platform never claims a BI connection', async () => {
     const r = (await sponsor.get(RP(project, '/bi-access')).expect(200)).body;
-    expect(r).toMatchObject({ projectIsDemo: false, exposed: false, connection: 'not_verified', items: [] });
+    expect(r).toMatchObject({ projectIsDemo: false, exposed: false, connection: 'not_verified', grants: [] });
     expect((await pm.get(RP(project, '/bi-access'))).status).toBe(403);
     expect((await pm.post(RP(project, '/bi-access'), { maxClassification: 'internal', reason: 'PM is not the sponsor' })).status).toBe(403);
     const lowClient = await loginUserId(await reportUser('bi-sponsor-internal', 'internal', [{ role: 'sponsor' }]));

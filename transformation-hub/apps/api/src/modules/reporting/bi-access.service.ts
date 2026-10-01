@@ -58,7 +58,7 @@ export class BiAccessService {
   async get(ctx: RequestContext, projectId: string) {
     const p = await this.project(ctx, projectId);
     const rows = await this.db.tx().select().from(schema.biAccessGrant).where(eq(schema.biAccessGrant.projectId, projectId)).orderBy(desc(schema.biAccessGrant.createdAt), desc(schema.biAccessGrant.id));
-    return { projectIsDemo: p.isDemo, exposed: !p.isDemo && rows.some((r) => !r.revokedAt), views: [...BI_VIEWS], connection: 'not_verified' as const, items: await this.dto(rows) };
+    return { projectIsDemo: p.isDemo, exposed: !p.isDemo && rows.some((r) => !r.revokedAt), views: [...BI_VIEWS], connection: 'not_verified' as const, grants: await this.dto(rows) };
   }
 
   async grant(ctx: RequestContext, projectId: string, body: RouteInput<R['grantBiAccess']>['body']) {
