@@ -702,10 +702,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:18e150714d29fa67aeaf28e817bb500d2db6191c88cde3ea680b3a64c8056f5b",
-        "source_commit": "40dbd2400c0f0dfbc6704c7fc40d23be714239d6",
-        "frozen_at": "2026-10-01T22:23:49Z",
-        "manifest_path": "docs/delivery/candidates/DG1/18e150714d29fa67.manifest.json"
+        "candidate_id": "sha256:6e0c0db1a8bea33cd81f05ea8c795d8ede4bfb7f380dfe146556cb4875a6f827",
+        "source_commit": "642e6bfb2c905d2c3382035032fa56c84672dcab",
+        "frozen_at": "2026-10-01T23:13:23Z",
+        "manifest_path": "docs/delivery/candidates/DG1/6e0c0db1a8bea33c.manifest.json"
       },
       "review_rounds": [
         {
@@ -743,6 +743,18 @@
             "qa-verifier": "docs/delivery/reviews/DG1/round-3/qa-verifier.json"
           },
           "note": "Clean re-gate round 3 (gate round) on candidate 18e15071 after the F-DG1-232 e2e-determinism fix. qa re-verifies F-DG1-232; domain and code-security re-confirm no regression (their round-2 closures hold). Live-registry (D-057) and live-CI A24 (D-058) remain documented residuals, never BLOCKED gate checks."
+        },
+        {
+          "round": 4,
+          "candidate_id": "sha256:6e0c0db1a8bea33cd81f05ea8c795d8ede4bfb7f380dfe146556cb4875a6f827",
+          "frozen_at": "2026-10-01T23:13:23Z",
+          "source_commit": "642e6bfb2c905d2c3382035032fa56c84672dcab",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG1/round-4/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG1/round-4/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG1/round-4/qa-verifier.json"
+          },
+          "note": "Clean re-gate round 4 (gate round) on candidate 6e0c0db1 after the F-DG1-147 e2e-typecheck-coverage fix. code-security re-verifies F-DG1-147; domain and qa re-confirm no regression (their prior closures hold). Live-registry (D-057) and live-CI A24 (D-058) remain documented residuals, never BLOCKED gate checks."
         }
       ],
       "gate_record": "docs/delivery/gates/DG1.json",
@@ -781,6 +793,16 @@
           "state": "REVIEWING",
           "at": "2026-10-01T22:27:00Z",
           "note": "F-DG1-232 repaired and FIXED_PENDING_VERIFICATION at ee2dfcf; candidate re-frozen as 18e15071 (394 files, source 40dbd24) for the round-3 gate review."
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-10-01T23:15:00Z",
+          "note": "Round 3 (gate round): domain PASS, qa PASS (F-DG1-232 CLOSED_VERIFIED), code-security PASS but raised one new Low finding F-DG1-147 (Playwright e2e specs apps/web/e2e/** + root playwright.config.ts outside every typecheck target). Repaired: new apps/web/tsconfig.e2e.json wired into apps/web typecheck so pnpm -r typecheck covers the e2e specs + playwright config (fail-then-pass proven; no real type errors). F-DG1-147 FIXED_PENDING_VERIFICATION at ac4a13c. Verified: typecheck green incl. e2e, lint, unit 326/326."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-10-01T23:17:00Z",
+          "note": "F-DG1-147 repaired and FIXED_PENDING_VERIFICATION at ac4a13c; candidate re-frozen as 6e0c0db1 (395 files, source 642e6bfb) for the round-4 gate review."
         }
       ]
     },
