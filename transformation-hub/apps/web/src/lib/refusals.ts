@@ -263,6 +263,18 @@ export const REFUSAL_KEYS: Readonly<Record<string, Entry>> = {
   'jv.checklist_item.no_not_required_request': 'jv.refusal.codes.checklist_no_not_required_request',
   'governance.action.linker_verification': 'governance.refusal.codes.action_linker_verification',
   'governance.decision.not_requester': 'governance.refusal.codes.decision_not_requester',
+  // Reports (P6): generation scope, exports and BI grants
+  'report.export_format_unavailable': 'reports.refusals.export_format_unavailable',
+  'report.renderer_unavailable': 'reports.refusals.export_format_unavailable',
+  'report.meeting_required': 'reports.refusals.meeting_required',
+  'report.meeting_not_applicable': 'reports.refusals.meeting_not_applicable',
+  'report.workstream_not_applicable': 'reports.refusals.workstream_not_applicable',
+  'report.nothing_to_report': 'reports.refusals.nothing_to_report',
+  'report.export_not_ready': 'reports.refusals.export_not_ready',
+  'report.export_integrity': 'reports.refusals.export_integrity',
+  'report.bi_above_clearance': 'reports.refusals.bi_above_clearance',
+  'report.bi_grant_active': 'reports.refusals.bi_grant_active',
+  'report.bi_grant_revoked': 'reports.refusals.bi_grant_revoked',
 };
 
 /** `(error) => translated explanation | null` for the active locale. */

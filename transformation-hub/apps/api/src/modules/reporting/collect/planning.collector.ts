@@ -109,7 +109,7 @@ export function delaysSection(g: Gen, d: PlanningData): StoredSection {
     ],
     notes: d.baselineDates.size ? [] : [serverMessage('report.no_approved_baseline')],
     unverified: unverifiedOf(lateMilestones.map(({ m }) => ({ id: m.id, label: m.code, status: m.verificationStatus })), 'milestone'),
-    sourceRefs: [{ type: 'register', id: null, label: 'milestone register' }, { type: 'register', id: null, label: 'task register' }],
+    sourceRefs: [{ type: 'register', id: null, label: 'milestone_register' }, { type: 'register', id: null, label: 'task_register' }],
   });
 }
 
@@ -138,7 +138,7 @@ export function milestonesSection(g: Gen, d: PlanningData): StoredSection {
       ),
     ],
     unverified: unverifiedOf(rows.map((m) => ({ id: m.id, label: m.code, status: m.verificationStatus })), 'milestone'),
-    sourceRefs: [{ type: 'register', id: null, label: 'milestone register' }],
+    sourceRefs: [{ type: 'register', id: null, label: 'milestone_register' }],
   });
 }
 
@@ -174,7 +174,7 @@ export function lookAheadSection(g: Gen, d: PlanningData): StoredSection {
       ),
     ],
     notes: [serverMessage('report.look_ahead_windows', { from: g.today, to2: addCalendarDays(g.today, 13), to4: addCalendarDays(g.today, 27), to8: addCalendarDays(g.today, 55) })],
-    sourceRefs: [{ type: 'register', id: null, label: 'task, milestone and deliverable registers' }],
+    sourceRefs: [{ type: 'register', id: null, label: 'plan_registers' }],
   });
 }
 
@@ -195,7 +195,7 @@ export function overdueSection(g: Gen, d: PlanningData): StoredSection {
         120,
       ),
     ],
-    sourceRefs: [{ type: 'register', id: null, label: 'task, milestone and deliverable registers' }],
+    sourceRefs: [{ type: 'register', id: null, label: 'plan_registers' }],
   });
 }
 
@@ -269,7 +269,7 @@ export async function raidSection(g: Gen, d: PlanningData): Promise<StoredSectio
         30,
       ),
     ],
-    sourceRefs: [{ type: 'register', id: null, label: 'RAID register' }],
+    sourceRefs: [{ type: 'register', id: null, label: 'raid_register' }],
   });
 }
 
@@ -316,6 +316,6 @@ export async function dataQualitySection(g: Gen, d: PlanningData): Promise<Store
     ],
     notes: [serverMessage('report.stale_after_days', { days: UPDATE_STALE_AFTER_DAYS })],
     unverified: historical.slice(0, 100).map((t) => ({ type: 'task', id: t.id, label: t.wbsCode, status: t.verificationStatus })),
-    sourceRefs: [{ type: 'register', id: null, label: 'task, milestone, deliverable, workstream and update registers' }],
+    sourceRefs: [{ type: 'register', id: null, label: 'data_quality_registers' }],
   });
 }

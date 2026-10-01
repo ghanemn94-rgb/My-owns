@@ -56,6 +56,8 @@ export interface ReportLabels {
   columns: Dict;
   figures: Dict;
   notes: Dict;
+  /** Source references that name a register (type `register`): translated; other references are record codes. */
+  sources: Dict;
   enums: Record<string, Dict>;
 }
 
@@ -338,6 +340,14 @@ const en: ReportLabels = {
     'kpi.weights_approved': 'Approved deliverable weights are used.',
     'kpi.weights_not_approved_count_based': 'Not every weight is approved: each deliverable counts once.',
     'kpi.limited_to_your_workstreams': 'Limited to the generator’s workstreams.',
+  },
+  sources: {
+    milestone_register: 'Milestone register',
+    task_register: 'Task register',
+    plan_registers: 'Task, milestone and deliverable registers',
+    raid_register: 'RAID register',
+    data_quality_registers: 'Task, milestone, deliverable, workstream and update registers',
+    readiness_register: 'Readiness checklist register',
   },
   enums: {
     reportItemTypes: { task: 'Task', milestone: 'Milestone', deliverable: 'Deliverable' },
@@ -663,6 +673,14 @@ const ar: ReportLabels = {
     'kpi.weights_approved': 'تُستخدم أوزان المخرجات المعتمدة.',
     'kpi.weights_not_approved_count_based': 'ليست كل الأوزان معتمدة: يُحتسب كل مخرج مرة واحدة.',
     'kpi.limited_to_your_workstreams': 'مقتصر على مسارات عمل منشئ التقرير.',
+  },
+  sources: {
+    milestone_register: 'سجل المعالم',
+    task_register: 'سجل المهام',
+    plan_registers: 'سجلات المهام والمعالم والمخرجات',
+    raid_register: 'سجل المخاطر والمشكلات (RAID)',
+    data_quality_registers: 'سجلات المهام والمعالم والمخرجات ومسارات العمل والتحديثات',
+    readiness_register: 'سجل قائمة فحوص الجاهزية',
   },
   enums: {
     reportItemTypes: { task: 'مهمة', milestone: 'معلم', deliverable: 'مخرج' },

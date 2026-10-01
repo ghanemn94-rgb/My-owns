@@ -105,7 +105,7 @@ export async function readinessSection(g: Gen): Promise<StoredSection | null> {
       ),
     ],
     notes: [serverMessage('report.blocker_makes_site_red')],
-    sourceRefs: [{ type: 'register', id: null, label: 'readiness checklist register' }, ...plans.map((p) => ({ type: 'cutover_plan', id: p.id, label: p.code }))],
+    sourceRefs: [{ type: 'register', id: null, label: 'readiness_register' }, ...plans.map((p) => ({ type: 'cutover_plan', id: p.id, label: p.code }))],
   });
 }
 

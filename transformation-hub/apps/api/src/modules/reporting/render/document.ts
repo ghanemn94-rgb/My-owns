@@ -203,7 +203,7 @@ function renderSection(locale: ReportLocale, f: Formatter, key: string, s: Store
     })),
     notes: s.notes.map((n) => noteText(locale, f, n.code, n.params)).filter((x): x is string => !!x),
     unverified: s.unverified.map((u) => `${u.label} — ${enumLabel(locale, 'verificationStatuses', u.status)}`),
-    sources: s.sourceRefs.map((r) => r.label),
+    sources: s.sourceRefs.map((r) => (r.type === 'register' ? (L.sources[r.label] ?? r.label) : r.label)),
   };
 }
 
