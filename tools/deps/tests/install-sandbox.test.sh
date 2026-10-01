@@ -129,6 +129,12 @@ if ! printf '%s' "$esc" | grep -q "WRITABLE" && [ "$before" = "$after" ]; then
 else bad "AC-7 an escape succeeded or the real repo changed: $esc (before=$before after=$after)"; fi
 
 # ---- AC-8: agent-config surfaces that do not yet exist cannot be created (F-DG1-114) -----------------------------
+# NON-DESTRUCTIVE (F-DG1-122): a developer may legitimately have .vscode/ or CLAUDE.local.md etc. in their working
+# tree. Snapshot which probe paths pre-exist, and only ever remove a path the probe NEWLY created (there should be
+# none — the repo is read-only); never delete a pre-existing developer file.
+AC8_PATHS=(CLAUDE.local.md .mcp.json apps/api/CLAUDE.md .vscode/tasks.json)
+ac8_pre=""
+for p in "${AC8_PATHS[@]}"; do [ -e "$ROOT/$p" ] && ac8_pre="$ac8_pre|$p|"; done
 cfg="$("$WRAP" run -- bash -c '
   w(){ if ( eval "$2" ) 2>/dev/null; then echo "WRITABLE $1"; else echo "refused $1"; fi; }
   w CLAUDE.local.md "echo x > CLAUDE.local.md"
@@ -136,10 +142,13 @@ cfg="$("$WRAP" run -- bash -c '
   w nested-CLAUDE.md "echo x > apps/api/CLAUDE.md"
   w .vscode "mkdir -p .vscode && echo x > .vscode/tasks.json"
 ' 2>&1)"
-for p in CLAUDE.local.md .mcp.json apps/api/CLAUDE.md .vscode; do rm -rf "$ROOT/$p" 2>/dev/null; done
-if ! printf '%s' "$cfg" | grep -q "WRITABLE"; then
+ac8_created=0
+for p in "${AC8_PATHS[@]}"; do
+  if [ -e "$ROOT/$p" ] && [ "${ac8_pre#*"|$p|"}" = "$ac8_pre" ]; then ac8_created=1; rm -rf "$ROOT/$p" 2>/dev/null; fi
+done
+if ! printf '%s' "$cfg" | grep -q "WRITABLE" && [ "$ac8_created" = 0 ]; then
   ok "AC-8 agent-config surfaces (CLAUDE.local.md, .mcp.json, nested CLAUDE.md, .vscode) cannot be created"
-else bad "AC-8 an agent-config surface was creatable: $cfg"; fi
+else bad "AC-8 an agent-config surface was creatable or newly created (writable=$(printf '%s' "$cfg" | grep -c WRITABLE), created=$ac8_created)"; fi
 
 # ---- AC-9: copy-back only touches real workspace-member node_modules (F-DG1-118) -------------------------------
 # An allow-listed build script that plants a dir named node_modules at a NON-member path (a control-path-like subdir)

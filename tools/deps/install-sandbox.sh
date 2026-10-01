@@ -135,21 +135,50 @@ elif [ "$MODE" = "frozen" ]; then
   fi
 fi
 
-# Copy back node_modules ONLY at the real repository's own workspace-member directories — the root and every committed
-# package.json directory. The member list is enumerated from the REAL (trusted) tree, NEVER from the disposable copy, so
-# a dependency build script that plants a directory named `node_modules` at any other path (e.g. tools/gates/, .git/) —
-# or with a crafted name — is never copied into the real repo (F-DG1-118). Every destination is a path under
-# $REPO_ROOT derived from a trusted member directory, and the iteration is NUL-delimited, so a hostile file name cannot
-# make `rm -rf`/`cp` act on a path outside the repo. The source must be a real directory, not a symlink.
-while IFS= read -r -d '' pj; do
-  member="$(dirname "$pj")"
+# Copy back node_modules ONLY at the real repository's own pnpm-workspace members — the root plus every directory that
+# the `packages:` globs in pnpm-workspace.yaml resolve to and that has a package.json. The member list is computed from
+# the REAL (trusted) tree, NEVER from the disposable copy, so a dependency build script that plants a directory named
+# `node_modules` at any other path (e.g. tools/gates/, .git/), or a stray package.json, or a crafted name, is never
+# copied into the real repo (F-DG1-118/F-DG1-123). Every destination is a path under $REPO_ROOT derived from a trusted
+# member directory, the iteration is NUL-delimited, and the source must be a real directory (not a symlink), so a
+# hostile name cannot make rm/cp act outside the repo. A failed copy fails the whole install (never a silent exit 0).
+# The member directories come from the trusted real tree (apps/*, packages/* in pnpm-workspace.yaml) and so carry no
+# newlines; a newline-delimited list through a temp file is therefore safe and side-steps the NUL-stripping that a
+# command substitution would do. node resolves the globs against the REAL repo only.
+MEMBERS_FILE="$(mktemp "${TMPDIR:-/var/tmp}/mth-members.XXXXXX")"
+cleanup() { rm -rf "$WS"; rm -f "$MEMBERS_FILE"; }
+node -e '
+const fs = require("fs"), path = require("path");
+const root = process.argv[1];
+const members = new Set([root]); // the root is always a member; a single-package tree has no workspace file
+const wsPath = path.join(root, "pnpm-workspace.yaml");
+if (fs.existsSync(wsPath)) {
+  const txt = fs.readFileSync(wsPath, "utf8");
+  const globs = [...txt.matchAll(/^\s*-\s*["\x27]?([^"\x27\n#]+?)["\x27]?\s*$/gm)].map((m) => m[1].trim());
+  for (const g of globs) {
+    for (const rel of fs.globSync(g, { cwd: root })) {
+      const abs = path.join(root, rel);
+      try {
+        if (fs.statSync(abs).isDirectory() && fs.existsSync(path.join(abs, "package.json"))) members.add(abs);
+      } catch { /* not a usable member; skip */ }
+    }
+  }
+}
+process.stdout.write([...members].join("\n") + "\n");
+' "$REPO_ROOT" > "$MEMBERS_FILE" || fail "could not resolve the pnpm-workspace members for the node_modules copy-back"
+
+copy_err=0
+while IFS= read -r member; do
+  [ -n "$member" ] || continue
   rel="${member#"$REPO_ROOT"}"; rel="${rel#/}"
   wsnm="$WS${rel:+/$rel}/node_modules"
   dest="$member/node_modules"
-  if [ -d "$wsnm" ] && [ ! -L "$wsnm" ]; then
-    rm -rf "$dest"
-    cp -a "$wsnm" "$dest"
+  [ -d "$wsnm" ] && [ ! -L "$wsnm" ] || continue
+  if ! rm -rf "$dest" || ! cp -a "$wsnm" "$dest"; then
+    echo "install-sandbox: failed to copy node_modules back to $dest" >&2
+    copy_err=1
   fi
-done < <(find "$REPO_ROOT" -maxdepth 4 -name package.json -not -path '*/node_modules/*' -print0)
+done < "$MEMBERS_FILE"
+[ "$copy_err" -eq 0 ] || fail "node_modules copy-back failed; the install is incomplete"
 
 exit 0
