@@ -476,7 +476,24 @@ const sameTerms = (a: ExtensionTerms, b: ExtensionTerms) => a.tsaServiceId === b
  * carries another TSA's extension. Returns `new` (no terms bound yet — these become the decision's terms), `same` (the
  * request repeats the bound terms) or `rebind` (draft decision: its terms change).
  */
-export function extensionTermsBinding(i: { decisionStatus: DecisionStatus; bound: ExtensionTerms | null; requested: ExtensionTerms }): 'new' | 'same' | 'rebind' {
+export function extensionTermsBinding(i: {
+  decisionStatus: DecisionStatus;
+  bound: ExtensionTerms | null;
+  requested: ExtensionTerms;
+  /** DOM-P34R3-01: votes already cast in the decision's current voting round (0 if unknown — the caller reads it). */
+  votesInCurrentRound?: number;
+  /** DOM-P34R3-01: the chair closed voting for the current round. */
+  votingClosed?: boolean;
+}): 'new' | 'same' | 'rebind' {
+  if (!i.bound && ((i.votesInCurrentRound ?? 0) > 0 || i.votingClosed) && EXTENSION_TERMS_BINDABLE_STATUSES.includes(i.decisionStatus)) {
+    // DOM-P34R3-01: the window closes when voting starts, not when the outcome is recorded — members who already voted
+    // never saw these terms. A deferred paper resumed later starts a new round, and terms may be bound before its votes.
+    throw ruleViolation(
+      'tsa.extension.terms_after_vote',
+      'Voting on this decision has already started: link the extension request to a decision paper before the committee votes on it, so that every vote is cast on the end date and continuity plan it approves',
+      { decisionStatus: i.decisionStatus, votesInCurrentRound: i.votesInCurrentRound ?? 0, votingClosed: !!i.votingClosed },
+    );
+  }
   if (!i.bound) {
     // DOM-P34R2-01: terms are bound to a decision for the FIRST time only while its paper is still before the committee
     // (no outcome yet) — otherwise the terms would carry an end date the committee never saw (e.g. the decision that

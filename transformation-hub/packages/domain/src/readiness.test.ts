@@ -397,6 +397,16 @@ describe('TSA (REQ-TSA-001..006, AT-10, D-25)', () => {
     // Terms bound before the outcome stay usable after it (same terms).
     expect(extensionTermsBinding({ decisionStatus: 'approved', bound: terms, requested: terms })).toBe('same');
   });
+  it('DOM-P34R3-01: a first binding is refused once any vote of the current round exists or voting was closed; bound terms stay usable', () => {
+    const terms = { tsaServiceId: 't1', proposedEndDate: '2027-01-19', continuityPlan: 'Keep the bridge' };
+    expect(extensionTermsBinding({ decisionStatus: 'under_review', bound: null, requested: terms, votesInCurrentRound: 0 })).toBe('new');
+    expect(codeOf(() => extensionTermsBinding({ decisionStatus: 'under_review', bound: null, requested: terms, votesInCurrentRound: 1 }))).toBe('rule_violation:tsa.extension.terms_after_vote');
+    expect(codeOf(() => extensionTermsBinding({ decisionStatus: 'under_review', bound: null, requested: terms, votingClosed: true }))).toBe('rule_violation:tsa.extension.terms_after_vote');
+    // Terms bound before the first vote are repeated after it without change.
+    expect(extensionTermsBinding({ decisionStatus: 'under_review', bound: terms, requested: terms, votesInCurrentRound: 4 })).toBe('same');
+    // After the outcome the outcome rule decides (terms_after_outcome), whatever the votes.
+    expect(codeOf(() => extensionTermsBinding({ decisionStatus: 'approved', bound: null, requested: terms, votesInCurrentRound: 4 }))).toBe('rule_violation:tsa.extension.terms_after_outcome');
+  });
   it('DOM-P34R-04: the terms are bound per DECISION — another TSA is refused, and record-extension applies only the bound terms', () => {
     const terms = { tsaServiceId: 't1', proposedEndDate: '2027-01-19', continuityPlan: 'Keep the bridge' };
     expect(codeOf(() => extensionTermsBinding({ decisionStatus: 'approved', bound: terms, requested: { ...terms, tsaServiceId: 't2' } }))).toBe('rule_violation:tsa.extension.decision_other_tsa');

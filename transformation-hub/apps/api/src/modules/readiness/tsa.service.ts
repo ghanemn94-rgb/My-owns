@@ -554,8 +554,15 @@ export class TsaService {
     // DOM-P3-06 / DOM-P34R-04: the terms are bound to the DECISION (one TSA, one end date, one continuity plan per decision),
     // not to the TSA row's current link — re-linking through another decision never releases them. The decision row is read
     // FOR SHARE so a concurrent submission of the paper waits for (or is seen by) this request.
-    const locked = await this.s.db.query<{ status: string }>(`select status from decision where project_id = $1 and id = $2 for share`, [projectId, d.id]);
+    const locked = await this.s.db.query<{ status: string; vote_round: number; voting_closed_round: number | null }>(
+      `select status, vote_round, voting_closed_round from decision where project_id = $1 and id = $2 for share`,
+      [projectId, d.id],
+    );
     const decisionStatus = (locked.rows[0]?.status ?? d.status) as DecisionRow['status'];
+    // DOM-P34R3-01: votes already cast in the current round (read under the decision row lock; a vote takes the same row lock).
+    const voteRound = Number(locked.rows[0]?.vote_round ?? 1);
+    const cast = await this.s.db.query<{ n: number }>(`select count(*)::int n from vote where project_id = $1 and decision_id = $2 and round = $3`, [projectId, d.id, voteRound]);
+    const votingClosed = locked.rows[0]?.voting_closed_round != null && Number(locked.rows[0].voting_closed_round) === voteRound;
     const ET = schema.tsaExtensionTerms;
     const [bound] = await this.s.db.tx().select().from(ET).where(and(eq(ET.projectId, projectId), eq(ET.decisionId, d.id))).for('update');
     const requested = { tsaServiceId: t.id, proposedEndDate: body.proposedEndDate, continuityPlan: body.continuityPlan };
@@ -564,6 +571,8 @@ export class TsaService {
     await this.extensionReliance(projectId, t.id, d, false);
     const binding = extensionTermsBinding({
       decisionStatus,
+      votesInCurrentRound: cast.rows[0]?.n ?? 0,
+      votingClosed,
       bound: bound ? { tsaServiceId: bound.tsaServiceId, proposedEndDate: bound.proposedEndDate, continuityPlan: bound.continuityPlan } : null,
       requested,
     });

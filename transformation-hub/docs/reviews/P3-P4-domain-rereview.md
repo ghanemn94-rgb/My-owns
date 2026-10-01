@@ -792,3 +792,163 @@ In the full suite, the two expected fails are the open P2 Lows DOM-P2F-02 and DO
 - The decision paper does not yet show the requested extension end date (governance paper form; §8 and the last bullet of §9.3). The rule does not need it, because the terms are bound to the decision before its outcome.
 - O1 and O2 stay Info for the Operations owner.
 - Item 3 of §9.8 is not done: the owner's answer on rule 6. It belongs to the governance owner. The questions are recorded (Q-P3-13, Q-P34R2-01) and the conservative reading is implemented until the owner answers.
+
+### 9.10 Re-check of DOM-P34R2-01 (lead request)
+
+| Item | Value |
+|---|---|
+| Revision | `c990f5c` on `claude/mobily-transformation-hub` (fetch + merge → fast-forward from this review's `e911811`, which is an ancestor). Frozen. |
+| Added | This subsection and one probe file, `apps/api/test/reviews/p34-domain-re3-tsa.spec.ts`. §1–§9.9 above are unchanged. |
+| **DOM-P34R2-01** | **FIXED (verified)** — conservative reading; the governance owner should confirm it (Q-P3-13, Q-P34R2-01, recorded as questions). |
+| New | **DOM-P34R3-01 (Medium):** the binding window closes at the outcome, not at the vote. |
+| **Final P3 verdict** | **PASS WITH CONDITIONS** — no open Critical or High. Medium DOM-P34R3-01 must be fixed, or accepted by the governance owner with a recorded decision, before the P3 gate report. Info O1 / O2 and the owner questions go to the gate report. |
+
+**Probes, plain mode** (`P34DRE_PROBE_PLAIN=1`):
+
+```
+$ P34DRE_PROBE_PLAIN=1 TEST_DATABASE_URL=…/hub_test_p34dre_probe … npx vitest run test/reviews/p34-domain-re2-tsa.spec.ts test/reviews/p34-domain-re3-tsa.spec.ts --reporter=verbose
+ ✓ DOM-P34R2-01a: the decision that approved the TSA's TERMS … (fixed, regression)
+ ✓ DOM-P34R2-01b: an extension paper approved BEFORE it was linked to the TSA … (fixed, regression)
+ ✓ CONTROL: a deferred paper binds no terms (422 tsa.extension.terms_after_outcome); resumed, it opens a new vote round and the request binds before that vote
+ × DEFECT DOM-P34R3-01: votes {"t":"2026-10-01 08:15:36.095667+00","n":4}; request 201; outcome 201 approved; record 201 {"status":"extended"};
+     TSA extended end 2035-07-06; bound terms [{"end_date":"2035-07-06","bound_at":"2026-10-01 08:15:36.137441+00"}]: expected '2035-07-06' not to be '2035-07-06'
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 3 passed (4)
+$ psql …/hub_test_p34dre_probe -Atc "… audit_event … where p.code in ('P34R2-TSA','P34R3-TSA') and a.outcome <> 'success'"
+P34R3-TSA|readiness.requestExtension|rejected|tsa.extension.terms_after_outcome: This decision already has an outcome (deferred) …
+P34R2-TSA|readiness.requestExtension|rejected|tsa.extension.terms_after_outcome: This decision already has an outcome (approved) …   (01a)
+P34R2-TSA|readiness.requestExtension|rejected|tsa.extension.terms_after_outcome: This decision already has an outcome (approved) …   (01b)
+```
+
+Both DOM-P34R2-01 probes now pass for the intended reason: the first binding on an approved decision is refused, and the TSA
+keeps its end date.
+
+**Weakening check** (`diff e911811..c990f5c`):
+
+- `p34-domain-re2-tsa.spec.ts`: rename to "(fixed, regression)" and `void defect;` only; the assertions are unchanged.
+- The fixture refactor (table → request → approve → record, `approveTabledDecision` in `readiness-kit.ts`) in `at-10-tsa-expiry`,
+  `p3-fixes-tsa` (remedied breach, DOM-P3-06, DOM-P3-07) and `p2f-decision-reliance` changes only *when* the paper is approved.
+  Every assertion of those tests (201 / 422 codes, end dates, registry rows) is unchanged.
+- The two renamed tests asserted the former rule 6 ("the terms decision may authorize one extension"), which is exactly what
+  DOM-P34R2-01 required to be refused:
+  - **`p2f-decision-reliance`:** "not a second TSA" and "not a further extension" and the registry rows of X are unchanged. Only
+    the last part flips, from 201 to 422 `terms_after_outcome`, and the registry for Y's terms decision holds `tsa_service`
+    only.
+  - **`p3-fixes-tsa` DOM-P3-13:** part 1 (A's terms decision refused for B, `decision_other_tsa`) is unchanged. A's own request on
+    its terms decision is now 422 `terms_after_outcome`. A is then extended on its own paper.
+  - The "reverse" check of `p3-fixes-tsa` now uses that extension paper. It asserts that a decision used for an extension of A
+    does not approve C's terms; before, the terms+extension decision of A was used. Both cross-TSA directions are still
+    asserted.
+- **Not a weakening of anything this review required.** The flipped assertions encode the refusal recommended in §9.3.
+
+**Touched specs, default mode:**
+
+```
+$ TEST_DATABASE_URL=…/hub_test_p34dre_probe … npx vitest run <12 files> --reporter=verbose
+ Test Files  12 passed (12)
+      Tests  57 passed | 1 expected fail (58)          # the expected fail: DEFECT DOM-P34R3-01
+```
+
+| Spec | Tests |
+|---|---|
+| `readiness/p34r2-fixes-tsa` | 2 |
+| `readiness/at-10-tsa-expiry` | 11 |
+| `readiness/p3-fixes-tsa` | 9 |
+| `readiness/p2f-decision-reliance` | 5 |
+| `readiness/p34r-fixes-tsa` | 3 |
+| `readiness/readiness-isolation` | 7 |
+| `reviews/p3-domain-tsa` | 3 |
+| `reviews/p34-domain-re-tsa` | 2 |
+| `reviews/p34-domain-re2-tsa` | 2 |
+| `reviews/p34-domain-re3-tsa` | 2 |
+| `reviews/p34-sec-re-fixes` | 11 |
+| `reviews/p2-domain-final-readiness` | 1 |
+
+Also run:
+
+```
+$ (packages/domain) npx vitest run       Test Files 23 passed (23)   Tests 473 passed (473)
+$ (apps/api) pnpm run lint               module boundary check passed: 43 cross-module imports, 19 module edges … (exit 0)
+```
+
+**Full API suite** (once, at the end):
+
+```
+$ free -g                                                    → 6 GB free (12 GB available) at the start; one other agent was running tests
+$ (apps/api) TEST_DATABASE_URL=…/hub_test_p34dre TEST_DATABASE_MIGRATION_URL=…/hub_test_p34dre pnpm test --reporter=verbose
+ Test Files  138 passed (138)
+      Tests  1059 passed | 3 expected fail (1062)
+   Duration  1512.49s
+exit 0
+```
+
+The 3 expected failures are DEFECT DOM-P34R3-01 and the two open P2 Lows DOM-P2F-02 / DOM-P2F-04. Every DOM-P3 / DOM-P4 /
+DOM-P34R / DOM-P34R2 probe passes as a plain test.
+
+**Equivalent paths tried:**
+
+| Path | Result |
+|---|---|
+| Decision deferred, then resumed | **Closed by design** (CONTROL). A deferred paper binds nothing (`terms_after_outcome (deferred)`). `resume` returns it to `under_review` with `vote_round + 1`, so terms bound then precede the new round's votes. |
+| Decision superseded / rejected / recommended / implementation statuses | Refused (`terms_after_outcome`). Covered by the implementer's `readiness.test.ts` over every decision status and by `p34r2-fixes-tsa` (recommended / pending external authority, then externally approved). |
+| Decision first linked to another TSA's extension | Already closed by DOM-P34R-04: `decision_other_tsa` once the paper has left draft. While it is a draft it may be re-pointed (`rebind`), which is before the committee. |
+| **Votes cast, outcome not yet recorded** | **Open → DOM-P34R3-01.** |
+
+#### DOM-P34R3-01 — Medium — Extension terms can be bound after the committee has voted, before the outcome is recorded
+
+- **Where:** `packages/domain/src/readiness.ts:460` (`EXTENSION_TERMS_BINDABLE_STATUSES = ['draft', 'submitted', 'under_review']`)
+  and `:479-491`. A decision stays `under_review` until the secretariat records the outcome, even after every vote of the
+  round has been cast. In circulation the votes come in over days, so the window can be long.
+- **Finding:** the window closes at the outcome, not at the first vote. A paper voted with no terms bound gets its end date
+  between the last vote and the outcome. A partially voted paper gets it before the remaining voters, while the earlier voters
+  never had it. The paper itself does not display the bound terms (open since §8), so the voters cannot see them in any case.
+  business-gates.md §6 rule 5 says the binding window ensures "the committee always decides on a paper that carries the end
+  date and continuity plan it approves"; this holds only for terms bound before the first vote.
+- **Reproduction (executed):** `DEFECT DOM-P34R3-01` (`p34-domain-re3-tsa.spec.ts`):
+  1. The extension paper is tabled with no terms; all 4 votes are cast (approve, last at 08:15:36.095).
+  2. The PM requests the extension "to +3200 days" → 201, terms bound at 08:15:36.137.
+  3. The secretariat records the outcome `approved`; record-extension → 201 `extended`, end **2035-07-06**.
+- **Severity:** Medium rather than High.
+  - It is the same effect as DOM-P34R2-01 (an end date the voters never had), and it is reachable by the TSA manager alone.
+  - But it needs an extension paper the committee actually voted on, and it only works inside the voting window of that
+    paper.
+  - It no longer works on any approved decision at any time, as DOM-P34R2-01a did.
+- **Spec / rule:** §7.3; AT-10; REQ-TSA-005; business-gates.md §6 rule 5.
+- **Recommendation (governance owner to confirm):**
+  - Close the first-binding window at the first vote of the current round: refuse while any vote of `vote_round` exists.
+  - Alternatively, make a first binding during voting open a new vote round, as `resume` does.
+  - Show the bound end date and continuity plan on the decision paper, so the voters see what they approve.
+
+**P3 exit criteria at `c990f5c`:**
+
+| Criterion | Result | Evidence |
+|---|---|---|
+| Incorporation recorded while transfer / operations remain incomplete; states separate; never shown complete | **Met** | §9.6, unchanged code paths; AT-06 specs in the full suite. |
+| Blockers prevent go-live (AT-09) | **Met** | §9.6 (O1 / O2 Info). |
+| Perimeter-change impact (AT-07) | **Met** | §9.6. |
+| AT-10: expiry escalates, never an exit; extension awaits an approved decision | **Met, with Medium residual DOM-P34R3-01** | `at-10-tsa-expiry` 11/11. Every extension now needs its own paper, linked before the paper's outcome (DOM-P34R2-01a/-01b regressions, `p34r2-fixes-tsa`, renamed rule-6 tests). Residual: the end date may be bound after the votes and before the outcome. |
+
+**Final verdicts:**
+
+- **P3: PASS WITH CONDITIONS.** Conditions for the P3 gate report:
+  1. DOM-P34R3-01 (Medium): fixed with its probe turned into a regression test, or accepted by the governance owner with a
+     recorded decision.
+  2. Owner questions: Q-P3-13 / Q-P34R2-01 (governance), Q-P3-02 with O1 / O2 (Operations), Q-P3-05 (Legal / Finance),
+     Q-P3-12 (domain owner), Q-P3-17.
+  3. Decision papers do not yet display the extension terms.
+  4. REQ-PHS-005 closes with the gate report.
+- **P4:** unchanged, **PASS WITH CONDITIONS** (§9 table). No P4 code path was touched by this fix.
+
+
+#### Fix status of DOM-P34R3-01 (lead, separate context; the reviewer's text above is unchanged)
+
+**Fixed.** A first binding of extension terms is refused once any vote of the decision's current round exists or the chair
+has closed voting for it (`tsa.extension.terms_after_vote`, 422, audited as rejected); terms bound before the first vote
+stay usable. The vote count is read under the decision row lock (`FOR SHARE`), which a vote also takes (`FOR UPDATE`), so a
+concurrent vote and request serialize. A deferred paper resumed later starts a new round. Files:
+`packages/domain/src/readiness.ts` (`extensionTermsBinding`, new inputs `votesInCurrentRound`, `votingClosed`),
+`apps/api/src/modules/readiness/tsa.service.ts`, refusal texts en + ar, `docs/governance/business-gates.md` §6 rule 5
+(which also records that the decision paper does not yet DISPLAY the bound terms — open item for the governance screens).
+Tests: `DOM-P34R3-01 (fixed, regression)` in `apps/api/test/reviews/p34-domain-re3-tsa.spec.ts` (assertion unchanged;
+`P34DRE_PROBE_PLAIN=1` 6/6 on the three `p34-domain-re*-tsa` files) and the domain unit test "DOM-P34R3-01: …"
+(474/474). The 12 TSA spec files: 58/58. Full API suite: 138 files, 1060 passed + 2 expected fail (DOM-P2F-02/04).
