@@ -1,5 +1,6 @@
 'use client';
 
+import '@/lib/zod-csp';
 import type { ReactNode } from 'react';
 import { ToastProvider } from '@/components/Toast';
 import { I18nProvider } from '@/i18n/provider';

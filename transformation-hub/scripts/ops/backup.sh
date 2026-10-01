@@ -27,8 +27,14 @@
 # DBA backup role with BYPASSRLS — with any other role the dump would fail (row_security=off makes pg_dump refuse
 # rather than silently dumping a filtered subset).
 #
-# Encryption and off-site copies are the backup platform's job (Mobily-managed keys, MQ-09/MQ-17): write --out to
-# an encrypted volume or pipe the directory through the approved encryption tool. This script never uploads anywhere.
+# Encryption (REQ-SEC-011, REQ-DEP-018): with --encrypt-age (age X25519 recipients) or --encrypt-gpg (OpenPGP key ids)
+# the whole backup — dump, objects, configuration, checksums — is streamed into ONE encrypted archive
+# (backup.tar.age | backup.tar.gpg) plus backup.sha256 and a clear-text copy of manifest.json (metadata only: sizes,
+# counts, versions, checksums; no business data). Only PUBLIC keys are needed here: the backup host can write backups
+# but cannot read them; the private key stays with the restore operators (Mobily key management, MQ-09/MQ-17). The
+# plain files are assembled first in a private staging directory (mode 0700; HUB_BACKUP_STAGING_DIR, e.g. a tmpfs or
+# an encrypted volume) and removed after encryption. Off-site copies and immutability (object lock / WORM) are the
+# backup platform's job. This script never uploads anywhere.
 # =====================================================================================================================
 set -euo pipefail
 umask 077
@@ -43,12 +49,14 @@ S3_URI=""
 LABEL="manual"
 POST_MIGRATE_SQL=""
 CONFIG_FILES=()
+AGE_RECIPIENTS=()
+GPG_RECIPIENTS=()
 DB_URL="${DATABASE_BACKUP_URL:-}"
 APP_ROLE="${HUB_DB_RUNTIME_ROLE:-hub_app}"
 OWNER_ROLE="${HUB_DB_OWNER_ROLE:-hub_owner}"
 
 usage() {
-  sed -n '2,32p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+  awk 'NR > 2 && /^# =====/ { exit } NR > 2' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
   cat <<'EOF'
 Options:
   --out DIR               backup directory to create (must not exist)                                   [required]
@@ -58,10 +66,13 @@ Options:
   --config FILE           non-secret configuration file to include (repeatable); refused if it contains credentials
   --post-migrate-sql FILE post-migrate SQL to store with the backup (default: packages/db/sql/post-migrate.sql)
   --label TEXT            free-text label stored in the manifest (e.g. "nightly", "pre-upgrade-0.2.0")
+  --encrypt-age R         encrypt to an age recipient: a public key (age1…) or a recipients file (repeatable)
+  --encrypt-gpg KEY       encrypt to an OpenPGP public key in the caller's keyring (repeatable)
 Environment:
   DATABASE_BACKUP_URL     connection URL of the owner/backup role (no password in the URL; use PGPASSWORD/PGPASSFILE)
   HUB_APP_VERSION         application version recorded in the manifest (default: transformation-hub/package.json)
   HUB_DB_RUNTIME_ROLE     runtime role name (default hub_app); HUB_DB_OWNER_ROLE owner role name (default hub_owner)
+  HUB_BACKUP_STAGING_DIR  where the plain files are assembled before encryption (default: inside --out)
 EOF
 }
 
@@ -80,6 +91,8 @@ while [ $# -gt 0 ]; do
     --config) CONFIG_FILES+=("$2"); shift 2 ;;
     --post-migrate-sql) POST_MIGRATE_SQL="$2"; shift 2 ;;
     --label) LABEL="$2"; shift 2 ;;
+    --encrypt-age) AGE_RECIPIENTS+=("$2"); shift 2 ;;
+    --encrypt-gpg) GPG_RECIPIENTS+=("$2"); shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) die "unknown argument: $1 (see --help)" ;;
   esac
@@ -104,12 +117,40 @@ for f in "${CONFIG_FILES[@]+"${CONFIG_FILES[@]}"}"; do
   fi
 done
 
+ENCRYPT=""
+if [ "${#AGE_RECIPIENTS[@]}" -gt 0 ] && [ "${#GPG_RECIPIENTS[@]}" -gt 0 ]; then die "use either --encrypt-age or --encrypt-gpg, not both"; fi
+if [ "${#AGE_RECIPIENTS[@]}" -gt 0 ]; then
+  ENCRYPT="age"; command -v age >/dev/null || die "--encrypt-age needs the age tool (https://age-encryption.org)"
+  AGE_ARGS=()
+  for r in "${AGE_RECIPIENTS[@]}"; do
+    if [ -f "$r" ]; then AGE_ARGS+=(-R "$r")
+    elif printf '%s' "$r" | grep -Eq '^age1[0-9a-z]{58}$'; then AGE_ARGS+=(-r "$r")
+    else die "--encrypt-age expects an age public key (age1…) or a recipients file: $r"; fi
+  done
+elif [ "${#GPG_RECIPIENTS[@]}" -gt 0 ]; then
+  ENCRYPT="gpg"; command -v gpg >/dev/null || die "--encrypt-gpg needs gpg"
+  GPG_ARGS=()
+  for r in "${GPG_RECIPIENTS[@]}"; do
+    gpg --batch --list-keys "$r" >/dev/null 2>&1 || die "OpenPGP public key not found in the keyring: $r"
+    GPG_ARGS+=(--recipient "$r")
+  done
+fi
+
 export PGCONNECT_TIMEOUT="${PGCONNECT_TIMEOUT:-15}"
 export PGAPPNAME="hub-backup"
 T0="$(now)"
-mkdir -p "$OUT"
-chmod 700 "$OUT"
-info "target directory $OUT; database $(redact "$DB_URL")"
+FINAL_OUT="$OUT"
+mkdir -p "$FINAL_OUT"
+chmod 700 "$FINAL_OUT"
+if [ -n "$ENCRYPT" ]; then
+  # Assemble the plain backup in a private staging directory; only the encrypted archive stays in --out.
+  STAGE_PARENT="${HUB_BACKUP_STAGING_DIR:-$FINAL_OUT}"
+  [ -d "$STAGE_PARENT" ] || die "staging directory $STAGE_PARENT does not exist"
+  OUT="$(mktemp -d "$STAGE_PARENT/.hub-backup-plain.XXXXXX")"
+  chmod 700 "$OUT"
+  trap 'rm -rf "$OUT"' EXIT
+fi
+info "target directory $FINAL_OUT; database $(redact "$DB_URL")${ENCRYPT:+; encryption: $ENCRYPT}"
 
 # --- 1. Snapshot session: export a snapshot and keep the transaction open while pg_dump uses it -------------------
 coproc SNAP { psql -X -q -At -v ON_ERROR_STOP=1 -d "$DB_URL" 2>&1; }
@@ -197,7 +238,10 @@ fi
 (cd "$OUT/objects" && find . -type f -print0 | sort -z | xargs -0 -r sha256sum) >"$OUT/objects.sha256"
 if [ -n "$OBJECTS_DIR" ]; then
   # The source must still match what was copied (objects are immutable; a mismatch means concurrent modification).
-  (cd "$OBJECTS_DIR" && sha256sum --quiet -c "$OUT/objects.sha256") || die "object store changed during the copy"
+  # (An empty object store — e.g. a fresh installation — has nothing to re-check.)
+  if [ -s "$OUT/objects.sha256" ]; then
+    (cd "$OBJECTS_DIR" && sha256sum --quiet -c "$OUT/objects.sha256") || die "object store changed during the copy"
+  fi
 fi
 OBJECT_COUNT=$(wc -l <"$OUT/objects.sha256" | tr -d ' ')
 OBJECT_BYTES=$(find "$OUT/objects" -type f -printf '%s\n' | awk '{ s += $1 } END { print s + 0 }')
@@ -247,9 +291,26 @@ cat >"$OUT/manifest.json" <<EOF
   "postMigrateSql": { "file": "post-migrate.sql", "sha256": "$(sha256sum "$OUT/post-migrate.sql" | cut -d' ' -f1)" },
   "config": [ $CONFIG_JSON ],
   "secretsIncluded": false,
+  "encryption": { "tool": "${ENCRYPT:-none}", "recipients": $(( ${#AGE_RECIPIENTS[@]} + ${#GPG_RECIPIENTS[@]} )), "archive": "$([ -n "$ENCRYPT" ] && echo "backup.tar.$ENCRYPT")" },
   "durationsSeconds": { "pgDump": $(elapsed "$T_DUMP0" "$T_DUMP1"), "snapshotTotal": $(elapsed "$T0" "$T_SNAP1"), "objects": $(elapsed "$T_OBJ0" "$T_OBJ1"), "total": $(elapsed "$T0" "$T1") }
 }
 EOF
 (cd "$OUT" && find . -maxdepth 2 -type f ! -name SHA256SUMS ! -path './objects/*' -printf '%P\n' | sort | xargs -r sha256sum) >"$OUT/SHA256SUMS"
 info "manifest written; total $(elapsed "$T0" "$(now)")s"
+
+if [ -n "$ENCRYPT" ]; then
+  T_ENC0="$(now)"
+  ARCHIVE="$FINAL_OUT/backup.tar.$ENCRYPT"
+  if [ "$ENCRYPT" = age ]; then
+    tar -C "$OUT" -cf - . | age "${AGE_ARGS[@]}" -o "$ARCHIVE" || die "age encryption failed"
+  else
+    tar -C "$OUT" -cf - . | gpg --batch --yes --trust-model always --compress-algo none "${GPG_ARGS[@]}" --encrypt -o "$ARCHIVE" || die "gpg encryption failed"
+  fi
+  cp "$OUT/manifest.json" "$FINAL_OUT/manifest.json"
+  (cd "$FINAL_OUT" && sha256sum "backup.tar.$ENCRYPT" manifest.json) >"$FINAL_OUT/backup.sha256"
+  rm -rf "$OUT"
+  trap - EXIT
+  info "encrypted ($ENCRYPT) into $ARCHIVE ($(du -h "$ARCHIVE" | cut -f1)) in $(elapsed "$T_ENC0" "$(now)")s; plain staging removed"
+  OUT="$FINAL_OUT"
+fi
 info "OK: $OUT"

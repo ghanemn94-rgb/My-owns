@@ -6,6 +6,11 @@
 #   scripts/ops/restore.sh --from /backups/hub-2026-09-29T0200Z --objects-dir /data/objects \
 #       [--verify-app-url postgres://hub_app@db-host:5432/hub_restored] --report restore-report.txt
 #
+# Encrypted backups (backup.sh --encrypt-age / --encrypt-gpg): backup.sha256 is verified first, then the archive is
+# decrypted (age: --age-identity FILE with the PRIVATE key; gpg: the operator's keyring/agent) and unpacked into a
+# private staging directory (mode 0700; HUB_RESTORE_STAGING_DIR) that is removed when the script ends. Decryption time
+# is part of the measured restore time.
+#
 # Order of operations
 #   1. Verify SHA256SUMS of the backup and the target preconditions (EMPTY database, extensions, role attributes:
 #      the runtime role must exist and be NOSUPERUSER NOBYPASSRLS). Nothing is written before these pass.
@@ -52,11 +57,12 @@ REVOKE_SESSIONS=1
 APP_ROLE="${HUB_DB_RUNTIME_ROLE:-hub_app}"
 OWNER_ROLE="${HUB_DB_OWNER_ROLE:-hub_owner}"
 JOB_IDS=""
+AGE_IDENTITY="${HUB_BACKUP_AGE_IDENTITY_FILE:-}"
 RELEASE_ALL=0
 RELEASE_OUTBOX=0
 
 usage() {
-  sed -n '2,35p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+  awk 'NR > 2 && /^# =====/ { exit } NR > 2' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
   cat <<'EOF'
 Restore options:
   --from DIR                   backup directory produced by backup.sh                                          [required]
@@ -70,6 +76,7 @@ Restore options:
   --hold-exempt-prefix P       job/schedule kinds starting with P are not held (default "platform.": audit
                                checkpoint and delivery reconciliation have no external effect); "" holds all
   --keep-sessions              do not revoke sessions (NOT recommended; C-34)
+  --age-identity FILE          age identity (private key) file for an encrypted backup (or HUB_BACKUP_AGE_IDENTITY_FILE)
   --yes                        do not ask for confirmation
 Post-review options (target from DATABASE_RESTORE_URL):
   --release-held (--all | --job-ids ID,ID) [--outbox]   release held jobs (and held outbox events with --outbox/--all)
@@ -97,6 +104,7 @@ while [ $# -gt 0 ]; do
     --no-hold-outbox) HOLD_OUTBOX=0; shift ;;
     --hold-exempt-prefix) EXEMPT_PREFIX="$2"; shift 2 ;;
     --keep-sessions) REVOKE_SESSIONS=0; shift ;;
+    --age-identity) AGE_IDENTITY="$2"; shift 2 ;;
     --yes) YES=1; shift ;;
     --release-held) MODE="release"; shift ;;
     --cancel-held) MODE="cancel"; shift ;;
@@ -152,20 +160,44 @@ fi
 [ -n "$FROM" ] || die "--from is required"
 [ -d "$FROM" ] || die "backup directory $FROM not found"
 FROM="$(cd "$FROM" && pwd)"
-for f in manifest.json SHA256SUMS db.dump tables.counts schema.counts audit.heads objects.sha256 post-migrate.sql; do
-  [ -f "$FROM/$f" ] || die "backup incomplete: $f missing"
-done
+ORIGIN="$FROM"
 for t in pg_restore psql sha256sum awk sed sort; do command -v "$t" >/dev/null || die "required tool missing: $t"; done
 TS="$(date -u +%Y%m%dT%H%M%SZ)"
-REPORT="${REPORT:-$FROM/restore-report-$TS.txt}"
 WORK="$(mktemp -d)"
-trap 'rm -rf "$WORK"' EXIT
+STAGING=""
+trap 'rm -rf "$WORK" ${STAGING:+"$STAGING"}' EXIT
 : >"$WORK/checks"
 T0="$(now)"
 
 check() { # check <name> <PASS|FAIL> <detail>
   printf '%-4s  %-44s %s\n' "$2" "$1" "$3" | tee -a "$WORK/checks"
 }
+
+# Encrypted backup: verify the archive checksum, decrypt + unpack into a private staging directory (timed).
+T_DEC0="$(now)"
+ENC=""
+for e in age gpg; do [ -f "$FROM/backup.tar.$e" ] && ENC="$e"; done
+if [ -n "$ENC" ]; then
+  [ -f "$FROM/backup.sha256" ] || die "encrypted backup without backup.sha256"
+  (cd "$FROM" && sha256sum --quiet -c backup.sha256) || die "encrypted archive checksum verification FAILED — do not restore this copy"
+  STAGING="$(mktemp -d "${HUB_RESTORE_STAGING_DIR:-${TMPDIR:-/tmp}}/hub-restore-plain.XXXXXX")"
+  chmod 700 "$STAGING"
+  if [ "$ENC" = age ]; then
+    command -v age >/dev/null || die "age is required to decrypt this backup"
+    [ -n "$AGE_IDENTITY" ] && [ -f "$AGE_IDENTITY" ] || die "encrypted (age) backup: pass --age-identity FILE (the private key of a recipient)"
+    age --decrypt -i "$AGE_IDENTITY" "$FROM/backup.tar.age" | tar -C "$STAGING" -xf - || die "age decryption failed (wrong identity?)"
+  else
+    command -v gpg >/dev/null || die "gpg is required to decrypt this backup"
+    gpg --batch --quiet --decrypt "$FROM/backup.tar.gpg" | tar -C "$STAGING" -xf - || die "gpg decryption failed (private key not available?)"
+  fi
+  FROM="$STAGING"
+  check "encrypted archive ($ENC): checksum + decryption" PASS "backup.tar.$ENC verified and decrypted in $(elapsed "$T_DEC0" "$(now)")s"
+fi
+T_DEC1="$(now)"
+REPORT="${REPORT:-$ORIGIN/restore-report-$TS.txt}"
+for f in manifest.json SHA256SUMS db.dump tables.counts schema.counts audit.heads objects.sha256 post-migrate.sql; do
+  [ -f "$FROM/$f" ] || die "backup incomplete: $f missing"
+done
 
 info "verifying backup checksums in $FROM"
 (cd "$FROM" && sha256sum --quiet -c SHA256SUMS) || die "backup checksum verification FAILED — do not restore this copy"
@@ -265,7 +297,9 @@ if [ -n "$OBJECTS_DIR" ]; then
   fi
   mkdir -p "$OBJECTS_DIR"
   cp -a "$FROM/objects/." "$OBJECTS_DIR/"
-  if (cd "$OBJECTS_DIR" && sha256sum --quiet -c "$FROM/objects.sha256"); then
+  if [ "$OBJ_EXPECTED" = 0 ]; then
+    check "objects restored, sha256 verified" PASS "0 objects in this backup"
+  elif (cd "$OBJECTS_DIR" && sha256sum --quiet -c "$FROM/objects.sha256"); then
     check "objects restored, sha256 verified" PASS "$OBJ_EXPECTED/$OBJ_EXPECTED files match"
   else
     check "objects restored, sha256 verified" FAIL "checksum mismatch"
@@ -373,13 +407,14 @@ FAILS=$(grep -c '^FAIL' "$WORK/checks" || true)
 {
   echo "Transformation Hub restore report"
   echo "restore id:        $TS"
-  echo "backup:            $FROM"
+  echo "backup:            $ORIGIN${ENC:+ (encrypted archive backup.tar.$ENC)}"
   echo "backup created:    $(sed -n 's/.*"createdAt": "\(.*\)".*/\1/p' "$FROM/manifest.json" | head -1)"
   echo "backup app:        $(sed -n 's/.*"app": { "version": "\([^"]*\)", "gitCommit": "\([^"]*\)".*/\1 (\2)/p' "$FROM/manifest.json")"
   echo "target:            $(redact "$DB_URL")"
   echo "pg_restore:        $(pg_restore --version)"
   echo
   echo "Measured durations (seconds):"
+  if [ -n "$ENC" ]; then echo "  decrypt + unpack ($ENC)     $(elapsed "$T_DEC0" "$T_DEC1")"; fi
   echo "  pg_restore                 $(elapsed "$T_DB0" "$T_DB1")"
   echo "  post-migrate SQL           $(elapsed "$T_PM0" "$T_PM1")"
   echo "  quiesce                    $(elapsed "$T_Q0" "$T_Q1")"
