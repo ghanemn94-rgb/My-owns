@@ -702,10 +702,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:e5cc6ef982ba7d53ed80138c0cbaa0119bcfe8dcaad4e324b5dafdb6431afeb8",
-        "source_commit": "32e6478de3c49b2c80d044b8a2d5d89f88c35f65",
-        "frozen_at": "2026-10-01T15:16:54Z",
-        "manifest_path": "docs/delivery/candidates/DG1/e5cc6ef982ba7d53.manifest.json"
+        "candidate_id": "sha256:619d74ffa4e668933960fc14aa5d8c4c31850a2772972bceb647561be2efdfac",
+        "source_commit": "987ae029473f62c21e449e63178dedbe32201151",
+        "frozen_at": "2026-10-01T15:59:05Z",
+        "manifest_path": "docs/delivery/candidates/DG1/619d74ffa4e66893.manifest.json"
       },
       "review_rounds": [
         {
@@ -838,7 +838,19 @@
             "code-security-reviewer": "docs/delivery/reviews/DG1/round-11/code-security-reviewer.json",
             "qa-verifier": "docs/delivery/reviews/DG1/round-11/qa-verifier.json"
           },
-          "note": "DG1 round 11: re-review after the round-10 BLOCK (qa FAIL). Verify F-DG1-214 (Medium — the unit-web suite now passes on Node 24 as well as Node 22, via a custom jsdom environment that keeps Node's native AbortController/AbortSignal; harness-only), F-DG1-132/215 (crypto.setEngine namespace-enumeration documented+pinned as residual (a)), and F-DG1-011 (D-055 version/overclaim corrected, with the Node 24.21.0 member re-audit recorded). Re-run the suites on BOTH Node 22 and Node 24. Plus the 12 DG1-final requirements, on the same candidate."
+          "note": "DG1 round 11: re-review after the round-10 BLOCK (qa FAIL). Verify F-DG1-214 (Medium — the unit-web suite now passes on Node 24 as well as Node 22, via a custom jsdom environment that keeps Node's native AbortController/AbortSignal; harness-only), F-DG1-132/215 (crypto.setEngine namespace-enumeration documented+pinned as residual (a)), and F-DG1-011 (D-055 version/overclaim corrected, with the Node 24.21.0 member re-audit recorded). Re-run the suites on BOTH Node 22 and Node 24. Plus the 12 DG1-final requirements, on the same candidate. OUTCOME: all three PASS; F-DG1-011/214/215 CLOSED, F-DG1-132 accepted; code-security raised F-DG1-133 (Low: the residual (a) justification is inaccurate / the route is closable)."
+        },
+        {
+          "round": 12,
+          "candidate_id": "sha256:619d74ffa4e668933960fc14aa5d8c4c31850a2772972bceb647561be2efdfac",
+          "frozen_at": "2026-10-01T16:02:40Z",
+          "source_commit": "987ae029473f62c21e449e63178dedbe32201151",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG1/round-12/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG1/round-12/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG1/round-12/qa-verifier.json"
+          },
+          "note": "DG1 round 12: re-review after the round-11 all-PASS that raised one Low finding. Verify F-DG1-132/133 — the module lint now CLOSES the node:crypto namespace-enumeration route via rule 5 (named-imports-only for allow-listed built-ins that carry a rule-1-banned member; flags namespace/default/export-*/import=require/dynamic-import() of node:crypto), so crypto.setEngine can no longer be reached by enumeration; the residual (a) justification is corrected to plain-objects-only (legit Object.entries(cookies) enumeration still allowed). Re-confirm no regression on Node 22 and Node 24; plus the 12 DG1-final requirements, on the same candidate."
         }
       ],
       "gate_record": "docs/delivery/gates/DG1.json",
