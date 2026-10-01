@@ -1,0 +1,33 @@
+================ A26 first defect-injection drill (orchestrator) ================
+Candidate: 1ec0db40092b964002c4d6840cdd6d1d2da71d18
+
+-- Baseline: the two invariants' unit suites pass on the CLEAN candidate --
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/access/rules.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/transformations/transitions.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 4[2mms[22m[39m
+[2m Test Files [22m [1m[32m2 passed[39m[22m[90m (2)[39m
+[2m      Tests [22m [1m[32m13 passed[39m[22m[90m (13)[39m
+  baseline exit: 0 (expect 0)
+
+-- Defect A (AUTHORIZATION): neutralize the organization-boundary check in grantApplies (cross-org leak) --
+  injected into apps/api/src/modules/access/rules.ts
+[41m[1m FAIL [22m[49m [30m[45m unit-node [49m[39m apps/api/src/modules/access/rules.test.ts[2m > [22mgrantApplies[2m > [22morganization grant: inheriting role reaches every record in the organization, never another organization
+[41m[1m FAIL [22m[49m [30m[45m unit-node [49m[39m apps/api/src/modules/access/rules.test.ts[2m > [22mgrantApplies[2m > [22mstructural (organization administration) permissions cover the organization's structure without inheritance
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m10 passed[39m[22m[90m (12)[39m
+  => DEFECT CAUGHT (suite failed, exit 1)
+  reverted apps/api/src/modules/access/rules.ts
+
+-- Defect B (STATE MACHINE): make isAllowedTransition allow ANY status transition --
+  injected into apps/api/src/modules/transformations/routes.ts
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+[41m[1m FAIL [22m[49m [30m[45m unit-node [49m[39m apps/api/src/modules/transformations/transitions.test.ts[2m > [22misAllowedTransition[2m > [22mallows exactly draft->active, active->on_hold|closed, on_hold->active|closed (plus no-op)
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+  => DEFECT CAUGHT (suite failed, exit 1)
+  reverted apps/api/src/modules/transformations/routes.ts
+
+-- Post-revert sanity: both suites pass again --
+[2m Test Files [22m [1m[32m2 passed[39m[22m[90m (2)[39m
+[2m      Tests [22m [1m[32m13 passed[39m[22m[90m (13)[39m
+  post-revert exit: 0 (expect 0)
+================ end A26 drill ================
