@@ -11780,14 +11780,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-15/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-01T17:49:11Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG1 round 15 (session 32298593) while re-proving F-DG1-217. It is a residual of the same defect class, in names the F-DG1-217 reproduction did not list. Low and non-mandatory: fail-closed lint robustness, with no product impact. Suggested fix: use ts.isDeclarationFileName() in syntaxErrors(). The ID is proposed from the code-security F-DG1-1xx block (next after F-DG1-136); the orchestrator may re-allocate it."
+        },
+        {
+          "at": "2026-10-01T18:06:48Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at f7d9707234ddef3bba6ef9ebd6a90f9d9f1c3cb4"
         }
-      ]
+      ],
+      "fix_revision": "f7d9707234ddef3bba6ef9ebd6a90f9d9f1c3cb4",
+      "fix_summary": "Declaration-file branch in syntaxErrors() now follows TypeScript's own classification via the public SourceFile.isDeclarationFile (new isDeclarationFileName helper), covering allowArbitraryExtensions *.d.<ext>.ts (styles.d.css.ts/data.d.json.ts/x.d.ts.ts); none reach ts.transpileModule. Self-checks pin the classification and walk end-to-end. Unit 325/325 Node 22+24; architecture 132/132."
     },
     {
       "id": "F-DG1-218",
@@ -11809,14 +11816,21 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG1/round-15/qa-verifier.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-01T17:50:00Z",
           "status": "OPEN",
           "note": "Raised by qa-verifier in DG1 round 15 while independently verifying F-DG1-217. Rated Low and non-mandatory for the same reasons as F-DG1-217. The lint fails closed: it throws and goes red, so nothing passes unchecked. Declaration files emit no runtime code, an arbitrary-extension declaration file inside a backend API module is an unlikely layout, and there is no access-control, integrity, calculation or portability impact. F-DG1-217's own stated reproduction (.d.ts/.d.mts/.d.cts/.test.d.ts) is fixed and verified separately. This is a narrower residual name class. The proposed ID F-DG1-218 is the next free number after 217; the orchestrator may renumber it if another reviewer proposed the same number this round. It does not block DG1 on its own. The orchestrator may route it to a repair or accept it as an observation."
+        },
+        {
+          "at": "2026-10-01T18:06:49Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at f7d9707234ddef3bba6ef9ebd6a90f9d9f1c3cb4"
         }
-      ]
+      ],
+      "fix_revision": "f7d9707234ddef3bba6ef9ebd6a90f9d9f1c3cb4",
+      "fix_summary": "Same root cause as F-DG1-137: arbitrary-extension declaration files (*.d.<ext>.ts) no longer reach ts.transpileModule (which threw 'Debug Failure. Output generation failed'); the declaration-file branch now follows TS classification and surfaces a named 'unparseable source' diagnostic. Verified by new end-to-end self-check; unit 325/325 Node 22+24."
     }
   ]
 }
