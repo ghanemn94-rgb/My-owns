@@ -1,0 +1,33 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG1-125",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fix 83b12da is in candidate sha256:a7b46fbc...210d (commit 0026a7b). Code: LOADER_BUILTINS in apps/api/src/architecture.testkit.ts now includes process (and node:process), so bareAllowed() rejects both specifiers. Rule 3, which catches the global process.<loader> form, is unchanged. Unit: architecture.test.ts passes 77/77, including X6-X8 and P12 (03-unit.log, 270/270). Negative control in a disposable clone: with the pre-fix testkit (83b12da^), exactly X6, X7 and X8 fail (3 failed, 74 passed), so the new self-checks detect the defect. End to end: a planted real file apps/api/src/modules/access/zz-qa-planted.ts (`import { binding } from \"node:process\"`) turns the module-tree check red ('imports package node:process', 1 failed of 77); with the plant removed it is 77/77 again (11-f125-module-tree-plant.log). My independent probe adds 12 cases (10-f125-probe.log, 12/12 PASS): a namespace import; bare 'process' default and named imports; require('node:process'); dynamic import('node:process'); a re-export `export { dlopen } from \"node:process\"`; TS import-equals; a side-effect import; and a named _linkedBinding import are all reported. Global process.dlopen and process._linkedBinding are still caught by rule 3, and a control (node:crypto plus process.env) stays clean. Test-only scope: the only non-metadata change since round 5 in apps/ is architecture.testkit.ts and architecture.test.ts. The testkit is imported only by *.test.ts files. Unit 270/270, integration 200/200 (twice) and e2e 22/22 are unaffected. Cosmetic observation, not a finding: the generated self-check titles for X6-X8 read \"(round-4 lint: 'missed')\", though these forms were missed by the round-5 lint.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-6/03-unit.log",
+        "docs/delivery/test-evidence/DG1/qa/round-6/10-f125-probe.log",
+        "docs/delivery/test-evidence/DG1/qa/round-6/11-f125-module-tree-plant.log",
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r6-process-import-probe.test.ts",
+        "apps/api/src/architecture.testkit.ts",
+        "apps/api/src/architecture.test.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-126",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fix 3037ce2 is in the candidate. Code: the copy-back member list now comes from `pnpm -r ls --depth -1 --json` run in the real REPO_ROOT, parsed by a string- and escape-aware array scanner. A path outside REPO_ROOT is refused and fails the install, and an empty or failed resolve fails the install. Frozen suite in a disposable clone (12-install-sandbox-tests.log): 13 PASS, including AC-10. The 14th case, AC-1 (effect), is BLOCKED only by registry access (ECONNREFUSED, 13-ac1-effect-offline-equivalent.log part 1). Its offline equivalent passes: same fixture, lockfile pinned to the store integrity, wrapper unchanged, and it exercises the new pnpm-ls path for a single-package root. So the claimed 14/14 is consistent with everything I can reproduce. Negative control (14-f126-negative-control.log): with the pre-fix installer (3037ce2^), AC-10 FAILS ('legacy=yes, toolsx=yes'), so the test detects the defect. AC-10 asserts only the root as a positive destination. My own probe (15-f126-member-probe.log, dg1-r6-installer-members-probe.sh, 5/5 PASS) therefore covers the rest. A NON-ROOT member with its own dependency receives node_modules. A '!'-excluded package and a publicHoistPattern directory receive nothing, although a build script planted node_modules there. A member whose name contains ']' and '\"' and a nested packages/deep/inner member both receive node_modules. A `packages:` pattern pointing outside the root (../outside/*) is listed by pnpm, but the wrapper refuses both out-of-root paths and exits 1, and the outside directory gets nothing. Observations, not findings: the parser `continue`s past an array it cannot JSON.parse, so a partial parse failure would skip a member rather than fail the install (fail-incomplete, not an escape). A repo with an out-of-tree file: dependency would make every install fail closed. Neither applies to the committed tree. F-DG1-009 and F-DG1-210 still hold: integration 200/200 twice with no 57P01 in either PostgreSQL log, and e2e F-DG1-210 green EN and AR in both the candidate journey and my independent r4 spec. The register evidence for REQ-DLV-042 is stale for this change; that is raised separately as F-DG1-212 (Low). It concerns the evidence record, not the fix.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-6/12-install-sandbox-tests.log",
+        "docs/delivery/test-evidence/DG1/qa/round-6/13-ac1-effect-offline-equivalent.log",
+        "docs/delivery/test-evidence/DG1/qa/round-6/14-f126-negative-control.log",
+        "docs/delivery/test-evidence/DG1/qa/round-6/15-f126-member-probe.log",
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r6-installer-members-probe.sh",
+        "tools/deps/install-sandbox.sh",
+        "tools/deps/tests/install-sandbox.test.sh"
+      ]
+    }
+  ]
+}

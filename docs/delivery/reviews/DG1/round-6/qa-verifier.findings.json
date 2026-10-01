@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG1-212",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-042",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "REQ-DLV-042's cited installer acceptance log predates the F-DG1-126 installer change; the claimed 14/14 run (incl. AC-10) is not recorded anywhere in the repository",
+      "reproduction": "Candidate sha256:a7b46fbc...210d (commit 0026a7b). docs/delivery/requirements.csv row REQ-DLV-042 cites docs/delivery/test-evidence/DG1/orchestrator/install-sandbox-acceptance.log. That log's header reads 'current 13-case suite: AC-1..AC-9 ... Regenerated 2026-10-01T11:02:10Z for F-DG1-211' and ends 'install-sandbox acceptance: 13 passed, 0 failed'. Its last commit is 3e142d6 (11:02:32Z), but tools/deps/install-sandbox.sh and tools/deps/tests/install-sandbox.test.sh were both changed afterwards by the F-DG1-126 fix 3037ce2 (12:07:43Z). Diffing the log's PASS labels against the ok-labels in the frozen test script shows exactly one missing label: 'AC-10 a '!'-excluded package and a non-`packages:` list entry are not copy-back destinations'. The F-DG1-126 fix_summary in findings.json and D-052 both state 'installer suite 14/14', but a repository-wide search finds no 14-case log outside this round's QA evidence. This is the same defect class as F-DG1-211 (closed in round 5), now reintroduced by the round-6 installer change.",
+      "expected": "An IMPLEMENTED row's cited evidence was produced against the frozen candidate's installer and suite, so here a 14-case log (AC-1..AC-10) run on the post-3037ce2 wrapper. The '14/14' claim in D-052 and in the F-DG1-126 fix_summary should be backed by a persisted log.",
+      "actual": "The cited log is the 13-case run of the pre-fix installer. The behaviour itself is correct on this candidate. My independent run of the frozen suite gave 13 PASS, including AC-10. The 14th case, AC-1 (effect), is BLOCKED only because this sandbox has no registry network (ECONNREFUSED) and passes in its offline equivalent. AC-10 fails on the pre-fix installer (negative control), and my own member probe passes 5/5. So only the evidence record is stale; the control is not defective.",
+      "evidence": [
+        "docs/delivery/requirements.csv",
+        "docs/delivery/test-evidence/DG1/orchestrator/install-sandbox-acceptance.log",
+        "tools/deps/tests/install-sandbox.test.sh",
+        "docs/delivery/test-evidence/DG1/qa/round-6/12-install-sandbox-tests.log",
+        "docs/delivery/test-evidence/DG1/qa/round-6/13-ac1-effect-offline-equivalent.log",
+        "docs/delivery/test-evidence/DG1/qa/round-6/14-f126-negative-control.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-6/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T12:45:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG1 round 6 while verifying F-DG1-126. ID proposed in the QA range (next after F-DG1-211); the orchestrator may re-allocate it."
+        }
+      ]
+    }
+  ]
+}
