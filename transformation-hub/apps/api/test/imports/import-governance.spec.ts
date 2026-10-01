@@ -178,3 +178,28 @@ describe('REQ-INT-003 import rollback where feasible', () => {
     expect((await owner().query(`select count(*)::int n from risk where title = 'Synthetic rejected risk'`)).rows[0].n).toBe(0);
   });
 });
+
+describe('REQ-INT-002 second-person approval applies with the approver’s own authority', () => {
+  it('an approver whose role cannot create the records is refused before anything is applied (canApprove false, canReject true)', async () => {
+    // The project manager uploads risks; the secretary / CPMO holds the import approval but not the RAID rights.
+    const bytes = await xlsx([{ name: 'Risks', rows: [['Title', 'Probability', 'Impact'], ['Synthetic authority risk', 2, 3], [null, 9, 1]] }]);
+    const parsed = await uploadAndParse(pm, dc, bytes, 'authority.xlsx', { target: 'risk' });
+    let b = await mapBatch(pm, dc, parsed);
+    // A row refused by its own checks also lists the fields it would need to be created (one pass to fix the file).
+    const rows = await rowsOf(pm, dc, b.id);
+    expect(rows.find((r) => r.rowNo === 3)!.errors.map((e) => [e.code, e.params['field']])).toEqual([
+      ['imports.row.not_scale5', 'probability'],
+      ['imports.row.required', 'title'],
+    ]);
+    b = await submit(pm, dc, b);
+    const seen = await secretary.get(IP(dc, `/${b.id}`));
+    expect(seen.body).toMatchObject({ status: 'submitted', canApprove: false, canReject: true });
+    const refused = await secretary.post(IP(dc, `/${b.id}/approve`), { expectedVersion: b.version, acceptedRows: [2] });
+    expect(refused.status).toBe(422);
+    expect(refused.body).toMatchObject({ code: 'imports.approver_lacks_authority', details: { permissions: ['planning.raid.manage'] } });
+    expect((await owner().query(`select status from import_batch where id = $1`, [b.id])).rows[0].status).toBe('submitted');
+    expect((await owner().query(`select count(*)::int n from risk where title = 'Synthetic authority risk'`)).rows[0].n).toBe(0);
+    // The uploader's own view offers neither approval nor rejection (separation of duties).
+    expect((await pm.get(IP(dc, `/${b.id}`))).body).toMatchObject({ canApprove: false, canReject: false });
+  });
+});

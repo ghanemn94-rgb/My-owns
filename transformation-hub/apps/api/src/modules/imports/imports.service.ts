@@ -17,6 +17,7 @@ import {
   importSourceType,
   importTransition,
   invalid,
+  importApplyPermissions,
   isDocumentTarget,
   notFound,
   ruleViolation,
@@ -195,6 +196,7 @@ export class ImportsService {
     const uploader = ctx.principal.userId === b.createdBy;
     const res = { projectId: b.projectId, classification: b.classification as Classification };
     const applicable = (b.summary?.['create'] ?? 0) + (b.summary?.['update'] ?? 0) + (b.summary?.['conflict'] ?? 0);
+    const canReject = !uploader && b.status === 'submitted' && this.policy.can(ctx, 'imports.batch.approve', { ...res, requesterUserId: b.createdBy });
     return {
       ...this.summaryDto(b, names),
       sha256: b.sha256,
@@ -227,10 +229,18 @@ export class ImportsService {
       outputs: outputs.map((o) => ({ rowNo: o.rowNo, recordType: o.recordType as 'risk' | 'task' | 'source_claim' | 'change_request', recordId: o.recordId, recordCode: o.recordCode, rolledBack: !!o.rolledBackAt })),
       canMap: uploader && !isDocumentTarget(target) && (b.status === 'parsed' || b.status === 'validated') && this.policy.can(ctx, 'imports.batch.create', res),
       canSubmit: uploader && b.status === 'validated' && applicable > 0 && this.policy.can(ctx, 'imports.batch.create', res),
-      canApprove: !uploader && b.status === 'submitted' && this.policy.can(ctx, 'imports.batch.approve', { ...res, requesterUserId: b.createdBy }),
+      canApprove: canReject && this.authorityGaps(ctx, b, b.summary ?? {}).length === 0,
+      canReject,
       canRollback: b.status === 'applied' && this.policy.can(ctx, 'imports.batch.rollback', res),
       canCancel: uploader && ['uploaded', 'parsed', 'validated', 'submitted'].includes(b.status) && this.policy.can(ctx, 'imports.batch.create', res),
     };
+  }
+
+  /** Record permissions (importApplyPermissions) the approver lacks for the given row actions of this batch. */
+  private authorityGaps(ctx: RequestContext, b: Batch, actions: Record<string, number>): string[] {
+    const res = { projectId: b.projectId, classification: b.classification as Classification };
+    const need = importApplyPermissions(b.kind as ImportTarget, actions, { reportedStatusMapped: !!b.mapping?.['reportedStatus'] });
+    return need.filter((p) => !this.policy.can(ctx, p, res));
   }
 
   /** Preview / comparison rows. The current values of a matched record are shown only to readers of that record. */
@@ -604,7 +614,8 @@ export class ImportsService {
   /**
    * Approval by a second person, item by item (REQ-INT-002, REQ-SRC-009): role → state → separation of duties; the plan is
    * re-built as the uploader sees the records now and must equal the submitted preview (409 otherwise); then the accepted
-   * rows are applied in this transaction with the approver's authority (REQ-INT-015: no update of an existing record).
+   * rows are applied in this transaction with the approver's authority, which must cover them (importApplyPermissions; REQ-INT-015:
+   * no update of an existing record).
    */
   async approve(ctx: RequestContext, projectId: string, batchId: string, body: RouteInput<R['approveImport']>['body']) {
     const b0 = await loadInProject(this.db, schema.importBatch, projectId, batchId);
@@ -628,7 +639,13 @@ export class ImportsService {
     const applicable = new Set(plan.filter((r) => r.action === 'create' || r.action === 'update' || r.action === 'conflict').map((r) => r.rowNo));
     assertAcceptedRows(body.acceptedRows, applicable);
     const accepted = new Set(body.acceptedRows);
-    const outputs = await this.applier.apply(ctx, b, plan.filter((r) => accepted.has(r.rowNo)), sheetName);
+    const acceptedPlan = plan.filter((r) => accepted.has(r.rowNo));
+    // The approver applies with their own authority: refused (nothing applied) when it does not cover the accepted rows.
+    const counts0: Record<string, number> = {};
+    for (const r of acceptedPlan) counts0[r.action] = (counts0[r.action] ?? 0) + 1;
+    const gaps = this.authorityGaps(ctx, b, counts0);
+    if (gaps.length) throw ruleViolation('imports.approver_lacks_authority', `Your role cannot create these records (${gaps.join(', ')}) — ask an approver who holds that authority`, { permissions: gaps });
+    const outputs = await this.applier.apply(ctx, b, acceptedPlan, sheetName);
     const declined = [...applicable].filter((n) => !accepted.has(n));
     const rowsOf = (nums: number[]) => and(eq(schema.importRow.batchId, b.id), eq(schema.importRow.projectId, projectId), inArray(schema.importRow.rowNo, nums));
     await this.db.tx().update(schema.importRow).set({ decision: 'accepted' }).where(rowsOf([...accepted]));

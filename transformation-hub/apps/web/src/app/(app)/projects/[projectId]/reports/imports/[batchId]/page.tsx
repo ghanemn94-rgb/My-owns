@@ -158,7 +158,7 @@ function StatusCallout({ b }: { b: ImportDetail }) {
   if (b.status === 'submitted' && !b.canApprove)
     return (
       <div className="mb-4">
-        <Callout>{t('imports.detail.awaitingApproval')}</Callout>
+        <Callout testId="import-awaiting">{b.canReject ? t('imports.detail.noAuthority') : t('imports.detail.awaitingApproval')}</Callout>
       </div>
     );
   return null;
@@ -424,7 +424,7 @@ function ActionsPanel({ b }: { b: ImportDetail }) {
     [declined],
   );
   const accepted = b.applicableRows.filter((n) => !declinedRows.has(n));
-  if (!b.canSubmit && !b.canApprove && !b.canCancel && !b.canRollback) return null;
+  if (!b.canSubmit && !b.canApprove && !b.canReject && !b.canCancel && !b.canRollback) return null;
   const done = async (key: MessageKey) => {
     await refresh();
     toast.show('success', t(key));
@@ -439,14 +439,14 @@ function ActionsPanel({ b }: { b: ImportDetail }) {
           </button>
         ) : null}
         {b.canApprove ? (
-          <>
-            <button type="button" className={btn.primary} onClick={() => setDialog('approve')} data-testid="import-approve">
-              {t('imports.actions.approve')}
-            </button>
-            <button type="button" className={btn.secondary} onClick={() => setDialog('reject')} data-testid="import-reject">
-              {t('imports.actions.reject')}
-            </button>
-          </>
+          <button type="button" className={btn.primary} onClick={() => setDialog('approve')} data-testid="import-approve">
+            {t('imports.actions.approve')}
+          </button>
+        ) : null}
+        {b.canReject ? (
+          <button type="button" className={btn.secondary} onClick={() => setDialog('reject')} data-testid="import-reject">
+            {t('imports.actions.reject')}
+          </button>
         ) : null}
         {b.canRollback ? (
           <button type="button" className={btn.secondary} onClick={() => setDialog('rollback')} data-testid="import-rollback">

@@ -429,6 +429,25 @@ export function assertAcceptedRows(accepted: readonly number[], applicable: Read
   if (accepted.length === 0) throw ruleViolation('imports.accept.none', 'Accept at least one row, or reject the batch');
 }
 
+/**
+ * Record permissions the APPROVER must hold to apply the planned actions. The uploader proposes; the approver applies with
+ * their own authority — an import never lets someone create records they could not create by hand (new risks need RAID
+ * rights, new tasks plan rights, proposed changes to existing records become source claims, governed records become
+ * change requests). Checked before anything is applied; the detail's `canApprove` uses the same rule.
+ */
+export function importApplyPermissions(target: ImportTarget, actions: Readonly<Partial<Record<'create' | 'update' | 'conflict', number>>>, opts: { reportedStatusMapped?: boolean } = {}): string[] {
+  const need = new Set<string>();
+  const has = (k: 'create' | 'update' | 'conflict') => (actions[k] ?? 0) > 0;
+  if (target === 'source_claims' || target === 'document_claims') need.add('documents.source.manage');
+  if (target === 'risk' && has('create')) need.add('planning.raid.manage');
+  if (target === 'task' && has('create')) need.add('planning.task.manage');
+  if (has('update')) need.add('documents.source.manage');
+  if (has('conflict')) need.add('planning.change_request.create');
+  // A task's reported status is kept as a historical claim next to the task (created or matched).
+  if (target === 'task' && opts.reportedStatusMapped && (has('create') || has('update') || has('conflict'))) need.add('documents.source.manage');
+  return [...need].sort();
+}
+
 /** The approver binds to the exact preview the uploader submitted (a re-validation that differs → 409). */
 export function assertPreviewUnchanged(submittedHash: string | null, currentHash: string) {
   if (!submittedHash || submittedHash !== currentHash) {

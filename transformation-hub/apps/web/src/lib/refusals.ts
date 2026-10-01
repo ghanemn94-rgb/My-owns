@@ -297,6 +297,7 @@ export const REFUSAL_KEYS: Readonly<Record<string, Entry>> = {
   'imports.accept.none': 'imports.refusals.accept_none',
   'imports.accept.duplicate_row': 'imports.refusals.accept_duplicate_row',
   'imports.uploader_access_revoked': 'imports.refusals.uploader_access_revoked',
+  'imports.approver_lacks_authority': 'imports.refusals.approver_lacks_authority',
   'imports.rollback.not_feasible': 'imports.refusals.rollback_not_feasible',
   'imports.rollback.legal_hold': 'imports.refusals.rollback_legal_hold',
   'sources.already_superseded': 'imports.refusals.already_superseded',

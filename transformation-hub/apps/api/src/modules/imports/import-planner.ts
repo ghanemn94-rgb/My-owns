@@ -101,6 +101,12 @@ export class ImportPlanner {
       }
       if (rowIsBlank(cells)) continue;
       const chk = checkImportRow(target, cells);
+      // A row already refused by its own checks also lists the fields it would need to be created — unless it names a
+      // record it could match (then only the match key is required), so the person fixes the file in one pass.
+      if (chk.errors.length && !IMPORT_TARGET_FIELDS[target].some((f) => (f.matchKey || f.key === 'code') && chk.values[f.key])) {
+        const reported = new Set(chk.errors.map((e) => e.params['field']));
+        for (const field of missingForCreate(target, chk.values)) if (!reported.has(field)) chk.errors.push(serverMessage('imports.row.required', { field }));
+      }
       prepared.push({
         rowNo: i + 1,
         raw,

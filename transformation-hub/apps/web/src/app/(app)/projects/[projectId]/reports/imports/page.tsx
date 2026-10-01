@@ -99,12 +99,13 @@ function NewImport() {
   const id = useId();
   const fileRef = useRef<HTMLInputElement>(null);
   const [target, setTarget] = useState<ImportTarget>('risk');
-  const [classification, setClassification] = useState<string>('confidential');
+  const allowedClassifications = CLASSIFICATIONS.filter((c) => clearanceAllows(me.user.clearance as Classification, c));
+  // Default: Confidential when within the uploader's clearance, otherwise the highest classification they hold.
+  const [classification, setClassification] = useState<string>(() => (allowedClassifications.includes('confidential') ? 'confidential' : (allowedClassifications[allowedClassifications.length - 1] ?? 'internal')));
   const [file, setFile] = useState<File | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
   const [error, setError] = useState<unknown>(null);
   const types = policy.data?.targets.find((x) => x.target === target)?.fileTypes ?? [];
-  const allowedClassifications = CLASSIFICATIONS.filter((c) => clearanceAllows(me.user.clearance as Classification, c));
   const tooLarge = !!file && !!policy.data && file.size > policy.data.maxUploadBytes;
   const start = async () => {
     if (!file || tooLarge) return;

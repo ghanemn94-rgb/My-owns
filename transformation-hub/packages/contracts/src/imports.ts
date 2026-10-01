@@ -92,7 +92,10 @@ export const ImportBatchDetail = ImportBatchSummary.extend({
   /** What the caller may do now (UI hints — the server re-checks every command). */
   canMap: z.boolean(),
   canSubmit: z.boolean(),
+  /** Approve (apply): a second person whose own authority covers the records the accepted rows create. */
   canApprove: z.boolean(),
+  /** Reject: any second person holding the import approval permission. */
+  canReject: z.boolean(),
   canRollback: z.boolean(),
   canCancel: z.boolean(),
 });

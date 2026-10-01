@@ -10,6 +10,7 @@ import {
   excelSerialToIsoDate,
   governedReason,
   harmfulFormula,
+  importApplyPermissions,
   importTransition,
   missingForCreate,
   normalizeKey,
@@ -138,6 +139,19 @@ describe('REQ-INT-015 / REQ-SRC-009 / AT-01 never overwrite — proposals only',
     expect(() => assertPreviewUnchanged('abc', 'abc')).not.toThrow();
     expect(() => assertPreviewUnchanged('abc', 'abd')).toThrow(/validate it again/);
     expect(() => assertPreviewUnchanged(null, 'abd')).toThrow(DomainError);
+  });
+});
+
+describe('REQ-INT-002 the approver applies with their own authority', () => {
+  it('record permissions follow the planned actions and the target', () => {
+    expect(importApplyPermissions('risk', { create: 2 })).toEqual(['planning.raid.manage']);
+    expect(importApplyPermissions('risk', { update: 1 })).toEqual(['documents.source.manage']);
+    expect(importApplyPermissions('task', { create: 1, conflict: 1 })).toEqual(['planning.change_request.create', 'planning.task.manage']);
+    expect(importApplyPermissions('task', { conflict: 1 }, { reportedStatusMapped: true })).toEqual(['documents.source.manage', 'planning.change_request.create']);
+    expect(importApplyPermissions('decision', { conflict: 1 })).toEqual(['planning.change_request.create']);
+    expect(importApplyPermissions('source_claims', { create: 3 })).toEqual(['documents.source.manage']);
+    expect(importApplyPermissions('document_claims', {})).toEqual(['documents.source.manage']);
+    expect(importApplyPermissions('risk', {})).toEqual([]);
   });
 });
 
