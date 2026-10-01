@@ -1,0 +1,37 @@
+# 00 candidate identity (code-security-reviewer DG1 round 5)
+## real repo
+$ git rev-parse HEAD
+d3fcb895d43b255db53167efc17614bf594253f8
+$ git log --oneline 5f83a336..HEAD
+d3fcb89 DG1 r5: freeze candidate 24eb377 + round-5 review assignments
+$ git diff --name-only 5f83a336 HEAD
+docs/delivery/assignments/DG1/round-5/audit.md
+docs/delivery/assignments/DG1/round-5/review-code-security-reviewer.md
+docs/delivery/assignments/DG1/round-5/review-common.md
+docs/delivery/assignments/DG1/round-5/review-domain-reviewer.md
+docs/delivery/assignments/DG1/round-5/review-qa-verifier.md
+docs/delivery/candidates/DG1/24eb377939d83b70.manifest.json
+docs/delivery/stages.json
+docs/delivery/test-evidence/DG1/qa/tests/dg1-r4-serial-probe-a.test.ts
+docs/delivery/test-evidence/DG1/qa/tests/dg1-r4-serial-probe-b.test.ts
+$ git rev-parse --is-shallow-repository
+false
+$ (cd real repo) node tools/gates/candidate.mjs --stage DG1
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:24eb377939d83b7036e992e647f390b91e030cd6aa18b805b74dea900d50b08e","files":390}
+exit=0
+$ node tools/gates/candidate.mjs --stage DG1 --diff
+{
+  "frozen": "sha256:24eb377939d83b7036e992e647f390b91e030cd6aa18b805b74dea900d50b08e",
+  "working_tree": "sha256:24eb377939d83b7036e992e647f390b91e030cd6aa18b805b74dea900d50b08e",
+  "matches": true,
+  "added": [],
+  "removed": [],
+  "changed": []
+}
+exit=0
+## disposable clone /var/tmp/mth-run.3CT4cA/claude-0/review-sec-r5 at freeze commit
+$ git rev-parse HEAD
+5f83a3363798e3e3452be208f0e6adb5a8649fe6
+$ node tools/gates/candidate.mjs --stage DG1
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:24eb377939d83b7036e992e647f390b91e030cd6aa18b805b74dea900d50b08e","files":390}
+exit=0

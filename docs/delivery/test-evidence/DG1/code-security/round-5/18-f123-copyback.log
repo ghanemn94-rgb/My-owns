@@ -1,0 +1,84 @@
+$ bash repro-f123-copyback.sh <clone @5f83a336>   (npm_config_store_dir=private copy of host store; no registry access)
+=== Case A: create, then frozen; yaml packages: [apps/*, packages/*]
+    expected: node_modules at root, apps/a, packages/b; apps/legacy is a member (apps/*) so its planted node_modules
+    is copied (it is a real member); tools/x (stray package.json, not a member) and packages/c (no package.json) NOT
+  resolver members:
+  <root>
+  <root>/apps/a
+  <root>/apps/legacy
+  <root>/packages/b
+create exit=0
++ localdep 1.0.0
+
+Done in 585ms using pnpm v10.33.0
+  ./node_modules: PRESENT [.modules.yaml .pnpm .pnpm-workspace-state-v1.json f123-fixture localdep ]
+  apps/a/node_modules: PRESENT [localdep ]
+  packages/b/node_modules: PRESENT [localdep ]
+  tools/x/node_modules: absent
+  packages/c/node_modules: absent
+  apps/legacy/node_modules: PRESENT [PWNED ]
+  lockfile written by create: yes
+frozen exit=0
++ localdep localdep@file:localdep
+
+Done in 527ms using pnpm v10.33.0
+  ./node_modules: PRESENT [.modules.yaml .pnpm .pnpm-workspace-state-v1.json f123-fixture localdep ]
+  apps/a/node_modules: PRESENT [localdep ]
+  packages/b/node_modules: PRESENT [localdep ]
+  tools/x/node_modules: absent
+  packages/c/node_modules: absent
+  apps/legacy/node_modules: PRESENT [PWNED ]
+
+=== Case B: yaml with a NEGATED pattern (!apps/legacy) and an unrelated list key (publicHoistPattern) whose item is
+    a directory path. pnpm excludes apps/legacy; a correct resolver of the packages: globs would not list
+    apps/legacy or tools/x.
+  resolver members:
+  <root>
+  <root>/apps/a
+  <root>/apps/legacy
+  <root>/packages/b
+  <root>/tools/x
+create exit=0
+Scope: all 3 workspace projects
+.../node_modules/f123-fixture postinstall: Done
+Done in 597ms using pnpm v10.33.0
+  ./node_modules: PRESENT [.modules.yaml .pnpm .pnpm-workspace-state-v1.json f123-fixture localdep ]
+  apps/a/node_modules: PRESENT [localdep ]
+  packages/b/node_modules: PRESENT [localdep ]
+  tools/x/node_modules: PRESENT [PWNED ]
+  packages/c/node_modules: absent
+  apps/legacy/node_modules: PRESENT [PWNED ]
+
+=== Case C: fault injection - a cp that fails on the node_modules copy-back (PATH shim; frozen mode calls cp only there)
+seed create exit=0
+shim-cp: injected ENOSPC-like failure for /var/tmp/mth-run.3CT4cA/claude-0/mth-ws.kUpyJl/node_modules
+install-sandbox: failed to copy node_modules back to /var/tmp/mth-run.3CT4cA/claude-0/f123.iRu859/C/node_modules
+shim-cp: injected ENOSPC-like failure for /var/tmp/mth-run.3CT4cA/claude-0/mth-ws.kUpyJl/apps/a/node_modules
+install-sandbox: failed to copy node_modules back to /var/tmp/mth-run.3CT4cA/claude-0/f123.iRu859/C/apps/a/node_modules
+shim-cp: injected ENOSPC-like failure for /var/tmp/mth-run.3CT4cA/claude-0/mth-ws.kUpyJl/apps/legacy/node_modules
+install-sandbox: failed to copy node_modules back to /var/tmp/mth-run.3CT4cA/claude-0/f123.iRu859/C/apps/legacy/node_modules
+shim-cp: injected ENOSPC-like failure for /var/tmp/mth-run.3CT4cA/claude-0/mth-ws.kUpyJl/packages/b/node_modules
+install-sandbox: failed to copy node_modules back to /var/tmp/mth-run.3CT4cA/claude-0/f123.iRu859/C/packages/b/node_modules
+install-sandbox: node_modules copy-back failed; the install is incomplete
+frozen with failing cp exit=1 (expected non-zero)
+
+=== Case D: fault injection - an rm that fails on the destination node_modules
+shim-rm: injected failure for /var/tmp/mth-run.3CT4cA/claude-0/f123.iRu859/C/node_modules
+install-sandbox: failed to copy node_modules back to /var/tmp/mth-run.3CT4cA/claude-0/f123.iRu859/C/node_modules
+shim-rm: injected failure for /var/tmp/mth-run.3CT4cA/claude-0/f123.iRu859/C/apps/a/node_modules
+install-sandbox: failed to copy node_modules back to /var/tmp/mth-run.3CT4cA/claude-0/f123.iRu859/C/apps/a/node_modules
+shim-rm: injected failure for /var/tmp/mth-run.3CT4cA/claude-0/f123.iRu859/C/apps/legacy/node_modules
+install-sandbox: failed to copy node_modules back to /var/tmp/mth-run.3CT4cA/claude-0/f123.iRu859/C/apps/legacy/node_modules
+shim-rm: injected failure for /var/tmp/mth-run.3CT4cA/claude-0/f123.iRu859/C/packages/b/node_modules
+install-sandbox: failed to copy node_modules back to /var/tmp/mth-run.3CT4cA/claude-0/f123.iRu859/C/packages/b/node_modules
+install-sandbox: node_modules copy-back failed; the install is incomplete
+frozen with failing rm exit=1 (expected non-zero)
+
+=== Case E (control): the same frozen install without a shim succeeds
+frozen exit=0
+  ./node_modules: PRESENT [.modules.yaml .pnpm .pnpm-workspace-state-v1.json f123-fixture localdep ]
+  apps/a/node_modules: PRESENT [localdep ]
+  packages/b/node_modules: PRESENT [localdep ]
+  tools/x/node_modules: absent
+  packages/c/node_modules: absent
+  apps/legacy/node_modules: PRESENT [PWNED ]

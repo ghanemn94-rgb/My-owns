@@ -1,0 +1,12 @@
+clone HEAD: 5f83a3363798e3e3452be208f0e6adb5a8649fe6
+run: cp 03-equivalence-probe.mts apps/api/probe.mts with ./apps/api/src/ -> ./src/; old files from git show 016433d; cd apps/api; node probe.mts
+PASS C1 canonicalJson + filterHash identical old vs new over 20000 random values :: mismatches=0
+PASS C2 list filter hash unchanged :: ff19c7939755fe04
+PASS C3 a cursor encoded by the old code decodes under the new code :: ["2026-01-01T00:00:00.000000Z","id-1"]
+PASS C4 the same cursor with a different filter is still refused
+PASS R1 isApprovalPermission identical for 19 inputs
+   approval permissions: gate.decide, finance.validate
+PASS T1 isAllowedTransition identical over 16 pairs :: allowed non-noop: draft->active, active->on_hold, on_hold->active
+PASS T2 no transition into closed is allowed (G6 governs closure)
+SUMMARY failures=0
+exit=0

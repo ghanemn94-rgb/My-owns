@@ -1,0 +1,41 @@
+# F-DG1-122 non-destructiveness proof: disposable clone @5f83a336 (/var/tmp/mth-run.3CT4cA/claude-0/review-sec-r5), private writable copy of the host pnpm store (npm_config_store_dir=/var/tmp/mth-run.3CT4cA/claude-0/pstore); no registry access in the reviewer sandbox
+## planted developer files (pre-existing, untracked) BEFORE the run:
+779626a4d565560c3d3df0e643754c076514a10af180eb5dfa01815dcd6c37a2  .vscode/tasks.json
+ed7e527a815a7734263ebeda47c2f45a9248c881d9135bfc6dca8aeb93eea627  .vscode/settings.json
+4484596182808aa02d3019573047eea08da44bb13cd2aa48402f953eacfb5d55  CLAUDE.local.md
+b0e8cb90657b698085cfe1daff5fe5d3211d0a6af00d56ee7b1c4b5e5863f251  .mcp.json
+35d07d61899180e0ccc464c476ff56fa09423817cb60c43f621b4d3b0ec4ebb4  apps/api/CLAUDE.md
+git status --porcelain (before):
+?? .mcp.json
+?? .vscode/
+?? CLAUDE.local.md
+?? apps/api/CLAUDE.md
+
+$ bash tools/deps/tests/install-sandbox.test.sh
+PASS  AC-1 write to /etc is refused read-only under the sandbox
+FAIL  AC-1 (effect) create did not populate node_modules in the target tree
+PASS  AC-2 a non-allow-listed dependency's postinstall did not run
+PASS  AC-2 an allow-listed dependency's postinstall did run
+PASS  AC-3 frozen install without a committed lockfile fails non-zero
+PASS  AC-3 frozen install that would change the lockfile fails non-zero
+PASS  AC-4 a missing bubblewrap exits 65 (BLOCKED), never an unsandboxed install
+PASS  AC-5 control paths (.git, tools/gates) are read-only inside the sandbox
+PASS  AC-6 a host environment variable (secret) does not cross into the sandbox
+PASS  AC-6 (control) PATH is set inside the sandbox (install is usable)
+PASS  AC-7 control-path escape (parent-rename, installer append, delivery write) is refused; real repo unchanged
+PASS  AC-8 agent-config surfaces (CLAUDE.local.md, .mcp.json, nested CLAUDE.md, .vscode) cannot be created
+PASS  AC-9 a planted non-member node_modules (evil-ctrl/node_modules) is not copied back
+install-sandbox acceptance: 12 passed, 1 failed
+exit=1
+
+## AFTER the run:
+779626a4d565560c3d3df0e643754c076514a10af180eb5dfa01815dcd6c37a2  .vscode/tasks.json
+ed7e527a815a7734263ebeda47c2f45a9248c881d9135bfc6dca8aeb93eea627  .vscode/settings.json
+4484596182808aa02d3019573047eea08da44bb13cd2aa48402f953eacfb5d55  CLAUDE.local.md
+b0e8cb90657b698085cfe1daff5fe5d3211d0a6af00d56ee7b1c4b5e5863f251  .mcp.json
+35d07d61899180e0ccc464c476ff56fa09423817cb60c43f621b4d3b0ec4ebb4  apps/api/CLAUDE.md
+git status --porcelain (after):
+?? .mcp.json
+?? .vscode/
+?? CLAUDE.local.md
+?? apps/api/CLAUDE.md

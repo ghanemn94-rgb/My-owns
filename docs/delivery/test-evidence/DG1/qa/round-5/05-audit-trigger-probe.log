@@ -1,0 +1,69 @@
+$ QA_PG_PORT=5492 tests/qa/support/with-pg.sh bash probe.sh   (independent qa probe)
+set -u
+A="$TEST_DATABASE_ADMIN_URL"
+psql "$A" -qc "CREATE ROLE mth_owner NOLOGIN" -c "CREATE ROLE mth_app NOLOGIN"
+psql "$A" -qc "CREATE DATABASE qa_probe OWNER mth_owner"
+D="postgresql://postgres@127.0.0.1:5492/qa_probe"
+NODE_ENV=test DATABASE_OWNER_URL="$D?options=-c%20role%3Dmth_owner" node packages/db/dist/cli.js migrate; echo "migrate exit=$?"
+psql "$D" -Atc "select table_name from information_schema.tables where table_schema='public' and table_name ilike '%migration%'"
+T=$(psql "$D" -Atc "select table_name from information_schema.tables where table_schema='public' and table_name ilike '%migration%' limit 1")
+psql "$D" -Atc "select id||' '||name from $T order by id"
+echo "--- probe: app INSERT"; psql "$D?options=-c%20role%3Dmth_app" -Atc "insert into audit_event(id,actor_type,action,record_type,record_id,source) values (gen_random_uuid(),'system','qa.probe','qa_probe',gen_random_uuid(),'cli')"; echo "exit=$?"
+psql "$D" -Atc "select count(*) || ' audit rows before probe' from audit_event"
+echo "--- probe: superuser UPDATE audit_event"; psql "$D" -Atc "update audit_event set occurred_at = occurred_at"; echo "exit=$?"
+echo "--- probe: superuser DELETE audit_event"; psql "$D" -Atc "delete from audit_event"; echo "exit=$?"
+echo "--- probe: owner UPDATE"; psql "$D?options=-c%20role%3Dmth_owner" -Atc "update audit_event set occurred_at = occurred_at"; echo "exit=$?"
+echo "--- probe: owner DELETE"; psql "$D?options=-c%20role%3Dmth_owner" -Atc "delete from audit_event"; echo "exit=$?"
+echo "--- probe: superuser TRUNCATE"; psql "$D" -Atc "truncate audit_event"; echo "exit=$?"
+echo "--- probe: app DELETE"; psql "$D?options=-c%20role%3Dmth_app" -Atc "delete from audit_event"; echo "exit=$?"
+psql "$D" -Atc "select count(*) || ' audit rows after probe' from audit_event"
+---
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applied 8 migration(s)
+migrate exit=0
+schema_migration
+1 0001_identity_access.sql
+2 0002_transformation.sql
+3 0003_audit_event.sql
+4 0004_outbox_jobs.sql
+5 0005_seed_roles_permissions.sql
+6 0006_pgboss_schema_v25.sql
+7 0007_oidc_login_browser_binding.sql
+8 0008_scoped_assignment_derived_from.sql
+--- probe: app INSERT
+INSERT 0 1
+exit=0
+1 audit rows before probe
+--- probe: superuser UPDATE audit_event
+ERROR:  audit_event is append-only: UPDATE is not allowed
+CONTEXT:  PL/pgSQL function audit_event_immutable() line 3 at RAISE
+exit=1
+--- probe: superuser DELETE audit_event
+ERROR:  audit_event is append-only: DELETE is not allowed
+CONTEXT:  PL/pgSQL function audit_event_immutable() line 3 at RAISE
+exit=1
+--- probe: owner UPDATE
+ERROR:  audit_event is append-only: UPDATE is not allowed
+CONTEXT:  PL/pgSQL function audit_event_immutable() line 3 at RAISE
+exit=1
+--- probe: owner DELETE
+ERROR:  audit_event is append-only: DELETE is not allowed
+CONTEXT:  PL/pgSQL function audit_event_immutable() line 3 at RAISE
+exit=1
+--- probe: superuser TRUNCATE
+ERROR:  audit_event is append-only: TRUNCATE is not allowed
+CONTEXT:  PL/pgSQL function audit_event_immutable() line 3 at RAISE
+exit=1
+--- probe: app DELETE
+ERROR:  permission denied for table audit_event
+exit=1
+1 audit rows after probe
+exit=0

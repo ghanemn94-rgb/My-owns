@@ -1,0 +1,41 @@
+$ QA_PG_PORT=5492 tests/qa/support/with-pg.sh pnpm test:integration   # run 1
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+> mobily-transformation-hub@0.1.0 test:integration /var/tmp/mth-run.UIaYGI/claude-0/review-qa-r5
+> vitest run --project integration
+
+
+ RUN  v3.2.4 /var/tmp/mth-run.UIaYGI/claude-0/review-qa-r5
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mupgmosz_3589b402; applied 8 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/transformations.test.ts (30 tests) 923ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts (19 tests) 604ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts (18 tests) 776ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts (11 tests) 599ms
+ ✓ |integration| apps/api/test/integration/access-derived-race.test.ts (4 tests) 636ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts (9 tests) 581ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts (13 tests) 312ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts (14 tests) 631ms
+ ✓ |integration| tests/qa/integration/a13-job-idempotency.test.ts (5 tests) 2978ms
+   ✓ A13 running worker: a duplicate delivery is a no-op > consumes the event once; an extra job with the same message completes as 'duplicate'  2613ms
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts (10 tests) 4997ms
+   ✓ worker runtime: end to end, restarts and the dead-letter queue > relays and handles a created transformation, and survives a restart without losing the job  3668ms
+   ✓ worker runtime: end to end, restarts and the dead-letter queue > moves a job that keeps failing to ops.failed after the bounded retries  1039ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts (10 tests) 440ms
+ ✓ |integration| tests/qa/integration/a14-concurrency.test.ts (5 tests) 264ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts (17 tests) 119ms
+ ✓ |integration| apps/api/test/integration/platform.test.ts (9 tests) 177ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts (9 tests) 30ms
+ ✓ |integration| packages/db/test/integration/bootstrap.test.ts (5 tests) 732ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts (7 tests) 335ms
+ ✓ |integration| apps/worker/test/integration/maintenance.test.ts (2 tests) 239ms
+ ✓ |integration| packages/db/test/integration/scratch-drop.test.ts (3 tests) 4437ms
+   ✓ dropScratchDatabase never terminates a live client (F-DG1-009) > a drop right after pool.end() raises no 57P01 on the closing pool (40 rounds, 8 clients each)  3976ms
+   ✓ dropScratchDatabase never terminates a live client (F-DG1-009) > a client that is still connected is NOT terminated: the drop refuses, names it, and succeeds once it ends  459ms
+
+ Test Files  19 passed (19)
+      Tests  200 passed (200)
+   Start at  11:37:46
+   Duration  24.02s (transform 663ms, setup 0ms, collect 3.34s, tests 19.81s, environment 0ms, prepare 57ms)
+
+exit=0

@@ -1,0 +1,16 @@
+# F-DG1-122 mutation control: disposable clone /var/tmp/mth-run.3CT4cA/claude-0/review-sec-r5-mut @5f83a336; the test's WRAP replaced by an UNSANDBOXED 'run' (mutant), so AC-8 must FAIL
+## pre-existing (planted): .vscode/settings.json, apps/api/CLAUDE.md; NOT pre-existing: CLAUDE.local.md, .mcp.json, .vscode/tasks.json
+$ diff original mutant
+19c19
+< WRAP="$ROOT/tools/deps/install-sandbox.sh"
+---
+> WRAP="$ROOT/fake-unsandboxed-wrap.sh"
+$ bash tools/deps/tests/install-sandbox.mutant.test.sh | grep AC-8
+FAIL  AC-8 an agent-config surface was creatable or newly created (writable=4, created=1)
+install-sandbox acceptance: 3 passed, 10 failed
+## after:
+.vscode/settings.json present: DEV-SETTINGS sentinel
+apps/api/CLAUDE.md present: x
+CLAUDE.local.md absent
+.mcp.json absent
+.vscode/tasks.json absent

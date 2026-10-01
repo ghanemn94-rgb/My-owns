@@ -1,0 +1,75 @@
+clone HEAD: 5f83a3363798e3e3452be208f0e6adb5a8649fe6
+== pnpm -s openapi:lint
+PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 33 operations
+exit=0
+== pnpm -s check:no-cdn
+PASS no-cdn: scanned apps, packages
+exit=0
+== pnpm --filter ./apps/web -s typecheck
+exit=0
+== pnpm --filter ./apps/api -s typecheck
+exit=0
+== eslint apps/api/src/modules (F-DG1-124 module lint is in architecture.test.ts; eslint for completeness)
+exit=0
+== design tokens provenance
+provenance-ish entries: 45 values: ['#7A4B00', '#FFF1D6', 'Provisional marker (wordmark, tokens)', 'Provisional marker background', 'True']
+0078FF present: True
+official provenance: []
+== honesty grep (certified/official/PMI claims) in i18n + app src
+apps/web/src/i18n/en/common.json:6:    "provisionalNotice": "Branding is provisional: the text wordmark and colours are placeholders, not official Mobily brand assets."
+apps/web/src/i18n/en/common.json:120:    "brandBody": "No official Mobily logo or verified brand colours have been supplied. The header shows a provisional text wordmark, and the colours (including #0078FF) are provision
+apps/web/src/i18n/en/common.json:123:    "methodBody": "The product operationalizes the Business Transformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with custom extensions. It
+apps/web/src/i18n/ar/common.json:5:    "provisionalHint": "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي ا
+apps/web/src/i18n/ar/common.json:6:    "provisionalNotice": "الهوية البصرية مؤقتة: الشعار النصي والألوان بدائل مؤقتة وليست أصولًا رسمية لعلامة موبا
+apps/web/src/i18n/ar/common.json:117:    "brandBody": "لم يُقدَّم شعار رسمي لموبايلي ولا ألوان علامة معتمدة. يعرض الترويسة شعارًا نصيًا مؤقتًا، و
+apps/web/src/i18n/ar/common.json:120:    "methodBody": "يطبّق المنتج دليل تحوّل الأعمال الإصدار 1.0، وهو خلاصة عملية مستوحاة من ممارسات PMI وBrightline وB
+apps/web/src/components/Wordmark.tsx:1:// Provisional TEXT wordmark (REQ-S15-006, ADR-0009 §5). No official Mobily logo has been supplied, so the header
+apps/web/src/i18n/en/common.json:6:    "provisionalNotice": "Branding is provisional: the text wordmark and colours are placeholders, not official Mobily brand assets."
+apps/web/src/i18n/en/common.json:120:    "brandBody": "No official Mobily logo or verified brand colours have been supplied. The header shows a provisional text wordmark, and the colours (including #0078FF) are provision
+apps/web/src/i18n/en/common.json:123:    "methodBody": "The product operationalizes the Business Transformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with custom extensions. It
+apps/web/src/i18n/ar/common.json:5:    "provisionalHint": "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي ا
+apps/web/src/i18n/ar/common.json:6:    "provisionalNotice": "الهوية البصرية مؤقتة: الشعار النصي والألوان بدائل مؤقتة وليست أصولًا رسمية لعلامة موبا
+apps/web/src/i18n/ar/common.json:117:    "brandBody": "لم يُقدَّم شعار رسمي لموبايلي ولا ألوان علامة معتمدة. يعرض الترويسة شعارًا نصيًا مؤقتًا، و
+apps/web/src/i18n/ar/common.json:120:    "methodBody": "يطبّق المنتج دليل تحوّل الأعمال الإصدار 1.0، وهو خلاصة عملية مستوحاة من ممارسات PMI وBrightline وB
+== DG0-DG7 in product UI strings (should be none)
+apps/web/src/pages/transformations/TransformationEditPage.tsx:63: * Target statuses the API refuses as a status edit in P1 (F-DG1-001). Mirrors `GOVERNED_TARGET_STATUSES` in
+apps/web/src/pages/transformations/TransformationDetailPage.tsx:92: * The creator got a 201 but may not read the record (F-DG1-004: e.g. a grant that covers create at a business unit
+apps/web/src/pages/transformations/TransformationDetailPage.tsx:452:/** One side of an audited change, localized (F-DG1-005). Untranslated codes stay visible, LTR-isolated and marked. */
+apps/web/src/pages/transformations/TransformationCreatePage.tsx:66: * Re-reads GET /me (effective permissions) after a mutation that may change the caller's grants (F-DG1-210).
+apps/web/src/pages/transformations/TransformationCreatePage.tsx:143:      // F-DG1-210: creating a record can grant the creator a derived transformation-scope assignment (F-DG1-106), so
+(end)
+== float/real money columns in migrations (expect none)
+(end)
+== numeric columns
+== AR/EN catalogue key parity
+admin.json 80 80 missing_ar [] missing_en []
+auth.json 21 21 missing_ar [] missing_en []
+common.json 92 92 missing_ar [] missing_en []
+nav.json 48 48 missing_ar [] missing_en []
+problems.json 75 75 missing_ar [] missing_en []
+transformations.json 144 144 missing_ar [] missing_en []
+== DG mentions in i18n catalogues only (UI strings)
+apps/web/src/i18n/glossary.test.ts:1:// Domain terms in the UI catalogues follow the approved DG0 glossary (F-DG1-003, REQ-PB-003).
+apps/web/src/i18n/glossary.test.ts:2:// Source: docs/analysis/glossary.md (T-DG0-AN-01, revised T-DG0-AN-05). The test parses the glossary tables directly,
+apps/web/src/i18n/glossary.test.ts:71:  it("parses the DG0 glossary with distinct Transformation and Initiative terms", () => {
+(end)
+== decimal money convention
+docs/architecture/README.md
+62:  timezone: "Asia/Riyadh",
+63:  currency: "SAR",
+65:} as const satisfies { productName: string; timezone: string; currency: string; locale: Locale };
+== Unknown/Stale in catalogues
+apps/web/src/i18n/en/common.json:46:    "unknown": "Unknown",
+apps/web/src/i18n/en/common.json:47:    "stale": "Stale"
+apps/web/src/i18n/en/common.json:50:    "unknown": "Unknown",
+apps/web/src/i18n/ar/common.json:43:    "unknown": "غير معروف",
+apps/web/src/i18n/ar/common.json:44:    "stale": "قديم"
+apps/web/src/i18n/ar/common.json:47:    "unknown": "غير معروف",
+== list sort enum: shared schema vs Map SORTS vs OpenAPI (the 'unreachable' throw in routes.ts depends on these matching)
+packages/shared/src/schemas/transformation.ts:92:    .enum(["updatedAt:desc", "updatedAt:asc", "name:asc", "name:desc", "code:asc", "code:desc"])
+packages/shared/src/schemas/transformation.ts:93:    .default("updatedAt:desc"),
+apps/api/src/modules/transformations/routes.ts:82:  ["updatedAt:desc", { col: "t.updated_at", dir: "desc" }],
+docs/api/openapi.yaml:673:            enum: ["updatedAt:desc", "updatedAt:asc", "name:asc", "name:desc", "code:asc", "code:desc"]
+docs/api/openapi.yaml:674:            default: "updatedAt:desc"
+== candidate diff 016433d..5f83a33 touching docs/api, docs/architecture, packages/db/migrations, apps/web/src/i18n (expect none)
+(end)

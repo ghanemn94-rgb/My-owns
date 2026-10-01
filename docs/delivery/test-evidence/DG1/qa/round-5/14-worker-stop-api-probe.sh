@@ -1,0 +1,25 @@
+# qa-verifier REQ-S16-001 probe: stopping the worker does not stop the API (disposable cluster via with-pg.sh)
+set -u
+A="$TEST_DATABASE_ADMIN_URL"
+psql "$A" -qc "CREATE ROLE mth_owner NOLOGIN" -c "CREATE ROLE mth_app NOLOGIN"; psql "$A" -qc "CREATE DATABASE mth OWNER mth_owner"
+B="postgresql://postgres@127.0.0.1:${QA_PG_PORT}/mth"; OWN="$B?options=-c%20role%3Dmth_owner"; APP="$B?options=-c%20role%3Dmth_app"
+NODE_ENV=development DATABASE_OWNER_URL="$OWN" node packages/db/dist/cli.js migrate | tail -1
+AUTH_MODE=dev NODE_ENV=development DATABASE_OWNER_URL="$OWN" DATABASE_URL="$APP" node packages/db/dist/cli.js seed-dev | tail -1
+W=$(mktemp -d); mkdir -p $W/ev
+env NODE_ENV=development AUTH_MODE=dev PORT=3191 APP_BASE_URL=http://localhost:3191 LOG_LEVEL=warn DATABASE_URL="$APP" EVIDENCE_STORAGE_PATH=$W/ev node apps/api/dist/main.js > $W/api.log 2>&1 & API=$!
+env NODE_ENV=development DATABASE_URL="$APP" EVIDENCE_STORAGE_PATH=$W/ev LOG_LEVEL=info node apps/worker/dist/main.js > $W/worker.log 2>&1 & WK=$!
+for _ in $(seq 1 60); do curl -fsS localhost:3191/readyz >/dev/null 2>&1 && break; sleep 0.5; done; sleep 2
+echo "before: api alive=$(kill -0 $API 2>/dev/null && echo yes || echo no) worker alive=$(kill -0 $WK 2>/dev/null && echo yes || echo no)"
+echo "before: /readyz $(curl -s -o /dev/null -w '%{http_code}' localhost:3191/readyz)"
+kill -TERM $WK; for _ in $(seq 1 100); do kill -0 $WK 2>/dev/null || break; sleep 0.1; done
+wait $WK; echo "worker stopped (SIGTERM): exit status $?; alive=$(kill -0 $WK 2>/dev/null && echo yes || echo no)"
+sleep 2
+echo "after: api alive=$(kill -0 $API 2>/dev/null && echo yes || echo no)"
+echo "after: /healthz $(curl -s -w ' %{http_code}' localhost:3191/healthz)"
+echo "after: /readyz  $(curl -s -w ' %{http_code}' localhost:3191/readyz)"
+code=$(curl -s -c $W/cj -o /dev/null -w '%{http_code}' -H 'content-type: application/json' -H 'origin: http://localhost:3191' -d '{"username":"dev.office"}' localhost:3191/api/v1/auth/dev-login)
+echo "after: POST /api/v1/auth/dev-login (dev.office, SYNTHETIC) -> $code"
+echo "after: GET /api/v1/me -> $(curl -s -b $W/cj -o /dev/null -w '%{http_code}' localhost:3191/api/v1/me)"
+echo "after: GET /api/v1/transformations -> $(curl -s -b $W/cj -o /dev/null -w '%{http_code}' localhost:3191/api/v1/transformations)"
+echo "--- worker.log tail"; tail -5 $W/worker.log
+kill $API; wait $API 2>/dev/null; rm -rf $W

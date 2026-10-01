@@ -9054,7 +9054,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG1/round-1/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T06:46:01Z",
@@ -9065,10 +9065,30 @@
           "at": "2026-10-01T08:02:45Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 3eaab6c"
+        },
+        {
+          "at": "2026-10-01T11:40:31Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 5: PASS"
         }
       ],
       "fix_revision": "3eaab6c",
-      "fix_summary": "SBOM regenerated for the pinned digests; generate-sbom --check passes."
+      "fix_summary": "SBOM regenerated for the pinned digests; generate-sbom --check passes.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-SEC-R5-code-security-reviewer-20261001T112622Z-42264c87",
+          "session_id": "42264c87-c3ab-45af-bad5-a8900c03e7d6"
+        },
+        "at": "2026-10-01T11:40:31Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/code-security/round-5/26-sbom-check.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-5/15-node-modules-provenance.log"
+        ],
+        "note": "On the committed tree 5f83a336, `node licenses/generate-sbom.mjs --check` -> 'OK: packages=422 runtime=112 bundled=17 development=293 containers=4 shipped-without-licence-id=0 lockfile-sha256=f199a0e1...', exit 0. The recorded lockfile hash equals sha256(pnpm-lock.yaml) = f199a0e18472519b... (15-node-modules-provenance.log)."
+      }
     },
     {
       "id": "F-DG1-205",
@@ -9086,7 +9106,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG1/round-1/qa-verifier.json",
       "owner": "solution-architect",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T06:46:01Z",
@@ -9097,10 +9117,30 @@
           "at": "2026-10-01T08:02:45Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 3eaab6c"
+        },
+        {
+          "at": "2026-10-01T11:40:31Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 5: PASS"
         }
       ],
       "fix_revision": "3eaab6c",
-      "fix_summary": "All three ci.yml copies (.github/workflows, deploy/ci, docs/architecture/ci) are now byte-identical; drift closed."
+      "fix_summary": "All three ci.yml copies (.github/workflows, deploy/ci, docs/architecture/ci) are now byte-identical; drift closed.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-SEC-R5-code-security-reviewer-20261001T112622Z-42264c87",
+          "session_id": "42264c87-c3ab-45af-bad5-a8900c03e7d6"
+        },
+        "at": "2026-10-01T11:40:31Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/code-security/round-5/27-ci-yml-identity.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-5/09-deploy-scripts-tests.log"
+        ],
+        "note": "On 5f83a336, .github/workflows/ci.yml, deploy/ci/ci.yml and docs/architecture/ci/ci.yml all have SHA-256 8b5b1106...76ce; `cmp` of each pair exits 0. deploy/scripts/check-ci-needs.mjs on the installed workflow exits 0 (integration and e2e need verify, and images needs integration and e2e, all reaching delivery-gates); deploy/scripts tests 59/59."
+      }
     },
     {
       "id": "F-DG1-206",
@@ -9794,6 +9834,11 @@
           "at": "2026-10-01T10:50:30Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by qa-verifier round 4: PASS"
+        },
+        {
+          "at": "2026-10-01T11:55:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 5: PASS"
         }
       ],
       "fix_revision": "2b020cb",
@@ -9802,20 +9847,19 @@
         "by_role": "qa-verifier",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG1-T-DG1-REV-QA-R4-qa-verifier-20261001T102915Z-a504e866",
-          "session_id": "a504e866-a66e-46a1-a1b4-9c903960fc22"
+          "run_id": "DG1-T-DG1-REV-QA-R5-qa-verifier-20261001T112622Z-7050001a",
+          "session_id": "7050001a-b081-43f7-9ca1-b5d932ae9f87"
         },
-        "at": "2026-10-01T10:50:30Z",
+        "at": "2026-10-01T11:55:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG1/qa/round-4/09-integration-run1.log",
-          "docs/delivery/test-evidence/DG1/qa/round-4/09-integration-run2.log",
-          "docs/delivery/test-evidence/DG1/qa/round-4/09-integration-run3.log",
-          "docs/delivery/test-evidence/DG1/qa/round-4/10-serial-probe.log",
-          "docs/delivery/test-evidence/DG1/qa/tests/dg1-r4-serial-probe-a.test.ts",
-          "docs/delivery/test-evidence/DG1/qa/tests/dg1-r4-serial-probe-b.test.ts"
+          "docs/delivery/test-evidence/DG1/qa/round-5/04-int-run1.log",
+          "docs/delivery/test-evidence/DG1/qa/round-5/04-int-run1-pg.log",
+          "docs/delivery/test-evidence/DG1/qa/round-5/04-int-run2.log",
+          "docs/delivery/test-evidence/DG1/qa/round-5/04-int-run2-pg.log",
+          "docs/delivery/test-evidence/DG1/qa/round-5/04-int-run3-verbose.log"
         ],
-        "note": "Fix 8f73c84/45328ec is in candidate sha256:3b76021b... (recomputed in the repository and in a full disposable clone of e8ed6e29; the freeze diff from 016433d is metadata only). Determinism: `QA_PG_PORT=5492 tests/qa/support/with-pg.sh pnpm test:integration` 3 times, each on a FRESH PostgreSQL 16.13 cluster. Every run: 8 migrations, 19 files, 200/200, exit 0. No Unhandled error, 57P01 or 'terminating connection' in any log; the only grep hit is the new scratch-drop test's title. Mechanism, checked independently: vitest.config.ts puts the integration project on pool 'forks' with poolOptions.forks.singleFork. My probe (dg1-r4-serial-probe-{a,b}.test.ts, an O_EXCL lock per file) shows both files in ONE pid, strictly one after the other. As a negative control I removed the pool/singleFork lines (the round-3 config shape), and the two files then ran concurrently in two pids: OVERLAP, exit 1. So the probe detects concurrency, and the fix is what serializes the files. Teardown: dropScratchDatabase now polls pg_stat_activity until no other backend remains and throws ScratchDatabaseInUse instead of terminating a live client. WITH (FORCE) remains only for a racing connection. The new scratch-drop.test.ts (40 rounds x 8 clients with an error spy; the live-client refusal case; the name guard) passes 3/3 in every run. The harness owner pool now has an error listener. A12 (14), A13 (5) and A14 (5) are green in all 3 runs, including the a12 'denied create wrote a row' case that was red in round 3."
+        "note": "Re-confirmed on candidate sha256:24eb3779...b08e. The integration project ran 3 times, each on a FRESH PostgreSQL 16.13 cluster (port 5492): 19 files, 200/200, exit 0 every time. The PostgreSQL server logs of runs 1 and 2 were kept and contain no 57P01, no 'terminating connection' and no FATAL. The only 57P01 hit in the output is the scratch-drop test's own title ('a drop right after pool.end() raises no 57P01 ... 40 rounds, 8 clients'), and it passes. vitest.config.ts still pins the integration project to pool 'forks' with singleFork. A12 (14), A13 (5) and A14 (5) are green in all runs, including a12 'create is denied outside the caller's scope'."
       }
     },
     {
@@ -10093,6 +10137,11 @@
           "at": "2026-10-01T10:50:30Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by qa-verifier round 4: PASS"
+        },
+        {
+          "at": "2026-10-01T11:55:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 5: PASS"
         }
       ],
       "fix_revision": "e75a217",
@@ -10101,24 +10150,20 @@
         "by_role": "qa-verifier",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG1-T-DG1-REV-QA-R4-qa-verifier-20261001T102915Z-a504e866",
-          "session_id": "a504e866-a66e-46a1-a1b4-9c903960fc22"
+          "run_id": "DG1-T-DG1-REV-QA-R5-qa-verifier-20261001T112622Z-7050001a",
+          "session_id": "7050001a-b081-43f7-9ca1-b5d932ae9f87"
         },
-        "at": "2026-10-01T10:50:30Z",
+        "at": "2026-10-01T11:55:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG1/qa/round-4/12-e2e.log",
-          "docs/delivery/test-evidence/DG1/qa/round-4/13-lead-no-reload.log",
-          "docs/delivery/test-evidence/DG1/qa/round-4/14-lead-no-reload-negative-control.log",
-          "docs/delivery/test-evidence/DG1/qa/tests/dg1-r4-lead-create-edit-archive-no-reload.spec.ts",
-          "docs/delivery/test-evidence/DG1/qa/round-4/screenshots/lead-no-reload/ar-01-after-create.png",
-          "docs/delivery/test-evidence/DG1/qa/round-4/screenshots/lead-no-reload/en-01-after-create.png",
-          "docs/delivery/test-evidence/DG1/qa/round-4/screenshots/lead-no-reload/ar-02-after-edit-archive.png",
-          "docs/delivery/test-evidence/DG1/qa/round-4/screenshots/lead-no-reload/en-02-after-edit-archive.png",
-          "docs/delivery/test-evidence/DG1/qa/round-4/screenshots/journeys/ar/axe-summary.json",
-          "docs/delivery/test-evidence/DG1/qa/round-4/screenshots/journeys/en/axe-summary.json"
+          "docs/delivery/test-evidence/DG1/qa/round-5/06-e2e-run1.log",
+          "docs/delivery/test-evidence/DG1/qa/round-5/03-unit.log",
+          "docs/delivery/test-evidence/DG1/qa/round-5/screenshots/journeys/en/17a-lead-created-controls.png",
+          "docs/delivery/test-evidence/DG1/qa/round-5/screenshots/journeys/ar/17a-lead-created-controls.png",
+          "docs/delivery/test-evidence/DG1/qa/round-5/screenshots/journeys/en/axe-summary.json",
+          "docs/delivery/test-evidence/DG1/qa/round-5/screenshots/journeys/ar/axe-summary.json"
         ],
-        "note": "Fix 0025328/c3fffd2 is in the candidate. TransformationCreatePage now awaits refreshEffectivePermissions (invalidateQueries keys.me with refetchType 'all', raced against a 5 s timeout, never rejecting) before navigating. Real stack, EN and AR (PG 5493, --workers=1): (1) The full e2e passes 22/22, including the frontend journey 'a business-unit Lead creates a record: Edit/Archive and the audit trail appear without a reload'. That journey no longer calls page.reload(); it asserts a window marker. The only page.reload() left in journeys.spec.ts is the language-persistence step. (2) My independent spec dg1-r4-lead-create-edit-archive-no-reload.spec.ts passes 2/2. As dev.lead (TL at SYN-RETAIL only): create, then Edit/Archive/audit trail visible at once, then Edit and save, then Archive with a reason. No document reload happened (the marker survived; 0 load events after the form opened). The server confirms the edited name and archivedAt. No over-grant: the /me read after the 201 adds exactly one grant, scope {type: transformation, id: <new id>} with inheritsDownward false. (3) Negative control: I removed the refresh call in the clone and rebuilt the web app. The same spec then fails in EN and AR (Edit link not found), so it detects the defect. (4) My round-3 spec dg1-r3-derived-audit-localized, run unchanged, now records auditTrailRegions=1 and editLinks=1 before any reload (0/0 in round 3). The derived row is still localized in both languages (F-DG1-005/008: no regression). Axe: 0 violations, 15 pages per language, including the new lead-created-controls page."
+        "note": "Re-confirmed on candidate sha256:24eb3779...b08e. Full e2e on a real stack (PG 5493, --workers=1, pre-installed Chromium 1194): 22/22. The journey 'a business-unit Lead creates a record: Edit/Archive and the audit trail appear without a reload (F-DG1-210)' passes in chromium-en and chromium-ar. I read the test body: it sets a window marker before clicking Create and asserts it survives after Edit/Archive become visible and again after the audit-trail checks, so no document reload occurs, and it has no page.reload(). The three unit tests 'effective permissions refresh after create (F-DG1-210)' (EN, AR, and fail-safe when /me fails) also pass. Screenshots viewed: the AR page is RTL with تعديل/أرشفة and the localized derived-grant audit row; the EN page shows Edit/Archive and the audit trail. Axe: 15 pages per language, 0 violations."
       }
     },
     {
@@ -10138,7 +10183,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-4/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T10:48:36Z",
@@ -10149,10 +10194,37 @@
           "at": "2026-10-01T11:00:38Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at f75b334"
+        },
+        {
+          "at": "2026-10-01T11:40:31Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 5: PASS"
+        },
+        {
+          "at": "2026-10-01T11:55:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 5: PASS"
         }
       ],
       "fix_revision": "f75b334",
-      "fix_summary": "AC-8 is non-destructive: it snapshots pre-existing dev paths and removes only a probe-created path; a planted .vscode/tasks.json survives the run. 13/13 ACs."
+      "fix_summary": "AC-8 is non-destructive: it snapshots pre-existing dev paths and removes only a probe-created path; a planted .vscode/tasks.json survives the run. 13/13 ACs.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-QA-R5-qa-verifier-20261001T112622Z-7050001a",
+          "session_id": "7050001a-b081-43f7-9ca1-b5d932ae9f87"
+        },
+        "at": "2026-10-01T11:55:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/qa/round-5/09-install-sandbox-tests-planted.log",
+          "docs/delivery/test-evidence/DG1/qa/round-5/11-install-test-negative-control.log",
+          "docs/delivery/test-evidence/DG1/qa/round-5/10-ac1-effect-offline-equivalent.log",
+          "tools/deps/tests/install-sandbox.test.sh"
+        ],
+        "note": "Fix f75b334 is in the candidate. Code: AC-8 now snapshots which of CLAUDE.local.md, .mcp.json, apps/api/CLAUDE.md and .vscode/tasks.json pre-exist, and removes a path only if the probe newly created it (and then also fails AC-8). The unconditional `rm -rf \"$ROOT/$p\"` over .vscode etc. is gone. The other host-side removals touch only test-specific probe names (.git/mth-ac5-probe, tools/gates/mth-ac5-probe, docs/delivery/mth-ac7-probe, and tools.mth-ac7 renamed back only if present). Behaviour: in a dedicated disposable clone of 5f83a33 I planted .vscode/settings.json, .vscode/tasks.json, CLAUDE.local.md, .mcp.json and apps/api/CLAUDE.md, hashed them and ran the suite (scratch store). Result: 12 passed + AC-1 (effect) BLOCKED on registry, AC-7 and AC-8 PASS, and all 5 files byte-identical afterwards (sha256sum -c exit 0). Negative control in the same clone: with the pre-fix script (f75b334^), the same run deleted all 5 planted files (sha256sum -c exit 1). So the check detects the defect, and the fix removes it. Installer suite count: 13/13 in the orchestrator's regenerated log. Here 12/13 run as written, and the 13th (AC-1 effect) passes in its offline equivalent; the as-written case is BLOCKED for lack of registry network, not failed."
+      }
     },
     {
       "id": "F-DG1-123",
@@ -10172,7 +10244,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-4/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T10:48:36Z",
@@ -10183,10 +10255,32 @@
           "at": "2026-10-01T11:00:39Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at f75b334"
+        },
+        {
+          "at": "2026-10-01T11:40:31Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 5: PASS"
         }
       ],
       "fix_revision": "f75b334",
-      "fix_summary": "Copy-back enumerates the real pnpm-workspace members (root + packages: globs with a package.json), not package.json<=depth4; a failed rm/cp fails the install (no silent exit 0)."
+      "fix_summary": "Copy-back enumerates the real pnpm-workspace members (root + packages: globs with a package.json), not package.json<=depth4; a failed rm/cp fails the install (no silent exit 0).",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-SEC-R5-code-security-reviewer-20261001T112622Z-42264c87",
+          "session_id": "42264c87-c3ab-45af-bad5-a8900c03e7d6"
+        },
+        "at": "2026-10-01T11:40:31Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/code-security/round-5/18-f123-copyback.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-5/repro-f123-copyback.sh",
+          "docs/delivery/test-evidence/DG1/code-security/round-5/17-ac8-nondestructive-proof.log",
+          "tools/deps/install-sandbox.sh"
+        ],
+        "note": "Fixed on 5f83a336 for both parts of the finding. (a) Copy errors: tools/deps/install-sandbox.sh:170-182 checks every `rm -rf`/`cp -a`, reports the failing destination and ends with fail (exit 1) if any copy failed; the unconditional success path of round 4 is gone. Fault injection with the unchanged installer (18-f123-copyback.log Cases C/D): a PATH shim making cp fail on the node_modules copy-back gives 'failed to copy node_modules back to ...' for each member and 'node_modules copy-back failed; the install is incomplete', exit 1; an rm shim failing on the destination gives the same, exit 1; the control run without a shim exits 0 (Case E). (b) Destinations: lines 150-168 resolve the members from pnpm-workspace.yaml on the REAL tree (root plus glob matches that have a package.json), no longer from every on-disk package.json at depth <= 4. In Case A, the yaml is identical to the committed one (packages: apps/*, packages/*). The resolver yields root, apps/a, apps/legacy and packages/b. A planted node_modules at a stray tools/x/package.json (depth 2, the round-4 hazard) and at packages/c (glob match, no package.json) is NOT copied back. create and frozen populate the root and member node_modules and write the lockfile. AC-9 PASSes in the suite (17-ac8-nondestructive-proof.log). Residual, raised separately as F-DG1-126 (Low): the resolver regex reads every YAML list item, not only `packages:`, and ignores `!` exclusions (Case B). It is not reachable with the committed yaml."
+      }
     },
     {
       "id": "F-DG1-124",
@@ -10208,7 +10302,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-4/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T10:48:36Z",
@@ -10219,10 +10313,34 @@
           "at": "2026-10-01T11:17:23Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 6465ed8"
+        },
+        {
+          "at": "2026-10-01T11:40:31Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 5: PASS"
         }
       ],
       "fix_revision": "6465ed8",
-      "fix_summary": "Module lint bans the dynamic-code primitives outright (eval/Function/constructor/loaders/reflection/process.binding/dlopen/module + non-literal computed keys) in src/modules/**, written any way; real tree zero findings; planted f['constr'+'uctor'] / Reflect.get cases fail-before/pass-after."
+      "fix_summary": "Module lint bans the dynamic-code primitives outright (eval/Function/constructor/loaders/reflection/process.binding/dlopen/module + non-literal computed keys) in src/modules/**, written any way; real tree zero findings; planted f['constr'+'uctor'] / Reflect.get cases fail-before/pass-after.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-SEC-R5-code-security-reviewer-20261001T112622Z-42264c87",
+          "session_id": "42264c87-c3ab-45af-bad5-a8900c03e7d6"
+        },
+        "at": "2026-10-01T11:40:31Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/code-security/round-5/22-plant-f124.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-5/22b-plant-f124-module-tree.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-5/plant-f124.test.ts",
+          "docs/delivery/test-evidence/DG1/code-security/round-5/07-test.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-5/20-integration-run1.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-5/20-integration-run2.log"
+        ],
+        "note": "Fixed on 5f83a336. apps/api/src/architecture.testkit.ts bans the dynamic-code primitive names in every non-type syntactic form (rule 1: identifier, member, string literal, key, import/export name; 57-72, 266-274) and every computed member or computed property name whose key is not a literal or numeric by construction (rule 2: 171-178, 275-283). Re-test (22-plant-f124.log), through the candidate's fileViolations(): f[\"constr\"+\"uctor\"] -> 'computed member with a non-literal key'; Reflect.get(fn, \"constructor\") -> 'reflection via Reflect' + 'the \"constructor\" key as a value'; Reflect.get(fn, \"constr\".concat(\"uctor\")) -> 'reflection via Reflect'. My own probes are also caught: unicode-escaped Fun\\u0063tion and .constr\\u0075ctor, String.raw`constructor`, globalThis destructuring, a class computed member, Object.values(getOwnPropertyDescriptors(...)) and a k+0 key. End to end (22b-plant-f124-module-tree.log): as real files in apps/api/src/modules/access/, the R1 and R2 plants turn architecture.test.ts red (1 failed of 74, naming the file and line); without a plant the real module tree passes 74/74 with zero violations (also 07-test.log). The module-source refactors (access/rules.ts PERMISSION_CATEGORY Map; identity/routes.ts cookieValue over own cookie entries; platform/cursor.ts entries sorted by the same UTF-16 order as keys().sort(); transformations/routes.ts STATUS_TRANSITIONS and SORTS Maps, whose six keys equal the shared listQuery sort enum) behave the same for every valid input, and an invalid one is now refused rather than throwing a TypeError. The integration suite covers them: sorting and cursor pagination, OIDC cookies, status transitions; 200/200 twice (20-integration-run1/2.log). A different primitive still gets through: the native loaders, via an import of node:process. It is raised separately as F-DG1-125 (Low); the constructed-key route this finding is about is closed."
+      }
     },
     {
       "id": "F-DG1-211",
@@ -10244,7 +10362,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG1/round-4/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T10:46:00Z",
@@ -10255,10 +10373,90 @@
           "at": "2026-10-01T11:02:32Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 3e142d6"
+        },
+        {
+          "at": "2026-10-01T11:55:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 5: PASS"
         }
       ],
       "fix_revision": "3e142d6",
-      "fix_summary": "The REQ-DLV-042 acceptance log (docs/delivery/test-evidence/DG1/orchestrator/install-sandbox-acceptance.log) is regenerated from the current 13-case suite; 13/13 pass."
+      "fix_summary": "The REQ-DLV-042 acceptance log (docs/delivery/test-evidence/DG1/orchestrator/install-sandbox-acceptance.log) is regenerated from the current 13-case suite; 13/13 pass.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-QA-R5-qa-verifier-20261001T112622Z-7050001a",
+          "session_id": "7050001a-b081-43f7-9ca1-b5d932ae9f87"
+        },
+        "at": "2026-10-01T11:55:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/orchestrator/install-sandbox-acceptance.log",
+          "docs/delivery/requirements.csv",
+          "tools/deps/tests/install-sandbox.test.sh",
+          "docs/delivery/test-evidence/DG1/qa/round-5/09-install-sandbox-tests-planted.log",
+          "docs/delivery/test-evidence/DG1/qa/round-5/10-ac1-effect-offline-equivalent.log"
+        ],
+        "note": "Fix 3e142d6 is in candidate sha256:24eb3779...b08e (commit 5f83a33). REQ-DLV-042's evidence column cites docs/delivery/test-evidence/DG1/orchestrator/install-sandbox-acceptance.log. That log now records the current suite: header 'current 13-case suite: AC-1..AC-9 ... Regenerated 2026-10-01T11:02:10Z for F-DG1-211', 13 PASS lines, 'install-sandbox acceptance: 13 passed, 0 failed', exit=0. Its 13 labels are identical, 1:1, to the 13 ok-labels in the candidate's tools/deps/tests/install-sandbox.test.sh. The suite's last change (f75b334, 11:00:38Z) precedes the log, and no tools/deps change follows 3e142d6, so the log reflects the frozen suite. Independently on this candidate (disposable clone, no registry network): 12 of 13 cases pass as written, and AC-1 (effect) passes in the offline equivalent (same fixture, lockfile pinned to the store's integrity, wrapper unchanged). The as-written AC-1 (effect) is BLOCKED here only on registry access (ECONNREFUSED), so the orchestrator's 13/13 is consistent with what I can reproduce. Observation, not a new finding: the row's notes column still holds the historical analyst remark 'DG1 analyst check (T-DG1-REG): acceptance suite 7/7'. It's a dated statement and does not affect the cited evidence; the analyst may refresh it."
+      }
+    },
+    {
+      "id": "F-DG1-125",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Module lint rule 3 (native loaders process.binding/_linkedBinding/dlopen) is bypassed by aliasing process through an import of node:process",
+      "reproduction": "Candidate 24eb3779 (commit 5f83a336), disposable clone. apps/api/src/architecture.testkit.ts:290 flags `<root>.binding|_linkedBinding|dlopen` only when rootName() (line 131-134) sees the identifier text `process`/`globalThis`/`global`; BANNED_PRIMITIVES (57-72) does not contain binding/_linkedBinding/dlopen; and node:process is not in LOADER_BUILTINS (51-55), so bareAllowed() accepts it as a `node:` built-in. Plants through fileViolations('transformations', .../planted.ts): `import proc from \"node:process\"; proc.dlopen({exports:{}} as any, \"/tmp/x.node\")` -> 0 violations; `(proc as any).binding(\"fs\")` -> 0; `import { dlopen } from \"node:process\"` -> 0 (22-plant-f124.log X6-X8). Written as a real file apps/api/src/modules/access/zz-planted.ts (`import { binding } from \"node:process\"; ... binding(\"fs\")`, or the dlopen form), the candidate's architecture.test.ts stays green, 74/74, exit 0 (22b-plant-f124-module-tree.log). Runtime, Node 22.22.2: the default export of node:process is `process` itself, and the named exports binding and dlopen are functions; binding('fs') returns the internal fs binding, binding('natives') exposes the built-in JS sources, and dlopen attempts a native load (ERR_DLOPEN_FAILED for a missing file) (23-node-process-alias-runtime.log). The same forms written with the identifier `process` ARE caught (X9; the candidate's own P12 case).",
+      "expected": "The testkit header claims rule 3 bans the native loaders process.binding / process._linkedBinding / process.dlopen, and that rules 1-2 'remove every syntactic route inside module source'. To make that hold: add binding/_linkedBinding/dlopen to the banned names (rule 1, every syntactic form), or treat an import of node:process (default, namespace or named) as an alias of the runtime root, or ban the node:process specifier in src/modules (process is a global, so a module never needs the import). Then add the X6-X8 forms to the self-check table.",
+      "actual": "The three native-loader primitives are reachable from module source through an import of node:process without any violation. Impact is limited. Neither primitive is a JS module loader that hands out another module's internals. dlopen needs a compiled .node file on disk; binding gives raw internal bindings (fs, natives). This is a static architecture lint (defence in depth, ADR-0002), not a runtime security boundary, and the required plants of F-DG1-124 (constructed key, Reflect.get) are all caught. Hence Low, not mandatory.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-5/22-plant-f124.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-5/22b-plant-f124-module-tree.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-5/23-node-process-alias-runtime.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-5/plant-f124.test.ts",
+        "apps/api/src/architecture.testkit.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-5/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T11:40:31Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG1 round 5 while verifying F-DG1-124; reproduced in a disposable clone (lint, real module tree, Node runtime). ID proposed as the next free number in the 1xx range; the orchestrator may renumber."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-126",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-042",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "install-sandbox.sh copy-back member resolver reads every YAML list item in pnpm-workspace.yaml as a glob and ignores '!' exclusions, so non-member directories can become copy-back destinations",
+      "reproduction": "tools/deps/install-sandbox.sh:154-168 (candidate 5f83a336). The node resolver matches /^\\s*-\\s*[\"']?([^\"'\\n#]+?)[\"']?\\s*$/gm over the WHOLE file, not only the `packages:` sequence, and passes every item to fs.globSync. fs.globSync has no negation, so a `!pattern` item matches nothing and never removes a member. Repro (repro-f123-copyback.sh Case B, unchanged installer, --root on a disposable workspace, offline): pnpm-workspace.yaml = packages: [apps/*, packages/*, \"!apps/legacy\"] plus publicHoistPattern: [\"tools/x\"]; apps/legacy and tools/x each have a package.json; an allow-listed dependency's postinstall plants node_modules/PWNED in the disposable copy at tools/x and apps/legacy. The resolver parses the globs as [\"apps/*\",\"packages/*\",\"!apps/legacy\",\"tools/x\"] and lists apps/legacy and tools/x as members. pnpm itself reports 'Scope: all 3 workspace projects' (apps/legacy excluded), yet after `create` the REAL target tree has tools/x/node_modules/PWNED and apps/legacy/node_modules/PWNED (18-f123-copyback.log).",
+      "expected": "The destinations are exactly the pnpm workspace members, as the installer's own comment states ('the root plus every directory that the packages: globs in pnpm-workspace.yaml resolve to'): parse only the `packages:` sequence and apply `!` exclusions (or ask pnpm for the member list, e.g. `pnpm ls -r --depth -1 --json` run on the trusted real tree outside the sandbox), and add a test case with an exclusion and an unrelated list key.",
+      "actual": "Not exploitable on the committed tree. Today's pnpm-workspace.yaml has only the `packages:` sequence with apps/* and packages/* (case A: the resolver yields exactly root, apps/*, packages/* with a package.json; the stray tools/x/package.json is NOT a destination). The latent mismatch is reached only if a maintainer later adds a negated workspace pattern, or a list-valued pnpm setting (onlyBuiltDependencies, publicHoistPattern, ...) whose item names an existing directory with a package.json. The YAML is part of the trusted real tree (dependency code cannot change it), so this is hardening, not a current escape. Low, not mandatory.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-5/18-f123-copyback.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-5/repro-f123-copyback.sh",
+        "tools/deps/install-sandbox.sh",
+        "pnpm-workspace.yaml"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-5/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T11:40:31Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG1 round 5 while verifying F-DG1-123 (residual of the new member resolver); reproduced with the unchanged installer on a disposable workspace. ID proposed as the next free number in the 1xx range; the orchestrator may renumber."
+        }
+      ]
     }
   ]
 }

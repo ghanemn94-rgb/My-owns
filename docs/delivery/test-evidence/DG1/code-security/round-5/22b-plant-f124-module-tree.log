@@ -1,0 +1,39 @@
+# F-DG1-124 end-to-end: real files planted in the module tree of the disposable clone @5f83a336, then the candidate's architecture.test.ts
+## baseline (no plant)
+ Test Files  1 passed (1)
+      Tests  74 passed (74)
+
+## plant R1 -> apps/api/src/modules/access/zz-planted.ts:
+export const f = async () => {};
+const F = (f as any)["constr" + "uctor"];
+export const run = () => F("s", "return import(s)")("../transformations/routes.ts");
+$ pnpm vitest run --project unit-node apps/api/src/architecture.test.ts
+exit=1
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
++   "modules/access/zz-planted.ts: computed member with a non-literal key (line 2) bypasses the module-interface check",
+      Tests  1 failed | 73 passed (74)
+
+## plant R2 -> apps/api/src/modules/access/zz-planted.ts:
+const fn = async () => {};
+const F = Reflect.get(fn, "constructor");
+export const run = () => F("s", "return import(s)")("../transformations/routes.ts");
+$ pnpm vitest run --project unit-node apps/api/src/architecture.test.ts
+exit=1
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
++   "modules/access/zz-planted.ts: reflection via Reflect (line 2) bypasses the module-interface check",
++   "modules/access/zz-planted.ts: code evaluation via the \"constructor\" key as a value (line 2) bypasses the module-interface check",
+      Tests  1 failed | 73 passed (74)
+
+## plant X6 -> apps/api/src/modules/access/zz-planted.ts:
+import proc from "node:process";
+export const load = (p: string) => proc.dlopen({ exports: {} } as never, p);
+$ pnpm vitest run --project unit-node apps/api/src/architecture.test.ts
+exit=0
+      Tests  74 passed (74)
+
+## plant X8 -> apps/api/src/modules/access/zz-planted.ts:
+import { binding } from "node:process";
+export const fsb = () => (binding as (n: string) => unknown)("fs");
+$ pnpm vitest run --project unit-node apps/api/src/architecture.test.ts
+exit=0
+      Tests  74 passed (74)

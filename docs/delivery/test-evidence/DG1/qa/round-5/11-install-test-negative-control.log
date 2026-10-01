@@ -1,0 +1,23 @@
+# NEGATIVE CONTROL (disposable clone only): pre-fix test script from f75b334^ (round-4 candidate) with the same planted files
+139:for p in CLAUDE.local.md .mcp.json apps/api/CLAUDE.md .vscode; do rm -rf "$ROOT/$p" 2>/dev/null; done
+.vscode/settings.json: OK
+.vscode/tasks.json: OK
+CLAUDE.local.md: OK
+.mcp.json: OK
+apps/api/CLAUDE.md: OK
+# cmd: npm_config_store_dir=$TMPDIR/pnpm-store/v10 bash tools/deps/tests/install-sandbox.test.sh   (pre-fix version)
+PASS  AC-8 agent-config surfaces (CLAUDE.local.md, .mcp.json, nested CLAUDE.md, .vscode) cannot be created
+install-sandbox acceptance: 12 passed, 1 failed
+# after (pre-fix): planted files
+sha256sum: .vscode/settings.json: No such file or directory
+.vscode/settings.json: FAILED open or read
+sha256sum: .vscode/tasks.json: No such file or directory
+.vscode/tasks.json: FAILED open or read
+sha256sum: CLAUDE.local.md: No such file or directory
+CLAUDE.local.md: FAILED open or read
+sha256sum: .mcp.json: No such file or directory
+.mcp.json: FAILED open or read
+sha256sum: apps/api/CLAUDE.md: No such file or directory
+apps/api/CLAUDE.md: FAILED open or read
+sha256sum: WARNING: 5 listed files could not be read
+sha256sum -c exit=1

@@ -1,0 +1,35 @@
+# cwd: disposable clone @ 5f83a3363798e3e3452be208f0e6adb5a8649fe6 (candidate sha256:24eb3779...); bwrap=/usr/bin/bwrap; scratch copy of the local pnpm store; no registry network
+# planted pre-existing developer files (F-DG1-122):
+822a9ae0acc019d4724a08d4ae206999987b033b667f3290273014aafc717153  .vscode/settings.json
+b5533c8bc2c4eafc876b029c99b92618a16bdde8ca83fa4ba3cfb18203c506b7  .vscode/tasks.json
+89eba988447c1b01c8c6809b25b571b80ed9ef1718424db1e2e38393120d43fb  CLAUDE.local.md
+e93fc8db2b1bd77107fe6c758bca9545fa864cf7cce8ab93a7b2b93a1d566a7b  .mcp.json
+86b4b197cb8c127b86c90f46a1d990622ca0f3c55e1f04eb76aedef2b4c1d3c4  apps/api/CLAUDE.md
+# cmd: npm_config_store_dir=$TMPDIR/pnpm-store/v10 timeout 600 bash tools/deps/tests/install-sandbox.test.sh
+PASS  AC-1 write to /etc is refused read-only under the sandbox
+FAIL  AC-1 (effect) create did not populate node_modules in the target tree
+PASS  AC-2 a non-allow-listed dependency's postinstall did not run
+PASS  AC-2 an allow-listed dependency's postinstall did run
+PASS  AC-3 frozen install without a committed lockfile fails non-zero
+PASS  AC-3 frozen install that would change the lockfile fails non-zero
+PASS  AC-4 a missing bubblewrap exits 65 (BLOCKED), never an unsandboxed install
+PASS  AC-5 control paths (.git, tools/gates) are read-only inside the sandbox
+PASS  AC-6 a host environment variable (secret) does not cross into the sandbox
+PASS  AC-6 (control) PATH is set inside the sandbox (install is usable)
+PASS  AC-7 control-path escape (parent-rename, installer append, delivery write) is refused; real repo unchanged
+PASS  AC-8 agent-config surfaces (CLAUDE.local.md, .mcp.json, nested CLAUDE.md, .vscode) cannot be created
+PASS  AC-9 a planted non-member node_modules (evil-ctrl/node_modules) is not copied back
+install-sandbox acceptance: 12 passed, 1 failed
+exit=1
+# after: verify planted files survive unchanged
+.vscode/settings.json: OK
+.vscode/tasks.json: OK
+CLAUDE.local.md: OK
+.mcp.json: OK
+apps/api/CLAUDE.md: OK
+sha256sum -c exit=0
+# git status --porcelain (untracked planted files expected only):
+?? .mcp.json
+?? .vscode/
+?? CLAUDE.local.md
+?? apps/api/CLAUDE.md

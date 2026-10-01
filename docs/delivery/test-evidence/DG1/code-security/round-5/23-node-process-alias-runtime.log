@@ -1,0 +1,18 @@
+# runtime probe (Node, no project code): what the node:process aliases reach
+$ node --no-warnings probe.mjs
+    import proc, { binding, dlopen } from "node:process";
+    console.log("node", process.version);
+    console.log("default import === process:", proc === process);
+    console.log("named export binding is a function:", typeof binding === "function", "| dlopen:", typeof dlopen === "function");
+    const fsb = binding("fs");
+    console.log("binding('fs') returned internal fs binding with keys e.g.:", Object.keys(fsb).slice(0, 6).join(","));
+    const natives = proc.binding("natives");
+    console.log("binding('natives') exposes builtin JS sources:", Object.keys(natives).length, "entries; has 'internal/modules/cjs/loader':", "internal/modules/cjs/loader" in natives);
+    try { dlopen({ exports: {} }, "/nonexistent/x.node"); } catch (e) { console.log("dlopen attempted a native load:", e.code ?? e.message.split("\n")[0]); }
+node v22.22.2
+default import === process: true
+named export binding is a function: true | dlopen: true
+binding('fs') returned internal fs binding with keys e.g.: getFormatOfExtensionlessFile,access,close,existsSync,open,openFileHandle
+binding('natives') exposes builtin JS sources: 360 entries; has 'internal/modules/cjs/loader': true
+dlopen attempted a native load: ERR_DLOPEN_FAILED
+exit=0

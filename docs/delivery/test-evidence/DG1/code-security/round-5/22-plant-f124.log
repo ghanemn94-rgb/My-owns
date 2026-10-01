@@ -1,0 +1,114 @@
+$ pnpm vitest run --project unit-node apps/api/src/zz-plant-f124-r5.test.ts   (disposable clone @5f83a336; plant-f124.test.ts copied in)
+
+ RUN  v3.2.4 /var/tmp/mth-run.3CT4cA/claude-0/review-sec-r5
+
+stdout | apps/api/src/zz-plant-f124-r5.test.ts > F-DG1-124 required plants (assignment): must be violations > R1 f["constr"+"uctor"]
+[required] R1 f["constr"+"uctor"]: 1 violation(s): ["modules/transformations/planted.ts: computed member with a non-literal key (line 2) bypasses the module-interface check"]
+
+stdout | apps/api/src/zz-plant-f124-r5.test.ts > F-DG1-124 required plants (assignment): must be violations > R2 Reflect.get(fn,"constructor")
+[required] R2 Reflect.get(fn,"constructor"): 2 violation(s): ["modules/transformations/planted.ts: reflection via Reflect (line 2) bypasses the module-interface check","modules/transformations/planted.ts: code evaluation via the \"constructor\" key as a value (line 2) bypasses the module-interface check"]
+
+stdout | apps/api/src/zz-plant-f124-r5.test.ts > F-DG1-124 required plants (assignment): must be violations > R3 Reflect.get(fn, "constr".concat("uctor"))
+[required] R3 Reflect.get(fn, "constr".concat("uctor")): 1 violation(s): ["modules/transformations/planted.ts: reflection via Reflect (line 2) bypasses the module-interface check"]
+
+stdout | apps/api/src/zz-plant-f124-r5.test.ts > reviewer probes of the blanket ban (recorded, then asserted against the documented claim) > X1 unicode-escaped identifier Fun\u0063tion
+[probe] X1 unicode-escaped identifier Fun\u0063tion: 1 violation(s): ["modules/transformations/planted.ts: code evaluation via Function (line 1) bypasses the module-interface check"]
+
+stdout | apps/api/src/zz-plant-f124-r5.test.ts > reviewer probes of the blanket ban (recorded, then asserted against the documented claim) > X2 unicode-escaped member .constr\u0075ctor
+[probe] X2 unicode-escaped member .constr\u0075ctor: 1 violation(s): ["modules/transformations/planted.ts: code evaluation via .constructor (aliased) (line 1) bypasses the module-interface check"]
+
+stdout | apps/api/src/zz-plant-f124-r5.test.ts > reviewer probes of the blanket ban (recorded, then asserted against the documented claim) > X3 escaped string key
+[probe] X3 escaped string key: 5 violation(s): ["modules/transformations/planted.ts: unparseable source: ')' expected. (line 1) bypasses the module-interface check","modules/transformations/planted.ts: unparseable source: ',' expected. (line 1) bypasses the module-interface check","modules/transformations/planted.ts: unparseable source: Array element destructuring pattern expected. (line 1) bypasses the module-interface check","modules/transformations/planted.ts: unparseable source: ';' expected. (line 1) bypasses the module-interface check","modules/transformations/planted.ts: code evaluation via the \"constructor\" key as a value (line 1) bypasses the module-interface check"]
+
+stdout | apps/api/src/zz-plant-f124-r5.test.ts > reviewer probes of the blanket ban (recorded, then asserted against the documented claim) > X4 tagged template String.raw`constructor`
+[probe] X4 tagged template String.raw`constructor`: 1 violation(s): ["modules/transformations/planted.ts: code evaluation via the \"constructor\" key as a value (line 1) bypasses the module-interface check"]
+
+stdout | apps/api/src/zz-plant-f124-r5.test.ts > reviewer probes of the blanket ban (recorded, then asserted against the documented claim) > X5 globalThis destructured
+[probe] X5 globalThis destructured: 1 violation(s): ["modules/transformations/planted.ts: globalThis used as a value (line 1) bypasses the module-interface check"]
+
+stdout | apps/api/src/zz-plant-f124-r5.test.ts > reviewer probes of the blanket ban (recorded, then asserted against the documented claim) > X6 node:process default import, .dlopen
+[probe] X6 node:process default import, .dlopen: 0 violation(s): []
+
+stdout | apps/api/src/zz-plant-f124-r5.test.ts > reviewer probes of the blanket ban (recorded, then asserted against the documented claim) > X7 node:process default import, .binding
+[probe] X7 node:process default import, .binding: 0 violation(s): []
+
+stdout | apps/api/src/zz-plant-f124-r5.test.ts > reviewer probes of the blanket ban (recorded, then asserted against the documented claim) > X8 node:process named import dlopen
+[probe] X8 node:process named import dlopen: 0 violation(s): []
+
+stdout | apps/api/src/zz-plant-f124-r5.test.ts > reviewer probes of the blanket ban (recorded, then asserted against the documented claim) > X9 process.binding via optional chain
+[probe] X9 process.binding via optional chain: 1 violation(s): ["modules/transformations/planted.ts: module loader via process.binding (line 1) bypasses the module-interface check"]
+
+stdout | apps/api/src/zz-plant-f124-r5.test.ts > reviewer probes of the blanket ban (recorded, then asserted against the documented claim) > X10 class computed member
+[probe] X10 class computed member: 1 violation(s): ["modules/transformations/planted.ts: computed property name with a non-literal key (line 2) bypasses the module-interface check"]
+
+stdout | apps/api/src/zz-plant-f124-r5.test.ts > reviewer probes of the blanket ban (recorded, then asserted against the documented claim) > X11 Object.values of descriptors
+[probe] X11 Object.values of descriptors: 1 violation(s): ["modules/transformations/planted.ts: reflection via .getOwnPropertyDescriptors() (line 1) bypasses the module-interface check"]
+
+stdout | apps/api/src/zz-plant-f124-r5.test.ts > reviewer probes of the blanket ban (recorded, then asserted against the documented claim) > X12 with numeric-looking but string key k+0
+[probe] X12 with numeric-looking but string key k+0: 1 violation(s): ["modules/transformations/planted.ts: computed member with a non-literal key (line 2) bypasses the module-interface check"]
+
+ ❯ |unit-node| apps/api/src/zz-plant-f124-r5.test.ts (15 tests | 3 failed) 115ms
+   ✓ F-DG1-124 required plants (assignment): must be violations > R1 f["constr"+"uctor"] 41ms
+   ✓ F-DG1-124 required plants (assignment): must be violations > R2 Reflect.get(fn,"constructor") 5ms
+   ✓ F-DG1-124 required plants (assignment): must be violations > R3 Reflect.get(fn, "constr".concat("uctor")) 4ms
+   ✓ reviewer probes of the blanket ban (recorded, then asserted against the documented claim) > X1 unicode-escaped identifier Fun\u0063tion 3ms
+   ✓ reviewer probes of the blanket ban (recorded, then asserted against the documented claim) > X2 unicode-escaped member .constr\u0075ctor 3ms
+   ✓ reviewer probes of the blanket ban (recorded, then asserted against the documented claim) > X3 escaped string key 5ms
+   ✓ reviewer probes of the blanket ban (recorded, then asserted against the documented claim) > X4 tagged template String.raw`constructor` 4ms
+   ✓ reviewer probes of the blanket ban (recorded, then asserted against the documented claim) > X5 globalThis destructured 10ms
+   × reviewer probes of the blanket ban (recorded, then asserted against the documented claim) > X6 node:process default import, .dlopen 15ms
+     → X6 node:process default import, .dlopen is not flagged: expected 0 to be greater than 0
+   × reviewer probes of the blanket ban (recorded, then asserted against the documented claim) > X7 node:process default import, .binding 4ms
+     → X7 node:process default import, .binding is not flagged: expected 0 to be greater than 0
+   × reviewer probes of the blanket ban (recorded, then asserted against the documented claim) > X8 node:process named import dlopen 4ms
+     → X8 node:process named import dlopen is not flagged: expected 0 to be greater than 0
+   ✓ reviewer probes of the blanket ban (recorded, then asserted against the documented claim) > X9 process.binding via optional chain 3ms
+   ✓ reviewer probes of the blanket ban (recorded, then asserted against the documented claim) > X10 class computed member 5ms
+   ✓ reviewer probes of the blanket ban (recorded, then asserted against the documented claim) > X11 Object.values of descriptors 2ms
+   ✓ reviewer probes of the blanket ban (recorded, then asserted against the documented claim) > X12 with numeric-looking but string key k+0 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| apps/api/src/zz-plant-f124-r5.test.ts > reviewer probes of the blanket ban (recorded, then asserted against the documented claim) > X6 node:process default import, .dlopen
+AssertionError: X6 node:process default import, .dlopen is not flagged: expected 0 to be greater than 0
+ ❯ apps/api/src/zz-plant-f124-r5.test.ts:53:45
+     51|     const v = plant(src);
+     52|     console.log(`[probe] ${n}: ${v.length} violation(s): ${JSON.string…
+     53|     expect(v.length, `${n} is not flagged`).toBeGreaterThan(0);
+       |                                             ^
+     54|   });
+     55| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |unit-node| apps/api/src/zz-plant-f124-r5.test.ts > reviewer probes of the blanket ban (recorded, then asserted against the documented claim) > X7 node:process default import, .binding
+AssertionError: X7 node:process default import, .binding is not flagged: expected 0 to be greater than 0
+ ❯ apps/api/src/zz-plant-f124-r5.test.ts:53:45
+     51|     const v = plant(src);
+     52|     console.log(`[probe] ${n}: ${v.length} violation(s): ${JSON.string…
+     53|     expect(v.length, `${n} is not flagged`).toBeGreaterThan(0);
+       |                                             ^
+     54|   });
+     55| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |unit-node| apps/api/src/zz-plant-f124-r5.test.ts > reviewer probes of the blanket ban (recorded, then asserted against the documented claim) > X8 node:process named import dlopen
+AssertionError: X8 node:process named import dlopen is not flagged: expected 0 to be greater than 0
+ ❯ apps/api/src/zz-plant-f124-r5.test.ts:53:45
+     51|     const v = plant(src);
+     52|     console.log(`[probe] ${n}: ${v.length} violation(s): ${JSON.string…
+     53|     expect(v.length, `${n} is not flagged`).toBeGreaterThan(0);
+       |                                             ^
+     54|   });
+     55| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 12 passed (15)
+   Start at  11:38:53
+   Duration  956ms (transform 92ms, setup 0ms, collect 558ms, tests 115ms, environment 0ms, prepare 61ms)
+
+exit=1
