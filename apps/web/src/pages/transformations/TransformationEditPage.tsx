@@ -59,6 +59,22 @@ export function changedFields(base: EditFormValues, values: EditFormValues): Rec
   return out;
 }
 
+/**
+ * Target statuses the API refuses as a status edit in P1 (F-DG1-001). Mirrors `GOVERNED_TARGET_STATUSES` in
+ * apps/api/src/modules/transformations/routes.ts: `→closed` returns 422 `invalid-transition`, because closing a
+ * transformation is governed by the G6 (Sustain) business approval, which arrives in P2+. The web must not offer a
+ * transition the API refuses. TODO(P2): lift this shared source of truth into `@mth/shared` and import it here.
+ */
+export const P1_GOVERNED_STATUSES: readonly TransformationStatus[] = ["closed"];
+
+/**
+ * The statuses the edit form offers: the current status (always, so even a defensively-handled already-closed record
+ * renders its own value) plus the allowed next statuses, minus the governed targets the API refuses in P1.
+ */
+export function offeredStatusOptions(current: TransformationStatus): TransformationStatus[] {
+  return [current, ...TRANSFORMATION_STATUS_TRANSITIONS[current].filter((s) => !P1_GOVERNED_STATUSES.includes(s))];
+}
+
 export function TransformationEditPage() {
   const { id } = useParams();
   const query = useTransformation(id);
@@ -149,7 +165,7 @@ function EditForm({ loaded }: { loaded: Transformation }) {
   }
   if (!canOn(me, "transformation.update", target)) return <NoPermissionState />;
 
-  const statusOptions: TransformationStatus[] = [base.status, ...TRANSFORMATION_STATUS_TRANSITIONS[base.status]];
+  const statusOptions = offeredStatusOptions(base.status);
   const userOptions = canReadUsers
     ? (users.data ?? []).map((u) => ({ id: u.id, label: u.displayName }))
     : [{ id: me.user.id, label: t("transformations.form.me", { name: me.user.displayName }) }];

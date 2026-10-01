@@ -3,11 +3,13 @@
 //    localized "created, but you cannot open it" explanation instead of a dead "Not found" (Arabic RTL and English);
 //    a plain 404 / 403 without a just-created record still shows the correct localized message.
 //  - F-DG1-005: the audit trail's Changes column shows localized field and value labels, not raw keys or enum codes.
+//  - F-DG1-001 (T-DG1-FE3): the edit form never offers `closed` (the API refuses it in P1; G6 governs closure), and
+//    the status hint no longer promises a close transition (English LTR and Arabic RTL).
 import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { Permission } from "@mth/shared";
+import { TRANSFORMATION_STATUS_TRANSITIONS, type Permission, type TransformationStatus } from "@mth/shared";
 import type { AuditEvent } from "../../api/types.ts";
-import { createI18n } from "../../i18n/index.ts";
+import { catalogues, createI18n } from "../../i18n/index.ts";
 import {
   BU_ID,
   BUSINESS_UNIT,
@@ -21,6 +23,7 @@ import {
   renderApp,
   route,
 } from "../../test/fixtures.tsx";
+import { P1_GOVERNED_STATUSES, offeredStatusOptions } from "./TransformationEditPage.tsx";
 
 beforeEach(() => {
   localStorage.clear();
@@ -280,4 +283,63 @@ describe("audit trail changes (F-DG1-005)", () => {
       expect([archive, update, create].join("\n")).not.toContain(raw);
     }
   });
+});
+
+describe("P1 close rule in the edit form (F-DG1-001, T-DG1-FE3)", () => {
+  it("governs exactly `closed`, mirroring the API's GOVERNED_TARGET_STATUSES", () => {
+    expect([...P1_GOVERNED_STATUSES]).toEqual(["closed"]);
+  });
+
+  it("offers only the P1 transitions plus the current status; never `closed`", () => {
+    expect(offeredStatusOptions("draft")).toEqual(["draft", "active"]);
+    expect(offeredStatusOptions("active")).toEqual(["active", "on_hold"]);
+    expect(offeredStatusOptions("on_hold")).toEqual(["on_hold", "active"]);
+    for (const s of ["draft", "active", "on_hold"] as TransformationStatus[]) {
+      expect(offeredStatusOptions(s), s).not.toContain("closed");
+    }
+    // The shared transition table still lists `closed` (G6 arrives in P2+); the web filters it out.
+    expect(TRANSFORMATION_STATUS_TRANSITIONS.active).toContain("closed");
+    // Defensive: an already-closed record still renders its own status.
+    expect(offeredStatusOptions("closed")[0]).toBe("closed");
+  });
+
+  it("the status hint no longer promises a close transition and names the G6 approval (en and ar)", () => {
+    const en = catalogues.en.transformations.form.statusHint;
+    const ar = catalogues.ar.transformations.form.statusHint;
+    expect(en).toBe(
+      "Only the allowed next statuses are offered: draft → active; active → on hold; on hold → active. " +
+        "Closing a transformation needs the G6 (Sustain) business approval, which is available in a later release.",
+    );
+    expect(en).not.toMatch(/or closed/);
+    expect(en).not.toMatch(/→ closed/i);
+    expect(ar).not.toMatch(/أو مغلق/);
+    expect(ar).not.toMatch(/← مغلق/);
+    expect(ar).toContain("مسودة ← نشط؛ نشط ← معلّق؛ معلّق ← نشط");
+    expect(ar).toContain("البوابة 6 - الاستدامة");
+    expect(ar).toContain("التحوّل");
+  });
+
+  for (const [locale, title, statusLabel] of [
+    ["en", "Edit transformation", /^Status/],
+    ["ar", "تعديل التحوّل", /^الحالة/],
+  ] as const) {
+    it(`${locale}: the rendered status select for an active record has no Closed option`, async () => {
+      mockApi(
+        meRoute(makeMe(OFFICE_GRANTS, { preferredLocale: locale })),
+        buRoute,
+        route("GET", /\/api\/v1\/users/, () => ({ status: 200, body: { items: [], nextCursor: null } })),
+        route("GET", /\/api\/v1\/transformations\/[^/?]+$/, () => ({
+          status: 200,
+          body: makeTransformation({ status: "active" }),
+        })),
+      );
+      renderApp(`/transformations/${TR_ID}/edit`, { i18n: createI18n(locale) });
+      const select = (await screen.findByLabelText(statusLabel)) as HTMLSelectElement;
+      expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(title);
+      expect(document.documentElement.dir).toBe(locale === "ar" ? "rtl" : "ltr");
+      expect([...select.options].map((o) => o.value)).toEqual(["active", "on_hold"]);
+      const hint = catalogues[locale].transformations.form.statusHint;
+      expect(screen.getByText(hint)).toBeTruthy();
+    });
+  }
 });
