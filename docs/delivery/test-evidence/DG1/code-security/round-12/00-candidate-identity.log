@@ -1,0 +1,29 @@
+$ git rev-parse HEAD; git rev-parse --is-shallow-repository   # real repo (read-only)
+e77be1a93a33e284f789301c88bc48b0fe3e9059
+false
+$ git log --oneline 987ae02^..HEAD; git merge-base --is-ancestor 987ae02 HEAD
+e77be1a DG1 r12: freeze candidate 619d74ff + round-12 review assignments
+987ae02 DG1 r12: mark F-DG1-132/133 FIXED_PENDING_VERIFICATION (fix 792973b)
+987ae02 is an ancestor of HEAD
+$ git diff --stat 987ae02 HEAD   # freeze..HEAD: candidate-excluded metadata only
+ docs/delivery/assignments/DG1/round-12/audit.md    |   24 +
+ .../DG1/round-12/review-code-security-reviewer.md  |   12 +
+ .../assignments/DG1/round-12/review-common.md      |   15 +
+ .../DG1/round-12/review-domain-reviewer.md         |   12 +
+ .../assignments/DG1/round-12/review-qa-verifier.md |   16 +
+ .../candidates/DG1/619d74ffa4e66893.manifest.json  | 1973 ++++++++++++++++++++
+ docs/delivery/stages.json                          |   22 +-
+ 7 files changed, 2069 insertions(+), 5 deletions(-)
+$ node tools/gates/candidate.mjs --stage DG1   # real repo @HEAD, v24.21.0
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:619d74ffa4e668933960fc14aa5d8c4c31850a2772972bceb647561be2efdfac","files":391}
+$ (clone $TMPDIR/review-r12, not shallow) git checkout 987ae02 && node tools/gates/candidate.mjs --stage DG1
+987ae029473f62c21e449e63178dedbe32201151
+false
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:619d74ffa4e668933960fc14aa5d8c4c31850a2772972bceb647561be2efdfac","files":391}
+Already up to date.
+$ manifest source_commit
+ "source_commit": "987ae029473f62c21e449e63178dedbe32201151",
+$ git diff --stat 4a5e151 987ae02 -- apps packages tools deploy scripts e2e tests licenses .github package.json pnpm-lock.yaml   # source delta since round-11 import
+ apps/api/src/architecture.test.ts    | 98 ++++++++++++++++++++++++++++++------
+ apps/api/src/architecture.testkit.ts | 97 ++++++++++++++++++++++++++---------
+ 2 files changed, 155 insertions(+), 40 deletions(-)

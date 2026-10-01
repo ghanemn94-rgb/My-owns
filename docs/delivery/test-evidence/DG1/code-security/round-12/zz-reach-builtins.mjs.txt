@@ -1,0 +1,20 @@
+// Breadth-first search (depth<=3) over own props of each allow-listed builtin's named exports for a path to crypto.setEngine
+import { createRequire } from "node:module";
+const req = createRequire(import.meta.url);
+const target = req("node:crypto").setEngine;
+const mods = ["crypto","fs","fs/promises","os","path","url","util"];
+const hits = [];
+for (const m of mods) {
+  const ns = req("node:" + m);
+  const seen = new Set();
+  const q = Object.getOwnPropertyNames(ns).map((k) => { let v; try { v = ns[k]; } catch { v = undefined; } return [m + "." + k, v, 1]; });
+  while (q.length) {
+    const [p, v, d] = q.shift();
+    if (v === target) hits.push(p);
+    if (v === ns && m === "crypto") hits.push(p + " (=== crypto module)");
+    if (v === null || (typeof v !== "object" && typeof v !== "function") || seen.has(v) || d >= 3) continue;
+    seen.add(v);
+    for (const k of Object.getOwnPropertyNames(v)) { if (["caller","arguments","callee"].includes(k)) continue; let w; try { w = v[k]; } catch { continue; } q.push([p + "." + k, w, d + 1]); }
+  }
+}
+console.log("node", process.version, "paths reaching crypto.setEngine or the crypto module object from a named export (depth<=3):", JSON.stringify(hits));

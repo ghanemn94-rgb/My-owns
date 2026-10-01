@@ -1,0 +1,39 @@
+== pnpm check:no-cdn (node v24.21.0)
+PASS no-cdn: scanned apps, packages
+exit=0
+== pnpm openapi:lint (node v24.21.0)
+PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 33 operations
+exit=0
+== pnpm typecheck (node v24.21.0)
+exit=0
+== pnpm lint (node v24.21.0)
+exit=0
+== pnpm format:check (node v24.21.0)
+Checking formatting...
+All matched files use Prettier code style!
+exit=0
+== brand tokens provenance
+packages/shared/src/schemas/branding.ts:2:// operation getBrandingTokens); keep both in lockstep. `provenance` stays "provisional" while the seeded §15 tokens
+packages/shared/src/schemas/branding.ts:18:  provenance: brandingProvenance,
+packages/design-tokens/src/index.ts:4:// (REQ-S15-002/003). #0078FF is a provisional brand token, not a verified Mobily colour.
+packages/design-tokens/src/index.ts:160:    "/* PROVISIONAL tokens (master prompt §15): #0078FF is not a verified Mobily colour. */",
+== official/certified claims in i18n (expect only negations)
+apps/web/src/i18n/en/common.json:5:    "provisionalHint": "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.",
+apps/web/src/i18n/en/common.json:6:    "provisionalNotice": "Branding is provisional: the text wordmark and colours are placeholders, not official Mobily brand assets."
+apps/web/src/i18n/en/common.json:120:    "brandBody": "No official Mobily logo or verified brand colours have been supplied. The header shows a provisional text wordmark, and the colours (including #0
+apps/web/src/i18n/en/common.json:123:    "methodBody": "The product operationalizes the Business Transformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with c
+apps/web/src/i18n/ar/common.json:5:    "provisionalHint": "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علام
+apps/web/src/i18n/ar/common.json:6:    "provisionalNotice": "الهوية البصرية مؤقتة: الشعار النصي والألوان بدائل مؤقتة وليست أصولًا رسمية �
+apps/web/src/i18n/ar/common.json:117:    "brandBody": "لم يُقدَّم شعار رسمي لموبايلي ولا ألوان علامة معتمدة. يعرض الترويسة شعارًا نصيً
+apps/web/src/i18n/ar/common.json:120:    "methodBody": "يطبّق المنتج دليل تحوّل الأعمال الإصدار 1.0، وهو خلاصة عملية مستوحاة من ممارسات 
+== dir attribute / locale
+apps/web/src/components/States.tsx:46:            {t("common.state.reference")} <bdi dir="ltr">{requestId}</bdi>
+apps/web/src/pages/admin/OrganizationsPage.tsx:101:                        <bdi dir="ltr" className="code">
+apps/web/src/pages/admin/OrganizationsPage.tsx:108:                      <bdi dir="ltr">{o.defaultTimezone}</bdi>
+apps/web/src/pages/admin/OrganizationsPage.tsx:111:                      <bdi dir="ltr">{o.defaultCurrency}</bdi>
+apps/web/src/pages/admin/OrganizationsPage.tsx:177:          {(c) => <input {...c} {...register("code")} dir="ltr" maxLength={32} />}
+== DG vs G separation in UI strings (no DG in i18n)
+apps/web/src/i18n/glossary.test.ts:1:// Domain terms in the UI catalogues follow the approved DG0 glossary (F-DG1-003, REQ-PB-003).
+apps/web/src/i18n/glossary.test.ts:2:// Source: docs/analysis/glossary.md (T-DG0-AN-01, revised T-DG0-AN-05). The test parses the glossary tables directly,
+apps/web/src/i18n/glossary.test.ts:71:  it("parses the DG0 glossary with distinct Transformation and Initiative terms", () => {
+grep-exit=0

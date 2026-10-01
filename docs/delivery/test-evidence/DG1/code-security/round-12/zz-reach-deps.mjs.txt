@@ -1,0 +1,14 @@
+import { createRequire } from "node:module";
+const req = createRequire(process.cwd() + "/package.json");
+const nc = req("node:crypto"); const target = nc.setEngine;
+const deps = Object.keys(req("./package.json").dependencies).filter((d) => !d.startsWith("@mth/"));
+const hits = [];
+for (const d of deps) {
+  let ns; try { ns = await import(req.resolve(d)); } catch (e) { hits.push(`${d}: import failed ${e.code ?? e.message}`); continue; }
+  const seen = new Set(); const q = [[d, ns, 0]];
+  while (q.length) { const [p, v, dep] = q.shift();
+    if (v === nc || v === target) hits.push(p);
+    if (v === null || (typeof v !== "object" && typeof v !== "function") || seen.has(v) || dep >= 3) continue; seen.add(v);
+    for (const k of Object.getOwnPropertyNames(v)) { if (["caller","arguments","callee"].includes(k)) continue; let w; try { w = v[k]; } catch { continue; } q.push([p + "." + k, w, dep + 1]); } }
+}
+console.log("third-party deps", deps.join(","), "-> paths to node:crypto module/setEngine (depth<=3):", JSON.stringify(hits));

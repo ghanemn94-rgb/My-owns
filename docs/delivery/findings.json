@@ -11135,7 +11135,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-10/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T14:44:39Z",
@@ -11161,25 +11161,41 @@
           "at": "2026-10-01T15:55:51Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 792973b308d19e2c57490ff7c4a185939cd46600"
+        },
+        {
+          "at": "2026-10-01T16:16:07Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 12: PASS"
+        },
+        {
+          "at": "2026-10-01T16:20:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 12: PASS"
         }
       ],
       "fix_revision": "792973b308d19e2c57490ff7c4a185939cd46600",
       "fix_summary": "Module-lint rule 5 (named-imports-only for node:crypto, which carries the banned member setEngine) flags any namespace/default/export-*/import=require/dynamic-import() binding, so the crypto namespace can no longer be bound and enumerated to reach setEngine; residual (a) corrected to plain-objects/third-party only; legit plain-object enumeration still allowed. architecture 122/122; full unit 315/315 Node 22+24.",
       "verification": {
-        "by_role": "code-security-reviewer",
+        "by_role": "qa-verifier",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG1-T-DG1-REV-SEC-R11-code-security-reviewer-20261001T151913Z-38ae0562",
-          "session_id": "38ae0562-e606-480c-850b-ef621894a774"
+          "run_id": "DG1-T-DG1-REV-QA-R12-qa-verifier-20261001T160109Z-b50b5196",
+          "session_id": "b50b5196-0e6a-47f2-8026-1969069d48fb"
         },
-        "at": "2026-10-01T15:34:01Z",
+        "at": "2026-10-01T16:20:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG1/code-security/round-11/00-candidate-identity.log",
-          "docs/delivery/test-evidence/DG1/code-security/round-11/01-lint-probes.log",
-          "docs/delivery/test-evidence/DG1/code-security/round-11/zz-r11-probe.test.ts.txt"
+          "docs/delivery/test-evidence/DG1/qa/round-12/08-r12-rule5-probe-v22.22.2.log",
+          "docs/delivery/test-evidence/DG1/qa/round-12/08-r12-rule5-probe-v24.21.0.log",
+          "docs/delivery/test-evidence/DG1/qa/tests/dg1-r12-rule5-probe.test.ts",
+          "docs/delivery/test-evidence/DG1/qa/round-12/07-f132-arch-selfcheck-extract.log",
+          "docs/delivery/test-evidence/DG1/qa/round-12/01b-candidate-diff-r11-r12.log",
+          "docs/delivery/test-evidence/DG1/qa/round-12/03-unit-node22.log",
+          "docs/delivery/test-evidence/DG1/qa/round-12/04-unit-node24.log",
+          "apps/api/src/architecture.testkit.ts",
+          "apps/api/src/architecture.test.ts"
         ],
-        "note": "Verified by the originating reviewer on candidate sha256:e5cc6ef9...feb8 (freeze commit 32e6478, HEAD d8eb695). The ID is identical in the real repo and in a full disposable clone at both commits (00-candidate-identity.log). The fix is d54c151. In round 10 I asked for one of two things: close the node:crypto namespace-as-value route, or stop claiming 'every form' and name the route under residual (a). The second was done. apps/api/src/architecture.testkit.ts:19-22, :53-56, :64-74 and :100-101, and architecture.test.ts:15-16, now say 'every SPELLED form' and name runtime enumeration as residual (a). architecture.test.ts:530-556 pins E1-E4 as non-violations. D-055 says the same. I re-proved this on Node 22.22.2 AND Node 24.21.0 (01-lint-probes.log). All 16 spelled and computed forms are violations: named, namespace member, string key, aliased, destructured alias, default member, unicode-escaped, escaped key, template key, re-export, optional chain, dynamic-literal import, bare string, renamed re-export, concatenated key (rule 2) and computed destructuring key (rule 2). The enumeration forms E1-E4, plus my E5 (dynamic import() then enumerate), give 0 violations, as documented. Positive controls are clean: randomUUID/createHash, the namespace import alone, and Map(Object.entries(plainObject)).get. The real 13-module tree has 0 moduleViolations. architecture.test.ts passes 109/109 on both runtimes. The route is now documented and deliberate, a Low and non-mandatory static-lint residual, so I accept it as an observation (the release-auditor must also accept it). One inaccuracy in the stated justification remains: the header says the route is 'not closable statically' and that a namespace ban 'would break' identity/routes.ts and access/rules.ts, which actually enumerate plain objects. I raise that separately as F-DG1-133 (Low, non-mandatory). It does not reopen this finding."
+        "note": "Verified on frozen candidate sha256:619d74ffa4e668933960fc14aa5d8c4c31850a2772972bceb647561be2efdfac (freeze 987ae02; the ID recomputes identically in a full disposable clone). Fix 792973b (T-DG1-BE13) is test-only. The r11->r12 manifest diff changes only apps/api/src/architecture.testkit.ts and architecture.test.ts, so no product runtime source changed. Rule 5 (NAMESPACE_RESTRICTED_BUILTINS = crypto, node:crypto) flags every namespace/default binding. The candidate self-check (E1-E5, N1-N10 and three controls) is green on Node v22.22.2 and v24.21.0. My independent probe (qa/tests/dg1-r12-rule5-probe.test.ts) runs 41/41 on both runtimes. It flags 21 binding forms, including ones not in the candidate's table: string-literal { \"default\" as c }, export { default } without alias, import c, * as d, template-literal import(), import().then, import attributes and multi-line. It flags the round-11 residual routes E1-E4 and X2, plus new X3 and X4, at the import. A runtime BFS (depth 4) over the 69 named exports of node:crypto never reaches setEngine or the module object, so named-only imports really close the enumeration route rather than relabel it. The 41 module files are clean, and the 5 that import node:crypto use named imports only. Spelled setEngine is still rule 1. Named imports, plain-object enumeration and namespace imports of other allow-listed built-ins stay allowed. Nothing regressed: unit 315/315 on both runtimes, integration 200/200 x3, e2e 22/22 on both runtimes."
       }
     },
     {
@@ -11347,7 +11363,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-11/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T15:34:01Z",
@@ -11358,10 +11374,101 @@
           "at": "2026-10-01T15:55:51Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 792973b308d19e2c57490ff7c4a185939cd46600"
+        },
+        {
+          "at": "2026-10-01T16:08:30Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 12: PASS"
+        },
+        {
+          "at": "2026-10-01T16:16:07Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 12: PASS"
+        },
+        {
+          "at": "2026-10-01T16:20:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 12: PASS"
         }
       ],
       "fix_revision": "792973b308d19e2c57490ff7c4a185939cd46600",
-      "fix_summary": "Module-lint rule 5 (named-imports-only for node:crypto, which carries the banned member setEngine) flags any namespace/default/export-*/import=require/dynamic-import() binding, so the crypto namespace can no longer be bound and enumerated to reach setEngine; residual (a) corrected to plain-objects/third-party only; legit plain-object enumeration still allowed. architecture 122/122; full unit 315/315 Node 22+24."
+      "fix_summary": "Module-lint rule 5 (named-imports-only for node:crypto, which carries the banned member setEngine) flags any namespace/default/export-*/import=require/dynamic-import() binding, so the crypto namespace can no longer be bound and enumerated to reach setEngine; residual (a) corrected to plain-objects/third-party only; legit plain-object enumeration still allowed. architecture 122/122; full unit 315/315 Node 22+24.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-QA-R12-qa-verifier-20261001T160109Z-b50b5196",
+          "session_id": "b50b5196-0e6a-47f2-8026-1969069d48fb"
+        },
+        "at": "2026-10-01T16:20:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/qa/round-12/19-f133-wording-check.log",
+          "docs/delivery/test-evidence/DG1/qa/round-12/07-f132-arch-selfcheck-extract.log",
+          "docs/delivery/test-evidence/DG1/qa/round-12/08-r12-rule5-probe-v24.21.0.log",
+          "apps/api/src/architecture.testkit.ts",
+          "apps/api/src/architecture.test.ts",
+          "apps/api/src/modules/identity/routes.ts",
+          "apps/api/src/modules/access/rules.ts"
+        ],
+        "note": "Verified on frozen candidate sha256:619d74ff…dfac (freeze 987ae02). F-DG1-133's expected outcome is met by its first option: the lint closes the route with the narrow rule, so named imports only for node:crypto. At 987ae02 the testkit header no longer says 'not closable statically' and no longer cites identity/routes.ts or access/rules.ts as code a namespace ban would break (19-f133-wording-check.log). Residual (a) is now stated as plain-object/third-party data flow, 'ACCEPTED by choice (defence-in-depth lint over human-reviewed code)'. The rule-1 and member-audit wording now says enumeration is closed by rule 5, and architecture.test.ts:12-17 and :531-534 match. The cited plain-object idioms really exist: identity/routes.ts:35 (request.cookies) and access/rules.ts:55 (PERMISSIONS). The candidate's plain-object control and my P4 control both keep them allowed. One residual sentence lies outside this finding's scope, which named the header and the E-case comment: D-055 in docs/delivery/decisions.md still says 'reaching it by namespace enumeration is residual (a), F-DG1-132/215'. I raise it separately as F-DG1-216 (Low, docs-only)."
+      }
+    },
+    {
+      "id": "F-DG1-134",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Module lint file scope: walk() (apps/api/src/architecture.testkit.ts:167-172) scans only /\\.(ts|tsx)$/ files. A module-directory file named .mts (or .cts, .mjs, .js) is invisible to moduleViolations, so it evades every lint rule (1-5) AND the module-interface boundary check. With module NodeNext + allowImportingTsExtensions + rewriteRelativeImportExtensions (tsconfig.base.json), a .mts file typechecks and builds into dist as .mjs, so it ships. Pre-existing since 8332624 (DG1 original), not a regression of the round-12 rule 5. The real tree has 0 such files today.",
+      "reproduction": "Candidate sha256:619d74ff...fdfac (freeze 987ae02), full disposable clone, Node v22.22.2. I planted apps/api/src/modules/transformations/zzx.mts containing `import * as c from \"node:crypto\"; import { authorize } from \"../access/policy.ts\"; export const f = new Map(Object.entries(c)).get(\"set\".concat(\"Engine\")) as unknown; export const g = typeof authorize;`, plus a .ts importer zzimp.ts (`import { f, g } from \"./zzx.mts\"`). Results: (1) moduleViolations(\"transformations\") = [] and architecture.test.ts stays 122/122 green. (2) Control: the SAME source scanned via fileViolations under a .ts name gives 2 violations, the rule-5 namespace binding and the deep import of access/policy.ts. (3) apps/api pnpm typecheck exit 0, pnpm build exit 0, eslint exit 0. (4) dist/modules/transformations contains zzx.mjs, and zzimp.js imports './zzx.mjs'. (5) import(dist/.../zzx.mjs) gives typeof f = function with f.name = setEngine, i.e. the native loader is reached in the production artefact (`node dist/main.js` runs dist). Variant: a .mjs file with a .d.mts declaration is also unscanned and passes typecheck/build, but tsc does not copy it into dist, so it would run only from src (dev, vitest). Full log: docs/delivery/test-evidence/DG1/code-security/round-12/02-lint-file-scope-mts.log.",
+      "expected": "Every source file under apps/api/src/modules/** that can be built or loaded is scanned by the module lint, or the lint fails closed. For example, walk() matches /\\.[cm]?[jt]sx?$/ and scans them all, or any module-directory file outside .ts/.tsx is itself a violation. Then the header's rule-5 claim ('the module object never becomes a value in module source') and REQ-S16-003's 'dependency-lint check fails on imports that bypass a module interface' hold regardless of file extension. A planted-.mts self-check case should pin this.",
+      "actual": "A .mts (or .cts/.mjs/.js) file in a module directory bypasses all lint rules and the boundary check with 0 violations. The .mts form ships in dist and reaches crypto.setEngine by enumeration. The F-DG1-132 route is closed only for .ts/.tsx files.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-12/02-lint-file-scope-mts.log",
+        "apps/api/src/architecture.testkit.ts",
+        "apps/api/src/architecture.test.ts",
+        "tsconfig.base.json"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-12/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T16:16:07Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG1 round 12 while re-proving the F-DG1-132 closure. Rated Low and non-mandatory, consistent with the precedent for this lint's other boundary-bypass routes (F-DG1-109 createRequire/computed import(), F-DG1-117/124/125/127/128/130/132: all Low, non-mandatory). The reasons: the lint is static defence-in-depth over human-reviewed code, not a runtime security boundary (testkit header), and exploitation needs a contributor to commit an unusual-extension file past review. The current tree has no such file. It is distinct from F-DG1-132, whose route in .ts module source IS closed; this is a file-scope gap affecting every rule. Proposed ID: the next free number in the code-security 1xx range (F-DG1-134); the orchestrator may renumber. Does not block DG1."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-216",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "D-055 in docs/delivery/decisions.md (a candidate file) still says that reaching crypto.setEngine 'by namespace enumeration is residual (a), F-DG1-132/215'. Since rule 5 (F-DG1-132/133), the lint flags that route at the import, and the testkit header says it is CLOSED. The decision record contradicts the lint it documents.",
+      "reproduction": "Candidate sha256:619d74ff…dfac (freeze 987ae02). `git show 987ae02:docs/delivery/decisions.md | sed -n 7p | grep -o 'now banned by rule 1 (every spelled form; reaching it by namespace enumeration is residual (a), F-DG1-132/215)'` returns the sentence. Compare apps/api/src/architecture.testkit.ts:21-22 and :61-63 at the same commit ('the enumeration route is closed by rule 5'; 'is CLOSED by rule 5'). The r11->r12 manifest diff shows that decisions.md was not changed by the fix. The search for stale wording in the candidate (19-f133-wording-check.log, plus `git grep 'residual (a)|namespace enumeration' 987ae02`) finds this one sentence and no others outside metadata.",
+      "expected": "The D-055 text (or a new decision entry that supersedes it) records that the node:crypto namespace-enumeration route is closed by rule 5, named imports only (F-DG1-132/133). It no longer calls the route residual (a).",
+      "actual": "D-055 still describes the round-11 state, with enumeration as the accepted residual (a). The code and tests are correct, and only this decision record is stale. It is a documentation-accuracy defect in a delivery record with no runtime or security effect, so it is Low and non-mandatory and does not block DG1.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-12/19-f133-wording-check.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/01b-candidate-diff-r11-r12.log",
+        "docs/delivery/decisions.md",
+        "apps/api/src/architecture.testkit.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-12/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T16:20:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG1 round 12 while verifying F-DG1-132/133. F-DG1-133's scope (the testkit header and the E-case comment) is fixed and verified. This is the one remaining stale statement, in D-055. Proposed ID: the next free number in the qa 2xx range (F-DG1-216); the orchestrator may renumber. Low and non-mandatory. I would accept it as an observation if the auditor agrees, or it can be fixed by a one-line D-055 correction."
+        }
+      ]
     }
   ]
 }

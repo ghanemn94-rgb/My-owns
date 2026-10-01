@@ -1,0 +1,34 @@
+== playbook gate G6 / closure blocks
+52:Benefits before closure: an initiative is not complete when delivered; it is complete when value is realized and sustained. <!-- B0014 -->
+104:| G6 - Sustain | Is value embedded in BAU? | Benefits evidence, ownership transfer, controls, continuous improvement backlog. |
+719:| ☐ 21. Are benefits validated with evidence? | ☐ 22. Is BAU ownership defined before closure? |
+== candidate closure rule (API + i18n)
+61: * product's G6 (Sustain) business approval with validated benefits and a sustainment owner (playbook B0014
+62: * "Benefits before closure"; M0092; REQ-S03-003, REQ-PB-009). Neither G6 nor the benefit register exists in P1, and an
+64: * invalid-transition) and the record keeps its prior state. The governed close lands with the G6 workflow (P2+/P4).
+65: * This is a PRODUCT gate (G6), unrelated to the engineering delivery gates DG0-DG7.
+299:              "A transformation cannot be closed by a status edit. Closure requires the G6 (Sustain) business " +
+apps/web/src/i18n/en/transformations.json:77:    "statusHint": "Only the allowed next statuses are offered: draft → active; active → on hold; on hold → active. Closing a transformation needs the G6 (Sustain) busine
+apps/web/src/i18n/ar/transformations.json:77:    "statusHint": "لا تُعرض إلا الحالات التالية المسموح بها: مسودة ← نشط؛ نشط ← معلّق؛ معلّق ← نشط. يتطل�
+== allowed transitions (no closed target) in: 
+packages/shared/src/constants.ts:13:export const TRANSFORMATION_STATUSES = ["draft", "active", "on_hold", "closed"] as const;
+packages/shared/src/constants.ts-15-
+packages/shared/src/constants.ts-16-/** Explicit status transitions (REQ-S16-023). Anything not listed is rejected server-side with 422. */
+packages/shared/src/constants.ts:17:export const TRANSFORMATION_STATUS_TRANSITIONS: Readonly<
+packages/shared/src/constants.ts-18-  Record<TransformationStatus, readonly TransformationStatus[]>
+packages/shared/src/constants.ts-19-> = {
+packages/shared/src/constants.ts-20-  draft: ["active"],
+packages/shared/src/constants.ts-21-  active: ["on_hold", "closed"],
+packages/shared/src/constants.ts-22-  on_hold: ["active", "closed"],
+packages/shared/src/constants.ts-23-  closed: [],
+--
+--
+--
+apps/api/src/modules/transformations/routes.ts-3-// event, and (create only) the outbox event `transformation.created`. Archived records are read-only (422).
+apps/api/src/modules/transformations/routes.ts-4-import { diffFields, sql, type TransformationRow, type Tx } from "@mth/db";
+apps/api/src/modules/transformations/routes.ts:5:import { TRANSFORMATION_STATUS_TRANSITIONS, type TransformationStatus } from "@mth/shared";
+apps/api/src/modules/transformations/routes.ts-6-import {
+apps/api/src/modules/transformations/routes.ts-7-  reasonRequest,
+apps/api/src/modules/transformations/routes.ts-8-  transformationCreate,
+apps/api/src/modules/transformations/routes.ts-9-  transformationListQuery,
+apps/api/src/modules/transformations/routes.ts-10-  transformationUpdate,

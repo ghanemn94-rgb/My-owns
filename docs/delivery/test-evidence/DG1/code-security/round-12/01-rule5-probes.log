@@ -1,0 +1,88 @@
+# env: disposable clone $TMPDIR/review-r12 @987ae02, v22.22.2, vitest unit-node project; probe = zz-r12-probe.test.ts.txt (reviewer-authored, not in candidate)
+$ npx vitest run --project unit-node apps/api/src/zz-r12-probe.test.ts
+ RUN  v3.2.4 /var/tmp/mth-run.5bA4ve/claude-0/review-r12
+stdout | apps/api/src/zz-r12-probe.test.ts > r12 probe > FLAG A1 namespace
+PROBE A1 namespace -> 1 violation(s): ["modules/transformations/planted.ts: imports the node:crypto namespace/default binding via import * as; only named imports are allowed (it carries a rule-1-banned member) (line 1) bypasses the module-interface check"]
+stdout | apps/api/src/zz-r12-probe.test.ts > r12 probe > FLAG A2 default
+PROBE A2 default -> 1 violation(s): ["modules/transformations/planted.ts: imports the node:crypto namespace/default binding via a default import; only named imports are allowed (it carries a rule-1-banned member) (line 1) bypasses the module-interface check"]
+stdout | apps/api/src/zz-r12-probe.test.ts > r12 probe > FLAG A3 {default as c}
+PROBE A3 {default as c} -> 1 violation(s): ["modules/transformations/planted.ts: imports the node:crypto namespace/default binding via import { default }; only named imports are allowed (it carries a rule-1-banned member) (line 1) bypasses the module-interface check"]
+stdout | apps/api/src/zz-r12-probe.test.ts > r12 probe > FLAG A4 export *
+PROBE A4 export * -> 1 violation(s): ["modules/transformations/planted.ts: imports the node:crypto namespace/default binding via export *; only named imports are allowed (it carries a rule-1-banned member) (line 1) bypasses the module-interface check"]
+stdout | apps/api/src/zz-r12-probe.test.ts > r12 probe > FLAG A5 export * as
+PROBE A5 export * as -> 1 violation(s): ["modules/transformations/planted.ts: imports the node:crypto namespace/default binding via export * as; only named imports are allowed (it carries a rule-1-banned member) (line 1) bypasses the module-interface check"]
+stdout | apps/api/src/zz-r12-probe.test.ts > r12 probe > FLAG A6 import = require
+PROBE A6 import = require -> 1 violation(s): ["modules/transformations/planted.ts: imports the node:crypto namespace/default binding via import = require(); only named imports are allowed (it carries a rule-1-banned member) (line 1) bypasses the module-interface check"]
+stdout | apps/api/src/zz-r12-probe.test.ts > r12 probe > FLAG A7 await import
+PROBE A7 await import -> 1 violation(s): ["modules/transformations/planted.ts: imports the node:crypto namespace/default binding via a dynamic import(); only named imports are allowed (it carries a rule-1-banned member) (line 1) bypasses the module-interface check"]
+stdout | apps/api/src/zz-r12-probe.test.ts > r12 probe > FLAG E1
+PROBE E1 -> 1 violation(s): ["modules/transformations/planted.ts: imports the node:crypto namespace/default binding via import * as; only named imports are allowed (it carries a rule-1-banned member) (line 1) bypasses the module-interface check"]
+stdout | apps/api/src/zz-r12-probe.test.ts > r12 probe > FLAG E2
+PROBE E2 -> 1 violation(s): ["modules/transformations/planted.ts: imports the node:crypto namespace/default binding via import * as; only named imports are allowed (it carries a rule-1-banned member) (line 1) bypasses the module-interface check"]
+stdout | apps/api/src/zz-r12-probe.test.ts > r12 probe > FLAG E3
+PROBE E3 -> 1 violation(s): ["modules/transformations/planted.ts: imports the node:crypto namespace/default binding via import * as; only named imports are allowed (it carries a rule-1-banned member) (line 1) bypasses the module-interface check"]
+stdout | apps/api/src/zz-r12-probe.test.ts > r12 probe > FLAG E4
+PROBE E4 -> 1 violation(s): ["modules/transformations/planted.ts: imports the node:crypto namespace/default binding via a default import; only named imports are allowed (it carries a rule-1-banned member) (line 1) bypasses the module-interface check"]
+stdout | apps/api/src/zz-r12-probe.test.ts > r12 probe > FLAG E5
+PROBE E5 -> 1 violation(s): ["modules/transformations/planted.ts: imports the node:crypto namespace/default binding via a dynamic import(); only named imports are allowed (it carries a rule-1-banned member) (line 1) bypasses the module-interface check"]
+stdout | apps/api/src/zz-r12-probe.test.ts > r12 probe > FLAG X1 string-literal default name
+PROBE X1 string-literal default name -> 1 violation(s): ["modules/transformations/planted.ts: imports the node:crypto namespace/default binding via import { default }; only named imports are allowed (it carries a rule-1-banned member) (line 1) bypasses the module-interface check"]
+stdout | apps/api/src/zz-r12-probe.test.ts > r12 probe > FLAG X2 unicode-escaped default
+PROBE X2 unicode-escaped default -> 1 violation(s): ["modules/transformations/planted.ts: imports the node:crypto namespace/default binding via import { default }; only named imports are allowed (it carries a rule-1-banned member) (line 1) bypasses the module-interface check"]
+stdout | apps/api/src/zz-r12-probe.test.ts > r12 probe > FLAG X3 template-literal dynamic import
+PROBE X3 template-literal dynamic import -> 1 violation(s): ["modules/transformations/planted.ts: imports the node:crypto namespace/default binding via a dynamic import(); only named imports are allowed (it carries a rule-1-banned member) (line 1) bypasses the module-interface check"]
+stdout | apps/api/src/zz-r12-probe.test.ts > r12 probe > FLAG X4 bare crypto namespace
+PROBE X4 bare crypto namespace -> 2 violation(s): ["modules/transformations/planted.ts: imports the crypto namespace/default binding via import * as; only named imports are allowed (it carries a rule-1-banned member) (line 1) bypasses the module-interface check","modules/transformations/planted.ts: imports package crypto"]
+stdout | apps/api/src/zz-r12-probe.test.ts > r12 probe > FLAG X5 export {default} from
+PROBE X5 export {default} from -> 1 violation(s): ["modules/transformations/planted.ts: imports the node:crypto namespace/default binding via export { default }; only named imports are allowed (it carries a rule-1-banned member) (line 1) bypasses the module-interface check"]
+stdout | apps/api/src/zz-r12-probe.test.ts > r12 probe > FLAG X6 export * as default
+PROBE X6 export * as default -> 1 violation(s): ["modules/transformations/planted.ts: imports the node:crypto namespace/default binding via export * as; only named imports are allowed (it carries a rule-1-banned member) (line 1) bypasses the module-interface check"]
+stdout | apps/api/src/zz-r12-probe.test.ts > r12 probe > FLAG X7 import() then .then
+PROBE X7 import() then .then -> 1 violation(s): ["modules/transformations/planted.ts: imports the node:crypto namespace/default binding via a dynamic import(); only named imports are allowed (it carries a rule-1-banned member) (line 1) bypasses the module-interface check"]
+stdout | apps/api/src/zz-r12-probe.test.ts > r12 probe > FLAG X8 type-only namespace (erased; over-flag acceptable)
+PROBE X8 type-only namespace (erased; over-flag acceptable) -> 1 violation(s): ["modules/transformations/planted.ts: imports the node:crypto namespace/default binding via import * as; only named imports are allowed (it carries a rule-1-banned member) (line 1) bypasses the module-interface check"]
+stdout | apps/api/src/zz-r12-probe.test.ts > r12 probe > FLAG X9 import with attributes
+PROBE X9 import with attributes -> 1 violation(s): ["modules/transformations/planted.ts: imports the node:crypto namespace/default binding via import * as; only named imports are allowed (it carries a rule-1-banned member) (line 1) bypasses the module-interface check"]
+stdout | apps/api/src/zz-r12-probe.test.ts > r12 probe > FLAG X10 string-literal export default
+PROBE X10 string-literal export default -> 1 violation(s): ["modules/transformations/planted.ts: imports the node:crypto namespace/default binding via export { default }; only named imports are allowed (it carries a rule-1-banned member) (line 1) bypasses the module-interface check"]
+stdout | apps/api/src/zz-r12-probe.test.ts > r12 probe > FLAG X11 computed import()
+PROBE X11 computed import() -> 1 violation(s): ["modules/transformations/planted.ts: computed import() specifier (line 1) bypasses the module-interface check"]
+stdout | apps/api/src/zz-r12-probe.test.ts > r12 probe > FLAG R1 import { setEngine } (rule 1)
+PROBE R1 import { setEngine } (rule 1) -> 1 violation(s): ["modules/transformations/planted.ts: native loader via setEngine (line 1) bypasses the module-interface check"]
+stdout | apps/api/src/zz-r12-probe.test.ts > r12 probe > FLAG R2 import { setEngine as s } (rule 1)
+PROBE R2 import { setEngine as s } (rule 1) -> 1 violation(s): ["modules/transformations/planted.ts: native loader via setEngine (line 1) bypasses the module-interface check"]
+stdout | apps/api/src/zz-r12-probe.test.ts > r12 probe > ALLOW P1 named imports
+PROBE P1 named imports -> 0 violation(s): []
+stdout | apps/api/src/zz-r12-probe.test.ts > r12 probe > ALLOW P2 cookies Map
+PROBE P2 cookies Map -> 0 violation(s): []
+stdout | apps/api/src/zz-r12-probe.test.ts > r12 probe > ALLOW P3 Object.entries(someObj)
+PROBE P3 Object.entries(someObj) -> 0 violation(s): []
+stdout | apps/api/src/zz-r12-probe.test.ts > r12 probe > ALLOW P4 namespace of node:path
+PROBE P4 namespace of node:path -> 0 violation(s): []
+stdout | apps/api/src/zz-r12-probe.test.ts > r12 probe > real tree: zero moduleViolations
+PROBE real-tree violations: []
+ ✓ |unit-node| apps/api/src/zz-r12-probe.test.ts (30 tests) 579ms
+   ✓ r12 probe > real tree: zero moduleViolations  447ms
+ Test Files  1 passed (1)
+      Tests  30 passed (30)
+   Start at  16:04:15
+   Duration  1.44s (transform 90ms, setup 0ms, collect 573ms, tests 579ms, environment 0ms, prepare 58ms)
+exit=0
+
+$ node zz-reach-builtins.mjs (Node 22 and Node 24)
+node v22.22.2 paths reaching crypto.setEngine or the crypto module object from a named export (depth<=3): ["crypto.setEngine","crypto.setEngine.prototype.constructor"]
+node v24.21.0 paths reaching crypto.setEngine or the crypto module object from a named export (depth<=3): ["crypto.setEngine","crypto.setEngine.prototype.constructor"]
+
+$ (cd apps/api && node zz-reach-deps.mjs)
+third-party deps @fastify/cookie,@fastify/helmet,@fastify/rate-limit,@fastify/static,ajv,ajv-formats,decimal.js,fastify,kysely,openid-client,pg,uuid,yaml,zod -> paths to node:crypto module/setEngine (depth<=3): []
+
+$ module files / node:crypto importers in apps/api/src/modules
+41
+apps/api/src/modules/identity/sessions.ts:7:import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+apps/api/src/modules/identity/routes.ts:3:import { randomBytes } from "node:crypto";
+apps/api/src/modules/identity/oidc.ts:4:import { randomBytes } from "node:crypto";
+apps/api/src/modules/platform/cursor.ts:3:import { createHash } from "node:crypto";
+apps/api/src/modules/platform/idempotency.ts:4:import { createHash } from "node:crypto";
+
+$ header honesty grep (not closable|would break|identity/routes|access/rules) in architecture.testkit.ts
+grep exit=1 (1 = no match)

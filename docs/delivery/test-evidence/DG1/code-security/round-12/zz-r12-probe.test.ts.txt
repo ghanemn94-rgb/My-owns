@@ -1,0 +1,62 @@
+// code-security-reviewer round-12 probe (disposable clone only; not part of the candidate).
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { API_MODULES } from "./modules.ts";
+import { fileViolations, moduleViolations, type ApiModule } from "./architecture.testkit.ts";
+
+const MODULES_DIR = join(import.meta.dirname, "modules");
+const planted = (mod: ApiModule, source: string, name = "planted.ts") =>
+  fileViolations(mod, join(MODULES_DIR, mod, name), source);
+
+const MUST_FLAG: [string, string][] = [
+  ["A1 namespace", `import * as c from "node:crypto";`],
+  ["A2 default", `import c from "node:crypto";`],
+  ["A3 {default as c}", `import { default as c } from "node:crypto";`],
+  ["A4 export *", `export * from "node:crypto";`],
+  ["A5 export * as", `export * as c from "node:crypto";`],
+  ["A6 import = require", `import c = require("node:crypto");`],
+  ["A7 await import", `const c = await import("node:crypto");`],
+  ["E1", `import * as c from "node:crypto";\nconst f = Object.values(c).find((x) => typeof x === "function" && x.name === "set" + "Engine") as (p: string) => void;\nf("/tmp/x.so");`],
+  ["E2", `import * as c from "node:crypto";\n(new Map(Object.entries(c)).get("set".concat("Engine")) as (p: string) => void)("/tmp/x.so");`],
+  ["E3", `import * as c from "node:crypto";\n(Object.entries(c).find(([k]) => /^setEng/.test(k))![1] as (p: string) => void)("/tmp/x.so");`],
+  ["E4", `import crypto from "node:crypto";\nfor (const [k, f] of Object.entries(crypto)) if (k.startsWith("set") && k.endsWith("Engine")) (f as (p: string) => void)("/tmp/x.so");`],
+  ["E5", `const c = await import("node:crypto");\n(new Map(Object.entries(c)).get("set".concat("Engine")) as (p: string) => void)("/tmp/x.so");`],
+  // adversarial extras (reviewer-designed)
+  ["X1 string-literal default name", `import { "default" as c } from "node:crypto";`],
+  ["X2 unicode-escaped default", `import { def\\u0061ult as c } from "node:crypto";`],
+  ["X3 template-literal dynamic import", "const c = await import(`node:crypto`);"],
+  ["X4 bare crypto namespace", `import * as c from "crypto";`],
+  ["X5 export {default} from", `export { default } from "node:crypto";`],
+  ["X6 export * as default", `export * as default from "node:crypto";`],
+  ["X7 import() then .then", `import("node:crypto").then((c) => Object.values(c));`],
+  ["X8 type-only namespace (erased; over-flag acceptable)", `import type * as c from "node:crypto";`],
+  ["X9 import with attributes", `import * as c from "node:crypto" with { type: "x" };`],
+  ["X10 string-literal export default", `export { "default" as c } from "node:crypto";`],
+  ["X11 computed import()", `const s = "node:" + "crypto"; const c = await import(s);`],
+  ["R1 import { setEngine } (rule 1)", `import { setEngine } from "node:crypto";`],
+  ["R2 import { setEngine as s } (rule 1)", `import { setEngine as s } from "node:crypto";`],
+];
+const MUST_ALLOW: [string, string][] = [
+  ["P1 named imports", `import { randomUUID, createHash } from "node:crypto";\nexport const id = randomUUID() + createHash("sha256").update("x").digest("hex");`],
+  ["P2 cookies Map", `export function cookie(request: { cookies: Record<string, string> }, name: string) {\n  return new Map(Object.entries(request.cookies)).get(name);\n}`],
+  ["P3 Object.entries(someObj)", `const someObj = { a: 1 };\nexport const e = Object.entries(someObj);`],
+  ["P4 namespace of node:path", `import * as path from "node:path";\nexport const j = path.join("a");`],
+];
+
+describe("r12 probe", () => {
+  it.each(MUST_FLAG)("FLAG %s", (name, src) => {
+    const v = planted("transformations", src);
+    console.log(`PROBE ${name} -> ${v.length} violation(s): ${JSON.stringify(v)}`);
+    expect(v.length).toBeGreaterThan(0);
+  });
+  it.each(MUST_ALLOW)("ALLOW %s", (name, src) => {
+    const v = planted("transformations", src);
+    console.log(`PROBE ${name} -> ${v.length} violation(s): ${JSON.stringify(v)}`);
+    expect(v).toEqual([]);
+  });
+  it("real tree: zero moduleViolations", () => {
+    const all = (Object.keys(API_MODULES) as ApiModule[]).flatMap((m) => moduleViolations(m));
+    console.log(`PROBE real-tree violations: ${JSON.stringify(all)}`);
+    expect(all).toEqual([]);
+  });
+});

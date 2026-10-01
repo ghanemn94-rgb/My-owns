@@ -1,0 +1,9 @@
+$ git log --oneline e77be1a..HEAD
+163d0ca run: DG1-T-DG1-REV-DOM-R12-domain-reviewer-20261001T160109Z-ba2fda48 (review evidence, auto-committed by run-agent.sh)
+$ git diff --name-only e77be1a HEAD | sed 's#/[^/]*$##' | sort | uniq -c   (file NAMES only; other reviewers' records not opened)
+      3 docs/delivery/reviews/DG1/round-12
+      6 docs/delivery/runs/DG1/DG1-T-DG1-REV-DOM-R12-domain-reviewer-20261001T160109Z-ba2fda48
+$ git diff --name-only e77be1a HEAD -- $(manifest paths) | wc -l
+0
+$ node tools/gates/candidate.mjs --stage DG1
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:619d74ffa4e668933960fc14aa5d8c4c31850a2772972bceb647561be2efdfac","files":391}

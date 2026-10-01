@@ -1,0 +1,12 @@
+# why AC-1 (effect) and a real-repo install are BLOCKED here: no registry network in this sandbox; the AC-1 fixture dependency is not in the local store
+$ grep -c is-number in local store index
+1
+$ (AC-1 fixture package.json) npm_config_store_dir=$TMPDIR/pnpm-store/v10 tools/deps/install-sandbox.sh --root $TMPDIR/ac1p create
+{ "name": "ac1-root", "version": "1.0.0", "private": true, "dependencies": { "is-number": "7.0.0" } }
+ WARN  GET https://registry.npmjs.org/is-number error (ECONNREFUSED). Will retry in 10 seconds. 2 retries left.
+ WARN  GET https://registry.npmjs.org/is-number error (ECONNREFUSED). Will retry in 1 minute. 1 retries left.
+ ERR_PNPM_META_FETCH_FAIL  GET https://registry.npmjs.org/is-number: request to https://registry.npmjs.org/is-number failed, reason: connect ECONNREFUSED 127.0.0.1:3128
+
+This error happened while installing a direct dependency of /var/tmp/mth-run.5bA4ve/claude-0/mth-ws.ZJzqaj
+exit=1
+# CORRECTION (reviewer): the local store index DOES contain an is-number entry (count 1 above). The blocker is that `create` resolves without a lockfile and must fetch registry metadata (ERR_PNPM_META_FETCH_FAIL, ECONNREFUSED via proxy 127.0.0.1:3128). The header line "not in the local store" is superseded by this note. Result: AC-1 (effect) and a real-repo registry install = BLOCKED (no registry network), not a product defect.

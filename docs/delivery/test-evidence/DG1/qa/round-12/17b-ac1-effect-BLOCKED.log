@@ -1,0 +1,10 @@
+# AC-1 (effect) reason check: the fixture dependency is-number@7.0.0 is not in the local store and there is no registry network
+$ ls $TMPDIR/store/v10/index | wc -l; grep -rl '"name":"is-number"' store index (count)
+1
+$ npm_config_store_dir=$TMPDIR/store/v10 PATH=/opt/node22/bin:$PATH timeout 120 tools/deps/install-sandbox.sh --root $TMPDIR/ac1p create
+ WARN  GET https://registry.npmjs.org/is-number error (ECONNREFUSED). Will retry in 10 seconds. 2 retries left.
+ WARN  GET https://registry.npmjs.org/is-number error (ECONNREFUSED). Will retry in 1 minute. 1 retries left.
+ ERR_PNPM_META_FETCH_FAIL  GET https://registry.npmjs.org/is-number: request to https://registry.npmjs.org/is-number failed, reason: connect ECONNREFUSED 127.0.0.1:3128
+
+This error happened while installing a direct dependency of /var/tmp/mth-run.qXwk3D/claude-0/mth-ws.GaB2dH
+exit=1

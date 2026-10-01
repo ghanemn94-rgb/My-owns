@@ -1,0 +1,63 @@
+# F-DG1-134 (proposed) reproduction: module-lint file scope. env: disposable clone $TMPDIR/review-r12 @987ae02 (candidate 619d74ff), node v22.22.2
+$ sed -n 167,173p apps/api/src/architecture.testkit.ts   # walk(): only /\.(ts|tsx)$/ files are scanned
+export function walk(dir: string): string[] {
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir).flatMap((name) => {
+    const p = join(dir, name);
+    return statSync(p).isDirectory() ? walk(p) : /\.(ts|tsx)$/.test(name) ? [p] : [];
+  });
+}
+$ sed -n 1,20p tsconfig.base.json | grep -n "module\|allowImportingTsExtensions\|rewriteRelativeImportExtensions"
+7:    "module": "NodeNext",
+12:    "allowImportingTsExtensions": true,
+13:    "rewriteRelativeImportExtensions": true,
+
+## plant A (.mts, ships): apps/api/src/modules/transformations/zzx.mts + importer apps/api/src/modules/transformations/zzimp.ts
+--- zzx.mts
+import * as c from "node:crypto";
+import { authorize } from "../access/policy.ts";
+// enumeration route to setEngine without spelling it (rule 5 + rule 1 evasion), plus a deep import (boundary evasion)
+export const f = new Map(Object.entries(c)).get("set".concat("Engine")) as unknown;
+export const g = typeof authorize;
+--- zzimp.ts
+import { f, g } from "./zzx.mts";
+export const zz = [f, g];
+
+$ vitest: moduleViolations("transformations") with the plant present
+PROBE transformations moduleViolations: []
+$ vitest: the SAME zzx.mts source scanned as a .ts file via fileViolations (control)
+PROBE as .ts: ["modules/transformations/zzx_as.ts: imports the node:crypto namespace/default binding via import * as; only named imports are allowed (it carries a rule-1-banned member) (line 1) bypasses the module-interface check","modules/transformations/zzx_as.ts: imports ../access/policy.ts; only access/index.ts is public"]
+$ vitest run apps/api/src/architecture.test.ts (repo lint suite) with the plant present
+      Tests  122 passed (122)
+$ (apps/api) pnpm typecheck
+exit=0
+$ (apps/api) pnpm build; ls dist/modules/transformations | grep zz
+exit=0
+zzimp.d.ts
+zzimp.d.ts.map
+zzimp.js
+zzimp.js.map
+zzx.d.mts
+zzx.d.mts.map
+zzx.mjs
+zzx.mjs.map
+$ npx eslint zzx.mts zzimp.ts
+exit=0
+$ grep zzx dist/modules/transformations/zzimp.js
+1:import { f, g } from "./zzx.mjs";
+$ node -e import(dist/.../zzx.mjs) -> value of f
+dist zzx.mjs loaded; typeof f = function ; f.name = setEngine
+
+## plant B (.mjs + .d.mts): not in moduleViolations, typecheck/build/eslint exit 0; tsc does NOT copy .mjs into dist, so it would execute only from src (dev 'node --conditions=@mth/source src/main.ts', vitest), and fail ERR_MODULE_NOT_FOUND from dist.
+PROBE transformations moduleViolations: []
+typecheck exit=0
+build exit=0
+dist zz files: zzimp.d.ts zzimp.d.ts.map zzimp.js zzimp.js.map 
+
+$ real candidate tree: non-.ts/.tsx files under apps/api/src/modules
+0
+$ git status --short (clone, after removing plants)
+(empty = clean)
+$ git log -S"/\.(ts|tsx)$/" (origin of the extension filter)
+3eccdf5 2026-10-01 DG1 r2: backend repairs F-DG1-101/201/001/103/106/105/002/109/110/112 (T-DG1-BE3)
+8332624 2026-09-30 DG1(T-DG1-BE): backend — migrations, API, auth, audit, worker (backend-workflow-engineer)

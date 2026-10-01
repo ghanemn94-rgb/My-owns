@@ -1,0 +1,242 @@
+## repo HEAD / shallow / candidate
+e77be1a93a33e284f789301c88bc48b0fe3e9059
+false
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:619d74ffa4e668933960fc14aa5d8c4c31850a2772972bceb647561be2efdfac","files":391}
+## clone
+987ae029473f62c21e449e63178dedbe32201151
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:619d74ffa4e668933960fc14aa5d8c4c31850a2772972bceb647561be2efdfac","files":391}
+## freeze..HEAD (metadata only expected)
+ docs/delivery/assignments/DG1/round-12/audit.md    |   24 +
+ .../DG1/round-12/review-code-security-reviewer.md  |   12 +
+ .../assignments/DG1/round-12/review-common.md      |   15 +
+ .../DG1/round-12/review-domain-reviewer.md         |   12 +
+ .../assignments/DG1/round-12/review-qa-verifier.md |   16 +
+ .../candidates/DG1/619d74ffa4e66893.manifest.json  | 1973 ++++++++++++++++++++
+ docs/delivery/stages.json                          |   22 +-
+ 7 files changed, 2069 insertions(+), 5 deletions(-)
+## fix commit ancestor
+anc=0
+## round-11 freeze 32e6478 -> round-12 freeze 987ae02, all files
+ apps/api/src/architecture.test.ts                  |   98 +-
+ apps/api/src/architecture.testkit.ts               |   97 +-
+ docs/delivery/assignments/DG1/round-11/audit.md    |   24 +
+ .../DG1/round-11/review-code-security-reviewer.md  |   12 +
+ .../assignments/DG1/round-11/review-common.md      |   17 +
+ .../DG1/round-11/review-domain-reviewer.md         |   11 +
+ .../assignments/DG1/round-11/review-qa-verifier.md |   18 +
+ .../assignments/DG1/round-12/T-DG1-BE13.md         |   27 +
+ .../candidates/DG1/e5cc6ef982ba7d53.manifest.json  | 1973 ++++++++++++++++++++
+ docs/delivery/findings.json                        |  162 +-
+ .../T-DG1-BE13-backend-workflow-engineer.md        |  423 +++++
+ .../round-11/code-security-reviewer.findings.json  |   35 +
+ .../DG1/round-11/code-security-reviewer.json       |  362 ++++
+ .../reviews/DG1/round-11/code-security-reviewer.md |   62 +
+ .../code-security-reviewer.verifications.json      |   22 +
+ .../reviews/DG1/round-11/domain-reviewer.json      |  369 ++++
+ .../reviews/DG1/round-11/domain-reviewer.md        |   53 +
+ .../round-11/domain-reviewer.verifications.json    |   19 +
+ .../delivery/reviews/DG1/round-11/qa-verifier.json |  331 ++++
+ docs/delivery/reviews/DG1/round-11/qa-verifier.md  |   55 +
+ .../DG1/round-11/qa-verifier.verifications.json    |   37 +
+ .../meta.json                                      |   48 +
+ .../result.json                                    |    3 +
+ .../sandbox.json                                   |   59 +
+ .../settings.json                                  |   48 +
+ .../stderr.log                                     |    1 +
+ .../transcript.jsonl.gz                            |  Bin 0 -> 64778 bytes
+ .../meta.json                                      |  117 ++
+ .../result.json                                    |    3 +
+ .../sandbox.json                                   |   49 +
+ .../settings.json                                  |   88 +
+ .../stderr.log                                     |    1 +
+ .../transcript.jsonl.gz                            |  Bin 0 -> 759626 bytes
+ .../meta.json                                      |  179 ++
+ .../result.json                                    |    3 +
+ .../sandbox.json                                   |   51 +
+ .../settings.json                                  |   86 +
+ .../stderr.log                                     |    1 +
+ .../transcript.jsonl.gz                            |  Bin 0 -> 582669 bytes
+ .../meta.json                                      |  153 ++
+ .../result.json                                    |    3 +
+ .../sandbox.json                                   |   50 +
+ .../settings.json                                  |   88 +
+ .../stderr.log                                     |    1 +
+ .../transcript.jsonl.gz                            |  Bin 0 -> 155317 bytes
+ docs/delivery/stages.json                          |   22 +-
+ .../round-11/00-candidate-identity.log             |   53 +
+ .../DG1/code-security/round-11/01-lint-probes.log  |  162 ++
+ .../code-security/round-11/10-pnpm_-r_build.log    |   45 +
+ .../round-11/10-pnpm_-r_typecheck.log              |   17 +
+ .../round-11/10-pnpm_check_no-cdn.log              |    7 +
+ .../round-11/10-pnpm_format_check.log              |    8 +
+ .../DG1/code-security/round-11/10-pnpm_lint.log    |    6 +
+ .../round-11/10-pnpm_openapi_lint.log              |    7 +
+ .../DG1/code-security/round-11/10-pnpm_test.log    |   42 +
+ .../code-security/round-11/12-node24-pnpm_test.log |   43 +
+ .../round-11/13-f214-abort-env-probe.log           |   39 +
+ .../round-11/14-f214-harness-not-shipped.log       |    7 +
+ .../code-security/round-11/20-integration-run1.log |   41 +
+ .../code-security/round-11/20-integration-run2.log |   42 +
+ .../round-11/21-integration-node24.log             |   43 +
+ .../round-11/30-gates-agents-tests.log             |  650 +++++++
+ .../round-11/31-deploy-scripts-tests.log           |  412 ++++
+ .../round-11/32-install-sandbox-suite.log          |   17 +
+ .../round-11/32c-ac1-registry-BLOCKED.log          |   12 +
+ .../DG1/code-security/round-11/33-sbom-check.log   |    3 +
+ .../code-security/round-11/34-dg0-historical.log   |    3 +
+ .../code-security/round-11/35-ci-yml-identity.log  |    4 +
+ .../DG1/code-security/round-11/40-requirements.log |    9 +
+ .../DG1/code-security/round-11/50-cleanup.log      |   26 +
+ .../round-11/zz-r11-probe.test.ts.txt              |   59 +
+ .../domain/round-11/00-candidate-and-diff.out.txt  |   27 +
+ .../domain/round-11/01-unit-full-node22.out.txt    |   39 +
+ .../domain/round-11/01-unit-full-node24.out.txt    |   39 +
+ ...2-negative-control-node24-builtin-jsdom.out.txt |    9 +
+ .../03-architecture-verbose-node22.out.txt         |  120 ++
+ .../03-architecture-verbose-node24.out.txt         |  120 ++
+ .../DG1/domain/round-11/04-D055-accuracy.out.txt   |   27 +
+ .../DG1/domain/round-11/04-integration-run.sh      |   31 +
+ .../round-11/04-integration-run1-node22.out.txt    |  221 +++
+ .../round-11/04-integration-run2-node24.out.txt    |  221 +++
+ .../DG1/domain/round-11/05-member-name-scan.mjs    |   18 +
+ .../domain/round-11/05-member-name-scan.out.txt    |   87 +
+ .../round-11/06-process-member-form-probe.out.txt  |   28 +
+ .../round-11/06-process-member-form-probe.test.ts  |   30 +
+ .../DG1/domain/round-11/07-build.out.txt           |   22 +
+ .../DG1/domain/round-11/07-live-scenario.mjs       |  409 ++++
+ .../DG1/domain/round-11/07-live-scenario.out.txt   |  133 ++
+ .../DG1/domain/round-11/07-live-stack.sh           |   47 +
+ .../DG1/domain/round-11/08-static-checks.out.txt   |   31 +
+ .../DG1/domain/round-11/09-register-rows.out.txt   |   81 +
+ .../DG1/domain/round-11/09-register-rows.py        |   32 +
+ .../DG1/domain/round-11/10-source-fidelity.out.txt |   13 +
+ .../DG1/domain/round-11/50-cleanup.out.txt         |   10 +
+ .../DG1/domain/round-11/screens/ar-01-shell.png    |  Bin 0 -> 91294 bytes
+ .../round-11/screens/ar-02-edit-no-closed.png      |  Bin 0 -> 112404 bytes
+ .../domain/round-11/screens/ar-03-detail-audit.png |  Bin 0 -> 184332 bytes
+ .../round-11/screens/ar-04-lead-derived-audit.png  |  Bin 0 -> 219978 bytes
+ .../screens/ar-05-office-derived-audit.png         |  Bin 0 -> 219575 bytes
+ .../screens/ar-06-lead-ui-create-no-reload.png     |  Bin 0 -> 208807 bytes
+ .../DG1/domain/round-11/screens/en-01-shell.png    |  Bin 0 -> 96610 bytes
+ .../round-11/screens/en-02-edit-no-closed.png      |  Bin 0 -> 121704 bytes
+ .../domain/round-11/screens/en-03-detail-audit.png |  Bin 0 -> 183095 bytes
+ .../round-11/screens/en-04-lead-derived-audit.png  |  Bin 0 -> 214640 bytes
+ .../screens/en-05-office-derived-audit.png         |  Bin 0 -> 215947 bytes
+ .../screens/en-06-lead-ui-create-no-reload.png     |  Bin 0 -> 203507 bytes
+ .../test-evidence/DG1/qa/round-11/00-candidate.log |   22 +
+ .../DG1/qa/round-11/00b-head-moved.log             |   27 +
+ .../test-evidence/DG1/qa/round-11/01-install.log   |   29 +
+ .../DG1/qa/round-11/01b-candidate-diff-r10-r11.log |   15 +
+ .../test-evidence/DG1/qa/round-11/02-build.log     |   45 +
+ .../DG1/qa/round-11/02-check_no-cdn.log            |    7 +
+ .../test-evidence/DG1/qa/round-11/02-contrast.log  |   64 +
+ .../DG1/qa/round-11/02-deps_verify.log             |  117 ++
+ .../DG1/qa/round-11/02-format_check.log            |    8 +
+ .../test-evidence/DG1/qa/round-11/02-lint.log      |    6 +
+ .../DG1/qa/round-11/02-openapi_lint.log            |    7 +
+ .../test-evidence/DG1/qa/round-11/02-typecheck.log |   17 +
+ .../DG1/qa/round-11/03-unit-node22.log             |   42 +
+ .../DG1/qa/round-11/04-unit-node24.log             |   42 +
+ .../DG1/qa/round-11/05-unit-node-v22.22.2.log      |  203 ++
+ .../DG1/qa/round-11/05-unit-node-v24.21.0.log      |  206 ++
+ .../DG1/qa/round-11/05-unit-web-v22.22.2.log       |  121 ++
+ .../DG1/qa/round-11/05-unit-web-v24.21.0.log       |  124 ++
+ .../06-f214-node24-files-and-negative-control.log  |   69 +
+ .../qa/round-11/07-f215-arch-selfcheck-extract.log |   20 +
+ .../08-r11-setengine-probe-v22.22.2.attempt1.log   |  149 ++
+ .../round-11/08-r11-setengine-probe-v22.22.2.log   |  124 ++
+ .../08-r11-setengine-probe-v24.21.0.attempt1.log   |  149 ++
+ .../round-11/08-r11-setengine-probe-v24.21.0.log   |  124 ++
+ .../DG1/qa/round-11/09-int-run1-pg.log             |  187 ++
+ .../DG1/qa/round-11/09-int-run1-v22.22.2.log       |   41 +
+ .../DG1/qa/round-11/09-int-run2-pg.log             |  187 ++
+ .../DG1/qa/round-11/09-int-run2-v22.22.2.log       |   42 +
+ .../DG1/qa/round-11/09-int-run3-pg.log             |  187 ++
+ .../DG1/qa/round-11/09-int-run3-v24.21.0.log       |   42 +
+ .../DG1/qa/round-11/10-audit-trigger-probe.sh      |   18 +
+ .../qa/round-11/10-contract-and-audit-probe.log    |   73 +
+ .../DG1/qa/round-11/11-e2e-node22.log              |   42 +
+ .../DG1/qa/round-11/12-e2e-node24.log              |   42 +
+ .../DG1/qa/round-11/13-f210-independent-spec.log   |   24 +
+ .../DG1/qa/round-11/14-a18-clean-start.log         |  101 +
+ .../DG1/qa/round-11/15-a20-token-propagation.log   |   26 +
+ .../qa/round-11/16-req-dlv-042-installer-log.log   |   10 +
+ .../DG1/qa/round-11/17-validate-pipeline.log       |    3 +
+ .../DG1/qa/round-11/17-validate-reconcile.log      |   39 +
+ .../DG1/qa/round-11/17-validate-registerDG1.log    |    3 +
+ .../DG1/qa/round-11/18-requirements-evidence.log   |   25 +
+ .../DG1/qa/round-11/19-f215-wording-check.log      |   30 +
+ .../DG1/qa/round-11/screenshots/ar/01-sign-in.png  |  Bin 0 -> 64264 bytes
+ .../DG1/qa/round-11/screenshots/ar/05-detail.png   |  Bin 0 -> 185532 bytes
+ .../screenshots/ar/17-lead-audit-trail.png         |  Bin 0 -> 205143 bytes
+ .../screenshots/ar/17a-lead-created-controls.png   |  Bin 0 -> 205143 bytes
+ .../qa/round-11/screenshots/ar/axe-summary.json    |   47 +
+ .../DG1/qa/round-11/screenshots/en/01-sign-in.png  |  Bin 0 -> 61031 bytes
+ .../DG1/qa/round-11/screenshots/en/05-detail.png   |  Bin 0 -> 181127 bytes
+ .../screenshots/en/17-lead-audit-trail.png         |  Bin 0 -> 200896 bytes
+ .../screenshots/en/17a-lead-created-controls.png   |  Bin 0 -> 200765 bytes
+ .../qa/round-11/screenshots/en/axe-summary.json    |   47 +
+ .../DG1/qa/tests/dg1-r11-setengine-probe.test.ts   |  122 ++
+ 160 files changed, 11835 insertions(+), 53 deletions(-)
+## product/contract/data/i18n paths (expect empty)
+## testkit header greps (expect no matches)
+grep exit=1
+## residual (a) text
+// Residual limits (stated and ACCEPTED by choice: this is a defence-in-depth lint over human-reviewed code):
+//  (a) runtime DATA FLOW over PLAIN OBJECTS and third-party readers: a plain object or a third-party value passed to
+//      readers (`Object.entries`/`Object.values`/`Map`/`Array.prototype.find`/a regex over keys, a schema library
+//      given `Object.fromEntries([[k, ...]])`) and indexed by a key built or carried at runtime, rather than written
+//      as a banned name or a directly-flagged `x[k]` computed member. Enumerating plain objects is legitimate module
+//      code (`new Map(Object.entries(request.cookies)).get(name)`) and stays allowed. No allow-listed built-in
+//      NAMESPACE reaches this residual any more: the only one with a loader member (`node:crypto`, `setEngine`) can
+//      no longer be namespace- or default-bound (rule 5, F-DG1-132/133), so the former enumeration route
+//      (`new Map(Object.entries(c)).get("set".concat("Engine"))`, `Object.values(c).find(...)`) is a violation at the
+//      import. If the member audit ever finds a loader member in another allow-listed built-in, add that built-in to
+//      NAMESPACE_RESTRICTED_BUILTINS as well as banning the member name.
+//  (b) F-DG1-127: runtime code GENERATION followed by a dynamic import of a literal same-module path (an allowed
+## build excludes test-only lint files
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "rootDir": "src",
+    "outDir": "dist",
+    "customConditions": []
+  },
+  "include": ["src"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/**/*.testkit.ts"]
+}
+## node:crypto import forms across repo ts sources
+      1       // Type space only (`typeof import("node:crypto")` is erased), so rule 5 does not apply.
+      1       `const c = await import("node:crypto");\n(new Map(Object.entries(c)).get("set".concat("Engine")) as (p: string) => void)("/tmp/x.so");`,
+      1       `const c = await import("node:crypto");`,
+      1       `const c = require("node:crypto");`,
+      1       `export * from "node:crypto";`,
+      1       `export { randomUUID as uuid } from "node:crypto";`,
+      1       `import * as c from "node:crypto";\n(Object.entries(c).find(([k]) => /^setEng/.test(k))![1] as (p: string) => void)("/tmp/x.so");`,
+      1       `import * as c from "node:crypto";\n(new Map(Object.entries(c)).get("set".concat("Engine")) as (p: string) => void)("/tmp/x.so");`,
+      1       `import * as c from "node:crypto";\nc.setEngine("/tmp/x.so");`,
+      1       `import * as c from "node:crypto";\nconst f = Object.values(c).find((x) => typeof x === "function" && x.name === "set" + "Engine") as (p: string) => void;\nf("/tmp/x.so");`,
+      1       `import c, { randomUUID } from "node:crypto";`,
+      1       `import crypto from "node:crypto";\n(crypto as any)["setEngine"]("/tmp/x.so");`,
+      1       `import crypto from "node:crypto";\nconst p = "/tmp/x.so";\nfor (const [k, f] of Object.entries(crypto)) if (k.startsWith("set") && k.endsWith("Engine")) (f as (p: string) => void)(p);`,
+      1       `import { randomBytes } from "node:crypto";`,
+      1       `import { randomUUID } from "node:crypto";`,
+      1       `import { randomUUID, createHash } from "node:crypto";`,
+      1       `import { setEngine } from "node:crypto";\nsetEngine("/tmp/x.so");`,
+      1       `import { type Hash, randomBytes as rb } from "node:crypto";`,
+      1       `type C = typeof import("node:crypto");`,
+      1     ["N1 namespace import", `import * as c from "node:crypto";`, /via import \* as/, "missed"],
+      1     ["N2 default import", `import c from "node:crypto";`, /via a default import/, "missed"],
+      1     ["N4 named default import", `import { default as c } from "node:crypto";`, /via import \{ default \}/, "missed"],
+      1     ["N6 export star as", `export * as c from "node:crypto";`, /via export \* as/, "missed"],
+      1     ["N7 re-export default", `export { default as c } from "node:crypto";`, /via export \{ default \}/, "missed"],
+      1     ["N8 import-equals require", `import c = require("node:crypto");`, /via import = require\(\)/, "missed"],
+      1 //     (`import { randomUUID, createHash } from "node:crypto"`) stay allowed; `import { setEngine }` is rule 1.
+      1 //     `import("node:crypto")` / `require("node:crypto")` (both yield the namespace). Named imports
+      5 import { createHash } from "node:crypto";
+      1 import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+      1 import { createHash, generateKeyPairSync, randomBytes, sign, type KeyObject } from "node:crypto";
+      4 import { randomBytes } from "node:crypto";
+      1 import { randomBytes, randomUUID as uuidv7 } from "node:crypto";
+      1 import { randomUUID as uuidv7 } from "node:crypto";
