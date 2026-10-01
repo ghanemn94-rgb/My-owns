@@ -14,6 +14,8 @@ import type { ClaimedJob } from '../../src/platform/jobs/job-queue.service';
  * separate context; no implementation file and no existing test was changed.
  *
  * `DEFECT` = `it.fails` asserting the REQUIRED behaviour (red once fixed; then rename "(fixed, regression)", plain `it`).
+ * Fix status (implementer, separate context): every DEFECT of this file is fixed and runs as "(fixed, regression)" with its
+ * assertion unchanged; one CONTROL set-up was re-addressed (see the SEC-P34R-05 re-verification below).
  * `CONTROL` confirms a control or a precondition that holds before AND after a fix (so a broken set-up never hides behind
  * an expected failure). Scenarios run in `beforeAll` blocks; the tests only assert on what was recorded.
  *
@@ -202,7 +204,10 @@ describe('P4 C1 — SEC-P34R-05 re-verification: AI proposals follow the reader\
     await setAi(pid, { mode: 'assisted', max_classification_to_provider: 'restricted' });
     const r = await ok(await j.p.secretary.post(`${P(pid)}/ai/ask`, { question: `What does the ${FALCON} memo say? overdue`, locale: 'en' }));
     secRunId = r.id;
-    pInput = await propose(j.p.secretary, secRunId, 'propose_internal_notification', { recipientUserId: j.p.contributor.userId, targetType: 'task', targetId: ws0Task, title: 'Input probe', body: 'Synthetic probe.' });
+    // Set-up adjusted by the implementer for the SEC-P5-01 fix (assertions unchanged): the message is addressed to the
+    // sponsor (cleared for the restricted memo). Addressed to the contributor (cleared internal) it is now refused at
+    // creation, because its recipient may not read the restricted document the run gave the model — the fix itself.
+    pInput = await propose(j.p.secretary, secRunId, 'propose_internal_notification', { recipientUserId: j.p.sponsor.userId, targetType: 'task', targetId: ws0Task, title: 'Input probe', body: 'Synthetic probe.' });
     await setAi(pid, { mode: 'assisted' });
   }, 300_000);
 
@@ -318,7 +323,7 @@ describe('SEC-P5-03 — the provider ceiling classifies a committee action as "i
     expect((await snapshotOf(runId))!.items.some((i: { type: string; id: string }) => i.type === 'action_item' && i.id === actionId)).toBe(true);
   });
 
-  it.fails('DEFECT SEC-P5-03: content of a restricted decision\'s action is not sent to a provider whose ceiling is confidential (derived classification = the decision\'s)', async () => {
+  it('SEC-P5-03 (fixed, regression): content of a restricted decision\'s action is not sent to a provider whose ceiling is confidential (derived classification = the decision\'s)', async () => {
     const leaked = seen.flatMap((r) => r.context).filter((c) => `${c.title} ${c.text}`.includes(CANARY));
     expect(leaked).toHaveLength(0);
   });
@@ -382,7 +387,7 @@ describe('SEC-P5-05 — a stored run keeps the titles of sources the reader can 
     expect(JSON.stringify(after.body.output.claims)).not.toContain(docId);
   });
 
-  it.fails('DEFECT SEC-P5-05: re-reading the stored run does not show the title of a source the reader can no longer see (warnings / freshness re-checked like claims)', async () => {
+  it('SEC-P5-05 (fixed, regression): re-reading the stored run does not show the title of a source the reader can no longer see (warnings / freshness re-checked like claims)', async () => {
     expect(JSON.stringify(after.body)).not.toContain(TITLE);
   });
 });
@@ -448,11 +453,11 @@ describe('SEC-P5-01 — the recipient of an AI message is re-authorised for the 
     expect(auto.toolCalls).toContain('propose_internal_notification');
   });
 
-  it.fails('DEFECT SEC-P5-01 (policy-limited autopilot): no AI message carrying content the recipient may not read is delivered without any human review', async () => {
+  it('SEC-P5-01 (fixed, regression) (policy-limited autopilot): no AI message carrying content the recipient may not read is delivered without any human review', async () => {
     expect(auto.delivered.filter((n) => n.body.includes(CANARY))).toHaveLength(0);
   });
 
-  it.fails('DEFECT SEC-P5-01 (assisted, AIT-07): an uncleared recipient is refused before approval — the approval is not accepted and nothing carrying the content is delivered', async () => {
+  it('SEC-P5-01 (fixed, regression) (assisted, AIT-07): an uncleared recipient is refused before approval — the approval is not accepted and nothing carrying the content is delivered', async () => {
     expect(assisted.approve === null || assisted.approve >= 400).toBe(true);
     expect(assisted.delivered.filter((n) => n.body.includes(CANARY))).toHaveLength(0);
   });
@@ -511,7 +516,7 @@ describe('SEC-P5-02 — an autopilot execution ignores an emergency stop (or a r
     expect(statusAtKill).toBe('cancelled');
   });
 
-  it.fails('DEFECT SEC-P5-02: after the emergency stop cancelled it, the autopilot proposal is not executed and nothing is sent (phase 2 re-checks the status / kill switch under its lock)', async () => {
+  it('SEC-P5-02 (fixed, regression): after the emergency stop cancelled it, the autopilot proposal is not executed and nothing is sent (phase 2 re-checks the status / kill switch under its lock)', async () => {
     expect(result.finalStatus).toBe('cancelled');
     expect(result.notifications).toBe(0);
   });
@@ -564,7 +569,7 @@ describe('SEC-P5-06 — the autopilot daily limit is counted without a lock (con
     console.log(`SEC-P5-06 observed: autopilot executions today before ${n0}, limit ${n0 + 1}, after ${n1}; results ${JSON.stringify(results)}`);
   }, 300_000);
 
-  it.fails('DEFECT SEC-P5-06: two concurrent autopilot executions never exceed the approved daily limit', async () => {
+  it('SEC-P5-06 (fixed, regression): two concurrent autopilot executions never exceed the approved daily limit', async () => {
     expect(n1).toBeLessThanOrEqual(n0 + 1);
   });
 });

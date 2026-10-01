@@ -11,6 +11,7 @@ import type { ModelRequest } from '../../src/modules/ai/providers/model-provider
  * and no existing test was changed. LOCAL LOOPBACK ONLY: the "approved" endpoint is 127.0.0.1 (the only allowlisted host)
  * and the "unapproved" destination is 127.0.0.2 (a different host, not on the allowlist; Linux routes 127.0.0.0/8 to
  * loopback). No external host is contacted. The API key value is a placeholder, not a credential.
+ * Fix status (implementer, separate context): the three DEFECTs are fixed and run as "(fixed, regression)", assertions unchanged.
  * `DEFECT` = `it.fails` asserting the REQUIRED behaviour (red once fixed; then rename "(fixed, regression)", plain `it`);
  * `CONTROL` confirms an existing control.
  */
@@ -109,7 +110,7 @@ describe('SEC-P5-04 — the provider adapters follow redirects from the approved
     expect(unapprovedHits.length).toBe(before);
   });
 
-  it.fails('DEFECT SEC-P5-04 (anthropic adapter, 307): a redirect from the approved gateway is not followed — the unapproved host receives no request, no context and no x-api-key', async () => {
+  it('SEC-P5-04 (fixed, regression) (anthropic adapter, 307): a redirect from the approved gateway is not followed — the unapproved host receives no request, no context and no x-api-key', async () => {
     redirectStatus = 307;
     const before = unapprovedHits.length;
     const p = new AnthropicGatewayProvider({ url: () => `http://127.0.0.1:${approvedPort}`, apiKey: () => KEY, allowlist: () => ['127.0.0.1'] });
@@ -126,7 +127,7 @@ describe('SEC-P5-04 — the provider adapters follow redirects from the approved
     expect(got).toHaveLength(0);
   });
 
-  it.fails('DEFECT SEC-P5-04 (anthropic adapter, 302 — e.g. a login redirect): the unapproved host receives no request and no x-api-key', async () => {
+  it('SEC-P5-04 (fixed, regression) (anthropic adapter, 302 — e.g. a login redirect): the unapproved host receives no request and no x-api-key', async () => {
     redirectStatus = 302;
     const before = unapprovedHits.length;
     const p = new AnthropicGatewayProvider({ url: () => `http://127.0.0.1:${approvedPort}`, apiKey: () => KEY, allowlist: () => ['127.0.0.1'] });
@@ -136,7 +137,7 @@ describe('SEC-P5-04 — the provider adapters follow redirects from the approved
     expect(got).toHaveLength(0);
   });
 
-  it.fails('DEFECT SEC-P5-04 (openai_compatible adapter, 307): the unapproved host receives no request and no context', async () => {
+  it('SEC-P5-04 (fixed, regression) (openai_compatible adapter, 307): the unapproved host receives no request and no context', async () => {
     redirectStatus = 307;
     const before = unapprovedHits.length;
     const p = new OpenAiCompatibleProvider({ url: () => `http://127.0.0.1:${approvedPort}/v1`, apiKey: () => KEY, allowlist: () => ['127.0.0.1'] });
