@@ -1,0 +1,23 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG1-232",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:18e150714d29fa67aeaf28e817bb500d2db6191c88cde3ea680b3a64c8056f5b (disposable clone at 40dbd24; ID recomputed there and on the working tree). Fix inspected: between round-2 candidate 485e91f and 40dbd24 the ONLY non-delivery-record change is apps/web/e2e/journeys.spec.ts. After page.reload() the test now calls expectShellReadyForKeyboard(): wordmark + primary nav visible, My Work link aria-current=page, main#main h1 visible, then polls until document.hasFocus() and nothing is focused, before pressing Tab. Nothing is clicked, so the focus starting point is unchanged. The assertion is strengthened, not weakened: Tab -> skip link toBeFocused, then Enter -> main#main toBeFocused. Execution (Node 22, PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers, retries 0, --workers=1): full EN+AR journeys 18/18 three times (one of them under CPU load), 0 skipped / 0 'did not run'; qa-stack e2e 22/22; shell journey --repeat-each=20 over both locales 40/40 (unloaded), 40/40 (second unloaded run), and 40/40 under real CPU load (4 parallel unit-suite loops on 4 CPUs, loadavg 17-20, monitored in the log). In total, 128 executions of the fixed shell journey (42 of them loaded) with 0 failures. Sensitivity control: the PRE-FIX spec from 485e91f, run temporarily in the disposable clone under the same load and the same 20x/both-locale settings, failed 1/40 at the original toBeFocused assertion (line 172). So this harness and load still expose the race, and the fixed spec does not show it. The clone was restored afterwards and the candidate ID re-verified. The fix is complete. Note: one intended loaded run (14c) turned out unloaded because the background load had been reaped; it is labelled as such in its log and counted as unloaded.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-3/00-f232-fix-diff.txt",
+        "docs/delivery/test-evidence/DG1/qa/round-3/14-e2e-journeys-run1.log",
+        "docs/delivery/test-evidence/DG1/qa/round-3/14b-e2e-shell-repeat20-both-locales.log",
+        "docs/delivery/test-evidence/DG1/qa/round-3/14c-e2e-shell-repeat20-both-locales-run2-noload.log",
+        "docs/delivery/test-evidence/DG1/qa/round-3/14d-e2e-shell-repeat20-both-locales-under-load.log",
+        "docs/delivery/test-evidence/DG1/qa/round-3/14e-CONTROL-prefix-spec-shell-repeat20-under-load.log",
+        "docs/delivery/test-evidence/DG1/qa/round-3/screenshots/14e-CONTROL-prefix-spec-skiplink-focus-fail-en.png",
+        "docs/delivery/test-evidence/DG1/qa/round-3/14f-e2e-journeys-run2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-3/14g-e2e-journeys-full-under-load.log",
+        "docs/delivery/test-evidence/DG1/qa/round-3/15-e2e-qa-acceptance.log",
+        "apps/web/e2e/journeys.spec.ts#L118-L138"
+      ]
+    }
+  ]
+}

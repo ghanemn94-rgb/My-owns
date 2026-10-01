@@ -1,0 +1,413 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG1",
+  "round": 3,
+  "candidate_id": "sha256:18e150714d29fa67aeaf28e817bb500d2db6191c88cde3ea680b3a64c8056f5b",
+  "source_commit": "40dbd2400c0f0dfbc6704c7fc40d23be714239d6",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG1-T-DG1-REV-QA-R3-qa-verifier-20261001T222556Z-616f0029",
+    "session_id": "616f0029-ec84-4c78-95ba-09df8b88d037"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "frontend-ux-engineer",
+    "backend-workflow-engineer",
+    "devops-engineer",
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "qa-verifier authored no product implementation in the DG1 scope. The F-DG1-232 fix (apps/web/e2e/journeys.spec.ts) was authored by frontend-ux-engineer, not by me; I raised the finding and here verify it as its originating reviewer. My only candidate-tree contributions are the test-first acceptance suites under tests/qa/** and e2e/** (permitted qa scope) and earlier-round evidence. I formed this verdict before reading any other reviewer's round-3 record and did not open any of them. All execution happened in disposable clones under $TMPDIR."
+  },
+  "assignment": "docs/delivery/assignments/DG1/round-3/qa-verifier.md",
+  "requirements_checked": [
+    "REQ-DLV-025",
+    "REQ-DLV-033",
+    "REQ-DLV-042",
+    "REQ-S15-002",
+    "REQ-S15-005",
+    "REQ-S15-006",
+    "REQ-S16-001",
+    "REQ-S16-002",
+    "REQ-S16-003",
+    "REQ-S16-004",
+    "REQ-S19-004",
+    "REQ-S19-006"
+  ],
+  "checks_run": [
+    {
+      "id": "QA-R3-00-candidate-identity",
+      "procedure": "Recompute the candidate ID on the working tree (HEAD 4f312cc, later 3d58455) and in a disposable clone checked out at the manifest source_commit 40dbd24; confirm the HEAD delta since 40dbd24 is delivery metadata only (assignments, manifest, stages.json, then the other reviewers' auto-committed records and runs, all meta-excluded).",
+      "command": "node tools/gates/candidate.mjs --stage DG1 ; git diff --name-only 40dbd24 HEAD",
+      "environment": "/home/user/My-owns and $TMPDIR/review-qa @ 40dbd24; node v24.21.0 / v22.22.2",
+      "expected": "sha256:18e150714d29fa67aeaf28e817bb500d2db6191c88cde3ea680b3a64c8056f5b, 394 files, in every place",
+      "actual": "sha256:18e150714d29fa67aeaf28e817bb500d2db6191c88cde3ea680b3a64c8056f5b, 394 files, on the working tree at 4f312cc and at 3d58455, in the clone at 40dbd24, and again in the clone after the control experiment was restored. The HEAD delta is metadata only.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033"],
+      "evidence": ["docs/delivery/candidates/DG1/18e150714d29fa67.manifest.json", "docs/delivery/test-evidence/DG1/qa/round-3/14e-CONTROL-prefix-spec-shell-repeat20-under-load.log"]
+    },
+    {
+      "id": "QA-R3-01-static",
+      "procedure": "Build and static checks on the disposable clone: typecheck, build, lint, OpenAPI lint, no-CDN scan, Prettier format check, WCAG contrast on the token pairs.",
+      "command": "pnpm -r typecheck ; pnpm -r build ; pnpm lint ; pnpm openapi:lint ; pnpm check:no-cdn ; pnpm format:check ; pnpm --filter @mth/design-tokens run check:contrast",
+      "environment": "$TMPDIR/review-qa @ 40dbd24; node v22.22.2; pnpm 10.33.0 (offline install from a writable scratch copy of the pnpm store)",
+      "expected": "all exit 0; OpenAPI 3.1.x valid; no CDN reference; contrast PASS",
+      "actual": "All 7 exit 0. OpenAPI 3.1.1 with 33 operations. no-cdn scanned apps and packages. All files formatted. Contrast: 50 pairs meet WCAG AA; 3 prohibited pairs fail as documented.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033", "REQ-S16-002", "REQ-S19-006", "REQ-S15-005", "REQ-S15-002"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-3/01-typecheck.log",
+        "docs/delivery/test-evidence/DG1/qa/round-3/02-build.log",
+        "docs/delivery/test-evidence/DG1/qa/round-3/03-lint.log",
+        "docs/delivery/test-evidence/DG1/qa/round-3/04-openapi-lint.log",
+        "docs/delivery/test-evidence/DG1/qa/round-3/05-no-cdn.log",
+        "docs/delivery/test-evidence/DG1/qa/round-3/06-format-check.log",
+        "docs/delivery/test-evidence/DG1/qa/round-3/07-contrast.log"
+      ]
+    },
+    {
+      "id": "QA-R3-02-unit-node22",
+      "procedure": "Unit suites (unit-node + unit-web) on Node 22.",
+      "command": "pnpm test",
+      "environment": "$TMPDIR/review-qa @ 40dbd24; node v22.22.2",
+      "expected": "326/326 passed, exit 0",
+      "actual": "21 files, 326/326 passed, exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033", "REQ-S16-003"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-3/08-unit-node22.log"]
+    },
+    {
+      "id": "QA-R3-03-unit-node24",
+      "procedure": "Unit suites (unit-node + unit-web) on Node 24.",
+      "command": "pnpm test",
+      "environment": "$TMPDIR/review-qa @ 40dbd24; node v24.21.0",
+      "expected": "326/326 passed, exit 0",
+      "actual": "21 files, 326/326 passed, exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-3/09-unit-node24.log"]
+    },
+    {
+      "id": "QA-R3-04-integration-run1",
+      "procedure": "Integration suite on a disposable PostgreSQL 16 cluster (fresh database, all migrations applied).",
+      "command": "tests/qa/support/with-pg.sh pnpm test:integration",
+      "environment": "$TMPDIR/review-qa @ 40dbd24; node v22.22.2; PostgreSQL 16.13 disposable cluster",
+      "expected": "9 migrations applied to a fresh DB; all tests pass, including bu-hierarchy-guard and the contract suite; no 57P01, no hook timeout",
+      "actual": "9 migrations applied. 20 files, 209/209 passed. bu-hierarchy-guard.test.ts 7/7, contract.test.ts 9/9. No 57P01 or hook timeout. Exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-004", "REQ-S19-004", "REQ-S19-006", "REQ-DLV-033"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-3/10-integration-run1.log"]
+    },
+    {
+      "id": "QA-R3-05-integration-run2",
+      "procedure": "Second independent integration run on a new disposable cluster (stability).",
+      "command": "tests/qa/support/with-pg.sh pnpm test:integration",
+      "environment": "$TMPDIR/review-qa @ 40dbd24; node v22.22.2; PostgreSQL 16.13 disposable cluster",
+      "expected": "209/209 passed, exit 0",
+      "actual": "20 files, 209/209 passed, exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-004", "REQ-S19-004"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-3/11-integration-run2.log"]
+    },
+    {
+      "id": "QA-R3-06-contract-and-guard-verbose",
+      "procedure": "Verbose run of the contract suite and bu-hierarchy-guard.test.ts, to confirm the getBrandingTokens contract case and the migration-0009 guard cases individually.",
+      "command": "tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/contract apps/api/test/integration/bu-hierarchy-guard.test.ts --reporter=verbose",
+      "environment": "$TMPDIR/review-qa @ 40dbd24; node v22.22.2; PostgreSQL 16.13 disposable cluster",
+      "expected": "contract incl. 'branding tokens (getBrandingTokens)' passes; guard cycle/depth/race cases pass",
+      "actual": "16/16 passed. getBrandingTokens is authenticated-only, has provisional provenance, and is valid against the contract and zod. The guard refuses cycles and over-depth with 23514 under READ COMMITTED and REPEATABLE READ races, and destination-parent authorization works.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S19-006", "REQ-S19-004", "REQ-S15-002"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-3/17-contract-verbose.log"]
+    },
+    {
+      "id": "QA-R3-07-db-probe",
+      "procedure": "Rerun of the qa DB probe: fresh migrate; audit_event UPDATE/DELETE/TRUNCATE refused for app, owner and superuser; 0009 guard refuses a direct cycle, a two-session race and level 11.",
+      "command": "tests/qa/support/with-pg.sh bash docs/delivery/test-evidence/DG1/qa/round-2/12-db-probe.sh",
+      "environment": "$TMPDIR/review-qa @ 40dbd24; node v22.22.2; PostgreSQL 16.13 disposable cluster",
+      "expected": "every refusal observed; closure max depth 9; exit 0",
+      "actual": "9 migrations applied. Every refusal was observed (23514 business_unit_acyclic / business_unit_max_depth). Closure max depth 9. Exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-004", "REQ-S19-004"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-3/12-db-probe.log", "docs/delivery/test-evidence/DG1/qa/round-2/12-db-probe.sh"]
+    },
+    {
+      "id": "QA-R3-08-e2e-journeys-full-run1",
+      "procedure": "Full product e2e journeys, English LTR and Arabic RTL projects, one worker, retries 0, on a freshly migrated and seeded stack (synthetic dev users).",
+      "command": "PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e --workers=1 --reporter=list",
+      "environment": "$TMPDIR/review-qa @ 40dbd24; node v22.22.2; Playwright 1.56.1, pre-installed chromium; PostgreSQL 16.13",
+      "expected": "18/18 passed (9 EN + 9 AR), 0 failed, 0 skipped / 'did not run'",
+      "actual": "18 passed, 0 failed, 0 skipped. The shell journey passed in both locales. axe: 0 violations on 15 EN and 15 AR pages.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033", "REQ-S15-005", "REQ-S15-006", "REQ-S16-002"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-3/14-e2e-journeys-run1.log",
+        "docs/delivery/test-evidence/DG1/qa/round-3/screenshots/axe-summary-en.json",
+        "docs/delivery/test-evidence/DG1/qa/round-3/screenshots/axe-summary-ar.json",
+        "docs/delivery/test-evidence/DG1/qa/round-3/screenshots/en/02-my-work.png",
+        "docs/delivery/test-evidence/DG1/qa/round-3/screenshots/ar/02-my-work.png",
+        "docs/delivery/test-evidence/DG1/qa/round-3/screenshots/en/01-sign-in.png",
+        "docs/delivery/test-evidence/DG1/qa/round-3/screenshots/ar/01-sign-in.png",
+        "docs/delivery/test-evidence/DG1/qa/round-3/screenshots/en/03-planned-area.png",
+        "docs/delivery/test-evidence/DG1/qa/round-3/screenshots/ar/03-planned-area.png"
+      ]
+    },
+    {
+      "id": "QA-R3-09-e2e-journeys-full-run2",
+      "procedure": "Second full e2e journeys run (EN+AR, one worker), unloaded.",
+      "command": "apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e --workers=1 --reporter=list",
+      "environment": "$TMPDIR/review-qa @ 40dbd24; node v22.22.2; Playwright 1.56.1",
+      "expected": "18/18 passed, 0 skipped",
+      "actual": "18 passed, 0 failed, 0 skipped",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-3/14f-e2e-journeys-run2.log"]
+    },
+    {
+      "id": "QA-R3-10-e2e-journeys-full-under-load",
+      "procedure": "Third full e2e journeys run (EN+AR, one worker) under CPU load: 4 parallel `pnpm test` loops on the 4-CPU host, started 20 s before the run and monitored (loadavg, live vitest processes) in the same shell.",
+      "command": "load.sh (4x loop pnpm test) & ; apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e --workers=1 --reporter=list",
+      "environment": "$TMPDIR/review-qa @ 40dbd24; node v22.22.2; loadavg 15.5-17.8 during the run; 14 completed load iterations",
+      "expected": "18/18 passed, 0 skipped",
+      "actual": "18 passed, 0 failed, 0 skipped",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-3/14g-e2e-journeys-full-under-load.log"]
+    },
+    {
+      "id": "QA-R3-11-f232-shell-repeat20-unloaded",
+      "procedure": "F-DG1-232 determinism: the 'shell: navigation, language persistence and My Work' journey repeated 20x per locale (40 executions), one worker, retries 0; done twice on an unloaded host (14b, 14c). 14c was intended as the loaded run, but the background load had been reaped; its log is labelled as an unloaded run.",
+      "command": "apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e/journeys.spec.ts -g \"shell: navigation\" --repeat-each=20 --workers=1 --reporter=list",
+      "environment": "$TMPDIR/review-qa @ 40dbd24; node v22.22.2; Playwright 1.56.1",
+      "expected": "40/40 per run, 0 failures",
+      "actual": "14b: 40/40 passed. 14c: 40/40 passed. 0 failures.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-3/14b-e2e-shell-repeat20-both-locales.log",
+        "docs/delivery/test-evidence/DG1/qa/round-3/14c-e2e-shell-repeat20-both-locales-run2-noload.log"
+      ]
+    },
+    {
+      "id": "QA-R3-12-f232-shell-repeat20-under-load",
+      "procedure": "F-DG1-232 determinism under CPU load: the shell journey 20x per locale (40 executions) while 4 parallel unit-suite loops run on the 4-CPU host (heavier than the round-2 reproduction, which used 3 loops). Load verified by a loadavg/process monitor in the log.",
+      "command": "load.sh & ; apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e/journeys.spec.ts -g \"shell: navigation\" --repeat-each=20 --workers=1 --reporter=list",
+      "environment": "$TMPDIR/review-qa @ 40dbd24; node v22.22.2; loadavg 18-20 on 4 CPUs; 37 completed load iterations",
+      "expected": "40/40, 0 failures",
+      "actual": "40/40 passed, 0 failures (5.1 min)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-3/14d-e2e-shell-repeat20-both-locales-under-load.log"]
+    },
+    {
+      "id": "QA-R3-13-f232-sensitivity-control",
+      "procedure": "Negative control for the determinism claim: in the disposable clone only, temporarily replace journeys.spec.ts with the PRE-FIX version (round-2 candidate 485e91f) and run the same 20x/both-locale repeat under the same load. Then restore it with git checkout and re-verify the candidate ID.",
+      "command": "git show 485e91f:apps/web/e2e/journeys.spec.ts > apps/web/e2e/journeys.spec.ts ; load.sh & ; with-stack.sh npx playwright test ... -g \"shell: navigation\" --repeat-each=20 --workers=1 ; git checkout -- apps/web/e2e/journeys.spec.ts ; node tools/gates/candidate.mjs --stage DG1",
+      "environment": "$TMPDIR/review-qa (temporarily modified, then restored); node v22.22.2; same load profile",
+      "expected": "the pre-fix spec can still fail at the skip-link toBeFocused assertion (showing the harness can detect the race); candidate ID unchanged after the restore",
+      "actual": "Pre-fix spec: 1 failed / 39 passed. [chromium-en] repeat 8 failed at line 172, toBeFocused on the skip link, the original symptom. The fixed spec under the same conditions: 40/40. After the restore the candidate ID is 18e15071…, 394 files. The non-zero exit is the expected control outcome.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-3/14e-CONTROL-prefix-spec-shell-repeat20-under-load.log",
+        "docs/delivery/test-evidence/DG1/qa/round-3/screenshots/14e-CONTROL-prefix-spec-skiplink-focus-fail-en.png",
+        "docs/delivery/test-evidence/DG1/qa/round-3/00-f232-fix-diff.txt"
+      ]
+    },
+    {
+      "id": "QA-R3-14-e2e-qa-acceptance",
+      "procedure": "qa acceptance e2e (e2e/** plus the product journeys) on the qa stack: A20 bilingual shell (Arabic RTL default, English LTR after switch, persisted), A20 rendered design tokens.",
+      "command": "e2e/support/qa-stack.sh npx playwright test e2e --workers=1 --reporter=list",
+      "environment": "$TMPDIR/review-qa @ 40dbd24; node v22.22.2; PostgreSQL 16.13",
+      "expected": "all passed, exit 0",
+      "actual": "22/22 passed, exit 0 (includes a fourth pass of all 18 journeys)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S15-002", "REQ-S15-005", "REQ-S15-006", "REQ-DLV-033"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-3/15-e2e-qa-acceptance.log"]
+    },
+    {
+      "id": "QA-R3-15-a12-a13-a14",
+      "procedure": "Acceptance A12 (cross-scope read denied 404, in-scope allowed), A13 (job idempotency: Idempotency-Key replay, outbox relay twice, duplicate delivery = one effect), A14 on a disposable cluster.",
+      "command": "tests/qa/support/with-pg.sh npx vitest run --project integration tests/qa/integration --reporter=verbose",
+      "environment": "$TMPDIR/review-qa @ 40dbd24; node v22.22.2; PostgreSQL 16.13",
+      "expected": "24/24 passed",
+      "actual": "3 files, 24/24 passed, exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033", "REQ-S16-004"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-3/19-qa-a12-a13-a14-verbose.log"]
+    },
+    {
+      "id": "QA-R3-16-a18-clean-start",
+      "procedure": "A18 clean start: fresh checkout of 40dbd24, frozen offline install, build, migrate an empty DB, start, readiness, restart, and the negative case (an unmigrated DB is live but not ready).",
+      "command": "e2e/clean-start/a18-clean-start.sh --commit 40dbd2400c0f0dfbc6704c7fc40d23be714239d6 --install",
+      "environment": "$TMPDIR/review-qa; node v22.22.2; pnpm 10.33.0; PostgreSQL 16.13",
+      "expected": "A18 CLEAN START: PASS with 9 migrations",
+      "actual": "A18 CLEAN START: PASS in 24.4 s. 9 migrations applied. /readyz 200 after restart. Unmigrated DB: /healthz 200, /readyz 503 (migrations pending).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S19-004", "REQ-S16-004", "REQ-S16-001", "REQ-S15-005"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-3/18-a18-clean-start.log"]
+    },
+    {
+      "id": "QA-R3-17-a20-token-propagation",
+      "procedure": "A20 token propagation in a second disposable copy (installed and built): change brand.deep #003B73 -> #6B1D5C in tokens.json, rebuild, and assert the rendered CSS variables, nav background and header gradient follow the change (EN and AR). The first attempt failed with a usage error on my side (no prepared copy); its log is kept and labelled.",
+      "command": "e2e/support/a20-token-propagation.sh $TMPDIR/a20-copy",
+      "environment": "$TMPDIR/a20-copy @ 40dbd24; node v22.22.2",
+      "expected": "A20 token propagation: PASS",
+      "actual": "2/2 passed. 'A20 token propagation: PASS (brand.deep rendered as #6B1D5C, original #003B73)'. Exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S15-002"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-3/16-a20-token-propagation.log", "docs/delivery/test-evidence/DG1/qa/round-3/16a-a20-attempt1-operator-error.log"]
+    },
+    {
+      "id": "QA-R3-18-blackbox-and-worker-probes",
+      "procedure": "Rerun the qa black-box API probes (r1 and r2: branding tokens 401/200 provisional, logout invalidation, a 25-trial concurrent re-parent race, API depth limit) and the worker-stop probe (worker as a separate process, graceful SIGTERM).",
+      "command": "e2e/support/qa-stack.sh node docs/delivery/test-evidence/DG1/qa/tests/dg1-r2-blackbox-probe.mjs ; ... dg1-r1-blackbox-probe.mjs ; e2e/support/qa-stack.sh bash docs/delivery/test-evidence/DG1/qa/tests/dg1-r1-worker-stop.sh",
+      "environment": "$TMPDIR/review-qa @ 40dbd24; node v22.22.2; PostgreSQL 16.13",
+      "expected": "R2 BLACK-BOX PROBE: PASS; BLACKBOX PROBE: PASS; WORKER-STOP PROBE: PASS",
+      "actual": "All three PASS. Race x25: 0 cycles. Levels 1-10 return 201 and level 11 returns 400 business_unit.depth_exceeded. Branding is provisional. Old cookie returns 401 after logout. The worker started (Asia/Riyadh) and shut down cleanly on SIGTERM.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-001", "REQ-S15-002", "REQ-S16-004"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-3/20-blackbox-probe-r2-rerun.log",
+        "docs/delivery/test-evidence/DG1/qa/round-3/20b-blackbox-probe-r1-rerun.log",
+        "docs/delivery/test-evidence/DG1/qa/round-3/24-worker-stop.log"
+      ]
+    },
+    {
+      "id": "QA-R3-19-validate-register",
+      "procedure": "Requirement-register rules at DG1.",
+      "command": "node tools/gates/validate.mjs --register DG1",
+      "environment": "/home/user/My-owns (HEAD 3d58455, candidate 18e15071); node v22.22.2",
+      "expected": "PASS, exit 0",
+      "actual": "PASS register rules at DG1, exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-3/21-validate-register.log"]
+    },
+    {
+      "id": "QA-R3-20-validate-pipeline",
+      "procedure": "Delivery-gate pipeline state.",
+      "command": "node tools/gates/validate.mjs --pipeline DG1",
+      "environment": "/home/user/My-owns (HEAD 3d58455); node v22.22.2",
+      "expected": "PASS, exit 0",
+      "actual": "PASS pipeline (active stage: DG1 REVIEWING), exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-025"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-3/21-validate-pipeline.log"]
+    },
+    {
+      "id": "QA-R3-21-validate-reconcile",
+      "procedure": "Reconcile delivery records (structure).",
+      "command": "node tools/gates/validate.mjs --reconcile DG1",
+      "environment": "/home/user/My-owns (HEAD 3d58455); node v22.22.2",
+      "expected": "PASS reconcile (structure), exit 0; round-3 records still being produced are listed as missing",
+      "actual": "PASS reconcile (structure), exit 0. Round-3 code-security and qa records were listed as missing at the time; this record is one of them.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-3/21-validate-reconcile.log"]
+    },
+    {
+      "id": "QA-R3-22-ci-offline-surface",
+      "procedure": "REQ-DLV-025 / A24 offline surface, in a throwaway clone with dependencies installed: the two ci.yml copies are byte-identical; check-ci-needs passes; its 46 unit tests pass; three negative mutations (verify loses needs, e2e gets if: always(), delivery-gates stops running validate --pipeline) are each detected; the control passes; a tampered approved DG0 gate record makes validate --pipeline exit 1 and the restore passes. The live GitHub Actions run is the disclosed environmental residual D-058 and is not claimed. The first attempt ran without node_modules; it was void and its log is labelled.",
+      "command": "bash docs/delivery/test-evidence/DG1/qa/round-3/22-ci-offline.sh $TMPDIR/ci-mut",
+      "environment": "$TMPDIR/ci-mut @ 40dbd24 (throwaway, deps installed offline); node v24.21.0",
+      "expected": "identical copies; OK; 46/46; three mutations exit 1; control exit 0; tamper exit 1; restored exit 0",
+      "actual": "Copies identical (sha256 8b5b1106...). check-ci-needs OK with 5 jobs. 46/46 unit tests passed. Mutations a/b/c each exit 1 with specific messages, and the control exits 0. The tampered DG0 gate record makes validate --pipeline exit 1, and the restore exits 0. Residual (D-058): the live GitHub Actions execution cannot run in the hermetic sandbox and is not claimed as verified.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-025"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-3/22-ci-offline.log",
+        "docs/delivery/test-evidence/DG1/qa/round-3/22-ci-offline.sh",
+        "docs/delivery/test-evidence/DG1/qa/round-3/22a-ci-offline-attempt1-VOID-no-node_modules.log"
+      ]
+    },
+    {
+      "id": "QA-R3-23-install-sandbox-offline",
+      "procedure": "REQ-DLV-042 install-sandbox acceptance suite, offline, with a writable scratch copy of the pnpm store. I reproduced AC-1 (effect) standalone to identify its failure cause. The live-registry effect is the disclosed environmental residual D-057 and is not claimed.",
+      "command": "env npm_config_store_dir=$TMPDIR/pnpm-store/v10 bash tools/deps/tests/install-sandbox.test.sh ; tools/deps/install-sandbox.sh --root $TMPDIR/ac1 create",
+      "environment": "$TMPDIR/review-qa @ 40dbd24; node v22.22.2; bubblewrap; no registry reachable",
+      "expected": "13/14 offline ACs pass (AC-1 write-refusal, AC-2..AC-10); AC-1 (effect) fails only for lack of a reachable registry (D-057)",
+      "actual": "13 passed, 1 failed (AC-1 effect); the suite exits 1. The standalone reproduction shows the cause: ERR_PNPM_META_FETCH_FAIL GET https://registry.npmjs.org/is-number, ECONNREFUSED via the proxy. `create` resolves metadata from the live registry even though the tarball is in the store. This is exactly the residual D-057. All verifiable offline acceptance checks pass. Per the assignment and D-057 this is recorded as a PASS of the offline surface, not as BLOCKED; the live effect is not claimed.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-042"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-3/23-install-sandbox-tests.log",
+        "docs/delivery/test-evidence/DG1/qa/round-3/23b-ac1-effect-registry-cause.log"
+      ]
+    },
+    {
+      "id": "QA-R3-24-static-requirement-checks",
+      "procedure": "Static requirement checks (script in evidence). REQ-S15-006: no image/logo assets; Wordmark is text plus a provisional badge. REQ-S15-002: seven exact token values marked provisional; no positive official/certified claims. REQ-S15-005: @fontsource IBM Plex Sans / Sans Arabic bundled (woff2 in dist), no font CDN, OFL-1.1 in licenses/inventory.csv, e2e asserts the Plex face loads. REQ-S16-001: separate api and worker apps; ADR-0002. REQ-S16-002: React 19 + TypeScript strict (tsconfig.base). REQ-S16-003: module directories with index and tests. REQ-S16-004: 9 SQL migrations; no other DB driver. REQ-S19-006: OpenAPI 3.1.1, version 1.0.0-p1, sessionCookie + csrfToken schemes. REQ-S19-004: ERD + data dictionary. The first run had a token-lookup bug in my checker; its log is kept and labelled.",
+      "command": "bash docs/delivery/test-evidence/DG1/qa/round-3/25-static-requirement-checks.sh $TMPDIR/review-qa",
+      "environment": "$TMPDIR/review-qa @ 40dbd24 (built); node v22.22.2",
+      "expected": "every listed property holds",
+      "actual": "All hold. 0 image/logo assets, 0 <img>/<svg> in the Wordmark. Seven tokens OK with provisional:true. Locale strings only negate official status. 6 woff2 files bundled, 0 CDN references, OFL-1.1 inventory rows. api and worker are separate processes. React 19.2.0, TS strict. Modules access/admin/identity/kpi/reporting/transformations/workflows/... each have an index.ts. 9 migrations, 0 foreign DB drivers. OpenAPI 3.1.1 1.0.0-p1 with auth schemes.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S15-002", "REQ-S15-005", "REQ-S15-006", "REQ-S16-001", "REQ-S16-002", "REQ-S16-003", "REQ-S16-004", "REQ-S19-004", "REQ-S19-006"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-3/25-static-requirement-checks.log",
+        "docs/delivery/test-evidence/DG1/qa/round-3/25-static-requirement-checks.sh",
+        "docs/delivery/test-evidence/DG1/qa/round-3/25a-static-checks-attempt1-checker-bug.log",
+        "docs/delivery/test-evidence/DG1/qa/round-3/25b-fonts-licence-inventory.log"
+      ]
+    },
+    {
+      "id": "QA-R3-25-prior-qa-findings-still-closed",
+      "procedure": "Confirm that the bases of my round-2 closures of F-DG1-230 (views documented) and F-DG1-231 (register evidence) are unchanged on this candidate: diff 485e91f..40dbd24 over requirements.csv and docs/architecture; integration and migrations rerun (above).",
+      "command": "git diff --name-only 485e91f 40dbd24 ; git diff 485e91f 40dbd24 -- docs/delivery/requirements.csv docs/architecture",
+      "environment": "$TMPDIR/review-qa",
+      "expected": "no change to requirements.csv or docs/architecture",
+      "actual": "No change to either. The only non-delivery-record change is apps/web/e2e/journeys.spec.ts. F-DG1-230/231 stay CLOSED_VERIFIED.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033", "REQ-S19-004"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-3/00-f232-fix-diff.txt"]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG1/round-3/qa-verifier.verifications.json",
+    "docs/delivery/test-evidence/DG1/qa/round-3/00-f232-fix-diff.txt",
+    "docs/delivery/test-evidence/DG1/qa/round-3/14-e2e-journeys-run1.log",
+    "docs/delivery/test-evidence/DG1/qa/round-3/14d-e2e-shell-repeat20-both-locales-under-load.log",
+    "docs/delivery/test-evidence/DG1/qa/round-3/14e-CONTROL-prefix-spec-shell-repeat20-under-load.log",
+    "docs/delivery/test-evidence/DG1/qa/round-3/10-integration-run1.log",
+    "docs/delivery/test-evidence/DG1/qa/round-3/11-integration-run2.log",
+    "docs/delivery/test-evidence/DG1/qa/round-3/18-a18-clean-start.log",
+    "docs/delivery/test-evidence/DG1/qa/round-3/22-ci-offline.log",
+    "docs/delivery/test-evidence/DG1/qa/round-3/23-install-sandbox-tests.log",
+    "docs/delivery/test-evidence/DG1/qa/round-3/25-static-requirement-checks.log"
+  ],
+  "reviewed_at": "2026-10-01T23:05:00Z",
+  "summary": "PASS on candidate 18e15071 (commit 40dbd24). F-DG1-232 is CLOSED_VERIFIED: the fixed shell journey ran 128 times with 0 failures (42 under heavy CPU load), the full EN+AR journeys passed 18/18 with no skips in three runs (one loaded) plus the qa-stack run, and the pre-fix spec still fails under the same load (1/40), so the harness can detect the race. Every other check passed: build/static; unit 326/326 on Node 22 and 24; integration 209/209 twice (9 migrations, guard 7/7, contract 9/9 incl. getBrandingTokens); A12/A13/A14 24/24; A18; A20; validators. Live CI (D-058) and the live-registry install (D-057) are disclosed residuals; only their offline surfaces were verified. No new findings.",
+  "narrative": "docs/delivery/reviews/DG1/round-3/qa-verifier.md"
+}
