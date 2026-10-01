@@ -1,0 +1,51 @@
+clone HEAD: 11bc4c4a6f1e5eba58b0a0e0e9fdabbd62b22391
+== pnpm -s openapi:lint
+PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 33 operations
+exit=0
+== pnpm -s check:no-cdn
+PASS no-cdn: scanned apps, packages
+exit=0
+== typecheck api/web
+api=0
+web=0
+== lint/format of the two changed files (api eslint + prettier)
+eslint=0
+Checking formatting...
+All matched files use Prettier code style!
+prettier=0
+== design tokens provisional flags
+node:fs:440
+    return binding.readFileUtf8(path, stringToFlags(options.flag));
+                   ^
+
+Error: ENOENT: no such file or directory, open 'packages/design-tokens/tokens.json'
+    at Object.readFileSync (node:fs:440:20)
+    at [eval]:2:34
+    at runScriptInThisContext (node:internal/vm:209:10)
+    at node:internal/process/execution:446:12
+    at [eval]-wrapper:6:24
+    at runScriptInContext (node:internal/process/execution:444:60)
+    at evalFunction (node:internal/process/execution:279:30)
+    at evalTypeScript (node:internal/process/execution:291:3)
+    at node:internal/main/eval_string:74:3 {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'packages/design-tokens/tokens.json'
+}
+
+Node.js v22.22.2
+== honesty grep (official/certified/PMI-standard claims) in i18n catalogues
+(none unnegated)
+== DG[0-7] in i18n json catalogues (expect none)
+(none)
+== decimal money: float column types in migrations (expect none)
+== D-054 present
+1
+== (rerun) design tokens provisional flags — corrected path packages/design-tokens/src/tokens.json (the first attempt above used a wrong path: ENOENT, reviewer error)
+top-level provisional: true
+colour tokens: 34 not provisional: []
+0078FF: [[".color.brand.primary","#0078FF",true]]
+== float/real column types in migrations (expect none)
+(none)
+== numeric columns (decimal money)

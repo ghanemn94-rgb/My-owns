@@ -1,0 +1,102 @@
+== candidate confirmation
+HEAD: 6cb3813aeb0ac6a72f6d9dd3007184401e8b21ac
+shallow: false
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:e27eaf5fb5ada8640c4463b8e3c9d5f64e5aa629fa78b49cfd2861bdc7544876","files":390}
+{"stage":"DG1","source":"11bc4c4","candidate_id":"sha256:e27eaf5fb5ada8640c4463b8e3c9d5f64e5aa629fa78b49cfd2861bdc7544876","files":390}
+{
+  "frozen": "sha256:e27eaf5fb5ada8640c4463b8e3c9d5f64e5aa629fa78b49cfd2861bdc7544876",
+  "working_tree": "sha256:e27eaf5fb5ada8640c4463b8e3c9d5f64e5aa629fa78b49cfd2861bdc7544876",
+  "matches": true,
+  "added": [],
+  "removed": [],
+  "changed": []
+}
+diff-exit=0
+== git diff --stat 11bc4c4 HEAD (expect excluded metadata only)
+ docs/delivery/assignments/DG1/round-8/audit.md     |   23 +
+ .../DG1/round-8/review-code-security-reviewer.md   |   12 +
+ .../assignments/DG1/round-8/review-common.md       |   15 +
+ .../DG1/round-8/review-domain-reviewer.md          |   11 +
+ .../assignments/DG1/round-8/review-qa-verifier.md  |   15 +
+ .../candidates/DG1/e27eaf5fb5ada864.manifest.json  | 1968 ++++++++++++++++++++
+ docs/delivery/stages.json                          |   20 +-
+ 7 files changed, 2060 insertions(+), 4 deletions(-)
+== changes since round-7 candidate commit c36315b, outside docs/delivery
+ apps/api/src/architecture.test.ts    | 17 +++++++++++++++++
+ apps/api/src/architecture.testkit.ts | 36 ++++++++++++++++++++++++++----------
+ 2 files changed, 43 insertions(+), 10 deletions(-)
+== runtime/contract surfaces changed since c36315b (expect empty)
+== register/i18n changed (expect empty)
+== round-7 frozen candidate commit
+{
+"schema_version": 1,
+"stages": [
+{
+"id": "DG0",
+"stage": "P0",
+"name": "Discovery and execution setup",
+"state": "APPROVED",
+"depends_on": [],
+"implementation_owners": [
+"transformation-analyst",
+"delivery-orchestrator"
+],
+"candidate_spec": {
+"include": [
+"**"
+],
+"exclude": [
+"trading_agent/**"
+]
+},
+"candidate": {
+"candidate_id": "sha256:84130c624e877424eed6deb91d086249bc1330bda34ff109b0183102533751bd",
+"source_commit": "1e4c0226fc50dc6cc928ce4f16cbf7507afed1ac",
+"frozen_at": "2026-09-30T15:19:05Z",
+"manifest_path": "docs/delivery/candidates/DG0/84130c624e877424.manifest.json"
+},
+"review_rounds": [
+{
+"round": 1,
+"candidate_id": "sha256:dea5e75a8c5fe118a9390b8768afb73cf08429d7ed4bdbde37054701eab660af",
+"records": {
+"domain-reviewer": "docs/delivery/reviews/DG0/round-1/domain-reviewer.json",
+"code-security-reviewer": "docs/delivery/reviews/DG0/round-1/code-security-reviewer.json",
+"qa-verifier": "docs/delivery/reviews/DG0/round-1/qa-verifier.json"
+},
+"note": "Round 1: independent reviews of the frozen DG0 candidate",
+"frozen_at": "2026-09-28T12:32:08Z",
+"source_commit": "26642c72e72c22bff6472dacb0093b8efabbe7e3"
+},
+{
+"round": 2,
+"candidate_id": "sha256:d47b51caa83c28b068da75895b530e9b59d12b7ddb3356bf4aa1d71ad23c76c3",
+"records": {
+"domain-reviewer": "docs/delivery/reviews/DG0/round-2/domain-reviewer.json",
+"code-security-reviewer": "docs/delivery/reviews/DG0/round-2/code-security-reviewer.json",
+"qa-verifier": "docs/delivery/reviews/DG0/round-2/qa-verifier.json"
+},
+"note": "R
+== build tsconfig excludes tests
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "rootDir": "src",
+    "outDir": "dist",
+    "customConditions": []
+  },
+  "include": ["src"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/**/*.testkit.ts"]
+}
+architecture files in dist: 0
+== diff vs round-7 candidate commit a6bdea0 outside docs/delivery
+ apps/api/src/architecture.test.ts    | 17 +++++++++++++++++
+ apps/api/src/architecture.testkit.ts | 36 ++++++++++++++++++++++++++----------
+ 2 files changed, 43 insertions(+), 10 deletions(-)
+== runtime/contract surfaces (expect empty)
+== register / i18n (expect empty)
+== docs/delivery changes a6bdea0..11bc4c4
+ .../DG1/qa/round-7/17-requirements-evidence.log    |   15 +
+ .../qa/tests/dg1-r7-sqlite-import-probe.test.ts    |   45 +
+ 127 files changed, 9020 insertions(+), 8 deletions(-)

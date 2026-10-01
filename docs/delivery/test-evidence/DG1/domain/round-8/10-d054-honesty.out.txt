@@ -1,0 +1,20 @@
+== honesty of the D-054 / testkit 'pinned Node 22' claim
+-- engines / node pin:
+package.json:10:    "node": ">=22.18.0 <25",
+24
+-- runtime node: v22.22.2
+-- testkit header keeps the 'NOT a runtime security boundary' rationale:
+59:// that runs with a read-only production source tree; it is NOT a runtime security boundary.
+-- residual (c) text:
+//  (c) the loader/eval denylist is ENUMERATED (rule-1 primitives, rule-3 roots and loaders, LOADER_BUILTINS). For
+//      the PINNED Node version (22.x) the concrete loader/exec built-ins and `process.*` methods are now enumerated
+//      exhaustively, as validated by the round-7 code-security sweep of `builtinModules` + `process.*` (F-DG1-128):
+//      built-ins module, vm, worker_threads, inspector, repl, child_process, cluster, process, sqlite, test; and
+//      process.binding, _linkedBinding, dlopen, execve (closed as found: `process.dlopen` F-DG1-125, `node:sqlite`
+//      loadExtension F-DG1-127, `node:test` run / `process.execve` F-DG1-128). Residual (c) is therefore narrowed to
+//      genuinely FUTURE/UNKNOWN built-ins or `process.*` methods of a later Node version, and `WebAssembly` /
+//      `node:wasi` instantiation (a wasm exec, not a JS-module loader). A later hardening could switch module-source
+//      `node:` imports to a default-deny allow-list (module source uses only node:crypto/fs/path/url); that is
+//      deferred (bigger blast radius, not P1).
+-- glossary test in full unit run:
+15: ✓ |unit-web| src/i18n/glossary.test.ts (8 tests) 8ms

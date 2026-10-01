@@ -1,0 +1,18 @@
+# runtime proof, node v22.22.2, disposable dir outside repo
+$ node r3.mjs  (source: n1-sigusr1-inspector-runtime.mjs.txt)
+Debugger listening on ws://127.0.0.1:9229/109112ba-5632-448e-a750-9979e34c0f43
+For help, see: https://nodejs.org/en/docs/inspector
+Debugger attached.
+RESULT uid=0(root) gid=0(root) groups=0(root)
+
+exit=0
+$ node r4.mjs  (process._debugProcess(process.pid) then fetch /json/list)
+process._debugProcess(process.pid);
+await new Promise((r) => setTimeout(r, 500));
+const list = await (await fetch("http://127.0.0.1:9229/json/list")).json();
+console.log("inspector up:", list[0].webSocketDebuggerUrl.startsWith("ws://"));
+process.exit(0);
+Debugger listening on ws://127.0.0.1:9229/909a7b0b-41a2-4cf0-8146-e3d6796ea17c
+For help, see: https://nodejs.org/en/docs/inspector
+inspector up: true
+exit=0

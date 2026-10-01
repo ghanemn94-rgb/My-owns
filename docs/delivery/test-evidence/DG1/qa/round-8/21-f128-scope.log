@@ -1,0 +1,20 @@
+$ python3: diff manifest entries d3743a352912a357 (round 7) vs e27eaf5fb5ada864 (round 8)
+files r7: 8 r8: 8
+CHANGED candidate_id
+CHANGED entries
+CHANGED frozen_at
+CHANGED source_commit
+$ git diff --stat c36315b 11bc4c4 -- apps packages tests e2e scripts tools docs/api
+ apps/api/src/architecture.test.ts    | 17 +++++++++++++++++
+ apps/api/src/architecture.testkit.ts | 36 ++++++++++++++++++++++++++----------
+ 2 files changed, 43 insertions(+), 10 deletions(-)
+$ grep -rln architecture.testkit apps packages tests e2e scripts tools (excluding node_modules)
+apps/api/src/modules/reporting/reporting.test.ts
+apps/api/src/modules/workflows/workflows.test.ts
+apps/api/src/modules/kpi/kpi.test.ts
+apps/api/src/architecture.testkit.ts
+apps/api/src/architecture.test.ts
+$ grep tsconfig.build exclusion
+10:  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/**/*.testkit.ts"]
+$ grep -rn "node:test\|process.execve" apps/api/src packages --include=*.ts (excluding node_modules, testkit/test)
+grep-exit=1

@@ -1,0 +1,27 @@
+import { describe, expect, it } from "vitest";
+import { join } from "node:path";
+import { fileViolations, MODULES_DIR, moduleViolations } from "./architecture.testkit.ts";
+import { API_MODULES, type ApiModule } from "./modules.ts";
+const f = join(MODULES_DIR, "transformations", "probe.ts");
+const cases: Array<[string, string]> = [
+  ["R1 node:test run", `import { run } from "node:test";\nconst p = ["../access/","policy.ts"].join("");\nfor await (const _ of run({ files: [new URL(p, import.meta.url).pathname], isolation: "none" })) {}`],
+  ["R1b test (no prefix)", `import { run } from "test";`],
+  ["R1c node:test/reporters", `import { spec } from "node:test/reporters";`],
+  ["R2 process.execve", `process.execve("/bin/sh", ["sh","-c","id"]);`],
+  ["R2b (process as any).execve", `(process as any).execve("/bin/sh", ["sh"]);`],
+  ["R2c globalThis.process.execve", `globalThis.process.execve("/bin/sh", ["sh"]);`],
+  ["R2d import {execve} node:process", `import { execve } from "node:process"; execve("/bin/sh", ["sh"]);`],
+  ["N1 SIGUSR1 inspector + WebSocket Runtime.evaluate",
+`process.kill(process.pid, "SIGUSR1");
+await new Promise((r) => setTimeout(r, 500));
+const list = await (await fetch("http://127.0.0.1:9229/json/list")).json();
+const ws = new WebSocket(list[0].webSocketDebuggerUrl);
+await new Promise((r) => ws.addEventListener("open", r));
+ws.send(JSON.stringify({ id: 1, method: "Runtime.evaluate", params: { expression: 'process.getBuiltinModule("child_process").execSync("id").toString()' } }));`],
+  ["N2 process._debugProcess", `process._debugProcess(process.pid);`],
+];
+describe("probe", () => {
+  for (const [name, src] of cases)
+    it(name, () => { const v = fileViolations("transformations", f, src); console.log(`PROBE ${name} => ${v.length} violations: ${JSON.stringify(v)}`); expect(true).toBe(true); });
+  it("real tree", () => { const all = (Object.keys(API_MODULES) as ApiModule[]).flatMap((m) => moduleViolations(m)); console.log(`PROBE real-tree violations=${all.length}`); });
+});

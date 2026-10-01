@@ -1,0 +1,45 @@
+$ QA_PG_PORT=5492 tests/qa/support/with-pg.sh bash -c 'pnpm test:integration; s=$?; cp $TMPDIR/qa-pg.*/pg.log <evidence>/04-int-run1-pg.log; exit $s'   # run 1
+clone HEAD: 6cb3813aeb0ac6a72f6d9dd3007184401e8b21ac
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+> mobily-transformation-hub@0.1.0 test:integration /var/tmp/mth-run.aWxdP1/claude-0/review-qa-r8
+> vitest run --project integration
+
+
+ RUN  v3.2.4 /var/tmp/mth-run.aWxdP1/claude-0/review-qa-r8
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mupkujtn_21c49b05; applied 8 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/transformations.test.ts (30 tests) 1024ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts (19 tests) 921ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts (18 tests) 820ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts (11 tests) 648ms
+ ✓ |integration| apps/api/test/integration/access-derived-race.test.ts (4 tests) 945ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts (9 tests) 590ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts (13 tests) 324ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts (14 tests) 612ms
+ ✓ |integration| tests/qa/integration/a13-job-idempotency.test.ts (5 tests) 3153ms
+   ✓ A13 running worker: a duplicate delivery is a no-op > consumes the event once; an extra job with the same message completes as 'duplicate'  2602ms
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts (10 tests) 5193ms
+   ✓ worker runtime: end to end, restarts and the dead-letter queue > relays and handles a created transformation, and survives a restart without losing the job  3675ms
+   ✓ worker runtime: end to end, restarts and the dead-letter queue > moves a job that keeps failing to ops.failed after the bounded retries  1051ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts (10 tests) 503ms
+ ✓ |integration| tests/qa/integration/a14-concurrency.test.ts (5 tests) 332ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts (17 tests) 149ms
+ ✓ |integration| apps/api/test/integration/platform.test.ts (9 tests) 208ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts (9 tests) 43ms
+ ✓ |integration| packages/db/test/integration/bootstrap.test.ts (5 tests) 1498ms
+   ✓ mth-db bootstrap > creates the first organization and a technical/access admin with no business permission, fully audited  369ms
+   ✓ mth-db bootstrap > refuses to run twice  358ms
+   ✓ mth-db seed-dev (synthetic, development only) > seeds synthetic users bound to urn:mth:dev-local once, idempotently  359ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts (7 tests) 350ms
+ ✓ |integration| apps/worker/test/integration/maintenance.test.ts (2 tests) 237ms
+ ✓ |integration| packages/db/test/integration/scratch-drop.test.ts (3 tests) 5040ms
+   ✓ dropScratchDatabase never terminates a live client (F-DG1-009) > a drop right after pool.end() raises no 57P01 on the closing pool (40 rounds, 8 clients each)  4625ms
+   ✓ dropScratchDatabase never terminates a live client (F-DG1-009) > a client that is still connected is NOT terminated: the drop refuses, names it, and succeeds once it ends  413ms
+
+ Test Files  19 passed (19)
+      Tests  200 passed (200)
+   Start at  13:35:52
+   Duration  27.73s (transform 916ms, setup 0ms, collect 3.95s, tests 22.59s, environment 0ms, prepare 60ms)
+
+exit=0

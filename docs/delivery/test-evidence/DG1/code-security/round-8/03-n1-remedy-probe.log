@@ -1,0 +1,17 @@
+$ node --disable-sigusr1 r4.mjs   # remedy probe: is the SIGUSR1/_debugProcess inspector route disabled by the flag?
+}
+
+Node.js v22.22.2
+exit=1
+$ node --disable-sigusr1 r3.mjs
+}
+
+Node.js v22.22.2
+exit=1
+
+# error detail (both runs): the inspector never listens under --disable-sigusr1
+TypeError: fetch failed
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:9229
+$ node --disable-sigusr1 -e "process.kill(process.pid,\"SIGUSR1\"); setTimeout(()=>console.log(\"alive\"),300)"
+alive
+exit=0

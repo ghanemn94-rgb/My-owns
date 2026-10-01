@@ -1,0 +1,24 @@
+$ cp docs/delivery/test-evidence/DG1/qa/tests/dg1-r8-debugprocess-lint-probe.test.ts apps/api/src/ && pnpm vitest run --project unit-node apps/api/src/dg1-r8-debugprocess-lint-probe.test.ts --reporter=verbose
+clone HEAD: 6cb3813aeb0ac6a72f6d9dd3007184401e8b21ac
+
+ RUN  v3.2.4 /var/tmp/mth-run.aWxdP1/claude-0/review-qa-r8
+
+stdout | apps/api/src/dg1-r8-debugprocess-lint-probe.test.ts > QA r8 adjacent route: inspector activation via process._debugProcess / SIGUSR1 > D1 full route (_debugProcess + fetch + WebSocket Runtime.evaluate): candidate lint reports no violation (gap)
+D1 full route (_debugProcess + fetch + WebSocket Runtime.evaluate) violations = []
+
+stdout | apps/api/src/dg1-r8-debugprocess-lint-probe.test.ts > QA r8 adjacent route: inspector activation via process._debugProcess / SIGUSR1 > D2 process._debugProcess(process.pid) alone: candidate lint reports no violation (gap)
+D2 process._debugProcess(process.pid) alone violations = []
+
+stdout | apps/api/src/dg1-r8-debugprocess-lint-probe.test.ts > QA r8 adjacent route: inspector activation via process._debugProcess / SIGUSR1 > D3 process.kill(process.pid, 'SIGUSR1') alone: candidate lint reports no violation (gap)
+D3 process.kill(process.pid, 'SIGUSR1') alone violations = []
+
+ ✓ |unit-node| apps/api/src/dg1-r8-debugprocess-lint-probe.test.ts > QA r8 adjacent route: inspector activation via process._debugProcess / SIGUSR1 > D1 full route (_debugProcess + fetch + WebSocket Runtime.evaluate): candidate lint reports no violation (gap) 61ms
+ ✓ |unit-node| apps/api/src/dg1-r8-debugprocess-lint-probe.test.ts > QA r8 adjacent route: inspector activation via process._debugProcess / SIGUSR1 > D2 process._debugProcess(process.pid) alone: candidate lint reports no violation (gap) 4ms
+ ✓ |unit-node| apps/api/src/dg1-r8-debugprocess-lint-probe.test.ts > QA r8 adjacent route: inspector activation via process._debugProcess / SIGUSR1 > D3 process.kill(process.pid, 'SIGUSR1') alone: candidate lint reports no violation (gap) 3ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  13:35:33
+   Duration  945ms (transform 90ms, setup 0ms, collect 562ms, tests 70ms, environment 0ms, prepare 66ms)
+
+exit=0

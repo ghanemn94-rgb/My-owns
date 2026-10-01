@@ -1,0 +1,32 @@
+# node v22.22.2; clone at 11bc4c4a6f1e5eba58b0a0e0e9fdabbd62b22391
+$ npx vitest run --project unit-node apps/api/src/zz-probe.test.ts apps/api/src/architecture.test.ts
+ RUN  v3.2.4 /var/tmp/mth-run.TK9kKI/claude-0/review-sec
+stdout | apps/api/src/zz-probe.test.ts > probe > R1 node:test run
+PROBE R1 node:test run => 1 violations: ["modules/transformations/probe.ts: imports package node:test"]
+stdout | apps/api/src/zz-probe.test.ts > probe > R1b test (no prefix)
+PROBE R1b test (no prefix) => 1 violations: ["modules/transformations/probe.ts: imports package test"]
+stdout | apps/api/src/zz-probe.test.ts > probe > R1c node:test/reporters
+PROBE R1c node:test/reporters => 0 violations: []
+stdout | apps/api/src/zz-probe.test.ts > probe > R2 process.execve
+PROBE R2 process.execve => 1 violations: ["modules/transformations/probe.ts: module loader via process.execve (line 1) bypasses the module-interface check"]
+stdout | apps/api/src/zz-probe.test.ts > probe > R2b (process as any).execve
+PROBE R2b (process as any).execve => 1 violations: ["modules/transformations/probe.ts: module loader via process.execve (line 1) bypasses the module-interface check"]
+stdout | apps/api/src/zz-probe.test.ts > probe > R2c globalThis.process.execve
+PROBE R2c globalThis.process.execve => 1 violations: ["modules/transformations/probe.ts: globalThis.process (line 1) bypasses the module-interface check"]
+stdout | apps/api/src/zz-probe.test.ts > probe > R2d import {execve} node:process
+PROBE R2d import {execve} node:process => 1 violations: ["modules/transformations/probe.ts: imports package node:process"]
+stdout | apps/api/src/zz-probe.test.ts > probe > N1 SIGUSR1 inspector + WebSocket Runtime.evaluate
+PROBE N1 SIGUSR1 inspector + WebSocket Runtime.evaluate => 0 violations: []
+stdout | apps/api/src/zz-probe.test.ts > probe > N2 process._debugProcess
+PROBE N2 process._debugProcess => 0 violations: []
+stdout | apps/api/src/zz-probe.test.ts > probe > real tree
+PROBE real-tree violations=0
+ ✓ |unit-node| apps/api/src/zz-probe.test.ts (10 tests) 782ms
+   ✓ probe > real tree  698ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (80 tests) 1244ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  811ms
+ Test Files  2 passed (2)
+      Tests  90 passed (90)
+   Start at  13:34:13
+   Duration  2.20s (transform 108ms, setup 0ms, collect 1.20s, tests 2.03s, environment 0ms, prepare 169ms)
+exit=0

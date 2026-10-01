@@ -1,0 +1,48 @@
+clone HEAD: 11bc4c4a6f1e5eba58b0a0e0e9fdabbd62b22391; node v22.22.2
+
+ RUN  v3.2.4 /var/tmp/mth-run.2ApKvT/claude-0/review-dom8
+
+stdout | apps/api/src/zz-dom8-probe.test.ts > F-DG1-128 over-reach probe (domain-reviewer r8) > (a) legitimate specifiers stay allowed
+real-tree bare specifiers: @fastify/cookie, @fastify/rate-limit, @mth/config, @mth/db, @mth/shared, @mth/shared/schemas, ajv/dist/2020.js, fastify, node:crypto, node:fs, node:path, node:url, openid-client, pg, uuid, vitest, yaml, zod
+checked 47 legitimate specifiers; rejected: []
+
+stdout | apps/api/src/zz-dom8-probe.test.ts > F-DG1-128 over-reach probe (domain-reviewer r8) > (b) specifier differential vs round-7 testkit: only the test specifiers change
+corpus 158 specifiers (builtinModules=68); verdict changes: []
+
+stdout | apps/api/src/zz-dom8-probe.test.ts > F-DG1-128 over-reach probe (domain-reviewer r8) > (c) process-member differential vs round-7 testkit: only execve newly flagged
+process members checked: 109; newly flagged: ["execve"]; flagged in both: ["_linkedBinding","binding","constructor","dlopen","getBuiltinModule"]
+
+ ✓ |unit-node| apps/api/src/zz-dom8-probe.test.ts > F-DG1-128 over-reach probe (domain-reviewer r8) > (a) legitimate specifiers stay allowed 4ms
+ × |unit-node| apps/api/src/zz-dom8-probe.test.ts > F-DG1-128 over-reach probe (domain-reviewer r8) > (b) specifier differential vs round-7 testkit: only the test specifiers change 8ms
+   → expected [] to include 'node:test: r7=true r8=false'
+ ✓ |unit-node| apps/api/src/zz-dom8-probe.test.ts > F-DG1-128 over-reach probe (domain-reviewer r8) > (c) process-member differential vs round-7 testkit: only execve newly flagged 421ms
+stdout | apps/api/src/zz-dom8-probe.test.ts > F-DG1-128 over-reach probe (domain-reviewer r8) > (d) node:test and process.execve routes are violations
+node:test / execve forms tested: 15; missed: []
+
+stdout | apps/api/src/zz-dom8-probe.test.ts > F-DG1-128 over-reach probe (domain-reviewer r8) > (e) real module tree has zero violations
+real module tree violations: 0
+
+ ✓ |unit-node| apps/api/src/zz-dom8-probe.test.ts > F-DG1-128 over-reach probe (domain-reviewer r8) > (d) node:test and process.execve routes are violations 39ms
+ ✓ |unit-node| apps/api/src/zz-dom8-probe.test.ts > F-DG1-128 over-reach probe (domain-reviewer r8) > (e) real module tree has zero violations 506ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| apps/api/src/zz-dom8-probe.test.ts > F-DG1-128 over-reach probe (domain-reviewer r8) > (b) specifier differential vs round-7 testkit: only the test specifiers change
+AssertionError: expected [] to include 'node:test: r7=true r8=false'
+ ❯ apps/api/src/zz-dom8-probe.test.ts:51:21
+     49|     console.log(`corpus ${new Set(corpus).size} specifiers (builtinMod…
+     50|     for (const c of changed) expect(c).toMatch(/^(node:)?test(\/report…
+     51|     expect(changed).toContain("node:test: r7=true r8=false");
+       |                     ^
+     52|     expect(bareAllowed("test") || bareAllowed("node:test")).toBe(false…
+     53|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  13:33:40
+   Duration  2.46s (transform 204ms, setup 0ms, collect 989ms, tests 980ms, environment 0ms, prepare 125ms)
+
+exit=1

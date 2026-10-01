@@ -1,0 +1,20 @@
+$ git diff --stat c36315b HEAD -- tools/deps/ docs/delivery/test-evidence/DG1/orchestrator/install-sandbox-acceptance.log
+diff-exit=0
+$ git log -1 --format="%h %ci %s" -- docs/delivery/test-evidence/DG1/orchestrator/install-sandbox-acceptance.log
+cc0198e 2026-10-01 12:49:01 +0000 DG1 r7: F-DG1-212 — regenerate the 14-case installer acceptance log
+$ grep -c PASS / FAIL / exit= in cited log
+PASS lines: 14
+FAIL lines: 0
+install-sandbox acceptance: 14 passed, 0 failed
+exit=0
+$ diff <(ok labels of tools/deps/tests/install-sandbox.test.sh) <(PASS labels of cited log)
+14
+14
+3c3
+< AC-10 a '!'-excluded package and a non-\`packages:\` list entry are not copy-back destinations
+---
+> AC-10 a '!'-excluded package and a non-`packages:` list entry are not copy-back destinations
+label-diff-exit=1
+REQ-DLV-042
+$ diff after unescaping \` in the shell-source labels (extraction artefact: the source string is "...non-\`packages:\`..." inside double quotes)
+label-diff-exit=0

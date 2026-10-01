@@ -1,0 +1,11 @@
+$ git show c36315b:apps/api/src/architecture.testkit.ts > apps/api/src/architecture.testkit.ts && pnpm vitest run --project unit-node apps/api/src/architecture.test.ts
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > R1 node:test in-process run is a violation (round-4 lint: 'missed') 7ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > R2 process.execve is a violation (round-4 lint: 'missed') 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > R1 node:test in-process run is a violation (round-4 lint: 'missed')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > R2 process.execve is a violation (round-4 lint: 'missed')
+      Tests  2 failed | 78 passed (80)
+exit(pipe-status)=1
+$ git checkout -- apps/api/src/architecture.testkit.ts && rerun
+      Tests  80 passed (80)
+exit=0

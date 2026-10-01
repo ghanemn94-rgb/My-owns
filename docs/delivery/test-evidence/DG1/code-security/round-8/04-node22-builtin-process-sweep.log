@@ -1,0 +1,20 @@
+# independent Node v22.22.2 sweep: builtinModules + node:-only built-ins + every own/inherited process.* key
+builtins(68): _http_agent _http_client _http_common _http_incoming _http_outgoing _http_server _stream_duplex _stream_passthrough _stream_readable _stream_transform _stream_wrap _stream_writable _tls_common _tls_wrap assert assert/strict async_hooks buffer child_process cluster console constants crypto dgram diagnostics_channel dns dns/promises domain events fs fs/promises http http2 https inspector inspector/promises module net os path path/posix path/win32 perf_hooks process punycode querystring readline readline/promises repl stream stream/consumers stream/promises stream/web string_decoder sys timers timers/promises tls trace_events tty url util util/types v8 vm wasi worker_threads zlib
+process(100): _debugEnd _debugProcess _eval _events _eventsCount _exiting _fatalException _getActiveHandles _getActiveRequests _kill _linkedBinding _maxListeners _preload_modules _rawDebug _startProfilerIdleNotifier _stopProfilerIdleNotifier _tickCallback abort addListener allowedNodeEnvironmentFlags arch argv argv0 assert availableMemory binding chdir config constrainedMemory constructor cpuUsage cwd debugPort dlopen domain emit emitWarning env eventNames execArgv execPath execve exit exitCode features finalization getActiveResourcesInfo getBuiltinModule getMaxListeners getegid geteuid getgid getgroups getuid hasUncaughtExceptionCaptureCallback hrtime initgroups kill listenerCount listeners loadEnvFile memoryUsage moduleLoadList nextTick off on once openStdin pid platform ppid prependListener prependOnceListener rawListeners reallyExit ref release removeAllListeners removeListener report resourceUsage setMaxListeners setSourceMapsEnabled setUncaughtExceptionCaptureCallback setegid seteuid setgid setgroups setuid sourceMapsEnabled stderr stdin stdout threadCpuUsage title umask unref uptime version versions
+node:-only: test:ok sqlite:ok sea:ok test/reporters:ok quic:ERR_UNKNOWN_BUILTIN_MODULE
+(node:3) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+# classification (reviewer; loader/exec = loads code, evaluates code, or execs a binary)
+banned built-ins (LOADER_BUILTINS): module vm worker_threads inspector inspector/promises repl child_process cluster process sqlite test  -> verified caught (01-lint-probes.log R1/R1b/R2d)
+node:test/reporters: reporter streams only (no file loading) -> not a loader; allowed (R1c 0 violations) - OK
+residual (c) stated: wasi (+ global WebAssembly)
+residual (b) stated: fs, fs/promises (write-then-literal-import)
+not loaders/exec: _http_* _stream_* _tls_* assert async_hooks buffer console constants crypto dgram diagnostics_channel dns domain events http http2 https net os path perf_hooks punycode querystring readline stream string_decoder sys timers tls trace_events tty url util v8 zlib sea
+   (v8.setFlagsFromString only changes V8 flags for code compiled later; any such code still needs eval/new Function/import, all banned)
+process.*: binding _linkedBinding dlopen execve -> rule 3 (verified R2/R2b); getBuiltinModule mainModule -> rule 1 banned names; _eval/_preload_modules/moduleLoadList/config/features -> data, not callable loaders
+OPEN ROUTE (not banned, not a stated residual): process.kill(process.pid,"SIGUSR1") / process._kill / process._debugProcess(process.pid) activate the V8 inspector
+   in-process (the capability of the banned node:inspector) on 127.0.0.1:9229; then global fetch + global WebSocket send Runtime.evaluate -> arbitrary code
+   (02-n1-runtime.log: uid=0 output from child_process). Lint: 0 violations (01-lint-probes.log N1/N2). Remedy proven: node --disable-sigusr1 (03-n1-remedy-probe.log).
+other process.* (chdir, setuid family, umask, loadEnvFile, report, emit, abort, exit, reallyExit, ...): no code load/eval/exec.
+Node 24 (production image + CI matrix target per ADR-0001): no Node 24 binary in this sandbox -> sweep BLOCKED for 24.

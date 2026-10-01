@@ -1,0 +1,34 @@
+== Node version facts behind the D-054 / testkit 'PINNED Node version (22.x)' claim (candidate 11bc4c4)
+-- .nvmrc:
+24
+-- package.json engines:
+10:    "node": ">=22.18.0 <25",
+-- deploy/docker/Dockerfile production base image (digest-pinned):
+24:ARG NODE_IMAGE=node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+-- deploy/images.lock.json node entries:
+2:  "$comment": "Container images used by the build, Compose and CI (ADR-0011/0012/0005). Every reference must be pinned BY DIGEST: `node deploy/scripts/pin-images.mjs --resolve [id...]` (needs registry access; an ORCHESTRATOR/IT step, D-049 — agent sandboxes have no network) fills `digest` + `verifiedAt`, `--apply` rewrites every file in `usedIn`, and `--check` (offline) fails while any digest is missing, any file disagrees with this lock, or a scanned file references an image not listed here. A null digest means NOT PINNED; it is never a pass. `blockedReason` (null unless set by --resolve) records a registry the environment's network policy denies: the image is reported BLOCKED, still not pinned, and --check still fails. Never fabricate a digest. `scope`: production = shipped/run in production (mth-app base image, product database); test-ci = test IdP and CI-only images. Tags and support windows are [UNVERIFIED] until --resolve records `verifiedAt`.",
+5:      "id": "node-runtime",
+6:      "ref": "node",
+12:      "license": "MIT (Node.js); Debian packages under their own licences",
+-- deploy/ci/ci.yml verify matrix:
+45:      matrix:
+46-        node: ["24", "22"] # ADR-0001: target 24 LTS, supported floor 22.18+
+46:        node: ["24", "22"] # ADR-0001: target 24 LTS, supported floor 22.18+
+-- ADR-0001 target runtime vs floor:
+1. **Node.js (CF-1).**
+   - **Target runtime:** the **Node.js 24 LTS** line in every container image. devops-engineer pins the image by digest.
+     - Node 24 entered Active LTS in Oct 2025, moves to Maintenance in Oct 2026, and reaches end of life on 2028-04-30 [UNVERIFIED: https://github.com/nodejs/Release].
+   - **Supported floor:** Node **22.18.0 or later** (`engines.node: ">=22.18.0 <25"`).
+     - Node 22 is Maintenance LTS until 2027-04-30 [UNVERIFIED].
+     - The build sandbox has Node **v22.22.2** [V-LOCAL], and the existing `delivery-gates` job uses Node 22.
+-- testkit header claim:
+49://      the PINNED Node version (22.x) the concrete loader/exec built-ins and `process.*` methods are now enumerated
+-- D-054 claim:
+enumerated exhaustively for the pinned Node 22** (module, vm, worker_threads, inspector, repl, child_process, cluster, process, sqlite, test
+EXHAUSTIVE for the pinned Node version
+-- Node binaries available to this reviewer (no network in the sandbox):
+/opt/node20
+/opt/node21
+/opt/node22
+v22.22.2
+Node 24 binary: not available
