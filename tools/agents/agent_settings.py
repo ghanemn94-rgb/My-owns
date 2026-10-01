@@ -32,7 +32,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # Protected for every role, relative to the repository and to each of its worktrees.
 COMMON_DENY = [
     ".git", ".claude", ".mcp.json", "CLAUDE.md", "CLAUDE.local.md", ".gitignore", ".gitattributes", ".github",
-    "tools/gates", "tools/agents", "tools/source", "docs/source", "trading_agent",
+    "tools/gates", "tools/agents", "tools/deps", "tools/source", "docs/source", "trading_agent",
     "docs/delivery/reviews", "docs/delivery/gates", "docs/delivery/runs", "docs/delivery/candidates",
     "docs/delivery/assignments", "docs/delivery/findings.json", "docs/delivery/stages.json",
 ]

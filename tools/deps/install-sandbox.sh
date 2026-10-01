@@ -26,6 +26,10 @@
 set -uo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+# Optional --root <dir>: operate on another tree (the acceptance tests use disposable scratch projects). Only the
+# orchestrator invokes this wrapper, so the override is not an escalation; it never widens what is writable beyond the
+# named tree and the package store.
+if [ "${1:-}" = "--root" ]; then REPO_ROOT="$(cd "$2" && pwd)"; shift 2; fi
 MODE="${1:-frozen}"
 shift || true
 
@@ -43,9 +47,11 @@ mkdir -p "$PNPM_STORE"
 # tmpfs is mounted over it inside the sandbox, so nothing the install writes there survives or escapes the target tree.
 SBX_TMP="/tmp/mth-install.$$"
 
-# Build the pnpm argument list. Lifecycle scripts are off by default; the allow-list in package.json
-# (`pnpm.onlyBuiltDependencies`) is the only way a dependency's build script runs.
-pnpm_args=(--config.ignore-scripts=true --config.enable-pre-post-scripts=false)
+# Lifecycle-script policy (REQ-DLV-042). A DEPENDENCY's install/build script runs only if the package is on the reviewed
+# allow-list `pnpm.onlyBuiltDependencies` in package.json; pnpm 10 blocks every other dependency's scripts by default, so
+# no global `ignore-scripts` is set (that would also block allow-listed ones, defeating the "unless allow-listed" rule).
+# `enable-pre-post-scripts=false` additionally stops the project's OWN pre/post lifecycle scripts from running on install.
+pnpm_args=(--config.enable-pre-post-scripts=false)
 case "$MODE" in
   create)
     # The only mode permitted to write/update the lockfile. `--config.frozen-lockfile=false` is required because CI=1
