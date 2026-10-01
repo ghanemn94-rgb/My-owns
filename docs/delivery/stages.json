@@ -702,10 +702,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:dd747fe1df62d876a74101caa826542b90d3eb36cedb1de14f299b0b6de8c559",
-        "source_commit": "985d0fa6d05e0b63f53ad67f641910dab34f50ca",
-        "frozen_at": "2026-10-01T16:58:56Z",
-        "manifest_path": "docs/delivery/candidates/DG1/dd747fe1df62d876.manifest.json"
+        "candidate_id": "sha256:76d8b3049d22d414a4c036bd3dd1af6e0c3609baedb096e2d2ecf4180bf07846",
+        "source_commit": "f27b5a6f80f2b1146bc8f3de35d284991e4213f8",
+        "frozen_at": "2026-10-01T17:35:11Z",
+        "manifest_path": "docs/delivery/candidates/DG1/76d8b3049d22d414.manifest.json"
       },
       "review_rounds": [
         {
@@ -874,7 +874,19 @@
             "code-security-reviewer": "docs/delivery/reviews/DG1/round-14/code-security-reviewer.json",
             "qa-verifier": "docs/delivery/reviews/DG1/round-14/qa-verifier.json"
           },
-          "note": "DG1 round 14: re-review after the round-13 all-PASS that raised one Low finding. Verify F-DG1-135 — the module lint's TEST_FILE is narrowed to /\\.test\\.tsx?$/ (exactly the test extensions tsconfig.build.json excludes), so a *.test.mts/.test.js module file is a NON-test (full boundary rules, no test exemption) while still scanned by walk(); real module test files are all .test.ts. Re-confirm no regression on Node 22 and Node 24; plus the 12 DG1-final requirements, on the same candidate."
+          "note": "DG1 round 14: re-review after the round-13 all-PASS that raised one Low finding. Verify F-DG1-135 — the module lint's TEST_FILE is narrowed to /\\.test\\.tsx?$/ (exactly the test extensions tsconfig.build.json excludes), so a *.test.mts/.test.js module file is a NON-test (full boundary rules, no test exemption) while still scanned by walk(); real module test files are all .test.ts. Re-confirm no regression on Node 22 and Node 24; plus the 12 DG1-final requirements, on the same candidate. OUTCOME: all three PASS; F-DG1-135 CLOSED; module lint converged; raised F-DG1-136 (integration hookTimeout) + F-DG1-217 (lint .d.ts crash)."
+        },
+        {
+          "round": 15,
+          "candidate_id": "sha256:76d8b3049d22d414a4c036bd3dd1af6e0c3609baedb096e2d2ecf4180bf07846",
+          "frozen_at": "2026-10-01T17:12:40Z",
+          "source_commit": "f27b5a6f80f2b1146bc8f3de35d284991e4213f8",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG1/round-15/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG1/round-15/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG1/round-15/qa-verifier.json"
+          },
+          "note": "DG1 round 15: re-review after the round-14 all-PASS that raised two Low findings. Verify F-DG1-136 (the integration project now sets hookTimeout=30_000, so the afterAll teardown — DDL + api.close() + dropScratchDatabase's own 10s wait — no longer hits vitest's default 10s hook budget under host contention) and F-DG1-217 (the lint's syntaxErrors() is declaration-file-safe: a no-emit one-file program + getSyntacticDiagnostics for .d.ts/.d.mts/.d.cts, so the lint no longer throws a transpile Debug Failure and .d.ts files stay scanned). Re-confirm no regression on Node 22 and Node 24; plus the 12 DG1-final requirements, on the same candidate."
         }
       ],
       "gate_record": "docs/delivery/gates/DG1.json",
