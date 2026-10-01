@@ -702,10 +702,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:e6979e12111aeb1456f591d66f8437d9f491c7e8e58215ea7c5a9f233cbfe71d",
-        "source_commit": "485e91f50eabe236b12d67f45d1bf1d246a97e4a",
-        "frozen_at": "2026-10-01T21:39:42Z",
-        "manifest_path": "docs/delivery/candidates/DG1/e6979e12111aeb14.manifest.json"
+        "candidate_id": "sha256:18e150714d29fa67aeaf28e817bb500d2db6191c88cde3ea680b3a64c8056f5b",
+        "source_commit": "40dbd2400c0f0dfbc6704c7fc40d23be714239d6",
+        "frozen_at": "2026-10-01T22:23:49Z",
+        "manifest_path": "docs/delivery/candidates/DG1/18e150714d29fa67.manifest.json"
       },
       "review_rounds": [
         {
@@ -731,6 +731,18 @@
             "qa-verifier": "docs/delivery/reviews/DG1/round-2/qa-verifier.json"
           },
           "note": "Clean re-gate round 2 (gate round) on candidate e6979e12: re-verify the 12 round-1 findings on the repaired candidate and re-run the full required-check suite. Live-registry (D-057) and live-CI A24 (D-058) are documented environmental residuals, recorded as the available-evidence PASS + a note, never as BLOCKED gate checks."
+        },
+        {
+          "round": 3,
+          "candidate_id": "sha256:18e150714d29fa67aeaf28e817bb500d2db6191c88cde3ea680b3a64c8056f5b",
+          "frozen_at": "2026-10-01T22:23:49Z",
+          "source_commit": "40dbd2400c0f0dfbc6704c7fc40d23be714239d6",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG1/round-3/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG1/round-3/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG1/round-3/qa-verifier.json"
+          },
+          "note": "Clean re-gate round 3 (gate round) on candidate 18e15071 after the F-DG1-232 e2e-determinism fix. qa re-verifies F-DG1-232; domain and code-security re-confirm no regression (their round-2 closures hold). Live-registry (D-057) and live-CI A24 (D-058) remain documented residuals, never BLOCKED gate checks."
         }
       ],
       "gate_record": "docs/delivery/gates/DG1.json",
@@ -759,6 +771,16 @@
           "state": "REVIEWING",
           "at": "2026-10-01T21:42:00Z",
           "note": "Round-1 findings repaired and FIXED_PENDING_VERIFICATION at 12bf33f; candidate re-frozen as e6979e12 (394 files, source 485e91f) for the round-2 gate review."
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-10-01T22:25:00Z",
+          "note": "Round 2 (gate round): domain PASS + code-security PASS; all 12 round-1 findings CLOSED_VERIFIED (incl. the two Medium mandatory product bugs F-DG1-140/141). qa PASS-verified F-DG1-230/231 but raised one new Low flaky-e2e finding F-DG1-232 (Tab before shell remount after reload) and FAILed. Repaired: deterministic e2e shell journey (await shell remount + document focus before Tab; assertion strengthened). F-DG1-232 FIXED_PENDING_VERIFICATION at ee2dfcf. Verified: 120 green e2e repeats + full EN+AR, unit 326/326."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-10-01T22:27:00Z",
+          "note": "F-DG1-232 repaired and FIXED_PENDING_VERIFICATION at ee2dfcf; candidate re-frozen as 18e15071 (394 files, source 40dbd24) for the round-3 gate review."
         }
       ]
     },
