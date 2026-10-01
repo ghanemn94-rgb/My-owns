@@ -2872,6 +2872,7 @@ CREATE TABLE "ai_project_settings" (
 	"per_run_timeout_ms" integer DEFAULT 60000 NOT NULL,
 	"quiet_hours_start" integer,
 	"quiet_hours_end" integer,
+	"action_cooldown_hours" integer DEFAULT 24 NOT NULL,
 	"briefing_cron" varchar(64),
 	"briefing_timezone" text DEFAULT 'Asia/Riyadh' NOT NULL,
 	"autopilot_policy" jsonb,
@@ -2900,6 +2901,7 @@ CREATE TABLE "ai_proposal" (
 	"status" "ai_proposal_status" DEFAULT 'proposed' NOT NULL,
 	"policy_version" varchar(32) NOT NULL,
 	"idempotency_key" varchar(200) NOT NULL,
+	"dedupe_key" varchar(64),
 	"execution_result" jsonb,
 	"executed_at" timestamp with time zone,
 	"invalidated_reason" text,
@@ -2928,7 +2930,7 @@ CREATE TABLE "ai_run" (
 	"input_tokens" integer DEFAULT 0 NOT NULL,
 	"output_tokens" integer DEFAULT 0 NOT NULL,
 	"cost_estimate" numeric(12, 4),
-	"policy_version" varchar(32),
+	"policy_version" varchar(32) NOT NULL,
 	"started_at" timestamp with time zone,
 	"finished_at" timestamp with time zone,
 	"error" text,
@@ -3424,4 +3426,5 @@ CREATE INDEX "scheduled_job_due_idx" ON "scheduled_job" USING btree ("enabled","
 CREATE INDEX "ai_derived_artifact_idx" ON "ai_derived_artifact" USING btree ("project_id","kind","acl_fingerprint");--> statement-breakpoint
 CREATE UNIQUE INDEX "ai_project_settings_uq" ON "ai_project_settings" USING btree ("project_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "ai_proposal_idem_uq" ON "ai_proposal" USING btree ("idempotency_key");--> statement-breakpoint
+CREATE INDEX "ai_proposal_dedupe_idx" ON "ai_proposal" USING btree ("project_id","dedupe_key");--> statement-breakpoint
 CREATE INDEX "ai_run_project_idx" ON "ai_run" USING btree ("project_id","created_at");

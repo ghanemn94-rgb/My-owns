@@ -555,13 +555,17 @@ test.describe('P5 AI PM Center — modes, cited answers, bound approvals, emerge
     await loginAs(page, PERSONAS.contributor);
     await page.goto(`/projects/${dc}/ai`);
     const tabs = page.getByTestId('ai-tabs');
-    await expect(tabs.locator('[data-tab]')).toHaveText(['Overview', 'Ask', 'Briefings & detections']);
+    // QA-P5-02: a contributor holds no ai.run.read but reads their OWN runs (questions, delivered briefings).
+    await expect(tabs.locator('[data-tab]')).toHaveText(['Overview', 'Ask', 'Runs', 'Briefings & detections']);
     await expect(page.getByTestId('ai-status-unavailable')).toBeVisible();
-    for (const seg of ['/proposals', '/runs', '/settings']) {
+    for (const seg of ['/proposals', '/settings']) {
       await page.goto(`/projects/${dc}/ai${seg}`);
       await expect(page.getByTestId('restricted-state'), `contributor ai${seg}`).toBeVisible();
     }
-    await shot(page, 'ai-en-5-restricted-contributor-runs');
+    await page.goto(`/projects/${dc}/ai/runs`);
+    await expect(page.getByTestId('runs-table')).toBeVisible();
+    await expect(page.getByTestId('restricted-state')).toHaveCount(0);
+    await shot(page, 'ai-en-5-contributor-own-runs');
   });
 
   test('6. Arabic (RTL) screens and a 390 px view [REQ-UX-001, REQ-UX-017]', async ({ browser }) => {

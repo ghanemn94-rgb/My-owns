@@ -1,5 +1,5 @@
 {
-  "id": "ac1bc1fe-d61a-40b9-96bd-d4f01affeee7",
+  "id": "91b4e282-f382-4fe6-b8f5-c62d18c676ae",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -24968,6 +24968,13 @@
           "primaryKey": false,
           "notNull": false
         },
+        "action_cooldown_hours": {
+          "name": "action_cooldown_hours",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 24
+        },
         "briefing_cron": {
           "name": "briefing_cron",
           "type": "varchar(64)",
@@ -25171,6 +25178,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "dedupe_key": {
+          "name": "dedupe_key",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "execution_result": {
           "name": "execution_result",
           "type": "jsonb",
@@ -25223,6 +25236,27 @@
             }
           ],
           "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "ai_proposal_dedupe_idx": {
+          "name": "ai_proposal_dedupe_idx",
+          "columns": [
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "dedupe_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -25397,7 +25431,7 @@
           "name": "policy_version",
           "type": "varchar(32)",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "started_at": {
           "name": "started_at",

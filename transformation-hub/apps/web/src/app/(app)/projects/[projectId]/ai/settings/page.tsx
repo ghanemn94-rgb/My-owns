@@ -84,6 +84,7 @@ interface FormState {
   costCurrency: string;
   quietStart: string;
   quietEnd: string;
+  cooldownHours: string;
   briefingCron: string;
   briefingTimezone: string;
 }
@@ -101,6 +102,7 @@ function toForm(s: AiSettings): FormState {
     costCurrency: s.costCurrency ?? '',
     quietStart: s.quietHoursStart === null ? '' : String(s.quietHoursStart),
     quietEnd: s.quietHoursEnd === null ? '' : String(s.quietHoursEnd),
+    cooldownHours: String(s.actionCooldownHours),
     briefingCron: s.briefingCron ?? '',
     briefingTimezone: s.briefingTimezone,
   };
@@ -134,6 +136,8 @@ function SettingsForm({ s, endpoints, onReload }: { s: AiSettings; endpoints: Ai
     const h = intOrNull(f[k]);
     if (h !== null && (Number.isNaN(h) || h < 0 || h > 23)) errors[k] = t('ai.settings.errors.range', { min: formatNumber(0), max: formatNumber(23) });
   }
+  const cooldown = intOrNull(f.cooldownHours);
+  if (cooldown === null || Number.isNaN(cooldown) || cooldown < 0 || cooldown > 168) errors.cooldownHours = t('ai.settings.errors.range', { min: formatNumber(0), max: formatNumber(168) });
   if (f.monthlyCostBudget.trim() && !/^\d{1,16}(\.\d{1,4})?$/.test(f.monthlyCostBudget.trim())) errors.monthlyCostBudget = t('ai.settings.errors.decimal');
   if (f.costCurrency.trim() && !/^[A-Z]{3}$/.test(f.costCurrency.trim())) errors.costCurrency = t('ai.settings.errors.currency');
   if (f.monthlyCostBudget.trim() && !f.costCurrency.trim()) errors.costCurrency = t('ai.settings.errors.currencyRequired');
@@ -184,6 +188,10 @@ function SettingsForm({ s, endpoints, onReload }: { s: AiSettings; endpoints: Ai
       body.quietHoursStart = intOrNull(f.quietStart);
       body.quietHoursEnd = intOrNull(f.quietEnd);
       note(t('ai.settings.quietHours'), `${base.quietStart}–${base.quietEnd}`, `${f.quietStart}–${f.quietEnd}`);
+    }
+    if (f.cooldownHours !== base.cooldownHours) {
+      body.actionCooldownHours = Number(f.cooldownHours);
+      note(t('ai.settings.cooldownHours'), formatNumber(Number(base.cooldownHours)), formatNumber(Number(f.cooldownHours)));
     }
   }
   if (f.briefingCron.trim() !== base.briefingCron) {
@@ -254,6 +262,7 @@ function SettingsForm({ s, endpoints, onReload }: { s: AiSettings; endpoints: Ai
           <legend className="mb-2 text-sm font-semibold text-ink">{t('ai.settings.scheduleLegend')}</legend>
           <TextField label={t('ai.settings.quietStart')} inputMode="numeric" value={f.quietStart} onChange={set('quietStart')} error={err('quietStart')} hint={t('ai.settings.quietHint')} dir="ltr" data-testid="settings-quiet-start" />
           <TextField label={t('ai.settings.quietEnd')} inputMode="numeric" value={f.quietEnd} onChange={set('quietEnd')} error={err('quietEnd')} dir="ltr" data-testid="settings-quiet-end" />
+          <TextField label={t('ai.settings.cooldownHours')} required inputMode="numeric" value={f.cooldownHours} onChange={set('cooldownHours')} error={err('cooldownHours')} hint={t('ai.settings.cooldownHint')} dir="ltr" data-testid="settings-cooldown" />
           <TextField label={t('ai.settings.briefingCron')} value={f.briefingCron} onChange={set('briefingCron')} error={err('briefingCron')} hint={t('ai.settings.briefingCronHint')} dir="ltr" data-testid="settings-cron" />
           <TextField label={t('ai.settings.briefingTimezone')} required value={f.briefingTimezone} onChange={set('briefingTimezone')} dir="ltr" data-testid="settings-timezone" />
         </fieldset>

@@ -129,6 +129,8 @@ export const AiSettingsDto = z.object({
   perRunTimeoutMs: z.number().int(),
   quietHoursStart: z.number().int().nullable(),
   quietHoursEnd: z.number().int().nullable(),
+  /** Deduplication / cooldown window of AI actions in hours (0 = off) — spec §12.4, AIT-27. */
+  actionCooldownHours: z.number().int(),
   briefingCron: z.string().nullable(),
   briefingTimezone: z.string(),
   autopilotPolicy: AutopilotPolicyDto.nullable(),
@@ -154,6 +156,7 @@ export const UpdateAiSettingsBody = z.object({
   perRunTimeoutMs: z.number().int().min(1000).max(300_000).optional(),
   quietHoursStart: Hour.nullable().optional(),
   quietHoursEnd: Hour.nullable().optional(),
+  actionCooldownHours: z.number().int().min(0).max(168).optional(),
   briefingCron: Cron.nullable().optional(),
   briefingTimezone: z.string().trim().min(1).max(64).optional(),
   autopilotPolicy: z
@@ -205,6 +208,11 @@ export const AiProposalDto = z.object({
   version: z.number().int(),
   approvals: z.array(AiApprovalDto),
   simulated: z.boolean(),
+  /**
+   * Display names of the people the reviewer must identify — the delegating user, the message recipient and the approvers
+   * (QA-P5-05) — so an approver who cannot list the project members still sees who will receive the message.
+   */
+  people: z.array(z.object({ userId: Uuid, displayName: z.string() })),
 });
 export type AiProposal = z.infer<typeof AiProposalDto>;
 
@@ -379,9 +387,9 @@ export const aiRoutes = registerRoutes({
     id: 'ai.runs.list',
     method: 'GET',
     path: '/api/v1/projects/:projectId/ai/runs',
-    summary: 'My AI runs (answers are per user and never shared)',
+    summary: 'My AI runs (answers are per user and never shared). Service-enforced: ai.run.read, ai.assistant.use or ai.briefing.subscribe — a subscriber reads the briefings delivered to them (QA-P5-02)',
     tags: Tag,
-    access: 'ai.run.read',
+    access: 'authenticated',
     params: ProjectParams,
     // Default order: newest first.
     query: PageQuery.extend({ sort: SortParam(['createdAt', 'kind', 'status']) }),
@@ -391,9 +399,9 @@ export const aiRoutes = registerRoutes({
     id: 'ai.runs.get',
     method: 'GET',
     path: '/api/v1/projects/:projectId/ai/runs/:runId',
-    summary: 'One of my AI runs; citations are re-checked against my current access on every read',
+    summary: 'One of my AI runs; citations are re-checked against my current access on every read. Service-enforced: ai.run.read, ai.assistant.use or ai.briefing.subscribe (own runs only, QA-P5-02)',
     tags: Tag,
-    access: 'ai.run.read',
+    access: 'authenticated',
     params: idParams('runId'),
     response: AiRunDto,
   }),
@@ -448,6 +456,16 @@ export const aiRoutes = registerRoutes({
     // Default order: newest first.
     query: PageQuery.extend({ status: z.enum(AI_PROPOSAL_STATUSES).optional(), sort: SortParam(['createdAt', 'updatedAt', 'status', 'actionType']) }),
     response: paged(AiProposalDto),
+  }),
+  getProposal: defineRoute({
+    id: 'ai.proposals.get',
+    method: 'GET',
+    path: '/api/v1/projects/:projectId/ai/proposals/:proposalId',
+    summary: 'One AI proposal (404 when the reader may not see its target, its run inputs or the project — as the list)',
+    tags: Tag,
+    access: 'ai.proposal.read',
+    params: idParams('proposalId'),
+    response: AiProposalDto,
   }),
   approveProposal: defineRoute({
     id: 'ai.proposals.approve',

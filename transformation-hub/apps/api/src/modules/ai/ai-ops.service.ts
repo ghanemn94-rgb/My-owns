@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { and, desc, eq, sql } from 'drizzle-orm';
 import { schema } from '@hub/db';
 import type { AiRunOutput, RouteInput, aiRoutes } from '@hub/contracts';
-import { AI_ACTION_PERMISSION, AI_AUTOPILOT_ELIGIBLE, AI_MODES, AI_PROHIBITED_ACTIONS, AI_PROVIDERS, AI_TOOLS, aiFlagOf, circuitIsOpen, notFound, POLICY_VERSION, toolAllowedInMode, type AiProposableAction } from '@hub/domain';
+import { AI_ACTION_PERMISSION, AI_AUTOPILOT_ELIGIBLE, AI_MODES, AI_PROHIBITED_ACTIONS, AI_PROVIDERS, AI_TOOLS, aiFlagOf, circuitIsOpen, forbidden, notFound, POLICY_VERSION, toolAllowedInMode, type AiProposableAction } from '@hub/domain';
 import { DbService } from '../../platform/db.service';
 import { PolicyService } from '../../platform/policy.service';
 import { Clock } from '../../platform/clock';
@@ -16,6 +16,9 @@ import { AiKnowledgeService } from './ai-knowledge.service';
 import { ProviderRegistry } from './providers/provider-registry';
 
 const iso = (d: Date | string | null | undefined) => (d ? new Date(d).toISOString() : null);
+
+/** Permissions that let a user read their OWN AI runs (QA-P5-02). */
+export const OWN_RUN_READ = ['ai.run.read', 'ai.assistant.use', 'ai.briefing.subscribe'] as const;
 
 export const MANUAL_FALLBACK = {
   en: 'AI is optional. Every project, committee, gate, readiness and reporting function works without it. Use the rules-only Detections list, the task/milestone plan, the decision and action registers, gate and CP registers and the standard reports directly; nothing in project management waits for the AI.',
@@ -37,10 +40,19 @@ export class AiOpsService {
     private readonly knowledge: AiKnowledgeService,
   ) {}
 
+  /**
+   * QA-P5-02: the caller's OWN runs (never anyone else's) are readable with ai.run.read, or with the permission that produced
+   * them — ai.assistant.use (questions) or ai.briefing.subscribe (the briefings delivered to them). No other permission is
+   * widened: every read still re-checks the run's citations and stored text against the caller's current access.
+   */
+  private assertOwnRunsReader(ctx: RequestContext, projectId: string) {
+    if (!OWN_RUN_READ.some((p) => this.policy.canInProject(ctx, p, projectId))) throw forbidden('policy.forbidden', 'Missing permission ai.run.read (or ai.assistant.use / ai.briefing.subscribe for your own runs)');
+  }
+
   /** Runs are per user and never shared (AIT-08): only runs requested by / scheduled for the caller. */
   async listRuns(ctx: RequestContext, projectId: string, q: { page: number; pageSize: number; sort?: RouteInput<typeof aiRoutes.listRuns>['query']['sort'] }) {
     await this.knowledge.assertProjectVisible(ctx, projectId); // QA-P5-03: 404 when the project is not visible
-    this.policy.assert(ctx, 'ai.run.read', { projectId });
+    this.assertOwnRunsReader(ctx, projectId);
     const where = and(eq(schema.aiRun.projectId, projectId), eq(schema.aiRun.requestedBy, ctx.principal.userId!));
     const [{ n }] = (await this.db.tx().select({ n: sql<number>`count(*)::int` }).from(schema.aiRun).where(where)) as [{ n: number }];
     const rows = await this.db.tx().select().from(schema.aiRun).where(where).orderBy(...orderBySort(q.sort, { createdAt: schema.aiRun.createdAt, kind: schema.aiRun.kind, status: schema.aiRun.status }, schema.aiRun.id, [desc(schema.aiRun.createdAt), desc(schema.aiRun.id)])).limit(q.pageSize).offset((q.page - 1) * q.pageSize);
@@ -60,7 +72,7 @@ export class AiOpsService {
   /** One of MY runs; citations re-checked against my CURRENT access on every read (§12.1). Others → 404. */
   async getRun(ctx: RequestContext, projectId: string, runId: string) {
     await this.knowledge.assertProjectVisible(ctx, projectId); // QA-P5-03: 404 when the project is not visible
-    this.policy.assert(ctx, 'ai.run.read', { projectId });
+    this.assertOwnRunsReader(ctx, projectId);
     const [r] = await this.db.tx().select().from(schema.aiRun).where(and(eq(schema.aiRun.id, runId), eq(schema.aiRun.projectId, projectId), eq(schema.aiRun.requestedBy, ctx.principal.userId!)));
     if (!r) throw notFound();
     const dto = this.runtime.toDto(r);

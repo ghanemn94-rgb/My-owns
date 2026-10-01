@@ -2,14 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { AI_PROPOSAL_STATUSES } from '@hub/domain';
 import { DataTable, type Column } from '@/components/DataTable';
 import { PageHeader } from '@/components/PageHeader';
 import { StatusBadge } from '@/components/StatusBadge';
 import { btn, cx, input } from '@/components/ui';
 import { useI18n, type MessageKey } from '@/i18n/provider';
-import { aiHref, citationHref, PROPOSAL_SORTS, useAiProposals, useAiStatus, useMemberNames, type AiProposal } from '@/lib/ai';
+import { aiHref, citationHref, PROPOSAL_SORTS, useAiProposals, useAiStatus, useMemberNames, withProposalPeople, type AiProposal } from '@/lib/ai';
 import { useProjectContext } from '@/lib/project-context';
 import { Callout, Person, SimulatedBadge } from '../_components/bits';
 import { TabGuard } from '../_components/nav';
@@ -41,7 +41,9 @@ function ProposalsScreen() {
   const sort = (PROPOSAL_SORTS as readonly string[]).includes(sortParam) ? (sortParam as (typeof PROPOSAL_SORTS)[number]) : '-createdAt';
   const q = useAiProposals({ page, pageSize: PAGE_SIZE, sort, ...(statusFilter ? { status: statusFilter } : {}) });
   const status = useAiStatus();
-  const people = useMemberNames();
+  const members = useMemberNames();
+  // QA-P5-05: every row names its own people (requester, recipient, approvers) — no members list needed.
+  const people = useMemo(() => withProposalPeople(members, q.data?.items ?? []), [members, q.data]);
   const setParam = useCallback(
     (patch: Record<string, string | null>) => {
       const next = new URLSearchParams(params.toString());

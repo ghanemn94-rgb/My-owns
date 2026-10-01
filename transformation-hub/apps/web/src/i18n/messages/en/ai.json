@@ -375,7 +375,8 @@
     "recipient_not_authorized": "the recipient is not an authorized internal member of the project for this record",
     "recipient_no_longer_authorized": "the recipient is no longer an authorized internal member of the project for this record",
     "requester_not_cleared_for_content": "the person it was prepared for may no longer read its target or every source the AI used",
-    "requester_no_longer_authorized": "the person it was prepared for no longer holds the required permission"
+    "requester_no_longer_authorized": "the person it was prepared for no longer holds the required permission",
+    "duplicate_within_cooldown": "the same action for the same record and recipient was already executed within the project's cooldown window — it is not sent twice"
   },
   "payload": {
     "recipient": "Recipient",
@@ -516,6 +517,8 @@
     "quietEnd": "Quiet hours end (0–23)",
     "quietHint": "Messages are deferred until the end of the quiet window.",
     "quietHours": "Quiet hours",
+    "cooldownHours": "Cooldown of AI actions (hours)",
+    "cooldownHint": "The same reminder or draft for the same record is not prepared again while one awaits review, nor within this many hours of its execution. 0 turns deduplication off (0–168).",
     "briefingCron": "Default daily briefing (cron)",
     "briefingCronHint": "Five-field cron; also updates your own daily briefing.",
     "briefingTimezone": "Briefing timezone",
@@ -630,7 +633,7 @@
       "self_approval": "Separation of duties: the person on whose behalf the AI prepared this proposal cannot approve it.",
       "not_requester": "Only the person on whose behalf the proposal was prepared can revise it.",
       "proposal_not_pending": "The proposal is no longer awaiting review.",
-      "approval_invalidated": "The payload or the target record changed after the proposal was prepared, so the approval was refused. A fresh proposal is required.",
+      "approval_invalidated": "The payload or the target record changed after the proposal was prepared, so the approval was refused and the proposal was invalidated. The person it was prepared for can revise it; the revised version needs a fresh review.",
       "not_executable": "This is a prepared request for a person and can never be executed.",
       "not_revisable": "This proposal cannot be revised.",
       "invalid_payload": "The revised content is not valid for this action.",
@@ -646,9 +649,11 @@
       "autopilot_policy_required": "Autopilot mode needs an approved, unexpired autopilot policy.",
       "no_proposed_policy": "There is no proposed autopilot policy to approve.",
       "no_policy": "There is no autopilot policy.",
+      "duplicate_within_cooldown": "The same action for the same record and recipient is already awaiting review, or was executed within the project's cooldown window, so it is not prepared again.",
       "recipient_not_cleared": "The recipient may not read every source the AI used to draft this message (or its target), so it cannot be sent to them. The proposal was invalidated; the person it was prepared for can revise it for another recipient."
     },
     "policy": {
+      "forbidden": "You do not hold the permission this needs in this project.",
       "sod_subject_unknown": "Separation of duties cannot be established because the requester is unknown, so nobody may approve this.",
       "authority_unknown": "Your approval authority for this action could not be established."
     },

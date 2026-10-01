@@ -88,6 +88,11 @@ export class AiController {
     return this.proposals.list(ctx, i.params.projectId, i.query);
   }
 
+  @ApiRoute(R.getProposal)
+  getProposal(@Ctx() ctx: RequestContext, @Input() i: RouteInput<typeof R.getProposal>) {
+    return this.proposals.getOne(ctx, i.params.projectId, i.params.proposalId);
+  }
+
   @ApiRoute(R.approveProposal)
   approveProposal(@Ctx() ctx: RequestContext, @Input() i: RouteInput<typeof R.approveProposal>) {
     return this.proposals.approve(ctx, i.params.projectId, i.params.proposalId, i.body);

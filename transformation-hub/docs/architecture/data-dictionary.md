@@ -4339,6 +4339,7 @@ RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable
 | `per_run_timeout_ms` | integer | no | `60000` |
 | `quiet_hours_start` | integer | yes |  |
 | `quiet_hours_end` | integer | yes |  |
+| `action_cooldown_hours` | integer | no | `24` |
 | `briefing_cron` | character varying | yes |  |
 | `briefing_timezone` | text | no | `'Asia/Riyadh'::text` |
 | `autopilot_policy` | jsonb | yes |  |
@@ -4381,7 +4382,7 @@ RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable
 | `input_tokens` | integer | no | `0` |
 | `output_tokens` | integer | no | `0` |
 | `cost_estimate` | numeric | yes |  |
-| `policy_version` | character varying | yes |  |
+| `policy_version` | character varying | no |  |
 | `started_at` | timestamp with time zone | yes |  |
 | `finished_at` | timestamp with time zone | yes |  |
 | `error` | text | yes |  |
@@ -4414,6 +4415,7 @@ RLS: enabled (hub_project_isolation) · Triggers: hub_same_project_target, hub_s
 | `status` | enum ai_proposal_status | no | `'proposed'::ai_proposal_status` |
 | `policy_version` | character varying | no |  |
 | `idempotency_key` | character varying | no |  |
+| `dedupe_key` | character varying | yes |  |
 | `execution_result` | jsonb | yes |  |
 | `executed_at` | timestamp with time zone | yes |  |
 | `invalidated_reason` | text | yes |  |

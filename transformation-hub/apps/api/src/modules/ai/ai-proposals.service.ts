@@ -74,7 +74,22 @@ function externalDestination(args: Record<string, unknown>): boolean {
 export interface ProposalRefusal {
   refused: true;
   reason: string;
-  audit: 'AI_TOOL_DENIED' | 'DESTINATION_NOT_APPROVED';
+  audit: 'AI_TOOL_DENIED' | 'DESTINATION_NOT_APPROVED' | 'AI_ACTION_DEDUPLICATED';
+}
+
+/** Refusal / invalidation code of an AI action that repeats one pending or executed within the cooldown (QA-P5-01). */
+export const DUPLICATE_WITHIN_COOLDOWN = 'duplicate_within_cooldown';
+
+/**
+ * Deduplication key of an AI action (spec §12.4 "deduplication, cooldown", AIT-27; QA-P5-01). A message is "the same
+ * reminder" when it is the same action about the same target to the same recipient — whichever run, schedule or delegating
+ * user prepared it and however the model worded it; a draft / task / risk is the same action on the same target for the same
+ * delegating user (it is delivered to their workspace). Without a target, only the identical payload is a duplicate.
+ */
+export function aiDedupeKey(action: string, payload: Record<string, unknown>, requestedBy: string | null): string {
+  const target = payload.targetType && payload.targetId ? `${String(payload.targetType)}:${String(payload.targetId)}` : `payload:${payloadHash(payload)}`;
+  const who = (AI_MESSAGE_ACTIONS as string[]).includes(action) ? `to:${String(payload.recipientUserId ?? '-')}` : `for:${requestedBy ?? '-'}`;
+  return payloadHash({ action, target, who });
 }
 
 /** Outcome of the recipient re-authorisation; the reason is the invalidation / audit code. */
@@ -159,6 +174,17 @@ export class AiProposalsService {
     const payload = v.payload;
     const idempotencyKey = `ai:${run.id}:${action}:${(payload.targetId as string | undefined) ?? '-'}:${(payload.recipientUserId as string | undefined) ?? '-'}`.slice(0, 200);
     const tx = this.db.tx();
+    // The same call of the same run (a retry) returns its proposal — before the cross-run deduplication, which would see it.
+    const [again] = await tx.select().from(schema.aiProposal).where(and(eq(schema.aiProposal.projectId, projectId), eq(schema.aiProposal.idempotencyKey, idempotencyKey)));
+    if (again) return { proposal: again };
+    // QA-P5-01 (§12.4, AIT-27): an action identical to one awaiting review / execution, or executed within the project's
+    // cooldown window, is not created again (refused + audited). Serialised per key so two runs cannot both pass the check.
+    const dedupeKey = aiDedupeKey(action, payload, run.requestedBy);
+    if (s.actionCooldownHours > 0) {
+      await this.lockDedupe(dedupeKey);
+      const dup = await this.duplicateOf(projectId, dedupeKey, s.actionCooldownHours, null);
+      if (dup) return refuse(`${DUPLICATE_WITHIN_COOLDOWN}: the same action for the same target${(AI_MESSAGE_ACTIONS as string[]).includes(action) ? ' and recipient' : ''} is ${dup.status === 'executed' ? `already executed within the ${s.actionCooldownHours}-hour cooldown` : 'already awaiting review or execution'} (proposal ${dup.id})`, 'AI_ACTION_DEDUPLICATED');
+    }
     const [inserted] = await tx
       .insert(schema.aiProposal)
       .values({
@@ -176,6 +202,7 @@ export class AiProposalsService {
         citations: payload.targetType && payload.targetId ? [{ type: String(payload.targetType), id: String(payload.targetId) }] : [],
         policyVersion: s.policyVersion,
         idempotencyKey,
+        dedupeKey,
       })
       .onConflictDoNothing({ target: schema.aiProposal.idempotencyKey })
       .returning();
@@ -379,6 +406,14 @@ export class AiProposalsService {
     // The revised message is still drafted from the same run: its recipient is checked against that run's inputs (SEC-P5-01).
     const v = await this.validatePayload(ctx, projectId, action, parsed.data as Record<string, unknown>, { runId: p.runId });
     if ('error' in v) throw ruleViolation(v.refusalCode, v.error);
+    // QA-P5-01: a revision may not turn the proposal into a twin of another one pending or executed within the cooldown.
+    const dedupeKey = aiDedupeKey(action, v.payload, requester);
+    const s = await this.settings.load(projectId);
+    if (s.actionCooldownHours > 0) {
+      await this.lockDedupe(dedupeKey);
+      const dup = await this.duplicateOf(projectId, dedupeKey, s.actionCooldownHours, proposalId);
+      if (dup) throw ruleViolation('ai.duplicate_within_cooldown', `The same action for the same target is ${dup.status === 'executed' ? `already executed within the ${s.actionCooldownHours}-hour cooldown` : 'already awaiting review or execution'}`, { duplicateOf: dup.id });
+    }
     // Lock order proposal → approvals (as the execution and reject), then write only at the reviewed version (SEC-P5-02).
     const cur = await this.lockProposal(projectId, proposalId);
     if (!cur || cur.version !== body.expectedVersion) throw conflict('concurrency.version_mismatch', 'The proposal was changed — reload and review');
@@ -393,6 +428,7 @@ export class AiProposalsService {
         targetType: (v.payload.targetType as string | undefined) ?? null,
         targetId: (v.payload.targetId as string | undefined) ?? null,
         targetVersion: v.targetVersion,
+        dedupeKey,
         status: 'proposed',
         invalidatedReason: null,
         updatedAt: this.clock.now(),
@@ -409,6 +445,27 @@ export class AiProposalsService {
   /** `SELECT … FOR UPDATE` of one proposal (current transaction). Every writer locks the proposal before its approvals. */
   private async lockProposal(projectId: string, proposalId: string): Promise<{ status: string; version: number } | null> {
     const r = await this.db.query<{ status: string; version: number }>(`select status, version from ai_proposal where id = $1 and project_id = $2 for update`, [proposalId, projectId]);
+    return r.rows[0] ?? null;
+  }
+
+  /** Transaction-scoped lock of one deduplication key (lock order: autopilot → dedupe key → proposal row → approval). */
+  private async lockDedupe(key: string): Promise<void> {
+    await this.db.query(`select pg_advisory_xact_lock(hashtextextended('hub_ai_dedupe:' || $1, 0))`, [key]);
+  }
+
+  /**
+   * Another proposal with the same deduplication key that is awaiting review / execution, or was executed within the last
+   * `hours` (QA-P5-01). `executedOnly`: only executed ones count (execution re-check — a pending twin is not yet delivered).
+   */
+  private async duplicateOf(projectId: string, key: string, hours: number, exceptId: string | null, executedOnly = false): Promise<{ id: string; status: string } | null> {
+    const since = new Date(this.clock.now().getTime() - hours * 3_600_000);
+    const r = await this.db.query<{ id: string; status: string }>(
+      `select id, status from ai_proposal
+        where project_id = $1 and dedupe_key = $2 and ($3::uuid is null or id <> $3::uuid)
+          and ((status = 'executed' and executed_at > $4) or (not $5 and status in ('proposed', 'approved', 'executing')))
+        order by created_at desc, id desc limit 1`,
+      [projectId, key, exceptId, since, executedOnly],
+    );
     return r.rows[0] ?? null;
   }
 
@@ -472,6 +529,13 @@ export class AiProposalsService {
     const p = await this.loadVisible(ctx, projectId, proposalId);
     const [dto] = await this.toDtos(projectId, [p]);
     return dto!;
+  }
+
+  /** GET one proposal (QA-P5-08): the list's rule — `ai.proposal.read` held project-wide (OBS-P5-01) and the row's visibility. */
+  async getOne(ctx: RequestContext, projectId: string, proposalId: string) {
+    await this.knowledge.assertProjectVisible(ctx, projectId); // QA-P5-03: 404 when the project is not visible
+    this.policy.assert(ctx, 'ai.proposal.read', { projectId });
+    return this.get(ctx, projectId, proposalId);
   }
 
   /** A proposal the reader may see (404 otherwise, like an unknown id) — SEC-P34R-05. */
@@ -543,8 +607,13 @@ export class AiProposalsService {
     const approvals = await this.db.tx().select().from(schema.aiActionApproval).where(and(eq(schema.aiActionApproval.projectId, projectId), inArray(schema.aiActionApproval.proposalId, ids))).orderBy(asc(schema.aiActionApproval.createdAt));
     const runIds = [...new Set(rows.map((r) => r.runId).filter((x): x is string => !!x))];
     const runs = runIds.length ? await this.db.tx().select({ id: schema.aiRun.id, requestedBy: schema.aiRun.requestedBy, provider: schema.aiRun.provider }).from(schema.aiRun).where(and(eq(schema.aiRun.projectId, projectId), inArray(schema.aiRun.id, runIds))) : [];
+    // QA-P5-05: the names the reviewer needs — delegating user, message recipient, approvers (ids the DTO already carries).
+    const isUuid = (x: unknown): x is string => typeof x === 'string' && /^[0-9a-f-]{36}$/i.test(x);
+    const personIds = [...new Set([...runs.map((x) => x.requestedBy), ...rows.map((r) => (r.payload as { recipientUserId?: unknown }).recipientUserId), ...approvals.map((a) => a.approverUserId)].filter(isUuid))];
+    const names = personIds.length ? await this.db.tx().select({ id: schema.appUser.id, displayName: schema.appUser.displayName }).from(schema.appUser).where(inArray(schema.appUser.id, personIds)) : [];
     return rows.map((r) => {
       const run = runs.find((x) => x.id === r.runId);
+      const mine = [run?.requestedBy, (r.payload as { recipientUserId?: unknown }).recipientUserId, ...approvals.filter((a) => a.proposalId === r.id).map((a) => a.approverUserId)].filter(isUuid);
       return {
         id: r.id,
         runId: r.runId,
@@ -568,6 +637,7 @@ export class AiProposalsService {
           .filter((a) => a.proposalId === r.id)
           .map((a) => ({ id: a.id, approverUserId: a.approverUserId, status: a.status, expiresAt: a.expiresAt.toISOString(), targetVersion: a.targetVersion, invalidatedReason: a.invalidatedReason, createdAt: a.createdAt.toISOString() })),
         simulated: run?.provider === 'mock',
+        people: names.filter((n) => mine.includes(n.id)).map((n) => ({ userId: n.id, displayName: n.displayName })),
       };
     });
   }
@@ -690,6 +760,8 @@ export class AiProposalsService {
       const tx = this.db.tx();
       // SEC-P5-06: one autopilot execution of a project at a time — the daily limit is counted and consumed under this lock.
       if (!approval) await this.db.query(`select pg_advisory_xact_lock(hashtextextended('hub_ai_autopilot:' || $1, 0))`, [projectId]);
+      // QA-P5-01: twins of one action execute one at a time, so the cooldown re-check below sees the other's execution.
+      if (p.dedupeKey) await this.lockDedupe(p.dedupeKey);
       const cur = await this.lockProposal(projectId, p.id);
       if (!cur) return { stop: { skipped: 'proposal not found' } };
       if (cur.status === 'executed') return { stop: { status: 'already_executed' } };
@@ -710,6 +782,12 @@ export class AiProposalsService {
       } catch (e) {
         if (e instanceof DomainError) return { stop: { status: 'invalidated', reason: e.code }, invalidate: e.code };
         throw e;
+      }
+      // QA-P5-01 (§12.4 cooldown, AIT-27): the same action for the same target (and recipient) executed within the cooldown
+      // window is not executed — or delivered — again, whoever approved it and whichever run prepared it.
+      if (p.dedupeKey && s.actionCooldownHours > 0) {
+        const dup = await this.duplicateOf(projectId, p.dedupeKey, s.actionCooldownHours, p.id, true);
+        if (dup) return { stop: { status: 'invalidated', reason: DUPLICATE_WITHIN_COOLDOWN, duplicateOf: dup.id }, invalidate: DUPLICATE_WITHIN_COOLDOWN };
       }
       const result: Record<string, unknown> = { mode: approval ? 'approved' : 'autopilot', approvalId: approval?.id ?? null };
       const payload = p.payload as Record<string, unknown>;

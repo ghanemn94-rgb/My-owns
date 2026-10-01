@@ -56,6 +56,7 @@ export function defaultSettings(orgId: string, projectId: string): SettingsRow {
     perRunTimeoutMs: 60000,
     quietHoursStart: null,
     quietHoursEnd: null,
+    actionCooldownHours: 24,
     briefingCron: null,
     briefingTimezone: 'Asia/Riyadh',
     autopilotPolicy: null,
@@ -127,6 +128,7 @@ export class AiSettingsService {
       perRunTimeoutMs: s.perRunTimeoutMs,
       quietHoursStart: s.quietHoursStart,
       quietHoursEnd: s.quietHoursEnd,
+      actionCooldownHours: s.actionCooldownHours,
       briefingCron: s.briefingCron,
       briefingTimezone: s.briefingTimezone,
       autopilotPolicy: p
@@ -176,7 +178,7 @@ export class AiSettingsService {
     next.mode = mode;
     if (body.model !== undefined) next.model = body.model;
     if (body.provider && body.provider !== cur.provider && body.model === undefined) next.model = null;
-    for (const k of ['maxClassificationToProvider', 'monthlyTokenBudget', 'monthlyCostBudget', 'costCurrency', 'perRunTokenLimit', 'perRunTimeoutMs', 'quietHoursStart', 'quietHoursEnd', 'briefingCron', 'briefingTimezone'] as const) {
+    for (const k of ['maxClassificationToProvider', 'monthlyTokenBudget', 'monthlyCostBudget', 'costCurrency', 'perRunTokenLimit', 'perRunTimeoutMs', 'quietHoursStart', 'quietHoursEnd', 'actionCooldownHours', 'briefingCron', 'briefingTimezone'] as const) {
       if (body[k] !== undefined) (next as Record<string, unknown>)[k] = body[k];
     }
 
@@ -245,6 +247,7 @@ export class AiSettingsService {
       monthlyCostBudget: s.monthlyCostBudget,
       perRunTokenLimit: s.perRunTokenLimit,
       quietHours: [s.quietHoursStart, s.quietHoursEnd],
+      actionCooldownHours: s.actionCooldownHours,
       briefingCron: s.briefingCron,
       briefingTimezone: s.briefingTimezone,
       autopilotPolicy: s.autopilotPolicy,
@@ -279,6 +282,7 @@ export class AiSettingsService {
       perRunTimeoutMs: next.perRunTimeoutMs,
       quietHoursStart: next.quietHoursStart,
       quietHoursEnd: next.quietHoursEnd,
+      actionCooldownHours: next.actionCooldownHours,
       briefingCron: next.briefingCron,
       briefingTimezone: next.briefingTimezone,
       autopilotPolicy: next.autopilotPolicy,

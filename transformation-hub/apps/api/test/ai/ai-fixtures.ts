@@ -63,6 +63,7 @@ type SettingsPatch = Partial<{
   quiet_hours_end: number | null;
   monthly_cost_budget: string | null;
   cost_currency: string | null;
+  action_cooldown_hours: number;
 }>;
 
 /** Test-only reset of a project's AI settings (owner role). Rows are created with every project. */
@@ -84,6 +85,9 @@ export async function setAi(pid: string, patch: SettingsPatch) {
     quiet_hours_end: null,
     monthly_cost_budget: null,
     cost_currency: null,
+    // Deduplication off by default in the AI specs (they prepare the same reminder run after run); the deduplication /
+    // cooldown specs (QA-P5-01) set it explicitly. Projects default to 24 h.
+    action_cooldown_hours: 0,
   };
   const v = { ...base, ...patch };
   const cols = Object.keys(v);

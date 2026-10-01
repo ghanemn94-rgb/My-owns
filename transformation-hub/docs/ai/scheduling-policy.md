@@ -44,6 +44,16 @@ replicas) never exceed it (SEC-P5-06).
 * **Circuit breaker**: 3 consecutive provider failures → open for 15 minutes; open → run `failed (circuit_open)` without a
   provider call; a success closes it.
 * **Quiet hours** (local hours in the project timezone): message actions are deferred to the end of the window.
+* **Deduplication and cooldown** (§12.4, AIT-27, QA-P5-01; project setting `actionCooldownHours`, 0–168, default 24, 0 =
+  off): every proposal carries a deduplication key (`aiDedupeKey`) — for a message the action, the target and the
+  recipient (whichever run, schedule or delegating user prepared it and however it is worded); for a draft, task or risk
+  the action, the target and the delegating user; without a target, the identical payload. A proposal is not created
+  when a twin awaits review or execution, or was executed within the window — the tool call is refused
+  (`duplicate_within_cooldown`, audited `AI_ACTION_DEDUPLICATED`, listed in the run's refused tool calls); a revision into
+  such a twin is refused (422 `ai.duplicate_within_cooldown`); and the execution re-checks, under a per-key advisory lock
+  (`hub_ai_dedupe:<key>`, taken after the autopilot lock and before the proposal row lock), that no twin was executed
+  within the window — otherwise the proposal is invalidated `duplicate_within_cooldown` and nothing is sent. A rejected,
+  invalidated, cancelled or expired twin does not count. Retries of one execution stay exactly-once (AT-20).
 * **Tool-call cap**: 12 model tool calls per run; the rest are refused (`tool_call_limit`).
 * Scheduled slots missed during an outage are not replayed in bulk (ADR-0004); the next briefing covers the period.
 
@@ -54,7 +64,8 @@ replicas) never exceed it (SEC-P5-06).
 never shared; health uses the project's latest run status and error code only — SEC-P5-I2), next run, circuit state,
 budget used this month, manual fallback text. `GET …/ai/costs`: tokens and estimated cost per month (estimates only).
 Every run stores trigger, requester, evidence snapshot (items with id, version, classification, sent-to-provider flag,
-cited ids), output, tokens, cost estimate, policy version and status. Logs/audit carry ids and codes only, never prompts
+cited ids), output, tokens, cost estimate, policy version (required: `ai_run.policy_version` is NOT NULL — REQ-AI-029,
+QA-P5-10) and status. Logs/audit carry ids and codes only, never prompts
 or outputs (C-37).
 
 ## Manual fallback

@@ -287,14 +287,16 @@ describe('P5 exit "scheduled briefing after the browser closes" — dist/worker.
     }
   });
 
-  it.fails('DEFECT QA-P5-02: a contributor who may subscribe to briefings can open the briefing delivered to them (the notification links to GET /ai/runs/:id, which needs ai.run.read)', async () => {
+  it('QA-P5-02 (fixed, regression): a contributor who may subscribe to briefings can open the briefing delivered to them (the notification links to GET /ai/runs/:id, which needs ai.run.read)', async () => {
     expect(notes.contrib[0]!.link).toBe(`/projects/${f.dcId}/ai/runs/${runs.contrib[0]!.id}`);
     expect(reads.contrib.runStatus).toBe(200);
   });
 
-  it('OBSERVED QA-P5-02: the contributor\'s own briefing run and their runs list are refused (403): the delivered briefing cannot be read through the product', async () => {
-    expect(reads.contrib.runStatus).toBe(403);
-    expect(reads.contrib.listStatus).toBe(403);
+  // Fix status (QA-P5-02): this OBSERVED test pinned the defect (403). It now asserts the fixed behaviour: the contributor reads
+  // their OWN run and runs list (self-scoped: ai.briefing.subscribe), still never another subscriber's run (404, checked above).
+  it('QA-P5-02 (fixed, regression; formerly OBSERVED — it pinned the 403): the contributor\'s own briefing run and their runs list are readable (200); the delivered briefing can be read through the product', async () => {
+    expect(reads.contrib.runStatus).toBe(200);
+    expect(reads.contrib.listStatus).toBe(200);
   });
 
   it('AT-20 (worker process): a crash after the briefing committed (job left running, lease expired) → the restarted worker re-claims the job and finds the slot already ran: one run, one notification', async () => {
@@ -496,9 +498,11 @@ describe('§12.1 "citations open only for authorized users" — a project member
 describe('§12.4 "deduplication, cooldown" (AIT-27) — the same reminder prepared by two briefings of one day is delivered twice under policy-limited autopilot [REQ-AI-028, REQ-AI-022]', () => {
   let first: { proposalId: string } = { proposalId: '' };
   let second: { proposalId: string } = { proposalId: '' };
+  let weeklyRefusals: { name: string; reason: string }[] = [];
   let rows: { id: string; status: string; mode: string | null; target_id: string | null; recipient: string; title: string; body: string; payload_hash: string }[] = [];
   let delivered: { title: string; body: string }[] = [];
   let pendingDuplicates = 0;
+  let assistedRefusals: { name: string; reason: string }[] = [];
 
   beforeAll(async () => {
     const expires = new Date(Date.now() + 10 * 86_400_000).toISOString().slice(0, 10);
@@ -506,46 +510,60 @@ describe('§12.4 "deduplication, cooldown" (AIT-27) — the same reminder prepar
     const admin = await demoUserId('portfolio.admin');
     // Start of day for the daily limit (as DUP-05 does): earlier autopilot executions of this test database are not counted.
     await owner().query(`update ai_proposal set execution_result = jsonb_set(execution_result, '{mode}', '"approved"') where project_id = $1 and execution_result->>'mode' = 'autopilot'`, [f.dcId]);
-    await setAi(f.dcId, { mode: 'autopilot', autopilot_policy: { allowlist: ['create_internal_notification'], maxActionsPerDay: 10, expiresOn: expires, revoked: false, proposedBy: admin, approvedBy: sponsor, approvedAt: new Date().toISOString() } });
-    const since = new Date(Date.now() - 1000);
+    // Fix set-up (QA-P5-01): the proposals other specs left in this shared test database are not twins of this scenario's
+    // reminder, and the project's cooldown is the product default (the AI fixtures turn it off).
+    await owner().query(`update ai_proposal set dedupe_key = null where project_id = $1`, [f.dcId]);
+    await setAi(f.dcId, { mode: 'autopilot', action_cooldown_hours: 24, autopilot_policy: { allowlist: ['create_internal_notification'], maxActionsPerDay: 10, expiresOn: expires, revoked: false, proposedBy: admin, approvedBy: sponsor, approvedAt: new Date().toISOString() } });
+    // Fix set-up (QA-P5-01): the window starts at the database's clock when the scenario starts — the former 1-second slack
+    // could count the notification the previous section's real worker had just delivered (AT-20, executed < 1 s earlier).
+    const since = (await owner().query<{ t: Date }>(`select clock_timestamp() as t`)).rows[0]!.t;
     // The PM's daily briefing and, the same morning, the PM's weekly summary (two subscriptions are allowed) — run as the worker would.
     first = await briefingProposal(pmId, f.dcId);
     const { contexts, db, runtime } = await serviceHandles();
     const ctx = (await contexts.forUser(pmId, f.dcId))!;
     const weekly = await db.run(ctx, () => runtime.runBriefingNow(ctx, f.dcId, 'weekly', 'scheduled'));
-    second = { proposalId: weekly.output!.proposals[0]!.id };
+    second = { proposalId: weekly.output?.proposals[0]?.id ?? '' };
+    weeklyRefusals = weekly.output?.refusedToolCalls ?? [];
     await drain();
     rows = (
       await owner().query(
         `select id, status, execution_result->>'mode' as mode, target_id, payload->>'recipientUserId' as recipient, payload->>'title' as title, payload->>'body' as body, payload_hash from ai_proposal where id = any($1::uuid[]) order by created_at`,
-        [[first.proposalId, second.proposalId]],
+        [[first.proposalId, second.proposalId].filter(Boolean)],
       )
     ).rows;
     delivered = (await owner().query(`select title, body from notification where user_id = $1 and kind = 'ai_action' and created_at >= $2 and source_id = $3`, [rows[0]?.recipient, since, rows[0]?.target_id])).rows;
     // Assisted mode: the same reminder is prepared again by every briefing while an identical one awaits review.
-    await setAi(f.dcId, { mode: 'assisted' });
+    await owner().query(`update ai_proposal set dedupe_key = null where project_id = $1`, [f.dcId]);
+    await setAi(f.dcId, { mode: 'assisted', action_cooldown_hours: 24 });
     const a = await briefingProposal(pmId, f.dcId);
-    const b = await briefingProposal(pmId, f.dcId);
+    const runB = await db.run(ctx, () => runtime.runBriefingNow(ctx, f.dcId));
+    assistedRefusals = runB.output?.refusedToolCalls ?? [];
     const pa = await proposalRow(a.proposalId);
-    const pb = await proposalRow(b.proposalId);
-    pendingDuplicates = pa.status === 'proposed' && pb.status === 'proposed' && pa.payload_hash === pb.payload_hash ? 2 : 0;
-    console.log(`QA-P5 dedupe: autopilot proposals ${JSON.stringify(rows.map((r) => ({ status: r.status, mode: r.mode, target: r.target_id, recipient: r.recipient, title: r.title, hash: r.payload_hash.slice(0, 12) })))}; notifications delivered to the owner for the same target: ${delivered.length} ${JSON.stringify(delivered.map((d) => d.title))}; assisted: identical pending proposals ${pendingDuplicates}`);
+    const pb = runB.output?.proposals[0] ? await proposalRow(runB.output.proposals[0].id) : null;
+    pendingDuplicates = [pa, pb].filter((x) => x && x.status === 'proposed' && x.payload_hash === pa.payload_hash).length;
+    console.log(`QA-P5 dedupe: autopilot proposals ${JSON.stringify(rows.map((r) => ({ status: r.status, mode: r.mode, target: r.target_id, recipient: r.recipient, title: r.title, hash: r.payload_hash.slice(0, 12) })))}; weekly run refusals ${JSON.stringify(weeklyRefusals)}; notifications delivered to the owner for the same target: ${delivered.length} ${JSON.stringify(delivered.map((d) => d.title))}; assisted: identical pending proposals ${pendingDuplicates}, second run refusals ${JSON.stringify(assistedRefusals)}`);
     await setAi(f.dcId, {});
   }, 300_000);
 
-  it('CONTROL: two separate runs proposed the identical reminder (same target, recipient, title, body and payload hash) and both were executed by autopilot within the daily limit', async () => {
-    expect(rows).toHaveLength(2);
-    expect(rows[0]!.payload_hash).toBe(rows[1]!.payload_hash);
-    expect(rows[0]).toMatchObject({ status: 'executed', mode: 'autopilot', target_id: f.overdueTaskId, recipient: f.overdueTaskOwner });
-    expect(rows[1]).toMatchObject({ status: 'executed', mode: 'autopilot', target_id: f.overdueTaskId, recipient: f.overdueTaskOwner });
+  // Fix status (QA-P5-01): this CONTROL used to require both identical proposals to EXIST and be executed. With deduplication
+  // the second run's identical tool call is refused at creation, so the CONTROL now proves the same set-up differently: the
+  // first run's reminder (target, recipient) was executed by autopilot and the second run asked for the identical reminder —
+  // its tool call is recorded as refused "duplicate_within_cooldown" naming the first proposal.
+  it('CONTROL: two separate runs proposed the identical reminder (same target and recipient): the first was executed by autopilot; the second run\'s identical call is on record', async () => {
+    expect(rows).toHaveLength(1);
+    expect(second.proposalId).toBe('');
+    expect(rows[0]).toMatchObject({ id: first.proposalId, status: 'executed', mode: 'autopilot', target_id: f.overdueTaskId, recipient: f.overdueTaskOwner });
+    expect(weeklyRefusals).toEqual([expect.objectContaining({ name: 'propose_internal_notification', reason: expect.stringContaining('duplicate_within_cooldown') })]);
+    expect(weeklyRefusals[0]!.reason).toContain(first.proposalId);
   });
 
-  it.fails('DEFECT QA-P5-01: the owner receives the identical AI reminder for the same record only once per cooldown window (deduplication / cooldown, spec §12.4, AIT-27)', async () => {
+  it('QA-P5-01 (fixed, regression): the owner receives the identical AI reminder for the same record only once per cooldown window (deduplication / cooldown, spec §12.4, AIT-27)', async () => {
     expect(delivered).toHaveLength(1);
   });
 
-  it('OBSERVED QA-P5-01: in assisted mode every briefing prepares the identical reminder again while an identical one awaits review (2 pending proposals with one payload hash)', async () => {
-    expect(pendingDuplicates).toBe(2);
+  it('QA-P5-01 (fixed, regression; formerly OBSERVED — it pinned the duplicate): in assisted mode a second briefing does not prepare the identical reminder while one awaits review (1 pending proposal; the second call refused as a duplicate)', async () => {
+    expect(pendingDuplicates).toBe(1);
+    expect(assistedRefusals).toEqual([expect.objectContaining({ name: 'propose_internal_notification', reason: expect.stringContaining('duplicate_within_cooldown') })]);
   });
 });
 

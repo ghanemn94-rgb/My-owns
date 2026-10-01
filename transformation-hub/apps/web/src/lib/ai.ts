@@ -4,7 +4,7 @@ import { useCallback, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { aiRoutes, portfolioRoutes, type RouteQuery, type RouteResponse } from '@hub/contracts';
 import { AI_ACTION_PERMISSION, type AiProposableAction } from '@hub/domain';
-import { api } from './api';
+import { api, ApiError } from './api';
 import { useProjectContext } from './project-context';
 import { qk } from './queries';
 
@@ -73,12 +73,19 @@ export function aiHref(projectId: string, segment = ''): string {
   return `/projects/${projectId}/ai${segment}`;
 }
 
+/**
+ * Permissions that let a user read their OWN runs (QA-P5-02; mirrors the API's OWN_RUN_READ): `ai.run.read`, or the
+ * permission that produced the runs — questions (`ai.assistant.use`) and the briefings delivered to them
+ * (`ai.briefing.subscribe`). Runs are never shared: another user's run is 404 for everyone.
+ */
+export const OWN_RUN_PERMISSIONS = ['ai.run.read', 'ai.assistant.use', 'ai.briefing.subscribe'] as const;
+
 /** Sub-sections of the AI PM Center and the permissions that make each one visible (UI hint; the API decides). */
 export const AI_TABS = [
   { key: 'overview', segment: '', permissions: [] as readonly string[] },
   { key: 'ask', segment: '/ask', permissions: ['ai.assistant.use'] },
   { key: 'proposals', segment: '/proposals', permissions: ['ai.proposal.read'] },
-  { key: 'runs', segment: '/runs', permissions: ['ai.run.read'] },
+  { key: 'runs', segment: '/runs', permissions: OWN_RUN_PERMISSIONS },
   { key: 'briefings', segment: '/briefings', permissions: ['ai.briefing.subscribe', 'planning.plan.read'] },
   { key: 'settings', segment: '/settings', permissions: ['ai.settings.manage', 'ai.autopilot_policy.approve', 'ai.killswitch.activate', 'ai.killswitch.release'] },
 ] as const;
@@ -179,7 +186,7 @@ export function useAiRuns(query: RouteQuery<R['listRuns']>, enabled = true) {
   return useQuery({
     queryKey: ak.runs(projectId, query),
     queryFn: ({ signal }) => api(aiRoutes.listRuns, { params: { projectId }, query, signal }),
-    enabled: enabled && can('ai.run.read'),
+    enabled: enabled && can(OWN_RUN_PERMISSIONS),
     placeholderData: (prev) => prev,
   });
 }
@@ -189,7 +196,7 @@ export function useAiRun(runId: string) {
   return useQuery({
     queryKey: ak.run(projectId, runId),
     queryFn: ({ signal }) => api(aiRoutes.getRun, { params: { projectId, runId }, signal }),
-    enabled: can('ai.run.read'),
+    enabled: can(OWN_RUN_PERMISSIONS),
     // A queued/running run is completed by the worker: follow it until it settles.
     refetchInterval: (q) => (q.state.data && (q.state.data.status === 'queued' || q.state.data.status === 'running') ? 2000 : false),
   });
@@ -206,22 +213,20 @@ export function useAiProposals(query: RouteQuery<R['listProposals']>, enabled = 
 }
 
 /**
- * One proposal. The API has no "get proposal" route, so the (ACL-filtered, newest-first) list is paged until the id is
- * found; a proposal the caller may not see is simply never returned → the restricted state. Follows an approved /
- * executing proposal until the worker settles it.
+ * One proposal (`GET …/ai/proposals/:id`, QA-P5-08). A proposal the caller may not see is answered 404, like an unknown
+ * id → null → the restricted state. Follows an approved / executing proposal until the worker settles it.
  */
 export function useAiProposal(proposalId: string) {
   const { projectId, can } = useP();
   return useQuery({
     queryKey: ak.proposal(projectId, proposalId),
     queryFn: async ({ signal }) => {
-      for (let page = 1; page <= 50; page++) {
-        const r = await api(aiRoutes.listProposals, { params: { projectId }, query: { page, pageSize: 100 }, signal });
-        const hit = r.items.find((p) => p.id === proposalId);
-        if (hit) return hit;
-        if (page * r.pageSize >= r.total) break;
+      try {
+        return await api(aiRoutes.getProposal, { params: { projectId, proposalId }, signal });
+      } catch (e) {
+        if (e instanceof ApiError && e.isHidden) return null;
+        throw e;
       }
-      return null;
     },
     enabled: can('ai.proposal.read'),
     refetchInterval: (q) => (q.state.data && (q.state.data.status === 'approved' || q.state.data.status === 'executing') ? 2000 : false),
@@ -257,8 +262,19 @@ export function useAiTools(enabled = true) {
 }
 
 /**
+ * Display names of the people of AI proposals: the names each proposal carries (`people`: delegating user, message
+ * recipient, approvers — QA-P5-05) over the members list (holders of admin.role_assignment.read only). Anyone else is shown
+ * as "You" or the short id the API returned — never a guessed name.
+ */
+export function withProposalPeople(people: People, proposals: readonly Pick<AiProposal, 'people'>[]): People {
+  const out: Record<string, string> = { ...people };
+  for (const p of proposals) for (const x of p.people ?? []) out[x.userId] = x.displayName;
+  return out;
+}
+
+/**
  * Display names of project members (requesters, approvers, recipients). Only for holders of admin.role_assignment.read;
- * everyone else sees "You" or the short id the API returned — never a guessed name.
+ * everyone else sees "You", the names a proposal carries ({@link withProposalPeople}) or the short id the API returned.
  */
 export function useMemberNames(): People {
   const { projectId, can } = useP();

@@ -38,6 +38,12 @@ export const aiProjectSettings = pgTable(
     perRunTimeoutMs: integer('per_run_timeout_ms').notNull().default(60000),
     quietHoursStart: integer('quiet_hours_start'), // local hour 0-23
     quietHoursEnd: integer('quiet_hours_end'),
+    /**
+     * Deduplication / cooldown of AI actions (spec §12.4, AIT-27, QA-P5-01): the same action for the same target (and, for a
+     * message, the same recipient) is not prepared again while one is pending, nor prepared or executed again within this many
+     * hours of an execution. 0 turns deduplication off. Validated 0–168 by the API.
+     */
+    actionCooldownHours: integer('action_cooldown_hours').notNull().default(24),
     briefingCron: varchar('briefing_cron', { length: 64 }),
     briefingTimezone: text('briefing_timezone').notNull().default('Asia/Riyadh'),
     autopilotPolicy: jsonb('autopilot_policy')
@@ -74,7 +80,8 @@ export const aiRun = pgTable(
     inputTokens: integer('input_tokens').notNull().default(0),
     outputTokens: integer('output_tokens').notNull().default(0),
     costEstimate: numeric('cost_estimate', { precision: 12, scale: 4 }),
-    policyVersion: varchar('policy_version', { length: 32 }),
+    /** Policy version the run was produced under — required (REQ-AI-029, QA-P5-10). */
+    policyVersion: varchar('policy_version', { length: 32 }).notNull(),
     startedAt: ts('started_at'),
     finishedAt: ts('finished_at'),
     error: text('error'),
@@ -101,6 +108,8 @@ export const aiProposal = pgTable(
     status: aiProposalStatus('status').notNull().default('proposed'),
     policyVersion: varchar('policy_version', { length: 32 }).notNull(),
     idempotencyKey: varchar('idempotency_key', { length: 200 }).notNull(),
+    /** Deduplication key across runs (QA-P5-01, `aiDedupeKey`): action + target + recipient of a message (delegating user for other actions). */
+    dedupeKey: varchar('dedupe_key', { length: 64 }),
     executionResult: jsonb('execution_result').$type<Record<string, unknown>>(),
     executedAt: ts('executed_at'),
     invalidatedReason: text('invalidated_reason'),
@@ -111,6 +120,7 @@ export const aiProposal = pgTable(
   (t) => [
     unique('ai_proposal_pid_uq').on(t.projectId, t.id),
     uniqueIndex('ai_proposal_idem_uq').on(t.idempotencyKey),
+    index('ai_proposal_dedupe_idx').on(t.projectId, t.dedupeKey),
     projectFk('ai_proposal_run_fk', t.projectId, t.runId, (): FkTarget => aiRun),
   ],
 );

@@ -134,7 +134,12 @@ async function shot(page: Page, file: string, scope?: Locator) {
 }
 
 /** Release a leftover emergency stop and put DEMO-DC back in Advisory (the seeded state) — fixture reset only. */
-async function resetDc(baseURL: string, dc: string, mode: 'advisory' | 'assisted' = 'advisory') {
+/**
+ * Fix set-up (QA-P5-01): `cooldownHours` is the project's deduplication / cooldown window of AI actions. The fixture that
+ * needs two pending proposals for the same reminder (one per scheduled briefing) turns it off (0); every other reset
+ * restores the product default (24 h).
+ */
+async function resetDc(baseURL: string, dc: string, mode: 'advisory' | 'assisted' = 'advisory', cooldownHours = 24) {
   for (const persona of [PERSONAS.portfolioAdmin, PERSONAS.sponsor]) {
     const ctx = await apiSessionAs(baseURL, persona);
     try {
@@ -147,7 +152,9 @@ async function resetDc(baseURL: string, dc: string, mode: 'advisory' | 'assisted
   const sp = await apiSessionAs(baseURL, PERSONAS.sponsor);
   try {
     const s = await get(sp, `/api/v1/projects/${dc}/ai/settings`);
-    if (s.mode !== mode || s.provider !== 'mock') await ok(sp, 'PUT', `/api/v1/projects/${dc}/ai/settings`, { expectedVersion: s.version, mode, provider: 'mock', reason: `QA P5 fixture: ${mode} (synthetic)` });
+    if (s.mode !== mode || s.provider !== 'mock' || s.actionCooldownHours !== cooldownHours) {
+      await ok(sp, 'PUT', `/api/v1/projects/${dc}/ai/settings`, { expectedVersion: s.version, mode, provider: 'mock', actionCooldownHours: cooldownHours, reason: `QA P5 fixture: ${mode}, cooldown ${cooldownHours} h (synthetic)` });
+    }
   } finally {
     await sp.dispose();
   }
@@ -169,7 +176,8 @@ test.describe('QA P5 — AI PM Center in English and Arabic, approval invalidati
     try {
       dc = ((await get(pm, '/api/v1/projects?pageSize=100')).items as { id: string; code: string }[]).find((p) => p.code === 'DEMO-DC')!.id;
       pmId = await userId(pm, PERSONAS.pm);
-      await resetDc(baseURL!, dc);
+      // Two pending proposals for the same reminder are needed below: deduplication off for the fixture (QA-P5-01).
+      await resetDc(baseURL!, dc, 'advisory', 0);
       // An overdue task owned by the PM (as p5-ai.spec.ts does) so the Simulated briefing has a reminder to prepare.
       const ws = (await get(pm, `/api/v1/projects/${dc}/workstreams`)).items as { id: string }[];
       const day = (o: number) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Riyadh', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(Date.now() + o * 86_400_000));
@@ -326,14 +334,16 @@ test.describe('QA P5 — AI PM Center in English and Arabic, approval invalidati
         await sec.close();
       }
 
-      // Contributor (no status / runs / proposals permissions) and Clean Team (no AI permission at all).
+      // Contributor (no status / proposals permissions; own runs only — QA-P5-02) and Clean Team (no AI permission at all).
+      // Fix status (QA-P5-02): the runs page was asserted restricted for the contributor here; it now lists their own runs.
       const co = await open(browser, baseURL!, PERSONAS.contributor, lang);
       try {
         await co.page.goto(`/projects/${dc}/ai`);
         await expect(co.page.getByTestId('ai-status-unavailable')).toBeVisible();
         await check(co, 'overview-contributor');
         await co.page.goto(`/projects/${dc}/ai/runs`);
-        await expect(co.page.getByTestId('restricted-state')).toBeVisible();
+        await expect(co.page.getByTestId('runs-table')).toBeVisible();
+        await expect(co.page.getByTestId('restricted-state')).toHaveCount(0);
       } finally {
         await co.close();
       }
@@ -484,7 +494,7 @@ test.describe('QA P5 — AI PM Center in English and Arabic, approval invalidati
         shownRecipient: (await sec.page.getByTestId('payload-recipient').innerText()).replace(/\s+/g, ' '),
         shownRequester: (await sec.page.getByTestId('proposal-requester').innerText()).replace(/\s+/g, ' '),
       };
-      await shot(sec.page, 'defect-qa-p5-05-approver-sees-user-id-not-recipient.png', sec.page.getByTestId('proposal-change'));
+      await shot(sec.page, 'qa-p5-05-approver-sees-recipient.png', sec.page.getByTestId('proposal-change'));
       console.log(`QA-P5-05: ${JSON.stringify(recipientView)}`);
       expect(recipientId).toBe(pmId);
       expect(recipientView.taskOwnerNameInPlan).toBe(true);
@@ -493,9 +503,8 @@ test.describe('QA P5 — AI PM Center in English and Arabic, approval invalidati
     }
   });
 
-  test('DEFECT QA-P5-05: the approver can tell who will receive the AI message (the recipient\'s name is shown on the proposal under review)', async () => {
+  test('QA-P5-05 (fixed, regression): the approver can tell who will receive the AI message (the recipient\'s name is shown on the proposal under review)', async () => {
     test.skip(!recipientView, 'needs the CONTROL above');
-    test.fail(true, 'QA-P5-05: names come from the members list, which needs admin.role_assignment.read — the Secretary sees "User …<id>"');
     expect(recipientView!.shownRecipient).toContain(recipientView!.recipientName);
   });
 
@@ -723,14 +732,13 @@ test.describe('QA P5 — AI PM Center in English and Arabic, approval invalidati
     expect(note).toBe(`/projects/${dc}/ai/runs/${briefing.contributorRun}`);
   });
 
-  test('DEFECT QA-P5-02 (UI): the contributor opens the briefing delivered to them', async ({ browser, baseURL }) => {
+  test('QA-P5-02 (fixed, regression) (UI): the contributor opens the briefing delivered to them', async ({ browser, baseURL }) => {
     test.skip(!briefing.contributorRun, 'needs the contributor run of the CONTROL above');
-    test.fail(true, 'QA-P5-02: the run page needs ai.run.read, which a contributor does not hold — the restricted state is shown');
     const b = await open(browser, baseURL!, PERSONAS.contributor, 'en');
     try {
       await b.page.goto(`/projects/${dc}/ai/runs/${briefing.contributorRun}`);
       await settle(b.page);
-      await shot(b.page, 'defect-qa-p5-02-contributor-briefing-restricted.png');
+      await shot(b.page, 'qa-p5-02-contributor-opens-own-briefing.png');
       await expect(b.page.getByTestId('run-detail')).toBeVisible({ timeout: 5_000 });
     } finally {
       await b.close();

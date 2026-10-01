@@ -181,7 +181,11 @@ describe('Briefing schedules, status, costs, tool matrix, runs isolation [REQ-AI
     await pmB.get(`${aiPath(f.dcId)}/status`).expect(404);
     expect((await pmB.post(`${aiPath(f.dcId)}/ask`, { question: 'What is overdue?' })).status).toBe(404);
     const contributor = await login('contributor');
-    await contributor.get(`${aiPath(f.dcId)}/runs`).expect(403); // contributors may ask but hold no ai.run.read
+    // QA-P5-02: contributors hold no ai.run.read, but they read their OWN runs (ai.assistant.use / ai.briefing.subscribe) —
+    // formerly asserted 403 here. Another user's run stays invisible to them.
+    const own = await contributor.get(`${aiPath(f.dcId)}/runs`).expect(200);
+    expect(own.body.items.map((x: { id: string }) => x.id)).not.toContain(run.body.id);
+    await contributor.get(`${aiPath(f.dcId)}/runs/${run.body.id}`).expect(404);
   });
 
   it('rules-only detections list overdue work, missing owners and blocking CPs without any provider', async () => {

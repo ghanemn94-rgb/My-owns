@@ -48,7 +48,9 @@ the permission and `ai.assistant.use` → approver still holds `ai.proposal.appr
 the requester → payload hash, target version, expiry (`isApprovalStillValid`) → the message recipient may still read the
 target AND every record the run sent to the model (a draft: the delegating user may) → quiet hours (deferred) → ONE
 transaction as the accountable human: (autopilot: per-project advisory lock `hub_ai_autopilot:<projectId>`) → proposal row
-lock → re-check of status, version, approval, emergency stop, mode / autopilot policy / daily limit → effect + approval
+lock (after the per-key deduplication lock `hub_ai_dedupe:<key>`) → re-check of status, version, approval, emergency stop, mode /
+autopilot policy / daily limit, and that no twin was executed within the project's cooldown (QA-P5-01,
+`scheduling-policy.md`) → effect + approval
 consumed + proposal executed (only while still pending at the checked version) + audit (SEC-P5-02, SEC-P5-06). Messages
 are in-app only; e-mail / Teams / SMS are recorded in the delivery ledger as `disabled`. The delivered title carries the
 platform's marker "AI-generated:" ("AI-generated (Simulated):" for the mock; Arabic for an Arabic run) — never left to
@@ -78,9 +80,11 @@ audited `AI_PROHIBITED_ACTION_REQUESTED`; a user request for them yields only a 
 | `POST …/ai/autopilot-policy/revoke` | `ai.settings.manage` |
 | `POST …/ai/killswitch/activate` / `release` | `ai.killswitch.activate` / `ai.killswitch.release` (not the activator) |
 | `POST …/ai/ask`, `GET …/ai/tools`, `GET …/ai/artifacts`, `POST …/ai/proposals/:id/revise` | `ai.assistant.use` (revise: requester only) |
-| `GET …/ai/runs`, `GET …/ai/runs/:id`, `GET …/ai/status` | `ai.run.read` (runs: own only; the status shows the caller's own last run — SEC-P5-I2) |
+| `GET …/ai/runs`, `GET …/ai/runs/:id` | own runs only: `ai.run.read`, or the permission that produced them — `ai.assistant.use` (questions) or `ai.briefing.subscribe` (the briefings delivered to the caller) (QA-P5-02); another user's run is 404 for everyone |
+| `GET …/ai/status` | `ai.run.read` (the status shows the caller's own last run — SEC-P5-I2) |
 | `GET …/ai/costs` | `ai.operations.read` |
 | `GET …/ai/proposals` | `ai.proposal.read` held **project-wide** (a project-level register, access-matrix §2.2 strict rule — a workstream-only grant gets 403, OBS-P5-01); rows filtered by the reader's visibility of the target and the run inputs (SEC-P34R-05) |
+| `GET …/ai/proposals/:id` | as the list: `ai.proposal.read` project-wide and the row's visibility, else 404 (QA-P5-08). The DTO names the delegating user, the message recipient and the approvers (`people`, QA-P5-05) — only the people of that proposal, so an approver who cannot list the members still sees who will receive the message |
 | `POST …/ai/proposals/:id/approve` / `reject` | `ai.proposal.approve` / `ai.proposal.reject` |
 | `GET/POST …/ai/briefings` | `ai.briefing.subscribe` |
 | `GET …/ai/detections` | `planning.plan.read` (rules only; works with AI off) |

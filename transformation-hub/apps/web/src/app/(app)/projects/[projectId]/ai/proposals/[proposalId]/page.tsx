@@ -16,7 +16,7 @@ import { useToast } from '@/components/Toast';
 import { btn } from '@/components/ui';
 import { EM_DASH, useI18n, type MessageKey } from '@/i18n/provider';
 import { api } from '@/lib/api';
-import { aiHref, citationHref, REVISABLE_FIELDS, underlyingPermission, useAiProposal, useAiRefresh, useAiStatus, useMemberNames, type AiProposal, type People } from '@/lib/ai';
+import { aiHref, citationHref, REVISABLE_FIELDS, underlyingPermission, useAiProposal, useAiRefresh, useAiStatus, useMemberNames, withProposalPeople, type AiProposal, type People } from '@/lib/ai';
 import { useProjectContext } from '@/lib/project-context';
 import { Callout, CitationLinks, Code, Facts, Panel, Person, SimulatedBadge, UText } from '../../_components/bits';
 import { AiCommandDialog } from '../../_components/dialogs';
@@ -39,7 +39,7 @@ function ProposalDetail() {
   const { proposalId } = useParams<{ proposalId: string }>();
   const q = useAiProposal(proposalId);
   const status = useAiStatus();
-  const people = useMemberNames();
+  const members = useMemberNames();
   const refresh = useAiRefresh();
   const toast = useToast();
   const [dialog, setDialog] = useState<Dialog>(null);
@@ -48,6 +48,8 @@ function ProposalDetail() {
   if (q.error) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
   if (!q.data) return <RestrictedState />;
   const p = q.data;
+  // QA-P5-05: the proposal names its own people (requester, recipient, approvers) — the approver needs no members list.
+  const people = withProposalPeople(members, [p]);
   const myId = me.user.id;
   const perm = underlyingPermission(p.actionType);
   const mode = status.data?.mode ?? null;
