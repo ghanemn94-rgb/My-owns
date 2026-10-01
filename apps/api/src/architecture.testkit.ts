@@ -18,8 +18,8 @@
 // lint now forbids the building blocks themselves; every way to reach a primitive needs one of them:
 //  1. BANNED NAMES, in every SPELLED form outside type positions - identifier, `.member`, `["key"]`, string
 //     literal anywhere (`Reflect.get(fn, "constructor")`), object/destructuring key, import/export name, unicode
-//     escape, namespace member `ns.name` (F-DG1-132/215: a name that is never written - only reached by runtime
-//     enumeration of an allow-listed namespace - is NOT statically visible; that is residual (a) below):
+//     escape, namespace member `ns.name` (a name that is never written is not statically visible; for the one
+//     banned MEMBER of an allow-listed built-in, `crypto.setEngine`, the enumeration route is closed by rule 5):
 //     code evaluation  eval, Function, AsyncFunction, GeneratorFunction, AsyncGeneratorFunction, constructor
 //     module loaders   require, createRequire, getBuiltinModule, mainModule, _load
 //     native loader    setEngine (F-DG1-130: `crypto.setEngine(path)` dlopen()s an arbitrary shared object, whose
@@ -42,6 +42,14 @@
 //     Rule 3 covers the GLOBAL `process`; an IMPORTED process object (`import p from "node:process"`, a namespace or
 //     a named `{ dlopen }` import) is closed by the specifier check instead (`node:process` is not allow-listed).
 //  4. FAIL CLOSED: a file with a syntax error is a violation (the AST the rules see would not be the code written).
+//  5. NAMED IMPORTS ONLY for an allow-listed built-in that carries a rule-1-banned member (NAMESPACE_RESTRICTED_BUILTINS,
+//     today only `node:crypto`, because of `setEngine`; F-DG1-132/133). Without a namespace or default binding the
+//     module object never becomes a value in module source, so it cannot be enumerated (`Object.entries(c)`,
+//     `Object.values(c).find(...)`, `new Map(Object.entries(c)).get(runtimeKey)`) to reach the banned member without
+//     spelling it. Flagged: `import * as c`, `import c` (also `import c, { x }`), `import { default as c }`,
+//     `export *` / `export * as c` / `export { default } from`, `import c = require(...)`, and a literal-specifier
+//     `import("node:crypto")` / `require("node:crypto")` (both yield the namespace). Named imports
+//     (`import { randomUUID, createHash } from "node:crypto"`) stay allowed; `import { setEngine }` is rule 1.
 // Both built-in checks are allow-lists, not enumerations of known-bad routes, so they do not depend on the Node
 // version the lint runs on (production targets Node 24, the supported floor is Node 22.18+): a new built-in or
 // `process` member is denied until someone deliberately reviews it and adds it here. Nothing is executed.
@@ -50,28 +58,27 @@
 // MEMBER AUDIT (Node v22.22.2 / OpenSSL 3.5.5, every own property of node:{crypto, fs, fs/promises, os, path, url,
 // util} plus the namespaces fs.promises, path.posix/win32, util.types, crypto.webcrypto/subtle; handback
 // T-DG1-BE11): the ONLY member that loads, evaluates or executes code or loads a native object is
-// `crypto.setEngine`, which rule 1 now bans in every SPELLED form (identifier, `.member`, `["literal"]`, destructured,
+// `crypto.setEngine`, which rule 1 bans in every SPELLED form (identifier, `.member`, `["literal"]`, destructured,
 // string literal, unicode escape, namespace `ns.setEngine`); reaching it by runtime ENUMERATION of the `node:crypto`
-// namespace/default binding, without writing the name, is residual (a) (F-DG1-132/215). Name matches checked and
-// cleared by hand:
+// namespace/default binding, without writing the name, is CLOSED by rule 5 (named imports only: no such binding can
+// exist in module source; F-DG1-132/133). Name matches checked and cleared by hand:
 // `os.loadavg` (system-load averages, not a loader); `fs.open*`/`opendir`/`truncate` (file I/O); `util.debug`/
 // `debuglog`/`inspect` (logging/formatting, no debugger); `util.types.isModuleNamespaceObject`/`isNativeError`
 // (type predicates). `crypto.setFips(bool)` only toggles the OpenSSL FIPS provider named by the OpenSSL config, not a
 // caller-supplied path. No member of fs/promises, os, path, url or util exposes a code loader; `node:fs` writing a
 // file that is then `import()`ed is residual (b). A later Node version can add a loader MEMBER to an allowed module:
 // re-run the audit when the Node floor or target changes, and ban any such member here.
-// Residual limits (stated and ACCEPTED, not closable statically):
-//  (a) runtime DATA FLOW the static lint cannot follow (F-DG1-132/215): a value - including the namespace or default
-//      binding of an allow-listed built-in (e.g. `node:crypto`) - passed to third-party or built-in readers
-//      (`Object.entries`/`Object.values`/`Map`/`Array.prototype.find`/a regex over keys, a schema library given
-//      `Object.fromEntries([[k, ...]])`) and indexed by a key built or carried at runtime, rather than written as a
-//      banned name or a directly-flagged `x[k]` computed member. The one native-loader member among the allow-listed
-//      built-ins (`crypto.setEngine`) is additionally name-banned (rule 1, every spelled form); reaching it by
-//      enumeration, e.g. `new Map(Object.entries(c)).get("set".concat("Engine"))` or
-//      `Object.values(c).find((f) => f.name === "set" + "Engine")`, is this residual (pinned, not flagged, by the
-//      architecture.test.ts self-check). Rules 1-2 remove every SPELLED route inside module source, not every
-//      runtime route; banning all namespace-as-value use or all dynamic reads would break legitimate code
-//      (`new Map(Object.entries(x)).get(name)` in identity/routes.ts, access/rules.ts).
+// Residual limits (stated and ACCEPTED by choice: this is a defence-in-depth lint over human-reviewed code):
+//  (a) runtime DATA FLOW over PLAIN OBJECTS and third-party readers: a plain object or a third-party value passed to
+//      readers (`Object.entries`/`Object.values`/`Map`/`Array.prototype.find`/a regex over keys, a schema library
+//      given `Object.fromEntries([[k, ...]])`) and indexed by a key built or carried at runtime, rather than written
+//      as a banned name or a directly-flagged `x[k]` computed member. Enumerating plain objects is legitimate module
+//      code (`new Map(Object.entries(request.cookies)).get(name)`) and stays allowed. No allow-listed built-in
+//      NAMESPACE reaches this residual any more: the only one with a loader member (`node:crypto`, `setEngine`) can
+//      no longer be namespace- or default-bound (rule 5, F-DG1-132/133), so the former enumeration route
+//      (`new Map(Object.entries(c)).get("set".concat("Engine"))`, `Object.values(c).find(...)`) is a violation at the
+//      import. If the member audit ever finds a loader member in another allow-listed built-in, add that built-in to
+//      NAMESPACE_RESTRICTED_BUILTINS as well as banning the member name.
 //  (b) F-DG1-127: runtime code GENERATION followed by a dynamic import of a literal same-module path (an allowed
 //      built-in such as `node:fs` writes a file, then `import("./local.mjs")`): the specifier is a legal own-module
 //      path and the bytes exist only at runtime, so the lint never sees them. Irreducible for a static lint;
@@ -98,13 +105,20 @@ const SHARED_ALLOWED = new Set(["@mth/shared", "@mth/shared/schemas", "@mth/conf
  * what module source imports (crypto, fs, path, url) plus the read/utility built-ins fs/promises, os and util. Per the
  * member audit in the header (F-DG1-130), they expose no member that loads, evaluates or executes code, opens a
  * debugger, or loads native objects EXCEPT `crypto.setEngine` (a native loader), which rule 1 bans in every SPELLED
- * form (reaching it by runtime enumeration of the namespace is residual (a)); residuals (a)-(c)
+ * form and rule 5 keeps unreachable by enumeration (named imports only for node:crypto); residuals (a)-(c)
  * of the header still apply (`node:fs` code generation + import is (b)). NEVER add a code-loading, exec,
  * native or debug built-in (module, vm, worker_threads, inspector, repl, child_process, cluster, process, sqlite, test,
  * wasi, v8, net, http, https, dgram, async_hooks, ...): those routes were closed one by one by F-DG1-109/117/125/127/128
  * and are now denied by default. Network I/O belongs to the composition root, not module source.
  */
 const SAFE_NODE_BUILTINS: ReadonlySet<string> = new Set(["crypto", "fs", "fs/promises", "os", "path", "url", "util"]);
+/**
+ * Rule 5 (F-DG1-132/133): allow-listed built-ins that carry a rule-1-banned member (node:crypto -> setEngine) may be
+ * imported through NAMED imports only, so their namespace/default object never becomes an enumerable value. The bare
+ * `crypto` spelling is listed too (it is already a violation as a non-dependency; listed so the rule does not depend
+ * on that).
+ */
+const NAMESPACE_RESTRICTED_BUILTINS: ReadonlySet<string> = new Set(["crypto", "node:crypto"]);
 /** F-DG1-124: dynamic-code primitives, banned in every SPELLED form (rule 1), by the kind of bypass they give. */
 const BANNED_PRIMITIVES: ReadonlyMap<string, string> = new Map([
   ...["eval", "Function", "AsyncFunction", "GeneratorFunction", "AsyncGeneratorFunction", "constructor"].map(
@@ -281,28 +295,61 @@ export function scanSource(fileName: string, source: string): ScanResult {
   const evasions: string[] = [];
   const at = (n: ts.Node) => `line ${sf.getLineAndCharacterOfPosition(n.getStart(sf)).line + 1}`;
 
+  /** Rule 5: a namespace/default binding of a built-in that carries a banned member (it could be enumerated). */
+  const restricted = (spec: string, node: ts.Node, form: string): void => {
+    if (NAMESPACE_RESTRICTED_BUILTINS.has(spec))
+      evasions.push(
+        `imports the ${spec} namespace/default binding via ${form}; only named imports are allowed ` +
+          `(it carries a rule-1-banned member) (${at(node)})`,
+      );
+  };
+  /** `default` as an import/export specifier name binds the module's default export (the module object). */
+  const bindsDefault = (elements: readonly (ts.ImportSpecifier | ts.ExportSpecifier)[]): boolean =>
+    elements.some((e) => (e.propertyName ?? e.name).text === "default");
+
   /** Specifiers (checked against the boundary) are collected everywhere, types included: `import("x").T`. */
   const collect = (node: ts.Node): void => {
     if ((ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) && node.moduleSpecifier) {
       const spec = literalText(node.moduleSpecifier);
-      if (spec !== null) specifiers.push(spec);
+      if (spec !== null) {
+        specifiers.push(spec);
+        if (ts.isImportDeclaration(node)) {
+          const clause = node.importClause;
+          if (clause?.name) restricted(spec, node, "a default import");
+          const nb = clause?.namedBindings;
+          if (nb && ts.isNamespaceImport(nb)) restricted(spec, node, "import * as");
+          if (nb && ts.isNamedImports(nb) && bindsDefault(nb.elements)) restricted(spec, node, "import { default }");
+        } else {
+          const ec = node.exportClause;
+          if (!ec) restricted(spec, node, "export *");
+          else if (ts.isNamespaceExport(ec)) restricted(spec, node, "export * as");
+          else if (bindsDefault(ec.elements)) restricted(spec, node, "export { default }");
+        }
+      }
     } else if (ts.isImportEqualsDeclaration(node) && ts.isExternalModuleReference(node.moduleReference)) {
       const spec = literalText(node.moduleReference.expression);
-      if (spec !== null) specifiers.push(spec);
-      else evasions.push(`computed import-equals require (${at(node)})`);
+      if (spec !== null) {
+        specifiers.push(spec);
+        restricted(spec, node, "import = require()");
+      } else evasions.push(`computed import-equals require (${at(node)})`);
     } else if (ts.isImportTypeNode(node) && ts.isLiteralTypeNode(node.argument)) {
+      // Type space only (`typeof import("node:crypto")` is erased), so rule 5 does not apply.
       const spec = literalText(node.argument.literal);
       if (spec !== null) specifiers.push(spec);
     } else if (ts.isCallExpression(node)) {
       const callee = node.expression;
       if (callee.kind === ts.SyntaxKind.ImportKeyword) {
         const spec = literalText(node.arguments[0]);
-        if (spec !== null) specifiers.push(spec);
-        else evasions.push(`computed import() specifier (${at(node)})`);
+        if (spec !== null) {
+          specifiers.push(spec);
+          restricted(spec, node, "a dynamic import()");
+        } else evasions.push(`computed import() specifier (${at(node)})`);
       } else if (ts.isIdentifier(callee) && callee.text === "require") {
         const spec = literalText(node.arguments[0]);
-        if (spec !== null) specifiers.push(spec);
-        else evasions.push(`computed require() specifier (${at(node)})`);
+        if (spec !== null) {
+          specifiers.push(spec);
+          restricted(spec, node, "require()");
+        } else evasions.push(`computed require() specifier (${at(node)})`);
       }
     }
   };

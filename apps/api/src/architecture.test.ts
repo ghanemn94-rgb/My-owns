@@ -12,8 +12,9 @@
 //     syntactic form, and any computed key that is not a literal (a constructed key can spell any of them); since
 //     D-055 (F-DG1-129/213), any member of the global process outside the allow-list (process.kill, _debugProcess,
 //     execve, binding, ...) - default-deny, independent of the Node version; since F-DG1-130, the native-loader
-//     member `setEngine` of the allow-listed node:crypto (rule 1, every SPELLED form; reaching it by runtime
-//     enumeration of the namespace is the accepted residual (a), pinned by a self-check, F-DG1-132/215);
+//     member `setEngine` of the allow-listed node:crypto (rule 1, every SPELLED form); and since F-DG1-132/133,
+//     any namespace/default binding of node:crypto (rule 5, named imports only), which closes the route of reaching
+//     setEngine by runtime enumeration of the namespace;
 //  4. a module directory is not in the module map, a P1 module has no index.ts, or a §16 business module has no
 //     test suite of its own (A12, D-048);
 //  5. the declared module graph has a cycle, or audit/access depend on a business module;
@@ -392,7 +393,7 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
   it.each([
     // F-DG1-130: `crypto.setEngine(path)` dlopen()s an arbitrary shared object (native loader) although `node:crypto`
     // itself is allow-listed (default-deny covers modules, not members). Rule 1 now bans the `setEngine` name in every
-    // SPELLED form (enumeration without the name is residual (a), pinned below). "missed" here = 0 violations with
+    // SPELLED form (enumeration without the name is closed by rule 5, below). "missed" here = 0 violations with
     // the round-9 lint (HEAD 8ec95a6; handback T-DG1-BE11). Importing node:crypto stays allowed (D-055 positive
     // control below).
     [
@@ -527,39 +528,106 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
     expect(planted("transformations", allowed)).toEqual([]);
   });
 
-  // F-DG1-132 / F-DG1-215 - ACCEPTED RESIDUAL (a), deliberately NOT a violation case. Rule 1 bans `setEngine` only
-  // where the name is SPELLED. These forms reach `crypto.setEngine` at runtime by ENUMERATING the allow-listed
-  // node:crypto namespace/default binding with a key built at runtime (Object.values/Object.entries/Map/find/regex);
-  // a static AST lint cannot follow that data flow, and banning namespace-as-value use or Object.entries/Map lookups
-  // would break legitimate module code. See residual (a) in the architecture.testkit.ts header. This test pins the
-  // current behaviour (0 violations) so the gap is visible and deliberate; if a future lint closes the route, move
-  // these forms into the violation table above.
+  // F-DG1-132 / F-DG1-133 - rule 5, NAMED IMPORTS ONLY for node:crypto. Rule 1 bans `setEngine` only where the name
+  // is SPELLED; the forms E1-E5 reached `crypto.setEngine` at runtime by ENUMERATING the node:crypto namespace/default
+  // binding with a key built at runtime. Each needs such a binding, so each is now a violation AT THE IMPORT. The
+  // fourth column is the round-11 lint's result ("missed" = 0 violations, pinned then as residual (a)).
   it.each([
     [
       "E1 Object.values(ns).find by fn.name",
       `import * as c from "node:crypto";\nconst f = Object.values(c).find((x) => typeof x === "function" && x.name === "set" + "Engine") as (p: string) => void;\nf("/tmp/x.so");`,
+      /node:crypto namespace\/default binding via import \* as/,
+      "missed",
     ],
     [
       "E2 new Map(Object.entries(ns)).get(built key)",
       `import * as c from "node:crypto";\n(new Map(Object.entries(c)).get("set".concat("Engine")) as (p: string) => void)("/tmp/x.so");`,
+      /node:crypto namespace\/default binding via import \* as/,
+      "missed",
     ],
     [
       "E3 Object.entries(ns).find by regex over keys",
       `import * as c from "node:crypto";\n(Object.entries(c).find(([k]) => /^setEng/.test(k))![1] as (p: string) => void)("/tmp/x.so");`,
+      /node:crypto namespace\/default binding via import \* as/,
+      "missed",
     ],
     [
       "E4 for-of over Object.entries(default binding)",
       `import crypto from "node:crypto";\nconst p = "/tmp/x.so";\nfor (const [k, f] of Object.entries(crypto)) if (k.startsWith("set") && k.endsWith("Engine")) (f as (p: string) => void)(p);`,
+      /node:crypto namespace\/default binding via a default import/,
+      "missed",
     ],
-  ])("F-DG1-132/215 residual (a): %s is NOT flagged (accepted static-lint residual)", (_case, source) => {
-    expect(planted("transformations", source)).toEqual([]);
+    [
+      "E5 dynamic import() then enumerate",
+      `const c = await import("node:crypto");\n(new Map(Object.entries(c)).get("set".concat("Engine")) as (p: string) => void)("/tmp/x.so");`,
+      /node:crypto namespace\/default binding via a dynamic import\(\)/,
+      "missed",
+    ],
+    // The binding forms on their own (no enumeration needed for the violation).
+    ["N1 namespace import", `import * as c from "node:crypto";`, /via import \* as/, "missed"],
+    ["N2 default import", `import c from "node:crypto";`, /via a default import/, "missed"],
+    [
+      "N3 default + named import",
+      `import c, { randomUUID } from "node:crypto";`,
+      /node:crypto namespace\/default binding via a default import/,
+      "missed",
+    ],
+    ["N4 named default import", `import { default as c } from "node:crypto";`, /via import \{ default \}/, "missed"],
+    [
+      "N5 export star",
+      `export * from "node:crypto";`,
+      /node:crypto namespace\/default binding via export \*/,
+      "missed",
+    ],
+    ["N6 export star as", `export * as c from "node:crypto";`, /via export \* as/, "missed"],
+    ["N7 re-export default", `export { default as c } from "node:crypto";`, /via export \{ default \}/, "missed"],
+    ["N8 import-equals require", `import c = require("node:crypto");`, /via import = require\(\)/, "missed"],
+    [
+      "N9 dynamic import() literal",
+      `const c = await import("node:crypto");`,
+      /node:crypto namespace\/default binding via a dynamic import\(\)/,
+      "missed",
+    ],
+    [
+      "N10 require() literal",
+      `const c = require("node:crypto");`,
+      /node:crypto namespace\/default binding via require\(\)/,
+      "caught",
+    ],
+  ])("F-DG1-132/133 rule 5: %s is a violation (round-11 lint: $3)", (_case, source, message, _before) => {
+    const v = planted("transformations", source);
+    expect(v.length, `${_case}: ${JSON.stringify(v)}`).toBeGreaterThan(0);
+    expect(v.join("\n")).toMatch(message);
   });
 
-  it("F-DG1-130: only setEngine is banned - node:crypto and its other members stay allowed (positive control)", () => {
+  it("F-DG1-130/132: named node:crypto imports and their members stay allowed (positive control)", () => {
     const allowed = [
       `import { randomUUID, createHash } from "node:crypto";`,
-      `import * as nodeCrypto from "node:crypto";`,
-      `export const id = randomUUID() + nodeCrypto.randomUUID() + createHash("sha256").update("x").digest("hex");`,
+      `import { type Hash, randomBytes as rb } from "node:crypto";`,
+      `export { randomUUID as uuid } from "node:crypto";`,
+      `type C = typeof import("node:crypto");`,
+      `export const id = randomUUID() + createHash("sha256").update("x").digest("hex") + rb(4).toString("hex");`,
+    ].join("\n");
+    expect(planted("transformations", allowed)).toEqual([]);
+  });
+
+  it("F-DG1-133: enumerating a PLAIN object stays allowed (identity/routes.ts, access/rules.ts idiom)", () => {
+    const allowed = [
+      `export function cookie(request: { cookies: Record<string, string> }, name: string) {`,
+      `  return new Map(Object.entries(request.cookies)).get(name);`,
+      `}`,
+      `const PERMISSIONS = { read: ["a"], write: ["b"] } as const;`,
+      `export const byName = new Map(Object.entries(PERMISSIONS));`,
+      `export const vals = Object.values(PERMISSIONS).flat();`,
+    ].join("\n");
+    expect(planted("transformations", allowed)).toEqual([]);
+  });
+
+  it("rule 5 applies only to node:crypto: namespace/default imports of other allow-listed built-ins stay allowed", () => {
+    const allowed = [
+      `import * as path from "node:path";`,
+      `import fs from "node:fs";`,
+      `export const j = path.join("a") + typeof fs;`,
     ].join("\n");
     expect(planted("transformations", allowed)).toEqual([]);
   });
