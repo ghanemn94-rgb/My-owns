@@ -8532,7 +8532,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
       "owner": "devops-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T06:36:40Z",
@@ -8553,6 +8553,11 @@
           "at": "2026-10-01T10:13:19Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 1280e57"
+        },
+        {
+          "at": "2026-10-01T10:48:36Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 4: PASS"
         }
       ],
       "fix_revision": "1280e57",
@@ -8561,16 +8566,16 @@
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG1-T-DG1-REV-SEC-R3-code-security-reviewer-20261001T093018Z-d0594282",
-          "session_id": "d0594282-bce4-425f-9abc-aee2366edce3"
+          "run_id": "DG1-T-DG1-REV-SEC-R4-code-security-reviewer-20261001T102915Z-c98f572b",
+          "session_id": "c98f572b-f02a-4287-8757-d035357066cf"
         },
-        "at": "2026-10-01T09:57:42Z",
-        "result": "FAIL",
+        "at": "2026-10-01T10:48:36Z",
+        "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG1/code-security/round-3/15-check-ci-needs-probes.log",
-          "deploy/scripts/check-ci-needs.mjs"
+          "docs/delivery/test-evidence/DG1/code-security/round-4/24-check-ci-needs-probes.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-4/09-deploy-scripts-tests.log"
         ],
-        "note": "always()/!cancelled()/failure() are rejected, but check-ci-needs.mjs:129 deliberately exempts success() ('success() is allowed; it is the default', :9). Per GitHub Actions semantics any status-check function in a job-level if: replaces the implicit success() check, so `if: ${{ success() || true }}`, `if: ${{ !success() }}` or `if: success() || github.event_name == 'push'` run the job after delivery-gates FAILED; all three pass the checker with OK/exit 0 (probes R1-R3). The finding's expected outcome ('fails any job whose if: uses ... other status functions, or otherwise proves each product job runs only when delivery-gates succeeded') is not met. Fix direction: reject any status function in a product job's if: except a bare `success()` / `success() && <expr>` form, or require no status function at all. (Static analysis; GitHub runtime behaviour per its documented expression semantics, not executed.)"
+        "note": "Status-function bypasses are rejected (if: always(), ${{ !cancelled() }}, ${{ Always ( ) }} on verify: exit 1), and the remaining round-3 FAIL reason (gate checkout ref/repository could validate a different tree) is closed via F-DG1-120."
       }
     },
     {
@@ -9346,7 +9351,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-2/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T08:26:50Z",
@@ -9367,6 +9372,11 @@
           "at": "2026-10-01T10:05:48Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at ecaf66f"
+        },
+        {
+          "at": "2026-10-01T10:48:36Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 4: PASS"
         }
       ],
       "fix_revision": "ecaf66f",
@@ -9375,17 +9385,17 @@
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG1-T-DG1-REV-SEC-R3-code-security-reviewer-20261001T093018Z-d0594282",
-          "session_id": "d0594282-bce4-425f-9abc-aee2366edce3"
+          "run_id": "DG1-T-DG1-REV-SEC-R4-code-security-reviewer-20261001T102915Z-c98f572b",
+          "session_id": "c98f572b-f02a-4287-8757-d035357066cf"
         },
-        "at": "2026-10-01T09:57:42Z",
-        "result": "FAIL",
+        "at": "2026-10-01T10:48:36Z",
+        "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG1/code-security/round-3/11-installer-escape-r2-rerun.log",
-          "docs/delivery/test-evidence/DG1/code-security/round-3/13-copyback-escape.log",
-          "docs/delivery/test-evidence/DG1/code-security/round-3/repro-copyback-escape.sh"
+          "docs/delivery/test-evidence/DG1/code-security/round-4/10b-install-sandbox-test-privstore.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-4/11-r3-repro-rerun.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-4/12-r4-repro.log"
         ],
-        "note": "The round-2 vectors are closed: re-running repro-installer-escape.sh on a fresh disposable clone, the parent rename (tools/, docs/), installer append, delivery-record write and all direct control-path writes are refused and the clone is unchanged; AC-7 passes. But the finding's expected outcome ('every other repo path ... immutable, and no new control/config file can be planted') still does not hold: in create/frozen the installer copies back every directory named node_modules from the writable disposable copy, so dependency code plants files under .git/, tools/gates/, docs/delivery/ and .claude/ (and can make the installer rm -rf outside the root). New mechanism raised as F-DG1-118 (High, mandatory). AC-7/AC-8 exercise only `run` mode, never the create/frozen copy-back."
+        "note": "Run mode: AC-5/AC-7 PASS (parent rename, installer append, delivery-record write refused; repo unchanged). create/frozen: the copy-back mechanism (F-DG1-118) no longer lets dependency code write any control path (.git, tools/gates, docs/delivery, .claude) in the real tree; verified with the round-3 and extended round-4 repros."
       }
     },
     {
@@ -9405,7 +9415,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-2/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T08:26:50Z",
@@ -9426,6 +9436,11 @@
           "at": "2026-10-01T10:05:48Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at ecaf66f"
+        },
+        {
+          "at": "2026-10-01T10:48:36Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 4: PASS"
         }
       ],
       "fix_revision": "ecaf66f",
@@ -9434,16 +9449,16 @@
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG1-T-DG1-REV-SEC-R3-code-security-reviewer-20261001T093018Z-d0594282",
-          "session_id": "d0594282-bce4-425f-9abc-aee2366edce3"
+          "run_id": "DG1-T-DG1-REV-SEC-R4-code-security-reviewer-20261001T102915Z-c98f572b",
+          "session_id": "c98f572b-f02a-4287-8757-d035357066cf"
         },
-        "at": "2026-10-01T09:57:42Z",
-        "result": "FAIL",
+        "at": "2026-10-01T10:48:36Z",
+        "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG1/code-security/round-3/13-copyback-escape.log",
-          "docs/delivery/test-evidence/DG1/code-security/round-3/11-installer-escape-r2-rerun.log"
+          "docs/delivery/test-evidence/DG1/code-security/round-4/10b-install-sandbox-test-privstore.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-4/12-r4-repro.log"
         ],
-        "note": "CLAUDE.local.md, .mcp.json, nested CLAUDE.md and .vscode/tasks.json can no longer be created in `run` mode (AC-8 passes; round-2 probe refused). The finding's expected outcome ('configuration surfaces that influence later agent/CLI behaviour cannot be created by dependency code') still fails through the create/frozen copy-back: .claude/rules/node_modules/*.md, .claude/skills/node_modules/SKILL.md, .claude/commands/node_modules/*.md, .claude/agents/node_modules/*.md and .vscode/ are created in the real tree, git-ignored and invisible to git status. See F-DG1-118."
+        "note": "AC-8 PASS (CLAUDE.local.md, .mcp.json, nested CLAUDE.md, .vscode not creatable in run mode), and through create the planted .vscode/node_modules and .claude/*/node_modules are not copied back (11, 12 logs)."
       }
     },
     {
@@ -9753,7 +9768,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-3/domain-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T09:45:00Z",
@@ -9764,10 +9779,44 @@
           "at": "2026-10-01T10:21:44Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 2b020cb"
+        },
+        {
+          "at": "2026-10-01T10:42:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 4: PASS"
+        },
+        {
+          "at": "2026-10-01T10:48:36Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 4: PASS"
+        },
+        {
+          "at": "2026-10-01T10:50:30Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 4: PASS"
         }
       ],
       "fix_revision": "2b020cb",
-      "fix_summary": "vitest serializes integration files (singleFork) + dropScratchDatabase waits for no connected client before dropping (else ScratchDatabaseInUse, no force) and the owner pool has an error listener. New scratch-drop.test.ts (40x8) 3/3; full integration 5x all exit 0 / 200 tests, no 57P01, no a12 false red."
+      "fix_summary": "vitest serializes integration files (singleFork) + dropScratchDatabase waits for no connected client before dropping (else ScratchDatabaseInUse, no force) and the owner pool has an error listener. New scratch-drop.test.ts (40x8) 3/3; full integration 5x all exit 0 / 200 tests, no 57P01, no a12 false red.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-QA-R4-qa-verifier-20261001T102915Z-a504e866",
+          "session_id": "a504e866-a66e-46a1-a1b4-9c903960fc22"
+        },
+        "at": "2026-10-01T10:50:30Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/qa/round-4/09-integration-run1.log",
+          "docs/delivery/test-evidence/DG1/qa/round-4/09-integration-run2.log",
+          "docs/delivery/test-evidence/DG1/qa/round-4/09-integration-run3.log",
+          "docs/delivery/test-evidence/DG1/qa/round-4/10-serial-probe.log",
+          "docs/delivery/test-evidence/DG1/qa/tests/dg1-r4-serial-probe-a.test.ts",
+          "docs/delivery/test-evidence/DG1/qa/tests/dg1-r4-serial-probe-b.test.ts"
+        ],
+        "note": "Fix 8f73c84/45328ec is in candidate sha256:3b76021b... (recomputed in the repository and in a full disposable clone of e8ed6e29; the freeze diff from 016433d is metadata only). Determinism: `QA_PG_PORT=5492 tests/qa/support/with-pg.sh pnpm test:integration` 3 times, each on a FRESH PostgreSQL 16.13 cluster. Every run: 8 migrations, 19 files, 200/200, exit 0. No Unhandled error, 57P01 or 'terminating connection' in any log; the only grep hit is the new scratch-drop test's title. Mechanism, checked independently: vitest.config.ts puts the integration project on pool 'forks' with poolOptions.forks.singleFork. My probe (dg1-r4-serial-probe-{a,b}.test.ts, an O_EXCL lock per file) shows both files in ONE pid, strictly one after the other. As a negative control I removed the pool/singleFork lines (the round-3 config shape), and the two files then ran concurrently in two pids: OVERLAP, exit 1. So the probe detects concurrency, and the fix is what serializes the files. Teardown: dropScratchDatabase now polls pg_stat_activity until no other backend remains and throws ScratchDatabaseInUse instead of terminating a live client. WITH (FORCE) remains only for a racing connection. The new scratch-drop.test.ts (40 rounds x 8 clients with an error spy; the live-client refusal case; the name guard) passes 3/3 in every run. The harness owner pool now has an error listener. A12 (14), A13 (5) and A14 (5) are green in all 3 runs, including the a12 'denied create wrote a row' case that was red in round 3."
+      }
     },
     {
       "id": "F-DG1-118",
@@ -9789,7 +9838,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-3/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T09:57:42Z",
@@ -9800,10 +9849,33 @@
           "at": "2026-10-01T10:05:48Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at ecaf66f"
+        },
+        {
+          "at": "2026-10-01T10:48:36Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 4: PASS"
         }
       ],
       "fix_revision": "ecaf66f",
-      "fix_summary": "Copy-back enumerates workspace members from the trusted real tree and copies only their node_modules (NUL-safe, non-symlink); a planted non-member node_modules is ignored (AC-9); destinations stay under REPO_ROOT. 13/13 ACs."
+      "fix_summary": "Copy-back enumerates workspace members from the trusted real tree and copies only their node_modules (NUL-safe, non-symlink); a planted non-member node_modules is ignored (AC-9); destinations stay under REPO_ROOT. 13/13 ACs.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-SEC-R4-code-security-reviewer-20261001T102915Z-c98f572b",
+          "session_id": "c98f572b-f02a-4287-8757-d035357066cf"
+        },
+        "at": "2026-10-01T10:48:36Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/code-security/round-4/11-r3-repro-rerun.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-4/12-r4-repro.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-4/repro-copyback-escape-r4.sh",
+          "docs/delivery/test-evidence/DG1/code-security/round-4/10b-install-sandbox-test-privstore.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-4/18-create-frozen-positive-workspace.log"
+        ],
+        "note": "The copy-back escape is closed on 016433d. tools/deps/install-sandbox.sh:144-153 now enumerates destinations from the REAL (read-only to package code) tree with find -print0 / read -d '', derives every destination as <real member>/node_modules, and copies only a non-symlink directory. Re-running the round-3 repro unchanged: installer exit 0, all 8 planted control-path files (.claude/{rules,skills,commands,agents}, .git/hooks, tools/gates, docs/delivery, .vscode) ABSENT from the real root, git status shows only the new lockfile, and the sibling victim/node_modules OUTSIDE the root is intact (11-r3-repro-rerun.log). The extended round-4 repro adds a forged member (tools/gates/package.json planted in the copy), a newline-named member ('n\\nl'), a 'h\\n../victim' path, a member node_modules replaced by a symlink to a dir outside the root, a hard link to a real-root file (EXDEV) and a direct write (EROFS): none reaches the real root; the only new path in the real root is pnpm-lock.yaml; everything outside the root is byte-identical (12-r4-repro.log). install-sandbox.test.sh: 12 PASS incl. AC-9, the 13th (AC-1 effect) BLOCKED only by the reviewer sandbox having no registry access (10/10b logs); create and frozen still populate the root and member node_modules (18-create-frozen-positive-workspace.log). Residual (not part of this finding): a symlink inside the root node_modules is copied as a symlink (not followed) - inherent to installing package content. The unrepaired 'Secondary' (acceptance-test cleanup deleting real-repo files) is split out as F-DG1-122 (Medium); copy-error handling and the on-disk member enumeration as F-DG1-123 (Low)."
+      }
     },
     {
       "id": "F-DG1-119",
@@ -9824,7 +9896,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-3/code-security-reviewer.json",
       "owner": "devops-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T09:57:42Z",
@@ -9835,10 +9907,36 @@
           "at": "2026-10-01T10:13:19Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 1280e57"
+        },
+        {
+          "at": "2026-10-01T10:48:36Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 4: PASS"
+        },
+        {
+          "at": "2026-10-01T10:50:30Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 4: PASS"
         }
       ],
       "fix_revision": "1280e57",
-      "fix_summary": "deploy/images.lock.json added to .prettierignore (generated lock); pnpm format:check passes on the committed tree and after pin-images --resolve/--apply."
+      "fix_summary": "deploy/images.lock.json added to .prettierignore (generated lock); pnpm format:check passes on the committed tree and after pin-images --resolve/--apply.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-QA-R4-qa-verifier-20261001T102915Z-a504e866",
+          "session_id": "a504e866-a66e-46a1-a1b4-9c903960fc22"
+        },
+        "at": "2026-10-01T10:50:30Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/qa/round-4/06b-format-check.log",
+          "docs/delivery/test-evidence/DG1/qa/round-4/19-ci-needs-selftests.log",
+          "docs/delivery/test-evidence/DG1/qa/round-4/README.md"
+        ],
+        "note": "Fix 39284cd/dab46b7 is in the candidate. `pnpm format:check` on the disposable clone reports 'All matched files use Prettier code style!', exit 0 (the round-3 failure was on deploy/images.lock.json). The fix is the finding's own option (b): .prettierignore lists deploy/images.lock.json, with the rationale recorded inline (a generated lock written by pin-images.mjs, also at CI runtime). `prettier --file-info deploy/images.lock.json` reports ignored=true. The ignore is a single path, so the rest of the product tree is still format-checked. The lock stays structurally validated by pin-images.mjs: its self-tests pass within the 59/59 run. `pin-images --check` still fails, but only on the keycloak digest, the disclosed environment-bound test-only residual (D-049); format:check is unrelated to it. ci.yml:62 still runs `pnpm format:check` in the verify job, and the other verify steps (lint, typecheck, build, test, openapi:lint, check:no-cdn) also pass here."
+      }
     },
     {
       "id": "F-DG1-120",
@@ -9857,7 +9955,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-3/code-security-reviewer.json",
       "owner": "devops-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T09:57:42Z",
@@ -9868,10 +9966,30 @@
           "at": "2026-10-01T10:13:19Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 1280e57"
+        },
+        {
+          "at": "2026-10-01T10:48:36Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 4: PASS"
         }
       ],
       "fix_revision": "1280e57",
-      "fix_summary": "check-ci-needs restricts the gate checkout/setup-node with: inputs to literal safe values (fetch-depth/persist-credentials/node-version); ref/repository/path/token/expressions rejected. 9 neg + 2 pos tests."
+      "fix_summary": "check-ci-needs restricts the gate checkout/setup-node with: inputs to literal safe values (fetch-depth/persist-credentials/node-version); ref/repository/path/token/expressions rejected. 9 neg + 2 pos tests.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-SEC-R4-code-security-reviewer-20261001T102915Z-c98f572b",
+          "session_id": "c98f572b-f02a-4287-8757-d035357066cf"
+        },
+        "at": "2026-10-01T10:48:36Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/code-security/round-4/24-check-ci-needs-probes.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-4/25-check-ci-needs-test.log"
+        ],
+        "note": "check-ci-needs.mjs:83-113 allow-lists the gate checkout/setup-node with: inputs with literal-value predicates. Installed ci.yml: OK, exit 0. Mutations of a copy: checkout with.ref (round-3 R4), with.repository (R5), path, token, sparse-checkout, fetch-depth expression, setup-node node-version-file, node-version expression, a scalar-expression with:, and a duplicate with: key all exit 1. node --test check-ci-needs.test.mjs 46/46."
+      }
     },
     {
       "id": "F-DG1-121",
@@ -9892,7 +10010,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-3/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T09:57:42Z",
@@ -9903,10 +10021,31 @@
           "at": "2026-10-01T10:21:44Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 2b020cb"
+        },
+        {
+          "at": "2026-10-01T10:48:36Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 4: PASS"
         }
       ],
       "fix_revision": "2b020cb",
-      "fix_summary": "Module lint catches an aliased function-.constructor (AsyncFunction/Function) loader; planted case fails-before/passes-after."
+      "fix_summary": "Module lint catches an aliased function-.constructor (AsyncFunction/Function) loader; planted case fails-before/passes-after.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-SEC-R4-code-security-reviewer-20261001T102915Z-c98f572b",
+          "session_id": "c98f572b-f02a-4287-8757-d035357066cf"
+        },
+        "at": "2026-10-01T10:48:36Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/code-security/round-4/22-plant-f121.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-4/plant-f121.test.ts",
+          "docs/delivery/test-evidence/DG1/code-security/round-4/plant-f121.sh"
+        ],
+        "note": "All four reported aliased forms (const alias of (async()=>{}).constructor, destructured { constructor: F }, Reflect.construct(f.constructor,...), Object.getPrototypeOf(...).constructor) plus an assignment-pattern destructure and Reflect.get(fn, \"constructor\") are now reported by scanSource; clean controls (class constructor declaration, plain code) stay clean; a real planted aliased loader in modules/access makes architecture.test.ts fail (1 failed / 53 passed, exit 1). A NEW route with a constructed key (f[\"constr\"+\"uctor\"]) still evades and is raised separately as F-DG1-124 (Low)."
+      }
     },
     {
       "id": "F-DG1-210",
@@ -9933,7 +10072,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG1/round-3/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T09:42:41Z",
@@ -9944,10 +10083,154 @@
           "at": "2026-10-01T10:15:46Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at e75a217"
+        },
+        {
+          "at": "2026-10-01T10:42:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 4: PASS"
+        },
+        {
+          "at": "2026-10-01T10:50:30Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 4: PASS"
         }
       ],
       "fix_revision": "e75a217",
-      "fix_summary": "After create, TransformationCreatePage refetches /api/v1/me before opening the record, so Edit/Archive/audit appear without a reload; <=5s cap, fail-open, no over-granting. 4 component tests + e2e journey (reload workaround removed)."
+      "fix_summary": "After create, TransformationCreatePage refetches /api/v1/me before opening the record, so Edit/Archive/audit appear without a reload; <=5s cap, fail-open, no over-granting. 4 component tests + e2e journey (reload workaround removed).",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-QA-R4-qa-verifier-20261001T102915Z-a504e866",
+          "session_id": "a504e866-a66e-46a1-a1b4-9c903960fc22"
+        },
+        "at": "2026-10-01T10:50:30Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/qa/round-4/12-e2e.log",
+          "docs/delivery/test-evidence/DG1/qa/round-4/13-lead-no-reload.log",
+          "docs/delivery/test-evidence/DG1/qa/round-4/14-lead-no-reload-negative-control.log",
+          "docs/delivery/test-evidence/DG1/qa/tests/dg1-r4-lead-create-edit-archive-no-reload.spec.ts",
+          "docs/delivery/test-evidence/DG1/qa/round-4/screenshots/lead-no-reload/ar-01-after-create.png",
+          "docs/delivery/test-evidence/DG1/qa/round-4/screenshots/lead-no-reload/en-01-after-create.png",
+          "docs/delivery/test-evidence/DG1/qa/round-4/screenshots/lead-no-reload/ar-02-after-edit-archive.png",
+          "docs/delivery/test-evidence/DG1/qa/round-4/screenshots/lead-no-reload/en-02-after-edit-archive.png",
+          "docs/delivery/test-evidence/DG1/qa/round-4/screenshots/journeys/ar/axe-summary.json",
+          "docs/delivery/test-evidence/DG1/qa/round-4/screenshots/journeys/en/axe-summary.json"
+        ],
+        "note": "Fix 0025328/c3fffd2 is in the candidate. TransformationCreatePage now awaits refreshEffectivePermissions (invalidateQueries keys.me with refetchType 'all', raced against a 5 s timeout, never rejecting) before navigating. Real stack, EN and AR (PG 5493, --workers=1): (1) The full e2e passes 22/22, including the frontend journey 'a business-unit Lead creates a record: Edit/Archive and the audit trail appear without a reload'. That journey no longer calls page.reload(); it asserts a window marker. The only page.reload() left in journeys.spec.ts is the language-persistence step. (2) My independent spec dg1-r4-lead-create-edit-archive-no-reload.spec.ts passes 2/2. As dev.lead (TL at SYN-RETAIL only): create, then Edit/Archive/audit trail visible at once, then Edit and save, then Archive with a reason. No document reload happened (the marker survived; 0 load events after the form opened). The server confirms the edited name and archivedAt. No over-grant: the /me read after the 201 adds exactly one grant, scope {type: transformation, id: <new id>} with inheritsDownward false. (3) Negative control: I removed the refresh call in the clone and rebuilt the web app. The same spec then fails in EN and AR (Edit link not found), so it detects the defect. (4) My round-3 spec dg1-r3-derived-audit-localized, run unchanged, now records auditTrailRegions=1 and editLinks=1 before any reload (0/0 in round 3). The derived row is still localized in both languages (F-DG1-005/008: no regression). Axe: 0 violations, 15 pages per language, including the new lead-created-controls page."
+      }
+    },
+    {
+      "id": "F-DG1-122",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-042",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The required installer acceptance test deletes a developer's pre-existing files in the repo it runs in (rm -rf of CLAUDE.local.md, .mcp.json, apps/api/CLAUDE.md, .vscode/): the 'Secondary' part of F-DG1-118 was not repaired",
+      "reproduction": "tools/deps/tests/install-sandbox.test.sh:139 `for p in CLAUDE.local.md .mcp.json apps/api/CLAUDE.md .vscode; do rm -rf \"$ROOT/$p\" 2>/dev/null; done` runs on the HOST (outside the sandbox) against ROOT = the repository containing the test, unconditionally, whether or not the test created those paths; line 124 likewise mv's \"$ROOT/tools.mth-ac7\" onto \"$ROOT/tools\". Neither file changed in this round (git diff 5204179..016433d touches only the AC-9 block). Disposable clone 016433d (log 17-test-cleanup-deletes-dev-files.log): seed .vscode/settings.json, CLAUDE.local.md, .mcp.json, apps/api/CLAUDE.md -> `bash tools/deps/tests/install-sandbox.test.sh` -> all four are gone afterwards. The orchestrator runs this test in the real repository as a required DG1 check, so a developer's untracked editor/agent configuration there is irrecoverably deleted.",
+      "expected": "As stated in F-DG1-118's expected outcome: the acceptance test must not rm -rf/mv pre-existing paths of the real repo. E.g. run AC-7/AC-8 against a disposable copy (--root <scratch>) or record which paths existed before and remove only what the probe itself created.",
+      "actual": "Pre-existing CLAUDE.local.md, .mcp.json, apps/api/CLAUDE.md and .vscode/ are deleted by every run of the test.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-4/17-test-cleanup-deletes-dev-files.log",
+        "tools/deps/tests/install-sandbox.test.sh"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-4/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T10:48:36Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG1 round 4; reproduced in a disposable clone. Split out of F-DG1-118 (whose primary escape is CLOSED_VERIFIED) so its severity is tracked honestly."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-123",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-042",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "install-sandbox.sh copy-back hardening: copy errors are ignored (installer exits 0 after a failed/partial cp), and the destination set is 'any package.json at depth <= 4 on disk' rather than the pnpm-workspace.yaml members its comment claims",
+      "reproduction": "Static, tools/deps/install-sandbox.sh @016433d. (a) Lines 150-151 `rm -rf \"$dest\"; cp -a \"$wsnm\" \"$dest\"` have no error check and line 155 is an unconditional `exit 0`: if cp fails (ENOSPC from a dependency that fills the disposable copy, I/O error), the real member's node_modules has already been deleted or is partial and the installer still reports success. F-DG1-118's expected outcome asked to 'fail (non-zero) on any copy error'. A dynamic attempt (an unreadable directory planted in node_modules) was stopped earlier by pnpm itself (EACCES, exit 243), so this part is not reproduced dynamically. (b) Line 153 enumerates `find \"$REPO_ROOT\" -maxdepth 4 -name package.json -not -path '*/node_modules/*'` on the real FILESYSTEM (tracked and untracked), while the comment (lines 138-143) says 'the root and every committed package.json directory' and pnpm-workspace.yaml declares only apps/* and packages/*. Today the two sets are identical (8 paths, verified), so there is no current exploit; but any future package.json at depth <= 4 outside the workspace (e.g. a test fixture such as tools/gates/fixtures/package.json, or an untracked one) silently becomes a copy-back destination where dependency code can plant a node_modules that scripts in that directory would resolve.",
+      "expected": "Fail non-zero on any rm/cp error in the copy-back; derive the destinations from pnpm-workspace.yaml globs (plus the root) resolved on the real tree, or from `git ls-files` package.json entries, matching the documented contract.",
+      "actual": "cp failures are swallowed; destinations follow the on-disk package.json set.",
+      "evidence": [
+        "tools/deps/install-sandbox.sh",
+        "pnpm-workspace.yaml",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/12-r4-repro.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-4/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T10:48:36Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG1 round 4 (static hardening note on the F-DG1-118 repair)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-124",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The module dependency-lint still misses the Function/AsyncFunction constructor reached through a constructed (non-literal) key, e.g. f[\"constr\" + \"uctor\"] or Reflect.get(f, \"constr\".concat(\"uctor\")) (follow-on to F-DG1-121)",
+      "reproduction": "apps/api/src/architecture.testkit.ts @016433d: element access is checked only when literalText(key) === \"constructor\" (line ~187), and the string-value rule (lines ~233-242) only matches the literal \"constructor\". Plant (plant-f121.sh / plant-f121.test.ts, disposable clone, log 22-plant-f121.log): scanSource reports NO evasion for `f[\"constr\" + \"uctor\"]`, `Reflect.get(fn, \"constr\".concat(\"uctor\"))`, a template-literal key and an Object.getOwnPropertyNames(...).find(...) key; a real file apps/api/src/modules/access/zz-planted.ts using `const F = f[\"constr\" + \"uctor\"]; F(\"s\",\"return import(s)\")(\"../transformations/routes.ts\")` leaves architecture.test.ts green (54/54, exit 0). Runtime probe in Node 22.22.2 (23-f121-computed-key-runtime.log): the same form performs a dynamic import of another file ('internal-of-other-module').",
+      "expected": "The lint's documented claim ('the rules close every syntactic route') holds, or the residual is recorded: e.g. report element access with a non-literal key whose receiver is a function expression/identifier bound to a function, or ban Reflect.get/getOwnPropertyNames on functions in module code, or document constructed-key evaluation as an accepted residual of a static lint in ADR-0002.",
+      "actual": "A one-line constructed-key loader bypasses the module-interface check undetected.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-4/22-plant-f121.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/23-f121-computed-key-runtime.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/plant-f121.test.ts",
+        "docs/delivery/test-evidence/DG1/code-security/round-4/plant-f121.sh",
+        "apps/api/src/architecture.testkit.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-4/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T10:48:36Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG1 round 4; planted in a disposable clone and confirmed at runtime."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-211",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-042",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "REQ-DLV-042 cites a stale installer acceptance log: the 7-case run predates the 13-case suite (AC-5..AC-9 for F-DG1-113/114/118), and the implementer recorded no run of the current suite",
+      "reproduction": "Candidate 3b76021be348356f (commit 016433d). In docs/delivery/requirements.csv, row REQ-DLV-042 cites docs/delivery/test-evidence/DG1/orchestrator/install-sandbox-acceptance.log as its execution evidence. That file holds 8 lines: AC-1..AC-4, '7 passed, 0 failed'. The candidate's tools/deps/tests/install-sandbox.test.sh now has 13 cases: AC-5 control paths read-only, AC-6 environment, AC-7 control-path escape (F-DG1-113), AC-8 config surfaces (F-DG1-114), AC-9 planted non-member node_modules not copied back (F-DG1-118). Commit ecaf66f's message claims 'Acceptance 13/13', but `grep -rl 'AC-9' docs/delivery` finds no recorded run log before this review. In this reviewer sandbox, with the default store, 8 cases PASS and 5 fail only on environment (EROFS on the pnpm store under read-only HOME; 20-install-sandbox-tests.log). With a writable scratch copy of the store, 12/13 PASS, including AC-2, AC-3 would-change, AC-7, AC-8 and AC-9 (20b-install-sandbox-tests-scratch-store.log). The suite's AC-1 (effect) needs registry metadata (no network here). Its property passes in an offline equivalent: unchanged wrapper, fixture lockfile and offline .npmrc, same log.",
+      "expected": "The register row's execution evidence is a recorded run of the CURRENT acceptance suite (13 cases incl. AC-9) on the DG1 candidate, made in an environment with the store and registry access the installer needs (orchestrator), with the log committed under docs/delivery/test-evidence/ and cited by REQ-DLV-042.",
+      "actual": "The register cites only the round-1 suite's log (7 cases). Apart from this QA review's own logs, the F-DG1-113/114/118 acceptance cases have no recorded run in the repository; only a commit message states 13/13. On this candidate, every case passes in my runs (12 as written plus the AC-1 effect offline equivalent), so the behaviour is not in doubt. F-DG1-118 itself is verified by code-security-reviewer, not by this finding. This is a register evidence and traceability gap, not a product defect. Fix: cite a current 13-case run (the orchestrator's, with registry access, or this review's 20b log) in REQ-DLV-042.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-4/20-install-sandbox-tests.log",
+        "docs/delivery/test-evidence/DG1/qa/round-4/20b-install-sandbox-tests-scratch-store.log",
+        "docs/delivery/test-evidence/DG1/orchestrator/install-sandbox-acceptance.log",
+        "tools/deps/tests/install-sandbox.test.sh",
+        "docs/delivery/requirements.csv"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-4/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T10:46:00Z",
+          "status": "OPEN",
+          "note": "Reported in DG1 round-4 QA verification. ID proposed in the qa-verifier 2xx range; the orchestrator may renumber."
+        }
+      ]
     }
   ]
 }

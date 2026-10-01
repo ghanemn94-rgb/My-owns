@@ -1,0 +1,37 @@
+# cwd: disposable clone @ e8ed6e29 (built); fresh PG16 port 5493 + API via e2e/support/qa-stack.sh (synthetic seed)
+# cmd: QA_E2E_PG_PORT=5493 e2e/support/qa-stack.sh bash $TMPDIR/worker-probe.sh   (start the built worker, SIGTERM it, probe the API)
+# probe script:
+#   set -u
+#   node apps/worker/dist/main.js > "$TMPDIR/worker.log" 2>&1 &
+#   W=$!
+#   sleep 5
+#   echo "worker pid $W alive after 5s: $(kill -0 $W 2>/dev/null && echo yes || echo no)"
+#   echo "readyz with worker running: $(curl -sS -o /dev/null -w '%{http_code}' http://localhost:3000/readyz)"
+#   kill -TERM $W; wait $W; echo "worker exit status after SIGTERM: $?"
+#   sleep 1
+#   echo "readyz after worker stopped: $(curl -sS -w ' http=%{http_code}' http://localhost:3000/readyz)"
+#   echo "healthz after worker stopped: $(curl -sS -w ' http=%{http_code}' http://localhost:3000/healthz)"
+#   echo "--- worker.log (tail):"; tail -n 8 "$TMPDIR/worker.log" | cut -c1-300
+#   code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/readyz); [ "$code" = 200 ]
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applied 8 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+worker pid 92 alive after 5s: yes
+readyz with worker running: 200
+worker exit status after SIGTERM: 0
+readyz after worker stopped: {"status":"ready","checks":{"database":"ok","migrations":"ok"}} http=200
+healthz after worker stopped: {"status":"ok"} http=200
+--- worker.log (tail):
+{"level":"info","msg":"mth-worker started","timeZone":"Asia/Riyadh"}
+{"level":"info","msg":"mth-worker shutting down","signal":"SIGTERM"}
+exit=0

@@ -1,0 +1,66 @@
+# cwd: disposable clone @ e8ed6e29; probe files copied into tests/qa/integration/ (clone only); PG port 5492
+# (A) candidate vitest.config.ts: QA_PG_PORT=5492 tests/qa/support/with-pg.sh npx vitest run --project integration tests/qa/integration/dg1-r4-serial-probe
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+ RUN  v3.2.4 /var/tmp/mth-run.K0erYX/claude-0/review-qa
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mupeci5f_10faae88; applied 8 migrations to a fresh database
+ ✓ |integration| tests/qa/integration/dg1-r4-serial-probe-a.test.ts (1 test) 1507ms
+   ✓ qa serial probe a (F-DG1-009) > no other probe file holds the lock while this file runs  1505ms
+ ✓ |integration| tests/qa/integration/dg1-r4-serial-probe-b.test.ts (1 test) 1503ms
+   ✓ qa serial probe b (F-DG1-009) > no other probe file holds the lock while this file runs  1502ms
+
+ Test Files  2 passed (2)
+      Tests  2 passed (2)
+   Start at  10:33:52
+   Duration  4.16s (transform 97ms, setup 0ms, collect 54ms, tests 3.01s, environment 0ms, prepare 89ms)
+
+exit=0
+# journal:
+a start pid=99 t=1790850833626
+a end pid=99 t=1790850835129
+b start pid=99 t=1790850835161
+b end pid=99 t=1790850836662
+
+# (B) NEGATIVE CONTROL: same clone, vitest.config.ts with the singleFork/pool lines removed (round-3 config shape: only fileParallelism:false)
+# diff:
+46,47d45
+<           pool: "forks",
+<           poolOptions: { forks: { singleFork: true } },
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+ RUN  v3.2.4 /var/tmp/mth-run.K0erYX/claude-0/review-qa
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mupecncj_6e6f357d; applied 8 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/dg1-r4-serial-probe-b.test.ts (1 test | 1 failed) 7ms
+   × qa serial probe b (F-DG1-009) > no other probe file holds the lock while this file runs 6ms
+     → probe b: another integration file is running concurrently (Error: EEXIST: file already exists, open '/var/tmp/mth-run.K0erYX/claude-0/serial/qa-serial-probe.lock')
+ ✓ |integration| tests/qa/integration/dg1-r4-serial-probe-a.test.ts (1 test) 1506ms
+   ✓ qa serial probe a (F-DG1-009) > no other probe file holds the lock while this file runs  1504ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/dg1-r4-serial-probe-b.test.ts > qa serial probe b (F-DG1-009) > no other probe file holds the lock while this file runs
+Error: probe b: another integration file is running concurrently (Error: EEXIST: file already exists, open '/var/tmp/mth-run.K0erYX/claude-0/serial/qa-serial-probe.lock')
+ ❯ tests/qa/integration/dg1-r4-serial-probe-b.test.ts:20:13
+     18|     } catch (e) {
+     19|       appendFileSync(JOURNAL, `b OVERLAP pid=${process.pid} t=${Date.n…
+     20|       throw new Error(`probe b: another integration file is running co…
+       |             ^
+     21|     }
+     22|     try {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 1 passed (2)
+   Start at  10:33:59
+   Duration  2.48s (transform 58ms, setup 0ms, collect 41ms, tests 1.51s, environment 1ms, prepare 156ms)
+
+exit=1
+# journal:
+a start pid=285 t=1790850840251
+b OVERLAP pid=286 t=1790850840296 lock=a pid=285
+a end pid=285 t=1790850841754
+# config restored: 0 modified

@@ -1,0 +1,76 @@
+# NEGATIVE CONTROL (clone only): the F-DG1-210 call 'await refreshEffectivePermissions(queryClient);' removed from apps/web/src/pages/transformations/TransformationCreatePage.tsx, web rebuilt, my r4 spec re-run (EN+AR). Expected: FAIL.
+ apps/web/src/pages/transformations/TransformationCreatePage.tsx | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+web rebuild exit=0
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applied 8 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+Running 2 tests using 1 worker
+  ✘  1 [chromium-en] › e2e/qa-r4/dg1-r4-lead-create-edit-archive-no-reload.spec.ts:37:1 › BU Lead: create -> Edit (save) -> Archive without a reload; refreshed /me adds only the new record's grant (6.1s)
+  ✘  2 [chromium-ar] › e2e/qa-r4/dg1-r4-lead-create-edit-archive-no-reload.spec.ts:37:1 › BU Lead: create -> Edit (save) -> Archive without a reload; refreshed /me adds only the new record's grant (5.9s)
+  1) [chromium-en] › e2e/qa-r4/dg1-r4-lead-create-edit-archive-no-reload.spec.ts:37:1 › BU Lead: create -> Edit (save) -> Archive without a reload; refreshed /me adds only the new record's grant 
+    Error: expect(locator).toBeVisible() failed
+    Locator: locator('main#main').getByRole('link', { name: /^\s*Edit\s*$/ })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for locator('main#main').getByRole('link', { name: /^\s*Edit\s*$/ })
+      85 |   // 1. Controls and audit trail are there at once, with no reload and no extra wait beyond the default expect timeout.
+      86 |   const main = page.locator("main#main");
+    > 87 |   await expect(main.getByRole("link", { name: exactly(tr(lang, "common.action.edit")) })).toBeVisible();
+         |                                                                                           ^
+      88 |   await expect(main.getByRole("button", { name: exactly(tr(lang, "transformations.archive.action")) })).toBeVisible();
+      89 |   await expect(page.getByRole("region", { name: tr(lang, "transformations.audit.title"), exact: true })).toBeVisible();
+      90 |   await page.screenshot({ path: join(SHOTS, `${lang}-01-after-create.png`), fullPage: true });
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-qa-r4-dg1-r4-lead-crea-81dea-only-the-new-record-s-grant-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+    Error Context: test-results/e2e-qa-r4-dg1-r4-lead-crea-81dea-only-the-new-record-s-grant-chromium-en/error-context.md
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-qa-r4-dg1-r4-lead-crea-81dea-only-the-new-record-s-grant-chromium-en/trace.zip
+    Usage:
+        npx playwright show-trace test-results/e2e-qa-r4-dg1-r4-lead-crea-81dea-only-the-new-record-s-grant-chromium-en/trace.zip
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+  2) [chromium-ar] › e2e/qa-r4/dg1-r4-lead-create-edit-archive-no-reload.spec.ts:37:1 › BU Lead: create -> Edit (save) -> Archive without a reload; refreshed /me adds only the new record's grant 
+    Error: expect(locator).toBeVisible() failed
+    Locator: locator('main#main').getByRole('link', { name: /^\s*تعديل\s*$/ })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for locator('main#main').getByRole('link', { name: /^\s*تعديل\s*$/ })
+      85 |   // 1. Controls and audit trail are there at once, with no reload and no extra wait beyond the default expect timeout.
+      86 |   const main = page.locator("main#main");
+    > 87 |   await expect(main.getByRole("link", { name: exactly(tr(lang, "common.action.edit")) })).toBeVisible();
+         |                                                                                           ^
+      88 |   await expect(main.getByRole("button", { name: exactly(tr(lang, "transformations.archive.action")) })).toBeVisible();
+      89 |   await expect(page.getByRole("region", { name: tr(lang, "transformations.audit.title"), exact: true })).toBeVisible();
+      90 |   await page.screenshot({ path: join(SHOTS, `${lang}-01-after-create.png`), fullPage: true });
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-qa-r4-dg1-r4-lead-crea-81dea-only-the-new-record-s-grant-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+    Error Context: test-results/e2e-qa-r4-dg1-r4-lead-crea-81dea-only-the-new-record-s-grant-chromium-ar/error-context.md
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-qa-r4-dg1-r4-lead-crea-81dea-only-the-new-record-s-grant-chromium-ar/trace.zip
+    Usage:
+        npx playwright show-trace test-results/e2e-qa-r4-dg1-r4-lead-crea-81dea-only-the-new-record-s-grant-chromium-ar/trace.zip
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+  2 failed
+    [chromium-en] › e2e/qa-r4/dg1-r4-lead-create-edit-archive-no-reload.spec.ts:37:1 › BU Lead: create -> Edit (save) -> Archive without a reload; refreshed /me adds only the new record's grant 
+    [chromium-ar] › e2e/qa-r4/dg1-r4-lead-create-edit-archive-no-reload.spec.ts:37:1 › BU Lead: create -> Edit (save) -> Archive without a reload; refreshed /me adds only the new record's grant 
+---- api.log (tail)
+exit=1
+restored + rebuilt exit=0; git status: 0 modified under apps/

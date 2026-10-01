@@ -1,0 +1,44 @@
+# cwd: disposable clone @ e8ed6e29; node v22.22.2
+# cmd: node --test deploy/scripts/tests/check-ci-needs.test.mjs deploy/scripts/tests/pin-images.test.mjs ; node deploy/scripts/check-ci-needs.mjs .github/workflows/ci.yml
+  duration_ms: 0.437897
+  type: 'test'
+  ...
+1..59
+# tests 59
+# suites 0
+# pass 59
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 5166.528642
+exit=0
+assemble-runtime.sh
+build-image.sh
+check-ci-needs.mjs
+ci-e2e-stack.mjs
+ci-install-deps.sh
+clean-start-local.sh
+ensure-docker.sh
+generate-env-example.mjs
+init-secrets.sh
+pin-images.mjs
+smoke.mjs
+tests
+verify-stack.sh
+OK: .github/workflows/ci.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it with no status-function if:; installs only via ci-install-deps.sh
+  verify <- delivery-gates
+  integration <- verify
+  e2e <- verify
+  images <- integration, e2e
+exit=0
+
+# supplementary (read-only, in /home/user/My-owns): node deploy/scripts/pin-images.mjs --check
+PINNED     node-runtime (production) node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+PINNED     postgres (production) postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722
+BLOCKED    keycloak (test-ci) quay.io/keycloak/keycloak:26.4: BLOCKED: --resolve at 2026-10-01T07:30:37.561Z could not reach the registry: ERROR: failed to do request: Head "https://quay.io/v2/keycloak/keycloak/manifests/26.4": Forbidden
+PINNED     playwright (test-ci) mcr.microsoft.com/playwright:v1.56.1-noble@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+FAIL: keycloak (quay.io/keycloak/keycloak:26.4): BLOCKED, not pinned — BLOCKED: --resolve at 2026-10-01T07:30:37.561Z could not reach the registry: ERROR: failed to do request: Head "https://quay.io/v2/keycloak/keycloak/manifests/26.4": Forbidden
+FAIL: deploy/compose/compose.yaml: quay.io/keycloak/keycloak:26.4 has no digest
+2 problem(s). Pin with (registry access; orchestrator/IT): node deploy/scripts/pin-images.mjs --resolve && node deploy/scripts/pin-images.mjs --apply
+exit=1  (expected non-zero: keycloak digest BLOCKED by environment egress policy, D-049)

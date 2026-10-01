@@ -1,0 +1,37 @@
+# cwd: disposable clone @ e8ed6e29 (candidate 3b76021be348356f, built); specs copied into e2e/qa-r4/ of the CLONE only; chromium-1194 pre-installed; PG 16 port 5493
+# cmd: PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers QA_E2E_PG_PORT=5493 QA_EVIDENCE_DIR=<evidence>/screenshots/lead-no-reload e2e/support/qa-stack.sh npx playwright test e2e/qa-r4 --workers=1
+# specs: ../tests/dg1-r4-lead-create-edit-archive-no-reload.spec.ts (new, F-DG1-210) + ../tests/dg1-r3-derived-audit-localized.spec.ts (round-3, unchanged; F-DG1-005/008 regression + recorded pre-reload probe)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applied 8 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+
+Running 4 tests using 1 worker
+
+[chromium-en] post-create before reload: auditTrailRegions=1, editLinks=1; after in-app navigation list->record (no reload): auditTrailRegions=1, editLinks=1; after reload: auditTrailRegions=1, editLinks=1
+[chromium-en] source-assignment line: Carried over from assignment: None → 01a0f709-7bc6-702c-b710-12b35ef176f9
+  ✓  1 [chromium-en] › e2e/qa-r4/dg1-r3-derived-audit-localized.spec.ts:59:1 › F-DG1-005/008: BU lead's derived creator assignment is localized on the record's audit trail (1.8s)
+[chromium-en] id=01a0f709-90b6-7554-a555-0a917bf05c4e /me reads after 201=1 added grants=[{"type":"transformation","id":"01a0f709-90b6-7554-a555-0a917bf05c4e"}] documentLoads after form=0
+  ✓  2 [chromium-en] › e2e/qa-r4/dg1-r4-lead-create-edit-archive-no-reload.spec.ts:37:1 › BU Lead: create -> Edit (save) -> Archive without a reload; refreshed /me adds only the new record's grant (1.5s)
+[chromium-ar] post-create before reload: auditTrailRegions=1, editLinks=1; after in-app navigation list->record (no reload): auditTrailRegions=1, editLinks=1; after reload: auditTrailRegions=1, editLinks=1
+[chromium-ar] source-assignment line: منقول من الإسناد: لا يوجد ← 01a0f709-7bc6-702c-b710-12b35ef176f9
+  ✓  3 [chromium-ar] › e2e/qa-r4/dg1-r3-derived-audit-localized.spec.ts:59:1 › F-DG1-005/008: BU lead's derived creator assignment is localized on the record's audit trail (1.8s)
+[chromium-ar] id=01a0f709-a1c8-707b-8aea-03fce8f2e119 /me reads after 201=1 added grants=[{"type":"transformation","id":"01a0f709-a1c8-707b-8aea-03fce8f2e119"}] documentLoads after form=0
+  ✓  4 [chromium-ar] › e2e/qa-r4/dg1-r4-lead-create-edit-archive-no-reload.spec.ts:37:1 › BU Lead: create -> Edit (save) -> Archive without a reload; refreshed /me adds only the new record's grant (1.6s)
+
+  4 passed (9.1s)
+
+To open last HTML report run:
+
+  npx playwright show-report
+
+exit=0
