@@ -1,0 +1,125 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG1-007",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate f0baa87d0163560f (commit 5204179; register change 213264e, T-DG1-ANALYST3). (1) REQ-PB-009's notes now read 'enforced as API 422 invalid-transition (ADR-0007; the single transition contract of REQ-S16-023)', which matches its acceptance. A scan of all 412 register rows finds no row that ties a status transition to 409: every row mentioning a transition and 422/409 (REQ-PB-004, PB-007, PB-009, PB-022, S03-004, S16-023) uses 422. The remaining 409s are concurrency, uniqueness, superseded-version or finalized-record conflicts, which ADR-0007 keeps as 409. (2) REQ-S19-004's note covers migrations 0001-0008 and names the 0007 column (oidc_login_state.browser_binding_hash) and the 0008 column (scoped_assignment.derived_from_assignment_id). Its evidence lists all eight migration files plus migrate.test.ts, catalogue.test.ts and the round-2 QA runs and schema probe, and all 16 entries exist. data-dictionary.md documents both columns (lines 167 and 229). The note says the migrations are unchanged since f32c705; git diff f32c705..5204179 -- packages/db/migrations is empty, so this holds. (3) No residual '0001-0006', '32 operations', '8/8' or 'enforced as API 409' remains anywhere in the register. On this candidate my own runs applied 8 migrations to a fresh PostgreSQL 16.13 database three times, and migrate and catalogue passed 16/16 each time.",
+      "evidence": [
+        "docs/delivery/requirements.csv",
+        "docs/delivery/test-evidence/DG1/domain/round-3/09-register-rows.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-3/05-integration-run3.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-3/07-live-scenario.out.txt",
+        "docs/architecture/data-dictionary.md"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-008",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Live on a disposable stack of commit 5204179 (PostgreSQL 16.13, AUTH_MODE=dev, SYNTHETIC seed, Chromium headless 1280x900). dev.lead (TL at SYN-RETAIL) created a Modular transformation and opened it in Arabic (RTL) and English. The derived creator-assignment row on the audit trail now reads as follows. Action: 'Role granted to the creator (carried over from a business-unit assignment)' / 'إسناد دور لمُنشئ السجل (منقول من إسناد على مستوى وحدة العمل)', distinct from a manual grant ('Role granted' / 'إسناد دور'). User: the creator's display name (Synthetic Transformation Lead), not the id. Role: 'Transformation Lead' / 'قائد التحوّل', the DG0 glossary term. Scope: 'Transformation: this transformation' / 'التحوّل: هذا التحوّل'. Source: 'Carried over from assignment' / 'منقول من الإسناد' with the source assignment id, LTR-isolated. No raw action code, no camelCase key and no 'without a translation' marker appears in that row in either language (checks E1-E8). The role catalogue labels all 14 role codes, and the six playbook roles match glossary.md exactly. Another authorized user (dev.office, TO) sees the same localized row; the creator's name shows as an honest 'Unknown: Not visible to you' / 'غير معروف : غير مرئي لك' because TO has no user.read on that user, never a raw id (F1/F2). Unit coverage passes: auditChanges.test.ts (6 F-DG1-008 cases) and transformations.test.tsx (3 rendered en/ar cases), 51/51 in the focused run and 235/235 overall. Cosmetic note, not a defect: a null effective_to renders as 'Effective until: None -> None' / 'لا يوجد'. It would read better as the admin catalogue's 'No end' / 'بلا نهاية', but it is optional polish.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-3/07-live-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-3/07-live-scenario.mjs",
+        "docs/delivery/test-evidence/DG1/domain/round-3/screens/ar-04-lead-derived-audit.png",
+        "docs/delivery/test-evidence/DG1/domain/round-3/screens/en-04-lead-derived-audit.png",
+        "docs/delivery/test-evidence/DG1/domain/round-3/screens/ar-05-office-derived-audit.png",
+        "docs/delivery/test-evidence/DG1/domain/round-3/screens/en-05-office-derived-audit.png",
+        "docs/delivery/test-evidence/DG1/domain/round-3/02-unit-domain-focused.out.txt",
+        "apps/web/src/lib/auditChanges.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-005",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on this candidate together with F-DG1-008, which was the remaining gap on the same trail (qa-verifier's round-2 FAIL concerned it). The transformation audit trail shows catalogue labels in both languages for field names (Code, Name, Mode, Entry phase, Phase, Status, Time zone, Currency, Business unit / الرمز، الاسم، النمط، مرحلة الدخول، المرحلة، الحالة ...) and enum values (Modular / النمط الجزئي المرن (الدخول عند المرحلة المناسبة); Design / التصميم; Draft - not submitted / مسودة - لم تُقدَّم; Active / نشط). It shows the business unit by name. No raw current_phase, business_unit_id or end_to_end appears (D7/D8 in ar and en). The safety net is real: a synthetic audit row with an unknown action, field and value (written into the throwaway database only) renders as 'zz_probe.synthetic_event (action without a translation)', 'mysteryField (field without a translation)' and 'zz_code (value without a translation)', with the Arabic markers إجراء/حقل/قيمة بلا ترجمة. The raw code sits LTR-isolated in a bdi dir=ltr element, never blank and never a guessed label (G1-G4 in ar and en).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-3/07-live-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-3/screens/ar-03-detail-audit.png",
+        "docs/delivery/test-evidence/DG1/domain/round-3/screens/en-03-detail-audit.png",
+        "docs/delivery/test-evidence/DG1/domain/round-3/screens/ar-04-lead-derived-audit.png",
+        "docs/delivery/test-evidence/DG1/domain/round-3/screens/en-04-lead-derived-audit.png",
+        "docs/delivery/test-evidence/DG1/domain/round-3/02-unit-domain-focused.out.txt"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-001",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Still holds on f0baa87d0163560f. Live: dev.office tried active->closed twice, status-only and mixed with a rename. Both returned 422 urn:mth:problem:invalid-transition with the detail 'Closure requires the G6 (Sustain) business approval with validated benefits, which is not available in this release.' The row stayed active|2|original name, no audit row was written (2 -> 2), and the database has zero closed transformations (A3-A6). The rendered edit form offers only active/on_hold (نشط/معلّق; Active/On hold), and the hint names the G6 business approval in both languages (D3/D4). The integration suite 'closure is not a status edit' (active, on_hold and draft -> closed) passed 3/3 in all three full runs. The workflows scaffold still names only G1-G6 (CLOSURE_GATE = G6) and states that these are not DG0-DG7.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-3/07-live-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-3/screens/ar-02-edit-no-closed.png",
+        "docs/delivery/test-evidence/DG1/domain/round-3/screens/en-02-edit-no-closed.png",
+        "docs/delivery/test-evidence/DG1/domain/round-3/05-integration-run3.out.txt"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-002",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Still holds. apps/api/src/modules has eleven modules, including workflows, kpi and reporting, each with index.ts and its own suite, and the unit run passes 235/235. D-048 and D-050 are present in decisions.md. REQ-S16-003's note maps the six §16 modules to directories and suites. REQ-S16-004's note discloses that DG1 delivers the persistence part and that the A19 restore drill belongs to REQ-S19-012/REQ-S20-019 (DG7). Neither row overclaims.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-3/08-static-checks.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-3/09-register-rows.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-3/01-unit-full.out.txt"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-105",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Still holds. workflows/, kpi/ and reporting/ each contain index.ts plus workflows.test.ts, kpi.test.ts and reporting.test.ts, all green in the 235/235 unit run on this candidate. The scaffolds compute nothing and register no route.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-3/08-static-checks.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-3/01-unit-full.out.txt"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-003",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Still holds. glossary.test.ts passes, including 'uses the glossary role, record and methodology names'. No 'مبادرة/مبادرات التحوّل' conflation and no 'معياري' appears anywhere in the ar catalogues. The rendered Arabic detail uses التحوّل (D5/D6). The new F-DG1-008 role labels reuse the glossary role terms (الراعي التنفيذي، قائد التحوّل، المالك التشغيلي للأعمال، قائد مسار العمل، الإدارة المالية / مكتب القيمة، مكتب التحوّل). The glossary still marks its Arabic terms as proposals pending a Mobily Arabic-language owner, which is honest.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-3/02-unit-domain-focused.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-3/08-static-checks.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-3/07-live-scenario.out.txt",
+        "docs/analysis/glossary.md"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-004",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Still holds, and F-DG1-115 introduces no regression in the real user outcome. dev.lead created a record (201), read it (200) and opened it in both languages with the record as the heading (E0). The derived assignment is TL at transformation scope, linked to its source grant (B3), and TL holds no gate.* permission (B4). dev.lead still gets 404 on a record it did not create (B5). The F-DG1-115 race suite (revoke-first refused, create-first cascaded, partial revoke, non-source authority) passed 4/4 in all three full runs.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-3/07-live-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-3/screens/ar-04-lead-derived-audit.png",
+        "docs/delivery/test-evidence/DG1/domain/round-3/screens/en-04-lead-derived-audit.png",
+        "docs/delivery/test-evidence/DG1/domain/round-3/05-integration-run3.out.txt"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-006",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Still holds. pnpm openapi:lint reports 'OpenAPI 3.1.1, 33 operations', and the file has 33 operationIds. The register uses one transition contract (422 invalid-transition) everywhere, now including REQ-PB-009. REQ-S16-001 still states honestly that the worker-stop criterion rests on process separation plus the round-1 manual check. apps/worker, apps/api/src/main.ts and deploy/compose are unchanged since f32c705, so that manual check still applies.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-3/08-static-checks.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-3/09-register-rows.out.txt",
+        "docs/delivery/requirements.csv"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-207",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Still holds. REQ-S19-006 cites 33 operations and a 9/9 contract suite. On this candidate the contract suite ran 9/9 in each of my three full integration runs, including getBrandingTokens. REQ-S16-003's literal acceptance is met by the built modules (D-048).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-3/05-integration-run3.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-3/09-register-rows.out.txt"
+      ]
+    }
+  ]
+}

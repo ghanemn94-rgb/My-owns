@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG1-009",
+      "stage_id": "DG1",
+      "requirement": "REQ-S19-004",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The integration project is non-deterministic on the frozen candidate: 2 of 3 full runs exited 1 (one unhandled 57P01 from the new F-DG1-115 race suite, one a12 'denied create wrote a row' false red), because vitest ignores the project-level fileParallelism:false",
+      "reproduction": "Disposable clone of commit 5204179 (candidate f0baa87d0163560f), node_modules copied from the repository, PostgreSQL 16.13 throwaway cluster per run. bash docs/delivery/test-evidence/DG1/domain/round-3/03-integration-run.sh, three times. Run 1: 197/197 passed but vitest exit 1 on an Uncaught Exception 'terminating connection due to administrator command' (FATAL 57P01, database mth_f115_*), attributed to apps/api/test/integration/access-derived-race.test.ts: its afterAll drops the scratch database WITH (FORCE) (packages/db/test/global-setup.ts dropScratchDatabase) while a pooled client without an error listener is still connected. Run 2: 196/197, tests/qa/integration/a12-cross-scope.test.ts 'create is denied outside the caller's scope' failed with 'a denied create wrote a row: expected 33 to be 30'. Run 3: 197/197, exit 0. The a12 file alone, five times on fresh clusters: 14/14 each (06-a12-isolated.out.txt). Root cause of run 2: vitest.config.ts sets fileParallelism:false inside the integration project's test block, but vitest 3.2.4 lists fileParallelism in NonProjectOptions (node_modules/vitest/dist/chunks/reporters.d.*.d.ts: type ProjectConfig = Omit<InlineConfig, NonProjectOptions | ...>), so files still run concurrently (run 2: summed test time 24.4 s > wall time 17.0 s); a12 counts every transformation row in the shared per-run database (startApi() without a scratch database), so creates by a concurrently running file are counted as if the denied creates had written them.",
+      "expected": "A required DG1 check (the integration project behind REQ-S19-004, REQ-S19-006 and REQ-DLV-033) gives the same verdict on the same candidate: either files really run serially (fileParallelism at the root config, or a per-project pool option that vitest honours), or suites that count rows on the shared database count only their own rows (or use a scratch database); and scratch databases are dropped only after every pool client has ended, or clients carry an error listener so a forced drop cannot surface as an uncaught exception.",
+      "actual": "The product behaviour is correct in every run: the five denied creates each returned 403/404 problem+json (asserted before the count), a refused create runs inside one transaction that rolls back (apps/api/src/modules/transformations/routes.ts: authorization precedes the insert), the a12 file is green in isolation 5/5, and migrations (8/8, migrate+catalogue 16/16), closure refusal (3/3), F-DG1-115 race (4/4) and contract (9/9) pass in all three runs. But a red integration run on an unchanged candidate cannot be told apart from a real access-control regression without manual triage like this, and the a12 assertion that guards 'a denied create writes nothing' is the one that flakes.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-3/03-integration-run1.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-3/04-integration-run2.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-3/05-integration-run3.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-3/03-integration-run.sh",
+        "docs/delivery/test-evidence/DG1/domain/round-3/06-a12-isolated.sh",
+        "docs/delivery/test-evidence/DG1/domain/round-3/06-a12-isolated.out.txt",
+        "vitest.config.ts",
+        "tests/qa/integration/a12-cross-scope.test.ts",
+        "apps/api/test/integration/access-derived-race.test.ts",
+        "packages/db/test/global-setup.ts"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-3/domain-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T09:45:00Z",
+          "status": "OPEN",
+          "note": "Reported by domain-reviewer in DG1 round 3 as a Medium, non-mandatory test-reliability defect (no product defect found; triaged to harness concurrency). The a12 suite itself is qa-verifier-authored; the harness, global setup and vitest config are the fix surface."
+        }
+      ]
+    }
+  ]
+}
