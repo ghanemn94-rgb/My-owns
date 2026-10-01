@@ -1,0 +1,20 @@
+# Disposable copy of 2c22c27 + repro-ratelimit/zz-review-ratelimit.test.ts; disposable PG16 127.0.0.1:54731; node v22.22.2; 2026-10-01T20:37:32Z
+# cmd: npx vitest run --project integration apps/api/test/integration/zz-review-ratelimit.test.ts
+
+ RUN  v3.2.4 /var/tmp/mth-run.3mVNuW/claude-0/review-sec-bu
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mupzwucn_eada14ef; applied 8 migrations to a fresh database
+stdout | apps/api/test/integration/zz-review-ratelimit.test.ts > SEC-3 global rate limit is bypassed by rotating an invalid session cookie > control: without a cookie the 4th request from one IP is 429
+SEC-3 control (no cookie, same IP): 401,401,401,429,429,429
+
+stdout | apps/api/test/integration/zz-review-ratelimit.test.ts > SEC-3 global rate limit is bypassed by rotating an invalid session cookie > bypass: 50 requests from the SAME IP with a fresh random 43-char cookie each are never 429
+SEC-3 bypass (random cookie per request, same IP) status counts: {"401":50}
+
+ ✓ |integration| apps/api/test/integration/zz-review-ratelimit.test.ts (2 tests) 146ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  20:37:33
+   Duration  1.84s (transform 462ms, setup 0ms, collect 980ms, tests 146ms, environment 0ms, prepare 58ms)
+
+# exit=0

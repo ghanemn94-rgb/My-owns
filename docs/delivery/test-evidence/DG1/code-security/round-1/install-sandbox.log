@@ -1,0 +1,18 @@
+# cmd: tools/deps/tests/install-sandbox.test.sh (disposable clone, offline sandbox, no registry)
+# date: 2026-10-01T20:23:54Z bwrap: bubblewrap 0.9.0 pnpm: 10.33.0
+PASS  AC-1 write to /etc is refused read-only under the sandbox
+FAIL  AC-1 (effect) create did not populate node_modules in the target tree
+FAIL  AC-2 (setup) the non-allow-listed install failed, so the negative case would be vacuous
+FAIL  AC-2 (setup) the allow-listed install itself failed
+PASS  AC-3 frozen install without a committed lockfile fails non-zero
+FAIL  AC-3 (setup) seeding a lockfile via create failed, so the would-change case would be vacuous
+PASS  AC-4 a missing bubblewrap exits 65 (BLOCKED), never an unsandboxed install
+PASS  AC-5 control paths (.git, tools/gates) are read-only inside the sandbox
+PASS  AC-6 a host environment variable (secret) does not cross into the sandbox
+PASS  AC-6 (control) PATH is set inside the sandbox (install is usable)
+PASS  AC-7 control-path escape (parent-rename, installer append, delivery write) is refused; real repo unchanged
+PASS  AC-8 agent-config surfaces (CLAUDE.local.md, .mcp.json, nested CLAUDE.md, .vscode) cannot be created
+FAIL  AC-9 (setup) the allow-listed install failed, so the case would be vacuous
+FAIL  AC-10 (setup) the allow-listed workspace install failed, so the case would be vacuous
+install-sandbox acceptance: 8 passed, 6 failed
+# exit=1

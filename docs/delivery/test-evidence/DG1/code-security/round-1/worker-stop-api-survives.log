@@ -1,0 +1,16 @@
+# cmd: ADMIN=postgresql://postgres@127.0.0.1:54731/postgres API_PORT=3197 worker-stop-api-survives.sh (built clone 2c22c27, node v22.22.2, 2026-10-01T20:35:17Z)
+NOTICE:  database "mth_s16" does not exist, skipping
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applied 8 migration(s)
+api pid=36 worker pid=37 (separate processes: yes)
+worker alive before stop
+readyz before worker stop: {"status":"ready","checks":{"database":"ok","migrations":"ok"}} 200
+worker exit status after SIGTERM: 0
+api process alive after worker stop
+healthz after worker stop: 200
+readyz after worker stop: {"status":"ready","checks":{"database":"ok","migrations":"ok"}} 200
+--- worker.log tail
+{"level":"info","msg":"mth-worker started","timeZone":"Asia/Riyadh"}
+{"level":"info","msg":"mth-worker shutting down","signal":"SIGTERM"}
+RESULT PASS
+# exit=0

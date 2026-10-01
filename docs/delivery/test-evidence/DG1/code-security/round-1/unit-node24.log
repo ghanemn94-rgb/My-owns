@@ -1,0 +1,52 @@
+# cmd: pnpm test
+# node: v24.21.0 cwd: /var/tmp/mth-run.3mVNuW/claude-0/review-sec date: 2026-10-01T20:20:45Z
+
+> mobily-transformation-hub@0.1.0 test /var/tmp/mth-run.3mVNuW/claude-0/review-sec
+> vitest run --project unit-node --project unit-web
+
+
+ RUN  v3.2.4 /var/tmp/mth-run.3mVNuW/claude-0/review-sec
+
+ ✓ |unit-web| src/components/States.test.tsx (15 tests) 1495ms
+   ✓ explicit states in en > stale is labelled Stale with the last successful load time, never shown as current  851ms
+ ✓ |unit-web| src/app/app.test.tsx (16 tests) 2517ms
+   ✓ bilingual shell > shows all fourteen areas to an administrator  344ms
+   ✓ bilingual shell > hides Administration from a Workstream Lead, and the admin route shows no-permission  340ms
+   ✓ transformations > lists transformations with a sortable code column and removable filter chips  491ms
+ ✓ |unit-web| src/lib/lib.test.ts (18 tests) 43ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts (15 tests) 24ms
+ ✓ |unit-web| src/i18n/glossary.test.ts (8 tests) 8ms
+ ✓ |unit-web| src/styles/styles.test.ts (6 tests) 19ms
+ ✓ |unit-web| src/i18n/i18n.test.ts (11 tests) 39ms
+ ✓ |unit-node| apps/api/src/server.test.ts (6 tests) 335ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (132 tests) 2748ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  1214ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)  667ms
+ ✓ |unit-node| apps/api/src/modules/workflows/workflows.test.ts (5 tests) 150ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx (21 tests) 10282ms
+   ✓ after create (F-DG1-004) > shows the created record when the server lets the creator read it  882ms
+   ✓ after create (F-DG1-004) > explains, in English, that the draft was created but cannot be opened (server 404), instead of 'Not found'  730ms
+   ✓ after create (F-DG1-004) > explains the same in Arabic (RTL), using the glossary term for Transformation  644ms
+   ✓ audit trail changes (F-DG1-005) > English: field and value labels, not raw keys or enum codes  523ms
+   ✓ derived creator assignment on the audit trail (F-DG1-008) > an action the catalogue does not know stays readable and is explicitly marked (en and ar)  319ms
+   ✓ effective permissions refresh after create (F-DG1-210) > English: Edit, Archive and the audit trail appear after create, without a reload  1314ms
+   ✓ effective permissions refresh after create (F-DG1-210) > Arabic (RTL): the same controls and the audit trail appear after create, without a reload  560ms
+   ✓ effective permissions refresh after create (F-DG1-210) > does not over-grant: if the refreshed server answer adds nothing, Archive and the audit trail stay hidden  531ms
+   ✓ effective permissions refresh after create (F-DG1-210) > a failed /me refresh never blocks the navigation; the UI stays fail-safe (no controls offered)  3324ms
+ ✓ |unit-node| apps/api/src/modules/kpi/kpi.test.ts (5 tests) 197ms
+ ✓ |unit-node| packages/config/src/load.test.ts (17 tests) 82ms
+ ✓ |unit-node| packages/design-tokens/src/tokens.test.ts (15 tests) 57ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reporting.test.ts (4 tests) 134ms
+ ✓ |unit-node| apps/api/src/modules/admin/branding.test.ts (4 tests) 109ms
+ ✓ |unit-node| packages/db/src/seed.test.ts (4 tests) 13ms
+ ✓ |unit-node| apps/api/src/modules/platform/platform.test.ts (7 tests) 16ms
+ ✓ |unit-node| apps/api/src/modules/access/rules.test.ts (12 tests) 29ms
+ ✓ |unit-node| packages/shared/src/schemas/schemas.test.ts (2 tests) 14ms
+ ✓ |unit-node| apps/api/src/modules/transformations/transitions.test.ts (2 tests) 6ms
+
+ Test Files  21 passed (21)
+      Tests  325 passed (325)
+   Start at  20:20:46
+   Duration  16.30s (transform 3.84s, setup 0ms, collect 13.76s, tests 18.32s, environment 5.51s, prepare 2.60s)
+
+# exit=0

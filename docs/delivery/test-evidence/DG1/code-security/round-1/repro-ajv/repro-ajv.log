@@ -1,0 +1,19 @@
+# Disposable copy of candidate 2c22c27 with repro-ajv/zz-ajv-planted.ts planted at apps/api/src/modules/transformations/ (never in the candidate tree)
+# date: 2026-10-01T20:29:34Z node: v22.22.2
+## 1) candidate's own fileViolations() on the planted file + actually importing it:
+LINT violations for planted file: []
+child_process.execFileSync reachable: function
+deep import of access/policy.ts exports: authorize,businessUnitAncestry,denialOf,holdsAnywhere,loadGrants,organizationsWith,requireAction,requireRead,resolveTarget,scopeFilter,targetFor
+# exit=0
+## 2) the real ADR-0002 architecture suite with the plant present:
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  748ms
+ Test Files  1 passed (1)
+      Tests  132 passed (132)
+# exit=0
+## 3) eslint, @mth/api typecheck and prettier on the planted file:
+# eslint exit=0
+# tsc exit=0
+Checking formatting...
+[warn] apps/api/src/modules/transformations/zz-ajv-planted.ts
+[warn] Code style issues found in the above file. Run Prettier with --write to fix.
+# prettier exit=1

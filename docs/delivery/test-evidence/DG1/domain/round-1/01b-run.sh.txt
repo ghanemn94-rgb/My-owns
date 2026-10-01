@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -uo pipefail
+SRC="$TMPDIR/review-dg1"; OUT="$1"; cd "$SRC"
+PGBIN=/usr/lib/postgresql/16/bin; PG_PORT=54391; WORK="$TMPDIR/scn/work"; rm -rf "$WORK"; mkdir -p "$WORK"; chmod 777 "$WORK"
+as_pg() { if [ "$(id -u)" = "0" ]; then unshare --user --map-user=1000 --map-group=1000 "$@"; else "$@"; fi; }
+cleanup() { [ -n "${API_PID:-}" ] && kill $API_PID 2>/dev/null; [ -n "${WPID:-}" ] && kill $WPID 2>/dev/null; [ -n "${PG_PID:-}" ] && kill -INT $PG_PID 2>/dev/null; sleep 2; }
+trap cleanup EXIT
+echo "== env: $(date -u +%FT%TZ) node $(node -v) $($PGBIN/postgres --version) commit $(git rev-parse HEAD)"
+as_pg $PGBIN/initdb -D "$WORK/pg" -U postgres --auth=trust >/dev/null
+as_pg $PGBIN/postgres -D "$WORK/pg" -c unix_socket_directories='' -c listen_addresses=127.0.0.1 -p $PG_PORT -c fsync=off >"$WORK/pg.log" 2>&1 &
+PG_PID=$!
+ADMIN="postgresql://postgres@127.0.0.1:${PG_PORT}/postgres"
+for _ in $(seq 1 60); do psql "$ADMIN" -qAtc "select 1" >/dev/null 2>&1 && break; sleep 0.5; done
+psql "$ADMIN" -q -v ON_ERROR_STOP=1 -c "CREATE ROLE mth_owner NOLOGIN" -c "CREATE ROLE mth_app NOLOGIN" -c "CREATE DATABASE mth OWNER mth_owner"
+role_url() { node -e 'const u=new URL(process.argv[1]);u.pathname="/mth";u.searchParams.set("options","-c role="+process.argv[2]);console.log(u.toString())' "$ADMIN" "$1"; }
+export NODE_ENV=development AUTH_MODE=dev PORT=3000 APP_BASE_URL=http://localhost:3000 LOG_LEVEL=warn
+export DATABASE_OWNER_URL="$(role_url mth_owner)" DATABASE_URL="$(role_url mth_app)" AUTH_RATE_LIMIT_PER_MINUTE=1000 RATE_LIMIT_PER_MINUTE=10000
+echo "== migrate (fresh db)"; node packages/db/dist/cli.js migrate; echo "exit=$?"
+echo "== migrate again (no-op)"; node packages/db/dist/cli.js migrate; echo "exit=$?"
+psql "postgresql://postgres@127.0.0.1:${PG_PORT}/mth" -qAtc "select count(*)||' migrations recorded' from schema_migration"
+echo "== seed-dev (SYNTHETIC)"; node packages/db/dist/cli.js seed-dev; echo "exit=$?"
+node apps/api/dist/main.js >"$WORK/api.log" 2>&1 & API_PID=$!
+node apps/worker/dist/main.js >"$WORK/worker.log" 2>&1 & WPID=$!
+for _ in $(seq 1 60); do curl -fsS http://localhost:3000/readyz >/dev/null 2>&1 && break; sleep 0.5; done
+echo "== /healthz: $(curl -s http://localhost:3000/healthz)"; echo "== /readyz: $(curl -s -w ' %{http_code}' http://localhost:3000/readyz)"
+echo "== index.html head:"; curl -s http://localhost:3000/ | head -c 800; echo
+echo; echo "== API probe"; node $TMPDIR/scn/probe.mjs; echo "probe exit=$?"
+sleep 3
+echo "== outbox/ledger after worker run:"; psql "postgresql://postgres@127.0.0.1:${PG_PORT}/mth" -qAtc "select event_type, count(*), count(published_at) from outbox_event group by 1" 2>&1
+psql "postgresql://postgres@127.0.0.1:${PG_PORT}/mth" -qAtc "select table_name from information_schema.tables where table_schema='public' order by 1" | tr '\n' ' '; echo
+echo; echo "== worker stop test: SIGTERM worker pid $WPID"
+kill -TERM $WPID; wait $WPID; echo "worker exit=$?"; WPID=
+sleep 1; echo "API alive: $(kill -0 $API_PID && echo yes)"; echo "/readyz after worker stopped: $(curl -s -w ' %{http_code}' http://localhost:3000/readyz)"
+echo "worker log tail:"; tail -5 "$WORK/worker.log"
+echo; echo "== AR/EN screens"; NODE_PATH="$SRC/node_modules" node --input-type=module -e "process.chdir('$SRC')" ; (cd "$SRC" && cp $TMPDIR/scn/screens.mjs ./zz-screens.mjs && PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers node zz-screens.mjs "$OUT"; echo "screens exit=$?"; rm -f zz-screens.mjs)
+echo "== api.log warnings/errors:"; grep -c '"level":[56]0' "$WORK/api.log"

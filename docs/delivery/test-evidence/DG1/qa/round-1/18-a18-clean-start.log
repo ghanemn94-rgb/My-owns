@@ -1,0 +1,102 @@
+# cmd: e2e/clean-start/a18-clean-start.sh --commit 37ec37453a5e8ce8bebba102a85df4f5c4b0ef8b --install
+# cwd: <clone of candidate 37ec374> ; node v22.22.2 ; date 2026-10-01T20:55:47Z
+
+==> [   0.0 s] environment
+  date (UTC): 2026-10-01T20:55:47Z; node v22.22.2; pnpm 10.33.0; postgres (PostgreSQL) 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
+
+==> [   0.4 s] 1. fresh checkout of 37ec37453a5e8ce8bebba102a85df4f5c4b0ef8b
+Note: switching to '37ec37453a5e8ce8bebba102a85df4f5c4b0ef8b'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+  PASS checked-out commit: 37ec37453a5e8ce8bebba102a85df4f5c4b0ef8b
+  PASS working tree clean: 
+  PASS no build output or node_modules in the fresh checkout
+
+==> [   1.6 s] 2. dependencies
+  pnpm install --frozen-lockfile --offline
+ WARN  Failed to create bin at /var/tmp/mth-run.7AGPgI/claude-0/qa-a18.URpwTY/src/apps/api/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/var/tmp/mth-run.7AGPgI/claude-0/qa-a18.URpwTY/src/apps/api/node_modules/@mth/db/dist/cli.js'
+ WARN  Failed to create bin at /var/tmp/mth-run.7AGPgI/claude-0/qa-a18.URpwTY/src/apps/worker/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/var/tmp/mth-run.7AGPgI/claude-0/qa-a18.URpwTY/src/apps/worker/node_modules/@mth/db/dist/cli.js'
+Done in 2.2s using pnpm v10.33.0
+
+==> [   3.9 s] 3. build (documented: pnpm -r build)
+apps/worker build: Done
+apps/api build: Done
+  PASS build outputs present
+
+==> [  19.5 s] 4. fresh PostgreSQL, roles and empty database (docs/operations: mth_owner owns, mth_app runtime)
+
+==> [  20.2 s] 5. migrate the fresh database (documented: mth-db status / migrate)
+  | pending  0001_identity_access.sql
+  | pending  0002_transformation.sql
+  | pending  0003_audit_event.sql
+  | pending  0004_outbox_jobs.sql
+  | pending  0005_seed_roles_permissions.sql
+  | pending  0006_pgboss_schema_v25.sql
+  | pending  0007_oidc_login_browser_binding.sql
+  | pending  0008_scoped_assignment_derived_from.sql
+  | mth-db status: 8 pending
+  | mth-db migrate: applying 0001_identity_access.sql
+  | mth-db migrate: applying 0002_transformation.sql
+  | mth-db migrate: applying 0003_audit_event.sql
+  | mth-db migrate: applying 0004_outbox_jobs.sql
+  | mth-db migrate: applying 0005_seed_roles_permissions.sql
+  | mth-db migrate: applying 0006_pgboss_schema_v25.sql
+  | mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+  | mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+  | mth-db migrate: applied 8 migration(s)
+  | mth-db migrate: database is up to date
+  | applied  0001_identity_access.sql
+  | applied  0002_transformation.sql
+  | applied  0003_audit_event.sql
+  | applied  0004_outbox_jobs.sql
+  | applied  0005_seed_roles_permissions.sql
+  | applied  0006_pgboss_schema_v25.sql
+  | applied  0007_oidc_login_browser_binding.sql
+  | applied  0008_scoped_assignment_derived_from.sql
+  | mth-db status: up to date (8 applied)
+  PASS status on the empty database (3 = pending): 3
+  PASS migrate exit: 0
+  PASS second migrate exit (no-op): 0
+  PASS status after migrate (0 = up to date): 0
+  PASS applied migrations recorded = migration files: 8
+
+==> [  21.2 s] 6. start api + worker in PRODUCTION configuration (AUTH_MODE=oidc; IdP not reachable offline)
+
+==> [  21.8 s] 7. health and readiness
+  PASS GET /healthz status: 200
+  body: {"status":"ok"}
+  PASS healthz body: ok
+  PASS GET /readyz status: 200
+  body: {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+  PASS readyz body: ready/ok/ok
+  PASS GET / serves the SPA: 200
+  PASS SPA index has lang="ar" dir="rtl"
+  PASS dev login absent in production (404): 404
+  PASS GET /api/v1/me without a session: 401
+  PASS worker running (pid alive after 2 s)
+
+==> [  23.9 s] 8. restart: the API comes back ready against the same database
+  PASS GET /readyz after restart: 200
+
+==> [  24.5 s] 9. negative: an UNMIGRATED database is live but not ready
+  PASS GET /healthz (liveness) on an unmigrated database: 200
+  PASS GET /readyz on an unmigrated database: 503
+  body: {"status":"not_ready","checks":{"database":"ok","migrations":"pending"}}
+
+==> [  25.1 s] done
+A18 CLEAN START: PASS (commit 37ec37453a5e8ce8bebba102a85df4f5c4b0ef8b; install step: pnpm install --frozen-lockfile --offline; total 25.1 s)
+# exit_status: 0

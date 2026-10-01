@@ -1,0 +1,148 @@
+== env: 2026-10-01T20:25:31Z node v22.22.2 postgres (PostgreSQL) 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) commit 2c22c275ea28d1e848c0f225ceda56b47b747cac
+== migrate (fresh db)
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applied 8 migration(s)
+exit=0
+== migrate again (no-op)
+mth-db migrate: database is up to date
+exit=0
+8 migrations recorded
+== seed-dev (SYNTHETIC)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+exit=0
+== /healthz: {"status":"ok"}
+== /readyz: {"status":"ready","checks":{"database":"ok","migrations":"ok"}} 200
+== index.html head:
+<!doctype html>
+<!-- Arabic RTL is the default; /locale-boot.js applies the stored language before first paint (ADR-0009). -->
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light" />
+    <title>Mobily Transformation Hub</title>
+    <script src="/locale-boot.js"></script>
+    <script type="module" crossorigin src="/assets/index-PYaLHjCH.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-react-CsJgKse7.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-3XePDs2p.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-tanstack-xE1K3O-G.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-i18n
+
+== API probe
+PASS unauthenticated GET /me is 401 (problem+json) :: 401 application/problem+json; charset=utf-8
+PASS dev.office dev-login 204 :: 204
+me(office): {"roles":[{"id":"01a0f924-cd0c-776e-9fd2-51cf2bf585a3","organizationId":"01920000-0000-7000-9000-000000000001","userId":"01920000-0000-7000-9000-000000000202","roleCode":"TO","scope":{"type":"organization","id":"01920000-0000-7000-9000-000000000001"},"effectiveFrom":"2026-10-01T20:25:33.679Z","effectiveTo":null,"reason":"mth-db seed-dev: SYNTHETIC development data","grantedBy":"01920000-0000-7000-
+PASS TO creates end-to-end transformation 201 :: 201 {"id":"01a0f924-d2b4-7669-8b5d-f31b9feea325","organizationId":"01920000-0000-7000-9000-000000000001","businessUnitId":"01920000-0000-7000-9000-000000000102","code":"TR-0001","name":"Roaming revenue uplift (synthetic)","description":null,"mode":"end_to_end","entryPhase":null,"standaloneDeliverableTyp
+PASS defaults: timezone Asia/Riyadh, currency SAR, phase diagnose, status draft :: Asia/Riyadh SAR diagnose draft
+PASS modular entry at selected phase + configurable tz/currency :: 201 design Europe/London USD
+PASS modular without entryPhase is refused (400/422) :: 400
+PASS PATCH without If-Match is 428 :: 428
+PASS draft -> closed refused 422 :: 422 {"type":"urn:mth:problem:invalid-transition","title":"Invalid transition","status":422,"detail":"A transformation cannot be closed by a status edit. Closure requires the G6 (Sustain) business approval with validated benefits, which is not available in this release.","code":"invalid_transition","requ
+PASS draft -> active 200 :: 200 v2
+PASS stale If-Match is 409/412 :: 409
+PASS active -> closed refused 422 (closure needs product gate G6) :: 422 {"type":"urn:mth:problem:invalid-transition","title":"Invalid transition","status":422,"detail":"A transformation cannot be closed by a status edit. Closure requires the G6 (Sustain) business approval with validated benefits, which is not available in this release.","code":"invalid_transition","requestId":"01a0f924-d31c-7235-9d71-795bdb083ac4"}
+PASS record unchanged after refused close (status active, same version) :: active v2
+PASS on_hold -> closed refused 422 :: 200 422
+PASS close + rename in one PATCH refused atomically :: 422 name=Roaming revenue uplift (synthetic)
+PASS refusal message does not claim engineering DG7 or a real approval :: {"type":"urn:mth:problem:invalid-transition","title":"Invalid transition","status":422,"detail":"A transformation cannot be closed by a status edit. Closure requires the G6 (Sustain) business approval
+PASS audit trail: one event per successful mutation, none for refused close :: ["transformation.update","transformation.update","transformation.create"]
+PASS TO (org scope) creates in SYN-FIN :: 201
+PASS TL (SYN-RETAIL) creates in own BU :: 201
+PASS TL cannot read out-of-scope SYN-FIN record (404, no existence leak) :: 404
+PASS TL cannot create in SYN-FIN (403/404) :: 404
+PASS TL list excludes SYN-FIN record and includes own :: n=1
+PASS access/technical admin sees no business records :: 200 {"items":[],"nextCursor":null}
+PASS admin cannot read a transformation (403/404) :: 404
+PASS user without roles: list 403 or empty :: 200
+PASS auditor reads but cannot update (403) :: 200 403
+PASS mutation without CSRF token refused 403 :: 403
+PASS cursor pagination walks every row exactly once in order :: rows=7 pages=4
+PASS cursor reused with a different sort/filter is rejected 400 :: 400
+PASS tampered cursor rejected 400 :: 400
+PASS limit above maximum rejected 400 :: 400
+branding: {"provenance":"provisional","tokens":[{"name":"brand.primary","value":"#0078FF","purpose":"Primary accents and selected elements","provisional":true},{"name":"brand.deep","value":"#003B73","purpose":"Stronger blue surfaces and text where suitable","provisional":true},{"name":"surface.page","value":"#F5F8FC","purpose":"Page background","provisional":true},{"name":"surface.card","value":"#FFFFFF","purpose":"Content surfaces","provisional":true},{"name":"text.primary","value":"#142438","purpose":"Main text","provisional":true},{"name":"text.secondary","value":"#526174","purpose":"Secondary text","provisional":true},{"name":"border.default","value":"#DCE5EF","purpose":"Dividers and field boundaries","provisional":true}]}
+PASS branding tokens: 7 seeded values, provenance=provisional :: 200 n=7
+PASS PUT /me/preferences without If-Match is 428 :: 428
+PASS PUT /me/preferences persists locale (en) :: 200 en
+PASS locale reset to ar :: 200
+
+SUMMARY pass=34 fail=0
+{"tId":"01a0f924-d2b4-7669-8b5d-f31b9feea325"}
+probe exit=0
+== outbox/ledger after worker run:
+transformation.created|7|7
+actor_display app_user audit_event business_unit business_unit_closure delegation idempotency_record oidc_login_state organization outbox_event permission processed_message role role_permission schema_migration scope_node scoped_assignment session transformation user_identity 
+
+== worker stop test: SIGTERM worker pid 87
+worker exit=0
+API alive: yes
+/readyz after worker stopped: {"status":"ready","checks":{"database":"ok","migrations":"ok"}} 200
+worker log tail:
+{"level":"info","msg":"mth-worker started","timeZone":"Asia/Riyadh"}
+{"level":"info","msg":"outbox relay","published":7,"failed":0}
+{"level":"info","msg":"job handled","queue":"transformation.created","jobId":"01a0f924-d2bc-72fa-80ce-ce76b19c32b4","outcome":"done"}
+{"level":"info","msg":"mth-worker shutting down","signal":"SIGTERM"}
+
+== AR/EN screens
+[
+  {
+    "user": "dev.office",
+    "locale": "ar-SA",
+    "loginAttrs": {
+      "lang": "ar",
+      "dir": "rtl",
+      "text": "منصة موبايلي للتحوّل\nمؤقت\nشعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة.\nEnglish\nتسجيل الدخول\n\nسجّل الدخول بحسابك المؤسسي للمتابعة.\n\nتسجيل الدخول بالحساب المؤسسي\n\nستُحوَّل إلى مزوّد الهوية الخاص بجهتك.\n\nتسجيل دخول بيئة التطوير\n\n لوضع التطوير فقط: يسجّل دخول مستخدم اصطناعي مُعدّ مسبقًا. غير متاح في بيئة الإنتاج.\n\nاسم المستخدم الاصطناعي\nتسجيل الدخول (بيئة التطوير)\n\nالهوية البصرية مؤقتة: الشعار النصي والألوان بدائل مؤقتة وليست أصولًا رسمية لعلامة موبايلي."
+    },
+    "shell": {
+      "lang": "ar",
+      "dir": "rtl",
+      "text": "انتقل إلى المحتوى الرئيسي\nمنصة موبايلي للتحوّل\nمؤقت\nشعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة.\nEnglish\nSynthetic Transformation Office\nمؤسسة تطوير تجريبية (بيانات اصطناعية)\nتسجيل الخروج\nعملي\nالنظرة التنفيذية\nمخطط\nالتحوّلات\nالدليل والإجراءات\nمخطط\nالاستراتيجية ومؤشرات الأداء\nمخطط\nنموذج التشغيل المستهدف\nمخطط\nالمبادرات وخرائط الطريق\nمخطط\nالحوكمة\nمخطط\nالمخاطر والإجراءات\nمخطط\nالمنافع والمالية\nمخطط\nالتغيير والتبنّي\nمخطط\nالأدلة والتقارير\nمخطط\nالعمليات الاعتيادية والتحسين\nمخطط\n\nحول هذا المنتج\n\nمرحبًا، Synthetic Transformation Office\n\nإجراءاتك ومسوداتك ومراجعاتك ومواعيدك النهائية في مكان واحد.\n\nابدأ من هنا\n\nافتح سجل التحوّلات\n\nمخطط\n\nالإجراءات المسندة، والمسودات، والمراجعات، والاعتمادات، والتحديثات الناقصة، والمواعيد النهائية القادمة.",
+      "imgs": 2,
+      "font": "\"IBM Plex Sans Arabic\", \"IBM Plex Sans\", system-ui, sans-serif"
+    },
+    "list": {
+      "dir": "rtl",
+      "text": "انتقل إلى المحتوى الرئيسي\nمنصة موبايلي للتحوّل\nمؤقت\nشعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة.\nEnglish\nSynthetic Transformation Office\nمؤسسة تطوير تجريبية (بيانات اصطناعية)\nتسجيل الخروج\nعملي\nالنظرة التنفيذية\nمخطط\nالتحوّلات\nالدليل والإجراءات\nمخطط\nالاستراتيجية ومؤشرات الأداء\nمخطط\nنموذج التشغيل المستهدف\nمخطط\nالمبادرات وخرائط الطريق\nمخطط\nالحوكمة\nمخطط\nالمخاطر والإجراءات\nمخطط\nالمنافع والمالية\nمخطط\nالتغيير والتبنّي\nمخطط\nالأدلة والتقارير\nمخطط\nالعمليات الاعتيادية والتحسين\nمخطط\n\nحول هذا المنتج\n\nالتحوّلات\n\nالتحوّلات المسموح لك برؤيتها ضمن نطاق إسناداتك الوظيفية.\n\nتحوّل جديد\nبحث\nتطبيق\nالحالة\nمسودة – لم تُقدَّم\nنشط\nمعلّق\nمغلق\nالنمط\nالكل\nالنمط الشامل (من البداية إلى النهاية)\nالنمط الجزئي المرن (الدخول عند المرحلة المناسبة)\nالمرحلة\nالكل\nالتشخيص\nالتحديد (تحديد التوجّه)\nالتصميم\nالتعبئة (حشد الموارد والتهيئة للتنفيذ)\nالتحويل والتنفيذ\nتحقيق القيمة\nوحدة العمل\nالكل\nالمالية (اصطناعي) (SYN-FIN)\nالعمليات (اصطناعي) (SYN-OPS)\nالتجزئة (اصطناعي) (SYN-RETAIL)\nتضمين المؤرشفة\nالأعمدة\nالتحوّلات\nالرمز\nغير مرتّب\n\tالاسم\nغير مرتّب\n\tوحدة العمل\tالنمط\tالمرحلة\tالحالة\tآخر تحديث\nمرتّب تنازليًا\n\nTR-0007\tPaging 2 (synthetic)\tالتجزئة (اصطناعي) SYN-RETAIL\tالنمط الشامل (من البداية إلى النهاية)\tالتشخيص\t\nمسودة – لم تُقدَّم\n\t01‏/10‏/2026 23:25 Asia/Riyadh\nTR-0006\tPaging 1 (synthetic)\tالتجزئة (اصطناعي) SYN-RETAIL\tالنمط الشامل (من البداية إلى النهاية)\tالتشخيص\t\nمسودة – لم تُقدَّم\n\t01‏/10‏/2026 23:25 Asia/Riyadh\nTR-0005\tPaging 0 (synthetic)\tالتجزئة (اصطناعي) SYN-RETAIL\tالنمط الشامل (من البداية إلى النهاية)\tالتشخيص\t\nمسودة – لم تُقدَّم\n\t01‏/10‏/2026 23:25 Asia/Riyadh\nTR-0004\tLead's record (synthetic)\tالتجزئة (اصطناعي) SYN-RETAIL\tالنمط الشامل (من البداية إلى النهاية)\tالتشخيص\t\nمسودة – لم تُقدَّم\n\t01‏/10‏/2026 23:25 Asia/Riyadh\nTR-0003\tFinance BU record (synthetic)\tالمالية (اصطناعي) SYN-FIN\tالنمط الشامل (من البداية إلى النهاية)\tالتشخيص\t\nمسودة – لم تُقدَّم\n\t01‏/10‏/2026 23:25 Asia/Riyadh\nTR-0001\tRoaming revenue uplift (synthetic)\tالتجزئة (اصطناعي) SYN-RETAIL\tالنمط الشامل"
+    },
+    "fontsLoaded": [
+      "IBM Plex Sans Arabic",
+      "IBM Plex Sans"
+    ],
+    "foreignRequests": []
+  },
+  {
+    "user": "dev.auditor",
+    "locale": "en-US",
+    "loginAttrs": {
+      "lang": "ar",
+      "dir": "rtl",
+      "text": "منصة موبايلي للتحوّل\nمؤقت\nشعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة.\nEnglish\nتسجيل الدخول\n\nسجّل الدخول بحسابك المؤسسي للمتابعة.\n\nتسجيل الدخول بالحساب المؤسسي\n\nستُحوَّل إلى مزوّد الهوية الخاص بجهتك.\n\nتسجيل دخول بيئة التطوير\n\n لوضع التطوير فقط: يسجّل دخول مستخدم اصطناعي مُعدّ مسبقًا. غير متاح في بيئة الإنتاج.\n\nاسم المستخدم الاصطناعي\nتسجيل الدخول (بيئة التطوير)\n\nالهوية البصرية مؤقتة: الشعار النصي والألوان بدائل مؤقتة وليست أصولًا رسمية لعلامة موبايلي."
+    },
+    "shell": {
+      "lang": "en",
+      "dir": "ltr",
+      "text": "Skip to main content\nMobily Transformation Hub\nProvisional\nProvisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.\nالعربية\nSynthetic Auditor\nSynthetic Dev Organization\nSign out\nMy Work\nExecutive Overview\nPlanned\nTransformations\nPlaybook and Procedures\nPlanned\nStrategy and KPIs\nPlanned\nTarget Operating Model\nPlanned\nInitiatives and Roadmaps\nPlanned\nGovernance\nPlanned\nRisks and Actions\nPlanned\nBenefits and Finance\nPlanned\nChange and Adoption\nPlanned\nEvidence and Reports\nPlanned\nBAU and Improvement\nPlanned\nAdministration\n\nAbout this product\n\nWelcome, Synthetic Auditor\n\nYour actions, drafts, reviews and deadlines in one place.\n\nStart here\n\nOpen the transformations register\n\nPlanned\n\nAssigned actions, drafts, reviews, approvals, missing updates and upcoming deadlines.",
+      "imgs": 2,
+      "font": "\"IBM Plex Sans\", \"IBM Plex Sans Arabic\", system-ui, sans-serif"
+    },
+    "list": {
+      "dir": "ltr",
+      "text": "Skip to main content\nMobily Transformation Hub\nProvisional\nProvisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.\nالعربية\nSynthetic Auditor\nSynthetic Dev Organization\nSign out\nMy Work\nExecutive Overview\nPlanned\nTransformations\nPlaybook and Procedures\nPlanned\nStrategy and KPIs\nPlanned\nTarget Operating Model\nPlanned\nInitiatives and Roadmaps\nPlanned\nGovernance\nPlanned\nRisks and Actions\nPlanned\nBenefits and Finance\nPlanned\nChange and Adoption\nPlanned\nEvidence and Reports\nPlanned\nBAU and Improvement\nPlanned\nAdministration\n\nAbout this product\n\nTransformations\n\nTransformations you are allowed to see, scoped by your role assignments.\n\nSearch\nApply\nStatus\nDraft – not submitted\nActive\nOn hold\nClosed\nMode\nAny\nEnd-to-End\nModular\nPhase\nAny\nDiagnose\nDefine\nDesign\nMobilize\nTransform\nRealize\nBusiness unit\nAny\nSynthetic Finance (SYN-FIN)\nSynthetic Operations (SYN-OPS)\nSynthetic Retail (SYN-RETAIL)\nInclude archived\nColumns\nTransformations\nCode\nnot sorted\n\tName\nnot sorted\n\tBusiness unit\tMode\tPhase\tStatus\tLast updated\nsorted descending\n\nTR-0007\tPaging 2 (synthetic)\tSynthetic Retail SYN-RETAIL\tEnd-to-End\tDiagnose\t\nDraft – not submitted\n\t1 Oct 2026, 23:25 Asia/Riyadh\nTR-0006\tPaging 1 (synthetic)\tSynthetic Retail SYN-RETAIL\tEnd-to-End\tDiagnose\t\nDraft – not submitted\n\t1 Oct 2026, 23:25 Asia/Riyadh\nTR-0005\tPaging 0 (synthetic)\tSynthetic Retail SYN-RETAIL\tEnd-to-End\tDiagnose\t\nDraft – not submitted\n\t1 Oct 2026, 23:25 Asia/Riyadh\nTR-0004\tLead's record (synthetic)\tSynthetic Retail SYN-RETAIL\tEnd-to-End\tDiagnose\t\nDraft – not submitted\n\t1 Oct 2026, 23:25 Asia/Riyadh\nTR-0003\tFinance BU record (synthetic)\tSynthetic Finance SYN-FIN\tEnd-to-End\tDiagnose\t\nDraft – not submitted\n\t1 Oct 2026, 23:25 Asia/Riyadh\nTR-0001\tRoaming revenue uplift (synthetic)\tSynthetic Retail SYN-RETAIL\tEnd-to-End\tDiagnose\t\nOn hold\n\t1 Oct 2026, 23:25 Asia/Riyadh\nTR-0002\tModular TOM (synthetic)\tSynthetic Retail SYN-RETAIL\tModular\tDesign\t\nDraft – not submi"
+    },
+    "fontsLoaded": [
+      "IBM Plex Sans Arabic",
+      "IBM Plex Sans"
+    ],
+    "foreignRequests": []
+  }
+]
+screens exit=0
+== api.log warnings/errors:
+0

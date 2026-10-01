@@ -1,0 +1,40 @@
+# cmd: tests/qa/support/with-pg.sh bash /home/user/My-owns/docs/delivery/test-evidence/DG1/qa/round-1/26-schema-vs-dictionary.sh
+# cwd: <clone of candidate 37ec374> ; node v22.22.2 ; date 2026-10-01T21:03:23Z
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+mth-db migrate: applied 8 migration(s)
+MISSING-IN-DICTIONARY table actor_display
+DIFF app_user: db 13 cols, dictionary 8 | undocumented: version,created_at,updated_at,created_by,updated_by
+OK   audit_event: db 17 cols, dictionary 17
+DIFF business_unit: db 12 cols, dictionary 5 | undocumented: name_en,name_ar,version,created_at,updated_at,created_by,updated_by
+MISSING-IN-DICTIONARY table business_unit_closure
+DIFF delegation: db 17 cols, dictionary 12 | undocumented: version,created_at,updated_at,created_by,updated_by
+OK   idempotency_record: db 7 cols, dictionary 7
+OK   oidc_login_state: db 7 cols, dictionary 7
+DIFF organization: db 13 cols, dictionary 8 | undocumented: version,created_at,updated_at,created_by,updated_by
+OK   outbox_event: db 13 cols, dictionary 13
+DIFF permission: db 4 cols, dictionary 2 | undocumented: description_en,description_ar
+OK   processed_message: db 4 cols, dictionary 4
+DIFF role: db 12 cols, dictionary 5 | undocumented: name_en,name_ar,version,created_at,updated_at,created_by,updated_by
+OK   role_permission: db 3 cols, dictionary 3
+DIFF schema_migration: db 5 cols, dictionary 4 | undocumented: name
+MISSING-IN-DICTIONARY table scope_node
+DIFF scoped_assignment: db 19 cols, dictionary 14 | undocumented: version,created_at,updated_at,created_by,updated_by
+OK   session: db 13 cols, dictionary 13
+DIFF transformation: db 23 cols, dictionary 18 | undocumented: name,created_at,created_by,updated_at,updated_by
+OK   user_identity: db 7 cols, dictionary 7
+DOCUMENTED-NOT-IN-DB table pg
+SCHEMA-VS-DICTIONARY: 12 difference(s)
+# exit_status: 1
+# ---- qa-verifier analysis of the 12 reported differences (manual reading of docs/architecture/data-dictionary.md):
+# * version/created_at/updated_at/created_by/updated_by: documented once under "Global rules" (Concurrency, Row stamps)
+#   -> parser artefact, NOT a gap.
+# * name_en/name_ar, description_en/description_ar: documented as combined rows ("| name_en / name_ar |") -> parser artefact.
+# * schema_migration.name and transformation.name: documented; the probe's header filter skipped the word "name" -> artefact.
+# * "DOCUMENTED-NOT-IN-DB table pg": the "## pg-boss schema (`pgboss.*`)" section (not in schema public) -> artefact.
+# * REAL GAP: three schema objects created by the migrations are not documented in data-dictionary.md or erd.md
+#   (grep -i "closure|view|scope_node|actor_display" finds nothing in either file):
+#     actor_display          (0001_identity_access.sql:62, read model for audit actor names)
+#     business_unit_closure  (0001_identity_access.sql:93, recursive view used by the access policy for downward inheritance)
+#     scope_node             (0002_transformation.sql:48, scope resolution view used by the access module; GRANT SELECT to mth_app)
+#   -> raised as a Low, non-mandatory documentation finding against REQ-S19-004 (IT handover data design).
+# Net: every public TABLE and column is documented; 3 security-relevant VIEWS are undocumented.

@@ -1,0 +1,91 @@
+# negative control: tokens.json brand.deep changed to #6B1D5C in a disposable copy WITHOUT rebuilding apps/web; the A20 spec must FAIL
+# cmd: QA_E2E_PG_PORT=55733 e2e/support/qa-stack.sh npx playwright test e2e/a20-bilingual-shell.spec.ts -g 'design tokens' --workers=1
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applied 8 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+
+Running 2 tests using 1 worker
+
+  ✘  1 [chromium-en] › e2e/a20-bilingual-shell.spec.ts:159:3 › A20 design tokens reach the rendered CSS › seeded --mth-* colours and referencing surfaces equal the built token source (355ms)
+  ✘  2 [chromium-ar] › e2e/a20-bilingual-shell.spec.ts:159:3 › A20 design tokens reach the rendered CSS › seeded --mth-* colours and referencing surfaces equal the built token source (418ms)
+
+
+  1) [chromium-en] › e2e/a20-bilingual-shell.spec.ts:159:3 › A20 design tokens reach the rendered CSS › seeded --mth-* colours and referencing surfaces equal the built token source 
+
+    Error: --mth-brand-deep on :root
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m"#[7m6B1D5C[27m"[39m
+    Received: [31m"#[7m003B73[27m"[39m
+
+      172 |     );
+      173 |     for (const name of seeds) {
+    > 174 |       expect(rendered[cssVar(name)], `${cssVar(name)} on :root`).toBe(tokenHex(name));
+          |                                                                  ^
+      175 |     }
+      176 |
+      177 |     // Surfaces that reference tokens (semantic refs) paint with the source values: sign in and inspect the shell.
+        at /var/tmp/mth-run.7AGPgI/claude-0/a20-copy/e2e/a20-bilingual-shell.spec.ts:174:66
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-a20-bilingual-shell-A2-8edaf-qual-the-built-token-source-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-a20-bilingual-shell-A2-8edaf-qual-the-built-token-source-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-a20-bilingual-shell-A2-8edaf-qual-the-built-token-source-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-a20-bilingual-shell-A2-8edaf-qual-the-built-token-source-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-ar] › e2e/a20-bilingual-shell.spec.ts:159:3 › A20 design tokens reach the rendered CSS › seeded --mth-* colours and referencing surfaces equal the built token source 
+
+    Error: --mth-brand-deep on :root
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m"#[7m6B1D5C[27m"[39m
+    Received: [31m"#[7m003B73[27m"[39m
+
+      172 |     );
+      173 |     for (const name of seeds) {
+    > 174 |       expect(rendered[cssVar(name)], `${cssVar(name)} on :root`).toBe(tokenHex(name));
+          |                                                                  ^
+      175 |     }
+      176 |
+      177 |     // Surfaces that reference tokens (semantic refs) paint with the source values: sign in and inspect the shell.
+        at /var/tmp/mth-run.7AGPgI/claude-0/a20-copy/e2e/a20-bilingual-shell.spec.ts:174:66
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-a20-bilingual-shell-A2-8edaf-qual-the-built-token-source-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-a20-bilingual-shell-A2-8edaf-qual-the-built-token-source-chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-a20-bilingual-shell-A2-8edaf-qual-the-built-token-source-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-a20-bilingual-shell-A2-8edaf-qual-the-built-token-source-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium-en] › e2e/a20-bilingual-shell.spec.ts:159:3 › A20 design tokens reach the rendered CSS › seeded --mth-* colours and referencing surfaces equal the built token source 
+    [chromium-ar] › e2e/a20-bilingual-shell.spec.ts:159:3 › A20 design tokens reach the rendered CSS › seeded --mth-* colours and referencing surfaces equal the built token source 
+---- api.log (tail)
+# exit_status: 1 (non-zero expected)

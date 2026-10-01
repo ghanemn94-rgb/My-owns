@@ -1,0 +1,32 @@
+# Disposable copy of 2c22c27 + repro-bu/zz-review-bu-hierarchy.test.ts; disposable PG16 127.0.0.1:54731; node v22.22.2; 2026-10-01T20:34:16Z
+# cmd: TEST_DATABASE_ADMIN_URL=postgresql://postgres@127.0.0.1:54731/postgres npx vitest run --project integration apps/api/test/integration/zz-review-bu-hierarchy.test.ts
+
+ RUN  v3.2.4 /var/tmp/mth-run.3mVNuW/claude-0/review-sec-bu
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mupzsmm0_41965561; applied 8 migrations to a fresh database
+stdout | apps/api/test/integration/zz-review-bu-hierarchy.test.ts > SEC-1 concurrent re-parenting creates a business-unit cycle > A->C and B->A (with C already under B) both return 200 and the committed hierarchy has a cycle A->C->B->A
+SEC-1 sequential control (B under A after A under C): [33m422[39m {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A business unit cannot be moved under itself or one of its descendants.","code":"business_unit.cycle","requestId":"01a0f92c-d10d-7038-be59-5d97965be8e2"}
+
+stdout | apps/api/test/integration/zz-review-bu-hierarchy.test.ts > SEC-1 concurrent re-parenting creates a business-unit cycle > A->C and B->A (with C already under B) both return 200 and the committed hierarchy has a cycle A->C->B->A
+SEC-1 statuses: A->C [33m200[39m | B->A [33m200[39m
+
+stdout | apps/api/test/integration/zz-review-bu-hierarchy.test.ts > SEC-1 concurrent re-parenting creates a business-unit cycle > A->C and B->A (with C already under B) both return 200 and the committed hierarchy has a cycle A->C->B->A
+SEC-1 committed: parent(A)=C? [33mtrue[39m parent(C)=B? [33mtrue[39m parent(B)=A? [33mtrue[39m
+
+stdout | apps/api/test/integration/zz-review-bu-hierarchy.test.ts > SEC-1 concurrent re-parenting creates a business-unit cycle > A->C and B->A (with C already under B) both return 200 and the committed hierarchy has a cycle A->C->B->A
+SEC-1 closure rows with A as descendant: {"n":11,"maxdepth":10}
+
+stdout | apps/api/test/integration/zz-review-bu-hierarchy.test.ts > SEC-2 re-parenting does not authorize the destination parent > a manager scoped to BU a1 moves a1x under sibling a2 (no rights on a2); a2's inheriting users gain a1x records
+SEC-2 control: U PATCH a2 -> [33m404[39m
+
+stdout | apps/api/test/integration/zz-review-bu-hierarchy.test.ts > SEC-2 re-parenting does not authorize the destination parent > a manager scoped to BU a1 moves a1x under sibling a2 (no rights on a2); a2's inheriting users gain a1x records
+SEC-2 V read before: [33m404[39m | U move a1x->a2: [33m200[39m | V read after: [33m200[39m | U read a1x after: [33m404[39m
+
+ ✓ |integration| apps/api/test/integration/zz-review-bu-hierarchy.test.ts (2 tests) 732ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  20:34:16
+   Duration  2.54s (transform 435ms, setup 0ms, collect 953ms, tests 732ms, environment 0ms, prepare 55ms)
+
+# exit=0

@@ -1,0 +1,59 @@
+# cmd: tests/qa/support/with-pg.sh ./qa-db-probe.sh
+# cwd: <clone of candidate 37ec374> ; node v22.22.2 ; date 2026-10-01T20:52:24Z
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+== migrate (fresh database)
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applied 8 migration(s)
+migrate exit=0
+== migrate again (idempotent)
+mth-db migrate: database is up to date
+migrate2 exit=0
+== status
+applied  0001_identity_access.sql
+applied  0002_transformation.sql
+applied  0003_audit_event.sql
+applied  0004_outbox_jobs.sql
+applied  0005_seed_roles_permissions.sql
+applied  0006_pgboss_schema_v25.sql
+applied  0007_oidc_login_browser_binding.sql
+applied  0008_scoped_assignment_derived_from.sql
+mth-db status: up to date (8 applied)
+status exit=0
+== schema_migration rows
+0001_identity_access.sql
+0002_transformation.sql
+0003_audit_event.sql
+0004_outbox_jobs.sql
+0005_seed_roles_permissions.sql
+0006_pgboss_schema_v25.sql
+0007_oidc_login_browser_binding.sql
+0008_scoped_assignment_derived_from.sql
+== insert one audit row as mth_app
+1
+INSERT 0 1
+insert exit=0
+[mth_app] UPDATE audit_event SET reason='tamper' -> exit=1 :: ERROR:  permission denied for table audit_event
+[mth_app] DELETE FROM audit_event -> exit=1 :: ERROR:  permission denied for table audit_event
+[mth_app] TRUNCATE audit_event -> exit=1 :: ERROR:  permission denied for table audit_event
+[mth_owner] UPDATE audit_event SET reason='tamper' -> exit=1 :: ERROR:  audit_event is append-only: UPDATE is not allowed
+CONTEXT:  PL/pgSQL function audit_event_immutable() line 3 at RAISE
+[mth_owner] DELETE FROM audit_event -> exit=1 :: ERROR:  audit_event is append-only: DELETE is not allowed
+CONTEXT:  PL/pgSQL function audit_event_immutable() line 3 at RAISE
+[mth_owner] TRUNCATE audit_event -> exit=1 :: ERROR:  audit_event is append-only: TRUNCATE is not allowed
+CONTEXT:  PL/pgSQL function audit_event_immutable() line 3 at RAISE
+[postgres(superuser)] UPDATE audit_event SET reason='tamper' -> exit=1 :: ERROR:  audit_event is append-only: UPDATE is not allowed
+CONTEXT:  PL/pgSQL function audit_event_immutable() line 3 at RAISE
+[postgres(superuser)] DELETE FROM audit_event -> exit=1 :: ERROR:  audit_event is append-only: DELETE is not allowed
+CONTEXT:  PL/pgSQL function audit_event_immutable() line 3 at RAISE
+[postgres(superuser)] TRUNCATE audit_event -> exit=1 :: ERROR:  audit_event is append-only: TRUNCATE is not allowed
+CONTEXT:  PL/pgSQL function audit_event_immutable() line 3 at RAISE
+== rows remaining (expect 1, reason NULL)
+1|<null>
+# exit_status: 0

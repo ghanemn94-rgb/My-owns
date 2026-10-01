@@ -1,0 +1,1633 @@
+# cmd: pnpm test
+# node: v22.22.2 cwd: /var/tmp/mth-run.3mVNuW/claude-0/review-sec date: 2026-10-01T20:20:23Z
+
+> mobily-transformation-hub@0.1.0 test /var/tmp/mth-run.3mVNuW/claude-0/review-sec
+> vitest run --project unit-node --project unit-web
+
+
+ RUN  v3.2.4 /var/tmp/mth-run.3mVNuW/claude-0/review-sec
+
+ ✓ |unit-web| src/components/States.test.tsx (15 tests) 513ms
+ ✓ |unit-web| src/lib/lib.test.ts (18 tests) 173ms
+ ✓ |unit-web| src/app/app.test.tsx (16 tests) 3769ms
+   ✓ bilingual shell > switches to English LTR and persists the preference with If-Match  470ms
+   ✓ bilingual shell > shows all fourteen areas to an administrator  477ms
+   ✓ bilingual shell > hides Administration from a Workstream Lead, and the admin route shows no-permission  325ms
+   ✓ transformations > lists transformations with a sortable code column and removable filter chips  892ms
+   ✓ transformations > detail shows the workspace header with Unknown for data from later stages  536ms
+   ✓ transformations > edit: a 409 writes nothing, shows compare, and re-applies on the current version  424ms
+ ✓ |unit-web| src/i18n/i18n.test.ts (11 tests) 18ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts (15 tests) 54ms
+ ✓ |unit-web| src/i18n/glossary.test.ts (8 tests) 25ms
+ ✓ |unit-web| src/styles/styles.test.ts (6 tests) 15ms
+ ✓ |unit-node| apps/api/src/server.test.ts (6 tests) 384ms
+ ❯ |unit-web| src/pages/transformations/transformations.test.tsx (21 tests | 1 failed) 11428ms
+   ✓ after create (F-DG1-004) > shows the created record when the server lets the creator read it  771ms
+   ✓ after create (F-DG1-004) > explains, in English, that the draft was created but cannot be opened (server 404), instead of 'Not found'  403ms
+   ✓ after create (F-DG1-004) > explains the same in Arabic (RTL), using the glossary term for Transformation 290ms
+   ✓ after create (F-DG1-004) > treats a 403 for the just-created record the same way 161ms
+   ✓ truly out-of-scope records keep the correct localized message > 404 without a just-created record: 'Not found' (en) / 'غير موجود' (ar), nothing disclosed 128ms
+   ✓ truly out-of-scope records keep the correct localized message > 403: 'You do not have access' rather than 'Not found' 87ms
+   ✓ truly out-of-scope records keep the correct localized message > router state for a different id does not turn a 404 into the created message 179ms
+   ✓ audit trail changes (F-DG1-005) > English: field and value labels, not raw keys or enum codes  332ms
+   ✓ audit trail changes (F-DG1-005) > Arabic: the same changes with Arabic labels in the RTL layout  349ms
+   ✓ P1 close rule in the edit form (F-DG1-001, T-DG1-FE3) > governs exactly `closed`, mirroring the API's GOVERNED_TARGET_STATUSES 1ms
+   ✓ P1 close rule in the edit form (F-DG1-001, T-DG1-FE3) > offers only the P1 transitions plus the current status; never `closed` 1ms
+   ✓ P1 close rule in the edit form (F-DG1-001, T-DG1-FE3) > the status hint no longer promises a close transition and names the G6 approval (en and ar) 17ms
+   ✓ P1 close rule in the edit form (F-DG1-001, T-DG1-FE3) > en: the rendered status select for an active record has no Closed option 202ms
+   ✓ P1 close rule in the edit form (F-DG1-001, T-DG1-FE3) > ar: the rendered status select for an active record has no Closed option 75ms
+   ✓ derived creator assignment on the audit trail (F-DG1-008) > English: localized action, fields, role, user and scope; nothing raw or marked untranslated 216ms
+   ✓ derived creator assignment on the audit trail (F-DG1-008) > Arabic (RTL): the same event with Arabic labels and the glossary role name 272ms
+   ✓ derived creator assignment on the audit trail (F-DG1-008) > an action the catalogue does not know stays readable and is explicitly marked (en and ar)  421ms
+   × effective permissions refresh after create (F-DG1-210) > English: Edit, Archive and the audit trail appear after create, without a reload 1528ms
+     → Unable to find role="link" and name "Edit"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"app"[39m
+    [36m>[39m
+      [36m<a[39m
+        [33mclass[39m=[32m"skip-link"[39m
+        [33mhref[39m=[32m"#main"[39m
+      [36m>[39m
+        [0mSkip to main content[0m
+      [36m</a>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"app-header"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"_r_27_"[39m
+          [33maria-expanded[39m=[32m"false"[39m
+          [33mclass[39m=[32m"button button--ghost-inverse nav-toggle"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"icon"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.8"[39m
+            [33mviewBox[39m=[32m"0 0 20 20"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 5h14M3 10h14M3 15h14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"visually-hidden"[39m
+          [36m>[39m
+            [0mShow or hide navigation[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"wordmark"[39m
+          [33mdata-discover[39m=[32m"true"[39m
+          [33mdata-testid[39m=[32m"wordmark"[39m
+          [33mhref[39m=[32m"/"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"wordmark__name"[39m
+          [36m>[39m
+            [0mMobily Transformation Hub[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"badge badge--provisional"[39m
+            [33mdata-testid[39m=[32m"provisional-badge"[39m
+            [33mtitle[39m=[32m"Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values."[39m
+          [36m>[39m
+            [0mProvisional[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"visually-hidden"[39m
+          [36m>[39m
+            [0mProvisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.[0m
+          [36m</span>[39m
+        [36m</a>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"app-header__spacer"[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"language-switch"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Switch language to العربية"[39m
+            [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+            [33mlang[39m=[32m"ar"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mالعربية[0m
+          [36m</button>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"user-box"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"user-box__name"[39m
+          [36m>[39m
+            [0mSynthetic Test User[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"user-box__org"[39m
+          [36m>[39m
+            [0mSynthetic Organization[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"icon"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.8"[39m
+            [33mviewBox[39m=[32m"0 0 20 20"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 4H4v12h4M12 6l4 4-4 4M16 10H8"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mSign out[0m
+        [36m</button>[39m
+      [36m</header>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"app-body"[39m
+      [36m>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"Primary navigation"[39m
+          [33mclass[39m=[32m"app-nav"[39m
+          [33mid[39m=[32m"_r_27_"[39m
+        [36m>[39m
+          [36m<ul[39m
+            [33mclass[39m=[32m"app-nav__list"[39m
+          [36m>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"myWork"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/my-work"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mMy Work[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"executive"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/executive-overview"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mExecutive Overview[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33maria-current[39m=[32m"page"[39m
+                [33mclass[39m=[32m"app-nav__link active"[39m
+                [33mdata-area[39m=[32m"transformations"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/transformations"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mTransformations[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"playbook"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/playbook"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mPlaybook and Procedures[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"strategy"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/strategy-kpis"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mStrategy and KPIs[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"tom"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/target-operating-model"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mTarget Operating Model[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"initiatives"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/initiatives-roadmaps"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mInitiatives and Roadmaps[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"governance"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/governance"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mGovernance[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"risks"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/risks-actions"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mRisks and Actions[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"benefits"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/benefits-finance"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mBenefits and Finance[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"change"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/change-adoption"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mChange and Adoption[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"evidence"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/evidence-reports"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mEvidence and Reports[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"bau"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/bau-improvement"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mBAU and Improvement[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+          [36m</ul>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"app-nav__footer"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"app-nav__link app-nav__link--small"[39m
+              [33mdata-discover[39m=[32m"true"[39m
+              [33mhref[39m=[32m"/about"[39m
+            [36m>[39m
+              [0mAbout this product[0m
+            [36m</a>[39m
+          [36m</p>[39m
+        [36m</nav>[39m
+        [36m<main[39m
+          [33mclass[39m=[32m"app-main"[39m
+          [33mid[39m=[32m"main"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"page"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33maria-live[39m=[32m"polite"[39m
+              [33mclass[39m=[32m"state state--loading"[39m
+              [33mdata-state[39m=[32m"loading"[39m
+              [33mrole[39m=[32m"status"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"spinner"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mLoading…[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</main>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"app"[39m
+    [36m>[39m
+      [36m<a[39m
+        [33mclass[39m=[32m"skip-link"[39m
+        [33mhref[39m=[32m"#main"[39m
+      [36m>[39m
+        [0mSkip to main content[0m
+      [36m</a>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"app-header"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"_r_27_"[39m
+          [33maria-expanded[39m=[32m"false"[39m
+          [33mclass[39m=[32m"button button--ghost-inverse nav-toggle"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"icon"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.8"[39m
+            [33mviewBox[39m=[32m"0 0 20 20"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 5h14M3 10h14M3 15h14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"visually-hidden"[39m
+          [36m>[39m
+            [0mShow or hide navigation[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"wordmark"[39m
+          [33mdata-discover[39m=[32m"true"[39m
+          [33mdata-testid[39m=[32m"wordmark"[39m
+          [33mhref[39m=[32m"/"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"wordmark__name"[39m
+          [36m>[39m
+            [0mMobily Transformation Hub[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"badge badge--provisional"[39m
+            [33mdata-testid[39m=[32m"provisional-badge"[39m
+            [33mtitle[39m=[32m"Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values."[39m
+          [36m>[39m
+            [0mProvisional[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"visually-hidden"[39m
+          [36m>[39m
+            [0mProvisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.[0m
+          [36m</span>[39m
+        [36m</a>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"app-header__spacer"[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"language-switch"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Switch language to العربية"[39m
+            [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+            [33mlang[39m=[32m"ar"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mالعربية[0m
+          [36m</button>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"user-box"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"user-box__name"[39m
+          [36m>[39m
+            [0mSynthetic Test User[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"user-box__org"[39m
+          [36m>[39m
+            [0mSynthetic Organization[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"icon"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.8"[39m
+            [33mviewBox[39m=[32m"0 0 20 20"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 4H4v12h4M12 6l4 4-4 4M16 10H8"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mSign out[0m
+        [36m</button>[39m
+      [36m</header>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"app-body"[39m
+      [36m>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"Primary navigation"[39m
+          [33mclass[39m=[32m"app-nav"[39m
+          [33mid[39m=[32m"_r_27_"[39m
+        [36m>[39m
+          [36m<ul[39m
+            [33mclass[39m=[32m"app-nav__list"[39m
+          [36m>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"myWork"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/my-work"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mMy Work[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"executive"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/executive-overview"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mExecutive Overview[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33maria-current[39m=[32m"page"[39m
+                [33mclass[39m=[32m"app-nav__link active"[39m
+                [33mdata-area[39m=[32m"transformations"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/transformations"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mTransformations[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"playbook"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/playbook"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mPlaybook and Procedures[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"strategy"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/strategy-kpis"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mStrategy and KPIs[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"tom"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/target-operating-model"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mTarget Operating Model[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"initiatives"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/initiatives-roadmaps"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mInitiatives and Roadmaps[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"governance"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/governance"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mGovernance[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"risks"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/risks-actions"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mRisks and Actions[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"benefits"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/benefits-finance"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mBenefits and Finance[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"change"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/change-adoption"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mChange and Adoption[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"evidence"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/evidence-reports"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mEvidence and Reports[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"bau"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/bau-improvement"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mBAU and Improvement[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+          [36m</ul>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"app-nav__footer"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"app-nav__link app-nav__link--small"[39m
+              [33mdata-discover[39m=[32m"true"[39m
+              [33mhref[39m=[32m"/about"[39m
+            [36m>[39m
+              [0mAbout this product[0m
+            [36m</a>[39m
+          [36m</p>[39m
+        [36m</nav>[39m
+        [36m<main[39m
+          [33mclass[39m=[32m"app-main"[39m
+          [33mid[39m=[32m"main"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"page"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33maria-live[39m=[32m"polite"[39m
+              [33mclass[39m=[32m"state state--loading"[39m
+              [33mdata-state[39m=[32m"loading"[39m
+              [33mrole[39m=[32m"status"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"spinner"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mLoading…[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</main>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+   ✓ effective permissions refresh after create (F-DG1-210) > Arabic (RTL): the same controls and the audit trail appear after create, without a reload  1494ms
+   ✓ effective permissions refresh after create (F-DG1-210) > does not over-grant: if the refreshed server answer adds nothing, Archive and the audit trail stay hidden  855ms
+   ✓ effective permissions refresh after create (F-DG1-210) > a failed /me refresh never blocks the navigation; the UI stays fail-safe (no controls offered)  3642ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (132 tests) 4150ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  1987ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)  1197ms
+ ✓ |unit-node| apps/api/src/modules/workflows/workflows.test.ts (5 tests) 287ms
+ ✓ |unit-node| apps/api/src/modules/kpi/kpi.test.ts (5 tests) 206ms
+ ✓ |unit-node| packages/config/src/load.test.ts (17 tests) 193ms
+ ✓ |unit-node| packages/design-tokens/src/tokens.test.ts (15 tests) 71ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reporting.test.ts (4 tests) 181ms
+ ✓ |unit-node| apps/api/src/modules/platform/platform.test.ts (7 tests) 14ms
+ ✓ |unit-node| packages/db/src/seed.test.ts (4 tests) 17ms
+ ✓ |unit-node| apps/api/src/modules/admin/branding.test.ts (4 tests) 75ms
+ ✓ |unit-node| apps/api/src/modules/access/rules.test.ts (12 tests) 6ms
+ ✓ |unit-node| packages/shared/src/schemas/schemas.test.ts (2 tests) 6ms
+ ✓ |unit-node| apps/api/src/modules/transformations/transitions.test.ts (2 tests) 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/pages/transformations/transformations.test.tsx > effective permissions refresh after create (F-DG1-210) > English: Edit, Archive and the audit trail appear after create, without a reload
+TestingLibraryElementError: Unable to find role="link" and name "Edit"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"app"[39m
+    [36m>[39m
+      [36m<a[39m
+        [33mclass[39m=[32m"skip-link"[39m
+        [33mhref[39m=[32m"#main"[39m
+      [36m>[39m
+        [0mSkip to main content[0m
+      [36m</a>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"app-header"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"_r_27_"[39m
+          [33maria-expanded[39m=[32m"false"[39m
+          [33mclass[39m=[32m"button button--ghost-inverse nav-toggle"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"icon"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.8"[39m
+            [33mviewBox[39m=[32m"0 0 20 20"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 5h14M3 10h14M3 15h14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"visually-hidden"[39m
+          [36m>[39m
+            [0mShow or hide navigation[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"wordmark"[39m
+          [33mdata-discover[39m=[32m"true"[39m
+          [33mdata-testid[39m=[32m"wordmark"[39m
+          [33mhref[39m=[32m"/"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"wordmark__name"[39m
+          [36m>[39m
+            [0mMobily Transformation Hub[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"badge badge--provisional"[39m
+            [33mdata-testid[39m=[32m"provisional-badge"[39m
+            [33mtitle[39m=[32m"Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values."[39m
+          [36m>[39m
+            [0mProvisional[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"visually-hidden"[39m
+          [36m>[39m
+            [0mProvisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.[0m
+          [36m</span>[39m
+        [36m</a>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"app-header__spacer"[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"language-switch"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Switch language to العربية"[39m
+            [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+            [33mlang[39m=[32m"ar"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mالعربية[0m
+          [36m</button>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"user-box"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"user-box__name"[39m
+          [36m>[39m
+            [0mSynthetic Test User[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"user-box__org"[39m
+          [36m>[39m
+            [0mSynthetic Organization[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"icon"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.8"[39m
+            [33mviewBox[39m=[32m"0 0 20 20"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 4H4v12h4M12 6l4 4-4 4M16 10H8"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mSign out[0m
+        [36m</button>[39m
+      [36m</header>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"app-body"[39m
+      [36m>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"Primary navigation"[39m
+          [33mclass[39m=[32m"app-nav"[39m
+          [33mid[39m=[32m"_r_27_"[39m
+        [36m>[39m
+          [36m<ul[39m
+            [33mclass[39m=[32m"app-nav__list"[39m
+          [36m>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"myWork"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/my-work"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mMy Work[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"executive"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/executive-overview"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mExecutive Overview[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33maria-current[39m=[32m"page"[39m
+                [33mclass[39m=[32m"app-nav__link active"[39m
+                [33mdata-area[39m=[32m"transformations"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/transformations"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mTransformations[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"playbook"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/playbook"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mPlaybook and Procedures[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"strategy"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/strategy-kpis"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mStrategy and KPIs[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"tom"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/target-operating-model"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mTarget Operating Model[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"initiatives"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/initiatives-roadmaps"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mInitiatives and Roadmaps[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"governance"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/governance"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mGovernance[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"risks"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/risks-actions"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mRisks and Actions[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"benefits"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/benefits-finance"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mBenefits and Finance[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"change"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/change-adoption"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mChange and Adoption[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"evidence"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/evidence-reports"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mEvidence and Reports[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"bau"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/bau-improvement"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mBAU and Improvement[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+          [36m</ul>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"app-nav__footer"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"app-nav__link app-nav__link--small"[39m
+              [33mdata-discover[39m=[32m"true"[39m
+              [33mhref[39m=[32m"/about"[39m
+            [36m>[39m
+              [0mAbout this product[0m
+            [36m</a>[39m
+          [36m</p>[39m
+        [36m</nav>[39m
+        [36m<main[39m
+          [33mclass[39m=[32m"app-main"[39m
+          [33mid[39m=[32m"main"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"page"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33maria-live[39m=[32m"polite"[39m
+              [33mclass[39m=[32m"state state--loading"[39m
+              [33mdata-state[39m=[32m"loading"[39m
+              [33mrole[39m=[32m"status"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"spinner"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mLoading…[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</main>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"app"[39m
+    [36m>[39m
+      [36m<a[39m
+        [33mclass[39m=[32m"skip-link"[39m
+        [33mhref[39m=[32m"#main"[39m
+      [36m>[39m
+        [0mSkip to main content[0m
+      [36m</a>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"app-header"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"_r_27_"[39m
+          [33maria-expanded[39m=[32m"false"[39m
+          [33mclass[39m=[32m"button button--ghost-inverse nav-toggle"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"icon"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.8"[39m
+            [33mviewBox[39m=[32m"0 0 20 20"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 5h14M3 10h14M3 15h14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"visually-hidden"[39m
+          [36m>[39m
+            [0mShow or hide navigation[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"wordmark"[39m
+          [33mdata-discover[39m=[32m"true"[39m
+          [33mdata-testid[39m=[32m"wordmark"[39m
+          [33mhref[39m=[32m"/"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"wordmark__name"[39m
+          [36m>[39m
+            [0mMobily Transformation Hub[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"badge badge--provisional"[39m
+            [33mdata-testid[39m=[32m"provisional-badge"[39m
+            [33mtitle[39m=[32m"Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values."[39m
+          [36m>[39m
+            [0mProvisional[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"visually-hidden"[39m
+          [36m>[39m
+            [0mProvisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.[0m
+          [36m</span>[39m
+        [36m</a>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"app-header__spacer"[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"language-switch"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Switch language to العربية"[39m
+            [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+            [33mlang[39m=[32m"ar"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mالعربية[0m
+          [36m</button>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"user-box"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"user-box__name"[39m
+          [36m>[39m
+            [0mSynthetic Test User[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"user-box__org"[39m
+          [36m>[39m
+            [0mSynthetic Organization[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"icon"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.8"[39m
+            [33mviewBox[39m=[32m"0 0 20 20"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 4H4v12h4M12 6l4 4-4 4M16 10H8"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mSign out[0m
+        [36m</button>[39m
+      [36m</header>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"app-body"[39m
+      [36m>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"Primary navigation"[39m
+          [33mclass[39m=[32m"app-nav"[39m
+          [33mid[39m=[32m"_r_27_"[39m
+        [36m>[39m
+          [36m<ul[39m
+            [33mclass[39m=[32m"app-nav__list"[39m
+          [36m>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"myWork"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/my-work"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mMy Work[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"executive"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/executive-overview"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mExecutive Overview[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33maria-current[39m=[32m"page"[39m
+                [33mclass[39m=[32m"app-nav__link active"[39m
+                [33mdata-area[39m=[32m"transformations"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/transformations"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mTransformations[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"playbook"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/playbook"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mPlaybook and Procedures[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"strategy"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/strategy-kpis"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mStrategy and KPIs[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"tom"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/target-operating-model"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mTarget Operating Model[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"initiatives"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/initiatives-roadmaps"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mInitiatives and Roadmaps[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"governance"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/governance"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mGovernance[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"risks"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/risks-actions"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mRisks and Actions[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"benefits"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/benefits-finance"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mBenefits and Finance[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"change"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/change-adoption"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mChange and Adoption[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"evidence"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/evidence-reports"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mEvidence and Reports[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"bau"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/bau-improvement"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mBAU and Improvement[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+          [36m</ul>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"app-nav__footer"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"app-nav__link app-nav__link--small"[39m
+              [33mdata-discover[39m=[32m"true"[39m
+              [33mhref[39m=[32m"/about"[39m
+            [36m>[39m
+              [0mAbout this product[0m
+            [36m</a>[39m
+          [36m</p>[39m
+        [36m</nav>[39m
+        [36m<main[39m
+          [33mclass[39m=[32m"app-main"[39m
+          [33mid[39m=[32m"main"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"page"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33maria-live[39m=[32m"polite"[39m
+              [33mclass[39m=[32m"state state--loading"[39m
+              [33mdata-state[39m=[32m"loading"[39m
+              [33mrole[39m=[32m"status"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"spinner"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mLoading…[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</main>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/pages/transformations/transformations.test.tsx:529:25
+    527|     await submitCreateForm({ unit: /^Business unit/, name: /^Name/, su…
+    528|     await waitFor(() => expect(router.state.location.pathname).toBe(`/…
+    529|     expect(await screen.findByRole("link", { name: "Edit" })).toBeTrut…
+       |                         ^
+    530|     expect(screen.getByRole("button", { name: "Archive" })).toBeTruthy…
+    531|     expect(await screen.findByRole("heading", { name: "Audit trail" })…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 20 passed (21)
+      Tests  1 failed | 324 passed (325)
+   Start at  20:20:24
+   Duration  20.58s (transform 2.75s, setup 0ms, collect 14.99s, tests 21.59s, environment 8.55s, prepare 3.53s)
+
+ ELIFECYCLE  Test failed. See above for more details.
+# exit=1

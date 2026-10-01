@@ -1,0 +1,39 @@
+# Disposable copy of 2c22c27 + repro-bu/zz-review-bu-hierarchy.test.ts; disposable PG16 127.0.0.1:54731; node v22.22.2; 2026-10-01T20:33:08Z
+# cmd: TEST_DATABASE_ADMIN_URL=postgresql://postgres@127.0.0.1:54731/postgres npx vitest run --project integration apps/api/test/integration/zz-review-bu-hierarchy.test.ts
+
+ RUN  v3.2.4 /var/tmp/mth-run.3mVNuW/claude-0/review-sec-bu
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mupzr665_776104f8; applied 8 migrations to a fresh database
+stdout | apps/api/test/integration/zz-review-bu-hierarchy.test.ts > SEC-2 re-parenting does not authorize the destination parent > a manager scoped to BU a1 moves a1x under sibling a2 (no rights on a2); a2's inheriting users gain a1x records
+SEC-2 control: U PATCH a2 -> [33m404[39m
+
+stdout | apps/api/test/integration/zz-review-bu-hierarchy.test.ts > SEC-2 re-parenting does not authorize the destination parent > a manager scoped to BU a1 moves a1x under sibling a2 (no rights on a2); a2's inheriting users gain a1x records
+SEC-2 V read before: [33m404[39m | U move a1x->a2: [33m200[39m | V read after: [33m200[39m | U read a1x after: [33m404[39m
+
+ ❯ |integration| apps/api/test/integration/zz-review-bu-hierarchy.test.ts (2 tests | 1 failed) 21027ms
+   × SEC-1 concurrent re-parenting creates a business-unit cycle > X->Y and Y->X both return 200 and the committed hierarchy has a cycle 10525ms
+     → timed out waiting for 2 advisory waiter(s)
+   ✓ SEC-2 re-parenting does not authorize the destination parent > a manager scoped to BU a1 moves a1x under sibling a2 (no rights on a2); a2's inheriting users gain a1x records 140ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-review-bu-hierarchy.test.ts > SEC-1 concurrent re-parenting creates a business-unit cycle > X->Y and Y->X both return 200 and the committed hierarchy has a cycle
+Error: timed out waiting for 2 advisory waiter(s)
+ ❯ waitForAdvisoryWaiters apps/api/test/integration/zz-review-bu-hierarchy.test.ts:67:9
+     65|     await new Promise((r) => setTimeout(r, 25));
+     66|   }
+     67|   throw new Error(`timed out waiting for ${n} advisory waiter(s)`);
+       |         ^
+     68| }
+     69| 
+ ❯ apps/api/test/integration/zz-review-bu-hierarchy.test.ts:97:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  20:33:08
+   Duration  22.94s (transform 430ms, setup 0ms, collect 1.07s, tests 21.03s, environment 0ms, prepare 71ms)
+
+# exit=1

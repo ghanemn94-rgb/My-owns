@@ -1,0 +1,44 @@
+# cmd: pnpm test:integration (run 1)
+# node: v22.22.2 TEST_DATABASE_ADMIN_URL=postgresql://postgres@127.0.0.1:54731/postgres (disposable PG16, trust auth, scratch cluster) date: 2026-10-01T20:23:34Z
+
+> mobily-transformation-hub@0.1.0 test:integration /var/tmp/mth-run.3mVNuW/claude-0/review-sec
+> vitest run --project integration
+
+
+ RUN  v3.2.4 /var/tmp/mth-run.3mVNuW/claude-0/review-sec
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mupzevfn_6e028537; applied 8 migrations to a fresh database
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts (10 tests) 5635ms
+   ✓ worker runtime: end to end, restarts and the dead-letter queue > relays and handles a created transformation, and survives a restart without losing the job  3709ms
+   ✓ worker runtime: end to end, restarts and the dead-letter queue > moves a job that keeps failing to ops.failed after the bounded retries  1259ms
+ ✓ |integration| packages/db/test/integration/scratch-drop.test.ts (3 tests) 5433ms
+   ✓ dropScratchDatabase never terminates a live client (F-DG1-009) > a drop right after pool.end() raises no 57P01 on the closing pool (40 rounds, 8 clients each)  4983ms
+   ✓ dropScratchDatabase never terminates a live client (F-DG1-009) > a client that is still connected is NOT terminated: the drop refuses, names it, and succeeds once it ends  449ms
+ ✓ |integration| tests/qa/integration/a13-job-idempotency.test.ts (5 tests) 3316ms
+   ✓ A13 running worker: a duplicate delivery is a no-op > consumes the event once; an extra job with the same message completes as 'duplicate'  2612ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts (30 tests) 938ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts (18 tests) 913ms
+ ✓ |integration| apps/api/test/integration/access-derived-race.test.ts (4 tests) 942ms
+ ✓ |integration| packages/db/test/integration/bootstrap.test.ts (5 tests) 2217ms
+   ✓ mth-db bootstrap > creates the first organization and a technical/access admin with no business permission, fully audited  359ms
+   ✓ mth-db bootstrap > refuses to run twice  322ms
+   ✓ mth-db seed-dev (synthetic, development only) > seeds synthetic users bound to urn:mth:dev-local once, idempotently  348ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts (11 tests) 689ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts (9 tests) 924ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts (19 tests) 1489ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts (14 tests) 1047ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts (10 tests) 768ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts (7 tests) 889ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts (13 tests) 454ms
+ ✓ |integration| tests/qa/integration/a14-concurrency.test.ts (5 tests) 344ms
+ ✓ |integration| apps/worker/test/integration/maintenance.test.ts (2 tests) 498ms
+ ✓ |integration| apps/api/test/integration/platform.test.ts (9 tests) 236ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts (17 tests) 139ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts (9 tests) 32ms
+
+ Test Files  19 passed (19)
+      Tests  200 passed (200)
+   Start at  20:23:35
+   Duration  32.15s (transform 956ms, setup 0ms, collect 4.08s, tests 26.90s, environment 0ms, prepare 69ms)
+
+# exit=0

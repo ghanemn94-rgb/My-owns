@@ -1,0 +1,59 @@
+# qa-verifier static requirement checks on the clone of 37ec374 (2026-10-01T21:03:05Z)
+## REQ-S15-005 bundled fonts in apps/web/dist (no CDN)
+      1 ibm-plex-sans-arabic-arabic-400-normal-<hash>.woff2
+      1 ibm-plex-sans-arabic-arabic-400-normal-D-ylXcdQ.woff
+      1 ibm-plex-sans-arabic-arabic-500-normal-<hash>.woff
+      1 ibm-plex-sans-arabic-arabic-500-normal-<hash>.woff2
+      1 ibm-plex-sans-arabic-arabic-600-normal-<hash>.woff
+      1 ibm-plex-sans-arabic-arabic-600-normal-<hash>.woff2
+      1 ibm-plex-sans-latin-400-normal-<hash>.woff2
+      1 ibm-plex-sans-latin-400-normal-CYLoc0-x.woff
+      1 ibm-plex-sans-latin-500-normal-<hash>.woff
+      1 ibm-plex-sans-latin-500-normal-<hash>.woff2
+      1 ibm-plex-sans-latin-600-normal-<hash>.woff
+      1 ibm-plex-sans-latin-600-normal-<hash>.woff2
+font-face src hosts in built CSS (expect only relative /assets URLs):
+(none external if the line above is empty)
+apps/web/dist/assets/index-LAhfGP3z.css:0
+apps/web/dist/assets/vendor-DXNDhYAL.css:1
+fonts referenced: apps/web/dist/assets/vendor-DXNDhYAL.css:font-family:IBM Plex Sans
+apps/web/dist/assets/vendor-DXNDhYAL.css:font-family:IBM Plex Sans Arabic
+licence inventory rows for fonts:
+@fontsource/ibm-plex-sans,5.2.6,OFL-1.1,bundled,apps/web,sha512-yclktpagJncROwdWHHEfPsrIfoo3uiIeDFchvmjNmTW/YMBfLYWJnUv19EAqPNhGizdtmcH9FjzOR2094Z2uPg==
+@fontsource/ibm-plex-sans-arabic,5.2.6,OFL-1.1,bundled,apps/web,sha512-bC8hGRCdPIs60kMRLGDPkoGT7G5oeOYaxqMo8pFi64JV8WO1B60TJtOdhTC4LqLQWwyLda872wbmq0sNm0C6ow==
+e2e assertions on fonts / same-origin:
+72: * Every request stays on the application origin (no CDN, no remote fonts; REQ-S15-005), and nothing the page does
+147:  // Fonts come from the bundle: the Plex face for this language is loaded, from the same origin.
+149:    await document.fonts.ready;
+150:    return [...document.fonts].filter((f) => f.status === "loaded").map((f) => f.family.replace(/"/g, ""));
+152:  expect(families).toContain(lang === "ar" ? "IBM Plex Sans Arabic" : "IBM Plex Sans");
+## REQ-S15-006 no invented logo image in the repo (excluding node_modules/trading_agent)
+(empty list above = no logo file)
+Wordmark.tsx has no img/svg
+apps/web/src/components/Wordmark.tsx:1:// Provisional TEXT wordmark (REQ-S15-006, ADR-0009 §5). No official Mobily logo has been supplied, so the header
+apps/web/src/components/Wordmark.tsx:2:// shows the configurable product name as plain text with a visible "Provisional" badge. No logo image, glyph or
+apps/web/src/components/Wordmark.tsx:21:        className="badge badge--provisional"
+apps/web/src/components/Wordmark.tsx:22:        title={t("common.brand.provisionalHint")}
+apps/web/src/components/Wordmark.tsx:23:        data-testid="provisional-badge"
+## REQ-S15-006/no-official-claim: UI strings claiming official Mobily brand/certification
+(empty = no claim)
+## REQ-S16-002 frontend stack
+react 19.2.0 vite 7.1.11 typescript undefined
+tsconfig.base.json:19:    "strict": true,
+docs/architecture/adr/ADR-0009-frontend.md
+## REQ-S16-003 module directories with public index.ts + dependency lint in unit run
+identity         index.ts:yes tests:0
+access           index.ts:yes tests:1
+transformations  index.ts:yes tests:1
+workflows        index.ts:yes tests:1
+kpi              index.ts:yes tests:1
+reporting        index.ts:yes tests:1
+admin            index.ts:yes tests:1
+ ✓ |unit-node| apps/api/src/architecture.test.ts (132 tests) 1669ms
+## REQ-S16-001 separate entry points
+apps/api/src/main.ts
+apps/worker/src/main.ts
+38:  db:
+59:  migrate:
+72:  api:
+107:  worker:

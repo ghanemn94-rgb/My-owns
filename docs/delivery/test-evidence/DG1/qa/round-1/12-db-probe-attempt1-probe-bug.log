@@ -1,0 +1,47 @@
+# cmd: tests/qa/support/with-pg.sh ./qa-db-probe.sh
+# cwd: <clone of candidate 37ec374> ; node v22.22.2 ; date 2026-10-01T20:52:11Z
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+== migrate (fresh database)
+mth-db: Invalid configuration:
+  - NODE_ENV is required for db-cli
+migrate exit=1
+== migrate again (idempotent)
+mth-db: Invalid configuration:
+  - NODE_ENV is required for db-cli
+migrate2 exit=1
+== status
+mth-db: Invalid configuration:
+  - NODE_ENV is required for db-cli
+status exit=1
+== schema_migration rows
+ERROR:  relation "schema_migration" does not exist
+LINE 1: SELECT name FROM schema_migration ORDER BY 1
+                         ^
+== insert one audit row as mth_app
+psql: error: connection to server at "127.0.0.1", port 55713 failed: FATAL:  unrecognized configuration parameter "+role"
+connection to server at "127.0.0.1", port 55713 failed: FATAL:  unrecognized configuration parameter "+role"
+insert exit=2
+[APP] UPDATE audit_event SET reason='tamper' -> exit=2 :: psql: error: connection to server at "127.0.0.1", port 55713 failed: FATAL:  unrecognized configuration parameter "+role"
+connection to server at "127.0.0.1", port 55713 failed: FATAL:  unrecognized configuration parameter "+role"
+[APP] DELETE FROM audit_event -> exit=2 :: psql: error: connection to server at "127.0.0.1", port 55713 failed: FATAL:  unrecognized configuration parameter "+role"
+connection to server at "127.0.0.1", port 55713 failed: FATAL:  unrecognized configuration parameter "+role"
+[APP] TRUNCATE audit_event -> exit=2 :: psql: error: connection to server at "127.0.0.1", port 55713 failed: FATAL:  unrecognized configuration parameter "+role"
+connection to server at "127.0.0.1", port 55713 failed: FATAL:  unrecognized configuration parameter "+role"
+[OWN] UPDATE audit_event SET reason='tamper' -> exit=2 :: psql: error: connection to server at "127.0.0.1", port 55713 failed: FATAL:  unrecognized configuration parameter "+role"
+connection to server at "127.0.0.1", port 55713 failed: FATAL:  unrecognized configuration parameter "+role"
+[OWN] DELETE FROM audit_event -> exit=2 :: psql: error: connection to server at "127.0.0.1", port 55713 failed: FATAL:  unrecognized configuration parameter "+role"
+connection to server at "127.0.0.1", port 55713 failed: FATAL:  unrecognized configuration parameter "+role"
+[OWN] TRUNCATE audit_event -> exit=2 :: psql: error: connection to server at "127.0.0.1", port 55713 failed: FATAL:  unrecognized configuration parameter "+role"
+connection to server at "127.0.0.1", port 55713 failed: FATAL:  unrecognized configuration parameter "+role"
+[SU] UPDATE audit_event SET reason='tamper' -> exit=1 :: ERROR:  relation "audit_event" does not exist
+LINE 1: UPDATE audit_event SET reason='tamper'
+               ^
+[SU] DELETE FROM audit_event -> exit=1 :: ERROR:  relation "audit_event" does not exist
+LINE 1: DELETE FROM audit_event
+                    ^
+[SU] TRUNCATE audit_event -> exit=1 :: ERROR:  relation "audit_event" does not exist
+== rows remaining (expect 1, reason NULL)
+ERROR:  relation "audit_event" does not exist
+LINE 1: ...ECT count(*), max(coalesce(reason,'<null>')) FROM audit_even...
+                                                             ^
+# exit_status: 1
