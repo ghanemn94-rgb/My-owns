@@ -475,8 +475,11 @@ Rules **[server]**:
    decision. Re-sending the bound terms is accepted. `record-extension` applies only the terms bound to the linked decision
    (`tsa.extension.terms_mismatch` otherwise). **The terms are bound for the first time only while the paper is still
    before the committee** — the decision is `draft`, `submitted` or `under_review` (DOM-P34R2-01): an extension request
-   linked to a decision that already has an outcome is refused (`tsa.extension.terms_after_outcome`), so the committee
-   always decides on a paper that carries the end date and continuity plan it approves.
+   linked to a decision that already has an outcome is refused (`tsa.extension.terms_after_outcome`), and so is a first
+   binding once any vote of the current round has been cast or voting was closed (`tsa.extension.terms_after_vote`,
+   DOM-P34R3-01): every vote is cast on a paper whose extension terms are already bound. A deferred paper that is resumed
+   starts a new round, so terms may be bound before its new votes. The decision paper does not yet DISPLAY the bound end
+   date and continuity plan (open item for the governance screens).
 6. **A decision backs one TSA (DOM-P3-13, conservative option — governance owner to confirm).** A
    `tsa_approval_or_extension` decision already used for TSA A (its terms or its extension) never backs a use for another
    TSA B (`tsa.extension.decision_other_tsa` / `tsa.approve.decision_other_tsa`); the same decision may still approve the

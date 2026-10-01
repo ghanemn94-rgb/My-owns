@@ -16,6 +16,7 @@ import { decisionVersion, vote } from '../governance/gov-fixtures';
  * All data is synthetic.
  */
 const defect = process.env['P34DRE_PROBE_PLAIN'] ? it : it.fails;
+void defect;
 
 let projectId: string;
 let p: Personas;
@@ -80,7 +81,9 @@ describe('P3/P4 domain re-review, re-check of DOM-P34R2-01 — when extension te
     expect(afterResume.status, JSON.stringify(afterResume.body)).toBe(201);
   });
 
-  defect('DEFECT DOM-P34R3-01: every committee vote of the round is cast (approve) with no terms bound; the PM binds an end date before the outcome is recorded; the TSA is extended to it', async () => {
+  // Fixed by the lead (DOM-P34R3-01): a first binding is refused once any vote of the current round exists
+  // (`tsa.extension.terms_after_vote`). Plain `it`, assertion unchanged; the `defect` alias stays for P34DRE_PROBE_PLAIN.
+  it('DOM-P34R3-01 (fixed, regression): every committee vote of the round is cast (approve) with no terms bound; the PM binds an end date before the outcome is recorded; the TSA is extended to it', async () => {
     const id = await activeTsa('Facility service E (re-check probe, synthetic)', plusDays(-30), plusDays(25));
     const paper = await decisionOfType(projectId, p, gov, 'tsa_approval_or_extension', { vote: false });
     const v = await decisionVersion(p.chair, projectId, paper.id);

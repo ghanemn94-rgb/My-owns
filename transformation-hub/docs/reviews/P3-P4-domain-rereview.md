@@ -938,3 +938,17 @@ DOM-P34R / DOM-P34R2 probe passes as a plain test.
   3. Decision papers do not yet display the extension terms.
   4. REQ-PHS-005 closes with the gate report.
 - **P4:** unchanged, **PASS WITH CONDITIONS** (§9 table). No P4 code path was touched by this fix.
+
+
+#### Fix status of DOM-P34R3-01 (lead, separate context; the reviewer's text above is unchanged)
+
+**Fixed.** A first binding of extension terms is refused once any vote of the decision's current round exists or the chair
+has closed voting for it (`tsa.extension.terms_after_vote`, 422, audited as rejected); terms bound before the first vote
+stay usable. The vote count is read under the decision row lock (`FOR SHARE`), which a vote also takes (`FOR UPDATE`), so a
+concurrent vote and request serialize. A deferred paper resumed later starts a new round. Files:
+`packages/domain/src/readiness.ts` (`extensionTermsBinding`, new inputs `votesInCurrentRound`, `votingClosed`),
+`apps/api/src/modules/readiness/tsa.service.ts`, refusal texts en + ar, `docs/governance/business-gates.md` §6 rule 5
+(which also records that the decision paper does not yet DISPLAY the bound terms — open item for the governance screens).
+Tests: `DOM-P34R3-01 (fixed, regression)` in `apps/api/test/reviews/p34-domain-re3-tsa.spec.ts` (assertion unchanged;
+`P34DRE_PROBE_PLAIN=1` 6/6 on the three `p34-domain-re*-tsa` files) and the domain unit test "DOM-P34R3-01: …"
+(474/474). The 12 TSA spec files: 58/58. Full API suite: 138 files, 1060 passed + 2 expected fail (DOM-P2F-02/04).
