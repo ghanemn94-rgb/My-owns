@@ -150,7 +150,12 @@ const SCREENS: readonly Screen[] = [
     },
   },
   { id: 'project-dimension', persona: 'pm', path: (i) => `/projects/${i.dc}/dimensions/perimeter_transfer` },
-  { id: 'project-charter', persona: 'pm', path: (i) => `/projects/${i.dc}/charter` },
+  { id: 'project-charter', persona: 'pm', path: (i) => `/projects/${i.dc}/charter`, ready: visible('[data-testid="overview-baseline"][data-state="approved"]') },
+  // Program Overview & Charter "none yet" states and the project setup wizard steps 5 and 6 (P2 residuals; read-only).
+  { id: 'project-charter-none', persona: 'pmB', path: (i) => `/projects/${i.transform}/charter`, ready: visible('[data-testid="overview-baseline"][data-state="none"]') },
+  { id: 'project-setup-step5', persona: 'pm', path: (i) => `/projects/${i.dc}/setup?step=committee`, ready: visible('[data-testid="wizard-matrices-table"][data-state="ready"]') },
+  { id: 'project-setup-step6', persona: 'pmB', path: (i) => `/projects/${i.transform}/setup?step=baseline`, ready: visible('[data-testid="wizard-gates-table"][data-state="ready"]') },
+  { id: 'project-setup-390', persona: 'pmB', path: (i) => `/projects/${i.transform}/setup?step=baseline`, ready: visible('[data-testid="wizard-gates-table"][data-state="ready"]'), viewport: MOBILE },
   { id: 'project-members', persona: 'pm', path: (i) => `/projects/${i.dc}/members` },
   // Committee Hub.
   { id: 'committee-hub', persona: 'pm', path: (i) => `/projects/${i.dc}/committee` },
@@ -162,7 +167,7 @@ const SCREENS: readonly Screen[] = [
   { id: 'committee-actions', persona: 'pm', path: (i) => `/projects/${i.dc}/committee/actions` },
   { id: 'committee-escalations', persona: 'pm', path: (i) => `/projects/${i.dc}/committee/escalations` },
   // Plan.
-  ...(['wbs', 'timeline', 'milestones', 'deliverables', 'dependencies', 'crossproject', 'baselines', 'lookahead', 'whatif', 'health'] as const).map(
+  ...(['wbs', 'kanban', 'timeline', 'milestones', 'deliverables', 'dependencies', 'crossproject', 'baselines', 'lookahead', 'whatif', 'health'] as const).map(
     (tab): Screen => ({ id: `plan-${tab}`, persona: 'pm', path: (i) => `/projects/${i.dc}/plan?tab=${tab}`, ready: visible(`[role="tab"][data-tab="${tab}"][aria-selected="true"]`) }),
   ),
   {
