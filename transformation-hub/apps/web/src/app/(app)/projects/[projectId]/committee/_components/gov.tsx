@@ -169,6 +169,8 @@ export function useUrlState<K extends string>(keys: readonly K[]) {
       }
       if (!('page' in patch)) next.delete('page');
       const qs = next.toString();
+      // QA-P34-07: no navigation when nothing changed (a no-op replace could still supersede a navigation in progress).
+      if (qs === params.toString()) return;
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     },
     [params, router, pathname],
