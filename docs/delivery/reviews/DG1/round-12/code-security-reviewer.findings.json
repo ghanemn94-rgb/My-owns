@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG1-134",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Module lint file scope: walk() (apps/api/src/architecture.testkit.ts:167-172) scans only /\\.(ts|tsx)$/ files. A module-directory file named .mts (or .cts, .mjs, .js) is invisible to moduleViolations, so it evades every lint rule (1-5) AND the module-interface boundary check. With module NodeNext + allowImportingTsExtensions + rewriteRelativeImportExtensions (tsconfig.base.json), a .mts file typechecks and builds into dist as .mjs, so it ships. Pre-existing since 8332624 (DG1 original), not a regression of the round-12 rule 5. The real tree has 0 such files today.",
+      "reproduction": "Candidate sha256:619d74ff...fdfac (freeze 987ae02), full disposable clone, Node v22.22.2. I planted apps/api/src/modules/transformations/zzx.mts containing `import * as c from \"node:crypto\"; import { authorize } from \"../access/policy.ts\"; export const f = new Map(Object.entries(c)).get(\"set\".concat(\"Engine\")) as unknown; export const g = typeof authorize;`, plus a .ts importer zzimp.ts (`import { f, g } from \"./zzx.mts\"`). Results: (1) moduleViolations(\"transformations\") = [] and architecture.test.ts stays 122/122 green. (2) Control: the SAME source scanned via fileViolations under a .ts name gives 2 violations, the rule-5 namespace binding and the deep import of access/policy.ts. (3) apps/api pnpm typecheck exit 0, pnpm build exit 0, eslint exit 0. (4) dist/modules/transformations contains zzx.mjs, and zzimp.js imports './zzx.mjs'. (5) import(dist/.../zzx.mjs) gives typeof f = function with f.name = setEngine, i.e. the native loader is reached in the production artefact (`node dist/main.js` runs dist). Variant: a .mjs file with a .d.mts declaration is also unscanned and passes typecheck/build, but tsc does not copy it into dist, so it would run only from src (dev, vitest). Full log: docs/delivery/test-evidence/DG1/code-security/round-12/02-lint-file-scope-mts.log.",
+      "expected": "Every source file under apps/api/src/modules/** that can be built or loaded is scanned by the module lint, or the lint fails closed. For example, walk() matches /\\.[cm]?[jt]sx?$/ and scans them all, or any module-directory file outside .ts/.tsx is itself a violation. Then the header's rule-5 claim ('the module object never becomes a value in module source') and REQ-S16-003's 'dependency-lint check fails on imports that bypass a module interface' hold regardless of file extension. A planted-.mts self-check case should pin this.",
+      "actual": "A .mts (or .cts/.mjs/.js) file in a module directory bypasses all lint rules and the boundary check with 0 violations. The .mts form ships in dist and reaches crypto.setEngine by enumeration. The F-DG1-132 route is closed only for .ts/.tsx files.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-12/02-lint-file-scope-mts.log",
+        "apps/api/src/architecture.testkit.ts",
+        "apps/api/src/architecture.test.ts",
+        "tsconfig.base.json"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-12/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T16:16:07Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG1 round 12 while re-proving the F-DG1-132 closure. Rated Low and non-mandatory, consistent with the precedent for this lint's other boundary-bypass routes (F-DG1-109 createRequire/computed import(), F-DG1-117/124/125/127/128/130/132: all Low, non-mandatory). The reasons: the lint is static defence-in-depth over human-reviewed code, not a runtime security boundary (testkit header), and exploitation needs a contributor to commit an unusual-extension file past review. The current tree has no such file. It is distinct from F-DG1-132, whose route in .ts module source IS closed; this is a file-scope gap affecting every rule. Proposed ID: the next free number in the code-security 1xx range (F-DG1-134); the orchestrator may renumber. Does not block DG1."
+        }
+      ]
+    }
+  ]
+}

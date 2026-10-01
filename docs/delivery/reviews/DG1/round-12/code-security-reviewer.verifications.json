@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "verifications": [
+    {
+      "finding_id": "F-DG1-132",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by the originating reviewer on candidate sha256:619d74ff...fdfac. The freeze commit is 987ae02; HEAD at start was e77be1a, which adds only candidate-excluded metadata on top of it. The ID is identical in the real repo and in a full disposable clone at 987ae02. The fix is 792973b, an ancestor of the freeze commit. It adds rule 5 to apps/api/src/architecture.testkit.ts: NAMESPACE_RESTRICTED_BUILTINS = {crypto, node:crypto} at :121, the restricted() and bindsDefault() helpers at :299-309, and their use in collect() at :311-355. I re-proved it with my own probe (zz-r12-probe.test.ts.txt; output in 01-rule5-probes.log): 25/25 must-flag plants are violations. These are the seven assignment forms (namespace, default, {default as c}, export *, export * as, import = require, await import) and E1-E5. They also include my adversarial variants: string-literal {\"default\" as c} import and export, unicode-escaped def\\u0061ult, template-literal import(`node:crypto`), bare 'crypto', export {default} from, export * as default, import().then, import-attributes, and computed import() (flagged as an evasion). import {setEngine} and {setEngine as s} remain rule-1 violations. Positive controls give 0 violations: named {randomUUID, createHash}, new Map(Object.entries(request.cookies)).get(name), Object.entries(someObj), and a namespace import of node:path. The real 11-module tree (41 files) has 0 moduleViolations. architecture.test.ts passes 122/122 on Node 22.22.2 and 24.21.0. I also checked at runtime, on both Node versions, that no other named export of the allow-listed built-ins (crypto, fs, fs/promises, os, path, url, util) reaches setEngine or the crypto module object within depth 3, and that none of the 14 allow-listed third-party dependencies does either. Without a namespace/default binding the route is closed. Scope caveat, raised separately as F-DG1-134 (Low, pre-existing): the lint scans only .ts/.tsx files, so a .mts module file evades every rule, including this one. That is a file-scope gap, not a defect in the rule-5 closure of the F-DG1-132 route in .ts module source.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-12/00-candidate-identity.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-12/01-rule5-probes.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-12/zz-r12-probe.test.ts.txt",
+        "docs/delivery/test-evidence/DG1/code-security/round-12/10-pnpm_test.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-12/12-node24-pnpm_test.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-133",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by the originating reviewer on candidate sha256:619d74ff...fdfac, fix 792973b. A grep of apps/api/src/architecture.testkit.ts for 'not closable', 'would break', 'identity/routes' and 'access/rules' finds no match (01-rule5-probes.log). Rule 5 is documented at :45-52. Residual (a) at :71-81 is now 'runtime DATA FLOW over PLAIN OBJECTS and third-party readers'. It says plainly that no allow-listed built-in namespace reaches it any more, and that a future loader member must be added to NAMESPACE_RESTRICTED_BUILTINS. That framing is accurate: my runtime reachability search found no path to setEngine through named exports of allow-listed built-ins or allow-listed third-party dependencies (01-rule5-probes.log). The member audit at :58-70 and the SAFE_NODE_BUILTINS doc-comment at :103-114 are consistent with it. architecture.test.ts:614 still names identity/routes.ts and access/rules.ts, but only as the plain-object idiom that stays allowed. That is correct: routes.ts:35 enumerates request.cookies and rules.ts:55 enumerates PERMISSIONS. One wording note, not a defect: '41 module files use named node:crypto imports' (commit message; also my round-11 finding text) means the 41 files contain no namespace/default binding. Only 5 of them import node:crypto at all, all through named imports. The header's 'defence-in-depth lint over human-reviewed code' framing should eventually also note the file-extension scope (F-DG1-134), but that is a separate pre-existing gap and does not make this header correction inaccurate.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-12/01-rule5-probes.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-12/zz-reach-builtins.mjs.txt",
+        "docs/delivery/test-evidence/DG1/code-security/round-12/zz-reach-deps.mjs.txt"
+      ]
+    }
+  ]
+}
