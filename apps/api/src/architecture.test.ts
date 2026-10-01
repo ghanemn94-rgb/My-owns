@@ -313,6 +313,26 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
       /unparseable source: '\)' expected/,
       "missed",
     ],
+    // F-DG1-125: an import of the process module aliased it past rule 3 (which only knows the global identifier
+    // `process`). Importing `process` / `node:process` is now itself a specifier violation (LOADER_BUILTINS).
+    [
+      "X6 node:process default import .dlopen",
+      `import proc from "node:process";\nproc.dlopen({ exports: {} } as any, "/tmp/x.node");`,
+      /imports package node:process/,
+      "missed",
+    ],
+    [
+      "X7 node:process default import .binding",
+      `import proc from "node:process";\nconst fs = (proc as any).binding("fs");`,
+      /imports package node:process/,
+      "missed",
+    ],
+    [
+      "X8 node:process named import dlopen",
+      `import { dlopen } from "node:process";\ndlopen({ exports: {} } as any, "/tmp/x.node");`,
+      /imports package node:process/,
+      "missed",
+    ],
     // Prior forms (F-DG1-117/121), still caught: regression guards for the blanket rules.
     ["P17 module.constructor", `const M = module.constructor;`, /module used as a value[\s\S]*\.constructor/, "caught"],
     [

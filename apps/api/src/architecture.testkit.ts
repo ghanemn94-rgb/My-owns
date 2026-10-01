@@ -6,7 +6,8 @@
 //    `import("...")` / `require("...")` with a string-literal specifier - each checked against the module boundary;
 //  - a computed `import(expr)` / `require(expr)` (the target cannot be checked), and any import of the built-ins that
 //    hand out a loader or evaluate code (`module`, `vm`, `worker_threads`, `inspector`, `repl`, `child_process`,
-//    `cluster`; with or without `node:`).
+//    `cluster`, `process`; with or without `node:`). F-DG1-125: importing `process` / `node:process` is itself banned
+//    (an imported binding aliases the process object past rule 3; the global is a Node global, no module imports it).
 //
 // F-DG1-124 - BLANKET BAN of the dynamic-code-loading primitives in module source. F-DG1-117 and F-DG1-121 matched
 // ever more spellings of the same thing (`.constructor()`, aliased `.constructor`, destructured `constructor`, ...)
@@ -29,6 +30,8 @@
 //  3. RUNTIME ROOTS `process`, `globalThis`, `global`: used other than as `root.member` (aliased, passed,
 //     destructured), indexed at all (`process["x"]`), `globalThis.<root|primitive>`, and the native loaders
 //     `process.binding` / `process._linkedBinding` / `process.dlopen`; the CommonJS free variable `module` as a value.
+//     Rule 3 covers the GLOBAL `process`; an IMPORTED process object (`import p from "node:process"`, a namespace or
+//     a named `{ dlopen }` import) is closed by the specifier check instead, which bans `process`/`node:process`.
 //  4. FAIL CLOSED: a file with a syntax error is a violation (the AST the rules see would not be the code written).
 // Nothing is executed. Residual limit (stated, not closable statically): a string computed at RUNTIME and handed to
 // third-party code that itself reads `input[key]` (e.g. a schema library given `Object.fromEntries([[k, ...]])`) is
@@ -47,11 +50,23 @@ const apiPkg = JSON.parse(readFileSync(join(SRC, "../package.json"), "utf8")) as
 };
 const THIRD_PARTY = new Set(Object.keys(apiPkg.dependencies).filter((d) => !d.startsWith("@mth/")));
 const SHARED_ALLOWED = new Set(["@mth/shared", "@mth/shared/schemas", "@mth/config", "@mth/db"]);
-/** Built-ins that hand out an unchecked loader or evaluate code; a module never needs them. */
+/**
+ * Built-ins that hand out an unchecked loader or evaluate code; a module never needs them. F-DG1-125: `process` too -
+ * an imported process object (default, namespace or named `{ dlopen }`/`{ binding }`) is a local binding that rule 3's
+ * `process.<loader>` check cannot see, so the import itself is the violation. The global `process` stays under rule 3.
+ */
 const LOADER_BUILTINS = new Set(
-  ["module", "vm", "worker_threads", "inspector", "inspector/promises", "repl", "child_process", "cluster"].flatMap(
-    (b) => [b, `node:${b}`],
-  ),
+  [
+    "module",
+    "vm",
+    "worker_threads",
+    "inspector",
+    "inspector/promises",
+    "repl",
+    "child_process",
+    "cluster",
+    "process",
+  ].flatMap((b) => [b, `node:${b}`]),
 );
 /** F-DG1-124: dynamic-code primitives, banned in every syntactic form (rule 1), by the kind of bypass they give. */
 const BANNED_PRIMITIVES: ReadonlyMap<string, string> = new Map([
