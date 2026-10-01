@@ -1,0 +1,18 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG1-133",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by domain-reviewer, a non-author: code-security-reviewer raised the finding in round 11, and backend-workflow-engineer wrote the fix in commit 792973b (T-DG1-BE13). That commit is an ancestor of the freeze commit 987ae02 and is in candidate sha256:619d74ffa4e668933960fc14aa5d8c4c31850a2772972bceb647561be2efdfac, whose ID recomputes identically in a full disposable clone. Every element of the finding's 'expected' is met. (1) The inaccurate wording is gone: 'not closable statically' and the identity/routes.ts / access/rules.ts citation no longer appear in architecture.testkit.ts (grep exit 1). The heading now reads 'ACCEPTED by choice: this is a defence-in-depth lint over human-reviewed code'. (2) Residual (a) is now an accurate description. It covers runtime data flow over PLAIN OBJECTS and third-party readers, keeps `new Map(Object.entries(request.cookies)).get(name)` as legitimate, and states that no allow-listed built-in namespace reaches it any more. (3) Rule 5 is documented in the header, in the SAFE_NODE_BUILTINS and NAMESPACE_RESTRICTED_BUILTINS JSDoc and in the member audit, which now says the enumeration route is CLOSED, not residual. The documentation matches the code. E1-E5 and N1-N10 are violations, and the positive controls pass (122/122 on Node 22.22.2 and 24.21.0). My independent probe (32/32 on both runtimes) confirms that rule 5 flags every namespace/default binding form of node:crypto, including { \"default\" as c }, a template-literal import() and import().then(enumerate). It leaves named crypto imports, the namespace/default imports of fs, fs/promises, os, path, url and util, and plain-object enumeration unaffected. All 13 real modules have zero violations. The architecture.test.ts title that still names 'identity/routes.ts, access/rules.ts idiom' now correctly labels them as plain-object enumeration.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-12/00-candidate-and-diff.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-12/02-rule5-scope-probe.test.ts",
+        "docs/delivery/test-evidence/DG1/domain/round-12/02-rule5-scope-probe-node22.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-12/02-rule5-scope-probe-node24.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-12/03-architecture-verbose-node22.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-12/03-architecture-verbose-node24.out.txt"
+      ]
+    }
+  ]
+}
