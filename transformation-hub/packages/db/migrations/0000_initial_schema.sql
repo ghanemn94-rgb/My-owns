@@ -2591,6 +2591,22 @@ CREATE TABLE "source_record" (
 	CONSTRAINT "source_record_pid_uq" UNIQUE("project_id","id")
 );
 --> statement-breakpoint
+CREATE TABLE "bi_access_grant" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"project_id" uuid NOT NULL,
+	"max_classification" "classification" NOT NULL,
+	"reason" text NOT NULL,
+	"granted_by" uuid NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"revoked_at" timestamp with time zone,
+	"revoked_by" uuid,
+	"revoke_reason" text,
+	"version" integer DEFAULT 1 NOT NULL,
+	CONSTRAINT "bi_access_grant_pid_uq" UNIQUE("project_id","id"),
+	CONSTRAINT "bi_access_grant_revoke_ck" CHECK (("bi_access_grant"."revoked_at" is null) = ("bi_access_grant"."revoked_by" is null))
+);
+--> statement-breakpoint
 CREATE TABLE "import_batch" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"org_id" uuid NOT NULL,
@@ -3286,6 +3302,7 @@ ALTER TABLE "source_claim" ADD CONSTRAINT "source_claim_verification_source_fk" 
 ALTER TABLE "source_record" ADD CONSTRAINT "source_record_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "source_record" ADD CONSTRAINT "source_record_supersedes_fk" FOREIGN KEY ("project_id","supersedes_source_id") REFERENCES "public"."source_record"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "source_record" ADD CONSTRAINT "source_record_docver_fk" FOREIGN KEY ("project_id","document_version_id") REFERENCES "public"."document_version"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "bi_access_grant" ADD CONSTRAINT "bi_access_grant_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "import_batch" ADD CONSTRAINT "import_batch_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "import_batch" ADD CONSTRAINT "import_batch_source_fk" FOREIGN KEY ("project_id","source_id") REFERENCES "public"."source_record"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "import_batch" ADD CONSTRAINT "import_batch_docver_fk" FOREIGN KEY ("project_id","document_version_id") REFERENCES "public"."document_version"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -3420,6 +3437,7 @@ CREATE UNIQUE INDEX "document_version_uq" ON "document_version" USING btree ("do
 CREATE INDEX "evidence_link_target_idx" ON "evidence_link" USING btree ("project_id","target_type","target_id");--> statement-breakpoint
 CREATE INDEX "source_claim_target_idx" ON "source_claim" USING btree ("project_id","target_type","target_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "source_record_code_uq" ON "source_record" USING btree ("project_id","code");--> statement-breakpoint
+CREATE UNIQUE INDEX "bi_access_grant_active_uq" ON "bi_access_grant" USING btree ("project_id") WHERE revoked_at is null;--> statement-breakpoint
 CREATE UNIQUE INDEX "import_row_uq" ON "import_row" USING btree ("batch_id","row_no");--> statement-breakpoint
 CREATE INDEX "report_export_snapshot_idx" ON "report_export" USING btree ("project_id","snapshot_id","created_by");--> statement-breakpoint
 CREATE INDEX "report_snapshot_kind_idx" ON "report_snapshot" USING btree ("project_id","kind");--> statement-breakpoint

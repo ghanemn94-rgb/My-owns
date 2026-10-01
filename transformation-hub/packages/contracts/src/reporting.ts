@@ -211,6 +211,34 @@ export const KpiCatalogueDto = z.object({
   items: z.array(KpiCatalogueEntryDto),
 });
 
+/** BI exposure grant of a project (REQ-RPT-011): the sponsor lists the project for the read-only `bi` views. */
+export const BI_VIEWS = ['bi.projects', 'bi.status_dimensions', 'bi.milestones', 'bi.tasks', 'bi.risks', 'bi.decisions', 'bi.report_snapshots'] as const;
+export const BiAccessGrantDto = z.object({
+  id: Uuid,
+  maxClassification: ClassificationSchema,
+  reason: z.string(),
+  grantedBy: Uuid,
+  grantedByName: z.string().nullable(),
+  createdAt: z.string(),
+  active: z.boolean(),
+  revokedAt: z.string().nullable(),
+  revokedBy: Uuid.nullable(),
+  revokeReason: z.string().nullable(),
+  version: z.number().int(),
+});
+export const BiAccessDto = z.object({
+  /** Demo projects are never readable through the BI views, whatever their grant. */
+  projectIsDemo: z.boolean(),
+  /** True when an active grant exists and the project is not demo: the `hub_bi` role can read it. */
+  exposed: z.boolean(),
+  views: z.array(z.string()),
+  /** Status of the BI connection itself: the platform never claims a connected BI tool (it does not see one). */
+  connection: z.literal('not_verified'),
+  items: z.array(BiAccessGrantDto),
+});
+export const GrantBiAccessBody = z.object({ maxClassification: z.enum(['internal', 'confidential', 'restricted']), reason: z.string().trim().min(3).max(2000) }).strict();
+export const RevokeBiAccessBody = z.object({ expectedVersion: z.number().int().positive(), reason: z.string().trim().min(3).max(2000) }).strict();
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Routes
 
@@ -307,6 +335,39 @@ export const reportingRoutes = registerRoutes({
     binary: true,
     params: ExportParams,
     response: z.any(),
+  }),
+  getBiAccess: defineRoute({
+    id: 'reporting.getBiAccess',
+    method: 'GET',
+    path: `${P}/bi-access`,
+    summary: 'BI exposure of the project: grants (active and revoked) of the read-only bi views for the restricted BI database role',
+    tags,
+    access: 'admin.clearance.grant',
+    params: ProjectParams,
+    response: BiAccessDto,
+  }),
+  grantBiAccess: defineRoute({
+    id: 'reporting.grantBiAccess',
+    method: 'POST',
+    path: `${P}/bi-access`,
+    summary: 'List the project for the read-only BI views up to a classification (never above the grantor’s clearance; demo projects stay excluded)',
+    tags,
+    access: 'admin.clearance.grant',
+    params: ProjectParams,
+    body: GrantBiAccessBody,
+    response: BiAccessGrantDto,
+  }),
+  revokeBiAccess: defineRoute({
+    id: 'reporting.revokeBiAccess',
+    method: 'POST',
+    path: `${P}/bi-access/:grantId/revoke`,
+    summary: 'Withdraw the project from the BI views (effective for the next BI query; history kept)',
+    tags,
+    access: 'admin.clearance.grant',
+    command: true,
+    params: ProjectParams.extend({ grantId: Uuid }),
+    body: RevokeBiAccessBody,
+    response: BiAccessGrantDto,
   }),
   getKpiCatalogue: defineRoute({
     id: 'reporting.getKpiCatalogue',

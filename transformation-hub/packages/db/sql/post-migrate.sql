@@ -1282,8 +1282,99 @@ CREATE TRIGGER hub_report_export_no_delete BEFORE DELETE ON report_export FOR EA
 DO $rptgrants$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'hub_app') THEN
-    EXECUTE 'REVOKE DELETE ON report_export FROM hub_app';
+    EXECUTE 'REVOKE DELETE ON report_export, bi_access_grant FROM hub_app';
   END IF;
 END
 $rptgrants$;
+
+-- 25. Read-only BI views for Power BI or another BI tool (REQ-RPT-011; access-matrix §9 bi_reader; threat model DF-09, C-36) --
+-- Schema `bi`: views with security_invoker = true, read by the dedicated login role `hub_bi` (created by the DBA, like
+-- hub_app — scripts/ops/db-init-roles.sh with HUB_BI_DB_PASSWORD). hub_bi holds no table privilege except the listed
+-- columns, and on every table a view reads it is bound by a PERMISSIVE policy (so it sees rows at all) AND a RESTRICTIVE
+-- policy (so nothing else — e.g. a session setting that the app's policies trust — can widen it): only projects listed
+-- in bi_access_grant by their sponsor, never demo projects or demo rows, never above the grant's classification, never
+-- partner-room material. The views are documented in docs/architecture/bi-views.md.
+CREATE SCHEMA IF NOT EXISTS bi;
+
+-- Is a row of project p with classification c within an active, non-demo BI grant? (security invoker: hub_bi reads
+-- bi_access_grant and project under the policies below.)
+CREATE OR REPLACE FUNCTION hub_bi_cleared(p uuid, c classification) RETURNS boolean LANGUAGE sql STABLE SET search_path = public, pg_catalog AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM bi_access_grant g JOIN project pr ON pr.id = g.project_id
+     WHERE g.project_id = p AND g.revoked_at IS NULL AND NOT pr.is_demo AND c <= g.max_classification)
+$$;
+
+CREATE OR REPLACE VIEW bi.projects WITH (security_invoker = true) AS
+  SELECT p.id AS project_id, p.code, p.name, p.status, p.classification, p.planned_start, p.timezone
+    FROM project p WHERE NOT p.is_demo;
+CREATE OR REPLACE VIEW bi.status_dimensions WITH (security_invoker = true) AS
+  SELECT d.project_id, d.key AS dimension, d.state, d.computed_at FROM status_dimension d;
+CREATE OR REPLACE VIEW bi.milestones WITH (security_invoker = true) AS
+  SELECT m.project_id, m.code, m.title, m.status, m.planned_date, m.forecast_date, m.actual_date, m.is_critical, m.gate_key, m.verification_status
+    FROM milestone m WHERE NOT m.is_demo;
+CREATE OR REPLACE VIEW bi.tasks WITH (security_invoker = true) AS
+  SELECT t.project_id, t.wbs_code, t.title, t.status, t.planned_start, t.planned_finish, t.forecast_finish, t.actual_finish, t.gate_key, t.verification_status
+    FROM task t WHERE NOT t.is_demo;
+CREATE OR REPLACE VIEW bi.risks WITH (security_invoker = true) AS
+  SELECT r.project_id, r.code, r.title, r.status, r.probability, r.impact, r.due_date, r.escalation_level
+    FROM risk r WHERE NOT r.is_demo;
+CREATE OR REPLACE VIEW bi.decisions WITH (security_invoker = true) AS
+  SELECT d.project_id, d.code, d.title, d.status, d.authority_outcome, d.latest_safe_date, d.classification, d.outcome_recorded_at
+    FROM decision d WHERE NOT d.is_demo;
+CREATE OR REPLACE VIEW bi.report_snapshots WITH (security_invoker = true) AS
+  SELECT s.project_id, s.id AS snapshot_id, s.kind, s.title, s.as_of, s.as_of_local_date, s.classification, s.content_hash
+    FROM report_snapshot s WHERE s.schema_version IS NOT NULL AND s.includes_demo_data = 'false'::jsonb;
+
+DO $bi$
+DECLARE
+  t text;
+  -- table → classification expression of its rows (tables without one take their project's classification)
+  cls jsonb := '{"status_dimension": "(SELECT pr.classification FROM project pr WHERE pr.id = project_id)",
+                 "milestone": "(SELECT pr.classification FROM project pr WHERE pr.id = project_id)",
+                 "task": "(SELECT pr.classification FROM project pr WHERE pr.id = project_id)",
+                 "risk": "(SELECT pr.classification FROM project pr WHERE pr.id = project_id)",
+                 "decision": "classification",
+                 "report_snapshot": "classification"}';
+  cols jsonb := '{"status_dimension": "project_id, key, state, computed_at",
+                  "milestone": "project_id, code, title, status, planned_date, forecast_date, actual_date, is_critical, gate_key, verification_status, is_demo",
+                  "task": "project_id, wbs_code, title, status, planned_start, planned_finish, forecast_finish, actual_finish, gate_key, verification_status, is_demo",
+                  "risk": "project_id, code, title, status, probability, impact, due_date, escalation_level, is_demo",
+                  "decision": "project_id, code, title, status, authority_outcome, latest_safe_date, classification, outcome_recorded_at, is_demo",
+                  "report_snapshot": "project_id, id, kind, title, as_of, as_of_local_date, classification, content_hash, schema_version, includes_demo_data"}';
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'hub_bi') THEN
+    RAISE NOTICE 'role hub_bi does not exist: BI views created without a reader (see docs/architecture/bi-views.md)';
+    RETURN;
+  END IF;
+  -- The BI role must not bypass row-level security (its attributes are set by the DBA scripts; checked here).
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'hub_bi' AND (rolsuper OR rolbypassrls OR rolcreaterole)) THEN
+    RAISE EXCEPTION 'unsafe_bi_role: hub_bi must be NOSUPERUSER NOBYPASSRLS NOCREATEROLE';
+  END IF;
+  -- Schema usage and the listed columns only.
+  EXECUTE format('GRANT CONNECT ON DATABASE %I TO hub_bi', current_database());
+  EXECUTE 'REVOKE ALL ON ALL TABLES IN SCHEMA public FROM hub_bi';
+  EXECUTE 'GRANT USAGE ON SCHEMA public, bi TO hub_bi';
+  EXECUTE 'GRANT SELECT ON ALL TABLES IN SCHEMA bi TO hub_bi';
+  EXECUTE 'GRANT SELECT (id, project_id, max_classification, revoked_at) ON bi_access_grant TO hub_bi';
+  EXECUTE 'GRANT SELECT (id, code, name, status, classification, planned_start, timezone, is_demo) ON project TO hub_bi';
+  EXECUTE 'GRANT EXECUTE ON FUNCTION hub_bi_cleared(uuid, classification) TO hub_bi';
+  -- bi_access_grant: hub_bi reads active grants only.
+  EXECUTE 'DROP POLICY IF EXISTS hub_bi_read ON bi_access_grant';
+  EXECUTE 'CREATE POLICY hub_bi_read ON bi_access_grant AS PERMISSIVE FOR SELECT TO hub_bi USING (revoked_at IS NULL)';
+  EXECUTE 'DROP POLICY IF EXISTS hub_bi_guard ON bi_access_grant';
+  EXECUTE 'CREATE POLICY hub_bi_guard ON bi_access_grant AS RESTRICTIVE FOR SELECT TO hub_bi USING (revoked_at IS NULL)';
+  -- project: granted, non-demo projects only.
+  EXECUTE 'DROP POLICY IF EXISTS hub_bi_read ON project';
+  EXECUTE 'CREATE POLICY hub_bi_read ON project AS PERMISSIVE FOR SELECT TO hub_bi USING (NOT is_demo AND EXISTS (SELECT 1 FROM bi_access_grant g WHERE g.project_id = project.id AND g.revoked_at IS NULL AND project.classification <= g.max_classification))';
+  EXECUTE 'DROP POLICY IF EXISTS hub_bi_guard ON project';
+  EXECUTE 'CREATE POLICY hub_bi_guard ON project AS RESTRICTIVE FOR SELECT TO hub_bi USING (NOT is_demo AND EXISTS (SELECT 1 FROM bi_access_grant g WHERE g.project_id = project.id AND g.revoked_at IS NULL AND project.classification <= g.max_classification))';
+  FOREACH t IN ARRAY ARRAY['status_dimension', 'milestone', 'task', 'risk', 'decision', 'report_snapshot'] LOOP
+    EXECUTE format('GRANT SELECT (%s) ON %I TO hub_bi', cols ->> t, t);
+    EXECUTE format('DROP POLICY IF EXISTS hub_bi_read ON %I', t);
+    EXECUTE format('CREATE POLICY hub_bi_read ON %I AS PERMISSIVE FOR SELECT TO hub_bi USING (hub_bi_cleared(project_id, %s))', t, cls ->> t);
+    EXECUTE format('DROP POLICY IF EXISTS hub_bi_guard ON %I', t);
+    EXECUTE format('CREATE POLICY hub_bi_guard ON %I AS RESTRICTIVE FOR SELECT TO hub_bi USING (hub_bi_cleared(project_id, %s))', t, cls ->> t);
+  END LOOP;
+END
+$bi$;
 

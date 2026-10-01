@@ -7,6 +7,7 @@ import { attachmentDisposition } from '../../platform/helpers';
 import { SnapshotsService } from './snapshots.service';
 import { KpiCatalogueService } from './kpi-catalogue.service';
 import { ExportsService } from './exports.service';
+import { BiAccessService } from './bi-access.service';
 
 @Controller()
 export class ReportingController {
@@ -14,6 +15,7 @@ export class ReportingController {
     private readonly snapshots: SnapshotsService,
     private readonly kpis: KpiCatalogueService,
     private readonly exports: ExportsService,
+    private readonly bi: BiAccessService,
   ) {}
 
   @ApiRoute(R.generateReport)
@@ -58,6 +60,21 @@ export class ReportingController {
     res.setHeader('Content-Security-Policy', "sandbox; default-src 'none'");
     res.setHeader('Cache-Control', 'no-store');
     return new StreamableFile(f.bytes, { type: f.mime, length: f.bytes.length, disposition: attachmentDisposition(f.filename) });
+  }
+
+  @ApiRoute(R.getBiAccess)
+  getBiAccess(@Ctx() ctx: RequestContext, @Input() i: RouteInput<typeof R.getBiAccess>) {
+    return this.bi.get(ctx, i.params.projectId);
+  }
+
+  @ApiRoute(R.grantBiAccess)
+  grantBiAccess(@Ctx() ctx: RequestContext, @Input() i: RouteInput<typeof R.grantBiAccess>) {
+    return this.bi.grant(ctx, i.params.projectId, i.body);
+  }
+
+  @ApiRoute(R.revokeBiAccess)
+  revokeBiAccess(@Ctx() ctx: RequestContext, @Input() i: RouteInput<typeof R.revokeBiAccess>) {
+    return this.bi.revoke(ctx, i.params.projectId, i.params.grantId, i.body);
   }
 
   @ApiRoute(R.getKpiCatalogue)

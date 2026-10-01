@@ -3,6 +3,7 @@
 # passwords are provisioned by Mobily DBAs; see docs/deployment/installation.md):
 #   hub_owner — owns schema objects, runs migrations (never used by the running app)
 #   hub_app   — runtime role: NOT owner, NOBYPASSRLS, DML only; audit_event is INSERT/SELECT only
+#   hub_bi    — read-only BI role: NOBYPASSRLS, the `bi` views only (post-migrate §25, docs/architecture/bi-views.md)
 set -euo pipefail
 DEV_PW="${HUB_DEV_DB_PASSWORD:-hub_dev_only}"
 as_pg() { if [ "$(id -un)" = "postgres" ]; then psql -v ON_ERROR_STOP=1 -qAt "$@"; else su postgres -c "psql -v ON_ERROR_STOP=1 -qAt $*"; fi; }
@@ -15,6 +16,9 @@ BEGIN
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'hub_app') THEN
     CREATE ROLE hub_app LOGIN NOBYPASSRLS NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD '${DEV_PW}';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'hub_bi') THEN
+    CREATE ROLE hub_bi LOGIN NOBYPASSRLS NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD '${DEV_PW}';
   END IF;
 END
 \$do\$;
@@ -29,6 +33,7 @@ for db in ${HUB_DATABASES:-hub_dev hub_test}; do
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE EXTENSION IF NOT EXISTS citext;
 GRANT CONNECT ON DATABASE ${db} TO hub_app;
+GRANT CONNECT ON DATABASE ${db} TO hub_bi;
 SQL
 done
-echo "roles hub_owner/hub_app and databases ready: ${HUB_DATABASES:-hub_dev hub_test}"
+echo "roles hub_owner/hub_app/hub_bi and databases ready: ${HUB_DATABASES:-hub_dev hub_test}"

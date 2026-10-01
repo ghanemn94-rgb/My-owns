@@ -126,6 +126,34 @@ export const reportExport = pgTable(
   ],
 );
 
+/**
+ * BI exposure of a project (REQ-RPT-011, access-matrix §9 `bi_reader`, threat model DF-09 / C-36): the project's sponsor
+ * lists the project for the read-only BI views (schema `bi`) and sets the highest classification the BI database role
+ * `hub_bi` may read there (never above the sponsor's own clearance). Demo projects are never exposed, whatever the grant.
+ * One active grant per project; a change is a revoke and a new grant (history kept).
+ */
+export const biAccessGrant = pgTable(
+  'bi_access_grant',
+  {
+    id: pk(),
+    orgId: orgIdCol(),
+    projectId: projectIdCol().references(() => project.id),
+    maxClassification: classification('max_classification').notNull(),
+    reason: text('reason').notNull(),
+    grantedBy: uuid('granted_by').notNull(),
+    createdAt: createdAt(),
+    revokedAt: ts('revoked_at'),
+    revokedBy: uuid('revoked_by'),
+    revokeReason: text('revoke_reason'),
+    version: versionCol(),
+  },
+  (t) => [
+    unique('bi_access_grant_pid_uq').on(t.projectId, t.id),
+    uniqueIndex('bi_access_grant_active_uq').on(t.projectId).where(sql`revoked_at is null`),
+    check('bi_access_grant_revoke_ck', sql`(${t.revokedAt} is null) = (${t.revokedBy} is null)`),
+  ],
+);
+
 export const importBatch = pgTable(
   'import_batch',
   {

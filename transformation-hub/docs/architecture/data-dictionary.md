@@ -1,7 +1,7 @@
 # Data dictionary
 
 > Generated from the live PostgreSQL schema by `packages/db/src/cli/data-dictionary.ts` — do not edit by hand.
-> Tables: 122. RLS enabled: 117.
+> Tables: 123. RLS enabled: 118.
 
 ## Spec §14 entity coverage
 
@@ -422,7 +422,7 @@ Foreign keys:
 
 ### `project`
 
-RLS: enabled (hub_project_self) · Triggers: hub_scope_immutable
+RLS: enabled (hub_project_self, hub_bi_read, hub_bi_guard) · Triggers: hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -486,7 +486,7 @@ Foreign keys:
 
 ### `legal_entity`
 
-RLS: enabled (hub_org_isolation, hub_legal_entity_owner_insert, hub_legal_entity_owner_update) · Triggers: hub_legal_entity_owner_immutable, hub_scope_immutable
+RLS: enabled (hub_org_isolation, hub_legal_entity_owner_update, hub_legal_entity_owner_insert) · Triggers: hub_legal_entity_owner_immutable, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -655,7 +655,7 @@ Foreign keys:
 
 ### `task`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable
+RLS: enabled (hub_project_isolation, hub_bi_read, hub_bi_guard) · Triggers: hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -720,7 +720,7 @@ Foreign keys:
 
 ### `milestone`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable
+RLS: enabled (hub_project_isolation, hub_bi_read, hub_bi_guard) · Triggers: hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -975,7 +975,7 @@ Foreign keys:
 
 ### `risk`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable
+RLS: enabled (hub_project_isolation, hub_bi_read, hub_bi_guard) · Triggers: hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -1456,7 +1456,7 @@ Foreign keys:
 
 ### `decision`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_same_project_subject, hub_scope_immutable
+RLS: enabled (hub_project_isolation, hub_bi_read, hub_bi_guard) · Triggers: hub_same_project_subject, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -1931,7 +1931,7 @@ Foreign keys:
 
 ### `status_dimension`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable
+RLS: enabled (hub_project_isolation, hub_bi_read, hub_bi_guard) · Triggers: hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -3958,7 +3958,7 @@ Foreign keys:
 
 ### `report_snapshot`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_append_only, hub_scope_immutable
+RLS: enabled (hub_project_isolation, hub_bi_read, hub_bi_guard) · Triggers: hub_append_only, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -4027,6 +4027,31 @@ Foreign keys:
 - `report_export_project_id_project_id_fk`: (project_id) → `project`(id)
 - `report_export_snapshot_fk`: (project_id,snapshot_id) → `report_snapshot`(project_id,id) — composite project-scoped FK
 
+### `bi_access_grant`
+
+RLS: enabled (hub_project_isolation, hub_bi_read, hub_bi_guard) · Triggers: hub_scope_immutable
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | uuid | no | `gen_random_uuid()` |
+| `org_id` | uuid | no |  |
+| `project_id` | uuid | no |  |
+| `max_classification` | enum classification | no |  |
+| `reason` | text | no |  |
+| `granted_by` | uuid | no |  |
+| `created_at` | timestamp with time zone | no | `now()` |
+| `revoked_at` | timestamp with time zone | yes |  |
+| `revoked_by` | uuid | yes |  |
+| `revoke_reason` | text | yes |  |
+| `version` | integer | no | `1` |
+
+Foreign keys:
+
+- `bi_access_grant_project_id_project_id_fk`: (project_id) → `project`(id)
+- `hub_opfk_bi_access_grant`: (org_id,project_id) → `project`(org_id,id)
+- `hub_ufk_bi_access_grant_granted_by`: (org_id,granted_by) → `app_user`(org_id,id)
+- `hub_ufk_bi_access_grant_revoked_by`: (org_id,revoked_by) → `app_user`(org_id,id)
+
 ### `import_batch`
 
 RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable
@@ -4094,7 +4119,7 @@ Foreign keys:
 
 ### `notification`
 
-RLS: enabled (hub_notification_read, hub_notification_write, hub_notification_update) · Triggers: hub_same_project_source, hub_scope_immutable
+RLS: enabled (hub_notification_write, hub_notification_update, hub_notification_read) · Triggers: hub_same_project_source, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|

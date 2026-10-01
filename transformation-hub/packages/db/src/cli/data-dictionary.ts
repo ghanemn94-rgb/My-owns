@@ -38,7 +38,7 @@ const MODULES: Record<string, string[]> = {
     'room_disclosure', 'room_access_event',
   ],
   'Documents & sources': ['document', 'document_version', 'evidence_link', 'source_record', 'source_claim', 'document_chunk'],
-  'Reporting & imports': ['report_snapshot', 'report_export', 'import_batch', 'import_row'],
+  'Reporting & imports': ['report_snapshot', 'report_export', 'bi_access_grant', 'import_batch', 'import_row'],
   'Platform, jobs & audit': [
     'notification', 'integration_connection', 'outbox_event', 'job', 'scheduled_job', 'delivery_record', 'audit_event', 'record_version',
     'audit_checkpoint',

@@ -2192,6 +2192,19 @@ erDiagram
     classification content_classification
     more more_columns
   }
+  bi_access_grant {
+    uuid id
+    uuid org_id
+    uuid project_id
+    classification max_classification
+    text reason
+    uuid granted_by
+    timestamptz created_at
+    timestamptz revoked_at
+    uuid revoked_by
+    text revoke_reason
+    int4 version
+  }
   import_batch {
     uuid id
     uuid org_id
@@ -2229,6 +2242,8 @@ erDiagram
   report_snapshot ||--o{ report_snapshot : "previous_snapshot_id"
   app_user ||--o{ report_export : "org_id,created_by"
   report_snapshot ||--o{ report_export : "snapshot_id"
+  app_user ||--o{ bi_access_grant : "org_id,granted_by"
+  app_user ||--o{ bi_access_grant : "org_id,revoked_by"
   app_user ||--o{ import_batch : "org_id,approved_by"
   app_user ||--o{ import_batch : "org_id,created_by"
   document_version ||--o{ import_batch : "document_version_id"
