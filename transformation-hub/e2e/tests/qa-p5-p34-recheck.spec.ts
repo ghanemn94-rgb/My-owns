@@ -135,19 +135,42 @@ test.describe('QA P5 — P4 C1 re-verification (QA-P34-01 c/h, QA-P34-07) and P3
     console.log(`QA-P34-01h re-check: detector problems classified QA-P5-07 (template KPI texts with no Arabic in the template): ${classified07}`);
   });
 
-  test('OBSERVED QA-P5-07: the Arabic KPI page shows the template KPI formula, unit, frequency, source and thresholds in English (the template has no Arabic for them)', async ({ browser, baseURL }) => {
+  // This regression REPLACES the former "OBSERVED QA-P5-07" test, which recorded (expected ≥ 5) English template KPI texts on
+  // the Arabic KPI page. Fix (P6 configuration): template version 2 carries the Arabic formula, source and thresholds of every
+  // template KPI (DEMO-DC is created on dc-carveout version 2); unit, period and frequency are translated from the web
+  // vocabularies. A text a person has edited is shown as recorded and marked as such — the API then has no Arabic for it.
+  test('QA-P5-07 regression: the Arabic KPI page shows no English template KPI text — formula, source and thresholds in the template’s Arabic, unit, period and frequency translated', async ({ browser, baseURL }, testInfo) => {
+    test.setTimeout(240_000);
+    const ar = msg('ar', 'statuses') as Record<'kpiUnits' | 'kpiPeriods' | 'kpiFrequencies', Record<string, string>>;
     const s = await open(browser, baseURL!, PERSONAS.finance, 'ar');
     try {
-      const kpis = (await get(s.page.request, `/api/v1/projects/${dc}/kpis?pageSize=100`)).items as { id: string; key: string; formula: string | null; unit: string | null; frequency: string | null; source: string | null; thresholds: Record<string, string | null> }[];
-      const k = kpis.find((x) => x.key === 'cps_verified')!;
-      await s.page.goto(`/projects/${dc}/finance/kpis/${k.id}`);
-      await expect(s.page.getByTestId('kpi-detail')).toBeVisible();
-      await settle(s.page);
-      const shown = await s.page.getByTestId('kpi-detail').innerText();
-      const english = [k.formula, k.unit, k.frequency, k.source, ...Object.values(k.thresholds)].filter((x): x is string => !!x && shown.includes(x));
-      await s.page.screenshot({ path: join(SHOTS, 'observed-qa-p5-07-ar-kpi-template-english.png'), fullPage: true });
-      console.log(`QA-P5-07: English template KPI texts on the Arabic page (${english.length}): ${JSON.stringify(english)}`);
-      expect(english.length).toBeGreaterThanOrEqual(5);
+      type Kpi = { id: string; key: string; formula: string | null; formulaAr: string | null; unit: string; period: string; frequency: string; source: string | null; sourceAr: string | null; thresholds: Record<'green' | 'amber' | 'red', string | null>; thresholdsAr: Record<'green' | 'amber' | 'red', string | null> | null };
+      const kpis = (await get(s.page.request, `/api/v1/projects/${dc}/kpis?pageSize=100`)).items as Kpi[];
+      // Every template KPI of the demo project carries the Arabic of its template texts (none has been edited by a person).
+      const template = kpis.filter((k) => k.formulaAr !== null);
+      console.log(`QA-P5-07 regression: ${kpis.length} KPI(s), ${template.length} with the template Arabic texts: ${JSON.stringify(template.map((k) => k.key))}`);
+      expect(template.map((k) => k.key)).toContain('cps_verified');
+      expect(template.length).toBeGreaterThanOrEqual(15);
+      for (const k of template) {
+        expect(k.sourceAr, `${k.key}: sourceAr`).not.toBeNull();
+        expect(k.thresholdsAr, `${k.key}: thresholdsAr`).not.toBeNull();
+        await s.page.goto(`/projects/${dc}/finance/kpis/${k.id}`);
+        const detail = s.page.getByTestId('kpi-detail');
+        await expect(detail).toBeVisible();
+        await settle(s.page);
+        const shown = await detail.innerText();
+        const english = [k.formula, k.source, ...Object.values(k.thresholds)].filter((x): x is string => !!x && shown.includes(x));
+        expect(english, `${k.key}: English template texts shown on the Arabic page`).toEqual([]);
+        await expect(detail).toContainText(k.formulaAr!);
+        await expect(detail).toContainText(k.sourceAr!);
+        for (const band of ['green', 'amber', 'red'] as const) if (k.thresholdsAr![band]) await expect(detail).toContainText(k.thresholdsAr![band]!);
+        await expect(detail).toContainText(ar.kpiUnits[k.unit]!);
+        await expect(detail).toContainText(ar.kpiPeriods[k.period]!);
+        await expect(detail).toContainText(ar.kpiFrequencies[k.frequency]!);
+        // The detector without any allowance: no English UI message and no English half of a bilingual field.
+        await checkArabic(s.page, testInfo, SHOTS, `qa-p5-07-regression-kpi-${k.key}`, s.bilingual);
+      }
+      expect(s.problems(), s.problems().join('\n')).toEqual([]);
     } finally {
       await s.close();
     }

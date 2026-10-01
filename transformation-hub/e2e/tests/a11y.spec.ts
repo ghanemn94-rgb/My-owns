@@ -24,7 +24,7 @@ import { PERSONAS, apiSessionAs, loginAs } from './helpers';
  */
 
 type Locale = 'en' | 'ar';
-type PersonaKey = 'pm' | 'pmB' | 'portfolioAdmin' | 'partnerAlpha' | 'finance' | 'contributor' | 'sponsor' | 'cleanTeam' | 'legal';
+type PersonaKey = 'pm' | 'pmB' | 'portfolioAdmin' | 'platformAdmin' | 'partnerAlpha' | 'finance' | 'contributor' | 'sponsor' | 'cleanTeam' | 'legal';
 const LOCALES: readonly Locale[] = ['en', 'ar'];
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] as const;
 const FAILING_IMPACTS = new Set(['serious', 'critical']);
@@ -156,6 +156,25 @@ const SCREENS: readonly Screen[] = [
   { id: 'project-setup-step5', persona: 'pm', path: (i) => `/projects/${i.dc}/setup?step=committee`, ready: visible('[data-testid="wizard-matrices-table"][data-state="ready"]') },
   { id: 'project-setup-step6', persona: 'pmB', path: (i) => `/projects/${i.transform}/setup?step=baseline`, ready: visible('[data-testid="wizard-gates-table"][data-state="ready"]') },
   { id: 'project-setup-390', persona: 'pmB', path: (i) => `/projects/${i.transform}/setup?step=baseline`, ready: visible('[data-testid="wizard-gates-table"][data-state="ready"]'), viewport: MOBILE },
+  // Setup wizard steps 7 and 8 (P6 configuration; read-only on the launched demo project): confidentiality, retention, AI mode,
+  // integrations; the gap list and the onboarding approvals checklist.
+  { id: 'project-setup-step7', persona: 'pm', path: (i) => `/projects/${i.dc}/setup?step=settings`, ready: visible('[data-testid="wizard-policies-state"]') },
+  { id: 'project-setup-step8', persona: 'pm', path: (i) => `/projects/${i.dc}/setup?step=launch`, ready: visible('[data-testid="wizard-checklist"][data-state="ready"]') },
+  // Project configuration (P6): RAG thresholds and the template version with its upgrades (read-only).
+  { id: 'project-settings-rag', persona: 'pm', path: (i) => `/projects/${i.dc}/settings?tab=rag`, ready: visible('[data-testid="rag-in-force"]') },
+  { id: 'project-settings-template', persona: 'pm', path: (i) => `/projects/${i.dc}/settings?tab=template`, ready: visible('[data-testid="template-current"]') },
+  { id: 'project-settings-rag-390', persona: 'pm', path: (i) => `/projects/${i.dc}/settings?tab=rag`, ready: visible('[data-testid="rag-in-force"]'), viewport: MOBILE },
+  {
+    // The proposal form (three numbers and a reason); nothing is submitted.
+    id: 'project-settings-rag-dialog-open',
+    persona: 'pm',
+    path: (i) => `/projects/${i.dc}/settings?tab=rag`,
+    ready: visible('[data-testid="rag-propose"]'),
+    prepare: async (page) => {
+      await page.getByTestId('rag-propose').click();
+      await expect(page.getByRole('dialog')).toBeVisible();
+    },
+  },
   { id: 'project-members', persona: 'pm', path: (i) => `/projects/${i.dc}/members` },
   // Committee Hub.
   { id: 'committee-hub', persona: 'pm', path: (i) => `/projects/${i.dc}/committee` },
@@ -392,6 +411,28 @@ const SCREENS: readonly Screen[] = [
   { id: 'ai-restricted', persona: 'cleanTeam', path: (i) => `/projects/${i.dc}/ai`, ready: visible('[data-testid="restricted-state"]') },
   // Administration.
   { id: 'admin', persona: 'portfolioAdmin', path: () => '/admin' },
+  {
+    // Template catalogue with the difference of a version to the previous one (P6 configuration).
+    id: 'admin-templates',
+    persona: 'portfolioAdmin',
+    path: () => '/admin',
+    prepare: async (page) => {
+      await page.locator('#tab-templates').click();
+      const v2 = page.locator('[data-testid="admin-template"][data-key="general-transformation"] [data-testid="admin-template-version"][data-version="2"]');
+      await v2.getByTestId('admin-template-diff').click();
+      await expect(v2.getByTestId('template-diff')).toBeVisible();
+    },
+  },
+  {
+    // Deployment settings (REQ-UX-020): platform administration only; no secret is shown.
+    id: 'admin-deployment',
+    persona: 'platformAdmin',
+    path: () => '/admin',
+    prepare: async (page) => {
+      await page.locator('#tab-deployment').click();
+      await expect(page.getByTestId('admin-deployment')).toBeVisible();
+    },
+  },
   // An open modal dialog (native <dialog>): the RAID "new risk" form.
   {
     id: 'dialog-open',
@@ -583,7 +624,7 @@ function summarise(results: Awaited<ReturnType<AxeBuilder['analyze']>>): Finding
 test.describe('REQ-ARC-008 accessibility (axe-core, WCAG 2.1 A/AA)', () => {
   test.beforeAll(async ({ browser, baseURL }) => {
     ids = await lookupIds(baseURL!);
-    for (const persona of ['pm', 'pmB', 'portfolioAdmin', 'partnerAlpha', 'finance', 'contributor', 'sponsor', 'cleanTeam', 'legal'] as const) {
+    for (const persona of ['pm', 'pmB', 'portfolioAdmin', 'platformAdmin', 'partnerAlpha', 'finance', 'contributor', 'sponsor', 'cleanTeam', 'legal'] as const) {
       const ctx = await browser.newContext();
       const page = await ctx.newPage();
       await loginAs(page, PERSONAS[persona]);

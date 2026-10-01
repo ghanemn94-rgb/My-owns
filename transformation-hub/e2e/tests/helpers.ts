@@ -4,6 +4,7 @@ export const PERSONAS = {
   pm: 'Demo Project Manager',
   pmB: 'Demo PM — Project B',
   portfolioAdmin: 'Demo Portfolio Admin',
+  platformAdmin: 'Demo Platform Admin',
   contributor: 'Demo Contributor',
   partnerAlpha: 'Demo Partner Alpha User',
   finance: 'Demo Finance Member',

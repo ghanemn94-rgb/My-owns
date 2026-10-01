@@ -4,8 +4,10 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { planningRoutes as P } from '@hub/contracts';
+import { ragThresholdsRefMessage } from '@hub/domain';
 import { useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
+import { settingsHref } from '@/lib/config';
 import { localToday, pk, useProgress, useRefreshPlanning, workstreamHref, type Progress, type RagOverride, type WorkstreamHealth } from '@/lib/planning';
 import { useProjectContext } from '@/lib/project-context';
 import { ConfirmCommandDialog } from '../../ConfirmCommandDialog';
@@ -113,6 +115,13 @@ export function HealthTab() {
             <ServerText as="p" className="text-xs text-muted" messages={d.project.aggregate.explanationI18n} text={d.project.aggregate.explanation} />
             <p className="text-xs text-muted">
               {t('planning.health.thresholds', { green: d.thresholds.greenMaxSlipDays, amber: d.thresholds.amberMaxSlipDays, stale: d.thresholds.staleAfterDays })}
+            </p>
+            {/* REQ-PLN-019: the threshold set every calculated status used (approved project version or template default). */}
+            <p className="text-xs" data-testid="rag-thresholds-ref" data-source={d.thresholdsRef.source} data-version={d.thresholdsRef.versionNo ?? ''}>
+              <ServerText messages={[ragThresholdsRefMessage(d.thresholdsRef)]} text={null} />{' '}
+              <Link href={settingsHref(projectId, 'rag')} className={btn.link}>
+                {t('planning.health.thresholdsLink')}
+              </Link>
             </p>
             {d.baseline ? <p className="text-xs">{t('planning.health.baselineRef', { version: d.baseline.versionNo })}</p> : <p className="text-xs text-warning">{t('planning.health.noBaseline')}</p>}
           </div>
