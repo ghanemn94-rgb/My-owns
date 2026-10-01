@@ -11433,14 +11433,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-12/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-01T16:16:07Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG1 round 12 while re-proving the F-DG1-132 closure. Rated Low and non-mandatory, consistent with the precedent for this lint's other boundary-bypass routes (F-DG1-109 createRequire/computed import(), F-DG1-117/124/125/127/128/130/132: all Low, non-mandatory). The reasons: the lint is static defence-in-depth over human-reviewed code, not a runtime security boundary (testkit header), and exploitation needs a contributor to commit an unusual-extension file past review. The current tree has no such file. It is distinct from F-DG1-132, whose route in .ts module source IS closed; this is a file-scope gap affecting every rule. Proposed ID: the next free number in the code-security 1xx range (F-DG1-134); the orchestrator may renumber. Does not block DG1."
+        },
+        {
+          "at": "2026-10-01T16:27:54Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at e71f3d0e1ad115a4d48f2cef704424ac3836fa40"
         }
-      ]
+      ],
+      "fix_revision": "e71f3d0e1ad115a4d48f2cef704424ac3836fa40",
+      "fix_summary": "walk() broadened to CODE_FILE=/\\.[cm]?[jt]sx?$/ (ts/tsx/mts/cts/js/jsx/mjs/cjs) so every buildable module file is linted (no extension evasion); scanSource parses tsx/jsx as TSX; isTest uses TEST_FILE. Real module tree has 0 non-ts/tsx files; planted .mts self-check flags violations. architecture 127/127; full unit 320/320 Node 22+24."
     },
     {
       "id": "F-DG1-216",
@@ -11461,14 +11468,21 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG1/round-12/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-01T16:20:00Z",
           "status": "OPEN",
           "note": "Raised by qa-verifier in DG1 round 12 while verifying F-DG1-132/133. F-DG1-133's scope (the testkit header and the E-case comment) is fixed and verified. This is the one remaining stale statement, in D-055. Proposed ID: the next free number in the qa 2xx range (F-DG1-216); the orchestrator may renumber. Low and non-mandatory. I would accept it as an observation if the auditor agrees, or it can be fixed by a one-line D-055 correction."
+        },
+        {
+          "at": "2026-10-01T16:22:41Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 85af2e6eddc735a8e183962734b2a4dad3511182"
         }
-      ]
+      ],
+      "fix_revision": "85af2e6eddc735a8e183962734b2a4dad3511182",
+      "fix_summary": "D-055 corrected: the node:crypto namespace-enumeration route is now CLOSED by rule 5 (named-imports-only), not residual (a); both stale 'residual (a), F-DG1-132/215' mentions updated to reflect the rule-5 closure. D-055 no longer contradicts the testkit header."
     }
   ]
 }
