@@ -135,41 +135,63 @@ elif [ "$MODE" = "frozen" ]; then
   fi
 fi
 
-# Copy back node_modules ONLY at the real repository's own pnpm-workspace members — the root plus every directory that
-# the `packages:` globs in pnpm-workspace.yaml resolve to and that has a package.json. The member list is computed from
-# the REAL (trusted) tree, NEVER from the disposable copy, so a dependency build script that plants a directory named
-# `node_modules` at any other path (e.g. tools/gates/, .git/), or a stray package.json, or a crafted name, is never
-# copied into the real repo (F-DG1-118/F-DG1-123). Every destination is a path under $REPO_ROOT derived from a trusted
-# member directory, the iteration is NUL-delimited, and the source must be a real directory (not a symlink), so a
-# hostile name cannot make rm/cp act outside the repo. A failed copy fails the whole install (never a silent exit 0).
-# The member directories come from the trusted real tree (apps/*, packages/* in pnpm-workspace.yaml) and so carry no
-# newlines; a newline-delimited list through a temp file is therefore safe and side-steps the NUL-stripping that a
-# command substitution would do. node resolves the globs against the REAL repo only.
+# Copy back node_modules ONLY at the real repository's own pnpm-workspace members. The member list is pnpm's OWN
+# authoritative resolution of pnpm-workspace.yaml (`pnpm -r ls --depth -1 --json`), run against the REAL (trusted)
+# tree — NEVER the disposable copy. Delegating to pnpm (instead of re-parsing the YAML here) means the members are
+# exactly the `packages:` sequence pnpm itself would use, with its `!` exclusions honored and any other list-valued
+# key (publicHoistPattern, onlyBuiltDependencies, …) ignored (F-DG1-126); a dependency build script that plants a
+# directory named `node_modules` at any non-member path (e.g. tools/gates/, .git/), or a stray/crafted package.json,
+# is therefore never a copy-back destination (F-DG1-118/F-DG1-123). `pnpm ls` reads only pnpm-workspace.yaml and the
+# members' package.json, runs no lifecycle script, needs no network and works with node_modules absent; the repo has
+# no .pnpmfile.cjs, so no repository code runs either. Each reported path must be the repo root or physically under
+# it (a path pnpm reports outside $REPO_ROOT is refused); member paths from the trusted tree carry no newlines, so a
+# newline-delimited temp file is safe and side-steps the NUL-stripping a command substitution would do. The source
+# must be a real directory (not a symlink). A failed resolve/parse or a failed rm/cp fails the whole install (never a
+# silent exit 0 that would leave the real tree without node_modules).
+PNPM_LS_FILE="$(mktemp "${TMPDIR:-/var/tmp}/mth-pnpmls.XXXXXX")"
 MEMBERS_FILE="$(mktemp "${TMPDIR:-/var/tmp}/mth-members.XXXXXX")"
-cleanup() { rm -rf "$WS"; rm -f "$MEMBERS_FILE"; }
+cleanup() { rm -rf "$WS"; rm -f "$PNPM_LS_FILE" "$MEMBERS_FILE"; }
+( cd "$REPO_ROOT" && pnpm -r ls --depth -1 --json ) > "$PNPM_LS_FILE" \
+  || fail "could not resolve the pnpm-workspace members (pnpm -r ls) for the node_modules copy-back"
+# `pnpm -r ls --json` prints ONE JSON array per project it iterates (the root, the workspace members, and any
+# file:-linked local project under the tree); when there is more than one, the arrays are concatenated and are NOT a
+# single JSON document. Parse the stream as a sequence of top-level arrays (string- and escape-aware, so a path
+# containing a bracket cannot fool the scanner) and merge every `path`. --depth -1 means each element is a flat
+# object (no dependency sub-trees), so the only structure is the arrays themselves.
 node -e '
-const fs = require("fs"), path = require("path");
-const root = process.argv[1];
-const members = new Set([root]); // the root is always a member; a single-package tree has no workspace file
-const wsPath = path.join(root, "pnpm-workspace.yaml");
-if (fs.existsSync(wsPath)) {
-  const txt = fs.readFileSync(wsPath, "utf8");
-  const globs = [...txt.matchAll(/^\s*-\s*["\x27]?([^"\x27\n#]+?)["\x27]?\s*$/gm)].map((m) => m[1].trim());
-  for (const g of globs) {
-    for (const rel of fs.globSync(g, { cwd: root })) {
-      const abs = path.join(root, rel);
-      try {
-        if (fs.statSync(abs).isDirectory() && fs.existsSync(path.join(abs, "package.json"))) members.add(abs);
-      } catch { /* not a usable member; skip */ }
-    }
+const fs = require("fs");
+const raw = fs.readFileSync(process.argv[1], "utf8");
+const out = [];
+let i = 0;
+const n = raw.length;
+while (i < n) {
+  while (i < n && raw[i] !== "[") i++;
+  if (i >= n) break;
+  const start = i;
+  let depth = 0, inStr = false, esc = false;
+  for (; i < n; i++) {
+    const c = raw[i];
+    if (inStr) { if (esc) esc = false; else if (c === "\\") esc = true; else if (c === "\x22") inStr = false; }
+    else if (c === "\x22") inStr = true;
+    else if (c === "[") depth++;
+    else if (c === "]") { depth--; if (depth === 0) { i++; break; } }
   }
+  let arr;
+  try { arr = JSON.parse(raw.slice(start, i)); } catch { continue; }
+  if (Array.isArray(arr)) for (const m of arr) if (m && typeof m.path === "string" && m.path) out.push(m.path);
 }
-process.stdout.write([...members].join("\n") + "\n");
-' "$REPO_ROOT" > "$MEMBERS_FILE" || fail "could not resolve the pnpm-workspace members for the node_modules copy-back"
+if (out.length === 0) process.exit(4); // pnpm always lists at least the root; empty means a contract/parse problem
+fs.writeFileSync(process.argv[2], [...new Set(out)].join("\n") + "\n");
+' "$PNPM_LS_FILE" "$MEMBERS_FILE" \
+  || fail "could not parse the pnpm-workspace member list for the node_modules copy-back"
 
 copy_err=0
 while IFS= read -r member; do
   [ -n "$member" ] || continue
+  case "$member" in
+    "$REPO_ROOT" | "$REPO_ROOT"/*) : ;;
+    *) echo "install-sandbox: refusing a non-repo member path reported by pnpm: $member" >&2; copy_err=1; continue ;;
+  esac
   rel="${member#"$REPO_ROOT"}"; rel="${rel#/}"
   wsnm="$WS${rel:+/$rel}/node_modules"
   dest="$member/node_modules"

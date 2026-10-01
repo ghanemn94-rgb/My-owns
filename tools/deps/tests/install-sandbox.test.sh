@@ -10,9 +10,15 @@
 #   AC-7  the control-path ESCAPE is closed (F-DG1-113): renaming the writable parent of a protected subtree, appending
 #         to the installer itself, and writing a delivery record are all refused, and the real repo is unchanged;
 #   AC-8  agent-config surfaces that do not exist yet (CLAUDE.local.md, .mcp.json, nested CLAUDE.md, .vscode) cannot be
-#         created inside the sandbox (F-DG1-114).
-# The negative cases (AC-2 not-allow-listed, AC-3 would-change) first assert their setup install SUCCEEDED, so they can
-# never pass vacuously because the install failed for an unrelated reason (F-DG1-111/F-DG1-206).
+#         created inside the sandbox (F-DG1-114);
+#   AC-9  a dependency build script that plants a dir named node_modules at a NON-member path is not copied back into
+#         the target tree (F-DG1-118);
+#   AC-10 the copy-back destinations are exactly pnpm's own workspace members: a `!`-excluded package pattern and a
+#         non-`packages:` list-valued setting (publicHoistPattern) that name real directories with a package.json are
+#         NOT members and never receive node_modules, while a real member (the root) still does (F-DG1-126).
+# The negative cases (AC-2 not-allow-listed, AC-3 would-change, AC-9/AC-10 planted-but-not-copied) first assert their
+# setup install SUCCEEDED (and, for AC-10, that the build script actually RAN), so they can never pass vacuously
+# because the install failed or the attack never fired (F-DG1-111/F-DG1-206).
 # Usage: tools/deps/tests/install-sandbox.test.sh   (exit 0 = all pass; non-zero = a failure)
 set -uo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
@@ -168,6 +174,48 @@ if "$WRAP" --root "$WORK/ac9" create >/dev/null 2>&1; then
   if [ ! -e "$WORK/ac9/evil-ctrl" ]; then ok "AC-9 a planted non-member node_modules (evil-ctrl/node_modules) is not copied back"
   else bad "AC-9 a planted non-member node_modules was copied into the target tree ($WORK/ac9/evil-ctrl present)"; fi
 else bad "AC-9 (setup) the allow-listed install failed, so the case would be vacuous"; fi
+
+# ---- AC-10: copy-back members are pnpm's OWN resolution; '!' exclusions and non-`packages:` list keys are NOT members
+# (F-DG1-126) -------------------------------------------------------------------------------------------------------
+# A workspace whose pnpm-workspace.yaml has a negated package pattern (!packages/legacy) AND an unrelated list-valued
+# setting (publicHoistPattern) naming a real directory with a package.json (tools/x). An allow-listed build script
+# plants node_modules/AC10_RAN at the ROOT (a real member, so it MUST be copied back — proving the script ran) and
+# node_modules/PWNED at both packages/legacy (excluded) and tools/x (not a `packages:` member), neither of which may be
+# copied back.
+mkdir -p "$WORK/ac10/fixture" "$WORK/ac10/packages/real" "$WORK/ac10/packages/legacy" "$WORK/ac10/tools/x"
+cat > "$WORK/ac10/pnpm-workspace.yaml" <<'YAML'
+packages:
+  - "packages/*"
+  - "!packages/legacy"
+publicHoistPattern:
+  - "tools/x"
+YAML
+cat > "$WORK/ac10/fixture/package.json" <<'JSON'
+{ "name": "ac10-fixture", "version": "1.0.0",
+  "scripts": { "postinstall": "node -e \"const fs=require('fs');const r=process.env.INIT_CWD;fs.mkdirSync(r+'/node_modules',{recursive:true});fs.writeFileSync(r+'/node_modules/AC10_RAN','1');for(const d of ['packages/legacy','tools/x']){const p=r+'/'+d+'/node_modules';fs.mkdirSync(p,{recursive:true});fs.writeFileSync(p+'/PWNED','1')}\"" } }
+JSON
+cat > "$WORK/ac10/packages/real/package.json" <<'JSON'
+{ "name": "ac10-real", "version": "1.0.0", "private": true }
+JSON
+cat > "$WORK/ac10/packages/legacy/package.json" <<'JSON'
+{ "name": "ac10-legacy", "version": "1.0.0", "private": true }
+JSON
+cat > "$WORK/ac10/tools/x/package.json" <<'JSON'
+{ "name": "ac10-toolsx", "version": "1.0.0", "private": true }
+JSON
+cat > "$WORK/ac10/package.json" <<'JSON'
+{ "name": "ac10-root", "version": "1.0.0", "private": true,
+  "dependencies": { "ac10-fixture": "file:./fixture" },
+  "pnpm": { "onlyBuiltDependencies": ["ac10-fixture"] } }
+JSON
+rm -rf "$WORK/ac10/node_modules" "$WORK/ac10/pnpm-lock.yaml"
+if "$WRAP" --root "$WORK/ac10" create >/dev/null 2>&1; then
+  if [ -f "$WORK/ac10/node_modules/AC10_RAN" ]; then
+    if [ ! -e "$WORK/ac10/packages/legacy/node_modules" ] && [ ! -e "$WORK/ac10/tools/x/node_modules" ]; then
+      ok "AC-10 a '!'-excluded package and a non-\`packages:\` list entry are not copy-back destinations"
+    else bad "AC-10 a non-member directory received node_modules (legacy=$([ -e "$WORK/ac10/packages/legacy/node_modules" ] && echo yes || echo no), toolsx=$([ -e "$WORK/ac10/tools/x/node_modules" ] && echo yes || echo no))"; fi
+  else bad "AC-10 (setup) the allow-listed build script did not run (root AC10_RAN absent), so the case would be vacuous"; fi
+else bad "AC-10 (setup) the allow-listed workspace install failed, so the case would be vacuous"; fi
 
 echo "install-sandbox acceptance: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]
