@@ -683,7 +683,7 @@
       "id": "DG1",
       "stage": "P1",
       "name": "Architecture and working foundation",
-      "state": "VERIFYING",
+      "state": "BLOCKED",
       "depends_on": [
         "DG0"
       ],
@@ -902,7 +902,14 @@
         }
       ],
       "gate_record": "docs/delivery/gates/DG1.json",
-      "blockers": [],
+      "blockers": [
+        {
+          "id": "BLK-DG1-r2-schema",
+          "decision": "D-056",
+          "opened_at": "2026-10-01T19:05:00Z",
+          "summary": "round-2 code-security record predates the checks_run schema; write-once; needs user decision (history rewrite vs documented deviation)"
+        }
+      ],
       "history": [
         {
           "state": "PLANNED",
@@ -922,6 +929,11 @@
           "state": "VERIFYING",
           "at": "2026-10-01T18:20:00Z",
           "note": "Round 16 (gate round): domain PASS, code-security PASS (verified F-DG1-137/218 CLOSED_VERIFIED, 0 new), qa PASS (verified F-DG1-137/218 CLOSED_VERIFIED, 0 new) on candidate sha256:56f3eb88 (source 13418b8). All DG1 findings terminal: F-DG1-137/218 CLOSED_VERIFIED; only the three DG0 ACCEPTED_OBSERVATION remain (previous gate). Handing to release-auditor."
+        },
+        {
+          "state": "BLOCKED",
+          "at": "2026-10-01T19:05:00Z",
+          "note": "Round-16 gate audit BLOCKED (release-auditor run …4a21e619; gates/DG1.json). First complete validate.mjs --stage DG1 (not run to exit in rounds 1-15) reports 209 problems. Taxonomy in D-056: fixable autonomously = 44 abbreviated fix_revisions, ~25 verification-mirror divergences (systemic import-findings vs validator role selection), stages.json rounds 7-15 metadata drift, a clean round-17 re-verification of ~26 findings on annotated/pre-freeze governing sidecars, 2 missing .findings.json sidecars (append-only), and a D-049-style decision for the environmentally-BLOCKED online installer check SEC-R16-32c. Irreducible = the round-2 code-security record predates the current checks_run schema and is write-once (checkReviewRounds validates every round), needing a D-034-style history rewrite (user permission) or a documented deviation. Awaiting the user decision; no record edited to pass the validator."
         }
       ]
     },
