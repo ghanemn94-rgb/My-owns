@@ -1,0 +1,12 @@
+# DG1 round-8: code-security-reviewer
+Read `review-common.md` first. Task ID: `T-DG1-REV-SEC-R8`.
+
+## Finding you verify (file:line + a re-test)
+- **F-DG1-128 (node:test + process.execve):** read `apps/api/src/architecture.testkit.ts` — `LOADER_BUILTINS` now includes `test` (→ `test`, `node:test`) and `PROCESS_LOADERS` includes `execve`. **Re-prove both routes are closed:** in a throwaway clone, plant into a module (`fileViolations("transformations", …)`): R1 `import { run } from "node:test"; const p = ["../access/","policy.ts"].join(""); for await (const _ of run({ files: [new URL(p, import.meta.url).pathname], isolation: "none" })) {}` → violation `imports package node:test`; R2 `process.execve("/bin/sh", ["sh","-c","id"]);` → violation `module loader via process.execve`. Run `architecture.test.ts` (80/80) incl. R1/R2 and the P12/X6–X8/A1 guards; confirm the real module tree has zero `moduleViolations`.
+- **Validate the exhaustiveness claim (D-054):** the header now asserts the concrete loader/exec built-ins and `process.*` methods are enumerated exhaustively for the pinned Node 22 (per your round-7 sweep). Independently re-sweep Node's `builtinModules` + `process.*` for any loader/exec route a module could reach that is NEITHER banned NOR a stated residual (future/unknown built-in, `WebAssembly`/`node:wasi`). If the enumeration is complete, confirm it; if you find a concrete reachable route still open, raise it (but a genuinely future/unknown built-in or a wasm exec is residual (c), not a new finding).
+
+## Checks (real output; BLOCKED if a tool/DB missing)
+`pnpm -r typecheck`, `pnpm -r build` (or repo build), `pnpm lint`, `pnpm openapi:lint`, `pnpm check:no-cdn`, `pnpm format:check`, `pnpm test`, the integration suite on disposable PostgreSQL (unique port e.g. 5491) **run twice** (F-DG1-009), `node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs`, `node --test deploy/scripts/tests/*.test.mjs`, `tools/deps/tests/install-sandbox.test.sh` (AC-1..AC-10; AC-1-effect + a real-repo install are BLOCKED if your sandbox has no registry — note it, the offline ACs prove the copy-back), `node licenses/generate-sbom.mjs --check`, `node tools/gates/validate.mjs --stage DG0 --historical`. Confirm the three ci.yml copies are byte-identical. Evidence under `docs/delivery/test-evidence/DG1/code-security/round-8/`.
+
+## Requirements to check (record exactly these)
+`REQ-DLV-025`, `REQ-DLV-033`, `REQ-DLV-042`, `REQ-S16-001`, `REQ-S16-003`, `REQ-S16-004`, `REQ-S19-004`, `REQ-S19-006`.
