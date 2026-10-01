@@ -1,5 +1,11 @@
 import { Module } from '@nestjs/common';
+import { IntegrationsController } from './integrations.controller';
+import { IntegrationsService } from './integrations.service';
 
-/** Integration connections with honest status. Owner: see docs/architecture/module-guide.md (file ownership table). */
-@Module({ controllers: [], providers: [], exports: [] })
+/**
+ * Integration connectors with honest status (spec §17): adapter registry (Microsoft 365 adapters defined, Not configured;
+ * future enterprise systems documented only), SSRF-guarded connectivity checks, execution logs, signed inbound webhooks
+ * with replay protection, processing with retries, reconciliation and failure alerts. Owner: integration-reporting-engineer.
+ */
+@Module({ controllers: [IntegrationsController], providers: [IntegrationsService], exports: [IntegrationsService] })
 export class IntegrationsModule {}

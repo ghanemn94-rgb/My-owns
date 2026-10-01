@@ -232,7 +232,7 @@ export const importBatch = pgTable(
     uniqueIndex('import_batch_code_uq').on(t.projectId, t.code),
     index('import_batch_status_idx').on(t.projectId, t.status, t.createdAt),
     check('import_batch_kind_ck', sql`${t.kind} in ('risk', 'task', 'decision', 'source_claims', 'document_claims')`),
-    check('import_batch_file_type_ck', sql`${t.fileType} in ('xlsx', 'csv', 'docx', 'pdf', 'png', 'jpeg')`),
+    check('import_batch_file_type_ck', sql`${t.fileType} in ('xlsx', 'csv', 'docx', 'pdf', 'png', 'jpeg', 'unknown')`),
     check('import_batch_approval_ck', sql`${t.status} not in ('applied', 'rolled_back') or (${t.approvedBy} is not null and ${t.approvedAt} is not null and ${t.appliedAt} is not null)`),
     check('import_batch_not_self_ck', sql`${t.approvedBy} is null or ${t.approvedBy} <> ${t.createdBy}`),
   ],
