@@ -2,13 +2,13 @@
 // readiness, North Star, owners, outcome health, benefits, key decisions, next required action. Elements whose records
 // arrive in later stages show Unknown (never 0 or green). Archive needs a reason and If-Match.
 import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation, useParams } from "react-router";
 import { ApiError, api } from "../../api/client.ts";
 import { keys, useTransformation, useTransformationAudit } from "../../api/queries.ts";
 import type { Transformation } from "../../api/types.ts";
-import { useForwardArrow, useLocale } from "../../app/locale.ts";
+import { localName, useForwardArrow, useLocale } from "../../app/locale.ts";
 import { ancestryOf, canOn, type PermissionTarget } from "../../auth/permissions.ts";
 import { useMe } from "../../auth/session.tsx";
 import { HealthChip, LifecycleChip, Unknown } from "../../components/Badges.tsx";
@@ -17,7 +17,7 @@ import { Icon } from "../../components/Icon.tsx";
 import { PageHeader, usePageTitle } from "../../components/Page.tsx";
 import { ReasonDialog } from "../../components/ReasonDialog.tsx";
 import { EmptyState, NoPermissionState, QueryState } from "../../components/States.tsx";
-import { describeAuditChanges, type AuditValue } from "../../lib/auditChanges.ts";
+import { describeAuditAction, describeAuditChanges, type AuditValue } from "../../lib/auditChanges.ts";
 import { formatDateTime } from "../../lib/format.ts";
 import { isNoPermission } from "../../lib/problem.ts";
 import { BusinessUnitName, PhaseStepper, UserName, useBusinessUnitIndex } from "./common.tsx";
@@ -381,12 +381,13 @@ function AuditTrail({ tr }: { tr: Transformation }) {
                     <tr key={e.id}>
                       <td>{formatDateTime(e.occurredAt, locale, tr.timezone)}</td>
                       <td>
-                        {t(`transformations.audit.actions.${e.action.replace(/\./g, "_")}`, {
-                          defaultValue: "",
-                        }) || (
-                          <bdi dir="ltr" className="code">
-                            {e.action}
-                          </bdi>
+                        {describeAuditAction(t, e.action, e.changes) ?? (
+                          <>
+                            <bdi dir="ltr" className="code">
+                              {e.action}
+                            </bdi>{" "}
+                            <span className="muted small">({t("transformations.audit.untranslatedAction")})</span>
+                          </>
                         )}
                       </td>
                       <td>
@@ -414,8 +415,8 @@ function AuditTrail({ tr }: { tr: Transformation }) {
                                     </span>
                                   </>
                                 )}
-                                : <AuditValueView value={c.from} tz={tr.timezone} /> {arrow}{" "}
-                                <AuditValueView value={c.to} tz={tr.timezone} />
+                                : <AuditValueView value={c.from} tz={tr.timezone} transformationId={tr.id} /> {arrow}{" "}
+                                <AuditValueView value={c.to} tz={tr.timezone} transformationId={tr.id} />
                               </li>
                             ))}
                           </ul>
@@ -449,9 +450,19 @@ function AuditTrail({ tr }: { tr: Transformation }) {
 }
 
 /** One side of an audited change, localized (F-DG1-005). Untranslated codes stay visible, LTR-isolated and marked. */
-export function AuditValueView({ value, tz }: { value: AuditValue; tz: string }) {
+export function AuditValueView({
+  value,
+  tz,
+  transformationId,
+}: {
+  value: AuditValue;
+  tz: string;
+  /** The transformation whose trail this is: a scope on it reads "this transformation". */
+  transformationId?: string;
+}) {
   const { t } = useTranslation();
   const locale = useLocale();
+  const me = useMe();
   const bu = useBusinessUnitIndex();
   switch (value.kind) {
     case "none":
@@ -479,6 +490,30 @@ export function AuditValueView({ value, tz }: { value: AuditValue; tz: string })
       );
     case "datetime":
       return <bdi>{formatDateTime(value.iso, locale, tz) ?? value.iso}</bdi>;
+    case "scope": {
+      const type = t(`admin.scopeType.${value.scopeType}`);
+      let name: ReactNode;
+      if (value.scopeType === "business_unit") name = <BusinessUnitName id={value.id} index={bu.byId} />;
+      else if (value.scopeType === "organization")
+        name =
+          value.id === me.organization.id ? (
+            localName(me.organization, locale)
+          ) : (
+            <Unknown hint={t("common.value.notVisible")} />
+          );
+      else if (value.id === transformationId) name = t("transformations.audit.value.thisTransformation");
+      else
+        name = (
+          <bdi dir="ltr" className="code">
+            {value.id}
+          </bdi>
+        );
+      return (
+        <bdi>
+          {type}: {name}
+        </bdi>
+      );
+    }
     case "untranslated":
       return (
         <span>

@@ -1,8 +1,21 @@
-// Audit-trail changes are shown with localized labels in Arabic and English (F-DG1-005, REQ-S15-007, M0302).
+// Audit-trail changes are shown with localized labels in Arabic and English (F-DG1-005, F-DG1-008, REQ-S15-007, M0302).
 import { describe, expect, it } from "vitest";
-import { PHASES, STANDALONE_DELIVERABLE_TYPES, TRANSFORMATION_MODES, TRANSFORMATION_STATUSES } from "@mth/shared";
+import {
+  PHASES,
+  ROLE_CODES,
+  STANDALONE_DELIVERABLE_TYPES,
+  TRANSFORMATION_MODES,
+  TRANSFORMATION_STATUSES,
+} from "@mth/shared";
 import { createI18n } from "../i18n/index.ts";
-import { auditFieldKey, describeAuditChange, describeAuditChanges, describeAuditValue } from "./auditChanges.ts";
+import {
+  auditActionKey,
+  auditFieldKey,
+  describeAuditAction,
+  describeAuditChange,
+  describeAuditChanges,
+  describeAuditValue,
+} from "./auditChanges.ts";
 
 const en = createI18n("en").t;
 const ar = createI18n("ar").t;
@@ -135,5 +148,94 @@ describe("audit values", () => {
       status: { from: null, to: "draft" },
     }).map((c) => c.field);
     expect(order).toEqual(["code", "status", "business_unit_id", "zzz"]);
+  });
+});
+
+// F-DG1-008: the derived creator assignment (F-DG1-106) is written on the new transformation's own trail, exactly in
+// the shape apps/api/src/modules/access/assignments.ts (grantCreatorTransformationRoles) records it.
+describe("role-assignment events on a transformation's trail (F-DG1-008)", () => {
+  const SRC = "01920000-0000-7000-8000-0000000000b1";
+  const TR = "01920000-0000-7000-9000-000000000301";
+  const USER = "01920000-0000-7000-8000-0000000000u1";
+  const derived = {
+    userId: { from: null, to: USER },
+    roleCode: { from: null, to: "TL" },
+    scope: { from: null, to: { type: "transformation", id: TR } },
+    derivedFromAssignmentId: { from: null, to: SRC },
+    effectiveTo: { from: null, to: null },
+  };
+
+  it("labels the action in both languages, the derived grant differently from a manual one", () => {
+    expect(describeAuditAction(en, "scoped_assignment.create", derived)).toBe(
+      "Role granted to the creator (carried over from a business-unit assignment)",
+    );
+    expect(describeAuditAction(ar, "scoped_assignment.create", derived)).toBe(
+      "إسناد دور لمُنشئ السجل (منقول من إسناد على مستوى وحدة العمل)",
+    );
+    expect(describeAuditAction(en, "scoped_assignment.create", { userId: derived.userId })).toBe("Role granted");
+    expect(describeAuditAction(ar, "scoped_assignment.create", null)).toBe("إسناد دور");
+    expect(describeAuditAction(en, "scoped_assignment.revoke", null)).toBe("Role revoked");
+    expect(describeAuditAction(ar, "scoped_assignment.revoke", null)).toBe("سحب دور");
+    expect(describeAuditAction(en, "transformation.create", null)).toBe("Created");
+    expect(auditActionKey("scoped_assignment.create", derived)).toBe(
+      "transformations.audit.actions.scoped_assignment_create_derived",
+    );
+  });
+
+  it("falls back (null -> raw code, marked by the caller) for an unknown or malformed action", () => {
+    expect(describeAuditAction(en, "kpi.recalculate", null)).toBeNull();
+    expect(describeAuditAction(ar, "kpi.recalculate", null)).toBeNull();
+    // An action can never address another catalogue entry.
+    expect(auditActionKey("../audit.title", null)).toBeNull();
+    expect(describeAuditAction(en, "Audit.Title", null)).toBeNull();
+  });
+
+  it("English: every field and value of the derived event is localized, none raw", () => {
+    const c = describeAuditChanges(en, derived);
+    expect(c.map((x) => x.label)).toEqual(["User", "Role", "Scope", "Effective until", "Carried over from assignment"]);
+    const by = Object.fromEntries(c.map((x) => [x.field, x.to]));
+    expect(by["userId"]).toEqual({ kind: "user", id: USER });
+    expect(by["roleCode"]).toEqual({ kind: "label", text: "Transformation Lead", code: "TL" });
+    expect(by["scope"]).toEqual({ kind: "scope", scopeType: "transformation", id: TR });
+    expect(by["effectiveTo"]).toEqual({ kind: "none" });
+    expect(by["derivedFromAssignmentId"]).toEqual({ kind: "code", text: SRC });
+    for (const x of c) expect(x.to.kind).not.toBe("untranslated");
+  });
+
+  it("Arabic: the same fields and the role with Arabic (glossary) labels", () => {
+    const c = describeAuditChanges(ar, derived);
+    expect(c.map((x) => x.label)).toEqual(["المستخدم", "الدور", "النطاق", "يسري حتى", "منقول من الإسناد"]);
+    const role = c.find((x) => x.field === "roleCode")!.to;
+    expect(role).toEqual({ kind: "label", text: "قائد التحوّل", code: "TL" });
+    for (const x of c) expect(x.to.kind).not.toBe("untranslated");
+  });
+
+  it("has a role label for every role code, and the revocation time 'now' reads as the event time", () => {
+    for (const t of [en, ar])
+      for (const code of ROLE_CODES) expect(describeAuditValue(t, "roleCode", code).kind).toBe("label");
+    expect(describeAuditValue(en, "revokedAt", "now")).toMatchObject({
+      kind: "label",
+      text: "at the time of this event",
+    });
+    expect(describeAuditValue(ar, "revokedAt", "now")).toMatchObject({ kind: "label", text: "وقت هذا الحدث" });
+    expect(describeAuditValue(en, "effectiveTo", "2027-01-01T00:00:00.000Z")).toEqual({
+      kind: "datetime",
+      iso: "2027-01-01T00:00:00.000Z",
+    });
+  });
+
+  it("keeps the marked fallback for unexpected role codes and malformed scopes", () => {
+    expect(describeAuditValue(en, "roleCode", "NEW_ROLE")).toEqual({ kind: "untranslated", raw: "NEW_ROLE" });
+    expect(describeAuditValue(ar, "roleCode", "tl")).toEqual({ kind: "untranslated", raw: "tl" });
+    expect(describeAuditValue(en, "scope", { type: "galaxy", id: "x" })).toEqual({
+      kind: "untranslated",
+      raw: '{"type":"galaxy","id":"x"}',
+    });
+    expect(describeAuditValue(en, "scope", "transformation")).toEqual({ kind: "untranslated", raw: "transformation" });
+    expect(describeAuditValue(en, "scope", { type: "business_unit", id: "b" })).toEqual({
+      kind: "scope",
+      scopeType: "business_unit",
+      id: "b",
+    });
   });
 });

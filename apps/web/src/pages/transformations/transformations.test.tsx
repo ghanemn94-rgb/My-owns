@@ -3,11 +3,13 @@
 //    localized "created, but you cannot open it" explanation instead of a dead "Not found" (Arabic RTL and English);
 //    a plain 404 / 403 without a just-created record still shows the correct localized message.
 //  - F-DG1-005: the audit trail's Changes column shows localized field and value labels, not raw keys or enum codes.
+//  - F-DG1-008: the derived creator assignment (F-DG1-106) on a new record's trail shows a localized action, field,
+//    role, user and scope labels in English and Arabic, with no raw action code, camelCase key, JSON or role code.
 //  - F-DG1-001 (T-DG1-FE3): the edit form never offers `closed` (the API refuses it in P1; G6 governs closure), and
 //    the status hint no longer promises a close transition (English LTR and Arabic RTL).
 import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { TRANSFORMATION_STATUS_TRANSITIONS, type Permission, type TransformationStatus } from "@mth/shared";
+import { ROLES, TRANSFORMATION_STATUS_TRANSITIONS, type Permission, type TransformationStatus } from "@mth/shared";
 import type { AuditEvent } from "../../api/types.ts";
 import { catalogues, createI18n } from "../../i18n/index.ts";
 import {
@@ -174,6 +176,9 @@ describe("truly out-of-scope records keep the correct localized message", () => 
   });
 });
 
+/** A different user than the signed-in one (USER_ID), so the name is fetched from /users/{id}. */
+const LEAD_ID = "01920000-0000-7000-9000-000000000202";
+
 function auditEvent(overrides: Partial<AuditEvent>): AuditEvent {
   return {
     id: "01920000-0000-7000-9000-0000000005a1",
@@ -209,7 +214,7 @@ const AUDIT = [
     action: "transformation.update",
     priorVersion: 1,
     newVersion: 2,
-    changes: { status: { from: "active", to: "closed" }, lead_user_id: { from: null, to: USER_ID } },
+    changes: { status: { from: "active", to: "closed" }, lead_user_id: { from: null, to: LEAD_ID } },
   }),
   auditEvent({
     changes: {
@@ -227,7 +232,7 @@ function renderAuditTrail(locale: "en" | "ar") {
   mockApi(
     meRoute(makeMe(OFFICE_GRANTS, { preferredLocale: locale })),
     buRoute,
-    route("GET", new RegExp(`/api/v1/users/${USER_ID}$`), () => ({
+    route("GET", new RegExp(`/api/v1/users/${LEAD_ID}$`), () => ({
       status: 200,
       body: { ...makeMe([]).user, displayName: "Synthetic Lead" },
     })),
@@ -342,4 +347,137 @@ describe("P1 close rule in the edit form (F-DG1-001, T-DG1-FE3)", () => {
       expect(screen.getByText(hint)).toBeTruthy();
     });
   }
+});
+
+// The exact event apps/api access/assignments.ts (grantCreatorTransformationRoles) writes on the new record's trail
+// when a business-unit-scoped Transformation Lead creates it (F-DG1-106), followed by the transformation's own create.
+const SOURCE_ASSIGNMENT_ID = "01920000-0000-7000-8000-0000000000b1";
+const LEAD_CREATED_AUDIT = [
+  auditEvent({
+    id: "01920000-0000-7000-9000-0000000005b2",
+    seq: "2",
+    action: "scoped_assignment.create",
+    recordType: "scoped_assignment",
+    recordId: "01920000-0000-7000-9000-0000000006a1",
+    reason: `Creator of transformation TR-0001: TL carried over from business-unit assignment ${SOURCE_ASSIGNMENT_ID}`,
+    changes: {
+      userId: { from: null, to: USER_ID },
+      roleCode: { from: null, to: "TL" },
+      scope: { from: null, to: { type: "transformation", id: TR_ID } },
+      derivedFromAssignmentId: { from: null, to: SOURCE_ASSIGNMENT_ID },
+      effectiveTo: { from: null, to: null },
+    },
+  }),
+  auditEvent({
+    id: "01920000-0000-7000-9000-0000000005b1",
+    changes: { code: { from: null, to: "TR-0001" }, status: { from: null, to: "draft" } },
+  }),
+];
+
+function renderLeadCreatedTrail(locale: "en" | "ar") {
+  // The real TL role (packages/shared ROLES.TL, incl. audit.read), granted at the business unit only.
+  // The real TL role (packages/shared ROLES.TL, incl. audit.read) at the business unit, plus the derived
+  // transformation-scope TL assignment that this very event records (it is what lets the creator open the record).
+  const tl = [...ROLES.TL.permissions] as Permission[];
+  const me = makeMe(
+    [
+      { ...TL_BU_GRANTS[0]!, permissions: tl },
+      { scope: { type: "transformation" as const, id: TR_ID }, inheritsDownward: false, permissions: tl },
+    ],
+    { preferredLocale: locale },
+  );
+  const users = vi.fn(() => ({ status: 403, body: problem(403, "forbidden") }));
+  mockApi(
+    meRoute(me),
+    buRoute,
+    route("GET", /\/api\/v1\/users\//, users),
+    route("GET", /\/audit/, () => ({ status: 200, body: { items: LEAD_CREATED_AUDIT, nextCursor: null } })),
+    route("GET", /\/api\/v1\/transformations\/[^/?]+$/, () => ({ status: 200, body: makeTransformation() })),
+  );
+  renderApp(`/transformations/${TR_ID}`, { i18n: createI18n(locale) });
+  return { users };
+}
+
+async function auditRows(title: string): Promise<{ action: string; changes: string }[]> {
+  const region = await screen.findByRole("region", { name: title });
+  await waitFor(() => expect(within(region).getAllByRole("row").length).toBe(3));
+  return within(region)
+    .getAllByRole("row")
+    .slice(1)
+    .map((row) => {
+      const cells = row.querySelectorAll("td");
+      return { action: cells[1]!.textContent ?? "", changes: cells[4]!.textContent ?? "" };
+    });
+}
+
+const RAW_ASSIGNMENT_TOKENS = [
+  "scoped_assignment",
+  "userId",
+  "roleCode",
+  "effectiveTo",
+  "derivedFromAssignmentId",
+  '"type"',
+  "{",
+  USER_ID,
+  TR_ID,
+];
+
+describe("derived creator assignment on the audit trail (F-DG1-008)", () => {
+  it("English: localized action, fields, role, user and scope; nothing raw or marked untranslated", async () => {
+    const { users } = renderLeadCreatedTrail("en");
+    const [assignment, create] = await auditRows("Audit trail");
+    expect(assignment!.action).toBe("Role granted to the creator (carried over from a business-unit assignment)");
+    expect(create!.action).toBe("Created");
+    const c = assignment!.changes;
+    expect(c).toContain("User: None → Synthetic Test User");
+    expect(c).toContain("Role: None → Transformation Lead");
+    expect(c).toContain("Scope: None → Transformation: this transformation");
+    expect(c).toContain("Effective until: None → None");
+    expect(c).toContain(`Carried over from assignment: None → ${SOURCE_ASSIGNMENT_ID}`);
+    expect(c).not.toMatch(/without a translation/);
+    for (const raw of [...RAW_ASSIGNMENT_TOKENS, ": None → TL"])
+      expect(`${assignment!.action}\n${c}`).not.toContain(raw);
+    // The creator's own name comes from the session: a BU-scoped Lead holds no user.read.
+    expect(users).not.toHaveBeenCalled();
+  });
+
+  it("Arabic (RTL): the same event with Arabic labels and the glossary role name", async () => {
+    renderLeadCreatedTrail("ar");
+    const [assignment, create] = await auditRows("سجل التدقيق");
+    expect(document.documentElement.dir).toBe("rtl");
+    expect(assignment!.action).toBe("إسناد دور لمُنشئ السجل (منقول من إسناد على مستوى وحدة العمل)");
+    expect(create!.action).toBe("إنشاء");
+    const c = assignment!.changes;
+    expect(c).toContain("المستخدم: لا يوجد ← Synthetic Test User");
+    expect(c).toContain("الدور: لا يوجد ← قائد التحوّل");
+    expect(c).toContain("النطاق: لا يوجد ← التحوّل: هذا التحوّل");
+    expect(c).toContain("يسري حتى: لا يوجد ← لا يوجد");
+    expect(c).toContain(`منقول من الإسناد: لا يوجد ← ${SOURCE_ASSIGNMENT_ID}`);
+    expect(c).not.toMatch(/بلا ترجمة/);
+    for (const raw of [...RAW_ASSIGNMENT_TOKENS, "← TL"]) expect(`${assignment!.action}\n${c}`).not.toContain(raw);
+  });
+
+  it("an action the catalogue does not know stays readable and is explicitly marked (en and ar)", async () => {
+    for (const [locale, title, marker] of [
+      ["en", "Audit trail", "(action without a translation)"],
+      ["ar", "سجل التدقيق", "(إجراء بلا ترجمة)"],
+    ] as const) {
+      const me = makeMe(OFFICE_GRANTS, { preferredLocale: locale });
+      mockApi(
+        meRoute(me),
+        buRoute,
+        route("GET", /\/audit/, () => ({
+          status: 200,
+          body: { items: [auditEvent({ action: "future_record.reopen" })], nextCursor: null },
+        })),
+        route("GET", /\/api\/v1\/transformations\/[^/?]+$/, () => ({ status: 200, body: makeTransformation() })),
+      );
+      renderApp(`/transformations/${TR_ID}`, { i18n: createI18n(locale) });
+      const region = await screen.findByRole("region", { name: title });
+      await waitFor(() => expect(within(region).getAllByRole("row").length).toBe(2));
+      const action = within(region).getAllByRole("row")[1]!.querySelectorAll("td")[1]!.textContent;
+      expect(action).toBe(`future_record.reopen ${marker}`);
+      cleanup();
+    }
+  });
 });
