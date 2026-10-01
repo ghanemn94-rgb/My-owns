@@ -55,7 +55,7 @@ export const PROJECT_SECTIONS: readonly SectionDef[] = [
     permissions: ['ai.assistant.use', 'ai.proposal.read', 'ai.run.read', 'ai.briefing.subscribe', 'ai.settings.manage', 'ai.operations.read', 'ai.autopilot_policy.approve', 'ai.killswitch.activate', 'ai.killswitch.release'],
     phase: null,
   },
-  { key: 'reports', segment: 'reports', permissions: ['reports.snapshot.read', 'reports.report.generate'], phase: 'P6' },
+  { key: 'reports', segment: 'reports', permissions: ['reports.snapshot.read', 'reports.report.generate'], phase: null },
   { key: 'members', segment: 'members', permissions: ['admin.role_assignment.read'], phase: null },
 ];
 

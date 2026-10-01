@@ -1,5 +1,5 @@
 {
-  "id": "91b4e282-f382-4fe6-b8f5-c62d18c676ae",
+  "id": "0da404e9-92e0-4e89-8ea9-d1656ca4021d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -22695,6 +22695,134 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.bi_access_grant": {
+      "name": "bi_access_grant",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "project_id": {
+          "name": "project_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "max_classification": {
+          "name": "max_classification",
+          "type": "classification",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "granted_by": {
+          "name": "granted_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "revoked_by": {
+          "name": "revoked_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "revoke_reason": {
+          "name": "revoke_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "bi_access_grant_active_uq": {
+          "name": "bi_access_grant_active_uq",
+          "columns": [
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "revoked_at is null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "bi_access_grant_project_id_project_id_fk": {
+          "name": "bi_access_grant_project_id_project_id_fk",
+          "tableFrom": "bi_access_grant",
+          "tableTo": "project",
+          "columnsFrom": [
+            "project_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "bi_access_grant_pid_uq": {
+          "name": "bi_access_grant_pid_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "project_id",
+            "id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "bi_access_grant_revoke_ck": {
+          "name": "bi_access_grant_revoke_ck",
+          "value": "(\"bi_access_grant\".\"revoked_at\" is null) = (\"bi_access_grant\".\"revoked_by\" is null)"
+        }
+      },
+      "isRLSEnabled": false
+    },
     "public.import_batch": {
       "name": "import_batch",
       "schema": "",
@@ -23074,35 +23202,75 @@
           "primaryKey": false,
           "notNull": true
         },
+        "locale": {
+          "name": "locale",
+          "type": "varchar(5)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'en'"
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'queued'"
+        },
         "storage_key": {
           "name": "storage_key",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "filename": {
           "name": "filename",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
+        },
+        "mime_type": {
+          "name": "mime_type",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": false
         },
         "size_bytes": {
           "name": "size_bytes",
           "type": "bigint",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "sha256": {
           "name": "sha256",
           "type": "varchar(64)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
+        },
+        "included_sections": {
+          "name": "included_sections",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "content_classification": {
+          "name": "content_classification",
+          "type": "classification",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "error_code": {
+          "name": "error_code",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
         },
         "created_by": {
           "name": "created_by",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "created_at": {
           "name": "created_at",
@@ -23110,9 +23278,57 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
         }
       },
-      "indexes": {},
+      "indexes": {
+        "report_export_snapshot_idx": {
+          "name": "report_export_snapshot_idx",
+          "columns": [
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "snapshot_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_by",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "report_export_project_id_project_id_fk": {
           "name": "report_export_project_id_project_id_fk",
@@ -23144,9 +23360,31 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "report_export_pid_uq": {
+          "name": "report_export_pid_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "project_id",
+            "id"
+          ]
+        }
+      },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "report_export_status_ck": {
+          "name": "report_export_status_ck",
+          "value": "\"report_export\".\"status\" in ('queued', 'rendering', 'ready', 'failed', 'cancelled')"
+        },
+        "report_export_locale_ck": {
+          "name": "report_export_locale_ck",
+          "value": "\"report_export\".\"locale\" in ('en', 'ar')"
+        },
+        "report_export_ready_ck": {
+          "name": "report_export_ready_ck",
+          "value": "\"report_export\".\"status\" <> 'ready' or (\"report_export\".\"storage_key\" is not null and \"report_export\".\"filename\" is not null and \"report_export\".\"size_bytes\" is not null and \"report_export\".\"sha256\" is not null and \"report_export\".\"completed_at\" is not null)"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.report_snapshot": {
@@ -23268,6 +23506,19 @@
           "notNull": true,
           "default": "'false'::jsonb"
         },
+        "schema_version": {
+          "name": "schema_version",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sections": {
+          "name": "sections",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
         "generated_by": {
           "name": "generated_by",
           "type": "uuid",
@@ -23294,6 +23545,27 @@
             },
             {
               "expression": "kind",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "report_snapshot_generated_idx": {
+          "name": "report_snapshot_generated_idx",
+          "columns": [
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
               "isExpression": false,
               "asc": true,
               "nulls": "last"

@@ -5,6 +5,8 @@
 #
 #   hub_owner  owns the schema and runs migrations (Job/hook only; never used by running pods)
 #   hub_app    runtime role: LOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE — RLS applies to it (ADR-0003)
+#   hub_bi     OPTIONAL read-only BI role (only when HUB_BI_DB_PASSWORD is set): same attributes as hub_app; it reads the
+#              `bi` views only, limited by the sponsors' BI grants (post-migrate §25, docs/architecture/bi-views.md)
 #
 #   PGADMIN_URL=postgres://postgres@db:5432/postgres HUB_OWNER_DB_PASSWORD=… HUB_APP_DB_PASSWORD=… \
 #   HUB_DATABASES="hub" bash scripts/ops/db-init-roles.sh
@@ -19,6 +21,7 @@ set -euo pipefail
 : "${HUB_APP_DB_PASSWORD:?HUB_APP_DB_PASSWORD is required}"
 DATABASES="${HUB_DATABASES:-hub}"
 RESET="${HUB_RESET_ROLE_PASSWORDS:-false}"
+BI_PW="${HUB_BI_DB_PASSWORD:-}"
 
 # psql against database $1 on the admin connection (URL: its database part is replaced; socket: --dbname).
 admin_db() {
@@ -44,15 +47,25 @@ SELECT format('ALTER ROLE hub_app PASSWORD %L', :'app_pw') WHERE :'reset' = 'tru
 ALTER ROLE hub_app NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE;
 SQL
 
+if [ -n "$BI_PW" ]; then
+  admin_db "$MAINT_DB" -v bi_pw="$BI_PW" -v reset="$RESET" <<'SQL'
+SELECT format('CREATE ROLE hub_bi LOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE PASSWORD %L', :'bi_pw')
+ WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'hub_bi') \gexec
+SELECT format('ALTER ROLE hub_bi PASSWORD %L', :'bi_pw') WHERE :'reset' = 'true' \gexec
+ALTER ROLE hub_bi NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE;
+SQL
+fi
+
 for db in $DATABASES; do
   case "$db" in *[!A-Za-z0-9_]*|'') echo "db-init-roles: invalid database name '$db'" >&2; exit 1 ;; esac
   admin_db "$MAINT_DB" -v db="$db" <<'SQL'
 SELECT format('CREATE DATABASE %I OWNER hub_owner', :'db') WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = :'db') \gexec
 SELECT format('REVOKE ALL ON DATABASE %I FROM PUBLIC', :'db') \gexec
 SELECT format('GRANT CONNECT ON DATABASE %I TO hub_app', :'db') \gexec
+SELECT format('GRANT CONNECT ON DATABASE %I TO hub_bi', :'db') WHERE EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'hub_bi') \gexec
 SQL
   # pgcrypto and citext are "trusted" extensions (the owner could create them), created here so the owner never
   # needs superuser rights.
   admin_db "$db" -c 'CREATE EXTENSION IF NOT EXISTS pgcrypto' -c 'CREATE EXTENSION IF NOT EXISTS citext'
 done
-echo "db-init-roles: roles hub_owner/hub_app and database(s) ready: $DATABASES"
+echo "db-init-roles: roles hub_owner/hub_app${BI_PW:+/hub_bi} and database(s) ready: $DATABASES"

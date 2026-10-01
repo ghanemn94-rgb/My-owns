@@ -1,4 +1,6 @@
-import { pgTable, uuid, text, integer, jsonb, varchar, date, bigint, unique, index, uniqueIndex } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, integer, jsonb, varchar, date, bigint, unique, index, uniqueIndex, check } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import type { Classification } from '@hub/domain';
 import {
   pk,
   orgIdCol,
@@ -21,8 +23,24 @@ import { baselineVersion } from './planning';
 import { sourceRecord, documentVersion } from './documents';
 
 /**
- * Report snapshot — immutable in content (trigger blocks UPDATE of payload columns and DELETE). Figures never
- * change after later source updates; permission is re-checked on every access (spec §11).
+ * Access metadata of one section of a report snapshot (ADR-0011 amendment, REQ-RPT-017): which read permission(s) the
+ * section's records need, the highest classification among them, whether finance-domain clearance applies, and the
+ * workstream reach the generator had (`all` = project-wide, `none` = records without a workstream, or the list of
+ * workstreams the content is limited to). Every read and export re-checks it against the viewer's CURRENT access.
+ */
+export interface ReportSectionAccess {
+  key: string;
+  permissions: string[];
+  classification: Classification;
+  domain: 'finance' | null;
+  workstreamIds: 'all' | 'none' | string[];
+}
+
+/**
+ * Report snapshot — immutable in content (append-only trigger rejects UPDATE / DELETE / TRUNCATE; REVOKE UPDATE, DELETE
+ * for the runtime role — post-migrate.sql §4). Figures never change after later source updates; permission is re-checked
+ * on every access (spec §11). Rows written by the reporting module carry `schema_version` (`hub.report/1`) and per-section
+ * access metadata in `sections`; frozen meeting packs of the governance module leave both empty.
  */
 export const reportSnapshot = pgTable(
   'report_snapshot',
@@ -45,14 +63,29 @@ export const reportSnapshot = pgTable(
     contentHash: varchar('content_hash', { length: 64 }).notNull(),
     previousSnapshotId: uuid('previous_snapshot_id'),
     includesDemoData: jsonb('includes_demo_data').$type<boolean>().notNull().default(false),
+    /** `hub.report/1` for report snapshots of the reporting module; null for governance meeting packs. */
+    schemaVersion: varchar('schema_version', { length: 32 }),
+    /** Per-section access metadata (see ReportSectionAccess) — the list filter re-checks it without loading payloads. */
+    sections: jsonb('sections').$type<ReportSectionAccess[]>().notNull().default([]),
     generatedBy: uuid('generated_by'),
     generatedAt: createdAt(),
   },
   (t) => [
     projectFk('report_snapshot_baseline_fk', t.projectId, t.baselineVersionId, (): FkTarget => baselineVersion),
-    projectFk('report_snapshot_previous_fk', t.projectId, t.previousSnapshotId, { projectId: t.projectId, id: t.id }),unique('report_snapshot_pid_uq').on(t.projectId, t.id), index('report_snapshot_kind_idx').on(t.projectId, t.kind)],
+    projectFk('report_snapshot_previous_fk', t.projectId, t.previousSnapshotId, { projectId: t.projectId, id: t.id }),
+    unique('report_snapshot_pid_uq').on(t.projectId, t.id),
+    index('report_snapshot_kind_idx').on(t.projectId, t.kind),
+    index('report_snapshot_generated_idx').on(t.projectId, t.generatedAt),
+  ],
 );
 
+/**
+ * File export of a snapshot (REQ-RPT-007..010, REQ-INT-011). Requested through the API, rendered by the worker from the
+ * snapshot only (re-authorizing the requester at execution — AT-19), stored through the object-storage adapter and
+ * downloadable only by its requester after a fresh permission re-check. Never sent anywhere: there is no recipient.
+ * `included_sections` records which sections the requester could see when the file was rendered; the download re-checks
+ * each of them.
+ */
 export const reportExport = pgTable(
   'report_export',
   {
@@ -61,14 +94,64 @@ export const reportExport = pgTable(
     projectId: projectIdCol().references(() => project.id),
     snapshotId: uuid('snapshot_id').notNull(),
     format: exportFormat('format').notNull(),
-    storageKey: text('storage_key').notNull(),
-    filename: text('filename').notNull(),
-    sizeBytes: bigint('size_bytes', { mode: 'number' }).notNull(),
-    sha256: varchar('sha256', { length: 64 }).notNull(),
-    createdBy: createdBy(),
+    locale: varchar('locale', { length: 5 }).notNull().default('en'),
+    /** queued → rendering → ready | failed | cancelled (requester lost access before the file was produced). */
+    status: varchar('status', { length: 16 }).notNull().default('queued'),
+    storageKey: text('storage_key'),
+    filename: text('filename'),
+    mimeType: varchar('mime_type', { length: 128 }),
+    sizeBytes: bigint('size_bytes', { mode: 'number' }),
+    sha256: varchar('sha256', { length: 64 }),
+    includedSections: jsonb('included_sections').$type<string[]>().notNull().default([]),
+    /** Classification of the content actually rendered (max of the included sections). */
+    contentClassification: classification('content_classification'),
+    errorCode: varchar('error_code', { length: 64 }),
+    /** The requester (the only person who may download the file). */
+    createdBy: createdBy().notNull(),
     createdAt: createdAt(),
+    completedAt: ts('completed_at'),
+    updatedAt: updatedAt(),
+    version: versionCol(),
   },
-  (t) => [projectFk('report_export_snapshot_fk', t.projectId, t.snapshotId, (): FkTarget => reportSnapshot)],
+  (t) => [
+    projectFk('report_export_snapshot_fk', t.projectId, t.snapshotId, (): FkTarget => reportSnapshot),
+    unique('report_export_pid_uq').on(t.projectId, t.id),
+    index('report_export_snapshot_idx').on(t.projectId, t.snapshotId, t.createdBy),
+    check('report_export_status_ck', sql`${t.status} in ('queued', 'rendering', 'ready', 'failed', 'cancelled')`),
+    check('report_export_locale_ck', sql`${t.locale} in ('en', 'ar')`),
+    check(
+      'report_export_ready_ck',
+      sql`${t.status} <> 'ready' or (${t.storageKey} is not null and ${t.filename} is not null and ${t.sizeBytes} is not null and ${t.sha256} is not null and ${t.completedAt} is not null)`,
+    ),
+  ],
+);
+
+/**
+ * BI exposure of a project (REQ-RPT-011, access-matrix §9 `bi_reader`, threat model DF-09 / C-36): the project's sponsor
+ * lists the project for the read-only BI views (schema `bi`) and sets the highest classification the BI database role
+ * `hub_bi` may read there (never above the sponsor's own clearance). Demo projects are never exposed, whatever the grant.
+ * One active grant per project; a change is a revoke and a new grant (history kept).
+ */
+export const biAccessGrant = pgTable(
+  'bi_access_grant',
+  {
+    id: pk(),
+    orgId: orgIdCol(),
+    projectId: projectIdCol().references(() => project.id),
+    maxClassification: classification('max_classification').notNull(),
+    reason: text('reason').notNull(),
+    grantedBy: uuid('granted_by').notNull(),
+    createdAt: createdAt(),
+    revokedAt: ts('revoked_at'),
+    revokedBy: uuid('revoked_by'),
+    revokeReason: text('revoke_reason'),
+    version: versionCol(),
+  },
+  (t) => [
+    unique('bi_access_grant_pid_uq').on(t.projectId, t.id),
+    uniqueIndex('bi_access_grant_active_uq').on(t.projectId).where(sql`revoked_at is null`),
+    check('bi_access_grant_revoke_ck', sql`(${t.revokedAt} is null) = (${t.revokedBy} is null)`),
+  ],
 );
 
 export const importBatch = pgTable(

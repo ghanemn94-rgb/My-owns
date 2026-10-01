@@ -987,8 +987,8 @@
   security_rule: "Export pipeline applies viewer ABAC inside the query and re-checks at download"
   acceptance_tests: ["AT-24", "IT: export by lower-clearance user omits restricted items"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['reporting report-snapshots.spec.ts "REQ-GOV-026 IT: export by lower-clearance user omits restricted items — a restricted decision is in the secretary’s pack only; the PM’s own pack omits it and the secretary’s decisions are withheld from the PM"', 'AT-24: reporting at-24-report-exports.spec.ts "no leakage: a reader without finance access gets a PDF whose financial section is only the "; e2e p6-reports.spec.ts "AT-24 (ar): Arabic Reports screens and dialogs pass the RTL detector and axe; committee pack PPTX and minutes DOCX exported in Arabic, right to left"']
 - id: REQ-GOV-027
   section: "4.2"
   title: "Internal approvals are not legal signatures"
@@ -1004,7 +1004,7 @@
   acceptance_tests: ["UT: approval record and exports labelled 'Internal electronic approval'"]
   phase: P2
   status: Tested
-  evidence: ['governance p2r-residuals-governance.spec.ts "decision approval: the decision detail carries the label once an outcome is recorded (never on a draft paper)"; "external authority decision: the recording response and the decision carry the label"; "authority-matrix approval: the approve response and the approved version carry the label; a draft version does not"; "charter approval: the approve response and the committee carry the label; an unapproved charter does not"; "a cleared reader sees the meeting, its approved minutes (labelled) and its pack, classified like the committee" (minutes approval and frozen meeting pack)', D governance.p2r.test.ts "the label says internal electronic approval and not a legally certified signature", 'approval_record.method (default internal_electronic, check constraint approval_record_method_ck refuses any other method) — packages/db/src/schema/governance.ts', 'AT scope: exports do not exist before P6 (reporting); the export label is covered with the P6 exports']
+  evidence: ['governance p2r-residuals-governance.spec.ts "decision approval: the decision detail carries the label once an outcome is recorded (never on a draft paper)"; "external authority decision: the recording response and the decision carry the label"; "authority-matrix approval: the approve response and the approved version carry the label; a draft version does not"; "charter approval: the approve response and the committee carry the label; an unapproved charter does not"; "a cleared reader sees the meeting, its approved minutes (labelled) and its pack, classified like the committee" (minutes approval and frozen meeting pack)', D governance.p2r.test.ts "the label says internal electronic approval and not a legally certified signature", 'approval_record.method (default internal_electronic, check constraint approval_record_method_ck refuses any other method) — packages/db/src/schema/governance.ts', 'exports (P6): reporting at-24-report-exports.spec.ts "IT: DOCX validates as OOXML document (not renamed HTML); minutes content = snapshot" (the minutes file carries the label in en and ar); decisions, minutes and committee-pack sections carry the note report.internal_approval_label in every format']
 
 # ---------------------------------------------------------------- ENT
 
@@ -2599,7 +2599,7 @@
   acceptance_tests: ["UT: source change updates live metric but not the published snapshot"]
   phase: P2
   status: Tested
-  evidence: [planning measurement.spec.ts "an open blocker makes the workstream red and the project red despite a green workstream" (the frozen WS01 update keeps its snapshot while the live RAG changes), governance decision-lifecycle.spec.ts "10. the frozen pack is unchanged by later changes; re-freezing creates a linked new version; the DB rejects edits", published report snapshots (reporting module) are P6]
+  evidence: [planning measurement.spec.ts "an open blocker makes the workstream red and the project red despite a green workstream" (the frozen WS01 update keeps its snapshot while the live RAG changes), governance decision-lifecycle.spec.ts "10. the frozen pack is unchanged by later changes; re-freezing creates a linked new version; the DB rejects edits", 'published report snapshots (P6): reporting report-snapshots.spec.ts "UT: snapshot hash unchanged after source edits — a later snapshot shows the change against the previous one"; "DB trigger rejects update of snapshot content; content hash stored (UPDATE / DELETE refused for the runtime role and the owner)"']
 - id: REQ-PLN-023
   section: "9-M8"
   title: "Schedule-based forecasts, no LLM delay probabilities"
@@ -2953,8 +2953,8 @@
   security_rule: "Report generation re-checks permissions; settings admin-only"
   acceptance_tests: ["AT-24", "E2E: generate committee pack from reports screen"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['reports part delivered and tested: e2e p6-reports.spec.ts "AT-24 (en): committee pack generated from the Reports screen; screen figures equal the snapshot; PPTX and PDF exported and downloaded as genuine files" (the AT: E2E generate committee pack from reports screen); "AT-24 (ar): Arabic Reports screens and dialogs pass the RTL detector and axe"; "a contributor reads the snapshots but is offered no export; the KPI catalogue tab is not offered"; reporting report-labels.spec.ts "the web catalogue reports.json content equals the file labels, and the enum labels equal statuses.json"', 'gap: the integrations and deployment-settings parts of screen 16b are other P6 assignments (integrations / configuration)']
 - id: REQ-UX-021
   section: "10"
   title: "Search and filtering on every screen"
@@ -3065,8 +3065,8 @@
   security_rule: "n/a"
   acceptance_tests: ["AT-24", "E2E: RTL visual snapshots for tables with Latin/Arabic mixed text and dates"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['AT-24: e2e p6-reports.spec.ts "AT-24 (ar): Arabic Reports screens and dialogs pass the RTL detector and axe; committee pack PPTX and minutes DOCX exported in Arabic, right to left" (tables with Latin codes / English demo text / dates inside Arabic screens; full-page screenshots e2e/screenshots/p6/ar-*.png)', 'files: reporting at-24-report-exports.spec.ts (Arabic PDF, PPTX, DOCX) and the visual review of mixed Arabic / Latin tables and dates in docs/test-evidence/p6-report-exports.md', 'variance: the RTL "visual snapshots" are reviewed screenshots and rendered pages, not pixel-diff baselines']
 - id: REQ-UX-028
   section: "10"
   title: "Demo data clearly labelled"
@@ -3100,8 +3100,8 @@
   security_rule: "Generation runs in worker with requester permissions re-checked"
   acceptance_tests: ["AT-24", "IT: report figures reconcile to source queries"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['reporting report-snapshots.spec.ts "IT: report figures reconcile to source queries (overdue tasks, decisions awaiting a decision)"; "every report kind is generated from the project records and carries as-of date, scope, baseline, unverified data, classification and source references"', 'AT-24: reporting at-24-report-exports.spec.ts "committee pack PDF — %PDF file with the bundled IBM Plex fonts embedded, ... every section title, record code and figure of the snapshot, classification and page number on every page"; "IT: PPTX validates as OOXML presentation; figures match snapshot"; "IT: DOCX validates as OOXML document (not renamed HTML); minutes content = snapshot"; e2e p6-reports.spec.ts "AT-24 (en): committee pack generated from the Reports screen; screen figures equal the snapshot; PPTX and PDF exported and downloaded as genuine files"; "AT-24 (ar): Arabic Reports screens and dialogs pass the RTL detector and axe; committee pack PPTX and minutes DOCX exported in Arabic, right to left"', 'AT variance (ADR-0011 amendment): one route POST /api/v1/projects/{projectId}/report-snapshots {kind} instead of per-type …/reports/{type}/generate; the snapshot is generated in the request under the requester’s own access (files are rendered in the worker with re-authorization)', 'executed 2026-10-01 in the P6 reporting worktree (own databases hub_test_p6rep / hub_test_p6rep_e2e, e2e stack API :4610 / web :3610): apps/api/test/reporting 7 files / 45 tests PASS; packages/domain reporting.test.ts PASS; e2e p6-reports.spec.ts 4/4 PASS']
 - id: REQ-RPT-002
   section: "11"
   title: "One-page executive summary"
@@ -3116,8 +3116,8 @@
   security_rule: "Classification-filtered"
   acceptance_tests: ["UT: executive summary fits one page in ar and en"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['reporting at-24-report-exports.spec.ts "UT: executive summary fits one page in ar and en"', 'visual check: docs/test-evidence/p6-report-exports.md (pdf-executive-summary-ar-p1.png / -en-p1.png: one A4 page each)', 'the PDF assertions need headless Chromium: they ran here (Chromium 1194 available); the CI integration job has no Chromium and runs reporting at-24-report-exports.spec.ts "no Chromium in this environment: a PDF export is refused with an honest 422 (format unavailable)" instead until the job installs it (proposed CI change); the CI e2e job installs Chromium, so the PDF export of p6-reports.spec.ts runs there']
 - id: REQ-RPT-003
   section: "11"
   title: "Committee pack"
@@ -3132,8 +3132,8 @@
   security_rule: "Classification-filtered per recipient"
   acceptance_tests: ["AT-24", "IT: committee pack sections populated from snapshot"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['reporting at-24-report-exports.spec.ts "committee pack PDF — %PDF file with the bundled IBM Plex fonts embedded, ... every section title, record code and figure of the snapshot"; "IT: PPTX validates as OOXML presentation; figures match snapshot" (committee pack sections populated from the snapshot)', 'reporting report-snapshots.spec.ts "committee packs and minutes are committee records: they also need reports.snapshot.create (finance member: 403; executive summary allowed)"', 'e2e p6-reports.spec.ts "AT-24 (en): committee pack generated from the Reports screen; screen figures equal the snapshot; PPTX and PDF exported and downloaded as genuine files"', 'sections: overview and status dimensions, gates, delays, plan and milestones, Day-1 readiness, RAID, financials within the generator’s finance clearance, decisions, committee actions, evidence (apps/api/src/modules/reporting/snapshots.service.ts)']
 - id: REQ-RPT-004
   section: "11"
   title: "Weekly workstream, look-ahead, overdue and escalation reports"
@@ -3148,8 +3148,8 @@
   security_rule: "Workstream/project scope applied inside report queries"
   acceptance_tests: ["UT: weekly report uses accepted updates only", "UT: look-ahead window boundaries use business dates"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['reporting report-snapshots.spec.ts "UT: weekly report uses accepted updates only"', 'D reporting.test.ts "UT: look-ahead window boundaries use business dates"', 'weekly report = accepted updates, 2 / 4 / 8-week look-ahead, overdue, RAID and escalations; workstream scope applied inside the queries (WORKSTREAM_SCOPED_REPORT_KINDS)']
 - id: REQ-RPT-005
   section: "11"
   title: "Day-1, TSA exit and JV signing/closing/CP reports"
@@ -3164,8 +3164,8 @@
   security_rule: "Scope-filtered; partner-room and Legal Restricted ABAC on CP content"
   acceptance_tests: ["AT-10", "AT-12", "UT: TSA exit report shows Expired-unresolved separately", "UT: CP report lists unverified blocking CPs"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['reporting report-snapshots.spec.ts "UT: TSA exit report shows Expired-unresolved separately — never counted as an exit, with its own table and figure"; "UT: CP report lists unverified blocking CPs — a verified or waived CP is not among them"', 'AT-10: readiness at-10-tsa-expiry.spec.ts "AT-10 / REQ-TSA-003: past the end date without an accepted replacement → expired_unresolved + escalation, never an exit"; AT-12: jv at-12-closing-blocked-cp.spec.ts "IT: confirm with one unverified blocking CP is rejected and logged" (the reports show these states as recorded)', 'Day-1 report: readiness by site and check with open blockers (red whatever the percentage) and the gates (day1_readiness kind)']
 - id: REQ-RPT-006
   section: "11"
   title: "Project health, data quality and changes since last report"
@@ -3180,8 +3180,8 @@
   security_rule: "Diff limited to fields caller may see"
   acceptance_tests: ["UT: diff between two snapshots lists changed figures"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['D reporting.test.ts "UT: diff between two snapshots lists changed figures"', 'reporting report-snapshots.spec.ts "UT: snapshot hash unchanged after source edits — a later snapshot shows the change against the previous one" (figures carry the previous value; GET …/report-snapshots/{id}/diff compares only sections readable in both)', 'health & data quality report: overview, data-quality figures and tables (owners, dates, draft tasks, unconfirmed milestones, weights, leads, stale updates) and the KPI values']
 - id: REQ-RPT-007
   section: "11"
   title: "XLSX table exports"
@@ -3196,8 +3196,8 @@
   security_rule: "Export re-checks permissions; formula injection neutralized"
   acceptance_tests: ["AT-25", "IT: exported file validates as OOXML spreadsheet"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['reporting report-exports.spec.ts "IT: exported file validates as OOXML spreadsheet; every figure and record of the snapshot is in it (en)"; "Arabic workbook: every sheet is right-to-left and the labels are Arabic; the same figures"', 'AT-25 (export side — a harmful formula in record text): reporting report-exports.spec.ts "UT: ''=HYPERLINK(...)'' exported as text — formula-like record text is neutralised, no cell is a formula"; the import side of AT-25 belongs to the imports module', 'reporting report-labels.spec.ts "all report kinds of the demo project: section, table, column, figure, note, register-source and enum labels exist in en and ar"']
 - id: REQ-RPT-008
   section: "11"
   title: "PDF reports with verified Arabic output"
@@ -3212,8 +3212,8 @@
   security_rule: "Download via short-lived authorized URL"
   acceptance_tests: ["AT-24", "VIS: Arabic PDF rendered to image and reviewed for shaping, clipping, overlap"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['AT-24: reporting at-24-report-exports.spec.ts "committee pack PDF — %PDF file with the bundled IBM Plex fonts embedded, ... Arabic shaped right-to-left ... every section title, record code and figure of the snapshot, classification and page number on every page"; "no leakage: a reader without finance access gets a PDF whose financial section is only the "', 'VIS: Arabic PDFs rendered to PNG (pdf.js) and reviewed for shaping, clipping and overlap — docs/test-evidence/p6-report-exports.md and docs/test-evidence/p6-reports/*.png', 'the PDF assertions need headless Chromium: they ran here (Chromium 1194 available); the CI integration job has no Chromium and runs reporting at-24-report-exports.spec.ts "no Chromium in this environment: a PDF export is refused with an honest 422 (format unavailable)" instead until the job installs it (proposed CI change); the CI e2e job installs Chromium, so the PDF export of p6-reports.spec.ts runs there', 'variance: downloads through the authorized, audited download route (no short-lived URL is issued — ADR-0011 amendment)']
 - id: REQ-RPT-009
   section: "11"
   title: "Basic PPTX committee packs"
@@ -3228,8 +3228,8 @@
   security_rule: "Classification-filtered"
   acceptance_tests: ["AT-24", "IT: PPTX validates as OOXML presentation; figures match snapshot"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['AT-24: reporting at-24-report-exports.spec.ts "IT: PPTX validates as OOXML presentation; figures match snapshot" (en and ar; rtl presentation and paragraphs, lang ar-SA, footer layout with classification and Demo label)', 'e2e p6-reports.spec.ts "AT-24 (en): committee pack generated from the Reports screen" ... "PPTX and PDF exported and downloaded as genuine files"; "AT-24 (ar): ... committee pack PPTX and minutes DOCX exported in Arabic, right to left"', 'VIS: Arabic PPTX rendered through LibreOffice to PNG and reviewed (docs/test-evidence/p6-report-exports.md)']
 - id: REQ-RPT-010
   section: "11"
   title: "DOCX minutes"
@@ -3244,8 +3244,8 @@
   security_rule: "Classification-filtered"
   acceptance_tests: ["AT-24", "IT: DOCX validates as OOXML document (not renamed HTML)"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['AT-24: reporting at-24-report-exports.spec.ts "IT: DOCX validates as OOXML document (not renamed HTML); minutes content = snapshot" (en and ar; w:bidi, w:rtl, w:bidiVisual in Arabic)', 'e2e p6-reports.spec.ts "AT-24 (ar): Arabic Reports screens and dialogs pass the RTL detector and axe; committee pack PPTX and minutes DOCX exported in Arabic, right to left"']
 - id: REQ-RPT-011
   section: "11"
   title: "BI-ready views or documented API for Power BI"
@@ -3260,8 +3260,8 @@
   security_rule: "Dedicated read-only service account limited to approved projects/classifications; excludes demo data"
   acceptance_tests: ["IT: BI service account cannot read restricted or demo rows"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['reporting bi-views.spec.ts "IT: BI service account cannot read restricted or demo rows"; "the views exist as security-invoker views and the application role cannot read them"; "only the project sponsor lists a project for BI, never above their own clearance; the platform never claims a BI connection"', 'e2e p6-reports.spec.ts "REQ-RPT-011 (ar): the sponsor manages the BI exposure — connection shown as not verified, demo project never readable; grant and withdrawal recorded"', 'docs/architecture/bi-views.md (seven read-only bi views for the hub_bi role, PERMISSIVE + RESTRICTIVE row-level security, column-level grants); no BI tool is connected or claimed (connection: not_verified)', 'the hub_bi connection test needs the role: it ran here (scripts/dev/pg-init-roles.sh creates it); in CI it is skipped until the integration job sets HUB_BI_DB_PASSWORD for scripts/ops/db-init-roles.sh (proposed CI change)']
 - id: REQ-RPT-012
   section: "11"
   title: "Proposed KPI catalogue"
@@ -3276,8 +3276,8 @@
   security_rule: "KPI values computed in scope; finance KPIs Finance Restricted"
   acceptance_tests: ["UT: each proposed KPI computes from reference fixture"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['D reporting.test.ts "UT: each proposed KPI computes from reference fixture"', reporting kpi-catalogue.spec.ts "the §11 KPIs are listed with every attribute and a value computed now from the records (never stored as history)", 'web Reports → KPI catalogue (e2e p6-reports.spec.ts "AT-24 (ar)": Arabic detector and axe on the catalogue)']
 - id: REQ-RPT-013
   section: "11"
   title: "KPI definition attributes"
@@ -3292,8 +3292,8 @@
   security_rule: "KPI definition changes versioned and audited"
   acceptance_tests: ["UT: KPI without formula or owner rejected"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['reporting kpi-catalogue.spec.ts "the §11 KPIs are listed with every attribute and a value computed now from the records (never stored as history)" (definition, formula, unit, period, owner role, source, target, thresholds, direction, frequency, last verified)', 'gap: the AT "KPI without formula or owner rejected" is not met for the owner — finance createKpi requires the formula (contract RequiredText) but the owner is optional (ownerUserId nullable, no owner role for a user-defined KPI); needs a finance module change (owner: finance contract owner)']
 - id: REQ-RPT-014
   section: "11"
   title: "KPIs without source data remain proposals"
@@ -3308,8 +3308,8 @@
   security_rule: "n/a"
   acceptance_tests: ["UT: KPI with no observations renders 'Proposed — no data'"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['D reporting.test.ts "UT: KPI with no observations renders ''Proposed — no data'' (no source records → no value, never a historical figure)"', 'reporting kpi-catalogue.spec.ts "UT: KPI with no observations renders ''Proposed — no data'' — a KPI whose source has no records has no value"; "the health & data quality snapshot freezes the KPI values with their definitions; no-data KPIs stay proposals without a value"']
 - id: REQ-RPT-015
   section: "11"
   title: "Report metadata on every report"
@@ -3324,8 +3324,8 @@
   security_rule: "Classification banner derived from highest included classification"
   acceptance_tests: ["UT: every report template renders required metadata block"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['reporting report-metadata.spec.ts "UT: every report template renders required metadata block — all kinds, en and ar, XLSX / PPTX / DOCX / PDF source"', 'reporting report-snapshots.spec.ts "every report kind is generated from the project records and carries as-of date, scope, baseline, unverified data, classification and source references"']
 - id: REQ-RPT-016
   section: "11"
   title: "Immutable report snapshots"
@@ -3340,8 +3340,8 @@
   security_rule: "DB trigger rejects update of snapshot content; content hash stored"
   acceptance_tests: ["AT-24", "UT: snapshot hash unchanged after source edits"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['reporting report-snapshots.spec.ts "UT: snapshot hash unchanged after source edits — a later snapshot shows the change against the previous one"; "DB trigger rejects update of snapshot content; content hash stored (UPDATE / DELETE refused for the runtime role and the owner)"', 'AT-24: reporting at-24-report-exports.spec.ts and e2e p6-reports.spec.ts (files print the frozen snapshot; the screen shows its content hash, verified on read)', 'reporting report-exports.spec.ts "a ready export is frozen: its file reference and checksum cannot change and the row cannot be deleted"']
 - id: REQ-RPT-017
   section: "11"
   title: "Permission recheck on snapshot access"
@@ -3356,8 +3356,8 @@
   security_rule: "Access requires current permission for all snapshot classifications"
   acceptance_tests: ["AT-03", "AT-19", "IT: user removed from project cannot open earlier snapshot"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['reporting report-snapshots.spec.ts "IT: user removed from project cannot open earlier snapshot (404) and no longer lists it"; "a section the viewer cannot read now is returned without any content; the rest stays readable"; "clearance lowered after generation: nothing left to show → 404 (no title, no count)"; "a record-class permission lost after generation withholds that section (project manager → contributor: financials withheld)"', 'AT-03: reporting report-snapshots.spec.ts "AT-03: a Project B user gets 404 for Project A snapshots, by Project A’s path and by their own project’s path"; reporting report-exports.spec.ts "AT-03 worker path: a render job carrying a Project B identity for a Project A export renders nothing"', 'AT-19: reporting report-exports.spec.ts "AT-19: requester removed before the worker runs → export cancelled, nothing rendered or stored"; "a ready file whose section the requester can no longer read is never handed out again (404, audited denial)"', 'model: per-section re-check on every read (ADR-0011 amendment); the shown classification is the maximum of the sections the viewer may read']
 
 # ---------------------------------------------------------------- AI
 
@@ -4616,8 +4616,8 @@
   security_rule: "Worker sets RLS context per job; caches keyed by scope"
   acceptance_tests: ["AT-03", "IT: Project B user cannot obtain Project A data via search, report, AI, file or notification"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['reports and their worker path: reporting report-snapshots.spec.ts "AT-03: a Project B user gets 404 for Project A snapshots, by Project A’s path and by their own project’s path"; reporting report-exports.spec.ts "AT-03 worker path: a render job carrying a Project B identity for a Project A export renders nothing"; e2e p6-reports.spec.ts (files only for their requester)', 'search, AI, files: covered by the modules’ AT-03 tests (documents at-03-documents-isolation.spec.ts, ai ai-retrieval-acl.spec.ts, jv at-03-partner-room-isolation.spec.ts)', 'gap: notifications are a P6 notifications assignment (REQ-PLT-008); the requirement becomes Tested with its notification isolation test']
 - id: REQ-SEC-008
   section: "15"
   title: "Enterprise authentication and MFA via IdP"
@@ -4776,8 +4776,8 @@
   security_rule: "Cells beginning with = + - @ tab CR escaped; imports never evaluate formulas"
   acceptance_tests: ["AT-25", "UT: '=HYPERLINK(...)' exported as text"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['D reporting.test.ts "UT: ''=HYPERLINK(...)'' exported as text" (= + - @ tab CR prefixes neutralised)', 'reporting report-exports.spec.ts "UT: ''=HYPERLINK(...)'' exported as text — formula-like record text is neutralised, no cell is a formula" (no <f> element in any sheet)', 'AT-25 scope: the export side (a harmful formula in record text never becomes a formula in a file) is tested here; never evaluating formulas on import belongs to the imports module (REQ-IMP-*)']
 - id: REQ-SEC-018
   section: "15"
   title: "Classification, DLP and destination checks before AI"
@@ -4809,7 +4809,7 @@
   acceptance_tests: ["IT: download of Legal Restricted file produces access audit event"]
   phase: P2
   status: Tested
-  evidence: ['documents at-27-legal-hold.spec.ts "every successful download is audited with the actor, version and checksum; there is no public URL" (every download is audited, a superset of the AT)', 'partner rooms: jv at-03-partner-room-isolation.spec.ts "download → revoke → 404, and the access/disclosure history keeps every event"', exports and report snapshots are P6]
+  evidence: ['documents at-27-legal-hold.spec.ts "every successful download is audited with the actor, version and checksum; there is no public URL" (every download is audited, a superset of the AT)', 'partner rooms: jv at-03-partner-room-isolation.spec.ts "download → revoke → 404, and the access/disclosure history keeps every event"', 'exports and report snapshots (P6): reporting report-exports.spec.ts "a file is downloadable only by its requester (every download audited with the actor and the checksum)"; "a ready file whose section the requester can no longer read is never handed out again (404, audited denial)"; "a stored file that no longer matches its checksum is refused (409) and the refusal is audited"; snapshot generation, export requests, rendering and BI grants are audited']
 - id: REQ-SEC-020
   section: "15"
   title: "Incident-response runbook"
@@ -5422,8 +5422,8 @@
   security_rule: "Export produces download only; send requires separate authorized action"
   acceptance_tests: ["UT: export job has no outbound channel"]
   phase: P6
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['reporting report-exports.spec.ts "UT: export job has no outbound channel — exports create no delivery or notification and the pipeline imports no network client"; "a file is downloadable only by its requester (every download audited with the actor and the checksum)"', 'PDF rendering runs offline (every Chromium request aborted, offline context) — apps/api/src/modules/reporting/render/pdf.renderer.ts']
 - id: REQ-INT-012
   section: "17"
   title: "Recheck permissions at every send"

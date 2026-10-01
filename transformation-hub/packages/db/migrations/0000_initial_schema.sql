@@ -2591,6 +2591,22 @@ CREATE TABLE "source_record" (
 	CONSTRAINT "source_record_pid_uq" UNIQUE("project_id","id")
 );
 --> statement-breakpoint
+CREATE TABLE "bi_access_grant" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"project_id" uuid NOT NULL,
+	"max_classification" "classification" NOT NULL,
+	"reason" text NOT NULL,
+	"granted_by" uuid NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"revoked_at" timestamp with time zone,
+	"revoked_by" uuid,
+	"revoke_reason" text,
+	"version" integer DEFAULT 1 NOT NULL,
+	CONSTRAINT "bi_access_grant_pid_uq" UNIQUE("project_id","id"),
+	CONSTRAINT "bi_access_grant_revoke_ck" CHECK (("bi_access_grant"."revoked_at" is null) = ("bi_access_grant"."revoked_by" is null))
+);
+--> statement-breakpoint
 CREATE TABLE "import_batch" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"org_id" uuid NOT NULL,
@@ -2638,12 +2654,25 @@ CREATE TABLE "report_export" (
 	"project_id" uuid NOT NULL,
 	"snapshot_id" uuid NOT NULL,
 	"format" "export_format" NOT NULL,
-	"storage_key" text NOT NULL,
-	"filename" text NOT NULL,
-	"size_bytes" bigint NOT NULL,
-	"sha256" varchar(64) NOT NULL,
-	"created_by" uuid,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+	"locale" varchar(5) DEFAULT 'en' NOT NULL,
+	"status" varchar(16) DEFAULT 'queued' NOT NULL,
+	"storage_key" text,
+	"filename" text,
+	"mime_type" varchar(128),
+	"size_bytes" bigint,
+	"sha256" varchar(64),
+	"included_sections" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"content_classification" "classification",
+	"error_code" varchar(64),
+	"created_by" uuid NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"completed_at" timestamp with time zone,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"version" integer DEFAULT 1 NOT NULL,
+	CONSTRAINT "report_export_pid_uq" UNIQUE("project_id","id"),
+	CONSTRAINT "report_export_status_ck" CHECK ("report_export"."status" in ('queued', 'rendering', 'ready', 'failed', 'cancelled')),
+	CONSTRAINT "report_export_locale_ck" CHECK ("report_export"."locale" in ('en', 'ar')),
+	CONSTRAINT "report_export_ready_ck" CHECK ("report_export"."status" <> 'ready' or ("report_export"."storage_key" is not null and "report_export"."filename" is not null and "report_export"."size_bytes" is not null and "report_export"."sha256" is not null and "report_export"."completed_at" is not null))
 );
 --> statement-breakpoint
 CREATE TABLE "report_snapshot" (
@@ -2665,6 +2694,8 @@ CREATE TABLE "report_snapshot" (
 	"content_hash" varchar(64) NOT NULL,
 	"previous_snapshot_id" uuid,
 	"includes_demo_data" jsonb DEFAULT 'false'::jsonb NOT NULL,
+	"schema_version" varchar(32),
+	"sections" jsonb DEFAULT '[]'::jsonb NOT NULL,
 	"generated_by" uuid,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "report_snapshot_pid_uq" UNIQUE("project_id","id")
@@ -3273,6 +3304,7 @@ ALTER TABLE "source_claim" ADD CONSTRAINT "source_claim_verification_source_fk" 
 ALTER TABLE "source_record" ADD CONSTRAINT "source_record_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "source_record" ADD CONSTRAINT "source_record_supersedes_fk" FOREIGN KEY ("project_id","supersedes_source_id") REFERENCES "public"."source_record"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "source_record" ADD CONSTRAINT "source_record_docver_fk" FOREIGN KEY ("project_id","document_version_id") REFERENCES "public"."document_version"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "bi_access_grant" ADD CONSTRAINT "bi_access_grant_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "import_batch" ADD CONSTRAINT "import_batch_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "import_batch" ADD CONSTRAINT "import_batch_source_fk" FOREIGN KEY ("project_id","source_id") REFERENCES "public"."source_record"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "import_batch" ADD CONSTRAINT "import_batch_docver_fk" FOREIGN KEY ("project_id","document_version_id") REFERENCES "public"."document_version"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -3407,8 +3439,11 @@ CREATE UNIQUE INDEX "document_version_uq" ON "document_version" USING btree ("do
 CREATE INDEX "evidence_link_target_idx" ON "evidence_link" USING btree ("project_id","target_type","target_id");--> statement-breakpoint
 CREATE INDEX "source_claim_target_idx" ON "source_claim" USING btree ("project_id","target_type","target_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "source_record_code_uq" ON "source_record" USING btree ("project_id","code");--> statement-breakpoint
+CREATE UNIQUE INDEX "bi_access_grant_active_uq" ON "bi_access_grant" USING btree ("project_id") WHERE revoked_at is null;--> statement-breakpoint
 CREATE UNIQUE INDEX "import_row_uq" ON "import_row" USING btree ("batch_id","row_no");--> statement-breakpoint
+CREATE INDEX "report_export_snapshot_idx" ON "report_export" USING btree ("project_id","snapshot_id","created_by");--> statement-breakpoint
 CREATE INDEX "report_snapshot_kind_idx" ON "report_snapshot" USING btree ("project_id","kind");--> statement-breakpoint
+CREATE INDEX "report_snapshot_generated_idx" ON "report_snapshot" USING btree ("project_id","created_at");--> statement-breakpoint
 CREATE INDEX "audit_checkpoint_org_idx" ON "audit_checkpoint" USING btree ("org_id","chain_pos");--> statement-breakpoint
 CREATE UNIQUE INDEX "audit_event_id_uq" ON "audit_event" USING btree ("id");--> statement-breakpoint
 CREATE INDEX "audit_event_project_idx" ON "audit_event" USING btree ("project_id","created_at");--> statement-breakpoint

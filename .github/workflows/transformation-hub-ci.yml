@@ -81,7 +81,7 @@ jobs:
   integration:
     name: API integration tests (PostgreSQL 16)
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 45
     services:
       postgres:
         image: postgres:16
@@ -96,8 +96,10 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: "${{ env.NODE_VERSION }}", cache: pnpm, cache-dependency-path: transformation-hub/pnpm-lock.yaml }
       - run: pnpm install --frozen-lockfile
-      - name: Create roles hub_owner / hub_app (NOBYPASSRLS) and the test database
-        run: HUB_OWNER_DB_PASSWORD="$HUB_DEV_DB_PASSWORD" HUB_APP_DB_PASSWORD="$HUB_DEV_DB_PASSWORD" HUB_DATABASES="hub_test hub_test_boot" bash scripts/ops/db-init-roles.sh
+      - name: Create roles hub_owner / hub_app / hub_bi (NOBYPASSRLS) and the test database
+        run: HUB_OWNER_DB_PASSWORD="$HUB_DEV_DB_PASSWORD" HUB_APP_DB_PASSWORD="$HUB_DEV_DB_PASSWORD" HUB_BI_DB_PASSWORD="$HUB_DEV_DB_PASSWORD" HUB_DATABASES="hub_test hub_test_boot" bash scripts/ops/db-init-roles.sh
+      # Headless Chromium for the PDF export tests (REQ-RPT-008); the API finds it through playwright-core (same version).
+      - run: pnpm --filter @hub/e2e exec playwright install --with-deps chromium
       - run: pnpm build:packages
       - run: pnpm --filter @hub/api test
 
