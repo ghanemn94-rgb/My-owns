@@ -63,8 +63,8 @@ type CutoverPlanStatus = 'planning' | 'rehearsal' | 'ready_for_decision' | 'appr
  */
 export const DIMENSION_STATES = {
   incorporation: ['not_started', 'unconfirmed', 'in_progress', 'incorporated_evidence_pending', 'incorporated_verified', 'not_applicable'],
-  perimeter_transfer: ['perimeter_draft', 'not_started', 'perimeter_approved', 'in_progress', 'transferred_evidence_pending', 'transferred_verified', 'blocked'],
-  operational_readiness: ['not_assessed', 'in_progress', 'day1_go_approved', 'operating_with_transitional_services', 'standalone_accepted', 'transitional_services_exited', 'blocked'],
+  perimeter_transfer: ['perimeter_draft', 'not_started', 'perimeter_approved', 'transfer_in_progress', 'partially_transferred', 'transferred_evidence_pending', 'transferred_verified', 'blocked'],
+  operational_readiness: ['not_assessed', 'readiness_in_progress', 'day1_go_approved', 'operating_with_transitional_services', 'standalone_accepted', 'transitional_services_exited', 'blocked'],
   jv_transaction: ['not_started', 'partner_preparation', 'diligence_and_negotiation', 'signing_ready', 'signed', 'closing_conditions_in_progress', 'partially_closed', 'closed', 'terminated'],
 } as const satisfies Record<'incorporation' | 'perimeter_transfer' | 'operational_readiness' | 'jv_transaction', readonly string[]>;
 
@@ -184,8 +184,13 @@ export function computeStatusDimensions(input: DimensionInput): DimensionState[]
     if (verified + pendingEvidence === inScope.length && pending === 0) {
       return dimension(k, 'transferred_evidence_pending', [m('dimension.perimeter.evidence_pending', { inScope: inScope.length, pendingEvidence }), ...naNotes], counts);
     }
-    if (verified > 0 || pendingEvidence > 0 || (counts['in_progress'] ?? 0) > 0) {
-      return dimension(k, 'in_progress', [m('dimension.perimeter.in_progress', { verified, inScope: inScope.length, pending }), ...naNotes], counts);
+    // Some in-scope items transferred (reported or verified), others not yet → partially transferred; transfer work started
+    // (in progress) but nothing transferred yet → transfer in progress.
+    if (verified > 0 || pendingEvidence > 0) {
+      return dimension(k, 'partially_transferred', [m('dimension.perimeter.in_progress', { verified, inScope: inScope.length, pending }), ...naNotes], counts);
+    }
+    if ((counts['in_progress'] ?? 0) > 0) {
+      return dimension(k, 'transfer_in_progress', [m('dimension.perimeter.in_progress', { verified, inScope: inScope.length, pending }), ...naNotes], counts);
     }
     if (input.perimeterApproved === true) return dimension(k, 'perimeter_approved', [m('dimension.perimeter.approved', { inScope: inScope.length }), ...naNotes], counts);
     return dimension(k, 'not_started', [m('dimension.perimeter.not_started', { inScope: inScope.length }), ...naNotes], counts);
@@ -228,8 +233,8 @@ export function computeStatusDimensions(input: DimensionInput): DimensionState[]
     if (passed === required.length && plans.length > 0 && withGo === plans.length) {
       return dimension(k, 'day1_go_approved', [...reassess, m('dimension.readiness.all_passed'), m('dimension.readiness.go_approved', { plans: plans.length }), ...dep, ...def]);
     }
-    if (passed === required.length) return dimension(k, 'in_progress', [...reassess, m('dimension.readiness.all_passed'), ...goMsg, ...dep, ...def]);
-    return dimension(k, 'in_progress', [...reassess, m('dimension.readiness.in_progress', { passed, required: required.length }), ...goMsg, ...dep, ...def]);
+    if (passed === required.length) return dimension(k, 'readiness_in_progress', [...reassess, m('dimension.readiness.all_passed'), ...goMsg, ...dep, ...def]);
+    return dimension(k, 'readiness_in_progress', [...reassess, m('dimension.readiness.in_progress', { passed, required: required.length }), ...goMsg, ...dep, ...def]);
   })();
 
   const jv: DimensionState = (() => {

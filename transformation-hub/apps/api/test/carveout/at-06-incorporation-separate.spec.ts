@@ -108,7 +108,7 @@ describe('AT-06 — incorporation confirmed, carve-out not complete [AT-06, REQ-
     expect(ver.transfer).toEqual({ legal: 'transferred_verified', economic: 'in_progress', combined: 'in_progress' });
     await runWorker(); // perimeter.changed → gates.recompute_dimensions
     const g = (await p.pm.get(`${base(pid)}/status-dimensions`).expect(200)).body;
-    expect(states(g.items)).toMatchObject({ incorporation: 'incorporated_verified', perimeter_transfer: 'in_progress' });
+    expect(states(g.items)).toMatchObject({ incorporation: 'incorporated_verified', perimeter_transfer: 'transfer_in_progress' });
     expect(g.carveOutComplete).toBe(false);
   });
 });

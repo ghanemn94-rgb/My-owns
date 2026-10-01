@@ -184,8 +184,8 @@ describe('AT-06 — independent status dimensions', () => {
     const s = Object.fromEntries(dims.map((d) => [d.key, d.state]));
     expect(s).toEqual({
       incorporation: 'incorporated_verified',
-      perimeter_transfer: 'in_progress',
-      operational_readiness: 'in_progress',
+      perimeter_transfer: 'transfer_in_progress',
+      operational_readiness: 'readiness_in_progress',
       jv_transaction: 'not_started',
     });
     expect(isCarveOutComplete(dims)).toBe(false);
@@ -203,10 +203,10 @@ describe('DOM-P3-11 / DOM-P3-12 — the dimension machines of business-gates.md 
   const state = (i: Parameters<typeof computeStatusDimensions>[0], key: string) => computeStatusDimensions(i).find((d) => d.key === key)!.state;
 
   it('never "Day-1 GO approved" without a GO of every transition plan; a flagged GO does not count; acceptance → operating with transitional services', () => {
-    expect(state(base, 'operational_readiness')).toBe('in_progress');
-    expect(state({ ...base, cutoverPlans: [{ status: 'approved_go', goFlagged: false }, { status: 'ready_for_decision', goFlagged: false }] }, 'operational_readiness')).toBe('in_progress');
+    expect(state(base, 'operational_readiness')).toBe('readiness_in_progress');
+    expect(state({ ...base, cutoverPlans: [{ status: 'approved_go', goFlagged: false }, { status: 'ready_for_decision', goFlagged: false }] }, 'operational_readiness')).toBe('readiness_in_progress');
     expect(state({ ...base, cutoverPlans: [{ status: 'approved_go', goFlagged: false }, { status: 'executed', goFlagged: false }] }, 'operational_readiness')).toBe('day1_go_approved');
-    expect(state({ ...base, cutoverPlans: [{ status: 'approved_go', goFlagged: true }] }, 'operational_readiness')).toBe('in_progress');
+    expect(state({ ...base, cutoverPlans: [{ status: 'approved_go', goFlagged: true }] }, 'operational_readiness')).toBe('readiness_in_progress');
     expect(state({ ...base, cutoverPlans: [{ status: 'accepted', goFlagged: false }] }, 'operational_readiness')).toBe('operating_with_transitional_services');
     expect(state({ ...base, readiness: [{ mandatory: true, blocker: true, status: 'failed' }], cutoverPlans: [{ status: 'approved_go', goFlagged: true }] }, 'operational_readiness')).toBe('blocked');
   });
@@ -229,12 +229,14 @@ describe('DOM-P3-11 / DOM-P3-12 — the dimension machines of business-gates.md 
     expect(d.explanationI18n.find((m) => m.code === 'dimension.readiness.dependencies')!.params).toMatchObject({ enduring: 0 });
   });
 
-  it('perimeter: draft → not started → approved → in progress → evidence pending → verified; blocked; N/A never counts as transferred', () => {
+  it('perimeter: draft → not started → approved → transfer in progress → partially transferred → evidence pending → verified; blocked; N/A never counts as transferred', () => {
     const inc = (transferStatus: TransferStatus, economicTransferStatus: TransferStatus = transferStatus) => [{ disposition: 'included' as const, transferStatus, economicTransferStatus }];
     expect(state({ ...base, perimeter: [] }, 'perimeter_transfer')).toBe('perimeter_draft');
     expect(state({ ...base, perimeter: inc('not_started') }, 'perimeter_transfer')).toBe('not_started');
     expect(state({ ...base, perimeter: inc('planned'), perimeterApproved: true }, 'perimeter_transfer')).toBe('perimeter_approved');
-    expect(state({ ...base, perimeter: inc('in_progress'), perimeterApproved: true }, 'perimeter_transfer')).toBe('in_progress');
+    expect(state({ ...base, perimeter: inc('in_progress'), perimeterApproved: true }, 'perimeter_transfer')).toBe('transfer_in_progress');
+    expect(state({ ...base, perimeter: [...inc('transferred_verified'), ...inc('in_progress')], perimeterApproved: true }, 'perimeter_transfer')).toBe('partially_transferred');
+    expect(state({ ...base, perimeter: [...inc('transferred_pending_evidence'), ...inc('planned')], perimeterApproved: true }, 'perimeter_transfer')).toBe('partially_transferred');
     expect(state({ ...base, perimeter: inc('transferred_pending_evidence', 'transferred_verified') }, 'perimeter_transfer')).toBe('transferred_evidence_pending');
     expect(state({ ...base, perimeter: inc('blocked') }, 'perimeter_transfer')).toBe('blocked');
     expect(state({ ...base, perimeter: inc('not_applicable') }, 'perimeter_transfer')).not.toBe('transferred_verified');

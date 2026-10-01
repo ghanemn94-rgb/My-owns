@@ -49,7 +49,7 @@ describe('AT-06 / REQ-LCY-007 — incorporation verified does not complete the c
       standaloneAccepted: false,
       closings: [],
     });
-    expect(Object.fromEntries(dims.map((d) => [d.key, d.state]))).toMatchObject({ incorporation: 'incorporated_verified', perimeter_transfer: 'in_progress' });
+    expect(Object.fromEntries(dims.map((d) => [d.key, d.state]))).toMatchObject({ incorporation: 'incorporated_verified', perimeter_transfer: 'transfer_in_progress' });
     expect(isCarveOutComplete(dims)).toBe(false);
   });
 });

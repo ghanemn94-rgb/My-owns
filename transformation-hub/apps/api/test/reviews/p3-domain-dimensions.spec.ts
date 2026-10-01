@@ -87,7 +87,7 @@ describe('P3 domain review — dimension states vs business-gates.md §1 and the
     expect(produced['operational_readiness']!.has('transitional_services_exited')).toBe(true);
     expect(produced['perimeter_transfer']!.has('perimeter_approved')).toBe(true);
     // Every mandatory check passed but no GO decision exists: still in progress, never "Day-1 ready" without a GO.
-    expect(ops(base).state).toBe('in_progress');
+    expect(ops(base).state).toBe('readiness_in_progress');
     // G4 approved while a TSA is still active: "standalone_accepted" — the terminal state needs the TSA exits.
     expect(ops({ ...base, standaloneAccepted: true, tsas: [{ status: 'active', isEnduringArrangement: false }] }).state).toBe('standalone_accepted');
     expect(ops({ ...base, standaloneAccepted: true, tsas: [{ status: 'exit_accepted', isEnduringArrangement: false }] }).state).toBe('transitional_services_exited');
