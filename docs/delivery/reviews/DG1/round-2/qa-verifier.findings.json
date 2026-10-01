@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG1-232",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-033",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Non-deterministic e2e journey: 'shell: navigation, language persistence and My Work' presses Tab before the shell has mounted after page.reload(), so the skip-link toBeFocused assertion intermittently fails (1 of 29 normal runs; 1 of 15 under CPU load) and, because the spec is serial, skips the remaining 7 journeys of that locale",
+      "reproduction": "Disposable clone of candidate sha256:e6979e12… (commit 485e91f), Node v22.22.2, PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers. (1) E2E_PG_PORT=55941 apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e --workers=1 --reporter=list -> 1 failed, 7 did not run, 10 passed, exit 1 ([chromium-en] journeys.spec.ts:156, line 172: expect(getByRole('link', {name: 'Skip to main content'})).toBeFocused() -> Received: inactive, 9x over 5000 ms). (2) With three parallel `pnpm test` runs as CPU load on the 4-CPU host: apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e/journeys.spec.ts -g 'shell: navigation' --project=chromium-en --repeat-each=15 --workers=1 -> 1 failed / 14 passed, same assertion. Without load: two more full suite runs 18/18, the qa-stack run 22/22, and --repeat-each=10 over both locales 20/20. Root cause (test synchronisation, not a product defect): after `await page.reload()` the test only waits for `html[lang]`, but `public/locale-boot.js` sets <html lang dir> before first paint, i.e. before React has mounted the shell. The Tab keypress can therefore land while no focusable element exists; in the failure snapshot the skip link (first focusable element) is present afterwards but unfocused (screenshot shows the fully rendered My Work page with nothing focused).",
+      "expected": "A required gate check (master prompt §0: required checks run and pass; playwright.config.ts retries: 0, so CI is red on any flake) that is deterministic: after the reload, wait for a post-mount signal (e.g. the primary navigation or the My Work heading to be visible) before pressing Tab, as the earlier part of the same test already does after sign-in.",
+      "actual": "Intermittent failure of the required e2e journeys check (first run of this review: exit 1, 7 EN journeys not executed). The product behaviour itself is correct in every run where the shell had mounted (skip link is the first focusable element; 28 of 29 unloaded runs and 14 of 15 loaded runs pass).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-2/14-e2e-journeys.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/14b-e2e-journeys-rerun2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/14c-e2e-journeys-rerun3.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/14d-e2e-shell-repeat10.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/14e-e2e-shell-repeat15-under-load.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/14e-shell-skiplink-focus-fail-error-context.md",
+        "docs/delivery/test-evidence/DG1/qa/round-2/screenshots/14e-shell-skiplink-focus-fail-en.png",
+        "docs/delivery/test-evidence/DG1/qa/round-2/15-e2e-qa-acceptance.log",
+        "apps/web/e2e/journeys.spec.ts#L166-L172",
+        "apps/web/src/i18n/index.ts#L4"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-2/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T22:02:07Z",
+          "status": "OPEN",
+          "note": "raised by qa-verifier DG1 round 2 (proposed ID in the qa 2xx range after F-DG1-231; the orchestrator may renumber)"
+        }
+      ]
+    }
+  ]
+}

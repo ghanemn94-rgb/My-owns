@@ -1,0 +1,86 @@
+{
+ "hooks": {
+  "PreToolUse": [
+   {
+    "matcher": "Write|Edit|NotebookEdit|MultiEdit",
+    "hooks": [
+     {
+      "type": "command",
+      "command": "if [ -z \"$MTH_GUARD_ROOT\" ]; then echo \"write guard: MTH_GUARD_ROOT is not set (run agents through tools/agents/run-agent.sh)\" >&2; exit 2; fi; g=\"$MTH_GUARD_ROOT/tools/agents/guard-write.mjs\"; if [ -f \"$g\" ]; then node \"$g\" qa-verifier; rc=$?; else echo \"write guard missing\" >&2; rc=2; fi; [ \"$rc\" -eq 0 ] || exit 2"
+     }
+    ]
+   }
+  ]
+ },
+ "sandbox": {
+  "enabled": true,
+  "failIfUnavailable": true,
+  "allowUnsandboxedCommands": false,
+  "autoAllowBashIfSandboxed": true,
+  "enableWeakerNestedSandbox": true,
+  "filesystem": {
+   "denyWrite": [
+    "/home/user/My-owns/.claude",
+    "/home/user/My-owns/.dockerignore",
+    "/home/user/My-owns/.editorconfig",
+    "/home/user/My-owns/.env.example",
+    "/home/user/My-owns/.git",
+    "/home/user/My-owns/.gitattributes",
+    "/home/user/My-owns/.github",
+    "/home/user/My-owns/.gitignore",
+    "/home/user/My-owns/.mcp.json",
+    "/home/user/My-owns/.npmrc",
+    "/home/user/My-owns/.nvmrc",
+    "/home/user/My-owns/.prettierignore",
+    "/home/user/My-owns/.prettierrc.json",
+    "/home/user/My-owns/CLAUDE.local.md",
+    "/home/user/My-owns/CLAUDE.md",
+    "/home/user/My-owns/apps",
+    "/home/user/My-owns/deploy",
+    "/home/user/My-owns/docs/analysis",
+    "/home/user/My-owns/docs/api",
+    "/home/user/My-owns/docs/architecture",
+    "/home/user/My-owns/docs/delivery/agent-protocol.md",
+    "/home/user/My-owns/docs/delivery/agents.md",
+    "/home/user/My-owns/docs/delivery/assignments",
+    "/home/user/My-owns/docs/delivery/candidates",
+    "/home/user/My-owns/docs/delivery/decisions.md",
+    "/home/user/My-owns/docs/delivery/environment.md",
+    "/home/user/My-owns/docs/delivery/findings.json",
+    "/home/user/My-owns/docs/delivery/gates",
+    "/home/user/My-owns/docs/delivery/handbacks",
+    "/home/user/My-owns/docs/delivery/progress.md",
+    "/home/user/My-owns/docs/delivery/requirements-spec.md",
+    "/home/user/My-owns/docs/delivery/requirements.csv",
+    "/home/user/My-owns/docs/delivery/reviews",
+    "/home/user/My-owns/docs/delivery/runs",
+    "/home/user/My-owns/docs/delivery/stages.json",
+    "/home/user/My-owns/docs/delivery/test-evidence/DG0",
+    "/home/user/My-owns/docs/delivery/test-evidence/DG1/audit",
+    "/home/user/My-owns/docs/delivery/test-evidence/DG1/code-security",
+    "/home/user/My-owns/docs/delivery/test-evidence/DG1/domain",
+    "/home/user/My-owns/docs/delivery/test-evidence/DG1/orchestrator",
+    "/home/user/My-owns/docs/delivery/threat-model.md",
+    "/home/user/My-owns/docs/operations",
+    "/home/user/My-owns/docs/source",
+    "/home/user/My-owns/eslint.config.js",
+    "/home/user/My-owns/licenses",
+    "/home/user/My-owns/node_modules",
+    "/home/user/My-owns/package.json",
+    "/home/user/My-owns/packages",
+    "/home/user/My-owns/playwright.config.ts",
+    "/home/user/My-owns/pnpm-lock.yaml",
+    "/home/user/My-owns/pnpm-workspace.yaml",
+    "/home/user/My-owns/scripts",
+    "/home/user/My-owns/tools",
+    "/home/user/My-owns/tools/agents",
+    "/home/user/My-owns/tools/deps",
+    "/home/user/My-owns/tools/gates",
+    "/home/user/My-owns/tools/source",
+    "/home/user/My-owns/trading_agent",
+    "/home/user/My-owns/tsconfig.base.json",
+    "/home/user/My-owns/vitest.config.ts"
+   ]
+  }
+ }
+}

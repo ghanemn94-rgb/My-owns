@@ -1,0 +1,29 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG1-230",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:e6979e12… (disposable clone at 485e91f). docs/architecture/data-dictionary.md now has a 'Views (read models)' section with one subsection per view (actor_display 0001/identity, business_unit_closure 0001/organization, scope_node 0002/access), giving columns, types, purpose, source, owner mth_owner and SELECT-only for mth_app; the closure view's depth cap (recursion stops at depth < 10, so 0-10) is stated together with the migration-0009 invariant. docs/architecture/erd.md lists all three views (with their columns) and the business_unit_hierarchy_guard trigger under 'Also created in P1'. Independent live check: 26-views-vs-dictionary.sh migrates a fresh PostgreSQL 16 database (9 migrations), reads every view in schema public from pg_class/information_schema and compares it with the dictionary tables: 3 views, 11 columns, every column and type matches, every view is named in the ERD, owner mth_owner, grants mth_app SELECT only (exit 0). Fix complete.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-2/26-views-vs-dictionary.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/26-views-vs-dictionary.sh",
+        "docs/architecture/data-dictionary.md#views-read-models",
+        "docs/architecture/erd.md#L197-L201"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-231",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:e6979e12… (requirements.csv is a candidate file). The REQ-DLV-033 and REQ-S19-004 rows no longer cite candidate 991d3241 / commit f32c705 evidence, and contain no conditional IMPLEMENTED wording (grep -c -E '991d3241|f32c705|stands only if|F-DG1-(108|203|208)' over the whole register = 0). Their evidence now lists stable candidate files only (REQ-DLV-033: 16 files; REQ-S19-004: 14 files incl. migrations 0001-0009, migrate.test.ts and catalogue.test.ts); all 30 exist. No docs/delivery/test-evidence/DG1/*/round-2/ file is tracked at the candidate commit, so the carried dev-history logs are gone. The notes' factual claims hold on this candidate in my own runs: 9 migrations apply to a fresh PostgreSQL 16 database (A18 clean start, DB probe), the integration suite incl. the contract suite with getBrandingTokens is 209/209 in two runs with no 57P01 or hook timeout, and the three views are documented (F-DG1-230). validate.mjs --register DG1 PASS. Fix complete.",
+      "evidence": [
+        "docs/delivery/requirements.csv",
+        "docs/delivery/test-evidence/DG1/qa/round-2/10-integration-run1.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/11-integration-run2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/18-a18-clean-start.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/21-validate-register.log"
+      ]
+    }
+  ]
+}
