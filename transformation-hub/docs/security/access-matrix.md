@@ -238,6 +238,17 @@ Nobody can assign a role they could not be assigned by the table. A role assignm
 | `ai.killswitch.release` | activator |
 | `admin.users.manage`, `admin.access.suspend`, `admin.role_assignment.manage`, `admin.clearance.grant`, `jv.room.grant_access` | the target user (grantee) |
 
+**"The person who recorded the evidence" — P3 commands as implemented (DOM-P3-10 / SEC-P34-01, P3 part).** Every person who
+linked an active (or conflicting) evidence link of the record (`evidence_link.added_by`, read for the rule whatever the
+caller may see) is an additional `not_self` subject, checked one by one (a refusal is 403 and audited as denied):
+`readiness.check.signoff` (with the check's owner, creator and the recorder of its latest test —
+`apps/api/src/modules/readiness/checks.service.ts`), `newco.incorporation.verify` (with the status recorder —
+`newco/legal-entities.service.ts`), `newco.regulatory.verify` for the outcome (with the registrant) and for "conditions
+satisfied" (with the recorder of the outcome — `newco/regulatory.service.ts`), `carveout.transfer.verify` (with the reporter —
+`carveout/transfers.service.ts`). The specialist "transfer not applicable" determination on an in-scope item
+(`carveout.transfer.verify`, DOM-P3-05) is not by the item's owner or creator. `newco.regulatory.verify` is held by the
+Legal role only (REQ-AGR-004, SEC-P34-05): applicability determinations, outcomes and conditions are recorded by Legal.
+
 Quorum, majority, recusal and tie rules are computed **on the server** from committee membership at the vote timestamp. Historical votes are never recomputed when membership or delegation changes later (master prompt §4.2).
 
 ### 5.2 Special meanings of `authority`

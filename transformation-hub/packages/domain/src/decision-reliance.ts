@@ -162,7 +162,8 @@ export function decisionEvidenceReassessment(d: {
  * record type `tsa_service`: one decision authorizes one extension of one TSA — a TSA extended again needs a new decision)
  * and the GO of a cutover plan (`cutover_plan`: one Day-1 go/no-go decision authorizes the GO of one plan). The terms
  * approval and an extension of the same TSA are different kinds: one `tsa_approval_or_extension` decision may approve the
- * terms of a TSA and one extension (of that TSA or another).
+ * terms of a TSA and one extension of THAT TSA — never of another one (DOM-P3-13, conservative option pending the
+ * governance owner, Q-P3-13; enforced by the readiness module, `tsa.*.decision_other_tsa`).
  */
 export const DECISION_USE_KINDS = [
   'change_request',

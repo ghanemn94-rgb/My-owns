@@ -140,8 +140,8 @@ human principal at execution time and returns `null` when access was revoked (AT
   | Approved valuation / ownership values of a model version | `financial_model_version` | `if_set` | `finance.model` |
   | Approved budget of a line (+ its stated amount, fail closed: `finance.budget.decision_amount_missing`) | `budget_line` | `none` (a budget decision is raised for the change request / baseline it approves; the line records that approval's amount) | `finance.budget` |
   | Figure / opening-balance approval | none (no kind for figures yet) | `none` | `finance.approval` |
-  | TSA terms approval (DOM-P2F-09) | `tsa_service` | `if_set` | `tsa.approve` |
-  | TSA extension: linked at the request (`requireFinal: false`), consumed when recorded; replaces the former per-TSA check — a decision that authorized an extension of this TSA or another is refused (`tsa.extension.decision_already_used`) | `tsa_extension` (record type `tsa_service`) | `if_set` | `tsa.extension` |
+  | TSA terms approval (DOM-P2F-09); a decision already used for another TSA (its terms or its extension) is refused (`tsa.approve.decision_other_tsa`, DOM-P3-13) | `tsa_service` | `if_set` | `tsa.approve` |
+  | TSA extension: linked at the request (`requireFinal: false`), consumed when recorded; replaces the former per-TSA check — a decision that authorized an extension of this TSA or another is refused (`tsa.extension.decision_already_used`); a decision used for the terms of ANOTHER TSA is refused (`tsa.extension.decision_other_tsa`, DOM-P3-13, conservative option — governance owner to confirm); once the decision left draft the requested end date / continuity plan are bound to it (`tsa.extension.terms_bound`, DOM-P3-06) | `tsa_extension` (record type `tsa_service`) | `if_set` | `tsa.extension` |
   | GO of a cutover plan: linked (`requireFinal: false`), consumed at the GO; a plan that goes to GO again after a rollback needs a new decision; a NO-GO relies on none | `cutover_plan` | `if_set` | `readiness.go_no_go` |
   | Perimeter version approval (G1 paper) | `perimeter_version` | `required` since DOM-P2F-08 (a G1 paper must name the version it approves) | `perimeter.version` |
 
@@ -176,6 +176,21 @@ human principal at execution time and returns `null` when access was revoked (AT
   gate order; without the lock it and the worker's refresh could lock the same rows in opposite orders (PostgreSQL
   "deadlock detected" → 409 `db.serialization_failure`). A new gate write path must take the lock first; reads do not.
   Regression: `apps/api/test/gates/gate-lock-order.spec.ts`.
+- **One writer of a project's Day-1 readiness state at a time (DOM-P3-03):** the GO, the execution record and every command
+  that changes a gating input of a GO (check creation / instantiation, test run, sign-off, determination, reopen, waiver
+  application, re-binding, the `evidence.changed` reaction) take the transaction-scoped advisory lock
+  `hub_readiness:<projectId>` (`ReadinessSupport.lockReadiness`) FIRST, before they read the checks. Lock order:
+  `hub_readiness` → decision row (`lockDecisionAndRecheck`). TSA commands do not take it. A new command that changes what a
+  GO evaluates must take it. Regression: `apps/api/test/reviews/p3-domain-readiness-race.spec.ts`.
+- **One recompute of a project's status dimensions at a time (DOM-P3-14):** `StatusDimensionsService.recomputeDimensions`
+  takes the transaction-scoped advisory lock `hub_dimensions:<projectId>` before it reads its inputs, so a recompute with an
+  older snapshot never commits last and no `record_version` row is dropped. It is taken last (after any module lock of the
+  calling command). Regression: `apps/api/test/gates/p3-dimension-lock.spec.ts`.
+- **Evidence a rule relied on (DOM-P3-08, DOM-P3-09):** a record verified or signed off on evidence reacts to
+  `evidence.changed` (service-principal job with an explicit permission allowlist): a readiness check passed on evidence
+  that is no longer active returns to `in_progress` and flags the GOs it gated (`readiness.check_evidence_changed` job); a
+  confirmed incorporation whose evidence is no longer active returns to "proposed" verification
+  (`newco.incorporation_evidence_changed` job). History is kept; the change is audited.
 - **Workstream-scoped reach:** when a list or count is structured by workstream, filter it with
   `policy.reachSql(ctx, '<permission>', projectId, table.workstreamId)` — a workstream-only role (e.g. a lead without a
   project role) sees only its workstreams; `policy.permissionReach(...)` tells you whether the grant is project-wide.

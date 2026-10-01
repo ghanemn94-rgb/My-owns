@@ -17,9 +17,9 @@ the Executive Cockpit. No dimension is derived from another, and no dimension is
 
 | Dimension | Arabic | States (in order) | What moves it |
 |---|---|---|---|
-| `incorporation` | التأسيس | `unconfirmed` → `not_started` → `in_progress` → `incorporated_evidence_pending` → `incorporated_verified` | Verified incorporation documents (G2-C01) |
-| `perimeter_transfer` | نقل النطاق | `not_started` → `perimeter_draft` → `perimeter_approved` → `transfer_in_progress` → `partially_transferred` → `transferred_evidence_pending` → `transferred_verified` | Perimeter register transfer evidence and reconciliation |
-| `operational_readiness` | الجاهزية والاستقلال التشغيلي | `not_assessed` → `readiness_in_progress` → `day1_go_approved` → `operating_with_transitional_services` → `standalone_accepted` → `transitional_services_exited` | Readiness sign-offs, go/no-go decision, post-transition acceptance, TSA exits |
+| `incorporation` | التأسيس | `not_started` / `unconfirmed` → `in_progress` → `incorporated_evidence_pending` → `incorporated_verified`; or `not_applicable` | Verified incorporation documents (G2-C01) |
+| `perimeter_transfer` | نقل النطاق | `perimeter_draft` → `not_started` → `perimeter_approved` → `transfer_in_progress` → `partially_transferred` → `transferred_evidence_pending` → `transferred_verified`; exception `blocked` | Perimeter register transfer evidence and reconciliation, perimeter-version approval |
+| `operational_readiness` | الجاهزية والاستقلال التشغيلي | `not_assessed` → `readiness_in_progress` → `day1_go_approved` → `operating_with_transitional_services` → `standalone_accepted` → `transitional_services_exited`; exception `blocked` | Readiness sign-offs, go/no-go decision, post-transition acceptance, TSA exits |
 | `jv_transaction` | توقيع وإتمام المشروع المشترك | `not_started` → `partner_preparation` → `diligence_and_negotiation` → `signing_ready` → `signed` → `closing_conditions_in_progress` → `partially_closed` → `closed`; or `terminated` | Partner process, signing record, CP verification, closing confirmations |
 
 Rules:
@@ -43,6 +43,44 @@ Rules:
    `partially_closed` / `closed` from the confirmed closings; `terminated` when every partner has withdrawn and every
    event was aborted. **Aborted events are not counted** (one confirmed and one aborted closing is `closed`); the
    explanation states how many were excluded. Partner and event changes trigger the recompute.
+8. **`incorporation`, `perimeter_transfer`, `operational_readiness` as implemented (DOM-P3-08, -11, -12) [server].** The rule
+   (`computeStatusDimensions`, `packages/domain/src/carveout.ts`) produces only the states of the table above and of the
+   template's `statusDimensions` (`DIMENSION_STATES`; a unit test compares the template with it). Until a dimension is first
+   computed it shows `not_assessed` ("Not yet assessed").
+   - `incorporation`: `not_started` while no NewCo legal entity is recorded; otherwise the entity's status —
+     `unconfirmed` (default), `in_progress`, `not_applicable` (a determination with its basis) — and `incorporated` reads
+     `incorporated_verified` only while the verification is confirmed **and** its evidence is still active in the owning
+     project; otherwise `incorporated_evidence_pending`. Evidence of a confirmed incorporation that is rejected, superseded
+     or conflicting returns the verification to "proposed" (audited, history kept) and asks Legal to re-verify (DOM-P3-08).
+   - `perimeter_transfer` (legal and economic transfer combined, the least advanced counts): `perimeter_draft` while no item
+     is Included / Shared; `blocked` while an in-scope item is blocked; `transferred_verified` when every in-scope item is
+     transferred with verified evidence (no pending disposition); `transferred_evidence_pending` when every in-scope item is
+     reported transferred and some still await verification; `partially_transferred` when some in-scope items are
+     transferred (reported or verified) and others are not; `transfer_in_progress` when transfer work started but nothing is
+     transferred yet; `perimeter_approved` once a perimeter version is approved and no transfer started; otherwise
+     `not_started`. An in-scope item whose two aspects are "not applicable" never counts as transferred (it is shown
+     separately and reported by reconciliation — DOM-P3-05); one aspect "not applicable" is disclosed.
+   - `operational_readiness`: before standalone acceptance — `blocked` while a TSA is breached or expired-unresolved or a
+     blocker check failed / is improperly waived; `not_assessed` while no mandatory / blocking check exists;
+     `day1_go_approved` when every mandatory / blocking check is cleared (passed — a passed check whose sign-off evidence
+     becomes invalid is returned to in progress, §5 —, not applicable, or waived with an effective waiver) **and every transition plan has a Day-1 GO** that is not flagged (§5);
+     `operating_with_transitional_services` when, in addition, every plan was executed and accepted; otherwise
+     `readiness_in_progress` — **never "Day-1 ready" without a GO decision**. After G4 (approved, not under reassessment):
+     `transitional_services_exited` when no transitional service is left running (approved enduring arrangements
+     excepted), otherwise `standalone_accepted`, with any breached / expired-unresolved TSA still stated in the explanation
+     (DOM-P3-11). An enduring arrangement counts as "approved" only once its terms are approved (DOM-P3-15).
+   - `blocked` is an exception state shown instead of the progression while a blocker is open (P0 decision D-15); it is not
+     a step of the machine.
+   - **Carve-out complete** (`carveOutComplete`) only when incorporation is `incorporated_verified`, the perimeter
+     `transferred_verified` and operational readiness `transitional_services_exited` — never while a TSA is running,
+     breached or expired-unresolved (DOM-P3-11).
+   - Recomputes of a project's dimensions are serialized by the transaction advisory lock `hub_dimensions:<projectId>`
+     (DOM-P3-14), so a recompute with an older snapshot cannot commit last and no history row is dropped.
+   - Amended at the P3 fixes (domain owner to confirm, `docs/assumptions-and-open-questions.md`): the `blocked` exception
+     state, `not_applicable` for incorporation, `perimeter_draft` before `not_started` (the draft has no in-scope item yet;
+     `not_started` = in-scope items defined, perimeter not approved, no transfer started) and the label of
+     `partially_transferred` ("other in-scope items pending" — the platform does not know whether interim arrangements
+     cover them; the Day-1 positions record those).
 
 ## 2. Gate model (نموذج البوابة)
 
@@ -341,6 +379,37 @@ flowchart LR
   testing, go/no-go decision, contingency/rollback and post-transition acceptance.
 - The platform documents work; it does not control data center devices, networks or power.
 
+A Day-1 blocker keeps blocking go-live (P3 domain review fixes) **[server]**:
+
+1. **Which plans a check gates is not a description (DOM-P3-01).** `cutoverPlanId` / `siteId` of a check change only through
+   `POST …/readiness-checks/:checkId/rebind` (reason required); the descriptive PATCH refuses them (400). Re-binding is
+   refused for a FAILED gating check (`readiness.check.rebind_failed`) and for an open (not cleared) gating check that would
+   leave or enter a plan at `ready_for_decision` / `approved_go` (`readiness.check.rebind_plan_locked`). Every plan left or
+   entered gets a decision-history entry with the reason.
+2. **Signed off on evidence, while the evidence holds (DOM-P3-09).** A passed check clears the GO only while its evidence
+   has at least one ACTIVE link and no conflicting one (blocker `evidenceInvalid` in the GO evaluation). When the documents
+   module rejects, supersedes or contests that evidence, the `evidence.changed` reaction returns the check to
+   `in_progress` (audited, the earlier sign-off kept in history) and flags any GO it gated (rule 5).
+3. **A determination never releases an open blocker (DOM-P3-02).** The specialist determination cannot lower `blocker` /
+   `mandatory` of a FAILED check, nor of an open check gating a plan under decision or with a GO
+   (`readiness.determination.release_not_allowed`); a waivable check is released only through the waiver register (basis,
+   impact, the waiver authority set by the specialist, not the requester); a non-waivable one cannot be released.
+4. **One writer of a project's readiness state at a time (DOM-P3-03).** The GO and the execution record take the
+   transaction advisory lock `hub_readiness:<projectId>` before evaluating; every command that changes a gating input
+   (check creation / instantiation, test run, sign-off, determination, reopen, waiver application, re-binding, the evidence
+   reaction) takes the same lock first. Lock order: `hub_readiness` → decision row (GO reliance). A GO therefore never
+   commits on an evaluation that missed a concurrently committed failure.
+5. **A blocker failing after the GO stops go-live (DOM-P3-04).** A gating check that is open again after the GO (failed test,
+   reopen, invalid evidence) flags the GO: a `go_flagged` decision-history entry and an audit row. Recording the execution is
+   refused (`readiness.execution_blocked`; the refusal is recorded) until the check is cleared again (passed on valid evidence
+   or waived with an effective waiver) or the GO is withdrawn (`return_to_planning` is allowed from `approved_go`; the
+   consumed decision cannot back a new GO).
+6. **Separation of duties (DOM-P3-10 / SEC-P34-01).** The sign-off is not by the owner or creator of the check, the
+   recorder of its latest test, nor anyone who linked its active (or conflicting) evidence.
+7. **Summary = GO evaluation (DOM-P3-16).** The Day-1 summary counts a waived blocker as cleared only with an effective
+   waiver (approved, not expired) and a passed one only with valid evidence, as the GO does.
+8. **Recorded test result (DOM-P3-15).** The test result text is written only by the test-run command (not a PATCH field).
+
 ## 6. TSA state machine (آلة حالات اتفاقيات الخدمات الانتقالية)
 
 ```mermaid
@@ -352,6 +421,7 @@ stateDiagram-v2
   active --> exit_in_progress: exit plan started (replacement being stood up)
   active --> breached: SLA breach recorded
   breached --> active: breach remediated (evidence)
+  breached --> extended: breach remediated on an extended TSA (back to its pre-breach state)
   breached --> exit_in_progress: exit accelerated by decision
   exit_in_progress --> exit_accepted: replacement accepted with evidence by authorized user
   active --> expired_unresolved: end date passed, no accepted exit, no approved extension (system)
@@ -378,6 +448,24 @@ Rules **[server]**:
 4. Every TSA records provider/recipient, scope, dependent services/assets/systems, SLA and metric, charge basis, start and
    end dates, extension/termination terms, owner, replacement service, exit milestones, acceptance evidence and residual
    risks. Charges are money values with currency and unit.
+5. **An extension decision is bound to the terms it approved (DOM-P3-06).** Once the linked decision has left draft
+   (submitted to the committee or decided), the requested extension (end date, continuity plan, decision) can no longer be
+   re-requested with other terms on that decision (`tsa.extension.terms_bound`); a new date needs a new decision. Re-sending
+   the same terms is accepted (idempotent). `record-extension` applies the end date the decision saw.
+6. **A decision backs one TSA (DOM-P3-13, conservative option — governance owner to confirm).** A
+   `tsa_approval_or_extension` decision already used for TSA A (its terms or its extension) never backs a use for another
+   TSA B (`tsa.extension.decision_other_tsa` / `tsa.approve.decision_other_tsa`); the same decision may still approve the
+   terms of A and one extension of A. Open question Q-P3-13 in `docs/assumptions-and-open-questions.md`.
+7. **Extension to a future date (DOM-P3-07).** The new end date must follow the current one **and** be after today (project
+   timezone), at the request and again when the extension is recorded (`tsa.extension.end_date_past`).
+8. **Guards (DOM-P3-15, DOM-P3-17).** `activate` needs the service start date reached (`tsa.activate.not_started`);
+   `remedy_breach` returns the TSA to the state it had before the breach (`active` or `extended`); `accelerate_exit`
+   (`breached → exit_in_progress`) records the decision that accelerates the exit in its note (a linked decision record is
+   not yet required); `isEnduringArrangement` is locked once the terms are approved (`tsa.enduring_locked`) and the status
+   dimension calls an enduring arrangement "approved" only from then on.
+9. **Access (SEC-P34-06, SEC-P34-08).** The charge and its basis are shown only to a caller with the finance-domain
+   clearance and finance reach over the TSA's workstream (otherwise redacted); a TSA cannot be relabelled above the editor's
+   clearance (403 `readiness.classification_above_clearance`, record unchanged).
 
 ## 7. Conditions precedent (CP) semantics (الشروط المسبقة)
 
