@@ -532,7 +532,8 @@ export class TsaService {
 
   /** Extension options await an approved decision: link it with the proposed end date and continuity plan. */
   async requestExtension(ctx: RequestContext, projectId: string, id: string, body: { expectedVersion: number; decisionId: string; proposedEndDate: string; continuityPlan: string; note?: string }) {
-    const t = await loadInProject(this.s.db, schema.tsaService, projectId, id);
+    // SEC-P34R-02: the module's read rule first (a TSA the caller cannot read is 404, like an unknown id), then the command.
+    const t = await this.loadReadable(ctx, projectId, id);
     this.assertManage(ctx, projectId, t);
     const d = await this.s.decision(ctx, projectId, body.decisionId);
     assertDecisionLinkable(this.s.linked(d), TSA_DECISION_TYPE_KEYS, 'A TSA extension');
@@ -585,7 +586,7 @@ export class TsaService {
 
   /** REQ-TSA-005: the extension takes effect ONLY when the linked decision is a final approval. Never automatic. */
   async recordExtension(ctx: RequestContext, projectId: string, id: string, body: { expectedVersion: number; note?: string }) {
-    const t = await loadInProject(this.s.db, schema.tsaService, projectId, id);
+    const t = await this.loadReadable(ctx, projectId, id); // SEC-P34R-02
     this.assertManage(ctx, projectId, t);
     if (!t.proposedEndDate || !t.extensionDecisionId) throw ruleViolation('tsa.extension.not_requested', 'Request the extension (decision, new end date, continuity plan) first');
     const d = await this.s.decisionRow(projectId, t.extensionDecisionId);

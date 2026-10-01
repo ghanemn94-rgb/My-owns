@@ -138,6 +138,31 @@ describe('SEC-P34R-09 — a CP with conflicting evidence is not verified (as rea
 });
 
 // ---------------------------------------------------------------------------------------------------------------------
+describe('SEC-P34R-02 — the TSA extension routes answer 404 for a TSA the caller cannot read, like an unknown id', () => {
+  it('request-extension / record-extension: the WS1 lead (readiness.tsa.manage on WS1) gets 404 for a WS2 TSA, with the code of an unknown id; the TSA is unchanged', async () => {
+    const ws = ((await j.p.pm.get(`${P(pid)}/workstreams`).expect(200)).body.items as { id: string }[]).map((w) => w.id);
+    const wsl = j.gp.techLead as unknown as DocClient;
+    const scope = (await owner().query(`select role, workstream_id from project_membership where project_id = $1 and user_id = $2 and revoked_at is null`, [pid, wsl.userId])).rows;
+    expect(scope).toEqual([{ role: 'workstream_lead', workstream_id: ws[0] }]); // owner pool: setup assertion
+    const t = await ok(await j.p.pm.post(`${P(pid)}/tsa-services`, { name: `${TAG} WS2 TSA hosting (synthetic)`, workstreamId: ws[1] }));
+    await wsl.get(`${P(pid)}/tsa-services/${t.id}`).expect(404);
+    const UNKNOWN = '0192f0c0-0000-7000-8000-00000000fe12';
+    const req = { expectedVersion: t.version, decisionId: UNKNOWN, proposedEndDate: '2027-12-31', continuityPlan: 'Probe (synthetic)' };
+    for (const [path, body] of [
+      ['request-extension', req],
+      ['record-extension', { expectedVersion: t.version }],
+    ] as const) {
+      const existing = await wsl.post(`${P(pid)}/tsa-services/${t.id}/${path}`, body);
+      const unknown = await wsl.post(`${P(pid)}/tsa-services/${UNKNOWN}/${path}`, body);
+      expect(unknown.status, path).toBe(404);
+      expect(existing.status, `${path} ${JSON.stringify(existing.body)}`).toBe(404);
+      expect(existing.body.code).toBe(unknown.body.code);
+    }
+    expect((await owner().query(`select version from tsa_service where id = $1`, [t.id])).rows[0].version).toBe(t.version);
+  });
+});
+
+// ---------------------------------------------------------------------------------------------------------------------
 describe('SEC-P34R-05 — AI proposals follow the visibility of what their run gave the model', () => {
   let proposalId: string;
   let draftId: string;

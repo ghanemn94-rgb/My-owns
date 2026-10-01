@@ -193,8 +193,8 @@ SEC-P34-11` test in `apps/api/test/reviews/p34-sec-registers.spec.ts`.
   (recorded in the run snapshot) or to its requester. A hidden proposal answers 404 to detail, approve, reject and revise,
   like an unknown id. Tests: the `SEC-P34R-05 (fixed, regression)` probes in `p34-sec-re-jv-ai.spec.ts` and
   `p34-sec-re-fixes.spec.ts`.
-- **Commands answer 404 before 403 (SEC-P34R-02).** The readiness rebind and cutover plan site change load the record with
-  the caller's readiness visibility, and the JV checklist-item and CP commands require project-wide deal reach (or the
+- **Commands answer 404 before 403 (SEC-P34R-02).** The readiness rebind, the cutover plan site change and the TSA
+  extension request / record load the record with the caller's readiness visibility, and the JV checklist-item and CP commands require project-wide deal reach (or the
   command permission project-wide) before any 403 check, so an unreadable record answers like an unknown id. The cutover
   site-change refusal names only the failed checks the caller may read and counts the others; the TSA extension refusal
   does not name the other TSA (SEC-P34R-08).
