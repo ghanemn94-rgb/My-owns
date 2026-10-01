@@ -20,6 +20,8 @@
 //     literal anywhere (`Reflect.get(fn, "constructor")`), object/destructuring key, import/export name:
 //     code evaluation  eval, Function, AsyncFunction, GeneratorFunction, AsyncGeneratorFunction, constructor
 //     module loaders   require, createRequire, getBuiltinModule, mainModule, _load
+//     native loader    setEngine (F-DG1-130: `crypto.setEngine(path)` dlopen()s an arbitrary shared object, whose
+//                      ELF constructor runs before the call throws - a member of the allow-listed `node:crypto`)
 //     reflection       Reflect, getPrototypeOf, __proto__, getOwnPropertyDescriptor(s), getOwnPropertyNames,
 //                      __lookupGetter__, __lookupSetter__ (they read a property by a runtime name, or expose the
 //                      prototype / non-enumerable keys where `constructor` lives).
@@ -41,6 +43,18 @@
 // Both built-in checks are allow-lists, not enumerations of known-bad routes, so they do not depend on the Node
 // version the lint runs on (production targets Node 24, the supported floor is Node 22.18+): a new built-in or
 // `process` member is denied until someone deliberately reviews it and adds it here. Nothing is executed.
+// SCOPE OF THE DEFAULT-DENY (F-DG1-130): it decides which built-in MODULES may be imported; it does NOT allow-list
+// the MEMBERS of an allowed module. Members of the 7 allow-listed built-ins are covered by a recorded audit instead:
+// MEMBER AUDIT (Node v22.22.2 / OpenSSL 3.5.5, every own property of node:{crypto, fs, fs/promises, os, path, url,
+// util} plus the namespaces fs.promises, path.posix/win32, util.types, crypto.webcrypto/subtle; handback
+// T-DG1-BE11): the ONLY member that loads, evaluates or executes code or loads a native object is
+// `crypto.setEngine`, which rule 1 now bans in every form. Name matches checked and cleared by hand:
+// `os.loadavg` (system-load averages, not a loader); `fs.open*`/`opendir`/`truncate` (file I/O); `util.debug`/
+// `debuglog`/`inspect` (logging/formatting, no debugger); `util.types.isModuleNamespaceObject`/`isNativeError`
+// (type predicates). `crypto.setFips(bool)` only toggles the OpenSSL FIPS provider named by the OpenSSL config, not a
+// caller-supplied path. No member of fs/promises, os, path, url or util exposes a code loader; `node:fs` writing a
+// file that is then `import()`ed is residual (b). A later Node version can add a loader MEMBER to an allowed module:
+// re-run the audit when the Node floor or target changes, and ban any such member here.
 // Residual limits (stated and ACCEPTED, not closable statically):
 //  (a) runtime DATA FLOW: a string computed at runtime and handed to third-party code that itself reads
 //      `input[key]` (e.g. a schema library given `Object.fromEntries([[k, ...]])`); rules 1-2 remove every syntactic
@@ -68,8 +82,10 @@ const THIRD_PARTY = new Set(Object.keys(apiPkg.dependencies).filter((d) => !d.st
 const SHARED_ALLOWED = new Set(["@mth/shared", "@mth/shared/schemas", "@mth/config", "@mth/db"]);
 /**
  * D-055 DEFAULT-DENY allow-list of `node:` built-ins (without the prefix) that module source may import. Seeded from
- * what module source imports (crypto, fs, path, url) plus the read/utility built-ins fs/promises, os and util. None of
- * them loads, evaluates or executes code, opens a debugger, or loads native objects. NEVER add a code-loading, exec,
+ * what module source imports (crypto, fs, path, url) plus the read/utility built-ins fs/promises, os and util. Per the
+ * member audit in the header (F-DG1-130), they expose no member that loads, evaluates or executes code, opens a
+ * debugger, or loads native objects EXCEPT `crypto.setEngine` (a native loader), which rule 1 bans; residuals (a)-(c)
+ * of the header still apply (`node:fs` code generation + import is (b)). NEVER add a code-loading, exec,
  * native or debug built-in (module, vm, worker_threads, inspector, repl, child_process, cluster, process, sqlite, test,
  * wasi, v8, net, http, https, dgram, async_hooks, ...): those routes were closed one by one by F-DG1-109/117/125/127/128
  * and are now denied by default. Network I/O belongs to the composition root, not module source.
@@ -81,6 +97,8 @@ const BANNED_PRIMITIVES: ReadonlyMap<string, string> = new Map([
     (n) => [n, "code evaluation"] as const,
   ),
   ...["require", "createRequire", "getBuiltinModule", "mainModule", "_load"].map((n) => [n, "module loader"] as const),
+  // F-DG1-130: a native-loader MEMBER of the allow-listed node:crypto (dlopen of an arbitrary shared object).
+  ["setEngine", "native loader"] as const,
   ...[
     "Reflect",
     "getPrototypeOf",

@@ -11,7 +11,8 @@
 //     primitive name (eval, Function & co., constructor, require, createRequire, Reflect, getPrototypeOf, ...) in any
 //     syntactic form, and any computed key that is not a literal (a constructed key can spell any of them); since
 //     D-055 (F-DG1-129/213), any member of the global process outside the allow-list (process.kill, _debugProcess,
-//     execve, binding, ...) - default-deny, independent of the Node version;
+//     execve, binding, ...) - default-deny, independent of the Node version; since F-DG1-130, the native-loader
+//     member `setEngine` of the allow-listed node:crypto (rule 1, every form);
 //  4. a module directory is not in the module map, a P1 module has no index.ts, or a §16 business module has no
 //     test suite of its own (A12, D-048);
 //  5. the declared module graph has a cycle, or audit/access depend on a business module;
@@ -386,6 +387,36 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
     expect(v.join("\n")).toMatch(message);
   });
 
+  // F-DG1-124 blanket ban extended by F-DG1-130 (same 4-column shape; the 4th column is the round-9 lint's result).
+  it.each([
+    // F-DG1-130: `crypto.setEngine(path)` dlopen()s an arbitrary shared object (native loader) although `node:crypto`
+    // itself is allow-listed (default-deny covers modules, not members). Rule 1 now bans the `setEngine` name in every
+    // form. "missed" here = 0 violations with the round-9 lint (HEAD 8ec95a6; handback T-DG1-BE11). Importing
+    // node:crypto stays allowed (D-055 positive control below).
+    [
+      "S1 crypto.setEngine (named import)",
+      `import { setEngine } from "node:crypto";\nsetEngine("/tmp/x.so");`,
+      /native loader via setEngine \(line 2\)/,
+      "missed",
+    ],
+    [
+      "S2 crypto.setEngine (namespace import)",
+      `import * as c from "node:crypto";\nc.setEngine("/tmp/x.so");`,
+      /native loader via \.setEngine\(\)/,
+      "missed",
+    ],
+    [
+      'S3 crypto["setEngine"] (string key)',
+      `import crypto from "node:crypto";\n(crypto as any)["setEngine"]("/tmp/x.so");`,
+      /native loader via \["setEngine"\]/,
+      "missed",
+    ],
+  ])("%s is a violation (round-9 lint: $3)", (_case, source, message, _before) => {
+    const v = planted("transformations", source);
+    expect(v.length, `${_case}: ${JSON.stringify(v)}`).toBeGreaterThan(0);
+    expect(v.join("\n")).toMatch(message);
+  });
+
   // D-055 / F-DG1-129, F-DG1-213, F-DG1-010: DEFAULT-DENY for node: built-ins and process.* members. The third column
   // records what the round-8 lint (HEAD ed43620, denylists LOADER_BUILTINS / PROCESS_LOADERS) did with the same plant:
   // "missed" = 0 violations; "caught" = flagged by the old denylist (kept as a regression guard).
@@ -490,6 +521,15 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
       `process.once("SIGTERM", () => process.exit(0));`,
       `if (!e) process.exit(1);`,
       `export const id = randomUUID() + readFileSync(join("a", "b"), "utf8") + pathToFileURL("/x").href;`,
+    ].join("\n");
+    expect(planted("transformations", allowed)).toEqual([]);
+  });
+
+  it("F-DG1-130: only setEngine is banned - node:crypto and its other members stay allowed (positive control)", () => {
+    const allowed = [
+      `import { randomUUID, createHash } from "node:crypto";`,
+      `import * as nodeCrypto from "node:crypto";`,
+      `export const id = randomUUID() + nodeCrypto.randomUUID() + createHash("sha256").update("x").digest("hex");`,
     ].join("\n");
     expect(planted("transformations", allowed)).toEqual([]);
   });
