@@ -20,8 +20,18 @@
 //  5. the declared module graph has a cycle, or audit/access depend on a business module;
 //  6. the package dependency direction is broken (db -> config, shared; config -> shared; shared -> none;
 //     apps/web never imports @mth/db or @mth/config).
-import { existsSync, readdirSync, statSync } from "node:fs";
-import { join, relative, resolve } from "node:path";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { basename, join, relative, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   bareAllowed,
@@ -675,6 +685,89 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
     expect(planted("access", `import { KPI_MODULE } from "../kpi/index.ts";`).join("\n")).toMatch(
       /module access may not import module kpi/,
     );
+  });
+
+  // F-DG1-134: walk() used to collect only /\.(ts|tsx)$/, so a module file named .mts/.cts/.mjs/.cjs/.js/.jsx evaded
+  // every rule and the boundary check (a .mts file typechecks and ships in dist as .mjs). Now every buildable JS/TS
+  // module file is scanned.
+  const CODE_EXTS = ["ts", "tsx", "mts", "cts", "js", "jsx", "mjs", "cjs"] as const;
+  const EVASIVE = [
+    `import * as c from "node:crypto";`,
+    `import { authorize } from "../access/policy.ts";`,
+    `export const f = new Map(Object.entries(c)).get("set".concat("Engine")) as unknown;`,
+    `export const g = typeof authorize;`,
+  ].join("\n");
+
+  it("F-DG1-134: walk() collects every buildable JS/TS file (.[cm]?[jt]sx?), incl. nested ones, and no other file", () => {
+    const dir = mkdtempSync(join(tmpdir(), "mth-walk-"));
+    try {
+      mkdirSync(join(dir, "nested"));
+      for (const ext of CODE_EXTS) writeFileSync(join(dir, "nested", `zz-planted.${ext}`), EVASIVE);
+      for (const other of ["README.md", "data.json", "schema.sql", "x.tsbuildinfo", "y.mts.map"])
+        writeFileSync(join(dir, other), "");
+      expect(
+        walk(dir)
+          .map((f) => relative(dir, f))
+          .sort(),
+      ).toEqual(CODE_EXTS.map((ext) => join("nested", `zz-planted.${ext}`)).sort());
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("F-DG1-134: a planted non-.ts module file (zz-planted.mts etc.) is linted like a .ts one, end to end", () => {
+    // moduleViolations = walk(module dir) -> fileViolations(each file); a temp dir stands in for the module directory
+    // so nothing is written into the real tree. Before the fix this list was [] for every extension except ts/tsx.
+    const dir = mkdtempSync(join(tmpdir(), "mth-walk-"));
+    try {
+      for (const ext of CODE_EXTS) writeFileSync(join(dir, `zz-planted.${ext}`), EVASIVE);
+      const seen = walk(dir).map((f) => ({
+        name: basename(f),
+        v: fileViolations(
+          "transformations",
+          join(MODULES_DIR, "transformations", basename(f)),
+          readFileSync(f, "utf8"),
+        ),
+      }));
+      expect(seen.map((s) => s.name).sort()).toEqual(CODE_EXTS.map((ext) => `zz-planted.${ext}`).sort());
+      for (const { name, v } of seen) {
+        expect(v.join("\n"), name).toMatch(/imports the node:crypto namespace\/default binding/);
+        expect(v.join("\n"), name).toMatch(/only access\/index\.ts is public/);
+      }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("F-DG1-134: zz-planted.mts via fileViolations yields the rule-5 and deep-import violations", () => {
+    const v = fileViolations("transformations", join(MODULES_DIR, "transformations", "zz-planted.mts"), EVASIVE);
+    expect(v).toHaveLength(2);
+    expect(v.join("\n")).toMatch(/imports the node:crypto namespace\/default binding/);
+    expect(v.join("\n")).toMatch(/only access\/index\.ts is public/);
+  });
+
+  it("F-DG1-134: JSX in a .tsx/.jsx module file is parsed as JSX, so its imports are still seen and not mis-parsed", () => {
+    const jsx = `import { authorize } from "../access/policy.ts";\nexport const X = () => <div>{typeof authorize}</div>;`;
+    // Under a TS-kind parse the apostrophe in the JSX text opened a string literal that swallowed `require(...)`.
+    const swallowed = `export const X = () => <div>a'b {require("node:vm")}</div>;`;
+    for (const name of ["zz-planted.tsx", "zz-planted.jsx"]) {
+      expect(planted("transformations", swallowed, name).join("\n"), name).toMatch(
+        /imports non-allow-listed node built-in node:vm/,
+      );
+      expect(planted("transformations", jsx, name), name).toEqual([
+        `modules/transformations/${name}: imports ../access/policy.ts; only access/index.ts is public`,
+      ]);
+    }
+  });
+
+  it("F-DG1-134: *.test.<ext> is a test for every extension (vitest/testkit allowance), other files are not", () => {
+    const src = `import { describe } from "vitest";\nimport { moduleViolations } from "../../architecture.testkit.ts";`;
+    for (const ext of CODE_EXTS) {
+      expect(planted("kpi", src, `kpi.test.${ext}`), ext).toEqual([]);
+      expect(planted("kpi", src, `kpi.${ext}`).join("\n"), ext).toMatch(
+        /imports package vitest[\s\S]*composition root/,
+      );
+    }
   });
 
   it("scanSource reports what it saw (paths resolve relative to the planted file)", () => {

@@ -1,6 +1,10 @@
 // Module dependency-lint (ADR-0002), shared by architecture.test.ts and every module's own suite (D-048). Test-only:
 // excluded from the build (tsconfig.build.json `*.testkit.ts`) and never imported by runtime code.
 //
+// FILE SCOPE (F-DG1-134): walk() collects EVERY buildable JS/TS module file, `/\.[cm]?[jt]sx?$/` (.ts .tsx .mts .cts
+// .js .jsx .mjs .cjs), so no module code evades the lint by its extension (a `.mts` file typechecks and ships in dist as
+// `.mjs`). All of them get the same rules 1-5 and boundary checks; `.tsx`/`.jsx` are parsed as TSX, the rest as TS (a
+// superset of JS); `*.test.<ext>` is a test.
 // It walks the TypeScript AST of each file (F-DG1-109: `ts.preProcessFile` saw only literal specifiers) and reports:
 //  - every static import / export-from / `import x = require()` / type-only import specifier, and every
 //    `import("...")` / `require("...")` with a string-literal specifier - each checked against the module boundary;
@@ -164,11 +168,21 @@ const NUMERIC_OPERATORS = new Set([
 /** Composition-root files a module's OWN TEST may read: the declarative module map and this lint (D-048). */
 const TEST_SUPPORT_FILES = new Set(["modules.ts", "architecture.testkit.ts"]);
 
+/**
+ * F-DG1-134: every buildable JS/TS module file - .ts .tsx .mts .cts .js .jsx .mjs .cjs. Matching only .ts/.tsx let a
+ * `.mts` module file (typechecks under NodeNext + allowImportingTsExtensions, ships in dist as `.mjs`) evade every rule
+ * and the boundary check. `*.test.<ext>` of any of these is a test (TEST_FILE).
+ */
+const CODE_FILE = /\.[cm]?[jt]sx?$/;
+const TEST_FILE = /\.test\.[cm]?[jt]sx?$/;
+/** JSX-capable files are parsed as TSX (a TS-kind parse of JSX text such as `a'b {require(x)}` swallows code). */
+const scriptKindOf = (fileName: string) => (/\.[jt]sx$/.test(fileName) ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
+
 export function walk(dir: string): string[] {
   if (!existsSync(dir)) return [];
   return readdirSync(dir).flatMap((name) => {
     const p = join(dir, name);
-    return statSync(p).isDirectory() ? walk(p) : /\.(ts|tsx)$/.test(name) ? [p] : [];
+    return statSync(p).isDirectory() ? walk(p) : CODE_FILE.test(name) ? [p] : [];
   });
 }
 
@@ -290,7 +304,7 @@ function occurrence(node: ts.Identifier | ts.PrivateIdentifier | ts.StringLitera
 
 /** Parse `source` (as if it were `fileName`) and collect what it loads. */
 export function scanSource(fileName: string, source: string): ScanResult {
-  const sf = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const sf = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true, scriptKindOf(fileName));
   const specifiers: string[] = [];
   const evasions: string[] = [];
   const at = (n: ts.Node) => `line ${sf.getLineAndCharacterOfPosition(n.getStart(sf)).line + 1}`;
@@ -444,7 +458,7 @@ function syntaxErrors(fileName: string, source: string): string[] {
 export function fileViolations(mod: ApiModule, file: string, source: string): string[] {
   const violations: string[] = [];
   const where = relative(SRC, file);
-  const isTest = file.endsWith(".test.ts");
+  const isTest = TEST_FILE.test(file);
   const allowedDeps = new Set<string>(API_MODULES[mod].dependsOn);
   const { specifiers, evasions } = scanSource(file, source);
   for (const e of [...syntaxErrors(file, source), ...evasions])
