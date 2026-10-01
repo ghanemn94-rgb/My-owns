@@ -10676,14 +10676,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-7/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-01T13:10:00Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG1 round 7 while assessing the D-053 residual framing, as the assignment asked (a concrete loader route not covered by a stated residual). It was reproduced statically in a disposable clone and at runtime on Node 22.22.2. Proposed id is the next free number in the code-security 1xx range; the orchestrator may renumber. If the orchestrator and release-auditor read residual (c) as covering any demonstrated route, an ACCEPTED_OBSERVATION is reasonable, but the header text should then name these two routes."
+        },
+        {
+          "at": "2026-10-01T13:25:57Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at a8cb7b971ec74bb615da3fe9b847f7d49b0ce9d3"
         }
-      ]
+      ],
+      "fix_revision": "a8cb7b971ec74bb615da3fe9b847f7d49b0ce9d3",
+      "fix_summary": "architecture.testkit.ts adds test to LOADER_BUILTINS (bans node:test) and execve to PROCESS_LOADERS (flags process.execve), closing the two routes the round-7 Node-22 sweep found; self-checks R1/R2; residual (c) tightened to exhaustive-for-pinned-Node + future/WebAssembly. architecture.test.ts 80/80; @mth/api typecheck/eslint/prettier clean; no module uses node:test/process.execve. D-054."
     }
   ]
 }
