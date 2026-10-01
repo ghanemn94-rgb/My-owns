@@ -31,6 +31,9 @@ import {
   reconcilePerimeterRegister,
   ruleViolation,
   sameScope,
+  scopeEntryTransferReset,
+  transferNote,
+  transferNoteI18n,
   withheldImpactEntry,
 } from '@hub/domain';
 import type { z } from 'zod';
@@ -344,10 +347,11 @@ export class PerimeterService {
       mechanism: r.mechanism,
       effectiveDate: r.effectiveDate,
       note: r.note,
+      ...((i18n) => (i18n ? { noteI18n: i18n } : {}))(transferNoteI18n(r)),
       evidenceCount: r.evidenceCount,
       reviewsRecordId: r.reviewsRecordId,
       recordedBy: r.recordedBy,
-      recordedByName: names.get(r.recordedBy) ?? null,
+      recordedByName: r.recordedBy ? (names.get(r.recordedBy) ?? null) : null,
       recordedAt: r.recordedAt.toISOString(),
     }));
   }
@@ -735,12 +739,50 @@ export class PerimeterService {
       await this.outbox.emit({ type: 'perimeter.changed', projectId, aggregateType: 'perimeter_item', aggregateId: itemId, payload: { change: 'change_requested', changeRequestId: raised.cr.id } });
       return { id: itemId, code: item.code, version, disposition: item.disposition as PerimeterDisposition, applied: false, changeRequest: { id: raised.cr.id, code: raised.cr.code, status: raised.cr.status, rebaseline: cc.rebaseline }, impactAssessmentId: raised.impactId };
     }
-    const row = await updateVersioned(this.s.db, PI, { id: itemId, projectId, expectedVersion: body.expectedVersion }, { disposition: to.disposition, siteId: to.siteId, currentEntityId: to.currentEntityId, targetEntityId: to.targetEntityId });
+    // DOM-P34R-05: "not applicable" aspects recorded while the item was out of scope are reset as it enters the scope.
+    const reset = this.scopeEntryReset(item, to.disposition);
+    const row = await updateVersioned(this.s.db, PI, { id: itemId, projectId, expectedVersion: body.expectedVersion }, { disposition: to.disposition, siteId: to.siteId, currentEntityId: to.currentEntityId, targetEntityId: to.targetEntityId, ...reset.updates });
     const version = row['version'] as number;
+    await this.recordScopeEntryReset(ctx, p, item, to.disposition, reset.aspects);
     await this.versions.snapshot({ projectId, entityType: 'perimeter_item', entityId: itemId, versionNo: version, snapshot: row, reason: perimeterHistoryReason('perimeter.history.classified', { justification: body.justification }) });
-    await this.audit.record({ action: 'carveout.perimeter.classify', entityType: 'perimeter_item', entityId: itemId, projectId, before: { ...from }, after: { ...to, applied: true }, reason: body.justification });
+    await this.audit.record({ action: 'carveout.perimeter.classify', entityType: 'perimeter_item', entityId: itemId, projectId, before: { ...from }, after: { ...to, applied: true, ...(reset.aspects.length ? { transferReset: reset.aspects } : {}) }, reason: body.justification });
     await this.outbox.emit({ type: 'perimeter.changed', projectId, aggregateType: 'perimeter_item', aggregateId: itemId, payload: { change: 'classified', disposition: to.disposition } });
     return { id: itemId, code: item.code, version, disposition: to.disposition, applied: true, changeRequest: null, impactAssessmentId: null };
+  }
+
+  /** DOM-P34R-05: the aspects to reset (and the column updates) when the item enters the transferring scope. */
+  private scopeEntryReset(item: Item, toDisposition: PerimeterDisposition) {
+    const aspects = scopeEntryTransferReset({
+      fromDisposition: item.disposition as PerimeterDisposition,
+      toDisposition,
+      legal: item.transferStatus as TransferStatus,
+      economic: item.economicTransferStatus as TransferStatus,
+    });
+    const updates: Partial<typeof schema.perimeterItem.$inferInsert> = {};
+    for (const a of aspects) updates[a === 'legal' ? 'transferStatus' : 'economicTransferStatus'] = 'not_started';
+    return { aspects, updates };
+  }
+
+  /** The reset is part of the append-only transfer history of each aspect (command `scope_reset`). */
+  private async recordScopeEntryReset(ctx: RequestContext, p: CarveoutProject, item: Item, toDisposition: PerimeterDisposition, aspects: ('legal' | 'economic')[], changeRequestCode?: string) {
+    for (const aspect of aspects) {
+      await this.tx.insert(schema.transferRecord).values({
+        id: newId(),
+        orgId: p.orgId,
+        projectId: p.id,
+        perimeterItemId: item.id,
+        aspect,
+        command: 'scope_reset',
+        fromStatus: 'not_applicable',
+        toStatus: 'not_started',
+        mechanism: item.transferMechanism,
+        effectiveDate: null,
+        note: transferNote(changeRequestCode ? 'perimeter.transfer_note.scope_reset_cr' : 'perimeter.transfer_note.scope_reset', { from: item.disposition, to: toDisposition, ...(changeRequestCode ? { cr: changeRequestCode } : {}) }).slice(0, 2000),
+        evidenceCount: 0,
+        reviewsRecordId: null,
+        recordedBy: ctx.principal.userId!,
+      });
+    }
   }
 
   /** Apply an approved change request bound to this item (or close a rejected / withdrawn one without change). */
@@ -755,6 +797,7 @@ export class PerimeterService {
     let outcome: 'applied' | 'closed_without_change';
     const u: Partial<typeof schema.perimeterItem.$inferInsert> = { pendingChangeRequestId: null };
     let transferNa: { aspect: 'legal' | 'economic'; from: TransferStatus; note: string } | null = null;
+    let scopeReset: { aspects: ('legal' | 'economic')[]; updates: Partial<typeof schema.perimeterItem.$inferInsert> } = { aspects: [], updates: {} };
     if ((cr.status === 'approved' || cr.status === 'implemented') && proposed.kind === 'transfer_not_applicable') {
       // DOM-P3-05: the approved change declares one aspect "not applicable" — bound to the aspect's status and the item's
       // scope when it was raised; the transfer rules are applied again (never both aspects).
@@ -791,6 +834,9 @@ export class PerimeterService {
       if (!sameScope(scopeOf(item), proposed.from)) throw conflict('perimeter.change_request_stale', 'The item scope changed since the change request was raised — raise a new request');
       await this.validateRefs(ctx, p, proposed.to);
       Object.assign(u, { disposition: proposed.to.disposition, siteId: proposed.to.siteId, currentEntityId: proposed.to.currentEntityId, targetEntityId: proposed.to.targetEntityId });
+      // DOM-P34R-05: an approved reclassification into the scope resets "not applicable" aspects set while out of scope.
+      scopeReset = this.scopeEntryReset(item, proposed.to.disposition);
+      Object.assign(u, scopeReset.updates);
       outcome = 'applied';
     } else if (cr.status === 'rejected' || cr.status === 'withdrawn') {
       outcome = 'closed_without_change';
@@ -818,6 +864,7 @@ export class PerimeterService {
         recordedBy: ctx.principal.userId!,
       });
     }
+    if (scopeReset.aspects.length) await this.recordScopeEntryReset(ctx, p, item, u.disposition as PerimeterDisposition, scopeReset.aspects, cr.code);
     await this.versions.snapshot({ projectId, entityType: 'perimeter_item', entityId: itemId, versionNo: version, snapshot: row, reason: perimeterHistoryReason(outcome === 'applied' ? 'perimeter.history.applied' : 'perimeter.history.closed_without_change', { cr: cr.code }) });
     await this.audit.record({ action: 'carveout.perimeter.apply_change', entityType: 'perimeter_item', entityId: itemId, projectId, before: { ...scopeOf(item), pendingChangeRequestId: item.pendingChangeRequestId }, after: { ...scopeOf(row as unknown as Item), outcome, changeRequestId: cr.id, changeRequestStatus: cr.status }, reason: body.note ?? null });
     await this.outbox.emit({ type: 'perimeter.changed', projectId, aggregateType: 'perimeter_item', aggregateId: itemId, payload: { change: outcome, changeRequestId: cr.id } });

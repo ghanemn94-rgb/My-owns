@@ -22,6 +22,18 @@ export function isInScope(d: PerimeterDisposition | null | undefined): boolean {
 }
 
 /**
+ * DOM-P34R-05 (A-P3-05; business-gates.md §1 rule 8): "not applicable" on an aspect of an Included / Shared item is a
+ * specialist determination (one aspect, a basis) — a "not applicable" recorded while the item was OUT of the transferring
+ * scope (Excluded / Pending) is not that determination. When the item ENTERS the scope (classification or an applied change
+ * request), every such aspect is reset to `not_started` (recorded in the transfer history), to be planned or determined by
+ * the specialist. Returns the aspects to reset (none when the item was already in scope or stays out of it).
+ */
+export function scopeEntryTransferReset(i: { fromDisposition: PerimeterDisposition; toDisposition: PerimeterDisposition; legal: TransferStatus; economic: TransferStatus }): ('legal' | 'economic')[] {
+  if (isInScope(i.fromDisposition) || !isInScope(i.toDisposition)) return [];
+  return (['legal', 'economic'] as const).filter((a) => (a === 'legal' ? i.legal : i.economic) === 'not_applicable');
+}
+
+/**
  * Categories every perimeter must assess (spec §7.1: assets, liabilities, receivables/payables, contracts, employees,
  * data, IP, licences, financing, guarantees and shared services — physical assets alone are not the perimeter).
  */
@@ -387,13 +399,40 @@ export const PERIMETER_HISTORY_MESSAGES_EN: Readonly<Record<string, string>> = {
   'perimeter.history.transferability': 'Transferability: {transferClass}',
   'perimeter.history.day1_updated': 'Day-1 position updated',
   'perimeter.history.transfer': 'Transfer ({aspect}) {command}: {from} → {to}',
+  /** DOM-P34R-06 evidence reaction; `{aspects}` is "legal", "economic" or "legal, economic". */
+  'perimeter.history.transfer_evidence_invalidated': 'Transfer evidence invalidated: {aspects} verified → in progress',
 };
 
 /** Parameters of the history reasons that are codes / enum values (parsed as single tokens). */
 const PERIMETER_HISTORY_TOKENS = ['cr', 'disposition', 'aspect', 'transferClass', 'command', 'from', 'to'] as const;
 
+/**
+ * English templates of the notes the SYSTEM writes on a transfer record (plain text, `transfer_record.note`): the evidence
+ * reaction (DOM-P34R-06, `reject_evidence` recorded by the system) and the scope-entry reset of a "not applicable" aspect
+ * (DOM-P34R-05, `scope_reset`). `{from}` / `{to}` are perimeter dispositions. A note typed by a person is never parsed.
+ */
+export const TRANSFER_NOTE_MESSAGES_EN: Readonly<Record<string, string>> = {
+  'perimeter.transfer_note.evidence_invalidated':
+    'The transfer evidence was rejected, superseded or contested after verification (active {active}, contested {conflicting}) — report the transfer again on valid evidence for a new verification',
+  'perimeter.transfer_note.scope_reset': 'the item entered the transferring scope ({from} → {to}); "not applicable" was recorded while it was {from} — plan the transfer or have the specialist determine it',
+  'perimeter.transfer_note.scope_reset_cr':
+    '{cr}: the item entered the transferring scope ({from} → {to}); "not applicable" was recorded while it was {from} — plan the transfer or have the specialist determine it',
+};
+
+/** English system note of a transfer record. */
+export function transferNote(code: string, params: Record<string, string | number>): string {
+  return renderMessageEn(code, params, TRANSFER_NOTE_MESSAGES_EN);
+}
+
+/** Codes of a SYSTEM-written transfer note (the evidence reaction has no recorder; `scope_reset` is always the system's). */
+export function transferNoteI18n(r: { command: string; recordedBy: string | null; note: string | null }): ServerMessage[] | undefined {
+  if (!(r.command === 'scope_reset' || (r.command === 'reject_evidence' && r.recordedBy === null))) return undefined;
+  const m = parseRenderedMessage(r.note, TRANSFER_NOTE_MESSAGES_EN, ['active', 'conflicting', 'from', 'to', 'cr']);
+  return m ? [m] : [];
+}
+
 /** Every server message the carve-out module returns (web `carveout.messages`, checked by apps/web/scripts/check-i18n.mjs). */
-export const PERIMETER_MESSAGES_EN: Readonly<Record<string, string>> = { ...RECON_MESSAGES_EN, ...IMPACT_MESSAGES_EN, ...PERIMETER_HISTORY_MESSAGES_EN };
+export const PERIMETER_MESSAGES_EN: Readonly<Record<string, string>> = { ...RECON_MESSAGES_EN, ...IMPACT_MESSAGES_EN, ...PERIMETER_HISTORY_MESSAGES_EN, ...TRANSFER_NOTE_MESSAGES_EN };
 
 /** English history reason of a perimeter item, rendered from {@link PERIMETER_HISTORY_MESSAGES_EN}. */
 export function perimeterHistoryReason(code: keyof typeof PERIMETER_HISTORY_MESSAGES_EN & string, params: Record<string, string | number> = {}): string {

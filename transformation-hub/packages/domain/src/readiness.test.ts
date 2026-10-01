@@ -16,8 +16,10 @@ import {
   assertExecutionAllowed,
   assertExtensionEndDateAhead,
   assertReadinessCheckRebind,
+  assertCutoverPlanSiteChange,
   assertTsaActivatable,
   extensionTermsBinding,
+  assertExtensionTermsRecordable,
   statusAfterRemedy,
   assertCutoverSubmittable,
   assertDecisionLinkable,
@@ -142,6 +144,9 @@ describe('Readiness checks (REQ-RDY-001/002, AT-09)', () => {
     activeEvidenceCount: 1,
     conflictingEvidenceCount: 0,
     note: null,
+    status: 'in_progress' as const,
+    gating: true,
+    gatesDecidedPlan: false,
   };
   it('REQ-RDY-001: sign-off by a non-assigned role is rejected (403)', () => {
     expect(() => assertReadinessSignoffAllowed(so)).not.toThrow();
@@ -155,6 +160,15 @@ describe('Readiness checks (REQ-RDY-001/002, AT-09)', () => {
     expect(codeOf(() => assertReadinessSignoffAllowed({ ...so, latestTestResult: 'failed' }))).toBe('rule_violation:readiness.signoff.latest_test_failed');
     expect(codeOf(() => assertReadinessSignoffAllowed({ ...so, outcome: 'not_applicable', activeEvidenceCount: 0 }))).toBe('rule_violation:readiness.signoff.na_basis_required');
     expect(() => assertReadinessSignoffAllowed({ ...so, outcome: 'not_applicable', activeEvidenceCount: 0, note: 'Site has no generator' })).not.toThrow();
+  });
+  it('DOM-P34R-02: "not applicable" never releases a failed gating check, nor an open one gating a plan under decision / with a GO', () => {
+    const na = { ...so, outcome: 'not_applicable' as const, activeEvidenceCount: 0, note: 'Not part of this transition' };
+    expect(codeOf(() => assertReadinessSignoffAllowed({ ...na, status: 'failed', latestTestResult: 'failed' }))).toBe('rule_violation:readiness.signoff.na_release_not_allowed');
+    expect(codeOf(() => assertReadinessSignoffAllowed({ ...na, status: 'in_progress', latestTestResult: 'failed' }))).toBe('rule_violation:readiness.signoff.na_release_not_allowed');
+    expect(codeOf(() => assertReadinessSignoffAllowed({ ...na, gatesDecidedPlan: true }))).toBe('rule_violation:readiness.signoff.na_release_not_allowed');
+    // A non-gating check, or an open gating check of a transition still in planning, may be determined not applicable.
+    expect(() => assertReadinessSignoffAllowed({ ...na, status: 'failed', latestTestResult: 'failed', gating: false })).not.toThrow();
+    expect(() => assertReadinessSignoffAllowed(na)).not.toThrow();
   });
   it('waivability determination: assigned specialist, not the author, authority role for waivable checks, basis', () => {
     const d = {
@@ -362,13 +376,21 @@ describe('TSA (REQ-TSA-001..006, AT-10, D-25)', () => {
     expect(codeOf(() => assertExtensionEndDateAhead('2026-09-30', today))).toBe('rule_violation:tsa.extension.end_date_past');
   });
   it('DOM-P3-06: the extension terms are bound to their decision once it left draft; the same terms are idempotent', () => {
-    const base = { linkedDecisionId: 'd1', requestedDecisionId: 'd1', linkedDecisionStatus: 'under_review' as const, bound: { proposedEndDate: '2027-01-19', continuityPlan: 'Keep the bridge' }, requested: { proposedEndDate: '2027-01-19', continuityPlan: 'Keep the bridge' } };
+    const terms = { tsaServiceId: 't1', proposedEndDate: '2027-01-19', continuityPlan: 'Keep the bridge' };
+    const base = { decisionStatus: 'under_review' as const, bound: terms, requested: terms };
     expect(extensionTermsBinding(base)).toBe('same');
-    expect(codeOf(() => extensionTermsBinding({ ...base, requested: { proposedEndDate: '2036-09-28', continuityPlan: 'Keep the bridge' } }))).toBe('rule_violation:tsa.extension.terms_bound');
-    expect(codeOf(() => extensionTermsBinding({ ...base, linkedDecisionStatus: 'approved', requested: { proposedEndDate: '2027-01-19', continuityPlan: 'Another plan' } }))).toBe('rule_violation:tsa.extension.terms_bound');
-    expect(extensionTermsBinding({ ...base, linkedDecisionStatus: 'draft', requested: { proposedEndDate: '2027-02-19', continuityPlan: 'x' } })).toBe('free');
-    expect(extensionTermsBinding({ ...base, requestedDecisionId: 'd2', requested: { proposedEndDate: '2036-09-28', continuityPlan: 'x' } })).toBe('free');
-    expect(extensionTermsBinding({ ...base, bound: { proposedEndDate: null, continuityPlan: null } })).toBe('free');
+    expect(codeOf(() => extensionTermsBinding({ ...base, requested: { ...terms, proposedEndDate: '2036-09-28' } }))).toBe('rule_violation:tsa.extension.terms_bound');
+    expect(codeOf(() => extensionTermsBinding({ ...base, decisionStatus: 'approved', requested: { ...terms, continuityPlan: 'Another plan' } }))).toBe('rule_violation:tsa.extension.terms_bound');
+    expect(extensionTermsBinding({ ...base, decisionStatus: 'draft', requested: { ...terms, proposedEndDate: '2027-02-19' } })).toBe('rebind');
+    expect(extensionTermsBinding({ ...base, bound: null })).toBe('new');
+  });
+  it('DOM-P34R-04: the terms are bound per DECISION — another TSA is refused, and record-extension applies only the bound terms', () => {
+    const terms = { tsaServiceId: 't1', proposedEndDate: '2027-01-19', continuityPlan: 'Keep the bridge' };
+    expect(codeOf(() => extensionTermsBinding({ decisionStatus: 'approved', bound: terms, requested: { ...terms, tsaServiceId: 't2' } }))).toBe('rule_violation:tsa.extension.decision_other_tsa');
+    expect(() => assertExtensionTermsRecordable({ decisionCode: 'DEC-1', bound: terms, stored: terms })).not.toThrow();
+    expect(codeOf(() => assertExtensionTermsRecordable({ decisionCode: 'DEC-1', bound: terms, stored: { ...terms, proposedEndDate: '2036-09-28' } }))).toBe('rule_violation:tsa.extension.terms_mismatch');
+    expect(codeOf(() => assertExtensionTermsRecordable({ decisionCode: 'DEC-1', bound: terms, stored: { ...terms, tsaServiceId: 't2' } }))).toBe('rule_violation:tsa.extension.terms_mismatch');
+    expect(codeOf(() => assertExtensionTermsRecordable({ decisionCode: 'DEC-1', bound: null, stored: terms }))).toBe('rule_violation:tsa.extension.terms_mismatch');
   });
   it('DOM-P3-17: activation needs the start date reached; a remedied breach returns to the status before the breach; a breach may accelerate the exit', () => {
     expect(codeOf(() => assertTsaActivatable({ startDate: '2026-10-05', today: '2026-09-30' }))).toBe('rule_violation:tsa.activate.not_started');
@@ -394,5 +416,19 @@ describe('TSA (REQ-TSA-001..006, AT-10, D-25)', () => {
     expect(codeOf(() => assertReplacementAcceptable({ ...r, activeEvidenceCount: 0 }))).toBe('rule_violation:tsa.replacement.no_evidence');
     expect(codeOf(() => assertReplacementAcceptable({ ...r, status: 'proposed' }))).toBe('rule_violation:tsa.replacement.invalid_state');
     expect(codeOf(() => assertTsaExitStartable({ replacementService: null }))).toBe('rule_violation:tsa.exit.no_replacement_plan');
+  });
+});
+
+describe('DOM-P34R-01 — the plan\'s site is a scope command', () => {
+  const failed = { id: 'c1', code: 'RC-001', status: 'failed' as const, gating: true, cleared: false };
+  it('reason required; only before the go/no-go; refused while a FAILED gating check would stop gating the plan', () => {
+    expect(codeOf(() => assertCutoverPlanSiteChange({ planCode: 'CO-1', planStatus: 'planning', reason: ' ', leaving: [] }))).toBe('rule_violation:readiness.cutover.site_reason_required');
+    for (const planStatus of ['ready_for_decision', 'approved_go', 'executed'] as const) {
+      expect(codeOf(() => assertCutoverPlanSiteChange({ planCode: 'CO-1', planStatus, reason: 'r', leaving: [] }))).toBe('rule_violation:readiness.cutover.locked');
+    }
+    expect(codeOf(() => assertCutoverPlanSiteChange({ planCode: 'CO-1', planStatus: 'rehearsal', reason: 'r', leaving: [failed] }))).toBe('rule_violation:readiness.cutover.site_change_failed_check');
+    // An open (not failed) check, or a non-gating one, may leave a plan before its go/no-go.
+    expect(() => assertCutoverPlanSiteChange({ planCode: 'CO-1', planStatus: 'planning', reason: 'r', leaving: [{ ...failed, status: 'in_progress' }] })).not.toThrow();
+    expect(() => assertCutoverPlanSiteChange({ planCode: 'CO-1', planStatus: 'planning', reason: 'r', leaving: [{ ...failed, gating: false }] })).not.toThrow();
   });
 });

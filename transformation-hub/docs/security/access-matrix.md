@@ -256,7 +256,7 @@ Nobody can assign a role they could not be assigned by the table. A role assignm
 | `gates.waiver.approve`, `jv.cp.waive` | waiver requester |
 | `carveout.transfer.verify`, `newco.incorporation.verify`, `newco.regulatory.verify`, `readiness.check.signoff`, `finance.benefit.verify`, `jv.cp.verify` | record owner and the person who recorded the status/evidence |
 | `readiness.go_no_go.decide`, `readiness.tsa.approve_exit`, `jv.signing.record`, `jv.closing.declare`, `jv.partner.approve_contact`, `jv.nda.record` | requester of the decision/confirmation (a pending request by another person must exist) |
-| `finance.snapshot.approve` | preparer |
+| `finance.snapshot.approve` | preparer; for an intercompany reconciliation its creator and every person who edited it (record history — DOM-P4-16, DOM-P34R-09) |
 | `jv.dd_answer.review` | drafter |
 | `jv.disclosure.release` | drafter/uploader of the item and release requester |
 | `jv.clean_team_output.release` | submitter |
@@ -657,6 +657,9 @@ Every permission below has `ai: "none"`. **No AI tool exists** that calls it (to
 | `ai_runtime` | Derived: `{p : p.ai ∈ {retrieve, propose}}` ∩ delegating user's **current** permissions ∩ project mode allowlist | Never an approver. Never holds role assignments. Every tool call and every execution re-runs `authorize` as the delegating user (AT-19). If the delegating user is disabled, the job is cancelled. |
 | `bi_reader` | `reports.bi_view.read` | Explicit project list; max clearance internal unless raised through `admin.clearance.grant`; views are `security_invoker`; no room or clean-team data |
 | `integration_adapter` | none | Authenticates to the external system only. Sends run under the approving/sending user's authority, re-checked at send time. |
+| `svc-readiness` (worker jobs) | TSA expiry scan: `readiness.register.read`, `readiness.tsa.manage`; evidence reaction (DOM-P3-09, DOM-P34R-06): `readiness.register.read`, `readiness.check.manage`, `readiness.tsa.manage` (`apps/api/src/modules/readiness/readiness.jobs.ts`) | Marks a TSA expired-unresolved and escalates; returns a signed-off check whose evidence is no longer valid to in progress and flags the GOs it gated; withdraws a TSA replacement acceptance whose evidence is no longer valid. Never signs off, waives, decides a GO, extends, accepts or approves an exit |
+| `svc-newco` (worker jobs) | Incorporation evidence reaction (DOM-P3-08): `newco.register.read`, `newco.incorporation.manage` (`apps/api/src/modules/newco/newco.jobs.ts`) | Returns a confirmed incorporation whose evidence is no longer valid to "proposed"; never verifies |
+| `svc-carveout` (worker jobs) | Transfer evidence reaction (DOM-P34R-06): `carveout.register.read`, `carveout.transfer.manage` (`apps/api/src/modules/carveout/carveout.jobs.ts`) | Returns a verified transfer aspect whose evidence is no longer valid to in progress (`reject_evidence`, system entry); never reports, verifies or classifies |
 | `svc-jv` (worker jobs) | One allowlist PER JOB (SEC-P34-17): the post-close overdue scan `jv.closing_checklist.manage`; the CP long-stop scan `jv.cp.manage` (`apps/api/src/modules/jv/jv.jobs.ts`) | Marks overdue / lapsed and raises system escalations only; never verifies, waives, extends, confirms or notifies externally (human-only commands refuse service principals). Test: `p34-sec-fixes.spec.ts` (SEC-P34-17) |
 
 ---

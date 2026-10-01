@@ -421,7 +421,15 @@ const planDescriptive = {
 };
 
 export const CreateCutoverPlanBody = z.object(planDescriptive).strict();
-export const UpdateCutoverPlanBody = z.object({ expectedVersion: ExpectedVersion, ...planDescriptive, title: RequiredText(300).optional() }).strict();
+/**
+ * DOM-P34R-01: the plan's site decides which checks gate it (with each check's own binding) — it is a scope attribute, changed
+ * only through `changeCutoverPlanSite` (reason, refused while a failed gating check would stop gating the plan). A PATCH
+ * carrying `siteId` is a 400.
+ */
+const { siteId: _planSite, ...planEditable } = planDescriptive;
+void _planSite;
+export const UpdateCutoverPlanBody = z.object({ expectedVersion: ExpectedVersion, ...planEditable, title: RequiredText(300).optional() }).strict();
+export const ChangeCutoverPlanSiteBody = z.object({ expectedVersion: ExpectedVersion, siteId: Uuid.nullable(), reason: RequiredText(4000) }).strict();
 
 const tsaDescriptive = {
   name: RequiredText(300),
@@ -701,6 +709,19 @@ export const readinessRoutes = registerRoutes({
     params: PlanParams,
     body: UpdateCutoverPlanBody,
     response: VersionResult,
+  }),
+  changeCutoverPlanSite: defineRoute({
+    id: 'readiness.changeCutoverPlanSite',
+    method: 'POST',
+    path: `${P}/cutover-plans/:planId/site`,
+    summary:
+      'Change the site of a transition plan (null = project-wide), with a reason — before the go/no-go only; refused while a failed gating check of its current scope would stop gating it; recorded in the decision history (DOM-P34R-01)',
+    tags,
+    access: 'readiness.cutover.manage',
+    command: true,
+    params: PlanParams,
+    body: ChangeCutoverPlanSiteBody,
+    response: CutoverCommandResult,
   }),
   recordCutoverRehearsal: defineRoute({
     id: 'readiness.recordRehearsal',

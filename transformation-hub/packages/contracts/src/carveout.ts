@@ -161,9 +161,11 @@ export const TransferRecordDto = z.object({
   mechanism: z.string().nullable(),
   effectiveDate: z.string().nullable(),
   note: z.string().nullable(),
+  /** Present only on a note the SYSTEM wrote (evidence reaction, scope-entry reset): the note as codes + parameters. */
+  noteI18n: Messages.optional(),
   evidenceCount: z.number().int(),
   reviewsRecordId: Uuid.nullable(),
-  recordedBy: Uuid,
+  recordedBy: Uuid.nullable(),
   recordedByName: z.string().nullable(),
   recordedAt: z.string(),
 });

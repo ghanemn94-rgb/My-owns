@@ -48,6 +48,8 @@ const ENUM_PARAMS: Readonly<Record<string, Readonly<Record<string, StatusEnum>>>
   'perimeter.history.transferability': { transferClass: 'contractTransferClasses' },
   'perimeter.history.transfer': { from: 'transferStatuses', to: 'transferStatuses' },
   'newco.history.incorporation_recorded': { status: 'incorporationStatuses' },
+  'perimeter.transfer_note.scope_reset': { from: 'perimeterDispositions', to: 'perimeterDispositions' },
+  'perimeter.transfer_note.scope_reset_cr': { from: 'perimeterDispositions', to: 'perimeterDispositions' },
 };
 
 /**
@@ -59,6 +61,7 @@ const KEY_PARAMS: Readonly<Record<string, Readonly<Record<string, { prefix: stri
     missing: { prefix: 'carveout.day1.missing', values: ['specialistClassification', 'interimArrangement', 'serviceAccountableOwner', 'billingAccountableOwner', 'slaAccountableOwner', 'remediationPlan'] },
   },
   'perimeter.history.aspect_not_applicable_requested': { aspect: { prefix: 'carveout.aspect', values: ['legal', 'economic'] } },
+  'perimeter.history.transfer_evidence_invalidated': { aspects: { prefix: 'carveout.aspect', values: ['legal', 'economic'] } },
   'perimeter.history.transfer': {
     aspect: { prefix: 'carveout.aspect', values: ['legal', 'economic'] },
     command: { prefix: 'carveout.transfer.cmd', values: ['plan', 'start', 'report_transferred', 'verify', 'reject_evidence', 'block', 'unblock', 'mark_not_applicable', 'determine_not_applicable'] },

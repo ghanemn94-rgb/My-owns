@@ -36,8 +36,12 @@ export interface DimensionInput {
   partners?: { stage: PartnerStage }[];
   /** The current cycle of gate G5 (JV Signing Readiness) is approved and not flagged for reassessment. */
   signingGatePassed?: boolean;
-  /** TSAs and approved enduring arrangements affect the independence picture (spec §3, D-15). */
-  tsas?: { status: TsaStatus; isEnduringArrangement: boolean }[];
+  /**
+   * TSAs and approved enduring arrangements affect the independence picture (spec §3, D-15). `exitEvidenceValid` (DOM-P34R-06,
+   * the DOM-P3-09 residual): an accepted exit whose acceptance evidence is no longer active (rejected, superseded, contested)
+   * does not count as exited. Omitted = valid.
+   */
+  tsas?: { status: TsaStatus; isEnduringArrangement: boolean; exitEvidenceValid?: boolean }[];
   /** Whether the approved definition of operational independence exists (spec §3). */
   independenceDefinitionApproved?: boolean;
   /**
@@ -111,6 +115,7 @@ export const DIMENSION_MESSAGES_EN: Readonly<Record<string, string>> = {
   'dimension.readiness.operating': 'Every transition executed and accepted ({plans}); operating until standalone acceptance (G4).',
   'dimension.readiness.services_exited': 'No transitional service left to exit.',
   'dimension.readiness.dependencies': 'Dependencies: {active} transitional service(s) not yet exited, {enduring} approved enduring arrangement(s).',
+  'dimension.readiness.exit_evidence_invalid': '{exits} accepted TSA exit(s) whose acceptance evidence is no longer valid — not counted as exited.',
   'dimension.readiness.definition_pending': 'The definition of operational independence is not yet approved.',
   'dimension.jv.closed': 'All {closings} closing(s) confirmed.',
   'dimension.jv.partially_closed': '{confirmed} of {closings} closing(s) confirmed.',
@@ -203,10 +208,14 @@ export function computeStatusDimensions(input: DimensionInput): DimensionState[]
   const passed = required.filter(cleared).length;
   const tsas = input.tsas ?? [];
   const tsaProblems = tsas.filter((t) => t.status === 'breached' || t.status === 'expired_unresolved').length;
-  const tsaActive = tsas.filter((t) => !t.isEnduringArrangement && ['approved', 'active', 'exit_in_progress', 'extended', 'breached', 'expired_unresolved'].includes(t.status)).length;
+  // DOM-P34R-06: an accepted exit resting on evidence that is no longer valid is not an exit.
+  const exitEvidenceInvalid = tsas.filter((t) => !t.isEnduringArrangement && t.status === 'exit_accepted' && t.exitEvidenceValid === false).length;
+  const tsaActive = tsas.filter((t) => !t.isEnduringArrangement && ['approved', 'active', 'exit_in_progress', 'extended', 'breached', 'expired_unresolved'].includes(t.status)).length + exitEvidenceInvalid;
   // DOM-P3-15: an enduring arrangement counts as APPROVED only once its terms are approved (not while proposed / negotiating).
   const enduring = tsas.filter((t) => t.isEnduringArrangement && t.status !== 'proposed' && t.status !== 'negotiating').length;
-  const dep: ServerMessage[] = tsas.length ? [m('dimension.readiness.dependencies', { active: tsaActive, enduring })] : [];
+  const dep: ServerMessage[] = tsas.length
+    ? [m('dimension.readiness.dependencies', { active: tsaActive, enduring }), ...(exitEvidenceInvalid ? [m('dimension.readiness.exit_evidence_invalid', { exits: exitEvidenceInvalid })] : [])]
+    : [];
   const def: ServerMessage[] = input.independenceDefinitionApproved === false ? [m('dimension.readiness.definition_pending')] : [];
   const reassess: ServerMessage[] = input.standaloneAccepted && input.standaloneUnderReassessment ? [m('dimension.readiness.standalone_reassessment')] : [];
   const tsaMsg: ServerMessage[] = tsaProblems > 0 ? [m('dimension.readiness.tsa_blocked', { tsaProblems })] : [];

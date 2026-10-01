@@ -165,7 +165,7 @@ export class ReadinessSupport {
     ctx: RequestContext,
     plan: { id: string; status: CutoverStatus; goDecisionId: string | null; isDemo: boolean },
     projectId: string,
-    kind: 'go_flagged' | 'execution_blocked' | 'check_bound' | 'check_unbound',
+    kind: 'go_flagged' | 'execution_blocked' | 'check_bound' | 'check_unbound' | 'site_changed',
     rationale: string,
     evaluation: { blockers: { id: string; title: string; titleAr?: string | null; status: ReadinessStatus; blocker: boolean; evidenceInvalid?: boolean }[]; missing: string[] } | null,
   ) {
@@ -230,8 +230,8 @@ export class ReadinessSupport {
     await this.outbox.emit({
       type: 'readiness.changed',
       projectId,
-      aggregateType: kind === 'tsa' ? 'tsa_service' : kind === 'check' ? 'readiness_check' : 'project',
-      aggregateId: (kind === 'tsa' || kind === 'check') && id ? id : projectId,
+      aggregateType: kind === 'tsa' ? 'tsa_service' : kind === 'check' ? 'readiness_check' : kind === 'plan' ? 'cutover_plan' : 'project',
+      aggregateId: (kind === 'tsa' || kind === 'check' || kind === 'plan') && id ? id : projectId,
       payload: { reason: `readiness:${kind}` },
       dedupeKey: `readiness.changed:${projectId}:${key}`.slice(0, 200),
     });

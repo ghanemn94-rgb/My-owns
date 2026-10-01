@@ -38,6 +38,13 @@ beforeAll(async () => {
             (gen_random_uuid(), $1, $2, 'PI-3', 'asset', 'Retained asset (synthetic)', 'excluded', 'not_applicable', 'not_applicable')`,
     [orgId, projectId],
   );
+  // … with the transfer evidence a verification relies on (DOM-P34R-06: a verified aspect without valid evidence reads
+  // "evidence pending").
+  await owner().query(
+    `insert into evidence_link (org_id, project_id, target_type, target_id, note, added_by)
+     select $1, $2, 'transfer', id, 'Synthetic signed transfer record (test)', $3 from perimeter_item where project_id = $2 and disposition = 'included'`,
+    [orgId, projectId, p.pm.userId],
+  );
 });
 afterAll(async () => {
   await closeApp();

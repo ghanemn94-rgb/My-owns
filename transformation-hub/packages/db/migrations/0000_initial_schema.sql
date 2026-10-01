@@ -1590,11 +1590,26 @@ CREATE TABLE "transfer_record" (
 	"note" text,
 	"evidence_count" integer DEFAULT 0 NOT NULL,
 	"reviews_record_id" uuid,
-	"recorded_by" uuid NOT NULL,
+	"recorded_by" uuid,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "transfer_record_pid_uq" UNIQUE("project_id","id"),
 	CONSTRAINT "transfer_record_aspect_ck" CHECK ("transfer_record"."aspect" in ('legal', 'economic')),
-	CONSTRAINT "transfer_record_command_ck" CHECK ("transfer_record"."command" in ('plan', 'start', 'report_transferred', 'verify', 'reject_evidence', 'block', 'unblock', 'mark_not_applicable'))
+	CONSTRAINT "transfer_record_command_ck" CHECK ("transfer_record"."command" in ('plan', 'start', 'report_transferred', 'verify', 'reject_evidence', 'block', 'unblock', 'mark_not_applicable', 'scope_reset'))
+);
+--> statement-breakpoint
+CREATE TABLE "tsa_extension_terms" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"project_id" uuid NOT NULL,
+	"decision_id" uuid NOT NULL,
+	"tsa_service_id" uuid NOT NULL,
+	"proposed_end_date" date NOT NULL,
+	"continuity_plan" text NOT NULL,
+	"requested_by" uuid NOT NULL,
+	"is_demo" boolean DEFAULT false NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"version" integer DEFAULT 1 NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "tsa_service" (
@@ -3110,6 +3125,9 @@ ALTER TABLE "regulatory_requirement" ADD CONSTRAINT "regulatory_requirement_lega
 ALTER TABLE "transfer_record" ADD CONSTRAINT "transfer_record_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "transfer_record" ADD CONSTRAINT "transfer_record_item_fk" FOREIGN KEY ("project_id","perimeter_item_id") REFERENCES "public"."perimeter_item"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "transfer_record" ADD CONSTRAINT "transfer_record_reviews_fk" FOREIGN KEY ("project_id","reviews_record_id") REFERENCES "public"."transfer_record"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "tsa_extension_terms" ADD CONSTRAINT "tsa_extension_terms_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "tsa_extension_terms" ADD CONSTRAINT "tsa_extension_terms_decision_fk" FOREIGN KEY ("project_id","decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "tsa_extension_terms" ADD CONSTRAINT "tsa_extension_terms_tsa_fk" FOREIGN KEY ("project_id","tsa_service_id") REFERENCES "public"."tsa_service"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "tsa_service" ADD CONSTRAINT "tsa_service_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "tsa_service" ADD CONSTRAINT "tsa_service_provider_entity_id_legal_entity_id_fk" FOREIGN KEY ("provider_entity_id") REFERENCES "public"."legal_entity"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "tsa_service" ADD CONSTRAINT "tsa_service_recipient_entity_id_legal_entity_id_fk" FOREIGN KEY ("recipient_entity_id") REFERENCES "public"."legal_entity"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -3345,6 +3363,8 @@ CREATE INDEX "readiness_check_status_idx" ON "readiness_check" USING btree ("pro
 CREATE UNIQUE INDEX "readiness_test_run_seq_uq" ON "readiness_test_run" USING btree ("readiness_check_id","seq");--> statement-breakpoint
 CREATE UNIQUE INDEX "regulatory_requirement_code_uq" ON "regulatory_requirement" USING btree ("project_id","code");--> statement-breakpoint
 CREATE INDEX "transfer_record_item_idx" ON "transfer_record" USING btree ("perimeter_item_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "tsa_extension_terms_decision_uq" ON "tsa_extension_terms" USING btree ("decision_id");--> statement-breakpoint
+CREATE INDEX "tsa_extension_terms_tsa_idx" ON "tsa_extension_terms" USING btree ("project_id","tsa_service_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "tsa_service_code_uq" ON "tsa_service" USING btree ("project_id","code");--> statement-breakpoint
 CREATE INDEX "tsa_service_status_idx" ON "tsa_service" USING btree ("project_id","status");--> statement-breakpoint
 CREATE UNIQUE INDEX "benefit_code_uq" ON "benefit" USING btree ("project_id","code");--> statement-breakpoint

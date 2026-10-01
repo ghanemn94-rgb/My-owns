@@ -6,9 +6,11 @@ import {
   IMPACT_MESSAGES_EN,
   PERIMETER_HISTORY_MESSAGES_EN,
   PERIMETER_MESSAGES_EN,
+  TRANSFER_NOTE_MESSAGES_EN,
   perimeterHistoryReason,
   perimeterHistoryReasonI18n,
   reconcilePerimeterRegister,
+  transferNoteI18n,
   withheldImpactEntry,
   type ImpactInput,
 } from './perimeter';
@@ -36,6 +38,8 @@ const CODE_PARAMS: Record<string, string> = {
   transferClass: 'novation_required',
   decisionType: 'tsa_approval_or_extension',
   matrixVersion: '12',
+  active: '0',
+  conflicting: '1',
   endDate: '2026-09-24',
 };
 /** Free text (names, the user's justification / note, recorded summaries) may hold any punctuation of the templates. */
@@ -47,6 +51,7 @@ describe('QA-P34-01 — stored sentences: codes recovered from the template they
     ['TSA escalation texts', TSA_MESSAGES_EN, tsaEscalationI18n],
     ['cutover plan system rationales', CUTOVER_HISTORY_MESSAGES_EN, (t: string) => cutoverHistoryI18n('go_flagged', t).concat(cutoverHistoryI18n('check_bound', t)).slice(0, 1)],
     ['legal-entity history reasons', NEWCO_HISTORY_MESSAGES_EN, legalEntityHistoryReasonI18n],
+    ['system transfer notes', TRANSFER_NOTE_MESSAGES_EN, (t: string) => transferNoteI18n({ command: 'scope_reset', recordedBy: null, note: t }) ?? []],
   ] as const) {
     it(`${label}: every template round-trips (render → parse gives the same code and parameters)`, () => {
       for (const [code, template] of Object.entries(table)) {
@@ -90,6 +95,11 @@ describe('QA-P34-01 — stored sentences: codes recovered from the template they
     expect(cutoverHistoryText('cutover.history.go_flagged.test_failed_note', { check: 'RC-001', note: 'link down (retest 2)' })).toBe('RC-001: a test of this gating check failed after the GO (link down (retest 2))');
     expect(legalEntityHistoryReason('newco.history.incorporation_recorded', { status: 'incorporated' })).toBe('Incorporation recorded: incorporated');
     expect(legalEntityHistoryReasonI18n('Incorporation verified')).toEqual([serverMessage('newco.history.incorporation_verified')]);
+    // A transfer note is parsed only when the system wrote it (scope reset, or the evidence reaction without a recorder).
+    const note = 'The transfer evidence was rejected, superseded or contested after verification (active 0, contested 1) — report the transfer again on valid evidence for a new verification';
+    expect(transferNoteI18n({ command: 'reject_evidence', recordedBy: null, note })).toEqual([serverMessage('perimeter.transfer_note.evidence_invalidated', { active: '0', conflicting: '1' })]);
+    expect(transferNoteI18n({ command: 'reject_evidence', recordedBy: 'u1', note })).toBeUndefined();
+    expect(transferNoteI18n({ command: 'plan', recordedBy: 'u1', note: 'Plan agreed (synthetic)' })).toBeUndefined();
   });
 
   it('writers render the sentences the API stored before the codes existed (stored rows stay recognised)', () => {

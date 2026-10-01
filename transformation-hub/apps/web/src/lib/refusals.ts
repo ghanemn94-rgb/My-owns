@@ -143,9 +143,14 @@ export const REFUSAL_KEYS: Readonly<Record<string, Entry>> = {
   'readiness.check.rebind_plan_locked': 'readiness.refusal.codes.rebind_plan_locked',
   'readiness.check.rebind_reason_required': 'readiness.refusal.codes.rebind_reason_required',
   'readiness.determination.release_not_allowed': 'readiness.refusal.codes.determination_release_not_allowed',
+  'readiness.signoff.na_release_not_allowed': 'readiness.refusal.codes.signoff_na_release_not_allowed',
   'readiness.execution_blocked': 'readiness.refusal.codes.execution_blocked',
+  // The plan's site is a scope command too (P3/P4 domain re-review: DOM-P34R-01)
+  'readiness.cutover.site_change_failed_check': 'readiness.refusal.codes.site_change_failed_check',
+  'readiness.cutover.site_reason_required': 'readiness.refusal.codes.site_reason_required',
   // TSA extensions and guards (DOM-P3-06, -07, -13, -15, -17; SEC-P34-08)
   'tsa.extension.terms_bound': 'readiness.refusal.codes.extension_terms_bound',
+  'tsa.extension.terms_mismatch': 'readiness.refusal.codes.extension_terms_mismatch',
   'tsa.extension.end_date_past': 'readiness.refusal.codes.extension_end_date_past',
   'tsa.extension.decision_other_tsa': 'readiness.refusal.codes.tsa_decision_other_tsa',
   'tsa.approve.decision_other_tsa': 'readiness.refusal.codes.tsa_decision_other_tsa',
@@ -225,6 +230,8 @@ export const REFUSAL_KEYS: Readonly<Record<string, Entry>> = {
   'jv.signing.g5_under_reassessment': 'jv.refusal.codes.signing_g5_under_reassessment',
   'jv.signing.decision_not_g5': 'jv.refusal.codes.signing_decision_not_g5',
   'jv.cp.blocking_release_not_allowed': (d) => ({ key: d?.['waivable'] === true ? 'jv.refusal.codes.cp_blocking_release_waivable' : 'jv.refusal.codes.cp_blocking_release_non_waivable' }),
+  // DOM-P34R-08: a non-blocking CP is created by the Legal specialist only
+  'jv.cp.non_blocking_requires_specialist': 'jv.refusal.codes.cp_non_blocking_requires_specialist',
   'jv.cp.validity_locked': 'jv.refusal.codes.cp_validity_locked',
   'jv.cp.long_stop_extension_required': 'jv.refusal.codes.cp_long_stop_extension_required',
   'jv.cp.extension_invalid_state': 'jv.refusal.codes.cp_extension_invalid_state',

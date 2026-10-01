@@ -12,6 +12,7 @@ import {
   assertDecisionLinkable,
   assertExtensionEndDateAhead,
   assertExtensionRequestValid,
+  assertExtensionTermsRecordable,
   assertTsaActivatable,
   clearanceAllows,
   extensionTermsBinding,
@@ -468,6 +469,40 @@ export class TsaService {
   }
 
   /**
+   * DOM-P34R-06 (the DOM-P3-09 residual for the TSA replacement acceptance; spec §3 controlled reopen): when the acceptance
+   * evidence of a TSA (target `tsa_service`) is no longer valid — no ACTIVE link left, or a contested one — an accepted
+   * replacement of a TSA not yet exited is withdrawn (audited, record history kept): the exit approval cannot rest on it, and
+   * a pending exit approval request no longer matches its bound payload. An exit already accepted stays recorded (terminal),
+   * but the status dimension no longer counts it as exited (`exitEvidenceValid`) and the change is audited.
+   */
+  async processEvidenceChange(ctx: RequestContext, projectId: string, id: string): Promise<{ withdrawn: boolean; exitEvidenceInvalid: boolean }> {
+    const [t] = await this.s.db.tx().select().from(schema.tsaService).where(and(eq(schema.tsaService.projectId, projectId), eq(schema.tsaService.id, id)));
+    if (!t || !t.replacementAccepted) return { withdrawn: false, exitEvidenceInvalid: false };
+    const ev = await this.s.evidence(projectId, 'tsa_service', t.id);
+    if (ev.active > 0 && ev.conflicting === 0) return { withdrawn: false, exitEvidenceInvalid: false };
+    this.s.policy.assert(ctx, 'readiness.tsa.manage', { projectId, workstreamId: t.workstreamId });
+    const reason = `The acceptance evidence of the replacement service is no longer valid (active ${ev.active}, contested ${ev.conflicting})`;
+    if (t.status === 'exit_accepted') {
+      await this.s.audit.record({ action: 'readiness.tsa.exit_evidence_invalidated', entityType: 'tsa_service', entityId: t.id, projectId, after: { status: t.status, activeEvidence: ev.active, conflictingEvidence: ev.conflicting }, reason: `${reason} — the accepted exit is no longer counted as an exit in the status dimension` });
+      await this.s.enqueueDimensions(ctx, projectId, `tsa:${t.id}:${t.version}:evidence`);
+      return { withdrawn: false, exitEvidenceInvalid: true };
+    }
+    const row = (await updateVersioned(this.s.db, schema.tsaService, { id: t.id, projectId, expectedVersion: t.version }, { replacementAccepted: false, replacementAcceptedBy: null, replacementAcceptedAt: null })) as TsaRow;
+    await this.s.versions.snapshot({ projectId, entityType: 'tsa_service', entityId: t.id, versionNo: row.version, snapshot: row, reason: 'replacement acceptance withdrawn: evidence no longer valid' });
+    await this.s.audit.record({
+      action: 'readiness.tsa.replacement_evidence_invalidated',
+      entityType: 'tsa_service',
+      entityId: t.id,
+      projectId,
+      before: { replacementAccepted: true, replacementAcceptedBy: t.replacementAcceptedBy },
+      after: { replacementAccepted: false, activeEvidence: ev.active, conflictingEvidence: ev.conflicting },
+      reason: `${reason} — the replacement must be accepted again on valid evidence`,
+    });
+    await this.s.enqueueDimensions(ctx, projectId, `tsa:${t.id}:${row.version}`);
+    return { withdrawn: true, exitEvidenceInvalid: false };
+  }
+
+  /**
    * REQ-TSA-004 / AT-10: a replacement failure withdraws any replacement acceptance, records the continuity plan and raises
    * an escalation (decision requested) with extension / continuity options routed per the authority matrix. Nothing is
    * extended — the extension needs its own approved decision.
@@ -515,22 +550,26 @@ export class TsaService {
     assertDecisionLinkable(this.s.linked(d), TSA_DECISION_TYPE_KEYS, 'A TSA extension');
     const today = this.s.today(await this.s.project(projectId));
     assertExtensionRequestValid({ status: t.status, currentEndDate: t.endDate, proposedEndDate: body.proposedEndDate, continuityPlan: body.continuityPlan, today });
-    // DOM-P3-06: once the linked decision left draft, the requested terms are bound to it — a new date needs a new decision;
-    // repeating the bound terms changes nothing.
-    const linked = t.extensionDecisionId === d.id ? d : null;
+    // DOM-P3-06 / DOM-P34R-04: the terms are bound to the DECISION (one TSA, one end date, one continuity plan per decision),
+    // not to the TSA row's current link — re-linking through another decision never releases them. The decision row is read
+    // FOR SHARE so a concurrent submission of the paper waits for (or is seen by) this request.
+    const locked = await this.s.db.query<{ status: string }>(`select status from decision where project_id = $1 and id = $2 for share`, [projectId, d.id]);
+    const decisionStatus = (locked.rows[0]?.status ?? d.status) as DecisionRow['status'];
+    const ET = schema.tsaExtensionTerms;
+    const [bound] = await this.s.db.tx().select().from(ET).where(and(eq(ET.projectId, projectId), eq(ET.decisionId, d.id))).for('update');
+    const requested = { tsaServiceId: t.id, proposedEndDate: body.proposedEndDate, continuityPlan: body.continuityPlan };
+    // DOM-P2F-09: the decision-use registry (and the external evidence) decide first — a decision already consumed by a
+    // recorded extension, or used for another TSA, is refused as such; the decision may still be pending here.
+    await this.extensionReliance(projectId, t.id, d, false);
     const binding = extensionTermsBinding({
-      linkedDecisionId: t.extensionDecisionId,
-      requestedDecisionId: d.id,
-      linkedDecisionStatus: linked?.status ?? null,
-      bound: { proposedEndDate: t.proposedEndDate, continuityPlan: t.continuityPlan },
-      requested: { proposedEndDate: body.proposedEndDate, continuityPlan: body.continuityPlan },
+      decisionStatus,
+      bound: bound ? { tsaServiceId: bound.tsaServiceId, proposedEndDate: bound.proposedEndDate, continuityPlan: bound.continuityPlan } : null,
+      requested,
     });
-    if (binding === 'same') {
+    if (binding === 'same' && t.extensionDecisionId === d.id && t.proposedEndDate === body.proposedEndDate && (t.continuityPlan ?? '') === body.continuityPlan) {
       assertVersion(t, body.expectedVersion, 'TSA service');
       return { id: t.id, status: t.status, version: t.version };
     }
-    // DOM-P2F-09: the decision-use registry (and the external evidence) decide — the decision may still be pending here.
-    await this.extensionReliance(projectId, t.id, d, false);
     const row = (await updateVersioned(this.s.db, schema.tsaService, { id: t.id, projectId, expectedVersion: body.expectedVersion }, {
       extensionDecisionId: d.id,
       proposedEndDate: body.proposedEndDate,
@@ -538,8 +577,21 @@ export class TsaService {
       extensionRequestedBy: ctx.principal.userId,
       extensionRequestedAt: this.s.clock.now(),
     })) as TsaRow;
+    if (binding === 'new') {
+      await this.s.db.tx().insert(ET).values({ id: newId(), orgId: ctx.principal.orgId, projectId, decisionId: d.id, ...requested, requestedBy: ctx.principal.userId!, isDemo: t.isDemo });
+    } else if (binding === 'rebind') {
+      await updateVersioned(this.s.db, ET, { id: bound!.id, projectId, expectedVersion: bound!.version }, { ...requested, requestedBy: ctx.principal.userId! });
+    }
     await this.s.versions.snapshot({ projectId, entityType: 'tsa_service', entityId: t.id, versionNo: row.version, snapshot: row, reason: 'extension requested' });
-    await this.s.audit.record({ action: 'readiness.tsa.request_extension', entityType: 'tsa_service', entityId: t.id, projectId, after: { decisionId: d.id, decisionStatus: d.status, proposedEndDate: body.proposedEndDate }, reason: body.note ?? null });
+    await this.s.audit.record({
+      action: 'readiness.tsa.request_extension',
+      entityType: 'tsa_service',
+      entityId: t.id,
+      projectId,
+      before: { decisionId: t.extensionDecisionId, proposedEndDate: t.proposedEndDate, decisionTerms: bound ? { tsaServiceId: bound.tsaServiceId, proposedEndDate: bound.proposedEndDate } : null },
+      after: { decisionId: d.id, decisionStatus, proposedEndDate: body.proposedEndDate, decisionTerms: binding },
+      reason: body.note ?? null,
+    });
     return { id: t.id, status: row.status, version: row.version };
   }
 
@@ -558,6 +610,13 @@ export class TsaService {
       }
       throw e;
     }
+    // DOM-P34R-04: only the terms bound to the linked decision are recorded (the TSA's stored request must be exactly those).
+    const [bound] = await this.s.db.tx().select().from(schema.tsaExtensionTerms).where(and(eq(schema.tsaExtensionTerms.projectId, projectId), eq(schema.tsaExtensionTerms.decisionId, d!.id)));
+    assertExtensionTermsRecordable({
+      decisionCode: d!.code,
+      bound: bound ? { tsaServiceId: bound.tsaServiceId, proposedEndDate: bound.proposedEndDate, continuityPlan: bound.continuityPlan } : null,
+      stored: { tsaServiceId: t.id, proposedEndDate: t.proposedEndDate, continuityPlan: t.continuityPlan ?? '' },
+    });
     // DOM-P3-07: the requested end date must still be ahead when the extension is recorded (a passed date needs a new request).
     assertExtensionEndDateAhead(t.proposedEndDate, this.s.today(await this.s.project(projectId)));
     // DOM-P2F-09: the FINAL decision (checked above) authorizes this one extension — evidence re-checked, registry pre-check,

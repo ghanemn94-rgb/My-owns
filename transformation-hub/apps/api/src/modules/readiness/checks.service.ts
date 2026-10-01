@@ -378,8 +378,9 @@ export class ReadinessChecksService implements OnModuleInit {
   /**
    * DOM-P3-01: re-bind the transition a check gates (cutover plan / site) — a scope change with a reason, under the
    * readiness lock. Refused for a FAILED gating check (it keeps gating the transition it was raised for until cleared)
-   * and for an open gating check that would leave a plan under go/no-go decision or with a GO. Every plan the check leaves
-   * or enters gets an entry in its decision history.
+   * and for an open gating check that would leave a plan under go/no-go decision or with a GO; an open gating check that
+   * enters a plan with a GO flags that GO (DOM-P34R-07). Every plan the check leaves or enters gets an entry in its decision
+   * history.
    */
   async rebind(ctx: RequestContext, projectId: string, checkId: string, body: { expectedVersion: number; siteId?: string | null; cutoverPlanId?: string | null; reason: string }) {
     await this.s.lockReadiness(projectId);
@@ -395,10 +396,20 @@ export class ReadinessChecksService implements OnModuleInit {
     const after = await this.s.plansGatedBy(projectId, next);
     const leaving = before.filter((p) => !after.some((a) => a.id === p.id));
     const entering = after.filter((p) => !before.some((b) => b.id === p.id));
-    assertReadinessCheckRebind({ checkCode: c.code, status: c.status, gating: c.blocker || c.mandatory, cleared: await this.isCleared(projectId, c), leaving, reason: body.reason });
+    const cleared = await this.isCleared(projectId, c);
+    assertReadinessCheckRebind({ checkCode: c.code, status: c.status, gating: c.blocker || c.mandatory, cleared, leaving, reason: body.reason });
     const row = (await updateVersioned(this.s.db, schema.readinessCheck, { id: c.id, projectId, expectedVersion: body.expectedVersion }, next)) as CheckRow;
     for (const plan of leaving) await this.s.recordPlanHistory(ctx, plan, projectId, 'check_unbound', cutoverHistoryText('cutover.history.check_unbound', { check: c.code, reason: body.reason }), null);
     for (const plan of entering) await this.s.recordPlanHistory(ctx, plan, projectId, 'check_bound', cutoverHistoryText('cutover.history.check_bound', { check: c.code, reason: body.reason }), null);
+    // DOM-P34R-07: an open gating check that ENTERS a plan with a GO flags that GO (as a check failing after the GO does —
+    // DOM-P3-04); the execution record then re-evaluates and refuses until it is cleared or the GO is withdrawn.
+    if ((c.blocker || c.mandatory) && !cleared) {
+      const blocker = { id: c.id, title: `${c.code} — ${c.title}`, titleAr: c.titleAr ? `${c.code} — ${c.titleAr}` : null, status: c.status, blocker: c.blocker };
+      for (const plan of entering.filter((x) => x.status === 'approved_go')) {
+        await this.s.recordPlanHistory(ctx, plan, projectId, 'go_flagged', cutoverHistoryText('cutover.history.go_flagged.bound_after_go', { check: c.code, note: body.reason }), { blockers: [blocker], missing: [] });
+        await this.s.audit.record({ action: 'readiness.cutover.go_flagged', entityType: 'cutover_plan', entityId: plan.id, projectId, after: { status: plan.status, flagged: true, checkId: c.id, checkCode: c.code, checkStatus: c.status }, reason: `${c.code} was bound to this transition after the GO — execution is refused until it is cleared or the GO is withdrawn` });
+      }
+    }
     await this.s.audit.record({
       action: 'readiness.check.rebind',
       entityType: 'readiness_check',
@@ -517,7 +528,12 @@ export class ReadinessChecksService implements OnModuleInit {
     const linkers = await this.s.evidenceLinkers(projectId, 'readiness_check', c.id);
     for (const linker of linkers) this.s.policy.assert(ctx, 'readiness.check.signoff', { projectId, workstreamId: c.workstreamId, requesterUserId: linker });
     const ev = await this.s.evidence(projectId, 'readiness_check', c.id);
+    // DOM-P34R-02: "not applicable" never releases a failed gating check, nor one gating a plan under decision / with a GO.
+    const gatesDecidedPlan = (await this.s.plansGatedBy(projectId, c)).some((p) => GO_DECIDED_PLAN_STATUSES.includes(p.status));
     assertReadinessSignoffAllowed({
+      status: c.status,
+      gating: c.blocker || c.mandatory,
+      gatesDecidedPlan,
       checkCode: c.code,
       outcome: body.outcome,
       signoffRole: c.signoffRole,

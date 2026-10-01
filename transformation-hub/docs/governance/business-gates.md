@@ -75,7 +75,15 @@ Rules:
      `transferred_verified` and operational readiness `transitional_services_exited` — never while a TSA is running,
      breached or expired-unresolved (DOM-P3-11).
    - Recomputes of a project's dimensions are serialized by the transaction advisory lock `hub_dimensions:<projectId>`
-     (DOM-P3-14), so a recompute with an older snapshot cannot commit last and no history row is dropped.
+     (DOM-P3-14), so a recompute with an older snapshot cannot commit last and no history row is dropped. Every cutover
+     state command (GO / NO-GO, withdrawal, execution, rollback, acceptance) and the plan's site change trigger the
+     recompute (`readiness.changed`, DOM-P34R-03), so the stored dimension follows the GO and its withdrawal.
+   - A verified transfer aspect counts as verified only while the item's transfer evidence is still active and uncontested
+     (otherwise "evidence pending"), and the evidence reaction returns such aspects to `in_progress` (system entry
+     `reject_evidence` in the transfer history) for a new report and verification (DOM-P34R-06). A "not applicable" aspect
+     recorded while the item was out of the transferring scope is reset to `not_started` when the item enters the scope
+     (classification, or an applied change request after the baseline — transfer-history entry `scope_reset`), to be
+     planned or determined by the specialist (DOM-P34R-05).
    - Amended at the P3 fixes (domain owner to confirm, `docs/assumptions-and-open-questions.md`): the `blocked` exception
      state, `not_applicable` for incorporation, `perimeter_draft` before `not_started` (the draft has no in-scope item yet;
      `not_started` = in-scope items defined, perimeter not approved, no transfer started) and the label of
@@ -384,8 +392,14 @@ A Day-1 blocker keeps blocking go-live (P3 domain review fixes) **[server]**:
 1. **Which plans a check gates is not a description (DOM-P3-01).** `cutoverPlanId` / `siteId` of a check change only through
    `POST …/readiness-checks/:checkId/rebind` (reason required); the descriptive PATCH refuses them (400). Re-binding is
    refused for a FAILED gating check (`readiness.check.rebind_failed`) and for an open (not cleared) gating check that would
-   leave or enter a plan at `ready_for_decision` / `approved_go` (`readiness.check.rebind_plan_locked`). Every plan left or
-   entered gets a decision-history entry with the reason.
+   LEAVE a plan at `ready_for_decision` / `approved_go` (`readiness.check.rebind_plan_locked`); an open gating check that
+   ENTERS a plan at `approved_go` flags that GO (rule 5 — a `go_flagged` entry; entering a plan under decision simply adds it
+   to that plan's GO evaluation) (DOM-P34R-07). Every plan left or entered gets a decision-history entry with the reason.
+   **The plan's side of the same relation (DOM-P34R-01):** the plan's `siteId` is not a PATCH field either (400); it changes
+   only through `POST …/cutover-plans/:planId/site` with a reason, before the go/no-go (planning / rehearsal; otherwise
+   `readiness.cutover.locked`), and is refused while a FAILED gating check of the plan's current scope would stop gating it
+   (`readiness.cutover.site_change_failed_check`). The plan's decision history records the change (`site_changed`, with the
+   checks leaving and entering its scope); the command takes the readiness lock (rule 4).
 2. **Signed off on evidence, while the evidence holds (DOM-P3-09).** A passed check clears the GO only while its evidence
    has at least one ACTIVE link and no conflicting one (blocker `evidenceInvalid` in the GO evaluation). When the documents
    module rejects, supersedes or contests that evidence, the `evidence.changed` reaction returns the check to
@@ -394,10 +408,14 @@ A Day-1 blocker keeps blocking go-live (P3 domain review fixes) **[server]**:
    `mandatory` of a FAILED check, nor of an open check gating a plan under decision or with a GO
    (`readiness.determination.release_not_allowed`); a waivable check is released only through the waiver register (basis,
    impact, the waiver authority set by the specialist, not the requester); a non-waivable one cannot be released.
+   **The same rule on the sign-off path (DOM-P34R-02):** the sign-off as "not applicable" is refused for a FAILED gating
+   check (status or latest test) and for an open gating check of a plan under decision or with a GO
+   (`readiness.signoff.na_release_not_allowed`); a non-gating check, or an open one of a plan still in planning, may be
+   determined not applicable with a basis. Operations specialist to confirm (Q-P3-02).
 4. **One writer of a project's readiness state at a time (DOM-P3-03).** The GO and the execution record take the
    transaction advisory lock `hub_readiness:<projectId>` before evaluating; every command that changes a gating input
-   (check creation / instantiation, test run, sign-off, determination, reopen, waiver application, re-binding, the evidence
-   reaction) takes the same lock first. Lock order: `hub_readiness` → decision row (GO reliance). A GO therefore never
+   (check creation / instantiation, test run, sign-off, determination, reopen, waiver application, re-binding, the plan's
+   site change, the evidence reaction) takes the same lock first. Lock order: `hub_readiness` → decision row (GO reliance). A GO therefore never
    commits on an evaluation that missed a concurrently committed failure.
 5. **A blocker failing after the GO stops go-live (DOM-P3-04).** A gating check that is open again after the GO (failed test,
    reopen, invalid evidence) flags the GO: a `go_flagged` decision-history entry and an audit row. Recording the execution is
@@ -448,10 +466,14 @@ Rules **[server]**:
 4. Every TSA records provider/recipient, scope, dependent services/assets/systems, SLA and metric, charge basis, start and
    end dates, extension/termination terms, owner, replacement service, exit milestones, acceptance evidence and residual
    risks. Charges are money values with currency and unit.
-5. **An extension decision is bound to the terms it approved (DOM-P3-06).** Once the linked decision has left draft
-   (submitted to the committee or decided), the requested extension (end date, continuity plan, decision) can no longer be
-   re-requested with other terms on that decision (`tsa.extension.terms_bound`); a new date needs a new decision. Re-sending
-   the same terms is accepted (idempotent). `record-extension` applies the end date the decision saw.
+5. **An extension decision is bound to the terms it approved (DOM-P3-06, DOM-P34R-04).** The terms belong to the
+   DECISION, not to the TSA row's current link: each `tsa_approval_or_extension` decision carries at most ONE extension —
+   one TSA, one end date, one continuity plan (`tsa_extension_terms`) — written when the extension is first requested on it.
+   While the decision is a draft its terms may change; once it has left draft (submitted to the committee or decided), a
+   request with another end date or continuity plan is refused (`tsa.extension.terms_bound`) and a request for another TSA
+   too (`tsa.extension.decision_other_tsa`), whatever decision the TSA was linked to in between — a new date needs a new
+   decision. Re-sending the bound terms is accepted. `record-extension` applies only the terms bound to the linked decision
+   (`tsa.extension.terms_mismatch` otherwise).
 6. **A decision backs one TSA (DOM-P3-13, conservative option — governance owner to confirm).** A
    `tsa_approval_or_extension` decision already used for TSA A (its terms or its extension) never backs a use for another
    TSA B (`tsa.extension.decision_other_tsa` / `tsa.approve.decision_other_tsa`); the same decision may still approve the
@@ -466,6 +488,10 @@ Rules **[server]**:
 9. **Access (SEC-P34-06, SEC-P34-08).** The charge and its basis are shown only to a caller with the finance-domain
    clearance and finance reach over the TSA's workstream (otherwise redacted); a TSA cannot be relabelled above the editor's
    clearance (403 `readiness.classification_above_clearance`, record unchanged).
+10. **Accepted on evidence, while the evidence holds (DOM-P34R-06, the DOM-P3-09 residual).** When the acceptance evidence
+    of a TSA is rejected, superseded or contested, the evidence reaction withdraws an accepted replacement of a TSA not yet
+    exited (audited; it must be accepted again on valid evidence before the exit approval); an exit already accepted stays
+    recorded but is not counted as exited in the operational dimension while its evidence is invalid.
 
 ## 7. Conditions precedent (CP) semantics (الشروط المسبقة)
 
@@ -474,7 +500,7 @@ Rules **[server]**:
 | Reference, owner, parties | Required; owner is one accountable user |
 | Closing | Each CP belongs to a specific closing; multiple closings each have their own CP set and checklist |
 | Evidence | Required for verification; evidence type per CP |
-| `blocking` | A blocking CP that is not verified or validly waived prevents the closing confirmation **[server]** (AT-12) |
+| `blocking` | A blocking CP that is not verified or validly waived prevents the closing confirmation **[server]** (AT-12). **As implemented (DOM-P34R-08) [server]:** the CP manager creates conditions blocking; only the Legal specialist (`jv.cp.set_waivability`) creates a non-blocking CP (403 `jv.cp.non_blocking_requires_specialist`) — Legal to confirm |
 | Waivability and authority | Set only by authorized legal specialists per the agreement; records which party may waive and within which approved authority. **As implemented (DOM-P4-03) [server]:** permission `jv.cp.set_waivability`, held by `legal_restricted` only (human only, documented basis, audited). A determination never **releases** a blocking CP: a non-waivable blocking CP stays blocking (spec §3 "an exception cannot override a non-waivable condition"); a waivable one is released only through the waiver register (basis, impact, approval by the designated authority, not the requester) — 422 `jv.cp.blocking_release_not_allowed`. Raising a CP to blocking is a recorded determination |
 | Validity | Approvals that satisfy CPs carry validity periods; an expired approval re-opens the CP. **As implemented (DOM-P4-04) [server]:** a verified or waived CP whose validity has passed blocks its closing (`jv.closing.cp_validity_lapsed`); its validity date changes only after the CP is reopened (explicit command with a reason) and verified again (422 `jv.cp.validity_locked`) |
 | Long-stop date | Business date from the agreement; approaching it without evidence raises an escalation; passing it without an approved extension makes the CP `lapsed` and blocks closing. **As implemented (DOM-P4-04) [server]:** a long-stop date is set, or brought forward, by the CP manager; moving it later, clearing it or changing it on a lapsed CP needs an **approved extension** (`extend-long-stop`: a later date, a FINAL decision — *Proposed:* type `jv_closing_confirmation` of the closing authority until Legal confirms the authority —, never the decision of the current extension; 422 `jv.cp.long_stop_extension_required`). A daily worker scan (project timezone) moves an open / evidence-submitted CP past its long-stop date to `lapsed` (audited, service identity) and raises one system-generated escalation per CP and long-stop date — also for an open CP without evidence inside a *Proposed* 30-day warning window (the specification gives no window). A lapsed CP is open again only through an approved extension |
@@ -530,12 +556,13 @@ Stages: `identified` → `approved_for_contact` → `nda` → `materials_access`
   registry); since DOM-P4-08 the evidence of an external approval is re-checked when the issue is agreed or closed
   (`jv.negotiation.decision_evidence_invalid`). *Proposed — to be confirmed:* a dedicated decision type (or the
   `valuation_and_ownership_terms` / `jv_signing_authorization` types) for negotiated terms.
-- **Single-person steps (DOM-P4-14).** A closing checklist item set `not_required` (documented reason, visible to the
-  confirmer and in the confirmation snapshot) and the funds-flow steps (create / confirm / report settled, record-only) are
-  not subject to a separation-of-duties rule in the access matrix (`jv.closing_checklist.manage`, `jv.funds_flow.manage`
-  carry no `not_self`); the specification does not require one (§15: "separate request creation from approval **where
-  policy requires**"). *Proposed — to be confirmed:* G6-C05 "approved by Finance" read as a second Finance person
-  confirming a funds-flow line, and a second person for `not_required` on executed-document items.
+- **Single-person steps (DOM-P4-14).** *Updated (DOM-P34R-07):* a closing checklist item is no longer set `not_required`
+  by one person — since SEC-P34-10 the checklist manager requests it (documented reason, bound to the item version) and a
+  second person holding `jv.cp.verify` (never the requester) confirms it; the request and the decision are visible to the
+  confirmer and in the confirmation snapshot. The funds-flow steps (create / confirm / report settled, record-only) are
+  still not subject to a separation-of-duties rule in the access matrix (`jv.funds_flow.manage` carries no `not_self`); the
+  specification does not require one (§15: "separate request creation from approval **where policy requires**").
+  *Proposed — to be confirmed:* G6-C05 "approved by Finance" read as a second Finance person confirming a funds-flow line.
 
 ## 9. Acceptance tests covered (اختبارات القبول)
 

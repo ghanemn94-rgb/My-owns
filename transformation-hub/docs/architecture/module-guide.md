@@ -178,7 +178,7 @@ human principal at execution time and returns `null` when access was revoked (AT
   Regression: `apps/api/test/gates/gate-lock-order.spec.ts`.
 - **One writer of a project's Day-1 readiness state at a time (DOM-P3-03):** the GO, the execution record and every command
   that changes a gating input of a GO (check creation / instantiation, test run, sign-off, determination, reopen, waiver
-  application, re-binding, the `evidence.changed` reaction) take the transaction-scoped advisory lock
+  application, re-binding, the plan's site change, the `evidence.changed` reaction) take the transaction-scoped advisory lock
   `hub_readiness:<projectId>` (`ReadinessSupport.lockReadiness`) FIRST, before they read the checks. Lock order:
   `hub_readiness` → decision row (`lockDecisionAndRecheck`). TSA commands do not take it. A new command that changes what a
   GO evaluates must take it. Regression: `apps/api/test/reviews/p3-domain-readiness-race.spec.ts`.
@@ -186,11 +186,18 @@ human principal at execution time and returns `null` when access was revoked (AT
   takes the transaction-scoped advisory lock `hub_dimensions:<projectId>` before it reads its inputs, so a recompute with an
   older snapshot never commits last and no `record_version` row is dropped. It is taken last (after any module lock of the
   calling command). Regression: `apps/api/test/gates/p3-dimension-lock.spec.ts`.
-- **Evidence a rule relied on (DOM-P3-08, DOM-P3-09):** a record verified or signed off on evidence reacts to
-  `evidence.changed` (service-principal job with an explicit permission allowlist): a readiness check passed on evidence
-  that is no longer active returns to `in_progress` and flags the GOs it gated (`readiness.check_evidence_changed` job); a
-  confirmed incorporation whose evidence is no longer active returns to "proposed" verification
-  (`newco.incorporation_evidence_changed` job). History is kept; the change is audited.
+- **Evidence a rule relied on (DOM-P3-08, DOM-P3-09, DOM-P34R-06):** a record verified, signed off or accepted on evidence
+  reacts to `evidence.changed` (service-principal job with an explicit permission allowlist — access-matrix §9): a readiness
+  check passed on evidence that is no longer active returns to `in_progress` and flags the GOs it gated, and a TSA
+  replacement acceptance whose evidence is no longer valid is withdrawn (`readiness.check_evidence_changed` job); a
+  confirmed incorporation returns to "proposed" verification (`newco.incorporation_evidence_changed`); a verified transfer
+  aspect returns to `in_progress` through `reject_evidence` (`carveout.transfer_evidence_changed`, system entry with a null
+  `recorded_by`). The rules that read these records fail closed meanwhile (GO evaluation, status dimension). History is
+  kept; the change is audited. A new consumer of evidence follows the same pattern.
+- **The decision a record relied on carries its terms (DOM-P34R-04):** when a decision authorizes specific values of a
+  record (e.g. a TSA extension's end date and continuity plan), bind those values to the DECISION (a per-decision row, here
+  `tsa_extension_terms`) — never only to the record's current link, which the requester can switch through another
+  decision.
 - **Workstream-scoped reach:** when a list or count is structured by workstream, filter it with
   `policy.reachSql(ctx, '<permission>', projectId, table.workstreamId)` — a workstream-only role (e.g. a lead without a
   project role) sees only its workstreams; `policy.permissionReach(...)` tells you whether the grant is project-wide.

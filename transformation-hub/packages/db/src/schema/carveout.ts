@@ -213,7 +213,11 @@ export const transferRecord = pgTable(
     evidenceCount: integer('evidence_count').notNull().default(0),
     /** For verify / reject_evidence: the `report_transferred` row being reviewed. */
     reviewsRecordId: uuid('reviews_record_id'),
-    recordedBy: uuid('recorded_by').notNull(),
+    /**
+     * Null for entries recorded by the system: the evidence reaction returning a verified aspect to in progress when its
+     * evidence is rejected / superseded / contested (DOM-P34R-06).
+     */
+    recordedBy: uuid('recorded_by'),
     recordedAt: createdAt(),
   },
   (t) => [
@@ -224,7 +228,8 @@ export const transferRecord = pgTable(
     check('transfer_record_aspect_ck', sql`${t.aspect} in ('legal', 'economic')`),
     check(
       'transfer_record_command_ck',
-      sql`${t.command} in ('plan', 'start', 'report_transferred', 'verify', 'reject_evidence', 'block', 'unblock', 'mark_not_applicable')`,
+      // `scope_reset`: a "not applicable" aspect reset when the item enters the transferring scope (DOM-P34R-05).
+      sql`${t.command} in ('plan', 'start', 'report_transferred', 'verify', 'reject_evidence', 'block', 'unblock', 'mark_not_applicable', 'scope_reset')`,
     ),
   ],
 );
@@ -490,6 +495,37 @@ export const tsaService = pgTable(
   ],
 );
 
+/**
+ * DOM-P34R-04 (business-gates.md §6 rule 5): the TSA extension a `tsa_approval_or_extension` decision carries — ONE TSA, ONE
+ * end date and ONE continuity plan per decision, whatever the TSA row links later. Written when an extension is requested on
+ * the decision; the terms change only while the decision is a draft (then they are what the committee has before it);
+ * `record-extension` applies only the terms bound to the linked decision.
+ */
+export const tsaExtensionTerms = pgTable(
+  'tsa_extension_terms',
+  {
+    id: pk(),
+    orgId: orgIdCol(),
+    projectId: projectIdCol().references(() => project.id),
+    decisionId: uuid('decision_id').notNull(),
+    tsaServiceId: uuid('tsa_service_id').notNull(),
+    proposedEndDate: date('proposed_end_date', { mode: 'string' }).notNull(),
+    continuityPlan: text('continuity_plan').notNull(),
+    /** Who last requested these terms on the decision. */
+    requestedBy: uuid('requested_by').notNull(),
+    isDemo: isDemo(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+    version: versionCol(),
+  },
+  (t) => [
+    uniqueIndex('tsa_extension_terms_decision_uq').on(t.decisionId),
+    projectFk('tsa_extension_terms_decision_fk', t.projectId, t.decisionId, (): FkTarget => decision),
+    projectFk('tsa_extension_terms_tsa_fk', t.projectId, t.tsaServiceId, (): FkTarget => tsaService),
+    index('tsa_extension_terms_tsa_idx').on(t.projectId, t.tsaServiceId),
+  ],
+);
+
 export const cutoverPlan = pgTable(
   'cutover_plan',
   {
@@ -562,7 +598,7 @@ export const cutoverDecisionRecord = pgTable(
     /**
      * submitted | returned_to_planning | rehearsal | go | no_go | go_blocked | executed | rolled_back | accepted |
      * go_flagged (a gating check open again after the GO — DOM-P3-04) | execution_blocked | check_bound / check_unbound
-     * (re-binding of a check — DOM-P3-01)
+     * (re-binding of a check — DOM-P3-01) | site_changed (the plan's site changed — DOM-P34R-01)
      */
     kind: varchar('kind', { length: 32 }).notNull(),
     fromStatus: cutoverStatus('from_status'),

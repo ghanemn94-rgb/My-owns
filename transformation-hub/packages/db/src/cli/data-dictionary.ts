@@ -25,7 +25,7 @@ const MODULES: Record<string, string[]> = {
   'Carve-out, NewCo, readiness & TSA': [
     'perimeter_item', 'transfer_record', 'agreement', 'consent', 'regulatory_requirement', 'tsa_service', 'readiness_check',
     'readiness_test_run', 'cutover_plan', 'agreement_version', 'perimeter_version', 'perimeter_category_review',
-    'perimeter_impact_assessment', 'cutover_decision_record', 'operating_model_definition',
+    'perimeter_impact_assessment', 'cutover_decision_record', 'operating_model_definition', 'tsa_extension_terms',
   ],
   Finance: [
     'financial_snapshot', 'budget_line', 'financial_model', 'financial_model_version', 'benefit', 'kpi', 'kpi_observation',

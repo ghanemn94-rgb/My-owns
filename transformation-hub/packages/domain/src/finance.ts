@@ -483,7 +483,19 @@ export function reconciliationState(r: { code: string; our: Money; their: Money 
  * Marking a reconciliation reconciled: the counterparty balance is recorded in the same currency and unit; a non-zero
  * difference needs an explanation (reconciling items); the reviewer is a human who did not prepare it.
  */
-export function assertReconcilable(r: { our: Money; their: Money | null; status: ReconciliationStatus; explanation: string | null; preparedBy: string | null; createdBy?: string | null }, actor: Actor): void {
+export function assertReconcilable(
+  r: {
+    our: Money;
+    their: Money | null;
+    status: ReconciliationStatus;
+    explanation: string | null;
+    preparedBy: string | null;
+    createdBy?: string | null;
+    /** DOM-P34R-09: every person who created or edited the reconciliation (its record history) — none of them reviews it. */
+    editorUserIds?: readonly (string | null)[];
+  },
+  actor: Actor,
+): void {
   assertHumanActor(actor, 'Reconciliation review');
   if (r.status === 'reconciled') throw ruleViolation('finance.recon.already_reconciled', 'The reconciliation is already reconciled');
   if (!r.their) throw ruleViolation('finance.recon.counterparty_missing', 'Record the counterparty balance before reconciling');
@@ -494,6 +506,9 @@ export function assertReconcilable(r: { our: Money; their: Money | null; status:
   if (actor.userId === r.preparedBy) throw forbidden('finance.recon.self', 'Separation of duties: the preparer cannot review the reconciliation');
   // DOM-P4-16: `preparedBy` is the LAST editor; the person who recorded the balance prepared it too and is never its reviewer.
   if (r.createdBy && actor.userId === r.createdBy) throw forbidden('finance.recon.self', 'Separation of duties: the person who recorded the balance cannot review the reconciliation');
+  if (actor.userId && (r.editorUserIds ?? []).includes(actor.userId)) {
+    throw forbidden('finance.recon.self', 'Separation of duties: a person who edited the reconciliation cannot review it');
+  }
 }
 
 // ---------------------------------------------------------------------------------------------------------

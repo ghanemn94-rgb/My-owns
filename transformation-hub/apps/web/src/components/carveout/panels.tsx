@@ -233,7 +233,7 @@ export function TransfersPanel({ initialAspect }: { initialAspect?: string }) {
     },
     { key: 'date', header: t('carveout.transfer.effectiveDate'), cell: (r) => <DateText value={r.effectiveDate} /> },
     { key: 'ev', header: t('carveout.transfer.evidenceAtTime'), cell: (r) => <span className="tabular">{r.evidenceCount}</span> },
-    { key: 'by', header: t('carveout.transfer.recordedBy'), cell: (r) => <span dir="auto">{r.recordedByName ?? EM_DASH}</span> },
+    { key: 'by', header: t('carveout.transfer.recordedBy'), cell: (r) => <span dir="auto">{r.recordedBy ? (r.recordedByName ?? EM_DASH) : t('carveout.transfer.system')}</span> },
   ];
   return (
     <div className="space-y-3" data-testid="transfers-history">
@@ -258,7 +258,7 @@ export function TransfersPanel({ initialAspect }: { initialAspect?: string }) {
   );
 }
 
-const COMMANDS = ['plan', 'start', 'report_transferred', 'verify', 'reject_evidence', 'block', 'unblock', 'mark_not_applicable'] as const;
+const COMMANDS = ['plan', 'start', 'report_transferred', 'verify', 'reject_evidence', 'block', 'unblock', 'mark_not_applicable', 'scope_reset'] as const;
 export function CommandLabel({ command }: { command: string }) {
   const { t } = useI18n();
   return <>{(COMMANDS as readonly string[]).includes(command) ? t(`carveout.transfer.cmd.${command as (typeof COMMANDS)[number]}`) : command}</>;

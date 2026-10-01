@@ -74,6 +74,12 @@ export function assertAssignedSpecialist(what: string, checkCode: string, signof
  * recorder of the latest test run AND every person who linked the check's current (active / conflicting) evidence
  * (DOM-P3-10 / SEC-P34-01). A "passed" sign-off needs active, non-conflicting evidence and a latest test run that did not
  * fail; "not applicable" needs a documented basis.
+ *
+ * DOM-P34R-02 (the rule of DOM-P3-02 applied to the sign-off path; business-gates.md §5 rule 3): "not applicable" never
+ * RELEASES an open gating (mandatory / blocker) check — refused while the check has FAILED (status or latest test), and while
+ * it gates a plan under go/no-go decision or with a GO. A failed check is cleared by a passing test and sign-off, or — if
+ * waivable — through the waiver register; one raised for the wrong transition is re-bound before it fails or after it is
+ * cleared. A non-waivable failed blocker cannot be released (owner question Q-P3-02).
  */
 export function assertReadinessSignoffAllowed(i: {
   checkCode: string;
@@ -86,12 +92,24 @@ export function assertReadinessSignoffAllowed(i: {
   activeEvidenceCount: number;
   conflictingEvidenceCount: number;
   note: string | null | undefined;
+  /** Current status and criticality of the check, and whether it gates a plan at ready_for_decision / approved_go (REQUIRED). */
+  status: ReadinessStatus;
+  gating: boolean;
+  gatesDecidedPlan: boolean;
 }): void {
   assertAssignedSpecialist('sign-off', i.checkCode, i.signoffRole, i.actorRoles);
   if (i.selfUserIds.some((u) => !!u && u === i.actorUserId)) {
     throw forbidden('readiness.signoff.self', 'Separation of duties: the owner of the check or the person who recorded its latest status/evidence cannot sign it off');
   }
   if (i.outcome === 'not_applicable') {
+    const failed = i.status === 'failed' || i.latestTestResult === 'failed';
+    if (i.gating !== false && (failed || i.gatesDecidedPlan !== false)) {
+      throw ruleViolation(
+        'readiness.signoff.na_release_not_allowed',
+        `${i.checkCode} is ${failed ? 'a failed' : 'an open'} gating check${failed ? '' : ' of a transition under go/no-go decision or with a GO'}: a "not applicable" sign-off cannot release it — clear it with a passing test and sign-off, or (if waivable) through the waiver register`,
+        { status: i.status, latestTest: i.latestTestResult, gatesDecidedPlan: i.gatesDecidedPlan },
+      );
+    }
     if (!i.note?.trim()) throw ruleViolation('readiness.signoff.na_basis_required', 'A "not applicable" determination requires a documented basis');
     return;
   }
@@ -261,6 +279,35 @@ export function assertReadinessCheckRebind(i: { checkCode: string; status: Readi
 }
 
 /**
+ * DOM-P34R-01: the plan's site is the other side of the same scope relation (`readinessCheckAppliesToPlan`), so changing it is
+ * a scope command too — never a descriptive edit. A reason is required; the plan must be before its go/no-go (planning /
+ * rehearsal — never while a GO is pending or approved); and the change is refused while a FAILED gating check of the plan's
+ * current scope would stop gating it (a failed blocker keeps gating the transition it was raised for until cleared). Open
+ * (not failed) checks may leave a plan in planning, as with the check's own re-binding; the plan's decision history records
+ * the change with the checks that leave and enter its scope.
+ */
+export function assertCutoverPlanSiteChange(i: {
+  planCode: string;
+  planStatus: CutoverStatus;
+  reason: string | null | undefined;
+  /** Checks gating the plan now that would no longer gate it after the change. */
+  leaving: readonly { id: string; code: string; status: ReadinessStatus; gating: boolean; cleared: boolean }[];
+}): void {
+  if (!i.reason?.trim()) throw ruleViolation('readiness.cutover.site_reason_required', 'Changing the site of a transition plan requires a reason');
+  if (!CUTOVER_EDITABLE_STATUSES.includes(i.planStatus)) {
+    throw ruleViolation('readiness.cutover.locked', `The plan ${i.planCode} is ${i.planStatus}; its site changes only before the go/no-go (return it to planning first — earlier decisions stay in the history)`, { status: i.planStatus });
+  }
+  const failed = i.leaving.filter((c) => c.gating && !c.cleared && c.status === 'failed');
+  if (failed.length) {
+    throw ruleViolation(
+      'readiness.cutover.site_change_failed_check',
+      `${failed.map((c) => c.code).join(', ')} failed and gate ${i.planCode} through its current site: a failed gating check keeps gating the transition it was raised for until it is cleared (passed, waived or not applicable)`,
+      { checks: failed.map((c) => ({ id: c.id, code: c.code, status: c.status })) },
+    );
+  }
+}
+
+/**
  * DOM-P3-04 (AT-09 "a failed test blocks go-live according to the blocker"): recording that a transition was executed is
  * refused while a gating check of the plan is open again after the GO — until it is cleared / waived, or the GO is withdrawn
  * (return to planning) and a new GO is decided on a new decision.
@@ -401,27 +448,49 @@ export function assertTsaActivatable(t: { startDate: string | null; today: strin
 /** Whether a TSA's terms are approved (its descriptive terms are then part of the approval — DOM-P3-15). */
 export const TSA_TERMS_OPEN_STATUSES: readonly TsaStatus[] = ['proposed', 'negotiating'];
 
+/** The extension a `tsa_approval_or_extension` decision carries: one TSA, one end date, one continuity plan. */
+export interface ExtensionTerms {
+  tsaServiceId: string;
+  proposedEndDate: string;
+  continuityPlan: string;
+}
+
+const sameTerms = (a: ExtensionTerms, b: ExtensionTerms) => a.tsaServiceId === b.tsaServiceId && a.proposedEndDate === b.proposedEndDate && a.continuityPlan === b.continuityPlan;
+
 /**
- * DOM-P3-06: the terms of an extension request (end date, continuity plan) are bound to the decision they were linked to
- * once that decision has left `draft` (the paper went to the committee with them): a different end date or continuity plan
- * needs a NEW decision. Returns `same` when the request repeats the bound terms (idempotent), `free` when they may change.
+ * DOM-P3-06 / DOM-P34R-04: the terms of an extension request (TSA, end date, continuity plan) are bound to the DECISION — one
+ * set of terms per decision (`tsa_extension_terms`), whatever the TSA row links later — so re-linking the request through
+ * another decision never releases them. While the decision is a draft its terms may change (the paper is not yet before the
+ * committee); once it has left draft a different end date or continuity plan needs a NEW decision, and the decision never
+ * carries another TSA's extension. Returns `new` (no terms bound yet — these become the decision's terms), `same` (the
+ * request repeats the bound terms) or `rebind` (draft decision: its terms change).
  */
-export function extensionTermsBinding(i: {
-  linkedDecisionId: string | null;
-  requestedDecisionId: string;
-  linkedDecisionStatus: DecisionStatus | null;
-  bound: { proposedEndDate: string | null; continuityPlan: string | null };
-  requested: { proposedEndDate: string; continuityPlan: string };
-}): 'free' | 'same' {
-  if (!i.linkedDecisionId || i.linkedDecisionId !== i.requestedDecisionId || !i.bound.proposedEndDate) return 'free';
-  const same = i.bound.proposedEndDate === i.requested.proposedEndDate && (i.bound.continuityPlan ?? '') === i.requested.continuityPlan;
-  if (same) return 'same';
-  if (i.linkedDecisionStatus === 'draft') return 'free';
+export function extensionTermsBinding(i: { decisionStatus: DecisionStatus; bound: ExtensionTerms | null; requested: ExtensionTerms }): 'new' | 'same' | 'rebind' {
+  if (!i.bound) return 'new';
+  if (sameTerms(i.bound, i.requested)) return 'same';
+  if (i.decisionStatus === 'draft') return 'rebind';
+  if (i.bound.tsaServiceId !== i.requested.tsaServiceId) {
+    throw ruleViolation('tsa.extension.decision_other_tsa', 'This decision carries the extension of another TSA; a decision about one TSA does not back another TSA', { boundTsaServiceId: i.bound.tsaServiceId });
+  }
   throw ruleViolation(
     'tsa.extension.terms_bound',
     `The extension requested on this decision (end date ${i.bound.proposedEndDate}) is before the committee: a different end date or continuity plan needs a new decision`,
     { boundEndDate: i.bound.proposedEndDate, requestedEndDate: i.requested.proposedEndDate },
   );
+}
+
+/**
+ * DOM-P34R-04: `record-extension` applies only the terms bound to the linked decision — the TSA's stored request must be
+ * exactly those terms (business-gates.md §6 rule 5 "record-extension applies the end date the decision saw").
+ */
+export function assertExtensionTermsRecordable(i: { decisionCode: string; bound: ExtensionTerms | null; stored: ExtensionTerms }): void {
+  if (!i.bound || !sameTerms(i.bound, i.stored)) {
+    throw ruleViolation(
+      'tsa.extension.terms_mismatch',
+      `Decision ${i.decisionCode} does not carry this extension (TSA, end date ${i.stored.proposedEndDate} and continuity plan): request the extension again on the decision that approved these terms, or on a new decision`,
+      { boundEndDate: i.bound?.proposedEndDate ?? null, requestedEndDate: i.stored.proposedEndDate },
+    );
+  }
 }
 
 /** DOM-P3-07: an extension ends after "today" (project timezone) — an expired TSA is never "extended" into the past. */
@@ -487,10 +556,14 @@ export const CUTOVER_HISTORY_MESSAGES_EN: Readonly<Record<string, string>> = {
   'cutover.history.go_flagged.evidence_invalidated': '{check}: the evidence of this signed-off gating check was rejected, superseded or contested after the GO',
   'cutover.history.check_unbound': '{check} no longer gates this transition: {reason}',
   'cutover.history.check_bound': '{check} now gates this transition: {reason}',
+  /** DOM-P34R-07: an open gating check bound to a plan that has a GO flags that GO. */
+  'cutover.history.go_flagged.bound_after_go': '{check}: an open gating check was bound to this transition after the GO ({note})',
+  /** The plan's site changed (scope command): `{leaving}` / `{entering}` list check codes ("—" when none). */
+  'cutover.history.site_changed': '{reason} — no longer gating: {leaving}; now gating: {entering}',
 };
 
 /** History kinds whose rationale the system writes from {@link CUTOVER_HISTORY_MESSAGES_EN}. */
-export const SYSTEM_CUTOVER_HISTORY_KINDS = ['go_flagged', 'check_bound', 'check_unbound'] as const;
+export const SYSTEM_CUTOVER_HISTORY_KINDS = ['go_flagged', 'check_bound', 'check_unbound', 'site_changed'] as const;
 
 /** English system rationale of a cutover plan history entry. */
 export function cutoverHistoryText(code: string, params: Record<string, string | number>): string {

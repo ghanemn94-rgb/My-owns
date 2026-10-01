@@ -14,6 +14,9 @@ import {
   StatusDimensionKey,
   ProjectTemplateDefinition,
   IncorporationStatus,
+  PerimeterDisposition,
+  TransferStatus,
+  TsaStatus,
 } from '@hub/domain';
 import { DbService } from '../../platform/db.service';
 import { PolicyService } from '../../platform/policy.service';
@@ -106,10 +109,20 @@ export class StatusDimensionsService {
         from project_entity pe join legal_entity le on le.id = pe.legal_entity_id
        where pe.project_id = ${projectId} and pe.role = 'newco'
        order by pe.created_at limit 1`);
-    const perimeter = await tx
-      .select({ disposition: schema.perimeterItem.disposition, transferStatus: schema.perimeterItem.transferStatus, economicTransferStatus: schema.perimeterItem.economicTransferStatus })
-      .from(schema.perimeterItem)
-      .where(eq(schema.perimeterItem.projectId, projectId));
+    // DOM-P34R-06 (the DOM-P3-08 / DOM-P3-09 rule for transfers): an aspect counts as verified only while the item's transfer
+    // evidence is still active and uncontested — otherwise it is shown as awaiting evidence until the carve-out evidence
+    // reaction returns it to in progress.
+    const perimeterRows = await tx.execute<{ disposition: PerimeterDisposition; transfer_status: TransferStatus; economic_transfer_status: TransferStatus; active: number; conflicting: number }>(sql`
+      select pi.disposition, pi.transfer_status, pi.economic_transfer_status,
+             (select count(*) from evidence_link e where e.project_id = ${projectId} and e.target_type = 'transfer' and e.target_id = pi.id and e.status = 'active')::int as active,
+             (select count(*) from evidence_link e where e.project_id = ${projectId} and e.target_type = 'transfer' and e.target_id = pi.id and e.status = 'conflicting')::int as conflicting
+        from perimeter_item pi
+       where pi.project_id = ${projectId}`);
+    const perimeter = perimeterRows.rows.map((r) => {
+      const evidenceValid = Number(r.active) > 0 && Number(r.conflicting) === 0;
+      const v = (st: TransferStatus): TransferStatus => (st === 'transferred_verified' && !evidenceValid ? 'transferred_pending_evidence' : st);
+      return { disposition: r.disposition, transferStatus: v(r.transfer_status), economicTransferStatus: v(r.economic_transfer_status) };
+    });
     const readiness = await tx
       .select({ r: schema.readinessCheck, w: schema.waiver })
       .from(schema.readinessCheck)
@@ -132,10 +145,18 @@ export class StatusDimensionsService {
       .from(schema.gateAssessment)
       .innerJoin(schema.gateDefinition, eq(schema.gateDefinition.id, schema.gateAssessment.gateId))
       .where(and(eq(schema.gateAssessment.projectId, projectId), eq(schema.gateDefinition.key, SIGNING_GATE_KEY), eq(schema.gateAssessment.isCurrent, true)));
-    const tsas = await tx
-      .select({ status: schema.tsaService.status, isEnduringArrangement: schema.tsaService.isEnduringArrangement })
-      .from(schema.tsaService)
-      .where(eq(schema.tsaService.projectId, projectId));
+    // DOM-P34R-06: an accepted exit counts only while its acceptance evidence is still active and uncontested.
+    const tsaRows = await tx.execute<{ status: TsaStatus; is_enduring_arrangement: boolean; active: number; conflicting: number }>(sql`
+      select t.status, t.is_enduring_arrangement,
+             (select count(*) from evidence_link e where e.project_id = ${projectId} and e.target_type = 'tsa_service' and e.target_id = t.id and e.status = 'active')::int as active,
+             (select count(*) from evidence_link e where e.project_id = ${projectId} and e.target_type = 'tsa_service' and e.target_id = t.id and e.status = 'conflicting')::int as conflicting
+        from tsa_service t
+       where t.project_id = ${projectId}`);
+    const tsas = tsaRows.rows.map((t) => ({
+      status: t.status,
+      isEnduringArrangement: t.is_enduring_arrangement,
+      ...(t.status === 'exit_accepted' ? { exitEvidenceValid: Number(t.active) > 0 && Number(t.conflicting) === 0 } : {}),
+    }));
     const defs = await tx.select({ status: schema.operatingModelDefinition.status }).from(schema.operatingModelDefinition).where(eq(schema.operatingModelDefinition.projectId, projectId));
     // DOM-P3-12: the approved perimeter version and the Day-1 GO / post-transition acceptance of the transition plans.
     const [approvedVersion] = await tx

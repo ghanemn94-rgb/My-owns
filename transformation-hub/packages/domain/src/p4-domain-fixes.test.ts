@@ -210,4 +210,9 @@ describe('DOM-P4-16 — reconciliation review is independent of the creator and 
     expect(code(() => assertReconcilable(base, { kind: 'user', userId: 'editor' }))).toBe('finance.recon.self');
     expect(code(() => assertReconcilable(base, { kind: 'user', userId: 'reviewer' }))).toBe('no error');
   });
+  it('DOM-P34R-09: every intermediate editor of the reconciliation is excluded as well', () => {
+    const edited = { ...base, editorUserIds: ['creator', 'intermediate', 'editor'] };
+    expect(code(() => assertReconcilable(edited, { kind: 'user', userId: 'intermediate' }))).toBe('finance.recon.self');
+    expect(code(() => assertReconcilable(edited, { kind: 'user', userId: 'reviewer' }))).toBe('no error');
+  });
 });
