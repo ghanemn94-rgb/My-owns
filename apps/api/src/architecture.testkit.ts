@@ -16,8 +16,10 @@
 // and a constructed key (`f["constr" + "uctor"]`, `Reflect.get(fn, "constr".concat("uctor"))`) still got through.
 // P1 module code has no legitimate need to load or evaluate code at runtime, so instead of recognising patterns the
 // lint now forbids the building blocks themselves; every way to reach a primitive needs one of them:
-//  1. BANNED NAMES, in EVERY syntactic form outside type positions - identifier, `.member`, `["key"]`, string
-//     literal anywhere (`Reflect.get(fn, "constructor")`), object/destructuring key, import/export name:
+//  1. BANNED NAMES, in every SPELLED form outside type positions - identifier, `.member`, `["key"]`, string
+//     literal anywhere (`Reflect.get(fn, "constructor")`), object/destructuring key, import/export name, unicode
+//     escape, namespace member `ns.name` (F-DG1-132/215: a name that is never written - only reached by runtime
+//     enumeration of an allow-listed namespace - is NOT statically visible; that is residual (a) below):
 //     code evaluation  eval, Function, AsyncFunction, GeneratorFunction, AsyncGeneratorFunction, constructor
 //     module loaders   require, createRequire, getBuiltinModule, mainModule, _load
 //     native loader    setEngine (F-DG1-130: `crypto.setEngine(path)` dlopen()s an arbitrary shared object, whose
@@ -48,7 +50,10 @@
 // MEMBER AUDIT (Node v22.22.2 / OpenSSL 3.5.5, every own property of node:{crypto, fs, fs/promises, os, path, url,
 // util} plus the namespaces fs.promises, path.posix/win32, util.types, crypto.webcrypto/subtle; handback
 // T-DG1-BE11): the ONLY member that loads, evaluates or executes code or loads a native object is
-// `crypto.setEngine`, which rule 1 now bans in every form. Name matches checked and cleared by hand:
+// `crypto.setEngine`, which rule 1 now bans in every SPELLED form (identifier, `.member`, `["literal"]`, destructured,
+// string literal, unicode escape, namespace `ns.setEngine`); reaching it by runtime ENUMERATION of the `node:crypto`
+// namespace/default binding, without writing the name, is residual (a) (F-DG1-132/215). Name matches checked and
+// cleared by hand:
 // `os.loadavg` (system-load averages, not a loader); `fs.open*`/`opendir`/`truncate` (file I/O); `util.debug`/
 // `debuglog`/`inspect` (logging/formatting, no debugger); `util.types.isModuleNamespaceObject`/`isNativeError`
 // (type predicates). `crypto.setFips(bool)` only toggles the OpenSSL FIPS provider named by the OpenSSL config, not a
@@ -56,9 +61,17 @@
 // file that is then `import()`ed is residual (b). A later Node version can add a loader MEMBER to an allowed module:
 // re-run the audit when the Node floor or target changes, and ban any such member here.
 // Residual limits (stated and ACCEPTED, not closable statically):
-//  (a) runtime DATA FLOW: a string computed at runtime and handed to third-party code that itself reads
-//      `input[key]` (e.g. a schema library given `Object.fromEntries([[k, ...]])`); rules 1-2 remove every syntactic
-//      route inside module source.
+//  (a) runtime DATA FLOW the static lint cannot follow (F-DG1-132/215): a value - including the namespace or default
+//      binding of an allow-listed built-in (e.g. `node:crypto`) - passed to third-party or built-in readers
+//      (`Object.entries`/`Object.values`/`Map`/`Array.prototype.find`/a regex over keys, a schema library given
+//      `Object.fromEntries([[k, ...]])`) and indexed by a key built or carried at runtime, rather than written as a
+//      banned name or a directly-flagged `x[k]` computed member. The one native-loader member among the allow-listed
+//      built-ins (`crypto.setEngine`) is additionally name-banned (rule 1, every spelled form); reaching it by
+//      enumeration, e.g. `new Map(Object.entries(c)).get("set".concat("Engine"))` or
+//      `Object.values(c).find((f) => f.name === "set" + "Engine")`, is this residual (pinned, not flagged, by the
+//      architecture.test.ts self-check). Rules 1-2 remove every SPELLED route inside module source, not every
+//      runtime route; banning all namespace-as-value use or all dynamic reads would break legitimate code
+//      (`new Map(Object.entries(x)).get(name)` in identity/routes.ts, access/rules.ts).
 //  (b) F-DG1-127: runtime code GENERATION followed by a dynamic import of a literal same-module path (an allowed
 //      built-in such as `node:fs` writes a file, then `import("./local.mjs")`): the specifier is a legal own-module
 //      path and the bytes exist only at runtime, so the lint never sees them. Irreducible for a static lint;
@@ -84,14 +97,15 @@ const SHARED_ALLOWED = new Set(["@mth/shared", "@mth/shared/schemas", "@mth/conf
  * D-055 DEFAULT-DENY allow-list of `node:` built-ins (without the prefix) that module source may import. Seeded from
  * what module source imports (crypto, fs, path, url) plus the read/utility built-ins fs/promises, os and util. Per the
  * member audit in the header (F-DG1-130), they expose no member that loads, evaluates or executes code, opens a
- * debugger, or loads native objects EXCEPT `crypto.setEngine` (a native loader), which rule 1 bans; residuals (a)-(c)
+ * debugger, or loads native objects EXCEPT `crypto.setEngine` (a native loader), which rule 1 bans in every SPELLED
+ * form (reaching it by runtime enumeration of the namespace is residual (a)); residuals (a)-(c)
  * of the header still apply (`node:fs` code generation + import is (b)). NEVER add a code-loading, exec,
  * native or debug built-in (module, vm, worker_threads, inspector, repl, child_process, cluster, process, sqlite, test,
  * wasi, v8, net, http, https, dgram, async_hooks, ...): those routes were closed one by one by F-DG1-109/117/125/127/128
  * and are now denied by default. Network I/O belongs to the composition root, not module source.
  */
 const SAFE_NODE_BUILTINS: ReadonlySet<string> = new Set(["crypto", "fs", "fs/promises", "os", "path", "url", "util"]);
-/** F-DG1-124: dynamic-code primitives, banned in every syntactic form (rule 1), by the kind of bypass they give. */
+/** F-DG1-124: dynamic-code primitives, banned in every SPELLED form (rule 1), by the kind of bypass they give. */
 const BANNED_PRIMITIVES: ReadonlyMap<string, string> = new Map([
   ...["eval", "Function", "AsyncFunction", "GeneratorFunction", "AsyncGeneratorFunction", "constructor"].map(
     (n) => [n, "code evaluation"] as const,

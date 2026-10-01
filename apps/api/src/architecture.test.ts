@@ -12,7 +12,8 @@
 //     syntactic form, and any computed key that is not a literal (a constructed key can spell any of them); since
 //     D-055 (F-DG1-129/213), any member of the global process outside the allow-list (process.kill, _debugProcess,
 //     execve, binding, ...) - default-deny, independent of the Node version; since F-DG1-130, the native-loader
-//     member `setEngine` of the allow-listed node:crypto (rule 1, every form);
+//     member `setEngine` of the allow-listed node:crypto (rule 1, every SPELLED form; reaching it by runtime
+//     enumeration of the namespace is the accepted residual (a), pinned by a self-check, F-DG1-132/215);
 //  4. a module directory is not in the module map, a P1 module has no index.ts, or a §16 business module has no
 //     test suite of its own (A12, D-048);
 //  5. the declared module graph has a cycle, or audit/access depend on a business module;
@@ -391,8 +392,9 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
   it.each([
     // F-DG1-130: `crypto.setEngine(path)` dlopen()s an arbitrary shared object (native loader) although `node:crypto`
     // itself is allow-listed (default-deny covers modules, not members). Rule 1 now bans the `setEngine` name in every
-    // form. "missed" here = 0 violations with the round-9 lint (HEAD 8ec95a6; handback T-DG1-BE11). Importing
-    // node:crypto stays allowed (D-055 positive control below).
+    // SPELLED form (enumeration without the name is residual (a), pinned below). "missed" here = 0 violations with
+    // the round-9 lint (HEAD 8ec95a6; handback T-DG1-BE11). Importing node:crypto stays allowed (D-055 positive
+    // control below).
     [
       "S1 crypto.setEngine (named import)",
       `import { setEngine } from "node:crypto";\nsetEngine("/tmp/x.so");`,
@@ -523,6 +525,34 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
       `export const id = randomUUID() + readFileSync(join("a", "b"), "utf8") + pathToFileURL("/x").href;`,
     ].join("\n");
     expect(planted("transformations", allowed)).toEqual([]);
+  });
+
+  // F-DG1-132 / F-DG1-215 - ACCEPTED RESIDUAL (a), deliberately NOT a violation case. Rule 1 bans `setEngine` only
+  // where the name is SPELLED. These forms reach `crypto.setEngine` at runtime by ENUMERATING the allow-listed
+  // node:crypto namespace/default binding with a key built at runtime (Object.values/Object.entries/Map/find/regex);
+  // a static AST lint cannot follow that data flow, and banning namespace-as-value use or Object.entries/Map lookups
+  // would break legitimate module code. See residual (a) in the architecture.testkit.ts header. This test pins the
+  // current behaviour (0 violations) so the gap is visible and deliberate; if a future lint closes the route, move
+  // these forms into the violation table above.
+  it.each([
+    [
+      "E1 Object.values(ns).find by fn.name",
+      `import * as c from "node:crypto";\nconst f = Object.values(c).find((x) => typeof x === "function" && x.name === "set" + "Engine") as (p: string) => void;\nf("/tmp/x.so");`,
+    ],
+    [
+      "E2 new Map(Object.entries(ns)).get(built key)",
+      `import * as c from "node:crypto";\n(new Map(Object.entries(c)).get("set".concat("Engine")) as (p: string) => void)("/tmp/x.so");`,
+    ],
+    [
+      "E3 Object.entries(ns).find by regex over keys",
+      `import * as c from "node:crypto";\n(Object.entries(c).find(([k]) => /^setEng/.test(k))![1] as (p: string) => void)("/tmp/x.so");`,
+    ],
+    [
+      "E4 for-of over Object.entries(default binding)",
+      `import crypto from "node:crypto";\nconst p = "/tmp/x.so";\nfor (const [k, f] of Object.entries(crypto)) if (k.startsWith("set") && k.endsWith("Engine")) (f as (p: string) => void)(p);`,
+    ],
+  ])("F-DG1-132/215 residual (a): %s is NOT flagged (accepted static-lint residual)", (_case, source) => {
+    expect(planted("transformations", source)).toEqual([]);
   });
 
   it("F-DG1-130: only setEngine is banned - node:crypto and its other members stay allowed (positive control)", () => {
