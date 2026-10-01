@@ -1,4 +1,6 @@
+import { createHash } from 'node:crypto';
 import request from 'supertest';
+import { expect } from 'vitest';
 import { getApp, owner, projectIdByCode, DC, type Client } from '../helpers';
 import { registerJobHandlers } from '../../src/jobs';
 import { WorkerService } from '../../src/platform/jobs/worker.service';
@@ -68,4 +70,23 @@ export async function generate(c: Client, pid: string, body: Record<string, unkn
   const r = await c.post(RP(pid, '/report-snapshots'), body);
   if (r.status !== status) throw new Error(`generate ${JSON.stringify(body)} → ${r.status} ${JSON.stringify(r.body)}`);
   return r.body;
+}
+
+/** Request an export, run the worker, download it as the requester. */
+export async function exportFile(c: Client, pid: string, snapshotId: string, format: string, locale: string) {
+  const req = await c.post(RP(pid, `/report-snapshots/${snapshotId}/exports`), { format, locale });
+  if (req.status !== 201) throw new Error(`export request → ${req.status} ${JSON.stringify(req.body)}`);
+  expect(req.body).toMatchObject({ status: 'queued', format, locale });
+  await drain();
+  const st = (await c.get(RP(pid, `/report-exports/${req.body.id}`)).expect(200)).body;
+  expect(st.status, JSON.stringify(st)).toBe('ready');
+  const dl = await c.agent.get(RP(pid, `/report-exports/${req.body.id}/download`)).buffer(true).parse((res, cb) => {
+    const chunks: Buffer[] = [];
+    res.on('data', (d: Buffer) => chunks.push(d));
+    res.on('end', () => cb(null, Buffer.concat(chunks)));
+  });
+  expect(dl.status).toBe(200);
+  const bytes = dl.body as Buffer;
+  expect(createHash('sha256').update(bytes).digest('hex')).toBe(st.sha256);
+  return { exportId: req.body.id as string, status: st, bytes, headers: dl.headers };
 }

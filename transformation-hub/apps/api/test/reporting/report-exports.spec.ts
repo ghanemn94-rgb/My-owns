@@ -1,34 +1,14 @@
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
-import { createHash } from 'node:crypto';
 import { join, resolve } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { closeApp, closePools, DC, GEN, loginAs, owner, projectIdByCode, type Client } from '../helpers';
-import { drain, generate, loginUserId, reportUser, revokeMemberships, RP } from './report-kit';
+import { drain, exportFile, generate, loginUserId, reportUser, revokeMemberships, RP } from './report-kit';
 import { openOoxml, SPREADSHEET_MAIN, workbookCells } from './ooxml';
 
 type Snap = { id: string; sections: { key: string; included: boolean; figures: { key: string; value: number | null }[]; tables: { key: string; rows: Record<string, unknown>[] }[] }[] };
 
 let dc: string;
 let pm: Client;
-
-/** Request an export, run the worker, download it as the requester. */
-async function exportFile(c: Client, pid: string, snapshotId: string, format: string, locale: string) {
-  const req = await c.post(RP(pid, `/report-snapshots/${snapshotId}/exports`), { format, locale });
-  if (req.status !== 201) throw new Error(`export request → ${req.status} ${JSON.stringify(req.body)}`);
-  expect(req.body).toMatchObject({ status: 'queued', format, locale });
-  await drain();
-  const st = (await c.get(RP(pid, `/report-exports/${req.body.id}`)).expect(200)).body;
-  expect(st.status, JSON.stringify(st)).toBe('ready');
-  const dl = await c.agent.get(RP(pid, `/report-exports/${req.body.id}/download`)).buffer(true).parse((res, cb) => {
-    const chunks: Buffer[] = [];
-    res.on('data', (d: Buffer) => chunks.push(d));
-    res.on('end', () => cb(null, Buffer.concat(chunks)));
-  });
-  expect(dl.status).toBe(200);
-  const bytes = dl.body as Buffer;
-  expect(createHash('sha256').update(bytes).digest('hex')).toBe(st.sha256);
-  return { exportId: req.body.id as string, status: st, bytes, headers: dl.headers };
-}
 
 beforeAll(async () => {
   dc = await projectIdByCode(DC);
