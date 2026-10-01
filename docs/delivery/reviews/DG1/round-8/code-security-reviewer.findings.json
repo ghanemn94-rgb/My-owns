@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG1-129",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Module lint: in the pinned Node 22, process.kill(process.pid,'SIGUSR1') or process._debugProcess(process.pid) starts the V8 inspector in-process, which is the capability of the banned node:inspector. Global fetch and WebSocket then send Runtime.evaluate, which runs arbitrary code. The lint reports 0 violations, so D-054's 'exhaustive for the pinned Node 22' claim does not hold.",
+      "reproduction": "Candidate e27eaf5f (freeze commit 11bc4c4), disposable clone, Node 22.22.2. In apps/api/src/architecture.testkit.ts, PROCESS_LOADERS (line 122) is binding/_linkedBinding/dlopen/execve, and rule 3 (line 336) flags only those members on the global process. `process.kill`, `process._kill` and `process._debugProcess` are ordinary `root.member` uses, so they are allowed. Plant through fileViolations('transformations', .../probe.ts) (01-lint-probes.log). N1: `process.kill(process.pid, \"SIGUSR1\"); await new Promise((r) => setTimeout(r, 500)); const list = await (await fetch(\"http://127.0.0.1:9229/json/list\")).json(); const ws = new WebSocket(list[0].webSocketDebuggerUrl); await new Promise((r) => ws.addEventListener(\"open\", r)); ws.send(JSON.stringify({ id: 1, method: \"Runtime.evaluate\", params: { expression: '<any JS>' } }));` gives 0 violations. N2: `process._debugProcess(process.pid);` gives 0 violations. Runtime proof (02-n1-runtime.log, source n1-sigusr1-inspector-runtime.mjs.txt): the same N1 code prints 'Debugger listening on ws://127.0.0.1:9229/...'. The evaluated expression process.getBuiltinModule(\"child_process\").execSync(\"id\") returns 'uid=0(root) gid=0(root)', which is code evaluation plus exec in the running process. N2 also opens the inspector. Production starts `node .../dist/main.js` without --disable-sigusr1 (deploy/docker/entrypoint.sh:30-31), so the route exists in the shipped runtime as well. No module uses process.kill/_kill/_debugProcess today (grep of apps/ and packages/ is empty).",
+      "expected": "D-054 and the testkit header (lines 48-57) say the concrete loader/exec built-ins and `process.*` methods are enumerated exhaustively for the pinned Node 22.x. Residual (c) is narrowed to future/unknown built-ins and WebAssembly/node:wasi. The header bans node:inspector as a loader built-in (line 89), so reaching the same inspector without the import is a loader/eval route that the enumeration should cover. It is neither future/unknown nor wasm. Suggested fix (any one, the first two together are best): (1) add `kill`, `_kill`, `_debugProcess` and `_debugEnd` to PROCESS_LOADERS (no module needs to signal processes), with self-checks N1/N2; (2) run the shipped node processes with `--disable-sigusr1` (present on the >=22.18 floor; 03-n1-remedy-probe.log shows the inspector then never listens: fetch ECONNREFUSED, and the process survives the signal); or (3) drop the 'exhaustive' wording and name this route as an accepted residual in the header and D-054.",
+      "actual": "Both plants pass the lint with zero violations, and the header and D-054 claim an exhaustive enumeration that this route contradicts. Impact is limited, as with F-DG1-125/127/128. The lint is static defence-in-depth for ADR-0002 module boundaries over human-reviewed code, not a runtime security boundary (header rationale). The route needs a loopback network and visibly starts a debugger ('Debugger listening' on stderr). No module uses it today. Hence Low, not mandatory, and not blocking. It does not reopen F-DG1-128. Related observation (no separate finding): the header says 'PINNED Node version (22.x)', but ADR-0001, the production image (deploy/docker/Dockerfile:24, node:24) and .nvmrc target Node 24, while 22.18 is the floor. My sweep could cover only 22.22.2, so the Node 24 check is BLOCKED (no binary). The wording should name both lines, or the enumeration should be re-checked on 24.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-8/01-lint-probes.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-8/02-n1-runtime.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-8/03-n1-remedy-probe.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-8/04-node22-builtin-process-sweep.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-8/zz-probe.test.ts.txt",
+        "docs/delivery/test-evidence/DG1/code-security/round-8/n1-sigusr1-inspector-runtime.mjs.txt",
+        "apps/api/src/architecture.testkit.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-8/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T13:43:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG1 round 8 while independently re-sweeping Node 22.22.2 builtinModules plus process.*, as the assignment asked, to validate D-054's exhaustiveness claim. The route was reproduced statically (lint: 0 violations) and at runtime (arbitrary evaluate and exec) in disposable directories. It is not a future/unknown built-in and not wasm, so it is outside residual (c) as now worded. The proposed id is the next free number in the code-security 1xx range; the orchestrator may renumber. An ACCEPTED_OBSERVATION would be reasonable only if the header and D-054 drop the 'exhaustive' claim or name this route."
+        }
+      ]
+    }
+  ]
+}

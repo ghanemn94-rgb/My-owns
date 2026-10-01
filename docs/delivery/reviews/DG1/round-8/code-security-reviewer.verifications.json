@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "verifications": [
+    {
+      "finding_id": "F-DG1-128",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate e27eaf5f. The freeze commit is 11bc4c4 and the fix is a8cb7b9 (T-DG1-BE9). HEAD 6cb3813 adds only candidate-excluded metadata, and the recomputed ID is identical in the real repo and in a full disposable clone at 11bc4c4 (00-candidate-identity.log). The fix is in apps/api/src/architecture.testkit.ts: line 96 adds \"test\" to LOADER_BUILTINS (84-98), which expands to `test` and `node:test`; line 122 adds \"execve\" to PROCESS_LOADERS; rule 3 applies it at line 336. Re-proof via fileViolations('transformations', .../probe.ts) in the clone (01-lint-probes.log). R1, the exact assignment plant (node:test run({files:[computed]}, isolation:'none')), gives 1 violation, 'imports package node:test'; bare `test` is also caught. R2 `process.execve(\"/bin/sh\",[...])` gives 1 violation, 'module loader via process.execve'. These variants are also caught: `(process as any).execve` (rule 3 unwrap), `globalThis.process.execve` (globalThis.process) and `import { execve } from \"node:process\"` (specifier ban). `node:test/reporters` stays allowed, which is correct: it only exports reporter streams and loads no files. architecture.test.ts passes 80/80, including the self-checks R1/R2 (architecture.test.ts:351/357) and the P12/X6-X8/A1 guards. The real module tree has 0 moduleViolations across all modules. Unit suite 273/273. F-DG1-128 is fully closed. I did check the separate D-054 claim that the loader/exec enumeration is exhaustive for the pinned Node 22, and it does NOT hold: process.kill(pid,'SIGUSR1') / process._debugProcess opens the inspector. I raise that as new Low finding F-DG1-129 (proposed). It does not reopen F-DG1-128, whose two routes are closed."
+    }
+  ]
+}
