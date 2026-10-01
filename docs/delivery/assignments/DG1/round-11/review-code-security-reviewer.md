@@ -1,0 +1,12 @@
+# DG1 round-11: code-security-reviewer
+Read `review-common.md` first. Task ID: `T-DG1-REV-SEC-R11`. A Node 24.21.0 binary is at `/opt/nvm/versions/node/v24.21.0/bin`.
+
+## Findings you verify (file:line + a re-test)
+- **F-DG1-132 ≡ F-DG1-215 (enumeration residual):** read `apps/api/src/architecture.testkit.ts` — the header now says rule 1 bans `setEngine` in every **SPELLED** form and documents the namespace-enumeration reach as **residual (a)**; the self-check pins the enumeration forms (E1–E4) as non-violations. Confirm: the spelled forms (named/namespace/string-key) of `crypto.setEngine` are STILL violations; the enumeration forms (`Object.entries(c)`/`Map`/`find` + runtime key) are deliberately NOT flagged (residual (a)); `node:crypto` import and `randomUUID`/`createHash` stay allowed; the real module tree is zero `moduleViolations`. Run `architecture.test.ts` (expect ~109/109). Confirm the residual framing is honest (forbidding namespace-as-value would break legit `new Map(Object.entries(x)).get(name)` used in identity/access — check those files).
+- **F-DG1-214 (harness-only):** confirm the fix is confined to the web test harness (`apps/web/test/jsdom-native-abort-environment.ts`, `apps/web/vitest.config.ts`, `apps/web/tsconfig.json`) — **no product/runtime file changed**; it restores Node's native AbortController/AbortSignal in the jsdom env. (QA verifies the runtime behaviour on Node 24.)
+
+## Checks (real output; BLOCKED if a tool/DB missing) — run on Node 22; where cheap, confirm on Node 24 too
+`pnpm -r typecheck`, `pnpm -r build` (or repo build), `pnpm lint`, `pnpm openapi:lint`, `pnpm check:no-cdn`, `pnpm format:check`, `pnpm test` (also `PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH pnpm test` to confirm Node 24 unit green), the integration suite on disposable PostgreSQL (unique port e.g. 5491) **run twice** (F-DG1-009), `node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs`, `node --test deploy/scripts/tests/*.test.mjs`, `tools/deps/tests/install-sandbox.test.sh` (AC-1..AC-10; AC-1-effect + real-repo install BLOCKED without registry — note it), `node licenses/generate-sbom.mjs --check`, `node tools/gates/validate.mjs --stage DG0 --historical`. Confirm the three ci.yml copies byte-identical. Evidence under `docs/delivery/test-evidence/DG1/code-security/round-11/`.
+
+## Requirements to check (record exactly these)
+`REQ-DLV-025`, `REQ-DLV-033`, `REQ-DLV-042`, `REQ-S16-001`, `REQ-S16-003`, `REQ-S16-004`, `REQ-S19-004`, `REQ-S19-006`.

@@ -702,10 +702,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:18fee1617d617cfd719aeaebe3c37904bd116c47eaafb5be52e7bd779c6e8807",
-        "source_commit": "265af7e65a6a66f1dabcc678d9bf1adb1415f601",
-        "frozen_at": "2026-10-01T14:30:22Z",
-        "manifest_path": "docs/delivery/candidates/DG1/18fee1617d617cfd.manifest.json"
+        "candidate_id": "sha256:e5cc6ef982ba7d53ed80138c0cbaa0119bcfe8dcaad4e324b5dafdb6431afeb8",
+        "source_commit": "32e6478de3c49b2c80d044b8a2d5d89f88c35f65",
+        "frozen_at": "2026-10-01T15:16:54Z",
+        "manifest_path": "docs/delivery/candidates/DG1/e5cc6ef982ba7d53.manifest.json"
       },
       "review_rounds": [
         {
@@ -826,7 +826,19 @@
             "code-security-reviewer": "docs/delivery/reviews/DG1/round-10/code-security-reviewer.json",
             "qa-verifier": "docs/delivery/reviews/DG1/round-10/qa-verifier.json"
           },
-          "note": "DG1 round 10: re-review after the round-9 all-PASS that raised two Low non-mandatory findings. Verify F-DG1-130 (the native-loader member crypto.setEngine of the allow-listed node:crypto is now banned by rule 1, with an exhaustive member-audit of the 7 allow-listed built-ins recorded) and F-DG1-131 (D-055 wording corrected: allow-lists are seeded usage + reviewed safe headroom, not minimal usage). Re-confirm no regression; plus the 12 DG1-final requirements, on the same candidate."
+          "note": "DG1 round 10: re-review after the round-9 all-PASS that raised two Low non-mandatory findings. Verify F-DG1-130 (the native-loader member crypto.setEngine of the allow-listed node:crypto is now banned by rule 1, with an exhaustive member-audit of the 7 allow-listed built-ins recorded) and F-DG1-131 (D-055 wording corrected: allow-lists are seeded usage + reviewed safe headroom, not minimal usage). Re-confirm no regression; plus the 12 DG1-final requirements, on the same candidate. OUTCOME: BLOCKED — qa FAIL (F-DG1-214 Medium: unit-web fails on Node 24; F-DG1-215 enumeration)."
+        },
+        {
+          "round": 11,
+          "candidate_id": "sha256:e5cc6ef982ba7d53ed80138c0cbaa0119bcfe8dcaad4e324b5dafdb6431afeb8",
+          "frozen_at": "2026-10-01T15:18:40Z",
+          "source_commit": "32e6478de3c49b2c80d044b8a2d5d89f88c35f65",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG1/round-11/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG1/round-11/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG1/round-11/qa-verifier.json"
+          },
+          "note": "DG1 round 11: re-review after the round-10 BLOCK (qa FAIL). Verify F-DG1-214 (Medium — the unit-web suite now passes on Node 24 as well as Node 22, via a custom jsdom environment that keeps Node's native AbortController/AbortSignal; harness-only), F-DG1-132/215 (crypto.setEngine namespace-enumeration documented+pinned as residual (a)), and F-DG1-011 (D-055 version/overclaim corrected, with the Node 24.21.0 member re-audit recorded). Re-run the suites on BOTH Node 22 and Node 24. Plus the 12 DG1-final requirements, on the same candidate."
         }
       ],
       "gate_record": "docs/delivery/gates/DG1.json",
