@@ -7,6 +7,8 @@
 //    role, user and scope labels in English and Arabic, with no raw action code, camelCase key, JSON or role code.
 //  - F-DG1-001 (T-DG1-FE3): the edit form never offers `closed` (the API refuses it in P1; G6 governs closure), and
 //    the status hint no longer promises a close transition (English LTR and Arabic RTL).
+//  - F-DG1-210: after a create, GET /me is re-read so the server-granted derived assignment shows Edit/Archive and the
+//    audit trail without a reload (en and ar); nothing is granted on the client; a failed refresh never blocks.
 import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ROLES, TRANSFORMATION_STATUS_TRANSITIONS, type Permission, type TransformationStatus } from "@mth/shared";
@@ -25,6 +27,7 @@ import {
   renderApp,
   route,
 } from "../../test/fixtures.tsx";
+import { ME_REFRESH_TIMEOUT_MS } from "./TransformationCreatePage.tsx";
 import { P1_GOVERNED_STATUSES, offeredStatusOptions } from "./TransformationEditPage.tsx";
 
 beforeEach(() => {
@@ -480,4 +483,95 @@ describe("derived creator assignment on the audit trail (F-DG1-008)", () => {
       cleanup();
     }
   });
+});
+
+describe("effective permissions refresh after create (F-DG1-210)", () => {
+  /** What the server grants the creator after the create (the derived transformation-scope assignment, F-DG1-106). */
+  const DERIVED_GRANT = {
+    scope: { type: "transformation" as const, id: NEW_ID },
+    inheritsDownward: false,
+    permissions: [
+      "transformation.read",
+      "transformation.update",
+      "transformation.archive",
+      "audit.read",
+    ] as Permission[],
+  };
+
+  /**
+   * GET /me answers with the BU-scoped grants until the POST succeeded, then with the server's refreshed grants
+   * (`after`), exactly like the live API does once the derived assignment exists.
+   */
+  function scriptedMe(locale: "en" | "ar", after: "derived" | "unchanged" | "error") {
+    let createdOnServer = false;
+    const meRoute = route("GET", /\/api\/v1\/me$/, () => {
+      if (!createdOnServer || after === "unchanged") {
+        return { status: 200, body: makeMe(TL_BU_GRANTS, { preferredLocale: locale }) };
+      }
+      if (after === "error") return problem(503, "unavailable");
+      return { status: 200, body: makeMe([...TL_BU_GRANTS, DERIVED_GRANT], { preferredLocale: locale }) };
+    });
+    const create = route("POST", /\/api\/v1\/transformations$/, () => {
+      createdOnServer = true;
+      return { status: 201, body: created };
+    });
+    return { meRoute, create };
+  }
+
+  const detailRoute = route("GET", /\/api\/v1\/transformations\/[^/?]+$/, () => ({ status: 200, body: created }));
+
+  it("English: Edit, Archive and the audit trail appear after create, without a reload", async () => {
+    const { meRoute: me, create } = scriptedMe("en", "derived");
+    const { requests } = mockApi(me, buRoute, create, detailRoute, auditEmpty);
+    const { router } = renderApp("/transformations/new", { i18n: createI18n("en") });
+    await submitCreateForm({ unit: /^Business unit/, name: /^Name/, submit: "Create transformation" });
+    await waitFor(() => expect(router.state.location.pathname).toBe(`/transformations/${NEW_ID}`));
+    expect(await screen.findByRole("link", { name: "Edit" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Archive" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Audit trail" })).toBeTruthy();
+    // /me was re-read after the POST (the refreshed server answer), and the page was never reloaded (same router).
+    const postAt = requests.findIndex((r) => r.method === "POST");
+    expect(requests.slice(postAt + 1).some((r) => r.method === "GET" && r.url === "/api/v1/me")).toBe(true);
+    expect(document.documentElement.dir).toBe("ltr");
+  });
+
+  it("Arabic (RTL): the same controls and the audit trail appear after create, without a reload", async () => {
+    const { meRoute: me, create } = scriptedMe("ar", "derived");
+    mockApi(me, buRoute, create, detailRoute, auditEmpty);
+    const { router } = renderApp("/transformations/new", { i18n: createI18n("ar") });
+    await submitCreateForm({ unit: /^وحدة العمل/, name: /^الاسم/, submit: "إنشاء التحوّل" });
+    await waitFor(() => expect(router.state.location.pathname).toBe(`/transformations/${NEW_ID}`));
+    expect(await screen.findByRole("link", { name: "تعديل" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "أرشفة" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "سجل التدقيق" })).toBeTruthy();
+    expect(document.documentElement.dir).toBe("rtl");
+  });
+
+  it("does not over-grant: if the refreshed server answer adds nothing, Archive and the audit trail stay hidden", async () => {
+    const { meRoute: me, create } = scriptedMe("en", "unchanged");
+    const { requests } = mockApi(me, buRoute, create, detailRoute, auditEmpty);
+    const { router } = renderApp("/transformations/new", { i18n: createI18n("en") });
+    await submitCreateForm({ unit: /^Business unit/, name: /^Name/, submit: "Create transformation" });
+    await waitFor(() => expect(router.state.location.pathname).toBe(`/transformations/${NEW_ID}`));
+    expect(await screen.findByRole("heading", { level: 1 })).toBeTruthy();
+    await screen.findByText("Transformation created as a draft. It is not submitted or approved.");
+    expect(screen.queryByRole("link", { name: "Edit" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Archive" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Audit trail" })).toBeNull();
+    expect(requests.some((r) => r.url.includes("/audit"))).toBe(false);
+  });
+
+  it("a failed /me refresh never blocks the navigation; the UI stays fail-safe (no controls offered)", async () => {
+    const { meRoute: me, create } = scriptedMe("en", "error");
+    mockApi(me, buRoute, create, detailRoute, auditEmpty);
+    const { router } = renderApp("/transformations/new", { i18n: createI18n("en") });
+    await submitCreateForm({ unit: /^Business unit/, name: /^Name/, submit: "Create transformation" });
+    // useMeQuery retries a 5xx twice with back-off (~3 s); the create page waits at most ME_REFRESH_TIMEOUT_MS.
+    await waitFor(() => expect(router.state.location.pathname).toBe(`/transformations/${NEW_ID}`), {
+      timeout: ME_REFRESH_TIMEOUT_MS + 1_000,
+    });
+    await screen.findByText("Transformation created as a draft. It is not submitted or approved.");
+    expect(screen.queryByRole("button", { name: "Archive" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Audit trail" })).toBeNull();
+  }, 15_000);
 });

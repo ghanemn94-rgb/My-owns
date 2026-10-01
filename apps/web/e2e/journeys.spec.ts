@@ -368,7 +368,7 @@ test("a user without roles sees no Administration and no business records", asyn
   expect(foreign).toEqual([]);
 });
 
-test("a business-unit Lead creates a record; its audit trail shows the derived access grant localized (F-DG1-008)", async ({
+test("a business-unit Lead creates a record: Edit/Archive and the audit trail appear without a reload (F-DG1-210), the derived grant localized (F-DG1-008)", async ({
   page,
 }, info) => {
   const lang = langOf(info);
@@ -383,12 +383,22 @@ test("a business-unit Lead creates a record; its audit trail shows the derived a
   await page
     .getByLabel(fieldLabel(lang, "transformations.field.name"))
     .fill(`Synthetic ${lang.toUpperCase()} lead-created record`);
+  // A marker on `window` survives in-app navigation but not a document reload: it proves no reload happened below.
+  await page.evaluate(() => {
+    (window as unknown as { __mthNoReload?: boolean }).__mthNoReload = true;
+  });
   await page.getByRole("button", { name: tr(lang, "transformations.form.create"), exact: true }).click();
   await page.waitForURL(/\/transformations\/[0-9a-f-]{36}$/);
-  // Open the record afresh (as the reviewers' reproduction does): the session's grants, read at sign-in, do not yet
-  // include the derived assignment, and the audit trail needs audit.read on the record (reported in the T-DG1-FE4
-  // handback as a separate observation; not part of F-DG1-008).
-  await page.reload();
+  // F-DG1-210: the create page re-reads GET /me after the 201, so the server-granted derived transformation-scope TL
+  // assignment shows Edit, Archive and the audit trail straight away, WITHOUT a reload (previously hidden until one).
+  const header = page.locator("main#main");
+  await expect(header.getByRole("link", { name: exactly(tr(lang, "common.action.edit")) })).toBeVisible();
+  await expect(header.getByRole("button", { name: exactly(tr(lang, "transformations.archive.action")) })).toBeVisible();
+  expect(await page.evaluate(() => (window as unknown as { __mthNoReload?: boolean }).__mthNoReload === true)).toBe(
+    true,
+  );
+  await shot(page, lang, "17a-lead-created-controls");
+  await expectAccessible(page, lang, "lead-created-controls");
   const trail = page.getByRole("region", { name: tr(lang, "transformations.audit.title"), exact: true });
   const derivedLabel = tr(lang, "transformations.audit.actions.scoped_assignment_create_derived");
   const row = trail.getByRole("row").filter({ has: page.getByRole("cell", { name: derivedLabel, exact: true }) });
@@ -423,6 +433,9 @@ test("a business-unit Lead creates a record; its audit trail shows the derived a
   ]) {
     expect(text).not.toContain(raw);
   }
+  expect(await page.evaluate(() => (window as unknown as { __mthNoReload?: boolean }).__mthNoReload === true)).toBe(
+    true,
+  );
   await trail.scrollIntoViewIfNeeded();
   await shot(page, lang, "17-lead-audit-trail");
   await expectAccessible(page, lang, "lead-audit-trail");
