@@ -527,6 +527,57 @@ export class AiKnowledgeService {
 
   // ---------------------------------------------------------------------------------------------------------
   /**
+   * SQL form of the citation re-check for ONE (type, id) pair given as text expressions (SEC-P34R-05): the reader may see
+   * the cited record — the same per-type rule as {@link visibleCitationKeys} (the owning module's read rule: classification,
+   * finance-domain clearance, workstream reach, project-wide registers, the documents list's grant coverage). Unknown types
+   * and malformed ids are not visible (deny by default). Used to filter AI proposals by their target and by the records
+   * their run gave the model, inside the list query (access-matrix §2.5, §2.6).
+   */
+  refVisibleSql(ctx: RequestContext, projectId: string, typeText: SQL, idText: SQL): SQL {
+    const uuid = sql`(${idText})::uuid`;
+    const isUuid = sql`coalesce((${idText}) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', false)`;
+    const no = sql`false`;
+    // CASE, not AND: PostgreSQL does not guarantee the evaluation order of AND, and a malformed id must never reach `::uuid`.
+    const ifUuid = (cond: SQL) => sql`(case when ${isUuid} then (${cond}) else false end)`;
+    const rec = (type: string, permission: string | null, extra: SQL = sql`true`) =>
+      permission && !this.can(ctx, permission, projectId) ? no : ifUuid(sql`${this.readable(ctx, projectId, type, uuid)} and ${extra}`);
+    const row = (table: string, permission: string, extra: SQL = sql`true`) =>
+      this.can(ctx, permission, projectId) ? ifUuid(sql`exists (select 1 from ${sql.identifier(table)} hub_rr where hub_rr.id = ${uuid} and hub_rr.project_id = ${projectId}) and ${extra}`) : no;
+    const raw = (c: string) => sql.raw(c) as unknown as PgColumn;
+    const doc = this.can(ctx, 'documents.document.read', projectId)
+      ? ifUuid(sql`exists (select 1 from document hub_rd where hub_rd.id = ${uuid} and hub_rd.project_id = ${projectId} and hub_rd.deleted_at is null
+          and ${this.policy.visibilitySql(ctx, projectId, { classification: raw('hub_rd.classification'), room: raw('hub_rd.room_id') })}
+          and ${this.policy.grantSql(ctx, 'documents.document.read', projectId, { room: raw('hub_rd.room_id') })})`)
+      : no;
+    const decisionWide = this.projectWide(ctx, 'governance.decision.read', projectId);
+    const statusDims = this.can(ctx, 'portfolio.dashboard.read', projectId) ? 'portfolio.dashboard.read' : 'portfolio.project.read';
+    const computationNode = sql`substring((${idText}) from '^delay_impact:([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}):')`;
+    const computation = this.can(ctx, 'planning.plan.read', projectId)
+      ? sql`(case when ${computationNode} is not null then ${this.readable(ctx, projectId, 'task', sql`(${computationNode})::uuid`)} else false end)`
+      : no;
+    return sql`(case ${typeText}
+      when 'document' then ${doc}
+      when 'task' then ${rec('task', 'planning.plan.read')}
+      when 'milestone' then ${rec('milestone', 'planning.plan.read')}
+      when 'workstream' then ${rec('workstream', 'planning.plan.read')}
+      when 'decision' then ${rec('decision', 'governance.decision.read')}
+      when 'action_item' then ${rec('action_item', 'governance.decision.read', decisionWide)}
+      when 'approval_request' then ${rec('approval_request', 'governance.decision.read', decisionWide)}
+      when 'gate_definition' then ${row('gate_definition', 'gates.gate.read', this.policy.grantSql(ctx, 'gates.gate.read', projectId, {}))}
+      when 'closing_condition' then ${row('closing_condition', 'jv.deal.read', this.projectWide(ctx, 'jv.deal.read', projectId))}
+      when 'tsa_service' then ${rec('tsa_service', 'readiness.register.read')}
+      when 'readiness_check' then ${rec('readiness_check', 'readiness.register.read')}
+      when 'status_dimension' then ${row('status_dimension', statusDims, this.policy.grantSql(ctx, statusDims, projectId, {}))}
+      when 'partner' then ${rec('partner', 'jv.partner.read', this.projectWide(ctx, 'jv.partner.read', projectId))}
+      when 'deal_scenario' then ${rec('deal_scenario', 'jv.partner.read', this.projectWide(ctx, 'jv.partner.read', projectId))}
+      when 'financial_model_version' then ${rec('financial_model_version', 'finance.record.read')}
+      when 'financial_snapshot' then ${rec('financial_snapshot', 'finance.record.read')}
+      when 'computation' then ${computation}
+      else false end)`;
+  }
+
+  // ---------------------------------------------------------------------------------------------------------
+  /**
    * Visibility re-check of cited items for the CURRENT principal (before output and on every read — §12.1).
    * Returns the set of citation keys still visible. Unknown types are treated as not visible (deny by default).
    */
