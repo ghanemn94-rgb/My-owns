@@ -1,0 +1,333 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG1",
+  "round": 1,
+  "candidate_id": "sha256:7fcc4943694dc9d7d207b18b53c42eab1efa131da46b898f733ae20298b39367",
+  "source_commit": "85e5bbd601643d21b7420c704f99176d9e94b35a",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG1-T-DG1-REV-SEC-R1-code-security-reviewer-20261001T062250Z-02a4db71",
+    "session_id": "02a4db71-d919-4345-93f4-a5ec005ff766"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "frontend-ux-engineer",
+    "devops-engineer",
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "code-security-reviewer authored no implementation in the DG1 scope (apps/**, packages/**, tools/deps/**, deploy/**, .github/workflows/ci.yml, docs/api/openapi.yaml, register). The verdict was formed from direct source review, a disposable clone of the frozen candidate and a throwaway PostgreSQL cluster, before reading any other round-1 review record (none was read)."
+  },
+  "assignment": "docs/delivery/assignments/DG1/round-1/review-code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-DLV-025",
+    "REQ-DLV-033",
+    "REQ-DLV-042",
+    "REQ-S16-001",
+    "REQ-S16-003",
+    "REQ-S16-004",
+    "REQ-S19-004",
+    "REQ-S19-006"
+  ],
+  "checks_run": [
+    {
+      "id": "C01-candidate",
+      "procedure": "Confirm HEAD, complete clone, recomputed candidate ID; confirm the post-freeze commit touches only excluded metadata; recompute the candidate in a disposable clone checked out at the freeze commit.",
+      "command": "git rev-parse HEAD; git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG1; git diff --stat 85e5bbd..HEAD; (clone at 85e5bbd) node tools/gates/candidate.mjs --stage DG1",
+      "environment": "/home/user/My-owns (HEAD 863505e, metadata-only freeze commit) and $TMPDIR/review-sec (git clone --no-local, checkout 85e5bbd); Node 22.22.2",
+      "expected": "Complete clone; candidate sha256:7fcc4943...; only excluded docs/delivery paths changed after 85e5bbd",
+      "actual": "is-shallow=false; candidate_id sha256:7fcc4943694dc9d7d207b18b53c42eab1efa131da46b898f733ae20298b39367 (371 files) in both trees; 863505e changes only docs/delivery/{assignments,candidates,stages.json}",
+      "exit_status": 0,
+      "result": "PASS"
+    },
+    {
+      "id": "C02-dg0-historical",
+      "procedure": "Validate the preceding gate DG0 historically.",
+      "command": "node tools/gates/validate.mjs --stage DG0 --historical",
+      "environment": "/home/user/My-owns, Node 22.22.2",
+      "expected": "PASS gate DG0 (historical)",
+      "actual": "PASS gate DG0 (historical)",
+      "exit_status": 0,
+      "result": "PASS"
+    },
+    {
+      "id": "C03-typecheck",
+      "procedure": "Type-check every workspace package.",
+      "command": "pnpm -r typecheck",
+      "environment": "disposable clone at 85e5bbd with the installed node_modules copied in; offline; Node 22.22.2, pnpm 10.33.0",
+      "expected": "exit 0",
+      "actual": "all packages Done; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-1/pnpm_-r_typecheck.log"]
+    },
+    {
+      "id": "C04-build",
+      "procedure": "Build every workspace package (api, worker, web, packages).",
+      "command": "pnpm -r build",
+      "environment": "disposable clone at 85e5bbd; offline",
+      "expected": "exit 0",
+      "actual": "all builds Done (vite web bundle built); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-1/pnpm_-r_build.log"]
+    },
+    {
+      "id": "C05-lint",
+      "procedure": "ESLint with zero warnings.",
+      "command": "pnpm lint",
+      "environment": "disposable clone at 85e5bbd; offline",
+      "expected": "exit 0",
+      "actual": "no output; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-1/pnpm_lint.log"]
+    },
+    {
+      "id": "C06-openapi-lint",
+      "procedure": "Validate the OpenAPI contract.",
+      "command": "pnpm openapi:lint",
+      "environment": "disposable clone at 85e5bbd; offline",
+      "expected": "PASS, OpenAPI 3.1, 33 operations",
+      "actual": "PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 33 operations",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S19-006"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-1/pnpm_openapi_lint.log"]
+    },
+    {
+      "id": "C07-no-cdn",
+      "procedure": "Scan apps and packages for public CDN references.",
+      "command": "pnpm check:no-cdn",
+      "environment": "disposable clone at 85e5bbd; offline",
+      "expected": "PASS",
+      "actual": "PASS no-cdn: scanned apps, packages",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-1/pnpm_check_no-cdn.log"]
+    },
+    {
+      "id": "C08-unit",
+      "procedure": "Unit suites (unit-node + unit-web).",
+      "command": "pnpm test",
+      "environment": "disposable clone at 85e5bbd; offline",
+      "expected": "all pass",
+      "actual": "Test Files 15 passed (15); Tests 130 passed (130)",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-1/pnpm_test.log"]
+    },
+    {
+      "id": "C09-integration",
+      "procedure": "Full integration suite against a disposable PostgreSQL (global setup creates a fresh database, applies all migrations through the real mth-db CLI as mth_owner, runs as mth_app). Repeated 3 times for determinism.",
+      "command": "TEST_DATABASE_ADMIN_URL=postgresql://postgres@127.0.0.1:54391/postgres pnpm test:integration   (x3, via withpg.sh)",
+      "environment": "disposable clone at 85e5bbd; throwaway PostgreSQL 16.13 cluster (initdb under $TMPDIR, trust auth, 127.0.0.1:54391, fsync=off), removed afterwards",
+      "expected": "exit 0; every contract operation exercised",
+      "actual": "Run 1: 2 failed / 179 passed + 1 unhandled error (contract coverage: getBrandingTokens not exercised; transformations duplicate-code audit count 13 vs 11; worker maintenance 57P01). Runs 2 and 3: 1 failed / 180 passed (contract coverage only). 6 migrations applied to a fresh database each run.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "requirements": ["REQ-S19-006", "REQ-S19-004", "REQ-DLV-033"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/integration.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/integration-run2.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/integration-run3.log"
+      ]
+    },
+    {
+      "id": "C10-gate-agent-tooling",
+      "procedure": "DG0 delivery controls still hold after the DG1 changes: run the gate and agent tooling suites; review the DG1 diff of tools/gates, tools/agents, .claude, delivery-gates.yml.",
+      "command": "node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs; git diff --stat 1e4c0226..85e5bbd -- tools/gates tools/agents .claude .github/workflows/delivery-gates.yml",
+      "environment": "disposable clone at 85e5bbd; Node 22.22.2",
+      "expected": "all pass; no weakening",
+      "actual": "tests 105, pass 105, fail 0. The only control change is tools/agents/agent_settings.py adding tools/deps to COMMON_DENY (a strengthening); tools/gates and delivery-gates.yml unchanged.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-1/gates-agents-tests.log"]
+    },
+    {
+      "id": "C11-installer-acceptance",
+      "procedure": "Run the REQ-DLV-042 installer acceptance suite; first with the environment's default (read-only) pnpm store, then with a writable store in $TMPDIR.",
+      "command": "tools/deps/tests/install-sandbox.test.sh; npm_config_store_dir=$TMPDIR/pnpm-store tools/deps/tests/install-sandbox.test.sh",
+      "environment": "disposable clone at 85e5bbd; bubblewrap present; no network; reviewer sandbox (HOME read-only)",
+      "expected": "7/7",
+      "actual": "Default store: 6 pass / 1 fail (create failed with EROFS on the read-only store; AC-2 negative and AC-3(b) still reported PASS = vacuous, F-DG1-111). Writable store: 7 passed, 0 failed, exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-042"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/install-sandbox-test.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/install-sandbox-test-writable-store.log"
+      ]
+    },
+    {
+      "id": "C12-installer-containment",
+      "procedure": "Probe what package code can reach from inside the installer sandbox: environment, capabilities, writes to repository control paths, remount attempts.",
+      "command": "FAKE_ORCH_SECRET=... tools/deps/install-sandbox.sh --root <clone> run -- bash -c '<env names; CapEff; write .git/hooks, .claude, tools/gates, .github; mount tmpfs; remount / rw>'",
+      "environment": "disposable clone; bubblewrap; uid 0; values of credentials were never printed (names only)",
+      "expected": "cleared environment; control paths read-only; capabilities dropped",
+      "actual": "Credentials visible by name (GH_TOKEN, GITHUB_TOKEN, AWS_SECRET_ACCESS_KEY, CLOUDSDK_AUTH_ACCESS_TOKEN, CLAUDE_CODE_MESSAGING_TOKEN, FAKE_ORCH_SECRET); CapEff 000001ffffffffff; .git/hooks/pre-commit, .claude/*, tools/gates/*, .github/workflows/* all writable; new tmpfs mount succeeds; remount of / rw refused.",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": ["REQ-DLV-042"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/install-sandbox-probe.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/install-sandbox-caps-probe.log"
+      ]
+    },
+    {
+      "id": "C13-mutation-invariant-plants",
+      "procedure": "Plant six defects in the clone, one at a time, and run the full integration suite each time: remove the audit write of transformation archive, business-unit update, preferences update and assignment revoke; drop If-Match from user update; drop the business_unit.manage check from BU create.",
+      "command": "plant.sh <label> <file> <perl substitution> (applies, runs pnpm test:integration on a fresh DB, reverts)",
+      "environment": "disposable clone; throwaway PostgreSQL 16.13",
+      "expected": "each plant is caught by at least one dedicated test",
+      "actual": "6/6 caught (transformations archive, organizations BU update, identity preferences, admin revoke, admin user disable If-Match, organizations BU create authz).",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/plant-no-audit-archive.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/plant-no-audit-bu-update.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/plant-no-audit-prefs.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/plant-no-audit-revoke.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/plant-no-ifmatch-user.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/plant-no-authz-bu-create.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/plant.sh.txt"
+      ]
+    },
+    {
+      "id": "C14-cross-scope",
+      "procedure": "Independent ADR-0006 probe: for 10 grant cases (TO org/BU/child BU, AUD BU, TL org/BU, SP transformation, ADM_TECH, ADM_ACCESS, TO other org) compare the SQL-filtered list with per-record reads, check siblings never cross, and check cross-scope PATCH and audit reads return 404; plus TL@BU create-then-read.",
+      "command": "npx vitest run --project integration apps/api/test/integration/repro-scope-consistency.test.ts (copied into the clone)",
+      "environment": "disposable clone; throwaway PostgreSQL 16.13",
+      "expected": "list == read == expected set for every case; 404 on cross-scope write/audit",
+      "actual": "11/11 pass: list and read agree in every case, siblings and other organizations never cross, technical admins see no business records, cross-scope PATCH/audit 404. Logged defect: TL@BU create 201 then read-back 404 (F-DG1-106).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/repro-scope-consistency.test.ts",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/repro-scope-consistency.log"
+      ]
+    },
+    {
+      "id": "C15-oidc-login-csrf",
+      "procedure": "Reproduce whether the OIDC state is bound to the initiating browser (attacker obtains code+state, victim browser opens the callback).",
+      "command": "npx vitest run --project integration apps/api/test/integration/repro-oidc-login-csrf.test.ts (copied into the clone)",
+      "environment": "disposable clone; throwaway PostgreSQL 16.13; local fake IdP with real openid-client validation",
+      "expected": "callback refused without the initiating browser's binding",
+      "actual": "callback 302; /auth/login sets no cookie; victim's browser signed in as attacker-sub; victim's original session 401 (F-DG1-103)",
+      "exit_status": 0,
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/repro-oidc-login-csrf.test.ts",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/repro-oidc-login-csrf.log"
+      ]
+    },
+    {
+      "id": "C16-module-boundary-lint",
+      "procedure": "Plant boundary violations in src/modules/transformations and run architecture.test.ts.",
+      "command": "npx vitest run --project unit-node apps/api/src/architecture.test.ts (per plant)",
+      "environment": "disposable clone",
+      "expected": "every bypass detected",
+      "actual": "Detected: static deep import, literal dynamic import, re-export, disallowed module. Not detected: createRequire(...) and computed import() (F-DG1-109).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-003"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-1/plant-module-boundary.log"]
+    },
+    {
+      "id": "C17-ci-needs",
+      "procedure": "REQ-DLV-025 structure check plus negative cases: removed needs, rogue job, unknown need, job-level if: always(), job-level if: !cancelled().",
+      "command": "node deploy/scripts/check-ci-needs.mjs (on ci.yml and on 5 planted variants)",
+      "environment": "disposable clone",
+      "expected": "OK on ci.yml; FAIL on every variant",
+      "actual": "OK on ci.yml (5 jobs, all reach delivery-gates). N1-N3 rejected (exit 1). N4 (if: always()) and N5 (if: !cancelled()) accepted with exit 0 (F-DG1-107).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-025"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/check-ci-needs-negative.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/ci-structure-checks.log"
+      ]
+    },
+    {
+      "id": "C18-packaging-checks",
+      "procedure": "Run the packaging checks of the CI images job offline: .env.example names-only, SBOM up to date, image digests pinned.",
+      "command": "node deploy/scripts/generate-env-example.mjs --check; node licenses/generate-sbom.mjs --check; node deploy/scripts/pin-images.mjs --check",
+      "environment": "disposable clone; offline",
+      "expected": "all exit 0",
+      "actual": "env-example OK (21 names, no values, exit 0); SBOM STALE (exit 1, lockfile hash only); pin-images 10 problems (exit 1) (F-DG1-108)",
+      "exit_status": 1,
+      "result": "FAIL",
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-1/ci-structure-checks.log"]
+    },
+    {
+      "id": "C19-secret-scan",
+      "procedure": "Scan tracked files (excluding trading_agent and delivery records) for private keys, cloud/GitHub/API tokens and literal passwords; check .env.example, the Keycloak realm and the dev seed for values.",
+      "command": "git ls-files | xargs grep -I -E '(AKIA...|BEGIN ... PRIVATE KEY|ghp_...|sk-...|xox[bp]-|password\\s*[:=]\\s*\"...\")'; grep on .env.example, deploy/keycloak/realm-mth-test.json, packages/db/seeds/dev/synthetic-dev-users.json",
+      "environment": "/home/user/My-owns at HEAD (candidate paths)",
+      "expected": "no secret values",
+      "actual": "No matches (only the documented ci-only-not-a-secret CI database password). Realm credentials are ${...} placeholders; .env.example has names only; the seed has no credentials.",
+      "exit_status": 0,
+      "result": "PASS"
+    },
+    {
+      "id": "C20-compose-no-egress",
+      "procedure": "Compose clean start, test-IdP login and the no-egress variant smoke (deploy/scripts/verify-stack.sh).",
+      "command": "docker info",
+      "environment": "reviewer sandbox",
+      "expected": "a usable Docker daemon",
+      "actual": "permission denied on /var/run/docker.sock: the Compose stack and the no-egress smoke could not be run. Reviewed statically only (non-root image uid 10001, read_only, cap_drop ALL, no-new-privileges, file secrets, internal network variant).",
+      "exit_status": 1,
+      "result": "BLOCKED"
+    },
+    {
+      "id": "C21-source-review",
+      "procedure": "Direct review of the full files in scope: access policy/rules/assignments/denials, identity (oidc, sessions, routes, users), organization, transformations, admin, audit, platform (hooks, idempotency, cursor, http, validation), server.ts, migrations 0001-0006, worker relay/handlers/queues, config loader, Dockerfile/entrypoint/Compose, ci.yml, install-sandbox.sh, modules.ts, architecture.test.ts; web token handling.",
+      "environment": "/home/user/My-owns at the frozen candidate (read-only)",
+      "expected": "no unaddressed security or integrity defect",
+      "actual": "Sound: single policy function + SQL scope filter used by every list/read/write; registration-time access declaration and response-time fail-closed guard; 404/403 semantics; SoD trigger on role/permission/role_permission and policy guard; append-only audit (INSERT/SELECT grant + UPDATE/DELETE/TRUNCATE triggers); If-Match 428/409 with row locks; transactional outbox with SKIP LOCKED, deterministic job id, consumer ledger, bounded retry + dead letter; Idempotency-Key with advisory lock; PKCE+nonce; hashed session tokens; HMAC CSRF + Origin check; strict CSP; dev login refused with NODE_ENV=production; no XSS sinks in apps/web. Defects: F-DG1-103, F-DG1-106, F-DG1-112 (and tooling F-DG1-102, 104, 107, 109, 111).",
+      "exit_status": null,
+      "result": "FAIL"
+    }
+  ],
+  "findings": [
+    "F-DG1-101",
+    "F-DG1-102",
+    "F-DG1-103",
+    "F-DG1-104",
+    "F-DG1-105",
+    "F-DG1-106",
+    "F-DG1-107",
+    "F-DG1-108",
+    "F-DG1-109",
+    "F-DG1-110",
+    "F-DG1-111",
+    "F-DG1-112"
+  ],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG1/round-1/code-security-reviewer.findings.json",
+    "docs/delivery/reviews/DG1/round-1/code-security-reviewer.md",
+    "docs/delivery/test-evidence/DG1/code-security/round-1/integration.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-1/integration-run2.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-1/integration-run3.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-1/install-sandbox-probe.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-1/install-sandbox-caps-probe.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-1/repro-oidc-login-csrf.test.ts",
+    "docs/delivery/test-evidence/DG1/code-security/round-1/repro-oidc-login-csrf.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-1/repro-scope-consistency.test.ts",
+    "docs/delivery/test-evidence/DG1/code-security/round-1/repro-scope-consistency.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-1/check-ci-needs-negative.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-1/ci-structure-checks.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-1/plant-module-boundary.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-1/gates-agents-tests.log"
+  ],
+  "reviewed_at": "2026-10-01T06:36:40Z",
+  "summary": "FAIL. The product core is well built and the authorization/audit/concurrency invariants held under independent cross-scope probes and six planted defects. But the frozen candidate's integration suite fails (contract coverage of getBrandingTokens, High), the REQ-DLV-042 installer does not contain dependency code (credentials pass through, repo control paths writable, High), OIDC state is not browser-bound (login CSRF, Medium), CI does not use the installer, REQ-S16-003 is marked complete at DG1 although three named modules do not exist, and the CI images job cannot pass. Compose/no-egress checks are BLOCKED (no Docker daemon).",
+  "narrative": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.md"
+}

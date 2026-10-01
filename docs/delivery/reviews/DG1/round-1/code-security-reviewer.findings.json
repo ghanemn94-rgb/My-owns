@@ -1,0 +1,334 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG1-101",
+      "stage_id": "DG1",
+      "requirement": "REQ-S19-006",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "The integration suite fails on the frozen candidate: the contract test does not exercise getBrandingTokens (33rd operation), and the cited contract-test evidence predates it",
+      "reproduction": "Disposable clone at 85e5bbd (candidate sha256:7fcc4943 recomputed), fresh PostgreSQL 16.13 cluster: `TEST_DATABASE_ADMIN_URL=postgresql://postgres@127.0.0.1:54391/postgres pnpm test:integration` -> exit 1 in 3/3 runs. apps/api/test/integration/contract/contract.test.ts:252-254 `covers every operation with at least one success...` fails: `expected [ 'getBrandingTokens' ] to deeply equal []`. Commit 0b42847 added the operation (docs/api/openapi.yaml, apps/api/src/modules/admin/branding.ts:32-37) and states 'Integration contract test (DB) verified by the reviewers', i.e. the integration suite was not run after the change. The register evidence for REQ-S19-006 ('32 operations; contract tests 8/8') and for REQ-DLV-033/REQ-S19-004 (docs/delivery/test-evidence/DG1/qa/T-DG1-QA-authoring/02-pnpm-test-integration.log, committed 2026-09-30 23:54, before 0b42847 at 2026-10-01 06:13) predates the frozen contract. The CI `integration` job would fail on this candidate.",
+      "expected": "Every P1 operation in the frozen OpenAPI contract (33) passes the contract test against the implementation; `pnpm test:integration` exits 0 on the frozen candidate, and the register cites evidence produced on it.",
+      "actual": "`pnpm test:integration` exits 1 (1 failed / 180 passed, deterministic); getBrandingTokens is never called through the contract-validating harness; register evidence is stale (32 operations).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/integration.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/integration-run2.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/integration-run3.log",
+        "apps/api/test/integration/contract/contract.test.ts",
+        "apps/api/src/modules/admin/branding.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:36:40Z",
+          "status": "OPEN",
+          "note": "Raised in DG1 round 1 by code-security-reviewer; reproduced 3/3 on a disposable PostgreSQL."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-102",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-042",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "The sandboxed installer does not contain dependency code: the orchestrator's full environment (credentials) is passed in with host network, and the repository's control paths (.git/hooks, .claude, tools/gates, .github) are writable",
+      "reproduction": "tools/deps/install-sandbox.sh:76-96 builds the bwrap argv without --clearenv (and without --unshare-user/--cap-drop), and :82 binds the WHOLE repository writable. Probe (disposable clone, writable pnpm store in $TMPDIR): `FAKE_ORCH_SECRET=... tools/deps/install-sandbox.sh --root <clone> run -- bash -c 'env; grep CapEff /proc/self/status; echo > .git/hooks/pre-commit; echo > .claude/x; echo > tools/gates/x; echo > .github/workflows/x'`. Result: FAKE_ORCH_SECRET and the host's GH_TOKEN, GITHUB_TOKEN, AWS_SECRET_ACCESS_KEY, CLOUDSDK_AUTH_ACCESS_TOKEN, CLAUDE_CODE_MESSAGING_TOKEN are all visible inside (names recorded only, values never printed); uid 0 with CapEff 000001ffffffffff; all four control paths are WRITABLE (a new tmpfs mount also succeeds; a remount of / rw was refused in this container). Failure scenario: an allow-listed lifecycle script, or any package code executed by `run` (D-046: build/typecheck/lint/test 'only inside the sandbox' -- vitest, eslint, vite plugins), reads the orchestrator's credentials and either sends them over the shared host network (an allow-listed host such as the GitHub API or the package registry suffices) or writes .git/hooks/pre-commit, which then executes UNSANDBOXED with the orchestrator's privileges at the next commit, or edits tools/gates/** or .claude/** to weaken the delivery controls. This defeats the stated purpose (D-046: 'a dependency's install script would otherwise run against the real filesystem and secrets').",
+      "expected": "REQ-DLV-042: the orchestrator never runs package code with its own privileges. Inside the sandbox: a cleared environment (only the variables pnpm/node need), only the dependency target trees (node_modules, build outputs) and the package store writable, with .git, .claude, tools/gates, tools/agents, tools/deps, .github and other control paths re-bound read-only (or a separate working copy), capabilities dropped (--unshare-user or --cap-drop ALL), and acceptance tests that prove each of these.",
+      "actual": "All host environment variables, including credentials, reach dependency code; .git/hooks, .claude, tools/gates and .github are writable from inside; the process keeps the full root capability set.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/install-sandbox-probe.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/install-sandbox-caps-probe.log",
+        "tools/deps/install-sandbox.sh",
+        "docs/delivery/decisions.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:36:40Z",
+          "status": "OPEN",
+          "note": "Raised in DG1 round 1 by code-security-reviewer; probe reproduced in a disposable clone."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-103",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-007",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "OIDC login CSRF: the `state` is not bound to the browser that started the login, so a callback URL obtained by one user signs another browser in as that user",
+      "reproduction": "apps/api/src/modules/identity/routes.ts:218-231 (GET /auth/login) stores state/nonce/verifier server-side (oidc.ts:52-76) but sets NO browser-binding cookie; routes.ts:238-276 (GET /auth/callback) accepts any request carrying a valid unexpired state (oidc.ts:79-86), revokes the presenting browser's current session (routes.ts:130) and starts a new one. Repro docs/delivery/test-evidence/DG1/code-security/round-1/repro-oidc-login-csrf.test.ts (fake IdP harness, real openid-client validation): attacker calls /auth/login, authenticates at the IdP as attacker-sub, and stops; the victim's browser (holding its own valid session) opens /auth/callback?code=..&state=.. -> 302, /auth/login Set-Cookie = null, victim's browser now signed in as `attacker-sub`, victim's original session -> 401. PKCE does not help because the verifier is looked up by state on the server.",
+      "expected": "RFC 6749 §10.12 / OIDC Core §3.1.2.1: the state (or a separate value) is bound to the initiating user-agent, e.g. an HttpOnly, Secure, SameSite=Lax, __Host- prefixed, short-lived login cookie whose hash is stored with oidc_login_state and required (and cleared) at the callback; a callback without the matching cookie is refused and audited, and the presenting browser's existing session is not revoked.",
+      "actual": "Any browser that presents a valid code+state completes the login as the IdP user who authenticated, and loses its own session.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/repro-oidc-login-csrf.test.ts",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/repro-oidc-login-csrf.log",
+        "apps/api/src/modules/identity/routes.ts",
+        "apps/api/src/modules/identity/oidc.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:36:40Z",
+          "status": "OPEN",
+          "note": "Raised in DG1 round 1 by code-security-reviewer; reproduced with the fake-IdP harness."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-104",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-042",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "CI installs dependencies without the sandboxed installer (register: 'invoked by the orchestrator (and by CI) for every dependency install')",
+      "reproduction": ".github/workflows/ci.yml:46, :76, :101 and :130 run a plain `pnpm install --frozen-lockfile` in the verify, integration, e2e and images jobs; none calls tools/deps/install-sandbox.sh. The register row for REQ-DLV-042 (automation column) requires the wrapper for every dependency install, by the orchestrator AND by CI. The images job later receives registry secrets (ci.yml:151-162) in the same job whose installed packages already ran build steps.",
+      "expected": "Every CI dependency install goes through tools/deps/install-sandbox.sh frozen (bubblewrap installed on the runner, or the image/container equivalent), or the register/ADR records a reviewed, accepted CI-specific alternative.",
+      "actual": "CI relies only on pnpm 10's default lifecycle-script blocking; no sandbox, no read-only root.",
+      "evidence": [
+        ".github/workflows/ci.yml",
+        "docs/delivery/requirements.csv",
+        "tools/deps/install-sandbox.sh"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:36:40Z",
+          "status": "OPEN",
+          "note": "Raised in DG1 round 1 by code-security-reviewer (source review)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-105",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "REQ-S16-003 is marked IMPLEMENTED with final gate DG1, but three of the six modules its acceptance (A12) requires — workflows, formulas, reporting — do not exist",
+      "reproduction": "A12 (requirements.csv, REQ-S16-003): 'the six modules exist with separate test suites; a dependency-lint check fails on imports that bypass a module interface'. apps/api/src/modules/ contains access, admin, audit, identity, jobs, organization, platform, transformations only; workflows, kpi (formulas) and reporting are names in apps/api/src/modules.ts:34-45 with no directory, code or suite; packages/calc and packages/reporting contain only README.md. D-047 reads the DG1 deliverable as the architecture. What IS met (verified): the dependency-lint fails on static, dynamic and re-export deep imports and on a disallowed module (plant-module-boundary.log, cases A-C), and the eight P1-active modules have suites.",
+      "expected": "Either the requirement's final_gate moves to the stage where the last named module lands (P5/DG5), with the P1 increment 'boundaries + enforced lint + P1-active modules' recorded and the status not IMPLEMENTED at DG1, or the modules are delivered now. Building P2-P5 modules early is NOT recommended; the register should be re-staged.",
+      "actual": "Status IMPLEMENTED at DG1 for a requirement whose acceptance is only partly satisfiable until P5 (planned work labelled as delivered).",
+      "evidence": [
+        "docs/delivery/requirements.csv",
+        "apps/api/src/modules.ts",
+        "docs/delivery/decisions.md",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/plant-module-boundary.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:36:40Z",
+          "status": "OPEN",
+          "note": "Raised in DG1 round 1 by code-security-reviewer as the requested judgement on D-047."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-106",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-033",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "A Transformation Lead granted at business-unit scope can create a transformation (201) but cannot read, update or archive what it just created (404)",
+      "reproduction": "Policy rules (apps/api/src/modules/access/rules.ts:76-91): TL does not inherit downward, so a TL grant at BU a1 matches the BU target used by create (transformations/routes.ts:130-136, requireAction transformation.create on the BU) but never a transformation target (routes.ts:239, :376). Repro docs/delivery/test-evidence/DG1/code-security/round-1/repro-scope-consistency.test.ts, last case: TL@BU a1 POST /api/v1/transformations {businessUnitId: a1} -> 201; GET /api/v1/transformations/{newId} by the same user -> 404. The UI navigates to the new record after create, so the user meets a not-found page for a record they just created.",
+      "expected": "Create and subsequent read are consistent for the same grant: either transformation.create at BU scope also grants access to the created record (e.g. an automatic transformation-scope TL assignment for the creator, audited), or create requires the same scope rule that read uses, so the 201 is never followed by a 404.",
+      "actual": "201 on create, then 404 on read/update/archive for the creator.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/repro-scope-consistency.test.ts",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/repro-scope-consistency.log",
+        "apps/api/src/modules/access/rules.ts",
+        "apps/api/src/modules/transformations/routes.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:36:40Z",
+          "status": "OPEN",
+          "note": "Raised in DG1 round 1 by code-security-reviewer; reproduced on a disposable PostgreSQL."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-107",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-025",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "check-ci-needs.mjs can be bypassed: a job-level `if: always()` / `if: ${{ !cancelled() }}` makes a product job run after delivery-gates FAILED, and the check still reports OK",
+      "reproduction": "deploy/scripts/check-ci-needs.mjs:33-52 only verifies that every job reaches delivery-gates through `needs:`. In GitHub Actions a job-level status-check function (always(), !cancelled(), failure()) overrides the implicit success() and runs the job even when a needed job failed. Disposable clone: add `if: always()` under `verify:` (or `if: ${{ !cancelled() }}` under `images:`, which pushes images on protected branches) -> `node deploy/scripts/check-ci-needs.mjs` prints OK and exits 0 (check-ci-needs-negative.log N4, N5). The checker correctly rejects a removed `needs`, a rogue job and an unknown need (N1-N3). The current ci.yml is compliant.",
+      "expected": "The REQ-DLV-025 structural check fails any job (or the job chain to it) whose `if:` uses always(), !cancelled(), failure() or other status functions, or otherwise proves that each product job runs only when delivery-gates succeeded.",
+      "actual": "Status-function conditions pass the check unnoticed, so a later CI edit could silently re-enable product jobs after a failed gate.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/check-ci-needs-negative.log",
+        "deploy/scripts/check-ci-needs.mjs",
+        ".github/workflows/ci.yml"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:36:40Z",
+          "status": "OPEN",
+          "note": "Raised in DG1 round 1 by code-security-reviewer; bypass reproduced in a disposable clone."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-108",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-033",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The CI `images` job cannot pass on the candidate: image digests are unpinned (pin-images --check: 10 problems) and the SBOM check is stale after the lockfile change in 0b42847",
+      "reproduction": "Disposable clone at 85e5bbd: `node deploy/scripts/pin-images.mjs --check` -> exit 1 (postgres:18 in compose.yaml and ci.yml x2, quay.io/keycloak/keycloak:26.4 and mcr.microsoft.com/playwright:v1.56.1-noble not pinned in deploy/images.lock.json); `node licenses/generate-sbom.mjs --check` -> exit 1 'STALE' (only metadata drifts: mth:lockfile-sha256 3c94b771... -> f199a0e1... and the derived serialNumber, because 0b42847 added the @mth/design-tokens workspace link to apps/api without regenerating the SBOM; the package inventory is otherwise unchanged). Both run in .github/workflows/ci.yml:131-138, so the images job (clean start, test-IdP login and no-egress smoke) fails before it builds anything.",
+      "expected": "The CI pipeline defined for DG1 can pass on the frozen candidate: base and service images pinned by digest (ADR-0011), SBOM regenerated with every lockfile change.",
+      "actual": "pin-images --check exit 1 (10 problems); generate-sbom --check exit 1 (stale lockfile hash).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/ci-structure-checks.log",
+        "deploy/images.lock.json",
+        "licenses/sbom.cdx.json"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:36:40Z",
+          "status": "OPEN",
+          "note": "Raised in DG1 round 1 by code-security-reviewer. SBOM part: the lockfile change was the orchestrator's integration of 0b42847."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-109",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The module dependency-lint misses createRequire() and computed import() specifiers",
+      "reproduction": "apps/api/src/architecture.test.ts:100-102 relies on ts.preProcessFile, which sees only literal specifiers. Planted in a disposable clone as apps/api/src/modules/transformations/planted.ts: (D) `createRequire(import.meta.url)(\"../access/policy.ts\")` and (E) ``import(`../access/${p}.ts`)`` -> architecture.test.ts 9/9 PASS (not detected), while static, dynamic-literal, re-export and disallowed-module imports are detected (plant-module-boundary.log A-C).",
+      "expected": "The lint also rejects createRequire/require calls and non-literal import() inside src/modules (e.g. an AST walk or an ESLint no-restricted-syntax rule), so the boundary cannot be evaded by syntax.",
+      "actual": "Both evasion forms pass the lint.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/plant-module-boundary.log",
+        "apps/api/src/architecture.test.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:36:40Z",
+          "status": "OPEN",
+          "note": "Raised in DG1 round 1 by code-security-reviewer."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-110",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-033",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Flaky integration tests: a global audit-count assertion fails intermittently, and a worker test leaves a connection that the database drop terminates",
+      "reproduction": "Run 1 of 3 of `pnpm test:integration` (integration.log): apps/api/test/integration/transformations.test.ts:113-121 'rolls back record, audit and outbox together ... (duplicate code -> 409)' failed with `expected 13 to be 11`. It compares auditCount() (harness.ts, a count over the WHOLE audit_event table), so any concurrent or late audit write elsewhere breaks it. The same run reported an unhandled error 57P01 'terminating connection due to administrator command' originating in apps/worker/test/integration/maintenance.test.ts (a pg client still open when its scratch database is dropped WITH (FORCE)). Runs 2 and 3 did not show either.",
+      "expected": "Rollback assertions scoped to the request (e.g. audit rows with the duplicate request's request_id or record id, outbox rows for that code) and worker tests that close every pool before dropping their database; deterministic suite results.",
+      "actual": "1/3 runs fail on the audit-count assertion; 1/3 runs report an unhandled error.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/integration.log",
+        "apps/api/test/integration/transformations.test.ts",
+        "apps/worker/test/integration/maintenance.test.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:36:40Z",
+          "status": "OPEN",
+          "note": "Raised in DG1 round 1 by code-security-reviewer."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-111",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-042",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Installer acceptance tests AC-2 (negative) and AC-3 (would-change) pass vacuously when the preceding install step itself fails",
+      "reproduction": "tools/deps/tests/install-sandbox.test.sh:48-51 and :68-73 ignore the exit status of the `create` step. In this review's environment the default pnpm store was read-only, so every `create` failed (EROFS, rc 226): AC-2 'non-allow-listed postinstall did not run' still reported PASS (no install happened at all), and AC-3 'frozen install that would change the lockfile fails' still reported PASS (it failed for the missing lockfile, not for divergence); only the positive AC-2 case exposed the problem (install-sandbox-test.log, 6 pass / 1 fail). With a writable store the suite passes 7/7 (install-sandbox-test-writable-store.log).",
+      "expected": "Each negative case first asserts that its setup install succeeded (exit 0, lockfile present, fixture linked), so a negative result cannot come from an unrelated failure.",
+      "actual": "Two negative checks can pass without exercising the property they claim.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-1/install-sandbox-test.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-1/install-sandbox-test-writable-store.log",
+        "tools/deps/tests/install-sandbox.test.sh"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:36:40Z",
+          "status": "OPEN",
+          "note": "Raised in DG1 round 1 by code-security-reviewer."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-112",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "NODE_ENV=production accepts an http APP_BASE_URL, which silently drops the Secure flag and the __Host- prefix from the session cookie",
+      "reproduction": "packages/config/src/load.ts:129-145 accepts http: or https: for APP_BASE_URL regardless of NODE_ENV; apps/api/src/modules/identity/sessions.ts:277-279 and routes.ts:63-64 derive the cookie name and `secure` from that protocol. deploy/compose/compose.yaml:76-78 runs the api with NODE_ENV=production and a default APP_BASE_URL of http://localhost:3000. A production deployment with a mistyped http:// origin behind a TLS-terminating proxy would therefore issue a non-Secure, non-__Host- session cookie, contrary to ADR-0005 §3 ('HttpOnly; Secure; SameSite=Lax; Path=/, with the __Host- prefix in HTTPS deployments').",
+      "expected": "With NODE_ENV=production, APP_BASE_URL must be https (as OIDC_ISSUER_URL already is, load.ts:192-194), except for an explicit loopback host (localhost/127.0.0.1) used by the local Compose stack.",
+      "actual": "Any http origin is accepted in production.",
+      "evidence": [
+        "packages/config/src/load.ts",
+        "apps/api/src/modules/identity/sessions.ts",
+        "deploy/compose/compose.yaml"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:36:40Z",
+          "status": "OPEN",
+          "note": "Raised in DG1 round 1 by code-security-reviewer (source review)."
+        }
+      ]
+    }
+  ]
+}
