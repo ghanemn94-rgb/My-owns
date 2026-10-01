@@ -3,14 +3,26 @@
 //   - the first job is `delivery-gates` and it runs `node tools/gates/validate.mjs --pipeline`;
 //   - every other job depends on `delivery-gates`, directly or transitively through `needs:` (so a failed or
 //     unapproved gate skips every product build, test, image and push job);
+//   - every product job is TRULY gated on delivery-gates SUCCESS (F-DG1-107): GitHub Actions runs a job only when all
+//     its `needs` succeeded UNLESS its job-level `if:` uses a status-check function — always(), failure(), cancelled()
+//     (incl. `!cancelled()`) replace the implicit success() and run the job after delivery-gates FAILED. Any such `if:`
+//     on a product job is a violation (success() is allowed; it is the default). Also rejected, because each would let a
+//     failed gate count as success: `continue-on-error` on the delivery-gates job or its validate step, an `if:` on that
+//     step, and a validate command that is anything but exactly `node tools/gates/validate.mjs --pipeline`
+//     (e.g. `... || true`);
+//   - dependency installs go ONLY through deploy/scripts/ci-install-deps.sh (tools/deps/install-sandbox.sh frozen;
+//     REQ-DLV-042, F-DG1-104): any other install command (pnpm/npm/yarn install|i|ci|add, corepack) is a violation,
+//     except provisioning pnpm itself with `npm install --global --ignore-scripts pnpm@...`; a job that runs pnpm must
+//     run ci-install-deps.sh before its first pnpm command;
 //   - `needs:` references exist and form no cycle;
 //   - every `uses:` action is pinned to a full 40-hex commit SHA.
 //
 //   node deploy/scripts/check-ci-needs.mjs [workflow]      default: .github/workflows/ci.yml, else deploy/ci/ci.yml
+// Negative and positive cases: node --test deploy/scripts/tests/check-ci-needs.test.mjs
 // Uses the `yaml` package already in the lockfile (resolved from apps/api); needs an installed workspace.
 import { existsSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -18,16 +30,27 @@ const YAML = createRequire(join(root, "apps", "api", "package.json"))("yaml");
 const file =
   process.argv[2] ??
   (existsSync(join(root, ".github/workflows/ci.yml")) ? ".github/workflows/ci.yml" : "deploy/ci/ci.yml");
-const wf = YAML.parse(readFileSync(join(root, file), "utf8"));
+const wf = YAML.parse(readFileSync(resolve(root, file), "utf8"));
 const jobs = wf.jobs ?? {};
 const names = Object.keys(jobs);
 const problems = [];
 const GATE = "delivery-gates";
 
 if (names[0] !== GATE) problems.push(`first job is "${names[0]}", expected "${GATE}"`);
-const gateRuns = (jobs[GATE]?.steps ?? []).map((s) => s.run ?? "").join("\n");
-if (!/node tools\/gates\/validate\.mjs --pipeline/.test(gateRuns))
-  problems.push(`${GATE} does not run validate.mjs --pipeline`);
+const VALIDATE = "node tools/gates/validate.mjs --pipeline";
+const gateSteps = jobs[GATE]?.steps ?? [];
+const validateSteps = gateSteps.filter((s) => /tools\/gates\/validate\.mjs/.test(String(s.run ?? "")));
+if (!validateSteps.some((s) => String(s.run).trim() === VALIDATE))
+  problems.push(`${GATE} does not run exactly "${VALIDATE}"`);
+for (const s of validateSteps) {
+  if (String(s.run).trim() !== VALIDATE)
+    problems.push(`${GATE}: validate step must be exactly "${VALIDATE}", got: ${JSON.stringify(String(s.run).trim())}`);
+  if (s.if !== undefined) problems.push(`${GATE}: validate step must not have an if: (${JSON.stringify(s.if)})`);
+  if (s["continue-on-error"] !== undefined && s["continue-on-error"] !== false)
+    problems.push(`${GATE}: validate step must not set continue-on-error`);
+}
+if (jobs[GATE]?.["continue-on-error"] !== undefined && jobs[GATE]["continue-on-error"] !== false)
+  problems.push(`${GATE}: job must not set continue-on-error (a failed gate would count as success)`);
 if (jobs[GATE]?.needs) problems.push(`${GATE} must not depend on other jobs`);
 
 const needsOf = (j) => {
@@ -52,10 +75,53 @@ for (const j of names) {
   else chains.push(`${j} <- ${needsOf(j).join(", ")}`);
 }
 
+// F-DG1-107: a job-level status-check function overrides the implicit success() and runs the job after a needed job
+// (ultimately delivery-gates) failed. Expression function names are case-insensitive; whitespace before "(" is allowed.
+// Deliberately fail-closed: the function name anywhere in the expression (even inside a string literal) is rejected.
+const STATUS_FN = /\b(always|failure|cancelled)\s*\(/i;
+for (const j of names) {
+  if (j === GATE) continue;
+  const cond = jobs[j]?.if;
+  if (cond !== undefined && STATUS_FN.test(String(cond)))
+    problems.push(
+      `job "${j}": job-level if: ${JSON.stringify(String(cond))} uses a status function, so it can run after ${GATE} failed`,
+    );
+}
+
 for (const j of names) {
   for (const s of jobs[j].steps ?? []) {
     if (s.uses && !/^[\w.-]+\/[\w./-]+@[0-9a-f]{40}$/.test(s.uses))
       problems.push(`${j}: action not pinned to a commit SHA: ${s.uses}`);
+  }
+}
+
+// F-DG1-104 / REQ-DLV-042: dependency installs only through the sandboxed installer.
+// The sandboxed install must be the WHOLE command line (no `|| pnpm install` fallback, no chained commands).
+const SANDBOXED_INSTALL = /^(\.\/)?deploy\/scripts\/ci-install-deps\.sh$/;
+const PNPM_PROVISION = /^npm install --global --ignore-scripts "?(\$\(.*packageManager.*\)|pnpm@[\w.+-]+)"?$/;
+const INSTALL_CMD =
+  /(^|[\s;&|(])(pnpm\s+(install|i|add|ci)|npm\s+(install|i|ci|add)|yarn(\s+(install|add))?|corepack(\s|$)|npx\s|pnpm\s+dlx|bun\s+(install|add))(\s|$)/m;
+const PNPM_USE = /(^|[\s;&|(])pnpm\s+(?!--version\b)\S/m;
+for (const j of names) {
+  let installed = false;
+  for (const s of jobs[j].steps ?? []) {
+    if (typeof s.run !== "string") continue;
+    for (const line of s.run.split("\n").map((l) => l.trim())) {
+      if (line === "" || line.startsWith("#")) continue;
+      if (SANDBOXED_INSTALL.test(line)) {
+        installed = true;
+        continue;
+      }
+      if (/ci-install-deps\.sh/.test(line))
+        problems.push(
+          `${j}: the sandboxed install must be the whole command, exactly deploy/scripts/ci-install-deps.sh: ${line}`,
+        );
+      if (PNPM_PROVISION.test(line)) continue;
+      if (INSTALL_CMD.test(line))
+        problems.push(`${j}: dependency install outside deploy/scripts/ci-install-deps.sh (REQ-DLV-042): ${line}`);
+      else if (PNPM_USE.test(line) && !installed)
+        problems.push(`${j}: runs pnpm before the sandboxed install (deploy/scripts/ci-install-deps.sh): ${line}`);
+    }
   }
 }
 
@@ -64,6 +130,7 @@ if (problems.length > 0) {
   process.exit(1);
 }
 console.log(
-  `OK: ${file}: ${names.length} jobs; first job ${GATE} runs validate.mjs --pipeline; every other job depends on it`,
+  `OK: ${file}: ${names.length} jobs; first job ${GATE} runs validate.mjs --pipeline; every other job depends on it ` +
+    `with no status-function if:; installs only via ci-install-deps.sh`,
 );
 for (const c of chains) console.log(`  ${c}`);

@@ -1,0 +1,29 @@
+# environment: 2026-10-01T07:25:28Z; Linux 6.18.44-fc-v50 x86_64; 4 vCPU; node v22.22.2; pnpm 10.33.0; bubblewrap 0.9.0; uid 0; agent sandbox (bubblewrap, nested), NO network (D-025); worktree HEAD 868ebb6c44c1b89709234e3db4e8dfd2d7672233
+# scratch clone of HEAD + this worktree's deploy/scripts/ci-install-deps.sh; store = copy of the local pnpm store (offline: frozen lockfile + full store needs no registry)
+# $ npm_config_store_dir=$S/pstore/v10 deploy/scripts/ci-install-deps.sh
+ci-install-deps: bubblewrap 0.9.0; sandbox probe OK
+ci-install-deps: node v22.22.2; pnpm 10.33.0 at /opt/node22/bin/pnpm
+ci-install-deps: lockfile sha256 f199a0e18472519b24d9eaf840ead45e42192d74187e22b6b03e9e8005708dd5
+Scope: all 8 workspace projects
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +371
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 371, reused 371, downloaded 0, added 213
+Progress: resolved 371, reused 371, downloaded 0, added 371, done
+ WARN  Failed to create bin at $TMPDIR/s/ws-sbx/apps/api/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '$TMPDIR/s/ws-sbx/packages/db/dist/cli.js'
+ WARN  Failed to create bin at $TMPDIR/s/ws-sbx/apps/worker/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '$TMPDIR/s/ws-sbx/packages/db/dist/cli.js'
+devDependencies:
+ WARN  Failed to create bin at $TMPDIR/s/ws-sbx/apps/api/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '$TMPDIR/s/ws-sbx/apps/api/node_modules/@mth/db/dist/cli.js'
+ WARN  Failed to create bin at $TMPDIR/s/ws-sbx/apps/worker/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '$TMPDIR/s/ws-sbx/apps/worker/node_modules/@mth/db/dist/cli.js'
+Done in 2.3s using pnpm v10.33.0
+ci-install-deps: OK (sandboxed, frozen lockfile)
+exit 0 (3.12 s)
+# lockfile after: sha256 f199a0e18472519b24d9eaf840ead45e42192d74187e22b6b03e9e8005708dd5; git status --porcelain pnpm-lock.yaml: ''
+
+# N1 bwrap not on PATH:
+ci-install-deps: BLOCKED: bubblewrap (bwrap) is not installed on this runner; refusing an unsandboxed install
+exit 65
+# N2 bwrap present but its sandbox cannot be created (stub bwrap printing the kernel refusal):
+ci-install-deps: BLOCKED: bubblewrap cannot create its sandbox on this runner: bwrap: No permissions to create new namespace
+exit 65

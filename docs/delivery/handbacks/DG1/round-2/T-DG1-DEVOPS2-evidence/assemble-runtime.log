@@ -1,0 +1,43 @@
+# F-DG1-202 baseline (UNCHANGED assemble-runtime.sh at 868ebb6) — scratch workspace, built with pnpm -r build
+$ bash deploy/scripts/assemble-runtime.sh --store-dir $S/pstore/v10 $S/ws-base $S/out-base   -> exit 0
+Done in 940ms using pnpm v10.33.0
+virtual store: 129 package directories, all in the shipped set (129 runtime+bundled)
+assemble-runtime: OK 129 packages, 100M -> $TMPDIR/s/out-base
+$ ls out-base/packages
+config
+db
+shared
+$ node -e 'import("./apps/api/dist/server.js")'  (in out-base)
+ERR_MODULE_NOT_FOUND Cannot find package '@mth/design-tokens' imported from $TMPDIR/s/out-base/apps/api/dist/server.js
+exit 1
+
+# F-DG1-202 fixed assemble-runtime.sh — same built workspace (fresh copy)
+$ bash deploy/scripts/assemble-runtime.sh --store-dir $S/pstore/v10 $S/ws-fix $S/out-fix   -> exit 0 (2.91 s)
+runtime workspace packages: apps/api apps/worker packages/config packages/db packages/design-tokens packages/shared
+virtual store: 129 package directories, all in the shipped set (129 runtime+bundled)
+resolve: @mth/api: 18 dependencies resolve; ./dist/index.js imports
+resolve: @mth/worker: 7 dependencies resolve; ./dist/index.js imports
+resolve: @mth/config: 2 dependencies resolve; ./dist/index.js imports
+resolve: @mth/db: 5 dependencies resolve; ./dist/index.js imports
+resolve: @mth/design-tokens: 0 dependencies resolve; ./dist/index.js imports
+resolve: @mth/shared: 2 dependencies resolve; ./dist/index.js imports
+assemble-runtime: OK 129 packages, 100M -> $TMPDIR/s/out-fix
+$ find out-fix/packages/design-tokens -type f ! -name '*.map'
+packages/design-tokens/dist/cli.d.ts
+packages/design-tokens/dist/cli.js
+packages/design-tokens/dist/contrast.d.ts
+packages/design-tokens/dist/contrast.js
+packages/design-tokens/dist/index.d.ts
+packages/design-tokens/dist/index.js
+packages/design-tokens/dist/tokens.css
+packages/design-tokens/dist/tokens.json
+packages/design-tokens/package.json
+packages/design-tokens/src/tokens.json
+$ node -e 'import("./apps/api/dist/server.js")'  (in out-fix)
+server.js import OK; exports: JSON_BODY_LIMIT_BYTES,buildServer,defaultWebRoot
+exit 0
+
+# negative: the new resolution check, run against the OLD tree (out-base), apps/api
+@mth/api: unresolved: @mth/design-tokens (ERR_MODULE_NOT_FOUND)
+layout check failed: apps/api does not resolve its runtime dependencies
+exit 1 (expected non-zero)

@@ -1,12 +1,14 @@
 {
-  "$comment": "Container images used by the build, Compose and CI (ADR-0011/0012/0005). Every reference must be pinned BY DIGEST: `node deploy/scripts/pin-images.mjs --resolve` (needs registry access; run by the orchestrator or IT) fills `digest`, `--apply` rewrites every file in `usedIn`, and `--check` (offline) fails while any digest is missing or any file disagrees with this lock. A null digest means NOT YET PINNED; it is never a pass. Tags and support windows are [UNVERIFIED] until the resolve step records `verifiedAt`.",
+  "$comment": "Container images used by the build, Compose and CI (ADR-0011/0012/0005). Every reference must be pinned BY DIGEST: `node deploy/scripts/pin-images.mjs --resolve [id...]` (needs registry access; an ORCHESTRATOR/IT step, D-049 — agent sandboxes have no network) fills `digest` + `verifiedAt`, `--apply` rewrites every file in `usedIn`, and `--check` (offline) fails while any digest is missing, any file disagrees with this lock, or a scanned file references an image not listed here. A null digest means NOT PINNED; it is never a pass. `blockedReason` (null unless set by --resolve) records a registry the environment's network policy denies: the image is reported BLOCKED, still not pinned, and --check still fails. Never fabricate a digest. `scope`: production = shipped/run in production (mth-app base image, product database); test-ci = test IdP and CI-only images. Tags and support windows are [UNVERIFIED] until --resolve records `verifiedAt`.",
   "images": [
     {
       "id": "node-runtime",
       "ref": "node",
       "tag": "24-bookworm-slim",
+      "scope": "production",
       "digest": null,
       "verifiedAt": null,
+      "blockedReason": null,
       "license": "MIT (Node.js); Debian packages under their own licences",
       "role": "base image of mth-app (build and runtime stages)",
       "usedIn": ["deploy/docker/Dockerfile"]
@@ -15,8 +17,10 @@
       "id": "postgres",
       "ref": "postgres",
       "tag": "18",
+      "scope": "production",
       "digest": null,
       "verifiedAt": null,
+      "blockedReason": null,
       "license": "PostgreSQL",
       "role": "product database for Compose and CI (ADR-0003)",
       "usedIn": ["deploy/compose/compose.yaml", ".github/workflows/ci.yml"]
@@ -25,8 +29,10 @@
       "id": "keycloak",
       "ref": "quay.io/keycloak/keycloak",
       "tag": "26.4",
+      "scope": "test-ci",
       "digest": null,
       "verifiedAt": null,
+      "blockedReason": null,
       "license": "Apache-2.0",
       "role": "TEST identity provider only (Compose profile test-idp); production uses Mobily's corporate IdP (ADR-0005)",
       "usedIn": ["deploy/compose/compose.yaml"]
@@ -35,8 +41,10 @@
       "id": "playwright",
       "ref": "mcr.microsoft.com/playwright",
       "tag": "v1.56.1-noble",
+      "scope": "test-ci",
       "digest": null,
       "verifiedAt": null,
+      "blockedReason": null,
       "license": "Apache-2.0 (Playwright); browsers under their own licences",
       "role": "CI e2e container with baked-in browsers matching @playwright/test 1.56.1 (ADR-0012)",
       "usedIn": [".github/workflows/ci.yml"]
