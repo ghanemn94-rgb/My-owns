@@ -75,7 +75,11 @@ export async function startApi(
     ),
     options: "-c role=mth_owner",
     max: 2,
+    application_name: "api-test-owner",
   });
+  // Like createPool: an error on an idle client (e.g. a backend terminated while the suite tears down) must never
+  // become an unhandled 'error' event that fails a green run (F-DG1-009).
+  owner.on("error", () => undefined);
   return {
     app,
     routes,
