@@ -10944,14 +10944,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-9/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-01T14:15:29Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG1 round 9 during the adversarial review of the allow-list that the assignment asked for. Severity is Low and non-mandatory, consistent with the same class (F-DG1-125 process.dlopen, F-DG1-127 node:sqlite loadExtension, F-DG1-129). The lint is static defence-in-depth over human-reviewed code, not a runtime boundary. The proposed ID is the next free number in the code-security 1xx range; the orchestrator may renumber. An ACCEPTED_OBSERVATION would be reasonable once the header and D-055 stop claiming that no allow-listed built-in loads native objects and either deny setEngine or name it as a residual."
+        },
+        {
+          "at": "2026-10-01T14:27:05Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 74c9e4a6701667ef855b87bee95f04dbf9585038"
         }
-      ]
+      ],
+      "fix_revision": "74c9e4a6701667ef855b87bee95f04dbf9585038",
+      "fix_summary": "architecture.testkit.ts bans setEngine via rule-1 BANNED_PRIMITIVES (catches crypto.setEngine in every form) and records an exhaustive member-audit of the 7 allow-listed built-ins in the header (setEngine is the only native loader; os.loadavg/fs.open*/util.*/crypto.setFips cleared; node:fs write+import is residual b). Self-checks S1/S2/S3 + positive control. architecture 105/105; typecheck/lint/prettier clean. D-055 updated."
     },
     {
       "id": "F-DG1-131",
@@ -10971,14 +10978,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-9/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-01T14:15:29Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG1 round 9 while cross-checking the allow-lists against the real module source, as the assignment asked. Low and non-mandatory. No capability risk was found in the extra entries. This is a candidate for ACCEPTED_OBSERVATION once D-055's wording matches the evidence (or the unused entries are removed)."
+        },
+        {
+          "at": "2026-10-01T14:22:08Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 99f344735e7bc15e8a2c99b2262fe97811623e6f"
         }
-      ]
+      ],
+      "fix_revision": "99f344735e7bc15e8a2c99b2262fe97811623e6f",
+      "fix_summary": "D-055 wording corrected: module source uses 4 of 7 allow-listed built-ins (crypto/fs/path/url) and none of the 4 process members; the remaining entries are reviewed safe headroom (no loader/exec/native/debug capability), not claimed as current usage."
     }
   ]
 }
