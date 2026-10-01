@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG1-011",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "D-055 calls the F-DG1-130 built-in member audit 'exhaustive' and sets its re-run trigger to 'when the Node floor/target changes', but leaves out what its own evidence says: the audit ran only on Node v22.22.2, and Node 24, the production target, is BLOCKED (not audited). It also keeps the round-9 claim that the default-deny 'closes the whole loader/exec class at once … and prevents further adjacent-route findings', which F-DG1-130 itself disproved. This is the F-DG1-010 pattern (an exhaustiveness claim detached from the runtime it was established on) coming back in the decision record.",
+      "reproduction": "Candidate sha256:18fee1617d617cfd719aeaebe3c37904bd116c47eaafb5be52e7bd779c6e8807 (freeze commit 265af7e, HEAD 241a377). Read the D-055 row in docs/delivery/decisions.md (the phrase scan is in this record's check DOM-R10-03). (1) It says 'the MEMBERS of an allow-listed module are covered by a recorded exhaustive member-audit in the testkit header (F-DG1-130) … the audit is re-run when the Node floor/target changes'. It never names the runtime the audit ran on. (2) The audit's own evidence names it: apps/api/src/architecture.testkit.ts says 'MEMBER AUDIT (Node v22.22.2 / OpenSSL 3.5.5 …)', and the T-DG1-BE11 handback (docs/delivery/handbacks/DG1/round-10/T-DG1-BE11-backend-workflow-engineer.md, lines 242 and 298) says 'It ran on Node 22.22.2 only. Node 24, the production target, is **BLOCKED**' and 'neither the member audit nor the probes ran on Node 24'. Production targets Node 24 (.nvmrc = 24, engines '>=22.18.0 <25', ADR-0001), so the audited runtime and the target already differ, and the trigger 'when the floor/target changes' has effectively already fired. (3) The same row still says the switch 'closes the whole loader/exec class at once (fixes F-DG1-129/213 and prevents further adjacent-route findings)'. F-DG1-130 (crypto.setEngine) was exactly such an adjacent-route finding. A later sentence in the row correctly limits the default-deny to MODULES, not MEMBERS, so the row now contradicts itself. (4) Minor: the row's Evidence column still cites 'architecture.test.ts 101/101' and 'unit suite 294/294' (round-9 counts). The edited row's current candidate gives 105/105 and 298/298, and the column cites no F-DG1-130 evidence.",
+      "expected": "A decision record that describes its evidence accurately (F-DG1-131's own criterion). It should state that the member audit was performed on Node v22.22.2, and that Node 24 (the production target) is not yet audited (BLOCKED, no binary available) and is a stated, accepted gap or a pending action. It should drop or qualify 'closes the whole loader/exec class at once … prevents further adjacent-route findings' so it applies only to which built-in MODULES and process members are reachable. Optionally, it should refresh the Evidence column (105/105, 298/298, the F-DG1-130 self-checks S1-S3 and the positive control).",
+      "actual": "D-055 presents the member audit as 'exhaustive' with no runtime named. It implies the audit is current for the target ('re-run when the floor/target changes') although the target was never audited. It keeps a 'whole class closed / prevents further adjacent-route findings' sentence that F-DG1-130 disproved. The testkit header and the handback are accurate: this is only a decision-record wording gap. No capability is exposed. My own name scan of the seven allow-listed built-ins on Node 22.22.2 finds no loader member other than setEngine (now banned), and no module uses any of these members. Not checked on Node 24: no binary in this sandbox (only node20/21/22), and there is no network.",
+      "evidence": [
+        "docs/delivery/decisions.md",
+        "apps/api/src/architecture.testkit.ts",
+        "docs/delivery/handbacks/DG1/round-10/T-DG1-BE11-backend-workflow-engineer.md",
+        "docs/delivery/test-evidence/DG1/domain/round-10/05-member-name-scan.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-10/01-unit-full.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-10/02-architecture-focused.out.txt"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-10/domain-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T14:38:45Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG1 round 10 while checking, as assigned, whether D-055 is now an accurate description of the evidence (F-DG1-131). It is Low and non-mandatory: documentation accuracy only, with no runtime, contract, data or capability impact. The usage/minimality claim that F-DG1-131 targeted is now accurate, and I verify F-DG1-131 separately. The proposed ID is the next free number in the domain 0xx range (after F-DG1-010); the orchestrator may renumber. It is a reasonable ACCEPTED_OBSERVATION candidate once D-055 names the audited runtime (Node 22.22.2), records Node 24 as not yet audited, and drops or qualifies the 'prevents further adjacent-route findings' sentence."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,351 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG1",
+  "round": 10,
+  "candidate_id": "sha256:18fee1617d617cfd719aeaebe3c37904bd116c47eaafb5be52e7bd779c6e8807",
+  "source_commit": "265af7e65a6a66f1dabcc678d9bf1adb1415f601",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG1-T-DG1-REV-DOM-R10-domain-reviewer-20261001T143212Z-e2a85e66",
+    "session_id": "e2a85e66-9af0-45b9-98ea-ead4212ea120"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "frontend-ux-engineer",
+    "devops-engineer",
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am domain-reviewer, run T-DG1-REV-DOM-R10. I authored no implementation, register text or decision in the DG1 scope. The round-10 repairs are the F-DG1-130 setEngine ban and member audit in architecture.testkit.ts/architecture.test.ts (T-DG1-BE11, backend-workflow-engineer) and the F-DG1-131 rewording of D-055 (delivery-orchestrator). I did not raise either finding (code-security-reviewer did), and I did not author either fix. I formed this verdict before reading any other reviewer's round-10 record, and none was visible to me (docs/delivery/reviews/DG1/round-10 did not exist when I started). The earlier review material I used: my own role's round-9 record and harness scripts (re-used as round-10 copies with only headers, diff ranges and the findings list changed), the findings.json entries for F-DG1-130/131, the T-DG1-BE11 handback, and D-055. I grant no business, Finance or IT approval. Product gate G6 is not engineering gate DG7."
+  },
+  "assignment": "docs/delivery/assignments/DG1/round-10/review-domain-reviewer.md (sha256 c21f48bab9f3b7366dc14d47a842539292280c347c83b5f0b1dbef56abf84ca3) with review-common.md",
+  "requirements_checked": [
+    "REQ-S15-002",
+    "REQ-S15-005",
+    "REQ-S15-006",
+    "REQ-S16-001",
+    "REQ-S16-002",
+    "REQ-S16-004",
+    "REQ-S19-004",
+    "REQ-S19-006",
+    "REQ-S16-003",
+    "REQ-PB-001",
+    "REQ-PB-003",
+    "REQ-PB-012",
+    "REQ-PB-014",
+    "REQ-PB-029",
+    "REQ-S15-001",
+    "REQ-S15-003",
+    "REQ-S15-004",
+    "REQ-S15-007",
+    "REQ-S15-008",
+    "REQ-S15-010",
+    "REQ-S15-011",
+    "REQ-S15-012",
+    "REQ-S15-013",
+    "REQ-S16-005",
+    "REQ-S16-006",
+    "REQ-S16-007",
+    "REQ-S16-008",
+    "REQ-S16-009",
+    "REQ-S16-010",
+    "REQ-S16-011",
+    "REQ-S16-012",
+    "REQ-S16-022",
+    "REQ-S16-023",
+    "REQ-S16-026",
+    "REQ-S16-027",
+    "REQ-S16-030",
+    "REQ-S16-031",
+    "REQ-S16-032"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-R10-01-candidate",
+      "procedure": "Confirm the frozen candidate. Check HEAD, that the repository is not shallow, and the recomputed candidate id at the working tree, in a full disposable clone checked out at the freeze commit 265af7e, and in the frozen manifest. Check that HEAD differs from the freeze commit only in META_EXCLUDES paths, and that both fix commits are ancestors of the freeze commit.",
+      "command": "git rev-parse HEAD; git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG1; git clone /home/user/My-owns $TMPDIR/review-dom-r10 && git checkout 265af7e && node tools/gates/candidate.mjs --stage DG1; grep candidate_id docs/delivery/candidates/DG1/18fee1617d617cfd.manifest.json; git diff --stat 265af7e 241a377; grep -A12 META_EXCLUDES tools/gates/lib/candidate.mjs; git merge-base --is-ancestor 74c9e4a 265af7e; git merge-base --is-ancestor 99f3447 265af7e",
+      "environment": "Linux sandbox, node v22.22.2, pnpm 10.33.0; repository /home/user/My-owns (HEAD 241a377) and a full disposable clone under $TMPDIR (removed afterwards)",
+      "expected": "candidate_id sha256:18fee161…c8807 in every computation; HEAD..265af7e limited to META_EXCLUDES paths; 74c9e4a and 99f3447 are ancestors",
+      "actual": "Every computation gives sha256:18fee1617d617cfd719aeaebe3c37904bd116c47eaafb5be52e7bd779c6e8807 (390 files), and the manifest's candidate_id matches. The repository is not shallow. HEAD 241a377 is one commit past the freeze commit 265af7e and adds only docs/delivery/assignments/DG1/round-10/*, the candidate manifest and stages.json, all of which are in META_EXCLUDES. HEAD therefore holds the same frozen candidate, and the commit is only a traceability pointer (CLAUDE.md). Both fix commits, 74c9e4a (F-DG1-130) and 99f3447 (F-DG1-131), are ancestors of 265af7e.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-10/00-candidate-and-diff.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R10-02-change-scope",
+      "procedure": "Confirm the only product-tree change since the round-9 frozen candidate (273d21f) is the test-only module lint. Product/runtime behaviour, the API contract, the data model, i18n strings, design tokens and the register must be unchanged, and the testkit must be excluded from the build.",
+      "command": "git diff --stat 273d21f 265af7e -- . ':!docs/delivery'; git diff --stat 273d21f 265af7e -- apps/web packages docs/architecture docs/api deploy apps/worker apps/api/src/modules apps/api/src/server.ts apps/api/src/main.ts docs/delivery/requirements.csv; grep exclude apps/api/tsconfig.build.json; pnpm -r build; ls apps/api/dist/architecture*; git diff 273d21f 265af7e -- apps/",
+      "environment": "repository and the disposable clone at 265af7e",
+      "expected": "only apps/api/src/architecture.test.ts and architecture.testkit.ts change outside docs/delivery; runtime/contract/data/i18n/register diffs empty; no architecture* file in dist",
+      "actual": "Outside docs/delivery, only architecture.test.ts (+41/-1) and architecture.testkit.ts (+20/-2) changed. The runtime, contract, data-model, i18n, token and register diffs are empty. tsconfig.build.json excludes src/**/*.test.ts and src/**/*.testkit.ts. pnpm -r build exits 0, and no apps/api/dist/architecture* file exists. The code diff only adds ['setEngine','native loader'] to BANNED_PRIMITIVES, the header member-audit and scope text, self-checks S1-S3 and a node:crypto positive control. Inside docs/delivery, only decisions.md (D-055) is in the candidate; the rest is META_EXCLUDES metadata.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-001",
+        "REQ-S19-004",
+        "REQ-S19-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-10/00-candidate-and-diff.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-10/06-build.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R10-03-F-DG1-131-D-055-accuracy",
+      "procedure": "Verify F-DG1-131. Read the D-055 row of docs/delivery/decisions.md (diff 273d21f..265af7e plus a phrase scan of the current row). Compare its usage statement with an independent TypeScript-AST inventory of node: specifiers, `process` identifiers and process.<member> in src/modules/**. Then check the rest of the row against its evidence (the testkit header, the T-DG1-BE11 handback, and the current test counts).",
+      "command": "git diff 273d21f 265af7e -- docs/delivery/decisions.md; python3 phrase scan of the D-055 row for exhaustive / prevents further / Node 22 / Node 24 / 22.22 / 101/101 / 294/294 / re-run; probe 'inventory' test (03-default-deny-overreach-probe.test.ts); grep -n 'Node 24|BLOCKED' docs/delivery/handbacks/DG1/round-10/T-DG1-BE11-backend-workflow-engineer.md",
+      "environment": "repository at HEAD 241a377 (candidate tree identical to 265af7e); disposable clone for the probe",
+      "expected": "D-055 no longer claims the allow-lists equal actual/minimal usage; it states 4 of 7 built-ins are used (crypto/fs/path/url), none of the 4 process members, the rest reviewed safe headroom; it describes the member audit (F-DG1-130) accurately",
+      "actual": "F-DG1-131 is fixed. The false sentence ('the only node built-ins module source imports are the seven listed and the only process members are the four listed') is gone. D-055 now says module source imports four of the seven (crypto, fs, path, url) and uses none of the four process members, and calls the rest 'reviewed safe headroom … NOT claimed as current usage'. My independent AST inventory gives exactly [crypto, fs, path, url] (crypto x5, path x3, fs x1, url x1) and zero `process` identifiers or members, both asserted. D-055 also now describes the module-vs-member scope and the F-DG1-130 member audit. Residual accuracy gap, raised as proposed F-DG1-011 (Low, non-mandatory): D-055 calls the member audit 'exhaustive', re-run 'when the Node floor/target changes', without naming the runtime it ran on. The testkit header says 'Node v22.22.2' and the handback says 'Node 24, the production target, is BLOCKED', so the target has never been audited. D-055 also keeps 'closes the whole loader/exec class at once … prevents further adjacent-route findings', which F-DG1-130 disproved and which a later sentence in the same row contradicts. Its Evidence column still cites the round-9 counts 101/101 and 294/294 (now 105/105 and 298/298). The testkit header and the handback are accurate. This is decision-record wording only, with no capability impact.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/decisions.md",
+        "docs/delivery/test-evidence/DG1/domain/round-10/03-default-deny-overreach-probe.test.ts",
+        "docs/delivery/test-evidence/DG1/domain/round-10/03-default-deny-overreach-probe.out.txt",
+        "docs/delivery/handbacks/DG1/round-10/T-DG1-BE11-backend-workflow-engineer.md"
+      ]
+    },
+    {
+      "id": "DOM-R10-04-unit-full",
+      "procedure": "Run the full unit suite (unit-node + unit-web) on the frozen candidate in the disposable clone.",
+      "command": "npx vitest run --project unit-node --project unit-web",
+      "environment": "disposable clone at 265af7e under $TMPDIR; node v22.22.2; node_modules copied from the repository install (no pnpm-lock.yaml or package.json change since 273d21f)",
+      "expected": "all pass; no legitimate module import or member newly flagged",
+      "actual": "21 files, 298 passed (298), exit 0. That is 294 from round 9 plus the 4 new F-DG1-130 tests. The architecture module-tree check and the web suites (bilingual shell, F-DG1-004/008/210) pass.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-001",
+        "REQ-S16-002",
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-10/01-unit-full.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R10-05-architecture-focused",
+      "procedure": "Run the architecture suite verbose. This covers the ADR-0002 module boundaries, the real module tree, the default-deny controls, the new S1-S3 setEngine self-checks and the node:crypto positive control.",
+      "command": "npx vitest run --project unit-node apps/api/src/architecture.test.ts --reporter=verbose",
+      "environment": "disposable clone at 265af7e",
+      "expected": "105/105 including S1/S2/S3 and the F-DG1-130 positive control",
+      "actual": "Tests 105 passed (105), exit 0. S1 (named import), S2 (namespace), S3 (string key) and 'F-DG1-130: only setEngine is banned - node:crypto and its other members stay allowed (positive control)' all pass.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-001",
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-10/02-architecture-focused.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R10-06-F-DG1-130-overreach-probe",
+      "procedure": "Run an independent probe written by me to show the F-DG1-130 fix does not over-reach. (1) moduleViolations is zero for every module. (2) An AST inventory written separately from the testkit scanner. (3) Eleven positive controls must each give [] (asserted): node:crypto randomUUID/createHash, createHmac/randomBytes/timingSafeEqual, namespace randomUUID + webcrypto.getRandomValues, default-import getHashes, fs/promises, url+path, util+os, process.env/argv/once/exit, decimal.js, and identifiers merely containing 'Engine' (setEngineLabel, engineName). (4) Ten setEngine forms must each be denied: named, aliased, namespace, string key, destructured, renamed destructure, constructed key, template key, re-export, dynamic import. (5) Eighteen loader/debug/exec/network controls must still be denied (no regression).",
+      "command": "cp 03-default-deny-overreach-probe.test.ts apps/api/src/zz-dom-r10-probe.test.ts (clone only); npx vitest run --project unit-node apps/api/src/zz-dom-r10-probe.test.ts --reporter=verbose",
+      "environment": "disposable clone at 265af7e; the probe file was never in the candidate tree and was removed from the clone after the run",
+      "expected": "5/5 pass; positive controls []; every setEngine form and every negative control at least 1 violation",
+      "actual": "5 passed (5), exit 0. All 11 positive controls give [], so importing node:crypto and using randomUUID/createHash/createHmac/randomBytes/timingSafeEqual/webcrypto/getHashes stays allowed. Identifiers that merely contain 'Engine' are not flagged. All 10 setEngine forms are denied ('native loader via setEngine', '.setEngine()', '[\"setEngine\"]', 'a destructured setEngine'; the constructed key is caught by the non-literal computed-key rule). All 18 regression controls are denied. Observation, not a defect: the ban is name-based, like require/eval, so a module that declared its own function named exactly `setEngine` would be flagged. No module does, and the cost is a rename.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-001",
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-10/03-default-deny-overreach-probe.test.ts",
+        "docs/delivery/test-evidence/DG1/domain/round-10/03-default-deny-overreach-probe.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R10-07-member-audit-name-scan",
+      "procedure": "As a sanity check of the testkit header's F-DG1-130 member audit (common note: a member the audit already cleared is not a new finding), scan by name every own property of node:{crypto, fs, fs/promises, os, path, url, util} plus fs.promises, path.posix/win32, util.types, crypto.webcrypto/subtle and *.constants on this Node. Use a loader-like regex (load|engine|dlopen|exec|spawn|fork|eval|require|import|module|debug|native|binding|wasm|compile|script|inspect|worker|fips|open|run|plugin|extension|process), and check the type of every hit the header does not explicitly clear.",
+      "command": "node docs/delivery/test-evidence/DG1/domain/round-10/05-member-name-scan.mjs; node -e '<typeof os.constants.dlopen / fs.openAsBlob / crypto.constants.ENGINE_METHOD_ALL / crypto.getFips>'",
+      "environment": "node v22.22.2, OpenSSL 3.5.5 (repository; read-only scan, nothing written except the evidence file)",
+      "expected": "no loader member other than crypto.setEngine (banned); every other hit cleared by the header or harmless",
+      "actual": "The hits are crypto.setEngine (banned), setFips/getFips, the ENGINE_METHOD_* numeric constants, fs open/opendir/truncate/openAsBlob (file I/O), os.loadavg, os.constants.dlopen, util.debug/debuglog/inspect/isNullOrUndefined and util.types.isModuleNamespaceObject/isNativeError. The header does not name os.constants.dlopen, crypto.getFips, fs.openAsBlob or the ENGINE_METHOD_* constants. os.constants.dlopen is a plain object of RTLD_* numbers ({RTLD_LAZY:1,…}), the flags for the banned process.dlopen. getFips is a read-only query. openAsBlob reads a file. The constants are numbers. None is a loader, so the audit's conclusion holds on Node 22.22.2. BLOCKED part: Node 24 (the production target) could not be scanned. This sandbox has only node20/21/22 and no network. That is why F-DG1-011 asks D-055 to state it.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-10/05-member-name-scan.mjs",
+        "docs/delivery/test-evidence/DG1/domain/round-10/05-member-name-scan.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R10-08-integration-x2",
+      "procedure": "Run the full integration project twice, each time against a fresh throwaway PostgreSQL 16 cluster. It covers the closure rule (422 / G6), scoped access (read/write/list), identity routes (OIDC login, sessions, user disable/revoke), cursor pagination and F-DG1-009 determinism.",
+      "command": "bash docs/delivery/test-evidence/DG1/domain/round-10/04-integration-run.sh 54493; bash … 54494 (from the clone root)",
+      "environment": "disposable clone at 265af7e; PostgreSQL 16.13 initdb under $TMPDIR on private ports, removed afterwards",
+      "expected": "both runs all green, exit 0; zero FATAL/57P01; no leftover test databases",
+      "actual": "Run 1: 19 files, 200/200, exit 0, 31.9 s. Run 2: 200/200, exit 0, 34.2 s. Both runs had 0 FATAL/57P01 lines and left only postgres/template0/template1. Among the tests: 'closure is not a status edit (F-DG1-001: closure needs the G6 business approval, absent in P1)', where active->closed, on_hold->closed and draft->closed are refused with 422; access-scope cross-scope read 404, write 403/404, SQL list filtering and per-request revocation; the F-DG1-106 BU-scoped creator; cursor pagination stable order and cursor reuse refused; and the OIDC/session tests.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-004",
+        "REQ-S19-004",
+        "REQ-S19-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-10/04-integration-run.sh",
+        "docs/delivery/test-evidence/DG1/domain/round-10/04-integration-run1.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-10/04-integration-run2.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R10-09-live-shell-ar-en",
+      "procedure": "Build the clone (pnpm -r build) and start a disposable stack: a throwaway PostgreSQL 16, migrate, seed-dev with SYNTHETIC users, and the API serving the built web in AUTH_MODE=dev. Then run my role's live scenario (unchanged since round 8 except its header) with Playwright Chromium in Arabic and English. Sections: A closure 422/G6; C provisional tokens; D rendered shell/edit/detail; E-G localized audit; H F-DG1-210 create without reload; I cursor pagination over six sorts plus tamper and binding; J identity. Inspect the rendered screens myself.",
+      "command": "pnpm -r build; bash docs/delivery/test-evidence/DG1/domain/round-10/07-live-stack.sh docs/delivery/test-evidence/DG1/domain/round-10 (runs 07-live-scenario.mjs)",
+      "environment": "disposable clone at 265af7e; PostgreSQL 16 on port 54824; API on 3438; Chromium from /opt/pw-browsers; SYNTHETIC dev data only",
+      "expected": "SUMMARY failures=0, exit 0; screens show correct direction, provisional branding, Unknown states, no closed status offered",
+      "actual": "readyz ready (database ok, migrations ok). 108 PASS, 0 FAIL, SUMMARY failures=0, exit=0. A3: active->closed is refused with 422 urn:mth:problem:invalid-transition citing G6 (Sustain). A4-A6 show the record, audit and closed rows unchanged. C2: #0078FF is present with provenance provisional, never official. D1: rtl (ar) and ltr (en). D2: the provisional wordmark text. D9: Unknown never shown as 0 or green. D10: no off-origin request. D11: bundled IBM Plex fonts. I1: six sorts page identically. J6: dev.lead holds no gate/finance approval. I viewed ar-02-edit-no-closed.png: RTL, the 'مؤقت' badge, only نشط/معلّق offered plus the G6 hint, SAR, Asia/Riyadh, and 'مخطط' markers. I viewed en-03-detail-audit.png: LTR, the Provisional badge, Planned markers, every indicator Unknown with the 'never shown as zero or as on track' note, and a localized audit trail.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S15-002",
+        "REQ-S15-005",
+        "REQ-S15-006",
+        "REQ-S16-002",
+        "REQ-S19-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-10/07-live-stack.sh",
+        "docs/delivery/test-evidence/DG1/domain/round-10/07-live-scenario.mjs",
+        "docs/delivery/test-evidence/DG1/domain/round-10/07-live-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-10/06-build.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-10/screens/ar-01-shell.png",
+        "docs/delivery/test-evidence/DG1/domain/round-10/screens/ar-02-edit-no-closed.png",
+        "docs/delivery/test-evidence/DG1/domain/round-10/screens/en-01-shell.png",
+        "docs/delivery/test-evidence/DG1/domain/round-10/screens/en-03-detail-audit.png",
+        "docs/delivery/test-evidence/DG1/domain/round-10/screens/ar-06-lead-ui-create-no-reload.png",
+        "docs/delivery/test-evidence/DG1/domain/round-10/screens/en-06-lead-ui-create-no-reload.png"
+      ]
+    },
+    {
+      "id": "DOM-R10-10-static-invariants",
+      "procedure": "Run the static checks on the clone: no-CDN, OpenAPI lint, typecheck, eslint, prettier on the changed files, and a diff of the contract, i18n, db, architecture-doc and token files since round 9. Then check the invariants: provisional tokens, a fail-safe provenance mapping, no official Mobily/PMI or certification claim in the catalogues, and the decimal.js money dependency.",
+      "command": "pnpm run check:no-cdn; pnpm run openapi:lint; pnpm -r typecheck; pnpm run lint; npx prettier --check apps/api/src/architecture.testkit.ts apps/api/src/architecture.test.ts; git diff --stat 273d21f 265af7e -- docs/api apps/web/src/i18n packages/db docs/architecture packages/design-tokens; grep provisional tokens.json; grep provenance branding.ts; grep -i 'official|certified|PMI' apps/web/src/i18n; grep decimal.js package.json",
+      "environment": "disposable clone at 265af7e",
+      "expected": "all exit 0; diff empty; only negated or provisional brand/PMI statements",
+      "actual": "All five checks exit 0 (no-cdn PASS; OpenAPI 3.1.1, 33 operations). The diff is empty. tokens.json has provisional:true at the top level and per token (#0078FF). branding.ts maps provenance to 'official' only when the source says so, and otherwise to provisional. Every catalogue mention is a negation: 'not official Mobily brand assets' and 'not an official PMI standard, and this product is not certified by PMI or any other body', with the same in Arabic. decimal.js 10.6.0 is in api and shared. DG0-DG7 stay separate from G1-G6: live J6, and the G6 hint describes a business approval.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S15-002",
+        "REQ-S15-005",
+        "REQ-S15-006",
+        "REQ-S16-002",
+        "REQ-S19-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-10/08-static-checks.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R10-11-register",
+      "procedure": "Register check. The 8 assigned DG1-final rows (and all 12 DG1-final rows) must be IMPLEMENTED, with every cited evidence file present. The REQ-PB/§15/§16 rows that have a P1 increment and a later final gate must not over-claim. The register must be unchanged since round 9. Also list the finding statuses.",
+      "command": "python3 docs/delivery/test-evidence/DG1/domain/round-10/09-register-rows.py",
+      "environment": "repository at HEAD 241a377",
+      "expected": "assigned rows IMPLEMENTED with 0 missing evidence; P1-increment later-gate rows SPECIFIED; register diff empty",
+      "actual": "The register diffs 273d21f..265af7e and 265af7e..HEAD are empty. All 8 assigned rows are IMPLEMENTED with 0 missing evidence: S15-002 (5), S15-005 (7), S15-006 (4), S16-001 (8), S16-002 (5), S16-004 (11), S19-004 (16), S19-006 (5). All 12 DG1-final rows are IMPLEMENTED with 0 missing, including S16-003 (13). All 29 REQ-PB/S15/S16 P1-increment rows with final gates DG2-DG7 are SPECIFIED, so nothing is over-claimed.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S15-002",
+        "REQ-S15-005",
+        "REQ-S15-006",
+        "REQ-S16-001",
+        "REQ-S16-002",
+        "REQ-S16-004",
+        "REQ-S19-004",
+        "REQ-S19-006",
+        "REQ-PB-001",
+        "REQ-PB-003",
+        "REQ-PB-012",
+        "REQ-PB-014",
+        "REQ-PB-029"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-10/09-register-rows.py",
+        "docs/delivery/test-evidence/DG1/domain/round-10/09-register-rows.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R10-12-round9-closures-hold",
+      "procedure": "Re-confirm that the round-9 domain closures (F-DG1-001/002/003/004/005/006/105/007/008/207/009/210) hold on this candidate. Use their findings.json status and re-run their behaviour on the candidate.",
+      "command": "09-register-rows.py findings section; integration runs 1+2; live scenario sections A, B, D5-D8, E-H; unit web suites",
+      "environment": "repository and the disposable clone at 265af7e",
+      "expected": "all twelve CLOSED_VERIFIED and behaviour unchanged; no open Critical/High/mandatory DG1 finding",
+      "actual": "All twelve are CLOSED_VERIFIED, and their behaviour re-verifies on this candidate. 001: 422 in integration and live A3-A6. 003: the glossary checks D5/D6 in ar and en. 004/210: H1-H9 in ar and en, without reload. 005/008: E-G localized and derived audit entries. 009: two integration runs, 200/200 each, 0 57P01. 002/105/207/007/006: the register rows are unchanged, with complete evidence. Open Critical/High/mandatory DG1 findings: none. Before this round, the only non-closed findings were F-DG1-130/131 (Low, FIXED_PENDING_VERIFICATION). I verify 131 in my sidecar. 130 is code-security's finding: my over-reach part passes, see DOM-R10-06.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-003",
+        "REQ-S16-004",
+        "REQ-S19-004",
+        "REQ-S19-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-10/09-register-rows.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-10/07-live-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-10/04-integration-run1.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-10/04-integration-run2.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R10-13-cleanup",
+      "procedure": "Remove the disposable clone and any throwaway clusters. Confirm the candidate tree is untouched and the candidate id unchanged.",
+      "command": "rm -rf $TMPDIR/review-dom-r10; ls $TMPDIR/review-dom-r10 $TMPDIR/dom-int.* $TMPDIR/dom-stack.*; git status --short -- apps packages docs/delivery/decisions.md; node tools/gates/candidate.mjs --stage DG1",
+      "environment": "repository at HEAD 241a377",
+      "expected": "no scratch left; no tracked change; same candidate id",
+      "actual": "No clone or cluster directories remain. There are no tracked changes under apps, packages or decisions.md. The candidate id is still sha256:18fee1617d617cfd…c8807.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-10/50-cleanup.out.txt"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG1-011"
+  ],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG1/domain/round-10/00-candidate-and-diff.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-10/01-unit-full.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-10/02-architecture-focused.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-10/03-default-deny-overreach-probe.test.ts",
+    "docs/delivery/test-evidence/DG1/domain/round-10/03-default-deny-overreach-probe.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-10/04-integration-run.sh",
+    "docs/delivery/test-evidence/DG1/domain/round-10/04-integration-run1.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-10/04-integration-run2.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-10/05-member-name-scan.mjs",
+    "docs/delivery/test-evidence/DG1/domain/round-10/05-member-name-scan.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-10/06-build.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-10/07-live-stack.sh",
+    "docs/delivery/test-evidence/DG1/domain/round-10/07-live-scenario.mjs",
+    "docs/delivery/test-evidence/DG1/domain/round-10/07-live-scenario.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-10/08-static-checks.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-10/09-register-rows.py",
+    "docs/delivery/test-evidence/DG1/domain/round-10/09-register-rows.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-10/50-cleanup.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-10/screens/ar-02-edit-no-closed.png",
+    "docs/delivery/test-evidence/DG1/domain/round-10/screens/en-03-detail-audit.png"
+  ],
+  "reviewed_at": "2026-10-01T14:38:45Z",
+  "summary": "PASS with one new Low, non-mandatory finding. F-DG1-131 is verified closed. D-055 no longer claims the allow-lists equal real usage. It now says 4 of 7 built-ins are used (crypto/fs/path/url), none of the 4 process members, and the rest is reviewed safe headroom, and my independent AST inventory confirms this exactly. The F-DG1-130 fix does not over-reach. The real module tree is clean, and node:crypto with randomUUID/createHash/createHmac/randomBytes/timingSafeEqual/webcrypto stays allowed. All 10 setEngine forms I wrote are denied, and a member-name scan on Node 22.22.2 finds no other loader member. There is no regression: the only product-tree change is two build-excluded test files. On the frozen candidate sha256:18fee161…c8807: unit 298/298, architecture 105/105, probe 5/5, integration 200/200 twice with 0 57P01, live AR/EN 108/108 (closure 422/G6, scoped access, identity, cursor pagination, provisional branding, Unknown states). Static checks are clean, and the register is unchanged with complete evidence. The round-9 domain closures hold. New finding, proposed F-DG1-011 (Low, non-mandatory, documentation only): D-055 calls the member audit 'exhaustive' without naming its Node 22.22.2-only runtime. Node 24, the production target, is BLOCKED in the handback. D-055 also keeps the disproved 'prevents further adjacent-route findings' sentence. Node 24 could not be checked here (no binary, no network).",
+  "narrative": "docs/delivery/reviews/DG1/round-10/domain-reviewer.md"
+}

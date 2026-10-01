@@ -1,0 +1,17 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG1-131",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by domain-reviewer, a qualified non-author: code-security-reviewer raised it and the delivery-orchestrator wrote the fix. My assignment (T-DG1-REV-DOM-R10) names this finding. The fix 99f3447 is an ancestor of the freeze commit 265af7e and is in the frozen candidate sha256:18fee1617d617cfd719aeaebe3c37904bd116c47eaafb5be52e7bd779c6e8807 (decisions.md is not in META_EXCLUDES), whose id recomputes identically in a full disposable clone. The defect was D-055's claim that 'the only node built-ins module source imports are the seven listed and the only process members are the four listed'. That sentence is gone. D-055 now says module source imports four of the seven built-ins (crypto, fs, path, url) and uses none of the four process members, and that fs/promises, os, util and env/exit/argv/once are 'reviewed safe headroom … NOT claimed as current usage'. My independent TypeScript-AST inventory of src/modules/** confirms exactly this on the candidate: node:crypto x5, node:path x3, node:fs x1, node:url x1; distinct built-ins [crypto, fs, path, url]; zero `process` identifiers and zero process members (probe test 'inventory' asserts both, PASS). On the 'no loader/exec/native/debug capability' part of the headroom statement, my member-name scan finds no loader member in fs/promises, os or util (os.constants.dlopen is a plain object of RTLD_* numbers). So the usage and minimality statement this finding targeted is now accurate. Two other D-055 accuracy gaps are outside this finding's scope: the member audit is called 'exhaustive' without naming its Node 22-only runtime, and a stale 'prevents further adjacent-route findings' sentence remains. I raise them separately as proposed F-DG1-011 (Low, non-mandatory).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-10/03-default-deny-overreach-probe.test.ts",
+        "docs/delivery/test-evidence/DG1/domain/round-10/03-default-deny-overreach-probe.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-10/05-member-name-scan.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-10/00-candidate-and-diff.out.txt",
+        "docs/delivery/decisions.md"
+      ]
+    }
+  ]
+}
