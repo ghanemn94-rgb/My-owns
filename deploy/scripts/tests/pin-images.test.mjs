@@ -26,10 +26,30 @@ const FILES = [
   "deploy/ci/ci.yml",
 ];
 const FAKE = (c) => `sha256:${c.repeat(64)}`; // TEST-ONLY placeholder digests
+const REF_FILES = [
+  "deploy/docker/Dockerfile",
+  "deploy/compose/compose.yaml",
+  ".github/workflows/ci.yml",
+  "deploy/ci/ci.yml",
+];
 let n = 0;
 function tree() {
   const t = join(scratch, `t${++n}`);
   for (const f of FILES) if (existsSync(join(root, f))) cpSync(join(root, f), join(t, f), { recursive: true });
+  // Normalize the copy to a deterministic UNPINNED baseline so these self-tests do not depend on whether the committed
+  // lock and files are already pinned. Once the orchestrator/IT resolves digests (D-049) the committed state IS pinned
+  // (and keycloak carries blockedReason); each test sets exactly the state it exercises, starting from clean here.
+  const l = lockOf(t);
+  for (const img of l.images) {
+    img.digest = null;
+    img.verifiedAt = null;
+    img.blockedReason = null; // present-but-null is the valid "not blocked" shape the tool requires
+  }
+  writeLock(t, l);
+  for (const f of REF_FILES) {
+    const p = join(t, f);
+    if (existsSync(p)) writeFileSync(p, readFileSync(p, "utf8").replace(/@sha256:[0-9a-f]{64}/g, ""));
+  }
   return t;
 }
 const lockOf = (t) => JSON.parse(readFileSync(join(t, "deploy/images.lock.json"), "utf8"));
@@ -48,10 +68,11 @@ const pinAll = (l, except = []) =>
     img.verifiedAt = "2026-10-01T00:00:00.000Z";
   });
 
-test("C1 committed lock: --check exits 1 and reports every null digest as NOT PINNED (honest, never a pass)", () => {
-  const r = pin(tree(), ["--check"]);
+test("C1 an unpinned lock: --check exits 1 and reports every null digest as NOT PINNED (honest, never a pass)", () => {
+  const t = tree();
+  const r = pin(t, ["--check"]);
   assert.equal(r.status, 1, r.out);
-  assert.equal((r.out.match(/^NOT PINNED /gm) ?? []).length, lockOf(root).images.filter((i) => !i.digest).length);
+  assert.equal((r.out.match(/^NOT PINNED /gm) ?? []).length, lockOf(t).images.filter((i) => !i.digest).length);
   assert.doesNotMatch(r.out, /^OK:/m);
 });
 
