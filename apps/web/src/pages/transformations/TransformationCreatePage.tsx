@@ -20,6 +20,7 @@ import { PageHeader, usePageTitle } from "../../components/Page.tsx";
 import { LoadingState, NoPermissionState } from "../../components/States.tsx";
 import { errorMessage, fieldErrorMessage, pointerToField } from "../../lib/problem.ts";
 import { useBusinessUnitIndex } from "./common.tsx";
+import type { CreatedNavigationState } from "./TransformationDetailPage.tsx";
 
 export interface CreateFormValues {
   businessUnitId: string;
@@ -113,9 +114,11 @@ export function TransformationCreatePage() {
         body: toCreatePayload(values),
         idempotencyKey,
       });
-      queryClient.setQueryData(["transformation", created.id], created);
+      // The detail page reads the record back from the server rather than from this response, so what it shows is
+      // exactly what the creator may see; if a 403/404 comes back, it explains instead of showing "Not found".
       await queryClient.invalidateQueries({ queryKey: ["transformations"] });
-      void navigate(`/transformations/${created.id}`, { state: { created: true } });
+      const state: CreatedNavigationState = { created: { id: created.id, code: created.code, name: created.name } };
+      void navigate(`/transformations/${created.id}`, { state });
     } catch (e) {
       if (e instanceof ApiError && e.fieldErrors.length > 0) {
         for (const fe of e.fieldErrors) {
