@@ -1,0 +1,213 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG1",
+  "round": 4,
+  "candidate_id": "sha256:6e0c0db1a8bea33cd81f05ea8c795d8ede4bfb7f380dfe146556cb4875a6f827",
+  "source_commit": "91936e63348dae6a9ae6c10eb52568e841196b27",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG1-T-DG1-REV-DOM-R4-domain-reviewer-20261001T231504Z-609c0775",
+    "session_id": "609c0775-3160-4fe8-a915-8c2780554fa8"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "frontend-ux-engineer",
+    "devops-engineer",
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (domain-reviewer) did not author any implementation in the DG1 scope, including the round-4 F-DG1-147 tooling fix (apps/web/tsconfig.e2e.json, apps/web/package.json typecheck script). I formed this verdict from my own checks on the frozen candidate. I read no round-4 record from another reviewer; I read only my own round-3 record to reuse my own probe scripts and keep the requirement set consistent."
+  },
+  "assignment": "docs/delivery/assignments/DG1/round-4/domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-S15-002",
+    "REQ-S15-005",
+    "REQ-S15-006",
+    "REQ-S16-001",
+    "REQ-S16-002",
+    "REQ-S16-004",
+    "REQ-S19-004",
+    "REQ-S19-006",
+    "REQ-PB-003"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-R4-00-candidate",
+      "procedure": "Confirm HEAD and recompute the candidate ID in the repository and in a disposable clone; diff the round-3 manifest (18e150714d29fa67) against the round-4 manifest (6e0c0db1a8bea33c) and the git tree outside docs/delivery.",
+      "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG1 (repo, Node 24; $TMPDIR/review-dg1r4, Node 22); python3 manifest entry diff; git diff --stat 4f312cc 91936e6 -- . ':!docs/delivery'",
+      "environment": "Linux sandbox; Node v24.21.0 and v22.22.2; git clone of /home/user/My-owns at 91936e6 in $TMPDIR/review-dg1r4",
+      "expected": "HEAD 91936e6; candidate sha256:6e0c0db1…a6f827 with 395 files; only test-tooling changes since round 3",
+      "actual": "HEAD 91936e63348dae6a9ae6c10eb52568e841196b27; candidate sha256:6e0c0db1a8bea33cd81f05ea8c795d8ede4bfb7f380dfe146556cb4875a6f827, 395 files, in both places. Manifest diff 394->395 entries: apps/web/package.json changed (typecheck script) and apps/web/tsconfig.e2e.json added. Nothing else changed outside docs/delivery. The manifest's source_commit is 642e6bf; 91936e6 adds only delivery records and gives the same candidate ID.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-4/00-candidate.log",
+        "docs/delivery/test-evidence/DG1/domain/round-4/10-source-fidelity.log"
+      ]
+    },
+    {
+      "id": "DOM-R4-01-typecheck",
+      "procedure": "Type-check every workspace package. The apps/web step must now also run tsconfig.e2e.json.",
+      "command": "PATH=/opt/node22/bin:$PATH pnpm -r typecheck",
+      "environment": "Disposable clone $TMPDIR/review-dg1r4; Node v22.22.2; pnpm 10.33.0; offline install from a copied pnpm store",
+      "expected": "exit 0; apps/web runs tsc -p tsconfig.json && tsc -p tsconfig.e2e.json",
+      "actual": "exit 0; the log shows 'apps/web typecheck$ tsc -p tsconfig.json && tsc -p tsconfig.e2e.json'",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-002"],
+      "evidence": ["docs/delivery/test-evidence/DG1/domain/round-4/02-typecheck.log"]
+    },
+    {
+      "id": "DOM-R4-02-e2e-typecheck-coverage",
+      "procedure": "Fail-then-pass probe in the disposable clone only: append a deliberate type error to apps/web/e2e/journeys.spec.ts, run the apps/web typecheck, revert, and run it again.",
+      "command": "echo 'const __domainProbe: number = \"not a number\"; void __domainProbe;' >> apps/web/e2e/journeys.spec.ts; pnpm --filter ./apps/web run typecheck; (revert); pnpm --filter ./apps/web run typecheck",
+      "environment": "Disposable clone $TMPDIR/review-dg1r4; Node v22.22.2",
+      "expected": "non-zero exit with the injected error; exit 0 after the revert; clean git status",
+      "actual": "TS2322 at e2e/journeys.spec.ts(473,7), exit 2; exit 0 after the revert; git status clean",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG1/domain/round-4/09-e2e-typecheck-coverage.log"]
+    },
+    {
+      "id": "DOM-R4-03-build",
+      "procedure": "Build all workspace packages.",
+      "command": "PATH=/opt/node22/bin:$PATH pnpm -r build",
+      "environment": "Disposable clone; Node v22.22.2",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-001", "REQ-S16-002"],
+      "evidence": ["docs/delivery/test-evidence/DG1/domain/round-4/03-build.log"]
+    },
+    {
+      "id": "DOM-R4-04-lint",
+      "procedure": "Lint the repository.",
+      "command": "PATH=/opt/node22/bin:$PATH pnpm lint",
+      "environment": "Disposable clone; Node v22.22.2",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG1/domain/round-4/04-lint.log"]
+    },
+    {
+      "id": "DOM-R4-05-test-node22",
+      "procedure": "Run the unit test suite on Node 22.",
+      "command": "PATH=/opt/node22/bin:$PATH pnpm test",
+      "environment": "Disposable clone; Node v22.22.2",
+      "expected": "exit 0, no failures",
+      "actual": "exit 0; Test Files 21 passed (21); Tests 326 passed (326)",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG1/domain/round-4/05-test-node22.log"]
+    },
+    {
+      "id": "DOM-R4-06-test-node24",
+      "procedure": "Run the unit test suite on Node 24.",
+      "command": "PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH pnpm test",
+      "environment": "Disposable clone; Node v24.21.0",
+      "expected": "exit 0, no failures",
+      "actual": "exit 0; Test Files 21 passed (21); Tests 326 passed (326)",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG1/domain/round-4/06-test-node24.log"]
+    },
+    {
+      "id": "DOM-R4-07-contrast",
+      "procedure": "Check contrast for the provisional design tokens.",
+      "command": "PATH=/opt/node22/bin:$PATH pnpm --filter @mth/design-tokens run check:contrast",
+      "environment": "Disposable clone; Node v22.22.2",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S15-002"],
+      "evidence": ["docs/delivery/test-evidence/DG1/domain/round-4/07-contrast.log"]
+    },
+    {
+      "id": "DOM-R4-08-nocdn-openapi-claims",
+      "procedure": "Run the no-CDN scan and the OpenAPI lint, then grep apps and packages for official PMI/Mobily claims.",
+      "command": "pnpm check:no-cdn; pnpm openapi:lint; grep -rniE 'official (pmi|mobily)|pmi[- ]certified|certified by pmi|mobily[- ]approved' apps packages (ts/tsx/json/css/html, excluding node_modules and dist)",
+      "environment": "Disposable clone; Node v22.22.2",
+      "expected": "no-cdn PASS; OpenAPI lint PASS; every claim-grep match is a disclaimer",
+      "actual": "no-cdn PASS (scanned apps, packages); OpenAPI 3.1.1, 33 operations, PASS. All 7 grep matches are negations or disclaimers ('not official Mobily brand assets', 'not an official PMI standard… not certified by PMI', 'not a Mobily-approved access policy', '#0078FF is a provisional brand token').",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S15-005", "REQ-S15-006", "REQ-S19-006"],
+      "evidence": ["docs/delivery/test-evidence/DG1/domain/round-4/08-nocdn-openapi-claims.log"]
+    },
+    {
+      "id": "DOM-R4-09-live-scenario",
+      "procedure": "Live shell scenario on a disposable PostgreSQL 16 cluster with SYNTHETIC seed data. Steps: migrate a fresh database twice, seed-dev, start the API and the worker, then run the API probe (modes, tz/currency defaults, the 422 G6 close rule, If-Match/428/409, scoped access/404, admin has no business data, CSRF, cursor pagination, provisional branding tokens, preferences, BU cycle guard, destination-scope rule, audit events). Also: DB-level cycle trigger, outbox, worker SIGTERM, rate-limit keying, and AR/EN screens.",
+      "command": "cd $TMPDIR/review-dg1r4 && PATH=/opt/node22/bin:$PATH bash $TMPDIR/scn/run.sh $TMPDIR/ev/screens (scripts saved as 01a/01b/01c/01d *.txt)",
+      "environment": "Disposable clone; Node v22.22.2; PostgreSQL 16.13 (disposable initdb on 127.0.0.1:54393); headless Chromium from /opt/pw-browsers",
+      "expected": "all probe assertions PASS; refused closures return 422 and the record is unchanged; no DG7 or real approval claimed; no foreign requests",
+      "actual": "Probe SUMMARY pass=49 fail=0, rate-limit SUMMARY pass=7 fail=0. draft/active/on_hold -> closed all return 422 invalid_transition ('Closure requires the G6 (Sustain) business approval with validated benefits, which is not available in this release'). The record is unchanged, no audit event is written for a refused close, and close+rename is refused atomically. TL out-of-scope reads/creates return 404; the admin sees no business records. Defaults are Asia/Riyadh/SAR; the modular entry phase is configurable. 7 branding tokens with provenance=provisional. A DB trigger blocks the owner-role cycle UPDATE (psql exit 1). Outbox 7/7 published; the worker exits 0 on SIGTERM and the API stays ready. index.html has lang=ar dir=rtl. foreignRequests=[] for every screen.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-003", "REQ-S16-001", "REQ-S16-004", "REQ-S19-004", "REQ-S19-006", "REQ-S15-002"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-4/01-runtime-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-4/01a-probe.mjs.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-4/01b-run.sh.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-4/01d-ratelimit.mjs.txt"
+      ]
+    },
+    {
+      "id": "DOM-R4-10-bilingual-screens",
+      "procedure": "Render login, home, transformations and the BU-cycle screens in Arabic and English with headless Chromium, then inspect the screenshots visually.",
+      "command": "PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers node 01c-screens.mjs <out> (run from 01b-run.sh)",
+      "environment": "Disposable clone; Node v22.22.2; headless Chromium",
+      "expected": "AR is rtl and EN is ltr; a provisional text wordmark and notice are shown; unbuilt modules are marked Planned; local IBM Plex fonts load; no foreign requests",
+      "actual": "AR: lang=ar dir=rtl, the 'مؤقت' badge, the provisional-wordmark notice and 'مخطط' on planned modules. EN: lang=en dir=ltr, the 'Provisional' badge, and the 'Colours are provisional design tokens, not verified Mobily brand values' notice. fontsLoaded: IBM Plex Sans Arabic and IBM Plex Sans. foreignRequests: []. The EN BU-cycle UI shows the alert 'A business unit cannot be its own ancestor.' and the server parent stays null. Timestamps carry Asia/Riyadh or the record's own timezone (Europe/London). The screenshots show correct mirrored layouts.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S15-002", "REQ-S15-005", "REQ-S15-006"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-4/01c-screens.mjs.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-4/screen-home-ar.png",
+        "docs/delivery/test-evidence/DG1/domain/round-4/screen-home-en.png",
+        "docs/delivery/test-evidence/DG1/domain/round-4/screen-login-ar.png",
+        "docs/delivery/test-evidence/DG1/domain/round-4/screen-login-en.png",
+        "docs/delivery/test-evidence/DG1/domain/round-4/screen-transformations-ar.png",
+        "docs/delivery/test-evidence/DG1/domain/round-4/screen-transformations-en.png",
+        "docs/delivery/test-evidence/DG1/domain/round-4/screen-bu-cycle-ar.png",
+        "docs/delivery/test-evidence/DG1/domain/round-4/screen-bu-cycle-en.png"
+      ]
+    },
+    {
+      "id": "DOM-R4-11-source-fidelity",
+      "procedure": "Confirm that the source documents and the domain code (shared constants, web src, api src, db) are unchanged since round 3. Check the phase constants against the playbook and the playbook .docx SHA-256.",
+      "command": "git diff --stat 4f312cc 91936e6 -- docs/source packages/shared apps/web/src apps/api/src packages/db; grep PHASES packages/shared/src; sha256sum docs/source/Business_Transformation_Playbook.docx",
+      "environment": "Disposable clone",
+      "expected": "empty diff; six phases diagnose..realize; docx SHA-256 2584a352…548ad2",
+      "actual": "Empty diff. PHASES = diagnose, define, design, mobilize, transform, realize. docx SHA-256 2584a35282804e639a697478eae75a55a43cfb8c551345dfc7636b9b34548ad2. DG0-DG7 and G1-G6 stay separate: the 422 message names only product gate G6, with no DG7 or real-approval claim (probe assertion PASS).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-003"],
+      "evidence": ["docs/delivery/test-evidence/DG1/domain/round-4/10-source-fidelity.log"]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG1/domain/round-4/00-candidate.log",
+    "docs/delivery/test-evidence/DG1/domain/round-4/01-runtime-scenario.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-4/02-typecheck.log",
+    "docs/delivery/test-evidence/DG1/domain/round-4/03-build.log",
+    "docs/delivery/test-evidence/DG1/domain/round-4/04-lint.log",
+    "docs/delivery/test-evidence/DG1/domain/round-4/05-test-node22.log",
+    "docs/delivery/test-evidence/DG1/domain/round-4/06-test-node24.log",
+    "docs/delivery/test-evidence/DG1/domain/round-4/07-contrast.log",
+    "docs/delivery/test-evidence/DG1/domain/round-4/08-nocdn-openapi-claims.log",
+    "docs/delivery/test-evidence/DG1/domain/round-4/09-e2e-typecheck-coverage.log",
+    "docs/delivery/test-evidence/DG1/domain/round-4/10-source-fidelity.log"
+  ],
+  "reviewed_at": "2026-10-01T23:25:00Z",
+  "summary": "Round-4 re-gate of candidate 6e0c0db1. The only change since round 3 is test tooling (apps/web/tsconfig.e2e.json and the typecheck script, F-DG1-147); a fail-then-pass probe confirms the new typecheck covers the e2e specs. No regression in the domain: the 422/G6 close rule, scoped access, provisional brand, no official PMI/Mobily claim, AR-RTL/EN-LTR, no CDN, Unknown/Stale and decimal invariants are untouched (no domain source changed), and the live scenario passes 49/49 + 7/7. No new findings."
+}
