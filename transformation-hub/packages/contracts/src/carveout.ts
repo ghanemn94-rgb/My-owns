@@ -18,6 +18,7 @@ import {
   PageQuery,
   ProjectParams,
   RequiredText,
+  ServerMessageSchema,
   SortParam,
   Text,
   Uuid,
@@ -25,6 +26,9 @@ import {
   idParams,
   paged,
 } from './common';
+
+/** Server-computed sentence as codes + parameters (web `carveout.messages`; module guide §2). */
+const Messages = z.array(ServerMessageSchema);
 
 /**
  * Carve-out: transaction perimeter register, sites, transfers (legal/economic), reconciliation, perimeter versions,
@@ -52,7 +56,15 @@ export const GateKeySchema = z.string().trim().regex(/^G[0-9]{1,2}$/, 'Gate key 
 const VersionResult = z.object({ id: Uuid, version: z.number().int() });
 const Person = z.object({ userId: Uuid, name: z.string().nullable() }).nullable();
 const EvidenceCounts = z.object({ active: z.number().int(), conflicting: z.number().int() });
-const HistoryEntry = z.object({ versionNo: z.number().int(), reason: z.string().nullable(), changedByName: z.string().nullable(), changedAt: z.string() });
+const HistoryEntry = z.object({
+  versionNo: z.number().int(),
+  /** English reason as recorded (audit / AI context). */
+  reason: z.string().nullable(),
+  /** The same reason as codes + parameters (QA-P34-01f); empty when it matches no known template (shown as recorded). */
+  reasonI18n: Messages,
+  changedByName: z.string().nullable(),
+  changedAt: z.string(),
+});
 
 // ---------------------------------------------------------------------------------------------------------
 // Sites
@@ -106,6 +118,8 @@ export const ImpactEntryDto = z.object({
   area: ImpactAreaSchema,
   status: z.enum(['identified', 'assessment_pending', 'none_identified', 'not_visible']),
   summary: z.string(),
+  /** The same summary as codes + parameters (QA-P34-01f); empty for entries stored before the codes existed. */
+  summaryI18n: Messages,
   references: z.array(ImpactRefDto),
 });
 /** Optional specialist narrative per impact area (kept beside the derived entries). */
@@ -147,6 +161,8 @@ export const TransferRecordDto = z.object({
   mechanism: z.string().nullable(),
   effectiveDate: z.string().nullable(),
   note: z.string().nullable(),
+  /** Present only on a note the SYSTEM wrote (evidence reaction, scope-entry reset): the note as codes + parameters. */
+  noteI18n: Messages.optional(),
   evidenceCount: z.number().int(),
   reviewsRecordId: Uuid.nullable(),
   recordedBy: Uuid.nullable(),
@@ -355,7 +371,7 @@ export const TransferResult = z.object({
 // Reconciliation, categories, Day-1 positions
 
 export const ReconciliationDto = z.object({
-  findings: z.array(z.object({ itemId: Uuid, code: z.string(), issue: z.string(), message: z.string() })),
+  findings: z.array(z.object({ itemId: Uuid, code: z.string(), issue: z.string(), message: z.string(), messageI18n: Messages })),
   categories: z.array(
     z.object({
       category: PerimeterItemTypeSchema,

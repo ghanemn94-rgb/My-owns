@@ -2,7 +2,8 @@ import { ruleViolation } from './errors';
 import { CONSENT_STATUSES } from './enums';
 import type { AgreementStage, ContractTransferClass, PerimeterDisposition, PerimeterItemType, TransferStatus } from './enums';
 import { TRANSFER_MACHINE, transition, type Machine, type TransferCommand } from './workflows';
-import { assertDay1ContractPosition, combinedTransferStatus, perimeterChangeRequiresChangeRequest, reconcilePerimeter, type PerimeterReconItem, type ReconFinding } from './carveout';
+import { assertDay1ContractPosition, combinedTransferStatus, perimeterChangeRequiresChangeRequest, reconcilePerimeter, reconFinding, RECON_MESSAGES_EN, type PerimeterReconItem, type ReconFinding } from './carveout';
+import { parseRenderedMessage, renderMessageEn, renderMessagesEn, serverMessage, type ServerMessage } from './messages';
 
 /**
  * Carve-out perimeter rules used by the carve-out module (spec §7.1–7.2; AT-07, AT-08; REQ-PER-*, REQ-AGR-*).
@@ -271,6 +272,7 @@ export interface RegisterFinding {
   code: string;
   issue: RegisterIssue;
   message: string;
+  messageI18n: ServerMessage[];
 }
 
 export interface CategoryCoverage {
@@ -284,13 +286,13 @@ export function reconcilePerimeterRegister(input: { items: RegisterReconItem[]; 
   const findings: RegisterFinding[] = reconcilePerimeter(input.items).map((f) => ({ ...f }));
   for (const it of input.items) {
     if (it.disposition === 'pending' && (!it.ownerUserId || blank(it.resolutionPath) || blank(it.targetGateKey))) {
-      findings.push({ itemId: it.id, code: it.code, issue: 'pending_without_resolution', message: 'Pending item without owner, resolution path and target resolution gate (G1-C03)' });
+      findings.push(reconFinding(it.id, it.code, 'pending_without_resolution', 'perimeter.recon.pending_without_resolution'));
     }
     if (it.day1 && !it.day1.ok) {
-      findings.push({ itemId: it.id, code: it.code, issue: 'day1_position_incomplete', message: `Day-1 contract position incomplete: ${it.day1.missing.join(', ')}` });
+      findings.push(reconFinding(it.id, it.code, 'day1_position_incomplete', 'perimeter.recon.day1_position_incomplete', { missing: it.day1.missing.join(', ') }));
     }
     if (it.pendingChangeRequest) {
-      findings.push({ itemId: it.id, code: it.code, issue: 'change_request_pending', message: 'A scope change awaits change-request decision' });
+      findings.push(reconFinding(it.id, it.code, 'change_request_pending', 'perimeter.recon.change_request_pending'));
     }
   }
   const byType = new Map<PerimeterItemType, number>();
@@ -329,11 +331,119 @@ export interface ImpactRef {
 export interface ImpactEntry {
   area: ImpactArea;
   status: ImpactStatus;
+  /** English sentence (change-request impacts, audit, AI context). */
   summary: string;
+  /** The same sentence as codes + parameters (QA-P34-01f); stored with the entry. Absent on entries stored before the codes. */
+  summaryI18n?: ServerMessage[];
   references: ImpactRef[];
 }
 
 export const SPECIALIST_PENDING = 'Assessment pending — specialist';
+
+/**
+ * English templates of the derived impact summaries (REQ-PER-004). A financial-statements summary is two messages (the
+ * change, then what must be reassessed) rendered as one sentence. `{codes}` lists record codes; `{disposition}` is a
+ * perimeter disposition enum value. Web catalogue: `carveout.messages.perimeter.impact.*` (en + ar).
+ */
+export const IMPACT_MESSAGES_EN: Readonly<Record<string, string>> = {
+  'perimeter.impact.change.add': 'The change adds {item} ({disposition});',
+  'perimeter.impact.change.attributes': 'The change changes the scope attributes of {item};',
+  'perimeter.impact.change.into_scope': 'The change moves {item} into the transferring scope;',
+  'perimeter.impact.change.out_of_scope': 'The change moves {item} out of the transferring scope;',
+  'perimeter.impact.financial.reassess': `the carve-out financial statements / reporting perimeter must be reassessed — ${SPECIALIST_PENDING} (Finance).`,
+  'perimeter.impact.financial.reassess_balance_sheet': `the carve-out financial statements / reporting perimeter (balance-sheet item) must be reassessed — ${SPECIALIST_PENDING} (Finance).`,
+  'perimeter.impact.no_scope_change': 'No change to the transferring scope.',
+  'perimeter.impact.valuation.pending': `Valuation assumptions may change — ${SPECIALIST_PENDING} (Finance / Corporate Development).`,
+  'perimeter.impact.agreements.not_visible': 'Agreement register not visible to you.',
+  'perimeter.impact.agreements.linked': 'Linked agreements / consents to review: {codes}.',
+  'perimeter.impact.agreements.no_instrument': 'No transfer instrument linked yet — TBD.',
+  'perimeter.impact.agreements.none': 'No linked agreement.',
+  'perimeter.impact.tsa.not_visible': 'TSA register not visible to you.',
+  'perimeter.impact.tsa.linked': "TSA services linked through the item's agreement: {codes}.",
+  'perimeter.impact.tsa.shared': `Shared item: a TSA or approved enduring arrangement is required — TBD (${SPECIALIST_PENDING}).`,
+  'perimeter.impact.tsa.none': 'No TSA dependency identified.',
+  'perimeter.impact.readiness.not_visible': 'Readiness register not visible to you.',
+  'perimeter.impact.readiness.linked': 'Day-1 readiness checks for the same site to revisit: {codes}.',
+  'perimeter.impact.readiness.no_checks': 'No Day-1 readiness checks exist for this site yet — checklist to be defined.',
+  'perimeter.impact.readiness.none': 'No readiness check linked.',
+  'perimeter.impact.schedule.not_visible': 'Plan not visible to you.',
+  'perimeter.impact.schedule.linked': "Milestones of the item's workstream that may move: {codes}.",
+  'perimeter.impact.schedule.none': 'No open milestone in the workstream.',
+  'perimeter.impact.schedule.no_workstream': 'No workstream assigned — schedule impact TBD.',
+  'perimeter.impact.budget.not_visible': 'Budget not visible to you.',
+  'perimeter.impact.budget.linked': "Budget lines of the item's workstream to review: {codes}.",
+  'perimeter.impact.budget.pending': `Separation / standalone cost effect — ${SPECIALIST_PENDING} (Finance).`,
+  'perimeter.impact.budget.none': 'No budget effect identified.',
+  'perimeter.impact.transaction.pending': `Transaction perimeter (JV scope, CPs, signing/closing documents) — ${SPECIALIST_PENDING} (Legal / Corporate Development).`,
+  'perimeter.impact.transaction.none': 'No change to the transaction perimeter.',
+  /** Shown instead of a stored entry whose references the reader may not see (AT-03). */
+  'perimeter.impact.withheld': 'Not visible to you.',
+};
+
+/**
+ * English templates of the perimeter item's record-history reasons (`record_version.reason`, plain text). Writers render
+ * them with {@link perimeterHistoryReason}; readers recover the codes with {@link perimeterHistoryReasonI18n}
+ * (QA-P34-01f). `{justification}` / `{note}` are the user's own text; `{disposition}`, `{transferClass}`, `{from}`, `{to}`
+ * are enum values; `{aspect}` is legal / economic; `{command}` a transfer command. Web: `carveout.messages.perimeter.history.*`.
+ */
+export const PERIMETER_HISTORY_MESSAGES_EN: Readonly<Record<string, string>> = {
+  'perimeter.history.created': 'Created',
+  'perimeter.history.created_pending': 'Created — held Pending under change control',
+  'perimeter.history.change_request_raised': 'Change request {cr} raised (requested: {disposition})',
+  'perimeter.history.descriptive_update': 'Descriptive update',
+  'perimeter.history.change_requested': 'Change requested ({cr}): {justification}',
+  'perimeter.history.aspect_not_applicable_requested': 'Change requested ({cr}): {aspect} transfer not applicable — {note}',
+  'perimeter.history.classified': 'Classified: {justification}',
+  'perimeter.history.applied': 'Applied: {cr}',
+  'perimeter.history.closed_without_change': 'Closed without change: {cr}',
+  'perimeter.history.transferability': 'Transferability: {transferClass}',
+  'perimeter.history.day1_updated': 'Day-1 position updated',
+  'perimeter.history.transfer': 'Transfer ({aspect}) {command}: {from} → {to}',
+  /** DOM-P34R-06 evidence reaction; `{aspects}` is "legal", "economic" or "legal, economic". */
+  'perimeter.history.transfer_evidence_invalidated': 'Transfer evidence invalidated: {aspects} verified → in progress',
+};
+
+/** Parameters of the history reasons that are codes / enum values (parsed as single tokens). */
+const PERIMETER_HISTORY_TOKENS = ['cr', 'disposition', 'aspect', 'transferClass', 'command', 'from', 'to'] as const;
+
+/**
+ * English templates of the notes the SYSTEM writes on a transfer record (plain text, `transfer_record.note`): the evidence
+ * reaction (DOM-P34R-06, `reject_evidence` recorded by the system) and the scope-entry reset of a "not applicable" aspect
+ * (DOM-P34R-05, `scope_reset`). `{from}` / `{to}` are perimeter dispositions. A note typed by a person is never parsed.
+ */
+export const TRANSFER_NOTE_MESSAGES_EN: Readonly<Record<string, string>> = {
+  'perimeter.transfer_note.evidence_invalidated':
+    'The transfer evidence was rejected, superseded or contested after verification (active {active}, contested {conflicting}) — report the transfer again on valid evidence for a new verification',
+  'perimeter.transfer_note.scope_reset': 'the item entered the transferring scope ({from} → {to}); "not applicable" was recorded while it was {from} — plan the transfer or have the specialist determine it',
+  'perimeter.transfer_note.scope_reset_cr':
+    '{cr}: the item entered the transferring scope ({from} → {to}); "not applicable" was recorded while it was {from} — plan the transfer or have the specialist determine it',
+};
+
+/** English system note of a transfer record. */
+export function transferNote(code: string, params: Record<string, string | number>): string {
+  return renderMessageEn(code, params, TRANSFER_NOTE_MESSAGES_EN);
+}
+
+/** Codes of a SYSTEM-written transfer note (the evidence reaction has no recorder; `scope_reset` is always the system's). */
+export function transferNoteI18n(r: { command: string; recordedBy: string | null; note: string | null }): ServerMessage[] | undefined {
+  if (!(r.command === 'scope_reset' || (r.command === 'reject_evidence' && r.recordedBy === null))) return undefined;
+  const m = parseRenderedMessage(r.note, TRANSFER_NOTE_MESSAGES_EN, ['active', 'conflicting', 'from', 'to', 'cr']);
+  return m ? [m] : [];
+}
+
+/** Every server message the carve-out module returns (web `carveout.messages`, checked by apps/web/scripts/check-i18n.mjs). */
+export const PERIMETER_MESSAGES_EN: Readonly<Record<string, string>> = { ...RECON_MESSAGES_EN, ...IMPACT_MESSAGES_EN, ...PERIMETER_HISTORY_MESSAGES_EN, ...TRANSFER_NOTE_MESSAGES_EN };
+
+/** English history reason of a perimeter item, rendered from {@link PERIMETER_HISTORY_MESSAGES_EN}. */
+export function perimeterHistoryReason(code: keyof typeof PERIMETER_HISTORY_MESSAGES_EN & string, params: Record<string, string | number> = {}): string {
+  return renderMessageEn(code, params, PERIMETER_HISTORY_MESSAGES_EN);
+}
+
+/** Codes + parameters of a stored history reason; empty when the reason matches no template (shown as stored). */
+export function perimeterHistoryReasonI18n(reason: string | null | undefined): ServerMessage[] {
+  const m = parseRenderedMessage(reason, PERIMETER_HISTORY_MESSAGES_EN, PERIMETER_HISTORY_TOKENS);
+  return m ? [m] : [];
+}
 
 export interface ImpactInput {
   change: { kind: 'add' | 'reclassify' | 'review'; itemCode: string; itemType: PerimeterItemType; fromDisposition: PerimeterDisposition | null; toDisposition: PerimeterDisposition; scopeAttributesChanged: boolean };
@@ -360,47 +470,58 @@ export function derivePerimeterImpacts(i: ImpactInput): ImpactEntry[] {
   const before = c.kind === 'add' ? false : isInScope(c.fromDisposition);
   const after = isInScope(c.toDisposition);
   const scopeMoves = before !== after || c.kind === 'add' || c.scopeAttributesChanged;
-  const direction = c.kind === 'add' ? `adds ${c.itemCode} (${c.toDisposition})` : before === after ? `changes the scope attributes of ${c.itemCode}` : `moves ${c.itemCode} ${after ? 'into' : 'out of'} the transferring scope`;
+  const direction =
+    c.kind === 'add'
+      ? serverMessage('perimeter.impact.change.add', { item: c.itemCode, disposition: c.toDisposition })
+      : before === after
+        ? serverMessage('perimeter.impact.change.attributes', { item: c.itemCode })
+        : serverMessage(after ? 'perimeter.impact.change.into_scope' : 'perimeter.impact.change.out_of_scope', { item: c.itemCode });
   const out: ImpactEntry[] = [];
-  const push = (area: ImpactArea, status: ImpactStatus, summary: string, references: ImpactRef[] = []) => out.push({ area, status, summary, references });
+  const push = (area: ImpactArea, status: ImpactStatus, messages: ServerMessage[], references: ImpactRef[] = []) =>
+    out.push({ area, status, summary: renderMessagesEn(messages, IMPACT_MESSAGES_EN), summaryI18n: messages, references });
+  const m = (code: string, params: Record<string, string | number> = {}) => [serverMessage(code, params)];
 
   const financialTypes: PerimeterItemType[] = ['liability', 'receivable', 'payable', 'financing', 'guarantee', 'asset', 'site'];
   push(
     'financial_statements',
     scopeMoves ? 'assessment_pending' : 'none_identified',
-    scopeMoves
-      ? `The change ${direction}; the carve-out financial statements / reporting perimeter${financialTypes.includes(c.itemType) ? ' (balance-sheet item)' : ''} must be reassessed — ${SPECIALIST_PENDING} (Finance).`
-      : 'No change to the transferring scope.',
+    scopeMoves ? [direction, serverMessage(financialTypes.includes(c.itemType) ? 'perimeter.impact.financial.reassess_balance_sheet' : 'perimeter.impact.financial.reassess')] : m('perimeter.impact.no_scope_change'),
   );
-  push('valuation', scopeMoves ? 'assessment_pending' : 'none_identified', scopeMoves ? `Valuation assumptions may change — ${SPECIALIST_PENDING} (Finance / Corporate Development).` : 'No change to the transferring scope.');
+  push('valuation', scopeMoves ? 'assessment_pending' : 'none_identified', m(scopeMoves ? 'perimeter.impact.valuation.pending' : 'perimeter.impact.no_scope_change'));
 
-  if (i.agreements === null && i.consents === null) push('agreements', 'not_visible', 'Agreement register not visible to you.');
+  if (i.agreements === null && i.consents === null) push('agreements', 'not_visible', m('perimeter.impact.agreements.not_visible'));
   else {
     const refs = [...(i.agreements ?? []), ...(i.consents ?? [])];
-    if (refs.length) push('agreements', 'identified', `Linked agreements / consents to review: ${codes(refs)}.`, refs);
-    else push('agreements', scopeMoves && after ? 'assessment_pending' : 'none_identified', scopeMoves && after ? 'No transfer instrument linked yet — TBD.' : 'No linked agreement.');
+    if (refs.length) push('agreements', 'identified', m('perimeter.impact.agreements.linked', { codes: codes(refs) }), refs);
+    else push('agreements', scopeMoves && after ? 'assessment_pending' : 'none_identified', m(scopeMoves && after ? 'perimeter.impact.agreements.no_instrument' : 'perimeter.impact.agreements.none'));
   }
 
-  if (i.tsaServices === null) push('tsa', 'not_visible', 'TSA register not visible to you.');
-  else if (i.tsaServices.length) push('tsa', 'identified', `TSA services linked through the item's agreement: ${codes(i.tsaServices)}.`, i.tsaServices);
-  else if (c.toDisposition === 'shared' || c.itemType === 'shared_service') push('tsa', 'assessment_pending', `Shared item: a TSA or approved enduring arrangement is required — TBD (${SPECIALIST_PENDING}).`);
-  else push('tsa', 'none_identified', 'No TSA dependency identified.');
+  if (i.tsaServices === null) push('tsa', 'not_visible', m('perimeter.impact.tsa.not_visible'));
+  else if (i.tsaServices.length) push('tsa', 'identified', m('perimeter.impact.tsa.linked', { codes: codes(i.tsaServices) }), i.tsaServices);
+  else if (c.toDisposition === 'shared' || c.itemType === 'shared_service') push('tsa', 'assessment_pending', m('perimeter.impact.tsa.shared'));
+  else push('tsa', 'none_identified', m('perimeter.impact.tsa.none'));
 
-  if (i.readinessChecks === null) push('readiness', 'not_visible', 'Readiness register not visible to you.');
-  else if (i.readinessChecks.length) push('readiness', 'identified', `Day-1 readiness checks for the same site to revisit: ${codes(i.readinessChecks)}.`, i.readinessChecks);
-  else if (i.hasSite && after) push('readiness', 'assessment_pending', 'No Day-1 readiness checks exist for this site yet — checklist to be defined.');
-  else push('readiness', 'none_identified', 'No readiness check linked.');
+  if (i.readinessChecks === null) push('readiness', 'not_visible', m('perimeter.impact.readiness.not_visible'));
+  else if (i.readinessChecks.length) push('readiness', 'identified', m('perimeter.impact.readiness.linked', { codes: codes(i.readinessChecks) }), i.readinessChecks);
+  else if (i.hasSite && after) push('readiness', 'assessment_pending', m('perimeter.impact.readiness.no_checks'));
+  else push('readiness', 'none_identified', m('perimeter.impact.readiness.none'));
 
-  if (i.milestones === null) push('schedule', 'not_visible', 'Plan not visible to you.');
-  else if (i.milestones.length) push('schedule', 'identified', `Milestones of the item's workstream that may move: ${codes(i.milestones)}.`, i.milestones);
-  else push('schedule', i.hasWorkstream ? 'none_identified' : 'assessment_pending', i.hasWorkstream ? 'No open milestone in the workstream.' : 'No workstream assigned — schedule impact TBD.');
+  if (i.milestones === null) push('schedule', 'not_visible', m('perimeter.impact.schedule.not_visible'));
+  else if (i.milestones.length) push('schedule', 'identified', m('perimeter.impact.schedule.linked', { codes: codes(i.milestones) }), i.milestones);
+  else push('schedule', i.hasWorkstream ? 'none_identified' : 'assessment_pending', m(i.hasWorkstream ? 'perimeter.impact.schedule.none' : 'perimeter.impact.schedule.no_workstream'));
 
-  if (i.budgetLines === null) push('budget', 'not_visible', 'Budget not visible to you.');
-  else if (i.budgetLines.length) push('budget', 'identified', `Budget lines of the item's workstream to review: ${codes(i.budgetLines)}.`, i.budgetLines);
-  else push('budget', scopeMoves ? 'assessment_pending' : 'none_identified', scopeMoves ? `Separation / standalone cost effect — ${SPECIALIST_PENDING} (Finance).` : 'No budget effect identified.');
+  if (i.budgetLines === null) push('budget', 'not_visible', m('perimeter.impact.budget.not_visible'));
+  else if (i.budgetLines.length) push('budget', 'identified', m('perimeter.impact.budget.linked', { codes: codes(i.budgetLines) }), i.budgetLines);
+  else push('budget', scopeMoves ? 'assessment_pending' : 'none_identified', m(scopeMoves ? 'perimeter.impact.budget.pending' : 'perimeter.impact.budget.none'));
 
-  push('transaction', scopeMoves ? 'assessment_pending' : 'none_identified', scopeMoves ? `Transaction perimeter (JV scope, CPs, signing/closing documents) — ${SPECIALIST_PENDING} (Legal / Corporate Development).` : 'No change to the transaction perimeter.');
+  push('transaction', scopeMoves ? 'assessment_pending' : 'none_identified', m(scopeMoves ? 'perimeter.impact.transaction.pending' : 'perimeter.impact.transaction.none'));
   return out;
+}
+
+/** The entry shown instead of a stored one whose references the reader may not see (AT-03: no codes, no counts). */
+export function withheldImpactEntry(area: ImpactArea): ImpactEntry {
+  const messages = [serverMessage('perimeter.impact.withheld')];
+  return { area, status: 'not_visible', summary: renderMessagesEn(messages, IMPACT_MESSAGES_EN), summaryI18n: messages, references: [] };
 }
 
 /** Change-request impacts (planning `ImpactsSchema` keys) built from the derived entries — each ≤ 2000 characters. */

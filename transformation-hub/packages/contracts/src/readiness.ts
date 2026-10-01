@@ -15,7 +15,7 @@ import {
   LINKED_DECISION_ISSUE_CODES,
 } from '@hub/domain';
 import { defineRoute, registerRoutes } from './route';
-import { ClassificationSchema, ExpectedVersion, IsoDate, IsoInstant, MoneySchema, NoSort, PageQuery, ProjectParams, RequiredText, SortParam, Text, Uuid, paged } from './common';
+import { ClassificationSchema, ExpectedVersion, IsoDate, IsoInstant, MoneySchema, NoSort, PageQuery, ProjectParams, RequiredText, ServerMessageSchema, SortParam, Text, Uuid, paged } from './common';
 
 /**
  * Day-1 readiness checks, cutover plans / go-no-go and TSA services (spec §7.3, §7.4; AT-09, AT-10; REQ-RDY-*,
@@ -122,7 +122,10 @@ const CheckCommandResult = z.object({ id: Uuid, status: RStatus, version: z.numb
 
 export const GoBlockerDto = z.object({
   id: Uuid,
+  /** "<code> — <title>" (English / primary text, as evaluated). */
   title: z.string(),
+  /** "<code> — <Arabic title>" when the check has an Arabic title (QA-P34-01e); absent on entries recorded before. */
+  titleAr: z.string().nullable().optional(),
   status: RStatus,
   blocker: z.boolean(),
   /** DOM-P3-09: a `passed` check whose sign-off evidence is no longer active (rejected / superseded / conflicting). */
@@ -170,6 +173,8 @@ export const CutoverCheckDto = z.object({
   code: z.string(),
   area: Area,
   title: z.string(),
+  /** Arabic title (template checks; null when there is no Arabic source) — QA-P34-01e. */
+  titleAr: z.string().nullable(),
   mandatory: z.boolean(),
   blocker: z.boolean(),
   status: RStatus,
@@ -188,6 +193,11 @@ export const CutoverDecisionRecordDto = z.object({
   /** Null for entries recorded by the system (a GO flagged by the evidence reaction — DOM-P3-09). */
   actorUserId: Uuid.nullable(),
   rationale: z.string().nullable(),
+  /**
+   * Present only on entries whose rationale the SYSTEM wrote (GO flagged, check bound / unbound): the rationale as codes +
+   * parameters. A person's rationale has no codes (it is their own text, shown as entered).
+   */
+  rationaleI18n: z.array(ServerMessageSchema).optional(),
   goDecisionId: Uuid.nullable(),
   evaluation: z.object({ blockers: z.array(GoBlockerDto), missing: z.array(z.string()) }).nullable(),
   createdAt: z.string(),
@@ -269,10 +279,15 @@ export const TsaEscalationDto = z.object({
   id: Uuid,
   code: z.string(),
   status: z.enum(ESCALATION_STATUSES),
+  /** English text as stored on the escalation record (shared with the committee escalations). */
   requestedAction: z.string(),
+  /** The same text as codes + parameters (QA-P34-01b; web `readiness.messages`); empty when it matches no known template. */
+  requestedActionI18n: z.array(ServerMessageSchema),
   decisionDeadline: z.string().nullable(),
   options: z.array(z.object({ title: z.string(), impact: z.string().optional() })),
   target: z.string().nullable(),
+  /** Routing target as codes + parameters (QA-P34-01b); empty when it matches no known template. */
+  targetI18n: z.array(ServerMessageSchema),
 });
 
 export const TsaServiceDetailDto = TsaServiceDto.extend({

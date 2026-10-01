@@ -15,7 +15,10 @@ import {
   conflict,
   forbidden,
   isInScope,
+  perimeterHistoryReason,
   ruleViolation,
+  transferNote,
+  transferNoteI18n,
   transition,
   TRANSFER_MACHINE,
 } from '@hub/domain';
@@ -82,6 +85,7 @@ export class TransfersService {
         mechanism: r.mechanism,
         effectiveDate: r.effectiveDate,
         note: r.note,
+        ...((i18n) => (i18n ? { noteI18n: i18n } : {}))(transferNoteI18n(r)),
         evidenceCount: r.evidenceCount,
         reviewsRecordId: r.reviewsRecordId,
         recordedBy: r.recordedBy,
@@ -140,7 +144,7 @@ export class TransfersService {
       recordedBy: ctx.principal.userId!,
     });
     const version = row['version'] as number;
-    await this.versions.snapshot({ projectId: p.id, entityType: 'perimeter_item', entityId: item.id, versionNo: version, snapshot: row, reason: `Transfer (${rec.aspect}) ${rec.command}: ${rec.from} → ${rec.to}` });
+    await this.versions.snapshot({ projectId: p.id, entityType: 'perimeter_item', entityId: item.id, versionNo: version, snapshot: row, reason: perimeterHistoryReason('perimeter.history.transfer', { aspect: rec.aspect, command: rec.command, from: rec.from, to: rec.to }) });
     await this.audit.record({
       action: `carveout.transfer.${rec.command}`,
       entityType: 'perimeter_item',
@@ -174,7 +178,7 @@ export class TransfersService {
     const u: Partial<typeof schema.perimeterItem.$inferInsert> = {};
     for (const aspect of verified) u[aspect === 'legal' ? 'transferStatus' : 'economicTransferStatus'] = transition('transfer', TRANSFER_MACHINE, 'transferred_verified', 'reject_evidence');
     const row = await updateVersioned(this.s.db, PI, { id: item.id, projectId, expectedVersion: item.version }, u);
-    const note = `The transfer evidence was rejected, superseded or contested after verification (active ${ev.active}, contested ${ev.conflicting}) — report the transfer again on valid evidence for a new verification`;
+    const note = transferNote('perimeter.transfer_note.evidence_invalidated', { active: ev.active, conflicting: ev.conflicting });
     for (const aspect of verified) {
       await this.tx.insert(TR).values({
         id: newId(),
@@ -194,7 +198,7 @@ export class TransfersService {
       });
     }
     const version = row['version'] as number;
-    await this.versions.snapshot({ projectId, entityType: 'perimeter_item', entityId: item.id, versionNo: version, snapshot: row, reason: `Transfer evidence invalidated: ${verified.join(', ')} verified → in progress` });
+    await this.versions.snapshot({ projectId, entityType: 'perimeter_item', entityId: item.id, versionNo: version, snapshot: row, reason: perimeterHistoryReason('perimeter.history.transfer_evidence_invalidated', { aspects: verified.join(', ') }) });
     await this.audit.record({
       action: 'carveout.transfer.evidence_invalidated',
       entityType: 'perimeter_item',

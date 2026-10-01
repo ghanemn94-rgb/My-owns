@@ -372,4 +372,47 @@ test.describe.serial('P3 carve-out & NewCo', () => {
     }
     expect(problems(), problems().join('\n')).toEqual([]);
   });
+
+  test('(e) REQ-LCY-007 / AT-06: the cockpit shows the NewCo incorporated (verified, test b) alongside the perimeter transfer in progress — each dimension separately, never the carve-out as complete', async ({ page, baseURL }) => {
+    const problems = watchConsole(page);
+    await loginAs(page, PERSONAS.pm);
+    await setSavedLocale(page, 'en');
+    // An in-scope demo item whose legal and economic transfers are planned: the PM starts both through the item page (the
+    // combined status of the item — the less advanced aspect — is then in progress).
+    const api = await apiSessionAs(baseURL!, PERSONAS.pm);
+    const items = (await (await api.get(`/api/v1/projects/${dcId}/perimeter-items?pageSize=100`)).json()).items as { id: string; code: string; disposition: string; transfer: { legal: string; economic: string } }[];
+    await api.dispose();
+    const item = items.find((x) => x.disposition === 'included' && ['planned', 'in_progress'].includes(x.transfer.legal) && ['planned', 'in_progress'].includes(x.transfer.economic));
+    expect(item, 'an included demo item with both transfer aspects planned (PI-001 in the demo seed)').toBeTruthy();
+    await page.goto(`/projects/${dcId}/perimeter/items/${item!.id}`);
+    for (const aspect of ['legal', 'economic'] as const) {
+      if (item!.transfer[aspect] === 'in_progress') continue;
+      await page.locator(`[data-command="${aspect}:start"]`).click();
+      const dialog = page.locator('dialog[open]');
+      await dialog.getByRole('button', { name: 'Start', exact: true }).click();
+      await expect(dialog).toHaveCount(0);
+      await expect(page.getByTestId('transfer-view').first()).toHaveAttribute(`data-${aspect}`, 'in_progress');
+    }
+
+    // The cockpit (status dimensions are recomputed by the worker after the perimeter change).
+    await page.goto(`/projects/${dcId}`);
+    await expect(page.getByTestId('dimension-cards').locator('[data-dimension]')).toHaveCount(4);
+    await expect
+      .poll(
+        async () => {
+          await page.reload();
+          await expect(dimensionState(page, 'perimeter_transfer')).toBeVisible();
+          return dimensionState(page, 'perimeter_transfer').getAttribute('data-status');
+        },
+        { timeout: 60_000, intervals: [2_000] },
+      )
+      .toBe('transfer_in_progress');
+    await expect(dimensionState(page, 'incorporation')).toHaveAttribute('data-status', 'incorporated_verified');
+    await expect(page.locator('[data-testid="dimension-cards"] [data-dimension="incorporation"]')).toContainText('Incorporated — evidence verified');
+    await expect(page.locator('[data-testid="dimension-cards"] [data-dimension="perimeter_transfer"]')).toContainText('Transfer in progress');
+    // Operational readiness is not at its terminal state, so the carve-out is not complete (AT-06): no dimension reads "complete".
+    await expect(dimensionState(page, 'operational_readiness')).not.toHaveAttribute('data-status', 'transitional_services_exited');
+    await page.screenshot({ path: join(SHOTS, 'cockpit-incorporated-transfer-in-progress-en.png'), fullPage: true });
+    expect(problems(), problems().join('\n')).toEqual([]);
+  });
 });

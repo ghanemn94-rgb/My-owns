@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft } from 'lucide-react';
 import { useState } from 'react';
 import { jvRoutes } from '@hub/contracts';
+import { PARTNER_REQUESTER_LABEL } from '@hub/domain';
 import { ActivityHistory } from '@/components/ActivityHistory';
 import { DemoBadge } from '@/components/DemoBadge';
 import { ErrorState } from '@/components/ErrorState';
@@ -263,7 +264,11 @@ export default function DdRequestPage() {
           <Facts
             items={[
               { label: t('jv.dd.fields.room'), value: r.roomId ? <Link className={btn.link} href={`${base}/rooms/${r.roomId}`}><span dir="auto">{rooms.label(r.roomId)}</span></Link> : EM_DASH },
-              { label: t('jv.dd.fields.requesterLabel'), value: <UText value={r.requesterLabel} /> },
+              {
+                label: t('jv.dd.fields.requesterLabel'),
+                // QA-P34-01c: the server stores the English label of a partner-raised question; show it translated.
+                value: r.origin === 'partner' && r.requesterLabel === PARTNER_REQUESTER_LABEL ? t('jv.dd.requesterCounterparty') : <UText value={r.requesterLabel} />,
+              },
               { label: t('jv.dd.fields.assignee'), value: <Person id={r.assigneeUserId} people={people} /> },
               { label: t('jv.dd.fields.reviewer'), value: <Person id={r.reviewerUserId} people={people} /> },
               { label: t('jv.dd.fields.dueDate'), value: <span className="tabular">{formatDate(r.dueDate)}</span> },

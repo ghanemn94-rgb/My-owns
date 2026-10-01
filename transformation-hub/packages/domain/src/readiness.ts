@@ -6,6 +6,7 @@ import { TSA_MACHINE } from './workflows';
 import type { Machine } from './workflows';
 import { goDecisionBlockers, missingCutoverPrerequisites } from './carveout';
 import type { CutoverPrerequisites, TsaExpiryAssessment } from './carveout';
+import { parseRenderedMessage, renderMessageEn, type ServerMessage } from './messages';
 
 /**
  * Day-1 readiness, cutover / go-no-go and TSA rules (spec §7.3, §7.4; AT-09, AT-10; REQ-RDY-*, REQ-TSA-*).
@@ -518,6 +519,75 @@ export const TSA_ESCALATION_OPTIONS = [
   { key: 'replan', title: 'Accelerate / re-plan the replacement service', impact: 'Exit only after the replacement is accepted with evidence and the exit approved' },
 ] as const;
 export type TsaEscalationOptionKey = (typeof TSA_ESCALATION_OPTIONS)[number]['key'];
+
+/**
+ * English templates of the texts the TSA escalation stores on the governance escalation record (QA-P34-01b): the requested
+ * action and the routing target. They are persisted as plain text (the escalation table is shared with the committee
+ * escalations), so the API recovers the codes with {@link tsaEscalationI18n}. `{endDate}` is a business date; `{name}`,
+ * `{failureSummary}`, `{continuityPlan}`, `{committee}` and `{escalateTo}` are recorded data (shown as entered);
+ * `{decisionType}` is a decision-type key. Web catalogue: `readiness.messages.tsa.*` (en + ar).
+ */
+export const TSA_MESSAGES_EN: Readonly<Record<string, string>> = {
+  'tsa.escalation.expired_unresolved':
+    'TSA {code} ({name}) reached its end date {endDate} without an accepted replacement service. This is NOT an exit. Decide on continuity: an extension (approved decision required; never automatic) or an alternative arrangement.',
+  'tsa.escalation.replacement_failure':
+    'The replacement for TSA {code} ({name}) failed: {failureSummary}. Decide on continuity: extension of the TSA (requires an approved decision; never automatic) or an alternative interim arrangement. Continuity plan: {continuityPlan}',
+  'tsa.routing.within_authority': '{committee} — within its delegated authority ({decisionType}, matrix v{matrixVersion})',
+  'tsa.routing.delegating_authority_tbc': 'Delegating authority — to be confirmed ({decisionType}, matrix v{matrixVersion})',
+  'tsa.routing.escalate_to': '{escalateTo} ({decisionType}, matrix v{matrixVersion})',
+  'tsa.routing.no_matrix': 'Authorized body — to be confirmed (no approved authority matrix covers TSA decisions)',
+};
+
+/** Parameters of the TSA escalation texts that are codes / keys / numbers / dates (parsed as single tokens). */
+const TSA_MESSAGE_TOKENS = ['code', 'endDate', 'decisionType', 'matrixVersion'] as const;
+
+/** English TSA escalation text rendered from {@link TSA_MESSAGES_EN} (what the escalation record stores). */
+export function tsaEscalationText(code: string, params: Record<string, string | number> = {}): string {
+  return renderMessageEn(code, params, TSA_MESSAGES_EN);
+}
+
+/** Codes + parameters of a stored TSA escalation text; empty when it matches no template (shown as stored). */
+export function tsaEscalationI18n(text: string | null | undefined): ServerMessage[] {
+  const m = parseRenderedMessage(text, TSA_MESSAGES_EN, TSA_MESSAGE_TOKENS);
+  return m ? [m] : [];
+}
+
+/**
+ * English templates of the rationale the SYSTEM records in a cutover plan's go/no-go history (cutover_decision_record,
+ * plain text): a GO flagged by a gating check that is open again (DOM-P3-04 / DOM-P3-09) and a check bound to / unbound from
+ * the plan (DOM-P3-01 rebind). `{check}` is the check code; `{note}` / `{reason}` are the user's own text. Web catalogue:
+ * `readiness.messages.cutover.*` (en + ar). Rationales typed by a person are never parsed.
+ */
+export const CUTOVER_HISTORY_MESSAGES_EN: Readonly<Record<string, string>> = {
+  'cutover.history.go_flagged.test_failed': '{check}: a test of this gating check failed after the GO',
+  'cutover.history.go_flagged.test_failed_note': '{check}: a test of this gating check failed after the GO ({note})',
+  'cutover.history.go_flagged.reopened': '{check}: the specialist reopened this gating check after the GO ({note})',
+  'cutover.history.go_flagged.evidence_invalidated': '{check}: the evidence of this signed-off gating check was rejected, superseded or contested after the GO',
+  'cutover.history.check_unbound': '{check} no longer gates this transition: {reason}',
+  'cutover.history.check_bound': '{check} now gates this transition: {reason}',
+  /** DOM-P34R-07: an open gating check bound to a plan that has a GO flags that GO. */
+  'cutover.history.go_flagged.bound_after_go': '{check}: an open gating check was bound to this transition after the GO ({note})',
+  /** The plan's site changed (scope command): `{leaving}` / `{entering}` list check codes ("—" when none). */
+  'cutover.history.site_changed': '{reason} — no longer gating: {leaving}; now gating: {entering}',
+};
+
+/** History kinds whose rationale the system writes from {@link CUTOVER_HISTORY_MESSAGES_EN}. */
+export const SYSTEM_CUTOVER_HISTORY_KINDS = ['go_flagged', 'check_bound', 'check_unbound', 'site_changed'] as const;
+
+/** English system rationale of a cutover plan history entry. */
+export function cutoverHistoryText(code: string, params: Record<string, string | number>): string {
+  return renderMessageEn(code, params, CUTOVER_HISTORY_MESSAGES_EN);
+}
+
+/** Codes + parameters of a system-written history rationale; empty for a person's rationale or an unknown text. */
+export function cutoverHistoryI18n(kind: string, rationale: string | null | undefined): ServerMessage[] {
+  if (!(SYSTEM_CUTOVER_HISTORY_KINDS as readonly string[]).includes(kind)) return [];
+  const m = parseRenderedMessage(rationale, CUTOVER_HISTORY_MESSAGES_EN, ['check']);
+  return m ? [m] : [];
+}
+
+/** Every server message the readiness module returns (web `readiness.messages`, checked by apps/web/scripts/check-i18n.mjs). */
+export const READINESS_MESSAGES_EN: Readonly<Record<string, string>> = { ...TSA_MESSAGES_EN, ...CUTOVER_HISTORY_MESSAGES_EN };
 
 /** REQ-TSA-001 (proposed test "a TSA without exit milestones cannot be Approved"): approval needs a complete record. */
 export function assertTsaApprovable(t: {

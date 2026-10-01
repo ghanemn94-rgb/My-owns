@@ -460,3 +460,16 @@ Also carried: REQ-ENT-010 (Implemented; F-08 variance — a reader of one end se
 awaiting the governance owner); REQ-PHS-004 is closed by the P2 gate report itself (the decision journey passes: request →
 authorized approval → action → verified closure, `governance decision-lifecycle.spec.ts` and the QA final e2e
 `qa-p2-final-authority-ui.spec.ts`).
+
+### Update after the P3/P4 QA fixes (implementer, 2026-10-01) — QA-P34-04
+
+The P3/P4 QA review (`docs/reviews/P3-P4-qa-review.md`, QA-P34-04) found stale or inconsistent evidence on four P3 musts.
+The rows of §3 are kept as written; the result of each is below (evidence in `docs/requirements/status-evidence.yaml`, runs
+in the review's "Fix status").
+
+| Requirement | Finding | Result |
+|---|---|---|
+| REQ-UX-010 | The evidence still recorded `p3-carveout (a)` as failed (F-13, since fixed); the AT "add perimeter item and see reconciliation update" had no test | **Result: Tested.** AT-07 through the API and `p3-carveout.spec.ts` (a); the AT's E2E is `qa-p34-journeys.spec.ts` J5 (an item added in the UI is listed in the reconciliation tab, item count +1); English / Arabic / 390 px rendering and axe (QA-P34-01a/f, -02, -03 fixed). |
+| REQ-LCY-007 | The E2E evidence was the NewCo screen (the AT names the cockpit) and cited a skipped run | **Result: stays Tested, now with the AT's E2E.** New `p3-carveout.spec.ts` (e): the cockpit shows the NewCo "Incorporated — evidence verified" next to "Transfer in progress" (perimeter dimension recomputed by the worker), operational readiness not terminal. |
+| REQ-SET-012 | Tested while its only AT is an E2E that no Playwright test drives | **Result: lowered to Implemented**, gap stated: the perimeter approval is reached from the Perimeter versions tab (propose = the setup step-4 endpoint, approve = the sponsor with a final G1 decision); the wizard screens are in the P2 residual screens package. Tested again when that E2E passes, or Implemented with the variance accepted by the P3 gate reviewer (§6). |
+| REQ-PHS-005 | "P3 screens not yet in the axe scan list" | **Result: evidence refreshed; stays Implemented** until `docs/phases/P3-gate-report.json`. The P3 screens are in `a11y.spec.ts` (27 screen states, both locales — QA-P34-02); the P3 domain, security and QA reviews have run and their fixes are merged. |

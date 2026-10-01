@@ -26,10 +26,15 @@ import {
   isInScope,
   notFound,
   perimeterChangeControl,
+  perimeterHistoryReason,
+  perimeterHistoryReasonI18n,
   reconcilePerimeterRegister,
   ruleViolation,
   sameScope,
   scopeEntryTransferReset,
+  transferNote,
+  transferNoteI18n,
+  withheldImpactEntry,
 } from '@hub/domain';
 import type { z } from 'zod';
 import type {
@@ -317,7 +322,7 @@ export class PerimeterService {
       consents: shownConsents,
       transfers,
       evidence: { item: ev.get(item.id) ?? { active: 0, conflicting: 0 }, transfer: evT.get(item.id) ?? { active: 0, conflicting: 0 } },
-      history: hist.map((h) => ({ versionNo: h.versionNo, reason: h.reason, changedByName: h.changedBy ? (histNames.get(h.changedBy) ?? null) : null, changedAt: h.changedAt.toISOString() })),
+      history: hist.map((h) => ({ versionNo: h.versionNo, reason: h.reason, reasonI18n: perimeterHistoryReasonI18n(h.reason), changedByName: h.changedBy ? (histNames.get(h.changedBy) ?? null) : null, changedAt: h.changedAt.toISOString() })),
       allowedTransferCommands: {
         legal: allowedCommands(TRANSFER_MACHINE, item.transferStatus as TransferStatus),
         economic: allowedCommands(TRANSFER_MACHINE, item.economicTransferStatus as TransferStatus),
@@ -342,6 +347,7 @@ export class PerimeterService {
       mechanism: r.mechanism,
       effectiveDate: r.effectiveDate,
       note: r.note,
+      ...((i18n) => (i18n ? { noteI18n: i18n } : {}))(transferNoteI18n(r)),
       evidenceCount: r.evidenceCount,
       reviewsRecordId: r.reviewsRecordId,
       recordedBy: r.recordedBy,
@@ -560,7 +566,7 @@ export class PerimeterService {
     await this.recordImpact(ctx, p, item.id, entries, undefined, 'change_request', cr.id);
     const row = await updateVersioned(this.s.db, PI, { id: item.id, projectId: p.id, expectedVersion: item.version }, { pendingChangeRequestId: cr.id });
     const itemVersion = row['version'] as number;
-    await this.versions.snapshot({ projectId: p.id, entityType: 'perimeter_item', entityId: item.id, versionNo: itemVersion, snapshot: row, reason: `Change requested (${cr.code}): ${aspect} transfer not applicable — ${note}` });
+    await this.versions.snapshot({ projectId: p.id, entityType: 'perimeter_item', entityId: item.id, versionNo: itemVersion, snapshot: row, reason: perimeterHistoryReason('perimeter.history.aspect_not_applicable_requested', { cr: cr.code, aspect, note }) });
     await this.audit.record({
       action: 'carveout.transfer.not_applicable_requested',
       entityType: 'perimeter_item',
@@ -630,7 +636,7 @@ export class PerimeterService {
       createdBy: ctx.principal.userId,
     });
     const item = await loadInProject(this.s.db, PI, projectId, id);
-    await this.versions.snapshot({ projectId, entityType: 'perimeter_item', entityId: id, versionNo: 1, snapshot: item as unknown as Record<string, unknown>, reason: cc.requiresChangeRequest ? 'Created — held Pending under change control' : 'Created' });
+    await this.versions.snapshot({ projectId, entityType: 'perimeter_item', entityId: id, versionNo: 1, snapshot: item as unknown as Record<string, unknown>, reason: perimeterHistoryReason(cc.requiresChangeRequest ? 'perimeter.history.created_pending' : 'perimeter.history.created') });
     let changeRequest: { id: string; code: string; status: string; rebaseline: boolean } | null = null;
     let impactAssessmentId: string | null = null;
     let version = 1;
@@ -640,7 +646,7 @@ export class PerimeterService {
       version = row['version'] as number;
       changeRequest = { id: raised.cr.id, code: raised.cr.code, status: raised.cr.status, rebaseline: cc.rebaseline };
       impactAssessmentId = raised.impactId;
-      await this.versions.snapshot({ projectId, entityType: 'perimeter_item', entityId: id, versionNo: version, snapshot: row, reason: `Change request ${raised.cr.code} raised (requested: ${requested.disposition})` });
+      await this.versions.snapshot({ projectId, entityType: 'perimeter_item', entityId: id, versionNo: version, snapshot: row, reason: perimeterHistoryReason('perimeter.history.change_request_raised', { cr: raised.cr.code, disposition: requested.disposition }) });
     }
     await this.audit.record({
       action: 'carveout.perimeter.create',
@@ -702,7 +708,7 @@ export class PerimeterService {
     if (Object.keys(u).length === 0) throw invalid('carveout.no_changes', 'No changes supplied');
     const row = await updateVersioned(this.s.db, PI, { id: itemId, projectId, expectedVersion: body.expectedVersion }, u);
     const version = row['version'] as number;
-    await this.versions.snapshot({ projectId, entityType: 'perimeter_item', entityId: itemId, versionNo: version, snapshot: row, reason: 'Descriptive update' });
+    await this.versions.snapshot({ projectId, entityType: 'perimeter_item', entityId: itemId, versionNo: version, snapshot: row, reason: perimeterHistoryReason('perimeter.history.descriptive_update') });
     await this.audit.record({ action: 'carveout.perimeter.update', entityType: 'perimeter_item', entityId: itemId, projectId, before: pick(item, Object.keys(u)), after: u as Record<string, unknown> });
     await this.outbox.emit({ type: 'perimeter.changed', projectId, aggregateType: 'perimeter_item', aggregateId: itemId, payload: { change: 'updated' } });
     return { id: itemId, version };
@@ -728,7 +734,7 @@ export class PerimeterService {
       const raised = await this.raiseChangeRequest(ctx, p, item, 'reclassify', from, to, cc, body.justification, body.impactNarrative);
       const row = await updateVersioned(this.s.db, PI, { id: itemId, projectId, expectedVersion: body.expectedVersion }, { pendingChangeRequestId: raised.cr.id });
       const version = row['version'] as number;
-      await this.versions.snapshot({ projectId, entityType: 'perimeter_item', entityId: itemId, versionNo: version, snapshot: row, reason: `Change requested (${raised.cr.code}): ${body.justification}` });
+      await this.versions.snapshot({ projectId, entityType: 'perimeter_item', entityId: itemId, versionNo: version, snapshot: row, reason: perimeterHistoryReason('perimeter.history.change_requested', { cr: raised.cr.code, justification: body.justification }) });
       await this.audit.record({ action: 'carveout.perimeter.classify', entityType: 'perimeter_item', entityId: itemId, projectId, before: { ...from }, after: { requested: to, changeRequestId: raised.cr.id, applied: false }, reason: body.justification });
       await this.outbox.emit({ type: 'perimeter.changed', projectId, aggregateType: 'perimeter_item', aggregateId: itemId, payload: { change: 'change_requested', changeRequestId: raised.cr.id } });
       return { id: itemId, code: item.code, version, disposition: item.disposition as PerimeterDisposition, applied: false, changeRequest: { id: raised.cr.id, code: raised.cr.code, status: raised.cr.status, rebaseline: cc.rebaseline }, impactAssessmentId: raised.impactId };
@@ -738,7 +744,7 @@ export class PerimeterService {
     const row = await updateVersioned(this.s.db, PI, { id: itemId, projectId, expectedVersion: body.expectedVersion }, { disposition: to.disposition, siteId: to.siteId, currentEntityId: to.currentEntityId, targetEntityId: to.targetEntityId, ...reset.updates });
     const version = row['version'] as number;
     await this.recordScopeEntryReset(ctx, p, item, to.disposition, reset.aspects);
-    await this.versions.snapshot({ projectId, entityType: 'perimeter_item', entityId: itemId, versionNo: version, snapshot: row, reason: `Classified: ${body.justification}` });
+    await this.versions.snapshot({ projectId, entityType: 'perimeter_item', entityId: itemId, versionNo: version, snapshot: row, reason: perimeterHistoryReason('perimeter.history.classified', { justification: body.justification }) });
     await this.audit.record({ action: 'carveout.perimeter.classify', entityType: 'perimeter_item', entityId: itemId, projectId, before: { ...from }, after: { ...to, applied: true, ...(reset.aspects.length ? { transferReset: reset.aspects } : {}) }, reason: body.justification });
     await this.outbox.emit({ type: 'perimeter.changed', projectId, aggregateType: 'perimeter_item', aggregateId: itemId, payload: { change: 'classified', disposition: to.disposition } });
     return { id: itemId, code: item.code, version, disposition: to.disposition, applied: true, changeRequest: null, impactAssessmentId: null };
@@ -771,7 +777,7 @@ export class PerimeterService {
         toStatus: 'not_started',
         mechanism: item.transferMechanism,
         effectiveDate: null,
-        note: `${changeRequestCode ? `${changeRequestCode}: ` : ''}the item entered the transferring scope (${item.disposition} → ${toDisposition}); "not applicable" was recorded while it was ${item.disposition} — plan the transfer or have the specialist determine it`.slice(0, 2000),
+        note: transferNote(changeRequestCode ? 'perimeter.transfer_note.scope_reset_cr' : 'perimeter.transfer_note.scope_reset', { from: item.disposition, to: toDisposition, ...(changeRequestCode ? { cr: changeRequestCode } : {}) }).slice(0, 2000),
         evidenceCount: 0,
         reviewsRecordId: null,
         recordedBy: ctx.principal.userId!,
@@ -859,7 +865,7 @@ export class PerimeterService {
       });
     }
     if (scopeReset.aspects.length) await this.recordScopeEntryReset(ctx, p, item, u.disposition as PerimeterDisposition, scopeReset.aspects, cr.code);
-    await this.versions.snapshot({ projectId, entityType: 'perimeter_item', entityId: itemId, versionNo: version, snapshot: row, reason: `${outcome === 'applied' ? 'Applied' : 'Closed without change'}: ${cr.code}` });
+    await this.versions.snapshot({ projectId, entityType: 'perimeter_item', entityId: itemId, versionNo: version, snapshot: row, reason: perimeterHistoryReason(outcome === 'applied' ? 'perimeter.history.applied' : 'perimeter.history.closed_without_change', { cr: cr.code }) });
     await this.audit.record({ action: 'carveout.perimeter.apply_change', entityType: 'perimeter_item', entityId: itemId, projectId, before: { ...scopeOf(item), pendingChangeRequestId: item.pendingChangeRequestId }, after: { ...scopeOf(row as unknown as Item), outcome, changeRequestId: cr.id, changeRequestStatus: cr.status }, reason: body.note ?? null });
     await this.outbox.emit({ type: 'perimeter.changed', projectId, aggregateType: 'perimeter_item', aggregateId: itemId, payload: { change: outcome, changeRequestId: cr.id } });
     return { id: itemId, version, disposition: row['disposition'] as PerimeterDisposition, outcome };
@@ -874,7 +880,7 @@ export class PerimeterService {
     );
     const r = await this.recordImpact(ctx, p, itemId, entries, body.narrative, 'manual', null);
     await this.audit.record({ action: 'carveout.perimeter.impact_assessment', entityType: 'perimeter_item', entityId: itemId, projectId, after: { impactAssessmentId: r.id, areas: entries.map((e) => `${e.area}:${e.status}`) } });
-    return { id: r.id, perimeterItemId: itemId, changeRequestId: null, trigger: 'manual' as const, entries, narrative: r.narrative, assessedBy: ctx.principal.userId!, assessedByName: ctx.principal.displayName ?? null, createdAt: new Date().toISOString() };
+    return { id: r.id, perimeterItemId: itemId, changeRequestId: null, trigger: 'manual' as const, entries: entries.map((e) => this.entryDto(e)), narrative: r.narrative, assessedBy: ctx.principal.userId!, assessedByName: ctx.principal.displayName ?? null, createdAt: new Date().toISOString() };
   }
 
   async listImpacts(ctx: RequestContext, projectId: string, itemId: string) {
@@ -890,7 +896,7 @@ export class PerimeterService {
         changeRequestId: r.changeRequestId,
         trigger: r.trigger as 'manual' | 'change_request',
         // Entries are frozen at assessment time; references of registers the reader cannot see are withheld.
-        entries: (r.entries as unknown as ImpactEntry[]).map((e) => this.redactEntry(ctx, projectId, e)),
+        entries: (r.entries as unknown as ImpactEntry[]).map((e) => this.entryDto(this.redactEntry(ctx, projectId, e))),
         narrative: r.narrative ?? {},
         assessedBy: r.assessedBy,
         assessedByName: names.get(r.assessedBy) ?? null,
@@ -902,8 +908,13 @@ export class PerimeterService {
   private redactEntry(ctx: RequestContext, projectId: string, e: ImpactEntry): ImpactEntry {
     const perm: Record<string, string> = { tsa: 'readiness.register.read', readiness: 'readiness.register.read', budget: 'finance.record.read', schedule: 'planning.plan.read', agreements: READ };
     const needed = perm[e.area];
-    if (needed && e.references.length && !this.s.policy.permissionReach(ctx, needed, projectId).all) return { area: e.area, status: 'not_visible', summary: 'Not visible to you.', references: [] };
+    if (needed && e.references.length && !this.s.policy.permissionReach(ctx, needed, projectId).all) return withheldImpactEntry(e.area);
     return e;
+  }
+
+  /** Stored entries keep their codes; entries stored before the codes existed carry none (the web shows the English). */
+  private entryDto(e: ImpactEntry) {
+    return { area: e.area, status: e.status, summary: e.summary, summaryI18n: e.summaryI18n ?? [], references: e.references };
   }
 
   /** REQ-AGR-006: specialist transferability (carveout.contract.classify); the assessor is recorded (D-17). */
@@ -921,7 +932,7 @@ export class PerimeterService {
       consentRequired: body.transferClass === 'consent_required' || body.transferClass === 'novation_required' ? true : item.consentRequired,
     });
     const version = row['version'] as number;
-    await this.versions.snapshot({ projectId, entityType: 'perimeter_item', entityId: itemId, versionNo: version, snapshot: row, reason: `Transferability: ${body.transferClass}` });
+    await this.versions.snapshot({ projectId, entityType: 'perimeter_item', entityId: itemId, versionNo: version, snapshot: row, reason: perimeterHistoryReason('perimeter.history.transferability', { transferClass: body.transferClass }) });
     await this.audit.record({ action: 'carveout.contract.classify', entityType: 'perimeter_item', entityId: itemId, projectId, before: { transferClass: item.transferClass, assessedBy: item.transferClassAssessedBy }, after: { transferClass: body.transferClass, assessedBy: assessed ? ctx.principal.userId : null }, reason: body.basis });
     await this.outbox.emit({ type: 'perimeter.changed', projectId, aggregateType: 'perimeter_item', aggregateId: itemId, payload: { change: 'transferability', transferClass: body.transferClass } });
     const fresh = row as unknown as Item;
@@ -948,7 +959,7 @@ export class PerimeterService {
     if (Object.keys(u).length === 0) throw invalid('carveout.no_changes', 'No changes supplied');
     const row = await updateVersioned(this.s.db, PI, { id: itemId, projectId, expectedVersion: body.expectedVersion }, u);
     const version = row['version'] as number;
-    await this.versions.snapshot({ projectId, entityType: 'perimeter_item', entityId: itemId, versionNo: version, snapshot: row, reason: 'Day-1 position updated' });
+    await this.versions.snapshot({ projectId, entityType: 'perimeter_item', entityId: itemId, versionNo: version, snapshot: row, reason: perimeterHistoryReason('perimeter.history.day1_updated') });
     await this.audit.record({ action: 'carveout.perimeter.interim_arrangement', entityType: 'perimeter_item', entityId: itemId, projectId, before: pick(item, Object.keys(u)), after: u as Record<string, unknown> });
     await this.outbox.emit({ type: 'perimeter.changed', projectId, aggregateType: 'perimeter_item', aggregateId: itemId, payload: { change: 'day1_position' } });
     const fresh = row as unknown as Item;

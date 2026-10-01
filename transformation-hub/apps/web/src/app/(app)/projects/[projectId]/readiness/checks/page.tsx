@@ -16,6 +16,7 @@ import { btn } from '@/components/ui';
 import { UserPicker, type PickedUser } from '@/components/UserPicker';
 import { useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
+import { useLocalized } from '@/lib/i18n-data';
 import { useProjectContext } from '@/lib/project-context';
 import { rdHref, useChecks, usePlans, useReadinessRefresh, type ReadinessCheck } from '@/lib/readiness';
 import { CriticalityBadges, FilterBar, FilterSelect, RdCommandDialog, useScopeLabels, useUrlState } from '../_components/rd';
@@ -28,7 +29,7 @@ function CreateCheckDialog({ onClose }: { onClose: () => void }) {
   const { projectId } = useProjectContext();
   const refresh = useReadinessRefresh();
   const toast = useToast();
-  const { sites, workstreams, siteName } = useScopeLabels();
+  const { sites, workstreams, siteName, wsName } = useScopeLabels();
   const plans = usePlans({ page: 1, pageSize: 100 });
   const [area, setArea] = useState<ReadinessArea>('connectivity');
   const [title, setTitle] = useState('');
@@ -112,7 +113,7 @@ function CreateCheckDialog({ onClose }: { onClose: () => void }) {
           <option value="">{t('readiness.common.notSet')}</option>
           {workstreams.map((w) => (
             <option key={w.id} value={w.id}>
-              {w.code} — {w.name}
+              {wsName(w.id)}
             </option>
           ))}
         </SelectField>
@@ -173,6 +174,7 @@ export default function ReadinessChecksPage() {
   const { projectId, can } = useProjectContext();
   const { values, page, set, clear, active } = useUrlState(FILTERS);
   const { sites, workstreams, siteName, wsName, projectLevel } = useScopeLabels();
+  const localized = useLocalized();
   const [createOpen, setCreateOpen] = useState(false);
   const [instOpen, setInstOpen] = useState(false);
   const base = rdHref(projectId);
@@ -207,10 +209,13 @@ export default function ReadinessChecksPage() {
     {
       key: 'title',
       header: t('readiness.checks.columns.title'),
-      sortValue: (c) => c.title,
+      sortValue: (c) => localized(c.title, c.titleAr),
       cell: (c) => (
         <span className="flex flex-col gap-0.5">
-          <span dir="auto">{c.title}</span>
+          {/* QA-P34-01d: template checks carry their Arabic title; a check without one was typed by a person (data-user-text). */}
+          <span dir="auto" data-user-text={c.titleAr ? undefined : true}>
+            {localized(c.title, c.titleAr)}
+          </span>
           <span className="text-xs text-muted">{tStatus('readinessAreas', c.area)}</span>
         </span>
       ),
@@ -290,7 +295,7 @@ export default function ReadinessChecksPage() {
         />
         {sites.length ? <FilterSelect label={t('readiness.checks.filterSite')} value={values.siteId} onChange={(v) => set({ siteId: v })} options={sites.map((s) => ({ value: s.id, label: siteName(s.id) ?? s.code }))} /> : null}
         {workstreams.length ? (
-          <FilterSelect label={t('readiness.checks.filterWorkstream')} value={values.workstreamId} onChange={(v) => set({ workstreamId: v })} options={workstreams.map((w) => ({ value: w.id, label: `${w.code} — ${w.name}` }))} />
+          <FilterSelect label={t('readiness.checks.filterWorkstream')} value={values.workstreamId} onChange={(v) => set({ workstreamId: v })} options={workstreams.map((w) => ({ value: w.id, label: wsName(w.id) ?? w.code }))} />
         ) : null}
       </FilterBar>
       <DataTable

@@ -20,6 +20,7 @@ import {
   ReadinessArea,
   ReadinessStatus,
   RoleKey,
+  cutoverHistoryText,
 } from '@hub/domain';
 import type { RequestContext } from '../../platform/context';
 import { likeContains, loadInProject, nextCode, offsetOf, pageOf, updateVersioned, visibleEvidenceCounts } from '../../platform/helpers';
@@ -110,7 +111,8 @@ export class ReadinessChecksService implements OnModuleInit {
       q.workstreamId ? eq(c.workstreamId, q.workstreamId) : undefined,
       q.cutoverPlanId ? eq(c.cutoverPlanId, q.cutoverPlanId) : undefined,
       q.blocker ? eq(c.blocker, q.blocker === 'true') : undefined,
-      q.q ? or(ilike(c.title, likeContains(q.q)), ilike(c.code, likeContains(q.q))) : undefined,
+      // The Arabic title is searchable too (the Arabic register shows it — QA-P34-01d).
+      q.q ? or(ilike(c.title, likeContains(q.q)), ilike(c.titleAr, likeContains(q.q)), ilike(c.code, likeContains(q.q))) : undefined,
     );
     const tx = this.s.db.tx();
     const [{ total }] = (await tx.select({ total: count() }).from(c).where(where)) as [{ total: number }];
@@ -398,14 +400,14 @@ export class ReadinessChecksService implements OnModuleInit {
     const cleared = await this.isCleared(projectId, c);
     assertReadinessCheckRebind({ checkCode: c.code, status: c.status, gating: c.blocker || c.mandatory, cleared, leaving, reason: body.reason });
     const row = (await updateVersioned(this.s.db, schema.readinessCheck, { id: c.id, projectId, expectedVersion: body.expectedVersion }, next)) as CheckRow;
-    for (const plan of leaving) await this.s.recordPlanHistory(ctx, plan, projectId, 'check_unbound', `${c.code} no longer gates this transition: ${body.reason}`, null);
-    for (const plan of entering) await this.s.recordPlanHistory(ctx, plan, projectId, 'check_bound', `${c.code} now gates this transition: ${body.reason}`, null);
+    for (const plan of leaving) await this.s.recordPlanHistory(ctx, plan, projectId, 'check_unbound', cutoverHistoryText('cutover.history.check_unbound', { check: c.code, reason: body.reason }), null);
+    for (const plan of entering) await this.s.recordPlanHistory(ctx, plan, projectId, 'check_bound', cutoverHistoryText('cutover.history.check_bound', { check: c.code, reason: body.reason }), null);
     // DOM-P34R-07: an open gating check that ENTERS a plan with a GO flags that GO (as a check failing after the GO does —
     // DOM-P3-04); the execution record then re-evaluates and refuses until it is cleared or the GO is withdrawn.
     if ((c.blocker || c.mandatory) && !cleared) {
-      const blocker = { id: c.id, title: `${c.code} — ${c.title}`, status: c.status, blocker: c.blocker };
+      const blocker = { id: c.id, title: `${c.code} — ${c.title}`, titleAr: c.titleAr ? `${c.code} — ${c.titleAr}` : null, status: c.status, blocker: c.blocker };
       for (const plan of entering.filter((x) => x.status === 'approved_go')) {
-        await this.s.recordPlanHistory(ctx, plan, projectId, 'go_flagged', `${c.code}: an open gating check was bound to this transition after the GO (${body.reason})`, { blockers: [blocker], missing: [] });
+        await this.s.recordPlanHistory(ctx, plan, projectId, 'go_flagged', cutoverHistoryText('cutover.history.go_flagged.bound_after_go', { check: c.code, note: body.reason }), { blockers: [blocker], missing: [] });
         await this.s.audit.record({ action: 'readiness.cutover.go_flagged', entityType: 'cutover_plan', entityId: plan.id, projectId, after: { status: plan.status, flagged: true, checkId: c.id, checkCode: c.code, checkStatus: c.status }, reason: `${c.code} was bound to this transition after the GO — execution is refused until it is cleared or the GO is withdrawn` });
       }
     }
@@ -512,7 +514,7 @@ export class ReadinessChecksService implements OnModuleInit {
     });
     if (to !== c.status) await this.s.enqueueDimensions(ctx, projectId, `check:${c.id}:${row.version}`);
     // DOM-P3-04: a gating check that fails after the GO flags the GO of the plan(s) it gates.
-    if (to === 'failed') await this.s.flagGoPlans(ctx, projectId, { ...c, status: to }, `a test of this gating check failed after the GO${body.note ? ` (${body.note})` : ''}`);
+    if (to === 'failed') await this.s.flagGoPlans(ctx, projectId, { ...c, status: to }, body.note ? { code: 'cutover.history.go_flagged.test_failed_note', note: body.note } : { code: 'cutover.history.go_flagged.test_failed' });
     return { id: c.id, status: to, version: row.version, testRunId: runId, seq };
   }
 
@@ -579,7 +581,7 @@ export class ReadinessChecksService implements OnModuleInit {
     })) as CheckRow;
     await this.s.audit.record({ action: 'readiness.check.reopen', entityType: 'readiness_check', entityId: c.id, projectId, before: { status: c.status, waiverId: c.waiverId, signedOffBy: c.signedOffBy }, after: { status: to }, reason: body.note });
     await this.s.enqueueDimensions(ctx, projectId, `check:${c.id}:${row.version}`);
-    await this.s.flagGoPlans(ctx, projectId, { ...c, status: to }, `the specialist reopened this gating check after the GO (${body.note})`); // DOM-P3-04
+    await this.s.flagGoPlans(ctx, projectId, { ...c, status: to }, { code: 'cutover.history.go_flagged.reopened', note: body.note }); // DOM-P3-04
     return { id: c.id, status: to, version: row.version };
   }
 
@@ -608,7 +610,7 @@ export class ReadinessChecksService implements OnModuleInit {
       reason: 'The evidence the sign-off relied on is no longer active (rejected, superseded or conflicting) — a fresh sign-off on valid evidence is required',
     });
     await this.s.enqueueDimensions(ctx, projectId, `check:${c.id}:${row.version}`);
-    const flaggedPlans = await this.s.flagGoPlans(ctx, projectId, { ...c, status: to }, 'the evidence of this signed-off gating check was rejected, superseded or contested after the GO');
+    const flaggedPlans = await this.s.flagGoPlans(ctx, projectId, { ...c, status: to }, { code: 'cutover.history.go_flagged.evidence_invalidated' });
     return { reopened: true, flaggedPlans };
   }
 

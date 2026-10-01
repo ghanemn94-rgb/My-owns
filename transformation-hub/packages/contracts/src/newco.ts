@@ -63,7 +63,16 @@ export const LegalEntityDto = z.object({
 
 export const LegalEntityDetailDto = LegalEntityDto.extend({
   requirements: z.array(z.object({ id: Uuid, code: z.string(), title: z.string(), status: RequirementStatusSchema, applicability: ApplicabilitySchema })),
-  history: z.array(z.object({ versionNo: z.number().int(), reason: z.string().nullable(), changedByName: z.string().nullable(), changedAt: z.string() })),
+  history: z.array(
+    z.object({
+      versionNo: z.number().int(),
+      reason: z.string().nullable(),
+      /** The same reason as codes + parameters (web `newco.messages`); empty when it matches no known template. */
+      reasonI18n: z.array(ServerMessageSchema),
+      changedByName: z.string().nullable(),
+      changedAt: z.string(),
+    }),
+  ),
 });
 
 export const CreateLegalEntityBody = z

@@ -6,6 +6,7 @@ import { carveoutRoutes as C, newcoRoutes as N } from '@hub/contracts';
 import { CONTRACT_TRANSFER_CLASSES, PERIMETER_DISPOSITIONS, type ContractTransferClass, type PerimeterDisposition } from '@hub/domain';
 import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
+import { useServerMessages } from '@/lib/i18n-data';
 import { ck, localToday, useRefreshCarveout, type PerimeterDetail, type TransferAspect, type TransferCmd, type TransferRecord } from '@/lib/carveout';
 import { useProjectContext } from '@/lib/project-context';
 import { ConfirmCommandDialog } from '../ConfirmCommandDialog';
@@ -228,6 +229,7 @@ function TransferReviewDialog({ item, record, kind, onClose }: { item: Item; rec
 
 export function TransferHistory({ item }: { item: Item }) {
   const { t, formatDateTime } = useI18n();
+  const serverText = useServerMessages();
   return (
     <Section id="transfer-history" title={t('carveout.transfer.historyTitle')} hint={t('carveout.transfer.historyExplain')}>
       {item.transfers.length === 0 ? (
@@ -257,8 +259,10 @@ export function TransferHistory({ item }: { item: Item }) {
                 ) : null}
               </p>
               {r.note ? (
-                <p className="mt-1 text-xs" dir="auto">
-                  {r.note}
+                // A note written by the system (evidence reaction, scope-entry reset) is translated from its codes; a person's
+                // note is shown as entered (data-user-text).
+                <p className="mt-1 text-xs" dir={r.noteI18n?.length ? undefined : 'auto'} data-user-text={r.noteI18n?.length ? undefined : true}>
+                  {serverText(r.noteI18n, r.note)}
                 </p>
               ) : null}
             </li>

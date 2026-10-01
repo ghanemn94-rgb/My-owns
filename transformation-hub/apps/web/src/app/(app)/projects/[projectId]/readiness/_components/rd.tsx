@@ -8,6 +8,7 @@ import { SelectField } from '@/components/Field';
 import { StatusBadge } from '@/components/StatusBadge';
 import { btn, card, cx } from '@/components/ui';
 import { EM_DASH, useI18n, type MessageKey } from '@/i18n/provider';
+import { useLocalized } from '@/lib/i18n-data';
 import { useProjectContext } from '@/lib/project-context';
 import { rdHref, useDecisionsOfTypes, useSites, type People } from '@/lib/readiness';
 import { useWorkstreams } from '@/lib/queries';
@@ -61,9 +62,10 @@ export function Person({ id, people }: { id: string | null | undefined; people: 
   return name ? <span dir="auto">{name}</span> : <span dir="ltr">{t('readiness.common.unknownUser', { id: id.slice(-6) })}</span>;
 }
 
-/** Site / workstream / plan labels for a record's scope. */
+/** Site / workstream / plan labels for a record's scope (workstream names in the user's language — QA-P34-01g). */
 export function useScopeLabels() {
   const { t } = useI18n();
+  const localized = useLocalized();
   const sites = useSites();
   const ws = useWorkstreams(useProjectContext().projectId);
   const siteName = (id: string | null | undefined) => {
@@ -74,7 +76,7 @@ export function useScopeLabels() {
   const wsName = (id: string | null | undefined) => {
     if (!id) return null;
     const w = ws.data?.items.find((x) => x.id === id);
-    return w ? `${w.code} — ${w.name}` : `#${id.slice(-6)}`;
+    return w ? `${w.code} — ${localized(w.name, w.nameAr)}` : `#${id.slice(-6)}`;
   };
   return { sites: sites.data?.items ?? [], workstreams: ws.data?.items ?? [], siteName, wsName, projectLevel: t('readiness.common.projectLevel') };
 }

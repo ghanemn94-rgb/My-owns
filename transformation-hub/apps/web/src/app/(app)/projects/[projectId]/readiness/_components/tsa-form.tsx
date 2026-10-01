@@ -121,7 +121,7 @@ export function tsaBody(f: TsaForm, original: TsaServiceDetail | null) {
 
 export function TsaFields({ form, onChange, datesLocked = false, chargeRedacted = false }: { form: TsaForm; onChange: (f: TsaForm) => void; datesLocked?: boolean; chargeRedacted?: boolean }) {
   const { t } = useI18n();
-  const { workstreams } = useScopeLabels();
+  const { workstreams, wsName } = useScopeLabels();
   const set = <K extends keyof TsaForm>(k: K, v: TsaForm[K]) => onChange({ ...form, [k]: v });
   const text = (k: keyof TsaForm, label: string, area = false, testId?: string) =>
     area ? (
@@ -141,7 +141,7 @@ export function TsaFields({ form, onChange, datesLocked = false, chargeRedacted 
         <option value="">{t('readiness.common.notSet')}</option>
         {workstreams.map((w) => (
           <option key={w.id} value={w.id}>
-            {w.code} — {w.name}
+            {wsName(w.id)}
           </option>
         ))}
       </SelectField>

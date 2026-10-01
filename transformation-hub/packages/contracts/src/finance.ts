@@ -638,6 +638,8 @@ export const KpiDto = z.object({
   name: z.string(),
   nameAr: z.string().nullable(),
   definition: z.string(),
+  /** Arabic definition from the pinned template while the definition is still the template's (QA-P34-01h); else null. */
+  definitionAr: z.string().nullable(),
   formula: z.string(),
   unit: z.string(),
   period: z.string(),

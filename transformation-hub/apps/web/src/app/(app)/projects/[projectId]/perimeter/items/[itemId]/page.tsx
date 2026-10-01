@@ -33,6 +33,7 @@ import { BackLink } from '@/components/planning/DetailShell';
 import { DateText, Fact, Section } from '@/components/planning/bits';
 import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
+import { useServerMessages } from '@/lib/i18n-data';
 import { agreementHref, changeRequestHref, ck, useFollowEvidence } from '@/lib/carveout';
 import { useProjectContext } from '@/lib/project-context';
 
@@ -41,6 +42,7 @@ const CONTRACT_LIKE: readonly PerimeterItemType[] = ['contract', 'license'];
 /** Screen 7 — one perimeter item: scope, legal vs economic transfer, Day-1 contract position, impacts, evidence. */
 export default function PerimeterItemPage() {
   const { t, tStatus, formatDateTime } = useI18n();
+  const serverText = useServerMessages();
   const { itemId } = useParams<{ itemId: string }>();
   const { projectId, can } = useProjectContext();
   useFollowEvidence(projectId);
@@ -117,7 +119,7 @@ export default function PerimeterItemPage() {
         </div>
       ) : null}
 
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <TransferSection item={it} />
         <Section id="item-facts" title={t('carveout.item.facts')}>
           <dl className="grid gap-3 sm:grid-cols-2">
@@ -190,7 +192,9 @@ export default function PerimeterItemPage() {
       </div>
 
       {contractLike ? (
-        <div className="mt-4 grid gap-4 xl:grid-cols-2">
+        // QA-P34-03: grid-cols-1 = minmax(0, 1fr): the consents table scrolls inside its own region instead of widening the
+        // page at 390 px (an implicit `auto` track grows to the table's min-content width).
+        <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
           <Section
             id="contract-position"
             title={t('carveout.contract.title')}
@@ -251,19 +255,20 @@ export default function PerimeterItemPage() {
         ) : null}
       </Section>
 
-      <div className="mt-4 grid gap-4 xl:grid-cols-2">
+      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
         <EvidencePanel targetType="transfer" targetId={it.id} title={t('carveout.evidence.transfer')} />
         <EvidencePanel targetType="perimeter_item" targetId={it.id} title={t('carveout.evidence.item')} />
       </div>
 
-      <div className="mt-4 grid gap-4 xl:grid-cols-2">
+      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
         <TransferHistory item={it} />
         <Section id="versions" title={t('carveout.item.history')} hint={t('carveout.item.historyHint')}>
           <ol className="space-y-1.5 text-sm" data-testid="item-history">
             {it.history.map((h) => (
               <li key={h.versionNo} className="flex flex-wrap gap-x-2">
                 <span className="tabular font-medium">{t('documents.versions.label', { version: h.versionNo })}</span>
-                <span dir="auto">{h.reason ?? EM_DASH}</span>
+                {/* QA-P34-01f: the recorded reason in the user's language (the user's own text inside it is shown as entered). */}
+                <span dir={h.reasonI18n.length ? undefined : 'auto'}>{serverText(h.reasonI18n, h.reason) ?? EM_DASH}</span>
                 <span className="text-muted">
                   · <span dir="auto">{h.changedByName ?? EM_DASH}</span> · {formatDateTime(h.changedAt)}
                 </span>

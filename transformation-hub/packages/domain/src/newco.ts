@@ -2,6 +2,7 @@ import { ruleViolation } from './errors';
 import { APPLICABILITY_STATUSES, REQUIREMENT_STATUSES } from './enums';
 import type { IncorporationStatus, VerificationStatus } from './enums';
 import { transition, type Machine } from './workflows';
+import { parseRenderedMessage, renderMessageEn, type ServerMessage } from './messages';
 
 /**
  * NewCo rules (spec §3 G2, §7.2, §21 step 2; AT-06; REQ-LCY-007, REQ-SET-010, REQ-AGR-004/005/007).
@@ -194,4 +195,27 @@ export function assertConditionsSatisfied(i: { state: ConditionsState; activeEvi
   if (i.outcomeRecordedBy && i.outcomeRecordedBy === i.actorUserId) {
     throw ruleViolation('newco.regulatory.self_verification', 'The person who recorded the conditional grant cannot also confirm its conditions');
   }
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// Record-history reasons of a legal entity (record_version.reason, plain text) — same treatment as the perimeter item
+// history (QA-P34-01f): written from these templates, codes recovered by the reader. `{status}` is an incorporation status
+// enum value. Web catalogue: `newco.messages.newco.history.*` (en + ar).
+
+export const NEWCO_HISTORY_MESSAGES_EN: Readonly<Record<string, string>> = {
+  'newco.history.created': 'Created',
+  'newco.history.descriptive_update': 'Descriptive update',
+  'newco.history.incorporation_recorded': 'Incorporation recorded: {status}',
+  'newco.history.incorporation_verified': 'Incorporation verified',
+  'newco.history.incorporation_rejected': 'Incorporation verification rejected',
+  'newco.history.evidence_invalidated': 'Incorporation evidence invalidated — re-verification required',
+};
+
+export function legalEntityHistoryReason(code: string, params: Record<string, string | number> = {}): string {
+  return renderMessageEn(code, params, NEWCO_HISTORY_MESSAGES_EN);
+}
+
+export function legalEntityHistoryReasonI18n(reason: string | null | undefined): ServerMessage[] {
+  const m = parseRenderedMessage(reason, NEWCO_HISTORY_MESSAGES_EN, ['status']);
+  return m ? [m] : [];
 }

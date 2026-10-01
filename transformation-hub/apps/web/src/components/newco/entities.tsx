@@ -95,7 +95,7 @@ export function EntitiesPanel() {
     },
     { key: 'ev', header: t('newco.common.evidence'), cell: (e) => <span className="tabular">{t('newco.common.evidenceCount', { active: e.evidence.active, conflicting: e.evidence.conflicting })}</span> },
     { key: 'reg', header: t('newco.entities.registrationRef'), cell: (e) => <span dir="auto">{e.registrationRef ?? EM_DASH}</span> },
-    { key: 'demo', header: '', cell: (e) => (e.isDemo ? <DemoBadge /> : null) },
+    { key: 'demo', header: t('common.table.demoColumn'), headerHidden: true, cell: (e) => (e.isDemo ? <DemoBadge /> : null) },
   ];
   return (
     <div className="space-y-4" data-testid="legal-entities">
