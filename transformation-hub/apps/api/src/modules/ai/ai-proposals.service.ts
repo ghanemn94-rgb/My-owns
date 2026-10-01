@@ -228,10 +228,11 @@ export class AiProposalsService {
     if ((AI_MESSAGE_ACTIONS as string[]).includes(action)) {
       const recipientUserId = String(args.recipientUserId);
       const chk = await this.recipientAllowed(ctx.principal.orgId, projectId, recipientUserId, targetType, targetId, content);
+      // The refused recipient is named by id in the refusal and its audit row (AIT-07); never any content.
       if (!chk.ok && chk.reason === 'recipient_not_cleared_for_content') {
-        return { error: 'recipient_not_cleared_for_content: the recipient may not read every record this message was drafted from', code: 'DESTINATION_NOT_APPROVED', refusalCode: RECIPIENT_NOT_CLEARED };
+        return { error: `recipient_not_cleared_for_content (recipient ${recipientUserId}): the recipient may not read every record this message was drafted from`, code: 'DESTINATION_NOT_APPROVED', refusalCode: RECIPIENT_NOT_CLEARED };
       }
-      if (!chk.ok) return { error: 'recipient is not an authorised internal project member for this content', code: 'DESTINATION_NOT_APPROVED', refusalCode: 'DESTINATION_NOT_APPROVED' };
+      if (!chk.ok) return { error: `recipient is not an authorised internal project member for this content (recipient ${recipientUserId})`, code: 'DESTINATION_NOT_APPROVED', refusalCode: 'DESTINATION_NOT_APPROVED' };
     }
     return { payload, targetVersion };
   }

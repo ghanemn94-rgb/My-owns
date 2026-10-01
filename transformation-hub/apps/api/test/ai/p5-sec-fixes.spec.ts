@@ -102,6 +102,7 @@ describe('SEC-P5-01 (fix) — the message recipient is re-authorised for the CON
   let approve: { status: number; code: string };
   let revise: { status: number; code: string };
   let versionBeforeRevise = 0;
+  let created: { proposals: number; refused: { name: string; reason: string }[]; audit: { outcome: string; reason: string }[] };
 
   beforeAll(async () => {
     cleared = await member('p5fix.cleared', 'confidential');
@@ -130,7 +131,20 @@ describe('SEC-P5-01 (fix) — the message recipient is re-authorised for the CON
     const rv = await j.p.pm.post(`${P(pid)}/ai/proposals/${pRevise}/revise`, { expectedVersion: row.version, payload: { ...row.payload, recipientUserId: low.userId } });
     revise = { status: rv.status, code: rv.body.code };
     expect((await proposalRow(pRevise)).version).toBe(versionBeforeRevise);
+    // (d) Creation: the model addresses the memo text to the member cleared internal — no proposal at all.
+    const d = await withScript(notifyWith(low.userId, CANARY), () => ask(j.p.pm, `What does the ${CANARY} memo say about the terms?`));
+    created = { proposals: d.output.proposals.length, refused: d.output.refusedToolCalls, audit: await auditOf(d.id, 'DESTINATION_NOT_APPROVED') };
   }, 300_000);
+
+
+  it('creation: no proposal is created for a recipient who may not read a record the model saw; the run reports the refusal and the audit names the recipient (id only)', async () => {
+    expect(created.proposals).toBe(0);
+    expect(created.refused).toEqual([expect.objectContaining({ name: 'propose_internal_notification', reason: expect.stringContaining('recipient_not_cleared_for_content') })]);
+    expect(created.audit).toHaveLength(1);
+    expect(created.audit[0]!.outcome).toBe('denied');
+    expect(created.audit[0]!.reason).toContain(low.userId);
+    expect(created.audit[0]!.reason).not.toContain(CANARY);
+  });
 
   it('approval: a recipient who may no longer read a record the message was drafted from is refused BEFORE approval (422 ai.recipient_not_cleared); the proposal is invalidated and audited; nothing is approved or sent', async () => {
     expect(approve).toEqual({ status: 422, code: 'ai.recipient_not_cleared' });
@@ -163,6 +177,54 @@ describe('SEC-P5-01 (fix) — the message recipient is re-authorised for the CON
     const n = await notes(id);
     expect(n).toHaveLength(1);
     expect(n[0]).toMatchObject({ user_id: low.userId, title: 'AI-generated (Simulated): Reminder (P5FIX control)' });
+  });
+});
+
+// =====================================================================================================================
+describe('AT-17 "a document instructs the AI to send financials" (SEC-P5-01 fix): an approved figure the model saw never reaches a member without finance read access', () => {
+  const CANARY = 'P5FIXHERONFIG';
+  let figureId: string;
+  let noFinance: DocClient;
+  let out: { proposals: number; refused: { name: string; reason: string }[]; sentFigure: boolean };
+
+  beforeAll(async () => {
+    // A full project member cleared confidential, without finance.record.read (contributor role).
+    noFinance = await member('p5fix.nofinance', 'confidential');
+    const f = await ok(await j.p.finance.post(`${P(pid)}/financial-snapshots`, {
+      kind: 'actual',
+      category: 'opex',
+      lineRef: 'P5FIX-1',
+      label: `${CANARY} programme actual (synthetic)`,
+      period: '2026-09',
+      amount: { amount: '7777.0000', currency: 'SAR', unitScale: 1 },
+      sourceRef: 'Synthetic source reference (P5 fix test)',
+      classification: 'confidential',
+    }));
+    figureId = f.id;
+    // Owner pool (set-up): APPROVED by two people other than the preparer (the table's check constraints); production
+    // reaches this state through the validate / approve commands.
+    await owner().query(
+      `update financial_snapshot set validated_by = $2, validated_at = now(), validated_hash = 'p5fix-synthetic', approved_by = $3, approved_at = now(), approval_state = 'approved' where id = $1`,
+      [figureId, j.p.legal.userId, j.p.sponsor.userId],
+    );
+    const r = await withScript(notifyWith(noFinance.userId, CANARY), () => ask(j.p.pm, 'What is the approved budget amount?'));
+    const snap = (await owner().query(`select evidence_snapshot from ai_run where id = $1`, [r.id])).rows[0].evidence_snapshot;
+    out = {
+      proposals: r.output.proposals.length,
+      refused: r.output.refusedToolCalls,
+      sentFigure: (snap.items as { type: string; id: string; sentToProvider: boolean }[]).some((i) => i.type === 'financial_snapshot' && i.id === figureId && i.sentToProvider),
+    };
+  }, 300_000);
+
+  it('CONTROL: the PM\'s run gave the figure to the (Simulated) model; the recipient is refused the figure by the finance module', async () => {
+    expect(out.sentFigure).toBe(true);
+    expect([403, 404]).toContain((await noFinance.get(`${P(pid)}/financial-snapshots/${figureId}`)).status);
+  });
+
+  it('the message carrying the figure is refused at creation (recipient_not_cleared_for_content); nothing is proposed or sent', async () => {
+    expect(out.proposals).toBe(0);
+    expect(out.refused).toEqual([expect.objectContaining({ name: 'propose_internal_notification', reason: expect.stringContaining('recipient_not_cleared_for_content') })]);
+    expect((await owner().query(`select count(*)::int n from notification where user_id = $1`, [noFinance.userId])).rows[0].n).toBe(0);
   });
 });
 
