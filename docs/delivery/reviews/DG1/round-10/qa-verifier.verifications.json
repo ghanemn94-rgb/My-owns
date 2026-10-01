@@ -1,0 +1,23 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG1-130",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on frozen candidate sha256:18fee1617d617cfd719aeaebe3c37904bd116c47eaafb5be52e7bd779c6e8807 (freeze commit 265af7e; HEAD 241a377 adds only candidate-excluded metadata; the ID recomputes identically in a full, non-shallow clone). Fix 74c9e4a (T-DG1-BE11): `setEngine` is added to rule-1 BANNED_PRIMITIVES as 'native loader'. The header now says the default-deny covers built-in MODULES, not the MEMBERS of an allowed module, and records a member audit of the 7 allow-listed built-ins. The finding's expected outcome ('setEngine added to BANNED_PRIMITIVES, so rule 1 catches it in every syntactic form ... plus a self-check row', with the header scope sentence) is met. The candidate's self-checks S1/S2/S3 and the positive control pass (architecture.test.ts 105/105, 10-arch-verbose.log). My independent probe flags all 18 written-name spellings as 'native loader': named, aliased, namespace, default-export, ns.default, optional chain, string key, template key, unicode-escaped string and identifier, three destructuring forms, export-from (x2), dynamic import, then() destructuring, and the 'in' probe. node:crypto stays usable (randomUUID/createHash/createHmac/timingSafeEqual/getFips) along with fs/path/url/os/util/fs.promises: 0 violations (11c-r10-setengine-probe-final-node22.log). Negative control: on the pre-fix testkit (273d21f) exactly those 18 forms and S1-S3 fail, while the positive controls still pass (14-negative-control.log). I ran an independent member enumeration of the 7 built-ins on Node v22.22.2 AND on Node v24.21.0, the production target, which round 9 recorded as BLOCKED and which appeared on PATH during this run. It agrees with the header's audit: setEngine is the only loader member on both. Node 24's additions (crypto.argon2*, encapsulate/decapsulate, randomUUIDv7, fs.Utf8Stream, mkdtempDisposable*, url.URLPattern, util.convertProcessSignalToExitCode) load no code (15-member-audit-node22-vs-24.log). The change is test-only: the code-path diff 273d21f..265af7e is architecture.test.ts plus architecture.testkit.ts, the testkit is excluded from the build, and no product code uses setEngine (13-scope-and-real-tree.log). Unit 298/298, integration 200/200 in each of 4 runs, and e2e 22/22 (EN+AR) are unaffected. SCOPE OF THIS CLOSURE: it covers the reported written-name route. A separate route that never writes the name, enumerating the node:crypto namespace with Object.values/Object.entries/Map and a runtime-built key, still reaches setEngine with 0 violations. That is raised as F-DG1-215 (Low, non-mandatory) and is not hidden by this closure.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-10/00-candidate.log",
+        "docs/delivery/test-evidence/DG1/qa/round-10/10-arch-verbose.log",
+        "docs/delivery/test-evidence/DG1/qa/round-10/11c-r10-setengine-probe-final-node22.log",
+        "docs/delivery/test-evidence/DG1/qa/round-10/14-negative-control.log",
+        "docs/delivery/test-evidence/DG1/qa/round-10/15-member-audit-node22-vs-24.log",
+        "docs/delivery/test-evidence/DG1/qa/round-10/16-node24-arch-probe-plant.log",
+        "docs/delivery/test-evidence/DG1/qa/round-10/13-scope-and-real-tree.log",
+        "docs/delivery/test-evidence/DG1/qa/round-10/03-unit.log",
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r10-setengine-probe.test.ts",
+        "apps/api/src/architecture.testkit.ts",
+        "apps/api/src/architecture.test.ts"
+      ]
+    }
+  ]
+}

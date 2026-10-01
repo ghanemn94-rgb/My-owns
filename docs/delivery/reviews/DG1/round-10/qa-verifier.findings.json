@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG1-214",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-033",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The unit-web suite fails deterministically on Node 24, the ADR-0001 target runtime and a leg of the candidate's own CI verify matrix: 12 of 110 tests fail with 'RequestInit: Expected signal (\"AbortSignal {}\") to be an instance of AbortSignal'. So `pnpm test`, and the declared CI, cannot pass on Node 24.",
+      "reproduction": "Candidate sha256:18fee1617d617cfd719aeaebe3c37904bd116c47eaafb5be52e7bd779c6e8807 (freeze commit 265af7e). A Node v24.21.0 binary (/opt/nvm/versions/node/v24.21.0, undici 7.29.1) appeared on PATH during this run. Earlier rounds could not test Node 24 at all. Fresh full clone, everything under PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH: `pnpm install --offline --frozen-lockfile` (exit 0), `pnpm -r build` (exit 0), then `pnpm test` twice. Both runs give 12 failed / 286 passed (298), exit 1. `pnpm vitest run --project unit-web` gives 12 failed / 98 passed (110); `--project unit-node` gives 188/188 (18-node24-unit-clean-repro.log; first observed in 17-node24-unit.log). The failing files are apps/web/src/app/app.test.tsx (3) and apps/web/src/pages/transformations/transformations.test.tsx (9), including the F-DG1-004 and F-DG1-210 regression tests. Every failure has the same cause, plus 'Vitest caught 11 unhandled errors ... might cause false positive tests'. Stack: TypeError: RequestInit: Expected signal (\"AbortSignal {}\") to be an instance of AbortSignal at new Request (node:internal/deps/undici) <- createClientSideRequest <- startNavigation (react-router@7.9.0). In the jsdom environment, react-router builds the request signal from jsdom's AbortController, and Node 24's bundled undici 7 rejects it with a WebIDL brand check. The same clone and suite on Node v22.22.2 (undici 6.24.1) gives 298/298 with 0 unhandled errors (03-unit.log). Declared runtime: ADR-0001 sets the target runtime to Node.js 24 LTS in every container image, `.nvmrc` = 24, and engines '>=22.18.0 <25'. .github/workflows/ci.yml (mirrored in deploy/ci/ci.yml) runs job `verify` on matrix node [\"24\", \"22\"] with `- run: pnpm test`; jobs `integration` and `e2e` declare `needs: verify`.",
+      "expected": "The required unit check passes on every runtime the candidate declares and its own CI runs, in particular the Node 24 target. ADR-0001 says 'CI runs the product jobs on 24 and 22'. The web unit harness should therefore work on Node 24, for example with a jsdom setup in which react-router's Request receives a signal that Node's Request accepts. If Node 24 is knowingly unsupported for the web unit tests, that must be decided and recorded, and the CI matrix and ADR changed to match. A required check must not be green only on the floor runtime.",
+      "actual": "On Node 24 the unit-web project is red: 12 failures in 2 runs, deterministic. As written, the CI verify[24] leg would fail at `pnpm test`, which makes the verify job fail and skips the integration and e2e jobs that `need` it, so the declared product pipeline cannot go green. I verified only v24.21.0 (no other 24.x is available offline), and I could not run GitHub Actions itself (no network). The product is not affected: on the same Node 24 the integration suite passes 200/200 with no 57P01, and the real-browser e2e passes 22/22 in EN and AR (19-node24-integration-e2e.log). The architecture suite passes 105/105 and unit-node 188/188. The defect is confined to the jsdom unit-test harness and the CI deliverable. It is not mandatory: no product behaviour, data integrity, access control, calculation or deployment is broken. It predates round 10 (the round-10 change touches only the API architecture lint) and became observable only because Node 24 is now present.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-10/18-node24-unit-clean-repro.log",
+        "docs/delivery/test-evidence/DG1/qa/round-10/17-node24-unit.log",
+        "docs/delivery/test-evidence/DG1/qa/round-10/03-unit.log",
+        "docs/delivery/test-evidence/DG1/qa/round-10/19-node24-integration-e2e.log",
+        "docs/architecture/adr/ADR-0001-runtime-language-package-manager.md",
+        ".github/workflows/ci.yml",
+        "apps/web/vitest.config.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-10/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T14:56:30Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG1 round 10. Node v24.21.0 appeared on this sandbox's PATH mid-run (/opt/nvm created 14:43:16Z), not by any action of mine. Every earlier DG1 round recorded Node 24 as unavailable. I reproduced the failure in a fresh clone installed, built and tested entirely under Node 24 (twice), and confirmed it is absent on Node 22.22.2 for the same tree. The proposed ID is the next free number in the qa 2xx range, and the orchestrator may renumber it. I rate it Medium, not High: the user-facing workflow is intact on Node 24 (integration and e2e green), but the delivered CI cannot pass on its own target leg."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-215",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Module lint: crypto.setEngine is still reachable from module source with 0 violations by ENUMERATING the allow-listed node:crypto namespace (Object.values/Object.entries/Map + a runtime-built name or a regex). The F-DG1-130 name ban cannot see a name that is never written, and no stated residual covers this route.",
+      "reproduction": "Candidate sha256:18fee161…8807 (freeze commit 265af7e), disposable clone. Probe docs/delivery/test-evidence/DG1/qa/tests/dg1-r10-setengine-probe.test.ts (R2), run through fileViolations('transformations', …), gives 0 violations for all four forms on both Node v22.22.2 and v24.21.0 (11c-…final-node22.log, 16-node24-arch-probe-plant.log). E1 `Object.values(c).find((x) => typeof x === \"function\" && x.name === \"set\" + \"Engine\")`; E2 `new Map(Object.entries(c)).get(\"set\".concat(\"Engine\"))`; E3 `Object.entries(c).find(([k]) => /^setEng/.test(k))![1]`; E4 `for (const [k, f] of Object.entries(crypto)) if (k.startsWith(\"set\") && k.endsWith(\"Engine\")) f(p)` on the default export. At runtime, each selector is identical (===) to crypto.setEngine. End to end (12-real-plant-enumeration.log on Node 22; 16-… on Node 24): with a real file at apps/api/src/modules/transformations/zz-qa-r10-enum-engine.ts containing `import * as c from \"node:crypto\"; … new Map(Object.entries(c)).get(\"set\".concat(\"Engine\"))(p)`, the real module-tree check 'every import respects dependsOn, public surfaces and allowed packages' stays GREEN (exit 0). Importing that file and calling load() with a gcc-built marker .so (source 12-qa-marker-engine.c.txt; its constructor prints one line) prints 'QA-R10-NATIVE-CONSTRUCTOR-RAN' before setEngine throws ERR_CRYPTO_ENGINE_UNKNOWN, so native code ran in-process. Control: the same plant with the literal \"setEngine\" turns the check red ('native loader via the \"setEngine\" key as a value').",
+      "expected": "The F-DG1-130 fix summary says setEngine is caught 'in every form', and residual (a) says 'rules 1-2 remove every syntactic route inside module source'. Either the member is unreachable from module source, or this route is a stated residual. A name ban works for constructor/eval-style primitives because their holders (process, globalThis, non-enumerable constructor, non-allow-listed modules) cannot be enumerated by module source. setEngine, however, is an ENUMERABLE export of an allow-listed module, so enumeration recovers it without the name. Rule 2 endorses Map lookups because 'a Map returns only what was put in it', and here the namespace's own entries are what is put in. Possible closures, for the implementer to choose: treat namespace/default bindings of allow-listed built-ins like runtime roots (only `ns.member` with a static, non-banned member; no value use such as passing to Object.values/entries/assign, spread or for-in); require named imports for node:crypto; or name 'enumeration of an allow-listed namespace' as a stated residual and correct the 'every form' and 'every syntactic route' wording. Note that real module source already uses `new Map(Object.entries(x)).get(name)` on its own objects (identity/routes.ts:35), so a blanket Object.entries ban would be brittle.",
+      "actual": "All 4 enumeration forms pass the lint with 0 violations and reach crypto.setEngine (Node 22.22.2 and 24.21.0), and the native constructor ran end to end through a real module file while the module-tree check stayed green. This is not a new MEMBER. My independent member audit agrees with the header's audit: setEngine is the only loader member on both runtimes (15-member-audit-node22-vs-24.log). It is a new ROUTE to the already-banned member. The stated residuals do not cover it: (a) is third-party data flow, and here only built-ins inside module source are used; (b) is fs write + literal import; (c) is WebAssembly. The severity matches F-DG1-130 (Low, non-mandatory): static defence-in-depth over human-reviewed code in a read-only production tree, not a runtime boundary, and no module enumerates node:crypto today.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-10/11c-r10-setengine-probe-final-node22.log",
+        "docs/delivery/test-evidence/DG1/qa/round-10/12-real-plant-enumeration.log",
+        "docs/delivery/test-evidence/DG1/qa/round-10/12-qa-marker-engine.c.txt",
+        "docs/delivery/test-evidence/DG1/qa/round-10/16-node24-arch-probe-plant.log",
+        "docs/delivery/test-evidence/DG1/qa/round-10/15-member-audit-node22-vs-24.log",
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r10-setengine-probe.test.ts",
+        "apps/api/src/architecture.testkit.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-10/qa-verifier.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T14:56:30Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG1 round 10 while verifying F-DG1-130. As the common assignment requires, I checked this against the header's member audit: it is not a member the audit missed (setEngine is the audited and banned member, and my Node 22 and 24 enumerations find no other loader). It is a route around the name ban, which none of residuals (a)-(c) covers. ACCEPTED_OBSERVATION would be reasonable if the implementer names it as a residual and corrects the 'every form' / 'every syntactic route' wording, consistent with the class's Low severity. The proposed ID follows F-DG1-214, and the orchestrator may renumber."
+        }
+      ]
+    }
+  ]
+}
