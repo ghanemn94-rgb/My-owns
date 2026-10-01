@@ -1,0 +1,188 @@
+{
+  "phase": "P3",
+  "title": "Carve-out & NewCo",
+  "revision": "bb8a373 (gate revision; CI run 65 green on it). Later commits (P5 security review, P2 residual screens) are not part of this gate.",
+  "requirements": {
+    "source": "docs/requirements/requirements.yaml at the gate revision (generated from status-evidence.yaml; apply_status.py --check OK)",
+    "p3_musts": 37,
+    "tested": 35,
+    "implemented": 2,
+    "deferred": 0,
+    "planned": 0,
+    "implemented_ids": [
+      "REQ-RDY-006 (no control of data-center devices): behaviour tested (execution is recorded, never performed; no adapter with device, network or power write access exists) — its AT is an architecture review confirmation, owner solution-architect / devops-platform-engineer at the P7 review",
+      "REQ-SET-012 (setup-wizard perimeter step): API tested; no Playwright test drives the wizard's perimeter approval (lowered by the QA fixes, QA-P34-04) — owner ux-frontend-engineer, P2 residual screens / P6"
+    ],
+    "note": "REQ-PHS-005 (P3 exit) moves to Tested with this report."
+  },
+  "exit_criteria": [
+    {
+      "criterion": "Incorporation recorded while transfer / operations remain incomplete (states separate; the carve-out never reads complete)",
+      "evidence": "carveout at-06-incorporation-separate.spec.ts, gates at-06-status-dimensions.spec.ts, the documented dimension vocabulary (DOM-P3-11/-12), evidence reactions (DOM-P3-08, DOM-P34R-06); verified by the focused re-review (docs/reviews/P3-P4-domain-rereview.md §9, §9.10)",
+      "status": "Met"
+    },
+    {
+      "criterion": "Blockers prevent go-live",
+      "evidence": "readiness at-09-readiness-go-no-go.spec.ts; the fixes of DOM-P3-01/-02/-03/-04/-09 and DOM-P34R-01/-02/-03 with their regression probes; QA journey J2 (NO-GO with access and incident-response blockers) in qa-p34-journeys.spec.ts; re-check §9.10: Met",
+      "status": "Met"
+    },
+    {
+      "criterion": "Perimeter-change impact (change request with financial / TSA / readiness / transaction impact, previous version preserved)",
+      "evidence": "carveout at-07-perimeter-change-control.spec.ts; e2e p3-carveout.spec.ts (a) AT-07; QA AT-07 control probe; journey J5",
+      "status": "Met"
+    },
+    {
+      "criterion": "AT-08 Day-1 contract position (consent / interim arrangement / accountability / remediation)",
+      "evidence": "carveout at-08-day1-contract-position.spec.ts",
+      "status": "Met"
+    },
+    {
+      "criterion": "AT-10 TSA expiry without replacement escalates, never an exit; extensions await an approved decision",
+      "evidence": "readiness at-10-tsa-expiry.spec.ts; QA journey J1 through the real worker; extension terms bound to the decision before its votes (DOM-P3-06, DOM-P34R-04, DOM-P34R2-01, DOM-P34R3-01) with regression probes",
+      "status": "Met (DOM-P34R3-01, found at the last re-check, fixed by the lead after it — condition C1)"
+    },
+    {
+      "criterion": "Domain review plus security / QA review",
+      "evidence": "see reviewers",
+      "status": "Met — domain and security PASS WITH CONDITIONS; QA review FAIL at 5bf274b only through the domain Highs since fixed and verified (condition C2)"
+    }
+  ],
+  "implemented": [
+    "Perimeter register with versions, dispositions, transfers per aspect (with a specialist 'not applicable' determination, never on both aspects), reconciliation, Day-1 contract positions, agreements and consents (Legal-only edits)",
+    "NewCo: legal entities with an incorporation status separate from operational readiness, regulatory register (applicability, outcomes and conditions by Legal only), evidence reactions",
+    "Readiness: site checklists from the template (14 Day-1 domains), specialist sign-off (never by an evidence linker), guarded rebind of checks and of a plan's site, cutover plans with GO / NO-GO on a final decision, execution recorded (never performed), flagged GOs, contingency runbooks",
+    "TSA lifecycle (proposed → … → exited / expired_unresolved), escalation before expiry, extension terms bound to one decision before its votes, exit only with an accepted replacement on evidence",
+    "Status dimensions per business-gates.md §1 recomputed under a per-project lock on every relevant event",
+    "Web: Perimeter & Transfers, NewCo, Day-1 & TSA Center in Arabic RTL and English LTR"
+  ],
+  "tests_executed": [
+    {
+      "command": "GitHub Actions transformation-hub-ci (run 65, id 36841997209, at bb8a373 — conclusion success, 14/14 jobs green)",
+      "result": "success — every job green",
+      "revision": "bb8a373 (gate revision; CI run 65 green on it). Later commits (P5 security review, P2 residual screens) are not part of this gate.",
+      "environment": "GitHub-hosted runners"
+    },
+    {
+      "command": "full API integration suite",
+      "result": "138 files, 1060 passed + 2 expected fail (the open P2 Low probes DOM-P2F-02/04) in CI run 65 and locally",
+      "revision": "bb8a373 (gate revision; CI run 65 green on it). Later commits (P5 security review, P2 residual screens) are not part of this gate.",
+      "environment": "GitHub-hosted runners (CI) and the build container"
+    },
+    {
+      "command": "full Playwright suite",
+      "result": "395 passed + 1 skipped (33.8 min) in CI run 65 at bb8a373, including the P3 specs, the QA journeys J1–J5 and the axe scans of the P3 screens",
+      "revision": "bb8a373 (gate revision; CI run 65 green on it). Later commits (P5 security review, P2 residual screens) are not part of this gate.",
+      "environment": "see result"
+    },
+    {
+      "command": "review runs",
+      "result": "P3 domain review at 5bf274b (FAIL, 4 High); focused re-review at 9a93951 (FAIL, 2 High), re-check at 2ed5d55 (FAIL, 1 High), re-check at c990f5c (PASS WITH CONDITIONS); security review at 5bf274b and re-check at 4fde3ec (P3 PASS WITH CONDITIONS); QA review at 5bf274b (P3 FAIL via the domain Highs) — commands and results in each document",
+      "revision": "see each review",
+      "environment": "build container (reviewers)"
+    }
+  ],
+  "reviewers": [
+    {
+      "agent": "carveout-domain-analyst",
+      "verdict": "PASS WITH CONDITIONS",
+      "evidence": [
+        "docs/reviews/P3-domain-review.md (FAIL, 4 High, 8 Medium) — fixed",
+        "docs/reviews/P3-P4-domain-rereview.md: re-review FAIL (DOM-P34R-01/-04 High) → fixed; §9 re-check FAIL (DOM-P34R2-01 High) → fixed; §9.10 re-check at c990f5c: DOM-P34R2-01 verified, P3 PASS WITH CONDITIONS; DOM-P34R3-01 (Medium) fixed by the lead afterwards (fix status appended)"
+      ]
+    },
+    {
+      "agent": "security-privacy-reviewer",
+      "verdict": "PASS WITH CONDITIONS",
+      "evidence": [
+        "docs/reviews/P3-P4-security-review.md (P3 PASS WITH CONDITIONS; SEC-P34-01 P3 part, -02, -05, -07 Medium fixed)",
+        "docs/reviews/P3-P4-security-recheck.md at 4fde3ec: P3 PASS WITH CONDITIONS; SEC-P34R-07 (Medium) and Lows fixed after it (fix status in the document)"
+      ]
+    },
+    {
+      "agent": "qa-test-engineer",
+      "verdict": "FAIL at 5bf274b (cause closed)",
+      "evidence": [
+        "docs/reviews/P3-P4-qa-review.md: P3 FAIL because AT-09 / AT-10 did not hold on the server through DOM-P3-01/-06/-09 — all fixed and verified by the domain re-review; QA-P34-01 (Arabic), -02, -03, -04, -06, -07 fixed (§12); the QA journeys J1–J5 and the AT-09 / AT-10 e2e pass in CI at the gate revision"
+      ]
+    }
+  ],
+  "conditions": [
+    {
+      "id": "C1",
+      "status": "Open",
+      "detail": "Independent re-verification of the fixes made after the last review of each kind: DOM-P34R3-01 (domain), SEC-P34R-07 and SEC-P34R-01..-04 (security), QA-P34-01 a/b/d–g and -03/-07 (QA). Assigned to the P5 security and QA reviews (and a domain re-check with the next domain review)."
+    },
+    {
+      "id": "C2",
+      "status": "Open",
+      "detail": "An independent QA re-check of the P3 verdict (AT-09 and AT-10 through the UI, the Arabic P3 screens) — the QA review's FAIL rested only on findings since fixed and verified; the P5 QA review re-checks it and records the P3 QA verdict."
+    },
+    {
+      "id": "C3",
+      "status": "Open",
+      "detail": "Owner decisions recorded as questions: Q-P3-13 and Q-P34R2-01 (governance owner: one TSA per decision; no extension on a decided paper), Q-P3-02 with O1/O2 (Operations: release of a failed blocker after a passing re-test), Q-P3-05 (Legal / Finance: which transfer aspects may be 'not applicable'), Q-P3-12 (domain owner: dimension vocabulary), Q-P3-17 (Legal / governance: legal reviewer roles, accelerate_exit decision record)."
+    }
+  ],
+  "open_findings": [
+    {
+      "id": "Decision paper display",
+      "severity": "Low",
+      "status": "Open",
+      "owner": "ux-frontend-engineer (governance screens)",
+      "gate": "P6",
+      "detail": "The governance decision paper does not yet show the extension end date and continuity plan bound to it (rule enforced server-side)"
+    },
+    {
+      "id": "DOM-P34R2-O1 / -O2",
+      "severity": "Info",
+      "status": "Open",
+      "owner": "Operations owner (Role — To be confirmed)",
+      "gate": "owner decision",
+      "detail": "After a passing re-test, the site command or a second specialist can release a check that had failed (documented rules; Operations to confirm)"
+    },
+    {
+      "id": "DOM-P3-I2",
+      "severity": "Info",
+      "status": "Open",
+      "owner": "carveout-domain-analyst / Legal",
+      "gate": "owner decision",
+      "detail": "G3-C02 asks for an 'approved interim arrangement'; the Day-1 position accepts any text, so only the human criterion review approves it"
+    },
+    {
+      "id": "SEC-P34R-08 (rest)",
+      "severity": "Info",
+      "status": "Open",
+      "owner": "backend-data-engineer (readiness)",
+      "gate": "P6",
+      "detail": "The cutover plan history entry for a site change lists every check code (stored record)"
+    },
+    {
+      "id": "REQ-RDY-006 review AT",
+      "severity": "Low",
+      "status": "Open",
+      "owner": "solution-architect / devops-platform-engineer",
+      "gate": "P7",
+      "detail": "Architecture confirmation that no device / network / power write path exists"
+    },
+    {
+      "id": "REQ-SET-012 e2e",
+      "severity": "Low",
+      "status": "Open",
+      "owner": "ux-frontend-engineer",
+      "gate": "P6",
+      "detail": "No Playwright test drives the setup wizard's perimeter approval"
+    }
+  ],
+  "assumptions": [
+    "docs/assumptions-and-open-questions.md (A-P3-*, Q-P3-*, Q-P34R*)"
+  ],
+  "external_dependencies": [
+    "Reference image and Excel workbook not provided — image extraction NOT performed",
+    "No legal, regulatory, tax or zakat determination is made by the software: such items read 'Assessment pending — specialist'",
+    "Mobily IdP, object store, malware scanner, SMTP/Teams, SIEM, approved model endpoint, infrastructure: Not configured",
+    "No Docker daemon in the build environment: images, Compose and Helm validated only in CI; Helm install NOT EXECUTED"
+  ],
+  "gate": "PASS WITH CONDITIONS",
+  "gate_note": "The domain review (after three fix rounds) and the security review returned PASS WITH CONDITIONS for P3 with no open Critical or High; the QA review's FAIL rested only on the domain Highs, which are fixed and verified, and its own findings are fixed. Every P3 exit criterion is met with executed tests at the gate revision (CI green). Conditions: independent re-verification of the last fixes and a QA re-check of the P3 verdict in the next review cycle, and owner decisions. Engineering gate only, not Mobily production approval; nothing here means Production Ready.",
+  "next_action": "P5 security review (running) and P5 QA review (also C1/C2 of P3 and P4); P6 packages; P7; P8."
+}
