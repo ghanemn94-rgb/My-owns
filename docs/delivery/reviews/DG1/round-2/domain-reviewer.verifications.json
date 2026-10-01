@@ -1,0 +1,45 @@
+{
+  "stage_id": "DG1",
+  "round": 2,
+  "reviewer_role": "domain-reviewer",
+  "candidate_id": "sha256:e6979e12111aeb1456f591d66f8437d9f491c7e8e58215ea7c5a9f233cbfe71d",
+  "verifications": [
+    {
+      "finding_id": "F-DG1-001",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fixed on this candidate. docs/architecture/erd.md (lines 197-200) lists the three views as read models with their source migration, and docs/architecture/data-dictionary.md has a new 'Views (read models)' section with one subsection per view: actor_display (0001), business_unit_closure (0001) and scope_node (0002). Each gives its columns, types, purpose and source query. I migrated a fresh PostgreSQL 16 database with the candidate and compared it with the docs. information_schema.views returns exactly actor_display, business_unit_closure and scope_node. Their columns and types (actor_display user_id uuid and display_name text; business_unit_closure ancestor_id, descendant_id and organization_id uuid, depth integer; scope_node scope_type text, scope_id, organization_id, business_unit_id and transformation_id uuid) match the dictionary tables exactly. mth_app has SELECT only on all three, as documented. The documented definitions match the SQL in 0001_identity_access.sql:62 and :93 (recursion capped at depth < 10) and 0002_transformation.sql:48 (UNION ALL of organization, business_unit and transformation). The claim that the views are pinned also holds: packages/db/src/schema.ts:282 VIEW_NAMES, and catalogue.test.ts asserts it ('marks exactly the views as views', which passed in the integration run). The ERD also documents the new 0009 trigger business_unit_hierarchy_guard (erd.md:201), which I observed installed on business_unit.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-2/01-runtime-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-2/09-integration-node22.log",
+        "docs/architecture/erd.md",
+        "docs/architecture/data-dictionary.md",
+        "packages/db/migrations/0001_identity_access.sql",
+        "packages/db/migrations/0002_transformation.sql"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-002",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fixed on this candidate. docs/operations/clean-start.md:91 (path B, A1-A2) now says '`mth migrate` applies every shipped migration in `packages/db/migrations/` (currently 9: `0001`-`0009`), a re-run is a no-op'. That matches the candidate: packages/db/migrations holds 0001-0009. On a fresh database the live run printed 'applied 9 migration(s)', the re-run printed 'database is up to date', and schema_migration records 9 rows. The integration global setup reports 'applied 9 migrations to a fresh database'. The timing table (line 101) now labels its 6 migrations as 'the count at the time of measurement', so the historical figure is clearly separated from current behaviour.",
+      "evidence": [
+        "docs/operations/clean-start.md",
+        "docs/delivery/test-evidence/DG1/domain/round-2/01-runtime-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-2/09-integration-node22.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-003",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fixed on this candidate. The REQ-S16-001 notes column no longer cites 'docs/delivery/test-evidence/DG1/domain/round-1/01-runtime-scenario.out.txt' or any dev-history evidence. A grep of the REQ-S16-001 row for 'dev-history|test-evidence/DG1/domain' finds 0 matches, and the whole register has no round-scoped domain evidence path. The old wording on the round-1 candidate 37ec374 contained the ambiguous citation. The note now gives stable facts checkable on the candidate: separate compose services and entry points (apps/api/src/main.ts, apps/worker/src/main.ts), the eight P1-active modules in apps/api/src/modules.ts enforced by architecture.test.ts, and the API suites running with no worker process. I re-established the substantive claim live on this candidate. After SIGTERM the worker exits 0, the API process stays alive, and /readyz still answers 200 'ready'. architecture.test.ts passed in both the Node 22 and Node 24 unit runs.",
+      "evidence": [
+        "docs/delivery/requirements.csv",
+        "docs/delivery/test-evidence/DG1/domain/round-2/01-runtime-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-2/05-test-node22.log",
+        "docs/delivery/test-evidence/DG1/domain/round-2/06-test-node24.log"
+      ]
+    }
+  ]
+}

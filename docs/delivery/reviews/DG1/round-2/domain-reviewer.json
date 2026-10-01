@@ -1,0 +1,270 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG1",
+  "round": 2,
+  "candidate_id": "sha256:e6979e12111aeb1456f591d66f8437d9f491c7e8e58215ea7c5a9f233cbfe71d",
+  "source_commit": "485e91f50eabe236b12d67f45d1bf1d246a97e4a",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG1-T-DG1-REV-DOM-R2-domain-reviewer-20261001T214241Z-81903f52",
+    "session_id": "81903f52-72e6-4262-8d2f-193134ba0198"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "frontend-ux-engineer",
+    "devops-engineer",
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am domain-reviewer, session 81903f52-72e6-4262-8d2f-193134ba0198. I authored no implementation in the DG1 scope, including the round-2 repairs at 12bf33f. I reviewed the frozen candidate only, at HEAD 309be8d, whose candidate ID equals the manifest's. Code ran only in a disposable clone and disposable PostgreSQL clusters under $TMPDIR. I formed this verdict without reading any other reviewer's DG1 round-2 record. My own round-1 record was read only to reuse its probe structure and to recall the findings I raised."
+  },
+  "assignment": "docs/delivery/assignments/DG1/round-2/domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-S15-002",
+    "REQ-S15-005",
+    "REQ-S15-006",
+    "REQ-S16-001",
+    "REQ-S16-002",
+    "REQ-S16-004",
+    "REQ-S19-004",
+    "REQ-S19-006",
+    "REQ-PB-003"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-R2-00-candidate",
+      "procedure": "Confirm HEAD, then recompute the candidate ID in the repository and again in a disposable clone checked out at HEAD",
+      "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG1 (repo and $TMPDIR/review-dg1r2)",
+      "environment": "Node v24.21.0, sandboxed shell, repo /home/user/My-owns and clone $TMPDIR/review-dg1r2",
+      "expected": "candidate_id sha256:e6979e12111aeb1456f591d66f8437d9f491c7e8e58215ea7c5a9f233cbfe71d, 394 files",
+      "actual": "HEAD 309be8def2a4294377aa26c4586819bfa53991a2, which adds only delivery records on top of the manifest source_commit 485e91f. Both the repo and the clone give candidate_id sha256:e6979e12111aeb1456f591d66f8437d9f491c7e8e58215ea7c5a9f233cbfe71d with files=394.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/candidates/DG1/e6979e12111aeb14.manifest.json"
+      ]
+    },
+    {
+      "id": "DOM-R2-01-typecheck",
+      "procedure": "Recursive TypeScript type check of all workspace packages",
+      "command": "PATH=/opt/node22/bin:$PATH pnpm -r typecheck",
+      "environment": "Node v22.22.2, pnpm 10.33.0, offline install from a copy of the local store, disposable clone",
+      "expected": "exit 0",
+      "actual": "All packages Done, exit=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-2/02-typecheck.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-02-build",
+      "procedure": "Recursive build of api, worker, web, db, design-tokens, shared and config",
+      "command": "PATH=/opt/node22/bin:$PATH pnpm -r build",
+      "environment": "Node v22.22.2, pnpm 10.33.0, disposable clone",
+      "expected": "exit 0",
+      "actual": "All packages Done, exit=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-2/03-build.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-03-lint",
+      "procedure": "ESLint over the repository with zero warnings allowed",
+      "command": "PATH=/opt/node22/bin:$PATH pnpm lint",
+      "environment": "Node v22.22.2, disposable clone",
+      "expected": "exit 0, no warnings",
+      "actual": "eslint . --max-warnings=0 printed nothing, exit=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-2/04-lint.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-04-test-node22",
+      "procedure": "Unit suites (unit-node and unit-web), including architecture.test.ts (module boundaries, ADR-0002)",
+      "command": "PATH=/opt/node22/bin:$PATH pnpm test",
+      "environment": "Node v22.22.2, disposable clone",
+      "expected": "all tests pass",
+      "actual": "Test Files 21 passed (21); Tests 326 passed (326); exit=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-2/05-test-node22.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-05-test-node24",
+      "procedure": "The same unit suites on the production Node line",
+      "command": "PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH pnpm test",
+      "environment": "Node v24.21.0, disposable clone",
+      "expected": "all tests pass",
+      "actual": "Test Files 21 passed (21); Tests 326 passed (326); exit=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-2/06-test-node24.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-06-contrast",
+      "procedure": "WCAG contrast check of the provisional design tokens",
+      "command": "PATH=/opt/node22/bin:$PATH pnpm --filter @mth/design-tokens run check:contrast",
+      "environment": "Node v22.22.2, disposable clone",
+      "expected": "every used pair meets WCAG AA; the documented prohibited pairs fail",
+      "actual": "PASS contrast: 50 pairs meet WCAG AA; 3 prohibited pairs fail as documented (including white on #0078FF at 4.09:1, which is not used for small text); exit=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-2/07-contrast.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-07-nocdn-openapi-claims",
+      "procedure": "Scan for public CDNs, validate the OpenAPI document, and grep the product source for official PMI or Mobily claims",
+      "command": "pnpm check:no-cdn; pnpm openapi:lint; grep -rniE 'official (pmi|mobily)|pmi[- ]certified|certified by pmi|mobily[- ]approved' apps packages (excluding node_modules and dist)",
+      "environment": "Node v22.22.2, disposable clone",
+      "expected": "no CDN references; OpenAPI valid; every claim match is a disclaimer",
+      "actual": "PASS no-cdn: scanned apps, packages. PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 33 operations. All 7 grep matches are negations: the provisional wordmark comment, 'not official Mobily brand assets', 'not an official PMI standard ... not certified by PMI', 'not a Mobily-approved access policy', and tokens.json 'NOT verified or official Mobily colours'. deps:verify (registry pin check) needs network access to npm and was NOT run. It is outside this assignment and is recorded as BLOCKED in the log.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-2/08-nocdn-openapi-deps.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-08-integration",
+      "procedure": "Integration suites on a disposable PostgreSQL 16 cluster: fresh-database migrations, the catalogue (pins the three views), the contract suite, and the new bu-hierarchy-guard suite",
+      "command": "TEST_DATABASE_ADMIN_URL=postgresql://postgres@127.0.0.1:54392/postgres pnpm test:integration",
+      "environment": "Node v22.22.2, PostgreSQL 16.13 (disposable initdb cluster under $TMPDIR)",
+      "expected": "all tests pass; 9 migrations applied to a fresh database",
+      "actual": "applied 9 migrations to a fresh database; bu-hierarchy-guard.test.ts 7 tests passed; Test Files 20 passed (20); Tests 209 passed (209); exit=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-2/09-integration-node22.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-09-live-scenario",
+      "procedure": "Live stack on a fresh PostgreSQL 16 database: migrate twice, seed the SYNTHETIC dev users, then start the API (AUTH_MODE=dev) and the worker as separate processes. The HTTP probe (01a) re-runs the round-1 domain checks: the close rule (draft, active and on_hold to closed are refused 422 with the record and version unchanged; a combined close plus rename is refused atomically; the message names neither DG7 nor an approval); defaults Asia/Riyadh and SAR, with modular entry and configurable timezone and currency; If-Match 428 and 409/412; audit only for successful mutations; scoped access (TL 404 out of scope, admin sees no business records, auditor read-only, CSRF 403); cursor pagination (complete walk, cursor bound to sort, tamper and limit rejected); provisional branding tokens; and locale preferences. Round-2 additions: BU re-parent cycle (A>B>C, then A under C and A under A are refused 422 business_unit.cycle and A is unchanged); an org-scope ADM_TECH moves a BU to the top and back; BU PATCH without If-Match gives 428; destination authorization (a user with ADM_TECH on Y only gets 403 moving Y under X or under SYN-FIN, can still rename Y, gets 200 once also granted X, and gets 403 moving Y to the top level, where the destination is the organization); a direct UPDATE as mth_app is refused by the 0009 trigger; denials are audited; the closure view has no self-cycles. Then the worker stop test",
+      "command": "bash 01b-run.sh <evidence dir> (probe 01a-probe.mjs, ratelimit 01d-ratelimit.mjs, screens 01c-screens.mjs)",
+      "environment": "Node v22.22.2, PostgreSQL 16.13 disposable cluster on 127.0.0.1:54393, API on :3000, worker as a separate process, synthetic data only",
+      "expected": "every probe check PASS; the DB guard refuses the cycle; the API survives the worker stop",
+      "actual": "API probe SUMMARY pass=49 fail=0. Cycle refusal: 422 {code: business_unit.cycle}. Destination-authz refusals: 403 forbidden, with 5 authorization.denied audit events, the latest naming 'PATCH /api/v1/business-units/:businessUnitId requires business_unit.manage' (record_type organization for the move to the top level). business_unit.update count = 4, exactly the successful moves and renames. The direct mth_app UPDATE failed: 'business unit ... cannot be placed under its own descendant' (psql exit 1). Closure self-cycles = 0. Outbox transformation.created 7/7 published. The worker exits 0 on SIGTERM, the API stays alive, and /readyz answers 200 ready. api.log has 0 error or fatal lines.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-2/01-runtime-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-2/01a-probe.mjs.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-2/01b-run.sh.txt"
+      ]
+    },
+    {
+      "id": "DOM-R2-10-ratelimit-keying",
+      "procedure": "A second API instance with RATE_LIMIT_PER_MINUTE=20, same database. Two synthetic users sign in from the same IP. The office user sends 15 normal requests. Then 40 requests come with freshly fabricated session cookies, followed by one anonymous request. Afterwards, check that both validated users are still served and that /readyz is exempt",
+      "command": "node 01d-ratelimit.mjs (run from 01b-run.sh against http://localhost:3001)",
+      "environment": "Node v22.22.2, API :3001 with RATE_LIMIT_PER_MINUTE=20 and AUTH_RATE_LIMIT_PER_MINUTE=1000, PostgreSQL 16.13 disposable",
+      "expected": "normal user traffic is served; forged cookies share the IP bucket and get 429 problem+json; validated users keep their own subject buckets; /readyz is never limited",
+      "actual": "SUMMARY pass=7 fail=0. 15 of 15 legitimate requests returned 200. The forged-cookie flood gave {401:20, 429:20}, and the 429 was application/problem+json code rate_limited. The anonymous request from the same IP got 429. dev.office and dev.lead still got 200 and 200 after the flood. /readyz returned 200. Ordinary users keep working under the new keying, and users behind a shared IP are not throttled by a forged-cookie flood.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-2/01-runtime-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-2/01d-ratelimit.mjs.txt"
+      ]
+    },
+    {
+      "id": "DOM-R2-11-bilingual-screens",
+      "procedure": "Headless Chromium 1194 (pre-installed, no download) against the live stack. Screens: the login page, My Work and the transformations register, as dev.office (ar, ar-SA) and dev.auditor (en, en-US). Also the BU edit screen, where dev.admin selects a descendant (SYN-RETAIL) as the parent of SYN-OPS and saves, once in English and once in Arabic. For each, record lang and dir, visible text, loaded fonts, alerts, every non-localhost request, and the server-side parent afterwards",
+      "command": "PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers node 01c-screens.mjs <evidence dir>",
+      "environment": "Chromium 1194 headless, 1366x860, timezone Asia/Riyadh, live stack on :3000",
+      "expected": "Arabic RTL and English LTR; provisional wordmark; bundled fonts; no external requests; the cycle refusal is shown in the user's language and nothing is saved",
+      "actual": "ar: lang=ar dir=rtl, header 'منصة موبايلي للتحوّل' with the badge 'مؤقت' and the provisional notice. en: lang=en dir=ltr, 'Mobily Transformation Hub' with 'Provisional' and the notice 'not verified Mobily brand values'. Fonts loaded: IBM Plex Sans Arabic and IBM Plex Sans, bundled woff2 files. foreignRequests=[] in every context. The register shows timestamps in Asia/Riyadh and mode and phase labels in Arabic. BU cycle UI: en alert 'A business unit cannot be its own ancestor.'; ar alert 'لا يمكن أن تكون وحدة العمل أصلًا لنفسها.'; serverParentAfter=null in both. The screenshots show the error banner in the correct direction. The round-2 web change was test-only (transformations.test.tsx), and no visible regression was seen.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-2/01-runtime-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-2/01c-screens.mjs.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-2/screen-login-ar.png",
+        "docs/delivery/test-evidence/DG1/domain/round-2/screen-login-en.png",
+        "docs/delivery/test-evidence/DG1/domain/round-2/screen-home-ar.png",
+        "docs/delivery/test-evidence/DG1/domain/round-2/screen-home-en.png",
+        "docs/delivery/test-evidence/DG1/domain/round-2/screen-transformations-ar.png",
+        "docs/delivery/test-evidence/DG1/domain/round-2/screen-transformations-en.png",
+        "docs/delivery/test-evidence/DG1/domain/round-2/screen-bu-cycle-ar.png",
+        "docs/delivery/test-evidence/DG1/domain/round-2/screen-bu-cycle-en.png"
+      ]
+    },
+    {
+      "id": "DOM-R2-12-source-fidelity",
+      "procedure": "Static comparison with the playbook and a no-regression diff. Diff 37ec374..485e91f (round-1 candidate to this candidate) over apps, packages, docs/api, docs/architecture and docs/operations. Re-compare PHASES with B0021, modes with B0009, PRODUCT_GATES G1-G6 and CLOSURE_GATE=G6 with B0023, and the close rule with B0014",
+      "command": "git diff --stat 37ec374 485e91f -- apps packages docs/api docs/architecture docs/operations; grep of PHASES, PRODUCT_GATES, CLOSURE_GATE and the close-rule text; read playbook.md B0009/B0014/B0021/B0023",
+      "environment": "disposable clone at 309be8d",
+      "expected": "no domain-bearing change since round 1; constants match the playbook; the G6 product gate is kept separate from DG7",
+      "actual": "Only identity rate-limiting, organization BU routes and repository, server wiring, migration 0009, schema.ts VIEW_NAMES, tests and docs changed. Transformations, workflows, web pages, i18n and design tokens are unchanged since round 1. PHASES = diagnose, define, design, mobilize, transform, realize (B0021). PRODUCT_GATES G1-G6, 'Not the engineering gates DG0-DG7', and CLOSURE_GATE G6 (B0023). The close refusal cites G6 (Sustain) and B0014 'Benefits before closure', and is labelled a PRODUCT gate unrelated to DG0-DG7. End_to_end and modular modes with an entry phase (B0009) were confirmed live.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/source/playbook.md#B0021",
+        "packages/shared/src/constants.ts",
+        "apps/api/src/modules/workflows/index.ts",
+        "apps/api/src/modules/transformations/routes.ts"
+      ]
+    },
+    {
+      "id": "DOM-R2-13-schema-docs",
+      "procedure": "Compare the migrated fresh database (views, view columns and types, mth_app grants, business_unit trigger, migration count) with erd.md, data-dictionary.md and clean-start.md; check the REQ-S16-001 register note (round-1 findings F-DG1-001/002/003)",
+      "command": "psql queries in 01b-run.sh; grep -n of erd.md, data-dictionary.md and clean-start.md; grep of the REQ-S16-001 row for dev-history and round-scoped evidence paths",
+      "environment": "PostgreSQL 16.13 disposable cluster; repository at 309be8d",
+      "expected": "the three views are documented with matching columns; the migration count is stated as currently 9; no ambiguous round-scoped citation in the REQ-S16-001 note",
+      "actual": "Views actor_display, business_unit_closure and scope_node exist, and their 11 columns and types match the dictionary. mth_app has SELECT only, as documented. Trigger business_unit_hierarchy_guard is documented in erd.md:201 and data-dictionary.md:86. clean-start.md:91 says 'currently 9: 0001-0009', which matches 'applied 9 migration(s)'. The REQ-S16-001 note has 0 matches for dev-history or test-evidence/DG1/domain. All three findings are verified fixed (see the verifications sidecar).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-2/01-runtime-scenario.out.txt",
+        "docs/architecture/erd.md",
+        "docs/architecture/data-dictionary.md",
+        "docs/operations/clean-start.md",
+        "docs/delivery/requirements.csv",
+        "docs/delivery/reviews/DG1/round-2/domain-reviewer.verifications.json"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG1/domain/round-2/01-runtime-scenario.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-2/01a-probe.mjs.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-2/01b-run.sh.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-2/01c-screens.mjs.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-2/01d-ratelimit.mjs.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-2/02-typecheck.log",
+    "docs/delivery/test-evidence/DG1/domain/round-2/03-build.log",
+    "docs/delivery/test-evidence/DG1/domain/round-2/04-lint.log",
+    "docs/delivery/test-evidence/DG1/domain/round-2/05-test-node22.log",
+    "docs/delivery/test-evidence/DG1/domain/round-2/06-test-node24.log",
+    "docs/delivery/test-evidence/DG1/domain/round-2/07-contrast.log",
+    "docs/delivery/test-evidence/DG1/domain/round-2/08-nocdn-openapi-deps.log",
+    "docs/delivery/test-evidence/DG1/domain/round-2/09-integration-node22.log",
+    "docs/delivery/test-evidence/DG1/domain/round-2/screen-login-ar.png",
+    "docs/delivery/test-evidence/DG1/domain/round-2/screen-login-en.png",
+    "docs/delivery/test-evidence/DG1/domain/round-2/screen-home-ar.png",
+    "docs/delivery/test-evidence/DG1/domain/round-2/screen-home-en.png",
+    "docs/delivery/test-evidence/DG1/domain/round-2/screen-transformations-ar.png",
+    "docs/delivery/test-evidence/DG1/domain/round-2/screen-transformations-en.png",
+    "docs/delivery/test-evidence/DG1/domain/round-2/screen-bu-cycle-ar.png",
+    "docs/delivery/test-evidence/DG1/domain/round-2/screen-bu-cycle-en.png",
+    "docs/delivery/reviews/DG1/round-2/domain-reviewer.verifications.json"
+  ],
+  "reviewed_at": "2026-10-01T21:58:00Z",
+  "summary": "PASS on candidate sha256:e6979e12… (source 485e91f). All three Low findings I raised in round 1 are verified fixed: F-DG1-001 (the views are documented and match the migrated schema), F-DG1-002 (the clean-start guide states 'currently 9: 0001-0009', matching 'applied 9 migration(s)') and F-DG1-003 (the REQ-S16-001 note cites stable candidate facts, and the worker-stop claim was re-proven live). The round-2 product change does not break domain behaviour. BU cycles are refused with 422 by the API, and by the 0009 trigger at the database. Moves need business_unit.manage on the destination, with 403 refusals audited. The new rate-limit keying serves ordinary users while throttling forged-cookie floods per IP. The cycle refusal is shown in Arabic RTL and English LTR. No regression: the close rule is still 422 under the G6 product gate (never DG7); scoped access, CSRF, If-Match, cursor pagination, provisional branding, bundled fonts, no CDN, and Asia/Riyadh and SAR defaults are unchanged. Every required check ran and passed on Node 22 and Node 24 (326 unit tests each, 209 integration tests). No new findings.",
+  "narrative": "docs/delivery/reviews/DG1/round-2/domain-reviewer.md"
+}
