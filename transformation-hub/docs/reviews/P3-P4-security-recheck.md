@@ -209,3 +209,72 @@ $ GITLEAKS=… bash scripts/ops/secret-scan.sh history
 ```
 This section was filled in by a follow-up documentation commit. Nothing was pushed; every process started by the reviewer has
 ended (the first, early full-suite run was stopped by PID; the final run exited 0).
+
+---
+
+## Fix status (implementer `backend-data-engineer`, separate context — not part of the re-check)
+
+Fixed from `52bea13` (head of `claude/mobily-transformation-hub` with this re-check merged) on the implementer's worktree branch;
+commits in §F.4. The reviewer's `DEFECT` probes were renamed "… (fixed, regression)" and run as plain tests with their
+assertions unchanged; the `OBSERVED SEC-P34R-03` probe was updated together with the fix (a comment records the behaviour
+observed at `4fde3ec`); `OBSERVED SEC-P34R-06` and every `CONTROL` are unchanged. The implementer's own regression tests are in
+the new `apps/api/test/reviews/p34-sec-re-fixes.spec.ts` (11 tests, own JV project `P34RFX-JV`).
+
+### F.1 Findings
+
+| Finding | Status | Rule → file | Tests |
+|---|---|---|---|
+| **SEC-P34R-07** (Medium) | **FIXED** | One target check for every evidence command that changes what a target rests on: `EvidenceService.assertTargetWrite` (`apps/api/src/modules/documents/evidence.service.ts`) = the target's work permission (`EVIDENCE_TARGET_PERMISSION`, 403 `evidence.target_permission`) + `assertTargetCommand` (gate-criterion owner rule SEC-P2-05, requester-only rule on a draft / submitted decision paper SEC-P34-13). Called by `link`, `flagConflict` (both links' target) and `supersede`, before any state check, so the subscribed reactions (`svc-carveout`, readiness, NewCo, gates) can only be triggered by someone who could have linked that evidence. Routes checked and not changed: evidence `verify` (decision accept or reject) is the review function (`documents.evidence.verify`, with its own `not_self` against the linker and the version uploader); there is no withdraw route; disposing of a document supersedes its links under `documents.document.dispose` (Legal, `not_self` against the requester, authority, retention / legal hold). | `p34-sec-re-jv-ai.spec.ts` "SEC-P34R-07 (fixed, regression)" ×2 (transfer: contributor 403, transfer unchanged; paper: Finance 403 `governance.decision.not_requester`). `p34-sec-re-fixes.spec.ts`: incorporation evidence — Finance supersede 403, link active; TSA evidence — Legal 403, the PM 201; gate-criterion evidence — a contributor can neither link nor supersede (403), the PM can; flag-conflict on transfer evidence — contributor 403, both links active. |
+| **SEC-P34R-05** (Medium) | **FIXED** | `AiProposalsService.visibleSql` (`apps/api/src/modules/ai/ai-proposals.service.ts`), applied in SQL to the list, its `total` and the detail, and through `loadVisible` (404 like an unknown id) to approve, reject and revise. A proposal is visible when (1) the reader can read its **target** and (2) the reader can read **every record its run sent to the model** (`ai_run.evidence_snapshot.items`, `sentToProvider`), both with `AiKnowledgeService.refVisibleSql` (`ai-knowledge.service.ts`) — the per-type rules of the AI knowledge sources: documents (the documents list's predicate: classification, room / clean-team room, grant coverage), tasks / milestones / workstreams (planning reach), decisions, actions and approval requests (their decision / subject, project-wide `governance.decision.read`), gates (`gates.gate.read` coverage), closing conditions, partners and deal scenarios (project-wide JV read), TSA / readiness checks (`RecordVisibility`, readiness reach), financial snapshots / model versions (finance-domain clearance + finance reach), status dimensions, computations (the task they derive from); an unknown type is hidden; `::uuid` casts guarded by `CASE`. (3) A proposal **without a target** (a free draft whose content is the model's text) is visible to its requester and to a reader whose base and finance-domain clearance are at least the delegating user's, recorded in the run snapshot at run time (`delegate`, `ai-runtime.service.ts`; no schema change). This is the "derived classification" of access-matrix §2.6 without a stored column: the run's inputs are re-checked on every read, so a reader who later loses access to an input loses the proposal too. | `p34-sec-re-jv-ai.spec.ts` "SEC-P34R-05 (fixed, regression)" ×2 (CP target hidden from the secretary; the draft carrying Finance's strictly confidential figure hidden from the PM). `p34-sec-re-fixes.spec.ts`: a task-targeted proposal from a run that sent a CP to the model is hidden from the secretary, who reads that task but not the CP; Legal and the sponsor see it; approve by the secretary → 404 with the code of an unknown id, reject → 404, proposal unchanged; the PM's free draft is listed to the sponsor, not to the secretary. Existing `ai/*` specs pass (§F.3). |
+| SEC-P34R-01 (Low) | **FIXED** for the P3 registers | `apps/api/src/platform/record-visibility.ts`: rules `legal_entity` (`ws: newco.register.read, wsCol: null`), `perimeter_version` and `perimeter_category_review` (`ws: carveout.register.read, wsCol: null`) — a project-wide read grant, as the NewCo / carve-out modules require; `legal_entity` and `perimeter_version` leave the unruled-target list. The governance part (action items, escalations, committee children) is the documented open deviation of access-matrix §2.2 and stays with the governance module (not in this assignment). | `p34-sec-re-registers.spec.ts` "SEC-P34R-01 (fixed, regression)"; its CONTROLs (PM / Legal / auditor still see the events) pass. |
+| SEC-P34R-02 (Low) | **FIXED** for the new routes | Readiness rebind (`checks.service.ts`) and cutover plan site change (`cutover.service.ts`) load with `loadReadable` (the module's read rule, 404) before the manage check; TSA `request-extension` / `record-extension` (`tsa.service.ts`) likewise. JV checklist-item and CP commands (`jv/transactions.service.ts` `loadItem` / `loadCp`, which also serve the "not required" decide): `assertReachable` — 404 unless the caller holds project-wide `jv.deal.read` or the command permission project-wide (JV closing records carry no workstream), before the 403 checks. Residual (recorded, static): the older readiness / cutover / TSA commands (update, status commands, exit approval) keep the `loadInProject` → manage-check order; same project only, UUIDv7 ids. | `p34-sec-re-registers.spec.ts` "SEC-P34R-02 (fixed, regression)" ×3 (rebind, plan site, not-required decide: existing unreadable record and unknown id both 404). `p34-sec-re-fixes.spec.ts`: TSA request-extension / record-extension by the WS1 lead on a WS2 TSA → 404 with the code of an unknown id, TSA unchanged (run once against the code before the change: 403 `policy.forbidden`, as expected). |
+| SEC-P34R-03 (Low) | **FIXED** (as recommended; consistent with the documents module) | One definition of the evidence "self": `evidenceSelfIds` / `evidenceSelfSql` (`apps/api/src/platform/helpers.ts`) = everyone who linked an `active` or `conflicting` evidence record of the target **and** the uploaders of the document versions those links point to. Every module's `evidenceLinkers` delegates to it (`readiness.support.ts`, `jv.support.ts`, `finance.support.ts`, `carveout.support.ts`, `newco.support.ts`) and the action-closure verification uses it (`governance/actions.service.ts`). Checked for finance, JV and governance: CP verify, deliverable acceptance, obligation verify, benefit verify and action closure all refuse the uploader. Refusal texts (en / ar) now say "linked or uploaded"; codes unchanged. | `p34-sec-re-jv-ai.spec.ts` "SEC-P34R-03 (fixed, regression)" (the uploader's CP verify 403 `jv.cp.self_verification`, CP unchanged; the approver verifies). `p34-sec-re-fixes.spec.ts`: benefit realization (uploader 403 `finance.benefit.verify_self`; an independent verifier 201); action closure (uploading secretary 403, not offered in My Work; a second secretary verifies). |
+| SEC-P34R-04 (Low) | **FIXED** | `apps/api/src/modules/planning/my-work.service.ts`: the action-closure verification item excludes the action's owner and anyone in `evidenceSelfSql` (linker or uploader of its evidence) — the command's own rule, in SQL. | `p34-sec-re-jv-ai.spec.ts` "SEC-P34R-04 (fixed, regression)"; `p34-sec-re-fixes.spec.ts` action closure (uploader not offered). |
+| SEC-P34R-06 (Info) | **RECORDED, not changed** | Requiring a project-wide `jv.deal.read` for `jv.cp.verify` (or granting it to the functional approver) changes who may verify CPs and decide "not required" requests — a policy-matrix decision for the JV / Legal owner. Recorded in access-matrix §5.1. | `OBSERVED SEC-P34R-06` unchanged. |
+| SEC-P34R-08 (Info) | **PARTLY FIXED** | `packages/domain/src/readiness.ts` `assertCutoverPlanSiteChange` takes the caller's `canRead`: the refusal names (code, id) only the failed checks the caller may read and counts the others (`otherFailedChecks`); the rule still weighs every check (`cutover.service.ts` passes the readiness reach). `tsa.extension.decision_other_tsa` no longer returns `boundTsaServiceId`. Not changed: the plan history entry `site_changed` keeps the codes of every leaving / entering check (a persisted decision-history record read by the plan's readers; filtering it per reader would need a structured history entry). | D `readiness.test.ts` "SEC-P34R-08: the refusal names only the failed checks the caller may read and counts the others; the rule weighs every check". |
+| SEC-P34R-09 (Info) | **FIXED** | One linker definition (`active` or `conflicting`, plus uploaders — SEC-P34R-03) in every module; CP verification refuses while any evidence of the CP is conflicting (`packages/domain/src/jv.ts` `assertCpVerifiable`, 422 `jv.cp.evidence_conflicting`, en / ar text), as the readiness and NewCo verifications. | D `jv.test.ts` "SEC-P34R-09: a CP with conflicting evidence is not verified until the conflict is resolved"; `p34-sec-re-fixes.spec.ts` "CP verify while two of its evidence records conflict → 422 jv.cp.evidence_conflicting; the CP is unchanged". |
+
+Documentation: `docs/security/access-matrix.md` §2.2 (P3 register rules in the activity feed), §2.5 (AI proposals; 404 before 403),
+§2.6 (AI proposals as derived data), §5.1 (one evidence-"self" definition, conflicting CP, SEC-P34R-06 recorded), §6 documents note
+(supersede / flag-conflict apply the link authorization). No permission or role changed (the policy matrix and its JSON are
+unchanged). Requirement evidence added (statuses unchanged, already Tested): REQ-JV-013, REQ-FIN-009, REQ-GOV-018.
+
+### F.2 Not done
+
+- SEC-P34R-06: recorded, a domain decision (above).
+- SEC-P34R-08: the plan history text (above).
+- SEC-P34R-02: the older readiness / cutover / TSA commands (above).
+- SEC-P34R-01: the governance registers in the activity feed (open deviation of access-matrix §2.2, governance module).
+- SEC-P34R-05 (adjacent, not in the finding): the activity feed's `ai_proposal` events (action, actor, time; no payload or title)
+  keep the `viaTarget` rule of `record-visibility.ts` — they follow the proposal's target, not its run inputs.
+- Playwright: no route, page or contract changed; the web change is limited to refusal texts (i18n en / ar, one new refusal code
+  mapping), checked by `pnpm lint` (i18n parity) and `pnpm typecheck`.
+
+### F.3 Verification (own databases `hub_test_secfix2*`, worktree of the implementer)
+
+```
+$ (packages/domain) npx vitest run                       → Test Files 22 passed (22); Tests 461 passed (461)
+$ pnpm typecheck                                          → every workspace project: Done
+$ pnpm lint                                               → i18n check passed (19 namespaces, 6765 keys per language, en = ar);
+                                                            hard-coded string check passed; module boundary check passed
+$ free -g → 7 GB free at start (another agent's Playwright run active)
+$ (apps/api) TEST_DATABASE_URL=postgres://hub_app:…@127.0.0.1:5432/hub_test_secfix2 \
+    TEST_DATABASE_MIGRATION_URL=postgres://hub_owner:…@127.0.0.1:5432/hub_test_secfix2 pnpm test      (code at 8165eb1)
+ Test Files  132 passed (132)
+      Tests  1041 passed | 2 expected fail (1043)
+   Duration  1373.87s
+exit 0
+```
+132 files = the 131 spec files at `52bea13` (including the two re-check probe specs) + the new `p34-sec-re-fixes.spec.ts`. The 2 expected fails are the open P2 probes DOM-P2F-02 / DOM-P2F-04 (`p2-domain-final.spec.ts`); the 9 DEFECT
+probes of this re-check now run as plain regression tests and pass. After the TSA extension change (`73a81d2`), single-file runs:
+`p34-sec-re-fixes.spec.ts` 11/11; the TSA / readiness specs that use the extension routes (`readiness/p34r-fixes-tsa`,
+`readiness-isolation`, `p3-fixes-tsa`, `p2f-decision-reliance`, `at-10-tsa-expiry`, `reviews/p34-domain-re-tsa`, `reviews/p3-domain-tsa`)
+with both re-check probe specs: 9 files, 64 tests passed. `python3 scripts/requirements/apply_status.py --check` → OK (263 entries).
+Secret scan at `73a81d2`: `GITLEAKS=…/gitleaks-8.30.1 bash scripts/ops/secret-scan.sh tree` → 1154 committed files, no leaks found,
+`SECRET SCAN (tree): PASS`.
+
+### F.4 Commits
+
+`0f484b4` SEC-P34R-07 · `b6d1415` SEC-P34R-05 · `52a6c8a` SEC-P34R-03 / -04 / -09 (and the JV part of -02) · `50ef3d9` SEC-P34R-01 /
+-02 / -08 · `8165eb1` probes converted and the implementer's regression spec · `15c0e25` access matrix and requirement evidence ·
+`73a81d2` SEC-P34R-02 TSA extension routes · this section (documentation commit). Nothing was pushed; no server was started.
