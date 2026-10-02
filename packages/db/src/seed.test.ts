@@ -1,17 +1,24 @@
-// Unit test (no database): the role/permission seed migration equals packages/shared/src/permissions.ts
-// (data dictionary "role" seed rule, ADR-0006). The integration test seed.test.ts checks the seeded ROWS too.
+// Unit test (no database): the role/permission seed migrations equal packages/shared/src/permissions.ts
+// (data dictionary "role" seed rule, ADR-0006, ADR-0020): 0005 seeds the P1 part, 0018 the P2 part. The integration
+// tests check the seeded ROWS too.
 import { readFileSync } from "node:fs";
-import { PERMISSIONS, ROLES } from "@mth/shared";
+import { P1_PERMISSIONS, P2_PERMISSIONS, P2_ROLE_PERMISSIONS, PERMISSIONS, ROLES } from "@mth/shared";
 import { describe, expect, it } from "vitest";
 import { defaultMigrationsDir, listMigrationFiles } from "./migrate.ts";
 
 const sql = readFileSync(`${defaultMigrationsDir()}/0005_seed_roles_permissions.sql`, "utf8");
+const sqlP2 = readFileSync(`${defaultMigrationsDir()}/0018_p2_access_instantiation.sql`, "utf8");
+const P2_PERMISSION_SET: ReadonlySet<string> = new Set(Object.keys(P2_PERMISSIONS));
 
-function section(header: string): string {
-  const start = sql.indexOf(header);
+function section(header: string, text: string = sql): string {
+  const start = text.indexOf(header);
   expect(start).toBeGreaterThanOrEqual(0);
-  const end = sql.indexOf(";", start);
-  return sql.slice(start, end);
+  // A statement ends at ");" + an optional trailing comment + newline (seed descriptions may contain ";").
+  const end = /\);( --[^\n]*)?\n/g;
+  end.lastIndex = start;
+  const m = end.exec(text);
+  expect(m).not.toBeNull();
+  return text.slice(start, m!.index + 1);
 }
 
 describe("0005 seed equals permissions.ts", () => {
@@ -20,8 +27,8 @@ describe("0005 seed equals permissions.ts", () => {
       m[1],
       m[2],
     ]);
-    expect(Object.fromEntries(rows)).toEqual(PERMISSIONS);
-    expect(rows).toHaveLength(Object.keys(PERMISSIONS).length);
+    expect(Object.fromEntries(rows)).toEqual(P1_PERMISSIONS);
+    expect(rows).toHaveLength(Object.keys(P1_PERMISSIONS).length);
   });
 
   it("role rows (kind, inheritance) and role_permission links", () => {
@@ -43,7 +50,9 @@ describe("0005 seed equals permissions.ts", () => {
     const links = [...section("INSERT INTO role_permission").matchAll(/^\s*\('([0-9a-f-]{36})', '([a-z_.]+)'\)/gm)];
     const byRole: Record<string, string[]> = {};
     for (const l of links) (byRole[idToCode.get(l[1]!)!] ??= []).push(l[2]!);
-    const expected = Object.fromEntries(Object.entries(ROLES).map(([c, d]) => [c, [...d.permissions].sort()]));
+    const expected = Object.fromEntries(
+      Object.entries(ROLES).map(([c, d]) => [c, d.permissions.filter((p) => !P2_PERMISSION_SET.has(p)).sort()]),
+    );
     expect(Object.fromEntries(Object.entries(byRole).map(([c, p]) => [c, p.sort()]))).toEqual(
       Object.fromEntries(Object.entries(expected).filter(([, p]) => p.length > 0)),
     );
@@ -58,6 +67,35 @@ describe("0005 seed equals permissions.ts", () => {
           expect.stringMatching(/business_approval|finance_validation/),
         ]);
     }
+  });
+});
+
+describe("0018 seed equals the P2 part of permissions.ts", () => {
+  it("permission rows", () => {
+    const rows = [...section("INSERT INTO permission", sqlP2).matchAll(/^\s*\('([a-z_.]+)', '([a-z_]+)'/gm)].map(
+      (m) => [m[1], m[2]],
+    );
+    expect(Object.fromEntries(rows)).toEqual(P2_PERMISSIONS);
+    expect(rows).toHaveLength(Object.keys(P2_PERMISSIONS).length);
+    expect({ ...P1_PERMISSIONS, ...P2_PERMISSIONS }).toEqual(PERMISSIONS);
+  });
+
+  it("role_permission links", () => {
+    const idToCode = new Map(
+      [...section("INSERT INTO role (").matchAll(/^\s*\('([0-9a-f-]{36})', '([A-Z_]+)'/gm)].map((m) => [m[1]!, m[2]!]),
+    );
+    const byRole: Record<string, string[]> = {};
+    for (const l of section("INSERT INTO role_permission", sqlP2).matchAll(/\('([0-9a-f-]{36})', '([a-z_.]+)'\)/g))
+      (byRole[idToCode.get(l[1]!)!] ??= []).push(l[2]!);
+    const sorted = (o: Record<string, readonly string[]>) =>
+      Object.fromEntries(Object.entries(o).map(([c, p]) => [c, [...p].sort()]));
+    expect(sorted(byRole)).toEqual(sorted(P2_ROLE_PERMISSIONS));
+    for (const [code, perms] of Object.entries(P2_ROLE_PERMISSIONS))
+      for (const p of perms) expect(ROLES[code as keyof typeof ROLES].permissions).toContain(p);
+  });
+
+  it("gives the read-only auditor no write, configure or approval permission (ADR-0020)", () => {
+    for (const p of ROLES.AUD.permissions) expect([p, PERMISSIONS[p]]).toEqual([p, "read"]);
   });
 });
 

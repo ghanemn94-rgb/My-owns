@@ -1,4 +1,4 @@
-# Architecture (P1 / DG1)
+# Architecture (P1 / DG1, P2 / DG2)
 
 This folder holds the architecture of the Mobily Transformation Hub, a modular monolith. solution-architect
 owns it; changes after DG1 approval go through the orchestrator.
@@ -19,11 +19,18 @@ owns it; changes after DG1 approval go through the orchestrator.
 | [adr/ADR-0012](adr/ADR-0012-testing-strategy.md) | Unit / integration (real PostgreSQL) / contract / e2e (Playwright 1.56.1, CF-2) / a11y / visual |
 | [adr/ADR-0013](adr/ADR-0013-ci-delivery-gate-dependency.md) | `ci.yml` with a first `delivery-gates` job (REQ-DLV-025); file in [ci/ci.yml](ci/ci.yml) |
 | [adr/ADR-0014](adr/ADR-0014-configuration-versioning.md) | Methodology/form/formula versions pinned per transformation (outline) |
-| [erd.md](erd.md) | P1 physical ERD plus the conceptual ERD of all 81 §16 entities |
-| [data-dictionary.md](data-dictionary.md) | P1 tables: columns, types, constraints, indexes, invariants |
+| [adr/ADR-0015](adr/ADR-0015-decision-and-product-gate-model.md) | P2: one decision model (T04/gate/T16); product-gate engine G1–G3 (required outputs, versioned submissions, unverified evidence, 403/409); separate from DG0–DG7 |
+| [adr/ADR-0016](adr/ADR-0016-p2-data-model-registers-guards.md) | P2: typed register tables T01–T04 + TOM canvas; database record guards (version step, audit coverage at COMMIT, append-only); starter structure |
+| [adr/ADR-0017](adr/ADR-0017-charter-versioning-and-direction.md) | P2: charter current row + immutable version snapshots; North Star; outcomes; guardrails |
+| [adr/ADR-0018](adr/ADR-0018-evidence-repository-and-verification.md) | P2: evidence items, content revisions, links, verification state |
+| [adr/ADR-0019](adr/ADR-0019-value-pool-quantification-decimal-unknown.md) | P2: value pools quantified (decimal upside/downside) or explicitly unquantified, never zero; Unknown rule |
+| [adr/ADR-0020](adr/ADR-0020-role-catalogue-p2-authorization.md) | P2: permission catalogue + role defaults; record-level rules; read-only auditor write-deny |
+| [erd.md](erd.md) | P1 physical ERD, the P2 physical ERD (§1b, migrations 0010–0018) and the conceptual ERD of all 81 §16 entities |
+| [data-dictionary.md](data-dictionary.md) | P1 and P2 tables: columns, types, constraints, indexes, triggers, grants, invariants |
 | [p1-work-split.md](p1-work-split.md) | File ownership and integration order for the parallel P1 tasks |
+| [p2-work-split.md](p2-work-split.md) | File ownership, contracts, seams and integration order for the parallel P2 tasks |
 | [discovery/p1-stack-discovery.md](discovery/p1-stack-discovery.md) | Version, licence and support evidence ([V-LOCAL] vs [UNVERIFIED]) |
-| [../api/openapi.yaml](../api/openapi.yaml) | The P1 API contract (OpenAPI 3.1.1) |
+| [../api/openapi.yaml](../api/openapi.yaml) | The API contract (OpenAPI 3.1.1): 33 P1 + 127 P2 operations |
 
 The playbook is a practical synthesis inspired by PMI, Brightline and BRM. Nothing here claims official PMI
 status, Mobily brand compliance or regulatory compliance. `#0078FF` is a provisional brand token.

@@ -24,6 +24,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { FakeIdp } from "../../support/fake-idp.ts";
 import { exercised, operations } from "../../support/contract.ts";
+import { P2_PENDING_OPERATIONS } from "../../support/p2-pending.ts";
+import { exerciseKpiOperations } from "./kpi-exercises.ts";
 import {
   call,
   seedWorld,
@@ -118,9 +120,16 @@ describe("route coverage", () => {
       )
       .map((r) => `${r.method} ${toOpenApi(r.url)}`)
       .sort();
-    const contract = operations.map((o) => `${o.method} ${o.path}`).sort();
+    const contract = operations
+      .filter((o) => !P2_PENDING_OPERATIONS.has(o.operationId))
+      .map((o) => `${o.method} ${o.path}`)
+      .sort();
     // dev-login is registered only in AUTH_MODE=dev and OIDC routes only with OIDC configured: this app has both.
     expect(governed).toEqual(contract);
+    // Pending P2 operations (p2-pending.ts) are declared but not routed yet; a routed one must leave the list.
+    const pending = operations.filter((o) => P2_PENDING_OPERATIONS.has(o.operationId));
+    expect(pending.map((o) => o.operationId).sort()).toEqual([...P2_PENDING_OPERATIONS].sort());
+    expect(pending.filter((o) => governed.includes(`${o.method} ${o.path}`)).map((o) => o.operationId)).toEqual([]);
   });
 
   it("declares access on every governed route (public or a permission)", () => {
@@ -287,15 +296,27 @@ describe("every operation, validated against the contract and the zod mirrors", 
     expect(res.body.tokens.some((t) => t.value.toUpperCase() === "#0078FF" && t.provisional)).toBe(true);
   });
 
+  it("kpi module operations (P2; kpi-exercises.ts, owned by kpi-benefits-engineer)", async () => {
+    await exerciseKpiOperations({
+      api,
+      world: w,
+      sessions: { admin, office },
+      mirrored: (m, u, o) => mirrored(m, u, o),
+    });
+  });
+
   it("covers every operation with at least one success and every successful body with its zod mirror", () => {
-    const missing = operations.filter((o) => !exercised.has(o.operationId)).map((o) => o.operationId);
+    const live = operations.filter((o) => !P2_PENDING_OPERATIONS.has(o.operationId));
+    const missing = live.filter((o) => !exercised.has(o.operationId)).map((o) => o.operationId);
     expect(missing).toEqual([]);
-    const noSuccess = operations
+    expect([...P2_PENDING_OPERATIONS].filter((id) => exercised.has(id))).toEqual([]);
+    const noSuccess = live
       .filter((o) => ![...exercised.get(o.operationId)!].some((s) => s < 400))
       .map((o) => o.operationId);
     expect(noSuccess).toEqual([]);
     const mirrorsNotChecked = Object.keys(ZOD_MIRRORS).filter((id) => !zodChecked.has(id));
     expect(mirrorsNotChecked).toEqual([]);
-    expect(operations).toHaveLength(33);
+    // 33 P1 operations + 127 P2 operations (T-DG2-ARCH-01B). A new operation needs a contract change first.
+    expect(operations).toHaveLength(160);
   });
 });

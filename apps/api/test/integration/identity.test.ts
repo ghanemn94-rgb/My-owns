@@ -134,11 +134,20 @@ describe("GET /api/v1/me", () => {
       {
         scope: { type: "organization", id: w.orgA.id },
         inheritsDownward: true,
+        // TO = P1 defaults (0005) + P2 defaults (0018), sorted.
         permissions: [
+          "action.edit",
           "audit.read",
           "business_unit.read",
+          "charter.edit",
+          "dependency.edit",
+          "diagnostic.edit",
+          "evidence.create",
+          "evidence.review",
+          "gate.configure",
           "organization.read",
           "role.read",
+          "team.assign",
           "transformation.archive",
           "transformation.create",
           "transformation.read",

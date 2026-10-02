@@ -5,6 +5,7 @@
 - **Detail:** the physical columns of the tables P1 implements are in `data-dictionary.md`.
 - **Marking:**
   - **P1** means the table is created by P1 migrations.
+  - **P2** in bold means the table is created by the P2 migrations 0010–0018 (section 1b; T-DG2-ARCH-01B).
   - `Px` names the stage that adds the table.
   - Entity names are conceptual. Table names are snake_case singular, and `User` becomes `app_user` because `user` is a reserved word.
 
@@ -202,6 +203,473 @@ Also created in P1, not drawn above:
 - `schema_migration`: migration bookkeeping.
 - The `pgboss.*` schema: owned and migrated by pg-boss (ADR-0008). This is P1's "job tables as required by the queue choice", and the physical form of the §16 entity **Job**.
 
+## 1b. P2 physical model (migrations 0010–0018, DG2)
+
+- **Task:** T-DG2-ARCH-01 / 01B (solution-architect), 2026-10-02.
+- **What it documents:** exactly what migrations `0010`–`0018` build. The diagrams were checked against the migrated PostgreSQL 16.13 catalogue, and the columns are in `data-dictionary.md` § "P2 tables".
+- **Common columns:** every business table below has `id uuid PK`, `organization_id` (FK, equal to the transformation's), `transformation_id` (FK), `version int` (optimistic concurrency, +1 per change), `created_at`/`updated_at timestamptz` and `created_by`/`updated_by` (FK `app_user`). The diagrams omit them unless they matter.
+- **References:** `T`-prefixed FKs are composite `(transformation_id, x_id)`, so a reference never crosses transformations.
+- **Guards:** every mutable table carries the record guards of ADR-0016: version step, audit coverage at COMMIT, and no DELETE.
+
+### 1b.1 Methodology catalogue (seed) and pin — `methodology` / `workflows` modules
+
+```mermaid
+erDiagram
+    methodology_version ||--o{ diagnostic_dimension : defines
+    methodology_version ||--o{ diagnostic_workstream : defines
+    methodology_version ||--o{ tom_dimension : defines
+    methodology_version ||--o{ gate_definition : defines
+    gate_definition ||--o{ gate_criterion_definition : "required outputs"
+    methodology_version ||--o{ charter_scope_check_definition : defines
+    methodology_version ||--o{ good_outcome_criterion : defines
+    transformation ||--|| transformation_config_pin : "pinned to (kind methodology)"
+    methodology_version ||--o{ transformation_config_pin : "pinned by"
+    role ||--o| role_accountability : "accountability text"
+
+    methodology_version {
+        uuid id PK
+        text key UK "with version_no"
+        int version_no
+        text status "draft|published|retired"
+        jsonb definition "immutable once published"
+        char64 content_sha256
+        int version
+    }
+    gate_definition {
+        uuid id PK
+        text code UK "G1..G6 (product gates, not DG0-DG7)"
+        text phase
+        text next_phase
+        text default_approver_role_code FK "role.code (SP)"
+        text_array allowed_approver_role_codes
+        bool submission_enabled "G1-G3 true in P2"
+    }
+    gate_criterion_definition {
+        uuid id PK
+        uuid gate_definition_id FK
+        text key UK "g1.diagnostic ..."
+        bool mandatory
+        bool requires_verified_evidence
+    }
+    tom_dimension {
+        uuid id PK
+        text code UK "10 seeded"
+        text source_design_question_en
+        text source_canvas_box_en
+        int version "labels editable, audited"
+    }
+    diagnostic_dimension {
+        uuid id PK
+        text code UK "6 seeded (T01)"
+    }
+    diagnostic_workstream {
+        uuid id PK
+        text code UK "6 seeded"
+    }
+```
+
+### 1b.2 Direction and charter — `transformations` module
+
+```mermaid
+erDiagram
+    transformation ||--o| charter : "has one"
+    charter ||--o{ charter_version : "snapshot per saved version (append-only)"
+    transformation ||--o{ north_star : "one current"
+    north_star |o--o{ charter : "T-FK north_star_id"
+    transformation ||--o{ strategic_guardrail : has
+    transformation ||--o{ outcome : has
+    outcome |o--o{ outcome : "T-FK parent (tree, <= 6 levels)"
+
+    charter {
+        uuid id PK
+        uuid transformation_id UK
+        text transformation_name
+        uuid executive_sponsor_user_id FK
+        uuid transformation_lead_user_id FK
+        text case_for_change
+        uuid north_star_id FK
+        text in_scope
+        text out_of_scope
+        date baseline_date
+        int target_horizon_value
+        text governance_forum
+        text decision_rights
+        text success_definition
+        text thesis_change "thesis x4"
+        text sc_outcome_linkage "scope checks x5 (+evidence)"
+        int version
+    }
+    charter_version {
+        uuid id PK
+        uuid charter_id FK "T-FK"
+        int version_no UK "with charter_id; = charter.version"
+        jsonb top_outcomes_snapshot
+        jsonb guardrails_snapshot
+        text change_summary
+        uuid saved_by FK
+    }
+    north_star {
+        uuid id PK
+        text statement "1 sentence, <= 300"
+        text status "current|superseded"
+        int version
+    }
+    strategic_guardrail {
+        uuid id PK
+        text category
+        text statement
+        uuid owner_user_id FK
+        text status "active|archived"
+        int version
+    }
+    outcome {
+        uuid id PK
+        uuid parent_outcome_id FK
+        text statement
+        uuid owner_user_id FK
+        bool is_top_outcome
+        smallint top_rank
+        text status "draft|active|archived"
+        int version
+    }
+```
+
+### 1b.3 Diagnose, KPI, baseline and value — `transformations` and `kpi` modules
+
+```mermaid
+erDiagram
+    transformation ||--o{ diagnostic_item : "T01 (6 seeded rows)"
+    diagnostic_dimension ||--o{ diagnostic_item : "dimension_code"
+    baseline |o--o{ diagnostic_item : "T-FK baseline_id"
+    kpi_definition |o--o{ diagnostic_item : "T-FK impact KPI"
+    transformation ||--o{ diagnostic_finding : has
+    diagnostic_workstream ||--o{ diagnostic_finding : "workstream_code"
+    diagnostic_item |o--o{ diagnostic_finding : "T-FK"
+    transformation ||--o{ diagnostic_workstream_output : has
+    diagnostic_workstream ||--o{ diagnostic_workstream_output : "workstream_code"
+    transformation ||--o{ kpi_definition : has
+    transformation ||--o{ baseline : has
+    kpi_definition |o--o{ baseline : "T-FK"
+    outcome ||--o{ outcome_kpi : "T02 rows (T-FK)"
+    kpi_definition ||--o{ outcome_kpi : "T-FK kpi / leading kpi"
+    baseline |o--o{ outcome_kpi : "T-FK"
+    transformation ||--o{ value_pool : has
+    diagnostic_workstream |o--o{ value_pool : "workstream_code"
+
+    diagnostic_item {
+        uuid id PK
+        text dimension_code FK
+        bool is_seeded "unique per dimension; never archived"
+        text current_state
+        text evidence_baseline
+        text root_cause
+        numeric impact_amount "20,4 + impact_currency"
+        text confidence "H|M|L"
+        uuid owner_user_id FK
+        text status "active|archived"
+        int version
+    }
+    diagnostic_finding {
+        uuid id PK
+        text kind "symptom|root_cause|opportunity|observation"
+        text statement
+        text status "draft|confirmed|rejected|archived"
+        int version
+    }
+    diagnostic_workstream_output {
+        uuid id PK
+        text record_type "polymorphic, guarded"
+        uuid record_id
+        uuid evidence_id FK
+        text status
+        int version
+    }
+    kpi_definition {
+        uuid id PK
+        text name UK "lower(name) per transformation"
+        text unit_kind
+        char3 currency
+        text polarity
+        uuid owner_user_id FK
+        uuid steward_user_id FK
+        text status "draft|active|archived"
+        int version
+    }
+    baseline {
+        uuid id PK
+        text metric
+        numeric value "24,6; NULL = Unknown"
+        text source
+        date baseline_date
+        text validation_status "unvalidated|validated|rejected (FIN)"
+        int validated_record_version
+        text status
+        int version
+    }
+    outcome_kpi {
+        uuid id PK
+        numeric baseline_value "24,6"
+        numeric target_value "24,6"
+        date target_date "NOT NULL"
+        uuid owner_user_id FK
+        text leading_indicator_text
+        jsonb trajectory_points
+        text trajectory_status "draft|approved (approver != creator)"
+        text status
+        int version
+    }
+    value_pool {
+        uuid id PK
+        text driver
+        text quantification_status "quantified|unquantified"
+        numeric upside_amount "20,4; NULL when unquantified"
+        numeric downside_amount "20,4; <= upside"
+        char3 currency
+        text materiality
+        text validation_status "FIN; quantified only"
+        text status
+        int version
+    }
+```
+
+### 1b.4 Design (TOM) — `transformations` module
+
+```mermaid
+erDiagram
+    transformation ||--|{ tom_canvas_cell : "10 cells (one per dimension)"
+    tom_dimension ||--o{ tom_canvas_cell : "dimension_code"
+    transformation ||--o{ tom_gap : "T03"
+    tom_dimension ||--o{ tom_gap : "dimension_code (NOT NULL)"
+    decision |o--o{ tom_gap : "T-FK design_decision_id (T04)"
+    transformation ||--o{ capability : "heatmap"
+    tom_gap |o--o{ capability : "T-FK"
+    transformation ||--o{ journey : has
+    journey ||--o{ journey_pain_point : "T-FK"
+    diagnostic_item |o--o{ journey_pain_point : "T-FK"
+
+    tom_canvas_cell {
+        uuid id PK
+        text dimension_code FK "UK with transformation"
+        text current_design
+        text target_design
+        uuid owner_user_id FK
+        text status "draft|ready (target + owner)"
+        int version
+    }
+    tom_gap {
+        uuid id PK
+        text dimension_code FK
+        text current_state
+        text target_state
+        text gap
+        uuid design_decision_id FK
+        uuid owner_user_id FK
+        text status "open|resolved|archived"
+        int version
+    }
+    capability {
+        uuid id PK
+        text name
+        smallint current_level "1-5"
+        smallint target_level "1-5"
+        text sourcing_need "build|buy|partner|undecided"
+        text status
+        int version
+    }
+    journey {
+        uuid id PK
+        text kind "journey|process"
+        text state "current|future"
+        jsonb steps "actors, handoffs, systems, controls"
+        numeric cycle_time_value
+        text status "draft|active|archived"
+        int version
+    }
+    journey_pain_point {
+        uuid id PK
+        uuid step_key
+        text description
+        text status
+        int version
+    }
+```
+
+### 1b.5 Decisions, workshops, actions, dependencies and product gates — `workflows` module
+
+```mermaid
+erDiagram
+    transformation ||--o{ decision : "ONE decision model"
+    decision ||--o{ decision_option : "A/B/C (T-FK)"
+    decision_option |o--o| decision : "recommended / chosen (composite FK)"
+    transformation ||--o{ record_code_counter : "D / DEC / GD / DEP"
+    transformation ||--o{ tom_workshop : has
+    tom_workshop ||--o{ tom_workshop_participant : "T-FK"
+    tom_workshop ||--o{ tom_workshop_item : "T-FK"
+    tom_workshop_item |o--o| decision : "converted to (T04, status open)"
+    tom_workshop_item |o--o| action_item : "converted to"
+    transformation ||--o{ action_item : has
+    transformation ||--o{ dependency : "canonical (T08 + RAID)"
+    decision |o--o{ dependency : "T-FK"
+    transformation ||--|{ gate_instance : "G1..G6"
+    gate_definition ||--o{ gate_instance : "gate_code"
+    gate_instance ||--o{ gate_submission : "submission_no 1..n"
+    charter_version |o--o{ gate_submission : "pinned charter version"
+    gate_submission ||--o{ gate_submission_criterion : "frozen (append-only)"
+    gate_submission ||--o| gate_decision : "decided by (append-only)"
+    decision ||--o| gate_decision : "kind gate (composite FK id+kind)"
+
+    decision {
+        uuid id PK
+        text kind "design|executive|gate"
+        text code UK "D-01 / DEC-01 / GD-01"
+        text title
+        uuid owner_user_id FK
+        date due_date
+        text status "open|decided|deferred|cancelled"
+        uuid recommendation_option_id FK
+        uuid chosen_option_id FK
+        uuid decided_by FK
+        text tom_dimension_code FK
+        int version
+    }
+    decision_option {
+        uuid id PK
+        text label UK "A..Z per decision"
+        text status "active|withdrawn"
+        int version
+    }
+    gate_instance {
+        uuid id PK
+        text gate_code FK "UK with transformation"
+        text status "draft|submitted|under_review|changes_requested|approved|rejected|deferred"
+        text approver_role_code FK "allowed roles only"
+        uuid approver_user_id FK
+        uuid current_submission_id FK
+        int latest_submission_no
+        int version
+    }
+    gate_submission {
+        uuid id PK
+        int submission_no UK "with gate_instance_id"
+        text status "pending|superseded|decided|withdrawn"
+        uuid submitted_by FK
+        jsonb snapshot "frozen + sha256"
+        int charter_version_no
+        int version
+    }
+    gate_decision {
+        uuid id PK
+        uuid gate_submission_id UK
+        uuid decision_id UK
+        text outcome "approved|rejected|changes_requested|deferred"
+        text rationale
+        uuid decided_by FK "never the submitter"
+        uuid on_behalf_of_user_id FK
+        text approver_basis
+    }
+    tom_workshop {
+        uuid id PK
+        date workshop_date
+        text status "planned|in_progress|closed"
+        int version
+    }
+    tom_workshop_item {
+        uuid id PK
+        text kind "contribution|unresolved"
+        text status "recorded|open|converted"
+        int version
+    }
+    action_item {
+        uuid id PK
+        uuid owner_user_id FK
+        text status "open|in_progress|done|cancelled"
+        int version
+    }
+    dependency {
+        uuid id PK
+        text code UK "DEP-01"
+        text from_kind
+        text to_kind
+        text dependency_type
+        text status "open|at_risk|resolved|archived"
+        int version
+    }
+```
+
+### 1b.6 Evidence — `evidence` module
+
+```mermaid
+erDiagram
+    transformation ||--o{ evidence : has
+    evidence ||--o{ evidence_content : "file revisions (append-only)"
+    evidence_content |o--o| evidence : "current / reviewed content (composite FK)"
+    evidence ||--o{ evidence_link : "T-FK"
+    evidence_link }o--|| P2_record : "record_type + record_id (guarded, same transformation)"
+
+    evidence {
+        uuid id PK
+        text kind "file|note|external_link|file_reference"
+        text title
+        uuid owner_user_id FK
+        text review_status "unverified|verified|rejected"
+        text accessibility_status "unchecked|accessible|inaccessible"
+        uuid reviewed_by FK "never the creator"
+        text status "active|archived"
+        int version
+    }
+    evidence_content {
+        uuid id PK
+        int revision UK "with evidence_id"
+        text storage_key UK "EvidenceStore key"
+        char64 sha256
+        bigint size_bytes
+    }
+    evidence_link {
+        uuid id PK
+        text record_type
+        uuid record_id
+        text status "active|removed"
+        int version
+    }
+```
+
+### 1b.7 P2 entity register: §16 and template entities → tables
+
+| Entity (§16 / template) | Table | PK | Owner role (writes) | Status field | `version` | API module |
+|---|---|---|---|---|---|---|
+| DiagnosticFinding (§16) | `diagnostic_finding` | `id` | TL, TO (`diagnostic.edit`); WL own (`diagnostic.contribute`) | `status` draft/confirmed/rejected/archived | yes | transformations |
+| Baseline (§16) | `baseline` | `id` | TL, KDS (`baseline.edit`); FIN validates | `validation_status`, `status` | yes | kpi |
+| Evidence (§16) | `evidence` (+ `evidence_content`, `evidence_link`) | `id` | evidence.create holders; reviewers per ADR-0018 | `review_status`, `accessibility_status`, `status` | yes (content: append-only) | evidence |
+| ValuePool (§16) | `value_pool` | `id` | TL, TO (`diagnostic.edit`); FIN validates | `quantification_status`, `validation_status`, `status` | yes | kpi |
+| Outcome (§16) | `outcome` | `id` | TL, BO, KDS (`outcome.edit`) | `status` draft/active/archived | yes | transformations |
+| StrategicGuardrail (§16) | `strategic_guardrail` | `id` | TL, TO (`charter.edit`) | `status` active/archived | yes | transformations |
+| Charter (+ version) (§16) | `charter`, `charter_version` | `id` | TL, TO (`charter.edit`) | version history (one current row) | yes (snapshots append-only) | transformations |
+| NorthStar | `north_star` | `id` | TL (`north_star.edit`) | `status` current/superseded | yes | transformations |
+| DiagnosticItem (T01) | `diagnostic_item` | `id` | TL, TO; WL own | `status` (seeded rows never archived) | yes | transformations |
+| OutcomeKpi (T02) | `outcome_kpi` | `id` | TL, BO, KDS; SP/BO approve the trajectory | `trajectory_status`, `status` | yes | kpi |
+| KPIDefinition (§16, P2 subset) | `kpi_definition` | `id` | TL, KDS | `status` | yes | kpi |
+| TomDimension (seed) | `tom_dimension` | `id` (code UK) | seed; ADM_METHOD labels | — | yes | methodology |
+| TomGap (T03) | `tom_gap` | `id` | TL, BO; WL/TD own | `status` open/resolved/archived | yes | transformations |
+| DesignDecision (T04) | `decision` (kind `design`) + `decision_option` | `id` (code `D-nn` UK) | TL, WL create; the named owner decides | `status` open/decided/deferred/cancelled | yes | workflows |
+| TOMCanvas cell | `tom_canvas_cell` | `id` | TL, BO (`tom.edit`) | `status` draft/ready | yes | transformations |
+| Capability heatmap entry | `capability` | `id` | TL, BO; WL/TD own | `status` | yes | transformations |
+| JourneyMap / ProcessStep | `journey` (`steps` jsonb) + `journey_pain_point` | `id` | TL, BO; WL/TD own | `status` | yes | transformations |
+| TOM workshop (+ participant, item) | `tom_workshop`, `tom_workshop_participant`, `tom_workshop_item` | `id` | TL (`workshop.facilitate`) | `status` | yes | workflows |
+| Action (P2 subset) | `action_item` | `id` | TL, TO; owner | `status` | yes | workflows |
+| Dependency (canonical, P2 subset) | `dependency` | `id` (code `DEP-nn` UK) | TL, WL, TO, TD | `status` | yes | workflows |
+| GateInstance | `gate_instance` | `id` | system (instantiation); TO configures the approver | `status` | yes | workflows |
+| GateSubmission | `gate_submission` (+ `gate_submission_criterion`) | `id` (`submission_no` UK per gate) | TL (`gate.submit`) | `status` pending/superseded/decided/withdrawn | yes (criteria append-only) | workflows |
+| GateDecision | `gate_decision` → canonical `decision` (kind `gate`) | `id` | configured approver (default SP) with `gate.decide`; never the submitter | `outcome` | append-only | workflows |
+| MethodologyVersion + pin | `methodology_version`, `transformation_config_pin` | `id` | seed / system | `status` | yes | methodology |
+| Role accountability | `role_accountability` | `role_id` | seed | — | yes | access |
+
+**Not built in P2.** These remain as in section 2:
+- `phase_definition` (the phases stay CHECK values plus `gate_definition.phase`);
+- `performance_area`;
+- KPI versions, actuals and calculation runs (P4);
+- `process` as its own table (a process is a `journey` row with `kind = 'process'`);
+- `approval` (P2 gate approvals are `gate_decision`; the generic approval table comes in P4).
+
 ## 2. Conceptual model, all §16 entity groups
 
 ### 2.1 Identity and access (REQ-S16-011; final gate DG4)
@@ -250,12 +718,12 @@ erDiagram
 |---|---|---|
 | Transformation | `transformation` | **P1** (minimal fields) |
 | PerformanceArea | `performance_area` | P4 |
-| Charter | `charter` (versioned, 14 source fields) | P2 |
-| MethodologyVersion | `methodology_version` | P2 |
-| Phase | `phase_definition` (per methodology version) | P2 |
-| GateDefinition | `gate_definition` | P2 |
-| GateInstance | `gate_instance` (submission version, evidence snapshot) | P2 |
-| GateDecision | `gate_decision` → references `decision` | P2 |
+| Charter | `charter` + `charter_version` (versioned, 14 source fields) | **P2** |
+| MethodologyVersion | `methodology_version` (+ `transformation_config_pin`) | **P2** |
+| Phase | `phase_definition` (per methodology version) | P5 (P2 keeps phases as CHECK values + `gate_definition.phase`) |
+| GateDefinition | `gate_definition` + `gate_criterion_definition` | **P2** |
+| GateInstance | `gate_instance` + `gate_submission` (versioned, evidence snapshot) + `gate_submission_criterion` | **P2** |
+| GateDecision | `gate_decision` → references `decision` (kind `gate`) | **P2** |
 
 ### 2.3 Diagnosis and direction (REQ-S16-013; DG2)
 
@@ -273,12 +741,12 @@ erDiagram
 
 | Entity | Table | Stage |
 |---|---|---|
-| DiagnosticFinding | `diagnostic_finding` | P2 |
-| Baseline | `baseline` | P2 |
-| Evidence | `evidence`, `evidence_version`, `evidence_link` (polymorphic link to any record) | P2 (storage adapter ADR-0010) |
-| ValuePool | `value_pool` | P2 |
-| Outcome | `outcome` (North Star, outcome hierarchy) | P2 |
-| StrategicGuardrail | `strategic_guardrail` | P2 |
+| DiagnosticFinding | `diagnostic_finding` (+ T01 `diagnostic_item`, `diagnostic_workstream_output`) | **P2** |
+| Baseline | `baseline` | **P2** |
+| Evidence | `evidence`, `evidence_content` (revisions), `evidence_link` (polymorphic link, guarded) | **P2** (storage adapter ADR-0010, ADR-0018) |
+| ValuePool | `value_pool` | **P2** |
+| Outcome | `outcome` (hierarchy) + `north_star` + T02 `outcome_kpi` | **P2** |
+| StrategicGuardrail | `strategic_guardrail` | **P2** |
 
 ### 2.4 KPI and calculation (REQ-S16-014; DG4)
 
@@ -294,7 +762,7 @@ erDiagram
 
 | Entity | Table | Stage |
 |---|---|---|
-| KPIDefinition | `kpi_definition` | P2 (dictionary), P4 |
+| KPIDefinition | `kpi_definition` | **P2** (dictionary subset), P4 |
 | KPIVersion | `kpi_version` | P4 |
 | KPIActual | `kpi_actual` (observation period, business date, event timestamp) | P4 |
 | TargetTrajectory | `target_trajectory` | P4 |
@@ -316,12 +784,12 @@ erDiagram
 
 | Entity | Table | Stage |
 |---|---|---|
-| TOMDimension | `tom_dimension` (the 10 seeded dimensions) | P2 |
-| TOMCanvas | `tom_canvas` | P2 |
-| Capability | `capability` | P2 |
-| Gap | `gap` (T03) | P2 |
-| Journey | `journey` | P2 |
-| Process | `process` | P2 |
+| TOMDimension | `tom_dimension` (the 10 seeded dimensions) | **P2** |
+| TOMCanvas | `tom_canvas_cell` (ten cells per transformation) | **P2** |
+| Capability | `capability` (heatmap entry) | **P2** |
+| Gap | `tom_gap` (T03) | **P2** |
+| Journey | `journey` (+ `journey_pain_point`) | **P2** |
+| Process | `journey` with `kind = 'process'` | **P2** |
 | ProcedureDefinition | `procedure_definition` (versioned) | P5 |
 | ProcedureInstance | `procedure_instance` | P5 |
 
@@ -348,7 +816,7 @@ erDiagram
 | Deliverable | `deliverable` | P3 |
 | Milestone | `milestone` | P3 |
 | RoadmapWave | `roadmap_wave` (T07) | P3 |
-| Dependency | `dependency`: **canonical, shared by T08 and RAID** | P3 |
+| Dependency | `dependency`: **canonical, shared by T08 and RAID** | **P2** (TOM-level subset), P3 |
 | ResourceDemand | `resource_demand` | P3 |
 | Capacity | `capacity` | P3 |
 | FundingDecision | `funding_decision` → references `decision` | P3 |
@@ -393,10 +861,10 @@ erDiagram
 | Entity | Table | Stage |
 |---|---|---|
 | Risk, Assumption, Issue | `risk`, `assumption`, `issue` (T15) | P3/P4 |
-| Action | `action` (also corrective actions) | P3/P4 |
-| Decision | `decision`: **the one decision model** (T04/T11/T16/gate/funding) | P2 (design decisions), P4 |
+| Action | `action_item` (also corrective actions) | **P2** (workshop actions), P3/P4 |
+| Decision | `decision` + `decision_option`: **the one decision model** (T04/T11/T16/gate/funding) | **P2** (design + gate decisions), P4 |
 | ChangeRequest | `change_request` | P4 |
-| Approval | `approval` (assignee, request version, due, rationale, decision timestamp; SoD) | P2 (gates), P4 |
+| Approval | P2: `gate_decision` (approver basis, submission number, rationale, timestamp; SoD). Generic `approval`: P4 | **P2** (gates), P4 |
 
 ### 2.9 Governance forums and meetings (REQ-S16-019; DG4)
 

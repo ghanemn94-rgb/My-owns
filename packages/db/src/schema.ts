@@ -1,5 +1,5 @@
-// Kysely `Database` interface for the P1 tables (ADR-0003), written by hand from
-// docs/architecture/data-dictionary.md. An integration test (packages/db/test/integration/catalogue.test.ts)
+// Kysely `Database` interface for the P1 and P2 tables (ADR-0003, ADR-0016), written from
+// docs/architecture/data-dictionary.md (P2 tables: migrations 0010-0018). An integration test (packages/db/test/integration/catalogue.test.ts)
 // compares every table, view and column here with information_schema after the migrations run, so a drift fails CI.
 //
 // Type mapping (node-postgres defaults): timestamptz -> Date, bigint -> string, numeric -> string,
@@ -14,6 +14,8 @@ type NullableTimestamp = ColumnType<Date | null, Date | string | null | undefine
 type IdentityBigint = ColumnType<string, never, never>;
 type Json = ColumnType<unknown, string, string>;
 type NullableJson = ColumnType<unknown | null, string | null | undefined, string | null>;
+/** A NOT NULL jsonb column with a database default (e.g. '[]'). */
+type JsonDefault = ColumnType<unknown, string | undefined, string>;
 
 interface Stamps {
   version: Generated<number>;
@@ -255,6 +257,914 @@ export interface IdempotencyRecordTable {
   expires_at: Timestamp;
 }
 
+// ---- P2 (migrations 0010-0018; T-DG2-ARCH-01/01B). `date` columns are "YYYY-MM-DD" strings (pool.ts), numeric is a
+// decimal string (never a JS number: ADR-0003/ADR-0019).
+
+export interface MethodologyVersionTable {
+  id: string;
+  key: string;
+  version_no: number;
+  status: Generated<string>;
+  title_en: string;
+  title_ar: string;
+  source_document: string;
+  source_sha256: string | null;
+  definition: Json;
+  content_sha256: string;
+  published_at: NullableTimestamp;
+  published_by: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface TransformationConfigPinTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  kind: string;
+  methodology_version_id: string;
+  pinned_at: TimestampDefault;
+  pinned_by: string;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface DiagnosticDimensionTable {
+  id: string;
+  code: string;
+  methodology_version_id: string;
+  ordinal: number;
+  source_label: string;
+  label_en: string;
+  label_ar: string;
+  evidence_hint_en: string;
+  evidence_hint_ar: string;
+  impact_hint_en: string;
+  impact_hint_ar: string;
+  is_source_seeded: Generated<boolean>;
+  status: Generated<string>;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface DiagnosticWorkstreamTable {
+  id: string;
+  code: string;
+  methodology_version_id: string;
+  ordinal: number;
+  source_name_en: string;
+  name_ar: string;
+  source_key_questions_en: string;
+  key_questions_ar: string;
+  source_typical_outputs_en: string;
+  typical_outputs_ar: string;
+  source_ref: string;
+  status: Generated<string>;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface TomDimensionTable {
+  id: string;
+  code: string;
+  methodology_version_id: string;
+  ordinal: number;
+  source_name_en: string;
+  source_design_question_en: string;
+  source_canvas_box_en: string;
+  source_canvas_prompt_en: string;
+  label_en: string;
+  label_ar: string;
+  design_question_ar: string;
+  canvas_box_ar: string;
+  canvas_prompt_ar: string;
+  source_ref: string;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface GateDefinitionTable {
+  id: string;
+  code: string;
+  methodology_version_id: string;
+  ordinal: number;
+  phase: string;
+  next_phase: string | null;
+  source_name_en: string;
+  name_ar: string;
+  source_decision_question_en: string;
+  decision_question_ar: string;
+  source_evidence_required_en: string;
+  evidence_required_ar: string;
+  default_approver_role_code: string;
+  allowed_approver_role_codes: string[];
+  submission_enabled: Generated<boolean>;
+  source_ref: string;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface GateCriterionDefinitionTable {
+  id: string;
+  gate_definition_id: string;
+  key: string;
+  ordinal: number;
+  label_en: string;
+  label_ar: string;
+  description_en: string;
+  description_ar: string;
+  mandatory: Generated<boolean>;
+  requires_verified_evidence: Generated<boolean>;
+  source_ref: string;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface CharterScopeCheckDefinitionTable {
+  id: string;
+  code: string;
+  methodology_version_id: string;
+  ordinal: number;
+  source_question_en: string;
+  question_ar: string;
+  source_ref: string;
+  system_precheck: string;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface GoodOutcomeCriterionTable {
+  id: string;
+  code: string;
+  methodology_version_id: string;
+  ordinal: number;
+  source_label_en: string;
+  label_ar: string;
+  evaluation: string;
+  source_ref: string;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface EvidenceTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  kind: string;
+  title: string;
+  description: string | null;
+  evidence_type: Generated<string>;
+  source: string | null;
+  owner_user_id: string;
+  observation_start: string | null;
+  observation_end: string | null;
+  note_body: string | null;
+  url: string | null;
+  file_name: string | null;
+  current_content_id: string | null;
+  review_status: Generated<string>;
+  accessibility_status: Generated<string>;
+  reviewed_content_id: string | null;
+  reviewed_by: string | null;
+  reviewed_at: NullableTimestamp;
+  review_note: string | null;
+  status: Generated<string>;
+  archived_at: NullableTimestamp;
+  archived_by: string | null;
+  archive_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface EvidenceContentTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  evidence_id: string;
+  revision: number;
+  storage_key: string;
+  sha256: string;
+  size_bytes: string;
+  content_type: string;
+  file_name: string;
+  uploaded_by: string;
+  uploaded_at: TimestampDefault;
+}
+
+export interface EvidenceLinkTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  evidence_id: string;
+  record_type: string;
+  record_id: string;
+  status: Generated<string>;
+  removed_at: NullableTimestamp;
+  removed_by: string | null;
+  remove_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface NorthStarTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  statement: string;
+  status: Generated<string>;
+  superseded_at: NullableTimestamp;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface StrategicGuardrailTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  title: string;
+  category: string;
+  statement: string;
+  owner_user_id: string | null;
+  status: Generated<string>;
+  archived_at: NullableTimestamp;
+  archived_by: string | null;
+  archive_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface OutcomeTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  parent_outcome_id: string | null;
+  statement: string;
+  description: string | null;
+  owner_user_id: string | null;
+  is_top_outcome: Generated<boolean>;
+  top_rank: number | null;
+  specific_confirmed: boolean | null;
+  strategically_relevant_confirmed: boolean | null;
+  causal_chain: string | null;
+  status: Generated<string>;
+  archived_at: NullableTimestamp;
+  archived_by: string | null;
+  archive_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface CharterTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  transformation_name: string | null;
+  executive_sponsor_user_id: string | null;
+  transformation_lead_user_id: string | null;
+  case_for_change: string | null;
+  north_star_id: string | null;
+  in_scope: string | null;
+  out_of_scope: string | null;
+  baseline_date: string | null;
+  target_horizon_value: number | null;
+  target_horizon_unit: string | null;
+  governance_forum: string | null;
+  decision_rights: string | null;
+  success_definition: string | null;
+  thesis_change: string | null;
+  thesis_outcomes: string | null;
+  thesis_benefits: string | null;
+  thesis_because: string | null;
+  sc_outcome_linkage: string | null;
+  sc_outcome_linkage_evidence: string | null;
+  sc_problem_traceability: string | null;
+  sc_problem_traceability_evidence: string | null;
+  sc_exclusions_documented: string | null;
+  sc_exclusions_documented_evidence: string | null;
+  sc_baseline_measurable: string | null;
+  sc_baseline_measurable_evidence: string | null;
+  sc_executive_decisions_visible: string | null;
+  sc_executive_decisions_visible_evidence: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface CharterVersionTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  charter_id: string;
+  version_no: number;
+  transformation_name: string | null;
+  executive_sponsor_user_id: string | null;
+  transformation_lead_user_id: string | null;
+  case_for_change: string | null;
+  north_star_id: string | null;
+  in_scope: string | null;
+  out_of_scope: string | null;
+  baseline_date: string | null;
+  target_horizon_value: number | null;
+  target_horizon_unit: string | null;
+  governance_forum: string | null;
+  decision_rights: string | null;
+  success_definition: string | null;
+  thesis_change: string | null;
+  thesis_outcomes: string | null;
+  thesis_benefits: string | null;
+  thesis_because: string | null;
+  sc_outcome_linkage: string | null;
+  sc_outcome_linkage_evidence: string | null;
+  sc_problem_traceability: string | null;
+  sc_problem_traceability_evidence: string | null;
+  sc_exclusions_documented: string | null;
+  sc_exclusions_documented_evidence: string | null;
+  sc_baseline_measurable: string | null;
+  sc_baseline_measurable_evidence: string | null;
+  sc_executive_decisions_visible: string | null;
+  sc_executive_decisions_visible_evidence: string | null;
+  north_star_statement: string | null;
+  top_outcomes_snapshot: JsonDefault;
+  guardrails_snapshot: JsonDefault;
+  change_summary: string | null;
+  saved_by: string;
+  saved_at: TimestampDefault;
+}
+
+export interface KpiDefinitionTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  name: string;
+  description: string | null;
+  business_purpose: string | null;
+  unit_kind: string;
+  unit_label: string | null;
+  currency: string | null;
+  polarity: string;
+  frequency: Generated<string>;
+  is_leading: Generated<boolean>;
+  data_source: string | null;
+  owner_user_id: string | null;
+  steward_user_id: string | null;
+  status: Generated<string>;
+  archived_at: NullableTimestamp;
+  archived_by: string | null;
+  archive_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface BaselineTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  metric: string;
+  kpi_definition_id: string | null;
+  value: string | null;
+  unit: string;
+  currency: string | null;
+  source: string | null;
+  baseline_date: string | null;
+  scope: string;
+  owner_user_id: string | null;
+  validation_status: Generated<string>;
+  validated_by: string | null;
+  validated_at: NullableTimestamp;
+  validation_note: string | null;
+  validated_record_version: number | null;
+  status: Generated<string>;
+  archived_at: NullableTimestamp;
+  archived_by: string | null;
+  archive_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface OutcomeKpiTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  outcome_id: string;
+  kpi_definition_id: string;
+  baseline_id: string | null;
+  baseline_value: string | null;
+  target_value: string | null;
+  target_date: string;
+  owner_user_id: string | null;
+  leading_indicator_text: string | null;
+  leading_kpi_definition_id: string | null;
+  ordinal: Generated<number>;
+  trajectory_points: JsonDefault;
+  trajectory_status: Generated<string>;
+  trajectory_approved_by: string | null;
+  trajectory_approved_at: NullableTimestamp;
+  trajectory_approved_version: number | null;
+  status: Generated<string>;
+  archived_at: NullableTimestamp;
+  archived_by: string | null;
+  archive_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface ValuePoolTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  name: string;
+  driver: string | null;
+  workstream_code: string | null;
+  quantification_status: Generated<string>;
+  upside_amount: string | null;
+  downside_amount: string | null;
+  currency: string;
+  unquantified_reason: string | null;
+  materiality: Generated<string>;
+  confidence: string | null;
+  owner_user_id: string | null;
+  validation_status: Generated<string>;
+  validated_by: string | null;
+  validated_at: NullableTimestamp;
+  validation_note: string | null;
+  validated_record_version: number | null;
+  status: Generated<string>;
+  archived_at: NullableTimestamp;
+  archived_by: string | null;
+  archive_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface DiagnosticItemTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  dimension_code: string;
+  is_seeded: Generated<boolean>;
+  current_state: string | null;
+  evidence_baseline: string | null;
+  baseline_id: string | null;
+  root_cause: string | null;
+  impact_text: string | null;
+  impact_amount: string | null;
+  impact_currency: string | null;
+  impact_kpi_definition_id: string | null;
+  confidence: string | null;
+  owner_user_id: string | null;
+  status: Generated<string>;
+  archived_at: NullableTimestamp;
+  archived_by: string | null;
+  archive_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface DiagnosticFindingTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  workstream_code: string;
+  diagnostic_item_id: string | null;
+  kind: string;
+  statement: string;
+  detail: string | null;
+  confidence: string | null;
+  owner_user_id: string | null;
+  status: Generated<string>;
+  archived_at: NullableTimestamp;
+  archived_by: string | null;
+  archive_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface DiagnosticWorkstreamOutputTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  workstream_code: string;
+  title: string;
+  output_kind: string | null;
+  record_type: string | null;
+  record_id: string | null;
+  evidence_id: string | null;
+  note: string | null;
+  status: Generated<string>;
+  archived_at: NullableTimestamp;
+  archived_by: string | null;
+  archive_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface TomCanvasCellTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  dimension_code: string;
+  current_design: string | null;
+  target_design: string | null;
+  owner_user_id: string | null;
+  status: Generated<string>;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface TomGapTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  dimension_code: string;
+  current_state: string | null;
+  target_state: string | null;
+  gap: string | null;
+  design_decision_id: string | null;
+  owner_user_id: string | null;
+  status: Generated<string>;
+  archived_at: NullableTimestamp;
+  archived_by: string | null;
+  archive_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface CapabilityTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  name: string;
+  description: string | null;
+  dimension_code: string | null;
+  current_level: number | null;
+  target_level: number | null;
+  sourcing_need: string | null;
+  owner_user_id: string | null;
+  tom_gap_id: string | null;
+  status: Generated<string>;
+  archived_at: NullableTimestamp;
+  archived_by: string | null;
+  archive_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface JourneyTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  name: string;
+  kind: string;
+  state: string;
+  description: string | null;
+  dimension_code: string | null;
+  steps: JsonDefault;
+  cycle_time_value: string | null;
+  cycle_time_unit: string | null;
+  failure_demand: string | null;
+  owner_user_id: string | null;
+  status: Generated<string>;
+  archived_at: NullableTimestamp;
+  archived_by: string | null;
+  archive_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface JourneyPainPointTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  journey_id: string;
+  step_key: string | null;
+  description: string;
+  diagnostic_item_id: string | null;
+  status: Generated<string>;
+  archived_at: NullableTimestamp;
+  archived_by: string | null;
+  archive_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface DecisionTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  kind: string;
+  code: string;
+  title: string;
+  context: string | null;
+  owner_user_id: string | null;
+  due_date: string | null;
+  status: Generated<string>;
+  recommendation_option_id: string | null;
+  recommendation_text: string | null;
+  chosen_option_id: string | null;
+  outcome_text: string | null;
+  decided_by: string | null;
+  decided_at: NullableTimestamp;
+  tom_dimension_code: string | null;
+  source_workshop_item_id: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface DecisionOptionTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  decision_id: string;
+  label: string;
+  title: string;
+  description: string | null;
+  ordinal: number;
+  status: Generated<string>;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface RecordCodeCounterTable {
+  transformation_id: string;
+  prefix: string;
+  last_value: number;
+}
+
+export interface TomWorkshopTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  title: string;
+  workshop_date: string;
+  duration_minutes: number;
+  agenda: string | null;
+  facilitator_user_id: string;
+  status: Generated<string>;
+  closed_at: NullableTimestamp;
+  closed_by: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface TomWorkshopParticipantTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  workshop_id: string;
+  user_id: string;
+  is_business_owner: Generated<boolean>;
+  status: Generated<string>;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface TomWorkshopItemTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  workshop_id: string;
+  dimension_code: string | null;
+  kind: string;
+  body: string;
+  owner_user_id: string | null;
+  status: string;
+  converted_decision_id: string | null;
+  converted_action_id: string | null;
+  converted_at: NullableTimestamp;
+  converted_by: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface ActionItemTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  title: string;
+  description: string | null;
+  owner_user_id: string;
+  due_date: string | null;
+  status: Generated<string>;
+  source_workshop_item_id: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface DependencyTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  code: string;
+  description: string;
+  from_kind: string;
+  from_label: string | null;
+  to_kind: string;
+  to_label: string | null;
+  dependency_type: string;
+  needed_by: string | null;
+  owner_user_id: string | null;
+  status: Generated<string>;
+  mitigation: string | null;
+  tom_dimension_code: string | null;
+  decision_id: string | null;
+  archived_at: NullableTimestamp;
+  archived_by: string | null;
+  archive_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface GateInstanceTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  gate_code: string;
+  status: Generated<string>;
+  approver_role_code: string;
+  approver_user_id: string | null;
+  current_submission_id: string | null;
+  latest_submission_no: Generated<number>;
+  approved_at: NullableTimestamp;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface GateSubmissionTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  gate_instance_id: string;
+  gate_code: string;
+  submission_no: number;
+  status: Generated<string>;
+  submitted_by: string;
+  submitted_at: TimestampDefault;
+  submission_note: string | null;
+  approver_role_code: string;
+  approver_user_id: string | null;
+  due_date: string | null;
+  charter_id: string | null;
+  charter_version_no: number | null;
+  snapshot: Json;
+  snapshot_sha256: string;
+  superseded_at: NullableTimestamp;
+  superseded_by_submission_id: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface GateSubmissionCriterionTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  gate_submission_id: string;
+  criterion_key: string;
+  ordinal: number;
+  mandatory: boolean;
+  completeness: string;
+  detail: JsonDefault;
+  evaluated_at: TimestampDefault;
+}
+
+export interface GateDecisionTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  gate_submission_id: string;
+  decision_id: string;
+  decision_kind: Generated<string>;
+  gate_code: string;
+  submission_no: number;
+  outcome: string;
+  rationale: string;
+  comments: string | null;
+  decided_by: string;
+  on_behalf_of_user_id: string | null;
+  decided_at: TimestampDefault;
+  approver_basis: string;
+  approver_role_code: string;
+}
+
+export interface RoleAccountabilityTable {
+  role_id: string;
+  accountability_en: string;
+  accountability_ar: string;
+  is_source_text: boolean;
+  source_ref: string;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
 export interface Database {
   schema_migration: SchemaMigrationTable;
   organization: OrganizationTable;
@@ -276,6 +1186,48 @@ export interface Database {
   outbox_event: OutboxEventTable;
   processed_message: ProcessedMessageTable;
   idempotency_record: IdempotencyRecordTable;
+  methodology_version: MethodologyVersionTable;
+  transformation_config_pin: TransformationConfigPinTable;
+  diagnostic_dimension: DiagnosticDimensionTable;
+  diagnostic_workstream: DiagnosticWorkstreamTable;
+  tom_dimension: TomDimensionTable;
+  gate_definition: GateDefinitionTable;
+  gate_criterion_definition: GateCriterionDefinitionTable;
+  charter_scope_check_definition: CharterScopeCheckDefinitionTable;
+  good_outcome_criterion: GoodOutcomeCriterionTable;
+  evidence: EvidenceTable;
+  evidence_content: EvidenceContentTable;
+  evidence_link: EvidenceLinkTable;
+  north_star: NorthStarTable;
+  strategic_guardrail: StrategicGuardrailTable;
+  outcome: OutcomeTable;
+  charter: CharterTable;
+  charter_version: CharterVersionTable;
+  kpi_definition: KpiDefinitionTable;
+  baseline: BaselineTable;
+  outcome_kpi: OutcomeKpiTable;
+  value_pool: ValuePoolTable;
+  diagnostic_item: DiagnosticItemTable;
+  diagnostic_finding: DiagnosticFindingTable;
+  diagnostic_workstream_output: DiagnosticWorkstreamOutputTable;
+  tom_canvas_cell: TomCanvasCellTable;
+  tom_gap: TomGapTable;
+  capability: CapabilityTable;
+  journey: JourneyTable;
+  journey_pain_point: JourneyPainPointTable;
+  decision: DecisionTable;
+  decision_option: DecisionOptionTable;
+  record_code_counter: RecordCodeCounterTable;
+  tom_workshop: TomWorkshopTable;
+  tom_workshop_participant: TomWorkshopParticipantTable;
+  tom_workshop_item: TomWorkshopItemTable;
+  action_item: ActionItemTable;
+  dependency: DependencyTable;
+  gate_instance: GateInstanceTable;
+  gate_submission: GateSubmissionTable;
+  gate_submission_criterion: GateSubmissionCriterionTable;
+  gate_decision: GateDecisionTable;
+  role_accountability: RoleAccountabilityTable;
 }
 
 /** Relations that are views (read-only); excluded from the table/column drift test's table list. */
@@ -293,6 +1245,14 @@ export type NewTransformation = Insertable<TransformationTable>;
 export type TransformationUpdate = Updateable<TransformationTable>;
 export type AuditEventRow = Selectable<AuditEventTable>;
 export type OutboxEventRow = Selectable<OutboxEventTable>;
+export type CharterRow = Selectable<CharterTable>;
+export type CharterVersionRow = Selectable<CharterVersionTable>;
+export type DecisionRow = Selectable<DecisionTable>;
+export type GateInstanceRow = Selectable<GateInstanceTable>;
+export type GateSubmissionRow = Selectable<GateSubmissionTable>;
+export type GateDecisionRow = Selectable<GateDecisionTable>;
+export type EvidenceRow = Selectable<EvidenceTable>;
+export type ValuePoolRow = Selectable<ValuePoolTable>;
 
 /**
  * Runtime column catalogue of `Database`. The compiler forces it to list exactly the interface's columns (both
@@ -497,6 +1457,865 @@ export const SCHEMA_COLUMNS = {
     "response_body",
     "created_at",
     "expires_at",
+  ],
+  methodology_version: [
+    "id",
+    "key",
+    "version_no",
+    "status",
+    "title_en",
+    "title_ar",
+    "source_document",
+    "source_sha256",
+    "definition",
+    "content_sha256",
+    "published_at",
+    "published_by",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  transformation_config_pin: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "kind",
+    "methodology_version_id",
+    "pinned_at",
+    "pinned_by",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  diagnostic_dimension: [
+    "id",
+    "code",
+    "methodology_version_id",
+    "ordinal",
+    "source_label",
+    "label_en",
+    "label_ar",
+    "evidence_hint_en",
+    "evidence_hint_ar",
+    "impact_hint_en",
+    "impact_hint_ar",
+    "is_source_seeded",
+    "status",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  diagnostic_workstream: [
+    "id",
+    "code",
+    "methodology_version_id",
+    "ordinal",
+    "source_name_en",
+    "name_ar",
+    "source_key_questions_en",
+    "key_questions_ar",
+    "source_typical_outputs_en",
+    "typical_outputs_ar",
+    "source_ref",
+    "status",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  tom_dimension: [
+    "id",
+    "code",
+    "methodology_version_id",
+    "ordinal",
+    "source_name_en",
+    "source_design_question_en",
+    "source_canvas_box_en",
+    "source_canvas_prompt_en",
+    "label_en",
+    "label_ar",
+    "design_question_ar",
+    "canvas_box_ar",
+    "canvas_prompt_ar",
+    "source_ref",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  gate_definition: [
+    "id",
+    "code",
+    "methodology_version_id",
+    "ordinal",
+    "phase",
+    "next_phase",
+    "source_name_en",
+    "name_ar",
+    "source_decision_question_en",
+    "decision_question_ar",
+    "source_evidence_required_en",
+    "evidence_required_ar",
+    "default_approver_role_code",
+    "allowed_approver_role_codes",
+    "submission_enabled",
+    "source_ref",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  gate_criterion_definition: [
+    "id",
+    "gate_definition_id",
+    "key",
+    "ordinal",
+    "label_en",
+    "label_ar",
+    "description_en",
+    "description_ar",
+    "mandatory",
+    "requires_verified_evidence",
+    "source_ref",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  charter_scope_check_definition: [
+    "id",
+    "code",
+    "methodology_version_id",
+    "ordinal",
+    "source_question_en",
+    "question_ar",
+    "source_ref",
+    "system_precheck",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  good_outcome_criterion: [
+    "id",
+    "code",
+    "methodology_version_id",
+    "ordinal",
+    "source_label_en",
+    "label_ar",
+    "evaluation",
+    "source_ref",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  evidence: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "kind",
+    "title",
+    "description",
+    "evidence_type",
+    "source",
+    "owner_user_id",
+    "observation_start",
+    "observation_end",
+    "note_body",
+    "url",
+    "file_name",
+    "current_content_id",
+    "review_status",
+    "accessibility_status",
+    "reviewed_content_id",
+    "reviewed_by",
+    "reviewed_at",
+    "review_note",
+    "status",
+    "archived_at",
+    "archived_by",
+    "archive_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  evidence_content: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "evidence_id",
+    "revision",
+    "storage_key",
+    "sha256",
+    "size_bytes",
+    "content_type",
+    "file_name",
+    "uploaded_by",
+    "uploaded_at",
+  ],
+  evidence_link: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "evidence_id",
+    "record_type",
+    "record_id",
+    "status",
+    "removed_at",
+    "removed_by",
+    "remove_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  north_star: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "statement",
+    "status",
+    "superseded_at",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  strategic_guardrail: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "title",
+    "category",
+    "statement",
+    "owner_user_id",
+    "status",
+    "archived_at",
+    "archived_by",
+    "archive_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  outcome: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "parent_outcome_id",
+    "statement",
+    "description",
+    "owner_user_id",
+    "is_top_outcome",
+    "top_rank",
+    "specific_confirmed",
+    "strategically_relevant_confirmed",
+    "causal_chain",
+    "status",
+    "archived_at",
+    "archived_by",
+    "archive_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  charter: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "transformation_name",
+    "executive_sponsor_user_id",
+    "transformation_lead_user_id",
+    "case_for_change",
+    "north_star_id",
+    "in_scope",
+    "out_of_scope",
+    "baseline_date",
+    "target_horizon_value",
+    "target_horizon_unit",
+    "governance_forum",
+    "decision_rights",
+    "success_definition",
+    "thesis_change",
+    "thesis_outcomes",
+    "thesis_benefits",
+    "thesis_because",
+    "sc_outcome_linkage",
+    "sc_outcome_linkage_evidence",
+    "sc_problem_traceability",
+    "sc_problem_traceability_evidence",
+    "sc_exclusions_documented",
+    "sc_exclusions_documented_evidence",
+    "sc_baseline_measurable",
+    "sc_baseline_measurable_evidence",
+    "sc_executive_decisions_visible",
+    "sc_executive_decisions_visible_evidence",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  charter_version: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "charter_id",
+    "version_no",
+    "transformation_name",
+    "executive_sponsor_user_id",
+    "transformation_lead_user_id",
+    "case_for_change",
+    "north_star_id",
+    "in_scope",
+    "out_of_scope",
+    "baseline_date",
+    "target_horizon_value",
+    "target_horizon_unit",
+    "governance_forum",
+    "decision_rights",
+    "success_definition",
+    "thesis_change",
+    "thesis_outcomes",
+    "thesis_benefits",
+    "thesis_because",
+    "sc_outcome_linkage",
+    "sc_outcome_linkage_evidence",
+    "sc_problem_traceability",
+    "sc_problem_traceability_evidence",
+    "sc_exclusions_documented",
+    "sc_exclusions_documented_evidence",
+    "sc_baseline_measurable",
+    "sc_baseline_measurable_evidence",
+    "sc_executive_decisions_visible",
+    "sc_executive_decisions_visible_evidence",
+    "north_star_statement",
+    "top_outcomes_snapshot",
+    "guardrails_snapshot",
+    "change_summary",
+    "saved_by",
+    "saved_at",
+  ],
+  kpi_definition: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "name",
+    "description",
+    "business_purpose",
+    "unit_kind",
+    "unit_label",
+    "currency",
+    "polarity",
+    "frequency",
+    "is_leading",
+    "data_source",
+    "owner_user_id",
+    "steward_user_id",
+    "status",
+    "archived_at",
+    "archived_by",
+    "archive_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  baseline: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "metric",
+    "kpi_definition_id",
+    "value",
+    "unit",
+    "currency",
+    "source",
+    "baseline_date",
+    "scope",
+    "owner_user_id",
+    "validation_status",
+    "validated_by",
+    "validated_at",
+    "validation_note",
+    "validated_record_version",
+    "status",
+    "archived_at",
+    "archived_by",
+    "archive_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  outcome_kpi: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "outcome_id",
+    "kpi_definition_id",
+    "baseline_id",
+    "baseline_value",
+    "target_value",
+    "target_date",
+    "owner_user_id",
+    "leading_indicator_text",
+    "leading_kpi_definition_id",
+    "ordinal",
+    "trajectory_points",
+    "trajectory_status",
+    "trajectory_approved_by",
+    "trajectory_approved_at",
+    "trajectory_approved_version",
+    "status",
+    "archived_at",
+    "archived_by",
+    "archive_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  value_pool: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "name",
+    "driver",
+    "workstream_code",
+    "quantification_status",
+    "upside_amount",
+    "downside_amount",
+    "currency",
+    "unquantified_reason",
+    "materiality",
+    "confidence",
+    "owner_user_id",
+    "validation_status",
+    "validated_by",
+    "validated_at",
+    "validation_note",
+    "validated_record_version",
+    "status",
+    "archived_at",
+    "archived_by",
+    "archive_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  diagnostic_item: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "dimension_code",
+    "is_seeded",
+    "current_state",
+    "evidence_baseline",
+    "baseline_id",
+    "root_cause",
+    "impact_text",
+    "impact_amount",
+    "impact_currency",
+    "impact_kpi_definition_id",
+    "confidence",
+    "owner_user_id",
+    "status",
+    "archived_at",
+    "archived_by",
+    "archive_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  diagnostic_finding: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "workstream_code",
+    "diagnostic_item_id",
+    "kind",
+    "statement",
+    "detail",
+    "confidence",
+    "owner_user_id",
+    "status",
+    "archived_at",
+    "archived_by",
+    "archive_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  diagnostic_workstream_output: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "workstream_code",
+    "title",
+    "output_kind",
+    "record_type",
+    "record_id",
+    "evidence_id",
+    "note",
+    "status",
+    "archived_at",
+    "archived_by",
+    "archive_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  tom_canvas_cell: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "dimension_code",
+    "current_design",
+    "target_design",
+    "owner_user_id",
+    "status",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  tom_gap: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "dimension_code",
+    "current_state",
+    "target_state",
+    "gap",
+    "design_decision_id",
+    "owner_user_id",
+    "status",
+    "archived_at",
+    "archived_by",
+    "archive_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  capability: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "name",
+    "description",
+    "dimension_code",
+    "current_level",
+    "target_level",
+    "sourcing_need",
+    "owner_user_id",
+    "tom_gap_id",
+    "status",
+    "archived_at",
+    "archived_by",
+    "archive_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  journey: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "name",
+    "kind",
+    "state",
+    "description",
+    "dimension_code",
+    "steps",
+    "cycle_time_value",
+    "cycle_time_unit",
+    "failure_demand",
+    "owner_user_id",
+    "status",
+    "archived_at",
+    "archived_by",
+    "archive_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  journey_pain_point: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "journey_id",
+    "step_key",
+    "description",
+    "diagnostic_item_id",
+    "status",
+    "archived_at",
+    "archived_by",
+    "archive_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  decision: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "kind",
+    "code",
+    "title",
+    "context",
+    "owner_user_id",
+    "due_date",
+    "status",
+    "recommendation_option_id",
+    "recommendation_text",
+    "chosen_option_id",
+    "outcome_text",
+    "decided_by",
+    "decided_at",
+    "tom_dimension_code",
+    "source_workshop_item_id",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  decision_option: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "decision_id",
+    "label",
+    "title",
+    "description",
+    "ordinal",
+    "status",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  record_code_counter: ["transformation_id", "prefix", "last_value"],
+  tom_workshop: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "title",
+    "workshop_date",
+    "duration_minutes",
+    "agenda",
+    "facilitator_user_id",
+    "status",
+    "closed_at",
+    "closed_by",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  tom_workshop_participant: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "workshop_id",
+    "user_id",
+    "is_business_owner",
+    "status",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  tom_workshop_item: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "workshop_id",
+    "dimension_code",
+    "kind",
+    "body",
+    "owner_user_id",
+    "status",
+    "converted_decision_id",
+    "converted_action_id",
+    "converted_at",
+    "converted_by",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  action_item: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "title",
+    "description",
+    "owner_user_id",
+    "due_date",
+    "status",
+    "source_workshop_item_id",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  dependency: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "code",
+    "description",
+    "from_kind",
+    "from_label",
+    "to_kind",
+    "to_label",
+    "dependency_type",
+    "needed_by",
+    "owner_user_id",
+    "status",
+    "mitigation",
+    "tom_dimension_code",
+    "decision_id",
+    "archived_at",
+    "archived_by",
+    "archive_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  gate_instance: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "gate_code",
+    "status",
+    "approver_role_code",
+    "approver_user_id",
+    "current_submission_id",
+    "latest_submission_no",
+    "approved_at",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  gate_submission: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "gate_instance_id",
+    "gate_code",
+    "submission_no",
+    "status",
+    "submitted_by",
+    "submitted_at",
+    "submission_note",
+    "approver_role_code",
+    "approver_user_id",
+    "due_date",
+    "charter_id",
+    "charter_version_no",
+    "snapshot",
+    "snapshot_sha256",
+    "superseded_at",
+    "superseded_by_submission_id",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  gate_submission_criterion: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "gate_submission_id",
+    "criterion_key",
+    "ordinal",
+    "mandatory",
+    "completeness",
+    "detail",
+    "evaluated_at",
+  ],
+  gate_decision: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "gate_submission_id",
+    "decision_id",
+    "decision_kind",
+    "gate_code",
+    "submission_no",
+    "outcome",
+    "rationale",
+    "comments",
+    "decided_by",
+    "on_behalf_of_user_id",
+    "decided_at",
+    "approver_basis",
+    "approver_role_code",
+  ],
+  role_accountability: [
+    "role_id",
+    "accountability_en",
+    "accountability_ar",
+    "is_source_text",
+    "source_ref",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
   ],
 } as const satisfies { readonly [T in keyof Database]: readonly (keyof Database[T] & string)[] };
 

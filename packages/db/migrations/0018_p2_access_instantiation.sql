@@ -38,7 +38,7 @@ INSERT INTO permission (code, category, description_en, description_ar) VALUES
   ('tom.contribute', 'write', 'Add TOM records and edit own records', 'إضافة سجلات نموذج التشغيل وتحرير السجلات الخاصة'),
   ('workshop.facilitate', 'write', 'Facilitate TOM workshops and convert unresolved items', 'تيسير ورش نموذج التشغيل وتحويل البنود غير المحسومة'),
   ('decision.edit', 'write', 'Create and update design decisions', 'إنشاء قرارات التصميم وتحديثها'),
-  ('decision.decide', 'business_approval', 'Record the outcome of a decision you own (business approval)', 'تسجيل نتيجة قرار تملكه (اعتماد أعمال)'),
+  ('decision.decide', 'write', 'Record the outcome of a design decision you own (owner-only; not a gate or Finance approval)', 'تسجيل نتيجة قرار تصميم تملكه (للمالك فقط؛ ليس اعتماد بوابة أو اعتماداً مالياً)'),
   ('dependency.edit', 'write', 'Create and update dependencies', 'إنشاء الاعتماديات وتحديثها'),
   ('action.edit', 'write', 'Create and update any action', 'إنشاء أي إجراء وتحديثه'),
   ('action.update_own', 'write', 'Update actions you own', 'تحديث الإجراءات التي تملكها'),

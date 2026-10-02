@@ -1,0 +1,5 @@
+SET ROLE mth_owner;
+INSERT INTO organization (id, code, name_en, name_ar) VALUES ('01920000-1000-7000-8000-000000000001','PRB','Probe Org (synthetic)','منظمة');
+INSERT INTO app_user (id, organization_id, display_name) VALUES ('01920000-1000-7000-8000-000000000002','01920000-1000-7000-8000-000000000001','Probe Creator (synthetic)'),('01920000-1000-7000-8000-000000000003','01920000-1000-7000-8000-000000000001','Probe Approver (synthetic)');
+INSERT INTO business_unit (id, organization_id, code, name_en, name_ar) VALUES ('01920000-1000-7000-8000-000000000004','01920000-1000-7000-8000-000000000001','BU1','BU','وحدة');
+INSERT INTO transformation (id, organization_id, business_unit_id, code, name, mode, current_phase, timezone, currency, created_by, updated_by) VALUES ('01920000-1000-7000-8000-000000000005','01920000-1000-7000-8000-000000000001','01920000-1000-7000-8000-000000000004','T1','Probe transformation (synthetic)','end_to_end','diagnose','Asia/Riyadh','SAR','01920000-1000-7000-8000-000000000002','01920000-1000-7000-8000-000000000002');

@@ -1,0 +1,153 @@
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+=== 1. mth-db migrate on an EMPTY database (0001 -> 0018) ===
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applied 18 migration(s)
+migrate exit=0
+18 migrations recorded; last = 0018_p2_access_instantiation.sql
+=== seeds ===
+diagnostic_dimension=6 diagnostic_workstream=6 tom_dimension=10 gate_definition=6 gate_criterion_definition=16 scope_checks=5 good_outcome=5 permissions=38 role_permission=126
+=== guard probes (as mth_app, the runtime role) ===
+-- fixture (owner): org, 2 users, BU, transformation; then p2_instantiate_transformation as the API would call it
+SET
+INSERT 0 1
+INSERT 0 2
+INSERT 0 1
+INSERT 0 1
+SET
+BEGIN
+          ?column?           
+-----------------------------
+ instantiate created 23 rows
+(1 row)
+
+COMMIT
+                   ?column?                    
+-----------------------------------------------
+ instantiate again (idempotent) created 0 rows
+(1 row)
+
+-- P1: INSERT a value_pool WITH its audit event -> must COMMIT
+BEGIN
+INSERT 0 1
+INSERT 0 1
+COMMIT
+                                   ?column?                                    
+-------------------------------------------------------------------------------
+ value_pool rows: 1, status unquantified, upside NULL (unquantified, not zero)
+(1 row)
+
+-- P2: INSERT a value_pool WITHOUT an audit event -> must FAIL at COMMIT (audit_required)
+BEGIN
+INSERT 0 1
+                             ?column?                              
+-------------------------------------------------------------------
+ insert accepted inside the transaction (check deferred to COMMIT)
+(1 row)
+
+psql:$TMPDIR/p/probe.sql:19: ERROR:  no audit_event for value_pool 01920000-2000-7000-8000-000000000002 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+                ?column?                
+----------------------------------------
+ value_pool rows after failed commit: 1
+(1 row)
+
+-- P3: UPDATE with version not stepping by 1 -> must FAIL (version_step)
+psql:$TMPDIR/p/probe.sql:22: ERROR:  value_pool: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+-- P3b: UPDATE keeping the same version -> must FAIL (version_step)
+psql:$TMPDIR/p/probe.sql:24: ERROR:  value_pool: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+-- P4: UPDATE stepping by 1 but without audit event -> must FAIL at COMMIT
+psql:$TMPDIR/p/probe.sql:26: ERROR:  no audit_event for value_pool 01920000-2000-7000-8000-000000000001 at version 2 (ADR-0004: every mutation writes its audit event in the same transaction)
+-- P5: quantified value pool with a missing downside -> must FAIL (value_pool_quantification)
+BEGIN
+psql:$TMPDIR/p/probe.sql:29: ERROR:  new row for relation "value_pool" violates check constraint "value_pool_quantification"
+ROLLBACK
+-- P6: charter INSERT with audit event but WITHOUT a charter_version snapshot -> must FAIL at COMMIT
+BEGIN
+INSERT 0 1
+INSERT 0 1
+psql:$TMPDIR/p/probe.sql:35: ERROR:  charter 01920000-2000-7000-8000-000000000010 version 1 has no charter_version snapshot
+-- P7: charter INSERT with audit event AND charter_version 1 -> must COMMIT
+BEGIN
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+COMMIT
+      ?column?       
+---------------------
+ charter versions: 1
+(1 row)
+
+-- P8: UPDATE / DELETE on the history table charter_version -> must FAIL (append-only)
+psql:$TMPDIR/p/probe.sql:44: ERROR:  permission denied for table charter_version
+psql:$TMPDIR/p/probe.sql:45: ERROR:  permission denied for table charter_version
+-- P9: invalid baseline date -> must FAIL (date type)
+psql:$TMPDIR/p/probe.sql:47: ERROR:  date/time field value out of range: "2026-02-30" at character 36
+-- P10: T02 row without target date -> must FAIL (not-null)
+psql:$TMPDIR/p/probe.sql:49: ERROR:  null value in column "target_date" of relation "outcome_kpi" violates not-null constraint
+-- P11: T01 confidence outside H/M/L -> must FAIL (check)
+psql:$TMPDIR/p/probe.sql:51: ERROR:  new row for relation "diagnostic_item" violates check constraint "diagnostic_item_confidence_check"
+-- P12: T03 gap without dimension -> must FAIL (not-null)
+psql:$TMPDIR/p/probe.sql:53: ERROR:  null value in column "dimension_code" of relation "tom_gap" violates not-null constraint
+-- P13: gate decision by the SUBMITTER -> must FAIL (gate_decision_not_submitter, maps to 403)
+BEGIN
+INSERT 0 1
+INSERT 0 1
+COMMIT
+BEGIN
+INSERT 0 1
+psql:$TMPDIR/p/probe.sql:62: ERROR:  gate submission 01920000-2000-7000-8000-000000000040: the submitter cannot decide it (separation of duties)
+ROLLBACK
+-- P14: gate decision on a stale submission_no -> must FAIL (gate_decision_current_submission, maps to 409)
+BEGIN
+INSERT 0 1
+psql:$TMPDIR/p/probe.sql:67: ERROR:  gate submission 01920000-2000-7000-8000-000000000040 (no 1) is not the current pending submission
+ROLLBACK
+-- P15: file_reference evidence marked verified -> must FAIL (evidence_filename_never_verified)
+psql:$TMPDIR/p/probe.sql:70: ERROR:  new row for relation "evidence" violates check constraint "evidence_filename_never_verified"
+-- P16: mth_app DELETE on a P2 business table -> must FAIL (no privilege)
+psql:$TMPDIR/p/probe.sql:72: ERROR:  permission denied for table value_pool
+-- P17: TRUNCATE gate_decision as owner -> must FAIL (append-only)
+RESET
+SET
+psql:$TMPDIR/p/probe.sql:75: ERROR:  gate_decision is append-only: TRUNCATE is not allowed
+=== 2. backfill path: 0001-0009, a pre-P2 transformation, then 0010-0018 ===
+0001-0009 applied (P1 state)
+pre-P2 transformation inserted
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applied 9 migration(s)
+migrate (0010-0018 over populated P1 db) exit=0
+backfilled for pre-P2 transformation: pins=1 t01_rows=6 tom_cells=10 gate_instances=6 audit_events(system,migration)=23
+=== append-only trigger as the OWNER (privileges bypassed) ===
+SET
+ERROR:  charter_version is append-only: UPDATE is not allowed
+CONTEXT:  PL/pgSQL function p2_append_only() line 3 at RAISE
+ERROR:  charter_version is append-only: DELETE is not allowed
+CONTEXT:  PL/pgSQL function p2_append_only() line 3 at RAISE
+UPDATE 0
+UPDATE 0
+=== 3. schema dump for schema.ts ===
+dumped

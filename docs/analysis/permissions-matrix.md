@@ -151,3 +151,96 @@ Unless stated otherwise, "own" means records where the user is the named owner o
 - Sensitive-record categories are placeholders until Mobily defines its data classification.
 - In the T11 "Go-live / scale" row, the T11 roles map to matrix roles as follows. "Initiative owner" is the initiative's named owner, recorded on T05 and typically the WL, or the BO where the BO owns it. "Risk" consultees act through the TO's RAID responsibility (B0018). "Tech" is TD. "CX" has no separate matrix role and is consulted as a named person under Rv on the decision record. "SteerCo" is its CM members. This mapping is an implementation assumption.
 - Revision T-DG0-AN-05 (finding F-DG0-002): SP now has Rv (RACI "C", B0101) instead of V on the TOM row; the T11 "Go-live / scale" row was added; rule 7 was clarified.
+
+## 8. P2 implementation (DG2): permission codes and per-entity rights
+
+- **Added by:** T-DG2-ARCH-01B (solution-architect), 2026-10-02.
+- **Implements:** sections 1–5 above for the P2 records. The design is ADR-0020; the seed is migration `0018`, mirrored in `packages/shared/src/permissions.ts`.
+- **Status:** these are configurable defaults and implementation assumptions. Mobily's business owners must confirm them before production.
+
+### 8.1 Role catalogue (all eleven §10 roles, 14 role codes)
+
+| Code | Role | Kind | Inherits downward | P2 rights in one line |
+|---|---|---|---|---|
+| SP | Executive Sponsor | source | no | Approves gates (default approver), approves KPI target trajectories, decides decisions they own |
+| TL | Transformation Lead | source | no | Drafts charter/North Star/outcomes/T01–T04/TOM; submits gates; reviews evidence; assigns non-approver team roles |
+| BO | Business Owner | source | no | Edits outcomes and TOM; approves KPI targets; decides decisions they own; G3 approver where configured |
+| WL | Workstream Lead | source | no | Contributes T01/TOM rows (own); creates decisions and dependencies |
+| FIN | Finance / Value Office | source | no | Validates baselines and value pools (`finance.validate`); reviews evidence |
+| TO | Transformation Office | source | **yes** | Charter and diagnostic editing; configures gate approvers; dependencies and actions; assigns non-approver team roles |
+| KDS | KPI/Data Steward | implementation | no | KPI definitions, baselines, outcomes/T02 rows |
+| TD | Tech/Data contributor | implementation | no | TOM contributions (own), dependencies |
+| CM | Committee member | implementation | no | Read only in P2 (forums are P4) |
+| SEC | Committee secretary | implementation | no | Read only in P2 (meetings are P4) |
+| AUD | Read-only auditor | implementation | **yes** | **Read only. Every write returns 403** (REQ-S10-001 A12) |
+| ADM_TECH | System administrator (technical) | technical_admin | no | No business-record rights; never an approver |
+| ADM_ACCESS | System administrator (access) | technical_admin | no | User/assignment administration only; never an approver |
+| ADM_METHOD | System administrator (methodology) | technical_admin | no | `methodology.configure`: TOM-dimension labels and translations only; never an approver |
+
+### 8.2 P2 permission catalogue
+
+| Code | Category | Meaning |
+|---|---|---|
+| `north_star.edit` | write | Create and refine the North Star |
+| `charter.edit` | write | Draft and version the charter, thesis, scope checks and strategic guardrails |
+| `outcome.edit` | write | Outcomes and T02 Outcome & KPI Tree rows |
+| `kpi_definition.edit` | write | KPI definitions |
+| `kpi_target.approve` | **business_approval** | Approve a KPI target trajectory (never the row's creator) |
+| `baseline.edit` | write | Baselines |
+| `diagnostic.edit` | write | T01, findings, workstream outputs, value pools (any row) |
+| `diagnostic.contribute` | write | Create diagnostic records; edit own only |
+| `tom.edit` | write | TOM canvas, T03 gaps, capabilities, journeys (any row) |
+| `tom.contribute` | write | Create TOM records; edit own only |
+| `workshop.facilitate` | write | Run TOM workshops; convert unresolved items |
+| `decision.edit` | write | Create and edit design decisions (T04) |
+| `decision.decide` | write (owner-only) | Record the outcome of a design decision **the caller owns**; not a gate or Finance approval |
+| `dependency.edit` | write | Canonical dependency records |
+| `action.edit` | write | Any action |
+| `action.update_own` | write | Actions the caller owns |
+| `evidence.create` | write | Add evidence; link it to records the caller may edit |
+| `evidence.review` | write | Verify or reject evidence; never the caller's own |
+| `gate.submit` | write | Submit G1–G6 (P2: G1–G3) |
+| `gate.configure` | configure | Configure a gate's approver (role from the allowed list, optional named user) |
+| `team.assign` | configure | Assign WL, KDS, TD, CM, SEC at the caller's transformation |
+| `methodology.configure` | configure | Edit methodology display labels and translations |
+
+The P1 permissions that P2 uses are `gate.decide` (business_approval: SP, BO) and `finance.validate` (finance_validation: FIN).
+
+### 8.3 Per-entity rights in P2
+
+Legend: **C** create, **E** edit (incl. archive), **E(own)** edit own rows only, **V** view, **D** decide/approve/validate, **—** none. V means the role can see the record at all; every role with `transformation.read` in scope has it. Every cell is checked server-side by the one policy function plus the record-level rule.
+
+| Entity (table) | SP | TL | BO | WL | FIN | TO | KDS | TD | CM/SEC | AUD | ADM_* |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Charter + versions (`charter`, `charter_version`) | V | C E | V | V | V | C E | V | V | V | V | — |
+| North Star (`north_star`) | V | C E | V | V | V | V | V | V | V | V | — |
+| Strategic guardrails (`strategic_guardrail`) | V | C E | V | V | V | C E | V | V | V | V | — |
+| Outcomes (`outcome`) | V | C E | C E | V | V | V | C E | V | V | V | — |
+| T02 Outcome & KPI Tree (`outcome_kpi`) | D (trajectory) | C E | C E D (trajectory) | V | V | V | C E | V | V | V | — |
+| KPI definitions (`kpi_definition`) | V | C E | V | V | V | V | C E | V | V | V | — |
+| Baselines (`baseline`) | V | C E | V | V | D (validate) | V | C E | V | V | V | — |
+| Value pools (`value_pool`) | V | C E | V | V | D (validate) | C E | V | V | V | V | — |
+| T01 diagnostic (`diagnostic_item`) | V | C E | V | C E(own) | V | C E | V | V | V | V | — |
+| Diagnostic findings, workstream outputs | V | C E | V | C E(own) | V | C E | V | V | V | V | — |
+| TOM canvas cells (`tom_canvas_cell`) | V | E | E | V | V | V | V | V | V | V | — |
+| T03 TOM gaps, capabilities, journeys, pain points | V | C E | C E | C E(own) | V | V | V | C E(own) | V | V | — |
+| TOM workshops, items, conversion | V | C E | C(item) | C(item) | V | V | V | C(item) | V | V | — |
+| T04 design decisions (`decision` kind design) | D (own) | C E D (own) | D (own) | C E D (own) | V | V | V | V | V | V | — |
+| Dependencies (`dependency`) | V | C E | V | C E | V | C E | V | C E | V | V | — |
+| Actions (`action_item`) | E(own) | C E | E(own) | E(own) | E(own) | C E | E(own) | E(own) | V | V | — |
+| Evidence + links (`evidence`, `evidence_link`) | V | C E D (review) | C E D (review) | C E | C E D (review) | C E D (review) | C E | C E | V | V | — |
+| Gate instance: approver configuration | V | V | V | V | V | E | V | V | V | V | — |
+| Gate submission (`gate_submission`) | V | C | V | V | V | V | V | V | V | V | — |
+| Gate decision (`gate_decision`) | D (default approver) | — (submitter; SoD) | D where configured (G3) | — | V | — | — | — | — | V | — (never) |
+| Team assignments (transformation scope) | V | C (WL, KDS, TD, CM, SEC) | V | V | V | C (WL, KDS, TD, CM, SEC) | V | V | V | V | ADM_ACCESS: all roles via `/role-assignments` |
+| Methodology labels (`tom_dimension` labels) | V | V | V | V | V | V | V | V | V | V | ADM_METHOD: E |
+
+**Read-only auditor (AUD) write-deny.**
+- AUD holds only `read`-category permissions and inherits them downward from its assigned scope.
+- Every P2 mutating operation declares a write, configure or approval permission, so AUD gets **403** (not 404, because AUD can read the record) and nothing is written.
+- `packages/db/src/seed.test.ts` asserts AUD's catalogue. The P2 integration suite must call every mutating P2 operation as AUD and expect 403 (ADR-0020 §4).
+
+**Changes against sections 1–5, all flagged as assumptions:**
+- T04 "Ap (decision owner)" is implemented as `decision.decide` with an owner-only record rule. It is available to SP, TL, BO and WL, so whichever of them is the named T04 owner decides (B0065 names a decision owner, not a role).
+- "Charter: SP Ap" and "North Star/outcomes: SP Ap" are exercised through the G1/G2 gate decisions, not a separate charter approval.
+- TL's team-assignment right is narrowed to roles without approval or assignment rights.
