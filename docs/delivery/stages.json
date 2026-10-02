@@ -820,7 +820,7 @@
       "id": "DG2",
       "stage": "P2",
       "name": "Diagnose define and design",
-      "state": "REVIEWING",
+      "state": "FIXING",
       "depends_on": [
         "DG1"
       ],
@@ -873,6 +873,11 @@
           "state": "REVIEWING",
           "at": "2026-10-02T03:56:00Z",
           "note": "P2 build complete and integrated green across six implementer runs (architect ERD/migrations/OpenAPI + ADRs 0015-0020; BE backend + gates G1-G3; KBE kpi/value helpers; BE2 REQ-PB-036 good-outcome test; FE + FE2 the 7 bilingual screens incl. REQ-PB-003 verbatim mode guidance and the Team screen). Orchestrator verification on the frozen tree: typecheck/build/lint/openapi exit 0, unit 422 + web 153, contrast PASS, integration 414/414, e2e 38 (chromium-en + chromium-ar), validate --historical --stage DG1 exit 0. Candidate frozen as 8ef26b71 (513 files, source 98a8d99) for the DG2 gate review round 1; three independent reviewers (domain, code-security, qa) run next."
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-10-02T10:50:00Z",
+          "note": "Round 1 FAIL (D-061): 9 findings imported from code-security (F-DG2-140 High evidence-verify SoD, 141 High trajectory-approval SoD, 142 Medium link-removal) and qa (201 High KPI-cannot-activate-blocks-G2, 202 High register-not-updated, 203/204/205 Medium thesis/superseded-North-Star/phase-sequence, 206 Low qa-stack). The domain-reviewer round-1 run was dropped twice for schema-invalid records (user-authorized surgical git rewrite); its 2 substantive findings duplicate qa's 205/204, so it rejoins from round 2. Repairs: orchestrator added the KPI-definition `activate` contract op (F-201; openapi.yaml 161 ops, openapi:lint PASS) and assigns the register update (F-202) to the transformation-analyst; BE repairs 140/142/203/204/205; KBE repairs 141 + wires activate (201); FE adds the activate affordance; qa fixes 206 in its re-review. Then re-freeze -> round 2 (all 3 reviewers) -> verify -> audit -> APPROVED."
         }
       ]
     },

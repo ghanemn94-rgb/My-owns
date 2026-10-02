@@ -1220,6 +1220,34 @@ paths:
         "409": { $ref: "#/components/responses/VersionConflict" }
         "422": { $ref: "#/components/responses/BusinessRule" }
         "428": { $ref: "#/components/responses/PreconditionRequired" }
+  /api/v1/transformations/{transformationId}/kpi-definitions/{kpiDefinitionId}/activate:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/KpiDefinitionId"
+    post:
+      tags: [kpi]
+      operationId: activateKpiDefinition
+      summary: "Activate a draft KPI definition so it can steer outcomes and satisfy G2 (kpi_definition.edit; REQ-PB-017, REQ-S07-001). Draft -> active; requires the measurable fields (unitKind, polarity, and a unit label/currency where the unit needs one). Already-active is 422; an archived definition cannot be activated."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "Activated; `version` incremented by one; `status` is `active`."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KpiDefinition" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
   /api/v1/transformations/{transformationId}/baselines:
     parameters:
       - $ref: "#/components/parameters/TransformationId"
