@@ -3,11 +3,20 @@
 // diff, and the 3-5 top-outcomes warning. Every saved change is a new immutable version (server side); a version
 // conflict shows "nothing was saved" with compare / re-apply / discard.
 import { useState, type ReactNode } from "react";
+import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
-import { charterUpdate, charterWrite, SCOPE_CHECK_CODES, type Warning } from "@mth/shared/schemas";
+import {
+  charterUpdate,
+  charterWrite,
+  composeThesis,
+  SCOPE_CHECK_CODES,
+  THESIS_PARTS,
+  type ThesisPart,
+  type Warning,
+} from "@mth/shared/schemas";
 import { api } from "../../api/client.ts";
 import { useCharter, useCharterVersions, useNorthStar, useP2Refresh } from "../../api/queries.ts";
-import type { Charter, CharterVersion, CharterView } from "../../api/types.ts";
+import type { Charter, CharterVersion, CharterView, NorthStar } from "../../api/types.ts";
 import { useLocale } from "../../app/locale.ts";
 import { Unknown } from "../../components/Badges.tsx";
 import { Icon } from "../../components/Icon.tsx";
@@ -320,11 +329,7 @@ function CharterContent({ view }: { view: CharterView }) {
                 {text(c.caseForChange)}
               </CharterField>
               <CharterField n={5} label={t("define.northStar.title")}>
-                {view.northStar ? (
-                  <q className="north-star">{view.northStar.statement}</q>
-                ) : (
-                  <Unknown hint={t("define.northStar.notSet")} />
-                )}
+                <CharterNorthStar northStar={view.northStar} warnings={view.warnings} />
               </CharterField>
               <CharterField n={6} label={t("define.charter.field.topOutcomes")}>
                 {topCount === 0 ? (
@@ -387,24 +392,7 @@ function CharterContent({ view }: { view: CharterView }) {
             title={t("define.charter.thesis.title")}
             intro={t("define.charter.thesis.pattern")}
           >
-            <dl className="thesis">
-              <div>
-                <dt>{t("define.charter.thesis.change")}</dt>
-                <dd>{text(c.thesisChange)}</dd>
-              </div>
-              <div>
-                <dt>{t("define.charter.thesis.outcomes")}</dt>
-                <dd>{text(c.thesisOutcomes)}</dd>
-              </div>
-              <div>
-                <dt>{t("define.charter.thesis.benefits")}</dt>
-                <dd>{text(c.thesisBenefits)}</dd>
-              </div>
-              <div>
-                <dt>{t("define.charter.thesis.because")}</dt>
-                <dd>{text(c.thesisBecause)}</dd>
-              </div>
-            </dl>
+            <Thesis charter={c} warnings={view.warnings} />
           </Section>
 
           <Section id="charter-scope" title={t("define.charter.scope.title")} intro={t("define.charter.scope.intro")}>
@@ -492,18 +480,148 @@ function CharterWarnings({ warnings, topCount }: { warnings: readonly Warning[];
         </p>
       ) : null}
       {other.length > 0 ? (
-        <ul className="banner banner--warning plain-list" role="status">
-          {other.map((w) => (
-            <li key={`${w.code}-${w.pointer ?? ""}`}>
-              <Icon name="alert" />{" "}
-              {t(`define.charter.warnings.${w.code.replace(/\./g, "__")}`, {
-                defaultValue: t("define.charter.warningGeneric"),
-              })}
-            </li>
-          ))}
-        </ul>
+        <div className="banner banner--warning" role="status">
+          <ul className="plain-list">
+            {other.map((w) => (
+              <li key={`${w.code}-${w.pointer ?? ""}`} data-warning={w.code} data-pointer={w.pointer ?? ""}>
+                <Icon name="alert" /> {warningText(t, w)}
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : null}
     </>
+  );
+}
+
+/** Localized text of a charter warning; a thesis warning names the empty part (B0037). */
+function warningText(t: TFunction, w: Warning): string {
+  if (w.code === "charter.thesis_incomplete") {
+    const part = thesisPartOf(w.pointer);
+    if (part) return t("define.charter.warnings.charter__thesis_incomplete", { part: t(THESIS_LABEL[part]) });
+  }
+  return t(`define.charter.warnings.${w.code.replace(/\./g, "__")}`, {
+    defaultValue: t("define.charter.warningGeneric"),
+  });
+}
+
+const THESIS_LABEL: Record<ThesisPart, string> = {
+  thesisChange: "define.charter.thesis.change",
+  thesisOutcomes: "define.charter.thesis.outcomes",
+  thesisBenefits: "define.charter.thesis.benefits",
+  thesisBecause: "define.charter.thesis.because",
+};
+
+/** "/charter/thesisBecause" -> "thesisBecause" (only the four thesis parts). */
+function thesisPartOf(pointer: string | undefined): ThesisPart | null {
+  const last = pointer?.split("/").pop() ?? "";
+  return THESIS_PARTS.find((p) => p === last) ?? null;
+}
+
+/**
+ * The four-part transformation thesis (B0037, REQ-PB-030; F-DG2-203): the composed sentence "If we change […], then
+ * […] will improve, which will create […], because […]" in the reader's language, and each part on its own. A part
+ * is incomplete when it is empty here OR the API flags it (`charter.thesis_incomplete`); while any part is incomplete
+ * no sentence is composed and the thesis is labelled Incomplete, never shown as answered.
+ */
+export function Thesis({ charter, warnings }: { charter: Charter; warnings: readonly Warning[] }) {
+  const { t } = useTranslation();
+  const composed = composeThesis(charter, t("define.charter.thesis.template"));
+  const flagged = new Set(
+    warnings.filter((w) => w.code === "charter.thesis_incomplete").map((w) => thesisPartOf(w.pointer)),
+  );
+  const missing = THESIS_PARTS.filter((p) => composed.missing.includes(p) || flagged.has(p));
+  const complete = missing.length === 0 && composed.sentence !== null;
+  return (
+    <div className="thesis-block" data-thesis={complete ? "complete" : "incomplete"}>
+      {complete ? (
+        <figure className="north-star-figure">
+          <blockquote className="thesis-sentence" data-thesis-sentence>
+            {composed.sentence}
+          </blockquote>
+          <figcaption className="muted small">
+            <span className="lifecycle-chip" data-thesis-state="complete">
+              <Icon name="check" /> {t("define.charter.thesis.complete")}
+            </span>
+          </figcaption>
+        </figure>
+      ) : (
+        <p className="banner banner--warning" role="status" data-thesis-state="incomplete">
+          <span className="status-chip status-chip--unknown">
+            <Icon name="alert" /> {t("define.charter.thesis.incomplete")}
+          </span>{" "}
+          {t("define.charter.thesis.incompleteBody", { n: missing.length })}
+        </p>
+      )}
+      <dl className="thesis">
+        {THESIS_PARTS.map((p) => (
+          <div key={p} data-thesis-part={p} data-part-state={missing.includes(p) ? "incomplete" : "complete"}>
+            <dt>{t(THESIS_LABEL[p])}</dt>
+            <dd>
+              {missing.includes(p) ? (
+                <span className="status-chip status-chip--unknown">
+                  <Icon name="alert" /> {t("define.charter.thesis.partIncomplete")}
+                </span>
+              ) : (
+                <TextCell value={charter[p]} />
+              )}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
+
+/**
+ * Charter field 5 (F-DG2-204, REQ-PB-033): the CURRENT North Star returned by the API. When the API reports that the
+ * charter was saved with a since-superseded statement, the current statement is shown with a Stale notice; a
+ * superseded statement itself is never presented as the current one.
+ */
+export function CharterNorthStar({
+  northStar,
+  warnings,
+}: {
+  northStar: NorthStar | null | undefined;
+  warnings: readonly Warning[];
+}) {
+  const { t } = useTranslation();
+  const locale = useLocale();
+  const ws = useWorkspace();
+  const supersededLink = warnings.some((w) => w.code === "charter.north_star_superseded");
+  if (!northStar) return <Unknown hint={t("define.northStar.notSet")} />;
+  if (northStar.status !== "current") {
+    return (
+      <span data-north-star="stale">
+        <span className="status-chip status-chip--stale">
+          <Icon name="clock" /> {t("common.status.stale")}
+        </span>{" "}
+        <span className="muted">{t("define.charter.northStar.notCurrent")}</span>
+      </span>
+    );
+  }
+  return (
+    <div data-north-star={supersededLink ? "current-relinked" : "current"}>
+      <q className="north-star">{northStar.statement}</q>
+      <span className="block small">
+        <span className="lifecycle-chip" data-north-star-state="current">
+          <Icon name="dot" /> {t("common.recordStatus.current")}
+        </span>{" "}
+        <span className="muted">
+          {t("define.northStar.since", {
+            when: formatDateTime(northStar.createdAt, locale, ws.tr.timezone) ?? t("common.value.unknown"),
+          })}
+        </span>
+      </span>
+      {supersededLink ? (
+        <p className="banner banner--warning small" role="status" data-north-star-link="stale">
+          <span className="status-chip status-chip--stale">
+            <Icon name="clock" /> {t("common.status.stale")}
+          </span>{" "}
+          {t("define.charter.northStar.savedWithSuperseded")}
+        </p>
+      ) : null}
+    </div>
   );
 }
 

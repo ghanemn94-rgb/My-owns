@@ -26,7 +26,7 @@ import type { Baseline, KpiDefinition, NorthStar, Outcome, OutcomeKpi, Strategic
 import { useLocale } from "../../app/locale.ts";
 import { Unknown } from "../../components/Badges.tsx";
 import { Amount } from "../../components/Amount.tsx";
-import { Field, issueCode } from "../../components/Form.tsx";
+import { Dialog, Field, issueCode } from "../../components/Form.tsx";
 import { Icon } from "../../components/Icon.tsx";
 import { RecordStatus, ResultChip } from "../../components/P2Badges.tsx";
 import { PersonName, usePeople, type Person } from "../../components/People.tsx";
@@ -808,6 +808,7 @@ function KpiDefinitionsSection() {
   const { people, byId } = usePeople(ws.tid);
   const refresh = useP2Refresh(ws.tid);
   const [dialog, setDialog] = useState<{ record: KpiDefinition | null } | null>(null);
+  const [activating, setActivating] = useState<KpiDefinition | null>(null);
   const canEdit = ws.can("kpi_definition.edit");
 
   const fields: FieldSpec[] = [
@@ -903,6 +904,17 @@ function KpiDefinitionsSection() {
               <Icon name="pencil" /> {t("common.action.edit")}
               <span className="visually-hidden">: {k.name}</span>
             </button>
+            {k.status === "draft" ? (
+              <button
+                type="button"
+                className="button button--link button--small"
+                data-action="activate-kpi"
+                onClick={() => setActivating(k)}
+              >
+                <Icon name="check" /> {t("kpi.definition.activate.action")}
+                <span className="visually-hidden">: {k.name}</span>
+              </button>
+            ) : null}
             <ArchiveAction
               url={`/api/v1/transformations/${ws.tid}/kpi-definitions/${k.id}`}
               version={k.version}
@@ -963,7 +975,89 @@ function KpiDefinitionsSection() {
           onCancel={() => setDialog(null)}
         />
       ) : null}
+      {activating ? <ActivateKpiDialog kpi={activating} onDone={refresh} onClose={() => setActivating(null)} /> : null}
     </Section>
+  );
+}
+
+/** JSON pointer of an activation precondition (422 kpi_definition.not_measurable) -> its localized reason key. */
+const ACTIVATION_POINTERS = ["unitKind", "polarity", "currency", "unitLabel"] as const;
+
+/** The specific unmet precondition of a refused activation, or null (the generic problem message then stands alone). */
+export function activationReason(t: TFunction, error: unknown): string | null {
+  if (!(error instanceof ApiError) || error.status !== 422) return null;
+  const pointer = error.fieldErrors[0]?.pointer?.replace(/^\//, "") ?? "";
+  const known = ACTIVATION_POINTERS.find((p) => p === pointer);
+  return known ? t(`kpi.definition.activate.missing.${known}`) : null;
+}
+
+/**
+ * Activate a draft KPI definition (POST …/kpi-definitions/{id}/activate, If-Match; F-DG2-201, REQ-PB-017). The server
+ * decides: a 422 states which precondition is unmet (unit kind, polarity, currency or unit label); a 409 refreshes the
+ * list so the next attempt carries the current version. Nothing is activated by the UI on its own.
+ */
+function ActivateKpiDialog({
+  kpi,
+  onDone,
+  onClose,
+}: {
+  kpi: KpiDefinition;
+  onDone: () => Promise<void>;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+  const ws = useWorkspace();
+  const [busy, setBusy] = useState(false);
+  const [serverError, setServerError] = useState<unknown>(null);
+  const reason = activationReason(t, serverError);
+  const activate = async () => {
+    setBusy(true);
+    setServerError(null);
+    try {
+      await api.send(`/api/v1/transformations/${ws.tid}/kpi-definitions/${kpi.id}/activate`, {
+        method: "POST",
+        ifMatch: kpi.version,
+      });
+      await onDone();
+      onClose();
+    } catch (e) {
+      setServerError(e);
+      if (e instanceof ApiError && e.status === 409) await onDone();
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Dialog
+      title={t("kpi.definition.activate.title", { name: kpi.name })}
+      onClose={onClose}
+      footer={
+        <>
+          <button type="button" className="button button--secondary" onClick={onClose} disabled={busy}>
+            {t("common.action.cancel")}
+          </button>
+          <button type="button" className="button button--primary" onClick={() => void activate()} disabled={busy}>
+            {busy ? t("common.state.saving") : t("kpi.definition.activate.confirm")}
+          </button>
+        </>
+      }
+    >
+      <p>{t("kpi.definition.activate.description")}</p>
+      <p className="muted small">{t("kpi.definition.activate.preconditions")}</p>
+      {serverError ? (
+        <div
+          className="banner banner--error"
+          role="alert"
+          data-state={serverError instanceof ApiError && serverError.status === 409 ? "conflict" : "error"}
+          data-problem={serverError instanceof ApiError ? (serverError.code ?? "") : ""}
+        >
+          <p>
+            <Icon name="alert" /> {errorMessage(t, serverError)}
+          </p>
+          {reason ? <p data-activation-reason>{reason}</p> : null}
+        </div>
+      ) : null}
+    </Dialog>
   );
 }
 

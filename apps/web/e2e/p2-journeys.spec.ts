@@ -604,6 +604,279 @@ test("Gates: the approver's decision — 409 when the submission was superseded,
   await office.close();
 });
 
+/** Lead submits a gate through the UI; the Executive Sponsor (dev.office, synthetic SP grant) approves it in the UI. */
+async function submitAndApproveGate(
+  page: Page,
+  browser: Browser,
+  lang: Lang,
+  code: "G2" | "G3",
+  shotPrefix: string,
+): Promise<void> {
+  await page.goto(ws(`gates/${code}`));
+  const readiness = section(page, lang, "gates.readinessTitle");
+  await expect(readiness.locator("[data-criterion]").first()).toBeVisible();
+  const incomplete = await readiness
+    .locator("[data-criterion][data-completeness='incomplete']")
+    .evaluateAll((els) => els.map((e) => `${e.getAttribute("data-criterion")}: ${(e.textContent ?? "").trim()}`));
+  expect(incomplete, `${code} readiness`).toEqual([]);
+  const submit = page.getByRole("button", { name: tr(lang, "gates.submit.action"), exact: true });
+  await expect(submit).toBeEnabled();
+  await shot(page, lang, `${shotPrefix}-ready`);
+  await expectAccessible(page, lang, `${shotPrefix}-ready`);
+  await submit.click();
+  const dialog = page.getByRole("dialog");
+  await dialog
+    .getByLabel(fieldLabel(lang, "gates.submit.note"))
+    .fill(`Synthetic ${code} submission for a demo decision`);
+  await dialog.getByRole("button", { name: tr(lang, "gates.submit.confirm"), exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.locator("[data-gate-status='submitted']").first()).toBeVisible();
+
+  const office = await asUser(browser, lang, "dev.office");
+  const sp = office.page;
+  const foreign = trackRequests(sp);
+  await sp.goto(ws(`gates/${code}`));
+  await sp.getByRole("button", { name: tr(lang, "gates.decision.action"), exact: true }).click();
+  const decision = sp.getByRole("dialog");
+  await expect(decision.getByRole("heading", { name: tr(lang, "gates.decision.title", { code, n: 1 }) })).toBeVisible();
+  await decision.getByRole("radio", { name: tr(lang, "gates.outcome.approved"), exact: true }).check();
+  await decision
+    .getByLabel(fieldLabel(lang, "gates.decision.rationale"))
+    .fill(`Synthetic demo rationale for ${code}: readiness complete.`);
+  await decision.getByRole("button", { name: tr(lang, "gates.decision.confirm"), exact: true }).click();
+  await expect(decision).toHaveCount(0);
+  await expect(sp.locator("[data-gate-status='approved']").first()).toBeVisible();
+  await shot(sp, lang, `${shotPrefix}-approved`);
+  await expectAccessible(sp, lang, `${shotPrefix}-approved`);
+  expect(foreign).toEqual([]);
+  await office.close();
+}
+
+test("Define → G2: activate a KPI, pass the good outcome test, add a guardrail, compose the thesis; G2 is decided", async ({
+  page,
+  browser,
+  playwright,
+}, info) => {
+  const lang = langOf(info);
+  const foreign = trackRequests(page);
+  const lead = await apiSession(playwright, "dev.lead");
+  // A KPI that cannot be activated yet: unit kind "other" without a unit label (the server says why; F-DG2-201).
+  await lead.call("POST", `/api/v1/transformations/${tid}/kpi-definitions`, {
+    name: "Synthetic unlabelled KPI",
+    unitKind: "other",
+    polarity: "higher_is_better",
+    ownerUserId: DEV_USERS.lead,
+  });
+  await signIn(page, lang, "dev.lead");
+  await page.goto(ws("define"));
+
+  // 1. KPI activation through the UI: 422 with its reason, then a draft KPI activated with If-Match.
+  const dict = section(page, lang, "kpi.definition.title");
+  const unlabelled = dict
+    .getByRole("row")
+    .filter({ has: page.getByRole("rowheader", { name: "Synthetic unlabelled KPI" }) });
+  await expect(unlabelled.locator("[data-status='draft']")).toBeVisible();
+  await unlabelled
+    .getByRole("button", { name: rowAction(lang, "kpi.definition.activate.action", "Synthetic unlabelled KPI") })
+    .click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("button", { name: tr(lang, "kpi.definition.activate.confirm"), exact: true }).click();
+  const refused = dialog.locator("[data-problem='kpi_definition.not_measurable']");
+  await expect(refused).toContainText(tr(lang, "problems.kpi_definition__not_measurable"));
+  await expect(refused.locator("[data-activation-reason]")).toHaveText(
+    tr(lang, "kpi.definition.activate.missing.unitLabel"),
+  );
+  await shot(page, lang, "p2-19-kpi-activation-refused");
+  await expectAccessible(page, lang, "p2-kpi-activation-refused");
+  await dialog.getByRole("button", { name: tr(lang, "common.action.cancel"), exact: true }).click();
+  await expect(unlabelled.locator("[data-status='draft']")).toBeVisible();
+
+  const billing = dict
+    .getByRole("row")
+    .filter({ has: page.getByRole("rowheader", { name: "Synthetic billing error rate" }) });
+  await expect(billing.locator("[data-status='draft']")).toBeVisible();
+  await billing
+    .getByRole("button", { name: rowAction(lang, "kpi.definition.activate.action", "Synthetic billing error rate") })
+    .click();
+  await dialog.getByRole("button", { name: tr(lang, "kpi.definition.activate.confirm"), exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(billing.locator("[data-status='active']")).toContainText(tr(lang, "common.recordStatus.active"));
+  await expect(
+    billing.getByRole("button", {
+      name: rowAction(lang, "kpi.definition.activate.action", "Synthetic billing error rate"),
+    }),
+  ).toHaveCount(0);
+  await billing.scrollIntoViewIfNeeded();
+  await shot(page, lang, "p2-20-kpi-activated");
+  await expectAccessible(page, lang, "p2-kpi-activated");
+
+  // 2. The outcome is reworded as a result, owned, attested and given its causal chain: the test passes.
+  const outcomes = section(page, lang, "define.outcomes.title");
+  await outcomes
+    .getByRole("button", { name: rowAction(lang, "common.action.edit", "Launch the synthetic billing app") })
+    .click();
+  await dialog
+    .getByLabel(fieldLabel(lang, "define.outcomes.statement"))
+    .fill("Synthetic retail bills are right the first time");
+  await dialog.getByLabel(fieldLabel(lang, "define.outcomes.owner")).selectOption(DEV_USERS.lead);
+  await dialog.getByLabel(fieldLabel(lang, "define.outcomes.specificConfirmed")).selectOption("yes");
+  await dialog.getByLabel(fieldLabel(lang, "define.outcomes.relevantConfirmed")).selectOption("yes");
+  await dialog
+    .getByLabel(fieldLabel(lang, "define.outcomes.causalChain"))
+    .fill("Synthetic: validated orders -> fewer billing errors -> lower cost to serve");
+  await dialog.getByRole("button", { name: tr(lang, "common.action.save"), exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  const card = outcomes.locator("[data-good-outcome='pass']");
+  await expect(card).toHaveCount(1);
+  await expect(card.locator("tr[data-criterion][data-result='pass']")).toHaveCount(5);
+  await expect(card).toContainText(tr(lang, "define.goodOutcome.passes"));
+  await card.scrollIntoViewIfNeeded();
+  await shot(page, lang, "p2-21-good-outcome-pass");
+  await expectAccessible(page, lang, "p2-good-outcome-pass");
+
+  // 3. A strategic guardrail.
+  const guardrails = section(page, lang, "define.guardrails.title");
+  await guardrails.getByRole("button", { name: tr(lang, "define.guardrails.add"), exact: true }).click();
+  await dialog.getByLabel(fieldLabel(lang, "define.guardrails.titleField")).fill("Synthetic: no customer price rise");
+  await dialog.getByLabel(fieldLabel(lang, "define.guardrails.category")).selectOption({ index: 1 });
+  await dialog
+    .getByLabel(fieldLabel(lang, "define.guardrails.statement"))
+    .fill("Synthetic: the billing change must not raise any retail tariff.");
+  await dialog.getByRole("button", { name: tr(lang, "common.action.create"), exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(guardrails.getByRole("rowheader", { name: "Synthetic: no customer price rise" })).toBeVisible();
+
+  // 4. The thesis on the charter: empty parts are Incomplete; with the fourth part stated the sentence is composed.
+  await page.goto(ws("charter"));
+  const thesis = section(page, lang, "define.charter.thesis.title");
+  await expect(thesis.locator("[data-thesis='incomplete']")).toBeVisible();
+  await expect(thesis.locator("[data-part-state='incomplete']")).toHaveCount(4);
+  const fields = section(page, lang, "define.charter.fieldsTitle");
+  await fields.getByRole("button", { name: tr(lang, "define.charter.edit"), exact: true }).click();
+  await page.getByLabel(fieldLabel(lang, "define.charter.thesis.change")).fill("the retail order-to-bill journey");
+  await page.getByLabel(fieldLabel(lang, "define.charter.thesis.outcomes")).fill("first-time-right bills");
+  await page.getByLabel(fieldLabel(lang, "define.charter.thesis.benefits")).fill("a lower cost to serve");
+  await page
+    .getByLabel(fieldLabel(lang, "define.northStar.title"))
+    .selectOption({ label: "Every synthetic retail bill is right the first time" });
+  await page.getByLabel(fieldLabel(lang, "define.charter.changeSummary")).fill("Synthetic: thesis drafted");
+  await page.getByRole("button", { name: tr(lang, "define.charter.saveVersion"), exact: true }).click();
+  await expect(thesis.locator("[data-thesis='incomplete']")).toBeVisible();
+  await expect(thesis.locator("[data-thesis-sentence]")).toHaveCount(0);
+  const because = thesis.locator("[data-thesis-part='thesisBecause']");
+  await expect(because).toHaveAttribute("data-part-state", "incomplete");
+  await expect(because).toContainText(tr(lang, "define.charter.thesis.partIncomplete"));
+  await expect(thesis.locator("[data-part-state='complete']")).toHaveCount(3);
+  await expect(page.locator("[data-warning='charter.thesis_incomplete']")).toHaveCount(1);
+  await thesis.scrollIntoViewIfNeeded();
+  await shot(page, lang, "p2-22-charter-thesis-incomplete");
+  await expectAccessible(page, lang, "p2-charter-thesis-incomplete");
+
+  await fields.getByRole("button", { name: tr(lang, "define.charter.edit"), exact: true }).click();
+  await page
+    .getByLabel(fieldLabel(lang, "define.charter.thesis.because"))
+    .fill("billing rework drives most of the cost to serve");
+  await page.getByLabel(fieldLabel(lang, "define.charter.changeSummary")).fill("Synthetic: thesis completed");
+  await page.getByRole("button", { name: tr(lang, "define.charter.saveVersion"), exact: true }).click();
+  const sentence = tr(lang, "define.charter.thesis.template")
+    .replace("{change}", "the retail order-to-bill journey")
+    .replace("{outcomes}", "first-time-right bills")
+    .replace("{benefits}", "a lower cost to serve")
+    .replace("{because}", "billing rework drives most of the cost to serve");
+  await expect(thesis.locator("[data-thesis-sentence]")).toHaveText(sentence);
+  await expect(thesis.locator("[data-part-state='complete']")).toHaveCount(4);
+  await expect(page.locator("[data-warning='charter.thesis_incomplete']")).toHaveCount(0);
+  await thesis.scrollIntoViewIfNeeded();
+  await shot(page, lang, "p2-23-charter-thesis-composed");
+  await expectAccessible(page, lang, "p2-charter-thesis-composed");
+
+  // 5. Refining the North Star: the charter shows the CURRENT statement and flags the superseded link as Stale.
+  await page.goto(ws("define"));
+  await page.getByRole("button", { name: tr(lang, "define.northStar.refine"), exact: true }).click();
+  await page
+    .getByLabel(fieldLabel(lang, "define.northStar.statement"))
+    .fill("Every synthetic retail bill is right the first time, every month");
+  await page.getByRole("button", { name: tr(lang, "define.northStar.save"), exact: true }).click();
+  await expect(page.locator("[data-north-star='current']")).toContainText("every month");
+  await page.goto(ws("charter"));
+  const five = fields.locator("li.charter-field").nth(4);
+  await expect(five).toContainText("Every synthetic retail bill is right the first time, every month");
+  await expect(five.locator("[data-north-star-state='current']")).toContainText(
+    tr(lang, "common.recordStatus.current"),
+  );
+  await expect(five.locator("[data-north-star-link='stale']")).toContainText(tr(lang, "common.status.stale"));
+  await expect(five.locator("q.north-star")).toHaveText(
+    "Every synthetic retail bill is right the first time, every month",
+  );
+  await shot(page, lang, "p2-24-charter-north-star-current");
+  await expectAccessible(page, lang, "p2-charter-north-star-current");
+
+  // 6. The Executive Sponsor (not the target's author) approves the T02 trajectory in the UI.
+  const office = await asUser(browser, lang, "dev.office");
+  const t02 = section(office.page, lang, "kpi.t02.title");
+  await office.page.goto(ws("define"));
+  await t02.getByRole("button", { name: rowAction(lang, "kpi.t02.approve", "Synthetic billing error rate") }).click();
+  const approve = office.page.getByRole("dialog");
+  await approve.getByRole("button", { name: tr(lang, "kpi.t02.approve"), exact: true }).click();
+  await expect(approve).toHaveCount(0);
+  await expect(t02.locator("[data-trajectory='approved']")).toBeVisible();
+  await shot(office.page, lang, "p2-25-trajectory-approved");
+  await expectAccessible(office.page, lang, "p2-trajectory-approved");
+  await office.close();
+
+  // 7. G2 readiness is complete through native workflows; submitted by the lead, decided by the Sponsor.
+  await submitAndApproveGate(page, browser, lang, "G2", "p2-26-g2");
+  await page.reload();
+  await expect(page.locator("main#main .page-header__subtitle")).toContainText(
+    tr(lang, "transformations.phase.design"),
+  );
+  expect(foreign).toEqual([]);
+});
+
+test("Design → G3: the target state is complete and G3 is decided by the Sponsor", async ({
+  page,
+  browser,
+  playwright,
+}, info) => {
+  const lang = langOf(info);
+  const foreign = trackRequests(page);
+  const lead = await apiSession(playwright, "dev.lead");
+  const base = `/api/v1/transformations/${tid}`;
+  // Target-state records through the real API (their screens are exercised by the Design journey above).
+  const canvas = await lead.call<{ cells: { cell: { dimensionCode: string; version: number } }[] }>(
+    "GET",
+    `${base}/tom-canvas`,
+  );
+  for (const { cell } of canvas.cells)
+    await lead.call(
+      "PATCH",
+      `${base}/tom-canvas/${cell.dimensionCode}`,
+      { targetDesign: `Synthetic target design: ${cell.dimensionCode}`, ownerUserId: DEV_USERS.lead, status: "ready" },
+      { ifMatch: cell.version },
+    );
+  await lead.call("POST", `${base}/tom-gaps`, {
+    dimensionCode: canvas.cells[0]!.cell.dimensionCode,
+    gap: "Synthetic: no order validation",
+    ownerUserId: DEV_USERS.lead,
+  });
+  await lead.call("POST", `${base}/capability-heatmap`, {
+    name: "Synthetic order validation",
+    currentLevel: 2,
+    targetLevel: 4,
+    sourcingNeed: "build",
+  });
+  await lead.call("POST", `${base}/journeys`, {
+    name: "Synthetic future order-to-bill",
+    kind: "journey",
+    state: "future",
+  });
+  await signIn(page, lang, "dev.lead");
+  await submitAndApproveGate(page, browser, lang, "G3", "p2-27-g3");
+  await page.reload();
+  await expect(page.locator("[data-gate-status='approved']").first()).toBeVisible();
+  expect(foreign).toEqual([]);
+});
+
 /** B0018 of the playbook (docs/source/playbook.md), copied verbatim: the Team screen shows exactly this text (en). */
 const PLAYBOOK_ACCOUNTABILITY: Record<string, string> = {
   SP: "Owns enterprise outcome, removes constraints, approves major trade-offs.",
@@ -694,6 +967,8 @@ test("read-only auditor (AUD): every P2 screen without write controls; Unknown a
     "define.outcomes.add",
     "kpi.t02.add",
     "kpi.definition.add",
+    "kpi.definition.activate.action",
+    "kpi.t02.approve",
     "define.guardrails.add",
     "design.gaps.add",
     "design.heatmap.add",

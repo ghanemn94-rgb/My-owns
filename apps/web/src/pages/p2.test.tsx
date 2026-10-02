@@ -364,6 +364,108 @@ describe("Define", () => {
   });
 });
 
+describe("Define: KPI activation (F-DG2-201)", () => {
+  const draftKpi = (over: Record<string, unknown> = {}) => ({
+    id: "01920000-0000-7000-c000-000000000009",
+    organizationId: outcome().organizationId,
+    transformationId: TR_ID,
+    name: "Synthetic first-time-right rate",
+    description: null,
+    businessPurpose: null,
+    unitKind: "percentage",
+    unitLabel: "%",
+    currency: null,
+    polarity: "higher_is_better",
+    frequency: "monthly",
+    isLeading: false,
+    dataSource: null,
+    ownerUserId: USER_ID,
+    stewardUserId: null,
+    status: "draft",
+    archivedAt: null,
+    archivedBy: null,
+    archiveReason: null,
+    version: 3,
+    createdAt: "2026-09-30T09:00:00Z",
+    createdBy: USER_ID,
+    updatedAt: "2026-09-30T09:00:00Z",
+    updatedBy: USER_ID,
+    ...over,
+  });
+
+  it("offers Activate on a draft KPI, states the unmet precondition on 422, then activates with If-Match", async () => {
+    let answer: "refuse" | "ok" = "refuse";
+    let current = draftKpi();
+    const { requests } = render(`/transformations/${TR_ID}/define`, [
+      ...base(leadGrants()),
+      route("GET", /\/north-star$/, () => problem(404, "north_star_not_found")),
+      route("GET", new RegExp(`${esc(TR)}/kpi-definitions(\\?|$)`), () => page([current])),
+      route("POST", /\/kpi-definitions\/[^/]+\/activate$/, () => {
+        if (answer === "refuse")
+          return problem(422, "kpi_definition.not_measurable", {
+            errors: [{ pointer: "/polarity", code: "kpi_definition.not_measurable", message: "x" }],
+          });
+        current = draftKpi({ status: "active", version: 4 });
+        return { status: 200, body: current };
+      }),
+    ]);
+    const dict = await screen.findByRole("region", { name: "KPI definitions" });
+    const row = (await within(dict).findByRole("rowheader", { name: "Synthetic first-time-right rate" })).closest(
+      "tr",
+    )!;
+    expect(within(row).getByText("Draft – not submitted")).toBeTruthy();
+    fireEvent.click(within(row).getByRole("button", { name: /^Activate/ }));
+    const dialog = await screen.findByRole("dialog", { name: "Activate KPI: Synthetic first-time-right rate" });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Activate KPI" }));
+    const alert = await within(dialog).findByRole("alert");
+    expect(alert.textContent).toContain("This KPI is not measurable yet, so it cannot be activated.");
+    expect(alert.textContent).toContain("Not activated: the KPI has no polarity.");
+    const post = requests.find((r) => r.method === "POST" && r.url.endsWith("/activate"))!;
+    expect(post.headers["if-match"]).toBe('"3"');
+    expect(post.body).toBeUndefined();
+    answer = "ok";
+    fireEvent.click(within(dialog).getByRole("button", { name: "Activate KPI" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() => expect(within(dict).getByText("Active")).toBeTruthy());
+    expect(within(dict).queryByRole("button", { name: /^Activate/ })).toBeNull();
+  });
+
+  it("Arabic: the Activate action and the 422 reason are in Arabic", async () => {
+    render(
+      `/transformations/${TR_ID}/define`,
+      [
+        ...base(leadGrants(), "ar"),
+        route("GET", /\/north-star$/, () => problem(404, "north_star_not_found")),
+        list("kpi-definitions", [draftKpi({ unitKind: "other", unitLabel: null, polarity: "within_band" })]),
+        route("POST", /\/activate$/, () =>
+          problem(422, "kpi_definition.not_measurable", {
+            errors: [{ pointer: "/unitLabel", code: "kpi_definition.not_measurable", message: "x" }],
+          }),
+        ),
+      ],
+      "ar",
+    );
+    const activate = await screen.findByRole("button", { name: /^تفعيل/ });
+    expect(document.documentElement.dir).toBe("rtl");
+    fireEvent.click(activate);
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: "تفعيل المؤشر" }));
+    const alert = await within(dialog).findByRole("alert");
+    expect(alert.textContent).toContain("تسمية الوحدة");
+  });
+
+  it("an active KPI shows Active and offers no Activate", async () => {
+    render(`/transformations/${TR_ID}/define`, [
+      ...base(leadGrants()),
+      route("GET", /\/north-star$/, () => problem(404, "north_star_not_found")),
+      list("kpi-definitions", [draftKpi({ status: "active" })]),
+    ]);
+    const dict = await screen.findByRole("region", { name: "KPI definitions" });
+    await within(dict).findByText("Active");
+    expect(within(dict).queryByRole("button", { name: /^Activate/ })).toBeNull();
+  });
+});
+
 // ------------------------------------------------------------------------------------------------ Charter
 
 describe("Charter", () => {
@@ -385,6 +487,144 @@ describe("Charter", () => {
     expect(within(scope).getByText("Scope question 1?")).toBeTruthy();
     expect(within(scope).getByText("No baseline has a value, a source and a date.")).toBeTruthy();
     expect(within(scope).getByText("Open decisions have a named owner.")).toBeTruthy();
+  });
+
+  it("thesis: an empty part is Incomplete and no sentence is composed (F-DG2-203)", async () => {
+    const view = charterView({}, [outcome()]);
+    view.warnings.push(
+      ...["thesisOutcomes", "thesisBenefits", "thesisBecause"].map((p) => ({
+        code: "charter.thesis_incomplete",
+        message: "x",
+        pointer: `/charter/${p}`,
+      })),
+    );
+    render(`/transformations/${TR_ID}/charter`, [
+      ...base(leadGrants()),
+      route("GET", new RegExp(`${esc(TR)}/charter$`), () => ({ status: 200, body: view })),
+      list("charter/versions", []),
+    ]);
+    const thesis = await screen.findByRole("region", { name: "Transformation thesis" });
+    expect(thesis.querySelector("[data-thesis='incomplete']")).toBeTruthy();
+    expect(thesis.querySelector("[data-thesis-sentence]")).toBeNull();
+    expect(within(thesis).getByText(/empty parts 3 of 4/)).toBeTruthy();
+    expect(thesis.querySelector("[data-thesis-part='thesisChange']")!.getAttribute("data-part-state")).toBe("complete");
+    for (const p of ["thesisOutcomes", "thesisBenefits", "thesisBecause"]) {
+      const part = thesis.querySelector(`[data-thesis-part='${p}']`)!;
+      expect(part.getAttribute("data-part-state")).toBe("incomplete");
+      expect(part.textContent).toContain("Incomplete – not stated yet");
+      expect(part.textContent).not.toContain("None");
+    }
+    expect(
+      screen.getByText("The transformation thesis is incomplete: “because (evidence / causal logic)” is empty."),
+    ).toBeTruthy();
+  });
+
+  it("thesis: a part the API flags incomplete is never shown as answered", async () => {
+    const view = charterView({
+      thesisOutcomes: "first-time-right bills",
+      thesisBenefits: "lower cost to serve",
+      thesisBecause: "rework drives cost",
+    });
+    view.warnings.push({ code: "charter.thesis_incomplete", message: "x", pointer: "/charter/thesisBecause" });
+    render(`/transformations/${TR_ID}/charter`, [
+      ...base(leadGrants()),
+      route("GET", new RegExp(`${esc(TR)}/charter$`), () => ({ status: 200, body: view })),
+      list("charter/versions", []),
+    ]);
+    const thesis = await screen.findByRole("region", { name: "Transformation thesis" });
+    expect(thesis.querySelector("[data-thesis='incomplete']")).toBeTruthy();
+    expect(thesis.querySelector("[data-thesis-part='thesisBecause']")!.getAttribute("data-part-state")).toBe(
+      "incomplete",
+    );
+  });
+
+  it("thesis: the four parts compose the B0037 sentence (EN and AR)", async () => {
+    const over = {
+      thesisChange: "the retail onboarding journey",
+      thesisOutcomes: "first-time-right bills",
+      thesisBenefits: "lower cost to serve.",
+      thesisBecause: "rework drives most billing cost",
+    };
+    render(`/transformations/${TR_ID}/charter`, [
+      ...base(leadGrants()),
+      route("GET", new RegExp(`${esc(TR)}/charter$`), () => ({ status: 200, body: charterView(over, []) })),
+      list("charter/versions", []),
+    ]);
+    const thesis = await screen.findByRole("region", { name: "Transformation thesis" });
+    expect(thesis.querySelector("[data-thesis-sentence]")!.textContent).toBe(
+      "If we change the retail onboarding journey, then first-time-right bills will improve, which will create lower cost to serve, because rework drives most billing cost.",
+    );
+    expect(thesis.querySelectorAll("[data-part-state='complete']")).toHaveLength(4);
+    cleanup();
+    render(
+      `/transformations/${TR_ID}/charter`,
+      [
+        ...base(leadGrants(), "ar"),
+        route("GET", new RegExp(`${esc(TR)}/charter$`), () => ({ status: 200, body: charterView(over, []) })),
+        list("charter/versions", []),
+      ],
+      "ar",
+    );
+    const ar = await screen.findByRole("region", { name: "فرضية التحوّل" });
+    expect(ar.querySelector("[data-thesis-sentence]")!.textContent).toBe(
+      "إذا غيّرنا the retail onboarding journey، فستتحسّن first-time-right bills، مما سيحقق lower cost to serve، لأن rework drives most billing cost.",
+    );
+  });
+
+  it("North Star (field 5): the current statement; a superseded link is flagged Stale (F-DG2-204)", async () => {
+    const ns = {
+      id: "01920000-0000-7000-d000-000000000002",
+      organizationId: "x",
+      transformationId: TR_ID,
+      statement: "Every synthetic bill is right the first time, every time",
+      status: "current" as const,
+      supersededAt: null,
+      version: 1,
+      createdAt: "2026-09-30T09:00:00Z",
+      createdBy: USER_ID,
+      updatedAt: "2026-09-30T09:00:00Z",
+      updatedBy: USER_ID,
+    };
+    const view = { ...charterView({ northStarId: "01920000-0000-7000-d000-000000000001" }, []), northStar: ns };
+    view.warnings.push({ code: "charter.north_star_superseded", message: "x", pointer: "/northStar" });
+    render(`/transformations/${TR_ID}/charter`, [
+      ...base(leadGrants()),
+      route("GET", new RegExp(`${esc(TR)}/charter$`), () => ({ status: 200, body: view })),
+      list("charter/versions", []),
+    ]);
+    const fields = await screen.findByRole("region", { name: "Charter fields (14)" });
+    const five = fields.querySelectorAll("li.charter-field")[4]!;
+    expect(five.textContent).toContain("Every synthetic bill is right the first time, every time");
+    expect(five.textContent).toContain("Current");
+    expect(five.querySelector("[data-north-star-link='stale']")!.textContent).toContain("Stale");
+  });
+
+  it("North Star (field 5): a superseded statement is never shown as the current one", async () => {
+    const ns = {
+      id: "01920000-0000-7000-d000-000000000001",
+      organizationId: "x",
+      transformationId: TR_ID,
+      statement: "Old synthetic sentence",
+      status: "superseded" as const,
+      supersededAt: "2026-09-30T10:00:00Z",
+      version: 2,
+      createdAt: "2026-09-30T09:00:00Z",
+      createdBy: USER_ID,
+      updatedAt: "2026-09-30T10:00:00Z",
+      updatedBy: USER_ID,
+    };
+    render(`/transformations/${TR_ID}/charter`, [
+      ...base(leadGrants()),
+      route("GET", new RegExp(`${esc(TR)}/charter$`), () => ({
+        status: 200,
+        body: { ...charterView({}, []), northStar: ns },
+      })),
+      list("charter/versions", []),
+    ]);
+    const fields = await screen.findByRole("region", { name: "Charter fields (14)" });
+    const five = fields.querySelectorAll("li.charter-field")[4]!;
+    expect(five.textContent).not.toContain("Old synthetic sentence");
+    expect(five.querySelector("[data-north-star='stale']")!.textContent).toContain("Stale");
   });
 
   it("compares a version with the previous one", async () => {
@@ -725,6 +965,34 @@ describe("read-only auditor (AUD)", () => {
         list("baselines", [baseline()]),
         list("value-pools", [valuePool()]),
         list("outcomes", [outcome()]),
+        list("kpi-definitions", [
+          {
+            id: "01920000-0000-7000-c000-000000000009",
+            organizationId: outcome().organizationId,
+            transformationId: TR_ID,
+            name: "Synthetic draft KPI",
+            description: null,
+            businessPurpose: null,
+            unitKind: "count",
+            unitLabel: null,
+            currency: null,
+            polarity: "higher_is_better",
+            frequency: "monthly",
+            isLeading: false,
+            dataSource: null,
+            ownerUserId: null,
+            stewardUserId: null,
+            status: "draft",
+            archivedAt: null,
+            archivedBy: null,
+            archiveReason: null,
+            version: 1,
+            createdAt: "2026-09-30T09:00:00Z",
+            createdBy: OTHER_USER,
+            updatedAt: "2026-09-30T09:00:00Z",
+            updatedBy: OTHER_USER,
+          },
+        ]),
         list("evidence", [evidence({ createdBy: OTHER_USER })]),
         route("GET", /\/api\/v1\/decisions\?/, () => page([decision({ ownerUserId: USER_ID })])),
         route("GET", /\/charter$/, () => ({ status: 200, body: charterView() })),
@@ -740,7 +1008,7 @@ describe("read-only auditor (AUD)", () => {
       await waitFor(() => expect(document.querySelectorAll("[data-state='loading']")).toHaveLength(0));
       const main = document.querySelector("main#main")!;
       const writeWords =
-        /^(Add|Edit|Create|Archive|Save|Validate|Review|Upload|Link to record|Submit|Record decision|Approve|Convert|Configure|Set North Star|Refine|Plan workshop|Fill in|Remove link|Assign(?![a-z]))/;
+        /^(Add|Edit|Create|Archive|Save|Validate|Review|Upload|Link to record|Submit|Record decision|Approve|Convert|Configure|Set North Star|Refine|Plan workshop|Fill in|Remove link|Activate|Assign(?![a-z]))/;
       const offending = [...main.querySelectorAll("button")]
         .filter((b) => !b.disabled)
         .map((b) => (b.textContent ?? "").trim())
