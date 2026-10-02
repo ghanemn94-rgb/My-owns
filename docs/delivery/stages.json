@@ -820,7 +820,7 @@
       "id": "DG2",
       "stage": "P2",
       "name": "Diagnose define and design",
-      "state": "BUILDING",
+      "state": "REVIEWING",
       "depends_on": [
         "DG1"
       ],
@@ -839,12 +839,25 @@
         ]
       },
       "candidate": {
-        "candidate_id": null,
-        "source_commit": null,
-        "frozen_at": null,
-        "manifest_path": null
+        "candidate_id": "sha256:8ef26b710e343ed3535934904bccd677eab87894bb2cb62d5fb7677d6a95355b",
+        "source_commit": "98a8d990a93e5a82c30b1b8f3b1e0f44c689e917",
+        "frozen_at": "2026-10-02T03:55:51Z",
+        "manifest_path": "docs/delivery/candidates/DG2/8ef26b710e343ed3.manifest.json"
       },
-      "review_rounds": [],
+      "review_rounds": [
+        {
+          "round": 1,
+          "candidate_id": "sha256:8ef26b710e343ed3535934904bccd677eab87894bb2cb62d5fb7677d6a95355b",
+          "frozen_at": "2026-10-02T03:55:51Z",
+          "source_commit": "98a8d990a93e5a82c30b1b8f3b1e0f44c689e917",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG2/round-1/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG2/round-1/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG2/round-1/qa-verifier.json"
+          },
+          "note": "DG2 gate review round 1 on candidate 8ef26b71 (513 files, source 98a8d99). Full P2 build integrated and green: BE (transformations/workflows/evidence/methodology, gates G1-G3), KBE (kpi/baselines/T02/value-pools + decimal value helpers), BE2 (REQ-PB-036 good-outcome test), FE+FE2 (7 bilingual screens, REQ-PB-003 verbatim mode guidance, Team screen). All 160 contract ops routed+exercised (p2-pending lists empty); unit 422+web 153, integration 414, e2e 38 (EN+AR). Reviewers verify the 32 DG2-final requirements; live-registry (D-057), live-CI (D-058) and keycloak (D-049) are documented environmental residuals, never BLOCKED gate checks."
+        }
+      ],
       "gate_record": "docs/delivery/gates/DG2.json",
       "blockers": [],
       "history": [
@@ -856,6 +869,11 @@
           "state": "BUILDING",
           "at": "2026-10-01T23:55:00Z",
           "note": "DG1 APPROVED and DG2 unblocked (validate --historical --stage DG1 exit 0). Begin P2 (Diagnose, define and design) on branch claude/mobily-transformation-platform-regate. Scope: 32 DG2-final requirements covering the diagnosis-and-direction entity group (DiagnosticFinding, Baseline, Evidence, ValuePool, Outcome, StrategicGuardrail; REQ-S16-013), the Transformation Charter (14 fields, versioned; REQ-PB-029), templates T01 Current-State Diagnostic / T02 Outcome & KPI Tree / T03 TOM Gap Matrix / T04 Design Decision Log (REQ-PB-026/034/039/043), the ten-dimension TOM canvas + capability heatmap + journey/process maps (REQ-PB-024/025/041/042), North Star + outcome test + strategic guardrails (REQ-PB-033/035/036/037), the six diagnostic workstreams (REQ-PB-023), role/record-level access for the expanded role set incl. read-only auditor (REQ-S10-001), unverified-evidence handling (REQ-S13-012), the end-to-end Diagnose/Define/Design phase procedures and product gates G1/G2/G3 (REQ-S04-003/004/005, REQ-DLV-034). Serial-first: solution-architect (T-DG2-ARCH-01) extends the ERD/migrations/OpenAPI, the shared decision + product-gate model (G1-G3, kept separate from engineering DG gates), the role catalogue and the P2 work split; then backend/frontend/kpi-benefits build in parallel."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-10-02T03:56:00Z",
+          "note": "P2 build complete and integrated green across six implementer runs (architect ERD/migrations/OpenAPI + ADRs 0015-0020; BE backend + gates G1-G3; KBE kpi/value helpers; BE2 REQ-PB-036 good-outcome test; FE + FE2 the 7 bilingual screens incl. REQ-PB-003 verbatim mode guidance and the Team screen). Orchestrator verification on the frozen tree: typecheck/build/lint/openapi exit 0, unit 422 + web 153, contrast PASS, integration 414/414, e2e 38 (chromium-en + chromium-ar), validate --historical --stage DG1 exit 0. Candidate frozen as 8ef26b71 (513 files, source 98a8d99) for the DG2 gate review round 1; three independent reviewers (domain, code-security, qa) run next."
         }
       ]
     },
