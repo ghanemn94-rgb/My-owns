@@ -307,3 +307,96 @@ describe("submission and decision (business approval by a person)", () => {
     expect([notHolder.status, notHolder.body.code]).toEqual([422, "gate.approver_not_role_holder"]);
   });
 });
+
+describe("G2 Direction readiness (REQ-PB-036 failing outcomes, REQ-PB-037 guardrails)", () => {
+  type Missing = { code: string; message: string; pointer?: string };
+  const g2 = async (p: P2World) => {
+    const res = await call(api.app, "GET", gateUrl(p, "G2"), { session: p.lead.session });
+    expect(res.status).toBe(200);
+    return new Map(
+      (res.body.criteria as (Omit<Criterion, "missing"> & { missing: Missing[] })[]).map((c) => [c.key, c]),
+    );
+  };
+
+  it("lists every outcome whose good outcome test is not passing (ids + criteria); zero guardrails blocks submission", async () => {
+    const p = await setupP2World(api, w);
+    const T = `/api/v1/transformations/${p.transformationId}`;
+    const launch = await call(api.app, "POST", `${T}/outcomes`, {
+      session: p.lead.session,
+      body: { statement: "Launch new app", isTopOutcome: true, topRank: 1 },
+    });
+    const good = await call(api.app, "POST", `${T}/outcomes`, {
+      session: p.lead.session,
+      body: {
+        statement: "Cut postpaid churn from 1.8% to 1.2% monthly (synthetic)",
+        ownerUserId: p.sponsor.id,
+        isTopOutcome: true,
+        topRank: 2,
+        specificConfirmed: true,
+        strategicallyRelevantConfirmed: true,
+        causalChain: "Proactive retention offers -> fewer port-outs -> lower churn (synthetic)",
+      },
+    });
+    const sub = await call(api.app, "POST", `${T}/outcomes`, {
+      session: p.lead.session,
+      body: { statement: "Retention offers reach 80% of at-risk lines (synthetic)", parentOutcomeId: good.body.id },
+    });
+    const kpi = await call(api.app, "POST", `${T}/kpi-definitions`, {
+      session: p.lead.session,
+      body: { name: "Monthly postpaid churn (synthetic)", unitKind: "percentage", polarity: "lower_is_better" },
+    });
+    const t02 = await call(api.app, "POST", `${T}/outcome-kpis`, {
+      session: p.lead.session,
+      body: { outcomeId: good.body.id, kpiDefinitionId: kpi.body.id, targetDate: "2027-12-31" },
+    });
+    expect([launch.status, good.status, sub.status, kpi.status, t02.status]).toEqual([201, 201, 201, 201, 201]);
+    expect(good.body.goodOutcomePass).toBe(false); // before the T02 row
+    expect(
+      (await call(api.app, "GET", `${T}/outcomes/${good.body.id}`, { session: p.lead.session })).body.goodOutcomePass,
+    ).toBe(true);
+
+    const c = await g2(p);
+    const tree = c.get("g2.outcome_tree")!;
+    expect(tree.completeness).toBe("incomplete");
+    const failing = tree.missing.filter((m) => m.code === "g2.outcome_tree.good_outcome_test_not_passing");
+    // Every non-archived outcome that does not pass (top or not), never the passing one.
+    expect(failing.map((m) => m.pointer).sort()).toEqual(
+      [`/outcomes/${launch.body.id}`, `/outcomes/${sub.body.id}`].sort(),
+    );
+    expect(failing.find((m) => m.pointer === `/outcomes/${launch.body.id}`)!.message).toBe(
+      'Outcome "Launch new app" does not pass the good outcome test: specific (fail), measurable (fail), ' +
+        "strategically_relevant (unknown), owned_by_business_leader (fail), causal_chain (unknown).",
+    );
+    // REQ-PB-037: zero active guardrails -> g2.guardrails incomplete.
+    expect(c.get("g2.guardrails")!.missing.map((m) => m.code)).toEqual(["g2.guardrails.none"]);
+
+    // Submission is refused (422) with nothing written; the outcome tree and the guardrails are named.
+    const refused = await submit(p, p.lead.session, "G2");
+    expect([refused.status, refused.body.code]).toEqual([422, "gate_criteria_incomplete"]);
+    const pointers = refused.body.errors.map((e: { pointer: string }) => e.pointer);
+    expect(pointers).toEqual(expect.arrayContaining(["/criteria/g2.outcome_tree", "/criteria/g2.guardrails"]));
+    const treeError = refused.body.errors.find((e: { pointer: string }) => e.pointer === "/criteria/g2.outcome_tree");
+    expect(treeError.message).toContain('Outcome "Launch new app" does not pass the good outcome test');
+    expect(await auditOfRequest(api.db, String(refused.headers["x-request-id"]))).toEqual([]);
+
+    // A guardrail clears g2.guardrails; archiving the failing outcomes removes them from the list.
+    const guardrail = await call(api.app, "POST", `${T}/strategic-guardrails`, {
+      session: p.lead.session,
+      body: { title: "No CAPEX overrun (synthetic)", category: "capex", statement: "Stay within the envelope." },
+    });
+    expect(guardrail.status).toBe(201);
+    for (const o of [launch, sub]) {
+      const a = await call(api.app, "POST", `${T}/outcomes/${o.body.id}/archive`, {
+        session: p.lead.session,
+        headers: ifm(o.body.version),
+        body: { reason: "Synthetic: reworded as an outcome" },
+      });
+      expect(a.status).toBe(200);
+    }
+    const after = await g2(p);
+    expect(after.get("g2.guardrails")!.completeness).toBe("complete");
+    expect(after.get("g2.outcome_tree")!.missing.map((m) => m.code)).not.toContain(
+      "g2.outcome_tree.good_outcome_test_not_passing",
+    );
+  });
+});

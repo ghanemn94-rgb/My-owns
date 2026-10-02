@@ -13,7 +13,7 @@ import type { DbOrTx } from "@mth/db";
 import type { GateCriterionEvaluation, GateDefinition, Warning } from "@mth/shared/schemas";
 import { loadVerifiedEvidenceFacts, type EvidenceFact } from "../evidence/index.ts";
 import { loadKpiGateFacts, type KpiGateFacts } from "../kpi/index.ts";
-import { findCharter, findCurrentNorthStar } from "../transformations/index.ts";
+import { findCharter, findCurrentNorthStar, loadGoodOutcomeFacts } from "../transformations/index.ts";
 
 /** Everything the G1-G3 evaluators read, loaded once per evaluation (inside the submitting transaction on submit). */
 export interface GateFacts {
@@ -41,6 +41,17 @@ export interface GateFacts {
   } | null;
   readonly northStar: { id: string; version: number } | null;
   readonly topOutcomes: ReadonlyArray<{ id: string }>;
+  /**
+   * The good outcome test (B0051, REQ-PB-036) of every non-archived outcome: G2 ("Are outcomes specific enough to
+   * steer decisions?", B0023) lists each outcome whose test is not passing, with the criteria that fail or are unknown.
+   */
+  readonly outcomes: ReadonlyArray<{
+    id: string;
+    statement: string;
+    isTopOutcome: boolean;
+    goodOutcomePass: boolean;
+    notPassing: ReadonlyArray<{ criterionCode: string; result: "fail" | "unknown"; reason: string | null }>;
+  }>;
   readonly activeGuardrails: number;
   readonly canvasCells: ReadonlyArray<{ dimensionCode: string; status: string }>;
   readonly tomGaps: ReadonlyArray<{ id: string; status: string; hasOwner: boolean }>;
@@ -85,6 +96,7 @@ export async function loadGateFacts(db: DbOrTx, transformationId: string): Promi
     .where("status", "<>", "archived")
     .orderBy("id")
     .execute();
+  const goodOutcomes = await loadGoodOutcomeFacts(db, transformationId);
   const guardrails = await db
     .selectFrom("strategic_guardrail")
     .select((eb) => eb.fn.countAll<string>().as("n"))
@@ -153,6 +165,15 @@ export async function loadGateFacts(db: DbOrTx, transformationId: string): Promi
       : null,
     northStar: northStar ? { id: northStar.id, version: northStar.version } : null,
     topOutcomes,
+    outcomes: goodOutcomes.map((o) => ({
+      id: o.id,
+      statement: o.statement,
+      isTopOutcome: o.isTopOutcome,
+      goodOutcomePass: o.goodOutcomePass,
+      notPassing: o.test.flatMap((r) =>
+        r.result === "pass" ? [] : [{ criterionCode: r.criterionCode, result: r.result, reason: r.reason }],
+      ),
+    })),
     activeGuardrails: Number(guardrails?.n ?? 0),
     canvasCells: canvasCells.map((c) => ({ dimensionCode: c.dimension_code, status: c.status })),
     tomGaps: tomGaps.map((g) => ({ id: g.id, status: g.status, hasOwner: g.owner_user_id !== null })),
@@ -177,6 +198,16 @@ const evidenceOf = (f: GateFacts, recordType: string, recordId: string) =>
 const unverifiedIn = (facts: readonly EvidenceFact[]) => [
   ...new Set(facts.filter((e) => !e.verified).map((e) => e.evidenceId)),
 ];
+
+/** "Outcome '<statement>' does not pass the good outcome test: specific (fail), causal_chain (unknown)." */
+function goodOutcomeMessage(
+  statement: string,
+  notPassing: ReadonlyArray<{ criterionCode: string; result: string }>,
+): string {
+  const quoted = statement.length > 80 ? `${statement.slice(0, 77)}...` : statement;
+  const which = notPassing.map((c) => `${c.criterionCode} (${c.result})`).join(", ");
+  return `Outcome "${quoted}" does not pass the good outcome test: ${which || "no criterion is evaluated"}.`;
+}
 
 /** The six T01 dimensions every transformation carries (seeded by p2_instantiate_transformation). */
 const T01_SEEDED = 6;
@@ -312,6 +343,16 @@ export const EVALUATORS: ReadonlyMap<string, Evaluator> = new Map<string, Evalua
         if (!f.kpi.outcomeKpis.some((k) => k.outcomeId === o.id))
           missing.push(
             miss("g2.outcome_tree.outcome_without_t02", "A top outcome has no T02 row.", `/outcomes/${o.id}`),
+          );
+      // REQ-PB-036: every outcome whose good outcome test does not pass is listed (never silently a pass).
+      for (const o of f.outcomes)
+        if (!o.goodOutcomePass)
+          missing.push(
+            miss(
+              "g2.outcome_tree.good_outcome_test_not_passing",
+              goodOutcomeMessage(o.statement, o.notPassing),
+              `/outcomes/${o.id}`,
+            ),
           );
       return { missing };
     },

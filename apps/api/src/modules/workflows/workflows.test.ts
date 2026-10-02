@@ -142,6 +142,7 @@ function completeFacts(): Facts {
     },
     northStar: { id: "n1", version: 1 },
     topOutcomes: [{ id: "o1" }],
+    outcomes: [{ id: "o1", statement: "Raise digital NPS", isTopOutcome: true, goodOutcomePass: true, notPassing: [] }],
     activeGuardrails: 1,
     canvasCells: Array.from({ length: 10 }, (_, i) => ({ dimensionCode: `d${i}`, status: "ready" })),
     tomGaps: [{ id: "g1", status: "open", hasOwner: true }],
@@ -270,6 +271,39 @@ describe("G1-G3 criterion evaluators (ADR-0015 §2)", () => {
       "g3.gap_matrix": "incomplete",
       "g3.design_decisions": "incomplete",
     });
+  });
+
+  it("REQ-PB-036: G2 lists every outcome whose good outcome test is not passing (ids + criteria)", () => {
+    const f = completeFacts();
+    const facts: Facts = {
+      ...f,
+      outcomes: [
+        ...f.outcomes,
+        {
+          id: "o2",
+          statement: "Launch new app",
+          isTopOutcome: false,
+          goodOutcomePass: false,
+          notPassing: [
+            { criterionCode: "specific", result: "fail", reason: "activity" },
+            { criterionCode: "measurable", result: "fail", reason: "No KPI linked" },
+            { criterionCode: "causal_chain", result: "unknown", reason: "not recorded" },
+          ],
+        },
+      ],
+    };
+    const tree = mod.evaluateGate(defOf("G2"), facts).find((c) => c.key === "g2.outcome_tree")!;
+    expect(tree.completeness).toBe("incomplete");
+    expect(tree.missing).toEqual([
+      {
+        code: "g2.outcome_tree.good_outcome_test_not_passing",
+        message:
+          'Outcome "Launch new app" does not pass the good outcome test: specific (fail), measurable (fail), causal_chain (unknown).',
+        pointer: "/outcomes/o2",
+      },
+    ]);
+    // A passing outcome is not listed; the other G2 criteria are unaffected.
+    expect(completeness("G2", facts)["g2.guardrails"]).toBe("complete");
   });
 
   it("a criterion without an evaluator fails closed", () => {

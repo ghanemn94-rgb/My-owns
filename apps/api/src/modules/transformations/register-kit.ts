@@ -81,7 +81,18 @@ export interface ParentSpec {
   readonly archivable: boolean;
 }
 
-export interface RegisterSpec<Row extends RegisterRow, Api> {
+/**
+ * How rows become API bodies: either a pure per-row mapper, or an async batch presenter for registers whose response
+ * carries COMPUTED read fields that need more data (e.g. the outcome's good outcome test, REQ-PB-036). The presenter
+ * runs on the same connection as the write, so a create/update response reflects the committed-to-be state.
+ */
+export type RegisterPresenter<Row, Api> =
+  | { readonly toApi: (row: Row) => Api; readonly present?: never }
+  | { readonly present: (db: DbOrTx, rows: readonly Row[]) => Promise<Api[]>; readonly toApi?: never };
+
+export type RegisterSpec<Row extends RegisterRow, Api> = RegisterSpecBase<Row> & RegisterPresenter<Row, Api>;
+
+export interface RegisterSpecBase<Row extends RegisterRow> {
   /** Table name; also the audit `record_type` (the database audit guard matches on it). */
   readonly table: string;
   /** Collection path, e.g. "/api/v1/transformations/:transformationId/strategic-guardrails". */
@@ -91,7 +102,6 @@ export interface RegisterSpec<Row extends RegisterRow, Api> {
   readonly writeRules: readonly WriteRule[];
   readonly createSchema: z.ZodType;
   readonly updateSchema: z.ZodType;
-  readonly toApi: (row: Row) => Api;
   /** Columns of a new row from the parsed body (ids, stamps and version are added by the kit). */
   readonly insertValues: (body: never, ctx: WriteContext) => LooseRow;
   /** Columns to change from the parsed update body. */
@@ -291,6 +301,11 @@ export function registerRegister<Row extends RegisterRow, Api extends { id: stri
   const readAccess = { access: { permission: "transformation.read" as const } };
   const writeAccess = { access: { permission: spec.writeRules[0]!.permission } };
 
+  /** Rows -> API bodies through the register's presenter. */
+  const render = async (dbx: DbOrTx, rows: readonly Row[]): Promise<Api[]> =>
+    spec.present ? spec.present(dbx, rows) : rows.map((r) => spec.toApi!(r));
+  const renderOne = async (dbx: DbOrTx, row: Row): Promise<Api> => (await render(dbx, [row]))[0]!;
+
   /** Parent check: the parent row exists in the transformation (404 otherwise). */
   const checkParent = async (dbx: DbOrTx, transformationId: string, params: ReadonlyMap<string, string>) => {
     if (!spec.parent) return;
@@ -336,7 +351,7 @@ export function registerRegister<Row extends RegisterRow, Api extends { id: stri
         .limit(query.limit + 1)
         .execute()) as unknown as Row[];
       const pageRows = paginate(rows, query.limit, (r) => [r.id], hash);
-      return { items: pageRows.items.map(spec.toApi), nextCursor: pageRows.nextCursor };
+      return { items: await render(db, pageRows.items), nextCursor: pageRows.nextCursor };
     });
   }
 
@@ -347,7 +362,7 @@ export function registerRegister<Row extends RegisterRow, Api extends { id: stri
       await requireTransformationRead(db, principalOf(request), params.get("transformationId")!);
       const row = await findRow(db, params);
       if (!row) throw problems.notFound();
-      return sendVersioned(reply, 200, spec.toApi(row));
+      return sendVersioned(reply, 200, await renderOne(db, row));
     });
   }
 
@@ -396,7 +411,7 @@ export function registerRegister<Row extends RegisterRow, Api extends { id: stri
             newVersion: row.version,
             changes: diffFields({} as LooseRow, row as unknown as LooseRow, spec.auditFields),
           });
-          return { status: 201, body: spec.toApi(row) };
+          return { status: 201, body: await renderOne(tx, row) };
         });
       });
       return sendCreated(request, reply, result);
@@ -463,9 +478,9 @@ export function registerRegister<Row extends RegisterRow, Api extends { id: stri
           newVersion: updated.version,
           changes: diffFields(current as unknown as LooseRow, updated as unknown as LooseRow, spec.auditFields),
         });
-        return updated;
+        return renderOne(tx, updated);
       });
-      return sendVersioned(reply, 200, spec.toApi(row));
+      return sendVersioned(reply, 200, row);
     });
   }
 
@@ -504,9 +519,9 @@ export function registerRegister<Row extends RegisterRow, Api extends { id: stri
           reason,
           changes: { status: { from: current.status ?? null, to: "archived" } },
         });
-        return updated;
+        return renderOne(tx, updated);
       });
-      return sendVersioned(reply, 200, spec.toApi(row));
+      return sendVersioned(reply, 200, row);
     });
   }
   return routes;

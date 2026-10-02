@@ -1,5 +1,6 @@
 // P2 direction mirrors (backend-workflow-engineer; ADR-0017): North Star (one sentence, exactly one current),
-// strategic guardrails and the outcome tree. Mirrors docs/api/openapi.yaml NorthStar*, StrategicGuardrail*, Outcome*.
+// strategic guardrails and the outcome tree. Mirrors docs/api/openapi.yaml NorthStar*, StrategicGuardrail*, Outcome*,
+// GoodOutcomeResult.
 import { z } from "zod";
 import { reason, timestamp, uuid, version } from "./common.ts";
 
@@ -88,9 +89,22 @@ const outcomeFields = {
   strategicallyRelevantConfirmed: z.boolean().nullable(),
   causalChain: text(1, 4000).nullable(),
 };
+/** One evaluated good-outcome-test criterion (B0051, REQ-PB-036); computed server-side, never written by a client. */
+export const GOOD_OUTCOME_RESULTS = ["pass", "fail", "unknown"] as const;
+export const goodOutcomeResult = z.strictObject({
+  criterionCode: z.string().regex(/^[a-z][a-z0-9_]{0,47}$/),
+  ordinal: z.number().int().min(1).max(5),
+  result: z.enum(GOOD_OUTCOME_RESULTS),
+  reason: text(1, 500).nullable(),
+});
+export type GoodOutcomeResult = z.infer<typeof goodOutcomeResult>;
+
 export const outcome = z.strictObject({
   ...p2RecordStamps,
   ...outcomeFields,
+  // Computed read fields (not in OutcomeCreate/OutcomeUpdate): true only when no criterion fails and none is unknown.
+  goodOutcomeTest: z.array(goodOutcomeResult),
+  goodOutcomePass: z.boolean(),
   status: z.enum(["draft", "active", "archived"]),
   ...p2ArchiveFields,
 });

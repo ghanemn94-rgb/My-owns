@@ -17,7 +17,9 @@ export {
   type LooseRow,
   type ParentSpec,
   type RegisterRow,
+  type RegisterPresenter,
   type RegisterSpec,
+  type RegisterSpecBase,
   type WriteContext,
 } from "./register-kit.ts";
 export {
@@ -28,9 +30,19 @@ export {
   toDiagnosticFinding,
   toDiagnosticItem,
   toJourney,
+  presentOutcomes,
   toOutcome,
   toStrategicGuardrail,
   toTomGap,
 } from "./registers.ts";
 export { charterView, findCharter, findCurrentNorthStar, toCharter, toNorthStar } from "./charter.ts";
 export { advancePhaseOnGateApproval } from "./phase.ts";
+export {
+  activityLead,
+  evaluateGoodOutcome,
+  loadGoodOutcomeEvaluations,
+  loadGoodOutcomeFacts,
+  type GoodOutcomeCriterionDef,
+  type GoodOutcomeEvaluation,
+  type GoodOutcomeInputs,
+} from "./good-outcome.ts";

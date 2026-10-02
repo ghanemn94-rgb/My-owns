@@ -492,3 +492,179 @@ describe("TOM canvas, methodology labels and the team", () => {
     ).toBe(403);
   });
 });
+
+describe("outcomes: the good outcome test (B0051, REQ-PB-036), computed server-side on every Outcome response", () => {
+  type Result = { criterionCode: string; ordinal: number; result: string; reason: string | null };
+  const byCode = (test: Result[]) => new Map(test.map((r) => [r.criterionCode, r]));
+  let q: P2World;
+  let Q: string;
+  beforeAll(async () => {
+    q = await setupP2World(api, w);
+    Q = `/api/v1/transformations/${q.transformationId}`;
+  });
+
+  it("A01: 'Launch new app' with no KPI fails the test with reasons (create, get and list agree); it is not stored", async () => {
+    const created = await call(api.app, "POST", `${Q}/outcomes`, {
+      session: q.lead.session,
+      body: { statement: "Launch new app" },
+    });
+    expect(created.status).toBe(201);
+    expect(created.body.goodOutcomePass).toBe(false);
+    const test = created.body.goodOutcomeTest as Result[];
+    // All five catalogue criteria (migration 0011), in ordinal order.
+    expect(test.map((r) => [r.ordinal, r.criterionCode, r.result])).toEqual([
+      [1, "specific", "fail"],
+      [2, "measurable", "fail"],
+      [3, "strategically_relevant", "unknown"],
+      [4, "owned_by_business_leader", "fail"],
+      [5, "causal_chain", "unknown"],
+    ]);
+    const c = byCode(test);
+    expect(c.get("specific")!.reason).toMatch(/not specific.*"launch"/);
+    expect(c.get("measurable")!.reason).toBe("No KPI linked: the outcome has no active Outcome & KPI Tree row.");
+    expect(c.get("owned_by_business_leader")!.reason).toMatch(/No owner set/);
+    expect(c.get("strategically_relevant")!.reason).toMatch(/not recorded/);
+    expect(c.get("causal_chain")!.reason).toMatch(/no causal chain/);
+
+    // The read-only auditor sees the same computed result on get and list.
+    const got = await call(api.app, "GET", `${Q}/outcomes/${created.body.id}`, { session: q.auditor.session });
+    expect(got.status).toBe(200);
+    expect(got.body.goodOutcomeTest).toEqual(test);
+    const list = await call(api.app, "GET", `${Q}/outcomes`, { session: q.auditor.session });
+    const listed = list.body.items.find((o: { id: string }) => o.id === created.body.id);
+    expect(listed).toMatchObject({ goodOutcomePass: false, goodOutcomeTest: test });
+
+    // Computed, never stored: the audit diff has no such field; the table has no such column.
+    const audit = await auditOf(api.db, created.body.id);
+    expect(audit).toHaveLength(1);
+    expect(JSON.stringify(audit[0])).not.toMatch(/goodOutcome|good_outcome/);
+    const cols = await sql<{ n: string }>`SELECT count(*) AS n FROM information_schema.columns
+      WHERE table_name = 'outcome' AND column_name LIKE '%good_outcome%'`.execute(api.db);
+    expect(cols.rows[0]!.n).toBe("0");
+  });
+
+  it("the computed fields are not writable: create and update with goodOutcomeTest/goodOutcomePass are 400, nothing written", async () => {
+    const bad = await call(api.app, "POST", `${Q}/outcomes`, {
+      session: q.lead.session,
+      body: { statement: "Raise NPS (synthetic)", goodOutcomePass: true },
+    });
+    expect(bad.status).toBe(400);
+    expect(await auditOfRequest(api.db, String(bad.headers["x-request-id"]))).toEqual([]);
+    const o = await call(api.app, "POST", `${Q}/outcomes`, {
+      session: q.lead.session,
+      body: { statement: "Raise NPS (synthetic)" },
+    });
+    const patched = await call(api.app, "PATCH", `${Q}/outcomes/${o.body.id}`, {
+      session: q.lead.session,
+      headers: ifm(1),
+      body: { goodOutcomeTest: [] },
+    });
+    expect(patched.status).toBe(400);
+  });
+
+  it("pass: confirmations, an active owner, a causal chain and a linked KPI; update and archive of the KPI re-evaluate", async () => {
+    const created = await call(api.app, "POST", `${Q}/outcomes`, {
+      session: q.lead.session,
+      body: {
+        statement: "Raise the digital self-service share of postpaid top-ups from 40% to 65% (synthetic)",
+        ownerUserId: q.sponsor.id,
+        isTopOutcome: true,
+        topRank: 1,
+        specificConfirmed: true,
+        strategicallyRelevantConfirmed: true,
+        causalChain: "Simpler app journey -> fewer drop-offs -> higher self-service share (synthetic)",
+      },
+    });
+    expect(created.status).toBe(201);
+    // Everything recorded except the KPI: measurable fails, so the test does not pass.
+    expect(byCode(created.body.goodOutcomeTest).get("measurable")!.result).toBe("fail");
+    expect(created.body.goodOutcomePass).toBe(false);
+
+    const kpi = await call(api.app, "POST", `${Q}/kpi-definitions`, {
+      session: q.lead.session,
+      body: { name: "Self-service top-up share (synthetic)", unitKind: "percentage", polarity: "higher_is_better" },
+    });
+    expect(kpi.status, JSON.stringify(kpi.body)).toBe(201);
+    const row = await call(api.app, "POST", `${Q}/outcome-kpis`, {
+      session: q.lead.session,
+      body: { outcomeId: created.body.id, kpiDefinitionId: kpi.body.id, targetDate: "2027-12-31" },
+    });
+    expect(row.status, JSON.stringify(row.body)).toBe(201);
+
+    const passing = await call(api.app, "GET", `${Q}/outcomes/${created.body.id}`, { session: q.lead.session });
+    expect(passing.body.goodOutcomePass).toBe(true);
+    expect((passing.body.goodOutcomeTest as Result[]).every((r) => r.result === "pass")).toBe(true);
+    expect(byCode(passing.body.goodOutcomeTest).get("measurable")!.reason).toMatch(/1 KPI\(s\) linked/);
+
+    // The charter view's top outcomes carry the same computed fields.
+    const charter = await call(api.app, "POST", `${Q}/charter`, {
+      session: q.lead.session,
+      body: { transformationName: "Synthetic good-outcome charter" },
+    });
+    expect(charter.status).toBe(201);
+    expect(charter.body.topOutcomes).toEqual([expect.objectContaining({ id: created.body.id, goodOutcomePass: true })]);
+    // REQ-PB-035 still holds: one top outcome -> the 3-5 warning.
+    expect(charter.body.warnings.map((x: { code: string }) => x.code)).toEqual(["charter.top_outcomes_count"]);
+
+    // An update that withdraws an attestation: the update response itself re-evaluates (unknown, not a pass).
+    const updated = await call(api.app, "PATCH", `${Q}/outcomes/${created.body.id}`, {
+      session: q.lead.session,
+      headers: ifm(1),
+      body: { strategicallyRelevantConfirmed: null },
+    });
+    expect(updated.status).toBe(200);
+    expect(byCode(updated.body.goodOutcomeTest).get("strategically_relevant")!.result).toBe("unknown");
+    expect(updated.body.goodOutcomePass).toBe(false);
+    // A stale If-Match is still 409 (the computed fields change nothing about concurrency).
+    const stale = await call(api.app, "PATCH", `${Q}/outcomes/${created.body.id}`, {
+      session: q.lead.session,
+      headers: ifm(1),
+      body: { strategicallyRelevantConfirmed: true },
+    });
+    expect(stale.status).toBe(409);
+    const restored = await call(api.app, "PATCH", `${Q}/outcomes/${created.body.id}`, {
+      session: q.lead.session,
+      headers: ifm(2),
+      body: { strategicallyRelevantConfirmed: true },
+    });
+    expect(restored.body.goodOutcomePass).toBe(true);
+
+    // Archiving the only T02 row: no active KPI link -> measurable fails again.
+    const archived = await call(api.app, "POST", `${Q}/outcome-kpis/${row.body.id}/archive`, {
+      session: q.lead.session,
+      headers: ifm(row.body.version),
+      body: { reason: "Synthetic: KPI replaced" },
+    });
+    expect(archived.status, JSON.stringify(archived.body)).toBe(200);
+    const after = await call(api.app, "GET", `${Q}/outcomes/${created.body.id}`, { session: q.lead.session });
+    expect(byCode(after.body.goodOutcomeTest).get("measurable")!.result).toBe("fail");
+    expect(after.body.goodOutcomePass).toBe(false);
+  });
+
+  it("explicit negatives fail; activity wording fails 'specific' even when attested; the read-only auditor gets 403", async () => {
+    const o = await call(api.app, "POST", `${Q}/outcomes`, {
+      session: q.lead.session,
+      body: {
+        statement: "Implement the new CRM (synthetic)",
+        specificConfirmed: true,
+        strategicallyRelevantConfirmed: false,
+        ownerUserId: q.lead.id,
+        causalChain: "CRM -> better targeting (synthetic)",
+      },
+    });
+    expect(o.status).toBe(201);
+    const c = byCode(o.body.goodOutcomeTest);
+    expect(c.get("specific")!.result).toBe("fail");
+    expect(c.get("strategically_relevant")).toMatchObject({
+      result: "fail",
+      reason: "Not confirmed as strategically relevant.",
+    });
+    expect(c.get("owned_by_business_leader")!.result).toBe("pass");
+    expect(c.get("causal_chain")!.result).toBe("pass");
+    const denied = await call(api.app, "POST", `${Q}/outcomes`, {
+      session: q.auditor.session,
+      body: { statement: "Raise NPS (synthetic)" },
+    });
+    expect(denied.status).toBe(403);
+  });
+});

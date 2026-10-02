@@ -4,6 +4,7 @@
 //   workstream outputs (B0029), T03 TOM Gap Matrix (B0058), capability heatmap, journeys/processes and pain points.
 import type {
   CapabilityTable,
+  DbOrTx,
   DiagnosticFindingTable,
   DiagnosticItemTable,
   DiagnosticWorkstreamOutputTable,
@@ -46,6 +47,7 @@ import {
 import type { Selectable } from "kysely";
 import type { z } from "zod";
 import { HttpProblem, iso, isoOrNull } from "../platform/index.ts";
+import { loadGoodOutcomeEvaluations, type GoodOutcomeEvaluation } from "./good-outcome.ts";
 import {
   assertActiveUsers,
   assertCatalogueCode,
@@ -165,7 +167,8 @@ const OUTCOME_COLS = [
   ["strategicallyRelevantConfirmed", "strategically_relevant_confirmed"],
   ["causalChain", "causal_chain"],
 ] as const;
-export const toOutcome = (r: OutcomeRow): Outcome => ({
+/** An outcome row plus its computed good outcome test (B0051, REQ-PB-036) as the API body. */
+export const toOutcome = (r: OutcomeRow, g: GoodOutcomeEvaluation): Outcome => ({
   ...stamps(r),
   parentOutcomeId: r.parent_outcome_id,
   statement: r.statement,
@@ -176,9 +179,16 @@ export const toOutcome = (r: OutcomeRow): Outcome => ({
   specificConfirmed: r.specific_confirmed,
   strategicallyRelevantConfirmed: r.strategically_relevant_confirmed,
   causalChain: r.causal_chain,
+  goodOutcomeTest: g.goodOutcomeTest,
+  goodOutcomePass: g.goodOutcomePass,
   status: r.status as Outcome["status"],
   ...archiveOf(r),
 });
+/** Outcome rows as API bodies, each with its good outcome test evaluated server-side (computed; never stored). */
+export async function presentOutcomes(db: DbOrTx, rows: readonly OutcomeRow[]): Promise<Outcome[]> {
+  const evaluations = await loadGoodOutcomeEvaluations(db, rows);
+  return rows.map((r) => toOutcome(r, evaluations.get(r.id)!));
+}
 export const outcomeRegister: RegisterSpec<OutcomeRow, Outcome> = {
   table: "outcome",
   path: `${T}/outcomes`,
@@ -186,7 +196,7 @@ export const outcomeRegister: RegisterSpec<OutcomeRow, Outcome> = {
   writeRules: [{ permission: "outcome.edit" }],
   createSchema: outcomeCreate,
   updateSchema: outcomeUpdate,
-  toApi: toOutcome,
+  present: presentOutcomes,
   insertValues: (b: z.infer<typeof outcomeCreate>) => pick(b, OUTCOME_COLS),
   updateValues: (b: z.infer<typeof outcomeUpdate>) => pick(b, OUTCOME_COLS),
   check: async (m, ctx, current) => {

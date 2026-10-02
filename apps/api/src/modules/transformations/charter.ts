@@ -46,7 +46,7 @@ import {
   sendVersioned,
 } from "../platform/index.ts";
 import { assertActiveUsers, assertSameTransformation, maybeIdempotent, openWrite } from "./register-kit.ts";
-import { pick, ruleProblem, toOutcome, toStrategicGuardrail } from "./registers.ts";
+import { pick, presentOutcomes, ruleProblem, toStrategicGuardrail } from "./registers.ts";
 
 const T = "/api/v1/transformations/:transformationId";
 const tParams = z.strictObject({ transformationId: z.uuid() });
@@ -283,7 +283,7 @@ export async function charterView(db: DbOrTx, c: CharterRow): Promise<CharterVie
   return {
     charter: toCharter(c),
     northStar: northStarRow ? toNorthStar(northStarRow) : null,
-    topOutcomes: topOutcomes.map(toOutcome),
+    topOutcomes: await presentOutcomes(db, topOutcomes),
     guardrails: guardrails.map(toStrategicGuardrail),
     warnings,
     scopeCheckPrechecks: await scopeCheckPrechecks(db, c),
