@@ -5064,10 +5064,20 @@ components:
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/StrategicGuardrail" } }
         nextCursor: { type: [string, "null"] }
+    GoodOutcomeResult:
+      type: object
+      description: "One good-outcome-test criterion (B0051, REQ-PB-036) evaluated for an outcome, computed server-side from the outcome against the good_outcome_criterion catalogue. `result` is `unknown` when the inputs the criterion needs are not yet recorded (never silently a pass)."
+      required: [criterionCode, ordinal, result, reason]
+      additionalProperties: false
+      properties:
+        criterionCode: { type: string, pattern: "^[a-z][a-z0-9_]{0,47}$" }
+        ordinal: { type: integer, minimum: 1, maximum: 5 }
+        result: { type: string, enum: ["pass", "fail", "unknown"] }
+        reason: { type: [string, "null"], minLength: 1, maxLength: 500 }
     Outcome:
       type: object
-      description: "Outcome tree under the North Star (B0048). The API warns (`warnings[]` on the charter) when the charter does not hold 3-5 top outcomes (REQ-PB-035); the good outcome test (B0051) is evaluated per outcome (`goodOutcomeTest`)."
-      required: [id, organizationId, transformationId, parentOutcomeId, statement, description, ownerUserId, isTopOutcome, topRank, specificConfirmed, strategicallyRelevantConfirmed, causalChain, status, archivedAt, archivedBy, archiveReason, version, createdAt, createdBy, updatedAt, updatedBy]
+      description: "Outcome tree under the North Star (B0048). The API warns (`warnings[]` on the charter) when the charter does not hold 3-5 top outcomes (REQ-PB-035); the good outcome test (B0051) is evaluated per outcome (`goodOutcomeTest`), and `goodOutcomePass` is true only when no criterion fails and none is unknown. G2 readiness lists outcomes whose test is not passing (REQ-PB-036)."
+      required: [id, organizationId, transformationId, parentOutcomeId, statement, description, ownerUserId, isTopOutcome, topRank, specificConfirmed, strategicallyRelevantConfirmed, causalChain, goodOutcomeTest, goodOutcomePass, status, archivedAt, archivedBy, archiveReason, version, createdAt, createdBy, updatedAt, updatedBy]
       additionalProperties: false
       properties:
         id: { $ref: "#/components/schemas/Uuid" }
@@ -5082,6 +5092,8 @@ components:
         specificConfirmed: { type: [boolean, "null"] }
         strategicallyRelevantConfirmed: { type: [boolean, "null"] }
         causalChain: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        goodOutcomeTest: { type: array, items: { $ref: "#/components/schemas/GoodOutcomeResult" } }
+        goodOutcomePass: { type: boolean }
         status: { type: string, enum: ["draft", "active", "archived"] }
         archivedAt: { oneOf: [{ $ref: "#/components/schemas/Timestamp" }, { type: "null" }] }
         archivedBy: { oneOf: [{ $ref: "#/components/schemas/Uuid" }, { type: "null" }] }
