@@ -8590,6 +8590,267 @@
         ],
         "note": "Verified on candidate sha256:6e0c0db1a8bea33cd81f05ea8c795d8ede4bfb7f380dfe146556cb4875a6f827. The ID was recomputed on the main working tree and on a disposable clone at the manifest source_commit 642e6bf (395 files). The fix is exactly 2 files since the round-3 candidate 4f312cc: (1) a new apps/web/tsconfig.e2e.json, which extends tsconfig.base.json (strict, noUncheckedIndexedAccess, exactOptionalPropertyTypes, etc.), uses lib ES2023+DOM+DOM.Iterable and types node, and includes e2e/**/*.ts and ../../playwright.config.ts; (2) the apps/web typecheck script changed to `tsc -p tsconfig.json && tsc -p tsconfig.e2e.json`. The root `typecheck` script is `pnpm -r typecheck`, and ci.yml runs `pnpm typecheck`, so CI covers the files. `tsc --listFilesOnly` shows that the project compiles exactly apps/web/e2e/journeys.spec.ts and playwright.config.ts (plus library typings). Fail-then-pass (Node 22.22.2, tsc 6.0.2, disposable clone): baseline exit 0. Injecting `const x: number = \"...\"` into journeys.spec.ts made `pnpm --filter @mth/web typecheck` exit 2 with TS2322, and made `pnpm -r typecheck` fail too; after the revert it exits 0. The same injection into the root playwright.config.ts gave exit 2 (TS2322 at ../../playwright.config.ts), and the revert gave exit 0. Calling a non-existent Locator method gave exit 2 (TS2339 'notARealMethod' does not exist on type 'Locator'), so Playwright's types really resolve and are not `any`; the revert gave exit 0. The full `pnpm -r typecheck` on the unmodified candidate passes (exit 0) and shows the new tsconfig.e2e.json step. The fix is complete for the finding's stated scope. Residual observation, not a finding: the qa-owned root e2e/a20-bilingual-shell.spec.ts is still in no typecheck project. The assignment scoped it out; it type-checks cleanly ad hoc (see the round-4 narrative)."
       }
+    },
+    {
+      "id": "F-DG2-140",
+      "stage_id": "DG2",
+      "requirement": "REQ-S13-012",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "Evidence separation of duties is bypassable: a reviewer can verify content they wrote or uploaded themselves on evidence another user created, because the rule only compares the reviewer with the row's created_by",
+      "reproduction": "apps/api/src/modules/evidence/routes.ts:388 (and CHECK evidence_verified_rule, packages/db/migrations/0012_p2_evidence.sql:46) refuse the review only when reviewer = evidence.created_by. But PATCH /evidence/{id} (routes.ts:107, writeRules CREATE = evidence.create with scope 'any') and POST /evidence/{id}/content (routes.ts:295-340, same rule, uploaded_by = caller) let ANY evidence.create holder replace another user's note text, URL or file bytes. Both operations reset the review and leave created_by unchanged. Inputs (synthetic): WL creates note evidence E. TL sends PATCH E {noteBody: <TL's own text>} with If-Match \"1\" and gets 200. TL then sends POST E/review {result: verified, accessibilityStatus: accessible} and gets 200 verified with reviewedBy = TL. The file variant works the same way: WL creates file evidence F, TL uploads revision 1 (uploaded_by = TL), TL verifies it and gets 200, reviewedContentId = TL's own upload. TL, BO and TO all hold both evidence.create and evidence.review (packages/shared/src/permissions.ts). A single TL can therefore supply AND verify the 'VERIFIED evidence' that the g1.diagnostic / g1.baseline criteria (workflows/criteria.ts) require, then submit G1. Reproduced through the API on a disposable PostgreSQL 16, in 2 runs: docs/delivery/test-evidence/DG2/code-security/round-1/probes/zz-sec-r1-probe.test.ts (SEC-1), probe-run1.log and probe-run2.log.",
+      "expected": "Nobody verifies evidence content they supplied: the review is refused (403) when the reviewer is the creator, the author of the current note/URL text, or the uploader of the current content revision (or the rule is bound to the content author, e.g. reviewed_by <> uploaded_by / last content editor, enforced in the API and in the CHECK/trigger). Editing or replacing another user's evidence content should also be limited (own rows, or an explicit edit permission).",
+      "actual": "200 verified in both variants. SEC-1.note: [200,\"verified\",reviewedBy=TL]. SEC-1.file: [200,\"verified\",reviewedContentId = the TL's own upload]. The DB CHECK passes because created_by is still the WL.",
+      "evidence": [
+        "apps/api/src/modules/evidence/routes.ts",
+        "packages/db/migrations/0012_p2_evidence.sql",
+        "docs/delivery/test-evidence/DG2/code-security/round-1/probes/zz-sec-r1-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-1/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-1/probe-run2.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-02T04:06:59Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer DG2 round 1; reproduced through the API on a disposable PostgreSQL 16 in two runs (proposed ID; the orchestrator may renumber)"
+        }
+      ]
+    },
+    {
+      "id": "F-DG2-141",
+      "stage_id": "DG2",
+      "requirement": "REQ-S10-001",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "T02 target-trajectory approval (kpi_target.approve, a business_approval) is bypassable: a Business Owner can change another user's target value and then approve the trajectory they just set",
+      "reproduction": "apps/api/src/modules/kpi/outcome-kpis.ts:289 (and CHECK outcome_kpi_approver_not_creator, packages/db/migrations/0014_p2_kpi_baseline_value_pool.sql:120) refuse approval only when approver = outcome_kpi.created_by. BO holds BOTH outcome.edit (the PATCH permission, outcome-kpis.ts:45/162) and kpi_target.approve (packages/shared/src/permissions.ts:100-108). Inputs (synthetic): TL creates a T02 row with targetValue \"100\" and gets 201. BO sends PATCH {targetValue: \"5\"} and gets 200 (trajectory back to draft, created_by still TL). BO sends POST .../trajectory-approval with If-Match = the new version and gets 200 trajectoryStatus approved, trajectoryApprovedBy = BO. The approved trajectory then satisfies the g2.target_trajectory criterion (workflows/criteria.ts) for G2 submission. Reproduced through the API on a disposable PostgreSQL 16, in 2 runs: docs/delivery/test-evidence/DG2/code-security/round-1/probes/zz-sec-r1-probe.test.ts (SEC-2), probe-run1.log and probe-run2.log.",
+      "expected": "A business approval is never given by the person who authored the approved content: approval is refused (403) when the approver last changed the target/trajectory (for example, by comparing with updated_by of the current version or keeping a target-author column), as well as when the approver is the row's creator. The DB CHECK should enforce the same rule.",
+      "actual": "SEC-2: bo_sets_target [200,\"5.000000\"], then bo_approves_own_target [200,\"approved\",trajectoryApprovedBy=BO].",
+      "evidence": [
+        "apps/api/src/modules/kpi/outcome-kpis.ts",
+        "packages/db/migrations/0014_p2_kpi_baseline_value_pool.sql",
+        "packages/shared/src/permissions.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-1/probes/zz-sec-r1-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-1/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-1/probe-run2.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-1/code-security-reviewer.json",
+      "owner": "kpi-benefits-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-02T04:06:59Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer DG2 round 1; reproduced through the API on a disposable PostgreSQL 16 in two runs (proposed ID; the orchestrator may renumber)"
+        }
+      ]
+    },
+    {
+      "id": "F-DG2-142",
+      "stage_id": "DG2",
+      "requirement": "REQ-S10-001",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "Evidence-link removal skips the record-level edit check that link creation requires: any evidence.create holder can remove any link, including links that satisfy gate criteria",
+      "reproduction": "POST /transformations/{id}/evidence-links requires edit rights on the linked record (apps/api/src/modules/evidence/routes.ts:496, RECORD_WRITE_RULES, ADR-0018 §4). POST .../evidence-links/{linkId}/remove (routes.ts:539-585) only calls openWrite(..., CREATE = evidence.create). It loads the link's created_by (routes.ts:546) and never uses it, and applies no RECORD_WRITE_RULES check. Inputs (synthetic): TL links verified evidence to a seeded T01 diagnostic_item and gets 201. WL (diagnostic.contribute is own-rows only) tries the same link and is refused with 403, as designed. The same WL sends POST /evidence-links/{TL's link}/remove {reason} with If-Match \"1\" and gets 200, status removed. Removing the only verified link makes g1.diagnostic incomplete, so a contributor can silently un-ready (or, after submission, alter the live readiness of) a gate. Reproduced through the API on a disposable PostgreSQL 16, in 2 runs: docs/delivery/test-evidence/DG2/code-security/round-1/probes/zz-sec-r1-probe.test.ts (SEC-3), probe-run1.log and probe-run2.log.",
+      "expected": "Removing a link needs the same authorization as creating it (edit rights on the target record, through requireRecordWrite with RECORD_WRITE_RULES), otherwise 403 with a denied-mutation audit event.",
+      "actual": "SEC-3: {\"wlCreateStatus\":403,\"tlCreateStatus\":201,\"wlRemoveStatus\":200,\"after\":\"removed\"}",
+      "evidence": [
+        "apps/api/src/modules/evidence/routes.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-1/probes/zz-sec-r1-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-1/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-1/probe-run2.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-02T04:06:59Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer DG2 round 1; reproduced through the API on a disposable PostgreSQL 16 in two runs (proposed ID; the orchestrator may renumber)"
+        }
+      ]
+    },
+    {
+      "id": "F-DG2-201",
+      "stage_id": "DG2",
+      "requirement": "REQ-PB-017",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "G2 Direction can never be completed through native workflows: every KPI definition stays 'draft' (no API or UI path sets 'active'), and the G2 criterion g2.kpi_definitions requires an ACTIVE definition, so G2 can never be submitted or approved and the Diagnose->Define->Design journey cannot complete (also REQ-S04-004, REQ-DLV-034)",
+      "reproduction": "Disposable clone of candidate sha256:8ef26b71… (commit 98a8d99), Node v22.22.2, disposable PostgreSQL 16. Copy docs/delivery/test-evidence/DG2/qa/tests/dg2-qa-journey.test.ts to tests/qa/integration/ and run `QA_PG_PORT=54761 tests/qa/support/with-pg.sh npx vitest run --project integration --reporter=verbose tests/qa/integration/dg2-qa-journey.test.ts`. The test completes every Define output through public API operations only, as the roles of the permissions matrix: North Star (TL), guardrail (TL), KPI definition with unit, polarity and owner (KDS), three top outcomes passing the good outcome test (TL), T02 rows with target, target date, owner, leading indicator and trajectory (KDS), each trajectory approved by the SP. GET /gates/G2 still reports g2.kpi_definitions incomplete with `g2.kpi_definitions.not_active`. PATCH /kpi-definitions/{id} {status:'active'} -> 400 validation; POST /kpi-definitions {..., status:'active'} -> 400 validation; the definition stays 'draft'. Deterministic in 2/2 runs. Static: the 160-operation contract has only list/create/get/update/archive for kpi-definitions; KpiDefinitionUpdate has no `status`; the only status write in apps/api/src/modules/kpi/kpi-definitions.ts sets 'archived'; no migration trigger activates a definition. criteria.ts:367-370 requires `d.status === 'active'`.",
+      "expected": "REQ-PB-017 / REQ-S04-004: G2 links North Star, the T02 tree, KPI definitions and guardrails, and can be submitted and decided once they are complete. REQ-DLV-034: a full Diagnose->Design journey (business gates G1-G3) completes through native workflows. A gate criterion must be satisfiable by a native user action, such as activating a KPI definition by KDS or TL, or the criterion must accept a complete definition.",
+      "actual": "G2 is permanently incomplete (`g2.kpi_definitions.not_active`). `canSubmit` stays false and submission returns 422 gate_criteria_incomplete, so G2 can never be approved and the transformation can only reach Design by a direct DB write. The existing integration and e2e suites only ever submit and decide G1, so this was not caught.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/18-qa-journey-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/18-qa-journey-run2.log",
+        "docs/delivery/test-evidence/DG2/qa/tests/dg2-qa-journey.test.ts",
+        "docs/delivery/test-evidence/DG2/qa/19-static-inspection.log",
+        "apps/api/src/modules/workflows/criteria.ts#L360-L372",
+        "apps/api/src/modules/kpi/kpi-definitions.ts#L180-L190"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG2/round-1/qa-verifier.json",
+      "owner": "kpi-benefits-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-02T04:25:00Z",
+          "status": "OPEN",
+          "note": "raised by qa-verifier DG2 round 1 (proposed ID in the qa 2xx range; the orchestrator may renumber)"
+        }
+      ]
+    },
+    {
+      "id": "F-DG2-202",
+      "stage_id": "DG2",
+      "requirement": "REQ-DLV-034",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "The frozen register does not record DG2 completion: all 32 DG2-final requirements are still SPECIFIED with no evidence, and `node tools/gates/validate.mjs --register DG2` FAILS (64 problems)",
+      "reproduction": "Repository at HEAD (candidate sha256:8ef26b71… unchanged; docs/delivery/requirements.csv is in the frozen manifest docs/delivery/candidates/DG2/8ef26b710e343ed3.manifest.json). Run `node tools/gates/validate.mjs --register DG2` -> 'FAIL register rules at DG2 (64 problems)': for each of the 32 rows, 'final gate DG2 requires IMPLEMENTED at DG2 (is SPECIFIED)' and 'IMPLEMENTED for DG2 without evidence'. A count of the requirements.csv rows with final_gate=DG2 gives 32 SPECIFIED, 0 IMPLEMENTED. Compare DG1: commit c3dff44 'register-rules DG1 now passes' updated the register before the DG1 review.",
+      "expected": "Gate rule (CLAUDE.md, master prompt §0): a gate passes only with all assigned requirements complete. The register rows of the frozen candidate carry IMPLEMENTED status and evidence, so `--register DG2` passes.",
+      "actual": "The register check fails with exit 1. No DG2 requirement is recorded as implemented or evidenced in the candidate.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/17-validate-register.log",
+        "docs/delivery/test-evidence/DG2/qa/19-static-inspection.log",
+        "docs/delivery/requirements.csv"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG2/round-1/qa-verifier.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-02T04:25:00Z",
+          "status": "OPEN",
+          "note": "raised by qa-verifier DG2 round 1 (proposed ID in the qa 2xx range; the orchestrator may renumber)"
+        }
+      ]
+    },
+    {
+      "id": "F-DG2-203",
+      "stage_id": "DG2",
+      "requirement": "REQ-PB-030",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "Transformation thesis: the rendered pattern does not follow the source sentence structure (B0037), no composed sentence is rendered, and a thesis with empty parts is not flagged incomplete (empty parts show 'None')",
+      "reproduction": "Candidate sha256:8ef26b71… (98a8d99). Playbook B0037: 'If we change [capabilities / journeys / operating model], then [customer/operational outcomes] will improve, which will create [financial/strategic benefits], because [evidence / causal logic].' apps/web/src/i18n/en/define.json charter.thesis.pattern reads 'We will change [what] to achieve [outcomes], creating [benefits], because [evidence and logic].' The AR text is the same restructured form. `grep -rn \"If we change\" apps/web/src` finds nothing. CharterPage.tsx:384-408 renders four labelled <dd> cells only, with no composed sentence and no incomplete flag. In the e2e screenshot (EN/AR p2-04-charter.png) of a charter with all four thesis parts empty, each part shows 'None' and the thesis section has no 'incomplete' marker.",
+      "expected": "REQ-PB-030 acceptance (A01): a thesis with any of the four parts empty is flagged incomplete, and the rendered sentence matches the source structure 'If we change …, then … will improve, which will create …, because …' (in EN; AR an equivalent translation of that structure).",
+      "actual": "The pattern text is a paraphrase with a different structure, no sentence is composed from the four parts, and there is no thesis-level incomplete flag. Empty parts render as 'None', which reads like an answer rather than Unknown.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/19-static-inspection.log",
+        "docs/delivery/test-evidence/DG2/qa/e2e/en/p2-04-charter.png",
+        "docs/delivery/test-evidence/DG2/qa/e2e/ar/p2-04-charter.png",
+        "apps/web/src/i18n/en/define.json#L155-L162",
+        "apps/web/src/pages/define/CharterPage.tsx#L384-L408",
+        "docs/source/playbook.md#L182-L183"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG2/round-1/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-02T04:25:00Z",
+          "status": "OPEN",
+          "note": "raised by qa-verifier DG2 round 1 (proposed ID in the qa 2xx range; the orchestrator may renumber)"
+        }
+      ]
+    },
+    {
+      "id": "F-DG2-204",
+      "stage_id": "DG2",
+      "requirement": "REQ-PB-033",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "After the North Star is refined, the charter keeps showing the SUPERSEDED North Star as its North Star (field 5), with no stale or superseded marker",
+      "reproduction": "Disposable clone of 98a8d99, Node v22.22.2, disposable PostgreSQL. Test 'QA REQ-PB-033/029 charter North Star after refinement (probe)' in docs/delivery/test-evidence/DG2/qa/tests/dg2-qa-acceptance.test.ts: PUT /north-star 'QA original star.' -> 200; POST /charter {northStarId: <that id>} -> 201; PUT /north-star 'QA refined star.' with If-Match \"1\" -> 200; GET /north-star -> 'QA refined star.'; GET /charter -> northStar = {statement:'QA original star.', status:'superseded'}. Failed in 2/2 runs. charter.ts:271-285 resolves the charter's North Star by the stored charter.north_star_id; the North Star PUT handler supersedes the old row and inserts a new one without touching the charter. CharterPage.tsx:322-328 renders view.northStar.statement without checking its status.",
+      "expected": "REQ-PB-033: exactly one current North Star per transformation, edited on the charter. CLAUDE.md: stale data shows Stale, never as current. The charter shows the current North Star, or at least visibly marks a superseded one as stale.",
+      "actual": "The charter view (API and UI) presents a superseded North Star as the charter's North Star, so the transformation header (current) and the charter disagree. G2 evaluates the current North Star, so the gate itself is not affected.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/13-qa-acceptance-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/13-qa-acceptance-run2.log",
+        "docs/delivery/test-evidence/DG2/qa/tests/dg2-qa-acceptance.test.ts",
+        "docs/delivery/test-evidence/DG2/qa/19-static-inspection.log",
+        "apps/api/src/modules/transformations/charter.ts#L268-L286",
+        "apps/web/src/pages/define/CharterPage.tsx#L322-L328"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG2/round-1/qa-verifier.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-02T04:25:00Z",
+          "status": "OPEN",
+          "note": "raised by qa-verifier DG2 round 1 (proposed ID in the qa 2xx range; the orchestrator may renumber)"
+        }
+      ]
+    },
+    {
+      "id": "F-DG2-205",
+      "stage_id": "DG2",
+      "requirement": "REQ-S04-005",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Phase integrity: in an End-to-End transformation, G3 can be submitted and approved while G2 has never been approved, and the approval moves the phase straight from 'define' to 'mobilize' (Design is skipped), contrary to B0009 'Run Phases 1-6 sequentially'",
+      "reproduction": "Same run as F-DG2-201 (dg2-qa-journey.test.ts): an end_to_end transformation, G1 approved (phase define), G2 not approved (blocked by F-DG2-201). After the Design outputs, G3 is submitted and approved by the SP -> 201, and GET /transformations/{id} currentPhase goes from 'define' to 'mobilize'. The log line reads 'QA-JOURNEY phase before/after G3 approval: define mobilize'. gates.ts:792-799 advances to the gate definition's nextPhase unconditionally on approval, with no check of the current phase or the preceding gate.",
+      "expected": "For mode end_to_end (B0009: 'Run Phases 1-6 sequentially'; B0023 gate sequence), a gate can be submitted, or at least advance the phase, only in its own phase, after the preceding gate is approved. Modular mode enters at its entry phase. A skip, if allowed at all, needs an explicit recorded exception (M0125).",
+      "actual": "G3 approval jumps the transformation from Define to Mobilize, with the Direction gate never approved and no exception recorded.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/18-qa-journey-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/18-qa-journey-run2.log",
+        "docs/delivery/test-evidence/DG2/qa/19-static-inspection.log",
+        "apps/api/src/modules/workflows/gates.ts#L792-L799",
+        "docs/source/playbook.md#L33-L37"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG2/round-1/qa-verifier.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-02T04:25:00Z",
+          "status": "OPEN",
+          "note": "raised by qa-verifier DG2 round 1 (proposed ID in the qa 2xx range; the orchestrator may renumber)"
+        }
+      ]
+    },
+    {
+      "id": "F-DG2-206",
+      "stage_id": "DG2",
+      "requirement": "REQ-DLV-034",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "QA's own acceptance stack e2e/support/qa-stack.sh was not updated for P2: it sets no EVIDENCE_STORAGE_DRIVER/PATH, so evidence uploads fall back to /var/lib/mth/evidence and fail with 503 in a sandbox, and the serial P2 journey then skips 8 tests per locale",
+      "reproduction": "Disposable clone of 98a8d99. A port-parameterised copy of e2e/support/qa-stack.sh (diff in 14-qa-stack-port.diff, port only), then `npx playwright test --workers=1` -> 2 failed ('Evidence: note, filename reference and file upload…' in EN and AR, from a 503 'Service unavailable' at evidence/routes storeProblem) and 8 did not run. The same suite on apps/web/e2e/support/with-stack.sh, which sets EVIDENCE_STORAGE_PATH to a private directory, gives 42/42 passed. This is a test-harness defect, not a product defect.",
+      "expected": "The QA-owned acceptance stack provisions everything the P2 product needs, such as a writable evidence store, so it can run the P2 journeys.",
+      "actual": "Evidence upload 503 under qa-stack.sh. qa-verifier owns the file and cannot change the frozen candidate during review; the fix belongs in tests/qa or e2e in the next stage.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/15-e2e-full.log",
+        "docs/delivery/test-evidence/DG2/qa/14-qa-stack-port.diff",
+        "docs/delivery/test-evidence/DG2/qa/16-e2e-full-run1.log",
+        "e2e/support/qa-stack.sh#L51"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG2/round-1/qa-verifier.json",
+      "owner": "qa-verifier",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-02T04:25:00Z",
+          "status": "OPEN",
+          "note": "raised by qa-verifier DG2 round 1 against its own harness (proposed ID in the qa 2xx range; the orchestrator may renumber)"
+        }
+      ]
     }
   ]
 }
