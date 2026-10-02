@@ -4,6 +4,12 @@ import { Kysely, PostgresDialect, type Transaction } from "kysely";
 import pg from "pg";
 import type { Database } from "./schema.ts";
 
+// Business dates (`date`, type OID 1082) stay "YYYY-MM-DD" strings (ADR-0003 "Time", ADR-0016). node-postgres'
+// default parser builds a JS Date at LOCAL midnight, which shifts a business date by a day whenever the process time
+// zone differs from UTC. Registered once per process, for every pool (T-DG2-ARCH-01).
+const PG_DATE_OID = 1082;
+pg.types.setTypeParser(PG_DATE_OID, (value: string) => value);
+
 export type Db = Kysely<Database>;
 export type Tx = Transaction<Database>;
 /** Either a plain handle or a transaction; read helpers accept both. */
