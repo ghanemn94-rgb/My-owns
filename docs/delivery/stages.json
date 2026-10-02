@@ -851,11 +851,10 @@
           "frozen_at": "2026-10-02T03:55:51Z",
           "source_commit": "98a8d990a93e5a82c30b1b8f3b1e0f44c689e917",
           "records": {
-            "domain-reviewer": "docs/delivery/reviews/DG2/round-1/domain-reviewer.json",
             "code-security-reviewer": "docs/delivery/reviews/DG2/round-1/code-security-reviewer.json",
             "qa-verifier": "docs/delivery/reviews/DG2/round-1/qa-verifier.json"
           },
-          "note": "DG2 gate review round 1 on candidate 8ef26b71 (513 files, source 98a8d99). Full P2 build integrated and green: BE (transformations/workflows/evidence/methodology, gates G1-G3), KBE (kpi/baselines/T02/value-pools + decimal value helpers), BE2 (REQ-PB-036 good-outcome test), FE+FE2 (7 bilingual screens, REQ-PB-003 verbatim mode guidance, Team screen). All 160 contract ops routed+exercised (p2-pending lists empty); unit 422+web 153, integration 414, e2e 38 (EN+AR). Reviewers verify the 32 DG2-final requirements; live-registry (D-057), live-CI (D-058) and keycloak (D-049) are documented environmental residuals, never BLOCKED gate checks."
+          "note": "DG2 gate review round 1 (FAIL) on candidate 8ef26b71 (513 files, source 98a8d99). code-security FAIL (F-DG2-140 High evidence-SoD, 141 High trajectory-approval-SoD, 142 Medium link-removal) and qa FAIL (F-DG2-201 High KPI-cannot-activate-blocks-G2, 202 High register-not-updated, 203/204/205 Medium thesis/superseded-North-Star/phase-sequence, 206 Low qa-stack) are the two independent reviews recorded here. The domain-reviewer run is NOT in round 1: its first run wrote a schema-invalid findings sidecar (non-canonical IDs) and the re-run followed a slightly-wrong orchestrator finding schema (disallowed `locations`, missing `reported_in`); since reviewer records are transcript-bound + write-once, both were dropped (the first via a user-authorized surgical git rewrite; the second unpushed). The domain reviewer's two substantive findings (phase-sequencing High, superseded-North-Star) duplicate qa's F-205/F-204, so no coverage is lost; the domain reviewer joins from round 2 on the repaired candidate with the exact finding schema. Live-registry (D-057), live-CI (D-058), keycloak (D-049) are documented residuals, never BLOCKED gate checks."
         }
       ],
       "gate_record": "docs/delivery/gates/DG2.json",
