@@ -1,0 +1,388 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG2",
+  "round": 2,
+  "candidate_id": "sha256:089a2a2fbe3675019b0c5faeb1cf66fd4ea3f7235fae2c2b4ddb5aaef6c9be69",
+  "source_commit": "eb8163e2de3bee568063a4c561c1a58c3b844e65",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG2-T-DG2-REV-SEC-R2-code-security-reviewer-20261002T115323Z-9a19f5a5",
+    "session_id": "9a19f5a5-6d1c-4ea3-ac8b-59a22c033ffc"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (code-security-reviewer, session 9a19f5a5) authored no implementation in the DG2 scope, including none of the round-2 repairs. I reviewed the frozen candidate directly: the repair diff 98a8d99..eb8163e2, the full touched files, and migration 0019. I ran code only in disposable clones under $TMPDIR and on disposable PostgreSQL 16 clusters. I formed this verdict without reading any other reviewer's DG2 round-2 record."
+  },
+  "assignment": "docs/delivery/assignments/DG2/round-2/code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-S10-001",
+    "REQ-S16-013",
+    "REQ-S13-012",
+    "REQ-DLV-034",
+    "REQ-PB-016",
+    "REQ-PB-017",
+    "REQ-PB-018",
+    "REQ-PB-027",
+    "REQ-PB-028",
+    "REQ-PB-029"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-R2-00-candidate",
+      "procedure": "Confirm the frozen candidate. HEAD is f5a72b4. Its only delta from source_commit eb8163e2 is excluded delivery metadata: 3 round-2 assignments, the 089a2a2f manifest and stages.json (git diff --stat eb8163e2..HEAD). Recompute the candidate ID. The disposable clones are checked out at eb8163e2.",
+      "command": "git rev-parse HEAD; git log --oneline eb8163e2..HEAD; git diff --stat eb8163e2..HEAD; node tools/gates/candidate.mjs --stage DG2",
+      "environment": "/home/user/My-owns working tree; Node v24.21.0",
+      "expected": "candidate_id sha256:089a2a2f...9be69 over 517 files; the post-source commits touch only delivery metadata",
+      "actual": "{\"stage\":\"DG2\",\"source\":\"working-tree\",\"candidate_id\":\"sha256:089a2a2fbe3675019b0c5faeb1cf66fd4ea3f7235fae2c2b4ddb5aaef6c9be69\",\"files\":517}. The 2 later commits (dfc26f8 re-freeze, f5a72b4 assignments) change only docs/delivery/assignments/DG2/round-2/*, docs/delivery/candidates/DG2/089a2a2fbe367501.manifest.json and docs/delivery/stages.json.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/candidates/DG2/089a2a2fbe367501.manifest.json"
+      ]
+    },
+    {
+      "id": "SEC-R2-01-verify-F-DG2-140",
+      "procedure": "Adversarial verification of the evidence SoD fix in the API and the DB. Probes: the round-1 note and file paths, owner-edit variants (note, URL, file), title-only laundering, controls, and a mth_app DB bypass with a matching audit event (author review, spoofed content_authored_by, uploader review, pre-reviewed INSERT, independent control). The probe runs in a disposable clone on disposable PG16, twice.",
+      "command": "with-pg.sh 55481|55482 npx vitest run --project integration apps/api/test/integration/zz-sec-r2-probe.test.ts apps/api/test/integration/zz-sec-r1-probe.test.ts",
+      "environment": "disposable clone $TMPDIR/review-probe @eb8163e2, Node v22.22.2, PostgreSQL 16.13 (nested user ns, 127.0.0.1)",
+      "expected": "Foreign edit or upload gives 403. A review by the creator, content author or current uploader gives 403 evidence.reviewer_is_author with a denied audit. The DB trigger refuses with 23514 evidence_review_separation. Independent controls succeed.",
+      "actual": "Both runs: 140.note.tl_edit_other [403, audited, author stays WL]; 140.file.tl_upload_other [403, 0 revisions]; owner_note/url/file: edit 200, review 403 evidence.reviewer_is_author with 1 authorization.denied; launder_title 403; controls 200. db_bypass: note_author_reviews, note_author_spoofs_content_author, file_uploader_reviews and insert_prereviewed_by_creator all 23514:evidence_review_separation; control_independent_reviewer COMMITTED. The round-1 SEC-1 asserts now fail 400 instead of 403, a probe artefact: the foreign edit is refused first, so If-Match is \"undefined\" (see probes/README.md).",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S13-012",
+        "REQ-S10-001"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-2/probes/zz-sec-r2-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-2/probes/README.md",
+        "docs/delivery/test-evidence/DG2/code-security/round-2/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-2/probe-run2.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-1/probes/zz-sec-r1-probe.test.ts"
+      ]
+    },
+    {
+      "id": "SEC-R2-02-verify-F-DG2-141",
+      "procedure": "Adversarial verification of the trajectory-approval SoD fix. Probes: the round-1 repro, BO-only changes to targetDate, trajectoryPoints and baselineValue, BO-then-TL, re-approval after an edit that reset the approval, and controls (non-trajectory edit; target overwritten by another user). Same runs as SEC-R2-01.",
+      "command": "with-pg.sh 55481|55482 npx vitest run --project integration apps/api/test/integration/zz-sec-r2-probe.test.ts apps/api/test/integration/zz-sec-r1-probe.test.ts",
+      "environment": "disposable clone $TMPDIR/review-probe @eb8163e2, Node v22.22.2, PostgreSQL 16.13",
+      "expected": "Approval by anyone who set or last changed any part of the current trajectory gives 403 kpi.target_author_cannot_approve with a denied audit. Independent approvals succeed.",
+      "actual": "Both runs: 141.r1 [200, 403, kpi.target_author_cannot_approve, 1 authorization.denied]; the targetDate, trajectoryPoints and baselineValue variants each 403; bo_then_tl_date 403; after_approval [200, 200, draft, 403]; controls [200, 200, 200, 200, 200, 200]. Round-1 probe SEC-2 now PASS (403).",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S10-001"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-2/probes/zz-sec-r2-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-2/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-2/probe-run2.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-03-verify-F-DG2-142",
+      "procedure": "Verify that evidence-link removal requires record-level edit rights. Probes: the round-1 repro (WL removes TL's link on a seeded T01 row), the link state afterwards, a TL control, AUD, and an unknown link id.",
+      "command": "with-pg.sh 55481|55482 npx vitest run --project integration apps/api/test/integration/zz-sec-r2-probe.test.ts apps/api/test/integration/zz-sec-r1-probe.test.ts",
+      "environment": "disposable clone $TMPDIR/review-probe @eb8163e2, Node v22.22.2, PostgreSQL 16.13",
+      "expected": "WL remove gives 403 with a denied audit and the link stays active; TL 200; AUD 403; unknown 404",
+      "actual": "Both runs: {wlCreate:403, tlCreate:201, wlRemove:403, audit:[authorization.denied], after:{status:active, version:1}, tlRemove:200}; aud_404 [403, 404]. Round-1 probe SEC-3 now PASS.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S10-001"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-2/probes/zz-sec-r2-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-2/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-2/probe-run2.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-04-activate-kpi-authz",
+      "procedure": "New operation POST /kpi-definitions/{id}/activate: check authorization, optimistic concurrency and the state rule with a direct probe (WL, BO and AUD; stale If-Match; TL; a repeat activation). Source review of kpi-definitions.ts activate: writeScope(kpi_definition.edit), If-Match, a status-guarded UPDATE, and an audit event in the same transaction.",
+      "command": "with-pg.sh 55481|55482 npx vitest run --project integration apps/api/test/integration/zz-sec-r2-probe.test.ts",
+      "environment": "disposable clone $TMPDIR/review-probe @eb8163e2, Node v22.22.2, PostgreSQL 16.13",
+      "expected": "WL, BO and AUD each 403 with 1 denied audit; stale 409; TL 200 active; repeat 422 kpi_definition.already_active",
+      "actual": "Both runs: {wl:[403,1], bo:[403,1], aud:[403,1], stale:409, ok:[200,active], again:[422,kpi_definition.already_active]}",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S10-001"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-2/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-2/probe-run2.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-05-db-guards-regression",
+      "procedure": "Re-run the round-1 SEC-4 (cross-org and wrong-scope gives 404; AUD gives 403 with audit) and SEC-5 DB guards (audit-required, version step, org match, identity, record ref, append-only as mth_app and mth_owner). Disambiguate SEC-5 owner_delete_evidence_content, which COMMITTED in run 2 only: the r1 file ran first, and because the fix now refuses SEC-1.file's upload, evidence_content was empty. A FOR EACH ROW trigger cannot fire on 0 rows. A dedicated probe makes the table non-empty first.",
+      "command": "with-pg.sh 55481|55482 ... zz-sec-r1-probe.test.ts; with-pg.sh 55483 npx vitest run --project integration apps/api/test/integration/zz-sec-r2-append-only.test.ts",
+      "environment": "disposable clone $TMPDIR/review-probe @eb8163e2, Node v22.22.2, PostgreSQL 16.13",
+      "expected": "SEC-4 all 404 and AUD 403 with audit; every DB guard refuses; with rows present, owner DELETE and UPDATE on evidence_content give 42501 and the count is unchanged",
+      "actual": "SEC-4 PASS in both runs. SEC-5: every guard refused in run 1. In run 2 only owner_delete_evidence_content committed, with 0 rows (probe defect). append-only probe: {upload:200, before:1, del:'42501 ... DELETE is not allowed', upd:'42501 ... UPDATE is not allowed', after:1}, exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-013",
+        "REQ-S10-001"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-2/probes/zz-sec-r2-append-only.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-2/probe-append-only.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-2/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-2/probe-run2.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-06-source-review",
+      "procedure": "Manual source review of the repair diff 98a8d99..eb8163e2 (41 non-doc files) for regressions in authorization, integrity and concurrency. Covered: evidence routes (EDIT_OWN/ARCHIVE rules, the review re-check after the lock, link removal with recordOwnership using kysely-quoted identifiers from a DB-constrained record_type); migration 0019 (trigger semantics; no backfill); kpi activate; trajectoryAuthors / outcomeKpiChangeEvents (diff keys equal the columns; all outcome_kpi UPDATE paths audited); gates.ts sequenceProblem on submit, decide and canSubmit; phase.ts exactly-one-step advance re-checked under the transformation FOR UPDATE lock (race-safe); charter North Star current-link rule; composeThesis; web pages (no innerHTML or dangerouslySetInnerHTML).",
+      "command": "git diff 98a8d99..eb8163e2 -- . ':!docs'; grep -rn 'updateTable(\"outcome_kpi\")|updateTable(\"evidence\")' apps/api/src; grep -rn dangerouslySetInnerHTML apps/web/src",
+      "environment": "/home/user/My-owns (read-only) and clone @eb8163e2",
+      "expected": "No new authz bypass, integrity gap, injection or concurrency defect introduced by the repairs",
+      "actual": "None found. Residual observations, below finding level: pre-0019 rows have content_authored_by NULL, read as the creator (no production data exists); the T02 author rule is API-only (the DB CHECK still covers only the creator); a multi-role KDS+BO user could alter a referenced baseline (predates the repair); archive now allows the owner or evidence.review holders (narrower than round 1's any evidence.create holder).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S10-001",
+        "REQ-S13-012",
+        "REQ-S16-013"
+      ],
+      "evidence": [
+        "apps/api/src/modules/evidence/routes.ts",
+        "packages/db/migrations/0019_evidence_review_separation.sql",
+        "apps/api/src/modules/kpi/rules.ts",
+        "apps/api/src/modules/workflows/gates.ts",
+        "apps/api/src/modules/transformations/phase.ts"
+      ]
+    },
+    {
+      "id": "SEC-R2-07-build",
+      "procedure": "Recursive build",
+      "command": "pnpm -r build",
+      "environment": "disposable clone $TMPDIR/review-sec @eb8163e2, Node v22.22.2, offline pnpm install --frozen-lockfile",
+      "expected": "exit 0",
+      "actual": "all packages 'Done'; exit_status 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-2/build.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-2/checks.sh"
+      ]
+    },
+    {
+      "id": "SEC-R2-08-typecheck",
+      "procedure": "Recursive typecheck",
+      "command": "pnpm -r typecheck",
+      "environment": "disposable clone $TMPDIR/review-sec @eb8163e2, Node v22.22.2",
+      "expected": "exit 0",
+      "actual": "apps/worker, apps/api typecheck: Done; exit_status 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-2/typecheck.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-09-lint",
+      "procedure": "ESLint with zero warnings allowed",
+      "command": "pnpm lint",
+      "environment": "disposable clone $TMPDIR/review-sec @eb8163e2, Node v22.22.2",
+      "expected": "exit 0",
+      "actual": "eslint . --max-warnings=0; exit_status 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-2/lint.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-10-openapi-lint",
+      "procedure": "OpenAPI contract lint",
+      "command": "pnpm openapi:lint",
+      "environment": "disposable clone $TMPDIR/review-sec @eb8163e2, Node v22.22.2",
+      "expected": "PASS, 161 operations",
+      "actual": "PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 161 operations; exit_status 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-2/openapi-lint.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-11-no-cdn",
+      "procedure": "Portability scan for public CDNs",
+      "command": "pnpm check:no-cdn",
+      "environment": "disposable clone $TMPDIR/review-sec @eb8163e2, Node v22.22.2",
+      "expected": "PASS",
+      "actual": "PASS no-cdn: scanned apps, packages; exit_status 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-2/no-cdn.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-12-format-check",
+      "procedure": "Prettier check",
+      "command": "pnpm format:check",
+      "environment": "disposable clone $TMPDIR/review-sec @eb8163e2, Node v22.22.2",
+      "expected": "exit 0",
+      "actual": "All matched files use Prettier code style!; exit_status 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-2/format-check.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-13-unit-node22",
+      "procedure": "Unit suite on the Node 22 floor. The first run overlapped my own second-clone build and probe workload; it was re-run twice with no concurrent load. All 3 logs are kept, and the flakiness is raised as F-DG2-143 (Low).",
+      "command": "pnpm test",
+      "environment": "disposable clone $TMPDIR/review-sec @eb8163e2, Node v22.22.2",
+      "expected": "30 files / 492 tests pass",
+      "actual": "Run 1, under load: 1 failed / 491 passed. architecture.test.ts 'every import respects dependsOn...' timed out at 5829 ms > 5000 ms; exit 1. Reruns 1 and 2, no load: 30 files / 492 tests passed (architecture.test.ts 4558 ms and 4322 ms); exit 0 and 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-2/unit-node22.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-2/unit-node22-rerun1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-2/unit-node22-rerun2.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-14-unit-node24",
+      "procedure": "Unit suite on Node 24",
+      "command": "pnpm test",
+      "environment": "disposable clone $TMPDIR/review-sec @eb8163e2, Node v24.21.0",
+      "expected": "30 files / 492 tests pass",
+      "actual": "Test Files 30 passed (30); Tests 492 passed (492); exit_status 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-2/unit-node24.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-15-integration-run1",
+      "procedure": "Full integration suite on a fresh disposable PostgreSQL 16, run 1. Covers migrations 0001-0019, contract.test.ts (161 routed operations), aud-write-deny (128) and kpi-aud-write-deny (18, incl. activateKpiDefinition), dg2-repairs (13), kpi-dg2-repairs (11) and oidc (19).",
+      "command": "with-pg.sh 55471 pnpm test:integration",
+      "environment": "disposable clone $TMPDIR/review-sec @eb8163e2, Node v22.22.2, PostgreSQL 16.13 on 127.0.0.1:55471",
+      "expected": "all files pass; 19 migrations applied",
+      "actual": "applied 19 migrations to a fresh database; Test Files 28 passed (28); Tests 440 passed (440); exit_status 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S10-001",
+        "REQ-S16-013",
+        "REQ-S13-012",
+        "REQ-DLV-034",
+        "REQ-PB-016",
+        "REQ-PB-017",
+        "REQ-PB-018",
+        "REQ-PB-027",
+        "REQ-PB-028",
+        "REQ-PB-029"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-2/integration-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-2/with-pg.sh"
+      ]
+    },
+    {
+      "id": "SEC-R2-16-integration-run2",
+      "procedure": "Full integration suite on a second fresh disposable PostgreSQL 16 (repeatability)",
+      "command": "with-pg.sh 55472 pnpm test:integration",
+      "environment": "disposable clone $TMPDIR/review-sec @eb8163e2, Node v22.22.2, PostgreSQL 16.13 on 127.0.0.1:55472",
+      "expected": "all files pass; 19 migrations applied",
+      "actual": "applied 19 migrations to a fresh database; Test Files 28 passed (28); Tests 440 passed (440); exit_status 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-2/integration-run2.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-17-aud-403-sweep",
+      "procedure": "Confirm that the AUD write-deny sweep covers every write operation, including the new activateKpiDefinition, and that it passed in both integration runs.",
+      "command": "grep -n activateKpiDefinition apps/api/test/integration/kpi/kpi-aud-write-deny.test.ts; grep aud-write-deny integration-run{1,2}.log",
+      "environment": "disposable clone $TMPDIR/review-sec @eb8163e2",
+      "expected": "activateKpiDefinition is in the sweep; both sweeps pass",
+      "actual": "kpi-aud-write-deny.test.ts:25 ['activateKpiDefinition', ...]; aud-write-deny.test.ts:199 counts 127 + activate. aud-write-deny (128 tests) and kpi-aud-write-deny (18 tests) PASS in both runs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S10-001"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-2/integration-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-2/integration-run2.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-18-validate-historical-DG0",
+      "procedure": "Historical validation of the approved DG0 gate",
+      "command": "node tools/gates/validate.mjs --historical --stage DG0",
+      "environment": "/home/user/My-owns @f5a72b4, Node v22.22.2",
+      "expected": "PASS, exit 0",
+      "actual": "PASS gate DG0 (historical); exit_status 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-2/validate-historical-DG0.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-19-validate-historical-DG1",
+      "procedure": "Historical validation of the approved DG1 gate",
+      "command": "node tools/gates/validate.mjs --historical --stage DG1",
+      "environment": "/home/user/My-owns @f5a72b4, Node v22.22.2",
+      "expected": "PASS, exit 0",
+      "actual": "PASS gate DG1 (historical); exit_status 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-2/validate-historical-DG1.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-20-env-residuals",
+      "procedure": "Environmental residuals, checked on their offline or config surfaces as the assignment requires; the live parts are not BLOCKED gate checks. Live registry (REQ-DLV-042 AC-1, D-057): offline pnpm install --frozen-lockfile against the committed lockfile succeeded. Live CI (REQ-DLV-025 A24, D-058): .github/workflows/ci.yml runs format, lint, typecheck, build, test, openapi:lint, no-cdn and integration against a digest-pinned postgres service on Node 22 and 24. Keycloak (D-049): deploy/keycloak is present and oidc.test.ts (19 tests) passed offline in both integration runs.",
+      "command": "pnpm install --frozen-lockfile --offline; grep -n 'run: pnpm\\|image:' .github/workflows/ci.yml; ls deploy/keycloak",
+      "environment": "disposable clone @eb8163e2 (no network); /home/user/My-owns",
+      "expected": "offline and config surfaces are consistent",
+      "actual": "Install done in 2.9 s, offline. ci.yml lines 62-68 and 100-101 list the required checks, with postgres:18@sha256:5a5a84b1... pinned. oidc.test.ts passed. Residual: live registry, live CI and a live Keycloak were not exercised (no network in the sandbox), per D-057, D-058 and D-049.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        ".github/workflows/ci.yml",
+        "docs/delivery/test-evidence/DG2/code-security/round-2/integration-run1.log"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG2-143"
+  ],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG2/round-2/code-security-reviewer.verifications.json",
+    "docs/delivery/reviews/DG2/round-2/code-security-reviewer.findings.json",
+    "docs/delivery/test-evidence/DG2/code-security/round-2/checks.sh",
+    "docs/delivery/test-evidence/DG2/code-security/round-2/summary.txt",
+    "docs/delivery/test-evidence/DG2/code-security/round-2/probes/README.md",
+    "docs/delivery/test-evidence/DG2/code-security/round-2/probes/zz-sec-r2-probe.test.ts",
+    "docs/delivery/test-evidence/DG2/code-security/round-2/probes/zz-sec-r2-append-only.test.ts",
+    "docs/delivery/test-evidence/DG2/code-security/round-2/probe-run1.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-2/probe-run2.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-2/probe-append-only.log"
+  ],
+  "reviewed_at": "2026-10-02T12:08:00Z",
+  "summary": "PASS. F-DG2-140, F-DG2-141 and F-DG2-142 are verified CLOSED on candidate 089a2a2f through adversarial API and DB probes (2 runs). No regression was found in the repairs. All required checks ran and passed: build, typecheck, lint, openapi:lint (161 ops), no-cdn, format, unit tests on Node 22 and 24, two integration runs with migrations 0001-0019, the contract test and the AUD sweep including activateKpiDefinition, and historical validation of DG0 and DG1. One new Low, non-mandatory finding: F-DG2-143, a flaky 5 s timeout in the architecture unit test."
+}

@@ -1,0 +1,44 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG2-140",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified fixed on candidate sha256:089a2a2f...9be69 (source eb8163e2), API and DB. API: PATCH and content upload now use EDIT_OWN (evidence.create scope own = creator or named owner; routes.ts:84, register-kit updateRules). The review route calls assertReviewerIndependent twice, before and after the row lock (routes.ts:~470-482). It refuses the creator, evidence.content_authored_by and the uploader of current_content_id. Migration 0019 adds content_authored_by, which only the trigger maintains: any value the app sends is overwritten. The BEFORE INSERT OR UPDATE trigger evidence_review_separation refuses a review by the creator, the content author, or the uploader of the reviewed or current revision, and db-errors maps it to 403. Probe results (zz-sec-r2-probe.test.ts, PASS in 2 runs on disposable PG16). Round-1 note path: TL PATCH of WL's note gives 403 + authorization.denied audit, and content_authored_by stays WL. Round-1 file path: TL upload gives 403 and 0 revisions. Owner-edit variants (WL creates the item naming TL as owner, so TL may edit): note, URL and file each give 200 for the edit and then 403 evidence.reviewer_is_author for TL's review, with 1 denied audit. Title-only laundering by the creator after TL's text edit: still 403. Controls: TL verifying WL-authored text is 200, and so is a verification after the creator rewrites the text. DB bypass as mth_app with a matching audit event: note author reviews, author review with spoofed content_authored_by, file uploader reviews, and an INSERT pre-reviewed by its creator all fail 23514 evidence_review_separation; an independent reviewer commits. The round-1 probe re-run verbatim now fails SEC-1 with 400 instead of 403. That is a probe artefact: step 1 (the foreign edit or upload) is refused 403, so the follow-up review sends If-Match \"undefined\". Residual (not a finding, pre-production): rows edited by a third party before 0019 have content_authored_by NULL, which is treated as the creator.",
+      "evidence": [
+        "packages/db/migrations/0019_evidence_review_separation.sql",
+        "apps/api/src/modules/evidence/routes.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-2/probes/zz-sec-r2-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-2/probes/README.md",
+        "docs/delivery/test-evidence/DG2/code-security/round-2/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-2/probe-run2.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG2-141",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified fixed on candidate sha256:089a2a2f...9be69. outcome-kpis.ts trajectory-approval keeps the creator rule and adds trajectoryAuthors() (rules.ts). For each of kpi_definition_id, baseline_id, baseline_value, target_value, target_date and trajectory_points it takes the actor and on-behalf-of user of the newest outcome_kpi audit event whose diff touched that field; untouched fields fall back to the creator. Any author is refused with 403 kpi.target_author_cannot_approve and a denied audit event. The audit trail is append-only, required at commit and read under the row lock. diffFields keys are the DB column names, which match TRAJECTORY_CONTENT_FIELDS, and outcome-kpis.ts holds the only three UPDATE paths on outcome_kpi, all audited. Probe results (2 runs). Round-1 repro (BO PATCH targetValue then approve): 403 kpi.target_author_cannot_approve with 1 authorization.denied audit. Variants where BO changes only targetDate, only trajectoryPoints or only baselineValue: each 403. BO sets the target, then TL changes the date: 403. After a legitimate SP approval, BO edits (status back to draft) and approves: 403. Controls: BO editing a non-trajectory field (leadingIndicatorText) may approve (200), and so may BO after TL overwrote BO's target (200). Residuals, not findings: the author rule is enforced in the API only; the DB CHECK still covers only the creator, and reaching it needs mth_app access. A user holding both KDS and BO grants could edit a referenced baseline record, which predates the repair.",
+      "evidence": [
+        "apps/api/src/modules/kpi/outcome-kpis.ts",
+        "apps/api/src/modules/kpi/rules.ts",
+        "apps/api/src/modules/kpi/repository.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-2/probes/zz-sec-r2-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-2/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-2/probe-run2.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG2-142",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified fixed on candidate sha256:089a2a2f...9be69. POST .../evidence-links/{linkId}/remove now loads the link's record_type and record_id and calls requireRecordWrite with RECORD_WRITE_RULES for that type, against the record's created_by/owner (recordOwnership). These are the same rules as link creation; an unknown type gives 500 and is never allowed. Probe results (2 runs). Round-1 repro: a WL (diagnostic.contribute, own rows only) removing TL's link on a seeded T01 row gets 403 with 1 authorization.denied audit, and the link stays active at version 1. The round-1 probe SEC-3 now passes too. Controls: TL removes its own link (200), AUD gets 403, and an unknown link id is 404.",
+      "evidence": [
+        "apps/api/src/modules/evidence/routes.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-2/probes/zz-sec-r2-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-2/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-2/probe-run2.log"
+      ]
+    }
+  ]
+}
