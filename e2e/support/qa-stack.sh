@@ -52,6 +52,9 @@ export NODE_ENV=development AUTH_MODE=dev PORT=3000 APP_BASE_URL=http://localhos
 export DATABASE_OWNER_URL="$(role_url mth_owner)" DATABASE_URL="$(role_url mth_app)"
 # Many sign-ins per minute in tests; production defaults are untouched.
 export AUTH_RATE_LIMIT_PER_MINUTE=1000 RATE_LIMIT_PER_MINUTE=10000
+# P2 evidence uploads need a writable store; the default /var/lib/mth/evidence is not writable
+# in the sandbox and returned 503, which skipped the serial P2 journey (F-DG2-206). Mirror with-stack.sh.
+export EVIDENCE_STORAGE_DRIVER=filesystem EVIDENCE_STORAGE_PATH="$WORK/evidence"
 
 node packages/db/dist/cli.js migrate
 node packages/db/dist/cli.js seed-dev
