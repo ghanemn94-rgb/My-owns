@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG2",
+  "round": 2,
+  "candidate_id": "sha256:089a2a2fbe3675019b0c5faeb1cf66fd4ea3f7235fae2c2b4ddb5aaef6c9be69",
+  "source_commit": "eb8163e2de3bee568063a4c561c1a58c3b844e65",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG2-T-DG2-REV-DOM-R2-domain-reviewer-20261002T115323Z-742d5cb2",
+    "session_id": "742d5cb2-5f87-4abb-bbad-93ad31dfe383"
+  },
+  "implementation_author": ["backend-workflow-engineer", "kpi-benefits-engineer", "frontend-ux-engineer", "solution-architect", "transformation-analyst"],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "domain-reviewer did not author any DG2 implementation, test or ADR in the reviewed scope. All execution happened in a disposable clone under $TMPDIR with disposable PostgreSQL clusters; the candidate tree was not modified. This verdict was formed before reading any other reviewer's round-2 record."
+  },
+  "assignment": "docs/delivery/assignments/DG2/round-2/domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-PB-003", "REQ-PB-012", "REQ-PB-016", "REQ-PB-017", "REQ-PB-018", "REQ-PB-023", "REQ-PB-024", "REQ-PB-025",
+    "REQ-PB-026", "REQ-PB-029", "REQ-PB-030", "REQ-PB-031", "REQ-PB-033", "REQ-PB-034", "REQ-PB-035", "REQ-PB-036",
+    "REQ-PB-037", "REQ-PB-038", "REQ-PB-039", "REQ-PB-041", "REQ-PB-042", "REQ-PB-043", "REQ-S04-003", "REQ-S04-004",
+    "REQ-S04-005", "REQ-S05-003"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-R2-00-candidate",
+      "procedure": "Confirm the frozen candidate. Recompute the candidate ID in the repository and in the disposable clone (at clone time, before any build). HEAD f5a72b49 differs from source_commit eb8163e2 only by the round-2 freeze and assignment metadata (stages.json, candidates/, assignments/), which the candidate excludes (D-005); eb8163e2 is an ancestor of HEAD. Run the historical DG1 validator.",
+      "command": "git rev-parse HEAD && node tools/gates/candidate.mjs --stage DG2 && node tools/gates/validate.mjs --historical --stage DG1",
+      "environment": "/home/user/My-owns and clone $TMPDIR/review-dg2 @ f5a72b49; Node 24.21.0",
+      "expected": "candidate_id sha256:089a2a2f… over 517 files; DG1 historical PASS",
+      "actual": "candidate_id sha256:089a2a2fbe3675019b0c5faeb1cf66fd4ea3f7235fae2c2b4ddb5aaef6c9be69, 517 files (repo and clone); 'PASS gate DG1 (historical)', exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/domain/round-2/candidate-verification.log"]
+    },
+    {
+      "id": "DOM-R2-01-node24",
+      "procedure": "In the disposable clone (node_modules copied from the repository install; pnpm-lock.yaml identical), run typecheck, build, lint, unit tests and the contrast check on Node 24.",
+      "command": "pnpm -r typecheck; pnpm -r build; pnpm lint; pnpm test; pnpm --filter @mth/design-tokens run check:contrast",
+      "environment": "Node v24.21.0, pnpm 10.33.0, Linux sandbox, clone $TMPDIR/review-dg2",
+      "expected": "all exit 0; all tests pass; every contrast pair PASS",
+      "actual": "typecheck exit 0; build exit 0; lint exit 0; test: 30 files / 492 tests passed, exit 0; contrast: all pairs PASS, exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/domain/round-2/node24-checks.log"]
+    },
+    {
+      "id": "DOM-R2-02-node22",
+      "procedure": "Same five checks on the Node 22 floor.",
+      "command": "pnpm -r typecheck; pnpm -r build; pnpm lint; pnpm test; pnpm --filter @mth/design-tokens run check:contrast",
+      "environment": "Node v22.22.2 (/opt/node22), pnpm 10.33.0, clone $TMPDIR/review-dg2",
+      "expected": "all exit 0",
+      "actual": "typecheck 0; build 0; lint 0; test 30 files / 492 tests passed (0); contrast all PASS (0)",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/domain/round-2/node22-checks.log"]
+    },
+    {
+      "id": "DOM-R2-03-source-fidelity-catalogue",
+      "procedure": "Static comparison of the seeded methodology catalogue and UI strings against docs/source/playbook.md: B0009 mode table (i18n transformations.json modeGuidance), B0018 six role accountabilities (migration 0018), B0029 six workstreams with key questions and typical outputs (0011), B0031 six T01 dimensions with placeholder hints (0011), B0023 G1-G6 questions and evidence (0011), B0039-B0043 five scope questions (0011), B0051 five good-outcome criteria (0011), B0056 ten TOM dimensions + design questions and B0062 canvas boxes/prompts (0011), B0035 charter 14 fields (0013 columns + outcomes + guardrails), B0050 T02 7 columns, B0058 T03 6 columns, B0065 T04 7 columns. Provenance text says 'inspired by PMI, Brightline and BRM … Not an official PMI standard'.",
+      "command": "sed/grep over docs/source/playbook.md, packages/db/migrations/0011-0018, apps/web/src/i18n/en/*.json",
+      "environment": "repository working tree at f5a72b49 (candidate files)",
+      "expected": "verbatim source text; correct counts; honest provenance",
+      "actual": "All matched verbatim (EN source text; AR is a labelled translation). Minor: the define.json i18n fallback for scope questions is paraphrased, but it is only used when the catalogue is not loaded; rendered screens show the verbatim B0039-B0043 questions.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-003", "REQ-PB-012", "REQ-PB-023", "REQ-PB-026", "REQ-PB-029", "REQ-PB-031", "REQ-PB-034", "REQ-PB-036", "REQ-PB-038", "REQ-PB-039", "REQ-PB-041", "REQ-PB-043"]
+    },
+    {
+      "id": "DOM-R2-04-live-scenario",
+      "procedure": "Own API scenario (scenario.mjs) on a disposable stack: e2e/support/qa-stack.sh copied as dom-stack.sh with port 3317 (PostgreSQL 16.13 initdb, migrate 0001-0019, seed-dev synthetic users, built API + SPA). Steps: B0018 accountabilities; Modular without entryPhase and an unknown mode rejected; Modular@design and End-to-End created (diagnose, SAR); methodology returns 6 workstreams, 10 TOM dimensions with verbatim B0056 questions, 6 T01 dims; six T01 rows seeded and Confidence 'X' rejected; G2 and G3 before G1 refused 422 gate.out_of_sequence; incomplete G1 refused listing g1.value_pools; unquantified and quantified (decimal string) value pools; G1 completed with verified evidence by another person, a root-cause finding and the charter; top-outcomes warning at 0 and 2, none at 3; thesis flagged incomplete per part, cleared when complete; G1 submitted; submitter and non-approver decisions 403; synthetic SP grant, G1 approved, phase diagnose->define; G1 resubmission refused; G3 before G2 refused; two-sentence North Star rejected; North Star refined, exactly one current in history, charter shows the current one; 'Launch new app' fails the good outcome test with reasons and G2 readiness lists it; G2 without guardrails refused listing g2.guardrails; T02 without target date rejected; KPI activated, trajectories approved by SP, guardrail with category; G2 submitted; submitter decision 403; decision on superseded submission 409; G2 approved, phase define->design; canvas has ten boxes; G3 TOM criterion incomplete; TOM gap without dimension rejected; auditor write 403; gate payloads mention no DG gate. Run 1 had 4 script-side failures (expected decimal scale, missing thesis). Run 2, with the script corrected, passed 62/62. All data synthetic; the approvals are demo approvals.",
+      "command": "QA_E2E_PG_PORT=54417 e2e/support/dom-stack.sh node $TMPDIR/scn/scenario.mjs",
+      "environment": "Node v24.21.0; PostgreSQL 16.13 disposable cluster on 127.0.0.1:54417; API on :3317 (AUTH_MODE=dev, NODE_ENV=development)",
+      "expected": "every scenario assertion OK; G1 then G2 decided; phases advance one step each",
+      "actual": "Run 2: 'SUMMARY: 62/62 OK; failed: []', exit 0. G1 approved -> define; G2 approved (submission #2 after #1 superseded -> 409) -> design. Run 1 (56/60): the 4 failures were reviewer-script assumptions, not product defects (amount returned as '2500000.2000' decimal string at scale 4; G2 correctly refused while the thesis was empty).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-003", "REQ-PB-012", "REQ-PB-016", "REQ-PB-017", "REQ-PB-018", "REQ-PB-023", "REQ-PB-026", "REQ-PB-029", "REQ-PB-030", "REQ-PB-033", "REQ-PB-034", "REQ-PB-035", "REQ-PB-036", "REQ-PB-037", "REQ-PB-038", "REQ-PB-039", "REQ-PB-041", "REQ-S04-003", "REQ-S04-004", "REQ-S04-005"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-2/scenario.mjs.txt",
+        "docs/delivery/test-evidence/DG2/domain/round-2/live-scenario-run1.log",
+        "docs/delivery/test-evidence/DG2/domain/round-2/live-scenario-run2.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-05-ui-en-ar",
+      "procedure": "Run the candidate's P2 browser journeys against the disposable stack in chromium-en and chromium-ar (Diagnose, Charter, Define, Design canvas/per-dimension/workshop->T04, Evidence, G1 submit/409/approve, Define->G2, Design->G3, Team B0018 roles, read-only auditor). Inspect the rendered screenshots: charter 14 fields with current North Star + stale notice, composed thesis, verbatim scope questions, Unknown rendering, 3-5 warning; AR RTL canvas with 10 boxes and per-dimension view (current/target design, owner, status, gaps, decisions, dependencies, evidence); gate page 'Business approval' note and no DG reference; AR Team page with six roles and B0018 text; provisional wordmark.",
+      "command": "E2E_BASE_URL=http://localhost:3317 QA_E2E_PG_PORT=54418 e2e/support/dom-stack.sh npx playwright test apps/web/e2e/p2-journeys.spec.ts --workers=1",
+      "environment": "Playwright 1.56.1, Chromium at /opt/pw-browsers, Node v24.21.0, PostgreSQL 16.13 on :54418",
+      "expected": "24/24 pass in EN and AR; axe no violations; screens faithful to the source",
+      "actual": "24 passed (3.4m), exit 0; axe-summary-p2.json has no violations in en/ar. Screens are faithful except the duplicated gate title 'G2 – G2 - Direction' (F-DG2-144, Low).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-012", "REQ-PB-024", "REQ-PB-025", "REQ-PB-029", "REQ-PB-030", "REQ-PB-033", "REQ-PB-035", "REQ-PB-036", "REQ-PB-041", "REQ-PB-042", "REQ-S05-003", "REQ-S04-003", "REQ-S04-004", "REQ-S04-005"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-2/e2e-p2-journeys-en-ar.log",
+        "docs/delivery/test-evidence/DG2/domain/round-2/screens/en/p2-24-charter-north-star-current.png",
+        "docs/delivery/test-evidence/DG2/domain/round-2/screens/ar/p2-08-design-canvas.png",
+        "docs/delivery/test-evidence/DG2/domain/round-2/screens/en/p2-26-g2-approved.png",
+        "docs/delivery/test-evidence/DG2/domain/round-2/screens/ar/p2-17c-team.png",
+        "docs/delivery/test-evidence/DG2/domain/round-2/screens/en/axe-summary-p2.json",
+        "docs/delivery/test-evidence/DG2/domain/round-2/screens/ar/axe-summary-p2.json"
+      ]
+    },
+    {
+      "id": "DOM-R2-06-sequence-logic",
+      "procedure": "Code review of the product-gate sequencing: apps/api/src/modules/transformations/phase.ts (advance exactly one step from the gate's phase; refuse when not yet in the gate's phase) and workflows/gates.ts sequenceProblem (predecessor gate must be approved unless before a Modular entry phase; current phase must have reached the gate's phase), applied on submit and decide. Product gates never read or write DG records (snapshot note 'unrelated to the engineering delivery gates DG0-DG7').",
+      "command": "sed -n over apps/api/src/modules/transformations/phase.ts and apps/api/src/modules/workflows/gates.ts",
+      "environment": "repository working tree (candidate files)",
+      "expected": "no phase skip; G3 not before G2; G1-G6 separate from DG0-DG7",
+      "actual": "Confirmed by code and live (G2/G3 before G1 and G3 before G2 refused 422)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-016", "REQ-PB-017", "REQ-PB-018", "REQ-S04-003", "REQ-S04-004", "REQ-S04-005"]
+    },
+    {
+      "id": "DOM-R2-07-scope-check-exclusions",
+      "procedure": "REQ-PB-031 acceptance probe: charter saved with In scope but empty Out of scope; read the scope-check pre-checks.",
+      "command": "QA_E2E_PG_PORT=54419 e2e/support/dom-stack.sh node $TMPDIR/scn/probe-exclusions.mjs",
+      "environment": "Node v24.21.0; PostgreSQL 16.13 disposable cluster on :54419; API :3317",
+      "expected": "'Are explicit exclusions documented?' fails (REQ-PB-031 acceptance)",
+      "actual": "exclusions_documented = {result: 'unknown', detail: 'No exclusions (out of scope) are recorded yet.'}; the UI shows 'Unknown'. The acceptance is not met (F-DG2-143, Medium).",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": ["REQ-PB-031"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-2/probe-exclusions.mjs.txt",
+        "docs/delivery/test-evidence/DG2/domain/round-2/probe-exclusions.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-08-environmental-residuals",
+      "procedure": "Environmental residuals named in the assignment: live registry (D-057), live CI (D-058), Keycloak (D-049). Per the assignment these are not BLOCKED gate checks. This review used only the offline install surface and AUTH_MODE=dev.",
+      "environment": "sandbox without network",
+      "expected": "offline surface works; residuals noted",
+      "actual": "Offline install (lockfile-identical node_modules) and dev auth worked throughout. Live-registry, live-CI and Keycloak behaviour were not exercised: these are residuals, noted per the assignment.",
+      "exit_status": 0,
+      "result": "PASS"
+    }
+  ],
+  "findings": ["F-DG2-143", "F-DG2-144"],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG2/domain/round-2/candidate-verification.log",
+    "docs/delivery/test-evidence/DG2/domain/round-2/node24-checks.log",
+    "docs/delivery/test-evidence/DG2/domain/round-2/node22-checks.log",
+    "docs/delivery/test-evidence/DG2/domain/round-2/live-scenario-run1.log",
+    "docs/delivery/test-evidence/DG2/domain/round-2/live-scenario-run2.log",
+    "docs/delivery/test-evidence/DG2/domain/round-2/scenario.mjs.txt",
+    "docs/delivery/test-evidence/DG2/domain/round-2/e2e-p2-journeys-en-ar.log",
+    "docs/delivery/test-evidence/DG2/domain/round-2/probe-exclusions.log",
+    "docs/delivery/test-evidence/DG2/domain/round-2/probe-exclusions.mjs.txt",
+    "docs/delivery/test-evidence/DG2/domain/round-2/screens/en/p2-24-charter-north-star-current.png",
+    "docs/delivery/test-evidence/DG2/domain/round-2/screens/ar/p2-08-design-canvas.png",
+    "docs/delivery/test-evidence/DG2/domain/round-2/screens/en/p2-26-g2-approved.png",
+    "docs/delivery/test-evidence/DG2/domain/round-2/screens/ar/p2-17c-team.png"
+  ],
+  "reviewed_at": "2026-10-02T12:09:16Z",
+  "summary": "FAIL on one Medium, non-mandatory source-fidelity defect: F-DG2-143 (REQ-PB-031). An empty Out of scope makes the 'Are explicit exclusions documented?' pre-check 'unknown' instead of failing. Also one Low cosmetic finding: F-DG2-144 (duplicated gate code in gate titles). No Critical or High findings and no mandatory violations. Everything else matches the playbook: verbatim catalogues (B0009, B0018, B0023, B0029, B0031, B0039-B0043, B0051, B0056, B0062); sequential G1->G2->G3 with no phase skip; exactly one current one-sentence North Star, shown as current on the charter; thesis flagged incomplete per part; 3-5 warning; good outcome test listed in G2 readiness; G2 blocked without guardrails; unquantified value pools labelled; decimal money; Unknown rendering; EN-LTR and AR-RTL; provisional wordmark; product gates separate from DG0-DG7. Checks green on Node 22 and 24; live scenario 62/62; EN/AR journeys 24/24."
+}

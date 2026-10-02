@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG2-143",
+      "stage_id": "DG2",
+      "requirement": "REQ-PB-031",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Scope sanity check 'Are explicit exclusions documented?' does not fail when Out of scope is empty: the system pre-check returns 'unknown' (rendered as Unknown) instead of failing, contrary to the REQ-PB-031 acceptance and B0041",
+      "reproduction": "Disposable stack built from candidate sha256:089a2a2f… (PostgreSQL 16.13, migrations 0001-0019, AUTH_MODE=dev, synthetic users). As dev.lead: POST /api/v1/transformations {mode: end_to_end}; POST /transformations/{id}/charter {transformationName, inScope: 'Synthetic retail billing', caseForChange} (Out of scope left empty); GET /transformations/{id}/charter. Output: outOfScope = null; scopeCheckPrechecks[exclusions_documented] = {result: 'unknown', detail: 'No exclusions (out of scope) are recorded yet.'}. Code: apps/api/src/modules/transformations/charter.ts:250-253 (`case \"exclusions_present\": out_of_scope === null ? unknown : pass`), which ADR-0017 §2 mirrors. The integration test apps/api/test/integration/registers.test.ts:90 asserts ['exclusions_documented','unknown']. The UI (CharterPage) renders the result as the neutral 'Unknown' badge. Script and log: docs/delivery/test-evidence/DG2/domain/round-2/probe-exclusions.mjs.txt, probe-exclusions.log.",
+      "expected": "REQ-PB-031 acceptance: 'an empty Out of scope field makes \"Are explicit exclusions documented?\" fail'. An empty Out of scope on a saved charter is a definite answer to B0041 (no exclusions are documented), not missing data. The pre-check should report a failing/attention result (for example result 'attention' or a dedicated 'fail', with a clear 'No explicit exclusions are documented' message in EN and AR). It should not report 'unknown'.",
+      "actual": "result 'unknown' / UI badge 'Unknown'. The check does not fail; it reads as 'not enough data'. It never shows green, so the Unknown-never-green invariant holds, but the acceptance criterion is not met and the B0041 negative is not surfaced as a failure.",
+      "evidence": [
+        "apps/api/src/modules/transformations/charter.ts",
+        "apps/api/test/integration/registers.test.ts",
+        "docs/architecture/adr/ADR-0017-charter-versioning-and-direction.md",
+        "docs/delivery/test-evidence/DG2/domain/round-2/probe-exclusions.mjs.txt",
+        "docs/delivery/test-evidence/DG2/domain/round-2/probe-exclusions.log"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-2/domain-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-02T12:09:16Z",
+          "status": "OPEN",
+          "note": "raised by domain-reviewer DG2 round 2; reproduced live through the API on a disposable PostgreSQL 16.13 stack (probe-exclusions.log); the web pre-check badge also needs updating (frontend-ux-engineer) once the API result changes"
+        }
+      ]
+    },
+    {
+      "id": "F-DG2-144",
+      "stage_id": "DG2",
+      "requirement": "REQ-PB-017",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Product gate titles repeat the gate code ('G2 – G2 - Direction') because the UI prefixes the code to the source gate name, which already contains it",
+      "reproduction": "Run apps/web/e2e/p2-journeys.spec.ts on the candidate (chromium-en/ar) and open /transformations/{id}/gates/G2 (screenshot docs/delivery/test-evidence/DG2/domain/round-2/screens/en/p2-26-g2-approved.png): the card heading reads 'G2 – G2 - Direction'. Code: apps/web/src/pages/gates/GateDetailPage.tsx:74 and GatesPage.tsx:70 build `${def.code} – ${sourceNameEn|nameAr}`, while gate_definition.source_name_en is already 'G2 - Direction' (B0023; migration 0011). The same applies to G1-G6 in both languages.",
+      "expected": "The B0023 gate name is shown once, e.g. 'G2 - Direction' (and 'G2 - التوجّه' in Arabic).",
+      "actual": "'G2 – G2 - Direction' (the code is duplicated) on the gate list and detail pages.",
+      "evidence": [
+        "apps/web/src/pages/gates/GateDetailPage.tsx",
+        "apps/web/src/pages/gates/GatesPage.tsx",
+        "docs/delivery/test-evidence/DG2/domain/round-2/screens/en/p2-26-g2-approved.png"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-2/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-02T12:09:16Z",
+          "status": "OPEN",
+          "note": "raised by domain-reviewer DG2 round 2 from the rendered EN/AR gate screens; cosmetic, non-mandatory"
+        }
+      ]
+    }
+  ]
+}
