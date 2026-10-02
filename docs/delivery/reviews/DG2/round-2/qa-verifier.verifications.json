@@ -1,0 +1,89 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG2-201",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:089a2a2f… (disposable clone at eb8163e2, Node 22.22.2, PostgreSQL 16.13). POST /kpi-definitions/{id}/activate (activateKpiDefinition) exists and is routed (contract.test 161 ops, both pending lists empty). Independent test dg2-qa-journey-r2.test.ts (native API only, no DB writes, 2/2 runs 8/8): KDS activates a draft KPI -> 200, status active, version+1, exactly one kpi_definition.activate audit event; SP (no kpi_definition.edit) -> 403; no If-Match -> 428; two concurrent activations with the same version -> one 200 and one 409; already active -> 422 kpi_definition.already_active. With the KPI active, all G2 mandatory criteria are complete, G2 is submitted and approved (phase define -> design), then G3 (design -> mobilize): Diagnose -> Define -> Design reaches a G2 and a G3 decision. UI: the Define-screen Activate affordance is exercised in p2-journeys 'Define -> G2: activate a KPI ... G2 is decided' and 'Design -> G3', green in chromium-en and chromium-ar in two full e2e runs (46/46 each, axe 0 violations). The screenshots show a refused activation with its reason, an activated KPI and G2/G3 approved in EN and AR.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/tests/round-2/dg2-qa-journey-r2.test.ts",
+        "docs/delivery/test-evidence/DG2/qa/round-2/18-qa-journey-r2-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-2/18-qa-journey-r2-run2.log",
+        "docs/delivery/test-evidence/DG2/qa/round-2/15-e2e-qa-stack-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-2/16-e2e-with-stack-run2.log",
+        "docs/delivery/test-evidence/DG2/qa/round-2/12-contract-verbose.log",
+        "docs/delivery/test-evidence/DG2/qa/round-2/e2e/en/p2-19-kpi-activation-refused.png",
+        "docs/delivery/test-evidence/DG2/qa/round-2/e2e/en/p2-20-kpi-activated.png",
+        "docs/delivery/test-evidence/DG2/qa/round-2/e2e/ar/p2-20-kpi-activated.png",
+        "docs/delivery/test-evidence/DG2/qa/round-2/e2e/en/p2-26-g2-approved.png",
+        "docs/delivery/test-evidence/DG2/qa/round-2/e2e/ar/p2-26-g2-approved.png",
+        "docs/delivery/test-evidence/DG2/qa/round-2/e2e/en/p2-27-g3-approved.png",
+        "docs/delivery/test-evidence/DG2/qa/round-2/e2e/ar/p2-27-g3-approved.png"
+      ]
+    },
+    {
+      "finding_id": "F-DG2-202",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on the frozen register (docs/delivery/requirements.csv, in manifest 089a2a2fbe367501). `node tools/gates/validate.mjs --register DG2` -> 'PASS register rules at DG2' (exit 0). An independent count of rows with final_gate=DG2 gives exactly 32, the same set as the assignment's 32 IDs, all IMPLEMENTED. Every row cites 7-17 evidence files, and every cited path exists (17b-register-rows.log: missing=[] for all 32).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-2/17-validate-register.log",
+        "docs/delivery/test-evidence/DG2/qa/round-2/17b-register-rows.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG2-203",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:089a2a2f…. The i18n template now follows B0037: EN 'If we change {change}, then {outcomes} will improve, which will create {benefits}, because {because}.'; AR 'إذا غيّرنا {change}، فستتحسّن {outcomes}، مما سيحقق {benefits}، لأن {because}.'. API (dg2-qa-journey-r2, 2/2 runs): a charter without a thesis has 4 charter.thesis_incomplete warnings naming each part, and G2 g2.outcome_tree lists 4 thesis_incomplete misses; after all four parts are saved there are 0 warnings and G2 completes. UI (e2e, EN and AR): empty parts render 'Incomplete – not stated yet' with data-part-state=incomplete and no composed sentence while a part is missing; with all four parts the composed sentence renders (screenshot p2-23 EN/AR) with 'Complete: all four parts stated'. No silent 'None'.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-2/18-qa-journey-r2-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-2/15-e2e-qa-stack-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-2/e2e/en/p2-22-charter-thesis-incomplete.png",
+        "docs/delivery/test-evidence/DG2/qa/round-2/e2e/ar/p2-22-charter-thesis-incomplete.png",
+        "docs/delivery/test-evidence/DG2/qa/round-2/e2e/en/p2-23-charter-thesis-composed.png",
+        "docs/delivery/test-evidence/DG2/qa/round-2/e2e/ar/p2-23-charter-thesis-composed.png"
+      ]
+    },
+    {
+      "finding_id": "F-DG2-204",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:089a2a2f…. My round-1 probe (dg2-qa-acceptance.test.ts, unchanged) now passes in 2/2 runs (17/17): after a refinement, GET /charter returns the refined statement. The independent r2 journey also checks it: the charter linked to the first North Star; after refinement GET /charter.northStar = {statement: refined, status: 'current', id: the new id}, a charter.north_star_superseded warning is shown, and PATCH charter {northStarId: <superseded>} -> 422 charter.north_star_not_current; a later save clears the warning. UI (e2e EN+AR): field 5 shows the current statement with a 'Current' badge and the stale link marked as superseded (AR screenshot p2-24 shows 'قديم' on the stale link). A superseded sentence is never shown as current.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-2/13-qa-acceptance-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-2/13-qa-acceptance-run2.log",
+        "docs/delivery/test-evidence/DG2/qa/round-2/18-qa-journey-r2-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-2/e2e/en/p2-24-charter-north-star-current.png",
+        "docs/delivery/test-evidence/DG2/qa/round-2/e2e/ar/p2-24-charter-north-star-current.png"
+      ]
+    },
+    {
+      "finding_id": "F-DG2-205",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:089a2a2f…. Independent r2 journey (End-to-End, 2/2 runs): with G1 unapproved, G2 and G3 submissions -> 422 gate.out_of_sequence, gate version and status unchanged, phase stays diagnose; after G1 (diagnose -> define), G3 submission -> 422 gate.out_of_sequence while G2 is unapproved; then G2 approval define -> design and G3 approval design -> mobilize. Each approval advances exactly one phase, and there are exactly 3 transformation.phase_advance audit events. phase.ts refuses an approval whose gate phase is ahead of the current phase, and gates.ts sequenceProblem checks the predecessor (Modular entry excepted). The candidate's dg2-repairs.test.ts cases for approving a pending G3 while G2 is unapproved (422, no jump) and for Modular entry ran green in both of my integration runs.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/tests/round-2/dg2-qa-journey-r2.test.ts",
+        "docs/delivery/test-evidence/DG2/qa/round-2/18-qa-journey-r2-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-2/18-qa-journey-r2-run2.log",
+        "docs/delivery/test-evidence/DG2/qa/round-2/10-integration-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-2/10-integration-run2.log",
+        "docs/delivery/test-evidence/DG2/qa/round-2/11-db-guards-verbose.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG2-206",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:089a2a2f…. e2e/support/qa-stack.sh now exports EVIDENCE_STORAGE_DRIVER=filesystem and EVIDENCE_STORAGE_PATH=$WORK/evidence (diff 98a8d99..eb8163e2 in 14b-qa-stack-fix.diff; fix authored by the orchestrator, not by me). I ran the full Playwright suite through the QA acceptance stack (a port-parameterised copy, with the same port-only diff as round 1 so as not to collide with parallel runs): 46 passed, 0 failed, 0 skipped, 0 did-not-run in chromium-en and chromium-ar. This includes 'Evidence: note, filename reference and file upload…', which returned 503 in round 1, and the whole serial P2 journey.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-2/14b-qa-stack-fix.diff",
+        "docs/delivery/test-evidence/DG2/qa/round-2/14-qa-stack-port.diff",
+        "docs/delivery/test-evidence/DG2/qa/round-2/15-e2e-qa-stack-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-2/e2e/en/p2-12-evidence-reviewed.png",
+        "docs/delivery/test-evidence/DG2/qa/round-2/e2e/ar/p2-12-evidence-reviewed.png"
+      ]
+    }
+  ]
+}
