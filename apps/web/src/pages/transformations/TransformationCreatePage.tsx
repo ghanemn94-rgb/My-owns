@@ -2,7 +2,7 @@
 // entry phase and optional standalone deliverable. Validated with the shared `transformationCreate` schema; the
 // Idempotency-Key is generated once per form so a retried submission never creates a duplicate.
 import { useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { PHASES, STANDALONE_DELIVERABLE_TYPES } from "@mth/shared";
+import { PHASES, STANDALONE_DELIVERABLE_TYPES, TRANSFORMATION_MODES, type TransformationMode } from "@mth/shared";
 import { transformationCreate } from "@mth/shared/schemas";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -57,6 +57,57 @@ export function toCreatePayload(v: CreateFormValues): Record<string, string> {
   put("timezone", v.timezone);
   put("currency", v.currency.toUpperCase());
   return out;
+}
+
+/**
+ * The selected mode's "When to use" and "How" guidance (REQ-PB-003). The English catalogue holds the playbook's mode
+ * table text verbatim (B0009); the Arabic catalogue holds a provisional translation, so the Arabic view also shows the
+ * English source text, marked as such. A polite live region: changing the mode announces the new guidance.
+ */
+export function ModeGuidance({ mode }: { mode: TransformationMode }) {
+  const { t, i18n } = useTranslation();
+  const source = i18n.getFixedT("en");
+  const showOriginal = !i18n.language.startsWith("en");
+  const key = (part: "whenToUse" | "how") => `transformations.form.modeGuidance.${mode}.${part}`;
+  return (
+    <section
+      className="banner banner--info mode-guidance"
+      aria-labelledby="mode-guidance-title"
+      aria-live="polite"
+      data-mode-guidance={mode}
+    >
+      <h3 id="mode-guidance-title" className="mode-guidance__title">
+        <Icon name="info" /> {t("transformations.form.modeGuidance.title", { mode: t(`transformations.mode.${mode}`) })}
+      </h3>
+      <dl className="details mode-guidance__list">
+        <div>
+          <dt>{t("transformations.form.modeGuidance.whenToUse")}</dt>
+          <dd data-guidance="whenToUse">{t(key("whenToUse"))}</dd>
+          {showOriginal ? (
+            <dd className="mode-guidance__original" data-guidance-source="whenToUse">
+              {t("transformations.form.modeGuidance.original")}:{" "}
+              <bdi lang="en" dir="ltr">
+                {source(key("whenToUse"))}
+              </bdi>
+            </dd>
+          ) : null}
+        </div>
+        <div>
+          <dt>{t("transformations.form.modeGuidance.how")}</dt>
+          <dd data-guidance="how">{t(key("how"))}</dd>
+          {showOriginal ? (
+            <dd className="mode-guidance__original" data-guidance-source="how">
+              {t("transformations.form.modeGuidance.original")}:{" "}
+              <bdi lang="en" dir="ltr">
+                {source(key("how"))}
+              </bdi>
+            </dd>
+          ) : null}
+        </div>
+      </dl>
+      <p className="small mode-guidance__source">{t("transformations.form.modeGuidance.source")}</p>
+    </section>
+  );
 }
 
 /** How long a create waits for the refreshed GET /me before navigating anyway (the refetch keeps running). */
@@ -216,16 +267,20 @@ export function TransformationCreatePage() {
             <legend className="field__label">
               {t("transformations.field.mode")} <span className="field__required">({t("common.form.required")})</span>
             </legend>
-            {(["end_to_end", "modular"] as const).map((m) => (
-              <label key={m} className="radio-card">
+            {TRANSFORMATION_MODES.map((m) => (
+              <label key={m} className="radio-card" data-mode-option={m}>
                 <input type="radio" value={m} {...register("mode")} />
                 <span>
-                  <strong>{t(`transformations.mode.${m}`)}</strong>
-                  <span className="muted small block">{t(`transformations.form.modeHelp.${m}`)}</span>
+                  <strong>{t(`transformations.mode.${m}`)}</strong>{" "}
+                  <span className="muted small block">
+                    {t("transformations.form.modeGuidance.whenToUse")}:{" "}
+                    {t(`transformations.form.modeGuidance.${m}.whenToUse`)}
+                  </span>
                 </span>
               </label>
             ))}
           </fieldset>
+          <ModeGuidance mode={mode} />
 
           {mode === "modular" ? (
             <>

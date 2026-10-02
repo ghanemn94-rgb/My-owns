@@ -1,5 +1,5 @@
 // Transformation workspace frame for the P2 screens (REQ-S03-011): breadcrumbs, the transformation's code and name,
-// the workspace tabs (Overview, Diagnose, Charter, Define, Design, Decisions, Gates, Evidence) and a context with the
+// the workspace tabs (Overview, Diagnose, Charter, Define, Design, Decisions, Gates, Evidence, Team) and a context with the
 // permission hints for this transformation.
 //
 // Permission hints decide only what the UI OFFERS (ADR-0006): a read-only auditor (AUD) or anyone without the write
@@ -29,6 +29,7 @@ export const WORKSPACE_TABS = [
   { id: "decisions", path: "/decisions" },
   { id: "gates", path: "/gates" },
   { id: "evidence", path: "/evidence" },
+  { id: "team", path: "/team" },
 ] as const;
 export type WorkspaceTabId = (typeof WORKSPACE_TABS)[number]["id"];
 

@@ -52,6 +52,29 @@ function navLink(nav: Locator, lang: Lang, area: string): Locator {
 /** The language switch (LanguageSwitch.tsx) is named in the CURRENT language after the target language. */
 const LANGUAGE_NAMES: Record<Lang, string> = { ar: "العربية", en: "English" };
 
+/**
+ * The playbook's mode table (docs/source/playbook.md, B0009), copied verbatim: the screen must show exactly this text
+ * (REQ-PB-003 A01;A03). The web unit test checks the catalogue against the source document itself.
+ */
+const PLAYBOOK_MODES = {
+  end_to_end: {
+    whenToUse: "New enterprise or business-unit transformation",
+    how: "Run Phases 1-6 sequentially. Do not launch initiatives before the North Star, outcomes and target state are clear.",
+  },
+  modular: {
+    whenToUse: "A transformation is already underway",
+    how: "Enter at the relevant phase, complete the minimum mandatory templates, then reconnect to outcomes and benefits.",
+  },
+} as const;
+/** A mode radio is named by its label, then "When to use: <text>" (TransformationCreatePage.tsx). */
+function modeRadio(page: Page, lang: Lang, mode: "end_to_end" | "modular"): Locator {
+  const label = escape(tr(lang, `transformations.mode.${mode}`));
+  const when = escape(
+    `${tr(lang, "transformations.form.modeGuidance.whenToUse")}: ${tr(lang, `transformations.form.modeGuidance.${mode}.whenToUse`)}`,
+  );
+  return page.getByRole("radio", { name: new RegExp(`^${label}\\s+${when}$`) });
+}
+
 const axeSummary: Record<string, { violations: { id: string; impact: string | null; nodes: number }[] }> = {};
 
 async function shot(page: Page, lang: Lang, name: string) {
@@ -223,19 +246,39 @@ test("create a modular transformation with an entry phase", async ({ page }, inf
   await shot(page, lang, "04-create-validation");
   await expectAccessible(page, lang, "create-validation");
 
+  // REQ-PB-003: the selected mode's "When to use" and "How" guidance. English shows the playbook text verbatim (B0009);
+  // Arabic shows its provisional translation AND the verbatim English source, so both languages assert the source text.
+  for (const mode of ["end_to_end", "modular"] as const) {
+    if (mode === "modular") await modeRadio(page, lang, mode).check();
+    const guidance = page.getByRole("region", {
+      name: tr(lang, "transformations.form.modeGuidance.title", { mode: tr(lang, `transformations.mode.${mode}`) }),
+      exact: true,
+    });
+    await expect(guidance).toBeVisible();
+    await expect(guidance.locator("[data-guidance='whenToUse']")).toHaveText(
+      tr(lang, `transformations.form.modeGuidance.${mode}.whenToUse`),
+    );
+    await expect(guidance.locator("[data-guidance='how']")).toHaveText(
+      tr(lang, `transformations.form.modeGuidance.${mode}.how`),
+    );
+    const verbatim =
+      lang === "en" ? guidance.locator("[data-guidance]") : guidance.locator("[data-guidance-source] bdi");
+    await expect(verbatim).toHaveText([PLAYBOOK_MODES[mode].whenToUse, PLAYBOOK_MODES[mode].how]);
+    await guidance.scrollIntoViewIfNeeded();
+    await shot(page, lang, `04${mode === "end_to_end" ? "b" : "c"}-create-guidance-${mode}`);
+    await expectAccessible(page, lang, `create-guidance-${mode}`);
+  }
+
   await page
     .getByLabel(fieldLabel(lang, "transformations.field.businessUnit"))
     .selectOption({ label: lang === "ar" ? "العمليات (اصطناعي) (SYN-OPS)" : "Synthetic Operations (SYN-OPS)" });
   await page.getByLabel(fieldLabel(lang, "transformations.field.name")).fill(`Synthetic ${lang.toUpperCase()} journey`);
-  // A mode radio is named by its label followed by its help text (TransformationCreatePage.tsx).
-  await page
-    .getByRole("radio", {
-      name: new RegExp(
-        `^${escape(tr(lang, "transformations.mode.modular"))}\\s+${escape(tr(lang, "transformations.form.modeHelp.modular"))}$`,
-      ),
-    })
-    .check();
-  await page.getByLabel(fieldLabel(lang, "transformations.field.entryPhase")).selectOption("design");
+  // Modular without an entry phase is refused on the entry-phase field, before anything is sent.
+  await page.getByRole("button", { name: tr(lang, "transformations.form.create"), exact: true }).click();
+  const entryPhase = page.getByLabel(fieldLabel(lang, "transformations.field.entryPhase"));
+  await expect(entryPhase).toHaveAttribute("aria-invalid", "true");
+  await expect(page).toHaveURL(/\/transformations\/new$/);
+  await entryPhase.selectOption("design");
   await page.getByRole("button", { name: tr(lang, "transformations.form.create"), exact: true }).click();
   await page.waitForURL(/\/transformations\/[0-9a-f-]{36}$/);
   createdId = page.url().split("/").pop()!;

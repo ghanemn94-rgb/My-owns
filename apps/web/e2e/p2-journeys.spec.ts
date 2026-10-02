@@ -1,6 +1,6 @@
 // P2 web journeys against the REAL API and PostgreSQL (support/with-stack.sh; no mocks): Diagnose, Charter, Define,
-// Design, Decisions, Evidence and the product gates, in the project's language (chromium-en -> English LTR,
-// chromium-ar -> Arabic RTL). Every step takes a full-page screenshot (screenshots/<lang>/p2-*.png) and runs axe.
+// Design, Decisions, Evidence, the product gates and the Team (roles with their accountability), in the project's
+// language (chromium-en -> English LTR, chromium-ar -> Arabic RTL). Every step takes a full-page screenshot (screenshots/<lang>/p2-*.png) and runs axe.
 //
 // Setup data is created through the real API as the SYNTHETIC dev users (with CSRF, If-Match, Idempotency-Key);
 // the behaviour under test is driven through the UI. Nothing here is Mobily data, and the G1 approval recorded below
@@ -69,7 +69,7 @@ test("lead creates an End-to-End transformation; the workspace tabs lead to the 
   await signIn(page, lang, "dev.lead");
   await page.goto(`/transformations/${tid}`);
   const tabs = page.getByRole("navigation", { name: tr(lang, "transformations.tabs.label"), exact: true });
-  for (const tab of ["overview", "diagnose", "charter", "define", "design", "decisions", "gates", "evidence"])
+  for (const tab of ["overview", "diagnose", "charter", "define", "design", "decisions", "gates", "evidence", "team"])
     await expect(tabs.getByRole("link", { name: tr(lang, `transformations.tabs.${tab}`), exact: true })).toBeVisible();
   // The header composes P2 data: no North Star yet is Unknown, never blank; G1 readiness is live.
   await expect(page.getByRole("link", { name: "G1", exact: true })).toBeVisible();
@@ -604,6 +604,74 @@ test("Gates: the approver's decision — 409 when the submission was superseded,
   await office.close();
 });
 
+/** B0018 of the playbook (docs/source/playbook.md), copied verbatim: the Team screen shows exactly this text (en). */
+const PLAYBOOK_ACCOUNTABILITY: Record<string, string> = {
+  SP: "Owns enterprise outcome, removes constraints, approves major trade-offs.",
+  TL: "Integrates workstreams, drives cadence, ensures outcome realization.",
+  BO: "Own target-state capabilities and BAU adoption.",
+  WL: "Deliver initiatives and manage dependencies.",
+  FIN: "Validates baseline, benefit logic, value realization.",
+  TO: "Governance, reporting, risks, dependencies, decisions, standards.",
+};
+const GOVERNANCE_ROLES = ["SP", "TL", "BO", "WL", "FIN", "TO"];
+
+test("Team: the six governance roles with their B0018 accountability; the lead assigns a Workstream Lead", async ({
+  page,
+}, info) => {
+  const lang = langOf(info);
+  const foreign = trackRequests(page);
+  await signIn(page, lang, "dev.lead");
+  await page.goto(ws("team"));
+  await expect(page.getByRole("heading", { level: 1, name: tr(lang, "team.title"), exact: true })).toBeVisible();
+  const governance = section(page, lang, "team.governance.title");
+  await expect(governance.locator("[data-role]")).toHaveCount(6);
+  const cards = await governance
+    .locator("[data-role]")
+    .evaluateAll((els) => els.map((e) => e.getAttribute("data-role")));
+  expect(cards).toEqual(GOVERNANCE_ROLES);
+  for (const code of GOVERNANCE_ROLES) {
+    const text = governance.locator(`[data-accountability='${code}']`);
+    await expect(text).toHaveAttribute("data-source-text", "true");
+    await expect(text).toContainText(tr(lang, "team.sourceText", { ref: "B0018" }));
+    if (lang === "en") await expect(text.locator(".accountability__text")).toHaveText(PLAYBOOK_ACCOUNTABILITY[code]!);
+  }
+  // Holders from the live team: the creator's derived TL grant, the synthetic SP grant (gate step), the inherited TO.
+  await expect(governance.locator("[data-holders='TL']")).toContainText(tr(lang, "team.scope.here"));
+  await expect(governance.locator("[data-holders='SP']")).not.toContainText(tr(lang, "team.unassigned"));
+  await expect(governance.locator("[data-holders='TO']")).toContainText(
+    tr(lang, "team.scope.inherited", { scope: tr(lang, "admin.scopeType.organization") }),
+  );
+  await expect(governance.locator("[data-holders='BO'] [data-state='unassigned']")).toHaveText(
+    exactly(tr(lang, "team.unassigned")),
+  );
+  await expect(governance.locator("[data-holders='WL'] [data-state='unassigned']")).toBeVisible();
+  const members = section(page, lang, "team.members.title");
+  await expect(members.getByRole("table")).toBeVisible();
+  await shot(page, lang, "p2-17c-team");
+  await expectAccessible(page, lang, "p2-team");
+
+  // The lead assigns the Transformation Office user as Workstream Lead (the lead cannot read the user directory, so
+  // the candidates are the people already on this team).
+  const wlName = tr(lang, "transformations.audit.role.WL");
+  await governance.getByRole("button", { name: rowAction(lang, "team.assign.action", wlName) }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.locator("[data-preview-role='WL']")).toBeVisible();
+  if (lang === "en")
+    await expect(dialog.locator("[data-preview-role='WL']")).toContainText(PLAYBOOK_ACCOUNTABILITY["WL"]!);
+  await dialog.getByLabel(fieldLabel(lang, "team.assign.person")).selectOption(DEV_USERS.office);
+  await dialog.getByLabel(fieldLabel(lang, "team.assign.reason")).fill("Synthetic: leads the billing workstream");
+  await shot(page, lang, "p2-17d-team-assign");
+  await expectAccessible(page, lang, "p2-team-assign");
+  await dialog.getByRole("button", { name: tr(lang, "team.assign.submit"), exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.locator("[data-state='assigned']")).toContainText(tr(lang, "team.assign.done", { role: wlName }));
+  await expect(governance.locator("[data-holders='WL'] [data-state='unassigned']")).toHaveCount(0);
+  await expect(governance.locator("[data-holders='WL'] [data-assignment]")).toHaveCount(1);
+  await shot(page, lang, "p2-17e-team-assigned");
+  await expectAccessible(page, lang, "p2-team-assigned");
+  expect(foreign).toEqual([]);
+});
+
 test("read-only auditor (AUD): every P2 screen without write controls; Unknown and Unquantified rendered", async ({
   page,
 }, info) => {
@@ -640,9 +708,10 @@ test("read-only auditor (AUD): every P2 screen without write controls; Unknown a
     "evidence.review.action",
     "evidence.upload.action",
     "evidence.links.add",
+    "team.assign.action",
   ].map((k) => tr(lang, k));
   const startsWithWrite = new RegExp(`^\\s*(?:${writeLabels.map(escape).join("|")})(?:\\s*:.*)?\\s*$`);
-  for (const tab of ["diagnose", "charter", "define", "design", "decisions", "gates", "evidence"]) {
+  for (const tab of ["diagnose", "charter", "define", "design", "decisions", "gates", "evidence", "team"]) {
     await page.goto(ws(tab));
     await expect(page.locator("[data-state='read-only']")).toContainText(tr(lang, "transformations.tabs.readOnly"));
     await expect(page.locator("[data-state='loading']")).toHaveCount(0);
@@ -657,6 +726,17 @@ test("read-only auditor (AUD): every P2 screen without write controls; Unknown a
       const pools = section(page, lang, "kpi.valuePool.title");
       await expect(pools.locator("[data-quantification='unquantified']").first()).toBeVisible();
       await expect(page.locator("[data-health='unknown']").first()).toContainText(tr(lang, "common.value.unknown"));
+    }
+    if (tab === "team") {
+      // The auditor reads the team and the accountability text, with no assign control (the server answers 403).
+      const governance = section(page, lang, "team.governance.title");
+      await expect(governance.locator("[data-source-text='true']")).toHaveCount(6);
+      if (lang === "en")
+        await expect(governance.locator("[data-accountability='TL'] .accountability__text")).toHaveText(
+          PLAYBOOK_ACCOUNTABILITY["TL"]!,
+        );
+      await expect(governance.locator("[data-holders='WL'] [data-assignment]")).toHaveCount(1);
+      await expect(page.getByText(tr(lang, "team.adminOnly"), { exact: true })).toHaveCount(0);
     }
     await shot(page, lang, `p2-18-aud-${tab}`);
     await expectAccessible(page, lang, `p2-aud-${tab}`);

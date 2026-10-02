@@ -15,6 +15,7 @@ import { DiagnosePage } from "../pages/diagnose/DiagnosePage.tsx";
 import { EvidencePage } from "../pages/evidence/EvidencePage.tsx";
 import { GateDetailPage } from "../pages/gates/GateDetailPage.tsx";
 import { GatesPage } from "../pages/gates/GatesPage.tsx";
+import { TeamPage } from "../pages/team/TeamPage.tsx";
 import { TransformationCreatePage } from "../pages/transformations/TransformationCreatePage.tsx";
 import { TransformationDetailPage } from "../pages/transformations/TransformationDetailPage.tsx";
 import { TransformationEditPage } from "../pages/transformations/TransformationEditPage.tsx";
@@ -57,6 +58,7 @@ export const routes: RouteObject[] = [
       { path: "transformations/:id/gates", element: <GatesPage /> },
       { path: "transformations/:id/gates/:gateCode", element: <GateDetailPage /> },
       { path: "transformations/:id/evidence", element: <EvidencePage /> },
+      { path: "transformations/:id/team", element: <TeamPage /> },
       { path: "admin", element: <AdminHomePage /> },
       { path: "admin/organizations", element: <OrganizationsPage /> },
       { path: "admin/organizations/:id", element: <OrganizationDetailPage /> },

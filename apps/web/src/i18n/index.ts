@@ -17,6 +17,7 @@ import arAuth from "./ar/auth.json" with { type: "json" };
 import arCommon from "./ar/common.json" with { type: "json" };
 import arNav from "./ar/nav.json" with { type: "json" };
 import arProblems from "./ar/problems.json" with { type: "json" };
+import arTeam from "./ar/team.json" with { type: "json" };
 import arTransformations from "./ar/transformations.json" with { type: "json" };
 import enAdmin from "./en/admin.json" with { type: "json" };
 import enDecisions from "./en/decisions.json" with { type: "json" };
@@ -30,6 +31,7 @@ import enAuth from "./en/auth.json" with { type: "json" };
 import enCommon from "./en/common.json" with { type: "json" };
 import enNav from "./en/nav.json" with { type: "json" };
 import enProblems from "./en/problems.json" with { type: "json" };
+import enTeam from "./en/team.json" with { type: "json" };
 import enTransformations from "./en/transformations.json" with { type: "json" };
 
 /** Namespace files per locale; the key-parity test walks exactly these. */
@@ -48,6 +50,7 @@ export const catalogues = {
     decisions: arDecisions,
     gates: arGates,
     evidence: arEvidence,
+    team: arTeam,
   },
   en: {
     common: enCommon,
@@ -63,6 +66,7 @@ export const catalogues = {
     decisions: enDecisions,
     gates: enGates,
     evidence: enEvidence,
+    team: enTeam,
   },
 } as const;
 

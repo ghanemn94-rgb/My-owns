@@ -21,6 +21,8 @@ const shortId = (id: string) => id.slice(-4);
 export function usePeople(tid: string): {
   people: readonly Person[];
   byId: ReadonlyMap<string, Person>;
+  /** The person's display name where readable (session or GET /users/{id}); otherwise null. */
+  nameOf: (id: string) => string | null;
   loading: boolean;
 } {
   const { t } = useTranslation();
@@ -57,7 +59,12 @@ export function usePeople(tid: string): {
       : t("common.people.teamMember", { roles: roleText || t("common.value.unknown"), ref: shortId(id) });
     return { id, label: id === me.user.id ? `${label} · ${t("common.people.me")}` : label };
   });
-  return { people, byId: new Map(people.map((p) => [p.id, p])), loading: team.isPending };
+  return {
+    people,
+    byId: new Map(people.map((p) => [p.id, p])),
+    nameOf: (id) => names.get(id) ?? null,
+    loading: team.isPending,
+  };
 }
 
 /** A person's name from the team lookup; Not assigned for null; Unknown for someone outside the visible team. */

@@ -9,7 +9,7 @@
 //  - Gates: labelled business approval (never DG0-DG7), unverified evidence shown as such, failing good-outcome
 //    outcomes at G2, submit with If-Match, 422/403/409 problems translated;
 //  - Evidence: octet-stream upload with a percent-encoded X-File-Name and If-Match; review never offered to the creator;
-//  - read-only auditor (AUD): no write control on any P2 screen, and a read-only note;
+//  - read-only auditor (AUD): no write control on any P2 screen (including Team), and a read-only note;
 //  - English LTR and Arabic RTL.
 import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -713,7 +713,7 @@ describe("Evidence", () => {
 // ------------------------------------------------------------------------------------------------ AUD read-only
 
 describe("read-only auditor (AUD)", () => {
-  const screens = ["diagnose", "charter", "define", "design", "decisions", "gates", "evidence"] as const;
+  const screens = ["diagnose", "charter", "define", "design", "decisions", "gates", "evidence", "team"] as const;
   for (const tab of screens) {
     it(`${tab}: no write control and a read-only note`, async () => {
       render(`/transformations/${TR_ID}/${tab}`, [
@@ -734,12 +734,13 @@ describe("read-only auditor (AUD)", () => {
           body: { cells: Array.from({ length: 10 }, (_, i) => canvasCell(i)) },
         })),
         route("GET", /\/gates$/, () => ({ status: 200, body: { items: gateViews({ pending: true }) } })),
+        route("GET", /\/api\/v1\/role-accountabilities$/, () => ({ status: 200, body: { items: [] } })),
       ]);
       await waitFor(() => expect(document.querySelector("[data-state='read-only']")).toBeTruthy());
       await waitFor(() => expect(document.querySelectorAll("[data-state='loading']")).toHaveLength(0));
       const main = document.querySelector("main#main")!;
       const writeWords =
-        /^(Add|Edit|Create|Archive|Save|Validate|Review|Upload|Link to record|Submit|Record decision|Approve|Convert|Configure|Set North Star|Refine|Plan workshop|Fill in|Remove link)/;
+        /^(Add|Edit|Create|Archive|Save|Validate|Review|Upload|Link to record|Submit|Record decision|Approve|Convert|Configure|Set North Star|Refine|Plan workshop|Fill in|Remove link|Assign(?![a-z]))/;
       const offending = [...main.querySelectorAll("button")]
         .filter((b) => !b.disabled)
         .map((b) => (b.textContent ?? "").trim())

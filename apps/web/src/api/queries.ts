@@ -13,6 +13,7 @@ import type {
   JourneyPainPoint,
   MethodologyCatalogue,
   NorthStar,
+  RoleAccountability,
   TeamAssignment,
   TomCanvasCellView,
   TomWorkshopItem,
@@ -243,6 +244,7 @@ export const p2Keys = {
   gateSubmissions: (tid: string, code: string) => ["p2", tid, "gate-submissions", code] as const,
   gateSubmission: (tid: string, code: string, no: number) => ["p2", tid, "gate-submission", code, no] as const,
   team: (tid: string) => ["p2", tid, "team"] as const,
+  roleAccountabilities: ["role-accountabilities"] as const,
 };
 
 const base = (tid: string) => `/api/v1/transformations/${tid}`;
@@ -370,6 +372,16 @@ export function useTeam(tid: string) {
     queryFn: () => fetchAllPages<TeamAssignment>(`${base(tid)}/scoped-assignments`),
     retry: shouldRetry,
     staleTime: 60_000,
+  });
+}
+
+/** Accountability text per role (B0018 verbatim for the six source roles; platform text for the others). */
+export function useRoleAccountabilities() {
+  return useQuery({
+    queryKey: p2Keys.roleAccountabilities,
+    queryFn: async () => (await api.get<{ items: RoleAccountability[] }>("/api/v1/role-accountabilities")).items,
+    retry: shouldRetry,
+    staleTime: 5 * 60_000,
   });
 }
 

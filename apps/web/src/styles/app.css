@@ -577,6 +577,30 @@ input[type="radio"] {
   background: var(--mth-surface-selected);
   border-color: var(--mth-action-primary);
 }
+/* Mode guidance on the create screen (REQ-PB-003): playbook text in the primary text colour on the info surface. */
+.mode-guidance {
+  display: grid;
+  gap: var(--mth-space-3);
+}
+.mode-guidance__title {
+  margin: 0;
+  font-size: 1rem;
+}
+.mode-guidance dd,
+.mode-guidance__source {
+  color: var(--mth-text-primary);
+}
+.mode-guidance__original {
+  font-size: 0.85rem;
+  margin-block-start: var(--mth-space-1);
+}
+/* The English source text sits on its own left-to-right line, so it never wraps around its Arabic label. */
+.mode-guidance__original bdi {
+  display: block;
+}
+.mode-guidance__source {
+  margin: 0;
+}
 
 /* ---------------------------------------------------------------- filters, chips, toolbar */
 .filters {
@@ -1442,4 +1466,43 @@ input[type="radio"] {
    container (otherwise, in RTL, it widens the document). */
 .table-wrap {
   position: relative;
+}
+
+/* ---------------------------------------------------------------- team (REQ-PB-012, REQ-S10-008) */
+.role-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+  gap: var(--mth-space-3);
+}
+.role-card {
+  display: grid;
+  gap: var(--mth-space-2);
+  align-content: start;
+  padding: var(--mth-space-3) var(--mth-space-4);
+  border: 1px solid var(--mth-border-default);
+  border-radius: var(--mth-radius);
+  background: var(--mth-surface-card);
+}
+.role-card__header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--mth-space-2);
+}
+.role-card__title {
+  margin: 0;
+  font-size: 1rem;
+}
+.role-card__facts {
+  grid-template-columns: 1fr;
+}
+.role-card__unassigned {
+  color: var(--mth-feedback-warning-fg);
+}
+.role-card__note {
+  margin: 0;
+}
+.accountability__source {
+  display: block;
 }

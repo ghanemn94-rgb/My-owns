@@ -36,6 +36,7 @@ import type {
   outcome,
   outcomeKpi,
   strategicGuardrail,
+  roleAccountability,
   teamAssignment,
   tomCanvasCellView,
   tomGap,
@@ -104,3 +105,4 @@ export type GateDecision = z.infer<typeof gateDecision>;
 export type Evidence = z.infer<typeof evidence>;
 export type EvidenceLink = z.infer<typeof evidenceLink>;
 export type TeamAssignment = z.infer<typeof teamAssignment>;
+export type RoleAccountability = z.infer<typeof roleAccountability>;

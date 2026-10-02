@@ -92,7 +92,9 @@ describe("catalogue parity", () => {
       ...TRANSFORMATION_STATUSES.map((s) => `transformations.status.${s}`),
       "transformations.status.archived",
       ...TRANSFORMATION_MODES.map((m) => `transformations.mode.${m}`),
-      ...TRANSFORMATION_MODES.map((m) => `transformations.form.modeHelp.${m}`),
+      ...TRANSFORMATION_MODES.flatMap((m) =>
+        ["whenToUse", "how"].map((part) => `transformations.form.modeGuidance.${m}.${part}`),
+      ),
       ...STANDALONE_DELIVERABLE_TYPES.map((d) => `transformations.deliverable.${d}`),
       ...SCOPE_TYPES.map((s) => `admin.scopeType.${s}`),
       ...NAV_AREAS.flatMap((a) => ["label", "summary", "contents"].map((f) => `nav.areas.${a.id}.${f}`)),
