@@ -33,7 +33,9 @@ export const API_MODULES = {
   },
   workflows: {
     responsibility: "Gates, approvals, decisions, SoD rules (P2+)",
-    dependsOn: ["platform", "audit", "access", "transformations", "methodology"],
+    // ADR-0015: the G1-G3 criterion evaluators read through the public interfaces of transformations, kpi and
+    // evidence. None of those depends on workflows, so the graph stays acyclic.
+    dependsOn: ["platform", "audit", "access", "transformations", "methodology", "kpi", "evidence"],
   },
   kpi: {
     responsibility: "KPI and benefit calculations via @mth/calc (P4)",
@@ -45,7 +47,8 @@ export const API_MODULES = {
   },
   evidence: {
     responsibility: "Evidence metadata and the storage adapter (P2/P6)",
-    dependsOn: ["platform", "audit", "access"],
+    // transformations: the P2 register kit (evidence items are transformation-scoped registers).
+    dependsOn: ["platform", "audit", "access", "transformations"],
   },
   jobs: { responsibility: "Outbox writer and job/automation administration views", dependsOn: ["platform", "audit"] },
   admin: {
@@ -57,10 +60,10 @@ export const API_MODULES = {
 export type ApiModule = keyof typeof API_MODULES;
 
 /**
- * Modules that exist in P1 (each with a public index.ts and, for the §16 business modules, its own test suite).
- * `workflows`, `kpi` and `reporting` are P1 SCAFFOLDS (D-048): boundary, public interface, wiring hook and suite exist
- * now, their business behaviour lands in P2 / P4 / P5, and their hooks register no routes yet. `methodology` and
- * `evidence` remain reserved names (no directory yet), so later stages add code, not new boundaries.
+ * Modules that exist since P1 (each with a public index.ts and, for the §16 business modules, its own test suite).
+ * `workflows`, `kpi` and `reporting` were P1 SCAFFOLDS (D-048): boundary, public interface, wiring hook and suite
+ * existed from DG1; their business behaviour lands in P2 / P4 / P5. `methodology` and `evidence` were reserved names
+ * in P1 and get their directories in P2 (P2_MODULES).
  */
 export const P1_MODULES: readonly ApiModule[] = [
   "platform",
@@ -75,6 +78,12 @@ export const P1_MODULES: readonly ApiModule[] = [
   "kpi",
   "reporting",
 ];
+
+/** Modules added in P2 (ADR-0015, ADR-0018; p2-work-split §2): each with a public index.ts and its own test suite. */
+export const P2_MODULES: readonly ApiModule[] = ["methodology", "evidence"];
+
+/** Every module directory that exists under src/modules (P1 + P2). */
+export const IMPLEMENTED_MODULES: readonly ApiModule[] = [...P1_MODULES, ...P2_MODULES];
 
 /** The six §16 business modules (master prompt M0308; REQ-S16-003 / A12): each exists with its own test suite. */
 export const SECTION16_MODULES = {

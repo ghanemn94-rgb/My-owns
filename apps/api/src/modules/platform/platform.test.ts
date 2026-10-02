@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { describe, expect, it } from "vitest";
 import { canonicalJson, decodeCursor, encodeCursor, filterHash, paginate } from "./cursor.ts";
+import { mapDatabaseGuardError, pointerOfColumn } from "./db-errors.ts";
 import { genReqId } from "./hooks.ts";
 import { requireIfMatch } from "./http.ts";
 import { requestHash } from "./idempotency.ts";
@@ -105,5 +106,74 @@ describe("Idempotency-Key request hash", () => {
     expect(canonicalJson({ b: 1, a: { d: 2, c: 3 } })).toBe('{"a":{"c":3,"d":2},"b":1}');
     expect(requestHash("post", "/x", { a: 1, b: 2 })).toBe(requestHash("POST", "/x", { b: 2, a: 1 }));
     expect(requestHash("POST", "/x", { a: 1 })).not.toBe(requestHash("POST", "/x", { a: 2 }));
+  });
+});
+
+describe("P2 database guard error mapping (ADR-0016 §3, ADR-0015)", () => {
+  const map = (e: { code?: string; constraint?: string; table?: string; column?: string }) => {
+    const p = mapDatabaseGuardError(e);
+    return p === null ? null : { status: p.status, code: p.code, type: p.type, pointer: p.errors?.[0]?.pointer };
+  };
+
+  it("maps a version-step guard to 409 version-conflict", () => {
+    expect(map({ code: "23514", constraint: "diagnostic_item_version_step", table: "diagnostic_item" })).toEqual({
+      status: 409,
+      code: "version_conflict",
+      type: "urn:mth:problem:version-conflict",
+      pointer: undefined,
+    });
+  });
+
+  it("maps the gate SoD guard to 403 gate.submitter_cannot_decide and the staleness guard to 409", () => {
+    expect(map({ code: "42501", constraint: "gate_decision_not_submitter" })).toMatchObject({
+      status: 403,
+      code: "gate.submitter_cannot_decide",
+      type: "urn:mth:problem:forbidden",
+    });
+    expect(map({ code: "23514", constraint: "gate_decision_current_submission" })).toMatchObject({
+      status: 409,
+      code: "gate.submission_superseded",
+      type: "urn:mth:problem:version-conflict",
+    });
+  });
+
+  it("maps template CHECK and NOT NULL violations to 422 with a field pointer", () => {
+    expect(map({ code: "23514", constraint: "diagnostic_item_confidence_check", table: "diagnostic_item" })).toEqual({
+      status: 422,
+      code: "validation.constraint",
+      type: "urn:mth:problem:validation",
+      pointer: "/confidence",
+    });
+    expect(map({ code: "23502", table: "outcome_kpi", column: "target_date" })).toMatchObject({
+      status: 422,
+      code: "validation.required",
+      pointer: "/targetDate",
+    });
+    expect(map({ code: "23502", table: "tom_gap", column: "dimension_code" })).toMatchObject({
+      pointer: "/dimensionCode",
+    });
+    expect(map({ code: "23514", constraint: "tom_workshop_close_unresolved" })).toMatchObject({
+      status: 422,
+      code: "workshop.unresolved_items",
+    });
+    expect(map({ code: "22008" })).toMatchObject({ status: 400, code: "validation" });
+  });
+
+  it("maps audit-required, append-only and identity guards to 500 (programming errors)", () => {
+    for (const e of [
+      { code: "23000", constraint: "charter_audit_required" },
+      { code: "23000", constraint: "charter_version_required" },
+      { code: "42501" },
+      { code: "23514", constraint: "outcome_identity_immutable" },
+      { code: "23514", constraint: "outcome_organization_matches" },
+    ])
+      expect(map(e), JSON.stringify(e)).toMatchObject({ status: 500, code: "internal" });
+  });
+
+  it("leaves unrelated errors to the generic mapping", () => {
+    expect(map({ code: "23505", constraint: "transformation_org_code_key" })).toBeNull();
+    expect(map({ code: "FST_ERR_CTP_INVALID_JSON_BODY" })).toBeNull();
+    expect(map({})).toBeNull();
+    expect(pointerOfColumn("impact_kpi_definition_id")).toBe("/impactKpiDefinitionId");
   });
 });

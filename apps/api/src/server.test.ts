@@ -96,19 +96,24 @@ describe("session cookie security in production (F-DG1-112)", () => {
   });
 });
 
-describe("module composition (D-048)", () => {
-  it("wires the workflows, kpi and reporting scaffolds, which register no routes in P1", async () => {
+describe("module composition (D-048, P2)", () => {
+  it("wires the P2 business modules (each registering routes) and keeps reporting a route-free scaffold until P5", async () => {
     const config = loadConfig("api", { ...base, AUTH_MODE: "dev" });
     const pool = createPool(config.databaseUrl!);
     try {
       const { app, modules, routes } = await buildServer({ config, pool, logger: false, webRoot: null });
       await app.close();
-      expect(modules.map((m) => [m.module, m.status, m.deliversIn, m.routes.length])).toEqual([
-        ["workflows", "scaffold", "P2", 0],
-        ["kpi", "scaffold", "P4", 0],
-        ["reporting", "scaffold", "P5", 0],
-      ]);
-      expect(routes.filter((r) => /workflow|kpi|formula|report/i.test(r.url))).toEqual([]);
+      expect(modules.map((m) => m.module)).toEqual(["workflows", "kpi", "reporting", "methodology", "evidence"]);
+      for (const m of modules.filter((x) => ["workflows", "methodology", "evidence"].includes(x.module))) {
+        expect([m.status, m.deliversIn], m.module).toEqual(["active", "P2"]);
+        expect(m.routes.length, m.module).toBeGreaterThan(0);
+      }
+      expect(modules.find((m) => m.module === "reporting")).toMatchObject({
+        status: "scaffold",
+        deliversIn: "P5",
+        routes: [],
+      });
+      expect(routes.filter((r) => /report|formula/i.test(r.url))).toEqual([]);
     } finally {
       await pool.end();
     }

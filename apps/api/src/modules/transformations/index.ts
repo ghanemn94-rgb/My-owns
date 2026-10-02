@@ -1,3 +1,36 @@
-// transformations (ADR-0002): transformation records; later performance areas and the workspace header.
+// transformations (ADR-0002): transformation records, the P2 registers of Diagnose/Define/Design (T01, findings,
+// workstream outputs, outcomes, guardrails, T03, capability heatmap, journeys), the charter and the North Star; the
+// register kit other business modules reuse; and the phase advance that only an approved product gate may trigger.
 export { GOVERNED_TARGET_STATUSES, isAllowedTransition, registerTransformationRoutes } from "./routes.ts";
 export { findTransformation, toTransformation } from "./repository.ts";
+export {
+  assertActiveUsers,
+  assertCatalogueCode,
+  assertSameTransformation,
+  bumpStamps,
+  loose,
+  maybeIdempotent,
+  openWrite,
+  registerRegister,
+  sendCreated,
+  writableTransformation,
+  type LooseRow,
+  type ParentSpec,
+  type RegisterRow,
+  type RegisterSpec,
+  type WriteContext,
+} from "./register-kit.ts";
+export {
+  col,
+  pick,
+  ruleProblem,
+  toCapability,
+  toDiagnosticFinding,
+  toDiagnosticItem,
+  toJourney,
+  toOutcome,
+  toStrategicGuardrail,
+  toTomGap,
+} from "./registers.ts";
+export { charterView, findCharter, findCurrentNorthStar, toCharter, toNorthStar } from "./charter.ts";
+export { advancePhaseOnGateApproval } from "./phase.ts";

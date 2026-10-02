@@ -1,68 +1,280 @@
-// workflows module suite (D-048; REQ-S16-003 / A12 "the six modules exist with separate test suites"). The module is a P1
-// SCAFFOLD: it is mapped, has a public index.ts with a typed interface and a wiring hook, registers no routes, and its
-// declared boundary is enforced by the same dependency-lint as architecture.test.ts. Behaviour lands in P2.
+// workflows module suite (REQ-S16-003 / A12 "the six modules exist with separate test suites"; ADR-0015). Unit level:
+// module mapping and boundary, the routes it registers (each declaring access), and the PURE G1-G3 criterion
+// evaluators over synthetic facts - including REQ-S13-012: evidence that is only a filename or an inaccessible link
+// is unverified and leaves a criterion incomplete. Behaviour against PostgreSQL: test/integration/gates.test.ts etc.
 import { join } from "node:path";
+import type { GateDefinition } from "@mth/shared/schemas";
 import Fastify from "fastify";
 import { describe, expect, it } from "vitest";
 import { fileViolations, moduleFiles, moduleViolations, MODULES_DIR } from "../../architecture.testkit.ts";
-import { API_MODULES, P1_MODULES, P1_SCAFFOLD_MODULES } from "../../modules.ts";
+import { API_MODULES, P1_MODULES } from "../../modules.ts";
 import type { ModuleDeps } from "../platform/index.ts";
 import * as mod from "./index.ts";
 
-describe("workflows module (P1 scaffold, D-048)", () => {
-  it("is mapped as a P1 scaffold module with its declared dependency direction", () => {
+describe("workflows module (P2)", () => {
+  it("is mapped with its declared dependency direction (reads kpi and evidence for the gate criteria)", () => {
     expect(P1_MODULES).toContain("workflows");
-    expect(P1_SCAFFOLD_MODULES).toContain("workflows");
     expect([...API_MODULES.workflows.dependsOn].sort()).toEqual([
       "access",
       "audit",
+      "evidence",
+      "kpi",
       "methodology",
       "platform",
       "transformations",
     ]);
   });
 
-  it("has a public index.ts exposing a typed interface and its wiring hook", () => {
+  it("has a public index.ts exposing the product gates, the evaluators and its wiring hook", () => {
     expect(moduleFiles("workflows")).toContain("index.ts");
     expect(Object.keys(mod).sort()).toEqual([
       "CLOSURE_GATE",
+      "EVALUATORS",
       "PRODUCT_GATES",
-      "WORKFLOWS_MODULE",
+      "evaluateGate",
+      "loadGateFacts",
       "registerWorkflowsModule",
     ]);
-    expect(mod.WORKFLOWS_MODULE).toEqual({ module: "workflows", status: "scaffold", deliversIn: "P2", routes: [] });
-    expect(Object.isFrozen(mod.WORKFLOWS_MODULE)).toBe(true);
   });
 
   it("names the product gates G1-G6 (business approvals), never the engineering gates DG0-DG7", () => {
     expect(mod.PRODUCT_GATES).toEqual(["G1", "G2", "G3", "G4", "G5", "G6"]);
     expect(mod.PRODUCT_GATES.some((g) => g.startsWith("DG"))).toBe(false);
-    // Closure waits for G6; until this module delivers it, the transformations module refuses closure (F-DG1-001).
     expect(mod.CLOSURE_GATE).toBe("G6");
   });
 
-  it("its register hook runs without error and registers no route (no mutating route in P1)", async () => {
+  it("registers its routes, each declaring access; every mutation declares a write permission", async () => {
     const app = Fastify({ logger: false });
-    const routes: string[] = [];
+    const routes: { key: string; access: unknown }[] = [];
     app.addHook("onRoute", (r) => {
-      routes.push(`${String(r.method)} ${r.url}`);
+      if (r.method !== "HEAD") routes.push({ key: `${String(r.method)} ${r.url}`, access: r.config?.access });
     });
-    // The scaffold uses no dependency yet; the hook keeps the same signature as every other module's.
-    const deps = { db: {}, config: {} } as unknown as ModuleDeps;
-    const registration = mod.registerWorkflowsModule(app, deps);
+    const registration = mod.registerWorkflowsModule(app, { db: {}, config: {} } as unknown as ModuleDeps);
     await app.ready();
-    expect(routes).toEqual([]);
-    expect(registration).toBe(mod.WORKFLOWS_MODULE);
+    expect(registration).toMatchObject({ module: "workflows", status: "active", deliversIn: "P2" });
+    expect(routes.map((r) => r.key).sort()).toEqual([...registration.routes].sort());
+    for (const r of routes) {
+      const permission = (r.access as { permission?: string }).permission;
+      if (r.key.startsWith("GET")) expect(permission, r.key).toBe("transformation.read");
+      else expect(permission, r.key).not.toMatch(/\.read$/);
+    }
+    expect(routes.find((r) => r.key.endsWith("/decision"))?.access).toEqual({ permission: "gate.decide" });
+    expect(routes.find((r) => r.key.endsWith("/decide"))?.access).toEqual({ permission: "decision.decide" });
     await app.close();
   });
 
-  it("its declared boundary holds, and a planted bypass or undeclared dependency would be caught", () => {
+  it("its declared boundary holds, and an undeclared dependency would be caught", () => {
     expect(moduleViolations("workflows")).toEqual([]);
     const plant = (source: string) =>
       fileViolations("workflows", join(MODULES_DIR, "workflows", "planted.ts"), source).join("\n");
     expect(plant(`import { decide } from "../access/rules.ts";`)).toContain("only access/index.ts is public");
-    expect(plant(`import { REPORTING_MODULE } from "../reporting/index.ts";`)).toContain(
+    expect(plant(`import { x } from "../reporting/index.ts";`)).toContain(
       "module workflows may not import module reporting",
     );
+  });
+});
+
+// ------------------------------------------------------------------------------------------------ evaluators
+
+const criterion = (key: string, ordinal: number, requiresVerifiedEvidence = false) => ({
+  id: "01920002-0005-7000-8000-000000000001",
+  gateDefinitionId: "01920002-0004-7000-8000-000000000001",
+  key,
+  ordinal,
+  labelEn: key,
+  labelAr: key,
+  descriptionEn: key,
+  descriptionAr: key,
+  mandatory: true,
+  requiresVerifiedEvidence,
+  sourceRef: "B0023",
+  version: 1,
+  createdAt: "2026-10-02T00:00:00.000Z",
+  createdBy: null,
+  updatedAt: "2026-10-02T00:00:00.000Z",
+  updatedBy: null,
+});
+const gate = (code: string, criteria: ReturnType<typeof criterion>[]) =>
+  ({ code, criteria }) as unknown as GateDefinition;
+
+const DIMS = ["financial", "customer", "process", "people_org", "technology", "data"];
+type Facts = Parameters<typeof mod.evaluateGate>[1];
+function completeFacts(): Facts {
+  return {
+    seededDiagnosticItems: DIMS.map((d, i) => ({
+      id: `00000000-0000-7000-8000-00000000000${i}`,
+      dimensionCode: d,
+      hasCurrentState: true,
+      hasRootCause: true,
+      hasImpact: true,
+      hasConfidence: true,
+      baselineId: null,
+    })),
+    findings: [{ id: "f1", kind: "root_cause", status: "confirmed" }],
+    kpi: {
+      baselines: [
+        { id: "b1", hasValue: true, hasSource: true, hasDate: true, validationStatus: "validated", status: "active" },
+      ],
+      valuePools: [{ id: "v1", quantificationStatus: "unquantified", materiality: "material", status: "active" }],
+      outcomeKpis: [
+        {
+          id: "k1",
+          outcomeId: "o1",
+          kpiDefinitionId: "d1",
+          hasTarget: true,
+          targetDate: "2027-12-31",
+          trajectoryStatus: "approved",
+          status: "active",
+        },
+      ],
+      kpiDefinitions: [{ id: "d1", status: "active", hasUnit: true, polarity: "higher_is_better", ownerUserId: "u1" }],
+    },
+    charter: {
+      id: "c1",
+      version: 1,
+      hasCaseForChange: true,
+      hasName: true,
+      hasSponsor: true,
+      hasLead: true,
+      hasInScope: true,
+      hasOutOfScope: true,
+      hasBaselineDate: true,
+    },
+    northStar: { id: "n1", version: 1 },
+    topOutcomes: [{ id: "o1" }],
+    activeGuardrails: 1,
+    canvasCells: Array.from({ length: 10 }, (_, i) => ({ dimensionCode: `d${i}`, status: "ready" })),
+    tomGaps: [{ id: "g1", status: "open", hasOwner: true }],
+    capabilities: [{ id: "cap", currentLevel: 2, targetLevel: 4 }],
+    futureJourneys: 1,
+    openDesignDecisions: [{ id: "x", code: "D-01", hasOwner: true }],
+    evidence: [
+      ...DIMS.map((_, i) => ({
+        evidenceId: `e${i}`,
+        recordType: "diagnostic_item",
+        recordId: `00000000-0000-7000-8000-00000000000${i}`,
+        kind: "note",
+        verified: true,
+      })),
+      { evidenceId: "eb", recordType: "baseline", recordId: "b1", kind: "file", verified: true },
+    ],
+  };
+}
+
+const ALL_KEYS = {
+  G1: ["g1.diagnostic", "g1.baseline", "g1.root_causes", "g1.value_pools", "g1.case_for_change", "g1.initial_charter"],
+  G2: ["g2.north_star", "g2.outcome_tree", "g2.kpi_definitions", "g2.target_trajectory", "g2.guardrails"],
+  G3: ["g3.target_operating_model", "g3.gap_matrix", "g3.capability_gaps", "g3.future_journeys", "g3.design_decisions"],
+};
+const ALL = new Map<"G1" | "G2" | "G3", readonly string[]>([
+  ["G1", ALL_KEYS.G1],
+  ["G2", ALL_KEYS.G2],
+  ["G3", ALL_KEYS.G3],
+]);
+const keysOf = (code: "G1" | "G2" | "G3") => ALL.get(code)!;
+const defOf = (code: "G1" | "G2" | "G3") =>
+  gate(
+    code,
+    keysOf(code).map((k, i) => criterion(k, i + 1, k === "g1.diagnostic" || k === "g1.baseline")),
+  );
+const completeness = (code: "G1" | "G2" | "G3", facts: Facts) =>
+  Object.fromEntries(mod.evaluateGate(defOf(code), facts).map((c) => [c.key, c.completeness]));
+
+describe("G1-G3 criterion evaluators (ADR-0015 §2)", () => {
+  it("has exactly one evaluator per seeded G1-G3 criterion (16)", () => {
+    expect([...mod.EVALUATORS.keys()].sort()).toEqual([...ALL_KEYS.G1, ...ALL_KEYS.G2, ...ALL_KEYS.G3].sort());
+  });
+
+  it("complete facts make every criterion complete", () => {
+    for (const code of ["G1", "G2", "G3"] as const)
+      expect(Object.values(completeness(code, completeFacts())), code).toEqual(keysOf(code).map(() => "complete"));
+  });
+
+  it("REQ-S13-012: evidence that is only a filename (never verifiable) leaves g1.diagnostic incomplete", () => {
+    const f = completeFacts();
+    const filenameOnly = f.seededDiagnosticItems.map((i, n) => ({
+      evidenceId: `fn${n}`,
+      recordType: "diagnostic_item",
+      recordId: i.id,
+      kind: "file_reference",
+      verified: false,
+    }));
+    const facts = { ...f, evidence: [...filenameOnly, ...f.evidence.filter((e) => e.recordType === "baseline")] };
+    const [diag] = mod.evaluateGate(defOf("G1"), facts);
+    expect(diag!.completeness).toBe("incomplete");
+    expect(diag!.unverifiedEvidenceIds.sort()).toEqual(filenameOnly.map((e) => e.evidenceId).sort());
+    expect(diag!.missing.map((m) => m.code)).toContain("g1.diagnostic.verified_evidence_missing");
+  });
+
+  it("an inaccessible / unreviewed link on the baseline leaves g1.baseline incomplete; a linked baseline backs T01", () => {
+    const f = completeFacts();
+    const facts = {
+      ...f,
+      seededDiagnosticItems: f.seededDiagnosticItems.map((i) => ({ ...i, baselineId: "b1" })),
+      evidence: [
+        { evidenceId: "link", recordType: "baseline", recordId: "b1", kind: "external_link", verified: false },
+      ],
+    };
+    const c = completeness("G1", facts);
+    expect(c["g1.diagnostic"]).toBe("complete"); // backed by a linked baseline
+    expect(c["g1.baseline"]).toBe("incomplete"); // only unverified evidence
+  });
+
+  it("missing data is never complete: no charter, no value pool, no T02 row, no gap, unready box", () => {
+    const f = completeFacts();
+    const empty: Facts = {
+      ...f,
+      charter: null,
+      kpi: { baselines: [], valuePools: [], outcomeKpis: [], kpiDefinitions: [] },
+      northStar: null,
+      topOutcomes: [],
+      activeGuardrails: 0,
+      canvasCells: f.canvasCells.map((c, i) => (i === 0 ? { ...c, status: "draft" } : c)),
+      tomGaps: [],
+      capabilities: [{ id: "c", currentLevel: 3, targetLevel: 3 }],
+      futureJourneys: 0,
+    };
+    expect(completeness("G1", empty)).toMatchObject({
+      "g1.initial_charter": "incomplete",
+      "g1.case_for_change": "incomplete",
+      "g1.value_pools": "incomplete",
+      "g1.baseline": "incomplete",
+    });
+    expect(Object.values(completeness("G2", empty)).every((v) => v === "incomplete")).toBe(true);
+    expect(completeness("G3", empty)).toMatchObject({
+      "g3.target_operating_model": "incomplete",
+      "g3.gap_matrix": "incomplete",
+      "g3.capability_gaps": "incomplete",
+      "g3.future_journeys": "incomplete",
+      "g3.design_decisions": "complete", // a prohibition: no open decision without an owner
+    });
+  });
+
+  it("an unapproved or stale trajectory, an inactive KPI definition and an unowned open gap are incomplete", () => {
+    const f = completeFacts();
+    const facts: Facts = {
+      ...f,
+      kpi: {
+        ...f.kpi,
+        outcomeKpis: f.kpi.outcomeKpis.map((k) => ({ ...k, trajectoryStatus: "stale" })),
+        kpiDefinitions: f.kpi.kpiDefinitions.map((d) => ({ ...d, status: "draft" })),
+      },
+      tomGaps: [{ id: "g", status: "open", hasOwner: false }],
+      openDesignDecisions: [{ id: "x", code: "D-02", hasOwner: false }],
+    };
+    expect(completeness("G2", facts)).toMatchObject({
+      "g2.target_trajectory": "incomplete",
+      "g2.kpi_definitions": "incomplete",
+    });
+    expect(completeness("G3", facts)).toMatchObject({
+      "g3.gap_matrix": "incomplete",
+      "g3.design_decisions": "incomplete",
+    });
+  });
+
+  it("a criterion without an evaluator fails closed", () => {
+    const [c] = mod.evaluateGate(gate("G4", [criterion("g4.portfolio", 1)]), completeFacts());
+    expect(c!.completeness).toBe("incomplete");
+    expect(c!.missing[0]!.code).toBe("gate.criterion_not_evaluable");
   });
 });

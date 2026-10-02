@@ -45,17 +45,46 @@ import {
   SRC,
   walk,
 } from "./architecture.testkit.ts";
-import { API_MODULES, P1_MODULES, P1_SCAFFOLD_MODULES, SECTION16_MODULES, type ApiModule } from "./modules.ts";
+import {
+  API_MODULES,
+  IMPLEMENTED_MODULES,
+  P1_MODULES,
+  P1_SCAFFOLD_MODULES,
+  P2_MODULES,
+  SECTION16_MODULES,
+  type ApiModule,
+} from "./modules.ts";
 
 const REPO = resolve(SRC, "../../..");
 
 describe("API module boundaries (ADR-0002)", () => {
   const moduleDirs = readdirSync(MODULES_DIR).filter((d) => statSync(join(MODULES_DIR, d)).isDirectory());
 
-  it("has only mapped module directories, and every P1 module has a public index.ts", () => {
+  it("has only mapped module directories, and every P1/P2 module has a public index.ts", () => {
     expect(moduleDirs.filter((d) => !(d in API_MODULES))).toEqual([]);
-    for (const m of P1_MODULES) expect(existsSync(join(MODULES_DIR, m, "index.ts")), m).toBe(true);
-    expect([...moduleDirs].sort()).toEqual([...P1_MODULES].sort());
+    for (const m of IMPLEMENTED_MODULES) expect(existsSync(join(MODULES_DIR, m, "index.ts")), m).toBe(true);
+    expect([...moduleDirs].sort()).toEqual([...IMPLEMENTED_MODULES].sort());
+    // Every mapped module exists now: P1 plus the two P2 modules (methodology, evidence).
+    expect([...IMPLEMENTED_MODULES].sort()).toEqual(Object.keys(API_MODULES).sort());
+  });
+
+  it("the P2 modules methodology and evidence each have their own test suite (p2-work-split §2)", () => {
+    expect([...P2_MODULES].sort()).toEqual(["evidence", "methodology"]);
+    for (const m of P2_MODULES) expect(existsSync(join(MODULES_DIR, m, `${m}.test.ts`)), m).toBe(true);
+  });
+
+  it("workflows reaches kpi and evidence (G1-G3 evaluators), and none of them reaches back (no cycle)", () => {
+    expect([...API_MODULES.workflows.dependsOn].sort()).toEqual([
+      "access",
+      "audit",
+      "evidence",
+      "kpi",
+      "methodology",
+      "platform",
+      "transformations",
+    ]);
+    for (const m of ["transformations", "kpi", "evidence", "methodology"] as const)
+      expect(API_MODULES[m].dependsOn as readonly string[], m).not.toContain("workflows");
   });
 
   it("the six §16 business modules all exist, each with its own test suite (A12; D-048)", () => {

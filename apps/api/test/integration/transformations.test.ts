@@ -475,10 +475,21 @@ describe("audit trail endpoint", () => {
     const page2 = await call<{ items: { action: string }[]; nextCursor: string | null }>(
       api.app,
       "GET",
-      `/api/v1/transformations/${t.id}/audit?limit=2&cursor=${page1.body.nextCursor}`,
+      `/api/v1/transformations/${t.id}/audit?limit=100&cursor=${page1.body.nextCursor}`,
       { session: office },
     );
-    expect(page2.body.items.map((i) => i.action)).toEqual(["transformation.create"]);
+    // Oldest last: the create itself, preceded (newer) by the 23 audited rows of the P2 starter structure created in
+    // the same transaction (ADR-0016 §4: 1 methodology pin, 6 T01 rows, 10 canvas boxes, 6 product gate instances).
+    const actions = page2.body.items.map((i) => i.action);
+    expect(actions.at(-1)).toBe("transformation.create");
+    expect(actions.slice(0, -1).sort()).toEqual(
+      [
+        "transformation_config_pin.create",
+        ...Array<string>(6).fill("diagnostic_item.create"),
+        ...Array<string>(10).fill("tom_canvas_cell.create"),
+        ...Array<string>(6).fill("gate_instance.create"),
+      ].sort(),
+    );
     expect(page2.body.nextCursor).toBeNull();
     // Auditor (AUD) holds audit.read; a technical admin cannot even see that the record exists.
     expect((await call(api.app, "GET", `/api/v1/transformations/${t.id}/audit`, { session: auditor })).status).toBe(

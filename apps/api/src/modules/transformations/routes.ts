@@ -43,6 +43,7 @@ import {
   withIdempotency,
   type ModuleDeps,
 } from "../platform/index.ts";
+import { registerTransformationP2Routes } from "./p2-routes.ts";
 import {
   activeUsersExist,
   findTransformation,
@@ -88,6 +89,7 @@ const SORTS: ReadonlyMap<string, SortSpec> = new Map<string, SortSpec>([
 ]);
 
 export function registerTransformationRoutes(app: FastifyInstance, { db }: ModuleDeps): void {
+  registerTransformationP2Routes(app, db);
   // ---------------------------------------------------------------- list (scope-filtered in SQL)
   app.get("/api/v1/transformations", { config: { access: { permission: "transformation.read" } } }, async (request) => {
     const principal = principalOf(request);
@@ -220,6 +222,13 @@ export function registerTransformationRoutes(app: FastifyInstance, { db }: Modul
               ...TRANSFORMATION_AUDIT_FIELDS,
             ]),
           });
+          // P2 starter structure (ADR-0016 §4; REQ-S12-004, REQ-PB-026, REQ-PB-041): the methodology pin, the six
+          // seeded T01 rows, the ten TOM canvas boxes and the six product gate instances, each with its own audit
+          // event, in THIS transaction - the gate and T01 screens exist as soon as the record does. Both modes
+          // (End-to-End and Modular) get the same structure (REQ-PB-003).
+          await sql`SELECT p2_instantiate_transformation(${id}::uuid, ${principal.userId!}::uuid, ${audit.requestId}, 'api')`.execute(
+            tx,
+          );
           // F-DG1-106: a creator authorized only by a non-inheriting business-unit grant (TL) gets an explicit,
           // audited transformation-scope assignment, so create and the following read resolve the same scope.
           await grantCreatorTransformationRoles(

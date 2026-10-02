@@ -3,6 +3,7 @@
 export {
   authorize,
   businessUnitAncestry,
+  denialOf,
   holdsAnywhere,
   loadGrants,
   organizationsWith,
@@ -40,3 +41,13 @@ export {
 export { auditContextOf, principalOf } from "./request.ts";
 export { grantCreatorAdminRoles, grantCreatorTransformationRoles } from "./assignments.ts";
 export { registerDeniedMutationAudit } from "./denials.ts";
+export {
+  actsOnBehalfOf,
+  holds,
+  isOwnRow,
+  requireRecordWrite,
+  requireTransformationRead,
+  type Ownership,
+  type WriteRule,
+} from "./records.ts";
+export { registerAccessP2Routes } from "./team.ts";

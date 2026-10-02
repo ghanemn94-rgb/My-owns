@@ -7,6 +7,7 @@
 import type { Permission } from "@mth/shared";
 import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
+import { mapDatabaseGuardError } from "./db-errors.ts";
 import { HttpProblem, problems } from "./problem.ts";
 
 /** `authenticated`: any signed-in user (e.g. /me); the handler scopes the data to the caller itself. */
@@ -44,8 +45,13 @@ export function sendProblem(reply: FastifyReply, request: FastifyRequest, proble
   return reply.code(problem.status).type("application/problem+json").send(problem.toBody(request.id));
 }
 
-function mapError(error: FastifyError & { code?: string; constraint?: string }): HttpProblem | null {
+function mapError(
+  error: FastifyError & { code?: string; constraint?: string; table?: string; column?: string },
+): HttpProblem | null {
   if (error instanceof HttpProblem) return error;
+  // P2 database record guards and template constraints (ADR-0016 §3, ADR-0015) first: they are more specific.
+  const guarded = mapDatabaseGuardError(error);
+  if (guarded) return guarded;
   switch (error.code) {
     case "FST_ERR_CTP_INVALID_JSON_BODY":
     case "FST_ERR_CTP_EMPTY_JSON_BODY":

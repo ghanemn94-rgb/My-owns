@@ -17,11 +17,13 @@ import type { AppConfig } from "@mth/config";
 import { createDb, listMigrationFiles, type Db, type MigrationFile } from "@mth/db";
 import Fastify, { type FastifyInstance, type FastifyRequest } from "fastify";
 import type pg from "pg";
-import { registerDeniedMutationAudit } from "./modules/access/index.ts";
+import { registerAccessP2Routes, registerDeniedMutationAudit } from "./modules/access/index.ts";
 import { colorTokens, tokensAreProvisional } from "@mth/design-tokens";
 import { registerAdminRoutes, registerBrandingRoutes } from "./modules/admin/index.ts";
 import { RateLimitSubjects, registerIdentity, sessionCookieName, type OidcService } from "./modules/identity/index.ts";
+import { registerEvidenceModule } from "./modules/evidence/index.ts";
 import { registerKpiModule } from "./modules/kpi/index.ts";
+import { registerMethodologyModule } from "./modules/methodology/index.ts";
 import { registerOrganizationRoutes } from "./modules/organization/index.ts";
 import {
   genReqId,
@@ -150,12 +152,16 @@ export async function buildServer(
   registerOrganizationRoutes(app, deps);
   registerTransformationRoutes(app, deps);
   registerAdminRoutes(app, deps);
+  registerAccessP2Routes(app, deps);
   registerBrandingRoutes(app, { colorTokens, tokensAreProvisional });
-  // P1 scaffolds (D-048): wired like every module, registering no routes until their stage (P2 / P4 / P5).
-  const scaffolds: ModuleRegistration[] = [
+  // Business modules reporting their registration (D-048): the P2 modules (workflows, methodology, evidence; kpi by
+  // kpi-benefits-engineer) and the remaining scaffold (reporting, P5), which registers no routes until its stage.
+  const modules: ModuleRegistration[] = [
     registerWorkflowsModule(app, deps),
     registerKpiModule(app, deps),
     registerReportingModule(app, deps),
+    registerMethodologyModule(app, deps),
+    registerEvidenceModule(app, deps),
   ];
 
   if (webRoot) {
@@ -163,5 +169,5 @@ export async function buildServer(
   }
 
   await app.ready();
-  return { app, db, routes, modules: scaffolds };
+  return { app, db, routes, modules };
 }

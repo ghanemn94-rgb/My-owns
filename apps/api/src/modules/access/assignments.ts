@@ -18,7 +18,7 @@ import {
 } from "./policy.ts";
 import { decide, grantApplies, isApprovalPermission, type ResolvedTarget, type TargetLevel } from "./rules.ts";
 
-const selectAssignment = (db: DbOrTx) =>
+export const selectAssignment = (db: DbOrTx) =>
   db
     .selectFrom("scoped_assignment as a")
     .innerJoin("role as r", "r.id", "a.role_id")

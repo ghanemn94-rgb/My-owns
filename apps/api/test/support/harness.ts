@@ -4,6 +4,9 @@
 //
 // Reusable by qa-verifier suites (tests/qa/integration/**): import { startApi, seedWorld, signIn } from here.
 import { randomBytes } from "node:crypto";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { loadConfig, type AppConfig } from "@mth/config";
 import { createDb, createPool, DEV_ISSUER, type Db } from "@mth/db";
 import type { FastifyInstance, LightMyRequestResponse } from "fastify";
@@ -29,6 +32,13 @@ export interface TestApi {
   close(): Promise<void>;
 }
 
+/** A private, per-process evidence store directory (ADR-0010 filesystem adapter; never the default /var/lib path). */
+let evidenceDir: string | null = null;
+export function testEvidenceDir(): string {
+  evidenceDir ??= mkdtempSync(join(tmpdir(), "mth-evidence-it-"));
+  return evidenceDir;
+}
+
 export function testConfig(env: Record<string, string> = {}): AppConfig {
   const { appUrl } = inject("mthDb");
   return loadConfig("api", {
@@ -38,6 +48,7 @@ export function testConfig(env: Record<string, string> = {}): AppConfig {
     AUTH_MODE: "dev",
     RATE_LIMIT_PER_MINUTE: "100000",
     AUTH_RATE_LIMIT_PER_MINUTE: "100000",
+    EVIDENCE_STORAGE_PATH: testEvidenceDir(),
     ...env,
   });
 }

@@ -113,7 +113,9 @@ export function assertContract(method: string, url: string, res: ContractRespons
         `contract: ${op.operationId} ${res.statusCode} returned ${mediaType || "no content-type"}, declared ${Object.keys(content).join(", ")}`,
       );
     const validate = validatorFor(`${op.operationId}:${res.statusCode}:${mediaType}`, media["schema"]);
-    const body = res.body === "" ? undefined : JSON.parse(res.body);
+    // Binary media (evidence content, application/octet-stream) is validated as the string it is, never parsed.
+    const isJson = mediaType === "application/json" || mediaType.endsWith("+json");
+    const body = res.body === "" ? undefined : isJson ? JSON.parse(res.body) : res.body;
     if (!validate(body)) {
       throw new Error(
         `contract: ${op.operationId} ${res.statusCode} body violates the schema: ${ajv.errorsText(validate.errors)}\n${res.body.slice(0, 500)}`,
@@ -158,6 +160,8 @@ export function assertAcceptedRequest(method: string, url: string, status: numbe
   const rb = (item[method.toLowerCase()] as Json)["requestBody"] as Json | undefined;
   if (!rb) return;
   const schema = ((deref(rb)["content"] as Record<string, Json>)["application/json"] ?? {})["schema"];
+  // Non-JSON request bodies (application/octet-stream uploads) carry raw bytes; there is no JSON schema to apply.
+  if (schema === undefined) return;
   const validate = validatorFor(`${op.operationId}:request`, schema);
   if (!validate(body)) {
     throw new Error(
