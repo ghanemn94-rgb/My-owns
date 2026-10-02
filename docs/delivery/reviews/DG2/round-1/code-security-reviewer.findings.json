@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG2-140",
+      "stage_id": "DG2",
+      "requirement": "REQ-S13-012",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "Evidence separation of duties is bypassable: a reviewer can verify content they wrote or uploaded themselves on evidence another user created, because the rule only compares the reviewer with the row's created_by",
+      "reproduction": "apps/api/src/modules/evidence/routes.ts:388 (and CHECK evidence_verified_rule, packages/db/migrations/0012_p2_evidence.sql:46) refuse the review only when reviewer = evidence.created_by. But PATCH /evidence/{id} (routes.ts:107, writeRules CREATE = evidence.create with scope 'any') and POST /evidence/{id}/content (routes.ts:295-340, same rule, uploaded_by = caller) let ANY evidence.create holder replace another user's note text, URL or file bytes. Both operations reset the review and leave created_by unchanged. Inputs (synthetic): WL creates note evidence E. TL sends PATCH E {noteBody: <TL's own text>} with If-Match \"1\" and gets 200. TL then sends POST E/review {result: verified, accessibilityStatus: accessible} and gets 200 verified with reviewedBy = TL. The file variant works the same way: WL creates file evidence F, TL uploads revision 1 (uploaded_by = TL), TL verifies it and gets 200, reviewedContentId = TL's own upload. TL, BO and TO all hold both evidence.create and evidence.review (packages/shared/src/permissions.ts). A single TL can therefore supply AND verify the 'VERIFIED evidence' that the g1.diagnostic / g1.baseline criteria (workflows/criteria.ts) require, then submit G1. Reproduced through the API on a disposable PostgreSQL 16, in 2 runs: docs/delivery/test-evidence/DG2/code-security/round-1/probes/zz-sec-r1-probe.test.ts (SEC-1), probe-run1.log and probe-run2.log.",
+      "expected": "Nobody verifies evidence content they supplied: the review is refused (403) when the reviewer is the creator, the author of the current note/URL text, or the uploader of the current content revision (or the rule is bound to the content author, e.g. reviewed_by <> uploaded_by / last content editor, enforced in the API and in the CHECK/trigger). Editing or replacing another user's evidence content should also be limited (own rows, or an explicit edit permission).",
+      "actual": "200 verified in both variants. SEC-1.note: [200,\"verified\",reviewedBy=TL]. SEC-1.file: [200,\"verified\",reviewedContentId = the TL's own upload]. The DB CHECK passes because created_by is still the WL.",
+      "evidence": [
+        "apps/api/src/modules/evidence/routes.ts",
+        "packages/db/migrations/0012_p2_evidence.sql",
+        "docs/delivery/test-evidence/DG2/code-security/round-1/probes/zz-sec-r1-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-1/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-1/probe-run2.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-02T04:06:59Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer DG2 round 1; reproduced through the API on a disposable PostgreSQL 16 in two runs (proposed ID; the orchestrator may renumber)"
+        }
+      ]
+    },
+    {
+      "id": "F-DG2-141",
+      "stage_id": "DG2",
+      "requirement": "REQ-S10-001",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "T02 target-trajectory approval (kpi_target.approve, a business_approval) is bypassable: a Business Owner can change another user's target value and then approve the trajectory they just set",
+      "reproduction": "apps/api/src/modules/kpi/outcome-kpis.ts:289 (and CHECK outcome_kpi_approver_not_creator, packages/db/migrations/0014_p2_kpi_baseline_value_pool.sql:120) refuse approval only when approver = outcome_kpi.created_by. BO holds BOTH outcome.edit (the PATCH permission, outcome-kpis.ts:45/162) and kpi_target.approve (packages/shared/src/permissions.ts:100-108). Inputs (synthetic): TL creates a T02 row with targetValue \"100\" and gets 201. BO sends PATCH {targetValue: \"5\"} and gets 200 (trajectory back to draft, created_by still TL). BO sends POST .../trajectory-approval with If-Match = the new version and gets 200 trajectoryStatus approved, trajectoryApprovedBy = BO. The approved trajectory then satisfies the g2.target_trajectory criterion (workflows/criteria.ts) for G2 submission. Reproduced through the API on a disposable PostgreSQL 16, in 2 runs: docs/delivery/test-evidence/DG2/code-security/round-1/probes/zz-sec-r1-probe.test.ts (SEC-2), probe-run1.log and probe-run2.log.",
+      "expected": "A business approval is never given by the person who authored the approved content: approval is refused (403) when the approver last changed the target/trajectory (for example, by comparing with updated_by of the current version or keeping a target-author column), as well as when the approver is the row's creator. The DB CHECK should enforce the same rule.",
+      "actual": "SEC-2: bo_sets_target [200,\"5.000000\"], then bo_approves_own_target [200,\"approved\",trajectoryApprovedBy=BO].",
+      "evidence": [
+        "apps/api/src/modules/kpi/outcome-kpis.ts",
+        "packages/db/migrations/0014_p2_kpi_baseline_value_pool.sql",
+        "packages/shared/src/permissions.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-1/probes/zz-sec-r1-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-1/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-1/probe-run2.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-1/code-security-reviewer.json",
+      "owner": "kpi-benefits-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-02T04:06:59Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer DG2 round 1; reproduced through the API on a disposable PostgreSQL 16 in two runs (proposed ID; the orchestrator may renumber)"
+        }
+      ]
+    },
+    {
+      "id": "F-DG2-142",
+      "stage_id": "DG2",
+      "requirement": "REQ-S10-001",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "Evidence-link removal skips the record-level edit check that link creation requires: any evidence.create holder can remove any link, including links that satisfy gate criteria",
+      "reproduction": "POST /transformations/{id}/evidence-links requires edit rights on the linked record (apps/api/src/modules/evidence/routes.ts:496, RECORD_WRITE_RULES, ADR-0018 §4). POST .../evidence-links/{linkId}/remove (routes.ts:539-585) only calls openWrite(..., CREATE = evidence.create). It loads the link's created_by (routes.ts:546) and never uses it, and applies no RECORD_WRITE_RULES check. Inputs (synthetic): TL links verified evidence to a seeded T01 diagnostic_item and gets 201. WL (diagnostic.contribute is own-rows only) tries the same link and is refused with 403, as designed. The same WL sends POST /evidence-links/{TL's link}/remove {reason} with If-Match \"1\" and gets 200, status removed. Removing the only verified link makes g1.diagnostic incomplete, so a contributor can silently un-ready (or, after submission, alter the live readiness of) a gate. Reproduced through the API on a disposable PostgreSQL 16, in 2 runs: docs/delivery/test-evidence/DG2/code-security/round-1/probes/zz-sec-r1-probe.test.ts (SEC-3), probe-run1.log and probe-run2.log.",
+      "expected": "Removing a link needs the same authorization as creating it (edit rights on the target record, through requireRecordWrite with RECORD_WRITE_RULES), otherwise 403 with a denied-mutation audit event.",
+      "actual": "SEC-3: {\"wlCreateStatus\":403,\"tlCreateStatus\":201,\"wlRemoveStatus\":200,\"after\":\"removed\"}",
+      "evidence": [
+        "apps/api/src/modules/evidence/routes.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-1/probes/zz-sec-r1-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-1/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-1/probe-run2.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-02T04:06:59Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer DG2 round 1; reproduced through the API on a disposable PostgreSQL 16 in two runs (proposed ID; the orchestrator may renumber)"
+        }
+      ]
+    }
+  ]
+}

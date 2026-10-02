@@ -1,0 +1,374 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG2",
+  "round": 1,
+  "candidate_id": "sha256:8ef26b710e343ed3535934904bccd677eab87894bb2cb62d5fb7677d6a95355b",
+  "source_commit": "98a8d990a93e5a82c30b1b8f3b1e0f44c689e917",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG2-T-DG2-REV-SEC-R1-code-security-reviewer-20261002T035904Z-0ad950a2",
+    "session_id": "0ad950a2-ae7f-40eb-9c8a-276fdf0f3d99"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (code-security-reviewer, session 0ad950a2) authored no implementation in the DG2 scope. I reviewed the frozen candidate directly: the P2 source and migrations at 98a8d99, plus disposable clones under $TMPDIR and disposable PostgreSQL 16 clusters. I formed this verdict without reading any other reviewer's DG2 round-1 record."
+  },
+  "assignment": "docs/delivery/assignments/DG2/round-1/code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-S10-001",
+    "REQ-S16-013",
+    "REQ-S13-012",
+    "REQ-DLV-034",
+    "REQ-PB-016",
+    "REQ-PB-017",
+    "REQ-PB-018",
+    "REQ-PB-027",
+    "REQ-PB-028",
+    "REQ-PB-029"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-R1-00-candidate",
+      "procedure": "Confirm the frozen candidate. HEAD of the working tree is 311b114 (the freeze commit). Its only delta from source_commit 98a8d99 is excluded delivery metadata (3 assignments, the manifest, stages.json; git diff --stat 98a8d99..311b114). Recompute the candidate ID in the working tree and again in a fresh disposable clone.",
+      "command": "git rev-parse HEAD; git diff --stat 98a8d99..311b114; node tools/gates/candidate.mjs --stage DG2",
+      "environment": "/home/user/My-owns and disposable clone $TMPDIR/review-sec @311b114; Node v24.21.0",
+      "expected": "candidate_id sha256:8ef26b71...5355b over 513 files, in both trees",
+      "actual": "{\"stage\":\"DG2\",\"candidate_id\":\"sha256:8ef26b710e343ed3535934904bccd677eab87894bb2cb62d5fb7677d6a95355b\",\"files\":513} in both trees. The freeze diff touches only the 3 assignments, the manifest and stages.json.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/candidates/DG2/8ef26b710e343ed3.manifest.json"
+      ]
+    },
+    {
+      "id": "SEC-R1-01-build",
+      "procedure": "Workspace build in the disposable clone (offline frozen-lockfile install from a writable copy of the host pnpm store)",
+      "command": "pnpm -r build",
+      "environment": "disposable clone $TMPDIR/review-sec @311b114; Node v22.22.2; pnpm 10.33.0",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-1/build.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-02-typecheck",
+      "procedure": "Typecheck every workspace package",
+      "command": "pnpm -r typecheck",
+      "environment": "disposable clone @311b114; Node v22.22.2",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-1/typecheck.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-03-lint",
+      "procedure": "ESLint with --max-warnings=0",
+      "command": "pnpm lint",
+      "environment": "disposable clone @311b114; Node v22.22.2",
+      "expected": "exit 0, no warnings",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-1/lint.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-04-openapi-lint",
+      "procedure": "OpenAPI contract lint",
+      "command": "pnpm openapi:lint",
+      "environment": "disposable clone @311b114; Node v22.22.2",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-1/openapi-lint.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-05-no-cdn",
+      "procedure": "Portability scan for public CDNs / builder-hosted runtime dependencies",
+      "command": "pnpm check:no-cdn",
+      "environment": "disposable clone @311b114; Node v22.22.2",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-1/no-cdn.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-06-format",
+      "procedure": "Prettier check",
+      "command": "pnpm format:check",
+      "environment": "disposable clone @311b114; Node v22.22.2",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-1/format-check.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-07-unit-node22",
+      "procedure": "Unit suites (unit-node + unit-web) on the Node 22 floor",
+      "command": "pnpm test",
+      "environment": "disposable clone @311b114; Node v22.22.2",
+      "expected": "all pass, exit 0",
+      "actual": "Test Files 29 passed (29); Tests 465 passed (465); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-1/unit-node22.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-08-unit-node24",
+      "procedure": "Unit suites confirmed on Node 24",
+      "command": "pnpm test",
+      "environment": "disposable clone @311b114; Node v24.21.0",
+      "expected": "all pass, exit 0",
+      "actual": "Test Files 29 passed (29); Tests 465 passed (465); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-1/unit-node24.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-09-integration-run1",
+      "procedure": "Full integration project on a fresh disposable PostgreSQL 16.13 cluster (with-pg.sh: initdb in a nested user namespace, TCP 127.0.0.1:55441, removed afterwards). It includes contract/contract.test.ts, gates.test.ts (gate 403 not_approver / submitter_cannot_decide, 409 superseded, filename-only evidence incomplete, criteria-incomplete 422 writes nothing), the generated aud-write-deny.test.ts (127 cases) and kpi-aud-write-deny.test.ts.",
+      "command": "with-pg.sh 55441 pnpm test:integration",
+      "environment": "disposable clone @311b114; Node v22.22.2; PostgreSQL 16.13 disposable cluster",
+      "expected": "all pass, exit 0",
+      "actual": "Test Files 26 passed (26); Tests 414 passed (414); contract.test.ts 11/11, gates.test.ts 11/11, aud-write-deny.test.ts 127/127, kpi-aud-write-deny.test.ts 17/17; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S10-001",
+        "REQ-S16-013",
+        "REQ-PB-016",
+        "REQ-PB-017",
+        "REQ-PB-018",
+        "REQ-DLV-034"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-1/integration-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-1/with-pg.sh"
+      ]
+    },
+    {
+      "id": "SEC-R1-10-integration-run2",
+      "procedure": "Second full integration run on another fresh disposable cluster (port 55442), for determinism",
+      "command": "with-pg.sh 55442 pnpm test:integration",
+      "environment": "disposable clone @311b114; Node v22.22.2; PostgreSQL 16.13 disposable cluster",
+      "expected": "all pass, exit 0",
+      "actual": "Test Files 26 passed (26); Tests 414 passed (414); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-1/integration-run2.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-11-validate-historical",
+      "procedure": "Gate validator against the approved DG0 and DG1 gates",
+      "command": "node tools/gates/validate.mjs --historical --stage DG0; node tools/gates/validate.mjs --historical --stage DG1",
+      "environment": "/home/user/My-owns @311b114; Node v22.22.2",
+      "expected": "both exit 0",
+      "actual": "DG0 exit 0; DG1 exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-1/validate-historical-DG0.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-1/validate-historical-DG1.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-12-cross-org-wrong-scope",
+      "procedure": "Own probe SEC-4 (disposable clone + disposable PG16, 2 runs). Org-B TO, a WL and an SP of ANOTHER transformation in the same org, and a no-grant user call P2 reads and writes (evidence list/create, gate read, gate decision, charter read, diagnostic-finding create, baselines list) on transformation T.",
+      "command": "with-pg.sh 55460|55461 npx vitest run --project integration apps/api/test/integration/zz-sec-r1-probe.test.ts",
+      "environment": "disposable clone $TMPDIR/review-probe @311b114 + probe file; Node v22.22.2; PostgreSQL 16.13",
+      "expected": "404 everywhere (existence not disclosed); nothing written",
+      "actual": "{orgB_get_evidence:404, orgB_post_evidence:404, orgB_get_gate:404, orgB_decide:404, otherWL_get_charter:404, otherWL_post_finding:404, otherSP_decide:404, nobody_get:404} in both runs",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S10-001"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-1/probes/zz-sec-r1-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-1/probe-run2.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-1/probes/README.md"
+      ]
+    },
+    {
+      "id": "SEC-R1-13-aud-sweep",
+      "procedure": "AUD sweep: (a) the generated aud-write-deny.test.ts in both integration runs. It builds its list from docs/api/openapi.yaml, covers every P2 non-GET operation and asserts 403 plus exactly one 'authorization.denied' audit event per request; reads must return 200. (b) Independent probe SEC-4.aud: AUD evidence review and AUD G1 submit, then the request's audit rows, then AUD GET evidence and GET gates.",
+      "command": "pnpm test:integration (aud-write-deny.test.ts); probe SEC-4.aud",
+      "environment": "disposable clones @311b114; Node v22.22.2; PostgreSQL 16.13",
+      "expected": "every P2 mutation is 403 with one denied-mutation audit event; every P2 read is 200 (403 not 404)",
+      "actual": "aud-write-deny 127/127 pass in both runs. Probe: review 403 with audit [authorization.denied], submit 403 with audit [authorization.denied], reads [200,200]",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S10-001"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-1/integration-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-1/integration-run2.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-1/probe-run2.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-14-db-guard-probe",
+      "procedure": "Own probe SEC-5: raw SQL as mth_app and mth_owner on the disposable DB. (a) UPDATE and INSERT without an audit event, checked at COMMIT. (b) version +2, an unchanged version, and an INSERT at version 2. (c) organization_id mismatch. (d) Changing created_by. (e) An evidence_link to another transformation's diagnostic_item. (f) The app role tries UPDATE charter_version and DELETE gate_decision/evidence. (g) The owner role tries UPDATE charter_version (after creating a charter), DELETE evidence_content and TRUNCATE gate_submission_criterion. Control: a correct update plus its audit event. Run 1 had a probe defect (no charter_version row existed); run 2 fixes it.",
+      "command": "with-pg.sh 55461 npx vitest run --project integration apps/api/test/integration/zz-sec-r1-probe.test.ts",
+      "environment": "disposable clone $TMPDIR/review-probe @311b114; Node v22.22.2; PostgreSQL 16.13",
+      "expected": "every violation is refused; the control commits",
+      "actual": "Every violation was refused. Missing audit: 23000 *_audit_required at COMMIT (update and insert). Version: 23514 evidence_version_step for +2, unchanged and insert-v2. Org mismatch: 23514 evidence_organization_matches. Identity change: 23514 evidence_identity_immutable. Cross-transformation link: 23503 evidence_link_record_ref. App UPDATE/DELETE: 42501 permission denied. Owner on charter_version/evidence_content/gate_submission_criterion: 42501 'append-only'. The control COMMITTED.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-013",
+        "REQ-PB-029"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-1/probe-run2.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-1/probe-run1.log",
+        "packages/db/migrations/0010_p2_record_guards.sql"
+      ]
+    },
+    {
+      "id": "SEC-R1-15-evidence-sod",
+      "procedure": "Own probe SEC-1 (2 runs). Can a reviewer verify evidence content they supplied? (note) WL creates a note; TL PATCHes its noteBody; TL reviews it. (file) WL creates a file item; TL uploads the content; TL reviews it.",
+      "command": "with-pg.sh 55460|55461 npx vitest run --project integration apps/api/test/integration/zz-sec-r1-probe.test.ts",
+      "environment": "disposable clone $TMPDIR/review-probe @311b114; Node v22.22.2; PostgreSQL 16.13",
+      "expected": "403: the reviewer never verifies content they wrote or uploaded",
+      "actual": "note: TL edit 200, TL verify 200 verified (reviewedBy=TL). file: TL upload 200 (uploaded_by=TL), TL verify 200 verified with reviewedContentId = the TL's upload. Same result in both runs. Finding F-DG2-140.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "requirements": [
+        "REQ-S13-012",
+        "REQ-S10-001",
+        "REQ-PB-016"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-1/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-1/probe-run2.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-1/probes/zz-sec-r1-probe.test.ts"
+      ]
+    },
+    {
+      "id": "SEC-R1-16-trajectory-approval-sod",
+      "procedure": "Own probe SEC-2 (2 runs). TL creates a T02 row with target 100. BO (outcome.edit + kpi_target.approve) PATCHes the target to 5, then approves the trajectory.",
+      "command": "with-pg.sh 55460|55461 npx vitest run --project integration apps/api/test/integration/zz-sec-r1-probe.test.ts",
+      "environment": "disposable clone $TMPDIR/review-probe @311b114; Node v22.22.2; PostgreSQL 16.13",
+      "expected": "403: an approver never approves a target they set",
+      "actual": "BO PATCH 200 (target 5.000000); BO approval 200, trajectoryStatus approved, trajectoryApprovedBy = BO. Same result in both runs. Finding F-DG2-141.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "requirements": [
+        "REQ-S10-001",
+        "REQ-PB-017"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-1/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-1/probe-run2.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-17-evidence-link-removal",
+      "procedure": "Own probe SEC-3 (2 runs). TL links evidence to a seeded T01 row. WL (own-only contributor) tries to create the same link, then removes the TL's link.",
+      "command": "with-pg.sh 55460|55461 npx vitest run --project integration apps/api/test/integration/zz-sec-r1-probe.test.ts",
+      "environment": "disposable clone $TMPDIR/review-probe @311b114; Node v22.22.2; PostgreSQL 16.13",
+      "expected": "WL create 403 and WL remove 403 (same record edit rights)",
+      "actual": "WL create 403, TL create 201, WL remove 200 (status removed). Same result in both runs. Finding F-DG2-142.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "requirements": [
+        "REQ-S10-001",
+        "REQ-S13-012"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-1/probe-run2.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-18-source-gates",
+      "procedure": "Source review of workflows/gates.ts, criteria.ts, transformations/phase.ts and migration 0017. Checks: the approver resolves through authorize(gate.decide) plus the role or named user; the submitter (or someone acting for them) gets 403; a stale submissionNo or a non-pending submission gets 409 with nothing written; the DB gate_decision_guard repeats both rules; the approver is frozen on the submission and cannot change while one is pending; submit re-evaluates the criteria inside the transaction (422 + pointers, nothing written); the snapshot is SHA-256 hashed and gate_submission_freeze makes it immutable; a missing evaluator fails closed. grep apps/*/src and packages/*/src for docs/delivery, stages.json, tools/gates and gates/DG.",
+      "command": "code reading; grep -rn 'docs/delivery\\|stages.json\\|gates/DG\\|tools/gates' apps/*/src packages/*/src",
+      "environment": "/home/user/My-owns @311b114 (source 98a8d99)",
+      "expected": "rules implemented in API + DB; the product gates neither read nor write any DG0-DG7 record",
+      "actual": "Implemented as expected. The grep hits only two *.test.ts files (branding.test.ts, kpi.test.ts), none in runtime code, and no route reads or writes DG records. Gate-decision concurrency uses body.submissionNo plus row locks instead of If-Match, which is acceptable because the 409 is enforced.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-016",
+        "REQ-PB-017",
+        "REQ-PB-018",
+        "REQ-DLV-034"
+      ],
+      "evidence": [
+        "apps/api/src/modules/workflows/gates.ts",
+        "apps/api/src/modules/workflows/criteria.ts",
+        "packages/db/migrations/0017_p2_decisions_gates.sql"
+      ]
+    },
+    {
+      "id": "SEC-R1-19-source-decimal-charter-store",
+      "procedure": "Source review. (a) packages/shared/src/value.ts and the kpi module: decimal.js only, no parseFloat/Number on amounts; pg numeric stays a string (pool.ts overrides only the date OID 1082); unquantified pools are counted, never added as 0; a validated total counts only current, non-stale validations. (b) charter.ts: every POST/PATCH appends a charter_version snapshot in the same transaction; baselineDate uses the businessDate schema (an invalid date gives 400 with a pointer); PATCH requires If-Match. (c) evidence/store.ts: keys are server-generated (org/transformation/evidence/uuidv7); a KEY regex, a '..' ban and a resolve+startsWith(root) check confine paths; download goes through transformation.read with attachment + nosniff + no-store. (d) requireIfMatch is used by every P2 update; the routes without it are creates or the gate decision.",
+      "command": "code reading",
+      "environment": "/home/user/My-owns @311b114 (source 98a8d99)",
+      "expected": "decimal-safe, versioned charter, confined store, If-Match on updates",
+      "actual": "All four hold as expected. Unit and integration suites covering them pass (SEC-R1-07..10).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-027",
+        "REQ-PB-028",
+        "REQ-PB-029",
+        "REQ-S13-012"
+      ],
+      "evidence": [
+        "packages/shared/src/value.ts",
+        "apps/api/src/modules/transformations/charter.ts",
+        "apps/api/src/modules/evidence/store.ts"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG2-140",
+    "F-DG2-141",
+    "F-DG2-142"
+  ],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG2/round-1/code-security-reviewer.findings.json",
+    "docs/delivery/test-evidence/DG2/code-security/round-1/summary.txt",
+    "docs/delivery/test-evidence/DG2/code-security/round-1/checks.sh",
+    "docs/delivery/test-evidence/DG2/code-security/round-1/with-pg.sh",
+    "docs/delivery/test-evidence/DG2/code-security/round-1/probes/zz-sec-r1-probe.test.ts",
+    "docs/delivery/test-evidence/DG2/code-security/round-1/probes/README.md",
+    "docs/delivery/test-evidence/DG2/code-security/round-1/probe-run1.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-1/probe-run2.log"
+  ],
+  "reviewed_at": "2026-10-02T04:06:59Z",
+  "summary": "FAIL. Every mechanical check passes on the frozen candidate: build, typecheck, lint, openapi lint, no-CDN, format, unit on Node 22 and 24 (465/465), integration twice on disposable PG16 (414/414, including contract, gates and the 127-case AUD sweep), and historical validation of DG0 and DG1. My own probes confirm cross-org/wrong-scope 404, AUD 403 with a denied-mutation audit event, and every migration-0010 DB guard. Three new separation-of-duties/authorization defects were reproduced through the API, in two runs each. F-DG2-140 (High, mandatory): a reviewer can verify evidence content they wrote or uploaded on someone else's item. F-DG2-141 (High, mandatory): a BO can set a T02 target and approve it themselves. F-DG2-142 (Medium, mandatory): any evidence.create holder can remove evidence links without the record edit rights that link creation requires. Environmental residuals D-057/D-058/D-049 are not in this assignment's requirement set and are not recorded as checks."
+}
