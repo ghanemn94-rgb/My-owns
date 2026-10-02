@@ -1,0 +1,12 @@
+51c51
+< export NODE_ENV=development AUTH_MODE=dev PORT=3000 APP_BASE_URL=http://localhost:3000 LOG_LEVEL=warn
+---
+> export NODE_ENV=development AUTH_MODE=dev PORT=${QA_API_PORT} APP_BASE_URL=http://localhost:${QA_API_PORT} LOG_LEVEL=warn
+60,62c60,62
+< for _ in $(seq 1 60); do curl -fsS http://localhost:3000/readyz >/dev/null 2>&1 && break; sleep 0.5; done
+< echo "healthz: $(curl -fsS http://localhost:3000/healthz)"
+< echo "readyz:  $(curl -fsS http://localhost:3000/readyz)" || { echo "API not ready"; cat "$WORK/api.log"; exit 4; }
+---
+> for _ in $(seq 1 60); do curl -fsS http://localhost:${QA_API_PORT}/readyz >/dev/null 2>&1 && break; sleep 0.5; done
+> echo "healthz: $(curl -fsS http://localhost:${QA_API_PORT}/healthz)"
+> echo "readyz:  $(curl -fsS http://localhost:${QA_API_PORT}/readyz)" || { echo "API not ready"; cat "$WORK/api.log"; exit 4; }

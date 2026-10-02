@@ -1,0 +1,8 @@
+# usage: source pg.sh <port> <workdir>
+PGBIN=/usr/lib/postgresql/16/bin; PG_PORT=$1; PGW=$2; rm -rf "$PGW"; mkdir -p "$PGW"; chmod 777 "$PGW"
+as_pg() { if [ "$(id -u)" = "0" ]; then unshare --user --map-user=1000 --map-group=1000 "$@"; else "$@"; fi; }
+as_pg $PGBIN/initdb -D "$PGW/pg" -U postgres --auth=trust >/dev/null
+as_pg $PGBIN/postgres -D "$PGW/pg" -c unix_socket_directories='' -c listen_addresses=127.0.0.1 -p $PG_PORT -c fsync=off >"$PGW/pg.log" 2>&1 &
+PG_PID=$!
+ADMIN="postgresql://postgres@127.0.0.1:${PG_PORT}/postgres"
+for _ in $(seq 1 60); do psql "$ADMIN" -qAtc "select 1" >/dev/null 2>&1 && break; sleep 0.5; done

@@ -1,0 +1,160 @@
+
+ RUN  v3.2.4 /var/tmp/mth-run.pqdUR2/claude-0/review-probe
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muqfwvx0_0278dd2a; applied 18 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-1 evidence separation of duties: reviewer must not verify content they supplied > note: TL rewrites a WL-created note, then verifies it himself
+PROBE SEC-1.note.tl_edit_other_users_evidence: [200,"Text written by the TL who will verify it",true]
+
+stdout | apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-1 evidence separation of duties: reviewer must not verify content they supplied > note: TL rewrites a WL-created note, then verifies it himself
+PROBE SEC-1.note.tl_verifies_own_text: [200,"verified",true]
+
+stdout | apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-1 evidence separation of duties: reviewer must not verify content they supplied > file: TL uploads a new revision to a WL-created file evidence, then verifies his own upload
+PROBE SEC-1.file.tl_uploads: [200,[true]]
+
+stdout | apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-1 evidence separation of duties: reviewer must not verify content they supplied > file: TL uploads a new revision to a WL-created file evidence, then verifies his own upload
+PROBE SEC-1.file.tl_verifies_own_upload: [200,"verified",true]
+
+stdout | apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-2 T02 trajectory approval: approver must not approve a target they set > BO changes the TL-created target value, then approves the trajectory himself
+PROBE SEC-2.setup: [201,201,null]
+
+stdout | apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-2 T02 trajectory approval: approver must not approve a target they set > BO changes the TL-created target value, then approves the trajectory himself
+PROBE SEC-2.t02_created_by_tl: [201,"100.000000"]
+
+stdout | apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-2 T02 trajectory approval: approver must not approve a target they set > BO changes the TL-created target value, then approves the trajectory himself
+PROBE SEC-2.bo_sets_target: [200,"5.000000"]
+
+stdout | apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-2 T02 trajectory approval: approver must not approve a target they set > BO changes the TL-created target value, then approves the trajectory himself
+PROBE SEC-2.bo_approves_own_target: [200,"approved",true]
+
+stdout | apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-3 evidence-link removal needs the same edit rights as creating the link > WL (diagnostic.contribute own-only) removes the TL's evidence link on a seeded T01 row
+PROBE SEC-3: {"wlCreateStatus":403,"tlCreateStatus":201,"wlRemoveStatus":200,"after":"removed"}
+
+stdout | apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-4 cross-organization / wrong-scope actors > TO of org B and WL of another transformation get 404 on reads and writes; nothing written
+PROBE SEC-4: {"orgB_get_evidence":404,"orgB_post_evidence":404,"orgB_get_gate":404,"orgB_decide":404,"otherWL_get_charter":404,"otherWL_post_finding":404,"otherSP_decide":404,"nobody_get":404}
+
+stdout | apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-4 cross-organization / wrong-scope actors > AUD: an evidence review and a gate submit are 403 with a denied-mutation audit event; AUD reads 200
+PROBE SEC-4.aud: {"review":403,"submit":403,"reviewAudit":[["authorization.denied",null]],"submitAudit":[["authorization.denied",null]],"reads":[200,200]}
+
+stdout | apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-5 database guards (migration 0010/0012/0017) as mth_app and mth_owner > audit-required at COMMIT, version step, append-only, cross-transformation record ref, org mismatch
+PROBE SEC-5: {"update_without_audit":"23000:evidence_audit_required:no audit_event for evidence 01a0fac9-f3ad-7218-af5b-f6a12c07bac9 at version 2 (ADR-0004: e","insert_without_audit":"23000:evidence_audit_required:no audit_event for evidence 01a0fac9-f3bc-7d61-a03c-fea411a95bc5 at version 1 (ADR-0004: e","version_step_2":"23514:evidence_version_step:evidence: version must increase by exactly 1 on every update (optimistic concurrency, ADR-","version_unchanged":"23514:evidence_version_step:evidence: version must increase by exactly 1 on every update (optimistic concurrency, ADR-","insert_version_2":"23514:evidence_version_step:evidence: a new row starts at version 1","org_mismatch":"23514:evidence_organization_matches:evidence: organization_id must equal the transformation's organization","identity_change":"23514:evidence_identity_immutable:evidence: id, organization_id, transformation_id, created_at and created_by are immutable","cross_transformation_link":"23503:evidence_link_record_ref:evidence_link: diagnostic_item 01a0fac9-f0e7-7914-8871-7c2b62bba9c7 does not exist in tran","app_update_charter_version":"42501::permission denied for table charter_version","app_delete_gate_decision":"42501::permission denied for table gate_decision","app_delete_evidence":"42501::permission denied for table evidence","owner_update_charter_version":"COMMITTED","owner_delete_evidence_content":"42501::evidence_content is append-only: DELETE is not allowed","owner_truncate_gate_decision":"42501::gate_submission_criterion is append-only: TRUNCATE is not allowed","control_update_with_audit":"COMMITTED"}
+
+ ❯ |integration| apps/api/test/integration/zz-sec-r1-probe.test.ts (7 tests | 5 failed) 1219ms
+   × SEC-1 evidence separation of duties: reviewer must not verify content they supplied > note: TL rewrites a WL-created note, then verifies it himself 113ms
+     → expected 200 to be 403 // Object.is equality
+   × SEC-1 evidence separation of duties: reviewer must not verify content they supplied > file: TL uploads a new revision to a WL-created file evidence, then verifies his own upload 53ms
+     → expected 200 to be 403 // Object.is equality
+   × SEC-2 T02 trajectory approval: approver must not approve a target they set > BO changes the TL-created target value, then approves the trajectory himself 164ms
+     → expected 200 to be 403 // Object.is equality
+   × SEC-3 evidence-link removal needs the same edit rights as creating the link > WL (diagnostic.contribute own-only) removes the TL's evidence link on a seeded T01 row 92ms
+     → expected 200 to be 403 // Object.is equality
+   ✓ SEC-4 cross-organization / wrong-scope actors > TO of org B and WL of another transformation get 404 on reads and writes; nothing written 88ms
+   ✓ SEC-4 cross-organization / wrong-scope actors > AUD: an evidence review and a gate submit are 403 with a denied-mutation audit event; AUD reads 200 109ms
+   × SEC-5 database guards (migration 0010/0012/0017) as mth_app and mth_owner > audit-required at COMMIT, version step, append-only, cross-transformation record ref, org mismatch 71ms
+     → expected [ Array(2) ] to deeply equal [ Array(2) ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-1 evidence separation of duties: reviewer must not verify content they supplied > note: TL rewrites a WL-created note, then verifies it himself
+AssertionError: expected 200 to be 403 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 403[39m
+[31m+ 200[39m
+
+ ❯ apps/api/test/integration/zz-sec-r1-probe.test.ts:46:22
+     44|     });
+     45|     log("SEC-1.note.tl_verifies_own_text", [v.status, v.body.reviewSta…
+     46|     expect(v.status).toBe(403);
+       |                      ^
+     47|   });
+     48| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-1 evidence separation of duties: reviewer must not verify content they supplied > file: TL uploads a new revision to a WL-created file evidence, then verifies his own upload
+AssertionError: expected 200 to be 403 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 403[39m
+[31m+ 200[39m
+
+ ❯ apps/api/test/integration/zz-sec-r1-probe.test.ts:67:22
+     65|     });
+     66|     log("SEC-1.file.tl_verifies_own_upload", [v.status, v.body.reviewS…
+     67|     expect(v.status).toBe(403);
+       |                      ^
+     68|   });
+     69| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-2 T02 trajectory approval: approver must not approve a target they set > BO changes the TL-created target value, then approves the trajectory himself
+AssertionError: expected 200 to be 403 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 403[39m
+[31m+ 200[39m
+
+ ❯ apps/api/test/integration/zz-sec-r1-probe.test.ts:95:23
+     93|     });
+     94|     log("SEC-2.bo_approves_own_target", [ok.status, ok.body.trajectory…
+     95|     expect(ok.status).toBe(403);
+       |                       ^
+     96|   });
+     97| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-3 evidence-link removal needs the same edit rights as creating the link > WL (diagnostic.contribute own-only) removes the TL's evidence link on a seeded T01 row
+AssertionError: expected 200 to be 403 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 403[39m
+[31m+ 200[39m
+
+ ❯ apps/api/test/integration/zz-sec-r1-probe.test.ts:109:23
+    107|     log("SEC-3", { wlCreateStatus: wlCreate.status, tlCreateStatus: li…
+    108|     expect(wlCreate.status).toBe(403);
+    109|     expect(rm.status).toBe(403);
+       |                       ^
+    110|   });
+    111| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-5 database guards (migration 0010/0012/0017) as mth_app and mth_owner > audit-required at COMMIT, version step, append-only, cross-transformation record ref, org mismatch
+AssertionError: expected [ Array(2) ] to deeply equal [ Array(2) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "owner_update_charter_version",[22m
+[32m-   false,[39m
+[31m+   true,[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/zz-sec-r1-probe.test.ts:216:133
+    214|     log("SEC-5", out);
+    215|     await pool.end();
+    216|     for (const k of Object.keys(out).filter((k) => k !== "control_upda…
+       |                                                                                                                                     ^
+    217|     void inject;
+    218|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 2 passed (7)
+   Start at  04:05:29
+   Duration  5.05s (transform 1.01s, setup 0ms, collect 2.49s, tests 1.22s, environment 0ms, prepare 106ms)
+

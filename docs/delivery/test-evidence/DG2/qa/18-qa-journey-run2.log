@@ -1,0 +1,64 @@
+$ QA_PG_PORT=54762 tests/qa/support/with-pg.sh npx vitest run --project integration --reporter=verbose tests/qa/integration/dg2-qa-journey.test.ts   (run 2; node v22.22.2; disposable clone @98a8d99; test = docs/delivery/test-evidence/DG2/qa/tests/dg2-qa-journey.test.ts)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+ RUN  v3.2.4 /var/tmp/mth-run.s2R7yU/claude-0/review-qa
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muqghozi_02195784; applied 18 migrations to a fresh database
+ ✓ |integration| tests/qa/integration/dg2-qa-journey.test.ts > QA REQ-DLV-034 Diagnose -> Define -> Design through native workflows > G1: complete through the API, submit, approve -> phase define 533ms
+stdout | tests/qa/integration/dg2-qa-journey.test.ts > QA REQ-DLV-034 Diagnose -> Define -> Design through native workflows > G2: every Define output can be completed through the API (no direct DB writes)
+QA-JOURNEY G2 incomplete mandatory criteria: [{"key":"g2.kpi_definitions","missing":["g2.kpi_definitions.not_active"]}]
+
+stdout | tests/qa/integration/dg2-qa-journey.test.ts > QA REQ-DLV-034 Diagnose -> Define -> Design through native workflows > G2: every Define output can be completed through the API (no direct DB writes)
+QA-JOURNEY PATCH kpi-definition {status:active} -> [33m400[39m validation
+
+stdout | tests/qa/integration/dg2-qa-journey.test.ts > QA REQ-DLV-034 Diagnose -> Define -> Design through native workflows > G2: every Define output can be completed through the API (no direct DB writes)
+QA-JOURNEY POST kpi-definition {status:active} -> [33m400[39m validation
+
+stdout | tests/qa/integration/dg2-qa-journey.test.ts > QA REQ-DLV-034 Diagnose -> Define -> Design through native workflows > G2: every Define output can be completed through the API (no direct DB writes)
+QA-JOURNEY kpi-definition status after the Define steps: draft
+
+stdout | tests/qa/integration/dg2-qa-journey.test.ts > QA REQ-DLV-034 Diagnose -> Define -> Design through native workflows > G3: every Design output can be completed through the API; approval advances the phase
+QA-JOURNEY G3 incomplete mandatory criteria: []
+
+stdout | tests/qa/integration/dg2-qa-journey.test.ts > QA REQ-DLV-034 Diagnose -> Define -> Design through native workflows > G3: every Design output can be completed through the API; approval advances the phase
+QA-JOURNEY phase before/after G3 approval: define mobilize
+
+ × |integration| tests/qa/integration/dg2-qa-journey.test.ts > QA REQ-DLV-034 Diagnose -> Define -> Design through native workflows > G2: every Define output can be completed through the API (no direct DB writes) 233ms
+   → G2 must be completable through native workflows: expected [ { key: 'g2.kpi_definitions', …(1) } ] to deeply equal []
+ ✓ |integration| tests/qa/integration/dg2-qa-journey.test.ts > QA REQ-DLV-034 Diagnose -> Define -> Design through native workflows > G3: every Design output can be completed through the API; approval advances the phase 393ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/dg2-qa-journey.test.ts > QA REQ-DLV-034 Diagnose -> Define -> Design through native workflows > G2: every Define output can be completed through the API (no direct DB writes)
+AssertionError: G2 must be completable through native workflows: expected [ { key: 'g2.kpi_definitions', …(1) } ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   {[39m
+[31m+     "key": "g2.kpi_definitions",[39m
+[31m+     "missing": [[39m
+[31m+       "g2.kpi_definitions.not_active",[39m
+[31m+     ],[39m
+[31m+   },[39m
+[31m+ ][39m
+
+ ❯ tests/qa/integration/dg2-qa-journey.test.ts:312:69
+    310|     const k = ok(await req("GET", `${T}/kpi-definitions/${kpi.id}`, kd…
+    311|     console.log("QA-JOURNEY kpi-definition status after the Define ste…
+    312|     expect(open, "G2 must be completable through native workflows").to…
+       |                                                                     ^
+    313|     await submitAndApprove("G2");
+    314|     expect(await phase()).toBe("design");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  04:21:40
+   Duration  4.45s (transform 781ms, setup 0ms, collect 1.82s, tests 1.48s, environment 0ms, prepare 67ms)
+
+exit=1

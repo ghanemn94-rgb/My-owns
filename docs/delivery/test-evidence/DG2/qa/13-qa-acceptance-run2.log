@@ -1,0 +1,53 @@
+$ QA_PG_PORT=54742 tests/qa/support/with-pg.sh npx vitest run --project integration --reporter=verbose tests/qa/integration/dg2-qa-acceptance.test.ts   (run 2; node v22.22.2; disposable clone @98a8d99; test file = docs/delivery/test-evidence/DG2/qa/tests/dg2-qa-acceptance.test.ts)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+ RUN  v3.2.4 /var/tmp/mth-run.s2R7yU/claude-0/review-qa
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muqg4qcl_a0e43f97; applied 18 migrations to a fresh database
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-PB-026 T01 current-state diagnostic > pre-seeds the six dimensions, persists all six source columns, rejects Confidence outside H/M/L 260ms
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-PB-034 T02 outcome & KPI tree > persists all seven columns and rejects a row without a target date 228ms
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-PB-039 T03 TOM gap matrix > persists all six columns; a row without a (valid) dimension is rejected 150ms
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-PB-043 T04 design decision log > generates D-01, D-02 …; Status defaults to Open; options A/B/C; all columns persist 119ms
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-PB-029/030/031/035 charter > persists the 14 fields, versions every save with retained history, rejects an invalid baseline date, warns outside 3-5 top outcomes 348ms
+stdout | tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-PB-033/029 charter North Star after refinement (probe) > the charter's North Star (field 5) follows the CURRENT North Star after it is refined
+QA-PROBE charter.northStar after refine: {"charterNorthStarId":"01a0facf-879e-773e-a52a-24f3ab21e419","shown":{"id":"01a0facf-879e-773e-a52a-24f3ab21e419","organizationId":"01a0facf-827f-7476-bef2-ffe97aa5d8d5","transformationId":"01a0facf-8763-73ef-b51d-bd1697db24e0","statement":"QA original star.","status":"superseded","supersededAt":"2026-10-02T04:11:39.831Z","version":2,"createdAt":"2026-10-02T04:11:39.802Z","createdBy":"01a0facf-8756-77f7-aa72-108995f0daa2","updatedAt":"2026-10-02T04:11:39.831Z","updatedBy":"01a0facf-8756-77f7-aa72-108995f0daa2"}}
+
+ × |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-PB-033/029 charter North Star after refinement (probe) > the charter's North Star (field 5) follows the CURRENT North Star after it is refined 128ms
+   → charter shows a superseded North Star: expected 'QA original star.' to be 'QA refined star.' // Object.is equality
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-PB-036 good outcome test > 'Launch new app' with no KPI fails with reasons; G2 lists it; goodOutcomePass false while unknown; true when all pass 230ms
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-PB-033 one current North Star > a second concurrent first North Star is refused (409), never two current rows; DB guard holds 140ms
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-PB-027/028 baselines and value pools > unknown is null never 0; Finance validation by non-creator; a later edit makes it stale; unquantified never 0 236ms
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-PB-016/017/018 REQ-S13-012 REQ-S04-003/004/005 product gates > G1 without a charter is rejected listing the charter; filename-only and inaccessible evidence stay incomplete 370ms
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-PB-016/017/018 REQ-S13-012 REQ-S04-003/004/005 product gates > non-approver 403, submitter 403, superseded submission 409, approval advances the phase; G2 without guardrails rejected 461ms
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-S10-001 / REQ-PB-012 roles and access > exposes the expanded role catalogue and B0018 accountability text verbatim 17ms
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-S10-001 / REQ-PB-012 roles and access > a Workstream Lead on X cannot read Y; AUD is read-only on every P2 mutation sampled 340ms
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-PB-003 End-to-End / Modular > Modular requires an entry phase; End-to-End rejects one 57ms
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-PB-023/024/025/038/041/042 REQ-S05-003 TOM and design > methodology: six workstreams, ten TOM dimensions with design questions; canvas has ten boxes with linked records 201ms
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-PB-023/024/025/038/041/042 REQ-S05-003 TOM and design > capability heatmap (build/buy/partner), journeys with pain points, workshop conversion to an owned T04 decision 240ms
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-S16-013 diagnosis/direction entity group > creates and reads each entity through the API; out-of-scope readers get 404; audit event per create 243ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-PB-033/029 charter North Star after refinement (probe) > the charter's North Star (field 5) follows the CURRENT North Star after it is refined
+AssertionError: charter shows a superseded North Star: expected 'QA original star.' to be 'QA refined star.' // Object.is equality
+
+Expected: [32m"QA [7mrefined[27m star."[39m
+Received: [31m"QA [7moriginal[27m star."[39m
+
+ ❯ tests/qa/integration/dg2-qa-acceptance.test.ts:434:80
+    432|       JSON.stringify({ charterNorthStarId: view.charter.northStarId, s…
+    433|     );
+    434|     expect(view.northStar?.statement, "charter shows a superseded Nort…
+       |                                                                                ^
+    435|   });
+    436| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 16 passed (17)
+   Start at  04:11:35
+   Duration  7.10s (transform 883ms, setup 0ms, collect 1.94s, tests 3.99s, environment 0ms, prepare 62ms)
+
+exit=1

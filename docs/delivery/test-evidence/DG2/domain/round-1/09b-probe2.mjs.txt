@@ -1,0 +1,55 @@
+// Domain-reviewer supplementary probe (DG2 round 1): North Star semantics, KPI naming in G2 rejection. SYNTHETIC data.
+const BASE = "http://localhost:3000", ORIGIN = BASE, RETAIL = "01920000-0000-7000-9000-000000000102";
+let pass = 0, fail = 0;
+const check = (n, c, d) => { c ? pass++ : fail++; console.log(`${c ? "PASS" : "FAIL"} ${n}${d ? " :: " + d : ""}`); };
+const j = (x, n = 400) => JSON.stringify(x).slice(0, n);
+async function login(u) {
+  const r = await fetch(`${BASE}/api/v1/auth/dev-login`, { method: "POST", headers: { "content-type": "application/json", origin: ORIGIN }, body: JSON.stringify({ username: u }) });
+  const cookie = (r.headers.getSetCookie?.() ?? []).map((c) => c.split(";")[0]).join("; ");
+  const me = await (await fetch(`${BASE}/api/v1/me`, { headers: { cookie } })).json();
+  return { cookie, csrf: me.csrfToken, me };
+}
+async function call(s, method, path, body, extra = {}) {
+  const headers = { origin: ORIGIN, cookie: s.cookie, ...extra };
+  if (method !== "GET") headers["x-csrf-token"] = s.csrf;
+  if (body !== undefined) headers["content-type"] = "application/json";
+  const r = await fetch(BASE + path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
+  const t = await r.text(); let json; try { json = JSON.parse(t); } catch { json = t; }
+  return { status: r.status, etag: r.headers.get("etag"), json };
+}
+const lead = await login("dev.lead");
+const tr = await call(lead, "POST", "/api/v1/transformations", { businessUnitId: RETAIL, name: "North Star probe (synthetic)", mode: "end_to_end" });
+const T = `/api/v1/transformations/${tr.json.id}`;
+const none = await call(lead, "GET", `${T}/north-star`);
+check("GET North Star before set -> 404 north_star_not_found (UI shows Unknown, not blank/zero)", none.status === 404, `${none.status} ${none.json.code}`);
+// race: two first-time PUTs concurrently (no If-Match) -> one 200, one 409 (unique current index)
+const [a, b] = await Promise.all([
+  call(lead, "PUT", `${T}/north-star`, { statement: "Make roaming effortless, trusted and economically accretive." }),
+  call(lead, "PUT", `${T}/north-star`, { statement: "A competing second active north star." }),
+]);
+check("REQ-PB-033 concurrent second active North Star -> exactly one 200 and one 409", [a.status, b.status].sort().join() === "200,409", `${a.status}/${b.status} ${j(a.status === 409 ? a.json : b.json, 300)}`);
+const cur = await call(lead, "GET", `${T}/north-star`);
+const noIfm = await call(lead, "PUT", `${T}/north-star`, { statement: "Second statement without If-Match." });
+check("REQ-PB-033 PUT without If-Match while a current one exists -> 428 (no second active)", noIfm.status === 428, `${noIfm.status} ${noIfm.json.code}`);
+const stale = await call(lead, "PUT", `${T}/north-star`, { statement: "Stale write." }, { "if-match": '"99"' });
+check("REQ-PB-033 stale If-Match -> 409", stale.status === 409, `${stale.status} ${stale.json.code}`);
+const refine = await call(lead, "PUT", `${T}/north-star`, { statement: "Make roaming effortless and trusted." }, { "if-match": cur.etag });
+check("REQ-PB-033 refine supersedes (200)", refine.status === 200, `${refine.status}`);
+const hist = await call(lead, "GET", `${T}/north-star/history`);
+check("REQ-PB-033 exactly one current, history retained", hist.json.items.filter((i) => i.status === "current").length === 1 && hist.json.items.length === 2, hist.json.items.map((i) => i.status).join(","));
+const ch = await call(lead, "POST", `${T}/charter`, { transformationName: "x (synthetic)" });
+const cv = await call(lead, "GET", `${T}/charter`);
+check("REQ-PB-033 charter view carries the current North Star", cv.json.northStar?.statement === "Make roaming effortless and trusted.", j(cv.json.northStar, 200));
+// thesis: empty parts -> any flag?
+const thesis = await call(lead, "PATCH", `${T}/charter`, { thesisChange: "the activation journey", changeSummary: "partial thesis (synthetic)" }, { "if-match": `"${cv.json.charter.version}"` });
+const cv2 = await call(lead, "GET", `${T}/charter`);
+check("REQ-PB-030 thesis with three empty parts is flagged incomplete somewhere in the charter view", /thesis/i.test(JSON.stringify(cv2.json.warnings)) || /thesis/i.test(JSON.stringify(cv2.json.scopeCheckPrechecks)), `warnings=${j(cv2.json.warnings, 300)}`);
+// T02 KPI naming in the G2 rejection
+const o = await call(lead, "POST", `${T}/outcomes`, { statement: "Grow roaming attach rate", isTopOutcome: true });
+const kd = await call(lead, "POST", `${T}/kpi-definitions`, { name: "Roaming attach rate KPI-NAME-PROBE", unitKind: "percentage", polarity: "higher_is_better" });
+await call(lead, "POST", `${T}/outcome-kpis`, { outcomeId: o.json.id, kpiDefinitionId: kd.json.id, targetValue: "12.5", targetDate: "2027-12-31" });
+const g2 = await call(lead, "GET", `${T}/gates/G2`);
+const sub = await call(lead, "POST", `${T}/gates/G2/submissions`, {}, { "if-match": `"${g2.json.gate.version}"` });
+const trj = (sub.json.errors ?? []).filter((e) => /target_trajectory/.test(e.code ?? e.pointer));
+check("REQ-S04-004 G2 rejection for unapproved trajectory names the KPI", JSON.stringify(trj).includes("KPI-NAME-PROBE"), `${sub.status} ${j(trj, 400)}`);
+console.log(`\nRESULT pass=${pass} fail=${fail}`);

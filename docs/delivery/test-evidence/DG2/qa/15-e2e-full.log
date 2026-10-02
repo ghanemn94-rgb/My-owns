@@ -1,0 +1,158 @@
+$ QA_API_PORT=3740 QA_E2E_PG_PORT=54750 E2E_BASE_URL=http://localhost:3740 <qa-stack.sh with port param, see 14-qa-stack-port.diff> npx playwright test --workers=1 --reporter=list   (node v22.22.2, PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers, disposable clone @98a8d99)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applied 18 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+
+Running 42 tests using 1 worker
+
+  ✓   1 [chromium-en] › apps/web/e2e/journeys.spec.ts:179:1 › sign-in page: Arabic RTL by default, provisional wordmark, dev form in dev mode (1.2s)
+  ✓   2 [chromium-en] › apps/web/e2e/journeys.spec.ts:201:1 › shell: navigation, language persistence and My Work (Transformation Office) (1.8s)
+  ✓   3 [chromium-en] › apps/web/e2e/journeys.spec.ts:235:1 › create a modular transformation with an entry phase (4.5s)
+  ✓   4 [chromium-en] › apps/web/e2e/journeys.spec.ts:295:1 › list: sort, filter chips, column selection and pagination controls (2.5s)
+  ✓   5 [chromium-en] › apps/web/e2e/journeys.spec.ts:335:1 › edit: a concurrent change gives a 409 conflict with compare and re-apply (1.9s)
+  ✓   6 [chromium-en] › apps/web/e2e/journeys.spec.ts:369:1 › archive with a mandatory reason makes the record read-only (2.3s)
+  ✓   7 [chromium-en] › apps/web/e2e/journeys.spec.ts:390:1 › administration screens (access + technical administrator) (4.5s)
+  ✓   8 [chromium-en] › apps/web/e2e/journeys.spec.ts:428:1 › a user without roles sees no Administration and no business records (1.8s)
+  ✓   9 [chromium-en] › apps/web/e2e/journeys.spec.ts:444:1 › a business-unit Lead creates a record: Edit/Archive and the audit trail appear without a reload (F-DG1-210), the derived grant localized (F-DG1-008) (3.4s)
+  ✓  10 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:56:1 › lead creates an End-to-End transformation; the workspace tabs lead to the P2 screens (2.1s)
+  ✓  11 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:83:1 › Diagnose: six T01 dimensions with Unknown; value pools labelled Unquantified with a partial total (6.3s)
+  ✓  12 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:150:1 › Charter: create, save a second version, compare versions; the 3-5 top-outcomes warning (3.6s)
+  ✓  13 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:200:1 › Define: North Star, the good outcome test with reasons, and a required T02 target date (3.9s)
+  ✓  14 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:264:1 › Design: ten canvas boxes, the per-dimension view; workshop mode converts an unresolved item into T04 (5.1s)
+  ✘  15 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:335:1 › Evidence: note, filename reference and file upload; a link; review by another person (6.7s)
+  -  16 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:493:1 › Gates: G1 shows unverified evidence and offers no submission while incomplete; once complete it is submitted
+  -  17 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:540:1 › Gates: the approver's decision — 409 when the submission was superseded, then approval with a rationale
+  -  18 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:618:1 › Team: the six governance roles with their B0018 accountability; the lead assigns a Workstream Lead
+  -  19 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:675:1 › read-only auditor (AUD): every P2 screen without write controls; Unknown and Unquantified rendered
+  ✓  20 [chromium-en] › e2e/a20-bilingual-shell.spec.ts:100:3 › A20 bilingual shell › Arabic RTL by default; English LTR after the switch; persisted; switch back (1.4s)
+  ✓  21 [chromium-en] › e2e/a20-bilingual-shell.spec.ts:159:3 › A20 design tokens reach the rendered CSS › seeded --mth-* colours and referencing surfaces equal the built token source (672ms)
+  ✓  22 [chromium-ar] › apps/web/e2e/journeys.spec.ts:179:1 › sign-in page: Arabic RTL by default, provisional wordmark, dev form in dev mode (1.0s)
+  ✓  23 [chromium-ar] › apps/web/e2e/journeys.spec.ts:201:1 › shell: navigation, language persistence and My Work (Transformation Office) (1.6s)
+  ✓  24 [chromium-ar] › apps/web/e2e/journeys.spec.ts:235:1 › create a modular transformation with an entry phase (4.3s)
+  ✓  25 [chromium-ar] › apps/web/e2e/journeys.spec.ts:295:1 › list: sort, filter chips, column selection and pagination controls (2.5s)
+  ✓  26 [chromium-ar] › apps/web/e2e/journeys.spec.ts:335:1 › edit: a concurrent change gives a 409 conflict with compare and re-apply (1.8s)
+  ✓  27 [chromium-ar] › apps/web/e2e/journeys.spec.ts:369:1 › archive with a mandatory reason makes the record read-only (2.1s)
+  ✓  28 [chromium-ar] › apps/web/e2e/journeys.spec.ts:390:1 › administration screens (access + technical administrator) (4.6s)
+  ✓  29 [chromium-ar] › apps/web/e2e/journeys.spec.ts:428:1 › a user without roles sees no Administration and no business records (1.7s)
+  ✓  30 [chromium-ar] › apps/web/e2e/journeys.spec.ts:444:1 › a business-unit Lead creates a record: Edit/Archive and the audit trail appear without a reload (F-DG1-210), the derived grant localized (F-DG1-008) (3.0s)
+  ✓  31 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:56:1 › lead creates an End-to-End transformation; the workspace tabs lead to the P2 screens (2.1s)
+  ✓  32 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:83:1 › Diagnose: six T01 dimensions with Unknown; value pools labelled Unquantified with a partial total (6.0s)
+  ✓  33 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:150:1 › Charter: create, save a second version, compare versions; the 3-5 top-outcomes warning (3.2s)
+  ✓  34 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:200:1 › Define: North Star, the good outcome test with reasons, and a required T02 target date (3.7s)
+  ✓  35 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:264:1 › Design: ten canvas boxes, the per-dimension view; workshop mode converts an unresolved item into T04 (4.6s)
+  ✘  36 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:335:1 › Evidence: note, filename reference and file upload; a link; review by another person (6.7s)
+  -  37 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:493:1 › Gates: G1 shows unverified evidence and offers no submission while incomplete; once complete it is submitted
+  -  38 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:540:1 › Gates: the approver's decision — 409 when the submission was superseded, then approval with a rationale
+  -  39 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:618:1 › Team: the six governance roles with their B0018 accountability; the lead assigns a Workstream Lead
+  -  40 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:675:1 › read-only auditor (AUD): every P2 screen without write controls; Unknown and Unquantified rendered
+  ✓  41 [chromium-ar] › e2e/a20-bilingual-shell.spec.ts:100:3 › A20 bilingual shell › Arabic RTL by default; English LTR after the switch; persisted; switch back (1.3s)
+  ✓  42 [chromium-ar] › e2e/a20-bilingual-shell.spec.ts:159:3 › A20 design tokens reach the rendered CSS › seeded --mth-* colours and referencing surfaces equal the built token source (668ms)
+
+
+  1) [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:335:1 › Evidence: note, filename reference and file upload; a link; review by another person 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveCount[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  getByRole('dialog')
+    Expected: [32m0[39m
+    Received: [31m1[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toHaveCount" with timeout 5000ms[22m
+    [2m  - waiting for getByRole('dialog')[22m
+    [2m    9 × locator resolved to 1 element[22m
+    [2m      - unexpected value "1"[22m
+
+
+      374 |   expect(sent.headers()["content-type"]).toBe("application/octet-stream");
+      375 |   expect(sent.headers()["x-file-name"]).toBe(encodeURIComponent("مستخرج اصطناعي.csv"));
+    > 376 |   await expect(dialog).toHaveCount(0);
+          |                        ^
+      377 |   await expect(
+      378 |     reg.getByRole("link", { name: rowAction(lang, "evidence.download", "Synthetic billing extract") }),
+      379 |   ).toBeVisible();
+        at /var/tmp/mth-run.s2R7yU/claude-0/review-qa/apps/web/e2e/p2-journeys.spec.ts:376:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-p2-journeys-E-54909-nk-review-by-another-person-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/apps-web-e2e-p2-journeys-E-54909-nk-review-by-another-person-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-p2-journeys-E-54909-nk-review-by-another-person-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-p2-journeys-E-54909-nk-review-by-another-person-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:335:1 › Evidence: note, filename reference and file upload; a link; review by another person 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveCount[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  getByRole('dialog')
+    Expected: [32m0[39m
+    Received: [31m1[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toHaveCount" with timeout 5000ms[22m
+    [2m  - waiting for getByRole('dialog')[22m
+    [2m    9 × locator resolved to 1 element[22m
+    [2m      - unexpected value "1"[22m
+
+
+      374 |   expect(sent.headers()["content-type"]).toBe("application/octet-stream");
+      375 |   expect(sent.headers()["x-file-name"]).toBe(encodeURIComponent("مستخرج اصطناعي.csv"));
+    > 376 |   await expect(dialog).toHaveCount(0);
+          |                        ^
+      377 |   await expect(
+      378 |     reg.getByRole("link", { name: rowAction(lang, "evidence.download", "Synthetic billing extract") }),
+      379 |   ).toBeVisible();
+        at /var/tmp/mth-run.s2R7yU/claude-0/review-qa/apps/web/e2e/p2-journeys.spec.ts:376:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-p2-journeys-E-54909-nk-review-by-another-person-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/apps-web-e2e-p2-journeys-E-54909-nk-review-by-another-person-chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-p2-journeys-E-54909-nk-review-by-another-person-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-p2-journeys-E-54909-nk-review-by-another-person-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:335:1 › Evidence: note, filename reference and file upload; a link; review by another person 
+    [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:335:1 › Evidence: note, filename reference and file upload; a link; review by another person 
+  8 did not run
+  32 passed (1.8m)
+---- api.log (tail)
+{"level":50,"time":1790914373307,"pid":69,"hostname":"vm","requestId":"01a0fad0-a6aa-72fd-91ae-d8442c201992","err":{"type":"HttpProblem","message":"Service unavailable","stack":"HttpProblem: Service unavailable\n    at Object.unavailable (file:///var/tmp/mth-run.s2R7yU/claude-0/review-qa/apps/api/dist/modules/platform/problem.js:99:24)\n    at storeProblem (file:///var/tmp/mth-run.s2R7yU/claude-0/review-qa/apps/api/dist/modules/evidence/routes.js:176:25)\n    at Object.<anonymous> (file:///var/tmp/mth-run.s2R7yU/claude-0/review-qa/apps/api/dist/modules/evidence/routes.js:308:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)","status":503,"code":"unavailable","title":"Service unavailable","name":"HttpProblem"},"msg":"request failed"}
+{"level":50,"time":1790914426811,"pid":69,"hostname":"vm","requestId":"01a0fad1-77b3-72ab-b9a4-9178935b295c","err":{"type":"HttpProblem","message":"Service unavailable","stack":"HttpProblem: Service unavailable\n    at Object.unavailable (file:///var/tmp/mth-run.s2R7yU/claude-0/review-qa/apps/api/dist/modules/platform/problem.js:99:24)\n    at storeProblem (file:///var/tmp/mth-run.s2R7yU/claude-0/review-qa/apps/api/dist/modules/evidence/routes.js:176:25)\n    at Object.<anonymous> (file:///var/tmp/mth-run.s2R7yU/claude-0/review-qa/apps/api/dist/modules/evidence/routes.js:308:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)","status":503,"code":"unavailable","title":"Service unavailable","name":"HttpProblem"},"msg":"request failed"}
+exit=1

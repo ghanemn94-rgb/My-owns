@@ -1,0 +1,148 @@
+# qa-verifier DG2 r1 static inspection of the frozen candidate (disposable clone @98a8d99)
+
+## A. KPI definition activation path (F-DG2-201)
+$ grep -n "operationId: .*[Kk]pi[Dd]efinition" docs/api/openapi.yaml
+1100:      operationId: listKpiDefinitions
+1117:      operationId: createKpiDefinition
+1150:      operationId: getKpiDefinition
+1163:      operationId: updateKpiDefinition
+1196:      operationId: archiveKpiDefinition
+$ grep KpiDefinitionUpdate properties (no status)
+    KpiDefinitionUpdate:
+      type: object
+      description: "Partial update; at least one property. Archiving uses the archive operation."
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        name: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        businessPurpose: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        unitKind: { type: string, enum: ["currency", "percentage", "count", "ratio", "duration", "score", "other"] }
+        unitLabel: { type: [string, "null"], minLength: 1, maxLength: 50 }
+        currency: { oneOf: [{ $ref: "#/components/schemas/Currency" }, { type: "null" }] }
+        polarity: { type: string, enum: ["higher_is_better", "lower_is_better", "within_band"] }
+        frequency: { type: string, enum: ["daily", "weekly", "monthly", "quarterly", "annual", "ad_hoc"] }
+        isLeading: { type: boolean }
+        dataSource: { type: [string, "null"], minLength: 1, maxLength: 500 }
+        ownerUserId: { oneOf: [{ $ref: "#/components/schemas/Uuid" }, { type: "null" }] }
+        stewardUserId: { oneOf: [{ $ref: "#/components/schemas/Uuid" }, { type: "null" }] }
+    KpiDefinitionPage:
+$ grep -rn "updateTable(\"kpi_definition\")" -A6 apps/api/src (status writes)
+11:apps/api/src/modules/kpi/kpi-definitions.ts-187-          status: "archived",
+$ grep kpi_definition triggers/updates in migrations
+(none)
+$ sed -n 360,372p apps/api/src/modules/workflows/criteria.ts
+  [
+    "g2.kpi_definitions",
+    (f) => {
+      const missing: Warning[] = [];
+      if (f.kpi.outcomeKpis.length === 0) missing.push(miss("g2.kpi_definitions.no_t02", "The T02 tree has no row."));
+      const used = new Set(f.kpi.outcomeKpis.map((k) => k.kpiDefinitionId));
+      for (const id of used) {
+        const d = f.kpi.kpiDefinitions.find((k) => k.id === id);
+        if (!d || d.status !== "active")
+          missing.push(
+            miss("g2.kpi_definitions.not_active", "A T02 KPI has no active definition.", `/kpiDefinitions/${id}`),
+          );
+        else {
+
+## B. Transformation thesis vs playbook B0037 (F-DG2-203)
+182:<!-- B0037 table -->
+183-| Complete this sentence  If we change [capabilities / journeys / operating model], then [customer/operational outcomes] will improve, which will create [financial/strategic benefits], because [evidence / causal logic]. |
+184-|---|
+$ grep pattern apps/web/src/i18n/{en,ar}/define.json
+apps/web/src/i18n/en/define.json:157:      "pattern": "We will change [what] to achieve [outcomes], creating [benefits], because [evidence and logic].",
+apps/web/src/i18n/ar/define.json:157:      "pattern": "سنغيّر [ماذا] لتحقيق [النتائج]، بما يحقق [المنافع]، لأن [الدليل والمنطق].",
+$ grep -rn "If we change" apps/web/src
+(none)
+$ sed -n 384,408p apps/web/src/pages/define/CharterPage.tsx
+
+          <Section
+            id="charter-thesis"
+            title={t("define.charter.thesis.title")}
+            intro={t("define.charter.thesis.pattern")}
+          >
+            <dl className="thesis">
+              <div>
+                <dt>{t("define.charter.thesis.change")}</dt>
+                <dd>{text(c.thesisChange)}</dd>
+              </div>
+              <div>
+                <dt>{t("define.charter.thesis.outcomes")}</dt>
+                <dd>{text(c.thesisOutcomes)}</dd>
+              </div>
+              <div>
+                <dt>{t("define.charter.thesis.benefits")}</dt>
+                <dd>{text(c.thesisBenefits)}</dd>
+              </div>
+              <div>
+                <dt>{t("define.charter.thesis.because")}</dt>
+                <dd>{text(c.thesisBecause)}</dd>
+              </div>
+            </dl>
+          </Section>
+
+## C. Charter North Star rendering (F-DG2-204)
+$ sed -n 268,286p apps/api/src/modules/transformations/charter.ts
+}
+
+export async function charterView(db: DbOrTx, c: CharterRow): Promise<CharterViewBody & { version: number }> {
+  const northStarRow = c.north_star_id
+    ? await db.selectFrom("north_star").selectAll().where("id", "=", c.north_star_id).executeTakeFirst()
+    : await findCurrentNorthStar(db, c.transformation_id);
+  const topOutcomes = await topOutcomesOf(db, c.transformation_id);
+  const guardrails = await activeGuardrailsOf(db, c.transformation_id);
+  const warnings: Warning[] = [];
+  if (topOutcomes.length < 3 || topOutcomes.length > 5)
+    warnings.push({
+      code: "charter.top_outcomes_count",
+      message: `The charter should hold 3-5 top outcomes; it holds ${topOutcomes.length}.`,
+      pointer: "/topOutcomes",
+    });
+  return {
+    charter: toCharter(c),
+    northStar: northStarRow ? toNorthStar(northStarRow) : null,
+    topOutcomes: await presentOutcomes(db, topOutcomes),
+$ sed -n 322,328p apps/web/src/pages/define/CharterPage.tsx
+              <CharterField n={5} label={t("define.northStar.title")}>
+                {view.northStar ? (
+                  <q className="north-star">{view.northStar.statement}</q>
+                ) : (
+                  <Unknown hint={t("define.northStar.notSet")} />
+                )}
+              </CharterField>
+
+## D. Phase advancement on gate approval (F-DG2-205)
+  // Approval advances the phase (G1 -> define, G2 -> design, G3 -> mobilize): the only phase-advance path.
+  if (body.outcome === "approved" && def.nextPhase !== null)
+    await advancePhaseOnGateApproval(tx, audit, {
+      transformationId,
+      nextPhase: def.nextPhase as Phase,
+      gateCode,
+      decisionId,
+    });
+  return row;
+33:<!-- B0009 table -->
+34-| Mode | When to use | How |
+35-|---|---|---|
+36-| End-to-End | New enterprise or business-unit transformation | Run Phases 1-6 sequentially. Do not launch initiatives before the North Star, outcomes and target state are clear. |
+37-| Modular | A transformation is already underway | Enter at the relevant phase, complete the minimum mandatory templates, then reconnect to outcomes and benefits. |
+38-
+
+## E. REQ-PB-003 verbatim mode guidance (EN) vs B0009
+67:      "whenToUse": "When to use",
+68:      "how": "How",
+72:        "whenToUse": "New enterprise or business-unit transformation",
+73:        "how": "Run Phases 1-6 sequentially. Do not launch initiatives before the North Star, outcomes and target state are clear."
+76:        "whenToUse": "A transformation is already underway",
+77:        "how": "Enter at the relevant phase, complete the minimum mandatory templates, then reconnect to outcomes and benefits."
+
+## F. i18n EN/AR key parity
+key parity mismatches: 0
+
+## G. qa-stack.sh lacks EVIDENCE_STORAGE_* (F-DG2-206)
+apps/web/e2e/support/with-stack.sh:54:export EVIDENCE_STORAGE_DRIVER=filesystem EVIDENCE_STORAGE_PATH="$WORK/evidence"
+92:    default: "/var/lib/mth/evidence",
+
+## H. Register status of the 32 DG2 requirements (F-DG2-202)
+32 {'SPECIFIED': 32}
