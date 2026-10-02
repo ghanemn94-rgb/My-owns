@@ -1,0 +1,238 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG2",
+  "round": 1,
+  "candidate_id": "sha256:8ef26b710e343ed3535934904bccd677eab87894bb2cb62d5fb7677d6a95355b",
+  "source_commit": "98a8d990a93e5a82c30b1b8f3b1e0f44c689e917",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG2-T-DG2-REV-QA-R1-qa-verifier-20261002T035904Z-2b481861",
+    "session_id": "2b481861-2327-432c-b69e-153b953a26f6"
+  },
+  "implementation_author": ["backend-workflow-engineer", "kpi-benefits-engineer", "frontend-ux-engineer", "solution-architect", "transformation-analyst"],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "qa-verifier authored no DG2 product implementation (apps/**, packages/**, migrations, contract). Its only files inside the candidate are DG1-era QA harness files (tests/qa/**, e2e/**). The new DG2 tests were written in this run under docs/delivery/test-evidence/DG2/qa/tests/ and run in a disposable clone, so the frozen candidate was not altered. The verdict was formed without reading any other reviewer's round-1 record."
+  },
+  "assignment": "docs/delivery/assignments/DG2/round-1/qa-verifier.md",
+  "requirements_checked": [
+    "REQ-PB-003", "REQ-PB-012", "REQ-PB-016", "REQ-PB-017", "REQ-PB-018", "REQ-PB-023", "REQ-PB-024", "REQ-PB-025",
+    "REQ-PB-026", "REQ-PB-027", "REQ-PB-028", "REQ-PB-029", "REQ-PB-030", "REQ-PB-031", "REQ-PB-033", "REQ-PB-034",
+    "REQ-PB-035", "REQ-PB-036", "REQ-PB-037", "REQ-PB-038", "REQ-PB-039", "REQ-PB-041", "REQ-PB-042", "REQ-PB-043",
+    "REQ-DLV-034", "REQ-S04-003", "REQ-S04-004", "REQ-S04-005", "REQ-S05-003", "REQ-S10-001", "REQ-S13-012", "REQ-S16-013"
+  ],
+  "checks_run": [
+    {
+      "id": "QA-DG2-00-candidate",
+      "procedure": "Confirm the frozen candidate: recompute the candidate ID. HEAD vs source_commit: HEAD (311b114 at start, 9bfaccf later) differs from 98a8d99 only by freeze metadata and other reviewers' auto-committed run evidence, which the candidate excludes. Historical DG1 validator.",
+      "command": "node tools/gates/candidate.mjs --stage DG2; node tools/gates/validate.mjs --historical --stage DG1",
+      "environment": "repo /home/user/My-owns, Node v24.21.0",
+      "expected": "candidate_id sha256:8ef26b71…, 513 files; PASS gate DG1 (historical)",
+      "actual": "candidate_id sha256:8ef26b710e343ed3535934904bccd677eab87894bb2cb62d5fb7677d6a95355b, 513 files; PASS gate DG1 (historical)",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/00-candidate.log", "docs/delivery/test-evidence/DG2/qa/00-historical-DG1.log"]
+    },
+    {
+      "id": "QA-DG2-01-build-static",
+      "procedure": "Build and static checks in a disposable clone at 98a8d99 (offline pnpm install from a copied store)",
+      "command": "pnpm -r typecheck; pnpm -r build; pnpm lint; pnpm openapi:lint; pnpm check:no-cdn; pnpm format:check; pnpm --filter @mth/design-tokens run check:contrast",
+      "environment": "disposable clone $TMPDIR/review-qa @98a8d99, Node v22.22.2, pnpm 10.33.0",
+      "expected": "all exit 0; OpenAPI 160 operations; contrast PASS",
+      "actual": "all seven exit 0; 'PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 160 operations'; 'PASS no-cdn'; Prettier clean; 'PASS contrast: 50 pairs meet WCAG AA; 3 prohibited pairs fail as documented'",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/01-typecheck.log", "docs/delivery/test-evidence/DG2/qa/02-build.log",
+        "docs/delivery/test-evidence/DG2/qa/03-lint.log", "docs/delivery/test-evidence/DG2/qa/04-openapi-lint.log",
+        "docs/delivery/test-evidence/DG2/qa/05-no-cdn.log", "docs/delivery/test-evidence/DG2/qa/06-format-check.log",
+        "docs/delivery/test-evidence/DG2/qa/07-contrast.log"
+      ]
+    },
+    {
+      "id": "QA-DG2-02-unit-node22-node24",
+      "procedure": "Unit suites (unit-node + unit-web) on both supported Node versions",
+      "command": "pnpm test (PATH=/opt/node22/bin first); PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH pnpm test",
+      "environment": "disposable clone @98a8d99; Node v22.22.2 and v24.21.0",
+      "expected": "all tests pass on both",
+      "actual": "Node 22: 29 files, 465/465 passed; Node 24: 29 files, 465/465 passed",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/08-unit-node22.log", "docs/delivery/test-evidence/DG2/qa/09-unit-node24.log"]
+    },
+    {
+      "id": "QA-DG2-03-integration-x2",
+      "procedure": "Full integration project twice on separate disposable PostgreSQL 16 clusters (unique ports): migrations 0001-0018 applied, DB guards (BU hierarchy, record guards, AUD write-deny, scope), contract test",
+      "command": "QA_PG_PORT=54733 tests/qa/support/with-pg.sh pnpm test:integration; QA_PG_PORT=54734 tests/qa/support/with-pg.sh pnpm test:integration",
+      "environment": "disposable clone @98a8d99, Node v22.22.2, PostgreSQL 16.13 (user namespace, fsync=off)",
+      "expected": "green and identical in both runs",
+      "actual": "run 1: 26 files, 414/414 passed; run 2: 26 files, 414/414 passed. Includes 'mth-db migrate on a fresh database > applies every shipped migration', bu-hierarchy-guard, aud-write-deny, kpi-aud-write-deny, access-scope",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/10-integration-run1.log", "docs/delivery/test-evidence/DG2/qa/11-integration-run2.log"]
+    },
+    {
+      "id": "QA-DG2-04-contract",
+      "procedure": "Contract test verbose: all 160 operations routed and exercised, zod mirrors; p2-pending.ts and p2-pending-kpi.ts both empty (inspected)",
+      "command": "QA_PG_PORT=54735 tests/qa/support/with-pg.sh npx vitest run --project integration --reporter=verbose apps/api/test/integration/contract",
+      "environment": "disposable clone @98a8d99, Node v22.22.2, PostgreSQL 16.13",
+      "expected": "11/11 pass; operations length 160; pending lists empty",
+      "actual": "11/11 passed (incl. 'covers every operation with at least one success'); P2_PENDING_BACKEND_OPERATIONS = [] and P2_PENDING_KPI_OPERATIONS = []",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/12-contract-verbose.log"]
+    },
+    {
+      "id": "QA-DG2-05-registers-T01-T04",
+      "procedure": "Independent acceptance tests (QA-authored): T01 six seeded dimensions, six columns persist, Confidence X/h/High/''/3 rejected, seeded rows not archivable; T02 seven columns persist, a row without or with a null targetDate is rejected (422 validation /targetDate) and nothing is written; T03 six columns persist, missing or null dimension rejected; T04 D-01/D-02, status open, options A/B/C, owner/due/recommendation persist",
+      "command": "QA_PG_PORT=5474{1,2} tests/qa/support/with-pg.sh npx vitest run --project integration --reporter=verbose tests/qa/integration/dg2-qa-acceptance.test.ts (file copied from docs/delivery/test-evidence/DG2/qa/tests/)",
+      "environment": "disposable clone @98a8d99, Node v22.22.2, PostgreSQL 16.13; two runs",
+      "expected": "pass",
+      "actual": "pass in both runs. Note: decimals are returned with padded scale (e.g. '1234567.8900'), exact-equal and not a defect",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-PB-026", "REQ-PB-034", "REQ-PB-039", "REQ-PB-043"],
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/13-qa-acceptance-run1.log", "docs/delivery/test-evidence/DG2/qa/13-qa-acceptance-run2.log", "docs/delivery/test-evidence/DG2/qa/tests/dg2-qa-acceptance.test.ts"]
+    },
+    {
+      "id": "QA-DG2-06-charter",
+      "procedure": "Charter: invalid baseline dates (2026-02-30, 31/01/2026, 2026-13-01) rejected; the 14 fields + thesis persist (northStar, guardrails and top outcomes linked); PATCH -> version 2; stale If-Match 409; versions 1 and 2 retained with old values; charter_version UPDATE rejected at DB; WL save -> 403; 2 top outcomes warn charter.top_outcomes_count, 4 do not; scope prechecks present. Thesis rendering inspected against B0037 (UI + screenshots)",
+      "command": "dg2-qa-acceptance.test.ts 'QA REQ-PB-029/030/031/035 charter'; static inspection 19-static-inspection.log §B",
+      "environment": "disposable clone @98a8d99, Node v22.22.2, PostgreSQL 16.13; e2e screenshots from QA-DG2-10",
+      "expected": "pass; thesis renders the source sentence structure and flags incomplete parts (REQ-PB-030)",
+      "actual": "Persistence, versioning, history, date validation, 3-5 warning and scope prechecks PASS. REQ-PB-030 FAILS: the pattern is not the B0037 structure, no composed sentence, no incomplete flag (F-DG2-203)",
+      "exit_status": 1,
+      "result": "FAIL",
+      "requirements": ["REQ-PB-029", "REQ-PB-030", "REQ-PB-031", "REQ-PB-035", "REQ-PB-037"],
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/13-qa-acceptance-run1.log", "docs/delivery/test-evidence/DG2/qa/19-static-inspection.log", "docs/delivery/test-evidence/DG2/qa/e2e/en/p2-04-charter.png", "docs/delivery/test-evidence/DG2/qa/e2e/ar/p2-04-charter.png"]
+    },
+    {
+      "id": "QA-DG2-07-good-outcome-north-star",
+      "procedure": "REQ-PB-036: 'Launch new app' without KPI -> goodOutcomePass false, specific=fail (reason cites launch), measurable=fail with reason; G2 g2.outcome_tree lists it (pointer to the outcome id); an outcome with KPI+owner but no attestations is still false (unknown); all attested -> true; attestation cannot make 'Launch…' pass. REQ-PB-033: two concurrent first PUTs -> one 200, the other refused; PUT without If-Match while one exists refused (428); stale If-Match 409; multi-line 400; exactly one current row in DB; history kept. Probe: the charter's North Star after refinement",
+      "command": "dg2-qa-acceptance.test.ts 'QA REQ-PB-036 …', 'QA REQ-PB-033 …', 'QA REQ-PB-033/029 charter North Star after refinement (probe)'",
+      "environment": "disposable clone @98a8d99, Node v22.22.2, PostgreSQL 16.13; two runs",
+      "expected": "pass; the charter shows the current North Star",
+      "actual": "Good outcome test and single-current-North-Star PASS (the header uses the current North Star, TransformationDetailPage). The probe FAILS in 2/2 runs: the charter shows the superseded North Star (F-DG2-204)",
+      "exit_status": 1,
+      "result": "FAIL",
+      "requirements": ["REQ-PB-036", "REQ-PB-033"],
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/13-qa-acceptance-run1.log", "docs/delivery/test-evidence/DG2/qa/13-qa-acceptance-run2.log"]
+    },
+    {
+      "id": "QA-DG2-08-baselines-value-pools",
+      "procedure": "Baseline without value/source/date stored null (Unknown, never 0); invalid scope/value 400; validation by WL 403, by FIN 200 (validatedRecordVersion = version); a later edit makes it stale (validatedRecordVersion < version); FIN self-validation refused; unquantified pool amounts null, unquantified+amount refused, validation of an unquantified pool 422; quantified pool decimals exact, SAR default; UI 'Unquantified' label and 'partial: N unquantified' total covered by e2e 'Diagnose: … value pools labelled Unquantified with a partial total' (EN+AR)",
+      "command": "dg2-qa-acceptance.test.ts 'QA REQ-PB-027/028 …'; e2e QA-DG2-10",
+      "environment": "disposable clone @98a8d99, Node v22.22.2, PostgreSQL 16.13; Chromium (pre-installed)",
+      "expected": "pass",
+      "actual": "pass (2/2 integration runs; e2e EN+AR pass)",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-PB-027", "REQ-PB-028", "REQ-S16-013"],
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/13-qa-acceptance-run1.log", "docs/delivery/test-evidence/DG2/qa/16-e2e-full-run1.log"]
+    },
+    {
+      "id": "QA-DG2-09-gates",
+      "procedure": "G1 without charter: g1.initial_charter incomplete, submit 422 listing it; filename-only (file_reference) evidence cannot be verified, inaccessible link rejected, both listed in unverifiedEvidenceIds and g1.diagnostic stays incomplete; full G1: two submissions -> #1 superseded; stale-If-Match submit 409; WL/FIN/AUD decide -> 403 (gate.not_approver); submitter holding SP -> 403 gate.submitter_cannot_decide; decide superseded #1 -> 409 gate.submission_superseded; SP approves #2 -> phase diagnose->define; re-decide 409; canonical GD-nn decision; G2 without guardrails incomplete and submit 422 listing g2.guardrails; G3 future_journeys incomplete; G4 submissionEnabled false; definitions never mention DGx. UI: e2e gates journeys EN+AR (business-approval label, no DGx text)",
+      "command": "dg2-qa-acceptance.test.ts 'QA REQ-PB-016/017/018 …' (2 tests); e2e QA-DG2-10",
+      "environment": "disposable clone @98a8d99, Node v22.22.2, PostgreSQL 16.13; Chromium",
+      "expected": "pass",
+      "actual": "pass (2/2 runs; e2e EN+AR pass)",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-PB-016", "REQ-S13-012", "REQ-S04-003", "REQ-PB-037"],
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/13-qa-acceptance-run1.log", "docs/delivery/test-evidence/DG2/qa/e2e/en/p2-14-gate-incomplete.png", "docs/delivery/test-evidence/DG2/qa/e2e/ar/p2-16-gate-409-superseded.png"]
+    },
+    {
+      "id": "QA-DG2-10-e2e",
+      "procedure": "All Playwright specs (P1 journeys, P2 journeys, A20 bilingual shell) in chromium-en and chromium-ar on the real stack (with-stack.sh: disposable PostgreSQL, migrate, synthetic seed, built API+SPA), --workers=1, unique ports; axe wcag2a/aa (no serious/critical)",
+      "command": "E2E_API_PORT=3741 E2E_PG_PORT=54751 apps/web/e2e/support/with-stack.sh npx playwright test --workers=1 --reporter=list",
+      "environment": "disposable clone @98a8d99, Node v22.22.2, @playwright/test 1.56.1, PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers (no playwright install)",
+      "expected": "all pass in both locales; 0 serious/critical axe violations",
+      "actual": "42/42 passed (21 EN + 21 AR). Axe: 46 pages per locale, 0 violations of any impact. An earlier run on QA's own e2e/support/qa-stack.sh hit evidence-upload 503 (no EVIDENCE_STORAGE_PATH; harness defect F-DG2-206, not product)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-003", "REQ-PB-012", "REQ-PB-023", "REQ-PB-024", "REQ-PB-025", "REQ-PB-041", "REQ-PB-042", "REQ-S05-003"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/16-e2e-full-run1.log", "docs/delivery/test-evidence/DG2/qa/15-e2e-full.log",
+        "docs/delivery/test-evidence/DG2/qa/e2e/en/axe-summary-p2.json", "docs/delivery/test-evidence/DG2/qa/e2e/ar/axe-summary-p2.json",
+        "docs/delivery/test-evidence/DG2/qa/e2e/en/axe-summary.json", "docs/delivery/test-evidence/DG2/qa/e2e/ar/axe-summary.json",
+        "docs/delivery/test-evidence/DG2/qa/e2e/en/p2-13-gates.png", "docs/delivery/test-evidence/DG2/qa/e2e/ar/p2-13-gates.png"
+      ]
+    },
+    {
+      "id": "QA-DG2-11-journey-native",
+      "procedure": "REQ-DLV-034: full Diagnose -> Define -> Design journey through public API operations only (no DB writes for gate outputs), roles per the permissions matrix; G1, G2 and G3 each completed, submitted and approved; phase advances diagnose->define->design->mobilize",
+      "command": "QA_PG_PORT=5476{1,2} tests/qa/support/with-pg.sh npx vitest run --project integration --reporter=verbose tests/qa/integration/dg2-qa-journey.test.ts",
+      "environment": "disposable clone @98a8d99, Node v22.22.2, PostgreSQL 16.13; two runs",
+      "expected": "3/3 pass",
+      "actual": "G1 PASS; G2 FAIL in 2/2: g2.kpi_definitions.not_active, KPI definitions cannot be activated (PATCH/POST status:active -> 400), so G2 can never be submitted (F-DG2-201). G3 complete and approvable, but the approval jumped define -> mobilize with G2 unapproved (F-DG2-205). The UI journeys (QA-DG2-10) cover Diagnose/Define/Design screens and a UI G1 decision in EN and AR; they never submit G2 or G3",
+      "exit_status": 1,
+      "result": "FAIL",
+      "requirements": ["REQ-DLV-034", "REQ-PB-017", "REQ-PB-018", "REQ-S04-004", "REQ-S04-005"],
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/18-qa-journey-run1.log", "docs/delivery/test-evidence/DG2/qa/18-qa-journey-run2.log", "docs/delivery/test-evidence/DG2/qa/tests/dg2-qa-journey.test.ts", "docs/delivery/test-evidence/DG2/qa/19-static-inspection.log"]
+    },
+    {
+      "id": "QA-DG2-12-roles-access",
+      "procedure": "Role catalogue incl. KDS, TD, CM, SEC, AUD, ADM_*; role-accountabilities for SP/TL/BO/WL/FIN/TO equal B0018 verbatim (isSourceText, sourceRef B0018, AR present); WL on X gets 404 on Y (detail + 6 sub-resources) and Y not listed; AUD reads X but 18 sampled P2 mutations (registers, charter, North Star, TOM, journeys, evidence, decisions, workshops, KPI, team, gate submit, methodology) -> 403; plus the candidate's aud-write-deny sweeps in QA-DG2-03",
+      "command": "dg2-qa-acceptance.test.ts 'QA REQ-S10-001 / REQ-PB-012 …' (2 tests)",
+      "environment": "disposable clone @98a8d99, Node v22.22.2, PostgreSQL 16.13",
+      "expected": "pass",
+      "actual": "pass (2/2 runs); e2e Team journey EN+AR also passes",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-S10-001", "REQ-PB-012"],
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/13-qa-acceptance-run1.log"]
+    },
+    {
+      "id": "QA-DG2-13-modes-tom-entities",
+      "procedure": "Modes: modular without entryPhase 400, end_to_end with entryPhase 400, modular+design 201; EN guidance equals B0009 verbatim; EN/AR i18n key parity. TOM: methodology 10 dimensions with design questions and 6 workstreams; canvas 10 boxes; per-dimension view lists gap/decision/dependency/evidence; 'ready' without owner refused; G3 TOM incomplete; heatmap build/buy/partner (invalid need 400); future journey with pain point makes g3.future_journeys complete; workshop close with open item 422, conversion -> T04 D-01 open with owner, second conversion refused. Entity group: create+read of DiagnosticFinding, Baseline, Evidence, ValuePool, Outcome, StrategicGuardrail, out-of-org reader 404, audit event per create",
+      "command": "dg2-qa-acceptance.test.ts (modes, TOM x2, entity group); 19-static-inspection.log §E-F",
+      "environment": "disposable clone @98a8d99, Node v22.22.2, PostgreSQL 16.13",
+      "expected": "pass",
+      "actual": "pass (2/2 runs); key parity mismatches: 0",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-PB-003", "REQ-PB-023", "REQ-PB-024", "REQ-PB-025", "REQ-PB-038", "REQ-PB-041", "REQ-PB-042", "REQ-S05-003", "REQ-S16-013"],
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/13-qa-acceptance-run1.log", "docs/delivery/test-evidence/DG2/qa/19-static-inspection.log"]
+    },
+    {
+      "id": "QA-DG2-14-register",
+      "procedure": "Register rules for DG2",
+      "command": "node tools/gates/validate.mjs --register DG2",
+      "environment": "repo @9bfaccf (candidate unchanged), Node v24.21.0",
+      "expected": "PASS",
+      "actual": "FAIL register rules at DG2 (64 problems): all 32 DG2 requirements SPECIFIED, none IMPLEMENTED with evidence (F-DG2-202)",
+      "exit_status": 1,
+      "result": "FAIL",
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/17-validate-register.log"]
+    },
+    {
+      "id": "QA-DG2-15-pipeline-reconcile",
+      "procedure": "Pipeline and reconcile structure checks",
+      "command": "node tools/gates/validate.mjs --pipeline; node tools/gates/validate.mjs --reconcile",
+      "environment": "repo @9bfaccf, Node v24.21.0",
+      "expected": "PASS",
+      "actual": "PASS pipeline (active stage: DG2 REVIEWING); PASS reconcile (structure), with round-1 records reported missing as expected while the reviews are in progress",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/17-validate-pipeline.log", "docs/delivery/test-evidence/DG2/qa/17-validate-reconcile.log"]
+    }
+  ],
+  "findings": ["F-DG2-201", "F-DG2-202", "F-DG2-203", "F-DG2-204", "F-DG2-205", "F-DG2-206"],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG2/round-1/qa-verifier.findings.json",
+    "docs/delivery/test-evidence/DG2/qa/env.txt",
+    "docs/delivery/test-evidence/DG2/qa/tests/dg2-qa-acceptance.test.ts",
+    "docs/delivery/test-evidence/DG2/qa/tests/dg2-qa-journey.test.ts",
+    "docs/delivery/test-evidence/DG2/qa/13-qa-acceptance-run1.log",
+    "docs/delivery/test-evidence/DG2/qa/16-e2e-full-run1.log",
+    "docs/delivery/test-evidence/DG2/qa/17-validate-register.log",
+    "docs/delivery/test-evidence/DG2/qa/18-qa-journey-run1.log",
+    "docs/delivery/test-evidence/DG2/qa/19-static-inspection.log"
+  ],
+  "reviewed_at": "2026-10-02T04:28:00Z",
+  "summary": "FAIL. Build/static, unit (Node 22+24: 465/465), integration ×2 (414/414, deterministic), contract (160 ops, pending lists empty) and e2e (42/42 EN+AR, axe 0 violations) are green, and most acceptance criteria pass independent tests. Two High mandatory findings block the gate: G2 can never be completed natively because KPI definitions cannot be activated (F-DG2-201), so the Diagnose->Design journey of REQ-DLV-034 cannot complete; and the frozen register records none of the 32 DG2 requirements as implemented, so --register DG2 fails (F-DG2-202). Also found: thesis not in source structure and no incomplete flag (F-DG2-203, Medium, mandatory); charter shows a superseded North Star (F-DG2-204, Medium); End-to-End phase skip on G3 approval (F-DG2-205, Medium); QA harness lacks evidence storage config (F-DG2-206, Low, own harness).",
+  "narrative": "Requirements PASS by independent test: REQ-PB-003, 012, 016, 023, 024, 025, 026, 027, 028, 029, 031, 033 (single-current guard; charter display defect is F-DG2-204), 034, 035, 036, 037, 038, 039, 041, 042, 043, REQ-S04-003, REQ-S05-003, REQ-S10-001, REQ-S13-012, REQ-S16-013. FAIL: REQ-PB-017 / REQ-S04-004 / REQ-DLV-034 (F-DG2-201), REQ-PB-030 (F-DG2-203); REQ-PB-018 / REQ-S04-005 criteria evaluate correctly, but the phase-skip defect F-DG2-205 is open. Gate-wide: F-DG2-202. Exit status note: checks QA-DG2-05/08/09/12/13 are PASS although their exit_status is 1, because they share the command (dg2-qa-acceptance.test.ts) whose only failing test is the F-DG2-204 probe; their own tests passed in both runs (16 passed, 1 failed). No product file was modified; all execution was in a disposable clone under $TMPDIR. All data is synthetic, and the product gate approvals in the tests are demo decisions that approve nothing real and imply no DG gate."
+}
