@@ -755,6 +755,7 @@ The P1 migrations create three views, owned by `mth_owner`. `mth_app` has `SELEC
 | review_status | text | NOT NULL | `'unverified'` | `CHECK ((review_status = ANY (ARRAY['unverified', 'verified', 'rejected'])))` |
 | accessibility_status | text | NOT NULL | `'unchecked'` | `CHECK ((accessibility_status = ANY (ARRAY['unchecked', 'accessible', 'inaccessible'])))` |
 | reviewed_content_id | uuid | NULL |  |  |
+| content_authored_by | uuid | NULL |  | FK → app_user(id). Added by migration 0019. The user who authored the current note/URL text or uploaded the current content revision; NULL means "the creator". Used by the `evidence_review_separation` trigger so a reviewer cannot verify content they themselves authored (F-DG2-140, separation of duties beyond `reviewed_by <> created_by`). |
 | reviewed_by | uuid | NULL |  | FK → app_user(id) |
 | reviewed_at | timestamp with time zone | NULL |  |  |
 | review_note | text | NULL |  | `CHECK (((review_note IS NULL) OR ((char_length(review_note) >= 1) AND (char_length(review_note) <= 2000))))` |
@@ -784,6 +785,10 @@ The P1 migrations create three views, owned by `mth_owner`. `mth_app` has `SELEC
 
 - `evidence_review_idx`: `(transformation_id, review_status) WHERE (status = 'active'::text)`
 - `evidence_transformation_updated_idx`: `(transformation_id, updated_at DESC, id DESC)`
+
+**Triggers:**
+
+- `evidence_review_separation` (migration 0019): on a review that sets `review_status = 'verified'`, rejects it when the reviewer is the evidence creator, the author of the current note/URL text, or the uploader of the current content revision (`content_authored_by`). Defence-in-depth for the API separation-of-duties rule (F-DG2-140); pre-0019 rows carry `content_authored_by = NULL` (= the creator) and are guarded on any new review.
 
 **Triggers:**
 
