@@ -14,13 +14,14 @@ import { API_MODULES, P1_MODULES } from "../../modules.ts";
 import type { ModuleDeps } from "../platform/index.ts";
 import * as mod from "./index.ts";
 
-/** The 23 kpi operations of the P2 contract (T-DG2-ARCH-01B; formerly apps/api/test/support/p2-pending-kpi.ts). */
+/** The 24 kpi operations of the P2 contract (T-DG2-ARCH-01B + D-061 activate; formerly apps/api/test/support/p2-pending-kpi.ts). */
 const KPI_OPERATIONS = [
   "listKpiDefinitions",
   "createKpiDefinition",
   "getKpiDefinition",
   "updateKpiDefinition",
   "archiveKpiDefinition",
+  "activateKpiDefinition",
   "listBaselines",
   "createBaseline",
   "getBaseline",
@@ -91,7 +92,7 @@ describe("kpi module (P2)", () => {
     expect(mod.VALUE_FRESHNESS).toEqual(["unknown", "stale", "current"]);
   });
 
-  it("registers exactly the 23 kpi operations of the contract, and reports them", async () => {
+  it("registers exactly the 24 kpi operations of the contract, and reports them", async () => {
     const { routes, registration } = await registered();
     const byKey = new Map(contractOps.map((o) => [o.key, o.operationId]));
     const ids = routes.map((r) => byKey.get(r.key));
@@ -99,7 +100,7 @@ describe("kpi module (P2)", () => {
     expect([...ids].sort()).toEqual([...KPI_OPERATIONS].sort());
     expect(registration.module).toBe("kpi");
     expect(registration.status).toBe("active");
-    expect(registration.routes).toHaveLength(23);
+    expect(registration.routes).toHaveLength(24);
     expect(Object.isFrozen(registration)).toBe(true);
   });
 

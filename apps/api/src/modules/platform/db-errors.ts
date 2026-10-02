@@ -3,6 +3,7 @@
 // requests race), and the database is the last line of defence. Mapping (p2-work-split §2):
 //   <table>_version_step                     -> 409 version-conflict (optimistic concurrency, ADR-0003)
 //   gate_decision_not_submitter              -> 403 gate.submitter_cannot_decide (separation of duties)
+//   evidence_review_separation (0019)        -> 403 evidence.reviewer_is_author (separation of duties, F-DG2-140)
 //   gate_decision_current_submission         -> 409 version-conflict, code gate.submission_superseded
 //   template CHECK / NOT NULL violations     -> 422 / 400 with a field pointer derived from the column
 //   <table>_audit_required, append-only,
@@ -127,6 +128,14 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
       code: "gate.submitter_cannot_decide",
       title: "Forbidden",
       detail: "The person who submitted the gate cannot decide it (separation of duties).",
+    });
+  if (constraint === "evidence_review_separation")
+    return new HttpProblem({
+      status: 403,
+      type: PROBLEM_TYPES.forbidden,
+      code: "evidence.reviewer_is_author",
+      title: "Forbidden",
+      detail: "Evidence is reviewed by someone other than the person who added it or supplied its current content.",
     });
   if (constraint === "gate_decision_current_submission")
     return new HttpProblem({

@@ -1,7 +1,9 @@
 // T02 Outcome & KPI Tree rows (B0050, REQ-PB-034; OpenAPI tag "kpi"): outcome, KPI, baseline, target, target date,
 // owner, leading indicator - all seven source columns persist. A row without a target date is refused with 422
 // (targets are time-bound). Permission outcome.edit (TL, BO, KDS); reads transformation.read.
-// Trajectory approval (kpi_target.approve, SP/BO; a business approval inside the product, never the row's creator).
+// Trajectory approval (kpi_target.approve, SP/BO; a business approval inside the product). Separation of duties
+// (F-DG2-141): the approver is never the row's creator NOR anyone who last set a part of the current trajectory
+// (KPI, baseline, target value, target date, trajectory points), derived from the row's append-only audit trail.
 // ANY later edit of an approved row returns its trajectory to draft (the approval fields are cleared and the audit
 // diff keeps the prior approval), so a changed target never reads as approved.
 import { diffFields, sql, type DbOrTx } from "@mth/db";
@@ -14,6 +16,7 @@ import { parse, parseBody, problems, requireIfMatch, sendVersioned, type ModuleD
 import {
   findOutcomeKpi,
   OUTCOME_KPI_AUDIT_FIELDS,
+  outcomeKpiChangeEvents,
   referenceStatus,
   toOutcomeKpi,
   trajectoryPointsOf,
@@ -23,6 +26,7 @@ import {
   oneBaselineSourceRule,
   targetAfterBaselineRule,
   targetDateRule,
+  trajectoryAuthors,
   trajectoryRule,
 } from "./rules.ts";
 import type { RouteAdder } from "./routes.ts";
@@ -290,6 +294,16 @@ export function registerOutcomeKpiRoutes(app: FastifyInstance, { db }: ModuleDep
         throw creatorDenied(
           "kpi.creator_cannot_approve",
           "A target trajectory is never approved by the person who created the T02 row.",
+          "kpi_target.approve",
+          { recordType: "outcome_kpi", recordId: id, organizationId: current.organization_id, transformationId },
+        );
+      // F-DG2-141: holding outcome.edit and kpi_target.approve (BO) must not let a person set a target and then
+      // approve it. Whoever last changed any part of the current trajectory content cannot approve it.
+      const authors = trajectoryAuthors(await outcomeKpiChangeEvents(tx, id), current.created_by);
+      if (authors.has(principal.userId!))
+        throw creatorDenied(
+          "kpi.target_author_cannot_approve",
+          "A target trajectory is never approved by a person who set or last changed its target or trajectory.",
           "kpi_target.approve",
           { recordType: "outcome_kpi", recordId: id, organizationId: current.organization_id, transformationId },
         );

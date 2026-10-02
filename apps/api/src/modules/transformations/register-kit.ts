@@ -100,6 +100,12 @@ export interface RegisterSpecBase<Row extends RegisterRow> {
   readonly idParam: string;
   readonly parent?: ParentSpec;
   readonly writeRules: readonly WriteRule[];
+  /**
+   * Write rules of update and archive when they differ from create's (default `writeRules`), e.g. evidence: anyone with
+   * evidence.create adds an item, but only its creator/owner edits its content (F-DG2-140).
+   */
+  readonly updateRules?: readonly WriteRule[];
+  readonly archiveRules?: readonly WriteRule[];
   readonly createSchema: z.ZodType;
   readonly updateSchema: z.ZodType;
   /** Columns of a new row from the parsed body (ids, stamps and version are added by the kit). */
@@ -419,13 +425,18 @@ export function registerRegister<Row extends RegisterRow, Api extends { id: stri
   }
 
   /** Shared prologue of update and archive: gates, If-Match, lock, version. */
-  const lockForChange = async (tx: Tx, request: FastifyRequest, params: ReadonlyMap<string, string>) => {
+  const lockForChange = async (
+    tx: Tx,
+    request: FastifyRequest,
+    params: ReadonlyMap<string, string>,
+    rules: readonly WriteRule[],
+  ) => {
     const principal = principalOf(request);
     const transformationId = params.get("transformationId")!;
     await requireTransformationRead(tx, principal, transformationId);
     const seen = await findRow(tx, params);
     if (!seen) throw problems.notFound();
-    const ctx = await openWrite(tx, request, transformationId, spec.writeRules, {
+    const ctx = await openWrite(tx, request, transformationId, rules, {
       createdBy: seen.created_by,
       ownerUserId: seen.owner_user_id ?? null,
     });
@@ -446,7 +457,7 @@ export function registerRegister<Row extends RegisterRow, Api extends { id: stri
     app.patch(itemPath, { config: writeAccess }, async (request, reply) => {
       const params = paramsOf(request, itemParams);
       const row = await db.transaction().execute(async (tx) => {
-        const { ctx } = await lockForChange(tx, request, params);
+        const { ctx } = await lockForChange(tx, request, params, spec.updateRules ?? spec.writeRules);
         const body = parseBody(spec.updateSchema, request.body) as LooseRow;
         const current = await finishLock(tx, request, params);
         const changes = spec.updateValues(body as never, current, ctx);
@@ -490,7 +501,7 @@ export function registerRegister<Row extends RegisterRow, Api extends { id: stri
     app.post(`${itemPath}/archive`, { config: writeAccess }, async (request, reply) => {
       const params = paramsOf(request, itemParams);
       const row = await db.transaction().execute(async (tx) => {
-        const { ctx } = await lockForChange(tx, request, params);
+        const { ctx } = await lockForChange(tx, request, params, spec.archiveRules ?? spec.writeRules);
         const { reason } = parseBody(z.strictObject({ reason: z.string().trim().min(3).max(1000) }), request.body);
         const current = await finishLock(tx, request, params);
         const refused = refuse ? refuse(current) : null;

@@ -76,8 +76,14 @@ describe("charter (ADR-0017; REQ-PB-029/030/031/035)", () => {
     expect(created.status).toBe(201);
     expect(created.headers["etag"]).toBe('"1"');
     expect(created.body.charter.version).toBe(1);
-    // 0 top outcomes: the 3-5 warning is computed, never blocking.
-    expect(created.body.warnings.map((x: { code: string }) => x.code)).toEqual(["charter.top_outcomes_count"]);
+    // 0 top outcomes: the 3-5 warning is computed, never blocking. The thesis has only its first part, so the three
+    // empty parts are flagged (F-DG2-203, REQ-PB-030).
+    expect(created.body.warnings.map((x: { code: string; pointer?: string }) => [x.code, x.pointer])).toEqual([
+      ["charter.top_outcomes_count", "/topOutcomes"],
+      ["charter.thesis_incomplete", "/charter/thesisOutcomes"],
+      ["charter.thesis_incomplete", "/charter/thesisBenefits"],
+      ["charter.thesis_incomplete", "/charter/thesisBecause"],
+    ]);
     expect(created.body.scopeCheckPrechecks.map((x: { code: string; result: string }) => [x.code, x.result])).toEqual([
       ["outcome_linkage", "not_applicable"],
       ["problem_traceability", "unknown"],
@@ -119,7 +125,12 @@ describe("charter (ADR-0017; REQ-PB-029/030/031/035)", () => {
     });
     expect(saved.status).toBe(200);
     expect(saved.body.charter.version).toBe(2);
-    expect(saved.body.warnings).toEqual([]); // three top outcomes
+    // Three top outcomes: no 3-5 warning. The thesis is still partial (F-DG2-203): only its empty parts are flagged.
+    expect(saved.body.warnings.map((x: { code: string }) => x.code)).toEqual([
+      "charter.thesis_incomplete",
+      "charter.thesis_incomplete",
+      "charter.thesis_incomplete",
+    ]);
     const stale = await call(api.app, "PATCH", C, {
       session: q.lead.session,
       headers: ifm(1),
@@ -603,8 +614,12 @@ describe("outcomes: the good outcome test (B0051, REQ-PB-036), computed server-s
     });
     expect(charter.status).toBe(201);
     expect(charter.body.topOutcomes).toEqual([expect.objectContaining({ id: created.body.id, goodOutcomePass: true })]);
-    // REQ-PB-035 still holds: one top outcome -> the 3-5 warning.
-    expect(charter.body.warnings.map((x: { code: string }) => x.code)).toEqual(["charter.top_outcomes_count"]);
+    // REQ-PB-035 still holds: one top outcome -> the 3-5 warning (the empty thesis is flagged too, F-DG2-203).
+    expect(
+      charter.body.warnings
+        .map((x: { code: string }) => x.code)
+        .filter((c: string) => c !== "charter.thesis_incomplete"),
+    ).toEqual(["charter.top_outcomes_count"]);
 
     // An update that withdraws an attestation: the update response itself re-evaluates (unknown, not a pass).
     const updated = await call(api.app, "PATCH", `${Q}/outcomes/${created.body.id}`, {

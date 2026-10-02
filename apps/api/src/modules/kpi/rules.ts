@@ -91,6 +91,91 @@ export function leadingNotSelfRule(
   return null;
 }
 
+// ------------------------------------------------------------------------------------------------ T02 approval SoD
+
+/**
+ * The T02 columns that make up the target trajectory an approver signs off (F-DG2-141): which KPI, measured from
+ * which baseline, to which target value, by which date, along which trajectory points. Changing any of them changes
+ * what is approved, so whoever last changed one of them is an author of the current trajectory.
+ */
+export const TRAJECTORY_CONTENT_FIELDS = [
+  "kpi_definition_id",
+  "baseline_id",
+  "baseline_value",
+  "target_value",
+  "target_date",
+  "trajectory_points",
+] as const;
+
+/** One outcome_kpi audit event, as far as authorship is concerned (newest first when passed to targetAuthors). */
+export interface AuthorshipEvent {
+  readonly actorUserId: string | null;
+  readonly onBehalfOfUserId: string | null;
+  readonly changes: unknown;
+}
+
+/**
+ * The people who authored the CURRENT trajectory content: for each content field, the actor (and the person acted
+ * for) of the newest audit event whose diff touched that field. A field that no event touched still holds the value
+ * the row was created with (a NULL at create time is not in the create diff), so its author is the row's creator.
+ * Pure: the caller passes the row's audit events newest first.
+ */
+export function trajectoryAuthors(events: readonly AuthorshipEvent[], createdBy: string): ReadonlySet<string> {
+  const authors = new Set<string>();
+  for (const field of TRAJECTORY_CONTENT_FIELDS) {
+    const latest = events.find((e) => touches(e.changes, field));
+    if (!latest) {
+      authors.add(createdBy);
+      continue;
+    }
+    if (latest.actorUserId !== null) authors.add(latest.actorUserId);
+    if (latest.onBehalfOfUserId !== null) authors.add(latest.onBehalfOfUserId);
+  }
+  return authors;
+}
+
+function touches(changes: unknown, field: string): boolean {
+  if (changes === null || typeof changes !== "object" || Array.isArray(changes)) return false;
+  return Object.prototype.hasOwnProperty.call(changes, field);
+}
+
+// ------------------------------------------------------------------------------------------------ KPI activation
+
+/**
+ * A KPI definition can be activated (draft -> active, F-DG2-201) only when it is measurable: a unit kind and a
+ * polarity, a currency when the unit is a currency, and a unit label when the unit kind is "other" (the same rule
+ * that makes gate facts report hasUnit). The status checks come first: already active or archived is 422.
+ */
+export function kpiDefinitionActivationRule(d: {
+  status: string;
+  unitKind: string | null;
+  unitLabel: string | null;
+  currency: string | null;
+  polarity: string | null;
+}): RuleViolation | null {
+  if (d.status === "active")
+    return v("kpi_definition.already_active", "The KPI definition is already active.", "/status");
+  if (d.status !== "draft")
+    return v("kpi_definition.not_draft", "Only a draft KPI definition can be activated.", "/status");
+  if (d.unitKind === null)
+    return v("kpi_definition.not_measurable", "A KPI needs a unit kind before it can be activated.", "/unitKind");
+  if (d.polarity === null)
+    return v("kpi_definition.not_measurable", "A KPI needs a polarity before it can be activated.", "/polarity");
+  if (d.unitKind === "currency" && d.currency === null)
+    return v(
+      "kpi_definition.not_measurable",
+      "A currency KPI needs its ISO 4217 currency before it can be activated.",
+      "/currency",
+    );
+  if (d.unitKind === "other" && d.unitLabel === null)
+    return v(
+      "kpi_definition.not_measurable",
+      'A KPI whose unit kind is "other" needs a unit label before it can be activated.',
+      "/unitLabel",
+    );
+  return null;
+}
+
 /** A baseline is a measured current state: its date cannot lie in the future (in the transformation's zone). */
 export function baselineDateRule(baselineDate: string | null, today: string): RuleViolation | null {
   if (baselineDate !== null && baselineDate > today)

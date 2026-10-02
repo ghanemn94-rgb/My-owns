@@ -1,5 +1,5 @@
 // Kysely `Database` interface for the P1 and P2 tables (ADR-0003, ADR-0016), written from
-// docs/architecture/data-dictionary.md (P2 tables: migrations 0010-0018). An integration test (packages/db/test/integration/catalogue.test.ts)
+// docs/architecture/data-dictionary.md (P2 tables: migrations 0010-0018; 0019+ by backend-workflow-engineer). An integration test (packages/db/test/integration/catalogue.test.ts)
 // compares every table, view and column here with information_schema after the migrations run, so a drift fails CI.
 //
 // Type mapping (node-postgres defaults): timestamptz -> Date, bigint -> string, numeric -> string,
@@ -464,6 +464,8 @@ export interface EvidenceTable {
   created_by: string;
   updated_at: TimestampDefault;
   updated_by: string;
+  /** 0019 (F-DG2-140): who supplied the current content; maintained by the evidence_review_separation trigger. */
+  content_authored_by: Generated<string | null>;
 }
 
 export interface EvidenceContentTable {
@@ -1653,6 +1655,7 @@ export const SCHEMA_COLUMNS = {
     "created_by",
     "updated_at",
     "updated_by",
+    "content_authored_by",
   ],
   evidence_content: [
     "id",

@@ -114,3 +114,56 @@ export const charterView = z.strictObject({
   scopeCheckPrechecks: z.array(scopeCheckPrecheck),
 });
 export type CharterViewBody = z.infer<typeof charterView>;
+
+// ---- Transformation thesis (B0036/B0037, REQ-PB-030; F-DG2-203) ------------------------------------------------------
+
+/** The four thesis parts, in the order of the source sentence. */
+export const THESIS_PARTS = ["thesisChange", "thesisOutcomes", "thesisBenefits", "thesisBecause"] as const;
+export type ThesisPart = (typeof THESIS_PARTS)[number];
+
+/**
+ * The source sentence structure of B0037 (EN): "If we change [capabilities / journeys / operating model], then
+ * [customer/operational outcomes] will improve, which will create [financial/strategic benefits], because [evidence /
+ * causal logic]." The placeholders are `{change}`, `{outcomes}`, `{benefits}` and `{because}`. A UI passes its own
+ * translated template of the SAME structure (e.g. Arabic); the playbook text stays the authority.
+ */
+export const THESIS_SOURCE_TEMPLATE_EN =
+  "If we change {change}, then {outcomes} will improve, which will create {benefits}, because {because}.";
+
+export interface ComposedThesis {
+  /** True only when all four parts are present (non-blank). */
+  readonly complete: boolean;
+  /** The parts that are empty, in source order. An incomplete thesis is flagged, never shown as answered. */
+  readonly missing: readonly ThesisPart[];
+  /** The composed sentence; null while any part is missing (no sentence with blanks is rendered as if complete). */
+  readonly sentence: string | null;
+}
+
+const PLACEHOLDER: Readonly<Record<ThesisPart, string>> = {
+  thesisChange: "{change}",
+  thesisOutcomes: "{outcomes}",
+  thesisBenefits: "{benefits}",
+  thesisBecause: "{because}",
+};
+
+/** A part as it reads inside the sentence: trimmed, without its own closing full stop. Blank -> null. */
+function thesisPartText(value: string | null | undefined): string | null {
+  if (value === null || value === undefined) return null;
+  const t = value
+    .trim()
+    .replace(/[.۔]+$/u, "")
+    .trim();
+  return t === "" ? null : t;
+}
+
+/** Composes the four-part thesis into the source sentence, or flags it incomplete (pure; used by the API and the UI). */
+export function composeThesis(
+  parts: Readonly<Partial<Record<ThesisPart, string | null>>>,
+  template: string = THESIS_SOURCE_TEMPLATE_EN,
+): ComposedThesis {
+  const missing = THESIS_PARTS.filter((p) => thesisPartText(parts[p]) === null);
+  if (missing.length > 0) return { complete: false, missing, sentence: null };
+  let sentence = template;
+  for (const p of THESIS_PARTS) sentence = sentence.split(PLACEHOLDER[p]).join(thesisPartText(parts[p])!);
+  return { complete: true, missing: [], sentence };
+}

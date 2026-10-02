@@ -137,6 +137,14 @@ describe("P2 database guard error mapping (ADR-0016 §3, ADR-0015)", () => {
     });
   });
 
+  it("maps the evidence review SoD guard (0019, F-DG2-140) to 403 evidence.reviewer_is_author", () => {
+    expect(map({ code: "23514", constraint: "evidence_review_separation" })).toMatchObject({
+      status: 403,
+      code: "evidence.reviewer_is_author",
+      type: "urn:mth:problem:forbidden",
+    });
+  });
+
   it("maps template CHECK and NOT NULL violations to 422 with a field pointer", () => {
     expect(map({ code: "23514", constraint: "diagnostic_item_confidence_check", table: "diagnostic_item" })).toEqual({
       status: 422,

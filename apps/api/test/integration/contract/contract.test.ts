@@ -476,7 +476,8 @@ describe("every operation, validated against the contract and the zod mirrors", 
     expect(noSuccess).toEqual([]);
     const mirrorsNotChecked = Object.keys(ZOD_MIRRORS).filter((id) => !zodChecked.has(id));
     expect(mirrorsNotChecked).toEqual([]);
-    // 33 P1 operations + 127 P2 operations (T-DG2-ARCH-01B). A new operation needs a contract change first.
-    expect(operations).toHaveLength(160);
+    // 33 P1 operations + 128 P2 operations (T-DG2-ARCH-01B, plus activateKpiDefinition: D-061, F-DG2-201). A new
+    // operation needs a contract change first.
+    expect(operations).toHaveLength(161);
   });
 });

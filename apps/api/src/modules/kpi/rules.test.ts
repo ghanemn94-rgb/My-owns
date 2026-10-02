@@ -13,6 +13,7 @@ import { describe, expect, it } from "vitest";
 import {
   baselineDateRule,
   baselineMeasurableRule,
+  kpiDefinitionActivationRule,
   kpiDefinitionUnitRule,
   leadingNotSelfRule,
   oneBaselineSourceRule,
@@ -20,6 +21,8 @@ import {
   targetAfterBaselineRule,
   targetDateRule,
   todayIn,
+  TRAJECTORY_CONTENT_FIELDS,
+  trajectoryAuthors,
   trajectoryRule,
   UNQUANTIFIED,
 } from "./rules.ts";
@@ -258,5 +261,104 @@ describe("kpi zod mirrors: decimal strings at the column scale, calendar dates",
     };
     expect(valuePool.safeParse(base).success).toBe(true);
     expect(valuePool.safeParse({ ...base, upsideAmount: 0 }).success).toBe(false);
+  });
+});
+
+describe("trajectory authorship (F-DG2-141: who may not approve a T02 trajectory)", () => {
+  const TL = "tl";
+  const BO = "bo";
+  const KDS = "kds";
+  const ev = (actor: string, changes: unknown, onBehalfOf: string | null = null) => ({
+    actorUserId: actor,
+    onBehalfOfUserId: onBehalfOf,
+    changes,
+  });
+  const ch = (...fields: string[]) => Object.fromEntries(fields.map((f) => [f, { from: null, to: "x" }]));
+
+  it("the trajectory content is KPI, baseline, target value, target date and trajectory points", () => {
+    expect([...TRAJECTORY_CONTENT_FIELDS]).toEqual([
+      "kpi_definition_id",
+      "baseline_id",
+      "baseline_value",
+      "target_value",
+      "target_date",
+      "trajectory_points",
+    ]);
+  });
+
+  it("a row nobody edited is authored by its creator only", () => {
+    expect([...trajectoryAuthors([], TL)]).toEqual([TL]);
+    expect([...trajectoryAuthors([ev(TL, ch("kpi_definition_id", "target_date", "target_value"))], TL)]).toEqual([TL]);
+  });
+
+  it("the finding's scenario: TL created, BO changed the target value -> BO is an author", () => {
+    const events = [ev(BO, ch("target_value")), ev(TL, ch("kpi_definition_id", "target_value", "target_date"))];
+    expect(trajectoryAuthors(events, TL).has(BO)).toBe(true);
+  });
+
+  it("the newest change per field decides; a later change of ANOTHER field does not clear an author", () => {
+    // newest first: KDS changed the value after BO changed the date -> both are authors.
+    const events = [ev(KDS, ch("target_value")), ev(BO, ch("target_date")), ev(TL, ch("target_value", "target_date"))];
+    const authors = trajectoryAuthors(events, TL);
+    expect(authors.has(BO)).toBe(true);
+    expect(authors.has(KDS)).toBe(true);
+  });
+
+  it("an author whose every change was overwritten by someone else is no longer an author", () => {
+    const events = [ev(KDS, ch("target_value")), ev(BO, ch("target_value")), ev(TL, ch("target_date"))];
+    expect(trajectoryAuthors(events, TL).has(BO)).toBe(false);
+  });
+
+  it("non-trajectory changes (owner, ordinal, approval fields) and empty diffs never make an author", () => {
+    const events = [
+      ev(BO, ch("owner_user_id", "ordinal", "leading_indicator_text")),
+      ev("sp", ch("trajectory_status", "trajectory_approved_by", "trajectory_approved_version")),
+      ev("x", null),
+      ev("y", []),
+      ev("z", "target_value"),
+    ];
+    expect([...trajectoryAuthors(events, TL)]).toEqual([TL]);
+  });
+
+  it("acting on behalf of someone makes both the actor and the represented person authors", () => {
+    const authors = trajectoryAuthors([ev("delegate", ch("trajectory_points"), BO)], TL);
+    expect(authors.has("delegate")).toBe(true);
+    expect(authors.has(BO)).toBe(true);
+  });
+});
+
+describe("KPI definition activation (F-DG2-201)", () => {
+  const draft = {
+    status: "draft",
+    unitKind: "percentage",
+    unitLabel: "%",
+    currency: null,
+    polarity: "lower_is_better",
+  };
+
+  it("a measurable draft can be activated", () => {
+    expect(kpiDefinitionActivationRule(draft)).toBeNull();
+    expect(kpiDefinitionActivationRule({ ...draft, unitKind: "count", unitLabel: null })).toBeNull();
+    expect(
+      kpiDefinitionActivationRule({ ...draft, unitKind: "currency", unitLabel: null, currency: "SAR" }),
+    ).toBeNull();
+    expect(kpiDefinitionActivationRule({ ...draft, unitKind: "other", unitLabel: "calls" })).toBeNull();
+  });
+
+  it("already active or not a draft is refused before any field check", () => {
+    expect(kpiDefinitionActivationRule({ ...draft, status: "active" })?.code).toBe("kpi_definition.already_active");
+    expect(kpiDefinitionActivationRule({ ...draft, status: "archived", unitKind: null })?.code).toBe(
+      "kpi_definition.not_draft",
+    );
+  });
+
+  it.each([
+    [{ unitKind: null }, "/unitKind"],
+    [{ polarity: null }, "/polarity"],
+    [{ unitKind: "currency", currency: null }, "/currency"],
+    [{ unitKind: "other", unitLabel: null }, "/unitLabel"],
+  ])("a missing measurable field %j is 422 not_measurable at %s", (patch, pointer) => {
+    const violation = kpiDefinitionActivationRule({ ...draft, ...patch });
+    expect(violation).toMatchObject({ code: "kpi_definition.not_measurable", pointer });
   });
 });

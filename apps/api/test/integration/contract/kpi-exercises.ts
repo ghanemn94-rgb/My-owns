@@ -2,7 +2,7 @@
 // contract.test.ts (owned by backend-workflow-engineer) calls exerciseKpiOperations once, so kpi operations are
 // exercised in the same test file whose coverage assertion counts them, without two agents editing one file.
 // Every call goes through `ctx.mirrored` (contract + problem-mirror validation), and every successful body is also
-// parsed here with its kpi zod mirror from @mth/shared/schemas (lockstep). All 23 kpi operations are exercised with at
+// parsed here with its kpi zod mirror from @mth/shared/schemas (lockstep). All 24 kpi operations are exercised with at
 // least one success, so p2-pending-kpi.ts is empty. All data is synthetic.
 import {
   baseline,
@@ -33,6 +33,7 @@ const MIRRORS = new Map<string, z.ZodType>([
   ["getKpiDefinition", kpiDefinition],
   ["updateKpiDefinition", kpiDefinition],
   ["archiveKpiDefinition", kpiDefinition],
+  ["activateKpiDefinition", kpiDefinition],
   ["listBaselines", baselinePage],
   ["createBaseline", baseline],
   ["getBaseline", baseline],
@@ -102,6 +103,23 @@ export async function exerciseKpiOperations(ctx: KpiContractContext): Promise<vo
     session: k.s.auditor,
     body: { name: "AUD", unitKind: "count", polarity: "higher_is_better" },
   });
+  // activate (F-DG2-201): declared 428 / 409 / 403 (auditor) first, then the draft -> active success, then 422 for
+  // an already-active definition. def is at version 2 after the update above.
+  await ctx.mirrored("POST", `${b}/kpi-definitions/${def.id}/activate`, { session: k.s.kds });
+  await ctx.mirrored("POST", `${b}/kpi-definitions/${def.id}/activate`, { session: k.s.kds, headers: ifMatch(1) });
+  await ctx.mirrored("POST", `${b}/kpi-definitions/${def.id}/activate`, {
+    session: k.s.auditor,
+    headers: ifMatch(2),
+  });
+  const active = await ok<{ status: string; version: number }>(
+    "activateKpiDefinition",
+    200,
+    "POST",
+    `${b}/kpi-definitions/${def.id}/activate`,
+    { session: k.s.kds, headers: ifMatch(2) },
+  );
+  expect([active.status, active.version]).toEqual(["active", 3]);
+  await ctx.mirrored("POST", `${b}/kpi-definitions/${def.id}/activate`, { session: k.s.kds, headers: ifMatch(3) });
   const spare = await ok("createKpiDefinition", 201, "POST", `${b}/kpi-definitions`, {
     session: k.s.tl,
     body: { name: "Contract spare KPI", unitKind: "currency", currency: "SAR", polarity: "higher_is_better" },

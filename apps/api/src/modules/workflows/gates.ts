@@ -20,7 +20,7 @@ import {
   type GateSubmissionRow,
   type Tx,
 } from "@mth/db";
-import type { Phase, Permission } from "@mth/shared";
+import { PHASES, type Phase, type Permission } from "@mth/shared";
 import {
   gateApproverConfig,
   gateDecisionCreate,
@@ -230,6 +230,7 @@ async function gateView(
   instance: GateInstanceRow,
   def: GateDefinition,
   facts: GateFacts,
+  defs: readonly GateDefinition[],
 ) {
   const criteria: GateCriterionEvaluation[] = evaluateGate(def, facts);
   const current = instance.current_submission_id
@@ -245,6 +246,7 @@ async function gateView(
     def.submissionEnabled &&
     instance.status !== "approved" &&
     allComplete &&
+    (await sequenceProblem(db, instance.transformation_id, def, defs)) === null &&
     (await holds(db, principal, "gate.submit", target));
   const canDecide =
     pending !== undefined &&
@@ -259,6 +261,47 @@ async function gateView(
     canSubmit,
     canDecide,
   };
+}
+
+/**
+ * Sequence integrity (B0009 "Run Phases 1-6 sequentially", B0023; F-DG2-205, REQ-S04-005): a gate can be submitted or
+ * approved only after the PRECEDING gate is approved and once the transformation has reached the gate's own phase.
+ * A Modular transformation starts at its entry phase, so gates closing phases before it are not required. Returns the
+ * 422 problem, or null when the gate is in sequence.
+ */
+async function sequenceProblem(
+  db: DbOrTx,
+  transformationId: string,
+  def: GateDefinition,
+  defs: readonly GateDefinition[],
+): Promise<HttpProblem | null> {
+  const t = await db
+    .selectFrom("transformation")
+    .select(["mode", "entry_phase", "current_phase"])
+    .where("id", "=", transformationId)
+    .executeTakeFirst();
+  if (!t) return problems.notFound();
+  const entryIdx = t.mode === "modular" && t.entry_phase !== null ? PHASES.indexOf(t.entry_phase as Phase) : 0;
+  const previous = defs.find((d) => d.ordinal === def.ordinal - 1);
+  if (previous && PHASES.indexOf(previous.phase) >= entryIdx) {
+    const prev = await db
+      .selectFrom("gate_instance")
+      .select("status")
+      .where("transformation_id", "=", transformationId)
+      .where("gate_code", "=", previous.code)
+      .executeTakeFirst();
+    if (prev?.status !== "approved")
+      return problems.businessRule(
+        "gate.out_of_sequence",
+        `${def.code} follows ${previous.code}: ${previous.code} must be approved first (phases run in sequence).`,
+      );
+  }
+  if (PHASES.indexOf(t.current_phase as Phase) < PHASES.indexOf(def.phase))
+    return problems.businessRule(
+      "gate.out_of_sequence",
+      `${def.code} closes the ${def.phase} phase; the transformation is still in ${t.current_phase}.`,
+    );
+  return null;
 }
 
 function definitionOf(defs: readonly GateDefinition[], gateCode: string): GateDefinition {
@@ -287,7 +330,7 @@ export function registerGateRoutes(app: FastifyInstance, db: Db): string[] {
     for (const def of defs) {
       const instance = instances.find((i) => i.gate_code === def.code);
       if (!instance) throw problems.notFound();
-      items.push(await gateView(db, principal, target, instance, def, facts));
+      items.push(await gateView(db, principal, target, instance, def, facts, defs));
     }
     return { items };
   });
@@ -296,9 +339,10 @@ export function registerGateRoutes(app: FastifyInstance, db: Db): string[] {
     const { transformationId, gateCode } = parse(gParams, request.params, "params");
     const principal = principalOf(request);
     const target = await requireTransformationRead(db, principal, transformationId);
-    const def = definitionOf(await loadGateDefinitions(db), gateCode);
+    const defs = await loadGateDefinitions(db);
+    const def = definitionOf(defs, gateCode);
     const instance = await instanceOf(db, transformationId, gateCode);
-    const view = await gateView(db, principal, target, instance, def, await loadGateFacts(db, transformationId));
+    const view = await gateView(db, principal, target, instance, def, await loadGateFacts(db, transformationId), defs);
     reply.header("ETag", `"${instance.version}"`);
     return view;
   });
@@ -364,9 +408,10 @@ export function registerGateRoutes(app: FastifyInstance, db: Db): string[] {
     });
     const principal = principalOf(request);
     const target = await requireTransformationRead(db, principal, transformationId);
-    const def = definitionOf(await loadGateDefinitions(db), gateCode);
+    const defs = await loadGateDefinitions(db);
+    const def = definitionOf(defs, gateCode);
     reply.header("ETag", `"${instance.version}"`);
-    return gateView(db, principal, target, instance, def, await loadGateFacts(db, transformationId));
+    return gateView(db, principal, target, instance, def, await loadGateFacts(db, transformationId), defs);
   });
 
   app.get(`${G}/:gateCode/submissions`, { config: read }, async (request) => {
@@ -475,6 +520,8 @@ async function submitGate(tx: Tx, request: FastifyRequest, transformationId: str
   if (instance.version !== expected) throw problems.versionConflict(instance.version);
   if (instance.status === "approved")
     throw problems.businessRule("gate.already_approved", "This gate is already approved; it cannot be resubmitted.");
+  const outOfSequence = await sequenceProblem(tx, transformationId, def, await loadGateDefinitions(tx));
+  if (outOfSequence) throw outOfSequence;
 
   // Re-evaluate every criterion INSIDE this transaction and freeze the result (ADR-0015 §2 step 2).
   const facts = await loadGateFacts(tx, transformationId);
@@ -639,7 +686,8 @@ async function decideGate(tx: Tx, request: FastifyRequest, transformationId: str
   const principal = principalOf(request);
   // 1. The caller can read the transformation (404 otherwise).
   const target = await requireTransformationRead(tx, principal, transformationId);
-  const def = definitionOf(await loadGateDefinitions(tx), gateCode);
+  const defs = await loadGateDefinitions(tx);
+  const def = definitionOf(defs, gateCode);
   const instance = await instanceOf(tx, transformationId, gateCode, true);
   const pending = await tx
     .selectFrom("gate_submission")
@@ -676,6 +724,11 @@ async function decideGate(tx: Tx, request: FastifyRequest, transformationId: str
         : "There is no pending submission to decide.",
       currentVersion: pending?.submission_no ?? Math.max(instance.latest_submission_no, 1),
     });
+  // 5. Sequence: an approval never skips a phase or a preceding gate (F-DG2-205); nothing is written otherwise.
+  if (body.outcome === "approved") {
+    const outOfSequence = await sequenceProblem(tx, transformationId, def, defs);
+    if (outOfSequence) throw outOfSequence;
+  }
   const t = await writableTransformation(tx, transformationId);
   const audit: AuditContext = { ...auditContextOf(request), ...(onBehalfOf ? { onBehalfOfUserId: onBehalfOf } : {}) };
   const userId = principal.userId!;
@@ -789,10 +842,12 @@ async function decideGate(tx: Tx, request: FastifyRequest, transformationId: str
     reason: body.rationale,
     changes: { status: { from: instance.status, to: body.outcome } },
   });
-  // Approval advances the phase (G1 -> define, G2 -> design, G3 -> mobilize): the only phase-advance path.
+  // Approval advances the phase by exactly one step (G1 diagnose -> define, G2 define -> design, G3 design ->
+  // mobilize): the only phase-advance path.
   if (body.outcome === "approved" && def.nextPhase !== null)
     await advancePhaseOnGateApproval(tx, audit, {
       transformationId,
+      gatePhase: def.phase,
       nextPhase: def.nextPhase as Phase,
       gateCode,
       decisionId,

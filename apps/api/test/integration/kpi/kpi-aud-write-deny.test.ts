@@ -22,6 +22,7 @@ const PROBE_BODIES = new Map<string, () => unknown>([
   ["createKpiDefinition", () => ({ name: "AUD probe KPI", unitKind: "count", polarity: "higher_is_better" })],
   ["updateKpiDefinition", () => ({ unitLabel: "probe" })],
   ["archiveKpiDefinition", () => ({ reason: "AUD probe" })],
+  ["activateKpiDefinition", () => undefined], // no request body (D-061 / F-DG2-201)
   ["createBaseline", () => ({ metric: "AUD probe", unit: "u", scope: "cost" })],
   ["updateBaseline", () => ({ metric: "AUD probe 2" })],
   ["archiveBaseline", () => ({ reason: "AUD probe" })],
@@ -79,9 +80,9 @@ beforeAll(async () => {
 afterAll(() => api.close());
 
 describe("AUD -> 403 on every kpi mutation (generated from the contract)", () => {
-  it("the generated list covers the 15 kpi mutations of the P2 contract, each with a probe body", () => {
+  it("the generated list covers the 16 kpi mutations of the P2 contract, each with a probe body", () => {
     expect(kpiMutations.map((o) => o.operationId).sort()).toEqual([...PROBE_BODIES.keys()].sort());
-    expect(kpiMutations).toHaveLength(15);
+    expect(kpiMutations).toHaveLength(16);
   });
 
   it("the auditor can read every kpi resource (so a denial is 403, not 404)", async () => {

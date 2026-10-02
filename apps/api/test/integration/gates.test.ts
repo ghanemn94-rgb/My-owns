@@ -321,6 +321,10 @@ describe("G2 Direction readiness (REQ-PB-036 failing outcomes, REQ-PB-037 guardr
   it("lists every outcome whose good outcome test is not passing (ids + criteria); zero guardrails blocks submission", async () => {
     const p = await setupP2World(api, w);
     const T = `/api/v1/transformations/${p.transformationId}`;
+    // G2 follows G1 (F-DG2-205): approve G1 first, so the refusal below is about G2's own criteria.
+    await makeG1Ready(api, p);
+    const g1 = await submit(p);
+    expect((await decide(p, p.sponsor.session, g1.body.submissionNo)).status).toBe(201);
     const launch = await call(api.app, "POST", `${T}/outcomes`, {
       session: p.lead.session,
       body: { statement: "Launch new app", isTopOutcome: true, topRank: 1 },

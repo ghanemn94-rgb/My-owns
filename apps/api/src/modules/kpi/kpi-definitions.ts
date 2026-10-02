@@ -1,4 +1,5 @@
-// KPI dictionary entries (P2 subset of REQ-S07-001; OpenAPI tag "kpi"): list, create, read, update, archive.
+// KPI dictionary entries (P2 subset of REQ-S07-001; OpenAPI tag "kpi"): list, create, read, update, activate,
+// archive. Activate (F-DG2-201) is the only draft -> active path; G2's g2.kpi_definitions criterion needs it.
 // Permission kpi_definition.edit (TL, KDS); reads need transformation.read.
 import { diffFields, sql } from "@mth/db";
 import { kpiDefinitionCreate, kpiDefinitionUpdate, reasonRequest } from "@mth/shared/schemas";
@@ -8,7 +9,7 @@ import { auditContextOf, principalOf } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import { parse, parseBody, problems, requireIfMatch, sendVersioned, type ModuleDeps } from "../platform/index.ts";
 import { findKpiDefinition, KPI_DEFINITION_AUDIT_FIELDS, kpiDefinitionInUse, toKpiDefinition } from "./repository.ts";
-import { kpiDefinitionUnitRule } from "./rules.ts";
+import { kpiDefinitionActivationRule, kpiDefinitionUnitRule } from "./rules.ts";
 import {
   archivedRecord,
   check,
@@ -150,6 +151,54 @@ export function registerKpiDefinitionRoutes(app: FastifyInstance, { db }: Module
         });
       await record(tx, audit, {
         action: "kpi_definition.update",
+        recordType: "kpi_definition",
+        recordId: id,
+        organizationId: current.organization_id,
+        transformationId,
+        priorVersion: current.version,
+        newVersion: updated.version,
+        changes: diffFields(current, updated, [...KPI_DEFINITION_AUDIT_FIELDS]),
+      });
+      return updated;
+    });
+    return sendVersioned(reply, 200, toKpiDefinition(row));
+  });
+
+  add(app, "POST", `${ITEM}/activate`, PERMISSION, async (request, reply) => {
+    const { transformationId, id } = parseRecordParams(request.params, "kpiDefinitionId");
+    const principal = principalOf(request);
+    const audit = auditContextOf(request);
+    const row = await db.transaction().execute(async (tx) => {
+      await writeScope(tx, request, transformationId, PERMISSION);
+      const expected = requireIfMatch(request);
+      const current = await findKpiDefinition(tx, transformationId, id, true);
+      if (!current) throw problems.notFound();
+      if (current.version !== expected) throw problems.versionConflict(current.version);
+      if (current.status === "archived") throw archivedRecord("kpi_definition");
+      check(
+        kpiDefinitionActivationRule({
+          status: current.status,
+          unitKind: current.unit_kind,
+          unitLabel: current.unit_label,
+          currency: current.currency,
+          polarity: current.polarity,
+        }),
+      );
+      const updated = await tx
+        .updateTable("kpi_definition")
+        .set({
+          status: "active",
+          version: sql<number>`version + 1`,
+          updated_at: sql<Date>`now()`,
+          updated_by: principal.userId!,
+        })
+        .where("id", "=", id)
+        .where("version", "=", current.version)
+        .where("status", "=", "draft")
+        .returningAll()
+        .executeTakeFirstOrThrow();
+      await record(tx, audit, {
+        action: "kpi_definition.activate",
         recordType: "kpi_definition",
         recordId: id,
         organizationId: current.organization_id,

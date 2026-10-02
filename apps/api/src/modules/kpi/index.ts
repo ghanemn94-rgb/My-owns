@@ -19,7 +19,7 @@ export { loadKpiGateFacts, type KpiGateFacts } from "./gate-facts.ts";
 export const VALUE_FRESHNESS = ["unknown", "stale", "current"] as const;
 export type ValueFreshness = (typeof VALUE_FRESHNESS)[number];
 
-/** Wiring hook called by the composition root (server.ts). P2: registers the 23 kpi operations. */
+/** Wiring hook called by the composition root (server.ts). P2: registers the 24 kpi operations. */
 export function registerKpiModule(app: FastifyInstance, deps: ModuleDeps): ModuleRegistration {
   const routes = registerKpiRoutes(app, deps);
   return Object.freeze({ module: "kpi", status: "active", deliversIn: "P2", routes: Object.freeze([...routes]) });

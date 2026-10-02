@@ -10,7 +10,7 @@
 //    (g3.design_decisions: "no open design decision without an owner").
 // These are BUSINESS gates inside the product; nothing here reads or writes the engineering gates DG0-DG7.
 import type { DbOrTx } from "@mth/db";
-import type { GateCriterionEvaluation, GateDefinition, Warning } from "@mth/shared/schemas";
+import { composeThesis, type GateCriterionEvaluation, type GateDefinition, type Warning } from "@mth/shared/schemas";
 import { loadVerifiedEvidenceFacts, type EvidenceFact } from "../evidence/index.ts";
 import { loadKpiGateFacts, type KpiGateFacts } from "../kpi/index.ts";
 import { findCharter, findCurrentNorthStar, loadGoodOutcomeFacts } from "../transformations/index.ts";
@@ -38,6 +38,8 @@ export interface GateFacts {
     hasInScope: boolean;
     hasOutOfScope: boolean;
     hasBaselineDate: boolean;
+    /** Empty parts of the four-part thesis (B0037), e.g. ["thesisBecause"]; [] when complete. */
+    thesisMissing: readonly string[];
   } | null;
   readonly northStar: { id: string; version: number } | null;
   readonly topOutcomes: ReadonlyArray<{ id: string }>;
@@ -161,6 +163,12 @@ export async function loadGateFacts(db: DbOrTx, transformationId: string): Promi
           hasInScope: charter.in_scope !== null,
           hasOutOfScope: charter.out_of_scope !== null,
           hasBaselineDate: charter.baseline_date !== null,
+          thesisMissing: composeThesis({
+            thesisChange: charter.thesis_change,
+            thesisOutcomes: charter.thesis_outcomes,
+            thesisBenefits: charter.thesis_benefits,
+            thesisBecause: charter.thesis_because,
+          }).missing,
         }
       : null,
     northStar: northStar ? { id: northStar.id, version: northStar.version } : null,
@@ -343,6 +351,21 @@ export const EVALUATORS: ReadonlyMap<string, Evaluator> = new Map<string, Evalua
         if (!f.kpi.outcomeKpis.some((k) => k.outcomeId === o.id))
           missing.push(
             miss("g2.outcome_tree.outcome_without_t02", "A top outcome has no T02 row.", `/outcomes/${o.id}`),
+          );
+      // REQ-PB-030 (F-DG2-203): the thesis states the causal chain change -> outcomes -> benefits (B0037) that the
+      // outcome tree steers by; a thesis with an empty part keeps the criterion incomplete.
+      if (f.charter === null)
+        missing.push(
+          miss("g2.outcome_tree.thesis_incomplete", "No charter states the transformation thesis.", "/charter"),
+        );
+      else
+        for (const part of f.charter.thesisMissing)
+          missing.push(
+            miss(
+              "g2.outcome_tree.thesis_incomplete",
+              `The transformation thesis is incomplete (${part} is empty): "If we change ..., then ... will improve, which will create ..., because ..." (B0037).`,
+              `/charter/${part}`,
+            ),
           );
       // REQ-PB-036: every outcome whose good outcome test does not pass is listed (never silently a pass).
       for (const o of f.outcomes)

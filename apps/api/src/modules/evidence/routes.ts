@@ -1,12 +1,17 @@
 // evidence routes (ADR-0018, ADR-0010; REQ-S13-010..013, REQ-S16-006, REQ-S16-013):
 //   /transformations/{id}/evidence                      list, create (evidence.create)
-//   /transformations/{id}/evidence/{evidenceId}         get, update (evidence.create), archive
-//   .../evidence/{evidenceId}/content                   download (transformation.read) / upload a revision
-//   .../evidence/{evidenceId}/review                    verify or reject (evidence.review; never the creator)
+//   /transformations/{id}/evidence/{evidenceId}         get, update (evidence.create, own rows only), archive (own rows,
+//                                                       or evidence.review)
+//   .../evidence/{evidenceId}/content                   download (transformation.read) / upload a revision (own rows)
+//   .../evidence/{evidenceId}/review                    verify or reject (evidence.review; never the creator, the
+//                                                       content author or the uploader of the current revision)
 //   /transformations/{id}/evidence-links                list, create (evidence.create + edit rights on the record)
-//   .../evidence-links/{linkId}/remove                  remove with a reason (the row stays)
+//   .../evidence-links/{linkId}/remove                  remove with a reason (the row stays); the SAME record-level
+//                                                       edit rights as creating the link (F-DG2-142)
 // A new content revision, or a change of a link's URL / a note's text, resets the item to `unverified`: a verification
 // is bound to the content the reviewer saw (reviewed_content_id).
+// Separation of duties (F-DG2-140, REQ-S13-012): nobody verifies content they supplied. The content author is kept in
+// evidence.content_authored_by by the 0019 trigger, which also refuses such a review (the last line of defence).
 import { diffFields, sql, type Db, type EvidenceRow, type Tx } from "@mth/db";
 import type { Permission } from "@mth/shared";
 import {
@@ -20,7 +25,14 @@ import {
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { principalOf, requireRecordWrite, requireTransformationRead, type WriteRule } from "../access/index.ts";
+import {
+  denialOf,
+  principalOf,
+  requireRecordWrite,
+  requireTransformationRead,
+  type ResolvedTarget,
+  type WriteRule,
+} from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   cursorSchema,
@@ -68,6 +80,13 @@ const itemParams = z.strictObject({ transformationId: z.uuid(), evidenceId: z.uu
 const linkParams = z.strictObject({ transformationId: z.uuid(), linkId: z.uuid() });
 const tParams = z.strictObject({ transformationId: z.uuid() });
 const CREATE: readonly WriteRule[] = [{ permission: "evidence.create" }];
+/** Editing or replacing an item's content: only its creator or named owner (F-DG2-140; no evidence.edit right exists). */
+const EDIT_OWN: readonly WriteRule[] = [{ permission: "evidence.create", scope: "own" }];
+/** Archiving: the creator/owner, or a reviewer curating the repository (archiving never supplies content). */
+const ARCHIVE: readonly WriteRule[] = [
+  { permission: "evidence.create", scope: "own" },
+  { permission: "evidence.review" },
+];
 
 const EVIDENCE_COLS = [
   ["title", "title"],
@@ -105,6 +124,8 @@ export const evidenceRegister: RegisterSpec<EvidenceRow, Evidence> = {
   path: `${T}/evidence`,
   idParam: "evidenceId",
   writeRules: CREATE,
+  updateRules: EDIT_OWN,
+  archiveRules: ARCHIVE,
   createSchema: evidenceCreate,
   updateSchema: evidenceUpdate,
   toApi: toEvidence,
@@ -246,6 +267,62 @@ async function lockEvidence(tx: Tx, request: FastifyRequest, transformationId: s
   return current;
 }
 
+/** Created-by / owner of a linkable record in this transformation (null when it does not exist there). */
+async function recordOwnership(tx: Tx, transformationId: string, recordType: string, recordId: string) {
+  const row = await loose(tx)
+    .selectFrom(recordType)
+    .select([
+      sql<string>`created_by`.as("created_by"),
+      sql<string | null>`to_jsonb(${sql.table(recordType)})->>'owner_user_id'`.as("owner"),
+    ])
+    .where("id", "=", recordId)
+    .where("transformation_id", "=", transformationId)
+    .executeTakeFirst();
+  return row ? { createdBy: row.created_by as string, ownerUserId: (row.owner as string | null) ?? null } : null;
+}
+
+type SupplierFacts = Pick<EvidenceRow, "id" | "created_by" | "content_authored_by" | "current_content_id">;
+
+/** The people who supplied an evidence item's current content: its creator, the content author, the file uploader. */
+async function suppliersOf(tx: Tx, row: SupplierFacts): Promise<{ creator: string; authors: Set<string> }> {
+  const authors = new Set<string>([row.content_authored_by ?? row.created_by]);
+  if (row.current_content_id !== null) {
+    const c = await tx
+      .selectFrom("evidence_content")
+      .select("uploaded_by")
+      .where("id", "=", row.current_content_id)
+      .where("evidence_id", "=", row.id)
+      .executeTakeFirst();
+    if (c) authors.add(c.uploaded_by);
+  }
+  return { creator: row.created_by, authors };
+}
+
+/** 403 (with a denied-mutation audit) when the reviewer added the item or supplied its current content. */
+async function assertReviewerIndependent(
+  tx: Tx,
+  ctx: { readonly userId: string; readonly target: ResolvedTarget },
+  row: SupplierFacts,
+): Promise<void> {
+  const { creator, authors } = await suppliersOf(tx, row);
+  if (creator === ctx.userId)
+    throw new HttpProblem({
+      status: 403,
+      type: "urn:mth:problem:forbidden",
+      code: "evidence.reviewer_is_creator",
+      title: "Forbidden",
+      detail: "Evidence is reviewed by someone other than the person who added it.",
+    }).withDenial(denialOf("evidence.review", ctx.target));
+  if (authors.has(ctx.userId))
+    throw new HttpProblem({
+      status: 403,
+      type: "urn:mth:problem:forbidden",
+      code: "evidence.reviewer_is_author",
+      title: "Forbidden",
+      detail: "Evidence is reviewed by someone other than the person who supplied its current content.",
+    }).withDenial(denialOf("evidence.review", ctx.target));
+}
+
 export function registerEvidenceModule(
   app: FastifyInstance,
   { db, config }: ModuleDeps,
@@ -297,7 +374,19 @@ function registerContentRoutes(app: FastifyInstance, db: Db, store: EvidenceStor
     let storedKey: string | null = null;
     try {
       const row = await db.transaction().execute(async (tx) => {
-        const ctx = await openWrite(tx, request, transformationId, CREATE, null);
+        // Replacing the stored content is an edit: only the item's creator or named owner (F-DG2-140).
+        await requireTransformationRead(tx, principalOf(request), transformationId);
+        const seen = await tx
+          .selectFrom("evidence")
+          .select(["created_by", "owner_user_id"])
+          .where("id", "=", evidenceId)
+          .where("transformation_id", "=", transformationId)
+          .executeTakeFirst();
+        if (!seen) throw problems.notFound();
+        const ctx = await openWrite(tx, request, transformationId, EDIT_OWN, {
+          createdBy: seen.created_by,
+          ownerUserId: seen.owner_user_id,
+        });
         const rawName = request.headers["x-file-name"];
         const fileName = parse(
           z
@@ -379,22 +468,18 @@ function registerReviewRoute(app: FastifyInstance, db: Db): void {
       const ctx = await openWrite(tx, request, transformationId, [{ permission: "evidence.review" }], null);
       const seen = await tx
         .selectFrom("evidence")
-        .select(["created_by"])
+        .select(["id", "created_by", "content_authored_by", "current_content_id"])
         .where("id", "=", evidenceId)
         .where("transformation_id", "=", transformationId)
         .executeTakeFirst();
       if (!seen) throw problems.notFound();
-      // Separation of duties (ADR-0018 §3, ADR-0020 §3): nobody reviews evidence they created (also a CHECK).
-      if (seen.created_by === ctx.userId)
-        throw new HttpProblem({
-          status: 403,
-          type: "urn:mth:problem:forbidden",
-          code: "evidence.reviewer_is_creator",
-          title: "Forbidden",
-          detail: "Evidence is reviewed by someone other than the person who added it.",
-        });
+      // Separation of duties (ADR-0018 §3, ADR-0020 §3, F-DG2-140): nobody reviews evidence they created, nor content
+      // they supplied (note text / URL author, uploader of the current revision). Also the 0019 trigger.
+      await assertReviewerIndependent(tx, ctx, seen);
       const body = parseBody(evidenceReview, request.body);
       const current = await lockEvidence(tx, request, transformationId, evidenceId);
+      // Re-check on the locked row: the content may have changed between the first read and the lock.
+      await assertReviewerIndependent(tx, ctx, current);
       if (
         current.kind === "file_reference" &&
         (body.result === "verified" || body.accessibilityStatus === "accessible")
@@ -482,21 +567,10 @@ function registerLinkRoutes(app: FastifyInstance, db: Db): void {
           throw ruleProblem("evidence.archived", "Archived evidence cannot be linked.", "/evidenceId");
         // The target must exist in THIS transformation (also the p2_record_ref_guard trigger), and the caller needs
         // edit rights on it.
-        const target = await loose(tx)
-          .selectFrom(body.recordType)
-          .select([
-            sql<string>`created_by`.as("created_by"),
-            sql<string | null>`to_jsonb(${sql.table(body.recordType)})->>'owner_user_id'`.as("owner"),
-          ])
-          .where("id", "=", body.recordId)
-          .where("transformation_id", "=", transformationId)
-          .executeTakeFirst();
+        const target = await recordOwnership(tx, transformationId, body.recordType, body.recordId);
         if (!target)
           throw ruleProblem("validation.reference", "The record does not exist in this transformation.", "/recordId");
-        await requireRecordWrite(tx, ctx.principal, ctx.target, RECORD_WRITE_RULES.get(body.recordType)!, {
-          createdBy: target.created_by as string,
-          ownerUserId: (target.owner as string | null) ?? null,
-        });
+        await requireRecordWrite(tx, ctx.principal, ctx.target, RECORD_WRITE_RULES.get(body.recordType)!, target);
         const id = uuidv7();
         const row = await tx
           .insertInto("evidence_link")
@@ -543,12 +617,23 @@ function registerLinkRoutes(app: FastifyInstance, db: Db): void {
       const row = await db.transaction().execute(async (tx) => {
         const seen = await tx
           .selectFrom("evidence_link")
-          .select(["created_by"])
+          .select(["record_type", "record_id"])
           .where("id", "=", linkId)
           .where("transformation_id", "=", transformationId)
           .executeTakeFirst();
         const ctx = await openWrite(tx, request, transformationId, CREATE, null);
         if (!seen) throw problems.notFound();
+        // F-DG2-142: removing a link needs the SAME record-level edit rights as creating it (ADR-0018 §4), so a
+        // contributor cannot un-ready a gate by removing evidence from a record they may not edit. 403 + audit.
+        const rules = RECORD_WRITE_RULES.get(seen.record_type);
+        if (rules === undefined) throw problems.internal();
+        await requireRecordWrite(
+          tx,
+          ctx.principal,
+          ctx.target,
+          rules,
+          (await recordOwnership(tx, transformationId, seen.record_type, seen.record_id)) ?? {},
+        );
         const { reason } = parseBody(z.strictObject({ reason: z.string().trim().min(3).max(1000) }), request.body);
         const expected = requireIfMatch(request);
         const current = await tx

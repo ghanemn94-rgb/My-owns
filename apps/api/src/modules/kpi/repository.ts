@@ -348,3 +348,27 @@ export async function kpiDefinitionInUse(db: DbOrTx, transformationId: string, i
     .executeTakeFirst();
   return base !== undefined;
 }
+
+/**
+ * The outcome_kpi row's audit events that carry a diff, newest first: the source of who authored each part of the
+ * current trajectory (rules.ts trajectoryAuthors; F-DG2-141). audit_event is append-only and written in the same
+ * transaction as every outcome_kpi mutation, and the caller holds the row lock, so the trail matches the row.
+ */
+export async function outcomeKpiChangeEvents(
+  db: DbOrTx,
+  id: string,
+): Promise<{ actorUserId: string | null; onBehalfOfUserId: string | null; changes: unknown }[]> {
+  const rows = await db
+    .selectFrom("audit_event")
+    .select(["actor_user_id", "on_behalf_of_user_id", "changes"])
+    .where("record_type", "=", "outcome_kpi")
+    .where("record_id", "=", id)
+    .where("changes", "is not", null)
+    .orderBy("seq", "desc")
+    .execute();
+  return rows.map((r) => ({
+    actorUserId: r.actor_user_id,
+    onBehalfOfUserId: r.on_behalf_of_user_id,
+    changes: r.changes,
+  }));
+}

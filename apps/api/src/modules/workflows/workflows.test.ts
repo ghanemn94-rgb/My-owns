@@ -139,6 +139,7 @@ function completeFacts(): Facts {
       hasInScope: true,
       hasOutOfScope: true,
       hasBaselineDate: true,
+      thesisMissing: [],
     },
     northStar: { id: "n1", version: 1 },
     topOutcomes: [{ id: "o1" }],
@@ -189,6 +190,20 @@ describe("G1-G3 criterion evaluators (ADR-0015 §2)", () => {
   it("complete facts make every criterion complete", () => {
     for (const code of ["G1", "G2", "G3"] as const)
       expect(Object.values(completeness(code, completeFacts())), code).toEqual(keysOf(code).map(() => "complete"));
+  });
+
+  it("REQ-PB-030 (F-DG2-203): a thesis with an empty part (or no charter) leaves g2.outcome_tree incomplete", () => {
+    const f = completeFacts();
+    const g2 = (facts: Facts) => mod.evaluateGate(defOf("G2"), facts).find((c) => c.key === "g2.outcome_tree")!;
+    const partial = { ...f, charter: { ...f.charter!, thesisMissing: ["thesisBenefits", "thesisBecause"] } };
+    expect(g2(partial).completeness).toBe("incomplete");
+    expect(g2(partial).missing.map((m) => [m.code, m.pointer])).toEqual([
+      ["g2.outcome_tree.thesis_incomplete", "/charter/thesisBenefits"],
+      ["g2.outcome_tree.thesis_incomplete", "/charter/thesisBecause"],
+    ]);
+    const none = g2({ ...f, charter: null });
+    expect(none.missing.map((m) => m.code)).toContain("g2.outcome_tree.thesis_incomplete");
+    expect(g2(f).completeness).toBe("complete");
   });
 
   it("REQ-S13-012: evidence that is only a filename (never verifiable) leaves g1.diagnostic incomplete", () => {

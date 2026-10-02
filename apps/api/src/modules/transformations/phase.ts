@@ -2,21 +2,32 @@
 // approved product gate (G1 -> define, G2 -> design, G3 -> mobilize), called by the workflows module inside the gate
 // decision transaction. A product gate is a business approval made by a person; it is unrelated to the engineering
 // delivery gates DG0-DG7.
+//
+// Sequence integrity (B0009 "Run Phases 1-6 sequentially", B0023; F-DG2-205): a gate closes ITS OWN phase, so an
+// approval advances by exactly one step - from the gate's phase to the next one (diagnose -> define -> design ->
+// mobilize), never skipping. The workflows module also refuses to submit or approve a gate before its predecessor is
+// approved (Modular entry excepted).
 import { sql, type Tx } from "@mth/db";
 import { PHASES, type Phase } from "@mth/shared";
 import type { AuditContext } from "../audit/index.ts";
 import { record } from "../audit/index.ts";
+import { problems } from "../platform/index.ts";
 
 /**
- * Moves the transformation forward to `nextPhase` when it is not already there or beyond (a Modular transformation
- * may have entered later). Writes version + 1 and one audit event. Returns the phase transition, or null when the
- * phase did not change.
+ * Moves the transformation from the gate's phase to `nextPhase` (exactly one step). Returns null without a change when
+ * the transformation is already beyond the gate's phase (a Modular transformation that entered later). Refuses (422
+ * gate.out_of_sequence) when the transformation has not reached the gate's phase, so an approval can never skip a
+ * phase. Writes version + 1 and one audit event.
  */
 export async function advancePhaseOnGateApproval(
   tx: Tx,
   audit: AuditContext,
-  input: { transformationId: string; nextPhase: Phase; gateCode: string; decisionId: string },
+  input: { transformationId: string; gatePhase: Phase; nextPhase: Phase; gateCode: string; decisionId: string },
 ): Promise<{ from: Phase; to: Phase } | null> {
+  const gateIdx = PHASES.indexOf(input.gatePhase);
+  // Catalogue integrity: a gate's next phase is the phase right after its own.
+  if (gateIdx < 0 || PHASES.indexOf(input.nextPhase) !== gateIdx + 1)
+    throw new Error(`gate ${input.gateCode}: next phase ${input.nextPhase} does not follow ${input.gatePhase}`);
   const t = await tx
     .selectFrom("transformation")
     .select(["id", "organization_id", "current_phase", "version"])
@@ -24,7 +35,13 @@ export async function advancePhaseOnGateApproval(
     .forUpdate()
     .executeTakeFirstOrThrow();
   const from = t.current_phase as Phase;
-  if (PHASES.indexOf(input.nextPhase) <= PHASES.indexOf(from)) return null;
+  const fromIdx = PHASES.indexOf(from);
+  if (fromIdx > gateIdx) return null;
+  if (fromIdx < gateIdx)
+    throw problems.businessRule(
+      "gate.out_of_sequence",
+      `${input.gateCode} closes the ${input.gatePhase} phase, but the transformation is still in ${from}; phases run in sequence.`,
+    );
   const updated = await tx
     .updateTable("transformation")
     .set({

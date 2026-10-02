@@ -3,6 +3,10 @@
 //   three rows in one transaction - version + 1, the snapshot (with the linked North Star, top outcomes and guardrails
 //   read in the same transaction) and the audit event; the database refuses a commit missing any of them.
 //   North Star: exactly one current row; refining supersedes the current row and inserts a new one (both audited).
+//   The charter view always shows the CURRENT North Star; a charter saved with a since-superseded North Star carries the
+//   warning `charter.north_star_superseded`, and its next save re-links the current one (F-DG2-204, REQ-PB-033).
+//   Thesis (B0037, REQ-PB-030): an empty part is flagged `charter.thesis_incomplete` (F-DG2-203); the sentence is
+//   composed by `composeThesis` (@mth/shared) in the source structure.
 import {
   diffFields,
   sql,
@@ -16,6 +20,7 @@ import {
 import {
   charterUpdate,
   charterWrite,
+  composeThesis,
   northStarWrite,
   type Charter,
   type CharterVersion,
@@ -267,10 +272,29 @@ async function scopeCheckPrechecks(db: DbOrTx, c: CharterRow): Promise<CharterVi
   });
 }
 
+const THESIS_PART_LABEL: ReadonlyMap<string, string> = new Map([
+  ["thesisChange", "what we change (capabilities / journeys / operating model)"],
+  ["thesisOutcomes", "the customer/operational outcomes that will improve"],
+  ["thesisBenefits", "the financial/strategic benefits it will create"],
+  ["thesisBecause", "the evidence / causal logic (because ...)"],
+]);
+
+/** One `charter.thesis_incomplete` warning per empty thesis part (B0037; never silently passing). */
+export function thesisWarnings(
+  c: Pick<Charter, "thesisChange" | "thesisOutcomes" | "thesisBenefits" | "thesisBecause">,
+) {
+  return composeThesis(c).missing.map(
+    (part): Warning => ({
+      code: "charter.thesis_incomplete",
+      message: `The transformation thesis is incomplete: ${THESIS_PART_LABEL.get(part) ?? part} is empty. It must read "If we change ..., then ... will improve, which will create ..., because ..." (B0037).`,
+      pointer: `/charter/${part}`,
+    }),
+  );
+}
+
 export async function charterView(db: DbOrTx, c: CharterRow): Promise<CharterViewBody & { version: number }> {
-  const northStarRow = c.north_star_id
-    ? await db.selectFrom("north_star").selectAll().where("id", "=", c.north_star_id).executeTakeFirst()
-    : await findCurrentNorthStar(db, c.transformation_id);
+  // Always the CURRENT North Star (REQ-PB-033): a refinement supersedes the row the charter was saved with.
+  const northStarRow = await findCurrentNorthStar(db, c.transformation_id);
   const topOutcomes = await topOutcomesOf(db, c.transformation_id);
   const guardrails = await activeGuardrailsOf(db, c.transformation_id);
   const warnings: Warning[] = [];
@@ -280,8 +304,17 @@ export async function charterView(db: DbOrTx, c: CharterRow): Promise<CharterVie
       message: `The charter should hold 3-5 top outcomes; it holds ${topOutcomes.length}.`,
       pointer: "/topOutcomes",
     });
+  if (c.north_star_id !== null && northStarRow?.id !== c.north_star_id)
+    warnings.push({
+      code: "charter.north_star_superseded",
+      message:
+        "The North Star this charter version was saved with has since been refined (superseded). The current North Star is shown; save the charter to record it in a new charter version.",
+      pointer: "/northStar",
+    });
+  const charterBody = toCharter(c);
+  warnings.push(...thesisWarnings(charterBody));
   return {
-    charter: toCharter(c),
+    charter: charterBody,
     northStar: northStarRow ? toNorthStar(northStarRow) : null,
     topOutcomes: await presentOutcomes(db, topOutcomes),
     guardrails: guardrails.map(toStrategicGuardrail),
@@ -351,6 +384,24 @@ async function checkCharter(tx: Tx, organizationId: string, transformationId: st
   await assertSameTransformation(tx, "north_star", transformationId, m.north_star_id ?? null, "/northStarId");
 }
 
+/** An explicitly linked North Star must be the CURRENT one (a superseded sentence is never linked as current). */
+async function assertNorthStarCurrent(tx: Tx, transformationId: string, changes: Partial<CharterRow>): Promise<void> {
+  const id = changes.north_star_id ?? null;
+  if (id === null) return;
+  const ns = await tx
+    .selectFrom("north_star")
+    .select("status")
+    .where("id", "=", id)
+    .where("transformation_id", "=", transformationId)
+    .executeTakeFirst();
+  if (ns && ns.status !== "current")
+    throw ruleProblem(
+      "charter.north_star_not_current",
+      "Link the current North Star; this one was superseded by a refinement.",
+      "/northStarId",
+    );
+}
+
 const sendView = (
   reply: FastifyReply,
   status: number,
@@ -390,6 +441,7 @@ export function registerCharterRoutes(app: FastifyInstance, db: Db): string[] {
           );
         const values = pick(body, CHARTER_COLS) as Partial<CharterRow>;
         await checkCharter(tx, ctx.organizationId, transformationId, values);
+        await assertNorthStarCurrent(tx, transformationId, values);
         const id = uuidv7();
         const row = await tx
           .insertInto("charter")
@@ -445,6 +497,12 @@ export function registerCharterRoutes(app: FastifyInstance, db: Db): string[] {
       if (current.version !== expected) throw problems.versionConflict(current.version);
       const changes = pick(body, CHARTER_COLS) as Partial<CharterRow>;
       await checkCharter(tx, ctx.organizationId, transformationId, { ...current, ...changes });
+      await assertNorthStarCurrent(tx, transformationId, changes);
+      // A save re-links a superseded North Star to the current one (recorded in the diff and the new snapshot).
+      if (!("north_star_id" in changes) && current.north_star_id !== null) {
+        const ns = await findCurrentNorthStar(tx, transformationId);
+        if (ns && ns.id !== current.north_star_id) changes.north_star_id = ns.id;
+      }
       const updated = await tx
         .updateTable("charter")
         .set({ ...changes, version: sql<number>`version + 1`, updated_at: sql<Date>`now()`, updated_by: ctx.userId })

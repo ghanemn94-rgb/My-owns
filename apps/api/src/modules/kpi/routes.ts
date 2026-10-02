@@ -1,5 +1,5 @@
-// kpi module route registration (P2): kpi-definitions, baselines (+ validation), outcome-kpis (+ trajectory-approval)
-// and value-pools (+ validation) - the 23 kpi operations of docs/api/openapi.yaml. Every route declares its access in
+// kpi module route registration (P2): kpi-definitions (+ activate), baselines (+ validation), outcome-kpis
+// (+ trajectory-approval) and value-pools (+ validation) - the 24 kpi operations of docs/api/openapi.yaml. Every route declares its access in
 // `config.access` (the platform refuses to start otherwise) and its handler calls the policy function.
 import type { Permission } from "@mth/shared";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";

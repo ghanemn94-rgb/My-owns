@@ -195,8 +195,9 @@ function urlOf(path: string): string {
 }
 
 describe("read-only auditor (AUD) write-deny over every P2 mutating operation (generated from the contract)", () => {
-  it("the generated list covers the P2 mutations (127 P2 operations in the contract)", () => {
-    expect(P2_OPERATIONS).toHaveLength(127);
+  it("the generated list covers the P2 mutations (128 P2 operations in the contract)", () => {
+    // 127 (T-DG2-ARCH-01B) + POST /kpi-definitions/{id}/activate (D-061, F-DG2-201).
+    expect(P2_OPERATIONS).toHaveLength(128);
     expect(P2_MUTATIONS.length).toBeGreaterThanOrEqual(60);
   });
 
