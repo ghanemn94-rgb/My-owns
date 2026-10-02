@@ -3,6 +3,9 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { DEFAULTS } from "@mth/shared";
+import { useTransformations } from "../api/queries.ts";
+import { EmptyState, QueryState } from "../components/States.tsx";
+import { LifecycleChip } from "../components/Badges.tsx";
 import type { AreaId } from "../app/nav.ts";
 import { useMe } from "../auth/session.tsx";
 import { canAnywhere } from "../auth/permissions.ts";
@@ -24,6 +27,61 @@ export function AreaPlaceholderPage({ area }: { area: AreaId }) {
           </span>
         </h2>
         <p>{t("nav.plannedBody")}</p>
+        <h3 className="card__subtitle">{t("nav.willContain")}</h3>
+        <p>{t(`nav.areas.${area}.contents`)}</p>
+      </section>
+    </div>
+  );
+}
+
+/**
+ * Entry page of an area whose P2 content lives in each transformation's workspace (Strategy and KPIs -> Define,
+ * Target Operating Model -> Design, Governance -> Gates, Evidence and Reports -> Evidence). It lists the
+ * transformations the user can see and opens the matching workspace tab; the cross-portfolio view is still planned.
+ */
+export function AreaEntryPage({ area, tab }: { area: AreaId; tab: "define" | "design" | "gates" | "evidence" }) {
+  const { t } = useTranslation();
+  const label = t(`nav.areas.${area}.label`);
+  usePageTitle(label);
+  const list = useTransformations({ sort: "updatedAt:desc", limit: 50 });
+  return (
+    <div className="page" data-area-entry={area}>
+      <PageHeader title={label} subtitle={t(`nav.areas.${area}.summary`)} />
+      <section className="card" aria-labelledby="entry-title">
+        <h2 id="entry-title" className="card__title">
+          {t("nav.entry.title", { tab: t(`transformations.tabs.${tab}`) })}
+        </h2>
+        <p>{t("nav.entry.body")}</p>
+        <QueryState
+          query={list}
+          isEmpty={(page) => page.items.length === 0}
+          empty={<EmptyState title={t("transformations.emptyTitle")} body={t("transformations.emptyBody")} />}
+        >
+          {(page) => (
+            <ul className="plain-list entry-list">
+              {page.items.map((tr) => (
+                <li key={tr.id}>
+                  <Link className="link" to={`/transformations/${tr.id}/${tab}`}>
+                    <bdi dir="ltr" className="code">
+                      {tr.code}
+                    </bdi>{" "}
+                    {tr.name}
+                  </Link>{" "}
+                  <LifecycleChip status={tr.status} />
+                  {tr.archivedAt ? <LifecycleChip status="archived" /> : null}
+                </li>
+              ))}
+            </ul>
+          )}
+        </QueryState>
+      </section>
+      <section className="card" aria-labelledby="entry-planned">
+        <h2 id="entry-planned" className="card__title">
+          <span className="lifecycle-chip lifecycle-chip--draft">
+            <Icon name="clock" /> {t("nav.planned")}
+          </span>
+        </h2>
+        <p>{t("nav.entry.portfolioPlanned")}</p>
         <h3 className="card__subtitle">{t("nav.willContain")}</h3>
         <p>{t(`nav.areas.${area}.contents`)}</p>
       </section>

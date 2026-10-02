@@ -103,8 +103,23 @@ describe("bilingual shell", () => {
 
   it("marks planned areas as planned instead of pretending they work", async () => {
     mockApi(meRoute(makeMe(OFFICE_GRANTS, { preferredLocale: "en" })));
+    renderApp("/risks-actions");
+    expect(await screen.findByRole("heading", { level: 1, name: "Risks and Actions" })).toBeTruthy();
+    expect(screen.getAllByText("Planned").length).toBeGreaterThan(0);
+  });
+
+  it("a partial area (Governance) leads into the Gates tab of each transformation; its portfolio view stays planned", async () => {
+    mockApi(
+      meRoute(makeMe(OFFICE_GRANTS, { preferredLocale: "en" })),
+      route("GET", /\/api\/v1\/transformations\?/, () => ({
+        status: 200,
+        body: { items: [makeTransformation()], nextCursor: null },
+      })),
+    );
     renderApp("/governance");
     expect(await screen.findByRole("heading", { level: 1, name: "Governance" })).toBeTruthy();
+    const link = await screen.findByRole("link", { name: /TR-0001/ });
+    expect(link.getAttribute("href")).toBe(`/transformations/${makeTransformation().id}/gates`);
     expect(screen.getAllByText("Planned").length).toBeGreaterThan(0);
   });
 
@@ -194,9 +209,15 @@ describe("transformations", () => {
       buRoute,
       route("GET", /\/api\/v1\/transformations\/[^/?]+$/, () => ({ status: 200, body: makeTransformation() })),
       route("GET", /\/audit/, () => ({ status: 200, body: { items: [], nextCursor: null } })),
+      // P2 header sources: no North Star yet, no gate visible, no design decision.
+      route("GET", /\/north-star$/, () => problem(404, "north_star_not_found")),
+      route("GET", /\/api\/v1\/decisions\?/, () => ({ status: 200, body: { items: [], nextCursor: null } })),
     );
     renderApp(`/transformations/${makeTransformation().id}`);
     expect(await screen.findByText("Workspace summary")).toBeTruthy();
+    // The P2 parts of the header resolve from the API: unset North Star and an invisible gate are Unknown, never 0.
+    expect(await screen.findByText("0 open of 0 design decisions")).toBeTruthy();
+    await waitFor(() => expect(screen.queryAllByText("Loading…")).toHaveLength(0));
     for (const label of [
       "Gate readiness",
       "North Star",
@@ -208,7 +229,8 @@ describe("transformations", () => {
     ]) {
       expect(screen.getByText(label)).toBeTruthy();
     }
-    expect(screen.getAllByText("Unknown").length).toBeGreaterThanOrEqual(6);
+    // Gate readiness (gate not visible), North Star (not set), outcome health, benefits, next action.
+    expect(screen.getAllByText("Unknown").length).toBeGreaterThanOrEqual(5);
     const current = document.querySelector("[aria-current='step']")!;
     expect(current.textContent).toContain("Design");
     expect(screen.getByRole("button", { name: /Archive/ })).toBeTruthy();

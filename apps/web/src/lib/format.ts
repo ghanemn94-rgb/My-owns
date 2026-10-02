@@ -118,3 +118,15 @@ function offsetMs(epoch: number, timeZone: string): number {
   const wall = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
   return wall - Math.floor(epoch / 1000) * 1000;
 }
+
+/**
+ * A business date "YYYY-MM-DD" (a calendar date in the transformation's zone, no time). Formatted as that calendar
+ * date, never shifted by the browser's or the server's offset. Null/invalid input yields null (the caller renders
+ * Unknown).
+ */
+export function formatBusinessDate(value: string | null | undefined, locale: Locale): string | null {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const date = new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return null;
+  return new Intl.DateTimeFormat(intlLocale(locale), { dateStyle: "medium", timeZone: "UTC" }).format(date);
+}

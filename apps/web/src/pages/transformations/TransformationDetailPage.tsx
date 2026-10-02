@@ -1,26 +1,37 @@
-// Transformation workspace (REQ-S03-011 P1 increment): the header shows the eight elements named in §3 — phase, gate
-// readiness, North Star, owners, outcome health, benefits, key decisions, next required action. Elements whose records
-// arrive in later stages show Unknown (never 0 or green). Archive needs a reason and If-Match.
+// Transformation workspace (REQ-S03-011): the header shows the eight elements named in §3 — phase, gate readiness,
+// North Star, owners, outcome health, benefits, key decisions, next required action. Since P2 the header composes gate
+// readiness, the North Star and the open design decisions from the P2 resources (no dedicated header endpoint);
+// elements whose records arrive in later stages show Unknown (never 0 or green). Archive needs a reason and If-Match.
+// The workspace tabs lead to the P2 screens (Diagnose, Charter, Define, Design, Decisions, Gates, Evidence).
 import { useQueryClient } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation, useParams } from "react-router";
 import { ApiError, api } from "../../api/client.ts";
-import { keys, useTransformation, useTransformationAudit } from "../../api/queries.ts";
+import {
+  keys,
+  useDecisions,
+  useGates,
+  useNorthStar,
+  useTransformation,
+  useTransformationAudit,
+} from "../../api/queries.ts";
 import type { Transformation } from "../../api/types.ts";
 import { localName, useForwardArrow, useLocale } from "../../app/locale.ts";
-import { ancestryOf, canOn, type PermissionTarget } from "../../auth/permissions.ts";
+import { canOn } from "../../auth/permissions.ts";
 import { useMe } from "../../auth/session.tsx";
 import { HealthChip, LifecycleChip, Unknown } from "../../components/Badges.tsx";
 import { Pager, useCursorPager } from "../../components/DataTable.tsx";
 import { Icon } from "../../components/Icon.tsx";
 import { PageHeader, usePageTitle } from "../../components/Page.tsx";
 import { ReasonDialog } from "../../components/ReasonDialog.tsx";
+import { GateStatusChip } from "../../components/P2Badges.tsx";
+import { WorkspaceTabs } from "../../components/Workspace.tsx";
 import { EmptyState, NoPermissionState, QueryState } from "../../components/States.tsx";
 import { describeAuditAction, describeAuditChanges, type AuditValue } from "../../lib/auditChanges.ts";
 import { formatDateTime } from "../../lib/format.ts";
 import { isNoPermission } from "../../lib/problem.ts";
-import { BusinessUnitName, PhaseStepper, UserName, useBusinessUnitIndex } from "./common.tsx";
+import { BusinessUnitName, PhaseStepper, UserName, useBusinessUnitIndex, useTransformationTarget } from "./common.tsx";
 
 /**
  * Router state the create page passes to the detail page. It carries the code and name the API returned to the
@@ -35,17 +46,7 @@ function createdState(state: unknown, id: string | undefined): CreatedNavigation
   return created && typeof created === "object" && created.id === id ? created : null;
 }
 
-export function useTransformationTarget(t: Transformation | undefined): PermissionTarget | null {
-  const bu = useBusinessUnitIndex();
-  if (!t) return null;
-  return {
-    level: "transformation",
-    organizationId: t.organizationId,
-    businessUnitId: t.businessUnitId,
-    transformationId: t.id,
-    businessUnitAncestry: ancestryOf(t.businessUnitId, bu.units),
-  };
-}
+export { useTransformationTarget };
 
 export function TransformationDetailPage() {
   const { id } = useParams();
@@ -187,6 +188,8 @@ function Workspace({ tr }: { tr: Transformation }) {
         }
       />
 
+      <WorkspaceTabs tid={tr.id} />
+
       {archived ? (
         <div className="banner banner--info" role="note">
           <Icon name="lock" />{" "}
@@ -213,13 +216,13 @@ function Workspace({ tr }: { tr: Transformation }) {
           <div>
             <dt>{t("transformations.workspace.gateReadiness")}</dt>
             <dd>
-              <Unknown hint={t("transformations.workspace.laterStage")} />
+              <HeaderGate tr={tr} />
             </dd>
           </div>
           <div>
             <dt>{t("transformations.workspace.northStar")}</dt>
             <dd>
-              <Unknown hint={t("transformations.workspace.laterStage")} />
+              <HeaderNorthStar tid={tr.id} />
             </dd>
           </div>
           <div>
@@ -248,7 +251,7 @@ function Workspace({ tr }: { tr: Transformation }) {
           <div>
             <dt>{t("transformations.workspace.keyDecisions")}</dt>
             <dd>
-              <Unknown hint={t("transformations.workspace.laterStage")} />
+              <HeaderDecisions tid={tr.id} />
             </dd>
           </div>
           <div>
@@ -343,6 +346,59 @@ function Workspace({ tr }: { tr: Transformation }) {
         />
       ) : null}
     </>
+  );
+}
+
+/** The product gate that closes the current phase (G1 Diagnose … G6 Realize), with its live readiness. */
+const PHASE_GATE: Record<string, string> = {
+  diagnose: "G1",
+  define: "G2",
+  design: "G3",
+  mobilize: "G4",
+  transform: "G5",
+  realize: "G6",
+};
+
+function HeaderGate({ tr }: { tr: Transformation }) {
+  const { t } = useTranslation();
+  const gates = useGates(tr.id);
+  const code = PHASE_GATE[tr.currentPhase] ?? "G1";
+  const view = gates.data?.items.find((g) => g.definition.code === code);
+  if (gates.isPending) return <span className="muted">{t("common.state.loading")}</span>;
+  if (!view) return <Unknown hint={t("transformations.workspace.notVisible")} />;
+  const mandatory = view.criteria.filter((c) => c.mandatory);
+  const complete = mandatory.filter((c) => c.completeness === "complete").length;
+  return (
+    <span className="block">
+      <Link className="link" to={`/transformations/${tr.id}/gates/${code}`}>
+        {code}
+      </Link>{" "}
+      <GateStatusChip status={view.gate.status} />
+      <span className="block small">
+        {view.submissionEnabled ? t("gates.readiness", { complete, total: mandatory.length }) : t("gates.notEnabled")}
+      </span>
+    </span>
+  );
+}
+
+function HeaderNorthStar({ tid }: { tid: string }) {
+  const { t } = useTranslation();
+  const ns = useNorthStar(tid);
+  if (ns.isPending) return <span className="muted">{t("common.state.loading")}</span>;
+  if (ns.isError) return <Unknown hint={t("transformations.workspace.notVisible")} />;
+  return ns.data ? <q>{ns.data.statement}</q> : <Unknown hint={t("define.northStar.notSet")} />;
+}
+
+function HeaderDecisions({ tid }: { tid: string }) {
+  const { t } = useTranslation();
+  const decisions = useDecisions(tid, "design");
+  if (decisions.isPending) return <span className="muted">{t("common.state.loading")}</span>;
+  if (decisions.isError) return <Unknown hint={t("transformations.workspace.notVisible")} />;
+  const open = decisions.data.filter((d) => d.status === "open").length;
+  return (
+    <Link className="link" to={`/transformations/${tid}/decisions`}>
+      {t("transformations.workspace.openDecisions", { n: open, total: decisions.data.length })}
+    </Link>
   );
 }
 

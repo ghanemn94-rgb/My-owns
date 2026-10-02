@@ -7,14 +7,18 @@
 # Usage (from the repository root):
 #   apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e --workers=1
 #
-# Environment: PGBIN (PostgreSQL bin dir; default: newest /usr/lib/postgresql/*/bin), E2E_PG_PORT (default 54331).
+# Environment: PGBIN (PostgreSQL bin dir; default: newest /usr/lib/postgresql/*/bin), E2E_PG_PORT or QA_PG_PORT
+# (default 54331), E2E_API_PORT (default 3000; the run exports E2E_BASE_URL=http://localhost:<port> for Playwright, so
+# two stacks on one machine never share a port).
 # When run as uid 0 (sandboxes), PostgreSQL is started in a user namespace as uid 1000 because it refuses root.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 cd "$ROOT"
 PGBIN="${PGBIN:-$(ls -d /usr/lib/postgresql/*/bin 2>/dev/null | sort -V | tail -1)}"
-PG_PORT="${E2E_PG_PORT:-54331}"
+PG_PORT="${E2E_PG_PORT:-${QA_PG_PORT:-54331}}"
+API_PORT="${E2E_API_PORT:-3000}"
+export E2E_BASE_URL="http://localhost:${API_PORT}"
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/mth-web-e2e.XXXXXX")"
 chmod 777 "$WORK"
 PG_PID=""
@@ -44,7 +48,10 @@ psql "$ADMIN_URL" -q -v ON_ERROR_STOP=1 \
   -c "CREATE ROLE mth_owner NOLOGIN" -c "CREATE ROLE mth_app NOLOGIN" -c "CREATE DATABASE mth OWNER mth_owner"
 
 role_url() { node -e 'const u=new URL(process.argv[1]);u.pathname="/mth";u.searchParams.set("options","-c role="+process.argv[2]);console.log(u.toString())' "$ADMIN_URL" "$1"; }
-export NODE_ENV=development AUTH_MODE=dev PORT=3000 APP_BASE_URL=http://localhost:3000 LOG_LEVEL=warn
+export NODE_ENV=development AUTH_MODE=dev PORT="$API_PORT" APP_BASE_URL="$E2E_BASE_URL" LOG_LEVEL=warn
+# Evidence file revisions (P2) go to a private directory of this run; it is deleted with the cluster at teardown.
+mkdir -p "$WORK/evidence"
+export EVIDENCE_STORAGE_DRIVER=filesystem EVIDENCE_STORAGE_PATH="$WORK/evidence"
 export DATABASE_OWNER_URL="$(role_url mth_owner)" DATABASE_URL="$(role_url mth_app)"
 # The journeys sign in many times in a minute; production defaults are unchanged.
 export AUTH_RATE_LIMIT_PER_MINUTE=1000 RATE_LIMIT_PER_MINUTE=10000
@@ -53,8 +60,8 @@ node packages/db/dist/cli.js migrate
 node packages/db/dist/cli.js seed-dev
 node apps/api/dist/main.js >"$WORK/api.log" 2>&1 &
 API_PID=$!
-for _ in $(seq 1 60); do curl -fsS http://localhost:3000/readyz >/dev/null 2>&1 && break; sleep 0.5; done
-curl -fsS http://localhost:3000/readyz || { echo "API not ready"; cat "$WORK/api.log"; exit 4; }
+for _ in $(seq 1 60); do curl -fsS "$E2E_BASE_URL/readyz" >/dev/null 2>&1 && break; sleep 0.5; done
+curl -fsS "$E2E_BASE_URL/readyz" || { echo "API not ready"; cat "$WORK/api.log"; exit 4; }
 echo
 
 set +e

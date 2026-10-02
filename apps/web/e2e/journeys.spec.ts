@@ -199,11 +199,12 @@ test("shell: navigation, language persistence and My Work (Transformation Office
   await expect(skipLink).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page.locator("main#main")).toBeFocused();
-  // A planned area is labelled planned.
-  await navLink(nav, lang, "governance").click();
+  // A planned area is labelled planned (Governance became a partial area in P2; Risks and Actions is still planned).
+  await navLink(nav, lang, "risks").click();
   await expect(
-    page.getByRole("heading", { level: 1, name: tr(lang, "nav.areas.governance.label"), exact: true }),
+    page.getByRole("heading", { level: 1, name: tr(lang, "nav.areas.risks.label"), exact: true }),
   ).toBeVisible();
+  await expect(page.getByText(tr(lang, "nav.plannedBody"), { exact: true })).toBeVisible();
   await shot(page, lang, "03-planned-area");
   expect(foreign).toEqual([]);
 });

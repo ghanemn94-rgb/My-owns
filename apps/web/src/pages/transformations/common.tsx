@@ -2,10 +2,11 @@
 import { useTranslation } from "react-i18next";
 import { PHASES, type Phase } from "@mth/shared";
 import { useBusinessUnits, useUser } from "../../api/queries.ts";
-import type { BusinessUnit } from "../../api/types.ts";
+import type { BusinessUnit, Transformation } from "../../api/types.ts";
 import { localName, useLocale } from "../../app/locale.ts";
 import { Unknown } from "../../components/Badges.tsx";
 import { useMe } from "../../auth/session.tsx";
+import { ancestryOf, type PermissionTarget } from "../../auth/permissions.ts";
 
 /** Business units of the caller's organization, by id (for names and permission ancestry). */
 export function useBusinessUnitIndex(): {
@@ -17,6 +18,19 @@ export function useBusinessUnitIndex(): {
   const q = useBusinessUnits(me.organization.id);
   const units = q.data ?? [];
   return { units, byId: new Map(units.map((u) => [u.id, u])), loaded: q.isSuccess };
+}
+
+/** The permission target of one transformation (with its business-unit ancestry, for downward-inheriting grants). */
+export function useTransformationTarget(t: Transformation | undefined): PermissionTarget | null {
+  const bu = useBusinessUnitIndex();
+  if (!t) return null;
+  return {
+    level: "transformation",
+    organizationId: t.organizationId,
+    businessUnitId: t.businessUnitId,
+    transformationId: t.id,
+    businessUnitAncestry: ancestryOf(t.businessUnitId, bu.units),
+  };
 }
 
 export function BusinessUnitName({ id, index }: { id: string; index: ReadonlyMap<string, BusinessUnit> }) {

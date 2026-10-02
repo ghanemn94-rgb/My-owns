@@ -5,8 +5,16 @@ import { AdminHomePage } from "../pages/admin/AdminHomePage.tsx";
 import { AssignmentsPage } from "../pages/admin/AssignmentsPage.tsx";
 import { BusinessUnitEditPage, OrganizationDetailPage, OrganizationsPage } from "../pages/admin/OrganizationsPage.tsx";
 import { UserDetailPage, UsersPage } from "../pages/admin/UsersPage.tsx";
-import { AboutPage, AreaPlaceholderPage, MyWorkPage, NotFoundPage } from "../pages/AreaPages.tsx";
+import { AboutPage, AreaEntryPage, AreaPlaceholderPage, MyWorkPage, NotFoundPage } from "../pages/AreaPages.tsx";
 import { LoginPage } from "../pages/LoginPage.tsx";
+import { DecisionsPage } from "../pages/decisions/DecisionsPage.tsx";
+import { CharterPage } from "../pages/define/CharterPage.tsx";
+import { DefinePage } from "../pages/define/DefinePage.tsx";
+import { DesignPage } from "../pages/design/DesignPage.tsx";
+import { DiagnosePage } from "../pages/diagnose/DiagnosePage.tsx";
+import { EvidencePage } from "../pages/evidence/EvidencePage.tsx";
+import { GateDetailPage } from "../pages/gates/GateDetailPage.tsx";
+import { GatesPage } from "../pages/gates/GatesPage.tsx";
 import { TransformationCreatePage } from "../pages/transformations/TransformationCreatePage.tsx";
 import { TransformationDetailPage } from "../pages/transformations/TransformationDetailPage.tsx";
 import { TransformationEditPage } from "../pages/transformations/TransformationEditPage.tsx";
@@ -17,6 +25,12 @@ import { Shell } from "./Shell.tsx";
 const placeholderRoutes: RouteObject[] = NAV_AREAS.filter((a) => a.availability === "planned").map((a) => ({
   path: a.path.slice(1),
   element: <AreaPlaceholderPage area={a.id} />,
+}));
+
+/** Areas whose P2 content lives in each transformation's workspace: the area page leads into that workspace tab. */
+const entryRoutes: RouteObject[] = NAV_AREAS.filter((a) => a.workspaceTab).map((a) => ({
+  path: a.path.slice(1),
+  element: <AreaEntryPage area={a.id} tab={a.workspaceTab!} />,
 }));
 
 export const routes: RouteObject[] = [
@@ -35,6 +49,14 @@ export const routes: RouteObject[] = [
       { path: "transformations/new", element: <TransformationCreatePage /> },
       { path: "transformations/:id", element: <TransformationDetailPage /> },
       { path: "transformations/:id/edit", element: <TransformationEditPage /> },
+      { path: "transformations/:id/diagnose", element: <DiagnosePage /> },
+      { path: "transformations/:id/charter", element: <CharterPage /> },
+      { path: "transformations/:id/define", element: <DefinePage /> },
+      { path: "transformations/:id/design", element: <DesignPage /> },
+      { path: "transformations/:id/decisions", element: <DecisionsPage /> },
+      { path: "transformations/:id/gates", element: <GatesPage /> },
+      { path: "transformations/:id/gates/:gateCode", element: <GateDetailPage /> },
+      { path: "transformations/:id/evidence", element: <EvidencePage /> },
       { path: "admin", element: <AdminHomePage /> },
       { path: "admin/organizations", element: <OrganizationsPage /> },
       { path: "admin/organizations/:id", element: <OrganizationDetailPage /> },
@@ -43,6 +65,7 @@ export const routes: RouteObject[] = [
       { path: "admin/users/:id", element: <UserDetailPage /> },
       { path: "admin/assignments", element: <AssignmentsPage /> },
       { path: "about", element: <AboutPage /> },
+      ...entryRoutes,
       ...placeholderRoutes,
       { path: "*", element: <NotFoundPage /> },
     ],

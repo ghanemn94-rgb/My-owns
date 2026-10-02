@@ -65,6 +65,14 @@ export interface RequestOptions {
   readonly signal?: AbortSignal;
   /** Do not notify 401 listeners (used by the session probe itself). */
   readonly silent401?: boolean;
+  /**
+   * Raw request body (file upload, application/octet-stream). Mutually exclusive with `body`; the bytes are sent
+   * as-is with `contentType`.
+   */
+  readonly rawBody?: Blob;
+  readonly contentType?: string;
+  /** Extra request headers (e.g. X-File-Name for an evidence upload). Never credentials. */
+  readonly headers?: Readonly<Record<string, string>>;
 }
 
 export function buildUrl(path: string, query?: RequestOptions["query"]): string {
@@ -91,8 +99,12 @@ export interface ApiResponse<T> {
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<ApiResponse<T>> {
   const method = options.method ?? "GET";
-  const headers: Record<string, string> = { Accept: "application/json, application/problem+json" };
+  const headers: Record<string, string> = {
+    ...options.headers,
+    Accept: "application/json, application/problem+json",
+  };
   if (options.body !== undefined) headers["Content-Type"] = "application/json";
+  else if (options.rawBody !== undefined) headers["Content-Type"] = options.contentType ?? "application/octet-stream";
   if (method !== "GET" && csrfToken) headers["X-CSRF-Token"] = csrfToken;
   if (options.ifMatch !== undefined) headers["If-Match"] = `"${options.ifMatch}"`;
   if (options.idempotencyKey) headers["Idempotency-Key"] = options.idempotencyKey;
@@ -103,7 +115,11 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
       method,
       headers,
       credentials: "same-origin",
-      ...(options.body !== undefined ? { body: JSON.stringify(options.body) } : {}),
+      ...(options.body !== undefined
+        ? { body: JSON.stringify(options.body) }
+        : options.rawBody !== undefined
+          ? { body: options.rawBody }
+          : {}),
       ...(options.signal ? { signal: options.signal } : {}),
     });
   } catch (err) {

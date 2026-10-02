@@ -1068,3 +1068,378 @@ input[type="radio"] {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+/* ---------------------------------------------------------------- P2 workspace screens (DG2) */
+/* Long dialogs scroll inside the viewport; the steps editor gets a wider dialog. */
+.dialog {
+  max-block-size: calc(100vh - 2rem);
+  overflow-y: auto;
+}
+.dialog:has(.steps-editor) {
+  inline-size: min(56rem, 100%);
+}
+.form--dialog {
+  display: grid;
+  gap: var(--mth-space-3);
+}
+
+.workspace-tabs {
+  margin-block: var(--mth-space-3);
+  border-block-end: 1px solid var(--mth-border-default);
+}
+.workspace-tabs__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mth-space-1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.workspace-tabs__link {
+  display: inline-block;
+  padding-block: var(--mth-space-2);
+  padding-inline: var(--mth-space-3);
+  color: var(--mth-action-primary);
+  text-decoration: none;
+  font-weight: 500;
+  border-block-end: 3px solid transparent;
+}
+.workspace-tabs__link:hover {
+  color: var(--mth-action-primary-hover);
+}
+.workspace-tabs__link[aria-current="page"] {
+  color: var(--mth-brand-deep);
+  border-block-end-color: var(--mth-brand-deep);
+  font-weight: 600;
+}
+.page-intro {
+  color: var(--mth-text-secondary);
+  margin-block-end: var(--mth-space-3);
+}
+
+.section {
+  margin-block-end: var(--mth-space-4);
+  scroll-margin-block-start: var(--mth-space-4);
+}
+.section__header {
+  flex-wrap: wrap;
+}
+.section__actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--mth-space-2);
+}
+.section__intro {
+  margin-block-end: var(--mth-space-3);
+}
+.section-nav {
+  margin-block-end: var(--mth-space-3);
+}
+.section-nav__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mth-space-2) var(--mth-space-4);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.small-heading {
+  font-size: 0.9rem;
+  margin-block: var(--mth-space-3) var(--mth-space-2);
+}
+.text-cell {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.row-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--mth-space-1) var(--mth-space-2);
+  align-items: center;
+}
+.details--compact {
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--mth-space-2) var(--mth-space-4);
+  margin-block: var(--mth-space-2);
+}
+.register__toolbar {
+  margin-block-end: var(--mth-space-3);
+}
+.form-section {
+  display: grid;
+  gap: var(--mth-space-3);
+  margin-block-end: var(--mth-space-4);
+}
+.disclosure {
+  margin-block-start: var(--mth-space-3);
+}
+.disclosure > summary {
+  cursor: pointer;
+  color: var(--mth-action-primary);
+  font-weight: 500;
+}
+.amount {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.value-summary {
+  margin-block-end: var(--mth-space-3);
+}
+.value-totals {
+  display: grid;
+  gap: var(--mth-space-2);
+}
+.value-total__label {
+  font-weight: 600;
+}
+
+/* Diagnose */
+.workstreams {
+  display: grid;
+  gap: var(--mth-space-4);
+}
+.workstream {
+  border: 1px solid var(--mth-border-default);
+  border-radius: var(--mth-radius);
+  padding: var(--mth-space-3);
+}
+.output-list > li {
+  padding-block: var(--mth-space-2);
+  border-block-end: 1px solid var(--mth-border-default);
+}
+
+/* Define */
+.north-star {
+  margin: 0;
+  font-size: 1.15rem;
+  color: var(--mth-brand-deep);
+  font-weight: 500;
+}
+.north-star-figure {
+  margin: 0;
+  padding-inline-start: var(--mth-space-4);
+  border-inline-start: 4px solid var(--mth-brand-primary);
+}
+.outcome-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--mth-space-3);
+}
+.outcome-tree--nested {
+  margin-block-start: var(--mth-space-3);
+  padding-inline-start: var(--mth-space-5);
+  border-inline-start: 2px solid var(--mth-border-default);
+}
+.outcome-card {
+  border: 1px solid var(--mth-border-default);
+  border-radius: var(--mth-radius);
+  padding: var(--mth-space-3);
+}
+.outcome-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--mth-space-2);
+}
+.outcome-card__title {
+  font-size: 1rem;
+  margin: 0;
+}
+.good-outcome {
+  margin-block: var(--mth-space-2);
+}
+.good-outcome__summary {
+  margin-block-end: var(--mth-space-2);
+}
+.charter-fields {
+  margin: 0;
+  padding-inline-start: var(--mth-space-5);
+  display: grid;
+  gap: var(--mth-space-3);
+}
+.charter-field__label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--mth-text-secondary);
+  font-weight: 500;
+}
+.thesis {
+  display: grid;
+  gap: var(--mth-space-2);
+  margin: 0;
+}
+.thesis dt {
+  font-weight: 600;
+  color: var(--mth-brand-deep);
+}
+.thesis dd {
+  margin: 0;
+}
+.version-diff {
+  margin-block-start: var(--mth-space-4);
+}
+.version-diff del {
+  text-decoration: line-through;
+  color: var(--mth-text-secondary);
+}
+.version-diff ins {
+  text-decoration: underline;
+}
+
+/* Design */
+.tom-canvas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: var(--mth-space-3);
+}
+.tom-box {
+  border: 1px solid var(--mth-border-control);
+  border-radius: var(--mth-radius);
+  padding: var(--mth-space-3);
+  display: grid;
+  align-content: start;
+  gap: var(--mth-space-2);
+}
+.tom-box--selected {
+  background: var(--mth-surface-selected);
+  border-width: 2px;
+  border-color: var(--mth-brand-deep);
+}
+.tom-box__title {
+  font-size: 0.95rem;
+  margin: 0;
+}
+.tom-box__num {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  border-radius: 999px;
+  background: var(--mth-brand-deep);
+  color: var(--mth-text-inverse);
+  font-size: 0.8rem;
+}
+.tom-box__prompt {
+  margin: 0;
+}
+.tom-box__facts {
+  margin: 0;
+  display: grid;
+  gap: var(--mth-space-1);
+}
+.tom-box__facts dt {
+  font-size: 0.75rem;
+  color: var(--mth-text-secondary);
+}
+.tom-box__facts dd {
+  margin: 0;
+}
+.dimension-view,
+.journey-detail,
+.workshop-mode,
+.submission-detail {
+  margin-block-start: var(--mth-space-4);
+  padding: var(--mth-space-4);
+  border: 2px solid var(--mth-brand-deep);
+  border-radius: var(--mth-radius);
+}
+.sourcing-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mth-space-4);
+  margin-block: 0 var(--mth-space-3);
+}
+.sourcing-summary dt {
+  font-size: 0.8rem;
+  color: var(--mth-text-secondary);
+}
+.sourcing-summary dd {
+  margin: 0;
+  font-weight: 600;
+}
+.journey-steps {
+  display: grid;
+  gap: var(--mth-space-3);
+  padding-inline-start: var(--mth-space-5);
+}
+.journey-step {
+  border-inline-start: 3px solid var(--mth-border-control);
+  padding-inline-start: var(--mth-space-3);
+}
+.steps-editor {
+  display: grid;
+  gap: var(--mth-space-3);
+  padding-inline-start: 0;
+  list-style: none;
+}
+.step-fieldset {
+  border: 1px solid var(--mth-border-default);
+  border-radius: var(--mth-radius);
+  padding: var(--mth-space-3);
+}
+
+/* Decisions, gates, evidence */
+.options-list > li + li {
+  margin-block-start: var(--mth-space-1);
+}
+.gate-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  gap: var(--mth-space-3);
+}
+.gate-card {
+  border: 1px solid var(--mth-border-control);
+  border-radius: var(--mth-radius);
+  padding: var(--mth-space-3);
+}
+.gate-card__title {
+  font-size: 1rem;
+  margin: 0 0 var(--mth-space-2);
+}
+.missing-list > li + li {
+  margin-block-start: var(--mth-space-1);
+}
+.criteria-table th[scope="row"] {
+  min-inline-size: 12rem;
+}
+.entry-list > li {
+  padding-block: var(--mth-space-2);
+  border-block-end: 1px solid var(--mth-border-default);
+}
+/* Grid items default to min-width:auto; a wide register must scroll inside its card, not widen the page. */
+.page > *,
+.section > *,
+.workstream > * {
+  min-inline-size: 0;
+}
+.register__toolbar {
+  flex-wrap: wrap;
+  align-items: end;
+}
+/* A hovered row uses surface.selected; links and link buttons in it switch to brand.deep, the declared (checked)
+   pair "brand.deep on surface.selected", so their contrast stays >= 4.5:1. */
+.table tbody tr:hover a,
+.table tbody tr:hover .button--link,
+.tom-box--selected a,
+.tom-box--selected .button--link {
+  color: var(--mth-brand-deep);
+}
+/* Absolutely positioned visually-hidden text inside a horizontally scrolled table must stay inside the scroll
+   container (otherwise, in RTL, it widens the document). */
+.table-wrap {
+  position: relative;
+}

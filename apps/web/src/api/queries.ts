@@ -4,6 +4,18 @@ import { PAGINATION } from "@mth/shared";
 import { ApiError, api, apiRequest, setCsrfToken } from "./client.ts";
 import type {
   AuditEvent,
+  CharterVersion,
+  CharterView,
+  Decision,
+  GateSubmission,
+  GateSubmissionView,
+  GateView,
+  JourneyPainPoint,
+  MethodologyCatalogue,
+  NorthStar,
+  TeamAssignment,
+  TomCanvasCellView,
+  TomWorkshopItem,
   BusinessUnit,
   Me,
   Organization,
@@ -210,4 +222,172 @@ export function useTransformationAudit(id: string, cursor: string | null, enable
 
 export function useInvalidate(): QueryClient {
   return useQueryClient();
+}
+
+// ------------------------------------------------------------------------------------------------ P2 (DG2)
+// Every P2 query key starts with ["p2", transformationId], so one invalidation after a mutation refreshes every
+// register of that transformation, including the LIVE gate readiness that depends on all of them.
+
+export const p2Keys = {
+  all: (tid: string) => ["p2", tid] as const,
+  methodology: (tid: string) => ["p2", tid, "methodology"] as const,
+  register: (tid: string, resource: string, query: Record<string, string>) => ["p2", tid, resource, query] as const,
+  charter: (tid: string) => ["p2", tid, "charter"] as const,
+  charterVersions: (tid: string) => ["p2", tid, "charter-versions"] as const,
+  northStar: (tid: string) => ["p2", tid, "north-star"] as const,
+  northStarHistory: (tid: string) => ["p2", tid, "north-star-history"] as const,
+  canvas: (tid: string) => ["p2", tid, "tom-canvas"] as const,
+  decisions: (tid: string, kind: string) => ["p2", tid, "decisions", kind] as const,
+  gates: (tid: string) => ["p2", tid, "gates"] as const,
+  gate: (tid: string, code: string) => ["p2", tid, "gate", code] as const,
+  gateSubmissions: (tid: string, code: string) => ["p2", tid, "gate-submissions", code] as const,
+  gateSubmission: (tid: string, code: string, no: number) => ["p2", tid, "gate-submission", code, no] as const,
+  team: (tid: string) => ["p2", tid, "team"] as const,
+};
+
+const base = (tid: string) => `/api/v1/transformations/${tid}`;
+
+/** A 404 whose code says "not created yet" is an empty state (null); any other error stays an error. */
+async function orNull<T>(load: () => Promise<T>, notFoundCode: string): Promise<T | null> {
+  try {
+    return await load();
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404 && e.code === notFoundCode) return null;
+    throw e;
+  }
+}
+
+export function useMethodology(tid: string) {
+  return useQuery({
+    queryKey: p2Keys.methodology(tid),
+    queryFn: () => api.get<MethodologyCatalogue>(`${base(tid)}/methodology`),
+    staleTime: 300_000,
+    retry: shouldRetry,
+  });
+}
+
+/**
+ * A whole P2 register of one transformation (bounded: 20 pages of 100). The registers are small per transformation;
+ * the screens sort, filter and paginate them client-side.
+ */
+export function useRegister<T>(tid: string, resource: string, query: Record<string, string> = {}, enabled = true) {
+  return useQuery({
+    queryKey: p2Keys.register(tid, resource, query),
+    queryFn: () => fetchAllPages<T>(`${base(tid)}/${resource}`, query),
+    enabled: Boolean(tid) && enabled,
+    retry: shouldRetry,
+  });
+}
+
+export function useCharter(tid: string) {
+  return useQuery({
+    queryKey: p2Keys.charter(tid),
+    queryFn: () => orNull(() => api.get<CharterView>(`${base(tid)}/charter`), "charter_not_found"),
+    retry: shouldRetry,
+  });
+}
+
+export function useCharterVersions(tid: string, enabled = true) {
+  return useQuery({
+    queryKey: p2Keys.charterVersions(tid),
+    queryFn: () => fetchAllPages<CharterVersion>(`${base(tid)}/charter/versions`),
+    enabled,
+    retry: shouldRetry,
+  });
+}
+
+export function useNorthStar(tid: string) {
+  return useQuery({
+    queryKey: p2Keys.northStar(tid),
+    queryFn: () => orNull(() => api.get<NorthStar>(`${base(tid)}/north-star`), "north_star_not_found"),
+    retry: shouldRetry,
+  });
+}
+
+export function useNorthStarHistory(tid: string, enabled = true) {
+  return useQuery({
+    queryKey: p2Keys.northStarHistory(tid),
+    queryFn: () => fetchAllPages<NorthStar>(`${base(tid)}/north-star/history`),
+    enabled,
+    retry: shouldRetry,
+  });
+}
+
+export function useTomCanvas(tid: string) {
+  return useQuery({
+    queryKey: p2Keys.canvas(tid),
+    queryFn: () => api.get<{ cells: TomCanvasCellView[] }>(`${base(tid)}/tom-canvas`),
+    retry: shouldRetry,
+  });
+}
+
+/** The canonical decision register filtered by kind (`design` = T04 Design Decision Log). */
+export function useDecisions(tid: string, kind: "design" | "gate" | "executive") {
+  return useQuery({
+    queryKey: p2Keys.decisions(tid, kind),
+    queryFn: () => fetchAllPages<Decision>("/api/v1/decisions", { transformationId: tid, kind }),
+    retry: shouldRetry,
+  });
+}
+
+export function useGates(tid: string) {
+  return useQuery({
+    queryKey: p2Keys.gates(tid),
+    queryFn: () => api.get<{ items: GateView[] }>(`${base(tid)}/gates`),
+    retry: shouldRetry,
+  });
+}
+
+export function useGate(tid: string, code: string) {
+  return useQuery({
+    queryKey: p2Keys.gate(tid, code),
+    queryFn: () => api.get<GateView>(`${base(tid)}/gates/${code}`),
+    retry: shouldRetry,
+  });
+}
+
+export function useGateSubmissions(tid: string, code: string) {
+  return useQuery({
+    queryKey: p2Keys.gateSubmissions(tid, code),
+    queryFn: () => fetchAllPages<GateSubmission>(`${base(tid)}/gates/${code}/submissions`),
+    retry: shouldRetry,
+  });
+}
+
+export function useGateSubmission(tid: string, code: string, no: number | null) {
+  return useQuery({
+    queryKey: p2Keys.gateSubmission(tid, code, no ?? 0),
+    queryFn: () => api.get<GateSubmissionView>(`${base(tid)}/gates/${code}/submissions/${no}`),
+    enabled: no !== null,
+    retry: shouldRetry,
+  });
+}
+
+/** The transformation team (active scoped assignments here and inherited), used for owner pickers. */
+export function useTeam(tid: string) {
+  return useQuery({
+    queryKey: p2Keys.team(tid),
+    queryFn: () => fetchAllPages<TeamAssignment>(`${base(tid)}/scoped-assignments`),
+    retry: shouldRetry,
+    staleTime: 60_000,
+  });
+}
+
+export function usePainPoints(tid: string, journeyId: string | null) {
+  return useRegister<JourneyPainPoint>(tid, `journeys/${journeyId}/pain-points`, {}, journeyId !== null);
+}
+
+export function useWorkshopItems(tid: string, workshopId: string | null) {
+  return useRegister<TomWorkshopItem>(tid, `tom-workshops/${workshopId}/items`, {}, workshopId !== null);
+}
+
+/** Refreshes everything of one transformation after a P2 mutation (registers, live gate readiness, header, phase). */
+export function useP2Refresh(tid: string): () => Promise<void> {
+  const queryClient = useQueryClient();
+  return async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: p2Keys.all(tid) }),
+      queryClient.invalidateQueries({ queryKey: keys.transformation(tid) }),
+    ]);
+  };
 }

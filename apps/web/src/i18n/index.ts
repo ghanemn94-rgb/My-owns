@@ -6,12 +6,26 @@ import i18next, { type i18n as I18n } from "i18next";
 import { initReactI18next } from "react-i18next";
 import { DEFAULTS, LOCALES, type Locale } from "@mth/shared";
 import arAdmin from "./ar/admin.json" with { type: "json" };
+import arDecisions from "./ar/decisions.json" with { type: "json" };
+import arDefine from "./ar/define.json" with { type: "json" };
+import arDesign from "./ar/design.json" with { type: "json" };
+import arDiagnose from "./ar/diagnose.json" with { type: "json" };
+import arEvidence from "./ar/evidence.json" with { type: "json" };
+import arGates from "./ar/gates.json" with { type: "json" };
+import arKpi from "./ar/kpi.json" with { type: "json" };
 import arAuth from "./ar/auth.json" with { type: "json" };
 import arCommon from "./ar/common.json" with { type: "json" };
 import arNav from "./ar/nav.json" with { type: "json" };
 import arProblems from "./ar/problems.json" with { type: "json" };
 import arTransformations from "./ar/transformations.json" with { type: "json" };
 import enAdmin from "./en/admin.json" with { type: "json" };
+import enDecisions from "./en/decisions.json" with { type: "json" };
+import enDefine from "./en/define.json" with { type: "json" };
+import enDesign from "./en/design.json" with { type: "json" };
+import enDiagnose from "./en/diagnose.json" with { type: "json" };
+import enEvidence from "./en/evidence.json" with { type: "json" };
+import enGates from "./en/gates.json" with { type: "json" };
+import enKpi from "./en/kpi.json" with { type: "json" };
 import enAuth from "./en/auth.json" with { type: "json" };
 import enCommon from "./en/common.json" with { type: "json" };
 import enNav from "./en/nav.json" with { type: "json" };
@@ -27,6 +41,13 @@ export const catalogues = {
     transformations: arTransformations,
     admin: arAdmin,
     problems: arProblems,
+    diagnose: arDiagnose,
+    kpi: arKpi,
+    define: arDefine,
+    design: arDesign,
+    decisions: arDecisions,
+    gates: arGates,
+    evidence: arEvidence,
   },
   en: {
     common: enCommon,
@@ -35,6 +56,13 @@ export const catalogues = {
     transformations: enTransformations,
     admin: enAdmin,
     problems: enProblems,
+    diagnose: enDiagnose,
+    kpi: enKpi,
+    define: enDefine,
+    design: enDesign,
+    decisions: enDecisions,
+    gates: enGates,
+    evidence: enEvidence,
   },
 } as const;
 
