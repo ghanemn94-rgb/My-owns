@@ -820,7 +820,7 @@
       "id": "DG2",
       "stage": "P2",
       "name": "Diagnose define and design",
-      "state": "FIXING",
+      "state": "REVIEWING",
       "depends_on": [
         "DG1"
       ],
@@ -839,10 +839,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:b98c44db7ef91295eec25a21cbd394a91890b01caeeb6bfd269eb1ee6d132be5",
-        "source_commit": "9e13947e5a242e43fb08aab0e506888ed2c6cc38",
-        "frozen_at": "2026-10-06T05:40:55Z",
-        "manifest_path": "docs/delivery/candidates/DG2/b98c44db7ef91295.manifest.json"
+        "candidate_id": "sha256:29ced0ed896ab9bf559e15dbdb39495b3da7a60c170989631ad9caf9a792ce58",
+        "source_commit": "e37f6ea4fdb2b97771e9965dd002e1102647804c",
+        "frozen_at": "2026-10-06T07:22:48Z",
+        "manifest_path": "docs/delivery/candidates/DG2/29ced0ed896ab9bf.manifest.json"
       },
       "review_rounds": [
         {
@@ -879,6 +879,18 @@
             "qa-verifier": "docs/delivery/reviews/DG2/round-3/qa-verifier.json"
           },
           "note": "DG2 gate review round 3 on candidate b98c44db (519 files, source 9e13947). The four round-2 findings are FIXED_PENDING_VERIFICATION: F-DG2-143 (architecture/unit-test timeout headroom), F-DG2-150 (B0041 exclusions pre-check fails on empty/blank Out of scope; blank free text rejected on P2 inputs, D-063), F-DG2-151 (gate titles show the B0023 name once) and F-DG2-152 (register screen_api matches the contract). Orchestrator pre-review verification: typecheck/build/lint/format/openapi(161)/no-cdn exit 0; unit 520/520 on Node 24 and 22; contrast PASS; integration 456/456; e2e P1+P2 chromium-en + chromium-ar green; validate --register DG2, --historical --stage DG1, --pipeline PASS. Reviewers use disjoint finding-id ranges (code-security 160-169, domain 170-179, qa 210-219; D-062)."
+        },
+        {
+          "round": 4,
+          "candidate_id": "sha256:29ced0ed896ab9bf559e15dbdb39495b3da7a60c170989631ad9caf9a792ce58",
+          "frozen_at": "2026-10-06T07:22:48Z",
+          "source_commit": "e37f6ea4fdb2b97771e9965dd002e1102647804c",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG2/round-4/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG2/round-4/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG2/round-4/qa-verifier.json"
+          },
+          "note": "DG2 gate review round 4 on candidate 29ced0ed (source e37f6ea). The round-3 findings are FIXED_PENDING_VERIFICATION: F-DG2-160 (one shared visible-content predicate for free text, name and reason: BE6 + BE7), F-DG2-210 (every P2 web form refuses whitespace- or invisible-only text with an inline EN/AR validation.blank error and sends nothing: FE5 + FE6) and F-DG2-211 (the error banner wraps a semantic list; axe clean: FE5). The other 13 DG2 findings are CLOSED_VERIFIED. Orchestrator pre-review verification: typecheck/build/lint/format/openapi(161)/no-cdn exit 0; unit 616/616 on Node 24 and 22; contrast PASS; integration 465/465; e2e 58 passed (P1+P2+blank-text, chromium-en + chromium-ar); validate --register DG2, --historical --stage DG1, --pipeline PASS. Disjoint id ranges: code-security 180-189, domain 190-199, qa 220-229 (D-062)."
         }
       ],
       "gate_record": "docs/delivery/gates/DG2.json",
@@ -922,6 +934,11 @@
           "state": "FIXING",
           "at": "2026-10-06T06:25:00Z",
           "note": "Round 3 on candidate b98c44db: code-security PASS (F-DG2-143 CLOSED_VERIFIED; new F-DG2-160 Low: invisible-only Unicode text (U+0085, Cf format characters, fillers) passes the blank rule) and domain PASS (F-DG2-150/151/152 CLOSED_VERIFIED; no new findings). qa-verifier FAIL with two new Medium web findings: F-DG2-210 (forms map whitespace-only to null, so the validation__blank message is unreachable and an edit can clear Out of scope) and F-DG2-211 (the RecordForm error banner <ul role=alert> gives a serious axe 'listitem' violation; present since Phase B). 13 findings CLOSED_VERIFIED, 3 OPEN. Round-4 repairs run in sequence: backend-workflow-engineer T-DG2-BE6 (F-160, one shared visible-content predicate), then frontend-ux-engineer T-DG2-FE5 (F-210, F-211). Then re-freeze; round 4 with disjoint id ranges."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-10-06T07:30:00Z",
+          "note": "Round-4 repairs integrated (D-064): BE6 visible-content predicate (F-160), BE7 name/reason and inline reason parsers plus sweep (F-160), FE5 RecordForm/charter blank handling and the alert-wrapped list (F-210, F-211), and FE6 the same rule in every hand-written P2 form and ReasonDialog (F-210 class). 13 findings CLOSED_VERIFIED and 3 FIXED_PENDING_VERIFICATION; 0 OPEN. Orchestrator verification green. Candidate frozen for gate review round 4; all three reviewers re-review, and code-security and qa verify their own findings."
         }
       ]
     },
