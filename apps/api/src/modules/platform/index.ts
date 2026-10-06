@@ -29,11 +29,20 @@ export {
 export {
   genReqId,
   isValidAccess,
+  problemForError,
   registerPlatformHooks,
   sendProblem,
   type AuthzTracker,
   type PlatformOptions,
   type RouteAccess,
 } from "./hooks.ts";
+export {
+  BAD_URL_DETAIL,
+  clientErrorProblem,
+  createClientErrorHandler,
+  createFrameworkErrorHandler,
+  frameworkProblem,
+  type SecurityHeaders,
+} from "./framework-errors.ts";
 export { registerHealthRoutes } from "./health.ts";
 export type { ModuleDeps, ModuleRegistration } from "./deps.ts";

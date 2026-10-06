@@ -1,0 +1,30 @@
+# negative control unit; node v22.22.2; 2026-10-06T13:20:03Z
+# command: npx vitest run --project unit-node apps/api/src/modules/platform/framework-errors.test.ts
+
+ RUN  v3.2.4 /home/user/My-owns
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/framework-errors.test.ts [ apps/api/src/modules/platform/framework-errors.test.ts ]
+Error: Cannot find module './framework-errors.ts' imported from '/home/user/My-owns/apps/api/src/modules/platform/framework-errors.test.ts'
+ ❯ apps/api/src/modules/platform/framework-errors.test.ts:4:1
+      2| import Fastify, { type FastifyError, type FastifyServerOptions } from …
+      3| import { describe, expect, it } from "vitest";
+      4| import { clientErrorProblem, createFrameworkErrorHandler, frameworkPro…
+       | ^
+      5| 
+      6| const err = (code: string, statusCode?: number) =>
+
+Caused by: Error: Failed to load url ./framework-errors.ts (resolved id: ./framework-errors.ts) in /home/user/My-owns/apps/api/src/modules/platform/framework-errors.test.ts. Does the file exist?
+ ❯ loadAndTransform node_modules/.pnpm/vite@7.1.11_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:26050:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  13:20:04
+   Duration  449ms (transform 50ms, setup 0ms, collect 0ms, tests 0ms, environment 0ms, prepare 77ms)
+
+# exit: 1

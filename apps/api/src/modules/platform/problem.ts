@@ -128,6 +128,15 @@ export const problems = {
       title: "If-Match required",
       detail: 'Send the ETag of the version you are changing in If-Match, e.g. If-Match: "3".',
     }),
+  /** Node's request timeout (connection level, before routing; T-DG2-BE12). */
+  requestTimeout: () =>
+    new HttpProblem({
+      status: 408,
+      type: PROBLEM_TYPES.validation,
+      code: "request_timeout",
+      title: "Request timeout",
+      detail: "The request was not received completely in time.",
+    }),
   rateLimited: () =>
     new HttpProblem({ status: 429, type: PROBLEM_TYPES.rateLimited, code: "rate_limited", title: "Too many requests" }),
   unavailable: () =>

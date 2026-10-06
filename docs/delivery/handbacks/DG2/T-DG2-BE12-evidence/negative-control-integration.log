@@ -1,0 +1,227 @@
+# negative control (product files at HEAD d819e7e, new tests kept); node v22.22.2; env -u LANG -u LC_ALL; 2026-10-06T13:19:56Z
+# command: QA_PG_PORT=55471 tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/framework-errors.test.ts apps/api/test/integration/invalid-character.test.ts
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/My-owns
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muwphd0z_c70dc25d (server_encoding UTF8); applied 19 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/invalid-character.test.ts (20 tests | 1 failed) 1476ms
+   ✓ U+0000 in a JSON body string is 400 validation.invalid_character; nothing is written or audited > charter create (outOfScope, freeText): no charter is created 156ms
+   ✓ U+0000 in a JSON body string is 400 validation.invalid_character; nothing is written or audited > charter update (inScope): version, value and audit trail unchanged 173ms
+   ✓ U+0000 in a JSON body string is 400 validation.invalid_character; nothing is written or audited > T03 TOM gap create and update (gap): no gap is created, the existing one is unchanged 50ms
+   ✓ U+0000 in a JSON body string is 400 validation.invalid_character; nothing is written or audited > T03 TOM gap archive reason: the gap stays open; a valid reason still archives (audited once) 48ms
+   ✓ U+0000 in a JSON body string is 400 validation.invalid_character; nothing is written or audited > P1 transformation name (shared name): no transformation is created 7ms
+   ✓ U+0000 in a JSON body string is 400 validation.invalid_character; nothing is written or audited > a NUL in an object key is reported at that key's pointer 69ms
+   ✓ U+0000 in a query or path parameter is 400 validation.invalid_character at /query or /params > GET /transformations?q= (a text filter the database queries) 21ms
+   ✓ U+0000 in a query or path parameter is 400 validation.invalid_character at /query or /params > GET /users?q= (admin user search) 16ms
+   ✓ U+0000 in a query or path parameter is 400 validation.invalid_character at /query or /params > a path parameter (TOM gap id on archive) 4ms
+   ✓ authentication and CSRF keep their precedence over the invalid-character check > no session: 401, not 400 4ms
+   ✓ authentication and CSRF keep their precedence over the invalid-character check > missing CSRF token: 403 csrf, not 400 6ms
+   ✓ authentication and CSRF keep their precedence over the invalid-character check > a user without write permission on a NUL body gets the 400 before any data access, and nothing is written 12ms
+   ✓ text without NUL is unaffected > visible text with other control-like marks (U+0001 inside, RLM) is accepted verbatim 85ms
+   ✓ a lone UTF-16 surrogate in a JSON body string is 400 validation.invalid_character (F-DG2-260) > charter create (outOfScope, text column): no charter is created, nothing is stored as U+FFFD 87ms
+   ✓ a lone UTF-16 surrogate in a JSON body string is 400 validation.invalid_character (F-DG2-260) > charter update (inScope): version, value and audit trail unchanged 94ms
+   ✓ a lone UTF-16 surrogate in a JSON body string is 400 validation.invalid_character (F-DG2-260) > journey step name (reaches jsonb directly): 400 at /steps/0/name, not validation.format at '' 78ms
+   ✓ a lone UTF-16 surrogate in a JSON body string is 400 validation.invalid_character (F-DG2-260) > archive reason (shared reason schema): the TOM gap stays open 19ms
+   ✓ a lone UTF-16 surrogate in a JSON body string is 400 validation.invalid_character (F-DG2-260) > a lone surrogate in an object key is reported at that key's pointer 73ms
+   × a lone UTF-16 surrogate in a JSON body string is 400 validation.invalid_character (F-DG2-260) > a percent-encoded lone surrogate (CESU-8 bytes %ED%A0%80) in a query or path never decodes to one, never a 5xx 24ms
+     → contract: archiveTomGap 400 returned application/json, declared application/problem+json
+   ✓ a lone UTF-16 surrogate in a JSON body string is 400 validation.invalid_character (F-DG2-260) > emoji (valid surrogate pairs) and Arabic are accepted and stored verbatim, in text and in jsonb 107ms
+ ❯ |integration| apps/api/test/integration/framework-errors.test.ts (11 tests | 9 failed) 328ms
+   × FST_ERR_BAD_URL (undecodable percent escape in the path) is the declared 400 ValidationError > GET /api/v1/transformations/%ZZ: 400 problem+json validation.format with requestId; nothing written 17ms
+     → contract: getTransformation 400 returned application/json, declared application/problem+json
+   × FST_ERR_BAD_URL (undecodable percent escape in the path) is the declared 400 ValidationError > GET-by-id paths with %ED%A0%80 (CESU-8 lone surrogate bytes) answer the same; nothing written 14ms
+     → contract: getTransformation 400 returned application/json, declared application/problem+json
+   × FST_ERR_BAD_URL (undecodable percent escape in the path) is the declared 400 ValidationError > an unsafe method with a bad path (POST tom-gap archive) writes nothing and is not audited 1ms
+     → contract: archiveTomGap 400 returned application/json, declared application/problem+json
+   × FST_ERR_BAD_URL (undecodable percent escape in the path) is the declared 400 ValidationError > keeps a well-formed inbound X-Request-Id, and answers without a session too (the router runs before auth) 1ms
+     → contract: getTransformation 400 returned application/json, declared application/problem+json
+   × the non-API SPA fallback with a bad URL > answers a problem+json 400 with the security headers (not a plain JSON body), and still serves good paths 42ms
+     → expected 'application/json' to match /^application\/problem\+j…/problem\+json
+   ✓ other framework-level answers on /api/** are already problems > an unsupported method on a known path is a 404 problem (Fastify does not answer 405) 2ms
+   ✓ other framework-level answers on /api/** are already problems > OPTIONS (CORS preflight) is a 404 problem: same-origin only, no CORS headers are granted 1ms
+   × connection-level parser errors (Node clientError) are 400 problems with the security headers > a request header that is too large: 400 validation.headers_too_large (was a plain-JSON 431) 9ms
+     → expected 431 to be 400 // Object.is equality
+   × connection-level parser errors (Node clientError) are 400 problems with the security headers > a URL that is too long: 400 validation.headers_too_large (was a plain-JSON 431) 2ms
+     → expected 431 to be 400 // Object.is equality
+   × connection-level parser errors (Node clientError) are 400 problems with the security headers > a malformed request line: 400 validation.malformed_request (was a plain-JSON 400) 2ms
+     → expected 'application/json' to match /^application\/problem\+j…/problem\+json
+   × connection-level parser errors (Node clientError) are 400 problems with the security headers > over the real socket, a bad path is the same problem as through inject 3ms
+     → expected 'application/json' to match /^application\/problem\+j…/problem\+json
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/framework-errors.test.ts > FST_ERR_BAD_URL (undecodable percent escape in the path) is the declared 400 ValidationError > GET /api/v1/transformations/%ZZ: 400 problem+json validation.format with requestId; nothing written
+Error: contract: getTransformation 400 returned application/json, declared application/problem+json
+ ❯ assertContract apps/api/test/support/contract.ts:112:13
+    110|     const media = content[mediaType];
+    111|     if (!media)
+    112|       throw new Error(
+       |             ^
+    113|         `contract: ${op.operationId} ${res.statusCode} returned ${medi…
+    114|       );
+ ❯ call apps/api/test/support/harness.ts:158:5
+ ❯ apps/api/test/integration/framework-errors.test.ts:82:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  |integration| apps/api/test/integration/framework-errors.test.ts > FST_ERR_BAD_URL (undecodable percent escape in the path) is the declared 400 ValidationError > GET-by-id paths with %ED%A0%80 (CESU-8 lone surrogate bytes) answer the same; nothing written
+Error: contract: getTransformation 400 returned application/json, declared application/problem+json
+ ❯ assertContract apps/api/test/support/contract.ts:112:13
+    110|     const media = content[mediaType];
+    111|     if (!media)
+    112|       throw new Error(
+       |             ^
+    113|         `contract: ${op.operationId} ${res.statusCode} returned ${medi…
+    114|       );
+ ❯ call apps/api/test/support/harness.ts:158:5
+ ❯ apps/api/test/integration/framework-errors.test.ts:96:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  |integration| apps/api/test/integration/framework-errors.test.ts > FST_ERR_BAD_URL (undecodable percent escape in the path) is the declared 400 ValidationError > an unsafe method with a bad path (POST tom-gap archive) writes nothing and is not audited
+Error: contract: archiveTomGap 400 returned application/json, declared application/problem+json
+ ❯ assertContract apps/api/test/support/contract.ts:112:13
+    110|     const media = content[mediaType];
+    111|     if (!media)
+    112|       throw new Error(
+       |             ^
+    113|         `contract: ${op.operationId} ${res.statusCode} returned ${medi…
+    114|       );
+ ❯ call apps/api/test/support/harness.ts:158:5
+ ❯ apps/api/test/integration/framework-errors.test.ts:103:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  |integration| apps/api/test/integration/framework-errors.test.ts > FST_ERR_BAD_URL (undecodable percent escape in the path) is the declared 400 ValidationError > keeps a well-formed inbound X-Request-Id, and answers without a session too (the router runs before auth)
+Error: contract: getTransformation 400 returned application/json, declared application/problem+json
+ ❯ assertContract apps/api/test/support/contract.ts:112:13
+    110|     const media = content[mediaType];
+    111|     if (!media)
+    112|       throw new Error(
+       |             ^
+    113|         `contract: ${op.operationId} ${res.statusCode} returned ${medi…
+    114|       );
+ ❯ call apps/api/test/support/harness.ts:158:5
+ ❯ apps/api/test/integration/framework-errors.test.ts:112:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  |integration| apps/api/test/integration/framework-errors.test.ts > the non-API SPA fallback with a bad URL > answers a problem+json 400 with the security headers (not a plain JSON body), and still serves good paths
+AssertionError: expected 'application/json' to match /^application\/problem\+j…/problem\+json
+
+[32m- Expected:[39m 
+/^application\/problem\+json/
+
+[31m+ Received:[39m 
+"application/json"
+
+ ❯ apps/api/test/integration/framework-errors.test.ts:132:51
+    130|       const res = await app.inject({ method: "GET", url: "/transformat…
+    131|       expect(res.statusCode).toBe(400);
+    132|       expect(String(res.headers["content-type"])).toMatch(/^applicatio…
+       |                                                   ^
+    133|       expect(res.json()).toMatchObject({
+    134|         status: 400,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  |integration| apps/api/test/integration/framework-errors.test.ts > connection-level parser errors (Node clientError) are 400 problems with the security headers > a request header that is too large: 400 validation.headers_too_large (was a plain-JSON 431)
+AssertionError: expected 431 to be 400 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 400[39m
+[31m+ 431[39m
+
+ ❯ expectClientProblem apps/api/test/integration/framework-errors.test.ts:215:24
+    213|   async function expectClientProblem(request: string, fieldCode: strin…
+    214|     const res = await raw(request);
+    215|     expect(res.status).toBe(400);
+       |                        ^
+    216|     expect(res.headers["content-type"]).toMatch(/^application\/problem…
+    217|     const body = JSON.parse(res.body) as { requestId: string; errors: …
+ ❯ apps/api/test/integration/framework-errors.test.ts:228:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  |integration| apps/api/test/integration/framework-errors.test.ts > connection-level parser errors (Node clientError) are 400 problems with the security headers > a URL that is too long: 400 validation.headers_too_large (was a plain-JSON 431)
+AssertionError: expected 431 to be 400 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 400[39m
+[31m+ 431[39m
+
+ ❯ expectClientProblem apps/api/test/integration/framework-errors.test.ts:215:24
+    213|   async function expectClientProblem(request: string, fieldCode: strin…
+    214|     const res = await raw(request);
+    215|     expect(res.status).toBe(400);
+       |                        ^
+    216|     expect(res.headers["content-type"]).toMatch(/^application\/problem…
+    217|     const body = JSON.parse(res.body) as { requestId: string; errors: …
+ ❯ apps/api/test/integration/framework-errors.test.ts:238:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  |integration| apps/api/test/integration/framework-errors.test.ts > connection-level parser errors (Node clientError) are 400 problems with the security headers > a malformed request line: 400 validation.malformed_request (was a plain-JSON 400)
+AssertionError: expected 'application/json' to match /^application\/problem\+j…/problem\+json
+
+[32m- Expected:[39m 
+/^application\/problem\+json/
+
+[31m+ Received:[39m 
+"application/json"
+
+ ❯ apps/api/test/integration/framework-errors.test.ts:249:41
+    247|     const res = await raw("NOT A REQUEST\r\n\r\n");
+    248|     expect(res.status).toBe(400);
+    249|     expect(res.headers["content-type"]).toMatch(/^application\/problem…
+       |                                         ^
+    250|     expect(JSON.parse(res.body)).toMatchObject({
+    251|       status: 400,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  |integration| apps/api/test/integration/framework-errors.test.ts > connection-level parser errors (Node clientError) are 400 problems with the security headers > over the real socket, a bad path is the same problem as through inject
+AssertionError: expected 'application/json' to match /^application\/problem\+j…/problem\+json
+
+[32m- Expected:[39m 
+/^application\/problem\+json/
+
+[31m+ Received:[39m 
+"application/json"
+
+ ❯ apps/api/test/integration/framework-errors.test.ts:260:41
+    258|     const res = await raw("GET /api/v1/transformations/%ZZ HTTP/1.1\r\…
+    259|     expect(res.status).toBe(400);
+    260|     expect(res.headers["content-type"]).toMatch(/^application\/problem…
+       |                                         ^
+    261|     expect(JSON.parse(res.body)).toMatchObject({ errors: [{ code: "val…
+    262|     assertContract("GET", "/api/v1/transformations/%ZZ", {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  |integration| apps/api/test/integration/invalid-character.test.ts > a lone UTF-16 surrogate in a JSON body string is 400 validation.invalid_character (F-DG2-260) > a percent-encoded lone surrogate (CESU-8 bytes %ED%A0%80) in a query or path never decodes to one, never a 5xx
+Error: contract: archiveTomGap 400 returned application/json, declared application/problem+json
+ ❯ assertContract apps/api/test/support/contract.ts:112:13
+    110|     const media = content[mediaType];
+    111|     if (!media)
+    112|       throw new Error(
+       |             ^
+    113|         `contract: ${op.operationId} ${res.statusCode} returned ${medi…
+    114|       );
+ ❯ call apps/api/test/support/harness.ts:158:5
+ ❯ apps/api/test/integration/invalid-character.test.ts:367:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  10 failed | 21 passed (31)
+   Start at  13:19:58
+   Duration  5.05s (transform 750ms, setup 0ms, collect 2.17s, tests 1.80s, environment 0ms, prepare 57ms)
+
+# exit: 1

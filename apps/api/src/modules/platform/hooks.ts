@@ -80,6 +80,14 @@ function mapError(
   }
 }
 
+/**
+ * The problem for any error that reaches an error handler: the specific mapping, else 500 internal (never a plain or
+ * internal-leaking body). Shared by `setErrorHandler` and the router-level `frameworkErrors` handler (T-DG2-BE12).
+ */
+export function problemForError(error: FastifyError): HttpProblem {
+  return mapError(error) ?? problems.internal();
+}
+
 export interface PlatformOptions {
   /** Serve the SPA's index.html for unknown GET paths outside /api/ (needs @fastify/static's reply.sendFile). */
   readonly spaFallback?: boolean;
@@ -138,7 +146,7 @@ export function registerPlatformHooks(app: FastifyInstance, options: PlatformOpt
       return sendProblem(reply, request, problem);
     }
     request.log.error({ err: error }, "unhandled error");
-    return sendProblem(reply, request, problems.internal());
+    return sendProblem(reply, request, problemForError(error));
   });
 
   app.setNotFoundHandler((request, reply) => {

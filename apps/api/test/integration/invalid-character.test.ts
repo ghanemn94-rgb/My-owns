@@ -360,18 +360,28 @@ describe("a lone UTF-16 surrogate in a JSON body string is 400 validation.invali
     });
     expect(res.status, JSON.stringify(res.body)).toBeLessThan(500);
     // Path: Fastify's router refuses an undecodable path segment itself (FST_ERR_BAD_URL) before any handler or hook
-    // runs. This answer predates F-DG2-260 and is the same for any malformed escape (%ZZ); it is plain JSON, not
-    // problem+json, so the contract assertion is off here (reported in the T-DG2-BE11 handback as an observation).
+    // runs, the same for any malformed escape (%ZZ). T-DG2-BE12: the `frameworkErrors` handler answers it with the
+    // declared 400 ValidationError (application/problem+json), so the contract assertion is ON here again.
+    const gapBefore = await call(api.app, "GET", `${T}/tom-gaps`, { session: p.lead.session });
     for (const bad of ["abc%ED%A0%80", "abc%ZZ"]) {
       const res2 = await call(api.app, "POST", `${T}/tom-gaps/${bad}/archive`, {
         session: p.lead.session,
         headers: ifm(1),
         body: { reason: "Synthetic reason" },
-        contract: false,
       });
       expect(res2.status, bad).toBe(400);
+      expect(String(res2.headers["content-type"]), bad).toMatch(/^application\/problem\+json/);
+      expect(res2.body, bad).toMatchObject({
+        type: "urn:mth:problem:validation",
+        status: 400,
+        code: "validation",
+        requestId: res2.headers["x-request-id"],
+        errors: [{ pointer: "", code: "validation.format" }],
+      });
       expect(await auditOfRequest(api.db, String(res2.headers["x-request-id"])), bad).toEqual([]);
     }
+    const gapAfter = await call(api.app, "GET", `${T}/tom-gaps`, { session: p.lead.session });
+    expect(gapAfter.body).toEqual(gapBefore.body);
   });
 
   it("emoji (valid surrogate pairs) and Arabic are accepted and stored verbatim, in text and in jsonb", async () => {
