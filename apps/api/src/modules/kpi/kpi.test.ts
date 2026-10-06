@@ -9,7 +9,13 @@ import { fileURLToPath } from "node:url";
 import Fastify from "fastify";
 import { describe, expect, it } from "vitest";
 import { parse as parseYaml } from "yaml";
-import { fileViolations, moduleFiles, moduleViolations, MODULES_DIR } from "../../architecture.testkit.ts";
+import {
+  AST_TEST_TIMEOUT_MS,
+  fileViolations,
+  moduleFiles,
+  moduleViolations,
+  MODULES_DIR,
+} from "../../architecture.testkit.ts";
 import { API_MODULES, P1_MODULES } from "../../modules.ts";
 import type { ModuleDeps } from "../platform/index.ts";
 import * as mod from "./index.ts";
@@ -131,16 +137,21 @@ describe("kpi module (P2)", () => {
     );
   });
 
-  it("its declared boundary holds, and a planted bypass or undeclared dependency would be caught", () => {
-    expect(moduleViolations("kpi")).toEqual([]);
-    const plant = (source: string) => fileViolations("kpi", join(MODULES_DIR, "kpi", "planted.ts"), source).join("\n");
-    expect(plant(`const r = createRequire(import.meta.url)("../transformations/routes.ts");`)).toMatch(
-      /createRequire/, // a regex: the string literal "createRequire" is itself banned in module source (F-DG1-124)
-    );
-    expect(plant(`import { WORKFLOWS_MODULE } from "../workflows/index.ts";`)).toContain(
-      "module kpi may not import module workflows",
-    );
-  });
+  it(
+    "its declared boundary holds, and a planted bypass or undeclared dependency would be caught",
+    () => {
+      expect(moduleViolations("kpi")).toEqual([]);
+      const plant = (source: string) =>
+        fileViolations("kpi", join(MODULES_DIR, "kpi", "planted.ts"), source).join("\n");
+      expect(plant(`const r = createRequire(import.meta.url)("../transformations/routes.ts");`)).toMatch(
+        /createRequire/, // a regex: the string literal "createRequire" is itself banned in module source (F-DG1-124)
+      );
+      expect(plant(`import { WORKFLOWS_MODULE } from "../workflows/index.ts";`)).toContain(
+        "module kpi may not import module workflows",
+      );
+    },
+    AST_TEST_TIMEOUT_MS,
+  ); // F-DG2-143: AST walk of the module sources gets explicit headroom.
 });
 
 describe("never a float (ADR-0019 §4): no amount is converted to a JavaScript number", () => {

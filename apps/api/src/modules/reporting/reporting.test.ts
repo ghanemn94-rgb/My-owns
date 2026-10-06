@@ -4,7 +4,13 @@
 import { join } from "node:path";
 import Fastify from "fastify";
 import { describe, expect, it } from "vitest";
-import { fileViolations, moduleFiles, moduleViolations, MODULES_DIR } from "../../architecture.testkit.ts";
+import {
+  AST_TEST_TIMEOUT_MS,
+  fileViolations,
+  moduleFiles,
+  moduleViolations,
+  MODULES_DIR,
+} from "../../architecture.testkit.ts";
 import { API_MODULES, P1_MODULES, P1_SCAFFOLD_MODULES } from "../../modules.ts";
 import type { ModuleDeps } from "../platform/index.ts";
 import * as mod from "./index.ts";
@@ -44,13 +50,17 @@ describe("reporting module (P1 scaffold, D-048)", () => {
     await app.close();
   });
 
-  it("its declared boundary holds, and a planted bypass or undeclared dependency would be caught", () => {
-    expect(moduleViolations("reporting")).toEqual([]);
-    const plant = (source: string) =>
-      fileViolations("reporting", join(MODULES_DIR, "reporting", "planted.ts"), source).join("\n");
-    expect(plant("const k = await import(`../kpi/${'index'}.ts`);")).toContain("computed import() specifier");
-    expect(plant(`import { PRODUCT_GATES } from "../workflows/index.ts";`)).toContain(
-      "module reporting may not import module workflows",
-    );
-  });
+  it(
+    "its declared boundary holds, and a planted bypass or undeclared dependency would be caught",
+    () => {
+      expect(moduleViolations("reporting")).toEqual([]);
+      const plant = (source: string) =>
+        fileViolations("reporting", join(MODULES_DIR, "reporting", "planted.ts"), source).join("\n");
+      expect(plant("const k = await import(`../kpi/${'index'}.ts`);")).toContain("computed import() specifier");
+      expect(plant(`import { PRODUCT_GATES } from "../workflows/index.ts";`)).toContain(
+        "module reporting may not import module workflows",
+      );
+    },
+    AST_TEST_TIMEOUT_MS,
+  ); // F-DG2-143: AST walk of the module sources gets explicit headroom.
 });

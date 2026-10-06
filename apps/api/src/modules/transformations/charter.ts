@@ -210,7 +210,15 @@ async function activeGuardrailsOf(db: DbOrTx, transformationId: string) {
     .execute();
 }
 
-/** The scope-check pre-checks (ADR-0017 §2): support, never replace, the human answer; missing data is `unknown`. */
+/**
+ * True when the charter's Out of scope documents at least one exclusion: the trimmed text is non-empty (F-DG2-150).
+ * Shared with the G1 "initial charter" criterion so the pre-check and the gate agree.
+ */
+export function hasExclusions(outOfScope: string | null): boolean {
+  return outOfScope !== null && outOfScope.trim().length > 0;
+}
+
+/** The scope-check pre-checks (ADR-0017 §2): support, never replace, the human answer; missing data is `unknown` (except `exclusions_present`: a blank Out of scope fails). */
 async function scopeCheckPrechecks(db: DbOrTx, c: CharterRow): Promise<CharterViewBody["scopeCheckPrechecks"]> {
   const defs = await db
     .selectFrom("charter_scope_check_definition")
@@ -248,9 +256,16 @@ async function scopeCheckPrechecks(db: DbOrTx, c: CharterRow): Promise<CharterVi
           ? { code, result: "pass" as const, detail: `${confirmedFindings} confirmed diagnostic finding(s) exist.` }
           : { code, result: "attention" as const, detail: "No confirmed diagnostic finding traces the scope yet." };
       case "exclusions_present":
-        return c.out_of_scope === null
-          ? { code, result: "unknown" as const, detail: "No exclusions (out of scope) are recorded yet." }
-          : { code, result: "pass" as const, detail: "Explicit exclusions are documented." };
+        // F-DG2-150 (REQ-PB-031 A01, B0041): on a saved charter an empty or blank Out of scope is a definite answer
+        // (no exclusions are documented), so the check fails (`attention`); it is never `unknown`.
+        return hasExclusions(c.out_of_scope)
+          ? { code, result: "pass" as const, detail: "Explicit exclusions are documented." }
+          : {
+              code,
+              result: "attention" as const,
+              detail:
+                "No explicit exclusions (out of scope) are documented; this check fails until Out of scope is completed.",
+            };
       case "baseline_measurable": {
         if (baselines.length === 0) return { code, result: "unknown" as const, detail: "No baseline is recorded yet." };
         const measurable = baselines.filter((b) => b.value !== null && b.source !== null && b.baseline_date !== null);

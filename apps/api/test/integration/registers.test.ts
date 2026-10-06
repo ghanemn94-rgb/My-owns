@@ -87,7 +87,8 @@ describe("charter (ADR-0017; REQ-PB-029/030/031/035)", () => {
     expect(created.body.scopeCheckPrechecks.map((x: { code: string; result: string }) => [x.code, x.result])).toEqual([
       ["outcome_linkage", "not_applicable"],
       ["problem_traceability", "unknown"],
-      ["exclusions_documented", "unknown"],
+      // F-DG2-150 (REQ-PB-031 A01): a saved charter without Out of scope documents no exclusion, so the check fails.
+      ["exclusions_documented", "attention"],
       ["baseline_measurable", "unknown"],
       ["executive_decisions_visible", "unknown"],
     ]);
@@ -165,6 +166,98 @@ describe("charter (ADR-0017; REQ-PB-029/030/031/035)", () => {
       const res = await call(api.app, method, url, { session: q.auditor.session, headers: ifm(1), body: {} });
       expect(res.status, `${method} ${url}`).toBe(403);
     }
+  });
+});
+
+describe("F-DG2-150: the exclusions pre-check fails on an empty or blank Out of scope (REQ-PB-031 A01, B0041)", () => {
+  type Pre = { code: string; result: string; detail: string };
+  type G1Criterion = { key: string; missing: { code: string; pointer?: string }[] };
+  const FAIL_DETAIL =
+    "No explicit exclusions (out of scope) are documented; this check fails until Out of scope is completed.";
+  let q: P2World;
+  let C: string;
+  const exclusions = (body: { scopeCheckPrechecks: Pre[] }) =>
+    body.scopeCheckPrechecks.find((x) => x.code === "exclusions_documented")!;
+  const g1OutOfScopeMissing = async () => {
+    const view = await call<{ criteria: G1Criterion[] }>(
+      api.app,
+      "GET",
+      `/api/v1/transformations/${q.transformationId}/gates/G1`,
+      { session: q.lead.session },
+    );
+    expect(view.status).toBe(200);
+    const charter = view.body.criteria.find((c) => c.key === "g1.initial_charter")!;
+    return charter.missing.some((m) => m.pointer === "/charter/outOfScope");
+  };
+  beforeAll(async () => {
+    q = await setupP2World(api, w);
+    C = `/api/v1/transformations/${q.transformationId}/charter`;
+  });
+
+  it("empty (never set) gives attention with the failing detail, never unknown", async () => {
+    const created = await call(api.app, "POST", C, { session: q.lead.session, body: { transformationName: "Syn" } });
+    expect(created.status).toBe(201);
+    expect(created.body.charter.outOfScope).toBeNull();
+    expect(exclusions(created.body)).toEqual({
+      code: "exclusions_documented",
+      result: "attention",
+      detail: FAIL_DETAIL,
+    });
+    expect(await g1OutOfScopeMissing()).toBe(true);
+  });
+
+  it("whitespace-only gives attention (and the G1 initial charter still lacks its scope out)", async () => {
+    const blank = await call(api.app, "PATCH", C, {
+      session: q.lead.session,
+      headers: ifm(1),
+      body: { outOfScope: "   \n\t " },
+    });
+    expect(blank.status).toBe(200);
+    expect(blank.body.charter.version).toBe(2);
+    expect(exclusions(blank.body)).toMatchObject({ result: "attention", detail: FAIL_DETAIL });
+    expect(await g1OutOfScopeMissing()).toBe(true);
+  });
+
+  it("a real exclusion text gives pass", async () => {
+    const real = await call(api.app, "PATCH", C, {
+      session: q.lead.session,
+      headers: ifm(2),
+      body: { outOfScope: "Enterprise fixed-line products (synthetic)" },
+    });
+    expect(real.status).toBe(200);
+    expect(exclusions(real.body)).toMatchObject({ result: "pass", detail: "Explicit exclusions are documented." });
+    expect(exclusions((await call(api.app, "GET", C, { session: q.lead.session })).body).result).toBe("pass");
+    expect(await g1OutOfScopeMissing()).toBe(false);
+  });
+
+  it("clearing it again (PATCH with If-Match) gives attention; a stale If-Match is 409 and changes nothing", async () => {
+    const stale = await call(api.app, "PATCH", C, {
+      session: q.lead.session,
+      headers: ifm(2),
+      body: { outOfScope: null },
+    });
+    expect([stale.status, stale.body.currentVersion]).toEqual([409, 3]);
+    const cleared = await call(api.app, "PATCH", C, {
+      session: q.lead.session,
+      headers: ifm(3),
+      body: { outOfScope: null },
+    });
+    expect(cleared.status).toBe(200);
+    expect(cleared.body.charter.version).toBe(4);
+    expect(cleared.body.charter.outOfScope).toBeNull();
+    expect(exclusions(cleared.body)).toEqual({
+      code: "exclusions_documented",
+      result: "attention",
+      detail: FAIL_DETAIL,
+    });
+    expect(await g1OutOfScopeMissing()).toBe(true);
+    const audit = await auditOf(api.db, cleared.body.charter.id as string);
+    expect(audit.map((e) => [e.action, e.new_version])).toEqual([
+      ["charter.create", 1],
+      ["charter.update", 2],
+      ["charter.update", 3],
+      ["charter.update", 4],
+    ]);
   });
 });
 

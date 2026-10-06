@@ -108,6 +108,13 @@ import { fileURLToPath } from "node:url";
 import ts from "typescript";
 import { API_MODULES, type ApiModule } from "./modules.ts";
 
+/**
+ * F-DG2-143: per-test timeout for every test that walks module sources through this lint (TypeScript parse plus
+ * `transpileModule` per file). The full-tree check takes ~1-1.5 s alone and 4.3-5.8 s under a parallel suite run,
+ * which crossed vitest's 5 s default. 30 s gives real headroom without raising the global unit-test default.
+ */
+export const AST_TEST_TIMEOUT_MS = 30_000;
+
 export const SRC = dirname(fileURLToPath(import.meta.url));
 export const MODULES_DIR = join(SRC, "modules");
 

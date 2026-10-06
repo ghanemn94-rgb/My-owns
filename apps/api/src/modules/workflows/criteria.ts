@@ -13,7 +13,7 @@ import type { DbOrTx } from "@mth/db";
 import { composeThesis, type GateCriterionEvaluation, type GateDefinition, type Warning } from "@mth/shared/schemas";
 import { loadVerifiedEvidenceFacts, type EvidenceFact } from "../evidence/index.ts";
 import { loadKpiGateFacts, type KpiGateFacts } from "../kpi/index.ts";
-import { findCharter, findCurrentNorthStar, loadGoodOutcomeFacts } from "../transformations/index.ts";
+import { findCharter, findCurrentNorthStar, hasExclusions, loadGoodOutcomeFacts } from "../transformations/index.ts";
 
 /** Everything the G1-G3 evaluators read, loaded once per evaluation (inside the submitting transaction on submit). */
 export interface GateFacts {
@@ -161,7 +161,8 @@ export async function loadGateFacts(db: DbOrTx, transformationId: string): Promi
           hasSponsor: charter.executive_sponsor_user_id !== null,
           hasLead: charter.transformation_lead_user_id !== null,
           hasInScope: charter.in_scope !== null,
-          hasOutOfScope: charter.out_of_scope !== null,
+          // F-DG2-150: a blank Out of scope documents no exclusion (same rule as the `exclusions_present` pre-check).
+          hasOutOfScope: hasExclusions(charter.out_of_scope),
           hasBaselineDate: charter.baseline_date !== null,
           thesisMissing: composeThesis({
             thesisChange: charter.thesis_change,

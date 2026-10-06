@@ -35,6 +35,7 @@ import { basename, join, relative, resolve } from "node:path";
 import ts from "typescript";
 import { describe, expect, it } from "vitest";
 import {
+  AST_TEST_TIMEOUT_MS,
   bareAllowed,
   fileViolations,
   importsOf,
@@ -104,9 +105,15 @@ describe("API module boundaries (ADR-0002)", () => {
     for (const m of P1_SCAFFOLD_MODULES) expect(existsSync(join(MODULES_DIR, m, `${m}.test.ts`)), m).toBe(true);
   });
 
-  it("every import respects dependsOn, public surfaces and allowed packages", () => {
-    expect((moduleDirs as ApiModule[]).flatMap((m) => moduleViolations(m))).toEqual([]);
-  });
+  // F-DG2-143: this walks and lints every module file (~1-1.5 s alone, 4.3-5.8 s under parallel load), so it gets an
+  // explicit timeout instead of vitest's 5 s default.
+  it(
+    "every import respects dependsOn, public surfaces and allowed packages",
+    () => {
+      expect((moduleDirs as ApiModule[]).flatMap((m) => moduleViolations(m))).toEqual([]);
+    },
+    AST_TEST_TIMEOUT_MS,
+  );
 
   it("the declared module graph is acyclic, and audit/access depend on no business module", () => {
     const state = new Map<string, "visiting" | "done">();
@@ -951,7 +958,9 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
   });
 });
 
-describe("package dependency direction (ADR-0002 rule 5)", () => {
+// F-DG2-143: each test here parses a whole source tree (apps/web alone takes ~0.5-0.8 s), so every test in the block
+// gets an explicit timeout instead of vitest's 5 s default.
+describe("package dependency direction (ADR-0002 rule 5)", { timeout: AST_TEST_TIMEOUT_MS }, () => {
   const workspaceImports = (dir: string) =>
     walk(join(REPO, dir)).flatMap((f) =>
       importsOf(f)

@@ -6,7 +6,13 @@ import { join } from "node:path";
 import type { GateDefinition } from "@mth/shared/schemas";
 import Fastify from "fastify";
 import { describe, expect, it } from "vitest";
-import { fileViolations, moduleFiles, moduleViolations, MODULES_DIR } from "../../architecture.testkit.ts";
+import {
+  AST_TEST_TIMEOUT_MS,
+  fileViolations,
+  moduleFiles,
+  moduleViolations,
+  MODULES_DIR,
+} from "../../architecture.testkit.ts";
 import { API_MODULES, P1_MODULES } from "../../modules.ts";
 import type { ModuleDeps } from "../platform/index.ts";
 import * as mod from "./index.ts";
@@ -63,15 +69,19 @@ describe("workflows module (P2)", () => {
     await app.close();
   });
 
-  it("its declared boundary holds, and an undeclared dependency would be caught", () => {
-    expect(moduleViolations("workflows")).toEqual([]);
-    const plant = (source: string) =>
-      fileViolations("workflows", join(MODULES_DIR, "workflows", "planted.ts"), source).join("\n");
-    expect(plant(`import { decide } from "../access/rules.ts";`)).toContain("only access/index.ts is public");
-    expect(plant(`import { x } from "../reporting/index.ts";`)).toContain(
-      "module workflows may not import module reporting",
-    );
-  });
+  it(
+    "its declared boundary holds, and an undeclared dependency would be caught",
+    () => {
+      expect(moduleViolations("workflows")).toEqual([]);
+      const plant = (source: string) =>
+        fileViolations("workflows", join(MODULES_DIR, "workflows", "planted.ts"), source).join("\n");
+      expect(plant(`import { decide } from "../access/rules.ts";`)).toContain("only access/index.ts is public");
+      expect(plant(`import { x } from "../reporting/index.ts";`)).toContain(
+        "module workflows may not import module reporting",
+      );
+    },
+    AST_TEST_TIMEOUT_MS,
+  ); // F-DG2-143: AST walk of the module sources gets explicit headroom.
 });
 
 // ------------------------------------------------------------------------------------------------ evaluators

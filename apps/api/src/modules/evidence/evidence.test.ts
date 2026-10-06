@@ -7,7 +7,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import Fastify from "fastify";
 import { afterAll, describe, expect, it } from "vitest";
-import { fileViolations, moduleFiles, moduleViolations, MODULES_DIR } from "../../architecture.testkit.ts";
+import {
+  AST_TEST_TIMEOUT_MS,
+  fileViolations,
+  moduleFiles,
+  moduleViolations,
+  MODULES_DIR,
+} from "../../architecture.testkit.ts";
 import { API_MODULES, P2_MODULES } from "../../modules.ts";
 import type { ModuleDeps } from "../platform/index.ts";
 import * as mod from "./index.ts";
@@ -48,16 +54,20 @@ describe("evidence module (P2)", () => {
     await app.close();
   });
 
-  it("its declared boundary holds", () => {
-    expect(moduleViolations("evidence")).toEqual([]);
-    expect(
-      fileViolations(
-        "evidence",
-        join(MODULES_DIR, "evidence", "planted.ts"),
-        `import { x } from "../workflows/index.ts";`,
-      ).join("\n"),
-    ).toContain("module evidence may not import module workflows");
-  });
+  it(
+    "its declared boundary holds",
+    () => {
+      expect(moduleViolations("evidence")).toEqual([]);
+      expect(
+        fileViolations(
+          "evidence",
+          join(MODULES_DIR, "evidence", "planted.ts"),
+          `import { x } from "../workflows/index.ts";`,
+        ).join("\n"),
+      ).toContain("module evidence may not import module workflows");
+    },
+    AST_TEST_TIMEOUT_MS,
+  ); // F-DG2-143: AST walk of the module sources gets explicit headroom.
 });
 
 describe("FilesystemEvidenceStore (ADR-0010)", () => {

@@ -35,7 +35,7 @@ export {
   toStrategicGuardrail,
   toTomGap,
 } from "./registers.ts";
-export { charterView, findCharter, findCurrentNorthStar, toCharter, toNorthStar } from "./charter.ts";
+export { charterView, findCharter, findCurrentNorthStar, hasExclusions, toCharter, toNorthStar } from "./charter.ts";
 export { advancePhaseOnGateApproval } from "./phase.ts";
 export {
   activityLead,

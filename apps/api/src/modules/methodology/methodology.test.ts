@@ -4,7 +4,13 @@
 import { join } from "node:path";
 import Fastify from "fastify";
 import { describe, expect, it } from "vitest";
-import { fileViolations, moduleFiles, moduleViolations, MODULES_DIR } from "../../architecture.testkit.ts";
+import {
+  AST_TEST_TIMEOUT_MS,
+  fileViolations,
+  moduleFiles,
+  moduleViolations,
+  MODULES_DIR,
+} from "../../architecture.testkit.ts";
 import { API_MODULES, P2_MODULES } from "../../modules.ts";
 import type { ModuleDeps } from "../platform/index.ts";
 import * as mod from "./index.ts";
@@ -43,12 +49,16 @@ describe("methodology module (P2)", () => {
     await app.close();
   });
 
-  it("its declared boundary holds, and an undeclared dependency would be caught", () => {
-    expect(moduleViolations("methodology")).toEqual([]);
-    const plant = (source: string) =>
-      fileViolations("methodology", join(MODULES_DIR, "methodology", "planted.ts"), source).join("\n");
-    expect(plant(`import { PRODUCT_GATES } from "../workflows/index.ts";`)).toContain(
-      "module methodology may not import module workflows",
-    );
-  });
+  it(
+    "its declared boundary holds, and an undeclared dependency would be caught",
+    () => {
+      expect(moduleViolations("methodology")).toEqual([]);
+      const plant = (source: string) =>
+        fileViolations("methodology", join(MODULES_DIR, "methodology", "planted.ts"), source).join("\n");
+      expect(plant(`import { PRODUCT_GATES } from "../workflows/index.ts";`)).toContain(
+        "module methodology may not import module workflows",
+      );
+    },
+    AST_TEST_TIMEOUT_MS,
+  ); // F-DG2-143: AST walk of the module sources gets explicit headroom.
 });
