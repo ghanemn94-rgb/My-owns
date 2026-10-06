@@ -192,6 +192,8 @@ function useCharterFields(): FieldSpec[] {
       hint: t("define.charter.changeSummaryHint"),
       maxLength: 1000,
       editOnly: true,
+      // A summary alone is not a change: never a content-free charter version (F-DG2-210).
+      annotation: true,
     },
   ];
 }

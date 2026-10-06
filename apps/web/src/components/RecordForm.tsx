@@ -6,8 +6,12 @@
 //  - creates send an Idempotency-Key (stable for this form instance, so a retry cannot create twice);
 //  - edits send only the changed fields with If-Match; a 409 shows "nothing was saved", compares the user's values
 //    with the current saved ones and offers re-apply on the current version or discard;
-//  - server field errors land on their field; everything else (403, 422 business rules) is a translated banner.
-import { useId, useRef, useState, type ReactNode } from "react";
+//  - server field errors land on their field; everything else (403, 422 business rules) is a translated banner;
+//  - free text is sent verbatim: "" means "no value" (create) or an explicit clear (edit), and a non-empty value with
+//    no visible content (the SHARED `hasText`, the server's own predicate) is an inline `validation.blank` error, so
+//    nothing is sent and focus moves to the first invalid field (F-DG2-210).
+import { hasText } from "@mth/shared/schemas";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import type { z } from "zod";
 import { ApiError, api, newIdempotencyKey } from "../api/client.ts";
@@ -52,6 +56,11 @@ export interface FieldSpec {
   readonly createOnly?: boolean;
   /** Only shown and sent when editing (e.g. a change summary). */
   readonly editOnly?: boolean;
+  /**
+   * Describes a change rather than being one (e.g. a charter change summary): an update whose only changed fields are
+   * annotations is "no changes to save", never a content-free new version (F-DG2-210).
+   */
+  readonly annotation?: boolean;
   /** Free-text decimals are typed with Latin digits and a dot ("1250000.50"); shown as a hint. */
   readonly dir?: "ltr" | "rtl";
 }
@@ -103,10 +112,20 @@ function fromFormValue(spec: FieldSpec, value: FormValue | undefined): unknown {
         });
     }
     default: {
+      // Verbatim: only a truly empty control means "no value". Whitespace- or invisible-only text is NOT turned into
+      // null; it is caught as `validation.blank` before sending (blankErrors) and by the shared schema (F-DG2-210).
       const s = typeof value === "string" ? value : "";
-      return s.trim() === "" ? null : s;
+      return s === "" ? null : s;
     }
   }
+}
+
+/** Kinds whose value is user-typed free text (the ones a blank-text rule applies to). */
+const FREE_TEXT_KINDS: ReadonlySet<FieldKind> = new Set<FieldKind>(["text", "textarea", "url"]);
+
+/** True when the control holds text but none of it is visible (spaces, format characters, fillers). */
+export function isBlankText(spec: FieldSpec, value: FormValue | undefined): boolean {
+  return FREE_TEXT_KINDS.has(spec.kind) && typeof value === "string" && value !== "" && !hasText(value);
 }
 
 export function formValuesOf(fields: readonly FieldSpec[], record: Record<string, unknown> | null): FormValues {
@@ -163,6 +182,18 @@ export function useRecordForm<R extends Record<string, unknown>>(props: RecordFo
   } | null>(null);
   const [busy, setBusy] = useState(false);
   const isEdit = base !== null;
+  /** The <form> element, so focus can move to the first invalid control after a failed submit. */
+  const formRef = useRef<HTMLFormElement | null>(null);
+  const [focusRequest, setFocusRequest] = useState(0);
+  useEffect(() => {
+    if (focusRequest === 0) return;
+    formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+  }, [focusRequest]);
+  const showErrors = (next: Record<string, string>, other: string[]) => {
+    setErrors(next);
+    setUnmapped([...new Set(other)]);
+    if (Object.keys(next).length > 0) setFocusRequest((n) => n + 1);
+  };
 
   const set = (name: string, value: FormValue) => {
     setValues((v) => {
@@ -194,34 +225,54 @@ export function useRecordForm<R extends Record<string, unknown>>(props: RecordFo
     return body;
   };
 
-  const validate = (body: Record<string, unknown>, schema: z.ZodType | undefined): boolean => {
-    if (!schema) return true;
-    const result = schema.safeParse(body);
-    if (result.success) {
-      setErrors({});
-      setUnmapped([]);
-      return true;
+  /**
+   * Free-text fields that would be sent but hold no visible content: on a create every sent field, on an edit only the
+   * fields the user changed (an untouched legacy value never blocks saving other fields).
+   */
+  const blankErrors = (vals: FormValues, against: R | null): Record<string, string> => {
+    const before = against === null ? null : formValuesOf(fields, against as Record<string, unknown>);
+    const out: Record<string, string> = {};
+    for (const f of fields) {
+      if (f.readOnly) continue;
+      if (against === null ? f.editOnly : f.createOnly) continue;
+      if (before !== null && vals[f.name] === before[f.name]) continue;
+      if (isBlankText(f, vals[f.name])) out[f.name] = fieldErrorMessage(t, "validation.blank");
     }
-    const next: Record<string, string> = {};
+    return out;
+  };
+
+  const validate = (
+    body: Record<string, unknown>,
+    schema: z.ZodType | undefined,
+    blank: Record<string, string>,
+  ): boolean => {
+    const next: Record<string, string> = { ...blank };
     const other: string[] = [];
-    for (const issue of result.error.issues) {
-      const name = String(issue.path[0] ?? "");
-      const message = fieldErrorMessage(t, issueCode(issue));
-      if (fields.some((f) => f.name === name)) next[name] ??= message;
-      else other.push(message);
+    const result = schema?.safeParse(body);
+    if (result && !result.success) {
+      for (const issue of result.error.issues) {
+        const name = String(issue.path[0] ?? "");
+        const message = fieldErrorMessage(t, issueCode(issue));
+        if (fields.some((f) => f.name === name)) next[name] ??= message;
+        else other.push(message);
+      }
     }
-    setErrors(next);
-    setUnmapped([...new Set(other)]);
-    return false;
+    showErrors(next, other);
+    return Object.keys(next).length === 0 && other.length === 0;
   };
 
   const send = async (vals: FormValues, against: (R & { version: number }) | null) => {
+    const blank = blankErrors(vals, against);
     const body = payloadFor(vals, against);
-    if (against !== null && Object.keys(body).length === 0) {
-      setUnmapped([t("problems.validation__empty_update")]);
-      return;
+    if (Object.keys(blank).length === 0 && against !== null) {
+      // Nothing changed, or only annotations (a change summary) changed: never write a content-free version.
+      const changed = Object.keys(body).filter((k) => !fields.find((f) => f.name === k)?.annotation);
+      if (changed.length === 0) {
+        showErrors({}, [t("problems.validation__empty_update")]);
+        return;
+      }
     }
-    if (!validate(body, against === null ? props.createSchema : props.updateSchema)) return;
+    if (!validate(body, against === null ? props.createSchema : props.updateSchema, blank)) return;
     setBusy(true);
     setBannerError(null);
     try {
@@ -263,8 +314,7 @@ export function useRecordForm<R extends Record<string, unknown>>(props: RecordFo
           // A business rule repeats its own code as `validation.<code>`: the banner already says it.
           else if (fe.code !== e.code && fe.code !== `validation.${e.code}`) other.push(fieldErrorMessage(t, fe.code));
         }
-        setErrors(next);
-        setUnmapped([...new Set(other)]);
+        showErrors(next, other);
       }
       setBannerError(e);
     } finally {
@@ -283,6 +333,7 @@ export function useRecordForm<R extends Record<string, unknown>>(props: RecordFo
     busy,
     isEdit,
     base,
+    formRef,
     submit: () => send(values, base),
     reapply: () => {
       const latest = conflict?.latest ?? null;
@@ -325,13 +376,16 @@ export function RecordFields({
         <FieldControl key={f.name} spec={f} form={form} people={people} />
       ))}
       {form.unmapped.length > 0 ? (
-        <ul className="banner banner--error plain-list" role="alert">
-          {form.unmapped.map((m) => (
-            <li key={m}>
-              <Icon name="alert" /> {m}
-            </li>
-          ))}
-        </ul>
+        // The live region is the wrapper; the <ul> keeps its list role so its <li> are valid (F-DG2-211, WCAG 1.3.1).
+        <div className="banner banner--error" role="alert" data-state="form-errors">
+          <ul className="plain-list">
+            {form.unmapped.map((m) => (
+              <li key={m}>
+                <Icon name="alert" /> {m}
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : null}
       {form.bannerError ? (
         <p className="banner banner--error" role="alert" data-state="error">
@@ -582,6 +636,7 @@ export function RecordDialog<R extends Record<string, unknown>>(
     >
       {props.description ? <p>{props.description}</p> : null}
       <form
+        ref={form.formRef}
         className="form form--dialog"
         noValidate
         onSubmit={(e) => {
@@ -606,6 +661,7 @@ export function InlineRecordForm<R extends Record<string, unknown>>(
   const byName = new Map(props.fields.map((f) => [f.name, f]));
   return (
     <form
+      ref={form.formRef}
       className="form"
       noValidate
       onSubmit={(e) => {

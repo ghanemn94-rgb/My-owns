@@ -282,6 +282,60 @@ describe("Diagnose", () => {
     expect(requests.some((r) => r.method === "PATCH")).toBe(false);
   });
 
+  // F-DG2-210: whitespace-only text is no longer turned into null by the form. It is an inline `validation.blank` error
+  // (EN and AR), with aria-invalid/aria-describedby, focus on the field and NO request.
+  it.each([
+    { locale: "en" as const, edit: /^Edit/, field: "Current state", save: "Save draft" },
+    { locale: "ar" as const, edit: /^تعديل/, field: "الوضع الراهن", save: "حفظ كمسودة" },
+  ])("a whitespace-only T01 value is an inline blank error and sends nothing ($locale)", async ({ locale, ...l }) => {
+    const item = diagnosticItem("financial", { currentState: "Synthetic current state" });
+    const { requests } = render(
+      `/transformations/${TR_ID}/diagnose`,
+      [
+        ...base(leadGrants(), locale),
+        list("diagnostic-items", [item]),
+        route("PATCH", /\/diagnostic-items\//, () => ({ status: 200, body: item })),
+      ],
+      locale,
+    );
+    fireEvent.click((await screen.findAllByRole("button", { name: l.edit }))[0]!);
+    const dialog = await screen.findByRole("dialog");
+    const field = within(dialog).getByLabelText(l.field);
+    fireEvent.change(field, { target: { value: "   \t " } });
+    fireEvent.click(within(dialog).getByRole("button", { name: l.save }));
+    const expected = createI18n(locale).t("problems.validation__blank");
+    await waitFor(() => expect(within(dialog).getByText(expected)).toBeTruthy());
+    expect(field.getAttribute("aria-invalid")).toBe("true");
+    const describedBy = field.getAttribute("aria-describedby")!.split(" ");
+    expect(describedBy.map((id) => document.getElementById(id)?.textContent ?? "").join(" ")).toContain(expected);
+    await waitFor(() => expect(document.activeElement).toBe(field));
+    expect(requests.some((r) => r.method === "PATCH")).toBe(false);
+    // The "no changes" banner is not what the user sees: the change exists and is invalid.
+    expect(within(dialog).queryByText(createI18n(locale).t("problems.validation__empty_update"))).toBeNull();
+  });
+
+  it("T01: an emptied field is sent as an explicit null; visible text is sent verbatim", async () => {
+    const item = diagnosticItem("financial", { currentState: "Synthetic current state" });
+    const { requests } = render(`/transformations/${TR_ID}/diagnose`, [
+      ...base(leadGrants()),
+      list("diagnostic-items", [item]),
+      route("PATCH", /\/diagnostic-items\//, (req) => ({
+        status: 200,
+        body: { ...item, ...(req.body as object), version: 2 },
+      })),
+    ]);
+    fireEvent.click((await screen.findAllByRole("button", { name: /^Edit/ }))[0]!);
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.change(within(dialog).getByLabelText("Current state"), { target: { value: "" } });
+    fireEvent.change(within(dialog).getByLabelText("Root cause"), { target: { value: "  Synthetic cause\u200f  " } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save draft" }));
+    await waitFor(() => expect(requests.some((r) => r.method === "PATCH")).toBe(true));
+    expect(requests.find((r) => r.method === "PATCH")!.body).toEqual({
+      currentState: null,
+      rootCause: "  Synthetic cause\u200f  ",
+    });
+  });
+
   it("Arabic: RTL with Arabic labels and the unquantified label", async () => {
     render(
       `/transformations/${TR_ID}/diagnose`,
@@ -766,6 +820,112 @@ describe("Charter", () => {
     const row = within(diff).getByRole("rowheader", { name: "In scope" }).closest("tr")!;
     expect(row.textContent).toContain("Retail onboarding");
     expect(row.textContent).toContain("None");
+  });
+
+  // F-DG2-210: the charter form never drops whitespace-only text (EN and AR).
+  it.each([
+    {
+      locale: "en" as const,
+      create: "Create charter",
+      caseForChange: "Case for change",
+    },
+    { locale: "ar" as const, create: "إنشاء الميثاق", caseForChange: "مبررات التغيير" },
+  ])("create: a whitespace Case for change is an inline blank error and creates nothing ($locale)", async (l) => {
+    const { requests } = render(
+      `/transformations/${TR_ID}/charter`,
+      [
+        ...base(leadGrants(), l.locale),
+        route("GET", /\/charter$/, () => problem(404, "charter_not_found")),
+        route("POST", /\/charter$/, () => ({ status: 201, body: charterView().charter })),
+      ],
+      l.locale,
+    );
+    fireEvent.click(await screen.findByRole("button", { name: l.create }));
+    const field = await screen.findByLabelText(l.caseForChange);
+    fireEvent.change(field, { target: { value: "  \n  " } });
+    const submit = screen.getAllByRole("button", { name: l.create }).find((b) => b.getAttribute("type") === "submit")!;
+    fireEvent.click(submit);
+    const expected = createI18n(l.locale).t("problems.validation__blank");
+    await waitFor(() => expect(field.getAttribute("aria-invalid")).toBe("true"));
+    const describedBy = field.getAttribute("aria-describedby")!.split(" ");
+    expect(describedBy.map((id) => document.getElementById(id)?.textContent ?? "").join(" ")).toContain(expected);
+    await waitFor(() => expect(document.activeElement).toBe(field));
+    expect(requests.some((r) => r.method === "POST")).toBe(false);
+  });
+
+  const editCharter = async (locale: "ar" | "en", over: Record<string, unknown>) => {
+    const view = charterView(over as never, []);
+    const api = render(
+      `/transformations/${TR_ID}/charter`,
+      [
+        ...base(leadGrants(), locale),
+        route("GET", new RegExp(`${esc(TR)}/charter$`), () => ({ status: 200, body: view })),
+        list("charter/versions", []),
+        route("PATCH", /\/charter$/, (req) => ({
+          status: 200,
+          body: { ...view.charter, ...(req.body as object), version: 3 },
+        })),
+      ],
+      locale,
+    );
+    const i18n = createI18n(locale);
+    fireEvent.click(await screen.findByRole("button", { name: i18n.t("define.charter.edit") }));
+    const form = (await screen.findByRole("button", { name: i18n.t("define.charter.saveVersion") })).closest("form")!;
+    return { ...api, i18n, form };
+  };
+
+  it.each(["en", "ar"] as const)(
+    "edit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (%s)",
+    async (locale) => {
+      const { requests, i18n, form } = await editCharter(locale, { outOfScope: "Synthetic: enterprise billing" });
+      const field = within(form).getByLabelText(i18n.t("define.charter.field.outOfScope"));
+      fireEvent.change(field, { target: { value: "    " } });
+      fireEvent.change(within(form).getByLabelText(i18n.t("define.charter.changeSummary")), {
+        target: { value: "Synthetic edit" },
+      });
+      fireEvent.click(within(form).getByRole("button", { name: i18n.t("define.charter.saveVersion") }));
+      await waitFor(() => expect(within(form).getByText(i18n.t("problems.validation__blank"))).toBeTruthy());
+      expect(field.getAttribute("aria-invalid")).toBe("true");
+      await waitFor(() => expect(document.activeElement).toBe(field));
+      expect(requests.some((r) => r.method === "PATCH")).toBe(false);
+    },
+  );
+
+  it.each(["en", "ar"] as const)(
+    "edit: emptying a filled field sends null; visible text is verbatim (%s)",
+    async (locale) => {
+      const { requests, i18n, form } = await editCharter(locale, { outOfScope: "Synthetic: enterprise billing" });
+      fireEvent.change(within(form).getByLabelText(i18n.t("define.charter.field.outOfScope")), {
+        target: { value: "" },
+      });
+      fireEvent.change(within(form).getByLabelText(i18n.t("define.charter.field.inScope")), {
+        target: { value: " \u200fالتجزئة (بيانات اصطناعية)\u200f " },
+      });
+      fireEvent.change(within(form).getByLabelText(i18n.t("define.charter.changeSummary")), {
+        target: { value: "Synthetic edit" },
+      });
+      fireEvent.click(within(form).getByRole("button", { name: i18n.t("define.charter.saveVersion") }));
+      await waitFor(() => expect(requests.some((r) => r.method === "PATCH")).toBe(true));
+      expect(requests.find((r) => r.method === "PATCH")!.body).toEqual({
+        outOfScope: null,
+        inScope: " \u200fالتجزئة (بيانات اصطناعية)\u200f ",
+        changeSummary: "Synthetic edit",
+      });
+    },
+  );
+
+  it("edit: a change summary alone is not a change (never a content-free version)", async () => {
+    const { requests, i18n, form } = await editCharter("en", {});
+    fireEvent.change(within(form).getByLabelText(i18n.t("define.charter.changeSummary")), {
+      target: { value: "Synthetic edit" },
+    });
+    fireEvent.click(within(form).getByRole("button", { name: i18n.t("define.charter.saveVersion") }));
+    const alert = await within(form).findByText("There are no changes to save.");
+    // F-DG2-211: the live region wraps a real list, so the <li> keep their list semantics.
+    const region = alert.closest('[role="alert"]')!;
+    expect(region.tagName).toBe("DIV");
+    expect(region.querySelector("ul:not([role]) > li")).toBeTruthy();
+    expect(requests.some((r) => r.method === "PATCH")).toBe(false);
   });
 
   it("offers to create the charter when none exists", async () => {
