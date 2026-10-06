@@ -6,11 +6,15 @@
 //   evidence_review_separation (0019)        -> 403 evidence.reviewer_is_author (separation of duties, F-DG2-140)
 //   gate_decision_current_submission         -> 409 version-conflict, code gate.submission_superseded
 //   template CHECK / NOT NULL violations     -> 422 / 400 with a field pointer derived from the column
+//   22021 character_not_in_repertoire,
+//   22P05 untranslatable_character          -> 400 validation.invalid_character (F-DG2-231: defence in depth behind
+//                                              the central U+0000 request check; text the database cannot store)
 //   <table>_audit_required, append-only,
 //   identity/organization guards, snapshots   -> 500 (a programming error, never user-facing detail)
 // Pure: no I/O, unit-tested in platform.test.ts.
 import { PROBLEM_TYPES } from "@mth/shared";
 import { HttpProblem, problems } from "./problem.ts";
+import { invalidCharacterProblem } from "./validation.ts";
 
 /** The fields node-postgres puts on a DatabaseError (subset). */
 export interface PgErrorLike {
@@ -207,6 +211,11 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
           ],
         });
       return null;
+    case "22021": // character_not_in_repertoire (U+0000 in text; F-DG2-231)
+    case "22P05": // untranslatable_character (a character the server encoding cannot hold; F-DG2-231)
+      // The column is not reported for these errors, so the pointer is the whole request; the central request check
+      // (validation.ts, assertNoInvalidCharacters) normally answers first with the exact field pointer.
+      return invalidCharacterProblem("");
     case "22007": // invalid_datetime_format
     case "22008": // datetime_field_overflow (e.g. 2026-02-30)
       return problems.badRequest("validation.date", "A date is not a valid calendar date.");

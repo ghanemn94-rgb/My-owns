@@ -6,7 +6,7 @@ import type {} from "@fastify/rate-limit";
 import { secureOriginAllowed } from "@mth/config";
 import { DEV_ISSUER, type Db } from "@mth/db";
 import type { Permission, ScopeType } from "@mth/shared";
-import { devLoginRequest, preferencesUpdate } from "@mth/shared/schemas";
+import { devLoginRequest, hasInvalidCharacter, preferencesUpdate } from "@mth/shared/schemas";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
@@ -14,7 +14,13 @@ import { activeAssignmentsOf, auditContextOf, loadGrants, principalOf } from "..
 import { record } from "../audit/index.ts";
 import { findOrganization, toOrganization } from "../organization/index.ts";
 import { parseBody, parseQuery, problems, requireIfMatch, sendVersioned, type ModuleDeps } from "../platform/index.ts";
-import { LOGIN_STATE_TTL_MINUTES, loginCookieName, OidcService, resolveOidcUser } from "./oidc.ts";
+import {
+  identityClaimsStorable,
+  LOGIN_STATE_TTL_MINUTES,
+  loginCookieName,
+  OidcService,
+  resolveOidcUser,
+} from "./oidc.ts";
 import {
   createSession,
   csrfMatches,
@@ -164,7 +170,11 @@ export function registerIdentity(
         authMode: mode,
         idpIssuer: issuer,
         idpSessionId: null,
-        userAgent: typeof request.headers["user-agent"] === "string" ? request.headers["user-agent"] : null,
+        // F-DG2-231: a User-Agent with U+0000 (only possible past the HTTP parser, which refuses it) is not stored.
+        userAgent:
+          typeof request.headers["user-agent"] === "string" && !hasInvalidCharacter(request.headers["user-agent"])
+            ? request.headers["user-agent"]
+            : null,
         idleMinutes: config.session.idleMinutes,
         absoluteHours: config.session.absoluteHours,
       });
@@ -264,14 +274,21 @@ export function registerIdentity(
       },
     );
 
+    // F-DG2-231: a value with U+0000 fails here and redirects with invalid_request (the route's declared 302); the
+    // route is therefore exempt from the central check, whose 400 problem the callback contract does not declare.
+    const storable = (max: number) =>
+      z
+        .string()
+        .max(max)
+        .refine((v) => !hasInvalidCharacter(v));
     const callbackQuery = z.object({
-      state: z.string().max(512).optional(),
-      code: z.string().max(4096).optional(),
-      error: z.string().max(256).optional(),
+      state: storable(512).optional(),
+      code: storable(4096).optional(),
+      error: storable(256).optional(),
     });
     app.get(
       "/api/v1/auth/callback",
-      { config: { access: { public: true }, rateLimit: authRateLimit } },
+      { config: { access: { public: true }, rateLimit: authRateLimit, invalidCharacters: "route" } },
       async (request, reply) => {
         // The login cookie is single use: cleared on every callback outcome.
         const browserBinding = cookieValue(request, loginCookie);
@@ -309,6 +326,15 @@ export function registerIdentity(
             userId: null,
             organizationId: null,
             reason: "OIDC token exchange or ID token validation failed",
+          });
+          return fail("token_invalid");
+        }
+        if (!identityClaimsStorable(claims)) {
+          // F-DG2-231: an issuer or subject with U+0000 cannot be stored or looked up; refused and audited.
+          await auditLoginFailure(request, {
+            userId: null,
+            organizationId: null,
+            reason: "OIDC sign-in refused: the ID token's issuer or subject contains an unsupported character",
           });
           return fail("token_invalid");
         }

@@ -1,0 +1,106 @@
+# negative control (unit): product files reverted to HEAD (new tests kept); node v22.22.2; started 2026-10-06T10:30:21Z
+# command: npx vitest run --project unit-node --project unit-web packages/shared/src/schemas/schemas.test.ts apps/api/src/modules/platform/platform.test.ts apps/web/src/pages/p2-blank-forms.test.tsx
+   ✓ cursor > round-trips and is bound to the filter hash 12ms
+   ✓ cursor > paginates limit+1 rows into a page and a next cursor 2ms
+   ✓ If-Match > 428 when missing, 400 when not a strong numeric ETag, the version otherwise 1ms
+   ✓ request IDs > accepts ^[A-Za-z0-9._-]{1,128}$ and generates a UUIDv7 otherwise 1ms
+   ✓ problems > render RFC 9457 bodies with code and requestId, currentVersion on 409 1ms
+   ✓ problems > maps zod issues to JSON pointers and i18n codes 5ms
+   ✓ Idempotency-Key request hash > ignores key order and changes with any value 1ms
+   ✓ P2 database guard error mapping (ADR-0016 §3, ADR-0015) > maps a version-step guard to 409 version-conflict 1ms
+   ✓ P2 database guard error mapping (ADR-0016 §3, ADR-0015) > maps the gate SoD guard to 403 gate.submitter_cannot_decide and the staleness guard to 409 1ms
+   ✓ P2 database guard error mapping (ADR-0016 §3, ADR-0015) > maps the evidence review SoD guard (0019, F-DG2-140) to 403 evidence.reviewer_is_author 0ms
+   ✓ P2 database guard error mapping (ADR-0016 §3, ADR-0015) > maps template CHECK and NOT NULL violations to 422 with a field pointer 1ms
+   ✓ P2 database guard error mapping (ADR-0016 §3, ADR-0015) > maps audit-required, append-only and identity guards to 500 (programming errors) 0ms
+   ✓ P2 database guard error mapping (ADR-0016 §3, ADR-0015) > leaves unrelated errors to the generic mapping 0ms
+   × invalid characters (U+0000): SQLSTATE mapping and the central request check (F-DG2-231) > maps 22021 character_not_in_repertoire and 22P05 untranslatable_character to 400 validation.invalid_character 13ms
+     → 22021: expected null not to be null
+   × invalid characters (U+0000): SQLSTATE mapping and the central request check (F-DG2-231) > finds the first U+0000 in document order, in values and keys, at an RFC 6901 pointer 1ms
+     → (0 , findInvalidCharacter) is not a function
+   × invalid characters (U+0000): SQLSTATE mapping and the central request check (F-DG2-231) > walks Fastify-style query/params objects with a non-Object prototype, never a stream or buffer 1ms
+     → (0 , findInvalidCharacter) is not a function
+   × invalid characters (U+0000): SQLSTATE mapping and the central request check (F-DG2-231) > a deeply nested body is scanned without recursion (no stack overflow) 14ms
+     → (0 , findInvalidCharacter) is not a function
+   × invalid characters (U+0000): SQLSTATE mapping and the central request check (F-DG2-231) > assertNoInvalidCharacters throws the 400 for params, query or body, and passes clean requests 4ms
+     → expected [ undefined, undefined, undefined ] to deeply equal [ 400, …(2) ]
+   ✓ roleAssignmentCreate effective range > compares instants, not strings, across offsets 4ms
+   ✓ uniqueItems mirrors > rejects duplicate permissions in Role and Me.effectivePermissions 1ms
+   ✓ blank free text (F-DG2-150) > hasText: only a string with a non-whitespace character is present 1ms
+   ✓ blank free text (F-DG2-150) > freeText rejects whitespace-only text with validation.blank, keeps the text as entered, and stays typed 3ms
+   ✓ blank free text (F-DG2-150) > every kind of P2 free text rejects a blank value with a pointer to the field 8ms
+   ✓ blank free text (F-DG2-150) > null still clears a nullable field, and valid text still passes 0ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+0085 NEXT LINE, alone and repeated, is blank and not present (F-DG2-160) 2ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+200B ZERO WIDTH SPACE, alone and repeated, is blank and not present (F-DG2-160) 2ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+200C ZWNJ, alone and repeated, is blank and not present (F-DG2-160) 2ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+200D ZWJ, alone and repeated, is blank and not present (F-DG2-160) 2ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+2060 WORD JOINER, alone and repeated, is blank and not present (F-DG2-160) 6ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+200E LRM, alone and repeated, is blank and not present (F-DG2-160) 2ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+200F RLM, alone and repeated, is blank and not present (F-DG2-160) 2ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+061C ARABIC LETTER MARK, alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+00AD SOFT HYPHEN, alone and repeated, is blank and not present (F-DG2-160) 8ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+180E MONGOLIAN VOWEL SEPARATOR, alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+FEFF BOM, alone and repeated, is blank and not present (F-DG2-160) 5ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+115F HANGUL CHOSEONG FILLER, alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+1160 HANGUL JUNGSEONG FILLER, alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+3164 HANGUL FILLER, alone and repeated, is blank and not present (F-DG2-160) 4ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+FFA0 HALFWIDTH HANGUL FILLER, alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+2800 BRAILLE PATTERN BLANK, alone and repeated, is blank and not present (F-DG2-160) 1ms
+   × blank free text (F-DG2-150) > invisible-only U+16FE4 KHITAN SMALL SCRIPT FILLER, alone and repeated, is blank and not present (F-DG2-160) 11ms
+     → "𖿤": expected true to be false // Object.is equality
+   × blank free text (F-DG2-150) > invisible-only U+1D159 MUSICAL SYMBOL NULL NOTEHEAD, alone and repeated, is blank and not present (F-DG2-160) 1ms
+     → "𝅙": expected true to be false // Object.is equality
+   ✓ blank free text (F-DG2-150) > invisible-only U+00A0 NBSP, alone and repeated, is blank and not present (F-DG2-160) 2ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+2028 LINE SEPARATOR, alone and repeated, is blank and not present (F-DG2-160) 2ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+3000 IDEOGRAPHIC SPACE, alone and repeated, is blank and not present (F-DG2-160) 2ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+FE00 VARIATION SELECTOR-1, alone and repeated, is blank and not present (F-DG2-160) 6ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+FE0E VARIATION SELECTOR-15, alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+FE0F VARIATION SELECTOR-16, alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+E0100 VARIATION SELECTOR-17, alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+E01EF VARIATION SELECTOR-256, alone and repeated, is blank and not present (F-DG2-160) 2ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+034F COMBINING GRAPHEME JOINER, alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+180B MONGOLIAN FVS1, alone and repeated, is blank and not present (F-DG2-160) 2ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+180C MONGOLIAN FVS2, alone and repeated, is blank and not present (F-DG2-160) 2ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+180D MONGOLIAN FVS3, alone and repeated, is blank and not present (F-DG2-160) 7ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+180F MONGOLIAN FVS4, alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+17B4 KHMER VOWEL INHERENT AQ, alone and repeated, is blank and not present (F-DG2-160) 2ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+17B5 KHMER VOWEL INHERENT AA, alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+E0041 TAG LATIN CAPITAL LETTER A, alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+0001 START OF HEADING (Cc), alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+001F UNIT SEPARATOR (Cc), alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+007F DELETE (Cc), alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+0080 C1 control (Cc), alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+009F C1 control (Cc), alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only lone low surrogate U+DC00 (Cs), alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only lone high surrogate U+D800 (Cs), alone and repeated, is blank and not present (F-DG2-160) 1ms
+   × blank free text (F-DG2-150) > a mix of every invisible code point is still blank, on every kind of P2 field (F-DG2-160) 1ms
+     → expected true to be false // Object.is equality
+   ✓ blank free text (F-DG2-150) > visible content with invisible marks is accepted, present and stored verbatim (F-DG2-160) 13ms
+   ✓ blank free text (F-DG2-150) > an invisible-only thesis part is incomplete (F-DG2-160) 0ms
+   ✓ blank free text (F-DG2-150) > a blank thesis part is incomplete 0ms
+   × name and reason: one blank rule (F-DG2-160, T-DG2-BE7) > name rejects invisible-only values with validation.blank only 3ms
+     → "𖿤𖿤𖿤": expected [] to deeply equal [ [ '', 'validation.blank' ] ]
+   × name and reason: one blank rule (F-DG2-160, T-DG2-BE7) > reason rejects invisible-only values with validation.blank only 2ms
+# exit_status: 1 finished 2026-10-06T10:30:34Z
+# summary (from the full run output):
+⎯⎯⎯⎯⎯⎯ Failed Tests 18 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed (3)
+      Tests  18 failed | 116 passed (134)
+# failing tests (all):
+   × invalid characters (U+0000): SQLSTATE mapping and the central request check (F-DG2-231) > maps 22021 character_not_in_repertoire and 22P05 untranslatable_character to 400 validation.invalid_character 13ms
+   × invalid characters (U+0000): SQLSTATE mapping and the central request check (F-DG2-231) > finds the first U+0000 in document order, in values and keys, at an RFC 6901 pointer 1ms
+   × invalid characters (U+0000): SQLSTATE mapping and the central request check (F-DG2-231) > walks Fastify-style query/params objects with a non-Object prototype, never a stream or buffer 1ms
+   × invalid characters (U+0000): SQLSTATE mapping and the central request check (F-DG2-231) > a deeply nested body is scanned without recursion (no stack overflow) 14ms
+   × invalid characters (U+0000): SQLSTATE mapping and the central request check (F-DG2-231) > assertNoInvalidCharacters throws the 400 for params, query or body, and passes clean requests 4ms
+   × blank free text (F-DG2-150) > invisible-only U+16FE4 KHITAN SMALL SCRIPT FILLER, alone and repeated, is blank and not present (F-DG2-160) 11ms
+   × blank free text (F-DG2-150) > invisible-only U+1D159 MUSICAL SYMBOL NULL NOTEHEAD, alone and repeated, is blank and not present (F-DG2-160) 1ms
+   × blank free text (F-DG2-150) > a mix of every invisible code point is still blank, on every kind of P2 field (F-DG2-160) 1ms
+   × name and reason: one blank rule (F-DG2-160, T-DG2-BE7) > name rejects invisible-only values with validation.blank only 3ms
+   × name and reason: one blank rule (F-DG2-160, T-DG2-BE7) > reason rejects invisible-only values with validation.blank only 2ms
+   × U+0000 is an invalid character in free text, name and reason (F-DG2-231) > the code and the predicate 1ms
+   × U+0000 is an invalid character in free text, name and reason (F-DG2-231) > freeText rejects NUL with validation.invalid_character only (never also validation.blank) 1ms
+   × U+0000 is an invalid character in free text, name and reason (F-DG2-231) > name and reason reject NUL with validation.invalid_character only; too short stays too_small only 1ms
+   × U+0000 is an invalid character in free text, name and reason (F-DG2-231) > every kind of field reports it at its own pointer 1ms
+   × Finance validation note and archive reason (en) > reason: a reason with U+0000 is refused inline with the localized message and nothing is archived 237ms
+   × Finance validation note and archive reason (en) > reason: a server 400 validation.invalid_character on /reason is the localized field message 233ms
+   × Finance validation note and archive reason (ar) > reason: a reason with U+0000 is refused inline with the localized message and nothing is archived 226ms
+   × Finance validation note and archive reason (ar) > reason: a server 400 validation.invalid_character on /reason is the localized field message 275ms

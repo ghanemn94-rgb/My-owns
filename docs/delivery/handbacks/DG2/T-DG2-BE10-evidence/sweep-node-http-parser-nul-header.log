@@ -1,0 +1,17 @@
+# sweep probe: does a raw U+0000 in an HTTP header value reach a Node http handler? (real socket, not inject)
+# script (in run TMPDIR, not committed):
+#   import http from "node:http";
+#   import net from "node:net";
+#   const srv = http.createServer((req, res) => { res.end(`reached handler ua=${JSON.stringify(req.headers["user-agent"])}`); });
+#   srv.listen(0, "127.0.0.1", () => {
+#     const { port } = srv.address();
+#     const s = net.connect(port, "127.0.0.1", () => s.write("GET / HTTP/1.1\r\nHost: x\r\nUser-Agent: a\u0000b\r\nX-File-Name: c%00d\r\n\r\n"));
+#     let out = ""; s.on("data", (d) => (out += d)); s.on("close", () => { console.log(out.split("\r\n")[0], "|", out.includes("reached handler") ? "HANDLER REACHED" : "handler not reached"); srv.close(); });
+#     setTimeout(() => s.end(), 500);
+#   });
+# node v24.21.0:
+HTTP/1.1 400 Bad Request | handler not reached
+# exit_status: 0
+# node v22.22.2:
+HTTP/1.1 400 Bad Request | handler not reached
+# exit_status: 0

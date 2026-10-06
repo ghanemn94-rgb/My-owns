@@ -306,6 +306,57 @@ describe("GET /api/v1/auth/callback", () => {
     expect(cookie).toBeNull();
   });
 
+  // F-DG2-231 (T-DG2-BE10): PostgreSQL text cannot store U+0000. The callback is exempt from the central 400 check
+  // (its contract declares 302 and 429 only), so it refuses such input itself, with a redirect and never a 500.
+  describe("U+0000 in the callback query or in ID-token claims (F-DG2-231)", () => {
+    it("a NUL in state, code or error redirects with invalid_request (declared 302), never a 400 or 500", async () => {
+      for (const query of ["code=x&state=ab%00cd", "code=x%00y&state=unknown", "error=a%00b&state=unknown"]) {
+        const res = await call(api.app, "GET", `/api/v1/auth/callback?${query}`);
+        expect(res.status, query).toBe(302);
+        expect(res.headers["location"], query).toBe("/login?error=invalid_request");
+        expect(sessionCookieOf(res), query).toBeNull();
+      }
+    });
+
+    it("a subject claim with NUL is refused as token_invalid and audited; no user, identity or session", async () => {
+      const { cb, cookie } = await completeLogin({ sub: "jit-subject\u0000nul", email: "nul-sub@example.invalid" });
+      expect(cb.status).toBe(302);
+      expect(cb.headers["location"]).toBe("/login?error=token_invalid");
+      expect(cookie).toBeNull();
+      const failed = await api.db
+        .selectFrom("audit_event")
+        .select("reason")
+        .where("action", "=", "session.login_failed")
+        .where("request_id", "=", String(cb.headers["x-request-id"]))
+        .execute();
+      expect(failed.map((r) => r.reason)).toEqual([
+        "OIDC sign-in refused: the ID token's issuer or subject contains an unsupported character",
+      ]);
+      const users = await api.db
+        .selectFrom("app_user")
+        .select("id")
+        .where("email", "=", "nul-sub@example.invalid")
+        .execute();
+      expect(users).toEqual([]);
+    });
+
+    it("a name or e-mail claim with NUL is absent: the next claim is used and the sign-in succeeds", async () => {
+      const user = await jitDisplayName("jit-subject-231-a", {
+        email: "jit-231-a@example.invalid",
+        email_verified: true,
+        name: "Synthetic\u0000Name",
+        preferred_username: "synthetic.preferred.231",
+      });
+      expect(user).toEqual({ display_name: "synthetic.preferred.231", email: "jit-231-a@example.invalid" });
+      const noEmail = await jitDisplayName("jit-subject-231-b", {
+        email: "jit-231-b\u0000@example.invalid",
+        email_verified: true,
+        name: "Synthetic NUL e-mail user",
+      });
+      expect(noEmail).toEqual({ display_name: "Synthetic NUL e-mail user", email: null });
+    });
+  });
+
   it("uses each state once, and rejects unknown or expired states", async () => {
     const authUrl = await startLogin();
     const { code, state } = idp.issueCode(authUrl, { sub: "sub-state" });

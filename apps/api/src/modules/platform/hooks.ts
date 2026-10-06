@@ -9,6 +9,7 @@ import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from
 import { v7 as uuidv7 } from "uuid";
 import { mapDatabaseGuardError } from "./db-errors.ts";
 import { HttpProblem, problems } from "./problem.ts";
+import { assertNoInvalidCharacters } from "./validation.ts";
 
 /** `authenticated`: any signed-in user (e.g. /me); the handler scopes the data to the caller itself. */
 export type RouteAccess = { readonly public: true } | { readonly permission: Permission | "authenticated" };
@@ -20,6 +21,11 @@ export interface AuthzTracker {
 declare module "fastify" {
   interface FastifyContextConfig {
     access?: RouteAccess;
+    /**
+     * F-DG2-231: `"route"` exempts the route from the central U+0000 request check because the route rejects such
+     * input itself in the form its contract declares (the OIDC callback answers with a redirect, never a problem).
+     */
+    invalidCharacters?: "route";
   }
   interface FastifyRequest {
     authz: AuthzTracker;
@@ -96,6 +102,14 @@ export function registerPlatformHooks(app: FastifyInstance, options: PlatformOpt
   app.addHook("onRequest", async (request, reply) => {
     request.authz = { decisions: 0 };
     reply.header("X-Request-Id", request.id);
+  });
+
+  // F-DG2-231: the central request check. preHandler runs after authentication and CSRF (identity's preValidation
+  // hook), so 401/403 keep their precedence, and before every handler, so a U+0000 in any body, query or path
+  // parameter is a 400 validation problem and never reaches PostgreSQL (SQLSTATE 22021 -> undeclared 500).
+  app.addHook("preHandler", async (request) => {
+    if (request.routeOptions.config?.invalidCharacters === "route") return;
+    assertNoInvalidCharacters(request);
   });
 
   app.addHook("onSend", async (request, reply, payload) => {

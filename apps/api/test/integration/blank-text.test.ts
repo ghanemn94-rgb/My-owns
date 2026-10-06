@@ -371,6 +371,12 @@ describe("invisible-only free text is blank (F-DG2-160)", () => {
     "\u0001",
     "\ud800",
     "\u{E0100} \u17b4\u17b5",
+    // F-DG2-230 (T-DG2-BE10): the two placeholder characters no Unicode property covers, alone, repeated and with
+    // whitespace.
+    "\u{16FE4}",
+    "\u{1D159}",
+    "\u{1D159}\u{1D159}",
+    " \u{16FE4}\t\u{1D159} ",
   ] as const;
 
   it.each(INVISIBLE.map((v) => [JSON.stringify(v), v]))(
@@ -407,6 +413,24 @@ describe("invisible-only free text is blank (F-DG2-160)", () => {
       expect(await auditOf(api.db, charterId)).toEqual(before);
     },
   );
+
+  it("visible text that contains U+16FE4 or U+1D159 is accepted verbatim and counts as documented (F-DG2-230)", async () => {
+    for (const text of ["Synthetic \u{16FE4}exclusion", "\u{1D159}Enterprise fixed-line (synthetic)\u{1D159}"]) {
+      const q = await setupP2World(api, w);
+      const Q = `/api/v1/transformations/${q.transformationId}`;
+      const created = await call(api.app, "POST", `${Q}/charter`, {
+        session: q.lead.session,
+        body: { transformationName: "Synthetic", outOfScope: text },
+      });
+      expect(created.status, JSON.stringify(created.body)).toBe(201);
+      expect(created.body.charter.outOfScope).toBe(text);
+      const view = await call(api.app, "GET", `${Q}/charter`, { session: q.lead.session });
+      const excl = view.body.scopeCheckPrechecks.find((x: { code: string }) => x.code === "exclusions_documented") as {
+        result: string;
+      };
+      expect(excl.result).toBe("pass");
+    }
+  });
 
   it("an Arabic Out of scope with RLM marks is accepted verbatim, the pre-check reads pass and G1 does not list it", async () => {
     const q = await setupP2World(api, w);

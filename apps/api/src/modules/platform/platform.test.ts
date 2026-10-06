@@ -8,7 +8,7 @@ import { genReqId } from "./hooks.ts";
 import { requireIfMatch } from "./http.ts";
 import { requestHash } from "./idempotency.ts";
 import { problems, type HttpProblem } from "./problem.ts";
-import { parseBody } from "./validation.ts";
+import { assertNoInvalidCharacters, findInvalidCharacter, parseBody } from "./validation.ts";
 
 const reqWith = (ifMatch?: string) => ({ headers: ifMatch === undefined ? {} : { "if-match": ifMatch } }) as never;
 const statusOf = (fn: () => unknown) => {
@@ -183,5 +183,86 @@ describe("P2 database guard error mapping (ADR-0016 §3, ADR-0015)", () => {
     expect(map({ code: "FST_ERR_CTP_INVALID_JSON_BODY" })).toBeNull();
     expect(map({})).toBeNull();
     expect(pointerOfColumn("impact_kpi_definition_id")).toBe("/impactKpiDefinitionId");
+  });
+});
+
+// F-DG2-231 (T-DG2-BE10): text PostgreSQL cannot store is a 400, never an undeclared 500.
+describe("invalid characters (U+0000): SQLSTATE mapping and the central request check (F-DG2-231)", () => {
+  it("maps 22021 character_not_in_repertoire and 22P05 untranslatable_character to 400 validation.invalid_character", () => {
+    for (const code of ["22021", "22P05"]) {
+      const p = mapDatabaseGuardError({ code });
+      expect(p, code).not.toBeNull();
+      expect(p!.toBody("r")).toEqual({
+        type: "urn:mth:problem:validation",
+        title: "Validation failed",
+        status: 400,
+        detail: "The request is not valid.",
+        code: "validation",
+        requestId: "r",
+        errors: [
+          {
+            pointer: "",
+            code: "validation.invalid_character",
+            message: "The text contains an unsupported invisible character (U+0000).",
+          },
+        ],
+      });
+    }
+    // Neither error is ever a 500 any more, whatever constraint/table the driver attaches.
+    expect(mapDatabaseGuardError({ code: "22021", table: "charter" })!.status).toBe(400);
+  });
+
+  it("finds the first U+0000 in document order, in values and keys, at an RFC 6901 pointer", () => {
+    expect(findInvalidCharacter({ a: "ok", b: "x\u0000y" })).toBe("/b");
+    expect(findInvalidCharacter({ a: "\u0000", b: "\u0000" })).toBe("/a");
+    expect(findInvalidCharacter({ items: [{ n: "ok" }, { n: "bad\u0000" }] })).toBe("/items/1/n");
+    expect(findInvalidCharacter({ "a/b~c": "\u0000" })).toBe("/a~1b~0c");
+    expect(findInvalidCharacter({ "k\u0000": 1 })).toBe("/k\u0000");
+    expect(findInvalidCharacter({ a: { b: "\u0000" }, "k\u0000": 1 })).toBe("/a/b");
+    expect(findInvalidCharacter({ a: "ok", "k\u0000": 1, z: "\u0000" })).toBe("/k\u0000");
+    expect(findInvalidCharacter("\u0000", "/query")).toBe("/query");
+    expect(findInvalidCharacter({ a: "ok", n: 1, b: true, z: null, l: ["x"] })).toBeNull();
+    expect(findInvalidCharacter(undefined)).toBeNull();
+  });
+
+  it("walks Fastify-style query/params objects with a non-Object prototype, never a stream or buffer", () => {
+    function Empty() {}
+    Empty.prototype = Object.create(null);
+    const query = new (Empty as unknown as new () => Record<string, unknown>)();
+    query["q"] = "a\u0000b";
+    expect(findInvalidCharacter(query, "/query")).toBe("/query/q");
+    const nullProto = Object.assign(Object.create(null) as Record<string, unknown>, { id: "\u0000" });
+    expect(findInvalidCharacter(nullProto, "/params")).toBe("/params/id");
+    expect(findInvalidCharacter(Buffer.from("a\u0000b"))).toBeNull();
+    const stream = { pipe: () => undefined, chunk: "\u0000" };
+    expect(findInvalidCharacter(stream)).toBeNull();
+    const iterable = Object.defineProperty({ chunk: "\u0000" }, Symbol.asyncIterator, { value: async function* () {} });
+    expect(findInvalidCharacter(iterable)).toBeNull();
+  });
+
+  it("a deeply nested body is scanned without recursion (no stack overflow)", () => {
+    let deep: unknown = "x\u0000";
+    for (let i = 0; i < 100_000; i++) deep = [deep];
+    expect(findInvalidCharacter(deep)).toMatch(/^(\/0){100000}$/);
+  });
+
+  it("assertNoInvalidCharacters throws the 400 for params, query or body, and passes clean requests", () => {
+    const thrown = (r: { body?: unknown; query?: unknown; params?: unknown }) => {
+      try {
+        assertNoInvalidCharacters(r);
+        return null;
+      } catch (e) {
+        const p = e as HttpProblem;
+        return [p.status, p.errors?.[0]?.code, p.errors?.[0]?.pointer];
+      }
+    };
+    expect(thrown({ body: { outOfScope: "Synthetic\u0000x" } })).toEqual([
+      400,
+      "validation.invalid_character",
+      "/outOfScope",
+    ]);
+    expect(thrown({ query: { q: "\u0000" } })).toEqual([400, "validation.invalid_character", "/query/q"]);
+    expect(thrown({ params: { id: "\u0000" } })).toEqual([400, "validation.invalid_character", "/params/id"]);
+    expect(thrown({ body: { a: "ok" }, query: { q: "ok" }, params: { id: "ok" } })).toBeNull();
   });
 });

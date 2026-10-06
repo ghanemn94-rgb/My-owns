@@ -5,7 +5,7 @@ import { randomBytes } from "node:crypto";
 import type { AppConfig } from "@mth/config";
 import { sql, type Tx } from "@mth/db";
 import * as client from "openid-client";
-import { hasText } from "@mth/shared/schemas";
+import { hasInvalidCharacter, hasText } from "@mth/shared/schemas";
 import { v7 as uuidv7 } from "uuid";
 import { record } from "../audit/index.ts";
 import { sha256 } from "./sessions.ts";
@@ -174,7 +174,8 @@ export function displayNameCandidate(v: unknown): string | null {
   if (typeof v !== "string") return null;
   const truncated = Array.from(v.trim()).slice(0, DISPLAY_NAME_MAX).join("").trim();
   // F-DG2-160 / F-DG2-180: a value with no visible content (spaces, U+200F, U+2060, VS16, controls, ...) is absent.
-  return hasText(truncated) ? truncated : null;
+  // F-DG2-231: so is a value with U+0000, which PostgreSQL text cannot store (the next claim is used instead).
+  return hasText(truncated) && !hasInvalidCharacter(truncated) ? truncated : null;
 }
 
 /** Display name from the claims: `name`, then `preferred_username`, then `email`, then a generated name. */
@@ -184,6 +185,14 @@ function displayNameOf(c: Claims): string {
     if (candidate !== null) return candidate;
   }
   return `User ${randomBytes(3).toString("hex")}`;
+}
+
+/**
+ * F-DG2-231: true when the identifying claims can be stored and looked up. PostgreSQL text cannot hold U+0000, so an
+ * ID token whose `iss` or `sub` contains it is refused (audited as a failed sign-in) instead of failing in the database.
+ */
+export function identityClaimsStorable(claims: { iss: string; sub: string }): boolean {
+  return !hasInvalidCharacter(claims.iss) && !hasInvalidCharacter(claims.sub);
 }
 
 /**
@@ -213,7 +222,11 @@ export async function resolveOidcUser(tx: Tx, claims: Claims, requestId: string)
     return { ok: true, userId: existing.id, organizationId: existing.organization_id, outcome: "existing" };
   }
 
-  const email = typeof claims.email === "string" && claims.email.length <= 320 ? claims.email : null;
+  // F-DG2-231: an e-mail claim with U+0000 cannot be stored or matched, so it is treated as absent.
+  const email =
+    typeof claims.email === "string" && claims.email.length <= 320 && !hasInvalidCharacter(claims.email)
+      ? claims.email
+      : null;
   const verified = claims.email_verified === true;
   if (email && verified) {
     const candidates = await tx

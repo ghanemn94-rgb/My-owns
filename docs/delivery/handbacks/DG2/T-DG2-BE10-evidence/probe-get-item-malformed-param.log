@@ -1,0 +1,12 @@
+# tree: fix (head = platform+shared product files reverted to HEAD cf3e7d7)
+PROBE GET tom-gaps/not-a-uuid: 400 {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a110cb-4338-77dd-866d-724c87a74bef","errors":[{"pointer":"/params/","code":"validation.invalid_format","message":"Invalid UUID"}]}
+PROBE GET tom-gaps/a%00b: 400 {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a110cb-433d-733b-bf66-589d646a31fe","errors":[{"pointer":"/params/tomGapId","code":"validation.invalid_character","message":"The text contains an unsupported invisible character (U+0000)."}]}
+      Tests  1 passed (1)
+# tree: head (head = platform+shared product files reverted to HEAD cf3e7d7)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed (1)
+# NOTE (author): the "head" run is NOT a valid control. Only the platform and shared files were reverted, and the
+# unreverted identity files import `hasInvalidCharacter` from the reverted shared module, so the test file failed to
+# load. The conclusion rests on the "fix" run only: GET tom-gaps/not-a-uuid contains no NUL, so the new central check
+# ignores it, and the 400 (pointer "/params/") comes from the unchanged register-kit `paramsOf`. That behaviour is
+# pre-existing. GET item operations declare 200/401/404 only, so a malformed path id has always been an undeclared 400.

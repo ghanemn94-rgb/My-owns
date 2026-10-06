@@ -11,8 +11,10 @@ import {
   freeText,
   gateDecisionCreate,
   gateSubmissionCreate,
+  hasInvalidCharacter,
   hasText,
   hasVisibleContent,
+  INVALID_CHARACTER_CODE,
   kpiDefinitionCreate,
   me,
   name,
@@ -157,6 +159,9 @@ describe("blank free text (F-DG2-150)", () => {
     ["U+3164 HANGUL FILLER", "\u3164"],
     ["U+FFA0 HALFWIDTH HANGUL FILLER", "\uffa0"],
     ["U+2800 BRAILLE PATTERN BLANK", "\u2800"],
+    // F-DG2-230 (T-DG2-BE10): placeholders that are invisible by design and in no excluded Unicode property.
+    ["U+16FE4 KHITAN SMALL SCRIPT FILLER", "\u{16FE4}"],
+    ["U+1D159 MUSICAL SYMBOL NULL NOTEHEAD", "\u{1D159}"],
     ["U+00A0 NBSP", "\u00a0"],
     ["U+2028 LINE SEPARATOR", "\u2028"],
     ["U+3000 IDEOGRAPHIC SPACE", "\u3000"],
@@ -274,6 +279,10 @@ describe("name and reason: one blank rule (F-DG2-160, T-DG2-BE7)", () => {
     "\u0001\u0001\u0001",
     "\ud800\ud800\ud800",
     "\u17b4\u17b5\u180f",
+    // F-DG2-230 (T-DG2-BE10)
+    "\u{16FE4}\u{16FE4}\u{16FE4}",
+    "\u{1D159}\u{1D159}\u{1D159}",
+    "\u{16FE4} \u{1D159}",
   ];
   const SCHEMAS = [
     ["name", name],
@@ -316,5 +325,63 @@ describe("name and reason: one blank rule (F-DG2-160, T-DG2-BE7)", () => {
     expect(issues(reasonRequest.safeParse({ reason: "\u2060\u2060\u2060" }))).toEqual([["reason", BLANK_TEXT_CODE]]);
     expect(issues(reasonRequest.safeParse({ reason: "\u180b\u180b\u180b" }))).toEqual([["reason", BLANK_TEXT_CODE]]);
     expect(reasonRequest.parse({ reason: " Synthetic reason " })).toEqual({ reason: "Synthetic reason" });
+  });
+});
+
+// F-DG2-231 (T-DG2-BE10): PostgreSQL text cannot store U+0000. The shared schemas reject it with one stable code, so
+// the web catches it before sending; the API also rejects it centrally for every route.
+describe("U+0000 is an invalid character in free text, name and reason (F-DG2-231)", () => {
+  const issues = (r: {
+    success: boolean;
+    error?: { issues: Array<{ path: PropertyKey[]; code: string; message: string }> };
+  }) => (r.success ? [] : r.error!.issues.map((i) => [i.path.join("/"), i.code === "custom" ? i.message : i.code]));
+  const WITH_NUL = [
+    "Synthetic\u0000exclusion",
+    "\u0000Synthetic",
+    "Synthetic\u0000",
+    "\u0000\u0000\u0000",
+    " \u0000 ",
+    "\u0645\u0000\u0645",
+  ];
+
+  it("the code and the predicate", () => {
+    expect(INVALID_CHARACTER_CODE).toBe("validation.invalid_character");
+    for (const v of WITH_NUL) expect(hasInvalidCharacter(v), JSON.stringify(v)).toBe(true);
+    for (const v of ["", "Synthetic", "\u0001", "\u200f", "\u{1F600}", "0"])
+      expect(hasInvalidCharacter(v), JSON.stringify(v)).toBe(false);
+  });
+
+  it("freeText rejects NUL with validation.invalid_character only (never also validation.blank)", () => {
+    for (const v of WITH_NUL) {
+      expect(issues(freeText(1, 100).safeParse(v)), JSON.stringify(v)).toEqual([["", INVALID_CHARACTER_CODE]]);
+      expect(issues(freeText(0, 100).nullable().safeParse(v)), JSON.stringify(v)).toEqual([
+        ["", INVALID_CHARACTER_CODE],
+      ]);
+    }
+  });
+
+  it("name and reason reject NUL with validation.invalid_character only; too short stays too_small only", () => {
+    for (const schema of [name, reason]) {
+      for (const v of ["Synthetic\u0000value", "\u0000\u0000\u0000", "abc\u0000"])
+        expect(issues(schema.safeParse(v)), JSON.stringify(v)).toEqual([["", INVALID_CHARACTER_CODE]]);
+    }
+    expect(issues(reason.safeParse("\u0000"))).toEqual([["", "too_small"]]);
+    expect(issues(name.safeParse(""))).toEqual([["", "too_small"]]);
+  });
+
+  it("every kind of field reports it at its own pointer", () => {
+    expect(issues(charterUpdate.safeParse({ outOfScope: "Synthetic\u0000x", changeSummary: "Synthetic" }))).toEqual([
+      ["outOfScope", INVALID_CHARACTER_CODE],
+    ]);
+    expect(issues(tomGapUpdate.safeParse({ gap: "Synthetic\u0000gap" }))).toEqual([["gap", INVALID_CHARACTER_CODE]]);
+    expect(issues(reasonRequest.safeParse({ reason: "Synthetic\u0000reason" }))).toEqual([
+      ["reason", INVALID_CHARACTER_CODE],
+    ]);
+  });
+
+  it("text without NUL is unaffected (other controls inside visible text stay accepted verbatim)", () => {
+    expect(freeText(1, 100).parse("Synthetic\u0001text")).toBe("Synthetic\u0001text");
+    expect(name.parse(" Synthetic name ")).toBe("Synthetic name");
+    expect(issues(freeText(1, 10).safeParse("   "))).toEqual([["", BLANK_TEXT_CODE]]);
   });
 });

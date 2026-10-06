@@ -6,7 +6,8 @@
 //    aria-invalid and aria-describedby, focus moves to the first invalid field, and NO request is sent;
 //  - visible text is sent verbatim (no trim());
 //  - "" keeps today's meaning (optional omitted / null, required "required" or "too short").
-// A server 400 `validation.blank` lands on its field (ReasonDialog `/reason`, P1 transformation `/name`).
+// A server 400 `validation.blank` lands on its field (ReasonDialog `/reason`, P1 transformation `/name`), and so does
+// `validation.invalid_character` (U+0000; F-DG2-231) on `/reason`.
 // Product gates G1-G6 are business approvals; these are synthetic test decisions only.
 import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -442,6 +443,44 @@ describe.each(LOCALES)("Finance validation note and archive reason (%s)", (local
     submit();
     await waitFor(() => expect(writes(requests)).toHaveLength(1));
     await expectBlankOn(reason, locale);
+    expect(within(dialog).queryByRole("alert")).toBeNull();
+  });
+
+  // F-DG2-231 (T-DG2-BE10): U+0000 is refused with validation.invalid_character, by the shared `reason` schema before
+  // sending and by the API; either way the localized message lands on the field (aria-invalid, aria-describedby), in
+  // EN and AR, not a generic error.
+  const expectInvalidCharacterOn = async (field: HTMLElement) => {
+    const expected = t("problems.validation__invalid_character");
+    expect(expected).not.toBe("problems.validation__invalid_character");
+    expect(expected).not.toBe(blankMessage(locale));
+    await waitFor(() => expect(field.getAttribute("aria-invalid")).toBe("true"));
+    const describedBy = (field.getAttribute("aria-describedby") ?? "").split(" ").filter(Boolean);
+    expect(describedBy.map((id) => document.getElementById(id)?.textContent ?? "").join(" ")).toContain(expected);
+  };
+
+  it("reason: a reason with U+0000 is refused inline with the localized message and nothing is archived", async () => {
+    const { requests, row } = await open();
+    const { reason, submit, dialog } = await openArchive(row);
+    fireEvent.change(reason, { target: { value: "Synthetic\u0000reason" } });
+    submit();
+    await expectInvalidCharacterOn(reason);
+    expect(within(dialog).queryByRole("alert")).toBeNull();
+    expect(writes(requests)).toEqual([]);
+  });
+
+  it("reason: a server 400 validation.invalid_character on /reason is the localized field message", async () => {
+    const { requests, row } = await open(
+      route("POST", /\/archive$/, () =>
+        problem(400, "validation", {
+          errors: [{ pointer: "/reason", code: "validation.invalid_character", message: "x" }],
+        }),
+      ),
+    );
+    const { reason, submit, dialog } = await openArchive(row);
+    fireEvent.change(reason, { target: { value: "Synthetic reason" } });
+    submit();
+    await waitFor(() => expect(writes(requests)).toHaveLength(1));
+    await expectInvalidCharacterOn(reason);
     expect(within(dialog).queryByRole("alert")).toBeNull();
   });
 

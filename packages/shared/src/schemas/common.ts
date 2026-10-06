@@ -42,15 +42,19 @@ export const version = z.number().int().min(1);
  *   - `\p{Default_Ignorable_Code_Point}` (F-DG2-180: variation selectors U+FE00-FE0F and U+E0100-E01EF, U+034F
  *     COMBINING GRAPHEME JOINER, Mongolian free variation selectors U+180B-180D and U+180F, Khmer inherent vowels
  *     U+17B4/U+17B5, the Hangul fillers U+115F/U+1160/U+3164/U+FFA0, the tag characters U+E0000-E007F, ...);
- *   - U+2800 BRAILLE PATTERN BLANK.
+ *   - three placeholder characters that are invisible by design but in none of the properties above: U+2800 BRAILLE
+ *     PATTERN BLANK, U+16FE4 KHITAN SMALL SCRIPT FILLER (gc=Mn, fills an empty position) and U+1D159 MUSICAL SYMBOL
+ *     NULL NOTEHEAD (gc=So, a notehead with no visible head) (F-DG2-230: the last two were the only residuals of an
+ *     exhaustive sweep; private-use, unassigned and noncharacter code points and lone combining marks are font
+ *     dependent or render as a mark on a dotted circle, so they are NOT treated as blank).
  * `String.prototype.trim()` is not used: it strips only ECMAScript WhiteSpace/LineTerminator, so an Out of scope of
  * "\u200f" used to count as documented. Text with visible content keeps its marks (an Arabic RLM, an emoji ZWJ
  * sequence, an emoji with VS16, Mongolian text with an FVS, a leading ZWSP) and is stored verbatim; nothing is
  * stripped. This is the only definition: `hasText`, `freeText`, `trimmedText` (`name`, `reason`) and the web use it.
  */
-const VISIBLE_CONTENT = /[^\p{White_Space}\p{Cc}\p{Cf}\p{Cs}\p{Default_Ignorable_Code_Point}\u2800]/u;
+const VISIBLE_CONTENT = /[^\p{White_Space}\p{Cc}\p{Cf}\p{Cs}\p{Default_Ignorable_Code_Point}\u2800\u{16FE4}\u{1D159}]/u;
 
-/** True when `value` contains at least one visible code point (F-DG2-160, F-DG2-180); see `VISIBLE_CONTENT`. */
+/** True when `value` contains at least one visible code point (F-DG2-160, F-DG2-180, F-DG2-230); see `VISIBLE_CONTENT`. */
 export function hasVisibleContent(value: string): boolean {
   return VISIBLE_CONTENT.test(value);
 }
@@ -69,17 +73,32 @@ export function hasText(value: string | null | undefined): value is string {
 export const BLANK_TEXT_CODE = "validation.blank";
 
 /**
+ * F-DG2-231: field-error code for text that contains a character PostgreSQL `text` cannot store. U+0000 (NUL) is the
+ * only such code point in a UTF-8 database (SQLSTATE 22021); a NUL inside otherwise visible text used to reach the
+ * database and come back as an undeclared 500. Localized in EN and AR by the web (`problems.validation__invalid_character`).
+ */
+export const INVALID_CHARACTER_CODE = "validation.invalid_character";
+
+/** F-DG2-231: true when `value` contains a character that cannot be stored (U+0000 NUL). Shared by the schemas and the API's central request check. */
+export function hasInvalidCharacter(value: string): boolean {
+  return value.includes("\u0000");
+}
+
+/**
  * Free text of `min`..`max` characters that is not blank (F-DG2-150, F-DG2-160). A value with no visible content
  * (whitespace, format characters or invisible fillers only; see `hasVisibleContent`) is rejected with
  * `validation.blank`; an empty string still fails `min` (`too_small`) only, so a value never gets two errors. The text
  * is stored exactly as entered (no trimming transform). Use `.nullable()` where `null` clears the field.
+ * F-DG2-231: a value that contains U+0000 is rejected with `validation.invalid_character` instead (one error, never
+ * `validation.blank` as well).
  */
 export function freeText(min: number, max: number) {
   return z
     .string()
     .min(min)
     .max(max)
-    .refine((v) => v.length === 0 || hasVisibleContent(v), BLANK_TEXT_CODE);
+    .refine((v) => v.length === 0 || !hasInvalidCharacter(v), INVALID_CHARACTER_CODE)
+    .refine((v) => v.length === 0 || hasInvalidCharacter(v) || hasVisibleContent(v), BLANK_TEXT_CODE);
 }
 
 /**
@@ -89,6 +108,7 @@ export function freeText(min: number, max: number) {
  * visible content (`hasVisibleContent`: whitespace, format characters such as U+200F RLM or U+2060 WORD JOINER,
  * U+0085, invisible fillers) is rejected with `validation.blank`. The blank check is skipped whenever `min` already
  * failed, so a value never gets two errors (the `freeText` rule generalized from `min` = 1 to any `min`).
+ * F-DG2-231: a value that contains U+0000 is rejected with `validation.invalid_character` (and not also as blank).
  * Declared after `BLANK_TEXT_CODE`/`hasVisibleContent` so the schemas below never read them in their TDZ.
  */
 function trimmedText(min: number, max: number) {
@@ -97,7 +117,8 @@ function trimmedText(min: number, max: number) {
     .trim()
     .min(min)
     .max(max)
-    .refine((v) => v.length < min || hasVisibleContent(v), BLANK_TEXT_CODE);
+    .refine((v) => v.length < min || !hasInvalidCharacter(v), INVALID_CHARACTER_CODE)
+    .refine((v) => v.length < min || hasInvalidCharacter(v) || hasVisibleContent(v), BLANK_TEXT_CODE);
 }
 export const name = trimmedText(1, 200);
 export const reason = trimmedText(3, 1000);
