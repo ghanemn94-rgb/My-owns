@@ -56,5 +56,18 @@ export {
   undecodableQueryPointer,
   type JsonTextParser,
 } from "./request-encoding.ts";
+export {
+  assertDeclaredMediaType,
+  consumesOf,
+  DEFAULT_CONSUMES,
+  JSON_MEDIA_TYPE,
+  mediaTypeEssence,
+  OCTET_STREAM_MEDIA_TYPE,
+  registerMediaTypeEnforcement,
+  restrictParserTo,
+  SUPPORTED_REQUEST_MEDIA_TYPES,
+  undeclaredMediaTypeProblem,
+  willParseBody,
+} from "./media-types.ts";
 export { registerHealthRoutes } from "./health.ts";
 export type { ModuleDeps, ModuleRegistration } from "./deps.ts";

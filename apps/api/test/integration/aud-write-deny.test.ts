@@ -205,10 +205,17 @@ describe("read-only auditor (AUD) write-deny over every P2 mutating operation (g
     "%s (%s %s): AUD gets 403 and nothing is written",
     async (_id, method, path) => {
       const url = urlOf(path);
+      // Each operation is sent its DECLARED request media type (F-DG2-320: any other one is a 400 before authorization,
+      // like an unparseable body): uploadEvidenceContent takes application/octet-stream, every other one JSON.
+      const upload = method === "POST" && path.endsWith("/evidence/{evidenceId}/content");
       const res = await call(api.app, method, url, {
         session: p.auditor.session,
-        headers: ifm(1),
-        body: method === "POST" && path.endsWith("/decisions") ? { transformationId: p.transformationId } : {},
+        headers: upload ? { ...ifm(1), "content-type": "application/octet-stream", "x-file-name": "aud.txt" } : ifm(1),
+        body: upload
+          ? Buffer.from("synthetic")
+          : method === "POST" && path.endsWith("/decisions")
+            ? { transformationId: p.transformationId }
+            : {},
       });
       expect(res.status, JSON.stringify(res.body)).toBe(403);
       const written = (await auditOfRequest(api.db, String(res.headers["x-request-id"]))).map((e) => e.action);

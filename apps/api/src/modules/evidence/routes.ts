@@ -43,13 +43,16 @@ import {
   filterHash,
   HttpProblem,
   limitSchema,
+  OCTET_STREAM_MEDIA_TYPE,
   paginate,
   parse,
   parseBody,
   parseQuery,
   problems,
   requireIfMatch,
+  restrictParserTo,
   sendVersioned,
+  undeclaredMediaTypeProblem,
   type ModuleDeps,
   type ModuleRegistration,
 } from "../platform/index.ts";
@@ -339,14 +342,27 @@ async function assertReviewerIndependent(
     }).withDenial(denialOf("evidence.review", ctx.target));
 }
 
+/** The raw octet-stream request body: the unread byte stream (no text decoding applied) or a byte buffer. */
+function isRawByteBody(body: unknown): body is AsyncIterable<Uint8Array> | Uint8Array {
+  if (body instanceof Uint8Array) return true;
+  if (typeof body !== "object" || body === null || !(Symbol.asyncIterator in body)) return false;
+  // A stream with an encoding set would yield decoded strings (U+FFFD for invalid bytes); never store those.
+  const encoding = (body as { readableEncoding?: unknown }).readableEncoding;
+  return encoding === undefined || encoding === null;
+}
+
 export function registerEvidenceModule(
   app: FastifyInstance,
   { db, config }: ModuleDeps,
   store: EvidenceStore = evidenceStoreFor(config.evidenceStorage),
 ): ModuleRegistration {
   // Uploads arrive as raw bytes: hand the request stream to the handler, which hashes and stores it after the
-  // authorization checks (never buffered whole; the size limit is enforced while streaming).
-  app.addContentTypeParser("application/octet-stream", (_request, payload, done) => done(null, payload));
+  // authorization checks (never buffered whole; the size limit is enforced while streaming). F-DG2-320: only routes
+  // that declare `consumes: ["application/octet-stream"]` accept it (central preParsing check, re-checked here).
+  app.addContentTypeParser(
+    OCTET_STREAM_MEDIA_TYPE,
+    restrictParserTo(OCTET_STREAM_MEDIA_TYPE, (_request, payload, done) => done(null, payload)),
+  );
 
   registerRegister(app, db, evidenceRegister);
   registerContentRoutes(app, db, store);
@@ -385,7 +401,9 @@ function registerContentRoutes(app: FastifyInstance, db: Db, store: EvidenceStor
       .send(stream);
   });
 
-  app.post(`${ITEM}/content`, { config: { access: { permission: "evidence.create" } } }, async (request, reply) => {
+  // F-DG2-320: the contract declares only application/octet-stream for this operation.
+  const uploadConfig = { access: { permission: "evidence.create" }, consumes: [OCTET_STREAM_MEDIA_TYPE] } as const;
+  app.post(`${ITEM}/content`, { config: uploadConfig }, async (request, reply) => {
     const { transformationId, evidenceId } = parse(itemParams, request.params, "params");
     let storedKey: string | null = null;
     try {
@@ -419,9 +437,11 @@ function registerContentRoutes(app: FastifyInstance, db: Db, store: EvidenceStor
         const current = await lockEvidence(tx, request, transformationId, evidenceId);
         if (current.kind !== "file")
           throw ruleProblem("evidence.not_a_file", "Only file evidence has stored content.", "");
-        const body = request.body as AsyncIterable<Uint8Array> | Uint8Array | undefined;
+        const body: unknown = request.body;
         if (body === undefined || body === null)
           throw problems.badRequest("validation.body_required", "Send the file bytes as application/octet-stream.");
+        // F-DG2-320 (defence in depth): only the raw request byte stream is ever stored, never a parsed value.
+        if (!isRawByteBody(body)) throw undeclaredMediaTypeProblem(uploadConfig.consumes);
         const last = await tx
           .selectFrom("evidence_content")
           .select((eb) => eb.fn.max<number>("revision").as("n"))

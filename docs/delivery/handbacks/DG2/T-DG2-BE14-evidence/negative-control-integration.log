@@ -1,0 +1,36 @@
+   ✓ route coverage > maps every governed Fastify route to an OpenAPI operation with the same method, and back 3ms
+   ✓ route coverage > declares access on every governed route (public or a permission) 4ms
+   ✓ every operation, validated against the contract and the zod mirrors > health 16ms
+   ✓ every operation, validated against the contract and the zod mirrors > auth + me 194ms
+   ✓ every operation, validated against the contract and the zod mirrors > organizations and business units 128ms
+   ✓ every operation, validated against the contract and the zod mirrors > users, roles, permissions and assignments 149ms
+   ✓ every operation, validated against the contract and the zod mirrors > transformations and audit 148ms
+   ✓ every operation, validated against the contract and the zod mirrors > branding tokens (getBrandingTokens): authenticated-only, provisional provenance, contract + zod valid 9ms
+   ✓ every operation, validated against the contract and the zod mirrors > kpi module operations (P2; kpi-exercises.ts, owned by kpi-benefits-engineer)  683ms
+   ✓ every operation, validated against the contract and the zod mirrors > P2 backend operations (p2-exercises.ts): every routed operation exercised with a success  2213ms
+   ✓ every operation, validated against the contract and the zod mirrors > every GET operation with a path parameter: a malformed id is a declared 400 at /params/<name>; nothing written  353ms
+   ✓ every operation, validated against the contract and the zod mirrors > the contract: every operation but the OIDC callback declares 400 (ADR-0007 §5a) 0ms
+   ✓ every operation, validated against the contract and the zod mirrors > every operation but the OIDC callback: U+0000 in the query is a declared 400 invalid_character  740ms
+   × every operation, validated against the contract and the zod mirrors > the contract: every route accepts exactly the request media types its operation declares 5ms
+     → route.consumes is not iterable
+   × every operation, validated against the contract and the zod mirrors > every operation: an undeclared request media type is a declared 400 validation.content_type; nothing written 22ms
+     → devLogin text/plain: expected [ { pointer: '', …(2) } ] to deeply equal [ { pointer: '', …(2) } ]
+   ✓ every operation, validated against the contract and the zod mirrors > the contract: every operation declares each platform status derived from its route (ADR-0007 §5b) 6ms
+   ✓ every operation, validated against the contract and the zod mirrors > every operation: the rate limiter's 429 is a declared RateLimited problem (live, limits of 1 per minute)  747ms
+   ✓ every operation, validated against the contract and the zod mirrors > covers every operation with at least one success and every successful body with its zod mirror 1ms
+   × uploadEvidenceContent accepts only application/octet-stream (F-DG2-320) > every undeclared media type, in each framing: 400 validation.content_type; nothing stored, no audit row 36ms
+     → expected { …(7) } to deeply equal { …(7) }
+   × uploadEvidenceContent accepts only application/octet-stream (F-DG2-320) > the refusal precedes authentication, like any body the framework cannot parse (no session: 400, not 401) 12ms
+     → expected [ 400, 'validation.malformed_request' ] to deeply equal [ 400, 'validation.content_type' ]
+   ✓ uploadEvidenceContent accepts only application/octet-stream (F-DG2-320) > a valid application/octet-stream upload stores exactly the bytes sent, in both framings (sha256 of the raw input) 87ms
+   ✓ uploadEvidenceContent accepts only application/octet-stream (F-DG2-320) > the size limit still applies to octet-stream uploads (unchanged): the declared 413 evidence.too_large 38ms
+   × JSON operations accept only application/json (F-DG2-320) > createEvidence sent text/plain or application/octet-stream, in each framing: 400; nothing created 10ms
+     → expected { …(7) } to deeply equal { …(7) }
+   × JSON operations accept only application/json (F-DG2-320) > an If-Match update (PATCH) sent application/octet-stream: 400; the record is unchanged 28ms
+     → expected { …(7) } to deeply equal { …(7) }
+   ✓ JSON operations accept only application/json (F-DG2-320) > a valid JSON request still works (application/json, with and without a charset) 15ms
+   ✓ bodiless requests behave as before (F-DG2-320 sweep) > GET with a Content-Type (and even a body) is never refused: the body is not read 14ms
+   ✓ bodiless requests behave as before (F-DG2-320 sweep) > a bodiless POST with no Content-Type and no body reaches its handler; an empty JSON body keeps its 400 41ms
+   ✓ bodiless requests behave as before (F-DG2-320 sweep) > an unknown route keeps its 404, whatever the media type 1ms
+ Test Files  2 failed (2)
+      Tests  6 failed | 22 passed (28)

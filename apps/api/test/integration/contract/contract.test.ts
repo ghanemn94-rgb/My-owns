@@ -88,6 +88,7 @@ import {
   NO_400_OPERATIONS,
 } from "./malformed-input.ts";
 import { exerciseRateLimitSweep, platformStatuses, undeclaredPlatformStatuses } from "./platform-statuses.ts";
+import { BODY_METHODS, consumesDrift, declaredRequestMediaTypes, exerciseUndeclaredMediaTypes } from "./media-types.ts";
 import {
   call,
   seedWorld,
@@ -505,6 +506,30 @@ describe("every operation, validated against the contract and the zod mirrors", 
   it("every operation but the OIDC callback: U+0000 in the query is a declared 400 invalid_character", async () => {
     const checked = await exerciseInvalidCharacterQuery({ api, world: w, session: admin });
     expect(checked).toHaveLength(operations.length - NO_400_OPERATIONS.size);
+  });
+
+  // F-DG2-320 (T-DG2-BE14): every operation accepts only the request media types it declares (media-types.ts).
+  it("the contract: every route accepts exactly the request media types its operation declares", () => {
+    expect(consumesDrift(operations, api.routes)).toEqual([]);
+    const withBody = operations.filter((o) => declaredRequestMediaTypes(o) !== null);
+    const byType = (t: string) => withBody.filter((o) => declaredRequestMediaTypes(o)!.includes(t)).length;
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([87, 86, 1]);
+    expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
+      "application/octet-stream",
+    ]);
+  });
+
+  it("every operation: an undeclared request media type is a declared 400 validation.content_type; nothing written", async () => {
+    const checked = await exerciseUndeclaredMediaTypes({ api, world: w, session: admin }, operations);
+    const live = operations.filter((o) => !P2_PENDING_OPERATIONS.has(o.operationId));
+    expect(checked.bodyOperations.sort()).toEqual(
+      live
+        .filter((o) => BODY_METHODS.has(o.method))
+        .map((o) => o.operationId)
+        .sort(),
+    );
+    expect(checked.bodyOperations.length + checked.getOperations.length).toBe(live.length);
+    expect(checked.bodyOperations).toContain("uploadEvidenceContent");
   });
 
   // T-DG2-ARCH-03 (ADR-0007 §5b): every status the platform layer can return is declared on the operation.

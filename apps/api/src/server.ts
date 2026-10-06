@@ -34,11 +34,15 @@ import {
   createClientErrorHandler,
   createFrameworkErrorHandler,
   createJsonBodyParser,
+  DEFAULT_CONSUMES,
   genReqId,
+  JSON_MEDIA_TYPE,
   parseQueryString,
   problems,
   registerHealthRoutes,
+  registerMediaTypeEnforcement,
   registerPlatformHooks,
+  restrictParserTo,
   type ModuleRegistration,
   type SecurityHeaders,
 } from "./modules/platform/index.ts";
@@ -116,6 +120,8 @@ export interface RouteRecord {
   readonly method: string;
   readonly url: string;
   readonly access: unknown;
+  /** The request media types the route accepts (F-DG2-320). */
+  readonly consumes: readonly string[];
 }
 
 export async function buildServer(
@@ -161,18 +167,27 @@ export async function buildServer(
   appLog = app.log;
   // F-DG2-290: JSON bodies are read as raw bytes and decoded as strict UTF-8 (never rewritten to U+FFFD), then parsed
   // by Fastify's default JSON parser (same empty/invalid-JSON errors and prototype-poisoning protection). Registered on
-  // the root instance, so every module inherits it; the evidence octet-stream parser is separate and unchanged.
+  // the root instance, so every module inherits it; the evidence octet-stream parser is separate.
+  // F-DG2-320: each route accepts only its declared `config.consumes` media types (platform/media-types.ts): the
+  // text/plain parser is removed, a central preParsing hook refuses any other media type with 400
+  // validation.content_type before a body byte is read, and each parser re-checks the route's set.
+  registerMediaTypeEnforcement(app);
   app.addContentTypeParser(
-    "application/json",
+    JSON_MEDIA_TYPE,
     { parseAs: "buffer" },
-    createJsonBodyParser(app.getDefaultJsonParser("error", "error")),
+    restrictParserTo(JSON_MEDIA_TYPE, createJsonBodyParser(app.getDefaultJsonParser("error", "error"))),
   );
   const db = createDb(pool);
   // Every registered route, for the route-coverage and access-declaration tests.
   const routes: RouteRecord[] = [];
   app.addHook("onRoute", (r) => {
     for (const method of [r.method].flat())
-      routes.push({ method: String(method), url: r.url, access: r.config?.access });
+      routes.push({
+        method: String(method),
+        url: r.url,
+        access: r.config?.access,
+        consumes: r.config?.consumes ?? DEFAULT_CONSUMES,
+      });
   });
 
   registerPlatformHooks(app, { spaFallback: webRoot !== null });
