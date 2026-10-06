@@ -820,7 +820,7 @@
       "id": "DG2",
       "stage": "P2",
       "name": "Diagnose define and design",
-      "state": "FIXING",
+      "state": "REVIEWING",
       "depends_on": [
         "DG1"
       ],
@@ -839,10 +839,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:2f81c60ab1347986b3a2c31f8cd7642e0f8e4c0b6de59f1636f05268f3558c46",
-        "source_commit": "96a3c293614b9e832b9a419ef20ecb61e54a07cb",
-        "frozen_at": "2026-10-06T09:23:54Z",
-        "manifest_path": "docs/delivery/candidates/DG2/2f81c60ab1347986.manifest.json"
+        "candidate_id": "sha256:bb3e75811631cbabef8f807972f36396e0be2cf7b1d1b1281fa2fdf16f52eb1f",
+        "source_commit": "51a692b1d6ec0edfde3f9e85d75b1571dc1932ee",
+        "frozen_at": "2026-10-06T11:46:13Z",
+        "manifest_path": "docs/delivery/candidates/DG2/bb3e75811631cbab.manifest.json"
       },
       "review_rounds": [
         {
@@ -903,6 +903,18 @@
             "qa-verifier": "docs/delivery/reviews/DG2/round-5/qa-verifier.json"
           },
           "note": "DG2 gate review round 5 on candidate 2f81c60a (526 files, source 96a3c29). Round-4 findings now FIXED_PENDING_VERIFICATION: F-DG2-180 (visible-content predicate excludes Cc/Cs/Default_Ignorable), F-DG2-181 (OIDC display name truncated by code point, then checked) and F-DG2-220 (unit-web async-utility timeout; 18 green repeat runs). D-065 also adds a fail-closed UTF8 database requirement and locale-independent test clusters, found by orchestrator verification. The other 16 DG2 findings are CLOSED_VERIFIED. Orchestrator pre-review verification ran in both locale settings: typecheck/build/lint/format/openapi(161)/no-cdn exit 0; unit 640/640 twice on Node 24 and twice on Node 22; contrast PASS; integration 483/483; e2e 58 passed en+ar; validate --register DG2, --historical --stage DG1 and --pipeline PASS. Id ranges are disjoint: code-security 230-239, domain 240-249, qa 250-259."
+        },
+        {
+          "round": 6,
+          "candidate_id": "sha256:bb3e75811631cbabef8f807972f36396e0be2cf7b1d1b1281fa2fdf16f52eb1f",
+          "frozen_at": "2026-10-06T11:46:13Z",
+          "source_commit": "51a692b1d6ec0edfde3f9e85d75b1571dc1932ee",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG2/round-6/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG2/round-6/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG2/round-6/qa-verifier.json"
+          },
+          "note": "DG2 gate review round 6 on candidate bb3e7581 (528 files, source 51a692b). The round-5 findings are FIXED_PENDING_VERIFICATION: F-DG2-230 (two placeholder characters added to the visible-content predicate) and F-DG2-231 (U+0000 refused centrally with 400 validation.invalid_character; SQLSTATE 22021/22P05 mapped to 400). D-066 also covers a contract amendment: 41 operations now declare the 400 the server can return, still 161 operations, and path-param pointers name the parameter. The other 19 DG2 findings are CLOSED_VERIFIED. Orchestrator pre-review verification in both locale settings: all steps exit 0 (unit 656/656, integration 507/507, e2e 58). Id ranges are disjoint: code-security 260-269, domain 270-279, qa 280-289."
         }
       ],
       "gate_record": "docs/delivery/gates/DG2.json",
@@ -966,6 +978,11 @@
           "state": "FIXING",
           "at": "2026-10-06T10:45:00Z",
           "note": "Round 5 on candidate 2f81c60a: all three verdicts PASS. code-security closed F-DG2-180 and F-DG2-181, qa closed F-DG2-220 with all 28 checks PASS, and domain raised no findings. Two new Low, non-mandatory code-security findings: F-DG2-230 (two placeholder characters, U+16FE4 and U+1D159, still count as visible; the reviewer's exhaustive sweep found no other residual) and F-DG2-231 (a NUL inside visible text reaches PostgreSQL and returns an undeclared 500 instead of 400; integrity holds). 19 findings CLOSED_VERIFIED, 2 OPEN. Round-6 repair: backend-workflow-engineer T-DG2-BE10 adds both placeholders, rejects NUL centrally in request parsing and the shared schemas, and maps SQLSTATE 22021/22P05 to 400. Then re-freeze and round 6."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-10-06T11:35:00Z",
+          "note": "Round-6 repairs integrated (D-066): BE10 for F-230 and F-231 (NUL refused centrally; SQLSTATE mapping), and ARCH-02 so the contract declares every 400 (41 operations, still 161) with params pointers that name the parameter. 19 findings CLOSED_VERIFIED, 2 FIXED_PENDING_VERIFICATION, 0 OPEN. Orchestrator verification green in both locale settings. Candidate frozen as bb3e7581 for gate review round 6."
         }
       ]
     },
