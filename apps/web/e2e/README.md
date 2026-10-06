@@ -27,7 +27,10 @@ apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e --workers=1
 
 `support/with-stack.sh` creates a disposable PostgreSQL cluster, runs `mth-db migrate` and `mth-db seed-dev`
 (SYNTHETIC users `dev.admin`, `dev.office`, `dev.lead`, `dev.auditor`, `dev.nobody`), starts the API with
-`AUTH_MODE=dev` on `http://localhost:3000` (serving `apps/web/dist`), runs the command and deletes everything.
+`AUTH_MODE=dev` on `http://localhost:3000` (serving `apps/web/dist`), runs the command and deletes everything. Ports
+(PostgreSQL default 24331, API default 3000, both below the Linux ephemeral range) are starting points. On a bind
+conflict the stack retries on another free port and exports `E2E_BASE_URL` with the port actually used. See
+`docs/operations/clean-start.md`, "Harness port policy" (`E2E_PG_STRICT_PORT` / `E2E_API_STRICT_PORT` disable this).
 Browsers are never downloaded (ADR-0012): `PLAYWRIGHT_BROWSERS_PATH` must point at the pre-installed chromium-1194.
 Set `E2E_SCREENSHOT_DIR` to write screenshots elsewhere.
 

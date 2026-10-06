@@ -12,7 +12,13 @@
 # Environment:
 #   PGBIN              PostgreSQL server binaries (default: newest /usr/lib/postgresql/*/bin)
 #   MTH_PNPM_STORE     pnpm store to install from (--store-dir); MTH_PNPM_OFFLINE=1 adds --offline (no network)
-#   MTH_LOCAL_PG_PORT  default 54340;  MTH_LOCAL_PORT (API) default 3100
+#   MTH_LOCAL_PG_PORT  default 24340;  MTH_LOCAL_PORT (API) default 3100
+#   Port policy (tests/qa/support/pg-port.sh, F-DG2-310; docs/operations/clean-start.md "Harness port policy"):
+#   defaults lie below the Linux ephemeral range (32768-60999); a requested port is the STARTING point and, if
+#   postgres or the API fails to bind (EADDRINUSE, e.g. a client socket in TIME_WAIT), the run retries on a free port
+#   from MTH_PORT_POOL (default 25000-31999), up to MTH_PORT_RETRIES (10) times, logging each retry. Every URL and
+#   secret file is written with the port actually used. MTH_LOCAL_PG_STRICT_PORT=1 / MTH_LOCAL_STRICT_PORT=1 (or
+#   MTH_STRICT_PORT=1) turn a conflict into "BLOCKED" (exit 3) instead. Any other start failure: FAIL (exit 1).
 #
 # Phase A: production semantics (NODE_ENV=production, AUTH_MODE=oidc) from the assembled runtime tree:
 #          status/migrate/idempotent re-run, health + readiness, SPA served, dev login absent, seed-dev refused,
@@ -46,8 +52,10 @@ LOG="${LOG:-$WORK/clean-start.log}"
 exec > >(tee "$LOG") 2>&1
 
 PGBIN="${PGBIN:-$(ls -d /usr/lib/postgresql/*/bin 2>/dev/null | sort -V | tail -1)}"
-PG_PORT="${MTH_LOCAL_PG_PORT:-54340}"
+PG_PORT="${MTH_LOCAL_PG_PORT:-24340}"
 API_PORT="${MTH_LOCAL_PORT:-3100}"
+# shellcheck source=../../tests/qa/support/pg-port.sh
+. "$REPO/tests/qa/support/pg-port.sh"
 PG_PID=""
 API_PID=""
 WORKER_PID=""
@@ -123,11 +131,9 @@ chmod 0644 "$WORK/secrets"/*
 # UTF8 + C locale whatever the shell locale (T-DG2-BE9; ADR-0003 "Database encoding").
 as_pg "$PGBIN/initdb" -D "$WORK/pg" -U postgres --pwfile="$WORK/secrets/pg_superuser_password" \
   --auth-local=trust --auth-host=scram-sha-256 --encoding=UTF8 --locale=C >/dev/null
-as_pg "$PGBIN/postgres" -D "$WORK/pg" -c unix_socket_directories='' -c listen_addresses=127.0.0.1 -p "$PG_PORT" \
-  -c fsync=off >"$WORK/pg.log" 2>&1 &
-PG_PID=$!
+mth_pg_start "$PGBIN" "$WORK/pg" "$WORK/pg.log" "$PG_PORT" MTH_LOCAL_PG_STRICT_PORT PG_PID || exit 3
+PG_PORT="$MTH_PG_PORT"
 export PGHOST=127.0.0.1 PGPORT="$PG_PORT" PGUSER=postgres PGPASSWORD="$(cat "$WORK/secrets/pg_superuser_password")"
-for _ in $(seq 1 60); do psql -d postgres -qAtc "select 1" >/dev/null 2>&1 && break; sleep 0.5; done
 psql -d postgres -qAtc "select version()"
 POSTGRES_USER=postgres MTH_DB_INIT_SECRETS_DIR="$WORK/secrets" bash "$WORK/src/deploy/compose/db-init/10-mth-roles.sh"
 psql -d postgres -v ON_ERROR_STOP=1 \
@@ -153,13 +159,38 @@ base_env() {
 # spawn <logfile> <env/cmd...>: background process whose PID ($!) IS the service (subshell -> exec env -> exec sh -> exec node)
 spawn() { local logf="$1"; shift; ( exec env -i PATH="$PATH" HOME="$WORK" MTH_APP_ROOT="$MTH_APP_ROOT" \
   MTH_HEALTHCHECK="$MTH_HEALTHCHECK" PORT="$API_PORT" DEFAULT_TIMEZONE=Asia/Riyadh DEFAULT_CURRENCY=SAR LOG_LEVEL=warn \
-  EVIDENCE_STORAGE_PATH="$WORK/evidence" "$@" ) >"$logf" 2>&1 & }
+  EVIDENCE_STORAGE_PATH="$WORK/evidence" "$@" ) >>"$logf" 2>&1 </dev/null & }
 port_free() { for _ in $(seq 1 40); do curl -s -o /dev/null "http://127.0.0.1:$API_PORT/healthz" || return 0; sleep 0.25; done; return 1; }
 mkdir -p "$WORK/evidence"
-PROD=(NODE_ENV=production AUTH_MODE=oidc APP_BASE_URL="http://localhost:$API_PORT"
-  DATABASE_URL_FILE="$WORK/secrets/database_url" DATABASE_OWNER_URL_FILE="$WORK/secrets/database_owner_url"
-  OIDC_ISSUER_URL=https://idp.mth-clean-start.invalid/realms/none OIDC_CLIENT_ID=mth-hub
-  OIDC_CLIENT_SECRET_FILE="$WORK/secrets/oidc_client_secret")
+# PROD/DEV carry APP_BASE_URL, so they are rebuilt whenever the API port changes (set_mode_env, launch_api).
+set_mode_env() {
+  PROD=(NODE_ENV=production AUTH_MODE=oidc APP_BASE_URL="http://localhost:$API_PORT"
+    DATABASE_URL_FILE="$WORK/secrets/database_url" DATABASE_OWNER_URL_FILE="$WORK/secrets/database_owner_url"
+    OIDC_ISSUER_URL=https://idp.mth-clean-start.invalid/realms/none OIDC_CLIENT_ID=mth-hub
+    OIDC_CLIENT_SECRET_FILE="$WORK/secrets/oidc_client_secret")
+  DEV=(NODE_ENV=development AUTH_MODE=dev APP_BASE_URL="http://localhost:$API_PORT"
+    DATABASE_URL_FILE="$WORK/secrets/dev_database_url" DATABASE_OWNER_URL_FILE="$WORK/secrets/dev_database_owner_url")
+}
+set_mode_env
+# start_api <PROD|DEV> <logfile>: api on API_PORT, or on another port after a bind conflict (port policy); the port
+# actually used is left in API_PORT (and in PROD/DEV). Sets API_PID.
+launch_api() {
+  API_PORT="$1"
+  set_mode_env
+  local -n mode="$START_MODE"
+  spawn "$START_LOG" "${mode[@]}" "${MTH[@]}" api
+  MTH_LAUNCHED_PID=$!
+}
+api_ready() { local -n mode="$START_MODE"; base_env "${mode[@]}" "${MTH[@]}" health /readyz >/dev/null 2>&1; }
+start_api() {
+  local rc=0
+  START_MODE="$1" START_LOG="$2"
+  mth_start_with_port_retry "API" "$API_PORT" MTH_LOCAL_STRICT_PORT API_PID "$START_LOG" 60 launch_api api_ready || rc=$?
+  [ "$rc" = 3 ] && exit 3
+  [ "$rc" = 0 ] || { tail -30 "$START_LOG"; die "API not ready"; }
+  API_PORT="$MTH_PORT"
+  set_mode_env
+}
 
 wait_ready() {
   for _ in $(seq 1 120); do base_env "$@" "${MTH[@]}" health /readyz >/dev/null 2>&1 && return 0; sleep 0.5; done
@@ -180,9 +211,7 @@ expect_exit 64 "mth db seed-dev" base_env "${PROD[@]}" "${MTH[@]}" db seed-dev
 expect_exit 78 "mth api with AUTH_MODE=dev" base_env "${PROD[@]}" AUTH_MODE=dev "${MTH[@]}" api
 end
 begin "A4. start api + worker (production, OIDC) and wait for readiness"
-port_free || die "port $API_PORT is already in use"
-spawn "$WORK/api-prod.log" "${PROD[@]}" "${MTH[@]}" api
-API_PID=$!
+start_api PROD "$WORK/api-prod.log"
 spawn "$WORK/worker-prod.log" "${PROD[@]}" "${MTH[@]}" worker
 WORKER_PID=$!
 wait_ready "${PROD[@]}" || { tail -30 "$WORK/api-prod.log"; die "API not ready"; }
@@ -214,16 +243,13 @@ stop "$API_PID" "$WORKER_PID"; API_PID=""; WORKER_PID=""
 port_free || die "phase A API did not stop"
 echo; echo "  phase A api/worker stopped (graceful SIGTERM)"
 
-DEV=(NODE_ENV=development AUTH_MODE=dev APP_BASE_URL="http://localhost:$API_PORT"
-  DATABASE_URL_FILE="$WORK/secrets/dev_database_url" DATABASE_OWNER_URL_FILE="$WORK/secrets/dev_database_owner_url")
 begin "B1. second fresh database: migrate, then SYNTHETIC dev users (seed-dev from the source tree; never in the image)"
 base_env "${DEV[@]}" "${MTH[@]}" migrate | tail -1
 base_env "${DEV[@]}" node "$WORK/src/packages/db/dist/cli.js" seed-dev
 end
 begin "B2. start api + worker (AUTH_MODE=dev) from the runtime tree"
 port_free || die "the phase A API is still listening on $API_PORT"
-spawn "$WORK/api-dev.log" "${DEV[@]}" "${MTH[@]}" api
-API_PID=$!
+start_api DEV "$WORK/api-dev.log"
 spawn "$WORK/worker-dev.log" "${DEV[@]}" "${MTH[@]}" worker
 WORKER_PID=$!
 wait_ready "${DEV[@]}" || { tail -30 "$WORK/api-dev.log"; die "API not ready"; }

@@ -1,0 +1,39 @@
+$ bash $TMPDIR/cs-api-block-check.sh /home/user/My-owns $TMPDIR/tw.py   (2026-10-06T16:08:23Z); script:
+#   #!/usr/bin/env bash
+#   # Partial check (NOT a clean-start run): the API-start block of deploy/scripts/clean-start-local.sh, extracted verbatim
+#   # (from "MTH=(sh" up to "wait_ready() {"), with MTH replaced by a stand-in entrypoint whose `api` is a Node HTTP server
+#   # (reports PORT and APP_BASE_URL) and whose `health` is curl on $PORT. Port 3100 (the default) is held in TIME_WAIT.
+#   set -euo pipefail
+#   REPO="$1"; TW="$2"
+#   WORK="$(mktemp -d "${TMPDIR:-/tmp}/cs-block.XXXXXX")"; mkdir -p "$WORK/secrets"
+#   API_PORT=3100; API_PID=""
+#   trap '[ -n "$API_PID" ] && kill "$API_PID" 2>/dev/null; rm -rf "$WORK"' EXIT
+#   . "$REPO/tests/qa/support/pg-port.sh"
+#   die() { echo "FAIL: $*"; exit 1; }
+#   sed -n '/^MTH=(sh /,/^wait_ready() {/p' "$REPO/deploy/scripts/clean-start-local.sh" | sed '$d' >"$WORK/block.sh"
+#   echo "extracted $(wc -l <"$WORK/block.sh") lines (sha256 $(sha256sum "$WORK/block.sh" | cut -c1-16))"
+#   . "$WORK/block.sh"
+#   cat >"$WORK/fake.sh" <<'SH'
+#   case "$1" in
+#     api) exec node -e 'require("http").createServer((q,s)=>s.end(JSON.stringify({PORT:process.env.PORT,APP_BASE_URL:process.env.APP_BASE_URL,NODE_ENV:process.env.NODE_ENV}))).listen(+process.env.PORT,"0.0.0.0")' ;;
+#     health) exec curl -fsS "http://127.0.0.1:$PORT$2" ;;
+#   esac
+#   SH
+#   MTH=(sh "$WORK/fake.sh")
+#   python3 -I "$TW" 3100
+#   start_api PROD "$WORK/api-prod.log"
+#   echo "after start_api: API_PORT=$API_PORT; PROD APP_BASE_URL entry: ${PROD[2]}"
+#   echo "service says: $(curl -fsS "http://127.0.0.1:$API_PORT/")"
+#   grep -m1 EADDRINUSE "$WORK/api-prod.log" | sed 's/^/api log: /'
+#   [ "$API_PORT" != 3100 ] && [ "${PROD[2]}" = "APP_BASE_URL=http://localhost:$API_PORT" ] \
+#     && curl -fsS "http://127.0.0.1:$API_PORT/" | grep -q "\"PORT\":\"$API_PORT\",\"APP_BASE_URL\":\"http://localhost:$API_PORT\"" \
+#     && echo "CLEAN-START-LOCAL API BLOCK: PASS" || { echo "CLEAN-START-LOCAL API BLOCK: FAIL"; exit 1; }
+extracted 42 lines (sha256 f4a5e4d48b2cae2d)
+TIME_WAIT check port 3100: states ['06']
+port-policy: API: port 3100 is in use (EADDRINUSE; attempt 1 of 11); retrying on port 31711
+port-policy: API listening on port 31711 (attempt 2)
+after start_api: API_PORT=31711; PROD APP_BASE_URL entry: APP_BASE_URL=http://localhost:31711
+service says: {"PORT":"31711","APP_BASE_URL":"http://localhost:31711","NODE_ENV":"production"}
+api log: Error: listen EADDRINUSE: address already in use 0.0.0.0:3100
+CLEAN-START-LOCAL API BLOCK: PASS
+exit=0

@@ -1,15 +1,23 @@
 #!/usr/bin/env bash
 # Runs a command against a REAL local stack for the web journeys (apps/web/e2e):
 #   disposable PostgreSQL -> `mth-db migrate` -> `mth-db seed-dev` (SYNTHETIC users) -> API (AUTH_MODE=dev) serving
-#   the built SPA from apps/web/dist on http://localhost:3000 -> "$@" -> teardown (the cluster is deleted).
+#   the built SPA from apps/web/dist on http://localhost:3000 (or the port actually used, see below) -> "$@" ->
+#   teardown (the cluster is deleted).
 # Nothing leaves the machine: no network access is needed. Prerequisite: `pnpm -r build`.
 #
 # Usage (from the repository root):
 #   apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e --workers=1
 #
 # Environment: PGBIN (PostgreSQL bin dir; default: newest /usr/lib/postgresql/*/bin), E2E_PG_PORT or QA_PG_PORT
-# (default 54331), E2E_API_PORT (default 3000; the run exports E2E_BASE_URL=http://localhost:<port> for Playwright, so
-# two stacks on one machine never share a port).
+# (default 24331), E2E_API_PORT (default 3000). Port policy (tests/qa/support/pg-port.sh, F-DG2-310): defaults lie
+# below the Linux ephemeral range (32768-60999); a requested port is the STARTING point and, if postgres or the API
+# fails to bind (EADDRINUSE, e.g. a client socket in TIME_WAIT), the harness retries on a free port from
+# MTH_PORT_POOL (default 25000-31999), up to MTH_PORT_RETRIES (10) times, logging each retry. E2E_PG_STRICT_PORT=1 /
+# E2E_API_STRICT_PORT=1 (or MTH_STRICT_PORT=1) turn a conflict into "BLOCKED" (exit 3) instead. The run exports
+# E2E_BASE_URL=http://localhost:<port actually used> for Playwright (and APP_BASE_URL/PORT for the API), so two
+# stacks on one machine never share a port.
+# Exit: the command's status; 3 BLOCKED (missing tool/build, PostgreSQL did not start, ports exhausted); 4 the API did
+# not become ready for another reason.
 # When run as uid 0 (sandboxes), PostgreSQL is started in a user namespace as uid 1000 because it refuses root.
 # The cluster is ALWAYS UTF8 with the C locale (T-DG2-BE9), whatever the shell's LANG/LC_*: without them initdb
 # would make a SQL_ASCII cluster, where char_length counts bytes. C (not C.UTF-8) because it exists on every platform
@@ -19,9 +27,10 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 cd "$ROOT"
 PGBIN="${PGBIN:-$(ls -d /usr/lib/postgresql/*/bin 2>/dev/null | sort -V | tail -1)}"
-PG_PORT="${E2E_PG_PORT:-${QA_PG_PORT:-54331}}"
+PG_PORT="${E2E_PG_PORT:-${QA_PG_PORT:-24331}}"
 API_PORT="${E2E_API_PORT:-3000}"
-export E2E_BASE_URL="http://localhost:${API_PORT}"
+# shellcheck source=../../../../tests/qa/support/pg-port.sh
+. "$ROOT/tests/qa/support/pg-port.sh"
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/mth-web-e2e.XXXXXX")"
 chmod 777 "$WORK"
 PG_PID=""
@@ -32,8 +41,11 @@ as_pg() {
 }
 cleanup() {
   [ -n "$API_PID" ] && kill "$API_PID" 2>/dev/null || true
-  [ -n "$PG_PID" ] && kill "$PG_PID" 2>/dev/null || true
-  sleep 1
+  if [ -n "$PG_PID" ]; then
+    kill -INT "$PG_PID" 2>/dev/null || true
+    for _ in $(seq 1 50); do kill -0 "$PG_PID" 2>/dev/null || break; sleep 0.1; done
+    kill -KILL "$PG_PID" 2>/dev/null || true
+  fi
   rm -rf "$WORK"
 }
 trap cleanup EXIT
@@ -42,18 +54,17 @@ trap cleanup EXIT
 [ -f apps/api/dist/main.js ] && [ -f apps/web/dist/index.html ] || { echo "BLOCKED: run 'pnpm -r build' first"; exit 3; }
 
 as_pg "$PGBIN/initdb" -D "$WORK/pg" -U postgres --auth=trust --encoding=UTF8 --locale=C >/dev/null
-as_pg "$PGBIN/postgres" -D "$WORK/pg" -c unix_socket_directories='' -c listen_addresses=127.0.0.1 \
-  -p "$PG_PORT" -c fsync=off >"$WORK/pg.log" 2>&1 &
-PG_PID=$!
+mth_pg_start "$PGBIN" "$WORK/pg" "$WORK/pg.log" "$PG_PORT" E2E_PG_STRICT_PORT PG_PID || exit 3
+PG_PORT="$MTH_PG_PORT"
 ADMIN_URL="postgresql://postgres@127.0.0.1:${PG_PORT}/postgres"
-for _ in $(seq 1 60); do psql "$ADMIN_URL" -qAtc "select 1" >/dev/null 2>&1 && break; sleep 0.5; done
+psql "$ADMIN_URL" -qAtc "select 1" >/dev/null || { echo "BLOCKED: disposable PostgreSQL did not start"; exit 3; }
 psql "$ADMIN_URL" -q -v ON_ERROR_STOP=1 \
   -c "CREATE ROLE mth_owner NOLOGIN" -c "CREATE ROLE mth_app NOLOGIN" \
   -c "CREATE DATABASE mth OWNER mth_owner ENCODING 'UTF8' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0"
 psql "$ADMIN_URL" -qAtc "select 'e2e database mth: server_encoding ' || pg_encoding_to_char(encoding) || ', lc_collate ' || datcollate || ', lc_ctype ' || datctype from pg_database where datname = 'mth'"
 
 role_url() { node -e 'const u=new URL(process.argv[1]);u.pathname="/mth";u.searchParams.set("options","-c role="+process.argv[2]);console.log(u.toString())' "$ADMIN_URL" "$1"; }
-export NODE_ENV=development AUTH_MODE=dev PORT="$API_PORT" APP_BASE_URL="$E2E_BASE_URL" LOG_LEVEL=warn
+export NODE_ENV=development AUTH_MODE=dev LOG_LEVEL=warn
 # Evidence file revisions (P2) go to a private directory of this run; it is deleted with the cluster at teardown.
 mkdir -p "$WORK/evidence"
 export EVIDENCE_STORAGE_DRIVER=filesystem EVIDENCE_STORAGE_PATH="$WORK/evidence"
@@ -63,10 +74,20 @@ export AUTH_RATE_LIMIT_PER_MINUTE=1000 RATE_LIMIT_PER_MINUTE=10000
 
 node packages/db/dist/cli.js migrate
 node packages/db/dist/cli.js seed-dev
-node apps/api/dist/main.js >"$WORK/api.log" 2>&1 &
-API_PID=$!
-for _ in $(seq 1 60); do curl -fsS "$E2E_BASE_URL/readyz" >/dev/null 2>&1 && break; sleep 0.5; done
-curl -fsS "$E2E_BASE_URL/readyz" || { echo "API not ready"; cat "$WORK/api.log"; exit 4; }
+# PORT / APP_BASE_URL / E2E_BASE_URL follow the port of each attempt; after the start they hold the port in use.
+launch_api() {
+  export PORT="$1" APP_BASE_URL="http://localhost:$1" E2E_BASE_URL="http://localhost:$1"
+  node apps/api/dist/main.js >>"$WORK/api.log" 2>&1 </dev/null &
+  MTH_LAUNCHED_PID=$!
+}
+api_ready() { curl -fsS "http://localhost:$1/readyz" >/dev/null 2>&1; }
+RC=0
+mth_start_with_port_retry "API" "$API_PORT" E2E_API_STRICT_PORT API_PID "$WORK/api.log" 30 launch_api api_ready || RC=$?
+[ "$RC" = 3 ] && exit 3
+[ "$RC" = 0 ] || { echo "API not ready"; cat "$WORK/api.log"; exit 4; }
+API_PORT="$MTH_PORT"
+echo "API: $E2E_BASE_URL (APP_BASE_URL=$APP_BASE_URL, PORT=$PORT)"
+curl -fsS "$E2E_BASE_URL/readyz"
 echo
 
 set +e

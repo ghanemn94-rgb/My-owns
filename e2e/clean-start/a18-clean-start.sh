@@ -15,8 +15,14 @@
 #                 populated pnpm store). WITHOUT it, the candidate's already-installed node_modules are copied into
 #                 the fresh checkout and the install step is reported as NOT RUN (the DG1 QA assignment forbids
 #                 running `pnpm install`).
-# Environment: PGBIN, QA_A18_PG_PORT (default 54371), QA_A18_PORT (API, default 3181).
-# Exit: 0 PASS, 1 FAIL (first failing assertion), 3 BLOCKED (missing tool).
+# Environment: PGBIN, QA_A18_PG_PORT (default 24371), QA_A18_PORT (API, default 3181).
+# Port policy (tests/qa/support/pg-port.sh, F-DG2-310): defaults lie below the Linux ephemeral range (32768-60999); a
+# requested port is the STARTING point and, if postgres or the API fails to bind (EADDRINUSE, e.g. a client socket in
+# TIME_WAIT), the run retries on a free port from MTH_PORT_POOL (default 25000-31999), up to MTH_PORT_RETRIES (10)
+# times, logging each retry; every URL below is built from the port actually used. QA_A18_PG_STRICT_PORT=1 /
+# QA_A18_STRICT_PORT=1 (or MTH_STRICT_PORT=1) turn a conflict into BLOCKED instead. An API that exits or is not
+# healthy for any OTHER reason is still a FAIL (that is what A18 asserts).
+# Exit: 0 PASS, 1 FAIL (first failing assertion), 3 BLOCKED (missing tool, PostgreSQL did not start, ports exhausted).
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -38,9 +44,11 @@ chmod 755 "$WORK"
 [ -n "$LOG" ] && exec > >(tee "$LOG") 2>&1
 
 PGBIN="${PGBIN:-$(ls -d /usr/lib/postgresql/*/bin 2>/dev/null | sort -V | tail -1)}"
-PG_PORT="${QA_A18_PG_PORT:-54371}"
+PG_PORT="${QA_A18_PG_PORT:-24371}"
 API_PORT="${QA_A18_PORT:-3181}"
 BASE="http://127.0.0.1:${API_PORT}"
+# shellcheck source=../../tests/qa/support/pg-port.sh
+. "$REPO/tests/qa/support/pg-port.sh"
 PG_PID=""
 API_PID=""
 WORKER_PID=""
@@ -112,11 +120,9 @@ step "4. fresh PostgreSQL, roles and empty database (docs/operations: mth_owner 
 if [ "$(id -u)" = "0" ]; then AS_PG=(unshare --user --map-user=1000 --map-group=1000); else AS_PG=(); fi
 # UTF8 + C locale whatever the shell locale (T-DG2-BE9; ADR-0003 "Database encoding").
 "${AS_PG[@]}" "$PGBIN/initdb" -D "$WORK/pg" -U postgres --auth=trust --encoding=UTF8 --locale=C >/dev/null
-"${AS_PG[@]}" "$PGBIN/postgres" -D "$WORK/pg" -c unix_socket_directories='' -c listen_addresses=127.0.0.1 \
-  -p "$PG_PORT" -c fsync=off >"$WORK/pg.log" 2>&1 &
-PG_PID=$!
+mth_pg_start "$PGBIN" "$WORK/pg" "$WORK/pg.log" "$PG_PORT" QA_A18_PG_STRICT_PORT PG_PID || blocked "PostgreSQL did not start"
+PG_PORT="$MTH_PG_PORT"
 ADMIN="postgresql://postgres@127.0.0.1:${PG_PORT}/postgres"
-for _ in $(seq 1 60); do psql "$ADMIN" -qAtc "select 1" >/dev/null 2>&1 && break; sleep 0.5; done
 psql "$ADMIN" -qAtc "select 1" >/dev/null || blocked "PostgreSQL did not start: $(tail -3 "$WORK/pg.log")"
 psql "$ADMIN" -q -v ON_ERROR_STOP=1 -c "CREATE ROLE mth_owner LOGIN" -c "CREATE ROLE mth_app LOGIN" \
   -c "CREATE DATABASE mth OWNER mth_owner ENCODING 'UTF8' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0" \
@@ -145,19 +151,25 @@ step "6. start api + worker in PRODUCTION configuration (AUTH_MODE=oidc; IdP not
 mkdir -p "$WORK/secrets" "$WORK/evidence"
 chmod 700 "$WORK/secrets" "$WORK/evidence"
 printf '%s' "qa-a18-$(head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \n')" >"$WORK/secrets/oidc_client_secret"
-start_api() { # start_api <database-url>
-  env -i PATH="$PATH" HOME="$WORK" NODE_ENV=production AUTH_MODE=oidc PORT="$API_PORT" APP_BASE_URL="https://hub.example.invalid" \
-    DATABASE_URL="$1" OIDC_ISSUER_URL="https://idp.example.invalid/realms/qa" OIDC_CLIENT_ID=mth-hub \
+launch_api() { # launch_api <port>   (database URL in API_DB_URL)
+  env -i PATH="$PATH" HOME="$WORK" NODE_ENV=production AUTH_MODE=oidc PORT="$1" APP_BASE_URL="https://hub.example.invalid" \
+    DATABASE_URL="$API_DB_URL" OIDC_ISSUER_URL="https://idp.example.invalid/realms/qa" OIDC_CLIENT_ID=mth-hub \
     OIDC_CLIENT_SECRET_FILE="$WORK/secrets/oidc_client_secret" EVIDENCE_STORAGE_PATH="$WORK/evidence" \
-    node apps/api/dist/main.js >>"$WORK/api.log" 2>&1 &
-  API_PID=$!
-  for _ in $(seq 1 60); do
-    [ "$(http_code "$BASE/healthz")" = 200 ] && return 0
-    kill -0 "$API_PID" 2>/dev/null || { tail -20 "$WORK/api.log"; fail "api exited during startup"; }
-    sleep 0.25
-  done
-  tail -20 "$WORK/api.log"
-  fail "api did not answer /healthz"
+    node apps/api/dist/main.js >>"$WORK/api.log" 2>&1 </dev/null &
+  MTH_LAUNCHED_PID=$!
+}
+api_healthy() { [ "$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$1/healthz" || true)" = 200 ]; }
+start_api() { # start_api <database-url>: bind conflicts are retried (port policy); any other startup failure is a FAIL
+  local rc=0
+  API_DB_URL="$1"
+  mth_start_with_port_retry "API" "$API_PORT" QA_A18_STRICT_PORT API_PID "$WORK/api.log" 15 launch_api api_healthy || rc=$?
+  [ "$rc" = 3 ] && blocked "API port conflict (see port-policy lines above)"
+  if [ "$rc" != 0 ]; then
+    tail -20 "$WORK/api.log"
+    fail "api exited during startup or did not answer /healthz (see the port-policy line above)"
+  fi
+  API_PORT="$MTH_PORT"
+  BASE="http://127.0.0.1:${API_PORT}"
 }
 start_api "$APP_URL"
 env -i PATH="$PATH" HOME="$WORK" NODE_ENV=production DATABASE_URL="$APP_URL" EVIDENCE_STORAGE_PATH="$WORK/evidence" \

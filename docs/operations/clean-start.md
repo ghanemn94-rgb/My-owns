@@ -80,7 +80,8 @@ everything down. Exit 0 means PASS, exit 3 means BLOCKED (no Docker daemon).
 ```bash
 deploy/scripts/clean-start-local.sh            # clones HEAD into a temp dir, installs, builds, assembles, runs A1–B5
 # options: --include-worktree (overlay uncommitted files), --keep, --work DIR, --log FILE
-# environment: PGBIN, MTH_PNPM_STORE, MTH_PNPM_OFFLINE=1, MTH_LOCAL_PG_PORT, MTH_LOCAL_PORT
+# environment: PGBIN, MTH_PNPM_STORE, MTH_PNPM_OFFLINE=1, MTH_LOCAL_PG_PORT (24340), MTH_LOCAL_PORT (3100),
+#              MTH_LOCAL_PG_STRICT_PORT, MTH_LOCAL_STRICT_PORT (see "Harness port policy" below)
 ```
 
 It runs `deploy/scripts/assemble-runtime.sh`, which is the same script as the image build, so the runtime tree
@@ -117,6 +118,61 @@ Source: `docs/delivery/handbacks/DG1/T-DG1-DEVOPS-evidence/clean-start-local.log
 
 The Compose timings (image build, `up` to healthy, Keycloak start) have **not** been measured: the build sandbox has no
 Docker daemon. `verify-stack.sh` prints them when run on a Docker host.
+
+## Harness port policy
+
+This applies to every script that starts a disposable PostgreSQL cluster and, in most cases, an API (F-DG2-310). One
+shared helper, `tests/qa/support/pg-port.sh`, holds the logic, so it cannot drift between the scripts.
+
+**Why.** Linux gives client sockets (psql, curl, the API's database pool) a local port from the *ephemeral range*,
+`/proc/sys/net/ipv4/ip_local_port_range` (32768–60999 by default). When a client closes first, its socket stays in
+`TIME_WAIT` for about 60 s. If a server then binds that port, the bind fails with `EADDRINUSE`, even with
+`SO_REUSEADDR`, because the client socket never set it. The old defaults (54331–54371) were inside that range, so
+about one run in six failed with `BLOCKED: disposable PostgreSQL did not start`.
+
+**Defaults.** Every default port is below 32768, and each harness has its own:
+
+| Harness | PostgreSQL port variable (default) | API port variable (default) | Strict flags |
+|---|---|---|---|
+| `tests/qa/support/with-pg.sh` (integration tests) | `QA_PG_PORT` (24351) | none | `QA_PG_STRICT_PORT` |
+| `apps/web/e2e/support/with-stack.sh` (web journeys) | `E2E_PG_PORT` or `QA_PG_PORT` (24331) | `E2E_API_PORT` (3000) | `E2E_PG_STRICT_PORT`, `E2E_API_STRICT_PORT` |
+| `e2e/support/qa-stack.sh` (acceptance e2e) | `QA_E2E_PG_PORT` (24361) | `QA_E2E_API_PORT` (3060; previously a fixed 3000) | `QA_E2E_PG_STRICT_PORT`, `QA_E2E_API_STRICT_PORT` |
+| `e2e/clean-start/a18-clean-start.sh` | `QA_A18_PG_PORT` (24371) | `QA_A18_PORT` (3181) | `QA_A18_PG_STRICT_PORT`, `QA_A18_STRICT_PORT` |
+| `deploy/scripts/clean-start-local.sh` (path B) | `MTH_LOCAL_PG_PORT` (24340) | `MTH_LOCAL_PORT` (3100) | `MTH_LOCAL_PG_STRICT_PORT`, `MTH_LOCAL_STRICT_PORT` |
+
+The API defaults (3000–3181) were already outside the ephemeral range. They are only exposed when someone sets a port
+inside it, and the retry below covers that case too.
+
+**Retry.** The requested port, whether the default or from the environment, is only the *starting point*. A warning
+is logged if it lies inside the ephemeral range. The service is started, and the harness waits until that process is
+ready. For PostgreSQL, "ready" means its own log says "ready to accept connections". For an API, the process must be
+alive and its health endpoint must answer. If the process exits because the bind failed (`Address already in use` or
+`EADDRINUSE` in its log), or something already accepts connections on the port, the harness picks a random port from
+`MTH_PORT_POOL` (default `25000-31999`). It skips the ephemeral range, ports already tried, and any port with a socket
+in any state in `/proc/net/tcp{,6}`. It tries again up to `MTH_PORT_RETRIES` more times (default 10), and logs every
+retry on stderr:
+
+```
+port-policy: PostgreSQL: port 24351 is in use (EADDRINUSE; attempt 1 of 11); retrying on port 26616
+port-policy: PostgreSQL listening on port 26616 (attempt 2)
+```
+
+Every URL the harness exports or writes uses the port actually in use: `TEST_DATABASE_ADMIN_URL`, `DATABASE_URL`,
+`DATABASE_OWNER_URL`, the secret URL files, `PORT`, `APP_BASE_URL` and `E2E_BASE_URL` (which Playwright reads).
+
+**Strict mode.** With the harness's `*_STRICT_PORT=1`, or `MTH_STRICT_PORT=1` for all of them, a port conflict is not
+retried. The run stops with `BLOCKED: … is in use … forbids another port` and exit 3.
+
+**Never a silent pass.** Only bind conflicts are retried. Any other failure is reported as before:
+- PostgreSQL that does not start for another reason, or retries that run out: `BLOCKED: …`, exit 3.
+- An API that exits or does not become ready for another reason: exit 4 in `with-stack.sh` and `qa-stack.sh`, and
+  `FAIL`/exit 1 in `a18-clean-start.sh` and `clean-start-local.sh`, where API startup is the thing being checked.
+
+**Regression check.** `tests/qa/support/port-collision-check.sh` puts a client socket into TIME_WAIT on a chosen port
+and proves the collision: state 06 in `/proc/net/tcp`, and a `SO_REUSEADDR` bind fails with `EADDRINUSE`. It then
+shows four things. The pre-fix `with-pg.sh` fails closed (the negative control). The current one retries and starts,
+both from an old in-range port and from the new default. Strict mode is BLOCKED. The generic API path retries a Node
+HTTP server. Exit 0 means every case behaved as expected.
 
 ## Troubleshooting
 

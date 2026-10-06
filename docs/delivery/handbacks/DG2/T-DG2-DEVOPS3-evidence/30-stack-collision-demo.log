@@ -1,0 +1,124 @@
+# Forced collision on the REAL stacks: client sockets left in TIME_WAIT on the default PostgreSQL AND API ports,
+# then the harness runs a short command that prints the exported URLs, hits /readyz and asks postgres for its port.
+# TIME_WAIT helper (2026-10-06T16:04:59Z):
+#   # Leaves client sockets bound to each given 127.0.0.1 port in TIME_WAIT (same method as port-collision-check.sh).
+#   import socket, sys, time
+#   for p in map(int, sys.argv[1:]):
+#       srv = socket.socket(); srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1); srv.bind(("127.0.0.1", 0)); srv.listen()
+#       c = socket.socket(); c.bind(("127.0.0.1", p)); c.connect(srv.getsockname()); a, _ = srv.accept(); c.close(); time.sleep(0.1); a.close(); srv.close()
+#   time.sleep(0.2)
+#   rows = [l.split() for l in open("/proc/net/tcp").read().splitlines()[1:]]
+#   for p in map(int, sys.argv[1:]):
+#       print("TIME_WAIT check port %d: states %s" % (p, [r[3] for r in rows if r[1].endswith(":%04X" % p)]))
+
+== with-stack.sh: TIME_WAIT on 24331 (PG) and 3000 (API)
+TIME_WAIT check port 24331: states ['06']
+TIME_WAIT check port 3000: states ['06']
+port-policy: PostgreSQL: port 24331 is in use (EADDRINUSE; attempt 1 of 11); retrying on port 28270
+port-policy: PostgreSQL listening on port 28270 (attempt 2)
+e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API: port 3000 is in use (EADDRINUSE; attempt 1 of 11); retrying on port 28577
+port-policy: API listening on port 28577 (attempt 2)
+API: http://localhost:28577 (APP_BASE_URL=http://localhost:28577, PORT=28577)
+{"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+E2E_BASE_URL=http://localhost:28577 APP_BASE_URL=http://localhost:28577 PORT=28577 DATABASE_URL=postgresql://postgres@127.0.0.1:28270/mth?options=-c+role%3Dmth_app
+{"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+server port 28270
+
+real	0m4.285s
+user	0m3.048s
+sys	0m1.018s
+exit=0
+
+== qa-stack.sh: TIME_WAIT on 24361 (PG) and 3060 (API)
+TIME_WAIT check port 24361: states ['06']
+TIME_WAIT check port 3060: states ['06']
+port-policy: PostgreSQL: port 24361 is in use (EADDRINUSE; attempt 1 of 11); retrying on port 27779
+port-policy: PostgreSQL listening on port 27779 (attempt 2)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API: port 3060 is in use (EADDRINUSE; attempt 1 of 11); retrying on port 31065
+port-policy: API listening on port 31065 (attempt 2)
+API:     http://localhost:31065
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+E2E_BASE_URL=http://localhost:31065 APP_BASE_URL=http://localhost:31065 PORT=31065 DATABASE_URL=postgresql://postgres@127.0.0.1:27779/mth?options=-c+role%3Dmth_app
+{"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+server port 27779
+
+real	0m4.357s
+user	0m2.880s
+sys	0m1.166s
+exit=0
+
+== qa-stack.sh strict API: TIME_WAIT on 3061, QA_E2E_API_PORT=3061 QA_E2E_API_STRICT_PORT=1 (expect BLOCKED exit 3)
+TIME_WAIT check port 3061: states ['06']
+port-policy: PostgreSQL: port 24361 is in use (EADDRINUSE; attempt 1 of 11); retrying on port 25922
+port-policy: PostgreSQL listening on port 25922 (attempt 2)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+BLOCKED: API port 3061 is in use (EADDRINUSE) and QA_E2E_API_STRICT_PORT=1 / MTH_STRICT_PORT=1 forbids another port
+exit=3

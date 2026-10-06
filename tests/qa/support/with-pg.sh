@@ -5,7 +5,11 @@
 #   tests/qa/support/with-pg.sh pnpm test:integration
 #   tests/qa/support/with-pg.sh npx vitest run --project integration tests/qa/integration
 #
-# Environment: PGBIN (default: newest /usr/lib/postgresql/*/bin), QA_PG_PORT (default 54351).
+# Environment: PGBIN (default: newest /usr/lib/postgresql/*/bin), QA_PG_PORT (default 24351: below the Linux ephemeral
+# range 32768-60999, F-DG2-310). Port policy (tests/qa/support/pg-port.sh): QA_PG_PORT is the STARTING port; if
+# postgres fails to bind (EADDRINUSE, e.g. a client socket in TIME_WAIT), it retries on a free port from MTH_PORT_POOL
+# (default 25000-31999) up to MTH_PORT_RETRIES (10) times, logging each retry. QA_PG_STRICT_PORT=1 (or
+# MTH_STRICT_PORT=1) makes a conflict BLOCKED instead. TEST_DATABASE_ADMIN_URL always carries the port actually used.
 # No network is used. When run as uid 0 (build sandboxes), PostgreSQL runs in a user namespace as uid 1000 because it
 # refuses to run as root. Missing binaries -> exit 3 and "BLOCKED" (never a silent pass).
 # The cluster is ALWAYS UTF8 with the C locale (T-DG2-BE9), whatever the shell's LANG/LC_*: without them initdb
@@ -14,7 +18,9 @@
 set -euo pipefail
 
 PGBIN="${PGBIN:-$(ls -d /usr/lib/postgresql/*/bin 2>/dev/null | sort -V | tail -1)}"
-PG_PORT="${QA_PG_PORT:-54351}"
+PG_PORT="${QA_PG_PORT:-24351}"
+# shellcheck source=pg-port.sh
+. "$(dirname "${BASH_SOURCE[0]}")/pg-port.sh"
 [ -n "$PGBIN" ] && [ -x "$PGBIN/initdb" ] && [ -x "$PGBIN/postgres" ] || {
   echo "BLOCKED: PostgreSQL server binaries not found (set PGBIN)"
   exit 3
@@ -37,15 +43,8 @@ cleanup() {
 trap cleanup EXIT
 
 as_pg "$PGBIN/initdb" -D "$WORK/pg" -U postgres --auth=trust --encoding=UTF8 --locale=C >/dev/null
-PG_ARGS=(-D "$WORK/pg" -c unix_socket_directories='' -c listen_addresses=127.0.0.1 -p "$PG_PORT" -c fsync=off
-  -c max_connections=200)
-# Started directly (not through a shell function) so $! is the postmaster: `unshare` without --fork execs it.
-if [ "$(id -u)" = "0" ]; then
-  unshare --user --map-user=1000 --map-group=1000 "$PGBIN/postgres" "${PG_ARGS[@]}" >"$WORK/pg.log" 2>&1 &
-else
-  "$PGBIN/postgres" "${PG_ARGS[@]}" >"$WORK/pg.log" 2>&1 &
-fi
-PG_PID=$!
+mth_pg_start "$PGBIN" "$WORK/pg" "$WORK/pg.log" "$PG_PORT" QA_PG_STRICT_PORT PG_PID -c max_connections=200 || exit 3
+PG_PORT="$MTH_PG_PORT"
 export TEST_DATABASE_ADMIN_URL="postgresql://postgres@127.0.0.1:${PG_PORT}/postgres"
 for _ in $(seq 1 60); do psql "$TEST_DATABASE_ADMIN_URL" -qAtc "select 1" >/dev/null 2>&1 && break; sleep 0.5; done
 psql "$TEST_DATABASE_ADMIN_URL" -qAtc "select 'qa disposable cluster: ' || version() || '; server_encoding ' || current_setting('server_encoding') || ', lc_collate ' || datcollate || ', lc_ctype ' || datctype from pg_database where datname = current_database()" || {

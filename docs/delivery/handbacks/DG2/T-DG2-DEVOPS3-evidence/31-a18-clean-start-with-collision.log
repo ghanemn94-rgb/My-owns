@@ -1,0 +1,127 @@
+$ python3 -I $TMPDIR/tw.py 24371 3181 && e2e/clean-start/a18-clean-start.sh   (2026-10-06T16:05:20Z; fresh clone of HEAD; the harness and pg-port.sh are run from the working tree)
+TIME_WAIT check port 24371: states ['06']
+TIME_WAIT check port 3181: states ['06']
+
+==> [   0.0 s] environment
+  date (UTC): 2026-10-06T16:05:21Z; node v24.21.0; pnpm 10.33.0; postgres (PostgreSQL) 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
+
+==> [   0.3 s] 1. fresh checkout of HEAD
+  PASS checked-out commit: 06430a4c698e3db0d7b4b9645bdaaa6bcfddf87f
+  PASS working tree clean: 
+  PASS no build output or node_modules in the fresh checkout
+
+==> [   3.1 s] 2. dependencies
+  NOT RUN: pnpm install (forbidden by the DG1 QA assignment). Copying the candidate's installed node_modules,
+  which were installed from the same committed pnpm-lock.yaml.
+
+==> [   4.3 s] 3. build (documented: pnpm -r build)
+apps/worker build: Done
+apps/api build: Done
+  PASS build outputs present
+
+==> [  24.8 s] 4. fresh PostgreSQL, roles and empty database (docs/operations: mth_owner owns, mth_app runtime)
+port-policy: PostgreSQL: port 24371 is in use (EADDRINUSE; attempt 1 of 11); retrying on port 31568
+port-policy: PostgreSQL listening on port 31568 (attempt 2)
+
+==> [  26.0 s] 5. migrate the fresh database (documented: mth-db status / migrate)
+  | pending  0001_identity_access.sql
+  | pending  0002_transformation.sql
+  | pending  0003_audit_event.sql
+  | pending  0004_outbox_jobs.sql
+  | pending  0005_seed_roles_permissions.sql
+  | pending  0006_pgboss_schema_v25.sql
+  | pending  0007_oidc_login_browser_binding.sql
+  | pending  0008_scoped_assignment_derived_from.sql
+  | pending  0009_business_unit_hierarchy_guard.sql
+  | pending  0010_p2_record_guards.sql
+  | pending  0011_p2_methodology_catalogue.sql
+  | pending  0012_p2_evidence.sql
+  | pending  0013_p2_direction_charter.sql
+  | pending  0014_p2_kpi_baseline_value_pool.sql
+  | pending  0015_p2_diagnose.sql
+  | pending  0016_p2_design_tom.sql
+  | pending  0017_p2_decisions_gates.sql
+  | pending  0018_p2_access_instantiation.sql
+  | pending  0019_evidence_review_separation.sql
+  | mth-db status: 19 pending
+  | mth-db migrate: applying 0001_identity_access.sql
+  | mth-db migrate: applying 0002_transformation.sql
+  | mth-db migrate: applying 0003_audit_event.sql
+  | mth-db migrate: applying 0004_outbox_jobs.sql
+  | mth-db migrate: applying 0005_seed_roles_permissions.sql
+  | mth-db migrate: applying 0006_pgboss_schema_v25.sql
+  | mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+  | mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+  | mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+  | mth-db migrate: applying 0010_p2_record_guards.sql
+  | mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+  | mth-db migrate: applying 0012_p2_evidence.sql
+  | mth-db migrate: applying 0013_p2_direction_charter.sql
+  | mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+  | mth-db migrate: applying 0015_p2_diagnose.sql
+  | mth-db migrate: applying 0016_p2_design_tom.sql
+  | mth-db migrate: applying 0017_p2_decisions_gates.sql
+  | mth-db migrate: applying 0018_p2_access_instantiation.sql
+  | mth-db migrate: applying 0019_evidence_review_separation.sql
+  | mth-db migrate: applied 19 migration(s)
+  | mth-db migrate: database is up to date
+  | applied  0001_identity_access.sql
+  | applied  0002_transformation.sql
+  | applied  0003_audit_event.sql
+  | applied  0004_outbox_jobs.sql
+  | applied  0005_seed_roles_permissions.sql
+  | applied  0006_pgboss_schema_v25.sql
+  | applied  0007_oidc_login_browser_binding.sql
+  | applied  0008_scoped_assignment_derived_from.sql
+  | applied  0009_business_unit_hierarchy_guard.sql
+  | applied  0010_p2_record_guards.sql
+  | applied  0011_p2_methodology_catalogue.sql
+  | applied  0012_p2_evidence.sql
+  | applied  0013_p2_direction_charter.sql
+  | applied  0014_p2_kpi_baseline_value_pool.sql
+  | applied  0015_p2_diagnose.sql
+  | applied  0016_p2_design_tom.sql
+  | applied  0017_p2_decisions_gates.sql
+  | applied  0018_p2_access_instantiation.sql
+  | applied  0019_evidence_review_separation.sql
+  | mth-db status: up to date (19 applied)
+  PASS status on the empty database (3 = pending): 3
+  PASS migrate exit: 0
+  PASS second migrate exit (no-op): 0
+  PASS status after migrate (0 = up to date): 0
+  PASS applied migrations recorded = migration files: 19
+
+==> [  27.2 s] 6. start api + worker in PRODUCTION configuration (AUTH_MODE=oidc; IdP not reachable offline)
+port-policy: API: port 3181 is in use (EADDRINUSE; attempt 1 of 11); retrying on port 29204
+port-policy: API listening on port 29204 (attempt 2)
+
+==> [  28.8 s] 7. health and readiness
+  PASS GET /healthz status: 200
+  body: {"status":"ok"}
+  PASS healthz body: ok
+  PASS GET /readyz status: 200
+  body: {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+  PASS readyz body: ready/ok/ok
+  PASS GET / serves the SPA: 200
+  PASS SPA index has lang="ar" dir="rtl"
+  PASS dev login absent in production (404): 404
+  PASS GET /api/v1/me without a session: 401
+  PASS worker running (pid alive after 2 s)
+
+==> [  30.9 s] 8. restart: the API comes back ready against the same database
+port-policy: API listening on port 29204 (attempt 1)
+  PASS GET /readyz after restart: 200
+
+==> [  31.7 s] 9. negative: an UNMIGRATED database is live but not ready
+port-policy: API listening on port 29204 (attempt 1)
+  PASS GET /healthz (liveness) on an unmigrated database: 200
+  PASS GET /readyz on an unmigrated database: 503
+  body: {"status":"not_ready","checks":{"database":"ok","migrations":"pending"}}
+
+==> [  32.6 s] done
+A18 CLEAN START: PASS (commit 06430a4c698e3db0d7b4b9645bdaaa6bcfddf87f; install step: NOT RUN, candidate node_modules reused; total 32.6 s)
+
+real	0m33.606s
+user	0m46.692s
+sys	0m7.234s
+exit=0

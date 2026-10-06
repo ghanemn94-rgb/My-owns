@@ -1,0 +1,56 @@
+$ tests/qa/support/port-collision-check.sh   (2026-10-06T15:50:01Z, HEAD 06430a4c698e3db0d7b4b9645bdaaa6bcfddf87f + uncommitted T-DG2-DEVOPS3 changes)
+environment: Linux 6.18.44-fc-v70 x86_64; ephemeral range 32768-60999; uid 0; Python 3.11.15; node v24.21.0; old harness from 06430a4c698e3db0d7b4b9645bdaaa6bcfddf87f
+
+== C1 negative control: OLD with-pg.sh, QA_PG_PORT=54351 held in TIME_WAIT
+  collision on port 54351: /proc/net/tcp states ['06'] (06 = TIME_WAIT); SO_REUSEADDR probe: bind FAILED EADDRINUSE
+  | psql: error: connection to server at "127.0.0.1", port 54351 failed: Connection refused
+  | 	Is the server running on that host and accepting TCP/IP connections?
+  | BLOCKED: disposable PostgreSQL did not start
+  | 2026-10-06 15:50:02.803 UTC [41] HINT:  Is another postmaster already running on port 54351? If not, wait a few seconds and retry.
+  | 2026-10-06 15:50:02.803 UTC [41] WARNING:  could not create listen socket for "127.0.0.1"
+  | 2026-10-06 15:50:02.803 UTC [41] FATAL:  could not create any TCP/IP sockets
+  exit 3 after 32 s
+  PASS old harness fails closed (exit 3, BLOCKED, postgres: Address already in use) -- the F-DG2-310 defect reproduced
+
+== C2 NEW with-pg.sh, QA_PG_PORT=54331 held in TIME_WAIT
+  collision on port 54331: /proc/net/tcp states ['06'] (06 = TIME_WAIT); SO_REUSEADDR probe: bind FAILED EADDRINUSE
+  | port-policy: warning: PostgreSQL port 54331 is inside the ephemeral range 32768-60999 (a client socket in TIME_WAIT can hold it); will retry outside it on EADDRINUSE
+  | port-policy: PostgreSQL: port 54331 is in use (EADDRINUSE; attempt 1 of 11); retrying on port 31899
+  | port-policy: PostgreSQL listening on port 31899 (attempt 2)
+  | qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+  | URL=postgresql://postgres@127.0.0.1:31899/postgres
+  | server port 31899
+  PASS new harness retried and started on 31899 (< 32768); exported URL and server agree
+
+== C3 NEW with-pg.sh, default port (24351) held in TIME_WAIT
+  collision on port 24351: /proc/net/tcp states ['06'] (06 = TIME_WAIT); SO_REUSEADDR probe: bind FAILED EADDRINUSE
+  | port-policy: PostgreSQL: port 24351 is in use (EADDRINUSE; attempt 1 of 11); retrying on port 26191
+  | port-policy: PostgreSQL listening on port 26191 (attempt 2)
+  | qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+  | URL=postgresql://postgres@127.0.0.1:26191/postgres
+  | server port 26191
+  PASS default port in TIME_WAIT: retried and started on 26191
+
+== C4 NEW with-pg.sh, QA_PG_PORT=24352 in TIME_WAIT with QA_PG_STRICT_PORT=1
+  collision on port 24352: /proc/net/tcp states ['06'] (06 = TIME_WAIT); SO_REUSEADDR probe: bind FAILED EADDRINUSE
+  | BLOCKED: PostgreSQL port 24352 is in use (EADDRINUSE) and QA_PG_STRICT_PORT=1 / MTH_STRICT_PORT=1 forbids another port
+  | ---- postgres log (tail)
+  | 2026-10-06 15:50:40.604 UTC [363] HINT:  Is another postmaster already running on port 24352? If not, wait a few seconds and retry.
+  | 2026-10-06 15:50:40.604 UTC [363] WARNING:  could not create listen socket for "127.0.0.1"
+  | 2026-10-06 15:50:40.604 UTC [363] FATAL:  could not create any TCP/IP sockets
+  PASS strict mode: no retry, exit 3 BLOCKED, the command did not run
+
+== C5 generic API path (mth_start_with_port_retry) with a Node HTTP server; port 3000 held in TIME_WAIT
+  collision on port 3000: /proc/net/tcp states ['06'] (06 = TIME_WAIT); SO_REUSEADDR probe: bind FAILED EADDRINUSE
+  | port-policy: API: port 3000 is in use (EADDRINUSE; attempt 1 of 11); retrying on port 30918
+  | port-policy: API listening on port 30918 (attempt 2)
+  | API answered: ok 30918 (MTH_PORT=30918)
+  | api log: Error: listen EADDRINUSE: address already in use 0.0.0.0:3000
+  PASS API-style server retried after EADDRINUSE and answers on the new port
+
+PORT COLLISION CHECK: PASS (5 cases)
+
+real	0m40.363s
+user	0m3.629s
+sys	0m2.415s
+exit=0
