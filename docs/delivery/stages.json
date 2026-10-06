@@ -820,7 +820,7 @@
       "id": "DG2",
       "stage": "P2",
       "name": "Diagnose define and design",
-      "state": "FIXING",
+      "state": "REVIEWING",
       "depends_on": [
         "DG1"
       ],
@@ -839,10 +839,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:29ced0ed896ab9bf559e15dbdb39495b3da7a60c170989631ad9caf9a792ce58",
-        "source_commit": "e37f6ea4fdb2b97771e9965dd002e1102647804c",
-        "frozen_at": "2026-10-06T07:22:48Z",
-        "manifest_path": "docs/delivery/candidates/DG2/29ced0ed896ab9bf.manifest.json"
+        "candidate_id": "sha256:2f81c60ab1347986b3a2c31f8cd7642e0f8e4c0b6de59f1636f05268f3558c46",
+        "source_commit": "96a3c293614b9e832b9a419ef20ecb61e54a07cb",
+        "frozen_at": "2026-10-06T09:23:54Z",
+        "manifest_path": "docs/delivery/candidates/DG2/2f81c60ab1347986.manifest.json"
       },
       "review_rounds": [
         {
@@ -891,6 +891,18 @@
             "qa-verifier": "docs/delivery/reviews/DG2/round-4/qa-verifier.json"
           },
           "note": "DG2 gate review round 4 on candidate 29ced0ed (source e37f6ea). The round-3 findings are FIXED_PENDING_VERIFICATION: F-DG2-160 (one shared visible-content predicate for free text, name and reason: BE6 + BE7), F-DG2-210 (every P2 web form refuses whitespace- or invisible-only text with an inline EN/AR validation.blank error and sends nothing: FE5 + FE6) and F-DG2-211 (the error banner wraps a semantic list; axe clean: FE5). The other 13 DG2 findings are CLOSED_VERIFIED. Orchestrator pre-review verification: typecheck/build/lint/format/openapi(161)/no-cdn exit 0; unit 616/616 on Node 24 and 22; contrast PASS; integration 465/465; e2e 58 passed (P1+P2+blank-text, chromium-en + chromium-ar); validate --register DG2, --historical --stage DG1, --pipeline PASS. Disjoint id ranges: code-security 180-189, domain 190-199, qa 220-229 (D-062)."
+        },
+        {
+          "round": 5,
+          "candidate_id": "sha256:2f81c60ab1347986b3a2c31f8cd7642e0f8e4c0b6de59f1636f05268f3558c46",
+          "frozen_at": "2026-10-06T09:23:54Z",
+          "source_commit": "96a3c293614b9e832b9a419ef20ecb61e54a07cb",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG2/round-5/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG2/round-5/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG2/round-5/qa-verifier.json"
+          },
+          "note": "DG2 gate review round 5 on candidate 2f81c60a (526 files, source 96a3c29). Round-4 findings now FIXED_PENDING_VERIFICATION: F-DG2-180 (visible-content predicate excludes Cc/Cs/Default_Ignorable), F-DG2-181 (OIDC display name truncated by code point, then checked) and F-DG2-220 (unit-web async-utility timeout; 18 green repeat runs). D-065 also adds a fail-closed UTF8 database requirement and locale-independent test clusters, found by orchestrator verification. The other 16 DG2 findings are CLOSED_VERIFIED. Orchestrator pre-review verification ran in both locale settings: typecheck/build/lint/format/openapi(161)/no-cdn exit 0; unit 640/640 twice on Node 24 and twice on Node 22; contrast PASS; integration 483/483; e2e 58 passed en+ar; validate --register DG2, --historical --stage DG1 and --pipeline PASS. Id ranges are disjoint: code-security 230-239, domain 240-249, qa 250-259."
         }
       ],
       "gate_record": "docs/delivery/gates/DG2.json",
@@ -944,6 +956,11 @@
           "state": "FIXING",
           "at": "2026-10-06T08:20:00Z",
           "note": "Round 4 on candidate 29ced0ed: all three verdicts PASS. code-security closed F-DG2-160, qa closed F-DG2-210 and F-DG2-211, domain raised no findings. Three new Low, non-mandatory findings: F-DG2-180 (Default_Ignorable code points outside Cf still count as visible), F-DG2-181 (OIDC display name truncated after the visible-content check) and F-DG2-220 (the new web unit suite is flaky under load because of the 1000 ms default findBy wait). 16 findings CLOSED_VERIFIED, 3 OPEN. Round-5 repairs run in sequence: backend-workflow-engineer T-DG2-BE8 (F-180: predicate adds Cc/Cs/Default_Ignorable_Code_Point; F-181: truncate by code point, then hasText), then frontend-ux-engineer T-DG2-FE7 (F-220: unit-web asyncUtilTimeout plus repeated-run proof). Then re-freeze; round 5 with disjoint id ranges."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-10-06T09:55:00Z",
+          "note": "Round-5 repairs integrated (D-065): BE8 (F-180 predicate, F-181 OIDC display name), FE7 (F-220 unit-web waits), and BE9 (UTF8 database required, fail closed; every test cluster and database explicitly UTF8). 16 findings CLOSED_VERIFIED, 3 FIXED_PENDING_VERIFICATION, 0 OPEN. Orchestrator verification green in both locale settings. Candidate frozen as 2f81c60a for gate review round 5. code-security verifies F-180/F-181, qa verifies F-220, and domain re-reviews."
         }
       ]
     },
