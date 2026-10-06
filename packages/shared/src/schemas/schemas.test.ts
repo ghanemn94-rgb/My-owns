@@ -12,6 +12,7 @@ import {
   gateDecisionCreate,
   gateSubmissionCreate,
   hasText,
+  hasVisibleContent,
   kpiDefinitionCreate,
   me,
   role,
@@ -133,6 +134,86 @@ describe("blank free text (F-DG2-150)", () => {
     expect(diagnosticItemUpdate.safeParse({ currentState: null }).success).toBe(true);
     expect(tomGapUpdate.safeParse({ gap: null }).success).toBe(true);
     expect(diagnosticItemUpdate.safeParse({ currentState: "Synthetic manual billing" }).success).toBe(true);
+  });
+
+  // F-DG2-160 (T-DG2-BE6): "blank" means no visible content (White_Space, Cf format characters, invisible fillers).
+  const INVISIBLE: ReadonlyArray<readonly [string, string]> = [
+    ["U+0085 NEXT LINE", "\u0085"],
+    ["U+200B ZERO WIDTH SPACE", "\u200b"],
+    ["U+200C ZWNJ", "\u200c"],
+    ["U+200D ZWJ", "\u200d"],
+    ["U+2060 WORD JOINER", "\u2060"],
+    ["U+200E LRM", "\u200e"],
+    ["U+200F RLM", "\u200f"],
+    ["U+061C ARABIC LETTER MARK", "\u061c"],
+    ["U+00AD SOFT HYPHEN", "\u00ad"],
+    ["U+180E MONGOLIAN VOWEL SEPARATOR", "\u180e"],
+    ["U+FEFF BOM", "\ufeff"],
+    ["U+115F HANGUL CHOSEONG FILLER", "\u115f"],
+    ["U+1160 HANGUL JUNGSEONG FILLER", "\u1160"],
+    ["U+3164 HANGUL FILLER", "\u3164"],
+    ["U+FFA0 HALFWIDTH HANGUL FILLER", "\uffa0"],
+    ["U+2800 BRAILLE PATTERN BLANK", "\u2800"],
+    ["U+00A0 NBSP", "\u00a0"],
+    ["U+2028 LINE SEPARATOR", "\u2028"],
+    ["U+3000 IDEOGRAPHIC SPACE", "\u3000"],
+  ];
+
+  it.each(INVISIBLE)("invisible-only %s, alone and repeated, is blank and not present (F-DG2-160)", (_label, ch) => {
+    for (const v of [ch, ch.repeat(3), `${ch} ${ch}\t`]) {
+      expect(hasVisibleContent(v), JSON.stringify(v)).toBe(false);
+      expect(hasText(v), JSON.stringify(v)).toBe(false);
+      expect(codes(freeText(1, 20).safeParse(v)), JSON.stringify(v)).toEqual([["", "validation.blank"]]);
+      expect(codes(freeText(0, 20).nullable().safeParse(v)), JSON.stringify(v)).toEqual([["", "validation.blank"]]);
+    }
+  });
+
+  it("a mix of every invisible code point is still blank, on every kind of P2 field (F-DG2-160)", () => {
+    const all = INVISIBLE.map(([, ch]) => ch).join("");
+    expect(hasText(all)).toBe(false);
+    expect(codes(charterUpdate.safeParse({ outOfScope: "\u200f", changeSummary: "Synthetic" }))).toEqual([
+      ["outOfScope", "validation.blank"],
+    ]);
+    expect(codes(charterWrite.safeParse({ caseForChange: "\u2060\u2060\u2060" }))).toEqual([
+      ["caseForChange", "validation.blank"],
+    ]);
+    expect(codes(diagnosticItemUpdate.safeParse({ currentState: "\u061c" }))).toEqual([
+      ["currentState", "validation.blank"],
+    ]);
+    expect(codes(gateDecisionCreate.safeParse({ submissionNo: 1, outcome: "approved", rationale: all }))).toEqual([
+      ["rationale", "validation.blank"],
+    ]);
+  });
+
+  it("visible content with invisible marks is accepted, present and stored verbatim (F-DG2-160)", () => {
+    const accepted = [
+      "\u200fقطاع الشركات خارج النطاق\u200f", // Arabic with RLM marks
+      "\u061cالفوترة اليدوية", // Arabic with ALM
+      "\u{1F469}\u200d\u{1F4BB}", // emoji ZWJ sequence (woman technologist)
+      "\u{1F468}\u200d\u{1F469}\u200d\u{1F467}", // family ZWJ sequence
+      "\u200bleading ZWSP",
+      "trailing ZWSP\u200b",
+      "x",
+      "\u0645",
+      "\u00a0.\u00a0",
+      ...INVISIBLE.map(([, ch]) => `${ch}a${ch}`),
+    ];
+    for (const v of accepted) {
+      expect(hasVisibleContent(v), JSON.stringify(v)).toBe(true);
+      expect(hasText(v), JSON.stringify(v)).toBe(true);
+      expect(freeText(1, 100).parse(v)).toBe(v);
+    }
+    const arabic = "\u200fقطاع الشركات خارج النطاق\u200f";
+    expect(charterUpdate.parse({ outOfScope: arabic, changeSummary: "Synthetic" }).outOfScope).toBe(arabic);
+  });
+
+  it("an invisible-only thesis part is incomplete (F-DG2-160)", () => {
+    const parts = { thesisChange: "x", thesisOutcomes: "\u200f", thesisBenefits: "z", thesisBecause: "\u2060." };
+    expect(composeThesis(parts)).toEqual({
+      complete: false,
+      missing: ["thesisOutcomes", "thesisBecause"],
+      sentence: null,
+    });
   });
 
   it("a blank thesis part is incomplete", () => {

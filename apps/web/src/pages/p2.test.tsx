@@ -248,6 +248,40 @@ describe("Diagnose", () => {
     expect(field.getAttribute("aria-invalid")).toBe("true");
   });
 
+  // F-DG2-160 (T-DG2-BE6): invisible-only input (an RLM, a word joiner, U+0085) is caught client-side by the shared
+  // schema (`hasVisibleContent`): no request is sent and the field shows the localized `validation.blank` message.
+  it.each([
+    { locale: "en" as const, edit: /^Edit/, rootCause: "Root cause", save: "Save draft", value: "\u200f" },
+    {
+      locale: "ar" as const,
+      edit: /^تعديل/,
+      rootCause: "السبب الجذري",
+      save: "حفظ كمسودة",
+      value: "\u2060\u2060\u0085",
+    },
+  ])("an invisible-only value is blocked client-side with validation.blank ($locale)", async ({ locale, ...l }) => {
+    const item = diagnosticItem("financial");
+    const { requests } = render(
+      `/transformations/${TR_ID}/diagnose`,
+      [
+        ...base(leadGrants(), locale),
+        list("diagnostic-items", [item]),
+        route("PATCH", /\/diagnostic-items\//, () => ({ status: 200, body: item })),
+      ],
+      locale,
+    );
+    const edit = await screen.findAllByRole("button", { name: l.edit });
+    fireEvent.click(edit[0]!);
+    const dialog = await screen.findByRole("dialog");
+    const field = within(dialog).getByLabelText(l.rootCause);
+    fireEvent.change(field, { target: { value: l.value } });
+    fireEvent.click(within(dialog).getByRole("button", { name: l.save }));
+    const expected = createI18n(locale).t("problems.validation__blank");
+    await waitFor(() => expect(within(dialog).getByText(expected)).toBeTruthy());
+    expect(field.getAttribute("aria-invalid")).toBe("true");
+    expect(requests.some((r) => r.method === "PATCH")).toBe(false);
+  });
+
   it("Arabic: RTL with Arabic labels and the unquantified label", async () => {
     render(
       `/transformations/${TR_ID}/diagnose`,

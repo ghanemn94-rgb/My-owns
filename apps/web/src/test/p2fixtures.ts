@@ -14,6 +14,7 @@ import type {
   TomCanvasCellView,
   ValuePool,
 } from "../api/types.ts";
+import { hasText } from "@mth/shared/schemas";
 import { ORG_ID, TR_ID, USER_ID } from "./fixtures.tsx";
 
 export const OTHER_USER = "01920000-0000-7000-9000-000000000299";
@@ -452,10 +453,10 @@ export function charterView(over: Partial<CharterView["charter"]> = {}, topOutco
     scopeCheckPrechecks: [
       { code: "outcome_linkage", result: "not_applicable", detail: "x" },
       { code: "problem_traceability", result: "unknown", detail: "x" },
-      // Mirrors the server (F-DG2-150): an empty or blank Out of scope FAILS the check ("attention"), never "unknown".
+      // Mirrors the server (F-DG2-150, F-DG2-160: the shared `hasText`): an empty or blank Out of scope FAILS the check ("attention"), never "unknown".
       {
         code: "exclusions_documented",
-        result: charter.outOfScope?.trim() ? "pass" : "attention",
+        result: hasText(charter.outOfScope) ? "pass" : "attention",
         detail: "x",
       },
       { code: "baseline_measurable", result: "attention", detail: "x" },

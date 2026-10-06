@@ -12,13 +12,20 @@ describe("hasExclusions (F-DG2-150)", () => {
     ["empty", ""],
     ["spaces", "   "],
     ["tabs and line breaks", "\t\n \r\n"],
+    ["RLM only (F-DG2-160)", "\u200f"],
+    ["NEXT LINE only (F-DG2-160)", "\u0085"],
+    ["word joiners only (F-DG2-160)", "\u2060\u2060\u2060"],
+    ["Arabic letter mark only (F-DG2-160)", "\u061c"],
   ])("%s documents no exclusion", (_label, value) => {
     expect(hasExclusions(value)).toBe(false);
   });
 
-  it.each([["Enterprise fixed-line products"], ["  B2B roaming  "], ["-"]])("%j documents an exclusion", (value) => {
-    expect(hasExclusions(value)).toBe(true);
-  });
+  it.each([["Enterprise fixed-line products"], ["  B2B roaming  "], ["-"], ["\u200fقطاع الشركات\u200f"]])(
+    "%j documents an exclusion",
+    (value) => {
+      expect(hasExclusions(value)).toBe(true);
+    },
+  );
 });
 
 describe("one shared free-text presence test (T-DG2-BE5)", () => {

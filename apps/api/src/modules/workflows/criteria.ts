@@ -150,7 +150,7 @@ export async function loadGateFacts(db: DbOrTx, transformationId: string): Promi
     seededDiagnosticItems: items.map((i) => ({
       id: i.id,
       dimensionCode: i.dimension_code,
-      // F-DG2-150: every free-text "is present" test is `hasText` (trimmed, non-empty); blank text is not content.
+      // F-DG2-150/160: every free-text "is present" test is `hasText` (visible content); blank text is not content.
       hasCurrentState: hasText(i.current_state),
       hasRootCause: hasText(i.root_cause),
       hasImpact: i.impact_amount !== null || i.impact_kpi_definition_id !== null || hasText(i.impact_text),

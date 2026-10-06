@@ -212,7 +212,8 @@ async function activeGuardrailsOf(db: DbOrTx, transformationId: string) {
 }
 
 /**
- * True when the charter's Out of scope documents at least one exclusion: the trimmed text is non-empty (F-DG2-150).
+ * True when the charter's Out of scope documents at least one exclusion: the text has visible content (F-DG2-150,
+ * F-DG2-160).
  * Shared with the G1 "initial charter" criterion so the pre-check and the gate agree. A named alias of the shared
  * free-text presence test `hasText` (@mth/shared), which every other free-text "is present" check uses too.
  */

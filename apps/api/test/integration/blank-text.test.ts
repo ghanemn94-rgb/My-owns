@@ -1,4 +1,5 @@
-// F-DG2-150 root cause (T-DG2-BE5): blank free text is never stored as content, on a real PostgreSQL.
+// F-DG2-150 root cause (T-DG2-BE5) and F-DG2-160 (T-DG2-BE6): blank free text (no visible content) is never stored
+// as content, on a real PostgreSQL.
 //  - A whitespace-only value for a representative field of each P2 kind (charter inScope / caseForChange / a thesis part,
 //    a T01 diagnostic item's currentState, a T03 TOM gap, a T04 decision, a KPI definition name, an evidence note) is
 //    a 400 validation problem with a JSON pointer to the field and code `validation.blank`: nothing is written (row
@@ -349,5 +350,87 @@ describe("defense in depth: blank text already in the database is never 'present
       (x: { code: string }) => x.code === "exclusions_documented",
     ) as { result: string };
     expect(excl.result).toBe("attention");
+  });
+});
+
+// F-DG2-160 (T-DG2-BE6): "blank" means no visible content: White_Space (incl. U+0085), Cf format characters (ZWSP,
+// word joiner, RLM, ALM, ...) and invisible fillers. One shared predicate (`hasVisibleContent` in @mth/shared) decides
+// both the 400 and readiness, so the API, the B0041 pre-check, G1 and the web agree.
+describe("invisible-only free text is blank (F-DG2-160)", () => {
+  type Miss = { code: string; pointer?: string };
+  type Criterion = { key: string; missing: Miss[] };
+  const INVISIBLE = ["‏", "\u0085", "⁠⁠⁠", "؜"] as const;
+
+  it.each(INVISIBLE.map((v) => [JSON.stringify(v), v]))(
+    "Out of scope %s is 400 validation.blank at /outOfScope; nothing written, no audit",
+    async (_label, invisible) => {
+      const q = await setupP2World(api, w);
+      const QC = `/api/v1/transformations/${q.transformationId}/charter`;
+      // Create: rejected, so no charter exists.
+      const createRes = await call(api.app, "POST", QC, {
+        session: q.lead.session,
+        body: { transformationName: "Synthetic", outOfScope: invisible },
+      });
+      await expectBlankRejected(createRes, "/outOfScope");
+      expect((await call(api.app, "GET", QC, { session: q.lead.session })).status).toBe(404);
+      // Update: rejected, so the charter keeps its version, value and audit trail.
+      const created = await call(api.app, "POST", QC, {
+        session: q.lead.session,
+        body: { transformationName: "Synthetic", outOfScope: "Enterprise fixed-line (synthetic)" },
+      });
+      expect(created.status).toBe(201);
+      const charterId = created.body.charter.id as string;
+      const before = await auditOf(api.db, charterId);
+      const res = await call(api.app, "PATCH", QC, {
+        session: q.lead.session,
+        headers: ifm(1),
+        body: { outOfScope: invisible, changeSummary: "Synthetic invisible attempt" },
+      });
+      await expectBlankRejected(res, "/outOfScope");
+      const after = await call(api.app, "GET", QC, { session: q.lead.session });
+      expect([after.body.charter.version, after.body.charter.outOfScope]).toEqual([
+        1,
+        "Enterprise fixed-line (synthetic)",
+      ]);
+      expect(await auditOf(api.db, charterId)).toEqual(before);
+    },
+  );
+
+  it("an Arabic Out of scope with RLM marks is accepted verbatim, the pre-check reads pass and G1 does not list it", async () => {
+    const q = await setupP2World(api, w);
+    const Q = `/api/v1/transformations/${q.transformationId}`;
+    const arabic = "‏قطاع الشركات خارج النطاق (بيانات اصطناعية)‏";
+    const created = await call(api.app, "POST", `${Q}/charter`, {
+      session: q.lead.session,
+      body: { transformationName: "Synthetic", outOfScope: arabic },
+    });
+    expect(created.status, JSON.stringify(created.body)).toBe(201);
+    expect(created.body.charter.outOfScope).toBe(arabic);
+    const view = await call(api.app, "GET", `${Q}/charter`, { session: q.lead.session });
+    expect(view.body.charter.outOfScope).toBe(arabic);
+    const excl = view.body.scopeCheckPrechecks.find((x: { code: string }) => x.code === "exclusions_documented") as {
+      result: string;
+    };
+    expect(excl.result).toBe("pass");
+    const g1 = await call<{ criteria: Criterion[] }>(api.app, "GET", `${Q}/gates/G1`, { session: q.lead.session });
+    const charterCriterion = g1.body.criteria.find((c) => c.key === "g1.initial_charter")!;
+    expect(charterCriterion.missing.some((m) => m.pointer === "/charter/outOfScope")).toBe(false);
+
+    // Defense in depth: an invisible-only Out of scope that reaches the database around the API is not documented.
+    await legacyBlankWrite("charter", created.body.charter.id as string, 1, { out_of_scope: "‏​" });
+    const blankView = await call(api.app, "GET", `${Q}/charter`, { session: q.lead.session });
+    expect(
+      (
+        blankView.body.scopeCheckPrechecks.find((x: { code: string }) => x.code === "exclusions_documented") as {
+          result: string;
+        }
+      ).result,
+    ).toBe("attention");
+    const g1b = await call<{ criteria: Criterion[] }>(api.app, "GET", `${Q}/gates/G1`, { session: q.lead.session });
+    expect(
+      g1b.body.criteria
+        .find((c) => c.key === "g1.initial_charter")!
+        .missing.some((m) => m.pointer === "/charter/outOfScope"),
+    ).toBe(true);
   });
 });

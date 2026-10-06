@@ -2,6 +2,7 @@
 // table of contents (anchor links) for long pages. Text cells render missing text as "None", never blank.
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { hasText } from "@mth/shared/schemas";
 
 export function Section({
   id,
@@ -47,10 +48,9 @@ export function SectionNav({ sections }: { sections: readonly { id: string; titl
   );
 }
 
-/** Multi-line user text; "None" when empty. */
+/** Multi-line user text; "None" when it has no visible content (the shared `hasText`, F-DG2-150 / F-DG2-160). */
 export function TextCell({ value }: { value: string | null | undefined }) {
   const { t } = useTranslation();
-  if (value === null || value === undefined || value.trim() === "")
-    return <span className="muted">{t("common.value.none")}</span>;
+  if (!hasText(value)) return <span className="muted">{t("common.value.none")}</span>;
   return <span className="text-cell">{value}</span>;
 }

@@ -200,6 +200,15 @@ describe("blank free text (F-DG2-150): caught client-side by the shared schemas,
       currentState: "  kept as typed  ",
     });
   });
+  it("invisible-only text (format characters, U+0085, fillers) also maps to validation.blank (F-DG2-160)", () => {
+    for (const v of ["\u200f", "\u0085", "\u2060\u2060\u2060", "\u061c", "\u200b\u3164\u2800"]) {
+      const r = freeText(1, 20).safeParse(v);
+      expect(r.success, JSON.stringify(v)).toBe(false);
+      expect(r.error!.issues.map(issueCode)).toEqual(["validation.blank"]);
+    }
+    const arabic = "\u200fخارج النطاق\u200f";
+    expect(charterUpdate.safeParse({ outOfScope: arabic, changeSummary: "Synthetic" }).data?.outOfScope).toBe(arabic);
+  });
   it("the code has a translated message in both languages", async () => {
     const i18n = createI18n("en");
     expect(fieldErrorMessage(i18n.t, "validation.blank")).toBe("Enter some text; spaces alone are not a value.");

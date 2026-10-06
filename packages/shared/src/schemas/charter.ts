@@ -2,7 +2,7 @@
 // scope sanity checks B0038-B0043), its immutable version snapshots and the computed view. Mirrors docs/api/openapi.yaml
 // Charter, CharterVersion, CharterView, CharterWrite, CharterUpdate, ScopeCheckPrecheck.
 import { z } from "zod";
-import { freeText, timestamp, uuid, version } from "./common.ts";
+import { freeText, hasText, timestamp, uuid, version } from "./common.ts";
 import { northStar, outcome, strategicGuardrail } from "./direction.ts";
 import { businessDate } from "./kpi.ts";
 import { warning } from "./methodology.ts";
@@ -147,14 +147,17 @@ const PLACEHOLDER: Readonly<Record<ThesisPart, string>> = {
   thesisBecause: "{because}",
 };
 
-/** A part as it reads inside the sentence: trimmed, without its own closing full stop. Blank -> null. */
+/**
+ * A part as it reads inside the sentence: trimmed, without its own closing full stop. Blank (no visible content,
+ * the shared `hasText`, F-DG2-160) -> null.
+ */
 function thesisPartText(value: string | null | undefined): string | null {
   if (value === null || value === undefined) return null;
   const t = value
     .trim()
     .replace(/[.۔]+$/u, "")
     .trim();
-  return t === "" ? null : t;
+  return hasText(t) ? t : null;
 }
 
 /** Composes the four-part thesis into the source sentence, or flags it incomplete (pure; used by the API and the UI). */
