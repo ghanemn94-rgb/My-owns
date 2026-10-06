@@ -1,0 +1,16 @@
+$ git rev-parse HEAD  (candidate tree)
+624590325838ed91ecf72325a38ad3c87d54df6f
+$ git merge-base --is-ancestor 9e13947e HEAD -> yes
+$ git diff --stat 9e13947e HEAD
+ .../DG2/round-3/code-security-reviewer.md          |   85 +
+ .../assignments/DG2/round-3/domain-reviewer.md     |  115 +
+ .../assignments/DG2/round-3/qa-verifier.md         |   82 +
+ .../candidates/DG2/b98c44db7ef91295.manifest.json  | 2613 ++++++++++++++++++++
+ docs/delivery/stages.json                          |   27 +-
+ 5 files changed, 2917 insertions(+), 5 deletions(-)
+$ node tools/gates/candidate.mjs --stage DG2  (candidate tree)
+{"stage":"DG2","source":"working-tree","candidate_id":"sha256:b98c44db7ef91295eec25a21cbd394a91890b01caeeb6bfd269eb1ee6d132be5","files":519}
+exit=0
+$ (clone @9e13947e) node tools/gates/candidate.mjs --stage DG2
+{"stage":"DG2","source":"working-tree","candidate_id":"sha256:b98c44db7ef91295eec25a21cbd394a91890b01caeeb6bfd269eb1ee6d132be5","files":519}
+exit=0

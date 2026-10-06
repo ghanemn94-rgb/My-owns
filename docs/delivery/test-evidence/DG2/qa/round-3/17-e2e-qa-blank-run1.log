@@ -1,0 +1,437 @@
+$ QA_SHOT_DIR=docs/delivery/test-evidence/DG2/qa/round-3/e2e QA_API_PORT=3761 QA_E2E_PG_PORT=54911 E2E_BASE_URL=http://localhost:3761 e2e/support/qa-stack-port.sh npx playwright test e2e/dg2-qa-blank-r3.spec.ts --workers=1 --reporter=list  (run 1; node v22.22.2; PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers; clone @9e13947e; spec = docs/delivery/test-evidence/DG2/qa/tests/round-3/e2e/dg2-qa-blank-r3.spec.ts; qa-stack-port.sh = e2e/support/qa-stack.sh + port parameter only, see 16-qa-stack-port.diff)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+
+Running 8 tests using 1 worker
+
+QA-R3 [en] create with blank caseForChange: blank message shown=false; GET charter -> 200 v1 caseForChange=null
+  ✘  1 [chromium-en] › e2e/dg2-qa-blank-r3.spec.ts:64:1 › charter create with a whitespace-only Case for change (2.8s)
+QA-R3 [en] edit Out of scope (was null) to blank: blank message shown=false; charter v1 -> v1 outOfScope=null
+  ✘  2 [chromium-en] › e2e/dg2-qa-blank-r3.spec.ts:92:1 › empty Out of scope: the exclusions chip FAILS (attention); whitespace-only Out of scope on edit (3.5s)
+QA-R3 [en] edit Out of scope (was text) to blank: blank message shown=false; charter v2 -> v3 outOfScope=null
+  ✘  3 [chromium-en] › e2e/dg2-qa-blank-r3.spec.ts:144:1 › existing Out of scope replaced by whitespace-only text in the UI (3.1s)
+QA-R3 [en] T01 blank currentState: blank message shown=false; dialog open=true; dialog lines=[" There are no changes to save."]; rows unchanged=true
+  ✘  4 [chromium-en] › e2e/dg2-qa-blank-r3.spec.ts:187:1 › T01 Current state whitespace-only (3.1s)
+QA-R3 [ar] create with blank caseForChange: blank message shown=false; GET charter -> 200 v1 caseForChange=null
+  ✘  5 [chromium-ar] › e2e/dg2-qa-blank-r3.spec.ts:64:1 › charter create with a whitespace-only Case for change (2.6s)
+QA-R3 [ar] edit Out of scope (was null) to blank: blank message shown=false; charter v1 -> v2 outOfScope=null
+  ✘  6 [chromium-ar] › e2e/dg2-qa-blank-r3.spec.ts:92:1 › empty Out of scope: the exclusions chip FAILS (attention); whitespace-only Out of scope on edit (3.4s)
+QA-R3 [ar] edit Out of scope (was text) to blank: blank message shown=false; charter v2 -> v3 outOfScope=null
+  ✘  7 [chromium-ar] › e2e/dg2-qa-blank-r3.spec.ts:144:1 › existing Out of scope replaced by whitespace-only text in the UI (3.0s)
+QA-R3 [ar] T01 blank currentState: blank message shown=false; dialog open=true; dialog lines=[" لا توجد تغييرات لحفظها."]; rows unchanged=true
+  ✘  8 [chromium-ar] › e2e/dg2-qa-blank-r3.spec.ts:187:1 › T01 Current state whitespace-only (2.9s)
+
+
+  1) [chromium-en] › e2e/dg2-qa-blank-r3.spec.ts:64:1 › charter create with a whitespace-only Case for change 
+
+    Error: localized validation__blank message after a whitespace-only Case for change
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      85 |   if (body) expect(isBlankStored(body.charter.caseForChange)).toBe(false);
+      86 |   // SOFT: the localized blank message (assignment / D-063).
+    > 87 |   expect.soft(shown, "localized validation__blank message after a whitespace-only Case for change").toBe(true);
+         |                                                                                                     ^
+      88 |   expect.soft(res.status(), "nothing saved after a whitespace-only Case for change").toBe(404);
+      89 |   expect(foreign).toEqual([]);
+      90 | });
+        at /var/tmp/mth-run.NeydCl/claude-0/review-dg2/e2e/dg2-qa-blank-r3.spec.ts:87:101
+
+    Error: nothing saved after a whitespace-only Case for change
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 404
+    Received: 200
+
+      86 |   // SOFT: the localized blank message (assignment / D-063).
+      87 |   expect.soft(shown, "localized validation__blank message after a whitespace-only Case for change").toBe(true);
+    > 88 |   expect.soft(res.status(), "nothing saved after a whitespace-only Case for change").toBe(404);
+         |                                                                                      ^
+      89 |   expect(foreign).toEqual([]);
+      90 | });
+      91 |
+        at /var/tmp/mth-run.NeydCl/claude-0/review-dg2/e2e/dg2-qa-blank-r3.spec.ts:88:86
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-blank-r3-charte-a8f05-espace-only-Case-for-change-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-dg2-qa-blank-r3-charte-a8f05-espace-only-Case-for-change-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-blank-r3-charte-a8f05-espace-only-Case-for-change-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg2-qa-blank-r3-charte-a8f05-espace-only-Case-for-change-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-en] › e2e/dg2-qa-blank-r3.spec.ts:92:1 › empty Out of scope: the exclusions chip FAILS (attention); whitespace-only Out of scope on edit 
+
+    Error: localized validation__blank message after a whitespace-only Out of scope
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      135 |     ),
+      136 |   ).toHaveAttribute("data-result", "attention");
+    > 137 |   expect.soft(shown, "localized validation__blank message after a whitespace-only Out of scope").toBe(true);
+          |                                                                                                  ^
+      138 |   expect.soft(after.charter.version, "no new charter version after a whitespace-only Out of scope").toBe(
+      139 |     before.charter.version,
+      140 |   );
+        at /var/tmp/mth-run.NeydCl/claude-0/review-dg2/e2e/dg2-qa-blank-r3.spec.ts:137:98
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-blank-r3-empty--d418d-e-only-Out-of-scope-on-edit-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-dg2-qa-blank-r3-empty--d418d-e-only-Out-of-scope-on-edit-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-blank-r3-empty--d418d-e-only-Out-of-scope-on-edit-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg2-qa-blank-r3-empty--d418d-e-only-Out-of-scope-on-edit-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium-en] › e2e/dg2-qa-blank-r3.spec.ts:144:1 › existing Out of scope replaced by whitespace-only text in the UI 
+
+    Error: localized validation__blank message after spaces replace an existing Out of scope
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      178 |   );
+      179 |   await expect(chip).toHaveAttribute("data-result", after.charter.outOfScope ? "pass" : "attention");
+    > 180 |   expect.soft(shown, "localized validation__blank message after spaces replace an existing Out of scope").toBe(true);
+          |                                                                                                           ^
+      181 |   expect.soft(after.charter.outOfScope, "existing Out of scope kept after a whitespace-only save").toBe(
+      182 |     before.charter.outOfScope,
+      183 |   );
+        at /var/tmp/mth-run.NeydCl/claude-0/review-dg2/e2e/dg2-qa-blank-r3.spec.ts:180:107
+
+    Error: existing Out of scope kept after a whitespace-only save
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "Enterprise contracts (synthetic)"
+    Received: null
+
+      179 |   await expect(chip).toHaveAttribute("data-result", after.charter.outOfScope ? "pass" : "attention");
+      180 |   expect.soft(shown, "localized validation__blank message after spaces replace an existing Out of scope").toBe(true);
+    > 181 |   expect.soft(after.charter.outOfScope, "existing Out of scope kept after a whitespace-only save").toBe(
+          |                                                                                                    ^
+      182 |     before.charter.outOfScope,
+      183 |   );
+      184 |   expect(foreign).toEqual([]);
+        at /var/tmp/mth-run.NeydCl/claude-0/review-dg2/e2e/dg2-qa-blank-r3.spec.ts:181:100
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-blank-r3-existi-39f1b-tespace-only-text-in-the-UI-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-dg2-qa-blank-r3-existi-39f1b-tespace-only-text-in-the-UI-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-blank-r3-existi-39f1b-tespace-only-text-in-the-UI-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg2-qa-blank-r3-existi-39f1b-tespace-only-text-in-the-UI-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) [chromium-en] › e2e/dg2-qa-blank-r3.spec.ts:187:1 › T01 Current state whitespace-only ─────────
+
+    Error: localized validation__blank message after a whitespace-only T01 Current state
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      211 |   expect(after.items.some((i) => isBlankStored(i.currentState))).toBe(false);
+      212 |   expect(pick(after)).toEqual(pick(before));
+    > 213 |   expect.soft(shown, "localized validation__blank message after a whitespace-only T01 Current state").toBe(true);
+          |                                                                                                       ^
+      214 |   expect(foreign).toEqual([]);
+      215 |   // Last: the axe scan of this state (the RecordForm "no changes" banner).
+      216 |   await expectAccessible(page, lang, "qa-r3-t01-blank");
+        at /var/tmp/mth-run.NeydCl/claude-0/review-dg2/e2e/dg2-qa-blank-r3.spec.ts:213:103
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 3
+
+    - Array []
+    + Array [
+    +   "listitem: .banner > li",
+    + ]
+
+       at apps/web/e2e/support/ui.ts:94
+
+      92 |   };
+      93 |   const serious = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+    > 94 |   expect(serious.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`)).toEqual([]);
+         |                                                                                               ^
+      95 | }
+      96 |
+      97 | /** Every request stays on the application origin (no CDN, no remote fonts), and nothing hits the CSP. */
+        at expectAccessible (/var/tmp/mth-run.NeydCl/claude-0/review-dg2/apps/web/e2e/support/ui.ts:94:95)
+        at /var/tmp/mth-run.NeydCl/claude-0/review-dg2/e2e/dg2-qa-blank-r3.spec.ts:216:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-blank-r3-T01-Current-state-whitespace-only-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-dg2-qa-blank-r3-T01-Current-state-whitespace-only-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-blank-r3-T01-Current-state-whitespace-only-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg2-qa-blank-r3-T01-Current-state-whitespace-only-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5) [chromium-ar] › e2e/dg2-qa-blank-r3.spec.ts:64:1 › charter create with a whitespace-only Case for change 
+
+    Error: localized validation__blank message after a whitespace-only Case for change
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      85 |   if (body) expect(isBlankStored(body.charter.caseForChange)).toBe(false);
+      86 |   // SOFT: the localized blank message (assignment / D-063).
+    > 87 |   expect.soft(shown, "localized validation__blank message after a whitespace-only Case for change").toBe(true);
+         |                                                                                                     ^
+      88 |   expect.soft(res.status(), "nothing saved after a whitespace-only Case for change").toBe(404);
+      89 |   expect(foreign).toEqual([]);
+      90 | });
+        at /var/tmp/mth-run.NeydCl/claude-0/review-dg2/e2e/dg2-qa-blank-r3.spec.ts:87:101
+
+    Error: nothing saved after a whitespace-only Case for change
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 404
+    Received: 200
+
+      86 |   // SOFT: the localized blank message (assignment / D-063).
+      87 |   expect.soft(shown, "localized validation__blank message after a whitespace-only Case for change").toBe(true);
+    > 88 |   expect.soft(res.status(), "nothing saved after a whitespace-only Case for change").toBe(404);
+         |                                                                                      ^
+      89 |   expect(foreign).toEqual([]);
+      90 | });
+      91 |
+        at /var/tmp/mth-run.NeydCl/claude-0/review-dg2/e2e/dg2-qa-blank-r3.spec.ts:88:86
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-blank-r3-charte-a8f05-espace-only-Case-for-change-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-dg2-qa-blank-r3-charte-a8f05-espace-only-Case-for-change-chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-blank-r3-charte-a8f05-espace-only-Case-for-change-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg2-qa-blank-r3-charte-a8f05-espace-only-Case-for-change-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  6) [chromium-ar] › e2e/dg2-qa-blank-r3.spec.ts:92:1 › empty Out of scope: the exclusions chip FAILS (attention); whitespace-only Out of scope on edit 
+
+    Error: localized validation__blank message after a whitespace-only Out of scope
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      135 |     ),
+      136 |   ).toHaveAttribute("data-result", "attention");
+    > 137 |   expect.soft(shown, "localized validation__blank message after a whitespace-only Out of scope").toBe(true);
+          |                                                                                                  ^
+      138 |   expect.soft(after.charter.version, "no new charter version after a whitespace-only Out of scope").toBe(
+      139 |     before.charter.version,
+      140 |   );
+        at /var/tmp/mth-run.NeydCl/claude-0/review-dg2/e2e/dg2-qa-blank-r3.spec.ts:137:98
+
+    Error: no new charter version after a whitespace-only Out of scope
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 2
+
+      136 |   ).toHaveAttribute("data-result", "attention");
+      137 |   expect.soft(shown, "localized validation__blank message after a whitespace-only Out of scope").toBe(true);
+    > 138 |   expect.soft(after.charter.version, "no new charter version after a whitespace-only Out of scope").toBe(
+          |                                                                                                     ^
+      139 |     before.charter.version,
+      140 |   );
+      141 |   expect(foreign).toEqual([]);
+        at /var/tmp/mth-run.NeydCl/claude-0/review-dg2/e2e/dg2-qa-blank-r3.spec.ts:138:101
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-blank-r3-empty--d418d-e-only-Out-of-scope-on-edit-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-dg2-qa-blank-r3-empty--d418d-e-only-Out-of-scope-on-edit-chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-blank-r3-empty--d418d-e-only-Out-of-scope-on-edit-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg2-qa-blank-r3-empty--d418d-e-only-Out-of-scope-on-edit-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  7) [chromium-ar] › e2e/dg2-qa-blank-r3.spec.ts:144:1 › existing Out of scope replaced by whitespace-only text in the UI 
+
+    Error: localized validation__blank message after spaces replace an existing Out of scope
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      178 |   );
+      179 |   await expect(chip).toHaveAttribute("data-result", after.charter.outOfScope ? "pass" : "attention");
+    > 180 |   expect.soft(shown, "localized validation__blank message after spaces replace an existing Out of scope").toBe(true);
+          |                                                                                                           ^
+      181 |   expect.soft(after.charter.outOfScope, "existing Out of scope kept after a whitespace-only save").toBe(
+      182 |     before.charter.outOfScope,
+      183 |   );
+        at /var/tmp/mth-run.NeydCl/claude-0/review-dg2/e2e/dg2-qa-blank-r3.spec.ts:180:107
+
+    Error: existing Out of scope kept after a whitespace-only save
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "Enterprise contracts (synthetic)"
+    Received: null
+
+      179 |   await expect(chip).toHaveAttribute("data-result", after.charter.outOfScope ? "pass" : "attention");
+      180 |   expect.soft(shown, "localized validation__blank message after spaces replace an existing Out of scope").toBe(true);
+    > 181 |   expect.soft(after.charter.outOfScope, "existing Out of scope kept after a whitespace-only save").toBe(
+          |                                                                                                    ^
+      182 |     before.charter.outOfScope,
+      183 |   );
+      184 |   expect(foreign).toEqual([]);
+        at /var/tmp/mth-run.NeydCl/claude-0/review-dg2/e2e/dg2-qa-blank-r3.spec.ts:181:100
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-blank-r3-existi-39f1b-tespace-only-text-in-the-UI-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-dg2-qa-blank-r3-existi-39f1b-tespace-only-text-in-the-UI-chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-blank-r3-existi-39f1b-tespace-only-text-in-the-UI-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg2-qa-blank-r3-existi-39f1b-tespace-only-text-in-the-UI-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  8) [chromium-ar] › e2e/dg2-qa-blank-r3.spec.ts:187:1 › T01 Current state whitespace-only ─────────
+
+    Error: localized validation__blank message after a whitespace-only T01 Current state
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      211 |   expect(after.items.some((i) => isBlankStored(i.currentState))).toBe(false);
+      212 |   expect(pick(after)).toEqual(pick(before));
+    > 213 |   expect.soft(shown, "localized validation__blank message after a whitespace-only T01 Current state").toBe(true);
+          |                                                                                                       ^
+      214 |   expect(foreign).toEqual([]);
+      215 |   // Last: the axe scan of this state (the RecordForm "no changes" banner).
+      216 |   await expectAccessible(page, lang, "qa-r3-t01-blank");
+        at /var/tmp/mth-run.NeydCl/claude-0/review-dg2/e2e/dg2-qa-blank-r3.spec.ts:213:103
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 3
+
+    - Array []
+    + Array [
+    +   "listitem: .banner > li",
+    + ]
+
+       at apps/web/e2e/support/ui.ts:94
+
+      92 |   };
+      93 |   const serious = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+    > 94 |   expect(serious.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`)).toEqual([]);
+         |                                                                                               ^
+      95 | }
+      96 |
+      97 | /** Every request stays on the application origin (no CDN, no remote fonts), and nothing hits the CSP. */
+        at expectAccessible (/var/tmp/mth-run.NeydCl/claude-0/review-dg2/apps/web/e2e/support/ui.ts:94:95)
+        at /var/tmp/mth-run.NeydCl/claude-0/review-dg2/e2e/dg2-qa-blank-r3.spec.ts:216:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-blank-r3-T01-Current-state-whitespace-only-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-dg2-qa-blank-r3-T01-Current-state-whitespace-only-chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-blank-r3-T01-Current-state-whitespace-only-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg2-qa-blank-r3-T01-Current-state-whitespace-only-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  8 failed
+    [chromium-en] › e2e/dg2-qa-blank-r3.spec.ts:64:1 › charter create with a whitespace-only Case for change 
+    [chromium-en] › e2e/dg2-qa-blank-r3.spec.ts:92:1 › empty Out of scope: the exclusions chip FAILS (attention); whitespace-only Out of scope on edit 
+    [chromium-en] › e2e/dg2-qa-blank-r3.spec.ts:144:1 › existing Out of scope replaced by whitespace-only text in the UI 
+    [chromium-en] › e2e/dg2-qa-blank-r3.spec.ts:187:1 › T01 Current state whitespace-only ──────────
+    [chromium-ar] › e2e/dg2-qa-blank-r3.spec.ts:64:1 › charter create with a whitespace-only Case for change 
+    [chromium-ar] › e2e/dg2-qa-blank-r3.spec.ts:92:1 › empty Out of scope: the exclusions chip FAILS (attention); whitespace-only Out of scope on edit 
+    [chromium-ar] › e2e/dg2-qa-blank-r3.spec.ts:144:1 › existing Out of scope replaced by whitespace-only text in the UI 
+    [chromium-ar] › e2e/dg2-qa-blank-r3.spec.ts:187:1 › T01 Current state whitespace-only ──────────
+---- api.log (tail)
+exit=1

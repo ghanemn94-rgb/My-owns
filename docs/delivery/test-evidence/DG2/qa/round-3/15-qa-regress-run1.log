@@ -1,0 +1,37 @@
+$ QA_PG_PORT=54991 tests/qa/support/with-pg.sh npx vitest run --project integration --reporter=verbose tests/qa/integration/dg2-qa-regress-r3.test.ts  (run 1; node v22.22.2; clone @9e13947e; test = docs/delivery/test-evidence/DG2/qa/tests/round-3/dg2-qa-regress-r3.test.ts)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+ RUN  v3.2.4 /var/tmp/mth-run.NeydCl/claude-0/review-dg2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muw9l3rp_f6717281; applied 19 migrations to a fresh database
+ ✓ |integration| tests/qa/integration/dg2-qa-regress-r3.test.ts > QA r3 F-DG2-150: exclusions pre-check and G1 with an empty Out of scope > baseline: G1-ready world, exclusions pre-check passes and the charter criterion is complete 70ms
+stdout | tests/qa/integration/dg2-qa-regress-r3.test.ts > QA r3 F-DG2-150: exclusions pre-check and G1 with an empty Out of scope > clearing Out of scope: pre-check attention (never unknown), G1 charter criterion incomplete, submit refused 422
+QA-R3 submit G1 with empty Out of scope -> 422 gate_criteria_incomplete
+
+ ✓ |integration| tests/qa/integration/dg2-qa-regress-r3.test.ts > QA r3 F-DG2-150: exclusions pre-check and G1 with an empty Out of scope > clearing Out of scope: pre-check attention (never unknown), G1 charter criterion incomplete, submit refused 422 117ms
+ ✓ |integration| tests/qa/integration/dg2-qa-regress-r3.test.ts > QA r3 F-DG2-150: exclusions pre-check and G1 with an empty Out of scope > whitespace-only Out of scope is 400 validation.blank; charter version unchanged; pre-check still attention 29ms
+ ✓ |integration| tests/qa/integration/dg2-qa-regress-r3.test.ts > QA r3 F-DG2-150: exclusions pre-check and G1 with an empty Out of scope > restoring a real exclusion: pass, criterion complete, G1 submission accepted (201) 107ms
+stdout | tests/qa/integration/dg2-qa-regress-r3.test.ts > QA r3 DB guards (migration 0010) fire independently of the API > version must step by exactly 1 (23514 check_violation)
+QA-R3 guard version+2 -> 23514
+
+stdout | tests/qa/integration/dg2-qa-regress-r3.test.ts > QA r3 DB guards (migration 0010) fire independently of the API > organization_id / transformation_id / created_by are immutable (23514)
+QA-R3 guard created_by change -> 23514
+
+stdout | tests/qa/integration/dg2-qa-regress-r3.test.ts > QA r3 DB guards (migration 0010) fire independently of the API > an update without its audit event cannot commit (23000 integrity_constraint_violation)
+QA-R3 guard unaudited update -> 23000
+
+stdout | tests/qa/integration/dg2-qa-regress-r3.test.ts > QA r3 DB guards (migration 0010) fire independently of the API > charter_version history is append-only (UPDATE and DELETE refused)
+QA-R3 guard charter_version UPDATE -> 42501; DELETE -> 42501
+
+ ✓ |integration| tests/qa/integration/dg2-qa-regress-r3.test.ts > QA r3 D-063: blank T01 text writes nothing > each T01 text field: 400 validation.blank, row version and value unchanged 45ms
+ ✓ |integration| tests/qa/integration/dg2-qa-regress-r3.test.ts > QA r3 DB guards (migration 0010) fire independently of the API > version must step by exactly 1 (23514 check_violation) 6ms
+ ✓ |integration| tests/qa/integration/dg2-qa-regress-r3.test.ts > QA r3 DB guards (migration 0010) fire independently of the API > organization_id / transformation_id / created_by are immutable (23514) 2ms
+ ✓ |integration| tests/qa/integration/dg2-qa-regress-r3.test.ts > QA r3 DB guards (migration 0010) fire independently of the API > an update without its audit event cannot commit (23000 integrity_constraint_violation) 17ms
+ ✓ |integration| tests/qa/integration/dg2-qa-regress-r3.test.ts > QA r3 DB guards (migration 0010) fire independently of the API > charter_version history is append-only (UPDATE and DELETE refused) 18ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  05:54:58
+   Duration  4.28s (transform 780ms, setup 0ms, collect 1.86s, tests 1.11s, environment 0ms, prepare 82ms)
+
+exit=0
