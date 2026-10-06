@@ -1,0 +1,304 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG2",
+  "round": 5,
+  "candidate_id": "sha256:2f81c60ab1347986b3a2c31f8cd7642e0f8e4c0b6de59f1636f05268f3558c46",
+  "source_commit": "96a3c293614b9e832b9a419ef20ecb61e54a07cb",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG2-T-DG2-REV-DOM-R5-domain-reviewer-20261006T092553Z-5c639bb5",
+    "session_id": "5c639bb5-b3ae-4b0b-8a95-eb5c0bf63219"
+  },
+  "implementation_author": [
+    "backend-workflow-engineer",
+    "frontend-ux-engineer",
+    "kpi-benefits-engineer",
+    "solution-architect",
+    "transformation-analyst",
+    "devops-engineer",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "domain-reviewer authored no DG2 implementation, test, register row or ADR in the reviewed candidate. I formed this verdict from my own runs in a disposable clone at da317d7 (source 96a3c293). I did not open any other reviewer's round-5 record. The only earlier material I reused was my own round-4 tooling (with-stack.sh, live-scenario.mjs, charter-blank-ui.mjs, dom-shots.mjs), which I extended for round 5, plus a new design-registers.mjs."
+  },
+  "assignment": "docs/delivery/assignments/DG2/round-5/domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-PB-003", "REQ-PB-012", "REQ-PB-016", "REQ-PB-017", "REQ-PB-018", "REQ-PB-023", "REQ-PB-024", "REQ-PB-025",
+    "REQ-PB-026", "REQ-PB-029", "REQ-PB-030", "REQ-PB-031", "REQ-PB-033", "REQ-PB-034", "REQ-PB-035", "REQ-PB-036",
+    "REQ-PB-037", "REQ-PB-038", "REQ-PB-039", "REQ-PB-041", "REQ-PB-042", "REQ-PB-043", "REQ-S04-003", "REQ-S04-004",
+    "REQ-S04-005", "REQ-S05-003"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-R5-00-candidate",
+      "procedure": "Confirm the frozen candidate. Check the assignment file's sha256 and recompute the candidate id in the repository and in the disposable clone (after removing the two harness scripts I had copied into the clone). Check that HEAD descends from source_commit and that only delivery records changed since.",
+      "command": "sha256sum docs/delivery/assignments/DG2/round-5/domain-reviewer.md; node tools/gates/candidate.mjs --stage DG2; git diff --stat 96a3c293 HEAD",
+      "environment": "/home/user/My-owns (HEAD da317d70) and disposable clone $TMPDIR/review-dom5 at da317d7; Node 24.21.0",
+      "expected": "assignment sha256 e724c502…ec77; candidate sha256:2f81c60a…8c46 over 526 files in both trees; only docs/delivery/** differs since 96a3c293",
+      "actual": "The assignment hash matches. Both trees give sha256:2f81c60ab1347986b3a2c31f8cd7642e0f8e4c0b6de59f1636f05268f3558c46 over 526 files. The diff 96a3c293..HEAD touches only the round-5 assignments, the candidate manifest and stages.json.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-5/candidate-and-dg1.log",
+        "docs/delivery/test-evidence/DG2/domain/round-5/env.txt",
+        "docs/delivery/candidates/DG2/2f81c60ab1347986.manifest.json"
+      ]
+    },
+    {
+      "id": "DOM-R5-01-validate-dg1-historical",
+      "procedure": "Re-validate the approved DG1 gate.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG1",
+      "environment": "disposable clone at da317d7; Node 24.21.0",
+      "expected": "PASS, exit 0",
+      "actual": "PASS gate DG1 (historical), exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/domain/round-5/candidate-and-dg1.log"]
+    },
+    {
+      "id": "DOM-R5-02-typecheck",
+      "procedure": "Typecheck every workspace package on Node 22 and on Node 24.",
+      "command": "pnpm -r typecheck",
+      "environment": "disposable clone; Node 22.22.2 and Node 24.21.0; pnpm 10.33.0; offline install from a copy of the local store",
+      "expected": "exit 0 on both Node versions",
+      "actual": "exit 0 on Node 22 and on Node 24. My first Node 24 attempt exited 127 because pnpm was not on the Node 24 PATH. That was a harness error and is documented in env.txt; the re-run passed.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-5/typecheck-node22.log",
+        "docs/delivery/test-evidence/DG2/domain/round-5/typecheck-node24.log",
+        "docs/delivery/test-evidence/DG2/domain/round-5/summary.txt"
+      ]
+    },
+    {
+      "id": "DOM-R5-03-build",
+      "procedure": "Build every workspace package on Node 22 and on Node 24.",
+      "command": "pnpm -r build",
+      "environment": "disposable clone; Node 22.22.2 and Node 24.21.0",
+      "expected": "exit 0 on both",
+      "actual": "exit 0 on both. The live stack served the Node 24 build.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-5/build-node22.log",
+        "docs/delivery/test-evidence/DG2/domain/round-5/build-node24.log"
+      ]
+    },
+    {
+      "id": "DOM-R5-04-lint",
+      "procedure": "Lint the workspace on Node 22 and on Node 24.",
+      "command": "pnpm lint",
+      "environment": "disposable clone; Node 22.22.2 and Node 24.21.0",
+      "expected": "exit 0 on both",
+      "actual": "exit 0 on both",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-5/lint-node22.log",
+        "docs/delivery/test-evidence/DG2/domain/round-5/lint-node24.log"
+      ]
+    },
+    {
+      "id": "DOM-R5-05-unit-tests-node24",
+      "procedure": "Run the unit-node and unit-web suites on Node 24.",
+      "command": "TZ=Asia/Riyadh pnpm test",
+      "environment": "disposable clone; Node 24.21.0",
+      "expected": "all tests pass, exit 0",
+      "actual": "34 test files and 640 tests passed, exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/domain/round-5/test-node24.log"]
+    },
+    {
+      "id": "DOM-R5-06-unit-tests-node22",
+      "procedure": "Run the unit-node and unit-web suites on Node 22.",
+      "command": "TZ=Asia/Riyadh pnpm test",
+      "environment": "disposable clone; Node 22.22.2",
+      "expected": "all tests pass, exit 0",
+      "actual": "34 test files and 640 tests passed, exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/domain/round-5/test-node22.log"]
+    },
+    {
+      "id": "DOM-R5-07-contrast",
+      "procedure": "Run the design-token contrast check on both Node versions.",
+      "command": "pnpm --filter @mth/design-tokens run check:contrast",
+      "environment": "disposable clone; Node 22.22.2 and Node 24.21.0",
+      "expected": "exit 0; every used pair meets WCAG AA; the documented prohibited pairs (white on provisional #0078FF, and others) are reported, not used",
+      "actual": "PASS contrast: 50 pairs meet WCAG AA; 3 prohibited pairs fail as documented. exit 0 on both.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-5/contrast-node22.log",
+        "docs/delivery/test-evidence/DG2/domain/round-5/contrast-node24.log"
+      ]
+    },
+    {
+      "id": "DOM-R5-08-utf8-fail-closed",
+      "procedure": "On the disposable cluster, create a SQL_ASCII database and run mth-db migrate against it. Then create the product database as UTF8 and migrate it.",
+      "command": "bash with-stack.sh … (CREATE DATABASE mth_ascii ENCODING 'SQL_ASCII' TEMPLATE template0; node packages/db/dist/cli.js migrate)",
+      "environment": "PostgreSQL 16 initdb cluster 127.0.0.1:54985 (fsync=off); Node 24.21.0",
+      "expected": "On SQL_ASCII: exit 1 with a 'must use UTF8' message and zero tables created. On UTF8: migrations apply and /readyz is ready.",
+      "actual": "\"mth-db: the database must use UTF8 encoding (found SQL_ASCII); create it with ENCODING 'UTF8' TEMPLATE template0\", exit=1, tables_created=0. On UTF8: 19 migrations applied and readyz returned database ok, migrations ok.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-5/live-scenario.log",
+        "docs/delivery/test-evidence/DG2/domain/round-5/with-stack.sh"
+      ]
+    },
+    {
+      "id": "DOM-R5-09-live-api-scenario",
+      "procedure": "Live end-to-end API scenario on a running stack with synthetic data. Create transformations in both modes (B0009). Check that the B0018 roles, the B0023 gate names, B0029 workstreams, B0056 design questions, B0062 canvas prompts and B0039-B0043 scope checks are verbatim. Check that G2 and G3 are refused before G1. Exercise the charter: the 14 fields, versions, the 3-5 top-outcome warning, the four-part thesis and incomplete parts, Out of scope and B0041. Check exactly one current North Star, the good outcome test, zero guardrails blocking G2, the T01 six dimensions and H/M/L, and the T02 target date. Then walk Diagnose→Define→Design with G1, G2 and G3 decisions by a separate demo Sponsor. Round 5 additions: (a) the F-DG2-180 classes are refused on Out of scope: VS16 only, VS16+CGJ, U+0001, a lone U+D800, Mongolian FVS1, a tag character, a Khmer inherent vowel and RLM+LRM+ALM; (b) Arabic charter text with RLM/ALM/isolates in 7 fields plus the change summary is stored verbatim and B0041 passes; (c) a 200-character Arabic name (401 bytes) is accepted and 201 characters are refused; char_length counts code points; (d) an emoji with VS16 is accepted; (e) an Arabic outcome, archive reason and North Star with RLM are accepted verbatim.",
+      "command": "bash docs/delivery/test-evidence/DG2/domain/round-5/with-stack.sh node docs/delivery/test-evidence/DG2/domain/round-5/live-scenario.mjs",
+      "environment": "disposable PG16 cluster :54985 (UTF8 db), API AUTH_MODE=dev :3985, seed-dev SYNTHETIC users, Node 24.21.0, TZ Asia/Riyadh",
+      "expected": "every assertion PASS; G1 approved → define; G2 approved → design; G3 approved → mobilize; G4-G6 stay draft",
+      "actual": "SUMMARY pass 99, fail []. G1→define, G2→design and G3→mobilize happened in sequence. G2 and G3 before G1, and G3 before G2, were refused with 422. Final gates: G1, G2 and G3 approved; G4, G5 and G6 draft. Every R5 case passed: 8 invisible classes 400 validation.blank with the version unchanged; Arabic with RLM verbatim in all 7 fields and the summary; 200 Arabic characters accepted and 201 refused (validation.too_big); char_length/octet_length 23/46; emoji+VS16 accepted; Arabic outcome, reason and North Star with RLM verbatim. Note: the label of R5.db-stores-codepoints says '22 chars', but the assertion compares against the real code-point count (23, including the two RLMs).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-003", "REQ-PB-012", "REQ-PB-016", "REQ-PB-017", "REQ-PB-018", "REQ-PB-023", "REQ-PB-026", "REQ-PB-029", "REQ-PB-030", "REQ-PB-031", "REQ-PB-033", "REQ-PB-034", "REQ-PB-035", "REQ-PB-036", "REQ-PB-037", "REQ-PB-038", "REQ-PB-041", "REQ-S04-003", "REQ-S04-004", "REQ-S04-005"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-5/live-scenario.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-5/live-scenario.log"
+      ]
+    },
+    {
+      "id": "DOM-R5-10-design-registers",
+      "procedure": "Live checks of T04 (B0065), T03 (B0058), the capability heatmap, journeys and pain points, workshop conversion (B0063) and the per-dimension view on a modular transformation entered at Design.",
+      "command": "bash docs/delivery/test-evidence/DG2/domain/round-5/with-stack.sh node docs/delivery/test-evidence/DG2/domain/round-5/design-registers.mjs",
+      "environment": "same disposable stack type (fresh database); Node 24.21.0",
+      "expected": "T04 codes D-01/D-02 with status open, options A/B/C and all 7 columns; an invisible title is refused. T03 without a dimension is refused and all 6 columns persist, linked to T04. A capability links to a T03 gap with a sourcing need. A journey's cycle time is a decimal; a pain point links to a T01 row. Conversion without an owner is refused; with an owner it creates the Open decision D-03 linked to the item. The dimension view returns cell/dimension/gaps/decisions/dependencies/evidence.",
+      "actual": "SUMMARY pass 11, fail 0. A T03 gap without a dimension returns 422 t03.dimension_required. The cycle time is \"3.2500\" days. Conversion without an owner returns 400; with an owner it returns 200 and D-03 is open with the owner set. Arabic+RLM text was verbatim in T04, T03, the pain point and the workshop item. Two earlier runs had harness errors (I expected exactly 400 where the product returns 422 for a business rule, and I used the invalid dimension code 'governance'). I corrected them; they were not product defects.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-024", "REQ-PB-025", "REQ-PB-039", "REQ-PB-042", "REQ-PB-043", "REQ-S05-003"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-5/design-registers.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-5/design-registers.log"
+      ]
+    },
+    {
+      "id": "DOM-R5-11-charter-blank-ui-en-ar",
+      "procedure": "In headless Chromium, use the charter create and edit forms in EN (LTR) and AR (RTL). Submit invisible-only input (ZWSP+RLM+WJ; and, new in round 5, VS16+CGJ+Mongolian FVS) and spaces only. Then submit visible text (AR: leading/trailing RLM, ALM and Arabic-Indic digits with a percent sign) and an invisible-only Out of scope on edit.",
+      "command": "OUT=… bash with-stack.sh bash -c 'node charter-blank-ui.mjs && node dom-shots.mjs' (scripts copied into the clone root to resolve @playwright/test)",
+      "environment": "disposable stack; Chromium via /opt/pw-browsers; locales en-US and ar-SA; timezone Asia/Riyadh; 1280px viewport",
+      "expected": "html dir ltr/rtl. The localized blank message appears inline with aria-invalid, and no request is sent for invisible or spaces-only input. Visible Arabic text with marks is created and stored verbatim. Thesis 'Incomplete' is shown.",
+      "actual": "SUMMARY pass 14, fail 0. EN shows 'Enter some text; spaces alone are not a value.' and AR shows 'أدخِل نصاً؛ المسافات وحدها ليست قيمة.' for both invisible classes, with nothing sent. The AR charter with RLM/ALM was stored verbatim. The screenshots show the RTL layout and the provisional (مؤقت) wordmark tag.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-029", "REQ-PB-030", "REQ-PB-031"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-5/charter-blank-ui.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-5/charter-blank-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-5/screens/en-charter-create-default-ignorable.png",
+        "docs/delivery/test-evidence/DG2/domain/round-5/screens/ar-charter-create-default-ignorable.png",
+        "docs/delivery/test-evidence/DG2/domain/round-5/screens/en-charter-created-visible.png",
+        "docs/delivery/test-evidence/DG2/domain/round-5/screens/ar-charter-created-visible.png"
+      ]
+    },
+    {
+      "id": "DOM-R5-12-mode-guidance-render",
+      "procedure": "Render the create-transformation screen in EN and AR and check the verbatim B0009 guidance for End-to-End and Modular.",
+      "command": "node dom-shots.mjs (same stack run as DOM-R5-11)",
+      "environment": "disposable stack; Chromium; en-US / ar-SA",
+      "expected": "lang/dir en/ltr and ar/rtl; B0009 E2E 'how' text verbatim, and the Modular 'how' text verbatim once Modular is selected",
+      "actual": "en ltr and ar rtl. The E2E 'how' text was present in both languages. The Modular 'how' text was present after selecting Modular, in both languages.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-003"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-5/dom-shots.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-5/charter-blank-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-5/screens/en-create-mode-guidance-modular.png",
+        "docs/delivery/test-evidence/DG2/domain/round-5/screens/ar-create-mode-guidance-modular.png"
+      ]
+    },
+    {
+      "id": "DOM-R5-13-d065-playbook-judgement",
+      "procedure": "Judge whether the D-065 visible-content predicate refuses any legitimate playbook or Arabic input. Evaluate the shipped regex on a case table on both Node versions, and read the source change in schemas/common.ts, ADR-0017 and oidc.ts.",
+      "command": "node -e '<VISIBLE_CONTENT case table>' on Node 22 and 24; git diff e37f6ea4 96a3c293 -- packages/shared/src/schemas/common.ts docs/architecture/adr/ADR-0017-charter-versioning-and-direction.md",
+      "environment": "disposable clone; Node 22.22.2 and 24.21.0",
+      "expected": "Arabic letters, Arabic-Indic and extended digits, ﷼ U+FDFC, the Saudi Riyal sign U+20C1, tatweel, harakat/shadda (even alone), SAR amounts, ٪, emoji+VS16, ZWNJ inside a word, dashes and bullets all count as content. RLM-only, VS16-only, CGJ-only and the Hangul filler do not.",
+      "actual": "Identical results on both Nodes and exactly as expected. Nothing a playbook user would type is refused. Only code points that render as nothing are blank, and stored text keeps its marks. The OIDC change affects only the display-name fallback, not the methodology.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/domain/round-5/predicate-table.log"]
+    },
+    {
+      "id": "DOM-R5-14-invariants",
+      "procedure": "Check the invariants. No PMI or Mobily certification or official claims; the wordmark is provisional in EN and AR. Product code does not reference DG0-DG7 gates (only finding-id comments). Money is stored as numeric. The live run checked that an unquantified value pool is labelled with a null amount, not 0.",
+      "command": "grep (see invariants.log); live-scenario INV.* assertions",
+      "environment": "disposable clone; live stack",
+      "expected": "Only negating or provisional statements. No DG gate logic in the product. numeric(20,4) money. Unquantified pools labelled. Product gate codes are G1..G6 only.",
+      "actual": "Only disclaimers found (the AR methodBody says it is not an official PMI standard and is not certified; brandBody says provisional). The DG mentions are F-DG1/F-DG2 comment ids only. impact/upside/downside amounts are numeric(20,4). INV.unquantified-label and INV.product-gates-only PASS.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-5/invariants.log",
+        "docs/delivery/test-evidence/DG2/domain/round-5/live-scenario.log"
+      ]
+    },
+    {
+      "id": "DOM-R5-15-register-status",
+      "procedure": "Read the status of the 26 assigned requirements in requirements.csv.",
+      "command": "python3 csv read of docs/delivery/requirements.csv",
+      "environment": "/home/user/My-owns HEAD da317d70",
+      "expected": "all 26 present and IMPLEMENTED; the register is unchanged since source_commit",
+      "actual": "All 26 are IMPLEMENTED. git diff 96a3c293 HEAD -- requirements.csv is empty.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/domain/round-5/register.log"]
+    },
+    {
+      "id": "DOM-R5-16-env-residual-registry",
+      "procedure": "Live package-registry check (environmental residual D-057).",
+      "environment": "offline sandbox; offline frozen-lockfile install surface",
+      "expected": "offline/config surface consistent",
+      "actual": "PASS on the offline surface: pnpm install --offline --frozen-lockfile succeeded against the lockfile. Residual D-057: no live registry access in this sandbox.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/domain/round-5/env.txt"]
+    },
+    {
+      "id": "DOM-R5-17-env-residual-ci",
+      "procedure": "Live CI check (environmental residual D-058).",
+      "environment": "offline sandbox",
+      "expected": "local equivalents of the CI steps pass",
+      "actual": "PASS on the offline surface: typecheck, build, lint, test and contrast passed locally on Node 22 and 24. Residual D-058: no live GitHub Actions run is observable from here.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/domain/round-5/summary.txt"]
+    },
+    {
+      "id": "DOM-R5-18-env-residual-keycloak",
+      "procedure": "Live Keycloak OIDC check (environmental residual D-049).",
+      "environment": "offline sandbox; AUTH_MODE=dev stack",
+      "expected": "OIDC configuration surface covered by tests",
+      "actual": "PASS on the config/offline surface: the unit suite passes on both Nodes and the live stack used dev auth. Residual D-049: no live Keycloak in this environment.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/domain/round-5/test-node24.log"]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG2/domain/round-5/env.txt",
+    "docs/delivery/test-evidence/DG2/domain/round-5/summary.txt",
+    "docs/delivery/test-evidence/DG2/domain/round-5/candidate-and-dg1.log",
+    "docs/delivery/test-evidence/DG2/domain/round-5/live-scenario.log",
+    "docs/delivery/test-evidence/DG2/domain/round-5/design-registers.log",
+    "docs/delivery/test-evidence/DG2/domain/round-5/charter-blank-ui.log",
+    "docs/delivery/test-evidence/DG2/domain/round-5/predicate-table.log",
+    "docs/delivery/test-evidence/DG2/domain/round-5/invariants.log",
+    "docs/delivery/test-evidence/DG2/domain/round-5/register.log",
+    "docs/delivery/reviews/DG2/round-5/domain-reviewer.md"
+  ],
+  "reviewed_at": "2026-10-06T09:40:00Z",
+  "summary": "PASS. The repaired DG2 candidate 2f81c60a is faithful to the playbook for all 26 requirements. D-065 (wider invisible-content rule, OIDC display name, UTF8 database) refuses no legitimate playbook or Arabic input: Arabic with RLM/ALM/isolates is stored verbatim, and length limits count characters. Invisible-only values are refused with the localized message in EN and AR. G1→G2→G3 advance sequentially with B0023 names. No new findings.",
+  "narrative": "docs/delivery/reviews/DG2/round-5/domain-reviewer.md"
+}
