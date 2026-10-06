@@ -1,0 +1,33 @@
+$ QA_PG_PORT=54882 tests/qa/support/with-pg.sh npx vitest run --project integration --reporter=verbose tests/qa/integration/dg2-qa-acceptance.test.ts  (run 2; node v22.22.2; clone @eb8163e; test = docs/delivery/test-evidence/DG2/qa/tests/dg2-qa-acceptance.test.ts, unchanged from round 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+ RUN  v3.2.4 /var/tmp/mth-run.K5VTP1/claude-0/review-dg2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muqx1er4_cc2c3065; applied 19 migrations to a fresh database
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-PB-026 T01 current-state diagnostic > pre-seeds the six dimensions, persists all six source columns, rejects Confidence outside H/M/L 357ms
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-PB-034 T02 outcome & KPI tree > persists all seven columns and rejects a row without a target date 289ms
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-PB-039 T03 TOM gap matrix > persists all six columns; a row without a (valid) dimension is rejected 191ms
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-PB-043 T04 design decision log > generates D-01, D-02 …; Status defaults to Open; options A/B/C; all columns persist 154ms
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-PB-029/030/031/035 charter > persists the 14 fields, versions every save with retained history, rejects an invalid baseline date, warns outside 3-5 top outcomes 505ms
+stdout | tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-PB-033/029 charter North Star after refinement (probe) > the charter's North Star (field 5) follows the CURRENT North Star after it is refined
+QA-PROBE charter.northStar after refine: {"charterNorthStarId":"01a0fc80-e000-7700-8f11-59b9bf5af97a","shown":{"id":"01a0fc80-e022-7170-967f-37ca2c5d8017","organizationId":"01a0fc80-d91b-7038-bd20-99ab067f1fbb","transformationId":"01a0fc80-dfaf-74a9-b742-3631862d568e","statement":"QA refined star.","status":"current","supersededAt":null,"version":1,"createdAt":"2026-10-02T12:04:59.548Z","createdBy":"01a0fc80-df9c-71a8-92ad-6d7122908990","updatedAt":"2026-10-02T12:04:59.548Z","updatedBy":"01a0fc80-df9c-71a8-92ad-6d7122908990"}}
+
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-PB-033/029 charter North Star after refinement (probe) > the charter's North Star (field 5) follows the CURRENT North Star after it is refined 159ms
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-PB-036 good outcome test > 'Launch new app' with no KPI fails with reasons; G2 lists it; goodOutcomePass false while unknown; true when all pass 309ms
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-PB-033 one current North Star > a second concurrent first North Star is refused (409), never two current rows; DB guard holds 202ms
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-PB-027/028 baselines and value pools > unknown is null never 0; Finance validation by non-creator; a later edit makes it stale; unquantified never 0 310ms
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-PB-016/017/018 REQ-S13-012 REQ-S04-003/004/005 product gates > G1 without a charter is rejected listing the charter; filename-only and inaccessible evidence stay incomplete 544ms
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-PB-016/017/018 REQ-S13-012 REQ-S04-003/004/005 product gates > non-approver 403, submitter 403, superseded submission 409, approval advances the phase; G2 without guardrails rejected 751ms
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-S10-001 / REQ-PB-012 roles and access > exposes the expanded role catalogue and B0018 accountability text verbatim 23ms
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-S10-001 / REQ-PB-012 roles and access > a Workstream Lead on X cannot read Y; AUD is read-only on every P2 mutation sampled 498ms
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-PB-003 End-to-End / Modular > Modular requires an entry phase; End-to-End rejects one 74ms
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-PB-023/024/025/038/041/042 REQ-S05-003 TOM and design > methodology: six workstreams, ten TOM dimensions with design questions; canvas has ten boxes with linked records 315ms
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-PB-023/024/025/038/041/042 REQ-S05-003 TOM and design > capability heatmap (build/buy/partner), journeys with pain points, workshop conversion to an owned T04 decision 316ms
+ ✓ |integration| tests/qa/integration/dg2-qa-acceptance.test.ts > QA REQ-S16-013 diagnosis/direction entity group > creates and reads each entity through the API; out-of-scope readers get 404; audit event per create 337ms
+
+ Test Files  1 passed (1)
+      Tests  17 passed (17)
+   Start at  12:04:53
+   Duration  9.52s (transform 1.07s, setup 0ms, collect 2.33s, tests 5.62s, environment 0ms, prepare 71ms)
+
+EXIT=0

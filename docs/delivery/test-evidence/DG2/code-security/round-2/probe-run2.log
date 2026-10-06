@@ -1,0 +1,184 @@
+# command: with-pg.sh 55482 npx vitest run --project integration apps/api/test/integration/zz-sec-r2-probe.test.ts apps/api/test/integration/zz-sec-r1-probe.test.ts
+# node: v22.22.2 commit: eb8163e2de3bee568063a4c561c1a58c3b844e65 started: 2026-10-02T11:59:06Z
+
+ RUN  v3.2.4 /var/tmp/mth-run.ru3NEP/claude-0/review-probe
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muqwu3ar_ef8ffb02; applied 19 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-1 evidence separation of duties: reviewer must not verify content they supplied > note: TL rewrites a WL-created note, then verifies it himself
+PROBE SEC-1.note.tl_edit_other_users_evidence: [403,null,false]
+
+stdout | apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-1 evidence separation of duties: reviewer must not verify content they supplied > note: TL rewrites a WL-created note, then verifies it himself
+PROBE SEC-1.note.tl_verifies_own_text: [400,null,false]
+
+stdout | apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-1 evidence separation of duties: reviewer must not verify content they supplied > file: TL uploads a new revision to a WL-created file evidence, then verifies his own upload
+PROBE SEC-1.file.tl_uploads: [403,[]]
+
+stdout | apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-1 evidence separation of duties: reviewer must not verify content they supplied > file: TL uploads a new revision to a WL-created file evidence, then verifies his own upload
+PROBE SEC-1.file.tl_verifies_own_upload: [400,null,true]
+
+stdout | apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-2 T02 trajectory approval: approver must not approve a target they set > BO changes the TL-created target value, then approves the trajectory himself
+PROBE SEC-2.setup: [201,201,null]
+
+stdout | apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-2 T02 trajectory approval: approver must not approve a target they set > BO changes the TL-created target value, then approves the trajectory himself
+PROBE SEC-2.t02_created_by_tl: [201,"100.000000"]
+
+stdout | apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-2 T02 trajectory approval: approver must not approve a target they set > BO changes the TL-created target value, then approves the trajectory himself
+PROBE SEC-2.bo_sets_target: [200,"5.000000"]
+
+stdout | apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-2 T02 trajectory approval: approver must not approve a target they set > BO changes the TL-created target value, then approves the trajectory himself
+PROBE SEC-2.bo_approves_own_target: [403,null,false]
+
+stdout | apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-3 evidence-link removal needs the same edit rights as creating the link > WL (diagnostic.contribute own-only) removes the TL's evidence link on a seeded T01 row
+PROBE SEC-3: {"wlCreateStatus":403,"tlCreateStatus":201,"wlRemoveStatus":403,"after":403}
+
+stdout | apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-4 cross-organization / wrong-scope actors > TO of org B and WL of another transformation get 404 on reads and writes; nothing written
+PROBE SEC-4: {"orgB_get_evidence":404,"orgB_post_evidence":404,"orgB_get_gate":404,"orgB_decide":404,"otherWL_get_charter":404,"otherWL_post_finding":404,"otherSP_decide":404,"nobody_get":404}
+
+stdout | apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-4 cross-organization / wrong-scope actors > AUD: an evidence review and a gate submit are 403 with a denied-mutation audit event; AUD reads 200
+PROBE SEC-4.aud: {"review":403,"submit":403,"reviewAudit":[["authorization.denied",null]],"submitAudit":[["authorization.denied",null]],"reads":[200,200]}
+
+stdout | apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-5 database guards (migration 0010/0012/0017) as mth_app and mth_owner > audit-required at COMMIT, version step, append-only, cross-transformation record ref, org mismatch
+PROBE SEC-5.charter_versions_present: [201,1]
+
+stdout | apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-5 database guards (migration 0010/0012/0017) as mth_app and mth_owner > audit-required at COMMIT, version step, append-only, cross-transformation record ref, org mismatch
+PROBE SEC-5: {"update_without_audit":"23000:evidence_audit_required:no audit_event for evidence 01a0fc7b-c8ed-76ef-ac5e-98dd2bdfe36a at version 2 (ADR-0004: e","insert_without_audit":"23000:evidence_audit_required:no audit_event for evidence 01a0fc7b-c903-7138-bf59-b38ce51d9c85 at version 1 (ADR-0004: e","version_step_2":"23514:evidence_version_step:evidence: version must increase by exactly 1 on every update (optimistic concurrency, ADR-","version_unchanged":"23514:evidence_version_step:evidence: version must increase by exactly 1 on every update (optimistic concurrency, ADR-","insert_version_2":"23514:evidence_version_step:evidence: a new row starts at version 1","org_mismatch":"23514:evidence_organization_matches:evidence: organization_id must equal the transformation's organization","identity_change":"23514:evidence_identity_immutable:evidence: id, organization_id, transformation_id, created_at and created_by are immutable","cross_transformation_link":"23503:evidence_link_record_ref:evidence_link: diagnostic_item 01a0fc7b-c137-7569-b63d-5a47a65d849c does not exist in tran","app_update_charter_version":"42501::permission denied for table charter_version","app_delete_gate_decision":"42501::permission denied for table gate_decision","app_delete_evidence":"42501::permission denied for table evidence","owner_update_charter_version":"42501::charter_version is append-only: UPDATE is not allowed","owner_delete_evidence_content":"COMMITTED","owner_truncate_gate_decision":"42501::gate_submission_criterion is append-only: TRUNCATE is not allowed","control_update_with_audit":"COMMITTED"}
+
+ ❯ |integration| apps/api/test/integration/zz-sec-r1-probe.test.ts (7 tests | 3 failed) 3336ms
+   × SEC-1 evidence separation of duties: reviewer must not verify content they supplied > note: TL rewrites a WL-created note, then verifies it himself 256ms
+     → expected 400 to be 403 // Object.is equality
+   × SEC-1 evidence separation of duties: reviewer must not verify content they supplied > file: TL uploads a new revision to a WL-created file evidence, then verifies his own upload 123ms
+     → expected 400 to be 403 // Object.is equality
+   ✓ SEC-2 T02 trajectory approval: approver must not approve a target they set > BO changes the TL-created target value, then approves the trajectory himself  362ms
+   ✓ SEC-3 evidence-link removal needs the same edit rights as creating the link > WL (diagnostic.contribute own-only) removes the TL's evidence link on a seeded T01 row 147ms
+   ✓ SEC-4 cross-organization / wrong-scope actors > TO of org B and WL of another transformation get 404 on reads and writes; nothing written 146ms
+   ✓ SEC-4 cross-organization / wrong-scope actors > AUD: an evidence review and a gate submit are 403 with a denied-mutation audit event; AUD reads 200 207ms
+   × SEC-5 database guards (migration 0010/0012/0017) as mth_app and mth_owner > audit-required at COMMIT, version step, append-only, cross-transformation record ref, org mismatch 203ms
+     → expected [ …(2) ] to deeply equal [ …(2) ]
+stdout | apps/api/test/integration/zz-sec-r2-probe.test.ts > F-DG2-140 evidence SoD > R1 path (note): TL can no longer rewrite a WL-created note; WL text stays authored by WL
+PROBE 140.note.tl_edit_other: [403,"forbidden",[["authorization.denied",null]],true]
+
+stdout | apps/api/test/integration/zz-sec-r2-probe.test.ts > F-DG2-140 evidence SoD > R1 path (note): TL can no longer rewrite a WL-created note; WL text stays authored by WL
+PROBE 140.note.control_tl_verifies_wl_text: [200,"verified"]
+
+stdout | apps/api/test/integration/zz-sec-r2-probe.test.ts > F-DG2-140 evidence SoD > R1 path (file): TL can no longer upload a revision to a WL-created file evidence
+PROBE 140.file.tl_upload_other: [403,"forbidden",0,[["authorization.denied",null]]]
+
+stdout | apps/api/test/integration/zz-sec-r2-probe.test.ts > F-DG2-140 evidence SoD > owner-edit variant (note): WL creates a note naming TL owner; TL rewrites it, then tries to verify -> 403 + audit
+PROBE 140.owner_note: [200,true,403,"evidence.reviewer_is_author",[["authorization.denied",null]]]
+
+stdout | apps/api/test/integration/zz-sec-r2-probe.test.ts > F-DG2-140 evidence SoD > owner-edit variant (url): TL (named owner) changes the URL then tries to verify -> 403
+PROBE 140.owner_url: [201,200,403,"evidence.reviewer_is_author"]
+
+stdout | apps/api/test/integration/zz-sec-r2-probe.test.ts > F-DG2-140 evidence SoD > owner-edit variant (file): TL (named owner) uploads a revision then tries to verify -> 403
+PROBE 140.owner_file: [200,403,"evidence.reviewer_is_author"]
+
+stdout | apps/api/test/integration/zz-sec-r2-probe.test.ts > F-DG2-140 evidence SoD > laundering: after TL's text edit the creator changes only the title -> TL still the content author -> 403
+PROBE 140.launder_title: [200,200,true,403]
+
+stdout | apps/api/test/integration/zz-sec-r2-probe.test.ts > F-DG2-140 evidence SoD > laundering: after TL's text edit the creator changes only the title -> TL still the content author -> 403
+PROBE 140.control_rewritten_by_creator: [200,200]
+
+stdout | apps/api/test/integration/zz-sec-r2-probe.test.ts > F-DG2-140 evidence SoD > DB bypass (mth_app): a review by the content author / current uploader is refused by the 0019 trigger, even when content_authored_by is spoofed in the same UPDATE
+PROBE 140.db_bypass: {"note_author_reviews":"23514:evidence_review_separation","note_author_spoofs_content_author":"23514:evidence_review_separation","file_uploader_reviews":"23514:evidence_review_separation","insert_prereviewed_by_creator":"23514:evidence_review_separation","control_independent_reviewer":"COMMITTED"}
+
+stdout | apps/api/test/integration/zz-sec-r2-probe.test.ts > F-DG2-141 T02 trajectory approval SoD > R1 repro: BO sets targetValue, then approves -> 403 kpi.target_author_cannot_approve + denied audit
+PROBE 141.r1: [200,403,"kpi.target_author_cannot_approve",[["authorization.denied",null]]]
+
+stdout | apps/api/test/integration/zz-sec-r2-probe.test.ts > F-DG2-141 T02 trajectory approval SoD > variant: BO changes only targetDate, then approves -> 403
+PROBE 141.targetDate: [200,null,403,"kpi.target_author_cannot_approve"]
+
+stdout | apps/api/test/integration/zz-sec-r2-probe.test.ts > F-DG2-141 T02 trajectory approval SoD > variant: BO changes only trajectoryPoints, then approves -> 403
+PROBE 141.trajectoryPoints: [200,null,403,"kpi.target_author_cannot_approve"]
+
+stdout | apps/api/test/integration/zz-sec-r2-probe.test.ts > F-DG2-141 T02 trajectory approval SoD > variant: BO changes only baselineValue, then approves -> 403
+PROBE 141.baselineValue: [200,null,403,"kpi.target_author_cannot_approve"]
+
+stdout | apps/api/test/integration/zz-sec-r2-probe.test.ts > F-DG2-141 T02 trajectory approval SoD > variant: BO sets target, then TL changes only targetDate -> BO still authored the target -> 403
+PROBE 141.bo_then_tl_date: [200,200,403]
+
+stdout | apps/api/test/integration/zz-sec-r2-probe.test.ts > F-DG2-141 T02 trajectory approval SoD > variant: SP approves legitimately; BO edits target (resets to draft) then approves -> 403
+PROBE 141.after_approval: [200,200,"draft",403]
+
+stdout | apps/api/test/integration/zz-sec-r2-probe.test.ts > F-DG2-141 T02 trajectory approval SoD > controls: BO edits a non-trajectory field -> may approve; TL overwrites BO's target -> BO may approve
+PROBE 141.controls: [200,200,null,200,200,200]
+
+stdout | apps/api/test/integration/zz-sec-r2-probe.test.ts > F-DG2-142 evidence-link removal needs record edit rights > WL cannot remove TL's link on a seeded T01 row (403 + audit); TL can (control)
+PROBE 142: {"wlCreate":403,"tlCreate":201,"wlRemove":403,"code":"forbidden","audit":[["authorization.denied",null]],"after":{"status":"active","version":1},"tlRemove":200}
+
+stdout | apps/api/test/integration/zz-sec-r2-probe.test.ts > F-DG2-142 evidence-link removal needs record edit rights > AUD cannot remove a link (403); unknown link id stays 404 for a member
+PROBE 142.aud_404: [403,404]
+
+stdout | apps/api/test/integration/zz-sec-r2-probe.test.ts > activateKpiDefinition authorization (new op) > WL, BO, AUD -> 403 with audit; TL -> 200 once; stale If-Match -> 409
+PROBE activate: {"wl":[403,1],"bo":[403,1],"aud":[403,1],"stale":409,"ok":[200,"active"],"again":[422,"kpi_definition.already_active"]}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r2-probe.test.ts (17 tests) 2403ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-1 evidence separation of duties: reviewer must not verify content they supplied > note: TL rewrites a WL-created note, then verifies it himself
+AssertionError: expected 400 to be 403 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 403[39m
+[31m+ 400[39m
+
+ ❯ apps/api/test/integration/zz-sec-r1-probe.test.ts:46:22
+     44|     });
+     45|     log("SEC-1.note.tl_verifies_own_text", [v.status, v.body.reviewSta…
+     46|     expect(v.status).toBe(403);
+       |                      ^
+     47|   });
+     48| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-1 evidence separation of duties: reviewer must not verify content they supplied > file: TL uploads a new revision to a WL-created file evidence, then verifies his own upload
+AssertionError: expected 400 to be 403 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 403[39m
+[31m+ 400[39m
+
+ ❯ apps/api/test/integration/zz-sec-r1-probe.test.ts:67:22
+     65|     });
+     66|     log("SEC-1.file.tl_verifies_own_upload", [v.status, v.body.reviewS…
+     67|     expect(v.status).toBe(403);
+       |                      ^
+     68|   });
+     69| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r1-probe.test.ts > SEC-5 database guards (migration 0010/0012/0017) as mth_app and mth_owner > audit-required at COMMIT, version step, append-only, cross-transformation record ref, org mismatch
+AssertionError: expected [ …(2) ] to deeply equal [ …(2) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "owner_delete_evidence_content",[22m
+[32m-   false,[39m
+[31m+   true,[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/zz-sec-r1-probe.test.ts:220:133
+    218|     log("SEC-5", out);
+    219|     await pool.end();
+    220|     for (const k of Object.keys(out).filter((k) => k !== "control_upda…
+       |                                                                                                                                     ^
+    221|     void inject;
+    222|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  3 failed | 21 passed (24)
+   Start at  11:59:12
+   Duration  17.24s (transform 2.23s, setup 0ms, collect 7.16s, tests 5.74s, environment 0ms, prepare 158ms)
+
+# exit_status: 1

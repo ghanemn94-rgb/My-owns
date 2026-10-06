@@ -1,0 +1,17 @@
+$ git diff 98a8d99 eb8163e2 -- e2e/support/qa-stack.sh
+diff --git a/e2e/support/qa-stack.sh b/e2e/support/qa-stack.sh
+index 4c0e0cf..4d04202 100755
+--- a/e2e/support/qa-stack.sh
++++ b/e2e/support/qa-stack.sh
+@@ -52,6 +52,9 @@ export NODE_ENV=development AUTH_MODE=dev PORT=3000 APP_BASE_URL=http://localhos
+ export DATABASE_OWNER_URL="$(role_url mth_owner)" DATABASE_URL="$(role_url mth_app)"
+ # Many sign-ins per minute in tests; production defaults are untouched.
+ export AUTH_RATE_LIMIT_PER_MINUTE=1000 RATE_LIMIT_PER_MINUTE=10000
++# P2 evidence uploads need a writable store; the default /var/lib/mth/evidence is not writable
++# in the sandbox and returned 503, which skipped the serial P2 journey (F-DG2-206). Mirror with-stack.sh.
++export EVIDENCE_STORAGE_DRIVER=filesystem EVIDENCE_STORAGE_PATH="$WORK/evidence"
+ 
+ node packages/db/dist/cli.js migrate
+ node packages/db/dist/cli.js seed-dev
+$ grep -E "skipped|did not run|failed" 15-e2e-qa-stack-run1.log (count)
+0

@@ -1,0 +1,60 @@
+$ QA_PG_PORT=54872 tests/qa/support/with-pg.sh npx vitest run --project integration --reporter=verbose tests/qa/integration/dg2-qa-journey-r2.test.ts  (run 2; node v22.22.2; clone @eb8163e; test = docs/delivery/test-evidence/DG2/qa/tests/round-2/dg2-qa-journey-r2.test.ts)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+ RUN  v3.2.4 /var/tmp/mth-run.K5VTP1/claude-0/review-dg2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muqx0qtd_8f5ab552; applied 19 migrations to a fresh database
+stdout | tests/qa/integration/dg2-qa-journey-r2.test.ts > QA r2 F-DG2-205 sequence (REQ-S04-005): before G1 is approved > G2 and G3 submissions are refused 422 gate.out_of_sequence while G1 is unapproved; phase unchanged
+QA-R2 submit G2 while G1 unapproved -> [33m422[39m gate.out_of_sequence
+
+stdout | tests/qa/integration/dg2-qa-journey-r2.test.ts > QA r2 F-DG2-205 sequence (REQ-S04-005): before G1 is approved > G2 and G3 submissions are refused 422 gate.out_of_sequence while G1 is unapproved; phase unchanged
+QA-R2 submit G3 while G1 unapproved -> [33m422[39m gate.out_of_sequence
+
+ ✓ |integration| tests/qa/integration/dg2-qa-journey-r2.test.ts > QA r2 F-DG2-205 sequence (REQ-S04-005): before G1 is approved > G2 and G3 submissions are refused 422 gate.out_of_sequence while G1 is unapproved; phase unchanged 331ms
+ ✓ |integration| tests/qa/integration/dg2-qa-journey-r2.test.ts > QA r2 Diagnose -> Define -> Design through native workflows (F-DG2-201, REQ-DLV-034, REQ-PB-017) > G1: complete through the API, submit, approve -> phase define (exactly one step) 618ms
+stdout | tests/qa/integration/dg2-qa-journey-r2.test.ts > QA r2 Diagnose -> Define -> Design through native workflows (F-DG2-201, REQ-DLV-034, REQ-PB-017) > F-DG2-205: G3 cannot be submitted while G2 is unapproved (422), nothing written
+QA-R2 submit G3 while G2 unapproved -> [33m422[39m gate.out_of_sequence
+
+stdout | tests/qa/integration/dg2-qa-journey-r2.test.ts > QA r2 Diagnose -> Define -> Design through native workflows (F-DG2-201, REQ-DLV-034, REQ-PB-017) > F-DG2-204: after refining the North Star, the charter shows the CURRENT one, never the superseded one as current
+QA-R2 charter.northStar after refine: {"id":"01a0fc80-676e-75a0-87c4-9df6f98b814e","organizationId":"01a0fc80-6222-7238-bf70-3ca891122432","transformationId":"01a0fc80-62de-740a-9a52-36460fabad96","statement":"QA refined star: double roaming revenue by 2028.","status":"current","supersededAt":null,"version":1,"createdAt":"2026-10-02T12:04:28.649Z","createdBy":"01a0fc80-62b7-771b-a2cc-a3e8dd980a11","updatedAt":"2026-10-02T12:04:28.649Z","updatedBy":"01a0fc80-62b7-771b-a2cc-a3e8dd980a11"} warnings: [{"code":"charter.top_outcomes_count","message":"The charter should hold 3-5 top outcomes; it holds 0.","pointer":"/topOutcomes"},{"code":"charter.north_star_superseded","message":"The North Star this charter version was saved with has since been refined (superseded). The current North Star is shown; save the charter to record it in a new charter version.","pointer":"/northStar"},{"code":"charter.thesis_incomplete","message":"The transformation thesis is incomplete: what we change (capabilities / journeys / operating model) is empty. It must read \"If we change ..., then ... will improve, which will create ..., because ...\" (B0037).","pointer":"/charter/thesisChange"},{"code":"charter.thesis_incomplete","message":"The transformation thesis is incomplete: the customer/operational outcomes that will improve is empty. It must read \"If we change ..., then ... will improve, which will create ..., because ...\" (B0037).","pointer":"/charter/thesisOutcomes"},{"code":"charter.thesis_incomplete","message":"The transformation thesis is incomplete: the financial/strategic benefits it will create is empty. It must read \"If we change ..., then ... will improve, which will create ..., because ...\" (B0037).","pointer":"/charter/thesisBenefits"},{"code":"charter.thesis_incomplete","message":"The transformation thesis is incomplete: the evidence / causal logic (because ...) is empty. It must read \"If we change ..., then ... will improve, which will create ..., because ...\" (B0037).","pointer":"/charter/thesisBecause"}]
+
+stdout | tests/qa/integration/dg2-qa-journey-r2.test.ts > QA r2 Diagnose -> Define -> Design through native workflows (F-DG2-201, REQ-DLV-034, REQ-PB-017) > F-DG2-204: after refining the North Star, the charter shows the CURRENT one, never the superseded one as current
+QA-R2 PATCH charter northStarId=<superseded> -> [33m422[39m charter.north_star_not_current
+
+ ✓ |integration| tests/qa/integration/dg2-qa-journey-r2.test.ts > QA r2 Diagnose -> Define -> Design through native workflows (F-DG2-201, REQ-DLV-034, REQ-PB-017) > F-DG2-205: G3 cannot be submitted while G2 is unapproved (422), nothing written 94ms
+ ✓ |integration| tests/qa/integration/dg2-qa-journey-r2.test.ts > QA r2 Diagnose -> Define -> Design through native workflows (F-DG2-201, REQ-DLV-034, REQ-PB-017) > F-DG2-204: after refining the North Star, the charter shows the CURRENT one, never the superseded one as current 56ms
+ ✓ |integration| tests/qa/integration/dg2-qa-journey-r2.test.ts > QA r2 Diagnose -> Define -> Design through native workflows (F-DG2-201, REQ-DLV-034, REQ-PB-017) > F-DG2-203: the thesis is flagged incomplete (4 parts) on the charter and in G2 until all four B0037 parts exist 71ms
+stdout | tests/qa/integration/dg2-qa-journey-r2.test.ts > QA r2 Diagnose -> Define -> Design through native workflows (F-DG2-201, REQ-DLV-034, REQ-PB-017) > F-DG2-201: a KPI definition can be ACTIVATED natively (KDS), with authz, concurrency, audit and rule checks
+QA-R2 activate as SP -> [33m403[39m forbidden
+
+stdout | tests/qa/integration/dg2-qa-journey-r2.test.ts > QA r2 Diagnose -> Define -> Design through native workflows (F-DG2-201, REQ-DLV-034, REQ-PB-017) > F-DG2-201: a KPI definition can be ACTIVATED natively (KDS), with authz, concurrency, audit and rule checks
+QA-R2 activate without If-Match -> [33m428[39m precondition_required
+
+stdout | tests/qa/integration/dg2-qa-journey-r2.test.ts > QA r2 Diagnose -> Define -> Design through native workflows (F-DG2-201, REQ-DLV-034, REQ-PB-017) > F-DG2-201: a KPI definition can be ACTIVATED natively (KDS), with authz, concurrency, audit and rule checks
+QA-R2 concurrent activations -> [33m200[39m [33m409[39m
+
+stdout | tests/qa/integration/dg2-qa-journey-r2.test.ts > QA r2 Diagnose -> Define -> Design through native workflows (F-DG2-201, REQ-DLV-034, REQ-PB-017) > F-DG2-201: a KPI definition can be ACTIVATED natively (KDS), with authz, concurrency, audit and rule checks
+QA-R2 activate already-active -> [33m422[39m kpi_definition.already_active
+
+ ✓ |integration| tests/qa/integration/dg2-qa-journey-r2.test.ts > QA r2 Diagnose -> Define -> Design through native workflows (F-DG2-201, REQ-DLV-034, REQ-PB-017) > F-DG2-201: a KPI definition can be ACTIVATED natively (KDS), with authz, concurrency, audit and rule checks 141ms
+stdout | tests/qa/integration/dg2-qa-journey-r2.test.ts > QA r2 Diagnose -> Define -> Design through native workflows (F-DG2-201, REQ-DLV-034, REQ-PB-017) > G2: every Define output completes through the API; G2 submitted and approved -> phase design
+QA-R2 G2 incomplete mandatory criteria: []
+
+stdout | tests/qa/integration/dg2-qa-journey-r2.test.ts > QA r2 Diagnose -> Define -> Design through native workflows (F-DG2-201, REQ-DLV-034, REQ-PB-017) > G2: every Define output completes through the API; G2 submitted and approved -> phase design
+QA-R2 phase after G2 approval: design
+
+ ✓ |integration| tests/qa/integration/dg2-qa-journey-r2.test.ts > QA r2 Diagnose -> Define -> Design through native workflows (F-DG2-201, REQ-DLV-034, REQ-PB-017) > G2: every Define output completes through the API; G2 submitted and approved -> phase design 270ms
+stdout | tests/qa/integration/dg2-qa-journey-r2.test.ts > QA r2 Diagnose -> Define -> Design through native workflows (F-DG2-201, REQ-DLV-034, REQ-PB-017) > G3: every Design output completes through the API; approval advances exactly one step design -> mobilize
+QA-R2 G3 incomplete mandatory criteria: []
+
+stdout | tests/qa/integration/dg2-qa-journey-r2.test.ts > QA r2 Diagnose -> Define -> Design through native workflows (F-DG2-201, REQ-DLV-034, REQ-PB-017) > G3: every Design output completes through the API; approval advances exactly one step design -> mobilize
+QA-R2 phase before/after G3 approval: design mobilize
+
+ ✓ |integration| tests/qa/integration/dg2-qa-journey-r2.test.ts > QA r2 Diagnose -> Define -> Design through native workflows (F-DG2-201, REQ-DLV-034, REQ-PB-017) > G3: every Design output completes through the API; approval advances exactly one step design -> mobilize 496ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  12:04:22
+   Duration  6.95s (transform 1.12s, setup 0ms, collect 2.73s, tests 2.51s, environment 0ms, prepare 120ms)
+
+EXIT=0
