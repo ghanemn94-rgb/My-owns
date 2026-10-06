@@ -1,0 +1,204 @@
+# command: with-pg.sh 55591 pnpm vitest run --project integration apps/api/test/integration/zz-sec-r3-invisible.test.ts apps/api/test/integration/zz-sec-r4-probe.test.ts apps/api/test/integration/zz-sec-r4-oidc.test.ts --reporter=verbose
+# node: v22.22.2 commit: e37f6ea4fdb2b97771e9965dd002e1102647804c started: 2026-10-06T07:33:01Z
+
+ RUN  v3.2.4 /var/tmp/mth-run.uDiaig/claude-0/review-probe
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muwd38r9_226b8e56; applied 19 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-r4-probe.test.ts > A. register archive (T03 TOM gap): shared reasonRequest keeps authz / If-Match / audit; blank 400 writes nothing > auditor 403 (+1 denial audit), outsider refused, blank 400, missing 428, stale 409, valid 200 audited once
+PROBE A.auditor: [403,"forbidden",[["authorization.denied",null]]]
+
+stdout | apps/api/test/integration/zz-sec-r4-probe.test.ts > A. register archive (T03 TOM gap): shared reasonRequest keeps authz / If-Match / audit; blank 400 writes nothing > auditor 403 (+1 denial audit), outsider refused, blank 400, missing 428, stale 409, valid 200 audited once
+PROBE A.outsider: [404,"not_found"]
+
+stdout | apps/api/test/integration/zz-sec-r4-probe.test.ts > A. register archive (T03 TOM gap): shared reasonRequest keeps authz / If-Match / audit; blank 400 writes nothing > auditor 403 (+1 denial audit), outsider refused, blank 400, missing 428, stale 409, valid 200 audited once
+PROBE A.blank."‏‏‏": [400,"validation",["/reason:validation.blank"],0]
+
+stdout | apps/api/test/integration/zz-sec-r4-probe.test.ts > A. register archive (T03 TOM gap): shared reasonRequest keeps authz / If-Match / audit; blank 400 writes nothing > auditor 403 (+1 denial audit), outsider refused, blank 400, missing 428, stale 409, valid 200 audited once
+PROBE A.blank."⁠ ​": [400,"validation",["/reason:validation.blank"],0]
+
+stdout | apps/api/test/integration/zz-sec-r4-probe.test.ts > A. register archive (T03 TOM gap): shared reasonRequest keeps authz / If-Match / audit; blank 400 writes nothing > auditor 403 (+1 denial audit), outsider refused, blank 400, missing 428, stale 409, valid 200 audited once
+PROBE A.blank."؜؜؜؜": [400,"validation",["/reason:validation.blank"],0]
+
+stdout | apps/api/test/integration/zz-sec-r4-probe.test.ts > A. register archive (T03 TOM gap): shared reasonRequest keeps authz / If-Match / audit; blank 400 writes nothing > auditor 403 (+1 denial audit), outsider refused, blank 400, missing 428, stale 409, valid 200 audited once
+PROBE A.blank."ㅤㅤㅤ": [400,"validation",["/reason:validation.blank"],0]
+
+stdout | apps/api/test/integration/zz-sec-r4-probe.test.ts > A. register archive (T03 TOM gap): shared reasonRequest keeps authz / If-Match / audit; blank 400 writes nothing > auditor 403 (+1 denial audit), outsider refused, blank 400, missing 428, stale 409, valid 200 audited once
+PROBE A.blank."‮⁦⁩": [400,"validation",["/reason:validation.blank"],0]
+
+stdout | apps/api/test/integration/zz-sec-r4-probe.test.ts > A. register archive (T03 TOM gap): shared reasonRequest keeps authz / If-Match / audit; blank 400 writes nothing > auditor 403 (+1 denial audit), outsider refused, blank 400, missing 428, stale 409, valid 200 audited once
+PROBE A.auditor.blank: [403,"forbidden"]
+
+stdout | apps/api/test/integration/zz-sec-r4-probe.test.ts > A. register archive (T03 TOM gap): shared reasonRequest keeps authz / If-Match / audit; blank 400 writes nothing > auditor 403 (+1 denial audit), outsider refused, blank 400, missing 428, stale 409, valid 200 audited once
+PROBE A.ifmatch: [428,"precondition_required",409,"version_conflict"]
+
+stdout | apps/api/test/integration/zz-sec-r4-probe.test.ts > A. register archive (T03 TOM gap): shared reasonRequest keeps authz / If-Match / audit; blank 400 writes nothing > auditor 403 (+1 denial audit), outsider refused, blank 400, missing 428, stale 409, valid 200 audited once
+PROBE A.audit.mid: [["tom_gap.create",null]]
+
+stdout | apps/api/test/integration/zz-sec-r4-probe.test.ts > A. register archive (T03 TOM gap): shared reasonRequest keeps authz / If-Match / audit; blank 400 writes nothing > auditor 403 (+1 denial audit), outsider refused, blank 400, missing 428, stale 409, valid 200 audited once
+PROBE A.ok: [200,"archived","Synthetic: superseded (sec r4)",2]
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r4-probe.test.ts > A. register archive (T03 TOM gap): shared reasonRequest keeps authz / If-Match / audit; blank 400 writes nothing > auditor 403 (+1 denial audit), outsider refused, blank 400, missing 428, stale 409, valid 200 audited once 434ms
+stdout | apps/api/test/integration/zz-sec-r4-probe.test.ts > B. evidence-link removal: shared reasonRequest keeps authz / If-Match / audit; blank 400 writes nothing > auditor 403, outsider refused, blank 400, missing 428, stale 409, valid removes once
+PROBE B.auditor: [403,"forbidden",[["authorization.denied",null]]]
+
+stdout | apps/api/test/integration/zz-sec-r4-probe.test.ts > B. evidence-link removal: shared reasonRequest keeps authz / If-Match / audit; blank 400 writes nothing > auditor 403, outsider refused, blank 400, missing 428, stale 409, valid removes once
+PROBE B.auditor.blank: [403,"forbidden"]
+
+stdout | apps/api/test/integration/zz-sec-r4-probe.test.ts > B. evidence-link removal: shared reasonRequest keeps authz / If-Match / audit; blank 400 writes nothing > auditor 403, outsider refused, blank 400, missing 428, stale 409, valid removes once
+PROBE B.outsider: [404,"not_found"]
+
+stdout | apps/api/test/integration/zz-sec-r4-probe.test.ts > B. evidence-link removal: shared reasonRequest keeps authz / If-Match / audit; blank 400 writes nothing > auditor 403, outsider refused, blank 400, missing 428, stale 409, valid removes once
+PROBE B.blank."‏‏‏": [400,"validation",["/reason:validation.blank"],0]
+
+stdout | apps/api/test/integration/zz-sec-r4-probe.test.ts > B. evidence-link removal: shared reasonRequest keeps authz / If-Match / audit; blank 400 writes nothing > auditor 403, outsider refused, blank 400, missing 428, stale 409, valid removes once
+PROBE B.blank."⁠ ​": [400,"validation",["/reason:validation.blank"],0]
+
+stdout | apps/api/test/integration/zz-sec-r4-probe.test.ts > B. evidence-link removal: shared reasonRequest keeps authz / If-Match / audit; blank 400 writes nothing > auditor 403, outsider refused, blank 400, missing 428, stale 409, valid removes once
+PROBE B.blank."؜؜؜؜": [400,"validation",["/reason:validation.blank"],0]
+
+stdout | apps/api/test/integration/zz-sec-r4-probe.test.ts > B. evidence-link removal: shared reasonRequest keeps authz / If-Match / audit; blank 400 writes nothing > auditor 403, outsider refused, blank 400, missing 428, stale 409, valid removes once
+PROBE B.blank."ㅤㅤㅤ": [400,"validation",["/reason:validation.blank"],0]
+
+stdout | apps/api/test/integration/zz-sec-r4-probe.test.ts > B. evidence-link removal: shared reasonRequest keeps authz / If-Match / audit; blank 400 writes nothing > auditor 403, outsider refused, blank 400, missing 428, stale 409, valid removes once
+PROBE B.blank."‮⁦⁩": [400,"validation",["/reason:validation.blank"],0]
+
+stdout | apps/api/test/integration/zz-sec-r4-probe.test.ts > B. evidence-link removal: shared reasonRequest keeps authz / If-Match / audit; blank 400 writes nothing > auditor 403, outsider refused, blank 400, missing 428, stale 409, valid removes once
+PROBE B.strict: [400,"validation"]
+
+stdout | apps/api/test/integration/zz-sec-r4-probe.test.ts > B. evidence-link removal: shared reasonRequest keeps authz / If-Match / audit; blank 400 writes nothing > auditor 403, outsider refused, blank 400, missing 428, stale 409, valid removes once
+PROBE B.ifmatch: [428,"precondition_required",409,"version_conflict"]
+
+stdout | apps/api/test/integration/zz-sec-r4-probe.test.ts > B. evidence-link removal: shared reasonRequest keeps authz / If-Match / audit; blank 400 writes nothing > auditor 403, outsider refused, blank 400, missing 428, stale 409, valid removes once
+PROBE B.ok: [200,"removed",2]
+
+stdout | apps/api/test/integration/zz-sec-r4-probe.test.ts > B. evidence-link removal: shared reasonRequest keeps authz / If-Match / audit; blank 400 writes nothing > auditor 403, outsider refused, blank 400, missing 428, stale 409, valid removes once
+PROBE B.audit: [["evidence_link.create",null],["evidence_link.remove",null]]
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r4-probe.test.ts > B. evidence-link removal: shared reasonRequest keeps authz / If-Match / audit; blank 400 writes nothing > auditor 403, outsider refused, blank 400, missing 428, stale 409, valid removes once 612ms
+stdout | apps/api/test/integration/zz-sec-r4-probe.test.ts > C. residual: Default_Ignorable (non-Cf) only Out of scope must not document an exclusion (B0041) or satisfy G1 > U+FE0F VARIATION SELECTOR-16
+PROBE C.U+FE0F VARIATION SELECTOR-16: {"create":201,"stored":true,"precheck":"pass","g1OutOfScopeMissing":false}
+
+stdout | apps/api/test/integration/zz-sec-r4-probe.test.ts > C. residual: Default_Ignorable (non-Cf) only Out of scope must not document an exclusion (B0041) or satisfy G1 > U+034F COMBINING GRAPHEME JOINER x2
+PROBE C.U+034F COMBINING GRAPHEME JOINER x2: {"create":201,"stored":true,"precheck":"pass","g1OutOfScopeMissing":false}
+
+ × |integration| apps/api/test/integration/zz-sec-r4-probe.test.ts > C. residual: Default_Ignorable (non-Cf) only Out of scope must not document an exclusion (B0041) or satisfy G1 > U+FE0F VARIATION SELECTOR-16 522ms
+   → expected 'pass' to be 'attention' // Object.is equality
+stdout | apps/api/test/integration/zz-sec-r4-probe.test.ts > C. residual: Default_Ignorable (non-Cf) only Out of scope must not document an exclusion (B0041) or satisfy G1 > U+180B MONGOLIAN FVS1
+PROBE C.U+180B MONGOLIAN FVS1: {"create":201,"stored":true,"precheck":"pass","g1OutOfScopeMissing":false}
+
+ × |integration| apps/api/test/integration/zz-sec-r4-probe.test.ts > C. residual: Default_Ignorable (non-Cf) only Out of scope must not document an exclusion (B0041) or satisfy G1 > U+034F COMBINING GRAPHEME JOINER x2 387ms
+   → expected 'pass' to be 'attention' // Object.is equality
+ × |integration| apps/api/test/integration/zz-sec-r4-probe.test.ts > C. residual: Default_Ignorable (non-Cf) only Out of scope must not document an exclusion (B0041) or satisfy G1 > U+180B MONGOLIAN FVS1 248ms
+   → expected 'pass' to be 'attention' // Object.is equality
+stdout | apps/api/test/integration/zz-sec-r4-probe.test.ts > C. residual: Default_Ignorable (non-Cf) only Out of scope must not document an exclusion (B0041) or satisfy G1 > U+17B4 KHMER VOWEL INHERENT AQ
+PROBE C.U+17B4 KHMER VOWEL INHERENT AQ: {"create":201,"stored":true,"precheck":"pass","g1OutOfScopeMissing":false}
+
+ × |integration| apps/api/test/integration/zz-sec-r4-probe.test.ts > C. residual: Default_Ignorable (non-Cf) only Out of scope must not document an exclusion (B0041) or satisfy G1 > U+17B4 KHMER VOWEL INHERENT AQ 179ms
+   → expected 'pass' to be 'attention' // Object.is equality
+stdout | apps/api/test/integration/zz-sec-r4-probe.test.ts > C. residual: Default_Ignorable (non-Cf) only Out of scope must not document an exclusion (B0041) or satisfy G1 > RLM + VS16 (RTL input)
+PROBE C.RLM + VS16 (RTL input): {"create":201,"stored":true,"precheck":"pass","g1OutOfScopeMissing":false}
+
+stdout | apps/api/test/integration/zz-sec-r4-probe.test.ts > C. residual: Default_Ignorable (non-Cf) only Out of scope must not document an exclusion (B0041) or satisfy G1 > archive reason of three U+FE0F (renders as nothing) must be refused
+PROBE C.archive.reason.VS16x3: [200,"archived","\"️️️\"",[]]
+
+ × |integration| apps/api/test/integration/zz-sec-r4-probe.test.ts > C. residual: Default_Ignorable (non-Cf) only Out of scope must not document an exclusion (B0041) or satisfy G1 > RLM + VS16 (RTL input) 245ms
+   → expected 'pass' to be 'attention' // Object.is equality
+ × |integration| apps/api/test/integration/zz-sec-r4-probe.test.ts > C. residual: Default_Ignorable (non-Cf) only Out of scope must not document an exclusion (B0041) or satisfy G1 > archive reason of three U+FE0F (renders as nothing) must be refused 29ms
+   → expected 200 to be 400 // Object.is equality
+stdout | apps/api/test/integration/zz-sec-r4-oidc.test.ts > OIDC displayNameOf after F-DG2-160 > invisible-only name falls back; identity stays (iss, sub); no roles granted
+PROBE oidc.fallback: {"cb1":302,"cb2":302,"display":"r4.user","sameUser":true,"roles":0}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r4-oidc.test.ts > OIDC displayNameOf after F-DG2-160 > invisible-only name falls back; identity stays (iss, sub); no roles granted 124ms
+stdout | apps/api/test/integration/zz-sec-r4-oidc.test.ts > OIDC displayNameOf after F-DG2-160 > 200 invisible code units followed by a visible name: stored display name must still have visible content
+PROBE oidc.truncation: {"cb":302,"length":200,"hasText":false}
+
+ × |integration| apps/api/test/integration/zz-sec-r4-oidc.test.ts > OIDC displayNameOf after F-DG2-160 > 200 invisible code units followed by a visible name: stored display name must still have visible content 62ms
+   → expected false to be true // Object.is equality
+stdout | apps/api/test/integration/zz-sec-r3-invisible.test.ts > invisible-only Out of scope must not document an exclusion (B0041) or satisfy G1 > U+0085 NEL (Unicode White_Space)
+PROBE U+0085 NEL (Unicode White_Space): {"create":400,"stored":false}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r3-invisible.test.ts > invisible-only Out of scope must not document an exclusion (B0041) or satisfy G1 > U+0085 NEL (Unicode White_Space) 349ms
+stdout | apps/api/test/integration/zz-sec-r3-invisible.test.ts > invisible-only Out of scope must not document an exclusion (B0041) or satisfy G1 > U+200B ZERO WIDTH SPACE
+PROBE U+200B ZERO WIDTH SPACE: {"create":400,"stored":false}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r3-invisible.test.ts > invisible-only Out of scope must not document an exclusion (B0041) or satisfy G1 > U+200B ZERO WIDTH SPACE 162ms
+stdout | apps/api/test/integration/zz-sec-r3-invisible.test.ts > invisible-only Out of scope must not document an exclusion (B0041) or satisfy G1 > U+200F RIGHT-TO-LEFT MARK
+PROBE U+200F RIGHT-TO-LEFT MARK: {"create":400,"stored":false}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r3-invisible.test.ts > invisible-only Out of scope must not document an exclusion (B0041) or satisfy G1 > U+200F RIGHT-TO-LEFT MARK 214ms
+stdout | apps/api/test/integration/zz-sec-r3-invisible.test.ts > invisible-only Out of scope must not document an exclusion (B0041) or satisfy G1 > U+061C ARABIC LETTER MARK
+PROBE U+061C ARABIC LETTER MARK: {"create":400,"stored":false}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r3-invisible.test.ts > invisible-only Out of scope must not document an exclusion (B0041) or satisfy G1 > U+061C ARABIC LETTER MARK 177ms
+stdout | apps/api/test/integration/zz-sec-r3-invisible.test.ts > invisible-only Out of scope must not document an exclusion (B0041) or satisfy G1 > U+2060 WORD JOINER x3
+PROBE U+2060 WORD JOINER x3: {"create":400,"stored":false}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r3-invisible.test.ts > invisible-only Out of scope must not document an exclusion (B0041) or satisfy G1 > U+2060 WORD JOINER x3 159ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r4-oidc.test.ts > OIDC displayNameOf after F-DG2-160 > 200 invisible code units followed by a visible name: stored display name must still have visible content
+AssertionError: expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+ ❯ apps/api/test/integration/zz-sec-r4-oidc.test.ts:83:37
+     81|     log("oidc.truncation", { cb: cb.status, length: u.display_name.len…
+     82|     expect(cb.status).toBe(302);
+     83|     expect(hasText(u.display_name)).toBe(true);
+       |                                     ^
+     84|   });
+     85| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r4-probe.test.ts > C. residual: Default_Ignorable (non-Cf) only Out of scope must not document an exclusion (B0041) or satisfy G1 > U+FE0F VARIATION SELECTOR-16
+ FAIL  |integration| apps/api/test/integration/zz-sec-r4-probe.test.ts > C. residual: Default_Ignorable (non-Cf) only Out of scope must not document an exclusion (B0041) or satisfy G1 > U+034F COMBINING GRAPHEME JOINER x2
+ FAIL  |integration| apps/api/test/integration/zz-sec-r4-probe.test.ts > C. residual: Default_Ignorable (non-Cf) only Out of scope must not document an exclusion (B0041) or satisfy G1 > U+180B MONGOLIAN FVS1
+ FAIL  |integration| apps/api/test/integration/zz-sec-r4-probe.test.ts > C. residual: Default_Ignorable (non-Cf) only Out of scope must not document an exclusion (B0041) or satisfy G1 > U+17B4 KHMER VOWEL INHERENT AQ
+ FAIL  |integration| apps/api/test/integration/zz-sec-r4-probe.test.ts > C. residual: Default_Ignorable (non-Cf) only Out of scope must not document an exclusion (B0041) or satisfy G1 > RLM + VS16 (RTL input)
+AssertionError: expected 'pass' to be 'attention' // Object.is equality
+
+Expected: [32m"attention"[39m
+Received: [31m"pass"[39m
+
+ ❯ apps/api/test/integration/zz-sec-r4-probe.test.ts:161:24
+    159|     log(`C.${label}`, { create: created.status, stored: created.body?.…
+    160|     if (created.status === 201) {
+    161|       expect(precheck).toBe("attention");
+       |                        ^
+    162|       expect(g1Missing).toBe(true);
+    163|     } else expect(created.status).toBe(400);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r4-probe.test.ts > C. residual: Default_Ignorable (non-Cf) only Out of scope must not document an exclusion (B0041) or satisfy G1 > archive reason of three U+FE0F (renders as nothing) must be refused
+AssertionError: expected 200 to be 400 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 400[39m
+[31m+ 200[39m
+
+ ❯ apps/api/test/integration/zz-sec-r4-probe.test.ts:171:22
+    169|     const r = await call(api.app, "POST", `${T}/tom-gaps/${gap.body.id…
+    170|     log("C.archive.reason.VS16x3", [r.status, r.body?.status, JSON.str…
+    171|     expect(r.status).toBe(400);
+       |                      ^
+    172|   });
+    173| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  7 failed | 8 passed (15)
+   Start at  07:33:04
+   Duration  14.80s (transform 1.32s, setup 0ms, collect 4.48s, tests 7.31s, environment 0ms, prepare 168ms)
+
+# exit_status: 1  finished: 2026-10-06T07:33:20Z
