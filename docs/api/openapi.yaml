@@ -87,6 +87,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Health" }
+        "400": { $ref: "#/components/responses/ValidationError" }
   /readyz:
     get:
       tags: [health]
@@ -101,6 +102,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Readiness" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "503":
           description: Not ready; the body says which check failed.
           content:
@@ -196,6 +198,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/LogoutResult" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
@@ -213,6 +216,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Me" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
   /api/v1/me/preferences:
     put:
@@ -298,6 +302,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Organization" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
     patch:
@@ -388,6 +393,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/BusinessUnit" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
     patch:
@@ -478,6 +484,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/User" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
     patch:
@@ -525,6 +532,7 @@ paths:
                 additionalProperties: false
                 properties:
                   items: { type: array, items: { $ref: "#/components/schemas/Role" } }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "403": { $ref: "#/components/responses/Forbidden" }
   /api/v1/permissions:
@@ -543,6 +551,7 @@ paths:
                 additionalProperties: false
                 properties:
                   items: { type: array, items: { $ref: "#/components/schemas/PermissionEntry" } }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "403": { $ref: "#/components/responses/Forbidden" }
   /api/v1/branding/tokens:
@@ -560,6 +569,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/BrandingTokens" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
   /api/v1/role-assignments:
     get:
@@ -627,6 +637,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/RoleAssignment" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
   /api/v1/role-assignments/{assignmentId}/revoke:
@@ -746,6 +757,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Transformation" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
     patch:
@@ -900,6 +912,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/StrategicGuardrail" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
     patch:
@@ -1028,6 +1041,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Outcome" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
     patch:
@@ -1156,6 +1170,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/KpiDefinition" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
     patch:
@@ -1312,6 +1327,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Baseline" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
     patch:
@@ -1440,6 +1456,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/OutcomeKpi" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
     patch:
@@ -1568,6 +1585,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ValuePool" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
     patch:
@@ -1696,6 +1714,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/DiagnosticItem" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
     patch:
@@ -1824,6 +1843,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/DiagnosticFinding" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
     patch:
@@ -1952,6 +1972,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/WorkstreamOutput" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
     patch:
@@ -2080,6 +2101,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/TomGap" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
     patch:
@@ -2208,6 +2230,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/CapabilityHeatmapEntry" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
     patch:
@@ -2336,6 +2359,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Journey" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
     patch:
@@ -2464,6 +2488,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Dependency" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
     patch:
@@ -2592,6 +2617,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ActionItem" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
     patch:
@@ -2687,6 +2713,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/TomWorkshop" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
     patch:
@@ -2782,6 +2809,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Evidence" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
     patch:
@@ -2859,6 +2887,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/MethodologyCatalogue" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
   /api/v1/methodology/tom-dimensions/{dimensionCode}:
@@ -2904,6 +2933,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/RoleAccountabilityList" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
   /api/v1/transformations/{transformationId}/charter:
     parameters:
@@ -2920,6 +2950,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/CharterView" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
     post:
@@ -3013,6 +3044,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/CharterVersion" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
   /api/v1/transformations/{transformationId}/north-star:
@@ -3030,6 +3062,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/NorthStar" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
     put:
@@ -3194,6 +3227,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/TomCanvas" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
   /api/v1/transformations/{transformationId}/tom-canvas/{dimensionCode}:
@@ -3212,6 +3246,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/TomCanvasCellView" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
     patch:
@@ -3373,6 +3408,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/TomWorkshopParticipantList" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
     post:
@@ -3589,6 +3625,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Decision" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
     patch:
@@ -3734,6 +3771,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/GateList" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
   /api/v1/transformations/{transformationId}/gates/{gateCode}:
@@ -3756,6 +3794,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/GateView" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
     patch:
@@ -3858,6 +3897,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/GateSubmissionView" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
   /api/v1/transformations/{transformationId}/gates/{gateCode}/decision:
@@ -3917,6 +3957,7 @@ paths:
           content:
             application/octet-stream:
               schema: { type: string, contentMediaType: application/octet-stream }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
     post:

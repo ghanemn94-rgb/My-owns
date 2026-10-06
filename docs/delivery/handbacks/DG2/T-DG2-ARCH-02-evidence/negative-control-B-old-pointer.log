@@ -1,0 +1,56 @@
+# negative control B: OLD path-param helpers (git show HEAD: register-kit.ts, kpi/support.ts), NEW contract + NEW tests   started: 2026-10-06T11:02:23Z
+# command: QA_PG_PORT=55471 tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/contract/contract.test.ts
+# node v24.21.0
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/My-owns
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muwkkgp6_249656d0 (server_encoding UTF8); applied 19 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/contract/contract.test.ts (14 tests | 1 failed) 4383ms
+   ✓ route coverage > maps every governed Fastify route to an OpenAPI operation with the same method, and back 3ms
+   ✓ route coverage > declares access on every governed route (public or a permission) 4ms
+   ✓ every operation, validated against the contract and the zod mirrors > health 24ms
+   ✓ every operation, validated against the contract and the zod mirrors > auth + me 160ms
+   ✓ every operation, validated against the contract and the zod mirrors > organizations and business units 133ms
+   ✓ every operation, validated against the contract and the zod mirrors > users, roles, permissions and assignments 116ms
+   ✓ every operation, validated against the contract and the zod mirrors > transformations and audit 132ms
+   ✓ every operation, validated against the contract and the zod mirrors > branding tokens (getBrandingTokens): authenticated-only, provisional provenance, contract + zod valid 8ms
+   ✓ every operation, validated against the contract and the zod mirrors > kpi module operations (P2; kpi-exercises.ts, owned by kpi-benefits-engineer)  627ms
+   ✓ every operation, validated against the contract and the zod mirrors > P2 backend operations (p2-exercises.ts): every routed operation exercised with a success  2034ms
+   × every operation, validated against the contract and the zod mirrors > every GET operation with a path parameter: a malformed id is a declared 400 at /params/<name>; nothing written 68ms
+     → listStrategicGuardrails: the pointer names the parameter: expected [ '/params/' ] to deeply equal [ '/params/transformationId' ]
+   ✓ every operation, validated against the contract and the zod mirrors > the contract: every operation but the OIDC callback declares 400 (ADR-0007 §5a) 0ms
+   ✓ every operation, validated against the contract and the zod mirrors > every operation but the OIDC callback: U+0000 in the query is a declared 400 invalid_character  861ms
+   ✓ every operation, validated against the contract and the zod mirrors > covers every operation with at least one success and every successful body with its zod mirror 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > every GET operation with a path parameter: a malformed id is a declared 400 at /params/<name>; nothing written
+AssertionError: listStrategicGuardrails: the pointer names the parameter: expected [ '/params/' ] to deeply equal [ '/params/transformationId' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "/params/transformationId",[39m
+[31m+   "/params/",[39m
+[2m  ][22m
+
+ ❯ exerciseMalformedPathParams apps/api/test/integration/contract/malformed-input.ts:74:7
+     72|       res.body.errors.map((e) => e.pointer),
+     73|       `${op.operationId}: the pointer names the parameter`,
+     74|     ).toEqual([`/params/${last}`]);
+       |       ^
+     75|     await expectNothingWritten(api, res);
+     76|     checked.push(op.operationId);
+ ❯ apps/api/test/integration/contract/contract.test.ts:478:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 passed (14)
+   Start at  11:02:24
+   Duration  7.45s (transform 852ms, setup 0ms, collect 1.87s, tests 4.38s, environment 0ms, prepare 59ms)
+
+# exit: 1

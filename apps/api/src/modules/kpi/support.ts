@@ -40,15 +40,20 @@ export interface Scope {
 }
 
 export const transformationParams = z.strictObject({ transformationId: z.uuid() });
-/** Path params of a record route, e.g. { transformationId, baselineId } -> { transformationId, id }. */
+/**
+ * Path params of a record route, e.g. { transformationId, baselineId } -> { transformationId, id }. A malformed id is a
+ * 400 at `/params/<name>` (e.g. `/params/baselineId`), the pointer style of `parse` (T-DG2-ARCH-02).
+ */
 export function parseRecordParams(params: unknown, name: string): { transformationId: string; id: string } {
   const entries = new Map(Object.entries((params ?? {}) as Record<string, unknown>));
+  const names = ["transformationId", name];
   const parsed = parse(
-    z.strictObject({ transformationId: z.uuid(), id: z.uuid() }),
-    { transformationId: entries.get("transformationId"), id: entries.get(name) },
+    z.strictObject(Object.fromEntries(names.map((n) => [n, z.uuid()]))),
+    Object.fromEntries(names.map((n) => [n, entries.get(n)])),
     "params",
   );
-  return parsed;
+  const ids = new Map(Object.entries(parsed));
+  return { transformationId: ids.get("transformationId")!, id: ids.get(name)! };
 }
 
 /** Read gate (404) and the transformation row. */

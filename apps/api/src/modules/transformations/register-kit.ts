@@ -136,12 +136,15 @@ const listQuery = z.strictObject({
 });
 const uuidParam = z.uuid();
 
-/** Path parameters of a register route, validated (malformed id -> 400). */
+/**
+ * Path parameters of a register route, validated (malformed id -> 400 at `/params/<name>`, the pointer style of
+ * `parse`; T-DG2-ARCH-02). All names are validated together, so every malformed parameter is reported.
+ */
 function paramsOf(request: FastifyRequest, names: readonly string[]): ReadonlyMap<string, string> {
-  const raw = new Map(Object.entries((request.params ?? {}) as Record<string, string>));
-  const out = new Map<string, string>();
-  for (const name of names) out.set(name, parse(uuidParam, raw.get(name), "params"));
-  return out;
+  const raw = new Map(Object.entries((request.params ?? {}) as Record<string, unknown>));
+  const schema = z.strictObject(Object.fromEntries(names.map((name) => [name, uuidParam])));
+  const parsed = parse(schema, Object.fromEntries(names.map((name) => [name, raw.get(name)])), "params");
+  return new Map(Object.entries(parsed));
 }
 
 /** Active users of the organization; otherwise 422 with a pointer (naming a person never grants access). */

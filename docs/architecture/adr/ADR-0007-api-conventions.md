@@ -41,6 +41,23 @@
    - Offset pagination is not offered: it is unstable under concurrent inserts and slow on large audit tables.
    - Table UIs page with next/previous cursors and keep their sort and filter chips.
 5. **Validation:** **zod 4.1.12** (MIT) [UNVERIFIED], shared between API and web. The API validates body, query and params before the handler runs. Unknown properties are rejected (strict objects). Strings are trimmed where the schema says so.
+
+   **5a. Amendment (DG2, T-DG2-ARCH-02, 2026-10-06): every operation that validates input declares 400.**
+   - **Rule.** An operation that validates any request input declares `"400": { $ref: "#/components/responses/ValidationError" }`. Input means body, query string or path parameters. A response status that the contract does not declare is contract drift, and the strict contract test fails on it.
+   - **Scope.** The central request check (F-DG2-231, `preHandler` in `platform/hooks.ts`) refuses U+0000 anywhere in a body, query or path parameter on every route, with 400 `validation.invalid_character`. So **every operation declares 400**.
+   - **The only exception** is `completeOidcLogin` (`GET /api/v1/auth/callback`). It opts out (`config.invalidCharacters: "route"`), validates its own query and answers every outcome with a redirect (302).
+   - **The 41 operations amended** had declared no 400 before:
+     - the 33 GET operations with path parameters;
+     - `getHealth`, `getReadiness`, `getMe`, `listRoles`, `listPermissions`, `getBrandingTokens`, `listRoleAccountabilities` and `logout`.
+
+     This is an additive amendment: no operation, schema or other response changed, and the operation count stays 161.
+   - **Pointers.** A malformed path parameter reports exactly one field error at `/params/<name>` (for example `/params/tomGapId`). That is the same pointer style as `/query/<key>` and body `/field`. Shared path helpers (`register-kit` `paramsOf`, KPI `parseRecordParams`) validate the parameters as one named object, so the pointer always carries the parameter name.
+   - **Tests.** `apps/api/test/integration/contract/malformed-input.ts`, run from `contract.test.ts`:
+     - every GET operation with a path parameter, called with a malformed last parameter, returns a declared 400 at `/params/<name>` and writes no audit row;
+     - a U+0000 path id returns 400 `validation.invalid_character`;
+     - every operation except the callback returns a declared 400 for a U+0000 in the query string;
+     - a contract assertion: every operation except the callback declares 400.
+   - **New operations.** A new operation declares 400 from the start. `pnpm openapi:lint` does not enforce this rule; the contract test does.
 6. **Concurrency:**
    - `ETag: "<version>"` on every single-resource response.
    - `If-Match` is required on PATCH, PUT and action endpoints that change a versioned record.

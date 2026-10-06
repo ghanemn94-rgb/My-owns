@@ -79,6 +79,12 @@ import { P2_PENDING_OPERATIONS } from "../../support/p2-pending.ts";
 import { exerciseKpiOperations } from "./kpi-exercises.ts";
 import { exerciseP2BackendOperations } from "./p2-exercises.ts";
 import {
+  exerciseInvalidCharacterQuery,
+  exerciseMalformedPathParams,
+  getOperationsWithPathParams,
+  NO_400_OPERATIONS,
+} from "./malformed-input.ts";
+import {
   call,
   seedWorld,
   signIn,
@@ -463,6 +469,38 @@ describe("every operation, validated against the contract and the zod mirrors", 
 
   it("P2 backend operations (p2-exercises.ts): every routed operation exercised with a success", async () => {
     await exerciseP2BackendOperations({ api, world: w, mirrored: (m, u, o) => mirrored(m, u, o) });
+  });
+
+  // T-DG2-ARCH-02 (ADR-0007 §5a): every operation that validates input declares 400.
+  it("every GET operation with a path parameter: a malformed id is a declared 400 at /params/<name>; nothing written", async () => {
+    // A fresh session: `office` signed out in "transformations and audit".
+    const reader = await signIn(api.app, w.office.subject);
+    const checked = await exerciseMalformedPathParams({ api, world: w, session: reader });
+    expect(checked.sort()).toEqual(
+      getOperationsWithPathParams()
+        .map((o) => o.operationId)
+        .sort(),
+    );
+    // At least the 33 GET-by-id operations of the T-DG2-BE10 handback (P1 and P2), plus the transformation-part reads.
+    expect(checked.length).toBeGreaterThanOrEqual(33);
+    for (const id of ["getTomGap", "getUser", "getOrganization", "getKpiDefinition", "getGateSubmission"]) {
+      expect(checked).toContain(id);
+    }
+  });
+
+  it("the contract: every operation but the OIDC callback declares 400 (ADR-0007 §5a)", () => {
+    const undeclared = operations
+      .filter((o) => !NO_400_OPERATIONS.has(o.operationId) && !("400" in o.responses))
+      .map((o) => o.operationId);
+    expect(undeclared).toEqual([]);
+    expect(
+      [...NO_400_OPERATIONS].filter((id) => "400" in operations.find((o) => o.operationId === id)!.responses),
+    ).toEqual([]);
+  });
+
+  it("every operation but the OIDC callback: U+0000 in the query is a declared 400 invalid_character", async () => {
+    const checked = await exerciseInvalidCharacterQuery({ api, world: w, session: admin });
+    expect(checked).toHaveLength(operations.length - NO_400_OPERATIONS.size);
   });
 
   it("covers every operation with at least one success and every successful body with its zod mirror", () => {

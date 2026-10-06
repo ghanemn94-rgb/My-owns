@@ -67,7 +67,8 @@ describe("GET /api/v1/branding/tokens (REQ-S15-002)", () => {
     });
     const op = openapi.paths["/api/v1/branding/tokens"]?.["get"] as { operationId: string; responses: object };
     expect(op.operationId).toBe("getBrandingTokens");
-    expect(Object.keys(op.responses).sort()).toEqual(["200", "401"]);
+    // 400: every operation that validates input declares it (ADR-0007 §5a, T-DG2-ARCH-02; U+0000 in the query string).
+    expect(Object.keys(op.responses).sort()).toEqual(["200", "400", "401"]);
   });
 
   it("never reports official provenance while the set or any single token is provisional", () => {
