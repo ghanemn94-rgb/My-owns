@@ -10137,7 +10137,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-8/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-06T18:10:00Z",
@@ -10148,10 +10148,41 @@
           "at": "2026-10-06T20:35:22Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at a7b84d89160f303358b8ac31f4e9c84d5d9b3449"
+        },
+        {
+          "at": "2026-10-06T21:20:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 9: PASS"
         }
       ],
       "fix_revision": "a7b84d89160f303358b8ac31f4e9c84d5d9b3449",
-      "fix_summary": "BE14 a7b84d8: each route declares config.consumes (default application/json; uploadEvidenceContent application/octet-stream), checked at registration. One central preParsing hook refuses any other media type with the declared 400 validation.content_type before a body byte is read (after onRequest, so rate limiting still applies). Fastify's text/plain parser is removed; both parsers re-check the route set; the upload handler stores only a raw byte stream. Contract test: every route's set equals its operation's requestBody.content (87 with a body: 86 JSON, 1 octet-stream); live sweep of every undeclared media type on every body-carrying operation; negative control."
+      "fix_summary": "BE14 a7b84d8: each route declares config.consumes (default application/json; uploadEvidenceContent application/octet-stream), checked at registration. One central preParsing hook refuses any other media type with the declared 400 validation.content_type before a body byte is read (after onRequest, so rate limiting still applies). Fastify's text/plain parser is removed; both parsers re-check the route set; the upload handler stores only a raw byte stream. Contract test: every route's set equals its operation's requestBody.content (87 with a body: 86 JSON, 1 octet-stream); live sweep of every undeclared media type on every body-carrying operation; negative control.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG2-T-DG2-REV-SEC-R9-code-security-reviewer-20261006T205417Z-2a600dcd",
+          "session_id": "2a600dcd-8351-4f8a-b62b-2c5ac352030e"
+        },
+        "at": "2026-10-06T21:20:00Z",
+        "result": "PASS",
+        "evidence": [
+          "apps/api/src/modules/platform/media-types.ts",
+          "apps/api/src/server.ts",
+          "apps/api/src/modules/evidence/routes.ts",
+          "apps/api/test/integration/media-types.test.ts",
+          "apps/api/test/integration/contract/media-types.ts",
+          "docs/delivery/test-evidence/DG2/code-security/round-8/probes/zz-sec-r8-probe.test.ts",
+          "docs/delivery/test-evidence/DG2/code-security/round-9/probes/zz-sec-r9-probe.test.ts",
+          "docs/delivery/test-evidence/DG2/code-security/round-9/probes/README.md",
+          "docs/delivery/test-evidence/DG2/code-security/round-9/probe-run1-lang-unset.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-9/probe-run2-lang-c-utf8.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-9/integration-run1-lang-unset.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-9/integration-run2-lang-c-utf8.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-9/requirements-suites.log"
+        ],
+        "note": "Verified on candidate sha256:45ebccc04d8efc0c4fdc6a842eb3c9ec330bab2ec517b1c592af60b05a066294 (source 7854770e, 544 files). I recomputed it in the working tree and in a disposable clone at 7854770e and at HEAD 041478cb, and tested against disposable PostgreSQL 16 clusters with LANG unset (SQL_ASCII) and with LANG=C.UTF-8 (UTF8).\n(1) My round-8 repro, zz-sec-r8-probe.test.ts R6, rerun unchanged, now passes in both runs (round 8: FAIL).\n- text/plain with a Content-Length, text/plain chunked (with and without NUL, and valid UTF-8 with a charset): each gives 400 validation.content_type. Nothing is stored and nothing is downloadable. Round 8: 200 with EF BF BD rewrites.\n- application/json {\"a\":1} and [1,2,3]: 400 validation.content_type. Round 8: an undeclared 500 plus an error log.\n- application/json \"Synthetic\": 400. Round 8: 200 with the decoded text stored.\n- Control: application/octet-stream, with a Content-Length or chunked, is stored and downloaded byte-exact, with sha256 of the bytes sent.\n- No error-level log line.\nThe same repro over a real socket (r9 S8), chunked, with and without a session: 400 validation.content_type; the octet control gives 200 with an exact sha256.\n(2) Code (media-types.ts, server.ts, evidence/routes.ts).\n- registerMediaTypeEnforcement runs before any route is registered. It removes Fastify's text/plain parser, adds an onRoute check (assertValidConsumes) and adds one root preParsing hook.\n- willParseBody mirrors fastify 5.6.1 lib/handleRequest.js. GET, HEAD and TRACE are bodyless. For DELETE, OPTIONS, PATCH, PUT and POST, the parser runs when there is a Content-Type, or when there is none but there is a Transfer-Encoding or a Content-Length other than 0. 5.6.1 has no OPTIONS exception.\n- mediaTypeEssence lower-cases and trims the part before ';', using the same single header value Node passes to the parser (r9 S3: with duplicate Content-Type headers Node keeps the first, and the hook and the parser agree).\n- Both parsers are wrapped in restrictParserTo. The JSON parser is still parseAs buffer, followed by createJsonBodyParser and Fastify's defaultJsonParser, so bodyLimit, strict UTF-8 and prototype-poisoning protection are unchanged. R1 to R5 still pass.\n- The upload handler refuses anything that is not a Uint8Array or an async iterable without readableEncoding. The 25 MiB streaming limit is unchanged (413 evidence.too_large, media-types.test.ts).\n- preParsing runs after onRequest (r9 S7, at a 3/min limit: 400 400 400 429 429) and before the preValidation authentication and CSRF checks, as documented. The contract test asserts consumes = requestBody.content for every routed operation (87 with a body: 86 JSON, 1 octet), and the live sweep sends every undeclared type to every body-carrying operation. Both pass in both locales (contract.test.ts 18/18).\n(3) Adversarial probe zz-sec-r9-probe.test.ts:\n- S1/S2: case, parameter, quoted-charset, list, wildcard, empty, +json, suffix and parameter-smuggling variants never store rewritten bytes. They never give a 500 and are always declared.\n- S4: an absent Content-Type with a body gives 400.\n- S6: GET/HEAD bodies are never read, and a request smuggled inside a GET chunked body is not executed. I agree with D-069 (a).\n- S4: logout and activateKpiDefinition keep JSON-or-nothing; the handlers never read the body; the web client sends no Content-Type without a body. I agree with D-069 (b).\nTwo residual Low, non-mandatory observations are raised separately because they are outside this finding's reopen condition: no operation accepts an undeclared media type, and nothing is stored rewritten.\n- F-DG2-350: an unmatched route given an application/octet-stream body gives 400 instead of 404, a BE14 regression in restrictParserTo.\n- F-DG2-351: a Content-Type whose essence is octet-stream but which Fastify's parser lookup cannot match (a tab before ';') is still the declared 400 and stores nothing, but its detail names application/json. This predates BE14.\nThis finding's scope and stated remedy are fully fixed."
+      }
     },
     {
       "id": "F-DG2-340",
@@ -10175,7 +10206,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG2/round-8/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-06T19:11:18Z",
@@ -10186,10 +10217,109 @@
           "at": "2026-10-06T20:35:22Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at e3cadfa20fac9b64179e4f36559161f1e3faaf16"
+        },
+        {
+          "at": "2026-10-06T21:36:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 9: PASS"
         }
       ],
       "fix_revision": "e3cadfa20fac9b64179e4f36559161f1e3faaf16",
-      "fix_summary": "FE8 e3cadfa: RecordFields renders in the form-errors region only the form-level messages the banner does not already say (distinctFormMessages: deduplicated by localized message, order kept, a genuinely different message still shown). A validation problem whose only field error has pointer \"\" is announced once, in one role=alert region, in EN and AR. Same guard in the JourneysSection step editor; the other forms were swept (no double rendering). EN/AR component tests (16), unit test, real-stack e2e with axe; negative control."
+      "fix_summary": "FE8 e3cadfa: RecordFields renders in the form-errors region only the form-level messages the banner does not already say (distinctFormMessages: deduplicated by localized message, order kept, a genuinely different message still shown). A validation problem whose only field error has pointer \"\" is announced once, in one role=alert region, in EN and AR. Same guard in the JourneysSection step editor; the other forms were swept (no double rendering). EN/AR component tests (16), unit test, real-stack e2e with axe; negative control.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG2-T-DG2-REV-QA-R9-qa-verifier-20261006T205457Z-1a213c54",
+          "session_id": "1a213c54-1928-4dd9-837b-44c73c0873b7"
+        },
+        "at": "2026-10-06T21:36:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG2/qa/round-9/17-e2e-qa-stack-unset.log",
+          "docs/delivery/test-evidence/DG2/qa/round-9/17-e2e-qa-stack-cutf8.log",
+          "docs/delivery/test-evidence/DG2/qa/round-9/19-e2e-qa-r9-final-unset.log",
+          "docs/delivery/test-evidence/DG2/qa/round-9/40-f340-sweep-static.log",
+          "docs/delivery/test-evidence/DG2/qa/round-9/20-axe-summary.log",
+          "docs/delivery/test-evidence/DG2/qa/round-9/08-unit-series-summary.log",
+          "docs/delivery/test-evidence/DG2/qa/round-9/e2e-qa-r9-screens/en-qa-r8-05-charter-invalid-utf8-server.png",
+          "docs/delivery/test-evidence/DG2/qa/round-9/e2e-qa-r9-screens/ar-qa-r8-05-charter-invalid-utf8-server.png",
+          "docs/delivery/test-evidence/DG2/qa/round-9/e2e-qa-r9-screens/en-qa-r9-05b-charter-distinct-second-message.png",
+          "docs/delivery/test-evidence/DG2/qa/round-9/e2e-qa-r9-screens/ar-qa-r9-05b-charter-distinct-second-message.png",
+          "docs/delivery/test-evidence/DG2/qa/round-9/e2e-qa-r9-screens/en-qa-r9-05b-charter-field-pointer.png",
+          "docs/delivery/test-evidence/DG2/qa/round-9/e2e-qa-r9-screens/ar-qa-r9-05e-reason-dialog-said-once.png",
+          "docs/delivery/test-evidence/DG2/qa/round-9/e2e-qa-r9-screens/en-qa-r9-05d-organization-create-said-once.png",
+          "docs/delivery/test-evidence/DG2/qa/round-9/e2e-qa-r9-screens/ar-qa-r9-05c-transformation-create-said-once.png",
+          "docs/delivery/test-evidence/DG2/qa/tests/round-9/e2e/dg2-qa-r9.spec.ts",
+          "docs/delivery/test-evidence/DG2/qa/tests/round-8/e2e/dg2-qa-r8.spec.ts",
+          "apps/web/src/components/RecordForm.tsx",
+          "apps/web/src/lib/problem.ts"
+        ],
+        "note": "qa-verifier raised this finding and verified fix e3cadfa (T-DG2-FE8, frontend-ux-engineer) on candidate 45ebccc0 (source 7854770e). (1) I re-ran my unchanged round-8 spec R8-05 (charter POST body tampered with FF FE; the REAL server answers 400 validation.json at pointer \"\") on the qa-stack in chromium-en and chromium-ar, in both locale settings: 4/4 green. The rerun screenshots show 'The request was not valid JSON.' / 'الطلب ليس بصيغة JSON صالحة.' ONCE. In round 8 the same spec's screenshots showed it twice. (2) My new spec dg2-qa-r9.spec.ts R9-05a..e counts every role=alert region and every occurrence in the page text. The message is said exactly once (1 alert, 1 occurrence), in EN-LTR and AR-RTL, on the charter, the P1 transformation create form, the P1 admin organization create form and the ReasonDialog (archive value pool), and nothing is written (DB and API checked). The real server's other pointer-\"\" error (validation.unknown_field) is also said once. (3) A genuinely different second message is still shown. For this sub-check only, the browser receives a fulfilled problem: [\"\" validation.json, /qaNotAField validation.too_big, \"\" validation.json]. The banner says validation__json once, the repeated pointer-\"\" entry is dropped, and the form-errors list keeps exactly the distinct too_big message, once. (4) Field-pointer errors stay on their field. A server validation.blank at /outOfScope sets aria-invalid on the field and its message is in the field's aria-describedby. The form-errors list stays empty, and the banner shows only the generic 'check the highlighted fields' message, once. (5) Static sweep of every role=alert in apps/web/src (40-f340-sweep-static.log). RecordFields computes the banner once and lists distinctFormMessages(banner, unmapped). The StepsEditor guard suppresses a client message identical to the server banner. GateProblem, ReasonDialog, RowActions, the DefinePage activation dialog and the admin, transformation and evidence forms render ONE server banner, and pointer \"\" never reaches a second region (pointerToField(\"\") is falsy; the dialogs match only their own pointer). (6) The FE8 component tests (RecordForm.alerts.test.tsx, 16 tests, including the distinct-message and field-pointer cases) pass in all 7 of my unit runs. Axe found no serious or critical violation in any of these error states (20-axe-summary.log)."
+      }
+    },
+    {
+      "id": "F-DG2-350",
+      "stage_id": "DG2",
+      "requirement": "REQ-DLV-034",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "An unmatched route sent an application/octet-stream body answers 400 validation.content_type ('Send the request body as application/json.') instead of 404: restrictParserTo does not skip 404 requests (BE14 regression)",
+      "reproduction": "Root cause. assertDeclaredMediaType skips request.is404 (apps/api/src/modules/platform/media-types.ts:82), but restrictParserTo (media-types.ts:88-100) does not. The octet-stream parser is registered with addContentTypeParser at apps/api/src/modules/evidence/routes.ts:362. For an unmatched URL, Fastify's 404 context finds that parser. consumesOf() falls back to DEFAULT_CONSUMES (application/json), and the parser calls done() with the 400 problem, so the not-found handler never runs.\nProbe. zz-sec-r9-probe.test.ts S10, disposable clone at 041478cb (candidate 45ebccc0), disposable PostgreSQL 16, identical in both locale runs (probe-run1-lang-unset.log, probe-run2-lang-c-utf8.log). Requests: POST /api/v1/does-not-exist, POST /does-not-exist, and PUT and DELETE on /api/v1/transformations/{tid}/evidence (no such operations). Each was sent with and without a session.\n- text/plain: 404 not_found.\n- application/json {}: 404 not_found.\n- application/octet-stream: 400 validation.content_type, detail 'Send the request body as application/json.'\nBaseline. At the round-8 candidate cf3446e4 (probe-baseline-cf3446e4-S10-S11.log), the same octet-stream requests gave 404, so BE14 introduced this. The candidate's own test 'an unknown route keeps its 404, whatever the media type' (apps/api/test/integration/media-types.test.ts:391) sends only text/plain, so it does not catch it.",
+      "expected": "An unmatched route answers 404 not_found whatever the request media type, as for text/plain and JSON, and as the candidate's own test name states. The restrictParserTo wrapper should pass through when request.is404 is true, like assertDeclaredMediaType. A regression case should send application/octet-stream to an unknown route.",
+      "actual": "For an unknown URL, the response depends on the Content-Type. With octet-stream the client gets a 400 telling it to send JSON instead of a 404. No data is read, stored or audited. Authorization and the declared operations are unaffected: no contract operation exists for these URLs, so this is an inconsistency, not a security or integrity defect. It is Low and non-mandatory.",
+      "evidence": [
+        "apps/api/src/modules/platform/media-types.ts",
+        "apps/api/src/modules/evidence/routes.ts",
+        "apps/api/test/integration/media-types.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-9/probes/zz-sec-r9-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-9/probes/README.md",
+        "docs/delivery/test-evidence/DG2/code-security/round-9/probe-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-9/probe-run2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-9/probe-baseline-cf3446e4-S10-S11.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-9/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-06T21:20:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG2 round 9 while probing for remaining media-type paths after BE14. It is a BE14 regression: the same requests gave 404 at cf3446e4. Rated Low and non-mandatory because it affects only URLs with no operation, and nothing is read, stored or audited. It does not block the round."
+        }
+      ]
+    },
+    {
+      "id": "F-DG2-351",
+      "stage_id": "DG2",
+      "requirement": "REQ-DLV-034",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "uploadEvidenceContent: a Content-Type that passes the essence check but that Fastify's parser lookup cannot match (e.g. 'application/octet-stream\\t; x=1') is refused with a detail naming application/json, a media type the operation does not accept",
+      "reproduction": "Root cause. mediaTypeEssence (apps/api/src/modules/platform/media-types.ts:63-68) trims the part before ';', so 'application/octet-stream\\t; x=1' passes the central check. Fastify 5.6.1's getParser (lib/contentTypeParser.js:116-125) matches a prefix only when the next character is ';' or a space, not a tab. No parser is found, so it raises FST_ERR_CTP_INVALID_MEDIA_TYPE. mapError maps that to a fixed 'Send the request body as application/json.' (apps/api/src/modules/platform/hooks.ts:66-67), whatever the route's consumes set.\nProbe. zz-sec-r9-probe.test.ts S11, plus the S1 tab-before-semicolon row (Content-Length and chunked), both locale runs. POST {T}/evidence/{id}/content as the lead, with If-Match, CSRF, X-File-Name and Content-Type 'application/octet-stream\\t; x=1'. Result: 400 validation.content_type, declared, nothing stored, but the detail is 'Send the request body as application/json.' For createEvidence, 'application/json\\t; charset=utf-8' gives the same 400. There the detail is correct for that operation, although the essence is a declared type.\nBaseline. The same at cf3446e4, so this predates BE14. BE14 made the central refusal name the route's set but left this fallback hard-coded.",
+      "expected": "Every media-type refusal on an operation names that operation's declared set, so here 'Send the request body as application/octet-stream.' For example, map FST_ERR_CTP_INVALID_MEDIA_TYPE through undeclaredMediaTypeProblem(consumesOf(request)). Alternatively, make the essence check and the parser lookup agree on whitespace, by refusing in preParsing or by normalising.",
+      "actual": "A non-browser client that puts a tab before the parameters gets the declared 400, and nothing is stored or rewritten. The message tells it to switch to application/json, which this operation refuses. This affects error-message accuracy only. There is no integrity, authorization or confidentiality impact, and the web client always sends 'application/octet-stream'. It is Low and non-mandatory.",
+      "evidence": [
+        "apps/api/src/modules/platform/media-types.ts",
+        "apps/api/src/modules/platform/hooks.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-9/probes/zz-sec-r9-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-9/probes/README.md",
+        "docs/delivery/test-evidence/DG2/code-security/round-9/probe-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-9/probe-run2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-9/probe-baseline-cf3446e4-S10-S11.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-9/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-06T21:20:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG2 round 9 while probing Content-Type variants after BE14. It predates BE14 (the same at cf3446e4). Rated Low and non-mandatory because the status is the declared 400, nothing is stored, and only the message text is wrong. It does not block the round."
+        }
+      ]
     }
   ]
 }

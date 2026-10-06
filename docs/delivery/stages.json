@@ -820,7 +820,7 @@
       "id": "DG2",
       "stage": "P2",
       "name": "Diagnose define and design",
-      "state": "REVIEWING",
+      "state": "FIXING",
       "depends_on": [
         "DG1"
       ],
@@ -1049,6 +1049,11 @@
           "state": "REVIEWING",
           "at": "2026-10-06T20:55:00Z",
           "note": "Round-9 repairs integrated (D-069): BE14 a7b84d8 (F-320: declared request media types only, central preParsing check, text/plain parser removed, contract and live sweep tests) and FE8 e3cadfa (F-340: one alert per distinct form-level message, EN/AR). 24 findings CLOSED_VERIFIED, 2 FIXED_PENDING_VERIFICATION, 0 OPEN. Orchestrator verification green in both locale settings (unit 718x4 per setting, integration 559, e2e 60). Candidate frozen as 45ebccc0 for gate review round 9."
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-10-06T22:40:00Z",
+          "note": "Round 9 on candidate 45ebccc0: all three verdicts PASS. code-security closed F-DG2-320, and qa closed F-DG2-340 (33 checks, no new findings). domain raised no findings (16 checks; seventh clean pass in a row). Two new Low, non-mandatory findings from code-security, both about the media-type refusal path that BE14 changed: F-DG2-350, a regression (an unmatched route sent application/octet-stream answers 400 validation.content_type instead of 404, because restrictParserTo does not skip 404 requests); and F-DG2-351, which predates BE14 (a Content-Type with HTAB before \";\" passes the essence check but matches no Fastify parser, so the refusal detail names application/json even on the octet-stream-only upload, and an RFC 9110-valid JSON spelling is refused). 26 findings CLOSED_VERIFIED, 2 OPEN. Round-10 repair: backend-workflow-engineer T-DG2-BE15 (one RFC 9110 media-type decision that the parser lookup agrees with; refusals name the route set; unmatched routes are 404 whatever the body)."
         }
       ]
     },
