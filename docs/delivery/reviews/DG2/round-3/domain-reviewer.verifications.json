@@ -1,0 +1,51 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG2-150",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified fixed on candidate sha256:b98c44db…32be5 (source 9e13947e), live on a disposable PostgreSQL 16 + API stack with synthetic data (Node 24.21.0). (1) A saved charter with a null Out of scope gives scopeCheckPrechecks[exclusions_documented] = attention with the API detail 'No explicit exclusions (out of scope) are documented; this check fails until Out of scope is completed.' The charter screen renders it as the amber chip 'Not supported by data' / 'لا تدعمه البيانات' with the detail 'No explicit exclusions (out of scope) are documented, so this check fails.' / 'لا توجد استثناءات صريحة (خارج النطاق) موثّقة؛ لذلك يفشل هذا الفحص.' in EN (LTR) and AR (RTL), and the chip is not green or grey. (2) Non-blank text passes (PATCH 'Synthetic: wholesale billing.' gives pass; e2e version 2 also shows pass). (3) G1 readiness applies the same rule: g1.initial_charter is incomplete with g1.initial_charter.field_missing at /charter/outOfScope for null, and also for a whitespace value planted directly in the disposable DB around the API (the pre-check gives attention too; defense in depth through hasExclusions/hasText). (4) PATCH outOfScope '   ', '\\t\\n ' and NBSP+ideographic space each return 400 validation.blank at /outOfScope, and the charter version is unchanged (nothing written). '' gives 400 too_small, and null still clears with 200. Blank inScope, changeSummary and T03 gap text are also rejected (D-063). (5) ADR-0017 §2 documents the exclusions_present exception and the blank-text rule. Unit tests (exclusions.test.ts), integration tests (blank-text.test.ts, 12 tests) and the e2e assertions pass.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-3/live-scenario.log",
+        "docs/delivery/test-evidence/DG2/domain/round-3/live-scenario.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-3/screens/en/p2-04a-charter-no-exclusions.png",
+        "docs/delivery/test-evidence/DG2/domain/round-3/screens/ar/p2-04a-charter-no-exclusions.png",
+        "docs/delivery/test-evidence/DG2/domain/round-3/e2e-p2-journeys.log",
+        "docs/delivery/test-evidence/DG2/domain/round-3/integration-node24.log",
+        "apps/api/src/modules/transformations/charter.ts",
+        "apps/api/src/modules/workflows/criteria.ts",
+        "packages/shared/src/schemas/common.ts",
+        "docs/architecture/adr/ADR-0017-charter-versioning-and-direction.md"
+      ]
+    },
+    {
+      "finding_id": "F-DG2-151",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on the live stack (p2-journeys e2e, chromium-en and chromium-ar, 24/24 passed) and in the code. The gate list cards read 'G1 - Case for Change' … 'G6 - Sustain' and in Arabic 'G1 - مبررات التغيير', 'G2 - التوجّه' … 'G6 - الاستدامة'. Each shows the verbatim B0023 name exactly once. The detail heading reads 'G3 - Target State' (G3 approved screenshot). No 'Gn – Gn' duplication appears anywhere in main (e2e regex assertion). Composition is centralised in gateLabel() (apps/web/src/lib/methodology.ts), which GatesPage and GateDetailPage use. The API values are unchanged and verbatim.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-3/screens/en/p2-13-gates.png",
+        "docs/delivery/test-evidence/DG2/domain/round-3/screens/ar/p2-13-gates.png",
+        "docs/delivery/test-evidence/DG2/domain/round-3/screens/en/p2-27-g3-approved.png",
+        "docs/delivery/test-evidence/DG2/domain/round-3/e2e-p2-journeys.log",
+        "apps/web/src/lib/methodology.ts",
+        "apps/web/src/pages/gates/GatesPage.tsx",
+        "apps/web/src/pages/gates/GateDetailPage.tsx"
+      ]
+    },
+    {
+      "finding_id": "F-DG2-152",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "REQ-S05-003 screen_api now reads 'Target Operating Model > Design > per-dimension view (DesignPage DimensionView); GET …/tom-canvas; GET …/tom-canvas/{dimensionCode}'. Live: GET /tom-canvas/customer_value_proposition returns 200 with cell, dimension, gaps, decisions, dependencies and evidence; the old register path /tom/dimensions/{dim} returns 404. DimensionView exists in DesignPage.tsx. Spot-check of all 16 rows changed since eb8163e2 (REQ-PB-012/023/024/025/026/027/028/029/034/037/038/039/041/042, REQ-S05-003, REQ-S10-001): every absolute API path cited resolves to a path in docs/api/openapi.yaml (0 unresolved).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-3/register-spotcheck.log",
+        "docs/delivery/test-evidence/DG2/domain/round-3/register-spotcheck.py",
+        "docs/delivery/test-evidence/DG2/domain/round-3/live-scenario.log",
+        "docs/delivery/requirements.csv",
+        "docs/api/openapi.yaml",
+        "apps/web/src/pages/design/DesignPage.tsx"
+      ]
+    }
+  ]
+}
