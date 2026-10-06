@@ -1,0 +1,18 @@
+$ git rev-parse HEAD (candidate tree)
+bd2e809c41af456b0a7e5b94efc1e28ace22513d
+$ git merge-base --is-ancestor 51a692b1 HEAD
+exit 0
+$ git diff --stat 51a692b1 HEAD
+ .../DG2/round-6/code-security-reviewer.md          |   89 +
+ .../assignments/DG2/round-6/domain-reviewer.md     |  104 +
+ .../assignments/DG2/round-6/qa-verifier.md         |   83 +
+ .../candidates/DG2/bb3e75811631cbab.manifest.json  | 2658 ++++++++++++++++++++
+ docs/delivery/stages.json                          |   27 +-
+ 5 files changed, 2956 insertions(+), 5 deletions(-)
+$ node tools/gates/candidate.mjs --stage DG2 (candidate tree)
+{"stage":"DG2","source":"working-tree","candidate_id":"sha256:bb3e75811631cbabef8f807972f36396e0be2cf7b1d1b1281fa2fdf16f52eb1f","files":528}
+$ (clone $TMPDIR/review-dg2 @51a692b1) node tools/gates/candidate.mjs --stage DG2
+51a692b1d6ec0edfde3f9e85d75b1571dc1932ee
+{"stage":"DG2","source":"working-tree","candidate_id":"sha256:bb3e75811631cbabef8f807972f36396e0be2cf7b1d1b1281fa2fdf16f52eb1f","files":528}
+$ manifest
+sha256:bb3e75811631cbabef8f807972f36396e0be2cf7b1d1b1281fa2fdf16f52eb1f 528

@@ -1,0 +1,128 @@
+$ pnpm test  (node v24.21.0; clone @51a692b1; LANG=<unset> LC_ALL=<unset>)
+
+> mobily-transformation-hub@0.1.0 test $TMPDIR/review-dg2
+> vitest run --project unit-node --project unit-web
+
+
+ RUN  v3.2.4 $TMPDIR/review-dg2
+
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx (21 tests) 5223ms
+   ✓ after create (F-DG1-004) > shows the created record when the server lets the creator read it  530ms
+   ✓ after create (F-DG1-004) > explains, in English, that the draft was created but cannot be opened (server 404), instead of 'Not found'  323ms
+   ✓ effective permissions refresh after create (F-DG1-210) > English: Edit, Archive and the audit trail appear after create, without a reload  775ms
+   ✓ effective permissions refresh after create (F-DG1-210) > Arabic (RTL): the same controls and the audit trail appear after create, without a reload  955ms
+   ✓ effective permissions refresh after create (F-DG1-210) > does not over-grant: if the refreshed server answer adds nothing, Archive and the audit trail stay hidden  385ms
+stderr | src/pages/team/team.test.tsx > Team (English LTR) > shows a 403 from the server in words; nothing is assigned
+Cannot update a component (`AssignDialog`) while rendering a different component (`RecordDialog`). To locate the bad setState() call inside `RecordDialog`, follow the stack trace as described in https://react.dev/link/setstate-in-render
+
+ ✓ |unit-web| src/pages/team/team.test.tsx (6 tests) 2478ms
+   ✓ Team (English LTR) > shows the six governance roles with B0018 accountability text verbatim and who holds each  857ms
+   ✓ Team (English LTR) > lists team members with the accountability on each assignment, sortable and filterable  493ms
+   ✓ Team (English LTR) > a Transformation Lead assigns a Workstream Lead: Idempotency-Key, reason, accountability preview  419ms
+   ✓ Team (English LTR) > shows a 403 from the server in words; nothing is assigned  361ms
+ ✓ |unit-web| src/app/app.test.tsx (17 tests) 2818ms
+   ✓ bilingual shell > shows all fourteen areas to an administrator  408ms
+   ✓ transformations > lists transformations with a sortable code column and removable filter chips  448ms
+   ✓ transformations > detail shows the workspace header with Unknown for data from later stages  349ms
+ ✓ |unit-web| src/pages/transformations/modeGuidance.test.tsx (5 tests) 1208ms
+   ✓ New transformation: mode guidance (English LTR) > shows When to use and How for the selected mode and switches with the mode  532ms
+ ✓ |unit-web| src/pages/p2-blank-forms.test.tsx (52 tests) 17788ms
+   ✓ gate submission note (en) > a whitespace-only note is refused inline and nothing is sent  564ms
+   ✓ gate submission note (en) > a invisible-only note is refused inline and nothing is sent  303ms
+   ✓ gate submission note (en) > visible text is sent verbatim; an empty note is omitted  491ms
+   ✓ gate submission note (ar) > visible text is sent verbatim; an empty note is omitted  472ms
+   ✓ gate decision rationale and comments (en) > a whitespace-only rationale is refused inline and nothing is sent  321ms
+   ✓ gate decision rationale and comments (en) > a whitespace-only comment is refused inline (focus on it) and nothing is sent  395ms
+   ✓ gate decision rationale and comments (en) > a invisible-only comment is refused inline (focus on it) and nothing is sent  309ms
+   ✓ gate decision rationale and comments (en) > visible text is sent verbatim; empty comments are omitted; an empty rationale stays 'too short'  526ms
+   ✓ gate decision rationale and comments (en) > a server 400 validation.blank on /rationale lands on the field  316ms
+   ✓ gate decision rationale and comments (ar) > visible text is sent verbatim; empty comments are omitted; an empty rationale stays 'too short'  329ms
+   ✓ journey step editor (en) > a whitespace-only actor is refused inline (not turned into null) and nothing is sent  496ms
+   ✓ journey step editor (en) > a invisible-only actor is refused inline (not turned into null) and nothing is sent  525ms
+   ✓ journey step editor (en) > several blank fields: each gets the message and focus goes to the first (name)  587ms
+   ✓ journey step editor (en) > visible text is sent verbatim; emptied optional text is null; an empty name is required  585ms
+   ✓ journey step editor (ar) > a whitespace-only actor is refused inline (not turned into null) and nothing is sent  481ms
+   ✓ journey step editor (ar) > a invisible-only actor is refused inline (not turned into null) and nothing is sent  452ms
+   ✓ journey step editor (ar) > several blank fields: each gets the message and focus goes to the first (name)  347ms
+   ✓ journey step editor (ar) > visible text is sent verbatim; emptied optional text is null; an empty name is required  463ms
+   ✓ Finance validation note and archive reason (en) > note: a whitespace-only note is refused inline and nothing is sent  324ms
+   ✓ Finance validation note and archive reason (en) > note: empty is 'required'; visible text is sent verbatim  398ms
+   ✓ Finance validation note and archive reason (en) > reason: a whitespace-only reason is refused inline and nothing is archived  499ms
+   ✓ Finance validation note and archive reason (en) > reason: a invisible-only reason is refused inline and nothing is archived  396ms
+   ✓ Finance validation note and archive reason (en) > reason: a server 400 validation.blank on /reason is the field message, not a generic error  373ms
+   ✓ Finance validation note and archive reason (en) > reason: empty keeps 'too short'; visible text is sent verbatim  309ms
+   ✓ Finance validation note and archive reason (ar) > note: a whitespace-only note is refused inline and nothing is sent  331ms
+   ✓ Finance validation note and archive reason (ar) > note: a invisible-only note is refused inline and nothing is sent  487ms
+   ✓ Finance validation note and archive reason (ar) > note: empty is 'required'; visible text is sent verbatim  512ms
+   ✓ Finance validation note and archive reason (ar) > reason: a whitespace-only reason is refused inline and nothing is archived  350ms
+   ✓ Finance validation note and archive reason (ar) > reason: a invisible-only reason is refused inline and nothing is archived  348ms
+   ✓ Finance validation note and archive reason (ar) > reason: a server 400 validation.blank on /reason is the field message, not a generic error  325ms
+   ✓ Finance validation note and archive reason (ar) > reason: a reason with U+0000 is refused inline with the localized message and nothing is archived  377ms
+   ✓ Finance validation note and archive reason (ar) > reason: a server 400 validation.invalid_character on /reason is the localized field message  321ms
+   ✓ Finance validation note and archive reason (ar) > reason: empty keeps 'too short'; visible text is sent verbatim  439ms
+ ✓ |unit-web| src/pages/p2.test.tsx (56 tests) 18009ms
+   ✓ Diagnose > shows the six T01 dimensions with Unknown for missing values, and value pools that are never 0  676ms
+   ✓ Diagnose > renders the six workstreams with their key questions  470ms
+   ✓ Diagnose > edits a T01 row with only the changed fields and If-Match  588ms
+   ✓ Diagnose > a 409 on save writes nothing, compares, and re-applies on the current version  604ms
+   ✓ Diagnose > a 400 validation.blank shows a localized message on its field ('en')  812ms
+   ✓ Diagnose > a 400 validation.blank shows a localized message on its field ('ar')  828ms
+   ✓ Diagnose > an invisible-only value is blocked client-side with validation.blank ('en')  826ms
+   ✓ Diagnose > an invisible-only value is blocked client-side with validation.blank ('ar')  562ms
+   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('en')  655ms
+   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('ar')  915ms
+   ✓ Diagnose > T01: an emptied field is sent as an explicit null; visible text is sent verbatim  681ms
+   ✓ Define: KPI activation (F-DG2-201) > offers Activate on a draft KPI, states the unmet precondition on 422, then activates with If-Match  300ms
+   ✓ Define: KPI activation (F-DG2-201) > Arabic: the Activate action and the 422 reason are in Arabic  376ms
+   ✓ Charter > scope pre-check: an empty Out of scope reads as failing (EN and AR)  374ms
+   ✓ Charter > create: a whitespace Case for change is an inline blank error and creates nothing ('en')  370ms
+   ✓ Charter > create: a whitespace Case for change is an inline blank error and creates nothing ('ar')  331ms
+   ✓ Charter > edit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (en)  307ms
+   ✓ Charter > edit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (ar)  315ms
+   ✓ Charter > edit: emptying a filled field sends null; visible text is verbatim (en)  505ms
+   ✓ Charter > edit: emptying a filled field sends null; visible text is verbatim (ar)  378ms
+   ✓ Charter > edit: a change summary alone is not a change (never a content-free version)  360ms
+   ✓ Design > shows the ten canvas boxes and the per-dimension view  489ms
+   ✓ Design > converts an unresolved workshop item into a design decision with If-Match  787ms
+   ✓ Gates (business approval) > gate detail heading: the verbatim B0023 name once (EN and AR)  367ms
+   ✓ Evidence > uploads a revision as octet-stream with a percent-encoded file name and If-Match  416ms
+ ✓ |unit-web| src/components/States.test.tsx (15 tests) 675ms
+ ✓ |unit-web| src/i18n/i18n.test.ts (11 tests) 35ms
+ ✓ |unit-web| src/lib/lib.test.ts (23 tests) 108ms
+ ✓ |unit-web| src/i18n/glossary.test.ts (8 tests) 14ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts (15 tests) 37ms
+ ✓ |unit-web| src/styles/styles.test.ts (6 tests) 13ms
+ ✓ |unit-web| src/test/harness-config.test.ts (2 tests) 8ms
+ ✓ |unit-node| apps/api/src/modules/workflows/workflows.test.ts (14 tests) 1011ms
+   ✓ workflows module (P2) > its declared boundary holds, and an undeclared dependency would be caught  941ms
+ ✓ |unit-node| apps/api/src/modules/kpi/kpi.test.ts (18 tests) 819ms
+   ✓ kpi module (P2) > its declared boundary holds, and a planted bypass or undeclared dependency would be caught  746ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (135 tests) 3712ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  2042ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)  887ms
+ ✓ |unit-node| packages/shared/src/value.test.ts (29 tests) 181ms
+ ✓ |unit-node| packages/shared/src/schemas/schemas.test.ts (64 tests) 225ms
+ ✓ |unit-node| apps/api/src/server.test.ts (6 tests) 397ms
+ ✓ |unit-node| apps/api/src/modules/evidence/evidence.test.ts (8 tests) 591ms
+   ✓ evidence module (P2) > its declared boundary holds  516ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reporting.test.ts (4 tests) 163ms
+ ✓ |unit-node| apps/api/src/modules/platform/platform.test.ts (18 tests) 164ms
+ ✓ |unit-node| packages/config/src/load.test.ts (17 tests) 88ms
+ ✓ |unit-node| apps/api/src/modules/methodology/methodology.test.ts (4 tests) 219ms
+ ✓ |unit-node| packages/design-tokens/src/tokens.test.ts (15 tests) 40ms
+ ✓ |unit-node| apps/api/src/modules/kpi/rules.test.ts (30 tests) 43ms
+ ✓ |unit-node| apps/api/src/modules/platform/health.test.ts (2 tests) 32ms
+ ✓ |unit-node| apps/api/src/modules/access/rules.test.ts (12 tests) 10ms
+ ✓ |unit-node| packages/db/src/seed.test.ts (7 tests) 28ms
+ ✓ |unit-node| apps/api/src/modules/admin/branding.test.ts (4 tests) 33ms
+ ✓ |unit-node| apps/api/src/modules/transformations/good-outcome.test.ts (7 tests) 9ms
+ ✓ |unit-node| apps/api/src/modules/transformations/thesis.test.ts (4 tests) 13ms
+ ✓ |unit-node| apps/api/src/modules/transformations/exclusions.test.ts (19 tests) 6ms
+ ✓ |unit-node| apps/api/src/modules/transformations/transitions.test.ts (2 tests) 4ms
+
+ Test Files  34 passed (34)
+      Tests  656 passed (656)
+   Start at  11:53:27
+   Duration  34.42s (transform 3.44s, setup 2.12s, collect 23.54s, tests 56.20s, environment 8.42s, prepare 3.55s)
+
+exit 0

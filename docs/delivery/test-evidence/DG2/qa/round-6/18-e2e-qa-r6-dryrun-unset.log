@@ -1,0 +1,193 @@
+$ env QA_API_PORT=3771 QA_E2E_PG_PORT=54971 E2E_BASE_URL=http://localhost:3771 QA_SHOT_DIR=$TMPDIR/shots-unset-qa-r6only/qa E2E_SCREENSHOT_DIR=$TMPDIR/shots-unset-qa-r6only/product e2e/support/qa-stack-port.sh npx playwright test e2e/dg2-qa-nul-r6.spec.ts --workers=1
+# clone @51a692b1 + qa-verifier specs in e2e/ (superseded round-3 inverse probe excluded); node v24.21.0; locale: LANG=<unset> LC_ALL=<unset>; start 2026-10-06T12:00:37Z
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 10 tests using 1 worker
+
+QA-R6 [en] R6-01 charter create NUL: message "Remove the unsupported invisible character from this text." shown, sent=[]
+  ✓   1 [chromium-en] › e2e/dg2-qa-nul-r6.spec.ts:65:1 › R6-01 charter create: U+0000 in Case for change is refused inline with the localized message; nothing is sent (2.2s)
+QA-R6 [en] R6-02 server 400 on /outOfScope shown as "Remove the unsupported invisible character from this text."; responses=["400"]
+  ✓   2 [chromium-en] › e2e/dg2-qa-nul-r6.spec.ts:100:1 › R6-02 charter create: a U+0000 the client did not catch is refused by the real server and shown localized (2.1s)
+QA-R6 [en] R6-03 U+16FE4 KHITAN SMALL SCRIPT FILLER alone: blank message shown, sent=[]
+QA-R6 [en] R6-03 U+1D159 MUSICAL SYMBOL NULL NOTEHEAD alone: blank message shown, sent=[]
+  ✓   3 [chromium-en] › e2e/dg2-qa-nul-r6.spec.ts:144:1 › R6-03 charter create: U+16FE4 alone and U+1D159 alone are blank (F-DG2-230); nothing is sent (2.8s)
+QA-R6 [en] R6-04 PATCH charter inScope with U+0000 (3 positions): 400 invalid_character at /inScope
+QA-R6 [en] R6-04 PATCH charter outOfScope with U+0000 (3 positions): 400 invalid_character at /outOfScope
+QA-R6 [en] R6-04 PATCH charter caseForChange with U+0000 (3 positions): 400 invalid_character at /caseForChange
+QA-R6 [en] R6-04 NUL in body key: 400 [{"pointer":"/in\u0000Scope","code":"validation.invalid_character","message":"The text contains an unsupported invisible character (U+0000)."}]
+QA-R6 [en] R6-04 path NUL: 400 [{"pointer":"/params/transformationId","code":"validation.invalid_character","message":"The text contains an unsupported invisible character (U+0000)."}]; query NUL: 400 [{"pointer":"/query/q","code":"validation.invalid_character","message":"The text contains an unsupported invisible character (U+0000)."}]
+QA-R6 [en] R6-04 PATCH outOfScope U+16FE4 KHITAN SMALL SCRIPT FILLER alone: 400 [{"pointer":"/outOfScope","code":"validation.blank","message":"validation.blank"}]
+QA-R6 [en] R6-04 PATCH outOfScope U+1D159 MUSICAL SYMBOL NULL NOTEHEAD alone: 400 [{"pointer":"/outOfScope","code":"validation.blank","message":"validation.blank"}]
+QA-R6 [en] R6-04 charter unchanged: version 1; history unchanged
+  ✓   4 [chromium-en] › e2e/dg2-qa-nul-r6.spec.ts:176:1 › R6-04 API: U+0000 in body, body key, path and query is 400 validation.invalid_character; nothing changes (214ms)
+QA-R6 [en] R6-05 contract operations=161; GET with path params=58
+QA-R6 [en] R6-05 getOrganization GET /api/v1/organizations/{organizationId} -> 400 [{"pointer":"/params/organizationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listBusinessUnits GET /api/v1/organizations/{organizationId}/business-units -> 400 [{"pointer":"/params/organizationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getBusinessUnit GET /api/v1/business-units/{businessUnitId} -> 400 [{"pointer":"/params/businessUnitId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getUser GET /api/v1/users/{userId} -> 400 [{"pointer":"/params/userId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getRoleAssignment GET /api/v1/role-assignments/{assignmentId} -> 400 [{"pointer":"/params/assignmentId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getTransformation GET /api/v1/transformations/{transformationId} -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listTransformationAudit GET /api/v1/transformations/{transformationId}/audit -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listStrategicGuardrails GET /api/v1/transformations/{transformationId}/strategic-guardrails -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getStrategicGuardrail GET /api/v1/transformations/{transformationId}/strategic-guardrails/{strategicGuardrailId} -> 400 [{"pointer":"/params/strategicGuardrailId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listOutcomes GET /api/v1/transformations/{transformationId}/outcomes -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getOutcome GET /api/v1/transformations/{transformationId}/outcomes/{outcomeId} -> 400 [{"pointer":"/params/outcomeId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listKpiDefinitions GET /api/v1/transformations/{transformationId}/kpi-definitions -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getKpiDefinition GET /api/v1/transformations/{transformationId}/kpi-definitions/{kpiDefinitionId} -> 400 [{"pointer":"/params/kpiDefinitionId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listBaselines GET /api/v1/transformations/{transformationId}/baselines -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getBaseline GET /api/v1/transformations/{transformationId}/baselines/{baselineId} -> 400 [{"pointer":"/params/baselineId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listOutcomeKpis GET /api/v1/transformations/{transformationId}/outcome-kpis -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getOutcomeKpi GET /api/v1/transformations/{transformationId}/outcome-kpis/{outcomeKpiId} -> 400 [{"pointer":"/params/outcomeKpiId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listValuePools GET /api/v1/transformations/{transformationId}/value-pools -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getValuePool GET /api/v1/transformations/{transformationId}/value-pools/{valuePoolId} -> 400 [{"pointer":"/params/valuePoolId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listDiagnosticItems GET /api/v1/transformations/{transformationId}/diagnostic-items -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getDiagnosticItem GET /api/v1/transformations/{transformationId}/diagnostic-items/{diagnosticItemId} -> 400 [{"pointer":"/params/diagnosticItemId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listDiagnosticFindings GET /api/v1/transformations/{transformationId}/diagnostic-findings -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getDiagnosticFinding GET /api/v1/transformations/{transformationId}/diagnostic-findings/{diagnosticFindingId} -> 400 [{"pointer":"/params/diagnosticFindingId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listWorkstreamOutputs GET /api/v1/transformations/{transformationId}/workstream-outputs -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getWorkstreamOutput GET /api/v1/transformations/{transformationId}/workstream-outputs/{diagnosticWorkstreamOutputId} -> 400 [{"pointer":"/params/diagnosticWorkstreamOutputId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listTomGaps GET /api/v1/transformations/{transformationId}/tom-gaps -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getTomGap GET /api/v1/transformations/{transformationId}/tom-gaps/{tomGapId} -> 400 [{"pointer":"/params/tomGapId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listCapabilityHeatmapEntries GET /api/v1/transformations/{transformationId}/capability-heatmap -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getCapabilityHeatmapEntry GET /api/v1/transformations/{transformationId}/capability-heatmap/{capabilityId} -> 400 [{"pointer":"/params/capabilityId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listJourneies GET /api/v1/transformations/{transformationId}/journeys -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getJourney GET /api/v1/transformations/{transformationId}/journeys/{journeyId} -> 400 [{"pointer":"/params/journeyId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listDependencies GET /api/v1/transformations/{transformationId}/dependencies -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getDependency GET /api/v1/transformations/{transformationId}/dependencies/{dependencyId} -> 400 [{"pointer":"/params/dependencyId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listActionItems GET /api/v1/transformations/{transformationId}/actions -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getActionItem GET /api/v1/transformations/{transformationId}/actions/{actionItemId} -> 400 [{"pointer":"/params/actionItemId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listTomWorkshops GET /api/v1/transformations/{transformationId}/tom-workshops -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getTomWorkshop GET /api/v1/transformations/{transformationId}/tom-workshops/{workshopId} -> 400 [{"pointer":"/params/workshopId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listEvidence GET /api/v1/transformations/{transformationId}/evidence -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getEvidence GET /api/v1/transformations/{transformationId}/evidence/{evidenceId} -> 400 [{"pointer":"/params/evidenceId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getTransformationMethodology GET /api/v1/transformations/{transformationId}/methodology -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getCharter GET /api/v1/transformations/{transformationId}/charter -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listCharterVersions GET /api/v1/transformations/{transformationId}/charter/versions -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getCharterVersion GET /api/v1/transformations/{transformationId}/charter/versions/{versionNo} -> 400 [{"pointer":"/params/versionNo","code":"validation.invalid_type","message":"Invalid input: expected number, received NaN"}] declares400=true
+QA-R6 [en] R6-05 getNorthStar GET /api/v1/transformations/{transformationId}/north-star -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listNorthStarHistory GET /api/v1/transformations/{transformationId}/north-star/history -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getTomCanvas GET /api/v1/transformations/{transformationId}/tom-canvas -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getTomCanvasCell GET /api/v1/transformations/{transformationId}/tom-canvas/{dimensionCode} -> 400 [{"pointer":"/params/dimensionCode","code":"validation.invalid_format","message":"Invalid string: must match pattern /^[a-z][a-z0-9_]{0,47}$/"}] declares400=true
+QA-R6 [en] R6-05 listJourneyPainPoints GET /api/v1/transformations/{transformationId}/journeys/{journeyId}/pain-points -> 400 [{"pointer":"/params/journeyId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listTomWorkshopParticipants GET /api/v1/transformations/{transformationId}/tom-workshops/{workshopId}/participants -> 400 [{"pointer":"/params/workshopId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listTomWorkshopItems GET /api/v1/transformations/{transformationId}/tom-workshops/{workshopId}/items -> 400 [{"pointer":"/params/workshopId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getDecision GET /api/v1/decisions/{decisionId} -> 400 [{"pointer":"/params/decisionId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listGates GET /api/v1/transformations/{transformationId}/gates -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getGate GET /api/v1/transformations/{transformationId}/gates/{gateCode} -> 400 [{"pointer":"/params/gateCode","code":"validation.invalid_value","message":"Invalid option: expected one of \"G1\"|\"G2\"|\"G3\"|\"G4\"|\"G5\"|\"G6\""}] declares400=true
+QA-R6 [en] R6-05 listGateSubmissions GET /api/v1/transformations/{transformationId}/gates/{gateCode}/submissions -> 400 [{"pointer":"/params/gateCode","code":"validation.invalid_value","message":"Invalid option: expected one of \"G1\"|\"G2\"|\"G3\"|\"G4\"|\"G5\"|\"G6\""}] declares400=true
+QA-R6 [en] R6-05 getGateSubmission GET /api/v1/transformations/{transformationId}/gates/{gateCode}/submissions/{submissionNo} -> 400 [{"pointer":"/params/submissionNo","code":"validation.invalid_type","message":"Invalid input: expected number, received NaN"}] declares400=true
+QA-R6 [en] R6-05 downloadEvidenceContent GET /api/v1/transformations/{transformationId}/evidence/{evidenceId}/content -> 400 [{"pointer":"/params/evidenceId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listEvidenceLinks GET /api/v1/transformations/{transformationId}/evidence-links -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listTransformationTeam GET /api/v1/transformations/{transformationId}/scoped-assignments -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+  ✓   5 [chromium-en] › e2e/dg2-qa-nul-r6.spec.ts:264:1 › R6-05 contract: every GET-by-id with a malformed last path parameter is the declared 400 at /params/<name> (389ms)
+QA-R6 [ar] R6-01 charter create NUL: message "أزِل الحرف غير المدعوم من هذا النص." shown, sent=[]
+  ✓   6 [chromium-ar] › e2e/dg2-qa-nul-r6.spec.ts:65:1 › R6-01 charter create: U+0000 in Case for change is refused inline with the localized message; nothing is sent (2.0s)
+QA-R6 [ar] R6-02 server 400 on /outOfScope shown as "أزِل الحرف غير المدعوم من هذا النص."; responses=["400"]
+  ✓   7 [chromium-ar] › e2e/dg2-qa-nul-r6.spec.ts:100:1 › R6-02 charter create: a U+0000 the client did not catch is refused by the real server and shown localized (2.0s)
+QA-R6 [ar] R6-03 U+16FE4 KHITAN SMALL SCRIPT FILLER alone: blank message shown, sent=[]
+QA-R6 [ar] R6-03 U+1D159 MUSICAL SYMBOL NULL NOTEHEAD alone: blank message shown, sent=[]
+  ✓   8 [chromium-ar] › e2e/dg2-qa-nul-r6.spec.ts:144:1 › R6-03 charter create: U+16FE4 alone and U+1D159 alone are blank (F-DG2-230); nothing is sent (2.7s)
+QA-R6 [ar] R6-04 PATCH charter inScope with U+0000 (3 positions): 400 invalid_character at /inScope
+QA-R6 [ar] R6-04 PATCH charter outOfScope with U+0000 (3 positions): 400 invalid_character at /outOfScope
+QA-R6 [ar] R6-04 PATCH charter caseForChange with U+0000 (3 positions): 400 invalid_character at /caseForChange
+QA-R6 [ar] R6-04 NUL in body key: 400 [{"pointer":"/in\u0000Scope","code":"validation.invalid_character","message":"The text contains an unsupported invisible character (U+0000)."}]
+QA-R6 [ar] R6-04 path NUL: 400 [{"pointer":"/params/transformationId","code":"validation.invalid_character","message":"The text contains an unsupported invisible character (U+0000)."}]; query NUL: 400 [{"pointer":"/query/q","code":"validation.invalid_character","message":"The text contains an unsupported invisible character (U+0000)."}]
+QA-R6 [ar] R6-04 PATCH outOfScope U+16FE4 KHITAN SMALL SCRIPT FILLER alone: 400 [{"pointer":"/outOfScope","code":"validation.blank","message":"validation.blank"}]
+QA-R6 [ar] R6-04 PATCH outOfScope U+1D159 MUSICAL SYMBOL NULL NOTEHEAD alone: 400 [{"pointer":"/outOfScope","code":"validation.blank","message":"validation.blank"}]
+QA-R6 [ar] R6-04 charter unchanged: version 1; history unchanged
+  ✓   9 [chromium-ar] › e2e/dg2-qa-nul-r6.spec.ts:176:1 › R6-04 API: U+0000 in body, body key, path and query is 400 validation.invalid_character; nothing changes (207ms)
+QA-R6 [ar] R6-05 contract operations=161; GET with path params=58
+QA-R6 [ar] R6-05 getOrganization GET /api/v1/organizations/{organizationId} -> 400 [{"pointer":"/params/organizationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listBusinessUnits GET /api/v1/organizations/{organizationId}/business-units -> 400 [{"pointer":"/params/organizationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getBusinessUnit GET /api/v1/business-units/{businessUnitId} -> 400 [{"pointer":"/params/businessUnitId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getUser GET /api/v1/users/{userId} -> 400 [{"pointer":"/params/userId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getRoleAssignment GET /api/v1/role-assignments/{assignmentId} -> 400 [{"pointer":"/params/assignmentId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getTransformation GET /api/v1/transformations/{transformationId} -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listTransformationAudit GET /api/v1/transformations/{transformationId}/audit -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listStrategicGuardrails GET /api/v1/transformations/{transformationId}/strategic-guardrails -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getStrategicGuardrail GET /api/v1/transformations/{transformationId}/strategic-guardrails/{strategicGuardrailId} -> 400 [{"pointer":"/params/strategicGuardrailId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listOutcomes GET /api/v1/transformations/{transformationId}/outcomes -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getOutcome GET /api/v1/transformations/{transformationId}/outcomes/{outcomeId} -> 400 [{"pointer":"/params/outcomeId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listKpiDefinitions GET /api/v1/transformations/{transformationId}/kpi-definitions -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getKpiDefinition GET /api/v1/transformations/{transformationId}/kpi-definitions/{kpiDefinitionId} -> 400 [{"pointer":"/params/kpiDefinitionId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listBaselines GET /api/v1/transformations/{transformationId}/baselines -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getBaseline GET /api/v1/transformations/{transformationId}/baselines/{baselineId} -> 400 [{"pointer":"/params/baselineId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listOutcomeKpis GET /api/v1/transformations/{transformationId}/outcome-kpis -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getOutcomeKpi GET /api/v1/transformations/{transformationId}/outcome-kpis/{outcomeKpiId} -> 400 [{"pointer":"/params/outcomeKpiId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listValuePools GET /api/v1/transformations/{transformationId}/value-pools -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getValuePool GET /api/v1/transformations/{transformationId}/value-pools/{valuePoolId} -> 400 [{"pointer":"/params/valuePoolId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listDiagnosticItems GET /api/v1/transformations/{transformationId}/diagnostic-items -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getDiagnosticItem GET /api/v1/transformations/{transformationId}/diagnostic-items/{diagnosticItemId} -> 400 [{"pointer":"/params/diagnosticItemId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listDiagnosticFindings GET /api/v1/transformations/{transformationId}/diagnostic-findings -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getDiagnosticFinding GET /api/v1/transformations/{transformationId}/diagnostic-findings/{diagnosticFindingId} -> 400 [{"pointer":"/params/diagnosticFindingId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listWorkstreamOutputs GET /api/v1/transformations/{transformationId}/workstream-outputs -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getWorkstreamOutput GET /api/v1/transformations/{transformationId}/workstream-outputs/{diagnosticWorkstreamOutputId} -> 400 [{"pointer":"/params/diagnosticWorkstreamOutputId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listTomGaps GET /api/v1/transformations/{transformationId}/tom-gaps -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getTomGap GET /api/v1/transformations/{transformationId}/tom-gaps/{tomGapId} -> 400 [{"pointer":"/params/tomGapId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listCapabilityHeatmapEntries GET /api/v1/transformations/{transformationId}/capability-heatmap -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getCapabilityHeatmapEntry GET /api/v1/transformations/{transformationId}/capability-heatmap/{capabilityId} -> 400 [{"pointer":"/params/capabilityId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listJourneies GET /api/v1/transformations/{transformationId}/journeys -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getJourney GET /api/v1/transformations/{transformationId}/journeys/{journeyId} -> 400 [{"pointer":"/params/journeyId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listDependencies GET /api/v1/transformations/{transformationId}/dependencies -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getDependency GET /api/v1/transformations/{transformationId}/dependencies/{dependencyId} -> 400 [{"pointer":"/params/dependencyId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listActionItems GET /api/v1/transformations/{transformationId}/actions -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getActionItem GET /api/v1/transformations/{transformationId}/actions/{actionItemId} -> 400 [{"pointer":"/params/actionItemId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listTomWorkshops GET /api/v1/transformations/{transformationId}/tom-workshops -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getTomWorkshop GET /api/v1/transformations/{transformationId}/tom-workshops/{workshopId} -> 400 [{"pointer":"/params/workshopId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listEvidence GET /api/v1/transformations/{transformationId}/evidence -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getEvidence GET /api/v1/transformations/{transformationId}/evidence/{evidenceId} -> 400 [{"pointer":"/params/evidenceId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getTransformationMethodology GET /api/v1/transformations/{transformationId}/methodology -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getCharter GET /api/v1/transformations/{transformationId}/charter -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listCharterVersions GET /api/v1/transformations/{transformationId}/charter/versions -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getCharterVersion GET /api/v1/transformations/{transformationId}/charter/versions/{versionNo} -> 400 [{"pointer":"/params/versionNo","code":"validation.invalid_type","message":"Invalid input: expected number, received NaN"}] declares400=true
+QA-R6 [ar] R6-05 getNorthStar GET /api/v1/transformations/{transformationId}/north-star -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listNorthStarHistory GET /api/v1/transformations/{transformationId}/north-star/history -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getTomCanvas GET /api/v1/transformations/{transformationId}/tom-canvas -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getTomCanvasCell GET /api/v1/transformations/{transformationId}/tom-canvas/{dimensionCode} -> 400 [{"pointer":"/params/dimensionCode","code":"validation.invalid_format","message":"Invalid string: must match pattern /^[a-z][a-z0-9_]{0,47}$/"}] declares400=true
+QA-R6 [ar] R6-05 listJourneyPainPoints GET /api/v1/transformations/{transformationId}/journeys/{journeyId}/pain-points -> 400 [{"pointer":"/params/journeyId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listTomWorkshopParticipants GET /api/v1/transformations/{transformationId}/tom-workshops/{workshopId}/participants -> 400 [{"pointer":"/params/workshopId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listTomWorkshopItems GET /api/v1/transformations/{transformationId}/tom-workshops/{workshopId}/items -> 400 [{"pointer":"/params/workshopId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getDecision GET /api/v1/decisions/{decisionId} -> 400 [{"pointer":"/params/decisionId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listGates GET /api/v1/transformations/{transformationId}/gates -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getGate GET /api/v1/transformations/{transformationId}/gates/{gateCode} -> 400 [{"pointer":"/params/gateCode","code":"validation.invalid_value","message":"Invalid option: expected one of \"G1\"|\"G2\"|\"G3\"|\"G4\"|\"G5\"|\"G6\""}] declares400=true
+QA-R6 [ar] R6-05 listGateSubmissions GET /api/v1/transformations/{transformationId}/gates/{gateCode}/submissions -> 400 [{"pointer":"/params/gateCode","code":"validation.invalid_value","message":"Invalid option: expected one of \"G1\"|\"G2\"|\"G3\"|\"G4\"|\"G5\"|\"G6\""}] declares400=true
+QA-R6 [ar] R6-05 getGateSubmission GET /api/v1/transformations/{transformationId}/gates/{gateCode}/submissions/{submissionNo} -> 400 [{"pointer":"/params/submissionNo","code":"validation.invalid_type","message":"Invalid input: expected number, received NaN"}] declares400=true
+QA-R6 [ar] R6-05 downloadEvidenceContent GET /api/v1/transformations/{transformationId}/evidence/{evidenceId}/content -> 400 [{"pointer":"/params/evidenceId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listEvidenceLinks GET /api/v1/transformations/{transformationId}/evidence-links -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listTransformationTeam GET /api/v1/transformations/{transformationId}/scoped-assignments -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+  ✓  10 [chromium-ar] › e2e/dg2-qa-nul-r6.spec.ts:264:1 › R6-05 contract: every GET-by-id with a malformed last path parameter is the declared 400 at /params/<name> (377ms)
+
+  10 passed (17.6s)
+
+To open last HTML report run:
+[36m[39m
+[36m  npx playwright show-report[39m
+[36m[39m
+exit 0  end 2026-10-06T12:00:59Z
