@@ -21,7 +21,7 @@
 // is the source's own example list ("launch", "implement", "deliver", with their inflections); the Arabic equivalents
 // are a PROVISIONAL rendering that needs business-owner review.
 import type { DbOrTx } from "@mth/db";
-import type { GoodOutcomeResult } from "@mth/shared/schemas";
+import { hasText, type GoodOutcomeResult } from "@mth/shared/schemas";
 
 /** One catalogue criterion, as seeded (code, ordinal, evaluation kind). */
 export interface GoodOutcomeCriterionDef {
@@ -111,7 +111,7 @@ const CRITERION_EVALUATORS: ReadonlyMap<string, (i: GoodOutcomeInputs) => Verdic
   [
     "causal_chain",
     (i: GoodOutcomeInputs): Verdict =>
-      i.causalChain !== null && i.causalChain.trim().length > 0
+      hasText(i.causalChain)
         ? pass("A causal chain is recorded.")
         : unknown("Not yet assessed: no causal chain is recorded."),
   ],

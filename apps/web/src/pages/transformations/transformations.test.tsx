@@ -583,17 +583,30 @@ describe("effective permissions refresh after create (F-DG1-210)", () => {
     SETTLED_TEST_TIMEOUT_MS,
   );
 
+  // F-DG2-143: this test took ~3.2 s against vitest's 5 s default. The time was not the assertion: useMeQuery retries
+  // a 5xx twice and TanStack Query's default back-off waited 1 s + 2 s in real time. The retries now run with no delay
+  // (`retryDelayMs: 0`); the same three failing /me reads still happen (asserted below) and the create page still
+  // races them against ME_REFRESH_TIMEOUT_MS. The explicit 30 s timeout keeps headroom under parallel load.
   it("a failed /me refresh never blocks the navigation; the UI stays fail-safe (no controls offered)", async () => {
     const { meRoute: me, create } = scriptedMe("en", "error");
-    mockApi(me, buRoute, create, detailRoute, auditEmpty);
-    const { router } = renderApp("/transformations/new", { i18n: createI18n("en") });
+    const { requests } = mockApi(me, buRoute, create, detailRoute, auditEmpty);
+    const { router } = renderApp("/transformations/new", { i18n: createI18n("en"), retryDelayMs: 0 });
     await submitCreateForm({ unit: /^Business unit/, name: /^Name/, submit: "Create transformation" });
-    // useMeQuery retries a 5xx twice with back-off (~3 s); the create page waits at most ME_REFRESH_TIMEOUT_MS.
+    // The create page waits at most ME_REFRESH_TIMEOUT_MS for the refreshed /me, then navigates anyway.
     await waitFor(() => expect(router.state.location.pathname).toBe(`/transformations/${NEW_ID}`), {
       timeout: ME_REFRESH_TIMEOUT_MS + 1_000,
     });
     await screen.findByText("Transformation created as a draft. It is not submitted or approved.", undefined, SETTLE);
+    // The refresh really failed: one read plus two retries after the POST, all 503.
+    const postAt = requests.findIndex((r) => r.method === "POST");
+    await waitFor(
+      () =>
+        expect(
+          requests.slice(postAt + 1).filter((r) => r.method === "GET" && r.url === "/api/v1/me").length,
+        ).toBeGreaterThanOrEqual(3),
+      SETTLE,
+    );
     expect(screen.queryByRole("button", { name: "Archive" })).toBeNull();
     expect(screen.queryByRole("heading", { name: "Audit trail" })).toBeNull();
-  }, 15_000);
+  }, 30_000);
 });

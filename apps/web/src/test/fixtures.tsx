@@ -216,12 +216,24 @@ export function problem(status: number, code: string, extra: Record<string, unkn
   return { status, body: { type, title: code, status, code, requestId: "req-test-1", ...extra } };
 }
 
-export function renderApp(path: string, options: { i18n?: I18n } = {}) {
+/**
+ * `retryDelayMs`: the delay between query retries. Queries that set their own `retry` policy (e.g. `useMeQuery`
+ * retries a 5xx twice) otherwise wait TanStack Query's default exponential back-off (1 s + 2 s) in real time; a test
+ * of that path can pass 0 so the same retries run immediately (F-DG2-143). Unset keeps the library default.
+ */
+export function renderApp(path: string, options: { i18n?: I18n; retryDelayMs?: number } = {}) {
   setCsrfToken(null);
   const i18n = options.i18n ?? createI18n("ar");
   const router = createMemoryRouter(routes, { initialEntries: [path] });
   const queryClient = createQueryClient();
-  queryClient.setDefaultOptions({ queries: { retry: false, staleTime: 0, refetchOnWindowFocus: false } });
+  queryClient.setDefaultOptions({
+    queries: {
+      retry: false,
+      staleTime: 0,
+      refetchOnWindowFocus: false,
+      ...(options.retryDelayMs !== undefined ? { retryDelay: options.retryDelayMs } : {}),
+    },
+  });
   const utils = render(
     <AppProviders i18n={i18n} queryClient={queryClient}>
       <RouterProvider router={router} />

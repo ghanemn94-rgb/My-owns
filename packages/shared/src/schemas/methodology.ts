@@ -4,9 +4,10 @@
 // enums shared by the other BE mirrors (codes, Warning, LinkableRecordType, the P2 list query).
 // Source text is verbatim from the playbook; Arabic is a provisional translation (ADR-0016 §2).
 import { z } from "zod";
-import { phase, timestamp, uuid, version } from "./common.ts";
+import { freeText, phase, timestamp, uuid, version } from "./common.ts";
 
-const text = (min: number, max: number) => z.string().min(min).max(max);
+// F-DG2-150: blank (whitespace-only) free text is rejected with `validation.blank`; stored exactly as entered.
+const text = freeText;
 const catalogueCode = z.string().regex(/^[a-z][a-z0-9_]{0,47}$/);
 const nullableUuid = uuid.nullable();
 

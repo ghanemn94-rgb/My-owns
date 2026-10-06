@@ -18,7 +18,9 @@ import {
 import type { MethodologyCatalogue } from "../api/types.ts";
 import { formatDateTime, formatDecimal, formatMoney, zonedLocalToUtcIso } from "./format.ts";
 import { gateLabel, gateName } from "./methodology.ts";
-import { errorMessage, pointerToField, problemKey } from "./problem.ts";
+import { charterUpdate, diagnosticItemUpdate, freeText } from "@mth/shared/schemas";
+import { issueCode } from "../components/Form.tsx";
+import { errorMessage, fieldErrorMessage, pointerToField, problemKey } from "./problem.ts";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -179,6 +181,30 @@ describe("problem translation", () => {
     expect(pointerToField("/identity/subject")).toBe("identity.subject");
     expect(pointerToField("/query/q")).toBe("q");
     expect(problemKey("validation.too_small")).toBe("problems.validation__too_small");
+  });
+});
+
+describe("blank free text (F-DG2-150): caught client-side by the shared schemas, localized in EN and AR", () => {
+  it("whitespace-only text maps to validation.blank, an empty string to required; null still clears", () => {
+    const blank = freeText(1, 20).safeParse(" \t\n ");
+    expect(blank.success).toBe(false);
+    expect(blank.error!.issues.map(issueCode)).toEqual(["validation.blank"]);
+    expect(freeText(1, 20).safeParse("").error!.issues.map(issueCode)).toEqual(["validation.required"]);
+    const charter = charterUpdate.safeParse({ inScope: "   ", changeSummary: "Synthetic" });
+    expect(charter.error!.issues.map((i) => [i.path.join("/"), issueCode(i)])).toEqual([
+      ["inScope", "validation.blank"],
+    ]);
+    expect(charterUpdate.safeParse({ inScope: null, changeSummary: "Synthetic" }).success).toBe(true);
+    expect(diagnosticItemUpdate.safeParse({ currentState: "  " }).success).toBe(false);
+    expect(diagnosticItemUpdate.safeParse({ currentState: "  kept as typed  " }).data).toEqual({
+      currentState: "  kept as typed  ",
+    });
+  });
+  it("the code has a translated message in both languages", async () => {
+    const i18n = createI18n("en");
+    expect(fieldErrorMessage(i18n.t, "validation.blank")).toBe("Enter some text; spaces alone are not a value.");
+    await i18n.changeLanguage("ar");
+    expect(fieldErrorMessage(i18n.t, "validation.blank")).toBe("أدخِل نصاً؛ المسافات وحدها ليست قيمة.");
   });
 });
 

@@ -32,6 +32,31 @@ export const code = z.string().regex(/^[A-Z0-9][A-Z0-9_-]{0,31}$/, "validation.c
 export const name = z.string().trim().min(1).max(200);
 export const reason = z.string().trim().min(3).max(1000);
 export const version = z.number().int().min(1);
+
+/**
+ * F-DG2-150: blank free text is never content. True only for a string whose trimmed length is > 0; `null`,
+ * `undefined`, "" and whitespace-only strings are all "not present". The single "is present" test for free text, shared
+ * by the API (gate readiness, charter pre-checks) and the web.
+ */
+export function hasText(value: string | null | undefined): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+/** Field-error code for a whitespace-only free-text value (F-DG2-150); localized in EN and AR by the web. */
+export const BLANK_TEXT_CODE = "validation.blank";
+
+/**
+ * Free text of `min`..`max` characters that is not blank (F-DG2-150). A whitespace-only value is rejected with
+ * `validation.blank`; an empty string still fails `min` (`too_small`) only, so a value never gets two errors. The text
+ * is stored exactly as entered (no trimming transform). Use `.nullable()` where `null` clears the field.
+ */
+export function freeText(min: number, max: number) {
+  return z
+    .string()
+    .min(min)
+    .max(max)
+    .refine((v) => v.length === 0 || v.trim().length > 0, BLANK_TEXT_CODE);
+}
 export const activeStatus = z.enum(["active", "inactive"]);
 export const userStatus = z.enum(["active", "disabled"]);
 export const phase = z.enum(PHASES);

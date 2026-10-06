@@ -215,6 +215,39 @@ describe("Diagnose", () => {
     expect(second.body).toEqual({ rootCause: "My root cause" });
   });
 
+  // F-DG2-150 (T-DG2-BE5): blank free text is never content. The form sends spaces-only input as null (it clears the
+  // field), and the shared schema rejects whitespace-only text client-side; a server 400 `validation.blank` lands on
+  // its field as a localized message in EN and AR.
+  it.each([
+    { locale: "en" as const, edit: /^Edit/, rootCause: "Root cause", save: "Save draft" },
+    { locale: "ar" as const, edit: /^تعديل/, rootCause: "السبب الجذري", save: "حفظ كمسودة" },
+  ])("a 400 validation.blank shows a localized message on its field ($locale)", async ({ locale, ...l }) => {
+    const item = diagnosticItem("financial");
+    render(
+      `/transformations/${TR_ID}/diagnose`,
+      [
+        ...base(leadGrants(), locale),
+        list("diagnostic-items", [item]),
+        route("PATCH", /\/diagnostic-items\//, () =>
+          problem(400, "validation", {
+            errors: [{ pointer: "/rootCause", code: "validation.blank", message: "validation.blank" }],
+          }),
+        ),
+      ],
+      locale,
+    );
+    const edit = await screen.findAllByRole("button", { name: l.edit });
+    fireEvent.click(edit[0]!);
+    const dialog = await screen.findByRole("dialog");
+    const field = within(dialog).getByLabelText(l.rootCause);
+    fireEvent.change(field, { target: { value: "Synthetic root cause" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: l.save }));
+    const expected = createI18n(locale).t("problems.validation__blank");
+    expect(expected).not.toBe("problems.validation__blank");
+    await waitFor(() => expect(within(dialog).getByText(expected)).toBeTruthy());
+    expect(field.getAttribute("aria-invalid")).toBe("true");
+  });
+
   it("Arabic: RTL with Arabic labels and the unquantified label", async () => {
     render(
       `/transformations/${TR_ID}/diagnose`,

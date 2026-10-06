@@ -3,11 +3,12 @@
 // Mirrors docs/api/openapi.yaml TomGap*, CapabilityHeatmapEntry*, Journey*, JourneyStep, JourneyPainPoint*,
 // TomCanvas*, TomWorkshop*, Dependency*, ActionItem*.
 import { z } from "zod";
-import { timestamp, uuid, version } from "./common.ts";
+import { freeText, timestamp, uuid, version } from "./common.ts";
 import { p2ArchiveFields, p2RecordStamps } from "./direction.ts";
 import { businessDate, decimal } from "./kpi.ts";
 
-const text = (min: number, max: number) => z.string().min(min).max(max);
+// F-DG2-150: blank (whitespace-only) free text is rejected with `validation.blank`; stored exactly as entered.
+const text = freeText;
 const nullableUuid = uuid.nullable();
 const minOne = <T extends z.ZodRawShape>(shape: T) =>
   z
@@ -78,8 +79,8 @@ export const journeyStep = z.strictObject({
   key: uuid,
   ordinal: z.number().int().min(1).max(200),
   name: text(1, 300),
-  actor: z.string().max(200).nullable().optional(),
-  handoffTo: z.string().max(200).nullable().optional(),
+  actor: freeText(0, 200).nullable().optional(),
+  handoffTo: freeText(0, 200).nullable().optional(),
   systems: z.array(text(1, 200)).max(20).optional(),
   controls: z.array(text(1, 300)).max(20).optional(),
   cycleTimeValue: cycleTimeDecimal.nullable().optional(),

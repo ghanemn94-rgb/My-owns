@@ -3,13 +3,14 @@
 // aggregates gaps, decisions, dependencies and evidence per dimension. Mirrors docs/api/openapi.yaml Decision*,
 // TomCanvasCellView, TomCanvas.
 import { z } from "zod";
-import { timestamp, uuid, version } from "./common.ts";
+import { freeText, timestamp, uuid, version } from "./common.ts";
 import { dependency, tomCanvasCell, tomGap } from "./design.ts";
 import { evidence } from "./evidence.ts";
 import { businessDate } from "./kpi.ts";
 import { tomDimension, tomDimensionCode } from "./methodology.ts";
 
-const text = (min: number, max: number) => z.string().min(min).max(max);
+// F-DG2-150: blank (whitespace-only) free text is rejected with `validation.blank`; stored exactly as entered.
+const text = freeText;
 const nullableUuid = uuid.nullable();
 
 export const DECISION_KINDS = ["design", "executive", "gate"] as const;

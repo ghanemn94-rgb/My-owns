@@ -21,6 +21,7 @@ import {
   charterUpdate,
   charterWrite,
   composeThesis,
+  hasText,
   northStarWrite,
   type Charter,
   type CharterVersion,
@@ -212,10 +213,11 @@ async function activeGuardrailsOf(db: DbOrTx, transformationId: string) {
 
 /**
  * True when the charter's Out of scope documents at least one exclusion: the trimmed text is non-empty (F-DG2-150).
- * Shared with the G1 "initial charter" criterion so the pre-check and the gate agree.
+ * Shared with the G1 "initial charter" criterion so the pre-check and the gate agree. A named alias of the shared
+ * free-text presence test `hasText` (@mth/shared), which every other free-text "is present" check uses too.
  */
 export function hasExclusions(outOfScope: string | null): boolean {
-  return outOfScope !== null && outOfScope.trim().length > 0;
+  return hasText(outOfScope);
 }
 
 /** The scope-check pre-checks (ADR-0017 §2): support, never replace, the human answer; missing data is `unknown` (except `exclusions_present`: a blank Out of scope fails). */
@@ -250,7 +252,8 @@ async function scopeCheckPrechecks(db: DbOrTx, c: CharterRow): Promise<CharterVi
     const code = d.code as CharterViewBody["scopeCheckPrechecks"][number]["code"];
     switch (d.system_precheck) {
       case "scope_items_traced":
-        if (c.in_scope === null)
+        // F-DG2-150: blank In scope is not recorded content (defense in depth; the API rejects blank text with 400).
+        if (!hasText(c.in_scope))
           return { code, result: "unknown" as const, detail: "In-scope items are not recorded yet." };
         return confirmedFindings > 0
           ? { code, result: "pass" as const, detail: `${confirmedFindings} confirmed diagnostic finding(s) exist.` }
@@ -268,7 +271,7 @@ async function scopeCheckPrechecks(db: DbOrTx, c: CharterRow): Promise<CharterVi
             };
       case "baseline_measurable": {
         if (baselines.length === 0) return { code, result: "unknown" as const, detail: "No baseline is recorded yet." };
-        const measurable = baselines.filter((b) => b.value !== null && b.source !== null && b.baseline_date !== null);
+        const measurable = baselines.filter((b) => b.value !== null && hasText(b.source) && b.baseline_date !== null);
         return measurable.length > 0
           ? { code, result: "pass" as const, detail: `${measurable.length} baseline(s) have a value, source and date.` }
           : { code, result: "attention" as const, detail: "No baseline has a value, a source and a date." };

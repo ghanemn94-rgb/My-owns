@@ -2,15 +2,15 @@
 // source roles; platform text for implementation roles; Arabic provisional), the transformation team view and the
 // non-approver team assignment body. Mirrors docs/api/openapi.yaml RoleAccountability*, TeamAssignment*.
 import { z } from "zod";
-import { reason, roleCode, timestamp, uuid, version } from "./common.ts";
+import { freeText, reason, roleCode, timestamp, uuid, version } from "./common.ts";
 import { roleAssignment } from "./access.ts";
 
 export const roleAccountability = z.strictObject({
   roleId: uuid,
-  accountabilityEn: z.string().min(1).max(1000),
-  accountabilityAr: z.string().min(1).max(1000),
+  accountabilityEn: freeText(1, 1000),
+  accountabilityAr: freeText(1, 1000),
   isSourceText: z.boolean(),
-  sourceRef: z.string().min(1).max(50),
+  sourceRef: freeText(1, 50),
   version,
   createdAt: timestamp,
   createdBy: uuid.nullable(),

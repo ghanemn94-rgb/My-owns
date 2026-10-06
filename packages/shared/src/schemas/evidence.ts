@@ -3,12 +3,13 @@
 // criterion; a bare filename or an inaccessible link never does (REQ-S13-012). Mirrors docs/api/openapi.yaml Evidence*,
 // EvidenceReview, EvidenceLink*.
 import { z } from "zod";
-import { reason, timestamp, uuid, version } from "./common.ts";
+import { freeText, reason, timestamp, uuid, version } from "./common.ts";
 import { p2ArchiveFields, p2RecordStamps } from "./direction.ts";
 import { businessDate } from "./kpi.ts";
 import { linkableRecordType } from "./methodology.ts";
 
-const text = (min: number, max: number) => z.string().min(min).max(max);
+// F-DG2-150: blank (whitespace-only) free text is rejected with `validation.blank`; stored exactly as entered.
+const text = freeText;
 const nullableUuid = uuid.nullable();
 
 export const EVIDENCE_KINDS = ["file", "note", "external_link", "file_reference"] as const;

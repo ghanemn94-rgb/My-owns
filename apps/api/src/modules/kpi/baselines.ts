@@ -4,7 +4,7 @@
 // results from it (validatedRecordVersion); any later edit makes the validation STALE (ADR-0019 §3), so an edited
 // figure never reads as validated until Finance decides again.
 import { diffFields, sql } from "@mth/db";
-import { baselineCreate, baselineUpdate, reasonRequest, validationDecision } from "@mth/shared/schemas";
+import { baselineCreate, baselineUpdate, hasText, reasonRequest, validationDecision } from "@mth/shared/schemas";
 import type { FastifyInstance } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { auditContextOf, principalOf } from "../access/index.ts";
@@ -282,7 +282,7 @@ function validationResetIfUnmeasurable(
   const value = body.value !== undefined ? body.value : current.value;
   const source = body.source !== undefined ? body.source : current.source;
   const date = body.baselineDate !== undefined ? body.baselineDate : current.baseline_date;
-  if (value !== null && source !== null && date !== null) return {};
+  if (value !== null && hasText(source) && date !== null) return {};
   return {
     validation_status: "unvalidated",
     validated_by: null,

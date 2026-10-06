@@ -206,22 +206,28 @@ describe("F-DG2-150: the exclusions pre-check fails on an empty or blank Out of 
     expect(await g1OutOfScopeMissing()).toBe(true);
   });
 
-  it("whitespace-only gives attention (and the G1 initial charter still lacks its scope out)", async () => {
+  it("whitespace-only is refused (400 validation.blank, T-DG2-BE5); nothing is written and the check still fails", async () => {
     const blank = await call(api.app, "PATCH", C, {
       session: q.lead.session,
       headers: ifm(1),
       body: { outOfScope: "   \n\t " },
     });
-    expect(blank.status).toBe(200);
-    expect(blank.body.charter.version).toBe(2);
-    expect(exclusions(blank.body)).toMatchObject({ result: "attention", detail: FAIL_DETAIL });
+    expect([blank.status, blank.body.errors[0].pointer, blank.body.errors[0].code]).toEqual([
+      400,
+      "/outOfScope",
+      "validation.blank",
+    ]);
+    // Nothing was written: still version 1, still no exclusion (legacy blank data: blank-text.test.ts).
+    const view = await call(api.app, "GET", C, { session: q.lead.session });
+    expect(view.body.charter.version).toBe(1);
+    expect(exclusions(view.body)).toMatchObject({ result: "attention", detail: FAIL_DETAIL });
     expect(await g1OutOfScopeMissing()).toBe(true);
   });
 
   it("a real exclusion text gives pass", async () => {
     const real = await call(api.app, "PATCH", C, {
       session: q.lead.session,
-      headers: ifm(2),
+      headers: ifm(1),
       body: { outOfScope: "Enterprise fixed-line products (synthetic)" },
     });
     expect(real.status).toBe(200);
@@ -233,17 +239,17 @@ describe("F-DG2-150: the exclusions pre-check fails on an empty or blank Out of 
   it("clearing it again (PATCH with If-Match) gives attention; a stale If-Match is 409 and changes nothing", async () => {
     const stale = await call(api.app, "PATCH", C, {
       session: q.lead.session,
+      headers: ifm(1),
+      body: { outOfScope: null },
+    });
+    expect([stale.status, stale.body.currentVersion]).toEqual([409, 2]);
+    const cleared = await call(api.app, "PATCH", C, {
+      session: q.lead.session,
       headers: ifm(2),
       body: { outOfScope: null },
     });
-    expect([stale.status, stale.body.currentVersion]).toEqual([409, 3]);
-    const cleared = await call(api.app, "PATCH", C, {
-      session: q.lead.session,
-      headers: ifm(3),
-      body: { outOfScope: null },
-    });
     expect(cleared.status).toBe(200);
-    expect(cleared.body.charter.version).toBe(4);
+    expect(cleared.body.charter.version).toBe(3);
     expect(cleared.body.charter.outOfScope).toBeNull();
     expect(exclusions(cleared.body)).toEqual({
       code: "exclusions_documented",
@@ -256,7 +262,6 @@ describe("F-DG2-150: the exclusions pre-check fails on an empty or blank Out of 
       ["charter.create", 1],
       ["charter.update", 2],
       ["charter.update", 3],
-      ["charter.update", 4],
     ]);
   });
 });

@@ -3,7 +3,7 @@
 // Mirrors docs/api/openapi.yaml GateInstance, GateSubmission*, GateDecision*, GateCriterionEvaluation, GateView,
 // GateList, GateApproverConfig.
 import { z } from "zod";
-import { roleCode, timestamp, uuid, version } from "./common.ts";
+import { freeText, roleCode, timestamp, uuid, version } from "./common.ts";
 import { businessDate } from "./kpi.ts";
 import { gateDefinition, warning } from "./methodology.ts";
 
@@ -50,7 +50,7 @@ export const gateSubmission = z.strictObject({
   status: z.enum(["pending", "superseded", "decided", "withdrawn"]),
   submittedBy: uuid,
   submittedAt: timestamp,
-  submissionNote: z.string().min(1).max(4000).nullable(),
+  submissionNote: freeText(1, 4000).nullable(),
   approverRoleCode: z.string(),
   approverUserId: nullableUuid,
   dueDate: businessDate.nullable(),
@@ -92,8 +92,8 @@ export const gateDecision = z.strictObject({
   gateCode: z.string(),
   submissionNo: z.number().int().min(1),
   outcome: z.enum(GATE_OUTCOMES),
-  rationale: z.string().min(3).max(8000),
-  comments: z.string().min(1).max(8000).nullable(),
+  rationale: freeText(3, 8000),
+  comments: freeText(1, 8000).nullable(),
   decidedBy: uuid,
   onBehalfOfUserId: nullableUuid,
   decidedAt: timestamp,
@@ -138,13 +138,13 @@ export const gateApproverConfig = z.strictObject({
   approverUserId: nullableUuid.optional(),
 });
 export const gateSubmissionCreate = z.strictObject({
-  submissionNote: z.string().min(1).max(4000).optional(),
+  submissionNote: freeText(1, 4000).optional(),
   dueDate: businessDate.optional(),
 });
 export const gateDecisionCreate = z.strictObject({
   submissionNo: z.number().int().min(1),
   outcome: z.enum(GATE_OUTCOMES),
-  rationale: z.string().min(3).max(8000),
-  comments: z.string().min(1).max(8000).optional(),
+  rationale: freeText(3, 8000),
+  comments: freeText(1, 8000).optional(),
   onBehalfOfUserId: uuid.optional(),
 });

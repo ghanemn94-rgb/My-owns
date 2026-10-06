@@ -68,6 +68,12 @@ The charter is a first-class record. Every saved change must create a new versio
 
   **`exclusions_present` on a saved charter (F-DG2-150).** An empty, null or whitespace-only Out of scope is a definite, failing answer to "Are explicit exclusions documented?", not missing data: it gives `attention` ("No explicit exclusions (out of scope) are documented; this check fails until Out of scope is completed."), never `unknown` and never `pass` (B0041; REQ-PB-031 acceptance A01, "an empty Out of scope field makes 'Are explicit exclusions documented?' fail"). It gives `pass` only when the trimmed text is non-empty. The G1 criterion `g1.initial_charter` uses the same rule (`hasExclusions`), so a blank Out of scope is also reported there as the missing "scope out" part.
 
+  **Blank free text is rejected; `null` clears (F-DG2-150, T-DG2-BE5).** This applies to all P2 free text, not only Out of scope. A whitespace-only value is not content.
+  - **Validation.** Every P2 shared schema builds its free-text fields with `freeText(min, max)` (`@mth/shared`, `schemas/common.ts`). It rejects a string whose trimmed length is 0 with a 400 validation problem: code `validation.blank`, plus a JSON pointer to the field. Nothing is written and no audit event is recorded.
+  - **Storage.** An accepted value is stored exactly as entered; there is no trimming transform. A nullable field still accepts `null`, which clears it.
+  - **Readiness.** Every free-text "is present" test in G1-G3 readiness, the charter pre-checks, KPI baseline measurability and the good outcome test uses the shared `hasText` helper (trimmed and non-empty), never `!== null`. `hasExclusions` is a named alias of it. A blank thesis part is incomplete (`composeThesis`). This is defense in depth for blank text that reaches the database around the API.
+  - **Web.** Forms send blank input as `null`, and the shared schemas reject whitespace client-side. A server `validation.blank` is shown on its field in EN and AR.
+
 ### 3. North Star
 
 - **`north_star` rows:** status `current`/`superseded`. A partial unique index allows exactly one current row per transformation.

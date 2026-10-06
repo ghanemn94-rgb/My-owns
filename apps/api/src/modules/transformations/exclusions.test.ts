@@ -3,6 +3,7 @@
 // "initial charter" criterion lacks its scope out; only a non-blank text counts. The full pre-check is exercised
 // against PostgreSQL in test/integration/registers.test.ts.
 import { describe, expect, it } from "vitest";
+import { hasText } from "@mth/shared/schemas";
 import { hasExclusions } from "./charter.ts";
 
 describe("hasExclusions (F-DG2-150)", () => {
@@ -17,5 +18,11 @@ describe("hasExclusions (F-DG2-150)", () => {
 
   it.each([["Enterprise fixed-line products"], ["  B2B roaming  "], ["-"]])("%j documents an exclusion", (value) => {
     expect(hasExclusions(value)).toBe(true);
+  });
+});
+
+describe("one shared free-text presence test (T-DG2-BE5)", () => {
+  it.each([null, "", "   ", "\t\n", " ", "x", "  B2B  "])("hasExclusions(%j) equals hasText", (value) => {
+    expect(hasExclusions(value)).toBe(hasText(value));
   });
 });

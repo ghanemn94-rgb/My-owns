@@ -2,11 +2,12 @@
 // findings by workstream, workstream outputs (REQ-PB-023). Mirrors docs/api/openapi.yaml DiagnosticItem*,
 // DiagnosticFinding*, WorkstreamOutput*.
 import { z } from "zod";
-import { currency, uuid } from "./common.ts";
+import { currency, freeText, uuid } from "./common.ts";
 import { p2ArchiveFields, p2RecordStamps } from "./direction.ts";
 import { decimal, moneyDecimal } from "./kpi.ts";
 
-const text = (min: number, max: number) => z.string().min(min).max(max);
+// F-DG2-150: blank (whitespace-only) free text is rejected with `validation.blank`; stored exactly as entered.
+const text = freeText;
 const nullableUuid = uuid.nullable();
 const minOne = <T extends z.ZodRawShape>(shape: T) =>
   z

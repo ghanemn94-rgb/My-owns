@@ -10,7 +10,13 @@
 //    (g3.design_decisions: "no open design decision without an owner").
 // These are BUSINESS gates inside the product; nothing here reads or writes the engineering gates DG0-DG7.
 import type { DbOrTx } from "@mth/db";
-import { composeThesis, type GateCriterionEvaluation, type GateDefinition, type Warning } from "@mth/shared/schemas";
+import {
+  composeThesis,
+  hasText,
+  type GateCriterionEvaluation,
+  type GateDefinition,
+  type Warning,
+} from "@mth/shared/schemas";
 import { loadVerifiedEvidenceFacts, type EvidenceFact } from "../evidence/index.ts";
 import { loadKpiGateFacts, type KpiGateFacts } from "../kpi/index.ts";
 import { findCharter, findCurrentNorthStar, hasExclusions, loadGoodOutcomeFacts } from "../transformations/index.ts";
@@ -144,9 +150,10 @@ export async function loadGateFacts(db: DbOrTx, transformationId: string): Promi
     seededDiagnosticItems: items.map((i) => ({
       id: i.id,
       dimensionCode: i.dimension_code,
-      hasCurrentState: i.current_state !== null,
-      hasRootCause: i.root_cause !== null,
-      hasImpact: i.impact_amount !== null || i.impact_kpi_definition_id !== null || i.impact_text !== null,
+      // F-DG2-150: every free-text "is present" test is `hasText` (trimmed, non-empty); blank text is not content.
+      hasCurrentState: hasText(i.current_state),
+      hasRootCause: hasText(i.root_cause),
+      hasImpact: i.impact_amount !== null || i.impact_kpi_definition_id !== null || hasText(i.impact_text),
       hasConfidence: i.confidence !== null,
       baselineId: i.baseline_id,
     })),
@@ -156,11 +163,11 @@ export async function loadGateFacts(db: DbOrTx, transformationId: string): Promi
       ? {
           id: charter.id,
           version: charter.version,
-          hasCaseForChange: charter.case_for_change !== null,
-          hasName: charter.transformation_name !== null,
+          hasCaseForChange: hasText(charter.case_for_change),
+          hasName: hasText(charter.transformation_name),
           hasSponsor: charter.executive_sponsor_user_id !== null,
           hasLead: charter.transformation_lead_user_id !== null,
-          hasInScope: charter.in_scope !== null,
+          hasInScope: hasText(charter.in_scope),
           // F-DG2-150: a blank Out of scope documents no exclusion (same rule as the `exclusions_present` pre-check).
           hasOutOfScope: hasExclusions(charter.out_of_scope),
           hasBaselineDate: charter.baseline_date !== null,

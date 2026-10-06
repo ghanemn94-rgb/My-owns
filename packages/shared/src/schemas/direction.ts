@@ -2,9 +2,10 @@
 // strategic guardrails and the outcome tree. Mirrors docs/api/openapi.yaml NorthStar*, StrategicGuardrail*, Outcome*,
 // GoodOutcomeResult.
 import { z } from "zod";
-import { reason, timestamp, uuid, version } from "./common.ts";
+import { freeText, reason, timestamp, uuid, version } from "./common.ts";
 
-const text = (min: number, max: number) => z.string().min(min).max(max);
+// F-DG2-150: blank (whitespace-only) free text is rejected with `validation.blank`; stored exactly as entered.
+const text = freeText;
 const nullableUuid = uuid.nullable();
 const minOne = <T extends z.ZodRawShape>(shape: T) =>
   z

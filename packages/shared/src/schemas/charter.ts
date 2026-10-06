@@ -2,12 +2,13 @@
 // scope sanity checks B0038-B0043), its immutable version snapshots and the computed view. Mirrors docs/api/openapi.yaml
 // Charter, CharterVersion, CharterView, CharterWrite, CharterUpdate, ScopeCheckPrecheck.
 import { z } from "zod";
-import { timestamp, uuid, version } from "./common.ts";
+import { freeText, timestamp, uuid, version } from "./common.ts";
 import { northStar, outcome, strategicGuardrail } from "./direction.ts";
 import { businessDate } from "./kpi.ts";
 import { warning } from "./methodology.ts";
 
-const text = (min: number, max: number) => z.string().min(min).max(max).nullable();
+// F-DG2-150: blank (whitespace-only) free text is rejected with `validation.blank`; `null` clears the field.
+const text = (min: number, max: number) => freeText(min, max).nullable();
 const nullableUuid = uuid.nullable();
 const scopeAnswer = z.enum(["yes", "partly", "no"]).nullable();
 
@@ -88,7 +89,7 @@ export const charterWrite = z
   .partial()
   .refine(horizonPair, { message: "validation.target_horizon_pair", path: ["targetHorizonUnit"] });
 export const charterUpdate = z
-  .strictObject({ ...charterFields, changeSummary: z.string().min(1).max(1000) })
+  .strictObject({ ...charterFields, changeSummary: freeText(1, 1000) })
   .partial()
   .refine((v) => Object.keys(v).length >= 1, "validation.min_properties");
 

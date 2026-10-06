@@ -11,7 +11,7 @@
 //  - kpiDefinitions[].hasUnit is false only for unit kind "other" without a unit label;
 //  - hasValue / hasTarget are false for Unknown (NULL), never for a real zero.
 import type { DbOrTx } from "@mth/db";
-import { validationState } from "@mth/shared/schemas";
+import { hasText, validationState } from "@mth/shared/schemas";
 
 export interface KpiGateFacts {
   baselines: {
@@ -99,7 +99,7 @@ export async function loadKpiGateFacts(db: DbOrTx, transformationId: string): Pr
     baselines: baselines.map((b) => ({
       id: b.id,
       hasValue: b.value !== null,
-      hasSource: b.source !== null,
+      hasSource: hasText(b.source), // F-DG2-150: a blank source is not a source
       hasDate: b.baseline_date !== null,
       validationStatus: validationState({
         validationStatus: b.validation_status,

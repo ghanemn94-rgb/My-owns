@@ -10,7 +10,7 @@
 // the one both the API and the web import (`@mth/shared/schemas`).
 import { z } from "zod";
 import { checkDecimal, DECIMAL_PATTERN, MEASURE_COLUMN, MONEY_COLUMN, type DecimalColumn } from "../value.ts";
-import { currency, timestamp, uuid, version } from "./common.ts";
+import { currency, freeText, timestamp, uuid, version } from "./common.ts";
 
 export * from "../value.ts";
 
@@ -45,7 +45,8 @@ export function isCalendarDate(value: string): boolean {
 export const businessDate = z.string().refine(isCalendarDate, "validation.business_date");
 
 const nullableUuid = uuid.nullable();
-const text = (min: number, max: number) => z.string().min(min).max(max);
+// F-DG2-150: blank (whitespace-only) free text is rejected with `validation.blank`; stored exactly as entered.
+const text = freeText;
 const archiveReason = text(3, 1000).nullable();
 const atLeastOne = <T extends z.ZodRawShape>(shape: T) =>
   z.strictObject(shape).refine((v) => Object.keys(v).length >= 1, "validation.min_properties");
