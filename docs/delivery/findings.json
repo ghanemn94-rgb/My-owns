@@ -9925,7 +9925,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-6/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-06T12:05:00Z",
@@ -9936,10 +9936,107 @@
           "at": "2026-10-06T14:38:56Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at cf9c65310eb275413a80d3a2585b32faaddc3555"
+        },
+        {
+          "at": "2026-10-06T14:58:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "cf9c65310eb275413a80d3a2585b32faaddc3555",
-      "fix_summary": "BE11 cf9c653: hasInvalidCharacter also matches lone UTF-16 surrogates (/\\p{Cs}/u; emoji pairs pass). As a result: (1) the central request check and the shared schemas refuse them with 400 validation.invalid_character at the field pointer, journey step names included; (2) identityClaimsStorable makes a lone surrogate in iss or sub follow the declared callback contract, 302 /login?error=token_invalid plus a session.login_failed audit row, with no user, identity or session created; (3) display-name claims containing an invalid character fall back to the next claim. Stored truncations now cut on code-point boundaries. BE12 951bbe7: router- and connection-level errors also answer the declared problem+json 400. Negative controls fail on the old code."
+      "fix_summary": "BE11 cf9c653: hasInvalidCharacter also matches lone UTF-16 surrogates (/\\p{Cs}/u; emoji pairs pass). As a result: (1) the central request check and the shared schemas refuse them with 400 validation.invalid_character at the field pointer, journey step names included; (2) identityClaimsStorable makes a lone surrogate in iss or sub follow the declared callback contract, 302 /login?error=token_invalid plus a session.login_failed audit row, with no user, identity or session created; (3) display-name claims containing an invalid character fall back to the next claim. Stored truncations now cut on code-point boundaries. BE12 951bbe7: router- and connection-level errors also answer the declared problem+json 400. Negative controls fail on the old code.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG2-T-DG2-REV-SEC-R7-code-security-reviewer-20261006T143950Z-9950ffc7",
+          "session_id": "9950ffc7-8c71-4f4f-bdd4-009c10e8f667"
+        },
+        "at": "2026-10-06T14:58:00Z",
+        "result": "PASS",
+        "evidence": [
+          "packages/shared/src/schemas/common.ts",
+          "apps/api/src/modules/identity/oidc.ts",
+          "apps/api/src/modules/identity/routes.ts",
+          "apps/api/src/modules/platform/validation.ts",
+          "apps/api/test/integration/oidc.test.ts",
+          "apps/api/test/integration/invalid-character.test.ts",
+          "docs/delivery/test-evidence/DG2/code-security/round-6/probes/zz-sec-r6-surrogate.test.ts",
+          "docs/delivery/test-evidence/DG2/code-security/round-7/probes/zz-sec-r7-probe.test.ts",
+          "docs/delivery/test-evidence/DG2/code-security/round-7/probe-run1-lang-unset.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-7/probe-run2-lang-c-utf8.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-7/truncate-text-edges.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-7/probes/README.md"
+        ],
+        "note": "Verified on candidate sha256:ede1a9362bb276ce620e440bf9f6a599f6695d395b8e495eaefec30107b016de (source 90439483, 532 files), recomputed in a disposable clone, against disposable PostgreSQL 16 clusters with LANG unset (SQL_ASCII) and LANG=C.UTF-8 (UTF8).\n(1) My round-6 repro zz-sec-r6-surrogate.test.ts, rerun unchanged, now passes 3/3 in both runs:\n- JIT sub 'r6s-jit-\\ud800' and bind sub 'r6s-bind-\\udfff' each get the declared 302 /login?error=token_invalid; the harness contract check reports 'declared'. Each leaves exactly one session.login_failed row ('issuer or subject cannot be stored'), no identity and no session, and the login cookie is cleared.\n- A journey step name with \\ud800 is now 400 validation.invalid_character at /steps/0/name, no longer validation.format at ''.\n(2) Code. hasInvalidCharacter (packages/shared/src/schemas/common.ts) = NUL || /\\p{Cs}/u. The central preHandler check (findInvalidCharacter over params, query, body values and keys), freeText/name/reason and the OIDC checks all use it. The callback remains the only route exempt from the central check. identityClaimsStorable also refuses an empty iss or sub, or one too long in code points (512/255, matching the char_length CHECKs).\nThe new try/catch around resolveOidcUser maps only SQLSTATE class 22 and 23514 to an audited token_invalid and rethrows everything else, so it does not mask other errors. truncateText is right at every boundary: 182 exhaustive prefix lengths plus a case table (truncate-text-edges.log). The BE11 sweep (assignments, sessions, gates, criteria, relay) only swaps .slice for truncateText. The evidence X-File-Name refine is additive.\n(3) Adversarial probe zz-sec-r7-probe.test.ts, both runs:\n- Claims (A1-A5): a sub of 255 astral code points is stored verbatim; 256 is an audited token_invalid. name, preferred_username and email that all carry lone surrogates give a generated display name and a null email and email_at_binding. A verified email with a trailing lone surrogate does not bind the look-alike pre-provisioned user. CESU-8 or invalid percent bytes in state, code, error or a query key always give a declared 302.\n- Headers (C1-C2): Latin-1 decoding means no header can hold a surrogate. A User-Agent with bytes ED A0 80 plus UTF-8 Arabic is stored as its exact, well-formed Latin-1 reading. A bad X-Request-Id is never reflected.\n- Path (D1-D2): a CESU-8 path is a 400 problem with the routed security headers and no echo, and writes nothing.\n- audit_event (E1): user_identity, app_user, session and audit_event contain no U+FFFD in either database.\nThe one residual found, raw ill-formed UTF-8 BYTES in a JSON body (undeclared 500 with Content-Length; U+FFFD stored when chunked), has a different root cause (Fastify body decoding plus an unmapped FST_ERR_CTP_INVALID_CONTENT_LENGTH). It is raised separately as F-DG2-290 (Low). This finding's scope and stated remedy, lone UTF-16 surrogates in strings and in the OIDC iss and sub, are fully fixed."
+      }
+    },
+    {
+      "id": "F-DG2-290",
+      "stage_id": "DG2",
+      "requirement": "REQ-DLV-034",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "A JSON request body with invalid UTF-8 bytes gets an undeclared 500 internal, before authentication, when it has a Content-Length; sent chunked, it is silently stored and audited as U+FFFD",
+      "reproduction": "Fastify 5.6.1 rawBody (node_modules fastify/lib/contentTypeParser.js:222-290) reads a JSON body with payload.setEncoding('utf8'). Each invalid UTF-8 sequence becomes U+FFFD, which is 3 bytes, so the decoded byte count differs from Content-Length. Fastify then raises FST_ERR_CTP_INVALID_CONTENT_LENGTH (statusCode 400), shown by fastify-errcode.log. apps/api/src/modules/platform/hooks.ts mapError (lines 54-80) has no case for that code, so setErrorHandler (lines 142-149) logs 'unhandled error' at error level and answers 500 internal. Body parsing runs before the preValidation authentication hook (apps/api/src/modules/identity/routes.ts:120), so no session is needed. Probe: disposable clone at 90439483, disposable PostgreSQL 16, zz-sec-r7-probe.test.ts part B, identical results with LANG unset (probe-run1-lang-unset.log) and LANG=C.UTF-8 (probe-run2-lang-c-utf8.log). (B1) POST /api/v1/transformations/{id}/charter as the Transformation Lead, body {\"transformationName\":\"Synthetic\",\"outOfScope\":\"Synthetic<bytes> text\"}: the control byte 0x41 gives 201; bytes ED A0 80 (CESU-8 lone surrogate), FF or C3 each give 500 {type: urn:mth:problem:internal, code: internal, requestId}. Nothing is stored or audited. (B2) The same body over a real socket with no cookie and no CSRF token: the control gives 401; byte FF gives 500 internal, not 401. (B3) The same body sent with Transfer-Encoding: chunked (no Content-Length), authenticated: 201, charter.out_of_scope is stored as 'Synthetic\\uFFFD text', and the charter.create audit_event changes holds U+FFFD. Every operation with a JSON body is affected, because the parser and error mapping are shared.",
+      "expected": "Every operation's contract is honoured for every request body. A body that is not valid UTF-8 (RFC 8259 §8.1) is refused with the declared 400 ValidationError, as invalid JSON already is (validation.json via FST_ERR_CTP_INVALID_JSON_BODY), whatever the framing. The text is never silently rewritten to U+FFFD: that is the same faithfulness rule F-DG2-260 applied to lone surrogates in JSON escapes. One fix: register the application/json parser with parseAs 'buffer' and decode with new TextDecoder('utf-8', { fatal: true }), mapping a decode failure to 400 (e.g. validation.json or validation.encoding). In addition, map FST_ERR_CTP_INVALID_CONTENT_LENGTH to a 400 problem in mapError. Add an integration case with a Content-Length body and a chunked body, unauthenticated and authenticated.",
+      "actual": "Undeclared 500 internal for any client that sends ill-formed UTF-8 with a Content-Length, including an unauthenticated one, with an error-level 'unhandled error' log entry each time. With chunked framing, the request is accepted and the replaced text is stored and audited. Integrity and confidentiality hold otherwise: on the 500 path nothing is written, the body carries only a requestId, and the global rate limiter (onRequest) still applies. Browsers' fetch/XHR always send well-formed UTF-8, so the trigger is a non-browser client. By code inspection the behaviour predates this round: neither 51a692b1 nor 90439483 maps the code, and the parser is the framework default. It is not a regression of BE11/BE12.",
+      "evidence": [
+        "apps/api/src/modules/platform/hooks.ts",
+        "apps/api/src/modules/identity/routes.ts",
+        "apps/api/src/server.ts",
+        "docs/api/openapi.yaml",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/probes/zz-sec-r7-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/probe-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/probe-run2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/probes/fastify-invalid-utf8-errcode.mjs",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/fastify-errcode.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/probes/README.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-7/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-06T14:54:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer, DG2 round 7, during the assigned adversarial probe for strings that are not well-formed. This is the raw-byte counterpart of F-DG2-260 (lone surrogates in JSON escapes, now verified fixed). Low and non-mandatory, the same rating as F-DG2-231 (an undeclared 500 for NUL): it breaks the contract and lands in the error log, but there is no integrity, authorization or confidentiality impact. It is rate-limited and needs a non-browser client. It does not block the round."
+        }
+      ]
+    },
+    {
+      "id": "F-DG2-310",
+      "stage_id": "DG2",
+      "requirement": "REQ-DLV-034",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Disposable-PostgreSQL test harnesses pick their ports inside the Linux ephemeral range (32768-60999), so a run sporadically fails to start with EADDRINUSE when a just-closed client socket in TIME_WAIT holds that port",
+      "reproduction": "Clone @90439483, node v24.21.0. Sequential full integration runs through tests/qa/support/with-pg.sh with QA_PG_PORT in the 55xxx/56xxx range. 2 of 12 full-project attempts never started: 10-integration-unset-run2.log (port 55172) and 10-integration-cutf8-load-attempt1.log (port 56402). Both show postgres 'could not bind IPv4 address \"127.0.0.1\": Address already in use' -> 'BLOCKED: disposable PostgreSQL did not start', exit 3, and no listener was present on the port moments later. Mechanism reproduced in isolation (11-port-collision-repro.py/.log): ip_local_port_range is 32768-60999; a client socket that closes first leaves TIME_WAIT on its ephemeral port, and a later bind+listen on that port, even with SO_REUSEADDR as postgres uses, fails with EADDRINUSE. The default ports of every disposable-cluster harness are inside that range: apps/web/e2e/support/with-stack.sh 54331, deploy/scripts/clean-start-local.sh 54340, tests/qa/support/with-pg.sh 54351, e2e/support/qa-stack.sh 54361. The previous run's many pool and client connections to 127.0.0.1 consume ephemeral ports right next to the next run's port choice. Reruns on the same suite with other ports (2xxxx) passed 531/531.",
+      "expected": "A disposable test cluster starts deterministically. Its port is outside the kernel's ephemeral range (for example below 32768), or is reserved, or is retried or chosen free at bind time, so an unrelated client TIME_WAIT cannot make a gate run fail at setup.",
+      "actual": "Sporadic exit 3 'disposable PostgreSQL did not start' (EADDRINUSE) with no product cause. It fails closed (BLOCKED, never a silent pass), so no result is falsified. It does produce unexplained red runs of the kind D-067 records. This mechanism does NOT explain the orchestrator's D-067 symptom (vitest ran, one file failed at setup, 11 skipped), because a bind failure stops before vitest starts. That symptom did not recur in 24 runs containing the two candidate files here (10 full runs, 5 per locale incl. one under CPU load each; 12 targeted loops, 6 per locale; 2 runs with the QA suites), all green with 0 skipped.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-7/10-integration-unset-run2.log",
+        "docs/delivery/test-evidence/DG2/qa/round-7/10-integration-cutf8-load-attempt1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-7/11-port-collision-repro.log",
+        "docs/delivery/test-evidence/DG2/qa/round-7/11-port-collision-repro.py",
+        "docs/delivery/test-evidence/DG2/qa/round-7/10-integration-determinism-summary.log",
+        "tests/qa/support/with-pg.sh",
+        "apps/web/e2e/support/with-stack.sh",
+        "e2e/support/qa-stack.sh",
+        "deploy/scripts/clean-start-local.sh"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG2/round-7/qa-verifier.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-06T15:45:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG2 round 7 (T-DG2-REV-QA-R7) because the assignment requires every failed run to be explained and raised. Low and non-mandatory: test-tooling reliability only, no product code involved, and it fails closed. Two of the four harnesses (tests/qa/support/with-pg.sh, e2e/support/qa-stack.sh) are qa-verifier's own; owner devops-engineer as the stack-tooling owner, so qa-verifier does not verify a fix to its own files alone."
+        }
+      ]
     }
   ]
 }

@@ -820,7 +820,7 @@
       "id": "DG2",
       "stage": "P2",
       "name": "Diagnose define and design",
-      "state": "REVIEWING",
+      "state": "FIXING",
       "depends_on": [
         "DG1"
       ],
@@ -1005,6 +1005,11 @@
           "state": "REVIEWING",
           "at": "2026-10-06T15:05:00Z",
           "note": "Round-7 repairs integrated (D-067): BE11 (F-260, lone surrogates refused like NUL; code-point-safe truncation) and BE12 (router- and connection-level errors answer the declared problem+json 400 with the security headers). 21 findings CLOSED_VERIFIED, 1 FIXED_PENDING_VERIFICATION, 0 OPEN. Orchestrator verification green in both locale settings, on the second full run. Candidate frozen as ede1a936 for gate review round 7."
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-10-06T16:15:00Z",
+          "note": "Round 7 on candidate ede1a936: all three verdicts PASS. code-security closed F-DG2-260. domain raised no findings (16 checks). qa raised one finding with all 32 checks PASS: integration ran 5 times per locale, and the D-067 symptom did not recur in 24 runs of the candidate files. Two new Low, non-mandatory findings: F-DG2-290 (code-security: a JSON body with invalid UTF-8 bytes gives an undeclared 500 with Content-Length, or is stored as U+FFFD when chunked; pre-existing) and F-DG2-310 (qa: disposable-cluster harness ports lie inside the Linux ephemeral range, so runs sporadically fail closed with EADDRINUSE from TIME_WAIT). 22 findings CLOSED_VERIFIED, 2 OPEN. Round-8 repairs run in sequence: devops-engineer T-DG2-DEVOPS3 (F-310: ports outside the ephemeral range plus retry), then backend-workflow-engineer T-DG2-BE13 (F-290: strict UTF-8 decoding of bodies in any framing, plus query/cookie/header sweep)."
         }
       ]
     },
