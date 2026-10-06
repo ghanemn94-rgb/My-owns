@@ -127,4 +127,5 @@ Docker daemon. `verify-stack.sh` prints them when run on a Docker host.
 | `migrate` exited 1 with `checksum` | An applied migration file differs from this build. Never edit applied migrations; restore from backup and add a corrective migration (ADR-0003) |
 | api exits 78 | Invalid configuration: the message names the variable (never its value) |
 | `/readyz` 503 `migrations: pending` | `migrate` has not run against this database |
+| `mth-db: the database must use UTF8 encoding (found SQL_ASCII)`, or `/readyz` 503 `database: fail` with that log line | The database was created without `ENCODING 'UTF8'` (for example by an `initdb` run with no `LANG`/`LC_*`). The encoding cannot be changed in place: re-create it with `CREATE DATABASE mth OWNER mth_owner ENCODING 'UTF8' TEMPLATE template0` (ADR-0003 "Database encoding") |
 | Login redirects to `/login?error=idp_unavailable` | The API cannot reach `OIDC_ISSUER_URL` (discovery is lazy and retried; the API keeps running) |

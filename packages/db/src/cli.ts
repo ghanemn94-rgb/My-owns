@@ -7,10 +7,13 @@
 //   mth-db seed-dev     SYNTHETIC dev-login users (refused with NODE_ENV=production or AUTH_MODE != dev)
 //
 // There is no `down`: recovery is backup/restore plus a new corrective migration (ADR-0003).
+// Every command first requires a UTF8 database (encoding.ts, T-DG2-BE9): on any other encoding it prints
+// "mth-db: the database must use UTF8 encoding (found …)" and exits 1 without changing anything.
 import { parseArgs } from "node:util";
 import { ConfigError, loadConfig } from "@mth/config";
 import { bootstrap, BootstrapError } from "./bootstrap.ts";
 import { DevSeedRefused, seedDev } from "./dev-seed.ts";
+import { assertUtf8Database, DatabaseEncodingError } from "./encoding.ts";
 import { migrate, MigrationError, migrationStatus } from "./migrate.ts";
 import { createDb, createPool } from "./pool.ts";
 
@@ -42,6 +45,8 @@ async function main(argv: string[]): Promise<number> {
 
   const pool = createPool(ownerUrl, { max: 2, applicationName: `mth-db ${command}` });
   try {
+    // Same connection path as the work below; refuses before any read or write (migrate checks inside migrate()).
+    await assertUtf8Database(pool);
     if (command === "status") {
       const client = await pool.connect();
       try {
@@ -127,7 +132,8 @@ main(process.argv.slice(2)).then(
       err instanceof ConfigError ||
       err instanceof MigrationError ||
       err instanceof BootstrapError ||
-      err instanceof DevSeedRefused
+      err instanceof DevSeedRefused ||
+      err instanceof DatabaseEncodingError
     ) {
       console.error(`mth-db: ${err.message}`);
     } else {

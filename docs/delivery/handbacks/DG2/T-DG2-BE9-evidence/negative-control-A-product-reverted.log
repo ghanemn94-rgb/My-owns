@@ -1,0 +1,223 @@
+# negative control A: product code reverted to HEAD 0466813 (cli.ts, migrate.ts, health.ts); new tests + new harness kept
+# reverted packages/db/src/cli.ts -> identical-to-HEAD
+# reverted packages/db/src/migrate.ts -> identical-to-HEAD
+# reverted apps/api/src/modules/platform/health.ts -> identical-to-HEAD
+# command: env -u LANG -u LC_ALL -u LC_CTYPE QA_PG_PORT=55471 tests/qa/support/with-pg.sh npx vitest run --project integration packages/db/test/integration/encoding.test.ts apps/api/test/integration/platform.test.ts
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/My-owns
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muwg9is1_88418c0f (server_encoding UTF8); applied 19 migrations to a fresh database
+ ❯ |integration| packages/db/test/integration/encoding.test.ts (8 tests | 5 failed) 2537ms
+   ✓ the per-run test database > is UTF8 (C locale), independent of the shell's LANG/LC_* 21ms
+   ✓ the per-run test database > counts characters, not bytes: a 200-code-point astral string has char_length 200 (F-DG2-181 root cause) 6ms
+   × a SQL_ASCII database is refused before anything is created > mth-db migrate: exit 1, the message on stderr, nothing applied, no schema_migration table 697ms
+     → expected +0 to be 1 // Object.is equality
+   × a SQL_ASCII database is refused before anything is created > mth-db status: exit 1 with the same message, nothing written 272ms
+     → expected [ +0, '' ] to deeply equal [ 1, …(1) ]
+   × a SQL_ASCII database is refused before anything is created > mth-db seed-dev: exit 1 with the same message, nothing written 279ms
+     → expected [ +0, '' ] to deeply equal [ 1, …(1) ]
+   × a SQL_ASCII database is refused before anything is created > mth-db bootstrap: exit 1 with the same message (checked before the arguments are used) 287ms
+     → expected [ 1, …(1) ] to deeply equal [ 1, …(1) ]
+   × a SQL_ASCII database is refused before anything is created > migrate() (library entry point) throws DatabaseEncodingError and creates nothing 14ms
+     → expected null to be an instance of DatabaseEncodingError
+   ✓ a SQL_ASCII database is refused before anything is created > control: the same CLI migrates a UTF8 scratch database created the same way  791ms
+ ❯ |integration| apps/api/test/integration/platform.test.ts (12 tests | 1 failed) 801ms
+   ✓ health and readiness > reports ready when the database answers and every shipped migration is applied 23ms
+   ✓ health and readiness > reports 503 not_ready/pending when the build ships a migration the database lacks, and fail on checksum drift 57ms
+   × readiness requires a UTF8 database (ADR-0003 'Database encoding', T-DG2-BE9) > reports 503 database: fail on a SQL_ASCII database, and database: ok on a UTF8 one created the same way 323ms
+     → expected [ 503, { status: 'not_ready', …(1) } ] to deeply equal [ 503, { status: 'not_ready', …(1) } ]
+   ✓ rate limiting (ADR-0007 T-3) > limits auth endpoints per IP with a 429 problem and Retry-After 52ms
+   ✓ rate limiting (ADR-0007 T-3) > limits general API traffic per session, never the health endpoints 85ms
+   ✓ rate limiting (ADR-0007 T-3) > does not reset the bucket when an unauthenticated client rotates fabricated session cookies 31ms
+   ✓ rate limiting (ADR-0007 T-3) > keys a validated session by its user, so it is not starved by an IP flood, and a revoked one falls back to the IP 60ms
+   ✓ request hygiene > rejects malformed JSON, non-JSON bodies and bodies over 1 MiB with 400 problems 35ms
+   ✓ request hygiene > answers unknown API paths with a 404 problem 1ms
+   ✓ request hygiene > sends a strict same-origin Content-Security-Policy and other security headers 1ms
+   ✓ fail-closed guards (ADR-0006) > refuses to start with an /api route that declares no access 1ms
+   ✓ fail-closed guards (ADR-0006) > turns a success from a route that never consulted the policy function into a 500 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/platform.test.ts > readiness requires a UTF8 database (ADR-0003 'Database encoding', T-DG2-BE9) > reports 503 database: fail on a SQL_ASCII database, and database: ok on a UTF8 one created the same way
+AssertionError: expected [ 503, { status: 'not_ready', …(1) } ] to deeply equal [ 503, { status: 'not_ready', …(1) } ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    503,[22m
+[2m    {[22m
+[2m      "checks": {[22m
+[32m-       "database": "fail",[39m
+[32m-       "migrations": "fail",[39m
+[31m+       "database": "ok",[39m
+[31m+       "migrations": "pending",[39m
+[2m      },[22m
+[2m      "status": "not_ready",[22m
+[2m    },[22m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/platform.test.ts:61:36
+     59|         // Not cached when negative: still refused on the second probe.
+     60|         const r = await call(onAscii.app, "GET", "/readyz");
+     61|         expect([r.status, r.body]).toEqual([
+       |                                    ^
+     62|           503,
+     63|           { status: "not_ready", checks: { database: "fail", migration…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |integration| packages/db/test/integration/encoding.test.ts > a SQL_ASCII database is refused before anything is created > mth-db migrate: exit 1, the message on stderr, nothing applied, no schema_migration table
+AssertionError: expected +0 to be 1 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 1[39m
+[31m+ 0[39m
+
+ ❯ packages/db/test/integration/encoding.test.ts:86:24
+     84|   it("mth-db migrate: exit 1, the message on stderr, nothing applied, …
+     85|     const run = runCli(owner, ["migrate"]);
+     86|     expect(run.status).toBe(1);
+       |                        ^
+     87|     expect(run.stderr.trim()).toBe(REFUSAL);
+     88|     expect(run.stdout).not.toMatch(/applying/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |integration| packages/db/test/integration/encoding.test.ts > a SQL_ASCII database is refused before anything is created > mth-db status: exit 1 with the same message, nothing written
+ FAIL  |integration| packages/db/test/integration/encoding.test.ts > a SQL_ASCII database is refused before anything is created > mth-db seed-dev: exit 1 with the same message, nothing written
+AssertionError: expected [ +0, '' ] to deeply equal [ 1, …(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   1,[39m
+[32m-   "mth-db: the database must use UTF8 encoding (found SQL_ASCII); create it with ENCODING 'UTF8' TEMPLATE template0",[39m
+[31m+   0,[39m
+[31m+   "",[39m
+[2m  ][22m
+
+ ❯ packages/db/test/integration/encoding.test.ts:96:45
+     94|   it.each([["status"], ["seed-dev"]])("mth-db %s: exit 1 with the same…
+     95|     const run = runCli(owner, [cmd]);
+     96|     expect([run.status, run.stderr.trim()]).toEqual([1, REFUSAL]);
+       |                                             ^
+     97|     expect(await userObjects(owner)).toEqual([]);
+     98|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |integration| packages/db/test/integration/encoding.test.ts > a SQL_ASCII database is refused before anything is created > mth-db bootstrap: exit 1 with the same message (checked before the arguments are used)
+AssertionError: expected [ 1, …(1) ] to deeply equal [ 1, …(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    1,[22m
+[32m-   "mth-db: the database must use UTF8 encoding (found SQL_ASCII); create it with ENCODING 'UTF8' TEMPLATE template0",[39m
+[31m+   "mth-db: refusing to bootstrap: an organization already exists",[39m
+[2m  ][22m
+
+ ❯ packages/db/test/integration/encoding.test.ts:116:45
+    114|       "enc-admin",
+    115|     ]);
+    116|     expect([run.status, run.stderr.trim()]).toEqual([1, REFUSAL]);
+       |                                             ^
+    117|     expect(await userObjects(owner)).toEqual([]);
+    118|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |integration| packages/db/test/integration/encoding.test.ts > a SQL_ASCII database is refused before anything is created > migrate() (library entry point) throws DatabaseEncodingError and creates nothing
+AssertionError: expected null to be an instance of DatabaseEncodingError
+ ❯ packages/db/test/integration/encoding.test.ts:125:17
+    123|       (e: unknown) => e,
+    124|     );
+    125|     expect(err).toBeInstanceOf(DatabaseEncodingError);
+       |                 ^
+    126|     expect((err as DatabaseEncodingError).found).toBe("SQL_ASCII");
+    127|     expect(await userObjects(owner)).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  6 failed | 14 passed (20)
+   Start at  09:01:55
+   Duration  6.17s (transform 714ms, setup 0ms, collect 1.77s, tests 3.34s, environment 0ms, prepare 59ms)
+
+# exit: 1
+# command: npx vitest run --project unit-node apps/api/src/modules/platform/health.test.ts
+
+ RUN  v3.2.4 /home/user/My-owns
+
+ ❯ |unit-node| apps/api/src/modules/platform/health.test.ts (2 tests | 2 failed) 38ms
+   × /readyz database encoding > is ready on UTF8 and asks for the encoding only once per process 31ms
+     → expected +0 to be 1 // Object.is equality
+   × /readyz database encoding > reports database: fail on SQL_ASCII, re-checks every probe, and recovers once the database is UTF8 6ms
+     → expected [ 200, { status: 'ready', …(1) } ] to deeply equal [ 503, { status: 'not_ready', …(1) } ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/health.test.ts > /readyz database encoding > is ready on UTF8 and asks for the encoding only once per process
+AssertionError: expected +0 to be 1 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 1[39m
+[31m+ 0[39m
+
+ ❯ apps/api/src/modules/platform/health.test.ts:39:21
+     37|     registerHealthRoutes(app, pool, []);
+     38|     for (let i = 0; i < 3; i++) expect(await probe(app)).toEqual(READY…
+     39|     expect(shows()).toBe(1);
+       |                     ^
+     40|     await app.close();
+     41|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/health.test.ts > /readyz database encoding > reports database: fail on SQL_ASCII, re-checks every probe, and recovers once the database is UTF8
+AssertionError: expected [ 200, { status: 'ready', …(1) } ] to deeply equal [ 503, { status: 'not_ready', …(1) } ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   503,[39m
+[31m+   200,[39m
+[2m    {[22m
+[2m      "checks": {[22m
+[32m-       "database": "fail",[39m
+[32m-       "migrations": "fail",[39m
+[31m+       "database": "ok",[39m
+[31m+       "migrations": "ok",[39m
+[2m      },[22m
+[32m-     "status": "not_ready",[39m
+[31m+     "status": "ready",[39m
+[2m    },[22m
+[2m  ][22m
+
+ ❯ apps/api/src/modules/platform/health.test.ts:48:30
+     46|     const app = Fastify();
+     47|     registerHealthRoutes(app, pool, []);
+     48|     expect(await probe(app)).toEqual(NOT_UTF8);
+       |                              ^
+     49|     expect(await probe(app)).toEqual(NOT_UTF8);
+     50|     expect(shows()).toBe(2);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  09:02:02
+   Duration  609ms (transform 104ms, setup 0ms, collect 333ms, tests 38ms, environment 0ms, prepare 71ms)
+
+# exit: 1

@@ -11,6 +11,9 @@
 # (default 54331), E2E_API_PORT (default 3000; the run exports E2E_BASE_URL=http://localhost:<port> for Playwright, so
 # two stacks on one machine never share a port).
 # When run as uid 0 (sandboxes), PostgreSQL is started in a user namespace as uid 1000 because it refuses root.
+# The cluster is ALWAYS UTF8 with the C locale (T-DG2-BE9), whatever the shell's LANG/LC_*: without them initdb
+# would make a SQL_ASCII cluster, where char_length counts bytes. C (not C.UTF-8) because it exists on every platform
+# and sorts by code point independent of the C library version.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
@@ -38,14 +41,16 @@ trap cleanup EXIT
 [ -x "$PGBIN/initdb" ] || { echo "BLOCKED: PostgreSQL binaries not found (set PGBIN)"; exit 3; }
 [ -f apps/api/dist/main.js ] && [ -f apps/web/dist/index.html ] || { echo "BLOCKED: run 'pnpm -r build' first"; exit 3; }
 
-as_pg "$PGBIN/initdb" -D "$WORK/pg" -U postgres --auth=trust >/dev/null
+as_pg "$PGBIN/initdb" -D "$WORK/pg" -U postgres --auth=trust --encoding=UTF8 --locale=C >/dev/null
 as_pg "$PGBIN/postgres" -D "$WORK/pg" -c unix_socket_directories='' -c listen_addresses=127.0.0.1 \
   -p "$PG_PORT" -c fsync=off >"$WORK/pg.log" 2>&1 &
 PG_PID=$!
 ADMIN_URL="postgresql://postgres@127.0.0.1:${PG_PORT}/postgres"
 for _ in $(seq 1 60); do psql "$ADMIN_URL" -qAtc "select 1" >/dev/null 2>&1 && break; sleep 0.5; done
 psql "$ADMIN_URL" -q -v ON_ERROR_STOP=1 \
-  -c "CREATE ROLE mth_owner NOLOGIN" -c "CREATE ROLE mth_app NOLOGIN" -c "CREATE DATABASE mth OWNER mth_owner"
+  -c "CREATE ROLE mth_owner NOLOGIN" -c "CREATE ROLE mth_app NOLOGIN" \
+  -c "CREATE DATABASE mth OWNER mth_owner ENCODING 'UTF8' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0"
+psql "$ADMIN_URL" -qAtc "select 'e2e database mth: server_encoding ' || pg_encoding_to_char(encoding) || ', lc_collate ' || datcollate || ', lc_ctype ' || datctype from pg_database where datname = 'mth'"
 
 role_url() { node -e 'const u=new URL(process.argv[1]);u.pathname="/mth";u.searchParams.set("options","-c role="+process.argv[2]);console.log(u.toString())' "$ADMIN_URL" "$1"; }
 export NODE_ENV=development AUTH_MODE=dev PORT="$API_PORT" APP_BASE_URL="$E2E_BASE_URL" LOG_LEVEL=warn

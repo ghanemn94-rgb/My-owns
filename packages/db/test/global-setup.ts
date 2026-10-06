@@ -4,8 +4,9 @@
 //     FAILS with "BLOCKED: no database" (never a silent skip; CLAUDE.md).
 //  2. Creates the roles mth_owner and mth_app if they are missing (NOLOGIN: tests reach them through the admin
 //     connection with the `role` startup parameter, so no test password is created or stored anywhere).
-//  3. Creates mth_test_<runId> OWNED BY mth_owner and applies ALL migrations to it as mth_owner (this doubles as the
-//     REQ-S19-004 "applied to a fresh database" check).
+//  3. Creates mth_test_<runId> OWNED BY mth_owner (explicitly UTF8, C locale, from template0; T-DG2-BE9) and
+//     applies ALL migrations to it as mth_owner (this doubles as the REQ-S19-004 "applied to a fresh database"
+//     check).
 //  4. Provides the URLs to test files (inject("mthDb")) and as TEST_DATABASE_URL / TEST_DATABASE_OWNER_URL.
 //  5. Drops the database at teardown (unless MTH_KEEP_TEST_DB=1, for debugging), only after every client of it has
 //     disconnected (dropScratchDatabase, F-DG1-009).
@@ -62,14 +63,36 @@ export async function ensureRoles(admin: PgModule.Client): Promise<void> {
   }
 }
 
-/** Creates an empty database owned by mth_owner. */
-export async function createScratchDatabase(adminUrl: string, prefix: string): Promise<string> {
+/**
+ * Encodings a scratch database may be created with. UTF8 is the product's requirement (ADR-0003); SQL_ASCII exists
+ * only so tests can prove that the product refuses a non-UTF8 database (T-DG2-BE9).
+ */
+export type ScratchEncoding = "UTF8" | "SQL_ASCII";
+
+/**
+ * Creates an empty database owned by mth_owner.
+ *
+ * The encoding and locale are always explicit (T-DG2-BE9): `TEMPLATE template0` with `ENCODING 'UTF8'` and
+ * `LC_COLLATE`/`LC_CTYPE` 'C', so the result never depends on the cluster's initdb locale (with no LANG/LC_* set,
+ * initdb makes a SQL_ASCII cluster, where char_length counts bytes). 'C' matches the disposable clusters'
+ * `initdb --encoding=UTF8 --locale=C` and exists on every platform; it is compatible with any encoding, so it is
+ * accepted on a cluster initialized with another locale too (e.g. the CI postgres:18 service, en_US.utf8).
+ */
+export async function createScratchDatabase(
+  adminUrl: string,
+  prefix: string,
+  options: { readonly encoding?: ScratchEncoding } = {},
+): Promise<string> {
+  const encoding = options.encoding ?? "UTF8";
+  if (encoding !== "UTF8" && encoding !== "SQL_ASCII") throw new Error(`unexpected scratch encoding: ${encoding}`);
   const name = `${prefix}_${Date.now().toString(36)}_${randomBytes(4).toString("hex")}`;
   const admin = new pg.Client({ connectionString: adminUrl });
   await admin.connect();
   try {
     await ensureRoles(admin);
-    await admin.query(`CREATE DATABASE ${name} OWNER mth_owner`);
+    await admin.query(
+      `CREATE DATABASE ${name} OWNER mth_owner ENCODING '${encoding}' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0`,
+    );
   } finally {
     await admin.end();
   }
@@ -153,17 +176,20 @@ export default async function setup(project: TestProject): Promise<() => Promise
     );
   }
   const applied = run.stdout.split("\n").filter((l) => l.startsWith("mth-db migrate: applying "));
-  const version = await (async () => {
-    const c = new pg.Client({ connectionString: adminUrl });
+  const { version, encoding } = await (async () => {
+    const c = new pg.Client({ connectionString: roleUrl(adminUrl, database, null) });
     await c.connect();
     try {
-      return (await c.query<{ server_version: string }>("SHOW server_version")).rows[0]?.server_version ?? "unknown";
+      const v = (await c.query<{ server_version: string }>("SHOW server_version")).rows[0]?.server_version;
+      const e = (await c.query<{ server_encoding: string }>("SHOW server_encoding")).rows[0]?.server_encoding;
+      return { version: v ?? "unknown", encoding: e ?? "unknown" };
     } finally {
       await c.end();
     }
   })();
   console.log(
-    `[integration] PostgreSQL ${version}; database ${database}; applied ${applied.length} migrations to a fresh database`,
+    `[integration] PostgreSQL ${version}; database ${database} (server_encoding ${encoding}); ` +
+      `applied ${applied.length} migrations to a fresh database`,
   );
 
   project.provide("mthDb", { database, adminUrl, ownerUrl, appUrl });

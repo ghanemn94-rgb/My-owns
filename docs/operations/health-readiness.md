@@ -5,7 +5,7 @@
 | Endpoint | Meaning | Healthy response | Unhealthy |
 |---|---|---|---|
 | `GET /healthz` | **Liveness**: the process serves HTTP. It checks no dependencies, so a database outage does not make the orchestrator restart-loop the API | `200 {"status":"ok"}` | no response |
-| `GET /readyz` | **Readiness**: the database is reachable (as `mth_app`) **and** every migration shipped with this build is applied with the same checksum | `200 {"status":"ready","checks":{"database":"ok","migrations":"ok"}}` | `503 {"status":"not_ready","checks":{…}}` with `database: fail`, or `migrations: pending` / `fail` (checksum drift or unknown migration) |
+| `GET /readyz` | **Readiness**: the database is reachable (as `mth_app`) **and** uses the `UTF8` encoding **and** every migration shipped with this build is applied with the same checksum | `200 {"status":"ready","checks":{"database":"ok","migrations":"ok"}}` | `503 {"status":"not_ready","checks":{…}}` with `database: fail` (unreachable, or not UTF8: the log line says `the database must use UTF8 encoding (found …)`), or `migrations: pending` / `fail` (checksum drift or unknown migration) |
 
 Both are public, never rate-limited, and return no configuration or secret data. Route traffic to an instance only
 while `/readyz` is 200.
@@ -31,7 +31,7 @@ while `/readyz` is 200.
 | Command | Exit codes |
 |---|---|
 | `mth db status` | 0 up to date · 3 pending · 4 drift (changed or unknown applied migration) |
-| `mth migrate` | 0 applied or already up to date · 1 failure (nothing half-applied: each file runs in its own transaction) |
+| `mth migrate` | 0 applied or already up to date · 1 failure (nothing half-applied: each file runs in its own transaction). A non-UTF8 database is refused before anything is created: `the database must use UTF8 encoding (found SQL_ASCII)` |
 | `mth api` / `mth worker` | 78 invalid configuration (the message names the variable, never its value) · 1 startup failure |
 | `mth health /readyz` | 0 ready · 1 not ready or unreachable · 64 bad argument |
 

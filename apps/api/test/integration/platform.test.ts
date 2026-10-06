@@ -7,6 +7,7 @@ import Fastify from "fastify";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { registerPlatformHooks } from "../../src/modules/platform/index.ts";
 import { call, seedWorld, signIn, startApi, type TestApi, type World } from "../support/harness.ts";
+import { createScratchDatabase, dropScratchDatabase, testDatabase } from "../../../../packages/db/test/helpers.ts";
 
 let api: TestApi;
 let w: World;
@@ -42,6 +43,37 @@ describe("health and readiness", () => {
     } finally {
       await pending.close();
       await drift.close();
+    }
+  });
+});
+
+describe("readiness requires a UTF8 database (ADR-0003 'Database encoding', T-DG2-BE9)", () => {
+  it("reports 503 database: fail on a SQL_ASCII database, and database: ok on a UTF8 one created the same way", async () => {
+    const { adminUrl } = testDatabase();
+    const ascii = await createScratchDatabase(adminUrl, "mth_ready_ascii", { encoding: "SQL_ASCII" });
+    const utf8 = await createScratchDatabase(adminUrl, "mth_ready_utf8");
+    const onAscii = await startApi({ database: ascii });
+    const onUtf8 = await startApi({ database: utf8 });
+    try {
+      for (let i = 0; i < 2; i++) {
+        // Not cached when negative: still refused on the second probe.
+        const r = await call(onAscii.app, "GET", "/readyz");
+        expect([r.status, r.body]).toEqual([
+          503,
+          { status: "not_ready", checks: { database: "fail", migrations: "fail" } },
+        ]);
+      }
+      // Control: both scratch databases are empty (no migrations), so the ONLY difference is the encoding.
+      const u = await call(onUtf8.app, "GET", "/readyz");
+      expect([u.status, u.body]).toEqual([
+        503,
+        { status: "not_ready", checks: { database: "ok", migrations: "pending" } },
+      ]);
+    } finally {
+      await onAscii.close();
+      await onUtf8.close();
+      await dropScratchDatabase(adminUrl, ascii);
+      await dropScratchDatabase(adminUrl, utf8);
     }
   });
 });

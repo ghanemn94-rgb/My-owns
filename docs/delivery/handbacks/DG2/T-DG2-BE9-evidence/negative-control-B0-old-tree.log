@@ -1,0 +1,182 @@
+# negative control B0: product AND harness reverted to HEAD 0466813 (packages/db/src/cli.ts packages/db/src/migrate.ts apps/api/src/modules/platform/health.ts tests/qa/support/with-pg.sh packages/db/test/global-setup.ts); only the new tests are added; no locale
+# command: env -u LANG -u LC_ALL -u LC_CTYPE -u LC_COLLATE -u LC_MESSAGES QA_PG_PORT=55471 tests/qa/support/with-pg.sh npx vitest run --project integration packages/db/test/integration/encoding.test.ts apps/api/test/integration/oidc.test.ts --reporter=verbose
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+ RUN  v3.2.4 /home/user/My-owns
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muwgahiw_909396bb; applied 19 migrations to a fresh database
+ × |integration| packages/db/test/integration/encoding.test.ts > the per-run test database > is UTF8 (C locale), independent of the shell's LANG/LC_* 17ms
+   → expected 'SQL_ASCII' to be 'UTF8' // Object.is equality
+ × |integration| packages/db/test/integration/encoding.test.ts > the per-run test database > counts characters, not bytes: a 200-code-point astral string has char_length 200 (F-DG2-181 root cause) 6ms
+   → conversion between UTF8 and SQL_ASCII is not supported
+ × |integration| packages/db/test/integration/encoding.test.ts > a SQL_ASCII database is refused before anything is created > mth-db migrate: exit 1, the message on stderr, nothing applied, no schema_migration table 702ms
+   → expected +0 to be 1 // Object.is equality
+ × |integration| packages/db/test/integration/encoding.test.ts > a SQL_ASCII database is refused before anything is created > mth-db status: exit 1 with the same message, nothing written 302ms
+   → expected [ +0, '' ] to deeply equal [ 1, …(1) ]
+ × |integration| packages/db/test/integration/encoding.test.ts > a SQL_ASCII database is refused before anything is created > mth-db seed-dev: exit 1 with the same message, nothing written 295ms
+   → expected [ +0, '' ] to deeply equal [ 1, …(1) ]
+ × |integration| packages/db/test/integration/encoding.test.ts > a SQL_ASCII database is refused before anything is created > mth-db bootstrap: exit 1 with the same message (checked before the arguments are used) 269ms
+   → expected [ 1, …(1) ] to deeply equal [ 1, …(1) ]
+ × |integration| packages/db/test/integration/encoding.test.ts > a SQL_ASCII database is refused before anything is created > migrate() (library entry point) throws DatabaseEncodingError and creates nothing 15ms
+   → expected null to be an instance of DatabaseEncodingError
+ ✓ |integration| packages/db/test/integration/encoding.test.ts > a SQL_ASCII database is refused before anything is created > control: the same CLI migrates a UTF8 scratch database created the same way 830ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/login > redirects to the IdP with code flow, PKCE S256, state and nonce, storing only the state's hash 45ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/login > rejects returnTo=//evil.example/x (open redirect) with 400 9ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/login > rejects returnTo=https://evil.example/ (open redirect) with 400 1ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/login > rejects returnTo=relative (open redirect) with 400 1ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/login > rejects returnTo=/\evil (open redirect) with 400 1ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > provisions a first-time user just in time, WITHOUT any role, and signs them in (audited) 79ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > an invisible-only name claim is absent: the display name falls back to the e-mail (F-DG2-160) 24ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > 200 invisible characters before visible text: the name claim is absent, preferred_username is used (F-DG2-181) 19ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > an invisible-truncated name and preferred_username fall back to the e-mail, then a generated name (F-DG2-181) 28ms
+ × |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > a name with astral characters at the 200 boundary is cut on a code-point boundary (F-DG2-181) 18ms
+   → contract: completeOidcLogin does not declare status 422 (declared: 302, 429); body: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"The change violates a data rule.","code":"validation.constraint","requestId":"01a11073-7fb2-720c-976d-bd5b750b302a","errors":[{"pointer":"/displayName","code":"validation.constraint","message":"app_user_disp
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > a normal name is stored unchanged, including visible text with marks (F-DG2-181) 46ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > signs an existing (issuer, subject) back in to the same user 11ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > binds a pre-provisioned user by VERIFIED e-mail only 23ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > refuses a disabled user 9ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > uses each state once, and rejects unknown or expired states 17ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > login CSRF: the state is bound to the browser that started the login (F-DG1-103) > refuses an attacker's live callback in the victim's browser; the victim stays signed in as themself 40ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > login CSRF: the state is bound to the browser that started the login (F-DG1-103) > sets a short-lived HttpOnly SameSite=Lax login cookie, stores only its hash, and clears it at the callback 5ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > login CSRF: the state is bound to the browser that started the login (F-DG1-103) > uses the __Host- prefix and Secure on an https origin 69ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > rejects a wrong nonce and a PKCE mismatch (token_invalid), and IdP errors (idp_denied), all without a session 23ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > refuses just-in-time provisioning when several organizations exist (users must be pre-provisioned) 10ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > OIDC logout and configuration > returns the IdP end-session URL for OIDC sessions 24ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > OIDC logout and configuration > answers 404 on /auth/login and /auth/callback when OIDC is not configured 25ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > OIDC logout and configuration > redirects to /login?error=idp_unavailable when the IdP cannot be reached, and never fails startup 24ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > OIDC logout and configuration > keeps the IdP's token endpoint behind the server (the browser never receives tokens) 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > a name with astral characters at the 200 boundary is cut on a code-point boundary (F-DG2-181)
+Error: contract: completeOidcLogin does not declare status 422 (declared: 302, 429); body: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"The change violates a data rule.","code":"validation.constraint","requestId":"01a11073-7fb2-720c-976d-bd5b750b302a","errors":[{"pointer":"/displayName","code":"validation.constraint","message":"app_user_disp
+ ❯ assertContract apps/api/test/support/contract.ts:100:11
+     98|   const declared = op.responses[String(res.statusCode)] ?? op.response…
+     99|   if (!declared) {
+    100|     throw new Error(
+       |           ^
+    101|       `contract: ${op.operationId} does not declare status ${res.statu…
+    102|     );
+ ❯ call apps/api/test/support/harness.ts:158:5
+ ❯ completeLogin apps/api/test/integration/oidc.test.ts:92:14
+ ❯ jitDisplayName apps/api/test/integration/oidc.test.ts:187:20
+ ❯ apps/api/test/integration/oidc.test.ts:228:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  |integration| packages/db/test/integration/encoding.test.ts > the per-run test database > is UTF8 (C locale), independent of the shell's LANG/LC_*
+AssertionError: expected 'SQL_ASCII' to be 'UTF8' // Object.is equality
+
+Expected: [32m"UTF8"[39m
+Received: [31m"SQL_ASCII"[39m
+
+ ❯ packages/db/test/integration/encoding.test.ts:54:34
+     52|   it("is UTF8 (C locale), independent of the shell's LANG/LC_*", async…
+     53|     const [enc] = await query<{ server_encoding: string }>(ownerUrl, "…
+     54|     expect(enc?.server_encoding).toBe("UTF8");
+       |                                  ^
+     55|     const [db] = await query<{ encoding: string; datcollate: string; d…
+     56|       adminUrl,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  |integration| packages/db/test/integration/encoding.test.ts > the per-run test database > counts characters, not bytes: a 200-code-point astral string has char_length 200 (F-DG2-181 root cause)
+error: conversion between UTF8 and SQL_ASCII is not supported
+ ❯ node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17
+ ❯ query packages/db/test/integration/encoding.test.ts:23:13
+     21|   await c.connect();
+     22|   try {
+     23|     return (await c.query<R>(text)).rows;
+       |             ^
+     24|   } finally {
+     25|     await c.end();
+ ❯ packages/db/test/integration/encoding.test.ts:63:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 124, severity: 'ERROR', code: '0A000', detail: undefined, hint: undefined, position: '30', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'mbutils.c', routine: 'pg_unicode_to_server' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  |integration| packages/db/test/integration/encoding.test.ts > a SQL_ASCII database is refused before anything is created > mth-db migrate: exit 1, the message on stderr, nothing applied, no schema_migration table
+AssertionError: expected +0 to be 1 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 1[39m
+[31m+ 0[39m
+
+ ❯ packages/db/test/integration/encoding.test.ts:86:24
+     84|   it("mth-db migrate: exit 1, the message on stderr, nothing applied, …
+     85|     const run = runCli(owner, ["migrate"]);
+     86|     expect(run.status).toBe(1);
+       |                        ^
+     87|     expect(run.stderr.trim()).toBe(REFUSAL);
+     88|     expect(run.stdout).not.toMatch(/applying/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  |integration| packages/db/test/integration/encoding.test.ts > a SQL_ASCII database is refused before anything is created > mth-db status: exit 1 with the same message, nothing written
+ FAIL  |integration| packages/db/test/integration/encoding.test.ts > a SQL_ASCII database is refused before anything is created > mth-db seed-dev: exit 1 with the same message, nothing written
+AssertionError: expected [ +0, '' ] to deeply equal [ 1, …(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   1,[39m
+[32m-   "mth-db: the database must use UTF8 encoding (found SQL_ASCII); create it with ENCODING 'UTF8' TEMPLATE template0",[39m
+[31m+   0,[39m
+[31m+   "",[39m
+[2m  ][22m
+
+ ❯ packages/db/test/integration/encoding.test.ts:96:45
+     94|   it.each([["status"], ["seed-dev"]])("mth-db %s: exit 1 with the same…
+     95|     const run = runCli(owner, [cmd]);
+     96|     expect([run.status, run.stderr.trim()]).toEqual([1, REFUSAL]);
+       |                                             ^
+     97|     expect(await userObjects(owner)).toEqual([]);
+     98|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  |integration| packages/db/test/integration/encoding.test.ts > a SQL_ASCII database is refused before anything is created > mth-db bootstrap: exit 1 with the same message (checked before the arguments are used)
+AssertionError: expected [ 1, …(1) ] to deeply equal [ 1, …(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    1,[22m
+[32m-   "mth-db: the database must use UTF8 encoding (found SQL_ASCII); create it with ENCODING 'UTF8' TEMPLATE template0",[39m
+[31m+   "mth-db: refusing to bootstrap: an organization already exists",[39m
+[2m  ][22m
+
+ ❯ packages/db/test/integration/encoding.test.ts:116:45
+    114|       "enc-admin",
+    115|     ]);
+    116|     expect([run.status, run.stderr.trim()]).toEqual([1, REFUSAL]);
+       |                                             ^
+    117|     expect(await userObjects(owner)).toEqual([]);
+    118|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  |integration| packages/db/test/integration/encoding.test.ts > a SQL_ASCII database is refused before anything is created > migrate() (library entry point) throws DatabaseEncodingError and creates nothing
+AssertionError: expected null to be an instance of DatabaseEncodingError
+ ❯ packages/db/test/integration/encoding.test.ts:125:17
+    123|       (e: unknown) => e,
+    124|     );
+    125|     expect(err).toBeInstanceOf(DatabaseEncodingError);
+       |                 ^
+    126|     expect((err as DatabaseEncodingError).found).toBe("SQL_ASCII");
+    127|     expect(await userObjects(owner)).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  8 failed | 24 passed (32)
+   Start at  09:02:40
+   Duration  6.72s (transform 753ms, setup 0ms, collect 1.76s, tests 3.76s, environment 0ms, prepare 66ms)
+
+# exit: 1

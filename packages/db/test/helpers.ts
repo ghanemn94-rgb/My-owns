@@ -5,7 +5,7 @@ import { inject } from "vitest";
 import { createDb, createPool, type Db } from "../src/pool.ts";
 import type { MthTestDatabase } from "./global-setup.ts";
 
-export { createScratchDatabase, dropScratchDatabase, roleUrl } from "./global-setup.ts";
+export { createScratchDatabase, dropScratchDatabase, roleUrl, type ScratchEncoding } from "./global-setup.ts";
 
 export function testDatabase(): MthTestDatabase {
   const db = inject("mthDb");

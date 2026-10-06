@@ -120,8 +120,9 @@ mkdir -p "$WORK/secrets" && chmod 0755 "$WORK/secrets"
 rand() { openssl rand -hex 24; }
 for s in pg_superuser_password mth_owner_db_password mth_app_db_password; do rand >"$WORK/secrets/$s"; done
 chmod 0644 "$WORK/secrets"/*
+# UTF8 + C locale whatever the shell locale (T-DG2-BE9; ADR-0003 "Database encoding").
 as_pg "$PGBIN/initdb" -D "$WORK/pg" -U postgres --pwfile="$WORK/secrets/pg_superuser_password" \
-  --auth-local=trust --auth-host=scram-sha-256 >/dev/null
+  --auth-local=trust --auth-host=scram-sha-256 --encoding=UTF8 --locale=C >/dev/null
 as_pg "$PGBIN/postgres" -D "$WORK/pg" -c unix_socket_directories='' -c listen_addresses=127.0.0.1 -p "$PG_PORT" \
   -c fsync=off >"$WORK/pg.log" 2>&1 &
 PG_PID=$!
@@ -129,7 +130,8 @@ export PGHOST=127.0.0.1 PGPORT="$PG_PORT" PGUSER=postgres PGPASSWORD="$(cat "$WO
 for _ in $(seq 1 60); do psql -d postgres -qAtc "select 1" >/dev/null 2>&1 && break; sleep 0.5; done
 psql -d postgres -qAtc "select version()"
 POSTGRES_USER=postgres MTH_DB_INIT_SECRETS_DIR="$WORK/secrets" bash "$WORK/src/deploy/compose/db-init/10-mth-roles.sh"
-psql -d postgres -v ON_ERROR_STOP=1 -qc "CREATE DATABASE mth_dev OWNER mth_owner" \
+psql -d postgres -v ON_ERROR_STOP=1 \
+  -qc "CREATE DATABASE mth_dev OWNER mth_owner ENCODING 'UTF8' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0" \
   -c "REVOKE ALL ON DATABASE mth_dev FROM PUBLIC" -c "GRANT CONNECT ON DATABASE mth_dev TO mth_app"
 unset PGPASSWORD
 OWNER_PW="$(cat "$WORK/secrets/mth_owner_db_password")"

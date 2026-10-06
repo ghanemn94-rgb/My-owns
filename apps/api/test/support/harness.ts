@@ -100,6 +100,10 @@ export async function startApi(
     async close() {
       await app.close();
       await db.destroy();
+      // Kysely's driver adopts the pool only on its first query, so destroy() does not end a pool that served only
+      // raw-pool routes (e.g. a /readyz-only test): its idle client would then hold the database open for pg's 10 s
+      // idle timeout and stall dropScratchDatabase (T-DG2-BE9).
+      if (!(pool as pg.Pool & { ending?: boolean }).ending) await pool.end();
       await owner.end();
     },
   };

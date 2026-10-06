@@ -24,7 +24,9 @@
 ## Prerequisites (deployment, not migrations)
 
 Roles `mth_owner` and `mth_app` exist, and the database is **owned by `mth_owner`**
-(`CREATE DATABASE mth OWNER mth_owner`). Migration 0001 refuses to run as any other role.
+and uses the **UTF8** encoding (`CREATE DATABASE mth OWNER mth_owner ENCODING 'UTF8' TEMPLATE template0`). Migration
+0001 refuses to run as any other role. Every `mth-db` command refuses a database whose `server_encoding` is not
+`UTF8` (exit 1, nothing applied; ADR-0003 "Database encoding"), because on `SQL_ASCII` `char_length` counts bytes.
 
 ## CLI
 

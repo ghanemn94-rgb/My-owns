@@ -42,6 +42,9 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD_FILE: /run/secrets/pg_superuser_password
       POSTGRES_DB: postgres
+      # The product requires a UTF8 database (ADR-0003 "Database encoding"; `mth-db` refuses any other). The image's
+      # default locale (en_US.utf8) already gives UTF8; this makes it explicit. Takes effect on an empty volume only.
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
     secrets: [pg_superuser_password, mth_owner_db_password, mth_app_db_password]
     volumes:
       # PostgreSQL 18 images keep PGDATA under /var/lib/postgresql/18/docker; mount the parent (upgrade-friendly).

@@ -1,0 +1,46 @@
+# negative control B2: only tests/qa/support/with-pg.sh reverted to HEAD (SQL_ASCII cluster); the NEW global-setup.ts creates the test database explicitly UTF8
+# command: env -u LANG -u LC_ALL -u LC_CTYPE -u LC_COLLATE -u LC_MESSAGES QA_PG_PORT=55471 tests/qa/support/with-pg.sh npx vitest run --project integration packages/db/test/integration/encoding.test.ts apps/api/test/integration/oidc.test.ts --reporter=verbose
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+ RUN  v3.2.4 /home/user/My-owns
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muwga2sq_d5393d8c (server_encoding UTF8); applied 19 migrations to a fresh database
+ ✓ |integration| packages/db/test/integration/encoding.test.ts > the per-run test database > is UTF8 (C locale), independent of the shell's LANG/LC_* 20ms
+ ✓ |integration| packages/db/test/integration/encoding.test.ts > the per-run test database > counts characters, not bytes: a 200-code-point astral string has char_length 200 (F-DG2-181 root cause) 6ms
+ ✓ |integration| packages/db/test/integration/encoding.test.ts > a SQL_ASCII database is refused before anything is created > mth-db migrate: exit 1, the message on stderr, nothing applied, no schema_migration table 287ms
+ ✓ |integration| packages/db/test/integration/encoding.test.ts > a SQL_ASCII database is refused before anything is created > mth-db status: exit 1 with the same message, nothing written 265ms
+ ✓ |integration| packages/db/test/integration/encoding.test.ts > a SQL_ASCII database is refused before anything is created > mth-db seed-dev: exit 1 with the same message, nothing written 265ms
+ ✓ |integration| packages/db/test/integration/encoding.test.ts > a SQL_ASCII database is refused before anything is created > mth-db bootstrap: exit 1 with the same message (checked before the arguments are used) 261ms
+ ✓ |integration| packages/db/test/integration/encoding.test.ts > a SQL_ASCII database is refused before anything is created > migrate() (library entry point) throws DatabaseEncodingError and creates nothing 14ms
+ ✓ |integration| packages/db/test/integration/encoding.test.ts > a SQL_ASCII database is refused before anything is created > control: the same CLI migrates a UTF8 scratch database created the same way 794ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/login > redirects to the IdP with code flow, PKCE S256, state and nonce, storing only the state's hash 46ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/login > rejects returnTo=//evil.example/x (open redirect) with 400 9ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/login > rejects returnTo=https://evil.example/ (open redirect) with 400 1ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/login > rejects returnTo=relative (open redirect) with 400 1ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/login > rejects returnTo=/\evil (open redirect) with 400 1ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > provisions a first-time user just in time, WITHOUT any role, and signs them in (audited) 69ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > an invisible-only name claim is absent: the display name falls back to the e-mail (F-DG2-160) 20ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > 200 invisible characters before visible text: the name claim is absent, preferred_username is used (F-DG2-181) 14ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > an invisible-truncated name and preferred_username fall back to the e-mail, then a generated name (F-DG2-181) 26ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > a name with astral characters at the 200 boundary is cut on a code-point boundary (F-DG2-181) 27ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > a normal name is stored unchanged, including visible text with marks (F-DG2-181) 32ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > signs an existing (issuer, subject) back in to the same user 9ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > binds a pre-provisioned user by VERIFIED e-mail only 22ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > refuses a disabled user 9ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > uses each state once, and rejects unknown or expired states 17ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > login CSRF: the state is bound to the browser that started the login (F-DG1-103) > refuses an attacker's live callback in the victim's browser; the victim stays signed in as themself 37ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > login CSRF: the state is bound to the browser that started the login (F-DG1-103) > sets a short-lived HttpOnly SameSite=Lax login cookie, stores only its hash, and clears it at the callback 5ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > login CSRF: the state is bound to the browser that started the login (F-DG1-103) > uses the __Host- prefix and Secure on an https origin 37ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > rejects a wrong nonce and a PKCE mismatch (token_invalid), and IdP errors (idp_denied), all without a session 17ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > refuses just-in-time provisioning when several organizations exist (users must be pre-provisioned) 9ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > OIDC logout and configuration > returns the IdP end-session URL for OIDC sessions 25ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > OIDC logout and configuration > answers 404 on /auth/login and /auth/callback when OIDC is not configured 25ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > OIDC logout and configuration > redirects to /login?error=idp_unavailable when the IdP cannot be reached, and never fails startup 37ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts > OIDC logout and configuration > keeps the IdP's token endpoint behind the server (the browser never receives tokens) 0ms
+
+ Test Files  2 passed (2)
+      Tests  32 passed (32)
+   Start at  09:02:21
+   Duration  5.97s (transform 673ms, setup 0ms, collect 1.63s, tests 3.25s, environment 0ms, prepare 65ms)
+
+# exit: 0

@@ -10,6 +10,7 @@
 
 - **Schema:** `public`, owned by `mth_owner`. `mth_app` gets `SELECT, INSERT, UPDATE` on business tables, **no `DELETE`** unless a row says otherwise below, and only `INSERT, SELECT` on `audit_event`.
 - **SQL floor:** SQL must run on PostgreSQL 16 and 18 (ADR-0003).
+- **Encoding:** the database must be `UTF8` (ADR-0003 "Database encoding"). Every "n chars" limit in this dictionary is a `char_length` limit in Unicode code points, which holds only on a UTF8 database (on `SQL_ASCII` it would count bytes). `mth-db` refuses any other encoding, and `/readyz` reports `database: fail`.
 - **IDs:** `id uuid PRIMARY KEY` with no default; the application supplies a UUIDv7.
 - **Time:** only `timestamptz`, and `DEFAULT now()` only where noted.
 - **Status values:** `text` plus `CHECK (col IN (...))`, not PostgreSQL enums, so later values can be added with a simple forward migration.

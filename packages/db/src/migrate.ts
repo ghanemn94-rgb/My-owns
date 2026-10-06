@@ -3,12 +3,14 @@
 //  - applies each pending file in lexical order, each in its own transaction, recording (id, name, sha256);
 //  - REFUSES to run when an applied file's checksum changed, or when the database has a migration this build
 //    does not ship (database newer than code);
+//  - REFUSES to touch a database whose encoding is not UTF8 (encoding.ts), before creating anything;
 //  - is idempotent on an up-to-date database.
 import { createHash } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { MIGRATION_FILE_PATTERN, MIGRATION_TABLE } from "./constants.ts";
+import { assertUtf8Database } from "./encoding.ts";
 import { connectionWithSessionOptions } from "./pool.ts";
 
 export interface MigrationFile {
@@ -131,6 +133,9 @@ export async function migrate(ownerUrl: string, options: MigrateOptions = {}): P
   await client.connect();
   const appliedNow: string[] = [];
   try {
+    // Fail closed BEFORE anything is created: no lock, no bookkeeping table, no migration on a non-UTF8 database
+    // (DatabaseEncodingError; T-DG2-BE9).
+    await assertUtf8Database(client);
     await client.query("SELECT pg_advisory_lock($1)", [MIGRATION_LOCK_KEY]);
     try {
       await client.query(`CREATE TABLE IF NOT EXISTS ${MIGRATION_TABLE} (

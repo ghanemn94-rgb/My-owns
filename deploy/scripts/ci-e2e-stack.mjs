@@ -30,7 +30,10 @@ for (const role of ["mth_owner", "mth_app"]) {
   if (rowCount === 0) await admin.query(`CREATE ROLE ${role} NOLOGIN`);
 }
 await admin.query(`DROP DATABASE IF EXISTS ${database}`);
-await admin.query(`CREATE DATABASE ${database} OWNER mth_owner`);
+// Explicitly UTF8 (ADR-0003 "Database encoding"; T-DG2-BE9), independent of the service cluster's initdb locale.
+await admin.query(
+  `CREATE DATABASE ${database} OWNER mth_owner ENCODING 'UTF8' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0`,
+);
 await admin.end();
 
 const roleUrl = (role) => {

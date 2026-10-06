@@ -1,0 +1,115 @@
+# command (as .github/workflows/ci.yml:173): node --test deploy/scripts/tests/check-ci-needs.test.mjs deploy/scripts/tests/pin-images.test.mjs   (node v24.21.0)
+  P0 deploy/ci/ci.yml as committed: exit 0
+  P1 images: if: success() && github.event_name == 'push' (implicit-success semantics kept): exit 0
+  P2 integration: if: github.event_name != 'schedule' (no status function): exit 0
+  P3 step-level if: always() inside a gated product job (upload-artifact): exit 0
+  N1 verify: needs removed: exit 1: FAIL: job "verify" does not depend on delivery-gates
+  N2 rogue job without needs: exit 1: FAIL: job "rogue" does not depend on delivery-gates
+  N3 unknown need: exit 1: FAIL: images needs unknown job "nope"
+  N4 verify: if: always(): exit 1: FAIL: job "verify": job-level if: "always()" uses a status function, so it can run after delivery-gates failed
+  N5 images: if: ${{ !cancelled() }}: exit 1: FAIL: job "images": job-level if: "${{ !cancelled() }}" uses a status function, so it can run after delivery-gates failed
+  N6 integration: if: failure(): exit 1: FAIL: job "integration": job-level if: "failure()" uses a status function, so it can run after delivery-gates failed
+  N7 e2e: if: ${{ always() && github.ref == 'refs/heads/main' }}: exit 1: FAIL: job "e2e": job-level if: "${{ always() && github.ref == 'refs/heads/main' }}" uses a status function, so it can run after delivery-gates failed
+  N8 verify: if: Always ( ) (case/whitespace): exit 1: FAIL: job "verify": job-level if: "Always ( )" uses a status function, so it can run after delivery-gates failed
+  N9 integration: if: success() || failure(): exit 1: FAIL: job "integration": job-level if: "success() || failure()" uses a status function, so it can run after delivery-gates failed
+  N10 delivery-gates: continue-on-error: true: exit 1: FAIL: delivery-gates: job must not set continue-on-error (a failed gate would count as success)
+  N11 validate step: continue-on-error: true: exit 1: FAIL: delivery-gates: validate step must not set continue-on-error
+  N12 validate step: `|| true`: exit 1: FAIL: delivery-gates does not run exactly "node tools/gates/validate.mjs --pipeline"
+  N13 validate step: if: false: exit 1: FAIL: delivery-gates: validate step must not have an if: ("false")
+  N14 verify: plain pnpm install --frozen-lockfile instead of ci-install-deps.sh: exit 1: FAIL: verify: dependency install outside deploy/scripts/ci-install-deps.sh (REQ-DLV-042): pnpm install --frozen-lockfile
+  N15 integration: ci-install-deps.sh step removed (pnpm used without any install): exit 1: FAIL: integration: runs pnpm before the sandboxed install (deploy/scripts/ci-install-deps.sh): pnpm -r build
+  N16 images: extra `npm ci` step: exit 1: FAIL: images: dependency install outside deploy/scripts/ci-install-deps.sh (REQ-DLV-042): npm ci
+  N17 e2e: corepack enable && pnpm install: exit 1: FAIL: e2e: dependency install outside deploy/scripts/ci-install-deps.sh (REQ-DLV-042): pnpm install
+  N18 verify: fallback `ci-install-deps.sh || pnpm install`: exit 1: FAIL: verify: the sandboxed install must be the whole command, exactly deploy/scripts/ci-install-deps.sh: deploy/scripts/ci-install-deps.sh || pnpm install
+  N19 validate step: env NODE_OPTIONS=--import=data:...process.exit(0): exit 1: FAIL: delivery-gates step 3: a validate.mjs step must not set env: {"NODE_OPTIONS":"--import=data:text/javascript,process.exit(0)"} (only name/id/run)
+  N20 validate step: working-directory: decoy: exit 1: FAIL: delivery-gates step 3: a validate.mjs step must not set working-directory: "decoy" (only name/id/run)
+  N21 validate step: shell: 'true {0}': exit 1: FAIL: delivery-gates step 3: a validate.mjs step must not set shell: "true {0}" (only name/id/run)
+  N22 workflow-level defaults.run.working-directory: decoy: exit 1: FAIL: workflow-level defaults: is not allowed (it reaches the delivery-gates validate step): {"run":{"working-directory":"decoy"}}
+  N23 workflow-level defaults.run.shell: exit 1: FAIL: workflow-level defaults: is not allowed (it reaches the delivery-gates validate step): {"run":{"shell":"true {0}"}}
+  N24 workflow-level env NODE_OPTIONS: exit 1: FAIL: workflow-level env: is not allowed (it reaches the delivery-gates validate step): {"NODE_OPTIONS":"--import=data:text/javascript,process.exit(0)"}
+  N25 delivery-gates job-level env NODE_OPTIONS: exit 1: FAIL: delivery-gates: job key "env" is not allowed (it could change how the validate step runs)
+  N26 delivery-gates job-level defaults.run.working-directory: exit 1: FAIL: delivery-gates: job key "defaults" is not allowed (it could change how the validate step runs)
+  N27 delivery-gates pre-step writes NODE_OPTIONS to $GITHUB_ENV: exit 1: FAIL: delivery-gates step 3: only the validate step may run commands in delivery-gates: "echo \"NODE_OPTIONS=--import=data:text/javascript,process.exit(0)\" >> \"$GITHUB_ENV\""
+  N28 delivery-gates setup-node step with env: exit 1: FAIL: delivery-gates step 2: key "env" is not allowed
+  N29 validate.mjs run in another job with NODE_OPTIONS: exit 1: FAIL: verify step 13: a validate.mjs step must not set env: {"NODE_OPTIONS":"--x"} (only name/id/run)
+  P4 validate step with a name and an id (only name/id/run): exit 0
+  P5 product job (verify) with its own job-level env and defaults (does not reach the gate): exit 0
+  N30 delivery-gates checkout with.ref override: exit 1: FAIL: delivery-gates step 1: with.ref is not allowed on checkout in delivery-gates (allowed: fetch-depth, persist-credentials); it could make validate.mjs check a different tree or toolchain
+  N31 delivery-gates checkout with.repository override: exit 1: FAIL: delivery-gates step 1: with.repository is not allowed on checkout in delivery-gates (allowed: fetch-depth, persist-credentials); it could make validate.mjs check a different tree or toolchain
+  N32 delivery-gates checkout with.path override: exit 1: FAIL: delivery-gates step 1: with.path is not allowed on checkout in delivery-gates (allowed: fetch-depth, persist-credentials); it could make validate.mjs check a different tree or toolchain
+  N33 delivery-gates checkout with.token override: exit 1: FAIL: delivery-gates step 1: with.token is not allowed on checkout in delivery-gates (allowed: fetch-depth, persist-credentials); it could make validate.mjs check a different tree or toolchain
+  N34 delivery-gates checkout with.sparse-checkout override: exit 1: FAIL: delivery-gates step 1: with.sparse-checkout is not allowed on checkout in delivery-gates (allowed: fetch-depth, persist-credentials); it could make validate.mjs check a different tree or toolchain
+  N35 delivery-gates checkout with.submodules override: exit 1: FAIL: delivery-gates step 1: with.submodules is not allowed on checkout in delivery-gates (allowed: fetch-depth, persist-credentials); it could make validate.mjs check a different tree or toolchain
+  N36 delivery-gates checkout with.fetch-depth as an expression: exit 1: FAIL: delivery-gates step 1: with.fetch-depth has a disallowed value "${{ github.event.inputs.depth }}"
+  N37 delivery-gates setup-node with.node-version-file: exit 1: FAIL: delivery-gates step 2: with.node-version-file is not allowed on setup-node in delivery-gates (allowed: node-version); it could make validate.mjs check a different tree or toolchain
+  N38 delivery-gates checkout with: is a string, not a mapping: exit 1: FAIL: delivery-gates step 1: with: must be a mapping, got "ref=main"
+  P6 delivery-gates checkout with persist-credentials: false (allow-listed): exit 0
+  P7 delivery-gates checkout without with: (defaults to the triggering commit): exit 0
+✔ POSITIVE P0 deploy/ci/ci.yml as committed (112.726544ms)
+✔ POSITIVE P1 images: if: success() && github.event_name == 'push' (implicit-success semantics kept) (97.732423ms)
+✔ POSITIVE P2 integration: if: github.event_name != 'schedule' (no status function) (97.815288ms)
+✔ POSITIVE P3 step-level if: always() inside a gated product job (upload-artifact) (101.510451ms)
+✔ NEGATIVE N1 verify: needs removed (98.177452ms)
+✔ NEGATIVE N2 rogue job without needs (86.986065ms)
+✔ NEGATIVE N3 unknown need (84.510051ms)
+✔ NEGATIVE N4 verify: if: always() (86.506882ms)
+✔ NEGATIVE N5 images: if: ${{ !cancelled() }} (82.254024ms)
+✔ NEGATIVE N6 integration: if: failure() (89.101776ms)
+✔ NEGATIVE N7 e2e: if: ${{ always() && github.ref == 'refs/heads/main' }} (97.679276ms)
+✔ NEGATIVE N8 verify: if: Always ( ) (case/whitespace) (88.573897ms)
+✔ NEGATIVE N9 integration: if: success() || failure() (95.171346ms)
+✔ NEGATIVE N10 delivery-gates: continue-on-error: true (118.856721ms)
+✔ NEGATIVE N11 validate step: continue-on-error: true (85.794526ms)
+✔ NEGATIVE N12 validate step: `|| true` (87.854319ms)
+✔ NEGATIVE N13 validate step: if: false (89.093626ms)
+✔ NEGATIVE N14 verify: plain pnpm install --frozen-lockfile instead of ci-install-deps.sh (92.977399ms)
+✔ NEGATIVE N15 integration: ci-install-deps.sh step removed (pnpm used without any install) (78.924978ms)
+✔ NEGATIVE N16 images: extra `npm ci` step (87.657533ms)
+✔ NEGATIVE N17 e2e: corepack enable && pnpm install (90.593406ms)
+✔ NEGATIVE N18 verify: fallback `ci-install-deps.sh || pnpm install` (89.164727ms)
+✔ NEGATIVE N19 validate step: env NODE_OPTIONS=--import=data:...process.exit(0) (85.865735ms)
+✔ NEGATIVE N20 validate step: working-directory: decoy (88.80818ms)
+✔ NEGATIVE N21 validate step: shell: 'true {0}' (85.289019ms)
+✔ NEGATIVE N22 workflow-level defaults.run.working-directory: decoy (87.575025ms)
+✔ NEGATIVE N23 workflow-level defaults.run.shell (103.451642ms)
+✔ NEGATIVE N24 workflow-level env NODE_OPTIONS (83.471056ms)
+✔ NEGATIVE N25 delivery-gates job-level env NODE_OPTIONS (89.107312ms)
+✔ NEGATIVE N26 delivery-gates job-level defaults.run.working-directory (90.561908ms)
+✔ NEGATIVE N27 delivery-gates pre-step writes NODE_OPTIONS to $GITHUB_ENV (87.799986ms)
+✔ NEGATIVE N28 delivery-gates setup-node step with env (88.806758ms)
+✔ NEGATIVE N29 validate.mjs run in another job with NODE_OPTIONS (87.158225ms)
+✔ POSITIVE P4 validate step with a name and an id (only name/id/run) (87.759844ms)
+✔ POSITIVE P5 product job (verify) with its own job-level env and defaults (does not reach the gate) (77.186839ms)
+✔ NEGATIVE N30 delivery-gates checkout with.ref override (77.954738ms)
+✔ NEGATIVE N31 delivery-gates checkout with.repository override (85.223025ms)
+✔ NEGATIVE N32 delivery-gates checkout with.path override (88.137426ms)
+✔ NEGATIVE N33 delivery-gates checkout with.token override (86.965653ms)
+✔ NEGATIVE N34 delivery-gates checkout with.sparse-checkout override (81.937752ms)
+✔ NEGATIVE N35 delivery-gates checkout with.submodules override (86.198435ms)
+✔ NEGATIVE N36 delivery-gates checkout with.fetch-depth as an expression (81.451072ms)
+✔ NEGATIVE N37 delivery-gates setup-node with.node-version-file (89.31206ms)
+✔ NEGATIVE N38 delivery-gates checkout with: is a string, not a mapping (102.517639ms)
+✔ POSITIVE P6 delivery-gates checkout with persist-credentials: false (allow-listed) (84.814551ms)
+✔ POSITIVE P7 delivery-gates checkout without with: (defaults to the triggering commit) (86.322108ms)
+✔ C1 an unpinned lock: --check exits 1 and reports every null digest as NOT PINNED (honest, never a pass) (46.756174ms)
+✔ C2 all digests recorded: --apply then --check exits 0; only image reference lines change (86.734901ms)
+✔ C3 keycloak BLOCKED (blockedReason, null digest), others pinned: --apply skips it, --check still exits 1 (92.491558ms)
+✔ C4 structure: blockedReason together with a digest is contradictory (48.207852ms)
+✔ C5 structure: missing blockedReason field, bad scope, digest without verifiedAt, malformed digest (44.213717ms)
+✔ C6 completeness: an image referenced in Compose but absent from the lock fails (96.501395ms)
+✔ C7 completeness: a file using an image but missing from its usedIn fails (85.76142ms)
+✔ C8 a file digest that differs from the lock fails (83.455747ms)
+✔ C9 --resolve with a denied registry (stub docker): reachable images recorded, quay.io BLOCKED, exit 1 (171.85233ms)
+✔ C10 runner WITH quay.io: --resolve --missing pins ONLY keycloak, --apply, --check exits 0 (207.984124ms)
+✔ C11 runner WITHOUT quay.io: --resolve --missing exits 1, keycloak stays null/BLOCKED, --check still exits 1 (180.857572ms)
+✔ C12 nothing missing: --resolve --missing calls no registry, leaves the lock byte-identical, exits 0 (36.561346ms)
+✔ C13 CI images job: resolve --missing, then --apply, then --check, in that order (0.393846ms)
+ℹ tests 59
+ℹ suites 0
+ℹ pass 59
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4251.620734
+# exit: 0

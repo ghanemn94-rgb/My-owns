@@ -8,6 +8,9 @@
 #
 # Environment: PGBIN (default: newest /usr/lib/postgresql/*/bin), QA_E2E_PG_PORT (default 54361).
 # Missing prerequisites -> exit 3 with "BLOCKED: ..." (never a silent pass).
+# The cluster is ALWAYS UTF8 with the C locale (T-DG2-BE9), whatever the shell's LANG/LC_*: without them initdb
+# would make a SQL_ASCII cluster, where char_length counts bytes. C (not C.UTF-8) because it exists on every platform
+# and sorts by code point independent of the C library version.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -37,7 +40,7 @@ cleanup() {
 trap cleanup EXIT
 
 if [ "$(id -u)" = "0" ]; then AS_PG=(unshare --user --map-user=1000 --map-group=1000); else AS_PG=(); fi
-"${AS_PG[@]}" "$PGBIN/initdb" -D "$WORK/pg" -U postgres --auth=trust >/dev/null
+"${AS_PG[@]}" "$PGBIN/initdb" -D "$WORK/pg" -U postgres --auth=trust --encoding=UTF8 --locale=C >/dev/null
 "${AS_PG[@]}" "$PGBIN/postgres" -D "$WORK/pg" -c unix_socket_directories='' -c listen_addresses=127.0.0.1 \
   -p "$PG_PORT" -c fsync=off >"$WORK/pg.log" 2>&1 &
 PG_PID=$!
@@ -45,7 +48,9 @@ ADMIN_URL="postgresql://postgres@127.0.0.1:${PG_PORT}/postgres"
 for _ in $(seq 1 60); do psql "$ADMIN_URL" -qAtc "select 1" >/dev/null 2>&1 && break; sleep 0.5; done
 psql "$ADMIN_URL" -qAtc "select 'qa e2e cluster: ' || version()" || { echo "BLOCKED: PostgreSQL did not start"; cat "$WORK/pg.log"; exit 3; }
 psql "$ADMIN_URL" -q -v ON_ERROR_STOP=1 \
-  -c "CREATE ROLE mth_owner NOLOGIN" -c "CREATE ROLE mth_app NOLOGIN" -c "CREATE DATABASE mth OWNER mth_owner"
+  -c "CREATE ROLE mth_owner NOLOGIN" -c "CREATE ROLE mth_app NOLOGIN" \
+  -c "CREATE DATABASE mth OWNER mth_owner ENCODING 'UTF8' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0"
+psql "$ADMIN_URL" -qAtc "select 'qa e2e database mth: server_encoding ' || pg_encoding_to_char(encoding) || ', lc_collate ' || datcollate || ', lc_ctype ' || datctype from pg_database where datname = 'mth'"
 
 role_url() { node -e 'const u=new URL(process.argv[1]);u.pathname="/mth";u.searchParams.set("options","-c role="+process.argv[2]);console.log(u.toString())' "$ADMIN_URL" "$1"; }
 export NODE_ENV=development AUTH_MODE=dev PORT=3000 APP_BASE_URL=http://localhost:3000 LOG_LEVEL=warn

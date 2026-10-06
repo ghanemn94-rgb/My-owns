@@ -24,6 +24,7 @@ export {
   type MigrationFile,
   type MigrationStatus,
 } from "./migrate.ts";
+export { assertUtf8Database, DatabaseEncodingError, readServerEncoding, REQUIRED_SERVER_ENCODING } from "./encoding.ts";
 export {
   diffFields,
   insertAuditEvent,

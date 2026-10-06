@@ -8,6 +8,9 @@
 # Environment: PGBIN (default: newest /usr/lib/postgresql/*/bin), QA_PG_PORT (default 54351).
 # No network is used. When run as uid 0 (build sandboxes), PostgreSQL runs in a user namespace as uid 1000 because it
 # refuses to run as root. Missing binaries -> exit 3 and "BLOCKED" (never a silent pass).
+# The cluster is ALWAYS UTF8 with the C locale (T-DG2-BE9), whatever the shell's LANG/LC_*: without them initdb
+# would make a SQL_ASCII cluster, where char_length counts bytes. C (not C.UTF-8) because it exists on every platform
+# and sorts by code point independent of the C library version.
 set -euo pipefail
 
 PGBIN="${PGBIN:-$(ls -d /usr/lib/postgresql/*/bin 2>/dev/null | sort -V | tail -1)}"
@@ -33,7 +36,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-as_pg "$PGBIN/initdb" -D "$WORK/pg" -U postgres --auth=trust >/dev/null
+as_pg "$PGBIN/initdb" -D "$WORK/pg" -U postgres --auth=trust --encoding=UTF8 --locale=C >/dev/null
 PG_ARGS=(-D "$WORK/pg" -c unix_socket_directories='' -c listen_addresses=127.0.0.1 -p "$PG_PORT" -c fsync=off
   -c max_connections=200)
 # Started directly (not through a shell function) so $! is the postmaster: `unshare` without --fork execs it.
@@ -45,7 +48,7 @@ fi
 PG_PID=$!
 export TEST_DATABASE_ADMIN_URL="postgresql://postgres@127.0.0.1:${PG_PORT}/postgres"
 for _ in $(seq 1 60); do psql "$TEST_DATABASE_ADMIN_URL" -qAtc "select 1" >/dev/null 2>&1 && break; sleep 0.5; done
-psql "$TEST_DATABASE_ADMIN_URL" -qAtc "select 'qa disposable cluster: ' || version()" || {
+psql "$TEST_DATABASE_ADMIN_URL" -qAtc "select 'qa disposable cluster: ' || version() || '; server_encoding ' || current_setting('server_encoding') || ', lc_collate ' || datcollate || ', lc_ctype ' || datctype from pg_database where datname = current_database()" || {
   echo "BLOCKED: disposable PostgreSQL did not start"
   cat "$WORK/pg.log"
   exit 3

@@ -37,6 +37,13 @@
   - Kysely `Migrator`: TypeScript migrations are harder for IT DBAs to review than SQL.
   - Prisma: generated client, engine binaries, and weaker control over SQL, triggers and roles.
 
+### Database encoding (amendment, T-DG2-BE9, 2026-10-06)
+
+- The product database **must use the `UTF8` encoding**. Every text limit in the schema is a `char_length` (code-point) limit, and Arabic text is two bytes per letter. On a `SQL_ASCII` database PostgreSQL does not validate UTF-8 and `char_length` counts **bytes**, so a 120-character Arabic name (~240 bytes) would break a 200-character limit and invalid byte sequences would be stored.
+- **Fail closed.** `mth-db migrate`, `status`, `bootstrap` and `seed-dev` run `SHOW server_encoding` first, on the same connection path they then use. On anything other than `UTF8` they print `mth-db: the database must use UTF8 encoding (found <ENC>); create it with ENCODING 'UTF8' TEMPLATE template0` and exit 1. Nothing is created: no advisory lock, no `schema_migration` table, no row. The API's `/readyz` answers `503` with `database: fail` on a non-UTF8 database (the `Readiness` contract has no separate encoding check). A positive answer is cached for the life of the process, because a database's encoding is fixed at `CREATE DATABASE`.
+- **Provisioning.** Create the database as `CREATE DATABASE mth OWNER mth_owner ENCODING 'UTF8' TEMPLATE template0`. `template0` is required whenever the requested encoding or locale may differ from `template1`'s. The **locale** (collation and ctype) is a deployment choice; the product requires only the encoding. The Compose `db` service (postgres:18, default locale `en_US.utf8`) also passes `POSTGRES_INITDB_ARGS=--encoding=UTF8`.
+- **Disposable test and demo clusters** are always `initdb --encoding=UTF8 --locale=C`, and their databases `ENCODING 'UTF8' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0`, so results never depend on the developer's `LANG`/`LC_*`. Without a locale, initdb makes a `SQL_ASCII` cluster. `C` is used rather than `C.UTF-8` because it exists on every platform and sorts by code point regardless of the C library version. Known difference from an `en_US.utf8` production database: under a `C` ctype, `lower()`/`upper()` fold only ASCII letters (Arabic has no case, so Arabic text is unaffected) and the sort order is by code point.
+
 ### Identifiers
 
 - **UUIDv7**, generated in the application with `uuid` 13.0.0 (MIT) `v7()` [UNVERIFIED].
@@ -85,6 +92,7 @@
 
 - The migration runner is ~150 lines of project code that backend-workflow-engineer must test. In return it has no extra dependency and produces SQL that a DBA can review.
 - Local PG 16 and target PG 18 differ in version. Mitigation: the PG 16 SQL floor plus CI on 18.
+- A database not created as `UTF8` is refused by the database tools and is not ready for the API. Operators must re-create it (the encoding of an existing database cannot be changed in place; dump and restore into a UTF8 database).
 
 ## Verification evidence
 

@@ -1,0 +1,36 @@
+# negative control B1: harness reverted to HEAD 0466813: tests/qa/support/with-pg.sh AND packages/db/test/global-setup.ts (plain CREATE DATABASE); product code is the fixed one
+# command: env -u LANG -u LC_ALL -u LC_CTYPE -u LC_COLLATE -u LC_MESSAGES QA_PG_PORT=55471 tests/qa/support/with-pg.sh npx vitest run --project integration packages/db/test/integration/encoding.test.ts apps/api/test/integration/oidc.test.ts --reporter=verbose
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+ RUN  v3.2.4 /home/user/My-owns
+
+No test files found, exiting with code 1
+
+filter: packages/db/test/integration/encoding.test.ts, apps/api/test/integration/oidc.test.ts
+projects: integration
+
+|integration| 
+
+include: apps/*/test/integration/**/*.test.ts, packages/*/test/integration/**/*.test.ts, tests/qa/integration/**/*.test.ts
+exclude:  **/node_modules/**, **/dist/**, **/cypress/**, **/.{idea,git,cache,output,temp}/**, **/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build,eslint,prettier}.config.*
+
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: mth-db migrate failed on the fresh test database (exit 1):
+mth-db: the database must use UTF8 encoding (found SQL_ASCII); create it with ENCODING 'UTF8' TEMPLATE template0
+
+ ❯ Object.setup packages/db/test/global-setup.ts:93:11
+ ❯ process.processTicksAndRejections node:internal/process/task_queues:104:5
+ ❯ TestProject._initializeGlobalSetup node_modules/.pnpm/vitest@3.2.4_@types+node@22.18.0_jsdom@27.0.0_yaml@2.8.1/node_modules/vitest/dist/chunks/cli-api.BkDphVBG.js:7074:21
+ ❯ Vitest.initializeGlobalSetup node_modules/.pnpm/vitest@3.2.4_@types+node@22.18.0_jsdom@27.0.0_yaml@2.8.1/node_modules/vitest/dist/chunks/cli-api.BkDphVBG.js:9724:35
+ ❯ node_modules/.pnpm/vitest@3.2.4_@types+node@22.18.0_jsdom@27.0.0_yaml@2.8.1/node_modules/vitest/dist/chunks/cli-api.BkDphVBG.js:9636:5
+ ❯ Vitest.runFiles node_modules/.pnpm/vitest@3.2.4_@types+node@22.18.0_jsdom@27.0.0_yaml@2.8.1/node_modules/vitest/dist/chunks/cli-api.BkDphVBG.js:9666:10
+ ❯ Vitest.start node_modules/.pnpm/vitest@3.2.4_@types+node@22.18.0_jsdom@27.0.0_yaml@2.8.1/node_modules/vitest/dist/chunks/cli-api.BkDphVBG.js:9554:18
+ ❯ startVitest node_modules/.pnpm/vitest@3.2.4_@types+node@22.18.0_jsdom@27.0.0_yaml@2.8.1/node_modules/vitest/dist/chunks/cli-api.BkDphVBG.js:10510:8
+ ❯ start node_modules/.pnpm/vitest@3.2.4_@types+node@22.18.0_jsdom@27.0.0_yaml@2.8.1/node_modules/vitest/dist/chunks/cac.Cb-PYCCB.js:1412:15
+ ❯ CAC.run node_modules/.pnpm/vitest@3.2.4_@types+node@22.18.0_jsdom@27.0.0_yaml@2.8.1/node_modules/vitest/dist/chunks/cac.Cb-PYCCB.js:1391:2
+
+
+
+
+# exit: 1

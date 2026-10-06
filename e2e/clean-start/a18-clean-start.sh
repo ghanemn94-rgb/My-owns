@@ -110,7 +110,8 @@ echo "  PASS build outputs present"
 
 step "4. fresh PostgreSQL, roles and empty database (docs/operations: mth_owner owns, mth_app runtime)"
 if [ "$(id -u)" = "0" ]; then AS_PG=(unshare --user --map-user=1000 --map-group=1000); else AS_PG=(); fi
-"${AS_PG[@]}" "$PGBIN/initdb" -D "$WORK/pg" -U postgres --auth=trust >/dev/null
+# UTF8 + C locale whatever the shell locale (T-DG2-BE9; ADR-0003 "Database encoding").
+"${AS_PG[@]}" "$PGBIN/initdb" -D "$WORK/pg" -U postgres --auth=trust --encoding=UTF8 --locale=C >/dev/null
 "${AS_PG[@]}" "$PGBIN/postgres" -D "$WORK/pg" -c unix_socket_directories='' -c listen_addresses=127.0.0.1 \
   -p "$PG_PORT" -c fsync=off >"$WORK/pg.log" 2>&1 &
 PG_PID=$!
@@ -118,7 +119,8 @@ ADMIN="postgresql://postgres@127.0.0.1:${PG_PORT}/postgres"
 for _ in $(seq 1 60); do psql "$ADMIN" -qAtc "select 1" >/dev/null 2>&1 && break; sleep 0.5; done
 psql "$ADMIN" -qAtc "select 1" >/dev/null || blocked "PostgreSQL did not start: $(tail -3 "$WORK/pg.log")"
 psql "$ADMIN" -q -v ON_ERROR_STOP=1 -c "CREATE ROLE mth_owner LOGIN" -c "CREATE ROLE mth_app LOGIN" \
-  -c "CREATE DATABASE mth OWNER mth_owner" -c "CREATE DATABASE mth_empty OWNER mth_owner"
+  -c "CREATE DATABASE mth OWNER mth_owner ENCODING 'UTF8' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0" \
+  -c "CREATE DATABASE mth_empty OWNER mth_owner ENCODING 'UTF8' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0"
 OWNER_URL="postgresql://mth_owner@127.0.0.1:${PG_PORT}/mth"
 APP_URL="postgresql://mth_app@127.0.0.1:${PG_PORT}/mth"
 EMPTY_APP_URL="postgresql://mth_app@127.0.0.1:${PG_PORT}/mth_empty"
