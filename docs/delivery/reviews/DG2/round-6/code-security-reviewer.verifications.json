@@ -1,0 +1,41 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG2-230",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:bb3e7581... (source 51a692b1), recomputed in a disposable clone, against disposable PostgreSQL 16.13 clusters. The one shared predicate is packages/shared/src/schemas/common.ts VISIBLE_CONTENT = /[^\\p{White_Space}\\p{Cc}\\p{Cf}\\p{Cs}\\p{Default_Ignorable_Code_Point}\\u2800\\u{16FE4}\\u{1D159}]/u. hasText, freeText and trimmedText (name, reason) use it, and so does the web. (1) The round-5 repro zz-sec-r5-probe.test.ts part E, rerun unchanged, now PASSES in both runs (LANG unset and C.UTF-8). An Out of scope of U+16FE4 or of U+1D159 x2 gets 400 validation.blank at /outOfScope; no charter is stored, the pre-check is not 'pass', and G1 still lists Out of scope as missing. (2) The exhaustive schema sweep (schema-sweep-r6.mts, Node 24) covers every code point 0..10FFFF, lone surrogates included. The code points counted as not visible are exactly WS, Cc, Cf, Cs, DI, U+2800, U+16FE4 and U+1D159 (6341 code points): 0 outside that set and 0 inside it still counted visible. So there is no residual and no over-blocking. (3) Placeholder-only values, alone, repeated or mixed with U+2800, NBSP, RLM and VS16, are rejected by freeText, name and reason with validation.blank, and hasText is false. (4) Text with visible content keeps its marks verbatim: a+U+16FE4, U+1D159+Arabic, a Khitan character + filler, G clef + null notehead, emoji+VS16+U+1D159. Through the API (zz-sec-r6-probe part A, both runs): 'Synthetic\\u{16FE4}exclusion' and '\\u{1D159} Synthetic exclusion' get 201, are stored verbatim, and the pre-check passes. A placeholder-only name or reason gets 400; a reason with a visible placeholder is stored verbatim. The round-5 D4 visible-with-marks cases still pass.",
+      "evidence": [
+        "packages/shared/src/schemas/common.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-6/probes/schema-sweep-r6.mts",
+        "docs/delivery/test-evidence/DG2/code-security/round-6/schema-sweep-r6.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/probes/zz-sec-r5-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-6/probes/zz-sec-r6-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-6/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-6/probe-run2.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-6/probes/README.md"
+      ]
+    },
+    {
+      "finding_id": "F-DG2-231",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:bb3e7581... (source 51a692b1) in a disposable clone, against disposable PostgreSQL 16.13 clusters. (1) My three round-5 repros (zz-sec-r5-nul.test.ts, rerun unchanged) now PASS in both runs: charter outOfScope 'Synthetic\\u0000exclusion', transformation name 'Synthetic\\u0000name' and TOM gap archive reason 'Synthetic\\u0000reason' each get a 4xx (400 validation.invalid_character at /outOfScope, /name or /reason). The transformation, charter and audit_event counts are unchanged, and the gap stays open at the same version. zz-sec-r5-probe part F passes too. NUL-only values now get validation.invalid_character instead of validation.blank: one error, by design. (2) The central check (platform/hooks.ts preHandler, validation.ts findInvalidCharacter) walks params, then query, then JSON body values and keys, iteratively. It never reads stream or binary bodies (the octet-stream evidence upload; its X-File-Name header already refuses \\x00-\\x1f). A NUL nested in an array is reported at /stakeholders/1/name. It does not bypass authentication or rate limits: the limiter runs onRequest, authentication and CSRF run in preValidation, and the probe saw 401 without a session and 403 for CSRF. For a signed-in caller without the permission, the 400 comes before the handler's authorization. The status is the same whether or not the transformation exists (400/400), so it is not an existence oracle, and nothing is written. That matches the existing pre-authorization 400 for malformed JSON. It does not reject legitimate input: '\\\\0', '%00', '\\\\u0000' as literal text, U+0001 and U+FFFD are stored verbatim. Only callback opts out (invalidCharacters: 'route' appears once). contract.test.ts includes 'every operation but the OIDC callback: U+0000 in the query is a declared 400' and the 161-operation assertion; it passes in both integration runs, as does invalid-character.test.ts (13/13). (3) db-errors maps 22021 and 22P05 to invalidCharacterProblem(''), which has a fixed message and no SQL, column or detail text: no leak. (4) OIDC (zz-sec-r6-oidc, oidc.test.ts 27/27). A NUL in state, code or error gets 302 invalid_request. A NUL sub gets token_invalid, is audited, and creates no user. A NUL name, preferred_username or email falls through to the next claim. The (iss, sub) binding, no roles at JIT, a working session and the single-use login cookie are all unchanged. (5) Real HTTP: a NUL in X-Request-Id or User-Agent, or raw in the request target, is refused by llhttp with 400 before the app runs, so no header-borne NUL reaches audit or session storage. (6) The contract amendment adds exactly 41 identical '400: ValidationError' lines and nothing else; openapi:lint reports 161 operations. Residual hunt, other characters: lone UTF-16 surrogates never give a 5xx on the main API, and declared 400s are acceptable there. On the OIDC callback, a lone surrogate in the ID token's sub gives an undeclared 400 with no failed-login audit. It is a different character and a different root cause (22P02 in audit jsonb, not NUL), so it is raised as the new Low finding F-DG2-260 rather than as a failure of this fix. This finding's reported scope (U+0000) and its stated remedy are fully fixed.",
+      "evidence": [
+        "apps/api/src/modules/platform/validation.ts",
+        "apps/api/src/modules/platform/hooks.ts",
+        "apps/api/src/modules/platform/db-errors.ts",
+        "apps/api/src/modules/identity/routes.ts",
+        "apps/api/src/modules/identity/oidc.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/probes/zz-sec-r5-nul.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-6/probes/zz-sec-r6-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-6/probes/zz-sec-r6-oidc.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-6/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-6/probe-run2.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-6/integration-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-6/integration-run2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-6/diff-scan.log"
+      ]
+    }
+  ]
+}

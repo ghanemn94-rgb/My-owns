@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG2-260",
+      "stage_id": "DG2",
+      "requirement": "REQ-DLV-034",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "A lone UTF-16 surrogate in the ID token's sub makes the OIDC callback answer an undeclared 400 problem (validation.format) instead of its declared 302 redirect, and the failed sign-in leaves no audit row",
+      "reproduction": "A lone surrogate is legal in a JSON string escape ('\\ud800'), so it survives JSON.parse of the ID token payload. identityClaimsStorable (apps/api/src/modules/identity/oidc.ts) checks only for U+0000. resolveOidcUser inserts user_identity (text: node-postgres sends UTF-8, so the column would receive U+FFFD). It then audits changes { identity: { issuer, subject } } through packages/db/src/audit.ts, whose changes column is JSON.stringify(event.changes). JSON.stringify keeps the lone surrogate as the escape '\\ud800', PostgreSQL's jsonb input refuses that escape with SQLSTATE 22P02, and apps/api/src/modules/platform/hooks.ts maps 22P02 to 400 validation.format. Probe: disposable clone at 51a692b1, disposable PostgreSQL 16.13, the candidate's FakeIdp; zz-sec-r6-surrogate.test.ts, run with LANG unset (surrogate-probe-run1.log) and with LANG=C.UTF-8 (probe-run2.log). GET /api/v1/auth/callback with a valid code whose ID token has sub 'r6s-jit-\\ud800' (JIT path), or sub 'r6s-bind-\\udfff' plus a verified e-mail of a pre-provisioned user (bind path), returns 400 application/problem+json {code: validation, errors: [{pointer: '', code: 'validation.format'}]}. The harness contract check reports 'completeOidcLogin does not declare status 400 (declared: 302, 429)'. The audit_event rows for the request id: none. No identity or session is created, and the login cookie is cleared.",
+      "expected": "The callback contract (docs/api/openapi.yaml completeOidcLogin: 302, 429; ADR-0007 §5a names it as the only operation without a 400) is honoured for every ID token. A subject or issuer the server cannot store or audit faithfully is refused like the NUL case: 302 /login?error=token_invalid, with a session.login_failed audit row. For example, extend identityClaimsStorable to refuse lone surrogates (e.g. !iss.isWellFormed() || !sub.isWellFormed(), Node 20+), or map the callback's database errors to its declared redirect. Add an oidc.test.ts case. Optionally, apply the same well-formedness check in hasInvalidCharacter so that free text is not silently rewritten to U+FFFD.",
+      "actual": "Undeclared 400 problem JSON from a browser-navigation endpoint (the user sees a raw JSON error page instead of the login page), and a failed sign-in with no audit row. Integrity and confidentiality hold: the transaction rolls back, no user, identity or session is created, and the body carries only a requestId. On the main API, lone surrogates in free text never give a 5xx (the text columns store U+FFFD; a value that reaches jsonb directly, e.g. a journey step name, gets a declared 400 validation.format at pointer ''), so this is limited to the callback.",
+      "evidence": [
+        "apps/api/src/modules/identity/oidc.ts",
+        "apps/api/src/modules/identity/routes.ts",
+        "apps/api/src/modules/platform/hooks.ts",
+        "packages/db/src/audit.ts",
+        "docs/api/openapi.yaml",
+        "docs/delivery/test-evidence/DG2/code-security/round-6/probes/zz-sec-r6-surrogate.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-6/surrogate-probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-6/probe-run2.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-6/probes/zz-sec-r6-oidc.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-6/probe-run1.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-6/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-06T12:05:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer, DG2 round 6, while probing for residuals of the F-DG2-231 class as assigned. Low and non-mandatory, the same rating as F-DG2-231. The input is IdP-issued: it needs the trusted OpenID Provider to sign an ID token whose sub contains a lone surrogate (Keycloak subjects are UUIDs), so an end user cannot trigger it. No integrity, authorization or confidentiality impact: everything rolls back and nothing internal leaks. It is a contract and audit-completeness defect. It does not block the round. F-DG2-231 (U+0000) is verified fixed (CLOSED_VERIFIED)."
+        }
+      ]
+    }
+  ]
+}
