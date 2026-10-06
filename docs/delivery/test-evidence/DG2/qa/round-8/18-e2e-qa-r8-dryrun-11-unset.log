@@ -1,0 +1,81 @@
+$ env -u LANG -u LC_ALL QA_E2E_API_PORT=3811 QA_E2E_PG_PORT=24511 QA_SHOT_DIR=$TMPDIR/shots-dry/qa QA_R8_QUERY_OPS=$TMPDIR/qa-r8-query-ops.json e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r8.spec.ts --workers=1 --reporter=list
+# cwd: $TMPDIR/review-dg2; node v24.21.0; date 2026-10-06T18:37:38Z
+port-policy: PostgreSQL listening on port 24511 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 3811 (attempt 1)
+API:     http://localhost:3811
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 12 tests using 1 worker
+
+QA-R8 [en] R8-01 48 raw requests (8 shapes x 3 framings x 2 auth): all 400 problem+json validation.json at pointer ""
+  ✓   1 [chromium-en] › e2e/dg2-qa-r8.spec.ts:171:1 › R8-01 raw socket: invalid UTF-8 JSON bodies are 400 validation.json for every framing, with and without a session (3.1s)
+QA-R8 [en] R8-02 emoji via Content-Length: 201, stored verbatim (21 bytes)
+QA-R8 [en] R8-02 emoji via 4 chunks cut mid-character: 201, stored verbatim (21 bytes)
+QA-R8 [en] R8-02 arabic via Content-Length: 201, stored verbatim (30 bytes)
+QA-R8 [en] R8-02 arabic via 15 chunks cut mid-character: 201, stored verbatim (30 bytes)
+QA-R8 [en] R8-02 zwj family + skin tone via Content-Length: 201, stored verbatim (50 bytes)
+QA-R8 [en] R8-02 zwj family + skin tone via 34 chunks cut mid-character: 201, stored verbatim (50 bytes)
+QA-R8 [en] R8-02 decomposed e + U+0301 (no NFC) via Content-Length: 201, stored verbatim (18 bytes)
+QA-R8 [en] R8-02 decomposed e + U+0301 (no NFC) via 3 chunks cut mid-character: 201, stored verbatim (18 bytes)
+  ✓   2 [chromium-en] › e2e/dg2-qa-r8.spec.ts:198:1 › R8-02 raw socket: valid multi-byte text split mid-character across chunks round-trips byte for byte (2.5s)
+QA-R8 [en] R8-03 104 query probes: all 400 validation.format at /query/<name>
+QA-R8 [en] R8-03 unauthenticated ?q=%FF -> 401; Arabic and emoji ?q= -> 200 and the record is found with its exact name
+  ✓   3 [chromium-en] › e2e/dg2-qa-r8.spec.ts:225:1 › R8-03 query sweep: undecodable percent sequences in any query parameter are 400 validation.format (732ms)
+QA-R8 [en] R8-04 value set via fill; POST 201; API and the reloaded page show the exact 50 code points
+  ✓   4 [chromium-en] › e2e/dg2-qa-r8.spec.ts:300:1 › R8-04 UI: Arabic, emoji, RLM and combining marks in the charter round-trip verbatim (2.8s)
+QA-R8 [en] R8-05 server 400 [{"pointer":"","code":"validation.json","message":"The request body is not valid UTF-8 JSON."}] shown as "The request was not valid JSON."
+  ✓   5 [chromium-en] › e2e/dg2-qa-r8.spec.ts:337:1 › R8-05 UI -> real server: an invalid UTF-8 body is refused with the localized validation__json message (2.1s)
+QA-R8 [en] R8-06 search requests ["200 ?sort=updatedAt%3Adesc&limit=25","200 ?sort=updatedAt%3Adesc&limit=25&q=%D9%82%D8%A7%D8%A6%D9%85%D8%A9"]
+QA-R8 [en] R8-06 deep link /transformations?q=%FF: document 200 text/html; charset=utf-8; API ["200 ?sort=updatedAt%3Adesc&limit=25&q=%F0%9F%A7%AD","200 ?sort=updatedAt%3Adesc&limit=25&q=%EF%BF%BD"]
+  ✓   6 [chromium-en] › e2e/dg2-qa-r8.spec.ts:388:1 › R8-06 UI: Arabic/emoji search finds the record; a deep link with ?q=%FF never yields a 5xx (3.1s)
+QA-R8 [ar] R8-01 48 raw requests (8 shapes x 3 framings x 2 auth): all 400 problem+json validation.json at pointer ""
+  ✓   7 [chromium-ar] › e2e/dg2-qa-r8.spec.ts:171:1 › R8-01 raw socket: invalid UTF-8 JSON bodies are 400 validation.json for every framing, with and without a session (3.0s)
+QA-R8 [ar] R8-02 emoji via Content-Length: 201, stored verbatim (21 bytes)
+QA-R8 [ar] R8-02 emoji via 4 chunks cut mid-character: 201, stored verbatim (21 bytes)
+QA-R8 [ar] R8-02 arabic via Content-Length: 201, stored verbatim (30 bytes)
+QA-R8 [ar] R8-02 arabic via 15 chunks cut mid-character: 201, stored verbatim (30 bytes)
+QA-R8 [ar] R8-02 zwj family + skin tone via Content-Length: 201, stored verbatim (50 bytes)
+QA-R8 [ar] R8-02 zwj family + skin tone via 34 chunks cut mid-character: 201, stored verbatim (50 bytes)
+QA-R8 [ar] R8-02 decomposed e + U+0301 (no NFC) via Content-Length: 201, stored verbatim (18 bytes)
+QA-R8 [ar] R8-02 decomposed e + U+0301 (no NFC) via 3 chunks cut mid-character: 201, stored verbatim (18 bytes)
+  ✓   8 [chromium-ar] › e2e/dg2-qa-r8.spec.ts:198:1 › R8-02 raw socket: valid multi-byte text split mid-character across chunks round-trips byte for byte (2.5s)
+QA-R8 [ar] R8-03 104 query probes: all 400 validation.format at /query/<name>
+QA-R8 [ar] R8-03 unauthenticated ?q=%FF -> 401; Arabic and emoji ?q= -> 200 and the record is found with its exact name
+  ✓   9 [chromium-ar] › e2e/dg2-qa-r8.spec.ts:225:1 › R8-03 query sweep: undecodable percent sequences in any query parameter are 400 validation.format (780ms)
+QA-R8 [ar] R8-04 value set via fill; POST 201; API and the reloaded page show the exact 50 code points
+  ✓  10 [chromium-ar] › e2e/dg2-qa-r8.spec.ts:300:1 › R8-04 UI: Arabic, emoji, RLM and combining marks in the charter round-trip verbatim (2.7s)
+QA-R8 [ar] R8-05 server 400 [{"pointer":"","code":"validation.json","message":"The request body is not valid UTF-8 JSON."}] shown as "الطلب ليس بصيغة JSON صالحة."
+  ✓  11 [chromium-ar] › e2e/dg2-qa-r8.spec.ts:337:1 › R8-05 UI -> real server: an invalid UTF-8 body is refused with the localized validation__json message (2.1s)
+QA-R8 [ar] R8-06 search requests ["200 ?sort=updatedAt%3Adesc&limit=25","200 ?sort=updatedAt%3Adesc&limit=25&q=%D9%82%D8%A7%D8%A6%D9%85%D8%A9"]
+QA-R8 [ar] R8-06 deep link /transformations?q=%FF: document 200 text/html; charset=utf-8; API ["200 ?sort=updatedAt%3Adesc&limit=25&q=%F0%9F%A7%AD","200 ?sort=updatedAt%3Adesc&limit=25&q=%EF%BF%BD"]
+  ✓  12 [chromium-ar] › e2e/dg2-qa-r8.spec.ts:388:1 › R8-06 UI: Arabic/emoji search finds the record; a deep link with ?q=%FF never yields a 5xx (3.4s)
+
+  12 passed (32.0s)
+exit 0

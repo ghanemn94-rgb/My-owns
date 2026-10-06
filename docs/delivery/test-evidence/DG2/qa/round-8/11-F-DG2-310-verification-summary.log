@@ -1,0 +1,19 @@
+F-DG2-310 verification (qa-verifier, round 8, candidate 9331e9d1 / cf3446e4; fix 4e3c446 T-DG2-DEVOPS3)
+1. Round-7 mechanism repro, unchanged (11-port-collision-repro.py) -> still reproduces on this kernel (EADDRINUSE on a
+   TIME_WAIT client port 58176): the kernel behaviour is unchanged, so the fix must come from the harness policy.
+2. Kernel-assigned client ports sampled (3000 connects): min 32770, max 60990, none below 32768; none in 24000-31999.
+   Every harness default is now below 32768: with-pg 24351, with-stack 24331/API 3000, qa-stack 24361/3060,
+   a18 24371/3181, clean-start-local 24340/3100. The natural F-DG2-310 collision cannot occur on a default port.
+3. tests/qa/support/port-collision-check.sh: PASS 5/5 (C1 old harness fails closed = defect reproduced; C2/C3 new
+   harness retries and exports the used port; C4 strict -> BLOCKED exit 3; C5 API path retries).
+4. qa-verifier independent cases on the REAL stacks (11-port-collision-repro-r8.sh/.log): R2 with-stack and R3 qa-stack
+   with TIME_WAIT on BOTH default PG and API ports -> retried, exit 0, E2E_BASE_URL/PORT/APP_BASE_URL and DATABASE_URL
+   follow the ports actually used, readyz ready; R4 two concurrent with-pg on the same port -> both start on distinct
+   ports and data dirs; R5 a foreign listener is never mistaken for ours; R6 a non-bind startup failure is not retried
+   (BLOCKED exit 3, command not run); R7 retries exhausted -> BLOCKED exit 3; R8 strict API port -> BLOCKED exit 3.
+5. a18-clean-start.sh --install with TIME_WAIT on 24371 and 3181: PASS (retries logged; restart keeps the used port).
+   deploy/scripts/clean-start-local.sh offline (private store copy) with TIME_WAIT on 24340 and 3100: CLEAN START PASS.
+6. Integration 10/10 runs started on attempt 1 (5 per locale, incl. default port and CPU load), all 547/547; QA-suite
+   integration 2/2 started (587/587); e2e product 2/2 and QA stack 2/2 final runs started on attempt 1.
+   No run in this round failed to start because of a port.
+Result: fix genuine -> CLOSED_VERIFIED.

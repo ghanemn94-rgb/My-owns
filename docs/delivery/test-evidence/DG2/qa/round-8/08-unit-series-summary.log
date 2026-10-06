@@ -1,0 +1,13 @@
+unit series (pnpm test = vitest --project unit-node --project unit-web) on clone @cf3446e4
+unit/node22-run1-unset.log: node v22.22.2 | -u LANG -u LC_ALL |  Tests 691 passed (691) |  Test Files 38 passed (38) | exit 0
+unit/node22-run2-cutf8.log: node v22.22.2 | LANG=C.UTF-8 |  Tests 691 passed (691) |  Test Files 38 passed (38) | exit 0
+unit/node22-run3-unset.log: node v22.22.2 | -u LANG -u LC_ALL |  Tests 691 passed (691) |  Test Files 38 passed (38) | exit 0
+unit/node22-run4-cutf8.log: node v22.22.2 | LANG=C.UTF-8 |  Tests 691 passed (691) |  Test Files 38 passed (38) | exit 0
+unit/node24-load-unset.log: node v24.21.0 | -u LANG -u LC_ALL |  Tests 691 passed (691) |  Test Files 38 passed (38) | exit 0
+unit/node24-run1-unset.log: node v24.21.0 | -u LANG -u LC_ALL |  Tests 691 passed (691) |  Test Files 38 passed (38) | exit 0
+unit/node24-run2-cutf8.log: node v24.21.0 | LANG=C.UTF-8 |  Tests 691 passed (691) |  Test Files 38 passed (38) | exit 0
+unit/node24-run3-unset.log: node v24.21.0 | -u LANG -u LC_ALL |  Tests 691 passed (691) |  Test Files 38 passed (38) | exit 0
+unit/node24-run4-cutf8.log: node v24.21.0 | LANG=C.UTF-8 |  Tests 691 passed (691) |  Test Files 38 passed (38) | exit 0
+$ echo loadavg-before: $(cat /proc/loadavg); env -u LANG -u LC_ALL pnpm test; rc=$?; echo loadavg-after: $(cat /proc/loadavg); exit $rc
+loadavg-before: 6.52 8.38 5.73 12/273 27
+loadavg-after: 15.62 11.75 7.38 8/257 902

@@ -1,0 +1,239 @@
+$ python3 -I /home/user/My-owns/docs/delivery/test-evidence/DG2/qa/round-8/11-tw.py 24340 3100 && MTH_PNPM_STORE=$TMPDIR/pnpm-store/v10 MTH_PNPM_OFFLINE=1 timeout 500 deploy/scripts/clean-start-local.sh
+# cwd: $TMPDIR/review-dg2; node v24.21.0; date 2026-10-06T18:26:25Z
+TIME_WAIT on 24340: states ['06']; SO_REUSEADDR probe bind FAILED EADDRINUSE
+TIME_WAIT on 3100: states ['06']; SO_REUSEADDR probe bind FAILED EADDRINUSE
+
+==> environment facts
+  date (UTC):  2026-10-06T18:26:25Z
+  host:        Linux 6.18.44-fc-v70 x86_64; 4 vCPU; 15 GiB RAM
+  node:        v24.21.0;  pnpm: 10.33.0
+  postgres:    postgres (PostgreSQL) 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
+  repo HEAD:   cf3446e4daafe17a24a4707c9415580f15d2ed25  (worktree overlay: 0)
+  lockfile:    sha256 4f63722ac959b337df92747069ce8bd1c6ab80af6713f9cfeac7908c445e1703
+<== ok (0.34 s)
+
+==> 1. fresh clone of the repository
+Note: switching to 'cf3446e4daafe17a24a4707c9415580f15d2ed25'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+<== ok (22.37 s)
+
+==> 2. install dependencies from the frozen lockfile (lifecycle scripts disabled; pnpm 10 default)
+  pnpm install --frozen-lockfile --store-dir $TMPDIR/pnpm-store/v10 --offline
+ WARN  Failed to create bin at $TMPDIR/mth-clean-start.tAAqru/src/apps/api/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '$TMPDIR/mth-clean-start.tAAqru/src/apps/api/node_modules/@mth/db/dist/cli.js'
+ WARN  Failed to create bin at $TMPDIR/mth-clean-start.tAAqru/src/apps/worker/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '$TMPDIR/mth-clean-start.tAAqru/src/apps/worker/node_modules/@mth/db/dist/cli.js'
+Done in 1.2s using pnpm v10.33.0
+<== ok (1.28 s)
+
+==> 3. build (pnpm -r build)
+  build log: $TMPDIR/mth-clean-start.tAAqru/build.log
+<== ok (22.95 s)
+
+==> 4. assemble the image runtime tree (same script as the Dockerfile)
+collect-notices: 128 shipped packages, 125 files, 3 without a licence file -> $TMPDIR/mth-clean-start.tAAqru/app/licenses
+Scope: all 8 workspace projects
+Lockfile is up to date, resolution step is skipped
+Packages: -243
+--------------------------------------------------------------------------------
+
+devDependencies:
+- @apidevtools/swagger-parser 10.1.1
+- @axe-core/playwright 4.10.2
+- @playwright/test 1.56.1
+- @types/node 22.18.0
+- eslint 10.1.0
+- eslint-plugin-react-hooks 7.1.1
+- openapi-types 12.1.3
+- prettier 3.8.1
+- typescript 6.0.2
+- typescript-eslint 8.71.0
+- vitest 3.2.4
+
+Done in 980ms using pnpm v10.33.0
+runtime workspace packages: apps/api apps/worker packages/config packages/db packages/design-tokens packages/shared
+virtual store: 128 package directories, all in the shipped set (128 runtime+bundled)
+resolve: @mth/api: 15 dependencies resolve; ./dist/index.js imports
+resolve: @mth/worker: 7 dependencies resolve; ./dist/index.js imports
+resolve: @mth/config: 2 dependencies resolve; ./dist/index.js imports
+resolve: @mth/db: 5 dependencies resolve; ./dist/index.js imports
+resolve: @mth/design-tokens: 0 dependencies resolve; ./dist/index.js imports
+resolve: @mth/shared: 2 dependencies resolve; ./dist/index.js imports
+assemble-runtime: OK 128 packages, 102M -> $TMPDIR/mth-clean-start.tAAqru/app
+<== ok (3.28 s)
+
+==> 5. disposable PostgreSQL cluster (password auth on TCP) + roles/database via deploy/compose/db-init
+port-policy: PostgreSQL: port 24340 is in use (EADDRINUSE; attempt 1 of 11); retrying on port 26383
+port-policy: PostgreSQL listening on port 26383 (attempt 2)
+PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+CREATE ROLE
+CREATE ROLE
+CREATE DATABASE
+REVOKE
+GRANT
+ALTER DATABASE
+mth: roles mth_owner, mth_app and database mth created
+<== ok (1.45 s)
+
+==> A1. mth db status on the empty database reports pending (exit 3)
+pending  0001_identity_access.sql
+pending  0002_transformation.sql
+pending  0003_audit_event.sql
+pending  0004_outbox_jobs.sql
+pending  0005_seed_roles_permissions.sql
+pending  0006_pgboss_schema_v25.sql
+pending  0007_oidc_login_browser_binding.sql
+pending  0008_scoped_assignment_derived_from.sql
+pending  0009_business_unit_hierarchy_guard.sql
+pending  0010_p2_record_guards.sql
+pending  0011_p2_methodology_catalogue.sql
+pending  0012_p2_evidence.sql
+pending  0013_p2_direction_charter.sql
+pending  0014_p2_kpi_baseline_value_pool.sql
+pending  0015_p2_diagnose.sql
+pending  0016_p2_design_tom.sql
+pending  0017_p2_decisions_gates.sql
+pending  0018_p2_access_instantiation.sql
+pending  0019_evidence_review_separation.sql
+mth-db status: 19 pending
+  mth db status: exit 3 (expected 3)
+<== ok (0.28 s)
+
+==> A2. mth migrate (fresh database), then again (idempotent)
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db migrate: database is up to date
+applied  0001_identity_access.sql
+applied  0002_transformation.sql
+applied  0003_audit_event.sql
+applied  0004_outbox_jobs.sql
+applied  0005_seed_roles_permissions.sql
+applied  0006_pgboss_schema_v25.sql
+applied  0007_oidc_login_browser_binding.sql
+applied  0008_scoped_assignment_derived_from.sql
+applied  0009_business_unit_hierarchy_guard.sql
+applied  0010_p2_record_guards.sql
+applied  0011_p2_methodology_catalogue.sql
+applied  0012_p2_evidence.sql
+applied  0013_p2_direction_charter.sql
+applied  0014_p2_kpi_baseline_value_pool.sql
+applied  0015_p2_diagnose.sql
+applied  0016_p2_design_tom.sql
+applied  0017_p2_decisions_gates.sql
+applied  0018_p2_access_instantiation.sql
+applied  0019_evidence_review_separation.sql
+mth-db status: up to date (19 applied)
+  mth db status: exit 0 (expected 0)
+<== ok (1.20 s)
+
+==> A3. production refusals: seed-dev not in the image; AUTH_MODE=dev refused with NODE_ENV=production
+mth: seed-dev is not available in the production image
+  mth db seed-dev: exit 64 (expected 64)
+Invalid configuration:
+  - AUTH_MODE=dev is refused when NODE_ENV=production
+  mth api with AUTH_MODE=dev: exit 78 (expected 78)
+<== ok (0.59 s)
+
+==> A4. start api + worker (production, OIDC) and wait for readiness
+port-policy: API: port 3100 is in use (EADDRINUSE; attempt 1 of 11); retrying on port 26382
+port-policy: API listening on port 26382 (attempt 2)
+  /healthz: {"status":"ok"}
+  /readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+<== ok (1.73 s)
+
+==> A5. production surface: SPA served, dev login absent (404), IdP outage -> login redirects with an error, no crash
+  GET / -> 200 text/html
+  POST /api/v1/auth/dev-login -> 404
+  GET /api/v1/auth/login -> 302 http://127.0.0.1:26382/login?error=idp_unavailable
+  GET /api/v1/me (no session) -> 401
+<== ok (0.10 s)
+
+==> A6. first organization + administrator via mth db bootstrap; a second bootstrap is refused
+  "organizationId": "01a11278-6129-7318-a447-f1da12becbb4",
+  "adminUserId": "01a11278-612a-70bb-80d8-c73d24d0cddc",
+  "systemUserId": "01a11278-612a-70bb-80d8-c3c4a4984c40",
+  "assignmentIds": [
+    "01a11278-613d-72ad-9f9a-b964c2b910c7",
+    "01a11278-6140-74ea-85cc-1b4ecf4a13ed"
+  ]
+}
+mth-db: refusing to bootstrap: an organization already exists
+  second bootstrap: exit 1 (expected 1)
+<== ok (0.63 s)
+
+  phase A api/worker stopped (graceful SIGTERM)
+
+==> B1. second fresh database: migrate, then SYNTHETIC dev users (seed-dev from the source tree; never in the image)
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+<== ok (0.85 s)
+
+==> B2. start api + worker (AUTH_MODE=dev) from the runtime tree
+port-policy: API listening on port 26382 (attempt 1)
+<== ok (1.00 s)
+
+==> B3. first-case journey (deploy/scripts/smoke.mjs, dev mode)
+mth smoke: mode=dev api=http://127.0.0.1:26382 app=http://localhost:26382 run=E9284319 (all users and data SYNTHETIC)
+PASS  GET /healthz returns 200 {status: ok} (45 ms): HTTP 200 {"status":"ok"}
+PASS  GET /readyz returns 200 ready (database + migrations) (12 ms): HTTP 200 {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+PASS  technical admin signs in (dev) (62 ms): dev.admin -> user 01920000-0000-7000-9000-000000000201, roles [ADM_ACCESS,ADM_TECH]
+PASS  technical admin holds no business role (0 ms)
+PASS  admin creates a business unit (201 + ETag) (17 ms): business unit 01a11278-6e64-71fe-bf9f-fdace3edf9ce
+PASS  transformation-office user signs in (dev) (16 ms): dev.office -> user 01920000-0000-7000-9000-000000000202, roles [TO]
+PASS  office creates a transformation (201 + ETag, Idempotency-Key) (48 ms): transformation 01a11278-6e89-732c-879a-2165a4eafe5c code TR-0001
+PASS  office reads it back: detail, list and audit trail (28 ms): audit actions [gate_instance.create,gate_instance.create,gate_instance.create,gate_instance.create,gate_instance.create,gate_instance.create,tom_canvas_cell.create,tom_canvas_cell.create,tom_canvas_cell.create,tom_canvas_cell.create,tom_canvas_cell.create,tom_canvas_cell.create,tom_canvas_cell.create,tom_canvas_cell.create,tom_canvas_cell.create,tom_canvas_cell.create,diagnostic_item.create,diagnostic_item.create,diagnostic_item.create,diagnostic_item.create,diagnostic_item.create,diagnostic_item.create,transformation_config_pin.create,transformation.create]
+PASS  technical admin cannot see the business record: list excludes it, detail is 404 (12 ms): list 200 with 0 visible, detail 404
+PASS  both users sign out (23 ms)
+{"smoke":"PASS","mode":"dev","run":"E9284319","steps":10,"passed":10,"totalMs":268,"transformationId":"01a11278-6e89-732c-879a-2165a4eafe5c"}
+<== ok (0.33 s)
+
+==> B4. the worker relays and consumes transformation.created (outbox published, ledger row written)
+outbox | transformation.created | transformation.created:01a11278-6e89-732c-879a-2165a4eafe5c | t
+ledger | starter_automation.v1 | transformation.created:01a11278-6e89-732c-879a-2165a4eafe5c | done
+<== ok (2.30 s)
+
+==> B5. record counts (database mth_dev)
+organization 1
+business_unit 4
+app_user 6
+scoped_assignment 5
+transformation 1
+audit_event 45
+outbox_event 1
+processed_message 1
+schema_migration 19
+<== ok (0.05 s)
+
+CLEAN START: PASS (total 61.8 s; work dir $TMPDIR/mth-clean-start.tAAqru; log $TMPDIR/mth-clean-start.tAAqru/clean-start.log)
+exit 0

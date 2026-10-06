@@ -1,0 +1,142 @@
+$ /home/user/My-owns/docs/delivery/test-evidence/DG2/qa/round-8/11-port-collision-repro-r8.sh /home/user/My-owns/docs/delivery/test-evidence/DG2/qa/round-8
+# cwd: $TMPDIR/review-dg2; node v24.21.0; date 2026-10-06T18:24:44Z
+== R0 round-7 mechanism repro (unchanged script)
+server port 33875 client ephemeral port 58176 client socket state ['06']
+bind on 58176 FAILED: EADDRINUSE [Errno 98] Address already in use
+== R1 kernel-assigned client ports never fall below 32768
+ip_local_port_range 32768 60999 | sampled 3000 client ports: min 32770 max 60990 | outside range: [] | in 24000-31999: []
+== R1b default PostgreSQL/API ports of every harness
+tests/qa/support/with-pg.sh:21:PG_PORT="${QA_PG_PORT:-24351}"
+tests/qa/support/with-pg.sh:47:PG_PORT="$MTH_PG_PORT"
+apps/web/e2e/support/with-stack.sh:30:PG_PORT="${E2E_PG_PORT:-${QA_PG_PORT:-24331}}"
+apps/web/e2e/support/with-stack.sh:31:API_PORT="${E2E_API_PORT:-3000}"
+apps/web/e2e/support/with-stack.sh:58:PG_PORT="$MTH_PG_PORT"
+apps/web/e2e/support/with-stack.sh:88:API_PORT="$MTH_PORT"
+e2e/support/qa-stack.sh:28:PG_PORT="${QA_E2E_PG_PORT:-24361}"
+e2e/support/qa-stack.sh:29:API_PORT="${QA_E2E_API_PORT:-3060}"
+e2e/support/qa-stack.sh:57:PG_PORT="$MTH_PG_PORT"
+e2e/support/qa-stack.sh:87:API_PORT="$MTH_PORT"
+e2e/clean-start/a18-clean-start.sh:47:PG_PORT="${QA_A18_PG_PORT:-24371}"
+e2e/clean-start/a18-clean-start.sh:48:API_PORT="${QA_A18_PORT:-3181}"
+e2e/clean-start/a18-clean-start.sh:124:PG_PORT="$MTH_PG_PORT"
+deploy/scripts/clean-start-local.sh:55:PG_PORT="${MTH_LOCAL_PG_PORT:-24340}"
+deploy/scripts/clean-start-local.sh:56:API_PORT="${MTH_LOCAL_PORT:-3100}"
+deploy/scripts/clean-start-local.sh:135:PG_PORT="$MTH_PG_PORT"
+
+== R2 with-stack.sh (real product stack) with TIME_WAIT on its default PG 24331 AND API 3000
+TIME_WAIT on 24331: states ['06']; SO_REUSEADDR probe bind FAILED EADDRINUSE
+TIME_WAIT on 3000: states ['06']; SO_REUSEADDR probe bind FAILED EADDRINUSE
+port-policy: PostgreSQL: port 24331 is in use (EADDRINUSE; attempt 1 of 11); retrying on port 29928
+port-policy: PostgreSQL listening on port 29928 (attempt 2)
+e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API: port 3000 is in use (EADDRINUSE; attempt 1 of 11); retrying on port 26657
+port-policy: API listening on port 26657 (attempt 2)
+API: http://localhost:26657 (APP_BASE_URL=http://localhost:26657, PORT=26657)
+{"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+E2E_BASE_URL=http://localhost:26657 PORT=26657 APP_BASE_URL=http://localhost:26657
+{"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+pg port in DATABASE_URL: 29928
+exit 0
+RESULT R2: PASS
+
+== R3 qa-stack.sh with TIME_WAIT on its default PG 24361 AND API 3060
+TIME_WAIT on 24361: states ['06']; SO_REUSEADDR probe bind FAILED EADDRINUSE
+TIME_WAIT on 3060: states ['06']; SO_REUSEADDR probe bind FAILED EADDRINUSE
+port-policy: PostgreSQL: port 24361 is in use (EADDRINUSE; attempt 1 of 11); retrying on port 26870
+port-policy: PostgreSQL listening on port 26870 (attempt 2)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API: port 3060 is in use (EADDRINUSE; attempt 1 of 11); retrying on port 31662
+port-policy: API listening on port 31662 (attempt 2)
+API:     http://localhost:31662
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+E2E_BASE_URL=http://localhost:31662 PORT=31662 APP_BASE_URL=http://localhost:31662
+{"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+pg port in DATABASE_URL: 26870
+exit 0
+RESULT R3: PASS
+
+== R4 concurrency: two with-pg.sh at once on the same QA_PG_PORT=24441
+  [a] port-policy: PostgreSQL: port 24441 is in use (EADDRINUSE; attempt 1 of 11); retrying on port 28130
+  [a] port-policy: PostgreSQL listening on port 28130 (attempt 2)
+  [a] url postgresql://postgres@127.0.0.1:28130/postgres server port 28130 datadir $TMPDIR/qa-pg.nu7rn0/pg
+  [b] port-policy: PostgreSQL listening on port 24441 (attempt 1)
+  [b] url postgresql://postgres@127.0.0.1:24441/postgres server port 24441 datadir $TMPDIR/qa-pg.oNEeVZ/pg
+exit a=0 b=0
+RESULT R4: PASS
+
+== R5 a foreign server already accepting on QA_PG_PORT=24442 is never mistaken for ours
+port-policy: PostgreSQL: port 24442 is in use (already accepting connections; attempt 1 of 11); retrying on port 25598
+port-policy: PostgreSQL listening on port 25598 (attempt 2)
+url postgresql://postgres@127.0.0.1:25598/postgres server port 25598 datadir $TMPDIR/qa-pg.lqJF3z/pg
+exit 0
+RESULT R5: PASS
+
+== R6 a startup failure that is NOT a bind conflict is not retried (fake postgres exits with FATAL)
+port-policy: PostgreSQL exited during startup on port 24443 (not a bind conflict; no retry); see $TMPDIR/qa-pg.FO4CsB/pg.log
+BLOCKED: disposable PostgreSQL did not start
+---- postgres log (tail)
+FATAL:  qa-induced startup failure (not a bind conflict)
+exit 3
+RESULT R6: PASS
+
+== R7 retries exhausted (MTH_PORT_RETRIES=0) -> BLOCKED exit 3, command not run
+TIME_WAIT on 24444: states ['06']; SO_REUSEADDR probe bind FAILED EADDRINUSE
+BLOCKED: PostgreSQL could not bind after 1 attempts (ports: 24444; MTH_PORT_RETRIES=0)
+---- postgres log (tail)
+exit 3
+RESULT R7: PASS
+
+== R8 strict API port (E2E_API_STRICT_PORT=1) with TIME_WAIT on 3001 -> BLOCKED exit 3
+TIME_WAIT on 3001: states ['06']; SO_REUSEADDR probe bind FAILED EADDRINUSE
+port-policy: PostgreSQL listening on port 24445 (attempt 1)
+e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+BLOCKED: API port 3001 is in use (EADDRINUSE) and E2E_API_STRICT_PORT=1 / MTH_STRICT_PORT=1 forbids another port
+exit 3
+RESULT R8: PASS
+exit 0
