@@ -1,0 +1,333 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG2",
+  "round": 10,
+  "candidate_id": "sha256:7fd1a89ca090dbdea5ae9f014853684239cbf80e89dc5cce50914155cb9d484a",
+  "source_commit": "fe22d75962ca1962df462055645169787ddbc201",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG2-T-DG2-REV-SEC-R10-code-security-reviewer-20261006T231657Z-99fcef43",
+    "session_id": "99fcef43-6f99-4f1d-aacd-4bd54ceac21d"
+  },
+  "implementation_author": ["backend-workflow-engineer"],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am code-security-reviewer, session 99fcef43. I authored no implementation in the DG2 scope. That includes the round-10 repairs: BE15 WIP 08a4f63 (committed by the orchestrator after the interrupted run, D-070) and BE15B e974d78. I reviewed the frozen candidate directly, reading the product diff 7854770e..fe22d759 (7 files) and the full files it touches, plus the fastify 5.6.1 source the design relies on (handleRequest, contentTypeParser getParser/run, the request.headers getter). I ran code only in disposable clones under $TMPDIR and on disposable PostgreSQL 16 clusters, all deleted afterwards. I formed this verdict without reading any other reviewer's DG2 round-10 record or evidence."
+  },
+  "assignment": "docs/delivery/assignments/DG2/round-10/code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-S10-001",
+    "REQ-S16-013",
+    "REQ-S13-012",
+    "REQ-DLV-034",
+    "REQ-PB-016",
+    "REQ-PB-017",
+    "REQ-PB-018",
+    "REQ-PB-027",
+    "REQ-PB-028",
+    "REQ-PB-029"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-R10-00-candidate",
+      "procedure": "Confirm HEAD, the assignment hash and the recomputed candidate ID, both in the working tree and in a disposable clone at HEAD 68fe3394",
+      "command": "git rev-parse HEAD; git diff --stat fe22d75..HEAD; sha256sum docs/delivery/assignments/DG2/round-10/code-security-reviewer.md; node tools/gates/candidate.mjs --stage DG2 (working tree and $TMPDIR/review-r10)",
+      "environment": "Node 24.21.0; working tree /home/user/My-owns; disposable clone $TMPDIR/review-r10 at 68fe3394",
+      "expected": "candidate_id sha256:7fd1a89c...cb9d484a with 544 files. HEAD may differ from fe22d759 only by delivery metadata that the manifest excludes. The assignment sha256 is b0808fbb...61af.",
+      "actual": "Both computations give {\"stage\":\"DG2\",\"candidate_id\":\"sha256:7fd1a89ca090dbdea5ae9f014853684239cbf80e89dc5cce50914155cb9d484a\",\"files\":544}. HEAD 68fe3394 is the single freeze commit on top of fe22d759. It touches only docs/delivery: the round-10 assignments, the manifest and stages.json. The assignment sha256 matches.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/candidates/DG2/7fd1a89ca090dbde.manifest.json",
+        "docs/delivery/test-evidence/DG2/code-security/round-10/candidate-id.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-10/checks.sh"
+      ]
+    },
+    {
+      "id": "SEC-R10-01-r9-probe-rerun",
+      "procedure": "Re-run my round-9 probe zz-sec-r9-probe.test.ts (S1-S11) unchanged on this candidate, in both locale settings",
+      "command": "with-pg.sh 29971|29972 pnpm vitest run --project integration apps/api/test/integration/zz-sec-r9-probe.test.ts apps/api/test/integration/zz-sec-r10-probe.test.ts --reporter=verbose",
+      "environment": "$TMPDIR/probe-r10 at 68fe3394, Node 22.22.2, disposable PostgreSQL 16; run 1 with LANG unset (SQL_ASCII), run 2 with LANG=C.UTF-8 (UTF8)",
+      "expected": "S10 passes (404 for octet-stream on unmatched routes). S11 shows that the check and the lookup agree, or that the refusal names octet-stream. S1-S9 keep their round-9 guarantees.",
+      "actual": "S1-S10 pass in both runs.\n- S10: 404 for every method, media type and session combination.\n- S11: its round-9 assertion (a 400 naming octet-stream) now fails BY DESIGN, because the HTAB spelling is ACCEPTED: 200, stored byte-exact with the raw sha256, in both framings. That is the finding's second remedy, so the fix is genuine. The detail half is verified by SEC-R10-02.\n- S1/S2: the HTAB rows are now 200/201.\n- S3: duplicate Content-Type lines are now refused in every order (a D-070 tightening). Nothing is stored.\nResult: 28 pass, 1 fail (r9 S11, the obsolete assertion), identical in both runs. The check result is PASS: the only failure is an assertion that encoded the round-9 behaviour.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-034"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-9/probes/zz-sec-r9-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-10/probe-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-10/probe-run2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-10/probes/README.md"
+      ]
+    },
+    {
+      "id": "SEC-R10-02-media-type-probe",
+      "procedure": "New adversarial probe zz-sec-r10-probe.test.ts (P1-P7). It looks for any Content-Type spelling or framing where the central decision and Fastify's lookup disagree, a refusal names the wrong media type, an unmatched route answers anything but 404, or a body is rewritten or answered with an undeclared status or a 500. It also looks for any weakening of CSRF, rate limiting, bodyLimit, the strict UTF-8 parser, prototype-poisoning protection, the evidence streaming limit, the raw sha256 or keep-alive framing.",
+      "command": "same run as SEC-R10-01 (both files); baseline: with-pg.sh 29973 pnpm vitest run --project integration apps/api/test/integration/zz-sec-r10-baseline-p5c.test.ts at 041478cb",
+      "environment": "$TMPDIR/probe-r10 at 68fe3394 (and $TMPDIR/probe-r9base at 041478cb for the P5c baseline), Node 22.22.2, disposable PostgreSQL 16, both locale settings",
+      "expected": "Every accepted spelling is stored or created byte-exact. Every refusal is the declared 400 naming the route's set. Unmatched routes are 404 with Connection: close, whatever the framing or size, and nothing is smuggled. CSRF, authorization, rate limiting, bodyLimit, strict UTF-8, prototype poisoning, the 25 MiB limit and the raw sha256 are unchanged. No 500.",
+      "actual": "All 18 tests pass in both runs. Highlights:\n- P1: 19 spellings x 2 framings. Accepted ones are stored byte-exact; refused ones name octet-stream.\n- P1b: obs-text over llhttp behaves correctly.\n- P2: UTF-8 JSON in any spelling is created verbatim. Other charsets are refused naming JSON.\n- P2b/P2c: strict UTF-8, prototype poisoning and bodyLimit still apply.\n- P3: CSRF, Origin, session and rate-limit order are unchanged.\n- P4a-d: unmatched routes give 404 + close, including for a 10 GB Content-Length, Expect: 100-continue and never-ending chunked bodies. Keep-alive smuggling was not executed.\n- P5/P5s: 413 evidence.too_large; the raw sha256 is exact.\n- P6: a 20,000-string fuzz found 0 decision/lookup mismatches.\n- P6b: the backstop names the set.\n- P7: 0 U+FFFD.\nTwo observations, neither a BE15 regression:\n- P3c: unmatched 404s are not metered by @fastify/rate-limit. This is pre-existing plugin behaviour, and ADR-0007 scopes the limiter to operations.\n- P5c: inject with a chunked over-limit Readable rejects with AbortError and logs one 'request errored' line. It is identical at 041478cb and absent over a real socket (P5s), so it is a light-my-request artifact.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-034", "REQ-S13-012"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-10/probes/zz-sec-r10-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-10/probes/zz-sec-r10-baseline-p5c.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-10/probes/README.md",
+        "docs/delivery/test-evidence/DG2/code-security/round-10/probe-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-10/probe-run2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-10/probe-baseline-041478cb-P5c.log"
+      ]
+    },
+    {
+      "id": "SEC-R10-03-diff-review",
+      "procedure": "Review the product diff 7854770e..fe22d759 (media-types.ts, hooks.ts, framework-errors.ts, index.ts and tests) together with fastify 5.6.1 lib/handleRequest.js, lib/contentTypeParser.js and lib/request.js. Scan for secrets, URLs, CDNs and dangerous APIs, other writers of request headers, and dependency changes.",
+      "command": "git diff 7854770e..fe22d759 -- apps packages; grep (diff-scan.log)",
+      "environment": "working tree at 68fe3394; fastify 5.6.1 from the clone's node_modules",
+      "expected": "One decision in preParsing, consistent with Fastify's lookup. No weakening of bodyLimit, the strict UTF-8 JSON parser, prototype-poisoning protection, CSRF, authorization, rate limiting, the streaming limit or the raw sha256. No secrets, CDNs or new dependencies.",
+      "actual": "parseContentType is a correct RFC 9110 §8.3.1 tokenizer: bounded by the trimmed end, linear, no regex backtracking (the TCHAR test is per character), with a quoted-string and quoted-pair grammar. decideMediaType: no-body, then is404, then parse, single Content-Type line, essence in consumes, JSON charset UTF-8; otherwise refuse with the route's set. The canonical rewrite goes to raw.headers, which is what handleRequest reads (no additionalHeaders is set anywhere), and it is the only header writer in apps/api/src. The 404 path deletes the Content-Type. getParser('') matches nothing (no catch-all parser), so run() hands is404 to the handler, and the body is never read; Connection: close. The JSON parser registration (parseAs buffer, restrictParserTo, createJsonBodyParser on defaultJsonParser('error','error')), the octet parser and the evidence handler are unchanged. preParsing still follows onRequest (rate limit) and precedes preValidation (auth/CSRF). No secrets, URLs or CDNs were added; the lockfile and package.json are unchanged. The web client sends only bare application/json and application/octet-stream, so the D-070 tightenings do not affect it.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-034"],
+      "evidence": [
+        "apps/api/src/modules/platform/media-types.ts",
+        "apps/api/src/modules/platform/hooks.ts",
+        "apps/api/src/modules/platform/framework-errors.ts",
+        "apps/api/src/server.ts",
+        "apps/api/src/modules/evidence/routes.ts",
+        "apps/web/src/api/client.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-10/diff-scan.log"
+      ]
+    },
+    {
+      "id": "SEC-R10-04-build",
+      "procedure": "Build every workspace package",
+      "command": "pnpm -r build",
+      "environment": "$TMPDIR/review-r10 at 68fe3394, Node 22.22.2, pnpm 10.33.0",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-10/build.log"]
+    },
+    {
+      "id": "SEC-R10-05-typecheck",
+      "procedure": "Typecheck every workspace package",
+      "command": "pnpm -r typecheck",
+      "environment": "$TMPDIR/review-r10 at 68fe3394, Node 22.22.2",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-10/typecheck.log"]
+    },
+    {
+      "id": "SEC-R10-06-lint",
+      "procedure": "ESLint with zero warnings allowed",
+      "command": "pnpm lint",
+      "environment": "$TMPDIR/review-r10 at 68fe3394, Node 22.22.2",
+      "expected": "exit 0, no warnings",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-10/lint.log"]
+    },
+    {
+      "id": "SEC-R10-07-openapi-lint",
+      "procedure": "Lint the OpenAPI contract",
+      "command": "pnpm openapi:lint",
+      "environment": "$TMPDIR/review-r10 at 68fe3394, Node 22.22.2",
+      "expected": "PASS with 161 operations",
+      "actual": "PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 161 operations",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-10/openapi-lint.log"]
+    },
+    {
+      "id": "SEC-R10-08-no-cdn",
+      "procedure": "Portability: no public CDN references",
+      "command": "pnpm check:no-cdn",
+      "environment": "$TMPDIR/review-r10 at 68fe3394, Node 22.22.2",
+      "expected": "PASS",
+      "actual": "PASS no-cdn: scanned apps, packages",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-10/no-cdn.log"]
+    },
+    {
+      "id": "SEC-R10-09-format",
+      "procedure": "Prettier check",
+      "command": "pnpm format:check",
+      "environment": "$TMPDIR/review-r10 at 68fe3394, Node 22.22.2",
+      "expected": "All matched files use Prettier code style",
+      "actual": "All matched files use Prettier code style!",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-10/format-check.log"]
+    },
+    {
+      "id": "SEC-R10-10-unit-node22",
+      "procedure": "Unit tests on Node 22",
+      "command": "pnpm test --reporter=verbose",
+      "environment": "$TMPDIR/review-r10 at 68fe3394, Node 22.22.2",
+      "expected": "all pass",
+      "actual": "40 files, 765/765 passed, including platform/media-types.test.ts and framework-errors.test.ts",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-10/unit-node22.log"]
+    },
+    {
+      "id": "SEC-R10-11-unit-node24",
+      "procedure": "Unit tests on Node 24",
+      "command": "pnpm test --reporter=verbose",
+      "environment": "$TMPDIR/review-r10 at 68fe3394, Node 24.21.0",
+      "expected": "all pass",
+      "actual": "40 files, 765/765 passed",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-10/unit-node24.log"]
+    },
+    {
+      "id": "SEC-R10-12-unit-under-load",
+      "procedure": "Unit tests on Node 22 and on Node 24 while a second clone repeatedly runs pnpm -r build and the round-9/10 integration probes against a disposable PostgreSQL (port 29991), as concurrent CPU load",
+      "command": "bash docs/delivery/test-evidence/DG2/code-security/round-10/load-repro.sh",
+      "environment": "4 vCPU host; load average 5.7-8.1 during the runs; $TMPDIR/review-r10 and $TMPDIR/probe-r10 at 68fe3394",
+      "expected": "all pass under load",
+      "actual": "Node 22: 765/765 (load average 5.66 at start, 7.83 at end). Node 24: 765/765 (7.83 at start, 7.92 at end). Both exited 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-10/load-repro.sh",
+        "docs/delivery/test-evidence/DG2/code-security/round-10/load-generator.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-10/unit-under-load-node22.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-10/unit-under-load-node24.log"
+      ]
+    },
+    {
+      "id": "SEC-R10-13-integration-lang-unset",
+      "procedure": "Full integration suite on a disposable PostgreSQL 16 with LANG, LC_ALL and LC_CTYPE unset. It includes contract (161 ops), media-types (with the S10/S11 regressions), blank-text, oidc, invalid-character, framework-errors, invalid-utf8, encoding and the evidence tests, and applies migrations 0001-0019",
+      "command": "with-pg.sh 29961 pnpm test:integration --reporter=verbose",
+      "environment": "$TMPDIR/review-r10 at 68fe3394, Node 22.22.2; the cluster defaults to SQL_ASCII, collate C, and the test DB is UTF8",
+      "expected": "all pass; 19 migrations applied",
+      "actual": "34 files, 570/570 passed. 19 migrations were applied to a fresh database. contract 18/18 (toHaveLength(161)), media-types 21/21, blank-text 29, oidc 33, invalid-character 20, framework-errors 11, invalid-utf8 14, encoding 8, evidence 6, migrate 7.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-034", "REQ-S10-001", "REQ-S13-012", "REQ-S16-013"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-10/integration-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-10/requirements-suites.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-10/with-pg.sh"
+      ]
+    },
+    {
+      "id": "SEC-R10-14-integration-lang-c-utf8",
+      "procedure": "The same integration suite with LANG=C.UTF-8",
+      "command": "LANG=C.UTF-8 with-pg.sh 29962 pnpm test:integration --reporter=verbose",
+      "environment": "$TMPDIR/review-r10 at 68fe3394, Node 22.22.2; the cluster is UTF8, collate C.UTF-8",
+      "expected": "all pass; 19 migrations applied",
+      "actual": "34 files, 570/570 passed, with 19 migrations applied. Per-suite counts are identical to run 1.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-034", "REQ-S10-001", "REQ-S13-012", "REQ-S16-013"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-10/integration-run2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-10/requirements-suites.log"
+      ]
+    },
+    {
+      "id": "SEC-R10-15-aud-403",
+      "procedure": "AUD-403 sweep: the read-only auditor is refused on every P2 mutation, with the list generated from the contract (both runs)",
+      "command": "grep -E '^ +(✓|×).*aud-write-deny' integration-run1-lang-unset.log integration-run2-lang-c-utf8.log",
+      "environment": "the integration logs of SEC-R10-13/14",
+      "expected": "0 failures; the generated list covers the 128 P2 mutations and the 16 kpi mutations",
+      "actual": "Each run: 146 pass, 0 fail (128 in aud-write-deny, including uploadEvidenceContent, and 18 in kpi-aud-write-deny). The generated-list coverage tests pass.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S10-001"],
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-10/aud-403-sweep.log"]
+    },
+    {
+      "id": "SEC-R10-16-requirements",
+      "procedure": "Assigned requirements: check the suites that implement them in both integration runs. G1-G3 gate evidence (REQ-PB-016/017/018: gates.test.ts), baseline, value pools and charter (REQ-PB-027/028/029: kpi-resources, registers, transformations), evidence verification (REQ-S13-012: gates, dg2-repairs, evidence, migration 0019 guard), the entity group (REQ-S16-013: registers, catalogue), role/record-level access (REQ-S10-001: access-scope, access-derived-race, aud-write-deny), and P2 outputs and the media-type contract (REQ-DLV-034)",
+      "command": "per-suite pass/fail counts (requirements-suites.log)",
+      "environment": "the integration logs of SEC-R10-13/14",
+      "expected": "0 failures in every suite, in both runs",
+      "actual": "Both runs: gates 12, registers 23, kpi-resources 23, access-scope 18, access-derived-race 4, aud-write-deny 128, dg2-repairs 13, transformations 30, evidence 6, packages/db 49; 0 failures. Tests named for REQ-PB-027 (5), REQ-PB-028 (5), REQ-PB-029 (4) and REQ-S13-012 (7) pass. The requirements are complete; this round's product diff touches only the media-type layer.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S10-001", "REQ-S16-013", "REQ-S13-012", "REQ-DLV-034", "REQ-PB-016", "REQ-PB-017", "REQ-PB-018", "REQ-PB-027", "REQ-PB-028", "REQ-PB-029"],
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-10/requirements-suites.log"]
+    },
+    {
+      "id": "SEC-R10-17-validate-historical-DG0",
+      "procedure": "Historical validation of the approved DG0 gate",
+      "command": "node tools/gates/validate.mjs --historical --stage DG0",
+      "environment": "working tree /home/user/My-owns at 68fe3394, Node 22.22.2",
+      "expected": "PASS",
+      "actual": "PASS gate DG0 (historical)",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-10/validate-historical-DG0.log"]
+    },
+    {
+      "id": "SEC-R10-18-validate-historical-DG1",
+      "procedure": "Historical validation of the approved DG1 gate",
+      "command": "node tools/gates/validate.mjs --historical --stage DG1",
+      "environment": "working tree /home/user/My-owns at 68fe3394, Node 22.22.2",
+      "expected": "PASS",
+      "actual": "PASS gate DG1 (historical)",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-10/validate-historical-DG1.log"]
+    },
+    {
+      "id": "SEC-R10-19-residual-registry",
+      "procedure": "REQ-DLV-042 AC-1 / D-057 (live registry), checked on the offline surface: a frozen-lockfile install from a scratch copy of the host store",
+      "command": "pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pstore/v10",
+      "environment": "$TMPDIR/review-r10 at 68fe3394, Node 22.22.2, pnpm 10.33.0",
+      "expected": "exit 0 with the frozen lockfile",
+      "actual": "Already up to date; exit 0. Residual: no live registry is reachable (D-057). This is the environmental residual, not a BLOCKED gate check.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-10/env-residuals.log"]
+    },
+    {
+      "id": "SEC-R10-20-residual-ci",
+      "procedure": "REQ-DLV-025 A24 / D-058 (live CI), checked on the config surface: the workflow runs the gate commands with pinned actions and images; the two ci.yml copies are identical; no change since round 9",
+      "command": "grep -nE 'run: pnpm|image:|uses:' .github/workflows/ci.yml; cmp .github/workflows/ci.yml deploy/ci/ci.yml; git diff --stat 7854770e..fe22d759 -- .github deploy/ci",
+      "environment": "$TMPDIR/review-r10 at 68fe3394",
+      "expected": "All gate steps are present, actions and images are pinned by SHA or digest, and the copies are identical",
+      "actual": "The workflow has format:check, lint, typecheck, build, test, openapi:lint, check:no-cdn, test:integration and e2e. Actions are pinned by SHA and images by digest. The copies are identical, and there is no diff since round 9. Residual: no GitHub Actions runner (D-058). This is the environmental residual, not a BLOCKED gate check.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-10/env-residuals.log"]
+    },
+    {
+      "id": "SEC-R10-21-residual-keycloak",
+      "procedure": "D-049 (Keycloak), checked on the config surface: the test realm parses; the OIDC flows are covered by oidc.test.ts against the stub IdP",
+      "command": "ls deploy/keycloak; node -e (realm parse)",
+      "environment": "$TMPDIR/review-r10 at 68fe3394",
+      "expected": "The realm file parses; oidc.test.ts passes in both locales",
+      "actual": "realm mth-test, 1 client. oidc.test.ts passes 33/33 in both integration runs. Residual: no Keycloak server (D-049). This is the environmental residual, not a BLOCKED gate check.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-10/env-residuals.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-10/requirements-suites.log"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "summary": "PASS. F-DG2-350 and F-DG2-351 are CLOSED_VERIFIED.\n- F-DG2-350: my round-9 S10 repro now gives 404 for every media type. A new probe gives 404 + Connection: close for every Content-Type spelling and framing on unmatched routes, including a 10 GB Content-Length, Expect: 100-continue, never-ending chunked bodies and keep-alive smuggling. The body is never read and the hidden request never runs.\n- F-DG2-351: the HTAB spelling is now accepted and stored byte-exact; the round-9 S11 assertion fails by design. Every refusal names the route's declared set, including the FST_ERR_CTP_INVALID_MEDIA_TYPE backstop. A 20,000-string fuzz found 0 mismatches between the decision and Fastify 5.6.1's parser lookup.\nBE15 does not weaken bodyLimit, the strict UTF-8 parser, prototype-poisoning protection, CSRF, authorization, rate limiting, the 25 MiB streaming limit or the raw sha256. The D-070 tightenings do not affect the web client, which sends only bare media types.\nAll required checks ran and passed:\n- build, typecheck, lint, openapi-lint (161), no-cdn, format;\n- unit 765/765 on Node 22 and 24, and again under load;\n- integration 570/570 in both locales, with 19 migrations applied;\n- the AUD-403 sweep;\n- historical validation of DG0 and DG1.\nNo new findings. Two observations are not raised, because neither is a BE15 regression: unmatched-route 404s are not rate-limited (pre-existing plugin behaviour, outside ADR-0007's 'every operation'), and light-my-request gives an AbortError for chunked over-limit inject (identical at 041478cb). No Critical, High or mandatory issue is unresolved.",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG2/round-10/code-security-reviewer.verifications.json",
+    "docs/delivery/test-evidence/DG2/code-security/round-10/probes/README.md",
+    "docs/delivery/test-evidence/DG2/code-security/round-10/probes/zz-sec-r10-probe.test.ts",
+    "docs/delivery/test-evidence/DG2/code-security/round-10/summary.txt",
+    "docs/delivery/test-evidence/DG2/code-security/round-10/checks.sh",
+    "docs/delivery/test-evidence/DG2/code-security/round-10/diff-scan.log"
+  ],
+  "reviewed_at": "2026-10-06T23:31:31Z"
+}
