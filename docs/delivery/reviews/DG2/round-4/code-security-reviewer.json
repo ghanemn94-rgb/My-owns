@@ -1,0 +1,322 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG2",
+  "round": 4,
+  "candidate_id": "sha256:29ced0ed896ab9bf559e15dbdb39495b3da7a60c170989631ad9caf9a792ce58",
+  "source_commit": "e37f6ea4fdb2b97771e9965dd002e1102647804c",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG2-T-DG2-REV-SEC-R4-code-security-reviewer-20261006T072411Z-9dc14c95",
+    "session_id": "9dc14c95-f586-43d3-ae5b-7625ac418d86"
+  },
+  "implementation_author": ["solution-architect", "backend-workflow-engineer", "kpi-benefits-engineer", "frontend-ux-engineer"],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (code-security-reviewer, session 9dc14c95) authored no implementation in the DG2 scope, including none of the round-4 repairs (BE6 35fb823, BE7 1905041, FE5 bfa1807, FE6 97863da). I reviewed the frozen candidate directly: the product diff 9e13947e..e37f6ea4 and the full touched files. I ran code only in disposable clones under $TMPDIR and on disposable PostgreSQL 16 clusters. I formed this verdict without reading any other reviewer's DG2 round-4 record."
+  },
+  "assignment": "docs/delivery/assignments/DG2/round-4/code-security-reviewer.md",
+  "requirements_checked": ["REQ-S10-001", "REQ-S16-013", "REQ-S13-012", "REQ-DLV-034", "REQ-PB-016", "REQ-PB-017", "REQ-PB-018", "REQ-PB-027", "REQ-PB-028", "REQ-PB-029"],
+  "checks_run": [
+    {
+      "id": "SEC-R4-00-candidate",
+      "procedure": "Confirm the frozen candidate. HEAD is bb4dd9c; its only delta from source_commit e37f6ea4 is excluded delivery metadata. Recompute the candidate ID on the working tree and again in a fresh complete clone checked out at e37f6ea4.",
+      "command": "git rev-parse HEAD; git diff --stat e37f6ea..HEAD; node tools/gates/candidate.mjs --stage DG2 (working tree and $TMPDIR/review-sec)",
+      "environment": "/home/user/My-owns working tree (Node v24.21.0); disposable clone $TMPDIR/review-sec @e37f6ea4 (Node v22.22.2)",
+      "expected": "candidate_id sha256:29ced0ed...ce58 over 521 files; post-source commits touch only delivery metadata",
+      "actual": "Both computations gave {\"stage\":\"DG2\",\"source\":\"working-tree\",\"candidate_id\":\"sha256:29ced0ed896ab9bf559e15dbdb39495b3da7a60c170989631ad9caf9a792ce58\",\"files\":521}. e37f6ea..HEAD changes only docs/delivery/assignments/DG2/round-4/{code-security-reviewer,domain-reviewer,qa-verifier}.md, docs/delivery/candidates/DG2/29ced0ed896ab9bf.manifest.json and docs/delivery/stages.json.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/candidates/DG2/29ced0ed896ab9bf.manifest.json"]
+    },
+    {
+      "id": "SEC-R4-01-verify-F-DG2-160",
+      "procedure": "Adversarial verification of F-DG2-160. Source review of the shared predicate and every call site. Re-run of the unchanged round-3 repro zz-sec-r3-invisible.test.ts on a disposable PG, twice. Schema-level matrix (freeText/hasText/name/reason) over the 18 round-3 code points plus extra Cf/fillers, Default_Ignorable code points outside Cf, combining marks alone and visible controls. An exhaustive sweep of \\p{Default_Ignorable_Code_Point}. Timing on strings of up to 10^7 invisible code units (ReDoS).",
+      "command": "with-pg.sh 55591|55592 pnpm vitest run --project integration zz-sec-r3-invisible.test.ts zz-sec-r4-probe.test.ts zz-sec-r4-oidc.test.ts --reporter=verbose; node probes/schema-unicode-matrix.mts $TMPDIR/review-probe/packages/shared",
+      "environment": "disposable clone $TMPDIR/review-probe @e37f6ea4, Node v22.22.2 (matrix: v24.21.0), PostgreSQL 16.13 (nested user ns, 127.0.0.1)",
+      "expected": "the round-3 repro passes (invisible-only Out of scope rejected or never documented); the matrix rejects every F-DG2-160 code point; visible text is accepted; the predicate is linear-time",
+      "actual": "zz-sec-r3-invisible.test.ts 5/5 PASS in both runs: U+0085, U+200B, U+200F, U+061C and U+2060x3 Out of scope -> 400, not stored. Matrix: all 18 round-3 code points and 11 more Cf/filler inputs are rejected by freeText (validation.blank) and name/reason (validation.blank, or too_small when trim already empties them), and hasText is false. Arabic+RLM, emoji ZWJ and leading-ZWSP text are ACCEPTED verbatim. Timing: hasVisibleContent on 10^7 invisible code units takes 151-216 ms, roughly linear (10^6: 13-15 ms). Residual: 4032 of 4174 Default_Ignorable code points still count as visible (assigned: U+034F, U+17B4-17B5, U+180B-180D, U+180F, U+FE00-FE0F, U+E0100-E01EF). This class is outside the reported set, so it is raised as F-DG2-180 (Low). F-DG2-160 is CLOSED_VERIFIED.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-029", "REQ-PB-016"],
+      "evidence": [
+        "docs/delivery/reviews/DG2/round-4/code-security-reviewer.verifications.json",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/schema-unicode-matrix.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/probes/schema-unicode-matrix.mts",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/probe-run2.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/probes/zz-sec-r3-invisible.test.ts"
+      ]
+    },
+    {
+      "id": "SEC-R4-02-residual-trim-sweep",
+      "procedure": "Look for any P1 or P2 input that still decides blankness with trim(), and for any inline free-text parser that bypasses the shared schemas.",
+      "command": "git grep -n '\\.trim()' e37f6ea4 -- apps/api/src packages/shared/src apps/web/src packages/*/src ':!*.test.*'; git grep -nE 'z\\.string\\(\\)(\\.trim\\(\\))?\\.(min|max)' e37f6ea4 -- apps/api/src packages/shared/src; grep -rn 'parseBody(z\\.' apps/api/src",
+      "environment": "/home/user/My-owns @bb4dd9c (product tree identical to e37f6ea4)",
+      "expected": "no server-side blank decision by trim(); every free-text body field goes through freeText or trimmedText",
+      "actual": "No server-side free-text blank decision uses trim(). The remaining trim() calls are: oidc.ts:167 (after hasText, see F-DG2-181); good-outcome.ts:59 (activity-verb lead detection, not presence); charter.ts:157-159 thesisPartText (followed by hasText); direction.ts:38 (sentence count); config/db bootstrap (P0 installer inputs, not API). Web: list syntax, decimals and search boxes, plus the admin forms, whose bodies the server validates with the shared name/reason. The inline z.string().min/max schemas left are non-free-text (search q, cursor, idempotency key, OIDC query params, identity subject/issuer, csrfToken). No parseBody(z....) inline free-text parser remains.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-029", "REQ-S16-013"],
+      "evidence": ["packages/shared/src/schemas/common.ts", "apps/api/src/modules/transformations/register-kit.ts", "apps/api/src/modules/evidence/routes.ts"]
+    },
+    {
+      "id": "SEC-R4-03-archive-remove-authz-ifmatch-audit",
+      "procedure": "Probe the shared reasonRequest reuse in register-kit.ts (POST .../tom-gaps/{id}/archive) and evidence/routes.ts (POST .../evidence-links/{id}/remove), in zz-sec-r4-probe.test.ts parts A and B, on a disposable PG, twice. Steps: read-only auditor with a valid and with a blank reason; outsider (another transformation's lead); 5 invisible reasons with a valid If-Match; strict body (extra key); missing and stale If-Match; then a valid reason. Audit rows are counted per request id and per record. The same invocation runs the residual demonstrations (part C, zz-sec-r4-oidc.test.ts test 2), which fail by design, so the process exit is 1.",
+      "command": "with-pg.sh 55591|55592 pnpm vitest run --project integration apps/api/test/integration/zz-sec-r4-probe.test.ts ... --reporter=verbose",
+      "environment": "disposable clone $TMPDIR/review-probe @e37f6ea4, Node v22.22.2, PostgreSQL 16.13",
+      "expected": "auditor 403 + 1 denial audit (also with a blank reason: authz before validation); outsider 403/404; blank 400 validation.blank at /reason, nothing written, 0 audit rows; missing If-Match 428; stale 409; valid 200 with exactly one archive/remove audit event",
+      "actual": "Parts A and B PASS in both runs. Auditor [403, forbidden, [authorization.denied]]; auditor with a blank reason 403; outsider 404; RLM x3, NEL+WJ+NBSP+ZWSP, ALM x4, U+3164 x3 and RLO+LRI+PDI each [400, validation, /reason:validation.blank, 0 audit]; extra key 400; missing If-Match 428 precondition_required; stale 409 version_conflict; the TOM gap was still open v1 with archiveReason null and the link still active v1 with remove_reason null; the valid reason gave 200 archived v2 with the reason trimmed and exactly one tom_gap.archive; the link gave removed v2 and audit [evidence_link.create, evidence_link.remove]. Part C (F-DG2-180) and OIDC test 2 (F-DG2-181) failed by design (7 failed | 8 passed).",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-S10-001", "REQ-S13-012", "REQ-PB-018"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-4/probes/zz-sec-r4-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/probes/README.md",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/probe-run2.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/with-pg.sh"
+      ]
+    },
+    {
+      "id": "SEC-R4-04-oidc-admin-issuer",
+      "procedure": "OIDC displayNameOf change. Source: confirm display_name is used only at the JIT app_user insert, and that binding (iss, sub), the e-mail bind, sessions and scoped assignments never read it. Probe zz-sec-r4-oidc.test.ts against the candidate's local fake OpenID Provider on its own scratch database. Admin issuer check: source review of the ordering, plus admin.test.ts in the integration runs.",
+      "command": "sed -n 150,300p apps/api/src/modules/identity/oidc.ts; git diff 9e13947e..e37f6ea4 -- apps/api/src/modules/admin/routes.ts; with-pg.sh 55591|55592 pnpm vitest run --project integration apps/api/test/integration/zz-sec-r4-oidc.test.ts",
+      "environment": "disposable clone $TMPDIR/review-probe @e37f6ea4, Node v22.22.2, PostgreSQL 16.13, fake IdP (apps/api/test/support/fake-idp.ts)",
+      "expected": "the change affects the display-name choice only; identity, session and authorization are unchanged; a blank issuer is 400 at /identity/issuer",
+      "actual": "displayNameOf feeds only app_user.display_name in the JIT insert (oidc.ts:267). Test 1 PASS in both runs: an invisible-only name falls back to preferred_username 'r4.user'; a second login with the same (iss, sub) and a different invisible name signs in the same user; 0 scoped_assignment rows. Test 2 FAIL (by design) in both runs: name = 200 x U+200B + visible text gives a 200-code-unit display name with hasText = false, raised as F-DG2-181 (Low, display only). Admin: the check moved from trim() === '' to !hasVisibleContent, in the same place (after parseBody, before requireOrgPermission, as before). admin.test.ts (11) passes in both integration runs, including the spaces, RLM x2, WJ and NEL issuer cases.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-S10-001"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-4/probes/zz-sec-r4-oidc.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/probe-run2.log",
+        "apps/api/src/modules/identity/oidc.ts",
+        "apps/api/src/modules/admin/routes.ts"
+      ]
+    },
+    {
+      "id": "SEC-R4-05-web-forms",
+      "procedure": "Source review of the web form diff: Form.tsx, ReasonDialog, RecordForm, RowActions, Section, CharterPage, DefinePage, DecisionsPage, GateDetailPage, JourneysSection. Check that no form can now send a request the server should refuse, that client validation is never the only guard, and that no test assertion was removed. Server refusal is confirmed by blank-text.test.ts (integration) and SEC-R4-03.",
+      "command": "git diff 9e13947e..e37f6ea4 -- apps/web/src; git diff --numstat 9e13947e..e37f6ea4 -- '*.test.ts' '*.test.tsx' '*.spec.ts'",
+      "environment": "/home/user/My-owns @bb4dd9c; unit-web results from SEC-R4-12/13",
+      "expected": "blank text is refused inline with the shared hasText; free text is sent verbatim ('' = no value); the server remains the authoritative guard; no weakened tests",
+      "actual": "Every hand-written P2 form, plus ReasonDialog and NoteDecisionDialog, refuses non-empty text without visible content inline (Form.tsx isBlankText = value !== '' && !hasText(value)); RecordForm applies it to the text, textarea and url kinds. The text is sent verbatim, and a server 400 on the field's pointer lands on the field. Anything the client misses is refused by the server: the shared freeText/reason schemas, blank-text.test.ts 20/20 in both integration runs, and my probes. A charter edit whose only change is the changeSummary is no longer sent (annotation). The test diffs only add lines, apart from a reformatted it.each in exclusions.test.ts, which keeps its cases and adds one. No new XSS sink: text is rendered as React text nodes.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-029", "REQ-DLV-034"],
+      "evidence": ["apps/web/src/components/Form.tsx", "apps/web/src/components/RecordForm.tsx", "apps/web/src/components/ReasonDialog.tsx", "apps/web/src/components/RowActions.tsx", "apps/web/src/pages/gates/GateDetailPage.tsx", "apps/web/src/pages/design/JourneysSection.tsx"]
+    },
+    {
+      "id": "SEC-R4-06-build",
+      "procedure": "Workspace build",
+      "command": "pnpm -r build",
+      "environment": "disposable clone $TMPDIR/review-sec @e37f6ea4, Node v22.22.2, offline frozen-lockfile install",
+      "expected": "exit 0",
+      "actual": "all packages Done; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-4/build.log", "docs/delivery/test-evidence/DG2/code-security/round-4/checks.sh"]
+    },
+    {
+      "id": "SEC-R4-07-typecheck",
+      "procedure": "Workspace typecheck",
+      "command": "pnpm -r typecheck",
+      "environment": "disposable clone $TMPDIR/review-sec @e37f6ea4, Node v22.22.2",
+      "expected": "exit 0",
+      "actual": "all packages Done; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-4/typecheck.log"]
+    },
+    {
+      "id": "SEC-R4-08-lint",
+      "procedure": "ESLint, zero warnings",
+      "command": "pnpm lint",
+      "environment": "disposable clone $TMPDIR/review-sec @e37f6ea4, Node v22.22.2",
+      "expected": "exit 0",
+      "actual": "eslint . --max-warnings=0 produced no findings; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-4/lint.log"]
+    },
+    {
+      "id": "SEC-R4-09-openapi-lint",
+      "procedure": "OpenAPI lint",
+      "command": "pnpm openapi:lint",
+      "environment": "disposable clone $TMPDIR/review-sec @e37f6ea4, Node v22.22.2",
+      "expected": "PASS, 161 operations",
+      "actual": "PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 161 operations; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-4/openapi-lint.log"]
+    },
+    {
+      "id": "SEC-R4-10-no-cdn",
+      "procedure": "Portability: no public CDN references",
+      "command": "pnpm check:no-cdn",
+      "environment": "disposable clone $TMPDIR/review-sec @e37f6ea4, Node v22.22.2",
+      "expected": "PASS",
+      "actual": "PASS no-cdn; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-4/no-cdn.log"]
+    },
+    {
+      "id": "SEC-R4-11-format-check",
+      "procedure": "Prettier check",
+      "command": "pnpm format:check",
+      "environment": "disposable clone $TMPDIR/review-sec @e37f6ea4, Node v22.22.2",
+      "expected": "All matched files use Prettier code style",
+      "actual": "All matched files use Prettier code style!; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-4/format-check.log"]
+    },
+    {
+      "id": "SEC-R4-12-unit-node22",
+      "procedure": "Unit suites (unit-node + unit-web), verbose reporter, Node 22 floor",
+      "command": "pnpm test --reporter=verbose",
+      "environment": "disposable clone $TMPDIR/review-sec @e37f6ea4, Node v22.22.2",
+      "expected": "all files and tests pass",
+      "actual": "Test Files 32 passed (32); Tests 616 passed (616); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-4/unit-node22.log"]
+    },
+    {
+      "id": "SEC-R4-13-unit-node24",
+      "procedure": "Unit suites (unit-node + unit-web), verbose reporter, Node 24",
+      "command": "pnpm test --reporter=verbose",
+      "environment": "disposable clone $TMPDIR/review-sec @e37f6ea4, Node v24.21.0",
+      "expected": "all files and tests pass",
+      "actual": "Test Files 32 passed (32); Tests 616 passed (616); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-4/unit-node24.log"]
+    },
+    {
+      "id": "SEC-R4-14-unit-under-load",
+      "procedure": "F-DG2-143 repro under moderate concurrent CPU load: pnpm test --reporter=verbose on Node 22 and then Node 24, while a second disposable clone loops pnpm -r build and the round-4 integration probes on a disposable PG (port 55593). Per-test durations of 1500 ms or more are extracted.",
+      "command": "bash docs/delivery/test-evidence/DG2/code-security/round-4/load-repro.sh",
+      "environment": "disposable clones $TMPDIR/review-sec and $TMPDIR/review-probe @e37f6ea4; Node v22.22.2 and v24.21.0; 4 vCPU, loadavg 9.5-13.8 during the runs",
+      "expected": "616/616 pass on both Node versions under load",
+      "actual": "Node 22: 32/32 files, 616/616 tests, exit 0 (loadavg 10.45 -> 13.77). Node 24: 616/616, exit 0 (loadavg 13.77 -> 12.06). Slowest: the architecture AST walk at 4418 ms against its explicit 30 s timeout (AST_TEST_TIMEOUT_MS). The new web p2-blank-forms tests peaked at 3061 ms (Node 22) and 3201 ms (Node 24) against the default 5 s unit-web timeout: they passed, a data point only.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-4/unit-under-load-node22.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/unit-under-load-node24.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/load-generator.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/load-repro.sh"
+      ]
+    },
+    {
+      "id": "SEC-R4-15-integration-run1",
+      "procedure": "Integration suite on a disposable PostgreSQL 16 cluster (unique port 55581), run 1. Includes contract.test.ts (asserts 161 operations), blank-text.test.ts, and migrate.test.ts (fresh database, all 19 migrations 0001-0019).",
+      "command": "with-pg.sh 55581 pnpm test:integration",
+      "environment": "disposable clone $TMPDIR/review-sec @e37f6ea4, Node v22.22.2, PostgreSQL 16.13",
+      "expected": "all tests pass; 19 migrations applied; contract 161 ops",
+      "actual": "applied 19 migrations to a fresh database; contract.test.ts (11) pass; blank-text.test.ts (20) pass; migrate.test.ts (7) pass; oidc.test.ts (20) pass; admin.test.ts (11) pass; Test Files 29 passed (29); Tests 465 passed (465); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-034", "REQ-PB-016", "REQ-PB-017", "REQ-PB-018", "REQ-PB-027", "REQ-PB-028", "REQ-PB-029", "REQ-S16-013", "REQ-S13-012"],
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-4/integration-run1.log", "docs/delivery/test-evidence/DG2/code-security/round-4/with-pg.sh"]
+    },
+    {
+      "id": "SEC-R4-16-integration-run2",
+      "procedure": "Integration suite on a second fresh disposable PostgreSQL 16 cluster (unique port 55582), run 2",
+      "command": "with-pg.sh 55582 pnpm test:integration",
+      "environment": "disposable clone $TMPDIR/review-sec @e37f6ea4, Node v22.22.2, PostgreSQL 16.13",
+      "expected": "all tests pass; 19 migrations applied; contract 161 ops",
+      "actual": "applied 19 migrations to a fresh database; contract.test.ts (11), blank-text.test.ts (20), migrate.test.ts (7), oidc.test.ts (20), admin.test.ts (11) pass; Test Files 29 passed (29); Tests 465 passed (465); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-034"],
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-4/integration-run2.log"]
+    },
+    {
+      "id": "SEC-R4-17-aud-403-sweep",
+      "procedure": "AUD-403 sweep. aud-write-deny.test.ts is generated from the contract: every P2 mutation called by a read-only auditor must return 403 with only a denial audit, and every P2 read must return 200. kpi-aud-write-deny.test.ts does the same for KPI. Both are part of the two integration runs.",
+      "command": "grep aud-write-deny integration-run{1,2}.log",
+      "environment": "as SEC-R4-15/16",
+      "expected": "both files pass in both runs",
+      "actual": "aud-write-deny.test.ts (128 tests) and kpi-aud-write-deny.test.ts (18 tests) PASS in run 1 and in run 2",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S10-001"],
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-4/integration-run1.log", "docs/delivery/test-evidence/DG2/code-security/round-4/integration-run2.log"]
+    },
+    {
+      "id": "SEC-R4-18-validate-historical-DG0",
+      "procedure": "Gate validator, historical DG0",
+      "command": "node tools/gates/validate.mjs --historical --stage DG0",
+      "environment": "/home/user/My-owns @bb4dd9c, Node v22.22.2",
+      "expected": "PASS",
+      "actual": "PASS gate DG0 (historical); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-4/validate-historical-DG0.log"]
+    },
+    {
+      "id": "SEC-R4-19-validate-historical-DG1",
+      "procedure": "Gate validator, historical DG1 (DG1 APPROVED)",
+      "command": "node tools/gates/validate.mjs --historical --stage DG1",
+      "environment": "/home/user/My-owns @bb4dd9c, Node v22.22.2",
+      "expected": "PASS",
+      "actual": "PASS gate DG1 (historical); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-4/validate-historical-DG1.log"]
+    },
+    {
+      "id": "SEC-R4-20-diff-scan",
+      "procedure": "Scan the added product lines for secrets, public URLs/CDNs, eval/new Function and HTML sinks; confirm .github, deploy, package.json and pnpm-lock.yaml are unchanged since round 3",
+      "command": "git diff 9e13947e..e37f6ea4 -- . ':!docs' | grep '^+' | grep -Ei 'https?://|eval\\(|new Function|dangerouslySetInnerHTML|innerHTML|password|secret|api[_-]?key|token'; git diff --stat 9e13947e..e37f6ea4 -- .github deploy pnpm-lock.yaml package.json '**/package.json'",
+      "environment": "/home/user/My-owns @bb4dd9c",
+      "expected": "no matches; no changes to those paths",
+      "actual": "no matches (grep exit 1 = no output); the diff for .github, deploy, package.json and pnpm-lock.yaml is empty",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [".github/workflows/ci.yml"]
+    },
+    {
+      "id": "SEC-R4-21-env-residuals",
+      "procedure": "Environmental residuals, checked on their offline/config surfaces as the assignment requires (not BLOCKED gate checks). Live registry (REQ-DLV-042 AC-1, D-057): offline pnpm install --frozen-lockfile against the committed lockfile. Live CI (REQ-DLV-025 A24, D-058): the .github/workflows/ci.yml check list and digest pins. Keycloak (D-049): deploy/keycloak realm, and oidc.test.ts offline against the local fake IdP.",
+      "command": "pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pstore; grep -n 'run: pnpm\\|image:\\|uses:' .github/workflows/ci.yml; ls deploy/keycloak",
+      "environment": "disposable clones @e37f6ea4 (no network); /home/user/My-owns",
+      "expected": "offline and config surfaces consistent",
+      "actual": "The offline frozen install finished in 2.8 s with lockfile up to date (both clones). ci.yml runs format:check, lint, typecheck, build, test, openapi:lint and check:no-cdn (lines 62-68) and test:integration (101), with actions pinned by SHA and postgres:18@sha256:5a5a84b1... and playwright@sha256:f1e7e010... pinned by digest. deploy/keycloak/realm-mth-test.json is present. oidc.test.ts (20 tests) passed in both integration runs. Residual: the live registry, live CI and a live Keycloak were not exercised (no network in the sandbox), per D-057, D-058 and D-049.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [".github/workflows/ci.yml", "docs/delivery/test-evidence/DG2/code-security/round-4/integration-run1.log"]
+    }
+  ],
+  "findings": ["F-DG2-180", "F-DG2-181"],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG2/round-4/code-security-reviewer.verifications.json",
+    "docs/delivery/reviews/DG2/round-4/code-security-reviewer.findings.json",
+    "docs/delivery/reviews/DG2/round-4/code-security-reviewer.md",
+    "docs/delivery/test-evidence/DG2/code-security/round-4/summary.txt",
+    "docs/delivery/test-evidence/DG2/code-security/round-4/checks.sh",
+    "docs/delivery/test-evidence/DG2/code-security/round-4/load-repro.sh",
+    "docs/delivery/test-evidence/DG2/code-security/round-4/probes/README.md",
+    "docs/delivery/test-evidence/DG2/code-security/round-4/probes/zz-sec-r4-probe.test.ts",
+    "docs/delivery/test-evidence/DG2/code-security/round-4/probes/zz-sec-r4-oidc.test.ts",
+    "docs/delivery/test-evidence/DG2/code-security/round-4/probes/schema-unicode-matrix.mts",
+    "docs/delivery/test-evidence/DG2/code-security/round-4/schema-unicode-matrix.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-4/probe-run1.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-4/probe-run2.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-4/integration-run1.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-4/integration-run2.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-4/unit-node22.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-4/unit-node24.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-4/unit-under-load-node22.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-4/unit-under-load-node24.log"
+  ],
+  "reviewed_at": "2026-10-06T07:42:00Z",
+  "summary": "PASS. F-DG2-160 is CLOSED_VERIFIED. One shared visible-content predicate (White_Space + Cf + fillers) backs freeText, hasText and the shared name/reason. The round-3 repro passes 5/5 in two runs, every reported code point is rejected, and the regex is linear. The archive/remove reason reuse keeps authz-first 403s, If-Match 428/409 and exactly-once audit, and a blank reason is a 400 that writes nothing. The OIDC change affects only the JIT display name. The web forms add inline checks, and the server stays the guard. All required checks pass: build, typecheck, lint, openapi 161, no-cdn, format; unit 616/616 on Node 22 and 24, also under load; integration 465/465 twice with 19 migrations, contract, blank-text and the AUD-403 sweep; historical DG0/DG1. Two new Low, non-mandatory findings: F-DG2-180 (Default_Ignorable non-Cf code points such as U+FE0F/U+034F still count as content) and F-DG2-181 (the OIDC display name is truncated after the visibility check).",
+  "narrative": "docs/delivery/reviews/DG2/round-4/code-security-reviewer.md"
+}

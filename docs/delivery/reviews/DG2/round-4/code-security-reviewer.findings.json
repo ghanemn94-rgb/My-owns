@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG2-180",
+      "stage_id": "DG2",
+      "requirement": "REQ-PB-031",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Residual of the F-DG2-160 class: Default_Ignorable code points outside \\p{Cf} (variation selectors U+FE00-FE0F / U+E0100-E01EF, COMBINING GRAPHEME JOINER U+034F, Mongolian FVS U+180B-180D/U+180F, Khmer inherent vowels U+17B4/17B5) render as nothing but count as visible content, so an invisible Out of scope passes the B0041 pre-check and G1, and an invisible archive reason is accepted",
+      "reproduction": "packages/shared/src/schemas/common.ts:46 VISIBLE_CONTENT = /[^\\p{White_Space}\\p{Cf}\\u115F\\u1160\\u3164\\uFFA0\\u2800]/u excludes only White_Space, Cf and five fillers. The 34 assigned Unicode Default_Ignorable_Code_Point characters of category Mn are not excluded, nor are the unassigned DI code points (U+2065, U+FFF0-FFF8, U+E0000, U+E0002-E001F, U+E0080-E0FFF). Exhaustive sweep (schema-unicode-matrix.log): 4032 of 4174 DI code points still satisfy hasVisibleContent(); freeText(1,100), hasText, the shared name and reason all ACCEPT U+FE0F, U+034F, U+180B, U+17B4, U+E0100. End to end (disposable clone at e37f6ea4, disposable PostgreSQL 16, zz-sec-r4-probe.test.ts part C, 2 runs): POST /api/v1/transformations/{id}/charter by the Transformation Lead with outOfScope = '\\ufe0f' (also '\\u034f\\u034f', '\\u180b', '\\u17b4', '\\u200f\\ufe0f') -> 201 stored; GET .../charter -> exclusions_documented = 'pass'; GET .../gates/G1 -> g1.initial_charter does not list /charter/outOfScope (apps/api/src/modules/transformations/charter.ts:220-221 hasExclusions -> hasText; apps/api/src/modules/workflows/criteria.ts:172). POST .../tom-gaps/{id}/archive with If-Match and reason '\\ufe0f\\ufe0f\\ufe0f' -> 200, archived with an invisible archive_reason (the shared reason at common.ts:95). The web uses the same hasText, so its inline blank check has the same gap.",
+      "expected": "Per D-063/D-064 ('blank' = no visible content) and B0041, a value that renders as nothing is not content: freeText/name/reason return 400 validation.blank and hasText is false. For example, add \\p{Default_Ignorable_Code_Point} to the excluded set in the one shared predicate: /[^\\p{White_Space}\\p{Cf}\\p{Default_Ignorable_Code_Point}\\u2800]/u (DI already covers U+115F/U+1160/U+3164/U+FFA0). Visible text that contains such marks, such as an emoji with VS16 or Mongolian text with an FVS, keeps its content because it also has a visible base character. Add the new code points to the schema and blank-text tests.",
+      "actual": "An Out of scope or archive reason made only of variation selectors, CGJ, Mongolian FVS or Khmer inherent vowels is accepted (201/200). The B0041 exclusions pre-check reads 'pass' and G1 treats Out of scope as documented. The same gap applies to every freeText field, every hasText readiness test, and the shared name and reason.",
+      "evidence": [
+        "packages/shared/src/schemas/common.ts",
+        "apps/api/src/modules/transformations/charter.ts",
+        "apps/api/src/modules/workflows/criteria.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/probes/zz-sec-r4-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/probes/schema-unicode-matrix.mts",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/schema-unicode-matrix.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/probe-run2.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-4/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-06T07:40:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer, DG2 round 4. Low and non-mandatory, the same rating as F-DG2-160: it needs deliberately entered, rarely typed combining or variation characters. The pre-check supports the human scope-check answer and never replaces it, G1 still needs a human Sponsor decision, and an archive is still authorized, If-Match-checked and audited with the actor. It does not block the round. F-DG2-160's reported set and its stated remedy (White_Space + Cf + fillers) are verified fixed; this finding tracks the remaining Default_Ignorable code points that are not Cf."
+        }
+      ]
+    },
+    {
+      "id": "F-DG2-181",
+      "stage_id": "DG2",
+      "requirement": "REQ-S16-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "OIDC just-in-time display name is cut to 200 code units AFTER the visible-content check, so a name claim of 200 invisible characters followed by visible text is stored as an invisible display name",
+      "reproduction": "apps/api/src/modules/identity/oidc.ts:167: `if (typeof v === \"string\" && hasText(v)) return v.trim().slice(0, 200);`. The visible-content test runs on the whole claim, but the stored value is the first 200 UTF-16 code units. On a disposable clone at e37f6ea4 with the candidate's local fake OpenID Provider and a disposable PostgreSQL 16 (zz-sec-r4-oidc.test.ts test 2, 2 runs), a first sign-in with sub 'r4-sub-2', preferred_username 'r4.second' and name = '\\u200b' x 200 + 'Visible Synthetic' gets a 302, and JIT creates app_user.display_name of length 200 with hasText(display_name) = false. It does not fall back to preferred_username. The same happens with any Cf/White_Space prefix that is not trimmed (U+200F, U+2060, U+0085).",
+      "expected": "The display name chosen at JIT provisioning has visible content, consistent with the F-DG2-160 intent of this change (an invisible name claim is treated as absent). For example, apply hasText to the truncated value (`const s = v.trim().slice(0, 200); if (hasText(s)) return s;`) so it falls back to the next claim, ideally also without splitting a surrogate pair.",
+      "actual": "The user is created with a display name that renders as empty wherever people are shown (owners, approvers, audit actor names), until an administrator renames them. Identity, session and authorization are unaffected: binding is by (iss, sub), no scoped assignment is created, and test 1 of the same probe confirms a second login signs in the same user.",
+      "evidence": [
+        "apps/api/src/modules/identity/oidc.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/probes/zz-sec-r4-oidc.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/probe-run2.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-4/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-06T07:40:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer, DG2 round 4. Low and non-mandatory: display only. It needs control of the IdP name claim (a self-service profile name in Keycloak), it never affects identity binding, sessions or authorization, and the user ID stays in the audit trail. The truncation predates the change; the F-DG2-160 edit to this line was meant to stop invisible names but checks the value before truncation. It does not block the round."
+        }
+      ]
+    }
+  ]
+}

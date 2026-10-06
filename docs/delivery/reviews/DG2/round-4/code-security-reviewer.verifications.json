@@ -1,0 +1,21 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG2-160",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified adversarially on candidate sha256:29ced0ed...ce58 (source e37f6ea4; ID recomputed in a fresh clone, 521 files). Source: one shared predicate VISIBLE_CONTENT = /[^\\p{White_Space}\\p{Cf}\\u115F\\u1160\\u3164\\uFFA0\\u2800]/u (packages/shared/src/schemas/common.ts:46). It sits behind hasVisibleContent, hasText, freeText's refine (:77) and the new trimmedText behind the shared name and reason (:95). The refine is skipped when min already failed, so a value never gets two errors. hasExclusions (charter.ts:220) and the G1 criterion (criteria.ts:172) go through hasText, as does thesisPartText. The two inline reason parsers (register-kit archive, evidence-link remove) now use the shared reasonRequest, and no inline z.string() free-text parser remains in apps/api/src. Repro: the unchanged round-3 zz-sec-r3-invisible.test.ts now passes 5/5 in 2 runs on a disposable PG (U+0085, U+200B, U+200F, U+061C, U+2060x3 Out of scope -> 400, nothing stored). Schema matrix: all 18 round-3 code points plus 11 more Cf/fillers (U+115F, U+1160, U+FFA0, RLO, LRI, U+2062, U+1BCA0, tag chars, U+1D173, mixed NEL/RLM/WJ/NBSP) are rejected by freeText, name and reason, and hasText is false. Visible controls (Arabic with RLM, emoji ZWJ, leading ZWSP + text) are accepted verbatim. Performance: one negated character class, linear and with no backtracking; 10^7 invisible code units take about 0.2 s, and the API body limit keeps real inputs far smaller. Residual probes: no P1/P2 blank decision still uses trim() (the remaining trim() calls are list syntax, decimals, search boxes, the activity-verb lead or the admin web forms, whose bodies are all guarded by the shared schemas server-side). Combining marks alone (U+0301, U+064B, U+0670) render a visible mark and are reasonably content. Default_Ignorable code points outside Cf (variation selectors, CGJ U+034F, Mongolian FVS, Khmer inherent vowels) still pass. That class lies outside the White_Space/Cf/fillers set that F-DG2-160 reported and that its stated remedy named, so it is raised separately as the new Low finding F-DG2-180, not by reopening this one. Separately, F-DG2-181 records that the OIDC display-name change checks before it truncates.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-4/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/probe-run2.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/schema-unicode-matrix.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/probes/schema-unicode-matrix.mts",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/probes/README.md",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/probes/zz-sec-r3-invisible.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/integration-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/integration-run2.log",
+        "packages/shared/src/schemas/common.ts"
+      ]
+    }
+  ]
+}
