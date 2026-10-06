@@ -28,7 +28,7 @@ import { Section } from "../../components/Section.tsx";
 import { EmptyState, QueryState } from "../../components/States.tsx";
 import { useWorkspace, WorkspaceFrame } from "../../components/Workspace.tsx";
 import { formatBusinessDate, formatDateTime } from "../../lib/format.ts";
-import { diagnosticDimensionLabel, pick, tomDimensionLabel } from "../../lib/methodology.ts";
+import { diagnosticDimensionLabel, gateLabel, pick, tomDimensionLabel } from "../../lib/methodology.ts";
 import { errorMessage, fieldErrorMessage } from "../../lib/problem.ts";
 import { BusinessApprovalNote, readiness } from "./GatesPage.tsx";
 
@@ -71,7 +71,7 @@ function GateContent({ view }: { view: GateView }) {
     <>
       <Section
         id="gate"
-        title={`${def.code} – ${pick(locale, def.sourceNameEn, def.nameAr)}`}
+        title={gateLabel(def, locale)}
         actions={
           <span className="section__actions">
             {view.submissionEnabled && view.canSubmit ? (

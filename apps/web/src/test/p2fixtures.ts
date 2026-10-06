@@ -69,8 +69,9 @@ function gateDef(code: string, ordinal: number, phase: string, nextPhase: string
     ordinal,
     phase,
     nextPhase,
-    sourceNameEn: ["Case for Change", "Direction", "Target State", "Mobilization", "Scale", "Sustain"][ordinal - 1]!,
-    nameAr: ["مبررات التغيير", "التوجّه", "الحالة المستهدفة", "التعبئة", "التوسّع", "الاستدامة"][ordinal - 1]!,
+    // Verbatim B0023 form, as seeded (migration 0011): the source gate name already carries the code (F-DG2-151).
+    sourceNameEn: `${code} - ${["Case for Change", "Direction", "Target State", "Mobilization", "Scale", "Sustain"][ordinal - 1]!}`,
+    nameAr: `${code} - ${["مبررات التغيير", "التوجّه", "الحالة المستهدفة", "التعبئة", "التوسّع", "الاستدامة"][ordinal - 1]!}`,
     sourceDecisionQuestionEn: `Synthetic decision question ${code}`,
     decisionQuestionAr: `سؤال قرار اصطناعي ${code}`,
     sourceEvidenceRequiredEn: "Synthetic evidence list",
@@ -438,8 +439,9 @@ export function charterView(over: Partial<CharterView["charter"]> = {}, topOutco
     scExecutiveDecisionsVisible: null,
     scExecutiveDecisionsVisibleEvidence: null,
   };
+  const charter = { ...rec(), ...fields, version: 2, ...over };
   return {
-    charter: { ...rec(), ...fields, version: 2, ...over },
+    charter,
     northStar: null,
     topOutcomes,
     guardrails: [],
@@ -450,7 +452,12 @@ export function charterView(over: Partial<CharterView["charter"]> = {}, topOutco
     scopeCheckPrechecks: [
       { code: "outcome_linkage", result: "not_applicable", detail: "x" },
       { code: "problem_traceability", result: "unknown", detail: "x" },
-      { code: "exclusions_documented", result: "unknown", detail: "x" },
+      // Mirrors the server (F-DG2-150): an empty or blank Out of scope FAILS the check ("attention"), never "unknown".
+      {
+        code: "exclusions_documented",
+        result: charter.outOfScope?.trim() ? "pass" : "attention",
+        detail: "x",
+      },
       { code: "baseline_measurable", result: "attention", detail: "x" },
       { code: "executive_decisions_visible", result: "pass", detail: "x" },
     ],

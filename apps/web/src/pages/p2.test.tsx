@@ -489,6 +489,54 @@ describe("Charter", () => {
     expect(within(scope).getByText("Open decisions have a named owner.")).toBeTruthy();
   });
 
+  // F-DG2-150 (REQ-PB-031 / B0041): no explicit exclusions is a FAILING pre-check: a non-passing chip (never the green
+  // pass chip, never the grey Unknown chip) and a detail that says the check fails, in EN and AR.
+  it("scope pre-check: an empty Out of scope reads as failing (EN and AR)", async () => {
+    const handlers = (locale: "ar" | "en", outOfScope: string | null) => [
+      ...base(leadGrants(), locale),
+      route("GET", new RegExp(`${esc(TR)}/charter$`), () => ({ status: 200, body: charterView({ outOfScope }, []) })),
+      list("charter/versions", []),
+    ];
+    const expectFailing = (row: HTMLElement, chipText: string, detail: string) => {
+      const chip = row.querySelector<HTMLElement>("[data-result]")!;
+      expect(chip.dataset["result"]).toBe("attention");
+      expect(chip.className).toContain("status-chip--at-risk");
+      expect(chip.className).not.toMatch(/status-chip--(on-track|unknown)/);
+      expect(chip.querySelector("svg")).toBeTruthy();
+      expect(chip.textContent!.trim()).toBe(chipText);
+      expect(within(row).getByText(detail)).toBeTruthy();
+    };
+
+    for (const empty of [null, "   "]) {
+      render(`/transformations/${TR_ID}/charter`, handlers("en", empty));
+      const scope = await screen.findByRole("region", { name: "Scope sanity checks" });
+      const row = scope.querySelector<HTMLElement>("[data-scope-check='exclusions_documented']")!;
+      expectFailing(
+        row,
+        "Not supported by data",
+        "No explicit exclusions (out of scope) are documented, so this check fails.",
+      );
+      expect(row.textContent).not.toContain("Check the documented exclusions.");
+      cleanup();
+    }
+
+    render(`/transformations/${TR_ID}/charter`, handlers("ar", null), "ar");
+    const ar = await screen.findByRole("region", { name: "فحوص معقولية النطاق" });
+    expectFailing(
+      ar.querySelector<HTMLElement>("[data-scope-check='exclusions_documented']")!,
+      "لا تدعمه البيانات",
+      "لا توجد استثناءات صريحة (خارج النطاق) موثّقة؛ لذلك يفشل هذا الفحص.",
+    );
+    cleanup();
+
+    // Documented exclusions pass.
+    render(`/transformations/${TR_ID}/charter`, handlers("en", "Synthetic: enterprise billing"));
+    const ok = await screen.findByRole("region", { name: "Scope sanity checks" });
+    const okRow = ok.querySelector<HTMLElement>("[data-scope-check='exclusions_documented']")!;
+    expect(okRow.querySelector<HTMLElement>("[data-result]")!.dataset["result"]).toBe("pass");
+    expect(within(okRow).getByText("Explicit exclusions (out of scope) are documented.")).toBeTruthy();
+  });
+
   it("thesis: an empty part is Incomplete and no sentence is composed (F-DG2-203)", async () => {
     const view = charterView({}, [outcome()]);
     view.warnings.push(
@@ -900,6 +948,59 @@ describe("Gates (business approval)", () => {
     expect(conflict.closest("[data-state]")!.getAttribute("data-state")).toBe("conflict");
     const body = requests.find((r) => r.method === "POST")!.body as Record<string, unknown>;
     expect(body).toEqual({ submissionNo: 1, outcome: "approved", rationale: "Synthetic rationale" });
+  });
+
+  // F-DG2-151 (REQ-PB-017 / B0023): the verbatim source gate name already contains the code; it is shown exactly once.
+  it("gate list titles: the verbatim B0023 name once, never the code twice (EN and AR)", async () => {
+    render(`/transformations/${TR_ID}/gates`, [
+      ...base(leadGrants()),
+      route("GET", /\/gates$/, () => ({ status: 200, body: { items: gateViews() } })),
+    ]);
+    const g2 = await waitFor(() => {
+      const h = document.querySelector("[data-gate='G2'] .gate-card__title");
+      expect(h).toBeTruthy();
+      return h!;
+    });
+    expect(g2.textContent!.trim()).toBe("G2 - Direction");
+    const titles = [...document.querySelectorAll(".gate-card__title")].map((h) => h.textContent!.trim());
+    expect(titles).toEqual([
+      "G1 - Case for Change",
+      "G2 - Direction",
+      "G3 - Target State",
+      "G4 - Mobilization",
+      "G5 - Scale",
+      "G6 - Sustain",
+    ]);
+    for (const t of titles) expect(t).not.toMatch(/G\d\s*[–-]\s*G\d/);
+    cleanup();
+
+    render(
+      `/transformations/${TR_ID}/gates`,
+      [...base(leadGrants(), "ar"), route("GET", /\/gates$/, () => ({ status: 200, body: { items: gateViews() } }))],
+      "ar",
+    );
+    const g2ar = await waitFor(() => {
+      const h = document.querySelector("[data-gate='G2'] .gate-card__title");
+      expect(h).toBeTruthy();
+      return h!;
+    });
+    expect(g2ar.textContent!.trim()).toBe("G2 - التوجّه");
+    expect(document.body.textContent).not.toMatch(/G\d\s*[–-]\s*G\d/);
+  });
+
+  it("gate detail heading: the verbatim B0023 name once (EN and AR)", async () => {
+    const handlers = (locale: "ar" | "en") => [
+      ...base(leadGrants(), locale),
+      route("GET", /\/gates\/G2$/, () => ({ status: 200, body: gateViews()[1] })),
+    ];
+    render(`/transformations/${TR_ID}/gates/G2`, handlers("en"));
+    expect(await screen.findByRole("heading", { name: "G2 - Direction" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: /G2\s*[–-]\s*G2/ })).toBeNull();
+    cleanup();
+
+    render(`/transformations/${TR_ID}/gates/G2`, handlers("ar"), "ar");
+    expect(await screen.findByRole("heading", { name: "G2 - التوجّه" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: /G2\s*[–-]\s*G2/ })).toBeNull();
   });
 
   it("Arabic: the gate is labelled a business approval, RTL", async () => {

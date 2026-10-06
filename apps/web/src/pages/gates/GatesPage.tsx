@@ -12,7 +12,7 @@ import { GateStatusChip } from "../../components/P2Badges.tsx";
 import { Section } from "../../components/Section.tsx";
 import { QueryState } from "../../components/States.tsx";
 import { useWorkspace, WorkspaceFrame } from "../../components/Workspace.tsx";
-import { pick } from "../../lib/methodology.ts";
+import { gateLabel, pick } from "../../lib/methodology.ts";
 
 export function GatesPage() {
   const { t } = useTranslation();
@@ -67,7 +67,7 @@ function GateList() {
           <ol className="gate-list">
             {data.items.map((g) => {
               const r = readiness(g);
-              const name = `${g.definition.code} – ${pick(locale, g.definition.sourceNameEn, g.definition.nameAr)}`;
+              const name = gateLabel(g.definition, locale);
               return (
                 <li key={g.gate.id} className="gate-card" data-gate={g.definition.code}>
                   <h3 className="gate-card__title">

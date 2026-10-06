@@ -15,7 +15,9 @@ import {
   problem,
   route,
 } from "../test/fixtures.tsx";
+import type { MethodologyCatalogue } from "../api/types.ts";
 import { formatDateTime, formatDecimal, formatMoney, zonedLocalToUtcIso } from "./format.ts";
+import { gateLabel, gateName } from "./methodology.ts";
 import { errorMessage, pointerToField, problemKey } from "./problem.ts";
 
 afterEach(() => {
@@ -177,5 +179,22 @@ describe("problem translation", () => {
     expect(pointerToField("/identity/subject")).toBe("identity.subject");
     expect(pointerToField("/query/q")).toBe("q");
     expect(problemKey("validation.too_small")).toBe("problems.validation__too_small");
+  });
+});
+
+describe("product gate label (F-DG2-151, REQ-PB-017 / B0023)", () => {
+  const catalogue = {
+    gateDefinitions: [{ code: "G2", sourceNameEn: "G2 - Direction", nameAr: "G2 - التوجّه" }],
+  } as unknown as MethodologyCatalogue;
+
+  it("shows the verbatim source name once, as given, in each language", () => {
+    expect(gateLabel({ sourceNameEn: "G2 - Direction", nameAr: "G2 - التوجّه" }, "en")).toBe("G2 - Direction");
+    expect(gateLabel({ sourceNameEn: "G2 - Direction", nameAr: "G2 - التوجّه" }, "ar")).toBe("G2 - التوجّه");
+    expect(gateName(catalogue, "G2", "en")).toBe("G2 - Direction");
+    expect(gateName(catalogue, "G2", "ar")).toBe("G2 - التوجّه");
+  });
+
+  it("falls back to the bare code for a gate the catalogue does not contain", () => {
+    expect(gateName(catalogue, "G9", "en")).toBe("G9");
   });
 });

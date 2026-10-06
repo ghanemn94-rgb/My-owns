@@ -159,7 +159,7 @@ test("Charter: create, save a second version, compare versions; the 3-5 top-outc
   await page
     .getByLabel(fieldLabel(lang, "define.charter.field.caseForChange"))
     .fill("Synthetic: billing errors drive churn and cost.");
-  await page.getByLabel(fieldLabel(lang, "define.charter.field.outOfScope")).fill("Synthetic: wholesale billing");
+  // Out of scope is left empty in version 1: the exclusions pre-check must read as FAILING (F-DG2-150).
   await page.getByRole("button", { name: tr(lang, "define.charter.create"), exact: true }).click();
   await expect(page.locator("[data-state='charter-version']")).toHaveAttribute("data-charter-version", "1");
   const fields = section(page, lang, "define.charter.fieldsTitle");
@@ -169,12 +169,27 @@ test("Charter: create, save a second version, compare versions; the 3-5 top-outc
   );
   const scope = section(page, lang, "define.charter.scope.title");
   await expect(scope.locator("[data-scope-check]")).toHaveCount(5);
+  // F-DG2-150 (REQ-PB-031 / B0041): no exclusions documented -> a non-passing chip (never green, never grey Unknown)
+  // with a detail that says the check fails.
+  const exclusions = scope.locator("[data-scope-check='exclusions_documented']");
+  const exclusionsChip = exclusions.locator("[data-result]");
+  await expect(exclusionsChip).toHaveAttribute("data-result", "attention");
+  await expect(exclusionsChip).toHaveClass(/status-chip--at-risk/);
+  await expect(exclusionsChip).toHaveText(tr(lang, "define.charter.precheck.result.attention"));
+  await expect(exclusions).toContainText(tr(lang, "define.charter.precheck.detail.exclusions_documented.attention"));
+  await exclusions.scrollIntoViewIfNeeded();
+  await shot(page, lang, "p2-04a-charter-no-exclusions");
+  await expectAccessible(page, lang, "p2-charter-no-exclusions");
 
   await fields.getByRole("button", { name: tr(lang, "define.charter.edit"), exact: true }).click();
   await page.getByLabel(fieldLabel(lang, "define.charter.field.inScope")).fill("Synthetic: retail consumer billing");
+  await page.getByLabel(fieldLabel(lang, "define.charter.field.outOfScope")).fill("Synthetic: wholesale billing");
   await page.getByLabel(fieldLabel(lang, "define.charter.changeSummary")).fill("Synthetic: scope added");
   await page.getByRole("button", { name: tr(lang, "define.charter.saveVersion"), exact: true }).click();
   await expect(page.locator("[data-state='charter-version']")).toHaveAttribute("data-charter-version", "2");
+  // With exclusions documented the pre-check passes.
+  await expect(exclusionsChip).toHaveAttribute("data-result", "pass");
+  await expect(exclusions).toContainText(tr(lang, "define.charter.precheck.detail.exclusions_documented.pass"));
   await shot(page, lang, "p2-04-charter");
   await expectAccessible(page, lang, "p2-charter");
   await page
@@ -501,9 +516,32 @@ test("Gates: G1 shows unverified evidence and offers no submission while incompl
   await expect(page.locator("[data-business-approval]")).toContainText(tr(lang, "gates.businessApproval"));
   await expect(page.locator("[data-gate]")).toHaveCount(6);
   await expect(page.locator("main#main")).not.toContainText(/\bDG[0-7]\b/);
+  // F-DG2-151 (REQ-PB-017 / B0023): each card shows the verbatim seeded gate name once (it already carries the code).
+  const GATE_NAMES = {
+    en: [
+      "G1 - Case for Change",
+      "G2 - Direction",
+      "G3 - Target State",
+      "G4 - Mobilization",
+      "G5 - Scale",
+      "G6 - Sustain",
+    ],
+    ar: [
+      "G1 - مبررات التغيير",
+      "G2 - التوجّه",
+      "G3 - الحالة المستهدفة",
+      "G4 - التعبئة",
+      "G5 - التوسّع",
+      "G6 - الاستدامة",
+    ],
+  } as const;
+  await expect(page.locator(".gate-card__title")).toHaveText([...GATE_NAMES[lang]]);
+  await expect(page.locator("main#main")).not.toContainText(/G\d\s*[–-]\s*G\d/);
   await shot(page, lang, "p2-13-gates");
   await expectAccessible(page, lang, "p2-gates");
   await page.locator("[data-gate='G1']").getByRole("link").click();
+  await expect(page.getByRole("heading", { name: GATE_NAMES[lang][0], exact: true })).toBeVisible();
+  await expect(page.locator("main#main")).not.toContainText(/G\d\s*[–-]\s*G\d/);
   const readiness = section(page, lang, "gates.readinessTitle");
   const diagnostic = readiness.locator("[data-criterion='g1.diagnostic']");
   await expect(diagnostic).toHaveAttribute("data-completeness", "incomplete");

@@ -1,7 +1,7 @@
 // Bilingual methodology labels (ADR-0016 §2). The catalogue carries the playbook's source text verbatim in English and
 // a provisional Arabic translation; the UI shows the one of the current language.
 import type { Locale } from "@mth/shared";
-import type { MethodologyCatalogue } from "../api/types.ts";
+import type { GateDefinition, MethodologyCatalogue } from "../api/types.ts";
 
 export const pick = (locale: Locale, en: string, ar: string): string => (locale === "ar" ? ar : en);
 
@@ -20,9 +20,19 @@ export function tomDimensionLabel(m: MethodologyCatalogue, code: string | null, 
   return d ? pick(locale, d.labelEn, d.labelAr) : null;
 }
 
+/**
+ * The ONE place a product gate's display name is composed (F-DG2-151, REQ-PB-017 / B0023). The catalogue carries the
+ * verbatim B0023 gate name, which already contains the code ("G2 - Direction" / "G2 - التوجّه"), so it is shown
+ * exactly once, as given: never prefixed with the code again, never stripped or rebuilt.
+ */
+export function gateLabel(def: Pick<GateDefinition, "sourceNameEn" | "nameAr">, locale: Locale): string {
+  return pick(locale, def.sourceNameEn, def.nameAr);
+}
+
+/** The gate name for a code from the catalogue; the bare code when the catalogue has no such gate. */
 export function gateName(m: MethodologyCatalogue, code: string, locale: Locale): string {
   const g = m.gateDefinitions.find((x) => x.code === code);
-  return g ? `${code} – ${pick(locale, g.sourceNameEn, g.nameAr)}` : code;
+  return g ? gateLabel(g, locale) : code;
 }
 
 /** Options for a TOM-dimension <select>, in source order. */
