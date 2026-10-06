@@ -9604,14 +9604,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-4/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-06T07:40:00Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer, DG2 round 4. Low and non-mandatory, the same rating as F-DG2-160: it needs deliberately entered, rarely typed combining or variation characters. The pre-check supports the human scope-check answer and never replaces it, G1 still needs a human Sponsor decision, and an archive is still authorized, If-Match-checked and audited with the actor. It does not block the round. F-DG2-160's reported set and its stated remedy (White_Space + Cf + fillers) are verified fixed; this finding tracks the remaining Default_Ignorable code points that are not Cf."
+        },
+        {
+          "at": "2026-10-06T09:23:42Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 9b4ded0a2397daae7a72549e1363fd7f5f869faf"
         }
-      ]
+      ],
+      "fix_revision": "9b4ded0a2397daae7a72549e1363fd7f5f869faf",
+      "fix_summary": "BE8 9b4ded0. The single shared predicate is now /[^\\p{White_Space}\\p{Cc}\\p{Cf}\\p{Cs}\\p{Default_Ignorable_Code_Point}⠀]/u. Variation selectors, CGJ, Mongolian FVS, Khmer inherent vowels, controls, lone surrogates and fillers on their own are not content (400 validation.blank; never present in readiness, pre-checks, thesis, name or reason). Emoji with VS16, Arabic with RLM and combining marks stay content. Unit matrix and integration tests; the negative controls fail on the old code."
     },
     {
       "id": "F-DG2-181",
@@ -9632,14 +9639,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-4/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-06T07:40:00Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer, DG2 round 4. Low and non-mandatory: display only. It needs control of the IdP name claim (a self-service profile name in Keycloak), it never affects identity binding, sessions or authorization, and the user ID stays in the audit trail. The truncation predates the change; the F-DG2-160 edit to this line was meant to stop invisible names but checks the value before truncation. It does not block the round."
+        },
+        {
+          "at": "2026-10-06T09:23:42Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 786f574d61123aa827d75a427cc675f7c4dc61a5"
         }
-      ]
+      ],
+      "fix_revision": "786f574d61123aa827d75a427cc675f7c4dc61a5",
+      "fix_summary": "BE8 9b4ded0: displayNameCandidate truncates the claim to 200 code points first (no split surrogate pair), then applies hasText and falls back to preferred_username, then email, then a generated name. Identity binding is unchanged. BE9 786f574: the astral-boundary test is deterministic in every locale, because the test clusters and databases are explicitly UTF8 and the product refuses a non-UTF8 database."
     },
     {
       "id": "F-DG2-220",
@@ -9663,14 +9677,21 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG2/round-4/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-06T07:55:00Z",
           "status": "OPEN",
           "note": "Raised by qa-verifier in DG2 round 4 (T-DG2-REV-QA-R4). Low and non-mandatory, like F-DG2-143: the flake affects a required check's reliability, not product behaviour or data integrity."
+        },
+        {
+          "at": "2026-10-06T09:23:42Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 6946a1e444a9d09186847d0b321c7629421c6717"
         }
-      ]
+      ],
+      "fix_revision": "6946a1e444a9d09186847d0b321c7629421c6717",
+      "fix_summary": "FE7 6946a1e: unit-web setup configure({ asyncUtilTimeout: 5000 }) plus project testTimeout 20 s, with a guard test; p2-blank-forms page loads are cheaper (slowest test 2121 -> 451 ms). 18 consecutive green pnpm test runs (10 on Node 24, 5 on Node 22, 3 under CPU load). Orchestrator: 4 more green runs in each locale setting."
     }
   ]
 }
