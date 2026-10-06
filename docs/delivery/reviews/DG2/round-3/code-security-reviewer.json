@@ -1,0 +1,368 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG2",
+  "round": 3,
+  "candidate_id": "sha256:b98c44db7ef91295eec25a21cbd394a91890b01caeeb6bfd269eb1ee6d132be5",
+  "source_commit": "9e13947e5a242e43fb08aab0e506888ed2c6cc38",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG2-T-DG2-REV-SEC-R3-code-security-reviewer-20261006T054225Z-a828d9b1",
+    "session_id": "a828d9b1-7f70-4171-b4d8-992375122f84"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (code-security-reviewer, session a828d9b1) authored no implementation in the DG2 scope, including none of the round-3 repairs (BE4 05abd88, e8c5b14, b9668d7; BE5 c65fcc3). I reviewed the frozen candidate directly: the product diff eb8163e2..9e13947e and the full touched files. I ran code only in disposable clones under $TMPDIR and on disposable PostgreSQL 16 clusters. I formed this verdict without reading any other reviewer's DG2 round-3 record."
+  },
+  "assignment": "docs/delivery/assignments/DG2/round-3/code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-S10-001",
+    "REQ-S16-013",
+    "REQ-S13-012",
+    "REQ-DLV-034",
+    "REQ-PB-016",
+    "REQ-PB-017",
+    "REQ-PB-018",
+    "REQ-PB-027",
+    "REQ-PB-028",
+    "REQ-PB-029"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-R3-00-candidate",
+      "procedure": "Confirm the frozen candidate. HEAD is 6245903. Its only delta from source_commit 9e13947e is excluded delivery metadata: 3 round-3 assignments, the b98c44db manifest and stages.json. Recompute the candidate ID. The disposable clones are checked out at 9e13947e.",
+      "command": "git rev-parse HEAD; git diff --stat 9e13947..HEAD; node tools/gates/candidate.mjs --stage DG2",
+      "environment": "/home/user/My-owns working tree; Node v24.21.0",
+      "expected": "candidate_id sha256:b98c44db...2be5 over 519 files; post-source commits touch only delivery metadata",
+      "actual": "{\"stage\":\"DG2\",\"source\":\"working-tree\",\"candidate_id\":\"sha256:b98c44db7ef91295eec25a21cbd394a91890b01caeeb6bfd269eb1ee6d132be5\",\"files\":519}. 9e13947..HEAD changes only docs/delivery/assignments/DG2/round-3/{code-security-reviewer,domain-reviewer,qa-verifier}.md, docs/delivery/candidates/DG2/b98c44db7ef91295.manifest.json and docs/delivery/stages.json.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/candidates/DG2/b98c44db7ef91295.manifest.json"
+      ]
+    },
+    {
+      "id": "SEC-R3-01-verify-F-DG2-143",
+      "procedure": "Adversarial re-run of the round-2 repro: pnpm test --reporter=verbose while a second disposable clone loops pnpm -r build plus integration probes on a disposable PG. Done on Node 22 and on Node 24, plus one heavier Node 22 run (build loop + full integration suite concurrently). Static check that every AST-walking test carries AST_TEST_TIMEOUT_MS. Per-test durations extracted; every test >= 1500 ms classified as explicit vs default (5 s) timeout.",
+      "command": "bash docs/delivery/test-evidence/DG2/code-security/round-3/load-repro.sh; bash .../load-repro-heavy.sh; grep -E ' [0-9]+ms$' <logs> | awk 'ms>=1500'",
+      "environment": "disposable clones $TMPDIR/review-sec and $TMPDIR/review-probe @9e13947e; Node v22.22.2 and v24.21.0; 4 vCPU, loadavg ~9.3-9.5 during the runs",
+      "expected": "520/520 pass under load on both Node versions; AST tests have an explicit 30 s timeout; no test without an explicit timeout reaches 2500 ms (2x of 5 s)",
+      "actual": "Node 22 under load: 520/520, exit 0, slowest test architecture walk 2857 ms (explicit 30 s; round 2: 5829 ms and a timeout). Node 24 under load: 520/520, exit 0 (2633 ms). Node 22 under heavier load: 520/520, exit 0 (2176 ms). Slowest default-timeout test in any run: 1868 ms (p2.test.tsx Diagnose, Node 22 under load) < 2500 ms. Every P2 module boundary test (evidence, kpi, methodology, reporting, workflows) and the dependency-direction block use AST_TEST_TIMEOUT_MS. F-DG2-143 CLOSED_VERIFIED (verifications sidecar).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-034"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-3/unit-under-load-node22.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/unit-under-load-node24.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/unit-under-heavy-load-node22.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/load-repro.sh",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/load-repro-heavy.sh",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/load-generator.log"
+      ]
+    },
+    {
+      "id": "SEC-R3-02-source-review-blank-text",
+      "procedure": "Source review of the product diff eb8163e2..9e13947e (41 files). Look for any P2 input that bypasses the shared schemas: every parseBody/parseQuery call site in apps/api/src/modules (register-kit create/update, charter, kpi x4, evidence, workflows decisions/gates/workshops/canvas, methodology labels, team) mapped to its shared schema. Grep for remaining z.string().min/max free text in packages/shared/src/schemas. Readiness and pre-check presence tests in criteria.ts, gate-facts.ts, good-outcome.ts and charter.ts. Scan the diff for secrets, CDN URLs, eval and HTML sinks.",
+      "command": "git diff eb8163e2..9e13947e -- . ':!docs'; grep -rn 'parseBody(' apps/api/src/modules; grep -n 'z\\.string()\\.\\(min\\|max\\)' packages/shared/src/schemas/*.ts; grep -n '!== null' criteria.ts gate-facts.ts",
+      "environment": "/home/user/My-owns @6245903 (source identical to 9e13947e)",
+      "expected": "every P2 body uses freeText-based schemas; query params are enums/uuids/cursor; readiness uses hasText for free text; no secrets/CDN/unsafe sinks",
+      "actual": "All P2 bodies parse through shared schemas whose free text is freeText (`text = freeText` in charter, decision, design, diagnose, direction, evidence, kpi, methodology; gate.ts and team.ts directly), including nested journey steps (actor/handoffTo freeText(0,200), systems/controls arrays). The only remaining raw strings are P1 (transformation description, admin q), identity/OIDC, cursor and codes. The archive reason uses z.string().trim().min(3) (P1-style reason, blank-safe). P2 list queries take enums, uuids, cursor and limit only. criteria.ts and gate-facts.ts use hasText for current_state, root_cause, impact_text, case_for_change, transformation_name, in_scope, out_of_scope and baseline source. Observation: gate-facts.ts:134 still tests unit_label !== null, but every write path (kpiDefinitionCreate/Update unitLabel text(1,50)) rejects blank, so it is unreachable through the API; no finding. The diff scan found no secrets, CDN URLs, eval or dangerouslySetInnerHTML. A Unicode residual in the shared helpers is raised separately as F-DG2-160 (see SEC-R3-03).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-013",
+        "REQ-PB-016",
+        "REQ-PB-017",
+        "REQ-PB-018",
+        "REQ-PB-027",
+        "REQ-PB-029"
+      ],
+      "evidence": [
+        "packages/shared/src/schemas/common.ts",
+        "apps/api/src/modules/workflows/criteria.ts",
+        "apps/api/src/modules/kpi/gate-facts.ts",
+        "apps/api/src/modules/transformations/charter.ts"
+      ]
+    },
+    {
+      "id": "SEC-R3-03-blank-text-probes",
+      "procedure": "Probe zz-sec-r3-probe.test.ts (9 tests) on a disposable PG, twice. Unicode whitespace that ECMAScript trim covers (NBSP, U+3000, LS/PS, BOM, U+2007, U+205F, U+1680, U+202F) on charter outOfScope and changeSummary. P2 inputs not in the implementer's blank-text suite: journey nested step name/actor/systems[1], failureDemand, journey PATCH (partial merge) description, evidence review note, G1 submission note, decision PATCH title, decision option title. Each response must be a 400 with validation.blank at the pointer, no new row, version unchanged, and 0 audit rows for the request id. Control: actor \"\" is accepted. The same invocation also runs zz-sec-r3-invisible.test.ts, the F-DG2-160 reproduction, which is why the process exit is 1. Schema-level matrix of 18 code points via Node 24 type stripping.",
+      "command": "with-pg.sh 55491|55492 pnpm vitest run --project integration apps/api/test/integration/zz-sec-r3-probe.test.ts apps/api/test/integration/zz-sec-r3-invisible.test.ts; node probes/schema-unicode-matrix.mts $TMPDIR/review-sec/packages/shared",
+      "environment": "disposable clone $TMPDIR/review-probe @9e13947e, Node v22.22.2 (matrix: v24.21.0), PostgreSQL 16.13 (nested user ns, 127.0.0.1)",
+      "expected": "every blank input -> 400 validation.blank at the exact (nested) pointer; nothing written; no audit event",
+      "actual": "zz-sec-r3-probe.test.ts 9/9 PASS in both runs. All listed inputs gave [400, validation, <pointer>:validation.blank, 0 audit rows], e.g. /steps/0/systems/1, /steps/0/actor, /note, /submissionNote, /title. Journey count, evidence version and gate_submission count were unchanged; the control returned 201. Residual: zz-sec-r3-invisible.test.ts failed 5/5 in both runs (process exit 1). Text made only of U+0085 NEL (Unicode White_Space) or Cf format characters (U+200B, U+200F, U+061C, U+2060) is accepted (201), and the B0041 pre-check reads 'pass'. The matrix shows trim() misses U+0085, U+180E, U+200B-D, U+2060, U+3164, U+2800, U+00AD, U+061C, U+200F. Raised as F-DG2-160 (Low, non-mandatory). The D-063 behaviour as specified (ECMAScript whitespace-only rejected with no write and no audit) holds.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-013",
+        "REQ-PB-029",
+        "REQ-S13-012"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-3/probes/zz-sec-r3-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/probes/zz-sec-r3-invisible.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/probes/README.md",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/probe-run2.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/schema-unicode-matrix.log"
+      ]
+    },
+    {
+      "id": "SEC-R3-04-exclusions-precheck-authz-ifmatch-audit",
+      "procedure": "Confirm the exclusions pre-check change (now 'attention' for a blank or empty Out of scope) left authz, If-Match/409 and audit unchanged. Source: the charter.ts diff touches only scopeCheckPrechecks (read path) and adds hasExclusions; the PATCH/POST handlers are unchanged. Probe on a disposable PG: auditor PATCH, outsider GET and PATCH, stale and missing If-Match, null clear, then the pre-check and G1, and the auditor reading the view.",
+      "command": "git diff eb8163e2..9e13947e -- apps/api/src/modules/transformations/charter.ts; zz-sec-r3-probe.test.ts (describe 'charter Out of scope ...')",
+      "environment": "disposable clone $TMPDIR/review-probe @9e13947e, Node v22.22.2, PostgreSQL 16.13",
+      "expected": "auditor 403 with 1 denial audit; outsider 403/404; stale If-Match 409; missing 428; nothing written; null clear audited once; pre-check attention; G1 lists /charter/outOfScope",
+      "actual": "Both runs: authz.auditor [403, forbidden, [authorization.denied]]. authz.outsider [404, 404]. ifmatch [409 version_conflict, 428 precondition_required], audit unchanged. clear: v2, [[charter.update, 2]], exclusions_documented 'attention', G1 missing includes /charter/outOfScope. The auditor reads the view (200) and sees 'attention'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S10-001",
+        "REQ-PB-016",
+        "REQ-PB-029"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-3/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/probe-run2.log",
+        "apps/api/src/modules/transformations/charter.ts"
+      ]
+    },
+    {
+      "id": "SEC-R3-05-web-retry-test-not-weakened",
+      "procedure": "Review the transformations.test.tsx and fixtures.tsx diff (c65fcc3) and TransformationCreatePage.refreshEffectivePermissions.",
+      "command": "git diff eb8163e2..9e13947e -- apps/web/src/pages/transformations/transformations.test.tsx apps/web/src/test/fixtures.tsx",
+      "environment": "/home/user/My-owns @6245903",
+      "expected": "same behaviour asserted (navigation not blocked by a failed /me refresh, fail-safe UI), no assertion removed",
+      "actual": "No assertion was removed. The navigation, the toast and the absence of Archive/Audit trail are still asserted, and a new assertion requires >= 3 failed GET /api/v1/me after the POST, so the retries really happen. retryDelayMs is opt-in (default unchanged) and only zeroes TanStack's back-off. The race against ME_REFRESH_TIMEOUT_MS (5 s) settles on the refetch here, and did before too: the old 1 s + 2 s back-off also finished before 5 s, so no path lost coverage. The test passes in all 5 unit runs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "apps/web/src/pages/transformations/transformations.test.tsx",
+        "apps/web/src/test/fixtures.tsx",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/unit-node22.log"
+      ]
+    },
+    {
+      "id": "SEC-R3-06-build",
+      "procedure": "Workspace build",
+      "command": "pnpm -r build",
+      "environment": "disposable clone $TMPDIR/review-sec @9e13947e, Node v22.22.2, offline frozen-lockfile install",
+      "expected": "exit 0",
+      "actual": "all packages Done; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-3/build.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/checks.sh"
+      ]
+    },
+    {
+      "id": "SEC-R3-07-typecheck",
+      "procedure": "Workspace typecheck",
+      "command": "pnpm -r typecheck",
+      "environment": "disposable clone $TMPDIR/review-sec @9e13947e, Node v22.22.2",
+      "expected": "exit 0",
+      "actual": "all packages Done; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-3/typecheck.log"
+      ]
+    },
+    {
+      "id": "SEC-R3-08-lint",
+      "procedure": "ESLint, zero warnings",
+      "command": "pnpm lint",
+      "environment": "disposable clone $TMPDIR/review-sec @9e13947e, Node v22.22.2",
+      "expected": "exit 0, no output from eslint",
+      "actual": "eslint . --max-warnings=0 produced no findings; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-3/lint.log"
+      ]
+    },
+    {
+      "id": "SEC-R3-09-openapi-lint",
+      "procedure": "OpenAPI lint",
+      "command": "pnpm openapi:lint",
+      "environment": "disposable clone $TMPDIR/review-sec @9e13947e, Node v22.22.2",
+      "expected": "PASS, 161 operations",
+      "actual": "PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 161 operations; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-3/openapi-lint.log"
+      ]
+    },
+    {
+      "id": "SEC-R3-10-no-cdn",
+      "procedure": "Portability: no public CDN references",
+      "command": "pnpm check:no-cdn",
+      "environment": "disposable clone $TMPDIR/review-sec @9e13947e, Node v22.22.2",
+      "expected": "PASS",
+      "actual": "PASS no-cdn: scanned apps, packages; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-3/no-cdn.log"
+      ]
+    },
+    {
+      "id": "SEC-R3-11-format-check",
+      "procedure": "Prettier check",
+      "command": "pnpm format:check",
+      "environment": "disposable clone $TMPDIR/review-sec @9e13947e, Node v22.22.2",
+      "expected": "All matched files use Prettier code style",
+      "actual": "All matched files use Prettier code style!; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-3/format-check.log"
+      ]
+    },
+    {
+      "id": "SEC-R3-12-unit-node22",
+      "procedure": "Unit suites (unit-node + unit-web), verbose reporter, Node 22 floor",
+      "command": "pnpm test --reporter=verbose",
+      "environment": "disposable clone $TMPDIR/review-sec @9e13947e, Node v22.22.2",
+      "expected": "all files and tests pass",
+      "actual": "Test Files 31 passed (31); Tests 520 passed (520); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-3/unit-node22.log"
+      ]
+    },
+    {
+      "id": "SEC-R3-13-unit-node24",
+      "procedure": "Unit suites (unit-node + unit-web), verbose reporter, Node 24",
+      "command": "pnpm test --reporter=verbose",
+      "environment": "disposable clone $TMPDIR/review-sec @9e13947e, Node v24.21.0",
+      "expected": "all files and tests pass",
+      "actual": "Test Files 31 passed (31); Tests 520 passed (520); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-3/unit-node24.log"
+      ]
+    },
+    {
+      "id": "SEC-R3-14-integration-run1",
+      "procedure": "Integration suite on a disposable PostgreSQL 16 cluster (unique port 55481), run 1. Includes contract.test.ts (asserts 161 operations) and migrate.test.ts (fresh database, 19 migrations 0001-0019).",
+      "command": "with-pg.sh 55481 pnpm test:integration",
+      "environment": "disposable clone $TMPDIR/review-sec @9e13947e, Node v22.22.2, PostgreSQL 16.13",
+      "expected": "all tests pass; 19 migrations applied; contract 161 ops",
+      "actual": "applied 19 migrations to a fresh database; contract.test.ts (11 tests) pass; migrate.test.ts (7) pass; Test Files 29 passed (29); Tests 456 passed (456); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-034"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-3/integration-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/with-pg.sh"
+      ]
+    },
+    {
+      "id": "SEC-R3-15-integration-run2",
+      "procedure": "Integration suite on a second fresh disposable PostgreSQL 16 cluster (unique port 55482), run 2",
+      "command": "with-pg.sh 55482 pnpm test:integration",
+      "environment": "disposable clone $TMPDIR/review-sec @9e13947e, Node v22.22.2, PostgreSQL 16.13",
+      "expected": "all tests pass; 19 migrations applied; contract 161 ops",
+      "actual": "applied 19 migrations to a fresh database; contract.test.ts (11 tests) pass; Test Files 29 passed (29); Tests 456 passed (456); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-034"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-3/integration-run2.log"
+      ]
+    },
+    {
+      "id": "SEC-R3-16-aud-403-sweep",
+      "procedure": "AUD-403 sweep: aud-write-deny.test.ts is generated from the contract. Every P2 mutation called by a read-only auditor must return 403 with only a denial audit, and every P2 read must return 200. kpi-aud-write-deny.test.ts covers the same for KPI. Both are in the two integration runs.",
+      "command": "grep aud-write-deny integration-run{1,2}.log",
+      "environment": "as SEC-R3-14/15",
+      "expected": "both files pass in both runs; 128 P2 operations covered",
+      "actual": "aud-write-deny.test.ts (128 tests) PASS and kpi-aud-write-deny.test.ts (18 tests) PASS in run 1 and in run 2",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S10-001"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-3/integration-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/integration-run2.log"
+      ]
+    },
+    {
+      "id": "SEC-R3-17-validate-historical-DG0",
+      "procedure": "Gate validator, historical DG0",
+      "command": "node tools/gates/validate.mjs --historical --stage DG0",
+      "environment": "/home/user/My-owns @6245903, Node v22.22.2",
+      "expected": "PASS",
+      "actual": "PASS gate DG0 (historical); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-3/validate-historical-DG0.log"
+      ]
+    },
+    {
+      "id": "SEC-R3-18-validate-historical-DG1",
+      "procedure": "Gate validator, historical DG1 (DG1 APPROVED)",
+      "command": "node tools/gates/validate.mjs --historical --stage DG1",
+      "environment": "/home/user/My-owns @6245903, Node v22.22.2",
+      "expected": "PASS",
+      "actual": "PASS gate DG1 (historical); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-3/validate-historical-DG1.log"
+      ]
+    },
+    {
+      "id": "SEC-R3-19-env-residuals",
+      "procedure": "Environmental residuals, checked on their offline/config surfaces as the assignment requires (not BLOCKED gate checks). Live registry (REQ-DLV-042 AC-1, D-057): offline pnpm install --frozen-lockfile against the committed lockfile. Live CI (REQ-DLV-025 A24, D-058): .github/workflows/ci.yml check list and digest pins. Keycloak (D-049): deploy/keycloak realm and oidc.test.ts offline. No change to .github, deploy, package.json or pnpm-lock.yaml since round 2.",
+      "command": "pnpm install --offline --frozen-lockfile; grep -n 'run: pnpm\\|image:' .github/workflows/ci.yml; ls deploy/keycloak; git diff --stat eb8163e2..9e13947e -- .github deploy pnpm-lock.yaml package.json",
+      "environment": "disposable clone @9e13947e (no network); /home/user/My-owns",
+      "expected": "offline and config surfaces consistent",
+      "actual": "Offline frozen install done in 1 s. ci.yml lines 62-68 and 100-101 run format:check, lint, typecheck, build, test, openapi:lint, check:no-cdn and test:integration, with postgres:18@sha256:5a5a84b1... and playwright@sha256:f1e7e010... pinned by digest. deploy/keycloak/realm-mth-test.json is present. oidc.test.ts (19 tests) passed in both integration runs. The diff is empty for these paths. Residual: live registry, live CI and a live Keycloak were not exercised (no network in the sandbox), per D-057, D-058 and D-049.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        ".github/workflows/ci.yml",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/integration-run1.log"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG2-160"
+  ],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG2/round-3/code-security-reviewer.verifications.json",
+    "docs/delivery/reviews/DG2/round-3/code-security-reviewer.findings.json",
+    "docs/delivery/test-evidence/DG2/code-security/round-3/summary.txt",
+    "docs/delivery/test-evidence/DG2/code-security/round-3/checks.sh",
+    "docs/delivery/test-evidence/DG2/code-security/round-3/probes/README.md",
+    "docs/delivery/test-evidence/DG2/code-security/round-3/probe-run1.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-3/probe-run2.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-3/unit-under-load-node22.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-3/unit-under-load-node24.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-3/unit-under-heavy-load-node22.log"
+  ],
+  "reviewed_at": "2026-10-06T05:58:00Z",
+  "summary": "PASS. F-DG2-143 is CLOSED_VERIFIED: under concurrent load on Node 22 and 24, 520/520 tests pass, the AST walk peaks at 2.9 s against an explicit 30 s timeout, and no default-timeout test exceeds 1.87 s. D-063 holds as specified: every P2 body goes through freeText schemas (nested and partial PATCH included), and a blank value returns 400 at the field's pointer with nothing written and no audit row. The exclusions pre-check change left authz, If-Match/409 and audit unchanged, and the web retry test was strengthened, not weakened. All 13 required checks pass, including two integration runs (456/456, 19 migrations, contract 161 ops, AUD-403 sweep) and historical DG0/DG1. One new Low, non-mandatory finding: F-DG2-160. Invisible-only text (U+0085 NEL, zero-width and bidi marks) evades trim()-based freeText and hasText, so the B0041 exclusions pre-check reads 'pass'.",
+  "narrative": "docs/delivery/reviews/DG2/round-3/code-security-reviewer.md"
+}

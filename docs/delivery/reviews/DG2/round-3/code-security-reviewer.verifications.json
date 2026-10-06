@@ -1,0 +1,23 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG2-143",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified fixed on candidate sha256:b98c44db...2be5 (source 9e13947e), adversarially. Source: AST_TEST_TIMEOUT_MS = 30_000 (apps/api/src/architecture.testkit.ts) is applied to the full-tree boundary test (architecture.test.ts it(..., AST_TEST_TIMEOUT_MS)), the whole 'package dependency direction' describe block ({ timeout }), and the boundary test of every P2 module that walks sources (evidence, kpi, methodology, reporting, workflows: 2 calls and 2 timeout refs each). The remaining moduleViolations/fileViolations calls in architecture.test.ts are self-checks on single planted files or small temp dirs. The global unit default is unchanged (vitest.config.ts sets testTimeout only for the integration project). Web: renderApp gains an opt-in retryDelayMs, and transformations.test.tsx uses retryDelayMs: 0 with a 30 s explicit timeout. The assertion was strengthened, not weakened: it now also asserts >= 3 failed GET /api/v1/me after the POST. The ME_REFRESH_TIMEOUT_MS (5 s) race branch was not exercised before either, because the old 1 s + 2 s back-off also settled before 5 s. Round-2 repro re-run: pnpm test --reporter=verbose while a second disposable clone looped pnpm -r build and integration probes on a disposable PG (4 vCPU, loadavg ~9.5). Node 22: 520/520 PASS, slowest test the explicit-timeout architecture walk at 2857 ms (round 2: 5829 ms and a timeout FAIL). Node 24: 520/520 PASS (2633 ms). Heavier load (build loop + full integration suite concurrently), Node 22: 520/520 PASS (2176 ms). No test WITHOUT an explicit timeout came within 2x of the 5 s default in any run: the maximum was 1868 ms (p2.test.tsx Diagnose, Node 22 under load) against the 2500 ms line. Unloaded runs: max 1385 ms on Node 22 and 1360 ms on Node 24.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-3/unit-under-load-node22.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/unit-under-load-node24.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/unit-under-heavy-load-node22.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/load-repro.sh",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/load-repro-heavy.sh",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/load-generator.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/unit-node22.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/unit-node24.log",
+        "apps/api/src/architecture.testkit.ts",
+        "apps/api/src/architecture.test.ts",
+        "apps/web/src/pages/transformations/transformations.test.tsx"
+      ]
+    }
+  ]
+}

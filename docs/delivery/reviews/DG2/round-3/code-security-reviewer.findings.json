@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG2-160",
+      "stage_id": "DG2",
+      "requirement": "REQ-PB-031",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Invisible-only free text (U+0085 NEL, zero-width and bidi format characters) passes freeText() and counts as present in hasText(), so the B0041 exclusions pre-check reads 'pass' and G1 treats Out of scope as documented (residual of the F-DG2-150 / D-063 class)",
+      "reproduction": "packages/shared/src/schemas/common.ts:42 (hasText) and :58 (freeText refine) both decide blankness with String.prototype.trim(). That strips only ECMAScript WhiteSpace/LineTerminator, not U+0085 NEXT LINE (a Unicode White_Space code point) or Cf format characters such as U+200B ZWSP, U+200C/U+200D, U+2060 WORD JOINER, U+200F RLM, U+061C ARABIC LETTER MARK (the bidi marks are common in Arabic RTL input). Schema matrix (schema-unicode-matrix.log): freeText(1,100) ACCEPTS and hasText returns true for U+0085, U+180E, U+200B, U+200C, U+200D, U+2060, U+3164, U+2800, U+00AD, U+061C, U+200F; it correctly rejects NBSP, U+3000, U+2028, U+FEFF, U+2007. End to end (disposable clone at 9e13947e, disposable PostgreSQL 16, zz-sec-r3-invisible.test.ts, 2 runs): POST /api/v1/transformations/{id}/charter by the Transformation Lead with outOfScope = '\\u0085' (or '\\u200b', '\\u200f', '\\u061c', '\\u2060\\u2060\\u2060') -> 201 and stored. GET .../charter -> scopeCheckPrechecks exclusions_documented = 'pass' ('Explicit exclusions are documented.'). GET .../gates/G1 -> g1.initial_charter does not list /charter/outOfScope as missing (apps/api/src/modules/workflows/criteria.ts:172 via hasExclusions, apps/api/src/modules/transformations/charter.ts:219-220 and :264).",
+      "expected": "Per D-063 ('blank free text is rejected on every P2 input and never counts as present in G1-G3 readiness') and B0041, text with no visible content is not a documented exclusion. Either freeText rejects it with 400 validation.blank (nothing written, no audit), or hasText treats it as not present. For example, test /[^\\p{White_Space}\\p{Cf}]/u (plus U+3164/U+2800/U+115F/U+1160 if desired) instead of trim(), in the one shared helper so API, pre-checks and web stay consistent.",
+      "actual": "An Out of scope that renders as empty is accepted (201), and the B0041 pre-check and the G1 initial-charter criterion both treat it as documented exclusions. The same predicate gap applies to every freeText field and every hasText readiness test (In scope, Case for change, T01 current state, root cause and impact text, baseline source).",
+      "evidence": [
+        "packages/shared/src/schemas/common.ts",
+        "apps/api/src/modules/transformations/charter.ts",
+        "apps/api/src/modules/workflows/criteria.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/probes/zz-sec-r3-invisible.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/probe-run2.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/schema-unicode-matrix.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-3/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-06T05:55:00Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer DG2 round 3. Low, non-mandatory: it needs deliberately entered invisible-only characters, the pre-check supports and never replaces the human scope-check answer, and G1 still needs a human Sponsor decision. It does not block the round."
+        }
+      ]
+    }
+  ]
+}
