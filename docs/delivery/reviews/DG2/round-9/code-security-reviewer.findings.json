@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG2-350",
+      "stage_id": "DG2",
+      "requirement": "REQ-DLV-034",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "An unmatched route sent an application/octet-stream body answers 400 validation.content_type ('Send the request body as application/json.') instead of 404: restrictParserTo does not skip 404 requests (BE14 regression)",
+      "reproduction": "Root cause. assertDeclaredMediaType skips request.is404 (apps/api/src/modules/platform/media-types.ts:82), but restrictParserTo (media-types.ts:88-100) does not. The octet-stream parser is registered with addContentTypeParser at apps/api/src/modules/evidence/routes.ts:362. For an unmatched URL, Fastify's 404 context finds that parser. consumesOf() falls back to DEFAULT_CONSUMES (application/json), and the parser calls done() with the 400 problem, so the not-found handler never runs.\nProbe. zz-sec-r9-probe.test.ts S10, disposable clone at 041478cb (candidate 45ebccc0), disposable PostgreSQL 16, identical in both locale runs (probe-run1-lang-unset.log, probe-run2-lang-c-utf8.log). Requests: POST /api/v1/does-not-exist, POST /does-not-exist, and PUT and DELETE on /api/v1/transformations/{tid}/evidence (no such operations). Each was sent with and without a session.\n- text/plain: 404 not_found.\n- application/json {}: 404 not_found.\n- application/octet-stream: 400 validation.content_type, detail 'Send the request body as application/json.'\nBaseline. At the round-8 candidate cf3446e4 (probe-baseline-cf3446e4-S10-S11.log), the same octet-stream requests gave 404, so BE14 introduced this. The candidate's own test 'an unknown route keeps its 404, whatever the media type' (apps/api/test/integration/media-types.test.ts:391) sends only text/plain, so it does not catch it.",
+      "expected": "An unmatched route answers 404 not_found whatever the request media type, as for text/plain and JSON, and as the candidate's own test name states. The restrictParserTo wrapper should pass through when request.is404 is true, like assertDeclaredMediaType. A regression case should send application/octet-stream to an unknown route.",
+      "actual": "For an unknown URL, the response depends on the Content-Type. With octet-stream the client gets a 400 telling it to send JSON instead of a 404. No data is read, stored or audited. Authorization and the declared operations are unaffected: no contract operation exists for these URLs, so this is an inconsistency, not a security or integrity defect. It is Low and non-mandatory.",
+      "evidence": [
+        "apps/api/src/modules/platform/media-types.ts",
+        "apps/api/src/modules/evidence/routes.ts",
+        "apps/api/test/integration/media-types.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-9/probes/zz-sec-r9-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-9/probes/README.md",
+        "docs/delivery/test-evidence/DG2/code-security/round-9/probe-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-9/probe-run2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-9/probe-baseline-cf3446e4-S10-S11.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-9/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-06T21:20:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG2 round 9 while probing for remaining media-type paths after BE14. It is a BE14 regression: the same requests gave 404 at cf3446e4. Rated Low and non-mandatory because it affects only URLs with no operation, and nothing is read, stored or audited. It does not block the round."
+        }
+      ]
+    },
+    {
+      "id": "F-DG2-351",
+      "stage_id": "DG2",
+      "requirement": "REQ-DLV-034",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "uploadEvidenceContent: a Content-Type that passes the essence check but that Fastify's parser lookup cannot match (e.g. 'application/octet-stream\\t; x=1') is refused with a detail naming application/json, a media type the operation does not accept",
+      "reproduction": "Root cause. mediaTypeEssence (apps/api/src/modules/platform/media-types.ts:63-68) trims the part before ';', so 'application/octet-stream\\t; x=1' passes the central check. Fastify 5.6.1's getParser (lib/contentTypeParser.js:116-125) matches a prefix only when the next character is ';' or a space, not a tab. No parser is found, so it raises FST_ERR_CTP_INVALID_MEDIA_TYPE. mapError maps that to a fixed 'Send the request body as application/json.' (apps/api/src/modules/platform/hooks.ts:66-67), whatever the route's consumes set.\nProbe. zz-sec-r9-probe.test.ts S11, plus the S1 tab-before-semicolon row (Content-Length and chunked), both locale runs. POST {T}/evidence/{id}/content as the lead, with If-Match, CSRF, X-File-Name and Content-Type 'application/octet-stream\\t; x=1'. Result: 400 validation.content_type, declared, nothing stored, but the detail is 'Send the request body as application/json.' For createEvidence, 'application/json\\t; charset=utf-8' gives the same 400. There the detail is correct for that operation, although the essence is a declared type.\nBaseline. The same at cf3446e4, so this predates BE14. BE14 made the central refusal name the route's set but left this fallback hard-coded.",
+      "expected": "Every media-type refusal on an operation names that operation's declared set, so here 'Send the request body as application/octet-stream.' For example, map FST_ERR_CTP_INVALID_MEDIA_TYPE through undeclaredMediaTypeProblem(consumesOf(request)). Alternatively, make the essence check and the parser lookup agree on whitespace, by refusing in preParsing or by normalising.",
+      "actual": "A non-browser client that puts a tab before the parameters gets the declared 400, and nothing is stored or rewritten. The message tells it to switch to application/json, which this operation refuses. This affects error-message accuracy only. There is no integrity, authorization or confidentiality impact, and the web client always sends 'application/octet-stream'. It is Low and non-mandatory.",
+      "evidence": [
+        "apps/api/src/modules/platform/media-types.ts",
+        "apps/api/src/modules/platform/hooks.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-9/probes/zz-sec-r9-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-9/probes/README.md",
+        "docs/delivery/test-evidence/DG2/code-security/round-9/probe-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-9/probe-run2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-9/probe-baseline-cf3446e4-S10-S11.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-9/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-06T21:20:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG2 round 9 while probing Content-Type variants after BE14. It predates BE14 (the same at cf3446e4). Rated Low and non-mandatory because the status is the declared 400, nothing is stored, and only the message text is wrong. It does not block the round."
+        }
+      ]
+    }
+  ]
+}
