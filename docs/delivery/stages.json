@@ -820,7 +820,7 @@
       "id": "DG2",
       "stage": "P2",
       "name": "Diagnose define and design",
-      "state": "REVIEWING",
+      "state": "FIXING",
       "depends_on": [
         "DG1"
       ],
@@ -917,6 +917,11 @@
           "state": "REVIEWING",
           "at": "2026-10-06T05:42:00Z",
           "note": "Round-3 repairs integrated: AN3 register sweep (F-152), BE4 exclusions pre-check + AST test timeouts (F-150/F-143), FE4 gate titles + EN/AR failing state (F-151/F-150), and BE5 blank-free-text hardening + web test back-off (D-063, F-150/F-143). All DG2 findings are CLOSED_VERIFIED (9) or FIXED_PENDING_VERIFICATION (4); 0 OPEN. Orchestrator verification green (see round 3 note). Candidate frozen as b98c44db (519 files, source 9e13947) for gate review round 3. All three reviewers verify their own findings and re-review in full."
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-10-06T06:25:00Z",
+          "note": "Round 3 on candidate b98c44db: code-security PASS (F-DG2-143 CLOSED_VERIFIED; new F-DG2-160 Low: invisible-only Unicode text (U+0085, Cf format characters, fillers) passes the blank rule) and domain PASS (F-DG2-150/151/152 CLOSED_VERIFIED; no new findings). qa-verifier FAIL with two new Medium web findings: F-DG2-210 (forms map whitespace-only to null, so the validation__blank message is unreachable and an edit can clear Out of scope) and F-DG2-211 (the RecordForm error banner <ul role=alert> gives a serious axe 'listitem' violation; present since Phase B). 13 findings CLOSED_VERIFIED, 3 OPEN. Round-4 repairs run in sequence: backend-workflow-engineer T-DG2-BE6 (F-160, one shared visible-content predicate), then frontend-ux-engineer T-DG2-FE5 (F-210, F-211). Then re-freeze; round 4 with disjoint id ranges."
         }
       ]
     },

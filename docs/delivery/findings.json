@@ -9152,7 +9152,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-2/domain-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-06T05:00:07Z",
@@ -9163,10 +9163,38 @@
           "at": "2026-10-06T05:40:40Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at c65fcc32047a749953b07725058441ac3983f0a6"
+        },
+        {
+          "at": "2026-10-06T05:58:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 3: PASS"
         }
       ],
       "fix_revision": "c65fcc32047a749953b07725058441ac3983f0a6",
-      "fix_summary": "BE4 05abd88 + BE5 c65fcc3: exclusions_present returns attention (not unknown/pass) for a null, empty or whitespace-only Out of scope on a saved charter, and pass only for non-blank text (REQ-PB-031 A01, B0041). G1 initial-charter uses the same hasText rule. Whitespace-only free text is now rejected (400 validation.blank) on every P2 input. The web shows the failing state in EN and AR (FE4 e8c5b14). ADR-0017 s2. Tests: registers.test.ts F-DG2-150 block, blank-text.test.ts, exclusions.test.ts, p2.test.tsx, p2-journeys e2e."
+      "fix_summary": "BE4 05abd88 + BE5 c65fcc3: exclusions_present returns attention (not unknown/pass) for a null, empty or whitespace-only Out of scope on a saved charter, and pass only for non-blank text (REQ-PB-031 A01, B0041). G1 initial-charter uses the same hasText rule. Whitespace-only free text is now rejected (400 validation.blank) on every P2 input. The web shows the failing state in EN and AR (FE4 e8c5b14). ADR-0017 s2. Tests: registers.test.ts F-DG2-150 block, blank-text.test.ts, exclusions.test.ts, p2.test.tsx, p2-journeys e2e.",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG2-T-DG2-REV-DOM-R3-domain-reviewer-20261006T054245Z-186c67c8",
+          "session_id": "186c67c8-59d0-4bfd-ab2a-490ec595d31c"
+        },
+        "at": "2026-10-06T05:58:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG2/domain/round-3/live-scenario.log",
+          "docs/delivery/test-evidence/DG2/domain/round-3/live-scenario.mjs",
+          "docs/delivery/test-evidence/DG2/domain/round-3/screens/en/p2-04a-charter-no-exclusions.png",
+          "docs/delivery/test-evidence/DG2/domain/round-3/screens/ar/p2-04a-charter-no-exclusions.png",
+          "docs/delivery/test-evidence/DG2/domain/round-3/e2e-p2-journeys.log",
+          "docs/delivery/test-evidence/DG2/domain/round-3/integration-node24.log",
+          "apps/api/src/modules/transformations/charter.ts",
+          "apps/api/src/modules/workflows/criteria.ts",
+          "packages/shared/src/schemas/common.ts",
+          "docs/architecture/adr/ADR-0017-charter-versioning-and-direction.md"
+        ],
+        "note": "Verified fixed on candidate sha256:b98c44db…32be5 (source 9e13947e), live on a disposable PostgreSQL 16 + API stack with synthetic data (Node 24.21.0). (1) A saved charter with a null Out of scope gives scopeCheckPrechecks[exclusions_documented] = attention with the API detail 'No explicit exclusions (out of scope) are documented; this check fails until Out of scope is completed.' The charter screen renders it as the amber chip 'Not supported by data' / 'لا تدعمه البيانات' with the detail 'No explicit exclusions (out of scope) are documented, so this check fails.' / 'لا توجد استثناءات صريحة (خارج النطاق) موثّقة؛ لذلك يفشل هذا الفحص.' in EN (LTR) and AR (RTL), and the chip is not green or grey. (2) Non-blank text passes (PATCH 'Synthetic: wholesale billing.' gives pass; e2e version 2 also shows pass). (3) G1 readiness applies the same rule: g1.initial_charter is incomplete with g1.initial_charter.field_missing at /charter/outOfScope for null, and also for a whitespace value planted directly in the disposable DB around the API (the pre-check gives attention too; defense in depth through hasExclusions/hasText). (4) PATCH outOfScope '   ', '\\t\\n ' and NBSP+ideographic space each return 400 validation.blank at /outOfScope, and the charter version is unchanged (nothing written). '' gives 400 too_small, and null still clears with 200. Blank inScope, changeSummary and T03 gap text are also rejected (D-063). (5) ADR-0017 §2 documents the exclusions_present exception and the blank-text rule. Unit tests (exclusions.test.ts), integration tests (blank-text.test.ts, 12 tests) and the e2e assertions pass."
+      }
     },
     {
       "id": "F-DG2-151",
@@ -9189,7 +9217,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-2/domain-reviewer.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-06T05:00:07Z",
@@ -9200,10 +9228,35 @@
           "at": "2026-10-06T05:40:40Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at e8c5b14009f8c0edc9f0c519c6f5d6435eefb9c7"
+        },
+        {
+          "at": "2026-10-06T05:58:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 3: PASS"
         }
       ],
       "fix_revision": "e8c5b14009f8c0edc9f0c519c6f5d6435eefb9c7",
-      "fix_summary": "FE4: shared gateLabel() shows the verbatim B0023 gate name once (e.g. 'G2 - Direction' / 'G2 - التوجّه') on the gate list and detail; gateName delegates to it; fixtures carry the seeded names; unit, p2 and e2e assertions in EN and AR."
+      "fix_summary": "FE4: shared gateLabel() shows the verbatim B0023 gate name once (e.g. 'G2 - Direction' / 'G2 - التوجّه') on the gate list and detail; gateName delegates to it; fixtures carry the seeded names; unit, p2 and e2e assertions in EN and AR.",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG2-T-DG2-REV-DOM-R3-domain-reviewer-20261006T054245Z-186c67c8",
+          "session_id": "186c67c8-59d0-4bfd-ab2a-490ec595d31c"
+        },
+        "at": "2026-10-06T05:58:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG2/domain/round-3/screens/en/p2-13-gates.png",
+          "docs/delivery/test-evidence/DG2/domain/round-3/screens/ar/p2-13-gates.png",
+          "docs/delivery/test-evidence/DG2/domain/round-3/screens/en/p2-27-g3-approved.png",
+          "docs/delivery/test-evidence/DG2/domain/round-3/e2e-p2-journeys.log",
+          "apps/web/src/lib/methodology.ts",
+          "apps/web/src/pages/gates/GatesPage.tsx",
+          "apps/web/src/pages/gates/GateDetailPage.tsx"
+        ],
+        "note": "Verified on the live stack (p2-journeys e2e, chromium-en and chromium-ar, 24/24 passed) and in the code. The gate list cards read 'G1 - Case for Change' … 'G6 - Sustain' and in Arabic 'G1 - مبررات التغيير', 'G2 - التوجّه' … 'G6 - الاستدامة'. Each shows the verbatim B0023 name exactly once. The detail heading reads 'G3 - Target State' (G3 approved screenshot). No 'Gn – Gn' duplication appears anywhere in main (e2e regex assertion). Composition is centralised in gateLabel() (apps/web/src/lib/methodology.ts), which GatesPage and GateDetailPage use. The API values are unchanged and verbatim."
+      }
     },
     {
       "id": "F-DG2-152",
@@ -9225,7 +9278,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-2/domain-reviewer.json",
       "owner": "transformation-analyst",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-06T05:00:07Z",
@@ -9236,10 +9289,34 @@
           "at": "2026-10-06T05:40:40Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at b9668d7a31009bc8ab72159bcb746b711835a7bd"
+        },
+        {
+          "at": "2026-10-06T05:58:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 3: PASS"
         }
       ],
       "fix_revision": "b9668d7a31009bc8ab72159bcb746b711835a7bd",
-      "fix_summary": "AN3: REQ-S05-003 screen_api names GET .../tom-canvas and GET .../tom-canvas/{dimensionCode} plus the DesignPage DimensionView. A sweep of all 32 DG2-final rows corrected 10 more non-existent paths and 5 placeholder spellings; 27/27 cited paths exist in openapi.yaml (re-checked by the orchestrator); validate --register DG2 PASS."
+      "fix_summary": "AN3: REQ-S05-003 screen_api names GET .../tom-canvas and GET .../tom-canvas/{dimensionCode} plus the DesignPage DimensionView. A sweep of all 32 DG2-final rows corrected 10 more non-existent paths and 5 placeholder spellings; 27/27 cited paths exist in openapi.yaml (re-checked by the orchestrator); validate --register DG2 PASS.",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG2-T-DG2-REV-DOM-R3-domain-reviewer-20261006T054245Z-186c67c8",
+          "session_id": "186c67c8-59d0-4bfd-ab2a-490ec595d31c"
+        },
+        "at": "2026-10-06T05:58:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG2/domain/round-3/register-spotcheck.log",
+          "docs/delivery/test-evidence/DG2/domain/round-3/register-spotcheck.py",
+          "docs/delivery/test-evidence/DG2/domain/round-3/live-scenario.log",
+          "docs/delivery/requirements.csv",
+          "docs/api/openapi.yaml",
+          "apps/web/src/pages/design/DesignPage.tsx"
+        ],
+        "note": "REQ-S05-003 screen_api now reads 'Target Operating Model > Design > per-dimension view (DesignPage DimensionView); GET …/tom-canvas; GET …/tom-canvas/{dimensionCode}'. Live: GET /tom-canvas/customer_value_proposition returns 200 with cell, dimension, gaps, decisions, dependencies and evidence; the old register path /tom/dimensions/{dim} returns 404. DimensionView exists in DesignPage.tsx. Spot-check of all 16 rows changed since eb8163e2 (REQ-PB-012/023/024/025/026/027/028/029/034/037/038/039/041/042, REQ-S05-003, REQ-S10-001): every absolute API path cited resolves to a path in docs/api/openapi.yaml (0 unresolved)."
+      }
     },
     {
       "id": "F-DG2-143",
@@ -9261,7 +9338,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-2/code-security-reviewer.json",
       "owner": "solution-architect",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-02T12:06:00Z",
@@ -9272,10 +9349,133 @@
           "at": "2026-10-06T05:40:41Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at c65fcc32047a749953b07725058441ac3983f0a6"
+        },
+        {
+          "at": "2026-10-06T05:58:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 3: PASS"
         }
       ],
       "fix_revision": "c65fcc32047a749953b07725058441ac3983f0a6",
-      "fix_summary": "BE4 05abd88: explicit 30 s timeout (AST_TEST_TIMEOUT_MS) on every AST-walking boundary test; the global default is unchanged. BE5 c65fcc3: the 3.2 s web test was waiting on TanStack's real-time retry back-off and now runs in about 0.16 s (retryDelay 0) with an explicit timeout. No unit test is within 2x of its timeout (verbose sweep on Node 22 and 24; 520/520)."
+      "fix_summary": "BE4 05abd88: explicit 30 s timeout (AST_TEST_TIMEOUT_MS) on every AST-walking boundary test; the global default is unchanged. BE5 c65fcc3: the 3.2 s web test was waiting on TanStack's real-time retry back-off and now runs in about 0.16 s (retryDelay 0) with an explicit timeout. No unit test is within 2x of its timeout (verbose sweep on Node 22 and 24; 520/520).",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG2-T-DG2-REV-SEC-R3-code-security-reviewer-20261006T054225Z-a828d9b1",
+          "session_id": "a828d9b1-7f70-4171-b4d8-992375122f84"
+        },
+        "at": "2026-10-06T05:58:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG2/code-security/round-3/unit-under-load-node22.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-3/unit-under-load-node24.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-3/unit-under-heavy-load-node22.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-3/load-repro.sh",
+          "docs/delivery/test-evidence/DG2/code-security/round-3/load-repro-heavy.sh",
+          "docs/delivery/test-evidence/DG2/code-security/round-3/load-generator.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-3/unit-node22.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-3/unit-node24.log",
+          "apps/api/src/architecture.testkit.ts",
+          "apps/api/src/architecture.test.ts",
+          "apps/web/src/pages/transformations/transformations.test.tsx"
+        ],
+        "note": "Verified fixed on candidate sha256:b98c44db...2be5 (source 9e13947e), adversarially. Source: AST_TEST_TIMEOUT_MS = 30_000 (apps/api/src/architecture.testkit.ts) is applied to the full-tree boundary test (architecture.test.ts it(..., AST_TEST_TIMEOUT_MS)), the whole 'package dependency direction' describe block ({ timeout }), and the boundary test of every P2 module that walks sources (evidence, kpi, methodology, reporting, workflows: 2 calls and 2 timeout refs each). The remaining moduleViolations/fileViolations calls in architecture.test.ts are self-checks on single planted files or small temp dirs. The global unit default is unchanged (vitest.config.ts sets testTimeout only for the integration project). Web: renderApp gains an opt-in retryDelayMs, and transformations.test.tsx uses retryDelayMs: 0 with a 30 s explicit timeout. The assertion was strengthened, not weakened: it now also asserts >= 3 failed GET /api/v1/me after the POST. The ME_REFRESH_TIMEOUT_MS (5 s) race branch was not exercised before either, because the old 1 s + 2 s back-off also settled before 5 s. Round-2 repro re-run: pnpm test --reporter=verbose while a second disposable clone looped pnpm -r build and integration probes on a disposable PG (4 vCPU, loadavg ~9.5). Node 22: 520/520 PASS, slowest test the explicit-timeout architecture walk at 2857 ms (round 2: 5829 ms and a timeout FAIL). Node 24: 520/520 PASS (2633 ms). Heavier load (build loop + full integration suite concurrently), Node 22: 520/520 PASS (2176 ms). No test WITHOUT an explicit timeout came within 2x of the 5 s default in any run: the maximum was 1868 ms (p2.test.tsx Diagnose, Node 22 under load) against the 2500 ms line. Unloaded runs: max 1385 ms on Node 22 and 1360 ms on Node 24."
+      }
+    },
+    {
+      "id": "F-DG2-160",
+      "stage_id": "DG2",
+      "requirement": "REQ-PB-031",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Invisible-only free text (U+0085 NEL, zero-width and bidi format characters) passes freeText() and counts as present in hasText(), so the B0041 exclusions pre-check reads 'pass' and G1 treats Out of scope as documented (residual of the F-DG2-150 / D-063 class)",
+      "reproduction": "packages/shared/src/schemas/common.ts:42 (hasText) and :58 (freeText refine) both decide blankness with String.prototype.trim(). That strips only ECMAScript WhiteSpace/LineTerminator, not U+0085 NEXT LINE (a Unicode White_Space code point) or Cf format characters such as U+200B ZWSP, U+200C/U+200D, U+2060 WORD JOINER, U+200F RLM, U+061C ARABIC LETTER MARK (the bidi marks are common in Arabic RTL input). Schema matrix (schema-unicode-matrix.log): freeText(1,100) ACCEPTS and hasText returns true for U+0085, U+180E, U+200B, U+200C, U+200D, U+2060, U+3164, U+2800, U+00AD, U+061C, U+200F; it correctly rejects NBSP, U+3000, U+2028, U+FEFF, U+2007. End to end (disposable clone at 9e13947e, disposable PostgreSQL 16, zz-sec-r3-invisible.test.ts, 2 runs): POST /api/v1/transformations/{id}/charter by the Transformation Lead with outOfScope = '\\u0085' (or '\\u200b', '\\u200f', '\\u061c', '\\u2060\\u2060\\u2060') -> 201 and stored. GET .../charter -> scopeCheckPrechecks exclusions_documented = 'pass' ('Explicit exclusions are documented.'). GET .../gates/G1 -> g1.initial_charter does not list /charter/outOfScope as missing (apps/api/src/modules/workflows/criteria.ts:172 via hasExclusions, apps/api/src/modules/transformations/charter.ts:219-220 and :264).",
+      "expected": "Per D-063 ('blank free text is rejected on every P2 input and never counts as present in G1-G3 readiness') and B0041, text with no visible content is not a documented exclusion. Either freeText rejects it with 400 validation.blank (nothing written, no audit), or hasText treats it as not present. For example, test /[^\\p{White_Space}\\p{Cf}]/u (plus U+3164/U+2800/U+115F/U+1160 if desired) instead of trim(), in the one shared helper so API, pre-checks and web stay consistent.",
+      "actual": "An Out of scope that renders as empty is accepted (201), and the B0041 pre-check and the G1 initial-charter criterion both treat it as documented exclusions. The same predicate gap applies to every freeText field and every hasText readiness test (In scope, Case for change, T01 current state, root cause and impact text, baseline source).",
+      "evidence": [
+        "packages/shared/src/schemas/common.ts",
+        "apps/api/src/modules/transformations/charter.ts",
+        "apps/api/src/modules/workflows/criteria.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/probes/zz-sec-r3-invisible.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/probe-run2.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-3/schema-unicode-matrix.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-3/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-06T05:55:00Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer DG2 round 3. Low, non-mandatory: it needs deliberately entered invisible-only characters, the pre-check supports and never replaces the human scope-check answer, and G1 still needs a human Sponsor decision. It does not block the round."
+        }
+      ]
+    },
+    {
+      "id": "F-DG2-210",
+      "stage_id": "DG2",
+      "requirement": "REQ-PB-029",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Web forms silently turn whitespace-only text into null: the localized validation__blank message (D-063) is unreachable, and a blank save creates a charter, a content-free charter version, or clears an existing Out of scope",
+      "reproduction": "Disposable clone @9e13947e, real built SPA + API + PostgreSQL (e2e/support/qa-stack.sh with a port parameter only), chromium-en and chromium-ar, spec docs/delivery/test-evidence/DG2/qa/tests/round-3/e2e/dg2-qa-blank-r3.spec.ts, run twice. (1) Charter > Create charter, Case for change = '   \\t  ', Create: no message; GET charter -> 200 v1 with caseForChange null. (2) Charter with Out of scope null > Edit charter, Out of scope = whitespace, change summary filled, Save version: no message; a new charter version v2 is saved (probe dg2-qa-blank-probe-r3.spec.ts shows the PATCH body is {\"changeSummary\":\"QA probe\"} only and versions [[2,'QA probe'],[1,null]]). (3) Charter with Out of scope 'Enterprise contracts (synthetic)' > Edit, replace it with whitespace, Save version: no message; v2 -> v3 with outOfScope null, i.e. the documented exclusion is cleared. (4) Diagnose > T01 Edit, Current state = whitespace, Save draft: no blank message; the dialog shows 'There are no changes to save.' / 'لا توجد تغييرات لحفظها.' Cause: apps/web/src/components/RecordForm.tsx fromFormValue (default branch) maps s.trim() === '' to null before the request, so the server's 400 validation.blank is never triggered from these forms. The web unit test 'Diagnose a 400 validation.blank shows a localized message on its field' mocks the 400 and therefore does not exercise this path.",
+      "expected": "Per D-063 ('The web shows the EN/AR validation__blank message') and the round-3 assignment: whitespace-only text in a charter field or a T01 field shows the localized blank-validation message (EN/AR) and saves nothing. No charter is created, no charter version is written, and an existing value is not cleared by typing spaces.",
+      "actual": "In EN and AR, in both runs, the blank message is never shown. Whitespace is treated as an empty field: create saves a charter without the field; edit saves a new charter version with no content change, or clears an existing Out of scope (the exclusions chip then correctly fails). T01 shows 'no changes to save'. Data integrity holds: blank text is never stored, and readiness and pre-checks stay correct (hard assertions pass).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-3/17-e2e-qa-blank-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-3/17-e2e-qa-blank-run2.log",
+        "docs/delivery/test-evidence/DG2/qa/round-3/24-e2e-blank-probe.log",
+        "docs/delivery/test-evidence/DG2/qa/tests/round-3/e2e/dg2-qa-blank-r3.spec.ts",
+        "docs/delivery/test-evidence/DG2/qa/tests/round-3/e2e/dg2-qa-blank-probe-r3.spec.ts",
+        "docs/delivery/test-evidence/DG2/qa/round-3/e2e/en/qa-r3-01-charter-create-blank.png",
+        "docs/delivery/test-evidence/DG2/qa/round-3/e2e/ar/qa-r3-04-out-of-scope-replaced-by-blank.png",
+        "docs/delivery/test-evidence/DG2/qa/round-3/e2e/ar/qa-r3-05-t01-blank.png",
+        "apps/web/src/components/RecordForm.tsx"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG2/round-3/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-06T06:12:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG2 round 3 (T-DG2-REV-QA-R3) from the assignment's own negative UI check, which fails in EN and AR in two runs. Not a data-integrity failure: the server and DB reject or never store blank text. Medium because the D-063 UI claim is not delivered, and a whitespace save over an existing Out of scope silently clears the B0041 exclusion and writes a charter version."
+        }
+      ]
+    },
+    {
+      "id": "F-DG2-211",
+      "stage_id": "DG2",
+      "requirement": "REQ-S15-012",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "RecordForm error banner <ul role=\"alert\"> breaks list semantics: axe reports a serious 'listitem' violation (EN and AR) whenever the banner is shown",
+      "reproduction": "Disposable clone @9e13947e, real stack, chromium-en and chromium-ar: Diagnose > T01 row > Edit, enter whitespace only in Current state (or make any edit that leaves no change), Save draft. The form shows the 'There are no changes to save.' banner rendered by apps/web/src/components/RecordForm.tsx line 328: <ul className=\"banner banner--error plain-list\" role=\"alert\"> with <li> children. Run axe (wcag2a/2aa/21a/21aa, the product's expectAccessible helper). Result in both languages and both runs: serious violation 'listitem: .banner > li'. role=\"alert\" overrides the list role, so the <li> elements are not contained in a list (WCAG 1.3.1). The same banner renders every unmapped server field error of every RecordForm. The product journeys never scan this state, so their axe summaries (0 serious/critical over 58 screens per language) do not cover it. Present since ea72d86 (DG2 Phase B); not a round-3 regression.",
+      "expected": "No serious or critical axe violation on any P2 screen state in EN or AR (A20; the round-3 assignment's axe criterion). For example, put role=\"alert\" on a wrapper element around the <ul>, or render the messages without list items.",
+      "actual": "axe reports a serious 'listitem' violation (.banner > li) in chromium-en and chromium-ar whenever the RecordForm error banner is shown.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-3/17-e2e-qa-blank-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-3/17-e2e-qa-blank-run2.log",
+        "docs/delivery/test-evidence/DG2/qa/round-3/e2e/en/qa-r3-05-t01-blank.png",
+        "docs/delivery/test-evidence/DG2/qa/round-3/e2e/ar/qa-r3-05-t01-blank.png",
+        "docs/delivery/test-evidence/DG2/qa/tests/round-3/e2e/dg2-qa-blank-r3.spec.ts",
+        "apps/web/src/components/RecordForm.tsx"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG2/round-3/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-06T06:12:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG2 round 3 (T-DG2-REV-QA-R3). Not marked mandatory: REQ-S15-012's final gate is DG6 and the product's key journeys are axe-clean. It is still a serious-impact violation in a delivered P2 form state, in both languages."
+        }
+      ]
     }
   ]
 }
