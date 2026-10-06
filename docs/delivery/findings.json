@@ -9790,14 +9790,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-5/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-06T09:55:00Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer, DG2 round 5. Low and non-mandatory, the same rating as F-DG2-160/180. It needs two deliberately entered, exotic code points from the Khitan and musical-symbol blocks. The pre-check supports the human scope-check answer and never replaces it, G1 still needs a human Sponsor decision, and every write stays authorized, If-Match-checked and audited. It does not block the round. F-DG2-180's reported set and stated remedy are verified fixed (CLOSED_VERIFIED); this finding tracks the last two placeholders that no Unicode property covers."
+        },
+        {
+          "at": "2026-10-06T11:46:07Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at e057bf84f5193b4f5ab020bce0ef7648a15c6109"
         }
-      ]
+      ],
+      "fix_revision": "e057bf84f5193b4f5ab020bce0ef7648a15c6109",
+      "fix_summary": "BE10 e057bf8: U+16FE4 and U+1D159 added next to U+2800 in the single shared predicate, so text made only of them is 400 validation.blank and never present. Visible text containing them is still accepted. Unit matrix and integration (Out of scope) tests; the negative control fails on the old code."
     },
     {
       "id": "F-DG2-231",
@@ -9820,14 +9827,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-5/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-06T09:55:00Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer, DG2 round 5. Low and non-mandatory: a robustness and contract defect with no integrity, authorization or confidentiality impact. Nothing is written, the transaction rolls back, and the problem body carries only a requestId. A NUL is rarely typed; it mostly arrives by paste from binary sources or from direct API clients. It is pre-existing (DG1 and earlier DG2 rounds) and does not block the round."
+        },
+        {
+          "at": "2026-10-06T11:46:07Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at a1e748b8a14ee2c128ba519e96326a95e8427ded"
         }
-      ]
+      ],
+      "fix_revision": "a1e748b8a14ee2c128ba519e96326a95e8427ded",
+      "fix_summary": "BE10 e057bf8: a central request check (body/query/params) refuses any string containing U+0000 with 400 validation.invalid_character at its pointer (nothing written, no audit). Shared freeText/name/reason refuse it as well (EN/AR message). db-errors maps SQLSTATE 22021/22P05 to 400. The OIDC callback answers with its declared 302 invalid_request. ARCH-02 a1e748b: every operation that can return that 400 now declares it (41 operations, still 161), and a contract sweep sends a U+0000 query to all 161 operations: no 500 and no undeclared status."
     }
   ]
 }
