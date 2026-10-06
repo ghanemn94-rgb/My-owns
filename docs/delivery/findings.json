@@ -9925,14 +9925,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-6/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-06T12:05:00Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer, DG2 round 6, while probing for residuals of the F-DG2-231 class as assigned. Low and non-mandatory, the same rating as F-DG2-231. The input is IdP-issued: it needs the trusted OpenID Provider to sign an ID token whose sub contains a lone surrogate (Keycloak subjects are UUIDs), so an end user cannot trigger it. No integrity, authorization or confidentiality impact: everything rolls back and nothing internal leaks. It is a contract and audit-completeness defect. It does not block the round. F-DG2-231 (U+0000) is verified fixed (CLOSED_VERIFIED)."
+        },
+        {
+          "at": "2026-10-06T14:38:56Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at cf9c65310eb275413a80d3a2585b32faaddc3555"
         }
-      ]
+      ],
+      "fix_revision": "cf9c65310eb275413a80d3a2585b32faaddc3555",
+      "fix_summary": "BE11 cf9c653: hasInvalidCharacter also matches lone UTF-16 surrogates (/\\p{Cs}/u; emoji pairs pass). As a result: (1) the central request check and the shared schemas refuse them with 400 validation.invalid_character at the field pointer, journey step names included; (2) identityClaimsStorable makes a lone surrogate in iss or sub follow the declared callback contract, 302 /login?error=token_invalid plus a session.login_failed audit row, with no user, identity or session created; (3) display-name claims containing an invalid character fall back to the next claim. Stored truncations now cut on code-point boundaries. BE12 951bbe7: router- and connection-level errors also answer the declared problem+json 400. Negative controls fail on the old code."
     }
   ]
 }
