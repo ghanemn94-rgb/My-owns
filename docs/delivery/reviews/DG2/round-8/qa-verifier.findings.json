@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG2-340",
+      "stage_id": "DG2",
+      "requirement": "REQ-PB-029",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "A form-level validation problem whose only field error has pointer \"\" (e.g. the new D-068 validation.json for an invalid-UTF-8 body) is shown twice in RecordForm: the same localized message appears in two role=\"alert\" regions, in English and Arabic",
+      "reproduction": "Candidate 9331e9d1 (source cf3446e4), qa-stack (real SPA + API + PostgreSQL), chromium-en and chromium-ar. qa-verifier spec docs/delivery/test-evidence/DG2/qa/tests/round-8/e2e/dg2-qa-r8.spec.ts R8-05: on the charter page, click Create, fill Out of scope, and submit while the browser's POST /charter body carries two invalid UTF-8 bytes (FF FE) inside the value. The real server answers 400 problem+json code validation, errors [{pointer:\"\", code:\"validation.json\"}] (correct per D-068). The form then shows 'The request was not valid JSON.' / 'الطلب ليس بصيغة JSON صالحة.' TWICE (screenshots en-/ar-qa-r8-05-charter-invalid-utf8-server.png). Cause (40-f340-duplicate-alert-static.log): in apps/web/src/components/RecordForm.tsx the pointer-\"\" field error is not mapped to a field, so it goes to `other` (the data-state=\"form-errors\" alert). setBannerError(e) then renders errorMessage(), which in apps/web/src/lib/problem.ts returns the same field-error text for a validation problem whose first error has pointer \"\" (the data-state=\"error\" alert). The de-duplication on that line only skips codes equal to e.code or validation.<e.code>. The logic dates from bfa1807 (round 4); it is not a D-068 regression. The normal SPA cannot produce such a problem (it always sends valid UTF-8 JSON), so users reach it only through tampered or proxied requests or other pointer-\"\" validation codes.",
+      "expected": "One alert per distinct message: a form-level validation problem shows its localized message once (and a screen reader announces it once), in both English LTR and Arabic RTL.",
+      "actual": "The identical message is rendered in two adjacent role=\"alert\" regions, so it is visually duplicated and announced twice. No data is written, the status and code are correct, and axe reports no serious or critical violation. Polish only.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-8/e2e-qa-r8-screens/en-qa-r8-05-charter-invalid-utf8-server.png",
+        "docs/delivery/test-evidence/DG2/qa/round-8/e2e-qa-r8-screens/ar-qa-r8-05-charter-invalid-utf8-server.png",
+        "docs/delivery/test-evidence/DG2/qa/round-8/40-f340-duplicate-alert-static.log",
+        "docs/delivery/test-evidence/DG2/qa/round-8/17-e2e-qa-stack-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/tests/round-8/e2e/dg2-qa-r8.spec.ts",
+        "apps/web/src/components/RecordForm.tsx",
+        "apps/web/src/lib/problem.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG2/round-8/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-06T19:11:18Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG2 round 8 (T-DG2-REV-QA-R8) while regression-testing D-068 in the UI. Low and non-mandatory: a duplicated, correctly localized message on a path the normal SPA does not produce; nothing is written and the server behaviour is correct. Pre-existing RecordForm logic (bfa1807), surfaced by the new validation.json path."
+        }
+      ]
+    }
+  ]
+}

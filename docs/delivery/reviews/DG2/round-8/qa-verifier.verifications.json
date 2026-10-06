@@ -1,0 +1,24 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG2-310",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fix 4e3c446 (T-DG2-DEVOPS3, devops-engineer) verified on candidate 9331e9d1 (cf3446e4) by qa-verifier, who raised the finding. (1) My round-7 repro (11-port-collision-repro.py), unchanged, still shows the kernel mechanism (a TIME_WAIT client port refuses a SO_REUSEADDR bind). A 3000-connect sample confirms the kernel assigns client ports only in 32768-60999, and every harness default is now below it (24331/24340/24351/24361/24371; APIs 3000/3060/3100/3181), so the natural collision cannot hit a default port. (2) tests/qa/support/port-collision-check.sh: PASS 5/5. C1 still reproduces the defect on the old harness, failing closed. (3) My own cases on the REAL stacks with TIME_WAIT forced on both the default PostgreSQL and API ports: with-stack.sh and qa-stack.sh retry with a logged 'port-policy' line, exit 0, and export E2E_BASE_URL/PORT/APP_BASE_URL and DATABASE_URL on the ports actually used (readyz ready). Two concurrent with-pg.sh runs on one port both start, on distinct ports and data dirs. A foreign listener is never adopted. A non-bind startup failure is not retried (BLOCKED, exit 3, command not run). Exhausted retries and *_STRICT_PORT=1 give BLOCKED exit 3. (4) a18-clean-start.sh --install and deploy/scripts/clean-start-local.sh (offline, private store copy) both PASS with TIME_WAIT on their default ports. (5) Every run this round started on attempt 1 for port reasons: integration 10/10 (5 per locale, incl. the default port and CPU load, all 547/547), QA-suite integration 2/2 (587/587), e2e product 2/2 and QA stack 2/2. The QA-stack attempts that failed were my own spec/setup mistakes, not port issues (17-attempt1-cause.log, 17-e2e-qa-stack-attempt2-cutf8-spec-race.log).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-8/11-F-DG2-310-verification-summary.log",
+        "docs/delivery/test-evidence/DG2/qa/round-8/11-port-collision-check.log",
+        "docs/delivery/test-evidence/DG2/qa/round-8/11-port-collision-repro-r8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-8/11-port-collision-repro-r8.sh",
+        "docs/delivery/test-evidence/DG2/qa/round-8/11-port-collision-repro.py",
+        "docs/delivery/test-evidence/DG2/qa/round-8/11-tw.py",
+        "docs/delivery/test-evidence/DG2/qa/round-8/11-ephemeral-sample.py",
+        "docs/delivery/test-evidence/DG2/qa/round-8/11-a18-clean-start-timewait.log",
+        "docs/delivery/test-evidence/DG2/qa/round-8/11-clean-start-local-timewait.log",
+        "docs/delivery/test-evidence/DG2/qa/round-8/10-integration-series-summary.log",
+        "tests/qa/support/pg-port.sh",
+        "tests/qa/support/port-collision-check.sh"
+      ]
+    }
+  ]
+}
