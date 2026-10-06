@@ -181,6 +181,77 @@ describe("GET /api/v1/auth/callback", () => {
     expect(user.display_name).toBe("jit-invisible@example.invalid");
   });
 
+  // F-DG2-181 (T-DG2-BE8): the claim is truncated to 200 code points FIRST; the visible-content check runs on the
+  // value that would be stored.
+  async function jitDisplayName(subject: string, claims: Omit<Parameters<FakeIdp["issueCode"]>[1], "sub">) {
+    const { cb } = await completeLogin({ sub: subject, ...claims });
+    expect(cb.status).toBe(302);
+    const identity = await api.db
+      .selectFrom("user_identity")
+      .select("user_id")
+      .where("issuer", "=", idp.issuer)
+      .where("subject", "=", subject)
+      .executeTakeFirstOrThrow();
+    const user = await api.db
+      .selectFrom("app_user")
+      .select(["display_name", "email"])
+      .where("id", "=", identity.user_id)
+      .executeTakeFirstOrThrow();
+    return user;
+  }
+
+  it("200 invisible characters before visible text: the name claim is absent, preferred_username is used (F-DG2-181)", async () => {
+    const user = await jitDisplayName("jit-subject-181-a", {
+      email: "jit-181-a@example.invalid",
+      email_verified: true,
+      name: `${"\u200f".repeat(200)}Visible tail`,
+      preferred_username: "synthetic.preferred",
+    });
+    expect(user.display_name).toBe("synthetic.preferred");
+    expect(user.email).toBe("jit-181-a@example.invalid");
+  });
+
+  it("an invisible-truncated name and preferred_username fall back to the e-mail, then a generated name (F-DG2-181)", async () => {
+    const viaEmail = await jitDisplayName("jit-subject-181-b", {
+      email: "jit-181-b@example.invalid",
+      email_verified: true,
+      name: `${"\ufe0f".repeat(200)}Visible`,
+      preferred_username: `${"\u180b".repeat(150)}${"\u{E0100}".repeat(50)}user`,
+    });
+    expect(viaEmail.display_name).toBe("jit-181-b@example.invalid");
+    const generated = await jitDisplayName("jit-subject-181-c", { name: `${"\u2060".repeat(200)}Visible` });
+    expect(generated.display_name).toMatch(/^User [0-9a-f]{6}$/);
+  });
+
+  it("a name with astral characters at the 200 boundary is cut on a code-point boundary (F-DG2-181)", async () => {
+    const name = `${"a".repeat(199)}\u{1F600}\u{1F601}tail`; // the 200th code point is a surrogate pair in UTF-16
+    const user = await jitDisplayName("jit-subject-181-d", {
+      email: "jit-181-d@example.invalid",
+      email_verified: true,
+      name,
+    });
+    expect(user.display_name).toBe(`${"a".repeat(199)}\u{1F600}`);
+    expect(Array.from(user.display_name)).toHaveLength(200);
+    expect(user.display_name).not.toMatch(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/);
+    const emoji = await jitDisplayName("jit-subject-181-e", {
+      name: "\u{1F469}\u200d\u{1F4BB}".repeat(80), // 240 code points of ZWJ sequences
+    });
+    expect(Array.from(emoji.display_name)).toEqual(Array.from("\u{1F469}\u200d\u{1F4BB}".repeat(80)).slice(0, 200));
+  });
+
+  it("a normal name is stored unchanged, including visible text with marks (F-DG2-181)", async () => {
+    const plain = await jitDisplayName("jit-subject-181-f", {
+      name: "Synthetic Normal Name",
+      email: "n@example.invalid",
+    });
+    expect(plain.display_name).toBe("Synthetic Normal Name");
+    const arabic = "\u200f\u0645\u0633\u062a\u062e\u062f\u0645 \u062a\u062c\u0631\u064a\u0628\u064a\u200f";
+    expect((await jitDisplayName("jit-subject-181-g", { name: `  ${arabic}  ` })).display_name).toBe(arabic);
+    expect((await jitDisplayName("jit-subject-181-h", { name: "\u2764\ufe0f Synthetic" })).display_name).toBe(
+      "\u2764\ufe0f Synthetic",
+    );
+  });
+
   it("signs an existing (issuer, subject) back in to the same user", async () => {
     const before = await api.db.selectFrom("app_user").select("id").execute();
     const { cb } = await completeLogin({

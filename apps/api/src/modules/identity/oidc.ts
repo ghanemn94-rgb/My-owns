@@ -161,10 +161,27 @@ interface Claims {
   preferred_username?: unknown;
 }
 
+/** Longest stored display name, in code points (`app_user.display_name`: char_length 1..200). */
+export const DISPLAY_NAME_MAX = 200;
+
+/**
+ * F-DG2-181: the display name candidate a claim yields, or null. The claim is trimmed and truncated FIRST, by code
+ * points (`Array.from`), so a surrogate pair is never split; only then is the visible-content predicate applied to the
+ * value that would be stored. A claim whose first 200 code points are invisible is therefore absent, even when visible
+ * text follows them.
+ */
+export function displayNameCandidate(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  const truncated = Array.from(v.trim()).slice(0, DISPLAY_NAME_MAX).join("").trim();
+  // F-DG2-160 / F-DG2-180: a value with no visible content (spaces, U+200F, U+2060, VS16, controls, ...) is absent.
+  return hasText(truncated) ? truncated : null;
+}
+
+/** Display name from the claims: `name`, then `preferred_username`, then `email`, then a generated name. */
 function displayNameOf(c: Claims): string {
   for (const v of [c.name, c.preferred_username, c.email]) {
-    // F-DG2-160: a claim with no visible content (spaces, U+200F, U+2060, U+0085, ...) is absent, not a name.
-    if (typeof v === "string" && hasText(v)) return v.trim().slice(0, 200);
+    const candidate = displayNameCandidate(v);
+    if (candidate !== null) return candidate;
   }
   return `User ${randomBytes(3).toString("hex")}`;
 }

@@ -11,6 +11,7 @@ export interface IdTokenClaims {
   email?: string;
   email_verified?: boolean;
   name?: string;
+  preferred_username?: string;
   /** Override the nonce (to test nonce mismatch). */
   nonce?: string;
 }

@@ -32,20 +32,25 @@ export const code = z.string().regex(/^[A-Z0-9][A-Z0-9_-]{0,31}$/, "validation.c
 export const version = z.number().int().min(1);
 
 /**
- * F-DG2-160 (residual of F-DG2-150 / D-063): the single "has visible content" predicate for free text. A value has
- * content only if it contains at least one code point that is NOT any of:
- *   - `\p{White_Space}` (Unicode White_Space, which includes U+0085 NEXT LINE, NBSP, U+2028/U+2029, U+3000, ...);
+ * F-DG2-160 / F-DG2-180 (residuals of F-DG2-150 / D-063; ADR-0017 §2): the single "has visible content" predicate for
+ * free text. A value has content only if it contains at least one code point that is NOT in any of:
+ *   - `\p{White_Space}` (Unicode White_Space: U+0085 NEXT LINE, NBSP, U+2028/U+2029, U+3000, ...);
+ *   - `\p{Cc}` (C0/C1 control characters, e.g. a lone U+0001; F-DG2-180);
  *   - `\p{Cf}` (format characters: U+200B ZWSP, U+200C ZWNJ, U+200D ZWJ, U+2060 WORD JOINER, U+200E LRM,
- *     U+200F RLM, U+061C ARABIC LETTER MARK, U+00AD SOFT HYPHEN, U+180E, U+FEFF, the bidi embeddings/isolates, ...);
- *   - the invisible fillers U+115F/U+1160 (Hangul choseong/jungseong fillers), U+3164 (Hangul filler), U+FFA0
- *     (halfwidth Hangul filler) and U+2800 (Braille pattern blank).
+ *     U+200F RLM, U+061C ARABIC LETTER MARK, U+00AD SOFT HYPHEN, U+180E, U+FEFF, bidi embeddings/isolates, tags, ...);
+ *   - `\p{Cs}` (lone surrogates, e.g. an unpaired U+D800; F-DG2-180);
+ *   - `\p{Default_Ignorable_Code_Point}` (F-DG2-180: variation selectors U+FE00-FE0F and U+E0100-E01EF, U+034F
+ *     COMBINING GRAPHEME JOINER, Mongolian free variation selectors U+180B-180D and U+180F, Khmer inherent vowels
+ *     U+17B4/U+17B5, the Hangul fillers U+115F/U+1160/U+3164/U+FFA0, the tag characters U+E0000-E007F, ...);
+ *   - U+2800 BRAILLE PATTERN BLANK.
  * `String.prototype.trim()` is not used: it strips only ECMAScript WhiteSpace/LineTerminator, so an Out of scope of
  * "\u200f" used to count as documented. Text with visible content keeps its marks (an Arabic RLM, an emoji ZWJ
- * sequence, a leading ZWSP) and is stored verbatim; nothing is stripped.
+ * sequence, an emoji with VS16, Mongolian text with an FVS, a leading ZWSP) and is stored verbatim; nothing is
+ * stripped. This is the only definition: `hasText`, `freeText`, `trimmedText` (`name`, `reason`) and the web use it.
  */
-const VISIBLE_CONTENT = /[^\p{White_Space}\p{Cf}\u115F\u1160\u3164\uFFA0\u2800]/u;
+const VISIBLE_CONTENT = /[^\p{White_Space}\p{Cc}\p{Cf}\p{Cs}\p{Default_Ignorable_Code_Point}\u2800]/u;
 
-/** True when `value` contains at least one visible code point (F-DG2-160); see `VISIBLE_CONTENT`. */
+/** True when `value` contains at least one visible code point (F-DG2-160, F-DG2-180); see `VISIBLE_CONTENT`. */
 export function hasVisibleContent(value: string): boolean {
   return VISIBLE_CONTENT.test(value);
 }

@@ -160,6 +160,27 @@ describe("blank free text (F-DG2-150)", () => {
     ["U+00A0 NBSP", "\u00a0"],
     ["U+2028 LINE SEPARATOR", "\u2028"],
     ["U+3000 IDEOGRAPHIC SPACE", "\u3000"],
+    // F-DG2-180 (T-DG2-BE8): Default_Ignorable code points outside Cf, controls (Cc) and lone surrogates (Cs).
+    ["U+FE00 VARIATION SELECTOR-1", "\ufe00"],
+    ["U+FE0E VARIATION SELECTOR-15", "\ufe0e"],
+    ["U+FE0F VARIATION SELECTOR-16", "\ufe0f"],
+    ["U+E0100 VARIATION SELECTOR-17", "\u{E0100}"],
+    ["U+E01EF VARIATION SELECTOR-256", "\u{E01EF}"],
+    ["U+034F COMBINING GRAPHEME JOINER", "\u034f"],
+    ["U+180B MONGOLIAN FVS1", "\u180b"],
+    ["U+180C MONGOLIAN FVS2", "\u180c"],
+    ["U+180D MONGOLIAN FVS3", "\u180d"],
+    ["U+180F MONGOLIAN FVS4", "\u180f"],
+    ["U+17B4 KHMER VOWEL INHERENT AQ", "\u17b4"],
+    ["U+17B5 KHMER VOWEL INHERENT AA", "\u17b5"],
+    ["U+E0041 TAG LATIN CAPITAL LETTER A", "\u{E0041}"],
+    ["U+0001 START OF HEADING (Cc)", "\u0001"],
+    ["U+001F UNIT SEPARATOR (Cc)", "\u001f"],
+    ["U+007F DELETE (Cc)", "\u007f"],
+    ["U+0080 C1 control (Cc)", "\u0080"],
+    ["U+009F C1 control (Cc)", "\u009f"],
+    ["lone low surrogate U+DC00 (Cs)", "\udc00"],
+    ["lone high surrogate U+D800 (Cs)", "\ud800"], // last, so the mix below never forms a pair
   ];
 
   it.each(INVISIBLE)("invisible-only %s, alone and repeated, is blank and not present (F-DG2-160)", (_label, ch) => {
@@ -200,6 +221,16 @@ describe("blank free text (F-DG2-150)", () => {
       "\u0645",
       "\u00a0.\u00a0",
       ...INVISIBLE.map(([, ch]) => `${ch}a${ch}`),
+      // F-DG2-180: visible text with default-ignorable marks stays accepted and verbatim.
+      "\u2764\ufe0f", // emoji with VS16 (red heart)
+      "\u{1F44D}\u{1F3FD}\ufe0f", // emoji with a skin-tone modifier and VS16
+      "\u200f\u0633\u0628\u0628\u200f", // Arabic with RLM
+      "\u1820\u180b\u1821", // Mongolian letters with an FVS
+      "\u1820\u180f", // Mongolian letter with FVS4
+      "e\u0301", // letter with a combining acute accent
+      "\u0915\u094d\u0937", // Devanagari conjunct with a virama
+      "\u8fbb\u{E0100}", // CJK ideograph with an ideographic variation selector
+      "\u{1F600}", // astral emoji (a surrogate pair is not a lone surrogate)
     ];
     for (const v of accepted) {
       expect(hasVisibleContent(v), JSON.stringify(v)).toBe(true);
@@ -232,7 +263,18 @@ describe("name and reason: one blank rule (F-DG2-160, T-DG2-BE7)", () => {
     success: boolean;
     error?: { issues: Array<{ path: PropertyKey[]; code: string; message: string }> };
   }) => (r.success ? [] : r.error!.issues.map((i) => [i.path.join("/"), i.code === "custom" ? i.message : i.code]));
-  const INVISIBLE = ["\u200f\u200f\u200f", "\u2060\u2060\u2060", "\u0085\u0085\u0085"];
+  const INVISIBLE = [
+    "\u200f\u200f\u200f",
+    "\u2060\u2060\u2060",
+    "\u0085\u0085\u0085",
+    // F-DG2-180 (T-DG2-BE8)
+    "\ufe0f\u034f\ufe0f",
+    "\u180b\u180b\u180b",
+    "\u{E0100}\u{E0100}",
+    "\u0001\u0001\u0001",
+    "\ud800\ud800\ud800",
+    "\u17b4\u17b5\u180f",
+  ];
   const SCHEMAS = [
     ["name", name],
     ["reason", reason],
@@ -259,6 +301,10 @@ describe("name and reason: one blank rule (F-DG2-160, T-DG2-BE7)", () => {
     expect(reason.parse(` ${arabic} `)).toBe(arabic);
     expect(name.parse(arabic)).toBe(arabic);
     expect(name.parse("x")).toBe("x");
+    // F-DG2-180: visible text with default-ignorable marks is accepted verbatim.
+    expect(name.parse("\u2764\ufe0f")).toBe("\u2764\ufe0f");
+    expect(reason.parse("\u1820\u180b\u1821")).toBe("\u1820\u180b\u1821");
+    expect(reason.parse("Cafe\u0301")).toBe("Cafe\u0301");
   });
 
   it("max still applies after trimming", () => {
@@ -268,6 +314,7 @@ describe("name and reason: one blank rule (F-DG2-160, T-DG2-BE7)", () => {
 
   it("reasonRequest reports the blank reason at /reason", () => {
     expect(issues(reasonRequest.safeParse({ reason: "\u2060\u2060\u2060" }))).toEqual([["reason", BLANK_TEXT_CODE]]);
+    expect(issues(reasonRequest.safeParse({ reason: "\u180b\u180b\u180b" }))).toEqual([["reason", BLANK_TEXT_CODE]]);
     expect(reasonRequest.parse({ reason: " Synthetic reason " })).toEqual({ reason: "Synthetic reason" });
   });
 });

@@ -359,7 +359,19 @@ describe("defense in depth: blank text already in the database is never 'present
 describe("invisible-only free text is blank (F-DG2-160)", () => {
   type Miss = { code: string; pointer?: string };
   type Criterion = { key: string; missing: Miss[] };
-  const INVISIBLE = ["‏", "\u0085", "⁠⁠⁠", "؜"] as const;
+  const INVISIBLE = [
+    "‏",
+    "\u0085",
+    "⁠⁠⁠",
+    "؜",
+    // F-DG2-180 (T-DG2-BE8): VS16 + COMBINING GRAPHEME JOINER, a Mongolian FVS, a C0 control, a lone surrogate, an
+    // ideographic variation selector and the Khmer inherent vowels.
+    "\ufe0f\u034f",
+    "\u180b\u180f",
+    "\u0001",
+    "\ud800",
+    "\u{E0100} \u17b4\u17b5",
+  ] as const;
 
   it.each(INVISIBLE.map((v) => [JSON.stringify(v), v]))(
     "Out of scope %s is 400 validation.blank at /outOfScope; nothing written, no audit",
@@ -439,7 +451,15 @@ describe("invisible-only free text is blank (F-DG2-160)", () => {
 // inline reason parsers (register archive, evidence-link removal) now use the shared `reasonRequest`. An
 // invisible-only reason is a 400 `validation.blank` at /reason: nothing is written and nothing is audited.
 describe("invisible-only reasons are blank on every reason endpoint (F-DG2-160, T-DG2-BE7)", () => {
-  const INVISIBLE_REASONS = ["‏‏‏", "⁠⁠⁠", "\u0085\u0085\u0085"] as const;
+  const INVISIBLE_REASONS = [
+    "‏‏‏",
+    "⁠⁠⁠",
+    "\u0085\u0085\u0085",
+    // F-DG2-180 (T-DG2-BE8): Mongolian FVS, VS16, C0 controls.
+    "\u180b\u180b\u180b",
+    "\ufe0f\ufe0f\ufe0f",
+    "\u0001\u0001\u0001",
+  ] as const;
 
   it("P2 register archive (T03 TOM gap): invisible reason is 400 at /reason; a valid reason archives", async () => {
     const gap = await call(api.app, "POST", `${T}/tom-gaps`, {
