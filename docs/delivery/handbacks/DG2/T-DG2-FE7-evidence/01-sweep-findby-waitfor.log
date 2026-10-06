@@ -1,0 +1,33 @@
+# F-DG2-220 sweep: findBy*/waitFor per unit-web test file (all covered by apps/web/test/setup.ts asyncUtilTimeout=5000 via setupFiles)
+# file | findBy* | waitFor | explicit {timeout} options
+apps/web/src/app/app.test.tsx | 17 | 8 | 0
+apps/web/src/components/States.test.tsx | 0 | 0 | 0
+apps/web/src/i18n/glossary.test.ts | 0 | 0 | 0
+apps/web/src/i18n/i18n.test.ts | 0 | 0 | 0
+apps/web/src/lib/auditChanges.test.ts | 0 | 0 | 0
+apps/web/src/lib/lib.test.ts | 0 | 0 | 0
+apps/web/src/pages/p2-blank-forms.test.tsx | 19 | 15 | 1
+apps/web/src/pages/p2.test.tsx | 91 | 24 | 0
+apps/web/src/pages/team/team.test.tsx | 14 | 6 | 0
+apps/web/src/pages/transformations/modeGuidance.test.tsx | 8 | 2 | 0
+apps/web/src/pages/transformations/transformations.test.tsx | 20 | 10 | 6
+apps/web/src/styles/styles.test.ts | 0 | 0 | 0
+apps/web/src/test/harness-config.test.ts | 1 | 0 | 6
+
+# explicit timeout lines
+apps/web/src/test/harness-config.test.ts:2:// findBy*/waitFor in the unit-web project gets the raised async-utility timeout, and the per-test timeout stays above
+apps/web/src/test/harness-config.test.ts:4:// with Testing Library's own message instead of a bare test timeout.
+apps/web/src/test/harness-config.test.ts:10:  it("raises Testing Library's async-utility timeout from the 1000 ms default", () => {
+apps/web/src/test/harness-config.test.ts:15:  it("keeps the per-test timeout at least 2x above the async-utility timeout", ({ task }) => {
+apps/web/src/test/harness-config.test.ts:16:    // No explicit timeout on this test, so `task.timeout` is the project-wide `testTimeout`.
+apps/web/src/test/harness-config.test.ts:17:    const testTimeout = task.timeout;
+apps/web/src/pages/transformations/transformations.test.tsx:77:  const unit = (await screen.findByLabelText(labels.unit, undefined, { timeout: 5_000 })) as HTMLSelectElement;
+apps/web/src/pages/transformations/transformations.test.tsx:527:   * Library's default 1 s, so every wait that depends on it gets an explicit, generous timeout. The assertions
+apps/web/src/pages/transformations/transformations.test.tsx:528:   * themselves are unchanged; the test timeout covers the sum of these waits.
+apps/web/src/pages/transformations/transformations.test.tsx:530:  const SETTLE = { timeout: 5_000 };
+apps/web/src/pages/transformations/transformations.test.tsx:589:  // races them against ME_REFRESH_TIMEOUT_MS. The explicit 30 s timeout keeps headroom under parallel load.
+apps/web/src/pages/transformations/transformations.test.tsx:597:      timeout: ME_REFRESH_TIMEOUT_MS + 1_000,
+apps/web/src/pages/p2-blank-forms.test.tsx:96: * The wait uses the unit-web async-utility timeout (apps/web/test/setup.ts).
+
+# fake timers (would interact with waitFor): 
+none

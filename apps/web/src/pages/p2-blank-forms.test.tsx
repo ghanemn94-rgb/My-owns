@@ -39,7 +39,14 @@ afterEach(() => {
 
 type Locale = "en" | "ar";
 const LOCALES = ["en", "ar"] as const;
-const tr = (locale: Locale) => createI18n(locale).t;
+// F-DG2-220: one translation-only i18n instance per locale (the app under test still gets a fresh one per render), so
+// assertion helpers such as blankMessage() don't build a new i18next instance on every call.
+const translators = new Map<Locale, ReturnType<typeof createI18n>["t"]>();
+const tr = (locale: Locale) => {
+  let t = translators.get(locale);
+  if (!t) translators.set(locale, (t = createI18n(locale).t));
+  return t;
+};
 const blankMessage = (locale: Locale) => tr(locale)("problems.validation__blank");
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 /** A label that may be followed by " (required)". */
@@ -81,6 +88,23 @@ function render(path: string, handlers: Handler[], locale: Locale) {
 }
 
 const writes = (requests: RecordedRequest[]) => requests.filter((r) => r.method !== "GET");
+
+/**
+ * F-DG2-220: the Diagnose and Design pages are large, and a screen-wide `findByRole(..., { name })` recomputes the
+ * accessible name of every button on every poll while the page loads (the round-4 flake waited here). Wait for the
+ * page once, with a cheap text query, for the table row that shows `text`, and scope the role queries to that row.
+ * The wait uses the unit-web async-utility timeout (apps/web/test/setup.ts).
+ */
+async function rowOf(text: string): Promise<HTMLElement> {
+  return waitFor(() => {
+    const row = screen
+      .getAllByText(text)
+      .map((el) => el.closest("tr"))
+      .find((r): r is HTMLTableRowElement => r !== null);
+    if (!row) throw new Error(`no table row shows "${text}" yet`);
+    return row;
+  });
+}
 
 /** The field shows the localized blank message (linked by aria-describedby), is aria-invalid and has focus. */
 async function expectBlankOn(field: HTMLElement, locale: Locale) {
@@ -270,10 +294,13 @@ describe.each(LOCALES)("journey step editor (%s)", (locale) => {
       ],
       locale,
     );
+    const row = await rowOf(journeyFixture.name);
     fireEvent.click(
-      await screen.findByRole("button", { name: `${t("design.journeys.open")}: ${journeyFixture.name}` }),
+      await within(row).findByRole("button", { name: `${t("design.journeys.open")}: ${journeyFixture.name}` }),
     );
-    fireEvent.click(await screen.findByRole("button", { name: t("design.journeys.editSteps") }));
+    await waitFor(() => expect(document.getElementById("journey-detail")).not.toBeNull());
+    const detail = document.getElementById("journey-detail")!;
+    fireEvent.click(await within(detail).findByRole("button", { name: t("design.journeys.editSteps") }));
     const dialog = await screen.findByRole("dialog");
     const field = (label: string) =>
       within(dialog).getByLabelText(label === t("common.field.name") ? labelled(label) : label);
@@ -338,8 +365,9 @@ describe.each(LOCALES)("journey step editor (%s)", (locale) => {
 describe.each(LOCALES)("Finance validation note and archive reason (%s)", (locale) => {
   const t = tr(locale);
   const b = baseline({ metric: "Synthetic handling time" });
-  const open = async (archive: Handler = route("POST", /\/archive$/, () => ({ status: 200, body: b }))) =>
-    render(
+  /** Renders the Diagnose page and waits once for the baseline's row (F-DG2-220). */
+  const open = async (archive: Handler = route("POST", /\/archive$/, () => ({ status: 200, body: b }))) => {
+    const api = render(
       `/transformations/${TR_ID}/diagnose`,
       [
         ...base(leadGrants(["finance.validate"]), locale),
@@ -349,16 +377,18 @@ describe.each(LOCALES)("Finance validation note and archive reason (%s)", (local
       ],
       locale,
     );
-  const openValidation = async () => {
-    fireEvent.click(await screen.findByRole("button", { name: `${t("kpi.validation.action")}: ${b.metric}` }));
+    return { ...api, row: await rowOf(b.metric) };
+  };
+  const openValidation = async (row: HTMLElement) => {
+    fireEvent.click(await within(row).findByRole("button", { name: `${t("kpi.validation.action")}: ${b.metric}` }));
     const dialog = await screen.findByRole("dialog");
     fireEvent.click(within(dialog).getByRole("radio", { name: t("kpi.validation.validated") }));
     const note = within(dialog).getByLabelText(labelled(t("kpi.validation.note")));
     const submit = () => fireEvent.click(within(dialog).getByRole("button", { name: t("kpi.validation.record") }));
     return { dialog, note, submit };
   };
-  const openArchive = async () => {
-    fireEvent.click(await screen.findByRole("button", { name: `${t("common.action.archive")}: ${b.metric}` }));
+  const openArchive = async (row: HTMLElement) => {
+    fireEvent.click(await within(row).findByRole("button", { name: `${t("common.action.archive")}: ${b.metric}` }));
     const dialog = await screen.findByRole("dialog");
     const reason = within(dialog).getByLabelText(labelled(t("common.form.reason")));
     const submit = () => fireEvent.click(within(dialog).getByRole("button", { name: t("common.action.archive") }));
@@ -369,8 +399,8 @@ describe.each(LOCALES)("Finance validation note and archive reason (%s)", (local
     ["whitespace", WHITESPACE],
     ["invisible", INVISIBLE],
   ])("note: a %s-only note is refused inline and nothing is sent", async (_, value) => {
-    const { requests } = await open();
-    const { note, submit } = await openValidation();
+    const { requests, row } = await open();
+    const { note, submit } = await openValidation(row);
     fireEvent.change(note, { target: { value } });
     submit();
     await expectBlankOn(note, locale);
@@ -378,8 +408,8 @@ describe.each(LOCALES)("Finance validation note and archive reason (%s)", (local
   });
 
   it("note: empty is 'required'; visible text is sent verbatim", async () => {
-    const { requests } = await open();
-    const { note, submit, dialog } = await openValidation();
+    const { requests, row } = await open();
+    const { note, submit, dialog } = await openValidation(row);
     submit();
     expect(await within(dialog).findByText(t("problems.validation__required"))).toBeTruthy();
     expect(writes(requests)).toEqual([]);
@@ -393,8 +423,8 @@ describe.each(LOCALES)("Finance validation note and archive reason (%s)", (local
     ["whitespace", WHITESPACE],
     ["invisible", INVISIBLES],
   ])("reason: a %s-only reason is refused inline and nothing is archived", async (_, value) => {
-    const { requests } = await open();
-    const { reason, submit } = await openArchive();
+    const { requests, row } = await open();
+    const { reason, submit } = await openArchive(row);
     fireEvent.change(reason, { target: { value } });
     submit();
     await expectBlankOn(reason, locale);
@@ -402,12 +432,12 @@ describe.each(LOCALES)("Finance validation note and archive reason (%s)", (local
   });
 
   it("reason: a server 400 validation.blank on /reason is the field message, not a generic error", async () => {
-    const { requests } = await open(
+    const { requests, row } = await open(
       route("POST", /\/archive$/, () =>
         problem(400, "validation", { errors: [{ pointer: "/reason", code: "validation.blank", message: "x" }] }),
       ),
     );
-    const { reason, submit, dialog } = await openArchive();
+    const { reason, submit, dialog } = await openArchive(row);
     fireEvent.change(reason, { target: { value: "Synthetic reason" } });
     submit();
     await waitFor(() => expect(writes(requests)).toHaveLength(1));
@@ -416,8 +446,8 @@ describe.each(LOCALES)("Finance validation note and archive reason (%s)", (local
   });
 
   it("reason: empty keeps 'too short'; visible text is sent verbatim", async () => {
-    const { requests } = await open();
-    const { reason, submit, dialog } = await openArchive();
+    const { requests, row } = await open();
+    const { reason, submit, dialog } = await openArchive(row);
     submit();
     expect(await within(dialog).findByText(t("problems.validation__too_small"))).toBeTruthy();
     expect(writes(requests)).toEqual([]);

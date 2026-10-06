@@ -1,0 +1,34 @@
+# docs/delivery/handbacks/DG2/T-DG2-FE7-evidence/02-verbose-node24.raw.log: 638 tests with a duration; slowest 10, then every test over 1500 ms
+  1392 ms  |unit-node| apps/api/src/architecture.test.ts > API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages
+   777 ms  |unit-node| apps/api/src/architecture.test.ts > package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)
+   631 ms  |unit-web| src/pages/p2.test.tsx > Diagnose > shows the six T01 dimensions with Unknown for missing values, and value pools that are never 0
+   629 ms  |unit-node| apps/api/src/modules/workflows/workflows.test.ts > workflows module (P2) > its declared boundary holds, and an undeclared dependency would be caught
+   567 ms  |unit-web| src/pages/p2.test.tsx > Design > converts an unresolved workshop item into a design decision with If-Match
+   529 ms  |unit-web| src/pages/transformations/transformations.test.tsx > effective permissions refresh after create (F-DG1-210) > English: Edit, Archive and the audit trail appear after create, without a reload
+   520 ms  |unit-node| apps/api/src/modules/kpi/kpi.test.ts > kpi module (P2) > its declared boundary holds, and a planted bypass or undeclared dependency would be caught
+   502 ms  |unit-web| src/pages/p2.test.tsx > Diagnose > a 400 validation.blank shows a localized message on its field ('en')
+   489 ms  |unit-web| src/pages/p2.test.tsx > Diagnose > a 400 validation.blank shows a localized message on its field ('ar')
+   481 ms  |unit-web| src/pages/transformations/transformations.test.tsx > after create (F-DG1-004) > shows the created record when the server lets the creator read it
+# over 1500 ms: 0
+
+# docs/delivery/handbacks/DG2/T-DG2-FE7-evidence/02-verbose-node22.raw.log: 638 tests with a duration; slowest 10, then every test over 1500 ms
+  1560 ms  |unit-node| apps/api/src/architecture.test.ts > API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages
+   769 ms  |unit-node| apps/api/src/architecture.test.ts > package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)
+   748 ms  |unit-node| apps/api/src/modules/workflows/workflows.test.ts > workflows module (P2) > its declared boundary holds, and an undeclared dependency would be caught
+   710 ms  |unit-node| apps/api/src/modules/kpi/kpi.test.ts > kpi module (P2) > its declared boundary holds, and a planted bypass or undeclared dependency would be caught
+   647 ms  |unit-web| src/pages/p2.test.tsx > Diagnose > shows the six T01 dimensions with Unknown for missing values, and value pools that are never 0
+   544 ms  |unit-web| src/pages/p2.test.tsx > Design > converts an unresolved workshop item into a design decision with If-Match
+   519 ms  |unit-web| src/pages/p2.test.tsx > Diagnose > an invisible-only value is blocked client-side with validation.blank ('en')
+   508 ms  |unit-web| src/pages/transformations/transformations.test.tsx > effective permissions refresh after create (F-DG1-210) > English: Edit, Archive and the audit trail appear after create, without a reload
+   484 ms  |unit-web| src/pages/p2.test.tsx > Diagnose > a 400 validation.blank shows a localized message on its field ('en')
+   464 ms  |unit-web| src/pages/p2.test.tsx > Diagnose > an invisible-only value is blocked client-side with validation.blank ('ar')
+# over 1500 ms: 1
+1560 ms |unit-node| apps/api/src/architecture.test.ts > API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages | project timeout 5000 ms | ratio 3.2x
+
+# Annotation (written by hand after the run): the single test over 1500 ms (Node 22, 1560 ms) is
+# apps/api/src/architecture.test.ts "every import respects dependsOn, public surfaces and allowed packages". It has an
+# EXPLICIT timeout, AST_TEST_TIMEOUT_MS = 30_000 (apps/api/src/architecture.testkit.ts:116, F-DG2-143), so the real
+# ratio is 30000/1560 = 19.2x, not the 3.2x the script prints from the project default. No unit test over 1500 ms
+# relies on a default timeout, and none is within 2x of its timeout. Before this repair, p2-blank-forms.test.tsx's slowest
+# test was 2121 ms in the round-4 QA run against vitest's 5000 ms default (2.4x). In these two verbose runs that file's slowest test is 451 ms,
+# against a 20000 ms unit-web testTimeout.

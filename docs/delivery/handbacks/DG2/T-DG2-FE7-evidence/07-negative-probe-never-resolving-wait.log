@@ -1,0 +1,65 @@
+# Throwaway probe (file created, run, then deleted; not part of the candidate):
+import { render, screen } from "@testing-library/react";
+import { it } from "vitest";
+it("a wait that never resolves fails with Testing Library's message, not a test timeout", async () => {
+  render(<p>nothing here</p>);
+  await screen.findByRole("button", { name: "never rendered" });
+});
+# ---
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+ RUN  v3.2.4 /home/user/My-owns
+ ❯ |unit-web| src/zz-fe7-negative-probe.test.tsx (1 test | 1 failed) 5018ms
+   × a wait that never resolves fails with Testing Library's message, not a test timeout 5017ms
+     → Unable to find role="button" and name "never rendered"
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<p>[39m
+      [0mnothing here[0m
+    [36m</p>[39m
+  [36m</div>[39m
+[36m</body>[39m
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<p>[39m
+      [0mnothing here[0m
+    [36m</p>[39m
+  [36m</div>[39m
+[36m</body>[39m
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |unit-web| src/zz-fe7-negative-probe.test.tsx > a wait that never resolves fails with Testing Library's message, not a test timeout
+TestingLibraryElementError: Unable to find role="button" and name "never rendered"
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<p>[39m
+      [0mnothing here[0m
+    [36m</p>[39m
+  [36m</div>[39m
+[36m</body>[39m
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<p>[39m
+      [0mnothing here[0m
+    [36m</p>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/zz-fe7-negative-probe.test.tsx:5:16
+      3| it("a wait that never resolves fails with Testing Library's message, n…
+      4|   render(<p>nothing here</p>);
+      5|   await screen.findByRole("button", { name: "never rendered" });
+       |                ^
+      6| });
+      7| 
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  08:25:44
+   Duration  5.76s (transform 57ms, setup 80ms, collect 17ms, tests 5.02s, environment 358ms, prepare 106ms)
+EXIT 1
