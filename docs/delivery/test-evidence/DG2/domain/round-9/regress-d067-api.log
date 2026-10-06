@@ -1,0 +1,12 @@
+PASS R7.lone-surrogate-charter:lone-high :: expected 400 exactly one error validation.invalid_character at /caseForChange; no charter stored :: actual 400 application/problem+json; charset=utf-8 [["/caseForChange","validation.invalid_character"]]; charter=false
+PASS R7.lone-surrogate-charter:lone-low :: expected 400 exactly one error validation.invalid_character at /caseForChange; no charter stored :: actual 400 application/problem+json; charset=utf-8 [["/caseForChange","validation.invalid_character"]]; charter=false
+PASS R7.lone-surrogate-charter:reversed-pair :: expected 400 exactly one error validation.invalid_character at /caseForChange; no charter stored :: actual 400 application/problem+json; charset=utf-8 [["/caseForChange","validation.invalid_character"]]; charter=false
+PASS R7.lone-surrogate-charter:arabic+lone :: expected 400 exactly one error validation.invalid_character at /caseForChange; no charter stored :: actual 400 application/problem+json; charset=utf-8 [["/caseForChange","validation.invalid_character"]]; charter=false
+PASS R7.invalid-character-localized :: expected EN and AR messages exist, differ, AR is Arabic :: actual en='Remove the unsupported character from this text.' ar='أزِل الحرف غير المدعوم من هذا النص.'
+PASS R7.arabic-emoji-rlm-verbatim :: expected 201; caseForChange/name/inScope stored code point for code point :: actual 201; verbatim=true,true,true
+PASS R7.lone-surrogate-charter-update :: expected 400 invalid_character at /outOfScope; version and value unchanged :: actual 400 [["/outOfScope","validation.invalid_character"]] v 1->1
+PASS R7.lone-surrogate-outcome :: expected 400 validation.invalid_character :: actual 400 [["/statement","validation.invalid_character"]]
+PASS R7.arabic-emoji-outcome-verbatim :: expected 201 stored verbatim :: actual 201 verbatim=true
+PASS R7.malformed-url-problem :: expected 400 application/problem+json; code has EN and AR message :: actual 400 application/problem+json; charset=utf-8 code="validation" errors=["validation.format"] en=This value has the wrong format. ar=صيغة هذه القيمة غير صحيحة.
+PASS R7.oversized-url-problem :: expected 400 application/problem+json; localized code :: actual 400 application/problem+json; charset=utf-8 code="validation" errors=["validation.headers_too_large"] ar=عنوان الويب أو ترويسات الطلب طويلة جدًا.
+SUMMARY {"pass":11,"fail":[]}

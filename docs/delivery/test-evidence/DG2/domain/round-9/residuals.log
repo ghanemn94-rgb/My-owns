@@ -1,0 +1,10 @@
+$ pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pstore (D-057 offline surface)
+Done in 757ms using pnpm v10.33.0
+$ cmp .github/workflows/ci.yml deploy/ci/ci.yml (D-058 config surface)
+identical
+$ grep keycloak deploy/ (D-049)
+deploy/images.lock.json:34:      "id": "keycloak",
+deploy/images.lock.json:35:      "ref": "quay.io/keycloak/keycloak",
+deploy/images.lock.json:40:      "blockedReason": "BLOCKED: --resolve at 2026-10-01T07:30:37.561Z could not reach the registry: ERROR: failed to do request: Head \"https://quay.io/v2/keycloak/keycloak/manifests/26.4\": Forbidden",
+deploy/compose/compose.yaml:130:    image: quay.io/keycloak/keycloak:26.4
+deploy/ci/ci.yml:180:      # F-DG1-108/F-DG1-203, D-049: the committed lock records the TEST-ONLY keycloak image (Compose profile test-idp)

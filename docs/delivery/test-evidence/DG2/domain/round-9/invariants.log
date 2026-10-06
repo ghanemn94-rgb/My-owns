@@ -1,0 +1,63 @@
+## D-069 diff scope (cf3446e4..7854770e), non-delivery files:
+apps/api/src/modules/evidence/routes.ts
+apps/api/src/modules/platform/index.ts
+apps/api/src/modules/platform/media-types.test.ts
+apps/api/src/modules/platform/media-types.ts
+apps/api/src/server.ts
+apps/api/test/integration/aud-write-deny.test.ts
+apps/api/test/integration/contract/contract.test.ts
+apps/api/test/integration/contract/media-types.ts
+apps/api/test/integration/media-types.test.ts
+apps/web/e2e/p2-blank-text.spec.ts
+apps/web/src/components/RecordForm.alerts.test.tsx
+apps/web/src/components/RecordForm.tsx
+apps/web/src/lib/lib.test.ts
+apps/web/src/lib/problem.ts
+apps/web/src/pages/design/JourneysSection.tsx
+## i18n/seed/migration/methodology files touched by D-069 (expect none):
+none
+## B0009 verbatim in playbook and EN i18n:
+playbook=1 en=1
+playbook=1 en=1
+## B0023 gate names in migration:
+'G1 - Case for Change'
+'G2 - Direction'
+'G3 - Target State'
+'G4 - Mobilization'
+'G5 - Scale'
+'G6 - Sustain'
+## PMI / certification / official claims in product source:
+apps/web/src/components/Wordmark.tsx:1:// Provisional TEXT wordmark (REQ-S15-006, ADR-0009 §5). No official Mobily logo has been supplied, so the header
+apps/web/src/i18n/en/common.json:5:    "provisionalHint": "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.",
+apps/web/src/i18n/en/common.json:6:    "provisionalNotice": "Branding is provisional: the text wordmark and colours are placeholders, not official Mobily brand assets."
+apps/web/src/i18n/en/common.json:126:    "brandBody": "No official Mobily logo or verified brand colours have been supplied. The header shows a provisional text wordmark, and the colours (including #0078FF) are provisional design tokens that can be replaced through Branding Settings once official values are approved.",
+apps/web/src/i18n/en/common.json:129:    "methodBody": "The product operationalizes the Business Transformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with custom extensions. It is not an official PMI standard, and this product is not certified by PMI or any other body.",
+apps/web/src/i18n/ar/common.json:129:    "methodBody": "يطبّق المنتج دليل تحوّل الأعمال الإصدار 1.0، وهو خلاصة عملية مستوحاة من ممارسات PMI وBrightline وBRM مع إضافات مخصصة. وهو ليس معيارًا رسميًا من PMI، وهذا المنتج غير معتمد من PMI أو من أي جهة أخرى.",
+apps/api/src/modules/admin/branding.ts:4:// #0078FF is a provisional brand token, not a verified Mobily colour; nothing here claims official brand compliance.
+apps/api/src/modules/admin/branding.ts:17: * Maps the token source to the contract shape. Fails safe: provenance is "official" only when the source says the
+apps/api/src/modules/admin/branding.ts:18: * set is not provisional AND no single token is provisional, so a partly unverified set is never reported official.
+apps/api/src/modules/admin/branding.ts:29:  return brandingTokens.parse({ provenance: provisional ? "provisional" : "official", tokens });
+## provisional brand token:
+1-{
+2:  "$comment": "Single design-token source (ADR-0009). PROVISIONAL values from master prompt §15 (REQ-S15-002). They are NOT verified or official Mobily colours; #0078FF is a provisional brand token. Replace only through the Branding Settings flow (REQ-S15-004) once official values are supplied.",
+3-  "provisional": true,
+4-  "color": {
+5:    "brand.primary": { "value": "#0078FF", "purpose": "Primary accents and selected elements", "provisional": true },
+6-    "brand.deep": {
+7-      "value": "#003B73",
+--
+## float types on money/rate columns (expect none):
+## DG0-DG7 used in product source (expect none):
+apps/web/src/components/ReasonDialog.tsx:3:// dialog. The blank-text rule of every P2 form applies (F-DG2-210, BE7): a non-empty reason with no visible content
+apps/web/src/components/RowActions.tsx:4:// The note follows the blank-text rule of every P2 form (F-DG2-210): "" is "no note" (or "required"), a non-empty note
+apps/web/src/components/Form.tsx:73: * The one blank-text rule of every hand-written P2 form (F-DG2-210, D-063): a control that holds text but none of it is
+apps/web/src/components/Section.tsx:51:/** Multi-line user text; "None" when it has no visible content (the shared `hasText`, F-DG2-150 / F-DG2-160). */
+apps/web/src/components/RecordForm.tsx:12://    nothing is sent and focus moves to the first invalid field (F-DG2-210).
+apps/web/src/components/RecordForm.tsx:61:   * annotations is "no changes to save", never a content-free new version (F-DG2-210).
+apps/web/src/components/RecordForm.tsx:116:      // null; it is caught as `validation.blank` before sending (blankErrors) and by the shared schema (F-DG2-210).
+apps/web/src/components/RecordForm.tsx:374:  // F-DG2-340: a form-level problem is announced once. The banner already says the message of a validation problem
+apps/web/src/components/RecordForm.tsx:383:        // The live region is the wrapper; the <ul> keeps its list role so its <li> are valid (F-DG2-211, WCAG 1.3.1).
+apps/web/src/api/queries.ts:228:// ------------------------------------------------------------------------------------------------ P2 (DG2)
+## validate DG1 historical:
+PASS gate DG1 (historical)
+exit=0
