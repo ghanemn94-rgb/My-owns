@@ -1,0 +1,112 @@
+# command: per-suite pass/fail counts extracted from integration-run1-lang-unset.log and integration-run2-lang-c-utf8.log (grep -E '^ +(✓|×)' by file); unit-node22.log for unit files
+integration-run1-lang-unset.log contract pass=18 fail=0
+integration-run1-lang-unset.log media-types pass=21 fail=0
+integration-run1-lang-unset.log blank-text pass=29 fail=0
+integration-run1-lang-unset.log oidc pass=33 fail=0
+integration-run1-lang-unset.log invalid-character pass=20 fail=0
+integration-run1-lang-unset.log framework-errors pass=11 fail=0
+integration-run1-lang-unset.log invalid-utf8 pass=14 fail=0
+integration-run1-lang-unset.log encoding pass=8 fail=0
+integration-run1-lang-unset.log evidence pass=6 fail=0
+integration-run1-lang-unset.log migrat pass=7 fail=0
+integration-run2-lang-c-utf8.log contract pass=18 fail=0
+integration-run2-lang-c-utf8.log media-types pass=21 fail=0
+integration-run2-lang-c-utf8.log blank-text pass=29 fail=0
+integration-run2-lang-c-utf8.log oidc pass=33 fail=0
+integration-run2-lang-c-utf8.log invalid-character pass=20 fail=0
+integration-run2-lang-c-utf8.log framework-errors pass=11 fail=0
+integration-run2-lang-c-utf8.log invalid-utf8 pass=14 fail=0
+integration-run2-lang-c-utf8.log encoding pass=8 fail=0
+integration-run2-lang-c-utf8.log evidence pass=6 fail=0
+integration-run2-lang-c-utf8.log migrat pass=7 fail=0
+# contract 161-operation lines:
+ ✓ |integration| apps/api/test/integration/blank-text.test.ts > invisible-only free text is blank (F-DG2-160) > Out of scope "᠋᠏" is 400 validation.blank at /outOfScope; nothing written, no audit 161ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > auth + me 161ms
+# media-types S10/S11 regression tests:
+integration-run1-lang-unset.log: ✓ |integration| apps/api/test/integration/media-types.test.ts > an unmatched route is 404 not_found whatever its body (F-DG2-350) > S10 (code-security round 9) regression: POST/PUT/DELETE x text/plain, JSON, octet-stream x wi
+integration-run1-lang-unset.log: ✓ |integration| apps/api/test/integration/media-types.test.ts > an unmatched route is 404 not_found whatever its body (F-DG2-350) > every method x body class x session: 404 not_found (problem+json), the connection closes, not
+integration-run1-lang-unset.log: ✓ |integration| apps/api/test/integration/media-types.test.ts > an unmatched route is 404 not_found whatever its body (F-DG2-350) > on a real keep-alive socket the unread body never becomes the next request: the server closes
+integration-run1-lang-unset.log: ✓ |integration| apps/api/test/integration/media-types.test.ts > the media-type check and the parser lookup agree for every spelling (F-DG2-351) > S11 (code-security round 9) regression: the tab-before-';' upload is accepted a
+integration-run1-lang-unset.log: ✓ |integration| apps/api/test/integration/media-types.test.ts > the media-type check and the parser lookup agree for every spelling (F-DG2-351) > S11: every refusal on uploadEvidenceContent names application/octet-stream (nev
+integration-run1-lang-unset.log: ✓ |integration| apps/api/test/integration/media-types.test.ts > the media-type check and the parser lookup agree for every spelling (F-DG2-351) > every OWS/whitespace spelling of octet-stream reaches the octet parser: stored 
+integration-run1-lang-unset.log: ✓ |integration| apps/api/test/integration/media-types.test.ts > the media-type check and the parser lookup agree for every spelling (F-DG2-351) > every OWS/whitespace spelling of application/json reaches the JSON parser: acce
+integration-run1-lang-unset.log: ✓ |integration| apps/api/test/integration/media-types.test.ts > the media-type check and the parser lookup agree for every spelling (F-DG2-351) > every refusal on a JSON operation names application/json: malformed, other char
+integration-run1-lang-unset.log: ✓ |integration| apps/api/test/integration/media-types.test.ts > on a real socket (T-DG2-BE15B) > S11 over llhttp: an HTAB before ';' reaches the octet parser (stored byte-exact) and the JSON parser 36ms
+integration-run2-lang-c-utf8.log: ✓ |integration| apps/api/test/integration/media-types.test.ts > an unmatched route is 404 not_found whatever its body (F-DG2-350) > S10 (code-security round 9) regression: POST/PUT/DELETE x text/plain, JSON, octet-stream x w
+integration-run2-lang-c-utf8.log: ✓ |integration| apps/api/test/integration/media-types.test.ts > an unmatched route is 404 not_found whatever its body (F-DG2-350) > every method x body class x session: 404 not_found (problem+json), the connection closes, no
+integration-run2-lang-c-utf8.log: ✓ |integration| apps/api/test/integration/media-types.test.ts > an unmatched route is 404 not_found whatever its body (F-DG2-350) > on a real keep-alive socket the unread body never becomes the next request: the server close
+integration-run2-lang-c-utf8.log: ✓ |integration| apps/api/test/integration/media-types.test.ts > the media-type check and the parser lookup agree for every spelling (F-DG2-351) > S11 (code-security round 9) regression: the tab-before-';' upload is accepted 
+integration-run2-lang-c-utf8.log: ✓ |integration| apps/api/test/integration/media-types.test.ts > the media-type check and the parser lookup agree for every spelling (F-DG2-351) > S11: every refusal on uploadEvidenceContent names application/octet-stream (ne
+integration-run2-lang-c-utf8.log: ✓ |integration| apps/api/test/integration/media-types.test.ts > the media-type check and the parser lookup agree for every spelling (F-DG2-351) > every OWS/whitespace spelling of octet-stream reaches the octet parser: stored
+integration-run2-lang-c-utf8.log: ✓ |integration| apps/api/test/integration/media-types.test.ts > the media-type check and the parser lookup agree for every spelling (F-DG2-351) > every OWS/whitespace spelling of application/json reaches the JSON parser: acc
+integration-run2-lang-c-utf8.log: ✓ |integration| apps/api/test/integration/media-types.test.ts > the media-type check and the parser lookup agree for every spelling (F-DG2-351) > every refusal on a JSON operation names application/json: malformed, other cha
+integration-run2-lang-c-utf8.log: ✓ |integration| apps/api/test/integration/media-types.test.ts > on a real socket (T-DG2-BE15B) > S11 over llhttp: an HTAB before ';' reaches the octet parser (stored byte-exact) and the JSON parser 31ms
+# migrations 0001-0019:
+ ✓ |integration| apps/api/test/integration/kpi/kpi-resources.test.ts > value-pools (REQ-PB-028, ADR-0019) > defaults to unquantified with null amounts (never 0) and the transformation currency (SAR) 25ms
+ ✓ |integration| apps/api/test/integration/kpi/kpi-resources.test.ts > value-pools (REQ-PB-028, ADR-0019) > quantified by driver with exact decimal upside/downside 18ms
+ ✓ |integration| apps/api/test/integration/kpi/kpi-resources.test.ts > value-pools (REQ-PB-028, ADR-0019) > refuses downside > upside, amounts without quantification, and money beyond numeric(20,4) 16ms
+ ✓ |integration| apps/api/test/integration/kpi/kpi-resources.test.ts > value-pools (REQ-PB-028, ADR-0019) > FIN cannot validate an unquantified pool (422); a validation goes stale on edit; un-quantifying withdraws it 125ms
+ ✓ |integration| apps/api/test/integration/kpi/kpi-resources.test.ts > value-pools (REQ-PB-028, ADR-0019) > the creator cannot validate their own pool; a real zero is quantified, not Unknown 27ms
+ ✓ |integration| apps/api/test/integration/blank-text.test.ts > invisible-only free text is blank (F-DG2-160) > Out of scope "\u0001" is 400 validation.blank at /outOfScope; nothing written, no audit 139ms
+26
+# contract.test.ts asserts toHaveLength(161) (apps/api/test/integration/contract/contract.test.ts:559,578); its 'covers every operation' test:
+integration-run1-lang-unset.log: ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > the contract: every route accepts exactly the request m
+integration-run1-lang-unset.log: ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > every operation: an undeclared request media type is a 
+integration-run1-lang-unset.log: ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > every operation: the rate limiter's 429 is a declared R
+integration-run1-lang-unset.log: ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > covers every operation with at least one success and ev
+integration-run2-lang-c-utf8.log: ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > the contract: every route accepts exactly the request 
+integration-run2-lang-c-utf8.log: ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > every operation: an undeclared request media type is a
+integration-run2-lang-c-utf8.log: ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > every operation: the rate limiter's 429 is a declared 
+integration-run2-lang-c-utf8.log: ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > covers every operation with at least one success and e
+# migrations 0001->0019 (fresh DB via the real mth-db migrate CLI; readiness checks every shipped migration):
+integration-run1-lang-unset.log:[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muxb28gy_a6a45923 (server_encoding UTF8); applied 19 migrations to a fresh database
+integration-run1-lang-unset.log: ✓ |integration| apps/api/test/integration/dg2-repairs.test.ts > F-DG2-140 evidence separation of duties (REQ-S13-012) > database guard (0019): content_authored_by is trigger-maintained, and a sel
+integration-run1-lang-unset.log: ✓ |integration| apps/api/test/integration/platform.test.ts > health and readiness > reports ready when the database answers and every shipped migration is applied 7ms
+integration-run1-lang-unset.log: ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > applies every shipped migration, then reports up to date 863ms
+integration-run1-lang-unset.log: ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > is idempotent on an up-to-date database 15ms
+integration-run1-lang-unset.log: ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > records id, name, sha256, applied_at and applied_by = mth_owner 9ms
+integration-run1-lang-unset.log: ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > refuses to run when an applied file changed on disk 32ms
+integration-run1-lang-unset.log: ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > refuses to run when the database has a migration the build does not ship 33ms
+integration-run1-lang-unset.log: ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > applies a new forward migration atomically: a failing file leaves no trace 38ms
+integration-run1-lang-unset.log: ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate guards > refuses to run as the app role (objects must be owned by mth_owner) 77ms
+integration-run2-lang-c-utf8.log:[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muxb4gye_c763b69e (server_encoding UTF8); applied 19 migrations to a fresh database
+integration-run2-lang-c-utf8.log: ✓ |integration| apps/api/test/integration/dg2-repairs.test.ts > F-DG2-140 evidence separation of duties (REQ-S13-012) > database guard (0019): content_authored_by is trigger-maintained, and a se
+integration-run2-lang-c-utf8.log: ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > applies every shipped migration, then reports up to date 521ms
+integration-run2-lang-c-utf8.log: ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > is idempotent on an up-to-date database 9ms
+integration-run2-lang-c-utf8.log: ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > records id, name, sha256, applied_at and applied_by = mth_owner 7ms
+integration-run2-lang-c-utf8.log: ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > refuses to run when an applied file changed on disk 21ms
+integration-run2-lang-c-utf8.log: ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > refuses to run when the database has a migration the build does not ship 20ms
+integration-run2-lang-c-utf8.log: ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > applies a new forward migration atomically: a failing file leaves no trace 19ms
+integration-run2-lang-c-utf8.log: ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate guards > refuses to run as the app role (objects must be owned by mth_owner) 94ms
+integration-run2-lang-c-utf8.log: ✓ |integration| apps/api/test/integration/platform.test.ts > health and readiness > reports ready when the database answers and every shipped migration is applied 6ms
+# packages/db integration tests passed: run1 49, run2 49; failed: 0 / 0
+# exit_status: 0
+# per-requirement suites (pass/fail by file) for REQ-S10-001, REQ-S16-013, REQ-S13-012, REQ-PB-016/017/018/027/028/029:
+integration-run1-lang-unset.log gates pass=12 fail=0
+integration-run1-lang-unset.log registers pass=23 fail=0
+integration-run1-lang-unset.log kpi-resources pass=23 fail=0
+integration-run1-lang-unset.log access-scope pass=18 fail=0
+integration-run1-lang-unset.log access-derived-race pass=4 fail=0
+integration-run1-lang-unset.log aud-write-deny pass=128 fail=0
+integration-run1-lang-unset.log dg2-repairs pass=13 fail=0
+integration-run1-lang-unset.log transformations pass=30 fail=0
+integration-run1-lang-unset.log evidence pass=6 fail=0
+integration-run2-lang-c-utf8.log gates pass=12 fail=0
+integration-run2-lang-c-utf8.log registers pass=23 fail=0
+integration-run2-lang-c-utf8.log kpi-resources pass=23 fail=0
+integration-run2-lang-c-utf8.log access-scope pass=18 fail=0
+integration-run2-lang-c-utf8.log access-derived-race pass=4 fail=0
+integration-run2-lang-c-utf8.log aud-write-deny pass=128 fail=0
+integration-run2-lang-c-utf8.log dg2-repairs pass=13 fail=0
+integration-run2-lang-c-utf8.log transformations pass=30 fail=0
+integration-run2-lang-c-utf8.log evidence pass=6 fail=0
+REQ-PB-016 tests naming it: run1 pass=0 run2 pass=0
+REQ-PB-017 tests naming it: run1 pass=0 run2 pass=0
+REQ-PB-018 tests naming it: run1 pass=0 run2 pass=0
+REQ-PB-027 tests naming it: run1 pass=5 run2 pass=5
+REQ-PB-028 tests naming it: run1 pass=5 run2 pass=5
+REQ-PB-029 tests naming it: run1 pass=4 run2 pass=4
+REQ-S13-012 tests naming it: run1 pass=7 run2 pass=7
+REQ-S16-013 tests naming it: run1 pass=0 run2 pass=0
+REQ-S10-001 tests naming it: run1 pass=1 run2 pass=1
+# exit_status: 0

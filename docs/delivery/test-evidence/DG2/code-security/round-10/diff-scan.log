@@ -1,0 +1,25 @@
+# command: git diff --stat 7854770e..fe22d759 -- . ':!docs/delivery'
+ .../src/modules/platform/framework-errors.test.ts  |  19 +-
+ apps/api/src/modules/platform/framework-errors.ts  |   7 +-
+ apps/api/src/modules/platform/hooks.ts             |  14 +-
+ apps/api/src/modules/platform/index.ts             |   9 +
+ apps/api/src/modules/platform/media-types.test.ts  | 316 +++++++++++++++-
+ apps/api/src/modules/platform/media-types.ts       | 198 +++++++++-
+ apps/api/test/integration/media-types.test.ts      | 403 +++++++++++++++++++++
+ 7 files changed, 937 insertions(+), 29 deletions(-)
+
+# command: added lines in product code matching secrets / URLs / dangerous APIs
+(none)
+
+# command: writers of request headers anywhere in apps/api/src (the rewrite must be the only one)
+apps/api/src/modules/platform/media-types.ts:252:  if (decision.kind === "accept") headers["content-type"] = decision.contentType;
+apps/api/src/modules/platform/media-types.ts:253:  if (decision.kind === "unmatched-route") delete headers["content-type"];
+
+# command: fastify / @fastify/* versions unchanged since round 9
+0
+
+# command: preParsing / content-type parser registrations
+apps/api/src/modules/platform/media-types.ts:296:  app.addHook("preParsing", async (request, reply, payload) => {
+apps/api/src/modules/evidence/routes.ts:362:  app.addContentTypeParser(
+apps/api/src/server.ts:175:  app.addContentTypeParser(
+# exit_status: 0
