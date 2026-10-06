@@ -1,0 +1,42 @@
+== B0009 source rows
+36:| End-to-End | New enterprise or business-unit transformation | Run Phases 1-6 sequentially. Do not launch initiatives before the North Star, outcomes and target state are clear. |
+37:| Modular | A transformation is already underway | Enter at the relevant phase, complete the minimum mandatory templates, then reconnect to outcomes and benefits. |
+== B0009 how-text verbatim in EN i18n / seeds
+[Run Phases 1-6 sequentially. Do not launch initiatives before the North Star, outcomes and target state are clear.]
+apps/web/src/i18n/en/transformations.json
+[Enter at the relevant phase, complete the minimum mandatory templates, then reconnect to outcomes and benefits.]
+apps/web/src/i18n/en/transformations.json
+== B0023 gate table
+99-| G1 - Case for Change | Do we agree on the problem/opportunity and value at stake? | Diagnostic, baseline, root causes, value pools. |
+100-| G2 - Direction | Are outcomes specific enough to steer decisions? | North Star, outcome tree, KPI definitions, guardrails. |
+101-| G3 - Target State | Do we know what must be different operationally? | Target Operating Model, capability gaps, future journeys. |
+102-| G4 - Mobilization | Is the portfolio executable and value-backed? | Initiative cards, business cases, roadmap, owners, capacity. |
+103-| G5 - Scale | Are pilots/results sufficient to scale? | Performance evidence, adoption, risk closure, decision log. |
+104-| G6 - Sustain | Is value embedded in BAU? | Benefits evidence, ownership transfer, controls, continuous improvement backlog. |
+== gate names in methodology seed
+== PMI/certified claims (non-negated lines) in product UI/i18n
+== provisional token
+2:  "$comment": "Single design-token source (ADR-0009). PROVISIONAL values from master prompt §15 (REQ-S15-002). They are NOT verified or official Mobily colours; #0078FF is a provisional brand token. Replace only through the Branding Settings flow (REQ-S15-004) once official values are supplied.",
+5:    "brand.primary": { "value": "#0078FF", "purpose": "Primary accents and selected elements", "provisional": true },
+== money/rates column types (numeric) vs float
+(end float grep)
+== product gate codes never DGx
+(end DG grep)
+== D-067 diff (51a692b1..90439483) touches playbook-text/methodology/i18n files other than problems.json?
+apps/web/src/i18n/ar/problems.json
+apps/web/src/i18n/en/problems.json
+(end)
+== money/rate columns in packages/db/migrations
+      1 baseline_value              numeric(24,6)
+      1 cycle_time_value  numeric(14,4)
+      1 downside_amount          numeric(20,4)
+      1 impact_amount            numeric(20,4)
+      1 last_value        integer
+      2 target_horizon_value                    integer
+      1 target_value                numeric(24,6)
+      1 upside_amount            numeric(20,4)
+      1 value                    numeric(24,6)
+      1 value real
+== any float types
+(end)
+NOTE: 'value real' above is a regex false positive on the B0018 seed text 'value realization' (0018_p2_access_instantiation.sql:115); last_value integer is the code counter (0017:81). No float/real/double column types; money and rates are numeric.
