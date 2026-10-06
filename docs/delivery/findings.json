@@ -9405,7 +9405,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-3/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-06T05:55:00Z",
@@ -9416,10 +9416,37 @@
           "at": "2026-10-06T07:22:33Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 190504171b37151e553d4357a5d8f3f432aacba6"
+        },
+        {
+          "at": "2026-10-06T07:42:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 4: PASS"
         }
       ],
       "fix_revision": "190504171b37151e553d4357a5d8f3f432aacba6",
-      "fix_summary": "BE6 35fb823 + BE7 1905041. One shared predicate, hasVisibleContent = /[^\\p{White_Space}\\p{Cf}ᅟᅠㅤﾠ⠀]/u, replaces trim() in hasText/freeText and in the shared name/reason schemas. Invisible-only text (U+0085, ZWSP, RLM, ALM, WJ, fillers) gets 400 validation.blank and is never present in readiness, pre-checks or the thesis. Visible text keeps its marks verbatim. The inline reason parsers reuse the shared reason; the admin issuer check and the OIDC display-name fallback use the same predicate. Unit matrix and integration tests; negative controls fail on the old code."
+      "fix_summary": "BE6 35fb823 + BE7 1905041. One shared predicate, hasVisibleContent = /[^\\p{White_Space}\\p{Cf}ᅟᅠㅤﾠ⠀]/u, replaces trim() in hasText/freeText and in the shared name/reason schemas. Invisible-only text (U+0085, ZWSP, RLM, ALM, WJ, fillers) gets 400 validation.blank and is never present in readiness, pre-checks or the thesis. Visible text keeps its marks verbatim. The inline reason parsers reuse the shared reason; the admin issuer check and the OIDC display-name fallback use the same predicate. Unit matrix and integration tests; negative controls fail on the old code.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG2-T-DG2-REV-SEC-R4-code-security-reviewer-20261006T072411Z-9dc14c95",
+          "session_id": "9dc14c95-f586-43d3-ae5b-7625ac418d86"
+        },
+        "at": "2026-10-06T07:42:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG2/code-security/round-4/probe-run1.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-4/probe-run2.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-4/schema-unicode-matrix.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-4/probes/schema-unicode-matrix.mts",
+          "docs/delivery/test-evidence/DG2/code-security/round-4/probes/README.md",
+          "docs/delivery/test-evidence/DG2/code-security/round-3/probes/zz-sec-r3-invisible.test.ts",
+          "docs/delivery/test-evidence/DG2/code-security/round-4/integration-run1.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-4/integration-run2.log",
+          "packages/shared/src/schemas/common.ts"
+        ],
+        "note": "Verified adversarially on candidate sha256:29ced0ed...ce58 (source e37f6ea4; ID recomputed in a fresh clone, 521 files). Source: one shared predicate VISIBLE_CONTENT = /[^\\p{White_Space}\\p{Cf}\\u115F\\u1160\\u3164\\uFFA0\\u2800]/u (packages/shared/src/schemas/common.ts:46). It sits behind hasVisibleContent, hasText, freeText's refine (:77) and the new trimmedText behind the shared name and reason (:95). The refine is skipped when min already failed, so a value never gets two errors. hasExclusions (charter.ts:220) and the G1 criterion (criteria.ts:172) go through hasText, as does thesisPartText. The two inline reason parsers (register-kit archive, evidence-link remove) now use the shared reasonRequest, and no inline z.string() free-text parser remains in apps/api/src. Repro: the unchanged round-3 zz-sec-r3-invisible.test.ts now passes 5/5 in 2 runs on a disposable PG (U+0085, U+200B, U+200F, U+061C, U+2060x3 Out of scope -> 400, nothing stored). Schema matrix: all 18 round-3 code points plus 11 more Cf/fillers (U+115F, U+1160, U+FFA0, RLO, LRI, U+2062, U+1BCA0, tag chars, U+1D173, mixed NEL/RLM/WJ/NBSP) are rejected by freeText, name and reason, and hasText is false. Visible controls (Arabic with RLM, emoji ZWJ, leading ZWSP + text) are accepted verbatim. Performance: one negated character class, linear and with no backtracking; 10^7 invisible code units take about 0.2 s, and the API body limit keeps real inputs far smaller. Residual probes: no P1/P2 blank decision still uses trim() (the remaining trim() calls are list syntax, decimals, search boxes, the activity-verb lead or the admin web forms, whose bodies are all guarded by the shared schemas server-side). Combining marks alone (U+0301, U+064B, U+0670) render a visible mark and are reasonably content. Default_Ignorable code points outside Cf (variation selectors, CGJ U+034F, Mongolian FVS, Khmer inherent vowels) still pass. That class lies outside the White_Space/Cf/fillers set that F-DG2-160 reported and that its stated remedy named, so it is raised separately as the new Low finding F-DG2-180, not by reopening this one. Separately, F-DG2-181 records that the OIDC display-name change checks before it truncates."
+      }
     },
     {
       "id": "F-DG2-210",
@@ -9445,7 +9472,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG2/round-3/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-06T06:12:00Z",
@@ -9456,10 +9483,39 @@
           "at": "2026-10-06T07:22:33Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 97863da6c6d8baa00eaf6310529b204b2425cc15"
+        },
+        {
+          "at": "2026-10-06T07:58:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 4: PASS"
         }
       ],
       "fix_revision": "97863da6c6d8baa00eaf6310529b204b2425cc15",
-      "fix_summary": "FE5 bfa1807 + FE6 97863da: every P2 form (RecordForm, charter, gate submission note, decision rationale/comments, journey steps, row-action note, decisions/define inputs, ReasonDialog) sends free text verbatim, and only an empty string becomes null. A non-empty value with no visible content (shared hasText) shows an inline EN/AR validation.blank error with aria-invalid/describedby and focus, and nothing is sent. A change summary alone is reported as 'no changes'. e2e p2-blank-text.spec.ts (en+ar); 58 component tests fail on the old code."
+      "fix_summary": "FE5 bfa1807 + FE6 97863da: every P2 form (RecordForm, charter, gate submission note, decision rationale/comments, journey steps, row-action note, decisions/define inputs, ReasonDialog) sends free text verbatim, and only an empty string becomes null. A non-empty value with no visible content (shared hasText) shows an inline EN/AR validation.blank error with aria-invalid/describedby and focus, and nothing is sent. A change summary alone is reported as 'no changes'. e2e p2-blank-text.spec.ts (en+ar); 58 component tests fail on the old code.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG2-T-DG2-REV-QA-R4-qa-verifier-20261006T072451Z-abe57590",
+          "session_id": "abe57590-a5bf-4f47-b14b-097d237ff638"
+        },
+        "at": "2026-10-06T07:58:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG2/qa/round-4/17-e2e-qa-blank-run1.log",
+          "docs/delivery/test-evidence/DG2/qa/round-4/17-e2e-qa-blank-run2.log",
+          "docs/delivery/test-evidence/DG2/qa/round-4/24-e2e-blank-probe-r3-unchanged.log",
+          "docs/delivery/test-evidence/DG2/qa/round-4/15-e2e-product-run1.log",
+          "docs/delivery/test-evidence/DG2/qa/round-4/18-e2e-product-run2-qa-stack.log",
+          "docs/delivery/test-evidence/DG2/qa/tests/round-4/e2e/dg2-qa-blank-r4.spec.ts",
+          "docs/delivery/test-evidence/DG2/qa/tests/round-4/e2e/dg2-qa-blank-probe-r4.spec.ts",
+          "docs/delivery/test-evidence/DG2/qa/round-4/e2e/en/qa-r4-01-charter-create-blank.png",
+          "docs/delivery/test-evidence/DG2/qa/round-4/e2e/ar/qa-r4-03-out-of-scope-replaced-by-blank.png",
+          "docs/delivery/test-evidence/DG2/qa/round-4/e2e/en/qa-r4-08-journey-steps-blank.png",
+          "docs/delivery/test-evidence/DG2/qa/round-4/e2e/ar/qa-r4-13-gate-decision-blank.png"
+        ],
+        "note": "Re-verified by the originating reviewer on candidate 29ced0ed (clone @e37f6ea4) against the real built SPA + API + PostgreSQL, in chromium-en and chromium-ar, in two runs on separate stacks (30/30 each). The round-3 spec dg2-qa-blank-r3 now passes in full: every former soft assertion holds. The blank message is shown, create returns 404 (no charter), Out of scope stays null at v1, and an existing Out of scope is kept at v2. The new hardened spec dg2-qa-blank-r4 covers whitespace and invisible-only values (ZWSP, WJ, U+3164, RLM, NBSP) in every claimed form: charter create and edit, T01, North Star, journey steps (name, hand-off, an invisible list item), the ReasonDialog archive reason, the design-decision outcome (row-action NoteDecisionDialog), the evidence review note, the gate G1 submission note, and the gate decision rationale and comments. In every case the field shows the localized validation__blank message (EN 'Enter some text; spaces alone are not a value.' / AR 'أدخِل نصاً؛ المسافات وحدها ليست قيمة.'), has aria-invalid=true and the message in its accessible description, the first invalid field gets focus, no mutating request is sent, and stored versions and values are unchanged. Visible text with outer spaces and an RLM is stored verbatim (charter, T01, decision outcome, gate note). A change summary alone gives 'There are no changes to save.' and writes no version. The r4 probe shows no PATCH for whitespace Out of scope, and one verbatim PATCH {outOfScope:' Wholesale (synthetic) ', changeSummary} for visible text. The unchanged r3 probe now fails as expected, recording zero PATCH bodies and versions [[1,null]]. The product spec p2-blank-text also passes in EN and AR in both full e2e runs."
+      }
     },
     {
       "id": "F-DG2-211",
@@ -9482,7 +9538,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG2/round-3/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-06T06:12:00Z",
@@ -9493,10 +9549,128 @@
           "at": "2026-10-06T07:22:34Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at bfa18079cb7384b726cfc9a590c72f58c8ac5376"
+        },
+        {
+          "at": "2026-10-06T07:58:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 4: PASS"
         }
       ],
       "fix_revision": "bfa18079cb7384b726cfc9a590c72f58c8ac5376",
-      "fix_summary": "FE5 bfa1807: the RecordForm error banner is now a div with role=alert wrapping a semantic ul/li. The sweep found no other alert/status role on a list. The e2e drives the error-banner state and runs axe in EN and AR: 0 violations."
+      "fix_summary": "FE5 bfa1807: the RecordForm error banner is now a div with role=alert wrapping a semantic ul/li. The sweep found no other alert/status role on a list. The e2e drives the error-banner state and runs axe in EN and AR: 0 violations.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG2-T-DG2-REV-QA-R4-qa-verifier-20261006T072451Z-abe57590",
+          "session_id": "abe57590-a5bf-4f47-b14b-097d237ff638"
+        },
+        "at": "2026-10-06T07:58:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG2/qa/round-4/17-e2e-qa-blank-run1.log",
+          "docs/delivery/test-evidence/DG2/qa/round-4/17-e2e-qa-blank-run2.log",
+          "docs/delivery/test-evidence/DG2/qa/round-4/19-axe-summary.log",
+          "docs/delivery/test-evidence/DG2/qa/round-4/e2e/en/qa-r4-06-t01-no-changes-banner.png",
+          "docs/delivery/test-evidence/DG2/qa/round-4/e2e/ar/qa-r4-06-t01-no-changes-banner.png",
+          "docs/delivery/test-evidence/DG2/qa/round-4/e2e/ar/qa-r4-04-charter-no-changes-banner.png",
+          "docs/delivery/test-evidence/DG2/qa/round-4/e2e/product-run1/en/axe-summary-p2-blank.json",
+          "docs/delivery/test-evidence/DG2/qa/round-4/e2e/product-run2/ar/axe-summary-p2-blank.json",
+          "docs/delivery/test-evidence/DG2/qa/tests/round-4/e2e/dg2-qa-blank-r4.spec.ts"
+        ],
+        "note": "Re-verified on candidate 29ced0ed in chromium-en and chromium-ar, two runs. The RecordForm banner is now a DIV with role=alert (data-state=form-errors) wrapping exactly one semantic <ul>. Its listitem is the localized 'There are no changes to save.' / 'لا توجد تغييرات لحفظها.'. axe (wcag2a/2aa/21a/21aa) reports no serious or critical violation in the exact round-3 state (the T01 dialog banner, qa-r4-t01-no-changes-banner) or in the charter change-summary-only banner. The same holds in every other error state scanned: 13 QA blank-error states per language, plus 8 p2-blank, 49 P2 and 17 P1 product states per language in both full e2e runs, all with 0 serious/critical."
+      }
+    },
+    {
+      "id": "F-DG2-180",
+      "stage_id": "DG2",
+      "requirement": "REQ-PB-031",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Residual of the F-DG2-160 class: Default_Ignorable code points outside \\p{Cf} (variation selectors U+FE00-FE0F / U+E0100-E01EF, COMBINING GRAPHEME JOINER U+034F, Mongolian FVS U+180B-180D/U+180F, Khmer inherent vowels U+17B4/17B5) render as nothing but count as visible content, so an invisible Out of scope passes the B0041 pre-check and G1, and an invisible archive reason is accepted",
+      "reproduction": "packages/shared/src/schemas/common.ts:46 VISIBLE_CONTENT = /[^\\p{White_Space}\\p{Cf}\\u115F\\u1160\\u3164\\uFFA0\\u2800]/u excludes only White_Space, Cf and five fillers. The 34 assigned Unicode Default_Ignorable_Code_Point characters of category Mn are not excluded, nor are the unassigned DI code points (U+2065, U+FFF0-FFF8, U+E0000, U+E0002-E001F, U+E0080-E0FFF). Exhaustive sweep (schema-unicode-matrix.log): 4032 of 4174 DI code points still satisfy hasVisibleContent(); freeText(1,100), hasText, the shared name and reason all ACCEPT U+FE0F, U+034F, U+180B, U+17B4, U+E0100. End to end (disposable clone at e37f6ea4, disposable PostgreSQL 16, zz-sec-r4-probe.test.ts part C, 2 runs): POST /api/v1/transformations/{id}/charter by the Transformation Lead with outOfScope = '\\ufe0f' (also '\\u034f\\u034f', '\\u180b', '\\u17b4', '\\u200f\\ufe0f') -> 201 stored; GET .../charter -> exclusions_documented = 'pass'; GET .../gates/G1 -> g1.initial_charter does not list /charter/outOfScope (apps/api/src/modules/transformations/charter.ts:220-221 hasExclusions -> hasText; apps/api/src/modules/workflows/criteria.ts:172). POST .../tom-gaps/{id}/archive with If-Match and reason '\\ufe0f\\ufe0f\\ufe0f' -> 200, archived with an invisible archive_reason (the shared reason at common.ts:95). The web uses the same hasText, so its inline blank check has the same gap.",
+      "expected": "Per D-063/D-064 ('blank' = no visible content) and B0041, a value that renders as nothing is not content: freeText/name/reason return 400 validation.blank and hasText is false. For example, add \\p{Default_Ignorable_Code_Point} to the excluded set in the one shared predicate: /[^\\p{White_Space}\\p{Cf}\\p{Default_Ignorable_Code_Point}\\u2800]/u (DI already covers U+115F/U+1160/U+3164/U+FFA0). Visible text that contains such marks, such as an emoji with VS16 or Mongolian text with an FVS, keeps its content because it also has a visible base character. Add the new code points to the schema and blank-text tests.",
+      "actual": "An Out of scope or archive reason made only of variation selectors, CGJ, Mongolian FVS or Khmer inherent vowels is accepted (201/200). The B0041 exclusions pre-check reads 'pass' and G1 treats Out of scope as documented. The same gap applies to every freeText field, every hasText readiness test, and the shared name and reason.",
+      "evidence": [
+        "packages/shared/src/schemas/common.ts",
+        "apps/api/src/modules/transformations/charter.ts",
+        "apps/api/src/modules/workflows/criteria.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/probes/zz-sec-r4-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/probes/schema-unicode-matrix.mts",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/schema-unicode-matrix.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/probe-run2.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-4/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-06T07:40:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer, DG2 round 4. Low and non-mandatory, the same rating as F-DG2-160: it needs deliberately entered, rarely typed combining or variation characters. The pre-check supports the human scope-check answer and never replaces it, G1 still needs a human Sponsor decision, and an archive is still authorized, If-Match-checked and audited with the actor. It does not block the round. F-DG2-160's reported set and its stated remedy (White_Space + Cf + fillers) are verified fixed; this finding tracks the remaining Default_Ignorable code points that are not Cf."
+        }
+      ]
+    },
+    {
+      "id": "F-DG2-181",
+      "stage_id": "DG2",
+      "requirement": "REQ-S16-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "OIDC just-in-time display name is cut to 200 code units AFTER the visible-content check, so a name claim of 200 invisible characters followed by visible text is stored as an invisible display name",
+      "reproduction": "apps/api/src/modules/identity/oidc.ts:167: `if (typeof v === \"string\" && hasText(v)) return v.trim().slice(0, 200);`. The visible-content test runs on the whole claim, but the stored value is the first 200 UTF-16 code units. On a disposable clone at e37f6ea4 with the candidate's local fake OpenID Provider and a disposable PostgreSQL 16 (zz-sec-r4-oidc.test.ts test 2, 2 runs), a first sign-in with sub 'r4-sub-2', preferred_username 'r4.second' and name = '\\u200b' x 200 + 'Visible Synthetic' gets a 302, and JIT creates app_user.display_name of length 200 with hasText(display_name) = false. It does not fall back to preferred_username. The same happens with any Cf/White_Space prefix that is not trimmed (U+200F, U+2060, U+0085).",
+      "expected": "The display name chosen at JIT provisioning has visible content, consistent with the F-DG2-160 intent of this change (an invisible name claim is treated as absent). For example, apply hasText to the truncated value (`const s = v.trim().slice(0, 200); if (hasText(s)) return s;`) so it falls back to the next claim, ideally also without splitting a surrogate pair.",
+      "actual": "The user is created with a display name that renders as empty wherever people are shown (owners, approvers, audit actor names), until an administrator renames them. Identity, session and authorization are unaffected: binding is by (iss, sub), no scoped assignment is created, and test 1 of the same probe confirms a second login signs in the same user.",
+      "evidence": [
+        "apps/api/src/modules/identity/oidc.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/probes/zz-sec-r4-oidc.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/probe-run2.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-4/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-06T07:40:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer, DG2 round 4. Low and non-mandatory: display only. It needs control of the IdP name claim (a self-service profile name in Keycloak), it never affects identity binding, sessions or authorization, and the user ID stays in the audit trail. The truncation predates the change; the F-DG2-160 edit to this line was meant to stop invisible names but checks the value before truncation. It does not block the round."
+        }
+      ]
+    },
+    {
+      "id": "F-DG2-220",
+      "stage_id": "DG2",
+      "requirement": "REQ-DLV-034",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "New web unit suite p2-blank-forms.test.tsx is flaky under full-suite load: the first findByRole waits for the page with Testing Library's default 1000 ms timeout, and the required 'pnpm test' failed once on Node 24 (1 of 7 runs)",
+      "reproduction": "Disposable clone @e37f6ea4 (candidate 29ced0ed), offline install, 'pnpm test' (unit-node + unit-web) on Node 24.21.0. First run: 1 failed | 615 passed. 'Finance validation note and archive reason (en) > reason: a invisible-only reason is refused inline and nothing is archived' (1183 ms) threw TestingLibraryElementError: Unable to find role=\"button\" and name \"Archive: Synthetic handling time\". openArchive() calls screen.findByRole(...) with the default 1000 ms timeout while the Diagnose page is still loading its mocked queries. Six more full runs on Node 24 and four on Node 22 passed. JSON-reporter durations on Node 24: 22 of the 48 tests in this file take 700 ms or more, and the slowest takes 2121 ms. Most of that is the page load before the first findByRole, so headroom against the 1000 ms wait is thin, the same class as F-DG2-143 (architecture test near its timeout).",
+      "expected": "The required unit check ('pnpm test' on Node 22 and Node 24) is deterministic: no test depends on the page rendering within Testing Library's 1000 ms default under parallel full-suite load. For example, pass an explicit timeout to the first findByRole/findBy* waits in p2-blank-forms.test.tsx, or raise asyncUtilTimeout for the unit-web project.",
+      "actual": "1 failure in 7 full Node 24 runs (0 in 4 Node 22 runs) of a test the product added in this round. The product behaviour it covers is correct: the same flow passes in the real-stack e2e in EN and AR. This is a test-reliability defect of a required gate check, not a product defect.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-4/08-unit-node24.log",
+        "docs/delivery/test-evidence/DG2/qa/round-4/08-unit-node24-rerun1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-4/08-unit-node24-rerun2.log",
+        "docs/delivery/test-evidence/DG2/qa/round-4/08-unit-node24-rerun3.log",
+        "docs/delivery/test-evidence/DG2/qa/round-4/08-unit-flake-sweep.log",
+        "docs/delivery/test-evidence/DG2/qa/round-4/08-unit-durations-node24.log",
+        "apps/web/src/pages/p2-blank-forms.test.tsx"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG2/round-4/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-06T07:55:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG2 round 4 (T-DG2-REV-QA-R4). Low and non-mandatory, like F-DG2-143: the flake affects a required check's reliability, not product behaviour or data integrity."
+        }
+      ]
     }
   ]
 }
