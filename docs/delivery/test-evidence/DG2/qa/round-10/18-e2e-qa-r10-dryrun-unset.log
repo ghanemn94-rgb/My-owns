@@ -1,0 +1,63 @@
+$ env -u LANG -u LC_ALL QA_E2E_API_PORT=3901 QA_E2E_PG_PORT=24791 e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r10.spec.ts --workers=1 --reporter=list   # dry run (test-side debugging)
+# node v24.21.0; 2026-10-06T23:27:12Z
+port-policy: PostgreSQL listening on port 24791 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 3901 (attempt 1)
+API:     http://localhost:3901
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 12 tests using 1 worker
+
+QA-R10 [en] R10-01 577 unmatched-route requests (3 paths x 4 methods x 12 bodies x 2 framings x session/anon + 1 declared 500 MB): all exactly one 404 not_found, problem+json, Connection: close; declared-500MB answered in 1 ms; audit_event rows 41->41; readyz 200; control GET /me 200
+  ✓   1 [chromium-en] › e2e/dg2-qa-r10.spec.ts:206:1 › R10-01 raw socket: an unmatched route answers 404 not_found for every body, media type, framing and session (772ms)
+QA-R10 [en] R10-02 ["\"application/octet-stream; x=1\" length -> 200 40266 B, sha256 44ffdc865fd6… = DB = Digest, audit 1","\"application/octet-stream\\t; x=1\" length -> 200 9266 B, sha256 b7a968333790… = DB = Digest, audit 1","\"application/octet-stream\\t; x=1\" split -> 200 30256 B, sha256 ddcc072cfb1c… = DB = Digest, audit 1","\"application/octet-stream \\t;\\t x=\\\"quoted; value\\\"\" chunked -> 200 266 B, sha256 6bf3f8797363… = DB = Digest, audit 1","\"APPLICATION/Octet-Stream\\t;x=1;\\ty=2\" length -> 200 5000 B, sha256 f415a0eea5fe… = DB = Digest, audit 1"]
+  ✓   2 [chromium-en] › e2e/dg2-qa-r10.spec.ts:247:1 › R10-02 raw socket: uploads with '; x=1' and HTAB before ';' are stored byte-exact; sha256 = DB = Digest; audited (793ms)
+QA-R10 [en] R10-03 ["\"application/json\\t; charset=utf-8\" 57 chunks -> 201; title/note verbatim (API and DB)","\"application/json ;\\tcharset=\\\"UTF-8\\\"\" length -> 201; title/note verbatim (API and DB)","\"Application/JSON\\t;\\tCharset=Utf-8\" 57 chunks -> 201; title/note verbatim (API and DB)","\"application/json\\t\" length -> 201; title/note verbatim (API and DB)","PATCH charter HTAB spelling -> 200; version 1->2; outOfScope verbatim"]
+  ✓   3 [chromium-en] › e2e/dg2-qa-r10.spec.ts:286:1 › R10-03 raw socket: 'application/json\t; charset=utf-8' is accepted; Arabic/emoji text cut mid-character round-trips verbatim (2.3s)
+QA-R10 [en] R10-04 30 duplicate-Content-Type requests: all 400 validation.content_type naming the declared set, 0 audit rows each; transformations created 0; charter version 1->1 (Synthetic start); evidence version 1->1, currentContentId null, content rows 0, stored files 0
+  ✓   4 [chromium-en] › e2e/dg2-qa-r10.spec.ts:336:1 › R10-04 raw socket: duplicate Content-Type lines are the declared 400 naming the declared set; nothing is written (1.5s)
+QA-R10 [en] R10-05 36 non-UTF-8 JSON charset requests: all 400 validation.content_type naming application/json, 0 audit rows each; charter version 1->1 (Synthetic start); transformations created 0
+  ✓   5 [chromium-en] › e2e/dg2-qa-r10.spec.ts:397:1 › R10-05 raw socket: a JSON charset other than UTF-8 is the declared 400 naming application/json; nothing is written (1.6s)
+QA-R10 [en] R10-06 48 malformed/undeclared requests: JSON op always "Send the request body as application/json.", upload always "Send the request body as application/octet-stream."; notes created 0; upload content rows 0
+  ✓   6 [chromium-en] › e2e/dg2-qa-r10.spec.ts:437:1 › R10-06 raw socket: every refusal names exactly the operation's declared set (JSON op vs octet-stream-only upload) (2.1s)
+QA-R10 [ar] R10-01 577 unmatched-route requests (3 paths x 4 methods x 12 bodies x 2 framings x session/anon + 1 declared 500 MB): all exactly one 404 not_found, problem+json, Connection: close; declared-500MB answered in 3 ms; audit_event rows 208->208; readyz 200; control GET /me 200
+  ✓   7 [chromium-ar] › e2e/dg2-qa-r10.spec.ts:206:1 › R10-01 raw socket: an unmatched route answers 404 not_found for every body, media type, framing and session (853ms)
+QA-R10 [ar] R10-02 ["\"application/octet-stream; x=1\" length -> 200 40266 B, sha256 95a18bad4a63… = DB = Digest, audit 1","\"application/octet-stream\\t; x=1\" length -> 200 9266 B, sha256 f09c8a5ae0e7… = DB = Digest, audit 1","\"application/octet-stream\\t; x=1\" split -> 200 30256 B, sha256 021f4a7b39f9… = DB = Digest, audit 1","\"application/octet-stream \\t;\\t x=\\\"quoted; value\\\"\" chunked -> 200 266 B, sha256 6bf3f8797363… = DB = Digest, audit 1","\"APPLICATION/Octet-Stream\\t;x=1;\\ty=2\" length -> 200 5000 B, sha256 b52ae2946db2… = DB = Digest, audit 1"]
+  ✓   8 [chromium-ar] › e2e/dg2-qa-r10.spec.ts:247:1 › R10-02 raw socket: uploads with '; x=1' and HTAB before ';' are stored byte-exact; sha256 = DB = Digest; audited (789ms)
+QA-R10 [ar] R10-03 ["\"application/json\\t; charset=utf-8\" 57 chunks -> 201; title/note verbatim (API and DB)","\"application/json ;\\tcharset=\\\"UTF-8\\\"\" length -> 201; title/note verbatim (API and DB)","\"Application/JSON\\t;\\tCharset=Utf-8\" 57 chunks -> 201; title/note verbatim (API and DB)","\"application/json\\t\" length -> 201; title/note verbatim (API and DB)","PATCH charter HTAB spelling -> 200; version 1->2; outOfScope verbatim"]
+  ✓   9 [chromium-ar] › e2e/dg2-qa-r10.spec.ts:286:1 › R10-03 raw socket: 'application/json\t; charset=utf-8' is accepted; Arabic/emoji text cut mid-character round-trips verbatim (2.3s)
+QA-R10 [ar] R10-04 30 duplicate-Content-Type requests: all 400 validation.content_type naming the declared set, 0 audit rows each; transformations created 0; charter version 1->1 (Synthetic start); evidence version 1->1, currentContentId null, content rows 0, stored files 0
+  ✓  10 [chromium-ar] › e2e/dg2-qa-r10.spec.ts:336:1 › R10-04 raw socket: duplicate Content-Type lines are the declared 400 naming the declared set; nothing is written (1.6s)
+QA-R10 [ar] R10-05 36 non-UTF-8 JSON charset requests: all 400 validation.content_type naming application/json, 0 audit rows each; charter version 1->1 (Synthetic start); transformations created 0
+  ✓  11 [chromium-ar] › e2e/dg2-qa-r10.spec.ts:397:1 › R10-05 raw socket: a JSON charset other than UTF-8 is the declared 400 naming application/json; nothing is written (1.6s)
+QA-R10 [ar] R10-06 48 malformed/undeclared requests: JSON op always "Send the request body as application/json.", upload always "Send the request body as application/octet-stream."; notes created 0; upload content rows 0
+  ✓  12 [chromium-ar] › e2e/dg2-qa-r10.spec.ts:437:1 › R10-06 raw socket: every refusal names exactly the operation's declared set (JSON op vs octet-stream-only upload) (2.4s)
+
+  12 passed (21.0s)
+exit 0

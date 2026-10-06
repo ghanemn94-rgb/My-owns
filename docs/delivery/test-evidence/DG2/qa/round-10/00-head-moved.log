@@ -1,0 +1,9 @@
+# HEAD moved during the run: 68fe339 -> 6dd7147 (2026-10-06T23:25:28Z)
+$ git log --oneline 68fe339..HEAD; git diff --stat 68fe339 HEAD
+6dd7147 DG2: correct two stage-history timestamps to the actual commit times
+ docs/delivery/stages.json | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+$ node tools/gates/candidate.mjs --stage DG2
+{"stage":"DG2","source":"working-tree","candidate_id":"sha256:7fd1a89ca090dbdea5ae9f014853684239cbf80e89dc5cce50914155cb9d484a","files":544}
+exit 0
+# only docs/delivery/stages.json (stage metadata, excluded from the candidate manifest) changed; the candidate ID is unchanged, so the clones @68fe339 test the same candidate content.

@@ -1,0 +1,111 @@
+$ node tools/gates/candidate.mjs --stage DG2   # end of run, candidate tree
+{"stage":"DG2","source":"working-tree","candidate_id":"sha256:7fd1a89ca090dbdea5ae9f014853684239cbf80e89dc5cce50914155cb9d484a","files":544}
+exit 0
+# HEAD 29cf9f99a87bd121ba089c974221751a1f44e81d; 2026-10-06T23:54:42Z
+$ git log --oneline 68fe339..HEAD; git diff --stat 68fe339 HEAD
+29cf9f9 progress: DG2 checkpoint (round 10 in review)
+96947af DG2 round 10: code-security test evidence
+c34133d run: DG2-T-DG2-REV-SEC-R10-code-security-reviewer-20261006T231657Z-99fcef43 (review evidence, auto-committed by run-agent.sh)
+c41355a DG2 round 10: domain test evidence
+2691554 run: DG2-T-DG2-REV-DOM-R10-domain-reviewer-20261006T231717Z-2657ded0 (review evidence, auto-committed by run-agent.sh)
+6dd7147 DG2: correct two stage-history timestamps to the actual commit times
+ docs/delivery/progress.md                          |  11 +-
+ .../DG2/round-10/code-security-reviewer.json       | 333 +++++++++
+ .../reviews/DG2/round-10/code-security-reviewer.md |  42 ++
+ .../code-security-reviewer.verifications.json      |  39 +
+ .../reviews/DG2/round-10/domain-reviewer.json      | 217 ++++++
+ .../reviews/DG2/round-10/domain-reviewer.md        |  38 +
+ .../meta.json                                      | 168 +++++
+ .../result.json                                    |   3 +
+ .../sandbox.json                                   |  48 ++
+ .../settings.json                                  |  93 +++
+ .../stderr.log                                     |   1 +
+ .../transcript.jsonl.gz                            | Bin 0 -> 979463 bytes
+ .../meta.json                                      | 175 +++++
+ .../result.json                                    |   3 +
+ .../sandbox.json                                   |  49 ++
+ .../settings.json                                  |  93 +++
+ .../stderr.log                                     |   1 +
+ .../transcript.jsonl.gz                            | Bin 0 -> 271474 bytes
+ docs/delivery/stages.json                          |   4 +-
+ .../DG2/code-security/round-10/aud-403-sweep.log   |  10 +
+ .../DG2/code-security/round-10/build.log           |  50 ++
+ .../DG2/code-security/round-10/candidate-id.log    |   4 +
+ .../DG2/code-security/round-10/checks.sh           |  33 +
+ .../DG2/code-security/round-10/diff-scan.log       |  25 +
+ .../DG2/code-security/round-10/env-residuals.log   |  46 ++
+ .../DG2/code-security/round-10/format-check.log    |   9 +
+ .../round-10/integration-run1-lang-unset.log       | 590 ++++++++++++++++
+ .../round-10/integration-run2-lang-c-utf8.log      | 590 ++++++++++++++++
+ .../DG2/code-security/round-10/lint.log            |   7 +
+ .../DG2/code-security/round-10/load-generator.log  |   4 +
+ .../DG2/code-security/round-10/load-repro.sh       |  23 +
+ .../DG2/code-security/round-10/no-cdn.log          |   8 +
+ .../DG2/code-security/round-10/openapi-lint.log    |   8 +
+ .../round-10/probe-baseline-041478cb-P5c.log       |  20 +
+ .../round-10/probe-run1-lang-unset.log             | 176 +++++
+ .../round-10/probe-run2-lang-c-utf8.log            | 176 +++++
+ .../DG2/code-security/round-10/probes/README.md    |  60 ++
+ .../probes/zz-sec-r10-baseline-p5c.test.ts         | 144 ++++
+ .../round-10/probes/zz-sec-r10-probe.test.ts       | 526 ++++++++++++++
+ .../code-security/round-10/requirements-suites.log | 112 +++
+ .../DG2/code-security/round-10/summary.txt         |  14 +
+ .../DG2/code-security/round-10/typecheck.log       |  18 +
+ .../DG2/code-security/round-10/unit-node22.log     | 786 +++++++++++++++++++++
+ .../DG2/code-security/round-10/unit-node24.log     | 786 +++++++++++++++++++++
+ .../round-10/unit-under-load-node22.log            | 786 +++++++++++++++++++++
+ .../round-10/unit-under-load-node24.log            | 786 +++++++++++++++++++++
+ .../round-10/validate-historical-DG0.log           |   4 +
+ .../round-10/validate-historical-DG1.log           |   4 +
+ .../DG2/code-security/round-10/with-pg.sh          |  22 +
+ .../DG2/domain/round-10/build-node22.log           |  47 ++
+ .../DG2/domain/round-10/build-node24.log           |  47 ++
+ .../DG2/domain/round-10/candidate-and-dg1.log      |  15 +
+ .../DG2/domain/round-10/charter-blank-ui.log       |  15 +
+ .../DG2/domain/round-10/charter-blank-ui.mjs       |  66 ++
+ .../DG2/domain/round-10/contrast-node22.log        |  62 ++
+ .../DG2/domain/round-10/contrast-node24.log        |  62 ++
+ .../DG2/domain/round-10/design-registers.log       |  14 +
+ .../DG2/domain/round-10/design-registers.mjs       |  72 ++
+ .../DG2/domain/round-10/dom-shots.log              |   8 +
+ .../DG2/domain/round-10/dom-shots.mjs              |  26 +
+ .../test-evidence/DG2/domain/round-10/env.txt      |  12 +
+ .../handback-T-DG2-REV-DOM-R10-domain-reviewer.md  |  33 +
+ .../DG2/domain/round-10/invariants.log             |  54 ++
+ .../DG2/domain/round-10/lint-node22.log            |   4 +
+ .../DG2/domain/round-10/lint-node24.log            |   4 +
+ .../DG2/domain/round-10/live-scenario.log          | 130 ++++
+ .../DG2/domain/round-10/live-scenario.mjs          | 387 ++++++++++
+ .../test-evidence/DG2/domain/round-10/node22.txt   |   1 +
+ .../test-evidence/DG2/domain/round-10/node24.txt   |   1 +
+ .../DG2/domain/round-10/r10-delta-api.log          |  18 +
+ .../DG2/domain/round-10/r10-delta-api.mjs          | 101 +++
+ .../test-evidence/DG2/domain/round-10/r9-ui.mjs    |  86 +++
+ .../DG2/domain/round-10/regress-d066-api.log       |  17 +
+ .../DG2/domain/round-10/regress-d066-ui.log        |   9 +
+ .../DG2/domain/round-10/regress-d067-api.log       |  12 +
+ .../DG2/domain/round-10/regress-d067-ui.log        |  11 +
+ .../DG2/domain/round-10/regress-d068-api.log       |  22 +
+ .../DG2/domain/round-10/regress-d069-api.log       |  19 +
+ .../DG2/domain/round-10/regress-d069-api.mjs       | 100 +++
+ .../DG2/domain/round-10/residuals.log              |  10 +
+ .../ar-charter-arabic-emoji-rlm-created.png        | Bin 0 -> 334239 bytes
+ .../screens/ar-charter-create-invisible.png        | Bin 0 -> 231708 bytes
+ .../screens/ar-charter-form-level-problem-once.png | Bin 0 -> 236370 bytes
+ .../screens/ar-create-mode-guidance-modular.png    | Bin 0 -> 173912 bytes
+ .../round-10/screens/ar-evidence-uploaded.png      | Bin 0 -> 153281 bytes
+ .../en-charter-arabic-emoji-rlm-created.png        | Bin 0 -> 324028 bytes
+ .../screens/en-charter-create-invisible.png        | Bin 0 -> 228139 bytes
+ .../screens/en-charter-form-level-problem-once.png | Bin 0 -> 232863 bytes
+ .../screens/en-create-mode-guidance-modular.png    | Bin 0 -> 162210 bytes
+ .../round-10/screens/en-evidence-uploaded.png      | Bin 0 -> 157012 bytes
+ .../DG2/domain/round-10/stack-run-1.log            |  13 +
+ .../DG2/domain/round-10/stack-run-2.log            |  11 +
+ .../DG2/domain/round-10/test-node22.log            | 147 ++++
+ .../DG2/domain/round-10/test-node24.log            | 168 +++++
+ .../DG2/domain/round-10/typecheck-node22.log       |  15 +
+ .../DG2/domain/round-10/typecheck-node24.log       |  15 +
+ .../DG2/domain/round-10/ui-upload-alert.log        |  11 +
+ .../DG2/domain/round-10/with-stack.sh              |  35 +
+ 98 files changed, 9020 insertions(+), 5 deletions(-)
+# no candidate file changed; the candidate ID above is unchanged

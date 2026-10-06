@@ -1,0 +1,229 @@
+$ env -u LANG -u LC_ALL QA_E2E_API_PORT=3921 QA_E2E_PG_PORT=24821 QA_SHOT_DIR=<shots> E2E_SCREENSHOT_DIR=<shots> QA_R8_QUERY_OPS=<21-query-ops.py output> e2e/support/qa-stack.sh npx playwright test e2e apps/web/e2e --workers=1 --reporter=list
+# node v24.21.0; 2026-10-06T23:39:53Z
+port-policy: PostgreSQL listening on port 24821 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 3921 (attempt 1)
+API:     http://localhost:3921
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 108 tests using 1 worker
+
+  ✓    1 [chromium-en] › apps/web/e2e/journeys.spec.ts:187:1 › sign-in page: Arabic RTL by default, provisional wordmark, dev form in dev mode (1.1s)
+  ✓    2 [chromium-en] › apps/web/e2e/journeys.spec.ts:213:1 › shell: navigation, language persistence and My Work (Transformation Office) (1.8s)
+  ✓    3 [chromium-en] › apps/web/e2e/journeys.spec.ts:258:1 › create a modular transformation with an entry phase (4.2s)
+  ✓    4 [chromium-en] › apps/web/e2e/journeys.spec.ts:332:1 › list: sort, filter chips, column selection and pagination controls (2.5s)
+  ✓    5 [chromium-en] › apps/web/e2e/journeys.spec.ts:390:1 › edit: a concurrent change gives a 409 conflict with compare and re-apply (1.8s)
+  ✓    6 [chromium-en] › apps/web/e2e/journeys.spec.ts:442:1 › archive with a mandatory reason makes the record read-only (2.1s)
+  ✓    7 [chromium-en] › apps/web/e2e/journeys.spec.ts:477:1 › administration screens (access + technical administrator) (4.2s)
+  ✓    8 [chromium-en] › apps/web/e2e/journeys.spec.ts:538:1 › a user without roles sees no Administration and no business records (1.7s)
+  ✓    9 [chromium-en] › apps/web/e2e/journeys.spec.ts:560:1 › a business-unit Lead creates a record: Edit/Archive and the audit trail appear without a reload (F-DG1-210), the derived grant localized (F-DG1-008) (3.1s)
+  ✓   10 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:58:1 › setup: a fresh End-to-End transformation for the blank-text checks (63ms)
+  ✓   11 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:73:1 › Charter create: a whitespace Case for change is an inline error and creates no charter (2.3s)
+  ✓   12 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:113:1 › Charter edit: a whitespace Out of scope is an inline error, writes no version and keeps the value (3.2s)
+  ✓   13 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:163:1 › T01: a whitespace Current state is an inline error and sends nothing (2.7s)
+  ✓   14 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:265:1 › Gate G1 submission: a whitespace note is an inline error and submits nothing; visible text is verbatim (2.3s)
+  ✓   15 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:326:1 › Gate G1 decision: a whitespace rationale is an inline error and decides nothing (2.3s)
+  ✓   16 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:382:1 › Journey steps: a whitespace actor is an inline error and writes no journey version (2.9s)
+  ✓   17 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:425:1 › Reason dialog: an invisible-only archive reason is an inline error and archives nothing (2.8s)
+  ✓   18 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:461:1 › Charter create: a form-level validation problem (invalid UTF-8 body) is said once, in one live region (2.1s)
+  ✓   19 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:42:1 › lead creates an End-to-End transformation; the workspace tabs lead to the P2 screens (2.2s)
+  ✓   20 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:83:1 › Diagnose: six T01 dimensions with Unknown; value pools labelled Unquantified with a partial total (6.2s)
+  ✓   21 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:168:1 › Charter: create, save a second version, compare versions; the 3-5 top-outcomes warning (4.3s)
+  ✓   22 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:248:1 › Define: North Star, the good outcome test with reasons, and a required T02 target date (3.9s)
+  ✓   23 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:332:1 › Design: ten canvas boxes, the per-dimension view; workshop mode converts an unresolved item into T04 (4.9s)
+  ✓   24 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:414:1 › Evidence: note, filename reference and file upload; a link; review by another person (5.4s)
+  ✓   25 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:608:1 › Gates: G1 shows unverified evidence and offers no submission while incomplete; once complete it is submitted (4.2s)
+  ✓   26 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:675:1 › Gates: the approver's decision — 409 when the submission was superseded, then approval with a rationale (3.6s)
+  ✓   27 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:824:1 › Define → G2: activate a KPI, pass the good outcome test, add a guardrail, compose the thesis; G2 is decided (15.6s)
+  ✓   28 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:1027:1 › Design → G3: the target state is complete and G3 is decided by the Sponsor (4.4s)
+  ✓   29 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:1080:1 › Team: the six governance roles with their B0018 accountability; the lead assigns a Workstream Lead (4.7s)
+  ✓   30 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:1144:1 › read-only auditor (AUD): every P2 screen without write controls; Unknown and Unquantified rendered (11.1s)
+  ✓   31 [chromium-en] › e2e/a20-bilingual-shell.spec.ts:117:3 › A20 bilingual shell › Arabic RTL by default; English LTR after the switch; persisted; switch back (1.1s)
+  ✓   32 [chromium-en] › e2e/a20-bilingual-shell.spec.ts:182:3 › A20 design tokens reach the rendered CSS › seeded --mth-* colours and referencing surfaces equal the built token source (618ms)
+QA-R10 [en] R10-01 1153 unmatched-route requests (3 paths x 4 methods x 12 bodies x 2 framings x session/anon x one-write/delayed-body + 1 declared 500 MB): all exactly one 404 not_found, problem+json, Connection: close; declared-500MB answered in 0 ms; audit_event rows 327->327; readyz 200; control GET /me 200
+  ✓   33 [chromium-en] › e2e/dg2-qa-r10.spec.ts:206:1 › R10-01 raw socket: an unmatched route answers 404 not_found for every body, media type, framing and session (899ms)
+QA-R10 [en] R10-02 ["\"application/octet-stream; x=1\" length -> 200 40266 B, sha256 f8b98e3b5614… = DB = Digest, audit 1","\"application/octet-stream\\t; x=1\" length -> 200 9266 B, sha256 bacf3f2e3585… = DB = Digest, audit 1","\"application/octet-stream\\t; x=1\" split -> 200 30256 B, sha256 f8b86041bb40… = DB = Digest, audit 1","\"application/octet-stream \\t;\\t x=\\\"quoted; value\\\"\" chunked -> 200 266 B, sha256 6bf3f8797363… = DB = Digest, audit 1","\"APPLICATION/Octet-Stream\\t;x=1;\\ty=2\" length -> 200 5000 B, sha256 abb42d60be17… = DB = Digest, audit 1"]
+  ✓   34 [chromium-en] › e2e/dg2-qa-r10.spec.ts:250:1 › R10-02 raw socket: uploads with '; x=1' and HTAB before ';' are stored byte-exact; sha256 = DB = Digest; audited (735ms)
+QA-R10 [en] R10-03 ["\"application/json\\t; charset=utf-8\" 57 chunks -> 201; title/note verbatim (API and DB)","\"application/json ;\\tcharset=\\\"UTF-8\\\"\" length -> 201; title/note verbatim (API and DB)","\"Application/JSON\\t;\\tCharset=Utf-8\" 57 chunks -> 201; title/note verbatim (API and DB)","\"application/json\\t\" length -> 201; title/note verbatim (API and DB)","PATCH charter HTAB spelling -> 200; version 1->2; outOfScope verbatim"]
+  ✓   35 [chromium-en] › e2e/dg2-qa-r10.spec.ts:289:1 › R10-03 raw socket: 'application/json\t; charset=utf-8' is accepted; Arabic/emoji text cut mid-character round-trips verbatim (2.2s)
+QA-R10 [en] R10-04 30 duplicate-Content-Type requests: all 400 validation.content_type naming the declared set, 0 audit rows each; transformations created 0; charter version 1->1 (Synthetic start); evidence version 1->1, currentContentId null, content rows 0, stored files 0
+  ✓   36 [chromium-en] › e2e/dg2-qa-r10.spec.ts:339:1 › R10-04 raw socket: duplicate Content-Type lines are the declared 400 naming the declared set; nothing is written (1.5s)
+QA-R10 [en] R10-05 36 non-UTF-8 JSON charset requests: all 400 validation.content_type naming application/json, 0 audit rows each; charter version 1->1 (Synthetic start); transformations created 0
+  ✓   37 [chromium-en] › e2e/dg2-qa-r10.spec.ts:400:1 › R10-05 raw socket: a JSON charset other than UTF-8 is the declared 400 naming application/json; nothing is written (1.6s)
+QA-R10 [en] R10-06 48 malformed/undeclared requests: JSON op always "Send the request body as application/json.", upload always "Send the request body as application/octet-stream."; notes created 0; upload content rows 0
+  ✓   38 [chromium-en] › e2e/dg2-qa-r10.spec.ts:440:1 › R10-06 raw socket: every refusal names exactly the operation's declared set (JSON op vs octet-stream-only upload) (2.0s)
+QA-R8 [en] R8-01 48 raw requests (8 shapes x 3 framings x 2 auth): all 400 problem+json validation.json at pointer ""
+  ✓   39 [chromium-en] › e2e/dg2-qa-r8.spec.ts:171:1 › R8-01 raw socket: invalid UTF-8 JSON bodies are 400 validation.json for every framing, with and without a session (3.0s)
+QA-R8 [en] R8-02 emoji via Content-Length: 201, stored verbatim (21 bytes)
+QA-R8 [en] R8-02 emoji via 4 chunks cut mid-character: 201, stored verbatim (21 bytes)
+QA-R8 [en] R8-02 arabic via Content-Length: 201, stored verbatim (30 bytes)
+QA-R8 [en] R8-02 arabic via 15 chunks cut mid-character: 201, stored verbatim (30 bytes)
+QA-R8 [en] R8-02 zwj family + skin tone via Content-Length: 201, stored verbatim (50 bytes)
+QA-R8 [en] R8-02 zwj family + skin tone via 34 chunks cut mid-character: 201, stored verbatim (50 bytes)
+QA-R8 [en] R8-02 decomposed e + U+0301 (no NFC) via Content-Length: 201, stored verbatim (18 bytes)
+QA-R8 [en] R8-02 decomposed e + U+0301 (no NFC) via 3 chunks cut mid-character: 201, stored verbatim (18 bytes)
+  ✓   40 [chromium-en] › e2e/dg2-qa-r8.spec.ts:198:1 › R8-02 raw socket: valid multi-byte text split mid-character across chunks round-trips byte for byte (2.3s)
+QA-R8 [en] R8-03 104 query probes: all 400 validation.format at /query/<name>
+QA-R8 [en] R8-03 unauthenticated ?q=%FF -> 401; Arabic and emoji ?q= -> 200 and the record is found with its exact name
+  ✓   41 [chromium-en] › e2e/dg2-qa-r8.spec.ts:225:1 › R8-03 query sweep: undecodable percent sequences in any query parameter are 400 validation.format (578ms)
+QA-R8 [en] R8-04 value set via fill; POST 201; API and the reloaded page show the exact 50 code points
+  ✓   42 [chromium-en] › e2e/dg2-qa-r8.spec.ts:300:1 › R8-04 UI: Arabic, emoji, RLM and combining marks in the charter round-trip verbatim (2.4s)
+QA-R8 [en] R8-05 server 400 [{"pointer":"","code":"validation.json","message":"The request body is not valid UTF-8 JSON."}] shown as "The request was not valid JSON."
+  ✓   43 [chromium-en] › e2e/dg2-qa-r8.spec.ts:337:1 › R8-05 UI -> real server: an invalid UTF-8 body is refused with the localized validation__json message (2.0s)
+QA-R8 [en] R8-06 search requests ["200 ?sort=updatedAt%3Adesc&limit=25","200 ?sort=updatedAt%3Adesc&limit=25&q=%D9%82%D8%A7%D8%A6%D9%85%D8%A9"]
+QA-R8 [en] R8-06 deep link /transformations?q=%FF: document 200 text/html; charset=utf-8; API ["200 ?sort=updatedAt%3Adesc&limit=25&q=%F0%9F%A7%AD","200 ?sort=updatedAt%3Adesc&limit=25&q=%EF%BF%BD"]
+  ✓   44 [chromium-en] › e2e/dg2-qa-r8.spec.ts:390:1 › R8-06 UI: Arabic/emoji search finds the record; a deep link with ?q=%FF never yields a 5xx (3.0s)
+QA-R9 [en] R9-01 18 undeclared-media-type uploads (9 types x 2 framings): all 400 validation.content_type at pointer "", 0 audit rows each; no session -> 400 [{"pointer":"","code":"validation.content_type","message":"Send the request body as application/octet-stream."}]; evidence version 1->1, currentContentId null, download 404, evidence_content rows 0, stored files 0
+  ✓   45 [chromium-en] › e2e/dg2-qa-r9.spec.ts:212:1 › R9-01 raw socket: an evidence upload in an undeclared media type is 400 validation.content_type; nothing stored, no audit row (874ms)
+QA-R9 [en] R9-02 content-length (application/octet-stream): 200, 65804 bytes; download identical; sha256 33cabb0a317a0407… = DB = Digest; audit rows 1; fileName round-trips; Content-Disposition attachment; filename="_____ en __ synthetic.bin"; filename*=UTF-8''%D8%AA%D9%82%D8%B1%D9%8A%D8%B1%20en%20%F0%9F%A7%BE%20synthetic.bin
+QA-R9 [en] R9-02 chunked split (application/octet-stream): 200, 20268 bytes; download identical; sha256 72968f102c39b8d4… = DB = Digest; audit rows 1; fileName round-trips; Content-Disposition attachment; filename="_____ en __ synthetic.bin"; filename*=UTF-8''%D8%AA%D9%82%D8%B1%D9%8A%D8%B1%20en%20%F0%9F%A7%BE%20synthetic.bin
+QA-R9 [en] R9-02 case + parameter (Application/Octet-Stream; charset=binary): 200, 3256 bytes; download identical; sha256 e4e2af3f426194bc… = DB = Digest; audit rows 1; fileName round-trips; Content-Disposition attachment; filename="_____ en __ synthetic.bin"; filename*=UTF-8''%D8%AA%D9%82%D8%B1%D9%8A%D8%B1%20en%20%F0%9F%A7%BE%20synthetic.bin
+  ✓   46 [chromium-en] › e2e/dg2-qa-r9.spec.ts:256:1 › R9-02 raw socket: a valid binary upload stores the exact bytes; download bytes, sha256 and Digest match; audited (594ms)
+QA-R9 [en] R9-03 16 undeclared JSON-op requests: all 400 validation.content_type, no audit; charter version 1->1 (Synthetic start); transformations created 0
+QA-R9 [en] R9-03 accepted: "application/json; charset=UTF-8" -> 200, "APPLICATION/JSON" chunked -> 200
+  ✓   47 [chromium-en] › e2e/dg2-qa-r9.spec.ts:298:1 › R9-03 raw socket: JSON operations refuse undeclared media types (nothing written, no audit) and accept JSON with parameters (929ms)
+QA-R9 [en] R9-04 62 chunks cut mid-character: 201; title and note stored verbatim (50+73 bytes)
+  ✓   48 [chromium-en] › e2e/dg2-qa-r9.spec.ts:358:1 › R9-04 raw socket: Arabic/emoji/ZWJ/combining text sent chunked and cut mid-character round-trips verbatim (1.7s)
+QA-R9 [en] R9-06 logout + text/plain body -> 400 {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"Send the request body as application/json.","code":"validation","request; GET /me afterwards 200
+QA-R9 [en] R9-06 ["iso-8859-1 byte E9 -> 400 {\"type\":\"urn:mth:problem:validation\",\"title\":\"Validation failed\",\"status\":400,\"detail\":\"Send the request body as application/json.\",\"code\":\"","utf-16le body -> 400 {\"type\":\"urn:mth:problem:validation\",\"title\":\"Validation failed\",\"status\":400,\"detail\":\"Send the request body as application/json.\",\"code\":\""]
+  ✓   49 [chromium-en] › e2e/dg2-qa-r9.spec.ts:384:1 › R9-06 raw socket edges: a bodiless operation with an undeclared body; JSON declared with a non-UTF-8 charset (210ms)
+QA-R9 [en] R9-05a charter: alerts with the message 1; occurrences in page text 1; all alerts [" The request was not valid JSON."]
+  ✓   50 [chromium-en] › e2e/dg2-qa-r9.spec.ts:462:1 › R9-05a UI charter: invalid-UTF-8 body -> validation__json said once; nothing saved (2.2s)
+QA-R9 [en] R9-05b server answer 1: 400 [{"pointer":"/outOfScope","code":"validation.blank","message":"validation.blank"}]
+QA-R9 [en] R9-05b field message(s) "Enter some text; spaces alone are not a value."; form-errors list []; alerts [" Some values are not valid. Check the highlighted fields."]
+QA-R9 [en] R9-05b server answer 2: 400 [{"pointer":"","code":"validation.unknown_field","message":"Unrecognized key: \"qaUnknownProperty\""}]; banner [" The request contained an unknown field."]; form-errors []
+QA-R9 [en] R9-05b unknown_field (real server): alerts with the message 1; occurrences in page text 1; all alerts [" The request contained an unknown field."]
+QA-R9 [en] R9-05b distinct second message (fulfilled problem): banner [" The request was not valid JSON."]; form-errors list [" This value is too long or too large."]
+QA-R9 [en] R9-05b validation__json with a distinct second message: alerts with the message 1; occurrences in page text 1; all alerts [" This value is too long or too large."," The request was not valid JSON."]
+QA-R9 [en] R9-05b distinct second message: alerts with the message 1; occurrences in page text 1; all alerts [" This value is too long or too large."," The request was not valid JSON."]
+  ✓   51 [chromium-en] › e2e/dg2-qa-r9.spec.ts:494:1 › R9-05b UI charter: a field-pointer error stays on its field; a distinct unmapped message is still shown (4.4s)
+QA-R9 [en] R9-05c transformation create: alerts with the message 1; occurrences in page text 1; all alerts [" The request was not valid JSON."]
+  ✓   52 [chromium-en] › e2e/dg2-qa-r9.spec.ts:624:1 › R9-05c UI P1 transformation create: invalid-UTF-8 body -> said once; nothing created (1.7s)
+QA-R9 [en] R9-05d organization create: alerts with the message 1; occurrences in page text 1; all alerts ["The request was not valid JSON."]
+  ✓   53 [chromium-en] › e2e/dg2-qa-r9.spec.ts:654:1 › R9-05d UI P1 admin organization create: invalid-UTF-8 body -> said once; nothing created (1.8s)
+QA-R9 [en] R9-05e reason dialog: alerts with the message 1; occurrences in page text 1; all alerts ["The request was not valid JSON."]
+  ✓   54 [chromium-en] › e2e/dg2-qa-r9.spec.ts:686:1 › R9-05e UI ReasonDialog (archive value pool): invalid-UTF-8 body -> said once; nothing archived (2.8s)
+  ✓   55 [chromium-ar] › apps/web/e2e/journeys.spec.ts:187:1 › sign-in page: Arabic RTL by default, provisional wordmark, dev form in dev mode (1.0s)
+  ✓   56 [chromium-ar] › apps/web/e2e/journeys.spec.ts:213:1 › shell: navigation, language persistence and My Work (Transformation Office) (1.5s)
+  ✓   57 [chromium-ar] › apps/web/e2e/journeys.spec.ts:258:1 › create a modular transformation with an entry phase (4.2s)
+  ✓   58 [chromium-ar] › apps/web/e2e/journeys.spec.ts:332:1 › list: sort, filter chips, column selection and pagination controls (3.7s)
+  ✓   59 [chromium-ar] › apps/web/e2e/journeys.spec.ts:390:1 › edit: a concurrent change gives a 409 conflict with compare and re-apply (1.7s)
+  ✓   60 [chromium-ar] › apps/web/e2e/journeys.spec.ts:442:1 › archive with a mandatory reason makes the record read-only (2.1s)
+  ✓   61 [chromium-ar] › apps/web/e2e/journeys.spec.ts:477:1 › administration screens (access + technical administrator) (5.1s)
+  ✓   62 [chromium-ar] › apps/web/e2e/journeys.spec.ts:538:1 › a user without roles sees no Administration and no business records (1.4s)
+  ✓   63 [chromium-ar] › apps/web/e2e/journeys.spec.ts:560:1 › a business-unit Lead creates a record: Edit/Archive and the audit trail appear without a reload (F-DG1-210), the derived grant localized (F-DG1-008) (2.9s)
+  ✓   64 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:58:1 › setup: a fresh End-to-End transformation for the blank-text checks (51ms)
+  ✓   65 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:73:1 › Charter create: a whitespace Case for change is an inline error and creates no charter (2.2s)
+  ✓   66 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:113:1 › Charter edit: a whitespace Out of scope is an inline error, writes no version and keeps the value (3.1s)
+  ✓   67 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:163:1 › T01: a whitespace Current state is an inline error and sends nothing (2.4s)
+  ✓   68 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:265:1 › Gate G1 submission: a whitespace note is an inline error and submits nothing; visible text is verbatim (2.2s)
+  ✓   69 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:326:1 › Gate G1 decision: a whitespace rationale is an inline error and decides nothing (2.0s)
+  ✓   70 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:382:1 › Journey steps: a whitespace actor is an inline error and writes no journey version (2.6s)
+  ✓   71 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:425:1 › Reason dialog: an invisible-only archive reason is an inline error and archives nothing (2.9s)
+  ✓   72 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:461:1 › Charter create: a form-level validation problem (invalid UTF-8 body) is said once, in one live region (2.1s)
+  ✓   73 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:42:1 › lead creates an End-to-End transformation; the workspace tabs lead to the P2 screens (1.9s)
+  ✓   74 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:83:1 › Diagnose: six T01 dimensions with Unknown; value pools labelled Unquantified with a partial total (5.7s)
+  ✓   75 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:168:1 › Charter: create, save a second version, compare versions; the 3-5 top-outcomes warning (4.1s)
+  ✓   76 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:248:1 › Define: North Star, the good outcome test with reasons, and a required T02 target date (3.8s)
+  ✓   77 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:332:1 › Design: ten canvas boxes, the per-dimension view; workshop mode converts an unresolved item into T04 (4.7s)
+  ✓   78 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:414:1 › Evidence: note, filename reference and file upload; a link; review by another person (5.2s)
+  ✓   79 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:608:1 › Gates: G1 shows unverified evidence and offers no submission while incomplete; once complete it is submitted (4.1s)
+  ✓   80 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:675:1 › Gates: the approver's decision — 409 when the submission was superseded, then approval with a rationale (3.6s)
+  ✓   81 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:824:1 › Define → G2: activate a KPI, pass the good outcome test, add a guardrail, compose the thesis; G2 is decided (15.1s)
+  ✓   82 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:1027:1 › Design → G3: the target state is complete and G3 is decided by the Sponsor (4.1s)
+  ✓   83 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:1080:1 › Team: the six governance roles with their B0018 accountability; the lead assigns a Workstream Lead (4.1s)
+  ✓   84 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:1144:1 › read-only auditor (AUD): every P2 screen without write controls; Unknown and Unquantified rendered (10.3s)
+  ✓   85 [chromium-ar] › e2e/a20-bilingual-shell.spec.ts:117:3 › A20 bilingual shell › Arabic RTL by default; English LTR after the switch; persisted; switch back (1.1s)
+  ✓   86 [chromium-ar] › e2e/a20-bilingual-shell.spec.ts:182:3 › A20 design tokens reach the rendered CSS › seeded --mth-* colours and referencing surfaces equal the built token source (648ms)
+QA-R10 [ar] R10-01 1153 unmatched-route requests (3 paths x 4 methods x 12 bodies x 2 framings x session/anon x one-write/delayed-body + 1 declared 500 MB): all exactly one 404 not_found, problem+json, Connection: close; declared-500MB answered in 1 ms; audit_event rows 1340->1340; readyz 200; control GET /me 200
+  ✓   87 [chromium-ar] › e2e/dg2-qa-r10.spec.ts:206:1 › R10-01 raw socket: an unmatched route answers 404 not_found for every body, media type, framing and session (842ms)
+QA-R10 [ar] R10-02 ["\"application/octet-stream; x=1\" length -> 200 40266 B, sha256 b9bedab3ffa1… = DB = Digest, audit 1","\"application/octet-stream\\t; x=1\" length -> 200 9266 B, sha256 8f3a5afbc2e6… = DB = Digest, audit 1","\"application/octet-stream\\t; x=1\" split -> 200 30256 B, sha256 82429e1b8fa6… = DB = Digest, audit 1","\"application/octet-stream \\t;\\t x=\\\"quoted; value\\\"\" chunked -> 200 266 B, sha256 6bf3f8797363… = DB = Digest, audit 1","\"APPLICATION/Octet-Stream\\t;x=1;\\ty=2\" length -> 200 5000 B, sha256 98c6ce86c8af… = DB = Digest, audit 1"]
+  ✓   88 [chromium-ar] › e2e/dg2-qa-r10.spec.ts:250:1 › R10-02 raw socket: uploads with '; x=1' and HTAB before ';' are stored byte-exact; sha256 = DB = Digest; audited (762ms)
+QA-R10 [ar] R10-03 ["\"application/json\\t; charset=utf-8\" 57 chunks -> 201; title/note verbatim (API and DB)","\"application/json ;\\tcharset=\\\"UTF-8\\\"\" length -> 201; title/note verbatim (API and DB)","\"Application/JSON\\t;\\tCharset=Utf-8\" 57 chunks -> 201; title/note verbatim (API and DB)","\"application/json\\t\" length -> 201; title/note verbatim (API and DB)","PATCH charter HTAB spelling -> 200; version 1->2; outOfScope verbatim"]
+  ✓   89 [chromium-ar] › e2e/dg2-qa-r10.spec.ts:289:1 › R10-03 raw socket: 'application/json\t; charset=utf-8' is accepted; Arabic/emoji text cut mid-character round-trips verbatim (2.2s)
+QA-R10 [ar] R10-04 30 duplicate-Content-Type requests: all 400 validation.content_type naming the declared set, 0 audit rows each; transformations created 0; charter version 1->1 (Synthetic start); evidence version 1->1, currentContentId null, content rows 0, stored files 0
+  ✓   90 [chromium-ar] › e2e/dg2-qa-r10.spec.ts:339:1 › R10-04 raw socket: duplicate Content-Type lines are the declared 400 naming the declared set; nothing is written (1.5s)
+QA-R10 [ar] R10-05 36 non-UTF-8 JSON charset requests: all 400 validation.content_type naming application/json, 0 audit rows each; charter version 1->1 (Synthetic start); transformations created 0
+  ✓   91 [chromium-ar] › e2e/dg2-qa-r10.spec.ts:400:1 › R10-05 raw socket: a JSON charset other than UTF-8 is the declared 400 naming application/json; nothing is written (1.7s)
+QA-R10 [ar] R10-06 48 malformed/undeclared requests: JSON op always "Send the request body as application/json.", upload always "Send the request body as application/octet-stream."; notes created 0; upload content rows 0
+  ✓   92 [chromium-ar] › e2e/dg2-qa-r10.spec.ts:440:1 › R10-06 raw socket: every refusal names exactly the operation's declared set (JSON op vs octet-stream-only upload) (2.2s)
+QA-R8 [ar] R8-01 48 raw requests (8 shapes x 3 framings x 2 auth): all 400 problem+json validation.json at pointer ""
+  ✓   93 [chromium-ar] › e2e/dg2-qa-r8.spec.ts:171:1 › R8-01 raw socket: invalid UTF-8 JSON bodies are 400 validation.json for every framing, with and without a session (3.0s)
+QA-R8 [ar] R8-02 emoji via Content-Length: 201, stored verbatim (21 bytes)
+QA-R8 [ar] R8-02 emoji via 4 chunks cut mid-character: 201, stored verbatim (21 bytes)
+QA-R8 [ar] R8-02 arabic via Content-Length: 201, stored verbatim (30 bytes)
+QA-R8 [ar] R8-02 arabic via 15 chunks cut mid-character: 201, stored verbatim (30 bytes)
+QA-R8 [ar] R8-02 zwj family + skin tone via Content-Length: 201, stored verbatim (50 bytes)
+QA-R8 [ar] R8-02 zwj family + skin tone via 34 chunks cut mid-character: 201, stored verbatim (50 bytes)
+QA-R8 [ar] R8-02 decomposed e + U+0301 (no NFC) via Content-Length: 201, stored verbatim (18 bytes)
+QA-R8 [ar] R8-02 decomposed e + U+0301 (no NFC) via 3 chunks cut mid-character: 201, stored verbatim (18 bytes)
+  ✓   94 [chromium-ar] › e2e/dg2-qa-r8.spec.ts:198:1 › R8-02 raw socket: valid multi-byte text split mid-character across chunks round-trips byte for byte (2.3s)
+QA-R8 [ar] R8-03 104 query probes: all 400 validation.format at /query/<name>
+QA-R8 [ar] R8-03 unauthenticated ?q=%FF -> 401; Arabic and emoji ?q= -> 200 and the record is found with its exact name
+  ✓   95 [chromium-ar] › e2e/dg2-qa-r8.spec.ts:225:1 › R8-03 query sweep: undecodable percent sequences in any query parameter are 400 validation.format (703ms)
+QA-R8 [ar] R8-04 value set via fill; POST 201; API and the reloaded page show the exact 50 code points
+  ✓   96 [chromium-ar] › e2e/dg2-qa-r8.spec.ts:300:1 › R8-04 UI: Arabic, emoji, RLM and combining marks in the charter round-trip verbatim (2.3s)
+QA-R8 [ar] R8-05 server 400 [{"pointer":"","code":"validation.json","message":"The request body is not valid UTF-8 JSON."}] shown as "الطلب ليس بصيغة JSON صالحة."
+  ✓   97 [chromium-ar] › e2e/dg2-qa-r8.spec.ts:337:1 › R8-05 UI -> real server: an invalid UTF-8 body is refused with the localized validation__json message (2.0s)
+QA-R8 [ar] R8-06 search requests ["200 ?sort=updatedAt%3Adesc&limit=25","200 ?sort=updatedAt%3Adesc&limit=25&q=%D9%82%D8%A7%D8%A6%D9%85%D8%A9"]
+QA-R8 [ar] R8-06 deep link /transformations?q=%FF: document 200 text/html; charset=utf-8; API ["200 ?sort=updatedAt%3Adesc&limit=25&q=%F0%9F%A7%AD","200 ?sort=updatedAt%3Adesc&limit=25&q=%EF%BF%BD"]
+  ✓   98 [chromium-ar] › e2e/dg2-qa-r8.spec.ts:390:1 › R8-06 UI: Arabic/emoji search finds the record; a deep link with ?q=%FF never yields a 5xx (2.9s)
+QA-R9 [ar] R9-01 18 undeclared-media-type uploads (9 types x 2 framings): all 400 validation.content_type at pointer "", 0 audit rows each; no session -> 400 [{"pointer":"","code":"validation.content_type","message":"Send the request body as application/octet-stream."}]; evidence version 1->1, currentContentId null, download 404, evidence_content rows 0, stored files 0
+  ✓   99 [chromium-ar] › e2e/dg2-qa-r9.spec.ts:212:1 › R9-01 raw socket: an evidence upload in an undeclared media type is 400 validation.content_type; nothing stored, no audit row (911ms)
+QA-R9 [ar] R9-02 content-length (application/octet-stream): 200, 65804 bytes; download identical; sha256 f49dd5a86255534d… = DB = Digest; audit rows 1; fileName round-trips; Content-Disposition attachment; filename="_____ ar __ synthetic.bin"; filename*=UTF-8''%D8%AA%D9%82%D8%B1%D9%8A%D8%B1%20ar%20%F0%9F%A7%BE%20synthetic.bin
+QA-R9 [ar] R9-02 chunked split (application/octet-stream): 200, 20268 bytes; download identical; sha256 79538560332cd2b2… = DB = Digest; audit rows 1; fileName round-trips; Content-Disposition attachment; filename="_____ ar __ synthetic.bin"; filename*=UTF-8''%D8%AA%D9%82%D8%B1%D9%8A%D8%B1%20ar%20%F0%9F%A7%BE%20synthetic.bin
+QA-R9 [ar] R9-02 case + parameter (Application/Octet-Stream; charset=binary): 200, 3256 bytes; download identical; sha256 370bad009fb145c9… = DB = Digest; audit rows 1; fileName round-trips; Content-Disposition attachment; filename="_____ ar __ synthetic.bin"; filename*=UTF-8''%D8%AA%D9%82%D8%B1%D9%8A%D8%B1%20ar%20%F0%9F%A7%BE%20synthetic.bin
+  ✓  100 [chromium-ar] › e2e/dg2-qa-r9.spec.ts:256:1 › R9-02 raw socket: a valid binary upload stores the exact bytes; download bytes, sha256 and Digest match; audited (597ms)
+QA-R9 [ar] R9-03 16 undeclared JSON-op requests: all 400 validation.content_type, no audit; charter version 1->1 (Synthetic start); transformations created 0
+QA-R9 [ar] R9-03 accepted: "application/json; charset=UTF-8" -> 200, "APPLICATION/JSON" chunked -> 200
+  ✓  101 [chromium-ar] › e2e/dg2-qa-r9.spec.ts:298:1 › R9-03 raw socket: JSON operations refuse undeclared media types (nothing written, no audit) and accept JSON with parameters (840ms)
+QA-R9 [ar] R9-04 62 chunks cut mid-character: 201; title and note stored verbatim (50+73 bytes)
+  ✓  102 [chromium-ar] › e2e/dg2-qa-r9.spec.ts:358:1 › R9-04 raw socket: Arabic/emoji/ZWJ/combining text sent chunked and cut mid-character round-trips verbatim (1.6s)
+QA-R9 [ar] R9-06 logout + text/plain body -> 400 {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"Send the request body as application/json.","code":"validation","request; GET /me afterwards 200
+QA-R9 [ar] R9-06 ["iso-8859-1 byte E9 -> 400 {\"type\":\"urn:mth:problem:validation\",\"title\":\"Validation failed\",\"status\":400,\"detail\":\"Send the request body as application/json.\",\"code\":\"","utf-16le body -> 400 {\"type\":\"urn:mth:problem:validation\",\"title\":\"Validation failed\",\"status\":400,\"detail\":\"Send the request body as application/json.\",\"code\":\""]
+  ✓  103 [chromium-ar] › e2e/dg2-qa-r9.spec.ts:384:1 › R9-06 raw socket edges: a bodiless operation with an undeclared body; JSON declared with a non-UTF-8 charset (224ms)
+QA-R9 [ar] R9-05a charter: alerts with the message 1; occurrences in page text 1; all alerts [" الطلب ليس بصيغة JSON صالحة."]
+  ✓  104 [chromium-ar] › e2e/dg2-qa-r9.spec.ts:462:1 › R9-05a UI charter: invalid-UTF-8 body -> validation__json said once; nothing saved (2.0s)
+QA-R9 [ar] R9-05b server answer 1: 400 [{"pointer":"/outOfScope","code":"validation.blank","message":"validation.blank"}]
+QA-R9 [ar] R9-05b field message(s) "أدخِل نصاً؛ المسافات وحدها ليست قيمة."; form-errors list []; alerts [" بعض القيم غير صالحة. راجع الحقول المميّزة."]
+QA-R9 [ar] R9-05b server answer 2: 400 [{"pointer":"","code":"validation.unknown_field","message":"Unrecognized key: \"qaUnknownProperty\""}]; banner [" احتوى الطلب على حقل غير معروف."]; form-errors []
+QA-R9 [ar] R9-05b unknown_field (real server): alerts with the message 1; occurrences in page text 1; all alerts [" احتوى الطلب على حقل غير معروف."]
+QA-R9 [ar] R9-05b distinct second message (fulfilled problem): banner [" الطلب ليس بصيغة JSON صالحة."]; form-errors list [" هذه القيمة طويلة أو كبيرة جدًا."]
+QA-R9 [ar] R9-05b validation__json with a distinct second message: alerts with the message 1; occurrences in page text 1; all alerts [" هذه القيمة طويلة أو كبيرة جدًا."," الطلب ليس بصيغة JSON صالحة."]
+QA-R9 [ar] R9-05b distinct second message: alerts with the message 1; occurrences in page text 1; all alerts [" هذه القيمة طويلة أو كبيرة جدًا."," الطلب ليس بصيغة JSON صالحة."]
+  ✓  105 [chromium-ar] › e2e/dg2-qa-r9.spec.ts:494:1 › R9-05b UI charter: a field-pointer error stays on its field; a distinct unmapped message is still shown (4.0s)
+QA-R9 [ar] R9-05c transformation create: alerts with the message 1; occurrences in page text 1; all alerts [" الطلب ليس بصيغة JSON صالحة."]
+  ✓  106 [chromium-ar] › e2e/dg2-qa-r9.spec.ts:624:1 › R9-05c UI P1 transformation create: invalid-UTF-8 body -> said once; nothing created (1.7s)
+QA-R9 [ar] R9-05d organization create: alerts with the message 1; occurrences in page text 1; all alerts ["الطلب ليس بصيغة JSON صالحة."]
+  ✓  107 [chromium-ar] › e2e/dg2-qa-r9.spec.ts:654:1 › R9-05d UI P1 admin organization create: invalid-UTF-8 body -> said once; nothing created (1.7s)
+QA-R9 [ar] R9-05e reason dialog: alerts with the message 1; occurrences in page text 1; all alerts ["الطلب ليس بصيغة JSON صالحة."]
+  ✓  108 [chromium-ar] › e2e/dg2-qa-r9.spec.ts:686:1 › R9-05e UI ReasonDialog (archive value pool): invalid-UTF-8 body -> said once; nothing archived (2.9s)
+
+  108 passed (5.2m)
+exit 0

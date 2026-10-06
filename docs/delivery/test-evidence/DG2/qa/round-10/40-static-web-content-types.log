@@ -1,0 +1,8 @@
+$ grep -rn "content-type\|Content-Type\|contentType:" apps/web/src (non-test)   # clone @68fe339
+apps/web/src/api/client.ts:106:  if (options.body !== undefined) headers["Content-Type"] = "application/json";
+apps/web/src/api/client.ts:107:  else if (options.rawBody !== undefined) headers["Content-Type"] = options.contentType ?? "application/octet-stream";
+apps/web/src/test/fixtures.tsx:179:          headers: { "Content-Type": isProblem ? "application/problem+json" : "application/json", ...res.headers },
+apps/web/src/test/fixtures.tsx:191:      { status: 404, headers: { "Content-Type": "application/problem+json" } },
+apps/web/src/pages/evidence/EvidencePage.tsx:383:        contentType: "application/octet-stream",
+exit 0
+# the web client sends only "application/json" (no charset) for JSON bodies and "application/octet-stream" for the one raw upload (EvidencePage.tsx:383, the only contentType caller); fixtures.tsx is test-only. None of the D-070 tightenings (duplicate lines, non-UTF-8 charset, malformed parameters) can be triggered by the shipped client.

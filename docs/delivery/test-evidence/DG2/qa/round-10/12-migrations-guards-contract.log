@@ -1,0 +1,116 @@
+# clone @68fe339; what the assigned files assert (static read) + their result lines in integration-unset-run1.log / integration-cutf8-run1.log
+$ ls packages/db/migrations/*.sql
+0001_identity_access.sql
+0002_transformation.sql
+0003_audit_event.sql
+0004_outbox_jobs.sql
+0005_seed_roles_permissions.sql
+0006_pgboss_schema_v25.sql
+0007_oidc_login_browser_binding.sql
+0008_scoped_assignment_derived_from.sql
+0009_business_unit_hierarchy_guard.sql
+0010_p2_record_guards.sql
+0011_p2_methodology_catalogue.sql
+0012_p2_evidence.sql
+0013_p2_direction_charter.sql
+0014_p2_kpi_baseline_value_pool.sql
+0015_p2_diagnose.sql
+0016_p2_design_tom.sql
+0017_p2_decisions_gates.sql
+0018_p2_access_instantiation.sql
+0019_evidence_review_separation.sql
+$ grep -n "toHaveLength(161)" apps/api/test/integration/contract/contract.test.ts
+559:      expect(checked).toHaveLength(161);
+578:    expect(operations).toHaveLength(161);
+$ grep -n "listMigrationFiles" packages/db/test/integration/migrate.test.ts
+9:  listMigrationFiles,
+37:    return await migrationStatus(c, listMigrationFiles(dir));
+58:    expect(applied).toEqual(listMigrationFiles().map((f) => f.name));
+74:      listMigrationFiles().map((f) => [f.id, f.name, f.sha256, "mth_owner"]),
+$ grep -E 'migrate.test.ts|protection.test.ts|contract.test.ts' integration/integration-unset-run1.log
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > route coverage > maps every governed Fastify route to an OpenAPI operation with the same method, and back 1ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > route coverage > declares access on every governed route (public or a permission) 2ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > health 7ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > auth + me 88ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > organizations and business units 98ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > users, roles, permissions and assignments 98ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > transformations and audit 124ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > branding tokens (getBrandingTokens): authenticated-only, provisional provenance, contra
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > kpi module operations (P2; kpi-exercises.ts, owned by kpi-benefits-engineer) 561ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > P2 backend operations (p2-exercises.ts): every routed operation exercised with a succes
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > every GET operation with a path parameter: a malformed id is a declared 400 at /params/
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > the contract: every operation but the OIDC callback declares 400 (ADR-0007 §5a) 0ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > every operation but the OIDC callback: U+0000 in the query is a declared 400 invalid_ch
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > the contract: every route accepts exactly the request media types its operation declare
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > every operation: an undeclared request media type is a declared 400 validation.content_
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > the contract: every operation declares each platform status derived from its route (ADR
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > every operation: the rate limiter's 429 is a declared RateLimited problem (live, limits
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > covers every operation with at least one success and every successful body with its zod
+ ✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > lets mth_app INSERT and SELECT 1ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > rejects UPDATE by mth_app (no privilege) 1ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > rejects DELETE by mth_app (no privilege) 8ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > rejects TRUNCATE by mth_app 5ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > rejects UPDATE even by the owner (trigger audit_event_immutable) 17ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > rejects DELETE even by the owner (trigger audit_event_immutable) 11ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > rejects TRUNCATE even by the owner (trigger audit_event_immutable) 6ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > enforces the version step and the user-actor rule 10ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > rejects ADM_TECH + gate.decide and + finance.validate, even for
+ ✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > rejects ADM_ACCESS + gate.decide and + finance.validate, even f
+ ✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > rejects ADM_METHOD + gate.decide and + finance.validate, even f
+ ✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > rejects re-classifying an approver role as technical_admin 7ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > rejects re-classifying a permission held by a technical admin a
+ ✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > still allows approval permissions on business roles (positive c
+ ✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > gives mth_app no way to write role_permission at all 6ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > seeded catalogue equals permissions.ts > permissions 10ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > seeded catalogue equals permissions.ts > roles and their permissions 2ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > applies every shipped migration, then reports up to date 314ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > is idempotent on an up-to-date database 8ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > records id, name, sha256, applied_at and applied_by = mth_owner 6ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > refuses to run when an applied file changed on disk 22ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > refuses to run when the database has a migration the build does not ship 18ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > applies a new forward migration atomically: a failing file leaves no trace 18ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate guards > refuses to run as the app role (objects must be owned by mth_owner) 37ms
+$ grep -E 'migrate.test.ts|protection.test.ts|contract.test.ts' integration/integration-cutf8-run1.log
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > route coverage > maps every governed Fastify route to an OpenAPI operation with the same method, and back 4ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > route coverage > declares access on every governed route (public or a permission) 6ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > health 18ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > auth + me 200ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > organizations and business units 141ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > users, roles, permissions and assignments 143ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > transformations and audit 164ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > branding tokens (getBrandingTokens): authenticated-only, provisional provenance, contra
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > kpi module operations (P2; kpi-exercises.ts, owned by kpi-benefits-engineer) 715ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > P2 backend operations (p2-exercises.ts): every routed operation exercised with a succes
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > every GET operation with a path parameter: a malformed id is a declared 400 at /params/
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > the contract: every operation but the OIDC callback declares 400 (ADR-0007 §5a) 0ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > every operation but the OIDC callback: U+0000 in the query is a declared 400 invalid_ch
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > the contract: every route accepts exactly the request media types its operation declare
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > every operation: an undeclared request media type is a declared 400 validation.content_
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > the contract: every operation declares each platform status derived from its route (ADR
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > every operation: the rate limiter's 429 is a declared RateLimited problem (live, limits
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > covers every operation with at least one success and every successful body with its zod
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > applies every shipped migration, then reports up to date 360ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > is idempotent on an up-to-date database 8ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > records id, name, sha256, applied_at and applied_by = mth_owner 8ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > refuses to run when an applied file changed on disk 20ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > refuses to run when the database has a migration the build does not ship 19ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > applies a new forward migration atomically: a failing file leaves no trace 20ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate guards > refuses to run as the app role (objects must be owned by mth_owner) 95ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > lets mth_app INSERT and SELECT 1ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > rejects UPDATE by mth_app (no privilege) 1ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > rejects DELETE by mth_app (no privilege) 4ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > rejects TRUNCATE by mth_app 3ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > rejects UPDATE even by the owner (trigger audit_event_immutable) 8ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > rejects DELETE even by the owner (trigger audit_event_immutable) 5ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > rejects TRUNCATE even by the owner (trigger audit_event_immutable) 5ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > enforces the version step and the user-actor rule 8ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > rejects ADM_TECH + gate.decide and + finance.validate, even for
+ ✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > rejects ADM_ACCESS + gate.decide and + finance.validate, even f
+ ✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > rejects ADM_METHOD + gate.decide and + finance.validate, even f
+ ✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > rejects re-classifying an approver role as technical_admin 5ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > rejects re-classifying a permission held by a technical admin a
+ ✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > still allows approval permissions on business roles (positive c
+ ✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > gives mth_app no way to write role_permission at all 7ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > seeded catalogue equals permissions.ts > permissions 8ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts > seeded catalogue equals permissions.ts > roles and their permissions 2ms
+exit 0
