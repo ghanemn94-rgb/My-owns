@@ -820,7 +820,7 @@
       "id": "DG2",
       "stage": "P2",
       "name": "Diagnose define and design",
-      "state": "FIXING",
+      "state": "REVIEWING",
       "depends_on": [
         "DG1"
       ],
@@ -839,10 +839,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:bb3e75811631cbabef8f807972f36396e0be2cf7b1d1b1281fa2fdf16f52eb1f",
-        "source_commit": "51a692b1d6ec0edfde3f9e85d75b1571dc1932ee",
-        "frozen_at": "2026-10-06T11:46:13Z",
-        "manifest_path": "docs/delivery/candidates/DG2/bb3e75811631cbab.manifest.json"
+        "candidate_id": "sha256:ede1a9362bb276ce620e440bf9f6a599f6695d395b8e495eaefec30107b016de",
+        "source_commit": "904394835a128bd992b4316521b772abec1ef867",
+        "frozen_at": "2026-10-06T14:39:01Z",
+        "manifest_path": "docs/delivery/candidates/DG2/ede1a9362bb276ce.manifest.json"
       },
       "review_rounds": [
         {
@@ -915,6 +915,18 @@
             "qa-verifier": "docs/delivery/reviews/DG2/round-6/qa-verifier.json"
           },
           "note": "DG2 gate review round 6 on candidate bb3e7581 (528 files, source 51a692b). The round-5 findings are FIXED_PENDING_VERIFICATION: F-DG2-230 (two placeholder characters added to the visible-content predicate) and F-DG2-231 (U+0000 refused centrally with 400 validation.invalid_character; SQLSTATE 22021/22P05 mapped to 400). D-066 also covers a contract amendment: 41 operations now declare the 400 the server can return, still 161 operations, and path-param pointers name the parameter. The other 19 DG2 findings are CLOSED_VERIFIED. Orchestrator pre-review verification in both locale settings: all steps exit 0 (unit 656/656, integration 507/507, e2e 58). Id ranges are disjoint: code-security 260-269, domain 270-279, qa 280-289."
+        },
+        {
+          "round": 7,
+          "candidate_id": "sha256:ede1a9362bb276ce620e440bf9f6a599f6695d395b8e495eaefec30107b016de",
+          "frozen_at": "2026-10-06T14:39:01Z",
+          "source_commit": "904394835a128bd992b4316521b772abec1ef867",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG2/round-7/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG2/round-7/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG2/round-7/qa-verifier.json"
+          },
+          "note": "DG2 gate review round 7 on candidate ede1a936 (532 files, source 9043948). F-DG2-260 is FIXED_PENDING_VERIFICATION: lone UTF-16 surrogates are now refused under the same invalid-character rule as NUL, and the OIDC callback answers its declared 302 token_invalid with an audit row. D-067 also makes router- and connection-level errors answer the declared problem+json 400. The other 21 DG2 findings are CLOSED_VERIFIED. Orchestrator pre-review verification in both locale settings: all steps exit 0 (unit 673/673, integration 531/531, e2e 58). One earlier unreproduced integration setup failure is recorded in D-067. Disjoint id ranges: code-security 290-299, domain 300-309, qa 310-319."
         }
       ],
       "gate_record": "docs/delivery/gates/DG2.json",
@@ -988,6 +1000,11 @@
           "state": "FIXING",
           "at": "2026-10-06T12:40:00Z",
           "note": "Round 6 on candidate bb3e7581: all three verdicts PASS. code-security closed F-DG2-230 and F-DG2-231, domain raised no findings (21 checks), and qa raised no findings (30 checks, both locale settings). One new Low, non-mandatory finding from code-security: F-DG2-260. A lone UTF-16 surrogate in the ID token sub gives the OIDC callback an undeclared 400 instead of its declared 302 and leaves no audit row. Integrity holds. 21 findings CLOSED_VERIFIED, 1 OPEN. Round-7 repair: backend-workflow-engineer T-DG2-BE11 makes hasInvalidCharacter cover lone surrogates (/\\p{Cs}/u), which flows through the central check, the shared schemas and identityClaimsStorable (302 token_invalid plus audit). Then re-freeze and round 7."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-10-06T15:05:00Z",
+          "note": "Round-7 repairs integrated (D-067): BE11 (F-260, lone surrogates refused like NUL; code-point-safe truncation) and BE12 (router- and connection-level errors answer the declared problem+json 400 with the security headers). 21 findings CLOSED_VERIFIED, 1 FIXED_PENDING_VERIFICATION, 0 OPEN. Orchestrator verification green in both locale settings, on the second full run. Candidate frozen as ede1a936 for gate review round 7."
         }
       ]
     },
