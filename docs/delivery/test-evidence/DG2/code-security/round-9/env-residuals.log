@@ -1,0 +1,44 @@
+# REQ-DLV-042 AC-1 / D-057 (live registry): offline frozen install from a scratch copy of the host store
+# command: pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pstore/v10   (commit 041478cb50d4a54352ab655aa8a45d219c5a7b42, node v22.22.2, pnpm 10.33.0)
+Already up to date
+
+Done in 848ms using pnpm v10.33.0
+# exit_status: 0
+
+# REQ-DLV-025 A24 / D-058 (live CI): workflow config surface
+# command: grep -nE 'run: pnpm|image:|uses:' .github/workflows/ci.yml; cmp .github/workflows/ci.yml deploy/ci/ci.yml
+31:      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (same pin as delivery-gates.yml)
+34:      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0 (same pin as delivery-gates.yml)
+48:      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+49:      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+62:      - run: pnpm format:check
+63:      - run: pnpm lint
+64:      - run: pnpm typecheck
+65:      - run: pnpm build
+66:      - run: pnpm test
+67:      - run: pnpm openapi:lint
+68:      - run: pnpm check:no-cdn
+75:        image: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722 # devops-engineer: pin by digest (ADR-0003/ADR-0011)
+86:      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+87:      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+100:      - run: pnpm -r build
+101:      - run: pnpm test:integration
+108:      image: mcr.microsoft.com/playwright:v1.56.1-noble@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a # devops-engineer: pin by digest
+117:        image: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722 # devops-engineer: pin by digest
+128:      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+135:      - run: pnpm -r build
+142:      - run: pnpm e2e --workers=1
+144:        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2 - devops-engineer: re-verify pin
+158:      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+159:      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+199:        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2 - same pin as e2e; re-verify
+ci.yml copies identical
+# exit_status: 0
+
+# D-049 (Keycloak): config surface
+# command: ls deploy/keycloak; node -e (realm parse)
+realm-mth-test.json
+realm mth-test clients 1
+# exit_status: 0
+
+Residuals (not BLOCKED gate checks, per D-057/D-058/D-049): no live package registry, no GitHub Actions runner and no Keycloak server are reachable from this sandbox; the offline/config surfaces above were checked instead.

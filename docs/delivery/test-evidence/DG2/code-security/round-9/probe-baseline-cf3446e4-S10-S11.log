@@ -1,0 +1,79 @@
+# command: with-pg.sh 29883 pnpm vitest run --project integration --reporter=verbose apps/api/test/integration/zz-sec-r9-probe.test.ts -t S1[01]   (baseline: round-8 candidate cf3446e4, S10/S11 only)
+# node: v22.22.2  commit: cf3446e4daafe17a24a4707c9415580f15d2ed25  LANG=<unset> LC_ALL=<unset>  started: 2026-10-06T21:06:05Z
+[with-pg initdb] The database cluster will be initialized with locale "C".
+[with-pg initdb] The default database encoding has accordingly been set to "SQL_ASCII".
+[with-pg] cluster template1 encoding SQL_ASCII, collate C
+
+ RUN  v3.2.4 /var/tmp/mth-run.4nU2jy/claude-0/probe-r8base
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mux64u7b_cf6b7ff8 (server_encoding UTF8); applied 19 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-r9-probe.test.ts > S10 an unmatched route answers 404 whatever the media type (incl. application/octet-stream) > POST/PUT/DELETE to unmatched URLs with application/octet-stream -> 404, like text/plain and JSON
+PROBE S10: {"out":[{"method":"POST","url":"/api/v1/does-not-exist","ct":"text/plain","auth":false,"status":400,"code":"validation.malformed_request","detail":"The request body does not match its Content-Length."},{"method":"POST","url":"/api/v1/does-not-exist","ct":"text/plain","auth":true,"status":400,"code":"validation.malformed_request","detail":"The request body does not match its Content-Length."},{"method":"POST","url":"/api/v1/does-not-exist","ct":"application/json","auth":false,"status":404,"code":"not_found"},{"method":"POST","url":"/api/v1/does-not-exist","ct":"application/json","auth":true,"status":404,"code":"not_found"},{"method":"POST","url":"/api/v1/does-not-exist","ct":"application/octet-stream","auth":false,"status":404,"code":"not_found"},{"method":"POST","url":"/api/v1/does-not-exist","ct":"application/octet-stream","auth":true,"status":404,"code":"not_found"},{"method":"POST","url":"/does-not-exist","ct":"text/plain","auth":false,"status":400,"code":"validation.malformed_request","detail":"The request body does not match its Content-Length."},{"method":"POST","url":"/does-not-exist","ct":"text/plain","auth":true,"status":400,"code":"validation.malformed_request","detail":"The request body does not match its Content-Length."},{"method":"POST","url":"/does-not-exist","ct":"application/json","auth":false,"status":404,"code":"not_found"},{"method":"POST","url":"/does-not-exist","ct":"application/json","auth":true,"status":404,"code":"not_found"},{"method":"POST","url":"/does-not-exist","ct":"application/octet-stream","auth":false,"status":404,"code":"not_found"},{"method":"POST","url":"/does-not-exist","ct":"application/octet-stream","auth":true,"status":404,"code":"not_found"},{"method":"PUT","url":"/api/v1/transformations/{tid}/evidence","ct":"text/plain","auth":false,"status":400,"code":"validation.malformed_request","detail":"The request body does not match its Content-Length."},{"method":"PUT","url":"/api/v1/transformations/{tid}/evidence","ct":"text/plain","auth":true,"status":400,"code":"validation.malformed_request","detail":"The request body does not match its Content-Length."},{"method":"PUT","url":"/api/v1/transformations/{tid}/evidence","ct":"application/json","auth":false,"status":404,"code":"not_found"},{"method":"PUT","url":"/api/v1/transformations/{tid}/evidence","ct":"application/json","auth":true,"status":404,"code":"not_found"},{"method":"PUT","url":"/api/v1/transformations/{tid}/evidence","ct":"application/octet-stream","auth":false,"status":404,"code":"not_found"},{"method":"PUT","url":"/api/v1/transformations/{tid}/evidence","ct":"application/octet-stream","auth":true,"status":404,"code":"not_found"},{"method":"DELETE","url":"/api/v1/transformations/{tid}/evidence","ct":"text/plain","auth":false,"status":400,"code":"validation.malformed_request","detail":"The request body does not match its Content-Length."},{"method":"DELETE","url":"/api/v1/transformations/{tid}/evidence","ct":"text/plain","auth":true,"status":400,"code":"validation.malformed_request","detail":"The request body does not match its Content-Length."},{"method":"DELETE","url":"/api/v1/transformations/{tid}/evidence","ct":"application/json","auth":false,"status":404,"code":"not_found"},{"method":"DELETE","url":"/api/v1/transformations/{tid}/evidence","ct":"application/json","auth":true,"status":404,"code":"not_found"},{"method":"DELETE","url":"/api/v1/transformations/{tid}/evidence","ct":"application/octet-stream","auth":false,"status":404,"code":"not_found"},{"method":"DELETE","url":"/api/v1/transformations/{tid}/evidence","ct":"application/octet-stream","auth":true,"status":404,"code":"not_found"}]}
+
+ ↓ |integration| apps/api/test/integration/zz-sec-r9-probe.test.ts > S1 uploadEvidenceContent: Content-Type case / parameter / whitespace / list variants > accepted only as octet-stream and stored byte-exact; everything else a declared 400; never 500
+ ↓ |integration| apps/api/test/integration/zz-sec-r9-probe.test.ts > S2 createEvidence (JSON only): Content-Type variants > only application/json (any case/params) is parsed; +json / text/json / lists are a declared 400
+ ↓ |integration| apps/api/test/integration/zz-sec-r9-probe.test.ts > S3 duplicate Content-Type headers on a real socket > the media type checked is the one the parser uses; text/plain + octet in either order never stores rewritten bytes
+ ↓ |integration| apps/api/test/integration/zz-sec-r9-probe.test.ts > S4 absent Content-Type with a body; the two bodiless POST operations > JSON op with no Content-Type and a body (both framings) -> 400; logout/activate keep declared statuses
+ ↓ |integration| apps/api/test/integration/zz-sec-r9-probe.test.ts > S5 methods without a declared operation, carrying a body > DELETE/OPTIONS/PUT with undeclared media types on existing paths -> 404 (not 400, not 500), nothing stored
+ ↓ |integration| apps/api/test/integration/zz-sec-r9-probe.test.ts > S6 GET/HEAD with a body and an undeclared Content-Type (D-069 design choice a) > the body is never read or acted upon; the response is the normal declared one
+ ↓ |integration| apps/api/test/integration/zz-sec-r9-probe.test.ts > S7 rate limiting still applies to refused media types (onRequest before preParsing) > with a 3/min limit, the 4th+ text/plain POST is a 429, not a 400
+ ↓ |integration| apps/api/test/integration/zz-sec-r9-probe.test.ts > S8 the round-8 F-DG2-320 repro on a real socket (chunked text/plain, no session and with a session) > 400 validation.content_type, nothing stored; control octet-stream stores the exact bytes
+ ↓ |integration| apps/api/test/integration/zz-sec-r9-probe.test.ts > S9 no U+FFFD anywhere in stored evidence names / audit changes after all probes > 0 rows
+ × |integration| apps/api/test/integration/zz-sec-r9-probe.test.ts > S10 an unmatched route answers 404 whatever the media type (incl. application/octet-stream) > POST/PUT/DELETE to unmatched URLs with application/octet-stream -> 404, like text/plain and JSON 36ms
+   → expected [ 'POST', …(4) ] to deeply equal [ 'POST', …(4) ]
+stdout | apps/api/test/integration/zz-sec-r9-probe.test.ts > S11 every refusal on uploadEvidenceContent names the media type the operation declares > a Content-Type whose essence is octet-stream but which Fastify cannot match (tab before ';') -> detail names octet-stream
+PROBE S11: {"status":400,"code":"validation.content_type","detail":"Send the request body as application/json.","declared":true,"stored":null}
+
+ × |integration| apps/api/test/integration/zz-sec-r9-probe.test.ts > S11 every refusal on uploadEvidenceContent names the media type the operation declares > a Content-Type whose essence is octet-stream but which Fastify cannot match (tab before ';') -> detail names octet-stream 79ms
+   → expected 'Send the request body as application/…' to be 'Send the request body as application/…' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r9-probe.test.ts > S10 an unmatched route answers 404 whatever the media type (incl. application/octet-stream) > POST/PUT/DELETE to unmatched URLs with application/octet-stream -> 404, like text/plain and JSON
+AssertionError: expected [ 'POST', …(4) ] to deeply equal [ 'POST', …(4) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "POST",[22m
+[2m    "/api/v1/does-not-exist",[22m
+[2m    "text/plain",[22m
+[2m    false,[22m
+[32m-   404,[39m
+[31m+   400,[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/zz-sec-r9-probe.test.ts:372:76
+    370|     }
+    371|     log("S10", { out });
+    372|     for (const o of out) expect([o.method, o.url, o.ct, o.auth, o.stat…
+       |                                                                            ^
+    373|   });
+    374| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r9-probe.test.ts > S11 every refusal on uploadEvidenceContent names the media type the operation declares > a Content-Type whose essence is octet-stream but which Fastify cannot match (tab before ';') -> detail names octet-stream
+AssertionError: expected 'Send the request body as application/…' to be 'Send the request body as application/…' // Object.is equality
+
+Expected: [32m"Send the request body as application/[7moctet-stream[27m."[39m
+Received: [31m"Send the request body as application/[7mjson[27m."[39m
+
+ ❯ apps/api/test/integration/zz-sec-r9-probe.test.ts:383:22
+    381|     log("S11", { status: r.status, code: r.code, detail: r.detail, dec…
+    382|     expect([r.status, r.code, r.declared]).toEqual([400, "validation.c…
+    383|     expect(r.detail).toBe("Send the request body as application/octet-…
+       |                      ^
+    384|   });
+    385| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 9 skipped (11)
+   Start at  21:06:07
+   Duration  4.13s (transform 980ms, setup 0ms, collect 2.29s, tests 561ms, environment 0ms, prepare 85ms)
+
+# exit_status: 1  finished: 2026-10-06T21:06:11Z

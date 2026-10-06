@@ -1,0 +1,40 @@
+# command: per-file pass/fail counts from the two integration logs (grep of vitest verbose lines)
+integration-run1-lang-unset.log contract/contract.test.ts pass=18 fail=0
+integration-run1-lang-unset.log media-types.test.ts pass=10 fail=0
+integration-run1-lang-unset.log blank-text.test.ts pass=29 fail=0
+integration-run1-lang-unset.log oidc.test.ts pass=33 fail=0
+integration-run1-lang-unset.log invalid-character.test.ts pass=20 fail=0
+integration-run1-lang-unset.log framework-errors.test.ts pass=11 fail=0
+integration-run1-lang-unset.log invalid-utf8.test.ts pass=14 fail=0
+integration-run1-lang-unset.log encoding.test.ts pass=8 fail=0
+integration-run1-lang-unset.log evidence.test.ts pass=6 fail=0
+integration-run1-lang-unset.log dg2-repairs.test.ts pass=13 fail=0
+integration-run1-lang-unset.log aud-write-deny.test.ts pass=128 fail=0
+integration-run1-lang-unset.log 161-operations: 0 lines mention 161; sample:
+integration-run1-lang-unset.log migrations:
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mux5wgzk_b93b2aeb (server_encoding UTF8); applied 19 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/kpi/kpi-resources.test.ts > value-pools (REQ-PB-028, ADR-0019) > defaults to unquantified with null amounts (never 0) and the transformation currency (SAR) 24ms
+ ✓ |integration| apps/api/test/integration/kpi/kpi-resources.test.ts > value-pools (REQ-PB-028, ADR-0019) > quantified by driver with exact decimal upside/downside 18ms
+ ✓ |integration| apps/api/test/integration/kpi/kpi-resources.test.ts > value-pools (REQ-PB-028, ADR-0019) > refuses downside > upside, amounts without quantification, and money beyond numeric(20,4) 18ms
+ ✓ |integration| apps/api/test/integration/kpi/kpi-resources.test.ts > value-pools (REQ-PB-028, ADR-0019) > FIN cannot validate an unquantified pool (422); a validation goes stale on edit; un-quantifying withdraws it 1
+integration-run2-lang-c-utf8.log contract/contract.test.ts pass=18 fail=0
+integration-run2-lang-c-utf8.log media-types.test.ts pass=10 fail=0
+integration-run2-lang-c-utf8.log blank-text.test.ts pass=29 fail=0
+integration-run2-lang-c-utf8.log oidc.test.ts pass=33 fail=0
+integration-run2-lang-c-utf8.log invalid-character.test.ts pass=20 fail=0
+integration-run2-lang-c-utf8.log framework-errors.test.ts pass=11 fail=0
+integration-run2-lang-c-utf8.log invalid-utf8.test.ts pass=14 fail=0
+integration-run2-lang-c-utf8.log encoding.test.ts pass=8 fail=0
+integration-run2-lang-c-utf8.log evidence.test.ts pass=6 fail=0
+integration-run2-lang-c-utf8.log dg2-repairs.test.ts pass=13 fail=0
+integration-run2-lang-c-utf8.log aud-write-deny.test.ts pass=128 fail=0
+integration-run2-lang-c-utf8.log 161-operations: 2 lines mention 161; sample:
+ ✓ |integration| apps/api/test/integration/gates.test.ts > submission and decision (business approval by a person) > configuring the approver: allowed roles only, refused while a submission is pending, needs gate.confi
+ ✓ |integration| apps/api/test/integration/transformations.test.ts > list: filters, sorting and cursor pagination > pages through a stable order without duplicates or gaps 161ms
+integration-run2-lang-c-utf8.log migrations:
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mux5yntd_4aa69c79 (server_encoding UTF8); applied 19 migrations to a fresh database
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts > pg-boss schema (installed by mth-db migrate) > migration 0006 is exactly pg-boss 11's construction plan without its transaction wrapper 1ms
+ ✓ |integration| packages/db/test/integration/encoding.test.ts > a SQL_ASCII database is refused before anything is created > mth-db migrate: exit 1, the message on stderr, nothing applied, no schema_migration table 42
+ ✓ |integration| apps/api/test/integration/bu-hierarchy-guard.test.ts > F-DG1-140 the database guard (migration 0009) fails closed on its own > refuses a direct cycle and an over-deep chain with 23514 and the named con
+ ✓ |integration| apps/api/test/integration/bu-hierarchy-guard.test.ts > F-DG1-140 the database guard (migration 0009) fails closed on its own > READ COMMITTED: two raw transactions forming A->C->B->A - the second fails
+# exit_status: 0
