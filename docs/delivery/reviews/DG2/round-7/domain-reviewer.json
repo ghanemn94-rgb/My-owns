@@ -1,0 +1,354 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG2",
+  "round": 7,
+  "candidate_id": "sha256:ede1a9362bb276ce620e440bf9f6a599f6695d395b8e495eaefec30107b016de",
+  "source_commit": "904394835a128bd992b4316521b772abec1ef867",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG2-T-DG2-REV-DOM-R7-domain-reviewer-20261006T144010Z-32690239",
+    "session_id": "32690239-48e0-4d05-8244-3c0b43128739"
+  },
+  "implementation_author": [
+    "backend-workflow-engineer",
+    "frontend-ux-engineer",
+    "kpi-benefits-engineer",
+    "solution-architect",
+    "transformation-analyst",
+    "devops-engineer",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "domain-reviewer authored no DG2 implementation, test, register row or ADR in the reviewed candidate. I formed this verdict from my own runs in a disposable clone at 36524e54 (source 90439483). I did not open any other reviewer's round-7 record. The only earlier material I reused was my own round-6 tooling: ports and paths changed, one expectation updated for the intended D-067 behaviour, and new D-067 probes added (r7-delta-api.mjs, r7-ui.mjs, two G3-decision checks in live-scenario.mjs)."
+  },
+  "assignment": "docs/delivery/assignments/DG2/round-7/domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-PB-003",
+    "REQ-PB-012",
+    "REQ-PB-016",
+    "REQ-PB-017",
+    "REQ-PB-018",
+    "REQ-PB-023",
+    "REQ-PB-024",
+    "REQ-PB-025",
+    "REQ-PB-026",
+    "REQ-PB-029",
+    "REQ-PB-030",
+    "REQ-PB-031",
+    "REQ-PB-033",
+    "REQ-PB-034",
+    "REQ-PB-035",
+    "REQ-PB-036",
+    "REQ-PB-037",
+    "REQ-PB-038",
+    "REQ-PB-039",
+    "REQ-PB-041",
+    "REQ-PB-042",
+    "REQ-PB-043",
+    "REQ-S04-003",
+    "REQ-S04-004",
+    "REQ-S04-005",
+    "REQ-S05-003"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-R7-00-candidate",
+      "procedure": "Confirm the frozen candidate. Check the assignment's sha256, then recompute the candidate ID in the repository and in the disposable clone, before and after the runs. Confirm that HEAD is the freeze commit on top of source_commit and that only delivery records changed since. Run the DG1 historical validation.",
+      "command": "sha256sum docs/delivery/assignments/DG2/round-7/domain-reviewer.md; node tools/gates/candidate.mjs --stage DG2; git diff --name-only 90439483 HEAD; node tools/gates/validate.mjs --historical --stage DG1",
+      "environment": "/home/user/My-owns (HEAD 36524e54) and disposable clone $TMPDIR/review-dom7 at 36524e54; Node 24.21.0",
+      "expected": "assignment sha256 ef30ac38…604f; candidate sha256:ede1a936…16de over 532 files in both trees; only docs/delivery/** differs since 90439483; DG1 historical PASS",
+      "actual": "The assignment hash matches. Both trees give sha256:ede1a9362bb276ce620e440bf9f6a599f6695d395b8e495eaefec30107b016de over 532 files, before and after the runs. The 90439483..HEAD diff touches only the three round-7 assignments, the candidate manifest and stages.json. The validator prints 'PASS gate DG1 (historical)' and exits 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-7/candidate-and-dg1.log",
+        "docs/delivery/test-evidence/DG2/domain/round-7/env.txt",
+        "docs/delivery/candidates/DG2/ede1a9362bb276ce.manifest.json"
+      ]
+    },
+    {
+      "id": "DOM-R7-01-typecheck",
+      "procedure": "Typecheck all workspaces on Node 22 and Node 24",
+      "command": "pnpm -r typecheck",
+      "environment": "disposable clone; Node 22.22.2 and 24.21.0, pnpm 10.33.0, offline frozen-lockfile install",
+      "expected": "exit 0 on both",
+      "actual": "node22 exit=0, node24 exit=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-7/typecheck-node22.log",
+        "docs/delivery/test-evidence/DG2/domain/round-7/typecheck-node24.log",
+        "docs/delivery/test-evidence/DG2/domain/round-7/summary.txt"
+      ]
+    },
+    {
+      "id": "DOM-R7-02-build",
+      "procedure": "Build all workspaces on Node 22 and Node 24",
+      "command": "pnpm -r build",
+      "environment": "disposable clone; Node 22.22.2 and 24.21.0",
+      "expected": "exit 0 on both",
+      "actual": "node22 exit=0, node24 exit=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-7/build-node22.log",
+        "docs/delivery/test-evidence/DG2/domain/round-7/build-node24.log"
+      ]
+    },
+    {
+      "id": "DOM-R7-03-lint",
+      "procedure": "Lint the repository on Node 22 and Node 24",
+      "command": "pnpm lint",
+      "environment": "disposable clone; Node 22.22.2 and 24.21.0",
+      "expected": "exit 0, zero warnings",
+      "actual": "node22 exit=0, node24 exit=0 (eslint . --max-warnings=0)",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-7/lint-node22.log",
+        "docs/delivery/test-evidence/DG2/domain/round-7/lint-node24.log"
+      ]
+    },
+    {
+      "id": "DOM-R7-04-test",
+      "procedure": "Unit test suites (unit-node and unit-web) on Node 22 and Node 24",
+      "command": "pnpm test",
+      "environment": "disposable clone; Node 22.22.2 and 24.21.0",
+      "expected": "exit 0 on both",
+      "actual": "Test Files 36 passed (36), Tests 673 passed (673) on both Node 22 and Node 24, exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-7/test-node22.log",
+        "docs/delivery/test-evidence/DG2/domain/round-7/test-node24.log"
+      ]
+    },
+    {
+      "id": "DOM-R7-05-contrast",
+      "procedure": "Design-token contrast check (provisional brand tokens) on Node 22 and Node 24",
+      "command": "pnpm --filter @mth/design-tokens run check:contrast",
+      "environment": "disposable clone; Node 22.22.2 and 24.21.0",
+      "expected": "exit 0; AA pairs pass; prohibited pairs documented",
+      "actual": "'PASS contrast: 50 pairs meet WCAG AA; 3 prohibited pairs fail as documented', exit 0 on both",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-7/contrast-node22.log",
+        "docs/delivery/test-evidence/DG2/domain/round-7/contrast-node24.log"
+      ]
+    },
+    {
+      "id": "DOM-R7-06-live-scenario",
+      "procedure": "Live end-to-end scenario on a disposable stack with synthetic data. Covers: the B0018 roles; End-to-End and Modular modes; B0023 gate names; G2/G3 refused out of sequence; the charter's 14 fields, versions, four-part thesis incomplete warning and five scope checks (B0038-B0043, verbatim); exactly one current North Star; the 3-5 top-outcome warning; the good-outcome test; G2 blocked at zero guardrails; T01 six dimensions with H/M/L confidence; six B0029 workstreams; ten B0056 TOM dimensions; ten B0062 canvas prompts; unquantified value pool (null, not 0); Diagnose->Define->Design with demo G1, G2 and G3 decisions. Round 7 adds: a lone-surrogate G3 rationale is refused and the gate stays undecided; a rationale whose emoji straddles the 8000-unit outcome_text cut is stored without U+FFFD or a lone surrogate.",
+      "command": "bash with-stack.sh node live-scenario.mjs",
+      "environment": "disposable PostgreSQL 16 127.0.0.1:54987 (UTF8), API AUTH_MODE=dev :3987, Node 24.21.0 build; SYNTHETIC seed-dev users",
+      "expected": "all checks PASS; G1, G2 and G3 approved in order; the phase moves diagnose->define->design->mobilize",
+      "actual": "SUMMARY pass 101, fail []. G1: 201, phase define. G2: 201, phase design. G3: 201, phase mobilize. Gates at the end: G1/G2/G3 approved, G4-G6 draft; gate codes are G1..G6 only. R7.gate-rationale-lone-surrogate: 400 [/rationale, validation.invalid_character], G3 stays 'submitted'. R7.gate-outcome-text-codepoint-cut: rationale of 8000 accepted, decision outcome_text 7999 units ending 'xxx', no U+FFFD, no lone surrogate.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-003",
+        "REQ-PB-012",
+        "REQ-PB-016",
+        "REQ-PB-017",
+        "REQ-PB-018",
+        "REQ-PB-023",
+        "REQ-PB-026",
+        "REQ-PB-029",
+        "REQ-PB-030",
+        "REQ-PB-031",
+        "REQ-PB-033",
+        "REQ-PB-034",
+        "REQ-PB-035",
+        "REQ-PB-036",
+        "REQ-PB-037",
+        "REQ-PB-038",
+        "REQ-PB-041",
+        "REQ-S04-003",
+        "REQ-S04-004",
+        "REQ-S04-005"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-7/live-scenario.log",
+        "docs/delivery/test-evidence/DG2/domain/round-7/live-scenario.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-7/with-stack.sh",
+        "docs/delivery/test-evidence/DG2/domain/round-7/stack-run-1.log"
+      ]
+    },
+    {
+      "id": "DOM-R7-07-design-registers",
+      "procedure": "Live T03/T04 and design registers: T04 seven columns and codes D-01/D-02 with A/B/C options; T03 six columns linked to T04 and requiring a dimension; capability heatmap linked to a gap; journey map with decimal cycle time and a pain point linked to T01; a workshop item converted to a T04 decision only with an owner; per-dimension TOM view",
+      "command": "bash with-stack.sh node design-registers.mjs",
+      "environment": "same disposable stack as DOM-R7-06",
+      "expected": "all checks PASS",
+      "actual": "SUMMARY pass 11, fail 0 (T04.seven-columns, T03.six-columns, REQ-PB-024 capability-linked-to-gap, REQ-PB-025 cycle time '3.2500' decimal, REQ-PB-042 convert-needs-owner and convert-to-t04, REQ-S05-003 dimension-view with cell/dimension/gaps/decisions/dependencies/evidence)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-024",
+        "REQ-PB-025",
+        "REQ-PB-039",
+        "REQ-PB-042",
+        "REQ-PB-043",
+        "REQ-S05-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-7/design-registers.log",
+        "docs/delivery/test-evidence/DG2/domain/round-7/design-registers.mjs"
+      ]
+    },
+    {
+      "id": "DOM-R7-08-d067-api",
+      "procedure": "D-067 live API probes. Lone UTF-16 surrogates (high, low, reversed pair, Arabic plus a lone surrogate) in a charter create, a charter update and an outcome statement. Arabic plus emoji (including a skin-tone modifier and a flag) plus RLM/ALM in the charter and an outcome. A malformed percent-escape URL and an oversized URL.",
+      "command": "bash with-stack.sh node r7-delta-api.mjs",
+      "environment": "same disposable stack as DOM-R7-06",
+      "expected": "Lone surrogates: 400 with exactly one validation.invalid_character at the field pointer, problem+json, nothing stored and the version unchanged. Arabic, emoji and RLM: 201, stored code point for code point. Malformed and oversized URLs: 400 application/problem+json with a code that has EN and AR messages.",
+      "actual": "SUMMARY pass 11, fail []. Every lone-surrogate case: 400 [[/caseForChange|/outOfScope|/statement, validation.invalid_character]], no charter stored, version 1->1. Arabic, emoji and RLM: verbatim=true,true,true; the outcome is verbatim. Malformed URL %E0%A4%A: 400 problem+json, validation.format (EN 'This value has the wrong format.', AR 'صيغة هذه القيمة غير صحيحة.'). URL of 20000 characters: 400 problem+json, validation.headers_too_large (AR 'عنوان الويب أو ترويسات الطلب طويلة جدًا.').",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-029",
+        "REQ-PB-034"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-7/r7-delta-api.log",
+        "docs/delivery/test-evidence/DG2/domain/round-7/r7-delta-api.mjs"
+      ]
+    },
+    {
+      "id": "DOM-R7-09-d066-regression-api",
+      "procedure": "Regression of the D-066 behaviour (my round-6 probe, rerun). U+0000 is refused in the name, the charter, an outcome, a path parameter and the query. Placeholder-only text is blank, but stays content next to Arabic. Arabic with RLM is stored verbatim. Path pointers name the parameter.",
+      "command": "bash with-stack.sh node regress-d066-api.mjs",
+      "environment": "same disposable stack as DOM-R7-06",
+      "expected": "all PASS",
+      "actual": "SUMMARY pass 16, fail []",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-7/regress-d066-api.log",
+        "docs/delivery/test-evidence/DG2/domain/round-7/regress-d066-api.mjs"
+      ]
+    },
+    {
+      "id": "DOM-R7-10-ui-ar-en-lone-surrogate-and-rlm",
+      "procedure": "Charter form in EN (LTR) and AR (RTL) in Chromium. A lone surrogate is placed inside visible text with an in-page DOM value set plus an input event: Playwright fill() crosses the CDP UTF-8 boundary and turns it into U+FFFD first, a harness limitation recorded in r7-ui-fill-attempt.log. Then placeholder-only text. Then Arabic with emoji and RLM marks.",
+      "command": "bash with-stack.sh node r7-ui.mjs",
+      "environment": "disposable stack; Chromium /opt/pw-browsers, timezone Asia/Riyadh, locales en-US and ar-SA",
+      "expected": "html dir ltr/rtl. Lone surrogate: inline localized validation__invalid_character message, aria-invalid, no request sent, no charter stored. Placeholder-only: localized validation__blank. Arabic, emoji and RLM: created and stored verbatim.",
+      "actual": "SUMMARY pass 8, fail 0. en dir ltr, ar dir rtl. EN shows 'Remove the unsupported character from this text.' and AR shows 'أزِل الحرف غير المدعوم من هذا النص.', with inputHasLone=true, aria-invalid=true, sent=[] and charter 404. Placeholder-only shows the localized blank message in both languages. Arabic, emoji and RLM are stored verbatim in both languages.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-029"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-7/r7-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-7/r7-ui.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-7/r7-ui-fill-attempt.log",
+        "docs/delivery/test-evidence/DG2/domain/round-7/stack-run-4.log",
+        "docs/delivery/test-evidence/DG2/domain/round-7/screens/en-charter-lone-surrogate-refused.png",
+        "docs/delivery/test-evidence/DG2/domain/round-7/screens/ar-charter-lone-surrogate-refused.png",
+        "docs/delivery/test-evidence/DG2/domain/round-7/screens/en-charter-arabic-emoji-rlm-created.png",
+        "docs/delivery/test-evidence/DG2/domain/round-7/screens/ar-charter-arabic-emoji-rlm-created.png"
+      ]
+    },
+    {
+      "id": "DOM-R7-11-ui-invisible-only-refused",
+      "procedure": "Charter form in EN and AR: invisible-only values (format characters, default-ignorables) are refused with the localized blank message, a visible value is accepted, and an invisible-only out-of-scope edit is refused (round-6 tooling rerun). Also rerun the D-066 UI regression (U+0000 refused, localized).",
+      "command": "bash with-stack.sh node charter-blank-ui.mjs; node regress-d066-ui.mjs",
+      "environment": "disposable stack; Chromium, Asia/Riyadh",
+      "expected": "all PASS in both languages",
+      "actual": "charter-blank-ui SUMMARY pass 14, fail 0; regress-d066-ui SUMMARY pass 8, fail 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-029"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-7/charter-blank-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-7/regress-d066-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-7/stack-run-2.log",
+        "docs/delivery/test-evidence/DG2/domain/round-7/screens/en-charter-create-invisible.png",
+        "docs/delivery/test-evidence/DG2/domain/round-7/screens/ar-charter-create-invisible.png"
+      ]
+    },
+    {
+      "id": "DOM-R7-12-ui-mode-guidance-b0009",
+      "procedure": "Create-transformation screen in EN and AR shows the End-to-End and Modular guidance. The EN text is compared with the B0009 rows verbatim.",
+      "command": "bash with-stack.sh node dom-shots.mjs; grep -F <B0009 how-text> apps/web/src/i18n/en/transformations.json",
+      "environment": "disposable stack; Chromium",
+      "expected": "B0009 'how' text verbatim in EN, localized in AR; both modes shown",
+      "actual": "dom-shots exit 0 ('ar after selecting Modular, contains B0009 Modular how: true'). Both B0009 sentences are found verbatim in apps/web/src/i18n/en/transformations.json.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-7/dom-shots.log",
+        "docs/delivery/test-evidence/DG2/domain/round-7/invariants.log",
+        "docs/delivery/test-evidence/DG2/domain/round-7/screens/en-create-mode-guidance.png",
+        "docs/delivery/test-evidence/DG2/domain/round-7/screens/ar-create-mode-guidance.png"
+      ]
+    },
+    {
+      "id": "DOM-R7-13-d067-scope-and-invariants",
+      "procedure": "Inspect the D-067 diff (51a692b1..90439483) for effects on playbook fidelity and gate logic, and check the static invariants: no PMI or certification claims, the provisional #0078FF token, numeric (not float) money and rate columns, no DGx code in product gates, and no change to ADRs 0015-0020, sources, migrations, seeds or methodology modules.",
+      "command": "git diff 51a692b1 90439483 -- packages/shared/src/schemas/common.ts apps/api/src/modules/workflows apps/web/src/i18n ...; grep invariants (see invariants.log)",
+      "environment": "/home/user/My-owns and the disposable clone",
+      "expected": "D-067 touches only validation/error plumbing plus problems.json; the gate logic changes only by code-point-safe truncation (gates.ts outcome_text, criteria.ts good-outcome message); no methodology text changes; invariants hold",
+      "actual": "Confirmed. hasInvalidCharacter adds /\\p{Cs}/u (matches only unpaired surrogates, so emoji and Arabic pass). truncateText backs off one unit at a split pair. The gates.ts and criteria.ts changes are truncation only, with no criterion, sequencing or approver change. The i18n changes are problems.json only (EN and AR). ADRs, docs/source, migrations, seeds and methodology are untouched. No unnegated PMI/certification claims. #0078FF is flagged provisional. Money and rates are numeric(20,4)/(24,6)/(14,4). The only 'real' match is the B0018 text 'value realization'. No DGx in product code.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-7/invariants.log"
+      ]
+    },
+    {
+      "id": "DOM-R7-14-utf8-fail-closed",
+      "procedure": "with-stack.sh probe: migrating a SQL_ASCII database must be refused before anything is created; the mth database is UTF8",
+      "command": "node packages/db/dist/cli.js migrate (against SQL_ASCII db)",
+      "environment": "disposable PostgreSQL 16",
+      "expected": "non-zero exit, 0 tables; mth encoding UTF8",
+      "actual": "'the database must use UTF8 encoding (found SQL_ASCII)'; exit=1, tables_created=0; mth encoding=UTF8",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-7/stack-run-1.log"
+      ]
+    },
+    {
+      "id": "DOM-R7-15-env-residuals",
+      "procedure": "Environmental residuals, checked on their offline/config surface only: live registry (D-057), live CI (D-058) and Keycloak (D-049)",
+      "command": "pnpm install --offline --frozen-lockfile; cmp .github/workflows/ci.yml deploy/ci/ci.yml; read deploy/images.lock.json keycloak entry",
+      "environment": "disposable clone, no network",
+      "expected": "offline frozen install succeeds; CI config copies identical; keycloak digest null with an explicit blockedReason (test-only IdP)",
+      "actual": "Offline frozen install Done. ci.yml copies identical. The keycloak entry has digest null and blockedReason quay.io Forbidden, scope test-ci. Residuals not exercised live: live-registry fetch (D-057), live GitHub Actions run (D-058), Keycloak image pull and digest (D-049).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-7/residuals.log"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG2/domain/round-7/env.txt",
+    "docs/delivery/test-evidence/DG2/domain/round-7/summary.txt",
+    "docs/delivery/test-evidence/DG2/domain/round-7/candidate-and-dg1.log",
+    "docs/delivery/test-evidence/DG2/domain/round-7/live-scenario.log",
+    "docs/delivery/test-evidence/DG2/domain/round-7/design-registers.log",
+    "docs/delivery/test-evidence/DG2/domain/round-7/r7-delta-api.log",
+    "docs/delivery/test-evidence/DG2/domain/round-7/r7-ui.log",
+    "docs/delivery/test-evidence/DG2/domain/round-7/invariants.log",
+    "docs/delivery/test-evidence/DG2/domain/round-7/residuals.log",
+    "docs/delivery/reviews/DG2/round-7/domain-reviewer.md"
+  ],
+  "reviewed_at": "2026-10-06T14:55:00Z",
+  "summary": "PASS. The repaired DG2 candidate ede1a936 is faithful to the playbook for all 26 requirements. D-067 changes no methodology text, gate criterion, sequencing or register column. Lone UTF-16 surrogates are refused with a localized message in EN and AR (one error, nothing stored, the gate stays undecided). Arabic, emoji and RLM text is stored verbatim. Gate decision text is cut on a code-point boundary. Malformed and oversized URLs answer the localized problem+json 400. G1→G2→G3 advance sequentially with B0023 names. No new findings.",
+  "narrative": "docs/delivery/reviews/DG2/round-7/domain-reviewer.md"
+}
