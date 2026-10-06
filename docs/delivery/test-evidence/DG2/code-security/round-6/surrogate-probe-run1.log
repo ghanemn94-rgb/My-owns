@@ -1,0 +1,66 @@
+# command: (LANG unset) with-pg.sh 55672 pnpm vitest run --project integration zz-sec-r6-surrogate --reporter=verbose
+# node: v22.22.2 commit: 51a692b1d6ec0edfde3f9e85d75b1571dc1932ee started: 2026-10-06T11:55:03Z
+[with-pg initdb] The database cluster will be initialized with locale "C".
+[with-pg initdb] The default database encoding has accordingly been set to "SQL_ASCII".
+[with-pg] cluster template1 encoding SQL_ASCII, collate C
+
+ RUN  v3.2.4 /var/tmp/mth-run.4rWb9b/claude-0/probe
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muwmg7nc_904e3581 (server_encoding UTF8); applied 19 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-r6-surrogate.test.ts > OIDC callback: lone surrogate in sub (F-DG2-260) > JIT path: new subject 'r6s-jit-\ud800' -> must be the declared 302 (token_invalid), audited
+PROBE 260.jit: {"status":400,"contentType":"application/problem+json; charset=utf-8","location":null,"body":{"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"A value has an invalid format.","code":"validation","requestId":"01a11111-57ca-7370-8dc8-a0fcf0160ca3","errors":[{"pointer":"","code":"validation.format","message":"A value has an invalid format."}]},"setCookie":["mth_login=; Max-Age=0; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax"],"audit":[],"identities":"0","contract":"contract check: contract: completeOidcLogin does not declare status 400 (declared: 302, 429); body: {\"type\":\"urn:mth:problem:validation\",\"title\":\"Validation failed\",\"status\":400,\"detail\":\"A value has an invalid format.\",\"code\":\"validation\",\"requestId\":\"01a11111-57ca-7370-8dc8-a0fcf0160ca3\",\"errors\":[{\"pointer\":\"\",\"code\":\"validation.format\",\"message\":\"A value has an invalid format.\"}]}"}
+
+stdout | apps/api/test/integration/zz-sec-r6-surrogate.test.ts > OIDC callback: lone surrogate in sub (F-DG2-260) > bind path: pre-provisioned user with a verified e-mail, subject with a lone surrogate -> must be 302
+PROBE 260.bind: {"status":400,"location":null,"body":{"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"A value has an invalid format.","code":"validation","requestId":"01a11111-5810-7488-bf64-17cd08092fa7","errors":[{"pointer":"","code":"validation.format","message":"A value has an invalid format."}]},"audit":[],"contract":"contract check: contract: completeOidcLogin does not declare status 400 (declared: 302, 429); body: {\"type\":\"urn:mth:problem:validation\",\"title\":\"Validation failed\",\"status\":400,\"detail\":\"A value has an invalid format.\",\"code\":\"validation\",\"requestId\":\"01a11111-5810-7488-bf64-17cd08092fa7\",\"errors\":[{\"pointer\":\"\",\"code\":\"validation.format\",\"message\":\"A value has an invalid format.\"}]}"}
+
+ × |integration| apps/api/test/integration/zz-sec-r6-surrogate.test.ts > OIDC callback: lone surrogate in sub (F-DG2-260) > JIT path: new subject 'r6s-jit-\ud800' -> must be the declared 302 (token_invalid), audited 109ms
+   → expected 400 to be 302 // Object.is equality
+ × |integration| apps/api/test/integration/zz-sec-r6-surrogate.test.ts > OIDC callback: lone surrogate in sub (F-DG2-260) > bind path: pre-provisioned user with a verified e-mail, subject with a lone surrogate -> must be 302 28ms
+   → expected 400 to be 302 // Object.is equality
+stdout | apps/api/test/integration/zz-sec-r6-surrogate.test.ts > main API: lone surrogate in a value that reaches jsonb directly (journey steps) > journey step name 'Synthetic\ud800step' -> declared status, never 500 (observed status logged)
+PROBE journey.steps: {"status":400,"body":[{"pointer":"","code":"validation.format","message":"A value has an invalid format."}]}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r6-surrogate.test.ts > main API: lone surrogate in a value that reaches jsonb directly (journey steps) > journey step name 'Synthetic\ud800step' -> declared status, never 500 (observed status logged) 302ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r6-surrogate.test.ts > OIDC callback: lone surrogate in sub (F-DG2-260) > JIT path: new subject 'r6s-jit-\ud800' -> must be the declared 302 (token_invalid), audited
+AssertionError: expected 400 to be 302 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 302[39m
+[31m+ 400[39m
+
+ ❯ apps/api/test/integration/zz-sec-r6-surrogate.test.ts:77:23
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r6-surrogate.test.ts > OIDC callback: lone surrogate in sub (F-DG2-260) > bind path: pre-provisioned user with a verified e-mail, subject with a lone surrogate -> must be 302
+AssertionError: expected 400 to be 302 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 302[39m
+[31m+ 400[39m
+
+ ❯ apps/api/test/integration/zz-sec-r6-surrogate.test.ts:84:23
+     82|     const rid = String(cb.headers["x-request-id"]);
+     83|     log("260.bind", { status: cb.status, location: cb.headers["locatio…
+     84|     expect(cb.status).toBe(302);
+       |                       ^
+     85|   });
+     86| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  11:55:05
+   Duration  6.58s (transform 1.15s, setup 0ms, collect 2.78s, tests 1.91s, environment 0ms, prepare 95ms)
+
+# exit_status: 1 finished: 2026-10-06T11:55:13Z

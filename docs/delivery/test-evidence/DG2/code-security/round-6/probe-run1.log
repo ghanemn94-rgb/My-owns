@@ -1,0 +1,380 @@
+# command: (LANG unset) with-pg.sh 55671 pnpm vitest run --project integration zz-sec-r5-probe zz-sec-r5-nul zz-sec-r5-oidc zz-sec-r6-probe zz-sec-r6-oidc --reporter=verbose
+# node: v22.22.2 commit: 51a692b1d6ec0edfde3f9e85d75b1571dc1932ee started: 2026-10-06T11:53:31Z
+[with-pg initdb] The database cluster will be initialized with locale "C".
+[with-pg initdb] The default database encoding has accordingly been set to "SQL_ASCII".
+[with-pg] cluster template1 encoding SQL_ASCII, collate C
+
+ RUN  v3.2.4 /var/tmp/mth-run.4rWb9b/claude-0/probe
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muwme8z0_f0786316 (server_encoding UTF8); applied 19 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-r6-probe.test.ts > A. F-DG2-230: placeholders > charter outOfScope U+16FE4 alone
+PROBE A.U+16FE4 alone: {"status":400,"errors":[{"pointer":"/outOfScope","code":"validation.blank","message":"validation.blank"}],"verbatim":false}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r6-probe.test.ts > A. F-DG2-230: placeholders > charter outOfScope U+16FE4 alone 181ms
+stdout | apps/api/test/integration/zz-sec-r6-probe.test.ts > A. F-DG2-230: placeholders > charter outOfScope U+1D159 x2
+PROBE A.U+1D159 x2: {"status":400,"errors":[{"pointer":"/outOfScope","code":"validation.blank","message":"validation.blank"}],"verbatim":false}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r6-probe.test.ts > A. F-DG2-230: placeholders > charter outOfScope U+1D159 x2 122ms
+stdout | apps/api/test/integration/zz-sec-r6-probe.test.ts > A. F-DG2-230: placeholders > charter outOfScope U+16FE4 + U+1D159 + U+2800 + NBSP + RLM
+PROBE A.U+16FE4 + U+1D159 + U+2800 + NBSP + RLM: {"status":400,"errors":[{"pointer":"/outOfScope","code":"validation.blank","message":"validation.blank"}],"verbatim":false}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r6-probe.test.ts > A. F-DG2-230: placeholders > charter outOfScope U+16FE4 + U+1D159 + U+2800 + NBSP + RLM 137ms
+stdout | apps/api/test/integration/zz-sec-r6-probe.test.ts > A. F-DG2-230: placeholders > charter outOfScope visible + U+16FE4
+PROBE A.visible + U+16FE4: {"status":201,"verbatim":true,"precheck":"pass"}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r6-probe.test.ts > A. F-DG2-230: placeholders > charter outOfScope visible + U+16FE4 186ms
+stdout | apps/api/test/integration/zz-sec-r6-probe.test.ts > A. F-DG2-230: placeholders > charter outOfScope U+1D159 + visible
+PROBE A.U+1D159 + visible: {"status":201,"verbatim":true,"precheck":"pass"}
+
+stdout | apps/api/test/integration/zz-sec-r6-probe.test.ts > A. F-DG2-230: placeholders > name and reason made only of the placeholders are blank; with visible text they are kept
+PROBE A.name_reason: {"name":[400,[{"pointer":"/name","code":"validation.blank","message":"validation.blank"}]],"reason":[400,[{"pointer":"/reason","code":"validation.blank","message":"validation.blank"}]],"visibleReason":[200,"Synthetic 𝅙 reason"]}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r6-probe.test.ts > A. F-DG2-230: placeholders > charter outOfScope U+1D159 + visible 159ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r6-probe.test.ts > A. F-DG2-230: placeholders > name and reason made only of the placeholders are blank; with visible text they are kept 58ms
+stdout | apps/api/test/integration/zz-sec-r6-probe.test.ts > B. F-DG2-231 beyond the round-5 repro > NUL nested in an array element of a body (charter topOutcomes-like arrays) and in a deep key
+PROBE B.nested: {"status":400,"errors":[{"pointer":"/stakeholders/1/name","code":"validation.invalid_character","message":"The text contains an unsupported invisible character (U+0000)."}],"audit":0}
+
+stdout | apps/api/test/integration/zz-sec-r6-probe.test.ts > B. F-DG2-231 beyond the round-5 repro > precedence: no session -> 401; bad CSRF -> 403; signed-in user without the permission -> 400 (no record lookup)
+PROBE B.precedence: {"nosession":401,"csrf":403,"unauthorizedNul":400,"unauthorizedValid":404,"unknownTransformationNul":400}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r6-probe.test.ts > B. F-DG2-231 beyond the round-5 repro > NUL nested in an array element of a body (charter topOutcomes-like arrays) and in a deep key 93ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r6-probe.test.ts > B. F-DG2-231 beyond the round-5 repro > precedence: no session -> 401; bad CSRF -> 403; signed-in user without the permission -> 400 (no record lookup) 39ms
+stdout | apps/api/test/integration/zz-sec-r6-probe.test.ts > B. F-DG2-231 beyond the round-5 repro > legitimate input is not rejected: U+0001, U+FFFD, literal backslash-zero, '%00' text in a body
+PROBE B.legit: {"status":201,"gap":"Synthetic \\0 %00 \\u0000 \u0001 � gap"}
+
+stdout | apps/api/test/integration/zz-sec-r6-probe.test.ts > C. lone UTF-16 surrogates in free text (JSON escapes) > charter create outOfScope (lone high)
+PROBE C.charter create outOfScope (lone high): {"status":201,"body":null,"errors":null,"stored":"53 79 6e 74 68 65 74 69 63 fffd 65 78 63 6c 75 73 69 6f 6e","before":{"t":"7","c":"2","g":"2","a":"224"},"after":{"t":"8","c":"3","g":"2","a":"256"}}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r6-probe.test.ts > B. F-DG2-231 beyond the round-5 repro > legitimate input is not rejected: U+0001, U+FFFD, literal backslash-zero, '%00' text in a body 9ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r6-probe.test.ts > C. lone UTF-16 surrogates in free text (JSON escapes) > charter create outOfScope (lone high) 119ms
+stdout | apps/api/test/integration/zz-sec-r6-probe.test.ts > C. lone UTF-16 surrogates in free text (JSON escapes) > charter create outOfScope (lone low)
+PROBE C.charter create outOfScope (lone low): {"status":201,"body":null,"errors":null,"stored":"53 79 6e 74 68 65 74 69 63 fffd 65 78 63 6c 75 73 69 6f 6e","before":{"t":"8","c":"3","g":"2","a":"256"},"after":{"t":"9","c":"4","g":"2","a":"288"}}
+
+stdout | apps/api/test/integration/zz-sec-r6-probe.test.ts > C. lone UTF-16 surrogates in free text (JSON escapes) > TOM gap create gap
+PROBE C.TOM gap create gap: {"status":201,"body":null,"errors":null,"stored":"53 79 6e 74 68 65 74 69 63 fffd 67 61 70","before":{"t":"9","c":"4","g":"2","a":"288"},"after":{"t":"9","c":"4","g":"3","a":"289"}}
+
+stdout | apps/api/test/integration/zz-sec-r6-probe.test.ts > C. lone UTF-16 surrogates in free text (JSON escapes) > TOM gap archive reason
+PROBE C.TOM gap archive reason: {"status":200,"body":null,"errors":null,"stored":["archived",2,"Synthetic�reason"],"before":{"t":"9","c":"4","g":"3","a":"289"},"after":{"t":"9","c":"4","g":"4","a":"291"}}
+
+stdout | apps/api/test/integration/zz-sec-r6-probe.test.ts > C. lone UTF-16 surrogates in free text (JSON escapes) > transformation name
+PROBE C.transformation name: {"status":201,"body":"TR-0010","errors":null,"stored":"53 79 6e 74 68 65 74 69 63 fffd 6e 61 6d 65","before":{"t":"9","c":"4","g":"4","a":"291"},"after":{"t":"10","c":"4","g":"4","a":"316"}}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r6-probe.test.ts > C. lone UTF-16 surrogates in free text (JSON escapes) > charter create outOfScope (lone low) 123ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r6-probe.test.ts > C. lone UTF-16 surrogates in free text (JSON escapes) > TOM gap create gap 9ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r6-probe.test.ts > C. lone UTF-16 surrogates in free text (JSON escapes) > TOM gap archive reason 32ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r6-probe.test.ts > C. lone UTF-16 surrogates in free text (JSON escapes) > transformation name 27ms
+stdout | apps/api/test/integration/zz-sec-r6-probe.test.ts > C. lone UTF-16 surrogates in free text (JSON escapes) > charter PATCH inScope
+PROBE C.charter PATCH inScope: {"status":200,"body":null,"errors":null,"stored":"52 65 74 61 69 6c fffd 6f 6e 62 6f 61 72 64 69 6e 67","before":{"t":"10","c":"4","g":"4","a":"316"},"after":{"t":"11","c":"5","g":"4","a":"349"}}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r6-probe.test.ts > C. lone UTF-16 surrogates in free text (JSON escapes) > charter PATCH inScope 221ms
+stdout | apps/api/test/integration/zz-sec-r6-probe.test.ts > D. real HTTP (llhttp): header-borne NUL never reaches the database > NUL in X-Request-Id / User-Agent / request target is refused by the HTTP parser (400), never 500
+PROBE D.raw: {"xRequestId":"HTTP/1.1 400 Bad Request","userAgent":"HTTP/1.1 400 Bad Request","rawNulTarget":"HTTP/1.1 400 Bad Request","pctNulQuery":"HTTP/1.1 400 Bad Request","pctSurrogateQuery":"HTTP/1.1 200 OK"}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r6-probe.test.ts > D. real HTTP (llhttp): header-borne NUL never reaches the database > NUL in X-Request-Id / User-Agent / request target is refused by the HTTP parser (400), never 500 20ms
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D1. F-DG2-180 set as Out of scope -> 400 validation.blank, nothing stored > VS16
+PROBE D1.VS16: {"create":400,"errors":["/outOfScope:validation.blank"],"audit":0,"getAfter":404,"storedOutOfScope":null}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-probe.test.ts > D1. F-DG2-180 set as Out of scope -> 400 validation.blank, nothing stored > VS16 208ms
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D1. F-DG2-180 set as Out of scope -> 400 validation.blank, nothing stored > CGJ x2
+PROBE D1.CGJ x2: {"create":400,"errors":["/outOfScope:validation.blank"],"audit":0,"getAfter":404,"storedOutOfScope":null}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-probe.test.ts > D1. F-DG2-180 set as Out of scope -> 400 validation.blank, nothing stored > CGJ x2 140ms
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D1. F-DG2-180 set as Out of scope -> 400 validation.blank, nothing stored > MONGOLIAN FVS1
+PROBE D1.MONGOLIAN FVS1: {"create":400,"errors":["/outOfScope:validation.blank"],"audit":0,"getAfter":404,"storedOutOfScope":null}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-probe.test.ts > D1. F-DG2-180 set as Out of scope -> 400 validation.blank, nothing stored > MONGOLIAN FVS1 141ms
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D1. F-DG2-180 set as Out of scope -> 400 validation.blank, nothing stored > MONGOLIAN FVS4
+PROBE D1.MONGOLIAN FVS4: {"create":400,"errors":["/outOfScope:validation.blank"],"audit":0,"getAfter":404,"storedOutOfScope":null}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-probe.test.ts > D1. F-DG2-180 set as Out of scope -> 400 validation.blank, nothing stored > MONGOLIAN FVS4 150ms
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D1. F-DG2-180 set as Out of scope -> 400 validation.blank, nothing stored > KHMER INHERENT AQ
+PROBE D1.KHMER INHERENT AQ: {"create":400,"errors":["/outOfScope:validation.blank"],"audit":0,"getAfter":404,"storedOutOfScope":null}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-probe.test.ts > D1. F-DG2-180 set as Out of scope -> 400 validation.blank, nothing stored > KHMER INHERENT AQ 127ms
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D1. F-DG2-180 set as Out of scope -> 400 validation.blank, nothing stored > RLM+VS16
+PROBE D1.RLM+VS16: {"create":400,"errors":["/outOfScope:validation.blank"],"audit":0,"getAfter":404,"storedOutOfScope":null}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-probe.test.ts > D1. F-DG2-180 set as Out of scope -> 400 validation.blank, nothing stored > RLM+VS16 109ms
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D1. F-DG2-180 set as Out of scope -> 400 validation.blank, nothing stored > VS17 (astral)
+PROBE D1.VS17 (astral): {"create":400,"errors":["/outOfScope:validation.blank"],"audit":0,"getAfter":404,"storedOutOfScope":null}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-probe.test.ts > D1. F-DG2-180 set as Out of scope -> 400 validation.blank, nothing stored > VS17 (astral) 146ms
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D1. F-DG2-180 set as Out of scope -> 400 validation.blank, nothing stored > U+FFF0 Cn DI
+PROBE D1.U+FFF0 Cn DI: {"create":400,"errors":["/outOfScope:validation.blank"],"audit":0,"getAfter":404,"storedOutOfScope":null}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-probe.test.ts > D1. F-DG2-180 set as Out of scope -> 400 validation.blank, nothing stored > U+FFF0 Cn DI 123ms
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D1. F-DG2-180 set as Out of scope -> 400 validation.blank, nothing stored > U+E0020 tag
+PROBE D1.U+E0020 tag: {"create":400,"errors":["/outOfScope:validation.blank"],"audit":0,"getAfter":404,"storedOutOfScope":null}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-probe.test.ts > D1. F-DG2-180 set as Out of scope -> 400 validation.blank, nothing stored > U+E0020 tag 148ms
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D1. F-DG2-180 set as Out of scope -> 400 validation.blank, nothing stored > U+0001 Cc
+PROBE D1.U+0001 Cc: {"create":400,"errors":["/outOfScope:validation.blank"],"audit":0,"getAfter":404,"storedOutOfScope":null}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-probe.test.ts > D1. F-DG2-180 set as Out of scope -> 400 validation.blank, nothing stored > U+0001 Cc 216ms
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D1. F-DG2-180 set as Out of scope -> 400 validation.blank, nothing stored > U+0000 NUL only
+PROBE D1.U+0000 NUL only: {"create":400,"errors":["/outOfScope:validation.invalid_character"],"audit":0,"getAfter":404,"storedOutOfScope":null}
+
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D1. F-DG2-180 set as Out of scope -> 400 validation.blank, nothing stored > lone U+D800
+PROBE D1.lone U+D800: {"create":400,"errors":["/outOfScope:validation.blank"],"audit":0,"getAfter":404,"storedOutOfScope":null}
+
+ × |integration| apps/api/test/integration/zz-sec-r5-probe.test.ts > D1. F-DG2-180 set as Out of scope -> 400 validation.blank, nothing stored > U+0000 NUL only 165ms
+   → expected [ Array(1) ] to include '/outOfScope:validation.blank'
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-probe.test.ts > D1. F-DG2-180 set as Out of scope -> 400 validation.blank, nothing stored > lone U+D800 174ms
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D1. F-DG2-180 set as Out of scope -> 400 validation.blank, nothing stored > mixed NEL+WJ+NBSP+VS16+CGJ
+PROBE D1.mixed NEL+WJ+NBSP+VS16+CGJ: {"create":400,"errors":["/outOfScope:validation.blank"],"audit":0,"getAfter":404,"storedOutOfScope":null}
+
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D2. F-DG2-180 set (x3) as archive reason -> 400 at /reason, record unchanged, no audit > every value refused
+PROBE D2.VS16: [400,["/reason:validation.blank"],0]
+
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D2. F-DG2-180 set (x3) as archive reason -> 400 at /reason, record unchanged, no audit > every value refused
+PROBE D2.CGJ x2: [400,["/reason:validation.blank"],0]
+
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D2. F-DG2-180 set (x3) as archive reason -> 400 at /reason, record unchanged, no audit > every value refused
+PROBE D2.MONGOLIAN FVS1: [400,["/reason:validation.blank"],0]
+
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D2. F-DG2-180 set (x3) as archive reason -> 400 at /reason, record unchanged, no audit > every value refused
+PROBE D2.MONGOLIAN FVS4: [400,["/reason:validation.blank"],0]
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-probe.test.ts > D1. F-DG2-180 set as Out of scope -> 400 validation.blank, nothing stored > mixed NEL+WJ+NBSP+VS16+CGJ 152ms
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D2. F-DG2-180 set (x3) as archive reason -> 400 at /reason, record unchanged, no audit > every value refused
+PROBE D2.KHMER INHERENT AQ: [400,["/reason:validation.blank"],0]
+
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D2. F-DG2-180 set (x3) as archive reason -> 400 at /reason, record unchanged, no audit > every value refused
+PROBE D2.RLM+VS16: [400,["/reason:validation.blank"],0]
+
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D2. F-DG2-180 set (x3) as archive reason -> 400 at /reason, record unchanged, no audit > every value refused
+PROBE D2.VS17 (astral): [400,["/reason:validation.blank"],0]
+
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D2. F-DG2-180 set (x3) as archive reason -> 400 at /reason, record unchanged, no audit > every value refused
+PROBE D2.U+FFF0 Cn DI: [400,["/reason:validation.blank"],0]
+
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D2. F-DG2-180 set (x3) as archive reason -> 400 at /reason, record unchanged, no audit > every value refused
+PROBE D2.U+E0020 tag: [400,["/reason:validation.blank"],0]
+
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D2. F-DG2-180 set (x3) as archive reason -> 400 at /reason, record unchanged, no audit > every value refused
+PROBE D2.U+0001 Cc: [400,["/reason:validation.blank"],0]
+
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D2. F-DG2-180 set (x3) as archive reason -> 400 at /reason, record unchanged, no audit > every value refused
+PROBE D2.U+0000 NUL only: [400,["/reason:validation.invalid_character"],0]
+
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D3. shared `name` (transformation create) -> 400 at /name, nothing created > every value refused
+PROBE D3.VS16: [400,["/name:validation.blank"]]
+
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D3. shared `name` (transformation create) -> 400 at /name, nothing created > every value refused
+PROBE D3.CGJ x2: [400,["/name:validation.blank"]]
+
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D3. shared `name` (transformation create) -> 400 at /name, nothing created > every value refused
+PROBE D3.MONGOLIAN FVS1: [400,["/name:validation.blank"]]
+
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D3. shared `name` (transformation create) -> 400 at /name, nothing created > every value refused
+PROBE D3.MONGOLIAN FVS4: [400,["/name:validation.blank"]]
+
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D3. shared `name` (transformation create) -> 400 at /name, nothing created > every value refused
+PROBE D3.KHMER INHERENT AQ: [400,["/name:validation.blank"]]
+
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D3. shared `name` (transformation create) -> 400 at /name, nothing created > every value refused
+PROBE D3.RLM+VS16: [400,["/name:validation.blank"]]
+
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D3. shared `name` (transformation create) -> 400 at /name, nothing created > every value refused
+PROBE D3.VS17 (astral): [400,["/name:validation.blank"]]
+
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D3. shared `name` (transformation create) -> 400 at /name, nothing created > every value refused
+PROBE D3.U+FFF0 Cn DI: [400,["/name:validation.blank"]]
+
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D3. shared `name` (transformation create) -> 400 at /name, nothing created > every value refused
+PROBE D3.U+E0020 tag: [400,["/name:validation.blank"]]
+
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D3. shared `name` (transformation create) -> 400 at /name, nothing created > every value refused
+PROBE D3.U+0001 Cc: [400,["/name:validation.blank"]]
+
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D3. shared `name` (transformation create) -> 400 at /name, nothing created > every value refused
+PROBE D3.U+0000 NUL only: [400,["/name:validation.invalid_character"]]
+
+ × |integration| apps/api/test/integration/zz-sec-r5-probe.test.ts > D2. F-DG2-180 set (x3) as archive reason -> 400 at /reason, record unchanged, no audit > every value refused 178ms
+   → expected [ Array(1) ] to include '/reason:validation.blank'
+ × |integration| apps/api/test/integration/zz-sec-r5-probe.test.ts > D3. shared `name` (transformation create) -> 400 at /name, nothing created > every value refused 73ms
+   → expected [ Array(1) ] to include '/name:validation.blank'
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D4. visible text with marks is accepted and stored verbatim > Out of scope: heart+VS16
+PROBE D4.oos.heart+VS16: {"create":201,"verbatim":true,"precheck":"pass"}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-probe.test.ts > D4. visible text with marks is accepted and stored verbatim > Out of scope: heart+VS16 254ms
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D4. visible text with marks is accepted and stored verbatim > Out of scope: RLM + Arabic
+PROBE D4.oos.RLM + Arabic: {"create":201,"verbatim":true,"precheck":"pass"}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-probe.test.ts > D4. visible text with marks is accepted and stored verbatim > Out of scope: RLM + Arabic 220ms
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D4. visible text with marks is accepted and stored verbatim > Out of scope: decomposed e-acute
+PROBE D4.oos.decomposed e-acute: {"create":201,"verbatim":true,"precheck":"pass"}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-probe.test.ts > D4. visible text with marks is accepted and stored verbatim > Out of scope: decomposed e-acute 175ms
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D4. visible text with marks is accepted and stored verbatim > Out of scope: Arabic shadda+fatha
+PROBE D4.oos.Arabic shadda+fatha: {"create":201,"verbatim":true,"precheck":"pass"}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-probe.test.ts > D4. visible text with marks is accepted and stored verbatim > Out of scope: Arabic shadda+fatha 146ms
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D4. visible text with marks is accepted and stored verbatim > Out of scope: Mongolian a + FVS1
+PROBE D4.oos.Mongolian a + FVS1: {"create":201,"verbatim":true,"precheck":"pass"}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-probe.test.ts > D4. visible text with marks is accepted and stored verbatim > Out of scope: Mongolian a + FVS1 184ms
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D4. visible text with marks is accepted and stored verbatim > Out of scope: keycap
+PROBE D4.oos.keycap: {"create":201,"verbatim":true,"precheck":"pass"}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-probe.test.ts > D4. visible text with marks is accepted and stored verbatim > Out of scope: keycap 151ms
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D4. visible text with marks is accepted and stored verbatim > Out of scope: ZWJ family
+PROBE D4.oos.ZWJ family: {"create":201,"verbatim":true,"precheck":"pass"}
+
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > D4. visible text with marks is accepted and stored verbatim > reason and name keep their marks
+PROBE D4.reason+name: {"archive":200,"reasonVerbatim":true,"create":201,"nameVerbatim":true}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-probe.test.ts > D4. visible text with marks is accepted and stored verbatim > Out of scope: ZWJ family 147ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-probe.test.ts > D4. visible text with marks is accepted and stored verbatim > reason and name keep their marks 48ms
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > E. adversarial residual: invisible-by-design code points outside the excluded properties > U+16FE4 KHITAN SMALL SCRIPT FILLER as Out of scope must not document an exclusion
+PROBE E.U+16FE4 KHITAN SMALL SCRIPT FILLER: {"create":400}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-probe.test.ts > E. adversarial residual: invisible-by-design code points outside the excluded properties > U+16FE4 KHITAN SMALL SCRIPT FILLER as Out of scope must not document an exclusion 95ms
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > E. adversarial residual: invisible-by-design code points outside the excluded properties > U+1D159 MUSICAL SYMBOL NULL NOTEHEAD x2 as Out of scope must not document an exclusion
+PROBE E.U+1D159 MUSICAL SYMBOL NULL NOTEHEAD x2: {"create":400}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-probe.test.ts > E. adversarial residual: invisible-by-design code points outside the excluded properties > U+1D159 MUSICAL SYMBOL NULL NOTEHEAD x2 as Out of scope must not document an exclusion 106ms
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > F. U+0000 inside visible text must be a 4xx, never a 500 > Out of scope 'scope\u0000x'
+PROBE F.oos.nul: {"create":400,"code":"validation","type":"urn:mth:problem:validation","detail":"The request is not valid.","errors":["/outOfScope:validation.invalid_character"],"getAfter":404,"stored":null}
+
+stdout | apps/api/test/integration/zz-sec-r5-probe.test.ts > F. U+0000 inside visible text must be a 4xx, never a 500 > transformation name 'Synthetic\u0000name'
+PROBE F.name.nul: {"status":400,"code":"validation","detail":"The request is not valid.","errors":["/name:validation.invalid_character"]}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-probe.test.ts > F. U+0000 inside visible text must be a 4xx, never a 500 > Out of scope 'scope\u0000x' 111ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-probe.test.ts > F. U+0000 inside visible text must be a 4xx, never a 500 > transformation name 'Synthetic\u0000name' 4ms
+stdout | apps/api/test/integration/zz-sec-r5-oidc.test.ts > F-DG2-181 re-verification > round-4 repro: 200 x U+200B + visible -> name claim absent, falls back to preferred_username
+PROBE 181.repro: {"cb":302,"display":"r5.first","hasText":true}
+
+stdout | apps/api/test/integration/zz-sec-r5-oidc.test.ts > F-DG2-181 re-verification > other untrimmed invisible prefixes (U+200F, U+2060, U+0085, VS16, CGJ, U+E0100) x 200 + visible -> fallback
+PROBE 181.prefix.U+200f: {"cb":302,"display":"r5.p1"}
+
+stdout | apps/api/test/integration/zz-sec-r5-oidc.test.ts > F-DG2-181 re-verification > other untrimmed invisible prefixes (U+200F, U+2060, U+0085, VS16, CGJ, U+E0100) x 200 + visible -> fallback
+PROBE 181.prefix.U+2060: {"cb":302,"display":"r5.p2"}
+
+stdout | apps/api/test/integration/zz-sec-r5-oidc.test.ts > F-DG2-181 re-verification > other untrimmed invisible prefixes (U+200F, U+2060, U+0085, VS16, CGJ, U+E0100) x 200 + visible -> fallback
+PROBE 181.prefix.U+85: {"cb":302,"display":"r5.p3"}
+
+stdout | apps/api/test/integration/zz-sec-r5-oidc.test.ts > F-DG2-181 re-verification > other untrimmed invisible prefixes (U+200F, U+2060, U+0085, VS16, CGJ, U+E0100) x 200 + visible -> fallback
+PROBE 181.prefix.U+fe0f: {"cb":302,"display":"r5.p4"}
+
+stdout | apps/api/test/integration/zz-sec-r5-oidc.test.ts > F-DG2-181 re-verification > other untrimmed invisible prefixes (U+200F, U+2060, U+0085, VS16, CGJ, U+E0100) x 200 + visible -> fallback
+PROBE 181.prefix.U+34f: {"cb":302,"display":"r5.p5"}
+
+stdout | apps/api/test/integration/zz-sec-r5-oidc.test.ts > F-DG2-181 re-verification > other untrimmed invisible prefixes (U+200F, U+2060, U+0085, VS16, CGJ, U+E0100) x 200 + visible -> fallback
+PROBE 181.prefix.U+e0100: {"cb":302,"display":"r5.p6"}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-oidc.test.ts > F-DG2-181 re-verification > round-4 repro: 200 x U+200B + visible -> name claim absent, falls back to preferred_username 82ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-oidc.test.ts > F-DG2-181 re-verification > other untrimmed invisible prefixes (U+200F, U+2060, U+0085, VS16, CGJ, U+E0100) x 200 + visible -> fallback 169ms
+stdout | apps/api/test/integration/zz-sec-r5-oidc.test.ts > F-DG2-181 re-verification > 199 invisible + visible: kept (200 code points, has visible content)
+PROBE 181.199: {"len":200,"last":"V","hasText":true}
+
+stdout | apps/api/test/integration/zz-sec-r5-oidc.test.ts > F-DG2-181 re-verification > astral: 250 x U+1F600 -> 200 code points, no lone surrogate, DB char_length 200
+PROBE 181.astral: {"cps":200,"units":400,"dbCharLength":200,"lone":false}
+
+stdout | apps/api/test/integration/zz-sec-r5-oidc.test.ts > F-DG2-181 re-verification > name and preferred_username invisible after truncation -> email (unverified e-mail is still only a display fallback)
+PROBE 181.email: {"display":"r5-4@example.invalid","storedEmail":null}
+
+stdout | apps/api/test/integration/zz-sec-r5-oidc.test.ts > F-DG2-181 re-verification > all claims invisible -> generated name
+PROBE 181.generated: {"display":"User 636da9"}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-oidc.test.ts > F-DG2-181 re-verification > 199 invisible + visible: kept (200 code points, has visible content) 24ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-oidc.test.ts > F-DG2-181 re-verification > astral: 250 x U+1F600 -> 200 code points, no lone surrogate, DB char_length 200 36ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-oidc.test.ts > F-DG2-181 re-verification > name and preferred_username invisible after truncation -> email (unverified e-mail is still only a display fallback) 27ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-oidc.test.ts > F-DG2-181 re-verification > all claims invisible -> generated name 25ms
+stdout | apps/api/test/integration/zz-sec-r5-oidc.test.ts > identity, session and authorization unchanged > (iss, sub) binding: same sub with another name signs in the SAME user, name not re-derived; session works; no roles
+PROBE bind: {"cb":[302,302],"same":true,"display":"Synthetic Original","me":200,"meUser":true,"roles":0,"list":[200,0],"identities":1}
+
+stdout | apps/api/test/integration/zz-sec-r5-oidc.test.ts > identity, session and authorization unchanged > another sub with the same name and the same unverified e-mail is a DIFFERENT user (no binding by name/e-mail)
+PROBE distinct: {"distinct":true}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-oidc.test.ts > identity, session and authorization unchanged > (iss, sub) binding: same sub with another name signs in the SAME user, name not re-derived; session works; no roles 148ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-oidc.test.ts > identity, session and authorization unchanged > another sub with the same name and the same unverified e-mail is a DIFFERENT user (no binding by name/e-mail) 61ms
+stdout | apps/api/test/integration/zz-sec-r6-oidc.test.ts > F-DG2-231: NUL in claims and callback > NUL in sub -> token_invalid, audited, no user; NUL in name/preferred_username/email -> next claim
+PROBE 231.claims: {"subNul":[302,"/login?error=token_invalid",false],"nameNul":[302,"/"],"users":[["72 36 2d 6e 75 6c 2d 6e 61 6d 65","r6-nn@example.invalid","r6-nn@example.invalid"]]}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r6-oidc.test.ts > F-DG2-231: NUL in claims and callback > NUL in sub -> token_invalid, audited, no user; NUL in name/preferred_username/email -> next claim 99ms
+stdout | apps/api/test/integration/zz-sec-r6-oidc.test.ts > F-DG2-231: NUL in claims and callback > callback: NUL in state/code/error -> 302 invalid_request; a valid code after a NUL attempt still signs in once
+PROBE 231.callback: [["code=x&state=a%00b",302,"/login?error=invalid_request"],["code=a%00&state=unknown",302,"/login?error=invalid_request"],["error=x%00&state=unknown",302,"/login?error=invalid_request"],["code=x&state=y&extra=%00",302,"/login?error=state_invalid"]]
+
+stdout | apps/api/test/integration/zz-sec-r6-oidc.test.ts > other input PostgreSQL may refuse: lone surrogates in claims > name claim with lone high surrogate: never a 500
+PROBE sur.name claim with lone high surrogate: {"status":302,"location":"/","body":"","session":true,"users":[["72 36 2d 73 75 72 2d 6e 61 6d 65","53 79 6e 74 68 65 74 69 63 fffd 4e 61 6d 65",null]]}
+
+stdout | apps/api/test/integration/zz-sec-r6-oidc.test.ts > other input PostgreSQL may refuse: lone surrogates in claims > preferred_username with lone low surrogate: never a 500
+PROBE sur.preferred_username with lone low surrogate: {"status":302,"location":"/","body":"","session":true,"users":[["72 36 2d 73 75 72 2d 70 72 65 66","73 79 6e fffd 74 68 65 74 69 63",null]]}
+
+stdout | apps/api/test/integration/zz-sec-r6-oidc.test.ts > other input PostgreSQL may refuse: lone surrogates in claims > verified email with lone surrogate: never a 500
+PROBE sur.verified email with lone surrogate: {"status":302,"location":"/","body":"","session":true,"users":[["72 36 2d 73 75 72 2d 6d 61 69 6c","53 79 6e 74 68 65 74 69 63","r6�@example.invalid"]]}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r6-oidc.test.ts > F-DG2-231: NUL in claims and callback > callback: NUL in state/code/error -> 302 invalid_request; a valid code after a NUL attempt still signs in once 10ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r6-oidc.test.ts > other input PostgreSQL may refuse: lone surrogates in claims > name claim with lone high surrogate: never a 500 36ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r6-oidc.test.ts > other input PostgreSQL may refuse: lone surrogates in claims > preferred_username with lone low surrogate: never a 500 28ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r6-oidc.test.ts > other input PostgreSQL may refuse: lone surrogates in claims > verified email with lone surrogate: never a 500 24ms
+stdout | apps/api/test/integration/zz-sec-r6-oidc.test.ts > other input PostgreSQL may refuse: lone surrogates in claims > sub with lone surrogate: never a 500
+PROBE sur.sub with lone surrogate: {"status":400,"location":null,"body":{"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"A value has an invalid format.","code":"validation","requestId":"01a11110-1e8e-706c-8694-3d4337394d90","errors":[{"pointer":"","code":"validation.format","message":"A value has an invalid format."}]},"session":false,"users":[]}
+
+stdout | apps/api/test/integration/zz-sec-r6-oidc.test.ts > other input PostgreSQL may refuse: lone surrogates in claims > two distinct subjects that differ only in a lone surrogate are not merged into one user
+PROBE sur.collision: {"status":[400,400],"users":[]}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r6-oidc.test.ts > other input PostgreSQL may refuse: lone surrogates in claims > sub with lone surrogate: never a 500 19ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r6-oidc.test.ts > other input PostgreSQL may refuse: lone surrogates in claims > two distinct subjects that differ only in a lone surrogate are not merged into one user 60ms
+stdout | apps/api/test/integration/zz-sec-r6-oidc.test.ts > identity, session and authorization unchanged > (iss, sub) binding, no roles at JIT, session works, login cookie single use
+PROBE bind: {"cb":[302,302],"users":1,"display":"Synthetic Original","me":[200,true],"roles":0,"replay":[302,"/login?error=state_invalid",false]}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r6-oidc.test.ts > identity, session and authorization unchanged > (iss, sub) binding, no roles at JIT, session works, login cookie single use 131ms
+stdout | apps/api/test/integration/zz-sec-r5-nul.test.ts > U+0000 in visible free text > root cause: PostgreSQL rejects NUL in text with SQLSTATE 22021
+PROBE pg.nul: {"code":"22021","message":"invalid byte sequence for encoding \"UTF8\": 0x00"}
+
+stdout | apps/api/test/integration/zz-sec-r5-nul.test.ts > U+0000 in visible free text > charter outOfScope (freeText, P2)
+PROBE nul.charter: {"status":400,"body":{"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a11110-2541-73c9-a5e7-7c5f23d20edf","errors":[{"pointer":"/outOfScope","code":"validation.invalid_character","message":"The text contains an unsupported invisible character (U+0000)."}]},"before":{"t":"38","c":"12","a":"1190"},"after":{"t":"38","c":"12","a":"1190"},"getAfter":404,"audit":0}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-nul.test.ts > U+0000 in visible free text > root cause: PostgreSQL rejects NUL in text with SQLSTATE 22021 10ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-nul.test.ts > U+0000 in visible free text > charter outOfScope (freeText, P2) 252ms
+stdout | apps/api/test/integration/zz-sec-r5-nul.test.ts > U+0000 in visible free text > transformation name (shared name, P1)
+PROBE nul.name: {"status":400,"body":{"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a11110-2552-7693-8451-0ebd834b0125","errors":[{"pointer":"/name","code":"validation.invalid_character","message":"The text contains an unsupported invisible character (U+0000)."}]},"before":{"t":"38","c":"12","a":"1190"},"after":{"t":"38","c":"12","a":"1190"}}
+
+stdout | apps/api/test/integration/zz-sec-r5-nul.test.ts > U+0000 in visible free text > TOM gap archive reason (shared reason, P2)
+PROBE nul.reason: {"status":400,"body":{"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a11110-2569-75a2-8b98-8302e448d73b","errors":[{"pointer":"/reason","code":"validation.invalid_character","message":"The text contains an unsupported invisible character (U+0000)."}]},"before":{"t":"38","c":"12","a":"1191"},"after":{"t":"38","c":"12","a":"1191"},"record":["open",1]}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-nul.test.ts > U+0000 in visible free text > transformation name (shared name, P1) 5ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r5-nul.test.ts > U+0000 in visible free text > TOM gap archive reason (shared reason, P2) 40ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r5-probe.test.ts > D1. F-DG2-180 set as Out of scope -> 400 validation.blank, nothing stored > U+0000 NUL only
+AssertionError: expected [ Array(1) ] to include '/outOfScope:validation.blank'
+ ❯ apps/api/test/integration/zz-sec-r5-probe.test.ts:54:27
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r5-probe.test.ts > D2. F-DG2-180 set (x3) as archive reason -> 400 at /reason, record unchanged, no audit > every value refused
+AssertionError: expected [ Array(1) ] to include '/reason:validation.blank'
+ ❯ apps/api/test/integration/zz-sec-r5-probe.test.ts:70:23
+     68|       log(`D2.${label}`, [r.status, errs(r), audit.length]);
+     69|       expect(r.status).toBe(400);
+     70|       expect(errs(r)).toContain("/reason:validation.blank");
+       |                       ^
+     71|       expect(audit).toEqual([]);
+     72|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r5-probe.test.ts > D3. shared `name` (transformation create) -> 400 at /name, nothing created > every value refused
+AssertionError: expected [ Array(1) ] to include '/name:validation.blank'
+ ❯ apps/api/test/integration/zz-sec-r5-probe.test.ts:86:23
+     84|       log(`D3.${label}`, [r.status, errs(r)]);
+     85|       expect(r.status).toBe(400);
+     86|       expect(errs(r)).toContain("/name:validation.blank");
+       |                       ^
+     87|     }
+     88|     const after = await api.db.selectFrom("transformation").select("id…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  3 failed | 60 passed (63)
+   Start at  11:53:34
+   Duration  19.26s (transform 1.19s, setup 0ms, collect 5.18s, tests 11.83s, environment 0ms, prepare 93ms)
+
+# exit_status: 1 finished: 2026-10-06T11:53:54Z

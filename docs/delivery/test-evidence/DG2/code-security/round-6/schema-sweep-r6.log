@@ -1,0 +1,41 @@
+# command: node probes/schema-sweep-r6.mts $TMPDIR/probe/packages/shared
+# node: v24.21.0 commit: 51a692b1d6ec0edfde3f9e85d75b1571dc1932ee started: 2026-10-06T11:55:44Z
+## exhaustive sweep 0..10FFFF: invisible=6341; invisible but outside the declared set: 0 ; declared set but still visible: 0 ; hasInvalidCharacter true for: [0]
+
+## placeholders without visible content: expect rejected validation.blank, hasText false
+ok  U+16FE4                                  freeText: validation.blank  hasText: false  name: validation.blank  reason(x3): validation.blank
+ok  U+1D159                                  freeText: validation.blank  hasText: false  name: validation.blank  reason(x3): validation.blank
+ok  U+1D159 x2                               freeText: validation.blank  hasText: false  name: validation.blank  reason(x3): validation.blank
+ok  U+16FE4 x3                               freeText: validation.blank  hasText: false  name: validation.blank  reason(x3): validation.blank
+ok  U+2800+U+16FE4+U+1D159+NBSP+RLM+VS16     freeText: validation.blank  hasText: false  name: validation.blank  reason(x3): validation.blank
+
+## placeholders with visible text: expect accepted, verbatim
+ok  a+U+16FE4                                freeText: ACCEPTED  verbatim: true  hasText: true  name: ACCEPTED  reason: ACCEPTED
+ok  U+1D159+Arabic                           freeText: ACCEPTED  verbatim: true  hasText: true  name: ACCEPTED  reason: ACCEPTED
+ok  Khitan char U+18B00 + filler             freeText: ACCEPTED  verbatim: true  hasText: true  name: ACCEPTED  reason: ACCEPTED
+ok  musical G clef + null notehead           freeText: ACCEPTED  verbatim: true  hasText: true  name: ACCEPTED  reason: ACCEPTED
+ok  emoji+VS16+U+1D159                       freeText: ACCEPTED  verbatim: true  hasText: true  name: ACCEPTED  reason: ACCEPTED
+
+## U+0000: expect exactly one error validation.invalid_character
+ok  NUL alone            freeText: validation.invalid_character  name: validation.invalid_character  reason: validation.invalid_character
+ok  NUL x3               freeText: validation.invalid_character  name: validation.invalid_character  reason: validation.invalid_character
+ok  inside               freeText: validation.invalid_character  name: validation.invalid_character  reason: validation.invalid_character
+ok  leading              freeText: validation.invalid_character  name: validation.invalid_character  reason: validation.invalid_character
+ok  trailing             freeText: validation.invalid_character  name: validation.invalid_character  reason: validation.invalid_character
+BAD NUL+spaces           freeText: validation.invalid_character  name: validation.invalid_character  reason: Too small: expected string to have >=3 characters
+ok  NUL+RLM              freeText: validation.invalid_character  name: validation.invalid_character  reason: validation.invalid_character
+
+## legitimate input kept: U+0001..U+001F inside visible text, '\\0', '%00', U+FFFD
+ok  "a\u0001b"           freeText: ACCEPTED
+ok  "Synthetic \\0"      freeText: ACCEPTED
+ok  "100%00"             freeText: ACCEPTED
+ok  "a�b"                freeText: ACCEPTED
+
+UNEXPECTED: 1
+# exit_status: 1 finished: 2026-10-06T11:55:44Z
+# reviewer note (added after the run): the single BAD row is a probe-expectation error, not a defect. `reason` trims
+# first; " \u0000 " trims to "\u0000" (1 character), so `min(3)` fails and the documented one-error rule reports
+# too_small only (trimmedText skips the later refines when min failed). Through the API the central preHandler check
+# answers 400 validation.invalid_character at /reason before zod runs (zz-sec-r5-nul / invalid-character tests).
+# Every F-DG2-230/231 assertion passed: exhaustive sweep 0 extra / 0 missed; placeholders blank alone and kept with
+# visible text; hasInvalidCharacter is true for U+0000 only.
