@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG2-310",
+      "stage_id": "DG2",
+      "requirement": "REQ-DLV-034",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Disposable-PostgreSQL test harnesses pick their ports inside the Linux ephemeral range (32768-60999), so a run sporadically fails to start with EADDRINUSE when a just-closed client socket in TIME_WAIT holds that port",
+      "reproduction": "Clone @90439483, node v24.21.0. Sequential full integration runs through tests/qa/support/with-pg.sh with QA_PG_PORT in the 55xxx/56xxx range. 2 of 12 full-project attempts never started: 10-integration-unset-run2.log (port 55172) and 10-integration-cutf8-load-attempt1.log (port 56402). Both show postgres 'could not bind IPv4 address \"127.0.0.1\": Address already in use' -> 'BLOCKED: disposable PostgreSQL did not start', exit 3, and no listener was present on the port moments later. Mechanism reproduced in isolation (11-port-collision-repro.py/.log): ip_local_port_range is 32768-60999; a client socket that closes first leaves TIME_WAIT on its ephemeral port, and a later bind+listen on that port, even with SO_REUSEADDR as postgres uses, fails with EADDRINUSE. The default ports of every disposable-cluster harness are inside that range: apps/web/e2e/support/with-stack.sh 54331, deploy/scripts/clean-start-local.sh 54340, tests/qa/support/with-pg.sh 54351, e2e/support/qa-stack.sh 54361. The previous run's many pool and client connections to 127.0.0.1 consume ephemeral ports right next to the next run's port choice. Reruns on the same suite with other ports (2xxxx) passed 531/531.",
+      "expected": "A disposable test cluster starts deterministically. Its port is outside the kernel's ephemeral range (for example below 32768), or is reserved, or is retried or chosen free at bind time, so an unrelated client TIME_WAIT cannot make a gate run fail at setup.",
+      "actual": "Sporadic exit 3 'disposable PostgreSQL did not start' (EADDRINUSE) with no product cause. It fails closed (BLOCKED, never a silent pass), so no result is falsified. It does produce unexplained red runs of the kind D-067 records. This mechanism does NOT explain the orchestrator's D-067 symptom (vitest ran, one file failed at setup, 11 skipped), because a bind failure stops before vitest starts. That symptom did not recur in 24 runs containing the two candidate files here (10 full runs, 5 per locale incl. one under CPU load each; 12 targeted loops, 6 per locale; 2 runs with the QA suites), all green with 0 skipped.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-7/10-integration-unset-run2.log",
+        "docs/delivery/test-evidence/DG2/qa/round-7/10-integration-cutf8-load-attempt1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-7/11-port-collision-repro.log",
+        "docs/delivery/test-evidence/DG2/qa/round-7/11-port-collision-repro.py",
+        "docs/delivery/test-evidence/DG2/qa/round-7/10-integration-determinism-summary.log",
+        "tests/qa/support/with-pg.sh",
+        "apps/web/e2e/support/with-stack.sh",
+        "e2e/support/qa-stack.sh",
+        "deploy/scripts/clean-start-local.sh"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG2/round-7/qa-verifier.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-06T15:45:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG2 round 7 (T-DG2-REV-QA-R7) because the assignment requires every failed run to be explained and raised. Low and non-mandatory: test-tooling reliability only, no product code involved, and it fails closed. Two of the four harnesses (tests/qa/support/with-pg.sh, e2e/support/qa-stack.sh) are qa-verifier's own; owner devops-engineer as the stack-tooling owner, so qa-verifier does not verify a fix to its own files alone."
+        }
+      ]
+    }
+  ]
+}
