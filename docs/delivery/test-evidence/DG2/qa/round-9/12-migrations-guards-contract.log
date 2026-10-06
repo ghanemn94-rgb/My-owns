@@ -1,0 +1,61 @@
+$ ls packages/db/migrations; grep migrate/protection/contract route-coverage lines from integration-unset-run1.log
+0001_identity_access.sql
+0002_transformation.sql
+0003_audit_event.sql
+0004_outbox_jobs.sql
+0005_seed_roles_permissions.sql
+0006_pgboss_schema_v25.sql
+0007_oidc_login_browser_binding.sql
+0008_scoped_assignment_derived_from.sql
+0009_business_unit_hierarchy_guard.sql
+0010_p2_record_guards.sql
+0011_p2_methodology_catalogue.sql
+0012_p2_evidence.sql
+0013_p2_direction_charter.sql
+0014_p2_kpi_baseline_value_pool.sql
+0015_p2_diagnose.sql
+0016_p2_design_tom.sql
+0017_p2_decisions_gates.sql
+0018_p2_access_instantiation.sql
+0019_evidence_review_separation.sql
+✓ |integration| apps/api/test/integration/contract/contract.test.ts > route coverage > maps every governed Fastify route to an OpenAPI operation with the same method, and back 2ms
+✓ |integration| apps/api/test/integration/contract/contract.test.ts > route coverage > declares access on every governed route (public or a permission) 3ms
+✓ |integration| apps/api/test/integration/dg2-repairs.test.ts > F-DG2-140 evidence separation of duties (REQ-S13-012) > database guard (0019): content_authored_by is trigger-maintained, and a self-review is refused even bypassing the API 27ms
+✓ |integration| packages/db/test/integration/catalogue.test.ts > schema.ts matches the migrated database > has exactly the same relations and columns as public 16ms
+✓ |integration| packages/db/test/integration/catalogue.test.ts > schema.ts matches the migrated database > marks exactly the views as views 2ms
+✓ |integration| packages/db/test/integration/catalogue.test.ts > type and structure rules (ADR-0003, data dictionary global rules) > uses timestamptz only (no timestamp without time zone) and no floating point 5ms
+✓ |integration| packages/db/test/integration/catalogue.test.ts > type and structure rules (ADR-0003, data dictionary global rules) > gives every base table a primary key and uuid ids without defaults 5ms
+✓ |integration| packages/db/test/integration/catalogue.test.ts > type and structure rules (ADR-0003, data dictionary global rules) > gives every mutable business table a version column >= 1 defaulting to 1 7ms
+✓ |integration| packages/db/test/integration/catalogue.test.ts > type and structure rules (ADR-0003, data dictionary global rules) > stores money-bearing currency as char(3) with a code check 3ms
+✓ |integration| packages/db/test/integration/catalogue.test.ts > mth_app privileges are exactly the data dictionary's > matches per table 4ms
+✓ |integration| packages/db/test/integration/catalogue.test.ts > mth_app privileges are exactly the data dictionary's > has no CREATE on public and owns nothing 1ms
+✓ |integration| packages/db/test/integration/catalogue.test.ts > mth_app privileges are exactly the data dictionary's > can use the pg-boss schema without DDL 1ms
+✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > lets mth_app INSERT and SELECT 1ms
+✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > rejects UPDATE by mth_app (no privilege) 1ms
+✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > rejects DELETE by mth_app (no privilege) 5ms
+✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > rejects TRUNCATE by mth_app 4ms
+✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > rejects UPDATE even by the owner (trigger audit_event_immutable) 9ms
+✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > rejects DELETE even by the owner (trigger audit_event_immutable) 5ms
+✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > rejects TRUNCATE even by the owner (trigger audit_event_immutable) 6ms
+✓ |integration| packages/db/test/integration/protection.test.ts > audit_event is append-only (ADR-0004) > enforces the version step and the user-actor rule 11ms
+✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > rejects ADM_TECH + gate.decide and + finance.validate, even for the owner 10ms
+✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > rejects ADM_ACCESS + gate.decide and + finance.validate, even for the owner 12ms
+✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > rejects ADM_METHOD + gate.decide and + finance.validate, even for the owner 11ms
+✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > rejects re-classifying an approver role as technical_admin 6ms
+✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > rejects re-classifying a permission held by a technical admin as an approval 8ms
+✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > still allows approval permissions on business roles (positive case) 13ms
+✓ |integration| packages/db/test/integration/protection.test.ts > separation of duties: technical admins are never approvers (ADR-0006, REQ-S10-003, REQ-S06-010) > gives mth_app no way to write role_permission at all 5ms
+✓ |integration| packages/db/test/integration/protection.test.ts > seeded catalogue equals permissions.ts > permissions 4ms
+✓ |integration| packages/db/test/integration/protection.test.ts > seeded catalogue equals permissions.ts > roles and their permissions 3ms
+✓ |integration| packages/db/test/integration/bootstrap.test.ts > mth-db bootstrap > creates the first organization and a technical/access admin with no business permission, fully audited 399ms
+✓ |integration| packages/db/test/integration/bootstrap.test.ts > mth-db bootstrap > refuses to run twice 426ms
+✓ |integration| packages/db/test/integration/bootstrap.test.ts > mth-db bootstrap > validates its input and refuses the dev-login issuer 314ms
+✓ |integration| packages/db/test/integration/bootstrap.test.ts > mth-db seed-dev (synthetic, development only) > refuses in production and outside AUTH_MODE=dev 1ms
+✓ |integration| packages/db/test/integration/bootstrap.test.ts > mth-db seed-dev (synthetic, development only) > seeds synthetic users bound to urn:mth:dev-local once, idempotently 442ms
+✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > applies every shipped migration, then reports up to date 283ms
+✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > is idempotent on an up-to-date database 17ms
+✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > records id, name, sha256, applied_at and applied_by = mth_owner 7ms
+✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > refuses to run when an applied file changed on disk 20ms
+✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > refuses to run when the database has a migration the build does not ship 18ms
+✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > applies a new forward migration atomically: a failing file leaves no trace 24ms
+✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate guards > refuses to run as the app role (objects must be owned by mth_owner) 34ms

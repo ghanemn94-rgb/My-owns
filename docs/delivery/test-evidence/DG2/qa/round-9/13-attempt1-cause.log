@@ -1,0 +1,18 @@
+qa-verifier DG2 round 9 — why the first QA-suite attempt (13-integration-with-qa-suites-attempt1-*-incl-superseded-r1.log) had 2 failures
+
+What happened: I copied ALL six evidence suites, including tests/dg2-qa-journey.test.ts, into the clone's tests/qa/integration.
+That file is my ROUND-1 repro of F-DG2-201 ("G2 cannot be completed through native workflows"). It probes PATCH/POST
+kpi-definition {status:"active"} instead of the activation operation (POST .../kpi-definitions/{id}/activate), which the
+F-DG2-201 repair added in round 2. Its round-2 successor (tests/round-2/dg2-qa-journey-r2.test.ts) uses the real route.
+Round 8 (QA-R8-12) ran exactly the round-2/round-3 suites + dg2-qa-acceptance.test.ts and excluded this file.
+
+Failures (identical in both locale settings): G2 "every Define output can be completed through the API" (open criteria
+thesis_incomplete x4 + kpi_definitions.not_active, because the probe never activates the KPI) and then G3 (422
+gate.out_of_sequence because G2 was never approved).
+
+Control: the SAME file on the ROUND-8 candidate cf3446e4 (before D-069) fails the SAME 2 tests
+(14-control-superseded-r1-journey-on-r8-candidate.log). So it is not a D-069 regression; it is a stale test of mine.
+
+Re-run with the round-8 file set (8 qa files incl. the candidate's a12/a13/a14): 13-integration-with-qa-suites-unset.log and
+-cutf8.log: 39 files, 599 tests passed, exit 0. The native Define->G2 and Design->G3 journeys are also green in
+dg2-qa-journey-r2.test.ts there and in the product e2e (p2-journeys.spec.ts) in chromium-en and chromium-ar.

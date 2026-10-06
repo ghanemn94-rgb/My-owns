@@ -1,0 +1,99 @@
+$ env -u LANG -u LC_ALL QA_E2E_API_PORT=3895 QA_E2E_PG_PORT=24695 QA_SHOT_DIR=<shots> e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r9.spec.ts --workers=1 --reporter=list
+# final spec (sha256 ed726880345cc943…); node v24.21.0; 2026-10-06T21:29:25Z
+port-policy: PostgreSQL listening on port 24695 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 3895 (attempt 1)
+API:     http://localhost:3895
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 20 tests using 1 worker
+
+QA-R9 [en] R9-01 18 undeclared-media-type uploads (9 types x 2 framings): all 400 validation.content_type at pointer "", 0 audit rows each; no session -> 400 [{"pointer":"","code":"validation.content_type","message":"Send the request body as application/octet-stream."}]; evidence version 1->1, currentContentId null, download 404, evidence_content rows 0, stored files 0
+  ✓   1 [chromium-en] › e2e/dg2-qa-r9.spec.ts:212:1 › R9-01 raw socket: an evidence upload in an undeclared media type is 400 validation.content_type; nothing stored, no audit row (878ms)
+QA-R9 [en] R9-02 content-length (application/octet-stream): 200, 65804 bytes; download identical; sha256 1a4293017c207dd6… = DB = Digest; audit rows 1; fileName round-trips; Content-Disposition attachment; filename="_____ en __ synthetic.bin"; filename*=UTF-8''%D8%AA%D9%82%D8%B1%D9%8A%D8%B1%20en%20%F0%9F%A7%BE%20synthetic.bin
+QA-R9 [en] R9-02 chunked split (application/octet-stream): 200, 20268 bytes; download identical; sha256 009cff856c797d46… = DB = Digest; audit rows 1; fileName round-trips; Content-Disposition attachment; filename="_____ en __ synthetic.bin"; filename*=UTF-8''%D8%AA%D9%82%D8%B1%D9%8A%D8%B1%20en%20%F0%9F%A7%BE%20synthetic.bin
+QA-R9 [en] R9-02 case + parameter (Application/Octet-Stream; charset=binary): 200, 3256 bytes; download identical; sha256 578289fc7ed7968c… = DB = Digest; audit rows 1; fileName round-trips; Content-Disposition attachment; filename="_____ en __ synthetic.bin"; filename*=UTF-8''%D8%AA%D9%82%D8%B1%D9%8A%D8%B1%20en%20%F0%9F%A7%BE%20synthetic.bin
+  ✓   2 [chromium-en] › e2e/dg2-qa-r9.spec.ts:256:1 › R9-02 raw socket: a valid binary upload stores the exact bytes; download bytes, sha256 and Digest match; audited (628ms)
+QA-R9 [en] R9-03 16 undeclared JSON-op requests: all 400 validation.content_type, no audit; charter version 1->1 (Synthetic start); transformations created 0
+QA-R9 [en] R9-03 accepted: "application/json; charset=UTF-8" -> 200, "APPLICATION/JSON" chunked -> 200
+  ✓   3 [chromium-en] › e2e/dg2-qa-r9.spec.ts:298:1 › R9-03 raw socket: JSON operations refuse undeclared media types (nothing written, no audit) and accept JSON with parameters (857ms)
+QA-R9 [en] R9-04 62 chunks cut mid-character: 201; title and note stored verbatim (50+73 bytes)
+  ✓   4 [chromium-en] › e2e/dg2-qa-r9.spec.ts:358:1 › R9-04 raw socket: Arabic/emoji/ZWJ/combining text sent chunked and cut mid-character round-trips verbatim (1.7s)
+QA-R9 [en] R9-06 logout + text/plain body -> 400 {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"Send the request body as application/json.","code":"validation","request; GET /me afterwards 200
+QA-R9 [en] R9-06 ["iso-8859-1 byte E9 -> 400 {\"type\":\"urn:mth:problem:validation\",\"title\":\"Validation failed\",\"status\":400,\"detail\":\"The request body is not valid UTF-8 JSON.\",\"code\":\"v","utf-16le body -> 400 {\"type\":\"urn:mth:problem:validation\",\"title\":\"Validation failed\",\"status\":400,\"detail\":\"The request body is not valid JSON.\",\"code\":\"validat"]
+  ✓   5 [chromium-en] › e2e/dg2-qa-r9.spec.ts:384:1 › R9-06 raw socket edges: a bodiless operation with an undeclared body; JSON declared with a non-UTF-8 charset (277ms)
+QA-R9 [en] R9-05a charter: alerts with the message 1; occurrences in page text 1; all alerts [" The request was not valid JSON."]
+  ✓   6 [chromium-en] › e2e/dg2-qa-r9.spec.ts:462:1 › R9-05a UI charter: invalid-UTF-8 body -> validation__json said once; nothing saved (2.4s)
+QA-R9 [en] R9-05b server answer 1: 400 [{"pointer":"/outOfScope","code":"validation.blank","message":"validation.blank"}]
+QA-R9 [en] R9-05b field message(s) "Enter some text; spaces alone are not a value."; form-errors list []; alerts [" Some values are not valid. Check the highlighted fields."]
+QA-R9 [en] R9-05b server answer 2: 400 [{"pointer":"","code":"validation.unknown_field","message":"Unrecognized key: \"qaUnknownProperty\""}]; banner [" The request contained an unknown field."]; form-errors []
+QA-R9 [en] R9-05b unknown_field (real server): alerts with the message 1; occurrences in page text 1; all alerts [" The request contained an unknown field."]
+QA-R9 [en] R9-05b distinct second message (fulfilled problem): banner [" The request was not valid JSON."]; form-errors list [" This value is too long or too large."]
+QA-R9 [en] R9-05b validation__json with a distinct second message: alerts with the message 1; occurrences in page text 1; all alerts [" This value is too long or too large."," The request was not valid JSON."]
+QA-R9 [en] R9-05b distinct second message: alerts with the message 1; occurrences in page text 1; all alerts [" This value is too long or too large."," The request was not valid JSON."]
+  ✓   7 [chromium-en] › e2e/dg2-qa-r9.spec.ts:494:1 › R9-05b UI charter: a field-pointer error stays on its field; a distinct unmapped message is still shown (4.7s)
+QA-R9 [en] R9-05c transformation create: alerts with the message 1; occurrences in page text 1; all alerts [" The request was not valid JSON."]
+  ✓   8 [chromium-en] › e2e/dg2-qa-r9.spec.ts:624:1 › R9-05c UI P1 transformation create: invalid-UTF-8 body -> said once; nothing created (1.8s)
+QA-R9 [en] R9-05d organization create: alerts with the message 1; occurrences in page text 1; all alerts ["The request was not valid JSON."]
+  ✓   9 [chromium-en] › e2e/dg2-qa-r9.spec.ts:654:1 › R9-05d UI P1 admin organization create: invalid-UTF-8 body -> said once; nothing created (1.8s)
+QA-R9 [en] R9-05e reason dialog: alerts with the message 1; occurrences in page text 1; all alerts ["The request was not valid JSON."]
+  ✓  10 [chromium-en] › e2e/dg2-qa-r9.spec.ts:686:1 › R9-05e UI ReasonDialog (archive value pool): invalid-UTF-8 body -> said once; nothing archived (2.9s)
+QA-R9 [ar] R9-01 18 undeclared-media-type uploads (9 types x 2 framings): all 400 validation.content_type at pointer "", 0 audit rows each; no session -> 400 [{"pointer":"","code":"validation.content_type","message":"Send the request body as application/octet-stream."}]; evidence version 1->1, currentContentId null, download 404, evidence_content rows 0, stored files 0
+  ✓  11 [chromium-ar] › e2e/dg2-qa-r9.spec.ts:212:1 › R9-01 raw socket: an evidence upload in an undeclared media type is 400 validation.content_type; nothing stored, no audit row (889ms)
+QA-R9 [ar] R9-02 content-length (application/octet-stream): 200, 65804 bytes; download identical; sha256 21f9b8a8b5b43212… = DB = Digest; audit rows 1; fileName round-trips; Content-Disposition attachment; filename="_____ ar __ synthetic.bin"; filename*=UTF-8''%D8%AA%D9%82%D8%B1%D9%8A%D8%B1%20ar%20%F0%9F%A7%BE%20synthetic.bin
+QA-R9 [ar] R9-02 chunked split (application/octet-stream): 200, 20268 bytes; download identical; sha256 2d29bc644a004cc1… = DB = Digest; audit rows 1; fileName round-trips; Content-Disposition attachment; filename="_____ ar __ synthetic.bin"; filename*=UTF-8''%D8%AA%D9%82%D8%B1%D9%8A%D8%B1%20ar%20%F0%9F%A7%BE%20synthetic.bin
+QA-R9 [ar] R9-02 case + parameter (Application/Octet-Stream; charset=binary): 200, 3256 bytes; download identical; sha256 670193b37e2fb711… = DB = Digest; audit rows 1; fileName round-trips; Content-Disposition attachment; filename="_____ ar __ synthetic.bin"; filename*=UTF-8''%D8%AA%D9%82%D8%B1%D9%8A%D8%B1%20ar%20%F0%9F%A7%BE%20synthetic.bin
+  ✓  12 [chromium-ar] › e2e/dg2-qa-r9.spec.ts:256:1 › R9-02 raw socket: a valid binary upload stores the exact bytes; download bytes, sha256 and Digest match; audited (575ms)
+QA-R9 [ar] R9-03 16 undeclared JSON-op requests: all 400 validation.content_type, no audit; charter version 1->1 (Synthetic start); transformations created 0
+QA-R9 [ar] R9-03 accepted: "application/json; charset=UTF-8" -> 200, "APPLICATION/JSON" chunked -> 200
+  ✓  13 [chromium-ar] › e2e/dg2-qa-r9.spec.ts:298:1 › R9-03 raw socket: JSON operations refuse undeclared media types (nothing written, no audit) and accept JSON with parameters (831ms)
+QA-R9 [ar] R9-04 62 chunks cut mid-character: 201; title and note stored verbatim (50+73 bytes)
+  ✓  14 [chromium-ar] › e2e/dg2-qa-r9.spec.ts:358:1 › R9-04 raw socket: Arabic/emoji/ZWJ/combining text sent chunked and cut mid-character round-trips verbatim (1.7s)
+QA-R9 [ar] R9-06 logout + text/plain body -> 400 {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"Send the request body as application/json.","code":"validation","request; GET /me afterwards 200
+QA-R9 [ar] R9-06 ["iso-8859-1 byte E9 -> 400 {\"type\":\"urn:mth:problem:validation\",\"title\":\"Validation failed\",\"status\":400,\"detail\":\"The request body is not valid UTF-8 JSON.\",\"code\":\"v","utf-16le body -> 400 {\"type\":\"urn:mth:problem:validation\",\"title\":\"Validation failed\",\"status\":400,\"detail\":\"The request body is not valid JSON.\",\"code\":\"validat"]
+  ✓  15 [chromium-ar] › e2e/dg2-qa-r9.spec.ts:384:1 › R9-06 raw socket edges: a bodiless operation with an undeclared body; JSON declared with a non-UTF-8 charset (287ms)
+QA-R9 [ar] R9-05a charter: alerts with the message 1; occurrences in page text 1; all alerts [" الطلب ليس بصيغة JSON صالحة."]
+  ✓  16 [chromium-ar] › e2e/dg2-qa-r9.spec.ts:462:1 › R9-05a UI charter: invalid-UTF-8 body -> validation__json said once; nothing saved (2.2s)
+QA-R9 [ar] R9-05b server answer 1: 400 [{"pointer":"/outOfScope","code":"validation.blank","message":"validation.blank"}]
+QA-R9 [ar] R9-05b field message(s) "أدخِل نصاً؛ المسافات وحدها ليست قيمة."; form-errors list []; alerts [" بعض القيم غير صالحة. راجع الحقول المميّزة."]
+QA-R9 [ar] R9-05b server answer 2: 400 [{"pointer":"","code":"validation.unknown_field","message":"Unrecognized key: \"qaUnknownProperty\""}]; banner [" احتوى الطلب على حقل غير معروف."]; form-errors []
+QA-R9 [ar] R9-05b unknown_field (real server): alerts with the message 1; occurrences in page text 1; all alerts [" احتوى الطلب على حقل غير معروف."]
+QA-R9 [ar] R9-05b distinct second message (fulfilled problem): banner [" الطلب ليس بصيغة JSON صالحة."]; form-errors list [" هذه القيمة طويلة أو كبيرة جدًا."]
+QA-R9 [ar] R9-05b validation__json with a distinct second message: alerts with the message 1; occurrences in page text 1; all alerts [" هذه القيمة طويلة أو كبيرة جدًا."," الطلب ليس بصيغة JSON صالحة."]
+QA-R9 [ar] R9-05b distinct second message: alerts with the message 1; occurrences in page text 1; all alerts [" هذه القيمة طويلة أو كبيرة جدًا."," الطلب ليس بصيغة JSON صالحة."]
+  ✓  17 [chromium-ar] › e2e/dg2-qa-r9.spec.ts:494:1 › R9-05b UI charter: a field-pointer error stays on its field; a distinct unmapped message is still shown (4.1s)
+QA-R9 [ar] R9-05c transformation create: alerts with the message 1; occurrences in page text 1; all alerts [" الطلب ليس بصيغة JSON صالحة."]
+  ✓  18 [chromium-ar] › e2e/dg2-qa-r9.spec.ts:624:1 › R9-05c UI P1 transformation create: invalid-UTF-8 body -> said once; nothing created (1.9s)
+QA-R9 [ar] R9-05d organization create: alerts with the message 1; occurrences in page text 1; all alerts ["الطلب ليس بصيغة JSON صالحة."]
+  ✓  19 [chromium-ar] › e2e/dg2-qa-r9.spec.ts:654:1 › R9-05d UI P1 admin organization create: invalid-UTF-8 body -> said once; nothing created (1.9s)
+QA-R9 [ar] R9-05e reason dialog: alerts with the message 1; occurrences in page text 1; all alerts ["الطلب ليس بصيغة JSON صالحة."]
+  ✓  20 [chromium-ar] › e2e/dg2-qa-r9.spec.ts:686:1 › R9-05e UI ReasonDialog (archive value pool): invalid-UTF-8 body -> said once; nothing archived (3.0s)
+
+  20 passed (38.0s)
+exit 0

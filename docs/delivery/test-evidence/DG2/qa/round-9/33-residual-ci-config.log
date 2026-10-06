@@ -1,0 +1,44 @@
+$ ls .github/workflows; grep -nE "runs-on|node-version|pnpm |playwright|initdb|ENCODING|PORT" .github/workflows/*.yml deploy/scripts/ci-e2e-stack.mjs | head -60
+# cwd $TMPDIR/review-dg2 @7854770e; 2026-10-06T21:13:20Z; no live CI run available (D-058)
+ci.yml
+delivery-gates.yml
+.github/workflows/ci.yml:10:# (BLOCKED) and the job fails. pnpm is provisioned as a real binary at the packageManager version (not a Corepack
+.github/workflows/ci.yml:11:# shim: the sandbox clears HOME, so a shim would re-download pnpm inside it). check-ci-needs.mjs fails any other
+.github/workflows/ci.yml:29:    runs-on: ubuntu-24.04
+.github/workflows/ci.yml:36:          node-version: "22"
+.github/workflows/ci.yml:42:    runs-on: ubuntu-24.04
+.github/workflows/ci.yml:51:          node-version: ${{ matrix.node }}
+.github/workflows/ci.yml:52:      - name: pnpm at the packageManager version (real binary on PATH; no install scripts)
+.github/workflows/ci.yml:62:      - run: pnpm format:check
+.github/workflows/ci.yml:63:      - run: pnpm lint
+.github/workflows/ci.yml:64:      - run: pnpm typecheck
+.github/workflows/ci.yml:65:      - run: pnpm build
+.github/workflows/ci.yml:66:      - run: pnpm test
+.github/workflows/ci.yml:67:      - run: pnpm openapi:lint
+.github/workflows/ci.yml:68:      - run: pnpm check:no-cdn
+.github/workflows/ci.yml:72:    runs-on: ubuntu-24.04
+.github/workflows/ci.yml:89:          node-version: "24"
+.github/workflows/ci.yml:90:      - name: pnpm at the packageManager version (real binary on PATH; no install scripts)
+.github/workflows/ci.yml:100:      - run: pnpm -r build
+.github/workflows/ci.yml:101:      - run: pnpm test:integration
+.github/workflows/ci.yml:105:    runs-on: ubuntu-24.04
+.github/workflows/ci.yml:106:    # CF-2 (ADR-0012): browsers come baked into the version-matched Playwright image; `playwright install` is never run.
+.github/workflows/ci.yml:108:      image: mcr.microsoft.com/playwright:v1.56.1-noble@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a # devops-engineer: pin by digest
+.github/workflows/ci.yml:125:      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+.github/workflows/ci.yml:129:      - name: pnpm at the packageManager version (real binary on PATH; no install scripts)
+.github/workflows/ci.yml:135:      - run: pnpm -r build
+.github/workflows/ci.yml:142:      - run: pnpm e2e --workers=1
+.github/workflows/ci.yml:146:          name: playwright-report
+.github/workflows/ci.yml:147:          path: playwright-report/
+.github/workflows/ci.yml:154:    runs-on: ubuntu-24.04
+.github/workflows/ci.yml:161:          node-version: "24"
+.github/workflows/ci.yml:162:      - name: pnpm at the packageManager version (real binary on PATH; no install scripts)
+.github/workflows/delivery-gates.yml:16:    runs-on: ubuntu-24.04
+.github/workflows/delivery-gates.yml:23:          node-version: "22"
+deploy/scripts/ci-e2e-stack.mjs:3:// and leaves the API running in the background for `pnpm e2e`.
+deploy/scripts/ci-e2e-stack.mjs:9:// Uses `pg` from packages/db (the Playwright container has no psql). Prerequisite: `pnpm -r build`.
+deploy/scripts/ci-e2e-stack.mjs:23:const port = process.env.E2E_API_PORT ?? "3000";
+deploy/scripts/ci-e2e-stack.mjs:33:// Explicitly UTF8 (ADR-0003 "Database encoding"; T-DG2-BE9), independent of the service cluster's initdb locale.
+deploy/scripts/ci-e2e-stack.mjs:35:  `CREATE DATABASE ${database} OWNER mth_owner ENCODING 'UTF8' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0`,
+deploy/scripts/ci-e2e-stack.mjs:49:  PORT: port,
+exit 0
