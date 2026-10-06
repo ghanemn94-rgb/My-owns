@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG2-220",
+      "stage_id": "DG2",
+      "requirement": "REQ-DLV-034",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "New web unit suite p2-blank-forms.test.tsx is flaky under full-suite load: the first findByRole waits for the page with Testing Library's default 1000 ms timeout, and the required 'pnpm test' failed once on Node 24 (1 of 7 runs)",
+      "reproduction": "Disposable clone @e37f6ea4 (candidate 29ced0ed), offline install, 'pnpm test' (unit-node + unit-web) on Node 24.21.0. First run: 1 failed | 615 passed. 'Finance validation note and archive reason (en) > reason: a invisible-only reason is refused inline and nothing is archived' (1183 ms) threw TestingLibraryElementError: Unable to find role=\"button\" and name \"Archive: Synthetic handling time\". openArchive() calls screen.findByRole(...) with the default 1000 ms timeout while the Diagnose page is still loading its mocked queries. Six more full runs on Node 24 and four on Node 22 passed. JSON-reporter durations on Node 24: 22 of the 48 tests in this file take 700 ms or more, and the slowest takes 2121 ms. Most of that is the page load before the first findByRole, so headroom against the 1000 ms wait is thin, the same class as F-DG2-143 (architecture test near its timeout).",
+      "expected": "The required unit check ('pnpm test' on Node 22 and Node 24) is deterministic: no test depends on the page rendering within Testing Library's 1000 ms default under parallel full-suite load. For example, pass an explicit timeout to the first findByRole/findBy* waits in p2-blank-forms.test.tsx, or raise asyncUtilTimeout for the unit-web project.",
+      "actual": "1 failure in 7 full Node 24 runs (0 in 4 Node 22 runs) of a test the product added in this round. The product behaviour it covers is correct: the same flow passes in the real-stack e2e in EN and AR. This is a test-reliability defect of a required gate check, not a product defect.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-4/08-unit-node24.log",
+        "docs/delivery/test-evidence/DG2/qa/round-4/08-unit-node24-rerun1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-4/08-unit-node24-rerun2.log",
+        "docs/delivery/test-evidence/DG2/qa/round-4/08-unit-node24-rerun3.log",
+        "docs/delivery/test-evidence/DG2/qa/round-4/08-unit-flake-sweep.log",
+        "docs/delivery/test-evidence/DG2/qa/round-4/08-unit-durations-node24.log",
+        "apps/web/src/pages/p2-blank-forms.test.tsx"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG2/round-4/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-06T07:55:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG2 round 4 (T-DG2-REV-QA-R4). Low and non-mandatory, like F-DG2-143: the flake affects a required check's reliability, not product behaviour or data integrity."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG2-210",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified by the originating reviewer on candidate 29ced0ed (clone @e37f6ea4) against the real built SPA + API + PostgreSQL, in chromium-en and chromium-ar, in two runs on separate stacks (30/30 each). The round-3 spec dg2-qa-blank-r3 now passes in full: every former soft assertion holds. The blank message is shown, create returns 404 (no charter), Out of scope stays null at v1, and an existing Out of scope is kept at v2. The new hardened spec dg2-qa-blank-r4 covers whitespace and invisible-only values (ZWSP, WJ, U+3164, RLM, NBSP) in every claimed form: charter create and edit, T01, North Star, journey steps (name, hand-off, an invisible list item), the ReasonDialog archive reason, the design-decision outcome (row-action NoteDecisionDialog), the evidence review note, the gate G1 submission note, and the gate decision rationale and comments. In every case the field shows the localized validation__blank message (EN 'Enter some text; spaces alone are not a value.' / AR 'أدخِل نصاً؛ المسافات وحدها ليست قيمة.'), has aria-invalid=true and the message in its accessible description, the first invalid field gets focus, no mutating request is sent, and stored versions and values are unchanged. Visible text with outer spaces and an RLM is stored verbatim (charter, T01, decision outcome, gate note). A change summary alone gives 'There are no changes to save.' and writes no version. The r4 probe shows no PATCH for whitespace Out of scope, and one verbatim PATCH {outOfScope:' Wholesale (synthetic) ', changeSummary} for visible text. The unchanged r3 probe now fails as expected, recording zero PATCH bodies and versions [[1,null]]. The product spec p2-blank-text also passes in EN and AR in both full e2e runs.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-4/17-e2e-qa-blank-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-4/17-e2e-qa-blank-run2.log",
+        "docs/delivery/test-evidence/DG2/qa/round-4/24-e2e-blank-probe-r3-unchanged.log",
+        "docs/delivery/test-evidence/DG2/qa/round-4/15-e2e-product-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-4/18-e2e-product-run2-qa-stack.log",
+        "docs/delivery/test-evidence/DG2/qa/tests/round-4/e2e/dg2-qa-blank-r4.spec.ts",
+        "docs/delivery/test-evidence/DG2/qa/tests/round-4/e2e/dg2-qa-blank-probe-r4.spec.ts",
+        "docs/delivery/test-evidence/DG2/qa/round-4/e2e/en/qa-r4-01-charter-create-blank.png",
+        "docs/delivery/test-evidence/DG2/qa/round-4/e2e/ar/qa-r4-03-out-of-scope-replaced-by-blank.png",
+        "docs/delivery/test-evidence/DG2/qa/round-4/e2e/en/qa-r4-08-journey-steps-blank.png",
+        "docs/delivery/test-evidence/DG2/qa/round-4/e2e/ar/qa-r4-13-gate-decision-blank.png"
+      ]
+    },
+    {
+      "finding_id": "F-DG2-211",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on candidate 29ced0ed in chromium-en and chromium-ar, two runs. The RecordForm banner is now a DIV with role=alert (data-state=form-errors) wrapping exactly one semantic <ul>. Its listitem is the localized 'There are no changes to save.' / 'لا توجد تغييرات لحفظها.'. axe (wcag2a/2aa/21a/21aa) reports no serious or critical violation in the exact round-3 state (the T01 dialog banner, qa-r4-t01-no-changes-banner) or in the charter change-summary-only banner. The same holds in every other error state scanned: 13 QA blank-error states per language, plus 8 p2-blank, 49 P2 and 17 P1 product states per language in both full e2e runs, all with 0 serious/critical.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-4/17-e2e-qa-blank-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-4/17-e2e-qa-blank-run2.log",
+        "docs/delivery/test-evidence/DG2/qa/round-4/19-axe-summary.log",
+        "docs/delivery/test-evidence/DG2/qa/round-4/e2e/en/qa-r4-06-t01-no-changes-banner.png",
+        "docs/delivery/test-evidence/DG2/qa/round-4/e2e/ar/qa-r4-06-t01-no-changes-banner.png",
+        "docs/delivery/test-evidence/DG2/qa/round-4/e2e/ar/qa-r4-04-charter-no-changes-banner.png",
+        "docs/delivery/test-evidence/DG2/qa/round-4/e2e/product-run1/en/axe-summary-p2-blank.json",
+        "docs/delivery/test-evidence/DG2/qa/round-4/e2e/product-run2/ar/axe-summary-p2-blank.json",
+        "docs/delivery/test-evidence/DG2/qa/tests/round-4/e2e/dg2-qa-blank-r4.spec.ts"
+      ]
+    }
+  ]
+}
