@@ -9996,7 +9996,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-7/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-06T14:54:00Z",
@@ -10007,10 +10007,41 @@
           "at": "2026-10-06T17:54:00Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at d9c3f5dacb16adc29a80c55556ebeede4d5acd70"
+        },
+        {
+          "at": "2026-10-06T18:16:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 8: PASS"
         }
       ],
       "fix_revision": "d9c3f5dacb16adc29a80c55556ebeede4d5acd70",
-      "fix_summary": "BE13 d9c3f5d: application/json is read as raw bytes (parseAs buffer; bodyLimit and the length check apply to raw bytes), decoded with TextDecoder in fatal mode, then parsed by Fastify's default JSON parser. Ill-formed UTF-8 gets the declared 400 validation.json under both Content-Length and chunked framing, never 500 and never U+FFFD; a single BOM is stripped. A strict query-string parser returns 400 validation.format at /query/<key> for an undecodable component. Cookies and headers were swept. ARCH-03 cac0788 declares 429 and every other platform status, so the rate-limit path asserts the contract. Negative controls fail on the old code."
+      "fix_summary": "BE13 d9c3f5d: application/json is read as raw bytes (parseAs buffer; bodyLimit and the length check apply to raw bytes), decoded with TextDecoder in fatal mode, then parsed by Fastify's default JSON parser. Ill-formed UTF-8 gets the declared 400 validation.json under both Content-Length and chunked framing, never 500 and never U+FFFD; a single BOM is stripped. A strict query-string parser returns 400 validation.format at /query/<key> for an undecodable component. Cookies and headers were swept. ARCH-03 cac0788 declares 429 and every other platform status, so the rate-limit path asserts the contract. Negative controls fail on the old code.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG2-T-DG2-REV-SEC-R8-code-security-reviewer-20261006T175450Z-1704237b",
+          "session_id": "1704237b-be59-49e3-8bfc-f693f2cda5c0"
+        },
+        "at": "2026-10-06T18:16:00Z",
+        "result": "PASS",
+        "evidence": [
+          "apps/api/src/modules/platform/request-encoding.ts",
+          "apps/api/src/modules/platform/hooks.ts",
+          "apps/api/src/server.ts",
+          "apps/api/test/integration/invalid-utf8.test.ts",
+          "apps/api/src/modules/platform/request-encoding.test.ts",
+          "apps/api/src/request-encoding.test.ts",
+          "docs/delivery/test-evidence/DG2/code-security/round-7/probes/zz-sec-r7-probe.test.ts",
+          "docs/delivery/test-evidence/DG2/code-security/round-8/probes/zz-sec-r8-probe.test.ts",
+          "docs/delivery/test-evidence/DG2/code-security/round-8/probe-run1-lang-unset.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-8/probe-run2-lang-c-utf8.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-8/integration-run1-lang-unset.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-8/integration-run2-lang-c-utf8.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-8/probes/README.md"
+        ],
+        "note": "Verified on candidate sha256:9331e9d13e0ffa55f35ebc25ecdf9b60e159876dc2470fe56e9241a40fea124f (source cf3446e4, 539 files). I recomputed it in a disposable clone at cf3446e4 and at HEAD 4053630c, and ran it against disposable PostgreSQL 16 clusters with LANG unset (SQL_ASCII) and LANG=C.UTF-8 (UTF8).\n(1) My round-7 repro, zz-sec-r7-probe.test.ts, rerun unchanged, now passes 14/14 in both runs (in round 7: 12 pass, 2 fail):\n- B1: charter create with a Content-Length body holding ED A0 80, FF or C3 now gets 400 validation.json at pointer '' (it was 500 internal). There is no charter and no audit row. Control 0x41 still gives 201.\n- B2: unauthenticated, over a real socket: 400 validation.json as problem+json (it was a 500). Control: 401.\n- B3: chunked and authenticated: 400 (it was 201 with Synthetic\\uFFFD text stored and audited). Nothing is stored, and no U+FFFD appears in charter or audit_event.changes.\n(2) Code. server.ts registers addContentTypeParser('application/json', { parseAs: 'buffer' }, createJsonBodyParser(app.getDefaultJsonParser('error','error'))).\n- Fastify 5.6.1 addContentTypeParser fills a missing bodyLimit with the server bodyLimit (contentTypeParser.js:344), so the 1 MiB limit still applies. With asBuffer, rawBody counts raw chunk.length (:246), so the Content-Length comparison is on raw bytes.\n- decodeUtf8Body uses a fresh TextDecoder('utf-8', { fatal: true, ignoreBOM: true }) and strips exactly one U+FEFF. A second leading U+FEFF is refused as validation.json.\n- The text then goes to Fastify's own defaultJsonParser (secure-json-parse with protoAction and constructorAction 'error'; FST_ERR_CTP_EMPTY_JSON_BODY / INVALID_JSON_BODY), so prototype-poisoning protection and the error codes are unchanged.\n- mapError additionally maps FST_ERR_CTP_INVALID_CONTENT_LENGTH to 400 validation.malformed_request, so no framing error reaches the 500 path.\n- The evidence octet-stream parser is untouched: the stream is handed to the handler, and the size limit is enforced while streaming.\n- parseQueryString (routerOptions.querystringParser) keeps the null-prototype shape and marks undecodable components through a WeakMap. Nothing reassigns request.query, and there is no validatorCompiler that could replace it, so the mark survives until the preHandler check. That check runs after authentication and CSRF, and the OIDC callback (invalidCharacters: 'route') keeps its 302.\n(3) Adversarial probe zz-sec-r8-probe.test.ts, both runs:\n- R1: ten ill-formed classes, in both framings, all give 400 validation.json with nothing stored and no error log: overlong C0 AF and E0 80 AF; F4 90 80 80; the 5-byte F8; a lone 80; truncated E2 82, mid-body and trailing; CESU low ED B0 80; Latin-1 E9.\n- R2: one BOM gives 201 with the exact text. Two BOMs, BOM+FF, a BOM alone, and UTF-16LE/BE bodies give 400. A U+FEFF inside a string is kept verbatim.\n- R3: charset=iso-8859-1 or utf-16le never switches the decoder (400). Other +json types give 400 validation.content_type.\n- R4: __proto__ (plain and \\u-escaped) and constructor.prototype give 400 validation.json, with no pollution.\n- R5: 349,571 characters = 1,048,629 bytes gives 400 body_too_large in both framings.\n- R7: query pointers /query/q, /query, /query/a~0b~1c; a stray % gives 400; '+' and emoji decode; 401 precedes; an unmatched route gives 404; no error log.\n- R8: an X-File-Name refusal never precedes authorization: a non-editor gets 403.\n- R9: chunked, no session: 400.\n- R10: no U+FFFD in charter, audit_event or evidence_content.file_name.\n(4) The candidate's own invalid-utf8.test.ts (14 tests) and request-encoding unit tests (18) pass on Node 22 and 24 and in both locales. Cookies and headers stay byte-faithful (Latin-1); the round-7 C1/C2 probes still pass.\nThe one residual this round found has a different root cause: the evidence upload route accepts text/plain and application/json bodies that its contract does not declare, and the store iterates whatever body it receives. It predates BE13 (same behaviour at 90439483) and is raised separately as F-DG2-320 (Low). This finding's scope and stated remedy, JSON bodies and query strings decoded strictly with a declared 400 in every framing, are fully fixed."
+      }
     },
     {
       "id": "F-DG2-310",
@@ -10036,7 +10067,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG2/round-7/qa-verifier.json",
       "owner": "devops-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-06T15:45:00Z",
@@ -10047,10 +10078,104 @@
           "at": "2026-10-06T17:54:00Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 4e3c44625ca030bfff7052003476955f2dec3e1e"
+        },
+        {
+          "at": "2026-10-06T19:11:18Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 8: PASS"
         }
       ],
       "fix_revision": "4e3c44625ca030bfff7052003476955f2dec3e1e",
-      "fix_summary": "DEVOPS3 4e3c446: shared tests/qa/support/pg-port.sh. Default ports for every disposable-cluster harness sit below the Linux ephemeral range (24331/24340/24351/24361/24371). A bounded, logged retry on EADDRINUSE covers PostgreSQL and the API; *_STRICT_PORT=1 turns it off. Exported URLs follow the port actually used. Other failures still exit 3 BLOCKED. port-collision-check.sh reproduces the TIME_WAIT defect on the old harness and passes on the new one. Integration ran 6 times at 531/531 in both locales; e2e 58 in both locales; A18 passed with forced collisions."
+      "fix_summary": "DEVOPS3 4e3c446: shared tests/qa/support/pg-port.sh. Default ports for every disposable-cluster harness sit below the Linux ephemeral range (24331/24340/24351/24361/24371). A bounded, logged retry on EADDRINUSE covers PostgreSQL and the API; *_STRICT_PORT=1 turns it off. Exported URLs follow the port actually used. Other failures still exit 3 BLOCKED. port-collision-check.sh reproduces the TIME_WAIT defect on the old harness and passes on the new one. Integration ran 6 times at 531/531 in both locales; e2e 58 in both locales; A18 passed with forced collisions.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG2-T-DG2-REV-QA-R8-qa-verifier-20261006T175530Z-7188e49a",
+          "session_id": "7188e49a-5081-4bba-8508-49b645ab76de"
+        },
+        "at": "2026-10-06T19:11:18Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG2/qa/round-8/11-F-DG2-310-verification-summary.log",
+          "docs/delivery/test-evidence/DG2/qa/round-8/11-port-collision-check.log",
+          "docs/delivery/test-evidence/DG2/qa/round-8/11-port-collision-repro-r8.log",
+          "docs/delivery/test-evidence/DG2/qa/round-8/11-port-collision-repro-r8.sh",
+          "docs/delivery/test-evidence/DG2/qa/round-8/11-port-collision-repro.py",
+          "docs/delivery/test-evidence/DG2/qa/round-8/11-tw.py",
+          "docs/delivery/test-evidence/DG2/qa/round-8/11-ephemeral-sample.py",
+          "docs/delivery/test-evidence/DG2/qa/round-8/11-a18-clean-start-timewait.log",
+          "docs/delivery/test-evidence/DG2/qa/round-8/11-clean-start-local-timewait.log",
+          "docs/delivery/test-evidence/DG2/qa/round-8/10-integration-series-summary.log",
+          "tests/qa/support/pg-port.sh",
+          "tests/qa/support/port-collision-check.sh"
+        ],
+        "note": "Fix 4e3c446 (T-DG2-DEVOPS3, devops-engineer) verified on candidate 9331e9d1 (cf3446e4) by qa-verifier, who raised the finding. (1) My round-7 repro (11-port-collision-repro.py), unchanged, still shows the kernel mechanism (a TIME_WAIT client port refuses a SO_REUSEADDR bind). A 3000-connect sample confirms the kernel assigns client ports only in 32768-60999, and every harness default is now below it (24331/24340/24351/24361/24371; APIs 3000/3060/3100/3181), so the natural collision cannot hit a default port. (2) tests/qa/support/port-collision-check.sh: PASS 5/5. C1 still reproduces the defect on the old harness, failing closed. (3) My own cases on the REAL stacks with TIME_WAIT forced on both the default PostgreSQL and API ports: with-stack.sh and qa-stack.sh retry with a logged 'port-policy' line, exit 0, and export E2E_BASE_URL/PORT/APP_BASE_URL and DATABASE_URL on the ports actually used (readyz ready). Two concurrent with-pg.sh runs on one port both start, on distinct ports and data dirs. A foreign listener is never adopted. A non-bind startup failure is not retried (BLOCKED, exit 3, command not run). Exhausted retries and *_STRICT_PORT=1 give BLOCKED exit 3. (4) a18-clean-start.sh --install and deploy/scripts/clean-start-local.sh (offline, private store copy) both PASS with TIME_WAIT on their default ports. (5) Every run this round started on attempt 1 for port reasons: integration 10/10 (5 per locale, incl. the default port and CPU load, all 547/547), QA-suite integration 2/2 (587/587), e2e product 2/2 and QA stack 2/2. The QA-stack attempts that failed were my own spec/setup mistakes, not port issues (17-attempt1-cause.log, 17-e2e-qa-stack-attempt2-cutf8-spec-race.log)."
+      }
+    },
+    {
+      "id": "F-DG2-320",
+      "stage_id": "DG2",
+      "requirement": "REQ-DLV-034",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "uploadEvidenceContent accepts media types its contract does not declare: a chunked text/plain upload stores the file with invalid UTF-8 bytes rewritten to U+FFFD (200, sha256 of the rewritten bytes), and an application/json object or array body gives an undeclared 500",
+      "reproduction": "The contract declares only application/octet-stream for POST /api/v1/transformations/{transformationId}/evidence/{evidenceId}/content (docs/api/openapi.yaml, uploadEvidenceContent). apps/api/src/modules/evidence/routes.ts:349 adds an octet-stream parser, but Fastify's default text/plain parser (setEncoding('utf8'): U+FFFD replacement) and the root application/json parser (server.ts) stay registered for the route. The handler casts request.body to AsyncIterable<Uint8Array> | Uint8Array (routes.ts:421). FileSystemEvidenceStore.put (apps/api/src/modules/evidence/store.ts:75-83) then iterates whatever it is given: a string character by character, each one re-encoded as UTF-8; a JSON object, which throws TypeError 'not iterable'; or an array of numbers, where hash.update throws.\nProbe: zz-sec-r8-probe.test.ts R6, disposable clone at 4053630c (candidate 9331e9d1), disposable PostgreSQL 16, identical in both runs (probe-run1-lang-unset.log, probe-run2-lang-c-utf8.log). The Transformation Lead creates a file evidence item, then POSTs the content with If-Match, CSRF and X-File-Name:\n(a) Content-Type text/plain, chunked (no Content-Length), bytes 53 79 6e ff c3 0a ed a0 80 41: 200. The downloaded content is 53 79 6e ef bf bd ef bf bd 0a ef bf bd ef bf bd ef bf bd 41, and evidence_content.sha256 is the hash of those rewritten bytes, not of the bytes sent.\n(b) Content-Type application/json, body {\"a\":1} or [1,2,3]: 500 urn:mth:problem:internal, not declared for the operation, with an error-level 'unhandled error' log line each time. Nothing is stored and the temp file is removed.\n(c) Content-Type application/json, body \"Synthetic\": 200; the stored content is the JSON-decoded text Synthetic (53796e746865746963), not the 11 bytes sent.\nControls: application/octet-stream with the same ill-formed bytes, with a Content-Length or chunked, is stored and downloaded byte for byte with a matching sha256. text/plain with a Content-Length and invalid bytes now gets 400 validation.malformed_request (BE13's FST_ERR_CTP_INVALID_CONTENT_LENGTH mapping).\nBaseline: the same R6 at the round-7 candidate 90439483 (probe-r6-baseline-90439483.log) gives the same (a), (b) and (c), and there text/plain with a Content-Length was a 500. So this predates BE13 and is not a regression.",
+      "expected": "uploadEvidenceContent honours its contract: the request body is application/octet-stream and the stored evidence is exactly the bytes the client sent. Any other media type is refused with the declared 400 ValidationError (validation.content_type, as other operations answer an undeclared media type) before anything is stored, and never gives a 500. This is the F-DG2-290 faithfulness rule (client bytes are never silently rewritten, and never answered with an undeclared status) applied to evidence content. Possible fixes: refuse a request whose Content-Type is not application/octet-stream in the upload route (for example in a route-level preValidation or onRequest hook, or by checking that the body is a stream or Buffer before store.put); or scope the parsers so that only octet-stream reaches this route. Add an integration case for text/plain (both framings) and application/json bodies on this route.",
+      "actual": "With a non-browser client that labels an upload text/plain and sends it chunked, an evidence file is silently stored with its ill-formed bytes replaced by U+FFFD. The 200 response and the stored sha256 describe the rewritten content, so the upload looks successful while the evidence no longer matches the original. With application/json, an object or array body gives an undeclared 500 plus an error log line, and a JSON string body stores its decoded text. Impact is limited. It needs an authenticated user who passes the route's own ownership check (creator or named owner, EDIT_OWN) and who chooses a media type the contract does not offer. The web client always sends application/octet-stream. No third party can cause it. Authorization, scoping and audit are unaffected, and nothing is stored on the 500 path. It is Low and non-mandatory, the same rating as F-DG2-290, which is the same rewrite class on JSON bodies.",
+      "evidence": [
+        "apps/api/src/modules/evidence/routes.ts",
+        "apps/api/src/modules/evidence/store.ts",
+        "apps/api/src/server.ts",
+        "docs/api/openapi.yaml",
+        "docs/delivery/test-evidence/DG2/code-security/round-8/probes/zz-sec-r8-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-8/probe-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-8/probe-run2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-8/probe-r6-baseline-90439483.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-8/probes/README.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-8/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-06T18:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG2 round 8, during the assigned probe for any remaining path where client bytes are silently rewritten or answered with an undeclared status or a 500. It predates BE13 (same behaviour at 90439483), and BE13 improved the text/plain Content-Length case from 500 to 400. Rated Low and non-mandatory like F-DG2-290, because it needs an authorized editor using a non-browser client with an undeclared media type, and has no authorization, confidentiality or audit impact. It does not block the round."
+        }
+      ]
+    },
+    {
+      "id": "F-DG2-340",
+      "stage_id": "DG2",
+      "requirement": "REQ-PB-029",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "A form-level validation problem whose only field error has pointer \"\" (e.g. the new D-068 validation.json for an invalid-UTF-8 body) is shown twice in RecordForm: the same localized message appears in two role=\"alert\" regions, in English and Arabic",
+      "reproduction": "Candidate 9331e9d1 (source cf3446e4), qa-stack (real SPA + API + PostgreSQL), chromium-en and chromium-ar. qa-verifier spec docs/delivery/test-evidence/DG2/qa/tests/round-8/e2e/dg2-qa-r8.spec.ts R8-05: on the charter page, click Create, fill Out of scope, and submit while the browser's POST /charter body carries two invalid UTF-8 bytes (FF FE) inside the value. The real server answers 400 problem+json code validation, errors [{pointer:\"\", code:\"validation.json\"}] (correct per D-068). The form then shows 'The request was not valid JSON.' / 'الطلب ليس بصيغة JSON صالحة.' TWICE (screenshots en-/ar-qa-r8-05-charter-invalid-utf8-server.png). Cause (40-f340-duplicate-alert-static.log): in apps/web/src/components/RecordForm.tsx the pointer-\"\" field error is not mapped to a field, so it goes to `other` (the data-state=\"form-errors\" alert). setBannerError(e) then renders errorMessage(), which in apps/web/src/lib/problem.ts returns the same field-error text for a validation problem whose first error has pointer \"\" (the data-state=\"error\" alert). The de-duplication on that line only skips codes equal to e.code or validation.<e.code>. The logic dates from bfa1807 (round 4); it is not a D-068 regression. The normal SPA cannot produce such a problem (it always sends valid UTF-8 JSON), so users reach it only through tampered or proxied requests or other pointer-\"\" validation codes.",
+      "expected": "One alert per distinct message: a form-level validation problem shows its localized message once (and a screen reader announces it once), in both English LTR and Arabic RTL.",
+      "actual": "The identical message is rendered in two adjacent role=\"alert\" regions, so it is visually duplicated and announced twice. No data is written, the status and code are correct, and axe reports no serious or critical violation. Polish only.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-8/e2e-qa-r8-screens/en-qa-r8-05-charter-invalid-utf8-server.png",
+        "docs/delivery/test-evidence/DG2/qa/round-8/e2e-qa-r8-screens/ar-qa-r8-05-charter-invalid-utf8-server.png",
+        "docs/delivery/test-evidence/DG2/qa/round-8/40-f340-duplicate-alert-static.log",
+        "docs/delivery/test-evidence/DG2/qa/round-8/17-e2e-qa-stack-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/tests/round-8/e2e/dg2-qa-r8.spec.ts",
+        "apps/web/src/components/RecordForm.tsx",
+        "apps/web/src/lib/problem.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG2/round-8/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-06T19:11:18Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG2 round 8 (T-DG2-REV-QA-R8) while regression-testing D-068 in the UI. Low and non-mandatory: a duplicated, correctly localized message on a path the normal SPA does not produce; nothing is written and the server behaviour is correct. Pre-existing RecordForm logic (bfa1807), surfaced by the new validation.json path."
+        }
+      ]
     }
   ]
 }
