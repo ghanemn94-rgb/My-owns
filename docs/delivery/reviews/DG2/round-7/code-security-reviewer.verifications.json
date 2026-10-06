@@ -1,0 +1,24 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG2-260",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:ede1a9362bb276ce620e440bf9f6a599f6695d395b8e495eaefec30107b016de (source 90439483, 532 files), recomputed in a disposable clone, against disposable PostgreSQL 16 clusters with LANG unset (SQL_ASCII) and LANG=C.UTF-8 (UTF8).\n(1) My round-6 repro zz-sec-r6-surrogate.test.ts, rerun unchanged, now passes 3/3 in both runs:\n- JIT sub 'r6s-jit-\\ud800' and bind sub 'r6s-bind-\\udfff' each get the declared 302 /login?error=token_invalid; the harness contract check reports 'declared'. Each leaves exactly one session.login_failed row ('issuer or subject cannot be stored'), no identity and no session, and the login cookie is cleared.\n- A journey step name with \\ud800 is now 400 validation.invalid_character at /steps/0/name, no longer validation.format at ''.\n(2) Code. hasInvalidCharacter (packages/shared/src/schemas/common.ts) = NUL || /\\p{Cs}/u. The central preHandler check (findInvalidCharacter over params, query, body values and keys), freeText/name/reason and the OIDC checks all use it. The callback remains the only route exempt from the central check. identityClaimsStorable also refuses an empty iss or sub, or one too long in code points (512/255, matching the char_length CHECKs).\nThe new try/catch around resolveOidcUser maps only SQLSTATE class 22 and 23514 to an audited token_invalid and rethrows everything else, so it does not mask other errors. truncateText is right at every boundary: 182 exhaustive prefix lengths plus a case table (truncate-text-edges.log). The BE11 sweep (assignments, sessions, gates, criteria, relay) only swaps .slice for truncateText. The evidence X-File-Name refine is additive.\n(3) Adversarial probe zz-sec-r7-probe.test.ts, both runs:\n- Claims (A1-A5): a sub of 255 astral code points is stored verbatim; 256 is an audited token_invalid. name, preferred_username and email that all carry lone surrogates give a generated display name and a null email and email_at_binding. A verified email with a trailing lone surrogate does not bind the look-alike pre-provisioned user. CESU-8 or invalid percent bytes in state, code, error or a query key always give a declared 302.\n- Headers (C1-C2): Latin-1 decoding means no header can hold a surrogate. A User-Agent with bytes ED A0 80 plus UTF-8 Arabic is stored as its exact, well-formed Latin-1 reading. A bad X-Request-Id is never reflected.\n- Path (D1-D2): a CESU-8 path is a 400 problem with the routed security headers and no echo, and writes nothing.\n- audit_event (E1): user_identity, app_user, session and audit_event contain no U+FFFD in either database.\nThe one residual found, raw ill-formed UTF-8 BYTES in a JSON body (undeclared 500 with Content-Length; U+FFFD stored when chunked), has a different root cause (Fastify body decoding plus an unmapped FST_ERR_CTP_INVALID_CONTENT_LENGTH). It is raised separately as F-DG2-290 (Low). This finding's scope and stated remedy, lone UTF-16 surrogates in strings and in the OIDC iss and sub, are fully fixed.",
+      "evidence": [
+        "packages/shared/src/schemas/common.ts",
+        "apps/api/src/modules/identity/oidc.ts",
+        "apps/api/src/modules/identity/routes.ts",
+        "apps/api/src/modules/platform/validation.ts",
+        "apps/api/test/integration/oidc.test.ts",
+        "apps/api/test/integration/invalid-character.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-6/probes/zz-sec-r6-surrogate.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/probes/zz-sec-r7-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/probe-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/probe-run2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/truncate-text-edges.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/probes/README.md"
+      ]
+    }
+  ]
+}

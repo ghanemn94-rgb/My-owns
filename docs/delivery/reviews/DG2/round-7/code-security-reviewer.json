@@ -1,0 +1,360 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG2",
+  "round": 7,
+  "candidate_id": "sha256:ede1a9362bb276ce620e440bf9f6a599f6695d395b8e495eaefec30107b016de",
+  "source_commit": "904394835a128bd992b4316521b772abec1ef867",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG2-T-DG2-REV-SEC-R7-code-security-reviewer-20261006T143950Z-9950ffc7",
+    "session_id": "9950ffc7-8c71-4f4f-bdd4-009c10e8f667"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am code-security-reviewer, session 9950ffc7. I authored no implementation in the DG2 scope, including none of the round-7 repairs (BE11 cf9c653, BE12). I reviewed the frozen candidate directly: the product diff 51a692b1..90439483 (27 files) and the full files it touches. I ran code only in disposable clones under $TMPDIR and on disposable PostgreSQL 16 clusters, which were deleted afterwards. I formed this verdict without reading any other reviewer's DG2 round-7 record or evidence."
+  },
+  "assignment": "docs/delivery/assignments/DG2/round-7/code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-S10-001",
+    "REQ-S16-013",
+    "REQ-S13-012",
+    "REQ-DLV-034",
+    "REQ-PB-016",
+    "REQ-PB-017",
+    "REQ-PB-018",
+    "REQ-PB-027",
+    "REQ-PB-028",
+    "REQ-PB-029"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-R7-00-candidate",
+      "procedure": "Confirm HEAD, the assignment hash and the recomputed candidate ID: in the working tree, and in a disposable clone at 90439483 and at HEAD 36524e54",
+      "command": "git rev-parse HEAD; git log --oneline 90439483..HEAD; git diff --stat 90439483..HEAD; sha256sum docs/delivery/assignments/DG2/round-7/code-security-reviewer.md; node tools/gates/candidate.mjs --stage DG2 (working tree, $TMPDIR/rev at 36524e54 and at 90439483)",
+      "environment": "Node 24.21.0; working tree /home/user/My-owns and disposable clone $TMPDIR/rev",
+      "expected": "candidate_id sha256:ede1a936...016de with 532 files. HEAD may differ from 90439483 only by delivery metadata that the manifest excludes. Assignment sha256 9be4a36d...0406.",
+      "actual": "All three computations give {\"stage\":\"DG2\",\"candidate_id\":\"sha256:ede1a9362bb276ce620e440bf9f6a599f6695d395b8e495eaefec30107b016de\",\"files\":532}. HEAD 36524e54 is the single freeze commit on top of 90439483 (an ancestor). It adds only the round-7 assignments, the candidate manifest and stages.json. The assignment sha256 matches. The HEAD/source difference is the documented freeze pattern, so it is not a BLOCKED condition: the candidate ID binds the review, and the commit is a traceability pointer.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/candidates/DG2/ede1a9362bb276ce.manifest.json",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/checks.sh"
+      ]
+    },
+    {
+      "id": "SEC-R7-01-verify-F-DG2-260",
+      "procedure": "Rerun my round-6 repro zz-sec-r6-surrogate.test.ts unchanged (JIT and bind paths with a lone surrogate in sub; a lone surrogate in a journey step name), in both locale settings. Review hasInvalidCharacter, identityClaimsStorable, the callback's new try/catch, displayNameCandidate and truncateText. Run the truncateText/hasInvalidCharacter boundary script.",
+      "command": "with-pg.sh 55771 (LANG unset) | 55772 (LANG=C.UTF-8) pnpm vitest run --project integration zz-sec-r6-surrogate.test.ts zz-sec-r7-probe.test.ts --reporter=verbose; node --experimental-strip-types probes/truncate-text-edges.mts <clone>/packages/shared/src/schemas/common.ts",
+      "environment": "Disposable clone $TMPDIR/probe at 90439483; Node 22.22.2 (vitest) and 24.21.0 (script); disposable PostgreSQL 16 clusters (SQL_ASCII and UTF8) with the candidate's FakeIdp",
+      "expected": "JIT and bind each get 302 /login?error=token_invalid, declared by the contract, with a session.login_failed audit row and no identity or session. The journey step name gets 400 validation.invalid_character at its pointer. truncateText never splits a pair.",
+      "actual": "zz-sec-r6-surrogate: 3/3 pass in both runs. JIT: 302 token_invalid; contract 'declared'; one session.login_failed row; 0 identities; login cookie cleared. Bind: the same, not bound. Journey: 400 validation.invalid_character at /steps/0/name. truncate-text-edges: ALL PASS (7 cases, 182 exhaustive lengths, 7 hasInvalidCharacter cases), exit 0. F-DG2-260 is CLOSED_VERIFIED (see verifications sidecar).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-034"
+      ],
+      "evidence": [
+        "docs/delivery/reviews/DG2/round-7/code-security-reviewer.verifications.json",
+        "docs/delivery/test-evidence/DG2/code-security/round-6/probes/zz-sec-r6-surrogate.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/probe-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/probe-run2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/truncate-text-edges.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/probes/truncate-text-edges.mts"
+      ]
+    },
+    {
+      "id": "SEC-R7-02-adversarial-well-formedness",
+      "procedure": "Adversarial hunt for any path that stores, audits or returns something unfaithful or undeclared for strings that are not well-formed: OIDC claims other than iss/sub (name, preferred_username, email, astral sub at the 255/256 code-point boundary); callback query values and keys with CESU-8/invalid percent bytes; raw ill-formed UTF-8 bytes in JSON bodies (Content-Length and chunked, authenticated and unauthenticated); header bytes over a real socket (User-Agent stored in session, X-Request-Id); and a U+FFFD sweep of user_identity, app_user, session and audit_event",
+      "command": "with-pg.sh 55771|55772 pnpm vitest run --project integration zz-sec-r7-probe.test.ts --reporter=verbose; node probes/fastify-invalid-utf8-errcode.mjs (cwd <clone>/apps/api)",
+      "environment": "Disposable clone $TMPDIR/probe at 90439483; Node 22.22.2; Fastify 5.6.1 (locked); disposable PostgreSQL 16 (LANG unset and C.UTF-8); real TCP socket on 127.0.0.1:0",
+      "expected": "Every residual is either shown absent, or recorded as a finding with a reproduction, severity and owner",
+      "actual": "Absent (both runs): A1-A5, C1-C2 and E1 pass. A sub of 255 astral code points is stored verbatim, and 256 is an audited token_invalid. Claims carrying lone surrogates fall back without U+FFFD and never bind a look-alike e-mail. The callback always answers a declared 302. Headers are Latin-1 decoded, so they cannot hold a surrogate: the User-Agent is stored as its exact, well-formed Latin-1 reading. X-Request-Id is never reflected. The audit, identity, user and session tables hold no U+FFFD. One residual was found, so vitest exits 1 (B1, B2): raw invalid UTF-8 bytes in a JSON body give an undeclared 500 internal when sent with a Content-Length, even unauthenticated (500 before 401). The cause is FST_ERR_CTP_INVALID_CONTENT_LENGTH, unmapped in hooks.ts mapError. B3: sent chunked, the bytes are stored and audited as U+FFFD. Raised as F-DG2-290 (Low, non-mandatory) with a reproduction and an owner.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-034"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-7/probes/zz-sec-r7-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/probe-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/probe-run2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/probe-run0-exploratory-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/fastify-errcode.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/probes/README.md",
+        "docs/delivery/reviews/DG2/round-7/code-security-reviewer.findings.json"
+      ]
+    },
+    {
+      "id": "SEC-R7-03-diff-review-BE11-BE12",
+      "procedure": "Review the product diff 51a692b1..90439483 (27 files). BE11 sweep (assignments, sessions, gates, criteria, relay, evidence X-File-Name, OIDC routes): no behaviour change beyond code-point-safe truncation. BE12 (framework-errors.ts, server.ts, hooks.ts problemForError): HELMET_OPTIONS equals the previous inline CSP; error responses carry the same security headers; no internals or raw URL leak; frameworkErrors and clientErrorHandler cannot bypass authz or rate limiting. Judge D-067's 408. Scan the added lines for secrets, CDN, eval and SQL grants.",
+      "command": "git diff 51a692b1..90439483 -- . ':!docs/delivery'; grep scan of '^+' lines; diff of the CSP block at 51a692b1 vs HELMET_OPTIONS at 90439483; git diff -- docs/api/openapi.yaml package.json pnpm-lock.yaml .github deploy packages/db/migrations | wc -l; zz-sec-r7-probe part D over a real socket",
+      "environment": "Working tree (git) and disposable clone $TMPDIR/probe at 90439483; Node 22.22.2; disposable PostgreSQL 16",
+      "expected": "No regression to authorization, sessions or integrity; CSP identical; error responses problem-shaped with the routed security headers and no echo; no secrets or CDN",
+      "actual": "Scan hits: test fixtures only ('https://idp.example.invalid', 'http://localhost:3000', 'http://synthetic.invalid'). The contract, lockfile, CI, deploy and migrations are unchanged (0 diff lines). The CSP directives are identical. captureSecurityHeaders copies helmet's own output from a throwaway instance, so the values cannot drift. Over a real socket, D1 gives 400 problem+json with validation.format / headers_too_large / malformed_request for: a CESU path, %ZZ on an unauthenticated POST, header and URL overflow, NUL in a header, and a garbage line. Every one carries the 12 security headers identical to a routed 404's. requestId equals X-Request-Id. Nothing is echoed (no FST_ERR/HPE_/%ED/%ZZ/payload). '%0d%0a' in the path injects no header. D2: a bad URL on a protected mutation writes nothing and leaves no audit row. No handler, hook or database access runs, so there is no authorization bypass. Rate limiting is global at onRequest, so it is unaffected. D3 (pipelined garbage) behaves like Fastify's default handler; BE12 is stricter because it never writes into a started response. The BE11 truncations only swap .slice for truncateText. The callback try/catch maps only SQLSTATE class 22 and 23514 and rethrows the rest. D-067's 408: Node's requestTimeout answers before any operation is matched; Fastify's default also sent 408, now as a problem body. I judge documenting it as transport-level acceptable, consistent with the shared 404 and 500 treatment.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-7/diff-scan.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/probe-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/probes/README.md",
+        "apps/api/src/modules/platform/framework-errors.ts",
+        "apps/api/src/server.ts",
+        "docs/delivery/decisions.md"
+      ]
+    },
+    {
+      "id": "SEC-R7-04-build",
+      "procedure": "Build every workspace package",
+      "command": "pnpm -r build",
+      "environment": "$TMPDIR/rev at 90439483; Node 22.22.2; pnpm 10.33.0",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-7/build.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-05-typecheck",
+      "procedure": "Type-check every package",
+      "command": "pnpm -r typecheck",
+      "environment": "$TMPDIR/rev at 90439483; Node 22.22.2",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-7/typecheck.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-06-lint",
+      "procedure": "Run ESLint with zero warnings allowed",
+      "command": "pnpm lint",
+      "environment": "$TMPDIR/rev at 90439483; Node 22.22.2",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-7/lint.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-07-openapi-lint",
+      "procedure": "Lint the OpenAPI contract",
+      "command": "pnpm openapi:lint",
+      "environment": "$TMPDIR/rev at 90439483; Node 22.22.2",
+      "expected": "PASS, 161 operations",
+      "actual": "PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 161 operations; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-7/openapi-lint.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-08-no-cdn",
+      "procedure": "Scan for public CDN references",
+      "command": "pnpm check:no-cdn",
+      "environment": "$TMPDIR/rev at 90439483; Node 22.22.2",
+      "expected": "PASS",
+      "actual": "PASS no-cdn: scanned apps, packages; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-7/no-cdn.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-09-format-check",
+      "procedure": "Prettier check",
+      "command": "pnpm format:check",
+      "environment": "$TMPDIR/rev at 90439483; Node 22.22.2",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-7/format-check.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-10-unit-node22",
+      "procedure": "Unit tests on Node 22",
+      "command": "pnpm test --reporter=verbose",
+      "environment": "$TMPDIR/rev at 90439483; Node 22.22.2",
+      "expected": "all pass",
+      "actual": "Test Files 36 passed (36); Tests 673 passed (673); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-7/unit-node22.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-11-unit-node24",
+      "procedure": "Unit tests on Node 24",
+      "command": "pnpm test --reporter=verbose",
+      "environment": "$TMPDIR/rev at 90439483; Node 24.21.0",
+      "expected": "all pass",
+      "actual": "Test Files 36 passed (36); Tests 673 passed (673); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-7/unit-node24.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-12-unit-under-load",
+      "procedure": "Unit tests on Node 22 and on Node 24 while a second clone repeatedly builds and runs the integration probes against a disposable PostgreSQL",
+      "command": "bash docs/delivery/test-evidence/DG2/code-security/round-7/load-repro.sh",
+      "environment": "$TMPDIR/rev at 90439483 (tests) and $TMPDIR/probe (load); 4 vCPU; load average 12.6-15.0 during the runs",
+      "expected": "all pass on both Node versions",
+      "actual": "Node 22.22.2: 673/673, exit 0. Node 24.21.0: 673/673, exit 0. The load generator ran 2 build+probe iterations, with load average up to 14.98.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-7/unit-under-load-node22.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/unit-under-load-node24.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/load-generator.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/load-repro.sh"
+      ]
+    },
+    {
+      "id": "SEC-R7-13-integration-run1-lang-unset",
+      "procedure": "Full integration suite on a disposable PostgreSQL 16 with a unique port and LANG, LC_ALL and LC_CTYPE unset. The cluster default is SQL_ASCII; the product creates UTF8 scratch databases. Includes contract.test.ts (161-operation assertion), blank-text, oidc, invalid-character, framework-errors, encoding and migrate (0001-0019).",
+      "command": "env -u LANG -u LC_ALL -u LC_CTYPE with-pg.sh 55761 pnpm test:integration --reporter=verbose",
+      "environment": "$TMPDIR/rev at 90439483; Node 22.22.2; PostgreSQL 16 cluster template1 SQL_ASCII, collate C",
+      "expected": "all pass",
+      "actual": "Test Files 32 passed (32); Tests 531 passed (531); exit 0. Passing tests: contract 109 (incl. 'covers every operation', expect(operations).toHaveLength(161)), blank-text 29, oidc 33, invalid-character 20, framework-errors 11, encoding 9, migrate 20 (19 migration files 0001-0019, applied on a fresh database, idempotent, sha-checked).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-7/integration-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/with-pg.sh"
+      ]
+    },
+    {
+      "id": "SEC-R7-14-integration-run2-lang-c-utf8",
+      "procedure": "Full integration suite on a disposable PostgreSQL 16 with a unique port and LANG=C.UTF-8 (the same named suites)",
+      "command": "LANG=C.UTF-8 with-pg.sh 55762 pnpm test:integration --reporter=verbose",
+      "environment": "$TMPDIR/rev at 90439483; Node 22.22.2; PostgreSQL 16 cluster template1 UTF8, collate C.UTF-8",
+      "expected": "all pass",
+      "actual": "Test Files 32 passed (32); Tests 531 passed (531); exit 0. The named suites' counts are identical to run 1.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-7/integration-run2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/with-pg.sh"
+      ]
+    },
+    {
+      "id": "SEC-R7-15-aud-403-sweep",
+      "procedure": "AUD-403 sweep: the read-only auditor is denied every write (aud-write-deny, generated from the contract, and kpi-aud-write-deny), in both integration runs",
+      "command": "grep -E '^ +(✓|×).*aud-write-deny' integration-run1-lang-unset.log integration-run2-lang-c-utf8.log",
+      "environment": "Logs of SEC-R7-13 and SEC-R7-14",
+      "expected": "all pass, 0 failures, in both runs",
+      "actual": "run 1: 146 pass, 0 fail (kpi-aud-write-deny 18). run 2: 146 pass, 0 fail (kpi-aud-write-deny 18).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S10-001"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-7/aud-403-sweep.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-16-requirements",
+      "procedure": "Requirement coverage from the code-security angle (server-side scoped authorization, integrity, audit) in both integration runs: access-scope and AUD write-deny (REQ-S10-001); the diagnosis/direction entities (REQ-S16-013); filename or inaccessible-link evidence stays unverified, and evidence separation of duties (REQ-S13-012); G1-G3 gate readiness, submission and decision rules (REQ-PB-016/017/018); baselines and value pools in exact decimals, never 0 for unknown (REQ-PB-027/028); the charter record (REQ-PB-029); the P2 outputs end to end (REQ-DLV-034)",
+      "command": "grep of the per-suite pass/fail counts in integration-run1-lang-unset.log and integration-run2-lang-c-utf8.log",
+      "environment": "Logs of SEC-R7-13 and SEC-R7-14",
+      "expected": "every relevant suite passes in both runs",
+      "actual": "Both runs, 0 failures: access-scope 18, aud-write-deny 146, evidence 6, dg2-repairs 24 (incl. F-DG2-140 evidence SoD, migration 0019 guard), gates 12 (incl. 'REQ-S13-012: evidence that is only a filename ... leaves g1.diagnostic incomplete', G2 readiness, non-approver 403, submitter-cannot-decide, stale If-Match 409), kpi 52 (kpi-resources 23: value pools exact decimal, unquantified null not 0, SAR), registers 23 (T01/T03, TOM canvas), transformations 30, charter-named 22. Tagged: REQ-PB-027 5, REQ-PB-028 5, REQ-PB-029 4, REQ-S13-012 7, REQ-S10-001 1.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S10-001",
+        "REQ-S16-013",
+        "REQ-S13-012",
+        "REQ-DLV-034",
+        "REQ-PB-016",
+        "REQ-PB-017",
+        "REQ-PB-018",
+        "REQ-PB-027",
+        "REQ-PB-028",
+        "REQ-PB-029"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-7/integration-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/integration-run2-lang-c-utf8.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-17-validate-historical-DG0",
+      "procedure": "Validate the approved DG0 gate historically",
+      "command": "node tools/gates/validate.mjs --historical --stage DG0",
+      "environment": "Working tree /home/user/My-owns; Node 22.22.2",
+      "expected": "PASS, exit 0",
+      "actual": "PASS gate DG0 (historical); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-7/validate-historical-DG0.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-18-validate-historical-DG1",
+      "procedure": "Validate the approved DG1 gate historically",
+      "command": "node tools/gates/validate.mjs --historical --stage DG1",
+      "environment": "Working tree /home/user/My-owns; Node 22.22.2",
+      "expected": "PASS, exit 0",
+      "actual": "PASS gate DG1 (historical); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-7/validate-historical-DG1.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-19-env-residuals",
+      "procedure": "Environmental residuals, checked on the offline and config surface: live registry (REQ-DLV-042 AC-1, D-057) as an offline frozen install; live CI (REQ-DLV-025 A24, D-058) as the workflow config; Keycloak (D-049) as the realm config, with OIDC exercised against the local FakeIdp",
+      "command": "pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pstore/v10; grep -nE 'run: pnpm|image:|uses:' .github/workflows/ci.yml; cmp .github/workflows/ci.yml deploy/ci/ci.yml; ls deploy/keycloak; git diff --stat 51a692b1..90439483 -- .github deploy pnpm-lock.yaml package.json",
+      "environment": "$TMPDIR/rev at 90439483; sandbox without network",
+      "expected": "Offline install exit 0; CI runs every gate command; images and actions pinned; unchanged since round 6",
+      "actual": "Offline frozen install: 'Already up to date', exit 0. ci.yml runs format:check, lint, typecheck, build, test, openapi:lint, check:no-cdn, test:integration and e2e. Actions are pinned by SHA; the postgres and playwright images are pinned by digest. ci.yml and deploy/ci/ci.yml are identical. deploy/keycloak/realm-mth-test.json is present. The diff since round 6 is empty. Residuals noted: no live registry, live CI or live Keycloak in this sandbox (D-057, D-058, D-049).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-7/env-residuals.log"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG2-290"
+  ],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG2/round-7/code-security-reviewer.verifications.json",
+    "docs/delivery/reviews/DG2/round-7/code-security-reviewer.findings.json",
+    "docs/delivery/reviews/DG2/round-7/code-security-reviewer.md",
+    "docs/delivery/test-evidence/DG2/code-security/round-7/summary.txt",
+    "docs/delivery/test-evidence/DG2/code-security/round-7/checks.sh",
+    "docs/delivery/test-evidence/DG2/code-security/round-7/probes/README.md",
+    "docs/delivery/test-evidence/DG2/code-security/round-7/probe-run1-lang-unset.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-7/probe-run2-lang-c-utf8.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-7/fastify-errcode.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-7/truncate-text-edges.log"
+  ],
+  "reviewed_at": "2026-10-06T14:58:00Z",
+  "summary": "PASS. F-DG2-260 is CLOSED_VERIFIED. My round-6 repro passes unchanged: JIT and bind get the declared 302 token_invalid with a session.login_failed row and nothing created, and a jsonb text gets 400 validation.invalid_character at its pointer. The adversarial hunt finds no lone-surrogate residual in claims, the callback query, headers, the path or audit_event. BE11 changes only the truncation. BE12 keeps the CSP identical, gives every pre-routing error a problem+json body with the routed security headers and no echo, and opens no authorization or rate-limit bypass. D-067's 408 is acceptable. One new Low, non-mandatory finding: F-DG2-290, where raw invalid UTF-8 bytes in a JSON body give an undeclared 500 (even unauthenticated) or, when chunked, are stored as U+FFFD. All required checks ran and passed: build, typecheck, lint, openapi:lint (161), no-cdn and format; unit tests 673/673 on Node 22, Node 24 and under load; integration 531/531 twice (LANG unset and C.UTF-8); AUD-403 146/146; historical validation of DG0 and DG1."
+}

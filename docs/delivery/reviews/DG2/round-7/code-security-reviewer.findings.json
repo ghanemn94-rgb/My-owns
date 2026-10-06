@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG2-290",
+      "stage_id": "DG2",
+      "requirement": "REQ-DLV-034",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "A JSON request body with invalid UTF-8 bytes gets an undeclared 500 internal, before authentication, when it has a Content-Length; sent chunked, it is silently stored and audited as U+FFFD",
+      "reproduction": "Fastify 5.6.1 rawBody (node_modules fastify/lib/contentTypeParser.js:222-290) reads a JSON body with payload.setEncoding('utf8'). Each invalid UTF-8 sequence becomes U+FFFD, which is 3 bytes, so the decoded byte count differs from Content-Length. Fastify then raises FST_ERR_CTP_INVALID_CONTENT_LENGTH (statusCode 400), shown by fastify-errcode.log. apps/api/src/modules/platform/hooks.ts mapError (lines 54-80) has no case for that code, so setErrorHandler (lines 142-149) logs 'unhandled error' at error level and answers 500 internal. Body parsing runs before the preValidation authentication hook (apps/api/src/modules/identity/routes.ts:120), so no session is needed. Probe: disposable clone at 90439483, disposable PostgreSQL 16, zz-sec-r7-probe.test.ts part B, identical results with LANG unset (probe-run1-lang-unset.log) and LANG=C.UTF-8 (probe-run2-lang-c-utf8.log). (B1) POST /api/v1/transformations/{id}/charter as the Transformation Lead, body {\"transformationName\":\"Synthetic\",\"outOfScope\":\"Synthetic<bytes> text\"}: the control byte 0x41 gives 201; bytes ED A0 80 (CESU-8 lone surrogate), FF or C3 each give 500 {type: urn:mth:problem:internal, code: internal, requestId}. Nothing is stored or audited. (B2) The same body over a real socket with no cookie and no CSRF token: the control gives 401; byte FF gives 500 internal, not 401. (B3) The same body sent with Transfer-Encoding: chunked (no Content-Length), authenticated: 201, charter.out_of_scope is stored as 'Synthetic\\uFFFD text', and the charter.create audit_event changes holds U+FFFD. Every operation with a JSON body is affected, because the parser and error mapping are shared.",
+      "expected": "Every operation's contract is honoured for every request body. A body that is not valid UTF-8 (RFC 8259 §8.1) is refused with the declared 400 ValidationError, as invalid JSON already is (validation.json via FST_ERR_CTP_INVALID_JSON_BODY), whatever the framing. The text is never silently rewritten to U+FFFD: that is the same faithfulness rule F-DG2-260 applied to lone surrogates in JSON escapes. One fix: register the application/json parser with parseAs 'buffer' and decode with new TextDecoder('utf-8', { fatal: true }), mapping a decode failure to 400 (e.g. validation.json or validation.encoding). In addition, map FST_ERR_CTP_INVALID_CONTENT_LENGTH to a 400 problem in mapError. Add an integration case with a Content-Length body and a chunked body, unauthenticated and authenticated.",
+      "actual": "Undeclared 500 internal for any client that sends ill-formed UTF-8 with a Content-Length, including an unauthenticated one, with an error-level 'unhandled error' log entry each time. With chunked framing, the request is accepted and the replaced text is stored and audited. Integrity and confidentiality hold otherwise: on the 500 path nothing is written, the body carries only a requestId, and the global rate limiter (onRequest) still applies. Browsers' fetch/XHR always send well-formed UTF-8, so the trigger is a non-browser client. By code inspection the behaviour predates this round: neither 51a692b1 nor 90439483 maps the code, and the parser is the framework default. It is not a regression of BE11/BE12.",
+      "evidence": [
+        "apps/api/src/modules/platform/hooks.ts",
+        "apps/api/src/modules/identity/routes.ts",
+        "apps/api/src/server.ts",
+        "docs/api/openapi.yaml",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/probes/zz-sec-r7-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/probe-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/probe-run2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/probes/fastify-invalid-utf8-errcode.mjs",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/fastify-errcode.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-7/probes/README.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-7/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-06T14:54:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer, DG2 round 7, during the assigned adversarial probe for strings that are not well-formed. This is the raw-byte counterpart of F-DG2-260 (lone surrogates in JSON escapes, now verified fixed). Low and non-mandatory, the same rating as F-DG2-231 (an undeclared 500 for NUL): it breaks the contract and lands in the error log, but there is no integrity, authorization or confidentiality impact. It is rate-limited and needs a non-browser client. It does not block the round."
+        }
+      ]
+    }
+  ]
+}
