@@ -1,0 +1,901 @@
+$ pnpm test (clone @e37f6ea4; node v24.21.0)
+
+> mobily-transformation-hub@0.1.0 test /var/tmp/mth-run.Z91WSp/claude-0/review-dg2
+> vitest run --project unit-node --project unit-web
+
+
+ RUN  v3.2.4 /var/tmp/mth-run.Z91WSp/claude-0/review-dg2
+
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx (21 tests) 6453ms
+   ✓ after create (F-DG1-004) > shows the created record when the server lets the creator read it  732ms
+   ✓ after create (F-DG1-004) > explains, in English, that the draft was created but cannot be opened (server 404), instead of 'Not found'  523ms
+   ✓ audit trail changes (F-DG1-005) > English: field and value labels, not raw keys or enum codes  431ms
+   ✓ derived creator assignment on the audit trail (F-DG1-008) > English: localized action, fields, role, user and scope; nothing raw or marked untranslated  307ms
+   ✓ derived creator assignment on the audit trail (F-DG1-008) > an action the catalogue does not know stays readable and is explicitly marked (en and ar)  383ms
+   ✓ effective permissions refresh after create (F-DG1-210) > English: Edit, Archive and the audit trail appear after create, without a reload  902ms
+   ✓ effective permissions refresh after create (F-DG1-210) > Arabic (RTL): the same controls and the audit trail appear after create, without a reload  773ms
+   ✓ effective permissions refresh after create (F-DG1-210) > does not over-grant: if the refreshed server answer adds nothing, Archive and the audit trail stay hidden  496ms
+   ✓ effective permissions refresh after create (F-DG1-210) > a failed /me refresh never blocks the navigation; the UI stays fail-safe (no controls offered)  438ms
+stderr | src/pages/team/team.test.tsx > Team (English LTR) > shows a 403 from the server in words; nothing is assigned
+Cannot update a component (`AssignDialog`) while rendering a different component (`RecordDialog`). To locate the bad setState() call inside `RecordDialog`, follow the stack trace as described in https://react.dev/link/setstate-in-render
+
+ ✓ |unit-web| src/pages/team/team.test.tsx (6 tests) 3702ms
+   ✓ Team (English LTR) > shows the six governance roles with B0018 accountability text verbatim and who holds each  1142ms
+   ✓ Team (English LTR) > lists team members with the accountability on each assignment, sortable and filterable  608ms
+   ✓ Team (English LTR) > a Transformation Lead assigns a Workstream Lead: Idempotency-Key, reason, accountability preview  666ms
+   ✓ Team (English LTR) > shows a 403 from the server in words; nothing is assigned  467ms
+   ✓ Team: read-only auditor (AUD) > sees the roles, accountabilities and members, a read-only note, and no assign control  384ms
+   ✓ Team (Arabic RTL) > shows Arabic role names and the provisional Arabic accountability text  434ms
+ ✓ |unit-web| src/app/app.test.tsx (17 tests) 2969ms
+   ✓ bilingual shell > switches to English LTR and persists the preference with If-Match  512ms
+   ✓ bilingual shell > shows all fourteen areas to an administrator  376ms
+   ✓ transformations > lists transformations with a sortable code column and removable filter chips  463ms
+ ✓ |unit-web| src/pages/p2.test.tsx (56 tests) 23828ms
+   ✓ Diagnose > shows the six T01 dimensions with Unknown for missing values, and value pools that are never 0  1130ms
+   ✓ Diagnose > shows the totals as Unknown when no pool is quantified  466ms
+   ✓ Diagnose > renders the six workstreams with their key questions  620ms
+   ✓ Diagnose > edits a T01 row with only the changed fields and If-Match  614ms
+   ✓ Diagnose > a 409 on save writes nothing, compares, and re-applies on the current version  816ms
+   ✓ Diagnose > a 400 validation.blank shows a localized message on its field ('en')  1002ms
+   ✓ Diagnose > a 400 validation.blank shows a localized message on its field ('ar')  751ms
+   ✓ Diagnose > an invisible-only value is blocked client-side with validation.blank ('en')  735ms
+   ✓ Diagnose > an invisible-only value is blocked client-side with validation.blank ('ar')  984ms
+   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('en')  1240ms
+   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('ar')  1220ms
+   ✓ Diagnose > T01: an emptied field is sent as an explicit null; visible text is sent verbatim  913ms
+   ✓ Diagnose > Arabic: RTL with Arabic labels and the unquantified label  414ms
+   ✓ Define > requires a target date on a T02 row before sending anything  437ms
+   ✓ Define > sets the North Star with one sentence and no If-Match the first time  332ms
+   ✓ Define: KPI activation (F-DG2-201) > offers Activate on a draft KPI, states the unmet precondition on 422, then activates with If-Match  519ms
+   ✓ Define: KPI activation (F-DG2-201) > Arabic: the Activate action and the 422 reason are in Arabic  508ms
+   ✓ Define: KPI activation (F-DG2-201) > an active KPI shows Active and offers no Activate  332ms
+   ✓ Charter > shows the 14 fields, the thesis, the five scope checks with pre-checks and the top-outcomes warning  367ms
+   ✓ Charter > scope pre-check: an empty Out of scope reads as failing (EN and AR)  587ms
+   ✓ Charter > edit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (en)  341ms
+   ✓ Charter > edit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (ar)  337ms
+   ✓ Charter > edit: emptying a filled field sends null; visible text is verbatim (en)  422ms
+   ✓ Charter > edit: emptying a filled field sends null; visible text is verbatim (ar)  486ms
+   ✓ Charter > edit: a change summary alone is not a change (never a content-free version)  365ms
+   ✓ Design > shows the ten canvas boxes and the per-dimension view  713ms
+   ✓ Design > converts an unresolved workshop item into a design decision with If-Match  906ms
+   ✓ Gates (business approval) > the approver's decision: rationale required; 403 and 409 problems in words  369ms
+   ✓ Gates (business approval) > gate list titles: the verbatim B0023 name once, never the code twice (EN and AR)  355ms
+   ✓ Gates (business approval) > gate detail heading: the verbatim B0023 name once (EN and AR)  666ms
+   ✓ Evidence > uploads a revision as octet-stream with a percent-encoded file name and If-Match  426ms
+   ✓ Evidence > never offers review to the creator; a filename reference can only be rejected  724ms
+ ✓ |unit-web| src/pages/transformations/modeGuidance.test.tsx (5 tests) 1628ms
+   ✓ New transformation: mode guidance (English LTR) > shows When to use and How for the selected mode and switches with the mode  755ms
+   ✓ New transformation: mode guidance (English LTR) > Modular requires an entry phase before anything is sent  427ms
+ ✓ |unit-web| src/i18n/i18n.test.ts (11 tests) 44ms
+ ✓ |unit-web| src/components/States.test.tsx (15 tests) 740ms
+   ✓ explicit states in en > loading is a polite live region with a text label  310ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts (15 tests) 23ms
+ ✓ |unit-web| src/lib/lib.test.ts (23 tests) 82ms
+ ✓ |unit-web| src/styles/styles.test.ts (6 tests) 11ms
+ ✓ |unit-web| src/i18n/glossary.test.ts (8 tests) 12ms
+ ✓ |unit-node| apps/api/src/modules/workflows/workflows.test.ts (14 tests) 1647ms
+   ✓ workflows module (P2) > its declared boundary holds, and an undeclared dependency would be caught  1315ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (135 tests) 8503ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  3788ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/shared imports no workspace package  505ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)  2708ms
+ ✓ |unit-node| apps/api/src/modules/kpi/kpi.test.ts (18 tests) 1323ms
+   ✓ kpi module (P2) > its declared boundary holds, and a planted bypass or undeclared dependency would be caught  1223ms
+ ❯ |unit-web| src/pages/p2-blank-forms.test.tsx (48 tests | 1 failed) 42177ms
+   ✓ gate submission note (en) > a whitespace-only note is refused inline and nothing is sent  738ms
+   ✓ gate submission note (en) > a invisible-only note is refused inline and nothing is sent  398ms
+   ✓ gate submission note (en) > visible text is sent verbatim; an empty note is omitted  820ms
+   ✓ gate submission note (ar) > a whitespace-only note is refused inline and nothing is sent  358ms
+   ✓ gate submission note (ar) > a invisible-only note is refused inline and nothing is sent  308ms
+   ✓ gate submission note (ar) > visible text is sent verbatim; an empty note is omitted  461ms
+   ✓ gate decision rationale and comments (en) > a whitespace-only rationale is refused inline and nothing is sent  397ms
+   ✓ gate decision rationale and comments (en) > a invisible-only rationale is refused inline and nothing is sent  385ms
+   ✓ gate decision rationale and comments (en) > a invisible (long enough for min 3)-only rationale is refused inline and nothing is sent 260ms
+   ✓ gate decision rationale and comments (en) > a whitespace-only comment is refused inline (focus on it) and nothing is sent 271ms
+   ✓ gate decision rationale and comments (en) > a invisible-only comment is refused inline (focus on it) and nothing is sent  363ms
+   ✓ gate decision rationale and comments (en) > visible text is sent verbatim; empty comments are omitted; an empty rationale stays 'too short'  381ms
+   ✓ gate decision rationale and comments (en) > a server 400 validation.blank on /rationale lands on the field  328ms
+   ✓ gate decision rationale and comments (ar) > a whitespace-only rationale is refused inline and nothing is sent  303ms
+   ✓ gate decision rationale and comments (ar) > a invisible-only rationale is refused inline and nothing is sent 210ms
+   ✓ gate decision rationale and comments (ar) > a invisible (long enough for min 3)-only rationale is refused inline and nothing is sent 239ms
+   ✓ gate decision rationale and comments (ar) > a whitespace-only comment is refused inline (focus on it) and nothing is sent 237ms
+   ✓ gate decision rationale and comments (ar) > a invisible-only comment is refused inline (focus on it) and nothing is sent  376ms
+   ✓ gate decision rationale and comments (ar) > visible text is sent verbatim; empty comments are omitted; an empty rationale stays 'too short'  397ms
+   ✓ gate decision rationale and comments (ar) > a server 400 validation.blank on /rationale lands on the field  305ms
+   ✓ journey step editor (en) > a whitespace-only actor is refused inline (not turned into null) and nothing is sent  1643ms
+   ✓ journey step editor (en) > a invisible-only actor is refused inline (not turned into null) and nothing is sent  1825ms
+   ✓ journey step editor (en) > several blank fields: each gets the message and focus goes to the first (name)  1379ms
+   ✓ journey step editor (en) > visible text is sent verbatim; emptied optional text is null; an empty name is required  1557ms
+   ✓ journey step editor (ar) > a whitespace-only actor is refused inline (not turned into null) and nothing is sent  1390ms
+   ✓ journey step editor (ar) > a invisible-only actor is refused inline (not turned into null) and nothing is sent  1162ms
+   ✓ journey step editor (ar) > several blank fields: each gets the message and focus goes to the first (name)  1288ms
+   ✓ journey step editor (ar) > visible text is sent verbatim; emptied optional text is null; an empty name is required  1339ms
+   ✓ Finance validation note and archive reason (en) > note: a whitespace-only note is refused inline and nothing is sent  2241ms
+   ✓ Finance validation note and archive reason (en) > note: a invisible-only note is refused inline and nothing is sent  1161ms
+   ✓ Finance validation note and archive reason (en) > note: empty is 'required'; visible text is sent verbatim  1072ms
+   ✓ Finance validation note and archive reason (en) > reason: a whitespace-only reason is refused inline and nothing is archived  1805ms
+   × Finance validation note and archive reason (en) > reason: a invisible-only reason is refused inline and nothing is archived 1183ms
+     → Unable to find role="button" and name "Archive: Synthetic handling time"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"app"[39m
+    [36m>[39m
+      [36m<a[39m
+        [33mclass[39m=[32m"skip-link"[39m
+        [33mhref[39m=[32m"#main"[39m
+      [36m>[39m
+        [0mSkip to main content[0m
+      [36m</a>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"app-header"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"_r_ac_"[39m
+          [33maria-expanded[39m=[32m"false"[39m
+          [33mclass[39m=[32m"button button--ghost-inverse nav-toggle"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"icon"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.8"[39m
+            [33mviewBox[39m=[32m"0 0 20 20"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 5h14M3 10h14M3 15h14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"visually-hidden"[39m
+          [36m>[39m
+            [0mShow or hide navigation[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"wordmark"[39m
+          [33mdata-discover[39m=[32m"true"[39m
+          [33mdata-testid[39m=[32m"wordmark"[39m
+          [33mhref[39m=[32m"/"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"wordmark__name"[39m
+          [36m>[39m
+            [0mMobily Transformation Hub[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"badge badge--provisional"[39m
+            [33mdata-testid[39m=[32m"provisional-badge"[39m
+            [33mtitle[39m=[32m"Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values."[39m
+          [36m>[39m
+            [0mProvisional[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"visually-hidden"[39m
+          [36m>[39m
+            [0mProvisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.[0m
+          [36m</span>[39m
+        [36m</a>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"app-header__spacer"[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"language-switch"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Switch language to العربية"[39m
+            [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+            [33mlang[39m=[32m"ar"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mالعربية[0m
+          [36m</button>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"user-box"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"user-box__name"[39m
+          [36m>[39m
+            [0mSynthetic Test User[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"user-box__org"[39m
+          [36m>[39m
+            [0mSynthetic Organization[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"icon"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.8"[39m
+            [33mviewBox[39m=[32m"0 0 20 20"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 4H4v12h4M12 6l4 4-4 4M16 10H8"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mSign out[0m
+        [36m</button>[39m
+      [36m</header>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"app-body"[39m
+      [36m>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"Primary navigation"[39m
+          [33mclass[39m=[32m"app-nav"[39m
+          [33mid[39m=[32m"_r_ac_"[39m
+        [36m>[39m
+          [36m<ul[39m
+            [33mclass[39m=[32m"app-nav__list"[39m
+          [36m>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"myWork"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/my-work"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mMy Work[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"executive"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/executive-overview"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mExecutive Overview[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33maria-current[39m=[32m"page"[39m
+                [33mclass[39m=[32m"app-nav__link active"[39m
+                [33mdata-area[39m=[32m"transformations"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/transformations"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mTransformations[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"playbook"[39m
+            ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"app"[39m
+    [36m>[39m
+      [36m<a[39m
+        [33mclass[39m=[32m"skip-link"[39m
+        [33mhref[39m=[32m"#main"[39m
+      [36m>[39m
+        [0mSkip to main content[0m
+      [36m</a>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"app-header"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"_r_ac_"[39m
+          [33maria-expanded[39m=[32m"false"[39m
+          [33mclass[39m=[32m"button button--ghost-inverse nav-toggle"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"icon"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.8"[39m
+            [33mviewBox[39m=[32m"0 0 20 20"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 5h14M3 10h14M3 15h14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"visually-hidden"[39m
+          [36m>[39m
+            [0mShow or hide navigation[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"wordmark"[39m
+          [33mdata-discover[39m=[32m"true"[39m
+          [33mdata-testid[39m=[32m"wordmark"[39m
+          [33mhref[39m=[32m"/"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"wordmark__name"[39m
+          [36m>[39m
+            [0mMobily Transformation Hub[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"badge badge--provisional"[39m
+            [33mdata-testid[39m=[32m"provisional-badge"[39m
+            [33mtitle[39m=[32m"Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values."[39m
+          [36m>[39m
+            [0mProvisional[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"visually-hidden"[39m
+          [36m>[39m
+            [0mProvisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.[0m
+          [36m</span>[39m
+        [36m</a>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"app-header__spacer"[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"language-switch"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Switch language to العربية"[39m
+            [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+            [33mlang[39m=[32m"ar"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mالعربية[0m
+          [36m</button>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"user-box"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"user-box__name"[39m
+          [36m>[39m
+            [0mSynthetic Test User[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"user-box__org"[39m
+          [36m>[39m
+            [0mSynthetic Organization[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"icon"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.8"[39m
+            [33mviewBox[39m=[32m"0 0 20 20"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 4H4v12h4M12 6l4 4-4 4M16 10H8"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mSign out[0m
+        [36m</button>[39m
+      [36m</header>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"app-body"[39m
+      [36m>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"Primary navigation"[39m
+          [33mclass[39m=[32m"app-nav"[39m
+          [33mid[39m=[32m"_r_ac_"[39m
+        [36m>[39m
+          [36m<ul[39m
+            [33mclass[39m=[32m"app-nav__list"[39m
+          [36m>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"myWork"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/my-work"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mMy Work[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"executive"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/executive-overview"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mExecutive Overview[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33maria-current[39m=[32m"page"[39m
+                [33mclass[39m=[32m"app-nav__link active"[39m
+                [33mdata-area[39m=[32m"transformations"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/transformations"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mTransformations[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"playbook"[39m
+            ...
+   ✓ Finance validation note and archive reason (en) > reason: a server 400 validation.blank on /reason is the field message, not a generic error  921ms
+   ✓ Finance validation note and archive reason (en) > reason: empty keeps 'too short'; visible text is sent verbatim  1322ms
+   ✓ Finance validation note and archive reason (ar) > note: a whitespace-only note is refused inline and nothing is sent  875ms
+   ✓ Finance validation note and archive reason (ar) > note: a invisible-only note is refused inline and nothing is sent  1164ms
+   ✓ Finance validation note and archive reason (ar) > note: empty is 'required'; visible text is sent verbatim  1596ms
+   ✓ Finance validation note and archive reason (ar) > reason: a whitespace-only reason is refused inline and nothing is archived  2001ms
+   ✓ Finance validation note and archive reason (ar) > reason: a invisible-only reason is refused inline and nothing is archived  1480ms
+   ✓ Finance validation note and archive reason (ar) > reason: a server 400 validation.blank on /reason is the field message, not a generic error  1752ms
+   ✓ Finance validation note and archive reason (ar) > reason: empty keeps 'too short'; visible text is sent verbatim  2427ms
+   ✓ North Star statement (en) > a whitespace-only statement is refused inline and nothing is sent 251ms
+   ✓ North Star statement (en) > a invisible-only statement is refused inline and nothing is sent  350ms
+   ✓ North Star statement (ar) > a whitespace-only statement is refused inline and nothing is sent  365ms
+   ✓ North Star statement (ar) > a invisible-only statement is refused inline and nothing is sent  387ms
+   ✓ P1 transformation edit: server validation.blank on /name (en) > is the localized field message, not only a generic failure  586ms
+   ✓ P1 transformation edit: server validation.blank on /name (ar) > is the localized field message, not only a generic failure 67ms
+ ✓ |unit-node| apps/api/src/server.test.ts (6 tests) 439ms
+ ✓ |unit-node| apps/api/src/modules/evidence/evidence.test.ts (8 tests) 676ms
+   ✓ evidence module (P2) > its declared boundary holds  566ms
+ ✓ |unit-node| packages/shared/src/value.test.ts (29 tests) 225ms
+ ✓ |unit-node| apps/api/src/modules/methodology/methodology.test.ts (4 tests) 255ms
+ ✓ |unit-node| packages/config/src/load.test.ts (17 tests) 94ms
+ ✓ |unit-node| packages/design-tokens/src/tokens.test.ts (15 tests) 32ms
+ ✓ |unit-node| packages/shared/src/schemas/schemas.test.ts (37 tests) 106ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reporting.test.ts (4 tests) 173ms
+ ✓ |unit-node| apps/api/src/modules/kpi/rules.test.ts (30 tests) 87ms
+ ✓ |unit-node| apps/api/src/modules/platform/platform.test.ts (13 tests) 17ms
+ ✓ |unit-node| apps/api/src/modules/transformations/good-outcome.test.ts (7 tests) 8ms
+ ✓ |unit-node| packages/db/src/seed.test.ts (7 tests) 19ms
+ ✓ |unit-node| apps/api/src/modules/access/rules.test.ts (12 tests) 13ms
+ ✓ |unit-node| apps/api/src/modules/admin/branding.test.ts (4 tests) 38ms
+ ✓ |unit-node| apps/api/src/modules/transformations/exclusions.test.ts (19 tests) 4ms
+ ✓ |unit-node| apps/api/src/modules/transformations/thesis.test.ts (4 tests) 14ms
+ ✓ |unit-node| apps/api/src/modules/transformations/transitions.test.ts (2 tests) 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/pages/p2-blank-forms.test.tsx > Finance validation note and archive reason (en) > reason: a invisible-only reason is refused inline and nothing is archived
+TestingLibraryElementError: Unable to find role="button" and name "Archive: Synthetic handling time"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"app"[39m
+    [36m>[39m
+      [36m<a[39m
+        [33mclass[39m=[32m"skip-link"[39m
+        [33mhref[39m=[32m"#main"[39m
+      [36m>[39m
+        [0mSkip to main content[0m
+      [36m</a>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"app-header"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"_r_ac_"[39m
+          [33maria-expanded[39m=[32m"false"[39m
+          [33mclass[39m=[32m"button button--ghost-inverse nav-toggle"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"icon"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.8"[39m
+            [33mviewBox[39m=[32m"0 0 20 20"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 5h14M3 10h14M3 15h14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"visually-hidden"[39m
+          [36m>[39m
+            [0mShow or hide navigation[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"wordmark"[39m
+          [33mdata-discover[39m=[32m"true"[39m
+          [33mdata-testid[39m=[32m"wordmark"[39m
+          [33mhref[39m=[32m"/"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"wordmark__name"[39m
+          [36m>[39m
+            [0mMobily Transformation Hub[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"badge badge--provisional"[39m
+            [33mdata-testid[39m=[32m"provisional-badge"[39m
+            [33mtitle[39m=[32m"Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values."[39m
+          [36m>[39m
+            [0mProvisional[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"visually-hidden"[39m
+          [36m>[39m
+            [0mProvisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.[0m
+          [36m</span>[39m
+        [36m</a>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"app-header__spacer"[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"language-switch"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Switch language to العربية"[39m
+            [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+            [33mlang[39m=[32m"ar"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mالعربية[0m
+          [36m</button>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"user-box"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"user-box__name"[39m
+          [36m>[39m
+            [0mSynthetic Test User[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"user-box__org"[39m
+          [36m>[39m
+            [0mSynthetic Organization[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"icon"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.8"[39m
+            [33mviewBox[39m=[32m"0 0 20 20"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 4H4v12h4M12 6l4 4-4 4M16 10H8"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mSign out[0m
+        [36m</button>[39m
+      [36m</header>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"app-body"[39m
+      [36m>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"Primary navigation"[39m
+          [33mclass[39m=[32m"app-nav"[39m
+          [33mid[39m=[32m"_r_ac_"[39m
+        [36m>[39m
+          [36m<ul[39m
+            [33mclass[39m=[32m"app-nav__list"[39m
+          [36m>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"myWork"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/my-work"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mMy Work[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"executive"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/executive-overview"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mExecutive Overview[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33maria-current[39m=[32m"page"[39m
+                [33mclass[39m=[32m"app-nav__link active"[39m
+                [33mdata-area[39m=[32m"transformations"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/transformations"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mTransformations[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"playbook"[39m
+            ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"app"[39m
+    [36m>[39m
+      [36m<a[39m
+        [33mclass[39m=[32m"skip-link"[39m
+        [33mhref[39m=[32m"#main"[39m
+      [36m>[39m
+        [0mSkip to main content[0m
+      [36m</a>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"app-header"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"_r_ac_"[39m
+          [33maria-expanded[39m=[32m"false"[39m
+          [33mclass[39m=[32m"button button--ghost-inverse nav-toggle"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"icon"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.8"[39m
+            [33mviewBox[39m=[32m"0 0 20 20"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 5h14M3 10h14M3 15h14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"visually-hidden"[39m
+          [36m>[39m
+            [0mShow or hide navigation[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"wordmark"[39m
+          [33mdata-discover[39m=[32m"true"[39m
+          [33mdata-testid[39m=[32m"wordmark"[39m
+          [33mhref[39m=[32m"/"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"wordmark__name"[39m
+          [36m>[39m
+            [0mMobily Transformation Hub[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"badge badge--provisional"[39m
+            [33mdata-testid[39m=[32m"provisional-badge"[39m
+            [33mtitle[39m=[32m"Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values."[39m
+          [36m>[39m
+            [0mProvisional[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"visually-hidden"[39m
+          [36m>[39m
+            [0mProvisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.[0m
+          [36m</span>[39m
+        [36m</a>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"app-header__spacer"[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"language-switch"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Switch language to العربية"[39m
+            [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+            [33mlang[39m=[32m"ar"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mالعربية[0m
+          [36m</button>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"user-box"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"user-box__name"[39m
+          [36m>[39m
+            [0mSynthetic Test User[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"user-box__org"[39m
+          [36m>[39m
+            [0mSynthetic Organization[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"icon"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.8"[39m
+            [33mviewBox[39m=[32m"0 0 20 20"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 4H4v12h4M12 6l4 4-4 4M16 10H8"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mSign out[0m
+        [36m</button>[39m
+      [36m</header>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"app-body"[39m
+      [36m>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"Primary navigation"[39m
+          [33mclass[39m=[32m"app-nav"[39m
+          [33mid[39m=[32m"_r_ac_"[39m
+        [36m>[39m
+          [36m<ul[39m
+            [33mclass[39m=[32m"app-nav__list"[39m
+          [36m>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"myWork"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/my-work"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mMy Work[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"executive"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/executive-overview"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mExecutive Overview[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"app-nav__tag"[39m
+                [36m>[39m
+                  [0mPlanned[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33maria-current[39m=[32m"page"[39m
+                [33mclass[39m=[32m"app-nav__link active"[39m
+                [33mdata-area[39m=[32m"transformations"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/transformations"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mTransformations[0m
+                [36m</span>[39m
+              [36m</a>[39m
+            [36m</li>[39m
+            [36m<li>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"app-nav__link"[39m
+                [33mdata-area[39m=[32m"playbook"[39m
+            ...
+ ❯ waitForWrapper ../../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ openArchive src/pages/p2-blank-forms.test.tsx:361:34
+    359|   };
+    360|   const openArchive = async () => {
+    361|     fireEvent.click(await screen.findByRole("button", { name: `${t("co…
+       |                                  ^
+    362|     const dialog = await screen.findByRole("dialog");
+    363|     const reason = within(dialog).getByLabelText(labelled(t("common.fo…
+ ❯ src/pages/p2-blank-forms.test.tsx:397:38
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 31 passed (32)
+      Tests  1 failed | 615 passed (616)
+   Start at  07:28:29
+   Duration  52.32s (transform 4.06s, setup 0ms, collect 32.62s, tests 95.35s, environment 11.77s, prepare 4.33s)
+
+ ELIFECYCLE  Test failed. See above for more details.
+exit 1

@@ -1,0 +1,99 @@
+$ QA_API_PORT=3763 QA_E2E_PG_PORT=54913 E2E_BASE_URL=http://localhost:3763 e2e/support/qa-stack-port.sh npx playwright test e2e/dg2-qa-blank-probe-r3.spec.ts --workers=1  (unchanged round-3 probe; its pre-fix assertion 'one PATCH' is EXPECTED to fail now)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+
+Running 2 tests using 1 worker
+
+QA-R3 PROBE PATCH bodies: [] -> status undefined
+QA-R3 PROBE charter versions: [[1,null]]
+  ✘  1 [chromium-en] › e2e/dg2-qa-blank-probe-r3.spec.ts:8:1 › probe: the PATCH body for a whitespace-only Out of scope, and the resulting charter versions (6.5s)
+QA-R3 PROBE PATCH bodies: [] -> status undefined
+QA-R3 PROBE charter versions: [[1,null]]
+  ✘  2 [chromium-ar] › e2e/dg2-qa-blank-probe-r3.spec.ts:8:1 › probe: the PATCH body for a whitespace-only Out of scope, and the resulting charter versions (6.1s)
+
+
+  1) [chromium-en] › e2e/dg2-qa-blank-probe-r3.spec.ts:8:1 › probe: the PATCH body for a whitespace-only Out of scope, and the resulting charter versions 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m1[39m
+    Received: [31m0[39m
+
+      39 |   console.log(`QA-R3 PROBE PATCH bodies: ${JSON.stringify(bodies)} -> status ${res?.status()}`);
+      40 |   console.log(`QA-R3 PROBE charter versions: ${JSON.stringify(versions.items.map((v) => [v.versionNo, v.changeSummary]))}`);
+    > 41 |   expect(bodies.length).toBe(1);
+         |                         ^
+      42 | });
+      43 |
+        at /var/tmp/mth-run.Z91WSp/claude-0/review-dg2/e2e/dg2-qa-blank-probe-r3.spec.ts:41:25
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-blank-probe-r3--7be65--resulting-charter-versions-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-dg2-qa-blank-probe-r3--7be65--resulting-charter-versions-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-blank-probe-r3--7be65--resulting-charter-versions-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg2-qa-blank-probe-r3--7be65--resulting-charter-versions-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-ar] › e2e/dg2-qa-blank-probe-r3.spec.ts:8:1 › probe: the PATCH body for a whitespace-only Out of scope, and the resulting charter versions 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m1[39m
+    Received: [31m0[39m
+
+      39 |   console.log(`QA-R3 PROBE PATCH bodies: ${JSON.stringify(bodies)} -> status ${res?.status()}`);
+      40 |   console.log(`QA-R3 PROBE charter versions: ${JSON.stringify(versions.items.map((v) => [v.versionNo, v.changeSummary]))}`);
+    > 41 |   expect(bodies.length).toBe(1);
+         |                         ^
+      42 | });
+      43 |
+        at /var/tmp/mth-run.Z91WSp/claude-0/review-dg2/e2e/dg2-qa-blank-probe-r3.spec.ts:41:25
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-blank-probe-r3--7be65--resulting-charter-versions-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-dg2-qa-blank-probe-r3--7be65--resulting-charter-versions-chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-blank-probe-r3--7be65--resulting-charter-versions-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg2-qa-blank-probe-r3--7be65--resulting-charter-versions-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium-en] › e2e/dg2-qa-blank-probe-r3.spec.ts:8:1 › probe: the PATCH body for a whitespace-only Out of scope, and the resulting charter versions 
+    [chromium-ar] › e2e/dg2-qa-blank-probe-r3.spec.ts:8:1 › probe: the PATCH body for a whitespace-only Out of scope, and the resulting charter versions 
+---- api.log (tail)
+exit 1

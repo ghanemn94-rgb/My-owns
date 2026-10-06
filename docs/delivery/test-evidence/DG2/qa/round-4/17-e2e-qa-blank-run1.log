@@ -1,0 +1,87 @@
+$ (clone: removed docs/delivery/test-evidence/DG2/qa/tests copies so the path filter only matches e2e/) QA_SHOT_DIR=/home/user/My-owns/docs/delivery/test-evidence/DG2/qa/round-4/e2e QA_API_PORT=3761 QA_E2E_PG_PORT=54911 E2E_BASE_URL=http://localhost:3761 e2e/support/qa-stack-port.sh npx playwright test e2e/dg2-qa-blank-r4.spec.ts e2e/dg2-qa-blank-probe-r4.spec.ts e2e/dg2-qa-blank-r3.spec.ts --workers=1  (node v22.22.2; run 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+
+Running 30 tests using 1 worker
+
+QA-R4 PROBE [en] blank: PATCH bodies [] -> status none
+QA-R4 PROBE [en] blank: charter versions [[1,null]]
+QA-R4 PROBE [en] visible: PATCH bodies ["{\"outOfScope\":\" Wholesale (synthetic) \",\"changeSummary\":\"QA probe\"}"] -> status 200
+QA-R4 PROBE [en] visible: charter versions [[2,"QA probe"],[1,null]]
+  ✓   1 [chromium-en] › e2e/dg2-qa-blank-probe-r4.spec.ts:10:1 › probe: no PATCH for a whitespace-only Out of scope; one verbatim PATCH for visible text (6.2s)
+QA-R3 [en] create with blank caseForChange: blank message shown=true; GET charter -> 404
+  ✓   2 [chromium-en] › e2e/dg2-qa-blank-r3.spec.ts:64:1 › charter create with a whitespace-only Case for change (2.4s)
+QA-R3 [en] edit Out of scope (was null) to blank: blank message shown=true; charter v1 -> v1 outOfScope=null
+  ✓   3 [chromium-en] › e2e/dg2-qa-blank-r3.spec.ts:92:1 › empty Out of scope: the exclusions chip FAILS (attention); whitespace-only Out of scope on edit (3.1s)
+QA-R3 [en] edit Out of scope (was text) to blank: blank message shown=true; charter v2 -> v2 outOfScope="Enterprise contracts (synthetic)"
+  ✓   4 [chromium-en] › e2e/dg2-qa-blank-r3.spec.ts:144:1 › existing Out of scope replaced by whitespace-only text in the UI (2.9s)
+QA-R3 [en] T01 blank currentState: blank message shown=true; dialog open=true; dialog lines=["Enter some text; spaces alone are not a value."]; rows unchanged=true
+  ✓   5 [chromium-en] › e2e/dg2-qa-blank-r3.spec.ts:187:1 › T01 Current state whitespace-only (3.1s)
+QA-R4 [en] charter create whitespace: blank message shown, sent=[]
+QA-R4 [en] charter create invisible: blank message shown, sent=[]
+  ✓   6 [chromium-en] › e2e/dg2-qa-blank-r4.spec.ts:92:1 › R4-01 charter create: whitespace and invisible-only Case for change are refused; visible text is verbatim (2.5s)
+QA-R4 [en] edit Out of scope (null) to blank: v1 -> v1; sent=[]
+  ✓   7 [chromium-en] › e2e/dg2-qa-blank-r4.spec.ts:124:1 › R4-02 charter edit: whitespace/invisible Out of scope (was null) writes no version; chip stays failing (2.5s)
+  ✓   8 [chromium-en] › e2e/dg2-qa-blank-r4.spec.ts:162:1 › R4-03 charter edit: spaces over an existing Out of scope keep it; a change summary alone is 'no changes' (banner axe) (3.8s)
+  ✓   9 [chromium-en] › e2e/dg2-qa-blank-r4.spec.ts:221:1 › R4-04 T01: whitespace/invisible Current state refused; unchanged save is the banner (axe); visible text verbatim (4.9s)
+  ✓  10 [chromium-en] › e2e/dg2-qa-blank-r4.spec.ts:270:1 › R4-05 North Star: whitespace/invisible statement is refused and nothing is set (2.2s)
+  ✓  11 [chromium-en] › e2e/dg2-qa-blank-r4.spec.ts:292:1 › R4-06 journey steps: invisible name, whitespace hand-off and an invisible list item are refused; no version (2.7s)
+  ✓  12 [chromium-en] › e2e/dg2-qa-blank-r4.spec.ts:331:1 › R4-07 reason dialog: a whitespace archive reason is refused and nothing is archived (2.7s)
+QA-R4 [en] decision after visible outcome: status=decided
+  ✓  13 [chromium-en] › e2e/dg2-qa-blank-r4.spec.ts:367:1 › R4-08 design decision: whitespace/invisible outcome is refused and nothing is decided; visible text verbatim (2.2s)
+  ✓  14 [chromium-en] › e2e/dg2-qa-blank-r4.spec.ts:412:1 › R4-09 evidence review: a whitespace review note is refused and nothing is reviewed (2.4s)
+QA-R4 [en] G1 canSubmit=true latest=0
+  ✓  15 [chromium-en] › e2e/dg2-qa-blank-r4.spec.ts:520:1 › R4-10 gate G1 submission note (invisible-only) refused; gate decision rationale/comments blank refused (4.6s)
+QA-R4 PROBE [ar] blank: PATCH bodies [] -> status none
+QA-R4 PROBE [ar] blank: charter versions [[1,null]]
+QA-R4 PROBE [ar] visible: PATCH bodies ["{\"outOfScope\":\" Wholesale (synthetic) \",\"changeSummary\":\"QA probe\"}"] -> status 200
+QA-R4 PROBE [ar] visible: charter versions [[2,"QA probe"],[1,null]]
+  ✓  16 [chromium-ar] › e2e/dg2-qa-blank-probe-r4.spec.ts:10:1 › probe: no PATCH for a whitespace-only Out of scope; one verbatim PATCH for visible text (6.3s)
+QA-R3 [ar] create with blank caseForChange: blank message shown=true; GET charter -> 404
+  ✓  17 [chromium-ar] › e2e/dg2-qa-blank-r3.spec.ts:64:1 › charter create with a whitespace-only Case for change (2.4s)
+QA-R3 [ar] edit Out of scope (was null) to blank: blank message shown=true; charter v1 -> v1 outOfScope=null
+  ✓  18 [chromium-ar] › e2e/dg2-qa-blank-r3.spec.ts:92:1 › empty Out of scope: the exclusions chip FAILS (attention); whitespace-only Out of scope on edit (3.3s)
+QA-R3 [ar] edit Out of scope (was text) to blank: blank message shown=true; charter v2 -> v2 outOfScope="Enterprise contracts (synthetic)"
+  ✓  19 [chromium-ar] › e2e/dg2-qa-blank-r3.spec.ts:144:1 › existing Out of scope replaced by whitespace-only text in the UI (2.8s)
+QA-R3 [ar] T01 blank currentState: blank message shown=true; dialog open=true; dialog lines=["أدخِل نصاً؛ المسافات وحدها ليست قيمة."]; rows unchanged=true
+  ✓  20 [chromium-ar] › e2e/dg2-qa-blank-r3.spec.ts:187:1 › T01 Current state whitespace-only (3.5s)
+QA-R4 [ar] charter create whitespace: blank message shown, sent=[]
+QA-R4 [ar] charter create invisible: blank message shown, sent=[]
+  ✓  21 [chromium-ar] › e2e/dg2-qa-blank-r4.spec.ts:92:1 › R4-01 charter create: whitespace and invisible-only Case for change are refused; visible text is verbatim (2.4s)
+QA-R4 [ar] edit Out of scope (null) to blank: v1 -> v1; sent=[]
+  ✓  22 [chromium-ar] › e2e/dg2-qa-blank-r4.spec.ts:124:1 › R4-02 charter edit: whitespace/invisible Out of scope (was null) writes no version; chip stays failing (2.6s)
+  ✓  23 [chromium-ar] › e2e/dg2-qa-blank-r4.spec.ts:162:1 › R4-03 charter edit: spaces over an existing Out of scope keep it; a change summary alone is 'no changes' (banner axe) (3.5s)
+  ✓  24 [chromium-ar] › e2e/dg2-qa-blank-r4.spec.ts:221:1 › R4-04 T01: whitespace/invisible Current state refused; unchanged save is the banner (axe); visible text verbatim (4.4s)
+  ✓  25 [chromium-ar] › e2e/dg2-qa-blank-r4.spec.ts:270:1 › R4-05 North Star: whitespace/invisible statement is refused and nothing is set (1.8s)
+  ✓  26 [chromium-ar] › e2e/dg2-qa-blank-r4.spec.ts:292:1 › R4-06 journey steps: invisible name, whitespace hand-off and an invisible list item are refused; no version (2.6s)
+  ✓  27 [chromium-ar] › e2e/dg2-qa-blank-r4.spec.ts:331:1 › R4-07 reason dialog: a whitespace archive reason is refused and nothing is archived (2.5s)
+QA-R4 [ar] decision after visible outcome: status=decided
+  ✓  28 [chromium-ar] › e2e/dg2-qa-blank-r4.spec.ts:367:1 › R4-08 design decision: whitespace/invisible outcome is refused and nothing is decided; visible text verbatim (2.4s)
+  ✓  29 [chromium-ar] › e2e/dg2-qa-blank-r4.spec.ts:412:1 › R4-09 evidence review: a whitespace review note is refused and nothing is reviewed (2.2s)
+QA-R4 [ar] G1 canSubmit=true latest=0
+  ✓  30 [chromium-ar] › e2e/dg2-qa-blank-r4.spec.ts:520:1 › R4-10 gate G1 submission note (invisible-only) refused; gate decision rationale/comments blank refused (4.1s)
+
+  30 passed (1.6m)
+exit 0
