@@ -1,0 +1,17 @@
+$ node tools/gates/candidate.mjs --stage DG2  (candidate tree)
+{"stage":"DG2","source":"working-tree","candidate_id":"sha256:ede1a9362bb276ce620e440bf9f6a599f6695d395b8e495eaefec30107b016de","files":532}
+exit 0
+$ (clone @90439483) node tools/gates/candidate.mjs --stage DG2
+{"stage":"DG2","source":"working-tree","candidate_id":"sha256:ede1a9362bb276ce620e440bf9f6a599f6695d395b8e495eaefec30107b016de","files":532}
+exit 0
+$ git merge-base --is-ancestor 90439483 HEAD
+exit 0
+$ git diff --stat 90439483 HEAD
+ .../DG2/round-7/code-security-reviewer.md          |   87 +
+ .../assignments/DG2/round-7/domain-reviewer.md     |  107 +
+ .../assignments/DG2/round-7/qa-verifier.md         |   84 +
+ .../candidates/DG2/ede1a9362bb276ce.manifest.json  | 2678 ++++++++++++++++++++
+ docs/delivery/stages.json                          |   27 +-
+ 5 files changed, 2978 insertions(+), 5 deletions(-)
+$ manifest
+{'stage_id': 'DG2', 'candidate_id': 'sha256:ede1a9362bb276ce620e440bf9f6a599f6695d395b8e495eaefec30107b016de', 'hash_algorithm': 'mth-candidate-v2', 'source_commit': '904394835a128bd992b4316521b772abec1ef867', 'frozen_at': '2026-10-06T14:39:01Z', 'spec': 2, 'meta_excluded': 'see tools/gates/lib/candidate.mjs META_EXCLUDES', 'entries': 532}

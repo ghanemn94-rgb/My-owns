@@ -1,0 +1,362 @@
+$ env -u LANG -u LC_ALL QA_API_PORT=3895 QA_E2E_PG_PORT=25641 E2E_BASE_URL=http://localhost:3895 QA_SHOT_DIR=$TMPDIR/shots-unset-qa/qa E2E_SCREENSHOT_DIR=$TMPDIR/shots-unset-qa/product e2e/support/qa-stack-port.sh npx playwright test e2e apps/web/e2e --workers=1 --reporter=list
+# clone @90439483 + qa-verifier specs in e2e/ (round-3 blank-r3, round-4 blank-r4/probe-r4, round-5 blank-r5, round-6 nul-r6, round-7 r7; superseded round-3 inverse probe excluded); evidence spec copies under docs/ deleted in the clone only; node v24.21.0; start 2026-10-06T15:21:39Z
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 114 tests using 1 worker
+
+  ✓    1 [chromium-en] › apps/web/e2e/journeys.spec.ts:187:1 › sign-in page: Arabic RTL by default, provisional wordmark, dev form in dev mode (1.1s)
+  ✓    2 [chromium-en] › apps/web/e2e/journeys.spec.ts:213:1 › shell: navigation, language persistence and My Work (Transformation Office) (1.7s)
+  ✓    3 [chromium-en] › apps/web/e2e/journeys.spec.ts:258:1 › create a modular transformation with an entry phase (4.1s)
+  ✓    4 [chromium-en] › apps/web/e2e/journeys.spec.ts:332:1 › list: sort, filter chips, column selection and pagination controls (2.4s)
+  ✓    5 [chromium-en] › apps/web/e2e/journeys.spec.ts:390:1 › edit: a concurrent change gives a 409 conflict with compare and re-apply (1.9s)
+  ✓    6 [chromium-en] › apps/web/e2e/journeys.spec.ts:442:1 › archive with a mandatory reason makes the record read-only (2.1s)
+  ✓    7 [chromium-en] › apps/web/e2e/journeys.spec.ts:477:1 › administration screens (access + technical administrator) (4.4s)
+  ✓    8 [chromium-en] › apps/web/e2e/journeys.spec.ts:538:1 › a user without roles sees no Administration and no business records (1.8s)
+  ✓    9 [chromium-en] › apps/web/e2e/journeys.spec.ts:560:1 › a business-unit Lead creates a record: Edit/Archive and the audit trail appear without a reload (F-DG1-210), the derived grant localized (F-DG1-008) (3.2s)
+  ✓   10 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:58:1 › setup: a fresh End-to-End transformation for the blank-text checks (64ms)
+  ✓   11 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:73:1 › Charter create: a whitespace Case for change is an inline error and creates no charter (2.2s)
+  ✓   12 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:113:1 › Charter edit: a whitespace Out of scope is an inline error, writes no version and keeps the value (3.1s)
+  ✓   13 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:163:1 › T01: a whitespace Current state is an inline error and sends nothing (2.5s)
+  ✓   14 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:265:1 › Gate G1 submission: a whitespace note is an inline error and submits nothing; visible text is verbatim (2.2s)
+  ✓   15 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:326:1 › Gate G1 decision: a whitespace rationale is an inline error and decides nothing (2.3s)
+  ✓   16 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:382:1 › Journey steps: a whitespace actor is an inline error and writes no journey version (2.6s)
+  ✓   17 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:425:1 › Reason dialog: an invisible-only archive reason is an inline error and archives nothing (2.7s)
+  ✓   18 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:42:1 › lead creates an End-to-End transformation; the workspace tabs lead to the P2 screens (2.0s)
+  ✓   19 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:83:1 › Diagnose: six T01 dimensions with Unknown; value pools labelled Unquantified with a partial total (6.1s)
+  ✓   20 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:168:1 › Charter: create, save a second version, compare versions; the 3-5 top-outcomes warning (4.5s)
+  ✓   21 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:248:1 › Define: North Star, the good outcome test with reasons, and a required T02 target date (3.8s)
+  ✓   22 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:332:1 › Design: ten canvas boxes, the per-dimension view; workshop mode converts an unresolved item into T04 (4.9s)
+  ✓   23 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:414:1 › Evidence: note, filename reference and file upload; a link; review by another person (5.0s)
+  ✓   24 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:608:1 › Gates: G1 shows unverified evidence and offers no submission while incomplete; once complete it is submitted (4.2s)
+  ✓   25 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:675:1 › Gates: the approver's decision — 409 when the submission was superseded, then approval with a rationale (3.6s)
+  ✓   26 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:824:1 › Define → G2: activate a KPI, pass the good outcome test, add a guardrail, compose the thesis; G2 is decided (15.7s)
+  ✓   27 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:1027:1 › Design → G3: the target state is complete and G3 is decided by the Sponsor (4.3s)
+  ✓   28 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:1080:1 › Team: the six governance roles with their B0018 accountability; the lead assigns a Workstream Lead (4.4s)
+  ✓   29 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:1144:1 › read-only auditor (AUD): every P2 screen without write controls; Unknown and Unquantified rendered (11.2s)
+  ✓   30 [chromium-en] › e2e/a20-bilingual-shell.spec.ts:117:3 › A20 bilingual shell › Arabic RTL by default; English LTR after the switch; persisted; switch back (1.2s)
+  ✓   31 [chromium-en] › e2e/a20-bilingual-shell.spec.ts:182:3 › A20 design tokens reach the rendered CSS › seeded --mth-* colours and referencing surfaces equal the built token source (589ms)
+QA-R4 PROBE [en] blank: PATCH bodies [] -> status none
+QA-R4 PROBE [en] blank: charter versions [[1,null]]
+QA-R4 PROBE [en] visible: PATCH bodies ["{\"outOfScope\":\" Wholesale (synthetic) \",\"changeSummary\":\"QA probe\"}"] -> status 200
+QA-R4 PROBE [en] visible: charter versions [[2,"QA probe"],[1,null]]
+  ✓   32 [chromium-en] › e2e/dg2-qa-blank-probe-r4.spec.ts:9:1 › probe: no PATCH for a whitespace-only Out of scope; one verbatim PATCH for visible text (6.0s)
+QA-R3 [en] create with blank caseForChange: blank message shown=true; GET charter -> 404
+  ✓   33 [chromium-en] › e2e/dg2-qa-blank-r3.spec.ts:59:1 › charter create with a whitespace-only Case for change (2.5s)
+QA-R3 [en] edit Out of scope (was null) to blank: blank message shown=true; charter v1 -> v1 outOfScope=null
+  ✓   34 [chromium-en] › e2e/dg2-qa-blank-r3.spec.ts:93:1 › empty Out of scope: the exclusions chip FAILS (attention); whitespace-only Out of scope on edit (3.4s)
+QA-R3 [en] edit Out of scope (was text) to blank: blank message shown=true; charter v2 -> v2 outOfScope="Enterprise contracts (synthetic)"
+  ✓   35 [chromium-en] › e2e/dg2-qa-blank-r3.spec.ts:140:1 › existing Out of scope replaced by whitespace-only text in the UI (2.8s)
+QA-R3 [en] T01 blank currentState: blank message shown=true; dialog open=true; dialog lines=["Enter some text; spaces alone are not a value."]; rows unchanged=true
+  ✓   36 [chromium-en] › e2e/dg2-qa-blank-r3.spec.ts:184:1 › T01 Current state whitespace-only (3.0s)
+QA-R4 [en] charter create whitespace: blank message shown, sent=[]
+QA-R4 [en] charter create invisible: blank message shown, sent=[]
+  ✓   37 [chromium-en] › e2e/dg2-qa-blank-r4.spec.ts:86:1 › R4-01 charter create: whitespace and invisible-only Case for change are refused; visible text is verbatim (2.1s)
+QA-R4 [en] edit Out of scope (null) to blank: v1 -> v1; sent=[]
+  ✓   38 [chromium-en] › e2e/dg2-qa-blank-r4.spec.ts:123:1 › R4-02 charter edit: whitespace/invisible Out of scope (was null) writes no version; chip stays failing (2.6s)
+  ✓   39 [chromium-en] › e2e/dg2-qa-blank-r4.spec.ts:163:1 › R4-03 charter edit: spaces over an existing Out of scope keep it; a change summary alone is 'no changes' (banner axe) (3.7s)
+  ✓   40 [chromium-en] › e2e/dg2-qa-blank-r4.spec.ts:229:1 › R4-04 T01: whitespace/invisible Current state refused; unchanged save is the banner (axe); visible text verbatim (4.8s)
+  ✓   41 [chromium-en] › e2e/dg2-qa-blank-r4.spec.ts:294:1 › R4-05 North Star: whitespace/invisible statement is refused and nothing is set (1.8s)
+  ✓   42 [chromium-en] › e2e/dg2-qa-blank-r4.spec.ts:324:1 › R4-06 journey steps: invisible name, whitespace hand-off and an invisible list item are refused; no version (2.8s)
+  ✓   43 [chromium-en] › e2e/dg2-qa-blank-r4.spec.ts:373:1 › R4-07 reason dialog: a whitespace archive reason is refused and nothing is archived (2.5s)
+QA-R4 [en] decision after visible outcome: status=decided
+  ✓   44 [chromium-en] › e2e/dg2-qa-blank-r4.spec.ts:410:1 › R4-08 design decision: whitespace/invisible outcome is refused and nothing is decided; visible text verbatim (2.1s)
+  ✓   45 [chromium-en] › e2e/dg2-qa-blank-r4.spec.ts:472:1 › R4-09 evidence review: a whitespace review note is refused and nothing is reviewed (2.1s)
+QA-R4 [en] G1 canSubmit=true latest=0
+  ✓   46 [chromium-en] › e2e/dg2-qa-blank-r4.spec.ts:578:1 › R4-10 gate G1 submission note (invisible-only) refused; gate decision rationale/comments blank refused (4.2s)
+QA-R5 [en] charter create variation selector alone (U+FE0F): blank message shown, sent=[]
+QA-R5 [en] charter create Default_Ignorable mix (VS1, CGJ, Mongolian FVS1, Khmer U+17B4, VS17): blank message shown, sent=[]
+QA-R5 [en] charter create C0 controls (U+0007, U+0001) with a space: blank message shown, sent=[]
+QA-R5 [en] charter create emoji+VS16 stored verbatim: "✔️"
+  ✓   47 [chromium-en] › e2e/dg2-qa-blank-r5.spec.ts:60:1 › R5-01 charter create: invisible-only Case for change (VS alone, Default_Ignorable, Cc) is refused; emoji+VS16 is verbatim (4.0s)
+QA-R5 [en] API PATCH charter outOfScope variation selector alone (U+FE0F): 400 [{"pointer":"/outOfScope","code":"validation.blank","message":"validation.blank"}]
+QA-R5 [en] API PATCH charter outOfScope Default_Ignorable mix (VS1, CGJ, Mongolian FVS1, Khmer U+17B4, VS17): 400 [{"pointer":"/outOfScope","code":"validation.blank","message":"validation.blank"}]
+QA-R5 [en] API PATCH charter outOfScope C0 controls (U+0007, U+0001) with a space: 400 [{"pointer":"/outOfScope","code":"validation.blank","message":"validation.blank"}]
+  ✓   48 [chromium-en] › e2e/dg2-qa-blank-r5.spec.ts:108:1 › R5-02 API: invisible-only Out of scope is 400 validation.blank at /outOfScope; the charter version is unchanged (56ms)
+QA-R6 [en] R6-01 charter create NUL: message "Remove the unsupported character from this text." shown, sent=[]
+  ✓   49 [chromium-en] › e2e/dg2-qa-nul-r6.spec.ts:65:1 › R6-01 charter create: U+0000 in Case for change is refused inline with the localized message; nothing is sent (1.9s)
+QA-R6 [en] R6-02 server 400 on /outOfScope shown as "Remove the unsupported character from this text."; responses=["400"]
+  ✓   50 [chromium-en] › e2e/dg2-qa-nul-r6.spec.ts:100:1 › R6-02 charter create: a U+0000 the client did not catch is refused by the real server and shown localized (2.0s)
+QA-R6 [en] R6-03 U+16FE4 KHITAN SMALL SCRIPT FILLER alone: blank message shown, sent=[]
+QA-R6 [en] R6-03 U+1D159 MUSICAL SYMBOL NULL NOTEHEAD alone: blank message shown, sent=[]
+  ✓   51 [chromium-en] › e2e/dg2-qa-nul-r6.spec.ts:144:1 › R6-03 charter create: U+16FE4 alone and U+1D159 alone are blank (F-DG2-230); nothing is sent (3.0s)
+QA-R6 [en] R6-04 PATCH charter inScope with U+0000 (3 positions): 400 invalid_character at /inScope
+QA-R6 [en] R6-04 PATCH charter outOfScope with U+0000 (3 positions): 400 invalid_character at /outOfScope
+QA-R6 [en] R6-04 PATCH charter caseForChange with U+0000 (3 positions): 400 invalid_character at /caseForChange
+QA-R6 [en] R6-04 NUL in body key: 400 [{"pointer":"/in\u0000Scope","code":"validation.invalid_character","message":"The text contains an unsupported character (U+0000 or an unpaired UTF-16 surrogate)."}]
+QA-R6 [en] R6-04 path NUL: 400 [{"pointer":"/params/transformationId","code":"validation.invalid_character","message":"The text contains an unsupported character (U+0000 or an unpaired UTF-16 surrogate)."}]; query NUL: 400 [{"pointer":"/query/q","code":"validation.invalid_character","message":"The text contains an unsupported character (U+0000 or an unpaired UTF-16 surrogate)."}]
+QA-R6 [en] R6-04 PATCH outOfScope U+16FE4 KHITAN SMALL SCRIPT FILLER alone: 400 [{"pointer":"/outOfScope","code":"validation.blank","message":"validation.blank"}]
+QA-R6 [en] R6-04 PATCH outOfScope U+1D159 MUSICAL SYMBOL NULL NOTEHEAD alone: 400 [{"pointer":"/outOfScope","code":"validation.blank","message":"validation.blank"}]
+QA-R6 [en] R6-04 charter unchanged: version 1; history unchanged
+  ✓   52 [chromium-en] › e2e/dg2-qa-nul-r6.spec.ts:176:1 › R6-04 API: U+0000 in body, body key, path and query is 400 validation.invalid_character; nothing changes (174ms)
+QA-R6 [en] R6-05 contract operations=161; GET with path params=58
+QA-R6 [en] R6-05 getOrganization GET /api/v1/organizations/{organizationId} -> 400 [{"pointer":"/params/organizationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listBusinessUnits GET /api/v1/organizations/{organizationId}/business-units -> 400 [{"pointer":"/params/organizationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getBusinessUnit GET /api/v1/business-units/{businessUnitId} -> 400 [{"pointer":"/params/businessUnitId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getUser GET /api/v1/users/{userId} -> 400 [{"pointer":"/params/userId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getRoleAssignment GET /api/v1/role-assignments/{assignmentId} -> 400 [{"pointer":"/params/assignmentId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getTransformation GET /api/v1/transformations/{transformationId} -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listTransformationAudit GET /api/v1/transformations/{transformationId}/audit -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listStrategicGuardrails GET /api/v1/transformations/{transformationId}/strategic-guardrails -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getStrategicGuardrail GET /api/v1/transformations/{transformationId}/strategic-guardrails/{strategicGuardrailId} -> 400 [{"pointer":"/params/strategicGuardrailId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listOutcomes GET /api/v1/transformations/{transformationId}/outcomes -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getOutcome GET /api/v1/transformations/{transformationId}/outcomes/{outcomeId} -> 400 [{"pointer":"/params/outcomeId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listKpiDefinitions GET /api/v1/transformations/{transformationId}/kpi-definitions -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getKpiDefinition GET /api/v1/transformations/{transformationId}/kpi-definitions/{kpiDefinitionId} -> 400 [{"pointer":"/params/kpiDefinitionId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listBaselines GET /api/v1/transformations/{transformationId}/baselines -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getBaseline GET /api/v1/transformations/{transformationId}/baselines/{baselineId} -> 400 [{"pointer":"/params/baselineId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listOutcomeKpis GET /api/v1/transformations/{transformationId}/outcome-kpis -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getOutcomeKpi GET /api/v1/transformations/{transformationId}/outcome-kpis/{outcomeKpiId} -> 400 [{"pointer":"/params/outcomeKpiId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listValuePools GET /api/v1/transformations/{transformationId}/value-pools -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getValuePool GET /api/v1/transformations/{transformationId}/value-pools/{valuePoolId} -> 400 [{"pointer":"/params/valuePoolId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listDiagnosticItems GET /api/v1/transformations/{transformationId}/diagnostic-items -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getDiagnosticItem GET /api/v1/transformations/{transformationId}/diagnostic-items/{diagnosticItemId} -> 400 [{"pointer":"/params/diagnosticItemId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listDiagnosticFindings GET /api/v1/transformations/{transformationId}/diagnostic-findings -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getDiagnosticFinding GET /api/v1/transformations/{transformationId}/diagnostic-findings/{diagnosticFindingId} -> 400 [{"pointer":"/params/diagnosticFindingId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listWorkstreamOutputs GET /api/v1/transformations/{transformationId}/workstream-outputs -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getWorkstreamOutput GET /api/v1/transformations/{transformationId}/workstream-outputs/{diagnosticWorkstreamOutputId} -> 400 [{"pointer":"/params/diagnosticWorkstreamOutputId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listTomGaps GET /api/v1/transformations/{transformationId}/tom-gaps -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getTomGap GET /api/v1/transformations/{transformationId}/tom-gaps/{tomGapId} -> 400 [{"pointer":"/params/tomGapId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listCapabilityHeatmapEntries GET /api/v1/transformations/{transformationId}/capability-heatmap -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getCapabilityHeatmapEntry GET /api/v1/transformations/{transformationId}/capability-heatmap/{capabilityId} -> 400 [{"pointer":"/params/capabilityId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listJourneies GET /api/v1/transformations/{transformationId}/journeys -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getJourney GET /api/v1/transformations/{transformationId}/journeys/{journeyId} -> 400 [{"pointer":"/params/journeyId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listDependencies GET /api/v1/transformations/{transformationId}/dependencies -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getDependency GET /api/v1/transformations/{transformationId}/dependencies/{dependencyId} -> 400 [{"pointer":"/params/dependencyId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listActionItems GET /api/v1/transformations/{transformationId}/actions -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getActionItem GET /api/v1/transformations/{transformationId}/actions/{actionItemId} -> 400 [{"pointer":"/params/actionItemId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listTomWorkshops GET /api/v1/transformations/{transformationId}/tom-workshops -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getTomWorkshop GET /api/v1/transformations/{transformationId}/tom-workshops/{workshopId} -> 400 [{"pointer":"/params/workshopId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listEvidence GET /api/v1/transformations/{transformationId}/evidence -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getEvidence GET /api/v1/transformations/{transformationId}/evidence/{evidenceId} -> 400 [{"pointer":"/params/evidenceId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getTransformationMethodology GET /api/v1/transformations/{transformationId}/methodology -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getCharter GET /api/v1/transformations/{transformationId}/charter -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listCharterVersions GET /api/v1/transformations/{transformationId}/charter/versions -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getCharterVersion GET /api/v1/transformations/{transformationId}/charter/versions/{versionNo} -> 400 [{"pointer":"/params/versionNo","code":"validation.invalid_type","message":"Invalid input: expected number, received NaN"}] declares400=true
+QA-R6 [en] R6-05 getNorthStar GET /api/v1/transformations/{transformationId}/north-star -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listNorthStarHistory GET /api/v1/transformations/{transformationId}/north-star/history -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getTomCanvas GET /api/v1/transformations/{transformationId}/tom-canvas -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getTomCanvasCell GET /api/v1/transformations/{transformationId}/tom-canvas/{dimensionCode} -> 400 [{"pointer":"/params/dimensionCode","code":"validation.invalid_format","message":"Invalid string: must match pattern /^[a-z][a-z0-9_]{0,47}$/"}] declares400=true
+QA-R6 [en] R6-05 listJourneyPainPoints GET /api/v1/transformations/{transformationId}/journeys/{journeyId}/pain-points -> 400 [{"pointer":"/params/journeyId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listTomWorkshopParticipants GET /api/v1/transformations/{transformationId}/tom-workshops/{workshopId}/participants -> 400 [{"pointer":"/params/workshopId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listTomWorkshopItems GET /api/v1/transformations/{transformationId}/tom-workshops/{workshopId}/items -> 400 [{"pointer":"/params/workshopId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getDecision GET /api/v1/decisions/{decisionId} -> 400 [{"pointer":"/params/decisionId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listGates GET /api/v1/transformations/{transformationId}/gates -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 getGate GET /api/v1/transformations/{transformationId}/gates/{gateCode} -> 400 [{"pointer":"/params/gateCode","code":"validation.invalid_value","message":"Invalid option: expected one of \"G1\"|\"G2\"|\"G3\"|\"G4\"|\"G5\"|\"G6\""}] declares400=true
+QA-R6 [en] R6-05 listGateSubmissions GET /api/v1/transformations/{transformationId}/gates/{gateCode}/submissions -> 400 [{"pointer":"/params/gateCode","code":"validation.invalid_value","message":"Invalid option: expected one of \"G1\"|\"G2\"|\"G3\"|\"G4\"|\"G5\"|\"G6\""}] declares400=true
+QA-R6 [en] R6-05 getGateSubmission GET /api/v1/transformations/{transformationId}/gates/{gateCode}/submissions/{submissionNo} -> 400 [{"pointer":"/params/submissionNo","code":"validation.invalid_type","message":"Invalid input: expected number, received NaN"}] declares400=true
+QA-R6 [en] R6-05 downloadEvidenceContent GET /api/v1/transformations/{transformationId}/evidence/{evidenceId}/content -> 400 [{"pointer":"/params/evidenceId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listEvidenceLinks GET /api/v1/transformations/{transformationId}/evidence-links -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [en] R6-05 listTransformationTeam GET /api/v1/transformations/{transformationId}/scoped-assignments -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+  ✓   53 [chromium-en] › e2e/dg2-qa-nul-r6.spec.ts:264:1 › R6-05 contract: every GET-by-id with a malformed last path parameter is the declared 400 at /params/<name> (358ms)
+QA-R7 [en] R7-01 value set via native-setter; field holds lone surrogate: true
+QA-R7 [en] R7-01 message "Remove the unsupported character from this text." shown, sent=[]
+  ✓   54 [chromium-en] › e2e/dg2-qa-r7.spec.ts:85:1 › R7-01 charter create: a lone surrogate in Case for change is refused inline, localized; nothing is sent (1.9s)
+QA-R7 [en] R7-02 server 400 [{"pointer":"/outOfScope","code":"validation.invalid_character","message":"The text contains an unsupported character (U+0000 or an unpaired UTF-16 surrogate)."}] shown as "Remove the unsupported character from this text."
+  ✓   55 [chromium-en] › e2e/dg2-qa-r7.spec.ts:121:1 › R7-02 charter create: a lone surrogate the client did not catch is refused by the real server, localized (2.1s)
+QA-R7 [en] R7-03 PATCH charter inScope with lone surrogates (4 shapes): 400 invalid_character at /inScope
+QA-R7 [en] R7-03 PATCH charter outOfScope with lone surrogates (4 shapes): 400 invalid_character at /outOfScope
+QA-R7 [en] R7-03 PATCH charter caseForChange with lone surrogates (4 shapes): 400 invalid_character at /caseForChange
+QA-R7 [en] R7-03 changeSummary [{"pointer":"/changeSummary","code":"validation.invalid_character","message":"The text contains an unsupported character (U+0000 or an unpaired UTF-16 surrogate)."}]; body key [{"pointer":"/in\ud800Scope","code":"validation.invalid_character","message":"The text contains an unsupported character (U+0000 or an unpaired UTF-16 surrogate)."}]
+QA-R7 [en] R7-03 emoji+Arabic accepted verbatim; version 1 -> 2
+  ✓   56 [chromium-en] › e2e/dg2-qa-r7.spec.ts:176:1 › R7-03 API: lone surrogates in body values and keys are 400 invalid_character; emoji/Arabic accepted verbatim (174ms)
+QA-R7 [en] R7-04 API path %ZZ: 400 application/problem+json; charset=utf-8 [{"pointer":"","code":"validation.format","message":"The request URL contains an invalid percent-encoding."}] sec-headers=12/12 ok
+QA-R7 [en] R7-04 API path %ED%A0%80 (CESU-8 lone surrogate): 400 application/problem+json; charset=utf-8 [{"pointer":"","code":"validation.format","message":"The request URL contains an invalid percent-encoding."}] sec-headers=12/12 ok
+QA-R7 [en] R7-04 POST archive with %ZZ id: 400 application/problem+json; charset=utf-8 [{"pointer":"","code":"validation.format","message":"The request URL contains an invalid percent-encoding."}] sec-headers=12/12 ok
+QA-R7 [en] R7-04 SPA path %ZZ: 400 application/problem+json; charset=utf-8 [{"pointer":"","code":"validation.format","message":"The request URL contains an invalid percent-encoding."}] sec-headers=12/12 ok
+QA-R7 [en] R7-04 oversized header: 400 application/problem+json; charset=utf-8 [{"pointer":"","code":"validation.headers_too_large","message":"The request URL or headers are too large."}] sec-headers=12/12 ok
+QA-R7 [en] R7-04 oversized URL: 400 application/problem+json; charset=utf-8 [{"pointer":"","code":"validation.headers_too_large","message":"The request URL or headers are too large."}] sec-headers=12/12 ok
+QA-R7 [en] R7-04 malformed request line: 400 application/problem+json; charset=utf-8 [{"pointer":"","code":"validation.malformed_request","message":"The request is not a valid HTTP request."}] sec-headers=12/12 ok
+  ✓   57 [chromium-en] › e2e/dg2-qa-r7.spec.ts:280:1 › R7-04 raw HTTP: router- and connection-level errors are 400 problem+json with the routed security headers (32ms)
+  ✓   58 [chromium-ar] › apps/web/e2e/journeys.spec.ts:187:1 › sign-in page: Arabic RTL by default, provisional wordmark, dev form in dev mode (1.2s)
+  ✓   59 [chromium-ar] › apps/web/e2e/journeys.spec.ts:213:1 › shell: navigation, language persistence and My Work (Transformation Office) (1.5s)
+  ✓   60 [chromium-ar] › apps/web/e2e/journeys.spec.ts:258:1 › create a modular transformation with an entry phase (4.1s)
+  ✓   61 [chromium-ar] › apps/web/e2e/journeys.spec.ts:332:1 › list: sort, filter chips, column selection and pagination controls (3.0s)
+  ✓   62 [chromium-ar] › apps/web/e2e/journeys.spec.ts:390:1 › edit: a concurrent change gives a 409 conflict with compare and re-apply (1.8s)
+  ✓   63 [chromium-ar] › apps/web/e2e/journeys.spec.ts:442:1 › archive with a mandatory reason makes the record read-only (2.1s)
+  ✓   64 [chromium-ar] › apps/web/e2e/journeys.spec.ts:477:1 › administration screens (access + technical administrator) (4.6s)
+  ✓   65 [chromium-ar] › apps/web/e2e/journeys.spec.ts:538:1 › a user without roles sees no Administration and no business records (1.5s)
+  ✓   66 [chromium-ar] › apps/web/e2e/journeys.spec.ts:560:1 › a business-unit Lead creates a record: Edit/Archive and the audit trail appear without a reload (F-DG1-210), the derived grant localized (F-DG1-008) (3.3s)
+  ✓   67 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:58:1 › setup: a fresh End-to-End transformation for the blank-text checks (51ms)
+  ✓   68 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:73:1 › Charter create: a whitespace Case for change is an inline error and creates no charter (2.0s)
+  ✓   69 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:113:1 › Charter edit: a whitespace Out of scope is an inline error, writes no version and keeps the value (3.0s)
+  ✓   70 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:163:1 › T01: a whitespace Current state is an inline error and sends nothing (2.4s)
+  ✓   71 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:265:1 › Gate G1 submission: a whitespace note is an inline error and submits nothing; visible text is verbatim (2.1s)
+  ✓   72 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:326:1 › Gate G1 decision: a whitespace rationale is an inline error and decides nothing (2.0s)
+  ✓   73 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:382:1 › Journey steps: a whitespace actor is an inline error and writes no journey version (2.5s)
+  ✓   74 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:425:1 › Reason dialog: an invisible-only archive reason is an inline error and archives nothing (2.5s)
+  ✓   75 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:42:1 › lead creates an End-to-End transformation; the workspace tabs lead to the P2 screens (1.9s)
+  ✓   76 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:83:1 › Diagnose: six T01 dimensions with Unknown; value pools labelled Unquantified with a partial total (5.5s)
+  ✓   77 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:168:1 › Charter: create, save a second version, compare versions; the 3-5 top-outcomes warning (4.1s)
+  ✓   78 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:248:1 › Define: North Star, the good outcome test with reasons, and a required T02 target date (3.8s)
+  ✓   79 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:332:1 › Design: ten canvas boxes, the per-dimension view; workshop mode converts an unresolved item into T04 (4.3s)
+  ✓   80 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:414:1 › Evidence: note, filename reference and file upload; a link; review by another person (4.8s)
+  ✓   81 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:608:1 › Gates: G1 shows unverified evidence and offers no submission while incomplete; once complete it is submitted (3.9s)
+  ✓   82 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:675:1 › Gates: the approver's decision — 409 when the submission was superseded, then approval with a rationale (3.2s)
+  ✓   83 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:824:1 › Define → G2: activate a KPI, pass the good outcome test, add a guardrail, compose the thesis; G2 is decided (14.9s)
+  ✓   84 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:1027:1 › Design → G3: the target state is complete and G3 is decided by the Sponsor (3.9s)
+  ✓   85 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:1080:1 › Team: the six governance roles with their B0018 accountability; the lead assigns a Workstream Lead (3.9s)
+  ✓   86 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:1144:1 › read-only auditor (AUD): every P2 screen without write controls; Unknown and Unquantified rendered (10.0s)
+  ✓   87 [chromium-ar] › e2e/a20-bilingual-shell.spec.ts:117:3 › A20 bilingual shell › Arabic RTL by default; English LTR after the switch; persisted; switch back (1.1s)
+  ✓   88 [chromium-ar] › e2e/a20-bilingual-shell.spec.ts:182:3 › A20 design tokens reach the rendered CSS › seeded --mth-* colours and referencing surfaces equal the built token source (665ms)
+QA-R4 PROBE [ar] blank: PATCH bodies [] -> status none
+QA-R4 PROBE [ar] blank: charter versions [[1,null]]
+QA-R4 PROBE [ar] visible: PATCH bodies ["{\"outOfScope\":\" Wholesale (synthetic) \",\"changeSummary\":\"QA probe\"}"] -> status 200
+QA-R4 PROBE [ar] visible: charter versions [[2,"QA probe"],[1,null]]
+  ✓   89 [chromium-ar] › e2e/dg2-qa-blank-probe-r4.spec.ts:9:1 › probe: no PATCH for a whitespace-only Out of scope; one verbatim PATCH for visible text (6.2s)
+QA-R3 [ar] create with blank caseForChange: blank message shown=true; GET charter -> 404
+  ✓   90 [chromium-ar] › e2e/dg2-qa-blank-r3.spec.ts:59:1 › charter create with a whitespace-only Case for change (2.2s)
+QA-R3 [ar] edit Out of scope (was null) to blank: blank message shown=true; charter v1 -> v1 outOfScope=null
+  ✓   91 [chromium-ar] › e2e/dg2-qa-blank-r3.spec.ts:93:1 › empty Out of scope: the exclusions chip FAILS (attention); whitespace-only Out of scope on edit (3.1s)
+QA-R3 [ar] edit Out of scope (was text) to blank: blank message shown=true; charter v2 -> v2 outOfScope="Enterprise contracts (synthetic)"
+  ✓   92 [chromium-ar] › e2e/dg2-qa-blank-r3.spec.ts:140:1 › existing Out of scope replaced by whitespace-only text in the UI (2.7s)
+QA-R3 [ar] T01 blank currentState: blank message shown=true; dialog open=true; dialog lines=["أدخِل نصاً؛ المسافات وحدها ليست قيمة."]; rows unchanged=true
+  ✓   93 [chromium-ar] › e2e/dg2-qa-blank-r3.spec.ts:184:1 › T01 Current state whitespace-only (2.8s)
+QA-R4 [ar] charter create whitespace: blank message shown, sent=[]
+QA-R4 [ar] charter create invisible: blank message shown, sent=[]
+  ✓   94 [chromium-ar] › e2e/dg2-qa-blank-r4.spec.ts:86:1 › R4-01 charter create: whitespace and invisible-only Case for change are refused; visible text is verbatim (2.2s)
+QA-R4 [ar] edit Out of scope (null) to blank: v1 -> v1; sent=[]
+  ✓   95 [chromium-ar] › e2e/dg2-qa-blank-r4.spec.ts:123:1 › R4-02 charter edit: whitespace/invisible Out of scope (was null) writes no version; chip stays failing (2.4s)
+  ✓   96 [chromium-ar] › e2e/dg2-qa-blank-r4.spec.ts:163:1 › R4-03 charter edit: spaces over an existing Out of scope keep it; a change summary alone is 'no changes' (banner axe) (3.2s)
+  ✓   97 [chromium-ar] › e2e/dg2-qa-blank-r4.spec.ts:229:1 › R4-04 T01: whitespace/invisible Current state refused; unchanged save is the banner (axe); visible text verbatim (3.9s)
+  ✓   98 [chromium-ar] › e2e/dg2-qa-blank-r4.spec.ts:294:1 › R4-05 North Star: whitespace/invisible statement is refused and nothing is set (1.7s)
+  ✓   99 [chromium-ar] › e2e/dg2-qa-blank-r4.spec.ts:324:1 › R4-06 journey steps: invisible name, whitespace hand-off and an invisible list item are refused; no version (2.4s)
+  ✓  100 [chromium-ar] › e2e/dg2-qa-blank-r4.spec.ts:373:1 › R4-07 reason dialog: a whitespace archive reason is refused and nothing is archived (2.3s)
+QA-R4 [ar] decision after visible outcome: status=decided
+  ✓  101 [chromium-ar] › e2e/dg2-qa-blank-r4.spec.ts:410:1 › R4-08 design decision: whitespace/invisible outcome is refused and nothing is decided; visible text verbatim (2.1s)
+  ✓  102 [chromium-ar] › e2e/dg2-qa-blank-r4.spec.ts:472:1 › R4-09 evidence review: a whitespace review note is refused and nothing is reviewed (2.0s)
+QA-R4 [ar] G1 canSubmit=true latest=0
+  ✓  103 [chromium-ar] › e2e/dg2-qa-blank-r4.spec.ts:578:1 › R4-10 gate G1 submission note (invisible-only) refused; gate decision rationale/comments blank refused (4.1s)
+QA-R5 [ar] charter create variation selector alone (U+FE0F): blank message shown, sent=[]
+QA-R5 [ar] charter create Default_Ignorable mix (VS1, CGJ, Mongolian FVS1, Khmer U+17B4, VS17): blank message shown, sent=[]
+QA-R5 [ar] charter create C0 controls (U+0007, U+0001) with a space: blank message shown, sent=[]
+QA-R5 [ar] charter create emoji+VS16 stored verbatim: "✔️"
+  ✓  104 [chromium-ar] › e2e/dg2-qa-blank-r5.spec.ts:60:1 › R5-01 charter create: invisible-only Case for change (VS alone, Default_Ignorable, Cc) is refused; emoji+VS16 is verbatim (3.7s)
+QA-R5 [ar] API PATCH charter outOfScope variation selector alone (U+FE0F): 400 [{"pointer":"/outOfScope","code":"validation.blank","message":"validation.blank"}]
+QA-R5 [ar] API PATCH charter outOfScope Default_Ignorable mix (VS1, CGJ, Mongolian FVS1, Khmer U+17B4, VS17): 400 [{"pointer":"/outOfScope","code":"validation.blank","message":"validation.blank"}]
+QA-R5 [ar] API PATCH charter outOfScope C0 controls (U+0007, U+0001) with a space: 400 [{"pointer":"/outOfScope","code":"validation.blank","message":"validation.blank"}]
+  ✓  105 [chromium-ar] › e2e/dg2-qa-blank-r5.spec.ts:108:1 › R5-02 API: invisible-only Out of scope is 400 validation.blank at /outOfScope; the charter version is unchanged (59ms)
+QA-R6 [ar] R6-01 charter create NUL: message "أزِل الحرف غير المدعوم من هذا النص." shown, sent=[]
+  ✓  106 [chromium-ar] › e2e/dg2-qa-nul-r6.spec.ts:65:1 › R6-01 charter create: U+0000 in Case for change is refused inline with the localized message; nothing is sent (1.7s)
+QA-R6 [ar] R6-02 server 400 on /outOfScope shown as "أزِل الحرف غير المدعوم من هذا النص."; responses=["400"]
+  ✓  107 [chromium-ar] › e2e/dg2-qa-nul-r6.spec.ts:100:1 › R6-02 charter create: a U+0000 the client did not catch is refused by the real server and shown localized (1.9s)
+QA-R6 [ar] R6-03 U+16FE4 KHITAN SMALL SCRIPT FILLER alone: blank message shown, sent=[]
+QA-R6 [ar] R6-03 U+1D159 MUSICAL SYMBOL NULL NOTEHEAD alone: blank message shown, sent=[]
+  ✓  108 [chromium-ar] › e2e/dg2-qa-nul-r6.spec.ts:144:1 › R6-03 charter create: U+16FE4 alone and U+1D159 alone are blank (F-DG2-230); nothing is sent (2.5s)
+QA-R6 [ar] R6-04 PATCH charter inScope with U+0000 (3 positions): 400 invalid_character at /inScope
+QA-R6 [ar] R6-04 PATCH charter outOfScope with U+0000 (3 positions): 400 invalid_character at /outOfScope
+QA-R6 [ar] R6-04 PATCH charter caseForChange with U+0000 (3 positions): 400 invalid_character at /caseForChange
+QA-R6 [ar] R6-04 NUL in body key: 400 [{"pointer":"/in\u0000Scope","code":"validation.invalid_character","message":"The text contains an unsupported character (U+0000 or an unpaired UTF-16 surrogate)."}]
+QA-R6 [ar] R6-04 path NUL: 400 [{"pointer":"/params/transformationId","code":"validation.invalid_character","message":"The text contains an unsupported character (U+0000 or an unpaired UTF-16 surrogate)."}]; query NUL: 400 [{"pointer":"/query/q","code":"validation.invalid_character","message":"The text contains an unsupported character (U+0000 or an unpaired UTF-16 surrogate)."}]
+QA-R6 [ar] R6-04 PATCH outOfScope U+16FE4 KHITAN SMALL SCRIPT FILLER alone: 400 [{"pointer":"/outOfScope","code":"validation.blank","message":"validation.blank"}]
+QA-R6 [ar] R6-04 PATCH outOfScope U+1D159 MUSICAL SYMBOL NULL NOTEHEAD alone: 400 [{"pointer":"/outOfScope","code":"validation.blank","message":"validation.blank"}]
+QA-R6 [ar] R6-04 charter unchanged: version 1; history unchanged
+  ✓  109 [chromium-ar] › e2e/dg2-qa-nul-r6.spec.ts:176:1 › R6-04 API: U+0000 in body, body key, path and query is 400 validation.invalid_character; nothing changes (162ms)
+QA-R6 [ar] R6-05 contract operations=161; GET with path params=58
+QA-R6 [ar] R6-05 getOrganization GET /api/v1/organizations/{organizationId} -> 400 [{"pointer":"/params/organizationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listBusinessUnits GET /api/v1/organizations/{organizationId}/business-units -> 400 [{"pointer":"/params/organizationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getBusinessUnit GET /api/v1/business-units/{businessUnitId} -> 400 [{"pointer":"/params/businessUnitId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getUser GET /api/v1/users/{userId} -> 400 [{"pointer":"/params/userId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getRoleAssignment GET /api/v1/role-assignments/{assignmentId} -> 400 [{"pointer":"/params/assignmentId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getTransformation GET /api/v1/transformations/{transformationId} -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listTransformationAudit GET /api/v1/transformations/{transformationId}/audit -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listStrategicGuardrails GET /api/v1/transformations/{transformationId}/strategic-guardrails -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getStrategicGuardrail GET /api/v1/transformations/{transformationId}/strategic-guardrails/{strategicGuardrailId} -> 400 [{"pointer":"/params/strategicGuardrailId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listOutcomes GET /api/v1/transformations/{transformationId}/outcomes -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getOutcome GET /api/v1/transformations/{transformationId}/outcomes/{outcomeId} -> 400 [{"pointer":"/params/outcomeId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listKpiDefinitions GET /api/v1/transformations/{transformationId}/kpi-definitions -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getKpiDefinition GET /api/v1/transformations/{transformationId}/kpi-definitions/{kpiDefinitionId} -> 400 [{"pointer":"/params/kpiDefinitionId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listBaselines GET /api/v1/transformations/{transformationId}/baselines -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getBaseline GET /api/v1/transformations/{transformationId}/baselines/{baselineId} -> 400 [{"pointer":"/params/baselineId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listOutcomeKpis GET /api/v1/transformations/{transformationId}/outcome-kpis -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getOutcomeKpi GET /api/v1/transformations/{transformationId}/outcome-kpis/{outcomeKpiId} -> 400 [{"pointer":"/params/outcomeKpiId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listValuePools GET /api/v1/transformations/{transformationId}/value-pools -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getValuePool GET /api/v1/transformations/{transformationId}/value-pools/{valuePoolId} -> 400 [{"pointer":"/params/valuePoolId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listDiagnosticItems GET /api/v1/transformations/{transformationId}/diagnostic-items -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getDiagnosticItem GET /api/v1/transformations/{transformationId}/diagnostic-items/{diagnosticItemId} -> 400 [{"pointer":"/params/diagnosticItemId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listDiagnosticFindings GET /api/v1/transformations/{transformationId}/diagnostic-findings -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getDiagnosticFinding GET /api/v1/transformations/{transformationId}/diagnostic-findings/{diagnosticFindingId} -> 400 [{"pointer":"/params/diagnosticFindingId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listWorkstreamOutputs GET /api/v1/transformations/{transformationId}/workstream-outputs -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getWorkstreamOutput GET /api/v1/transformations/{transformationId}/workstream-outputs/{diagnosticWorkstreamOutputId} -> 400 [{"pointer":"/params/diagnosticWorkstreamOutputId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listTomGaps GET /api/v1/transformations/{transformationId}/tom-gaps -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getTomGap GET /api/v1/transformations/{transformationId}/tom-gaps/{tomGapId} -> 400 [{"pointer":"/params/tomGapId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listCapabilityHeatmapEntries GET /api/v1/transformations/{transformationId}/capability-heatmap -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getCapabilityHeatmapEntry GET /api/v1/transformations/{transformationId}/capability-heatmap/{capabilityId} -> 400 [{"pointer":"/params/capabilityId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listJourneies GET /api/v1/transformations/{transformationId}/journeys -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getJourney GET /api/v1/transformations/{transformationId}/journeys/{journeyId} -> 400 [{"pointer":"/params/journeyId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listDependencies GET /api/v1/transformations/{transformationId}/dependencies -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getDependency GET /api/v1/transformations/{transformationId}/dependencies/{dependencyId} -> 400 [{"pointer":"/params/dependencyId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listActionItems GET /api/v1/transformations/{transformationId}/actions -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getActionItem GET /api/v1/transformations/{transformationId}/actions/{actionItemId} -> 400 [{"pointer":"/params/actionItemId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listTomWorkshops GET /api/v1/transformations/{transformationId}/tom-workshops -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getTomWorkshop GET /api/v1/transformations/{transformationId}/tom-workshops/{workshopId} -> 400 [{"pointer":"/params/workshopId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listEvidence GET /api/v1/transformations/{transformationId}/evidence -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getEvidence GET /api/v1/transformations/{transformationId}/evidence/{evidenceId} -> 400 [{"pointer":"/params/evidenceId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getTransformationMethodology GET /api/v1/transformations/{transformationId}/methodology -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getCharter GET /api/v1/transformations/{transformationId}/charter -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listCharterVersions GET /api/v1/transformations/{transformationId}/charter/versions -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getCharterVersion GET /api/v1/transformations/{transformationId}/charter/versions/{versionNo} -> 400 [{"pointer":"/params/versionNo","code":"validation.invalid_type","message":"Invalid input: expected number, received NaN"}] declares400=true
+QA-R6 [ar] R6-05 getNorthStar GET /api/v1/transformations/{transformationId}/north-star -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listNorthStarHistory GET /api/v1/transformations/{transformationId}/north-star/history -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getTomCanvas GET /api/v1/transformations/{transformationId}/tom-canvas -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getTomCanvasCell GET /api/v1/transformations/{transformationId}/tom-canvas/{dimensionCode} -> 400 [{"pointer":"/params/dimensionCode","code":"validation.invalid_format","message":"Invalid string: must match pattern /^[a-z][a-z0-9_]{0,47}$/"}] declares400=true
+QA-R6 [ar] R6-05 listJourneyPainPoints GET /api/v1/transformations/{transformationId}/journeys/{journeyId}/pain-points -> 400 [{"pointer":"/params/journeyId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listTomWorkshopParticipants GET /api/v1/transformations/{transformationId}/tom-workshops/{workshopId}/participants -> 400 [{"pointer":"/params/workshopId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listTomWorkshopItems GET /api/v1/transformations/{transformationId}/tom-workshops/{workshopId}/items -> 400 [{"pointer":"/params/workshopId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getDecision GET /api/v1/decisions/{decisionId} -> 400 [{"pointer":"/params/decisionId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listGates GET /api/v1/transformations/{transformationId}/gates -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 getGate GET /api/v1/transformations/{transformationId}/gates/{gateCode} -> 400 [{"pointer":"/params/gateCode","code":"validation.invalid_value","message":"Invalid option: expected one of \"G1\"|\"G2\"|\"G3\"|\"G4\"|\"G5\"|\"G6\""}] declares400=true
+QA-R6 [ar] R6-05 listGateSubmissions GET /api/v1/transformations/{transformationId}/gates/{gateCode}/submissions -> 400 [{"pointer":"/params/gateCode","code":"validation.invalid_value","message":"Invalid option: expected one of \"G1\"|\"G2\"|\"G3\"|\"G4\"|\"G5\"|\"G6\""}] declares400=true
+QA-R6 [ar] R6-05 getGateSubmission GET /api/v1/transformations/{transformationId}/gates/{gateCode}/submissions/{submissionNo} -> 400 [{"pointer":"/params/submissionNo","code":"validation.invalid_type","message":"Invalid input: expected number, received NaN"}] declares400=true
+QA-R6 [ar] R6-05 downloadEvidenceContent GET /api/v1/transformations/{transformationId}/evidence/{evidenceId}/content -> 400 [{"pointer":"/params/evidenceId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listEvidenceLinks GET /api/v1/transformations/{transformationId}/evidence-links -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+QA-R6 [ar] R6-05 listTransformationTeam GET /api/v1/transformations/{transformationId}/scoped-assignments -> 400 [{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}] declares400=true
+  ✓  110 [chromium-ar] › e2e/dg2-qa-nul-r6.spec.ts:264:1 › R6-05 contract: every GET-by-id with a malformed last path parameter is the declared 400 at /params/<name> (386ms)
+QA-R7 [ar] R7-01 value set via native-setter; field holds lone surrogate: true
+QA-R7 [ar] R7-01 message "أزِل الحرف غير المدعوم من هذا النص." shown, sent=[]
+  ✓  111 [chromium-ar] › e2e/dg2-qa-r7.spec.ts:85:1 › R7-01 charter create: a lone surrogate in Case for change is refused inline, localized; nothing is sent (1.7s)
+QA-R7 [ar] R7-02 server 400 [{"pointer":"/outOfScope","code":"validation.invalid_character","message":"The text contains an unsupported character (U+0000 or an unpaired UTF-16 surrogate)."}] shown as "أزِل الحرف غير المدعوم من هذا النص."
+  ✓  112 [chromium-ar] › e2e/dg2-qa-r7.spec.ts:121:1 › R7-02 charter create: a lone surrogate the client did not catch is refused by the real server, localized (2.1s)
+QA-R7 [ar] R7-03 PATCH charter inScope with lone surrogates (4 shapes): 400 invalid_character at /inScope
+QA-R7 [ar] R7-03 PATCH charter outOfScope with lone surrogates (4 shapes): 400 invalid_character at /outOfScope
+QA-R7 [ar] R7-03 PATCH charter caseForChange with lone surrogates (4 shapes): 400 invalid_character at /caseForChange
+QA-R7 [ar] R7-03 changeSummary [{"pointer":"/changeSummary","code":"validation.invalid_character","message":"The text contains an unsupported character (U+0000 or an unpaired UTF-16 surrogate)."}]; body key [{"pointer":"/in\ud800Scope","code":"validation.invalid_character","message":"The text contains an unsupported character (U+0000 or an unpaired UTF-16 surrogate)."}]
+QA-R7 [ar] R7-03 emoji+Arabic accepted verbatim; version 1 -> 2
+  ✓  113 [chromium-ar] › e2e/dg2-qa-r7.spec.ts:176:1 › R7-03 API: lone surrogates in body values and keys are 400 invalid_character; emoji/Arabic accepted verbatim (176ms)
+QA-R7 [ar] R7-04 API path %ZZ: 400 application/problem+json; charset=utf-8 [{"pointer":"","code":"validation.format","message":"The request URL contains an invalid percent-encoding."}] sec-headers=12/12 ok
+QA-R7 [ar] R7-04 API path %ED%A0%80 (CESU-8 lone surrogate): 400 application/problem+json; charset=utf-8 [{"pointer":"","code":"validation.format","message":"The request URL contains an invalid percent-encoding."}] sec-headers=12/12 ok
+QA-R7 [ar] R7-04 POST archive with %ZZ id: 400 application/problem+json; charset=utf-8 [{"pointer":"","code":"validation.format","message":"The request URL contains an invalid percent-encoding."}] sec-headers=12/12 ok
+QA-R7 [ar] R7-04 SPA path %ZZ: 400 application/problem+json; charset=utf-8 [{"pointer":"","code":"validation.format","message":"The request URL contains an invalid percent-encoding."}] sec-headers=12/12 ok
+QA-R7 [ar] R7-04 oversized header: 400 application/problem+json; charset=utf-8 [{"pointer":"","code":"validation.headers_too_large","message":"The request URL or headers are too large."}] sec-headers=12/12 ok
+QA-R7 [ar] R7-04 oversized URL: 400 application/problem+json; charset=utf-8 [{"pointer":"","code":"validation.headers_too_large","message":"The request URL or headers are too large."}] sec-headers=12/12 ok
+QA-R7 [ar] R7-04 malformed request line: 400 application/problem+json; charset=utf-8 [{"pointer":"","code":"validation.malformed_request","message":"The request is not a valid HTTP request."}] sec-headers=12/12 ok
+  ✓  114 [chromium-ar] › e2e/dg2-qa-r7.spec.ts:280:1 › R7-04 raw HTTP: router- and connection-level errors are 400 problem+json with the routed security headers (25ms)
+
+  114 passed (5.7m)
+exit 0  end 2026-10-06T15:27:29Z

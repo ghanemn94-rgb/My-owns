@@ -1,0 +1,39 @@
+$ env -u LANG -u LC_ALL QA_PG_PORT=56303 tests/qa/support/with-pg.sh npx vitest run --project integration --reporter=verbose apps/api/test/integration/framework-errors.test.ts apps/api/test/integration/admin.test.ts
+# 2026-10-06T15:02:24Z
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 $TMPDIR/review-dg2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muwt54wn_2b8eb7c9 (server_encoding UTF8); applied 19 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/admin.test.ts > users > lists users of an organization for user.read holders only (403 otherwise), with search 41ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts > users > pre-provisions a user with an identity binding (user.manage), 409 on duplicate e-mail or identity, audited 74ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts > users > reads a user (self always; others need user.read on the home organization, else 404) 22ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts > users > disables a user with If-Match, revoking all their sessions in the same transaction; audited 52ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts > users > refuses to let an administrator disable themself (403 user.cannot_disable_self) 7ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts > role and permission catalogue > lists roles with permissions equal to the seeded catalogue (role.read), 403 without it 26ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts > scoped role assignments > grants a role at a transformation scope (access.assign), with a mandatory reason; audited; access follows 63ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts > scoped role assignments > refuses self-grants, reserved scope types, unknown scopes and cross-organization scopes 19ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts > scoped role assignments > never makes a technical administrator an approver: admin roles carry no approval permission 20ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts > scoped role assignments > lists assignments (access.read) with filters; 403 for callers without access.read in that organization 19ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts > scoped role assignments > revokes with If-Match and a reason (never deletes); the user loses access and their sessions end; audited 84ms
+ ✓ |integration| apps/api/test/integration/framework-errors.test.ts > FST_ERR_BAD_URL (undecodable percent escape in the path) is the declared 400 ValidationError > GET /api/v1/transformations/%ZZ: 400 problem+json validation.format with requestId; nothing written 26ms
+ ✓ |integration| apps/api/test/integration/framework-errors.test.ts > FST_ERR_BAD_URL (undecodable percent escape in the path) is the declared 400 ValidationError > GET-by-id paths with %ED%A0%80 (CESU-8 lone surrogate bytes) answer the same; nothing written 24ms
+ ✓ |integration| apps/api/test/integration/framework-errors.test.ts > FST_ERR_BAD_URL (undecodable percent escape in the path) is the declared 400 ValidationError > an unsafe method with a bad path (POST tom-gap archive) writes nothing and is not audited 5ms
+ ✓ |integration| apps/api/test/integration/framework-errors.test.ts > FST_ERR_BAD_URL (undecodable percent escape in the path) is the declared 400 ValidationError > keeps a well-formed inbound X-Request-Id, and answers without a session too (the router runs before auth) 2ms
+ ✓ |integration| apps/api/test/integration/framework-errors.test.ts > the non-API SPA fallback with a bad URL > answers a problem+json 400 with the security headers (not a plain JSON body), and still serves good paths 49ms
+ ✓ |integration| apps/api/test/integration/framework-errors.test.ts > other framework-level answers on /api/** are already problems > an unsupported method on a known path is a 404 problem (Fastify does not answer 405) 1ms
+ ✓ |integration| apps/api/test/integration/framework-errors.test.ts > other framework-level answers on /api/** are already problems > OPTIONS (CORS preflight) is a 404 problem: same-origin only, no CORS headers are granted 1ms
+ ✓ |integration| apps/api/test/integration/framework-errors.test.ts > connection-level parser errors (Node clientError) are 400 problems with the security headers > a request header that is too large: 400 validation.headers_too_large (was a plain-JSON 431) 12ms
+ ✓ |integration| apps/api/test/integration/framework-errors.test.ts > connection-level parser errors (Node clientError) are 400 problems with the security headers > a URL that is too long: 400 validation.headers_too_large (was a plain-JSON 431) 6ms
+ ✓ |integration| apps/api/test/integration/framework-errors.test.ts > connection-level parser errors (Node clientError) are 400 problems with the security headers > a malformed request line: 400 validation.malformed_request (was a plain-JSON 400) 1ms
+ ✓ |integration| apps/api/test/integration/framework-errors.test.ts > connection-level parser errors (Node clientError) are 400 problems with the security headers > over the real socket, a bad path is the same problem as through inject 3ms
+
+ Test Files  2 passed (2)
+      Tests  22 passed (22)
+   Start at  15:02:26
+   Duration  4.52s (transform 779ms, setup 0ms, collect 2.31s, tests 1000ms, environment 0ms, prepare 63ms)
+
+exit 0

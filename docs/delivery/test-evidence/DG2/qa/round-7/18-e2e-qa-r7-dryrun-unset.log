@@ -1,0 +1,73 @@
+$ env -u LANG -u LC_ALL QA_API_PORT=3871 QA_E2E_PG_PORT=25601 E2E_BASE_URL=http://localhost:3871 QA_SHOT_DIR=$TMPDIR/shots-dry/qa e2e/support/qa-stack-port.sh npx playwright test e2e/dg2-qa-r7.spec.ts --workers=1
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 8 tests using 1 worker
+
+QA-R7 [en] R7-01 value set via native-setter; field holds lone surrogate: true
+QA-R7 [en] R7-01 message "Remove the unsupported character from this text." shown, sent=[]
+  ✓  1 [chromium-en] › e2e/dg2-qa-r7.spec.ts:85:1 › R7-01 charter create: a lone surrogate in Case for change is refused inline, localized; nothing is sent (2.2s)
+QA-R7 [en] R7-02 server 400 [{"pointer":"/outOfScope","code":"validation.invalid_character","message":"The text contains an unsupported character (U+0000 or an unpaired UTF-16 surrogate)."}] shown as "Remove the unsupported character from this text."
+  ✓  2 [chromium-en] › e2e/dg2-qa-r7.spec.ts:121:1 › R7-02 charter create: a lone surrogate the client did not catch is refused by the real server, localized (2.1s)
+QA-R7 [en] R7-03 PATCH charter inScope with lone surrogates (4 shapes): 400 invalid_character at /inScope
+QA-R7 [en] R7-03 PATCH charter outOfScope with lone surrogates (4 shapes): 400 invalid_character at /outOfScope
+QA-R7 [en] R7-03 PATCH charter caseForChange with lone surrogates (4 shapes): 400 invalid_character at /caseForChange
+QA-R7 [en] R7-03 changeSummary [{"pointer":"/changeSummary","code":"validation.invalid_character","message":"The text contains an unsupported character (U+0000 or an unpaired UTF-16 surrogate)."}]; body key [{"pointer":"/in\ud800Scope","code":"validation.invalid_character","message":"The text contains an unsupported character (U+0000 or an unpaired UTF-16 surrogate)."}]
+QA-R7 [en] R7-03 emoji+Arabic accepted verbatim; version 1 -> 2
+  ✓  3 [chromium-en] › e2e/dg2-qa-r7.spec.ts:176:1 › R7-03 API: lone surrogates in body values and keys are 400 invalid_character; emoji/Arabic accepted verbatim (226ms)
+QA-R7 [en] R7-04 API path %ZZ: 400 application/problem+json; charset=utf-8 [{"pointer":"","code":"validation.format","message":"The request URL contains an invalid percent-encoding."}] sec-headers=12/12 ok
+QA-R7 [en] R7-04 API path %ED%A0%80 (CESU-8 lone surrogate): 400 application/problem+json; charset=utf-8 [{"pointer":"","code":"validation.format","message":"The request URL contains an invalid percent-encoding."}] sec-headers=12/12 ok
+QA-R7 [en] R7-04 POST archive with %ZZ id: 400 application/problem+json; charset=utf-8 [{"pointer":"","code":"validation.format","message":"The request URL contains an invalid percent-encoding."}] sec-headers=12/12 ok
+QA-R7 [en] R7-04 SPA path %ZZ: 400 application/problem+json; charset=utf-8 [{"pointer":"","code":"validation.format","message":"The request URL contains an invalid percent-encoding."}] sec-headers=12/12 ok
+QA-R7 [en] R7-04 oversized header: 400 application/problem+json; charset=utf-8 [{"pointer":"","code":"validation.headers_too_large","message":"The request URL or headers are too large."}] sec-headers=12/12 ok
+QA-R7 [en] R7-04 oversized URL: 400 application/problem+json; charset=utf-8 [{"pointer":"","code":"validation.headers_too_large","message":"The request URL or headers are too large."}] sec-headers=12/12 ok
+QA-R7 [en] R7-04 malformed request line: 400 application/problem+json; charset=utf-8 [{"pointer":"","code":"validation.malformed_request","message":"The request is not a valid HTTP request."}] sec-headers=12/12 ok
+  ✓  4 [chromium-en] › e2e/dg2-qa-r7.spec.ts:280:1 › R7-04 raw HTTP: router- and connection-level errors are 400 problem+json with the routed security headers (28ms)
+QA-R7 [ar] R7-01 value set via native-setter; field holds lone surrogate: true
+QA-R7 [ar] R7-01 message "أزِل الحرف غير المدعوم من هذا النص." shown, sent=[]
+  ✓  5 [chromium-ar] › e2e/dg2-qa-r7.spec.ts:85:1 › R7-01 charter create: a lone surrogate in Case for change is refused inline, localized; nothing is sent (2.2s)
+QA-R7 [ar] R7-02 server 400 [{"pointer":"/outOfScope","code":"validation.invalid_character","message":"The text contains an unsupported character (U+0000 or an unpaired UTF-16 surrogate)."}] shown as "أزِل الحرف غير المدعوم من هذا النص."
+  ✓  6 [chromium-ar] › e2e/dg2-qa-r7.spec.ts:121:1 › R7-02 charter create: a lone surrogate the client did not catch is refused by the real server, localized (2.2s)
+QA-R7 [ar] R7-03 PATCH charter inScope with lone surrogates (4 shapes): 400 invalid_character at /inScope
+QA-R7 [ar] R7-03 PATCH charter outOfScope with lone surrogates (4 shapes): 400 invalid_character at /outOfScope
+QA-R7 [ar] R7-03 PATCH charter caseForChange with lone surrogates (4 shapes): 400 invalid_character at /caseForChange
+QA-R7 [ar] R7-03 changeSummary [{"pointer":"/changeSummary","code":"validation.invalid_character","message":"The text contains an unsupported character (U+0000 or an unpaired UTF-16 surrogate)."}]; body key [{"pointer":"/in\ud800Scope","code":"validation.invalid_character","message":"The text contains an unsupported character (U+0000 or an unpaired UTF-16 surrogate)."}]
+QA-R7 [ar] R7-03 emoji+Arabic accepted verbatim; version 1 -> 2
+  ✓  7 [chromium-ar] › e2e/dg2-qa-r7.spec.ts:176:1 › R7-03 API: lone surrogates in body values and keys are 400 invalid_character; emoji/Arabic accepted verbatim (252ms)
+QA-R7 [ar] R7-04 API path %ZZ: 400 application/problem+json; charset=utf-8 [{"pointer":"","code":"validation.format","message":"The request URL contains an invalid percent-encoding."}] sec-headers=12/12 ok
+QA-R7 [ar] R7-04 API path %ED%A0%80 (CESU-8 lone surrogate): 400 application/problem+json; charset=utf-8 [{"pointer":"","code":"validation.format","message":"The request URL contains an invalid percent-encoding."}] sec-headers=12/12 ok
+QA-R7 [ar] R7-04 POST archive with %ZZ id: 400 application/problem+json; charset=utf-8 [{"pointer":"","code":"validation.format","message":"The request URL contains an invalid percent-encoding."}] sec-headers=12/12 ok
+QA-R7 [ar] R7-04 SPA path %ZZ: 400 application/problem+json; charset=utf-8 [{"pointer":"","code":"validation.format","message":"The request URL contains an invalid percent-encoding."}] sec-headers=12/12 ok
+QA-R7 [ar] R7-04 oversized header: 400 application/problem+json; charset=utf-8 [{"pointer":"","code":"validation.headers_too_large","message":"The request URL or headers are too large."}] sec-headers=12/12 ok
+QA-R7 [ar] R7-04 oversized URL: 400 application/problem+json; charset=utf-8 [{"pointer":"","code":"validation.headers_too_large","message":"The request URL or headers are too large."}] sec-headers=12/12 ok
+QA-R7 [ar] R7-04 malformed request line: 400 application/problem+json; charset=utf-8 [{"pointer":"","code":"validation.malformed_request","message":"The request is not a valid HTTP request."}] sec-headers=12/12 ok
+  ✓  8 [chromium-ar] › e2e/dg2-qa-r7.spec.ts:280:1 › R7-04 raw HTTP: router- and connection-level errors are 400 problem+json with the routed security headers (36ms)
+
+  8 passed (11.8s)
+exit 0

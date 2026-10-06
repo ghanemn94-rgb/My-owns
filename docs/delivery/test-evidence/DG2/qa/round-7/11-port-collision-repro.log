@@ -1,0 +1,12 @@
+$ cat /proc/sys/net/ipv4/ip_local_port_range
+32768	60999
+$ python3 -I 11-port-collision-repro.py
+server port 46689 client ephemeral port 38224 client socket state ['06']
+bind on 38224 FAILED: EADDRINUSE [Errno 98] Address already in use
+exit 0
+
+# default/used disposable-PostgreSQL ports in the candidate (all inside 32768-60999):
+tests/qa/support/with-pg.sh:17:PG_PORT="${QA_PG_PORT:-54351}"
+e2e/support/qa-stack.sh:19:PG_PORT="${QA_E2E_PG_PORT:-54361}"
+apps/web/e2e/support/with-stack.sh:22:PG_PORT="${E2E_PG_PORT:-${QA_PG_PORT:-54331}}"
+deploy/scripts/clean-start-local.sh:49:PG_PORT="${MTH_LOCAL_PG_PORT:-54340}"

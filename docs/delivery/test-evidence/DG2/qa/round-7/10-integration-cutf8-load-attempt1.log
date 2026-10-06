@@ -1,0 +1,13 @@
+$ (6 x 'timeout 400 yes >/dev/null' load) env -u LC_ALL LANG=C.UTF-8 QA_PG_PORT=56402 tests/qa/support/with-pg.sh npx vitest run --project integration --reporter=verbose
+# 2026-10-06T15:05:23Z loadavg 6.17 3.40 3.91 7/135 950
+psql: error: connection to server at "127.0.0.1", port 56402 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+BLOCKED: disposable PostgreSQL did not start
+2026-10-06 15:05:24.883 UTC [973] LOG:  starting PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+2026-10-06 15:05:24.883 UTC [973] LOG:  could not bind IPv4 address "127.0.0.1": Address already in use
+2026-10-06 15:05:24.883 UTC [973] HINT:  Is another postmaster already running on port 56402? If not, wait a few seconds and retry.
+2026-10-06 15:05:24.883 UTC [973] WARNING:  could not create listen socket for "127.0.0.1"
+2026-10-06 15:05:24.883 UTC [973] FATAL:  could not create any TCP/IP sockets
+2026-10-06 15:05:24.885 UTC [973] LOG:  database system is shut down
+# loadavg after 6.16 3.71 3.99 7/140 1100
+exit 3
