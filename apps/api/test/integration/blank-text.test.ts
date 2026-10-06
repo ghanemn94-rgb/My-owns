@@ -434,3 +434,111 @@ describe("invisible-only free text is blank (F-DG2-160)", () => {
     ).toBe(true);
   });
 });
+
+// F-DG2-160 (T-DG2-BE7): the shared `reason` (and `name`) follow the same visible-content rule, and the two former
+// inline reason parsers (register archive, evidence-link removal) now use the shared `reasonRequest`. An
+// invisible-only reason is a 400 `validation.blank` at /reason: nothing is written and nothing is audited.
+describe("invisible-only reasons are blank on every reason endpoint (F-DG2-160, T-DG2-BE7)", () => {
+  const INVISIBLE_REASONS = ["‏‏‏", "⁠⁠⁠", "\u0085\u0085\u0085"] as const;
+
+  it("P2 register archive (T03 TOM gap): invisible reason is 400 at /reason; a valid reason archives", async () => {
+    const gap = await call(api.app, "POST", `${T}/tom-gaps`, {
+      session: p.lead.session,
+      body: { dimensionCode: "technology", gap: "Synthetic gap to archive" },
+    });
+    expect(gap.status).toBe(201);
+    const before = await auditOf(api.db, gap.body.id);
+    for (const reason of INVISIBLE_REASONS) {
+      const res = await call(api.app, "POST", `${T}/tom-gaps/${gap.body.id}/archive`, {
+        session: p.lead.session,
+        headers: ifm(gap.body.version),
+        body: { reason },
+      });
+      await expectBlankRejected(res, "/reason");
+    }
+    const still = await call(api.app, "GET", `${T}/tom-gaps/${gap.body.id}`, { session: p.lead.session });
+    expect([still.body.version, still.body.status, still.body.archiveReason]).toEqual([gap.body.version, "open", null]);
+    expect(await auditOf(api.db, gap.body.id)).toEqual(before);
+
+    const ok = await call(api.app, "POST", `${T}/tom-gaps/${gap.body.id}/archive`, {
+      session: p.lead.session,
+      headers: ifm(gap.body.version),
+      body: { reason: "  ‏Synthetic: superseded gap‏  " },
+    });
+    expect(ok.status, JSON.stringify(ok.body)).toBe(200);
+    expect([ok.body.status, ok.body.archiveReason]).toEqual(["archived", "‏Synthetic: superseded gap‏"]);
+    expect((await auditOf(api.db, gap.body.id)).map((x) => x.action)).toEqual([
+      ...before.map((x) => x.action),
+      "tom_gap.archive",
+    ]);
+  });
+
+  it("evidence-link removal: invisible reason is 400 at /reason; a valid reason removes", async () => {
+    const e = await call(api.app, "POST", `${T}/evidence`, {
+      session: p.lead.session,
+      body: { kind: "note", title: "Synthetic linked note", noteBody: "Synthetic", ownerUserId: p.lead.id },
+    });
+    expect(e.status).toBe(201);
+    const items = await call(api.app, "GET", `${T}/diagnostic-items`, { session: p.lead.session });
+    const link = await call(api.app, "POST", `${T}/evidence-links`, {
+      session: p.lead.session,
+      body: { evidenceId: e.body.id, recordType: "diagnostic_item", recordId: items.body.items[0].id },
+    });
+    expect(link.status).toBe(201);
+    const before = await auditOf(api.db, link.body.id);
+    for (const reason of INVISIBLE_REASONS) {
+      const res = await call(api.app, "POST", `${T}/evidence-links/${link.body.id}/remove`, {
+        session: p.lead.session,
+        headers: ifm(1),
+        body: { reason },
+      });
+      await expectBlankRejected(res, "/reason");
+    }
+    const still = await api.db
+      .selectFrom("evidence_link")
+      .select(["status", "version", "remove_reason"])
+      .where("id", "=", link.body.id)
+      .executeTakeFirstOrThrow();
+    expect(still).toEqual({ status: "active", version: 1, remove_reason: null });
+    expect(await auditOf(api.db, link.body.id)).toEqual(before);
+
+    const ok = await call(api.app, "POST", `${T}/evidence-links/${link.body.id}/remove`, {
+      session: p.lead.session,
+      headers: ifm(1),
+      body: { reason: "Synthetic unlink" },
+    });
+    expect(ok.body).toMatchObject({ status: "removed", version: 2 });
+    expect((await auditOf(api.db, link.body.id)).map((x) => x.action)).toEqual([
+      "evidence_link.create",
+      "evidence_link.remove",
+    ]);
+  });
+
+  it("P1 transformation archive (reasonRequest): invisible reason is 400 at /reason; a valid reason archives", async () => {
+    const q = await setupP2World(api, w);
+    const TR = `/api/v1/transformations/${q.transformationId}`;
+    const current = await call(api.app, "GET", TR, { session: q.lead.session });
+    expect(current.status).toBe(200);
+    const before = await auditOf(api.db, q.transformationId);
+    for (const reason of INVISIBLE_REASONS) {
+      const res = await call(api.app, "POST", `${TR}/archive`, {
+        session: q.lead.session,
+        headers: ifm(current.body.version),
+        body: { reason },
+      });
+      await expectBlankRejected(res, "/reason");
+    }
+    const still = await call(api.app, "GET", TR, { session: q.lead.session });
+    expect([still.body.version, still.body.status]).toEqual([current.body.version, current.body.status]);
+    expect(await auditOf(api.db, q.transformationId)).toEqual(before);
+
+    const ok = await call(api.app, "POST", `${TR}/archive`, {
+      session: q.lead.session,
+      headers: ifm(current.body.version),
+      body: { reason: "Synthetic archive with a valid reason" },
+    });
+    expect(ok.status, JSON.stringify(ok.body)).toBe(200);
+    expect(ok.body.version).toBe(current.body.version + 1);
+    expect((await auditOf(api.db, q.transformationId)).length).toBe(before.length + 1);
+  });
+});

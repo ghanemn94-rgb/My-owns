@@ -159,6 +159,28 @@ describe("GET /api/v1/auth/callback", () => {
     expect(me.body).toMatchObject({ authMode: "oidc", assignments: [], effectivePermissions: [] });
   });
 
+  it("an invisible-only name claim is absent: the display name falls back to the e-mail (F-DG2-160)", async () => {
+    const { cb } = await completeLogin({
+      sub: "jit-subject-invisible",
+      email: "jit-invisible@example.invalid",
+      email_verified: true,
+      name: "\u200f\u2060\u0085",
+    });
+    expect(cb.status).toBe(302);
+    const identity = await api.db
+      .selectFrom("user_identity")
+      .select("user_id")
+      .where("issuer", "=", idp.issuer)
+      .where("subject", "=", "jit-subject-invisible")
+      .executeTakeFirstOrThrow();
+    const user = await api.db
+      .selectFrom("app_user")
+      .select("display_name")
+      .where("id", "=", identity.user_id)
+      .executeTakeFirstOrThrow();
+    expect(user.display_name).toBe("jit-invisible@example.invalid");
+  });
+
   it("signs an existing (issuer, subject) back in to the same user", async () => {
     const before = await api.db.selectFrom("app_user").select("id").execute();
     const { cb } = await completeLogin({

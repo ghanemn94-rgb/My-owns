@@ -15,6 +15,7 @@ import { diffFields, sql, type Db, type DbOrTx, type Tx } from "@mth/db";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import type { Kysely } from "kysely";
 import { v7 as uuidv7 } from "uuid";
+import { reasonRequest } from "@mth/shared/schemas";
 import { z } from "zod";
 import {
   auditContextOf,
@@ -502,7 +503,7 @@ export function registerRegister<Row extends RegisterRow, Api extends { id: stri
       const params = paramsOf(request, itemParams);
       const row = await db.transaction().execute(async (tx) => {
         const { ctx } = await lockForChange(tx, request, params, spec.archiveRules ?? spec.writeRules);
-        const { reason } = parseBody(z.strictObject({ reason: z.string().trim().min(3).max(1000) }), request.body);
+        const { reason } = parseBody(reasonRequest, request.body);
         const current = await finishLock(tx, request, params);
         const refused = refuse ? refuse(current) : null;
         if (refused) throw refused;

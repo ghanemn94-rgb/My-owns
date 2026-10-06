@@ -20,6 +20,7 @@ import {
   evidenceLinkListQuery,
   evidenceReview,
   evidenceUpdate,
+  reasonRequest,
   type Evidence,
 } from "@mth/shared/schemas";
 import type { FastifyInstance, FastifyRequest } from "fastify";
@@ -634,7 +635,7 @@ function registerLinkRoutes(app: FastifyInstance, db: Db): void {
           rules,
           (await recordOwnership(tx, transformationId, seen.record_type, seen.record_id)) ?? {},
         );
-        const { reason } = parseBody(z.strictObject({ reason: z.string().trim().min(3).max(1000) }), request.body);
+        const { reason } = parseBody(reasonRequest, request.body);
         const expected = requireIfMatch(request);
         const current = await tx
           .selectFrom("evidence_link")

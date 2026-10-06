@@ -15,6 +15,9 @@ import {
   hasVisibleContent,
   kpiDefinitionCreate,
   me,
+  name,
+  reason,
+  reasonRequest,
   role,
   roleAssignmentCreate,
   tomGapUpdate,
@@ -220,5 +223,51 @@ describe("blank free text (F-DG2-150)", () => {
     const parts = { thesisChange: "x", thesisOutcomes: "y", thesisBenefits: "z", thesisBecause: "  \t " };
     expect(composeThesis(parts)).toEqual({ complete: false, missing: ["thesisBecause"], sentence: null });
     expect(composeThesis({ ...parts, thesisBecause: "w" }).complete).toBe(true);
+  });
+});
+
+// F-DG2-160 (T-DG2-BE7): the shared `name` and `reason` follow the same visible-content rule as `freeText`.
+describe("name and reason: one blank rule (F-DG2-160, T-DG2-BE7)", () => {
+  const issues = (r: {
+    success: boolean;
+    error?: { issues: Array<{ path: PropertyKey[]; code: string; message: string }> };
+  }) => (r.success ? [] : r.error!.issues.map((i) => [i.path.join("/"), i.code === "custom" ? i.message : i.code]));
+  const INVISIBLE = ["\u200f\u200f\u200f", "\u2060\u2060\u2060", "\u0085\u0085\u0085"];
+  const SCHEMAS = [
+    ["name", name],
+    ["reason", reason],
+  ] as const;
+
+  it.each(SCHEMAS)("%s rejects invisible-only values with validation.blank only", (_label, schema) => {
+    for (const v of INVISIBLE) expect(issues(schema.safeParse(v)), JSON.stringify(v)).toEqual([["", BLANK_TEXT_CODE]]);
+  });
+
+  it.each(SCHEMAS)("%s: spaces only still fail too_small only (one error, never two)", (_label, schema) => {
+    for (const v of ["   ", "", " \t\n "])
+      expect(issues(schema.safeParse(v)), JSON.stringify(v)).toEqual([["", "too_small"]]);
+  });
+
+  it("a value too short for min after trimming gets too_small only, even when it is invisible", () => {
+    expect(issues(reason.safeParse("\u200f"))).toEqual([["", "too_small"]]);
+    expect(issues(reason.safeParse(" \u2060\u2060 "))).toEqual([["", "too_small"]]);
+  });
+
+  it("visible text is accepted and trimmed as before, including Arabic with an RLM", () => {
+    expect(name.parse("  Synthetic name  ")).toBe("Synthetic name");
+    expect(reason.parse("  Synthetic reason\n")).toBe("Synthetic reason");
+    const arabic = "\u200f\u0633\u0628\u0628 \u0627\u0635\u0637\u0646\u0627\u0639\u064a\u200f";
+    expect(reason.parse(` ${arabic} `)).toBe(arabic);
+    expect(name.parse(arabic)).toBe(arabic);
+    expect(name.parse("x")).toBe("x");
+  });
+
+  it("max still applies after trimming", () => {
+    expect(issues(name.safeParse("a".repeat(201)))).toEqual([["", "too_big"]]);
+    expect(name.parse(` ${"a".repeat(200)} `)).toBe("a".repeat(200));
+  });
+
+  it("reasonRequest reports the blank reason at /reason", () => {
+    expect(issues(reasonRequest.safeParse({ reason: "\u2060\u2060\u2060" }))).toEqual([["reason", BLANK_TEXT_CODE]]);
+    expect(reasonRequest.parse({ reason: " Synthetic reason " })).toEqual({ reason: "Synthetic reason" });
   });
 });

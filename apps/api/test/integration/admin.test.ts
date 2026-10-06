@@ -100,6 +100,17 @@ describe("users", () => {
       body: { ...body, email: "e@example.invalid", identity: { issuer: "", subject: "s-empty" } },
     });
     expect([emptyIssuer.status, emptyIssuer.body.errors[0].pointer]).toEqual([400, "/identity/issuer"]);
+    // F-DG2-160: an issuer with no visible content is empty too (spaces, RLM, word joiner, U+0085).
+    for (const issuer of ["   ", "\u200f\u200f", "\u2060", "\u0085"]) {
+      const blankIssuer = await call(api.app, "POST", "/api/v1/users", {
+        session: admin,
+        body: { ...body, email: "e@example.invalid", identity: { issuer, subject: "s-blank" } },
+      });
+      expect([blankIssuer.status, blankIssuer.body.errors[0].pointer], JSON.stringify(issuer)).toEqual([
+        400,
+        "/identity/issuer",
+      ]);
+    }
   });
 
   it("reads a user (self always; others need user.read on the home organization, else 404)", async () => {

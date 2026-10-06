@@ -1,0 +1,70 @@
+
+> mobily-transformation-hub@0.1.0 test /home/user/My-owns
+> vitest run --project unit-node --project unit-web
+
+
+ RUN  v3.2.4 /home/user/My-owns
+
+ ✓ |unit-node| packages/shared/src/schemas/schemas.test.ts (37 tests) 72ms
+ ✓ |unit-node| apps/api/src/modules/workflows/workflows.test.ts (14 tests) 721ms
+   ✓ workflows module (P2) > its declared boundary holds, and an undeclared dependency would be caught  680ms
+ ✓ |unit-node| apps/api/src/modules/kpi/kpi.test.ts (18 tests) 757ms
+   ✓ kpi module (P2) > its declared boundary holds, and a planted bypass or undeclared dependency would be caught  714ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (135 tests) 3211ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  1857ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)  684ms
+ ✓ |unit-node| apps/api/src/modules/evidence/evidence.test.ts (8 tests) 356ms
+   ✓ evidence module (P2) > its declared boundary holds  306ms
+ ✓ |unit-node| apps/api/src/server.test.ts (6 tests) 340ms
+ ✓ |unit-node| packages/shared/src/value.test.ts (29 tests) 180ms
+ ✓ |unit-node| apps/api/src/modules/methodology/methodology.test.ts (4 tests) 237ms
+ ✓ |unit-node| packages/config/src/load.test.ts (17 tests) 96ms
+ ✓ |unit-node| apps/api/src/modules/kpi/rules.test.ts (30 tests) 31ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reporting.test.ts (4 tests) 104ms
+ ✓ |unit-node| packages/design-tokens/src/tokens.test.ts (15 tests) 50ms
+ ✓ |unit-node| packages/db/src/seed.test.ts (7 tests) 22ms
+ ✓ |unit-node| apps/api/src/modules/platform/platform.test.ts (13 tests) 28ms
+ ✓ |unit-node| apps/api/src/modules/admin/branding.test.ts (4 tests) 32ms
+ ✓ |unit-node| apps/api/src/modules/transformations/good-outcome.test.ts (7 tests) 8ms
+ ✓ |unit-node| apps/api/src/modules/access/rules.test.ts (12 tests) 6ms
+ ✓ |unit-node| apps/api/src/modules/transformations/thesis.test.ts (4 tests) 6ms
+ ✓ |unit-node| apps/api/src/modules/transformations/exclusions.test.ts (19 tests) 4ms
+ ✓ |unit-node| apps/api/src/modules/transformations/transitions.test.ts (2 tests) 3ms
+stderr | src/pages/team/team.test.tsx > Team (English LTR) > shows a 403 from the server in words; nothing is assigned
+Cannot update a component (`AssignDialog`) while rendering a different component (`RecordDialog`). To locate the bad setState() call inside `RecordDialog`, follow the stack trace as described in https://react.dev/link/setstate-in-render
+
+ ✓ |unit-web| src/pages/team/team.test.tsx (6 tests) 1860ms
+   ✓ Team (English LTR) > shows the six governance roles with B0018 accountability text verbatim and who holds each  487ms
+   ✓ Team (English LTR) > a Transformation Lead assigns a Workstream Lead: Idempotency-Key, reason, accountability preview  394ms
+   ✓ Team (English LTR) > shows a 403 from the server in words; nothing is assigned  304ms
+ ✓ |unit-web| src/app/app.test.tsx (17 tests) 2096ms
+   ✓ transformations > lists transformations with a sortable code column and removable filter chips  358ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx (21 tests) 3456ms
+   ✓ after create (F-DG1-004) > shows the created record when the server lets the creator read it  497ms
+   ✓ effective permissions refresh after create (F-DG1-210) > English: Edit, Archive and the audit trail appear after create, without a reload  439ms
+   ✓ effective permissions refresh after create (F-DG1-210) > Arabic (RTL): the same controls and the audit trail appear after create, without a reload  413ms
+ ✓ |unit-web| src/pages/transformations/modeGuidance.test.tsx (5 tests) 851ms
+   ✓ New transformation: mode guidance (English LTR) > shows When to use and How for the selected mode and switches with the mode  363ms
+ ✓ |unit-web| src/components/States.test.tsx (15 tests) 358ms
+ ✓ |unit-web| src/i18n/i18n.test.ts (11 tests) 23ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts (15 tests) 20ms
+ ✓ |unit-web| src/i18n/glossary.test.ts (8 tests) 14ms
+ ✓ |unit-web| src/styles/styles.test.ts (6 tests) 6ms
+ ✓ |unit-web| src/lib/lib.test.ts (23 tests) 56ms
+ ✓ |unit-web| src/pages/p2.test.tsx (46 tests) 8556ms
+   ✓ Diagnose > shows the six T01 dimensions with Unknown for missing values, and value pools that are never 0  575ms
+   ✓ Diagnose > renders the six workstreams with their key questions  327ms
+   ✓ Diagnose > edits a T01 row with only the changed fields and If-Match  445ms
+   ✓ Diagnose > a 409 on save writes nothing, compares, and re-applies on the current version  410ms
+   ✓ Diagnose > a 400 validation.blank shows a localized message on its field ('en')  443ms
+   ✓ Diagnose > a 400 validation.blank shows a localized message on its field ('ar')  437ms
+   ✓ Diagnose > an invisible-only value is blocked client-side with validation.blank ('en')  405ms
+   ✓ Diagnose > an invisible-only value is blocked client-side with validation.blank ('ar')  411ms
+   ✓ Design > converts an unresolved workshop item into a design decision with If-Match  461ms
+
+ Test Files  31 passed (31)
+      Tests  558 passed (558)
+   Start at  06:36:59
+   Duration  21.82s (transform 2.84s, setup 0ms, collect 17.70s, tests 23.56s, environment 5.16s, prepare 2.42s)
+
+exit 0

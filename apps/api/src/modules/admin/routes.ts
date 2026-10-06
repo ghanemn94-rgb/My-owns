@@ -2,6 +2,7 @@
 // (access). Composition only: each write is delegated to the owning module's function, inside one transaction.
 import {
   roleAssignmentCreate,
+  hasVisibleContent,
   reasonRequest,
   scopeType,
   userCreate,
@@ -98,8 +99,9 @@ export function registerAdminRoutes(app: FastifyInstance, { db }: ModuleDeps): v
     const principal = principalOf(request);
     const body = parseBody(userCreate, request.body);
     // The contract allows an empty issuer string, the database does not (and createUser declares no 422): reject
-    // it here as a validation error rather than surfacing a constraint violation.
-    if (body.identity && body.identity.issuer.trim() === "") {
+    // it here as a validation error rather than surfacing a constraint violation. "Empty" uses the single blank rule
+    // (F-DG2-160): an issuer with no visible content (spaces, U+200F, U+2060, U+0085, ...) is empty too.
+    if (body.identity && !hasVisibleContent(body.identity.issuer)) {
       throw problems.badRequest("validation.too_small", "identity.issuer must not be empty.", "/identity/issuer");
     }
     await requireOrgPermission(db, principal, "user.manage", body.organizationId);

@@ -5,6 +5,7 @@ import { randomBytes } from "node:crypto";
 import type { AppConfig } from "@mth/config";
 import { sql, type Tx } from "@mth/db";
 import * as client from "openid-client";
+import { hasText } from "@mth/shared/schemas";
 import { v7 as uuidv7 } from "uuid";
 import { record } from "../audit/index.ts";
 import { sha256 } from "./sessions.ts";
@@ -162,7 +163,8 @@ interface Claims {
 
 function displayNameOf(c: Claims): string {
   for (const v of [c.name, c.preferred_username, c.email]) {
-    if (typeof v === "string" && v.trim().length > 0) return v.trim().slice(0, 200);
+    // F-DG2-160: a claim with no visible content (spaces, U+200F, U+2060, U+0085, ...) is absent, not a name.
+    if (typeof v === "string" && hasText(v)) return v.trim().slice(0, 200);
   }
   return `User ${randomBytes(3).toString("hex")}`;
 }

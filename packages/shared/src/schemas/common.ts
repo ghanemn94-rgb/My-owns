@@ -29,8 +29,6 @@ export const timeZone = z
   }, "validation.timezone");
 export const currency = z.string().regex(/^[A-Z]{3}$/, "validation.currency");
 export const code = z.string().regex(/^[A-Z0-9][A-Z0-9_-]{0,31}$/, "validation.code");
-export const name = z.string().trim().min(1).max(200);
-export const reason = z.string().trim().min(3).max(1000);
 export const version = z.number().int().min(1);
 
 /**
@@ -78,6 +76,26 @@ export function freeText(min: number, max: number) {
     .max(max)
     .refine((v) => v.length === 0 || hasVisibleContent(v), BLANK_TEXT_CODE);
 }
+
+/**
+ * Trimmed text of `min`..`max` characters that is not blank (F-DG2-160, ADR-0017 §2): the P1/admin `name` and the
+ * shared `reason`. Leading and trailing ECMAScript whitespace is still trimmed, and a value whose trimmed length is
+ * below `min` (for example spaces only) fails `min` with `too_small` only. A value long enough for `min` but with no
+ * visible content (`hasVisibleContent`: whitespace, format characters such as U+200F RLM or U+2060 WORD JOINER,
+ * U+0085, invisible fillers) is rejected with `validation.blank`. The blank check is skipped whenever `min` already
+ * failed, so a value never gets two errors (the `freeText` rule generalized from `min` = 1 to any `min`).
+ * Declared after `BLANK_TEXT_CODE`/`hasVisibleContent` so the schemas below never read them in their TDZ.
+ */
+function trimmedText(min: number, max: number) {
+  return z
+    .string()
+    .trim()
+    .min(min)
+    .max(max)
+    .refine((v) => v.length < min || hasVisibleContent(v), BLANK_TEXT_CODE);
+}
+export const name = trimmedText(1, 200);
+export const reason = trimmedText(3, 1000);
 export const activeStatus = z.enum(["active", "inactive"]);
 export const userStatus = z.enum(["active", "disabled"]);
 export const phase = z.enum(PHASES);
