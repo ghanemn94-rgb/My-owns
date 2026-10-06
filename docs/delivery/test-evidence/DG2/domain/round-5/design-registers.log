@@ -1,0 +1,20 @@
+mth-db: the database must use UTF8 encoding (found SQL_ASCII); create it with ENCODING 'UTF8' TEMPLATE template0
+UTF8-PROBE sql_ascii migrate exit=1 tables_created=0
+UTF8-PROBE mth encoding=UTF8
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+readyz: {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+PASS T04.codes-status :: expected 201; codes D-01, D-02; status open; options A/B/C; Arabic title with RLM verbatim :: actual 201/201 codes=D-01,D-02 status=open options=["A","B","C"] arVerbatim=true
+PASS T04.seven-columns :: expected code, title, options, recommendation, owner, due date, status all persisted :: actual ["D-01","Synthetic: build or buy billing validation",3,"Synthetic: buy",true,"2026-12-31","open"]
+PASS T04.invisible-title-refused :: expected 400 validation.blank :: actual 400 [["/title","validation.blank"]]
+PASS T03.dimension-required :: expected rejected (400/422) without dimensionCode; nothing created :: actual 422 "t03.dimension_required"
+PASS T03.six-columns :: expected 201 with all six columns, linked to the T04 decision :: actual 201 ["technology","‏يدوي‏","Synthetic automated","Synthetic automation gap",true,true]
+PASS REQ-PB-024.capability-linked-to-gap :: expected 201; sourcing need partner; tomGapId set :: actual 201 need=partner gapLinked=true
+PASS REQ-PB-025.journey-decimal-cycle-time :: expected 201; cycle time kept as decimal string 3.25 :: actual 201 cycle="3.2500" days failureDemand=true
+PASS REQ-PB-025.pain-point-links-t01 :: expected 201; linked to the T01 row; Arabic+RLM verbatim :: actual 201 linked=true verbatim=true
+workshop 201 {"id":"01a11092-203d-75c3-ba6d-a0fdbf62e718","organizationId":"01920000-0000-7000-9000-000000000001","transformationId":"01a11092-1f5d-7286-8832-2dd2ba61488e","version":1,"createdAt":"2026-10-06T09:36:14.393Z","createdBy":"01920000-0000-7000-9000-000000000203","updatedAt":"2026-10-06T09:36:14.393Z",
+item 201 {"id":"01a11092-2052-71b5-bb69-7c7c83411d7e","organizationId":"01920000-0000-7000-9000-000000000001","transformationId":"01a11092-1f5d-7286-8832-2dd2ba61488e","workshopId":"01a11092-203d-75c3-ba6d-a0fdbf62e718","dimensionCode":"technology","kind":"unresolved","body":"‏من يقرر التسعير؟‏","ownerUserId":null,"status":"open","convertedDecisionId":null,"convertedActionId":null,"convertedAt":null,"conve
+PASS REQ-PB-042.convert-needs-owner :: expected 400/422 without owner :: actual 201/201 -> 400
+PASS REQ-PB-042.convert-to-t04 :: expected 2xx; a new Open T04 decision D-03 linked to the workshop item, owner set :: actual 200 made=["D-03","open",true]
+PASS REQ-S05-003.dimension-view :: expected 200 with cell, dimension, gaps (1), decisions (>=1), dependencies, evidence :: actual 200 keys=["cell","dimension","gaps","decisions","dependencies","evidence"] gaps=1 decisions=2
+SUMMARY {"pass":11,"fail":0}

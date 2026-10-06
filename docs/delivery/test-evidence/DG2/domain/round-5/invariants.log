@@ -1,0 +1,24 @@
+== PMI/certified/official claims in product UI/i18n/api (excluding negations)
+apps/web/src/i18n/en/common.json:126:    "brandBody": "No official Mobily logo or verified brand colours have been supplied. The header shows a provisional text wordmark, and the colours (including #0078FF) are provisional design tokens that can be replaced through Branding Settings once official values are approved.",
+apps/web/src/i18n/ar/common.json:129:    "methodBody": "يطبّق المنتج دليل تحوّل الأعمال الإصدار 1.0، وهو خلاصة عملية مستوحاة من ممارسات PMI وBrightline وBRM مع إضافات مخصصة. وهو ليس معيارًا رسميًا من PMI، وهذا المنتج غير معتمد من PMI أو من أي جهة أخرى.",
+apps/api/src/modules/admin/branding.test.ts:58:    // No response claims official Mobily brand compliance.
+apps/api/src/modules/admin/branding.test.ts:59:    expect(res.body).not.toMatch(/official|compliant|certified/i);
+== provisional wordmark
+apps/web/src/i18n/ar/common.json:4:    "provisional": "مؤقت",
+apps/web/src/i18n/en/common.json:4:    "provisional": "Provisional",
+== DG gate references in product code
+apps/api/src/modules/identity/routes.ts:33: * source has no computed member with a non-literal key (F-DG1-124), and own entries never reach the prototype chain.
+apps/api/src/modules/identity/routes.ts:66:   * Validated-session subjects for the global rate limiter's key (F-DG1-142). The composition root shares one instance
+apps/api/src/modules/identity/routes.ts:78:  // Defence in depth for F-DG1-112 (the loader already refuses this): never issue non-Secure, non-__Host- session
+apps/api/src/modules/identity/routes.ts:103:  // Pre-session login cookie (F-DG1-103): binds the OIDC state to the browser that started the login. SameSite=Lax
+apps/api/src/modules/identity/rate-limit-subjects.ts:1:// Trustworthy rate-limit keys (F-DG1-142, ADR-0007 T-3). The global limiter runs on onRequest, BEFORE the session is
+apps/api/src/modules/identity/oidc.ts:55:   * is stored (F-DG1-103). The PKCE verifier and nonce stay server-side and are released only to that browser.
+apps/api/src/modules/identity/oidc.ts:87:   * it is bound to (F-DG1-103; RFC 6749 §10.12). A valid state presented by another browser (no login cookie, or a
+apps/api/src/modules/identity/oidc.ts:146:/** Pre-session login cookie (F-DG1-103): `__Host-` prefixed on https, like the session cookie (ADR-0005 §3). */
+apps/api/src/modules/identity/oidc.ts:168: * F-DG2-181: the display name candidate a claim yields, or null. The claim is trimmed and truncated FIRST, by code
+apps/api/src/modules/identity/oidc.ts:176:  // F-DG2-160 / F-DG2-180: a value with no visible content (spaces, U+200F, U+2060, VS16, controls, ...) is absent.
+== money as numeric/decimal
+packages/db/migrations/0014_p2_kpi_baseline_value_pool.sql:138:  upside_amount            numeric(20,4) NULL,
+packages/db/migrations/0014_p2_kpi_baseline_value_pool.sql:139:  downside_amount          numeric(20,4) NULL,
+packages/db/migrations/0015_p2_diagnose.sql:21:  impact_amount            numeric(20,4) NULL,
+packages/db/migrations/0015_p2_diagnose.sql:38:  CONSTRAINT diagnostic_item_impact_money_pair CHECK ((impact_amount IS NULL) = (impact_currency IS NULL)),
