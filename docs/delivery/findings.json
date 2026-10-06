@@ -10137,14 +10137,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-8/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-06T18:10:00Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG2 round 8, during the assigned probe for any remaining path where client bytes are silently rewritten or answered with an undeclared status or a 500. It predates BE13 (same behaviour at 90439483), and BE13 improved the text/plain Content-Length case from 500 to 400. Rated Low and non-mandatory like F-DG2-290, because it needs an authorized editor using a non-browser client with an undeclared media type, and has no authorization, confidentiality or audit impact. It does not block the round."
+        },
+        {
+          "at": "2026-10-06T20:35:22Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at a7b84d89160f303358b8ac31f4e9c84d5d9b3449"
         }
-      ]
+      ],
+      "fix_revision": "a7b84d89160f303358b8ac31f4e9c84d5d9b3449",
+      "fix_summary": "BE14 a7b84d8: each route declares config.consumes (default application/json; uploadEvidenceContent application/octet-stream), checked at registration. One central preParsing hook refuses any other media type with the declared 400 validation.content_type before a body byte is read (after onRequest, so rate limiting still applies). Fastify's text/plain parser is removed; both parsers re-check the route set; the upload handler stores only a raw byte stream. Contract test: every route's set equals its operation's requestBody.content (87 with a body: 86 JSON, 1 octet-stream); live sweep of every undeclared media type on every body-carrying operation; negative control."
     },
     {
       "id": "F-DG2-340",
@@ -10168,14 +10175,21 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG2/round-8/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-06T19:11:18Z",
           "status": "OPEN",
           "note": "Raised by qa-verifier in DG2 round 8 (T-DG2-REV-QA-R8) while regression-testing D-068 in the UI. Low and non-mandatory: a duplicated, correctly localized message on a path the normal SPA does not produce; nothing is written and the server behaviour is correct. Pre-existing RecordForm logic (bfa1807), surfaced by the new validation.json path."
+        },
+        {
+          "at": "2026-10-06T20:35:22Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at e3cadfa20fac9b64179e4f36559161f1e3faaf16"
         }
-      ]
+      ],
+      "fix_revision": "e3cadfa20fac9b64179e4f36559161f1e3faaf16",
+      "fix_summary": "FE8 e3cadfa: RecordFields renders in the form-errors region only the form-level messages the banner does not already say (distinctFormMessages: deduplicated by localized message, order kept, a genuinely different message still shown). A validation problem whose only field error has pointer \"\" is announced once, in one role=alert region, in EN and AR. Same guard in the JourneysSection step editor; the other forms were swept (no double rendering). EN/AR component tests (16), unit test, real-stack e2e with axe; negative control."
     }
   ]
 }
