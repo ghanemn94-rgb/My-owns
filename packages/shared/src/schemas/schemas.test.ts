@@ -15,6 +15,7 @@ import {
   hasText,
   hasVisibleContent,
   INVALID_CHARACTER_CODE,
+  journeyCreate,
   kpiDefinitionCreate,
   me,
   name,
@@ -23,6 +24,7 @@ import {
   role,
   roleAssignmentCreate,
   tomGapUpdate,
+  truncateText,
 } from "./index.ts";
 
 const base = {
@@ -184,9 +186,32 @@ describe("blank free text (F-DG2-150)", () => {
     ["U+007F DELETE (Cc)", "\u007f"],
     ["U+0080 C1 control (Cc)", "\u0080"],
     ["U+009F C1 control (Cc)", "\u009f"],
-    ["lone low surrogate U+DC00 (Cs)", "\udc00"],
-    ["lone high surrogate U+D800 (Cs)", "\ud800"], // last, so the mix below never forms a pair
   ];
+  // F-DG2-180 treated lone surrogates (Cs) as blank. F-DG2-260 (T-DG2-BE11): they are still never visible content
+  // (`hasText` is false), but they cannot be stored faithfully, so the schemas now refuse them with
+  // `validation.invalid_character` (one error) instead of `validation.blank`.
+  const LONE_SURROGATES = [
+    ["lone low surrogate U+DC00 (Cs)", "\udc00"],
+    ["lone high surrogate U+D800 (Cs)", "\ud800"],
+  ] as const;
+
+  it.each(LONE_SURROGATES)(
+    "%s, alone and repeated, is not present and is an invalid character (F-DG2-180, F-DG2-260)",
+    (_label, ch) => {
+      for (const v of [ch, ch.repeat(3), `${ch} ${ch}\t`]) {
+        expect(hasVisibleContent(v), JSON.stringify(v)).toBe(false);
+        expect(hasText(v), JSON.stringify(v)).toBe(false);
+        expect(codes(freeText(1, 20).safeParse(v)), JSON.stringify(v)).toEqual([["", "validation.invalid_character"]]);
+        expect(codes(freeText(0, 20).nullable().safeParse(v)), JSON.stringify(v)).toEqual([
+          ["", "validation.invalid_character"],
+        ]);
+        // ... and visible text around it is refused too, never stored as U+FFFD.
+        expect(codes(freeText(1, 20).safeParse(`${ch}a${ch}`)), JSON.stringify(v)).toEqual([
+          ["", "validation.invalid_character"],
+        ]);
+      }
+    },
+  );
 
   it.each(INVISIBLE)("invisible-only %s, alone and repeated, is blank and not present (F-DG2-160)", (_label, ch) => {
     for (const v of [ch, ch.repeat(3), `${ch} ${ch}\t`]) {
@@ -277,7 +302,7 @@ describe("name and reason: one blank rule (F-DG2-160, T-DG2-BE7)", () => {
     "\u180b\u180b\u180b",
     "\u{E0100}\u{E0100}",
     "\u0001\u0001\u0001",
-    "\ud800\ud800\ud800",
+    // "\ud800\ud800\ud800" moved: since F-DG2-260 a lone surrogate is validation.invalid_character, not blank.
     "\u17b4\u17b5\u180f",
     // F-DG2-230 (T-DG2-BE10)
     "\u{16FE4}\u{16FE4}\u{16FE4}",
@@ -383,5 +408,90 @@ describe("U+0000 is an invalid character in free text, name and reason (F-DG2-23
     expect(freeText(1, 100).parse("Synthetic\u0001text")).toBe("Synthetic\u0001text");
     expect(name.parse(" Synthetic name ")).toBe("Synthetic name");
     expect(issues(freeText(1, 10).safeParse("   "))).toEqual([["", BLANK_TEXT_CODE]]);
+  });
+});
+
+// F-DG2-260 (T-DG2-BE11): a lone UTF-16 surrogate (a JSON escape such as "\ud800" survives JSON.parse) cannot be
+// stored faithfully: text columns receive U+FFFD and jsonb refuses it (22P02). It is an invalid character exactly like
+// U+0000; a valid surrogate PAIR (an emoji) is one code point and stays valid.
+describe("a lone UTF-16 surrogate is an invalid character (F-DG2-260)", () => {
+  const issues = (r: {
+    success: boolean;
+    error?: { issues: Array<{ path: PropertyKey[]; code: string; message: string }> };
+  }) => (r.success ? [] : r.error!.issues.map((i) => [i.path.join("/"), i.code === "custom" ? i.message : i.code]));
+  const LONE = [
+    "a\uD800",
+    "\uDC00b",
+    "\uD800\uD800",
+    "\uDFFF",
+    "Synthetic\uDBFFtext",
+    "\u{1F600}\uD800",
+    "\uDC00\u{1F600}",
+    "\u0645\uD83D \u0645",
+  ];
+  const VALID = [
+    "\u{1F600}",
+    "\uD83D\uDE00",
+    "\u0645\u0631\u062D\u0628\u0627 \u0628\u0627\u0644\u0639\u0627\u0644\u0645",
+    "\u{1F468}\u200D\u{1F469}\u200D\u{1F467}",
+    "\u{20BB7}\u{1D11E}",
+    "Synthetic",
+    "",
+  ];
+
+  it("hasInvalidCharacter is true for a lone high or low surrogate and false for a pair, emoji or Arabic", () => {
+    for (const v of LONE) expect(hasInvalidCharacter(v), JSON.stringify(v)).toBe(true);
+    for (const v of VALID) expect(hasInvalidCharacter(v), JSON.stringify(v)).toBe(false);
+  });
+
+  it("freeText, name and reason refuse a lone surrogate with validation.invalid_character only", () => {
+    for (const v of ["a\uD800", "\uDC00b", "\uD800\uD800", "Synthetic\uDFFFtext"]) {
+      expect(issues(freeText(1, 100).safeParse(v)), JSON.stringify(v)).toEqual([["", INVALID_CHARACTER_CODE]]);
+      expect(issues(freeText(0, 100).nullable().safeParse(v)), JSON.stringify(v)).toEqual([
+        ["", INVALID_CHARACTER_CODE],
+      ]);
+      expect(issues(name.safeParse(v)), JSON.stringify(v)).toEqual([["", INVALID_CHARACTER_CODE]]);
+      if (v.length >= 3) expect(issues(reason.safeParse(v)), JSON.stringify(v)).toEqual([["", INVALID_CHARACTER_CODE]]);
+    }
+    // A value that is ONLY a lone surrogate is invalid, not "blank" (one error).
+    expect(issues(freeText(1, 10).safeParse("\uD800"))).toEqual([["", INVALID_CHARACTER_CODE]]);
+  });
+
+  it("reports it at the field's own pointer (charter field, journey step name, reason)", () => {
+    expect(issues(charterUpdate.safeParse({ outOfScope: "Synthetic\uD800x", changeSummary: "Synthetic" }))).toEqual([
+      ["outOfScope", INVALID_CHARACTER_CODE],
+    ]);
+    expect(
+      issues(
+        journeyCreate.safeParse({
+          name: "Synthetic journey",
+          kind: "journey",
+          state: "current",
+          steps: [{ key: "01920099-0000-7000-8000-0000000000ab", ordinal: 1, name: "Synthetic\uD800step" }],
+        }),
+      ),
+    ).toEqual([["steps/0/name", INVALID_CHARACTER_CODE]]);
+    expect(issues(reasonRequest.safeParse({ reason: "Synthetic\uDC00reason" }))).toEqual([
+      ["reason", INVALID_CHARACTER_CODE],
+    ]);
+  });
+
+  it("emoji and Arabic text stay valid and are kept verbatim", () => {
+    for (const v of VALID.filter((x) => x !== "")) {
+      expect(freeText(1, 100).parse(v)).toBe(v);
+      expect(name.parse(v)).toBe(v);
+    }
+    expect(reason.parse("\u{1F600}\u{1F600}\u{1F600}")).toBe("\u{1F600}\u{1F600}\u{1F600}");
+  });
+
+  it("truncateText never splits a surrogate pair", () => {
+    expect(truncateText("abc", 10)).toBe("abc");
+    expect(truncateText("abcdef", 3)).toBe("abc");
+    // "ab" + U+1F600 (2 code units): a cut at 3 would leave a lone high surrogate.
+    expect(truncateText("ab\u{1F600}", 3)).toBe("ab");
+    expect(truncateText("ab\u{1F600}c", 4)).toBe("ab\u{1F600}");
+    expect(hasInvalidCharacter(truncateText("x".repeat(7999) + "\u{1F600}", 8000))).toBe(false);
+    expect(truncateText("x".repeat(7999) + "\u{1F600}", 8000)).toBe("x".repeat(7999));
+    expect(truncateText("\u0645".repeat(5), 3)).toBe("\u0645\u0645\u0645");
   });
 });

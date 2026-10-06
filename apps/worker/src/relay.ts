@@ -6,7 +6,7 @@
 // consumer ledger (processed_message) makes a redelivery a no-op. SKIP LOCKED lets several relays run safely.
 import { CompiledQuery } from "kysely";
 import { sql, type Db, type Tx } from "@mth/db";
-import { outboxPayloadSchema, type OutboxEnvelope } from "@mth/shared/schemas";
+import { outboxPayloadSchema, truncateText, type OutboxEnvelope } from "@mth/shared/schemas";
 import type PgBoss from "pg-boss";
 import { OUTBOX_RELAY, QUEUE_FOR_EVENT } from "./queues.ts";
 
@@ -87,7 +87,7 @@ export async function relayOnce(
     failed += 1;
     await db
       .updateTable("outbox_event")
-      .set({ publish_attempts: sql<number>`publish_attempts + 1`, last_error: r.error.slice(0, 2000) })
+      .set({ publish_attempts: sql<number>`publish_attempts + 1`, last_error: truncateText(r.error, 2000) })
       .where("id", "=", r.failedId)
       .execute();
     // The same (oldest) row would be picked again at once: end this round; the next poll retries it until

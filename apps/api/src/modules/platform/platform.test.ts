@@ -203,7 +203,7 @@ describe("invalid characters (U+0000): SQLSTATE mapping and the central request 
           {
             pointer: "",
             code: "validation.invalid_character",
-            message: "The text contains an unsupported invisible character (U+0000).",
+            message: "The text contains an unsupported character (U+0000 or an unpaired UTF-16 surrogate).",
           },
         ],
       });
@@ -223,6 +223,14 @@ describe("invalid characters (U+0000): SQLSTATE mapping and the central request 
     expect(findInvalidCharacter("\u0000", "/query")).toBe("/query");
     expect(findInvalidCharacter({ a: "ok", n: 1, b: true, z: null, l: ["x"] })).toBeNull();
     expect(findInvalidCharacter(undefined)).toBeNull();
+  });
+
+  it("F-DG2-260: also finds a lone UTF-16 surrogate (value or key), but never a valid pair (emoji) or Arabic", () => {
+    expect(findInvalidCharacter({ a: "ok", b: "x\uD800y" })).toBe("/b");
+    expect(findInvalidCharacter({ steps: [{ name: "ok" }, { name: "\uDC00" }] })).toBe("/steps/1/name");
+    expect(findInvalidCharacter({ "k\uDFFF": 1 })).toBe("/k\uDFFF");
+    expect(findInvalidCharacter({ a: "\uD800\uD800" })).toBe("/a");
+    expect(findInvalidCharacter({ a: "\u{1F600}", b: "\uD83D\uDE00", c: "\u0645\u0631\u062D\u0628\u0627" })).toBeNull();
   });
 
   it("walks Fastify-style query/params objects with a non-Object prototype, never a stream or buffer", () => {

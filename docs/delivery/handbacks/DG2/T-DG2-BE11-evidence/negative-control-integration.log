@@ -1,0 +1,316 @@
+# negative control (integration): product files reverted to HEAD f4cc48321f0c6ec0fd4c5925c56f6c343e60179b, new tests kept; node v22.22.2; 2026-10-06T12:33:51Z
+# command: QA_PG_PORT=55471 tests/qa/support/with-pg.sh npx vitest run --project integration invalid-character.test.ts oidc.test.ts gates.test.ts
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/My-owns
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muwnu338_e3623719 (server_encoding UTF8); applied 19 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/gates.test.ts (12 tests | 1 failed) 2660ms
+   ✓ starter structure and live readiness > a new transformation has six gate instances (G1-G6), draft, approver SP; G4-G6 are not submittable in P2 295ms
+   ✓ starter structure and live readiness > G1 submission without an initial charter is refused (422 gate_criteria_incomplete) and writes nothing 118ms
+   ✓ starter structure and live readiness > REQ-S13-012: evidence that is only a filename (or an inaccessible link) leaves g1.diagnostic incomplete  366ms
+   ✓ submission and decision (business approval by a person) > all G1 criteria are complete live; AUD cannot submit (403) and nothing is written 39ms
+   ✓ submission and decision (business approval by a person) > stale If-Match on submit is 409; a valid submit freezes submission 1 with its criteria and charter version 90ms
+   ✓ submission and decision (business approval by a person) > a non-configured approver (TO, technical admin, auditor) gets 403 gate.not_approver; nothing is written 22ms
+   ✓ submission and decision (business approval by a person) > the submitter cannot decide, even when they hold the approver role (403 gate.submitter_cannot_decide) 286ms
+   ✓ submission and decision (business approval by a person) > a decision on a superseded submission is 409 (gate.submission_superseded) and writes nothing 48ms
+   ✓ submission and decision (business approval by a person) > the configured approver (SP) approves the current submission: decision recorded, G1 approved, phase -> define 113ms
+   ✓ submission and decision (business approval by a person) > configuring the approver: allowed roles only, refused while a submission is pending, needs gate.configure 121ms
+   ✓ G2 Direction readiness (REQ-PB-036 failing outcomes, REQ-PB-037 guardrails) > lists every outcome whose good outcome test is not passing (ids + criteria); zero guardrails blocks submission  430ms
+   × decision outcome text is cut on a code-point boundary (F-DG2-260) > a rationale with an emoji at the 8000 boundary: the decision is recorded and outcome_text has no U+FFFD 264ms
+     → expected 'approved: xxxxxxxxxxxxxxxxxxxxxxxxxxx…' to be 'approved: xxxxxxxxxxxxxxxxxxxxxxxxxxx…' // Object.is equality
+ ❯ |integration| apps/api/test/integration/invalid-character.test.ts (20 tests | 5 failed) 1184ms
+   ✓ U+0000 in a JSON body string is 400 validation.invalid_character; nothing is written or audited > charter create (outOfScope, freeText): no charter is created 100ms
+   ✓ U+0000 in a JSON body string is 400 validation.invalid_character; nothing is written or audited > charter update (inScope): version, value and audit trail unchanged 139ms
+   ✓ U+0000 in a JSON body string is 400 validation.invalid_character; nothing is written or audited > T03 TOM gap create and update (gap): no gap is created, the existing one is unchanged 40ms
+   ✓ U+0000 in a JSON body string is 400 validation.invalid_character; nothing is written or audited > T03 TOM gap archive reason: the gap stays open; a valid reason still archives (audited once) 42ms
+   ✓ U+0000 in a JSON body string is 400 validation.invalid_character; nothing is written or audited > P1 transformation name (shared name): no transformation is created 7ms
+   ✓ U+0000 in a JSON body string is 400 validation.invalid_character; nothing is written or audited > a NUL in an object key is reported at that key's pointer 56ms
+   ✓ U+0000 in a query or path parameter is 400 validation.invalid_character at /query or /params > GET /transformations?q= (a text filter the database queries) 17ms
+   ✓ U+0000 in a query or path parameter is 400 validation.invalid_character at /query or /params > GET /users?q= (admin user search) 12ms
+   ✓ U+0000 in a query or path parameter is 400 validation.invalid_character at /query or /params > a path parameter (TOM gap id on archive) 4ms
+   ✓ authentication and CSRF keep their precedence over the invalid-character check > no session: 401, not 400 3ms
+   ✓ authentication and CSRF keep their precedence over the invalid-character check > missing CSRF token: 403 csrf, not 400 5ms
+   ✓ authentication and CSRF keep their precedence over the invalid-character check > a user without write permission on a NUL body gets the 400 before any data access, and nothing is written 12ms
+   ✓ text without NUL is unaffected > visible text with other control-like marks (U+0001 inside, RLM) is accepted verbatim 83ms
+   × a lone UTF-16 surrogate in a JSON body string is 400 validation.invalid_character (F-DG2-260) > charter create (outOfScope, text column): no charter is created, nothing is stored as U+FFFD 79ms
+     → {"charter":{"id":"01a11134-dc46-73df-8e26-b2754af4a0de","organizationId":"01a11134-d958-7052-9243-a95314569cc9","transformationId":"01a11134-dc12-75eb-9c94-ecb8f14f0b58","transformationName":"Synthetic","executiveSponsorUserId":null,"transformationLeadUserId":null,"caseForChange":null,"northStarId":null,"inScope":null,"outOfScope":"Synthetic�exclusion","baselineDate":null,"targetHorizonValue":null,"targetHorizonUnit":null,"governanceForum":null,"decisionRights":null,"successDefinition":null,"thesisChange":null,"thesisOutcomes":null,"thesisBenefits":null,"thesisBecause":null,"scOutcomeLinkage":null,"scOutcomeLinkageEvidence":null,"scProblemTraceability":null,"scProblemTraceabilityEvidence":null,"scExclusionsDocumented":null,"scExclusionsDocumentedEvidence":null,"scBaselineMeasurable":null,"scBaselineMeasurableEvidence":null,"scExecutiveDecisionsVisible":null,"scExecutiveDecisionsVisibleEvidence":null,"version":1,"createdAt":"2026-10-06T12:33:59.364Z","createdBy":"01a11134-dc03-73ef-bddc-0ee982590395","updatedAt":"2026-10-06T12:33:59.364Z","updatedBy":"01a11134-dc03-73ef-bddc-0ee982590395"},"northStar":null,"topOutcomes":[],"guardrails":[],"warnings":[{"code":"charter.top_outcomes_count","message":"The charter should hold 3-5 top outcomes; it holds 0.","pointer":"/topOutcomes"},{"code":"charter.thesis_incomplete","message":"The transformation thesis is incomplete: what we change (capabilities / journeys / operating model) is empty. It must read \"If we change ..., then ... will improve, which will create ..., because ...\" (B0037).","pointer":"/charter/thesisChange"},{"code":"charter.thesis_incomplete","message":"The transformation thesis is incomplete: the customer/operational outcomes that will improve is empty. It must read \"If we change ..., then ... will improve, which will create ..., because ...\" (B0037).","pointer":"/charter/thesisOutcomes"},{"code":"charter.thesis_incomplete","message":"The transformation thesis is incomplete: the financial/strategic benefits it will create is empty. It must read \"If we change ..., then ... will improve, which will create ..., because ...\" (B0037).","pointer":"/charter/thesisBenefits"},{"code":"charter.thesis_incomplete","message":"The transformation thesis is incomplete: the evidence / causal logic (because ...) is empty. It must read \"If we change ..., then ... will improve, which will create ..., because ...\" (B0037).","pointer":"/charter/thesisBecause"}],"scopeCheckPrechecks":[{"code":"outcome_linkage","result":"not_applicable","detail":"Answered by people; no system pre-check."},{"code":"problem_traceability","result":"unknown","detail":"In-scope items are not recorded yet."},{"code":"exclusions_documented","result":"pass","detail":"Explicit exclusions are documented."},{"code":"baseline_measurable","result":"unknown","detail":"No baseline is recorded yet."},{"code":"executive_decisions_visible","result":"unknown","detail":"No open decision is recorded yet."}]}: expected 201 to be 400 // Object.is equality
+   × a lone UTF-16 surrogate in a JSON body string is 400 validation.invalid_character (F-DG2-260) > charter update (inScope): version, value and audit trail unchanged 118ms
+     → {"charter":{"id":"01a11134-dca7-7790-bde0-588325e2e7fd","organizationId":"01a11134-d958-7052-9243-a95314569cc9","transformationId":"01a11134-dc5e-71de-b5f6-f77a7f2e4dba","transformationName":"Synthetic","executiveSponsorUserId":null,"transformationLeadUserId":null,"caseForChange":null,"northStarId":null,"inScope":"Synthetic�scope","outOfScope":null,"baselineDate":null,"targetHorizonValue":null,"targetHorizonUnit":null,"governanceForum":null,"decisionRights":null,"successDefinition":null,"thesisChange":null,"thesisOutcomes":null,"thesisBenefits":null,"thesisBecause":null,"scOutcomeLinkage":null,"scOutcomeLinkageEvidence":null,"scProblemTraceability":null,"scProblemTraceabilityEvidence":null,"scExclusionsDocumented":null,"scExclusionsDocumentedEvidence":null,"scBaselineMeasurable":null,"scBaselineMeasurableEvidence":null,"scExecutiveDecisionsVisible":null,"scExecutiveDecisionsVisibleEvidence":null,"version":2,"createdAt":"2026-10-06T12:33:59.461Z","createdBy":"01a11134-dc51-703c-85fb-6500e6937c4f","updatedAt":"2026-10-06T12:33:59.475Z","updatedBy":"01a11134-dc51-703c-85fb-6500e6937c4f"},"northStar":null,"topOutcomes":[],"guardrails":[],"warnings":[{"code":"charter.top_outcomes_count","message":"The charter should hold 3-5 top outcomes; it holds 0.","pointer":"/topOutcomes"},{"code":"charter.thesis_incomplete","message":"The transformation thesis is incomplete: what we change (capabilities / journeys / operating model) is empty. It must read \"If we change ..., then ... will improve, which will create ..., because ...\" (B0037).","pointer":"/charter/thesisChange"},{"code":"charter.thesis_incomplete","message":"The transformation thesis is incomplete: the customer/operational outcomes that will improve is empty. It must read \"If we change ..., then ... will improve, which will create ..., because ...\" (B0037).","pointer":"/charter/thesisOutcomes"},{"code":"charter.thesis_incomplete","message":"The transformation thesis is incomplete: the financial/strategic benefits it will create is empty. It must read \"If we change ..., then ... will improve, which will create ..., because ...\" (B0037).","pointer":"/charter/thesisBenefits"},{"code":"charter.thesis_incomplete","message":"The transformation thesis is incomplete: the evidence / causal logic (because ...) is empty. It must read \"If we change ..., then ... will improve, which will create ..., because ...\" (B0037).","pointer":"/charter/thesisBecause"}],"scopeCheckPrechecks":[{"code":"outcome_linkage","result":"not_applicable","detail":"Answered by people; no system pre-check."},{"code":"problem_traceability","result":"attention","detail":"No confirmed diagnostic finding traces the scope yet."},{"code":"exclusions_documented","result":"attention","detail":"No explicit exclusions (out of scope) are documented; this check fails until Out of scope is completed."},{"code":"baseline_measurable","result":"unknown","detail":"No baseline is recorded yet."},{"code":"executive_decisions_visible","result":"unknown","detail":"No open decision is recorded yet."}]}: expected 200 to be 400 // Object.is equality
+   × a lone UTF-16 surrogate in a JSON body string is 400 validation.invalid_character (F-DG2-260) > journey step name (reaches jsonb directly): 400 at /steps/0/name, not validation.format at '' 79ms
+     → expected [ { pointer: '', …(2) } ] to deeply equal [ ObjectContaining{…} ]
+   × a lone UTF-16 surrogate in a JSON body string is 400 validation.invalid_character (F-DG2-260) > archive reason (shared reason schema): the TOM gap stays open 19ms
+     → {"id":"01a11134-dd1a-7389-b28d-ba46e83d6f37","organizationId":"01a11134-d958-7052-9243-a95314569cc9","transformationId":"01a11134-d9a6-731d-b9f2-8f8007f67c28","version":2,"createdAt":"2026-10-06T12:33:59.577Z","createdBy":"01a11134-d973-73c0-8750-20cb2475a96f","updatedAt":"2026-10-06T12:33:59.585Z","updatedBy":"01a11134-d973-73c0-8750-20cb2475a96f","dimensionCode":"technology","currentState":null,"targetState":null,"gap":"Synthetic gap for the F-DG2-260 reason","designDecisionId":null,"ownerUserId":null,"status":"archived","archivedAt":"2026-10-06T12:33:59.585Z","archivedBy":"01a11134-d973-73c0-8750-20cb2475a96f","archiveReason":"Synthetic�reason"}: expected 200 to be 400 // Object.is equality
+   × a lone UTF-16 surrogate in a JSON body string is 400 validation.invalid_character (F-DG2-260) > a lone surrogate in an object key is reported at that key's pointer 70ms
+     → expected [ { pointer: '', …(2) } ] to deeply equal [ ObjectContaining{…} ]
+   ✓ a lone UTF-16 surrogate in a JSON body string is 400 validation.invalid_character (F-DG2-260) > a percent-encoded lone surrogate (CESU-8 bytes %ED%A0%80) in a query or path never decodes to one, never a 5xx 6ms
+   ✓ a lone UTF-16 surrogate in a JSON body string is 400 validation.invalid_character (F-DG2-260) > emoji (valid surrogate pairs) and Arabic are accepted and stored verbatim, in text and in jsonb 99ms
+ ❯ |integration| apps/api/test/integration/oidc.test.ts (33 tests | 5 failed) 1062ms
+   ✓ GET /api/v1/auth/login > redirects to the IdP with code flow, PKCE S256, state and nonce, storing only the state's hash 26ms
+   ✓ GET /api/v1/auth/login > rejects returnTo=//evil.example/x (open redirect) with 400 5ms
+   ✓ GET /api/v1/auth/login > rejects returnTo=https://evil.example/ (open redirect) with 400 1ms
+   ✓ GET /api/v1/auth/login > rejects returnTo=relative (open redirect) with 400 1ms
+   ✓ GET /api/v1/auth/login > rejects returnTo=/\evil (open redirect) with 400 1ms
+   ✓ GET /api/v1/auth/callback > provisions a first-time user just in time, WITHOUT any role, and signs them in (audited) 51ms
+   ✓ GET /api/v1/auth/callback > an invisible-only name claim is absent: the display name falls back to the e-mail (F-DG2-160) 23ms
+   ✓ GET /api/v1/auth/callback > 200 invisible characters before visible text: the name claim is absent, preferred_username is used (F-DG2-181) 15ms
+   ✓ GET /api/v1/auth/callback > an invisible-truncated name and preferred_username fall back to the e-mail, then a generated name (F-DG2-181) 28ms
+   ✓ GET /api/v1/auth/callback > a name with astral characters at the 200 boundary is cut on a code-point boundary (F-DG2-181) 22ms
+   ✓ GET /api/v1/auth/callback > a normal name is stored unchanged, including visible text with marks (F-DG2-181) 36ms
+   ✓ GET /api/v1/auth/callback > signs an existing (issuer, subject) back in to the same user 10ms
+   ✓ GET /api/v1/auth/callback > binds a pre-provisioned user by VERIFIED e-mail only 22ms
+   ✓ GET /api/v1/auth/callback > refuses a disabled user 10ms
+   ✓ GET /api/v1/auth/callback > U+0000 in the callback query or in ID-token claims (F-DG2-231) > a NUL in state, code or error redirects with invalid_request (declared 302), never a 400 or 500 2ms
+   × GET /api/v1/auth/callback > U+0000 in the callback query or in ID-token claims (F-DG2-231) > a subject claim with NUL is refused as token_invalid and audited; no user, identity or session 11ms
+     → expected [ Array(1) ] to deeply equal [ Array(1) ]
+   ✓ GET /api/v1/auth/callback > U+0000 in the callback query or in ID-token claims (F-DG2-231) > a name or e-mail claim with NUL is absent: the next claim is used and the sign-in succeeds 26ms
+   × GET /api/v1/auth/callback > a lone UTF-16 surrogate in ID-token claims (F-DG2-260) > sub with a lone surrogate (just-in-time path): 302 token_invalid, audited, no user, identity or session 10ms
+     → contract: completeOidcLogin does not declare status 400 (declared: 302, 429); body: {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"A value has an invalid format.","code":"validation","requestId":"01a11134-e27d-7478-bdcd-7bd363c56b66","errors":[{"pointer":"","code":"validation.format","message":"A value has an invalid format."}]}
+   × GET /api/v1/auth/callback > a lone UTF-16 surrogate in ID-token claims (F-DG2-260) > sub with a lone surrogate (bind path, verified e-mail of a pre-provisioned user): 302 token_invalid, not bound 13ms
+     → contract: completeOidcLogin does not declare status 400 (declared: 302, 429); body: {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"A value has an invalid format.","code":"validation","requestId":"01a11134-e28b-73f3-bc61-8bf8315d59ea","errors":[{"pointer":"","code":"validation.format","message":"A value has an invalid format."}]}
+   ✓ GET /api/v1/auth/callback > a lone UTF-16 surrogate in ID-token claims (F-DG2-260) > iss with a lone surrogate: 302 token_invalid, audited, no user, identity or session 9ms
+   × GET /api/v1/auth/callback > a lone UTF-16 surrogate in ID-token claims (F-DG2-260) > a subject longer than its column (256 code points) is token_invalid and audited, not an undeclared 422 8ms
+     → contract: completeOidcLogin does not declare status 422 (declared: 302, 429); body: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"The change violates a data rule.","code":"validation.constraint","requestId":"01a11134-e29d-775c-b753-9dc15536bdf1","errors":[{"pointer":"/subject","code":"validation.constraint","message":"user_identity_sub
+   × GET /api/v1/auth/callback > a lone UTF-16 surrogate in ID-token claims (F-DG2-260) > a name claim with a lone surrogate is absent: the e-mail is the display name, never U+FFFD 9ms
+     → expected { …(2) } to deeply equal { …(2) }
+   ✓ GET /api/v1/auth/callback > a lone UTF-16 surrogate in ID-token claims (F-DG2-260) > emoji and Arabic in sub and name still sign in and are stored verbatim 10ms
+   ✓ GET /api/v1/auth/callback > uses each state once, and rejects unknown or expired states 17ms
+   ✓ GET /api/v1/auth/callback > login CSRF: the state is bound to the browser that started the login (F-DG1-103) > refuses an attacker's live callback in the victim's browser; the victim stays signed in as themself 32ms
+   ✓ GET /api/v1/auth/callback > login CSRF: the state is bound to the browser that started the login (F-DG1-103) > sets a short-lived HttpOnly SameSite=Lax login cookie, stores only its hash, and clears it at the callback 4ms
+   ✓ GET /api/v1/auth/callback > login CSRF: the state is bound to the browser that started the login (F-DG1-103) > uses the __Host- prefix and Secure on an https origin 46ms
+   ✓ GET /api/v1/auth/callback > rejects a wrong nonce and a PKCE mismatch (token_invalid), and IdP errors (idp_denied), all without a session 22ms
+   ✓ GET /api/v1/auth/callback > refuses just-in-time provisioning when several organizations exist (users must be pre-provisioned) 10ms
+   ✓ OIDC logout and configuration > returns the IdP end-session URL for OIDC sessions 18ms
+   ✓ OIDC logout and configuration > answers 404 on /auth/login and /auth/callback when OIDC is not configured 31ms
+   ✓ OIDC logout and configuration > redirects to /login?error=idp_unavailable when the IdP cannot be reached, and never fails startup 31ms
+   ✓ OIDC logout and configuration > keeps the IdP's token endpoint behind the server (the browser never receives tokens) 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/gates.test.ts > decision outcome text is cut on a code-point boundary (F-DG2-260) > a rationale with an emoji at the 8000 boundary: the decision is recorded and outcome_text has no U+FFFD
+AssertionError: expected 'approved: xxxxxxxxxxxxxxxxxxxxxxxxxxx…' to be 'approved: xxxxxxxxxxxxxxxxxxxxxxxxxxx…' // Object.is equality
+
+Expected: [32m"approved: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"[39m
+Received: [31m"approved: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx[7m�[27m"[39m
+
+ ❯ apps/api/test/integration/gates.test.ts:431:30
+    429|       .where("kind", "=", "gate")
+    430|       .executeTakeFirstOrThrow();
+    431|     expect(row.outcome_text).toBe(`approved: ${"x".repeat(7989)}`);
+       |                              ^
+    432|     expect(row.outcome_text).not.toContain("�");
+    433|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  |integration| apps/api/test/integration/invalid-character.test.ts > a lone UTF-16 surrogate in a JSON body string is 400 validation.invalid_character (F-DG2-260) > charter create (outOfScope, text column): no charter is created, nothing is stored as U+FFFD
+AssertionError: {"charter":{"id":"01a11134-dc46-73df-8e26-b2754af4a0de","organizationId":"01a11134-d958-7052-9243-a95314569cc9","transformationId":"01a11134-dc12-75eb-9c94-ecb8f14f0b58","transformationName":"Synthetic","executiveSponsorUserId":null,"transformationLeadUserId":null,"caseForChange":null,"northStarId":null,"inScope":null,"outOfScope":"Synthetic�exclusion","baselineDate":null,"targetHorizonValue":null,"targetHorizonUnit":null,"governanceForum":null,"decisionRights":null,"successDefinition":null,"thesisChange":null,"thesisOutcomes":null,"thesisBenefits":null,"thesisBecause":null,"scOutcomeLinkage":null,"scOutcomeLinkageEvidence":null,"scProblemTraceability":null,"scProblemTraceabilityEvidence":null,"scExclusionsDocumented":null,"scExclusionsDocumentedEvidence":null,"scBaselineMeasurable":null,"scBaselineMeasurableEvidence":null,"scExecutiveDecisionsVisible":null,"scExecutiveDecisionsVisibleEvidence":null,"version":1,"createdAt":"2026-10-06T12:33:59.364Z","createdBy":"01a11134-dc03-73ef-bddc-0ee982590395","updatedAt":"2026-10-06T12:33:59.364Z","updatedBy":"01a11134-dc03-73ef-bddc-0ee982590395"},"northStar":null,"topOutcomes":[],"guardrails":[],"warnings":[{"code":"charter.top_outcomes_count","message":"The charter should hold 3-5 top outcomes; it holds 0.","pointer":"/topOutcomes"},{"code":"charter.thesis_incomplete","message":"The transformation thesis is incomplete: what we change (capabilities / journeys / operating model) is empty. It must read \"If we change ..., then ... will improve, which will create ..., because ...\" (B0037).","pointer":"/charter/thesisChange"},{"code":"charter.thesis_incomplete","message":"The transformation thesis is incomplete: the customer/operational outcomes that will improve is empty. It must read \"If we change ..., then ... will improve, which will create ..., because ...\" (B0037).","pointer":"/charter/thesisOutcomes"},{"code":"charter.thesis_incomplete","message":"The transformation thesis is incomplete: the financial/strategic benefits it will create is empty. It must read \"If we change ..., then ... will improve, which will create ..., because ...\" (B0037).","pointer":"/charter/thesisBenefits"},{"code":"charter.thesis_incomplete","message":"The transformation thesis is incomplete: the evidence / causal logic (because ...) is empty. It must read \"If we change ..., then ... will improve, which will create ..., because ...\" (B0037).","pointer":"/charter/thesisBecause"}],"scopeCheckPrechecks":[{"code":"outcome_linkage","result":"not_applicable","detail":"Answered by people; no system pre-check."},{"code":"problem_traceability","result":"unknown","detail":"In-scope items are not recorded yet."},{"code":"exclusions_documented","result":"pass","detail":"Explicit exclusions are documented."},{"code":"baseline_measurable","result":"unknown","detail":"No baseline is recorded yet."},{"code":"executive_decisions_visible","result":"unknown","detail":"No open decision is recorded yet."}]}: expected 201 to be 400 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 400[39m
+[31m+ 201[39m
+
+ ❯ expectInvalidCharacter apps/api/test/integration/invalid-character.test.ts:40:48
+     38| /** 400 `validation.invalid_character` at `pointer`, and no audit row …
+     39| async function expectInvalidCharacter(res: Res, pointer: string) {
+     40|   expect(res.status, JSON.stringify(res.body)).toBe(400);
+       |                                                ^
+     41|   const body = res.body as { code: string; type: string; errors: { poi…
+     42|   expect(body.code).toBe("validation");
+ ❯ apps/api/test/integration/invalid-character.test.ts:269:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  |integration| apps/api/test/integration/invalid-character.test.ts > a lone UTF-16 surrogate in a JSON body string is 400 validation.invalid_character (F-DG2-260) > charter update (inScope): version, value and audit trail unchanged
+AssertionError: {"charter":{"id":"01a11134-dca7-7790-bde0-588325e2e7fd","organizationId":"01a11134-d958-7052-9243-a95314569cc9","transformationId":"01a11134-dc5e-71de-b5f6-f77a7f2e4dba","transformationName":"Synthetic","executiveSponsorUserId":null,"transformationLeadUserId":null,"caseForChange":null,"northStarId":null,"inScope":"Synthetic�scope","outOfScope":null,"baselineDate":null,"targetHorizonValue":null,"targetHorizonUnit":null,"governanceForum":null,"decisionRights":null,"successDefinition":null,"thesisChange":null,"thesisOutcomes":null,"thesisBenefits":null,"thesisBecause":null,"scOutcomeLinkage":null,"scOutcomeLinkageEvidence":null,"scProblemTraceability":null,"scProblemTraceabilityEvidence":null,"scExclusionsDocumented":null,"scExclusionsDocumentedEvidence":null,"scBaselineMeasurable":null,"scBaselineMeasurableEvidence":null,"scExecutiveDecisionsVisible":null,"scExecutiveDecisionsVisibleEvidence":null,"version":2,"createdAt":"2026-10-06T12:33:59.461Z","createdBy":"01a11134-dc51-703c-85fb-6500e6937c4f","updatedAt":"2026-10-06T12:33:59.475Z","updatedBy":"01a11134-dc51-703c-85fb-6500e6937c4f"},"northStar":null,"topOutcomes":[],"guardrails":[],"warnings":[{"code":"charter.top_outcomes_count","message":"The charter should hold 3-5 top outcomes; it holds 0.","pointer":"/topOutcomes"},{"code":"charter.thesis_incomplete","message":"The transformation thesis is incomplete: what we change (capabilities / journeys / operating model) is empty. It must read \"If we change ..., then ... will improve, which will create ..., because ...\" (B0037).","pointer":"/charter/thesisChange"},{"code":"charter.thesis_incomplete","message":"The transformation thesis is incomplete: the customer/operational outcomes that will improve is empty. It must read \"If we change ..., then ... will improve, which will create ..., because ...\" (B0037).","pointer":"/charter/thesisOutcomes"},{"code":"charter.thesis_incomplete","message":"The transformation thesis is incomplete: the financial/strategic benefits it will create is empty. It must read \"If we change ..., then ... will improve, which will create ..., because ...\" (B0037).","pointer":"/charter/thesisBenefits"},{"code":"charter.thesis_incomplete","message":"The transformation thesis is incomplete: the evidence / causal logic (because ...) is empty. It must read \"If we change ..., then ... will improve, which will create ..., because ...\" (B0037).","pointer":"/charter/thesisBecause"}],"scopeCheckPrechecks":[{"code":"outcome_linkage","result":"not_applicable","detail":"Answered by people; no system pre-check."},{"code":"problem_traceability","result":"attention","detail":"No confirmed diagnostic finding traces the scope yet."},{"code":"exclusions_documented","result":"attention","detail":"No explicit exclusions (out of scope) are documented; this check fails until Out of scope is completed."},{"code":"baseline_measurable","result":"unknown","detail":"No baseline is recorded yet."},{"code":"executive_decisions_visible","result":"unknown","detail":"No open decision is recorded yet."}]}: expected 200 to be 400 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 400[39m
+[31m+ 200[39m
+
+ ❯ expectInvalidCharacter apps/api/test/integration/invalid-character.test.ts:40:48
+     38| /** 400 `validation.invalid_character` at `pointer`, and no audit row …
+     39| async function expectInvalidCharacter(res: Res, pointer: string) {
+     40|   expect(res.status, JSON.stringify(res.body)).toBe(400);
+       |                                                ^
+     41|   const body = res.body as { code: string; type: string; errors: { poi…
+     42|   expect(body.code).toBe("validation");
+ ❯ apps/api/test/integration/invalid-character.test.ts:289:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  |integration| apps/api/test/integration/invalid-character.test.ts > a lone UTF-16 surrogate in a JSON body string is 400 validation.invalid_character (F-DG2-260) > journey step name (reaches jsonb directly): 400 at /steps/0/name, not validation.format at ''
+AssertionError: expected [ { pointer: '', …(2) } ] to deeply equal [ ObjectContaining{…} ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   ObjectContaining {[39m
+[32m-     "code": "validation.invalid_character",[39m
+[32m-     "pointer": "/steps/0/name",[39m
+[31m+   {[39m
+[31m+     "code": "validation.format",[39m
+[31m+     "message": "A value has an invalid format.",[39m
+[31m+     "pointer": "",[39m
+[2m    },[22m
+[2m  ][22m
+
+ ❯ expectInvalidCharacter apps/api/test/integration/invalid-character.test.ts:44:23
+     42|   expect(body.code).toBe("validation");
+     43|   expect(body.type).toBe("urn:mth:problem:validation");
+     44|   expect(body.errors).toEqual([expect.objectContaining({ pointer, code…
+       |                       ^
+     45|   expect(await auditOfRequest(api.db, String(res.headers["x-request-id…
+     46| }
+ ❯ apps/api/test/integration/invalid-character.test.ts:308:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  |integration| apps/api/test/integration/invalid-character.test.ts > a lone UTF-16 surrogate in a JSON body string is 400 validation.invalid_character (F-DG2-260) > archive reason (shared reason schema): the TOM gap stays open
+AssertionError: {"id":"01a11134-dd1a-7389-b28d-ba46e83d6f37","organizationId":"01a11134-d958-7052-9243-a95314569cc9","transformationId":"01a11134-d9a6-731d-b9f2-8f8007f67c28","version":2,"createdAt":"2026-10-06T12:33:59.577Z","createdBy":"01a11134-d973-73c0-8750-20cb2475a96f","updatedAt":"2026-10-06T12:33:59.585Z","updatedBy":"01a11134-d973-73c0-8750-20cb2475a96f","dimensionCode":"technology","currentState":null,"targetState":null,"gap":"Synthetic gap for the F-DG2-260 reason","designDecisionId":null,"ownerUserId":null,"status":"archived","archivedAt":"2026-10-06T12:33:59.585Z","archivedBy":"01a11134-d973-73c0-8750-20cb2475a96f","archiveReason":"Synthetic�reason"}: expected 200 to be 400 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 400[39m
+[31m+ 200[39m
+
+ ❯ expectInvalidCharacter apps/api/test/integration/invalid-character.test.ts:40:48
+     38| /** 400 `validation.invalid_character` at `pointer`, and no audit row …
+     39| async function expectInvalidCharacter(res: Res, pointer: string) {
+     40|   expect(res.status, JSON.stringify(res.body)).toBe(400);
+       |                                                ^
+     41|   const body = res.body as { code: string; type: string; errors: { poi…
+     42|   expect(body.code).toBe("validation");
+ ❯ apps/api/test/integration/invalid-character.test.ts:341:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  |integration| apps/api/test/integration/invalid-character.test.ts > a lone UTF-16 surrogate in a JSON body string is 400 validation.invalid_character (F-DG2-260) > a lone surrogate in an object key is reported at that key's pointer
+AssertionError: expected [ { pointer: '', …(2) } ] to deeply equal [ ObjectContaining{…} ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   ObjectContaining {[39m
+[32m-     "code": "validation.invalid_character",[39m
+[32m-     "pointer": "/k�",[39m
+[31m+   {[39m
+[31m+     "code": "validation.unknown_field",[39m
+[31m+     "message": "Unrecognized key: \"k�\"",[39m
+[31m+     "pointer": "",[39m
+[2m    },[22m
+[2m  ][22m
+
+ ❯ expectInvalidCharacter apps/api/test/integration/invalid-character.test.ts:44:23
+     42|   expect(body.code).toBe("validation");
+     43|   expect(body.type).toBe("urn:mth:problem:validation");
+     44|   expect(body.errors).toEqual([expect.objectContaining({ pointer, code…
+       |                       ^
+     45|   expect(await auditOfRequest(api.db, String(res.headers["x-request-id…
+     46| }
+ ❯ apps/api/test/integration/invalid-character.test.ts:352:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > U+0000 in the callback query or in ID-token claims (F-DG2-231) > a subject claim with NUL is refused as token_invalid and audited; no user, identity or session
+AssertionError: expected [ Array(1) ] to deeply equal [ Array(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "OIDC sign-in refused: the ID token's issuer or subject cannot be stored (unsupported character, empty or too long)",[39m
+[31m+   "OIDC sign-in refused: the ID token's issuer or subject contains an unsupported character",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/oidc.test.ts:332:43
+    330|         .where("request_id", "=", String(cb.headers["x-request-id"]))
+    331|         .execute();
+    332|       expect(failed.map((r) => r.reason)).toEqual([
+       |                                           ^
+    333|         "OIDC sign-in refused: the ID token's issuer or subject cannot…
+    334|       ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > a lone UTF-16 surrogate in ID-token claims (F-DG2-260) > sub with a lone surrogate (just-in-time path): 302 token_invalid, audited, no user, identity or session
+Error: contract: completeOidcLogin does not declare status 400 (declared: 302, 429); body: {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"A value has an invalid format.","code":"validation","requestId":"01a11134-e27d-7478-bdcd-7bd363c56b66","errors":[{"pointer":"","code":"validation.format","message":"A value has an invalid format."}]}
+ ❯ assertContract apps/api/test/support/contract.ts:100:11
+     98|   const declared = op.responses[String(res.statusCode)] ?? op.response…
+     99|   if (!declared) {
+    100|     throw new Error(
+       |           ^
+    101|       `contract: ${op.operationId} does not declare status ${res.statu…
+    102|     );
+ ❯ call apps/api/test/support/harness.ts:158:5
+ ❯ completeLogin apps/api/test/integration/oidc.test.ts:92:14
+ ❯ apps/api/test/integration/oidc.test.ts:395:32
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > a lone UTF-16 surrogate in ID-token claims (F-DG2-260) > sub with a lone surrogate (bind path, verified e-mail of a pre-provisioned user): 302 token_invalid, not bound
+Error: contract: completeOidcLogin does not declare status 400 (declared: 302, 429); body: {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"A value has an invalid format.","code":"validation","requestId":"01a11134-e28b-73f3-bc61-8bf8315d59ea","errors":[{"pointer":"","code":"validation.format","message":"A value has an invalid format."}]}
+ ❯ assertContract apps/api/test/support/contract.ts:100:11
+     98|   const declared = op.responses[String(res.statusCode)] ?? op.response…
+     99|   if (!declared) {
+    100|     throw new Error(
+       |           ^
+    101|       `contract: ${op.operationId} does not declare status ${res.statu…
+    102|     );
+ ❯ call apps/api/test/support/harness.ts:158:5
+ ❯ completeLogin apps/api/test/integration/oidc.test.ts:92:14
+ ❯ apps/api/test/integration/oidc.test.ts:417:30
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > a lone UTF-16 surrogate in ID-token claims (F-DG2-260) > a subject longer than its column (256 code points) is token_invalid and audited, not an undeclared 422
+Error: contract: completeOidcLogin does not declare status 422 (declared: 302, 429); body: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"The change violates a data rule.","code":"validation.constraint","requestId":"01a11134-e29d-775c-b753-9dc15536bdf1","errors":[{"pointer":"/subject","code":"validation.constraint","message":"user_identity_sub
+ ❯ assertContract apps/api/test/support/contract.ts:100:11
+     98|   const declared = op.responses[String(res.statusCode)] ?? op.response…
+     99|   if (!declared) {
+    100|     throw new Error(
+       |           ^
+    101|       `contract: ${op.operationId} does not declare status ${res.statu…
+    102|     );
+ ❯ call apps/api/test/support/harness.ts:158:5
+ ❯ completeLogin apps/api/test/integration/oidc.test.ts:92:14
+ ❯ apps/api/test/integration/oidc.test.ts:458:30
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+ FAIL  |integration| apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > a lone UTF-16 surrogate in ID-token claims (F-DG2-260) > a name claim with a lone surrogate is absent: the e-mail is the display name, never U+FFFD
+AssertionError: expected { …(2) } to deeply equal { …(2) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "display_name": "jit-260-a@example.invalid",[39m
+[31m+   "display_name": "Synthetic�Name",[39m
+[2m    "email": "jit-260-a@example.invalid",[22m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/oidc.test.ts:475:20
+    473|         name: "Synthetic\ud800Name",
+    474|       });
+    475|       expect(user).toEqual({ display_name: "jit-260-a@example.invalid"…
+       |                    ^
+    476|       const viaPreferred = await jitDisplayName("jit-subject-260-b", {
+    477|         email: "jit-260-b@example.invalid",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/11]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  11 failed | 54 passed (65)
+   Start at  12:33:52
+   Duration  8.69s (transform 850ms, setup 0ms, collect 2.70s, tests 4.91s, environment 0ms, prepare 68ms)
+
+# exit: 1

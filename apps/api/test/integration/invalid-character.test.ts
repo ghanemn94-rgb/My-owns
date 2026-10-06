@@ -244,3 +244,157 @@ describe("text without NUL is unaffected", () => {
     expect(res.body.charter.outOfScope).toBe(text);
   });
 });
+
+// F-DG2-260 (T-DG2-BE11): a lone UTF-16 surrogate is legal in a JSON string escape ("\ud800") and survives JSON.parse,
+// but it cannot be stored faithfully: a text column used to receive U+FFFD silently, and a value that reaches jsonb
+// directly (a journey step name) used to fail there as 400 validation.format at pointer ''. The central request check
+// now refuses it exactly like U+0000: 400 validation.invalid_character at the field's pointer, nothing written or audited.
+const LONE_SURROGATE_TEXTS = ["Synthetic\ud800exclusion", "\udc00Synthetic leading", "Synthetic \ud800\ud800"] as const;
+
+async function journeyCount(transformationId: string): Promise<number> {
+  const r = await sql<{ n: string }>`
+    SELECT count(*) AS n FROM journey WHERE transformation_id = ${transformationId}`.execute(api.db);
+  return Number(r.rows[0]!.n);
+}
+
+describe("a lone UTF-16 surrogate in a JSON body string is 400 validation.invalid_character (F-DG2-260)", () => {
+  it("charter create (outOfScope, text column): no charter is created, nothing is stored as U+FFFD", async () => {
+    const q = await setupP2World(api, w);
+    const QC = `/api/v1/transformations/${q.transformationId}/charter`;
+    for (const text of LONE_SURROGATE_TEXTS) {
+      const res = await call(api.app, "POST", QC, {
+        session: q.lead.session,
+        body: { transformationName: "Synthetic", outOfScope: text },
+      });
+      await expectInvalidCharacter(res, "/outOfScope");
+    }
+    expect((await call(api.app, "GET", QC, { session: q.lead.session })).status).toBe(404);
+  });
+
+  it("charter update (inScope): version, value and audit trail unchanged", async () => {
+    const q = await setupP2World(api, w);
+    const QC = `/api/v1/transformations/${q.transformationId}/charter`;
+    const created = await call(api.app, "POST", QC, {
+      session: q.lead.session,
+      body: { transformationName: "Synthetic", inScope: "Retail onboarding (synthetic)" },
+    });
+    expect(created.status, JSON.stringify(created.body)).toBe(201);
+    const charterId = created.body.charter.id as string;
+    const before = await auditOf(api.db, charterId);
+    const res = await call(api.app, "PATCH", QC, {
+      session: q.lead.session,
+      headers: ifm(1),
+      body: { inScope: "Synthetic\udfffscope", changeSummary: "Synthetic edit" },
+    });
+    await expectInvalidCharacter(res, "/inScope");
+    const after = await call(api.app, "GET", QC, { session: q.lead.session });
+    expect(after.body.charter.version).toBe(1);
+    expect(after.body.charter.inScope).toBe("Retail onboarding (synthetic)");
+    expect(await auditOf(api.db, charterId)).toEqual(before);
+  });
+
+  it("journey step name (reaches jsonb directly): 400 at /steps/0/name, not validation.format at ''", async () => {
+    const q = await setupP2World(api, w);
+    const QT = `/api/v1/transformations/${q.transformationId}`;
+    const res = await call(api.app, "POST", `${QT}/journeys`, {
+      session: q.lead.session,
+      body: {
+        name: "Synthetic journey",
+        kind: "journey",
+        state: "current",
+        steps: [{ key: "01920099-0000-7000-8000-0000000000ab", ordinal: 1, name: "Synthetic\ud800step" }],
+      },
+    });
+    await expectInvalidCharacter(res, "/steps/0/name");
+    // A lone surrogate in a step's list item (systems[1]) is reported at that item.
+    const res2 = await call(api.app, "POST", `${QT}/journeys`, {
+      session: q.lead.session,
+      body: {
+        name: "Synthetic journey",
+        kind: "journey",
+        state: "current",
+        steps: [
+          {
+            key: "01920099-0000-7000-8000-0000000000ac",
+            ordinal: 1,
+            name: "Synthetic step",
+            systems: ["CRM", "\udc00Billing"],
+          },
+        ],
+      },
+    });
+    await expectInvalidCharacter(res2, "/steps/0/systems/1");
+    expect(await journeyCount(q.transformationId)).toBe(0);
+  });
+
+  it("archive reason (shared reason schema): the TOM gap stays open", async () => {
+    const gap = await call(api.app, "POST", `${T}/tom-gaps`, {
+      session: p.lead.session,
+      body: { dimensionCode: "technology", gap: "Synthetic gap for the F-DG2-260 reason" },
+    });
+    expect(gap.status, JSON.stringify(gap.body)).toBe(201);
+    const res = await call(api.app, "POST", `${T}/tom-gaps/${gap.body.id}/archive`, {
+      session: p.lead.session,
+      headers: ifm(gap.body.version),
+      body: { reason: "Synthetic\ud800reason" },
+    });
+    await expectInvalidCharacter(res, "/reason");
+    const still = await call(api.app, "GET", `${T}/tom-gaps/${gap.body.id}`, { session: p.lead.session });
+    expect([still.body.version, still.body.status, still.body.archiveReason]).toEqual([gap.body.version, "open", null]);
+  });
+
+  it("a lone surrogate in an object key is reported at that key's pointer", async () => {
+    const q = await setupP2World(api, w);
+    const res = await call(api.app, "POST", `/api/v1/transformations/${q.transformationId}/charter`, {
+      session: q.lead.session,
+      body: { transformationName: "Synthetic", "k\ud800": "x" },
+    });
+    await expectInvalidCharacter(res, "/k\ud800");
+  });
+
+  it("a percent-encoded lone surrogate (CESU-8 bytes %ED%A0%80) in a query or path never decodes to one, never a 5xx", async () => {
+    // Query: the bytes are not valid UTF-8, so they are never decoded to a lone surrogate (declared outcome, checked
+    // against the contract by the harness).
+    const res = await call(api.app, "GET", "/api/v1/transformations?q=Synthetic%ED%A0%80", {
+      session: p.lead.session,
+    });
+    expect(res.status, JSON.stringify(res.body)).toBeLessThan(500);
+    // Path: Fastify's router refuses an undecodable path segment itself (FST_ERR_BAD_URL) before any handler or hook
+    // runs. This answer predates F-DG2-260 and is the same for any malformed escape (%ZZ); it is plain JSON, not
+    // problem+json, so the contract assertion is off here (reported in the T-DG2-BE11 handback as an observation).
+    for (const bad of ["abc%ED%A0%80", "abc%ZZ"]) {
+      const res2 = await call(api.app, "POST", `${T}/tom-gaps/${bad}/archive`, {
+        session: p.lead.session,
+        headers: ifm(1),
+        body: { reason: "Synthetic reason" },
+        contract: false,
+      });
+      expect(res2.status, bad).toBe(400);
+      expect(await auditOfRequest(api.db, String(res2.headers["x-request-id"])), bad).toEqual([]);
+    }
+  });
+
+  it("emoji (valid surrogate pairs) and Arabic are accepted and stored verbatim, in text and in jsonb", async () => {
+    const q = await setupP2World(api, w);
+    const QT = `/api/v1/transformations/${q.transformationId}`;
+    const text = "نطاق تجريبي \u{1F600} \u{1F468}‍\u{1F469}‍\u{1F467}";
+    const charter = await call(api.app, "POST", `${QT}/charter`, {
+      session: q.lead.session,
+      body: { transformationName: "Synthetic", outOfScope: text },
+    });
+    expect(charter.status, JSON.stringify(charter.body)).toBe(201);
+    expect(charter.body.charter.outOfScope).toBe(text);
+    const journey = await call(api.app, "POST", `${QT}/journeys`, {
+      session: q.lead.session,
+      body: {
+        name: "Synthetic journey \u{1F680}",
+        kind: "journey",
+        state: "current",
+        steps: [{ key: "01920099-0000-7000-8000-0000000000ad", ordinal: 1, name: text }],
+      },
+    });
+    expect(journey.status, JSON.stringify(journey.body)).toBe(201);
+    expect(journey.body.steps[0].name).toBe(text);
+    expect(journey.body.name).toBe("Synthetic journey \u{1F680}");
+  });
+});

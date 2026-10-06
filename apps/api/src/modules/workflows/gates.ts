@@ -30,6 +30,7 @@ import {
   type GateDefinition,
   type GateInstance,
   type GateSubmission,
+  truncateText,
 } from "@mth/shared/schemas";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
@@ -748,7 +749,8 @@ async function decideGate(tx: Tx, request: FastifyRequest, transformationId: str
       context: pending.submission_note,
       owner_user_id: onBehalfOf ?? userId,
       status: "decided",
-      outcome_text: `${body.outcome}: ${body.rationale}`.slice(0, 8000),
+      // F-DG2-260: cut on a code-point boundary (a rationale of up to 8000 characters plus the outcome prefix).
+      outcome_text: truncateText(`${body.outcome}: ${body.rationale}`, 8000),
       decided_by: userId,
       decided_at: sql<Date>`now()`,
       created_by: userId,

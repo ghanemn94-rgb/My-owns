@@ -38,7 +38,8 @@ export const version = z.number().int().min(1);
  *   - `\p{Cc}` (C0/C1 control characters, e.g. a lone U+0001; F-DG2-180);
  *   - `\p{Cf}` (format characters: U+200B ZWSP, U+200C ZWNJ, U+200D ZWJ, U+2060 WORD JOINER, U+200E LRM,
  *     U+200F RLM, U+061C ARABIC LETTER MARK, U+00AD SOFT HYPHEN, U+180E, U+FEFF, bidi embeddings/isolates, tags, ...);
- *   - `\p{Cs}` (lone surrogates, e.g. an unpaired U+D800; F-DG2-180);
+ *   - `\p{Cs}` (lone surrogates, e.g. an unpaired U+D800; F-DG2-180. Since F-DG2-260 the schemas refuse them first as
+ *     `validation.invalid_character`, see `hasInvalidCharacter`; they are still never visible content);
  *   - `\p{Default_Ignorable_Code_Point}` (F-DG2-180: variation selectors U+FE00-FE0F and U+E0100-E01EF, U+034F
  *     COMBINING GRAPHEME JOINER, Mongolian free variation selectors U+180B-180D and U+180F, Khmer inherent vowels
  *     U+17B4/U+17B5, the Hangul fillers U+115F/U+1160/U+3164/U+FFA0, the tag characters U+E0000-E007F, ...);
@@ -73,15 +74,39 @@ export function hasText(value: string | null | undefined): value is string {
 export const BLANK_TEXT_CODE = "validation.blank";
 
 /**
- * F-DG2-231: field-error code for text that contains a character PostgreSQL `text` cannot store. U+0000 (NUL) is the
- * only such code point in a UTF-8 database (SQLSTATE 22021); a NUL inside otherwise visible text used to reach the
- * database and come back as an undeclared 500. Localized in EN and AR by the web (`problems.validation__invalid_character`).
+ * F-DG2-231 / F-DG2-260: field-error code for text that contains a character that cannot be stored faithfully:
+ * U+0000 (NUL; SQLSTATE 22021 in a UTF-8 database; a NUL inside otherwise visible text used to reach the database and
+ * come back as an undeclared 500) or a lone UTF-16 surrogate (F-DG2-260; see `hasInvalidCharacter`). Localized in EN
+ * and AR by the web (`problems.validation__invalid_character`).
  */
 export const INVALID_CHARACTER_CODE = "validation.invalid_character";
 
-/** F-DG2-231: true when `value` contains a character that cannot be stored (U+0000 NUL). Shared by the schemas and the API's central request check. */
+/**
+ * F-DG2-231 / F-DG2-260: true when `value` contains a character that cannot be stored faithfully:
+ *   - U+0000 NUL, which PostgreSQL `text` cannot hold (SQLSTATE 22021);
+ *   - a lone (unpaired) UTF-16 surrogate (F-DG2-260). A JSON string escape such as "\ud800" survives `JSON.parse`, but
+ *     the string is not well-formed UTF-16: node-postgres silently rewrites it to U+FFFD in a `text` column, and
+ *     PostgreSQL `jsonb` refuses the escape (SQLSTATE 22P02), for example in an audit row.
+ * In `/u` mode `\p{Cs}` matches only an unpaired surrogate: a valid astral pair (an emoji, U+1F600) is one code point
+ * and does not match, so emoji and Arabic text pass. Shared by the schemas (`freeText`, `name`, `reason`, so the web
+ * catches it too), the API's central request check and the OIDC claim checks.
+ */
 export function hasInvalidCharacter(value: string): boolean {
-  return value.includes("\u0000");
+  return value.includes("\u0000") || /\p{Cs}/u.test(value);
+}
+
+/**
+ * F-DG2-260: `value` cut to at most `max` UTF-16 code units WITHOUT splitting a surrogate pair. A plain
+ * `.slice(0, max)` that ends between the two halves of an emoji creates a lone surrogate from valid text, which the
+ * database then stores as U+FFFD (text) or refuses (jsonb). Use this for every server-side truncation of stored text.
+ */
+export function truncateText(value: string, max: number): string {
+  if (value.length <= max) return value;
+  let end = Math.max(0, max);
+  const last = value.charCodeAt(end - 1);
+  const next = value.charCodeAt(end);
+  if (end > 0 && last >= 0xd800 && last <= 0xdbff && next >= 0xdc00 && next <= 0xdfff) end -= 1;
+  return value.slice(0, end);
 }
 
 /**
@@ -89,8 +114,8 @@ export function hasInvalidCharacter(value: string): boolean {
  * (whitespace, format characters or invisible fillers only; see `hasVisibleContent`) is rejected with
  * `validation.blank`; an empty string still fails `min` (`too_small`) only, so a value never gets two errors. The text
  * is stored exactly as entered (no trimming transform). Use `.nullable()` where `null` clears the field.
- * F-DG2-231: a value that contains U+0000 is rejected with `validation.invalid_character` instead (one error, never
- * `validation.blank` as well).
+ * F-DG2-231 / F-DG2-260: a value that contains U+0000 or a lone surrogate is rejected with
+ * `validation.invalid_character` instead (one error, never `validation.blank` as well).
  */
 export function freeText(min: number, max: number) {
   return z
@@ -108,7 +133,8 @@ export function freeText(min: number, max: number) {
  * visible content (`hasVisibleContent`: whitespace, format characters such as U+200F RLM or U+2060 WORD JOINER,
  * U+0085, invisible fillers) is rejected with `validation.blank`. The blank check is skipped whenever `min` already
  * failed, so a value never gets two errors (the `freeText` rule generalized from `min` = 1 to any `min`).
- * F-DG2-231: a value that contains U+0000 is rejected with `validation.invalid_character` (and not also as blank).
+ * F-DG2-231 / F-DG2-260: a value that contains U+0000 or a lone surrogate is rejected with
+ * `validation.invalid_character` (and not also as blank).
  * Declared after `BLANK_TEXT_CODE`/`hasVisibleContent` so the schemas below never read them in their TDZ.
  */
 function trimmedText(min: number, max: number) {

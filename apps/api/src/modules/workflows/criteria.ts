@@ -16,6 +16,7 @@ import {
   type GateCriterionEvaluation,
   type GateDefinition,
   type Warning,
+  truncateText,
 } from "@mth/shared/schemas";
 import { loadVerifiedEvidenceFacts, type EvidenceFact } from "../evidence/index.ts";
 import { loadKpiGateFacts, type KpiGateFacts } from "../kpi/index.ts";
@@ -220,7 +221,8 @@ function goodOutcomeMessage(
   statement: string,
   notPassing: ReadonlyArray<{ criterionCode: string; result: string }>,
 ): string {
-  const quoted = statement.length > 80 ? `${statement.slice(0, 77)}...` : statement;
+  // F-DG2-260: cut on a code-point boundary, so the quoted statement never ends in a lone surrogate.
+  const quoted = statement.length > 80 ? `${truncateText(statement, 77)}...` : statement;
   const which = notPassing.map((c) => `${c.criterionCode} (${c.result})`).join(", ");
   return `Outcome "${quoted}" does not pass the good outcome test: ${which || "no criterion is evaluated"}.`;
 }

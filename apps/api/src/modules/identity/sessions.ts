@@ -6,6 +6,7 @@
 //    absolute expiry). A session is valid only if not revoked, not expired and its user is active.
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { sql, type DbOrTx, type Tx } from "@mth/db";
+import { truncateText } from "@mth/shared/schemas";
 import { v7 as uuidv7 } from "uuid";
 
 export const sha256 = (value: string): Buffer => createHash("sha256").update(value, "utf8").digest();
@@ -49,7 +50,7 @@ export async function createSession(tx: Tx, s: NewSession): Promise<{ sessionId:
       csrf_token_hash: sha256(csrfTokenFor(token)),
       idle_expires_at: sql<Date>`now() + make_interval(mins => ${s.idleMinutes})`,
       absolute_expires_at: sql<Date>`now() + make_interval(hours => ${s.absoluteHours})`,
-      user_agent: s.userAgent ? s.userAgent.slice(0, 512) : null,
+      user_agent: s.userAgent ? truncateText(s.userAgent, 512) : null,
     })
     .execute();
   await tx

@@ -61,8 +61,8 @@ function isWalkableContainer(value: unknown): value is Record<string, unknown> |
 }
 
 /**
- * F-DG2-231: the RFC 6901 pointer of the first string (value or object key) under `value` that contains U+0000, or
- * null. Only parsed JSON and query/params objects are walked; a streamed or binary body (the application/octet-stream
+ * F-DG2-231 / F-DG2-260: the RFC 6901 pointer of the first string (value or object key) under `value` that contains
+ * U+0000 or a lone UTF-16 surrogate (`hasInvalidCharacter`), or null. Only parsed JSON and query/params objects are walked; a streamed or binary body (the application/octet-stream
  * evidence upload) is never read here. Iterative, so a deeply nested body cannot overflow the stack.
  */
 export function findInvalidCharacter(value: unknown, basePointer = ""): string | null {
@@ -86,20 +86,21 @@ export function findInvalidCharacter(value: unknown, basePointer = ""): string |
   return null;
 }
 
-/** The 400 problem for a request string that contains U+0000 (F-DG2-231). */
+/** The 400 problem for a request string that contains U+0000 or a lone surrogate (F-DG2-231, F-DG2-260). */
 export function invalidCharacterProblem(pointer: string) {
   return problems.validation([
     {
       pointer,
       code: INVALID_CHARACTER_CODE,
-      message: "The text contains an unsupported invisible character (U+0000).",
+      message: "The text contains an unsupported character (U+0000 or an unpaired UTF-16 surrogate).",
     },
   ]);
 }
 
 /**
- * F-DG2-231: the central request check. Rejects a JSON body, query string or path parameter that contains U+0000
- * anywhere (PostgreSQL text cannot store it; SQLSTATE 22021) with 400 `validation.invalid_character` at the field's
+ * F-DG2-231 / F-DG2-260: the central request check. Rejects a JSON body, query string or path parameter that contains
+ * U+0000 (PostgreSQL text cannot store it; SQLSTATE 22021) or a lone UTF-16 surrogate (stored as U+FFFD in text, refused
+ * by jsonb with SQLSTATE 22P02) anywhere with 400 `validation.invalid_character` at the field's
  * pointer: `/field` in the body, `/query/<key>` and `/params/<key>` otherwise (the pointer style of `parse`). Runs
  * once per request, as a `preHandler` hook, so no route can miss it; nothing is read from or written to the database.
  */

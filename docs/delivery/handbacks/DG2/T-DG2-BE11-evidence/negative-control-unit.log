@@ -1,0 +1,375 @@
+# negative control (unit): product files reverted to HEAD f4cc48321f0c6ec0fd4c5925c56f6c343e60179b, new tests kept; node v22.22.2; 2026-10-06T12:33:44Z
+# command: npx vitest run --project unit-node packages/shared/src/schemas/schemas.test.ts apps/api/src/modules/platform/platform.test.ts apps/api/src/modules/identity/oidc-claims.test.ts
+
+ RUN  v3.2.4 /home/user/My-owns
+
+ ❯ |unit-node| apps/api/src/modules/identity/oidc-claims.test.ts (5 tests | 4 failed) 17ms
+   × identityClaimsStorable (F-DG2-231, F-DG2-260) > refuses an issuer or subject with U+0000 or a lone surrogate 12ms
+     → "a\ud800": expected true to be false // Object.is equality
+   × identityClaimsStorable (F-DG2-231, F-DG2-260) > refuses an empty value or one longer than its column (issuer 512, subject 255 code points) 1ms
+     → expected true to be false // Object.is equality
+   × identityClaimsStorable (F-DG2-231, F-DG2-260) > counts code points, not UTF-16 units: 255 emoji fit, and emoji or Arabic subjects are accepted 1ms
+     → expected true to be false // Object.is equality
+   × displayNameCandidate (F-DG2-231, F-DG2-260) > treats a value with U+0000 or a lone surrogate as absent (never stored as U+FFFD) 2ms
+     → "Synthetic\ud800Name": expected 'Synthetic�Name' to be null
+   ✓ displayNameCandidate (F-DG2-231, F-DG2-260) > keeps emoji and Arabic verbatim, and never splits a pair at the 200 code-point limit 0ms
+ ❯ |unit-node| packages/shared/src/schemas/schemas.test.ts (69 tests | 6 failed) 164ms
+   ✓ roleAssignmentCreate effective range > compares instants, not strings, across offsets 6ms
+   ✓ uniqueItems mirrors > rejects duplicate permissions in Role and Me.effectivePermissions 2ms
+   ✓ blank free text (F-DG2-150) > hasText: only a string with a non-whitespace character is present 1ms
+   ✓ blank free text (F-DG2-150) > freeText rejects whitespace-only text with validation.blank, keeps the text as entered, and stays typed 4ms
+   ✓ blank free text (F-DG2-150) > every kind of P2 free text rejects a blank value with a pointer to the field 14ms
+   ✓ blank free text (F-DG2-150) > null still clears a nullable field, and valid text still passes 1ms
+   × blank free text (F-DG2-150) > lone low surrogate U+DC00 (Cs), alone and repeated, is not present and is an invalid character (F-DG2-180, F-DG2-260) 13ms
+     → "\udc00": expected [ [ '', 'validation.blank' ] ] to deeply equal [ [ '', …(1) ] ]
+   × blank free text (F-DG2-150) > lone high surrogate U+D800 (Cs), alone and repeated, is not present and is an invalid character (F-DG2-180, F-DG2-260) 8ms
+     → "\ud800": expected [ [ '', 'validation.blank' ] ] to deeply equal [ [ '', …(1) ] ]
+   ✓ blank free text (F-DG2-150) > invisible-only U+0085 NEXT LINE, alone and repeated, is blank and not present (F-DG2-160) 3ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+200B ZERO WIDTH SPACE, alone and repeated, is blank and not present (F-DG2-160) 4ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+200C ZWNJ, alone and repeated, is blank and not present (F-DG2-160) 3ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+200D ZWJ, alone and repeated, is blank and not present (F-DG2-160) 2ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+2060 WORD JOINER, alone and repeated, is blank and not present (F-DG2-160) 2ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+200E LRM, alone and repeated, is blank and not present (F-DG2-160) 2ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+200F RLM, alone and repeated, is blank and not present (F-DG2-160) 2ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+061C ARABIC LETTER MARK, alone and repeated, is blank and not present (F-DG2-160) 2ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+00AD SOFT HYPHEN, alone and repeated, is blank and not present (F-DG2-160) 6ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+180E MONGOLIAN VOWEL SEPARATOR, alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+FEFF BOM, alone and repeated, is blank and not present (F-DG2-160) 2ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+115F HANGUL CHOSEONG FILLER, alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+1160 HANGUL JUNGSEONG FILLER, alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+3164 HANGUL FILLER, alone and repeated, is blank and not present (F-DG2-160) 2ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+FFA0 HALFWIDTH HANGUL FILLER, alone and repeated, is blank and not present (F-DG2-160) 9ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+2800 BRAILLE PATTERN BLANK, alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+16FE4 KHITAN SMALL SCRIPT FILLER, alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+1D159 MUSICAL SYMBOL NULL NOTEHEAD, alone and repeated, is blank and not present (F-DG2-160) 2ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+00A0 NBSP, alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+2028 LINE SEPARATOR, alone and repeated, is blank and not present (F-DG2-160) 3ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+3000 IDEOGRAPHIC SPACE, alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+FE00 VARIATION SELECTOR-1, alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+FE0E VARIATION SELECTOR-15, alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+FE0F VARIATION SELECTOR-16, alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+E0100 VARIATION SELECTOR-17, alone and repeated, is blank and not present (F-DG2-160) 2ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+E01EF VARIATION SELECTOR-256, alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+034F COMBINING GRAPHEME JOINER, alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+180B MONGOLIAN FVS1, alone and repeated, is blank and not present (F-DG2-160) 10ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+180C MONGOLIAN FVS2, alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+180D MONGOLIAN FVS3, alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+180F MONGOLIAN FVS4, alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+17B4 KHMER VOWEL INHERENT AQ, alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+17B5 KHMER VOWEL INHERENT AA, alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+E0041 TAG LATIN CAPITAL LETTER A, alone and repeated, is blank and not present (F-DG2-160) 2ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+0001 START OF HEADING (Cc), alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+001F UNIT SEPARATOR (Cc), alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+007F DELETE (Cc), alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+0080 C1 control (Cc), alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+009F C1 control (Cc), alone and repeated, is blank and not present (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > a mix of every invisible code point is still blank, on every kind of P2 field (F-DG2-160) 1ms
+   ✓ blank free text (F-DG2-150) > visible content with invisible marks is accepted, present and stored verbatim (F-DG2-160) 16ms
+   ✓ blank free text (F-DG2-150) > an invisible-only thesis part is incomplete (F-DG2-160) 0ms
+   ✓ blank free text (F-DG2-150) > a blank thesis part is incomplete 0ms
+   ✓ name and reason: one blank rule (F-DG2-160, T-DG2-BE7) > name rejects invisible-only values with validation.blank only 1ms
+   ✓ name and reason: one blank rule (F-DG2-160, T-DG2-BE7) > reason rejects invisible-only values with validation.blank only 1ms
+   ✓ name and reason: one blank rule (F-DG2-160, T-DG2-BE7) > name: spaces only still fail too_small only (one error, never two) 0ms
+   ✓ name and reason: one blank rule (F-DG2-160, T-DG2-BE7) > reason: spaces only still fail too_small only (one error, never two) 0ms
+   ✓ name and reason: one blank rule (F-DG2-160, T-DG2-BE7) > a value too short for min after trimming gets too_small only, even when it is invisible 0ms
+   ✓ name and reason: one blank rule (F-DG2-160, T-DG2-BE7) > visible text is accepted and trimmed as before, including Arabic with an RLM 0ms
+   ✓ name and reason: one blank rule (F-DG2-160, T-DG2-BE7) > max still applies after trimming 0ms
+   ✓ name and reason: one blank rule (F-DG2-160, T-DG2-BE7) > reasonRequest reports the blank reason at /reason 0ms
+   ✓ U+0000 is an invalid character in free text, name and reason (F-DG2-231) > the code and the predicate 0ms
+   ✓ U+0000 is an invalid character in free text, name and reason (F-DG2-231) > freeText rejects NUL with validation.invalid_character only (never also validation.blank) 4ms
+   ✓ U+0000 is an invalid character in free text, name and reason (F-DG2-231) > name and reason reject NUL with validation.invalid_character only; too short stays too_small only 0ms
+   ✓ U+0000 is an invalid character in free text, name and reason (F-DG2-231) > every kind of field reports it at its own pointer 0ms
+   ✓ U+0000 is an invalid character in free text, name and reason (F-DG2-231) > text without NUL is unaffected (other controls inside visible text stay accepted verbatim) 0ms
+   × a lone UTF-16 surrogate is an invalid character (F-DG2-260) > hasInvalidCharacter is true for a lone high or low surrogate and false for a pair, emoji or Arabic 1ms
+     → "a\ud800": expected false to be true // Object.is equality
+   × a lone UTF-16 surrogate is an invalid character (F-DG2-260) > freeText, name and reason refuse a lone surrogate with validation.invalid_character only 1ms
+     → "a\ud800": expected [] to deeply equal [ [ '', …(1) ] ]
+   × a lone UTF-16 surrogate is an invalid character (F-DG2-260) > reports it at the field's own pointer (charter field, journey step name, reason) 1ms
+     → expected [] to deeply equal [ [ 'outOfScope', …(1) ] ]
+   ✓ a lone UTF-16 surrogate is an invalid character (F-DG2-260) > emoji and Arabic text stay valid and are kept verbatim 1ms
+   × a lone UTF-16 surrogate is an invalid character (F-DG2-260) > truncateText never splits a surrogate pair 0ms
+     → (0 , truncateText) is not a function
+ ❯ |unit-node| apps/api/src/modules/platform/platform.test.ts (19 tests | 2 failed) 138ms
+   ✓ cursor > round-trips and is bound to the filter hash 9ms
+   ✓ cursor > paginates limit+1 rows into a page and a next cursor 1ms
+   ✓ If-Match > 428 when missing, 400 when not a strong numeric ETag, the version otherwise 1ms
+   ✓ request IDs > accepts ^[A-Za-z0-9._-]{1,128}$ and generates a UUIDv7 otherwise 1ms
+   ✓ problems > render RFC 9457 bodies with code and requestId, currentVersion on 409 1ms
+   ✓ problems > maps zod issues to JSON pointers and i18n codes 2ms
+   ✓ Idempotency-Key request hash > ignores key order and changes with any value 1ms
+   ✓ P2 database guard error mapping (ADR-0016 §3, ADR-0015) > maps a version-step guard to 409 version-conflict 0ms
+   ✓ P2 database guard error mapping (ADR-0016 §3, ADR-0015) > maps the gate SoD guard to 403 gate.submitter_cannot_decide and the staleness guard to 409 0ms
+   ✓ P2 database guard error mapping (ADR-0016 §3, ADR-0015) > maps the evidence review SoD guard (0019, F-DG2-140) to 403 evidence.reviewer_is_author 0ms
+   ✓ P2 database guard error mapping (ADR-0016 §3, ADR-0015) > maps template CHECK and NOT NULL violations to 422 with a field pointer 1ms
+   ✓ P2 database guard error mapping (ADR-0016 §3, ADR-0015) > maps audit-required, append-only and identity guards to 500 (programming errors) 0ms
+   ✓ P2 database guard error mapping (ADR-0016 §3, ADR-0015) > leaves unrelated errors to the generic mapping 0ms
+   × invalid characters (U+0000): SQLSTATE mapping and the central request check (F-DG2-231) > maps 22021 character_not_in_repertoire and 22P05 untranslatable_character to 400 validation.invalid_character 17ms
+     → expected { …(7) } to deeply equal { …(7) }
+   ✓ invalid characters (U+0000): SQLSTATE mapping and the central request check (F-DG2-231) > finds the first U+0000 in document order, in values and keys, at an RFC 6901 pointer 1ms
+   × invalid characters (U+0000): SQLSTATE mapping and the central request check (F-DG2-231) > F-DG2-260: also finds a lone UTF-16 surrogate (value or key), but never a valid pair (emoji) or Arabic 1ms
+     → expected null to be '/b' // Object.is equality
+   ✓ invalid characters (U+0000): SQLSTATE mapping and the central request check (F-DG2-231) > walks Fastify-style query/params objects with a non-Object prototype, never a stream or buffer 0ms
+   ✓ invalid characters (U+0000): SQLSTATE mapping and the central request check (F-DG2-231) > a deeply nested body is scanned without recursion (no stack overflow) 95ms
+   ✓ invalid characters (U+0000): SQLSTATE mapping and the central request check (F-DG2-231) > assertNoInvalidCharacters throws the 400 for params, query or body, and passes clean requests 4ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| packages/shared/src/schemas/schemas.test.ts > blank free text (F-DG2-150) > lone low surrogate U+DC00 (Cs), alone and repeated, is not present and is an invalid character (F-DG2-180, F-DG2-260)
+AssertionError: "\udc00": expected [ [ '', 'validation.blank' ] ] to deeply equal [ [ '', …(1) ] ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    [[22m
+[2m      "",[22m
+[32m-     "validation.invalid_character",[39m
+[31m+     "validation.blank",[39m
+[2m    ],[22m
+[2m  ][22m
+
+ ❯ packages/shared/src/schemas/schemas.test.ts:204:72
+    202|         expect(hasVisibleContent(v), JSON.stringify(v)).toBe(false);
+    203|         expect(hasText(v), JSON.stringify(v)).toBe(false);
+    204|         expect(codes(freeText(1, 20).safeParse(v)), JSON.stringify(v))…
+       |                                                                        ^
+    205|         expect(codes(freeText(0, 20).nullable().safeParse(v)), JSON.st…
+    206|           ["", "validation.invalid_character"],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  |unit-node| packages/shared/src/schemas/schemas.test.ts > blank free text (F-DG2-150) > lone high surrogate U+D800 (Cs), alone and repeated, is not present and is an invalid character (F-DG2-180, F-DG2-260)
+AssertionError: "\ud800": expected [ [ '', 'validation.blank' ] ] to deeply equal [ [ '', …(1) ] ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    [[22m
+[2m      "",[22m
+[32m-     "validation.invalid_character",[39m
+[31m+     "validation.blank",[39m
+[2m    ],[22m
+[2m  ][22m
+
+ ❯ packages/shared/src/schemas/schemas.test.ts:204:72
+    202|         expect(hasVisibleContent(v), JSON.stringify(v)).toBe(false);
+    203|         expect(hasText(v), JSON.stringify(v)).toBe(false);
+    204|         expect(codes(freeText(1, 20).safeParse(v)), JSON.stringify(v))…
+       |                                                                        ^
+    205|         expect(codes(freeText(0, 20).nullable().safeParse(v)), JSON.st…
+    206|           ["", "validation.invalid_character"],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  |unit-node| packages/shared/src/schemas/schemas.test.ts > a lone UTF-16 surrogate is an invalid character (F-DG2-260) > hasInvalidCharacter is true for a lone high or low surrogate and false for a pair, emoji or Arabic
+AssertionError: "a\ud800": expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+ ❯ packages/shared/src/schemas/schemas.test.ts:443:77
+    441| 
+    442|   it("hasInvalidCharacter is true for a lone high or low surrogate and…
+    443|     for (const v of LONE) expect(hasInvalidCharacter(v), JSON.stringif…
+       |                                                                             ^
+    444|     for (const v of VALID) expect(hasInvalidCharacter(v), JSON.stringi…
+    445|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  |unit-node| packages/shared/src/schemas/schemas.test.ts > a lone UTF-16 surrogate is an invalid character (F-DG2-260) > freeText, name and reason refuse a lone surrogate with validation.invalid_character only
+AssertionError: "a\ud800": expected [] to deeply equal [ [ '', …(1) ] ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [[39m
+[32m-   [[39m
+[32m-     "",[39m
+[32m-     "validation.invalid_character",[39m
+[32m-   ],[39m
+[32m- ][39m
+[31m+ [][39m
+
+ ❯ packages/shared/src/schemas/schemas.test.ts:449:72
+    447|   it("freeText, name and reason refuse a lone surrogate with validatio…
+    448|     for (const v of ["a\uD800", "\uDC00b", "\uD800\uD800", "Synthetic\…
+    449|       expect(issues(freeText(1, 100).safeParse(v)), JSON.stringify(v))…
+       |                                                                        ^
+    450|       expect(issues(freeText(0, 100).nullable().safeParse(v)), JSON.st…
+    451|         ["", INVALID_CHARACTER_CODE],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  |unit-node| packages/shared/src/schemas/schemas.test.ts > a lone UTF-16 surrogate is an invalid character (F-DG2-260) > reports it at the field's own pointer (charter field, journey step name, reason)
+AssertionError: expected [] to deeply equal [ [ 'outOfScope', …(1) ] ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [[39m
+[32m-   [[39m
+[32m-     "outOfScope",[39m
+[32m-     "validation.invalid_character",[39m
+[32m-   ],[39m
+[32m- ][39m
+[31m+ [][39m
+
+ ❯ packages/shared/src/schemas/schemas.test.ts:461:109
+    459| 
+    460|   it("reports it at the field's own pointer (charter field, journey st…
+    461|     expect(issues(charterUpdate.safeParse({ outOfScope: "Synthetic\uD8…
+       |                                                                                                             ^
+    462|       ["outOfScope", INVALID_CHARACTER_CODE],
+    463|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  |unit-node| packages/shared/src/schemas/schemas.test.ts > a lone UTF-16 surrogate is an invalid character (F-DG2-260) > truncateText never splits a surrogate pair
+TypeError: (0 , truncateText) is not a function
+ ❯ packages/shared/src/schemas/schemas.test.ts:488:12
+    486| 
+    487|   it("truncateText never splits a surrogate pair", () => {
+    488|     expect(truncateText("abc", 10)).toBe("abc");
+       |            ^
+    489|     expect(truncateText("abcdef", 3)).toBe("abc");
+    490|     // "ab" + U+1F600 (2 code units): a cut at 3 would leave a lone hi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/identity/oidc-claims.test.ts > identityClaimsStorable (F-DG2-231, F-DG2-260) > refuses an issuer or subject with U+0000 or a lone surrogate
+AssertionError: "a\ud800": expected true to be false // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- false[39m
+[31m+ true[39m
+
+ ❯ apps/api/src/modules/identity/oidc-claims.test.ts:11:83
+      9|   it("refuses an issuer or subject with U+0000 or a lone surrogate", (…
+     10|     for (const bad of ["a\u0000b", "a\uD800", "\uDC00b", "\uD800\uD800…
+     11|       expect(identityClaimsStorable({ iss: ISS, sub: bad }), JSON.stri…
+       |                                                                                   ^
+     12|       expect(identityClaimsStorable({ iss: `${ISS}${bad}`, sub: "s" })…
+     13|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/identity/oidc-claims.test.ts > identityClaimsStorable (F-DG2-231, F-DG2-260) > refuses an empty value or one longer than its column (issuer 512, subject 255 code points)
+AssertionError: expected true to be false // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- false[39m
+[31m+ true[39m
+
+ ❯ apps/api/src/modules/identity/oidc-claims.test.ts:17:59
+     15| 
+     16|   it("refuses an empty value or one longer than its column (issuer 512…
+     17|     expect(identityClaimsStorable({ iss: ISS, sub: "" })).toBe(false);
+       |                                                           ^
+     18|     expect(identityClaimsStorable({ iss: "", sub: "s" })).toBe(false);
+     19|     expect(identityClaimsStorable({ iss: ISS, sub: "s".repeat(256) }))…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/12]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/identity/oidc-claims.test.ts > identityClaimsStorable (F-DG2-231, F-DG2-260) > counts code points, not UTF-16 units: 255 emoji fit, and emoji or Arabic subjects are accepted
+AssertionError: expected true to be false // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- false[39m
+[31m+ true[39m
+
+ ❯ apps/api/src/modules/identity/oidc-claims.test.ts:27:80
+     25|   it("counts code points, not UTF-16 units: 255 emoji fit, and emoji o…
+     26|     expect(identityClaimsStorable({ iss: ISS, sub: "\u{1F600}".repeat(…
+     27|     expect(identityClaimsStorable({ iss: ISS, sub: "\u{1F600}".repeat(…
+       |                                                                                ^
+     28|     expect(identityClaimsStorable({ iss: ISS, sub: "مستخدم-1" })).toBe…
+     29|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/12]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/identity/oidc-claims.test.ts > displayNameCandidate (F-DG2-231, F-DG2-260) > treats a value with U+0000 or a lone surrogate as absent (never stored as U+FFFD)
+AssertionError: "Synthetic\ud800Name": expected 'Synthetic�Name' to be null
+
+[32m- Expected:[39m 
+null
+
+[31m+ Received:[39m 
+"Synthetic�Name"
+
+ ❯ apps/api/src/modules/identity/oidc-claims.test.ts:35:62
+     33|   it("treats a value with U+0000 or a lone surrogate as absent (never …
+     34|     for (const bad of ["Synthetic\u0000Name", "Synthetic\uD800Name", "…
+     35|       expect(displayNameCandidate(bad), JSON.stringify(bad)).toBeNull(…
+       |                                                              ^
+     36|   });
+     37| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/12]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/platform.test.ts > invalid characters (U+0000): SQLSTATE mapping and the central request check (F-DG2-231) > maps 22021 character_not_in_repertoire and 22P05 untranslatable_character to 400 validation.invalid_character
+AssertionError: expected { …(7) } to deeply equal { …(7) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -2,11 +2,11 @@[39m
+[2m    "code": "validation",[22m
+[2m    "detail": "The request is not valid.",[22m
+[2m    "errors": [[22m
+[2m      {[22m
+[2m        "code": "validation.invalid_character",[22m
+[32m-       "message": "The text contains an unsupported character (U+0000 or an unpaired UTF-16 surrogate).",[39m
+[31m+       "message": "The text contains an unsupported invisible character (U+0000).",[39m
+[2m        "pointer": "",[22m
+[2m      },[22m
+[2m    ],[22m
+[2m    "requestId": "r",[22m
+[2m    "status": 400,[22m
+
+ ❯ apps/api/src/modules/platform/platform.test.ts:195:30
+    193|       const p = mapDatabaseGuardError({ code });
+    194|       expect(p, code).not.toBeNull();
+    195|       expect(p!.toBody("r")).toEqual({
+       |                              ^
+    196|         type: "urn:mth:problem:validation",
+    197|         title: "Validation failed",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/12]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/platform.test.ts > invalid characters (U+0000): SQLSTATE mapping and the central request check (F-DG2-231) > F-DG2-260: also finds a lone UTF-16 surrogate (value or key), but never a valid pair (emoji) or Arabic
+AssertionError: expected null to be '/b' // Object.is equality
+
+[32m- Expected:[39m 
+"/b"
+
+[31m+ Received:[39m 
+null
+
+ ❯ apps/api/src/modules/platform/platform.test.ts:229:62
+    227| 
+    228|   it("F-DG2-260: also finds a lone UTF-16 surrogate (value or key), bu…
+    229|     expect(findInvalidCharacter({ a: "ok", b: "x\uD800y" })).toBe("/b"…
+       |                                                              ^
+    230|     expect(findInvalidCharacter({ steps: [{ name: "ok" }, { name: "\uD…
+    231|     expect(findInvalidCharacter({ "k\uDFFF": 1 })).toBe("/k\uDFFF");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/12]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  12 failed | 81 passed (93)
+   Start at  12:33:45
+   Duration  1.15s (transform 628ms, setup 0ms, collect 1.82s, tests 319ms, environment 1ms, prepare 254ms)
+
+# exit: 1

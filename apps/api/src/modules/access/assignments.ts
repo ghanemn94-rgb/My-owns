@@ -3,7 +3,7 @@
 // If-Match), and exactly one audit event, all in the caller's transaction.
 import { sql, type DbOrTx, type Tx } from "@mth/db";
 import { P1_SCOPE_TYPES, type Permission, type ScopeType } from "@mth/shared";
-import type { RoleAssignment, RoleAssignmentCreate } from "@mth/shared/schemas";
+import { truncateText, type RoleAssignment, type RoleAssignmentCreate } from "@mth/shared/schemas";
 import { v7 as uuidv7 } from "uuid";
 import { record, type AuditContext } from "../audit/index.ts";
 import { decodeCursor, filterHash, iso, isoOrNull, paginate, problems } from "../platform/index.ts";
@@ -245,7 +245,8 @@ export async function revokeAssignment(
     changes: { revokedAt: { from: null, to: "now" } },
   });
   // F-DG1-106: creator assignments derived from this grant never outlive it (same transaction, one audit event each).
-  const derivedReason = `Source assignment ${id} revoked: ${reason}`.slice(0, 1000);
+  // F-DG2-260: cut on a code-point boundary, so an emoji at the 1000 boundary never becomes a lone surrogate.
+  const derivedReason = truncateText(`Source assignment ${id} revoked: ${reason}`, 1000);
   const derived = await tx
     .updateTable("scoped_assignment")
     .set({

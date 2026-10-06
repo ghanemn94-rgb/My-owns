@@ -404,3 +404,31 @@ describe("G2 Direction readiness (REQ-PB-036 failing outcomes, REQ-PB-037 guardr
     );
   });
 });
+
+// F-DG2-260 (T-DG2-BE11): server-side truncation never splits a surrogate pair. The canonical decision row's
+// outcome_text is "<outcome>: <rationale>" cut to 8000; a rationale whose emoji straddles that boundary used to leave a
+// lone high surrogate (stored as U+FFFD). Synthetic demo decision: it approves nothing real.
+describe("decision outcome text is cut on a code-point boundary (F-DG2-260)", () => {
+  it("a rationale with an emoji at the 8000 boundary: the decision is recorded and outcome_text has no U+FFFD", async () => {
+    const p = await setupP2World(api, w);
+    await makeG1Ready(api, p);
+    const sub = await submit(p);
+    expect(sub.status, JSON.stringify(sub.body)).toBe(201);
+    // "approved: " (10) + 7989 x + U+1F600 (2 code units) = 8001 code units; a plain slice(0, 8000) splits the emoji.
+    const rationale = `${"x".repeat(7989)}\u{1F600}`;
+    const res = await call(api.app, "POST", `${gateUrl(p)}/decision`, {
+      session: p.sponsor.session,
+      body: { submissionNo: 1, outcome: "approved", rationale },
+    });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(res.body.rationale).toBe(rationale);
+    const row = await api.db
+      .selectFrom("decision")
+      .select("outcome_text")
+      .where("transformation_id", "=", p.transformationId)
+      .where("kind", "=", "gate")
+      .executeTakeFirstOrThrow();
+    expect(row.outcome_text).toBe(`approved: ${"x".repeat(7989)}`);
+    expect(row.outcome_text).not.toContain("�");
+  });
+});

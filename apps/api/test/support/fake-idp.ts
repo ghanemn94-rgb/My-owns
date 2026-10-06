@@ -14,6 +14,8 @@ export interface IdTokenClaims {
   preferred_username?: string;
   /** Override the nonce (to test nonce mismatch). */
   nonce?: string;
+  /** Override the issuer claim (F-DG2-260: an `iss` with a lone surrogate). */
+  iss?: string;
 }
 
 interface PendingCode {

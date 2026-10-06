@@ -364,12 +364,12 @@ describe("invisible-only free text is blank (F-DG2-160)", () => {
     "\u0085",
     "⁠⁠⁠",
     "؜",
-    // F-DG2-180 (T-DG2-BE8): VS16 + COMBINING GRAPHEME JOINER, a Mongolian FVS, a C0 control, a lone surrogate, an
-    // ideographic variation selector and the Khmer inherent vowels.
+    // F-DG2-180 (T-DG2-BE8): VS16 + COMBINING GRAPHEME JOINER, a Mongolian FVS, a C0 control, an ideographic
+    // variation selector and the Khmer inherent vowels. The lone surrogate "\ud800" moved: since F-DG2-260
+    // (T-DG2-BE11) it is 400 validation.invalid_character (invalid-character.test.ts), no longer validation.blank.
     "\ufe0f\u034f",
     "\u180b\u180f",
     "\u0001",
-    "\ud800",
     "\u{E0100} \u17b4\u17b5",
     // F-DG2-230 (T-DG2-BE10): the two placeholder characters no Unicode property covers, alone, repeated and with
     // whitespace.

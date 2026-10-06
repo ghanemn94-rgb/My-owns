@@ -20,6 +20,8 @@ import {
   evidenceLinkListQuery,
   evidenceReview,
   evidenceUpdate,
+  hasInvalidCharacter,
+  INVALID_CHARACTER_CODE,
   reasonRequest,
   type Evidence,
 } from "@mth/shared/schemas";
@@ -394,7 +396,10 @@ function registerContentRoutes(app: FastifyInstance, db: Db, store: EvidenceStor
             .string()
             .min(1)
             .max(255)
-            .regex(/^[^\\/\x00-\x1f]+$/, "validation.file_name"),
+            .regex(/^[^\\/\x00-\x1f]+$/, "validation.file_name")
+            // F-DG2-260: the same storability rule as every other client string (defence in depth: a header value is
+            // Latin-1 decoded and decodeURIComponent refuses CESU-8 surrogate bytes, so none can arrive today).
+            .refine((v) => !hasInvalidCharacter(v), INVALID_CHARACTER_CODE),
           decodeFileName(Array.isArray(rawName) ? rawName[0] : rawName),
           "header",
         );

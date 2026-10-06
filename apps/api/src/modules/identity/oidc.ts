@@ -174,7 +174,8 @@ export function displayNameCandidate(v: unknown): string | null {
   if (typeof v !== "string") return null;
   const truncated = Array.from(v.trim()).slice(0, DISPLAY_NAME_MAX).join("").trim();
   // F-DG2-160 / F-DG2-180: a value with no visible content (spaces, U+200F, U+2060, VS16, controls, ...) is absent.
-  // F-DG2-231: so is a value with U+0000, which PostgreSQL text cannot store (the next claim is used instead).
+  // F-DG2-231 / F-DG2-260: so is a value with U+0000 or a lone UTF-16 surrogate (`hasInvalidCharacter`), which cannot
+  // be stored faithfully (a lone surrogate would silently become U+FFFD); the next claim is used instead.
   return hasText(truncated) && !hasInvalidCharacter(truncated) ? truncated : null;
 }
 
@@ -187,12 +188,25 @@ function displayNameOf(c: Claims): string {
   return `User ${randomBytes(3).toString("hex")}`;
 }
 
+/** `user_identity` column limits, in code points (`char_length`): issuer 1..512, subject 1..255. */
+const ISSUER_MAX = 512;
+const SUBJECT_MAX = 255;
+
+/** True when `value` holds 1..`max` code points and no invalid character (U+0000, lone surrogate). */
+function storableIdentifier(value: unknown, max: number): boolean {
+  if (typeof value !== "string" || value.length === 0 || hasInvalidCharacter(value)) return false;
+  return Array.from(value).length <= max;
+}
+
 /**
- * F-DG2-231: true when the identifying claims can be stored and looked up. PostgreSQL text cannot hold U+0000, so an
- * ID token whose `iss` or `sub` contains it is refused (audited as a failed sign-in) instead of failing in the database.
+ * F-DG2-231 / F-DG2-260: true when the identifying claims can be stored, looked up and audited faithfully. An ID token
+ * whose `iss` or `sub` contains U+0000 (PostgreSQL text cannot hold it) or a lone UTF-16 surrogate (text would store
+ * U+FFFD, and the audit row's jsonb refuses it with 22P02), or that is empty or longer than its `user_identity` column
+ * allows (a CHECK violation), is refused as `token_invalid` and audited as a failed sign-in, instead of failing in the
+ * database with an answer the callback's contract does not declare (302 and 429 only).
  */
 export function identityClaimsStorable(claims: { iss: string; sub: string }): boolean {
-  return !hasInvalidCharacter(claims.iss) && !hasInvalidCharacter(claims.sub);
+  return storableIdentifier(claims.iss, ISSUER_MAX) && storableIdentifier(claims.sub, SUBJECT_MAX);
 }
 
 /**
@@ -222,7 +236,8 @@ export async function resolveOidcUser(tx: Tx, claims: Claims, requestId: string)
     return { ok: true, userId: existing.id, organizationId: existing.organization_id, outcome: "existing" };
   }
 
-  // F-DG2-231: an e-mail claim with U+0000 cannot be stored or matched, so it is treated as absent.
+  // F-DG2-231 / F-DG2-260: an e-mail claim with U+0000 or a lone surrogate cannot be stored or matched faithfully, so
+  // it is treated as absent.
   const email =
     typeof claims.email === "string" && claims.email.length <= 320 && !hasInvalidCharacter(claims.email)
       ? claims.email

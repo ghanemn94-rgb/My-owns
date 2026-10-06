@@ -330,7 +330,7 @@ describe("GET /api/v1/auth/callback", () => {
         .where("request_id", "=", String(cb.headers["x-request-id"]))
         .execute();
       expect(failed.map((r) => r.reason)).toEqual([
-        "OIDC sign-in refused: the ID token's issuer or subject contains an unsupported character",
+        "OIDC sign-in refused: the ID token's issuer or subject cannot be stored (unsupported character, empty or too long)",
       ]);
       const users = await api.db
         .selectFrom("app_user")
@@ -354,6 +354,149 @@ describe("GET /api/v1/auth/callback", () => {
         name: "Synthetic NUL e-mail user",
       });
       expect(noEmail).toEqual({ display_name: "Synthetic NUL e-mail user", email: null });
+    });
+  });
+
+  // F-DG2-260 (T-DG2-BE11): a lone UTF-16 surrogate is legal in a JSON string escape ("\ud800"), so it survives the
+  // ID token's JSON.parse. It cannot be stored faithfully (text -> U+FFFD, jsonb -> 22P02, which used to surface as an
+  // undeclared 400 validation.format). It follows the NUL contract: 302 token_invalid with a session.login_failed row.
+  describe("a lone UTF-16 surrogate in ID-token claims (F-DG2-260)", () => {
+    const loginFailedReasons = async (requestId: string) =>
+      (
+        await api.db
+          .selectFrom("audit_event")
+          .select(["action", "reason"])
+          .where("request_id", "=", requestId)
+          .execute()
+      ).map((r) => `${r.action}: ${r.reason}`);
+    const countLike = async (table: "user_identity", column: "subject", prefix: string) =>
+      Number(
+        (
+          await api.db
+            .selectFrom(table)
+            .select((eb) => eb.fn.countAll<string>().as("n"))
+            .where(column, "like", `${prefix}%`)
+            .executeTakeFirstOrThrow()
+        ).n,
+      );
+    const sessionCount = async () =>
+      Number(
+        (
+          await api.db
+            .selectFrom("session")
+            .select((eb) => eb.fn.countAll<string>().as("n"))
+            .executeTakeFirstOrThrow()
+        ).n,
+      );
+
+    it("sub with a lone surrogate (just-in-time path): 302 token_invalid, audited, no user, identity or session", async () => {
+      const sessionsBefore = await sessionCount();
+      for (const sub of ["s260-jit-\ud800", "s260-jit-\udc00x", "s260-jit-\ud800\ud800"]) {
+        const { cb, cookie } = await completeLogin({
+          sub,
+          email: "s260-jit@example.invalid",
+          email_verified: true,
+          name: "Synthetic 260",
+        });
+        expect(cb.status, JSON.stringify(sub)).toBe(302);
+        expect(cb.headers["location"], JSON.stringify(sub)).toBe("/login?error=token_invalid");
+        expect(cookie, JSON.stringify(sub)).toBeNull();
+        expect(await loginFailedReasons(String(cb.headers["x-request-id"])), JSON.stringify(sub)).toEqual([
+          "session.login_failed: OIDC sign-in refused: the ID token's issuer or subject cannot be stored (unsupported character, empty or too long)",
+        ]);
+      }
+      expect(await countLike("user_identity", "subject", "s260-jit-")).toBe(0);
+      expect(
+        await api.db.selectFrom("app_user").select("id").where("email", "=", "s260-jit@example.invalid").execute(),
+      ).toEqual([]);
+      expect(await sessionCount()).toBe(sessionsBefore);
+    });
+
+    it("sub with a lone surrogate (bind path, verified e-mail of a pre-provisioned user): 302 token_invalid, not bound", async () => {
+      const u = await createUser(api.db, orgId, { email: "s260-bind@example.invalid" });
+      const { cb, cookie } = await completeLogin({
+        sub: "s260-bind-\udfff",
+        email: "s260-bind@example.invalid",
+        email_verified: true,
+      });
+      expect(cb.status).toBe(302);
+      expect(cb.headers["location"]).toBe("/login?error=token_invalid");
+      expect(cookie).toBeNull();
+      expect(await loginFailedReasons(String(cb.headers["x-request-id"]))).toEqual([
+        "session.login_failed: OIDC sign-in refused: the ID token's issuer or subject cannot be stored (unsupported character, empty or too long)",
+      ]);
+      expect(
+        await api.db
+          .selectFrom("user_identity")
+          .select("id")
+          .where("user_id", "=", u.id)
+          .where("issuer", "=", idp.issuer)
+          .execute(),
+      ).toEqual([]);
+    });
+
+    it("iss with a lone surrogate: 302 token_invalid, audited, no user, identity or session", async () => {
+      const sessionsBefore = await sessionCount();
+      const { cb, cookie } = await completeLogin({
+        sub: "s260-iss",
+        iss: `${idp.issuer}\ud800`,
+        email: "s260-iss@example.invalid",
+        email_verified: true,
+      });
+      expect(cb.status).toBe(302);
+      expect(cb.headers["location"]).toBe("/login?error=token_invalid");
+      expect(cookie).toBeNull();
+      const audit = await loginFailedReasons(String(cb.headers["x-request-id"]));
+      expect(audit).toHaveLength(1);
+      expect(audit[0]).toMatch(/^session\.login_failed: /);
+      expect(await countLike("user_identity", "subject", "s260-iss")).toBe(0);
+      expect(await sessionCount()).toBe(sessionsBefore);
+    });
+
+    it("a subject longer than its column (256 code points) is token_invalid and audited, not an undeclared 422", async () => {
+      const sessionsBefore = await sessionCount();
+      const { cb, cookie } = await completeLogin({ sub: `s260-long-${"s".repeat(246)}` });
+      expect(cb.status).toBe(302);
+      expect(cb.headers["location"]).toBe("/login?error=token_invalid");
+      expect(cookie).toBeNull();
+      expect(await loginFailedReasons(String(cb.headers["x-request-id"]))).toEqual([
+        "session.login_failed: OIDC sign-in refused: the ID token's issuer or subject cannot be stored (unsupported character, empty or too long)",
+      ]);
+      expect(await countLike("user_identity", "subject", "s260-long-")).toBe(0);
+      expect(await sessionCount()).toBe(sessionsBefore);
+    });
+
+    it("a name claim with a lone surrogate is absent: the e-mail is the display name, never U+FFFD", async () => {
+      const user = await jitDisplayName("jit-subject-260-a", {
+        email: "jit-260-a@example.invalid",
+        email_verified: true,
+        name: "Synthetic\ud800Name",
+      });
+      expect(user).toEqual({ display_name: "jit-260-a@example.invalid", email: "jit-260-a@example.invalid" });
+      const viaPreferred = await jitDisplayName("jit-subject-260-b", {
+        email: "jit-260-b@example.invalid",
+        email_verified: true,
+        name: "\udc00Synthetic",
+        preferred_username: "synthetic.preferred.260",
+      });
+      expect(viaPreferred.display_name).toBe("synthetic.preferred.260");
+      // An e-mail claim with a lone surrogate is absent too (not stored, not used to bind).
+      const noEmail = await jitDisplayName("jit-subject-260-c", {
+        email: "jit-260-c\ud800@example.invalid",
+        email_verified: true,
+        name: "Synthetic lone-surrogate e-mail user",
+      });
+      expect(noEmail).toEqual({ display_name: "Synthetic lone-surrogate e-mail user", email: null });
+    });
+
+    it("emoji and Arabic in sub and name still sign in and are stored verbatim", async () => {
+      const name = "\u0645\u0633\u062a\u062e\u062f\u0645 \u062a\u062c\u0631\u064a\u0628\u064a \u{1F600}";
+      const user = await jitDisplayName("jit-subject-260-\u{1F600}-\u0645", {
+        email: "jit-260-d@example.invalid",
+        email_verified: true,
+        name,
+      });
+      expect(user.display_name).toBe(name);
     });
   });
 

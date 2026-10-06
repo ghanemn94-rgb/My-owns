@@ -170,7 +170,8 @@ export function registerIdentity(
         authMode: mode,
         idpIssuer: issuer,
         idpSessionId: null,
-        // F-DG2-231: a User-Agent with U+0000 (only possible past the HTTP parser, which refuses it) is not stored.
+        // F-DG2-231 / F-DG2-260: a User-Agent with U+0000 or a lone surrogate is not stored. Neither can arrive over HTTP
+        // (the parser refuses NUL, and header values are Latin-1 decoded, so they never hold a surrogate).
         userAgent:
           typeof request.headers["user-agent"] === "string" && !hasInvalidCharacter(request.headers["user-agent"])
             ? request.headers["user-agent"]
@@ -274,8 +275,9 @@ export function registerIdentity(
       },
     );
 
-    // F-DG2-231: a value with U+0000 fails here and redirects with invalid_request (the route's declared 302); the
-    // route is therefore exempt from the central check, whose 400 problem the callback contract does not declare.
+    // F-DG2-231 / F-DG2-260: a value with U+0000 or a lone surrogate fails here and redirects with invalid_request (the
+    // route's declared 302); the route is therefore exempt from the central check, whose 400 problem the callback
+    // contract does not declare.
     const storable = (max: number) =>
       z
         .string()
@@ -330,15 +332,33 @@ export function registerIdentity(
           return fail("token_invalid");
         }
         if (!identityClaimsStorable(claims)) {
-          // F-DG2-231: an issuer or subject with U+0000 cannot be stored or looked up; refused and audited.
+          // F-DG2-231 / F-DG2-260: an issuer or subject with U+0000 or a lone surrogate (or empty, or too long for its
+          // column) cannot be stored, looked up or audited faithfully; refused and audited.
           await auditLoginFailure(request, {
             userId: null,
             organizationId: null,
-            reason: "OIDC sign-in refused: the ID token's issuer or subject contains an unsupported character",
+            reason:
+              "OIDC sign-in refused: the ID token's issuer or subject cannot be stored (unsupported character, empty or too long)",
           });
           return fail("token_invalid");
         }
-        const resolved = await db.transaction().execute((tx) => resolveOidcUser(tx, claims, request.id));
+        let resolved: Awaited<ReturnType<typeof resolveOidcUser>>;
+        try {
+          resolved = await db.transaction().execute((tx) => resolveOidcUser(tx, claims, request.id));
+        } catch (err) {
+          // F-DG2-260 (defence in depth behind identityClaimsStorable): a claim value the database refuses (SQLSTATE
+          // class 22 data exception, or 23514 check violation) is a token the server cannot accept, never an
+          // undeclared 400/422 problem from this browser-navigation endpoint. The transaction has rolled back.
+          const sqlState = (err as { code?: unknown }).code;
+          if (typeof sqlState !== "string" || !(sqlState.startsWith("22") || sqlState === "23514")) throw err;
+          request.log.warn({ err }, "OIDC sign-in refused: the database refused an ID-token claim value");
+          await auditLoginFailure(request, {
+            userId: null,
+            organizationId: null,
+            reason: "OIDC sign-in refused: an ID-token claim value could not be stored",
+          });
+          return fail("token_invalid");
+        }
         if (!resolved.ok) {
           await auditLoginFailure(request, {
             userId: resolved.userId,

@@ -1,0 +1,67 @@
+# check: 09-integration   mode: cutf8   started: 2026-10-06T13:05:14Z
+# command: env -u LANG -u LC_ALL -u LC_CTYPE -u LC_COLLATE -u LC_MESSAGES -u LC_NUMERIC -u LC_TIME -u LC_MONETARY LANG=C.UTF-8 PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH env QA_PG_PORT=55471 tests/qa/support/with-pg.sh pnpm test:integration
+# node v24.21.0; LANG=C.UTF-8 LC_ALL=<unset> LC_CTYPE=<unset>
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+> mobily-transformation-hub@0.1.0 test:integration /home/user/My-owns
+> vitest run --project integration
+
+
+ RUN  v3.2.4 /home/user/My-owns
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muwoygaa_07ebbf2e (server_encoding UTF8); applied 19 migrations to a fresh database
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts (10 tests) 5343ms
+   ✓ worker runtime: end to end, restarts and the dead-letter queue > relays and handles a created transformation, and survives a restart without losing the job  3684ms
+   ✓ worker runtime: end to end, restarts and the dead-letter queue > moves a job that keeps failing to ops.failed after the bounded retries  1041ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts (14 tests) 4336ms
+   ✓ every operation, validated against the contract and the zod mirrors > kpi module operations (P2; kpi-exercises.ts, owned by kpi-benefits-engineer)  595ms
+   ✓ every operation, validated against the contract and the zod mirrors > P2 backend operations (p2-exercises.ts): every routed operation exercised with a success  1991ms
+   ✓ every operation, validated against the contract and the zod mirrors > every GET operation with a path parameter: a malformed id is a declared 400 at /params/<name>; nothing written  357ms
+   ✓ every operation, validated against the contract and the zod mirrors > every operation but the OIDC callback: U+0000 in the query is a declared 400 invalid_character  709ms
+ ✓ |integration| packages/db/test/integration/scratch-drop.test.ts (3 tests) 3726ms
+   ✓ dropScratchDatabase never terminates a live client (F-DG1-009) > a drop right after pool.end() raises no 57P01 on the closing pool (40 rounds, 8 clients each)  3309ms
+   ✓ dropScratchDatabase never terminates a live client (F-DG1-009) > a client that is still connected is NOT terminated: the drop refuses, names it, and succeeds once it ends  415ms
+ ✓ |integration| tests/qa/integration/a13-job-idempotency.test.ts (5 tests) 3276ms
+   ✓ A13 running worker: a duplicate delivery is a no-op > consumes the event once; an extra job with the same message completes as 'duplicate'  2603ms
+ ✓ |integration| apps/api/test/integration/blank-text.test.ts (29 tests) 2844ms
+ ✓ |integration| apps/api/test/integration/gates.test.ts (12 tests) 2208ms
+   ✓ G2 Direction readiness (REQ-PB-036 failing outcomes, REQ-PB-037 guardrails) > lists every outcome whose good outcome test is not passing (ids + criteria); zero guardrails blocks submission  461ms
+ ✓ |integration| apps/api/test/integration/aud-write-deny.test.ts (128 tests) 1924ms
+ ✓ |integration| packages/db/test/integration/encoding.test.ts (8 tests) 2010ms
+   ✓ a SQL_ASCII database is refused before anything is created > mth-db status: exit 1 with the same message, nothing written  339ms
+   ✓ a SQL_ASCII database is refused before anything is created > mth-db seed-dev: exit 1 with the same message, nothing written  328ms
+   ✓ a SQL_ASCII database is refused before anything is created > control: the same CLI migrates a UTF8 scratch database created the same way  618ms
+ ✓ |integration| apps/api/test/integration/registers.test.ts (23 tests) 1846ms
+ ✓ |integration| packages/db/test/integration/bootstrap.test.ts (5 tests) 1425ms
+   ✓ mth-db bootstrap > creates the first organization and a technical/access admin with no business permission, fully audited  347ms
+   ✓ mth-db bootstrap > refuses to run twice  377ms
+   ✓ mth-db bootstrap > validates its input and refuses the dev-login issuer  315ms
+ ✓ |integration| apps/api/test/integration/dg2-repairs.test.ts (13 tests) 1296ms
+ ✓ |integration| apps/api/test/integration/invalid-character.test.ts (20 tests) 1096ms
+ ✓ |integration| apps/api/test/integration/kpi/kpi-resources.test.ts (23 tests) 873ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts (33 tests) 882ms
+ ✓ |integration| apps/api/test/integration/access-derived-race.test.ts (4 tests) 848ms
+ ✓ |integration| apps/api/test/integration/kpi/kpi-dg2-repairs.test.ts (11 tests) 752ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts (30 tests) 829ms
+ ✓ |integration| apps/api/test/integration/bu-hierarchy-guard.test.ts (7 tests) 733ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts (18 tests) 657ms
+ ✓ |integration| apps/api/test/integration/evidence.test.ts (6 tests) 575ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts (7 tests) 589ms
+   ✓ mth-db migrate on a fresh database > applies every shipped migration, then reports up to date  342ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts (14 tests) 580ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts (11 tests) 499ms
+ ✓ |integration| apps/api/test/integration/kpi/kpi-aud-write-deny.test.ts (18 tests) 539ms
+ ✓ |integration| apps/api/test/integration/platform.test.ts (12 tests) 462ms
+ ✓ |integration| apps/worker/test/integration/maintenance.test.ts (2 tests) 377ms
+ ✓ |integration| tests/qa/integration/a14-concurrency.test.ts (5 tests) 367ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts (10 tests) 397ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts (13 tests) 318ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts (17 tests) 109ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts (9 tests) 40ms
+
+ Test Files  31 passed (31)
+      Tests  520 passed (520)
+   Start at  13:05:15
+   Duration  53.38s (transform 1.21s, setup 0ms, collect 10.35s, tests 41.76s, environment 0ms, prepare 74ms)
+
+# exit: 0   finished: 2026-10-06T13:06:09Z
