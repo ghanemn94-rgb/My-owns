@@ -1,0 +1,45 @@
+# command: with-pg.sh 29774 pnpm vitest run --project integration apps/api/test/integration/zz-sec-r8-probe.test.ts -t R6 --reporter=verbose
+# BASELINE clone $TMPDIR/probe-r7base at 904394835a128bd992b4316521b772abec1ef867 (round-7 candidate, before BE13) + zz-sec-r8-probe.test.ts copied in; only R6 selected. NOTE: this harness has no logStream option, so errorLogsAdded reads 0 here.  node: v22.22.2  LANG=<unset>  started: 2026-10-06T18:04:56Z
+[with-pg initdb] The database cluster will be initialized with locale "C".
+[with-pg initdb] The default database encoding has accordingly been set to "SQL_ASCII".
+[with-pg] cluster template1 encoding SQL_ASCII, collate C
+
+ RUN  v3.2.4 /var/tmp/mth-run.q3C6Py/claude-0/probe-r7base
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muwznvtm_fd044e6e (server_encoding UTF8); applied 19 migrations to a fresh database
+ ↓ |integration| apps/api/test/integration/zz-sec-r8-probe.test.ts > R1 JSON body: every ill-formed UTF-8 class, both framings -> 400 validation.json, nothing stored > charter create
+ ↓ |integration| apps/api/test/integration/zz-sec-r8-probe.test.ts > R2 BOM handling > one BOM ok; two BOMs, BOM+invalid, BOM only, UTF-16 BOMs -> 400 validation.json
+ ↓ |integration| apps/api/test/integration/zz-sec-r8-probe.test.ts > R3 Content-Type variants > charset params never switch the decoder; unknown JSON-ish types are 400 content_type; never 500
+ ↓ |integration| apps/api/test/integration/zz-sec-r8-probe.test.ts > R4 prototype-poisoning protection survives the new parser > __proto__ / constructor.prototype (plain and \u-escaped) -> 400 validation.json; no pollution
+ ↓ |integration| apps/api/test/integration/zz-sec-r8-probe.test.ts > R5 bodyLimit counts raw bytes (1 MiB) > multibyte body < limit in chars but > limit in bytes -> 400 body_too_large for both framings
+stdout | apps/api/test/integration/zz-sec-r8-probe.test.ts > R6 evidence content upload (contract: application/octet-stream only) > octet-stream bytes are stored verbatim; other media types are a declared 4xx and never store rewritten bytes
+PROBE R6: {"sentSha":"8add2a9b52881d002aac554c630980d012bb36b533094e659bdc67ead9eb3033","out":[{"name":"octet-cl","ct":"application/octet-stream","framing":"cl","status":200,"declared":true,"sentHex":"53796eff00c30aeda08041","storedSha":"8add2a9b52881d002aac554c630980d012bb36b533094e659bdc67ead9eb3033","sentSha":"8add2a9b52881d002aac554c630980d012bb36b533094e659bdc67ead9eb3033","downloadedHex":"53796eff00c30aeda08041","errorLogsAdded":0},{"name":"octet-chunked","ct":"application/octet-stream","framing":"chunked","status":200,"declared":true,"sentHex":"53796eff00c30aeda08041","storedSha":"8add2a9b52881d002aac554c630980d012bb36b533094e659bdc67ead9eb3033","sentSha":"8add2a9b52881d002aac554c630980d012bb36b533094e659bdc67ead9eb3033","downloadedHex":"53796eff00c30aeda08041","errorLogsAdded":0},{"name":"text-cl","ct":"text/plain","framing":"cl","status":500,"code":"internal","declared":false,"why":"contract: uploadEvidenceContent does not declare status 500 (declared: 200, 400, 401, 403, 404, 409, 413, 422, 428); body: {\"type\":\"urn:mth:problem:internal\",\"title\":\"Internal error\",\"status\":500,\"cod","sentHex":"53796eff00c30aeda08041","storedSha":null,"sentSha":"8add2a9b52881d002aac554c630980d012bb36b533094e659bdc67ead9eb3033","downloadedHex":null,"errorLogsAdded":0},{"name":"text-chunked","ct":"text/plain","framing":"chunked","status":400,"code":"validation.invalid_character","declared":true,"sentHex":"53796eff00c30aeda08041","storedSha":null,"sentSha":"8add2a9b52881d002aac554c630980d012bb36b533094e659bdc67ead9eb3033","downloadedHex":null,"errorLogsAdded":0},{"name":"text-chunked-valid","ct":"text/plain; charset=utf-8","framing":"chunked","status":200,"declared":true,"sentHex":"53796e74686574696320746578740a","storedSha":"c64546704066c66977664eee1b47b8d2696f4f55d91780566dde83edd15b6a2e","sentSha":"c64546704066c66977664eee1b47b8d2696f4f55d91780566dde83edd15b6a2e","downloadedHex":"53796e74686574696320746578740a","errorLogsAdded":0},{"name":"text-chunked-noNUL","ct":"text/plain","framing":"chunked","status":200,"declared":true,"sentHex":"53796effc30aeda08041","storedSha":"344dd6eb5aabe32516c93969c8b7fb382a1bfb534c583a4dd166b6966e445253","sentSha":"1917cf94f93b6aef6c9c414c372e4d07ebc3e267b7f3b35e0838a053e9de3cb3","downloadedHex":"53796eefbfbdefbfbd0aefbfbdefbfbdefbfbd41","errorLogsAdded":0},{"name":"json-object","ct":"application/json","framing":"cl","status":500,"code":"internal","declared":false,"why":"contract: uploadEvidenceContent does not declare status 500 (declared: 200, 400, 401, 403, 404, 409, 413, 422, 428); body: {\"type\":\"urn:mth:problem:internal\",\"title\":\"Internal error\",\"status\":500,\"cod","sentHex":"7b2261223a317d","storedSha":null,"sentSha":"015abd7f5cc57a2dd94b7590f04ad8084273905ee33ec5cebeae62276a97f862","downloadedHex":null,"errorLogsAdded":0},{"name":"json-array","ct":"application/json","framing":"cl","status":500,"code":"internal","declared":false,"why":"contract: uploadEvidenceContent does not declare status 500 (declared: 200, 400, 401, 403, 404, 409, 413, 422, 428); body: {\"type\":\"urn:mth:problem:internal\",\"title\":\"Internal error\",\"status\":500,\"cod","sentHex":"5b312c322c335d","storedSha":null,"sentSha":"a615eeaee21de5179de080de8c3052c8da901138406ba71c38c032845f7d54f4","downloadedHex":null,"errorLogsAdded":0},{"name":"json-string","ct":"application/json","framing":"cl","status":200,"declared":true,"sentHex":"2253796e74686574696322","storedSha":"4a85827ad80e8635fb4a2b41a3fce1d0f23ba1eb27db0aa84113a7b0ca415d42","sentSha":"f5defb7d8a17154e98e771f5f7645b0bf67d1400bafa961dcf38ed3a92beecc8","downloadedHex":"53796e746865746963","errorLogsAdded":0}]}
+
+ × |integration| apps/api/test/integration/zz-sec-r8-probe.test.ts > R6 evidence content upload (contract: application/octet-stream only) > octet-stream bytes are stored verbatim; other media types are a declared 4xx and never store rewritten bytes 431ms
+   → text-cl: expected 500 to be less than 500
+ ↓ |integration| apps/api/test/integration/zz-sec-r8-probe.test.ts > R7 query-string edge cases > pointers, stray %, __proto__, repeated keys, health, unmatched route: declared statuses only
+ ↓ |integration| apps/api/test/integration/zz-sec-r8-probe.test.ts > R8 X-File-Name refusal never precedes authorization > a user who may not edit the item gets 403/404 (not 400) for an undecodable name; literal % is kept
+ ↓ |integration| apps/api/test/integration/zz-sec-r8-probe.test.ts > R9 real socket, chunked, no session: invalid UTF-8 JSON on a mutation -> declared 4xx, never 5xx > 401 precedence vs 400 parser error is consistent and declared
+ ↓ |integration| apps/api/test/integration/zz-sec-r8-probe.test.ts > R10 U+FFFD sweep after R1-R9 > no U+FFFD in any probe-written charter, evidence or audit row
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r8-probe.test.ts > R6 evidence content upload (contract: application/octet-stream only) > octet-stream bytes are stored verbatim; other media types are a declared 4xx and never store rewritten bytes
+AssertionError: text-cl: expected 500 to be less than 500
+ ❯ apps/api/test/integration/zz-sec-r8-probe.test.ts:254:32
+    252|     log("R6", { sentSha, out });
+    253|     for (const o of out as Array<{ name: string; status: number; decla…
+    254|       expect(o.status, o.name).toBeLessThan(500);
+       |                                ^
+    255|       expect(o.declared, o.name).toBe(true);
+    256|       // Whatever is stored must be exactly the bytes the client sent …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 skipped (10)
+   Start at  18:04:58
+   Duration  5.73s (transform 1.21s, setup 0ms, collect 2.62s, tests 883ms, environment 0ms, prepare 237ms)
+
+# exit_status: 1  finished: 2026-10-06T18:05:05Z

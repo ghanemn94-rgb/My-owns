@@ -1,0 +1,10 @@
+# command: git diff 90439483..cf3446e4 --stat -- . ':!docs/delivery'; then a grep of added lines for risky patterns
+ tests/qa/support/port-collision-check.sh           | 151 +++++++
+ tests/qa/support/with-pg.sh                        |  21 +-
+ 24 files changed, 1852 insertions(+), 89 deletions(-)
+# added-line scan: eval|new Function|child_process|exec(|https?://(non-localhost)|password=|secret=|BEGIN .*PRIVATE|0.0.0.0|chmod 0?7|innerHTML|dangerouslySetInnerHTML
+869:+      const status = Number(/^HTTP\/1\.1 (\d{3})/.exec(rawHead)?.[1] ?? 0);
+1171:+    OIDC_ISSUER_URL=https://idp.mth-clean-start.invalid/realms/none OIDC_CLIENT_ID=mth-hub
+1845:+  launch() { node -e "require(\"http\").createServer((q,s)=>s.end(\"ok \"+process.argv[1])).listen(+process.argv[1],\"0.0.0.0\")" "$1" >>"$LOG" 2>&1 & MTH_LAUNCHED_PID=$!; }
+# (end of matches)
+# exit_status: 0
