@@ -820,7 +820,7 @@
       "id": "DG2",
       "stage": "P2",
       "name": "Diagnose define and design",
-      "state": "REVIEWING",
+      "state": "FIXING",
       "depends_on": [
         "DG1"
       ],
@@ -961,6 +961,11 @@
           "state": "REVIEWING",
           "at": "2026-10-06T09:55:00Z",
           "note": "Round-5 repairs integrated (D-065): BE8 (F-180 predicate, F-181 OIDC display name), FE7 (F-220 unit-web waits), and BE9 (UTF8 database required, fail closed; every test cluster and database explicitly UTF8). 16 findings CLOSED_VERIFIED, 3 FIXED_PENDING_VERIFICATION, 0 OPEN. Orchestrator verification green in both locale settings. Candidate frozen as 2f81c60a for gate review round 5. code-security verifies F-180/F-181, qa verifies F-220, and domain re-reviews."
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-10-06T10:45:00Z",
+          "note": "Round 5 on candidate 2f81c60a: all three verdicts PASS. code-security closed F-DG2-180 and F-DG2-181, qa closed F-DG2-220 with all 28 checks PASS, and domain raised no findings. Two new Low, non-mandatory code-security findings: F-DG2-230 (two placeholder characters, U+16FE4 and U+1D159, still count as visible; the reviewer's exhaustive sweep found no other residual) and F-DG2-231 (a NUL inside visible text reaches PostgreSQL and returns an undeclared 500 instead of 400; integrity holds). 19 findings CLOSED_VERIFIED, 2 OPEN. Round-6 repair: backend-workflow-engineer T-DG2-BE10 adds both placeholders, rejects NUL centrally in request parsing and the shared schemas, and maps SQLSTATE 22021/22P05 to 400. Then re-freeze and round 6."
         }
       ]
     },
