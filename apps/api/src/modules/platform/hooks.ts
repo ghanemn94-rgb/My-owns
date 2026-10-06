@@ -8,6 +8,7 @@ import type { Permission } from "@mth/shared";
 import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { mapDatabaseGuardError } from "./db-errors.ts";
+import { consumesOf, undeclaredMediaTypeProblem, type RouteConsumesSource } from "./media-types.ts";
 import { HttpProblem, problems } from "./problem.ts";
 import { assertDecodableQuery } from "./request-encoding.ts";
 import { assertNoInvalidCharacters } from "./validation.ts";
@@ -54,6 +55,7 @@ export function sendProblem(reply: FastifyReply, request: FastifyRequest, proble
 
 function mapError(
   error: FastifyError & { code?: string; constraint?: string; table?: string; column?: string },
+  request: RouteConsumesSource,
 ): HttpProblem | null {
   if (error instanceof HttpProblem) return error;
   // P2 database record guards and template constraints (ADR-0016 §3, ADR-0015) first: they are more specific.
@@ -64,7 +66,9 @@ function mapError(
     case "FST_ERR_CTP_EMPTY_JSON_BODY":
       return problems.badRequest("validation.json", "The request body is not valid JSON.");
     case "FST_ERR_CTP_INVALID_MEDIA_TYPE":
-      return problems.badRequest("validation.content_type", "Send the request body as application/json.");
+      // F-DG2-351: like every media-type refusal, the detail names the media types the operation declares. The central
+      // preParsing decision normally prevents this (it canonicalises every accepted Content-Type), so this is a backstop.
+      return undeclaredMediaTypeProblem(consumesOf(request));
     case "FST_ERR_CTP_BODY_TOO_LARGE":
       return problems.badRequest("validation.body_too_large", "The request body is too large.");
     case "FST_ERR_CTP_INVALID_CONTENT_LENGTH":
@@ -89,8 +93,8 @@ function mapError(
  * The problem for any error that reaches an error handler: the specific mapping, else 500 internal (never a plain or
  * internal-leaking body). Shared by `setErrorHandler` and the router-level `frameworkErrors` handler (T-DG2-BE12).
  */
-export function problemForError(error: FastifyError): HttpProblem {
-  return mapError(error) ?? problems.internal();
+export function problemForError(error: FastifyError, request: RouteConsumesSource): HttpProblem {
+  return mapError(error, request) ?? problems.internal();
 }
 
 export interface PlatformOptions {
@@ -148,13 +152,13 @@ export function registerPlatformHooks(app: FastifyInstance, options: PlatformOpt
   });
 
   app.setErrorHandler((error: FastifyError, request, reply) => {
-    const problem = mapError(error);
+    const problem = mapError(error, request);
     if (problem) {
       if (problem.status >= 500) request.log.error({ err: error }, "request failed");
       return sendProblem(reply, request, problem);
     }
     request.log.error({ err: error }, "unhandled error");
-    return sendProblem(reply, request, problemForError(error));
+    return sendProblem(reply, request, problemForError(error, request));
   });
 
   app.setNotFoundHandler((request, reply) => {

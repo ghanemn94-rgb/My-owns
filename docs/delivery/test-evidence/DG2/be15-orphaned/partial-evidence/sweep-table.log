@@ -1,0 +1,122 @@
+| Route | Content-Type class | Framing | Before (HEAD 3b2ab15) | After (BE15) |
+|---|---|---|---|---|
+| upload (octet-stream) | exact | CL | 200 | 200 |
+| upload (octet-stream) | exact | chunked | 200 | 200 |
+| upload (octet-stream) | upper case | CL | 200 | 200 |
+| upload (octet-stream) | upper case | chunked | 200 | 200 |
+| upload (octet-stream) | param | CL | 200 | 200 |
+| upload (octet-stream) | param | chunked | 200 | 200 |
+| upload (octet-stream) | param quoted | CL | 200 | 200 |
+| upload (octet-stream) | param quoted | chunked | 200 | 200 |
+| upload (octet-stream) | param non-utf8 charset | CL | 200 | 200 |
+| upload (octet-stream) | param non-utf8 charset | chunked | 200 | 200 |
+| upload (octet-stream) | SP before ; | CL | 200 | 200 |
+| upload (octet-stream) | SP before ; | chunked | 200 | 200 |
+| upload (octet-stream) | HTAB before ; | CL | 400 validation.content_type: Send the request body as application/json. | 200 |
+| upload (octet-stream) | HTAB before ; | chunked | 400 validation.content_type: Send the request body as application/json. | 200 |
+| upload (octet-stream) | HTAB after ; | CL | 200 | 200 |
+| upload (octet-stream) | HTAB after ; | chunked | 200 | 200 |
+| upload (octet-stream) | leading/trailing SP+HTAB | CL | 200 | 200 |
+| upload (octet-stream) | leading/trailing SP+HTAB | chunked | 200 | 200 |
+| upload (octet-stream) | trailing ; | CL | 200 | 200 |
+| upload (octet-stream) | trailing ; | chunked | 200 | 200 |
+| upload (octet-stream) | garbage params ;;;= | CL | 200 | 400 validation.content_type: Send the request body as application/octet-stream. |
+| upload (octet-stream) | garbage params ;;;= | chunked | 200 | 400 validation.content_type: Send the request body as application/octet-stream. |
+| upload (octet-stream) | text after subtype | CL | 400 validation.content_type: Send the request body as application/octet-stream. | 400 validation.content_type: Send the request body as application/octet-stream. |
+| upload (octet-stream) | text after subtype | chunked | 400 validation.content_type: Send the request body as application/octet-stream. | 400 validation.content_type: Send the request body as application/octet-stream. |
+| upload (octet-stream) | list | CL | 400 validation.content_type: Send the request body as application/octet-stream. | 400 validation.content_type: Send the request body as application/octet-stream. |
+| upload (octet-stream) | list | chunked | 400 validation.content_type: Send the request body as application/octet-stream. | 400 validation.content_type: Send the request body as application/octet-stream. |
+| upload (octet-stream) | duplicate header (same) | CL | 200 | 200 |
+| upload (octet-stream) | duplicate header (same) | chunked | 200 | 200 |
+| upload (octet-stream) | duplicate header (other first) | CL | 400 validation.content_type: Send the request body as application/octet-stream. | 400 validation.content_type: Send the request body as application/octet-stream. |
+| upload (octet-stream) | duplicate header (other first) | chunked | 400 validation.content_type: Send the request body as application/octet-stream. | 400 validation.content_type: Send the request body as application/octet-stream. |
+| upload (octet-stream) | duplicate header (declared first) | CL | 200 | 200 |
+| upload (octet-stream) | duplicate header (declared first) | chunked | 200 | 200 |
+| upload (octet-stream) | empty value | CL | 400 validation.content_type: Send the request body as application/octet-stream. | 400 validation.content_type: Send the request body as application/octet-stream. |
+| upload (octet-stream) | empty value | chunked | 400 validation.content_type: Send the request body as application/octet-stream. | 400 validation.content_type: Send the request body as application/octet-stream. |
+| upload (octet-stream) | malformed (no subtype) | CL | 400 validation.content_type: Send the request body as application/octet-stream. | 400 validation.content_type: Send the request body as application/octet-stream. |
+| upload (octet-stream) | malformed (no subtype) | chunked | 400 validation.content_type: Send the request body as application/octet-stream. | 400 validation.content_type: Send the request body as application/octet-stream. |
+| upload (octet-stream) | other type | CL | 400 validation.content_type: Send the request body as application/octet-stream. | 400 validation.content_type: Send the request body as application/octet-stream. |
+| upload (octet-stream) | other type | chunked | 400 validation.content_type: Send the request body as application/octet-stream. | 400 validation.content_type: Send the request body as application/octet-stream. |
+| upload (octet-stream) | no Content-Type, with body | CL | 400 validation.content_type: Send the request body as application/octet-stream. | 400 validation.content_type: Send the request body as application/octet-stream. |
+| upload (octet-stream) | no Content-Type, with body | chunked | 400 validation.content_type: Send the request body as application/octet-stream. | 400 validation.content_type: Send the request body as application/octet-stream. |
+| createEvidence (JSON) | exact | CL | 201 | 201 |
+| createEvidence (JSON) | exact | chunked | 201 | 201 |
+| createEvidence (JSON) | upper case | CL | 201 | 201 |
+| createEvidence (JSON) | upper case | chunked | 201 | 201 |
+| createEvidence (JSON) | param | CL | 201 | 201 |
+| createEvidence (JSON) | param | chunked | 201 | 201 |
+| createEvidence (JSON) | param quoted | CL | 201 | 201 |
+| createEvidence (JSON) | param quoted | chunked | 201 | 201 |
+| createEvidence (JSON) | param non-utf8 charset | CL | 201 | 400 validation.content_type: Send the request body as application/json. |
+| createEvidence (JSON) | param non-utf8 charset | chunked | 201 | 400 validation.content_type: Send the request body as application/json. |
+| createEvidence (JSON) | SP before ; | CL | 201 | 201 |
+| createEvidence (JSON) | SP before ; | chunked | 201 | 201 |
+| createEvidence (JSON) | HTAB before ; | CL | 400 validation.content_type: Send the request body as application/json. | 201 |
+| createEvidence (JSON) | HTAB before ; | chunked | 400 validation.content_type: Send the request body as application/json. | 201 |
+| createEvidence (JSON) | HTAB after ; | CL | 201 | 201 |
+| createEvidence (JSON) | HTAB after ; | chunked | 201 | 201 |
+| createEvidence (JSON) | leading/trailing SP+HTAB | CL | 201 | 201 |
+| createEvidence (JSON) | leading/trailing SP+HTAB | chunked | 201 | 201 |
+| createEvidence (JSON) | trailing ; | CL | 201 | 201 |
+| createEvidence (JSON) | trailing ; | chunked | 201 | 201 |
+| createEvidence (JSON) | garbage params ;;;= | CL | 201 | 400 validation.content_type: Send the request body as application/json. |
+| createEvidence (JSON) | garbage params ;;;= | chunked | 201 | 400 validation.content_type: Send the request body as application/json. |
+| createEvidence (JSON) | text after subtype | CL | 400 validation.content_type: Send the request body as application/json. | 400 validation.content_type: Send the request body as application/json. |
+| createEvidence (JSON) | text after subtype | chunked | 400 validation.content_type: Send the request body as application/json. | 400 validation.content_type: Send the request body as application/json. |
+| createEvidence (JSON) | list | CL | 400 validation.content_type: Send the request body as application/json. | 400 validation.content_type: Send the request body as application/json. |
+| createEvidence (JSON) | list | chunked | 400 validation.content_type: Send the request body as application/json. | 400 validation.content_type: Send the request body as application/json. |
+| createEvidence (JSON) | duplicate header (same) | CL | 201 | 201 |
+| createEvidence (JSON) | duplicate header (same) | chunked | 201 | 201 |
+| createEvidence (JSON) | duplicate header (other first) | CL | 400 validation.content_type: Send the request body as application/json. | 400 validation.content_type: Send the request body as application/json. |
+| createEvidence (JSON) | duplicate header (other first) | chunked | 400 validation.content_type: Send the request body as application/json. | 400 validation.content_type: Send the request body as application/json. |
+| createEvidence (JSON) | duplicate header (declared first) | CL | 201 | 201 |
+| createEvidence (JSON) | duplicate header (declared first) | chunked | 201 | 201 |
+| createEvidence (JSON) | empty value | CL | 400 validation.content_type: Send the request body as application/json. | 400 validation.content_type: Send the request body as application/json. |
+| createEvidence (JSON) | empty value | chunked | 400 validation.content_type: Send the request body as application/json. | 400 validation.content_type: Send the request body as application/json. |
+| createEvidence (JSON) | malformed (no subtype) | CL | 400 validation.content_type: Send the request body as application/json. | 400 validation.content_type: Send the request body as application/json. |
+| createEvidence (JSON) | malformed (no subtype) | chunked | 400 validation.content_type: Send the request body as application/json. | 400 validation.content_type: Send the request body as application/json. |
+| createEvidence (JSON) | other type | CL | 400 validation.content_type: Send the request body as application/json. | 400 validation.content_type: Send the request body as application/json. |
+| createEvidence (JSON) | other type | chunked | 400 validation.content_type: Send the request body as application/json. | 400 validation.content_type: Send the request body as application/json. |
+| createEvidence (JSON) | no Content-Type, with body | CL | 400 validation.content_type: Send the request body as application/json. | 400 validation.content_type: Send the request body as application/json. |
+| createEvidence (JSON) | no Content-Type, with body | chunked | 400 validation.content_type: Send the request body as application/json. | 400 validation.content_type: Send the request body as application/json. |
+| unmatched POST | exact | CL | 400 validation.json: The request body is not valid UTF-8 JSON. | 404 not_found |
+| unmatched POST | exact | chunked | 400 validation.json: The request body is not valid UTF-8 JSON. | 404 not_found |
+| unmatched POST | upper case | CL | 400 validation.json: The request body is not valid UTF-8 JSON. | 404 not_found |
+| unmatched POST | upper case | chunked | 400 validation.json: The request body is not valid UTF-8 JSON. | 404 not_found |
+| unmatched POST | param | CL | 400 validation.json: The request body is not valid UTF-8 JSON. | 404 not_found |
+| unmatched POST | param | chunked | 400 validation.json: The request body is not valid UTF-8 JSON. | 404 not_found |
+| unmatched POST | param quoted | CL | 400 validation.json: The request body is not valid UTF-8 JSON. | 404 not_found |
+| unmatched POST | param quoted | chunked | 400 validation.json: The request body is not valid UTF-8 JSON. | 404 not_found |
+| unmatched POST | param non-utf8 charset | CL | 400 validation.json: The request body is not valid UTF-8 JSON. | 404 not_found |
+| unmatched POST | param non-utf8 charset | chunked | 400 validation.json: The request body is not valid UTF-8 JSON. | 404 not_found |
+| unmatched POST | SP before ; | CL | 400 validation.json: The request body is not valid UTF-8 JSON. | 404 not_found |
+| unmatched POST | SP before ; | chunked | 400 validation.json: The request body is not valid UTF-8 JSON. | 404 not_found |
+| unmatched POST | HTAB before ; | CL | 404 not_found | 404 not_found |
+| unmatched POST | HTAB before ; | chunked | 404 not_found | 404 not_found |
+| unmatched POST | HTAB after ; | CL | 400 validation.json: The request body is not valid UTF-8 JSON. | 404 not_found |
+| unmatched POST | HTAB after ; | chunked | 400 validation.json: The request body is not valid UTF-8 JSON. | 404 not_found |
+| unmatched POST | leading/trailing SP+HTAB | CL | 400 validation.json: The request body is not valid UTF-8 JSON. | 404 not_found |
+| unmatched POST | leading/trailing SP+HTAB | chunked | 400 validation.json: The request body is not valid UTF-8 JSON. | 404 not_found |
+| unmatched POST | trailing ; | CL | 400 validation.json: The request body is not valid UTF-8 JSON. | 404 not_found |
+| unmatched POST | trailing ; | chunked | 400 validation.json: The request body is not valid UTF-8 JSON. | 404 not_found |
+| unmatched POST | garbage params ;;;= | CL | 400 validation.json: The request body is not valid UTF-8 JSON. | 404 not_found |
+| unmatched POST | garbage params ;;;= | chunked | 400 validation.json: The request body is not valid UTF-8 JSON. | 404 not_found |
+| unmatched POST | text after subtype | CL | 400 validation.json: The request body is not valid UTF-8 JSON. | 404 not_found |
+| unmatched POST | text after subtype | chunked | 400 validation.json: The request body is not valid UTF-8 JSON. | 404 not_found |
+| unmatched POST | list | CL | 404 not_found | 404 not_found |
+| unmatched POST | list | chunked | 404 not_found | 404 not_found |
+| unmatched POST | duplicate header (same) | CL | 400 validation.json: The request body is not valid UTF-8 JSON. | 404 not_found |
+| unmatched POST | duplicate header (same) | chunked | 400 validation.json: The request body is not valid UTF-8 JSON. | 404 not_found |
+| unmatched POST | duplicate header (other first) | CL | 404 not_found | 404 not_found |
+| unmatched POST | duplicate header (other first) | chunked | 404 not_found | 404 not_found |
+| unmatched POST | duplicate header (declared first) | CL | 400 validation.json: The request body is not valid UTF-8 JSON. | 404 not_found |
+| unmatched POST | duplicate header (declared first) | chunked | 400 validation.json: The request body is not valid UTF-8 JSON. | 404 not_found |
+| unmatched POST | empty value | CL | 404 not_found | 404 not_found |
+| unmatched POST | empty value | chunked | 404 not_found | 404 not_found |
+| unmatched POST | malformed (no subtype) | CL | 404 not_found | 404 not_found |
+| unmatched POST | malformed (no subtype) | chunked | 404 not_found | 404 not_found |
+| unmatched POST | other type | CL | 400 validation.content_type: Send the request body as application/json. | 404 not_found |
+| unmatched POST | other type | chunked | 400 validation.content_type: Send the request body as application/json. | 404 not_found |
+| unmatched POST | no Content-Type, with body | CL | 404 not_found | 404 not_found |
+| unmatched POST | no Content-Type, with body | chunked | 404 not_found | 404 not_found |

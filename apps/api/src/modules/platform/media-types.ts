@@ -56,19 +56,143 @@ export function willParseBody(request: Pick<FastifyRequest, "method" | "headers"
   return headers["transfer-encoding"] !== undefined || !(contentLength === undefined || contentLength === "0");
 }
 
+// T-DG2-BE15 (F-DG2-350, F-DG2-351): ONE media-type decision per request, made in the central preParsing hook.
+//   - The Content-Type is parsed per RFC 9110 §8.3.1 (`parseContentType`): field-value OWS at both ends is dropped
+//     (§5.5), OWS (SP/HTAB) is allowed around every ";" (`parameters = *( OWS ";" OWS [ parameter ] )`), the essence is
+//     the lower-cased `type/subtype`, parameter values are tokens or quoted-strings. Anything else is malformed and
+//     refused. A request is accepted iff its essence is in the route's declared `consumes` (and, on application/json,
+//     any charset parameter is UTF-8: see `parametersAcceptable`).
+//   - An accepted request's header is rewritten to the canonical `essence[; name=value]...` before Fastify reads it
+//     (handleRequest runs after preParsing), so Fastify's prefix lookup (lib/contentTypeParser.js getParser: exact key,
+//     or the key followed by ";" or " ") always finds the declared parser: the check and the lookup can't disagree.
+//   - An unmatched route (`request.is404`) never has its body parsed or refused: the Content-Type is removed so no
+//     parser matches, Fastify hands the request straight to the not-found handler (404 not_found for every media type),
+//     and the connection is closed after the response (the unread body is never drained into the server).
+
+/** The parsed media type of a Content-Type field value. */
+export interface ParsedMediaType {
+  /** Lower-cased `type/subtype`. */
+  readonly essence: string;
+  /** Parameters in order: lower-cased name, the value as sent (a token or a quoted-string, quotes kept). */
+  readonly parameters: ReadonlyArray<readonly [name: string, value: string]>;
+}
+
+const TCHAR = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]$/;
+const isTchar = (c: string): boolean => TCHAR.test(c);
+const isOws = (c: string): boolean => c === " " || c === "\t";
+/** qdtext = HTAB / SP / %x21 / %x23-5B / %x5D-7E / obs-text (%x80-FF). */
+function isQdtext(code: number): boolean {
+  return (
+    code === 0x09 ||
+    code === 0x20 ||
+    code === 0x21 ||
+    (code >= 0x23 && code <= 0x5b) ||
+    (code >= 0x5d && code <= 0x7e) ||
+    (code >= 0x80 && code <= 0xff)
+  );
+}
+/** The character after "\" in a quoted-pair: HTAB / SP / VCHAR / obs-text. */
+function isQuotedPairChar(code: number): boolean {
+  return code === 0x09 || (code >= 0x20 && code <= 0x7e) || (code >= 0x80 && code <= 0xff);
+}
+
 /**
- * The media type essence of a Content-Type header (RFC 9110 §8.3.1): the part before any parameter, trimmed and
- * lower-cased; "" when the header is absent or empty. Parameters (charset ...) never change the media type.
+ * Parses one Content-Type field value per RFC 9110 §8.3.1 (media-type = type "/" subtype parameters). Returns null for
+ * an absent, empty, multi-valued (a header array) or malformed value: a list ("a/b, c/d"), a wildcard is a token so
+ * `*\/*` parses (and is then refused because no route declares it), whitespace inside `type/subtype`, a parameter with
+ * no "=" or an empty name/value, an unterminated quoted-string, or trailing text.
+ */
+export function parseContentType(header: string | string[] | undefined): ParsedMediaType | null {
+  if (header === undefined || Array.isArray(header)) return null;
+  let i = 0;
+  let end = header.length;
+  while (i < end && isOws(header.charAt(i))) i++;
+  while (end > i && isOws(header.charAt(end - 1))) end--;
+  const token = (): string => {
+    const from = i;
+    while (i < end && isTchar(header.charAt(i))) i++;
+    return header.slice(from, i);
+  };
+  const type = token();
+  if (type === "" || header.charAt(i) !== "/") return null;
+  i++;
+  const subtype = token();
+  if (subtype === "") return null;
+  const parameters: Array<readonly [string, string]> = [];
+  for (;;) {
+    while (i < end && isOws(header.charAt(i))) i++;
+    if (i === end) break;
+    if (header.charAt(i) !== ";") return null;
+    i++;
+    while (i < end && isOws(header.charAt(i))) i++;
+    if (i === end || header.charAt(i) === ";") continue; // an empty parameter ("a/b;" or "a/b;;c=d") is allowed
+    const name = token();
+    if (name === "" || header.charAt(i) !== "=") return null;
+    i++;
+    let value: string;
+    if (header.charAt(i) === '"') {
+      const from = i;
+      i++;
+      for (;;) {
+        if (i >= end) return null; // unterminated quoted-string
+        const code = header.charCodeAt(i);
+        if (code === 0x22) break;
+        if (code === 0x5c) {
+          if (i + 1 >= end || !isQuotedPairChar(header.charCodeAt(i + 1))) return null;
+          i += 2;
+        } else if (isQdtext(code)) i++;
+        else return null;
+      }
+      i++;
+      value = header.slice(from, i);
+    } else {
+      value = token();
+      if (value === "") return null;
+    }
+    parameters.push([name.toLowerCase(), value]);
+  }
+  return { essence: `${type}/${subtype}`.toLowerCase(), parameters };
+}
+
+/** A parameter value without its quoted-string quoting. */
+export function unquoteParameterValue(value: string): string {
+  return value.startsWith('"') ? value.slice(1, -1).replace(/\\(.)/gs, "$1") : value;
+}
+
+/** The canonical `essence[; name=value]...` form: Fastify's parser lookup matches it for every accepted spelling. */
+export function canonicalContentType(parsed: ParsedMediaType): string {
+  return [parsed.essence, ...parsed.parameters.map(([name, value]) => `${name}=${value}`)].join("; ");
+}
+
+/**
+ * The parameter rule per media type. application/json: every `charset` parameter must be UTF-8 (case-insensitive,
+ * quoted or not). RFC 8259 §8.1 requires UTF-8 for JSON exchanged between systems and §11 defines no charset parameter;
+ * the API decodes JSON as strict UTF-8 whatever the header says, so a body declared in another charset is refused up
+ * front instead of being silently read as UTF-8. application/octet-stream: parameters carry no meaning for the stored
+ * bytes (never decoded), so any well-formed parameter is accepted.
+ */
+export function parametersAcceptable(parsed: ParsedMediaType): boolean {
+  if (parsed.essence !== JSON_MEDIA_TYPE) return true;
+  return parsed.parameters.every(
+    ([name, value]) => name !== "charset" || unquoteParameterValue(value).toLowerCase() === "utf-8",
+  );
+}
+
+/**
+ * The media type essence of a Content-Type header: the lower-cased type/subtype; "" when the header is absent,
+ * multi-valued or malformed (never a match for any declared media type).
  */
 export function mediaTypeEssence(contentType: string | string[] | undefined): string {
-  const value = Array.isArray(contentType) ? contentType[0] : contentType;
-  if (value === undefined) return "";
-  const semicolon = value.indexOf(";");
-  return (semicolon === -1 ? value : value.slice(0, semicolon)).trim().toLowerCase();
+  return parseContentType(contentType)?.essence ?? "";
+}
+
+/** Where a route's declared media types live (a Fastify request, or a minimal stand-in in unit tests). */
+export interface RouteConsumesSource {
+  readonly routeOptions: { readonly config?: { readonly consumes?: readonly string[] } | undefined };
 }
 
 /** The media types the request's route accepts. */
-export function consumesOf(request: FastifyRequest): readonly string[] {
+export function consumesOf(request: RouteConsumesSource): readonly string[] {
   return request.routeOptions.config?.consumes ?? DEFAULT_CONSUMES;
 }
 
@@ -77,11 +201,39 @@ export function undeclaredMediaTypeProblem(consumes: readonly string[]): HttpPro
   return problems.badRequest("validation.content_type", `Send the request body as ${consumes.join(" or ")}.`);
 }
 
-/** Throws the 400 problem when the request carries a body whose media type its route does not declare. */
-export function assertDeclaredMediaType(request: FastifyRequest): void {
-  if (request.is404 || !willParseBody(request)) return;
+/** The outcome of the one media-type decision for a request. */
+export type MediaTypeDecision =
+  | { readonly kind: "no-body" }
+  | { readonly kind: "unmatched-route" }
+  | { readonly kind: "accept"; readonly contentType: string }
+  | { readonly kind: "refuse"; readonly problem: HttpProblem };
+
+/** The one media-type decision (pure): see the header comment. */
+export function decideMediaType(
+  request: Pick<FastifyRequest, "method" | "headers" | "is404"> & RouteConsumesSource,
+): MediaTypeDecision {
+  if (!willParseBody(request)) return { kind: "no-body" };
+  if (request.is404) return { kind: "unmatched-route" };
   const consumes = consumesOf(request);
-  if (!consumes.includes(mediaTypeEssence(request.headers["content-type"]))) throw undeclaredMediaTypeProblem(consumes);
+  const parsed = parseContentType(request.headers["content-type"]);
+  if (parsed === null || !consumes.includes(parsed.essence) || !parametersAcceptable(parsed))
+    return { kind: "refuse", problem: undeclaredMediaTypeProblem(consumes) };
+  return { kind: "accept", contentType: canonicalContentType(parsed) };
+}
+
+/**
+ * Applies the decision to the request: throws the 400 problem on a refusal, rewrites an accepted header to its canonical
+ * form, and removes the Content-Type of an unmatched route so no parser runs. Returns the decision.
+ */
+export function assertDeclaredMediaType(request: FastifyRequest): MediaTypeDecision {
+  const decision = decideMediaType(request);
+  // request.headers is the raw IncomingMessage header object (Fastify's getter returns it when no additional headers
+  // were set), which handleRequest reads after preParsing to pick the parser.
+  const headers = request.raw.headers;
+  if (decision.kind === "refuse") throw decision.problem;
+  if (decision.kind === "accept") headers["content-type"] = decision.contentType;
+  if (decision.kind === "unmatched-route") delete headers["content-type"];
+  return decision;
 }
 
 /** A content-type parser that first re-checks that its media type is one the route declares (defence in depth). */
@@ -124,13 +276,17 @@ export function registerMediaTypeEnforcement(app: FastifyInstance): void {
   });
   // preParsing runs after onRequest (request IDs, rate limiting) and before Fastify reads or parses any body byte.
   app.addHook("preParsing", async (request, reply, payload) => {
+    let decision: MediaTypeDecision;
     try {
-      assertDeclaredMediaType(request);
+      decision = assertDeclaredMediaType(request);
     } catch (err) {
       // The unread body is not drained: like Fastify's own parser errors, the connection closes after the response.
       reply.header("connection", "close");
       throw err;
     }
+    // An unmatched route's body is never read (whatever its size: bodyLimit does not apply to a body nobody reads);
+    // close the connection after the 404 instead of draining it.
+    if (decision.kind === "unmatched-route") reply.header("connection", "close");
     return payload;
   });
 }

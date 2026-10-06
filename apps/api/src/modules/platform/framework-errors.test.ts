@@ -3,12 +3,14 @@ import Fastify, { type FastifyError, type FastifyServerOptions } from "fastify";
 import { describe, expect, it } from "vitest";
 import { clientErrorProblem, createFrameworkErrorHandler, frameworkProblem } from "./framework-errors.ts";
 
+/** A request stand-in: the route's declared media types (the default JSON route). */
+const req = { routeOptions: { config: {} } };
 const err = (code: string, statusCode?: number) =>
   Object.assign(new Error(`synthetic ${code}`), { code, ...(statusCode ? { statusCode } : {}) }) as FastifyError;
 
 describe("frameworkProblem", () => {
   it("maps FST_ERR_BAD_URL to 400 validation.format with a clear detail", () => {
-    const p = frameworkProblem(err("FST_ERR_BAD_URL", 400)).toBody("r1");
+    const p = frameworkProblem(err("FST_ERR_BAD_URL", 400), req).toBody("r1");
     expect(p).toEqual({
       type: "urn:mth:problem:validation",
       title: "Validation failed",
@@ -23,7 +25,7 @@ describe("frameworkProblem", () => {
   });
 
   it("maps FST_ERR_ASYNC_CONSTRAINT to 500 internal without internals", () => {
-    const p = frameworkProblem(err("FST_ERR_ASYNC_CONSTRAINT", 500)).toBody("r2");
+    const p = frameworkProblem(err("FST_ERR_ASYNC_CONSTRAINT", 500), req).toBody("r2");
     expect(p).toEqual({
       type: "urn:mth:problem:internal",
       title: "Internal error",
@@ -34,14 +36,19 @@ describe("frameworkProblem", () => {
   });
 
   it("falls back to the generic error mapping for any other code, never a plain body", () => {
-    expect(frameworkProblem(err("FST_ERR_CTP_INVALID_MEDIA_TYPE", 415)).toBody("r").errors).toEqual([
-      expect.objectContaining({ code: "validation.content_type" }),
+    expect(frameworkProblem(err("FST_ERR_CTP_INVALID_MEDIA_TYPE", 415), req).toBody("r").errors).toEqual([
+      { pointer: "", code: "validation.content_type", message: "Send the request body as application/json." },
     ]);
-    expect(frameworkProblem(err("FST_ERR_SOMETHING_NEW", 400)).toBody("r")).toMatchObject({
+    // F-DG2-351: the detail names the route's declared set, never a hard-coded application/json.
+    const octetRoute = { routeOptions: { config: { consumes: ["application/octet-stream"] } } };
+    expect(frameworkProblem(err("FST_ERR_CTP_INVALID_MEDIA_TYPE", 415), octetRoute).toBody("r").errors).toEqual([
+      { pointer: "", code: "validation.content_type", message: "Send the request body as application/octet-stream." },
+    ]);
+    expect(frameworkProblem(err("FST_ERR_SOMETHING_NEW", 400), req).toBody("r")).toMatchObject({
       status: 500,
       code: "internal",
     });
-    expect(frameworkProblem(err("FST_ERR_RATE", 429)).status).toBe(429);
+    expect(frameworkProblem(err("FST_ERR_RATE", 429), req).status).toBe(429);
   });
 });
 

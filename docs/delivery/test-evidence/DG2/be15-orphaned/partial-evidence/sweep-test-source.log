@@ -1,0 +1,116 @@
+// TEMPORARY T-DG2-BE15 sweep (not part of the candidate; source kept as sweep-test-source.log). SYNTHETIC data. Real
+// sockets, so Node's own header handling (trimming, duplicate Content-Type) applies. One SWEEP line per case.
+import { connect } from "node:net";
+import { afterAll, beforeAll, it } from "vitest";
+import { APP_ORIGIN, call, seedWorld, startApi, type TestApi } from "../support/harness.ts";
+import { setupP2World, type P2World } from "../support/p2-fixtures.ts";
+
+let api: TestApi;
+let p: P2World;
+let T: string;
+let port: number;
+beforeAll(async () => {
+  api = await startApi({});
+  const w = await seedWorld(api.db);
+  p = await setupP2World(api, w);
+  T = `/api/v1/transformations/${p.transformationId}`;
+  for (let i = 0; ; i++) {
+    port = 26000 + Math.floor(Math.random() * 6000);
+    try {
+      await api.app.listen({ port, host: "127.0.0.1" });
+      break;
+    } catch (e) {
+      if (i > 20) throw e;
+    }
+  }
+});
+afterAll(() => api.close());
+
+function raw(request: Buffer): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const s = connect(port, "127.0.0.1");
+    const chunks: Buffer[] = [];
+    const t = setTimeout(() => s.destroy(), 3000);
+    s.on("data", (c: Buffer) => chunks.push(c));
+    s.on("error", reject);
+    s.on("close", () => {
+      clearTimeout(t);
+      resolve(Buffer.concat(chunks).toString("utf8"));
+    });
+    s.write(request);
+  });
+}
+
+const BYTES = Buffer.from([0x53, 0x79, 0x6e, 0xff, 0xc3, 0x0a, 0xed, 0xa0, 0x80, 0x41]);
+const SPELLINGS: Array<[string, string[] | null]> = [
+  ["exact", ["Content-Type: $T"]],
+  ["upper case", ["Content-Type: $U"]],
+  ["param", ["Content-Type: $T; charset=utf-8"]],
+  ["param quoted", ['Content-Type: $T; charset="utf-8"']],
+  ["param non-utf8 charset", ["Content-Type: $T; charset=iso-8859-1"]],
+  ["SP before ;", ["Content-Type: $T ; x=1"]],
+  ["HTAB before ;", ["Content-Type: $T\t; x=1"]],
+  ["HTAB after ;", ["Content-Type: $T;\tx=1"]],
+  ["leading/trailing SP+HTAB", ["Content-Type: \t $T \t"]],
+  ["trailing ;", ["Content-Type: $T;"]],
+  ["garbage params ;;;=", ["Content-Type: $T;;;="]],
+  ["text after subtype", ["Content-Type: $T foo"]],
+  ["list", ["Content-Type: $T, text/plain"]],
+  ["duplicate header (same)", ["Content-Type: $T", "Content-Type: $T"]],
+  ["duplicate header (other first)", ["Content-Type: text/plain", "Content-Type: $T"]],
+  ["duplicate header (declared first)", ["Content-Type: $T", "Content-Type: text/plain"]],
+  ["empty value", ["Content-Type: "]],
+  ["malformed (no subtype)", ["Content-Type: application"]],
+  ["other type", ["Content-Type: $O"]],
+  ["no Content-Type, with body", null],
+];
+
+async function oneCase(target: string, kind: "octet" | "json" | "unmatched", cls: string, lines: string[] | null, framing: "CL" | "chunked") {
+  let url: string;
+  let body: Buffer;
+  const extra: string[] = [];
+  const own = kind === "octet" ? "application/octet-stream" : "application/json";
+  const other = kind === "octet" ? "application/json" : "application/octet-stream";
+  if (kind === "octet") {
+    const c = await call(api.app, "POST", `${T}/evidence`, { session: p.lead.session, body: { ownerUserId: p.lead.id, kind: "file", title: "Synthetic sweep" } });
+    url = `${T}/evidence/${c.body.id}/content`;
+    extra.push(`If-Match: "${c.body.version}"`, "X-File-Name: sweep.bin");
+    body = BYTES;
+  } else if (kind === "json") {
+    url = `${T}/evidence`;
+    body = Buffer.from(JSON.stringify({ ownerUserId: p.lead.id, kind: "note", title: "Synthetic sweep", noteBody: "x" }));
+  } else {
+    url = "/api/v1/does-not-exist";
+    body = BYTES;
+  }
+  const ct = (lines ?? []).map((l) => l.replace("$T", own).replace("$U", own.toUpperCase()).replace("$O", other));
+  const head = [
+    `POST ${url} HTTP/1.1`,
+    "Host: x",
+    "Connection: close",
+    `Origin: ${APP_ORIGIN}`,
+    `Cookie: ${p.lead.session.cookie}`,
+    `X-CSRF-Token: ${p.lead.session.csrf}`,
+    ...extra,
+    ...ct,
+    framing === "CL" ? `Content-Length: ${body.length}` : "Transfer-Encoding: chunked",
+  ].join("\r\n");
+  const payload = framing === "CL" ? body : Buffer.concat([Buffer.from(`${body.length.toString(16)}\r\n`), body, Buffer.from("\r\n0\r\n\r\n")]);
+  const text = await raw(Buffer.concat([Buffer.from(`${head}\r\n\r\n`), payload]));
+  const status = /^HTTP\/1\.1 (\d{3})/.exec(text)?.[1] ?? "none";
+  const bodyText = text.slice(text.indexOf("\r\n\r\n") + 4);
+  let detail = "";
+  try {
+    const j = JSON.parse(bodyText);
+    detail = j.errors?.[0] ? `${j.errors[0].code}: ${j.errors[0].message}` : (j.code ?? "");
+  } catch {
+    detail = bodyText.slice(0, 60);
+  }
+  console.log(`SWEEP ${JSON.stringify({ target, cls, framing, status, detail })}`);
+}
+
+it("sweep", async () => {
+  for (const [kind, target] of [["octet", "upload (octet-stream)"], ["json", "createEvidence (JSON)"], ["unmatched", "unmatched POST"]] as const)
+    for (const [cls, lines] of SPELLINGS)
+      for (const framing of ["CL", "chunked"] as const) await oneCase(target, kind, cls, lines, framing);
+}, 300000);

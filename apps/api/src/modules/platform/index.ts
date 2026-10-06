@@ -58,16 +58,24 @@ export {
 } from "./request-encoding.ts";
 export {
   assertDeclaredMediaType,
+  canonicalContentType,
   consumesOf,
+  decideMediaType,
   DEFAULT_CONSUMES,
   JSON_MEDIA_TYPE,
   mediaTypeEssence,
   OCTET_STREAM_MEDIA_TYPE,
+  parametersAcceptable,
+  parseContentType,
   registerMediaTypeEnforcement,
   restrictParserTo,
   SUPPORTED_REQUEST_MEDIA_TYPES,
   undeclaredMediaTypeProblem,
+  unquoteParameterValue,
   willParseBody,
+  type MediaTypeDecision,
+  type ParsedMediaType,
+  type RouteConsumesSource,
 } from "./media-types.ts";
 export { registerHealthRoutes } from "./health.ts";
 export type { ModuleDeps, ModuleRegistration } from "./deps.ts";

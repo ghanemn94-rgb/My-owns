@@ -15,6 +15,7 @@
 import type { FastifyError, FastifyReply, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { problemForError, sendProblem } from "./hooks.ts";
+import type { RouteConsumesSource } from "./media-types.ts";
 import { problems, type HttpProblem } from "./problem.ts";
 
 /** Static response headers that the security plugin (helmet) adds to every routed response. */
@@ -23,14 +24,14 @@ export type SecurityHeaders = Readonly<Record<string, string>>;
 export const BAD_URL_DETAIL = "The request URL contains an invalid percent-encoding.";
 
 /** The problem for a router-level (framework) error. */
-export function frameworkProblem(error: FastifyError): HttpProblem {
+export function frameworkProblem(error: FastifyError, request: RouteConsumesSource): HttpProblem {
   switch (error.code) {
     case "FST_ERR_BAD_URL":
       return problems.badRequest("validation.format", BAD_URL_DETAIL);
     case "FST_ERR_ASYNC_CONSTRAINT":
       return problems.internal();
     default:
-      return problemForError(error);
+      return problemForError(error, request);
   }
 }
 
@@ -39,7 +40,7 @@ export function createFrameworkErrorHandler(
   securityHeaders: SecurityHeaders,
 ): (error: FastifyError, request: FastifyRequest, reply: FastifyReply) => void {
   return (error, request, reply) => {
-    const problem = frameworkProblem(error);
+    const problem = frameworkProblem(error, request);
     if (problem.status >= 500) request.log.error({ err: error }, "router-level error");
     else request.log.info({ code: error.code }, "request refused by the router");
     // The bare framework context runs no onRequest/onSend hooks: set what they would have set.

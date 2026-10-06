@@ -8,6 +8,7 @@
 // approvals), unrelated to the engineering gates DG0-DG7.
 import { createHash } from "node:crypto";
 import { readdirSync } from "node:fs";
+import { connect } from "node:net";
 import { join } from "node:path";
 import { Readable } from "node:stream";
 import type { LightMyRequestResponse } from "fastify";
@@ -396,5 +397,268 @@ describe("bodiless requests behave as before (F-DG2-320 sweep)", () => {
       payload: "x",
     });
     expect(res.statusCode).toBe(404);
+  });
+});
+
+// ---------------------------------------------------------------------------------------------------------------------
+// T-DG2-BE15 (F-DG2-350, F-DG2-351): one media-type decision for every request, matched or not.
+// ---------------------------------------------------------------------------------------------------------------------
+
+const sha256 = (b: Buffer) => createHash("sha256").update(b).digest("hex");
+
+/** Every body class an unmatched route can receive (F-DG2-350). */
+const UNMATCHED_BODIES: ReadonlyArray<{ name: string; contentType: string | null; body: Buffer; framing: Framing }> = [
+  { name: "octet-stream", contentType: "application/octet-stream", body: ILL_FORMED, framing: "content-length" },
+  { name: "octet-stream chunked", contentType: "application/octet-stream", body: ILL_FORMED, framing: "chunked" },
+  { name: "json", contentType: "application/json", body: Buffer.from('{"a":1}'), framing: "content-length" },
+  { name: "invalid json", contentType: "application/json", body: Buffer.from('{"a":'), framing: "content-length" },
+  { name: "json chunked", contentType: "application/json", body: Buffer.from("[1]"), framing: "chunked" },
+  { name: "text/plain", contentType: "text/plain", body: Buffer.from("x"), framing: "content-length" },
+  { name: "no content-type, with a body", contentType: null, body: ILL_FORMED, framing: "content-length" },
+  { name: "no content-type, chunked", contentType: null, body: ILL_FORMED, framing: "chunked" },
+  { name: "malformed content-type", contentType: "application/octet-stream;;;=", body: ILL_FORMED, framing: "chunked" },
+  {
+    name: "json over bodyLimit",
+    contentType: "application/json",
+    body: Buffer.alloc(2 * 1024 * 1024, 0x20),
+    framing: "content-length",
+  },
+];
+
+describe("an unmatched route is 404 not_found whatever its body (F-DG2-350)", () => {
+  it("S10 (code-security round 9) regression: POST/PUT/DELETE x text/plain, JSON, octet-stream x with/without a session", async () => {
+    const BYTES = ILL_FORMED;
+    for (const [method, url] of [
+      ["POST", "/api/v1/does-not-exist"],
+      ["POST", "/does-not-exist"],
+      ["PUT", `${T}/evidence`],
+      ["DELETE", `${T}/evidence`],
+    ] as Array<["POST" | "PUT" | "DELETE", string]>) {
+      for (const ct of ["text/plain", "application/json", "application/octet-stream"]) {
+        for (const auth of [false, true]) {
+          const res = await api.app.inject({
+            method,
+            url,
+            headers: {
+              "content-type": ct,
+              ...(auth
+                ? { cookie: p.lead.session.cookie, origin: APP_ORIGIN, "x-csrf-token": p.lead.session.csrf }
+                : { origin: APP_ORIGIN }),
+            },
+            payload: ct === "application/json" ? Buffer.from("{}") : BYTES,
+          });
+          expect([method, url, ct, auth, res.statusCode, res.json().code]).toEqual([
+            method,
+            url,
+            ct,
+            auth,
+            404,
+            "not_found",
+          ]);
+        }
+      }
+    }
+  });
+
+  it("every method x body class x session: 404 not_found (problem+json), the connection closes, nothing parsed or logged as an error", async () => {
+    const before = logLines.filter((l) => l.level >= 50 || l.msg === "unhandled error").length;
+    for (const method of ["POST", "PUT", "PATCH", "DELETE"] as const)
+      for (const url of ["/api/v1/does-not-exist", "/does-not-exist", `${T}/evidence/not-a-route/x`])
+        for (const b of UNMATCHED_BODIES)
+          for (const auth of [false, true]) {
+            const raw = await api.app.inject({
+              method,
+              url,
+              headers: {
+                ...(b.contentType === null ? {} : { "content-type": b.contentType }),
+                ...(b.framing === "chunked" ? { "transfer-encoding": "chunked" } : {}),
+                origin: APP_ORIGIN,
+                ...(auth ? { cookie: p.lead.session.cookie, "x-csrf-token": p.lead.session.csrf } : {}),
+              },
+              payload: payloadFor(b.body, b.framing),
+            });
+            const key = [method, url, b.name, auth];
+            expect([...key, raw.statusCode, raw.json().code]).toEqual([...key, 404, "not_found"]);
+            expect(String(raw.headers["content-type"])).toMatch(/^application\/problem\+json/);
+            expect(raw.headers["connection"]).toBe("close");
+          }
+    expect(logLines.filter((l) => l.level >= 50 || l.msg === "unhandled error").length).toBe(before);
+  });
+
+  it("on a real keep-alive socket the unread body never becomes the next request: the server closes after the 404", async () => {
+    const port = await listenBelowEphemeral();
+    // The body is a complete HTTP request: if it leaked into the connection it would be answered as a second request.
+    const smuggled = Buffer.from(`GET /api/v1/me HTTP/1.1\r\nHost: x\r\n\r\n`);
+    for (const [ct, framing] of [
+      ["application/octet-stream", "content-length"],
+      ["application/json", "content-length"],
+      ["text/plain", "chunked"],
+      [null, "content-length"],
+    ] as Array<[string | null, Framing]>) {
+      const head =
+        `POST /api/v1/does-not-exist HTTP/1.1\r\nHost: x\r\nConnection: keep-alive\r\n` +
+        (ct === null ? "" : `Content-Type: ${ct}\r\n`) +
+        (framing === "chunked"
+          ? `Transfer-Encoding: chunked\r\n\r\n${smuggled.length.toString(16)}\r\n`
+          : `Content-Length: ${smuggled.length}\r\n\r\n`);
+      const tail = framing === "chunked" ? "\r\n0\r\n\r\n" : "";
+      const text = await rawSocket(port, Buffer.concat([Buffer.from(head), smuggled, Buffer.from(tail)]));
+      const statuses = [...text.matchAll(/HTTP\/1\.1 (\d{3})/g)].map((m) => m[1]);
+      expect([ct, framing, statuses]).toEqual([ct, framing, ["404"]]);
+      expect(text.toLowerCase()).toContain("connection: close");
+    }
+    // Positive control: the same raw-socket helper sees a matched response normally.
+    const control = await rawSocket(port, Buffer.from("GET /healthz HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"));
+    expect(control).toMatch(/^HTTP\/1\.1 200/);
+  });
+});
+
+/** Listens on a free port in 26000-31999 (below the Linux ephemeral range); retries on a collision. */
+async function listenBelowEphemeral(): Promise<number> {
+  const address = api.app.server.address();
+  if (address !== null && typeof address === "object") return address.port;
+  for (let attempt = 0; ; attempt++) {
+    const port = 26000 + Math.floor(Math.random() * 6000);
+    try {
+      await api.app.listen({ port, host: "127.0.0.1" });
+      return port;
+    } catch (err) {
+      if ((err as { code?: string }).code !== "EADDRINUSE" || attempt >= 20) throw err;
+    }
+  }
+}
+
+/** Writes raw bytes to a new socket and resolves with everything the server sent until it closed (5 s cap). */
+function rawSocket(port: number, request: Buffer): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const s = connect(port, "127.0.0.1");
+    const chunks: Buffer[] = [];
+    const timer = setTimeout(() => s.destroy(), 5000);
+    s.on("data", (c: Buffer) => chunks.push(c));
+    s.on("error", reject);
+    s.on("close", () => {
+      clearTimeout(timer);
+      resolve(Buffer.concat(chunks).toString("latin1"));
+    });
+    s.write(request);
+  });
+}
+
+describe("the media-type check and the parser lookup agree for every spelling (F-DG2-351)", () => {
+  /** Accepted spellings of application/octet-stream: RFC 9110 OWS (SP/HTAB) around ";", case, parameters. */
+  const OCTET_SPELLINGS = [
+    "application/octet-stream\t; x=1", // S11 (code-security round 9): refused before with a JSON detail
+    "application/octet-stream ; x=1",
+    "application/octet-stream;\tx=1",
+    "application/octet-stream \t;\t x=1",
+    "APPLICATION/OCTET-STREAM\t;\tCharset=UTF-8",
+    "\tapplication/octet-stream ",
+    "application/octet-stream;",
+  ];
+
+  it("S11 (code-security round 9) regression: the tab-before-';' upload is accepted and stored byte-exact", async () => {
+    for (const framing of FRAMINGS) {
+      const item = await newFileEvidence(`Synthetic S11 ${framing}`);
+      const res = await rawCall(
+        "POST",
+        `${T}/evidence/${item.id}/content`,
+        "application/octet-stream\t; x=1",
+        ILL_FORMED,
+        framing,
+        {
+          ...ifm(item.version),
+          "x-file-name": "s11.bin",
+        },
+      );
+      expect(res.status, JSON.stringify(res.body)).toBe(200);
+      const rows = await contentRows(item.id);
+      expect(rows.map((r) => r.sha256)).toEqual([sha256(ILL_FORMED)]);
+    }
+  });
+
+  it("S11: every refusal on uploadEvidenceContent names application/octet-stream (never a hard-coded JSON text)", async () => {
+    const item = await newFileEvidence("Synthetic S11 refusals");
+    for (const ct of [
+      "application/octet-stream\t;;;=",
+      "application/octet-stream foo",
+      "application/octet-stream, application/json",
+      "application/json\t; charset=utf-8",
+      "",
+      "*/*",
+    ])
+      for (const framing of FRAMINGS) {
+        const res = await rawCall("POST", `${T}/evidence/${item.id}/content`, ct, ILL_FORMED, framing, {
+          ...ifm(item.version),
+          "x-file-name": "s11.bin",
+        });
+        await expectUndeclaredMediaType(res, OCTET_ONLY);
+      }
+    expect(await contentRows(item.id)).toEqual([]);
+    expect(storedFilesOf(item.id)).toEqual([]);
+  });
+
+  it("every OWS/whitespace spelling of octet-stream reaches the octet parser: stored byte-exact (sha256), downloadable", async () => {
+    for (const ct of OCTET_SPELLINGS)
+      for (const framing of FRAMINGS) {
+        const item = await newFileEvidence(`Synthetic OWS upload ${framing}`);
+        const res = await rawCall("POST", `${T}/evidence/${item.id}/content`, ct, ILL_FORMED, framing, {
+          ...ifm(item.version),
+          "x-file-name": "ows.bin",
+        });
+        expect([ct, framing, res.status], JSON.stringify(res.body)).toEqual([ct, framing, 200]);
+        const rows = await contentRows(item.id);
+        expect([ct, rows.map((r) => [r.sha256, Number(r.size_bytes)])]).toEqual([
+          ct,
+          [[sha256(ILL_FORMED), ILL_FORMED.length]],
+        ]);
+        const download = await api.app.inject({
+          method: "GET",
+          url: `${T}/evidence/${item.id}/content`,
+          headers: { cookie: p.lead.session.cookie },
+        });
+        expect(download.rawPayload.equals(ILL_FORMED)).toBe(true);
+      }
+  });
+
+  it("every OWS/whitespace spelling of application/json reaches the JSON parser: accepted and stored verbatim", async () => {
+    const spellings = [
+      "application/json\t; charset=utf-8",
+      "application/json ; charset=UTF-8",
+      'application/json;\tcharset="utf-8"',
+      "Application/JSON \t",
+      "\tapplication/json",
+    ];
+    for (const ct of spellings)
+      for (const framing of FRAMINGS) {
+        const title = `Synthetic OWS note ${spellings.indexOf(ct)} ${framing} \u0645\u0644\u0627\u062d\u0638\u0629`;
+        const body = Buffer.from(
+          JSON.stringify({ ownerUserId: p.lead.id, kind: "note", title, noteBody: "Synthetic \u00e9" }),
+        );
+        const res = await rawCall("POST", `${T}/evidence`, ct, body, framing);
+        expect([ct, framing, res.status], JSON.stringify(res.body)).toEqual([ct, framing, 201]);
+        const row = await api.db
+          .selectFrom("evidence")
+          .select(["title"])
+          .where("id", "=", res.body.id as string)
+          .executeTakeFirstOrThrow();
+        expect(row.title).toBe(title);
+      }
+  });
+
+  it("every refusal on a JSON operation names application/json: malformed, other charsets, octet-stream spellings", async () => {
+    const valid = Buffer.from(
+      JSON.stringify({ ownerUserId: p.lead.id, kind: "note", title: "Synthetic refused", noteBody: "x" }),
+    );
+    for (const ct of [
+      "application/json; charset=iso-8859-1",
+      "application/json; charset=utf-16",
+      "application/json\t; charset",
+      "application/json foo",
+      "application/json, text/plain",
+      "application/octet-stream\t; x=1",
+      " ",
+    ])
+      for (const framing of FRAMINGS)
+        await expectUndeclaredMediaType(await rawCall("POST", `${T}/evidence`, ct, valid, framing), JSON_ONLY);
   });
 });
