@@ -9152,14 +9152,21 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-2/domain-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-06T05:00:07Z",
           "status": "OPEN",
           "note": "raised by domain-reviewer DG2 round 2 re-run (T-DG2-REV-DOM-R2B); independently reproduced on the live stack. Medium; mandatory because the assigned REQ-PB-031 acceptance criterion is unmet."
+        },
+        {
+          "at": "2026-10-06T05:40:40Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at c65fcc32047a749953b07725058441ac3983f0a6"
         }
-      ]
+      ],
+      "fix_revision": "c65fcc32047a749953b07725058441ac3983f0a6",
+      "fix_summary": "BE4 05abd88 + BE5 c65fcc3: exclusions_present returns attention (not unknown/pass) for a null, empty or whitespace-only Out of scope on a saved charter, and pass only for non-blank text (REQ-PB-031 A01, B0041). G1 initial-charter uses the same hasText rule. Whitespace-only free text is now rejected (400 validation.blank) on every P2 input. The web shows the failing state in EN and AR (FE4 e8c5b14). ADR-0017 s2. Tests: registers.test.ts F-DG2-150 block, blank-text.test.ts, exclusions.test.ts, p2.test.tsx, p2-journeys e2e."
     },
     {
       "id": "F-DG2-151",
@@ -9182,14 +9189,21 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-2/domain-reviewer.json",
       "owner": "frontend-ux-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-06T05:00:07Z",
           "status": "OPEN",
           "note": "raised by domain-reviewer DG2 round 2 re-run (T-DG2-REV-DOM-R2B); independently reproduced in EN and AR screenshots. Low, non-mandatory."
+        },
+        {
+          "at": "2026-10-06T05:40:40Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at e8c5b14009f8c0edc9f0c519c6f5d6435eefb9c7"
         }
-      ]
+      ],
+      "fix_revision": "e8c5b14009f8c0edc9f0c519c6f5d6435eefb9c7",
+      "fix_summary": "FE4: shared gateLabel() shows the verbatim B0023 gate name once (e.g. 'G2 - Direction' / 'G2 - التوجّه') on the gate list and detail; gateName delegates to it; fixtures carry the seeded names; unit, p2 and e2e assertions in EN and AR."
     },
     {
       "id": "F-DG2-152",
@@ -9211,14 +9225,21 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-2/domain-reviewer.json",
       "owner": "transformation-analyst",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-06T05:00:07Z",
           "status": "OPEN",
           "note": "raised by domain-reviewer DG2 round 2 re-run (T-DG2-REV-DOM-R2B). Low, non-mandatory (register accuracy)."
+        },
+        {
+          "at": "2026-10-06T05:40:40Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at b9668d7a31009bc8ab72159bcb746b711835a7bd"
         }
-      ]
+      ],
+      "fix_revision": "b9668d7a31009bc8ab72159bcb746b711835a7bd",
+      "fix_summary": "AN3: REQ-S05-003 screen_api names GET .../tom-canvas and GET .../tom-canvas/{dimensionCode} plus the DesignPage DimensionView. A sweep of all 32 DG2-final rows corrected 10 more non-existent paths and 5 placeholder spellings; 27/27 cited paths exist in openapi.yaml (re-checked by the orchestrator); validate --register DG2 PASS."
     },
     {
       "id": "F-DG2-143",
@@ -9240,14 +9261,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-2/code-security-reviewer.json",
       "owner": "solution-architect",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-02T12:06:00Z",
           "status": "OPEN",
           "note": "raised by code-security-reviewer DG2 round 2 (Low, non-mandatory; does not block the round)"
+        },
+        {
+          "at": "2026-10-06T05:40:41Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at c65fcc32047a749953b07725058441ac3983f0a6"
         }
-      ]
+      ],
+      "fix_revision": "c65fcc32047a749953b07725058441ac3983f0a6",
+      "fix_summary": "BE4 05abd88: explicit 30 s timeout (AST_TEST_TIMEOUT_MS) on every AST-walking boundary test; the global default is unchanged. BE5 c65fcc3: the 3.2 s web test was waiting on TanStack's real-time retry back-off and now runs in about 0.16 s (retryDelay 0) with an explicit timeout. No unit test is within 2x of its timeout (verbose sweep on Node 22 and 24; 520/520)."
     }
   ]
 }
