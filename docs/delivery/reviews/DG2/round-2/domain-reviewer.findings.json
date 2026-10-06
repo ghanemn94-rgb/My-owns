@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG2-150",
+      "stage_id": "DG2",
+      "requirement": "REQ-PB-031",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "Scope sanity check 'Are explicit exclusions documented?' (B0041) never fails: an empty Out of scope on a saved charter gives 'unknown', and a whitespace-only Out of scope gives 'pass'",
+      "reproduction": "Disposable clone at eb8163e2 (candidate 089a2a2f…), fresh PostgreSQL 16 and API (AUTH_MODE=dev, synthetic seed), Node 24.21.0: `with-stack.sh node live-scenario.mjs`. As dev.lead: POST /api/v1/transformations (end_to_end), then POST /transformations/{id}/charter with name, sponsor, lead, case for change, in scope and baseline date but no outOfScope. GET /charter returns scopeCheckPrechecks[exclusions_documented] = {result:'unknown', detail:'No exclusions (out of scope) are recorded yet.'}. Then PATCH /charter {outOfScope:'   '} returns 200, stores '   ', and the same pre-check returns 'pass' ('Explicit exclusions are documented.'). The charter screen renders the 'unknown' state as a grey 'Unknown' badge and the whitespace case as green 'Supported by data'. Source: apps/api/src/modules/transformations/charter.ts:250-253 (`c.out_of_scope === null ? unknown : pass`), and packages/shared/src/schemas/charter.ts `outOfScope: text(1, 20000)` (min length counts whitespace). The result enum has 'attention' but this pre-check never uses it.",
+      "expected": "Register acceptance for REQ-PB-031: 'an empty Out of scope field makes 'Are explicit exclusions documented?' fail'. On a saved charter the Out of scope field is known to be empty (charter field B0035 'Out of scope: [Explicit exclusions]'), so the B0041 check fails, for example with the 'attention' result and a reason. A blank or whitespace-only value is not a documented exclusion and must not pass.",
+      "actual": "Empty Out of scope gives 'unknown' (neutral grey, not a failure), and whitespace-only gives 'pass' (green). The check can therefore never fail, and the assigned acceptance criterion is not met. ADR-0017 §2 ('missing data gives unknown') is applied to a field whose emptiness is itself the B0041 answer.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-2/live-scenario.log",
+        "docs/delivery/test-evidence/DG2/domain/round-2/live-scenario.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-2/screens/en/p2-04-charter.png",
+        "apps/api/src/modules/transformations/charter.ts",
+        "packages/shared/src/schemas/charter.ts",
+        "docs/architecture/adr/ADR-0017-charter-versioning-and-direction.md",
+        "docs/source/playbook.md"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-2/domain-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-06T05:00:07Z",
+          "status": "OPEN",
+          "note": "raised by domain-reviewer DG2 round 2 re-run (T-DG2-REV-DOM-R2B); independently reproduced on the live stack. Medium; mandatory because the assigned REQ-PB-031 acceptance criterion is unmet."
+        }
+      ]
+    },
+    {
+      "id": "F-DG2-151",
+      "stage_id": "DG2",
+      "requirement": "REQ-PB-017",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Product-gate list cards and detail headings repeat the gate code ('G2 – G2 - Direction') in English and Arabic",
+      "reproduction": "Live P2 Playwright journey (apps/web/e2e/p2-journeys.spec.ts, chromium-en and chromium-ar) on the disposable stack: open Gates and Gate G2. Cards read 'G1 – G1 - Case for Change', 'G2 – G2 - Direction', … 'G6 – G6 - Sustain'. The detail heading reads 'G2 – G2 - Direction'. In Arabic it reads 'G2 – G2 - التوجّه'. Cause: apps/web/src/pages/gates/GatesPage.tsx:70 and GateDetailPage.tsx:74 prefix `${code} – ` to sourceNameEn/nameAr, which the seed (0011_p2_methodology_catalogue.sql) already stores as the B0023 gate column 'G2 - Direction'. The API values are correct and verbatim.",
+      "expected": "The gate title shows the B0023 name once, for example 'G2 - Direction' (or the code plus the name without the code prefix), in both languages.",
+      "actual": "The code is shown twice in every gate title on the list and detail screens (EN and AR). This is a cosmetic fidelity defect; the gate logic is unaffected.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-2/screens/en/p2-13-gates.png",
+        "docs/delivery/test-evidence/DG2/domain/round-2/screens/ar/p2-13-gates.png",
+        "docs/delivery/test-evidence/DG2/domain/round-2/screens/en/p2-26-g2-approved.png",
+        "apps/web/src/pages/gates/GatesPage.tsx",
+        "apps/web/src/pages/gates/GateDetailPage.tsx",
+        "packages/db/migrations/0011_p2_methodology_catalogue.sql"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-2/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-06T05:00:07Z",
+          "status": "OPEN",
+          "note": "raised by domain-reviewer DG2 round 2 re-run (T-DG2-REV-DOM-R2B); independently reproduced in EN and AR screenshots. Low, non-mandatory."
+        }
+      ]
+    },
+    {
+      "id": "F-DG2-152",
+      "stage_id": "DG2",
+      "requirement": "REQ-S05-003",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Register names a per-dimension endpoint that does not exist (GET /api/v1/transformations/{id}/tom/dimensions/{dim}); the view is served by GET /tom-canvas",
+      "reproduction": "requirements.csv REQ-S05-003 screen_api = 'Target Operating Model > Dimension; GET /api/v1/transformations/{id}/tom/dimensions/{dim}'. On the live stack, GET /api/v1/transformations/{id}/tom/dimensions/customer_value_proposition returns 404, and docs/api/openapi.yaml has no such path. The behaviour itself exists: GET /transformations/{id}/tom-canvas returns 10 cells, each with cell (current/target design, owner), dimension, gaps, decisions, dependencies and evidence, and the Design page renders the DimensionView (live-canvas.log).",
+      "expected": "The register's screen/API column names the real contract (GET …/tom-canvas, plus the per-dimension view in the Design page), so the register stays an honest map to the implementation.",
+      "actual": "The register cites a non-existent endpoint for an IMPLEMENTED requirement. Documentation drift only; no behaviour gap.",
+      "evidence": [
+        "docs/delivery/requirements.csv",
+        "docs/api/openapi.yaml",
+        "docs/delivery/test-evidence/DG2/domain/round-2/live-scenario.log",
+        "docs/delivery/test-evidence/DG2/domain/round-2/live-canvas.log",
+        "apps/web/src/pages/design/DesignPage.tsx"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-2/domain-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-06T05:00:07Z",
+          "status": "OPEN",
+          "note": "raised by domain-reviewer DG2 round 2 re-run (T-DG2-REV-DOM-R2B). Low, non-mandatory (register accuracy)."
+        }
+      ]
+    }
+  ]
+}
