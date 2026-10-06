@@ -1,0 +1,116 @@
+# command: env -u LANG -u LC_ALL -u LC_CTYPE with-pg.sh 55771 pnpm vitest run --project integration apps/api/test/integration/zz-sec-r6-surrogate.test.ts apps/api/test/integration/zz-sec-r7-probe.test.ts --reporter=verbose
+# node: v22.22.2 commit: 904394835a128bd992b4316521b772abec1ef867 LANG=<unset> started: 2026-10-06T14:46:26Z
+[with-pg initdb] The database cluster will be initialized with locale "C".
+[with-pg initdb] The default database encoding has accordingly been set to "SQL_ASCII".
+[with-pg] cluster template1 encoding SQL_ASCII, collate C
+
+ RUN  v3.2.4 /var/tmp/mth-run.Dxxxqq/claude-0/probe
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muwskmis_e2bc9ac5 (server_encoding UTF8); applied 19 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-r7-probe.test.ts > A. OIDC claims other than iss/sub, and code-point boundaries > A1 sub of exactly 255 astral code points (510 UTF-16 units) signs in and is stored verbatim (code points, not units)
+PROBE A1: {"status":302,"location":"/","rows":1,"cp":255,"verbatim":true}
+
+stdout | apps/api/test/integration/zz-sec-r7-probe.test.ts > A. OIDC claims other than iss/sub, and code-point boundaries > A2 sub of 256 astral code points -> 302 token_invalid + session.login_failed, nothing stored
+PROBE A2: {"status":302,"location":"/login?error=token_invalid","audit":[{"action":"session.login_failed","reason":"OIDC sign-in refused: the ID token's issuer or subject cannot be stored (unsupported character, empty or too long)"}]}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r7-probe.test.ts > A. OIDC claims other than iss/sub, and code-point boundaries > A1 sub of exactly 255 astral code points (510 UTF-16 units) signs in and is stored verbatim (code points, not units) 89ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r7-probe.test.ts > A. OIDC claims other than iss/sub, and code-point boundaries > A2 sub of 256 astral code points -> 302 token_invalid + session.login_failed, nothing stored 19ms
+stdout | apps/api/test/integration/zz-sec-r7-probe.test.ts > A. OIDC claims other than iss/sub, and code-point boundaries > A3 name, preferred_username AND email all carry lone surrogates -> generated display name, email null, never U+FFFD
+PROBE A3: {"status":302,"location":"/","user":[{"display_name":"User 671648","email":null,"eab":null}],"audit":["app_user.create","session.create"]}
+
+stdout | apps/api/test/integration/zz-sec-r7-probe.test.ts > A. OIDC claims other than iss/sub, and code-point boundaries > A4 email with a lone surrogate + email_verified does NOT bind the pre-provisioned user whose e-mail it resembles
+PROBE A4: {"status":302,"location":"/","boundToPreProvisioned":false,"identities":1}
+
+stdout | apps/api/test/integration/zz-sec-r7-probe.test.ts > A. OIDC claims other than iss/sub, and code-point boundaries > A5 callback query: CESU-8 / invalid percent bytes in state, code and error -> declared 302 (never 400 problem)
+PROBE A5: [{"q":"state=%ED%A0%80","status":302,"location":"/login?error=state_invalid"},{"q":"state=abc&code=%ED%A0%80","status":302,"location":"/login?error=state_invalid"},{"q":"state=abc&error=%ED%A0%80","status":302,"location":"/login?error=state_invalid"},{"q":"state=%FF%FE","status":302,"location":"/login?error=state_invalid"},{"q":"st%ED%A0%80te=x","status":302,"location":"/login?error=invalid_request"}]
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r7-probe.test.ts > A. OIDC claims other than iss/sub, and code-point boundaries > A3 name, preferred_username AND email all carry lone surrogates -> generated display name, email null, never U+FFFD 37ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r7-probe.test.ts > A. OIDC claims other than iss/sub, and code-point boundaries > A4 email with a lone surrogate + email_verified does NOT bind the pre-provisioned user whose e-mail it resembles 32ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r7-probe.test.ts > A. OIDC claims other than iss/sub, and code-point boundaries > A5 callback query: CESU-8 / invalid percent bytes in state, code and error -> declared 302 (never 400 problem) 8ms
+stdout | apps/api/test/integration/zz-sec-r7-probe.test.ts > C. header bytes over a real socket (Latin-1 decoding) > C1 dev-login with User-Agent bytes ED A0 80 and UTF-8 Arabic: session.user_agent is the Latin-1 reading (well-formed), audit row intact
+PROBE C1: {"status":"HTTP/1.1 403 Forbidden","storedEqualsLatin1":false}
+
+stdout | apps/api/test/integration/zz-sec-r7-probe.test.ts > C. header bytes over a real socket (Latin-1 decoding) > C2 X-Request-Id with high bytes or markup is never reflected; a generated UUIDv7 is used
+PROBE C2: [{"sent":"r7í ","status":"HTTP/1.1 200 OK","echoed":"01a111ae-44b3-76df-9452-f21e80190fa8"},{"sent":"<script>x</script>","status":"HTTP/1.1 200 OK","echoed":"01a111ae-44b5-77f6-b68d-93539548408b"},{"sent":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"HTTP/1.1 200 OK","echoed":"01a111ae-44b6-76a8-b981-a009b57c8326"}]
+
+stdout | apps/api/test/integration/zz-sec-r7-probe.test.ts > D. framework and client errors over a real socket > D1 each pre-routing error is a 400 problem+json with the routed security headers, a request id and no echo of input
+PROBE D1: {"reference":{"status":"HTTP/1.1 404 Not Found","sec":{"content-security-policy":"default-src 'self';script-src 'self';style-src 'self';img-src 'self' data:;font-src 'self';connect-src 'self';object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'none'","strict-transport-security":"max-age=31536000; includeSubDomains","x-content-type-options":"nosniff","x-frame-options":"SAMEORIGIN","referrer-policy":"no-referrer","cross-origin-opener-policy":"same-origin","cross-origin-resource-policy":"same-origin","origin-agent-cluster":"?1","x-dns-prefetch-control":"off","x-download-options":"noopen","x-permitted-cross-domain-policies":"none","x-xss-protection":"0"}},"cases":[{"name":"bad-url-cesu","status":"HTTP/1.1 400 Bad Request","ct":"application/problem+json; charset=utf-8","rid":"01a111ae-44bd-715c-8dc0-c79a9904db31","bodyCode":"validation","err":"validation.format","setCookie":null,"secSame":true},{"name":"bad-url-unauth-post","status":"HTTP/1.1 400 Bad Request","ct":"application/problem+json; charset=utf-8","rid":"01a111ae-44c1-76ff-bd54-b7aa2b04b068","bodyCode":"validation","err":"validation.format","setCookie":null,"secSame":true},{"name":"header-overflow","status":"HTTP/1.1 400 Bad Request","ct":"application/problem+json; charset=utf-8","rid":"01a111ae-44c3-7511-b62c-60dd2a6e13b2","bodyCode":"validation","err":"validation.headers_too_large","setCookie":null,"secSame":true},{"name":"url-overflow","status":"HTTP/1.1 400 Bad Request","ct":"application/problem+json; charset=utf-8","rid":"01a111ae-44c4-728a-8c70-7ac9af1cfde5","bodyCode":"validation","err":"validation.headers_too_large","setCookie":null,"secSame":true},{"name":"nul-in-header","status":"HTTP/1.1 400 Bad Request","ct":"application/problem+json; charset=utf-8","rid":"01a111ae-44c5-7198-b9c5-25968e2d8782","bodyCode":"validation","err":"validation.malformed_request","setCookie":null,"secSame":true},{"name":"garbage-line","status":"HTTP/1.1 400 Bad Request","ct":"application/problem+json; charset=utf-8","rid":"01a111ae-44c6-745f-8aba-07d3da453d5e","bodyCode":"validation","err":"validation.malformed_request","setCookie":null,"secSame":true},{"name":"cr-injection-attempt","status":"HTTP/1.1 404 Not Found","ct":"application/problem+json; charset=utf-8","rid":"01a111ae-44c7-761c-a42f-68e68531e03d","bodyCode":"not_found","setCookie":null,"secSame":true}]}
+
+stdout | apps/api/test/integration/zz-sec-r7-probe.test.ts > D. framework and client errors over a real socket > D2 a bad URL on a protected mutation writes nothing and leaves no audit row (no authz bypass)
+PROBE D2: {"status":400,"body":{"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request URL contains an invalid percent-encoding.","code":"validation","requestId":"01a111ae-44d9-73ee-aae4-d9051ca4b660","errors":[{"pointer":"","code":"validation.format","message":"The request URL contains an invalid percent-encoding."}]},"auditTotalBefore":"31","nonLoginAfter":"25","nonLoginNow":"25"}
+
+stdout | apps/api/test/integration/zz-sec-r7-probe.test.ts > D. framework and client errors over a real socket > D3 pipelined: a valid request followed by a malformed one on the same socket -> the first response is intact
+PROBE D3: {"statuses":["HTTP/1.1 400"],"length":1090}
+
+stdout | apps/api/test/integration/zz-sec-r7-probe.test.ts > E. stored-data sweep after all probes > E1 no lone surrogate was stored as U+FFFD in identity, user, session or audit_event (both databases)
+PROBE E1: {"oidc":{"user_identity":0,"app_user":0,"session":0,"audit_event":0},"main":{"user_identity":0,"app_user":0,"session":0,"audit_event":0},"mainCharterAuditWithFFFD_fromB1":0}
+
+ × |integration| apps/api/test/integration/zz-sec-r7-probe.test.ts > B. raw ill-formed UTF-8 bytes in a JSON body (not a \u escape) > B1 charter outOfScope with raw CESU-8 bytes ED A0 80 / FF -> observe: refused, or stored as U+FFFD 294ms
+   → [237,160,128]: expected 500 to be less than 500
+ × |integration| apps/api/test/integration/zz-sec-r7-probe.test.ts > C. header bytes over a real socket (Latin-1 decoding) > C1 dev-login with User-Agent bytes ED A0 80 and UTF-8 Arabic: session.user_agent is the Latin-1 reading (well-formed), audit row intact 7ms
+   → expected 'HTTP/1.1 403 Forbidden' to match /^HTTP\/1\.1 204/1\.1 204
+ ✓ |integration| apps/api/test/integration/zz-sec-r7-probe.test.ts > C. header bytes over a real socket (Latin-1 decoding) > C2 X-Request-Id with high bytes or markup is never reflected; a generated UUIDv7 is used 7ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r7-probe.test.ts > D. framework and client errors over a real socket > D1 each pre-routing error is a 400 problem+json with the routed security headers, a request id and no echo of input 15ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r7-probe.test.ts > D. framework and client errors over a real socket > D2 a bad URL on a protected mutation writes nothing and leaves no audit row (no authz bypass) 27ms
+ × |integration| apps/api/test/integration/zz-sec-r7-probe.test.ts > D. framework and client errors over a real socket > D3 pipelined: a valid request followed by a malformed one on the same socket -> the first response is intact 4ms
+   → expected 'HTTP/1.1 400' to be 'HTTP/1.1 200' // Object.is equality
+ ✓ |integration| apps/api/test/integration/zz-sec-r7-probe.test.ts > E. stored-data sweep after all probes > E1 no lone surrogate was stored as U+FFFD in identity, user, session or audit_event (both databases) 3ms
+stdout | apps/api/test/integration/zz-sec-r6-surrogate.test.ts > OIDC callback: lone surrogate in sub (F-DG2-260) > JIT path: new subject 'r6s-jit-\ud800' -> must be the declared 302 (token_invalid), audited
+PROBE 260.jit: {"status":302,"location":"/login?error=token_invalid","body":"","setCookie":["mth_login=; Max-Age=0; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax"],"audit":[{"action":"session.login_failed","reason":"OIDC sign-in refused: the ID token's issuer or subject cannot be stored (unsupported character, empty or too long)"}],"identities":"0","contract":"declared"}
+
+stdout | apps/api/test/integration/zz-sec-r6-surrogate.test.ts > OIDC callback: lone surrogate in sub (F-DG2-260) > bind path: pre-provisioned user with a verified e-mail, subject with a lone surrogate -> must be 302
+PROBE 260.bind: {"status":302,"location":"/login?error=token_invalid","body":"","audit":[{"action":"session.login_failed","reason":"OIDC sign-in refused: the ID token's issuer or subject cannot be stored (unsupported character, empty or too long)"}],"contract":"declared"}
+
+stdout | apps/api/test/integration/zz-sec-r6-surrogate.test.ts > main API: lone surrogate in a value that reaches jsonb directly (journey steps) > journey step name 'Synthetic\ud800step' -> declared status, never 500 (observed status logged)
+PROBE journey.steps: {"status":400,"body":[{"pointer":"/steps/0/name","code":"validation.invalid_character","message":"The text contains an unsupported character (U+0000 or an unpaired UTF-16 surrogate)."}]}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r6-surrogate.test.ts > OIDC callback: lone surrogate in sub (F-DG2-260) > JIT path: new subject 'r6s-jit-\ud800' -> must be the declared 302 (token_invalid), audited 45ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r6-surrogate.test.ts > OIDC callback: lone surrogate in sub (F-DG2-260) > bind path: pre-provisioned user with a verified e-mail, subject with a lone surrogate -> must be 302 26ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r6-surrogate.test.ts > main API: lone surrogate in a value that reaches jsonb directly (journey steps) > journey step name 'Synthetic\ud800step' -> declared status, never 500 (observed status logged) 300ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r7-probe.test.ts > B. raw ill-formed UTF-8 bytes in a JSON body (not a \u escape) > B1 charter outOfScope with raw CESU-8 bytes ED A0 80 / FF -> observe: refused, or stored as U+FFFD
+AssertionError: [237,160,128]: expected 500 to be less than 500
+ ❯ apps/api/test/integration/zz-sec-r7-probe.test.ts:157:51
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r7-probe.test.ts > C. header bytes over a real socket (Latin-1 decoding) > C1 dev-login with User-Agent bytes ED A0 80 and UTF-8 Arabic: session.user_agent is the Latin-1 reading (well-formed), audit row intact
+AssertionError: expected 'HTTP/1.1 403 Forbidden' to match /^HTTP\/1\.1 204/1\.1 204
+
+[32m- Expected:[39m 
+/^HTTP\/1\.1 204/
+
+[31m+ Received:[39m 
+"HTTP/1.1 403 Forbidden"
+
+ ❯ apps/api/test/integration/zz-sec-r7-probe.test.ts:177:28
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r7-probe.test.ts > D. framework and client errors over a real socket > D3 pipelined: a valid request followed by a malformed one on the same socket -> the first response is intact
+AssertionError: expected 'HTTP/1.1 400' to be 'HTTP/1.1 200' // Object.is equality
+
+Expected: [32m"HTTP/1.1 [7m2[27m00"[39m
+Received: [31m"HTTP/1.1 [7m4[27m00"[39m
+
+ ❯ apps/api/test/integration/zz-sec-r7-probe.test.ts:241:27
+    239|     const statuses = raw.match(/HTTP\/1\.1 \d{3}/g);
+    240|     log("D3", { statuses, length: raw.length });
+    241|     expect(statuses?.[0]).toBe("HTTP/1.1 200");
+       |                           ^
+    242|   });
+    243| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  3 failed | 12 passed (15)
+   Start at  14:46:29
+   Duration  9.23s (transform 1.26s, setup 0ms, collect 3.66s, tests 3.86s, environment 0ms, prepare 115ms)
+
+# exit_status: 1  finished: 2026-10-06T14:46:39Z

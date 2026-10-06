@@ -1,0 +1,17 @@
+# command: git diff --stat 51a692b1..90439483 -- . ':!docs/delivery'
+ packages/shared/src/schemas/common.ts              |  44 +++-
+ packages/shared/src/schemas/schemas.test.ts        | 116 ++++++++-
+ 27 files changed, 1207 insertions(+), 63 deletions(-)
+
+# command: git diff 51a692b1..90439483 -- . ':!docs/delivery' | grep '^+' | grep -Ei 'https?://|eval\(|new Function|innerHTML|dangerouslySetInnerHTML|password|secret|api[_-]?key|GRANT|SUPERUSER|child_process|exec\(|process\.env'
++const ISS = "https://idp.example.invalid/realms/synthetic";
++      const res = await api.app.inject({ method, url, headers: { origin: "http://localhost:3000" } });
++  it("OPTIONS (CORS preflight) is a 404 problem: same-origin only, no CORS headers are granted", async () => {
++      headers: { origin: "http://synthetic.invalid", "access-control-request-method": "POST" },
+# grep exit: 0
+
+# command: git diff 51a692b1..90439483 -- docs/api/openapi.yaml package.json pnpm-lock.yaml .github deploy packages/db/migrations | wc -l
+0
+
+# CSP: old inline directives (51a692b1) vs HELMET_OPTIONS (90439483)
+CSP directives identical

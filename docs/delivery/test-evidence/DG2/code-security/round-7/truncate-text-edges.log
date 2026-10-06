@@ -1,0 +1,18 @@
+# command: node --experimental-strip-types truncate-text-edges.mts $TMPDIR/probe/packages/shared/src/schemas/common.ts  (node v24.21.0, commit 904394835a128bd992b4316521b772abec1ef867)
+PASS max between pair halves: got "ab" (len 2, wellFormed true) want "ab"
+PASS max after pair: got "ab😀" (len 4, wellFormed true) want "ab😀"
+PASS max=1 with leading pair: got "" (len 0, wellFormed true) want ""
+PASS max=0: got "" (len 0, wellFormed true) want ""
+PASS no cut needed: got "a😀" (len 3, wellFormed true) want "a😀"
+PASS Arabic BMP: got "نطاق" (len 4, wellFormed true) want "نطاق"
+PASS ZWJ family cut mid-sequence stays well-formed: got "👨‍" (len 3, wellFormed true) want "👨‍"
+exhaustive: 182 lengths checked
+PASS hasInvalidCharacter("\ud800") = true
+PASS hasInvalidCharacter("\udfff") = true
+PASS hasInvalidCharacter("a\udbffb") = true
+PASS hasInvalidCharacter("😀") = false
+PASS hasInvalidCharacter("\u0000") = true
+PASS hasInvalidCharacter("نص") = false
+PASS hasInvalidCharacter("�") = false
+ALL PASS
+# exit_status: 0
