@@ -1,0 +1,11 @@
+import { randomUUID } from "node:crypto";
+const BASE = process.env.E2E_BASE_URL;
+const r = await fetch(`${BASE}/api/v1/auth/dev-login`, { method: "POST", headers: { "content-type": "application/json", origin: BASE }, body: JSON.stringify({ username: "dev.lead" }) });
+const cookie = r.headers.getSetCookie().map((c) => c.split(";")[0]).join("; ");
+const me = await (await fetch(`${BASE}/api/v1/me`, { headers: { cookie } })).json();
+const h = { cookie, origin: BASE, "x-csrf-token": me.csrfToken, "content-type": "application/json", "idempotency-key": randomUUID() };
+const t = await (await fetch(`${BASE}/api/v1/transformations`, { method: "POST", headers: h, body: JSON.stringify({ businessUnitId: "01920000-0000-7000-9000-000000000102", name: "Synthetic canvas check", mode: "end_to_end" }) })).json();
+const c = await (await fetch(`${BASE}/api/v1/transformations/${t.id}/tom-canvas`, { headers: { cookie } })).json();
+console.log("canvas cells:", c.cells.length, "keys of one cell view:", JSON.stringify(Object.keys(c.cells[0])), "cell keys:", JSON.stringify(Object.keys(c.cells[0].cell ?? {})));
+console.log("dimensions:", JSON.stringify(c.cells.map((x) => x.cell?.dimensionCode)));
+console.log(c.cells.length === 10 ? "PASS REQ-PB-041.ten-boxes (10 cells)" : "FAIL REQ-PB-041.ten-boxes");

@@ -1,0 +1,69 @@
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+readyz: {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+PASS REQ-PB-012.b0018-text :: expected the six B0018 governance roles present with verbatim accountability :: actual catalogue count=14; missing=[]
+PASS REQ-PB-003.modular-needs-entry-phase :: expected 400 validation (ADR-0007) :: actual 400 [{"pointer":"/entryPhase","code":"validation.required","message":"validation.required"}]
+PASS REQ-PB-003.only-two-modes :: expected 400 for mode 'hybrid' :: actual 400
+PASS REQ-PB-003.modular-with-entry :: expected 201 :: actual 201 mode=modular entryPhase=design
+PASS REQ-PB-003.e2e-created :: expected 201 end_to_end, phase diagnose :: actual mode=end_to_end phase=diagnose
+GATES ["G1|G1 - Case for Change|G1 - مبررات التغيير|","G2|G2 - Direction|G2 - التوجّه|","G3|G3 - Target State|G3 - الحالة المستهدفة|","G4|G4 - Mobilization|G4 - التعبئة|","G5|G5 - Scale|G5 - التوسّع|","G6|G6 - Sustain|G6 - الاستدامة|"]
+PASS REQ-PB-017.api-gate-names-b0023 :: expected API sourceNameEn equals B0023 gate column :: actual ["G1 - Case for Change","G2 - Direction","G3 - Target State","G4 - Mobilization","G5 - Scale","G6 - Sustain"]
+PASS REQ-PB-016.G2-before-G1-refused :: expected 422 gate.out_of_sequence :: actual 422 "gate.out_of_sequence"
+PASS REQ-PB-016.G3-before-G1-refused :: expected 422 gate.out_of_sequence :: actual 422 "gate.out_of_sequence"
+PRECHECKS(no out of scope) [{"code":"outcome_linkage","result":"not_applicable","detail":"Answered by people; no system pre-check."},{"code":"problem_traceability","result":"attention","detail":"No confirmed diagnostic finding traces the scope yet."},{"code":"exclusions_documented","result":"unknown","detail":"No exclusions (out of scope) are recorded yet."},{"code":"baseline_measurable","result":"unknown","detail":"No baseline is recorded yet."},{"code":"executive_decisions_visible","result":"unknown","detail":"No open decision is recorded yet."}]
+FAIL REQ-PB-031.empty-out-of-scope-fails :: expected exclusions_documented check fails (attention/fail) on a saved charter with empty Out of scope :: actual unknown: No exclusions (out of scope) are recorded yet.
+PASS REQ-PB-031.empty-string-out-of-scope :: expected rejected (400) :: actual 400
+FAIL REQ-PB-031.whitespace-out-of-scope :: expected whitespace-only Out of scope is not 'documented' (no pass) :: actual PATCH 200; stored="   "; precheck=pass
+human answer 'yes' with blank exclusions: PATCH 200; answer=yes
+PASS REQ-PB-031.out-of-scope-present-passes :: expected pass :: actual pass
+PASS REQ-PB-031.five-checks :: expected 5 pre-check entries in source order :: actual ["outcome_linkage","problem_traceability","exclusions_documented","baseline_measurable","executive_decisions_visible"]
+PASS REQ-PB-029.versions-retained :: expected >=3 versions :: actual 4
+PASS REQ-PB-035.top-outcome-warning :: expected charter.top_outcomes_count warning with 0 top outcomes :: actual ["charter.top_outcomes_count","charter.thesis_incomplete","charter.thesis_incomplete","charter.thesis_incomplete","charter.thesis_incomplete"]
+PASS REQ-PB-030.thesis-incomplete :: expected thesis incomplete warning :: actual ["charter.top_outcomes_count","charter.thesis_incomplete","charter.thesis_incomplete","charter.thesis_incomplete","charter.thesis_incomplete"]
+PASS REQ-PB-029.baseline-date-valid :: expected 400 for 2026-02-30 :: actual 400
+PASS REQ-PB-026.six-dimensions :: expected 6 seeded rows (Financial..Data) :: actual ["customer","financial","technology","people_org","data","process"]
+PASS REQ-PB-026.confidence-hml :: expected 400 for confidence X :: actual 400
+PASS REQ-PB-038.ten-dimensions :: expected 10 dimensions with B0056 design questions :: actual 10; first={"id":"01920002-0003-7000-8000-000000000001","code":"customer_value_proposition","methodologyVersionId":"01920002-0000-7000-8000-000000000001","ordinal":1,"sourceNameEn":"Customer & Value Proposition"
+PASS REQ-PB-023.six-workstreams :: expected 6 workstreams :: actual 6: ["business_financial","customer","process_operations","organization_governance","technology_data","capability"]
+METHODOLOGY_KEYS [
+  'methodologyVersion',
+  'diagnosticDimensions',
+  'diagnosticWorkstreams',
+  'tomDimensions',
+  'gateDefinitions',
+  'charterScopeChecks',
+  'goodOutcomeCriteria'
+]
+PASS REQ-PB-038.b0056-verbatim :: expected design questions equal B0056 in order :: actual [true,true,true,true,true,true,true,true,true,true]
+PASS REQ-PB-023.b0029-verbatim :: expected key questions equal B0029 in order :: actual ["Where is value created/lost? Revenue, margin, cost, churn, productivity?","Where does the customer experience break?","Where are delays, rework, bottlenecks, handoffs?","Are roles, decision rights, incentives and accountability clear?","What systems/data constrain performance?","What skills/capabilities are missing?"]
+PASS REQ-PB-041.b0062-prompts :: expected canvas prompts equal B0062 :: actual [true,true,true,true,true,true,true,true,true,true]
+PASS REQ-PB-031.b0039-43-verbatim :: expected five questions verbatim :: actual ["Is scope tied to outcomes rather than departments?","Can each major scope item be traced to a diagnosed problem or opportunity?","Are explicit exclusions documented?","Is the baseline measurable?","Are executive decisions required to unblock the transformation visible?"]
+GATEDEFS [["G1","Do we agree on the problem/opportunity and value at stake?","Diagnostic, baseline, root causes, value pools."],["G2","Are outcomes specific enough to steer decisions?","North Star, outcome tree, KPI definitions, guardrails."],["G3","Do we know what must be different operationally?","Target Operating Model, capability gaps, future journeys."],["G4","Is the portfolio executable and value-backed?","Initiative cards, business cases, roadmap, owners, capacity."],["G5","Are pilots/results sufficient to scale?","Performance evidence, adoption, risk closure, decision log."],["G6","Is value embedded in BAU?","Benefits evidence, ownership transfer, controls, continuous improvement backlog."]]
+SCOPECHECKDEF_KEYS ["id","code","methodologyVersionId","ordinal","sourceQuestionEn","questionAr","sourceRef","systemPrecheck","version","createdAt","createdBy","updatedAt","updatedBy"]
+DIMS [[1,"Customer & Value Proposition","What experience/value should customers receive?","CUSTOMER & VALUE","Segments / needs / promise / experience principles"],[2,"Products & Services","What portfolio, pricing, features and service model are required?","PRODUCTS & SERVICES","Portfolio / bundles / pricing / service model"],[3,"Journeys & Processes","What end-to-end journeys/processes must change?","JOURNEYS & PROCESSES","Critical E2E journeys / automation / controls"],[4,"Organization","What structure, roles and accountabilities are needed?","ORGANIZATION","Structure / role clarity / accountability"],[5,"Governance & Decision Rights","Who decides what, at what level, using what forums?","GOVERNANCE","Decision rights / forums / escalation"],[6,"People & Capabilities","What skills, capacity, behaviors and incentives are required?","PEOPLE & CAPABILITY","Skills / capacity / incentives / behaviors"],[7,"Technology","What platforms, systems and integration are required?","TECHNOLOGY","Platforms / architecture / integration"],[8,"Data & Analytics","What data, metrics, models and ownership are needed?","DATA & ANALYTICS","Sources / ownership / insight / AI / measurement"],[9,"Partners & Sourcing","What should be built, bought, outsourced or partnered?","PARTNERS & SOURCING","Partner model / vendors / build-buy-partner"],[10,"Performance Management","How will KPIs, benefits and continuous improvement be managed?","PERFORMANCE","KPIs / benefits / management cadence / CI"]]
+WORKSTREAMS [["Business & Financial","Where is value created/lost? Revenue, margin, cost, churn, productivity?","Baseline P&L bridge, value pools, trend analysis."],["Customer","Where does the customer experience break?","Journey pain points, complaints, NPS/CSAT drivers."],["Process & Operations","Where are delays, rework, bottlenecks, handoffs?","Process map, cycle time, failure demand."],["Organization & Governance","Are roles, decision rights, incentives and accountability clear?","RACI gaps, decision latency, governance map."],["Technology & Data","What systems/data constrain performance?","Architecture pain points, automation/data gaps."],["Capability","What skills/capabilities are missing?","Capability heatmap, build/buy/partner needs."]]
+PASS INV.unquantified-label :: expected value pool unquantified, amount null (not 0) :: actual [["unquantified",null]]
+G1 criteria [["g1.diagnostic","complete"],["g1.baseline","complete"],["g1.root_causes","complete"],["g1.value_pools","complete"],["g1.case_for_change","complete"],["g1.initial_charter","complete"]]
+PASS REQ-S04-003.g1-six-outputs :: expected G1 lists six required outputs :: actual 6
+PASS REQ-S04-003.submitter-cannot-decide :: expected 403 :: actual 403
+PASS LIVE.G1-decision :: expected 201/200 approved; phase advances diagnose->define :: actual 201; phase=define
+PASS REQ-PB-018.G3-before-G2-refused :: expected 422 :: actual 422 "gate.out_of_sequence"
+ns1 200 {"id":"01a10f91-7e91-744a-b2b0-158ce764c093","organizationId":"01920000-0000-7000-9000-000000000001","transformationId":"01a10f91-7c92-76df-9beb-629deda49587","statement":"Every synthetic bill is right first time","status":"current","supersededAt":null,"version":1,"createdAt":"2026-10-06T04:55:55.79
+PASS REQ-PB-033.one-sentence :: expected 400/422 for two sentences :: actual 400 [{"pointer":"/statement","code":"validation.single_sentence","message":"validation.single_sentence"}]
+PASS REQ-PB-033.exactly-one-current :: expected exactly 1 current after refine; older superseded :: actual POST2=200; statuses=["current","superseded"]
+PASS REQ-PB-036.launch-fails :: expected goodOutcomePass=false with reasons :: actual false [["specific","fail"],["measurable","fail"],["strategically_relevant","unknown"],["owned_by_business_leader","fail"],["causal_chain","unknown"]]
+activate 200 {"id":"01a10f91-7ebd-724b-8ed3-ec67898c4959","organizationId":"01920000-0000-7000-9000-000000000001","transformationId":"01a10f91-7c92-76df-9beb-629deda49587","name":"Synthetic billing error rate","de
+PASS REQ-PB-034.target-date-required :: expected 400/422 without targetDate :: actual 422
+G2 criteria [["g2.north_star","complete",[]],["g2.outcome_tree","incomplete",["g2.outcome_tree.thesis_incomplete","g2.outcome_tree.thesis_incomplete","g2.outcome_tree.thesis_incomplete","g2.outcome_tree.thesis_incomplete","g2.outcome_tree.good_outcome_test_not_passing"]],["g2.kpi_definitions","complete",[]],["g2.target_trajectory","incomplete",["g2.target_trajectory.not_approved"]],["g2.guardrails","incomplete",["g2.guardrails.none"]]]
+PASS REQ-PB-036.g2-lists-failing :: expected G2 readiness lists 'Launch new app' as failing :: actual true
+PASS REQ-PB-037.zero-guardrails-blocks :: expected 422 naming g2.guardrails :: actual 422 ["/criteria/g2.outcome_tree","/criteria/g2.target_trajectory","/criteria/g2.guardrails"]
+PASS REQ-PB-037.guardrail-category :: expected persisted with category :: actual cx
+trajectory 200 {"id":"01a10f91-7ed3-761f-8e7e-d657e8d435f7","organizationId":"01920000-0000-7000-9000-000000000001","transformationId":"01a10f91-7c92-76df-9beb-629deda49587","outcomeId":"01a10f91-7eb4-75bb-87f9-4a46
+PASS REQ-PB-033.charter-shows-current :: expected charter northStar = current statement :: actual Every synthetic bill is right first time, every month / current
+G2 criteria(after) [["g2.north_star","complete",[]],["g2.outcome_tree","complete",[]],["g2.kpi_definitions","complete",[]],["g2.target_trajectory","complete",[]],["g2.guardrails","complete",[]]]
+submit G2 201 {"id":"01a10f91-7f47-767b-9f50-322ed24f9150","organizationId":"01920000-0000-7000-9000-000000000001","transformationId":"01a10f91-7c92-76df-9beb-629deda49587","gateInstanceId":"01a10f91-7c98-79d4-abab-6b4830e9ef88","gateCode":"G2","submissionNo":1,"status":"pending","submittedBy":"01920000-0000-7000-9000-000000000203","submittedAt":"2026-10-06T04:55:55.965Z","submissionNote":"Synthetic G2","approv
+PASS LIVE.G2-decision :: expected approved; phase define->design :: actual 201; phase=design
+FAIL REQ-PB-041.ten-boxes :: expected 10 canvas boxes :: actual ["cells"]
+DIMVIEW 404 404 ["type","title","status","code","requestId"]
+PASS INV.product-gates-only :: expected gate codes G1..G6 only :: actual ["G1","G2","G3","G4","G5","G6"]
+SUMMARY {"pass":38,"fail":["REQ-PB-031.empty-out-of-scope-fails","REQ-PB-031.whitespace-out-of-scope","REQ-PB-041.ten-boxes"]}
