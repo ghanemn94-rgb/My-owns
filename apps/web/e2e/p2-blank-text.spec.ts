@@ -415,3 +415,61 @@ test("Reason dialog: an invisible-only archive reason is an inline error and arc
   expect(after.version).toBe(before.version);
   expect(foreign).toEqual([]);
 });
+
+// F-DG2-340 (T-DG2-FE8): a form-level validation problem is said ONCE. The browser's POST /charter body gets an invalid
+// UTF-8 byte (route interception; nothing else is mocked), the REAL server answers 400 `validation` with the single
+// field error {pointer:"", code:"validation.json"}, and the page shows the localized message exactly once, in exactly
+// one live region; nothing is saved; axe has no serious or critical violation in that state.
+test("Charter create: a form-level validation problem (invalid UTF-8 body) is said once, in one live region", async ({
+  page,
+  playwright,
+}, info) => {
+  const lang = langOf(info);
+  const lead = await leadSession(playwright);
+  const fresh = await lead.call<{ id: string }>("POST", "/api/v1/transformations", {
+    businessUnitId: SYN_RETAIL,
+    name: `Synthetic form-level problem ${lang.toUpperCase()} check`,
+    mode: "end_to_end",
+  });
+  const freshCharter = `/api/v1/transformations/${fresh.id}/charter`;
+  const foreign = trackRequests(page);
+  await signIn(page, lang, "dev.lead");
+  const answers: { status: number; body: string }[] = [];
+  page.on("response", async (r) => {
+    if (r.request().method() === "POST" && new URL(r.url()).pathname === freshCharter) {
+      answers.push({ status: r.status(), body: await r.text().catch(() => "") });
+    }
+  });
+  await page.route(`**${freshCharter}`, async (route) => {
+    const req = route.request();
+    if (req.method() !== "POST") return route.continue();
+    const text = req.postData() ?? "{}";
+    const at = text.indexOf("Synthetic out of scope");
+    expect(at).toBeGreaterThan(0);
+    const bytes = Buffer.from(text, "utf8");
+    const cut = Buffer.byteLength(text.slice(0, at), "utf8") + "Synthetic ".length;
+    return route.continue({
+      postData: Buffer.concat([bytes.subarray(0, cut), Buffer.from([0xff]), bytes.subarray(cut)]),
+    });
+  });
+  await page.goto(`/transformations/${fresh.id}/charter`);
+  await page.getByRole("button", { name: tr(lang, "define.charter.create"), exact: true }).click();
+  await page.getByLabel(fieldLabel(lang, "define.charter.field.outOfScope")).fill("Synthetic out of scope");
+  await page.getByRole("button", { name: tr(lang, "define.charter.create"), exact: true }).click();
+  await expect.poll(() => answers.length).toBe(1);
+  expect(answers[0]!.status).toBe(400);
+  const problem = JSON.parse(answers[0]!.body) as { code: string; errors: { pointer: string; code: string }[] };
+  expect(problem.code).toBe("validation");
+  expect(problem.errors).toEqual([expect.objectContaining({ pointer: "", code: "validation.json" })]);
+  const message = tr(lang, "problems.validation__json");
+  const withMessage = page.getByRole("alert").filter({ hasText: message });
+  await expect(withMessage).toHaveCount(1);
+  await expect(withMessage).toBeVisible();
+  await expect(page.locator("[data-state='form-errors']")).toHaveCount(0);
+  const text = await page.locator("body").innerText();
+  expect(text.split(message).length - 1).toBe(1);
+  await shot(page, lang, "p2-blank-09-charter-form-level-problem");
+  await expectAccessible(page, lang, "p2-blank-charter-form-level-problem");
+  await lead.call("GET", freshCharter, undefined, { expect: 404 });
+  expect(foreign).toEqual([]);
+});

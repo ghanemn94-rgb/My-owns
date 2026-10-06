@@ -15,7 +15,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import type { z } from "zod";
 import { ApiError, api, newIdempotencyKey } from "../api/client.ts";
-import { errorMessage, fieldErrorMessage, pointerToField } from "../lib/problem.ts";
+import { distinctFormMessages, errorMessage, fieldErrorMessage, pointerToField } from "../lib/problem.ts";
 import { Dialog, Field, issueCode } from "./Form.tsx";
 import { Icon } from "./Icon.tsx";
 import type { Person } from "./People.tsx";
@@ -370,16 +370,20 @@ export function RecordFields({
   people?: readonly Person[] | undefined;
 }) {
   const { t } = form;
+  const banner = form.bannerError ? errorMessage(t, form.bannerError) : null;
+  // F-DG2-340: a form-level problem is announced once. The banner already says the message of a validation problem
+  // whose only field error has pointer "" (errorMessage), so the form-errors list keeps only what the banner does not.
+  const formErrors = distinctFormMessages(banner, form.unmapped);
   return (
     <>
       {fields.map((f) => (
         <FieldControl key={f.name} spec={f} form={form} people={people} />
       ))}
-      {form.unmapped.length > 0 ? (
+      {formErrors.length > 0 ? (
         // The live region is the wrapper; the <ul> keeps its list role so its <li> are valid (F-DG2-211, WCAG 1.3.1).
         <div className="banner banner--error" role="alert" data-state="form-errors">
           <ul className="plain-list">
-            {form.unmapped.map((m) => (
+            {formErrors.map((m) => (
               <li key={m}>
                 <Icon name="alert" /> {m}
               </li>
@@ -387,9 +391,9 @@ export function RecordFields({
           </ul>
         </div>
       ) : null}
-      {form.bannerError ? (
+      {banner !== null ? (
         <p className="banner banner--error" role="alert" data-state="error">
-          <Icon name="alert" /> {errorMessage(t, form.bannerError)}
+          <Icon name="alert" /> {banner}
         </p>
       ) : null}
     </>

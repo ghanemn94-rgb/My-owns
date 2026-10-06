@@ -41,6 +41,24 @@ export function fieldErrorMessage(t: TFunction, code: string): string {
   return translated || t("problems.validation__invalid");
 }
 
+/**
+ * The messages of a form's error live regions, each shown once (F-DG2-340). `banner` is the message of the problem
+ * banner (already rendered in its own `role="alert"` region); `others` are the form-level messages that are not
+ * attached to a field. Returns the `others` that say something the banner does not, without repeats, in order: a
+ * validation problem whose only field error has pointer "" is then announced once, while a genuinely different second
+ * message is kept.
+ */
+export function distinctFormMessages(banner: string | null | undefined, others: readonly string[]): string[] {
+  const seen = new Set<string>(banner ? [banner] : []);
+  const out: string[] = [];
+  for (const m of others) {
+    if (m === "" || seen.has(m)) continue;
+    seen.add(m);
+    out.push(m);
+  }
+  return out;
+}
+
 /** "/name" -> "name", "/identity/subject" -> "identity.subject", "/query/q" -> "q". */
 export function pointerToField(pointer: string): string {
   return pointer

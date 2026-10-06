@@ -20,7 +20,7 @@ import { formatDateTime, formatDecimal, formatMoney, zonedLocalToUtcIso } from "
 import { gateLabel, gateName } from "./methodology.ts";
 import { charterUpdate, diagnosticItemUpdate, freeText } from "@mth/shared/schemas";
 import { issueCode } from "../components/Form.tsx";
-import { errorMessage, fieldErrorMessage, pointerToField, problemKey } from "./problem.ts";
+import { distinctFormMessages, errorMessage, fieldErrorMessage, pointerToField, problemKey } from "./problem.ts";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -231,5 +231,14 @@ describe("product gate label (F-DG2-151, REQ-PB-017 / B0023)", () => {
 
   it("falls back to the bare code for a gate the catalogue does not contain", () => {
     expect(gateName(catalogue, "G9", "en")).toBe("G9");
+  });
+});
+
+describe("distinctFormMessages (F-DG2-340)", () => {
+  it("drops what the banner already says and repeats, keeps distinct messages in order", () => {
+    expect(distinctFormMessages("A", ["A"])).toEqual([]);
+    expect(distinctFormMessages("A", ["A", "B", "B", "C"])).toEqual(["B", "C"]);
+    expect(distinctFormMessages(null, ["B", "B", ""])).toEqual(["B"]);
+    expect(distinctFormMessages(undefined, [])).toEqual([]);
   });
 });

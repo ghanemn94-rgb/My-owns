@@ -622,7 +622,8 @@ function StepsEditor({ journey, onClose }: { journey: Journey; onClose: () => vo
           <Icon name="alert" /> {errorMessage(t, serverError)}
         </p>
       ) : null}
-      {error ? (
+      {/* F-DG2-340: a client message identical to the (earlier) server banner is not announced a second time. */}
+      {error && !(serverError && errorMessage(t, serverError) === error) ? (
         <p className="banner banner--error" role="alert">
           <Icon name="alert" /> {error}
         </p>
