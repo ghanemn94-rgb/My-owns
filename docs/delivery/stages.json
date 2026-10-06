@@ -820,7 +820,7 @@
       "id": "DG2",
       "stage": "P2",
       "name": "Diagnose define and design",
-      "state": "FIXING",
+      "state": "REVIEWING",
       "depends_on": [
         "DG1"
       ],
@@ -839,10 +839,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:089a2a2fbe3675019b0c5faeb1cf66fd4ea3f7235fae2c2b4ddb5aaef6c9be69",
-        "source_commit": "eb8163e2de3bee568063a4c561c1a58c3b844e65",
-        "frozen_at": "2026-10-02T11:50:05Z",
-        "manifest_path": "docs/delivery/candidates/DG2/089a2a2fbe367501.manifest.json"
+        "candidate_id": "sha256:b98c44db7ef91295eec25a21cbd394a91890b01caeeb6bfd269eb1ee6d132be5",
+        "source_commit": "9e13947e5a242e43fb08aab0e506888ed2c6cc38",
+        "frozen_at": "2026-10-06T05:40:55Z",
+        "manifest_path": "docs/delivery/candidates/DG2/b98c44db7ef91295.manifest.json"
       },
       "review_rounds": [
         {
@@ -867,6 +867,18 @@
             "qa-verifier": "docs/delivery/reviews/DG2/round-2/qa-verifier.json"
           },
           "note": "DG2 gate review round 2 on the repaired candidate 089a2a2f (517 files, source eb8163e2). All 9 round-1 findings FIXED_PENDING_VERIFICATION: F-DG2-140 (evidence-verify SoD, migration 0019 content_authored_by+trigger), 141 (trajectory-approval SoD), 142 (evidence-link authz), 201 (KPI activate op + UI; G2 completes via e2e), 202 (register IMPLEMENTED, validate --register DG2 PASS), 203 (composed thesis + incomplete), 204 (charter current/stale North Star), 205 (phase-sequence integrity), 206 (qa-stack evidence env). Orchestrator pre-review verification: typecheck/build/lint/openapi(161)/register-DG2 exit 0; unit green; contrast PASS; integration 440/440; e2e 42 (incl. Define->G2 and Design->G3 in chromium-en AND chromium-ar); validate --historical --stage DG1 exit 0. All three reviewers (domain now with the exact finding schema; code-security; qa — qa also verifies its F-206 fix) verify their findings CLOSED on this candidate and re-review for regressions."
+        },
+        {
+          "round": 3,
+          "candidate_id": "sha256:b98c44db7ef91295eec25a21cbd394a91890b01caeeb6bfd269eb1ee6d132be5",
+          "frozen_at": "2026-10-06T05:40:55Z",
+          "source_commit": "9e13947e5a242e43fb08aab0e506888ed2c6cc38",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG2/round-3/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG2/round-3/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG2/round-3/qa-verifier.json"
+          },
+          "note": "DG2 gate review round 3 on candidate b98c44db (519 files, source 9e13947). The four round-2 findings are FIXED_PENDING_VERIFICATION: F-DG2-143 (architecture/unit-test timeout headroom), F-DG2-150 (B0041 exclusions pre-check fails on empty/blank Out of scope; blank free text rejected on P2 inputs, D-063), F-DG2-151 (gate titles show the B0023 name once) and F-DG2-152 (register screen_api matches the contract). Orchestrator pre-review verification: typecheck/build/lint/format/openapi(161)/no-cdn exit 0; unit 520/520 on Node 24 and 22; contrast PASS; integration 456/456; e2e P1+P2 chromium-en + chromium-ar green; validate --register DG2, --historical --stage DG1, --pipeline PASS. Reviewers use disjoint finding-id ranges (code-security 160-169, domain 170-179, qa 210-219; D-062)."
         }
       ],
       "gate_record": "docs/delivery/gates/DG2.json",
@@ -900,6 +912,11 @@
           "state": "FIXING",
           "at": "2026-10-06T05:20:00Z",
           "note": "Round 2 on candidate 089a2a2f: qa-verifier PASS and code-security-reviewer PASS. All 9 round-1 findings (F-DG2-140/141/142/201/202/203/204/205/206) are CLOSED_VERIFIED by the reviewers who raised them. domain-reviewer FAIL. New findings: F-DG2-143 (Low, code-security: flaky architecture-test timeout), F-DG2-150 (Medium, MANDATORY, REQ-PB-031: the B0041 exclusions pre-check never fails), F-DG2-151 (Low, gate titles repeat the code) and F-DG2-152 (Low, register cites a non-existent per-dimension endpoint). The first round-2 domain run was dropped by a user-approved surgical rewrite because its F-DG2-143 collided with code-security's (orchestrator assignment error) and was re-run on the same candidate with ids from F-DG2-150 (D-062). Round-3 repairs: backend-workflow-engineer F-150 + F-143; frontend-ux-engineer F-151 + the F-150 UI text; transformation-analyst F-152. Then re-freeze, round 3 (all 3 reviewers, distinct id ranges), audit."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-10-06T05:42:00Z",
+          "note": "Round-3 repairs integrated: AN3 register sweep (F-152), BE4 exclusions pre-check + AST test timeouts (F-150/F-143), FE4 gate titles + EN/AR failing state (F-151/F-150), and BE5 blank-free-text hardening + web test back-off (D-063, F-150/F-143). All DG2 findings are CLOSED_VERIFIED (9) or FIXED_PENDING_VERIFICATION (4); 0 OPEN. Orchestrator verification green (see round 3 note). Candidate frozen as b98c44db (519 files, source 9e13947) for gate review round 3. All three reviewers verify their own findings and re-review in full."
         }
       ]
     },
