@@ -820,7 +820,7 @@
       "id": "DG2",
       "stage": "P2",
       "name": "Diagnose define and design",
-      "state": "FIXING",
+      "state": "REVIEWING",
       "depends_on": [
         "DG1"
       ],
@@ -839,10 +839,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:9331e9d13e0ffa55f35ebc25ecdf9b60e159876dc2470fe56e9241a40fea124f",
-        "source_commit": "cf3446e4daafe17a24a4707c9415580f15d2ed25",
-        "frozen_at": "2026-10-06T17:54:06Z",
-        "manifest_path": "docs/delivery/candidates/DG2/9331e9d13e0ffa55.manifest.json"
+        "candidate_id": "sha256:45ebccc04d8efc0c4fdc6a842eb3c9ec330bab2ec517b1c592af60b05a066294",
+        "source_commit": "7854770efd93a23f575667caf2a31a35c0a334eb",
+        "frozen_at": "2026-10-06T20:53:03Z",
+        "manifest_path": "docs/delivery/candidates/DG2/45ebccc04d8efc0c.manifest.json"
       },
       "review_rounds": [
         {
@@ -939,6 +939,18 @@
             "qa-verifier": "docs/delivery/reviews/DG2/round-8/qa-verifier.json"
           },
           "note": "DG2 gate review round 8 on candidate 9331e9d1 (539 files, source cf3446e). F-DG2-290 (strict UTF-8 decoding of JSON bodies in any framing, and of query strings) and F-DG2-310 (disposable-cluster harness ports outside the ephemeral range, with retry) are FIXED_PENDING_VERIFICATION. D-068 also covers the contract change that declares 429 and every other platform status (still 161 operations), backed by a rule test. The other 22 DG2 findings are CLOSED_VERIFIED. Orchestrator pre-review verification in both locale settings: all 32 steps exit 0. Disjoint id ranges: code-security 320-329, domain 330-339, qa 340-349."
+        },
+        {
+          "round": 9,
+          "candidate_id": "sha256:45ebccc04d8efc0c4fdc6a842eb3c9ec330bab2ec517b1c592af60b05a066294",
+          "frozen_at": "2026-10-06T20:53:03Z",
+          "source_commit": "7854770efd93a23f575667caf2a31a35c0a334eb",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG2/round-9/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG2/round-9/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG2/round-9/qa-verifier.json"
+          },
+          "note": "DG2 gate review round 9 on candidate 45ebccc0 (544 files, source 7854770). F-DG2-320 (every operation accepts only its declared request media types; evidence upload stores the raw bytes) and F-DG2-340 (a form-level error is announced once, in one live region, EN and AR) are FIXED_PENDING_VERIFICATION (D-069). The other 24 DG2 findings are CLOSED_VERIFIED. Orchestrator pre-review verification in both locale settings: all 32 steps exit 0. Disjoint id ranges: code-security 350-359, domain 360-369, qa 370-379."
         }
       ],
       "gate_record": "docs/delivery/gates/DG2.json",
@@ -1032,6 +1044,11 @@
           "state": "FIXING",
           "at": "2026-10-06T19:05:00Z",
           "note": "Round 8 on candidate 9331e9d1: all three verdicts PASS. code-security closed F-DG2-290, qa closed F-DG2-310 (33 checks), and domain raised no findings (sixth clean pass in a row). Two new Low, non-mandatory findings: F-DG2-320 (code-security: uploadEvidenceContent accepts undeclared media types; text/plain chunked stores U+FFFD, application/json gives an undeclared 500) and F-DG2-340 (qa: a pointer-\"\" form-level problem shows twice in RecordForm, EN and AR; polish). 24 findings CLOSED_VERIFIED, 2 OPEN. Round-9 repairs run in sequence: backend-workflow-engineer T-DG2-BE14 (every operation accepts only its declared request media types), then frontend-ux-engineer T-DG2-FE8 (one alert per distinct form error)."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-10-06T20:55:00Z",
+          "note": "Round-9 repairs integrated (D-069): BE14 a7b84d8 (F-320: declared request media types only, central preParsing check, text/plain parser removed, contract and live sweep tests) and FE8 e3cadfa (F-340: one alert per distinct form-level message, EN/AR). 24 findings CLOSED_VERIFIED, 2 FIXED_PENDING_VERIFICATION, 0 OPEN. Orchestrator verification green in both locale settings (unit 718x4 per setting, integration 559, e2e 60). Candidate frozen as 45ebccc0 for gate review round 9."
         }
       ]
     },
