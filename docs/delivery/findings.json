@@ -10281,14 +10281,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-9/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-06T21:20:00Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG2 round 9 while probing for remaining media-type paths after BE14. It is a BE14 regression: the same requests gave 404 at cf3446e4. Rated Low and non-mandatory because it affects only URLs with no operation, and nothing is read, stored or audited. It does not block the round."
+        },
+        {
+          "at": "2026-10-06T22:58:49Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at e974d7804b2b247bebf79e8c42a6f2867b8a7421"
         }
-      ]
+      ],
+      "fix_revision": "e974d7804b2b247bebf79e8c42a6f2867b8a7421",
+      "fix_summary": "BE15 (WIP 08a4f63, salvaged from a run killed by a container restart) completed by BE15B e974d78: one RFC 9110 §8.3.1 media-type decision in the central preParsing hook. OWS (SP/HTAB) around ';', the essence is the lower-cased type/subtype, and parameters are tokens or quoted-strings; a malformed value, duplicate Content-Type lines, or a JSON charset other than UTF-8 is refused. An accepted header is rewritten to the canonical essence[; name=value] form before Fastify's parser lookup, so the check and the lookup cannot disagree. Every refusal, including the FST_ERR_CTP_INVALID_MEDIA_TYPE backstop and restrictParserTo, names the route's declared set. An unmatched route never has its body parsed or refused: 404 not_found for every media type and framing, with Connection: close (never drained). Unit and integration tests (reviewer S10/S11 kept as regressions), a real-socket sweep, and a negative control against 3b2ab15."
     },
     {
       "id": "F-DG2-351",
@@ -10312,14 +10319,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-9/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-06T21:20:00Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG2 round 9 while probing Content-Type variants after BE14. It predates BE14 (the same at cf3446e4). Rated Low and non-mandatory because the status is the declared 400, nothing is stored, and only the message text is wrong. It does not block the round."
+        },
+        {
+          "at": "2026-10-06T22:58:49Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at e974d7804b2b247bebf79e8c42a6f2867b8a7421"
         }
-      ]
+      ],
+      "fix_revision": "e974d7804b2b247bebf79e8c42a6f2867b8a7421",
+      "fix_summary": "BE15 (WIP 08a4f63, salvaged from a run killed by a container restart) completed by BE15B e974d78: one RFC 9110 §8.3.1 media-type decision in the central preParsing hook. OWS (SP/HTAB) around ';', the essence is the lower-cased type/subtype, and parameters are tokens or quoted-strings; a malformed value, duplicate Content-Type lines, or a JSON charset other than UTF-8 is refused. An accepted header is rewritten to the canonical essence[; name=value] form before Fastify's parser lookup, so the check and the lookup cannot disagree. Every refusal, including the FST_ERR_CTP_INVALID_MEDIA_TYPE backstop and restrictParserTo, names the route's declared set. An unmatched route never has its body parsed or refused: 404 not_found for every media type and framing, with Connection: close (never drained). Unit and integration tests (reviewer S10/S11 kept as regressions), a real-socket sweep, and a negative control against 3b2ab15."
     }
   ]
 }
