@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG2-230",
+      "stage_id": "DG2",
+      "requirement": "REQ-PB-031",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Residual of the F-DG2-160/180 class outside every Unicode property the predicate excludes: U+16FE4 KHITAN SMALL SCRIPT FILLER and U+1D159 MUSICAL SYMBOL NULL NOTEHEAD are placeholder characters meant to render as nothing, yet count as visible content, so an Out of scope made only of them passes the B0041 pre-check and G1",
+      "reproduction": "packages/shared/src/schemas/common.ts:51 VISIBLE_CONTENT = /[^\\p{White_Space}\\p{Cc}\\p{Cf}\\p{Cs}\\p{Default_Ignorable_Code_Point}\\u2800]/u. U+2800 BRAILLE PATTERN BLANK is listed explicitly as a blank placeholder. Two other placeholders that are invisible by design are in none of the excluded properties: U+16FE4 KHITAN SMALL SCRIPT FILLER (gc=Mn, fills an empty position) and U+1D159 MUSICAL SYMBOL NULL NOTEHEAD (gc=So, a notehead with no visible head). Schema level (schema-unicode-matrix-r5.log, 'adversarial' section): hasVisibleContent and freeText(1,100) ACCEPT both. End to end on a disposable clone at 96a3c293 with a disposable PostgreSQL 16.13 (zz-sec-r5-probe.test.ts part E, probe-run1.log and probe-run2.log): the Transformation Lead's POST /api/v1/transformations/{id}/charter with outOfScope '\\u{16FE4}' or '\\u{1D159}\\u{1D159}' returns 201. GET .../charter then shows scopeCheckPrechecks exclusions_documented = 'pass', and GET .../gates/G1 g1.initial_charter does not list /charter/outOfScope as missing. The same value is accepted as an archive reason (x3) or a name, because they share the predicate.",
+      "expected": "Per D-063/D-064 ('blank' = no visible content) and B0041, a value that renders as nothing is not content: freeText/name/reason return 400 validation.blank and hasText is false. For example, add the two placeholders next to U+2800 in the one shared predicate: /[^\\p{White_Space}\\p{Cc}\\p{Cf}\\p{Cs}\\p{Default_Ignorable_Code_Point}\\u2800\\u{16FE4}\\u{1D159}]/u, and add them to the schema and blank-text tests. Text with visible content is unaffected: these are placeholders, so a value with any other visible character still has content. Font-dependent glyphs (private use, unassigned, noncharacters) and lone combining marks, which render as a mark on a dotted circle, are NOT part of this finding.",
+      "actual": "An Out of scope made only of U+16FE4 or U+1D159 is stored (201). The B0041 exclusions pre-check reads 'pass' and G1 treats Out of scope as documented. Every other code point with White_Space, Cc, Cf, Cs or Default_Ignorable_Code_Point is now correctly rejected (exhaustive sweep: 0 residuals), so this is limited to these two placeholder characters.",
+      "evidence": [
+        "packages/shared/src/schemas/common.ts",
+        "apps/api/src/modules/transformations/charter.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/probes/schema-unicode-matrix-r5.mts",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/schema-unicode-matrix-r5.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/probes/zz-sec-r5-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/probe-run2.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-5/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-06T09:55:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer, DG2 round 5. Low and non-mandatory, the same rating as F-DG2-160/180. It needs two deliberately entered, exotic code points from the Khitan and musical-symbol blocks. The pre-check supports the human scope-check answer and never replaces it, G1 still needs a human Sponsor decision, and every write stays authorized, If-Match-checked and audited. It does not block the round. F-DG2-180's reported set and stated remedy are verified fixed (CLOSED_VERIFIED); this finding tracks the last two placeholders that no Unicode property covers."
+        }
+      ]
+    },
+    {
+      "id": "F-DG2-231",
+      "stage_id": "DG2",
+      "requirement": "REQ-DLV-034",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "U+0000 (NUL) inside otherwise visible free text passes validation and reaches PostgreSQL, which rejects it (SQLSTATE 22021); the API answers with an undeclared 500 Internal error instead of a 400 validation problem",
+      "reproduction": "freeText, name and reason (packages/shared/src/schemas/common.ts:77-103) check length and visible content only. A value such as 'Synthetic\\u0000exclusion' has visible content, so it is accepted (a NUL-only value is rejected since F-DG2-180, because Cc is excluded). PostgreSQL text cannot hold NUL. On a disposable clone at 96a3c293 with a disposable PostgreSQL 16.13 (zz-sec-r5-nul.test.ts, nul-probe.log; also zz-sec-r5-probe.test.ts part F, where the harness's contract check fails with 'createCharter does not declare status 500'), these calls each return 500 with body {type:'urn:mth:problem:internal', code:'internal', requestId}: the Transformation Lead's POST /api/v1/transformations/{id}/charter with outOfScope 'Synthetic\\u0000exclusion'; POST /api/v1/transformations with name 'Synthetic\\u0000name'; and POST .../tom-gaps/{id}/archive with If-Match and reason 'Synthetic\\u0000reason'. Root cause, from the same probe: SELECT $1::text with 'a\\u0000b' raises 22021 'invalid byte sequence for encoding \"UTF8\": 0x00'. Pre-existing: the round-4 and DG1 predicates also accepted NUL inside visible text. It is not a regression of this round.",
+      "expected": "Input that the database cannot store is refused by the shared schemas with a 400 validation problem at the field pointer, as the OpenAPI contract declares (the operations declare 201, 400, 401, 403, 404, 409 and 422; not 500). For example, add a refine to freeText and trimmedText that rejects '\\u0000' with a stable code such as validation.invalid_character. Alternatively, map SQLSTATE 22021 / 22P05 in apps/api/src/modules/platform/db-errors.ts to a 400. Add a blank-text or contract test for it.",
+      "actual": "Each of the three requests returns an undeclared 500 'Internal error'. Integrity and confidentiality hold: the transaction rolls back (transformation, charter and audit_event counts unchanged; the TOM gap stays open v1), no audit row is written for the request, and the body leaks no internals. The user sees a generic error instead of a localized field error. It applies to every free-text, name and reason field that reaches PostgreSQL.",
+      "evidence": [
+        "packages/shared/src/schemas/common.ts",
+        "apps/api/src/modules/platform/db-errors.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/probes/zz-sec-r5-nul.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/nul-probe.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/probes/zz-sec-r5-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/probe-run1.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-5/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-06T09:55:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer, DG2 round 5. Low and non-mandatory: a robustness and contract defect with no integrity, authorization or confidentiality impact. Nothing is written, the transaction rolls back, and the problem body carries only a requestId. A NUL is rarely typed; it mostly arrives by paste from binary sources or from direct API clients. It is pre-existing (DG1 and earlier DG2 rounds) and does not block the round."
+        }
+      ]
+    }
+  ]
+}

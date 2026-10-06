@@ -1,0 +1,32 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG2-180",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:2f81c60a... (source 96a3c293) in a disposable clone with disposable PostgreSQL 16.13. The one shared predicate is packages/shared/src/schemas/common.ts:51 VISIBLE_CONTENT = /[^\\p{White_Space}\\p{Cc}\\p{Cf}\\p{Cs}\\p{Default_Ignorable_Code_Point}\\u2800]/u, used by hasText, freeText and trimmedText (name, reason) and by the web. Schema matrix (Node 24): the round-3 and round-4 sets, plus Cc (U+0000/0001/007F/009F), lone surrogates, tag characters and unassigned DI, are all rejected by freeText, hasText, name and reason. The exhaustive sweeps find 0 of 4174 Default_Ignorable, 0 of 25 White_Space, 0 of 65 Cc, 0 of 170 Cf and 0 of 2048 lone-surrogate code points still counted as visible; matching takes about 0.13 s at 10^7 code units (linear); 0 unexpected results. Visible text keeps its marks verbatim: heart+VS16, VS16 before a heart, keycap, the ZWJ family, the England tag flag, decomposed e-acute, Arabic shadda/fatha, RLM + Arabic, Mongolian + FVS, Devanagari virama, text + inner CGJ; name/reason trim only ECMAScript whitespace at the ends. Through the API, the round-4 repro zz-sec-r4-probe.test.ts part C (unchanged) now passes 6/6: Out of scope U+FE0F, U+034F x2, U+180B, U+17B4 or RLM+VS16 -> 400; archive reason U+FE0F x3 -> 400 /reason. The round-5 probe D1-D3 sends 13 invisible values as Out of scope, as an archive reason and as a transformation name: each gets 400 validation.blank at the right pointer, with nothing stored, no audit for the request, and the record still open v1. D4: 7 visible-with-marks Out of scope values -> 201, stored verbatim, pre-check 'pass'; a reason and a name with marks are stored verbatim. Two integration runs: blank-text.test.ts 25/25 each. Residual outside the reported set: U+16FE4 and U+1D159 are invisible by design but have no excluded property; raised separately as Low F-DG2-230. They don't reopen this finding, whose reported set and stated remedy are fully fixed.",
+      "evidence": [
+        "packages/shared/src/schemas/common.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/probes/schema-unicode-matrix-r5.mts",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/schema-unicode-matrix-r5.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/probes/zz-sec-r5-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/probes/zz-sec-r4-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/probe-run2.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG2-181",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:2f81c60a... (source 96a3c293) with the candidate's local fake OpenID Provider and a disposable PostgreSQL 16.13. apps/api/src/modules/identity/oidc.ts:173-178 displayNameCandidate trims, truncates to 200 CODE POINTS (Array.from), trims again, then applies hasText to the value that is stored. displayNameOf tries name, then preferred_username, then email, then 'User <hex6>'. The round-4 repro zz-sec-r4-oidc.test.ts (unchanged) now passes 2/2: 200 x U+200B + 'Visible Synthetic' stores a visible 9-character fallback. The round-5 probe zz-sec-r5-oidc.test.ts passes 8/8. 200 x U+200F/U+2060/U+0085/U+FE0F/U+034F/U+E0100 + visible -> the preferred_username fallback. 199 x ZWSP + 'VX' -> 200 code points ending in 'V'. 250 x U+1F600 -> 200 code points (400 UTF-16 units), PostgreSQL char_length 200, no lone surrogate. Invisible name and preferred_username -> the e-mail as display name, while an unverified e-mail is still NOT stored as the user's e-mail. All claims invisible -> 'User <hex6>'. Identity, session and authz are unchanged: a second login with the same (iss, sub) and a different name signs in the SAME user, with 1 identity row, the display name not re-derived, /me 200 as that user, 0 scoped assignments and GET /api/v1/transformations 200 with 0 items. Two subs with the same name and the same unverified e-mail are distinct users. oidc.test.ts 24/24 in both integration runs.",
+      "evidence": [
+        "apps/api/src/modules/identity/oidc.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/probes/zz-sec-r5-oidc.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/probes/zz-sec-r4-oidc.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/probe-run2.log"
+      ]
+    }
+  ]
+}

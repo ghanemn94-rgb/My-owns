@@ -1,0 +1,471 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG2",
+  "round": 5,
+  "candidate_id": "sha256:2f81c60ab1347986b3a2c31f8cd7642e0f8e4c0b6de59f1636f05268f3558c46",
+  "source_commit": "96a3c293614b9e832b9a419ef20ecb61e54a07cb",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG2-T-DG2-REV-SEC-R5-code-security-reviewer-20261006T092533Z-4b57a8ad",
+    "session_id": "4b57a8ad-6347-42b0-958b-664270f30a02"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (code-security-reviewer, session 4b57a8ad) authored no implementation in the DG2 scope, including none of the round-5 repairs (BE8 9b4ded0, FE7 6946a1e, BE9 786f574). I reviewed the frozen candidate directly: the product diff e37f6ea4..96a3c293 and the full touched files. I ran code only in disposable clones under $TMPDIR and on disposable PostgreSQL 16 clusters, which were deleted afterwards. I formed this verdict without reading any other reviewer's DG2 round-5 record."
+  },
+  "assignment": "docs/delivery/assignments/DG2/round-5/code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-S10-001",
+    "REQ-S16-013",
+    "REQ-S13-012",
+    "REQ-DLV-034",
+    "REQ-PB-016",
+    "REQ-PB-017",
+    "REQ-PB-018",
+    "REQ-PB-027",
+    "REQ-PB-028",
+    "REQ-PB-029"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-R5-00-candidate",
+      "procedure": "Confirm the frozen candidate. HEAD is da317d7; its only delta from source_commit 96a3c293 must be excluded delivery metadata. Recompute the candidate ID on the working tree and again in a fresh complete clone checked out at 96a3c293. Verify the assignment's SHA-256.",
+      "command": "git rev-parse HEAD; git diff --stat 96a3c293..HEAD; node tools/gates/candidate.mjs --stage DG2 (working tree and $TMPDIR/review-sec); sha256sum docs/delivery/assignments/DG2/round-5/code-security-reviewer.md",
+      "environment": "/home/user/My-owns working tree (Node v24.21.0); disposable clone $TMPDIR/review-sec @96a3c293 (Node v24.21.0)",
+      "expected": "candidate_id sha256:2f81c60a...8c46 over 526 files; post-source commits touch only delivery metadata; assignment sha256 e6aecd30...426f",
+      "actual": "Both computations gave {\"stage\":\"DG2\",\"source\":\"working-tree\",\"candidate_id\":\"sha256:2f81c60ab1347986b3a2c31f8cd7642e0f8e4c0b6de59f1636f05268f3558c46\",\"files\":526}. 96a3c293..HEAD changes only docs/delivery/assignments/DG2/round-5/{code-security-reviewer,domain-reviewer,qa-verifier}.md, docs/delivery/candidates/DG2/2f81c60ab1347986.manifest.json and docs/delivery/stages.json. The assignment hash matches.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/candidates/DG2/2f81c60ab1347986.manifest.json",
+        "docs/delivery/assignments/DG2/round-5/code-security-reviewer.md"
+      ]
+    },
+    {
+      "id": "SEC-R5-01-verify-F-DG2-180",
+      "procedure": "Adversarial verification of F-DG2-180. Source review of the one shared predicate (common.ts:51) and its users (hasText, freeText, trimmedText name/reason, web). Schema-level Unicode matrix through freeText(1,100), hasText, name and reason, covering the round-3 and round-4 sets plus Cc, lone surrogates, tags and unassigned DI. Visible-with-marks controls must be stored verbatim. Exhaustive sweeps of every Default_Ignorable, White_Space, Cc, Cf and Cs code point, a census of what is still counted visible, and timing up to 10^7 code units. End to end: re-run the unchanged round-4 repro, then the round-5 probe D1-D4 through the API (Out of scope, archive reason, transformation name), twice on fresh disposable clusters.",
+      "command": "node probes/schema-unicode-matrix-r5.mts $TMPDIR/review-probe/packages/shared; with-pg.sh 55621|55624 pnpm vitest run --project integration zz-sec-r3-invisible zz-sec-r4-probe zz-sec-r4-oidc zz-sec-r5-probe zz-sec-r5-oidc [zz-sec-r5-readyz zz-sec-r5-nul] --reporter=verbose",
+      "environment": "disposable clone $TMPDIR/review-probe @96a3c293 with probe files copied in (untracked); Node v22.22.2 (matrix v24.21.0); PostgreSQL 16.13 (nested user ns, 127.0.0.1)",
+      "expected": "every reported code point and every Default_Ignorable/Cc/Cf/Cs/White_Space code point is not content (400 validation.blank, hasText false, nothing stored); visible text with marks is accepted and stored verbatim; linear time",
+      "actual": "Matrix: 0 unexpected results. The exhaustive sweeps find 0 of 4174 DI, 0 of 25 White_Space, 0 of 65 Cc, 0 of 170 Cf and 0 of 2048 Cs still counted visible. 10^7 code units take 103-139 ms. The round-4 repro zz-sec-r4-probe.test.ts passes 8/8 in both runs, including all of part C (U+FE0F, U+034F x2, U+180B, U+17B4, RLM+VS16 -> 400; archive reason U+FE0F x3 -> 400). zz-sec-r5-probe passes D1-D4 in both runs. D1-D3: 13 invisible values -> 400 validation.blank at /outOfScope, /reason and /name; GET charter 404, no audit row for the request, gap still open v1, transformation count unchanged. D4: 7 visible-with-marks Out of scope values -> 201, verbatim, pre-check pass; a reason and a name with marks are stored verbatim. F-DG2-180 is CLOSED_VERIFIED. Probing outside the reported set found two placeholder code points that no property covers (U+16FE4, U+1D159; part E fails by design in both runs), raised as new Low F-DG2-230.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-029",
+        "REQ-PB-016",
+        "REQ-DLV-034"
+      ],
+      "evidence": [
+        "docs/delivery/reviews/DG2/round-5/code-security-reviewer.verifications.json",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/probes/schema-unicode-matrix-r5.mts",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/schema-unicode-matrix-r5.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/probes/zz-sec-r5-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/probes/zz-sec-r4-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/probe-run2.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/probes/README.md"
+      ]
+    },
+    {
+      "id": "SEC-R5-02-verify-F-DG2-181",
+      "procedure": "Adversarial verification of F-DG2-181. Source review of displayNameCandidate/displayNameOf (oidc.ts:173-187) and resolveOidcUser. Re-run of the unchanged round-4 OIDC repro. Round-5 OIDC probe against the candidate's local fake OpenID Provider on its own scratch database: 200 invisible units (six kinds) + visible; 199 + visible; 250 astral; fallback to e-mail and to a generated name. Identity, session and authorization: second login with the same (iss, sub), /me, scoped assignments, transformation list, distinct subs.",
+      "command": "with-pg.sh 55621|55624 pnpm vitest run --project integration apps/api/test/integration/zz-sec-r4-oidc.test.ts apps/api/test/integration/zz-sec-r5-oidc.test.ts --reporter=verbose",
+      "environment": "disposable clone $TMPDIR/review-probe @96a3c293, Node v22.22.2, PostgreSQL 16.13, fake IdP (apps/api/test/support/fake-idp.ts)",
+      "expected": "the stored display name always has visible content and is cut on a code-point boundary to at most 200; identity, session and authorization unchanged",
+      "actual": "zz-sec-r4-oidc 2/2 and zz-sec-r5-oidc 8/8 PASS in both runs. The repro now stores 'r5.first' (the preferred_username fallback). 200 x U+200F/U+2060/U+0085/U+FE0F/U+034F/U+E0100 + visible -> fallback. 199 x ZWSP + 'VX' -> 200 code points ending 'V'. 250 x U+1F600 -> 200 code points, 400 units, char_length 200, no lone surrogate. An invisible name and preferred_username -> the e-mail as display name, while the unverified e-mail is not stored. All claims invisible -> 'User <hex6>'. Binding: same (iss, sub) -> same user, 1 identity row, name not re-derived; /me 200 for that user; 0 roles; transformations list 200 with 0 items. Two subs with the same name/e-mail -> distinct users. displayNameOf feeds only the JIT app_user insert. F-DG2-181 is CLOSED_VERIFIED.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S10-001"
+      ],
+      "evidence": [
+        "apps/api/src/modules/identity/oidc.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/probes/zz-sec-r5-oidc.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-4/probes/zz-sec-r4-oidc.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/probe-run2.log"
+      ]
+    },
+    {
+      "id": "SEC-R5-03-utf8-guard",
+      "procedure": "UTF8 database requirement (BE9 786f574, D-065). Source review of packages/db/src/encoding.ts, migrate.ts (assert before pg_advisory_lock and CREATE TABLE), cli.ts (assertUtf8Database(pool) before status/bootstrap/seed-dev; migrate goes through migrate()) and global-setup. Candidate test encoding.test.ts in both integration runs. Adversarial probe: migrate() through a URL whose options add -c client_encoding=LATIN1 on a SQL_ASCII database.",
+      "command": "git diff e37f6ea4..96a3c293 -- packages/db; with-pg.sh 55623|55624 pnpm vitest run --project integration apps/api/test/integration/zz-sec-r5-readyz.test.ts",
+      "environment": "disposable clones @96a3c293, Node v22.22.2, PostgreSQL 16.13",
+      "expected": "any non-UTF8 database is refused before any lock, table or migration; the check cannot be fooled by client settings",
+      "actual": "encoding.ts reads SHOW server_encoding, a read-only GUC fixed at CREATE DATABASE. migrate() asserts before the advisory lock; the CLI asserts before every other command; DatabaseEncodingError maps to 'mth-db: ...' and exit 1. encoding.test.ts passes 8/8 in both runs: migrate/status/seed-dev/bootstrap exit 1 with the exact message; no schema_migration table and 0 user objects; migrate() throws; the control migrates UTF8. Probe: with -c client_encoding=LATIN1 in the URL options, migrate() is still refused(SQL_ASCII) with 0 objects created (both runs).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-034",
+        "REQ-S16-013"
+      ],
+      "evidence": [
+        "packages/db/src/encoding.ts",
+        "packages/db/src/migrate.ts",
+        "packages/db/src/cli.ts",
+        "packages/db/test/integration/encoding.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/probes/zz-sec-r5-readyz.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/readyz-probe.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/integration-run1-lang-unset.log"
+      ]
+    },
+    {
+      "id": "SEC-R5-04-readyz",
+      "procedure": "/readyz (apps/api/src/modules/platform/health.ts). Source review. Adversarial probe zz-sec-r5-readyz.test.ts. (1) Positive-cache masking: start the API on a migrated UTF8 database (200, encoding cached), then DROP it and recreate it under the SAME name as SQL_ASCII while the process runs; probe 4 times, attempt migrate(), probe again; then a fresh process. (2) Not-ready path writes nothing: 5 probes on a SQL_ASCII database, counting pg_class objects. (3) The body leaks no internals. Candidate tests health.test.ts (unit) and platform.test.ts (integration).",
+      "command": "with-pg.sh 55623 pnpm vitest run --project integration apps/api/test/integration/zz-sec-r5-readyz.test.ts --reporter=verbose (also in probe run 2 on 55624)",
+      "environment": "disposable clone $TMPDIR/review-probe @96a3c293, Node v22.22.2, PostgreSQL 16.13",
+      "expected": "the cache can never produce a false 200; the not-ready path is read-only; the body holds only status/checks",
+      "actual": "3/3 PASS in both runs. The swap gave 4 x 503 {database: ok, migrations: pending}; migrate() was refused with the UTF8 message; the next probe was still 503; a fresh process returned 503 {database: fail, migrations: fail}. The false-ready path is closed because the product's tooling cannot migrate a non-UTF8 database. The SQL_ASCII database had 0 objects before and after 5 probes. The body is exactly {status, checks{database, migrations}} with no encoding, SQL_ASCII or database names; the encoding goes only to the server log (request.log.error). Candidate tests: health.test.ts (part of unit 640/640) and the platform.test.ts readiness test pass in both integration runs. Note: each unauthenticated probe of a mis-encoded database writes one error log line, the same pattern as the existing warn on a DB failure; not a finding.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-034"
+      ],
+      "evidence": [
+        "apps/api/src/modules/platform/health.ts",
+        "apps/api/src/modules/platform/health.test.ts",
+        "apps/api/test/integration/platform.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/probes/zz-sec-r5-readyz.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/readyz-probe.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/probe-run2.log"
+      ]
+    },
+    {
+      "id": "SEC-R5-05-deploy-and-test-clusters",
+      "procedure": "Review the deploy changes: compose.yaml POSTGRES_INITDB_ARGS, db-init/10-mth-roles.sh, deploy/scripts/ci-e2e-stack.mjs and clean-start-local.sh. Check for exposed secrets and privilege changes, and whether TEMPLATE template0 weakens schema hardening. Review the test-cluster scripts (tests/qa/support/with-pg.sh, e2e/support/qa-stack.sh, apps/web/e2e/support/with-stack.sh, e2e/clean-start/a18-clean-start.sh) and the harness pool.end change.",
+      "command": "git diff e37f6ea4..96a3c293 -- deploy e2e tests/qa/support apps/web/e2e/support apps/api/test/support; grep -n 'REVOKE' packages/db/migrations/0001*.sql",
+      "environment": "/home/user/My-owns and $TMPDIR/review-sec @96a3c293",
+      "expected": "UTF8 is explicit everywhere; no secret is exposed; no role or grant changes",
+      "actual": "POSTGRES_INITDB_ARGS is '--encoding=UTF8' (no secret). 10-mth-roles.sh only adds ENCODING 'UTF8' TEMPLATE template0; roles, passwords (psql variables from secret files, never echoed), REVOKE ALL FROM PUBLIC and GRANT CONNECT are unchanged. template0 does not weaken anything: migration 0001:18 explicitly runs REVOKE CREATE ON SCHEMA public FROM PUBLIC. ci-e2e-stack.mjs adds ENCODING/LC_*/TEMPLATE only; the E2E_DATABASE interpolation is pre-existing and CI-operator controlled. All disposable-cluster scripts add --encoding=UTF8 --locale=C and create databases explicitly UTF8/C from template0. The harness now ends a raw pool that Kysely never adopted (test-only).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-034"
+      ],
+      "evidence": [
+        "deploy/compose/compose.yaml",
+        "deploy/compose/db-init/10-mth-roles.sh",
+        "deploy/scripts/ci-e2e-stack.mjs",
+        "tests/qa/support/with-pg.sh",
+        "packages/db/test/global-setup.ts"
+      ]
+    },
+    {
+      "id": "SEC-R5-06-diff-scan",
+      "procedure": "Scan every added line of the product diff for URLs (CDN), eval/new Function, innerHTML, secrets, tokens and privilege keywords.",
+      "command": "git diff e37f6ea4..96a3c293 -- . ':!docs' | grep '^+' | grep -Ei 'https?://|eval\\(|new Function|dangerouslySetInnerHTML|innerHTML|password|secret|api[_-]?key|token|PGPASSWORD|GRANT|ALTER ROLE|SUPERUSER|CREATEDB|BYPASSRLS'",
+      "environment": "$TMPDIR/review-sec @96a3c293",
+      "expected": "no CDN, no code evaluation, no secret, no privilege grant added",
+      "actual": "One hit: '+ \"https://idp.example.invalid\",' (a test-only .invalid issuer in encoding.test.ts). Nothing else.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-5/diff-scan.log"
+      ]
+    },
+    {
+      "id": "SEC-R5-07-build",
+      "procedure": "Build every workspace package.",
+      "command": "pnpm -r build",
+      "environment": "disposable clone $TMPDIR/review-sec @96a3c293, Node v22.22.2, offline frozen install",
+      "expected": "exit 0",
+      "actual": "all packages built (apps/api build: Done); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-5/build.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/checks.sh"
+      ]
+    },
+    {
+      "id": "SEC-R5-08-typecheck",
+      "procedure": "Type-check every workspace package.",
+      "command": "pnpm -r typecheck",
+      "environment": "as SEC-R5-07",
+      "expected": "exit 0",
+      "actual": "exit 0, no type errors",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-5/typecheck.log"
+      ]
+    },
+    {
+      "id": "SEC-R5-09-lint",
+      "procedure": "ESLint over the repository with zero warnings allowed.",
+      "command": "pnpm lint",
+      "environment": "as SEC-R5-07",
+      "expected": "exit 0",
+      "actual": "eslint . --max-warnings=0: exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-5/lint.log"
+      ]
+    },
+    {
+      "id": "SEC-R5-10-openapi-lint",
+      "procedure": "Lint the OpenAPI contract.",
+      "command": "pnpm openapi:lint",
+      "environment": "as SEC-R5-07",
+      "expected": "PASS, 161 operations",
+      "actual": "PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 161 operations; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-5/openapi-lint.log"
+      ]
+    },
+    {
+      "id": "SEC-R5-11-no-cdn",
+      "procedure": "Portability: no public CDN or builder-hosted runtime reference.",
+      "command": "pnpm check:no-cdn",
+      "environment": "as SEC-R5-07",
+      "expected": "PASS",
+      "actual": "PASS no-cdn: scanned apps, packages; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-5/no-cdn.log"
+      ]
+    },
+    {
+      "id": "SEC-R5-12-format-check",
+      "procedure": "Prettier formatting check.",
+      "command": "pnpm format:check",
+      "environment": "as SEC-R5-07",
+      "expected": "exit 0",
+      "actual": "All matched files use Prettier code style! exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-5/format-check.log"
+      ]
+    },
+    {
+      "id": "SEC-R5-13-unit-node22",
+      "procedure": "Unit suites (unit-node, unit-web) on Node 22.",
+      "command": "pnpm test --reporter=verbose",
+      "environment": "disposable clone $TMPDIR/review-sec @96a3c293, Node v22.22.2",
+      "expected": "all pass",
+      "actual": "Test Files 34 passed (34); Tests 640 passed (640); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-029",
+        "REQ-DLV-034"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-5/unit-node22.log"
+      ]
+    },
+    {
+      "id": "SEC-R5-14-unit-node24",
+      "procedure": "Unit suites (unit-node, unit-web) on Node 24.",
+      "command": "pnpm test --reporter=verbose",
+      "environment": "disposable clone $TMPDIR/review-sec @96a3c293, Node v24.21.0",
+      "expected": "all pass",
+      "actual": "Test Files 34 passed (34); Tests 640 passed (640); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-029",
+        "REQ-DLV-034"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-5/unit-node24.log"
+      ]
+    },
+    {
+      "id": "SEC-R5-15-unit-under-load",
+      "procedure": "Unit suites on Node 22, then Node 24, while a second disposable clone loops 'pnpm -r build' and the round-5 integration probes on a disposable PostgreSQL (port 55631) as moderate concurrent CPU load. Covers the F-DG2-220 harness change.",
+      "command": "bash docs/delivery/test-evidence/DG2/code-security/round-5/load-repro.sh",
+      "environment": "disposable clones $TMPDIR/review-sec and $TMPDIR/review-probe @96a3c293, 4 vCPU; loadavg 7.98 at start, 13.91-14.90 during the runs",
+      "expected": "all pass on both Node versions under load",
+      "actual": "Node 22: 640/640, exit 0 (loadavg 13.91 at finish). Node 24: 640/640, exit 0 (loadavg 14.90 at finish). Load generator: 2 build iterations and 1 probe iteration.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-5/load-repro.sh",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/unit-under-load-node22.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/unit-under-load-node24.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/load-generator.log"
+      ]
+    },
+    {
+      "id": "SEC-R5-16-integration-run1-lang-unset",
+      "procedure": "Integration suite, run 1, with LANG/LC_ALL/LC_CTYPE UNSET, on a disposable PostgreSQL 16 cluster initialized WITHOUT --encoding (so its default is SQL_ASCII) on unique port 55611. This adversarially tests that the product's own scratch databases are UTF8 regardless of locale. Includes contract.test.ts (161 ops), blank-text.test.ts, oidc.test.ts, packages/db/test/integration/encoding.test.ts and migrations 0001-0019 on a fresh database.",
+      "command": "env -u LANG -u LC_ALL -u LC_CTYPE with-pg.sh 55611 pnpm test:integration --reporter=verbose",
+      "environment": "disposable clone $TMPDIR/review-sec @96a3c293, Node v22.22.2, PostgreSQL 16.13; cluster template1 encoding SQL_ASCII, collate C",
+      "expected": "all pass; run database server_encoding UTF8; 19 migrations",
+      "actual": "[integration] database mth_test_... (server_encoding UTF8); applied 19 migrations to a fresh database. Test Files 30 passed (30); Tests 483 passed (483); exit 0. contract.test.ts 11 tests incl. the 161-operation assertion; blank-text 25; oidc 24; encoding 8; migrate 7; platform readiness 1.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-034",
+        "REQ-PB-016",
+        "REQ-PB-017",
+        "REQ-PB-018",
+        "REQ-PB-027",
+        "REQ-PB-028",
+        "REQ-PB-029",
+        "REQ-S16-013",
+        "REQ-S13-012"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-5/integration-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/with-pg.sh"
+      ]
+    },
+    {
+      "id": "SEC-R5-17-integration-run2-lang-c-utf8",
+      "procedure": "Integration suite, run 2, with LANG=C.UTF-8, on a fresh disposable cluster (default UTF8) on unique port 55612. Same coverage as run 1.",
+      "command": "LANG=C.UTF-8 with-pg.sh 55612 pnpm test:integration --reporter=verbose",
+      "environment": "disposable clone $TMPDIR/review-sec @96a3c293, Node v22.22.2, PostgreSQL 16.13; cluster template1 encoding UTF8, collate C.UTF-8",
+      "expected": "all pass; 19 migrations",
+      "actual": "[integration] database ... (server_encoding UTF8); applied 19 migrations to a fresh database. Test Files 30 passed (30); Tests 483 passed (483); exit 0. Same per-file counts as run 1.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-034",
+        "REQ-PB-016",
+        "REQ-PB-017",
+        "REQ-PB-018",
+        "REQ-PB-027",
+        "REQ-PB-028",
+        "REQ-PB-029",
+        "REQ-S16-013",
+        "REQ-S13-012"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-5/integration-run2-lang-c-utf8.log"
+      ]
+    },
+    {
+      "id": "SEC-R5-18-aud-403-sweep",
+      "procedure": "AUD-403 sweep. aud-write-deny.test.ts is generated from the contract: every P2 mutation called by a read-only auditor must return 403 with only a denial audit, and every read must return 200. kpi-aud-write-deny.test.ts does the same for KPI. Both are part of the two integration runs.",
+      "command": "grep -E 'aud-write-deny' integration-run1-lang-unset.log integration-run2-lang-c-utf8.log",
+      "environment": "as SEC-R5-16/17",
+      "expected": "both files pass in both runs, with no failure",
+      "actual": "In each run: 146 passing aud-write-deny tests (aud-write-deny 128 + kpi-aud-write-deny 18), 0 failures.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S10-001"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-5/integration-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/integration-run2-lang-c-utf8.log"
+      ]
+    },
+    {
+      "id": "SEC-R5-19-validate-historical-DG0",
+      "procedure": "Historical validation of the approved DG0 gate.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG0",
+      "environment": "/home/user/My-owns @da317d7, Node v22.22.2",
+      "expected": "PASS",
+      "actual": "PASS gate DG0 (historical); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-5/validate-historical-DG0.log"
+      ]
+    },
+    {
+      "id": "SEC-R5-20-validate-historical-DG1",
+      "procedure": "Historical validation of the approved DG1 gate.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG1",
+      "environment": "/home/user/My-owns @da317d7, Node v22.22.2",
+      "expected": "PASS",
+      "actual": "PASS gate DG1 (historical); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-5/validate-historical-DG1.log"
+      ]
+    },
+    {
+      "id": "SEC-R5-21-env-residuals",
+      "procedure": "Environmental residuals, checked on their offline/config surfaces as the assignment requires (not BLOCKED gate checks). Live registry (REQ-DLV-042 AC-1, D-057): offline frozen install against the committed lockfile. Live CI (REQ-DLV-025 A24, D-058): the ci.yml check list and digest pins. Keycloak (D-049): deploy/keycloak realm, plus oidc.test.ts offline against the local fake IdP.",
+      "command": "pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pstore/v10; grep -n 'run: pnpm\\|image:\\|uses:' .github/workflows/ci.yml; ls deploy/keycloak",
+      "environment": "disposable clone $TMPDIR/review-sec @96a3c293 (no network)",
+      "expected": "offline and config surfaces consistent",
+      "actual": "The offline frozen install finished in 1.2 s, exit 0. ci.yml runs format:check, lint, typecheck, build, test, openapi:lint and check:no-cdn (lines 62-68) and test:integration (101). Actions are pinned by SHA; postgres:18@sha256:5a5a84b1... and playwright@sha256:f1e7e010... are pinned by digest. deploy/keycloak/realm-mth-test.json is present. oidc.test.ts (24) passed in both integration runs. Residual: the live registry, live CI and a live Keycloak were not exercised (no network in the sandbox), per D-057, D-058 and D-049.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-5/env-residuals.log",
+        ".github/workflows/ci.yml"
+      ]
+    },
+    {
+      "id": "SEC-R5-22-adversarial-residual-probing",
+      "procedure": "Adversarial probing beyond the two fixes, as the assignment asks: anything else that renders as nothing but counts as content, and other inputs the shared text schemas accept that the database cannot store. Probes: zz-sec-r5-probe.test.ts parts E/F, zz-sec-r5-nul.test.ts, extra-schema-checks.mts (including a comparison with the round-4 and DG1 schemas). The secure expectation is asserted, so a failing test shows a residual.",
+      "command": "with-pg.sh 55621|55622|55624 pnpm vitest run --project integration zz-sec-r5-probe.test.ts zz-sec-r5-nul.test.ts; node probes/extra-schema-checks.mts",
+      "environment": "disposable clone $TMPDIR/review-probe @96a3c293, Node v22.22.2 (schema checks v24.21.0), PostgreSQL 16.13",
+      "expected": "the probing runs to completion in two runs; every residual found is reproduced, classified and raised as a finding",
+      "actual": "The probing ran in both runs, and two residuals were found and raised as findings. (1) U+16FE4 and U+1D159 x2 as Out of scope -> 201, pre-check pass, G1 treats it as documented (part E fails by design in both runs); raised as F-DG2-230, Low, non-mandatory. (2) NUL inside visible text in charter outOfScope, transformation name and archive reason -> undeclared 500 'Internal error' (SQLSTATE 22021); counts unchanged, record unchanged, no audit, no leak; pre-existing since DG1 (plain zod strings). It fails by design in both runs (probe exit 1) and is raised as F-DG2-231, Low, non-mandatory. Neither is Critical, High or mandatory.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-029",
+        "REQ-DLV-034"
+      ],
+      "evidence": [
+        "docs/delivery/reviews/DG2/round-5/code-security-reviewer.findings.json",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/probes/zz-sec-r5-nul.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/nul-probe.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/probes/extra-schema-checks.mts",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/extra-schema-checks.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/probe-run1.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-5/probe-run2.log"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG2-230",
+    "F-DG2-231"
+  ],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG2/round-5/code-security-reviewer.verifications.json",
+    "docs/delivery/reviews/DG2/round-5/code-security-reviewer.findings.json",
+    "docs/delivery/reviews/DG2/round-5/code-security-reviewer.md",
+    "docs/delivery/test-evidence/DG2/code-security/round-5/summary.txt",
+    "docs/delivery/test-evidence/DG2/code-security/round-5/checks.sh",
+    "docs/delivery/test-evidence/DG2/code-security/round-5/load-repro.sh",
+    "docs/delivery/test-evidence/DG2/code-security/round-5/with-pg.sh",
+    "docs/delivery/test-evidence/DG2/code-security/round-5/probes/README.md",
+    "docs/delivery/test-evidence/DG2/code-security/round-5/probes/zz-sec-r5-probe.test.ts",
+    "docs/delivery/test-evidence/DG2/code-security/round-5/probes/zz-sec-r5-oidc.test.ts",
+    "docs/delivery/test-evidence/DG2/code-security/round-5/probes/zz-sec-r5-readyz.test.ts",
+    "docs/delivery/test-evidence/DG2/code-security/round-5/probes/zz-sec-r5-nul.test.ts",
+    "docs/delivery/test-evidence/DG2/code-security/round-5/probes/schema-unicode-matrix-r5.mts",
+    "docs/delivery/test-evidence/DG2/code-security/round-5/probes/extra-schema-checks.mts",
+    "docs/delivery/test-evidence/DG2/code-security/round-5/schema-unicode-matrix-r5.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-5/extra-schema-checks.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-5/probe-run1.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-5/probe-run2.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-5/readyz-probe.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-5/nul-probe.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-5/integration-run1-lang-unset.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-5/integration-run2-lang-c-utf8.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-5/unit-node22.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-5/unit-node24.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-5/unit-under-load-node22.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-5/unit-under-load-node24.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-5/load-generator.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-5/diff-scan.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-5/env-residuals.log"
+  ],
+  "reviewed_at": "2026-10-06T09:55:00Z",
+  "summary": "PASS. F-DG2-180 and F-DG2-181 are CLOSED_VERIFIED. The shared predicate now excludes White_Space, Cc, Cf, Cs and Default_Ignorable: the exhaustive sweeps find 0 residuals, the round-4 repros pass, invisible values are refused with 400 at /outOfScope, /reason and /name, and visible text with marks (VS16 emoji, RLM + Arabic, combining marks) is stored verbatim. The OIDC display name is truncated by code point and then checked, with (iss, sub) binding, sessions and authz unchanged. The UTF8 guard refuses non-UTF8 databases before any lock or table. The /readyz cache cannot give a false ready, the not-ready path writes nothing and leaks nothing, and the deploy changes add no secret or privilege. All required checks pass: build, typecheck, lint, openapi 161, no-cdn and format; unit 640/640 on Node 22 and 24, also under load; integration 483/483 twice (LANG unset on a SQL_ASCII-default cluster, and LANG=C.UTF-8) with 19 migrations, contract, blank-text, oidc, encoding and the AUD-403 sweep; historical DG0/DG1. Two new Low, non-mandatory findings: F-DG2-230 (U+16FE4/U+1D159 placeholders still count as content) and F-DG2-231 (NUL inside text gives an undeclared 500; pre-existing).",
+  "narrative": "docs/delivery/reviews/DG2/round-5/code-security-reviewer.md"
+}
