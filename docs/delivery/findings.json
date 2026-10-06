@@ -9405,14 +9405,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-3/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-06T05:55:00Z",
           "status": "OPEN",
           "note": "raised by code-security-reviewer DG2 round 3. Low, non-mandatory: it needs deliberately entered invisible-only characters, the pre-check supports and never replaces the human scope-check answer, and G1 still needs a human Sponsor decision. It does not block the round."
+        },
+        {
+          "at": "2026-10-06T07:22:33Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 190504171b37151e553d4357a5d8f3f432aacba6"
         }
-      ]
+      ],
+      "fix_revision": "190504171b37151e553d4357a5d8f3f432aacba6",
+      "fix_summary": "BE6 35fb823 + BE7 1905041. One shared predicate, hasVisibleContent = /[^\\p{White_Space}\\p{Cf}ᅟᅠㅤﾠ⠀]/u, replaces trim() in hasText/freeText and in the shared name/reason schemas. Invisible-only text (U+0085, ZWSP, RLM, ALM, WJ, fillers) gets 400 validation.blank and is never present in readiness, pre-checks or the thesis. Visible text keeps its marks verbatim. The inline reason parsers reuse the shared reason; the admin issuer check and the OIDC display-name fallback use the same predicate. Unit matrix and integration tests; negative controls fail on the old code."
     },
     {
       "id": "F-DG2-210",
@@ -9438,14 +9445,21 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG2/round-3/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-06T06:12:00Z",
           "status": "OPEN",
           "note": "Raised by qa-verifier in DG2 round 3 (T-DG2-REV-QA-R3) from the assignment's own negative UI check, which fails in EN and AR in two runs. Not a data-integrity failure: the server and DB reject or never store blank text. Medium because the D-063 UI claim is not delivered, and a whitespace save over an existing Out of scope silently clears the B0041 exclusion and writes a charter version."
+        },
+        {
+          "at": "2026-10-06T07:22:33Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 97863da6c6d8baa00eaf6310529b204b2425cc15"
         }
-      ]
+      ],
+      "fix_revision": "97863da6c6d8baa00eaf6310529b204b2425cc15",
+      "fix_summary": "FE5 bfa1807 + FE6 97863da: every P2 form (RecordForm, charter, gate submission note, decision rationale/comments, journey steps, row-action note, decisions/define inputs, ReasonDialog) sends free text verbatim, and only an empty string becomes null. A non-empty value with no visible content (shared hasText) shows an inline EN/AR validation.blank error with aria-invalid/describedby and focus, and nothing is sent. A change summary alone is reported as 'no changes'. e2e p2-blank-text.spec.ts (en+ar); 58 component tests fail on the old code."
     },
     {
       "id": "F-DG2-211",
@@ -9468,14 +9482,21 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG2/round-3/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-06T06:12:00Z",
           "status": "OPEN",
           "note": "Raised by qa-verifier in DG2 round 3 (T-DG2-REV-QA-R3). Not marked mandatory: REQ-S15-012's final gate is DG6 and the product's key journeys are axe-clean. It is still a serious-impact violation in a delivered P2 form state, in both languages."
+        },
+        {
+          "at": "2026-10-06T07:22:34Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at bfa18079cb7384b726cfc9a590c72f58c8ac5376"
         }
-      ]
+      ],
+      "fix_revision": "bfa18079cb7384b726cfc9a590c72f58c8ac5376",
+      "fix_summary": "FE5 bfa1807: the RecordForm error banner is now a div with role=alert wrapping a semantic ul/li. The sweep found no other alert/status role on a list. The e2e drives the error-banner state and runs axe in EN and AR: 0 violations."
     }
   ]
 }
