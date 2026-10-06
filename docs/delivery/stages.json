@@ -1064,12 +1064,12 @@
         },
         {
           "state": "FIXING",
-          "at": "2026-10-06T22:40:00Z",
+          "at": "2026-10-06T21:35:19Z",
           "note": "Round 9 on candidate 45ebccc0: all three verdicts PASS. code-security closed F-DG2-320, and qa closed F-DG2-340 (33 checks, no new findings). domain raised no findings (16 checks; seventh clean pass in a row). Two new Low, non-mandatory findings from code-security, both about the media-type refusal path that BE14 changed: F-DG2-350, a regression (an unmatched route sent application/octet-stream answers 400 validation.content_type instead of 404, because restrictParserTo does not skip 404 requests); and F-DG2-351, which predates BE14 (a Content-Type with HTAB before \";\" passes the essence check but matches no Fastify parser, so the refusal detail names application/json even on the octet-stream-only upload, and an RFC 9110-valid JSON spelling is refused). 26 findings CLOSED_VERIFIED, 2 OPEN. Round-10 repair: backend-workflow-engineer T-DG2-BE15 (one RFC 9110 media-type decision that the parser lookup agrees with; refusals name the route set; unmatched routes are 404 whatever the body)."
         },
         {
           "state": "REVIEWING",
-          "at": "2026-10-06T23:40:00Z",
+          "at": "2026-10-06T23:16:00Z",
           "note": "Round-10 repairs integrated (D-070): the first BE15 run was killed by a container restart mid-verification; its WIP was salvaged (08a4f63, orphaned run kept under test-evidence/DG2/be15-orphaned/ for provenance only) and completed by BE15B e974d78 (one RFC 9110 media-type decision with header canonicalisation, refusals name the route set, unmatched routes 404 + close; duplicate Content-Type lines and non-UTF-8 JSON charsets refused). 26 findings CLOSED_VERIFIED, 2 FIXED_PENDING_VERIFICATION, 0 OPEN. Orchestrator verification green in both locale settings (unit 765x4 per setting, integration 570, e2e 60). Candidate frozen as 7fd1a89c for gate review round 10."
         }
       ]
