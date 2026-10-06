@@ -1,0 +1,96 @@
+$ QA_PG_PORT=54981 tests/qa/support/with-pg.sh npx vitest run --project integration --reporter=verbose tests/qa/integration/dg2-qa-journey.test.ts
+# CONTROL: clone @e37f6ea4 (round-4 candidate 29ced0ed) + qa-verifier's round-1 suite docs/delivery/test-evidence/DG2/qa/tests/dg2-qa-journey.test.ts; node v24.21.0; LANG/LC_ALL unset
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 $TMPDIR/ctl-r4
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muwi1igz_a859a864; applied 19 migrations to a fresh database
+ ✓ |integration| tests/qa/integration/dg2-qa-journey.test.ts > QA REQ-DLV-034 Diagnose -> Define -> Design through native workflows > G1: complete through the API, submit, approve -> phase define 478ms
+stdout | tests/qa/integration/dg2-qa-journey.test.ts > QA REQ-DLV-034 Diagnose -> Define -> Design through native workflows > G2: every Define output can be completed through the API (no direct DB writes)
+QA-JOURNEY G2 incomplete mandatory criteria: [{"key":"g2.outcome_tree","missing":["g2.outcome_tree.thesis_incomplete","g2.outcome_tree.thesis_incomplete","g2.outcome_tree.thesis_incomplete","g2.outcome_tree.thesis_incomplete"]},{"key":"g2.kpi_definitions","missing":["g2.kpi_definitions.not_active"]}]
+
+stdout | tests/qa/integration/dg2-qa-journey.test.ts > QA REQ-DLV-034 Diagnose -> Define -> Design through native workflows > G2: every Define output can be completed through the API (no direct DB writes)
+QA-JOURNEY PATCH kpi-definition {status:active} -> [33m400[39m validation
+
+stdout | tests/qa/integration/dg2-qa-journey.test.ts > QA REQ-DLV-034 Diagnose -> Define -> Design through native workflows > G2: every Define output can be completed through the API (no direct DB writes)
+QA-JOURNEY POST kpi-definition {status:active} -> [33m400[39m validation
+
+stdout | tests/qa/integration/dg2-qa-journey.test.ts > QA REQ-DLV-034 Diagnose -> Define -> Design through native workflows > G2: every Define output can be completed through the API (no direct DB writes)
+QA-JOURNEY kpi-definition status after the Define steps: draft
+
+stdout | tests/qa/integration/dg2-qa-journey.test.ts > QA REQ-DLV-034 Diagnose -> Define -> Design through native workflows > G3: every Design output can be completed through the API; approval advances the phase
+QA-JOURNEY G3 incomplete mandatory criteria: []
+
+ × |integration| tests/qa/integration/dg2-qa-journey.test.ts > QA REQ-DLV-034 Diagnose -> Define -> Design through native workflows > G2: every Define output can be completed through the API (no direct DB writes) 248ms
+   → G2 must be completable through native workflows: expected [ …(2) ] to deeply equal []
+ × |integration| tests/qa/integration/dg2-qa-journey.test.ts > QA REQ-DLV-034 Diagnose -> Define -> Design through native workflows > G3: every Design output can be completed through the API; approval advances the phase 404ms
+   → submit G3: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"G3 follows G2: G2 must be approved first (phases run in sequence).","code":"gate.out_of_sequence","requestId":"01a110a0-5699-7246-92b7-40b38f9b872b"}: expected 422 to be 201 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/dg2-qa-journey.test.ts > QA REQ-DLV-034 Diagnose -> Define -> Design through native workflows > G2: every Define output can be completed through the API (no direct DB writes)
+AssertionError: G2 must be completable through native workflows: expected [ …(2) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   {[39m
+[31m+     "key": "g2.outcome_tree",[39m
+[31m+     "missing": [[39m
+[31m+       "g2.outcome_tree.thesis_incomplete",[39m
+[31m+       "g2.outcome_tree.thesis_incomplete",[39m
+[31m+       "g2.outcome_tree.thesis_incomplete",[39m
+[31m+       "g2.outcome_tree.thesis_incomplete",[39m
+[31m+     ],[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "key": "g2.kpi_definitions",[39m
+[31m+     "missing": [[39m
+[31m+       "g2.kpi_definitions.not_active",[39m
+[31m+     ],[39m
+[31m+   },[39m
+[31m+ ][39m
+
+ ❯ tests/qa/integration/dg2-qa-journey.test.ts:312:69
+    310|     const k = ok(await req("GET", `${T}/kpi-definitions/${kpi.id}`, kd…
+    311|     console.log("QA-JOURNEY kpi-definition status after the Define ste…
+    312|     expect(open, "G2 must be completable through native workflows").to…
+       |                                                                     ^
+    313|     await submitAndApprove("G2");
+    314|     expect(await phase()).toBe("design");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| tests/qa/integration/dg2-qa-journey.test.ts > QA REQ-DLV-034 Diagnose -> Define -> Design through native workflows > G3: every Design output can be completed through the API; approval advances the phase
+AssertionError: submit G3: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"G3 follows G2: G2 must be approved first (phases run in sequence).","code":"gate.out_of_sequence","requestId":"01a110a0-5699-7246-92b7-40b38f9b872b"}: expected 422 to be 201 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 201[39m
+[31m+ 422[39m
+
+ ❯ ok tests/qa/integration/dg2-qa-journey.test.ts:20:72
+     18|   call<Any>(api.app, method, url, { session: s, ...(body !== undefined…
+     19| const ok = (r: Any, status: number, what: string) => {
+     20|   expect(r.status, `${what}: ${JSON.stringify(r.body).slice(0, 400)}`)…
+       |                                                                        ^
+     21|   return r.body;
+     22| };
+ ❯ submitAndApprove tests/qa/integration/dg2-qa-journey.test.ts:47:15
+ ❯ tests/qa/integration/dg2-qa-journey.test.ts:323:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  09:51:41
+   Duration  4.43s (transform 922ms, setup 0ms, collect 1.98s, tests 1.45s, environment 0ms, prepare 88ms)
+
+exit 1

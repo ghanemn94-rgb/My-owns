@@ -1,0 +1,27 @@
+OIDC on the offline surface (live Keycloak is environmental residual D-049). Extracted from the final integration runs:
+== 10-integration-unset.log: oidc.test.ts 24 passed, 0 failed; contract 'auth + me': 1 passed
+== 10-integration-cutf8.log: oidc.test.ts 24 passed, 0 failed; contract 'auth + me': 1 passed
+ ✓apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/login > redirects to the IdP with code flow, PKCE S256, state and nonce, storing only the state's hash 10ms
+ ✓apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/login > rejects returnTo=//evil.example/x (open redirect) with 400 5ms
+ ✓apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/login > rejects returnTo=https://evil.example/ (open redirect) with 400 1ms
+ ✓apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/login > rejects returnTo=relative (open redirect) with 400 1ms
+ ✓apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/login > rejects returnTo=/\evil (open redirect) with 400 1ms
+ ✓apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > provisions a first-time user just in time, WITHOUT any role, and signs them in (audited) 45ms
+ ✓apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > an invisible-only name claim is absent: the display name falls back to the e-mail (F-DG2-160) 16ms
+ ✓apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > 200 invisible characters before visible text: the name claim is absent, preferred_username is used (F-DG2-181) 12ms
+ ✓apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > an invisible-truncated name and preferred_username fall back to the e-mail, then a generated name (F-DG2-181) 26ms
+ ✓apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > a name with astral characters at the 200 boundary is cut on a code-point boundary (F-DG2-181) 23ms
+ ✓apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > a normal name is stored unchanged, including visible text with marks (F-DG2-181) 34ms
+ ✓apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > signs an existing (issuer, subject) back in to the same user 9ms
+ ✓apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > binds a pre-provisioned user by VERIFIED e-mail only 22ms
+ ✓apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > refuses a disabled user 10ms
+ ✓apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > uses each state once, and rejects unknown or expired states 13ms
+ ✓apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > login CSRF: the state is bound to the browser that started the login (F-DG1-103) > refuses an attacker's live callback in the victim's browser; the
+ ✓apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > login CSRF: the state is bound to the browser that started the login (F-DG1-103) > sets a short-lived HttpOnly SameSite=Lax login cookie, stores on
+ ✓apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > login CSRF: the state is bound to the browser that started the login (F-DG1-103) > uses the __Host- prefix and Secure on an https origin 32ms
+ ✓apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > rejects a wrong nonce and a PKCE mismatch (token_invalid), and IdP errors (idp_denied), all without a session 16ms
+ ✓apps/api/test/integration/oidc.test.ts > GET /api/v1/auth/callback > refuses just-in-time provisioning when several organizations exist (users must be pre-provisioned) 8ms
+ ✓apps/api/test/integration/oidc.test.ts > OIDC logout and configuration > returns the IdP end-session URL for OIDC sessions 18ms
+ ✓apps/api/test/integration/oidc.test.ts > OIDC logout and configuration > answers 404 on /auth/login and /auth/callback when OIDC is not configured 19ms
+ ✓apps/api/test/integration/oidc.test.ts > OIDC logout and configuration > redirects to /login?error=idp_unavailable when the IdP cannot be reached, and never fails startup 24ms
+ ✓apps/api/test/integration/oidc.test.ts > OIDC logout and configuration > keeps the IdP's token endpoint behind the server (the browser never receives tokens) 0ms

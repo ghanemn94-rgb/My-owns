@@ -1,0 +1,22 @@
+F-DG2-220 reliability series: 'pnpm test' (vitest unit-node + unit-web) on clone @96a3c293, candidate sha256:2f81c60a...8c46
+procedure: a scratch loop (outside the candidate) ran 8x Node 24.21.0 and 4x Node 22.22.2 (alternating), then 2x Node 24 under 2 busy-loop processes on 4 cores; a 3rd load run with /proc/loadavg sampling
+
+node24-run1  Tests 640 passed (640) | exit 0  end 2026-10-06T09:30:09Z
+node22-run1  Tests 640 passed (640) | exit 0  end 2026-10-06T09:31:16Z
+node24-run2  Tests 640 passed (640) | exit 0  end 2026-10-06T09:32:14Z
+node22-run2  Tests 640 passed (640) | exit 0  end 2026-10-06T09:33:03Z
+node24-run3  Tests 640 passed (640) | exit 0  end 2026-10-06T09:33:33Z
+node22-run3  Tests 640 passed (640) | exit 0  end 2026-10-06T09:34:09Z
+node24-run4  Tests 640 passed (640) | exit 0  end 2026-10-06T09:34:40Z
+node22-run4  Tests 640 passed (640) | exit 0  end 2026-10-06T09:35:15Z
+node24-run5  Tests 640 passed (640) | exit 0  end 2026-10-06T09:35:46Z
+node24-run6  Tests 640 passed (640) | exit 0  end 2026-10-06T09:36:27Z
+node24-run7  Tests 640 passed (640) | exit 0  end 2026-10-06T09:37:06Z
+node24-run8  Tests 640 passed (640) | exit 0  end 2026-10-06T09:37:46Z
+node24-load-run1  Tests 640 passed (640) | exit 0  end 2026-10-06T09:38:32Z
+node24-load-run2  Tests 640 passed (640) | exit 0  end 2026-10-06T09:39:06Z
+DONE
+node24-load-run3  Tests 640 passed (640) | exit 0  end 2026-10-06T09:39:55Z  (1-min loadavg 8.1-8.9 on 4 cores, see node24-load-run3.loadavg.txt)
+
+TALLY: Node 24 8/8 green; Node 22 4/4 green; under load 3/3 green; total 15/15, 640/640 each, 0 failures
+round-4 baseline (same procedure, candidate 29ced0ed): Node 24 failed 1/7 (p2-blank-forms findByRole 1000 ms timeout)

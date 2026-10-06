@@ -1,0 +1,48 @@
+$ env QA_ENC_PG_PORT=55432 QA_ENC_API_PORT=3842 bash /home/user/My-owns/docs/delivery/test-evidence/DG2/qa/tests/round-5/encoding-refusal.sh
+# clone @96a3c293; node v24.21.0; locale: cutf8 (LANG=C.UTF-8 LC_ALL=<unset>); start 2026-10-06T09:46:40Z
+cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa_ascii: SQL_ASCII
+qa_latin1: LATIN1
+qa_utf8: UTF8
+== qa_ascii (SQL_ASCII): objects before: []
+$ mth-db migrate -> exit 1: mth-db: the database must use UTF8 encoding (found SQL_ASCII); create it with ENCODING 'UTF8' TEMPLATE template0
+PASS  qa_ascii: mth-db migrate exits 1
+PASS  qa_ascii: mth-db migrate prints the UTF8 refusal (found SQL_ASCII)
+$ mth-db status -> exit 1: mth-db: the database must use UTF8 encoding (found SQL_ASCII); create it with ENCODING 'UTF8' TEMPLATE template0
+PASS  qa_ascii: mth-db status exits 1
+PASS  qa_ascii: mth-db status prints the UTF8 refusal (found SQL_ASCII)
+$ mth-db seed-dev -> exit 1: mth-db: the database must use UTF8 encoding (found SQL_ASCII); create it with ENCODING 'UTF8' TEMPLATE template0
+PASS  qa_ascii: mth-db seed-dev exits 1
+PASS  qa_ascii: mth-db seed-dev prints the UTF8 refusal (found SQL_ASCII)
+$ mth-db bootstrap -> exit 1: mth-db: the database must use UTF8 encoding (found SQL_ASCII); create it with ENCODING 'UTF8' TEMPLATE template0
+PASS  qa_ascii: mth-db bootstrap exits 1
+PASS  qa_ascii: mth-db bootstrap prints the UTF8 refusal (found SQL_ASCII)
+== qa_ascii: objects after: []
+PASS  qa_ascii: nothing created by any mth-db command
+PASS  qa_ascii: no schema_migration table
+== qa_latin1 (LATIN1): objects before: []
+$ mth-db migrate -> exit 1: mth-db: the database must use UTF8 encoding (found LATIN1); create it with ENCODING 'UTF8' TEMPLATE template0
+PASS  qa_latin1: mth-db migrate exits 1
+PASS  qa_latin1: mth-db migrate prints the UTF8 refusal (found LATIN1)
+$ mth-db status -> exit 1: mth-db: the database must use UTF8 encoding (found LATIN1); create it with ENCODING 'UTF8' TEMPLATE template0
+PASS  qa_latin1: mth-db status exits 1
+PASS  qa_latin1: mth-db status prints the UTF8 refusal (found LATIN1)
+$ mth-db seed-dev -> exit 1: mth-db: the database must use UTF8 encoding (found LATIN1); create it with ENCODING 'UTF8' TEMPLATE template0
+PASS  qa_latin1: mth-db seed-dev exits 1
+PASS  qa_latin1: mth-db seed-dev prints the UTF8 refusal (found LATIN1)
+$ mth-db bootstrap -> exit 1: mth-db: the database must use UTF8 encoding (found LATIN1); create it with ENCODING 'UTF8' TEMPLATE template0
+PASS  qa_latin1: mth-db bootstrap exits 1
+PASS  qa_latin1: mth-db bootstrap prints the UTF8 refusal (found LATIN1)
+== qa_latin1: objects after: []
+PASS  qa_latin1: nothing created by any mth-db command
+PASS  qa_latin1: no schema_migration table
+$ GET /readyz (API on qa_ascii) -> {"status":"not_ready","checks":{"database":"fail","migrations":"fail"}} HTTP 503 | second call: {"status":"not_ready","checks":{"database":"fail","migrations":"fail"}} HTTP 503
+   api log (encoding lines): readiness: the database must use UTF8 encoding (found SQL_ASCII)
+PASS  readyz on SQL_ASCII: 503 not_ready with database fail (both calls)
+PASS  readyz on SQL_ASCII: API logs the encoding reason
+$ mth-db migrate (qa_utf8) -> exit 0: mth-db migrate: applying 0019_evidence_review_separation.sql mth-db migrate: applied 19 migration(s) 
+PASS  control qa_utf8: mth-db migrate exit 0
+$ GET /readyz (API on qa_utf8, migrated) -> {"status":"ready","checks":{"database":"ok","migrations":"ok"}} HTTP 200 | second call: {"status":"ready","checks":{"database":"ok","migrations":"ok"}} HTTP 200
+PASS  control qa_utf8: readyz database ok, migrations ok, 200
+assertion failures: 0
+exit 0  end 2026-10-06T09:46:47Z

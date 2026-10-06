@@ -1,0 +1,21 @@
+$ node tools/gates/candidate.mjs --stage DG2   # candidate tree
+{"stage":"DG2","source":"working-tree","candidate_id":"sha256:2f81c60ab1347986b3a2c31f8cd7642e0f8e4c0b6de59f1636f05268f3558c46","files":526}
+exit 0
+$ (clone @96a3c293) node tools/gates/candidate.mjs --stage DG2
+{"stage":"DG2","source":"working-tree","candidate_id":"sha256:2f81c60ab1347986b3a2c31f8cd7642e0f8e4c0b6de59f1636f05268f3558c46","files":526}
+exit 0
+$ git merge-base --is-ancestor 96a3c293 HEAD
+exit 0
+$ git log --oneline 96a3c293..HEAD
+da317d7 DG2 round-5 review assignments (disjoint id ranges: sec 230-239, domain 240-249, qa 250-259)
+144c68a DG2: freeze round-5 candidate 2f81c60a (526 files, source 96a3c29); state REVIEWING round 5
+$ git diff --stat 96a3c293 HEAD
+ .../DG2/round-5/code-security-reviewer.md          |   81 +
+ .../assignments/DG2/round-5/domain-reviewer.md     |  107 +
+ .../assignments/DG2/round-5/qa-verifier.md         |   96 +
+ .../candidates/DG2/2f81c60ab1347986.manifest.json  | 2648 ++++++++++++++++++++
+ docs/delivery/stages.json                          |   27 +-
+ 5 files changed, 2954 insertions(+), 5 deletions(-)
+$ manifest candidate_id
+sha256:2f81c60ab1347986b3a2c31f8cd7642e0f8e4c0b6de59f1636f05268f3558c46 0
+manifest sha256:2f81c60ab1347986b3a2c31f8cd7642e0f8e4c0b6de59f1636f05268f3558c46 entries 526 source_commit 96a3c293614b9e832b9a419ef20ecb61e54a07cb
