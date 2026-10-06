@@ -1,0 +1,391 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG2",
+  "round": 5,
+  "candidate_id": "sha256:2f81c60ab1347986b3a2c31f8cd7642e0f8e4c0b6de59f1636f05268f3558c46",
+  "source_commit": "96a3c293614b9e832b9a419ef20ecb61e54a07cb",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG2-T-DG2-REV-QA-R5-qa-verifier-20261006T092613Z-c01fb57e",
+    "session_id": "c01fb57e-8662-4104-89f5-8759cb9ff881"
+  },
+  "implementation_author": [
+    "transformation-analyst",
+    "frontend-ux-engineer",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "qa-verifier authored no product implementation in the DG2 scope. Its only authored files are QA tests and evidence (tests/qa/**, e2e/a20-bilingual-shell.spec.ts, e2e/support/qa-stack.sh, docs/delivery/test-evidence/DG2/qa/**). In this round backend-workflow-engineer (T-DG2-BE9) changed two qa-verifier harness files, tests/qa/support/with-pg.sh and e2e/support/qa-stack.sh. qa-verifier reviewed that diff: it only adds initdb --encoding=UTF8 --locale=C, explicit ENCODING 'UTF8' TEMPLATE template0 databases and an encoding log line, and weakens nothing. Every result here comes from qa-verifier's own runs on a disposable clone of 96a3c293 under $TMPDIR. The verdict was formed without reading any other reviewer's round-5 record."
+  },
+  "assignment": "docs/delivery/assignments/DG2/round-5/qa-verifier.md",
+  "requirements_checked": [
+    "REQ-PB-003", "REQ-PB-012", "REQ-PB-016", "REQ-PB-017", "REQ-PB-018", "REQ-PB-023", "REQ-PB-024", "REQ-PB-025",
+    "REQ-PB-026", "REQ-PB-027", "REQ-PB-028", "REQ-PB-029", "REQ-PB-030", "REQ-PB-031", "REQ-PB-033", "REQ-PB-034",
+    "REQ-PB-035", "REQ-PB-036", "REQ-PB-037", "REQ-PB-038", "REQ-PB-039", "REQ-PB-041", "REQ-PB-042", "REQ-PB-043",
+    "REQ-DLV-034", "REQ-S04-003", "REQ-S04-004", "REQ-S04-005", "REQ-S05-003", "REQ-S10-001", "REQ-S13-012", "REQ-S16-013"
+  ],
+  "checks_run": [
+    {
+      "id": "QA-R5-00-candidate",
+      "procedure": "Verify the frozen candidate. Recompute the candidate ID in the candidate tree and in a disposable clone at the source commit. Confirm the source commit is an ancestor of HEAD and that the commits between them change only delivery metadata.",
+      "command": "node tools/gates/candidate.mjs --stage DG2; git merge-base --is-ancestor 96a3c293 HEAD; git log/diff --stat 96a3c293..HEAD",
+      "environment": "candidate tree HEAD da317d7 and clone $TMPDIR/review-dg2 @96a3c293; node v24.21.0",
+      "expected": "candidate_id sha256:2f81c60a…8c46 with 526 files in both trees; manifest agrees",
+      "actual": "Both trees give sha256:2f81c60ab1347986b3a2c31f8cd7642e0f8e4c0b6de59f1636f05268f3558c46 with 526 files, and the manifest has 526 entries and the same ID. HEAD da317d7 is two commits past 96a3c293: the round-5 freeze (manifest, stages.json) and the three round-5 assignments, none of which are manifest files.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/round-5/00-candidate.log", "docs/delivery/test-evidence/DG2/qa/round-5/env.txt"]
+    },
+    {
+      "id": "QA-R5-01-historical-DG1",
+      "procedure": "Historical validation of the approved previous gate",
+      "command": "node tools/gates/validate.mjs --historical --stage DG1",
+      "environment": "candidate tree; node v24.21.0",
+      "expected": "PASS, exit 0",
+      "actual": "PASS gate DG1 (historical), exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/round-5/00-historical-DG1.log"]
+    },
+    {
+      "id": "QA-R5-02-typecheck",
+      "procedure": "Workspace typecheck",
+      "command": "pnpm -r typecheck",
+      "environment": "clone @96a3c293 after pnpm install --frozen-lockfile --offline (private copy of the pre-populated store); node v24.21.0",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/round-5/01-typecheck.log", "docs/delivery/test-evidence/DG2/qa/round-5/00-install.log"]
+    },
+    {
+      "id": "QA-R5-03-build",
+      "procedure": "Workspace build",
+      "command": "pnpm -r build",
+      "environment": "clone @96a3c293; node v24.21.0",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/round-5/02-build.log"]
+    },
+    {
+      "id": "QA-R5-04-lint",
+      "procedure": "ESLint",
+      "command": "pnpm lint",
+      "environment": "clone @96a3c293; node v24.21.0",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/round-5/03-lint.log"]
+    },
+    {
+      "id": "QA-R5-05-openapi-lint",
+      "procedure": "OpenAPI lint",
+      "command": "pnpm openapi:lint",
+      "environment": "clone @96a3c293; node v24.21.0",
+      "expected": "PASS with 161 operations",
+      "actual": "PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 161 operations",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/round-5/04-openapi-lint.log"]
+    },
+    {
+      "id": "QA-R5-06-no-cdn",
+      "procedure": "No public CDN references",
+      "command": "pnpm check:no-cdn",
+      "environment": "clone @96a3c293; node v24.21.0",
+      "expected": "PASS",
+      "actual": "PASS no-cdn: scanned apps, packages",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/round-5/05-no-cdn.log"]
+    },
+    {
+      "id": "QA-R5-07-format",
+      "procedure": "Prettier check",
+      "command": "pnpm format:check",
+      "environment": "clone @96a3c293; node v24.21.0",
+      "expected": "All matched files use Prettier code style",
+      "actual": "All matched files use Prettier code style!",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/round-5/06-format-check.log"]
+    },
+    {
+      "id": "QA-R5-08-contrast",
+      "procedure": "Design-token contrast check",
+      "command": "pnpm --filter @mth/design-tokens run check:contrast",
+      "environment": "clone @96a3c293; node v24.21.0",
+      "expected": "PASS; only the documented prohibited pairs fail",
+      "actual": "PASS contrast: 50 pairs meet WCAG AA; 3 prohibited pairs fail as documented (#0078FF stays a provisional token)",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/round-5/07-contrast.log"]
+    },
+    {
+      "id": "QA-R5-09-unit-reliability-F-DG2-220",
+      "procedure": "Repeated unit suite (unit-node + unit-web) to re-verify F-DG2-220. Run 8 times on Node 24 and 4 times on Node 22, alternating, then 2 times on Node 24 under moderate concurrent CPU load (2 busy-loop processes on 4 cores), plus a third load run with /proc/loadavg sampling. Also measure per-test durations of p2-blank-forms with the JSON reporter, and inspect the fix diff.",
+      "command": "pnpm test (x8 node 24, x4 node 22, x3 node 24 under load); npx vitest run --project unit-web --reporter=json apps/web/src/pages/p2-blank-forms.test.tsx apps/web/src/test/harness-config.test.ts; git show 6946a1e",
+      "environment": "clone @96a3c293; node v24.21.0 and v22.22.2; 4 vCPU, 15 GiB",
+      "expected": "640/640 in every run; guard test present and passing; no assertion weakened",
+      "actual": "15/15 runs green, 640/640 each: Node 24 8/8, Node 22 4/4, under load 3/3 (1-min loadavg 8.1-8.9 on 4 cores during run 3). harness-config.test.ts (2 tests) passes in every run. The diff removes no expect (1 added). The slowest p2-blank-forms test is 411 ms (round 4: 2121 ms), and none reaches 700 ms, against a 5000 ms async-utility timeout and a 20 s test timeout. F-DG2-220 verifies CLOSED (see qa-verifier.verifications.json).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-034"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-5/08-unit-series-summary.log",
+        "docs/delivery/test-evidence/DG2/qa/round-5/unit/tally.txt",
+        "docs/delivery/test-evidence/DG2/qa/round-5/unit/node24-run8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-5/unit/node22-run4.log",
+        "docs/delivery/test-evidence/DG2/qa/round-5/unit/node24-load-run3.log",
+        "docs/delivery/test-evidence/DG2/qa/round-5/unit/node24-load-run3.loadavg.txt",
+        "docs/delivery/test-evidence/DG2/qa/round-5/unit/durations-p2-blank-forms-node24.log"
+      ]
+    },
+    {
+      "id": "QA-R5-10-integration-locale-unset",
+      "procedure": "Full integration project on a disposable PostgreSQL 16 cluster (unique port), with LANG/LC_ALL unset. It covers migrations 0001-0019 on a fresh database, DB guards (protection, migrate, bu-hierarchy-guard, aud-write-deny), contract.test.ts (161 ops), blank-text.test.ts, encoding.test.ts, and qa-verifier's suites copied into tests/qa/integration (A12/A13/A14, acceptance, journey-r2, design-r2, blank-sweep-r3, regress-r3).",
+      "command": "env -u LANG -u LC_ALL QA_PG_PORT=54951 tests/qa/support/with-pg.sh npx vitest run --project integration --reporter=verbose",
+      "environment": "clone @96a3c293; node v24.21.0; PostgreSQL 16.13 (disposable; server_encoding UTF8, lc_collate C, lc_ctype C)",
+      "expected": "19 migrations applied; all tests pass; contract 161 ops; encoding and blank-text green",
+      "actual": "Applied 19 migrations to a fresh UTF8 database. 35 files, 523/523 passed: contract 11/11 (toHaveLength(161) and route coverage), blank-text 25/25, encoding 8/8, migrate 7/7, protection 17/17, bu-hierarchy-guard 7/7, aud-write-deny 128/128, oidc 24/24, and QA suites 64/64. The blank sweep made 116 probes over 60 operations and accepted none.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/round-5/10-integration-unset.log"]
+    },
+    {
+      "id": "QA-R5-11-integration-locale-cutf8",
+      "procedure": "Same as QA-R5-10 with LANG=C.UTF-8 (LC_ALL unset)",
+      "command": "env -u LC_ALL LANG=C.UTF-8 QA_PG_PORT=54952 tests/qa/support/with-pg.sh npx vitest run --project integration --reporter=verbose",
+      "environment": "clone @96a3c293; node v24.21.0; PostgreSQL 16.13 (disposable; server_encoding UTF8, lc_collate C, lc_ctype C)",
+      "expected": "same as QA-R5-10",
+      "actual": "Applied 19 migrations. 35 files, 523/523 passed, with the same per-file counts as QA-R5-10 (contract 11, blank-text 25, encoding 8, guards green, QA 64).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/round-5/10-integration-cutf8.log"]
+    },
+    {
+      "id": "QA-R5-12-attempt1-superseded-qa-artifacts",
+      "procedure": "Investigate the first-attempt failures. The first integration and QA-stack e2e attempts included two superseded qa-verifier artifacts that rounds 2-4 did not run: the round-1 suite dg2-qa-journey.test.ts (replaced by dg2-qa-journey-r2) and the round-3 inverse probe dg2-qa-blank-probe-r3.spec.ts (replaced by -probe-r4). Classify their failures by running the round-1 suite on the round-4 candidate (control).",
+      "command": "attempt 1: same commands as QA-R5-10/11 and QA-R5-17/18 with those files present; control: QA_PG_PORT=54981 tests/qa/support/with-pg.sh npx vitest run --project integration tests/qa/integration/dg2-qa-journey.test.ts in a clone @e37f6ea4",
+      "environment": "clones @96a3c293 and @e37f6ea4; node v24.21.0; disposable PostgreSQL 16.13 (UTF8)",
+      "expected": "any failure is confined to superseded QA artifacts and is identical on the round-4 candidate (not a regression)",
+      "actual": "Attempt 1, both locales: integration 524/526, with failures only in the round-1 suite: G2 lists g2.outcome_tree.thesis_incomplete and g2.kpi_definitions.not_active, because the suite predates KPI activation and the thesis rule, and G3 is then out of sequence. QA-stack e2e: 96 passed and 2 failed, only probe-r3, which asserts the pre-fix 'one PATCH sent' and now sees 0, the correct behaviour (as recorded in round 4). The control on e37f6ea4 fails identically: same missing lists, 2 failed and 1 passed. Classified as stale QA artifacts, not product regressions; they were excluded from the final runs QA-R5-10/11/17/18 as in rounds 2-4.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-5/10-integration-attempt1-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-5/10-integration-attempt1-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-5/17-e2e-qa-stack-attempt1-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-5/17-e2e-qa-stack-attempt1-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-5/11-control-round1-journey-on-r4.log",
+        "docs/delivery/test-evidence/DG2/qa/round-5/locale-series-attempt1.txt"
+      ]
+    },
+    {
+      "id": "QA-R5-13-encoding-refusal-negative",
+      "procedure": "Independent negative check (D-065), run in both locale settings. On a disposable UTF8 cluster, create databases with ENCODING 'SQL_ASCII' and 'LATIN1' (TEMPLATE template0). Run the built mth-db migrate, status, seed-dev and bootstrap against each, and list every non-system relation, schema, function and type before and after. Start the built API on the SQL_ASCII database and call /readyz twice. Control: a UTF8 database migrates, and /readyz reports ready.",
+      "command": "env -u LANG -u LC_ALL | env LANG=C.UTF-8: QA_ENC_PG_PORT=5543x QA_ENC_API_PORT=384x bash docs/delivery/test-evidence/DG2/qa/tests/round-5/encoding-refusal.sh",
+      "environment": "clone @96a3c293 (built); node v24.21.0; disposable PostgreSQL 16.13",
+      "expected": "every mth-db command exits 1 with 'mth-db: the database must use UTF8 encoding (found <ENC>)'; nothing created; /readyz 503 database fail; UTF8 control migrates and is ready",
+      "actual": "Both locales: 28/28 assertions PASS. SQL_ASCII and LATIN1: migrate, status, seed-dev and bootstrap each exit 1 with the exact refusal (found SQL_ASCII / found LATIN1). The object list is empty before and after, and there is no schema_migration table. /readyz on SQL_ASCII returns 503 {database: fail, migrations: fail} on both calls, and the API logs 'readiness: the database must use UTF8 encoding (found SQL_ASCII)'. Control qa_utf8: migrate applies 19, exit 0; /readyz returns 200 {database: ok, migrations: ok}.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-5/12-encoding-refusal-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-5/12-encoding-refusal-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/tests/round-5/encoding-refusal.sh"
+      ]
+    },
+    {
+      "id": "QA-R5-14-predicate-probe-F-DG2-180",
+      "procedure": "Independent probe of the built shared predicate (hasVisibleContent and hasText) against the F-DG2-180 classes and visible controls",
+      "command": "node docs/delivery/test-evidence/DG2/qa/tests/round-5/predicate-probe.mjs $TMPDIR/review-dg2/packages/shared/dist/schemas/index.js",
+      "environment": "clone @96a3c293 after pnpm -r build; node v24.21.0",
+      "expected": "VS alone, VS17, CGJ, Mongolian FVS, Khmer U+17B4, Hangul filler, C0/C1 controls, lone surrogate, tag char, braille blank and ZWSP+NBSP+RLM have no content; emoji+VS16, Arabic+RLM, a combining mark, a Mongolian letter+FVS and ZWSP+text are content",
+      "actual": "17/17 as expected, 0 failures",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/round-5/13-predicate-probe.log", "docs/delivery/test-evidence/DG2/qa/tests/round-5/predicate-probe.mjs"]
+    },
+    {
+      "id": "QA-R5-15-e2e-product-locale-unset",
+      "procedure": "P1 and P2 journeys, p2-blank-text.spec.ts and the A20 bilingual shell in chromium-en and chromium-ar with --workers=1 on the product stack (with-stack.sh, unique ports), with LANG/LC_ALL unset",
+      "command": "env -u LANG -u LC_ALL E2E_API_PORT=3791 E2E_PG_PORT=54991 apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e e2e/a20-bilingual-shell.spec.ts --workers=1",
+      "environment": "clone @96a3c293; node v24.21.0; PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers (chromium-1194, pre-installed, nothing downloaded); disposable PostgreSQL 16.13 (database mth: server_encoding UTF8, C)",
+      "expected": "all pass in en and ar, including Define→G2 and Design→G3",
+      "actual": "62 passed. Per file: journeys 18, p2-journeys 24 (Define→G2 and Design→G3 pass in en and ar), p2-blank-text 16, a20 4. The log shows 'e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/round-5/15-e2e-product-unset.log"]
+    },
+    {
+      "id": "QA-R5-16-e2e-product-locale-cutf8",
+      "procedure": "Same as QA-R5-15 with LANG=C.UTF-8",
+      "command": "env -u LC_ALL LANG=C.UTF-8 E2E_API_PORT=3792 E2E_PG_PORT=54992 apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e e2e/a20-bilingual-shell.spec.ts --workers=1",
+      "environment": "clone @96a3c293; node v24.21.0; pre-installed chromium-1194; disposable PostgreSQL 16.13 (UTF8, C)",
+      "expected": "all pass in en and ar, including Define→G2 and Design→G3",
+      "actual": "62 passed, with the same per-file counts as QA-R5-15; Define→G2 and Design→G3 pass in en and ar; server_encoding UTF8 is logged.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/round-5/15-e2e-product-cutf8.log"]
+    },
+    {
+      "id": "QA-R5-17-e2e-qa-acceptance-stack-locale-unset",
+      "procedure": "qa-verifier's acceptance stack (e2e/support/qa-stack.sh, a port-parameterised copy; diff recorded), with LANG/LC_ALL unset. It runs all product e2e specs plus qa-verifier's specs (a20, dg2-qa-blank-r3, -r4, -probe-r4, and the new -r5) in chromium-en and chromium-ar.",
+      "command": "env -u LANG -u LC_ALL QA_API_PORT=3781 QA_E2E_PG_PORT=54931 E2E_BASE_URL=http://localhost:3781 e2e/support/qa-stack-port.sh npx playwright test e2e apps/web/e2e --workers=1",
+      "environment": "clone @96a3c293 + qa-verifier specs copied into e2e/; node v24.21.0; pre-installed chromium-1194; disposable PostgreSQL 16.13",
+      "expected": "server_encoding UTF8 line in the log; readyz ready; all pass",
+      "actual": "The log shows 'qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C', 19 migrations and readyz {database: ok, migrations: ok}. 96 passed, 0 failed.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/round-5/17-e2e-qa-stack-unset.log", "docs/delivery/test-evidence/DG2/qa/round-5/16-qa-stack-port.diff"]
+    },
+    {
+      "id": "QA-R5-18-e2e-qa-acceptance-stack-locale-cutf8",
+      "procedure": "Same as QA-R5-17 with LANG=C.UTF-8",
+      "command": "env -u LC_ALL LANG=C.UTF-8 QA_API_PORT=3782 QA_E2E_PG_PORT=54932 E2E_BASE_URL=http://localhost:3782 e2e/support/qa-stack-port.sh npx playwright test e2e apps/web/e2e --workers=1",
+      "environment": "clone @96a3c293 + qa-verifier specs; node v24.21.0; pre-installed chromium-1194; disposable PostgreSQL 16.13",
+      "expected": "server_encoding UTF8 line in the log; readyz ready; all pass",
+      "actual": "server_encoding UTF8 (C) logged; readyz ready; 96 passed, 0 failed.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/round-5/17-e2e-qa-stack-cutf8.log"]
+    },
+    {
+      "id": "QA-R5-19-blank-text-negative-en-ar",
+      "procedure": "Re-run the blank-text negative checks in EN and AR on the real stack, in both locale settings (part of QA-R5-17/18). The round-4 hardened specs (whitespace and format-character values in every P2 form) run unchanged. The new spec dg2-qa-blank-r5 adds invisible-only Case for change values in charter create: a variation selector alone (U+FE0F), a Default_Ignorable mix (VS1, CGJ, Mongolian FVS1, Khmer U+17B4, VS17) and C0 controls. It also sends the same values to the API as Out of scope, and an emoji+VS16 positive case.",
+      "command": "npx playwright test e2e/dg2-qa-blank-r4.spec.ts e2e/dg2-qa-blank-probe-r4.spec.ts e2e/dg2-qa-blank-r3.spec.ts e2e/dg2-qa-blank-r5.spec.ts (within the QA-R5-17/18 runs)",
+      "environment": "as QA-R5-17/18; chromium-en and chromium-ar",
+      "expected": "each invisible-only value is refused inline with the localized validation__blank message (aria-invalid, description, focus); no mutating request is sent and no charter is created; the API returns 400 validation.blank at /outOfScope with the version unchanged; emoji+VS16 is stored verbatim; axe is clean in each error state",
+      "actual": "Both locales, EN and AR: dg2-qa-blank-r5 4/4. Each of the 3 invisible-only values shows the blank message with sent=[] and the charter still 404. The API returns 400 [{pointer:/outOfScope, code:validation.blank}] for all 3 values, and the version is unchanged. '✔️' is stored verbatim. The round-3/4 blank specs all pass: 34 dg2-qa-blank tests per locale. AR screenshots show RTL and the Arabic message.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-029", "REQ-PB-030", "REQ-PB-031"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/tests/round-5/e2e/dg2-qa-blank-r5.spec.ts",
+        "docs/delivery/test-evidence/DG2/qa/round-5/17-e2e-qa-stack-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-5/17-e2e-qa-stack-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-5/e2e-cutf8/qa/ar/qa-r5-01-charter-create-invisible-1.png",
+        "docs/delivery/test-evidence/DG2/qa/round-5/e2e-cutf8/qa/en/qa-r5-01-charter-create-invisible-1.png"
+      ]
+    },
+    {
+      "id": "QA-R5-20-axe",
+      "procedure": "Axe (wcag2a/2aa/21a/21aa) with no serious or critical violation, error states included. Every expectAccessible call fails the test on any serious/critical violation, and the per-screen summaries are collected from all four e2e runs.",
+      "command": "axe summaries from QA-R5-15/16/17/18 (apps/web/e2e/support/ui.ts expectAccessible)",
+      "environment": "as QA-R5-15..18; @axe-core/playwright 4.10.2",
+      "expected": "0 serious/critical in every scanned state",
+      "actual": "Every summary (P1 17, P2 49, P2 blank-error 8 screens per language, in 4 runs) has 0 serious/critical and no other violation. The QA blank specs scan every blank-error state, including the new R5 states, with 34/34 passing per locale.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/round-5/19-axe-summary.log", "docs/delivery/test-evidence/DG2/qa/round-5/e2e-cutf8/product/ar/axe-summary-p2-blank.json"]
+    },
+    {
+      "id": "QA-R5-21-validate-register",
+      "procedure": "Register rules at DG2",
+      "command": "node tools/gates/validate.mjs --register DG2",
+      "environment": "candidate tree; node v24.21.0",
+      "expected": "PASS",
+      "actual": "PASS register rules at DG2",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/round-5/20-validate-register.log"]
+    },
+    {
+      "id": "QA-R5-22-validate-pipeline",
+      "procedure": "Pipeline state",
+      "command": "node tools/gates/validate.mjs --pipeline",
+      "environment": "candidate tree; node v24.21.0",
+      "expected": "PASS",
+      "actual": "PASS pipeline (active stage: DG2 REVIEWING)",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/round-5/20-validate-pipeline.log"]
+    },
+    {
+      "id": "QA-R5-23-validate-reconcile",
+      "procedure": "Reconcile reviews and findings",
+      "command": "node tools/gates/validate.mjs --reconcile",
+      "environment": "candidate tree; node v24.21.0",
+      "expected": "PASS (structure)",
+      "actual": "PASS reconcile (structure). The round-5 records are listed as missing because they were in progress.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/round-5/20-validate-reconcile.log"]
+    },
+    {
+      "id": "QA-R5-24-register-rows",
+      "procedure": "Check that the 32 assigned requirement rows exist in requirements.csv",
+      "command": "python3 (csv.DictReader over docs/delivery/requirements.csv)",
+      "environment": "candidate tree",
+      "expected": "32/32 present",
+      "actual": "32/32 present, all final_gate=DG2, status=IMPLEMENTED",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/round-5/21-register-rows.log"]
+    },
+    {
+      "id": "QA-R5-25-residual-registry",
+      "procedure": "Dependency pins on the offline surface: frozen-lockfile offline install. Live-registry verification attempted.",
+      "command": "pnpm install --frozen-lockfile --offline --store-dir $TMPDIR/pnpm-store/v10; timeout 120 pnpm deps:verify",
+      "environment": "clone @96a3c293; no network in the sandbox",
+      "expected": "offline install exit 0 from the lockfile; live registry is an environmental residual (D-057)",
+      "actual": "Offline install exit 0, 371/371 packages reused, 0 downloaded. deps:verify cannot reach the registry and timed out (124). That is residual D-057, not a gate blocker.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/round-5/25-deps-verify.log", "docs/delivery/test-evidence/DG2/qa/round-5/00-install.log"]
+    },
+    {
+      "id": "QA-R5-26-residual-ci",
+      "procedure": "CI configuration on the config surface, including the UTF8 database in the CI e2e stack",
+      "command": "ls .github/workflows; grep -nE 'runs-on|node-version|pnpm |playwright|initdb|ENCODING' .github/workflows/*.yml deploy/scripts/ci-e2e-stack.mjs",
+      "environment": "clone @96a3c293",
+      "expected": "workflows present and run the gate checks; live CI is an environmental residual (D-058)",
+      "actual": "The workflows are present (node matrix, format/lint/typecheck/build/test/openapi/no-cdn/playwright). ci-e2e-stack.mjs creates the database with ENCODING 'UTF8' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0. No live CI run was observed here (D-058).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/round-5/26-ci-config.log"]
+    },
+    {
+      "id": "QA-R5-27-residual-keycloak",
+      "procedure": "OIDC on the offline surface",
+      "command": "oidc.test.ts and contract 'auth + me' results from QA-R5-10/11",
+      "environment": "clone @96a3c293; node v24.21.0; disposable PostgreSQL 16.13",
+      "expected": "offline OIDC tests green; live Keycloak is an environmental residual (D-049)",
+      "actual": "oidc.test.ts 24/24 in both locale runs, including the F-DG2-181 display-name cases; contract 'auth + me' green. No live Keycloak (D-049).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/qa/round-5/27-oidc-offline.log"]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG2/qa/round-5/env.txt",
+    "docs/delivery/test-evidence/DG2/qa/round-5/00-candidate.log",
+    "docs/delivery/test-evidence/DG2/qa/round-5/08-unit-series-summary.log",
+    "docs/delivery/test-evidence/DG2/qa/round-5/unit/tally.txt",
+    "docs/delivery/test-evidence/DG2/qa/round-5/10-integration-unset.log",
+    "docs/delivery/test-evidence/DG2/qa/round-5/10-integration-cutf8.log",
+    "docs/delivery/test-evidence/DG2/qa/round-5/11-control-round1-journey-on-r4.log",
+    "docs/delivery/test-evidence/DG2/qa/round-5/12-encoding-refusal-unset.log",
+    "docs/delivery/test-evidence/DG2/qa/round-5/12-encoding-refusal-cutf8.log",
+    "docs/delivery/test-evidence/DG2/qa/round-5/15-e2e-product-unset.log",
+    "docs/delivery/test-evidence/DG2/qa/round-5/15-e2e-product-cutf8.log",
+    "docs/delivery/test-evidence/DG2/qa/round-5/17-e2e-qa-stack-unset.log",
+    "docs/delivery/test-evidence/DG2/qa/round-5/17-e2e-qa-stack-cutf8.log",
+    "docs/delivery/test-evidence/DG2/qa/round-5/19-axe-summary.log",
+    "docs/delivery/test-evidence/DG2/qa/tests/round-5/e2e/dg2-qa-blank-r5.spec.ts",
+    "docs/delivery/test-evidence/DG2/qa/tests/round-5/encoding-refusal.sh",
+    "docs/delivery/test-evidence/DG2/qa/tests/round-5/predicate-probe.mjs",
+    "docs/delivery/reviews/DG2/round-5/qa-verifier.verifications.json"
+  ],
+  "reviewed_at": "2026-10-06T10:20:00Z",
+  "summary": "PASS. F-DG2-220 verifies CLOSED: 'pnpm test' passed 15 of 15 runs at 640/640 each (Node 24 8/8, Node 22 4/4, under CPU load 3/3), and the slowest p2-blank-forms test fell from 2121 ms to 411 ms. All static checks pass. Integration passes 523/523 in both locale settings (LANG/LC_ALL unset and LANG=C.UTF-8): 19 migrations, DB guards, contract (161 ops), blank-text and encoding. e2e passes 62/62 on the product stack and 96/96 on the QA acceptance stack in both locale settings, in EN and AR, including Define→G2 and Design→G3. Axe shows no serious or critical violation, error states included, and every database logs server_encoding UTF8. D-065 negative: SQL_ASCII and LATIN1 databases are refused by every mth-db command with exit 1, nothing is created, and /readyz reports database: fail. F-DG2-180: a variation selector alone, Default_Ignorable code points and C0 controls are refused in a charter field in EN and AR, in the UI and at the API, and emoji+VS16 is stored verbatim. Two first-attempt failures came from superseded qa-verifier artifacts and reproduce identically on the round-4 candidate; they are not regressions. No new findings. Environmental residuals D-057, D-058 and D-049 are recorded as PASS on the offline/config surface. All data is synthetic; no business approval is implied, and product G1–G6 never imply DG7."
+}

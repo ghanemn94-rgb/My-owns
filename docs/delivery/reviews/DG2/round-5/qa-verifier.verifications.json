@@ -1,0 +1,21 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG2-220",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified by the originating reviewer on candidate 2f81c60a (disposable clone @96a3c293) with the round-4 procedure plus repetition. The fix (FE7 6946a1e) is present and genuine: apps/web/test/setup.ts calls configure({ asyncUtilTimeout: 5000 }); apps/web/vitest.config.ts sets testTimeout 20000 for unit-web; the guard test apps/web/src/test/harness-config.test.ts (2 tests) runs and passes in every run. The p2-blank-forms diff removes no assertion (0 expect lines removed, 1 added). It scopes the role queries to the table row after one cheap waitFor and caches the translation helper. Tally of 'pnpm test' (unit-node + unit-web, 640 tests): Node 24.21.0 8/8 green, Node 22.22.2 4/4 green, under moderate concurrent CPU load (2 busy-loop processes on 4 cores) 3/3 green. The third load run sampled a 1-min loadavg of 8.1-8.9. Total 15/15 runs, 640/640 each, 0 failures. Round-4 baseline: Node 24 failed 1 of 7. Measured margin: the slowest p2-blank-forms test now takes 411 ms (round 4: 2121 ms), and no test reaches 700 ms (round 4: 22 of 48), against a 5000 ms async-utility timeout.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-5/08-unit-series-summary.log",
+        "docs/delivery/test-evidence/DG2/qa/round-5/unit/tally.txt",
+        "docs/delivery/test-evidence/DG2/qa/round-5/unit/node24-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-5/unit/node22-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-5/unit/node24-load-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-5/unit/node24-load-run2.log",
+        "docs/delivery/test-evidence/DG2/qa/round-5/unit/node24-load-run3.log",
+        "docs/delivery/test-evidence/DG2/qa/round-5/unit/node24-load-run3.loadavg.txt",
+        "docs/delivery/test-evidence/DG2/qa/round-5/unit/durations-p2-blank-forms-node24.log"
+      ]
+    }
+  ]
+}
