@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG2-320",
+      "stage_id": "DG2",
+      "requirement": "REQ-DLV-034",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "uploadEvidenceContent accepts media types its contract does not declare: a chunked text/plain upload stores the file with invalid UTF-8 bytes rewritten to U+FFFD (200, sha256 of the rewritten bytes), and an application/json object or array body gives an undeclared 500",
+      "reproduction": "The contract declares only application/octet-stream for POST /api/v1/transformations/{transformationId}/evidence/{evidenceId}/content (docs/api/openapi.yaml, uploadEvidenceContent). apps/api/src/modules/evidence/routes.ts:349 adds an octet-stream parser, but Fastify's default text/plain parser (setEncoding('utf8'): U+FFFD replacement) and the root application/json parser (server.ts) stay registered for the route. The handler casts request.body to AsyncIterable<Uint8Array> | Uint8Array (routes.ts:421). FileSystemEvidenceStore.put (apps/api/src/modules/evidence/store.ts:75-83) then iterates whatever it is given: a string character by character, each one re-encoded as UTF-8; a JSON object, which throws TypeError 'not iterable'; or an array of numbers, where hash.update throws.\nProbe: zz-sec-r8-probe.test.ts R6, disposable clone at 4053630c (candidate 9331e9d1), disposable PostgreSQL 16, identical in both runs (probe-run1-lang-unset.log, probe-run2-lang-c-utf8.log). The Transformation Lead creates a file evidence item, then POSTs the content with If-Match, CSRF and X-File-Name:\n(a) Content-Type text/plain, chunked (no Content-Length), bytes 53 79 6e ff c3 0a ed a0 80 41: 200. The downloaded content is 53 79 6e ef bf bd ef bf bd 0a ef bf bd ef bf bd ef bf bd 41, and evidence_content.sha256 is the hash of those rewritten bytes, not of the bytes sent.\n(b) Content-Type application/json, body {\"a\":1} or [1,2,3]: 500 urn:mth:problem:internal, not declared for the operation, with an error-level 'unhandled error' log line each time. Nothing is stored and the temp file is removed.\n(c) Content-Type application/json, body \"Synthetic\": 200; the stored content is the JSON-decoded text Synthetic (53796e746865746963), not the 11 bytes sent.\nControls: application/octet-stream with the same ill-formed bytes, with a Content-Length or chunked, is stored and downloaded byte for byte with a matching sha256. text/plain with a Content-Length and invalid bytes now gets 400 validation.malformed_request (BE13's FST_ERR_CTP_INVALID_CONTENT_LENGTH mapping).\nBaseline: the same R6 at the round-7 candidate 90439483 (probe-r6-baseline-90439483.log) gives the same (a), (b) and (c), and there text/plain with a Content-Length was a 500. So this predates BE13 and is not a regression.",
+      "expected": "uploadEvidenceContent honours its contract: the request body is application/octet-stream and the stored evidence is exactly the bytes the client sent. Any other media type is refused with the declared 400 ValidationError (validation.content_type, as other operations answer an undeclared media type) before anything is stored, and never gives a 500. This is the F-DG2-290 faithfulness rule (client bytes are never silently rewritten, and never answered with an undeclared status) applied to evidence content. Possible fixes: refuse a request whose Content-Type is not application/octet-stream in the upload route (for example in a route-level preValidation or onRequest hook, or by checking that the body is a stream or Buffer before store.put); or scope the parsers so that only octet-stream reaches this route. Add an integration case for text/plain (both framings) and application/json bodies on this route.",
+      "actual": "With a non-browser client that labels an upload text/plain and sends it chunked, an evidence file is silently stored with its ill-formed bytes replaced by U+FFFD. The 200 response and the stored sha256 describe the rewritten content, so the upload looks successful while the evidence no longer matches the original. With application/json, an object or array body gives an undeclared 500 plus an error log line, and a JSON string body stores its decoded text. Impact is limited. It needs an authenticated user who passes the route's own ownership check (creator or named owner, EDIT_OWN) and who chooses a media type the contract does not offer. The web client always sends application/octet-stream. No third party can cause it. Authorization, scoping and audit are unaffected, and nothing is stored on the 500 path. It is Low and non-mandatory, the same rating as F-DG2-290, which is the same rewrite class on JSON bodies.",
+      "evidence": [
+        "apps/api/src/modules/evidence/routes.ts",
+        "apps/api/src/modules/evidence/store.ts",
+        "apps/api/src/server.ts",
+        "docs/api/openapi.yaml",
+        "docs/delivery/test-evidence/DG2/code-security/round-8/probes/zz-sec-r8-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-8/probe-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-8/probe-run2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-8/probe-r6-baseline-90439483.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-8/probes/README.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-8/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-06T18:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG2 round 8, during the assigned probe for any remaining path where client bytes are silently rewritten or answered with an undeclared status or a 500. It predates BE13 (same behaviour at 90439483), and BE13 improved the text/plain Content-Length case from 500 to 400. Rated Low and non-mandatory like F-DG2-290, because it needs an authorized editor using a non-browser client with an undeclared media type, and has no authorization, confidentiality or audit impact. It does not block the round."
+        }
+      ]
+    }
+  ]
+}
