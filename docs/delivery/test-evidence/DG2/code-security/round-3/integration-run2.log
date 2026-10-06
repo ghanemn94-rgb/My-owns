@@ -1,0 +1,60 @@
+# command: /var/tmp/mth-run.AGZreP/claude-0/bin/with-pg.sh 55482 pnpm test:integration
+# node: v22.22.2  commit: 9e13947e5a242e43fb08aab0e506888ed2c6cc38  started: 2026-10-06T05:47:18Z
+
+> mobily-transformation-hub@0.1.0 test:integration /var/tmp/mth-run.AGZreP/claude-0/review-sec
+> vitest run --project integration
+
+
+ RUN  v3.2.4 /var/tmp/mth-run.AGZreP/claude-0/review-sec
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muw9ba5r_68135b47; applied 19 migrations to a fresh database
+ ✓ |integration| packages/db/test/integration/bootstrap.test.ts (5 tests) 4302ms
+   ✓ mth-db bootstrap > creates the first organization and a technical/access admin with no business permission, fully audited  1045ms
+   ✓ mth-db bootstrap > refuses to run twice  959ms
+   ✓ mth-db bootstrap > validates its input and refuses the dev-login issuer  819ms
+   ✓ mth-db seed-dev (synthetic, development only) > seeds synthetic users bound to urn:mth:dev-local once, idempotently  672ms
+ ✓ |integration| packages/db/test/integration/scratch-drop.test.ts (3 tests) 5071ms
+   ✓ dropScratchDatabase never terminates a live client (F-DG1-009) > a drop right after pool.end() raises no 57P01 on the closing pool (40 rounds, 8 clients each)  4633ms
+   ✓ dropScratchDatabase never terminates a live client (F-DG1-009) > a client that is still connected is NOT terminated: the drop refuses, names it, and succeeds once it ends  437ms
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts (10 tests) 5542ms
+   ✓ worker runtime: end to end, restarts and the dead-letter queue > relays and handles a created transformation, and survives a restart without losing the job  3683ms
+   ✓ worker runtime: end to end, restarts and the dead-letter queue > moves a job that keeps failing to ops.failed after the bounded retries  1040ms
+ ✓ |integration| tests/qa/integration/a13-job-idempotency.test.ts (5 tests) 3639ms
+   ✓ A13 running worker: a duplicate delivery is a no-op > consumes the event once; an extra job with the same message completes as 'duplicate'  2616ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts (11 tests) 3752ms
+   ✓ every operation, validated against the contract and the zod mirrors > kpi module operations (P2; kpi-exercises.ts, owned by kpi-benefits-engineer)  806ms
+   ✓ every operation, validated against the contract and the zod mirrors > P2 backend operations (p2-exercises.ts): every routed operation exercised with a success  2242ms
+ ✓ |integration| apps/api/test/integration/registers.test.ts (23 tests) 1897ms
+ ✓ |integration| apps/api/test/integration/gates.test.ts (11 tests) 1989ms
+   ✓ starter structure and live readiness > REQ-S13-012: evidence that is only a filename (or an inaccessible link) leaves g1.diagnostic incomplete  304ms
+   ✓ G2 Direction readiness (REQ-PB-036 failing outcomes, REQ-PB-037 guardrails) > lists every outcome whose good outcome test is not passing (ids + criteria); zero guardrails blocks submission  434ms
+ ✓ |integration| apps/api/test/integration/aud-write-deny.test.ts (128 tests) 2250ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts (19 tests) 1169ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts (7 tests) 1123ms
+   ✓ mth-db migrate on a fresh database > applies every shipped migration, then reports up to date  617ms
+ ✓ |integration| apps/api/test/integration/dg2-repairs.test.ts (13 tests) 1505ms
+ ✓ |integration| apps/worker/test/integration/maintenance.test.ts (2 tests) 933ms
+ ✓ |integration| apps/api/test/integration/bu-hierarchy-guard.test.ts (7 tests) 1162ms
+ ✓ |integration| apps/api/test/integration/kpi/kpi-resources.test.ts (23 tests) 1035ms
+ ✓ |integration| apps/api/test/integration/access-derived-race.test.ts (4 tests) 1266ms
+ ✓ |integration| apps/api/test/integration/evidence.test.ts (6 tests) 644ms
+ ✓ |integration| apps/api/test/integration/blank-text.test.ts (12 tests) 930ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts (10 tests) 433ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts (30 tests) 788ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts (18 tests) 629ms
+ ✓ |integration| apps/api/test/integration/kpi/kpi-dg2-repairs.test.ts (11 tests) 750ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts (14 tests) 515ms
+ ✓ |integration| apps/api/test/integration/platform.test.ts (11 tests) 317ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts (11 tests) 487ms
+ ✓ |integration| apps/api/test/integration/kpi/kpi-aud-write-deny.test.ts (18 tests) 521ms
+ ✓ |integration| tests/qa/integration/a14-concurrency.test.ts (5 tests) 294ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts (13 tests) 364ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts (17 tests) 94ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts (9 tests) 36ms
+
+ Test Files  29 passed (29)
+      Tests  456 passed (456)
+   Start at  05:47:20
+   Duration  56.32s (transform 1.38s, setup 0ms, collect 10.54s, tests 43.44s, environment 0ms, prepare 92ms)
+
+# exit_status: 0  finished: 2026-10-06T05:48:17Z

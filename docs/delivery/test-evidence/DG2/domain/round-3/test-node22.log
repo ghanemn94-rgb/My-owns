@@ -1,0 +1,107 @@
+
+> mobily-transformation-hub@0.1.0 test /var/tmp/mth-run.cLsOn9/claude-0/review-dom
+> vitest run --project unit-node --project unit-web
+
+
+ RUN  v3.2.4 /var/tmp/mth-run.cLsOn9/claude-0/review-dom
+
+stderr | src/pages/team/team.test.tsx > Team (English LTR) > shows a 403 from the server in words; nothing is assigned
+Cannot update a component (`AssignDialog`) while rendering a different component (`RecordDialog`). To locate the bad setState() call inside `RecordDialog`, follow the stack trace as described in https://react.dev/link/setstate-in-render
+
+ ✓ |unit-web| src/pages/team/team.test.tsx (6 tests) 4105ms
+   ✓ Team (English LTR) > shows the six governance roles with B0018 accountability text verbatim and who holds each  802ms
+   ✓ Team (English LTR) > lists team members with the accountability on each assignment, sortable and filterable  587ms
+   ✓ Team (English LTR) > a Transformation Lead assigns a Workstream Lead: Idempotency-Key, reason, accountability preview  890ms
+   ✓ Team (English LTR) > shows a 403 from the server in words; nothing is assigned  927ms
+   ✓ Team: read-only auditor (AUD) > sees the roles, accountabilities and members, a read-only note, and no assign control  433ms
+   ✓ Team (Arabic RTL) > shows Arabic role names and the provisional Arabic accountability text  464ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx (21 tests) 7487ms
+   ✓ after create (F-DG1-004) > shows the created record when the server lets the creator read it  828ms
+   ✓ after create (F-DG1-004) > explains, in English, that the draft was created but cannot be opened (server 404), instead of 'Not found'  310ms
+   ✓ audit trail changes (F-DG1-005) > English: field and value labels, not raw keys or enum codes  397ms
+   ✓ audit trail changes (F-DG1-005) > Arabic: the same changes with Arabic labels in the RTL layout  576ms
+   ✓ derived creator assignment on the audit trail (F-DG1-008) > an action the catalogue does not know stays readable and is explicitly marked (en and ar)  542ms
+   ✓ effective permissions refresh after create (F-DG1-210) > English: Edit, Archive and the audit trail appear after create, without a reload  1028ms
+   ✓ effective permissions refresh after create (F-DG1-210) > Arabic (RTL): the same controls and the audit trail appear after create, without a reload  1110ms
+   ✓ effective permissions refresh after create (F-DG1-210) > does not over-grant: if the refreshed server answer adds nothing, Archive and the audit trail stay hidden  694ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts (15 tests) 62ms
+ ✓ |unit-web| src/app/app.test.tsx (17 tests) 4796ms
+   ✓ bilingual shell > shows all fourteen areas to an administrator  414ms
+   ✓ bilingual shell > marks planned areas as planned instead of pretending they work  322ms
+   ✓ bilingual shell > a partial area (Governance) leads into the Gates tab of each transformation; its portfolio view stays planned  1237ms
+   ✓ transformations > lists transformations with a sortable code column and removable filter chips  602ms
+   ✓ transformations > detail shows the workspace header with Unknown for data from later stages  486ms
+   ✓ transformations > edit: a 409 writes nothing, shows compare, and re-applies on the current version  692ms
+ ✓ |unit-web| src/lib/lib.test.ts (22 tests) 132ms
+ ✓ |unit-web| src/i18n/glossary.test.ts (8 tests) 24ms
+ ✓ |unit-web| src/pages/transformations/modeGuidance.test.tsx (5 tests) 1949ms
+   ✓ New transformation: mode guidance (English LTR) > shows When to use and How for the selected mode and switches with the mode  762ms
+   ✓ New transformation: mode guidance (English LTR) > Modular requires an entry phase before anything is sent  497ms
+   ✓ New transformation: mode guidance (English LTR) > a server validation error on the entry phase is shown on that field  488ms
+ ✓ |unit-web| src/i18n/i18n.test.ts (11 tests) 35ms
+ ✓ |unit-web| src/styles/styles.test.ts (6 tests) 6ms
+ ✓ |unit-web| src/components/States.test.tsx (15 tests) 1136ms
+   ✓ explicit states in en > loading is a polite live region with a text label  327ms
+ ✓ |unit-node| packages/shared/src/value.test.ts (29 tests) 422ms
+ ✓ |unit-web| src/pages/p2.test.tsx (44 tests) 23136ms
+   ✓ Diagnose > shows the six T01 dimensions with Unknown for missing values, and value pools that are never 0  1641ms
+   ✓ Diagnose > shows the totals as Unknown when no pool is quantified  614ms
+   ✓ Diagnose > renders the six workstreams with their key questions  905ms
+   ✓ Diagnose > edits a T01 row with only the changed fields and If-Match  1174ms
+   ✓ Diagnose > a 409 on save writes nothing, compares, and re-applies on the current version  1020ms
+   ✓ Diagnose > a 400 validation.blank shows a localized message on its field ('en')  978ms
+   ✓ Diagnose > a 400 validation.blank shows a localized message on its field ('ar')  987ms
+   ✓ Diagnose > Arabic: RTL with Arabic labels and the unquantified label  479ms
+   ✓ Define > shows the good outcome test per outcome with pass / fail / unknown and localized reasons  547ms
+   ✓ Define > requires a target date on a T02 row before sending anything  438ms
+   ✓ Define > sets the North Star with one sentence and no If-Match the first time  910ms
+   ✓ Define: KPI activation (F-DG2-201) > offers Activate on a draft KPI, states the unmet precondition on 422, then activates with If-Match  730ms
+   ✓ Define: KPI activation (F-DG2-201) > Arabic: the Activate action and the 422 reason are in Arabic  903ms
+   ✓ Define: KPI activation (F-DG2-201) > an active KPI shows Active and offers no Activate  364ms
+   ✓ Charter > shows the 14 fields, the thesis, the five scope checks with pre-checks and the top-outcomes warning  662ms
+   ✓ Charter > scope pre-check: an empty Out of scope reads as failing (EN and AR)  1227ms
+   ✓ Charter > thesis: the four parts compose the B0037 sentence (EN and AR)  380ms
+   ✓ Charter > compares a version with the previous one  437ms
+   ✓ Design > shows the ten canvas boxes and the per-dimension view  395ms
+   ✓ Design > converts an unresolved workshop item into a design decision with If-Match  931ms
+   ✓ Decisions (T04) > creates a design decision with inline options and an idempotency key  535ms
+   ✓ Gates (business approval) > shows unverified evidence as unverified, the failing outcome at G2, and submits with If-Match  338ms
+   ✓ Gates (business approval) > lists outcomes failing the good outcome test at G2  329ms
+   ✓ Gates (business approval) > the approver's decision: rationale required; 403 and 409 problems in words  516ms
+   ✓ Gates (business approval) > gate list titles: the verbatim B0023 name once, never the code twice (EN and AR)  436ms
+   ✓ Gates (business approval) > gate detail heading: the verbatim B0023 name once (EN and AR)  466ms
+   ✓ Evidence > uploads a revision as octet-stream with a percent-encoded file name and If-Match  991ms
+   ✓ Evidence > never offers review to the creator; a filename reference can only be rejected  620ms
+   ✓ read-only auditor (AUD) > diagnose: no write control and a read-only note  455ms
+   ✓ read-only auditor (AUD) > design: no write control and a read-only note  333ms
+ ✓ |unit-node| apps/api/src/modules/kpi/rules.test.ts (30 tests) 44ms
+ ✓ |unit-node| apps/api/src/modules/platform/platform.test.ts (13 tests) 33ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (135 tests) 5918ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  3723ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)  900ms
+ ✓ |unit-node| apps/api/src/modules/access/rules.test.ts (12 tests) 10ms
+ ✓ |unit-node| apps/api/src/modules/workflows/workflows.test.ts (14 tests) 1149ms
+   ✓ workflows module (P2) > its declared boundary holds, and an undeclared dependency would be caught  1082ms
+ ✓ |unit-node| packages/shared/src/schemas/schemas.test.ts (7 tests) 23ms
+ ✓ |unit-node| packages/design-tokens/src/tokens.test.ts (15 tests) 85ms
+ ✓ |unit-node| packages/config/src/load.test.ts (17 tests) 97ms
+ ✓ |unit-node| apps/api/src/modules/kpi/kpi.test.ts (18 tests) 1196ms
+   ✓ kpi module (P2) > its declared boundary holds, and a planted bypass or undeclared dependency would be caught  1124ms
+ ✓ |unit-node| packages/db/src/seed.test.ts (7 tests) 17ms
+ ✓ |unit-node| apps/api/src/modules/transformations/good-outcome.test.ts (7 tests) 7ms
+ ✓ |unit-node| apps/api/src/modules/admin/branding.test.ts (4 tests) 50ms
+ ✓ |unit-node| apps/api/src/server.test.ts (6 tests) 792ms
+ ✓ |unit-node| apps/api/src/modules/evidence/evidence.test.ts (8 tests) 577ms
+   ✓ evidence module (P2) > its declared boundary holds  502ms
+ ✓ |unit-node| apps/api/src/modules/transformations/thesis.test.ts (4 tests) 11ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reporting.test.ts (4 tests) 156ms
+ ✓ |unit-node| apps/api/src/modules/methodology/methodology.test.ts (4 tests) 385ms
+   ✓ methodology module (P2) > its declared boundary holds, and an undeclared dependency would be caught  368ms
+ ✓ |unit-node| apps/api/src/modules/transformations/transitions.test.ts (2 tests) 10ms
+ ✓ |unit-node| apps/api/src/modules/transformations/exclusions.test.ts (14 tests) 4ms
+
+ Test Files  31 passed (31)
+      Tests  520 passed (520)
+   Start at  05:44:47
+   Duration  41.85s (transform 4.63s, setup 0ms, collect 35.73s, tests 53.85s, environment 12.28s, prepare 5.28s)
+
