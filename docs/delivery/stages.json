@@ -820,7 +820,7 @@
       "id": "DG2",
       "stage": "P2",
       "name": "Diagnose define and design",
-      "state": "REVIEWING",
+      "state": "FIXING",
       "depends_on": [
         "DG1"
       ],
@@ -983,6 +983,11 @@
           "state": "REVIEWING",
           "at": "2026-10-06T11:35:00Z",
           "note": "Round-6 repairs integrated (D-066): BE10 for F-230 and F-231 (NUL refused centrally; SQLSTATE mapping), and ARCH-02 so the contract declares every 400 (41 operations, still 161) with params pointers that name the parameter. 19 findings CLOSED_VERIFIED, 2 FIXED_PENDING_VERIFICATION, 0 OPEN. Orchestrator verification green in both locale settings. Candidate frozen as bb3e7581 for gate review round 6."
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-10-06T12:40:00Z",
+          "note": "Round 6 on candidate bb3e7581: all three verdicts PASS. code-security closed F-DG2-230 and F-DG2-231, domain raised no findings (21 checks), and qa raised no findings (30 checks, both locale settings). One new Low, non-mandatory finding from code-security: F-DG2-260. A lone UTF-16 surrogate in the ID token sub gives the OIDC callback an undeclared 400 instead of its declared 302 and leaves no audit row. Integrity holds. 21 findings CLOSED_VERIFIED, 1 OPEN. Round-7 repair: backend-workflow-engineer T-DG2-BE11 makes hasInvalidCharacter cover lone surrogates (/\\p{Cs}/u), which flows through the central check, the shared schemas and identityClaimsStorable (302 token_invalid plus audit). Then re-freeze and round 7."
         }
       ]
     },
