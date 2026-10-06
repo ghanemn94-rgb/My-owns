@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG2-210",
+      "stage_id": "DG2",
+      "requirement": "REQ-PB-029",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Web forms silently turn whitespace-only text into null: the localized validation__blank message (D-063) is unreachable, and a blank save creates a charter, a content-free charter version, or clears an existing Out of scope",
+      "reproduction": "Disposable clone @9e13947e, real built SPA + API + PostgreSQL (e2e/support/qa-stack.sh with a port parameter only), chromium-en and chromium-ar, spec docs/delivery/test-evidence/DG2/qa/tests/round-3/e2e/dg2-qa-blank-r3.spec.ts, run twice. (1) Charter > Create charter, Case for change = '   \\t  ', Create: no message; GET charter -> 200 v1 with caseForChange null. (2) Charter with Out of scope null > Edit charter, Out of scope = whitespace, change summary filled, Save version: no message; a new charter version v2 is saved (probe dg2-qa-blank-probe-r3.spec.ts shows the PATCH body is {\"changeSummary\":\"QA probe\"} only and versions [[2,'QA probe'],[1,null]]). (3) Charter with Out of scope 'Enterprise contracts (synthetic)' > Edit, replace it with whitespace, Save version: no message; v2 -> v3 with outOfScope null, i.e. the documented exclusion is cleared. (4) Diagnose > T01 Edit, Current state = whitespace, Save draft: no blank message; the dialog shows 'There are no changes to save.' / 'لا توجد تغييرات لحفظها.' Cause: apps/web/src/components/RecordForm.tsx fromFormValue (default branch) maps s.trim() === '' to null before the request, so the server's 400 validation.blank is never triggered from these forms. The web unit test 'Diagnose a 400 validation.blank shows a localized message on its field' mocks the 400 and therefore does not exercise this path.",
+      "expected": "Per D-063 ('The web shows the EN/AR validation__blank message') and the round-3 assignment: whitespace-only text in a charter field or a T01 field shows the localized blank-validation message (EN/AR) and saves nothing. No charter is created, no charter version is written, and an existing value is not cleared by typing spaces.",
+      "actual": "In EN and AR, in both runs, the blank message is never shown. Whitespace is treated as an empty field: create saves a charter without the field; edit saves a new charter version with no content change, or clears an existing Out of scope (the exclusions chip then correctly fails). T01 shows 'no changes to save'. Data integrity holds: blank text is never stored, and readiness and pre-checks stay correct (hard assertions pass).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-3/17-e2e-qa-blank-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-3/17-e2e-qa-blank-run2.log",
+        "docs/delivery/test-evidence/DG2/qa/round-3/24-e2e-blank-probe.log",
+        "docs/delivery/test-evidence/DG2/qa/tests/round-3/e2e/dg2-qa-blank-r3.spec.ts",
+        "docs/delivery/test-evidence/DG2/qa/tests/round-3/e2e/dg2-qa-blank-probe-r3.spec.ts",
+        "docs/delivery/test-evidence/DG2/qa/round-3/e2e/en/qa-r3-01-charter-create-blank.png",
+        "docs/delivery/test-evidence/DG2/qa/round-3/e2e/ar/qa-r3-04-out-of-scope-replaced-by-blank.png",
+        "docs/delivery/test-evidence/DG2/qa/round-3/e2e/ar/qa-r3-05-t01-blank.png",
+        "apps/web/src/components/RecordForm.tsx"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG2/round-3/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-06T06:12:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG2 round 3 (T-DG2-REV-QA-R3) from the assignment's own negative UI check, which fails in EN and AR in two runs. Not a data-integrity failure: the server and DB reject or never store blank text. Medium because the D-063 UI claim is not delivered, and a whitespace save over an existing Out of scope silently clears the B0041 exclusion and writes a charter version."
+        }
+      ]
+    },
+    {
+      "id": "F-DG2-211",
+      "stage_id": "DG2",
+      "requirement": "REQ-S15-012",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "RecordForm error banner <ul role=\"alert\"> breaks list semantics: axe reports a serious 'listitem' violation (EN and AR) whenever the banner is shown",
+      "reproduction": "Disposable clone @9e13947e, real stack, chromium-en and chromium-ar: Diagnose > T01 row > Edit, enter whitespace only in Current state (or make any edit that leaves no change), Save draft. The form shows the 'There are no changes to save.' banner rendered by apps/web/src/components/RecordForm.tsx line 328: <ul className=\"banner banner--error plain-list\" role=\"alert\"> with <li> children. Run axe (wcag2a/2aa/21a/21aa, the product's expectAccessible helper). Result in both languages and both runs: serious violation 'listitem: .banner > li'. role=\"alert\" overrides the list role, so the <li> elements are not contained in a list (WCAG 1.3.1). The same banner renders every unmapped server field error of every RecordForm. The product journeys never scan this state, so their axe summaries (0 serious/critical over 58 screens per language) do not cover it. Present since ea72d86 (DG2 Phase B); not a round-3 regression.",
+      "expected": "No serious or critical axe violation on any P2 screen state in EN or AR (A20; the round-3 assignment's axe criterion). For example, put role=\"alert\" on a wrapper element around the <ul>, or render the messages without list items.",
+      "actual": "axe reports a serious 'listitem' violation (.banner > li) in chromium-en and chromium-ar whenever the RecordForm error banner is shown.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-3/17-e2e-qa-blank-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-3/17-e2e-qa-blank-run2.log",
+        "docs/delivery/test-evidence/DG2/qa/round-3/e2e/en/qa-r3-05-t01-blank.png",
+        "docs/delivery/test-evidence/DG2/qa/round-3/e2e/ar/qa-r3-05-t01-blank.png",
+        "docs/delivery/test-evidence/DG2/qa/tests/round-3/e2e/dg2-qa-blank-r3.spec.ts",
+        "apps/web/src/components/RecordForm.tsx"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG2/round-3/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-06T06:12:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG2 round 3 (T-DG2-REV-QA-R3). Not marked mandatory: REQ-S15-012's final gate is DG6 and the product's key journeys are axe-clean. It is still a serious-impact violation in a delivered P2 form state, in both languages."
+        }
+      ]
+    }
+  ]
+}
