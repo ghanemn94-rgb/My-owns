@@ -340,6 +340,7 @@ function DecisionLog() {
           url={`/api/v1/decisions/${deciding.id}/decide`}
           version={deciding.version}
           toBody={({ choice, note }) => ({ chosenOptionId: choice, outcomeText: note })}
+          notePointer="/outcomeText"
           onDone={refresh}
           onClose={() => setDeciding(null)}
         />

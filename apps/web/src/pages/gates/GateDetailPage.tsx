@@ -2,7 +2,7 @@
 // with its evidence state, submission (gate.submit; If-Match on the gate), the approver's decision with a mandatory
 // rationale, and the submission history with the frozen criteria. The 403 (not the approver / submitter cannot decide)
 // and 409 (submission superseded, version conflict) problems are shown as translated messages; nothing is assumed.
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router";
 import { GATE_OUTCOMES, gateApproverConfig, gateDecisionCreate, gateSubmissionCreate } from "@mth/shared/schemas";
@@ -19,7 +19,7 @@ import type {
 } from "../../api/types.ts";
 import { useDecisions } from "../../api/queries.ts";
 import { useLocale } from "../../app/locale.ts";
-import { Dialog, Field, issueCode } from "../../components/Form.tsx";
+import { BLANK_CODE, Dialog, Field, isBlankText, issueCode, useFocusFirstInvalid } from "../../components/Form.tsx";
 import { Icon } from "../../components/Icon.tsx";
 import { CompletenessChip, EvidenceStateChip, GateStatusChip } from "../../components/P2Badges.tsx";
 import { PersonName, usePeople } from "../../components/People.tsx";
@@ -424,14 +424,25 @@ function SubmitDialog({ view, onClose, onDone }: { view: GateView; onClose: () =
   const [fieldError, setFieldError] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
   const r = readiness(view);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const focusInvalid = useFocusFirstInvalid(dialogRef);
+  const showNoteError = (code: string) => {
+    setFieldError(fieldErrorMessage(t, code));
+    focusInvalid();
+  };
 
   const submit = async () => {
+    // F-DG2-210: "" means "no note"; a note with no visible content is refused inline; visible text is sent verbatim.
+    if (isBlankText(note)) {
+      showNoteError(BLANK_CODE);
+      return;
+    }
     const body: Record<string, unknown> = {};
-    if (note.trim()) body["submissionNote"] = note.trim();
+    if (note !== "") body["submissionNote"] = note;
     if (dueDate) body["dueDate"] = dueDate;
     const parsed = gateSubmissionCreate.safeParse(body);
     if (!parsed.success) {
-      setFieldError(fieldErrorMessage(t, issueCode(parsed.error.issues[0]!)));
+      showNoteError(issueCode(parsed.error.issues[0]!));
       return;
     }
     setFieldError(undefined);
@@ -440,12 +451,14 @@ function SubmitDialog({ view, onClose, onDone }: { view: GateView; onClose: () =
     try {
       await api.send(`/api/v1/transformations/${ws.tid}/gates/${view.definition.code}/submissions`, {
         method: "POST",
-        body: parsed.data,
+        body,
         ifMatch: view.gate.version,
       });
       await onDone();
     } catch (e) {
-      setError(e);
+      const onNote = e instanceof ApiError ? e.fieldErrors.find((fe) => fe.pointer === "/submissionNote") : undefined;
+      if (onNote) showNoteError(onNote.code);
+      else setError(e);
       // A conflict or a refused submission: reload the live readiness so the user sees the current state.
       if (e instanceof ApiError && (e.status === 409 || e.status === 422)) await refresh();
     } finally {
@@ -457,6 +470,7 @@ function SubmitDialog({ view, onClose, onDone }: { view: GateView; onClose: () =
     <Dialog
       title={t("gates.submit.title", { code: view.definition.code })}
       onClose={onClose}
+      dialogRef={dialogRef}
       footer={
         <>
           <button type="button" className="button button--secondary" onClick={onClose} disabled={busy}>
@@ -509,15 +523,27 @@ function DecideDialog({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const focusInvalid = useFocusFirstInvalid(dialogRef);
+  const showErrors = (next: Record<string, string>) => {
+    setErrors(next);
+    if (Object.keys(next).length > 0) focusInvalid();
+  };
 
   const submit = async () => {
-    const body: Record<string, unknown> = { submissionNo, outcome, rationale: rationale.trim() };
-    if (comments.trim()) body["comments"] = comments.trim();
+    // F-DG2-210: the rationale and comments are sent verbatim. "" keeps its meaning (rationale required, no comments);
+    // text with no visible content is refused inline before anything is sent.
+    const next: Record<string, string> = {};
+    if (isBlankText(rationale)) next["rationale"] = fieldErrorMessage(t, BLANK_CODE);
+    if (isBlankText(comments)) next["comments"] = fieldErrorMessage(t, BLANK_CODE);
+    const body: Record<string, unknown> = { submissionNo, outcome, rationale };
+    if (comments !== "") body["comments"] = comments;
     const parsed = gateDecisionCreate.safeParse(body);
     if (!parsed.success) {
-      const next: Record<string, string> = {};
       for (const issue of parsed.error.issues) next[String(issue.path[0])] ??= fieldErrorMessage(t, issueCode(issue));
-      setErrors(next);
+    }
+    if (Object.keys(next).length > 0) {
+      showErrors(next);
       return;
     }
     setErrors({});
@@ -526,11 +552,19 @@ function DecideDialog({
     try {
       await api.send(`/api/v1/transformations/${ws.tid}/gates/${view.definition.code}/decision`, {
         method: "POST",
-        body: parsed.data,
+        body,
       });
       await onDone();
     } catch (e) {
-      setError(e);
+      const mapped: Record<string, string> = {};
+      if (e instanceof ApiError) {
+        for (const fe of e.fieldErrors) {
+          const field = /^\/(outcome|rationale|comments)$/.exec(fe.pointer)?.[1];
+          if (field) mapped[field] ??= fieldErrorMessage(t, fe.code);
+        }
+      }
+      if (Object.keys(mapped).length > 0) showErrors(mapped);
+      else setError(e);
       if (e instanceof ApiError && e.status === 409) await onStale();
     } finally {
       setBusy(false);
@@ -541,6 +575,7 @@ function DecideDialog({
     <Dialog
       title={t("gates.decision.title", { code: view.definition.code, n: submissionNo })}
       onClose={onClose}
+      dialogRef={dialogRef}
       footer={
         <>
           <button type="button" className="button button--secondary" onClick={onClose} disabled={busy}>
@@ -560,7 +595,14 @@ function DecideDialog({
         </legend>
         {GATE_OUTCOMES.map((o) => (
           <label key={o} className="checkbox">
-            <input type="radio" name="gate-outcome" value={o} checked={outcome === o} onChange={() => setOutcome(o)} />
+            <input
+              type="radio"
+              name="gate-outcome"
+              value={o}
+              checked={outcome === o}
+              aria-invalid={errors["outcome"] ? true : undefined}
+              onChange={() => setOutcome(o)}
+            />
             {t(`gates.outcome.${o}`)}
           </label>
         ))}

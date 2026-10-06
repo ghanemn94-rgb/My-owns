@@ -1,11 +1,13 @@
 // Row actions shared by the P2 registers: archive with a mandatory reason and If-Match (records are archived, never
 // deleted), and a small "decision with a note" dialog for Finance validation, trajectory approval and similar
 // business decisions recorded by a person (the UI never decides anything automatically).
-import { useState } from "react";
+// The note follows the blank-text rule of every P2 form (F-DG2-210): "" is "no note" (or "required"), a non-empty note
+// with no visible content is an inline `validation.blank` error and nothing is sent, and visible text is sent verbatim.
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ApiError, api } from "../api/client.ts";
-import { errorMessage } from "../lib/problem.ts";
-import { Dialog, Field } from "./Form.tsx";
+import { errorMessage, fieldErrorMessage } from "../lib/problem.ts";
+import { BLANK_CODE, Dialog, Field, isBlankText, useFocusFirstInvalid } from "./Form.tsx";
 import { Icon } from "./Icon.tsx";
 import { ReasonDialog } from "./ReasonDialog.tsx";
 
@@ -73,6 +75,7 @@ export function NoteDecisionDialog({
   url,
   version,
   toBody,
+  notePointer = "/note",
   onDone,
   onClose,
 }: {
@@ -87,6 +90,8 @@ export function NoteDecisionDialog({
   url: string;
   version: number;
   toBody: (input: { choice: string; note: string; extra: string }) => Record<string, unknown>;
+  /** JSON pointer of the note in the request body, so a server field error on it lands on the note (e.g. "/outcomeText"). */
+  notePointer?: string;
   onDone: () => void | Promise<void>;
   onClose: () => void;
 }) {
@@ -97,26 +102,36 @@ export function NoteDecisionDialog({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [serverError, setServerError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const focusInvalid = useFocusFirstInvalid(dialogRef);
 
   const submit = async () => {
     const next: Record<string, string> = {};
     if (choices && !choice) next["choice"] = t("problems.validation__required");
     if (extra && !extraValue) next["extra"] = t("problems.validation__required");
-    if (noteRequired && note.trim().length === 0) next["note"] = t("problems.validation__required");
+    if (isBlankText(note)) next["note"] = fieldErrorMessage(t, BLANK_CODE);
+    else if (noteRequired && note === "") next["note"] = t("problems.validation__required");
     setErrors(next);
-    if (Object.keys(next).length > 0) return;
+    if (Object.keys(next).length > 0) {
+      focusInvalid();
+      return;
+    }
     setBusy(true);
     setServerError(null);
     try {
       await api.send(url, {
         method: "POST",
-        body: toBody({ choice, note: note.trim(), extra: extraValue }),
+        body: toBody({ choice, note, extra: extraValue }),
         ifMatch: version,
       });
       await onDone();
       onClose();
     } catch (e) {
-      setServerError(e);
+      const onNote = e instanceof ApiError ? e.fieldErrors.find((fe) => fe.pointer === notePointer) : undefined;
+      if (onNote) {
+        setErrors({ note: fieldErrorMessage(t, onNote.code) });
+        focusInvalid();
+      } else setServerError(e);
       if (e instanceof ApiError && e.status === 409) await onDone();
     } finally {
       setBusy(false);
@@ -127,6 +142,7 @@ export function NoteDecisionDialog({
     <Dialog
       title={title}
       onClose={onClose}
+      dialogRef={dialogRef}
       footer={
         <>
           <button type="button" className="button button--secondary" onClick={onClose} disabled={busy}>
@@ -155,6 +171,7 @@ export function NoteDecisionDialog({
                 type="radio"
                 name="decision-choice"
                 value={c.value}
+                aria-invalid={errors["choice"] ? true : undefined}
                 checked={choice === c.value}
                 onChange={() => setChoice(c.value)}
               />
@@ -179,6 +196,7 @@ export function NoteDecisionDialog({
                 type="radio"
                 name="decision-extra"
                 value={c.value}
+                aria-invalid={errors["extra"] ? true : undefined}
                 checked={extraValue === c.value}
                 onChange={() => setExtraValue(c.value)}
               />

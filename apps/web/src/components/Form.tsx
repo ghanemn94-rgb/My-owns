@@ -1,7 +1,18 @@
 // Form building blocks: every control has a visible <label>, hints and errors are linked with aria-describedby, and
 // invalid fields carry aria-invalid (REQ-S15-012). Validation runs the SHARED zod schemas (@mth/shared/schemas), the
 // same ones the API uses, and messages are translated from their codes.
-import { useCallback, useEffect, useId, useRef, type KeyboardEvent, type ReactElement, type ReactNode } from "react";
+import { hasText } from "@mth/shared/schemas";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactElement,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import type { FieldValues, Resolver } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import type { z } from "zod";
@@ -58,6 +69,31 @@ export function Field({
   );
 }
 
+/**
+ * The one blank-text rule of every hand-written P2 form (F-DG2-210, D-063): a control that holds text but none of it is
+ * visible (spaces, format characters such as U+200F, invisible fillers; the SHARED `hasText`, the server's own
+ * predicate). "" is not blank: it keeps its "no value" meaning (optional field omitted, required field "required").
+ */
+export function isBlankText(value: string): boolean {
+  return value !== "" && !hasText(value);
+}
+
+/** Field-error code for blank text (`BLANK_TEXT_CODE` of the shared schemas). */
+export const BLANK_CODE = "validation.blank";
+
+/**
+ * Moves focus to the first `[aria-invalid="true"]` control inside `container` after each call of the returned
+ * function (after React has rendered the errors). Used by forms and dialogs after a refused submit.
+ */
+export function useFocusFirstInvalid(container: RefObject<HTMLElement | null>): () => void {
+  const [request, setRequest] = useState(0);
+  useEffect(() => {
+    if (request === 0) return;
+    container.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+  }, [request, container]);
+  return useCallback(() => setRequest((n) => n + 1), []);
+}
+
 /** Maps a zod issue to an i18n field-error code (the same codes the API returns in `errors[].code`). */
 export function issueCode(issue: z.core.$ZodIssue): string {
   if (typeof issue.message === "string" && /^validation\.[a-z_.]+$/.test(issue.message)) return issue.message;
@@ -103,14 +139,24 @@ export function Dialog({
   onClose,
   children,
   footer,
+  dialogRef,
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
   footer?: ReactNode;
+  /** The dialog element, e.g. for `useFocusFirstInvalid`. */
+  dialogRef?: RefObject<HTMLDivElement | null>;
 }) {
   const titleId = useId();
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement | null>(null);
+  const setRef = useCallback(
+    (el: HTMLDivElement | null) => {
+      ref.current = el;
+      if (dialogRef) dialogRef.current = el;
+    },
+    [dialogRef],
+  );
   const opener = useRef<Element | null>(null);
   useEffect(() => {
     opener.current = document.activeElement;
@@ -146,7 +192,14 @@ export function Dialog({
   );
   return (
     <div className="dialog-backdrop">
-      <div ref={ref} className="dialog" role="dialog" aria-modal="true" aria-labelledby={titleId} onKeyDown={onKeyDown}>
+      <div
+        ref={setRef}
+        className="dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        onKeyDown={onKeyDown}
+      >
         <h2 id={titleId} className="dialog__title">
           {title}
         </h2>

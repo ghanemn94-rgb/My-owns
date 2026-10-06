@@ -1,7 +1,7 @@
 // Journeys and processes (REQ-PB-025): current and future journey/process maps with ordered steps (actor, hand-off,
 // systems, controls, cycle time) and pain points linked to a step and, optionally, to a T01 row. Steps keep a stable
 // key across edits so pain points stay attached to them.
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   journeyCreate,
@@ -16,7 +16,7 @@ import type { DiagnosticItem, Journey, JourneyPainPoint } from "../../api/types.
 import { useLocale } from "../../app/locale.ts";
 import { Unknown } from "../../components/Badges.tsx";
 import { Amount } from "../../components/Amount.tsx";
-import { Dialog, issueCode } from "../../components/Form.tsx";
+import { BLANK_CODE, Dialog, Field, isBlankText, issueCode, useFocusFirstInvalid } from "../../components/Form.tsx";
 import { Icon } from "../../components/Icon.tsx";
 import { RecordStatus } from "../../components/P2Badges.tsx";
 import { PersonName, usePeople } from "../../components/People.tsx";
@@ -478,11 +478,44 @@ const toDraft = (s: JourneyStep): StepDraft => ({
   cycleTimeUnit: s.cycleTimeUnit ?? "",
 });
 
+/** A comma-separated list control: the commas and the spaces around them are list syntax; empty items are dropped. */
 const list = (v: string) =>
   v
     .split(",")
     .map((x) => x.trim())
     .filter((x) => x !== "");
+
+/** The editable text controls of a step, in screen order (their order decides which invalid control gets focus). */
+const STEP_TEXT_FIELDS = ["name", "actor", "handoffTo", "systems", "controls", "cycleTimeValue"] as const;
+type StepTextField = (typeof STEP_TEXT_FIELDS)[number];
+const isStepTextField = (f: unknown): f is StepTextField =>
+  typeof f === "string" && (STEP_TEXT_FIELDS as readonly string[]).includes(f);
+
+/**
+ * F-DG2-210: the blank-text rule on a step. A control that holds text but nothing visible is `validation.blank` (also a
+ * list item such as "\u200f" between commas); "" keeps its meaning (a required name is "required", the others are
+ * "no value").
+ */
+function blankStepFields(s: StepDraft): StepTextField[] {
+  return STEP_TEXT_FIELDS.filter((f) =>
+    f === "systems" || f === "controls"
+      ? isBlankText(s[f]) || list(s[f]).some((item) => isBlankText(item))
+      : isBlankText(s[f]),
+  );
+}
+
+/** The PATCH body: free text verbatim ("" is null); a cycle time is a decimal, so only its outer spaces are dropped. */
+const stepBody = (s: StepDraft, i: number) => ({
+  key: s.key,
+  ordinal: i + 1,
+  name: s.name,
+  actor: s.actor === "" ? null : s.actor,
+  handoffTo: s.handoffTo === "" ? null : s.handoffTo,
+  systems: list(s.systems),
+  controls: list(s.controls),
+  cycleTimeValue: s.cycleTimeValue === "" ? null : s.cycleTimeValue.trim(),
+  cycleTimeUnit: s.cycleTimeUnit || null,
+});
 
 /** Ordered step editor: add, remove, reorder; saved as one PATCH {steps} with If-Match. */
 function StepsEditor({ journey, onClose }: { journey: Journey; onClose: () => void }) {
@@ -493,8 +526,16 @@ function StepsEditor({ journey, onClose }: { journey: Journey; onClose: () => vo
     [...journey.steps].sort((a, b) => a.ordinal - b.ordinal).map(toDraft),
   );
   const [error, setError] = useState<string | null>(null);
+  /** Field errors keyed "<step key>/<field>", so they follow a step when it is moved. */
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [serverError, setServerError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const focusInvalid = useFocusFirstInvalid(dialogRef);
+  const showFieldErrors = (next: Record<string, string>) => {
+    setFieldErrors(next);
+    if (Object.keys(next).length > 0) focusInvalid();
+  };
 
   const update = (i: number, patch: Partial<StepDraft>) =>
     setSteps((s) => s.map((x, j) => (j === i ? { ...x, ...patch } : x)));
@@ -507,27 +548,28 @@ function StepsEditor({ journey, onClose }: { journey: Journey; onClose: () => vo
     });
 
   const save = async () => {
-    const body = {
-      steps: steps.map((s, i) => ({
-        key: s.key,
-        ordinal: i + 1,
-        name: s.name.trim(),
-        actor: s.actor.trim() || null,
-        handoffTo: s.handoffTo.trim() || null,
-        systems: list(s.systems),
-        controls: list(s.controls),
-        cycleTimeValue: s.cycleTimeValue.trim() || null,
-        cycleTimeUnit: s.cycleTimeUnit || null,
-      })),
-    };
+    const next: Record<string, string> = {};
+    for (const s of steps) for (const f of blankStepFields(s)) next[`${s.key}/${f}`] = fieldErrorMessage(t, BLANK_CODE);
+    const body = { steps: steps.map(stepBody) };
     const parsed = journeyUpdate.safeParse(body);
+    let other: string | null = null;
     if (!parsed.success) {
-      const issue = parsed.error.issues[0]!;
-      const at = typeof issue.path[1] === "number" ? `${t("design.journeys.step")} ${issue.path[1] + 1}: ` : "";
-      setError(`${at}${fieldErrorMessage(t, issueCode(issue))}`);
+      for (const issue of parsed.error.issues) {
+        const [, i, field] = issue.path;
+        const step = typeof i === "number" ? steps[i] : undefined;
+        if (step && isStepTextField(field)) next[`${step.key}/${field}`] ??= fieldErrorMessage(t, issueCode(issue));
+        else if (other === null) {
+          const at = typeof i === "number" ? `${t("design.journeys.step")} ${i + 1}: ` : "";
+          other = `${at}${fieldErrorMessage(t, issueCode(issue))}`;
+        }
+      }
+    }
+    setError(other);
+    if (other !== null || Object.keys(next).length > 0) {
+      showFieldErrors(next);
       return;
     }
-    setError(null);
+    setFieldErrors({});
     setServerError(null);
     setBusy(true);
     try {
@@ -539,7 +581,16 @@ function StepsEditor({ journey, onClose }: { journey: Journey; onClose: () => vo
       await refresh();
       onClose();
     } catch (e) {
-      setServerError(e);
+      const mapped: Record<string, string> = {};
+      if (e instanceof ApiError) {
+        for (const fe of e.fieldErrors) {
+          const m = /^\/steps\/(\d+)\/([A-Za-z]+)$/.exec(fe.pointer);
+          const step = m ? steps[Number(m[1])] : undefined;
+          if (step && isStepTextField(m?.[2])) mapped[`${step.key}/${m[2]}`] ??= fieldErrorMessage(t, fe.code);
+        }
+      }
+      if (Object.keys(mapped).length > 0) showFieldErrors(mapped);
+      else setServerError(e);
       if (e instanceof ApiError && e.status === 409) await refresh();
     } finally {
       setBusy(false);
@@ -550,6 +601,7 @@ function StepsEditor({ journey, onClose }: { journey: Journey; onClose: () => vo
     <Dialog
       title={t("design.journeys.editStepsTitle", { name: journey.name })}
       onClose={onClose}
+      dialogRef={dialogRef}
       footer={
         <>
           <button type="button" className="button button--secondary" onClick={onClose} disabled={busy}>
@@ -581,54 +633,71 @@ function StepsEditor({ journey, onClose }: { journey: Journey; onClose: () => vo
             <fieldset className="plain-fieldset step-fieldset">
               <legend className="field__label">{t("design.journeys.stepN", { n: i + 1 })}</legend>
               <div className="grid grid--2">
-                <label className="field">
-                  <span className="field__label">
-                    {t("common.field.name")} <span className="field__required">({t("common.form.required")})</span>
-                  </span>
-                  <input
-                    type="text"
-                    value={s.name}
-                    maxLength={300}
-                    aria-required
-                    onChange={(e) => update(i, { name: e.target.value })}
-                  />
-                </label>
-                <label className="field">
-                  <span className="field__label">{t("design.journeys.actor")}</span>
-                  <input
-                    type="text"
-                    value={s.actor}
-                    maxLength={200}
-                    onChange={(e) => update(i, { actor: e.target.value })}
-                  />
-                </label>
-                <label className="field">
-                  <span className="field__label">{t("design.journeys.handoffTo")}</span>
-                  <input
-                    type="text"
-                    value={s.handoffTo}
-                    maxLength={200}
-                    onChange={(e) => update(i, { handoffTo: e.target.value })}
-                  />
-                </label>
-                <label className="field">
-                  <span className="field__label">{t("design.journeys.systemsHint")}</span>
-                  <input type="text" value={s.systems} onChange={(e) => update(i, { systems: e.target.value })} />
-                </label>
-                <label className="field">
-                  <span className="field__label">{t("design.journeys.controlsHint")}</span>
-                  <input type="text" value={s.controls} onChange={(e) => update(i, { controls: e.target.value })} />
-                </label>
-                <label className="field">
-                  <span className="field__label">{t("design.journeys.cycleTime")}</span>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    dir="ltr"
-                    value={s.cycleTimeValue}
-                    onChange={(e) => update(i, { cycleTimeValue: e.target.value })}
-                  />
-                </label>
+                <Field label={t("common.field.name")} error={fieldErrors[`${s.key}/name`]} required>
+                  {(control) => (
+                    <input
+                      {...control}
+                      type="text"
+                      value={s.name}
+                      maxLength={300}
+                      onChange={(e) => update(i, { name: e.target.value })}
+                    />
+                  )}
+                </Field>
+                <Field label={t("design.journeys.actor")} error={fieldErrors[`${s.key}/actor`]}>
+                  {(control) => (
+                    <input
+                      {...control}
+                      type="text"
+                      value={s.actor}
+                      maxLength={200}
+                      onChange={(e) => update(i, { actor: e.target.value })}
+                    />
+                  )}
+                </Field>
+                <Field label={t("design.journeys.handoffTo")} error={fieldErrors[`${s.key}/handoffTo`]}>
+                  {(control) => (
+                    <input
+                      {...control}
+                      type="text"
+                      value={s.handoffTo}
+                      maxLength={200}
+                      onChange={(e) => update(i, { handoffTo: e.target.value })}
+                    />
+                  )}
+                </Field>
+                <Field label={t("design.journeys.systemsHint")} error={fieldErrors[`${s.key}/systems`]}>
+                  {(control) => (
+                    <input
+                      {...control}
+                      type="text"
+                      value={s.systems}
+                      onChange={(e) => update(i, { systems: e.target.value })}
+                    />
+                  )}
+                </Field>
+                <Field label={t("design.journeys.controlsHint")} error={fieldErrors[`${s.key}/controls`]}>
+                  {(control) => (
+                    <input
+                      {...control}
+                      type="text"
+                      value={s.controls}
+                      onChange={(e) => update(i, { controls: e.target.value })}
+                    />
+                  )}
+                </Field>
+                <Field label={t("design.journeys.cycleTime")} error={fieldErrors[`${s.key}/cycleTimeValue`]}>
+                  {(control) => (
+                    <input
+                      {...control}
+                      type="text"
+                      inputMode="decimal"
+                      dir="ltr"
+                      value={s.cycleTimeValue}
+                      onChange={(e) => update(i, { cycleTimeValue: e.target.value })}
+                    />
+                  )}
+                </Field>
                 <label className="field">
                   <span className="field__label">{t("design.journeys.cycleTimeUnit")}</span>
                   <select value={s.cycleTimeUnit} onChange={(e) => update(i, { cycleTimeUnit: e.target.value })}>

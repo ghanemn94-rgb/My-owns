@@ -2,7 +2,7 @@
 // (REQ-PB-032/035), the good outcome test per outcome with pass / fail / unknown and its reasons (REQ-PB-036), the T02
 // Outcome & KPI Tree with a REQUIRED target date (REQ-PB-034), KPI definitions and strategic guardrails (REQ-PB-037).
 // The good outcome test is computed by the server; the UI never upgrades an unknown or failing criterion to a pass.
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import {
@@ -26,7 +26,7 @@ import type { Baseline, KpiDefinition, NorthStar, Outcome, OutcomeKpi, Strategic
 import { useLocale } from "../../app/locale.ts";
 import { Unknown } from "../../components/Badges.tsx";
 import { Amount } from "../../components/Amount.tsx";
-import { Dialog, Field, issueCode } from "../../components/Form.tsx";
+import { BLANK_CODE, Dialog, Field, isBlankText, issueCode, useFocusFirstInvalid } from "../../components/Form.tsx";
 import { Icon } from "../../components/Icon.tsx";
 import { RecordStatus, ResultChip } from "../../components/P2Badges.tsx";
 import { PersonName, usePeople, type Person } from "../../components/People.tsx";
@@ -150,11 +150,15 @@ function NorthStarForm({ current, onDone }: { current: NorthStar | null; onDone:
   const [busy, setBusy] = useState(false);
   const [base, setBase] = useState(current);
   const [conflict, setConflict] = useState<NorthStar | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const focusInvalid = useFocusFirstInvalid(formRef);
 
   const save = async (on: NorthStar | null) => {
+    // F-DG2-210: a statement with no visible content is refused inline (never sent); visible text is sent verbatim.
     const parsed = northStarWrite.safeParse({ statement });
-    if (!parsed.success) {
-      setError(fieldErrorMessage(t, issueCode(parsed.error.issues[0]!)));
+    if (isBlankText(statement) || !parsed.success) {
+      setError(fieldErrorMessage(t, isBlankText(statement) ? BLANK_CODE : issueCode(parsed.error!.issues[0]!)));
+      focusInvalid();
       return;
     }
     setError(undefined);
@@ -176,7 +180,11 @@ function NorthStarForm({ current, onDone }: { current: NorthStar | null; onDone:
           setConflict(null);
         }
       }
-      setServerError(e);
+      const onStatement = e instanceof ApiError ? e.fieldErrors.find((fe) => fe.pointer === "/statement") : undefined;
+      if (onStatement) {
+        setError(fieldErrorMessage(t, onStatement.code));
+        focusInvalid();
+      } else setServerError(e);
     } finally {
       setBusy(false);
     }
@@ -184,6 +192,7 @@ function NorthStarForm({ current, onDone }: { current: NorthStar | null; onDone:
 
   return (
     <form
+      ref={formRef}
       className="form"
       noValidate
       onSubmit={(e) => {

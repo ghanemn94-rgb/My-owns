@@ -1,11 +1,14 @@
-// Mandatory-reason confirmation (archive, revoke): the reason is validated with the shared `reason` schema (3–1000
-// characters, trimmed) before the request, and server errors are shown translated inside the dialog.
+// Mandatory-reason confirmation (archive, revoke, remove): the reason is validated with the shared `reason` schema
+// (3–1000 characters, trimmed by the server) before the request, and server errors are shown translated inside the
+// dialog. The blank-text rule of every P2 form applies (F-DG2-210, BE7): a non-empty reason with no visible content
+// (spaces or invisible characters such as U+200F only) is an inline `validation.blank` error and nothing is sent; a
+// server 400 on `/reason` lands on the field, never as a generic failure. The text is sent as typed.
 import { reasonRequest } from "@mth/shared/schemas";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { errorMessage } from "../lib/problem.ts";
-import { Dialog, Field, issueCode } from "./Form.tsx";
-import { fieldErrorMessage } from "../lib/problem.ts";
+import { ApiError } from "../api/client.ts";
+import { errorMessage, fieldErrorMessage } from "../lib/problem.ts";
+import { BLANK_CODE, Dialog, Field, isBlankText, issueCode, useFocusFirstInvalid } from "./Form.tsx";
 
 export function ReasonDialog({
   title,
@@ -25,20 +28,33 @@ export function ReasonDialog({
   const [fieldError, setFieldError] = useState<string | undefined>();
   const [serverError, setServerError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const focusInvalid = useFocusFirstInvalid(dialogRef);
+
+  const showFieldError = (code: string) => {
+    setFieldError(fieldErrorMessage(t, code));
+    focusInvalid();
+  };
 
   const submit = async () => {
+    setServerError(null);
+    if (isBlankText(reason)) {
+      showFieldError(BLANK_CODE);
+      return;
+    }
     const parsed = reasonRequest.safeParse({ reason });
     if (!parsed.success) {
-      setFieldError(fieldErrorMessage(t, issueCode(parsed.error.issues[0]!)));
+      showFieldError(issueCode(parsed.error.issues[0]!));
       return;
     }
     setFieldError(undefined);
-    setServerError(null);
     setBusy(true);
     try {
-      await onConfirm(parsed.data.reason);
+      await onConfirm(reason);
     } catch (err) {
-      setServerError(err);
+      const onReason = err instanceof ApiError ? err.fieldErrors.find((fe) => fe.pointer === "/reason") : undefined;
+      if (onReason) showFieldError(onReason.code);
+      else setServerError(err);
       setBusy(false);
     }
   };
@@ -47,6 +63,7 @@ export function ReasonDialog({
     <Dialog
       title={title}
       onClose={onClose}
+      dialogRef={dialogRef}
       footer={
         <>
           <button type="button" className="button button--secondary" onClick={onClose} disabled={busy}>

@@ -1,0 +1,138 @@
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+{"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 16 tests using 1 worker
+
+  ✓   1 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:58:1 › setup: a fresh End-to-End transformation for the blank-text checks (142ms)
+  ✓   2 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:73:1 › Charter create: a whitespace Case for change is an inline error and creates no charter (2.5s)
+  ✓   3 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:113:1 › Charter edit: a whitespace Out of scope is an inline error, writes no version and keeps the value (3.3s)
+  ✓   4 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:163:1 › T01: a whitespace Current state is an inline error and sends nothing (2.9s)
+  ✘   5 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:265:1 › Gate G1 submission: a whitespace note is an inline error and submits nothing; visible text is verbatim (6.1s)
+  -   6 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:326:1 › Gate G1 decision: a whitespace rationale is an inline error and decides nothing
+  -   7 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:382:1 › Journey steps: a whitespace actor is an inline error and writes no journey version
+  -   8 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:425:1 › Reason dialog: an invisible-only archive reason is an inline error and archives nothing
+  ✓   9 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:58:1 › setup: a fresh End-to-End transformation for the blank-text checks (101ms)
+  ✓  10 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:73:1 › Charter create: a whitespace Case for change is an inline error and creates no charter (2.0s)
+  ✓  11 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:113:1 › Charter edit: a whitespace Out of scope is an inline error, writes no version and keeps the value (2.8s)
+  ✓  12 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:163:1 › T01: a whitespace Current state is an inline error and sends nothing (2.3s)
+  ✘  13 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:265:1 › Gate G1 submission: a whitespace note is an inline error and submits nothing; visible text is verbatim (6.1s)
+  -  14 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:326:1 › Gate G1 decision: a whitespace rationale is an inline error and decides nothing
+  -  15 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:382:1 › Journey steps: a whitespace actor is an inline error and writes no journey version
+  -  16 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:425:1 › Reason dialog: an invisible-only archive reason is an inline error and archives nothing
+
+
+  1) [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:265:1 › Gate G1 submission: a whitespace note is an inline error and submits nothing; visible text is verbatim 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveAttribute[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByRole('dialog').getByLabel(/^Submission note(?:\s*\(required\))?$/)
+    Expected: [32m"true"[39m
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toHaveAttribute" with timeout 5000ms[22m
+    [2m  - waiting for getByRole('dialog').getByLabel(/^Submission note(?:\s*\(required\))?$/)[22m
+    [2m    2 × locator resolved to <textarea rows="3" id="_r_2_" maxlength="4000">   ↵⇆ </textarea>[22m
+    [2m      - unexpected value "null"[22m
+
+
+      66 |   const field = scope.getByLabel(fieldLabel(lang, labelKey));
+      67 |   const message = tr(lang, "problems.validation__blank");
+    > 68 |   await expect(field).toHaveAttribute("aria-invalid", "true");
+         |                       ^
+      69 |   await expect(field).toHaveAccessibleDescription(new RegExp(escape(message)));
+      70 |   await expect(field).toBeFocused();
+      71 |   await expect(scope.getByText(message, { exact: false })).toBeVisible();
+        at expectBlankError (/home/user/My-owns/apps/web/e2e/p2-blank-text.spec.ts:68:23)
+        at /home/user/My-owns/apps/web/e2e/p2-blank-text.spec.ts:281:9
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-p2-blank-text-4acf6-ng-visible-text-is-verbatim-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/apps-web-e2e-p2-blank-text-4acf6-ng-visible-text-is-verbatim-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-p2-blank-text-4acf6-ng-visible-text-is-verbatim-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-p2-blank-text-4acf6-ng-visible-text-is-verbatim-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:265:1 › Gate G1 submission: a whitespace note is an inline error and submits nothing; visible text is verbatim 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveAttribute[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByRole('dialog').getByLabel(/^ملاحظة التقديم(?:\s*\(مطلوب\))?$/)
+    Expected: [32m"true"[39m
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toHaveAttribute" with timeout 5000ms[22m
+    [2m  - waiting for getByRole('dialog').getByLabel(/^ملاحظة التقديم(?:\s*\(مطلوب\))?$/)[22m
+    [2m    2 × locator resolved to <textarea rows="3" id="_r_2_" maxlength="4000">   ↵⇆ </textarea>[22m
+    [2m      - unexpected value "null"[22m
+
+
+      66 |   const field = scope.getByLabel(fieldLabel(lang, labelKey));
+      67 |   const message = tr(lang, "problems.validation__blank");
+    > 68 |   await expect(field).toHaveAttribute("aria-invalid", "true");
+         |                       ^
+      69 |   await expect(field).toHaveAccessibleDescription(new RegExp(escape(message)));
+      70 |   await expect(field).toBeFocused();
+      71 |   await expect(scope.getByText(message, { exact: false })).toBeVisible();
+        at expectBlankError (/home/user/My-owns/apps/web/e2e/p2-blank-text.spec.ts:68:23)
+        at /home/user/My-owns/apps/web/e2e/p2-blank-text.spec.ts:281:9
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-p2-blank-text-4acf6-ng-visible-text-is-verbatim-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/apps-web-e2e-p2-blank-text-4acf6-ng-visible-text-is-verbatim-chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-p2-blank-text-4acf6-ng-visible-text-is-verbatim-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-p2-blank-text-4acf6-ng-visible-text-is-verbatim-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:265:1 › Gate G1 submission: a whitespace note is an inline error and submits nothing; visible text is verbatim 
+    [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:265:1 › Gate G1 submission: a whitespace note is an inline error and submits nothing; visible text is verbatim 
+  6 did not run
+  8 passed (30.7s)
+
+To open last HTML report run:
+[36m[39m
+[36m  npx playwright show-report[39m
+[36m[39m
+---- api.log (tail)
+exit 1
