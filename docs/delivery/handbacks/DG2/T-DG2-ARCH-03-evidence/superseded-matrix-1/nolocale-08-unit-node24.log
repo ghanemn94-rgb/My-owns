@@ -1,0 +1,122 @@
+# check: 08-unit-node24   mode: nolocale   started: 2026-10-06T17:05:15Z
+# command: env -u LANG -u LC_ALL -u LC_CTYPE -u LC_COLLATE -u LC_MESSAGES -u LC_NUMERIC -u LC_TIME -u LC_MONETARY  PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH pnpm test
+# node v24.21.0; LANG=<unset> LC_ALL=<unset> LC_CTYPE=<unset>
+
+> mobily-transformation-hub@0.1.0 test /home/user/My-owns
+> vitest run --project unit-node --project unit-web
+
+
+ RUN  v3.2.4 /home/user/My-owns
+
+ ❯ |unit-node| apps/api/src/modules/admin/branding.test.ts (4 tests | 1 failed) 42ms
+   ✓ GET /api/v1/branding/tokens (REQ-S15-002) > returns the seven seeded tokens with their values and provenance=provisional, valid against the contract 27ms
+   × GET /api/v1/branding/tokens (REQ-S15-002) > declares authenticated-only access, matching the contract operation (401 declared) 12ms
+     → expected [ '200', '400', '401', '429' ] to deeply equal [ '200', '400', '401' ]
+   ✓ GET /api/v1/branding/tokens (REQ-S15-002) > never reports official provenance while the set or any single token is provisional 0ms
+   ✓ GET /api/v1/branding/tokens (REQ-S15-002) > the zod mirror rejects shapes the contract rejects 2ms
+ ✓ |unit-node| apps/api/src/modules/workflows/workflows.test.ts (14 tests) 612ms
+   ✓ workflows module (P2) > its declared boundary holds, and an undeclared dependency would be caught  560ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (135 tests) 2765ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  1555ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)  569ms
+ ✓ |unit-node| apps/api/src/modules/kpi/kpi.test.ts (18 tests) 550ms
+   ✓ kpi module (P2) > its declared boundary holds, and a planted bypass or undeclared dependency would be caught  505ms
+ ✓ |unit-node| apps/api/src/modules/evidence/evidence.test.ts (8 tests) 308ms
+ ✓ |unit-node| packages/shared/src/value.test.ts (29 tests) 175ms
+ ✓ |unit-node| apps/api/src/server.test.ts (6 tests) 328ms
+ ✓ |unit-node| apps/api/src/modules/methodology/methodology.test.ts (4 tests) 195ms
+ ✓ |unit-node| packages/shared/src/schemas/schemas.test.ts (69 tests) 162ms
+ ✓ |unit-node| packages/config/src/load.test.ts (17 tests) 90ms
+ ✓ |unit-node| apps/api/src/modules/platform/platform.test.ts (19 tests) 114ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reporting.test.ts (4 tests) 114ms
+ ✓ |unit-node| packages/design-tokens/src/tokens.test.ts (15 tests) 34ms
+ ✓ |unit-node| apps/api/src/request-encoding.test.ts (11 tests) 55ms
+(node:1601) [FSTDEP022] FastifyWarning: The router options for constraints property access is deprecated. Please use "options.routerOptions" instead for accessing router options. The router options will be removed in `fastify@6`.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |unit-node| apps/api/src/modules/platform/framework-errors.test.ts (6 tests) 29ms
+ ✓ |unit-node| apps/api/src/modules/kpi/rules.test.ts (30 tests) 36ms
+ ✓ |unit-node| packages/db/src/seed.test.ts (7 tests) 21ms
+ ✓ |unit-node| apps/api/src/modules/platform/health.test.ts (2 tests) 35ms
+ ✓ |unit-node| apps/api/src/modules/transformations/good-outcome.test.ts (7 tests) 15ms
+ ✓ |unit-node| apps/api/src/modules/platform/request-encoding.test.ts (7 tests) 6ms
+ ✓ |unit-node| apps/api/src/modules/access/rules.test.ts (12 tests) 11ms
+ ✓ |unit-node| apps/api/src/modules/transformations/thesis.test.ts (4 tests) 6ms
+ ✓ |unit-node| apps/api/src/modules/transformations/exclusions.test.ts (19 tests) 5ms
+ ✓ |unit-node| apps/api/src/modules/identity/oidc-claims.test.ts (5 tests) 8ms
+ ✓ |unit-node| apps/api/src/modules/transformations/transitions.test.ts (2 tests) 3ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx (21 tests) 3388ms
+   ✓ after create (F-DG1-004) > shows the created record when the server lets the creator read it  477ms
+   ✓ effective permissions refresh after create (F-DG1-210) > English: Edit, Archive and the audit trail appear after create, without a reload  491ms
+   ✓ effective permissions refresh after create (F-DG1-210) > Arabic (RTL): the same controls and the audit trail appear after create, without a reload  526ms
+ ✓ |unit-web| src/app/app.test.tsx (17 tests) 1699ms
+stderr | src/pages/team/team.test.tsx > Team (English LTR) > shows a 403 from the server in words; nothing is assigned
+Cannot update a component (`AssignDialog`) while rendering a different component (`RecordDialog`). To locate the bad setState() call inside `RecordDialog`, follow the stack trace as described in https://react.dev/link/setstate-in-render
+
+ ✓ |unit-web| src/pages/team/team.test.tsx (6 tests) 1636ms
+   ✓ Team (English LTR) > shows the six governance roles with B0018 accountability text verbatim and who holds each  468ms
+   ✓ Team (English LTR) > lists team members with the accountability on each assignment, sortable and filterable  301ms
+ ✓ |unit-web| src/pages/transformations/modeGuidance.test.tsx (5 tests) 946ms
+   ✓ New transformation: mode guidance (English LTR) > shows When to use and How for the selected mode and switches with the mode  453ms
+ ✓ |unit-web| src/pages/p2-blank-forms.test.tsx (52 tests) 11565ms
+   ✓ gate submission note (en) > a whitespace-only note is refused inline and nothing is sent  446ms
+   ✓ gate submission note (en) > visible text is sent verbatim; an empty note is omitted  389ms
+   ✓ journey step editor (en) > several blank fields: each gets the message and focus goes to the first (name)  335ms
+   ✓ journey step editor (en) > visible text is sent verbatim; emptied optional text is null; an empty name is required  424ms
+   ✓ journey step editor (ar) > visible text is sent verbatim; emptied optional text is null; an empty name is required  378ms
+   ✓ Finance validation note and archive reason (en) > reason: a server 400 validation.invalid_character on /reason is the localized field message  304ms
+ ✓ |unit-web| src/pages/p2.test.tsx (56 tests) 11819ms
+   ✓ Diagnose > shows the six T01 dimensions with Unknown for missing values, and value pools that are never 0  600ms
+   ✓ Diagnose > edits a T01 row with only the changed fields and If-Match  412ms
+   ✓ Diagnose > a 409 on save writes nothing, compares, and re-applies on the current version  350ms
+   ✓ Diagnose > a 400 validation.blank shows a localized message on its field ('en')  437ms
+   ✓ Diagnose > a 400 validation.blank shows a localized message on its field ('ar')  423ms
+   ✓ Diagnose > an invisible-only value is blocked client-side with validation.blank ('en')  418ms
+   ✓ Diagnose > an invisible-only value is blocked client-side with validation.blank ('ar')  425ms
+   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('en')  418ms
+   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('ar')  403ms
+   ✓ Diagnose > T01: an emptied field is sent as an explicit null; visible text is sent verbatim  413ms
+   ✓ Define: KPI activation (F-DG2-201) > Arabic: the Activate action and the 422 reason are in Arabic  302ms
+   ✓ Charter > scope pre-check: an empty Out of scope reads as failing (EN and AR)  330ms
+   ✓ Design > shows the ten canvas boxes and the per-dimension view  392ms
+   ✓ Design > converts an unresolved workshop item into a design decision with If-Match  504ms
+ ✓ |unit-web| src/components/States.test.tsx (15 tests) 329ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts (15 tests) 23ms
+ ✓ |unit-web| src/lib/lib.test.ts (23 tests) 61ms
+ ✓ |unit-web| src/i18n/i18n.test.ts (11 tests) 29ms
+ ✓ |unit-web| src/styles/styles.test.ts (6 tests) 8ms
+ ✓ |unit-web| src/i18n/glossary.test.ts (8 tests) 10ms
+ ✓ |unit-web| src/test/harness-config.test.ts (2 tests) 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| apps/api/src/modules/admin/branding.test.ts > GET /api/v1/branding/tokens (REQ-S15-002) > declares authenticated-only access, matching the contract operation (401 declared)
+AssertionError: expected [ '200', '400', '401', '429' ] to deeply equal [ '200', '400', '401' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "200",[22m
+[2m    "400",[22m
+[2m    "401",[22m
+[31m+   "429",[39m
+[2m  ][22m
+
+ ❯ apps/api/src/modules/admin/branding.test.ts:71:46
+     69|     expect(op.operationId).toBe("getBrandingTokens");
+     70|     // 400: every operation that validates input declares it (ADR-0007…
+     71|     expect(Object.keys(op.responses).sort()).toEqual(["200", "400", "4…
+       |                                              ^
+     72|   });
+     73| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 37 passed (38)
+      Tests  1 failed | 690 passed (691)
+   Start at  17:05:15
+   Duration  23.77s (transform 2.36s, setup 1.02s, collect 17.55s, tests 37.23s, environment 5.73s, prepare 2.59s)
+
+ ELIFECYCLE  Test failed. See above for more details.
+# exit: 1   finished: 2026-10-06T17:05:39Z

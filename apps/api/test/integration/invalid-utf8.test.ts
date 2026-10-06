@@ -422,12 +422,9 @@ describe("rate limiting still applies to the refused requests", () => {
     try {
       const statuses: number[] = [];
       for (let i = 0; i < 5; i += 1) {
-        // The contract assertion is skipped here only: createCharter does not declare 429 in docs/api/openapi.yaml
-        // although the global limiter applies to it (a pre-existing contract gap, reported in the T-DG2-BE13 handback;
-        // the contract file is outside this task's write scope). The 429 body is still checked below.
-        const res = await rawCall(limited.app, "POST", `${T}/charter`, charterBody(INVALID.FF), "content-length", {
-          contract: false,
-        });
+        // T-DG2-ARCH-03: createCharter now declares 429 (ADR-0007 §5b), so the 429 is asserted against the contract
+        // like the 400s (this call skipped the contract assertion before, when the 429 was undeclared).
+        const res = await rawCall(limited.app, "POST", `${T}/charter`, charterBody(INVALID.FF), "content-length");
         statuses.push(res.status);
         if (res.status === 429)
           expect(res.body).toMatchObject({ type: "urn:mth:problem:rate-limited", code: "rate_limited" });

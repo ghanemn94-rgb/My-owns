@@ -1,0 +1,293 @@
+# negative control: docs/api/openapi.yaml restored to HEAD d834bde (the old contract); tests are the new ones
+# git diff --stat (tests only differ from HEAD):
+ .../api/test/integration/contract/contract.test.ts | 38 ++++++++++++++++++++--
+ apps/api/test/integration/invalid-utf8.test.ts     |  9 ++---
+ apps/api/test/integration/platform.test.ts         |  5 +--
+ 3 files changed, 42 insertions(+), 10 deletions(-)
+# command: QA_PG_PORT=25472 tests/qa/support/with-pg.sh pnpm vitest run --project integration contract.test.ts invalid-utf8.test.ts platform.test.ts   started 2026-10-06T17:02:27Z
+port-policy: PostgreSQL listening on port 25472 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/My-owns
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muwxfiza_127802ca (server_encoding UTF8); applied 19 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/contract/contract.test.ts (16 tests | 2 failed) 4691ms
+   ✓ route coverage > maps every governed Fastify route to an OpenAPI operation with the same method, and back 3ms
+   ✓ route coverage > declares access on every governed route (public or a permission) 4ms
+   ✓ every operation, validated against the contract and the zod mirrors > health 16ms
+   ✓ every operation, validated against the contract and the zod mirrors > auth + me 155ms
+   ✓ every operation, validated against the contract and the zod mirrors > organizations and business units 118ms
+   ✓ every operation, validated against the contract and the zod mirrors > users, roles, permissions and assignments 107ms
+   ✓ every operation, validated against the contract and the zod mirrors > transformations and audit 133ms
+   ✓ every operation, validated against the contract and the zod mirrors > branding tokens (getBrandingTokens): authenticated-only, provisional provenance, contract + zod valid 8ms
+   ✓ every operation, validated against the contract and the zod mirrors > kpi module operations (P2; kpi-exercises.ts, owned by kpi-benefits-engineer)  665ms
+   ✓ every operation, validated against the contract and the zod mirrors > P2 backend operations (p2-exercises.ts): every routed operation exercised with a success  2172ms
+   ✓ every operation, validated against the contract and the zod mirrors > every GET operation with a path parameter: a malformed id is a declared 400 at /params/<name>; nothing written  362ms
+   ✓ every operation, validated against the contract and the zod mirrors > the contract: every operation but the OIDC callback declares 400 (ADR-0007 §5a) 0ms
+   ✓ every operation, validated against the contract and the zod mirrors > every operation but the OIDC callback: U+0000 in the query is a declared 400 invalid_character  714ms
+   × every operation, validated against the contract and the zod mirrors > the contract: every operation declares each platform status derived from its route (ADR-0007 §5b) 14ms
+     → expected [ 'getHealth 429', …(157) ] to deeply equal []
+   × every operation, validated against the contract and the zod mirrors > every operation: the rate limiter's 429 is a declared RateLimited problem (live, limits of 1 per minute) 35ms
+     → contract: getHealth does not declare status 429 (declared: 200, 400); body: {"type":"urn:mth:problem:rate-limited","title":"Too many requests","status":429,"code":"rate_limited","requestId":"01a1122a-cb6d-705d-b2d4-8d40d80f9ad5"}
+   ✓ every operation, validated against the contract and the zod mirrors > covers every operation with at least one success and every successful body with its zod mirror 1ms
+ ❯ |integration| apps/api/test/integration/invalid-utf8.test.ts (14 tests | 1 failed) 1110ms
+   ✓ a JSON body with invalid UTF-8 is 400 validation.json, the same with Content-Length and chunked > charter create: 400 for every invalid sequence and framing; no charter, no audit row, no U+FFFD stored 277ms
+   ✓ a JSON body with invalid UTF-8 is 400 validation.json, the same with Content-Length and chunked > charter update (PATCH, If-Match): version, value and audit trail unchanged 101ms
+   ✓ a JSON body with invalid UTF-8 is 400 validation.json, the same with Content-Length and chunked > T03 TOM gap create: no gap is created 7ms
+   ✓ a JSON body with invalid UTF-8 is 400 validation.json, the same with Content-Length and chunked > unauthenticated (no cookie, no CSRF token): the declared 400, never 500 7ms
+   ✓ over a real socket (the framing the reviewer probed), unauthenticated and authenticated > 400 validation.json for both framings, with and without a session; nothing stored 75ms
+   ✓ valid UTF-8 round-trips verbatim; one BOM is accepted and stripped > Arabic and emoji text, with Content-Length and chunked: stored and audited byte for byte 168ms
+   ✓ valid UTF-8 round-trips verbatim; one BOM is accepted and stripped > a leading BOM (EF BB BF) is stripped: the charter is created with the exact text 132ms
+   ✓ a query component that is not percent-encoded UTF-8 is 400 validation.format > GET /transformations?q=%FF and ?q=%ED%A0%80: 400 at /query/q (it used to search for the literal text) 22ms
+   ✓ a query component that is not percent-encoded UTF-8 is 400 validation.format > authentication keeps its precedence: without a session the answer is 401 3ms
+   ✓ a query component that is not percent-encoded UTF-8 is 400 validation.format > the OIDC callback (exempt; declares only its redirect) is unchanged: never a 400 problem 1ms
+   ✓ X-File-Name with a percent escape that is not UTF-8 > is 400 validation.file_name; no revision is stored and nothing is audited 69ms
+   × rate limiting still applies to the refused requests > invalid-UTF-8 bodies count against the limit: 400 until the limit, then 429 22ms
+     → contract: createCharter does not declare status 429 (declared: 201, 400, 401, 403, 404, 409, 422); body: {"type":"urn:mth:problem:rate-limited","title":"Too many requests","status":429,"code":"rate_limited","requestId":"01a1122a-d17d-727e-b366-32eccaabd77a"}
+   ✓ cookie and header values (sweep): byte-faithful, never rewritten, never a 500 > a session cookie with an undecodable escape or high bytes is no session (401); a CSRF token with them is 403 11ms
+   ✓ cookie and header values (sweep): byte-faithful, never rewritten, never a 500 > an X-Request-Id with high bytes or percent escapes is never adopted (a UUIDv7 is generated) 12ms
+ ❯ |integration| apps/api/test/integration/platform.test.ts (12 tests | 1 failed) 528ms
+   ✓ health and readiness > reports ready when the database answers and every shipped migration is applied 6ms
+   ✓ health and readiness > reports 503 not_ready/pending when the build ships a migration the database lacks, and fail on checksum drift 43ms
+   ✓ readiness requires a UTF8 database (ADR-0003 'Database encoding', T-DG2-BE9) > reports 503 database: fail on a SQL_ASCII database, and database: ok on a UTF8 one created the same way 182ms
+   ✓ rate limiting (ADR-0007 T-3) > limits auth endpoints per IP with a 429 problem and Retry-After 36ms
+   × rate limiting (ADR-0007 T-3) > limits general API traffic per session, never the health endpoints 68ms
+     → contract: getMe does not declare status 429 (declared: 200, 400, 401); body: {"type":"urn:mth:problem:rate-limited","title":"Too many requests","status":429,"code":"rate_limited","requestId":"01a1122a-d4a9-765b-9cf4-8637cdf5a022"}
+   ✓ rate limiting (ADR-0007 T-3) > does not reset the bucket when an unauthenticated client rotates fabricated session cookies 31ms
+   ✓ rate limiting (ADR-0007 T-3) > keys a validated session by its user, so it is not starved by an IP flood, and a revoked one falls back to the IP 61ms
+   ✓ request hygiene > rejects malformed JSON, non-JSON bodies and bodies over 1 MiB with 400 problems 23ms
+   ✓ request hygiene > answers unknown API paths with a 404 problem 1ms
+   ✓ request hygiene > sends a strict same-origin Content-Security-Policy and other security headers 1ms
+   ✓ fail-closed guards (ADR-0006) > refuses to start with an /api route that declares no access 1ms
+   ✓ fail-closed guards (ADR-0006) > turns a success from a route that never consulted the policy function into a 500 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/invalid-utf8.test.ts > rate limiting still applies to the refused requests > invalid-UTF-8 bodies count against the limit: 400 until the limit, then 429
+Error: contract: createCharter does not declare status 429 (declared: 201, 400, 401, 403, 404, 409, 422); body: {"type":"urn:mth:problem:rate-limited","title":"Too many requests","status":429,"code":"rate_limited","requestId":"01a1122a-d17d-727e-b366-32eccaabd77a"}
+ ❯ assertContract apps/api/test/support/contract.ts:100:11
+     98|   const declared = op.responses[String(res.statusCode)] ?? op.response…
+     99|   if (!declared) {
+    100|     throw new Error(
+       |           ^
+    101|       `contract: ${op.operationId} does not declare status ${res.statu…
+    102|     );
+ ❯ rawCall apps/api/test/integration/invalid-utf8.test.ts:101:5
+ ❯ apps/api/test/integration/invalid-utf8.test.ts:427:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/platform.test.ts > rate limiting (ADR-0007 T-3) > limits general API traffic per session, never the health endpoints
+Error: contract: getMe does not declare status 429 (declared: 200, 400, 401); body: {"type":"urn:mth:problem:rate-limited","title":"Too many requests","status":429,"code":"rate_limited","requestId":"01a1122a-d4a9-765b-9cf4-8637cdf5a022"}
+ ❯ assertContract apps/api/test/support/contract.ts:100:11
+     98|   const declared = op.responses[String(res.statusCode)] ?? op.response…
+     99|   if (!declared) {
+    100|     throw new Error(
+       |           ^
+    101|       `contract: ${op.operationId} does not declare status ${res.statu…
+    102|     );
+ ❯ call apps/api/test/support/harness.ts:161:5
+ ❯ apps/api/test/integration/platform.test.ts:107:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > the contract: every operation declares each platform status derived from its route (ADR-0007 §5b)
+AssertionError: expected [ 'getHealth 429', …(157) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "getHealth 429",[39m
+[31m+   "getReadiness 429",[39m
+[31m+   "logout 429",[39m
+[31m+   "getMe 429",[39m
+[31m+   "updateMyPreferences 429",[39m
+[31m+   "listOrganizations 429",[39m
+[31m+   "createOrganization 429",[39m
+[31m+   "getOrganization 429",[39m
+[31m+   "updateOrganization 429",[39m
+[31m+   "listBusinessUnits 429",[39m
+[31m+   "createBusinessUnit 429",[39m
+[31m+   "getBusinessUnit 429",[39m
+[31m+   "updateBusinessUnit 429",[39m
+[31m+   "listUsers 429",[39m
+[31m+   "createUser 429",[39m
+[31m+   "getUser 429",[39m
+[31m+   "updateUser 429",[39m
+[31m+   "listRoles 429",[39m
+[31m+   "listPermissions 429",[39m
+[31m+   "getBrandingTokens 429",[39m
+[31m+   "listRoleAssignments 429",[39m
+[31m+   "createRoleAssignment 429",[39m
+[31m+   "getRoleAssignment 429",[39m
+[31m+   "revokeRoleAssignment 429",[39m
+[31m+   "listTransformations 429",[39m
+[31m+   "createTransformation 429",[39m
+[31m+   "getTransformation 429",[39m
+[31m+   "updateTransformation 429",[39m
+[31m+   "archiveTransformation 429",[39m
+[31m+   "listTransformationAudit 429",[39m
+[31m+   "listStrategicGuardrails 429",[39m
+[31m+   "createStrategicGuardrail 429",[39m
+[31m+   "getStrategicGuardrail 429",[39m
+[31m+   "updateStrategicGuardrail 429",[39m
+[31m+   "archiveStrategicGuardrail 429",[39m
+[31m+   "listOutcomes 429",[39m
+[31m+   "createOutcome 429",[39m
+[31m+   "getOutcome 429",[39m
+[31m+   "updateOutcome 429",[39m
+[31m+   "archiveOutcome 429",[39m
+[31m+   "listKpiDefinitions 429",[39m
+[31m+   "createKpiDefinition 429",[39m
+[31m+   "getKpiDefinition 429",[39m
+[31m+   "updateKpiDefinition 429",[39m
+[31m+   "archiveKpiDefinition 429",[39m
+[31m+   "activateKpiDefinition 429",[39m
+[31m+   "listBaselines 429",[39m
+[31m+   "createBaseline 429",[39m
+[31m+   "getBaseline 429",[39m
+[31m+   "updateBaseline 429",[39m
+[31m+   "archiveBaseline 429",[39m
+[31m+   "listOutcomeKpis 429",[39m
+[31m+   "createOutcomeKpi 429",[39m
+[31m+   "getOutcomeKpi 429",[39m
+[31m+   "updateOutcomeKpi 429",[39m
+[31m+   "archiveOutcomeKpi 429",[39m
+[31m+   "listValuePools 429",[39m
+[31m+   "createValuePool 429",[39m
+[31m+   "getValuePool 429",[39m
+[31m+   "updateValuePool 429",[39m
+[31m+   "archiveValuePool 429",[39m
+[31m+   "listDiagnosticItems 429",[39m
+[31m+   "createDiagnosticItem 429",[39m
+[31m+   "getDiagnosticItem 429",[39m
+[31m+   "updateDiagnosticItem 429",[39m
+[31m+   "archiveDiagnosticItem 429",[39m
+[31m+   "listDiagnosticFindings 429",[39m
+[31m+   "createDiagnosticFinding 429",[39m
+[31m+   "getDiagnosticFinding 429",[39m
+[31m+   "updateDiagnosticFinding 429",[39m
+[31m+   "archiveDiagnosticFinding 429",[39m
+[31m+   "listWorkstreamOutputs 429",[39m
+[31m+   "createWorkstreamOutput 429",[39m
+[31m+   "getWorkstreamOutput 429",[39m
+[31m+   "updateWorkstreamOutput 429",[39m
+[31m+   "archiveWorkstreamOutput 429",[39m
+[31m+   "listTomGaps 429",[39m
+[31m+   "createTomGap 429",[39m
+[31m+   "getTomGap 429",[39m
+[31m+   "updateTomGap 429",[39m
+[31m+   "archiveTomGap 429",[39m
+[31m+   "listCapabilityHeatmapEntries 429",[39m
+[31m+   "createCapabilityHeatmapEntry 429",[39m
+[31m+   "getCapabilityHeatmapEntry 429",[39m
+[31m+   "updateCapabilityHeatmapEntry 429",[39m
+[31m+   "archiveCapabilityHeatmapEntry 429",[39m
+[31m+   "listJourneies 429",[39m
+[31m+   "createJourney 429",[39m
+[31m+   "getJourney 429",[39m
+[31m+   "updateJourney 429",[39m
+[31m+   "archiveJourney 429",[39m
+[31m+   "listDependencies 429",[39m
+[31m+   "createDependency 429",[39m
+[31m+   "getDependency 429",[39m
+[31m+   "updateDependency 429",[39m
+[31m+   "archiveDependency 429",[39m
+[31m+   "listActionItems 429",[39m
+[31m+   "createActionItem 429",[39m
+[31m+   "getActionItem 429",[39m
+[31m+   "updateActionItem 429",[39m
+[31m+   "listTomWorkshops 429",[39m
+[31m+   "createTomWorkshop 429",[39m
+[31m+   "getTomWorkshop 429",[39m
+[31m+   "updateTomWorkshop 429",[39m
+[31m+   "listEvidence 429",[39m
+[31m+   "createEvidence 429",[39m
+[31m+   "getEvidence 429",[39m
+[31m+   "updateEvidence 429",[39m
+[31m+   "archiveEvidence 429",[39m
+[31m+   "getTransformationMethodology 429",[39m
+[31m+   "updateTomDimensionLabels 429",[39m
+[31m+   "listRoleAccountabilities 429",[39m
+[31m+   "getCharter 429",[39m
+[31m+   "createCharter 429",[39m
+[31m+   "updateCharter 429",[39m
+[31m+   "listCharterVersions 429",[39m
+[31m+   "getCharterVersion 429",[39m
+[31m+   "getNorthStar 429",[39m
+[31m+   "setNorthStar 429",[39m
+[31m+   "listNorthStarHistory 429",[39m
+[31m+   "validateBaseline 429",[39m
+[31m+   "validateValuePool 429",[39m
+[31m+   "approveOutcomeKpiTrajectory 429",[39m
+[31m+   "getTomCanvas 429",[39m
+[31m+   "getTomCanvasCell 429",[39m
+[31m+   "updateTomCanvasCell 429",[39m
+[31m+   "listJourneyPainPoints 429",[39m
+[31m+   "createJourneyPainPoint 429",[39m
+[31m+   "updateJourneyPainPoint 429",[39m
+[31m+   "archiveJourneyPainPoint 429",[39m
+[31m+   "listTomWorkshopParticipants 429",[39m
+[31m+   "addTomWorkshopParticipant 429",[39m
+[31m+   "removeTomWorkshopParticipant 429",[39m
+[31m+   "listTomWorkshopItems 429",[39m
+[31m+   "createTomWorkshopItem 429",[39m
+[31m+   "convertTomWorkshopItem 429",[39m
+[31m+   "listDecisions 429",[39m
+[31m+   "createDecision 429",[39m
+[31m+   "getDecision 429",[39m
+[31m+   "updateDecision 429",[39m
+[31m+   "addDecisionOption 429",[39m
+[31m+   "updateDecisionOption 429",[39m
+[31m+   "decideDecision 429",[39m
+[31m+   "listGates 429",[39m
+[31m+   "getGate 429",[39m
+[31m+   "configureGateApprover 429",[39m
+[31m+   "listGateSubmissions 429",[39m
+[31m+   "submitGate 429",[39m
+[31m+   "getGateSubmission 429",[39m
+[31m+   "decideGate 429",[39m
+[31m+   "downloadEvidenceContent 429",[39m
+[31m+   "uploadEvidenceContent 429",[39m
+[31m+   "reviewEvidence 429",[39m
+[31m+   "listEvidenceLinks 429",[39m
+[31m+   "createEvidenceLink 429",[39m
+[31m+   "removeEvidenceLink 429",[39m
+[31m+   "listTransformationTeam 429",[39m
+[31m+   "assignTransformationTeamRole 429",[39m
+[31m+ ][39m
+
+ ❯ apps/api/test/integration/contract/contract.test.ts:512:73
+    510|   // T-DG2-ARCH-03 (ADR-0007 §5b): every status the platform layer can…
+    511|   it("the contract: every operation declares each platform status deri…
+    512|     expect(undeclaredPlatformStatuses(operations, api.routes, openapi)…
+       |                                                                         ^
+    513|     // The derivation itself, pinned on known operations (a public rea…
+    514|     const byId = (id: string) => platformStatuses(operations.find((o) …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > every operation: the rate limiter's 429 is a declared RateLimited problem (live, limits of 1 per minute)
+Error: contract: getHealth does not declare status 429 (declared: 200, 400); body: {"type":"urn:mth:problem:rate-limited","title":"Too many requests","status":429,"code":"rate_limited","requestId":"01a1122a-cb6d-705d-b2d4-8d40d80f9ad5"}
+ ❯ assertContract apps/api/test/support/contract.ts:100:11
+     98|   const declared = op.responses[String(res.statusCode)] ?? op.response…
+     99|   if (!declared) {
+    100|     throw new Error(
+       |           ^
+    101|       `contract: ${op.operationId} does not declare status ${res.statu…
+    102|     );
+ ❯ call apps/api/test/support/harness.ts:161:5
+ ❯ exerciseRateLimitSweep apps/api/test/integration/contract/platform-statuses.ts:116:17
+ ❯ apps/api/test/integration/contract/contract.test.ts:533:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  4 failed | 38 passed (42)
+   Start at  17:02:29
+   Duration  9.91s (transform 806ms, setup 0ms, collect 2.59s, tests 6.33s, environment 0ms, prepare 63ms)
+
+# exit: 1

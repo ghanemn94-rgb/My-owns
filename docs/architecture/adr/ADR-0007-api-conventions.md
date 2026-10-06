@@ -58,6 +58,33 @@
      - every operation except the callback returns a declared 400 for a U+0000 in the query string;
      - a contract assertion: every operation except the callback declares 400.
    - **New operations.** A new operation declares 400 from the start. `pnpm openapi:lint` does not enforce this rule; the contract test does.
+
+   **5b. Amendment (DG2, T-DG2-ARCH-03, 2026-10-06): every operation declares every status its platform layer can return.**
+   - **Rule.** The *platform layer* is everything that can answer for an operation regardless of its handler: hooks, authentication and CSRF, the rate limiter, the If-Match prologue, validation, and framework/parser errors. Every status it can return for an operation is declared on that operation, using the shared components. An undeclared one is contract drift (the §5a rule, generalised). The statuses are derived from the route's declared access:
+
+     | Status | Component | Declared on | Platform source |
+     |---|---|---|---|
+     | 400 | `ValidationError` | every operation except `completeOidcLogin` (§5a) | central request check, body/query parsers, `frameworkErrors` |
+     | 401 | `Unauthenticated` | every operation whose route is not `{ public: true }` | identity `preValidation`: no resolved session |
+     | 403 | `Forbidden` | every non-public operation with an unsafe method (POST, PUT, PATCH, DELETE) | identity `preValidation`: Origin / `X-CSRF-Token` |
+     | 428 | `PreconditionRequired` | every operation that takes the `IfMatch` parameter | If-Match prologue (`platform/http.ts`): header missing |
+     | 409 | `VersionConflict` | every operation that takes the `IfMatch` parameter | the same prologue: stale version |
+     | 429 | `RateLimited` | **every operation** | `@fastify/rate-limit` (§7) |
+
+   - **429 on every operation.** The limiter is registered with `global: true` at `onRequest`, before authentication, so unauthenticated and public calls are counted too. Two details from `apps/api/src/server.ts`:
+     - **Key.** The user id of a session the identity hook has *resolved* (within the idle timeout) is the key; anything else (no cookie, forged, expired or revoked) is keyed by the client IP (F-DG1-142). The three auth routes (`startOidcLogin`, `completeOidcLogin`, `devLogin`) use their own stricter per-IP limit (`AUTH_RATE_LIMIT_PER_MINUTE`). This corrects §7's "keyed by session ID".
+     - **Exemption.** The `allowList` compares the exact request URL with `/healthz` and `/readyz`. The bare health URLs are never limited, but the same operations called with a query string (`/healthz?probe=1`) are counted and answer 429. `getHealth` and `getReadiness` therefore declare 429 as well. Comparing the matched route rather than the raw URL is a product change outside this amendment; it would let the health operations drop 429 again only through a reopened contract.
+   - **Out of the contract by design (D-067).** These are deliberately **not** declared on any operation:
+     - **500 `internal`.** It is a failure (including the fail-closed authorization guard), never a contract response; a test that receives one fails.
+     - **408 request timeout.** It is a transport-level answer of Node's `clientError` handler and can occur before any operation is matched.
+     - **404 for an unmatched route.** No operation matched, so there is no operation to declare it on. This includes the dev-login and OIDC routes in a mode where they are not registered. 404 *as a handler answer* (missing or unreadable record) stays declared where the operation gives it.
+     - The other connection- or router-level answers (`clientError`'s malformed request and oversized headers, `FST_ERR_BAD_URL`) are also written before an operation is matched. They are 400 `ValidationError` problems, which every operation but the OIDC callback declares anyway.
+   - **The 158 operations amended.** All 161 operations except `startOidcLogin`, `completeOidcLogin` and `devLogin` (which already declared it) gained `"429": { $ref: "#/components/responses/RateLimited" }`. No 400, 401, 403, 409 or 428 was missing. The amendment is additive: no operation, schema or other response changed, and the operation count stays 161.
+   - **Tests.** `apps/api/test/integration/contract/platform-statuses.ts`, run from `contract.test.ts`:
+     - **rule test.** For every operation it derives the platform statuses from the route's declared access (public or not), its method (mutation or not), the contract's `IfMatch` parameter and the limiter, and fails on any undeclared one. It also pins the derivation for five known operations. Negative controls: on the pre-amendment contract it fails with 158 undeclared 429s, and with one 401, 403, 409 and 428 removed it lists exactly those four;
+     - **live sweep.** With both limits set to 1 per minute, every one of the 161 operations is called twice. The second call is a 429 `rate_limited` problem with `Retry-After`, asserted against the contract. The bare health URLs still answer 200.
+     - The rate-limit tests in `invalid-utf8.test.ts` and `platform.test.ts` now assert their 429 against the contract too; they skipped that assertion while the 429 was undeclared.
+   - **New operations.** A new operation declares its platform statuses from the start. `pnpm openapi:lint` checks 409/428 on If-Match; the contract test checks the rest.
 6. **Concurrency:**
    - `ETag: "<version>"` on every single-resource response.
    - `If-Match` is required on PATCH, PUT and action endpoints that change a versioned record.

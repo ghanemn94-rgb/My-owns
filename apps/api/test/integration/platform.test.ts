@@ -102,8 +102,9 @@ describe("rate limiting (ADR-0007 T-3)", () => {
       const s = await signIn(limited.app, w.office.subject);
       for (let i = 0; i < 2; i++)
         expect((await call(limited.app, "GET", "/api/v1/me", { session: s })).status).toBe(200);
-      // Most operations do not declare 429 in the contract yet (handback: contract gap), so skip the assertion here.
-      const res = await call(limited.app, "GET", "/api/v1/me", { session: s, contract: false });
+      // T-DG2-ARCH-03: every operation now declares 429 (ADR-0007 §5b), so this 429 is checked against the contract
+      // (the assertion was skipped here while getMe did not declare 429).
+      const res = await call(limited.app, "GET", "/api/v1/me", { session: s });
       expect(res.status).toBe(429);
       for (let i = 0; i < 5; i++) expect((await call(limited.app, "GET", "/healthz")).status).toBe(200);
     } finally {

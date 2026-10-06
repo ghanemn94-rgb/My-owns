@@ -4,7 +4,10 @@
 //  2. every operation is exercised at least once in this file through the validating client (status, body, headers
 //     checked against docs/api/openapi.yaml), with at least one success response each;
 //  3. zod lockstep: every successful body also parses with the @mth/shared/schemas mirror of its component, and the
-//     problem bodies parse with the problem mirror.
+//     problem bodies parse with the problem mirror;
+//  4. platform statuses (T-DG2-ARCH-03, ADR-0007 §5b, platform-statuses.ts): every status the platform layer can
+//     return (400/401/403/409/428/429, derived from each route's access) is declared, and a live sweep gets the
+//     declared 429 from every operation.
 import {
   actionItem,
   actionItemPage,
@@ -74,7 +77,7 @@ import {
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { FakeIdp } from "../../support/fake-idp.ts";
-import { exercised, operations } from "../../support/contract.ts";
+import { exercised, openapi, operations } from "../../support/contract.ts";
 import { P2_PENDING_OPERATIONS } from "../../support/p2-pending.ts";
 import { exerciseKpiOperations } from "./kpi-exercises.ts";
 import { exerciseP2BackendOperations } from "./p2-exercises.ts";
@@ -84,6 +87,7 @@ import {
   getOperationsWithPathParams,
   NO_400_OPERATIONS,
 } from "./malformed-input.ts";
+import { exerciseRateLimitSweep, platformStatuses, undeclaredPlatformStatuses } from "./platform-statuses.ts";
 import {
   call,
   seedWorld,
@@ -501,6 +505,36 @@ describe("every operation, validated against the contract and the zod mirrors", 
   it("every operation but the OIDC callback: U+0000 in the query is a declared 400 invalid_character", async () => {
     const checked = await exerciseInvalidCharacterQuery({ api, world: w, session: admin });
     expect(checked).toHaveLength(operations.length - NO_400_OPERATIONS.size);
+  });
+
+  // T-DG2-ARCH-03 (ADR-0007 §5b): every status the platform layer can return is declared on the operation.
+  it("the contract: every operation declares each platform status derived from its route (ADR-0007 §5b)", () => {
+    expect(undeclaredPlatformStatuses(operations, api.routes, openapi)).toEqual([]);
+    // The derivation itself, pinned on known operations (a public read, a protected read, a create, an If-Match change).
+    const byId = (id: string) => platformStatuses(operations.find((o) => o.operationId === id)!, api.routes, openapi);
+    expect(byId("getHealth")).toEqual([400, 429]);
+    expect(byId("completeOidcLogin")).toEqual([429]);
+    expect(byId("getMe")).toEqual([400, 401, 429]);
+    expect(byId("createCharter")).toEqual([400, 401, 403, 429]);
+    expect(byId("updateTransformation")).toEqual([400, 401, 403, 409, 428, 429]);
+    // Every governed route feeds the derivation with its declared access (public or a permission).
+    const publicIds = operations.filter((o) => !platformStatuses(o, api.routes, openapi).includes(401));
+    expect(publicIds.map((o) => o.operationId).sort()).toEqual(
+      ["completeOidcLogin", "devLogin", "getHealth", "getReadiness", "startOidcLogin"].sort(),
+    );
+  });
+
+  it("every operation: the rate limiter's 429 is a declared RateLimited problem (live, limits of 1 per minute)", async () => {
+    const oidc = new OidcService(
+      testConfig({ OIDC_ISSUER_URL: idp.issuer, OIDC_CLIENT_ID: idp.clientId, OIDC_CLIENT_SECRET: idp.clientSecret }),
+    );
+    const limited = await startApi({ oidc, env: { RATE_LIMIT_PER_MINUTE: "1", AUTH_RATE_LIMIT_PER_MINUTE: "1" } });
+    try {
+      const checked = await exerciseRateLimitSweep(limited, operations);
+      expect(checked).toHaveLength(161);
+    } finally {
+      await limited.close();
+    }
   });
 
   it("covers every operation with at least one success and every successful body with its zod mirror", () => {

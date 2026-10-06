@@ -1,0 +1,195 @@
+# platform-status analysis of docs/api/openapi.yaml, before (HEAD d834bde) and after. 'non-public GET without 403' is informational: CSRF (403) applies only to unsafe methods, and a read the caller may not see is 404 (ADR-0006).
+## before
+ops 161
+429 declared: [ 'startOidcLogin', 'completeOidcLogin', 'devLogin' ]
+public: [
+  'getHealth GET 200,400',
+  'getReadiness GET 200,400,503',
+  'startOidcLogin GET 302,400,404,429',
+  'completeOidcLogin GET 302,429',
+  'devLogin POST 204,400,401,403,404,429'
+]
+missing 401 on non-public: []
+missing 403 on non-public unsafe: []
+missing 400: [ 'completeOidcLogin' ]
+ifmatch ops: 58 missing 428: [] missing 409: []
+428 without ifmatch: []
+all statuses: 200 201 204 302 400 401 403 404 409 413 422 428 429 503
+missing 429: 158
+## after
+ops 161
+429 declared: all 161
+public: [
+  'getHealth GET 200,400,429',
+  'getReadiness GET 200,400,429,503',
+  'startOidcLogin GET 302,400,404,429',
+  'completeOidcLogin GET 302,429',
+  'devLogin POST 204,400,401,403,404,429'
+]
+missing 401 on non-public: []
+missing 403 on non-public unsafe: []
+missing 400: [ 'completeOidcLogin' ]
+ifmatch ops: 58 missing 428: [] missing 409: []
+428 without ifmatch: []
+all statuses: 200 201 204 302 400 401 403 404 409 413 422 428 429 503
+missing 429: 0
+## operations changed (status keys added/removed per operation)
+ops old=161 new=161 changed=158
+| `getHealth` | GET `/healthz` | +429 |
+| `getReadiness` | GET `/readyz` | +429 |
+| `logout` | POST `/api/v1/auth/logout` | +429 |
+| `getMe` | GET `/api/v1/me` | +429 |
+| `updateMyPreferences` | PUT `/api/v1/me/preferences` | +429 |
+| `listOrganizations` | GET `/api/v1/organizations` | +429 |
+| `createOrganization` | POST `/api/v1/organizations` | +429 |
+| `getOrganization` | GET `/api/v1/organizations/{organizationId}` | +429 |
+| `updateOrganization` | PATCH `/api/v1/organizations/{organizationId}` | +429 |
+| `listBusinessUnits` | GET `/api/v1/organizations/{organizationId}/business-units` | +429 |
+| `createBusinessUnit` | POST `/api/v1/organizations/{organizationId}/business-units` | +429 |
+| `getBusinessUnit` | GET `/api/v1/business-units/{businessUnitId}` | +429 |
+| `updateBusinessUnit` | PATCH `/api/v1/business-units/{businessUnitId}` | +429 |
+| `listUsers` | GET `/api/v1/users` | +429 |
+| `createUser` | POST `/api/v1/users` | +429 |
+| `getUser` | GET `/api/v1/users/{userId}` | +429 |
+| `updateUser` | PATCH `/api/v1/users/{userId}` | +429 |
+| `listRoles` | GET `/api/v1/roles` | +429 |
+| `listPermissions` | GET `/api/v1/permissions` | +429 |
+| `getBrandingTokens` | GET `/api/v1/branding/tokens` | +429 |
+| `listRoleAssignments` | GET `/api/v1/role-assignments` | +429 |
+| `createRoleAssignment` | POST `/api/v1/role-assignments` | +429 |
+| `getRoleAssignment` | GET `/api/v1/role-assignments/{assignmentId}` | +429 |
+| `revokeRoleAssignment` | POST `/api/v1/role-assignments/{assignmentId}/revoke` | +429 |
+| `listTransformations` | GET `/api/v1/transformations` | +429 |
+| `createTransformation` | POST `/api/v1/transformations` | +429 |
+| `getTransformation` | GET `/api/v1/transformations/{transformationId}` | +429 |
+| `updateTransformation` | PATCH `/api/v1/transformations/{transformationId}` | +429 |
+| `archiveTransformation` | POST `/api/v1/transformations/{transformationId}/archive` | +429 |
+| `listTransformationAudit` | GET `/api/v1/transformations/{transformationId}/audit` | +429 |
+| `listStrategicGuardrails` | GET `/api/v1/transformations/{transformationId}/strategic-guardrails` | +429 |
+| `createStrategicGuardrail` | POST `/api/v1/transformations/{transformationId}/strategic-guardrails` | +429 |
+| `getStrategicGuardrail` | GET `/api/v1/transformations/{transformationId}/strategic-guardrails/{strategicGuardrailId}` | +429 |
+| `updateStrategicGuardrail` | PATCH `/api/v1/transformations/{transformationId}/strategic-guardrails/{strategicGuardrailId}` | +429 |
+| `archiveStrategicGuardrail` | POST `/api/v1/transformations/{transformationId}/strategic-guardrails/{strategicGuardrailId}/archive` | +429 |
+| `listOutcomes` | GET `/api/v1/transformations/{transformationId}/outcomes` | +429 |
+| `createOutcome` | POST `/api/v1/transformations/{transformationId}/outcomes` | +429 |
+| `getOutcome` | GET `/api/v1/transformations/{transformationId}/outcomes/{outcomeId}` | +429 |
+| `updateOutcome` | PATCH `/api/v1/transformations/{transformationId}/outcomes/{outcomeId}` | +429 |
+| `archiveOutcome` | POST `/api/v1/transformations/{transformationId}/outcomes/{outcomeId}/archive` | +429 |
+| `listKpiDefinitions` | GET `/api/v1/transformations/{transformationId}/kpi-definitions` | +429 |
+| `createKpiDefinition` | POST `/api/v1/transformations/{transformationId}/kpi-definitions` | +429 |
+| `getKpiDefinition` | GET `/api/v1/transformations/{transformationId}/kpi-definitions/{kpiDefinitionId}` | +429 |
+| `updateKpiDefinition` | PATCH `/api/v1/transformations/{transformationId}/kpi-definitions/{kpiDefinitionId}` | +429 |
+| `archiveKpiDefinition` | POST `/api/v1/transformations/{transformationId}/kpi-definitions/{kpiDefinitionId}/archive` | +429 |
+| `activateKpiDefinition` | POST `/api/v1/transformations/{transformationId}/kpi-definitions/{kpiDefinitionId}/activate` | +429 |
+| `listBaselines` | GET `/api/v1/transformations/{transformationId}/baselines` | +429 |
+| `createBaseline` | POST `/api/v1/transformations/{transformationId}/baselines` | +429 |
+| `getBaseline` | GET `/api/v1/transformations/{transformationId}/baselines/{baselineId}` | +429 |
+| `updateBaseline` | PATCH `/api/v1/transformations/{transformationId}/baselines/{baselineId}` | +429 |
+| `archiveBaseline` | POST `/api/v1/transformations/{transformationId}/baselines/{baselineId}/archive` | +429 |
+| `listOutcomeKpis` | GET `/api/v1/transformations/{transformationId}/outcome-kpis` | +429 |
+| `createOutcomeKpi` | POST `/api/v1/transformations/{transformationId}/outcome-kpis` | +429 |
+| `getOutcomeKpi` | GET `/api/v1/transformations/{transformationId}/outcome-kpis/{outcomeKpiId}` | +429 |
+| `updateOutcomeKpi` | PATCH `/api/v1/transformations/{transformationId}/outcome-kpis/{outcomeKpiId}` | +429 |
+| `archiveOutcomeKpi` | POST `/api/v1/transformations/{transformationId}/outcome-kpis/{outcomeKpiId}/archive` | +429 |
+| `listValuePools` | GET `/api/v1/transformations/{transformationId}/value-pools` | +429 |
+| `createValuePool` | POST `/api/v1/transformations/{transformationId}/value-pools` | +429 |
+| `getValuePool` | GET `/api/v1/transformations/{transformationId}/value-pools/{valuePoolId}` | +429 |
+| `updateValuePool` | PATCH `/api/v1/transformations/{transformationId}/value-pools/{valuePoolId}` | +429 |
+| `archiveValuePool` | POST `/api/v1/transformations/{transformationId}/value-pools/{valuePoolId}/archive` | +429 |
+| `listDiagnosticItems` | GET `/api/v1/transformations/{transformationId}/diagnostic-items` | +429 |
+| `createDiagnosticItem` | POST `/api/v1/transformations/{transformationId}/diagnostic-items` | +429 |
+| `getDiagnosticItem` | GET `/api/v1/transformations/{transformationId}/diagnostic-items/{diagnosticItemId}` | +429 |
+| `updateDiagnosticItem` | PATCH `/api/v1/transformations/{transformationId}/diagnostic-items/{diagnosticItemId}` | +429 |
+| `archiveDiagnosticItem` | POST `/api/v1/transformations/{transformationId}/diagnostic-items/{diagnosticItemId}/archive` | +429 |
+| `listDiagnosticFindings` | GET `/api/v1/transformations/{transformationId}/diagnostic-findings` | +429 |
+| `createDiagnosticFinding` | POST `/api/v1/transformations/{transformationId}/diagnostic-findings` | +429 |
+| `getDiagnosticFinding` | GET `/api/v1/transformations/{transformationId}/diagnostic-findings/{diagnosticFindingId}` | +429 |
+| `updateDiagnosticFinding` | PATCH `/api/v1/transformations/{transformationId}/diagnostic-findings/{diagnosticFindingId}` | +429 |
+| `archiveDiagnosticFinding` | POST `/api/v1/transformations/{transformationId}/diagnostic-findings/{diagnosticFindingId}/archive` | +429 |
+| `listWorkstreamOutputs` | GET `/api/v1/transformations/{transformationId}/workstream-outputs` | +429 |
+| `createWorkstreamOutput` | POST `/api/v1/transformations/{transformationId}/workstream-outputs` | +429 |
+| `getWorkstreamOutput` | GET `/api/v1/transformations/{transformationId}/workstream-outputs/{diagnosticWorkstreamOutputId}` | +429 |
+| `updateWorkstreamOutput` | PATCH `/api/v1/transformations/{transformationId}/workstream-outputs/{diagnosticWorkstreamOutputId}` | +429 |
+| `archiveWorkstreamOutput` | POST `/api/v1/transformations/{transformationId}/workstream-outputs/{diagnosticWorkstreamOutputId}/archive` | +429 |
+| `listTomGaps` | GET `/api/v1/transformations/{transformationId}/tom-gaps` | +429 |
+| `createTomGap` | POST `/api/v1/transformations/{transformationId}/tom-gaps` | +429 |
+| `getTomGap` | GET `/api/v1/transformations/{transformationId}/tom-gaps/{tomGapId}` | +429 |
+| `updateTomGap` | PATCH `/api/v1/transformations/{transformationId}/tom-gaps/{tomGapId}` | +429 |
+| `archiveTomGap` | POST `/api/v1/transformations/{transformationId}/tom-gaps/{tomGapId}/archive` | +429 |
+| `listCapabilityHeatmapEntries` | GET `/api/v1/transformations/{transformationId}/capability-heatmap` | +429 |
+| `createCapabilityHeatmapEntry` | POST `/api/v1/transformations/{transformationId}/capability-heatmap` | +429 |
+| `getCapabilityHeatmapEntry` | GET `/api/v1/transformations/{transformationId}/capability-heatmap/{capabilityId}` | +429 |
+| `updateCapabilityHeatmapEntry` | PATCH `/api/v1/transformations/{transformationId}/capability-heatmap/{capabilityId}` | +429 |
+| `archiveCapabilityHeatmapEntry` | POST `/api/v1/transformations/{transformationId}/capability-heatmap/{capabilityId}/archive` | +429 |
+| `listJourneies` | GET `/api/v1/transformations/{transformationId}/journeys` | +429 |
+| `createJourney` | POST `/api/v1/transformations/{transformationId}/journeys` | +429 |
+| `getJourney` | GET `/api/v1/transformations/{transformationId}/journeys/{journeyId}` | +429 |
+| `updateJourney` | PATCH `/api/v1/transformations/{transformationId}/journeys/{journeyId}` | +429 |
+| `archiveJourney` | POST `/api/v1/transformations/{transformationId}/journeys/{journeyId}/archive` | +429 |
+| `listDependencies` | GET `/api/v1/transformations/{transformationId}/dependencies` | +429 |
+| `createDependency` | POST `/api/v1/transformations/{transformationId}/dependencies` | +429 |
+| `getDependency` | GET `/api/v1/transformations/{transformationId}/dependencies/{dependencyId}` | +429 |
+| `updateDependency` | PATCH `/api/v1/transformations/{transformationId}/dependencies/{dependencyId}` | +429 |
+| `archiveDependency` | POST `/api/v1/transformations/{transformationId}/dependencies/{dependencyId}/archive` | +429 |
+| `listActionItems` | GET `/api/v1/transformations/{transformationId}/actions` | +429 |
+| `createActionItem` | POST `/api/v1/transformations/{transformationId}/actions` | +429 |
+| `getActionItem` | GET `/api/v1/transformations/{transformationId}/actions/{actionItemId}` | +429 |
+| `updateActionItem` | PATCH `/api/v1/transformations/{transformationId}/actions/{actionItemId}` | +429 |
+| `listTomWorkshops` | GET `/api/v1/transformations/{transformationId}/tom-workshops` | +429 |
+| `createTomWorkshop` | POST `/api/v1/transformations/{transformationId}/tom-workshops` | +429 |
+| `getTomWorkshop` | GET `/api/v1/transformations/{transformationId}/tom-workshops/{workshopId}` | +429 |
+| `updateTomWorkshop` | PATCH `/api/v1/transformations/{transformationId}/tom-workshops/{workshopId}` | +429 |
+| `listEvidence` | GET `/api/v1/transformations/{transformationId}/evidence` | +429 |
+| `createEvidence` | POST `/api/v1/transformations/{transformationId}/evidence` | +429 |
+| `getEvidence` | GET `/api/v1/transformations/{transformationId}/evidence/{evidenceId}` | +429 |
+| `updateEvidence` | PATCH `/api/v1/transformations/{transformationId}/evidence/{evidenceId}` | +429 |
+| `archiveEvidence` | POST `/api/v1/transformations/{transformationId}/evidence/{evidenceId}/archive` | +429 |
+| `getTransformationMethodology` | GET `/api/v1/transformations/{transformationId}/methodology` | +429 |
+| `updateTomDimensionLabels` | PATCH `/api/v1/methodology/tom-dimensions/{dimensionCode}` | +429 |
+| `listRoleAccountabilities` | GET `/api/v1/role-accountabilities` | +429 |
+| `getCharter` | GET `/api/v1/transformations/{transformationId}/charter` | +429 |
+| `createCharter` | POST `/api/v1/transformations/{transformationId}/charter` | +429 |
+| `updateCharter` | PATCH `/api/v1/transformations/{transformationId}/charter` | +429 |
+| `listCharterVersions` | GET `/api/v1/transformations/{transformationId}/charter/versions` | +429 |
+| `getCharterVersion` | GET `/api/v1/transformations/{transformationId}/charter/versions/{versionNo}` | +429 |
+| `getNorthStar` | GET `/api/v1/transformations/{transformationId}/north-star` | +429 |
+| `setNorthStar` | PUT `/api/v1/transformations/{transformationId}/north-star` | +429 |
+| `listNorthStarHistory` | GET `/api/v1/transformations/{transformationId}/north-star/history` | +429 |
+| `validateBaseline` | POST `/api/v1/transformations/{transformationId}/baselines/{baselineId}/validation` | +429 |
+| `validateValuePool` | POST `/api/v1/transformations/{transformationId}/value-pools/{valuePoolId}/validation` | +429 |
+| `approveOutcomeKpiTrajectory` | POST `/api/v1/transformations/{transformationId}/outcome-kpis/{outcomeKpiId}/trajectory-approval` | +429 |
+| `getTomCanvas` | GET `/api/v1/transformations/{transformationId}/tom-canvas` | +429 |
+| `getTomCanvasCell` | GET `/api/v1/transformations/{transformationId}/tom-canvas/{dimensionCode}` | +429 |
+| `updateTomCanvasCell` | PATCH `/api/v1/transformations/{transformationId}/tom-canvas/{dimensionCode}` | +429 |
+| `listJourneyPainPoints` | GET `/api/v1/transformations/{transformationId}/journeys/{journeyId}/pain-points` | +429 |
+| `createJourneyPainPoint` | POST `/api/v1/transformations/{transformationId}/journeys/{journeyId}/pain-points` | +429 |
+| `updateJourneyPainPoint` | PATCH `/api/v1/transformations/{transformationId}/journeys/{journeyId}/pain-points/{painPointId}` | +429 |
+| `archiveJourneyPainPoint` | POST `/api/v1/transformations/{transformationId}/journeys/{journeyId}/pain-points/{painPointId}/archive` | +429 |
+| `listTomWorkshopParticipants` | GET `/api/v1/transformations/{transformationId}/tom-workshops/{workshopId}/participants` | +429 |
+| `addTomWorkshopParticipant` | POST `/api/v1/transformations/{transformationId}/tom-workshops/{workshopId}/participants` | +429 |
+| `removeTomWorkshopParticipant` | POST `/api/v1/transformations/{transformationId}/tom-workshops/{workshopId}/participants/{participantId}/remove` | +429 |
+| `listTomWorkshopItems` | GET `/api/v1/transformations/{transformationId}/tom-workshops/{workshopId}/items` | +429 |
+| `createTomWorkshopItem` | POST `/api/v1/transformations/{transformationId}/tom-workshops/{workshopId}/items` | +429 |
+| `convertTomWorkshopItem` | POST `/api/v1/transformations/{transformationId}/tom-workshops/{workshopId}/items/{itemId}/convert` | +429 |
+| `listDecisions` | GET `/api/v1/decisions` | +429 |
+| `createDecision` | POST `/api/v1/decisions` | +429 |
+| `getDecision` | GET `/api/v1/decisions/{decisionId}` | +429 |
+| `updateDecision` | PATCH `/api/v1/decisions/{decisionId}` | +429 |
+| `addDecisionOption` | POST `/api/v1/decisions/{decisionId}/options` | +429 |
+| `updateDecisionOption` | PATCH `/api/v1/decisions/{decisionId}/options/{optionId}` | +429 |
+| `decideDecision` | POST `/api/v1/decisions/{decisionId}/decide` | +429 |
+| `listGates` | GET `/api/v1/transformations/{transformationId}/gates` | +429 |
+| `getGate` | GET `/api/v1/transformations/{transformationId}/gates/{gateCode}` | +429 |
+| `configureGateApprover` | PATCH `/api/v1/transformations/{transformationId}/gates/{gateCode}` | +429 |
+| `listGateSubmissions` | GET `/api/v1/transformations/{transformationId}/gates/{gateCode}/submissions` | +429 |
+| `submitGate` | POST `/api/v1/transformations/{transformationId}/gates/{gateCode}/submissions` | +429 |
+| `getGateSubmission` | GET `/api/v1/transformations/{transformationId}/gates/{gateCode}/submissions/{submissionNo}` | +429 |
+| `decideGate` | POST `/api/v1/transformations/{transformationId}/gates/{gateCode}/decision` | +429 |
+| `downloadEvidenceContent` | GET `/api/v1/transformations/{transformationId}/evidence/{evidenceId}/content` | +429 |
+| `uploadEvidenceContent` | POST `/api/v1/transformations/{transformationId}/evidence/{evidenceId}/content` | +429 |
+| `reviewEvidence` | POST `/api/v1/transformations/{transformationId}/evidence/{evidenceId}/review` | +429 |
+| `listEvidenceLinks` | GET `/api/v1/transformations/{transformationId}/evidence-links` | +429 |
+| `createEvidenceLink` | POST `/api/v1/transformations/{transformationId}/evidence-links` | +429 |
+| `removeEvidenceLink` | POST `/api/v1/transformations/{transformationId}/evidence-links/{linkId}/remove` | +429 |
+| `listTransformationTeam` | GET `/api/v1/transformations/{transformationId}/scoped-assignments` | +429 |
+| `assignTransformationTeamRole` | POST `/api/v1/transformations/{transformationId}/scoped-assignments` | +429 |

@@ -68,7 +68,9 @@ describe("GET /api/v1/branding/tokens (REQ-S15-002)", () => {
     const op = openapi.paths["/api/v1/branding/tokens"]?.["get"] as { operationId: string; responses: object };
     expect(op.operationId).toBe("getBrandingTokens");
     // 400: every operation that validates input declares it (ADR-0007 §5a, T-DG2-ARCH-02; U+0000 in the query string).
-    expect(Object.keys(op.responses).sort()).toEqual(["200", "400", "401"]);
+    // 429: every operation declares the global rate limiter's answer (ADR-0007 §5b, T-DG2-ARCH-03; the old contract
+    // listed only 200/400/401 here).
+    expect(Object.keys(op.responses).sort()).toEqual(["200", "400", "401", "429"]);
   });
 
   it("never reports official provenance while the set or any single token is provisional", () => {

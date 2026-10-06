@@ -1,0 +1,151 @@
+# check: 10-web-e2e   mode: nolocale   started: 2026-10-06T17:07:42Z
+# command: env -u LANG -u LC_ALL -u LC_CTYPE -u LC_COLLATE -u LC_MESSAGES -u LC_NUMERIC -u LC_TIME -u LC_MONETARY  PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH env E2E_PG_PORT=25491 E2E_API_PORT=13601 PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e/journeys.spec.ts apps/web/e2e/p2-journeys.spec.ts apps/web/e2e/p2-blank-text.spec.ts --project=chromium-en --project=chromium-ar --workers=1
+# node v24.21.0; LANG=<unset> LC_ALL=<unset> LC_CTYPE=<unset>
+port-policy: PostgreSQL listening on port 25491 (attempt 1)
+e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 13601 (attempt 1)
+API: http://localhost:13601 (APP_BASE_URL=http://localhost:13601, PORT=13601)
+{"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 58 tests using 1 worker
+
+  ✓   1 [chromium-en] › apps/web/e2e/journeys.spec.ts:187:1 › sign-in page: Arabic RTL by default, provisional wordmark, dev form in dev mode (1.3s)
+  ✓   2 [chromium-en] › apps/web/e2e/journeys.spec.ts:213:1 › shell: navigation, language persistence and My Work (Transformation Office) (2.0s)
+  ✓   3 [chromium-en] › apps/web/e2e/journeys.spec.ts:258:1 › create a modular transformation with an entry phase (4.9s)
+  ✓   4 [chromium-en] › apps/web/e2e/journeys.spec.ts:332:1 › list: sort, filter chips, column selection and pagination controls (2.8s)
+  ✓   5 [chromium-en] › apps/web/e2e/journeys.spec.ts:390:1 › edit: a concurrent change gives a 409 conflict with compare and re-apply (2.1s)
+  ✓   6 [chromium-en] › apps/web/e2e/journeys.spec.ts:442:1 › archive with a mandatory reason makes the record read-only (2.7s)
+  ✓   7 [chromium-en] › apps/web/e2e/journeys.spec.ts:477:1 › administration screens (access + technical administrator) (5.1s)
+  ✓   8 [chromium-en] › apps/web/e2e/journeys.spec.ts:538:1 › a user without roles sees no Administration and no business records (1.9s)
+  ✓   9 [chromium-en] › apps/web/e2e/journeys.spec.ts:560:1 › a business-unit Lead creates a record: Edit/Archive and the audit trail appear without a reload (F-DG1-210), the derived grant localized (F-DG1-008) (3.4s)
+  ✓  10 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:58:1 › setup: a fresh End-to-End transformation for the blank-text checks (70ms)
+  ✓  11 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:73:1 › Charter create: a whitespace Case for change is an inline error and creates no charter (2.5s)
+  ✘  12 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:113:1 › Charter edit: a whitespace Out of scope is an inline error, writes no version and keeps the value (30.1s)
+  -  13 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:163:1 › T01: a whitespace Current state is an inline error and sends nothing
+  -  14 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:265:1 › Gate G1 submission: a whitespace note is an inline error and submits nothing; visible text is verbatim
+  -  15 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:326:1 › Gate G1 decision: a whitespace rationale is an inline error and decides nothing
+  -  16 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:382:1 › Journey steps: a whitespace actor is an inline error and writes no journey version
+  -  17 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:425:1 › Reason dialog: an invisible-only archive reason is an inline error and archives nothing
+  ✓  18 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:42:1 › lead creates an End-to-End transformation; the workspace tabs lead to the P2 screens (2.3s)
+  ✓  19 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:83:1 › Diagnose: six T01 dimensions with Unknown; value pools labelled Unquantified with a partial total (6.2s)
+  ✓  20 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:168:1 › Charter: create, save a second version, compare versions; the 3-5 top-outcomes warning (4.3s)
+  ✓  21 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:248:1 › Define: North Star, the good outcome test with reasons, and a required T02 target date (3.7s)
+  ✓  22 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:332:1 › Design: ten canvas boxes, the per-dimension view; workshop mode converts an unresolved item into T04 (4.7s)
+  ✓  23 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:414:1 › Evidence: note, filename reference and file upload; a link; review by another person (5.0s)
+  ✓  24 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:608:1 › Gates: G1 shows unverified evidence and offers no submission while incomplete; once complete it is submitted (4.2s)
+  ✓  25 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:675:1 › Gates: the approver's decision — 409 when the submission was superseded, then approval with a rationale (3.4s)
+  ✓  26 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:824:1 › Define → G2: activate a KPI, pass the good outcome test, add a guardrail, compose the thesis; G2 is decided (15.4s)
+  ✓  27 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:1027:1 › Design → G3: the target state is complete and G3 is decided by the Sponsor (4.1s)
+  ✓  28 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:1080:1 › Team: the six governance roles with their B0018 accountability; the lead assigns a Workstream Lead (4.3s)
+  ✓  29 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:1144:1 › read-only auditor (AUD): every P2 screen without write controls; Unknown and Unquantified rendered (10.6s)
+  ✓  30 [chromium-ar] › apps/web/e2e/journeys.spec.ts:187:1 › sign-in page: Arabic RTL by default, provisional wordmark, dev form in dev mode (1.0s)
+  ✓  31 [chromium-ar] › apps/web/e2e/journeys.spec.ts:213:1 › shell: navigation, language persistence and My Work (Transformation Office) (1.6s)
+  ✓  32 [chromium-ar] › apps/web/e2e/journeys.spec.ts:258:1 › create a modular transformation with an entry phase (4.2s)
+  ✓  33 [chromium-ar] › apps/web/e2e/journeys.spec.ts:332:1 › list: sort, filter chips, column selection and pagination controls (2.6s)
+  ✓  34 [chromium-ar] › apps/web/e2e/journeys.spec.ts:390:1 › edit: a concurrent change gives a 409 conflict with compare and re-apply (1.8s)
+  ✓  35 [chromium-ar] › apps/web/e2e/journeys.spec.ts:442:1 › archive with a mandatory reason makes the record read-only (2.0s)
+  ✓  36 [chromium-ar] › apps/web/e2e/journeys.spec.ts:477:1 › administration screens (access + technical administrator) (4.4s)
+  ✓  37 [chromium-ar] › apps/web/e2e/journeys.spec.ts:538:1 › a user without roles sees no Administration and no business records (1.6s)
+  ✓  38 [chromium-ar] › apps/web/e2e/journeys.spec.ts:560:1 › a business-unit Lead creates a record: Edit/Archive and the audit trail appear without a reload (F-DG1-210), the derived grant localized (F-DG1-008) (2.7s)
+  ✓  39 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:58:1 › setup: a fresh End-to-End transformation for the blank-text checks (46ms)
+  ✓  40 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:73:1 › Charter create: a whitespace Case for change is an inline error and creates no charter (2.0s)
+  ✓  41 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:113:1 › Charter edit: a whitespace Out of scope is an inline error, writes no version and keeps the value (2.8s)
+  ✓  42 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:163:1 › T01: a whitespace Current state is an inline error and sends nothing (2.3s)
+  ✓  43 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:265:1 › Gate G1 submission: a whitespace note is an inline error and submits nothing; visible text is verbatim (2.0s)
+  ✓  44 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:326:1 › Gate G1 decision: a whitespace rationale is an inline error and decides nothing (1.9s)
+  ✓  45 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:382:1 › Journey steps: a whitespace actor is an inline error and writes no journey version (2.3s)
+  ✓  46 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:425:1 › Reason dialog: an invisible-only archive reason is an inline error and archives nothing (2.7s)
+  ✓  47 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:42:1 › lead creates an End-to-End transformation; the workspace tabs lead to the P2 screens (1.9s)
+  ✓  48 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:83:1 › Diagnose: six T01 dimensions with Unknown; value pools labelled Unquantified with a partial total (5.3s)
+  ✓  49 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:168:1 › Charter: create, save a second version, compare versions; the 3-5 top-outcomes warning (3.8s)
+  ✓  50 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:248:1 › Define: North Star, the good outcome test with reasons, and a required T02 target date (3.6s)
+  ✓  51 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:332:1 › Design: ten canvas boxes, the per-dimension view; workshop mode converts an unresolved item into T04 (4.2s)
+  ✓  52 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:414:1 › Evidence: note, filename reference and file upload; a link; review by another person (4.8s)
+  ✓  53 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:608:1 › Gates: G1 shows unverified evidence and offers no submission while incomplete; once complete it is submitted (3.9s)
+  ✓  54 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:675:1 › Gates: the approver's decision — 409 when the submission was superseded, then approval with a rationale (3.4s)
+  ✓  55 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:824:1 › Define → G2: activate a KPI, pass the good outcome test, add a guardrail, compose the thesis; G2 is decided (14.1s)
+  ✓  56 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:1027:1 › Design → G3: the target state is complete and G3 is decided by the Sponsor (3.7s)
+  ✓  57 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:1080:1 › Team: the six governance roles with their B0018 accountability; the lead assigns a Workstream Lead (3.9s)
+  ✓  58 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:1144:1 › read-only auditor (AUD): every P2 screen without write controls; Unknown and Unquantified rendered (9.8s)
+
+
+  1) [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:113:1 › Charter edit: a whitespace Out of scope is an inline error, writes no version and keeps the value 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByRole('region', { name: 'Charter fields (14)', exact: true }).getByRole('button', { name: 'Edit charter', exact: true })[22m
+
+
+      125 |   await page.goto(ws("charter"));
+      126 |   const fields = page.getByRole("region", { name: tr(lang, "define.charter.fieldsTitle"), exact: true });
+    > 127 |   await fields.getByRole("button", { name: tr(lang, "define.charter.edit"), exact: true }).click();
+          |                                                                                            ^
+      128 |   await page.getByLabel(fieldLabel(lang, "define.charter.field.outOfScope")).fill("     ");
+      129 |   await page.getByLabel(fieldLabel(lang, "define.charter.changeSummary")).fill("Synthetic: blank exclusions");
+      130 |   await page.getByRole("button", { name: tr(lang, "define.charter.saveVersion"), exact: true }).click();
+        at /home/user/My-owns/apps/web/e2e/p2-blank-text.spec.ts:127:92
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-p2-blank-text-b7881-version-and-keeps-the-value-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/apps-web-e2e-p2-blank-text-b7881-version-and-keeps-the-value-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-p2-blank-text-b7881-version-and-keeps-the-value-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-p2-blank-text-b7881-version-and-keeps-the-value-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:113:1 › Charter edit: a whitespace Out of scope is an inline error, writes no version and keeps the value 
+  5 did not run
+  52 passed (3.9m)
+
+To open last HTML report run:
+[36m[39m
+[36m  npx playwright show-report[39m
+[36m[39m
+---- api.log (tail)
+{"level":40,"time":1791306498018,"pid":4108,"hostname":"vm","requestId":"01a1122f-ffdf-72a4-b8b0-140dcd94cb74","msg":"Trying to send a NotFound error inside a 404 handler. Sending basic 404 response."}
+{"level":40,"time":1791306498019,"pid":4108,"hostname":"vm","requestId":"01a1122f-ffe0-700f-8fa0-96b7d1446e46","msg":"Trying to send a NotFound error inside a 404 handler. Sending basic 404 response."}
+{"level":40,"time":1791306498020,"pid":4108,"hostname":"vm","requestId":"01a1122f-ffe0-700f-8fa0-9a01291b4c10","msg":"Trying to send a NotFound error inside a 404 handler. Sending basic 404 response."}
+{"level":40,"time":1791306498031,"pid":4108,"hostname":"vm","requestId":"01a1122f-ffee-71ab-91bd-3ff00e9ea617","msg":"Trying to send a NotFound error inside a 404 handler. Sending basic 404 response."}
+{"level":40,"time":1791306498038,"pid":4108,"hostname":"vm","requestId":"01a1122f-fff5-704f-84ad-8a106476b368","msg":"Trying to send a NotFound error inside a 404 handler. Sending basic 404 response."}
+{"level":40,"time":1791306498038,"pid":4108,"hostname":"vm","requestId":"01a1122f-fff5-704f-84ad-8d73c873ad69","msg":"Trying to send a NotFound error inside a 404 handler. Sending basic 404 response."}
+{"level":40,"time":1791306498066,"pid":4108,"hostname":"vm","requestId":"01a11230-0010-7269-9f07-056f66aa4daa","msg":"Trying to send a NotFound error inside a 404 handler. Sending basic 404 response."}
+{"level":40,"time":1791306498067,"pid":4108,"hostname":"vm","requestId":"01a11230-0011-76ee-9305-81826f83cdeb","msg":"Trying to send a NotFound error inside a 404 handler. Sending basic 404 response."}
+{"level":40,"time":1791306498067,"pid":4108,"hostname":"vm","requestId":"01a11230-0011-76ee-9305-859c34049390","msg":"Trying to send a NotFound error inside a 404 handler. Sending basic 404 response."}
+{"level":40,"time":1791306498092,"pid":4108,"hostname":"vm","requestId":"01a11230-002c-703f-921c-0d845e2da263","msg":"Trying to send a NotFound error inside a 404 handler. Sending basic 404 response."}
+{"level":40,"time":1791306498096,"pid":4108,"hostname":"vm","requestId":"01a11230-0030-70bb-aaf4-0bb021f567bd","msg":"Trying to send a NotFound error inside a 404 handler. Sending basic 404 response."}
+{"level":40,"time":1791306498097,"pid":4108,"hostname":"vm","requestId":"01a11230-0030-70bb-aaf4-0c8a9106ca31","msg":"Trying to send a NotFound error inside a 404 handler. Sending basic 404 response."}
+{"level":40,"time":1791306498298,"pid":4108,"hostname":"vm","requestId":"01a11230-00f9-730b-973a-b828c9f917e2","msg":"Trying to send a NotFound error inside a 404 handler. Sending basic 404 response."}
+# exit: 1   finished: 2026-10-06T17:11:39Z
