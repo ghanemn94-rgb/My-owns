@@ -1,0 +1,184 @@
+# supplementary control: the BE15B additions run against the salvaged WIP 08a4f63 src (disposable clone)
+# copied test files: apps/api/src/modules/platform/media-types.test.ts apps/api/test/integration/media-types.test.ts; started 2026-10-06T22:21:37Z
+## unit
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /var/tmp/mth-run.vLVz1A/claude-0/base
+
+ ❯ |unit-node| apps/api/src/modules/platform/media-types.test.ts (57 tests | 2 failed) 119ms
+   ✓ mediaTypeEssence > is the lower-cased type/subtype without parameters; '' when absent, multi-valued or malformed 2ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > parses "application/json" 1ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > parses "APPLICATION/JSON" 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > parses "Application/Json; Charset=UTF-8" 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > parses "application/json;charset=utf-8" 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > parses "application/json ; charset=utf-8" 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > parses "application/json\t; charset=utf-8" 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > parses "application/json;\tcharset=utf-8" 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > parses " \tapplication/json\t " 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > parses "application/json; charset=\"utf-8\"" 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > parses "application/octet-stream\t; x=1" 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > parses "application/octet-stream;" 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > parses "application/octet-stream ;; x=1 ;" 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > parses "a/b; q=\"x\\\"y; z\"" 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > parses "*/*" 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > refuses absent 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > refuses empty 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > refuses only whitespace 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > refuses header array (duplicate Content-Type) 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > refuses no subtype 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > refuses empty subtype 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > refuses empty type 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > refuses space inside type/subtype 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > refuses space before slash 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > refuses text after subtype 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > refuses list 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > refuses parameter without = 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > refuses empty parameter name 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > refuses empty parameter value 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > refuses garbage parameters 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > refuses space around = 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > refuses unterminated quoted-string 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > refuses text after quoted-string 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > refuses control character 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > refuses CR LF 0ms
+   ✓ parseContentType (RFC 9110 §8.3.1) > refuses non-tchar in subtype 0ms
+   ✓ parametersAcceptable > application/json: any charset must be UTF-8 (RFC 8259 §8.1); other parameters are ignored 0ms
+   ✓ parametersAcceptable > application/octet-stream: parameters never change the stored bytes, so any well-formed one is accepted 0ms
+   ✓ decideMediaType: one decision for every request > an unmatched route with a body is never refused, whatever its media type (F-DG2-350) 0ms
+   ✓ decideMediaType: one decision for every request > accepts iff the essence is declared, and returns the canonical header 1ms
+   × decideMediaType: one decision for every request > T-DG2-BE15B: two Content-Type field lines are refused on a matched route (Node keeps only the first) 6ms
+     → expected false to be 'Send the request body as application/…' // Object.is equality
+   × contentTypeFieldLines > counts Content-Type lines case-insensitively in rawHeaders (names at even indexes only) 0ms
+     → (0 , contentTypeFieldLines) is not a function
+   ✓ restrictParserTo (defence in depth) > refuses with the route's declared set (never a hard-coded JSON text) and does not call the parser 0ms
+   ✓ willParseBody mirrors Fastify's dispatch (lib/handleRequest.js) > never for GET/HEAD/TRACE, whatever the headers 0ms
+   ✓ willParseBody mirrors Fastify's dispatch (lib/handleRequest.js) > for body methods: a Content-Type, or else a Transfer-Encoding or a non-zero Content-Length 1ms
+   ✓ assertValidConsumes > accepts undefined and non-empty subsets of the supported media types 1ms
+   ✓ assertValidConsumes > refuses to start on an empty set, an unsupported type or a non-array 0ms
+   ✓ registerMediaTypeEnforcement > refuses an undeclared media type with 400 validation.content_type before any parser runs 33ms
+   ✓ registerMediaTypeEnforcement > the declared media types still work; the octet-stream bytes arrive untouched 10ms
+   ✓ registerMediaTypeEnforcement > bodiless requests are unchanged: GET with a Content-Type, POST with neither Content-Type nor body 3ms
+   ✓ registerMediaTypeEnforcement > removes Fastify's built-in text/plain parser and refuses an invalid consumes at registration 2ms
+   ✓ registerMediaTypeEnforcement > the parser guard refuses a media type the route does not declare (defence in depth, without the hook) 3ms
+   ✓ one decision: every accepted spelling reaches the declared parser; every refused one is the 400 > application/octet-stream spellings: accepted, the octet parser runs, the bytes arrive untouched 8ms
+   ✓ one decision: every accepted spelling reaches the declared parser; every refused one is the 400 > application/json spellings: accepted, the JSON parser runs, the body is parsed 6ms
+   ✓ one decision: every accepted spelling reaches the declared parser; every refused one is the 400 > every refused spelling is the 400 naming the route's declared set; no parser runs 19ms
+   ✓ one decision: every accepted spelling reaches the declared parser; every refused one is the 400 > an unmatched route answers 404 not_found for every body; no parser runs; the connection closes 13ms
+   ✓ one decision: every accepted spelling reaches the declared parser; every refused one is the 400 > FST_ERR_CTP_INVALID_MEDIA_TYPE (no parser for the route) names the declared set, not a hard-coded JSON text 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > decideMediaType: one decision for every request > T-DG2-BE15B: two Content-Type field lines are refused on a matched route (Node keeps only the first)
+AssertionError: expected false to be 'Send the request body as application/…' // Object.is equality
+
+[32m- Expected:[39m 
+"Send the request body as application/json."
+
+[31m+ Received:[39m 
+false
+
+ ❯ apps/api/src/modules/platform/media-types.test.ts:155:77
+    153|     expect(decideMediaType(withRaw(one)).kind).toBe("accept");
+    154|     const refused = decideMediaType(withRaw(two));
+    155|     expect(refused.kind === "refuse" && refused.problem.toBody("r").de…
+       |                                                                             ^
+    156|       "Send the request body as application/json.",
+    157|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > contentTypeFieldLines > counts Content-Type lines case-insensitively in rawHeaders (names at even indexes only)
+TypeError: (0 , contentTypeFieldLines) is not a function
+ ❯ apps/api/src/modules/platform/media-types.test.ts:165:12
+    163| describe("contentTypeFieldLines", () => {
+    164|   it("counts Content-Type lines case-insensitively in rawHeaders (name…
+    165|     expect(contentTypeFieldLines(undefined)).toBe(0);
+       |            ^
+    166|     expect(contentTypeFieldLines([])).toBe(0);
+    167|     expect(contentTypeFieldLines(["X-Note", "content-type", "Content-T…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 55 passed (57)
+   Start at  22:21:38
+   Duration  947ms (transform 297ms, setup 0ms, collect 572ms, tests 119ms, environment 0ms, prepare 81ms)
+
+# unit exit: 1
+## integration
+port-policy: PostgreSQL listening on port 24375 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /var/tmp/mth-run.vLVz1A/claude-0/base
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mux8u088_790c99a2 (server_encoding UTF8); applied 19 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/media-types.test.ts (21 tests | 1 failed) 1448ms
+   ✓ uploadEvidenceContent accepts only application/octet-stream (F-DG2-320) > every undeclared media type, in each framing: 400 validation.content_type; nothing stored, no audit row 79ms
+   ✓ uploadEvidenceContent accepts only application/octet-stream (F-DG2-320) > the refusal precedes authentication, like any body the framework cannot parse (no session: 400, not 401) 16ms
+   ✓ uploadEvidenceContent accepts only application/octet-stream (F-DG2-320) > a valid application/octet-stream upload stores exactly the bytes sent, in both framings (sha256 of the raw input) 106ms
+   ✓ uploadEvidenceContent accepts only application/octet-stream (F-DG2-320) > the size limit still applies to octet-stream uploads (unchanged): the declared 413 evidence.too_large 42ms
+   ✓ JSON operations accept only application/json (F-DG2-320) > createEvidence sent text/plain or application/octet-stream, in each framing: 400; nothing created 25ms
+   ✓ JSON operations accept only application/json (F-DG2-320) > an If-Match update (PATCH) sent application/octet-stream: 400; the record is unchanged 22ms
+   ✓ JSON operations accept only application/json (F-DG2-320) > a valid JSON request still works (application/json, with and without a charset) 17ms
+   ✓ bodiless requests behave as before (F-DG2-320 sweep) > GET with a Content-Type (and even a body) is never refused: the body is not read 19ms
+   ✓ bodiless requests behave as before (F-DG2-320 sweep) > a bodiless POST with no Content-Type and no body reaches its handler; an empty JSON body keeps its 400 42ms
+   ✓ bodiless requests behave as before (F-DG2-320 sweep) > an unknown route keeps its 404, whatever the media type 1ms
+   ✓ an unmatched route is 404 not_found whatever its body (F-DG2-350) > S10 (code-security round 9) regression: POST/PUT/DELETE x text/plain, JSON, octet-stream x with/without a session 17ms
+   ✓ an unmatched route is 404 not_found whatever its body (F-DG2-350) > every method x body class x session: 404 not_found (problem+json), the connection closes, nothing parsed or logged as an error 127ms
+   ✓ an unmatched route is 404 not_found whatever its body (F-DG2-350) > on a real keep-alive socket the unread body never becomes the next request: the server closes after the 404 18ms
+   ✓ the media-type check and the parser lookup agree for every spelling (F-DG2-351) > S11 (code-security round 9) regression: the tab-before-';' upload is accepted and stored byte-exact 46ms
+   ✓ the media-type check and the parser lookup agree for every spelling (F-DG2-351) > S11: every refusal on uploadEvidenceContent names application/octet-stream (never a hard-coded JSON text) 26ms
+   ✓ the media-type check and the parser lookup agree for every spelling (F-DG2-351) > every OWS/whitespace spelling of octet-stream reaches the octet parser: stored byte-exact (sha256), downloadable  344ms
+   ✓ the media-type check and the parser lookup agree for every spelling (F-DG2-351) > every OWS/whitespace spelling of application/json reaches the JSON parser: accepted and stored verbatim 72ms
+   ✓ the media-type check and the parser lookup agree for every spelling (F-DG2-351) > every refusal on a JSON operation names application/json: malformed, other charsets, octet-stream spellings 20ms
+   ✓ on a real socket (T-DG2-BE15B) > S11 over llhttp: an HTAB before ';' reaches the octet parser (stored byte-exact) and the JSON parser 27ms
+   × on a real socket (T-DG2-BE15B) > two Content-Type lines are refused on a matched route (declared set named) and a 404 on an unmatched one 17ms
+     → expected [ [ 'application/json', …(1) ], …(3) ] to deeply equal [ [ 'application/json', …(1) ], …(3) ]
+   ✓ on a real socket (T-DG2-BE15B) > after an unmatched 404 closes its connection, the client's next keep-alive connection is served normally 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/media-types.test.ts > on a real socket (T-DG2-BE15B) > two Content-Type lines are refused on a matched route (declared set named) and a 404 on an unmatched one
+AssertionError: expected [ [ 'application/json', …(1) ], …(3) ] to deeply equal [ [ 'application/json', …(1) ], …(3) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -2,10 +2,10 @@[39m
+[2m    [[22m
+[2m      "application/json",[22m
+[2m      "application/json",[22m
+[2m    ],[22m
+[2m    [[22m
+[32m-     "400",[39m
+[31m+     "201",[39m
+[2m    ],[22m
+[32m-   "validation",[39m
+[32m-   "Send the request body as application/json.",[39m
+[31m+   undefined,[39m
+[31m+   undefined,[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/media-types.test.ts:745:68
+    743|     ]) {
+    744|       const res = parseRaw(await rawSocket(port, rawRequest("POST", `$…
+    745|       expect([pair, res.statuses, res.body.code, res.body.detail]).toE…
+       |                                                                    ^
+    746|     }
+    747|     const after = await api.db
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 20 passed (21)
+   Start at  22:21:40
+   Duration  4.31s (transform 805ms, setup 0ms, collect 1.90s, tests 1.45s, environment 0ms, prepare 66ms)
+
+# integration exit: 1

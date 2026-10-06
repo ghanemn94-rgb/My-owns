@@ -662,3 +662,142 @@ describe("the media-type check and the parser lookup agree for every spelling (F
         await expectUndeclaredMediaType(await rawCall("POST", `${T}/evidence`, ct, valid, framing), JSON_ONLY);
   });
 });
+
+// ---------------------------------------------------------------------------------------------------------------------
+// T-DG2-BE15B: the same decision on a real socket (llhttp parsing, not light-my-request): HTAB OWS, duplicate
+// Content-Type lines (Node keeps only the first in `headers`), and the keep-alive behaviour after an unmatched 404.
+// ---------------------------------------------------------------------------------------------------------------------
+
+/** One raw HTTP/1.1 request, authenticated as the lead; `contentTypes` become one field line each, in order. */
+function rawRequest(
+  method: string,
+  url: string,
+  contentTypes: readonly string[],
+  body: Buffer,
+  extra: Record<string, string> = {},
+): Buffer {
+  const lines = [
+    `${method} ${url} HTTP/1.1`,
+    "Host: x",
+    "Connection: close",
+    `Origin: ${APP_ORIGIN}`,
+    `Cookie: ${p.lead.session.cookie}`,
+    `X-CSRF-Token: ${p.lead.session.csrf}`,
+    ...contentTypes.map((ct) => `Content-Type: ${ct}`),
+    ...Object.entries(extra).map(([k, v]) => `${k}: ${v}`),
+    `Content-Length: ${body.length}`,
+  ];
+  return Buffer.concat([Buffer.from(`${lines.join("\r\n")}\r\n\r\n`, "latin1"), body]);
+}
+
+/** The status and the JSON body of the only response in a raw socket transcript. */
+function parseRaw(text: string): { statuses: string[]; body: { code?: string; detail?: string; id?: string } } {
+  const statuses = [...text.matchAll(/HTTP\/1\.1 (\d{3})/g)].map((m) => m[1]!);
+  const start = text.indexOf("\r\n\r\n");
+  const rest = start < 0 ? "" : text.slice(start + 4);
+  return { statuses, body: rest.startsWith("{") ? (JSON.parse(rest) as { code?: string }) : {} };
+}
+
+describe("on a real socket (T-DG2-BE15B)", () => {
+  it("S11 over llhttp: an HTAB before ';' reaches the octet parser (stored byte-exact) and the JSON parser", async () => {
+    const port = await listenBelowEphemeral();
+    const item = await newFileEvidence("Synthetic S11 real socket");
+    const up = parseRaw(
+      await rawSocket(
+        port,
+        rawRequest("POST", `${T}/evidence/${item.id}/content`, ["application/octet-stream\t; x=1"], ILL_FORMED, {
+          "If-Match": ifm(item.version)["if-match"]!,
+          "X-File-Name": "s11.bin",
+        }),
+      ),
+    );
+    expect(up.statuses, JSON.stringify(up.body)).toEqual(["200"]);
+    expect((await contentRows(item.id)).map((r) => r.sha256)).toEqual([sha256(ILL_FORMED)]);
+    const title = "Synthetic S11 real socket note ملاحظة";
+    const note = Buffer.from(JSON.stringify({ ownerUserId: p.lead.id, kind: "note", title, noteBody: "x" }));
+    const created = parseRaw(
+      await rawSocket(port, rawRequest("POST", `${T}/evidence`, ["application/json\t; charset=utf-8"], note)),
+    );
+    expect(created.statuses, JSON.stringify(created.body)).toEqual(["201"]);
+    const row = await api.db
+      .selectFrom("evidence")
+      .select(["title"])
+      .where("id", "=", created.body.id!)
+      .executeTakeFirstOrThrow();
+    expect(row.title).toBe(title);
+  });
+
+  it("two Content-Type lines are refused on a matched route (declared set named) and a 404 on an unmatched one", async () => {
+    const port = await listenBelowEphemeral();
+    const note = Buffer.from(
+      JSON.stringify({ ownerUserId: p.lead.id, kind: "note", title: "Synthetic dup", noteBody: "x" }),
+    );
+    const before = await api.db
+      .selectFrom("evidence")
+      .select((eb) => eb.fn.countAll<string>().as("n"))
+      .executeTakeFirstOrThrow();
+    for (const pair of [
+      ["application/json", "application/json"],
+      ["application/json", "application/octet-stream"],
+      ["application/octet-stream", "application/json"],
+    ]) {
+      const res = parseRaw(await rawSocket(port, rawRequest("POST", `${T}/evidence`, pair, note)));
+      expect([pair, res.statuses, res.body.code, res.body.detail]).toEqual([pair, ["400"], "validation", JSON_ONLY]);
+    }
+    const after = await api.db
+      .selectFrom("evidence")
+      .select((eb) => eb.fn.countAll<string>().as("n"))
+      .executeTakeFirstOrThrow();
+    expect(after.n).toBe(before.n);
+
+    const item = await newFileEvidence("Synthetic duplicate Content-Type upload");
+    for (const pair of [
+      ["application/octet-stream", "application/octet-stream"],
+      ["application/octet-stream", "text/plain"],
+      ["text/plain", "application/octet-stream"],
+    ]) {
+      const res = parseRaw(
+        await rawSocket(
+          port,
+          rawRequest("POST", `${T}/evidence/${item.id}/content`, pair, ILL_FORMED, {
+            "If-Match": ifm(item.version)["if-match"]!,
+            "X-File-Name": "dup.bin",
+          }),
+        ),
+      );
+      expect([pair, res.statuses, res.body.detail]).toEqual([pair, ["400"], OCTET_ONLY]);
+    }
+    expect(await contentRows(item.id)).toEqual([]);
+    expect(storedFilesOf(item.id)).toEqual([]);
+
+    const unmatched = parseRaw(
+      await rawSocket(
+        port,
+        rawRequest("POST", "/api/v1/does-not-exist", ["application/octet-stream", "application/json"], ILL_FORMED),
+      ),
+    );
+    expect([unmatched.statuses, unmatched.body.code]).toEqual([["404"], "not_found"]);
+  });
+
+  it("after an unmatched 404 closes its connection, the client's next keep-alive connection is served normally", async () => {
+    const port = await listenBelowEphemeral();
+    const closed = await rawSocket(
+      port,
+      Buffer.from(
+        "PUT /api/v1/does-not-exist HTTP/1.1\r\nHost: x\r\nConnection: keep-alive\r\nContent-Type: application/json\r\n" +
+          'Content-Length: 7\r\n\r\n{"a":1}',
+      ),
+    );
+    expect(parseRaw(closed).statuses).toEqual(["404"]);
+    expect(closed.toLowerCase()).toContain("connection: close");
+    // Two pipelined requests on one fresh keep-alive connection: both answered, in order, unaffected by the 404 above.
+    const next = await rawSocket(
+      port,
+      Buffer.from(
+        "GET /healthz HTTP/1.1\r\nHost: x\r\nConnection: keep-alive\r\n\r\n" +
+          "GET /api/v1/does-not-exist HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n",
+      ),
+    );
+    expect([...next.matchAll(/HTTP\/1\.1 (\d{3})/g)].map((m) => m[1])).toEqual(["200", "404"]);
+  });
+});

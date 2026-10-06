@@ -201,6 +201,18 @@ export function undeclaredMediaTypeProblem(consumes: readonly string[]): HttpPro
   return problems.badRequest("validation.content_type", `Send the request body as ${consumes.join(" or ")}.`);
 }
 
+/**
+ * The number of Content-Type field lines the client sent. Node keeps only the FIRST of duplicate Content-Type lines in
+ * `headers` (and drops the rest silently), so the duplicate is visible only in `rawHeaders`. Content-Type is a
+ * singleton field (RFC 9110 §8.3, §5.3): two lines are ambiguous (an intermediary may honour the last one), so the
+ * decision refuses them instead of silently picking one (T-DG2-BE15B).
+ */
+export function contentTypeFieldLines(rawHeaders: readonly string[] | undefined): number {
+  if (rawHeaders === undefined) return 0;
+  // rawHeaders alternates name, value: count the names (even positions) only.
+  return rawHeaders.filter((entry, index) => index % 2 === 0 && entry.toLowerCase() === "content-type").length;
+}
+
 /** The outcome of the one media-type decision for a request. */
 export type MediaTypeDecision =
   | { readonly kind: "no-body" }
@@ -210,13 +222,19 @@ export type MediaTypeDecision =
 
 /** The one media-type decision (pure): see the header comment. */
 export function decideMediaType(
-  request: Pick<FastifyRequest, "method" | "headers" | "is404"> & RouteConsumesSource,
+  request: Pick<FastifyRequest, "method" | "headers" | "is404"> &
+    RouteConsumesSource & { readonly raw?: { readonly rawHeaders?: readonly string[] } },
 ): MediaTypeDecision {
   if (!willParseBody(request)) return { kind: "no-body" };
   if (request.is404) return { kind: "unmatched-route" };
   const consumes = consumesOf(request);
   const parsed = parseContentType(request.headers["content-type"]);
-  if (parsed === null || !consumes.includes(parsed.essence) || !parametersAcceptable(parsed))
+  if (
+    parsed === null ||
+    contentTypeFieldLines(request.raw?.rawHeaders) > 1 ||
+    !consumes.includes(parsed.essence) ||
+    !parametersAcceptable(parsed)
+  )
     return { kind: "refuse", problem: undeclaredMediaTypeProblem(consumes) };
   return { kind: "accept", contentType: canonicalContentType(parsed) };
 }

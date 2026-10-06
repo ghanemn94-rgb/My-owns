@@ -1,0 +1,774 @@
+# negative control: the BE15/BE15B tests (from the working tree) run against 3b2ab15 src (disposable clone /var/tmp/mth-run.vLVz1A/claude-0/base, PG 16 disposable cluster)
+# copied test files: apps/api/src/modules/platform/media-types.test.ts apps/api/src/modules/platform/framework-errors.test.ts apps/api/test/integration/media-types.test.ts
+# started 2026-10-06T22:21:13Z
+## unit
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /var/tmp/mth-run.vLVz1A/claude-0/base
+
+(node:70) [FSTDEP022] FastifyWarning: The router options for constraints property access is deprecated. Please use "options.routerOptions" instead for accessing router options. The router options will be removed in `fastify@6`.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ |unit-node| apps/api/src/modules/platform/framework-errors.test.ts (6 tests | 1 failed) 39ms
+   ✓ frameworkProblem > maps FST_ERR_BAD_URL to 400 validation.format with a clear detail 2ms
+   ✓ frameworkProblem > maps FST_ERR_ASYNC_CONSTRAINT to 500 internal without internals 0ms
+   × frameworkProblem > falls back to the generic error mapping for any other code, never a plain body 9ms
+     → expected [ { pointer: '', …(2) } ] to deeply equal [ { pointer: '', …(2) } ]
+   ✓ clientErrorProblem > maps parser errors to problems 1ms
+   ✓ createFrameworkErrorHandler on a real Fastify router > answers an async route-constraint failure (FST_ERR_ASYNC_CONSTRAINT) as a 500 problem with the headers 21ms
+   ✓ createFrameworkErrorHandler on a real Fastify router > answers a bad URL as a 400 problem with the given security headers and X-Request-Id 4ms
+ ❯ |unit-node| apps/api/src/modules/platform/media-types.test.ts (57 tests | 47 failed) 92ms
+   × mediaTypeEssence > is the lower-cased type/subtype without parameters; '' when absent, multi-valued or malformed 8ms
+     → expected 'application/octet-stream' to be '' // Object.is equality
+   × parseContentType (RFC 9110 §8.3.1) > parses "application/json" 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > parses "APPLICATION/JSON" 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > parses "Application/Json; Charset=UTF-8" 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > parses "application/json;charset=utf-8" 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > parses "application/json ; charset=utf-8" 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > parses "application/json\t; charset=utf-8" 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > parses "application/json;\tcharset=utf-8" 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > parses " \tapplication/json\t " 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > parses "application/json; charset=\"utf-8\"" 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > parses "application/octet-stream\t; x=1" 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > parses "application/octet-stream;" 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > parses "application/octet-stream ;; x=1 ;" 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > parses "a/b; q=\"x\\\"y; z\"" 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > parses "*/*" 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > refuses absent 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > refuses empty 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > refuses only whitespace 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > refuses header array (duplicate Content-Type) 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > refuses no subtype 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > refuses empty subtype 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > refuses empty type 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > refuses space inside type/subtype 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > refuses space before slash 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > refuses text after subtype 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > refuses list 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > refuses parameter without = 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > refuses empty parameter name 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > refuses empty parameter value 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > refuses garbage parameters 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > refuses space around = 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > refuses unterminated quoted-string 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > refuses text after quoted-string 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > refuses control character 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > refuses CR LF 0ms
+     → (0 , parseContentType) is not a function
+   × parseContentType (RFC 9110 §8.3.1) > refuses non-tchar in subtype 0ms
+     → (0 , parseContentType) is not a function
+   × parametersAcceptable > application/json: any charset must be UTF-8 (RFC 8259 §8.1); other parameters are ignored 0ms
+     → (0 , parseContentType) is not a function
+   × parametersAcceptable > application/octet-stream: parameters never change the stored bytes, so any well-formed one is accepted 0ms
+     → (0 , parseContentType) is not a function
+   × decideMediaType: one decision for every request > an unmatched route with a body is never refused, whatever its media type (F-DG2-350) 0ms
+     → (0 , decideMediaType) is not a function
+   × decideMediaType: one decision for every request > accepts iff the essence is declared, and returns the canonical header 0ms
+     → (0 , decideMediaType) is not a function
+   × decideMediaType: one decision for every request > T-DG2-BE15B: two Content-Type field lines are refused on a matched route (Node keeps only the first) 0ms
+     → (0 , decideMediaType) is not a function
+   × contentTypeFieldLines > counts Content-Type lines case-insensitively in rawHeaders (names at even indexes only) 0ms
+     → (0 , contentTypeFieldLines) is not a function
+   ✓ restrictParserTo (defence in depth) > refuses with the route's declared set (never a hard-coded JSON text) and does not call the parser 1ms
+   ✓ willParseBody mirrors Fastify's dispatch (lib/handleRequest.js) > never for GET/HEAD/TRACE, whatever the headers 0ms
+   ✓ willParseBody mirrors Fastify's dispatch (lib/handleRequest.js) > for body methods: a Content-Type, or else a Transfer-Encoding or a non-zero Content-Length 1ms
+   ✓ assertValidConsumes > accepts undefined and non-empty subsets of the supported media types 1ms
+   ✓ assertValidConsumes > refuses to start on an empty set, an unsupported type or a non-array 0ms
+   ✓ registerMediaTypeEnforcement > refuses an undeclared media type with 400 validation.content_type before any parser runs 26ms
+   ✓ registerMediaTypeEnforcement > the declared media types still work; the octet-stream bytes arrive untouched 7ms
+   ✓ registerMediaTypeEnforcement > bodiless requests are unchanged: GET with a Content-Type, POST with neither Content-Type nor body 4ms
+   ✓ registerMediaTypeEnforcement > removes Fastify's built-in text/plain parser and refuses an invalid consumes at registration 2ms
+   ✓ registerMediaTypeEnforcement > the parser guard refuses a media type the route does not declare (defence in depth, without the hook) 3ms
+   × one decision: every accepted spelling reaches the declared parser; every refused one is the 400 > application/octet-stream spellings: accepted, the octet parser runs, the bytes arrive untouched 11ms
+     → expected [ …(3) ] to deeply equal [ …(3) ]
+   × one decision: every accepted spelling reaches the declared parser; every refused one is the 400 > application/json spellings: accepted, the JSON parser runs, the body is parsed 5ms
+     → expected [ …(3) ] to deeply equal [ …(3) ]
+   × one decision: every accepted spelling reaches the declared parser; every refused one is the 400 > every refused spelling is the 400 naming the route's declared set; no parser runs 7ms
+     → expected [ '/api/bytes', …(2) ] to deeply equal [ '/api/bytes', …(2) ]
+   × one decision: every accepted spelling reaches the declared parser; every refused one is the 400 > an unmatched route answers 404 not_found for every body; no parser runs; the connection closes 5ms
+     → expected [ 'POST', 'octet-stream', 400, …(1) ] to deeply equal [ 'POST', 'octet-stream', 404, …(1) ]
+   × one decision: every accepted spelling reaches the declared parser; every refused one is the 400 > FST_ERR_CTP_INVALID_MEDIA_TYPE (no parser for the route) names the declared set, not a hard-coded JSON text 4ms
+     → expected [ 400, [ { pointer: '', …(2) } ] ] to deeply equal [ 400, [ { pointer: '', …(2) } ] ]
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 48 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/framework-errors.test.ts > frameworkProblem > falls back to the generic error mapping for any other code, never a plain body
+AssertionError: expected [ { pointer: '', …(2) } ] to deeply equal [ { pointer: '', …(2) } ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    {[22m
+[2m      "code": "validation.content_type",[22m
+[32m-     "message": "Send the request body as application/octet-stream.",[39m
+[31m+     "message": "Send the request body as application/json.",[39m
+[2m      "pointer": "",[22m
+[2m    },[22m
+[2m  ][22m
+
+ ❯ apps/api/src/modules/platform/framework-errors.test.ts:44:105
+     42|     // F-DG2-351: the detail names the route's declared set, never a h…
+     43|     const octetRoute = { routeOptions: { config: { consumes: ["applica…
+     44|     expect(frameworkProblem(err("FST_ERR_CTP_INVALID_MEDIA_TYPE", 415)…
+       |                                                                                                         ^
+     45|       { pointer: "", code: "validation.content_type", message: "Send t…
+     46|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/48]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > mediaTypeEssence > is the lower-cased type/subtype without parameters; '' when absent, multi-valued or malformed
+AssertionError: expected 'application/octet-stream' to be '' // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[31m+ application/octet-stream[39m
+
+ ❯ apps/api/src/modules/platform/media-types.test.ts:26:74
+     24|     expect(mediaTypeEssence("")).toBe("");
+     25|     // T-DG2-BE15: a header array (two Content-Type values) is ambiguo…
+     26|     expect(mediaTypeEssence(["application/octet-stream", "text/plain"]…
+       |                                                                          ^
+     27|     expect(mediaTypeEssence("application/json foo")).toBe("");
+     28|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/48]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > parses "application/json"
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > parses "APPLICATION/JSON"
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > parses "Application/Json; Charset=UTF-8"
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > parses "application/json;charset=utf-8"
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > parses "application/json ; charset=utf-8"
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > parses "application/json\t; charset=utf-8"
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > parses "application/json;\tcharset=utf-8"
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > parses " \tapplication/json\t "
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > parses "application/json; charset=\"utf-8\""
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > parses "application/octet-stream\t; x=1"
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > parses "application/octet-stream;"
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > parses "application/octet-stream ;; x=1 ;"
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > parses "a/b; q=\"x\\\"y; z\""
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > parses "*/*"
+TypeError: (0 , parseContentType) is not a function
+ ❯ apps/api/src/modules/platform/media-types.test.ts:62:20
+     60|   ];
+     61|   it.each(ok)("parses %j", (header, essence, parameters, canonical) =>…
+     62|     const parsed = parseContentType(header);
+       |                    ^
+     63|     expect(parsed).toEqual({ essence, parameters });
+     64|     expect(canonicalContentType(parsed!)).toBe(canonical);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/48]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > refuses absent
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > refuses empty
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > refuses only whitespace
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > refuses header array (duplicate Content-Type)
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > refuses no subtype
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > refuses empty subtype
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > refuses empty type
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > refuses space inside type/subtype
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > refuses space before slash
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > refuses text after subtype
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > refuses list
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > refuses parameter without =
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > refuses empty parameter name
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > refuses empty parameter value
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > refuses garbage parameters
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > refuses space around =
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > refuses unterminated quoted-string
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > refuses text after quoted-string
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > refuses control character
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > refuses CR LF
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parseContentType (RFC 9110 §8.3.1) > refuses non-tchar in subtype
+TypeError: (0 , parseContentType) is not a function
+ ❯ apps/api/src/modules/platform/media-types.test.ts:93:12
+     91|   ];
+     92|   it.each(malformed)("refuses %s", (_name, header) => {
+     93|     expect(parseContentType(header)).toBeNull();
+       |            ^
+     94|   });
+     95| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/48]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parametersAcceptable > application/json: any charset must be UTF-8 (RFC 8259 §8.1); other parameters are ignored
+TypeError: (0 , parseContentType) is not a function
+ ❯ p apps/api/src/modules/platform/media-types.test.ts:98:49
+     96| 
+     97| describe("parametersAcceptable", () => {
+     98|   const p = (h: string) => parametersAcceptable(parseContentType(h)!);
+       |                                                 ^
+     99|   it("application/json: any charset must be UTF-8 (RFC 8259 §8.1); oth…
+    100|     expect(p("application/json")).toBe(true);
+ ❯ apps/api/src/modules/platform/media-types.test.ts:100:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/48]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > parametersAcceptable > application/octet-stream: parameters never change the stored bytes, so any well-formed one is accepted
+TypeError: (0 , parseContentType) is not a function
+ ❯ p apps/api/src/modules/platform/media-types.test.ts:98:49
+     96| 
+     97| describe("parametersAcceptable", () => {
+     98|   const p = (h: string) => parametersAcceptable(parseContentType(h)!);
+       |                                                 ^
+     99|   it("application/json: any charset must be UTF-8 (RFC 8259 §8.1); oth…
+    100|     expect(p("application/json")).toBe(true);
+ ❯ apps/api/src/modules/platform/media-types.test.ts:110:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/48]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > decideMediaType: one decision for every request > an unmatched route with a body is never refused, whatever its media type (F-DG2-350)
+TypeError: (0 , decideMediaType) is not a function
+ ❯ apps/api/src/modules/platform/media-types.test.ts:123:14
+    121|   it("an unmatched route with a body is never refused, whatever its me…
+    122|     for (const ct of ["application/octet-stream", "application/json", …
+    123|       expect(decideMediaType(r("POST", { "content-type": ct, "content-…
+       |              ^
+    124|         kind: "unmatched-route",
+    125|       });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/48]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > decideMediaType: one decision for every request > accepts iff the essence is declared, and returns the canonical header
+TypeError: (0 , decideMediaType) is not a function
+ ❯ apps/api/src/modules/platform/media-types.test.ts:130:12
+    128|   });
+    129|   it("accepts iff the essence is declared, and returns the canonical h…
+    130|     expect(decideMediaType(r("POST", { "content-type": "Application/JS…
+       |            ^
+    131|       kind: "accept",
+    132|       contentType: "application/json; charset=utf-8",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/48]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > decideMediaType: one decision for every request > T-DG2-BE15B: two Content-Type field lines are refused on a matched route (Node keeps only the first)
+TypeError: (0 , decideMediaType) is not a function
+ ❯ apps/api/src/modules/platform/media-types.test.ts:153:12
+    151|     const one = ["Host", "x", "Content-Type", "application/json", "Con…
+    152|     const two = ["Host", "x", "Content-Type", "application/json", "con…
+    153|     expect(decideMediaType(withRaw(one)).kind).toBe("accept");
+       |            ^
+    154|     const refused = decideMediaType(withRaw(two));
+    155|     expect(refused.kind === "refuse" && refused.problem.toBody("r").de…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/48]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > contentTypeFieldLines > counts Content-Type lines case-insensitively in rawHeaders (names at even indexes only)
+TypeError: (0 , contentTypeFieldLines) is not a function
+ ❯ apps/api/src/modules/platform/media-types.test.ts:165:12
+    163| describe("contentTypeFieldLines", () => {
+    164|   it("counts Content-Type lines case-insensitively in rawHeaders (name…
+    165|     expect(contentTypeFieldLines(undefined)).toBe(0);
+       |            ^
+    166|     expect(contentTypeFieldLines([])).toBe(0);
+    167|     expect(contentTypeFieldLines(["X-Note", "content-type", "Content-T…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/48]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > one decision: every accepted spelling reaches the declared parser; every refused one is the 400 > application/octet-stream spellings: accepted, the octet parser runs, the bytes arrive untouched
+AssertionError: expected [ …(3) ] to deeply equal [ …(3) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "application/octet-stream	; x=1",[22m
+[32m-   200,[39m
+[32m-   "{\"hex\":\"ffc30a\"}",[39m
+[31m+   400,[39m
+[31m+   "{\"type\":\"urn:mth:problem:validation\",\"title\":\"Validation failed\",\"status\":400,\"detail\":\"Send the request body as application/json.\",\"code\":\"validation\",\"requestId\":\"req-5\",\"errors\":[{\"pointer\":\"\",\"code\":\"validation.content_type\",\"message\":\"Send the request body as application/json.\"}]}",[39m
+[2m  ][22m
+
+ ❯ apps/api/src/modules/platform/media-types.test.ts:387:46
+    385|         payload: BYTES,
+    386|       });
+    387|       expect([ct, res.statusCode, res.body]).toEqual([ct, 200, '{"hex"…
+       |                                              ^
+    388|       expect(seen).toEqual(["octet-parser"]);
+    389|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/48]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > one decision: every accepted spelling reaches the declared parser; every refused one is the 400 > application/json spellings: accepted, the JSON parser runs, the body is parsed
+AssertionError: expected [ …(3) ] to deeply equal [ …(3) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "application/json	; charset=utf-8",[22m
+[32m-   200,[39m
+[32m-   "{\"body\":{\"a\":1}}",[39m
+[31m+   400,[39m
+[31m+   "{\"type\":\"urn:mth:problem:validation\",\"title\":\"Validation failed\",\"status\":400,\"detail\":\"Send the request body as application/json.\",\"code\":\"validation\",\"requestId\":\"req-4\",\"errors\":[{\"pointer\":\"\",\"code\":\"validation.content_type\",\"message\":\"Send the request body as application/json.\"}]}",[39m
+[2m  ][22m
+
+ ❯ apps/api/src/modules/platform/media-types.test.ts:403:46
+    401|         payload: '{"a":1}',
+    402|       });
+    403|       expect([ct, res.statusCode, res.body]).toEqual([ct, 200, '{"body…
+       |                                              ^
+    404|       expect(seen).toEqual(["json-parser"]);
+    405|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/48]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > one decision: every accepted spelling reaches the declared parser; every refused one is the 400 > every refused spelling is the 400 naming the route's declared set; no parser runs
+AssertionError: expected [ '/api/bytes', …(2) ] to deeply equal [ '/api/bytes', …(2) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "/api/bytes",[22m
+[2m    "application/octet-stream;;;=",[22m
+[32m-   400,[39m
+[31m+   200,[39m
+[2m  ][22m
+
+ ❯ apps/api/src/modules/platform/media-types.test.ts:421:41
+    419|     for (const [url, ct, declared] of cases) {
+    420|       const res = await a.inject({ method: "POST", url, headers: { "co…
+    421|       expect([url, ct, res.statusCode]).toEqual([url, ct, 400]);
+       |                                         ^
+    422|       expect(res.json().errors).toEqual([
+    423|         { pointer: "", code: "validation.content_type", message: `Send…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/48]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > one decision: every accepted spelling reaches the declared parser; every refused one is the 400 > an unmatched route answers 404 not_found for every body; no parser runs; the connection closes
+AssertionError: expected [ 'POST', 'octet-stream', 400, …(1) ] to deeply equal [ 'POST', 'octet-stream', 404, …(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "POST",[22m
+[2m    "octet-stream",[22m
+[32m-   404,[39m
+[32m-   "not_found",[39m
+[31m+   400,[39m
+[31m+   "validation",[39m
+[2m  ][22m
+
+ ❯ apps/api/src/modules/platform/media-types.test.ts:445:65
+    443|       for (const [name, headers, payload] of bodies) {
+    444|         const res = await a.inject({ method, url: "/api/nope", headers…
+    445|         expect([method, name, res.statusCode, res.json().code]).toEqua…
+       |                                                                 ^
+    446|         expect(res.headers["connection"]).toBe("close");
+    447|       }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/48]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/media-types.test.ts > one decision: every accepted spelling reaches the declared parser; every refused one is the 400 > FST_ERR_CTP_INVALID_MEDIA_TYPE (no parser for the route) names the declared set, not a hard-coded JSON text
+AssertionError: expected [ 400, [ { pointer: '', …(2) } ] ] to deeply equal [ 400, [ { pointer: '', …(2) } ] ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    400,[22m
+[2m    [[22m
+[2m      {[22m
+[2m        "code": "validation.content_type",[22m
+[32m-       "message": "Send the request body as application/octet-stream.",[39m
+[31m+       "message": "Send the request body as application/json.",[39m
+[2m        "pointer": "",[22m
+[2m      },[22m
+[2m    ],[22m
+[2m  ][22m
+
+ ❯ apps/api/src/modules/platform/media-types.test.ts:469:49
+    467|       payload: BYTES,
+    468|     });
+    469|     expect([res.statusCode, res.json().errors]).toEqual([
+       |                                                 ^
+    470|       400,
+    471|       [{ pointer: "", code: "validation.content_type", message: "Send …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/48]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  48 failed | 15 passed (63)
+   Start at  22:21:13
+   Duration  938ms (transform 342ms, setup 0ms, collect 1.16s, tests 132ms, environment 0ms, prepare 158ms)
+
+# unit exit: 1
+## integration
+port-policy: PostgreSQL listening on port 24374 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /var/tmp/mth-run.vLVz1A/claude-0/base
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mux8thki_5cec3bec (server_encoding UTF8); applied 19 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/media-types.test.ts (21 tests | 11 failed) 5867ms
+   ✓ uploadEvidenceContent accepts only application/octet-stream (F-DG2-320) > every undeclared media type, in each framing: 400 validation.content_type; nothing stored, no audit row 93ms
+   ✓ uploadEvidenceContent accepts only application/octet-stream (F-DG2-320) > the refusal precedes authentication, like any body the framework cannot parse (no session: 400, not 401) 15ms
+   ✓ uploadEvidenceContent accepts only application/octet-stream (F-DG2-320) > a valid application/octet-stream upload stores exactly the bytes sent, in both framings (sha256 of the raw input) 108ms
+   ✓ uploadEvidenceContent accepts only application/octet-stream (F-DG2-320) > the size limit still applies to octet-stream uploads (unchanged): the declared 413 evidence.too_large 52ms
+   ✓ JSON operations accept only application/json (F-DG2-320) > createEvidence sent text/plain or application/octet-stream, in each framing: 400; nothing created 29ms
+   ✓ JSON operations accept only application/json (F-DG2-320) > an If-Match update (PATCH) sent application/octet-stream: 400; the record is unchanged 18ms
+   ✓ JSON operations accept only application/json (F-DG2-320) > a valid JSON request still works (application/json, with and without a charset) 17ms
+   ✓ bodiless requests behave as before (F-DG2-320 sweep) > GET with a Content-Type (and even a body) is never refused: the body is not read 18ms
+   ✓ bodiless requests behave as before (F-DG2-320 sweep) > a bodiless POST with no Content-Type and no body reaches its handler; an empty JSON body keeps its 400 46ms
+   ✓ bodiless requests behave as before (F-DG2-320 sweep) > an unknown route keeps its 404, whatever the media type 1ms
+   × an unmatched route is 404 not_found whatever its body (F-DG2-350) > S10 (code-security round 9) regression: POST/PUT/DELETE x text/plain, JSON, octet-stream x with/without a session 13ms
+     → expected [ 'POST', …(5) ] to deeply equal [ 'POST', …(5) ]
+   × an unmatched route is 404 not_found whatever its body (F-DG2-350) > every method x body class x session: 404 not_found (problem+json), the connection closes, nothing parsed or logged as an error 2ms
+     → expected [ 'POST', …(5) ] to deeply equal [ 'POST', …(5) ]
+   × an unmatched route is 404 not_found whatever its body (F-DG2-350) > on a real keep-alive socket the unread body never becomes the next request: the server closes after the 404 12ms
+     → expected [ 'application/octet-stream', …(2) ] to deeply equal [ 'application/octet-stream', …(2) ]
+   × the media-type check and the parser lookup agree for every spelling (F-DG2-351) > S11 (code-security round 9) regression: the tab-before-';' upload is accepted and stored byte-exact 9ms
+     → {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"Send the request body as application/json.","code":"validation","requestId":"01a1134e-980c-75c9-802a-230e567090e1","errors":[{"pointer":"","code":"validation.content_type","message":"Send the request body as application/json."}]}: expected 400 to be 200 // Object.is equality
+   × the media-type check and the parser lookup agree for every spelling (F-DG2-351) > S11: every refusal on uploadEvidenceContent names application/octet-stream (never a hard-coded JSON text) 11ms
+     → expected { …(7) } to deeply equal { …(7) }
+   × the media-type check and the parser lookup agree for every spelling (F-DG2-351) > every OWS/whitespace spelling of octet-stream reaches the octet parser: stored byte-exact (sha256), downloadable 10ms
+     → {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"Send the request body as application/json.","code":"validation","requestId":"01a1134e-9821-73f4-9a24-2f3249b9c98d","errors":[{"pointer":"","code":"validation.content_type","message":"Send the request body as application/json."}]}: expected [ …(3) ] to deeply equal [ …(3) ]
+   × the media-type check and the parser lookup agree for every spelling (F-DG2-351) > every OWS/whitespace spelling of application/json reaches the JSON parser: accepted and stored verbatim 1ms
+     → {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"Send the request body as application/json.","code":"validation","requestId":"01a1134e-9822-705b-bd26-8d9b28803741","errors":[{"pointer":"","code":"validation.content_type","message":"Send the request body as application/json."}]}: expected [ …(3) ] to deeply equal [ …(3) ]
+   × the media-type check and the parser lookup agree for every spelling (F-DG2-351) > every refusal on a JSON operation names application/json: malformed, other charsets, octet-stream spellings 10ms
+     → {"id":"01a1134e-982a-76e7-b7df-47b236a20c4a","organizationId":"01a1134e-9566-756e-9085-22e017242afe","transformationId":"01a1134e-95ee-7768-abf7-fcc9d71f4acd","kind":"note","title":"Synthetic refused","description":null,"evidenceType":"document","source":null,"ownerUserId":"01a1134e-959e-74fe-8cff-ff512fbdfb59","observationStart":null,"observationEnd":null,"noteBody":"x","url":null,"fileName":null,"currentContentId":null,"reviewStatus":"unverified","accessibilityStatus":"unchecked","reviewedContentId":null,"reviewedBy":null,"reviewedAt":null,"reviewNote":null,"status":"active","archivedAt":null,"archivedBy":null,"archiveReason":null,"version":1,"createdAt":"2026-10-06T22:21:20.295Z","createdBy":"01a1134e-959e-74fe-8cff-ff512fbdfb59","updatedAt":"2026-10-06T22:21:20.295Z","updatedBy":"01a1134e-959e-74fe-8cff-ff512fbdfb59"}: expected 201 to be 400 // Object.is equality
+   × on a real socket (T-DG2-BE15B) > S11 over llhttp: an HTAB before ';' reaches the octet parser (stored byte-exact) and the JSON parser 12ms
+     → {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"Send the request body as application/json.","code":"validation","requestId":"01a1134e-9837-73aa-9438-c3e7463698b3","errors":[{"pointer":"","code":"validation.content_type","message":"Send the request body as application/json."}]}: expected [ '400' ] to deeply equal [ '200' ]
+   × on a real socket (T-DG2-BE15B) > two Content-Type lines are refused on a matched route (declared set named) and a 404 on an unmatched one 11ms
+     → expected [ [ 'application/json', …(1) ], …(3) ] to deeply equal [ [ 'application/json', …(1) ], …(3) ]
+   × on a real socket (T-DG2-BE15B) > after an unmatched 404 closes its connection, the client's next keep-alive connection is served normally 5009ms
+     → expected 'http/1.1 404 not found\r\ncontent-sec…' to contain 'connection: close'
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/media-types.test.ts > an unmatched route is 404 not_found whatever its body (F-DG2-350) > S10 (code-security round 9) regression: POST/PUT/DELETE x text/plain, JSON, octet-stream x with/without a session
+AssertionError: expected [ 'POST', …(5) ] to deeply equal [ 'POST', …(5) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "POST",[22m
+[2m    "/api/v1/does-not-exist",[22m
+[2m    "application/octet-stream",[22m
+[2m    false,[22m
+[32m-   404,[39m
+[32m-   "not_found",[39m
+[31m+   400,[39m
+[31m+   "validation",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/media-types.test.ts:450:76
+    448|             payload: ct === "application/json" ? Buffer.from("{}") : B…
+    449|           });
+    450|           expect([method, url, ct, auth, res.statusCode, res.json().co…
+       |                                                                            ^
+    451|             method,
+    452|             url,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  |integration| apps/api/test/integration/media-types.test.ts > an unmatched route is 404 not_found whatever its body (F-DG2-350) > every method x body class x session: 404 not_found (problem+json), the connection closes, nothing parsed or logged as an error
+AssertionError: expected [ 'POST', …(5) ] to deeply equal [ 'POST', …(5) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "POST",[22m
+[2m    "/api/v1/does-not-exist",[22m
+[2m    "octet-stream",[22m
+[2m    false,[22m
+[32m-   404,[39m
+[32m-   "not_found",[39m
+[31m+   400,[39m
+[31m+   "validation",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/media-types.test.ts:481:63
+    479|             });
+    480|             const key = [method, url, b.name, auth];
+    481|             expect([...key, raw.statusCode, raw.json().code]).toEqual(…
+       |                                                               ^
+    482|             expect(String(raw.headers["content-type"])).toMatch(/^appl…
+    483|             expect(raw.headers["connection"]).toBe("close");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  |integration| apps/api/test/integration/media-types.test.ts > an unmatched route is 404 not_found whatever its body (F-DG2-350) > on a real keep-alive socket the unread body never becomes the next request: the server closes after the 404
+AssertionError: expected [ 'application/octet-stream', …(2) ] to deeply equal [ 'application/octet-stream', …(2) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "application/octet-stream",[22m
+[2m    "content-length",[22m
+[2m    [[22m
+[32m-     "404",[39m
+[31m+     "400",[39m
+[2m    ],[22m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/media-types.test.ts:507:39
+    505|       const text = await rawSocket(port, Buffer.concat([Buffer.from(he…
+    506|       const statuses = [...text.matchAll(/HTTP\/1\.1 (\d{3})/g)].map((…
+    507|       expect([ct, framing, statuses]).toEqual([ct, framing, ["404"]]);
+       |                                       ^
+    508|       expect(text.toLowerCase()).toContain("connection: close");
+    509|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  |integration| apps/api/test/integration/media-types.test.ts > the media-type check and the parser lookup agree for every spelling (F-DG2-351) > S11 (code-security round 9) regression: the tab-before-';' upload is accepted and stored byte-exact
+AssertionError: {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"Send the request body as application/json.","code":"validation","requestId":"01a1134e-980c-75c9-802a-230e567090e1","errors":[{"pointer":"","code":"validation.content_type","message":"Send the request body as application/json."}]}: expected 400 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 400[39m
+
+ ❯ apps/api/test/integration/media-types.test.ts:573:52
+    571|         },
+    572|       );
+    573|       expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                    ^
+    574|       const rows = await contentRows(item.id);
+    575|       expect(rows.map((r) => r.sha256)).toEqual([sha256(ILL_FORMED)]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  |integration| apps/api/test/integration/media-types.test.ts > the media-type check and the parser lookup agree for every spelling (F-DG2-351) > S11: every refusal on uploadEvidenceContent names application/octet-stream (never a hard-coded JSON text)
+AssertionError: expected { …(7) } to deeply equal { …(7) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -1,12 +1,12 @@[39m
+[2m  {[22m
+[2m    "code": "validation",[22m
+[32m-   "detail": "Send the request body as application/octet-stream.",[39m
+[31m+   "detail": "Send the request body as application/json.",[39m
+[2m    "errors": [[22m
+[2m      {[22m
+[2m        "code": "validation.content_type",[22m
+[32m-       "message": "Send the request body as application/octet-stream.",[39m
+[31m+       "message": "Send the request body as application/json.",[39m
+[2m        "pointer": "",[22m
+[2m      },[22m
+[2m    ],[22m
+[2m    "requestId": "01a1134e-9816-757c-9570-8a1e6b79478d",[22m
+[2m    "status": 400,[22m
+
+ ❯ expectUndeclaredMediaType apps/api/test/integration/media-types.test.ts:107:20
+    105|   expect(String(res.headers["content-type"])).toMatch(/^application\/p…
+    106|   const requestId = String(res.headers["x-request-id"]);
+    107|   expect(res.body).toEqual({
+       |                    ^
+    108|     type: "urn:mth:problem:validation",
+    109|     title: "Validation failed",
+ ❯ apps/api/test/integration/media-types.test.ts:594:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  |integration| apps/api/test/integration/media-types.test.ts > the media-type check and the parser lookup agree for every spelling (F-DG2-351) > every OWS/whitespace spelling of octet-stream reaches the octet parser: stored byte-exact (sha256), downloadable
+AssertionError: {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"Send the request body as application/json.","code":"validation","requestId":"01a1134e-9821-73f4-9a24-2f3249b9c98d","errors":[{"pointer":"","code":"validation.content_type","message":"Send the request body as application/json."}]}: expected [ …(3) ] to deeply equal [ …(3) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "application/octet-stream	; x=1",[22m
+[2m    "content-length",[22m
+[32m-   200,[39m
+[31m+   400,[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/media-types.test.ts:608:69
+    606|           "x-file-name": "ows.bin",
+    607|         });
+    608|         expect([ct, framing, res.status], JSON.stringify(res.body)).to…
+       |                                                                     ^
+    609|         const rows = await contentRows(item.id);
+    610|         expect([ct, rows.map((r) => [r.sha256, Number(r.size_bytes)])]…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  |integration| apps/api/test/integration/media-types.test.ts > the media-type check and the parser lookup agree for every spelling (F-DG2-351) > every OWS/whitespace spelling of application/json reaches the JSON parser: accepted and stored verbatim
+AssertionError: {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"Send the request body as application/json.","code":"validation","requestId":"01a1134e-9822-705b-bd26-8d9b28803741","errors":[{"pointer":"","code":"validation.content_type","message":"Send the request body as application/json."}]}: expected [ …(3) ] to deeply equal [ …(3) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "application/json	; charset=utf-8",[22m
+[2m    "content-length",[22m
+[32m-   201,[39m
+[31m+   400,[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/media-types.test.ts:638:69
+    636|         );
+    637|         const res = await rawCall("POST", `${T}/evidence`, ct, body, f…
+    638|         expect([ct, framing, res.status], JSON.stringify(res.body)).to…
+       |                                                                     ^
+    639|         const row = await api.db
+    640|           .selectFrom("evidence")
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  |integration| apps/api/test/integration/media-types.test.ts > the media-type check and the parser lookup agree for every spelling (F-DG2-351) > every refusal on a JSON operation names application/json: malformed, other charsets, octet-stream spellings
+AssertionError: {"id":"01a1134e-982a-76e7-b7df-47b236a20c4a","organizationId":"01a1134e-9566-756e-9085-22e017242afe","transformationId":"01a1134e-95ee-7768-abf7-fcc9d71f4acd","kind":"note","title":"Synthetic refused","description":null,"evidenceType":"document","source":null,"ownerUserId":"01a1134e-959e-74fe-8cff-ff512fbdfb59","observationStart":null,"observationEnd":null,"noteBody":"x","url":null,"fileName":null,"currentContentId":null,"reviewStatus":"unverified","accessibilityStatus":"unchecked","reviewedContentId":null,"reviewedBy":null,"reviewedAt":null,"reviewNote":null,"status":"active","archivedAt":null,"archivedBy":null,"archiveReason":null,"version":1,"createdAt":"2026-10-06T22:21:20.295Z","createdBy":"01a1134e-959e-74fe-8cff-ff512fbdfb59","updatedAt":"2026-10-06T22:21:20.295Z","updatedBy":"01a1134e-959e-74fe-8cff-ff512fbdfb59"}: expected 201 to be 400 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 400[39m
+[31m+ 201[39m
+
+ ❯ expectUndeclaredMediaType apps/api/test/integration/media-types.test.ts:104:48
+    102| /** 400 problem+json validation.content_type; no audit row and no erro…
+    103| async function expectUndeclaredMediaType(res: RawRes, detail: string) {
+    104|   expect(res.status, JSON.stringify(res.body)).toBe(400);
+       |                                                ^
+    105|   expect(String(res.headers["content-type"])).toMatch(/^application\/p…
+    106|   const requestId = String(res.headers["x-request-id"]);
+ ❯ apps/api/test/integration/media-types.test.ts:662:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  |integration| apps/api/test/integration/media-types.test.ts > on a real socket (T-DG2-BE15B) > S11 over llhttp: an HTAB before ';' reaches the octet parser (stored byte-exact) and the JSON parser
+AssertionError: {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"Send the request body as application/json.","code":"validation","requestId":"01a1134e-9837-73aa-9438-c3e7463698b3","errors":[{"pointer":"","code":"validation.content_type","message":"Send the request body as application/json."}]}: expected [ '400' ] to deeply equal [ '200' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "200",[39m
+[31m+   "400",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/media-types.test.ts:714:50
+    712|       ),
+    713|     );
+    714|     expect(up.statuses, JSON.stringify(up.body)).toEqual(["200"]);
+       |                                                  ^
+    715|     expect((await contentRows(item.id)).map((r) => r.sha256)).toEqual(…
+    716|     const title = "Synthetic S11 real socket note ملاحظة";
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  |integration| apps/api/test/integration/media-types.test.ts > on a real socket (T-DG2-BE15B) > two Content-Type lines are refused on a matched route (declared set named) and a 404 on an unmatched one
+AssertionError: expected [ [ 'application/json', …(1) ], …(3) ] to deeply equal [ [ 'application/json', …(1) ], …(3) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -2,10 +2,10 @@[39m
+[2m    [[22m
+[2m      "application/json",[22m
+[2m      "application/json",[22m
+[2m    ],[22m
+[2m    [[22m
+[32m-     "400",[39m
+[31m+     "201",[39m
+[2m    ],[22m
+[32m-   "validation",[39m
+[32m-   "Send the request body as application/json.",[39m
+[31m+   undefined,[39m
+[31m+   undefined,[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/media-types.test.ts:745:68
+    743|     ]) {
+    744|       const res = parseRaw(await rawSocket(port, rawRequest("POST", `$…
+    745|       expect([pair, res.statuses, res.body.code, res.body.detail]).toE…
+       |                                                                    ^
+    746|     }
+    747|     const after = await api.db
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+ FAIL  |integration| apps/api/test/integration/media-types.test.ts > on a real socket (T-DG2-BE15B) > after an unmatched 404 closes its connection, the client's next keep-alive connection is served normally
+AssertionError: expected 'http/1.1 404 not found\r\ncontent-sec…' to contain 'connection: close'
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- connection: close[39m
+[31m+ http/1.1 404 not found[39m
+[31m+ content-security-policy: default-src 'self';script-src 'self';style-src 'self';img-src 'self' data:;font-src 'self';connect-src 'self';object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'none'[39m
+[31m+ cross-origin-opener-policy: same-origin[39m
+[31m+ cross-origin-resource-policy: same-origin[39m
+[31m+ origin-agent-cluster: ?1[39m
+[31m+ referrer-policy: no-referrer[39m
+[31m+ strict-transport-security: max-age=31536000; includesubdomains[39m
+[31m+ x-content-type-options: nosniff[39m
+[31m+ x-dns-prefetch-control: off[39m
+[31m+ x-download-options: noopen[39m
+[31m+ x-frame-options: sameorigin[39m
+[31m+ x-permitted-cross-domain-policies: none[39m
+[31m+ x-xss-protection: 0[39m
+[31m+ x-request-id: 01a1134e-9845-7229-b19f-ac5737a3336d[39m
+[31m+ content-type: application/problem+json; charset=utf-8[39m
+[31m+ content-length: 139[39m
+[31m+ date: tue, 06 oct 2026 22:21:20 gmt[39m
+[31m+ connection: keep-alive[39m
+[31m+ keep-alive: timeout=72[39m
+[31m+ [39m
+[31m+ {"type":"urn:mth:problem:not-found","title":"not found","status":404,"code":"not_found","requestid":"01a1134e-9845-7229-b19f-ac5737a3336d"}[39m
+
+ ❯ apps/api/test/integration/media-types.test.ts:792:34
+    790|     );
+    791|     expect(parseRaw(closed).statuses).toEqual(["404"]);
+    792|     expect(closed.toLowerCase()).toContain("connection: close");
+       |                                  ^
+    793|     // Two pipelined requests on one fresh keep-alive connection: both…
+    794|     const next = await rawSocket(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/11]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  11 failed | 10 passed (21)
+   Start at  22:21:16
+   Duration  8.71s (transform 807ms, setup 0ms, collect 1.87s, tests 5.87s, environment 0ms, prepare 67ms)
+
+# integration exit: 1

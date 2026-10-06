@@ -1,0 +1,150 @@
+// TEMPORARY T-DG2-BE15B sweep (never part of the candidate; its source is kept as sweep-source.log). SYNTHETIC data.
+// Real sockets (llhttp), so Node's own header handling (OWS trimming, duplicate Content-Type) applies.
+// Prints one line per case: SWEEP|<route>|<class>|<framing>|<session>|<status> <code>[: <detail>].
+import { connect } from "node:net";
+import { afterAll, beforeAll, it } from "vitest";
+import { APP_ORIGIN, seedWorld, startApi, call, type TestApi } from "../support/harness.ts";
+import { setupP2World, type P2World } from "../support/p2-fixtures.ts";
+
+let api: TestApi;
+let p: P2World;
+let T: string;
+let port: number;
+beforeAll(async () => {
+  api = await startApi({});
+  p = await setupP2World(api, await seedWorld(api.db));
+  T = `/api/v1/transformations/${p.transformationId}`;
+  for (let i = 0; ; i++) {
+    port = 27000 + Math.floor(Math.random() * 5000);
+    try {
+      await api.app.listen({ port, host: "127.0.0.1" });
+      break;
+    } catch (e) {
+      if (i > 20) throw e;
+    }
+  }
+});
+afterAll(() => api.close());
+
+function send(request: Buffer): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const s = connect(port, "127.0.0.1");
+    const chunks: Buffer[] = [];
+    const t = setTimeout(() => s.destroy(), 1500);
+    s.on("data", (c: Buffer) => chunks.push(c));
+    s.on("error", reject);
+    s.on("close", () => {
+      clearTimeout(t);
+      resolve(Buffer.concat(chunks).toString("latin1"));
+    });
+    s.write(request);
+  });
+}
+
+const BYTES = Buffer.from([0x53, 0x79, 0x6e, 0xff, 0xc3, 0x0a, 0xed, 0xa0, 0x80, 0x41]);
+// $T = the route's declared type, $U = upper-cased; null = no Content-Type line.
+const CLASSES: Array<[string, string[] | null]> = [
+  ["exact", ["$T"]],
+  ["upper case", ["$U"]],
+  ["charset=utf-8", ["$T; charset=utf-8"]],
+  ['charset="UTF-8" (quoted)', ['$T; charset="UTF-8"']],
+  ["charset=iso-8859-1", ["$T; charset=iso-8859-1"]],
+  ['quoted param with ; and SP', ['$T; x="a; b"']],
+  ["SP before ;", ["$T ; x=1"]],
+  ["HTAB before ;", ["$T\t; x=1"]],
+  ["HTAB after ;", ["$T;\tx=1"]],
+  ["leading/trailing SP+HTAB", [" \t$T\t "]],
+  ["trailing ;", ["$T;"]],
+  ["param without =", ["$T; x"]],
+  ["garbage ;;;=", ["$T;;;="]],
+  ["text after subtype", ["$T foo"]],
+  ["list", ["$T, text/plain"]],
+  ["empty value", [""]],
+  ["*/*", ["*/*"]],
+  ["text/plain", ["text/plain"]],
+  ["other declared type", ["$O"]],
+  ["duplicate (same)", ["$T", "$T"]],
+  ["duplicate (other first)", ["text/plain", "$T"]],
+  ["duplicate (declared first)", ["$T", "text/plain"]],
+  ["no Content-Type", null],
+];
+const FRAMINGS = ["CL", "chunked"] as const;
+
+function request(
+  method: string,
+  url: string,
+  cts: string[] | null,
+  body: Buffer,
+  framing: (typeof FRAMINGS)[number],
+  extra: string[],
+): Buffer {
+  const head = [`${method} ${url} HTTP/1.1`, "Host: x", "Connection: keep-alive", ...extra];
+  for (const ct of cts ?? []) head.push(`Content-Type: ${ct}`);
+  head.push(framing === "CL" ? `Content-Length: ${body.length}` : "Transfer-Encoding: chunked");
+  const payload =
+    framing === "CL"
+      ? body
+      : Buffer.concat([Buffer.from(`${body.length.toString(16)}\r\n`), body, Buffer.from("\r\n0\r\n\r\n")]);
+  return Buffer.concat([Buffer.from(head.join("\r\n") + "\r\n\r\n", "latin1"), payload]);
+}
+
+function summarise(text: string): string {
+  const statuses = [...text.matchAll(/HTTP\/1\.1 (\d{3})/g)].map((m) => m[1]);
+  const rest = text.slice(text.indexOf("\r\n\r\n") + 4);
+  let tail = "";
+  try {
+    const b = JSON.parse(rest) as { errors?: Array<{ code: string; message: string }>; code?: string };
+    if (b.errors?.[0]) tail = ` ${b.errors[0].code}: ${b.errors[0].message}`;
+    else if (b.code) tail = ` ${b.code}`;
+  } catch {
+    /* not JSON (chunked body or none) */
+  }
+  const close = /\r\nconnection: close\r\n/i.test(text) ? " [close]" : "";
+  return `${statuses.join(",")}${tail}${close}`;
+}
+
+const auth = () => [`Origin: ${APP_ORIGIN}`, `Cookie: ${p.lead.session.cookie}`, `X-CSRF-Token: ${p.lead.session.csrf}`];
+const fill = (cts: string[] | null, t: string, o: string) =>
+  cts === null ? null : cts.map((c) => c.replaceAll("$T", t).replaceAll("$U", t.toUpperCase()).replaceAll("$O", o));
+
+it("sweep", { timeout: 900_000 }, async () => {
+  const out: string[] = [];
+  const OCT = "application/octet-stream";
+  const JSN = "application/json";
+  for (const [name, cts] of CLASSES)
+    for (const framing of FRAMINGS) {
+      // Matched: uploadEvidenceContent (declares octet-stream only); a fresh file evidence item per case.
+      const created = await call(api.app, "POST", `${T}/evidence`, {
+        session: p.lead.session,
+        body: { ownerUserId: p.lead.id, kind: "file", title: `Synthetic sweep ${name} ${framing}` },
+      });
+      const id = created.body.id as string;
+      const up = await send(
+        request("POST", `${T}/evidence/${id}/content`, fill(cts, OCT, JSN), BYTES, framing, [
+          ...auth(),
+          `If-Match: "${created.body.version}"`,
+          "X-File-Name: sweep.bin",
+        ]),
+      );
+      const rows = await api.db.selectFrom("evidence_content").select(["sha256"]).where("evidence_id", "=", id).execute();
+      out.push(`SWEEP|upload (octet-stream)|${name}|${framing}|session|${summarise(up)} rows=${rows.length}`);
+      // Matched: createEvidence (declares application/json only).
+      const note = Buffer.from(
+        JSON.stringify({ ownerUserId: p.lead.id, kind: "note", title: `Synthetic sweep ${name}`, noteBody: "x" }),
+      );
+      const js = await send(request("POST", `${T}/evidence`, fill(cts, JSN, OCT), note, framing, auth()));
+      out.push(`SWEEP|createEvidence (json)|${name}|${framing}|session|${summarise(js)}`);
+      // Unmatched: with and without a session; body = octet bytes for octet spellings, JSON otherwise.
+      for (const [label, t, body] of [
+        ["octet", OCT, BYTES],
+        ["json", JSN, Buffer.from('{"a":')],
+      ] as const)
+        for (const s of ["session", "none"] as const) {
+          const un = await send(
+            request("POST", "/api/v1/does-not-exist", fill(cts, t, t === OCT ? JSN : OCT), body, framing, s === "session" ? auth() : [`Origin: ${APP_ORIGIN}`]),
+          );
+          out.push(`SWEEP|unmatched POST (${label} body)|${name}|${framing}|${s}|${summarise(un)}`);
+        }
+    }
+  console.log(out.join("\n"));
+});

@@ -60,6 +60,7 @@ export {
   assertDeclaredMediaType,
   canonicalContentType,
   consumesOf,
+  contentTypeFieldLines,
   decideMediaType,
   DEFAULT_CONSUMES,
   JSON_MEDIA_TYPE,

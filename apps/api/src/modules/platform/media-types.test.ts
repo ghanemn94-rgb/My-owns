@@ -5,6 +5,7 @@ import { registerPlatformHooks } from "./hooks.ts";
 import {
   assertValidConsumes,
   canonicalContentType,
+  contentTypeFieldLines,
   decideMediaType,
   mediaTypeEssence,
   parametersAcceptable,
@@ -141,6 +142,49 @@ describe("decideMediaType: one decision for every request", () => {
       "Send the request body as application/octet-stream.",
     );
     expect(decideMediaType(r("POST", { "content-type": "application/json; charset=latin1" })).kind).toBe("refuse");
+  });
+  it("T-DG2-BE15B: two Content-Type field lines are refused on a matched route (Node keeps only the first)", () => {
+    const withRaw = (rawHeaders: string[], is404 = false) => ({
+      ...r("POST", { "content-type": "application/json", "content-length": "2" }, is404),
+      raw: { rawHeaders },
+    });
+    const one = ["Host", "x", "Content-Type", "application/json", "Content-Length", "2"];
+    const two = ["Host", "x", "Content-Type", "application/json", "content-type", "application/octet-stream"];
+    expect(decideMediaType(withRaw(one)).kind).toBe("accept");
+    const refused = decideMediaType(withRaw(two));
+    expect(refused.kind === "refuse" && refused.problem.toBody("r").detail).toBe(
+      "Send the request body as application/json.",
+    );
+    // An unmatched route is never refused, duplicates or not.
+    expect(decideMediaType(withRaw(two, true))).toEqual({ kind: "unmatched-route" });
+  });
+});
+
+describe("contentTypeFieldLines", () => {
+  it("counts Content-Type lines case-insensitively in rawHeaders (names at even indexes only)", () => {
+    expect(contentTypeFieldLines(undefined)).toBe(0);
+    expect(contentTypeFieldLines([])).toBe(0);
+    expect(contentTypeFieldLines(["X-Note", "content-type", "Content-Type", "a/b"])).toBe(1);
+    expect(contentTypeFieldLines(["CONTENT-TYPE", "a/b", "Content-type", "a/b", "content-type", ""])).toBe(3);
+  });
+});
+
+describe("restrictParserTo (defence in depth)", () => {
+  it("refuses with the route's declared set (never a hard-coded JSON text) and does not call the parser", () => {
+    let called = 0;
+    const parse = restrictParserTo<Buffer>("application/json", (_r, _b, done) => {
+      called++;
+      done(null, {});
+    });
+    const results: unknown[] = [];
+    const octetRoute = { routeOptions: { config: { consumes: ["application/octet-stream"] } } };
+    parse(octetRoute as never, Buffer.from("{}"), (err) => results.push(err));
+    expect(called).toBe(0);
+    expect((results[0] as { toBody: (id: string) => { detail: string } }).toBody("r").detail).toBe(
+      "Send the request body as application/octet-stream.",
+    );
+    parse({ routeOptions: { config: {} } } as never, Buffer.from("{}"), (err) => results.push(err));
+    expect([called, results[1]]).toEqual([1, null]);
   });
 });
 
