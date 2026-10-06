@@ -1,0 +1,183 @@
+# negative control: production code at HEAD 4e3c4462 (only the test-only ServerOptions.logStream added to server.ts; git diff --stat below), new tests from T-DG2-BE13
+ apps/api/src/server.ts           | 2 ++
+ apps/api/test/support/harness.ts | 5 ++++-
+ 2 files changed, 6 insertions(+), 1 deletion(-)
+# command: QA_PG_PORT=55471 tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/invalid-utf8.test.ts
+# node v24.21.0; LANG=<unset>
+port-policy: warning: PostgreSQL port 55471 is inside the ephemeral range 32768-60999 (a client socket in TIME_WAIT can hold it); will retry outside it on EADDRINUSE
+port-policy: PostgreSQL listening on port 55471 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/My-owns
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muwvwgm5_15864b64 (server_encoding UTF8); applied 19 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/invalid-utf8.test.ts (12 tests | 8 failed) 1096ms
+   × a JSON body with invalid UTF-8 is 400 validation.json, the same with Content-Length and chunked > charter create: 400 for every invalid sequence and framing; no charter, no audit row, no U+FFFD stored 98ms
+     → contract: createCharter does not declare status 500 (declared: 201, 400, 401, 403, 404, 409, 422); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a11203-878a-7219-a32a-ed4afcd2314f"}
+   × a JSON body with invalid UTF-8 is 400 validation.json, the same with Content-Length and chunked > charter update (PATCH, If-Match): version, value and audit trail unchanged 116ms
+     → contract: updateCharter does not declare status 500 (declared: 200, 400, 401, 403, 404, 409, 422, 428); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a11203-8805-74c8-a1e6-652c6002e1d1"}
+   × a JSON body with invalid UTF-8 is 400 validation.json, the same with Content-Length and chunked > T03 TOM gap create: no gap is created 3ms
+     → contract: createTomGap does not declare status 500 (declared: 201, 400, 401, 403, 404, 409, 422); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a11203-8808-77c6-9494-1a5bb2a2fc66"}
+   × a JSON body with invalid UTF-8 is 400 validation.json, the same with Content-Length and chunked > unauthenticated (no cookie, no CSRF token): the declared 400, never 500 1ms
+     → contract: createCharter does not declare status 500 (declared: 201, 400, 401, 403, 404, 409, 422); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a11203-880a-70a5-8b0b-972d469a2ae2"}
+   × over a real socket (the framing the reviewer probed), unauthenticated and authenticated > 400 validation.json for both framings, with and without a session; nothing stored 87ms
+     → content-length anonymous: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a11203-8860-71fb-b4c8-c909c8793991"}: expected 500 to be 400 // Object.is equality
+   ✓ valid UTF-8 round-trips verbatim; one BOM is accepted and stripped > Arabic and emoji text, with Content-Length and chunked: stored and audited byte for byte 173ms
+   ✓ valid UTF-8 round-trips verbatim; one BOM is accepted and stripped > a leading BOM (EF BB BF) is stripped: the charter is created with the exact text 151ms
+   × a query component that is not percent-encoded UTF-8 is 400 validation.format > GET /transformations?q=%FF and ?q=%ED%A0%80: 400 at /query/q (it used to search for the literal text) 17ms
+     → %FF: {"items":[],"nextCursor":null}: expected 200 to be 400 // Object.is equality
+   ✓ a query component that is not percent-encoded UTF-8 is 400 validation.format > authentication keeps its precedence: without a session the answer is 401 4ms
+   ✓ a query component that is not percent-encoded UTF-8 is 400 validation.format > the OIDC callback (exempt; declares only its redirect) is unchanged: never a 400 problem 1ms
+   × X-File-Name with a percent escape that is not UTF-8 > is 400 validation.file_name; no revision is stored and nothing is audited 56ms
+     → {"id":"01a11203-89cb-7440-9c24-caffe976ebf7","organizationId":"01a11203-8645-71af-8edf-0283615f21ce","transformationId":"01a11203-86c8-77df-a240-01fdac4b0fb7","kind":"file","title":"Synthetic file","description":null,"evidenceType":"document","source":null,"ownerUserId":"01a11203-8678-704f-9ac1-a5e9f3c0edcf","observationStart":null,"observationEnd":null,"noteBody":null,"url":null,"fileName":"report%FF.csv","currentContentId":"01a11203-89e9-7186-8da7-02a4cc8ff6b5","reviewStatus":"unverified","accessibilityStatus":"unchecked","reviewedContentId":null,"reviewedBy":null,"reviewedAt":null,"reviewNote":null,"status":"active","archivedAt":null,"archivedBy":null,"archiveReason":null,"version":2,"createdAt":"2026-10-06T16:19:44.199Z","createdBy":"01a11203-8678-704f-9ac1-a5e9f3c0edcf","updatedAt":"2026-10-06T16:19:44.226Z","updatedBy":"01a11203-8678-704f-9ac1-a5e9f3c0edcf"}: expected 200 to be 400 // Object.is equality
+   × rate limiting still applies to the refused requests > invalid-UTF-8 bodies count against the limit: 400 until the limit, then 429 32ms
+     → expected undefined to deeply equal [ ObjectContaining{…} ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/invalid-utf8.test.ts > a JSON body with invalid UTF-8 is 400 validation.json, the same with Content-Length and chunked > charter create: 400 for every invalid sequence and framing; no charter, no audit row, no U+FFFD stored
+Error: contract: createCharter does not declare status 500 (declared: 201, 400, 401, 403, 404, 409, 422); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a11203-878a-7219-a32a-ed4afcd2314f"}
+ ❯ assertContract apps/api/test/support/contract.ts:100:11
+     98|   const declared = op.responses[String(res.statusCode)] ?? op.response…
+     99|   if (!declared) {
+    100|     throw new Error(
+       |           ^
+    101|       `contract: ${op.operationId} does not declare status ${res.statu…
+    102|     );
+ ❯ rawCall apps/api/test/integration/invalid-utf8.test.ts:97:5
+ ❯ apps/api/test/integration/invalid-utf8.test.ts:139:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  |integration| apps/api/test/integration/invalid-utf8.test.ts > a JSON body with invalid UTF-8 is 400 validation.json, the same with Content-Length and chunked > charter update (PATCH, If-Match): version, value and audit trail unchanged
+Error: contract: updateCharter does not declare status 500 (declared: 200, 400, 401, 403, 404, 409, 422, 428); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a11203-8805-74c8-a1e6-652c6002e1d1"}
+ ❯ assertContract apps/api/test/support/contract.ts:100:11
+     98|   const declared = op.responses[String(res.statusCode)] ?? op.response…
+     99|   if (!declared) {
+    100|     throw new Error(
+       |           ^
+    101|       `contract: ${op.operationId} does not declare status ${res.statu…
+    102|     );
+ ❯ rawCall apps/api/test/integration/invalid-utf8.test.ts:97:5
+ ❯ apps/api/test/integration/invalid-utf8.test.ts:170:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  |integration| apps/api/test/integration/invalid-utf8.test.ts > a JSON body with invalid UTF-8 is 400 validation.json, the same with Content-Length and chunked > T03 TOM gap create: no gap is created
+Error: contract: createTomGap does not declare status 500 (declared: 201, 400, 401, 403, 404, 409, 422); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a11203-8808-77c6-9494-1a5bb2a2fc66"}
+ ❯ assertContract apps/api/test/support/contract.ts:100:11
+     98|   const declared = op.responses[String(res.statusCode)] ?? op.response…
+     99|   if (!declared) {
+    100|     throw new Error(
+       |           ^
+    101|       `contract: ${op.operationId} does not declare status ${res.statu…
+    102|     );
+ ❯ rawCall apps/api/test/integration/invalid-utf8.test.ts:97:5
+ ❯ apps/api/test/integration/invalid-utf8.test.ts:190:31
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  |integration| apps/api/test/integration/invalid-utf8.test.ts > a JSON body with invalid UTF-8 is 400 validation.json, the same with Content-Length and chunked > unauthenticated (no cookie, no CSRF token): the declared 400, never 500
+Error: contract: createCharter does not declare status 500 (declared: 201, 400, 401, 403, 404, 409, 422); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a11203-880a-70a5-8b0b-972d469a2ae2"}
+ ❯ assertContract apps/api/test/support/contract.ts:100:11
+     98|   const declared = op.responses[String(res.statusCode)] ?? op.response…
+     99|   if (!declared) {
+    100|     throw new Error(
+       |           ^
+    101|       `contract: ${op.operationId} does not declare status ${res.statu…
+    102|     );
+ ❯ rawCall apps/api/test/integration/invalid-utf8.test.ts:97:5
+ ❯ apps/api/test/integration/invalid-utf8.test.ts:197:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  |integration| apps/api/test/integration/invalid-utf8.test.ts > over a real socket (the framing the reviewer probed), unauthenticated and authenticated > 400 validation.json for both framings, with and without a session; nothing stored
+AssertionError: content-length anonymous: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a11203-8860-71fb-b4c8-c909c8793991"}: expected 500 to be 400 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 400[39m
+[31m+ 500[39m
+
+ ❯ apps/api/test/integration/invalid-utf8.test.ts:266:94
+    264|         const body = charterBody(INVALID.FF);
+    265|         const res = await overSocket(port, head(QC, framing, body.leng…
+    266|         expect(res.status, `${framing} ${session ? "signed in" : "anon…
+       |                                                                                              ^
+    267|         const problem = JSON.parse(res.body) as { requestId: string; e…
+    268|         expect(problem.errors).toEqual([expect.objectContaining({ poin…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  |integration| apps/api/test/integration/invalid-utf8.test.ts > a query component that is not percent-encoded UTF-8 is 400 validation.format > GET /transformations?q=%FF and ?q=%ED%A0%80: 400 at /query/q (it used to search for the literal text)
+AssertionError: %FF: {"items":[],"nextCursor":null}: expected 200 to be 400 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 400[39m
+[31m+ 200[39m
+
+ ❯ apps/api/test/integration/invalid-utf8.test.ts:318:65
+    316|     for (const raw of ["%FF", "%ED%A0%80", "%C3"]) {
+    317|       const res = await call(api.app, "GET", `/api/v1/transformations?…
+    318|       expect(res.status, `${raw}: ${JSON.stringify(res.body)}`).toBe(4…
+       |                                                                 ^
+    319|       expect(res.body.errors).toEqual([
+    320|         { pointer: "/query/q", code: "validation.format", message: "Th…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  |integration| apps/api/test/integration/invalid-utf8.test.ts > X-File-Name with a percent escape that is not UTF-8 > is 400 validation.file_name; no revision is stored and nothing is audited
+AssertionError: {"id":"01a11203-89cb-7440-9c24-caffe976ebf7","organizationId":"01a11203-8645-71af-8edf-0283615f21ce","transformationId":"01a11203-86c8-77df-a240-01fdac4b0fb7","kind":"file","title":"Synthetic file","description":null,"evidenceType":"document","source":null,"ownerUserId":"01a11203-8678-704f-9ac1-a5e9f3c0edcf","observationStart":null,"observationEnd":null,"noteBody":null,"url":null,"fileName":"report%FF.csv","currentContentId":"01a11203-89e9-7186-8da7-02a4cc8ff6b5","reviewStatus":"unverified","accessibilityStatus":"unchecked","reviewedContentId":null,"reviewedBy":null,"reviewedAt":null,"reviewNote":null,"status":"active","archivedAt":null,"archivedBy":null,"archiveReason":null,"version":2,"createdAt":"2026-10-06T16:19:44.199Z","createdBy":"01a11203-8678-704f-9ac1-a5e9f3c0edcf","updatedAt":"2026-10-06T16:19:44.226Z","updatedBy":"01a11203-8678-704f-9ac1-a5e9f3c0edcf"}: expected 200 to be 400 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 400[39m
+[31m+ 200[39m
+
+ ❯ apps/api/test/integration/invalid-utf8.test.ts:354:50
+    352|       body: Buffer.from("a,b\n1,2\n"),
+    353|     });
+    354|     expect(res.status, JSON.stringify(res.body)).toBe(400);
+       |                                                  ^
+    355|     expect(res.body.errors).toEqual([expect.objectContaining({ pointer…
+    356|     expect(await auditOf(api.db, created.body.id)).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  |integration| apps/api/test/integration/invalid-utf8.test.ts > rate limiting still applies to the refused requests > invalid-UTF-8 bodies count against the limit: 400 until the limit, then 429
+AssertionError: expected undefined to deeply equal [ ObjectContaining{…} ]
+
+[32m- Expected:[39m 
+[
+  ObjectContaining {
+    "code": "validation.json",
+  },
+]
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ apps/api/test/integration/invalid-utf8.test.ts:388:38
+    386|         statuses.push(res.status);
+    387|         if (res.status === 429) expect(res.body).toMatchObject({ type:…
+    388|         else expect(res.body.errors).toEqual([expect.objectContaining(…
+       |                                      ^
+    389|       }
+    390|       expect(statuses).toEqual([400, 400, 400, 429, 429]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 4 passed (12)
+   Start at  16:19:40
+   Duration  3.93s (transform 806ms, setup 0ms, collect 1.84s, tests 1.10s, environment 0ms, prepare 76ms)
+
+# exit: 1

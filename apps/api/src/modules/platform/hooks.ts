@@ -9,6 +9,7 @@ import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from
 import { v7 as uuidv7 } from "uuid";
 import { mapDatabaseGuardError } from "./db-errors.ts";
 import { HttpProblem, problems } from "./problem.ts";
+import { assertDecodableQuery } from "./request-encoding.ts";
 import { assertNoInvalidCharacters } from "./validation.ts";
 
 /** `authenticated`: any signed-in user (e.g. /me); the handler scopes the data to the caller itself. */
@@ -66,6 +67,10 @@ function mapError(
       return problems.badRequest("validation.content_type", "Send the request body as application/json.");
     case "FST_ERR_CTP_BODY_TOO_LARGE":
       return problems.badRequest("validation.body_too_large", "The request body is too large.");
+    case "FST_ERR_CTP_INVALID_CONTENT_LENGTH":
+      // F-DG2-290: the body's byte count differs from its Content-Length. The JSON parser now counts raw bytes, so a
+      // well-framed request no longer gets here; any that does is the client's framing error, never a 500.
+      return problems.badRequest("validation.malformed_request", "The request body does not match its Content-Length.");
     case "23505": // unique_violation that a service did not map more precisely
       return problems.duplicate("duplicate", "A record with the same unique value already exists.");
     case "23503": // foreign_key_violation
@@ -115,8 +120,11 @@ export function registerPlatformHooks(app: FastifyInstance, options: PlatformOpt
   // F-DG2-231: the central request check. preHandler runs after authentication and CSRF (identity's preValidation
   // hook), so 401/403 keep their precedence, and before every handler, so a U+0000 in any body, query or path
   // parameter is a 400 validation problem and never reaches PostgreSQL (SQLSTATE 22021 -> undeclared 500).
+  // F-DG2-290: a query component that is not valid percent-encoded UTF-8 (`%FF`, CESU-8 `%ED%A0%80`) is a 400
+  // validation.format problem first; it never reaches a handler as raw percent text.
   app.addHook("preHandler", async (request) => {
     if (request.routeOptions.config?.invalidCharacters === "route") return;
+    assertDecodableQuery(request);
     assertNoInvalidCharacters(request);
   });
 

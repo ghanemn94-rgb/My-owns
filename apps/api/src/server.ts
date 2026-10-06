@@ -4,6 +4,8 @@
 // Router-level errors (FST_ERR_BAD_URL ...) and connection-level parser errors are answered as problems by the
 // `frameworkErrors` / `clientErrorHandler` server options (platform/framework-errors.ts, T-DG2-BE12).
 //
+// JSON bodies and query strings are decoded as strict UTF-8 (platform/request-encoding.ts, T-DG2-BE13).
+//
 // Order matters:
 //   1. platform hooks (request IDs, problem+json, route access declarations, fail-closed guard);
 //   2. security headers (helmet, strict same-origin CSP), cookies, rate limiting (per validated-session subject or IP;
@@ -31,7 +33,9 @@ import { registerOrganizationRoutes } from "./modules/organization/index.ts";
 import {
   createClientErrorHandler,
   createFrameworkErrorHandler,
+  createJsonBodyParser,
   genReqId,
+  parseQueryString,
   problems,
   registerHealthRoutes,
   registerPlatformHooks,
@@ -49,6 +53,8 @@ export interface ServerOptions {
   readonly pool: pg.Pool;
   /** Defaults to a pino logger at config.logLevel with credential redaction; tests pass false. */
   readonly logger?: boolean;
+  /** Destination of that logger (default stdout); tests capture log lines with it. Ignored when logger is false. */
+  readonly logStream?: { write(line: string): unknown };
   /** Override the OIDC service (tests bind it to a local fake IdP). null disables OIDC routes. */
   readonly oidc?: OidcService | null;
   /** Directory of the built SPA; null disables static serving. Default: the first existing candidate. */
@@ -132,6 +138,7 @@ export async function buildServer(
         ? false
         : {
             level: config.logLevel,
+            ...(options.logStream ? { stream: options.logStream } : {}),
             redact: {
               paths: [
                 "req.headers.authorization",
@@ -146,10 +153,20 @@ export async function buildServer(
     requestIdLogLabel: "requestId",
     bodyLimit: JSON_BODY_LIMIT_BYTES,
     trustProxy: config.trustProxy.length > 0 ? [...config.trustProxy] : false,
+    // F-DG2-290: strict percent-decoding; an undecodable component is refused by the central preHandler check.
+    routerOptions: { querystringParser: parseQueryString },
     frameworkErrors: createFrameworkErrorHandler(securityHeaders),
     clientErrorHandler: onClientError,
   });
   appLog = app.log;
+  // F-DG2-290: JSON bodies are read as raw bytes and decoded as strict UTF-8 (never rewritten to U+FFFD), then parsed
+  // by Fastify's default JSON parser (same empty/invalid-JSON errors and prototype-poisoning protection). Registered on
+  // the root instance, so every module inherits it; the evidence octet-stream parser is separate and unchanged.
+  app.addContentTypeParser(
+    "application/json",
+    { parseAs: "buffer" },
+    createJsonBodyParser(app.getDefaultJsonParser("error", "error")),
+  );
   const db = createDb(pool);
   // Every registered route, for the route-coverage and access-declaration tests.
   const routes: RouteRecord[] = [];

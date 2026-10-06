@@ -44,5 +44,17 @@ export {
   frameworkProblem,
   type SecurityHeaders,
 } from "./framework-errors.ts";
+export {
+  assertDecodableQuery,
+  createJsonBodyParser,
+  decodeUtf8Body,
+  INVALID_QUERY_DETAIL,
+  INVALID_UTF8_BODY_DETAIL,
+  invalidQueryProblem,
+  invalidUtf8BodyProblem,
+  parseQueryString,
+  undecodableQueryPointer,
+  type JsonTextParser,
+} from "./request-encoding.ts";
 export { registerHealthRoutes } from "./health.ts";
 export type { ModuleDeps, ModuleRegistration } from "./deps.ts";

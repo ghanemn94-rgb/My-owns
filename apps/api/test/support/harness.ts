@@ -64,6 +64,8 @@ export async function startApi(
      * integration files of one run may execute concurrently.
      */
     database?: string;
+    /** Capture the server's log lines (JSON, one per write) instead of disabling the logger. */
+    logStream?: ServerOptions["logStream"];
   } = {},
 ): Promise<TestApi> {
   const { adminUrl } = inject("mthDb");
@@ -74,7 +76,8 @@ export async function startApi(
   const { app, db, routes } = await buildServer({
     config,
     pool,
-    logger: false,
+    logger: options.logStream !== undefined,
+    ...(options.logStream !== undefined ? { logStream: options.logStream } : {}),
     webRoot: null,
     ...(options.oidc !== undefined ? { oidc: options.oidc } : {}),
     ...(options.migrationFiles ? { migrationFiles: options.migrationFiles } : {}),

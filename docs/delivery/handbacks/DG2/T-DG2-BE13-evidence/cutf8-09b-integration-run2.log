@@ -1,0 +1,72 @@
+# check: 09b-integration-run2   mode: cutf8   started: 2026-10-06T16:42:33Z
+# command: env -u LANG -u LC_ALL -u LC_CTYPE -u LC_COLLATE -u LC_MESSAGES -u LC_NUMERIC -u LC_TIME -u LC_MONETARY LANG=C.UTF-8 PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH env QA_PG_PORT=55471 tests/qa/support/with-pg.sh pnpm test:integration
+# node v24.21.0; LANG=C.UTF-8 LC_ALL=<unset> LC_CTYPE=<unset>
+port-policy: warning: PostgreSQL port 55471 is inside the ephemeral range 32768-60999 (a client socket in TIME_WAIT can hold it); will retry outside it on EADDRINUSE
+port-policy: PostgreSQL listening on port 55471 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+> mobily-transformation-hub@0.1.0 test:integration /home/user/My-owns
+> vitest run --project integration
+
+
+ RUN  v3.2.4 /home/user/My-owns
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muwwpxhd_7ae6a547 (server_encoding UTF8); applied 19 migrations to a fresh database
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts (10 tests) 5428ms
+   ✓ worker runtime: end to end, restarts and the dead-letter queue > relays and handles a created transformation, and survives a restart without losing the job  3678ms
+   ✓ worker runtime: end to end, restarts and the dead-letter queue > moves a job that keeps failing to ops.failed after the bounded retries  1034ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts (14 tests) 4253ms
+   ✓ every operation, validated against the contract and the zod mirrors > kpi module operations (P2; kpi-exercises.ts, owned by kpi-benefits-engineer)  566ms
+   ✓ every operation, validated against the contract and the zod mirrors > P2 backend operations (p2-exercises.ts): every routed operation exercised with a success  1885ms
+   ✓ every operation, validated against the contract and the zod mirrors > every GET operation with a path parameter: a malformed id is a declared 400 at /params/<name>; nothing written  344ms
+   ✓ every operation, validated against the contract and the zod mirrors > every operation but the OIDC callback: U+0000 in the query is a declared 400 invalid_character  703ms
+ ✓ |integration| packages/db/test/integration/scratch-drop.test.ts (3 tests) 6272ms
+   ✓ dropScratchDatabase never terminates a live client (F-DG1-009) > a drop right after pool.end() raises no 57P01 on the closing pool (40 rounds, 8 clients each)  5812ms
+   ✓ dropScratchDatabase never terminates a live client (F-DG1-009) > a client that is still connected is NOT terminated: the drop refuses, names it, and succeeds once it ends  459ms
+ ✓ |integration| tests/qa/integration/a13-job-idempotency.test.ts (5 tests) 3399ms
+   ✓ A13 running worker: a duplicate delivery is a no-op > consumes the event once; an extra job with the same message completes as 'duplicate'  2607ms
+ ✓ |integration| apps/api/test/integration/blank-text.test.ts (29 tests) 2275ms
+ ✓ |integration| apps/api/test/integration/gates.test.ts (12 tests) 2148ms
+   ✓ G2 Direction readiness (REQ-PB-036 failing outcomes, REQ-PB-037 guardrails) > lists every outcome whose good outcome test is not passing (ids + criteria); zero guardrails blocks submission  426ms
+ ✓ |integration| packages/db/test/integration/encoding.test.ts (8 tests) 2032ms
+   ✓ a SQL_ASCII database is refused before anything is created > mth-db migrate: exit 1, the message on stderr, nothing applied, no schema_migration table  317ms
+   ✓ a SQL_ASCII database is refused before anything is created > control: the same CLI migrates a UTF8 scratch database created the same way  668ms
+ ✓ |integration| apps/api/test/integration/registers.test.ts (23 tests) 1697ms
+ ✓ |integration| apps/api/test/integration/aud-write-deny.test.ts (128 tests) 1805ms
+ ✓ |integration| packages/db/test/integration/bootstrap.test.ts (5 tests) 1366ms
+   ✓ mth-db bootstrap > creates the first organization and a technical/access admin with no business permission, fully audited  343ms
+   ✓ mth-db bootstrap > refuses to run twice  312ms
+   ✓ mth-db bootstrap > validates its input and refuses the dev-login issuer  302ms
+   ✓ mth-db seed-dev (synthetic, development only) > seeds synthetic users bound to urn:mth:dev-local once, idempotently  316ms
+ ✓ |integration| apps/api/test/integration/dg2-repairs.test.ts (13 tests) 1210ms
+ ✓ |integration| apps/api/test/integration/invalid-utf8.test.ts (14 tests) 1023ms
+ ✓ |integration| apps/api/test/integration/invalid-character.test.ts (20 tests) 1005ms
+ ✓ |integration| apps/api/test/integration/access-derived-race.test.ts (4 tests) 881ms
+ ✓ |integration| apps/api/test/integration/bu-hierarchy-guard.test.ts (7 tests) 765ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts (33 tests) 979ms
+ ✓ |integration| apps/api/test/integration/kpi/kpi-resources.test.ts (23 tests) 892ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts (30 tests) 844ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts (7 tests) 756ms
+   ✓ mth-db migrate on a fresh database > applies every shipped migration, then reports up to date  404ms
+ ✓ |integration| apps/api/test/integration/kpi/kpi-dg2-repairs.test.ts (11 tests) 717ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts (18 tests) 659ms
+ ✓ |integration| apps/api/test/integration/evidence.test.ts (6 tests) 628ms
+ ✓ |integration| apps/api/test/integration/platform.test.ts (12 tests) 703ms
+   ✓ readiness requires a UTF8 database (ADR-0003 'Database encoding', T-DG2-BE9) > reports 503 database: fail on a SQL_ASCII database, and database: ok on a UTF8 one created the same way  371ms
+ ✓ |integration| apps/worker/test/integration/maintenance.test.ts (2 tests) 559ms
+ ✓ |integration| apps/api/test/integration/kpi/kpi-aud-write-deny.test.ts (18 tests) 428ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts (11 tests) 436ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts (14 tests) 492ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts (10 tests) 358ms
+ ✓ |integration| tests/qa/integration/a14-concurrency.test.ts (5 tests) 311ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts (13 tests) 297ms
+ ✓ |integration| apps/api/test/integration/framework-errors.test.ts (11 tests) 297ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts (17 tests) 98ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts (9 tests) 37ms
+
+ Test Files  33 passed (33)
+      Tests  545 passed (545)
+   Start at  16:42:35
+   Duration  56.93s (transform 1.21s, setup 0ms, collect 10.43s, tests 45.05s, environment 0ms, prepare 64ms)
+
+# exit: 0   finished: 2026-10-06T16:43:32Z

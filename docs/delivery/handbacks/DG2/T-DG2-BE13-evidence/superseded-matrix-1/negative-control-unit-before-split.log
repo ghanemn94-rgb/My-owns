@@ -1,0 +1,33 @@
+# negative control (unit): production code at HEAD 4e3c4462 (request-encoding.ts absent)
+# command: npx vitest run --project unit-node apps/api/src/modules/platform/request-encoding.test.ts
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/My-owns
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/request-encoding.test.ts [ apps/api/src/modules/platform/request-encoding.test.ts ]
+Error: Cannot find module './request-encoding.ts' imported from '/home/user/My-owns/apps/api/src/modules/platform/request-encoding.test.ts'
+ ❯ apps/api/src/modules/platform/request-encoding.test.ts:8:1
+      6| import { decodeFileName } from "../evidence/routes.ts";
+      7| import { registerPlatformHooks } from "./hooks.ts";
+      8| import {
+       | ^
+      9|   createJsonBodyParser,
+     10|   decodeUtf8Body,
+
+Caused by: Error: Failed to load url ./request-encoding.ts (resolved id: ./request-encoding.ts) in /home/user/My-owns/apps/api/src/modules/platform/request-encoding.test.ts. Does the file exist?
+ ❯ loadAndTransform node_modules/.pnpm/vite@7.1.11_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:26050:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  16:19:45
+   Duration  1.24s (transform 459ms, setup 0ms, collect 0ms, tests 0ms, environment 0ms, prepare 86ms)
+
+# exit: 1

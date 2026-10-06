@@ -1,0 +1,11 @@
+# path-parameter confirmation (Fastify 5.6.1 router, find-my-way 9.9.0): undecodable path escapes raise FST_ERR_BAD_URL before routing
+# cwd apps/api; node v24.21.0; command: node --input-type=module -e <script below>
+#   import Fastify from "fastify";
+#   const app = Fastify({ frameworkErrors: (e, req, rep) => rep.code(400).send({ code: e.code }) });
+#   app.get("/x/:id", async (r) => ({ id: r.params.id }));
+#   for (const u of ["/x/%FF", "/x/%C3", "/x/%ED%A0%80", "/x/%C3%A9"]) { const r = await app.inject(u); console.log(u, r.statusCode, r.body); }
+/x/%FF 400 {"code":"FST_ERR_BAD_URL"}
+/x/%C3 400 {"code":"FST_ERR_BAD_URL"}
+/x/%ED%A0%80 400 {"code":"FST_ERR_BAD_URL"}
+/x/%C3%A9 200 {"id":"é"}
+# exit: 0

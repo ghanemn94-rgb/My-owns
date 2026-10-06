@@ -232,12 +232,25 @@ function contentDisposition(fileName: string): string {
   return `attachment; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(fileName)}`;
 }
 
-/** X-File-Name may be percent-encoded (non-ASCII names); a malformed encoding is taken literally. */
-function decodeFileName(raw: string | undefined): string | undefined {
+/**
+ * X-File-Name may be percent-encoded (non-ASCII names; the web client sends encodeURIComponent of the name). A name
+ * with a stray `%` and no percent escape at all (`50%.csv`) is taken literally. F-DG2-290: a name that holds a
+ * percent escape but does not decode as UTF-8 (`%FF`, CESU-8 `%ED%A0%80`, or escapes mixed with a stray `%`) is
+ * refused with 400 `validation.file_name` at `/header/X-File-Name`; it is never stored as its raw percent text.
+ * Exported for unit tests.
+ */
+export function decodeFileName(raw: string | undefined): string | undefined {
   if (raw === undefined) return undefined;
   try {
     return decodeURIComponent(raw);
   } catch {
+    if (/%[0-9A-Fa-f]{2}/.test(raw)) {
+      throw problems.badRequest(
+        "validation.file_name",
+        "X-File-Name is not valid percent-encoded UTF-8.",
+        "/header/X-File-Name",
+      );
+    }
     return raw;
   }
 }

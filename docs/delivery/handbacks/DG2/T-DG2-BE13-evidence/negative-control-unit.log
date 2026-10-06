@@ -1,0 +1,60 @@
+# negative control (unit): production code at HEAD 4e3c4462 (request-encoding.ts absent; git diff --stat below), new unit tests from T-DG2-BE13
+ apps/api/test/support/harness.ts | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+# command: npx vitest run --project unit-node apps/api/src/request-encoding.test.ts apps/api/src/modules/platform/request-encoding.test.ts
+# node v24.21.0
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/My-owns
+
+ ❯ |unit-node| apps/api/src/request-encoding.test.ts (11 tests | 11 skipped) 18ms
+   ↓ decodeFileName (X-File-Name) > decodes a percent-encoded UTF-8 name and takes a name without escapes literally
+   ↓ decodeFileName (X-File-Name) > refuses an escape that is not UTF-8 with 400 validation.file_name
+   ↓ the application/json parser > answers 400 validation.json for invalid UTF-8, the same with Content-Length and chunked; the handler never runs
+   ↓ the application/json parser > round-trips valid UTF-8 (Arabic, emoji) verbatim, with Content-Length and chunked
+   ↓ the application/json parser > accepts and strips one BOM; a second one is invalid JSON
+   ↓ the application/json parser > keeps the other body behaviour: empty, invalid JSON, prototype poisoning, body limit
+   ↓ the application/json parser > maps a Content-Length that does not match the bytes to 400 validation.malformed_request, never 500
+   ↓ the application/json parser > still runs the central U+0000 / lone-surrogate check after parsing
+   ↓ the query-string check > answers 400 validation.format at /query/<key> for %FF and CESU-8 %ED%A0%80
+   ↓ the query-string check > passes well-formed queries through decoded
+   ↓ the query-string check > leaves an exempt route (invalidCharacters: route) its raw-text fallback
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| apps/api/src/request-encoding.test.ts [ apps/api/src/request-encoding.test.ts ]
+TypeError: (0 , createJsonBodyParser) is not a function
+ ❯ apps/api/src/request-encoding.test.ts:57:5
+     55|     "application/json",
+     56|     { parseAs: "buffer" },
+     57|     createJsonBodyParser(app.getDefaultJsonParser("error", "error")),
+       |     ^
+     58|   );
+     59|   registerPlatformHooks(app);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/request-encoding.test.ts [ apps/api/src/modules/platform/request-encoding.test.ts ]
+Error: Cannot find module './request-encoding.ts' imported from '/home/user/My-owns/apps/api/src/modules/platform/request-encoding.test.ts'
+ ❯ apps/api/src/modules/platform/request-encoding.test.ts:4:1
+      2| // database). The parser and the query check wired into Fastify are te…
+      3| import { describe, expect, it } from "vitest";
+      4| import { decodeUtf8Body, parseQueryString, undecodableQueryPointer } f…
+       | ^
+      5| 
+      6| const utf8 = (s: string) => Buffer.from(s, "utf8");
+
+Caused by: Error: Failed to load url ./request-encoding.ts (resolved id: ./request-encoding.ts) in /home/user/My-owns/apps/api/src/modules/platform/request-encoding.test.ts. Does the file exist?
+ ❯ loadAndTransform node_modules/.pnpm/vite@7.1.11_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:26050:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  11 skipped (11)
+   Start at  16:31:05
+   Duration  1.65s (transform 692ms, setup 0ms, collect 1.28s, tests 18ms, environment 0ms, prepare 203ms)
+
+# exit: 1
