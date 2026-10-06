@@ -10281,7 +10281,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-9/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-06T21:20:00Z",
@@ -10292,10 +10292,37 @@
           "at": "2026-10-06T22:58:49Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at e974d7804b2b247bebf79e8c42a6f2867b8a7421"
+        },
+        {
+          "at": "2026-10-06T23:31:31Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 10: PASS"
         }
       ],
       "fix_revision": "e974d7804b2b247bebf79e8c42a6f2867b8a7421",
-      "fix_summary": "BE15 (WIP 08a4f63, salvaged from a run killed by a container restart) completed by BE15B e974d78: one RFC 9110 §8.3.1 media-type decision in the central preParsing hook. OWS (SP/HTAB) around ';', the essence is the lower-cased type/subtype, and parameters are tokens or quoted-strings; a malformed value, duplicate Content-Type lines, or a JSON charset other than UTF-8 is refused. An accepted header is rewritten to the canonical essence[; name=value] form before Fastify's parser lookup, so the check and the lookup cannot disagree. Every refusal, including the FST_ERR_CTP_INVALID_MEDIA_TYPE backstop and restrictParserTo, names the route's declared set. An unmatched route never has its body parsed or refused: 404 not_found for every media type and framing, with Connection: close (never drained). Unit and integration tests (reviewer S10/S11 kept as regressions), a real-socket sweep, and a negative control against 3b2ab15."
+      "fix_summary": "BE15 (WIP 08a4f63, salvaged from a run killed by a container restart) completed by BE15B e974d78: one RFC 9110 §8.3.1 media-type decision in the central preParsing hook. OWS (SP/HTAB) around ';', the essence is the lower-cased type/subtype, and parameters are tokens or quoted-strings; a malformed value, duplicate Content-Type lines, or a JSON charset other than UTF-8 is refused. An accepted header is rewritten to the canonical essence[; name=value] form before Fastify's parser lookup, so the check and the lookup cannot disagree. Every refusal, including the FST_ERR_CTP_INVALID_MEDIA_TYPE backstop and restrictParserTo, names the route's declared set. An unmatched route never has its body parsed or refused: 404 not_found for every media type and framing, with Connection: close (never drained). Unit and integration tests (reviewer S10/S11 kept as regressions), a real-socket sweep, and a negative control against 3b2ab15.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG2-T-DG2-REV-SEC-R10-code-security-reviewer-20261006T231657Z-99fcef43",
+          "session_id": "99fcef43-6f99-4f1d-aacd-4bd54ceac21d"
+        },
+        "at": "2026-10-06T23:31:31Z",
+        "result": "PASS",
+        "evidence": [
+          "apps/api/src/modules/platform/media-types.ts",
+          "apps/api/test/integration/media-types.test.ts",
+          "docs/delivery/test-evidence/DG2/code-security/round-9/probes/zz-sec-r9-probe.test.ts",
+          "docs/delivery/test-evidence/DG2/code-security/round-10/probes/zz-sec-r10-probe.test.ts",
+          "docs/delivery/test-evidence/DG2/code-security/round-10/probes/README.md",
+          "docs/delivery/test-evidence/DG2/code-security/round-10/probe-run1-lang-unset.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-10/probe-run2-lang-c-utf8.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-10/integration-run1-lang-unset.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-10/integration-run2-lang-c-utf8.log"
+        ],
+        "note": "Verified on candidate sha256:7fd1a89ca090dbdea5ae9f014853684239cbf80e89dc5cce50914155cb9d484a (source fe22d759, 544 files). I recomputed it in the working tree and in a disposable clone at HEAD 68fe3394, which adds only delivery metadata. I tested against disposable PostgreSQL 16 clusters with LANG unset (SQL_ASCII) and with LANG=C.UTF-8 (UTF8). Both runs gave identical results.\n(1) My round-9 repro, zz-sec-r9-probe.test.ts S10, rerun unchanged, now PASSES in both runs. POST /api/v1/does-not-exist, POST /does-not-exist, PUT and DELETE on {T}/evidence, each sent text/plain, JSON or application/octet-stream, with and without a session: 404 every time. Round 9 gave 400 validation.content_type for octet-stream.\n(2) Code. decideMediaType (media-types.ts:224-240) returns 'unmatched-route' when request.is404 is set, before any media-type check. assertDeclaredMediaType (:246-255) then deletes the Content-Type, and the preParsing hook (:296-309) sets Connection: close. I read fastify 5.6.1 to confirm the 404 path. handleRequest sees no Content-Type and calls contentTypeParser.run('') when a body is present. getParser('') matches no registered parser: only application/json and application/octet-stream are registered, and there is no catch-all. run() then hands is404 requests straight to the not-found handler (lib/contentTypeParser.js:177-181). So restrictParserTo, the round-9 root cause, can no longer be reached for an unmatched route.\n(3) Adversarial probe zz-sec-r10-probe.test.ts:\n- P4a (inject): 4 unmatched method/URL pairs x 7 Content-Types (HTAB, unterminated quote, */*, a latin1 charset, multipart, urlencoded, none) all gave 404 not_found with Connection: close and no error log.\n- P4b (llhttp): Content-Length of 10 GB or 900 MB, Expect: 100-continue, and a chunked body that never ends all gave a prompt 404 (first byte within 3 ms), never 413 or 400, and the server closed the socket.\n- P4c (llhttp keep-alive smuggling): I hid a signed-in logout in the body of an unmatched route (Content-Length, no Content-Type, chunked, and duplicate Content-Type), then pipelined a GET. The server sent exactly one response (404), then closed. GET /me still answered 200 afterwards, so the hidden request never ran.\n- The rate limiter still precedes the refusal (P3b).\nThe candidate's own regression tests (media-types.test.ts, 'an unmatched route is 404 not_found whatever its body', 3 tests) pass in both locales."
+      }
     },
     {
       "id": "F-DG2-351",
@@ -10319,7 +10346,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-9/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-06T21:20:00Z",
@@ -10330,10 +10357,38 @@
           "at": "2026-10-06T22:58:49Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at e974d7804b2b247bebf79e8c42a6f2867b8a7421"
+        },
+        {
+          "at": "2026-10-06T23:31:31Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 10: PASS"
         }
       ],
       "fix_revision": "e974d7804b2b247bebf79e8c42a6f2867b8a7421",
-      "fix_summary": "BE15 (WIP 08a4f63, salvaged from a run killed by a container restart) completed by BE15B e974d78: one RFC 9110 §8.3.1 media-type decision in the central preParsing hook. OWS (SP/HTAB) around ';', the essence is the lower-cased type/subtype, and parameters are tokens or quoted-strings; a malformed value, duplicate Content-Type lines, or a JSON charset other than UTF-8 is refused. An accepted header is rewritten to the canonical essence[; name=value] form before Fastify's parser lookup, so the check and the lookup cannot disagree. Every refusal, including the FST_ERR_CTP_INVALID_MEDIA_TYPE backstop and restrictParserTo, names the route's declared set. An unmatched route never has its body parsed or refused: 404 not_found for every media type and framing, with Connection: close (never drained). Unit and integration tests (reviewer S10/S11 kept as regressions), a real-socket sweep, and a negative control against 3b2ab15."
+      "fix_summary": "BE15 (WIP 08a4f63, salvaged from a run killed by a container restart) completed by BE15B e974d78: one RFC 9110 §8.3.1 media-type decision in the central preParsing hook. OWS (SP/HTAB) around ';', the essence is the lower-cased type/subtype, and parameters are tokens or quoted-strings; a malformed value, duplicate Content-Type lines, or a JSON charset other than UTF-8 is refused. An accepted header is rewritten to the canonical essence[; name=value] form before Fastify's parser lookup, so the check and the lookup cannot disagree. Every refusal, including the FST_ERR_CTP_INVALID_MEDIA_TYPE backstop and restrictParserTo, names the route's declared set. An unmatched route never has its body parsed or refused: 404 not_found for every media type and framing, with Connection: close (never drained). Unit and integration tests (reviewer S10/S11 kept as regressions), a real-socket sweep, and a negative control against 3b2ab15.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG2-T-DG2-REV-SEC-R10-code-security-reviewer-20261006T231657Z-99fcef43",
+          "session_id": "99fcef43-6f99-4f1d-aacd-4bd54ceac21d"
+        },
+        "at": "2026-10-06T23:31:31Z",
+        "result": "PASS",
+        "evidence": [
+          "apps/api/src/modules/platform/media-types.ts",
+          "apps/api/src/modules/platform/hooks.ts",
+          "apps/api/src/modules/platform/framework-errors.ts",
+          "apps/api/test/integration/media-types.test.ts",
+          "docs/delivery/test-evidence/DG2/code-security/round-9/probes/zz-sec-r9-probe.test.ts",
+          "docs/delivery/test-evidence/DG2/code-security/round-10/probes/zz-sec-r10-probe.test.ts",
+          "docs/delivery/test-evidence/DG2/code-security/round-10/probes/README.md",
+          "docs/delivery/test-evidence/DG2/code-security/round-10/probe-run1-lang-unset.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-10/probe-run2-lang-c-utf8.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-10/diff-scan.log"
+        ],
+        "note": "Verified on the same candidate (sha256:7fd1a89c..., source fe22d759) in both locale runs.\n(1) My round-9 repro, zz-sec-r9-probe.test.ts S11. Its assertion expected the HTAB spelling to be REFUSED with a detail naming octet-stream. It now 'fails' because the request is ACCEPTED: 'application/octet-stream\\t; x=1' gives 200, stored byte-exact, with the sha256 of the raw bytes, in both framings (r9 S1 rows). This is the finding's second suggested remedy: the essence check and the parser lookup now agree. It is the genuine fix, not a regression, and that S11 assertion is obsolete.\n(2) The detail half of the finding (every refusal names the operation's declared set).\n- Code: mapError maps FST_ERR_CTP_INVALID_MEDIA_TYPE to undeclaredMediaTypeProblem(consumesOf(request)) (hooks.ts:68-71). frameworkProblem threads the request through. decideMediaType and restrictParserTo use the same helper.\n- P1: 19 spellings x 2 framings on uploadEvidenceContent. Each malformed one (OWS around '=', an empty value, no '=', an unterminated quote, a trailing backslash, a space inside type/subtype, a JSON essence, a list, a comment, NUL) gives 400 validation.content_type 'Send the request body as application/octet-stream.', declared, with nothing stored.\n- P1b (llhttp, obs-text): the same detail.\n- P4d (llhttp, two identical Content-Type lines; malformed): the same detail, then close.\n- P6b: the FST_ERR_CTP_INVALID_MEDIA_TYPE backstop names octet-stream for an octet route, and falls back to JSON without throwing when the route has no config.\n(3) Agreement between the check and the lookup.\n- Accepted headers are rewritten to the canonical 'essence[; name=value]' form (media-types.ts:163-165, 252) before handleRequest reads request.headers, which is raw.headers because nothing sets additionalHeaders. Only this code writes request headers (diff-scan.log).\n- P6 fuzz: 20,000 random Content-Type strings over a hostile alphabet, against both declared sets. 1,760 were accepted and 38,240 refused, with 0 mismatches against fastify 5.6.1's getParser prefix rule. Every refusal names the route's set.\n- P1: quoted ';', an escaped quote, a quoted ' application/json', HTAB on both sides, leading or trailing OWS, empty parameters and X=\"\" are all stored byte-exact.\n- P2: UTF-8 JSON in every legitimate spelling is created verbatim."
+      }
     }
   ]
 }
