@@ -1,0 +1,24 @@
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+readyz: {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+PASS en.dir :: expected ltr :: actual ltr
+PASS en.charter-create-invisible :: expected inline 'Enter some text; spaces alone are not a value.'; aria-invalid; focus; nothing sent :: actual shown=1 aria-invalid=true focused=true sent=[]
+PASS en.charter-create-spaces :: expected same inline message; nothing sent :: actual shown=1 sent=[]
+PASS en.charter-create-visible :: expected 201 created; stored verbatim :: actual sent=["POST /api/v1/transformations/01a11020-000d-754c-a981-328c08187a8e/charter"] status=200 verbatim=true
+PASS en.thesis-incomplete-shown :: expected 'Incomplete' shown with 4 parts empty :: actual true
+PASS en.charter-edit-invisible-oos :: expected inline blank message; no version written :: actual shown=1 aria-invalid=true sent=[] version=1
+PASS ar.dir :: expected rtl :: actual rtl
+PASS ar.charter-create-invisible :: expected inline 'أدخِل نصاً؛ المسافات وحدها ليست قيمة.'; aria-invalid; focus; nothing sent :: actual shown=1 aria-invalid=true focused=true sent=[]
+PASS ar.charter-create-spaces :: expected same inline message; nothing sent :: actual shown=1 sent=[]
+PASS ar.charter-create-visible :: expected 201 created; stored verbatim :: actual sent=["POST /api/v1/transformations/01a11020-1e19-704d-ad5f-62bb4c486ca6/charter"] status=200 verbatim=true
+PASS ar.thesis-incomplete-shown :: expected 'غير مكتملة' shown with 4 parts empty :: actual true
+PASS ar.charter-edit-invisible-oos :: expected inline blank message; no version written :: actual shown=1 aria-invalid=true sent=[] version=1
+SUMMARY {"pass":12,"fail":0}
+en html lang/dir: en ltr
+en contains B0009 E2E how: true
+en contains B0009 Modular how: false
+en after selecting Modular, contains B0009 Modular how: true
+ar html lang/dir: ar rtl
+ar contains B0009 E2E how: true
+ar contains B0009 Modular how: false
+ar after selecting Modular, contains B0009 Modular how: true

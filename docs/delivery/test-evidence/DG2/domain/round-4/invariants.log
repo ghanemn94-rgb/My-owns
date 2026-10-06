@@ -1,0 +1,23 @@
+## certification / PMI claim grep (excluding disclaimers 'not'/'never'/'inspired')
+exit=1
+## DG0-DG7 references in product code (non-comment, non-test)
+apps/api/src/modules/workflows/gates.ts:577:    note: "Product gate (business approval inside the product); unrelated to the engineering delivery gates DG0-DG7.",
+apps/api/src/modules/kpi/gate-facts.ts:102:      hasSource: hasText(b.source), // F-DG2-150: a blank source is not a source
+apps/api/src/modules/organization/routes.ts:284:          await lockBusinessUnitHierarchy(tx, organizationId); // F-DG1-140: depth check vs a concurrent move
+exit=0
+## provisional brand
+apps/web/src/i18n/ar/common.json:4:    "provisional": "مؤقت",
+apps/web/src/i18n/ar/common.json:5:    "provisionalHint": "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة.",
+apps/web/src/i18n/ar/common.json:6:    "provisionalNotice": "الهوية البصرية مؤقتة: الشعار النصي والألوان بدائل مؤقتة وليست أصولًا رسمية لعلامة موبايلي."
+apps/web/src/i18n/ar/common.json:125:    "brandTitle": "هوية بصرية مؤقتة",
+## B0009 verbatim in methodology seed
+apps/web/src/pages/transformations/modeGuidance.test.tsx
+apps/web/src/i18n/en/transformations.json
+| End-to-End | New enterprise or business-unit transformation | Run Phases 1-6 sequentially. Do not launch initiatives before the North Star, outcomes and target state are clear. |
+## blank message i18n
+  "validation__blank": "أدخِل نصاً؛ المسافات وحدها ليست قيمة.",
+  "validation__blank": "Enter some text; spaces alone are not a value.",
+## money decimals: numeric columns for amounts
+packages/db/migrations/0014_p2_kpi_baseline_value_pool.sql:138:  upside_amount            numeric(20,4) NULL,
+packages/db/migrations/0014_p2_kpi_baseline_value_pool.sql:139:  downside_amount          numeric(20,4) NULL,
+packages/db/migrations/0015_p2_diagnose.sql:21:  impact_amount            numeric(20,4) NULL,
