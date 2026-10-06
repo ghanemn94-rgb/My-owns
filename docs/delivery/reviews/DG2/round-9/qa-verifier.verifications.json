@@ -1,0 +1,30 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG2-340",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "qa-verifier raised this finding and verified fix e3cadfa (T-DG2-FE8, frontend-ux-engineer) on candidate 45ebccc0 (source 7854770e). (1) I re-ran my unchanged round-8 spec R8-05 (charter POST body tampered with FF FE; the REAL server answers 400 validation.json at pointer \"\") on the qa-stack in chromium-en and chromium-ar, in both locale settings: 4/4 green. The rerun screenshots show 'The request was not valid JSON.' / 'الطلب ليس بصيغة JSON صالحة.' ONCE. In round 8 the same spec's screenshots showed it twice. (2) My new spec dg2-qa-r9.spec.ts R9-05a..e counts every role=alert region and every occurrence in the page text. The message is said exactly once (1 alert, 1 occurrence), in EN-LTR and AR-RTL, on the charter, the P1 transformation create form, the P1 admin organization create form and the ReasonDialog (archive value pool), and nothing is written (DB and API checked). The real server's other pointer-\"\" error (validation.unknown_field) is also said once. (3) A genuinely different second message is still shown. For this sub-check only, the browser receives a fulfilled problem: [\"\" validation.json, /qaNotAField validation.too_big, \"\" validation.json]. The banner says validation__json once, the repeated pointer-\"\" entry is dropped, and the form-errors list keeps exactly the distinct too_big message, once. (4) Field-pointer errors stay on their field. A server validation.blank at /outOfScope sets aria-invalid on the field and its message is in the field's aria-describedby. The form-errors list stays empty, and the banner shows only the generic 'check the highlighted fields' message, once. (5) Static sweep of every role=alert in apps/web/src (40-f340-sweep-static.log). RecordFields computes the banner once and lists distinctFormMessages(banner, unmapped). The StepsEditor guard suppresses a client message identical to the server banner. GateProblem, ReasonDialog, RowActions, the DefinePage activation dialog and the admin, transformation and evidence forms render ONE server banner, and pointer \"\" never reaches a second region (pointerToField(\"\") is falsy; the dialogs match only their own pointer). (6) The FE8 component tests (RecordForm.alerts.test.tsx, 16 tests, including the distinct-message and field-pointer cases) pass in all 7 of my unit runs. Axe found no serious or critical violation in any of these error states (20-axe-summary.log).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/17-e2e-qa-stack-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/17-e2e-qa-stack-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/19-e2e-qa-r9-final-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/40-f340-sweep-static.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/20-axe-summary.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/08-unit-series-summary.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/e2e-qa-r9-screens/en-qa-r8-05-charter-invalid-utf8-server.png",
+        "docs/delivery/test-evidence/DG2/qa/round-9/e2e-qa-r9-screens/ar-qa-r8-05-charter-invalid-utf8-server.png",
+        "docs/delivery/test-evidence/DG2/qa/round-9/e2e-qa-r9-screens/en-qa-r9-05b-charter-distinct-second-message.png",
+        "docs/delivery/test-evidence/DG2/qa/round-9/e2e-qa-r9-screens/ar-qa-r9-05b-charter-distinct-second-message.png",
+        "docs/delivery/test-evidence/DG2/qa/round-9/e2e-qa-r9-screens/en-qa-r9-05b-charter-field-pointer.png",
+        "docs/delivery/test-evidence/DG2/qa/round-9/e2e-qa-r9-screens/ar-qa-r9-05e-reason-dialog-said-once.png",
+        "docs/delivery/test-evidence/DG2/qa/round-9/e2e-qa-r9-screens/en-qa-r9-05d-organization-create-said-once.png",
+        "docs/delivery/test-evidence/DG2/qa/round-9/e2e-qa-r9-screens/ar-qa-r9-05c-transformation-create-said-once.png",
+        "docs/delivery/test-evidence/DG2/qa/tests/round-9/e2e/dg2-qa-r9.spec.ts",
+        "docs/delivery/test-evidence/DG2/qa/tests/round-8/e2e/dg2-qa-r8.spec.ts",
+        "apps/web/src/components/RecordForm.tsx",
+        "apps/web/src/lib/problem.ts"
+      ]
+    }
+  ]
+}

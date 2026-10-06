@@ -1,0 +1,569 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG2",
+  "round": 9,
+  "candidate_id": "sha256:45ebccc04d8efc0c4fdc6a842eb3c9ec330bab2ec517b1c592af60b05a066294",
+  "source_commit": "7854770efd93a23f575667caf2a31a35c0a334eb",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG2-T-DG2-REV-QA-R9-qa-verifier-20261006T205457Z-1a213c54",
+    "session_id": "1a213c54-1928-4dd9-837b-44c73c0873b7"
+  },
+  "implementation_author": [
+    "transformation-analyst",
+    "frontend-ux-engineer",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "solution-architect",
+    "devops-engineer"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "qa-verifier authored no product implementation in the DG2 scope. Its only authored files are QA tests, harnesses and evidence (tests/qa/**, e2e/**, docs/delivery/test-evidence/DG2/qa/**). The round-9 repairs are by other roles: D-069 declared request media types (T-DG2-BE14, backend-workflow-engineer) and the one-alert-per-form-error fix (e3cadfa, T-DG2-FE8, frontend-ux-engineer). Every result here comes from qa-verifier's own runs in disposable clones of 7854770e under $TMPDIR, removed afterwards. At the start the candidate tree's HEAD was 041478cb (the round-9 freeze: assignments, manifest and stages.json only). The recomputed candidate ID matched in the tree, at --ref 7854770e and in the clone. During the run HEAD moved to db8caee (domain-reviewer's and code-security-reviewer's auto-committed round-9 evidence). qa-verifier did not open those files, and at the end the ID was still 45ebccc0… with 544 files. The verdict was formed without reading any other reviewer's round-9 record."
+  },
+  "assignment": "docs/delivery/assignments/DG2/round-9/qa-verifier.md",
+  "requirements_checked": [
+    "REQ-PB-003",
+    "REQ-PB-012",
+    "REQ-PB-016",
+    "REQ-PB-017",
+    "REQ-PB-018",
+    "REQ-PB-023",
+    "REQ-PB-024",
+    "REQ-PB-025",
+    "REQ-PB-026",
+    "REQ-PB-027",
+    "REQ-PB-028",
+    "REQ-PB-029",
+    "REQ-PB-030",
+    "REQ-PB-031",
+    "REQ-PB-033",
+    "REQ-PB-034",
+    "REQ-PB-035",
+    "REQ-PB-036",
+    "REQ-PB-037",
+    "REQ-PB-038",
+    "REQ-PB-039",
+    "REQ-PB-041",
+    "REQ-PB-042",
+    "REQ-PB-043",
+    "REQ-DLV-034",
+    "REQ-S04-003",
+    "REQ-S04-004",
+    "REQ-S04-005",
+    "REQ-S05-003",
+    "REQ-S10-001",
+    "REQ-S13-012",
+    "REQ-S16-013"
+  ],
+  "checks_run": [
+    {
+      "id": "QA-R9-00-candidate",
+      "procedure": "Verify the frozen candidate. Recompute the candidate ID in the candidate tree (at the start and the end), at --ref 7854770e, and in a disposable clone checked out at the source commit. Confirm the source commit is an ancestor of HEAD and that the commits between them change only delivery metadata.",
+      "command": "git rev-parse HEAD; git merge-base --is-ancestor 7854770e HEAD; git diff --stat 7854770e HEAD; node tools/gates/candidate.mjs --stage DG2; node tools/gates/candidate.mjs --stage DG2 --ref 7854770e; (clone) node tools/gates/candidate.mjs --stage DG2",
+      "environment": "candidate tree HEAD 041478cb (start) / db8caee (end); clone $TMPDIR/review-dg2 @7854770e; node v24.21.0",
+      "expected": "sha256:45ebccc0…0066294 with 544 files everywhere",
+      "actual": "Every computation gives sha256:45ebccc04d8efc0c4fdc6a842eb3c9ec330bab2ec517b1c592af60b05a066294 with 544 files. 041478cb adds only the round-9 assignments, the manifest and stages.json. At the end HEAD was db8caee (other reviewers' evidence commits) and the ID was unchanged.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/00-candidate.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/00-candidate-end.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/env.txt"
+      ]
+    },
+    {
+      "id": "QA-R9-01-historical-DG1",
+      "procedure": "Validate the previously approved gate DG1 historically.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG1",
+      "environment": "candidate tree; node v24.21.0",
+      "expected": "PASS",
+      "actual": "PASS gate DG1 (historical)",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/00-historical-DG1.log"
+      ]
+    },
+    {
+      "id": "QA-R9-02-typecheck",
+      "procedure": "Type-check every workspace package.",
+      "command": "pnpm -r typecheck",
+      "environment": "clone @7854770e after pnpm install --frozen-lockfile --offline (private copy of the pre-populated store); node v24.21.0",
+      "expected": "exit 0",
+      "actual": "exit 0, no errors",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/00-install.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/01-typecheck.log"
+      ]
+    },
+    {
+      "id": "QA-R9-03-build",
+      "procedure": "Build every workspace package.",
+      "command": "pnpm -r build",
+      "environment": "clone @7854770e; node v24.21.0",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/02-build.log"
+      ]
+    },
+    {
+      "id": "QA-R9-04-lint",
+      "procedure": "ESLint with zero warnings allowed.",
+      "command": "pnpm lint",
+      "environment": "clone @7854770e; node v24.21.0",
+      "expected": "exit 0",
+      "actual": "eslint . --max-warnings=0: exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/03-lint.log"
+      ]
+    },
+    {
+      "id": "QA-R9-05-openapi-lint",
+      "procedure": "Lint the OpenAPI contract.",
+      "command": "pnpm openapi:lint",
+      "environment": "clone @7854770e; node v24.21.0",
+      "expected": "PASS, 161 operations",
+      "actual": "PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 161 operations",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/04-openapi-lint.log"
+      ]
+    },
+    {
+      "id": "QA-R9-06-no-cdn",
+      "procedure": "Check that there are no public CDN or builder-hosted runtime references.",
+      "command": "pnpm check:no-cdn",
+      "environment": "clone @7854770e; node v24.21.0",
+      "expected": "PASS",
+      "actual": "PASS no-cdn: scanned apps, packages",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/05-no-cdn.log"
+      ]
+    },
+    {
+      "id": "QA-R9-07-format",
+      "procedure": "Prettier format check.",
+      "command": "pnpm format:check",
+      "environment": "clone @7854770e; node v24.21.0",
+      "expected": "All matched files use Prettier code style",
+      "actual": "All matched files use Prettier code style!",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/06-format-check.log"
+      ]
+    },
+    {
+      "id": "QA-R9-08-contrast",
+      "procedure": "Design-token contrast check.",
+      "command": "pnpm --filter @mth/design-tokens run check:contrast",
+      "environment": "clone @7854770e; node v24.21.0",
+      "expected": "PASS (WCAG AA pairs met; documented prohibited pairs only)",
+      "actual": "PASS contrast: 50 pairs meet WCAG AA; 3 prohibited pairs fail as documented",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/07-contrast.log"
+      ]
+    },
+    {
+      "id": "QA-R9-09-unit-series",
+      "procedure": "Run the unit tests 3 times on Node 22.22.2 and 3 times on Node 24.21.0, alternating LANG/LC_ALL unset and LANG=C.UTF-8, plus once on Node 24 under CPU load (3 busy-loop hogs on 4 vCPU while other agents were also running).",
+      "command": "pnpm test (see unit/run-unit-series.sh)",
+      "environment": "clone @7854770e; node v22.22.2 and v24.21.0; 4 vCPU; loadavg 6.65 → 7.88 in the load run",
+      "expected": "every run green",
+      "actual": "7/7 runs: 40 files, 718 tests passed, exit 0. This includes RecordForm.alerts.test.tsx (16 tests, F-DG2-340) and media-types.test.ts (unit).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/08-unit-series-summary.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/unit/run-unit-series.sh",
+        "docs/delivery/test-evidence/DG2/qa/round-9/unit/node22-run1-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/unit/node24-run2-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/unit/node24-load-unset.log"
+      ]
+    },
+    {
+      "id": "QA-R9-10-integration-locale-unset",
+      "procedure": "Run the full integration project 3 times with LANG/LC_ALL unset, each on a fresh disposable PostgreSQL on a unique port. The project covers: migrations 0001→0019 (migrate.test.ts), DB guards (protection/bootstrap/catalogue, dg2-repairs 0019 guard), contract.test.ts (route coverage of every governed route, the media-type sweep, 429), blank-text, encoding, invalid-character, framework-errors, invalid-utf8, media-types and the evidence tests.",
+      "command": "env -u LANG -u LC_ALL QA_PG_PORT=2461{1,3,5} tests/qa/support/with-pg.sh npx vitest run --project integration --reporter=verbose",
+      "environment": "clone @7854770e; node v24.21.0; PostgreSQL 16.13 disposable cluster (server_encoding UTF8, lc_collate C, lc_ctype C)",
+      "expected": "3/3 green; each assigned file passing in every run",
+      "actual": "3/3 runs: 34 files, 559 tests passed, exit 0, port attempt 1. Per run: contract 18/18, blank-text 29, encoding 8, invalid-character 20, framework-errors 11, invalid-utf8 14, media-types 10, evidence 29, migrate 7, protection 17; 0 failures.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/10-integration-series-summary.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/integration/integration-unset-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/integration/integration-unset-run2.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/integration/integration-unset-run3.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/integration/run-integration-series.sh"
+      ]
+    },
+    {
+      "id": "QA-R9-11-integration-locale-cutf8",
+      "procedure": "Same as QA-R9-10 with LANG=C.UTF-8, 3 runs.",
+      "command": "env -u LC_ALL LANG=C.UTF-8 QA_PG_PORT=2461{2,4,6} tests/qa/support/with-pg.sh npx vitest run --project integration --reporter=verbose",
+      "environment": "clone @7854770e; node v24.21.0; PostgreSQL 16.13 disposable (UTF8, C)",
+      "expected": "3/3 green",
+      "actual": "3/3 runs: 34 files, 559 tests passed, exit 0, port attempt 1; same per-file counts as the unset runs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/10-integration-series-summary.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/integration/integration-cutf8-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/integration/integration-cutf8-run2.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/integration/integration-cutf8-run3.log"
+      ]
+    },
+    {
+      "id": "QA-R9-12-migrations-guards-contract",
+      "procedure": "Extract the migration list and the migrate, DB-guard and contract route-coverage results from the integration log.",
+      "command": "ls packages/db/migrations; grep migrate/protection/bootstrap/catalogue/route coverage lines in integration-unset-run1.log",
+      "environment": "clone @7854770e",
+      "expected": "migrations 0001…0019 applied in order, idempotent and checksum-guarded; append-only audit and SoD guards hold; every governed route maps to an operation and back (161 operations)",
+      "actual": "19 migrations (0001_identity_access … 0019_evidence_review_separation). migrate.test.ts passes 7/7 (applies every shipped migration, idempotent, refuses changed or unknown files, atomic failure). protection 17/17, 0019 self-review guard passes. Route coverage maps every governed route to an OpenAPI operation and back; openapi lint reports 161 operations.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/12-migrations-guards-contract.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/04-openapi-lint.log"
+      ]
+    },
+    {
+      "id": "QA-R9-13-integration-qa-acceptance-suites",
+      "procedure": "Run the integration project once per locale setting with my evidence acceptance suites added to the clone's tests/qa/integration (dg2-qa-acceptance, round-2 design/journey-r2, round-3 blank-sweep/regress; the same set as round 8). Attempt 1 also included my superseded round-1 dg2-qa-journey.test.ts by mistake: 2 failures in both locales. I investigated them: they reproduce identically on the round-8 candidate cf3446e4, so they are a stale round-1 probe (PATCH status:active instead of the /activate route), not a regression. I re-ran with the round-8 file set.",
+      "command": "<locale env> QA_PG_PORT=2464{1,2} tests/qa/support/with-pg.sh npx vitest run --project integration --reporter=verbose",
+      "environment": "clone @7854770e + qa-verifier suites (clone only); node v24.21.0; PostgreSQL 16.13 (UTF8, C)",
+      "expected": "green in both locale settings",
+      "actual": "unset: 39 files, 599 tests passed, exit 0. C.UTF-8: 39 files, 599 tests passed, exit 0. The attempt-1 failures are explained in 13-attempt1-cause.log, with the control run on cf3446e4 in 14-control-…log (same 2 failures).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/13-integration-with-qa-suites-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/13-integration-with-qa-suites-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/13-attempt1-cause.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/13-integration-with-qa-suites-attempt1-unset-incl-superseded-r1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/13-integration-with-qa-suites-attempt1-cutf8-incl-superseded-r1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/14-control-superseded-r1-journey-on-r8-candidate.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/run-qa-suites.sh"
+      ]
+    },
+    {
+      "id": "QA-R9-14-e2e-product-locale-unset",
+      "procedure": "Run the P1 and P2 product journeys, p2-blank-text.spec.ts (including the FE8 'said once' test) and A20 in chromium-en and chromium-ar on the real stack, with one worker on unique ports. The journeys include Define→G2 and Design→G3.",
+      "command": "env -u LANG -u LC_ALL E2E_API_PORT=3881 E2E_PG_PORT=24681 apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e e2e/a20-bilingual-shell.spec.ts --workers=1 --reporter=list",
+      "environment": "second clone @7854770e; node v24.21.0; PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers (chromium-1194 pre-installed, nothing downloaded); disposable PostgreSQL 16.13 (server_encoding UTF8)",
+      "expected": "all green in both projects, including Define → G2 and Design → G3",
+      "actual": "64 passed (4.3m), exit 0. Define → G2 and Design → G3 pass in en and ar.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/15-e2e-product-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/run-e2e.sh"
+      ]
+    },
+    {
+      "id": "QA-R9-15-e2e-product-locale-cutf8",
+      "procedure": "Same as QA-R9-14 with LANG=C.UTF-8.",
+      "command": "env -u LC_ALL LANG=C.UTF-8 E2E_API_PORT=3891 E2E_PG_PORT=24691 apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e e2e/a20-bilingual-shell.spec.ts --workers=1 --reporter=list",
+      "environment": "as QA-R9-14",
+      "expected": "all green",
+      "actual": "64 passed (4.3m), exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/15-e2e-product-cutf8.log"
+      ]
+    },
+    {
+      "id": "QA-R9-16-e2e-qa-acceptance-stack-locale-unset",
+      "procedure": "Run my acceptance journey on the qa-stack (real built SPA, API and PostgreSQL), with one worker. It covers A20, my round-8 spec (R8-01..06) and round-9 spec (R9-01..05), and the product journeys. The server_encoding line is in the log.",
+      "command": "env -u LANG -u LC_ALL QA_E2E_API_PORT=3883 QA_E2E_PG_PORT=24683 QA_R8_QUERY_OPS=<21-query-ops.py output> e2e/support/qa-stack.sh npx playwright test e2e apps/web/e2e --workers=1 --reporter=list",
+      "environment": "second clone @7854770e + qa-verifier specs in e2e/ (the clone's evidence copies under docs/ deleted); node v24.21.0; pre-installed chromium-1194",
+      "expected": "all green; log shows server_encoding UTF8",
+      "actual": "94 passed (5.2m), exit 0. Log: 'qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C'. This run used the spec before R9-06 was added; the final spec ran in QA-R9-17 and QA-R9-18.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/17-e2e-qa-stack-unset.log"
+      ]
+    },
+    {
+      "id": "QA-R9-17-e2e-qa-acceptance-stack-locale-cutf8",
+      "procedure": "Same as QA-R9-16 with LANG=C.UTF-8 and the final round-9 spec (including R9-06).",
+      "command": "env -u LC_ALL LANG=C.UTF-8 QA_E2E_API_PORT=3893 QA_E2E_PG_PORT=24693 QA_R8_QUERY_OPS=<…> e2e/support/qa-stack.sh npx playwright test e2e apps/web/e2e --workers=1 --reporter=list",
+      "environment": "as QA-R9-16",
+      "expected": "all green; server_encoding UTF8",
+      "actual": "96 passed (5.0m), exit 0; server_encoding UTF8, lc_collate C, lc_ctype C",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/17-e2e-qa-stack-cutf8.log"
+      ]
+    },
+    {
+      "id": "QA-R9-18-e2e-qa-r9-final-locale-unset",
+      "procedure": "Run the final round-9 spec (byte-identical to the evidence copy) alone on the qa-stack with locale unset, so R9-06 is also covered in that setting.",
+      "command": "env -u LANG -u LC_ALL QA_E2E_API_PORT=3895 QA_E2E_PG_PORT=24695 e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r9.spec.ts --workers=1 --reporter=list",
+      "environment": "as QA-R9-16",
+      "expected": "20/20 (10 tests x en, ar)",
+      "actual": "20 passed (38.0s), exit 0; server_encoding UTF8",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/19-e2e-qa-r9-final-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/18-e2e-qa-r9-dryrun-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/tests/round-9/e2e/dg2-qa-r9.spec.ts"
+      ]
+    },
+    {
+      "id": "QA-R9-19-F-DG2-340-verification",
+      "procedure": "Re-run round-8 R8-05 unchanged, in chromium-en and chromium-ar and in both locale settings. Run R9-05a..e: count the role=alert regions and the page-text occurrences of the localized message on the charter, the P1 transformation create form, the P1 admin organization create form and the ReasonDialog (real server, tampered invalid-UTF-8 body). Check that a field-pointer error stays on its field (real server validation.blank at /outOfScope). Check that a genuinely different second message is still shown (fulfilled problem, this sub-check only). Do a static sweep of every role=alert region in the SPA.",
+      "command": "npx playwright test e2e/dg2-qa-r8.spec.ts -g R8-05 and e2e/dg2-qa-r9.spec.ts -g R9-05 (within QA-R9-16/17/18); grep/sed sweep (40-f340-sweep-static.log)",
+      "environment": "as QA-R9-16/17/18; EN LTR and AR RTL",
+      "expected": "each form-level message said exactly once in one live region; distinct second message kept; field errors on fields; nothing written",
+      "actual": "R8-05: 4/4 green; the screenshots now show the message once (twice in round 8). R9-05a/c/d/e: 1 alert carrying the message and 1 occurrence in the page text, in en and ar, and nothing written. R9-05b: the field-pointer error is on the field (aria-invalid, describedby), the form-errors list is empty and the generic banner appears once. The real-server unknown_field is said once. With the fulfilled problem the banner shows validation__json once and the list shows only the distinct too_big message. The static sweep finds no second region for pointer \"\". F-DG2-340 CLOSED_VERIFIED (qa-verifier.verifications.json).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-029"
+      ],
+      "evidence": [
+        "docs/delivery/reviews/DG2/round-9/qa-verifier.verifications.json",
+        "docs/delivery/test-evidence/DG2/qa/round-9/40-f340-sweep-static.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/e2e-qa-r9-screens/en-qa-r8-05-charter-invalid-utf8-server.png",
+        "docs/delivery/test-evidence/DG2/qa/round-9/e2e-qa-r9-screens/ar-qa-r8-05-charter-invalid-utf8-server.png",
+        "docs/delivery/test-evidence/DG2/qa/round-9/e2e-qa-r9-screens/en-qa-r9-05b-charter-distinct-second-message.png",
+        "docs/delivery/test-evidence/DG2/qa/round-9/e2e-qa-r9-screens/ar-qa-r9-05b-charter-distinct-second-message.png",
+        "docs/delivery/test-evidence/DG2/qa/round-9/e2e-qa-r9-screens/en-qa-r9-05b-charter-field-pointer.png",
+        "docs/delivery/test-evidence/DG2/qa/round-9/e2e-qa-r9-screens/ar-qa-r9-05b-charter-field-pointer.png",
+        "docs/delivery/test-evidence/DG2/qa/round-9/e2e-qa-r9-screens/en-qa-r9-05c-transformation-create-said-once.png",
+        "docs/delivery/test-evidence/DG2/qa/round-9/e2e-qa-r9-screens/ar-qa-r9-05d-organization-create-said-once.png",
+        "docs/delivery/test-evidence/DG2/qa/round-9/e2e-qa-r9-screens/en-qa-r9-05e-reason-dialog-said-once.png",
+        "docs/delivery/test-evidence/DG2/qa/round-9/17-e2e-qa-stack-cutf8.log"
+      ]
+    },
+    {
+      "id": "QA-R9-20-upload-undeclared-media-type",
+      "procedure": "R9-01 (raw socket, real stack). Send uploadEvidenceContent in 9 undeclared media types: text/plain with invalid bytes, text/plain;charset=utf-8, JSON object, JSON string, multipart/form-data, x-www-form-urlencoded, image/png, application/octet-streams, and no Content-Type with a body. Use Content-Length and chunked framing, with a session, and once without a session. Check audit_event by request id (psql on the real DB), evidence_content rows, the evidence version and currentContentId, the download, and the stored files.",
+      "command": "npx playwright test e2e/dg2-qa-r9.spec.ts -g R9-01 (within QA-R9-16/17/18)",
+      "environment": "as QA-R9-16; chromium-en and chromium-ar projects; both locale settings",
+      "expected": "every request 400 problem+json validation.content_type at pointer \"\"; 0 audit rows; nothing stored",
+      "actual": "18/18 per project and run: 400 validation.content_type at \"\" with requestId = X-Request-Id and 0 audit rows each. Without a session: 400 as well (documented D-069 order: parsing before authentication). Evidence version 1→1, currentContentId null, download 404, 0 evidence_content rows, 0 stored files.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S13-012"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/17-e2e-qa-stack-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/19-e2e-qa-r9-final-unset.log"
+      ]
+    },
+    {
+      "id": "QA-R9-21-binary-upload-roundtrip",
+      "procedure": "R9-02 (raw socket). Upload 3 revisions of binary content: all 256 byte values, invalid-UTF-8 sequences and 64 KiB pseudo-random bytes with Content-Length; a chunked revision split mid-buffer; and one with 'Application/Octet-Stream; charset=binary'. Use an Arabic/emoji percent-encoded X-File-Name. Download each revision and compare bytes, sha256, the Digest header and the DB sha256/size. Check that each upload has an audit row.",
+      "command": "npx playwright test e2e/dg2-qa-r9.spec.ts -g R9-02 (within QA-R9-16/17/18)",
+      "environment": "as QA-R9-16",
+      "expected": "200 for each; downloaded bytes identical; sha256 = DB = Digest; ≥1 audit row; file name round-trips",
+      "actual": "All 3 revisions return 200 (65804, 20268 and 3256 bytes). Downloads are byte-identical; sha256 equals the DB value and the Digest header; 1 audit row each. The file name round-trips (Content-Disposition attachment with filename*=UTF-8''…). Same result in en and ar, in both locale settings.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S13-012",
+        "REQ-S16-013"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/17-e2e-qa-stack-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/17-e2e-qa-stack-cutf8.log"
+      ]
+    },
+    {
+      "id": "QA-R9-22-json-ops-undeclared-media-type",
+      "procedure": "R9-03/R9-06 (raw socket). Send PATCH charter in text/plain, text/plain;charset, octet-stream, form-urlencoded, text/json, application/jsonp and with no Content-Type, x 2 framings. Send POST transformations in text/plain and octet-stream. Send logout (a bodiless operation) with a text/plain body. Send JSON declared with charset iso-8859-1 or utf-16 but with non-UTF-8 bytes. Positive controls: 'application/json; charset=UTF-8' and 'APPLICATION/JSON'.",
+      "command": "npx playwright test e2e/dg2-qa-r9.spec.ts -g 'R9-03|R9-06' (within QA-R9-17/18)",
+      "environment": "as QA-R9-16",
+      "expected": "400 validation.content_type and nothing written for the undeclared types; logout refused and the session kept; non-UTF-8 JSON is a 4xx, never a 5xx, with nothing written; the declared JSON variants are accepted",
+      "actual": "16/16 refused with 400 validation.content_type and no audit row. Charter version 1→1 with its value unchanged; 0 transformations created. Logout with text/plain: 400 content_type, and GET /me is still 200. iso-8859-1 E9 and utf-16 bodies: 400 validation.json, no audit row, nothing created. charset=UTF-8 → 200, APPLICATION/JSON chunked → 200, charset=utf-8 POST → 201.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/17-e2e-qa-stack-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/19-e2e-qa-r9-final-unset.log"
+      ]
+    },
+    {
+      "id": "QA-R9-23-arabic-emoji-roundtrip",
+      "procedure": "R9-04: send an Arabic/emoji/ZWJ/RLM/combining-mark evidence title and note as JSON with a charset parameter, chunked and cut at every continuation byte (62 chunks). R8-02/R8-04 (rerun): the same through raw sockets and through the charter UI in EN and AR.",
+      "command": "npx playwright test e2e/dg2-qa-r9.spec.ts -g R9-04; e2e/dg2-qa-r8.spec.ts -g 'R8-02|R8-04' (within QA-R9-16/17/18)",
+      "environment": "as QA-R9-16; EN LTR and AR RTL",
+      "expected": "stored and returned verbatim, byte for byte",
+      "actual": "R9-04: 201; title and note stored verbatim (50+73 bytes). R8-02: 8 cases → 201 verbatim. R8-04: the API and the reloaded page show the exact 50 code points. Same in en and ar and in both locale settings.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/17-e2e-qa-stack-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/17-e2e-qa-stack-cutf8.log"
+      ]
+    },
+    {
+      "id": "QA-R9-24-d068-regression",
+      "procedure": "Re-run R8-01 (48 invalid-UTF-8 raw requests), R8-03 (104 undecodable-query probes over every GET query parameter, extracted from the candidate contract) and R8-06 (Arabic/emoji search, ?q=%FF deep link).",
+      "command": "npx playwright test e2e/dg2-qa-r8.spec.ts (within QA-R9-16/17)",
+      "environment": "as QA-R9-16",
+      "expected": "unchanged from round 8",
+      "actual": "R8-01: 48/48 400 validation.json at \"\". R8-03: 104/104 400 validation.format at /query/<name>; unauthenticated 401; the Arabic/emoji search finds the record. R8-06: no 5xx. All in en and ar, in both locale settings.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/17-e2e-qa-stack-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/17-e2e-qa-stack-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/tests/round-8/e2e/dg2-qa-r8.spec.ts"
+      ]
+    },
+    {
+      "id": "QA-R9-25-axe",
+      "procedure": "Aggregate every axe summary written by the product and qa-stack e2e runs (en and ar, both locale settings), including the error states and my round-9 F-DG2-340 states.",
+      "command": "python3 over e2e-*/*axe-summary*.json (see log)",
+      "environment": "as QA-R9-14..17; @axe-core/playwright, tags wcag2a/2aa/21a/21aa",
+      "expected": "0 serious or critical violations",
+      "actual": "636 page/state scans, 0 serious or critical violations (the round-9 states were scanned 7 times per language per run)",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/20-axe-summary.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/e2e-qa-cutf8/qa-ar-axe-summary-qa-r9.json",
+        "docs/delivery/test-evidence/DG2/qa/round-9/e2e-qa-unset/qa-en-axe-summary-qa-r9.json",
+        "docs/delivery/test-evidence/DG2/qa/round-9/e2e-product-cutf8/product-ar-axe-summary-p2.json",
+        "docs/delivery/test-evidence/DG2/qa/round-9/e2e-product-unset/product-en-axe-summary-p2-blank.json"
+      ]
+    },
+    {
+      "id": "QA-R9-26-validate-register",
+      "procedure": "Validate the register rules at DG2.",
+      "command": "node tools/gates/validate.mjs --register DG2",
+      "environment": "candidate tree; node v24.21.0",
+      "expected": "PASS",
+      "actual": "PASS register rules at DG2",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/30-validate-register.log"
+      ]
+    },
+    {
+      "id": "QA-R9-27-validate-pipeline",
+      "procedure": "Validate the pipeline state.",
+      "command": "node tools/gates/validate.mjs --pipeline",
+      "environment": "candidate tree; node v24.21.0",
+      "expected": "PASS",
+      "actual": "PASS pipeline (active stage: DG2 REVIEWING)",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/30-validate-pipeline.log"
+      ]
+    },
+    {
+      "id": "QA-R9-28-validate-reconcile",
+      "procedure": "Reconcile the findings and review structure.",
+      "command": "node tools/gates/validate.mjs --reconcile",
+      "environment": "candidate tree; node v24.21.0",
+      "expected": "PASS (structure); round-9 records are expected to be missing mid-round",
+      "actual": "PASS reconcile (structure). The round-9 records are listed as missing, as expected during the review.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/30-validate-reconcile.log"
+      ]
+    },
+    {
+      "id": "QA-R9-29-register-rows",
+      "procedure": "Check that the 32 assigned requirement ids exist in the register with final gate DG2, a status and acceptance text.",
+      "command": "python3 (csv.DictReader over docs/delivery/requirements.csv)",
+      "environment": "candidate tree",
+      "expected": "32/32 present, final_gate DG2",
+      "actual": "32 assigned, 32 unique, 0 missing; all final_gate DG2, status IMPLEMENTED, with acceptance text",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/31-register-rows.log"
+      ]
+    },
+    {
+      "id": "QA-R9-30-residual-registry",
+      "procedure": "Live registry residual (D-057), checked on the offline surface. The frozen-lockfile offline install from the pinned store succeeds. deps:verify needs the live registry, which this network-less sandbox cannot reach.",
+      "command": "pnpm install --frozen-lockfile --offline --store-dir $TMPDIR/pnpm-store/v10; timeout 120 pnpm deps:verify",
+      "environment": "clone @7854770e; no network in the sandbox",
+      "expected": "the offline install from the lockfile succeeds; the live registry check is a documented residual",
+      "actual": "Offline frozen-lockfile install exit 0. deps:verify timed out (124) with no network, as in round 8. Residual D-057: no live registry verification here. This is not a BLOCKED gate check.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/00-install.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/32-residual-registry.log"
+      ]
+    },
+    {
+      "id": "QA-R9-31-residual-ci",
+      "procedure": "Live CI residual (D-058), checked on the config surface: inspect the workflows and the CI e2e stack script.",
+      "command": "ls .github/workflows; grep -nE 'runs-on|node-version|pnpm |playwright|initdb|ENCODING|PORT' .github/workflows/*.yml deploy/scripts/ci-e2e-stack.mjs",
+      "environment": "clone @7854770e",
+      "expected": "CI config present and consistent with the local procedure; no live run available",
+      "actual": "ci.yml and delivery-gates.yml are present: ubuntu-24.04, Node 22/24 matrix, pinned pnpm, format/lint/test/e2e steps, UTF8 initdb. Residual D-058: no live CI run. This is not a BLOCKED gate check.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/33-residual-ci-config.log"
+      ]
+    },
+    {
+      "id": "QA-R9-32-residual-keycloak",
+      "procedure": "Keycloak residual (D-049), checked on the offline surface: the OIDC integration tests (oidc.test.ts, 33 tests) and contract 'auth + me', against an in-process OIDC provider.",
+      "command": "results of QA-R9-10/11",
+      "environment": "clone @7854770e; node v24.21.0; disposable PostgreSQL 16.13",
+      "expected": "green on the offline OIDC surface; live Keycloak a documented residual",
+      "actual": "oidc.test.ts 33/33 and contract 'auth + me' pass in all 6 integration runs. Residual D-049: no live Keycloak. This is not a BLOCKED gate check.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-9/integration/integration-unset-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-9/10-integration-series-summary.log"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG2/round-9/qa-verifier.verifications.json",
+    "docs/delivery/test-evidence/DG2/qa/round-9/env.txt",
+    "docs/delivery/test-evidence/DG2/qa/round-9/00-candidate.log",
+    "docs/delivery/test-evidence/DG2/qa/round-9/00-candidate-end.log",
+    "docs/delivery/test-evidence/DG2/qa/round-9/08-unit-series-summary.log",
+    "docs/delivery/test-evidence/DG2/qa/round-9/10-integration-series-summary.log",
+    "docs/delivery/test-evidence/DG2/qa/round-9/13-attempt1-cause.log",
+    "docs/delivery/test-evidence/DG2/qa/round-9/15-e2e-product-unset.log",
+    "docs/delivery/test-evidence/DG2/qa/round-9/15-e2e-product-cutf8.log",
+    "docs/delivery/test-evidence/DG2/qa/round-9/17-e2e-qa-stack-unset.log",
+    "docs/delivery/test-evidence/DG2/qa/round-9/17-e2e-qa-stack-cutf8.log",
+    "docs/delivery/test-evidence/DG2/qa/round-9/19-e2e-qa-r9-final-unset.log",
+    "docs/delivery/test-evidence/DG2/qa/round-9/20-axe-summary.log",
+    "docs/delivery/test-evidence/DG2/qa/round-9/40-f340-sweep-static.log",
+    "docs/delivery/test-evidence/DG2/qa/tests/round-9/e2e/dg2-qa-r9.spec.ts"
+  ],
+  "reviewed_at": "2026-10-06T21:36:00Z",
+  "summary": "PASS on candidate 45ebccc0 (source 7854770e). F-DG2-340 is CLOSED_VERIFIED: the form-level message is said once in EN-LTR and AR-RTL on the charter, transformation create, organization create and ReasonDialog; a distinct second message is kept; field errors stay on their fields. D-069 regression: undeclared media types are refused with 400 validation.content_type, with nothing stored and no audit row. Valid binary uploads round-trip byte for byte with matching sha256 and Digest, and Arabic/emoji text round-trips verbatim. Full regression is green in both locale settings: static checks, unit 7/7, integration 6/6 plus QA suites 2/2, product e2e 2/2, qa-stack 2/2 plus the final R9 run, and axe reports 0 serious or critical. No new findings. Residuals D-057, D-058 and D-049 are recorded as PASS on the offline/config surface."
+}
