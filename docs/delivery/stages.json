@@ -820,7 +820,7 @@
       "id": "DG2",
       "stage": "P2",
       "name": "Diagnose define and design",
-      "state": "REVIEWING",
+      "state": "FIXING",
       "depends_on": [
         "DG1"
       ],
@@ -895,6 +895,11 @@
           "state": "REVIEWING",
           "at": "2026-10-02T11:52:00Z",
           "note": "Round-2 repairs integrated across 4 agents (transformation-analyst register F-202; BE3 F-140/142/203/204/205 incl. migration 0019; KBE2 F-141 + activate wiring F-201; FE3 F-201/203/204 UI) plus the orchestrator F-206 qa-stack fix. All 9 round-1 findings FIXED_PENDING_VERIFICATION (0 OPEN). Orchestrator combined verification: typecheck/build/lint/openapi(161)/register-DG2 exit 0; unit green; contrast PASS; integration 440/440; e2e 42 (incl. Define->G2 + Design->G3 in EN and AR); validate --historical --stage DG1 exit 0. Candidate re-frozen as 089a2a2f (517 files, source eb8163e2) for the DG2 gate review round 2; all three reviewers (domain with the corrected finding schema, code-security, qa) run next to verify the fixes and re-review."
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-10-06T05:20:00Z",
+          "note": "Round 2 on candidate 089a2a2f: qa-verifier PASS and code-security-reviewer PASS. All 9 round-1 findings (F-DG2-140/141/142/201/202/203/204/205/206) are CLOSED_VERIFIED by the reviewers who raised them. domain-reviewer FAIL. New findings: F-DG2-143 (Low, code-security: flaky architecture-test timeout), F-DG2-150 (Medium, MANDATORY, REQ-PB-031: the B0041 exclusions pre-check never fails), F-DG2-151 (Low, gate titles repeat the code) and F-DG2-152 (Low, register cites a non-existent per-dimension endpoint). The first round-2 domain run was dropped by a user-approved surgical rewrite because its F-DG2-143 collided with code-security's (orchestrator assignment error) and was re-run on the same candidate with ids from F-DG2-150 (D-062). Round-3 repairs: backend-workflow-engineer F-150 + F-143; frontend-ux-engineer F-151 + the F-150 UI text; transformation-analyst F-152. Then re-freeze, round 3 (all 3 reviewers, distinct id ranges), audit."
         }
       ]
     },
