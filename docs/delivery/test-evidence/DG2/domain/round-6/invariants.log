@@ -1,0 +1,81 @@
+== B0009/B0018/B0023 source lines
+37:| Modular | A transformation is already underway | Enter at the relevant phase, complete the minimum mandatory templates, then reconnect to outcomes and benefits. |
+36:| End-to-End | New enterprise or business-unit transformation | Run Phases 1-6 sequentially. Do not launch initiatives before the North Star, outcomes and target state are clear. |
+== PMI/certified/official claims in product UI/i18n (lines mentioning PMI/certif/official)
+apps/web/src/i18n/en/common.json:5:    "provisionalHint": "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.",
+apps/web/src/i18n/en/common.json:6:    "provisionalNotice": "Branding is provisional: the text wordmark and colours are placeholders, not official Mobily brand assets."
+apps/web/src/i18n/en/common.json:126:    "brandBody": "No official Mobily logo or verified brand colours have been supplied. The header shows a provisional text wordmark, and the colours (including #0078FF) are provisional design tokens that can be replaced th
+apps/web/src/i18n/en/common.json:129:    "methodBody": "The product operationalizes the Business Transformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with custom extensions. It is not an official PMI standard, and th
+apps/web/src/i18n/ar/common.json:129:    "methodBody": "يطبّق المنتج دليل تحوّل الأعمال الإصدار 1.0، وهو خلاصة عملية مستوحاة من ممارسات PMI وBrightline وBRM مع إضافات مخصصة. وهو 
+apps/api/src/modules/admin/branding.ts:4:// #0078FF is a provisional brand token, not a verified Mobily colour; nothing here claims official brand compliance.
+apps/api/src/modules/admin/branding.ts:17: * Maps the token source to the contract shape. Fails safe: provenance is "official" only when the source says the
+apps/api/src/modules/admin/branding.ts:18: * set is not provisional AND no single token is provisional, so a partly unverified set is never reported official.
+apps/api/src/modules/admin/branding.ts:29:  return brandingTokens.parse({ provenance: provisional ? "provisional" : "official", tokens });
+== brand token / provisional
+packages/design-tokens/src/tokens.json:2:  "$comment": "Single design-token source (ADR-0009). PROVISIONAL values from master prompt §15 (REQ-S15-002). They are NOT verified or official Mobily colours; #0078FF is a provisional brand token. Replace only through the Branding Settings flow (REQ-S15-004) once official values are supplied.",
+packages/design-tokens/src/tokens.json:5:    "brand.primary": { "value": "#0078FF", "purpose": "Primary accents and selected elements", "provisional": true },
+packages/design-tokens/src/tokens.json:18:    "$comment": "Derived from the seeded tokens by a rule (REQ-S15-003). `value` is the result of the rule and a test re-derives it, so a change to a seed without regenerating fails. #0078FF itself is NOT used behind small white text.",
+apps/web/src/i18n/ar/common.json:4:    "provisional": "مؤقت",
+apps/web/src/i18n/ar/common.json:5:    "provisionalHint": "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة.",
+apps/web/src/i18n/ar/common.json:6:    "provisionalNotice": "الهوية البصرية مؤقتة: الشعار النصي والألوان بدائل مؤقتة وليست أصولًا رسمية لعلامة موبايلي."
+apps/web/src/i18n/ar/common.json:125:    "brandTitle": "هوية بصرية مؤقتة",
+== money columns
+== product gate codes vs DG
+apps/api/src/modules/identity/routes.ts:39: * source has no computed member with a non-literal key (F-DG1-124), and own entries never reach the prototype chain.
+apps/api/src/modules/identity/routes.ts:72:   * Validated-session subjects for the global rate limiter's key (F-DG1-142). The composition root shares one instance
+apps/api/src/modules/identity/routes.ts:84:  // Defence in depth for F-DG1-112 (the loader already refuses this): never issue non-Secure, non-__Host- session
+apps/api/src/modules/identity/routes.ts:109:  // Pre-session login cookie (F-DG1-103): binds the OIDC state to the browser that started the login. SameSite=Lax
+apps/api/src/modules/identity/routes.ts:173:        // F-DG2-231: a User-Agent with U+0000 (only possible past the HTTP parser, which refuses it) is not stored.
+(end DG grep)
+== D-066 diff touches playbook-text files?
+ apps/web/src/i18n/ar/problems.json | 1 +
+ apps/web/src/i18n/en/problems.json | 1 +
+ 2 files changed, 2 insertions(+)
+== money/rate column types in migrations
+      2 amount            numeric(20,4)
+      1 amount          numeric(20,4)
+      1 value                    numeric(24,6)
+      1 value                numeric(24,6)
+      1 value              numeric(24,6)
+      1 value  numeric(14,4)
+      1 value real
+== DG mentions in product source outside finding-id comments
+apps/api/src/modules/reporting/index.ts:2:// by the same scoped policy function as every other read. P1 SCAFFOLD (D-048, T-DG1-BE3): the module, its boundary
+apps/api/src/modules/admin/branding.ts:1:// GET /api/v1/branding/tokens (REQ-S15-002, contract operation getBrandingTokens). Read-only at DG1: Branding
+apps/api/src/modules/admin/branding.ts:33:  // Computed once: the source is static per process at DG1 (no Branding Settings writes yet).
+apps/api/src/modules/platform/health.ts:2:// shipped with this build applied with the same checksum). ADR-0007 §1, REQ-S19-010; encoding: ADR-0003, T-DG2-BE9.
+apps/api/src/modules/transformations/routes.ts:66: * This is a PRODUCT gate (G6), unrelated to the engineering delivery gates DG0-DG7.
+apps/api/src/modules/transformations/phase.ts:4:// delivery gates DG0-DG7.
+apps/api/src/modules/transformations/register-kit.ts:141: * `parse`; T-DG2-ARCH-02). All names are validated together, so every malformed parameter is reported.
+apps/api/src/modules/workflows/index.ts:7:// phase. They are unrelated to the engineering delivery gates DG0-DG7 (G6 never implies DG7, and the reverse).
+apps/api/src/modules/workflows/index.ts:20:/** The playbook's product gates (business approvals), in order. Not the engineering gates DG0-DG7. */
+apps/api/src/modules/workflows/criteria.ts:11:// These are BUSINESS gates inside the product; nothing here reads or writes the engineering gates DG0-DG7.
+(none above means none)
+== register
+REQ-PB-003,SOURCE,Offer the two source usage modes End-to-End and Modular when creating or entering a transformation,B0007;B0008;B0009;M0083
+REQ-PB-012,SOURCE,Seed the six minimum governance roles with their source accountabilities and assign them per transformation,B0017;B0018;M0
+REQ-PB-016,SOURCE,"G1 Case for Change: require diagnostic, baseline, root causes and value pools as gate evidence",B0023;M0118;M0125;M0228,S
+REQ-PB-017,SOURCE,"G2 Direction: require North Star, outcome tree, KPI definitions and guardrails as gate evidence",B0023;M0119;M0125,Stage 
+REQ-PB-018,SOURCE,"G3 Target State: require Target Operating Model, capability gaps and future journeys as gate evidence",B0023;M0120;M0125,
+REQ-PB-023,SOURCE,Organize the diagnostic into the six source workstreams with key questions and typical outputs,B0029,Core work (Diagnose),
+REQ-PB-024,SOURCE,Provide an editable capability heatmap with build/buy/partner needs,B0029;B0021;M0147,Core work (Capability); The 6-Phase 
+REQ-PB-025,SOURCE,"Provide journey and process maps capturing pain points, cycle time and failure demand",B0029;B0021;B0056;M0147,Core work 
+REQ-PB-026,SOURCE,Implement Template 1 Current-State Diagnostic as a native register,B0030;B0031;M0129;M0090,Template 1 — Current-State Di
+REQ-PB-029,SOURCE,Implement the Transformation Charter as a first-class record with all 14 source fields,B0034;B0035;M0146;M0127,Transformat
+REQ-PB-030,SOURCE,Capture the transformation thesis in its four-part causal sentence,B0036;B0037;M0146,Transformation thesis,CHARTER,Capabil
+REQ-PB-031,SOURCE,Run the five scope sanity checks on the charter,B0038;B0039;B0040;B0041;B0042;B0043;M0146,Scope sanity check,CHARTER,Is sc
+REQ-PB-033,SOURCE,"Hold exactly one current North Star per transformation, stated as one concise sentence",B0035;B0048,Charter (North Star);
+REQ-PB-034,SOURCE,Implement Template 2 Outcome & KPI Tree as a native register,B0049;B0050;B0048;M0130,Template 2 — Outcome & KPI Tree,T02
+REQ-PB-035,SOURCE,Warn when the charter does not hold 3-5 top outcomes,B0035,Charter (Top 3-5 outcomes),CHARTER,Top 3-5 outcomes (Outcome + 
+REQ-PB-036,SOURCE,Apply the good outcome test to every outcome,B0051,Good outcome test,T02,Specific;Measurable;Strategically relevant;Owned 
+REQ-PB-037,SOURCE,Record strategic guardrails as non-negotiables,B0035;B0021;B0023;M0125,Charter (Strategic guardrails); Phase 2 outputs,CHA
+REQ-PB-038,SOURCE,Seed the 10 TOM dimensions with their design questions,B0055;B0056;B0159;M0083;M0147;M0154,The 10-dimension Target Operati
+REQ-PB-039,SOURCE,Implement Template 3 TOM Gap Matrix as a native register,B0057;B0058;M0131;M0090,Template 3 — TOM Gap Matrix,T03,TOM dim
+REQ-PB-041,SOURCE,Implement the Target Operating Model Canvas with the ten source boxes and prompts,B0061;B0062;M0147,Target Operating Model
+REQ-PB-042,SOURCE,Support the TOM canvas workshop and convert unresolved items into design decisions with owners,B0063;M0147,Canvas use,TOM-
+REQ-PB-043,SOURCE,Implement Template 4 Design Decision Log as a native register,B0064;B0065;M0132;M0150,Template 4 — Design Decision Log,T
+REQ-S04-003,USER,Run the Diagnose phase procedure and G1 Case for Change decision,M0118,§4 Phase workflows and stage gates,,Scope;Sponsor;B
+REQ-S04-004,USER,Run the Define phase procedure and G2 Direction decision,M0119,§4 Phase workflows and stage gates,,North Star;Outcome hier
+REQ-S04-005,USER,Run the Design phase procedure and G3 Target State decision,M0120,§4 Phase workflows and stage gates,,Ten-dimension TOM;Cu
+REQ-S05-003,USER,"Provide per TOM dimension the current/target design, linked gaps, owner, evidence, dependencies and decisions",M0147,§5 C
+NOTE: 'value real' match above is the B0018 seed text 'value realization' in 0018_p2_access_instantiation.sql:115, not a column type. Money amounts numeric(20,4); measures numeric(24,6); cycle time numeric(14,4).
