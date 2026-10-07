@@ -2,6 +2,7 @@
 // and routes. The network is replaced by a scripted fetch that records requests.
 import { render } from "@testing-library/react";
 import type { i18n as I18n } from "i18next";
+import { StrictMode } from "react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { vi } from "vitest";
 import type { Permission } from "@mth/shared";
@@ -220,8 +221,13 @@ export function problem(status: number, code: string, extra: Record<string, unkn
  * `retryDelayMs`: the delay between query retries. Queries that set their own `retry` policy (e.g. `useMeQuery`
  * retries a 5xx twice) otherwise wait TanStack Query's default exponential back-off (1 s + 2 s) in real time; a test
  * of that path can pass 0 so the same retries run immediately (F-DG2-143). Unset keeps the library default.
+ * `strict` wraps the app in <StrictMode> as src/main.tsx does in production, so React runs state updaters and render
+ * functions twice and an impure updater shows up in the test (F-DG2-430).
  */
-export function renderApp(path: string, options: { i18n?: I18n; retryDelayMs?: number } = {}) {
+export function renderApp(
+  path: string,
+  options: { i18n?: I18n; retryDelayMs?: number; strict?: boolean | undefined } = {},
+) {
   setCsrfToken(null);
   const i18n = options.i18n ?? createI18n("ar");
   const router = createMemoryRouter(routes, { initialEntries: [path] });
@@ -234,10 +240,11 @@ export function renderApp(path: string, options: { i18n?: I18n; retryDelayMs?: n
       ...(options.retryDelayMs !== undefined ? { retryDelay: options.retryDelayMs } : {}),
     },
   });
-  const utils = render(
+  const app = (
     <AppProviders i18n={i18n} queryClient={queryClient}>
       <RouterProvider router={router} />
-    </AppProviders>,
+    </AppProviders>
   );
+  const utils = render(options.strict ? <StrictMode>{app}</StrictMode> : app);
   return { ...utils, router, i18n, queryClient };
 }

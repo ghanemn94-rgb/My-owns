@@ -132,6 +132,7 @@ function render(
   grants: ReturnType<typeof leadGrants> | typeof AUDITOR_GRANTS,
   locale: "en" | "ar",
   extra: Handler[] = [],
+  options: { strict?: boolean } = {},
 ) {
   const api = mockApi(
     ...extra,
@@ -150,7 +151,7 @@ function render(
       body: { ...makeMe([]).user, id: NAMED_USER, displayName: "Synthetic Named Teammate" },
     })),
   );
-  const utils = renderApp(`/transformations/${TR_ID}/team`, { i18n: createI18n(locale) });
+  const utils = renderApp(`/transformations/${TR_ID}/team`, { i18n: createI18n(locale), strict: options.strict });
   return { ...api, ...utils };
 }
 
@@ -302,4 +303,65 @@ describe("Team (Arabic RTL)", () => {
     expect(within(governance).getByRole("button", { name: "إسناد: قائد مسار العمل" })).toBeTruthy();
     expect(screen.getByRole("region", { name: "أعضاء الفريق" })).toBeTruthy();
   });
+});
+
+// F-DG2-430: the assign dialog's accountability preview follows the Role select. RecordForm reports value changes from
+// an effect, never from inside a state updater. The app is rendered in <StrictMode> (as src/main.tsx does), so React
+// double-invokes updaters, and the unit-web guard (test/react-warning-guard.ts) fails the test on any "Cannot update a
+// component ... while rendering a different component" warning.
+describe("Team assign dialog: accountability preview follows the selected role (F-DG2-430)", () => {
+  const cases = [
+    {
+      locale: "en" as const,
+      assignWl: "Assign: Workstream Lead",
+      roleLabel: /^Role/,
+      previewHeading: "Accountability of the selected role",
+      text: (code: string) => (code in SOURCE_ROLE ? SOURCE[SOURCE_ROLE[code]!]! : PLATFORM[code]!),
+    },
+    {
+      locale: "ar" as const,
+      assignWl: "إسناد: قائد مسار العمل",
+      roleLabel: /^الدور/,
+      previewHeading: "مسؤولية الدور المختار",
+      text: (code: string) => `مسؤولية الدور ${code} (ترجمة مؤقتة)`,
+    },
+  ];
+  for (const c of cases) {
+    it(`${c.locale}: WL on open, then KDS, TD, none and WL again, in StrictMode with no React warning`, async () => {
+      const { requests } = render(leadGrants(), c.locale, [], { strict: true });
+      expect(document.documentElement.dir).toBe(c.locale === "ar" ? "rtl" : "ltr");
+      fireEvent.click(await screen.findByRole("button", { name: c.assignWl }));
+      const dialog = await screen.findByRole("dialog");
+      const preview = () => dialog.querySelector<HTMLElement>("[data-preview-role]");
+      const expectPreview = async (code: string) =>
+        waitFor(() => {
+          const p = preview();
+          expect(p?.dataset["previewRole"]).toBe(code);
+          expect(p!.textContent).toContain(c.previewHeading);
+          expect(p!.textContent).toContain(c.text(code));
+        });
+
+      // Opened from the Workstream Lead card: the preview starts on WL (the default, not a reported change).
+      await expectPreview("WL");
+      const role = within(dialog).getByLabelText(c.roleLabel) as HTMLSelectElement;
+      expect(role.value).toBe("WL");
+      for (const code of ["KDS", "TD"]) {
+        fireEvent.change(role, { target: { value: code } });
+        expect(role.value).toBe(code);
+        await expectPreview(code);
+      }
+      // No role selected: no preview at all (never a stale one).
+      fireEvent.change(role, { target: { value: "" } });
+      await waitFor(() => expect(preview()).toBeNull());
+      fireEvent.change(role, { target: { value: "WL" } });
+      await expectPreview("WL");
+      // Editing another field keeps the preview on the selected role.
+      fireEvent.change(within(dialog).getByLabelText(c.locale === "ar" ? /^السبب/ : /^Reason/), {
+        target: { value: "Synthetic: preview check" },
+      });
+      await expectPreview("WL");
+      // Previewing never sends anything.
+      expect(requests.filter((r) => r.method !== "GET")).toEqual([]);
+    });
+  }
 });

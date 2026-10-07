@@ -161,7 +161,10 @@ export interface RecordFormProps<R> {
   readonly onCancel?: () => void;
   /** Rendered between the fields and the buttons (e.g. a computed warning). */
   readonly children?: ReactNode;
-  /** Live preview of the values (e.g. the North Star sentence check). */
+  /**
+   * Live preview of the values (e.g. the Team assign dialog's role accountability). Called after each change to the
+   * form's values is committed (a user edit, or a conflict reapply/discard), not for the initial values.
+   */
   readonly onValuesChange?: (values: FormValues) => void;
 }
 
@@ -195,13 +198,19 @@ export function useRecordForm<R extends Record<string, unknown>>(props: RecordFo
     if (Object.keys(next).length > 0) setFocusRequest((n) => n + 1);
   };
 
+  // F-DG2-430: a state updater must stay pure. React may run it while rendering (and twice under StrictMode), so the
+  // parent's onValuesChange (which sets the parent's own state) is never called from inside it. Committed values are
+  // reported from an effect instead: once per new `values` object, never for the initial values on mount.
   const set = (name: string, value: FormValue) => {
-    setValues((v) => {
-      const next = { ...v, [name]: value };
-      props.onValuesChange?.(next);
-      return next;
-    });
+    setValues((v) => ({ ...v, [name]: value }));
   };
+  const onValuesChange = props.onValuesChange;
+  const reportedValues = useRef(values);
+  useEffect(() => {
+    if (reportedValues.current === values) return;
+    reportedValues.current = values;
+    onValuesChange?.(values);
+  }, [values, onValuesChange]);
 
   const payloadFor = (vals: FormValues, against: R | null): Record<string, unknown> => {
     const body: Record<string, unknown> = {};

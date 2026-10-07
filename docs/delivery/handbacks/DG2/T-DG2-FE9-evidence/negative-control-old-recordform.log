@@ -1,0 +1,42 @@
+# Negative control (F-DG2-430): apps/web/src/components/RecordForm.tsx reverted to HEAD be51ad7 (onValuesChange inside the setValues updater); guard + tests from this task kept.
+# git diff --stat HEAD -- apps/web/src/components/RecordForm.tsx:
+# node v24.21.0; command: pnpm exec vitest run --project unit-web apps/web/src/pages/team
+
+ RUN  v3.2.4 /home/user/My-owns
+
+stderr | src/pages/team/team.test.tsx > Team (English LTR) > shows a 403 from the server in words; nothing is assigned
+Cannot update a component (`AssignDialog`) while rendering a different component (`RecordDialog`). To locate the bad setState() call inside `RecordDialog`, follow the stack trace as described in https://react.dev/link/setstate-in-render
+
+ ❯ |unit-web| src/pages/team/team.test.tsx (8 tests | 1 failed) 1872ms
+   ✓ Team (English LTR) > shows the six governance roles with B0018 accountability text verbatim and who holds each  399ms
+   ✓ Team (English LTR) > lists team members with the accountability on each assignment, sortable and filterable 232ms
+   ✓ Team (English LTR) > a Transformation Lead assigns a Workstream Lead: Idempotency-Key, reason, accountability preview 230ms
+   × Team (English LTR) > shows a 403 from the server in words; nothing is assigned 233ms
+     → React warning printed to console.error during this test (F-DG2-430 guard, apps/web/test/react-warning-guard.ts): 1 warning(s). First: Cannot update a component (`AssignDialog`) while rendering a different component (`RecordDialog`). To locate the bad setState() call inside `RecordDialog`, follow the stack trace as described in https://react.dev/link/setstate-in-render
+   ✓ Team: read-only auditor (AUD) > sees the roles, accountabilities and members, a read-only note, and no assign control 104ms
+   ✓ Team (Arabic RTL) > shows Arabic role names and the provisional Arabic accountability text 125ms
+   ✓ Team assign dialog: accountability preview follows the selected role (F-DG2-430) > en: WL on open, then KDS, TD, none and WL again, in StrictMode with no React warning 296ms
+   ✓ Team assign dialog: accountability preview follows the selected role (F-DG2-430) > ar: WL on open, then KDS, TD, none and WL again, in StrictMode with no React warning 250ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/pages/team/team.test.tsx > Team (English LTR) > shows a 403 from the server in words; nothing is assigned
+Error: React warning printed to console.error during this test (F-DG2-430 guard, apps/web/test/react-warning-guard.ts): 1 warning(s). First: Cannot update a component (`AssignDialog`) while rendering a different component (`RecordDialog`). To locate the bad setState() call inside `RecordDialog`, follow the stack trace as described in https://react.dev/link/setstate-in-render
+ ❯ assertNoReactWarnings test/react-warning-guard.ts:60:9
+     58|   if (found.length === 0) return;
+     59|   const first = found[0]!.split("\n")[0];
+     60|   throw new Error(
+       |         ^
+     61|     `React warning printed to console.error ${where} (F-DG2-430 guard,…
+     62|       `${found.length} warning(s). First: ${first}`,
+ ❯ test/setup.ts:26:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  03:55:53
+   Duration  4.02s (transform 934ms, setup 116ms, collect 1.34s, tests 1.87s, environment 394ms, prepare 110ms)
+
+# exit status: 1

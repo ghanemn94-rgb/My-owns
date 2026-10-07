@@ -746,11 +746,13 @@ function StepsEditor({ journey, onClose }: { journey: Journey; onClose: () => vo
       <button
         type="button"
         className="button button--secondary button--small"
-        onClick={() =>
+        onClick={() => {
+          // Generated outside the updater, which stays pure (F-DG2-430 sweep): a re-run updater gets the same key.
+          const key = globalThis.crypto.randomUUID();
           setSteps((s) => [
             ...s,
             {
-              key: globalThis.crypto.randomUUID(),
+              key,
               name: "",
               actor: "",
               handoffTo: "",
@@ -759,8 +761,8 @@ function StepsEditor({ journey, onClose }: { journey: Journey; onClose: () => vo
               cycleTimeValue: "",
               cycleTimeUnit: "",
             },
-          ])
-        }
+          ]);
+        }}
       >
         <Icon name="plus" /> {t("design.journeys.addStep")}
       </button>

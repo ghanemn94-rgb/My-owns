@@ -971,6 +971,15 @@ test("Team: the six governance roles with their B0018 accountability; the lead a
     await expect(dialog.locator("[data-preview-role='WL']")).toContainText(PLAYBOOK_ACCOUNTABILITY["WL"]!);
   await dialog.getByLabel(fieldLabel(lang, "team.assign.person")).selectOption(DEV_USERS.office);
   await dialog.getByLabel(fieldLabel(lang, "team.assign.reason")).fill("Synthetic: leads the billing workstream");
+  // F-DG2-430: the preview follows the Role select (reported from an effect, not from a state updater), then returns.
+  const roleSelect = dialog.getByLabel(fieldLabel(lang, "team.assign.role"));
+  await roleSelect.selectOption("KDS");
+  await expect(dialog.locator("[data-preview-role='KDS']")).toBeVisible();
+  await expect(dialog.locator("[data-preview-role='WL']")).toHaveCount(0);
+  await shot(page, lang, "p2-17d1-team-assign-preview-kds");
+  await roleSelect.selectOption("WL");
+  await expect(dialog.locator("[data-preview-role='WL']")).toBeVisible();
+  await expect(dialog.locator("[data-preview-role='KDS']")).toHaveCount(0);
   await shot(page, lang, "p2-17d-team-assign");
   await expectAccessible(page, lang, "p2-team-assign");
   await dialog.getByRole("button", { name: tr(lang, "team.assign.submit"), exact: true }).click();
