@@ -1,0 +1,89 @@
+# qa-verifier r14 static inspection of D-074 (FE10 8cb3bb8, FE11 59d38ad, FE12 7f03453) at ea9051b2; read-only, main tree
+$ git diff --stat aa0a68f1 ea9051b2 -- apps packages e2e tests
+ apps/web/e2e/session-end.spec.ts                 | 357 +++++++++++++++
+ apps/web/e2e/support/with-stack.sh               |  10 +-
+ apps/web/src/api/client.ts                       |  85 +++-
+ apps/web/src/api/queries.ts                      |  13 +-
+ apps/web/src/app/Shell.tsx                       |  35 +-
+ apps/web/src/auth/session-end.test.tsx           | 289 ++++++++++++
+ apps/web/src/auth/session.tsx                    |  73 ++-
+ apps/web/src/components/Form.tsx                 |   2 +
+ apps/web/src/components/LanguageSwitch.test.tsx  | 178 ++++++++
+ apps/web/src/components/LanguageSwitch.tsx       |  69 ++-
+ apps/web/src/components/ReasonDialog.tsx         |   8 +-
+ apps/web/src/components/RecordForm.tsx           |  30 +-
+ apps/web/src/components/RowActions.tsx           |  18 +-
+ apps/web/src/i18n/ar/common.json                 |   3 +-
+ apps/web/src/i18n/en/common.json                 |   3 +-
+ apps/web/src/lib/problem.ts                      |  10 +
+ apps/web/src/pages/LoginPage.tsx                 |  19 +-
+ apps/web/src/pages/define/DefinePage.tsx         |   8 +-
+ apps/web/src/pages/design/JourneysSection.tsx    |  32 +-
+ apps/web/src/pages/evidence/EvidencePage.tsx     |  20 +-
+ apps/web/src/pages/gates/GateDetailPage.tsx      |  22 +-
+ apps/web/src/pages/render-time-language.test.tsx | 543 +++++++++++++++++++++++
+ apps/web/src/pages/team/TeamPage.tsx             |   7 +-
+ apps/web/src/pages/team/team.test.tsx            |  69 +++
+ apps/web/src/styles/app.css                      |  54 ++-
+ apps/web/src/test/fixtures.tsx                   |   5 +-
+ 26 files changed, 1830 insertions(+), 132 deletions(-)
+
+$ git diff --stat aa0a68f1 ea9051b2 -- apps/api packages   # API unchanged by D-074
+(empty = no API/package change)
+
+$ grep -n "unauthenticated\|loginFailed" apps/api/src/modules/platform/problem.ts   # the only 401 codes the API emits
+87:      code: "unauthenticated",
+94:      code: "auth.login_failed",
+
+$ grep -n "isSessionEndedError\|function endSession\|sessionPhase !== \"active\"\|claimSessionEnd" apps/web/src/api/client.ts
+95:export function isSessionEndedError(err: unknown): boolean {
+99:function endSession(): void {
+100:  if (sessionPhase !== "active") return; // never signed in here, already ended, or signed out on purpose
+110:export function claimSessionEnd(): boolean {
+210:    if (!options.silent401 && isSessionEndedError(error)) endSession();
+
+$ grep -n "enabled: !ended\|if (ended) return null\|sessionEndedLoginPath\|redirected.current" apps/web/src/auth/session.tsx
+28:export function sessionEndedLoginPath(returnTo: string): string {
+40:  const me = useMeQuery({ enabled: !ended });
+53:    if (!ended || redirected.current) return;
+54:    redirected.current = true;
+59:    void navigate(sessionEndedLoginPath(here), { replace: true });
+75:  if (ended) return null;
+
+$ grep -n "refetchOnMount\|dataUpdatedAt >= mountedAt" apps/web/src/pages/LoginPage.tsx
+60:  const me = useMeQuery({ refetchOnMount: "always" });
+61:  const signedIn = me.isSuccess && !me.isFetching && me.dataUpdatedAt >= mountedAt;
+
+$ grep -n "silent401" apps/web/src --include=*.ts* -r | grep -v test   # who opts out of the session-end rule
+apps/web/src/app/Shell.tsx:36:  // answers 401 means the session had already ended: the user is signed out either way (silent401).
+apps/web/src/app/Shell.tsx:44:        silent401: true,
+apps/web/src/api/client.ts:135:  readonly silent401?: boolean;
+apps/web/src/api/client.ts:210:    if (!options.silent401 && isSessionEndedError(error)) endSession();
+apps/web/src/pages/LoginPage.tsx:41:    await apiRequest("/api/v1/auth/dev-login", { method: "POST", body: {}, silent401: true });
+apps/web/src/pages/LoginPage.tsx:134:      await apiRequest("/api/v1/auth/dev-login", { method: "POST", body: parsed.data, silent401: true });
+
+# FE12 sweep: translated text frozen into React state or refs (setX(t(...)), setX(errorMessage(...)), setX(fieldErrorMessage(...)), useState(t(...)))
+$ grep -rnE "set[A-Z]\w*\(\s*(t|i18n\.t)\(|set[A-Z]\w*\(\s*errorMessage\(|set[A-Z]\w*\(\s*fieldErrorMessage\(|useState<string[^>]*>\(\s*t\(" apps/web/src (non-test)
+matches: 0
+
+$ grep -n "LanguageNotSavedNotice\|aria-live\|lang={locale}" apps/web/src/components/LanguageSwitch.tsx apps/web/src/app/Shell.tsx
+apps/web/src/components/LanguageSwitch.tsx:11:// T-DG2-FE12: the notice is a banner *below* the header (LanguageNotSavedNotice, rendered by the Shell), never inside
+apps/web/src/components/LanguageSwitch.tsx:102:export function LanguageNotSavedNotice({ refused }: { refused: Locale | null }) {
+apps/web/src/components/LanguageSwitch.tsx:106:    <div className="app-notice language-switch__live" aria-live="polite" aria-atomic="true" lang={locale}>
+apps/web/src/app/Shell.tsx:12:import { LanguageNotSavedNotice, LanguageSwitch, useLanguageNotSaved } from "../components/LanguageSwitch.tsx";
+apps/web/src/app/Shell.tsx:91:      <LanguageNotSavedNotice refused={languageRefused} />
+
+$ grep -n "appliedPreferred" apps/web/src/auth/session.tsx   # FE11: the persisted preference is re-applied only when it changes
+66:  const appliedPreferred = useRef<string | null>(null);
+68:    if (!preferred || appliedPreferred.current === preferred) return;
+69:    appliedPreferred.current = preferred;
+
+# default limits: packages/config/src/index.ts
+116:  RATE_LIMIT_PER_MINUTE: {
+120-    default: "300",
+123:  AUTH_RATE_LIMIT_PER_MINUTE: {
+127-    default: "20",
+# auth limiter routes (dev-login incl. the login page availability probe, login, callback): apps/api/src/modules/identity/routes.ts
+251:      { config: { access: { public: true }, rateLimit: authRateLimit } },
+288:      { config: { access: { public: true }, rateLimit: authRateLimit } },
+322:      { config: { access: { public: true }, rateLimit: authRateLimit, invalidCharacters: "route" } },

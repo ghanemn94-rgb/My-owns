@@ -1,0 +1,67 @@
+$ env -u LANG -u LC_ALL QA_E2E_API_PORT=26065 QA_E2E_PG_PORT=26365 e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r14.spec.ts --workers=1 --reporter=list
+# dev run 5 (R14-04 test timeout 120 s); node v24.21.0; 2026-10-07T10:27:13Z
+port-policy: PostgreSQL listening on port 26365 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 26065 (attempt 1)
+API:     http://localhost:26065
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 14 tests using 1 worker
+
+[chromium-en] r14-01: landed in 139 ms; GET /me after the end (5 s) 1; all /api after the end 4; /me after Back 1; 4xx seen ["401 GET /api/v1/me","400 POST /api/v1/auth/dev-login","401 GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units","401 GET /api/v1/transformations","401 GET /api/v1/me","400 POST /api/v1/auth/dev-login","401 GET /api/v1/me"]; limits raised (harness)
+  ✓   1 [chromium-en] › e2e/dg2-qa-r14.spec.ts:172:1 › R14-01 sign-out from the UI in a real second tab, then an in-app link: one landing with the message; Back stays bounded (10.5s)
+[chromium-en] r14-02: upload 401 unauthenticated; /me after the end 1; content rows 0; store 0->0 files, .part 0; revoked sessions 2; after re-sign-in without access: path kept, /me 1; 4xx ["401 GET /api/v1/me","400 POST /api/v1/auth/dev-login","404 GET /api/v1/users/01920000-0000-7000-9000-000000000204","404 GET /api/v1/users/01920000-0000-7000-9000-000000000202","404 GET /api/v1/users/01920000-0000-7000-9000-000000000203","401 POST /api/v1/transformations/01a115e7-691a-7319-8570-cf892a2a2576/evidence/01a115e7-6981-76af-bc99-46073d757f78/content","401 GET /api/v1/me","400 POST /api/v1/auth/dev-login","404 GET /api/v1/transformations/01a115e7-691a-7319-8570-cf892a2a2576/methodology","404 GET /api/v1/transformations/01a115e7-691a-7319-8570-cf892a2a2576","404 GET /api/v1/transformations/01a115e7-691a-7319-8570-cf892a2a2576","404 GET /api/v1/transformations/01a115e7-691a-7319-8570-cf892a2a2576/methodology"]; limits raised (harness)
+  ✓   2 [chromium-en] › e2e/dg2-qa-r14.spec.ts:229:1 › R14-02 upload refused with 401 after the uploader's access is revoked: dialog closes, one landing, nothing stored (9.1s)
+[chromium-en] r14-03: ended tab over 10 s: /api 4, /me 1; second context signed in and opened 3 pages (/api 6); 429s 0; limits raised (harness)
+  ✓   3 [chromium-en] › e2e/dg2-qa-r14.spec.ts:322:1 › R14-03 the ended tab stays quiet for 10 s; a second context from the same IP signs in and works; no 429 (12.3s)
+[chromium-en] r14-04: (a1) upload started 3988 ms before the grant ended -> 403 forbidden; dialog kept with the forbidden message; path held 3 s; content rows 0; /me 0; (a2) preference save -> 403 csrf, still signed in, /me 0; (b) login_failed 401 kept on /login; message switched en->ar->en
+  ✓   4 [chromium-en] › e2e/dg2-qa-r14.spec.ts:374:1 › R14-04 a 403 is never a session end; a 401 login_failed is not either, and its message follows a language switch (42.1s)
+[chromium-en] r14-05a: saves 403 csrf, 403; /me 0; 320: header 93.390625/93.390625, wordmark 127/127, overflowX 0; 768: header 56/56, wordmark 305/305, overflowX 0; 1280: header 56/56, wordmark 305/305, overflowX 0
+  ✓   5 [chromium-en] › e2e/dg2-qa-r14.spec.ts:559:3 › R14-05a refused language save (a-csrf-403): notice in the language shown, both directions, layout holds (4.9s)
+[chromium-en] r14-05b: saves aborted, aborted; /me 0; 320: header 93.390625/93.390625, wordmark 127/127, overflowX 0; 768: header 56/56, wordmark 305/305, overflowX 0; 1280: header 56/56, wordmark 305/305, overflowX 0
+  ✓   6 [chromium-en] › e2e/dg2-qa-r14.spec.ts:559:3 › R14-05b refused language save (b-network-failure): notice in the language shown, both directions, layout holds (5.0s)
+[chromium-en] r14-06: 2 required-field errors and 2 aria-invalid controls followed en->ar->en
+  ✓   7 [chromium-en] › e2e/dg2-qa-r14.spec.ts:670:1 › R14-06 a language switch while form errors are visible re-renders them in the new language and direction (2.2s)
+[chromium-ar] r14-01: landed in 173 ms; GET /me after the end (5 s) 1; all /api after the end 4; /me after Back 1; 4xx seen ["401 GET /api/v1/me","400 POST /api/v1/auth/dev-login","401 GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units","401 GET /api/v1/transformations","401 GET /api/v1/me","400 POST /api/v1/auth/dev-login","401 GET /api/v1/me"]; limits raised (harness)
+  ✓   8 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:172:1 › R14-01 sign-out from the UI in a real second tab, then an in-app link: one landing with the message; Back stays bounded (10.8s)
+[chromium-ar] r14-02: upload 401 unauthenticated; /me after the end 1; content rows 0; store 0->0 files, .part 0; revoked sessions 8; after re-sign-in without access: path kept, /me 1; 4xx ["401 GET /api/v1/me","400 POST /api/v1/auth/dev-login","404 GET /api/v1/users/01920000-0000-7000-9000-000000000202","404 GET /api/v1/users/01920000-0000-7000-9000-000000000203","404 GET /api/v1/users/01920000-0000-7000-9000-000000000204","401 POST /api/v1/transformations/01a115e8-bf0a-7387-8119-c30a9a0751bc/evidence/01a115e8-bf57-74bb-a96b-e597b84ebc47/content","401 GET /api/v1/me","400 POST /api/v1/auth/dev-login","404 GET /api/v1/transformations/01a115e8-bf0a-7387-8119-c30a9a0751bc/methodology","404 GET /api/v1/transformations/01a115e8-bf0a-7387-8119-c30a9a0751bc","404 GET /api/v1/transformations/01a115e8-bf0a-7387-8119-c30a9a0751bc","404 GET /api/v1/transformations/01a115e8-bf0a-7387-8119-c30a9a0751bc/methodology"]; limits raised (harness)
+  ✓   9 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:229:1 › R14-02 upload refused with 401 after the uploader's access is revoked: dialog closes, one landing, nothing stored (9.1s)
+[chromium-ar] r14-03: ended tab over 10 s: /api 4, /me 1; second context signed in and opened 3 pages (/api 6); 429s 0; limits raised (harness)
+  ✓  10 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:322:1 › R14-03 the ended tab stays quiet for 10 s; a second context from the same IP signs in and works; no 429 (12.4s)
+[chromium-ar] r14-04: (a1) upload started 3990 ms before the grant ended -> 403 forbidden; dialog kept with the forbidden message; path held 3 s; content rows 0; /me 0; (a2) preference save -> 403 csrf, still signed in, /me 0; (b) login_failed 401 kept on /login; message switched ar->en->ar
+  ✓  11 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:374:1 › R14-04 a 403 is never a session end; a 401 login_failed is not either, and its message follows a language switch (42.1s)
+[chromium-ar] r14-05a: saves 403 csrf, 403; /me 0; 320: header 74.390625/74.390625, wordmark 115/115, overflowX 0; 768: header 56/56, wordmark 199/199, overflowX 0; 1280: header 56/56, wordmark 199/199, overflowX 0
+  ✓  12 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:559:3 › R14-05a refused language save (a-csrf-403): notice in the language shown, both directions, layout holds (5.0s)
+[chromium-ar] r14-05b: saves aborted, aborted; /me 0; 320: header 74.390625/74.390625, wordmark 115/115, overflowX 0; 768: header 56/56, wordmark 199/199, overflowX 0; 1280: header 56/56, wordmark 199/199, overflowX 0
+  ✓  13 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:559:3 › R14-05b refused language save (b-network-failure): notice in the language shown, both directions, layout holds (5.2s)
+[chromium-ar] r14-06: 2 required-field errors and 2 aria-invalid controls followed ar->en->ar
+  ✓  14 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:670:1 › R14-06 a language switch while form errors are visible re-renders them in the new language and direction (1.9s)
+
+  14 passed (2.9m)
+exit 0

@@ -1,0 +1,123 @@
+$ env -u LANG -u LC_ALL QA_E2E_API_PORT=26063 QA_E2E_PG_PORT=26363 e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r14.spec.ts --workers=1 --reporter=list
+# dev run 3 (nav links exact; R14-04(a) uses an expiring scoped grant; measurements logged); node v24.21.0; 2026-10-07T10:21:31Z
+port-policy: PostgreSQL listening on port 26363 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 26063 (attempt 1)
+API:     http://localhost:26063
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 14 tests using 1 worker
+
+[chromium-en] r14-01: landed in 249 ms; GET /me after the end (5 s) 1; all /api after the end 4; /me after Back 1; 4xx seen ["401 GET /api/v1/me","400 POST /api/v1/auth/dev-login","401 GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units","401 GET /api/v1/me","400 POST /api/v1/auth/dev-login","401 GET /api/v1/me"]; limits raised (harness)
+  ✓   1 [chromium-en] › e2e/dg2-qa-r14.spec.ts:172:1 › R14-01 sign-out from the UI in a real second tab, then an in-app link: one landing with the message; Back stays bounded (11.1s)
+[chromium-en] r14-02: upload 401 unauthenticated; /me after the end 1; content rows 0; store 0->0 files, .part 0; revoked sessions 2; after re-sign-in without access: path kept, /me 1; 4xx ["401 GET /api/v1/me","400 POST /api/v1/auth/dev-login","404 GET /api/v1/users/01920000-0000-7000-9000-000000000202","404 GET /api/v1/users/01920000-0000-7000-9000-000000000204","404 GET /api/v1/users/01920000-0000-7000-9000-000000000203","401 POST /api/v1/transformations/01a115e2-3481-753e-a702-7af32d780005/evidence/01a115e2-34da-762f-9b15-517ba6d99045/content","401 GET /api/v1/me","400 POST /api/v1/auth/dev-login","404 GET /api/v1/transformations/01a115e2-3481-753e-a702-7af32d780005","404 GET /api/v1/transformations/01a115e2-3481-753e-a702-7af32d780005/methodology","404 GET /api/v1/transformations/01a115e2-3481-753e-a702-7af32d780005","404 GET /api/v1/transformations/01a115e2-3481-753e-a702-7af32d780005/methodology"]; limits raised (harness)
+  ✓   2 [chromium-en] › e2e/dg2-qa-r14.spec.ts:229:1 › R14-02 upload refused with 401 after the uploader's access is revoked: dialog closes, one landing, nothing stored (9.5s)
+[chromium-en] r14-03: ended tab over 10 s: /api 4, /me 1; second context signed in and opened 3 pages (/api 6); 429s 0; limits raised (harness)
+  ✓   3 [chromium-en] › e2e/dg2-qa-r14.spec.ts:322:1 › R14-03 the ended tab stays quiet for 10 s; a second context from the same IP signs in and works; no 429 (13.0s)
+  ✘   4 [chromium-en] › e2e/dg2-qa-r14.spec.ts:374:1 › R14-04 a 403 is never a session end; a 401 login_failed is not either, and its message follows a language switch (30.2s)
+  -   5 [chromium-en] › e2e/dg2-qa-r14.spec.ts:481:3 › R14-05a refused language save (a-csrf-403): notice in the language shown, both directions, layout holds
+  -   6 [chromium-en] › e2e/dg2-qa-r14.spec.ts:481:3 › R14-05b refused language save (b-network-failure): notice in the language shown, both directions, layout holds
+  -   7 [chromium-en] › e2e/dg2-qa-r14.spec.ts:592:1 › R14-06 a language switch while form errors are visible re-renders them in the new language and direction
+[chromium-ar] r14-01: landed in 158 ms; GET /me after the end (5 s) 1; all /api after the end 4; /me after Back 1; 4xx seen ["401 GET /api/v1/me","400 POST /api/v1/auth/dev-login","401 GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units","401 GET /api/v1/transformations","401 GET /api/v1/me","400 POST /api/v1/auth/dev-login","401 GET /api/v1/me"]; limits raised (harness)
+  ✓   8 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:172:1 › R14-01 sign-out from the UI in a real second tab, then an in-app link: one landing with the message; Back stays bounded (10.7s)
+[chromium-ar] r14-02: upload 401 unauthenticated; /me after the end 1; content rows 0; store 0->0 files, .part 0; revoked sessions 6; after re-sign-in without access: path kept, /me 1; 4xx ["401 GET /api/v1/me","400 POST /api/v1/auth/dev-login","404 GET /api/v1/users/01920000-0000-7000-9000-000000000202","404 GET /api/v1/users/01920000-0000-7000-9000-000000000204","404 GET /api/v1/users/01920000-0000-7000-9000-000000000203","401 POST /api/v1/transformations/01a115e3-30d3-70bc-a91e-45913428dfbd/evidence/01a115e3-3123-767b-8262-d1408482e59b/content","401 GET /api/v1/me","400 POST /api/v1/auth/dev-login","404 GET /api/v1/transformations/01a115e3-30d3-70bc-a91e-45913428dfbd","404 GET /api/v1/transformations/01a115e3-30d3-70bc-a91e-45913428dfbd/methodology","404 GET /api/v1/transformations/01a115e3-30d3-70bc-a91e-45913428dfbd","404 GET /api/v1/transformations/01a115e3-30d3-70bc-a91e-45913428dfbd/methodology"]; limits raised (harness)
+  ✓   9 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:229:1 › R14-02 upload refused with 401 after the uploader's access is revoked: dialog closes, one landing, nothing stored (9.1s)
+[chromium-ar] r14-03: ended tab over 10 s: /api 4, /me 1; second context signed in and opened 3 pages (/api 6); 429s 0; limits raised (harness)
+  ✓  10 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:322:1 › R14-03 the ended tab stays quiet for 10 s; a second context from the same IP signs in and works; no 429 (12.6s)
+  ✘  11 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:374:1 › R14-04 a 403 is never a session end; a 401 login_failed is not either, and its message follows a language switch (30.1s)
+  -  12 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:481:3 › R14-05a refused language save (a-csrf-403): notice in the language shown, both directions, layout holds
+  -  13 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:481:3 › R14-05b refused language save (b-network-failure): notice in the language shown, both directions, layout holds
+  -  14 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:592:1 › R14-06 a language switch while form errors are visible re-renders them in the new language and direction
+
+
+  1) [chromium-en] › e2e/dg2-qa-r14.spec.ts:374:1 › R14-04 a 403 is never a session end; a 401 login_failed is not either, and its message follows a language switch 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.waitForResponse: Test timeout of 30000ms exceeded.
+
+      360 |   await page.waitForTimeout(Math.max(0, until - Date.now() + 1_500));
+      361 |   const me0 = w.me;
+    > 362 |   const forbidden = page.waitForResponse((r) => r.status() === 403 && new URL(r.url()).pathname.startsWith("/api/v1/"));
+          |                          ^
+      363 |   await page
+      364 |     .getByRole("navigation", { name: tr(lang, "transformations.tabs.label") })
+      365 |     .getByRole("link", { name: tr(lang, "transformations.tabs.decisions"), exact: true })
+        at $TMPDIR/review-dg2-e2e/e2e/dg2-qa-r14.spec.ts:362:26
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-04-a-40-a5a37-e-follows-a-language-switch-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-dg2-qa-r14-R14-04-a-40-a5a37-e-follows-a-language-switch-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-04-a-40-a5a37-e-follows-a-language-switch-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg2-qa-r14-R14-04-a-40-a5a37-e-follows-a-language-switch-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-ar] › e2e/dg2-qa-r14.spec.ts:374:1 › R14-04 a 403 is never a session end; a 401 login_failed is not either, and its message follows a language switch 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.waitForResponse: Test timeout of 30000ms exceeded.
+
+      360 |   await page.waitForTimeout(Math.max(0, until - Date.now() + 1_500));
+      361 |   const me0 = w.me;
+    > 362 |   const forbidden = page.waitForResponse((r) => r.status() === 403 && new URL(r.url()).pathname.startsWith("/api/v1/"));
+          |                          ^
+      363 |   await page
+      364 |     .getByRole("navigation", { name: tr(lang, "transformations.tabs.label") })
+      365 |     .getByRole("link", { name: tr(lang, "transformations.tabs.decisions"), exact: true })
+        at $TMPDIR/review-dg2-e2e/e2e/dg2-qa-r14.spec.ts:362:26
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-04-a-40-a5a37-e-follows-a-language-switch-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-dg2-qa-r14-R14-04-a-40-a5a37-e-follows-a-language-switch-chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-04-a-40-a5a37-e-follows-a-language-switch-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg2-qa-r14-R14-04-a-40-a5a37-e-follows-a-language-switch-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium-en] › e2e/dg2-qa-r14.spec.ts:374:1 › R14-04 a 403 is never a session end; a 401 login_failed is not either, and its message follows a language switch 
+    [chromium-ar] › e2e/dg2-qa-r14.spec.ts:374:1 › R14-04 a 403 is never a session end; a 401 login_failed is not either, and its message follows a language switch 
+  6 did not run
+  6 passed (2.2m)
+---- api.log (tail)
+exit 1

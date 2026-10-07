@@ -1,0 +1,104 @@
+$ env -u LC_ALL LANG=C.UTF-8 QA_E2E_API_PORT=26131 QA_E2E_PG_PORT=26431 QA_SHOT_DIR=<shots> E2E_SCREENSHOT_DIR=<shots> QA_R8_QUERY_OPS=<21-query-ops.py output> e2e/support/qa-stack.sh npx playwright test e2e apps/web/e2e --workers=1 --reporter=list
+# node v24.21.0; 2026-10-07T10:54:26Z
+port-policy: PostgreSQL listening on port 26431 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 26131 (attempt 1)
+API:     http://localhost:26131
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 164 tests using 1 worker
+
+  ✓    1 [chromium-en] › apps/web/e2e/journeys.spec.ts:187:1 › sign-in page: Arabic RTL by default, provisional wordmark, dev form in dev mode (1.2s)
+  ✓    2 [chromium-en] › apps/web/e2e/journeys.spec.ts:213:1 › shell: navigation, language persistence and My Work (Transformation Office) (1.8s)
+  ✓    3 [chromium-en] › apps/web/e2e/journeys.spec.ts:258:1 › create a modular transformation with an entry phase (4.6s)
+  ✓    4 [chromium-en] › apps/web/e2e/journeys.spec.ts:332:1 › list: sort, filter chips, column selection and pagination controls (2.6s)
+  ✓    5 [chromium-en] › apps/web/e2e/journeys.spec.ts:390:1 › edit: a concurrent change gives a 409 conflict with compare and re-apply (1.9s)
+  ✓    6 [chromium-en] › apps/web/e2e/journeys.spec.ts:442:1 › archive with a mandatory reason makes the record read-only (2.4s)
+  ✓    7 [chromium-en] › apps/web/e2e/journeys.spec.ts:477:1 › administration screens (access + technical administrator) (4.7s)
+  ✓    8 [chromium-en] › apps/web/e2e/journeys.spec.ts:538:1 › a user without roles sees no Administration and no business records (1.7s)
+  ✓    9 [chromium-en] › apps/web/e2e/journeys.spec.ts:560:1 › a business-unit Lead creates a record: Edit/Archive and the audit trail appear without a reload (F-DG1-210), the derived grant localized (F-DG1-008) (3.3s)
+  ✓   10 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:58:1 › setup: a fresh End-to-End transformation for the blank-text checks (70ms)
+  ✓   11 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:73:1 › Charter create: a whitespace Case for change is an inline error and creates no charter (2.5s)
+  ✓   12 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:113:1 › Charter edit: a whitespace Out of scope is an inline error, writes no version and keeps the value (3.4s)
+  ✓   13 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:163:1 › T01: a whitespace Current state is an inline error and sends nothing (2.8s)
+  ✓   14 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:265:1 › Gate G1 submission: a whitespace note is an inline error and submits nothing; visible text is verbatim (2.4s)
+  ✓   15 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:326:1 › Gate G1 decision: a whitespace rationale is an inline error and decides nothing (2.6s)
+  ✓   16 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:382:1 › Journey steps: a whitespace actor is an inline error and writes no journey version (2.8s)
+  ✓   17 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:425:1 › Reason dialog: an invisible-only archive reason is an inline error and archives nothing (3.0s)
+  ✓   18 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:461:1 › Charter create: a form-level validation problem (invalid UTF-8 body) is said once, in one live region (2.3s)
+  ✓   19 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:42:1 › lead creates an End-to-End transformation; the workspace tabs lead to the P2 screens (2.3s)
+  ✓   20 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:83:1 › Diagnose: six T01 dimensions with Unknown; value pools labelled Unquantified with a partial total (6.7s)
+  ✓   21 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:168:1 › Charter: create, save a second version, compare versions; the 3-5 top-outcomes warning (4.7s)
+  ✓   22 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:248:1 › Define: North Star, the good outcome test with reasons, and a required T02 target date (4.1s)
+  ✓   23 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:332:1 › Design: ten canvas boxes, the per-dimension view; workshop mode converts an unresolved item into T04 (5.6s)
+  ✓   24 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:414:1 › Evidence: note, filename reference and file upload; a link; review by another person (6.0s)
+  ✓   25 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:608:1 › Gates: G1 shows unverified evidence and offers no submission while incomplete; once complete it is submitted (4.9s)
+  ✓   26 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:675:1 › Gates: the approver's decision — 409 when the submission was superseded, then approval with a rationale (4.0s)
+  ✓   27 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:824:1 › Define → G2: activate a KPI, pass the good outcome test, add a guardrail, compose the thesis; G2 is decided (17.2s)
+  ✓   28 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:1027:1 › Design → G3: the target state is complete and G3 is decided by the Sponsor (4.6s)
+  ✓   29 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:1080:1 › Team: the six governance roles with their B0018 accountability; the lead assigns a Workstream Lead (5.2s)
+  ✓   30 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:1153:1 › read-only auditor (AUD): every P2 screen without write controls; Unknown and Unquantified rendered (11.6s)
+  ✓   31 [chromium-en] › apps/web/e2e/session-end.spec.ts:156:1 › signed out in another tab, then an in-app link: one landing on sign-in with the message (4.7s)
+  ✓   32 [chromium-en] › apps/web/e2e/session-end.spec.ts:187:1 › access withdrawn while the Upload dialog is open: the upload is refused, the dialog closes, one landing on sign-in (5.1s)
+  ✓   33 [chromium-en] › apps/web/e2e/session-end.spec.ts:266:1 › after a session end, another browser context from the same IP can still sign in (no 429) (6.5s)
+  ✓   34 [chromium-en] › apps/web/e2e/session-end.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are (4.5s)
+  ✓   35 [chromium-en] › e2e/a20-bilingual-shell.spec.ts:117:3 › A20 bilingual shell › Arabic RTL by default; English LTR after the switch; persisted; switch back (1.3s)
+  ✓   36 [chromium-en] › e2e/a20-bilingual-shell.spec.ts:182:3 › A20 design tokens reach the rendered CSS › seeded --mth-* colours and referencing surfaces equal the built token source (674ms)
+QA-R10 [en] R10-01 1153 unmatched-route requests (3 paths x 4 methods x 12 bodies x 2 framings x session/anon x one-write/delayed-body + 1 declared 500 MB): all exactly one 404 not_found, problem+json, Connection: close; declared-500MB answered in 1 ms; audit_event rows 367->367; readyz 200; control GET /me 200
+  ✓   37 [chromium-en] › e2e/dg2-qa-r10.spec.ts:206:1 › R10-01 raw socket: an unmatched route answers 404 not_found for every body, media type, framing and session (1.1s)
+QA-R10 [en] R10-02 ["\"application/octet-stream; x=1\" length -> 200 40266 B, sha256 b462ce9b325c… = DB = Digest, audit 1","\"application/octet-stream\\t; x=1\" length -> 200 9266 B, sha256 d4b91801651e… = DB = Digest, audit 1","\"application/octet-stream\\t; x=1\" split -> 200 30256 B, sha256 6c3a31f8f7f0… = DB = Digest, audit 1","\"application/octet-stream \\t;\\t x=\\\"quoted; value\\\"\" chunked -> 200 266 B, sha256 6bf3f8797363… = DB = Digest, audit 1","\"APPLICATION/Octet-Stream\\t;x=1;\\ty=2\" length -> 200 5000 B, sha256 6e4e51344f0d… = DB = Digest, audit 1"]
+  ✓   38 [chromium-en] › e2e/dg2-qa-r10.spec.ts:250:1 › R10-02 raw socket: uploads with '; x=1' and HTAB before ';' are stored byte-exact; sha256 = DB = Digest; audited (831ms)
+QA-R10 [en] R10-03 ["\"application/json\\t; charset=utf-8\" 57 chunks -> 201; title/note verbatim (API and DB)","\"application/json ;\\tcharset=\\\"UTF-8\\\"\" length -> 201; title/note verbatim (API and DB)","\"Application/JSON\\t;\\tCharset=Utf-8\" 57 chunks -> 201; title/note verbatim (API and DB)","\"application/json\\t\" length -> 201; title/note verbatim (API and DB)","PATCH charter HTAB spelling -> 200; version 1->2; outOfScope verbatim"]
+  ✓   39 [chromium-en] › e2e/dg2-qa-r10.spec.ts:289:1 › R10-03 raw socket: 'application/json\t; charset=utf-8' is accepted; Arabic/emoji text cut mid-character round-trips verbatim (2.2s)
+QA-R10 [en] R10-04 30 duplicate-Content-Type requests: all 400 validation.content_type naming the declared set, 0 audit rows each; transformations created 0; charter version 1->1 (Synthetic start); evidence version 1->1, currentContentId null, content rows 0, stored files 0
+  ✓   40 [chromium-en] › e2e/dg2-qa-r10.spec.ts:339:1 › R10-04 raw socket: duplicate Content-Type lines are the declared 400 naming the declared set; nothing is written (1.7s)
+QA-R10 [en] R10-05 36 non-UTF-8 JSON charset requests: all 400 validation.content_type naming application/json, 0 audit rows each; charter version 1->1 (Synthetic start); transformations created 0
+  ✓   41 [chromium-en] › e2e/dg2-qa-r10.spec.ts:400:1 › R10-05 raw socket: a JSON charset other than UTF-8 is the declared 400 naming application/json; nothing is written (1.9s)
+QA-R10 [en] R10-06 48 malformed/undeclared requests: JSON op always "Send the request body as application/json.", upload always "Send the request body as application/octet-stream."; notes created 0; upload content rows 0
+  ✓   42 [chromium-en] › e2e/dg2-qa-r10.spec.ts:440:1 › R10-06 raw socket: every refusal names exactly the operation's declared set (JSON op vs octet-stream-only upload) (2.5s)
+QA-R11 [en] R11-01 ["audit repro: 30 MiB chunked 'application/octet-stream\\t; x=1', one write, client waits -> 413 evidence.too_large Connection: close; server FIN +0 ms, closed +501 ms after the response (702 ms after connect); client write error EPIPE","Content-Length 26 MiB, fully sent -> 413 evidence.too_large Connection: close; server FIN +0 ms, closed +0 ms after the response (151 ms after connect); client write error none","chunked 26 MiB + terminator, fully sent -> 413 evidence.too_large Connection: close; server FIN +0 ms, closed +1 ms after the response (172 ms after connect); client write error none","chunked 25 MiB + 64 KiB then STALLED (no terminator, client open) -> 413 evidence.too_large Connection: close; server FIN +0 ms, closed +1 ms after the response (165 ms after connect); client write error none","Content-Length 100 MiB declared, 26 MiB sent then STALLED -> 413 evidence.too_large Connection: close; server FIN +4 ms, closed +4 ms after the response (165 ms after connect); client write error none","Content-Length 25 MiB + 1 declared, 25 MiB + 1 sent -> 413 evidence.too_large Connection: keep-alive (body fully received: kept alive); next GET /me on the same socket 200 in 21 ms"]; all exactly one 413 evidence.too_large; incomplete bodies: Connection: close and server-closed within 3 s; complete bodies: kept alive and the socket serves a next request; evidence version 1->1, currentContentId null, content rows 0, stored files 0, audit rows for the item 1->1; readyz 200
+  ✓   43 [chromium-en] › e2e/dg2-qa-r11.spec.ts:368:1 › R11-01 over-limit uploads (Content-Length, chunked; fully sent and STALLED): 413, the server closes the socket promptly, nothing stored, no audit row (10.1s)
+QA-R11 [en] R11-02 (a) GET /me 200 on an idle keep-alive socket + stalled over-limit chunked upload 413 + fully-sent 25 MiB + 1 upload 413 (Connection: keep-alive); SIGTERM -> exit code 0 in 22 ms; both sockets closed: true; 'shut down' logged: true; (b) 2 MiB of a declared 10 MiB upload stalled in flight; SIGTERM -> exit code 0 in 5028 ms; stalled socket closed +5007 ms after SIGTERM; grace warning logged: true; response on the stalled socket: none; content rows 0, stored files 0; shared stack readyz 200; OK
+  ✓   44 [chromium-en] › e2e/dg2-qa-r11.spec.ts:415:1 › R11-02 SIGTERM -> app.close() after a stalled over-limit upload is prompt; with an upload stalled IN FLIGHT it is bounded by the grace period (7.6s)
+QA-R11 [en] R11-03 ["1 MiB random + all 256 byte values, Content-Length -> 200 1049088 B, sha256 7bd0eca3b54b… = DB = Digest, downloaded byte-exact, audit 1","1 MiB random + all 256 byte values, chunked (odd chunk sizes) -> 200 1048837 B, sha256 7cb85b9a619f… = DB = Digest, downloaded byte-exact, audit 1","exactly 25 MiB, Content-Length -> 200 26214400 B, sha256 78fe5ba10aaf… = DB = Digest, downloaded byte-exact, audit 1","25 MiB + 1 chunked (terminated) -> 413 evidence.too_large Connection: keep-alive (body fully received: kept alive); next GET /me on the same socket 200 in 20 ms"]; content rows 3->3; version 4->4; OK
+  ✓   45 [chromium-en] › e2e/dg2-qa-r11.spec.ts:494:1 › R11-03 binary uploads: exactly 25 MiB is accepted, 25 MiB + 1 is refused; 1 MiB random + all 256 byte values stored byte-exact, sha256 = DB = Digest, audited (9.3s)
+QA-R11 [en] R11-04/05 one socket: ["GET /me -> 200 Connection: keep-alive","upload 200 KB (Content-Length) -> 200 Connection: keep-alive","upload with a stale If-Match (409 version_conflict), body complete in one write -> 409 Connection: keep-alive","JSON create, 72 chunks cut at continuation bytes -> 201 Connection: keep-alive","GET /me again -> 200 Connection: keep-alive"]; still open 1 s after the last 200: true; file name, title and note verbatim (API and DB)
+  ✓   46 [chromium-en] › e2e/dg2-qa-r11.spec.ts:557:1 › R11-04/05 one keep-alive socket: 200s keep the connection; Arabic/emoji text cut mid-character and an Arabic file name round-trip verbatim (1.6s)
+QA-R11 [en] R11-06 30 unmatched POSTs: 20x404, 10x429, others ; last rate_limited (application/problem+json; charset=utf-8); SIGTERM -> exit 0 in 18 ms
+  ✓   47 [chromium-en] › e2e/dg2-qa-r11.spec.ts:647:1 › R11-06 unmatched routes are rate-limited (RATE_LIMIT_PER_MINUTE=20 on a separate process): 404 then 429 rate_limited; SIGTERM exits 0 (890ms)
+QA-R12 [en] R12-01 ["PATCH title during a Content-Length body: answered before the body finished false; edit patch -> v2 in 19 ms while the upload was open true; upload -> 409 version_conflict (Connection: keep-alive); item v1->v2 status active title kept true currentContentId null; content rows 0; stored files 0; audit rows for the upload 0","PATCH title during a chunked body: answered before the body finished false; edit patch -> v2 in 33 ms while the upload was open true; upload -> 409 version_conflict (Connection: keep-alive); item v1->v2 status active title kept true currentContentId null; content rows 0; stored files 0; audit rows for the upload 0","archive during a Content-Length body: answered before the body finished false; edit archive -> v2 in 17 ms while the upload was open true; upload -> 409 version_conflict (Connection: keep-alive); item v1->v2 status archived title kept true currentContentId null; content rows 0; stored files 0; audit rows for the upload 0","race (same If-Match \"1\"): statuses 200,409 (ok,version_conflict); content rows 1; stored files 1 (0 .part); item v1->v2; download = winner's bytes true"]
+  ✓   48 [chromium-en] › e2e/dg2-qa-r12.spec.ts:295:1 › R12-01 the item edited or archived during the upload body: the edit is not blocked, the upload gets 409, nothing is stored; a same-If-Match race has exactly one winner (3.1s)
+QA-R12 [en] R12-02 25 uploads stalled (64 KiB of 10 MiB each; API pool max 20): answered while stalled 0; client sockets still open 25; pg_stat_activity read as postgres superuser=true: mth-api sessions idle:17 (state unknown 0); idle in transaction 0 (positive control, a psql session idling in a transaction: detected 1, psql exit 0); /readyz 200 in 6 ms; dev.office GET /me 200 in 9 ms; dev.lead JSON create 201 in 18 ms; PATCH of the uploading item -> v2 in 15 ms; 3 completed uploads -> 409 version_conflict, 409 version_conflict, 409 version_conflict; others dropped by the client; content rows 0; stored files 0; item v2 currentContentId null; /readyz after 200
+  ✓   49 [chromium-en] › e2e/dg2-qa-r12.spec.ts:398:1 › R12-02 25 stalled uploads (pool max 20) do not block other users, /readyz or an edit of the same item; no session idles in a transaction; nothing is stored (3.2s)
+QA-R12 [en] R12-03 ["JSON create, Content-Length, half sent: response before the abort none","JSON create, chunked, no terminator: response before the abort none","JSON create, cut inside an Arabic character: response before the abort none","JSON PATCH, Content-Length, half sent: response before the abort none","upload, Content-Length 5 MiB, 1 MiB sent: response before the abort none","upload, chunked, no terminator: response before the abort none"]; log lines 27; error-level (>=50) or 'unhandled error' 0; responses >= 500 0; 'request body not received completely' lines 6 at level(s) 30; logged response statuses [200,200]; evidence rows in the transformation 1->1; item v1->v1 title unchanged true; content rows 0; stored files 0; readyz 200; SIGTERM -> exit 0 in 18 ms
+  ✓   50 [chromium-en] › e2e/dg2-qa-r12.spec.ts:495:1 › R12-03 aborted JSON bodies and aborted uploads on a separate API process: no 500, no error-level log, nothing created or stored; SIGTERM exits 0 (7.3s)
+QA-R12 [en] R12-04 ["3 MiB random + all 256 byte values, Content-Length -> 200 in 41 ms, 3146240 B, sha256 e35f27d39f00d92a… DB e35f27d39f00d92a… Digest sha-256=418n058A2SoC…; byte-exact true; audit 1; files 1 (.part 0)","1 MiB + CRLF/0-CRLF lookalikes, chunked 77 777-byte pieces -> 200 in 42 ms, 1048839 B, sha256 beb7618c28293edb… DB beb7618c28293edb… Digest sha-256=vrdhjCgpPtvB…; byte-exact true; audit 1; files 2 (.part 0)","512 KiB sent in 16 pieces over ~3 s (slow body) -> 200 in 3209 ms, 524544 B, sha256 9539b79d8e490bad… DB 9539b79d8e490bad… Digest sha-256=lTm3nY5JC609…; byte-exact true; audit 1; files 3 (.part 0)"]; content rows 3
+  ✓   51 [chromium-en] › e2e/dg2-qa-r12.spec.ts:589:1 › R12-04 binary uploads (Content-Length, odd-size chunked, slow body over ~3 s) are stored byte-exact: sha256 = DB = Digest, audited, no .part left (3.9s)
+QA-R12 [en] R12-05 JSON create in 72 chunks cut at continuation bytes -> 201, title/note verbatim (API and DB); Arabic PATCH verbatim; file name "ملف en 👩🏽‍💻 r12.bin" verbatim (API and DB)
+  ✓   52 [chromium-en] › e2e/dg2-qa-r12.spec.ts:645:1 › R12-05 Arabic/emoji/ZWJ text cut at every UTF-8 continuation byte, an Arabic PATCH and 

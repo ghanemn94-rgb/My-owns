@@ -1,0 +1,125 @@
+$ env -u LANG -u LC_ALL QA_E2E_API_PORT=26062 QA_E2E_PG_PORT=26362 e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r14.spec.ts --workers=1 --reporter=list
+# dev run 2 (R14-03 trigger changed to the Transformations link); node v24.21.0; 2026-10-07T10:18:44Z
+port-policy: PostgreSQL listening on port 26362 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 26062 (attempt 1)
+API:     http://localhost:26062
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 14 tests using 1 worker
+
+  ✓   1 [chromium-en] › e2e/dg2-qa-r14.spec.ts:165:1 › R14-01 sign-out from the UI in a real second tab, then an in-app link: one landing with the message; Back stays bounded (11.5s)
+  ✓   2 [chromium-en] › e2e/dg2-qa-r14.spec.ts:222:1 › R14-02 upload refused with 401 after the uploader's access is revoked: dialog closes, one landing, nothing stored (10.1s)
+  ✓   3 [chromium-en] › e2e/dg2-qa-r14.spec.ts:315:1 › R14-03 the ended tab stays quiet for 10 s; a second context from the same IP signs in and works; no 429 (13.6s)
+  ✘   4 [chromium-en] › e2e/dg2-qa-r14.spec.ts:367:1 › R14-04 a 403 is never a session end; a 401 login_failed is not either, and its message follows a language switch (30.1s)
+  -   5 [chromium-en] › e2e/dg2-qa-r14.spec.ts:445:3 › R14-05a refused language save (a-csrf-403): notice in the language shown, both directions, layout holds
+  -   6 [chromium-en] › e2e/dg2-qa-r14.spec.ts:445:3 › R14-05b refused language save (b-network-failure): notice in the language shown, both directions, layout holds
+  -   7 [chromium-en] › e2e/dg2-qa-r14.spec.ts:556:1 › R14-06 a language switch while form errors are visible re-renders them in the new language and direction
+  ✓   8 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:165:1 › R14-01 sign-out from the UI in a real second tab, then an in-app link: one landing with the message; Back stays bounded (10.7s)
+  ✓   9 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:222:1 › R14-02 upload refused with 401 after the uploader's access is revoked: dialog closes, one landing, nothing stored (9.6s)
+  ✘  10 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:315:1 › R14-03 the ended tab stays quiet for 10 s; a second context from the same IP signs in and works; no 429 (12.5s)
+  -  11 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:367:1 › R14-04 a 403 is never a session end; a 401 login_failed is not either, and its message follows a language switch
+  -  12 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:445:3 › R14-05a refused language save (a-csrf-403): notice in the language shown, both directions, layout holds
+  -  13 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:445:3 › R14-05b refused language save (b-network-failure): notice in the language shown, both directions, layout holds
+  -  14 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:556:1 › R14-06 a language switch while form errors are visible re-renders them in the new language and direction
+
+
+  1) [chromium-en] › e2e/dg2-qa-r14.spec.ts:367:1 › R14-04 a 403 is never a session end; a 401 login_failed is not either, and its message follows a language switch 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.waitForResponse: Test timeout of 30000ms exceeded.
+
+      335 |   await signIn(page, lang, "dev.nobody");
+      336 |   const me0 = w.me;
+    > 337 |   const forbidden = page.waitForResponse((r) => r.status() === 403 && new URL(r.url()).pathname.startsWith("/api/v1/"));
+          |                          ^
+      338 |   await page.goto("/admin/users");
+      339 |   const f = await forbidden;
+      340 |   expect(((await f.json()) as { code: string }).code).toBe("forbidden");
+        at $TMPDIR/review-dg2-e2e/e2e/dg2-qa-r14.spec.ts:337:26
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-04-a-40-a5a37-e-follows-a-language-switch-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-dg2-qa-r14-R14-04-a-40-a5a37-e-follows-a-language-switch-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-04-a-40-a5a37-e-follows-a-language-switch-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg2-qa-r14-R14-04-a-40-a5a37-e-follows-a-language-switch-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-ar] › e2e/dg2-qa-r14.spec.ts:315:1 › R14-03 the ended tab stays quiet for 10 s; a second context from the same IP signs in and works; no 429 
+
+    Error: locator.click: Error: strict mode violation: getByRole('navigation', { name: 'التنقل الرئيسي' }).getByRole('link', { name: 'عملي' }) resolved to 2 elements:
+        1) <a href="/my-work" data-area="myWork" data-discover="true" class="app-nav__link">…</a> aka getByRole('link', { name: 'عملي', exact: true })
+        2) <a data-area="bau" data-discover="true" class="app-nav__link" href="/bau-improvement">…</a> aka getByRole('link', { name: 'العمليات الاعتيادية والتحسين مخطط' })
+
+    Call log:
+    [2m  - waiting for getByRole('navigation', { name: 'التنقل الرئيسي' }).getByRole('link', { name: 'عملي' })[22m
+
+
+      311 |   await signIn(b, lang, "dev.lead");
+      312 |   for (const key of ["nav.areas.transformations.label", "nav.areas.myWork.label", "nav.areas.transformations.label"]) {
+    > 313 |     await navLink(b, lang, key).click();
+          |                                 ^
+      314 |     await expect(b.locator("main#main h1")).toBeVisible();
+      315 |   }
+      316 |   await expect(signOutButton(b, lang)).toBeVisible();
+        at $TMPDIR/review-dg2-e2e/e2e/dg2-qa-r14.spec.ts:313:33
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-03-the--0a798-P-signs-in-and-works-no-429-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-03-the--0a798-P-signs-in-and-works-no-429-chromium-ar/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-dg2-qa-r14-R14-03-the--0a798-P-signs-in-and-works-no-429-chromium-ar/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-03-the--0a798-P-signs-in-and-works-no-429-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg2-qa-r14-R14-03-the--0a798-P-signs-in-and-works-no-429-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium-en] › e2e/dg2-qa-r14.spec.ts:367:1 › R14-04 a 403 is never a session end; a 401 login_failed is not either, and its message follows a language switch 
+    [chromium-ar] › e2e/dg2-qa-r14.spec.ts:315:1 › R14-03 the ended tab stays quiet for 10 s; a second context from the same IP signs in and works; no 429 
+  7 did not run
+  5 passed (1.7m)
+---- api.log (tail)
+exit 1
