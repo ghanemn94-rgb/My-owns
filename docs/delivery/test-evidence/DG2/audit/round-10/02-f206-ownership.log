@@ -1,0 +1,35 @@
+# F-DG2-206 ownership (release-auditor DG2 round 10)
+{
+ "id": "F-DG2-206",
+ "severity": "Low",
+ "mandatory_violation": false,
+ "reported_by": "qa-verifier",
+ "owner": "qa-verifier",
+ "status": "CLOSED_VERIFIED",
+ "fix_revision": "ee4681378ed48b9f4209bae27e6a83bf766f56b6",
+ "verification_by_role": "qa-verifier"
+}
+## fix commit
+ee4681378ed48b9f4209bae27e6a83bf766f56b6 Claude | DG2: fix F-DG2-206 — qa acceptance stack sets evidence storage env
+
+ e2e/support/qa-stack.sh | 3 +++
+ 1 file changed, 3 insertions(+)
+## rule
+function checkClosure(repo, stage, gate, f, v, where, errors) {
+  if (!v) return void errors.push(`${where}: ${f.status} but no reviewer verifications sidecar verifies it`);
+  if (v.result !== "PASS") errors.push(`${where}: latest reviewer verification (${v.sidecar}) is ${v.result}`);
+  if (v.status_after !== f.status) errors.push(`${where}: findings.json status ${f.status} differs from the reviewer's status_after ${v.status_after}`);
+  if (v.role === f.owner) errors.push(`${where}: verified by its own owner (${f.owner})`);
+  const recorded = f.verification;
+  if (!recorded) errors.push(`${where}: findings.json has no verification record`);
+## validate --stage DG2 (line for F-DG2-206)
+FAIL gate DG2 (current) (9 problems)
+  - gate DG2: decision is BLOCKED
+  - gate DG2: blocking conditions recorded: Evidence does not support a recorded specialist claim. code-security-reviewer SEC-R10-01 and SEC-R10-02 are PASS with exit_status 1, and the record and probes README attribute the non-zero exit only to the obsolete round-9 S11 assertion ('28 pass, 1 fail'). Both probe logs (probe-run1-lang-unset.log and probe-run2-lang-c-utf8.log, lines 128-131 and 171) show a second failure: 'Failed Suites 1', zz-sec-r10-probe.test.ts 'Error: Hook timed out in 30000ms' at afterAll(() => api.close()), 'Test Files 2 failed (2)'. No record discloses or explains it.; Untriaged product defect in the DG2 evidence-upload scope (REQ-S13-012, REQ-S16-013), reproduced by the auditor. After a 30 MiB CHUNKED over-limit upload to uploadEvidenceContent over a real socket, the API answers 413 evidence.too_large without closing the connection. It still holds the socket about 65 s after the client destroyed it, and app.close() (also run by src/main.ts on SIGTERM) completes only after about 65 s. This is independent of the Content-Type spelling and also present at the round-9 candidate 041478cb, so it is not a BE15 regression. It has no finding ID, severity, mandatory classification, repair or acceptance. A specialist (code-security-reviewer) must triage it. If raised, it must be repaired and verified by a non-author, or, only if Low and non-mandatory, accepted as an observation by a specialist and by the release-auditor with rationale and owner. The auditor cannot waive it.; Consequently, code-security-reviewer's round-10 PASS cannot be relied on as a complete record of its checks. A new review round with corrected or complete evidence is required before re-audit, because round-10 records are write-once.
+  - review release-auditor (docs/delivery/reviews/DG2/round-10/release-auditor.json): verdict is FAIL
+  - review release-auditor (docs/delivery/reviews/DG2/round-10/release-auditor.json): check AUD-6 is FAIL
+  - review release-auditor (docs/delivery/reviews/DG2/round-10/release-auditor.json): check AUD-7 is FAIL
+  - review release-auditor (docs/delivery/reviews/DG2/round-10/release-auditor.json) invocation: file not found (docs/delivery/runs/DG2/DG2-T-DG2-AUDIT-R10-release-auditor-20261006T235838Z-1b3a719f/meta.json)
+  - gate DG2: test 'code-security round-10 probe (SEC-R10-01/02): evidence vs claim' is FAIL
+  - gate DG2: test 'Auditor reproduction: over-limit chunked evidence upload holds the connection and stalls app.close (candidate and pre-BE15 041478cb)' is FAIL
+  - finding F-DG2-206 (Low): verified by its own owner (qa-verifier)

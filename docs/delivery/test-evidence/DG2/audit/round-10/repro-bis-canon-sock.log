@@ -1,0 +1,50 @@
+[with-pg initdb] The database cluster will be initialized with this locale configuration:
+[with-pg initdb] The default database encoding has accordingly been set to "UTF8".
+[with-pg] cluster template1 encoding UTF8, collate C
+
+ RUN  v3.2.4 /var/tmp/mth-run.9ULVMx/claude-0/repro
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muxci5uw_2d5991b1 (server_encoding UTF8); applied 19 migrations to a fresh database
+stdout | apps/api/test/integration/zz-aud-canon.test.ts > P5 the evidence upload's streaming size limit and raw-byte sha256 are unchanged behind a non-canonical spelling > over llhttp: a 30 MiB CHUNKED upload with an HTAB spelling -> 413 evidence.too_large, nothing stored, no error-level log
+PROBE P5s: {"statuses":["HTTP/1.1 413"],"code":"evidence.too_large","closedByServer":false,"stored":null,"errorLogsAdded":0}
+
+ ↓ |integration| apps/api/test/integration/zz-aud-canon.test.ts > P1 uploadEvidenceContent: every accepted spelling reaches the octet parser; every refusal names octet-stream > accepted -> 200 and stored byte-exact (raw sha256); refused -> 400 validation.content_type naming octet-stream; never 500
+ ↓ |integration| apps/api/test/integration/zz-aud-canon.test.ts > P1 uploadEvidenceContent: every accepted spelling reaches the octet parser; every refusal names octet-stream > over llhttp: obs-text (latin1 0x80-0xFF) inside a quoted parameter, and a bare obs-text token, never 500; accepted => byte-exact
+ ↓ |integration| apps/api/test/integration/zz-aud-canon.test.ts > P2 createEvidence: charset rule (D-070 tightening) and lookup agreement > UTF-8 in any legitimate spelling is accepted; other charsets / malformed are a 400 naming application/json
+ ↓ |integration| apps/api/test/integration/zz-aud-canon.test.ts > P2 createEvidence: charset rule (D-070 tightening) and lookup agreement > the strict UTF-8 decoder and prototype-poisoning protection still apply behind an accepted parameterised header
+ ↓ |integration| apps/api/test/integration/zz-aud-canon.test.ts > P2 createEvidence: charset rule (D-070 tightening) and lookup agreement > over-size JSON behind a parameterised header still hits bodyLimit (declared 400 validation.body_too_large), never parsed
+ ↓ |integration| apps/api/test/integration/zz-aud-canon.test.ts > P3 CSRF, authorization and rate limiting are not bypassed by an accepted non-canonical spelling > no CSRF token -> 403; foreign Origin -> 403; no session -> 401; AUD -> 403; nothing created or stored
+ ↓ |integration| apps/api/test/integration/zz-aud-canon.test.ts > P3 CSRF, authorization and rate limiting are not bypassed by an accepted non-canonical spelling > rate limiting (onRequest) still precedes the media-type refusal (charset tightening included)
+ ↓ |integration| apps/api/test/integration/zz-aud-canon.test.ts > P3 CSRF, authorization and rate limiting are not bypassed by an accepted non-canonical spelling > OBSERVATION (pre-existing, not BE15): unmatched-route 404s are not metered by @fastify/rate-limit (no route -> no onRoute hook)
+ ↓ |integration| apps/api/test/integration/zz-aud-canon.test.ts > P4 an unmatched route answers 404 for every Content-Type spelling and framing, and never reads the body > inject: malformed / duplicate-like / undeclared / no-CT bodies on unmatched URLs and methods -> 404 not_found + Connection: close
+ ↓ |integration| apps/api/test/integration/zz-aud-canon.test.ts > P4 an unmatched route answers 404 for every Content-Type spelling and framing, and never reads the body > llhttp: a Content-Length far above bodyLimit and the evidence limit on an unmatched route -> prompt 404, never 413/400, socket closed
+ ↓ |integration| apps/api/test/integration/zz-aud-canon.test.ts > P4 an unmatched route answers 404 for every Content-Type spelling and framing, and never reads the body > llhttp keep-alive smuggling: a request hidden in an unmatched route's body (CL and chunked) is never served
+ ↓ |integration| apps/api/test/integration/zz-aud-canon.test.ts > P4 an unmatched route answers 404 for every Content-Type spelling and framing, and never reads the body > llhttp: a matched route refusal (two Content-Type lines; malformed) closes the connection; the pipelined next request is not served from the body
+ ↓ |integration| apps/api/test/integration/zz-aud-canon.test.ts > P5 the evidence upload's streaming size limit and raw-byte sha256 are unchanged behind a non-canonical spelling > over-limit upload with 'application/octet-stream\t; x=1' (Content-Length, inject) -> 413 evidence.too_large, nothing stored; a 1 MiB binary stored with its raw sha256
+ ✓ |integration| apps/api/test/integration/zz-aud-canon.test.ts > P5 the evidence upload's streaming size limit and raw-byte sha256 are unchanged behind a non-canonical spelling > over llhttp: a 30 MiB CHUNKED upload with an HTAB spelling -> 413 evidence.too_large, nothing stored, no error-level log 8248ms
+ ↓ |integration| apps/api/test/integration/zz-aud-canon.test.ts > P5 the evidence upload's streaming size limit and raw-byte sha256 are unchanged behind a non-canonical spelling > OBSERVATION (test-transport artifact, compare the r9 baseline): inject + a CHUNKED over-limit stream rejects the inject promise with AbortError
+ ↓ |integration| apps/api/test/integration/zz-aud-canon.test.ts > P6 the pure decision and Fastify's getParser agree on every accepted spelling (fuzz) > for 20k random Content-Type strings over a hostile alphabet: accept => the canonical form maps to the declared parser; never throws
+ ↓ |integration| apps/api/test/integration/zz-aud-canon.test.ts > P6 the pure decision and Fastify's getParser agree on every accepted spelling (fuzz) > the FST_ERR_CTP_INVALID_MEDIA_TYPE backstop names the route's set; a request with no route config falls back to JSON without throwing
+ ↓ |integration| apps/api/test/integration/zz-aud-canon.test.ts > P7 no U+FFFD in stored evidence names / audit changes; no error-level log over the whole file (except the P5c transport artifact) > 0 / 0 / 0
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-aud-canon.test.ts [ apps/api/test/integration/zz-aud-canon.test.ts ]
+Error: Hook timed out in 30000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ apps/api/test/integration/zz-aud-canon.test.ts:42:1
+     40|   port = (api.app.server.address() as AddressInfo).port;
+     41| });
+     42| afterAll(() => api.close());
+       | ^
+     43| 
+     44| const ORIGIN = () => new URL(String(api.config.appBaseUrl)).origin;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 passed | 17 skipped (18)
+   Start at  00:04:26
+   Duration  41.92s (transform 794ms, setup 0ms, collect 1.86s, tests 38.68s, environment 0ms, prepare 71ms)
+

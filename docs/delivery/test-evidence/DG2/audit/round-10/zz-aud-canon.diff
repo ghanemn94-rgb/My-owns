@@ -1,0 +1,16 @@
+280c280
+<     const octNoCsrf = await send("POST", `${T}/evidence/${f.id}/content`, { cookie: p.lead.session.cookie, origin: ORIGIN(), ...ifm(f.version), "content-type": "application/octet-stream", "x-file-name": "p3.bin" }, BYTES, "chunked");
+---
+>     const octNoCsrf = await send("POST", `${T}/evidence/${f.id}/content`, { cookie: p.lead.session.cookie, origin: ORIGIN(), ...ifm(f.version), "content-type": "application/octet-stream\t; x=1", "x-file-name": "p3.bin" }, BYTES, "chunked");
+342c342
+<       for (const ct of ["application/octet-stream", 'application/json; x="', "*/*", "application/json; charset=latin1", "multipart/form-data; boundary=x", "application/x-www-form-urlencoded", null]) {
+---
+>       for (const ct of ["application/octet-stream\t; x=1", 'application/json; x="', "*/*", "application/json; charset=latin1", "multipart/form-data; boundary=x", "application/x-www-form-urlencoded", null]) {
+420c420
+<     const r = await send("POST", `${T}/evidence/${f.id}/content`, { ...authHeaders(), ...ifm(f.version), "content-type": "application/octet-stream", "x-file-name": "p5.bin" }, huge, "cl");
+---
+>     const r = await send("POST", `${T}/evidence/${f.id}/content`, { ...authHeaders(), ...ifm(f.version), "content-type": "application/octet-stream\t; x=1", "x-file-name": "p5.bin" }, huge, "cl");
+438c438
+<         `X-CSRF-Token: ${p.lead.session.csrf}\r\nIf-Match: "${f.version}"\r\nX-File-Name: p5s.bin\r\nContent-Type: application/octet-stream\r\nTransfer-Encoding: chunked\r\n\r\n`,
+---
+>         `X-CSRF-Token: ${p.lead.session.csrf}\r\nIf-Match: "${f.version}"\r\nX-File-Name: p5s.bin\r\nContent-Type: application/octet-stream\t; x=1\r\nTransfer-Encoding: chunked\r\n\r\n`,
