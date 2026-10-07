@@ -10906,7 +10906,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-13/domain-reviewer.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-07T07:00:00Z",
@@ -10917,10 +10917,68 @@
           "at": "2026-10-07T08:30:34Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 8cb3bb8d0006d0dbe4a7ea0b4322e97f9d4e4858"
+        },
+        {
+          "at": "2026-10-07T10:58:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 14: PASS"
         }
       ],
       "fix_revision": "8cb3bb8d0006d0dbe4a7ea0b4322e97f9d4e4858",
-      "fix_summary": "FE10 8cb3bb8: one session-end rule in the web API client (module phase unknown/active/ended). Any request (including /me, a page query, a mutation or the upload dialog) that answers 401 unauthenticated while the phase is active ends the session exactly once and drops the CSRF token. A 403, another 401 code, or a 401 with no active session is not a session end. RequireSession then renders nothing (no stale shell), disables its /me query, clears the cached identity and every session-scoped query once, and navigates once to /login?returnTo=...&error=session_expired. LoginPage decides 'already signed in' only from a fresh /me (refetchOnMount always, dataUpdatedAt >= mount). Signing out in this tab is not a session end. At most 2 /me per session end. Tests: session-end.test.tsx (EN/AR, every trigger, bounded /me, 403 not an end) and e2e session-end.spec.ts (sign-out elsewhere and an in-app link, the commit-time upload refusal, product default rate limits with a second context from the same IP signing in, axe 0); negative control on HEAD."
+      "fix_summary": "FE10 8cb3bb8: one session-end rule in the web API client (module phase unknown/active/ended). Any request (including /me, a page query, a mutation or the upload dialog) that answers 401 unauthenticated while the phase is active ends the session exactly once and drops the CSRF token. A 403, another 401 code, or a 401 with no active session is not a session end. RequireSession then renders nothing (no stale shell), disables its /me query, clears the cached identity and every session-scoped query once, and navigates once to /login?returnTo=...&error=session_expired. LoginPage decides 'already signed in' only from a fresh /me (refetchOnMount always, dataUpdatedAt >= mount). Signing out in this tab is not a session end. At most 2 /me per session end. Tests: session-end.test.tsx (EN/AR, every trigger, bounded /me, 403 not an end) and e2e session-end.spec.ts (sign-out elsewhere and an in-app link, the commit-time upload refusal, product default rate limits with a second context from the same IP signing in, axe 0); negative control on HEAD.",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG2-T-DG2-REV-DOM-R14-domain-reviewer-20261007T100739Z-92b93a49",
+          "session_id": "92b93a49-01d8-4e08-98ef-3b5adf0365bd"
+        },
+        "at": "2026-10-07T10:58:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG2/domain/round-14/r14-session-end-ui.log",
+          "docs/delivery/test-evidence/DG2/domain/round-14/r14-session-end-ui-default-limits.log",
+          "docs/delivery/test-evidence/DG2/domain/round-14/r13-session-end-ui.log",
+          "docs/delivery/test-evidence/DG2/domain/round-14/r13-session-end-ui-default-limits.log",
+          "docs/delivery/test-evidence/DG2/domain/round-14/r13-ui.log",
+          "docs/delivery/test-evidence/DG2/domain/round-14/r13-ui-withdrawn.log",
+          "docs/delivery/test-evidence/DG2/domain/round-14/r14-session-end-ui.mjs",
+          "docs/delivery/test-evidence/DG2/domain/round-14/screens/ar-r14-session-end-revocation-raised-limits.png",
+          "docs/delivery/test-evidence/DG2/domain/round-14/screens/en-r14-session-end-other-tab-signout-raised-limits.png",
+          "docs/delivery/test-evidence/DG2/domain/round-14/env.txt"
+        ],
+        "note": "Verified on candidate sha256:9f3ca298 (source ea9051b2, FE10 8cb3bb8), in EN (LTR) and AR (RTL), in a disposable stack with synthetic data.\n- My round-13 reproductions now pass unchanged. r13-session-end-ui: in-app link and reload, 4/4, with raised and default limits; each in-app link makes 1 /me where round 13 made about 130 per second. r13-ui (c): after the 401 upload refusal the user is on /login with the localized message, with no EN leak and 0 revisions. r13-ui-withdrawn: the message on /login at about 270 ms, and signing in again returns to the evidence page.\n- New r14-session-end-ui, 31/31 with raised limits and 31/31 with the product's default limits. It covers a real second tab clicking Sign out, an administrator revocation, idle expiry, absolute expiry and logout by API. Every trigger lands exactly once on /login?returnTo=/transformations&error=session_expired, with the form and the localized message and the correct dir. Each makes /me = 1 in 10 s, with 0 429s and no stale shell. A second context from the same IP signs in, and signing in again returns to /transformations.\n- Source: the session phase lives in the API client (unknown/active/ended). A 401 'unauthenticated' while active ends the session once, and a 403 never does. RequireSession disables /me, clears the cache once and navigates once. LoginPage trusts only a /me answered after it mounted.\n- Limit noted, not a defect: a tab learns that its session ended only from its next server request. A navigation served entirely from cache shows the page until then."
+      }
+    },
+    {
+      "id": "F-DG2-500",
+      "stage_id": "DG2",
+      "requirement": "REQ-S16-030",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "A session that ends while the sign-in page is shown never clears the session-scoped query cache: the next identity to sign in in that tab (development form, or a /me re-probe after an IdP sign-in in another tab) is shown the previous user's cached records",
+      "reproduction": "FE10 moved the session-end rule into the API client (apps/web/src/api/client.ts:99 endSession: a 401 `unauthenticated` while the phase is \"active\" makes it \"ended\"). The cache is cleared only by <RequireSession> (apps/web/src/auth/session.tsx:52-58: claimSessionEnd() then queryClient.removeQueries()), so only when that component is mounted, or mounts later while the phase is still \"ended\". The sign-in page is outside <RequireSession> (apps/web/src/app/router.tsx:38). It re-probes /me on mount (apps/web/src/pages/LoginPage.tsx:60, refetchOnMount \"always\") through the same client, so a 401 there ends the session but clears nothing. The next successful GET /me then sets the phase back to \"active\" (apps/web/src/api/queries.ts:62 markSessionActive), the end is never claimed, and the sign-in page navigates to returnTo (LoginPage.tsx:70) with the previous user's queries still cached.\nThe precondition is the sign-in page being shown in the same document while the phase is \"active\". That happens when the browser Back button returns to an in-document /login history entry, for example one pushed by the sign-in page's own wordmark link (LoginPage.tsx:80), after the user signed in in that document (development form, or a refocus /me re-probe after an IdP sign-in in another tab).\nProbe: docs/delivery/test-evidence/DG2/code-security/round-14/probes/zz-sec-r14-web-probe.test.tsx (sha256 2b64ba54), copied into a disposable clone of candidate 9f3ca298 (d99de98), unit-web project, jsdom, the product's own fixtures, SYNTHETIC data. Identical on Node 22.22.2 and Node 24.21.0 (probe-web-node22.log, probe-web-node24.log).\nW5 (development sign-in): user A is on /transformations and sees TR-A-SECRET. A's session ends, and the tab goes Back to /login?returnTo=%2Ftransformations: GET /me 401, phase \"ended\", and 1 transformations query is still cached. User B signs in with the development form (POST /auth/dev-login 204, GET /me 200 as \"Synthetic User B\"). The app navigates to /transformations, and with B's list request still in flight the page shows B's name and A's row TR-A-SECRET.\nW5b (OIDC mode, development sign-in 404): same, but B signs in at the IdP in another tab and this tab's /me is re-probed (as refetchOnWindowFocus does in production). Same result: B sees TR-A-SECRET.\nControl: when the session ends while <RequireSession> is mounted (the product's own session-end.test.tsx, and W6 here), the cache is cleared and nothing leaks.",
+      "expected": "When a session ends, whatever page is shown, the cached identity and every session-scoped query are removed before any later identity can render. A user who signs in afterwards in the same tab never sees records fetched under the previous session.",
+      "actual": "The cache is cleared only if <RequireSession> observes the \"ended\" phase. A session that ends on the sign-in page is never claimed. The next sign-in in that tab renders the previous user's cached records (TR-A-SECRET) under the new user's identity, until the new user's own requests replace them. In production (OIDC; development sign-in is refused under NODE_ENV=production) this needs an in-document /login history entry, a session end, Back to that entry, and a different identity signing in on the same browser profile in another tab. Server-side authorisation is intact: no API response ever carries A's data to B; the exposure is data A already held in that tab's memory. Rated Medium, not mandatory, for that reason and the narrow preconditions. Suggested fix: clear the session-scoped cache where the phase changes, independent of which route is mounted (for example a phase subscriber in AppProviders that removes every query when the phase becomes \"ended\"), or remove every query on any transition into \"active\" whose user differs from the cached one.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-14/probes/zz-sec-r14-web-probe.test.tsx",
+        "docs/delivery/test-evidence/DG2/code-security/round-14/probe-web-node22.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-14/probe-web-node24.log",
+        "apps/web/src/auth/session.tsx",
+        "apps/web/src/pages/LoginPage.tsx",
+        "apps/web/src/api/client.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-14/code-security-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-07T10:19:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG2 round 14 (T-DG2-REV-SEC-R14) on candidate 9f3ca298; reproduced on Node 22 and Node 24 (W5 development sign-in, W5b OIDC-mode /me re-probe)."
+        }
+      ]
     }
   ]
 }
