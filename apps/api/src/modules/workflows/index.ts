@@ -11,15 +11,20 @@ import type { ModuleDeps, ModuleRegistration } from "../platform/index.ts";
 import { registerRegister } from "../transformations/index.ts";
 import { registerCanvasRoutes } from "./canvas.ts";
 import { registerDecisionRoutes } from "./decisions.ts";
+import { registerDependencyTypeRoutes } from "./dependency-types.ts";
 import { actionItemRegister, dependencyRegister, tomWorkshopRegister } from "./design-registers.ts";
 import { UNWIRED_GATE_FACTS, type GateFactsProvider } from "./g4.ts";
 import { registerGateRoutes } from "./gates.ts";
+import { registerT08DependencyRoutes } from "./t08-dependencies.ts";
 import { registerWorkshopRoutes } from "./workshops.ts";
 
 export { EVALUATORS, evaluateGate, loadGateFacts, type GateFacts } from "./criteria.ts";
 export { isGateApprover } from "./gates.ts";
 // P3 (ADR-0021 §1, T-DG3-BE-A): the interface through which the G4 evaluators read portfolio and kpi facts.
 export type { GateFactsProvider, KpiP3GateFacts, PortfolioGateFacts } from "./g4.ts";
+// P3 (ADR-0023 §4-§5, T-DG3-BE-C): the seam through which portfolio supplies the T08 schedule flags.
+// Types only: the provider is supplied through the Fastify decorator `t08ScheduleFlags` (declared in t08-dependencies.ts).
+export type { T08Dependency, T08ScheduleFlagsProvider } from "./t08-dependencies.ts";
 
 /** The playbook's product gates (business approvals), in order. Not the engineering gates DG0-DG7. */
 export const PRODUCT_GATES = ["G1", "G2", "G3", "G4", "G5", "G6"] as const;
@@ -42,6 +47,9 @@ export function registerWorkflowsModule(
     ...registerWorkshopRoutes(app, db),
     ...registerCanvasRoutes(app, db),
     ...registerGateRoutes(app, db, options.gateFacts ?? UNWIRED_GATE_FACTS),
+    // P3 T08 dependency map and dependency types (ADR-0023 §4, T-DG3-BE-C).
+    ...registerT08DependencyRoutes(app, db),
+    ...registerDependencyTypeRoutes(app, db),
   ];
   return Object.freeze({ module: "workflows", status: "active", deliversIn: "P2", routes: Object.freeze(routes) });
 }
