@@ -1,0 +1,23 @@
+PASS R8.arabic-emoji-rlm-raw-utf8:content-length :: expected 201; caseForChange stored code point for code point (RLM/LRM/ZWJ/emoji kept) :: actual 201; verbatim=true; cps=63/63
+PASS R8.arabic-emoji-rlm-raw-utf8:chunked :: expected 201; caseForChange stored code point for code point (RLM/LRM/ZWJ/emoji kept) :: actual 201; verbatim=true; cps=63/63
+PASS R8.leading-bom-accepted :: expected 201 :: actual 201 []
+PASS R8.invalid-utf8-body:xFF:content-length :: expected 400 problem+json validation.json; no charter stored; EN/AR message :: actual 400 application/problem+json; charset=utf-8 code=validation errors=[["","validation.json"]] charter=false
+PASS R8.invalid-utf8-body:xFF:chunked :: expected 400 problem+json validation.json; no charter stored; EN/AR message :: actual 400 application/problem+json; charset=utf-8 code=validation errors=[["","validation.json"]] charter=false
+PASS R8.invalid-utf8-body:truncated-arabic:content-length :: expected 400 problem+json validation.json; no charter stored; EN/AR message :: actual 400 application/problem+json; charset=utf-8 code=validation errors=[["","validation.json"]] charter=false
+PASS R8.invalid-utf8-body:truncated-arabic:chunked :: expected 400 problem+json validation.json; no charter stored; EN/AR message :: actual 400 application/problem+json; charset=utf-8 code=validation errors=[["","validation.json"]] charter=false
+PASS R8.invalid-utf8-body:cesu8-surrogate:content-length :: expected 400 problem+json validation.json; no charter stored; EN/AR message :: actual 400 application/problem+json; charset=utf-8 code=validation errors=[["","validation.json"]] charter=false
+PASS R8.invalid-utf8-body:cesu8-surrogate:chunked :: expected 400 problem+json validation.json; no charter stored; EN/AR message :: actual 400 application/problem+json; charset=utf-8 code=validation errors=[["","validation.json"]] charter=false
+PASS R8.invalid-utf8-body:overlong-slash:content-length :: expected 400 problem+json validation.json; no charter stored; EN/AR message :: actual 400 application/problem+json; charset=utf-8 code=validation errors=[["","validation.json"]] charter=false
+PASS R8.invalid-utf8-body:overlong-slash:chunked :: expected 400 problem+json validation.json; no charter stored; EN/AR message :: actual 400 application/problem+json; charset=utf-8 code=validation errors=[["","validation.json"]] charter=false
+PASS R8.validation-json-localized :: expected EN and AR messages exist and AR is Arabic :: actual en='The request was not valid JSON.' ar='الطلب ليس بصيغة JSON صالحة.'
+PASS R8.query-arabic-plus-space :: expected 200 and the Arabic-named transformation is found :: actual 200 qs=q=%D8%A7%D9%84%D9%81%D9%88%D8%AA%D8%B1%D8%A9+%D8%A7%D9%84%D8… found=true
+PASS R8.query-literal-plus-%2B :: expected 200; %2B decodes to a literal '+' and still matches :: actual 200 found=true
+PASS R8.query-rlm-prefixed :: expected 200 (RLM is valid text, not refused as undecodable) :: actual 200 []
+PASS R8.query-undecodable:xFF :: expected 400 problem+json validation.format at /query/q :: actual 400 application/problem+json; charset=utf-8 [["/query/q","validation.format"]]
+PASS R8.query-undecodable:cesu8 :: expected 400 problem+json validation.format at /query/q :: actual 400 application/problem+json; charset=utf-8 [["/query/q","validation.format"]]
+PASS R8.query-undecodable:truncated-arabic :: expected 400 problem+json validation.format at /query/q :: actual 400 application/problem+json; charset=utf-8 [["/query/q","validation.format"]]
+PASS R8.validation-format-localized :: expected EN and AR messages exist and AR is Arabic :: actual en='This value has the wrong format.' ar='صيغة هذه القيمة غير صحيحة.'
+PASS R8.invisible-only-refused :: expected 400 validation.blank at /caseForChange :: actual 400 [["/caseForChange","validation.blank"]]
+PASS R8.validation-blank-localized :: expected EN and AR messages exist and AR is Arabic :: actual en='Enter some text; spaces alone are not a value.' ar='أدخِل نصاً؛ المسافات وحدها ليست قيمة.'
+SUMMARY {"pass":21,"fail":[]}
+### regress-d068-api exit=0

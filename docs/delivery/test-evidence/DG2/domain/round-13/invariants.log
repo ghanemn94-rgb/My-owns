@@ -1,0 +1,89 @@
+### source diff 8488e7a (round-12 source)..aa0a68f (round-13 source), all files:
+ 290 files changed, 32370 insertions(+), 64 deletions(-)
+### product (non-docs) files changed 8488e7a..aa0a68f:
+apps/api/src/main.ts
+apps/api/src/modules/access/denials.ts
+apps/api/src/modules/access/index.ts
+apps/api/src/modules/access/request.ts
+apps/api/src/modules/evidence/evidence.test.ts
+apps/api/src/modules/evidence/routes.ts
+apps/api/src/modules/evidence/store.ts
+apps/api/src/modules/identity/oidc.ts
+apps/api/src/modules/identity/routes.ts
+apps/api/src/modules/platform/in-flight.test.ts
+apps/api/src/modules/platform/in-flight.ts
+apps/api/src/modules/platform/index.ts
+apps/api/src/modules/transformations/register-kit.ts
+apps/api/src/server.ts
+apps/api/test/integration/commit-time-auth.test.ts
+apps/api/test/integration/shutdown-cleanup.test.ts
+packages/db/src/pool.ts
+### changes touching i18n, migrations, seeds, catalogues, gate rules, web (expect none):
+(end)
+### certification/official claims in user-facing i18n (expect only negations):
+ tokens that can be replaced through Branding Settings once official values are approved.
+No official Mobily logo or verified brand colours have been supplied. The header shows a pr
+Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mob
+sformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with custom extensions. It is not an official PMI 
+sional: the text wordmark and colours are placeholders, not official Mobily brand assets.
+standard, and this product is not certified by PMI or any other body.
+ر معتمد من PMI أو من أي جهة أخرى.
+وّل الأعمال الإصدار 1.0، وهو خلاصة عملية مستوحاة من ممارسات PMI وBrightline وBRM مع إضافات مخصصة. وهو ليس معيارًا رسميًا من PMI، وهذا المنتج غي
+### gate_definition codes in migrations:
+      1 'G1'
+      1 'G2'
+      1 'G3'
+      1 'G4'
+      1 'G5'
+      1 'G6'
+### float/real/double columns in migrations (expect 0):
+0
+### numeric columns (count):
+7
+### brand token provisional:
+2:  "$comment": "Single design-token source (ADR-0009). PROVISIONAL values from master prompt §15 (REQ-S15-002). They are NOT verified or official Mobily colours; #0078FF is a provisional brand token. Replace only through the Branding Settings flow (REQ-S15-004) once official values are supplied.",
+5:    "brand.primary": { "value": "#0078FF", "purpose": "Primary accents and selected elements", "provisional": true },
+18:    "$comment": "Derived from the seeded tokens by a rule (REQ-S15-003). `value` is the result of the rule and a test re-derives it, so a change to a seed without regenerating fails. #0078FF itself is NOT used behind small white text.",
+2:  "$comment": "Single design-token source (ADR-0009). PROVISIONAL values from master prompt §15 (REQ-S15-002). They are NOT verified or official Mobily colours; #0078FF is a provisional brand token. Replace only through the Branding Settings flow (REQ-S15-004) once official values are supplied.",
+3:  "provisional": true,
+5:    "brand.primary": { "value": "#0078FF", "purpose": "Primary accents and selected elements", "provisional": true },
+### provisional wordmark text (i18n):
+    "provisional": "مؤقت",
+    "provisionalHint": "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة.",
+    "provisionalNotice": "الهوية البصرية مؤقتة: الشعار النصي والألوان بدائل مؤقتة وليست أصولًا رسمية لعلامة موبايلي."
+    "provisional": "Provisional",
+    "provisionalHint": "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.",
+    "provisionalNotice": "Branding is provisional: the text wordmark and colours are placeholders, not official Mobily brand assets."
+    "brandBody": "No official Mobily logo or verified brand colours have been supplied. The header shows a provisional text wordmark, and the colours (including #0078FF) are provisional design tokens that can be replaced through Branding Settings once official values are approved.",
+### DG0-DG7 references in product source (non-test, excluding finding IDs F-DGn- and T-DGn- task ids):
+apps/api/src/modules/admin/branding.ts:1:// GET /api/v1/branding/tokens (REQ-S15-002, contract operation getBrandingTokens). Read-only at DG1: Branding
+apps/api/src/modules/admin/branding.ts:33:  // Computed once: the source is static per process at DG1 (no Branding Settings writes yet).
+apps/api/src/modules/transformations/routes.ts:66: * This is a PRODUCT gate (G6), unrelated to the engineering delivery gates DG0-DG7.
+apps/api/src/modules/transformations/phase.ts:4:// delivery gates DG0-DG7.
+apps/api/src/modules/workflows/index.ts:7:// phase. They are unrelated to the engineering delivery gates DG0-DG7 (G6 never implies DG7, and the reverse).
+apps/api/src/modules/workflows/index.ts:20:/** The playbook's product gates (business approvals), in order. Not the engineering gates DG0-DG7. */
+apps/api/src/modules/workflows/criteria.ts:11:// These are BUSINESS gates inside the product; nothing here reads or writes the engineering gates DG0-DG7.
+apps/api/src/modules/workflows/gates.ts:10:// delivery gates DG0-DG7, and no product gate implies one (G6 never implies DG7). The API never approves by itself:
+apps/api/src/modules/workflows/gates.ts:578:    note: "Product gate (business approval inside the product); unrelated to the engineering delivery gates DG0-DG7.",
+apps/api/src/modules/kpi/gate-facts.ts:3:// the product (G1-G6), unrelated to the engineering delivery gates DG0-DG7.
+(end)
+### unknown/stale never zero: value pool unquantified label i18n:
+    "unquantified": "غير مُقدَّر كمّياً",
+    "unquantifiedReason": "سبب عدم التقدير الكمّي",
+  "value_pool__unquantified_has_amount": "لا يمكن أن يكون لمجمّع قيمة غير مُقدَّر كمّياً مبالغ؛ اذكر السبب بدلاً منها.",
+  "value_pool__unquantified": "مجمّع القيمة هذا غير مُقدَّر كمّياً.",
+### new 403 detail text is an English server detail; the web shows the localized problem by code:
+(web uses code; none in web)
+### env residual surfaces:
+ci.yml mirrors identical
+ci
+compose
+docker
+images.lock.json
+keycloak
+scripts
+deploy/images.lock.json
+deploy/compose/compose.no-egress.yaml
+deploy/compose/compose.yaml
+deploy/ci/ci.yml
+deploy/scripts/init-secrets.sh

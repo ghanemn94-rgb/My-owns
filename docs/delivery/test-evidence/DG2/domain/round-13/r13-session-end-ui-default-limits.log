@@ -1,0 +1,20 @@
+TIMELINE en in-app-link (logout=200; /me requests in 10 s: 283)
+  +28ms /transformations blank=false signInForm=false msg=false
+  +284ms /login?error=session_expired blank=true signInForm=false msg=false
+  +539ms /transformations blank=true signInForm=false msg=false
+  +1837ms /transformations blank=false signInForm=true msg=false
+FAIL en.in-app-link :: expected after the session ends, the user lands on the sign-in form (dir ltr) with 'Your session ended. Please sign in again.', with a bounded number of /me requests :: actual logout=200; final={"path":"/transformations","form":true,"msg":false,"dir":"ltr"}; reached sign-in form at nullms; state changes=4; /me requests in 10 s=283
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+locator.fill: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('input').first()[22m
+
+    at /var/tmp/mth-run.3sKDTK/claude-0/review-dom-r13/rv/r13-session-end-ui.mjs:20:82 {
+  name: 'TimeoutError'
+}
+
+Node.js v24.21.0
+### r13-session-end-ui (default limits) exit=1

@@ -1,0 +1,30 @@
+INFO stack API (idle) stopped: true after 101 ms
+API LOG (probe API, LOG_LEVEL=info), lines with "msg":
+  30 Server listening at http://127.0.0.1:3923
+  30 mth-api listening
+  30 evidence store: start-up sweep of stale temporary objects finished
+  30 incoming request
+  30 request completed
+  30 incoming request
+  30 request completed
+  30 incoming request
+  30 request completed
+  30 incoming request
+  30 request completed
+  30 incoming request
+  30 request completed
+  30 incoming request
+  30 request completed
+  30 incoming request
+  30 request completed
+  30 incoming request
+  30 shutting down SIGTERM
+  40 shutdown grace period elapsed: closing the remaining connections
+  30 request body not received completely
+  30 shut down SIGTERM
+PASS R13.shutdown-during-upload-no-partial :: expected upload 0 committed first (200); a .part exists while the cut upload streams; the API exits with code 0 within the 10 s backstop and logs 'shut down' with no settle warning; afterwards 0 .part files, the cut item has 0 revisions, the final objects are unchanged :: actual up0=200 partsDuring=1 exit={"code":0,"signal":null} after 5030 ms; 'shut down' logged=true; settle warning=false; partsAfter=0; cutRevisions=0; finals 1->1 same=true; client got "no response (connection closed)"
+INFO restarted API start-up sweep log: evidence store: start-up sweep of stale temporary objects finished {"removed":0,"olderThanMs":3600000}
+PASS R13.after-restart-evidence-works :: expected API ready again; the file committed before the shutdown downloads byte-identical; the cut item now takes a normal upload (200) and downloads byte-identical :: actual ready=1; dl0 200 7a668ab47d6927dc vs 7a668ab47d6927dc; up1=200; dl1 200 identical=true
+INFO restarted API exit {"code":0,"signal":null}
+SUMMARY 2/2 PASS
+### r13-shutdown exit=0

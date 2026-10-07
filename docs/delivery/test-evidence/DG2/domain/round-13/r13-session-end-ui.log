@@ -1,0 +1,40 @@
+TIMELINE en in-app-link (logout=200; /me requests in 10 s: 1411)
+  +47ms /transformations blank=false signInForm=false msg=false
+  +313ms /transformations blank=true signInForm=false msg=false
+  +572ms /login?error=session_expired blank=true signInForm=false msg=false
+  +837ms /transformations blank=true signInForm=false msg=false
+  +1899ms /login?error=session_expired blank=true signInForm=false msg=false
+  +2952ms /transformations blank=true signInForm=false msg=false
+  +3477ms /login?error=session_expired blank=true signInForm=false msg=false
+  +4002ms /transformations blank=true signInForm=false msg=false
+  +4775ms /login?error=session_expired blank=true signInForm=false msg=false
+  +5292ms /transformations blank=true signInForm=false msg=false
+  +5552ms /login?error=session_expired blank=true signInForm=false msg=false
+  +6079ms /transformations blank=true signInForm=false msg=false
+  … 6 more state changes
+FAIL en.in-app-link :: expected after the session ends, the user lands on the sign-in form (dir ltr) with 'Your session ended. Please sign in again.', with a bounded number of /me requests :: actual logout=200; final={"path":"/transformations","form":false,"msg":false,"dir":"ltr"}; reached sign-in form at nullms; state changes=18; /me requests in 10 s=1411
+TIMELINE en reload-control (logout=200; /me requests in 10 s: 2)
+  +132ms /my-work blank=false signInForm=false msg=false
+  +391ms /login blank=false signInForm=true msg=false
+PASS en.reload-control :: expected after the session ends, the user lands on the sign-in form (dir ltr), with a bounded number of /me requests :: actual logout=200; final={"path":"/login","form":true,"msg":false,"dir":"ltr"}; reached sign-in form at 391ms; state changes=2; /me requests in 10 s=2
+TIMELINE ar in-app-link (logout=200; /me requests in 10 s: 1265)
+  +32ms /transformations blank=false signInForm=false msg=false
+  +288ms /login?error=session_expired blank=true signInForm=false msg=false
+  +545ms /transformations blank=true signInForm=false msg=false
+  +1400ms /login?error=session_expired blank=true signInForm=false msg=false
+  +2752ms /transformations blank=true signInForm=false msg=false
+  +3013ms /login?error=session_expired blank=true signInForm=false msg=false
+  +4062ms /transformations blank=true signInForm=false msg=false
+  +5124ms /login?error=session_expired blank=true signInForm=false msg=false
+  +5647ms /transformations blank=true signInForm=false msg=false
+  +5903ms /login?error=session_expired blank=true signInForm=false msg=false
+  +6164ms /transformations blank=true signInForm=false msg=false
+  +6419ms /login?error=session_expired blank=true signInForm=false msg=false
+  … 9 more state changes
+FAIL ar.in-app-link :: expected after the session ends, the user lands on the sign-in form (dir rtl) with 'انتهت جلستك. يُرجى تسجيل الدخول مجددًا.', with a bounded number of /me requests :: actual logout=200; final={"path":"/transformations","form":false,"msg":false,"dir":"rtl"}; reached sign-in form at nullms; state changes=21; /me requests in 10 s=1265
+TIMELINE ar reload-control (logout=200; /me requests in 10 s: 2)
+  +206ms /my-work blank=false signInForm=false msg=false
+  +460ms /login blank=false signInForm=true msg=false
+PASS ar.reload-control :: expected after the session ends, the user lands on the sign-in form (dir rtl), with a bounded number of /me requests :: actual logout=200; final={"path":"/login","form":true,"msg":false,"dir":"rtl"}; reached sign-in form at 460ms; state changes=2; /me requests in 10 s=2
+SUMMARY {"pass":2,"fail":2}
+### r13-session-end-ui exit=1

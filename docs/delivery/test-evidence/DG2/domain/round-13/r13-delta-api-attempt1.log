@@ -1,0 +1,42 @@
+PASS R13.en.normal-upload-download-unchanged :: expected 200; download byte-identical; file name kept; one revision :: actual upload 200 fileName="Baseline R13 extract 📊.xlsx"; download 200 2097444/2097444 bytes sha 3422162a8ecd5a5a vs 3422162a8ecd5a5a; revisions=1
+PASS R13.ar.normal-upload-download-unchanged :: expected 200; download byte-identical; file name kept; one revision :: actual upload 200 fileName="خط-الأساس R13 ‏📊.xlsx"; download 200 2097444/2097444 bytes sha 3422162a8ecd5a5a vs 3422162a8ecd5a5a; revisions=1
+FAIL R13.access-ends-mid-upload-403 :: expected assignment 201; evidence 201; temp object during stream; then 403 forbidden; 0 revisions; item version unchanged; authorization.denied audited; no .part left :: actual assign=201 evidence=201 partsDuring=1 response=403 code=forbidden detail="Your access to this record changed while the request was in progress." revisions=0 version 1->1 denials=0 partsLeft=0
+FAIL R13.upload-after-403 :: expected 200 by the transformation lead; byte-identical; 1 revision :: actual 403; identical=false; revisions=0
+ERROR:  invalid input syntax for type uuid: "undefined"
+LINE 1: ... count(*) from evidence_content where evidence_id='undefined...
+                                                             ^
+node:internal/errors:986
+  const err = new Error(message);
+              ^
+
+Error: Command failed: psql postgresql://postgres@127.0.0.1:55023/mth -qAtc select count(*) from evidence_content where evidence_id='undefined'
+ERROR:  invalid input syntax for type uuid: "undefined"
+LINE 1: ... count(*) from evidence_content where evidence_id='undefined...
+                                                             ^
+
+    at genericNodeError (node:internal/errors:986:15)
+    at wrappedFn (node:internal/errors:540:14)
+    at checkExecSyncError (node:child_process:942:11)
+    at execFileSync (node:child_process:978:15)
+    at psql (file:///var/tmp/mth-run.3sKDTK/claude-0/review-dom-r13/rv/r13-delta-api.mjs:25:21)
+    at revisions (file:///var/tmp/mth-run.3sKDTK/claude-0/review-dom-r13/rv/r13-delta-api.mjs:61:34)
+    at file:///var/tmp/mth-run.3sKDTK/claude-0/review-dom-r13/rv/r13-delta-api.mjs:115:272
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  status: 1,
+  signal: null,
+  output: [
+    null,
+    '',
+    'ERROR:  invalid input syntax for type uuid: "undefined"\n' +
+      "LINE 1: ... count(*) from evidence_content where evidence_id='undefined...\n" +
+      '                                                             ^\n'
+  ],
+  pid: 169,
+  stdout: '',
+  stderr: 'ERROR:  invalid input syntax for type uuid: "undefined"\n' +
+    "LINE 1: ... count(*) from evidence_content where evidence_id='undefined...\n" +
+    '                                                             ^\n'
+}
+
+Node.js v24.21.0
+### r13-delta-api exit=1
