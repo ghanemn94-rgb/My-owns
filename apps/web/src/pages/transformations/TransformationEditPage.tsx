@@ -7,12 +7,13 @@ import { transformationUpdate } from "@mth/shared/schemas";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { useNavigate, useParams } from "react-router";
-import { api, ApiError, isSessionChangedError } from "../../api/client.ts";
+import { useParams } from "react-router";
+import { api, ApiError } from "../../api/client.ts";
 import { keys, useAllUsers, useTransformation } from "../../api/queries.ts";
 import type { Transformation } from "../../api/types.ts";
 import { canAnywhere, canOn } from "../../auth/permissions.ts";
 import { useMe } from "../../auth/session.tsx";
+import { useSessionBoundAction, useSessionNavigate } from "../../auth/sessionBound.ts";
 import { Field, payloadResolver } from "../../components/Form.tsx";
 import { Icon } from "../../components/Icon.tsx";
 import { PageHeader, usePageTitle } from "../../components/Page.tsx";
@@ -90,7 +91,8 @@ export function TransformationEditPage() {
 function EditForm({ loaded }: { loaded: Transformation }) {
   const { t } = useTranslation();
   const me = useMe();
-  const navigate = useNavigate();
+  const begin = useSessionBoundAction();
+  const navigate = useSessionNavigate();
   const queryClient = useQueryClient();
   const target = useTransformationTarget(loaded)!;
   const canReadUsers = canAnywhere(me, "user.read");
@@ -115,8 +117,10 @@ function EditForm({ loaded }: { loaded: Transformation }) {
 
   /** Sends `body` (the user's own changes) as a PATCH on version `on`. */
   const save = async (body: Record<string, unknown>, on: Transformation) => {
+    // F-DG2-530: every effect below (cache, navigation, banners) belongs to the session generation the save began under.
+    const action = begin();
     if (Object.keys(body).length === 0) {
-      void navigate(`/transformations/${on.id}`);
+      action.navigate(`/transformations/${on.id}`);
       return;
     }
     setServerError(null);
@@ -127,22 +131,23 @@ function EditForm({ loaded }: { loaded: Transformation }) {
         body,
         ifMatch: on.version,
       });
-      queryClient.setQueryData(keys.transformation(on.id), updated);
+      if (!action.setQueryData(keys.transformation(on.id), updated)) return;
       await queryClient.invalidateQueries({ queryKey: ["transformations"] });
       await queryClient.invalidateQueries({ queryKey: ["transformation-audit", on.id] });
-      void navigate(`/transformations/${on.id}`);
+      action.navigate(`/transformations/${on.id}`);
     } catch (e) {
       setBusy(false);
-      if (isSessionChangedError(e)) return; // F-DG2-530: silent, the session state was already reset
+      if (action.stale(e)) return; // F-DG2-530: silent, the session state was already reset
       if (e instanceof ApiError && e.isConflict) {
         let latest: Transformation | null = null;
         try {
           latest = await api.get<Transformation>(`/api/v1/transformations/${on.id}`);
-          queryClient.setQueryData(keys.transformation(on.id), latest);
+          if (!action.setQueryData(keys.transformation(on.id), latest)) return;
         } catch (ge) {
-          if (isSessionChangedError(ge)) return; // F-DG2-530: silent, the session state was already reset
+          if (action.stale(ge)) return; // F-DG2-530: silent, the session state was already reset
           latest = null;
         }
+        if (action.stale()) return;
         setConflict({ latest, currentVersion: e.currentVersion ?? latest?.version ?? null });
         return;
       }
@@ -321,7 +326,7 @@ function EditForm({ loaded }: { loaded: Transformation }) {
           <button
             type="button"
             className="button button--secondary"
-            onClick={() => void navigate(`/transformations/${base.id}`)}
+            onClick={() => navigate(`/transformations/${base.id}`)}
           >
             {t("common.action.cancel")}
           </button>

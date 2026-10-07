@@ -394,7 +394,7 @@ function AssignDialog({
       onValuesChange={(v) => setSelectedRole(typeof v["roleCode"] === "string" ? v["roleCode"] : "")}
       onCancel={onClose}
       onSaved={async (saved) => {
-        await refresh();
+        if (!(await refresh())) return;
         onDone((saved as { roleCode: string }).roleCode);
       }}
     >

@@ -266,7 +266,7 @@ function T01Section() {
           people={people}
           submitLabel={t("common.action.saveDraft")}
           onSaved={async () => {
-            await refresh();
+            if (!(await refresh())) return;
             setEditing(null);
           }}
           onCancel={() => setEditing(null)}
@@ -553,7 +553,7 @@ function WorkstreamsSection() {
           people={people}
           submitLabel={findingDialog.record ? t("common.action.save") : t("common.action.create")}
           onSaved={async () => {
-            await refresh();
+            if (!(await refresh())) return;
             setFindingDialog(null);
           }}
           onCancel={() => setFindingDialog(null)}
@@ -572,7 +572,7 @@ function WorkstreamsSection() {
           people={people}
           submitLabel={outputDialog.record ? t("common.action.save") : t("common.action.create")}
           onSaved={async () => {
-            await refresh();
+            if (!(await refresh())) return;
             setOutputDialog(null);
           }}
           onCancel={() => setOutputDialog(null)}
@@ -754,7 +754,7 @@ function BaselinesSection() {
           people={people}
           submitLabel={dialog.record ? t("common.action.save") : t("common.action.create")}
           onSaved={async () => {
-            await refresh();
+            if (!(await refresh())) return;
             setDialog(null);
           }}
           onCancel={() => setDialog(null)}
@@ -783,7 +783,7 @@ function FinanceValidationDialog({
   name: string;
   url: string;
   version: number;
-  onDone: () => Promise<void>;
+  onDone: () => Promise<unknown>;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -1017,7 +1017,7 @@ function ValuePoolsSection() {
           people={people}
           submitLabel={dialog.record ? t("common.action.save") : t("common.action.create")}
           onSaved={async () => {
-            await refresh();
+            if (!(await refresh())) return;
             setDialog(null);
           }}
           onCancel={() => setDialog(null)}

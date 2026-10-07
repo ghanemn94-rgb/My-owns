@@ -7,13 +7,13 @@ import { transformationCreate } from "@mth/shared/schemas";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
-import { api, ApiError, isSessionChangedError, newIdempotencyKey } from "../../api/client.ts";
+import { api, ApiError, newIdempotencyKey } from "../../api/client.ts";
 import { keys, useAllUsers } from "../../api/queries.ts";
 import type { Transformation } from "../../api/types.ts";
 import { localName, useLocale } from "../../app/locale.ts";
 import { ancestryOf, canAnywhere, canOn } from "../../auth/permissions.ts";
 import { useMe } from "../../auth/session.tsx";
+import { useSessionBoundAction, useSessionNavigate } from "../../auth/sessionBound.ts";
 import { Field, payloadResolver } from "../../components/Form.tsx";
 import { Icon } from "../../components/Icon.tsx";
 import { PageHeader, usePageTitle } from "../../components/Page.tsx";
@@ -137,7 +137,8 @@ export function TransformationCreatePage() {
   const { t } = useTranslation();
   const locale = useLocale();
   const me = useMe();
-  const navigate = useNavigate();
+  const begin = useSessionBoundAction();
+  const navigate = useSessionNavigate();
   const queryClient = useQueryClient();
   usePageTitle(t("transformations.createTitle"));
   const bu = useBusinessUnitIndex();
@@ -181,6 +182,10 @@ export function TransformationCreatePage() {
   );
 
   const onSubmit = handleSubmit(async (values) => {
+    // F-DG2-530/580: every effect below belongs to the session generation this submission started under. The create
+    // awaits its POST, a list invalidation and a GET /me; if that /me (or anything meanwhile) moved the tab to another
+    // identity, the new identity is never navigated to this record nor shown its code and name.
+    const action = begin();
     setServerError(null);
     try {
       const created = await api.send<Transformation>("/api/v1/transformations", {
@@ -191,16 +196,25 @@ export function TransformationCreatePage() {
       // The detail page reads the record back from the server rather than from this response, so what it shows is
       // exactly what the creator may see; if a 403/404 comes back, it explains instead of showing "Not found".
       await queryClient.invalidateQueries({ queryKey: ["transformations"] });
+      if (action.stale()) return;
       // F-DG1-210: creating a record can grant the creator a derived transformation-scope assignment (F-DG1-106), so
       // the cached GET /me effective permissions are now stale. Refetch them BEFORE navigating, so the detail page
       // offers the Edit/Archive controls and the audit trail the server now allows, without a manual reload. This
       // only refreshes the server's own answer (never grants anything on the client); a failed or slow refetch
       // never blocks the navigation, and the server re-checks every request anyway.
       await refreshEffectivePermissions(queryClient);
-      const state: CreatedNavigationState = { created: { id: created.id, code: created.code, name: created.name } };
-      void navigate(`/transformations/${created.id}`, { state });
+      if (action.stale()) return;
+      const state: CreatedNavigationState = {
+        created: {
+          id: created.id,
+          code: created.code,
+          name: created.name,
+          createdBy: { organizationId: me.user.organizationId, userId: me.user.id },
+        },
+      };
+      action.navigate(`/transformations/${created.id}`, { state });
     } catch (e) {
-      if (isSessionChangedError(e)) return; // F-DG2-530: silent, the session state was already reset
+      if (action.stale(e)) return; // F-DG2-530: silent, the session state was already reset
       if (e instanceof ApiError && e.fieldErrors.length > 0) {
         for (const fe of e.fieldErrors) {
           const field = pointerToField(fe.pointer) as keyof CreateFormValues;
@@ -380,11 +394,7 @@ export function TransformationCreatePage() {
             <button type="submit" className="button button--primary" disabled={formState.isSubmitting}>
               {formState.isSubmitting ? t("common.state.saving") : t("transformations.form.create")}
             </button>
-            <button
-              type="button"
-              className="button button--secondary"
-              onClick={() => void navigate("/transformations")}
-            >
+            <button type="button" className="button button--secondary" onClick={() => navigate("/transformations")}>
               {t("common.action.cancel")}
             </button>
           </div>

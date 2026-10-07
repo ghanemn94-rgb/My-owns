@@ -5,6 +5,8 @@ import {
   ApiError,
   api,
   apiRequest,
+  asIdentityProbe,
+  getSessionGeneration,
   isSessionChangedError,
   markSessionActive,
   noteSessionIdentity,
@@ -68,12 +70,15 @@ export function shouldRetry(failureCount: number, error: unknown): boolean {
  * F-DG2-500: another identity (user or session) than the last one this document saw first removes every
  * session-scoped query (noteSessionIdentity), before the answer is stored and so before anything renders under it.
  */
-export async function fetchMe(): Promise<Me> {
-  const me = (await apiRequest<Me>("/api/v1/me")).data;
-  noteSessionIdentity(sessionIdentityKey(me));
-  setCsrfToken(me.csrfToken);
-  markSessionActive();
-  return me;
+export function fetchMe(): Promise<Me> {
+  // F-DG2-570: page GETs sent while this /me is in flight wait until its identity has been noted (api/client.ts).
+  return asIdentityProbe(async () => {
+    const me = (await apiRequest<Me>("/api/v1/me", { sessionProbe: true })).data;
+    noteSessionIdentity(sessionIdentityKey(me));
+    setCsrfToken(me.csrfToken);
+    markSessionActive();
+    return me;
+  });
 }
 
 export function useMeQuery(options: { enabled?: boolean; refetchOnMount?: boolean | "always" } = {}) {
@@ -411,13 +416,20 @@ export function useWorkshopItems(tid: string, workshopId: string | null) {
   return useRegister<TomWorkshopItem>(tid, `tom-workshops/${workshopId}/items`, {}, workshopId !== null);
 }
 
-/** Refreshes everything of one transformation after a P2 mutation (registers, live gate readiness, header, phase). */
-export function useP2Refresh(tid: string): () => Promise<void> {
+/**
+ * Refreshes everything of one transformation after a P2 mutation (registers, live gate readiness, header, phase).
+ * F-DG2-530 (T-DG2-FE15): resolves to whether the session generation it began under is still current, so a success
+ * continuation is written `if (!(await refresh())) return;` and closes no dialog and shows no notice for a session
+ * that has been replaced meanwhile (see auth/sessionBound.ts).
+ */
+export function useP2Refresh(tid: string): () => Promise<boolean> {
   const queryClient = useQueryClient();
   return async () => {
+    const generation = getSessionGeneration();
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: p2Keys.all(tid) }),
       queryClient.invalidateQueries({ queryKey: keys.transformation(tid) }),
     ]);
+    return getSessionGeneration() === generation;
   };
 }

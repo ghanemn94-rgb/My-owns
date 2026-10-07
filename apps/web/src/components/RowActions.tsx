@@ -5,7 +5,8 @@
 // with no visible content is an inline `validation.blank` error and nothing is sent, and visible text is sent verbatim.
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { api, ApiError, isSessionChangedError } from "../api/client.ts";
+import { api, ApiError } from "../api/client.ts";
+import { beginSessionGuard } from "../auth/sessionBound.ts";
 import { errorMessage, fieldErrorMessages } from "../lib/problem.ts";
 import { BLANK_CODE, Dialog, Field, isBlankText, REQUIRED_CODE, useFocusFirstInvalid } from "./Form.tsx";
 import { Icon } from "./Icon.tsx";
@@ -21,7 +22,7 @@ export function ArchiveAction({
   url: string;
   version: number;
   name: string;
-  onDone: () => void | Promise<void>;
+  onDone: () => unknown;
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -37,14 +38,15 @@ export function ArchiveAction({
           description={t("common.archive.description")}
           confirmLabel={t("common.action.archive")}
           onConfirm={async (reason) => {
+            const action = beginSessionGuard(); // F-DG2-530: every effect below belongs to this session generation
             try {
               await api.send(`${url}/archive`, { method: "POST", body: { reason }, ifMatch: version });
             } catch (e) {
               // A 409 means the row changed meanwhile: refresh so the next attempt uses the current version.
-              if (e instanceof ApiError && e.status === 409) await onDone();
-              throw e;
+              if (!action.stale(e) && e instanceof ApiError && e.status === 409) await onDone();
+              throw e; // ReasonDialog shows it, or drops it silently when the session generation moved
             }
-            setOpen(false);
+            if (!action.run(() => setOpen(false))) return;
             await onDone();
           }}
           onClose={() => setOpen(false)}
@@ -92,7 +94,7 @@ export function NoteDecisionDialog({
   toBody: (input: { choice: string; note: string; extra: string }) => Record<string, unknown>;
   /** JSON pointer of the note in the request body, so a server field error on it lands on the note (e.g. "/outcomeText"). */
   notePointer?: string;
-  onDone: () => void | Promise<void>;
+  onDone: () => unknown;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -118,6 +120,7 @@ export function NoteDecisionDialog({
       focusInvalid();
       return;
     }
+    const action = beginSessionGuard(); // F-DG2-530: every effect below belongs to this session generation
     setBusy(true);
     setServerError(null);
     try {
@@ -127,9 +130,10 @@ export function NoteDecisionDialog({
         ifMatch: version,
       });
       await onDone();
+      if (action.stale()) return;
       onClose();
     } catch (e) {
-      if (isSessionChangedError(e)) return; // F-DG2-530: silent, the session state was already reset
+      if (action.stale(e)) return; // F-DG2-530: silent, the session state was already reset
       const onNote = e instanceof ApiError ? e.fieldErrors.find((fe) => fe.pointer === notePointer) : undefined;
       if (onNote) {
         setErrors({ note: onNote.code });

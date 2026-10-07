@@ -4,8 +4,8 @@ import type { i18n as I18n } from "i18next";
 import { useEffect, useState, type ReactNode } from "react";
 import { I18nextProvider } from "react-i18next";
 import { RouterProvider } from "react-router";
-import { getSessionPhase, registerSessionReset, type SessionResetReason } from "../api/client.ts";
-import { keys, shouldRetry } from "../api/queries.ts";
+import { getSessionPhase, registerSessionCheck, registerSessionReset, type SessionResetReason } from "../api/client.ts";
+import { fetchMe, keys, shouldRetry } from "../api/queries.ts";
 import { createAppRouter } from "./router.tsx";
 
 /**
@@ -105,6 +105,11 @@ export function createQueryClient(): QueryClient {
   });
   // Wired once per client, at creation: clearing never depends on a component being mounted.
   registerSessionReset((reason) => resetSessionCache(queryClient, reason));
+  // F-DG2-570: the identity recheck before page GETs (api/client.ts SESSION_RECHECK_MS) revalidates GET /me through
+  // this cache, so the header and the permissions follow the same answer. It joins a /me already in flight.
+  registerSessionCheck(() =>
+    queryClient.fetchQuery({ queryKey: keys.me, queryFn: fetchMe, staleTime: 0, retry: false }),
+  );
   return queryClient;
 }
 

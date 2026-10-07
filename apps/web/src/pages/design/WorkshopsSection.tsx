@@ -163,7 +163,7 @@ export function WorkshopsSection() {
           people={people}
           submitLabel={dialog.record ? t("common.action.save") : t("common.action.create")}
           onSaved={async () => {
-            await refresh();
+            if (!(await refresh())) return;
             setDialog(null);
           }}
           onCancel={() => setDialog(null)}
@@ -382,7 +382,7 @@ function WorkshopMode({ workshop, onClose }: { workshop: TomWorkshop; onClose: (
           people={people}
           submitLabel={t("common.action.create")}
           onSaved={async () => {
-            await refresh();
+            if (!(await refresh())) return;
             setAdding(false);
           }}
           onCancel={() => setAdding(false)}
@@ -394,7 +394,7 @@ function WorkshopMode({ workshop, onClose }: { workshop: TomWorkshop; onClose: (
           fields={convertFields}
           people={people}
           onDone={async () => {
-            await refresh();
+            if (!(await refresh())) return;
             setConverting(null);
           }}
           onCancel={() => setConverting(null)}
@@ -415,7 +415,7 @@ function ConvertDialog({
   item: TomWorkshopItem;
   fields: FieldSpec[];
   people: ReturnType<typeof usePeople>["people"];
-  onDone: () => Promise<void>;
+  onDone: () => Promise<unknown>;
   onCancel: () => void;
 }) {
   const { t } = useTranslation();

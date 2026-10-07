@@ -8,6 +8,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { devLoginRequest } from "@mth/shared/schemas";
 import { useId, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
+// eslint-disable-next-line no-restricted-imports -- session transition: signing in establishes the new generation and then navigates to returnTo
 import { Navigate, useNavigate, useSearchParams } from "react-router";
 import { ApiError, apiRequest, isSessionChangedError } from "../api/client.ts";
 import { keys, useMeQuery } from "../api/queries.ts";

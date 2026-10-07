@@ -1,9 +1,25 @@
 // Session gate (ADR-0005): GET /api/v1/me decides whether the user is signed in, provides the CSRF token and the
 // permission hints, and sets the UI language from the persisted preference.
-import { Fragment, createContext, useContext, useEffect, useRef, useSyncExternalStore, type ReactNode } from "react";
+import {
+  Fragment,
+  createContext,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 import { useTranslation } from "react-i18next";
+// eslint-disable-next-line no-restricted-imports -- session transition: the redirect after a session END navigates because the generation moved
 import { Navigate, useLocation, useNavigate } from "react-router";
-import { ApiError, getSessionPhase, isSessionChangedError, subscribeSessionPhase } from "../api/client.ts";
+import {
+  ApiError,
+  getSessionPhase,
+  isSessionChangedError,
+  revalidateSessionIdentity,
+  subscribeSessionPhase,
+} from "../api/client.ts";
 import { useMeQuery } from "../api/queries.ts";
 import type { Me } from "../api/types.ts";
 import { ErrorState, LoadingState } from "../components/States.tsx";
@@ -53,6 +69,17 @@ export function RequireSession({ children }: { children: ReactNode }) {
     redirected.current = true;
     void navigate(sessionEndedLoginPath(here), { replace: true });
   }, [ended, here, navigate]);
+
+  // F-DG2-570: every in-app navigation to another path confirms the identity (GET /me) before the new page's data is
+  // fetched: the API client holds that page's GETs until /me has answered, so the header and the data on screen belong
+  // to one identity even when another tab signed someone else in moments ago. A LAYOUT effect, so it starts before the
+  // new page's queries subscribe (passive effects). Not on the first render (GET /me is being fetched right then).
+  const lastPath = useRef<string | null>(null);
+  useLayoutEffect(() => {
+    const previous = lastPath.current;
+    lastPath.current = location.pathname;
+    if (previous !== null && previous !== location.pathname) void revalidateSessionIdentity();
+  }, [location.pathname]);
 
   // The persisted preference wins after sign-in (REQ-S15-007); it also becomes the pre-sign-in hint. It is applied
   // when it is first known and whenever it changes, never merely because the displayed language changed: react-i18next

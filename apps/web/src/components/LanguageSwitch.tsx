@@ -15,10 +15,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Locale } from "@mth/shared";
-import { api, ApiError, isSessionChangedError, sessionIdentityKey } from "../api/client.ts";
+import { api, ApiError, sessionIdentityKey } from "../api/client.ts";
 import { fetchMe, keys } from "../api/queries.ts";
 import type { Me, User } from "../api/types.ts";
 import { useLocale } from "../app/locale.ts";
+import { useSessionBoundAction, type SessionBoundAction } from "../auth/sessionBound.ts";
 import { rememberLocale } from "../i18n/index.ts";
 import { Icon } from "./Icon.tsx";
 
@@ -43,40 +44,45 @@ export function LanguageSwitch({
   const { t, i18n } = useTranslation();
   const locale = useLocale();
   const queryClient = useQueryClient();
+  const begin = useSessionBoundAction();
   const setRefused = (refused: Locale | null) => onRefusedChange?.(refused);
   const next: Locale = locale === "ar" ? "en" : "ar";
+  // GET /me through the cache (never an out-of-band fetchMe + setQueryData): the answer is stored by the query itself,
+  // so whichever identity it brings, the header follows it (F-DG2-530/570).
+  const readMe = () => queryClient.fetchQuery({ queryKey: keys.me, queryFn: fetchMe, staleTime: 0, retry: false });
 
-  const persist = async (target: Locale, attempt = 0): Promise<void> => {
-    const me = queryClient.getQueryData<Me>(keys.me) ?? (await fetchMe());
+  const persist = async (target: Locale, action: SessionBoundAction, attempt = 0): Promise<void> => {
+    const me = queryClient.getQueryData<Me>(keys.me) ?? (await readMe());
+    if (action.stale()) return;
     try {
       const user = await api.send<User>("/api/v1/me/preferences", {
         method: "PUT",
         body: { preferredLocale: target },
         ifMatch: me.user.version,
       });
-      queryClient.setQueryData<Me>(keys.me, (old) => (old ? { ...old, user } : old));
+      action.setQueryData<Me>(keys.me, (old) => (old ? { ...old, user } : old));
     } catch (err) {
-      if (err instanceof ApiError && err.status === 409 && attempt === 0) {
-        const fresh = await fetchMe();
-        queryClient.setQueryData(keys.me, fresh);
+      if (!action.stale(err) && err instanceof ApiError && err.status === 409 && attempt === 0) {
+        const fresh = await readMe();
         // F-DG2-530: a choice made under one identity (or session) is never written for the one that replaced it.
-        if (sessionIdentityKey(fresh) !== sessionIdentityKey(me)) return;
-        return persist(target, 1);
+        if (action.stale() || sessionIdentityKey(fresh) !== sessionIdentityKey(me)) return;
+        return persist(target, action, 1);
       }
       throw err;
     }
   };
 
   const onClick = async () => {
+    const action = begin(); // F-DG2-530: the save and its notice belong to this session generation
     setRefused(null);
     const target = next; // captured before the language (and so `next`) changes
     rememberLocale(target);
     await i18n.changeLanguage(target);
     if (!signedIn) return;
     try {
-      await persist(target);
+      await persist(target, action);
     } catch (err) {
-      if (isSessionChangedError(err)) return; // F-DG2-530: silent, the session state was already reset
+      if (action.stale(err)) return; // F-DG2-530: silent, the session state was already reset
       setRefused(target);
     }
   };

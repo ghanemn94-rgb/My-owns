@@ -232,7 +232,7 @@ export function JourneysSection() {
           people={people}
           submitLabel={dialog.record ? t("common.action.save") : t("common.action.create")}
           onSaved={async () => {
-            await refresh();
+            if (!(await refresh())) return;
             setDialog(null);
           }}
           onCancel={() => setDialog(null)}
@@ -446,7 +446,7 @@ function JourneyDetail({ journey, onClose }: { journey: Journey; onClose: () => 
           updateUrl={(r) => `/api/v1/transformations/${ws.tid}/journeys/${journey.id}/pain-points/${r.id}`}
           submitLabel={painDialog.record ? t("common.action.save") : t("common.action.create")}
           onSaved={async () => {
-            await refresh();
+            if (!(await refresh())) return;
             setPainDialog(null);
           }}
           onCancel={() => setPainDialog(null)}
@@ -584,7 +584,7 @@ function StepsEditor({ journey, onClose }: { journey: Journey; onClose: () => vo
         body,
         ifMatch: journey.version,
       });
-      await refresh();
+      if (!(await refresh())) return;
       onClose();
     } catch (e) {
       if (isSessionChangedError(e)) return; // F-DG2-530: silent, the session state was already reset

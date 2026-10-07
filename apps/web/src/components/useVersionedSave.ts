@@ -2,7 +2,8 @@
 // If-Match; on 409 nothing was written, so the hook loads the latest version and lets the screen offer
 // "re-apply my change on the latest version" or "discard".
 import { useState } from "react";
-import { api, ApiError, isSessionChangedError } from "../api/client.ts";
+import { api, ApiError } from "../api/client.ts";
+import { useSessionBoundAction, type SessionBoundAction } from "../auth/sessionBound.ts";
 
 export interface Versioned {
   readonly id: string;
@@ -26,8 +27,13 @@ export function useVersionedSave<R extends Versioned, V>(options: {
   method?: "PATCH" | "PUT";
   toValues: (record: R) => V;
   diff: (base: V, values: V) => Record<string, unknown>;
-  onSaved: (updated: R) => void | Promise<void>;
+  /**
+   * Called once the save succeeded, while its session generation is still current. `action` is the save's
+   * session-bound action: write the cache and navigate through it (auth/sessionBound.ts), never with the raw APIs.
+   */
+  onSaved: (updated: R, action: SessionBoundAction) => void | Promise<void>;
 }) {
+  const begin = useSessionBoundAction();
   const [base, setBase] = useState<R>(options.initial);
   const [conflict, setConflict] = useState<Conflict<R> | null>(null);
   const [error, setError] = useState<unknown>(null);
@@ -38,6 +44,8 @@ export function useVersionedSave<R extends Versioned, V>(options: {
 
   const send = async (body: Record<string, unknown>, on: R): Promise<SaveResult> => {
     if (Object.keys(body).length === 0) return { outcome: "unchanged" };
+    // F-DG2-530: every effect of this save belongs to the session generation it began under.
+    const action = begin();
     setBusy(true);
     setError(null);
     try {
@@ -46,19 +54,22 @@ export function useVersionedSave<R extends Versioned, V>(options: {
         body,
         ifMatch: on.version,
       });
+      if (action.stale()) return { outcome: "session-changed" };
       setBase(updated);
-      await options.onSaved(updated);
+      await options.onSaved(updated, action);
+      if (action.stale()) return { outcome: "session-changed" };
       return { outcome: "saved" };
     } catch (e) {
-      if (isSessionChangedError(e)) return { outcome: "session-changed" }; // F-DG2-530: silent, the session state was already reset
+      if (action.stale(e)) return { outcome: "session-changed" }; // F-DG2-530: silent, the session state was already reset
       if (e instanceof ApiError && e.isConflict) {
         let latest: R | null = null;
         try {
           latest = await api.get<R>(options.url(on));
         } catch (ge) {
-          if (isSessionChangedError(ge)) return { outcome: "session-changed" };
+          if (action.stale(ge)) return { outcome: "session-changed" };
           latest = null;
         }
+        if (action.stale()) return { outcome: "session-changed" };
         setConflict({ latest, currentVersion: e.currentVersion ?? latest?.version ?? null });
         return { outcome: "conflict" };
       }

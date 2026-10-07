@@ -301,7 +301,7 @@ function DecisionLog() {
           people={people}
           submitLabel={dialog.record ? t("common.action.save") : t("common.action.create")}
           onSaved={async () => {
-            await refresh();
+            if (!(await refresh())) return;
             setDialog(null);
           }}
           onCancel={() => setDialog(null)}
@@ -320,7 +320,7 @@ function DecisionLog() {
           createIfMatch={addingOption.version}
           submitLabel={t("decisions.option.add")}
           onSaved={async () => {
-            await refresh();
+            if (!(await refresh())) return;
             setAddingOption(null);
           }}
           onCancel={() => setAddingOption(null)}

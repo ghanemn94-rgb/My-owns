@@ -4,6 +4,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
+// eslint-disable-next-line no-restricted-imports -- session transition: signing out here moves the generation (markSignedOut) and then navigates
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
 import { api, markSignedOut } from "../api/client.ts";
 import { canAny } from "../auth/permissions.ts";

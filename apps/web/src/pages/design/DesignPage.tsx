@@ -187,7 +187,7 @@ function CanvasSection() {
           people={people}
           submitLabel={t("common.action.save")}
           onSaved={async () => {
-            await refresh();
+            if (!(await refresh())) return;
             setEditing(null);
           }}
           onCancel={() => setEditing(null)}
@@ -471,7 +471,7 @@ function GapMatrixSection() {
           people={people}
           submitLabel={dialog.record ? t("common.action.save") : t("common.action.create")}
           onSaved={async () => {
-            await refresh();
+            if (!(await refresh())) return;
             setDialog(null);
           }}
           onCancel={() => setDialog(null)}
@@ -678,7 +678,7 @@ function HeatmapSection() {
           people={people}
           submitLabel={dialog.record ? t("common.action.save") : t("common.action.create")}
           onSaved={async () => {
-            await refresh();
+            if (!(await refresh())) return;
             setDialog(null);
           }}
           onCancel={() => setDialog(null)}

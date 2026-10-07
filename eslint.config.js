@@ -42,4 +42,46 @@ export default tseslint.config(
       "react-hooks/exhaustive-deps": "error",
     },
   },
+  {
+    // F-DG2-530/580 (T-DG2-FE15): effects of a user action belong to the session generation it began under. App code
+    // navigates and writes the query cache only through apps/web/src/auth/sessionBound.ts, which drops effects of a
+    // previous generation (an identity change while the action awaited). The session transitions themselves (the
+    // session-end redirect, signing out, signing in) carry a justified eslint-disable comment. Tests are exempt. By
+    // convention the session-bound action is the variable `action` (const action = begin()).
+    files: ["apps/web/src/**/*.{ts,tsx}"],
+    ignores: ["apps/web/src/**/*.test.{ts,tsx}", "apps/web/src/test/**", "apps/web/src/auth/sessionBound.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "react-router",
+              importNames: ["useNavigate", "redirect"],
+              message:
+                "Navigate through useSessionBoundAction()/useSessionNavigate() (apps/web/src/auth/sessionBound.ts), so a navigation never outlives the session it began under.",
+            },
+          ],
+        },
+      ],
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "CallExpression[callee.name='parseFloat']",
+          message: "Use Decimal (decimal.js via @mth/shared) for money, rates and KPI values, never parseFloat.",
+        },
+        {
+          selector:
+            "CallExpression[callee.property.name=/^(setQueryData|setQueriesData)$/]:not([callee.object.name='action'])",
+          message:
+            "Write the query cache through a session-bound action (action.setQueryData, apps/web/src/auth/sessionBound.ts), never directly.",
+        },
+        {
+          selector: "CallExpression[callee.property.name='navigate']:not([callee.object.name='action'])",
+          message:
+            "Navigate through a session-bound action (action.navigate, apps/web/src/auth/sessionBound.ts), never with the raw router.",
+        },
+      ],
+    },
+  },
 );

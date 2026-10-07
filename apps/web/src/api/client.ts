@@ -147,6 +147,7 @@ function runSessionReset(reason: SessionResetReason): void {
 
 /** A GET /me succeeded: a session exists (again). */
 export function markSessionActive(): void {
+  lastMeAt = Date.now(); // F-DG2-570: the identity was just confirmed
   setPhase("active");
 }
 
@@ -204,6 +205,108 @@ function endSession(): void {
   setPhase("ended");
 }
 
+// ------------------------------------------------------------------------------------------------ identity recheck
+// F-DG2-570 (T-DG2-FE15): the header (the identity of the last GET /me) and the page data must belong to one identity,
+// also on in-app navigation and inside the query fresh window. The session cookie is HttpOnly and the CSRF token is
+// not in a cookie, so a sign-out and another sign-in in another tab cannot be seen from here without asking the server.
+// Rules:
+//  1. every in-app navigation (another path) revalidates GET /me before the new page's data is fetched
+//     (revalidateSessionIdentity, called by auth/session.tsx <RequireSession>);
+//  2. any other GET for page data that would be sent more than SESSION_RECHECK_MS after the last GET /me (a filter,
+//     a page of results, a refetch after a write) revalidates GET /me first too.
+// The check goes through the app's query cache, so the header follows the same answer. Every GET sent while a check or
+// any other GET /me is in flight waits for it, and a GET whose session generation moved while it waited is never sent
+// (SessionChangedError): if /me returned another identity, the reset has already removed the previous identity's
+// queries and the new subtree fetches its own.
+//  - bounded: one /me per in-app navigation (shared by the page's whole burst of requests and joined with a /me already
+//    in flight); otherwise at most one per SESSION_RECHECK_MS while the page is making requests, none while it is idle;
+//    every /me (a focus revalidation, the session gate, a permission refresh) restarts the window;
+//  - unsafe methods (writes) neither trigger nor wait for it: they are sent as before with the CSRF token of the
+//    identity the user acted under, so a write never goes out for an identity the user did not act as (another
+//    session's cookie refuses it with 403 csrf, which is never a session end);
+//  - residual (stated in the handback): another sign-in less than SESSION_RECHECK_MS after the last /me, followed by
+//    a request that is NOT a navigation inside that window, is detected by the next navigation, the next request after
+//    the window, or a refocus.
+
+/** How old the last GET /me may be when a page GET is sent before /me is revalidated first. */
+export const SESSION_RECHECK_MS = 2_000;
+
+type SessionCheckRunner = () => Promise<unknown>;
+const checkRunners = new Set<SessionCheckRunner>();
+let pendingCheck: Promise<void> | null = null;
+/** When the last GET /me was sent or answered (ms since epoch), whichever is later. */
+let lastMeAt = Number.NEGATIVE_INFINITY;
+
+/**
+ * Registers how this app revalidates GET /me (the app wires its QueryClient, so the cached identity, and with it the
+ * header, is updated by the same answer). Returns the unregister function.
+ */
+export function registerSessionCheck(run: SessionCheckRunner): () => void {
+  checkRunners.add(run);
+  return () => checkRunners.delete(run);
+}
+
+/**
+ * Revalidates GET /me now (joining one already in flight), whatever its age: page GETs sent meanwhile wait for it.
+ * Used on every in-app navigation (auth/session.tsx), so a page opened after another sign-in in another tab is fetched
+ * only once the header shows the identity the browser's cookie now carries. No-op without an active session.
+ */
+export function revalidateSessionIdentity(): Promise<void> {
+  if (sessionPhase !== "active" || checkRunners.size === 0) return Promise.resolve();
+  return startSessionCheck();
+}
+
+/** The identity check in flight, if any (tests and diagnostics). */
+export function getPendingSessionCheck(): Promise<void> | null {
+  return pendingCheck ?? probesIdle;
+}
+
+let probesInFlight = 0;
+let probesIdle: Promise<void> | null = null;
+let resolveProbesIdle: (() => void) | null = null;
+
+/**
+ * Runs one GET /me and the bookkeeping of its answer (noteSessionIdentity, the CSRF token, the phase): page GETs sent
+ * meanwhile wait until it is done, so none of them is sent under an identity this /me is about to replace. Used by
+ * api/queries.ts fetchMe, i.e. by every /me of the app (session gate, refocus, recheck, permission refresh, sign-in).
+ */
+export async function asIdentityProbe<T>(probe: () => Promise<T>): Promise<T> {
+  if (probesInFlight++ === 0) {
+    probesIdle = new Promise<void>((resolve) => {
+      resolveProbesIdle = resolve;
+    });
+  }
+  try {
+    return await probe();
+  } finally {
+    if (--probesInFlight === 0) {
+      const resolve = resolveProbesIdle;
+      probesIdle = null;
+      resolveProbesIdle = null;
+      resolve?.();
+    }
+  }
+}
+
+function recheckDue(): boolean {
+  return sessionPhase === "active" && checkRunners.size > 0 && Date.now() - lastMeAt >= SESSION_RECHECK_MS;
+}
+
+function startSessionCheck(): Promise<void> {
+  if (pendingCheck) return pendingCheck;
+  lastMeAt = Date.now(); // bounded even when the check fails (offline): no /me per request
+  const run = Promise.all([...checkRunners].map((r) => r()))
+    .then(
+      () => undefined,
+      () => undefined, // a failed /me is handled where it is stored (401: the session ended; network: unchanged)
+    )
+    .finally(() => {
+      if (pendingCheck === run) pendingCheck = null;
+    });
+  pendingCheck = run;
+  return run;
+}
+
 /** Test isolation only: module state survives between tests in one file. */
 export function resetSessionStateForTests(): void {
   csrfToken = null;
@@ -211,6 +314,13 @@ export function resetSessionStateForTests(): void {
   lastIdentity = null;
   sessionGeneration = 0;
   resetHooks.clear();
+  checkRunners.clear();
+  pendingCheck = null;
+  lastMeAt = Number.NEGATIVE_INFINITY;
+  probesInFlight = 0;
+  resolveProbesIdle?.();
+  probesIdle = null;
+  resolveProbesIdle = null;
 }
 
 export interface RequestOptions {
@@ -234,6 +344,8 @@ export interface RequestOptions {
   readonly contentType?: string;
   /** Extra request headers (e.g. X-File-Name for an evidence upload). Never credentials. */
   readonly headers?: Readonly<Record<string, string>>;
+  /** This request IS the identity probe (GET /me): it never waits for, nor starts, an identity recheck. */
+  readonly sessionProbe?: boolean;
 }
 
 export function buildUrl(path: string, query?: RequestOptions["query"]): string {
@@ -263,6 +375,17 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   // F-DG2-530: the generation this request is sent under. Checked again when its answer (or failure) arrives.
   const sentGeneration = sessionGeneration;
   const changed = () => sessionGeneration !== sentGeneration;
+  if (options.sessionProbe) {
+    lastMeAt = Date.now();
+  } else if (method === "GET") {
+    // F-DG2-570: page data is fetched only under an identity confirmed within SESSION_RECHECK_MS (see above).
+    if (recheckDue()) void startSessionCheck();
+    if (pendingCheck) await pendingCheck;
+    if (probesIdle) await probesIdle;
+    // The identity changed (or the session ended) while this GET waited: it belongs to the previous identity's screen,
+    // which has been reset. It is never sent.
+    if (changed()) throw new SessionChangedError(sentGeneration, sessionGeneration);
+  }
   const headers: Record<string, string> = {
     ...options.headers,
     Accept: "application/json, application/problem+json",
@@ -317,6 +440,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     throw error;
   }
   if (changed()) throw new SessionChangedError(sentGeneration, sessionGeneration);
+  if (options.sessionProbe) lastMeAt = Date.now();
   return { data: parsed as T, status: response.status, etag: response.headers.get("ETag") };
 }
 

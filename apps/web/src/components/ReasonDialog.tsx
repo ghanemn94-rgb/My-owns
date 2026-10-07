@@ -6,7 +6,8 @@
 import { reasonRequest } from "@mth/shared/schemas";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ApiError, isSessionChangedError } from "../api/client.ts";
+import { ApiError } from "../api/client.ts";
+import { beginSessionGuard } from "../auth/sessionBound.ts";
 import { errorMessage, fieldErrorMessage } from "../lib/problem.ts";
 import { BLANK_CODE, Dialog, Field, isBlankText, issueCode, useFocusFirstInvalid } from "./Form.tsx";
 
@@ -50,11 +51,12 @@ export function ReasonDialog({
       return;
     }
     setFieldErrorCode(undefined);
+    const action = beginSessionGuard(); // F-DG2-530: the dialog's error display belongs to this session generation
     setBusy(true);
     try {
       await onConfirm(reason);
     } catch (err) {
-      if (isSessionChangedError(err)) {
+      if (action.stale(err)) {
         setBusy(false);
         return; // F-DG2-530: silent, the session state was already reset
       }

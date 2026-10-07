@@ -5,13 +5,14 @@ import { businessUnitCreate, businessUnitUpdate, organizationCreate, organizatio
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { Link, useNavigate, useParams } from "react-router";
-import { api, ApiError, isSessionChangedError } from "../../api/client.ts";
+import { Link, useParams } from "react-router";
+import { api, ApiError } from "../../api/client.ts";
 import { keys, useBusinessUnit, useBusinessUnits, useOrganization, useOrganizations } from "../../api/queries.ts";
 import type { BusinessUnit, Organization } from "../../api/types.ts";
 import { localName, useLocale } from "../../app/locale.ts";
 import { canAnywhere, canOn } from "../../auth/permissions.ts";
 import { useMe } from "../../auth/session.tsx";
+import { useSessionBoundAction } from "../../auth/sessionBound.ts";
 import { ActiveChip } from "../../components/Badges.tsx";
 import { Field, payloadResolver } from "../../components/Form.tsx";
 import { Icon } from "../../components/Icon.tsx";
@@ -143,7 +144,7 @@ const orgCreatePayload = (v: OrgCreateValues) =>
 function CreateOrganization({ onDone }: { onDone: () => void }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
+  const begin = useSessionBoundAction();
   const [serverError, setServerError] = useState<unknown>(null);
   const { register, handleSubmit, formState, setError } = useForm<OrgCreateValues>({
     defaultValues: { code: "", nameEn: "", nameAr: "", defaultTimezone: "", defaultCurrency: "", defaultLocale: "ar" },
@@ -151,14 +152,16 @@ function CreateOrganization({ onDone }: { onDone: () => void }) {
   });
   const err = useFieldError<OrgCreateValues>(formState.errors);
   const onSubmit = handleSubmit(async (v) => {
+    const action = begin(); // F-DG2-530: every effect below belongs to this session generation
     setServerError(null);
     try {
       const org = await api.send<Organization>("/api/v1/organizations", { method: "POST", body: orgCreatePayload(v) });
       await queryClient.invalidateQueries({ queryKey: keys.organizations });
+      if (action.stale()) return;
       onDone();
-      void navigate(`/admin/organizations/${org.id}`);
+      action.navigate(`/admin/organizations/${org.id}`);
     } catch (e) {
-      if (isSessionChangedError(e)) return; // F-DG2-530: silent, the session state was already reset
+      if (action.stale(e)) return; // F-DG2-530: silent, the session state was already reset
       applyServerErrors(e, setError as never);
       setServerError(e);
     }
@@ -252,8 +255,8 @@ function OrganizationEdit({ org }: { org: Organization }) {
     url: (o) => `/api/v1/organizations/${o.id}`,
     toValues: orgValues,
     diff: (a, b) => diffForm(a, b),
-    onSaved: (updated) => {
-      queryClient.setQueryData(keys.organization(updated.id), updated);
+    onSaved: (updated, action) => {
+      action.setQueryData(keys.organization(updated.id), updated);
       void queryClient.invalidateQueries({ queryKey: keys.organizations });
       setSaved(true);
     },
@@ -459,6 +462,7 @@ function CreateBusinessUnit({
   const { t } = useTranslation();
   const locale = useLocale();
   const queryClient = useQueryClient();
+  const begin = useSessionBoundAction();
   const [serverError, setServerError] = useState<unknown>(null);
   const { register, handleSubmit, formState, setError } = useForm<BuCreateValues>({
     defaultValues: { code: "", nameEn: "", nameAr: "", parentBusinessUnitId: "" },
@@ -466,6 +470,7 @@ function CreateBusinessUnit({
   });
   const err = useFieldError<BuCreateValues>(formState.errors);
   const onSubmit = handleSubmit(async (v) => {
+    const action = begin(); // F-DG2-530: every effect below belongs to this session generation
     setServerError(null);
     try {
       await api.send<BusinessUnit>(`/api/v1/organizations/${org.id}/business-units`, {
@@ -473,9 +478,10 @@ function CreateBusinessUnit({
         body: buCreatePayload(v),
       });
       await queryClient.invalidateQueries({ queryKey: keys.businessUnits(org.id) });
+      if (action.stale()) return;
       onDone();
     } catch (e) {
-      if (isSessionChangedError(e)) return; // F-DG2-530: silent, the session state was already reset
+      if (action.stale(e)) return; // F-DG2-530: silent, the session state was already reset
       applyServerErrors(e, setError as never);
       setServerError(e);
     }
@@ -570,8 +576,8 @@ function BusinessUnitEdit({ unit }: { unit: BusinessUnit }) {
     url: (u) => `/api/v1/business-units/${u.id}`,
     toValues: buValues,
     diff: (a, b) => diffForm(a, b, ["parentBusinessUnitId"]),
-    onSaved: (updated) => {
-      queryClient.setQueryData(keys.businessUnit(updated.id), updated);
+    onSaved: (updated, action) => {
+      action.setQueryData(keys.businessUnit(updated.id), updated);
       void queryClient.invalidateQueries({ queryKey: keys.businessUnits(updated.organizationId) });
       setSaved(true);
     },

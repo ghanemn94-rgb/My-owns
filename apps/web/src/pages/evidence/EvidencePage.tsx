@@ -292,7 +292,7 @@ function EvidenceRegister() {
           people={people}
           submitLabel={t("common.action.create")}
           onSaved={async (saved) => {
-            await refresh();
+            if (!(await refresh())) return;
             const kind = creating;
             setCreating(null);
             if (kind === "file") setUploading(saved as Evidence);
@@ -310,7 +310,7 @@ function EvidenceRegister() {
           people={people}
           submitLabel={t("common.action.save")}
           onSaved={async () => {
-            await refresh();
+            if (!(await refresh())) return;
             setEditing(null);
           }}
           onCancel={() => setEditing(null)}
@@ -386,7 +386,7 @@ function UploadDialog({ item, onClose }: { item: Evidence; onClose: () => void }
         headers: { "X-File-Name": encodeURIComponent(file.name) },
         ifMatch: item.version,
       });
-      await refresh();
+      if (!(await refresh())) return;
       onClose();
     } catch (e) {
       if (isSessionChangedError(e)) return; // F-DG2-530: silent, the session state was already reset
@@ -524,7 +524,7 @@ function LinkDialog({ item, onClose }: { item: Evidence; onClose: () => void }) 
         body: parsed.data,
         idempotencyKey: key.current,
       });
-      await refresh();
+      if (!(await refresh())) return;
       onClose();
     } catch (e) {
       if (isSessionChangedError(e)) return; // F-DG2-530: silent, the session state was already reset
@@ -662,7 +662,7 @@ function LinksSection({ evidence, links }: { evidence: readonly Evidence[]; link
               body: { reason },
               ifMatch: removing.version,
             });
-            await refresh();
+            if (!(await refresh())) return;
             setRemoving(null);
           }}
           onClose={() => setRemoving(null)}

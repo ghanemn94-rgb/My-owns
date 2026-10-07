@@ -201,7 +201,7 @@ function GateContent({ view }: { view: GateView }) {
           view={view}
           onClose={() => setSubmitting(false)}
           onDone={async () => {
-            await refresh();
+            if (!(await refresh())) return;
             setSubmitting(false);
           }}
         />
@@ -212,7 +212,7 @@ function GateContent({ view }: { view: GateView }) {
           submissionNo={current.submissionNo}
           onClose={() => setDeciding(false)}
           onDone={async () => {
-            await refresh();
+            if (!(await refresh())) return;
             setDeciding(false);
           }}
           onStale={refresh}
@@ -249,7 +249,7 @@ function GateContent({ view }: { view: GateView }) {
           people={people}
           submitLabel={t("common.action.save")}
           onSaved={async () => {
-            await refresh();
+            if (!(await refresh())) return;
             setConfiguring(false);
           }}
           onCancel={() => setConfiguring(false)}
@@ -515,8 +515,8 @@ function DecideDialog({
   view: GateView;
   submissionNo: number;
   onClose: () => void;
-  onDone: () => Promise<void>;
-  onStale: () => Promise<void>;
+  onDone: () => Promise<unknown>;
+  onStale: () => Promise<unknown>;
 }) {
   const { t } = useTranslation();
   const ws = useWorkspace();

@@ -6,13 +6,14 @@ import { userCreate, userUpdate } from "@mth/shared/schemas";
 import { useEffect, useId, useMemo, useState, type FormEvent } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router";
-import { api, ApiError, isSessionChangedError } from "../../api/client.ts";
+import { Link, useParams, useSearchParams } from "react-router";
+import { api, ApiError } from "../../api/client.ts";
 import { keys, useOrganizations, useUser, useUsers } from "../../api/queries.ts";
 import type { User } from "../../api/types.ts";
 import { localName, useLocale } from "../../app/locale.ts";
 import { canAnywhere, canOn } from "../../auth/permissions.ts";
 import { useMe } from "../../auth/session.tsx";
+import { useSessionBoundAction } from "../../auth/sessionBound.ts";
 import { ActiveChip } from "../../components/Badges.tsx";
 import {
   ColumnPicker,
@@ -273,7 +274,7 @@ function userCreatePayload(organizationId: string) {
 
 function CreateUser({ organizationId, onDone }: { organizationId: string; onDone: () => void }) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const begin = useSessionBoundAction();
   const queryClient = useQueryClient();
   const [serverError, setServerError] = useState<unknown>(null);
   const toPayload = userCreatePayload(organizationId);
@@ -286,14 +287,16 @@ function CreateUser({ organizationId, onDone }: { organizationId: string; onDone
     return m ? fieldErrorMessage(t, m) : undefined;
   };
   const onSubmit = handleSubmit(async (v) => {
+    const action = begin(); // F-DG2-530: every effect below belongs to this session generation
     setServerError(null);
     try {
       const user = await api.send<User>("/api/v1/users", { method: "POST", body: toPayload(v) });
       await queryClient.invalidateQueries({ queryKey: ["users"] });
+      if (action.stale()) return;
       onDone();
-      void navigate(`/admin/users/${user.id}`);
+      action.navigate(`/admin/users/${user.id}`);
     } catch (e) {
-      if (isSessionChangedError(e)) return; // F-DG2-530: silent, the session state was already reset
+      if (action.stale(e)) return; // F-DG2-530: silent, the session state was already reset
       if (e instanceof ApiError) {
         for (const fe of e.fieldErrors) {
           const field = pointerToField(fe.pointer).replace(/^identity\./, "");
@@ -384,8 +387,8 @@ function UserEdit({ user }: { user: User }) {
     url: (u) => `/api/v1/users/${u.id}`,
     toValues: userValues,
     diff: (a, b) => diffForm(a, b, ["email"]),
-    onSaved: (updated) => {
-      queryClient.setQueryData(keys.user(updated.id), updated);
+    onSaved: (updated, action) => {
+      action.setQueryData(keys.user(updated.id), updated);
       void queryClient.invalidateQueries({ queryKey: ["users"] });
       setSaved(true);
     },

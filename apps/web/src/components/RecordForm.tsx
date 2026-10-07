@@ -14,7 +14,8 @@ import { hasText } from "@mth/shared/schemas";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import type { z } from "zod";
-import { api, ApiError, isSessionChangedError, newIdempotencyKey } from "../api/client.ts";
+import { api, ApiError, newIdempotencyKey } from "../api/client.ts";
+import { beginSessionGuard } from "../auth/sessionBound.ts";
 import {
   distinctFormMessages,
   errorMessage,
@@ -163,7 +164,7 @@ export interface RecordFormProps<R> {
   readonly loadLatest?: (record: R) => Promise<R & { version: number }>;
   readonly people?: readonly Person[];
   readonly submitLabel: string;
-  readonly onSaved: (saved: unknown) => void | Promise<void>;
+  readonly onSaved: (saved: unknown) => unknown;
   readonly onCancel?: () => void;
   /** Rendered between the fields and the buttons (e.g. a computed warning). */
   readonly children?: ReactNode;
@@ -292,6 +293,8 @@ export function useRecordForm<R extends Record<string, unknown>>(props: RecordFo
       }
     }
     if (!validate(body, against === null ? props.createSchema : props.updateSchema, blank)) return;
+    // F-DG2-530: the save's effects (conflict panel, onSaved, banners) belong to the session generation it began under.
+    const action = beginSessionGuard();
     setBusy(true);
     setBannerError(null);
     try {
@@ -309,9 +312,11 @@ export function useRecordForm<R extends Record<string, unknown>>(props: RecordFo
               body,
               ifMatch: against.version,
             });
+      if (action.stale()) return;
       setConflict(null);
       await props.onSaved(saved);
     } catch (e) {
+      if (action.stale(e)) return; // F-DG2-530: silent, the session state was already reset
       if (e instanceof ApiError && e.isConflict && against !== null) {
         let latest: (R & { version: number }) | null = null;
         try {
@@ -319,9 +324,10 @@ export function useRecordForm<R extends Record<string, unknown>>(props: RecordFo
             ? await props.loadLatest(against)
             : await api.get<R & { version: number }>(props.updateUrl!(against));
         } catch (ge) {
-          if (isSessionChangedError(ge)) return; // F-DG2-530: silent, the session state was already reset
+          if (action.stale(ge)) return; // F-DG2-530: silent, the session state was already reset
           latest = null;
         }
+        if (action.stale()) return;
         setConflict({ latest, currentVersion: e.currentVersion ?? latest?.version ?? null });
         return;
       }
@@ -336,7 +342,7 @@ export function useRecordForm<R extends Record<string, unknown>>(props: RecordFo
         }
         showErrors(next, other);
       }
-      if (!isSessionChangedError(e)) setBannerError(e); // F-DG2-530: silent, the session state was already reset
+      setBannerError(e);
     } finally {
       setBusy(false);
     }

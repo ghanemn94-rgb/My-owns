@@ -1,0 +1,22 @@
+# domain probe r16-identity-nav.mjs (sha256 ace1063d), unchanged, on the FE15 build; copied to rv/ temporarily and removed after; real API + PostgreSQL (e2e/support/qa-stack.sh); node v24.21.0; LANG=C.UTF-8; 2026-10-07T18:25:23Z
+# cmd: LANG=C.UTF-8 QA_E2E_API_PORT=26441 QA_E2E_PG_PORT=26442 e2e/support/qa-stack.sh bash -c 'PSQL_MTH=${DATABASE_URL%%\?*} OUT=$TMPDIR/dom-shots-cutf8 node rv/r16-identity-nav.mjs'
+port-policy: PostgreSQL listening on port 26442 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 26441 (attempt 1)
+API:     http://localhost:26441
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+saved language set to en: 2 row(s)
+en refocus 4366 ms after tab 1's last /me; control A sees record=true
+PASS en.N1.own-record :: expected header and page of ONE identity: either B's name, or A's name with A's record :: actual header='Synthetic User Without Roles' (A='Synthetic Transformation Lead', B='Synthetic User Without Roles') pageStates=["no-permission"] meRequests=1
+PASS en.N2.list-after-16s :: expected header and list of ONE identity (A's name => A's list incl. 'R16N A-ONLY en 3ff7f370'; B's name => B's list) :: actual header='Synthetic User Without Roles' listHasASecret=false meRequests=2 listRequests=1 sinceLastMe=2535 ms
+saved language set to ar: 2 row(s)
+ar refocus 4361 ms after tab 1's last /me; control A sees record=true
+PASS ar.N1.own-record :: expected header and page of ONE identity: either B's name, or A's name with A's record :: actual header='Synthetic User Without Roles' (A='Synthetic Transformation Lead', B='Synthetic User Without Roles') pageStates=["no-permission"] meRequests=1
+PASS ar.N2.list-after-16s :: expected header and list of ONE identity (A's name => A's list incl. 'R16N A-ONLY ar 8ce20525'; B's name => B's list) :: actual header='Synthetic User Without Roles' listHasASecret=false meRequests=2 listRequests=1 sinceLastMe=2547 ms
+PASS no-page-errors :: expected no page errors / console errors other than 'Failed to load resource' :: actual []
+SUMMARY {"pass":5,"fail":0}
+# exit status: 0

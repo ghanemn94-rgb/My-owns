@@ -24,6 +24,7 @@ import { api, ApiError, isSessionChangedError } from "../../api/client.ts";
 import { useNorthStar, useNorthStarHistory, useP2Refresh, useRegister } from "../../api/queries.ts";
 import type { Baseline, KpiDefinition, NorthStar, Outcome, OutcomeKpi, StrategicGuardrail } from "../../api/types.ts";
 import { useLocale } from "../../app/locale.ts";
+import { beginSessionGuard } from "../../auth/sessionBound.ts";
 import { Unknown } from "../../components/Badges.tsx";
 import { Amount } from "../../components/Amount.tsx";
 import { BLANK_CODE, Dialog, Field, isBlankText, issueCode, useFocusFirstInvalid } from "../../components/Form.tsx";
@@ -172,7 +173,7 @@ function NorthStarForm({ current, onDone }: { current: NorthStar | null; onDone:
         body: parsed.data,
         ...(on ? { ifMatch: on.version } : {}),
       });
-      await refresh();
+      if (!(await refresh())) return;
       onDone();
     } catch (e) {
       if (isSessionChangedError(e)) return; // F-DG2-530: silent, the session state was already reset
@@ -378,7 +379,7 @@ function OutcomesSection() {
           people={people}
           submitLabel={dialog.record ? t("common.action.save") : t("common.action.create")}
           onSaved={async () => {
-            await refresh();
+            if (!(await refresh())) return;
             setDialog(null);
           }}
           onCancel={() => setDialog(null)}
@@ -405,7 +406,7 @@ function OutcomeNode({
   depth: number;
   onEdit: (o: Outcome) => void;
   onAddChild: (parentId: string) => void;
-  onRefresh: () => Promise<void>;
+  onRefresh: () => Promise<unknown>;
 }) {
   const { t } = useTranslation();
   const ws = useWorkspace();
@@ -788,7 +789,7 @@ function T02Section() {
           people={people}
           submitLabel={dialog.record ? t("common.action.save") : t("common.action.create")}
           onSaved={async () => {
-            await refresh();
+            if (!(await refresh())) return;
             setDialog(null);
           }}
           onCancel={() => setDialog(null)}
@@ -982,7 +983,7 @@ function KpiDefinitionsSection() {
           people={people}
           submitLabel={dialog.record ? t("common.action.save") : t("common.action.create")}
           onSaved={async () => {
-            await refresh();
+            if (!(await refresh())) return;
             setDialog(null);
           }}
           onCancel={() => setDialog(null)}
@@ -1015,7 +1016,7 @@ function ActivateKpiDialog({
   onClose,
 }: {
   kpi: KpiDefinition;
-  onDone: () => Promise<void>;
+  onDone: () => Promise<unknown>;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -1024,6 +1025,7 @@ function ActivateKpiDialog({
   const [serverError, setServerError] = useState<unknown>(null);
   const reason = activationReason(t, serverError);
   const activate = async () => {
+    const action = beginSessionGuard(); // F-DG2-530: every effect below belongs to this session generation
     setBusy(true);
     setServerError(null);
     try {
@@ -1032,9 +1034,10 @@ function ActivateKpiDialog({
         ifMatch: kpi.version,
       });
       await onDone();
+      if (action.stale()) return;
       onClose();
     } catch (e) {
-      if (isSessionChangedError(e)) return; // F-DG2-530: silent, the session state was already reset
+      if (action.stale(e)) return; // F-DG2-530: silent, the session state was already reset
       setServerError(e);
       if (e instanceof ApiError && e.status === 409) await onDone();
     } finally {
@@ -1187,7 +1190,7 @@ function GuardrailsSection() {
           people={people}
           submitLabel={dialog.record ? t("common.action.save") : t("common.action.create")}
           onSaved={async () => {
-            await refresh();
+            if (!(await refresh())) return;
             setDialog(null);
           }}
           onCancel={() => setDialog(null)}

@@ -98,7 +98,7 @@ function NoCharter() {
         <CharterForm
           view={null}
           onDone={async () => {
-            await refresh();
+            if (!(await refresh())) return;
             setCreating(false);
           }}
           onCancel={() => setCreating(false)}
@@ -204,7 +204,7 @@ function CharterForm({
   onCancel,
 }: {
   view: CharterView | null;
-  onDone: () => Promise<void>;
+  onDone: () => Promise<unknown>;
   onCancel: () => void;
 }) {
   const { t } = useTranslation();
@@ -297,7 +297,7 @@ function CharterContent({ view }: { view: CharterView }) {
           <CharterForm
             view={view}
             onDone={async () => {
-              await refresh();
+              if (!(await refresh())) return;
               setEditing(false);
             }}
             onCancel={() => setEditing(false)}

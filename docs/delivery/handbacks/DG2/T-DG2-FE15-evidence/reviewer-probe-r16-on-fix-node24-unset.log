@@ -1,0 +1,26 @@
+# reviewer probe zz-sec-r16-web-probe.test.tsx (sha256 f0d72881) on the FE15 working tree (copied in temporarily, removed after), node v24.21.0, LANG=unset, 2026-10-07T17:49:26Z
+# cmd: npx vitest run --project unit-web apps/web/src/auth/zz-sec-r16-web-probe.test.tsx
+
+ RUN  v3.2.4 /home/user/My-owns
+
+stdout | src/auth/zz-sec-r16-web-probe.test.tsx > Y1 a create of A's whose success continuation runs after the tab moved to B > B is never navigated to A's new record nor shown A's code/name
+Y1 requests after the POST: ["POST /api/v1/transformations","GET /api/v1/me","GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units"]
+Y1: generation at send 0, now 1; GET /me count 2; path /transformations/new; header B=true; B sees A's code=false; B sees A's name=false; body excerpt=""
+
+stdout | src/auth/zz-sec-r16-web-probe.test.tsx > Y4 X6 with the production query defaults > a refocus after B signed in elsewhere fetches /me first and never shows A's header with B's data
+Y4: requests on refocus = ["GET /api/v1/me","GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units","GET /api/v1/transformations"]; header A=false; header B=true; B's row=true; A's row=false
+
+stdout | src/auth/zz-sec-r16-web-probe.test.tsx > Y5 OBSERVATION: in-app navigation with no focus event after B signed in elsewhere > logs which header is shown above the newly fetched page data (always passes)
+Y5: requests on navigation = ["GET /api/v1/me","GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units","GET /api/v1/transformations"]; header A=false; B's row=true; A's row=false
+
+ ✓ |unit-web| src/auth/zz-sec-r16-web-probe.test.tsx (4 tests) 4636ms
+   ✓ Y1 a create of A's whose success continuation runs after the tab moved to B > B is never navigated to A's new record nor shown A's code/name  3723ms
+   ✓ Y4 X6 with the production query defaults > a refocus after B signed in elsewhere fetches /me first and never shows A's header with B's data  376ms
+   ✓ Y5 OBSERVATION: in-app navigation with no focus event after B signed in elsewhere > logs which header is shown above the newly fetched page data (always passes)  354ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  17:49:27
+   Duration  6.85s (transform 980ms, setup 116ms, collect 1.40s, tests 4.64s, environment 404ms, prepare 113ms)
+
+# exit status: 0

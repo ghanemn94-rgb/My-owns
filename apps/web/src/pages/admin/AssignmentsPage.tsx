@@ -9,7 +9,7 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router";
-import { api, ApiError, isSessionChangedError } from "../../api/client.ts";
+import { api, ApiError } from "../../api/client.ts";
 import {
   useAllUsers,
   useAssignments,
@@ -22,6 +22,7 @@ import type { RoleAssignment } from "../../api/types.ts";
 import { localName, useLocale } from "../../app/locale.ts";
 import { canAnywhere, canOn } from "../../auth/permissions.ts";
 import { useMe } from "../../auth/session.tsx";
+import { useSessionBoundAction } from "../../auth/sessionBound.ts";
 import {
   ColumnPicker,
   DataTable,
@@ -66,6 +67,7 @@ export function AssignmentsTable({
   const locale = useLocale();
   const me = useMe();
   const queryClient = useQueryClient();
+  const begin = useSessionBoundAction();
   const pager = useCursorPager();
   const [limit, setLimit] = useState(25);
   const [revoking, setRevoking] = useState<RoleAssignment | null>(null);
@@ -208,6 +210,7 @@ export function AssignmentsTable({
 
   const revoke = async (reason: string) => {
     if (!revoking) return;
+    const action = begin(); // F-DG2-530: every effect below belongs to this session generation
     try {
       await api.send<RoleAssignment>(`/api/v1/role-assignments/${revoking.id}/revoke`, {
         method: "POST",
@@ -215,11 +218,11 @@ export function AssignmentsTable({
         ifMatch: revoking.version,
       });
     } catch (e) {
-      if (e instanceof ApiError && e.status === 409)
+      if (!action.stale(e) && e instanceof ApiError && e.status === 409)
         await queryClient.invalidateQueries({ queryKey: ["role-assignments"] });
-      throw e;
+      throw e; // ReasonDialog shows it, or drops it silently when the session generation moved
     }
-    setRevoking(null);
+    if (!action.run(() => setRevoking(null))) return;
     await queryClient.invalidateQueries({ queryKey: ["role-assignments"] });
   };
 
@@ -389,6 +392,7 @@ function GrantForm({
   const locale = useLocale();
   const me = useMe();
   const queryClient = useQueryClient();
+  const begin = useSessionBoundAction();
   const canReadUsers = canAnywhere(me, "user.read");
   const users = useAllUsers(organizationId, canReadUsers);
   const roles = useRoles();
@@ -429,13 +433,15 @@ function GrantForm({
     return m ? fieldErrorMessage(t, m) : undefined;
   };
   const onSubmit = handleSubmit(async (v) => {
+    const action = begin(); // F-DG2-530: every effect below belongs to this session generation
     setServerError(null);
     try {
       await api.send<RoleAssignment>("/api/v1/role-assignments", { method: "POST", body: toPayload(v) });
       await queryClient.invalidateQueries({ queryKey: ["role-assignments"] });
+      if (action.stale()) return;
       onDone();
     } catch (e) {
-      if (isSessionChangedError(e)) return; // F-DG2-530: silent, the session state was already reset
+      if (action.stale(e)) return; // F-DG2-530: silent, the session state was already reset
       if (e instanceof ApiError) {
         for (const fe of e.fieldErrors) {
           const field = pointerToField(fe.pointer)

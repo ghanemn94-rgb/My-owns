@@ -20,6 +20,7 @@ import type { Transformation } from "../../api/types.ts";
 import { localName, useForwardArrow, useLocale } from "../../app/locale.ts";
 import { canOn } from "../../auth/permissions.ts";
 import { useMe } from "../../auth/session.tsx";
+import { useSessionBoundAction } from "../../auth/sessionBound.ts";
 import { HealthChip, LifecycleChip, Unknown } from "../../components/Badges.tsx";
 import { Pager, useCursorPager } from "../../components/DataTable.tsx";
 import { Icon } from "../../components/Icon.tsx";
@@ -38,12 +39,28 @@ import { BusinessUnitName, PhaseStepper, UserName, useBusinessUnitIndex, useTran
  * creator in the 201 response, so the creator is never left on a bare "Not found" for the record they just created.
  */
 export interface CreatedNavigationState {
-  readonly created: { readonly id: string; readonly code: string; readonly name: string };
+  readonly created: {
+    readonly id: string;
+    readonly code: string;
+    readonly name: string;
+    /**
+     * F-DG2-580: the person who created it. The browser keeps router state in its history entry, so Back/Forward (or a
+     * reload) can bring this state back after the tab's identity changed: it is shown only to that same person.
+     */
+    readonly createdBy: { readonly organizationId: string; readonly userId: string };
+  };
 }
 
-function createdState(state: unknown, id: string | undefined): CreatedNavigationState["created"] | null {
+function createdState(
+  state: unknown,
+  id: string | undefined,
+  me: { readonly user: { readonly id: string; readonly organizationId: string } },
+): CreatedNavigationState["created"] | null {
   const created = (state as Partial<CreatedNavigationState> | null)?.created;
-  return created && typeof created === "object" && created.id === id ? created : null;
+  if (!created || typeof created !== "object" || created.id !== id) return null;
+  const by = created.createdBy;
+  if (!by || by.userId !== me.user.id || by.organizationId !== me.user.organizationId) return null;
+  return created;
 }
 
 export { useTransformationTarget };
@@ -53,7 +70,8 @@ export function TransformationDetailPage() {
   const { t } = useTranslation();
   const query = useTransformation(id);
   const location = useLocation();
-  const created = createdState(location.state, id);
+  const me = useMe();
+  const created = createdState(location.state, id, me);
   usePageTitle(query.data ? `${query.data.code} · ${query.data.name}` : t("transformations.detailTitle"));
   // 403/404 means "not visible to you": never keep showing a cached copy (labelled stale) after the server says so.
   if (query.isError && isNoPermission(query.error)) {
@@ -126,6 +144,7 @@ function Workspace({ tr }: { tr: Transformation }) {
   const me = useMe();
   const bu = useBusinessUnitIndex();
   const queryClient = useQueryClient();
+  const begin = useSessionBoundAction();
   const target = useTransformationTarget(tr)!;
   const [archiving, setArchiving] = useState(false);
   const archived = tr.archivedAt !== null;
@@ -134,17 +153,19 @@ function Workspace({ tr }: { tr: Transformation }) {
   const canAudit = canOn(me, "audit.read", target);
 
   const archive = async (reason: string) => {
+    const action = begin(); // F-DG2-530: every effect below belongs to this session generation
     try {
       const updated = await api.send<Transformation>(`/api/v1/transformations/${tr.id}/archive`, {
         method: "POST",
         body: { reason },
         ifMatch: tr.version,
       });
-      queryClient.setQueryData(keys.transformation(tr.id), updated);
+      if (!action.setQueryData(keys.transformation(tr.id), updated)) return;
       await queryClient.invalidateQueries({ queryKey: ["transformations"] });
       await queryClient.invalidateQueries({ queryKey: ["transformation-audit", tr.id] });
-      setArchiving(false);
+      action.run(() => setArchiving(false));
     } catch (err) {
+      if (action.stale(err)) throw err; // ReasonDialog drops it silently (SessionChangedError) or not at all
       if (err instanceof ApiError && err.status === 409) {
         // Someone changed the record meanwhile: reload it so the user sees the current state before retrying.
         await queryClient.invalidateQueries({ queryKey: keys.transformation(tr.id) });
