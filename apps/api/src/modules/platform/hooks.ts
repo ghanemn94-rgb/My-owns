@@ -5,7 +5,7 @@
 //   2. at RESPONSE time: a successful response from a route that declares a business permission must have consulted
 //      the policy function at least once (request.authz.decisions > 0), otherwise the response is replaced by a 500.
 import type { Permission } from "@mth/shared";
-import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest, preHandlerAsyncHookHandler } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { mapDatabaseGuardError } from "./db-errors.ts";
 import { consumesOf, undeclaredMediaTypeProblem, type RouteConsumesSource } from "./media-types.ts";
@@ -97,9 +97,23 @@ export function problemForError(error: FastifyError, request: RouteConsumesSourc
   return mapError(error, request) ?? problems.internal();
 }
 
-export interface PlatformOptions {
+export interface NotFoundOptions {
   /** Serve the SPA's index.html for unknown GET paths outside /api/ (needs @fastify/static's reply.sendFile). */
   readonly spaFallback?: boolean;
+  /**
+   * T-DG2-BE16: preHandler hooks of the not-found handler. An unmatched route has no route, so no `onRoute`-attached
+   * hook (the rate limiter's) runs for it; server.ts passes `app.rateLimit()` here (@fastify/rate-limit's documented
+   * form for the not-found handler).
+   */
+  readonly preHandler?: preHandlerAsyncHookHandler | readonly preHandlerAsyncHookHandler[];
+}
+
+export interface PlatformOptions extends NotFoundOptions {
+  /**
+   * `"deferred"`: do not set the not-found handler here; the caller registers it with `registerNotFoundHandler` once
+   * the plugins its preHandler needs (the rate limiter) are registered.
+   */
+  readonly notFound?: "deferred";
 }
 
 export function registerPlatformHooks(app: FastifyInstance, options: PlatformOptions = {}): void {
@@ -161,7 +175,13 @@ export function registerPlatformHooks(app: FastifyInstance, options: PlatformOpt
     return sendProblem(reply, request, problemForError(error, request));
   });
 
-  app.setNotFoundHandler((request, reply) => {
+  if (options.notFound !== "deferred") registerNotFoundHandler(app, options);
+}
+
+/** The not-found handler: the SPA's index.html for unknown non-API GETs (when enabled), else 404 not_found. */
+export function registerNotFoundHandler(app: FastifyInstance, options: NotFoundOptions = {}): void {
+  const preHandler = options.preHandler === undefined ? [] : [options.preHandler].flat();
+  app.setNotFoundHandler({ preHandler }, (request, reply) => {
     if (options.spaFallback && request.method === "GET" && !request.url.startsWith("/api/")) {
       return (reply as unknown as { sendFile(name: string): FastifyReply }).sendFile("index.html");
     }

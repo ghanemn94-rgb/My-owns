@@ -7,9 +7,10 @@
 // JSON bodies and query strings are decoded as strict UTF-8 (platform/request-encoding.ts, T-DG2-BE13).
 //
 // Order matters:
-//   1. platform hooks (request IDs, problem+json, route access declarations, fail-closed guard);
+//   1. platform hooks (request IDs, problem+json, route access declarations, fail-closed guard) and the connection
+//      hygiene (T-DG2-BE16: an unread body closes its connection; bounded shutdown);
 //   2. security headers (helmet, strict same-origin CSP), cookies, rate limiting (per validated-session subject or IP;
-//      stricter on auth);
+//      stricter on auth), then the not-found handler, which the limiter meters too;
 //   3. the failed-authorization audit hook, health routes, identity (authentication + CSRF hook), then the modules;
 //   4. the built SPA, when present, from the same origin (no CDN).
 import { existsSync } from "node:fs";
@@ -35,12 +36,16 @@ import {
   createFrameworkErrorHandler,
   createJsonBodyParser,
   DEFAULT_CONSUMES,
+  DEFAULT_REQUEST_TIMEOUT_MS,
+  DEFAULT_SHUTDOWN_GRACE_MS,
   genReqId,
   JSON_MEDIA_TYPE,
   parseQueryString,
   problems,
+  registerConnectionHygiene,
   registerHealthRoutes,
   registerMediaTypeEnforcement,
+  registerNotFoundHandler,
   registerPlatformHooks,
   restrictParserTo,
   type ModuleRegistration,
@@ -65,6 +70,12 @@ export interface ServerOptions {
   readonly webRoot?: string | null;
   /** Migrations the readiness check expects (default: those shipped with @mth/db). */
   readonly migrationFiles?: readonly MigrationFile[];
+  /** T-DG2-BE16: time in-flight requests get after `app.close()` (default DEFAULT_SHUTDOWN_GRACE_MS, 5 s). */
+  readonly shutdownGraceMs?: number;
+  /** T-DG2-BE16: Node `requestTimeout` for headers + body (default DEFAULT_REQUEST_TIMEOUT_MS, 300 s). */
+  readonly requestTimeoutMs?: number;
+  /** How often Node checks that timeout (default Node's 30 s; tests shorten it). */
+  readonly connectionsCheckingIntervalMs?: number;
 }
 
 /** Security headers (helmet) with a strict same-origin CSP. Also applied to router- and connection-level errors. */
@@ -138,6 +149,7 @@ export async function buildServer(
     appLog?.info({ requestId, code }, "request refused by the HTTP parser"),
   );
 
+  const requestTimeout = options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
   const app = Fastify({
     logger:
       options.logger === false
@@ -163,6 +175,20 @@ export async function buildServer(
     routerOptions: { querystringParser: parseQueryString },
     frameworkErrors: createFrameworkErrorHandler(securityHeaders),
     clientErrorHandler: onClientError,
+    // T-DG2-BE16: a request (headers and body) must arrive within requestTimeout, else Node answers 408 and closes the
+    // connection (Fastify's default 0 let a stalled body hold its connection forever). `forceCloseConnections` stays
+    // Fastify's "idle": close() drops idle keep-alive connections at once and in-flight ones get the shutdown grace
+    // period (platform/connection-hygiene.ts), instead of `true`, which would cut every in-flight request at close().
+    // Node arms the timeout only when it is passed to http.createServer (Fastify's own option is assigned afterwards
+    // and alone has no effect: verified on Node 22 and 24), so it is given in `http` as well.
+    requestTimeout,
+    http: {
+      requestTimeout,
+      ...(options.connectionsCheckingIntervalMs !== undefined
+        ? { connectionsCheckingInterval: options.connectionsCheckingIntervalMs }
+        : {}),
+    },
+    forceCloseConnections: "idle",
   });
   appLog = app.log;
   // F-DG2-290: JSON bodies are read as raw bytes and decoded as strict UTF-8 (never rewritten to U+FFFD), then parsed
@@ -190,7 +216,11 @@ export async function buildServer(
       });
   });
 
-  registerPlatformHooks(app, { spaFallback: webRoot !== null });
+  // The not-found handler is registered after the rate limiter, which meters it too (T-DG2-BE16).
+  registerPlatformHooks(app, { notFound: "deferred" });
+  // T-DG2-BE16: a response sent before its request body was consumed closes the connection (bounded lingering close),
+  // and app.close() destroys what is still open after the shutdown grace period.
+  registerConnectionHygiene(app, { shutdownGraceMs: options.shutdownGraceMs ?? DEFAULT_SHUTDOWN_GRACE_MS });
 
   await app.register(helmet, HELMET_OPTIONS);
   await app.register(cookie);
@@ -215,6 +245,11 @@ export async function buildServer(
     allowList: (request: FastifyRequest) => request.url === "/healthz" || request.url === "/readyz",
     errorResponseBuilder: () => problems.rateLimited(),
   });
+  // T-DG2-BE16 (audit round 10, P3): `global: true` attaches the limiter through `onRoute`, and an unmatched route has
+  // no route, so unmatched-route 404s were never metered. The not-found handler runs it as a preHandler (the plugin's
+  // documented form; same key, store and limit). Its 429, like the unmatched 404 itself, belongs to no operation and is
+  // outside the contract by design (ADR-0007 §5b).
+  registerNotFoundHandler(app, { spaFallback: webRoot !== null, preHandler: app.rateLimit() });
 
   registerDeniedMutationAudit(app, db);
   registerHealthRoutes(app, pool, options.migrationFiles ?? listMigrationFiles());

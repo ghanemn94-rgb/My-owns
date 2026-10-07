@@ -30,9 +30,11 @@ export {
   genReqId,
   isValidAccess,
   problemForError,
+  registerNotFoundHandler,
   registerPlatformHooks,
   sendProblem,
   type AuthzTracker,
+  type NotFoundOptions,
   type PlatformOptions,
   type RouteAccess,
 } from "./hooks.ts";
@@ -78,5 +80,16 @@ export {
   type ParsedMediaType,
   type RouteConsumesSource,
 } from "./media-types.ts";
+export {
+  bodyUnconsumed,
+  closeIfBodyUnconsumed,
+  DEFAULT_REQUEST_TIMEOUT_MS,
+  DEFAULT_SHUTDOWN_GRACE_MS,
+  LINGER_CAP_MS,
+  lingerOnClose,
+  registerConnectionHygiene,
+  RST_AVOIDANCE_DELAY_MS,
+  type ConnectionHygieneOptions,
+} from "./connection-hygiene.ts";
 export { registerHealthRoutes } from "./health.ts";
 export type { ModuleDeps, ModuleRegistration } from "./deps.ts";

@@ -1,0 +1,87 @@
+# root-cause reproduction, no database, no project code. Node v24.21.0, fastify 5.6.1 (apps/api's). 2026-10-07T00:41:52Z
+# 1) plain node:http — trace of who detaches req.socket when a for-await over the body exits early
+## script plain.mjs:
+import http from "node:http"; import {connect} from "node:net";
+const T0=Date.now(); const lg=(m)=>console.log(`${Date.now()-T0}ms ${m}`);
+const srv=http.createServer(async (req,res)=>{
+  const sock=req.socket; let n=0; lg(`start socket=${!!req.socket}`); { let v=req.socket; Object.defineProperty(req,"socket",{get(){return v},set(x){ if(x===null) console.log(new Error("socket nulled").stack); v=x;},configurable:true}); } let first=true;
+  const origDestroy=req._destroy; req._destroy=function(e,cb){ lg(`_destroy called socket=${!!this.socket}`); return origDestroy.call(this,e,cb); };
+  try{ for await (const c of req){ n+=c.length; if(first){first=false; lg(`first chunk socket=${!!req.socket}`);} if(!req.socket && !globalThis.seen){globalThis.seen=1; lg(`socket gone at n=${n}`);} if(n>5e6) throw new Error("big"); } }catch(e){ lg(`threw: req.socket=${!!req.socket} sock.destroyed=${sock.destroyed}`); }
+  res.statusCode=413; res.end("x"); globalThis.sock=sock; res.on("finish",()=>setTimeout(()=>lg(`after finish: flowing=${sock.readableFlowing} reading=${sock._handle?.reading} parser=${!!sock.parser} destroyed=${sock.destroyed} bytesRead=${sock.bytesRead}`),10));
+});
+srv.listen(0,"127.0.0.1",async()=>{
+ const s=connect(srv.address().port,"127.0.0.1");
+ s.write(`POST / HTTP/1.1\r\nHost: x\r\nTransfer-Encoding: chunked\r\n\r\n`);
+ const mb=Buffer.alloc(1<<20); for(let i=0;i<30;i++) s.write(Buffer.concat([Buffer.from("100000\r\n"),mb,Buffer.from("\r\n")]));
+ let t=""; s.on("data",d=>t+=d); s.on("end",()=>lg("client FIN")); 
+ await new Promise(r=>setTimeout(r,1000)); lg(t.split("\r\n")[0]+" | "+(/connection: \S+/i.exec(t)||[""])[0]); s.destroy();
+ setTimeout(()=>{lg(`after client destroy: flowing=${globalThis.sock.readableFlowing} reading=${globalThis.sock._handle?.reading} destroyed=${globalThis.sock.destroyed} bytesRead=${globalThis.sock.bytesRead}`)},900); setTimeout(()=>srv.getConnections((e,n)=>{lg("conns="+n);process.exit(0)}),1000);
+});
+## output:
+35ms start socket=true
+36ms first chunk socket=true
+Error: socket nulled
+    at IncomingMessage.set [as socket] (file:///var/tmp/mth-run.xPMciR/claude-0/diag/plain.mjs:4:176)
+    at Object.destroyer (node:internal/streams/destroy:333:19)
+    at createAsyncIterator (node:internal/streams/readable:1424:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+47ms _destroy called socket=false
+48ms threw: req.socket=false sock.destroyed=false
+60ms after finish: flowing=false reading=false parser=true destroyed=false bytesRead=5111864
+1031ms HTTP/1.1 413 Payload Too Large | Connection: keep-alive
+1933ms after client destroy: flowing=false reading=false destroyed=false bytesRead=5111864
+2033ms conns=1
+# exit: 0
+
+# 2) plain Fastify with the same octet parser pattern as the upload route; client waits 8 s then destroys; server connections polled every 5 s
+## script repro.mjs:
+import Fastify from "/home/user/My-owns/apps/api/node_modules/fastify/fastify.js";
+import { connect } from "node:net";
+const T0=Date.now(); const lg=(m)=>console.log(`${Date.now()-T0}ms ${m}`);
+const app = Fastify({ logger: false }); app.setErrorHandler((e,req,reply)=>{lg("errorHandler "+e.message+" "+e.code); reply.code(500).send({})});
+app.addContentTypeParser("application/octet-stream", (_r, payload, done) => done(null, payload));
+app.post("/up", async (req, reply) => {
+  let size=0;
+  try { for await (const c of req.body) { size+=c.length; if (size>25*1024*1024) throw new Error("big"); } }
+  catch(e){ lg(`handler threw ${e.message}; raw destroyed=${req.raw.destroyed} complete=${req.raw.complete} rawSocketNull=${req.raw.socket===null} aborted=${req.raw.aborted} replySock=${!!reply.raw.socket} replySockDestroyed=${reply.raw.socket?.destroyed} flowing=${reply.raw.socket?.readableFlowing} paused=${reply.raw.socket?.isPaused()} parserNull=${!reply.raw.socket?.parser}`); return reply.code(413).send({code:"too_large"}); }
+  return {size};
+});
+await app.listen({port:0, host:"127.0.0.1"});
+const port=app.server.address().port;
+lg(`timeouts keepAlive=${app.server.keepAliveTimeout} headers=${app.server.headersTimeout} request=${app.server.requestTimeout} check=${app.server.connectionsCheckingInterval}`);
+app.server.on("connection",(s)=>{ s.on("close",()=>lg("server socket close")); s.on("end",()=>lg("server socket end")); });
+const s=connect(port,"127.0.0.1"); let txt="";
+s.on("data",d=>{txt+=d.toString("latin1"); }); s.on("end",()=>lg("client got FIN")); s.on("close",()=>lg("client close"));
+s.write(`POST /up HTTP/1.1\r\nHost: x\r\nContent-Type: application/octet-stream\r\nTransfer-Encoding: chunked\r\n\r\n`);
+const mb=Buffer.alloc(1024*1024,0xfe);
+for(let i=0;i<30;i++) s.write(Buffer.concat([Buffer.from("100000\r\n"),mb,Buffer.from("\r\n")]));
+s.write("0\r\n\r\n");
+await new Promise(r=>setTimeout(r,process.env.WAIT? +process.env.WAIT : 8000));
+app.server.on("connection",()=>{}); lg(`server conn internals`);
+lg(`client status: ${(txt.match(/HTTP\/1\.1 \d+/g)||[]).join(",")} conn hdr=${/connection: (\S+)/i.exec(txt)?.[1]}`);
+s.destroy(); lg("client destroyed");
+const iv=setInterval(()=>app.server.getConnections((e,n)=>lg(`server connections=${n}`)),5000);
+await app.close(); lg("app.close done"); clearInterval(iv);
+## output:
+18ms timeouts keepAlive=72000 headers=60000 request=0 check=30000
+96ms handler threw big; raw destroyed=true complete=false rawSocketNull=true aborted=true replySock=true replySockDestroyed=false flowing=true paused=false parserNull=false
+8049ms server conn internals
+8050ms client status: HTTP/1.1 413 conn hdr=keep-alive
+8050ms client destroyed
+8052ms client close
+13054ms server connections=1
+18056ms server connections=1
+23061ms server connections=1
+28066ms server connections=1
+33067ms server connections=1
+38069ms server connections=1
+43072ms server connections=1
+48073ms server connections=1
+53077ms server connections=1
+58079ms server connections=1
+63081ms server connections=1
+68085ms server connections=1
+73085ms server connections=1
+73101ms app.close done
+73102ms server socket close
+# exit: 0

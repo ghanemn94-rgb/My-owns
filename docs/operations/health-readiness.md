@@ -42,3 +42,33 @@ while `/readyz` is 200.
 - Compose keeps container logs with the `json-file` driver, rotated at 10 MB × 5 files per container. Production log
   shipping and monitoring belong to the production deployment guide (§19 item 8, later stage).
 - Metrics endpoints are not part of P1.
+
+## Shutdown and connection limits (T-DG2-BE16)
+
+The API process (`mth api`, `node dist/main.js`) stops on `SIGTERM` or `SIGINT`:
+
+1. It stops accepting connections and closes idle keep-alive connections at once.
+2. Requests already in flight get a **grace period of 5 s** (`DEFAULT_SHUTDOWN_GRACE_MS`) to finish. Their responses
+   carry `Connection: close`.
+3. When the grace period ends, every connection still open is destroyed. Typical causes are a stalled upload, or a
+   client that sends nothing more. The log line `shutdown grace period elapsed: closing the remaining connections`
+   (level warn) gives the number destroyed.
+4. The database pool is closed and the process exits 0, logging `shut down`. As a backstop, if this hasn't happened
+   10 s after the signal, the process logs `shutdown did not finish in time; exiting` and exits 1.
+
+**The trade-off.** An in-flight request that needs more than 5 s after the signal is cut off. This applies, for
+example, to a large evidence upload on a slow link. Its transaction rolls back, and no partial evidence object is
+kept, so the client must retry it. Compose's default stop timeout (10 s, after which it sends `SIGKILL`) leaves room
+for the whole sequence.
+
+Connection rules while the API is running:
+
+- **Unread request bodies.** A response sent before the request body has been received completely carries
+  `Connection: close`. Examples are an over-limit upload (413), a refusal before the body is read
+  (401/403/404/409/428/400/422), a JSON body over the limit, a media-type refusal, an unmatched route, and a malformed
+  URL. The server shuts down its side of the connection after the response and destroys the connection 0.5 s later,
+  at most 2 s later. It never reads the rest of the body.
+- **Request timeout.** A request whose headers and body don't arrive completely within **300 s** (Node's
+  `requestTimeout`) is answered with 408 `request_timeout` and its connection is closed.
+- **Rate limiting.** Requests to unmatched routes count against the same per-minute limit as every other request,
+  and so does the SPA fallback page. Once the limit is reached they are answered with 429 `rate_limited`.

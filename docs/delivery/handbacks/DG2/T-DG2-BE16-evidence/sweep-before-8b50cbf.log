@@ -1,0 +1,29 @@
+# SWEEP lines (before: apps/api/src at HEAD 8b50cbf) extracted with: grep -h SWEEP negative-control-head-8b50cbf.log
+SWEEP {"path":"upload 30 MiB chunked over the limit","status":413,"code":"evidence.too_large","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":-1}
+SWEEP-CLOSE {"label":"after upload 30 MiB chunked over the limit","ms":6002,"completed":false}
+SWEEP {"path":"upload 30 MiB content-length over the limit","status":413,"code":"evidence.too_large","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":-1}
+SWEEP-CLOSE {"label":"after upload 30 MiB content-length over the limit","ms":6043,"completed":false}
+SWEEP {"path":"upload 401 no session","status":401,"code":"unauthenticated","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":26}
+SWEEP {"path":"upload 403 no CSRF token","status":403,"code":"csrf","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}
+SWEEP {"path":"upload 404 unknown evidence","status":404,"code":"not_found","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}
+SWEEP {"path":"upload 409 stale If-Match","status":409,"code":"version_conflict","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}
+SWEEP {"path":"upload 428 no If-Match","status":428,"code":"precondition_required","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}
+SWEEP {"path":"upload 400 bad X-File-Name","status":400,"code":"validation.file_name","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":24}
+SWEEP {"path":"upload 422 not a file","status":422,"code":"validation.evidence.not_a_file","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}
+SWEEP {"path":"upload 400 undeclared media type (text/plain)","status":400,"code":"validation.content_type","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+SWEEP {"path":"upload 401 Content-Length 30 MiB","status":401,"code":"unauthenticated","connection":"keep-alive","serverCloseMs":2589,"connectionsZeroMs":0}
+SWEEP {"path":"upload 428 Content-Length 30 MiB","status":428,"code":"precondition_required","connection":"keep-alive","serverCloseMs":2601,"connectionsZeroMs":0}
+SWEEP {"path":"JSON over bodyLimit, chunked","status":400,"code":"validation.body_too_large","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+SWEEP {"path":"JSON over bodyLimit, Content-Length","status":400,"code":"validation.body_too_large","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+SWEEP {"path":"unmatched route 404, chunked","status":404,"code":"not_found","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+SWEEP {"path":"unmatched route 404, Content-Length 30 MiB","status":404,"code":"not_found","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+SWEEP {"path":"router-level 400 bad URL (FST_ERR_BAD_URL), chunked","status":400,"code":"validation.format","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}
+SWEEP-CLOSE {"label":"after the refusals sweep","ms":0,"completed":true}
+SWEEP-CLOSE {"label":"while a refused (403) client keeps sending its body","ms":7999,"completed":false}
+SWEEP {"path":"client abort mid-upload content-length","connectionsZeroMs":26,"partialFilesGoneMs":0}
+SWEEP {"path":"client abort mid-upload chunked","connectionsZeroMs":25,"partialFilesGoneMs":0}
+SWEEP-CLOSE {"label":"stalled upload in flight (default grace 5 s)","ms":15006,"completed":false}
+SWEEP-CLOSE {"label":"in-flight upload finishing during shutdown","ms":15005,"completed":false}
+SWEEP {"path":"stalled body, requestTimeout 1.5 s","status":[],"closedMs":-1}
+SWEEP-CLOSE {"label":"SIGTERM with a stalled upload (main.ts)","ms":-1,"exitCode":null}
+SWEEP {"path":"unmatched-route flood, limit 4/min","statuses":[404,404,404,404]}

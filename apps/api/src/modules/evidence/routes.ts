@@ -271,6 +271,17 @@ function storeProblem(err: unknown): HttpProblem | null {
   return null;
 }
 
+/**
+ * T-DG2-BE16: the client went away (or Node's requestTimeout cut the connection) while the body was streaming. The
+ * store removed its temporary file and the transaction rolls back; the answer is the declared 400 (nobody receives it:
+ * the socket is gone), never an "unhandled error" 500.
+ */
+function abortedBodyProblem(request: FastifyRequest, err: unknown): HttpProblem | null {
+  const aborted = (request.raw as { aborted?: unknown }).aborted === true;
+  if (!aborted && (err as { code?: unknown } | null)?.code !== "ECONNRESET") return null;
+  return problems.badRequest("validation.malformed_request", "The request body was not received completely.");
+}
+
 async function lockEvidence(tx: Tx, request: FastifyRequest, transformationId: string, evidenceId: string) {
   const expected = requireIfMatch(request);
   const current = await tx
@@ -495,7 +506,7 @@ function registerContentRoutes(app: FastifyInstance, db: Db, store: EvidenceStor
       return sendVersioned(reply, 200, toEvidence(row));
     } catch (err) {
       if (storedKey !== null) await store.discardUncommitted(storedKey).catch(() => undefined);
-      throw storeProblem(err) ?? err;
+      throw storeProblem(err) ?? abortedBodyProblem(request, err) ?? err;
     }
   });
 }

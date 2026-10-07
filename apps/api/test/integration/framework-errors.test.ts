@@ -40,9 +40,17 @@ beforeAll(async () => {
 afterAll(() => api.close());
 
 const TRANSPORT = new Set(["x-request-id", "content-type", "content-length", "date", "connection", "keep-alive"]);
-/** The security headers of a response: everything except transport headers and the per-request id. */
+/**
+ * The security headers of a response: everything except transport headers, the per-request id and the rate-limit
+ * headers (T-DG2-BE16: the reference unmatched-route 404 is now metered, so it carries `x-ratelimit-*` like every routed
+ * response; router- and connection-level answers run before the limiter and do not).
+ */
 function securityHeadersOf(headers: Record<string, unknown>): Record<string, unknown> {
-  return Object.fromEntries(Object.entries(headers).filter(([k]) => !TRANSPORT.has(k.toLowerCase())));
+  return Object.fromEntries(
+    Object.entries(headers).filter(
+      ([k]) => !TRANSPORT.has(k.toLowerCase()) && !k.toLowerCase().startsWith("x-ratelimit-"),
+    ),
+  );
 }
 
 /** The reference: security headers on an ordinary routed problem (an unknown API path, 404). */

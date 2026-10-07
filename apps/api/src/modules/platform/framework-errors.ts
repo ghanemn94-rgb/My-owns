@@ -14,6 +14,7 @@
 //      The answer is written to the socket as a problem with the same security headers and a generated request id.
 import type { FastifyError, FastifyReply, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
+import { closeIfBodyUnconsumed } from "./connection-hygiene.ts";
 import { problemForError, sendProblem } from "./hooks.ts";
 import type { RouteConsumesSource } from "./media-types.ts";
 import { problems, type HttpProblem } from "./problem.ts";
@@ -46,6 +47,8 @@ export function createFrameworkErrorHandler(
     // The bare framework context runs no onRequest/onSend hooks: set what they would have set.
     reply.headers(securityHeaders);
     reply.header("X-Request-Id", request.id);
+    // T-DG2-BE16: nor the connection-hygiene onSend hook: an unread body is never drained into the server.
+    closeIfBodyUnconsumed(request, reply);
     void sendProblem(reply, request, problem);
   };
 }

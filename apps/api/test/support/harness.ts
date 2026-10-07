@@ -66,6 +66,8 @@ export async function startApi(
     database?: string;
     /** Capture the server's log lines (JSON, one per write) instead of disabling the logger. */
     logStream?: ServerOptions["logStream"];
+    /** T-DG2-BE16: connection and shutdown settings, and the SPA directory (default: none). */
+    server?: Pick<ServerOptions, "shutdownGraceMs" | "requestTimeoutMs" | "connectionsCheckingIntervalMs" | "webRoot">;
   } = {},
 ): Promise<TestApi> {
   const { adminUrl } = inject("mthDb");
@@ -79,6 +81,7 @@ export async function startApi(
     logger: options.logStream !== undefined,
     ...(options.logStream !== undefined ? { logStream: options.logStream } : {}),
     webRoot: null,
+    ...options.server,
     ...(options.oidc !== undefined ? { oidc: options.oidc } : {}),
     ...(options.migrationFiles ? { migrationFiles: options.migrationFiles } : {}),
   });

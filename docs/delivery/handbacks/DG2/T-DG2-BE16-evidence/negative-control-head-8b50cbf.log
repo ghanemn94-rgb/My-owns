@@ -1,0 +1,729 @@
+# negative control: apps/api/src at HEAD 8b50cbf (every BE16 source change reverted; git status below), with the final BE16 integration test file and harness option; 2026-10-07T00:46:35Z
+ M apps/api/test/integration/framework-errors.test.ts
+ M apps/api/test/support/harness.ts
+?? apps/api/test/integration/connection-hygiene.test.ts
+# sha256 of the test file: 3376cbbe0af3a88416cf6e8cc3e713c51f079ce9a3d0a76d361e9e98d2cbf15e  apps/api/test/integration/connection-hygiene.test.ts
+# command: QA_PG_PORT=24471 tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/connection-hygiene.test.ts
+port-policy: PostgreSQL listening on port 24471 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/My-owns
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muxe0erd_346c64d9 (server_encoding UTF8); applied 19 migrations to a fresh database
+stdout | apps/api/test/integration/connection-hygiene.test.ts > an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB chunked, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt
+SWEEP {"path":"upload 30 MiB chunked over the limit","status":413,"code":"evidence.too_large","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":-1}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB chunked, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt
+SWEEP-CLOSE {"label":"after upload 30 MiB chunked over the limit","ms":6002,"completed":false}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB content-length, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt
+SWEEP {"path":"upload 30 MiB content-length over the limit","status":413,"code":"evidence.too_large","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":-1}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB content-length, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt
+SWEEP-CLOSE {"label":"after upload 30 MiB content-length over the limit","ms":6043,"completed":false}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 401 no session","status":401,"code":"unauthenticated","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":26}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 403 no CSRF token","status":403,"code":"csrf","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 404 unknown evidence","status":404,"code":"not_found","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 409 stale If-Match","status":409,"code":"version_conflict","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 428 no If-Match","status":428,"code":"precondition_required","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 400 bad X-File-Name","status":400,"code":"validation.file_name","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":24}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 422 not a file","status":422,"code":"validation.evidence.not_a_file","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 400 undeclared media type (text/plain)","status":400,"code":"validation.content_type","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 401 Content-Length 30 MiB","status":401,"code":"unauthenticated","connection":"keep-alive","serverCloseMs":2589,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 428 Content-Length 30 MiB","status":428,"code":"precondition_required","connection":"keep-alive","serverCloseMs":2601,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"JSON over bodyLimit, chunked","status":400,"code":"validation.body_too_large","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"JSON over bodyLimit, Content-Length","status":400,"code":"validation.body_too_large","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"unmatched route 404, chunked","status":404,"code":"not_found","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"unmatched route 404, Content-Length 30 MiB","status":404,"code":"not_found","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"router-level 400 bad URL (FST_ERR_BAD_URL), chunked","status":400,"code":"validation.format","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP-CLOSE {"label":"after the refusals sweep","ms":0,"completed":true}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > app.close() while a refused client (403, no CSRF token) KEEPS SENDING its body completes promptly
+SWEEP-CLOSE {"label":"while a refused (403) client keeps sending its body","ms":7999,"completed":false}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a client that aborts mid-upload leaves no partial object and no leaked socket > content-length: 2 MiB of a 10 MiB upload, then the client destroys the socket
+SWEEP {"path":"client abort mid-upload content-length","connectionsZeroMs":26,"partialFilesGoneMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a client that aborts mid-upload leaves no partial object and no leaked socket > chunked: 2 MiB of a 10 MiB upload, then the client destroys the socket
+SWEEP {"path":"client abort mid-upload chunked","connectionsZeroMs":25,"partialFilesGoneMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > shutdown is bounded > app.close() with a STALLED upload in flight completes within the grace period (default 5 s); the stalled socket is closed by the server
+SWEEP-CLOSE {"label":"stalled upload in flight (default grace 5 s)","ms":15006,"completed":false}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > shutdown is bounded > an in-flight upload that finishes within the grace period completes normally (200, stored byte-exact, Connection: close), then app.close() returns
+SWEEP-CLOSE {"label":"in-flight upload finishing during shutdown","ms":15005,"completed":false}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > shutdown is bounded > a body that stalls outside shutdown is cut by Node's requestTimeout (408, connection closed), nothing stored, no error log
+SWEEP {"path":"stalled body, requestTimeout 1.5 s","status":[],"closedMs":-1}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > shutdown is bounded > SIGTERM: the API process (src/main.ts) exits 0 within the grace period with a stalled upload in flight
+SWEEP-CLOSE {"label":"SIGTERM with a stalled upload (main.ts)","ms":-1,"exitCode":null}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > unmatched-route 404s are rate limited (audit round 10 observation P3) > a flood on unmatched routes gets 429 rate_limited after the limit (same key and limit as the routes); the SPA fallback still serves index.html
+SWEEP {"path":"unmatched-route flood, limit 4/min","statuses":[404,404,404,404]}
+
+ ❯ |integration| apps/api/test/integration/connection-hygiene.test.ts (13 tests | 11 failed) 127850ms
+   × an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB chunked, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt 12172ms
+     → {"status":413,"code":"evidence.too_large","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":-1}: expected 'keep-alive' to be 'close' // Object.is equality
+     → {"status":413,"code":"evidence.too_large","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":-1}: expected -1 to be greater than or equal to 0
+     → {"status":413,"code":"evidence.too_large","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":-1}: expected -1 to be greater than or equal to 0
+     → after upload 30 MiB chunked over the limit: expected false to be true // Object.is equality
+     → after upload 30 MiB chunked over the limit: expected 6002 to be less than or equal to 2000
+   × an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB content-length, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt 12158ms
+     → {"status":413,"code":"evidence.too_large","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":-1}: expected 'keep-alive' to be 'close' // Object.is equality
+     → {"status":413,"code":"evidence.too_large","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":-1}: expected -1 to be greater than or equal to 0
+     → {"status":413,"code":"evidence.too_large","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":-1}: expected -1 to be greater than or equal to 0
+     → after upload 30 MiB content-length over the limit: expected false to be true // Object.is equality
+     → after upload 30 MiB content-length over the limit: expected 6043 to be less than or equal to 2000
+   × a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt 29913ms
+     → {"status":401,"code":"unauthenticated","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":26}: expected 'keep-alive' to be 'close' // Object.is equality
+     → {"status":401,"code":"unauthenticated","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":26}: expected -1 to be greater than or equal to 0
+     → {"status":403,"code":"csrf","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}: expected 'keep-alive' to be 'close' // Object.is equality
+     → {"status":403,"code":"csrf","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}: expected -1 to be greater than or equal to 0
+     → {"status":404,"code":"not_found","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}: expected 'keep-alive' to be 'close' // Object.is equality
+     → {"status":404,"code":"not_found","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}: expected -1 to be greater than or equal to 0
+     → {"status":409,"code":"version_conflict","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}: expected 'keep-alive' to be 'close' // Object.is equality
+     → {"status":409,"code":"version_conflict","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}: expected -1 to be greater than or equal to 0
+     → {"status":428,"code":"precondition_required","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}: expected 'keep-alive' to be 'close' // Object.is equality
+     → {"status":428,"code":"precondition_required","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}: expected -1 to be greater than or equal to 0
+     → {"status":400,"code":"validation.file_name","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":24}: expected 'keep-alive' to be 'close' // Object.is equality
+     → {"status":400,"code":"validation.file_name","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":24}: expected -1 to be greater than or equal to 0
+     → {"status":422,"code":"validation.evidence.not_a_file","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}: expected 'keep-alive' to be 'close' // Object.is equality
+     → {"status":422,"code":"validation.evidence.not_a_file","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}: expected -1 to be greater than or equal to 0
+     → {"status":401,"code":"unauthenticated","connection":"keep-alive","serverCloseMs":2589,"connectionsZeroMs":0}: expected 'keep-alive' to be 'close' // Object.is equality
+     → {"status":401,"code":"unauthenticated","connection":"keep-alive","serverCloseMs":2589,"connectionsZeroMs":0}: expected 2589 to be less than or equal to 2000
+     → {"status":428,"code":"precondition_required","connection":"keep-alive","serverCloseMs":2601,"connectionsZeroMs":0}: expected 'keep-alive' to be 'close' // Object.is equality
+     → {"status":428,"code":"precondition_required","connection":"keep-alive","serverCloseMs":2601,"connectionsZeroMs":0}: expected 2601 to be less than or equal to 2000
+     → {"status":400,"code":"validation.format","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}: expected 'keep-alive' to be 'close' // Object.is equality
+     → {"status":400,"code":"validation.format","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}: expected -1 to be greater than or equal to 0
+   × a response sent before the body is read closes the connection and never drains the (unbounded) body > app.close() while a refused client (403, no CSRF token) KEEPS SENDING its body completes promptly 8318ms
+     → while a refused (403) client keeps sending its body: expected false to be true // Object.is equality
+     → while a refused (403) client keeps sending its body: expected 7999 to be less than or equal to 2000
+   ✓ a response sent before the body is read closes the connection and never drains the (unbounded) body > a small refused body that arrived completely keeps the keep-alive connection (it is bounded and already read) 183ms
+   × a client that aborts mid-upload leaves no partial object and no leaked socket > content-length: 2 MiB of a 10 MiB upload, then the client destroys the socket 345ms
+     → expected [ { level: 50, …(6) } ] to deeply equal []
+   × a client that aborts mid-upload leaves no partial object and no leaked socket > chunked: 2 MiB of a 10 MiB upload, then the client destroys the socket 341ms
+     → expected [ { level: 50, …(6) } ] to deeply equal []
+   ✓ normal traffic is unchanged > a valid 3 MiB upload over a real socket is stored byte-exact with its sha256, and the keep-alive connection serves the next request  894ms
+   × shutdown is bounded > app.close() with a STALLED upload in flight completes within the grace period (default 5 s); the stalled socket is closed by the server 15404ms
+     → expected false to be true // Object.is equality
+   × shutdown is bounded > an in-flight upload that finishes within the grace period completes normally (200, stored byte-exact, Connection: close), then app.close() returns 15269ms
+     → expected 'keep-alive' to be 'close' // Object.is equality
+   × shutdown is bounded > a body that stalls outside shutdown is cut by Node's requestTimeout (408, connection closed), nothing stored, no error log 16080ms
+     → expected -1 to be greater than or equal to 0
+   × shutdown is bounded > SIGTERM: the API process (src/main.ts) exits 0 within the grace period with a stalled upload in flight 16282ms
+     → expected null not to be null
+   × unmatched-route 404s are rate limited (audit round 10 observation P3) > a flood on unmatched routes gets 429 rate_limited after the limit (same key and limit as the routes); the SPA fallback still serves index.html 47ms
+     → expected [ 404, 404, 404, 404 ] to deeply equal [ 404, 404, 404, 429 ]
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB chunked, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB content-length, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt
+AssertionError: {"status":413,"code":"evidence.too_large","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":-1}: expected 'keep-alive' to be 'close' // Object.is equality
+
+Expected: [32m"[7mclos[27me"[39m
+Received: [31m"[7mkeep-aliv[27me"[39m
+
+ ❯ expectClosedRefusal apps/api/test/integration/connection-hygiene.test.ts:306:36
+    304|   expect.soft(o.status, label).toBe(status);
+    305|   if (code !== undefined) expect.soft(o.code, label).toBe(code);
+    306|   expect.soft(o.connection, label).toBe("close");
+       |                                    ^
+    307|   expect.soft(o.serverCloseMs, label).toBeGreaterThanOrEqual(0);
+    308|   expect.soft(o.serverCloseMs, label).toBeLessThanOrEqual(CLOSE_BOUND_…
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:341:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB chunked, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB content-length, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt
+AssertionError: {"status":413,"code":"evidence.too_large","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":-1}: expected -1 to be greater than or equal to 0
+ ❯ expectClosedRefusal apps/api/test/integration/connection-hygiene.test.ts:307:39
+    305|   if (code !== undefined) expect.soft(o.code, label).toBe(code);
+    306|   expect.soft(o.connection, label).toBe("close");
+    307|   expect.soft(o.serverCloseMs, label).toBeGreaterThanOrEqual(0);
+       |                                       ^
+    308|   expect.soft(o.serverCloseMs, label).toBeLessThanOrEqual(CLOSE_BOUND_…
+    309|   expect.soft(o.connectionsZeroMs, label).toBeGreaterThanOrEqual(0);
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:341:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB chunked, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB content-length, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt
+AssertionError: {"status":413,"code":"evidence.too_large","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":-1}: expected -1 to be greater than or equal to 0
+ ❯ expectClosedRefusal apps/api/test/integration/connection-hygiene.test.ts:309:43
+    307|   expect.soft(o.serverCloseMs, label).toBeGreaterThanOrEqual(0);
+    308|   expect.soft(o.serverCloseMs, label).toBeLessThanOrEqual(CLOSE_BOUND_…
+    309|   expect.soft(o.connectionsZeroMs, label).toBeGreaterThanOrEqual(0);
+       |                                           ^
+    310|   expect.soft(o.connectionsZeroMs, label).toBeLessThanOrEqual(CLOSE_BO…
+    311| }
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:341:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB chunked, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt
+AssertionError: after upload 30 MiB chunked over the limit: expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+ ❯ expectPromptClose apps/api/test/integration/connection-hygiene.test.ts:315:35
+    313| function expectPromptClose(c: { ms: number; completed: boolean }, labe…
+    314|   console.log(`SWEEP-CLOSE ${JSON.stringify({ label, ...c })}`);
+    315|   expect.soft(c.completed, label).toBe(true);
+       |                                   ^
+    316|   expect.soft(c.ms, label).toBeLessThanOrEqual(bound);
+    317| }
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:346:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB chunked, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt
+AssertionError: after upload 30 MiB chunked over the limit: expected 6002 to be less than or equal to 2000
+ ❯ expectPromptClose apps/api/test/integration/connection-hygiene.test.ts:316:28
+    314|   console.log(`SWEEP-CLOSE ${JSON.stringify({ label, ...c })}`);
+    315|   expect.soft(c.completed, label).toBe(true);
+    316|   expect.soft(c.ms, label).toBeLessThanOrEqual(bound);
+       |                            ^
+    317| }
+    318| 
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:346:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB content-length, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt
+AssertionError: after upload 30 MiB content-length over the limit: expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+ ❯ expectPromptClose apps/api/test/integration/connection-hygiene.test.ts:315:35
+    313| function expectPromptClose(c: { ms: number; completed: boolean }, labe…
+    314|   console.log(`SWEEP-CLOSE ${JSON.stringify({ label, ...c })}`);
+    315|   expect.soft(c.completed, label).toBe(true);
+       |                                   ^
+    316|   expect.soft(c.ms, label).toBeLessThanOrEqual(bound);
+    317| }
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:346:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB content-length, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt
+AssertionError: after upload 30 MiB content-length over the limit: expected 6043 to be less than or equal to 2000
+ ❯ expectPromptClose apps/api/test/integration/connection-hygiene.test.ts:316:28
+    314|   console.log(`SWEEP-CLOSE ${JSON.stringify({ label, ...c })}`);
+    315|   expect.soft(c.completed, label).toBe(true);
+    316|   expect.soft(c.ms, label).toBeLessThanOrEqual(bound);
+       |                            ^
+    317| }
+    318| 
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:346:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+AssertionError: {"status":401,"code":"unauthenticated","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":26}: expected 'keep-alive' to be 'close' // Object.is equality
+
+Expected: [32m"[7mclos[27me"[39m
+Received: [31m"[7mkeep-aliv[27me"[39m
+
+ ❯ expectClosedRefusal apps/api/test/integration/connection-hygiene.test.ts:306:36
+    304|   expect.soft(o.status, label).toBe(status);
+    305|   if (code !== undefined) expect.soft(o.code, label).toBe(code);
+    306|   expect.soft(o.connection, label).toBe("close");
+       |                                    ^
+    307|   expect.soft(o.serverCloseMs, label).toBeGreaterThanOrEqual(0);
+    308|   expect.soft(o.serverCloseMs, label).toBeLessThanOrEqual(CLOSE_BOUND_…
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:508:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+AssertionError: {"status":401,"code":"unauthenticated","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":26}: expected -1 to be greater than or equal to 0
+ ❯ expectClosedRefusal apps/api/test/integration/connection-hygiene.test.ts:307:39
+    305|   if (code !== undefined) expect.soft(o.code, label).toBe(code);
+    306|   expect.soft(o.connection, label).toBe("close");
+    307|   expect.soft(o.serverCloseMs, label).toBeGreaterThanOrEqual(0);
+       |                                       ^
+    308|   expect.soft(o.serverCloseMs, label).toBeLessThanOrEqual(CLOSE_BOUND_…
+    309|   expect.soft(o.connectionsZeroMs, label).toBeGreaterThanOrEqual(0);
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:508:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+AssertionError: {"status":403,"code":"csrf","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}: expected 'keep-alive' to be 'close' // Object.is equality
+
+Expected: [32m"[7mclos[27me"[39m
+Received: [31m"[7mkeep-aliv[27me"[39m
+
+ ❯ expectClosedRefusal apps/api/test/integration/connection-hygiene.test.ts:306:36
+    304|   expect.soft(o.status, label).toBe(status);
+    305|   if (code !== undefined) expect.soft(o.code, label).toBe(code);
+    306|   expect.soft(o.connection, label).toBe("close");
+       |                                    ^
+    307|   expect.soft(o.serverCloseMs, label).toBeGreaterThanOrEqual(0);
+    308|   expect.soft(o.serverCloseMs, label).toBeLessThanOrEqual(CLOSE_BOUND_…
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:508:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+AssertionError: {"status":403,"code":"csrf","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}: expected -1 to be greater than or equal to 0
+ ❯ expectClosedRefusal apps/api/test/integration/connection-hygiene.test.ts:307:39
+    305|   if (code !== undefined) expect.soft(o.code, label).toBe(code);
+    306|   expect.soft(o.connection, label).toBe("close");
+    307|   expect.soft(o.serverCloseMs, label).toBeGreaterThanOrEqual(0);
+       |                                       ^
+    308|   expect.soft(o.serverCloseMs, label).toBeLessThanOrEqual(CLOSE_BOUND_…
+    309|   expect.soft(o.connectionsZeroMs, label).toBeGreaterThanOrEqual(0);
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:508:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+AssertionError: {"status":404,"code":"not_found","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}: expected 'keep-alive' to be 'close' // Object.is equality
+
+Expected: [32m"[7mclos[27me"[39m
+Received: [31m"[7mkeep-aliv[27me"[39m
+
+ ❯ expectClosedRefusal apps/api/test/integration/connection-hygiene.test.ts:306:36
+    304|   expect.soft(o.status, label).toBe(status);
+    305|   if (code !== undefined) expect.soft(o.code, label).toBe(code);
+    306|   expect.soft(o.connection, label).toBe("close");
+       |                                    ^
+    307|   expect.soft(o.serverCloseMs, label).toBeGreaterThanOrEqual(0);
+    308|   expect.soft(o.serverCloseMs, label).toBeLessThanOrEqual(CLOSE_BOUND_…
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:508:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+AssertionError: {"status":404,"code":"not_found","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}: expected -1 to be greater than or equal to 0
+ ❯ expectClosedRefusal apps/api/test/integration/connection-hygiene.test.ts:307:39
+    305|   if (code !== undefined) expect.soft(o.code, label).toBe(code);
+    306|   expect.soft(o.connection, label).toBe("close");
+    307|   expect.soft(o.serverCloseMs, label).toBeGreaterThanOrEqual(0);
+       |                                       ^
+    308|   expect.soft(o.serverCloseMs, label).toBeLessThanOrEqual(CLOSE_BOUND_…
+    309|   expect.soft(o.connectionsZeroMs, label).toBeGreaterThanOrEqual(0);
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:508:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+AssertionError: {"status":409,"code":"version_conflict","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}: expected 'keep-alive' to be 'close' // Object.is equality
+
+Expected: [32m"[7mclos[27me"[39m
+Received: [31m"[7mkeep-aliv[27me"[39m
+
+ ❯ expectClosedRefusal apps/api/test/integration/connection-hygiene.test.ts:306:36
+    304|   expect.soft(o.status, label).toBe(status);
+    305|   if (code !== undefined) expect.soft(o.code, label).toBe(code);
+    306|   expect.soft(o.connection, label).toBe("close");
+       |                                    ^
+    307|   expect.soft(o.serverCloseMs, label).toBeGreaterThanOrEqual(0);
+    308|   expect.soft(o.serverCloseMs, label).toBeLessThanOrEqual(CLOSE_BOUND_…
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:508:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+AssertionError: {"status":409,"code":"version_conflict","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}: expected -1 to be greater than or equal to 0
+ ❯ expectClosedRefusal apps/api/test/integration/connection-hygiene.test.ts:307:39
+    305|   if (code !== undefined) expect.soft(o.code, label).toBe(code);
+    306|   expect.soft(o.connection, label).toBe("close");
+    307|   expect.soft(o.serverCloseMs, label).toBeGreaterThanOrEqual(0);
+       |                                       ^
+    308|   expect.soft(o.serverCloseMs, label).toBeLessThanOrEqual(CLOSE_BOUND_…
+    309|   expect.soft(o.connectionsZeroMs, label).toBeGreaterThanOrEqual(0);
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:508:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+AssertionError: {"status":428,"code":"precondition_required","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}: expected 'keep-alive' to be 'close' // Object.is equality
+
+Expected: [32m"[7mclos[27me"[39m
+Received: [31m"[7mkeep-aliv[27me"[39m
+
+ ❯ expectClosedRefusal apps/api/test/integration/connection-hygiene.test.ts:306:36
+    304|   expect.soft(o.status, label).toBe(status);
+    305|   if (code !== undefined) expect.soft(o.code, label).toBe(code);
+    306|   expect.soft(o.connection, label).toBe("close");
+       |                                    ^
+    307|   expect.soft(o.serverCloseMs, label).toBeGreaterThanOrEqual(0);
+    308|   expect.soft(o.serverCloseMs, label).toBeLessThanOrEqual(CLOSE_BOUND_…
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:508:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+AssertionError: {"status":428,"code":"precondition_required","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}: expected -1 to be greater than or equal to 0
+ ❯ expectClosedRefusal apps/api/test/integration/connection-hygiene.test.ts:307:39
+    305|   if (code !== undefined) expect.soft(o.code, label).toBe(code);
+    306|   expect.soft(o.connection, label).toBe("close");
+    307|   expect.soft(o.serverCloseMs, label).toBeGreaterThanOrEqual(0);
+       |                                       ^
+    308|   expect.soft(o.serverCloseMs, label).toBeLessThanOrEqual(CLOSE_BOUND_…
+    309|   expect.soft(o.connectionsZeroMs, label).toBeGreaterThanOrEqual(0);
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:508:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+AssertionError: {"status":400,"code":"validation.file_name","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":24}: expected 'keep-alive' to be 'close' // Object.is equality
+
+Expected: [32m"[7mclos[27me"[39m
+Received: [31m"[7mkeep-aliv[27me"[39m
+
+ ❯ expectClosedRefusal apps/api/test/integration/connection-hygiene.test.ts:306:36
+    304|   expect.soft(o.status, label).toBe(status);
+    305|   if (code !== undefined) expect.soft(o.code, label).toBe(code);
+    306|   expect.soft(o.connection, label).toBe("close");
+       |                                    ^
+    307|   expect.soft(o.serverCloseMs, label).toBeGreaterThanOrEqual(0);
+    308|   expect.soft(o.serverCloseMs, label).toBeLessThanOrEqual(CLOSE_BOUND_…
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:508:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+AssertionError: {"status":400,"code":"validation.file_name","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":24}: expected -1 to be greater than or equal to 0
+ ❯ expectClosedRefusal apps/api/test/integration/connection-hygiene.test.ts:307:39
+    305|   if (code !== undefined) expect.soft(o.code, label).toBe(code);
+    306|   expect.soft(o.connection, label).toBe("close");
+    307|   expect.soft(o.serverCloseMs, label).toBeGreaterThanOrEqual(0);
+       |                                       ^
+    308|   expect.soft(o.serverCloseMs, label).toBeLessThanOrEqual(CLOSE_BOUND_…
+    309|   expect.soft(o.connectionsZeroMs, label).toBeGreaterThanOrEqual(0);
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:508:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+AssertionError: {"status":422,"code":"validation.evidence.not_a_file","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}: expected 'keep-alive' to be 'close' // Object.is equality
+
+Expected: [32m"[7mclos[27me"[39m
+Received: [31m"[7mkeep-aliv[27me"[39m
+
+ ❯ expectClosedRefusal apps/api/test/integration/connection-hygiene.test.ts:306:36
+    304|   expect.soft(o.status, label).toBe(status);
+    305|   if (code !== undefined) expect.soft(o.code, label).toBe(code);
+    306|   expect.soft(o.connection, label).toBe("close");
+       |                                    ^
+    307|   expect.soft(o.serverCloseMs, label).toBeGreaterThanOrEqual(0);
+    308|   expect.soft(o.serverCloseMs, label).toBeLessThanOrEqual(CLOSE_BOUND_…
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:508:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+AssertionError: {"status":422,"code":"validation.evidence.not_a_file","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}: expected -1 to be greater than or equal to 0
+ ❯ expectClosedRefusal apps/api/test/integration/connection-hygiene.test.ts:307:39
+    305|   if (code !== undefined) expect.soft(o.code, label).toBe(code);
+    306|   expect.soft(o.connection, label).toBe("close");
+    307|   expect.soft(o.serverCloseMs, label).toBeGreaterThanOrEqual(0);
+       |                                       ^
+    308|   expect.soft(o.serverCloseMs, label).toBeLessThanOrEqual(CLOSE_BOUND_…
+    309|   expect.soft(o.connectionsZeroMs, label).toBeGreaterThanOrEqual(0);
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:508:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+AssertionError: {"status":401,"code":"unauthenticated","connection":"keep-alive","serverCloseMs":2589,"connectionsZeroMs":0}: expected 'keep-alive' to be 'close' // Object.is equality
+
+Expected: [32m"[7mclos[27me"[39m
+Received: [31m"[7mkeep-aliv[27me"[39m
+
+ ❯ expectClosedRefusal apps/api/test/integration/connection-hygiene.test.ts:306:36
+    304|   expect.soft(o.status, label).toBe(status);
+    305|   if (code !== undefined) expect.soft(o.code, label).toBe(code);
+    306|   expect.soft(o.connection, label).toBe("close");
+       |                                    ^
+    307|   expect.soft(o.serverCloseMs, label).toBeGreaterThanOrEqual(0);
+    308|   expect.soft(o.serverCloseMs, label).toBeLessThanOrEqual(CLOSE_BOUND_…
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:508:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+AssertionError: {"status":401,"code":"unauthenticated","connection":"keep-alive","serverCloseMs":2589,"connectionsZeroMs":0}: expected 2589 to be less than or equal to 2000
+ ❯ expectClosedRefusal apps/api/test/integration/connection-hygiene.test.ts:308:39
+    306|   expect.soft(o.connection, label).toBe("close");
+    307|   expect.soft(o.serverCloseMs, label).toBeGreaterThanOrEqual(0);
+    308|   expect.soft(o.serverCloseMs, label).toBeLessThanOrEqual(CLOSE_BOUND_…
+       |                                       ^
+    309|   expect.soft(o.connectionsZeroMs, label).toBeGreaterThanOrEqual(0);
+    310|   expect.soft(o.connectionsZeroMs, label).toBeLessThanOrEqual(CLOSE_BO…
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:508:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+AssertionError: {"status":428,"code":"precondition_required","connection":"keep-alive","serverCloseMs":2601,"connectionsZeroMs":0}: expected 'keep-alive' to be 'close' // Object.is equality
+
+Expected: [32m"[7mclos[27me"[39m
+Received: [31m"[7mkeep-aliv[27me"[39m
+
+ ❯ expectClosedRefusal apps/api/test/integration/connection-hygiene.test.ts:306:36
+    304|   expect.soft(o.status, label).toBe(status);
+    305|   if (code !== undefined) expect.soft(o.code, label).toBe(code);
+    306|   expect.soft(o.connection, label).toBe("close");
+       |                                    ^
+    307|   expect.soft(o.serverCloseMs, label).toBeGreaterThanOrEqual(0);
+    308|   expect.soft(o.serverCloseMs, label).toBeLessThanOrEqual(CLOSE_BOUND_…
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:508:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+AssertionError: {"status":428,"code":"precondition_required","connection":"keep-alive","serverCloseMs":2601,"connectionsZeroMs":0}: expected 2601 to be less than or equal to 2000
+ ❯ expectClosedRefusal apps/api/test/integration/connection-hygiene.test.ts:308:39
+    306|   expect.soft(o.connection, label).toBe("close");
+    307|   expect.soft(o.serverCloseMs, label).toBeGreaterThanOrEqual(0);
+    308|   expect.soft(o.serverCloseMs, label).toBeLessThanOrEqual(CLOSE_BOUND_…
+       |                                       ^
+    309|   expect.soft(o.connectionsZeroMs, label).toBeGreaterThanOrEqual(0);
+    310|   expect.soft(o.connectionsZeroMs, label).toBeLessThanOrEqual(CLOSE_BO…
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:508:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+AssertionError: {"status":400,"code":"validation.format","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}: expected 'keep-alive' to be 'close' // Object.is equality
+
+Expected: [32m"[7mclos[27me"[39m
+Received: [31m"[7mkeep-aliv[27me"[39m
+
+ ❯ expectClosedRefusal apps/api/test/integration/connection-hygiene.test.ts:306:36
+    304|   expect.soft(o.status, label).toBe(status);
+    305|   if (code !== undefined) expect.soft(o.code, label).toBe(code);
+    306|   expect.soft(o.connection, label).toBe("close");
+       |                                    ^
+    307|   expect.soft(o.serverCloseMs, label).toBeGreaterThanOrEqual(0);
+    308|   expect.soft(o.serverCloseMs, label).toBeLessThanOrEqual(CLOSE_BOUND_…
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:508:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+AssertionError: {"status":400,"code":"validation.format","connection":"keep-alive","serverCloseMs":-1,"connectionsZeroMs":25}: expected -1 to be greater than or equal to 0
+ ❯ expectClosedRefusal apps/api/test/integration/connection-hygiene.test.ts:307:39
+    305|   if (code !== undefined) expect.soft(o.code, label).toBe(code);
+    306|   expect.soft(o.connection, label).toBe("close");
+    307|   expect.soft(o.serverCloseMs, label).toBeGreaterThanOrEqual(0);
+       |                                       ^
+    308|   expect.soft(o.serverCloseMs, label).toBeLessThanOrEqual(CLOSE_BOUND_…
+    309|   expect.soft(o.connectionsZeroMs, label).toBeGreaterThanOrEqual(0);
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:508:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > app.close() while a refused client (403, no CSRF token) KEEPS SENDING its body completes promptly
+AssertionError: while a refused (403) client keeps sending its body: expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+ ❯ expectPromptClose apps/api/test/integration/connection-hygiene.test.ts:315:35
+    313| function expectPromptClose(c: { ms: number; completed: boolean }, labe…
+    314|   console.log(`SWEEP-CLOSE ${JSON.stringify({ label, ...c })}`);
+    315|   expect.soft(c.completed, label).toBe(true);
+       |                                   ^
+    316|   expect.soft(c.ms, label).toBeLessThanOrEqual(bound);
+    317| }
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:534:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > app.close() while a refused client (403, no CSRF token) KEEPS SENDING its body completes promptly
+AssertionError: while a refused (403) client keeps sending its body: expected 7999 to be less than or equal to 2000
+ ❯ expectPromptClose apps/api/test/integration/connection-hygiene.test.ts:316:28
+    314|   console.log(`SWEEP-CLOSE ${JSON.stringify({ label, ...c })}`);
+    315|   expect.soft(c.completed, label).toBe(true);
+    316|   expect.soft(c.ms, label).toBeLessThanOrEqual(bound);
+       |                            ^
+    317| }
+    318| 
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:534:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > a client that aborts mid-upload leaves no partial object and no leaked socket > content-length: 2 MiB of a 10 MiB upload, then the client destroys the socket
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > a client that aborts mid-upload leaves no partial object and no leaked socket > chunked: 2 MiB of a 10 MiB upload, then the client destroys the socket
+AssertionError: expected [ { level: 50, …(6) } ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   {[39m
+[31m+     "err": {[39m
+[31m+       "code": "ECONNRESET",[39m
+[31m+       "message": "aborted",[39m
+[31m+       "stack": "Error: aborted[39m
+[31m+     at abortIncoming (node:_http_server:921:17)[39m
+[31m+     at socketOnClose (node:_http_server:914:3)[39m
+[31m+     at Socket.emit (node:events:526:24)[39m
+[31m+     at TCP.<anonymous> (node:net:362:12)",[39m
+[31m+       "type": "Error",[39m
+[31m+     },[39m
+[31m+     "hostname": "vm",[39m
+[31m+     "level": 50,[39m
+[31m+     "msg": "unhandled error",[39m
+[31m+     "pid": 145,[39m
+[31m+     "requestId": "01a113d4-a14c-70af-b857-9f97460bd395",[39m
+[31m+     "time": 1791334064766,[39m
+[31m+   },[39m
+[31m+ ][39m
+
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:586:47
+    584|       expect(await contentRowsOf(f.id)).toEqual([]);
+    585|       expect(await versionOf(f.id)).toBe(f.version);
+    586|       expect(errorLogs().slice(errorsBefore)).toEqual([]);
+       |                                               ^
+    587|       // The row lock and the transaction are gone: the same If-Match …
+    588|       const ok = await call(base.app, "POST", `${T}/evidence/${f.id}/c…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > shutdown is bounded > app.close() with a STALLED upload in flight completes within the grace period (default 5 s); the stalled socket is closed by the server
+AssertionError: expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:661:27
+    659|       const c = await timedClose(api, 15_000);
+    660|       console.log(`SWEEP-CLOSE ${JSON.stringify({ label: "stalled uplo…
+    661|       expect(c.completed).toBe(true);
+       |                           ^
+    662|       expect(c.ms).toBeLessThanOrEqual(5_000 + 1_500);
+    663|       expect(await waitFor(() => client.serverClosedAt !== null, 1_000…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > shutdown is bounded > an in-flight upload that finishes within the grace period completes normally (200, stored byte-exact, Connection: close), then app.close() returns
+AssertionError: expected 'keep-alive' to be 'close' // Object.is equality
+
+Expected: [32m"[7mclos[27me"[39m
+Received: [31m"[7mkeep-aliv[27me"[39m
+
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:696:42
+    694|       const res = firstResponse(client.text());
+    695|       expect(res?.status, res?.body).toBe(200);
+    696|       expect(res?.headers["connection"]).toBe("close");
+       |                                          ^
+    697|       expect((await contentRowsOf(f.id))[0]?.sha256).toBe(sha256(bytes…
+    698|       expect(c.completed).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > shutdown is bounded > a body that stalls outside shutdown is cut by Node's requestTimeout (408, connection closed), nothing stored, no error log
+AssertionError: expected -1 to be greater than or equal to 0
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:719:24
+    717|         `SWEEP ${JSON.stringify({ path: "stalled body, requestTimeout …
+    718|       );
+    719|       expect(closedMs).toBeGreaterThanOrEqual(0);
+       |                        ^
+    720|       expect(statusesOf(client.text())).toEqual(["HTTP/1.1 408"]);
+    721|       expect(await waitFor(async () => (await connectionsOf(api)) === …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > shutdown is bounded > SIGTERM: the API process (src/main.ts) exits 0 within the grace period with a stalled upload in flight
+AssertionError: expected null not to be null
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:791:21
+    789|         `SWEEP-CLOSE ${JSON.stringify({ label: "SIGTERM with a stalled…
+    790|       );
+    791|       expect(r).not.toBeNull();
+       |                     ^
+    792|       expect(r!.code).toBe(0);
+    793|       expect(ms).toBeLessThanOrEqual(5_000 + 2_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/39]⎯
+
+ FAIL  |integration| apps/api/test/integration/connection-hygiene.test.ts > unmatched-route 404s are rate limited (audit round 10 observation P3) > a flood on unmatched routes gets 429 rate_limited after the limit (same key and limit as the routes); the SPA fallback still serves index.html
+AssertionError: expected [ 404, 404, 404, 404 ] to deeply equal [ 404, 404, 404, 429 ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    404,[22m
+[2m    404,[22m
+[2m    404,[22m
+[32m-   429,[39m
+[31m+   404,[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/connection-hygiene.test.ts:834:24
+    832|       // like the unmatched 404: ADR-0007 §5b).
+    833|       console.log(`SWEEP ${JSON.stringify({ path: "unmatched-route flo…
+    834|       expect(statuses).toEqual([404, 404, 404, 429]);
+       |                        ^
+    835|       const spaAfter = await api.app.inject({ method: "GET", url: "/an…
+    836|       expect(spaAfter.statusCode).toBe(429); // the SPA fallback is me…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/39]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  11 failed | 2 passed (13)
+   Start at  00:46:37
+   Duration  131.47s (transform 1.01s, setup 0ms, collect 2.26s, tests 127.85s, environment 0ms, prepare 98ms)
+
+# exit: 1

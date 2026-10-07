@@ -14,7 +14,7 @@ preparation. They are written for Mobily IT and for the delivery team's reviewer
 | Guide | Contents |
 |---|---|
 | [clean-start.md](clean-start.md) | One-command clean start with Docker Compose (A); container-free clean start (B); first organization bootstrap; smoke test; measured timings |
-| [health-readiness.md](health-readiness.md) | `/healthz`, `/readyz`, container health checks, `mth health`, exit codes, logs |
+| [health-readiness.md](health-readiness.md) | `/healthz`, `/readyz`, container health checks, `mth health`, exit codes, logs, shutdown and connection limits |
 | [configuration.md](configuration.md) | Environment template (`.env.example`), secrets as `<NAME>_FILE`, corporate IdP vs the Keycloak **test** realm, storage |
 | [restricted-network.md](restricted-network.md) | Building and running with no outbound internet: mirrors, image list, build-time CA, the no-egress Compose variant |
 
