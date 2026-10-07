@@ -1,0 +1,107 @@
+# release-auditor DG2 round 17 (T-DG2-AUDIT-R17), run DG2-T-DG2-AUDIT-R17-release-auditor-20261007T204355Z-31bcd459
+## assignment
+5e558abb178ba66168d9d2ca97b070aef19d43028a3474f6b07e018aefcad719  docs/delivery/assignments/DG2/round-17/release-auditor.md
+## identity
+HEAD 59225acf756c15202cba7beb10ca84a78c6bce23 shallow=false commits=556
+source_commit 805da3e2 ancestor of HEAD: yes
+$ node tools/gates/candidate.mjs --stage DG2
+{"stage":"DG2","source":"working-tree","candidate_id":"sha256:ddaab3cc264b0e13caadcb17f0d1811eff8ad1ec9364b7ba9c03727b83350750","files":564}
+exit=0
+$ (disposable clone $TMPDIR/aud @805da3e2) node tools/gates/candidate.mjs --stage DG2
+{"stage":"DG2","source":"working-tree","candidate_id":"sha256:ddaab3cc264b0e13caadcb17f0d1811eff8ad1ec9364b7ba9c03727b83350750","files":564}
+exit=0
+Already up to date.
+manifest: d0ba30b8016d63eac79daa8f302495a94dbd0ed333112d52e37e9bf7c537544c  docs/delivery/candidates/DG2/ddaab3cc264b0e13.manifest.json
+## previous gate
+$ node tools/gates/validate.mjs --historical --stage DG1
+PASS gate DG1 (historical)
+exit=0
+## register
+$ node tools/gates/validate.mjs --register DG2
+PASS register rules at DG2
+exit=0
+## round-17 runs (meta exit_code/subtype, sandbox.json sha == meta.process_sandbox_sha256, own outputs unchanged)
+round-17/domain-reviewer.json | run DG2-T-DG2-REV-DOM-R17-domain-reviewer-20261007T185446Z-1c1fbb0d | role domain-reviewer | sess true | exit 0 success is_error=false | sandbox_sha_match true | task T-DG2-REV-DOM-R17 | assignment docs/delivery/assignments/DG2/round-17/domain-reviewer.md | start 2026-10-07T18:54:46Z | outputs 216 mismatch 1 changed:docs/delivery/test-evidence/DG2/qa/round-17/17-e2e-qa-stack-unset.log
+round-17/code-security-reviewer.json | run DG2-T-DG2-REV-SEC-R17-code-security-reviewer-20261007T185426Z-682880ae | role code-security-reviewer | sess true | exit 0 success is_error=false | sandbox_sha_match true | task T-DG2-REV-SEC-R17 | assignment docs/delivery/assignments/DG2/round-17/code-security-reviewer.md | start 2026-10-07T18:54:26Z | outputs 140 mismatch 10 changed:docs/delivery/test-evidence/DG2/domain/round-17/candidate-and-dg1.log,changed:docs/delivery/test-evidence/DG2/domain/round-17/probe-sha256.txt,changed:docs/delivery/test-evidence/DG2/domain/round-17/r14-language-ui.log
+round-17/qa-verifier.json | run DG2-T-DG2-REV-QA-R17-qa-verifier-20261007T185506Z-4af87c30 | role qa-verifier | sess true | exit 0 success is_error=false | sandbox_sha_match true | task T-DG2-REV-QA-R17 | assignment docs/delivery/assignments/DG2/round-17/qa-verifier.md | start 2026-10-07T18:55:06Z | outputs 350 mismatch 0 
+domain-reviewer own outputs 118 own mismatched 0  | foreign-listed 98 | tool_authored mismatched 0
+qa-verifier own outputs 186 own mismatched 0  | foreign-listed 164 | tool_authored mismatched 0
+code-security-reviewer own outputs 46 own mismatched 0  | foreign-listed 94 | tool_authored mismatched 0
+note: 'mismatch' in the first table only concerns OTHER roles' files that each run's meta lists as a working-tree snapshot (foreign-listed); every run's own outputs and tool_authored files are byte-identical (second table).
+## findings (40 DG2): fix ancestry vs candidate source 805da3e2, verifying record/source, non-author
+F-DG2-140 High mand=true CLOSED_VERIFIED owner=backend-workflow-engineer verifier=code-security-reviewer fix=8bd05c72 fixAncOfCand=true verRec=round-2/code-security-reviewer.json verRecVerdict=PASS verSrc=eb8163e2 verSrcExists=true fixInVerSrc=true OK
+F-DG2-141 High mand=true CLOSED_VERIFIED owner=kpi-benefits-engineer verifier=code-security-reviewer fix=8bd05c72 fixAncOfCand=true verRec=round-2/code-security-reviewer.json verRecVerdict=PASS verSrc=eb8163e2 verSrcExists=true fixInVerSrc=true OK
+F-DG2-142 Medium mand=true CLOSED_VERIFIED owner=backend-workflow-engineer verifier=code-security-reviewer fix=8bd05c72 fixAncOfCand=true verRec=round-2/code-security-reviewer.json verRecVerdict=PASS verSrc=eb8163e2 verSrcExists=true fixInVerSrc=true OK
+F-DG2-201 High mand=true CLOSED_VERIFIED owner=kpi-benefits-engineer verifier=qa-verifier fix=a687046e fixAncOfCand=true verRec=round-2/qa-verifier.json verRecVerdict=PASS verSrc=eb8163e2 verSrcExists=true fixInVerSrc=true OK
+F-DG2-202 High mand=true CLOSED_VERIFIED owner=transformation-analyst verifier=qa-verifier fix=0bfab184 fixAncOfCand=true verRec=round-2/qa-verifier.json verRecVerdict=PASS verSrc=eb8163e2 verSrcExists=true fixInVerSrc=true OK
+F-DG2-203 Medium mand=true CLOSED_VERIFIED owner=frontend-ux-engineer verifier=qa-verifier fix=a687046e fixAncOfCand=true verRec=round-2/qa-verifier.json verRecVerdict=PASS verSrc=eb8163e2 verSrcExists=true fixInVerSrc=true OK
+F-DG2-204 Medium mand=false CLOSED_VERIFIED owner=backend-workflow-engineer verifier=qa-verifier fix=a687046e fixAncOfCand=true verRec=round-2/qa-verifier.json verRecVerdict=PASS verSrc=eb8163e2 verSrcExists=true fixInVerSrc=true OK
+F-DG2-205 Medium mand=false CLOSED_VERIFIED owner=backend-workflow-engineer verifier=qa-verifier fix=8bd05c72 fixAncOfCand=true verRec=round-2/qa-verifier.json verRecVerdict=PASS verSrc=eb8163e2 verSrcExists=true fixInVerSrc=true OK
+F-DG2-206 Low mand=false CLOSED_VERIFIED owner=delivery-orchestrator verifier=qa-verifier fix=ee468137 fixAncOfCand=true verRec=round-2/qa-verifier.json verRecVerdict=PASS verSrc=eb8163e2 verSrcExists=true fixInVerSrc=true OK
+F-DG2-150 Medium mand=true CLOSED_VERIFIED owner=backend-workflow-engineer verifier=domain-reviewer fix=c65fcc32 fixAncOfCand=true verRec=round-3/domain-reviewer.json verRecVerdict=PASS verSrc=9e13947e verSrcExists=true fixInVerSrc=true OK
+F-DG2-151 Low mand=false CLOSED_VERIFIED owner=frontend-ux-engineer verifier=domain-reviewer fix=e8c5b140 fixAncOfCand=true verRec=round-3/domain-reviewer.json verRecVerdict=PASS verSrc=9e13947e verSrcExists=true fixInVerSrc=true OK
+F-DG2-152 Low mand=false CLOSED_VERIFIED owner=transformation-analyst verifier=domain-reviewer fix=b9668d7a fixAncOfCand=true verRec=round-3/domain-reviewer.json verRecVerdict=PASS verSrc=9e13947e verSrcExists=true fixInVerSrc=true OK
+F-DG2-143 Low mand=false CLOSED_VERIFIED owner=solution-architect verifier=code-security-reviewer fix=c65fcc32 fixAncOfCand=true verRec=round-3/code-security-reviewer.json verRecVerdict=PASS verSrc=9e13947e verSrcExists=true fixInVerSrc=true OK
+F-DG2-160 Low mand=false CLOSED_VERIFIED owner=backend-workflow-engineer verifier=code-security-reviewer fix=19050417 fixAncOfCand=true verRec=round-4/code-security-reviewer.json verRecVerdict=PASS verSrc=e37f6ea4 verSrcExists=true fixInVerSrc=true OK
+F-DG2-210 Medium mand=false CLOSED_VERIFIED owner=frontend-ux-engineer verifier=qa-verifier fix=97863da6 fixAncOfCand=true verRec=round-4/qa-verifier.json verRecVerdict=PASS verSrc=e37f6ea4 verSrcExists=true fixInVerSrc=true OK
+F-DG2-211 Medium mand=false CLOSED_VERIFIED owner=frontend-ux-engineer verifier=qa-verifier fix=bfa18079 fixAncOfCand=true verRec=round-4/qa-verifier.json verRecVerdict=PASS verSrc=e37f6ea4 verSrcExists=true fixInVerSrc=true OK
+F-DG2-180 Low mand=false CLOSED_VERIFIED owner=backend-workflow-engineer verifier=code-security-reviewer fix=9b4ded0a fixAncOfCand=true verRec=round-5/code-security-reviewer.json verRecVerdict=PASS verSrc=96a3c293 verSrcExists=true fixInVerSrc=true OK
+F-DG2-181 Low mand=false CLOSED_VERIFIED owner=backend-workflow-engineer verifier=code-security-reviewer fix=786f574d fixAncOfCand=true verRec=round-5/code-security-reviewer.json verRecVerdict=PASS verSrc=96a3c293 verSrcExists=true fixInVerSrc=true OK
+F-DG2-220 Low mand=false CLOSED_VERIFIED owner=frontend-ux-engineer verifier=qa-verifier fix=6946a1e4 fixAncOfCand=true verRec=round-5/qa-verifier.json verRecVerdict=PASS verSrc=96a3c293 verSrcExists=true fixInVerSrc=true OK
+F-DG2-230 Low mand=false CLOSED_VERIFIED owner=backend-workflow-engineer verifier=code-security-reviewer fix=e057bf84 fixAncOfCand=true verRec=round-6/code-security-reviewer.json verRecVerdict=PASS verSrc=51a692b1 verSrcExists=true fixInVerSrc=true OK
+F-DG2-231 Low mand=false CLOSED_VERIFIED owner=backend-workflow-engineer verifier=code-security-reviewer fix=a1e748b8 fixAncOfCand=true verRec=round-6/code-security-reviewer.json verRecVerdict=PASS verSrc=51a692b1 verSrcExists=true fixInVerSrc=true OK
+F-DG2-260 Low mand=false CLOSED_VERIFIED owner=backend-workflow-engineer verifier=code-security-reviewer fix=cf9c6531 fixAncOfCand=true verRec=round-7/code-security-reviewer.json verRecVerdict=PASS verSrc=90439483 verSrcExists=true fixInVerSrc=true OK
+F-DG2-290 Low mand=false CLOSED_VERIFIED owner=backend-workflow-engineer verifier=code-security-reviewer fix=d9c3f5da fixAncOfCand=true verRec=round-8/code-security-reviewer.json verRecVerdict=PASS verSrc=cf3446e4 verSrcExists=true fixInVerSrc=true OK
+F-DG2-310 Low mand=false CLOSED_VERIFIED owner=devops-engineer verifier=qa-verifier fix=4e3c4462 fixAncOfCand=true verRec=round-8/qa-verifier.json verRecVerdict=PASS verSrc=cf3446e4 verSrcExists=true fixInVerSrc=true OK
+F-DG2-320 Low mand=false CLOSED_VERIFIED owner=backend-workflow-engineer verifier=code-security-reviewer fix=a7b84d89 fixAncOfCand=true verRec=round-9/code-security-reviewer.json verRecVerdict=PASS verSrc=7854770e verSrcExists=true fixInVerSrc=true OK
+F-DG2-340 Low mand=false CLOSED_VERIFIED owner=frontend-ux-engineer verifier=qa-verifier fix=e3cadfa2 fixAncOfCand=true verRec=round-9/qa-verifier.json verRecVerdict=PASS verSrc=7854770e verSrcExists=true fixInVerSrc=true OK
+F-DG2-350 Low mand=false CLOSED_VERIFIED owner=backend-workflow-engineer verifier=code-security-reviewer fix=e974d780 fixAncOfCand=true verRec=round-10/code-security-reviewer.json verRecVerdict=PASS verSrc=fe22d759 verSrcExists=true fixInVerSrc=true OK
+F-DG2-351 Low mand=false CLOSED_VERIFIED owner=backend-workflow-engineer verifier=code-security-reviewer fix=e974d780 fixAncOfCand=true verRec=round-10/code-security-reviewer.json verRecVerdict=PASS verSrc=fe22d759 verSrcExists=true fixInVerSrc=true OK
+F-DG2-410 Medium mand=false CLOSED_VERIFIED owner=backend-workflow-engineer verifier=code-security-reviewer fix=258b7e5c fixAncOfCand=true verRec=round-11/code-security-reviewer.json verRecVerdict=PASS verSrc=cbdb4f68 verSrcExists=true fixInVerSrc=true OK
+F-DG2-411 Medium mand=false CLOSED_VERIFIED owner=backend-workflow-engineer verifier=code-security-reviewer fix=eb455d35 fixAncOfCand=true verRec=round-12/code-security-reviewer.json verRecVerdict=PASS verSrc=8488e7a4 verSrcExists=true fixInVerSrc=true OK
+F-DG2-412 Low mand=false CLOSED_VERIFIED owner=backend-workflow-engineer verifier=code-security-reviewer fix=eb455d35 fixAncOfCand=true verRec=round-12/code-security-reviewer.json verRecVerdict=PASS verSrc=8488e7a4 verSrcExists=true fixInVerSrc=true OK
+F-DG2-430 Low mand=false CLOSED_VERIFIED owner=frontend-ux-engineer verifier=qa-verifier fix=644198a3 fixAncOfCand=true verRec=round-12/qa-verifier.json verRecVerdict=FAIL verSrc=8488e7a4 verSrcExists=true fixInVerSrc=true OK
+F-DG2-440 Medium mand=false CLOSED_VERIFIED owner=backend-workflow-engineer verifier=code-security-reviewer fix=8c0083e9 fixAncOfCand=true verRec=round-13/code-security-reviewer.json verRecVerdict=PASS verSrc=aa0a68f1 verSrcExists=true fixInVerSrc=true OK
+F-DG2-441 Low mand=false CLOSED_VERIFIED owner=backend-workflow-engineer verifier=code-security-reviewer fix=8c0083e9 fixAncOfCand=true verRec=round-13/code-security-reviewer.json verRecVerdict=PASS verSrc=aa0a68f1 verSrcExists=true fixInVerSrc=true OK
+F-DG2-460 Medium mand=false CLOSED_VERIFIED owner=backend-workflow-engineer verifier=qa-verifier fix=8c0083e9 fixAncOfCand=true verRec=round-13/qa-verifier.json verRecVerdict=PASS verSrc=aa0a68f1 verSrcExists=true fixInVerSrc=true OK
+F-DG2-480 High mand=false CLOSED_VERIFIED owner=frontend-ux-engineer verifier=domain-reviewer fix=8cb3bb8d fixAncOfCand=true verRec=round-14/domain-reviewer.json verRecVerdict=PASS verSrc=ea9051b2 verSrcExists=true fixInVerSrc=true OK
+F-DG2-500 Medium mand=false CLOSED_VERIFIED owner=frontend-ux-engineer verifier=code-security-reviewer fix=29da00d1 fixAncOfCand=true verRec=round-15/code-security-reviewer.json verRecVerdict=PASS verSrc=ed80b234 verSrcExists=true fixInVerSrc=true OK
+F-DG2-530 Low mand=false CLOSED_VERIFIED owner=frontend-ux-engineer verifier=code-security-reviewer fix=ac812981 fixAncOfCand=true verRec=round-17/code-security-reviewer.json verRecVerdict=PASS verSrc=805da3e2 verSrcExists=true fixInVerSrc=true OK
+F-DG2-570 Low mand=false CLOSED_VERIFIED owner=frontend-ux-engineer verifier=domain-reviewer fix=ac812981 fixAncOfCand=true verRec=round-17/domain-reviewer.json verRecVerdict=PASS verSrc=805da3e2 verSrcExists=true fixInVerSrc=true OK
+F-DG2-580 Low mand=false CLOSED_VERIFIED owner=frontend-ux-engineer verifier=qa-verifier fix=ac812981 fixAncOfCand=true verRec=round-17/qa-verifier.json verRecVerdict=PASS verSrc=805da3e2 verSrcExists=true fixInVerSrc=true OK
+TOTAL 40 PROBLEMS 0
+non-closed: none
+## requirements
+REQ-PB-003 IMPLEMENTED qa domain -------------
+REQ-PB-012 IMPLEMENTED qa domain -------------
+REQ-PB-016 IMPLEMENTED qa domain code-security
+REQ-PB-017 IMPLEMENTED qa domain code-security
+REQ-PB-018 IMPLEMENTED qa domain code-security
+REQ-PB-023 IMPLEMENTED qa domain -------------
+REQ-PB-024 IMPLEMENTED qa domain -------------
+REQ-PB-025 IMPLEMENTED qa domain -------------
+REQ-PB-026 IMPLEMENTED qa domain -------------
+REQ-PB-027 IMPLEMENTED qa ------ code-security
+REQ-PB-028 IMPLEMENTED qa ------ code-security
+REQ-PB-029 IMPLEMENTED qa domain code-security
+REQ-PB-030 IMPLEMENTED qa domain -------------
+REQ-PB-031 IMPLEMENTED qa domain -------------
+REQ-PB-033 IMPLEMENTED qa domain -------------
+REQ-PB-034 IMPLEMENTED qa domain -------------
+REQ-PB-035 IMPLEMENTED qa domain -------------
+REQ-PB-036 IMPLEMENTED qa domain -------------
+REQ-PB-037 IMPLEMENTED qa domain -------------
+REQ-PB-038 IMPLEMENTED qa domain -------------
+REQ-PB-039 IMPLEMENTED qa domain -------------
+REQ-PB-041 IMPLEMENTED qa domain -------------
+REQ-PB-042 IMPLEMENTED qa domain -------------
+REQ-PB-043 IMPLEMENTED qa domain -------------
+REQ-DLV-034 IMPLEMENTED qa ------ code-security
+REQ-S04-003 IMPLEMENTED qa domain -------------
+REQ-S04-004 IMPLEMENTED qa domain -------------
+REQ-S04-005 IMPLEMENTED qa domain -------------
+REQ-S05-003 IMPLEMENTED qa domain -------------
+REQ-S10-001 IMPLEMENTED qa ------ code-security
+REQ-S13-012 IMPLEMENTED qa ------ code-security
+REQ-S16-013 IMPLEMENTED qa ------ code-security
+32 rows; all IMPLEMENTED: True ; all in qa AND (domain OR code-security): True

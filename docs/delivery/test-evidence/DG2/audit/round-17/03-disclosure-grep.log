@@ -1,0 +1,53 @@
+# failure-pattern grep of every file cited by the round-17 specialist records (records, checks, verifications)
+domain-reviewer cited files 109 existing 109 missing 0  hit-lines 31
+code-security-reviewer cited files 51 existing 51 missing 0  hit-lines 46
+qa-verifier cited files 87 existing 87 missing 0  hit-lines 116
+# hit lines: 02-round17-log-grep-hits.tsv. Classification:
+# - qa 17-e2e-qa-stack-{unset,cutf8}.log '2 failed'/exit 1 = R15-04 last step (qa's own round-15 spec, not in the candidate manifest); disclosed in QA-R17-17 and measured in QA-R17-20 (20-r15-04-diagnostic-*.log: second PUT carries the new session's csrf and is answered 200, so no notice is correct)
+# - qa 20-r15-04-diagnostic-*.log exit 1 = the same R15-04 failure by design; R17-10 passes 4/4
+# - qa 18-r17-spec-dev-run1..4 exit 1 = spec development runs, disclosed in QA-R17-18
+# - qa round-16/19-r16-06-*.log exit 1 = round-16 negative control for F-DG2-580
+# - qa 32-residual-registry.log exit 124 = deps:verify timeout without network (D-057 residual), disclosed in QA-R17-32
+# - code-security lint-bypass-probe.log exit 1 = deliberate probe, disclosed in SEC-R17-19
+# - domain stack-run-4/5/7/8 EXIT=1, r17-identity-residual-attempt1/2, r16-identity-ui(-diag)-default-limits exit=1 = disclosed in env.txt and the domain record (probe mistakes fixed in attempt 3; dev-login 429 under default auth limit, dev mode only)
+# - 'UTF8-PROBE sql_ascii migrate exit=1' = intended D-065 fail-closed probe
+# - 'BE17 db-econnreset ... 500 unhandled error' = assertion output of a PASSING negative test (no over-match)
+# - FST_ERR_*/'exit 1' inside passing test titles = test names
+# Hook timed out / Failed Suites: 0 occurrences in any cited log
+0
+## relied-upon round-11..15 records: non-zero checks and flagged logs, each flagged log named in its record
+== round-11/code-security-reviewer PASS src cbdb4f68 | non-zero checks: SEC-R11-01-reproduce-auditor-defect-7fd1a89c:1,SEC-R11-02-verify-F-DG2-410:1,SEC-R11-03-no-regression-limits-csrf-authz:1,SEC-R11-04-bounded-shutdown-and-destroySoon:1,SEC-R11-05-unmatched-route-rate-limit:1,SEC-R11-06-class-probe-aborted-and-stalled-bodies:1,SEC-R11-07-class-probe-stalled-upload-db-pool:1,SEC-R11-09-F-DG2-206-owner-record:1
+    repro-7fd1a89c.log [3] mentioned=true
+    probe-23e6c0a2-node22-lang-unset.log [3] mentioned=true
+    probe-23e6c0a2-node24-lang-c-utf8.log [3] mentioned=true
+    validate-dg2-f206.log [2] mentioned=true
+== round-12/code-security-reviewer PASS src 8488e7a4 | non-zero checks: SEC-R12-02-verify-F-DG2-411-r11-probe-rerun:1,SEC-R12-03-three-phase-upload-races-and-leftovers:1,SEC-R12-05-toctou-revoked-grant-and-session:1,SEC-R12-06-sweep-remote-call-in-transaction:1
+    probe-r11-node22-lang-unset.log [3] mentioned=true
+    probe-r11-node24-lang-c-utf8.log [3] mentioned=true
+    probe-r12-node22-lang-unset.log [3] mentioned=true
+    probe-r12-node24-lang-c-utf8.log [3] mentioned=true
+    probe-r12-Q1-on-round11-23e6c0a2.log [3] mentioned=true
+    probe-r12-oidc-node22-lang-unset.log [3] mentioned=true
+    probe-r12-oidc-node24-lang-c-utf8.log [3] mentioned=true
+== round-12/qa-verifier FAIL src 8488e7a4 | non-zero checks: QA-R12-17-e2e-qa-stack:1,QA-R12-R12-07-shutdown-leftover:1,QA-R12-40-requirements-regression:1
+    09-guard-negative-control-A.log [6] mentioned=true
+    17-e2e-qa-stack-unset.log [2] mentioned=true
+    17-e2e-qa-stack-cutf8.log [2] mentioned=true
+    19-qa-r12-07-shutdown-leftover-unset.log [2] mentioned=true
+    19-qa-r12-07-shutdown-leftover-cutf8.log [2] mentioned=true
+    32-residual-registry.log [1] mentioned=true
+== round-13/code-security-reviewer PASS src aa0a68f1 | non-zero checks: none
+== round-13/qa-verifier PASS src aa0a68f1 | non-zero checks: QA-R13-F460-e-negative-control:1
+    19-negative-control-744af0b.log [2] mentioned=true
+    18-r13-spec-dev-run1.log [1] mentioned=true
+    32-residual-registry.log [1] mentioned=true
+== round-14/domain-reviewer PASS src ea9051b2 | non-zero checks: none
+    env.txt [4] mentioned=true
+    stack-run-3.log [1] mentioned=true
+    stack-run-4-attempt1.log [1] mentioned=true
+    stack-run-4-attempt2.log [1] mentioned=true
+    stack-run-5-attempt1.log [1] mentioned=true
+== round-15/code-security-reviewer PASS src ed80b234 | non-zero checks: SEC-R15-19-class-probe:1
+    all-exit-statuses.txt [2] mentioned=true
+    probe-r15-web-node22-lang-unset.log [3] mentioned=true
+    probe-r15-web-node24-lang-c-utf8.log [3] mentioned=true

@@ -1,0 +1,18 @@
+# F-DG2-410: my round-10 reproduction re-run on candidate ddaab3cc (disposable clone $TMPDIR/aud @805da3e2, offline frozen install, disposable PostgreSQL 16 via tests/qa/support/with-pg.sh, Node v24.21.0)
+probe: docs/delivery/test-evidence/DG2/audit/round-10/zz-aud-diag.test.ts.txt sha256 9f3eab012cf8ed3b688ab5b4964df389589eae8d96692fa2454fc1d631966214, copied unchanged to apps/api/test/integration/zz-aud-diag.test.ts in the clone; run with -t '30 MiB CHUNKED' (P5s + the afterAll AUDDIAG teardown timing)
+run A (plain Content-Type, identical to round-10 repro-diag.log): repro-r10-probe-on-ddaab3cc.log
+run B (HTAB spelling 'application/octet-stream\t; x=1' as in round-10 zz-aud-canon.diff): repro-r10-probe-htab-on-ddaab3cc.log
+
+| measure | round 10 @7fd1a89c (repro-diag.log) | run A @ddaab3cc | run B @ddaab3cc |
+| status | "statuses":["HTTP/1.1 413"] | "statuses":["HTTP/1.1 413"] | "statuses":["HTTP/1.1 413"] |
+| closedByServer | "closedByServer":false | "closedByServer":true | "closedByServer":true |
+| stored | "stored":null | "stored":null | "stored":null |
+| errorLogsAdded | "errorLogsAdded":0 | "errorLogsAdded":0 | "errorLogsAdded":0 |
+| server connections at teardown | AUDDIAG 0ms server connections=1 | AUDDIAG 0ms server connections=0 | AUDDIAG 0ms server connections=0 |
+| app.close | AUDDIAG 64911ms app.close done | AUDDIAG 3ms app.close done | AUDDIAG 3ms app.close done |
+
+Result: the defect NO LONGER REPRODUCES on this candidate. Both runs exit 0 (1 passed, 17 skipped); no 'Hook timed out' or 'Failed Suites'.
+fix 258b7e5 ancestor of 805da3e2: yes
+fix 258b7e5 author/subject: Claude | DG2 T-DG2-BE16: a response sent before its body arrived closes the connection; bounded shutdown; requestTimeout; unmatched routes rate-limited
+BE16 run dir: docs/delivery/runs/DG2/DG2-T-DG2-BE16-backend-workflow-engineer-20261007T001928Z-87a53fd9
+round-11 code-security repro at 7fd1a89c: docs/delivery/test-evidence/DG2/code-security/round-11/repro-7fd1a89c.log
