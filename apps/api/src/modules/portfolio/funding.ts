@@ -13,9 +13,22 @@ export function registerFundingRoutes(_app: FastifyInstance, _deps: ModuleDeps):
 }
 
 /**
- * The funding state of an initiative, derived from its latest funding decision (ADR-0023 §7). STUB: always
- * "unfunded" until BE-E replaces it with the read of the latest current funding decision.
+ * The funding state of an initiative, derived from its LATEST funding decision (ADR-0023 §7; T-DG3-BE-B owns this
+ * function, T-DG3-ARCH-02). funding_decision is append-only and the latest row per initiative (decided_at, then id)
+ * decides: `approved` -> "funded"; `revoked` -> "revoked"; `rejected` / `deferred` -> "unfunded"; no decision at all
+ * -> "unfunded" (fail closed: a selected initiative stays 'Selected - unfunded' and cannot launch). Read-only.
  */
-export async function latestFundingState(_db: DbOrTx, _initiativeId: string): Promise<FundingState> {
+export async function latestFundingState(db: DbOrTx, initiativeId: string): Promise<FundingState> {
+  const latest = await db
+    .selectFrom("funding_decision")
+    .select("outcome")
+    .where("initiative_id", "=", initiativeId)
+    .orderBy("decided_at", "desc")
+    .orderBy("id", "desc")
+    .limit(1)
+    .executeTakeFirst();
+  if (latest === undefined) return "unfunded";
+  if (latest.outcome === "approved") return "funded";
+  if (latest.outcome === "revoked") return "revoked";
   return "unfunded";
 }
