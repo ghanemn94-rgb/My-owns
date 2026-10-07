@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG2-430",
+      "stage_id": "DG2",
+      "requirement": "REQ-PB-012",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "React warns 'Cannot update a component (AssignDialog) while rendering a different component (RecordDialog)': RecordForm calls onValuesChange inside a setValues updater",
+      "reproduction": "Disposable clone @309aff2 (candidate 23e6c0a2), `pnpm test` on Node 22 and Node 24, with LANG/LC_ALL unset and with LANG=C.UTF-8, plus one run under CPU load (7 runs). Every run prints, once, on stderr: `stderr | src/pages/team/team.test.tsx > Team (English LTR) > shows a 403 from the server in words; nothing is assigned` followed by `Cannot update a component (`AssignDialog`) while rendering a different component (`RecordDialog`). To locate the bad setState() call inside `RecordDialog`, follow the stack trace as described in https://react.dev/link/setstate-in-render`. The same line is in the round-10 unit logs (for example docs/delivery/test-evidence/DG2/qa/round-10/unit/node24-run1-unset.log), so it predates BE16 and is not a regression. Cause (static read): apps/web/src/components/RecordForm.tsx lines 198-203: `set` calls `props.onValuesChange?.(next)` INSIDE the `setValues((v) => ...)` updater. React may run that updater while it renders RecordDialog, so the parent's `setSelectedRole` (apps/web/src/pages/team/TeamPage.tsx line 393, the only onValuesChange user) is a state update of another component during render. Updaters must be pure; React can also call them twice (StrictMode / concurrent rendering).",
+      "expected": "No React warnings during the web unit tests. RecordForm reports value changes outside the state updater, for example by computing `next` from the current values and calling onValuesChange after setValues, or in an effect on `values`. The Team assign dialog's role-accountability preview keeps updating as it does today.",
+      "actual": "The warning appears in 7 of 7 unit runs, and in the round-10 runs. Behaviour is still correct: the test passes, the 403 is shown in words, nothing is assigned, and the role preview follows the selected role in the e2e journeys (EN and AR). The defect is the impure updater: a side effect in a React state updater, which React reports and may run twice. It is limited to the Team assign dialog today, because that is the only onValuesChange consumer.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-11/08-unit-series-summary.log",
+        "docs/delivery/test-evidence/DG2/qa/round-11/unit/node24-run1-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-11/unit/node22-run1-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-10/unit/node24-run1-unset.log",
+        "apps/web/src/components/RecordForm.tsx",
+        "apps/web/src/pages/team/TeamPage.tsx"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG2/round-11/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-07T02:25:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG2 round 11 (T-DG2-REV-QA-R11) under the round-10 audit's evidence-honesty condition: every stderr line in the cited unit logs must be explained. Low, non-mandatory; pre-existing (also in round 10); not a BE16 regression; it does not affect the verdict."
+        }
+      ]
+    }
+  ]
+}
