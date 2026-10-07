@@ -1,0 +1,22 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG2-580",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate ddaab3cc (source 805da3e2, FE15 ac81298 / D-077) on the REAL built SPA + API + PostgreSQL (e2e/support/qa-stack.sh), chromium-en and chromium-ar, in both locale settings (LANG unset; LANG=C.UTF-8). My round-16 spec dg2-qa-r16.spec.ts was run UNCHANGED (sha256 408a6a14..., the file that reproduced F-DG2-580 4/4 on candidate 0cab0a8c in 19-r16-06-unset.log / 19-r16-06-cutf8.log of round 16, which are the negative control). R16-06 passes in every run: 17-e2e-qa-stack-unset.log tests 77 (EN, 6.6 s) and 183 (AR, 6.5 s), and the same two in 17-e2e-qa-stack-cutf8.log. Its assertions are that A's 201 is real (the server committed A's Finance record, which B, dev.lead, gets as 404), that after delivery tab 1 shows B's header ('Synthetic Transformation Lead'), that the leak observer recorded NO DOM moment with A's new record's name as text, that A's code is nowhere in the document, that the path is NOT /transformations/<A's id>, that the document stayed the same, and that there are no page errors and no 429. Screenshots: screens/unset-en-qa-r16-06-after-delivery.png shows B's header above B's empty create form, nothing of A's record (also -ar-, and cutf8-*). The other R16 tests (R16-01 to R16-05) also pass 6/6 per project in both settings. I added independent negative checks on the same class (dg2-qa-r17.spec.ts, 13 tests x 2 projects x 2 settings, all pass). The class covers the transformation create when tab 1 learns of B through an IN-APP NAVIGATION before A's 201 (R17-01: path /my-work, A's code TR-0041/TR-0108 not shown). It covers an edit, an archive and a user save answered while the tab still believes it is A (R17-02, R17-03 and R17-05b: B never sees A's text under B's header, and B opening A's record gets not-found), and an organisation create learn-first and deliver-first (R17-04a and R17-04b: B is not navigated to A's organisation, and neither its code nor either of its names shows). D-077's declared 2 s residual (4) is characterised separately in R17-04c and is not part of this finding: B lands on A's organisation URL with 'no permission' and never sees its name or code; see the narrative. The fix is genuine, so F-DG2-580 is closed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-17/17-e2e-qa-stack-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-17/17-e2e-qa-stack-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-17/19-e2e-results-summary.log",
+        "docs/delivery/test-evidence/DG2/qa/round-17/23-spec-hashes.log",
+        "docs/delivery/test-evidence/DG2/qa/tests/round-16/e2e/dg2-qa-r16.spec.ts",
+        "docs/delivery/test-evidence/DG2/qa/tests/round-17/e2e/dg2-qa-r17.spec.ts",
+        "docs/delivery/test-evidence/DG2/qa/round-17/screens/unset-en-qa-r16-06-after-delivery.png",
+        "docs/delivery/test-evidence/DG2/qa/round-17/screens/unset-ar-qa-r16-06-after-delivery.png",
+        "docs/delivery/test-evidence/DG2/qa/round-16/19-r16-06-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/19-r16-06-cutf8.log"
+      ]
+    }
+  ]
+}
