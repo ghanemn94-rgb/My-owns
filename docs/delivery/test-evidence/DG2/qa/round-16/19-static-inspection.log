@@ -1,0 +1,53 @@
+$ git diff --stat ed80b234 e3b2375a -- apps packages tests e2e; grep -rn "setQueryData\|navigate(" apps/web/src --include=*.tsx --include=*.ts (non-test) with the nearest isSessionChangedError guard
+# repository @e3b2375a via git show; 2026-10-07T16:15:48Z
+ apps/web/src/api/client.ts                         |  62 ++-
+ apps/web/src/api/queries.ts                        |   2 +
+ apps/web/src/app/App.tsx                           |  81 ++-
+ apps/web/src/auth/session-generation.test.tsx      | 569 +++++++++++++++++++++
+ apps/web/src/auth/session.tsx                      |  12 +-
+ apps/web/src/components/LanguageSwitch.tsx         |   7 +-
+ apps/web/src/components/ReasonDialog.tsx           |   6 +-
+ apps/web/src/components/RecordForm.tsx             |   7 +-
+ apps/web/src/components/RowActions.tsx             |   3 +-
+ apps/web/src/components/States.tsx                 |  16 +-
+ apps/web/src/components/useVersionedSave.ts        |   9 +-
+ apps/web/src/pages/LoginPage.tsx                   |   5 +-
+ apps/web/src/pages/admin/AssignmentsPage.tsx       |   3 +-
+ apps/web/src/pages/admin/OrganizationsPage.tsx     |   4 +-
+ apps/web/src/pages/admin/UsersPage.tsx             |   3 +-
+ apps/web/src/pages/define/DefinePage.tsx           |   7 +-
+ apps/web/src/pages/design/JourneysSection.tsx      |   3 +-
+ apps/web/src/pages/design/WorkshopsSection.tsx     |   3 +-
+ apps/web/src/pages/evidence/EvidencePage.tsx       |   4 +-
+ apps/web/src/pages/gates/GateDetailPage.tsx        |   4 +-
+ .../transformations/TransformationCreatePage.tsx   |   3 +-
+ .../transformations/TransformationEditPage.tsx     |   6 +-
+ 22 files changed, 785 insertions(+), 34 deletions(-)
+--- setQueryData call sites at e3b2375a (non-test files):
+apps/web/src/components/LanguageSwitch.tsx:57:      queryClient.setQueryData<Me>(keys.me, (old) => (old ? { ...old, user } : old));
+apps/web/src/components/LanguageSwitch.tsx:61:        queryClient.setQueryData(keys.me, fresh);
+apps/web/src/pages/admin/OrganizationsPage.tsx:256:      queryClient.setQueryData(keys.organization(updated.id), updated);
+apps/web/src/pages/admin/OrganizationsPage.tsx:574:      queryClient.setQueryData(keys.businessUnit(updated.id), updated);
+apps/web/src/pages/admin/UsersPage.tsx:388:      queryClient.setQueryData(keys.user(updated.id), updated);
+apps/web/src/pages/transformations/TransformationDetailPage.tsx:143:      queryClient.setQueryData(keys.transformation(tr.id), updated);
+apps/web/src/pages/transformations/TransformationEditPage.tsx:130:      queryClient.setQueryData(keys.transformation(on.id), updated);
+apps/web/src/pages/transformations/TransformationEditPage.tsx:141:          queryClient.setQueryData(keys.transformation(on.id), latest);
+--- files with an api write (api.send / apiRequest with method) and whether they reference isSessionChangedError:
+apps/web/src/app/Shell.tsx                                             0
+apps/web/src/components/LanguageSwitch.tsx                             2
+apps/web/src/components/RecordForm.tsx                                 3
+apps/web/src/components/RowActions.tsx                                 2
+apps/web/src/components/useVersionedSave.ts                            3
+apps/web/src/pages/LoginPage.tsx                                       2
+apps/web/src/pages/admin/AssignmentsPage.tsx                           2
+apps/web/src/pages/admin/OrganizationsPage.tsx                         3
+apps/web/src/pages/admin/UsersPage.tsx                                 2
+apps/web/src/pages/define/DefinePage.tsx                               4
+apps/web/src/pages/design/JourneysSection.tsx                          2
+apps/web/src/pages/design/WorkshopsSection.tsx                         2
+apps/web/src/pages/evidence/EvidencePage.tsx                           3
+apps/web/src/pages/gates/GateDetailPage.tsx                            3
+apps/web/src/pages/transformations/TransformationCreatePage.tsx        2
+apps/web/src/pages/transformations/TransformationDetailPage.tsx        0
+apps/web/src/pages/transformations/TransformationEditPage.tsx          3
+exit 0

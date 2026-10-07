@@ -1,0 +1,21 @@
+$ ls .github/workflows; git diff --stat ed80b234 e3b2375a -- .github deploy/scripts; node deploy/scripts/check-ci-needs.mjs; node --test deploy/scripts/tests/check-ci-needs.test.mjs
+# cwd $TMPDIR/review-dg2 @e3b2375a; node v24.21.0; 2026-10-07T16:14:39Z; D-058 live CI residual: config surface only
+ci.yml
+delivery-gates.yml
+(empty = no CI change since round 15)
+OK: .github/workflows/ci.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it with no status-function if:; installs only via ci-install-deps.sh
+  verify <- delivery-gates
+  integration <- verify
+  e2e <- verify
+  images <- integration, e2e
+check-ci-needs exit 0
+✔ POSITIVE P7 delivery-gates checkout without with: (defaults to the triggering commit) (93.013112ms)
+ℹ tests 46
+ℹ suites 0
+ℹ pass 46
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4764.522661
+exit 0

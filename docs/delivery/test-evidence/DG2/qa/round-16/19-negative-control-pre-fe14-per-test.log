@@ -1,0 +1,374 @@
+$ env -u LC_ALL LANG=C.UTF-8 QA_E2E_API_PORT=26301 QA_E2E_PG_PORT=26302 QA_SHOT_DIR=<shots> E2E_SCREENSHOT_DIR=<shots> e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r16.spec.ts --project chromium-en --grep R16-01 --workers=1 --reporter=list
+# NEGATIVE CONTROL clone $TMPDIR/nc-pre-fe14 @7905e8b (parent of FE14 44f1cf0); node v24.21.0; 2026-10-07T16:19:25Z
+port-policy: PostgreSQL listening on port 26302 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 26301 (attempt 1)
+API:     http://localhost:26301
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 1 test using 1 worker
+
+  ✘  1 [chromium-en] › e2e/dg2-qa-r16.spec.ts:257:1 › R16-01 a CREATE in flight when B signs in in another tab: B never sees A's record and is not navigated to it (1.1m)
+
+
+  1) [chromium-en] › e2e/dg2-qa-r16.spec.ts:257:1 › R16-01 a CREATE in flight when B signs in in another tab: B never sees A's record and is not navigated to it 
+
+    Error: B is not navigated to A's new record
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mnot[2m.[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: not [32m"/transformations/01a11729-b43d-7056-b76c-0927d3f2e5bd"[39m
+
+      273 |   await lead.call("GET", `/api/v1/transformations/${created.id}`, undefined, { expect: 404 });
+      274 |
+    > 275 |   expect(new URL(page.url()).pathname, "B is not navigated to A's new record").not.toBe(`/transformations/${created.id}`);
+          |                                                                                    ^
+      276 |   await expect(page.locator("[data-state='error']")).toHaveCount(0);
+      277 |   await shot(page, lang, "qa-r16-01-b-after-delivery");
+      278 |   await expectAccessible(page, lang, "qa-r16-01-b-after-delivery");
+        at $TMPDIR/nc-pre-fe14/e2e/dg2-qa-r16.spec.ts:275:84
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r16-R16-01-a-CR-b0a2f--and-is-not-navigated-to-it-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r16-R16-01-a-CR-b0a2f--and-is-not-navigated-to-it-chromium-en/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-dg2-qa-r16-R16-01-a-CR-b0a2f--and-is-not-navigated-to-it-chromium-en/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r16-R16-01-a-CR-b0a2f--and-is-not-navigated-to-it-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg2-qa-r16-R16-01-a-CR-b0a2f--and-is-not-navigated-to-it-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium-en] › e2e/dg2-qa-r16.spec.ts:257:1 › R16-01 a CREATE in flight when B signs in in another tab: B never sees A's record and is not navigated to it 
+---- api.log (tail)
+exit 1
+$ env -u LC_ALL LANG=C.UTF-8 QA_E2E_API_PORT=26301 QA_E2E_PG_PORT=26302 QA_SHOT_DIR=<shots> E2E_SCREENSHOT_DIR=<shots> e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r16.spec.ts --project chromium-en --grep R16-02 --workers=1 --reporter=list
+# NEGATIVE CONTROL clone $TMPDIR/nc-pre-fe14 @7905e8b (parent of FE14 44f1cf0); node v24.21.0; 2026-10-07T16:20:37Z
+port-policy: PostgreSQL listening on port 26302 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 26301 (attempt 1)
+API:     http://localhost:26301
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 1 test using 1 worker
+
+  ✘  1 [chromium-en] › e2e/dg2-qa-r16.spec.ts:310:1 › R16-02 an EDIT in flight when B signs in in another tab: A's updated record never lands in B's view or cache (1.2m)
+
+
+  1) [chromium-en] › e2e/dg2-qa-r16.spec.ts:310:1 › R16-02 an EDIT in flight when B signs in in another tab: A's updated record never lands in B's view or cache 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-state=\'not-found\'], [data-state=\'no-permission\']').first()
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-state=\'not-found\'], [data-state=\'no-permission\']').first()[22m
+
+
+      323 |   await inAppGo(page, `/transformations/${a.id}`);
+      324 |   await page.waitForTimeout(1_500);
+    > 325 |   await expect(page.locator("[data-state='not-found'], [data-state='no-permission']").first()).toBeVisible();
+          |                                                                                                ^
+      326 |   await expect(page.getByText(newName)).toHaveCount(0);
+      327 |   await expect(page.getByText(a.marker)).toHaveCount(0);
+      328 |   await shot(page, lang, "qa-r16-02-b-on-a-detail-url");
+        at $TMPDIR/nc-pre-fe14/e2e/dg2-qa-r16.spec.ts:325:96
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r16-R16-02-an-E-20ada--lands-in-B-s-view-or-cache-chromium-en/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r16-R16-02-an-E-20ada--lands-in-B-s-view-or-cache-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-dg2-qa-r16-R16-02-an-E-20ada--lands-in-B-s-view-or-cache-chromium-en/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r16-R16-02-an-E-20ada--lands-in-B-s-view-or-cache-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg2-qa-r16-R16-02-an-E-20ada--lands-in-B-s-view-or-cache-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium-en] › e2e/dg2-qa-r16.spec.ts:310:1 › R16-02 an EDIT in flight when B signs in in another tab: A's updated record never lands in B's view or cache 
+---- api.log (tail)
+exit 1
+$ env -u LC_ALL LANG=C.UTF-8 QA_E2E_API_PORT=26301 QA_E2E_PG_PORT=26302 QA_SHOT_DIR=<shots> E2E_SCREENSHOT_DIR=<shots> e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r16.spec.ts --project chromium-en --grep R16-03 --workers=1 --reporter=list
+# NEGATIVE CONTROL clone $TMPDIR/nc-pre-fe14 @7905e8b (parent of FE14 44f1cf0); node v24.21.0; 2026-10-07T16:21:57Z
+port-policy: PostgreSQL listening on port 26302 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 26301 (attempt 1)
+API:     http://localhost:26301
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 1 test using 1 worker
+
+  ✘  1 [chromium-en] › e2e/dg2-qa-r16.spec.ts:353:1 › R16-03 an ARCHIVE in flight when B signs in in another tab: A's archived record and reason never show for B (1.2m)
+
+
+  1) [chromium-en] › e2e/dg2-qa-r16.spec.ts:353:1 › R16-03 an ARCHIVE in flight when B signs in in another tab: A's archived record and reason never show for B 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveCount[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  getByText('Synthetic QA R16 R16-03 A-only EN muybfd7s')
+    Expected: [32m0[39m
+    Received: [31m1[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toHaveCount" with timeout 5000ms[22m
+    [2m  - waiting for getByText('Synthetic QA R16 R16-03 A-only EN muybfd7s')[22m
+    [2m    9 × locator resolved to 1 element[22m
+    [2m      - unexpected value "1"[22m
+
+
+      361 |
+      362 |   await expect(page.locator("[data-state='error']")).toHaveCount(0);
+    > 363 |   await expect(page.getByText(a.marker)).toHaveCount(0);
+          |                                          ^
+      364 |   await shot(page, lang, "qa-r16-03-b-after-delivery");
+      365 |   await expectAccessible(page, lang, "qa-r16-03-b-after-delivery");
+      366 |   await navLink(page, lang, "transformations").click();
+        at $TMPDIR/nc-pre-fe14/e2e/dg2-qa-r16.spec.ts:363:42
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r16-R16-03-an-A-12b17-and-reason-never-show-for-B-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r16-R16-03-an-A-12b17-and-reason-never-show-for-B-chromium-en/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-dg2-qa-r16-R16-03-an-A-12b17-and-reason-never-show-for-B-chromium-en/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r16-R16-03-an-A-12b17-and-reason-never-show-for-B-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg2-qa-r16-R16-03-an-A-12b17-and-reason-never-show-for-B-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium-en] › e2e/dg2-qa-r16.spec.ts:353:1 › R16-03 an ARCHIVE in flight when B signs in in another tab: A's archived record and reason never show for B 
+---- api.log (tail)
+exit 1
+$ env -u LC_ALL LANG=C.UTF-8 QA_E2E_API_PORT=26301 QA_E2E_PG_PORT=26302 QA_SHOT_DIR=<shots> E2E_SCREENSHOT_DIR=<shots> e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r16.spec.ts --project chromium-en --grep R16-04 --workers=1 --reporter=list
+# NEGATIVE CONTROL clone $TMPDIR/nc-pre-fe14 @7905e8b (parent of FE14 44f1cf0); node v24.21.0; 2026-10-07T16:23:15Z
+port-policy: PostgreSQL listening on port 26302 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 26301 (attempt 1)
+API:     http://localhost:26301
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 1 test using 1 worker
+
+  ✓  1 [chromium-en] › e2e/dg2-qa-r16.spec.ts:400:1 › R16-04 normal create, edit, evidence upload and archive still update the screen and navigate as before (5.2s)
+
+  1 passed (6.6s)
+exit 0
+$ env -u LC_ALL LANG=C.UTF-8 QA_E2E_API_PORT=26301 QA_E2E_PG_PORT=26302 QA_SHOT_DIR=<shots> E2E_SCREENSHOT_DIR=<shots> e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r16.spec.ts --project chromium-en --grep R16-05 --workers=1 --reporter=list
+# NEGATIVE CONTROL clone $TMPDIR/nc-pre-fe14 @7905e8b (parent of FE14 44f1cf0); node v24.21.0; 2026-10-07T16:23:26Z
+port-policy: PostgreSQL listening on port 26302 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 26301 (attempt 1)
+API:     http://localhost:26301
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 1 test using 1 worker
+
+  ✘  1 [chromium-en] › e2e/dg2-qa-r16.spec.ts:506:1 › R16-05 refocus with a new user before /me is stale: the header name and the data always belong to the same user (28.4s)
+
+
+  1) [chromium-en] › e2e/dg2-qa-r16.spec.ts:506:1 › R16-05 refocus with a new user before /me is stale: the header name and the data always belong to the same user 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  locator('.user-box__name')
+    Expected: [32m"Synthetic Transformation [7mOffice[27m"[39m
+    Received: [31m"Synthetic Transformation [7mLead[27m"[39m
+    Timeout:  10000ms
+
+    Call log:
+    [2m  - Expect "toHaveText" with timeout 10000ms[22m
+    [2m  - waiting for locator('.user-box__name')[22m
+    [2m    14 × locator resolved to <span class="user-box__name">Synthetic Transformation Lead</span>[22m
+    [2m       - unexpected value "Synthetic Transformation Lead"[22m
+
+
+      468 |   const meAt = w.me;
+      469 |   await refocus(page);
+    > 470 |   await expect(page.locator(".user-box__name")).toHaveText(OFFICE_NAME, { timeout: 10_000 });
+          |                                                 ^
+      471 |   await expect(page.getByText(b.marker).first()).toBeVisible({ timeout: 10_000 });
+      472 |   await page.waitForTimeout(1_000);
+      473 |   const meAfter = w.me;
+        at $TMPDIR/nc-pre-fe14/e2e/dg2-qa-r16.spec.ts:470:49
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r16-R16-05-refo-0e582-ays-belong-to-the-same-user-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r16-R16-05-refo-0e582-ays-belong-to-the-same-user-chromium-en/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-dg2-qa-r16-R16-05-refo-0e582-ays-belong-to-the-same-user-chromium-en/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r16-R16-05-refo-0e582-ays-belong-to-the-same-user-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg2-qa-r16-R16-05-refo-0e582-ays-belong-to-the-same-user-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium-en] › e2e/dg2-qa-r16.spec.ts:506:1 › R16-05 refocus with a new user before /me is stale: the header name and the data always belong to the same user 
+---- api.log (tail)
+exit 1
