@@ -1,17 +1,17 @@
 {
   "schema_version": 1,
   "stage_id": "DG2",
-  "decision": "BLOCKED",
-  "candidate_id": "sha256:7fd1a89ca090dbdea5ae9f014853684239cbf80e89dc5cce50914155cb9d484a",
-  "source_commit": "fe22d75962ca1962df462055645169787ddbc201",
-  "manifest_path": "docs/delivery/candidates/DG2/7fd1a89ca090dbde.manifest.json",
+  "decision": "APPROVED",
+  "candidate_id": "sha256:ddaab3cc264b0e13caadcb17f0d1811eff8ad1ec9364b7ba9c03727b83350750",
+  "source_commit": "805da3e26bed3572ca2fc32365934e57b2e84eeb",
+  "manifest_path": "docs/delivery/candidates/DG2/ddaab3cc264b0e13.manifest.json",
   "previous_gate": "DG1",
   "reviews": {
-    "domain-reviewer": "docs/delivery/reviews/DG2/round-10/domain-reviewer.json",
-    "code-security-reviewer": "docs/delivery/reviews/DG2/round-10/code-security-reviewer.json",
-    "qa-verifier": "docs/delivery/reviews/DG2/round-10/qa-verifier.json"
+    "domain-reviewer": "docs/delivery/reviews/DG2/round-17/domain-reviewer.json",
+    "code-security-reviewer": "docs/delivery/reviews/DG2/round-17/code-security-reviewer.json",
+    "qa-verifier": "docs/delivery/reviews/DG2/round-17/qa-verifier.json"
   },
-  "release_audit": "docs/delivery/reviews/DG2/round-10/release-auditor.json",
+  "release_audit": "docs/delivery/reviews/DG2/round-17/release-auditor.json",
   "requirements": {
     "final_gate_ids": [
       "REQ-PB-003",
@@ -47,102 +47,136 @@
       "REQ-S13-012",
       "REQ-S16-013"
     ],
-    "notes": "All 32 register rows with final_gate DG2 are IMPLEMENTED. qa-verifier checked all 32, and domain ∪ code-security cover all 32. validate --register DG2 PASS. Coverage holds, but REQ-S13-012/REQ-S16-013 (evidence upload) carry the untriaged connection-hold defect in blocking condition 2."
+    "notes": "All 32 register rows with final_gate DG2 are IMPLEMENTED and match the assignment list. qa-verifier checked all 32. domain-reviewer checked 26, and code-security-reviewer checked 10; REQ-PB-027/028, REQ-DLV-034, REQ-S10-001, REQ-S13-012 and REQ-S16-013 are covered by code-security. validate --register DG2 PASS. Documented environmental residuals with verified offline/config surfaces: live-registry install effect (REQ-DLV-042 AC-1, D-057), live GitHub-Actions run (REQ-DLV-025 A24, D-058), Keycloak (D-049; OIDC verified against the in-process IdP, 33/33 per run)."
   },
   "tests": [
     {
-      "name": "Candidate recomputation and complete-clone check",
+      "name": "Complete-clone check and candidate recomputation (working tree and clean clone at 805da3e2)",
       "command": "git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG2",
       "result": "PASS",
       "evidence": [
-        "docs/delivery/test-evidence/DG2/audit/round-10/01-audit-checks.log",
-        "docs/delivery/test-evidence/DG2/qa/round-10/00-candidate.log",
-        "docs/delivery/test-evidence/DG2/domain/round-10/candidate-and-dg1.log"
+        "docs/delivery/test-evidence/DG2/audit/round-17/01-audit-checks.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/candidate-id.log",
+        "docs/delivery/test-evidence/DG2/qa/round-17/00-candidate.log"
       ]
     },
     {
-      "name": "Previous gate DG1 historical validation",
-      "command": "node tools/gates/validate.mjs --historical --stage DG1",
+      "name": "Previous gate DG1 historical validation and register rules at DG2",
+      "command": "node tools/gates/validate.mjs --historical --stage DG1; node tools/gates/validate.mjs --register DG2",
       "result": "PASS",
       "evidence": [
-        "docs/delivery/test-evidence/DG2/audit/round-10/01-audit-checks.log",
-        "docs/delivery/test-evidence/DG2/code-security/round-10/validate-historical-DG1.log"
+        "docs/delivery/test-evidence/DG2/audit/round-17/01-audit-checks.log",
+        "docs/delivery/test-evidence/DG2/qa/round-17/00-historical-DG1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-17/30-validate-register.log"
       ]
     },
     {
-      "name": "Unit (765, Node 22 and 24, both locale settings, under load) and integration (610 qa / 570 code-security, both locale settings)",
-      "command": "pnpm test; pnpm test:integration on disposable PostgreSQL 16",
+      "name": "Typecheck, build, lint (including FE15's restricted-navigation rule), OpenAPI lint (161 ops), no-CDN, format",
+      "command": "pnpm -r typecheck; pnpm -r build; pnpm lint; pnpm openapi:lint; pnpm check:no-cdn; pnpm format:check",
       "result": "PASS",
       "evidence": [
-        "docs/delivery/test-evidence/DG2/qa/round-10/08-unit-series-summary.log",
-        "docs/delivery/test-evidence/DG2/qa/round-10/10-integration-series-summary.log",
-        "docs/delivery/test-evidence/DG2/code-security/round-10/integration-run1-lang-unset.log",
-        "docs/delivery/test-evidence/DG2/code-security/round-10/integration-run2-lang-c-utf8.log"
+        "docs/delivery/test-evidence/DG2/code-security/round-17/typecheck.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/build.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/lint.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/openapi-lint.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/no-cdn.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/format-check.log",
+        "docs/delivery/test-evidence/DG2/qa/round-17/01-typecheck.log",
+        "docs/delivery/test-evidence/DG2/qa/round-17/03-lint.log"
       ]
     },
     {
-      "name": "E2E qa-stack EN+AR and axe (636 scans, 0 serious/critical); QA-R10 raw-socket regression",
-      "command": "qa-stack playwright runs, both locale settings",
+      "name": "Unit tests on Node 22 and Node 24, and under load (926/926 each)",
+      "command": "pnpm test (unit-node + unit-web + qa unit) on Node 22 and Node 24",
       "result": "PASS",
       "evidence": [
-        "docs/delivery/test-evidence/DG2/qa/round-10/17-e2e-qa-stack-unset.log",
-        "docs/delivery/test-evidence/DG2/qa/round-10/17-e2e-qa-stack-cutf8.log",
-        "docs/delivery/test-evidence/DG2/qa/round-10/19-qa-r10-results.log",
-        "docs/delivery/test-evidence/DG2/qa/round-10/20-axe-summary.log"
+        "docs/delivery/test-evidence/DG2/code-security/round-17/unit-node22.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/unit-node24.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/unit-under-load-node24.log",
+        "docs/delivery/test-evidence/DG2/qa/round-17/08-unit-series-summary.log"
       ]
     },
     {
-      "name": "code-security round-10 probe (SEC-R10-01/02): evidence vs claim",
-      "command": "with-pg.sh <port> pnpm vitest run --project integration zz-sec-r9-probe.test.ts zz-sec-r10-probe.test.ts",
-      "result": "FAIL",
-      "evidence": [
-        "docs/delivery/test-evidence/DG2/code-security/round-10/probe-run1-lang-unset.log",
-        "docs/delivery/test-evidence/DG2/code-security/round-10/probe-run2-lang-c-utf8.log",
-        "docs/delivery/test-evidence/DG2/audit/round-10/repro-r10-alone.log"
-      ]
-    },
-    {
-      "name": "Auditor reproduction: over-limit chunked evidence upload holds the connection and stalls app.close (candidate and pre-BE15 041478cb)",
-      "command": "vitest -t 'over llhttp: a 30 MiB' (zz-aud-canon, zz-aud-diag) on disposable PostgreSQL 16",
-      "result": "FAIL",
-      "evidence": [
-        "docs/delivery/test-evidence/DG2/audit/round-10/repro-bis-p5sock.log",
-        "docs/delivery/test-evidence/DG2/audit/round-10/repro-bis-canon-sock.log",
-        "docs/delivery/test-evidence/DG2/audit/round-10/repro-base-canon-sock.log",
-        "docs/delivery/test-evidence/DG2/audit/round-10/repro-diag.log"
-      ]
-    },
-    {
-      "name": "Non-author verification of every closed DG2 finding (validator checkClosure)",
-      "command": "node tools/gates/validate.mjs --stage DG2",
-      "result": "FAIL",
-      "evidence": [
-        "docs/delivery/test-evidence/DG2/audit/round-10/02-f206-ownership.log"
-      ]
-    },
-    {
-      "name": "Register, provenance, findings status/ancestry and requirement coverage audit",
-      "command": "node tools/gates/validate.mjs --register DG2; inline audit over runs/, reviews/, findings.json, requirements.csv, decisions.md",
+      "name": "Integration on disposable PostgreSQL 16 in both locale settings (612/612; 652/652 with QA suites, 3 runs per locale; migrations 0001-0019)",
+      "command": "pnpm test:integration on a disposable PG16 cluster, LANG unset and LANG=C.UTF-8",
       "result": "PASS",
       "evidence": [
-        "docs/delivery/test-evidence/DG2/audit/round-10/01-audit-checks.log",
-        "docs/delivery/findings.json"
+        "docs/delivery/test-evidence/DG2/code-security/round-17/integration-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/integration-run2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-17/10-integration-series-summary.log",
+        "docs/delivery/test-evidence/DG2/qa/round-17/12-migrations.log"
+      ]
+    },
+    {
+      "name": "Product e2e EN+AR on the real stack (74/74 per locale) and the QA regression e2e (210 passed; the 2 failures are qa's own obsolete R15-04 last step, outside the candidate, explained by measurement)",
+      "command": "apps/web/e2e/support/with-stack.sh npx playwright test; e2e/support/qa-stack.sh npx playwright test e2e apps/web/e2e --workers=1",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-17/15-e2e-product-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-17/15-e2e-product-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-17/17-e2e-qa-stack-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-17/20-r15-04-diagnostic-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-17/22-axe-summary.log"
+      ]
+    },
+    {
+      "name": "Round-17 finding verifications: F-DG2-530 (code-security), F-DG2-570 (domain) and F-DG2-580 (qa) on this candidate, each considering the D-077 residual",
+      "command": "reviewer probes: code-security r14-r17 web probes; domain r16-identity-nav and r17-identity-residual; qa dg2-qa-r16 (unchanged) and dg2-qa-r17",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/reviews/DG2/round-17/code-security-reviewer.verifications.json",
+        "docs/delivery/reviews/DG2/round-17/domain-reviewer.verifications.json",
+        "docs/delivery/reviews/DG2/round-17/qa-verifier.verifications.json",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/probe-r17-web-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r17-identity-residual.log"
+      ]
+    },
+    {
+      "name": "Auditor reproduction of the round-10 connection-holding defect (F-DG2-410) on this candidate: no longer reproduces (app.close 3 ms vs 64,911 ms)",
+      "command": "tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/zz-aud-diag.test.ts -t '30 MiB CHUNKED' (disposable clone at 805da3e2)",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/audit/round-17/04-f410-repro-on-candidate.log",
+        "docs/delivery/test-evidence/DG2/audit/round-17/repro-r10-probe-on-ddaab3cc.log",
+        "docs/delivery/test-evidence/DG2/audit/round-17/repro-r10-probe-htab-on-ddaab3cc.log"
+      ]
+    },
+    {
+      "name": "Disclosure check: grep of every log cited by the round-17 records (and the relied-upon round-11..15 records) for undisclosed non-zero exits, failed suites or hook timeouts",
+      "command": "inline grep over every cited evidence file",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/audit/round-17/03-disclosure-grep.log",
+        "docs/delivery/test-evidence/DG2/audit/round-17/02-round17-log-grep-hits.tsv"
+      ]
+    },
+    {
+      "name": "Provenance, findings (40/40 CLOSED_VERIFIED by non-authors, fixes in the candidate) and requirement coverage audit",
+      "command": "inline audit over runs/, reviews/, findings.json, requirements.csv (git merge-base --is-ancestor)",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/audit/round-17/01-audit-checks.log"
+      ]
+    },
+    {
+      "name": "Environmental residuals on the offline/config surface: live registry (D-057), live CI (D-058), Keycloak (D-049)",
+      "command": "offline frozen install; check-ci-needs + tests; oidc.test.ts against the in-process IdP",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-17/env-residuals.log",
+        "docs/delivery/test-evidence/DG2/qa/round-17/32-residual-registry.log",
+        "docs/delivery/test-evidence/DG2/qa/round-17/33-residual-ci-config.log"
       ]
     }
   ],
-  "blocking_conditions": [
-    "Evidence does not support a recorded specialist claim. code-security-reviewer SEC-R10-01 and SEC-R10-02 are PASS with exit_status 1, and the record and probes README attribute the non-zero exit only to the obsolete round-9 S11 assertion ('28 pass, 1 fail'). Both probe logs (probe-run1-lang-unset.log and probe-run2-lang-c-utf8.log, lines 128-131 and 171) show a second failure: 'Failed Suites 1', zz-sec-r10-probe.test.ts 'Error: Hook timed out in 30000ms' at afterAll(() => api.close()), 'Test Files 2 failed (2)'. No record discloses or explains it.",
-    "Untriaged product defect in the DG2 evidence-upload scope (REQ-S13-012, REQ-S16-013), reproduced by the auditor. After a 30 MiB CHUNKED over-limit upload to uploadEvidenceContent over a real socket, the API answers 413 evidence.too_large without closing the connection. It still holds the socket about 65 s after the client destroyed it, and app.close() (also run by src/main.ts on SIGTERM) completes only after about 65 s. This is independent of the Content-Type spelling and also present at the round-9 candidate 041478cb, so it is not a BE15 regression. It has no finding ID, severity, mandatory classification, repair or acceptance. A specialist (code-security-reviewer) must triage it. If raised, it must be repaired and verified by a non-author, or, only if Low and non-mandatory, accepted as an observation by a specialist and by the release-auditor with rationale and owner. The auditor cannot waive it.",
-    "The gate validator rejects the closure of F-DG2-206 (Low, non-mandatory): 'verified by its own owner (qa-verifier)'. findings.json records owner=qa-verifier and verification.by_role=qa-verifier, while stages.json attributes fix ee46813 to the orchestrator. Either correct the ownership record or obtain a verification by a non-owner.",
-    "Consequently, code-security-reviewer's round-10 PASS cannot be relied on as a complete record of its checks. A new review round with corrected or complete evidence is required before re-audit, because round-10 records are write-once."
-  ],
+  "blocking_conditions": [],
   "accepted_observations": [],
-  "decided_at": "2026-10-07T00:16:30Z",
+  "decided_at": "2026-10-07T20:56:00Z",
   "decided_by": "release-auditor",
   "invocation_reference": {
     "kind": "claude-code-cli-session",
-    "run_id": "DG2-T-DG2-AUDIT-R10-release-auditor-20261006T235838Z-1b3a719f",
-    "session_id": "1b3a719f-57f6-455d-b417-8b726e6e2b2f"
+    "run_id": "DG2-T-DG2-AUDIT-R17-release-auditor-20261007T204355Z-31bcd459",
+    "session_id": "31bcd459-3cec-41d6-9405-aa7654a951b5"
   },
-  "notes": "DG2 engineering delivery gate only. It grants no real business, Finance or IT approval, and implies nothing about product gates G1-G6. Every other audit condition holds: identity, DG1 historical, register, provenance, 28/28 findings CLOSED_VERIFIED with correct ancestry (F-DG2-350/351 validly closed on this candidate), 32/32 requirement coverage, D-059 to D-070, residuals D-057/D-058/D-049 on their verified surfaces, and 0 BLOCKED specialist checks. Gate BLOCKED until the conditions above are resolved and a fresh audit passes."
+  "notes": "DG2 is an engineering delivery gate only. It grants no real business, Finance or IT approval and implies nothing about product gates G1-G6. All 40 DG2 findings are CLOSED_VERIFIED; there are no DG2 accepted observations. My round-10 BLOCKED conditions are resolved: the evidence is disclosed, F-DG2-410 is repaired, verified and no longer reproduces, and the F-DG2-206 owner record is corrected. The D-077 2 s residual for non-navigation GETs is accepted as declared: it can show only the current cookie holder's own server-authorised data, writes are refused, it is bounded, and all three closing specialists challenged it. Two non-finding observations for the orchestrator. (1) The round-17 audit assignment says D-067's symptom was 'attributed to port collisions'; F-DG2-310's record says that mechanism does not explain it. The symptom simply never recurred, and the records are honest. (2) code-security noted that deliberately evasive forms of setQueryData pass FE15's lint rule; no candidate code uses them."
 }

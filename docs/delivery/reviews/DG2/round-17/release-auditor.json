@@ -1,0 +1,260 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG2",
+  "round": 17,
+  "candidate_id": "sha256:ddaab3cc264b0e13caadcb17f0d1811eff8ad1ec9364b7ba9c03727b83350750",
+  "source_commit": "805da3e26bed3572ca2fc32365934e57b2e84eeb",
+  "reviewer_role": "release-auditor",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG2-T-DG2-AUDIT-R17-release-auditor-20261007T204355Z-31bcd459",
+    "session_id": "31bcd459-3cec-41d6-9405-aa7654a951b5"
+  },
+  "implementation_author": [
+    "transformation-analyst",
+    "solution-architect",
+    "backend-workflow-engineer",
+    "frontend-ux-engineer",
+    "kpi-benefits-engineer",
+    "devops-engineer",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "release-auditor authored no implementation, test, review or finding fix in the DG2 scope. That includes BE16 258b7e5, which repaired the connection-holding defect I reproduced in round 10; it was raised and verified by code-security-reviewer (F-DG2-410). I audited the frozen candidate, the three round-17 specialist records and their sidecars, run metadata and cited evidence, the round-2 to round-16 records that the 37 earlier closures rely on, findings.json, requirements.csv, stages.json and decisions D-059 to D-077. Code ran only in a disposable clone ($TMPDIR/aud at 805da3e2, offline frozen install) against disposable PostgreSQL 16 clusters, never in the candidate tree. I wrote only this record, my evidence under docs/delivery/test-evidence/DG2/audit/round-17/ and the gate record."
+  },
+  "assignment": "docs/delivery/assignments/DG2/round-17/release-auditor.md",
+  "requirements_checked": [
+    "REQ-PB-003",
+    "REQ-PB-012",
+    "REQ-PB-016",
+    "REQ-PB-017",
+    "REQ-PB-018",
+    "REQ-PB-023",
+    "REQ-PB-024",
+    "REQ-PB-025",
+    "REQ-PB-026",
+    "REQ-PB-027",
+    "REQ-PB-028",
+    "REQ-PB-029",
+    "REQ-PB-030",
+    "REQ-PB-031",
+    "REQ-PB-033",
+    "REQ-PB-034",
+    "REQ-PB-035",
+    "REQ-PB-036",
+    "REQ-PB-037",
+    "REQ-PB-038",
+    "REQ-PB-039",
+    "REQ-PB-041",
+    "REQ-PB-042",
+    "REQ-PB-043",
+    "REQ-DLV-034",
+    "REQ-S04-003",
+    "REQ-S04-004",
+    "REQ-S04-005",
+    "REQ-S05-003",
+    "REQ-S10-001",
+    "REQ-S13-012",
+    "REQ-S16-013"
+  ],
+  "checks_run": [
+    {
+      "id": "AUD-1-identity",
+      "procedure": "Verify the assignment hash, then check for a complete clone. Recompute the candidate in the working tree and in a fresh disposable clone at the source commit. Validate the previous gate historically and the register rules at DG2.",
+      "command": "sha256sum <assignment>; git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG2 (HEAD and clone @805da3e2); node tools/gates/validate.mjs --historical --stage DG1; node tools/gates/validate.mjs --register DG2",
+      "environment": "repository at HEAD 59225ac (child of 805da3e2 adding only delivery metadata); clone $TMPDIR/aud @805da3e2; node v24.21.0; auditor sandbox",
+      "expected": "assignment sha 5e558abb...; not shallow; sha256:ddaab3cc...350750 with 564 files in both; DG1 historical PASS; register PASS",
+      "actual": "Assignment sha256 5e558abb178ba661...fcad719 matches. The clone is complete (is-shallow=false, 556 commits) and 805da3e2 is an ancestor of HEAD. The candidate is sha256:ddaab3cc264b0e13caadcb17f0d1811eff8ad1ec9364b7ba9c03727b83350750 with 564 files, both on HEAD and in the clean clone at 805da3e2, equal to stages.json (state VERIFYING, frozen 2026-10-07T18:52:35Z) and to the three specialist records. 'PASS gate DG1 (historical)' exit 0. 'PASS register rules at DG2' exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/audit/round-17/01-audit-checks.log",
+        "docs/delivery/candidates/DG2/ddaab3cc264b0e13.manifest.json"
+      ]
+    },
+    {
+      "id": "AUD-2-independence-provenance",
+      "procedure": "For each round-17 specialist record, resolve invocation_reference to its run directory. Check that the run is real, distinct, successful and sandboxed: meta role, task, assignment and session id, exit code and subtype, and sha256(sandbox.json) == meta.process_sandbox_sha256. Check that the run's own outputs and tool_authored files are unchanged, and check the independence declarations and authorship.",
+      "command": "inline node over docs/delivery/runs/DG2/<run_id>/{meta.json,sandbox.json} and the round-17 records",
+      "environment": "repository working tree, node v24.21.0",
+      "expected": "3 distinct round-17 runs (one per role), exit 0/success, process_sandbox true with matching sandbox hash, own outputs byte-identical, no reviewer authored DG2 implementation",
+      "actual": "domain DG2-T-DG2-REV-DOM-R17-...-1c1fbb0d, code-security DG2-T-DG2-REV-SEC-R17-...-682880ae and qa DG2-T-DG2-REV-QA-R17-...-4af87c30 have three distinct session ids. Each run's meta has the matching role, the round-17 task and assignment, exit_code 0, subtype success, is_error false, process_sandbox true, sandbox_sha_match true, no external config change and nothing discarded. Own outputs (118, 46 and 186 files) and every tool_authored file are byte-identical to the repository. Each meta's outputs map also lists other roles' files as a working-tree snapshot taken during concurrent runs; those are not tool_authored by that run, and each such file matches its own author's run. All three declare reviewer_authored_reviewed_scope=false. The DG2 fixes are authored by implementer roles or the orchestrator (git log of the fix commits; F-DG2-206's ee46813 says 'Orchestrator-authored'). Domain's attempted handback write outside its area is not in its outputs; its copy is under its own evidence directory.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/audit/round-17/01-audit-checks.log",
+        "docs/delivery/runs/DG2/DG2-T-DG2-REV-DOM-R17-domain-reviewer-20261007T185446Z-1c1fbb0d/meta.json",
+        "docs/delivery/runs/DG2/DG2-T-DG2-REV-SEC-R17-code-security-reviewer-20261007T185426Z-682880ae/meta.json",
+        "docs/delivery/runs/DG2/DG2-T-DG2-REV-QA-R17-qa-verifier-20261007T185506Z-4af87c30/meta.json"
+      ]
+    },
+    {
+      "id": "AUD-3-verdicts",
+      "procedure": "Read the three round-17 specialist records: verdict, candidate id, source commit, checks and findings.",
+      "command": "inline node over docs/delivery/reviews/DG2/round-17/*.json",
+      "environment": "repository working tree",
+      "expected": "3x PASS on sha256:ddaab3cc..., source 805da3e2, no new findings, no BLOCKED check",
+      "actual": "domain-reviewer PASS (17 checks, all PASS), code-security-reviewer PASS (28 checks, all PASS) and qa-verifier PASS (30 checks, all PASS), all on candidate sha256:ddaab3cc...350750 and source 805da3e26bed. findings[] is empty in all three. No check is BLOCKED or FAIL.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/reviews/DG2/round-17/domain-reviewer.json",
+        "docs/delivery/reviews/DG2/round-17/code-security-reviewer.json",
+        "docs/delivery/reviews/DG2/round-17/qa-verifier.json"
+      ]
+    },
+    {
+      "id": "AUD-4-findings",
+      "procedure": "For all 40 DG2 findings in findings.json, check: status; that fix_revision is an ancestor of 805da3e2; that the verifying record exists with its source_commit present and containing the fix; that the verifier is not the owner. Read the round-17 sidecars for F-DG2-530, 570 and 580, F-DG2-410's history, and F-DG2-206's owner correction against commit ee46813.",
+      "command": "inline node (git merge-base --is-ancestor, git cat-file) over findings.json and docs/delivery/reviews/DG2/round-*/; git show ee46813",
+      "environment": "repository working tree, git",
+      "expected": "40/40 CLOSED_VERIFIED; no OPEN or FIXED_PENDING_VERIFICATION; every fix in the candidate; non-author verification; 530/570/580 closed on ddaab3cc by code-security, domain and qa",
+      "actual": "40/40 CLOSED_VERIFIED, 0 problems. Every fix_revision is an ancestor of 805da3e2. Every verifying record's source_commit exists and contains the fix. Verifier differs from owner in all 40.\n- Round 17: F-DG2-530 is closed by code-security (round-15 raiser; its round-16 verification failed; FE15 ac81298), F-DG2-570 by domain and F-DG2-580 by qa. Each sidecar names candidate ddaab3cc and states the D-077 2 s residual was considered (code-security probe Z3; domain probe r17-identity-residual; qa R17-04c).\n- F-DG2-410: honestly recorded. Reproduced at 7fd1a89c (round-11 repro-7fd1a89c.log), fixed by BE16 258b7e5 (backend-workflow-engineer), verified by code-security in round 11 on 23e6c0a2. 258b7e5 is an ancestor of this candidate, and my own reproduction no longer reproduces (AUD-5).\n- F-DG2-206: owner is delivery-orchestrator. ee46813's message says 'Orchestrator-authored', so qa's verification is by a non-author.\n- The other 36 are as listed in the assignment: 411/412 by code-security in round 12; 430 by qa in round 12 (the closure is valid although that qa round's overall verdict was FAIL for other reasons); 440/441 by code-security and 460 by qa in round 13; 480 by domain in round 14; 500 by code-security in round 15.\n- Unresolved Critical/High: 0. F-DG2-140/141/201/202 (High, mandatory), F-DG2-142/150/203 (Medium, mandatory) and F-DG2-480 (High, non-mandatory) are all CLOSED_VERIFIED. Unresolved mandatory violations: 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/audit/round-17/01-audit-checks.log",
+        "docs/delivery/findings.json",
+        "docs/delivery/reviews/DG2/round-17/code-security-reviewer.verifications.json",
+        "docs/delivery/reviews/DG2/round-17/domain-reviewer.verifications.json",
+        "docs/delivery/reviews/DG2/round-17/qa-verifier.verifications.json",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/repro-7fd1a89c.log"
+      ]
+    },
+    {
+      "id": "AUD-5-f410-auditor-repro-on-candidate",
+      "procedure": "Re-run my own round-10 reproduction, the 30 MiB chunked over-limit evidence upload over a real socket followed by app.close() timing, UNCHANGED on this candidate. Use a disposable clone at 805da3e2 (offline frozen install) and a disposable PostgreSQL 16. Run A uses the plain Content-Type; run B uses the HTAB spelling from round-10 zz-aud-canon.diff.",
+      "command": "cp docs/delivery/test-evidence/DG2/audit/round-10/zz-aud-diag.test.ts.txt <clone>/apps/api/test/integration/zz-aud-diag.test.ts; tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/zz-aud-diag.test.ts -t '30 MiB CHUNKED'",
+      "environment": "$TMPDIR/aud @805da3e2 (candidate recomputed in the clone with the probe stashed: ddaab3cc, 564 files), node v24.21.0, PostgreSQL 16 on ports 26417 and 26617",
+      "expected": "no longer reproduces: the server closes the connection, 0 open connections at teardown, app.close() bounded (round 10: closedByServer=false, 1 connection held, app.close 64,911 ms)",
+      "actual": "Both runs: 413 evidence.too_large, closedByServer=true, nothing stored, 0 error logs, server connections=0 at teardown, app.close done in 3 ms (round 10: 64,911 ms). 1 passed and 17 skipped, exit 0. No 'Hook timed out' and no 'Failed Suites'. The defect no longer reproduces.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S13-012",
+        "REQ-S16-013"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/audit/round-17/04-f410-repro-on-candidate.log",
+        "docs/delivery/test-evidence/DG2/audit/round-17/repro-r10-probe-on-ddaab3cc.log",
+        "docs/delivery/test-evidence/DG2/audit/round-17/repro-r10-probe-htab-on-ddaab3cc.log",
+        "docs/delivery/test-evidence/DG2/audit/round-10/repro-diag.log",
+        "docs/delivery/test-evidence/DG2/audit/round-10/zz-aud-diag.test.ts.txt"
+      ]
+    },
+    {
+      "id": "AUD-6-disclosure-grep",
+      "procedure": "Round-10 blocking condition 1. Grep every file cited by the three round-17 records (evidence_paths, check evidence and verification evidence: 109 domain, 51 code-security and 87 qa files, all existing) for non-zero exits, failed tests or suites, and hook timeouts. Classify each hit against the record. For the round-11 to round-15 records that the 37 earlier closures rely on, list non-zero checks and flagged logs and confirm each is named and explained in its record. Spot-check the round-11 probe and the qa R15-04 diagnosis.",
+      "command": "inline node grep over the cited files (pattern: Hook timed out|Failed Suites|Test Files N failed|N failed|exit [1-9]|EXIT=[1-9]|ERR_|...)",
+      "environment": "repository working tree",
+      "expected": "every non-zero exit, failed test or hook timeout in a cited log is disclosed and explained; no hidden failure",
+      "actual": "No cited round-17 log contains 'Hook timed out' or 'Failed Suites'. Every candidate suite passes: unit 926/926 (Node 22 and 24, under load), integration 612/612 (code-security, both locales) and 652/652 (qa with QA suites, 3 runs per locale), product e2e 74/74 per locale. Every non-zero hit is disclosed in its check:\n- qa 17-e2e-qa-stack-*: 2 failed, exit 1. This is qa's own round-15 spec R15-04, last step (not in the candidate manifest). It is measured in 20-r15-04-diagnostic-*: the second PUT carries the new same-person session's csrf and is answered 200, so the missing notice is correct; R17-10 passes 4/4. I read the trace.\n- qa 18-r17-spec-dev-run1..4: spec development runs (QA-R17-18).\n- qa round-16 19-r16-06-*: F-DG2-580's negative control.\n- qa 32-residual-registry: exit 124, the D-057 residual.\n- code-security lint-bypass-probe: exit 1 by design (SEC-R17-19).\n- domain stack-run-4/5/7/8 EXIT=1: probe attempts 1 and 2 (probe mistakes, fixed), and the dev-login 429 under the default 20/min auth limit, dev mode only. All are explained in env.txt and in the record.\n- Other hits are passing test titles, the D-065 SQL_ASCII fail-closed probe, and the assertion output of the passing 'db ECONNRESET is a 500' negative test.\nRounds 11-15: every flagged log is named and explained in its record. For example, round-11 code-security probes exit 1 by design with 3 named out-of-scope failures (F-DG2-411/412) and no hook timeout.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/audit/round-17/03-disclosure-grep.log",
+        "docs/delivery/test-evidence/DG2/audit/round-17/02-round17-log-grep-hits.tsv",
+        "docs/delivery/test-evidence/DG2/qa/round-17/20-r15-04-diagnostic-unset.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/env.txt",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/all-exit-statuses.txt"
+      ]
+    },
+    {
+      "id": "AUD-7-residuals",
+      "procedure": "Environmental residuals: confirm that no round-17 specialist recorded a BLOCKED check, and that the live registry (D-057), live CI (D-058) and Keycloak (D-049) residuals are documented with their available surface verified.",
+      "command": "read SEC-R17-25..27, QA-R17-32..34, DOM-R17-16 and their logs",
+      "environment": "repository working tree",
+      "expected": "0 BLOCKED checks; offline/config surfaces verified",
+      "actual": "0 BLOCKED checks in all three records.\n- D-057: offline frozen-lockfile installs exit 0 and the dependency diff since round 16 is empty; deps:verify times out (124) without network.\n- D-058: ci.yml has 5 jobs gated on delivery-gates (validate --pipeline); check-ci-needs exit 0 and its tests pass 46/46.\n- D-049: oidc.test.ts passes 33/33 per integration run against the in-process IdP.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-034"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-17/env-residuals.log",
+        "docs/delivery/test-evidence/DG2/qa/round-17/32-residual-registry.log",
+        "docs/delivery/test-evidence/DG2/qa/round-17/33-residual-ci-config.log"
+      ]
+    },
+    {
+      "id": "AUD-8-requirements",
+      "procedure": "Compare the register's final_gate=DG2 rows with the assignment list, check their status, and check coverage: each row in qa's requirements_checked AND in domain's or code-security's.",
+      "command": "python3 csv over docs/delivery/requirements.csv; node tools/gates/validate.mjs --register DG2",
+      "environment": "repository working tree",
+      "expected": "32 rows equal to the assignment list, all IMPLEMENTED, all covered; register PASS",
+      "actual": "32 rows, identical to the assignment list and all IMPLEMENTED. Each is in qa's list, and in domain's (26) or code-security's (10; REQ-PB-027/028, DLV-034, S10-001, S13-012 and S16-013 only there). 'PASS register rules at DG2' exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/audit/round-17/01-audit-checks.log",
+        "docs/delivery/requirements.csv"
+      ]
+    },
+    {
+      "id": "AUD-9-decisions",
+      "procedure": "Read D-059 to D-077 for presence and rationale, with D-062, D-067, D-069, D-070, D-071, D-072, D-073, D-074, D-075, D-076 and D-077 checked against the assignment's descriptions. Judge the D-077 2 s residual.",
+      "command": "grep '^| D-0NN |' docs/delivery/decisions.md; read findings.json F-DG2-310",
+      "environment": "repository working tree",
+      "expected": "all recorded with rationale and evidence; the D-077 residual is acceptable as declared or a reason to BLOCK",
+      "actual": "D-059 to D-077 are all present, each with rationale, evidence and a reopen condition.\n- D-062: surgical rewrite with the user's explicit approval (AskUserQuestion 'Surgical rewrite').\n- D-069: the media-type design choices.\n- D-070: BE15 salvage; BE15B is the implementer evidence and the orphaned transcript is provenance only.\n- D-071: my three round-10 conditions and their resolution.\n- D-072: BE17 three-phase upload and pool bounds, FE9 pure updaters, ADR-0007 §5b 503 note.\n- D-073: BE18A commit-time authorisation, OIDC discovery outside transactions, in-flight shutdown tracking, .part sweep.\n- D-074: FE10/11/12.\n- D-075: FE13, and qa round-14 salvage (the R14B run is the record).\n- D-076: FE14 generation.\n- D-077: FE15 and the residual.\nOBSERVATION on D-067: the assignment says its unreproduced setup failure was 'later attributed to port collisions and fixed by F-DG2-310'. The records say the opposite: F-DG2-310's 'actual' states that the EADDRINUSE mechanism 'does NOT explain the orchestrator's D-067 symptom'. D-068 and stages.json record that it did not recur in 24 qa runs. The records are honest; only the assignment's summary is inaccurate. The symptom has not recurred in the 8 round-17 integration runs I examined (612/612 and 652/652). No specialist raised it, so it is not blocking.\nD-077 residual: ACCEPTABLE as declared. It needs another tab of the same browser to sign a different person in within 2 s of tab 1's last /me. What can show is the new cookie holder's own server-authorised data under the previous header. Writes carry the old CSRF token and are refused. It ends at the next navigation, refocus, or GET after 2 s. qa R17-04c shows the worst case, B landing on A's organisation URL (an opaque id) with 'no permission' and no name or code. All three closing specialists challenged it with their own probes and accepted it. None raised a finding.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/decisions.md",
+        "docs/delivery/findings.json",
+        "docs/delivery/test-evidence/DG2/qa/round-17/18-r17-spec-dev-run2.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r17-identity-residual.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/probe-r17-web-node22-lang-unset.log"
+      ]
+    },
+    {
+      "id": "AUD-10-round10-conditions",
+      "procedure": "Check each of my round-10 blocking conditions against the evidence.",
+      "command": "see AUD-4, AUD-5, AUD-6; node tools/gates/validate.mjs --stage DG2",
+      "environment": "repository working tree",
+      "expected": "(1) every non-zero exit, failed suite or hook timeout disclosed; (2) the connection-holding defect has an ID, severity and mandatory class, and is repaired and verified by a non-author on this candidate; (3) the validator no longer reports F-DG2-206",
+      "actual": "(1) Resolved (AUD-6).\n(2) Resolved: F-DG2-410, Medium, mandatory_violation=false (availability only; nothing stored and no authorization bypass). Repaired by BE16 (backend-workflow-engineer), verified by code-security in round 11, the fix is in this candidate, and my own reproduction no longer reproduces (AUD-5).\n(3) Resolved: neither validate.mjs run in this audit reports F-DG2-206 (see AUD-11).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/audit/round-17/03-disclosure-grep.log",
+        "docs/delivery/test-evidence/DG2/audit/round-17/04-f410-repro-on-candidate.log",
+        "docs/delivery/test-evidence/DG2/audit/round-17/01-audit-checks.log"
+      ]
+    },
+    {
+      "id": "AUD-11-product-vs-engineering-gates",
+      "procedure": "Scan the 564 candidate files for text that ties G1-G6 to DG0-DG7, grants a real business, Finance or IT approval, or claims PMI certification or official Mobily branding.",
+      "command": "xargs grep over the manifest file list for DG[0-7] with G[1-6], and for certification and official-branding phrases",
+      "environment": "repository working tree",
+      "expected": "only disclaimers",
+      "actual": "Every hit is a disclaimer. Agent definitions and CLAUDE.md say G6 never implies DG7. apps/api gate-facts.ts and transformations/routes.ts say product gates are 'unrelated to the engineering delivery gates DG0-DG7'. The i18n provisional-branding notice, the Dockerfile label 'Not an official PMI product' and the analysis docs say 'inspired by'. Domain's G1-G3 decisions in its live scenario are demo decisions on synthetic data. Nothing grants a real approval.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/audit/round-17/01-audit-checks.log",
+        "apps/api/src/modules/kpi/gate-facts.ts",
+        "apps/web/src/i18n/en/common.json"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG2/audit/round-17/01-audit-checks.log",
+    "docs/delivery/test-evidence/DG2/audit/round-17/02-round17-log-grep-hits.tsv",
+    "docs/delivery/test-evidence/DG2/audit/round-17/03-disclosure-grep.log",
+    "docs/delivery/test-evidence/DG2/audit/round-17/04-f410-repro-on-candidate.log",
+    "docs/delivery/test-evidence/DG2/audit/round-17/repro-r10-probe-on-ddaab3cc.log",
+    "docs/delivery/test-evidence/DG2/audit/round-17/repro-r10-probe-htab-on-ddaab3cc.log",
+    "docs/delivery/reviews/DG2/round-17/domain-reviewer.json",
+    "docs/delivery/reviews/DG2/round-17/code-security-reviewer.json",
+    "docs/delivery/reviews/DG2/round-17/qa-verifier.json",
+    "docs/delivery/findings.json",
+    "docs/delivery/decisions.md"
+  ],
+  "reviewed_at": "2026-10-07T20:55:00Z",
+  "summary": "Audit PASS on candidate sha256:ddaab3cc...350750 (564 files, source 805da3e2).\n- Three independent, sandboxed, successful round-17 specialist runs, all PASS on this candidate, with no new findings and no BLOCKED check.\n- 40/40 DG2 findings CLOSED_VERIFIED by non-authors, every fix an ancestor of the candidate. 0 unresolved Critical/High and 0 unresolved mandatory violations.\n- 32/32 DG2 requirements IMPLEMENTED and covered. DG1 historical PASS; register PASS.\n- My round-10 conditions are resolved, and my connection-holding reproduction no longer reproduces (app.close 3 ms vs 64,911 ms).\n- The D-077 2 s residual is acceptable as declared.\n- Observation: the assignment's D-067 summary overstates the records, which honestly say the D-067 symptom is unexplained but never recurred. Non-blocking.\n- validate --stage DG2: see the gate record. Approval is conditional on every reported error concerning only my own in-flight run_id."
+}
