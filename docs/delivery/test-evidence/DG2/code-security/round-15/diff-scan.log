@@ -1,0 +1,20 @@
+# command: git diff ea9051b..ed80b23 --stat -- . ':!docs'; then the product diff (non-test) scanned for risky patterns
+ apps/web/e2e/session-end.spec.ts            |  97 +++++++
+ apps/web/src/api/client.ts                  |  81 ++++--
+ apps/web/src/api/queries.ts                 |  13 +-
+ apps/web/src/app/App.tsx                    |  24 +-
+ apps/web/src/auth/session-identity.test.tsx | 411 ++++++++++++++++++++++++++++
+ apps/web/src/auth/session.tsx               |  29 +-
+ 6 files changed, 623 insertions(+), 32 deletions(-)
+# pattern: https?://|cdn|unpkg|jsdelivr|googleapis|innerHTML|dangerously|eval\(|new Function|localStorage|sessionStorage|password|secret|token|api[_-]?key|window\.location|returnTo|console\.(log|debug)
+35:+ * The identity of a GET /me answer: organization, user and session. The CSRF token stands for the session: the API
+36:+ * derives it from the session token (apps/api identity/sessions.ts csrfTokenFor), so a new session (another user, or
+37:+ * the same user signed in again elsewhere) has a new one. Kept only in memory, like the token itself.
+41:+  readonly csrfToken: string;
+43:+  return `${me.user.organizationId}\u0000${me.user.id}\u0000${me.csrfToken}`;
+75:+  setCsrfToken,
+# note: the assignment names the range fe22d759..cbdb4f68 (round 10 -> 11, already reviewed in rounds 11-14); the product change since round 14 is ea9051b..ed80b23 (round-14 source -> round-15 source). Stat of the named range for the record:
+ apps/api/test/integration/framework-errors.test.ts |  12 +-
+ apps/api/test/support/harness.ts                   |   3 +
+ 11 files changed, 1240 insertions(+), 9 deletions(-)
+# exit_status: 0

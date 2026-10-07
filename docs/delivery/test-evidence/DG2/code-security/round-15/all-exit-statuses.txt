@@ -1,0 +1,54 @@
+# code-security-reviewer DG2 round-15: every exit status in this directory's logs (grep '# exit_status' / summary files), 2026-10-07T13:31:54Z
+aud-403-sweep.log:# exit_status: 0
+build.log:# exit_status: 0
+candidate-id.log:# exit_status: 0
+contract-ops.log:# exit_status: 0
+diff-scan.log:# exit_status: 0
+format-check.log:# exit_status: 0
+install.log:# exit_status: 0
+install2.log:# exit_status: 0
+integration-run1-lang-unset.log:# exit_status: 0
+integration-run2-lang-c-utf8.log:# exit_status: 0
+lint.log:# exit_status: 0
+no-cdn.log:# exit_status: 0
+openapi-lint.log:# exit_status: 0
+probe-r14-web-node22-lang-unset.log:# exit_status: 0
+probe-r14-web-node24-lang-c-utf8.log:# exit_status: 0
+probe-r15-web-node22-lang-unset.log:# exit_status: 1
+probe-r15-web-node24-lang-c-utf8.log:# exit_status: 1
+requirements-suites.log:# exit_status: 0
+typecheck.log:# exit_status: 0
+unit-node22.log:# exit_status: 0
+unit-node24.log:# exit_status: 0
+unit-under-load-node22.log:# exit_status: 0
+unit-under-load-node24.log:# exit_status: 0
+validate-historical-DG0.log:# exit_status: 0
+validate-historical-DG1.log:# exit_status: 0
+-- summary.txt
+candidate-id 0
+build 0
+install2 0
+typecheck 0
+lint 0
+openapi-lint 0
+no-cdn 0
+format-check 0
+unit-node22 0
+unit-node24 0
+integration-run1-lang-unset 0
+integration-run2-lang-c-utf8 0
+validate-historical-DG0 0
+validate-historical-DG1 0
+DONE
+-- probe-summary.txt
+probe-r14-web-node22-lang-unset 0
+probe-r14-web-node24-lang-c-utf8 0
+probe-r15-web-node22-lang-unset 1
+probe-r15-web-node24-lang-c-utf8 1
+DONE
+-- env-residuals.log
+check-ci-needs exit=0
+check-ci-needs.test exit=0
+-- notes
+probe-r15-web-*: exit 1 BY DESIGN: exactly one assertion fails in each (X3: expected cache[transformation].name to be undefined, got 'A-PATCHED-SECRET') = new finding F-DG2-530; the other 5 cases pass.
+load-generator.log: the load loop's build/integration output is discarded (load only); it ran 3 build and 2 integration iterations.

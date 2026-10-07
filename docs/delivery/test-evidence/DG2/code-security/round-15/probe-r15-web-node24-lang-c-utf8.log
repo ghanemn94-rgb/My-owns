@@ -1,0 +1,58 @@
+# command: pnpm vitest run --project unit-web apps/web/src/auth/zz-sec-r15-web-probe.test.tsx
+# clone HEAD 9236a9f696749612a84dfa352046f4d8ddc6fa91 (candidate 3f01c610 = source ed80b23 + metadata); node v24.21.0; LANG=C.UTF-8 LC_ALL=<unset>; probe sha256 bd97dbc90c6a39b5; started 2026-10-07T13:28:04Z
+
+ RUN  v3.2.4 /var/tmp/mth-run.AojpI0/claude-0/r15p
+
+stdout | src/auth/zz-sec-r15-web-probe.test.tsx > X2 Back/Forward after an identity change > B pressing Back to A's detail page never sees A's cached record
+X2: path /transformations/01920000-0000-7000-9000-000000000301; A's record seen after Back/Back/Forward = false,false,false
+
+stdout | src/auth/zz-sec-r15-web-probe.test.tsx > X3 a mutation of A's in flight across an identity change > its success (A's record) is not written into B's cache nor shown to B
+X3: GET detail requests so far 2 (1 = A's own edit-page load; a 2nd would be B refetching); path /transformations/01920000-0000-7000-9000-000000000301; header B=true; cache[transformation 01920000-0000-7000-9000-000000000301].name=A-PATCHED-SECRET; B sees A-PATCHED-SECRET=true
+
+stdout | src/auth/zz-sec-r15-web-probe.test.tsx > X3 a mutation of A's in flight across an identity change > its success (A's record) is not written into B's cache nor shown to B
+X3 after B's refetch (404): B still sees A-PATCHED-SECRET=true; cache name=A-PATCHED-SECRET
+
+stdout | src/auth/zz-sec-r15-web-probe.test.tsx > X3 a mutation of A's in flight across an identity change > X3b the same after a session END in this tab and B's sign-in: the identity change at B's /me removes it
+X3b: cache after the end and the late PATCH = A-PATCHED-SECRET; after B's sign-in path /transformations/01920000-0000-7000-9000-000000000301; cache name=undefined; B sees it=false
+
+stdout | src/auth/zz-sec-r15-web-probe.test.tsx > X4 a query of A's in flight across an identity change > A's late answer never lands in B's cache or screen
+X4: transformations queries after release = 
+
+stdout | src/auth/zz-sec-r15-web-probe.test.tsx > X6 OBSERVATION: refocus within GET /me's 60 s staleTime > logs what the tab shows after B signs in elsewhere and the window regains focus (always passes)
+X6: requests on refocus = ["GET /api/v1/transformations"]; header A=true; B's row shown=true; A's row shown=false
+
+stdout | src/auth/zz-sec-r15-web-probe.test.tsx > X7 403 csrf on a mutation is not a session end > PATCH 403 csrf keeps the phase, the identity and the cache
+X7: phase active; queries with data before 3 after 3; me cached true
+
+ ❯ |unit-web| src/auth/zz-sec-r15-web-probe.test.tsx (6 tests | 1 failed) 2872ms
+   ✓ X2 Back/Forward after an identity change > B pressing Back to A's detail page never sees A's cached record  504ms
+   × X3 a mutation of A's in flight across an identity change > its success (A's record) is not written into B's cache nor shown to B 834ms
+     → expected 'A-PATCHED-SECRET' to be undefined
+   ✓ X3 a mutation of A's in flight across an identity change > X3b the same after a session END in this tab and B's sign-in: the identity change at B's /me removes it  489ms
+   ✓ X4 a query of A's in flight across an identity change > A's late answer never lands in B's cache or screen 288ms
+   ✓ X6 OBSERVATION: refocus within GET /me's 60 s staleTime > logs what the tab shows after B signs in elsewhere and the window regains focus (always passes)  355ms
+   ✓ X7 403 csrf on a mutation is not a session end > PATCH 403 csrf keeps the phase, the identity and the cache  400ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/auth/zz-sec-r15-web-probe.test.tsx > X3 a mutation of A's in flight across an identity change > its success (A's record) is not written into B's cache nor shown to B
+AssertionError: expected 'A-PATCHED-SECRET' to be undefined
+
+[32m- Expected:[39m 
+undefined
+
+[31m+ Received:[39m 
+"A-PATCHED-SECRET"
+
+ ❯ src/auth/zz-sec-r15-web-probe.test.tsx:183:26
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  13:28:05
+   Duration  5.70s (transform 1.22s, setup 154ms, collect 1.85s, tests 2.87s, environment 444ms, prepare 126ms)
+
+# exit_status: 1 finished 2026-10-07T13:28:11Z
