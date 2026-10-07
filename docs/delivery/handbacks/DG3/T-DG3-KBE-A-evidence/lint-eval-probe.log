@@ -1,0 +1,65 @@
+$ date -u
+Wed Oct  7 22:17:11 UTC 2026
+$ cat packages/shared/src/formula/zz-eval-probe.ts
+// TEMPORARY lint probe (T-DG3-KBE-A): must FAIL the formula ESLint override; deleted after the run.
+import * as vm from "node:vm";
+export const a: unknown = eval("1");
+export const b: unknown = new Function("return 1");
+export const c: unknown = Function("return 1");
+export const d = setTimeout("1", 0);
+export const e = import("node:fs");
+export const f = vm;
+$ npx eslint --max-warnings=0 packages/shared/src/formula/zz-eval-probe.ts
+
+/home/user/wt/dg3-kbe-a/packages/shared/src/formula/zz-eval-probe.ts
+  2:1   error  'node:vm' import is restricted from being used. The formula engine never runs code (ADR-0024 §6)  no-restricted-imports
+  3:27  error  `eval` can be harmful                                                                             no-eval
+  4:27  error  The Function constructor is eval                                                                  no-new-func
+  5:27  error  The Function constructor is eval                                                                  no-new-func
+  7:18  error  No dynamic import() in the formula engine (ADR-0024 §6)                                           no-restricted-syntax
+
+✖ 5 problems (5 errors, 0 warnings)
+
+exit=1
+$ rm -f packages/shared/src/formula/zz-eval-probe.ts
+$ test -e packages/shared/src/formula/zz-eval-probe.ts (after removal)
+exists_exit=1 (1 = removed)
+=== run 2 (after adding the timer and .constructor selectors) ===
+$ date -u
+Wed Oct  7 22:17:30 UTC 2026
+$ cat packages/shared/src/formula/zz-eval-probe.ts
+// TEMPORARY lint probe (T-DG3-KBE-A): must FAIL the formula ESLint override; deleted after the run.
+import * as vm from "node:vm";
+import { runInNewContext } from "vm";
+export const a: unknown = eval("1");
+export const b: unknown = new Function("return 1");
+export const c: unknown = Function("return 1");
+export const d = setTimeout("1", 0);
+export const d2 = globalThis.setInterval("1", 0);
+export const e = import("node:fs");
+export const f = vm;
+export const g = runInNewContext;
+export const h: unknown = (() => 1).constructor("return 1");
+export const i = parseFloat("0.1");
+$ npx eslint --max-warnings=0 packages/shared/src/formula/zz-eval-probe.ts
+
+/home/user/wt/dg3-kbe-a/packages/shared/src/formula/zz-eval-probe.ts
+   2:1   error  'node:vm' import is restricted from being used. The formula engine never runs code (ADR-0024 §6)  no-restricted-imports
+   3:1   error  'vm' import is restricted from being used. The formula engine never runs code (ADR-0024 §6)       no-restricted-imports
+   4:27  error  `eval` can be harmful                                                                             no-eval
+   5:27  error  The Function constructor is eval                                                                  no-new-func
+   6:27  error  The Function constructor is eval                                                                  no-new-func
+   7:18  error  No timers in the formula engine: a timer can take a code string (ADR-0024 §6)                     no-restricted-syntax
+   8:19  error  No timers in the formula engine: a timer can take a code string (ADR-0024 §6)                     no-restricted-syntax
+   8:19  error  Implied eval. Consider passing a function instead of a string                                     no-implied-eval
+   9:18  error  No dynamic import() in the formula engine (ADR-0024 §6)                                           no-restricted-syntax
+  12:27  error  No .constructor(...) calls in the formula engine: that is the Function constructor (ADR-0024 §6)  no-restricted-syntax
+  13:18  error  Use Decimal (decimal.js via @mth/shared) for money, rates and KPI values, never parseFloat        no-restricted-syntax
+
+✖ 11 problems (11 errors, 0 warnings)
+
+exit=1
+$ rm -f packages/shared/src/formula/zz-eval-probe.ts
+exists_exit=1 (1 = removed)
+$ git status --porcelain packages/shared/src/formula/zz-eval-probe.ts
+(empty = not in tree)
