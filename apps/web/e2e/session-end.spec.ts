@@ -20,6 +20,7 @@ import {
   SYN_RETAIL,
   apiSession,
   axeSummary,
+  ensureLanguage,
   expectAccessible,
   fieldLabel,
   langOf,
@@ -354,4 +355,100 @@ test("a 403 is not a session end: a refused change keeps the user signed in wher
   await expect(page.getByRole("button", { name: tr(other, "auth.signOut"), exact: true })).toBeVisible();
   expect(watched.me - meAt).toBeLessThanOrEqual(1);
   expect(watched.tooMany).toEqual([]);
+});
+
+// F-DG2-500 (T-DG2-FE13): a session that ends while the SIGN-IN PAGE is shown clears the session-scoped cache there and
+// then, and the next identity to sign in in that tab never sees the previous user's records. The reviewer's W5 path,
+// in a real browser against the real API: user A (dev.office, organization-wide Transformation Office) sees a record
+// in Synthetic Finance; A signs in from an in-document /login entry (the sign-in page's own wordmark link), so the
+// browser history holds that entry; A's session ends elsewhere; the history goes back to that /login entry (the sign-in
+// page's GET /me is what notices the end); user B (dev.lead, Synthetic Retail only, who cannot read A's record)
+// signs in with the development form in the same tab and lands on the same list. B's list request is held for 1.5 s so
+// the first render under B shows whatever the cache still holds; a MutationObserver records whether A's record text
+// ever appears in the document while B is signed in. All data is SYNTHETIC.
+const SYN_FIN = "01920000-0000-7000-9000-000000000103";
+
+test("a session end on the sign-in page: the next user to sign in in the tab never sees the previous user's records", async ({
+  page,
+  playwright,
+}, info) => {
+  const lang = langOf(info);
+  const foreign = trackRequests(page);
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  const marker = `Synthetic A-only FE13 ${lang.toUpperCase()} ${Date.now().toString(36)}`;
+  const office = await apiSession(playwright, "dev.office");
+  const record = await office.call<{ id: string; code: string }>("POST", "/api/v1/transformations", {
+    businessUnitId: SYN_FIN,
+    name: marker,
+    mode: "end_to_end",
+  });
+  // Server-side authorisation is the first line: B cannot read A's record at all.
+  const lead = await apiSession(playwright, "dev.lead");
+  const leadList = await lead.call<{ items: { id: string }[] }>(
+    "GET",
+    `/api/v1/transformations?q=${encodeURIComponent(record.code)}`,
+  );
+  expect(leadList.items.map((i) => i.id)).not.toContain(record.id);
+
+  // A: the sign-in page, its wordmark link (pushes an in-document /login entry), then the development sign-in.
+  await page.goto("/login?returnTo=%2Ftransformations");
+  await page.getByTestId("wordmark").click();
+  await expect(page).toHaveURL(/\/login$/);
+  const field = page.getByLabel(
+    new RegExp(`^(?:${tr("ar", "auth.dev.username")}|${tr("en", "auth.dev.username")})(?:\\s*\\(.*\\))?$`),
+  );
+  await field.fill("dev.office");
+  await field.press("Enter");
+  await page.waitForURL("**/my-work");
+  await ensureLanguage(page, lang);
+  await page
+    .getByRole("navigation", { name: tr(lang, "nav.primary") })
+    .getByRole("link", { name: tr(lang, "nav.areas.transformations.label") })
+    .click();
+  await page.waitForURL("**/transformations");
+  await expect(page.getByText(marker)).toBeVisible();
+  await shot(page, lang, "fe13-user-a-sees-record");
+
+  // A's session ends elsewhere; the history returns to the earlier in-document /login entry (same document).
+  expect(await signOutElsewhere(page)).toBe(200);
+  const docId = await page.evaluate(() => ((window as unknown as { __fe13: number }).__fe13 = Math.random()));
+  await page.evaluate(() => history.go(-2));
+  await expect(page).toHaveURL(/\/login\?returnTo=%2Ftransformations$/);
+  await expect(page.getByLabel(devUsername(lang))).toBeVisible();
+  await page.waitForTimeout(500);
+  expect(await page.evaluate(() => (window as unknown as { __fe13: number }).__fe13)).toBe(docId); // no reload
+  await expect(page.getByText(marker)).toHaveCount(0);
+
+  // From now on, record whether A's record text ever reaches the document.
+  await page.evaluate((m) => {
+    const w = window as unknown as { __fe13Leak: string[] };
+    w.__fe13Leak = [];
+    new MutationObserver(() => {
+      if (document.body.textContent?.includes(m)) w.__fe13Leak.push(location.pathname);
+    }).observe(document.body, { childList: true, subtree: true, characterData: true });
+  }, marker);
+  // B's list is slow: hold it so a stale cache would have time to render.
+  let holdLists = false;
+  await page.route(/\/api\/v1\/transformations\?/, async (route) => {
+    if (holdLists) await new Promise((r) => setTimeout(r, 1_500));
+    await route.continue();
+  });
+  holdLists = true;
+  await page.getByLabel(devUsername(lang)).fill("dev.lead");
+  await page.getByLabel(devUsername(lang)).press("Enter");
+  await page.waitForURL("**/transformations");
+  await page.waitForTimeout(2_500); // past the held list request
+  holdLists = false;
+  await ensureLanguage(page, lang);
+  expect(await page.evaluate(() => (window as unknown as { __fe13: number }).__fe13)).toBe(docId); // same document
+  expect(await page.evaluate(() => (window as unknown as { __fe13Leak: string[] }).__fe13Leak)).toEqual([]);
+  await expect(page.getByText(marker)).toHaveCount(0);
+  await expect(page.getByRole("button", { name: tr(lang, "auth.signOut") })).toBeVisible();
+  await expect(page.getByText("Synthetic Transformation Lead")).toBeVisible();
+  await expect(page.getByText("Synthetic Transformation Office")).toHaveCount(0);
+  await shot(page, lang, "fe13-user-b-never-sees-a");
+  await expectAccessible(page, lang, "fe13-user-b-never-sees-a");
+  expect(errors).toEqual([]);
+  expect(foreign).toEqual([]);
 });

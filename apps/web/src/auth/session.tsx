@@ -1,10 +1,9 @@
 // Session gate (ADR-0005): GET /api/v1/me decides whether the user is signed in, provides the CSRF token and the
 // permission hints, and sets the UI language from the persisted preference.
-import { useQueryClient } from "@tanstack/react-query";
-import { createContext, useContext, useEffect, useRef, useSyncExternalStore, type ReactNode } from "react";
+import { Fragment, createContext, useContext, useEffect, useRef, useSyncExternalStore, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useLocation, useNavigate } from "react-router";
-import { ApiError, claimSessionEnd, getSessionPhase, subscribeSessionPhase } from "../api/client.ts";
+import { ApiError, getSessionPhase, subscribeSessionPhase } from "../api/client.ts";
 import { useMeQuery } from "../api/queries.ts";
 import type { Me } from "../api/types.ts";
 import { ErrorState, LoadingState } from "../components/States.tsx";
@@ -40,24 +39,20 @@ export function RequireSession({ children }: { children: ReactNode }) {
   const me = useMeQuery({ enabled: !ended });
   const location = useLocation();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { i18n } = useTranslation();
   const preferred = me.data?.user.preferredLocale;
   const redirected = useRef(false);
   const here = `${location.pathname}${location.search}`;
 
-  // The session ended: clear the cached identity and every session-scoped query (once per session end), then go to
-  // the sign-in page once. A dialog that got the 401 unmounts with the page. No /me is re-probed here (the query is
-  // disabled), so nothing can bounce the user back, and the sign-in page probes /me once, fresh.
+  // The session ended: go to the sign-in page once. The API client has already cleared the cached identity and every
+  // session-scoped query where the session ended (F-DG2-500: api/client.ts endSession, whatever page is mounted). A
+  // dialog that got the 401 unmounts with the page. No /me is re-probed here (the query is disabled), so nothing can
+  // bounce the user back, and the sign-in page probes /me once, fresh.
   useEffect(() => {
     if (!ended || redirected.current) return;
     redirected.current = true;
-    if (claimSessionEnd()) {
-      void queryClient.cancelQueries();
-      queryClient.removeQueries();
-    }
     void navigate(sessionEndedLoginPath(here), { replace: true });
-  }, [ended, here, navigate, queryClient]);
+  }, [ended, here, navigate]);
 
   // The persisted preference wins after sign-in (REQ-S15-007); it also becomes the pre-sign-in hint. It is applied
   // when it is first known and whenever it changes, never merely because the displayed language changed: react-i18next
@@ -87,5 +82,13 @@ export function RequireSession({ children }: { children: ReactNode }) {
       );
     }
   }
-  return <MeContext.Provider value={me.data ?? null}>{children}</MeContext.Provider>;
+  // F-DG2-500: the signed-in tree is keyed by the person (organization and user). Another person remounts it, so no
+  // component state of the previous one (a draft form, an open dialog, a typed filter) survives into it. The queries
+  // were already removed when GET /me returned the new identity (api/queries.ts fetchMe: any other user OR session).
+  // A new session of the SAME person (signed in again in another tab) keeps that person's own unsaved input.
+  return (
+    <MeContext.Provider value={me.data ?? null}>
+      <Fragment key={me.data ? `${me.data.user.organizationId}:${me.data.user.id}` : "none"}>{children}</Fragment>
+    </MeContext.Provider>
+  );
 }

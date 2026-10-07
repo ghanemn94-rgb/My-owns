@@ -1,0 +1,198 @@
+# command: npx vitest run src/auth/session-identity.test.tsx (clone of HEAD c44da6f + the new test file only); node v24.21.0
+
+ RUN  v3.2.4 /var/tmp/mth-run.OmJDoC/claude-0/nc-head2/apps/web
+
+ ❯ |unit-web| src/auth/session-identity.test.tsx (18 tests | 14 failed) 3356ms
+   × F-DG2-500 a session end on the sign-in page (en) > W5: Back to /login after A's session ends, B signs in with the development form: B never sees A's records 475ms
+     → expected [ '["me"]', …(2) ] to deeply equal []
+   × F-DG2-500 a session end on the sign-in page (en) > W5b (OIDC mode): B signs in in another tab and this tab's /me re-probe brings B: B never sees A's records 381ms
+     → expected [ '["me"]', …(2) ] to deeply equal []
+   × F-DG2-500 an identity change with no session end in this tab (en) > a refocus /me that returns another identity removes every session query before B renders, and drops A's drafts 252ms
+     → expected [ true, true ] to deeply equal [ false, false ]
+   × F-DG2-500 an identity change with no session end in this tab (en) > a new session of the same person (signed in again elsewhere) refetches the queries but keeps their own draft 81ms
+     → expected Query{ options: { …(11) }, …(5) } not to be Query{ options: { …(11) }, …(5) } // Object.is equality
+   ✓ F-DG2-500 an identity change with no session end in this tab (en) > the same identity re-probed (window refocus) keeps the cache and the page state 180ms
+   ✓ F-DG2-500 sign-out here and 403 (en) > signing out here clears everything; B signing in afterwards never sees A's records  505ms
+   × F-DG2-500 sign-out here and 403 (en) > a 403 is never a session end: the phase, the identity and the cache are kept 5ms
+     → (0 , registerSessionReset) is not a function
+   × F-DG2-500 a session end on the sign-in page (ar) > W5: Back to /login after A's session ends, B signs in with the development form: B never sees A's records 268ms
+     → expected [ '["me"]', …(2) ] to deeply equal []
+   × F-DG2-500 a session end on the sign-in page (ar) > W5b (OIDC mode): B signs in in another tab and this tab's /me re-probe brings B: B never sees A's records 267ms
+     → expected [ '["me"]', …(2) ] to deeply equal []
+   × F-DG2-500 an identity change with no session end in this tab (ar) > a refocus /me that returns another identity removes every session query before B renders, and drops A's drafts 201ms
+     → expected [ true, true ] to deeply equal [ false, false ]
+   × F-DG2-500 an identity change with no session end in this tab (ar) > a new session of the same person (signed in again elsewhere) refetches the queries but keeps their own draft 79ms
+     → expected Query{ options: { …(11) }, …(5) } not to be Query{ options: { …(11) }, …(5) } // Object.is equality
+   ✓ F-DG2-500 an identity change with no session end in this tab (ar) > the same identity re-probed (window refocus) keeps the cache and the page state 173ms
+   ✓ F-DG2-500 sign-out here and 403 (ar) > signing out here clears everything; B signing in afterwards never sees A's records  481ms
+   × F-DG2-500 sign-out here and 403 (ar) > a 403 is never a session end: the phase, the identity and the cache are kept 4ms
+     → (0 , registerSessionReset) is not a function
+   × F-DG2-500 the API client clears through the registered hook, with nothing mounted > a 401 `unauthenticated` while active runs the reset once, before the phase is announced 1ms
+     → (0 , registerSessionReset) is not a function
+   × F-DG2-500 the API client clears through the registered hook, with nothing mounted > a 401 with no session in this tab, a 401 with another code and a silent 401 clear nothing 1ms
+     → (0 , registerSessionReset) is not a function
+   × F-DG2-500 the API client clears through the registered hook, with nothing mounted > GET /me with another user or another session resets every query except the identity being stored 1ms
+     → (0 , registerSessionReset) is not a function
+   × F-DG2-500 the API client clears through the registered hook, with nothing mounted > noteSessionIdentity: the first identity of a document is not a change 0ms
+     → (0 , registerSessionReset) is not a function
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/auth/session-identity.test.tsx > F-DG2-500 a session end on the sign-in page (en) > W5: Back to /login after A's session ends, B signs in with the development form: B never sees A's records
+ FAIL  |unit-web| src/auth/session-identity.test.tsx > F-DG2-500 a session end on the sign-in page (ar) > W5: Back to /login after A's session ends, B signs in with the development form: B never sees A's records
+AssertionError: expected [ '["me"]', …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "[\"me\"]",
++   "[\"business-units\",\"01920000-0000-7000-9000-000000000001\"]",
++   "[\"transformations\",{\"sort\":\"updatedAt:desc\",\"limit\":25}]",
++ ]
+
+ ❯ expectNoSessionCache src/auth/session-identity.test.tsx:128:20
+    126|     .map((q) => JSON.stringify(q.queryKey))
+    127|     .filter((k) => k !== JSON.stringify(["dev-login-availability"]));
+    128|   expect(withData).toEqual([]);
+       |                    ^
+    129|   expect(queryClient.getQueryData(keys.me)).toBeUndefined();
+    130| }
+ ❯ src/auth/session-identity.test.tsx:153:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+ FAIL  |unit-web| src/auth/session-identity.test.tsx > F-DG2-500 a session end on the sign-in page (en) > W5b (OIDC mode): B signs in in another tab and this tab's /me re-probe brings B: B never sees A's records
+ FAIL  |unit-web| src/auth/session-identity.test.tsx > F-DG2-500 a session end on the sign-in page (ar) > W5b (OIDC mode): B signs in in another tab and this tab's /me re-probe brings B: B never sees A's records
+AssertionError: expected [ '["me"]', …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "[\"me\"]",
++   "[\"business-units\",\"01920000-0000-7000-9000-000000000001\"]",
++   "[\"transformations\",{\"sort\":\"updatedAt:desc\",\"limit\":25}]",
++ ]
+
+ ❯ expectNoSessionCache src/auth/session-identity.test.tsx:128:20
+    126|     .map((q) => JSON.stringify(q.queryKey))
+    127|     .filter((k) => k !== JSON.stringify(["dev-login-availability"]));
+    128|   expect(withData).toEqual([]);
+       |                    ^
+    129|   expect(queryClient.getQueryData(keys.me)).toBeUndefined();
+    130| }
+ ❯ src/auth/session-identity.test.tsx:181:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯
+
+ FAIL  |unit-web| src/auth/session-identity.test.tsx > F-DG2-500 an identity change with no session end in this tab (en) > a refocus /me that returns another identity removes every session query before B renders, and drops A's drafts
+ FAIL  |unit-web| src/auth/session-identity.test.tsx > F-DG2-500 an identity change with no session end in this tab (ar) > a refocus /me that returns another identity removes every session query before B renders, and drops A's drafts
+AssertionError: expected [ true, true ] to deeply equal [ false, false ]
+
+- Expected
++ Received
+
+  [
+-   false,
+-   false,
++   true,
++   true,
+  ]
+
+ ❯ src/auth/session-identity.test.tsx:217:33
+    215|       await wait(100);
+    216|       seenBeforeRelease.push(screen.queryByText(A_SECRET) !== null);
+    217|       expect(seenBeforeRelease).toEqual([false, false]);
+       |                                 ^
+    218|       expect(getSessionPhase()).toBe("active");
+    219|       expect(router.state.location.pathname).toBe("/transformations");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/14]⎯
+
+ FAIL  |unit-web| src/auth/session-identity.test.tsx > F-DG2-500 an identity change with no session end in this tab (en) > a new session of the same person (signed in again elsewhere) refetches the queries but keeps their own draft
+ FAIL  |unit-web| src/auth/session-identity.test.tsx > F-DG2-500 an identity change with no session end in this tab (ar) > a new session of the same person (signed in again elsewhere) refetches the queries but keeps their own draft
+AssertionError: expected Query{ options: { …(11) }, …(5) } not to be Query{ options: { …(11) }, …(5) } // Object.is equality
+
+Compared values have no visual difference.
+
+ ❯ src/auth/session-identity.test.tsx:250:25
+    248|       await screen.findByText(A_SECRET);
+    249|       const after = queryClient.getQueryCache().findAll({ queryKey: ["…
+    250|       expect(after).not.toBe(before); // the previous session's query …
+       |                         ^
+    251|       expect(server.requests.slice(from).some((r) => r.url.startsWith(…
+    252|       expect((screen.getByRole("searchbox") as HTMLInputElement).value…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/14]⎯
+
+ FAIL  |unit-web| src/auth/session-identity.test.tsx > F-DG2-500 sign-out here and 403 (en) > a 403 is never a session end: the phase, the identity and the cache are kept
+ FAIL  |unit-web| src/auth/session-identity.test.tsx > F-DG2-500 sign-out here and 403 (ar) > a 403 is never a session end: the phase, the identity and the cache are kept
+TypeError: (0 , registerSessionReset) is not a function
+ ❯ src/auth/session-identity.test.tsx:302:7
+    300|       const server = twoUserServer(lang, { devLogin: true });
+    301|       const { router, queryClient } = renderApp("/transformations", { …
+    302|       registerSessionReset((r) => resets.push(r));
+       |       ^
+    303|       expect(await screen.findByText(A_SECRET)).toBeTruthy();
+    304|       // A 403 (forbidden) on a GET and on a mutation: the API's "you …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/14]⎯
+
+ FAIL  |unit-web| src/auth/session-identity.test.tsx > F-DG2-500 the API client clears through the registered hook, with nothing mounted > a 401 `unauthenticated` while active runs the reset once, before the phase is announced
+TypeError: (0 , registerSessionReset) is not a function
+ ❯ src/auth/session-identity.test.tsx:339:5
+    337|     queryClient.setQueryData(["transformations", {}], page([makeTransf…
+    338|     const order: string[] = [];
+    339|     registerSessionReset((r) => order.push(`reset:${r}:phase=${getSess…
+       |     ^
+    340|     mockApi(() => unauthenticated());
+    341|     markSessionActive();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/14]⎯
+
+ FAIL  |unit-web| src/auth/session-identity.test.tsx > F-DG2-500 the API client clears through the registered hook, with nothing mounted > a 401 with no session in this tab, a 401 with another code and a silent 401 clear nothing
+TypeError: (0 , registerSessionReset) is not a function
+ ❯ src/auth/session-identity.test.tsx:352:5
+    350|     resetSessionStateForTests();
+    351|     const resets: SessionResetReason[] = [];
+    352|     registerSessionReset((r) => resets.push(r));
+       |     ^
+    353|     mockApi(() => unauthenticated());
+    354|     await expect(apiRequest("/api/v1/me")).rejects.toMatchObject({ sta…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/14]⎯
+
+ FAIL  |unit-web| src/auth/session-identity.test.tsx > F-DG2-500 the API client clears through the registered hook, with nothing mounted > GET /me with another user or another session resets every query except the identity being stored
+TypeError: (0 , registerSessionReset) is not a function
+ ❯ src/auth/session-identity.test.tsx:380:5
+    378|     mockApi(route("GET", /\/api\/v1\/me$/, () => ({ status: 200, body:…
+    379|     const resets: SessionResetReason[] = [];
+    380|     registerSessionReset((r) => resets.push(r));
+       |     ^
+    381|     await queryClient.fetchQuery({ queryKey: keys.me, queryFn: fetchMe…
+    382|     queryClient.setQueryData(["transformations", {}], page([]).body);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/14]⎯
+
+ FAIL  |unit-web| src/auth/session-identity.test.tsx > F-DG2-500 the API client clears through the registered hook, with nothing mounted > noteSessionIdentity: the first identity of a document is not a change
+TypeError: (0 , registerSessionReset) is not a function
+ ❯ src/auth/session-identity.test.tsx:404:5
+    402|     resetSessionStateForTests();
+    403|     const resets: SessionResetReason[] = [];
+    404|     registerSessionReset((r) => resets.push(r));
+       |     ^
+    405|     noteSessionIdentity("org\u0000a\u0000s1");
+    406|     noteSessionIdentity("org\u0000a\u0000s1");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/14]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  14 failed | 4 passed (18)
+   Start at  12:25:13
+   Duration  5.82s (transform 1.07s, setup 122ms, collect 1.59s, tests 3.36s, environment 423ms, prepare 124ms)
+
+# exit status: 1 (expected non-zero: the defect on HEAD)

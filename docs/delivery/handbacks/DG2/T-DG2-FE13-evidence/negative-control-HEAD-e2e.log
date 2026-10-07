@@ -1,0 +1,122 @@
+port-policy: PostgreSQL listening on port 24592 (attempt 1)
+e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 3592 (attempt 1)
+API: http://localhost:3592 (APP_BASE_URL=http://localhost:3592, PORT=3592)
+{"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 2 tests using 1 worker
+
+  ✘  1 [chromium-en] › apps/web/e2e/session-end.spec.ts:407:1 › a session end on the sign-in page: the next user to sign in in the tab never sees the previous user's records (4.5s)
+  ✘  2 [chromium-ar] › apps/web/e2e/session-end.spec.ts:407:1 › a session end on the sign-in page: the next user to sign in in the tab never sees the previous user's records (4.3s)
+
+
+  1) [chromium-en] › apps/web/e2e/session-end.spec.ts:407:1 › a session end on the sign-in page: the next user to sign in in the tab never sees the previous user's records 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 6
+
+    - Array []
+    + Array [
+    +   "/transformations",
+    +   "/transformations",
+    +   "/transformations",
+    +   "/transformations",
+    + ]
+
+      440 |   await ensureLanguage(page, lang);
+      441 |   expect(await page.evaluate(() => (window as unknown as { __fe13: number }).__fe13)).toBe(docId); // same document
+    > 442 |   expect(await page.evaluate(() => (window as unknown as { __fe13Leak: string[] }).__fe13Leak)).toEqual([]);
+          |                                                                                                 ^
+      443 |   await expect(page.getByText(marker)).toHaveCount(0);
+      444 |   await expect(page.getByRole("button", { name: tr(lang, "auth.signOut") })).toBeVisible();
+      445 |   await expect(page.getByText("Synthetic Transformation Lead")).toBeVisible();
+        at /var/tmp/mth-run.OmJDoC/claude-0/nc-head/apps/web/e2e/session-end.spec.ts:442:97
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-session-end-a-a0899-the-previous-user-s-records-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/apps-web-e2e-session-end-a-a0899-the-previous-user-s-records-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-session-end-a-a0899-the-previous-user-s-records-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-session-end-a-a0899-the-previous-user-s-records-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-ar] › apps/web/e2e/session-end.spec.ts:407:1 › a session end on the sign-in page: the next user to sign in in the tab never sees the previous user's records 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 6
+
+    - Array []
+    + Array [
+    +   "/transformations",
+    +   "/transformations",
+    +   "/transformations",
+    +   "/transformations",
+    + ]
+
+      440 |   await ensureLanguage(page, lang);
+      441 |   expect(await page.evaluate(() => (window as unknown as { __fe13: number }).__fe13)).toBe(docId); // same document
+    > 442 |   expect(await page.evaluate(() => (window as unknown as { __fe13Leak: string[] }).__fe13Leak)).toEqual([]);
+          |                                                                                                 ^
+      443 |   await expect(page.getByText(marker)).toHaveCount(0);
+      444 |   await expect(page.getByRole("button", { name: tr(lang, "auth.signOut") })).toBeVisible();
+      445 |   await expect(page.getByText("Synthetic Transformation Lead")).toBeVisible();
+        at /var/tmp/mth-run.OmJDoC/claude-0/nc-head/apps/web/e2e/session-end.spec.ts:442:97
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-session-end-a-a0899-the-previous-user-s-records-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/apps-web-e2e-session-end-a-a0899-the-previous-user-s-records-chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-session-end-a-a0899-the-previous-user-s-records-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-session-end-a-a0899-the-previous-user-s-records-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium-en] › apps/web/e2e/session-end.spec.ts:407:1 › a session end on the sign-in page: the next user to sign in in the tab never sees the previous user's records 
+    [chromium-ar] › apps/web/e2e/session-end.spec.ts:407:1 › a session end on the sign-in page: the next user to sign in in the tab never sees the previous user's records 
+
+To open last HTML report run:
+
+  npx playwright show-report
+
+---- api.log (tail)
+# exit status: 1 (expected: the defect on HEAD c44da6f)

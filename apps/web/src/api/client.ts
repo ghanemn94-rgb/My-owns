@@ -54,15 +54,30 @@ export function setCsrfToken(token: string | null): void {
 //  - "unknown": no session confirmed in this tab (first load, or after signing out here);
 //  - "active": the last GET /me succeeded;
 //  - "ended": a request answered 401 `unauthenticated` while the session was active (revoked, signed out in another
-//    tab, idle/absolute expiry, the D-073 commit-time refusal). <RequireSession> reacts to it: it clears the cached
-//    identity and every session-scoped query once (claimSessionEnd) and navigates once to the sign-in page. The next
-//    successful GET /me (signing in again) makes the phase "active" again.
+//    tab, idle/absolute expiry, the D-073 commit-time refusal). <RequireSession> reacts to it by navigating once to the
+//    sign-in page. The next successful GET /me (signing in again) makes the phase "active" again.
 // A 403 (forbidden, CSRF) is never a session end, and neither is a 401 with another code (e.g. auth.login_failed).
+//
+// F-DG2-500: the session-scoped cache is cleared HERE, in the same place as the transition, whatever page is mounted
+// (the sign-in page included): endSession() and noteSessionIdentity() call the registered session-reset hooks
+// synchronously, before the error (or the new identity) reaches any component. The app registers one hook per
+// QueryClient (app/App.tsx createQueryClient), so no component has to be mounted for the cache to be cleared.
 export type SessionPhase = "unknown" | "active" | "ended";
 
+/**
+ * Why the session-scoped state is being reset:
+ *  - "ended": the session ended (401 `unauthenticated` while active); drop the cached identity and every query;
+ *  - "identity-changed": GET /me returned another user or another session than the last one this document saw; drop
+ *    every query except GET /me itself, whose new answer is about to be stored.
+ */
+export type SessionResetReason = "ended" | "identity-changed";
+export type SessionResetHook = (reason: SessionResetReason) => void;
+
 let sessionPhase: SessionPhase = "unknown";
-let sessionEndClaimed = false;
+/** The last identity GET /me returned in this document: organization, user and session (see sessionIdentityKey). */
+let lastIdentity: string | null = null;
 const phaseListeners = new Set<() => void>();
+const resetHooks = new Set<SessionResetHook>();
 
 function setPhase(next: SessionPhase): void {
   if (next === sessionPhase) return;
@@ -80,6 +95,19 @@ export function subscribeSessionPhase(listener: () => void): () => void {
   return () => phaseListeners.delete(listener);
 }
 
+/**
+ * Registers a hook that clears session-scoped client state (the app wires its QueryClient). It runs synchronously on
+ * every session end and every identity change, whatever is mounted. Returns the unregister function.
+ */
+export function registerSessionReset(hook: SessionResetHook): () => void {
+  resetHooks.add(hook);
+  return () => resetHooks.delete(hook);
+}
+
+function runSessionReset(reason: SessionResetReason): void {
+  resetHooks.forEach((hook) => hook(reason));
+}
+
 /** A GET /me succeeded: a session exists (again). */
 export function markSessionActive(): void {
   setPhase("active");
@@ -91,6 +119,34 @@ export function markSignedOut(): void {
   setPhase("unknown");
 }
 
+/**
+ * The identity of a GET /me answer: organization, user and session. The CSRF token stands for the session: the API
+ * derives it from the session token (apps/api identity/sessions.ts csrfTokenFor), so a new session (another user, or
+ * the same user signed in again elsewhere) has a new one. Kept only in memory, like the token itself.
+ */
+export function sessionIdentityKey(me: {
+  readonly user: { readonly id: string; readonly organizationId: string };
+  readonly csrfToken: string;
+}): string {
+  return `${me.user.organizationId}\u0000${me.user.id}\u0000${me.csrfToken}`;
+}
+
+/**
+ * Called with every GET /me answer BEFORE it is stored or rendered. When it is another identity than the last one this
+ * document saw, every session-scoped query is removed first (defence in depth: also covers an identity change that no
+ * 401 announced, e.g. a sign-out and another user's sign-in in another tab, noticed by a refocus /me here).
+ */
+export function noteSessionIdentity(key: string): void {
+  const previous = lastIdentity;
+  lastIdentity = key;
+  if (previous !== null && previous !== key) runSessionReset("identity-changed");
+}
+
+/** The last identity seen by this document (test and diagnostics only). */
+export function getLastSessionIdentity(): string | null {
+  return lastIdentity;
+}
+
 /** True for the API's "your session is not valid" answer: 401 `unauthenticated` (or a 401 without a problem body). */
 export function isSessionEndedError(err: unknown): boolean {
   return err instanceof ApiError && err.status === 401 && (err.problem === null || err.code === "unauthenticated");
@@ -99,25 +155,18 @@ export function isSessionEndedError(err: unknown): boolean {
 function endSession(): void {
   if (sessionPhase !== "active") return; // never signed in here, already ended, or signed out on purpose
   csrfToken = null;
-  sessionEndClaimed = false;
+  // F-DG2-500: clear the session-scoped cache here, before any component can observe the phase (and whichever page is
+  // mounted), then announce the end.
+  runSessionReset("ended");
   setPhase("ended");
-}
-
-/**
- * The first caller after a session end gets true and clears the session-scoped cache; every later caller (a StrictMode
- * re-run, a remount after the back button) gets false.
- */
-export function claimSessionEnd(): boolean {
-  if (sessionPhase !== "ended" || sessionEndClaimed) return false;
-  sessionEndClaimed = true;
-  return true;
 }
 
 /** Test isolation only: module state survives between tests in one file. */
 export function resetSessionStateForTests(): void {
   csrfToken = null;
   sessionPhase = "unknown";
-  sessionEndClaimed = false;
+  lastIdentity = null;
+  resetHooks.clear();
 }
 
 export interface RequestOptions {

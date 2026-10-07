@@ -1,7 +1,15 @@
 // Server state through TanStack Query (ADR-0009). One query key family per resource; mutations invalidate them.
 import { keepPreviousData, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { PAGINATION } from "@mth/shared";
-import { ApiError, api, apiRequest, markSessionActive, setCsrfToken } from "./client.ts";
+import {
+  ApiError,
+  api,
+  apiRequest,
+  markSessionActive,
+  noteSessionIdentity,
+  sessionIdentityKey,
+  setCsrfToken,
+} from "./client.ts";
 import type {
   AuditEvent,
   CharterVersion,
@@ -55,9 +63,12 @@ export function shouldRetry(failureCount: number, error: unknown): boolean {
 /**
  * GET /me. A success makes the session phase "active"; a 401 while it was active is a session end like any other
  * request's (apps/web/src/api/client.ts), and a 401 with no session yet is just "not signed in".
+ * F-DG2-500: another identity (user or session) than the last one this document saw first removes every
+ * session-scoped query (noteSessionIdentity), before the answer is stored and so before anything renders under it.
  */
 export async function fetchMe(): Promise<Me> {
   const me = (await apiRequest<Me>("/api/v1/me")).data;
+  noteSessionIdentity(sessionIdentityKey(me));
   setCsrfToken(me.csrfToken);
   markSessionActive();
   return me;
