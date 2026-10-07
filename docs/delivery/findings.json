@@ -10971,14 +10971,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-14/code-security-reviewer.json",
       "owner": "frontend-ux-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-07T10:19:00Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG2 round 14 (T-DG2-REV-SEC-R14) on candidate 9f3ca298; reproduced on Node 22 and Node 24 (W5 development sign-in, W5b OIDC-mode /me re-probe)."
+        },
+        {
+          "at": "2026-10-07T12:44:48Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 29da00d1d9225287d25300a470390c248eb809cd"
         }
-      ]
+      ],
+      "fix_revision": "29da00d1d9225287d25300a470390c248eb809cd",
+      "fix_summary": "FE13 29da00d: the session-scoped cache is now cleared where the session ends. The API client's session-end transition invokes a cache-reset hook registered by the app with the QueryClient, so it works whatever page is mounted, including the sign-in page and every route outside RequireSession. Defence in depth: when /me returns an identity (person, or session via its CSRF token) different from the last one the document rendered, every session-scoped query is removed before anything renders under it, and the subtree is remounted when the person changes. Sign-out here and FE10's guarantees are unchanged (one navigation, bounded /me, no stale shell, a 403 is never an end). Tests: session-identity.test.tsx (18, incl. the reviewer's W5/W5b) and an EN/AR e2e (A's session ends on the sign-in page, B signs in in the same tab and never sees A's record); negative control on HEAD."
     }
   ]
 }
