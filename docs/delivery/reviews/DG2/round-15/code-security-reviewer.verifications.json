@@ -1,0 +1,23 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG2-500",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified adversarially on candidate sha256:3f01c610 (source ed80b23, FE13 29da00d) in the disposable clone $TMPDIR/r15p, on Node 22.22.2 (LANG unset) and Node 24.21.0 (LANG=C.UTF-8).\n- My round-14 web probe, rerun UNCHANGED (sha256 2b64ba54), passes 26/26 on both runtimes. W5 (development sign-in after a session end on the sign-in page): phase 'ended', 0 transformations queries cached, B does not see TR-A-SECRET. W5b (OIDC mode, /me re-probe): B does not see it. W1 (16 hostile returnTo values, Navigate target and OIDC href) passes. W2/W3: 403 forbidden, 403 csrf and 401 auth.login_failed are not a session end. W4: 4 requests and 1 navigation in 2 s against an inconsistent server. W6: 3x Back after a session-end landing shows no stale shell and makes 1 request.\n- Source: endSession() (api/client.ts) now runs the registered reset hook synchronously, before the phase is announced. The hook is wired once per QueryClient in createQueryClient, so the clearing no longer depends on <RequireSession> being mounted. fetchMe calls noteSessionIdentity(org, user, CSRF/session) before storing /me. When the identity changed, every query except 'me' is cancelled and removed, and the mutation cache is cleared. The signed-in subtree is keyed by person. keys.me is the only 'me'-prefixed key, so the predicate spares nothing else.\n- Class probe (new zz-sec-r15-web-probe, sha256 bd97dbc9): Back/Forward after an identity change (X2), A's in-flight query answered after the change (X4), a late write after a session END followed by B's sign-in (X3b) and a 403 csrf on a PATCH (X7) all pass. localStorage holds only the locale and the column-visibility preferences; there is no sessionStorage, IndexedDB, service worker or BroadcastChannel.\n- One residual of the same class through a different mechanism is raised as a NEW finding, F-DG2-530 (Low): a mutation success handler writes to the cache after an identity-change reset (X3). It does not reopen F-DG2-500: the session-end-on-the-sign-in-page leak reported there is gone, and the late-write case is covered when the session ended in this tab (X3b).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-15/probe-r14-web-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-15/probe-r14-web-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-15/probe-r15-web-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-15/probe-r15-web-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-15/probes/zz-sec-r15-web-probe.test.tsx",
+        "docs/delivery/test-evidence/DG2/code-security/round-15/probes/README.md",
+        "docs/delivery/test-evidence/DG2/code-security/round-15/probe-runs.sh",
+        "apps/web/src/api/client.ts",
+        "apps/web/src/app/App.tsx",
+        "apps/web/src/api/queries.ts",
+        "apps/web/src/auth/session.tsx"
+      ]
+    }
+  ]
+}

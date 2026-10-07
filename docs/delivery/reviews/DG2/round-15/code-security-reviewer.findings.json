@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG2-530",
+      "stage_id": "DG2",
+      "requirement": "REQ-S16-030",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "A mutation of user A's that is still in flight when this tab's identity changes to user B (a refocus /me after A signed out and B signed in in another tab) writes A's record into the cache after FE13's identity-change reset and navigates B to it: B sees A's record, and still sees it after B's own refetch answers 404",
+      "reproduction": "FE13 (29da00d) removes every session-scoped query when GET /me returns another identity (api/queries.ts fetchMe -> noteSessionIdentity -> app/App.tsx resetSessionCache: cancelQueries, removeQueries, getMutationCache().clear()). Its comment says an answer fetched under the previous session 'cannot land in the cache afterwards'. That holds for queries but not for the success continuations of in-flight writes. Those are plain async handlers that call queryClient.setQueryData after `await api.send(...)`: TransformationEditPage.tsx:130 (and the conflict path :140), TransformationDetailPage.tsx:143 (archive), OrganizationsPage.tsx:255/572 and UsersPage.tsx:387. They are not TanStack mutations, so clearing the mutation cache does not stop them. The handler of the unmounted A subtree still holds the QueryClient and the router.\nProbe: docs/delivery/test-evidence/DG2/code-security/round-15/probes/zz-sec-r15-web-probe.test.tsx case X3 (sha256 bd97dbc9), unit-web, jsdom, the product's own fixtures, SYNTHETIC data, in a disposable clone of candidate 3f01c610 (9236a9f). Identical on Node 22.22.2 and Node 24.21.0. A (user id …, CSRF a…) opens /transformations/{id}/edit, types the name A-PATCHED-SECRET and clicks Save. The PATCH is sent with A's cookie and its answer is held. In another tab A signs out and B (another user id and session) signs in; this tab re-probes /me (refocus) and gets B. FE13 resets the cache and remounts the subtree, and the header shows 'Synthetic User B'. A's PATCH is then answered 200. The edit page's handler calls setQueryData(['transformation', id], A's record) and navigates to /transformations/{id}. Result: path /transformations/{id}, header B, cache name = A-PATCHED-SECRET, and B sees A-PATCHED-SECRET. After B's own GET of that record answers 404 (B has no access), B still sees it and the cache still holds it. Control X3b: when the session ENDED in this tab and B then signed in, B's /me identity change removed the late write, and B does not see it.",
+      "expected": "No response to a request issued under a previous identity (session) is written into the cache or rendered once this tab has moved to another identity. Possible fix: give each identity a generation counter in the API client. apiRequest records it when the request is sent; if the identity changed or the session ended before the answer arrives, it throws a 'session changed' error instead of returning data. That covers every setQueryData path at once, without per-page guards. Alternatively, guard each success handler.",
+      "actual": "A's freshly edited record is written into the new identity's cache and shown to B, who is navigated to it. It stays on screen after B's own refetch fails with 404. Server-side authorisation is intact: no API response ever carries A's data to B, and the exposure is a record A had just edited in that tab. The exposure needs a narrow race. A write has to stay in flight while A signs out and B signs in in another tab of the same browser profile, and this tab has to re-probe /me before the write is answered (slow server or network). For that reason it is rated Low and not mandatory. It is the same class as F-DG2-500 but a different mechanism (a late write rather than an uncleared cache), and FE13's defence in depth already covers it when the session ended in this tab (X3b).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-15/probes/zz-sec-r15-web-probe.test.tsx",
+        "docs/delivery/test-evidence/DG2/code-security/round-15/probes/README.md",
+        "docs/delivery/test-evidence/DG2/code-security/round-15/probe-r15-web-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-15/probe-r15-web-node24-lang-c-utf8.log",
+        "apps/web/src/app/App.tsx",
+        "apps/web/src/api/client.ts",
+        "apps/web/src/pages/transformations/TransformationEditPage.tsx",
+        "apps/web/src/pages/transformations/TransformationDetailPage.tsx"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-15/code-security-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-07T13:32:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG2 round 15 (T-DG2-REV-SEC-R15) while probing the F-DG2-500 class on candidate 3f01c610; reproduced on Node 22 and Node 24 (probe X3). Low and not mandatory: it needs a write to stay in flight across a sign-out and another user's sign-in in another tab, and server-side authorisation is intact. It does not block the round."
+        }
+      ]
+    }
+  ]
+}

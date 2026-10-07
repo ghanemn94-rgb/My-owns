@@ -1,0 +1,372 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG2",
+  "round": 15,
+  "candidate_id": "sha256:3f01c61090435f114b52150d1ab73818839530ede08a4c07d04936175f7fe8f9",
+  "source_commit": "ed80b234d7ad6af3503aa04bb3a6f49cea2c1b65",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG2-T-DG2-REV-SEC-R15-code-security-reviewer-20261007T130911Z-20f82359",
+    "session_id": "20f82359-6fee-469a-a021-6f60627901f9"
+  },
+  "implementation_author": ["frontend-ux-engineer", "delivery-orchestrator"],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am code-security-reviewer, session 20f82359. I authored no implementation in the DG2 scope, including FE13 29da00d (frontend-ux-engineer) and D-075 ed80b23 (delivery-orchestrator). I reviewed the frozen candidate directly: the product diff ea9051b..ed80b23 (6 files, all under apps/web) and the full files it touches, plus LoginPage, Shell sign-out, LanguageSwitch and the pages whose success handlers write to the query cache. I ran code only in disposable clones under $TMPDIR ($TMPDIR/review-r15 for the checks, $TMPDIR/r15p for the probes and load, both at 9236a9f) and on disposable PostgreSQL 16 clusters, all deleted afterwards. I wrote nothing in source paths; my probes live in my evidence directory. I formed this verdict without reading any other reviewer's round-15 record or evidence."
+  },
+  "assignment": "docs/delivery/assignments/DG2/round-15/code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-S10-001",
+    "REQ-S16-013",
+    "REQ-S13-012",
+    "REQ-DLV-034",
+    "REQ-PB-016",
+    "REQ-PB-017",
+    "REQ-PB-018",
+    "REQ-PB-027",
+    "REQ-PB-028",
+    "REQ-PB-029"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-R15-00-candidate",
+      "procedure": "Verify the assignment hash, HEAD and the candidate ID in the working tree and in a clean clone.",
+      "command": "sha256sum docs/delivery/assignments/DG2/round-15/code-security-reviewer.md; git rev-parse HEAD; git diff --stat ed80b23..9236a9f; node tools/gates/candidate.mjs --stage DG2 (working tree and $TMPDIR/review-r15)",
+      "environment": "Node 24.21.0; working tree and disposable clone $TMPDIR/review-r15 at 9236a9f",
+      "expected": "Assignment sha256 b0613ea6...; candidate sha256:3f01c610..., 561 files; HEAD differs from ed80b23 only by delivery metadata.",
+      "actual": "The assignment sha256 b0613ea67f017e982d3b11ee871615ff274132dd299e499d19c7714095f33a07 matches. HEAD 9236a9f = ed80b23 plus the round-15 freeze: 3 assignments, the candidate manifest and stages.json (5 files). candidate.mjs gives sha256:3f01c61090435f114b52150d1ab73818839530ede08a4c07d04936175f7fe8f9, 561 files, in both the working tree and the clean clone. Exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-15/candidate-id.log"]
+    },
+    {
+      "id": "SEC-R15-01-diff-review",
+      "procedure": "Review the product changes since round 14 and the full files they touch: client.ts (session phase, reset hooks, identity key), queries.ts fetchMe, App.tsx resetSessionCache/createQueryClient, session.tsx RequireSession (claim removed, person-keyed subtree), plus LoginPage, Shell sign-out and LanguageSwitch, which call fetchMe. Also grep the added lines. The assignment names the range fe22d759..cbdb4f68, but those are the round-10/11 commits D-070 and D-071, already reviewed in rounds 11-14. The round-14 candidate's source was ea9051b, so the product change since round 14 is ea9051b..ed80b23, and that is what I reviewed. diff-scan.log records the stat of both ranges.",
+      "command": "git diff ea9051b..ed80b23 -- apps packages; git diff --stat ea9051b..ed80b23 -- . ':!docs'; added-line grep scan (diff-scan.log)",
+      "environment": "Disposable clone $TMPDIR/review-r15 at 9236a9f (read-only review)",
+      "expected": "No weakening of sign-in, sign-out, CSRF, OIDC returnTo, the bilingual messages, or FE10/FE11/FE12; no new XSS sink, CDN, secret or open redirect.",
+      "actual": "6 files, all under apps/web (client.ts, queries.ts, App.tsx, session.tsx, one unit test file and one e2e spec); no API, database or contract change. CSRF: endSession still clears the in-memory token before announcing the end. The identity key embeds the CSRF token only in module memory and never persists or logs it. The diff scan's 6 hits are this key and its comments; all are benign. returnTo: safeReturnTo (LoginPage.tsx:32) and sessionEndedLoginPath are unchanged. FE10: RequireSession still navigates once (redirected ref), disables /me while ended and renders nothing for an ended session. isSessionEndedError is unchanged (401 `unauthenticated` only), so a 403 never ends a session. Sign-out still calls markSignedOut, cancelQueries and clear() (Shell.tsx:51-53). FE11/FE12 render-time translation is untouched. The new person-keyed Fragment remounts only on another org/user; a new session of the same person keeps their drafts by design. One residual of the F-DG2-500 class is raised as a new finding (SEC-R15-20, F-DG2-530): success handlers that call setQueryData after an awaited api.send are not covered by the reset. Exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-15/diff-scan.log",
+        "apps/web/src/api/client.ts",
+        "apps/web/src/api/queries.ts",
+        "apps/web/src/app/App.tsx",
+        "apps/web/src/auth/session.tsx"
+      ]
+    },
+    {
+      "id": "SEC-R15-02-install",
+      "procedure": "Offline, frozen-lockfile install in the clean clone, then a re-install after the build.",
+      "command": "pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pstore/v10",
+      "environment": "Node 24.21.0 (install.log) and Node 22.22.2 (install2.log); clone $TMPDIR/review-r15 at 9236a9f; no network",
+      "expected": "Exit 0 with the lockfile unchanged.",
+      "actual": "Both exit 0, 'Lockfile is up to date'. install.log contains two 'WARN Failed to create bin ... mth-db ... packages/db/dist/cli.js ENOENT' lines. They are expected: the workspace bin target only exists after `pnpm -r build`, and install2.log (after the build) links it. No other warning or error.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-15/install.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-15/install2.log"
+      ]
+    },
+    {
+      "id": "SEC-R15-03-typecheck",
+      "procedure": "Typecheck every workspace package.",
+      "command": "pnpm -r typecheck",
+      "environment": "Node 22.22.2; clone $TMPDIR/review-r15 at 9236a9f",
+      "expected": "Exit 0, no type errors.",
+      "actual": "Exit 0, no errors in the log.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-15/typecheck.log"]
+    },
+    {
+      "id": "SEC-R15-04-build",
+      "procedure": "Build every workspace package.",
+      "command": "pnpm -r build",
+      "environment": "Node 22.22.2; clone $TMPDIR/review-r15 at 9236a9f",
+      "expected": "Exit 0.",
+      "actual": "Exit 0. The log contains Vite's '(!) Some chunks are larger than 500 kB after minification' advisory for the web bundle (index-*.js 521.50 kB, 133.16 kB gzip). It is a size advisory, not an error, and the bundle is served locally (no CDN). No other warning or error.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-15/build.log"]
+    },
+    {
+      "id": "SEC-R15-05-lint",
+      "procedure": "ESLint over the repository with zero warnings allowed.",
+      "command": "pnpm lint",
+      "environment": "Node 22.22.2; clone $TMPDIR/review-r15 at 9236a9f",
+      "expected": "Exit 0, 0 warnings.",
+      "actual": "Exit 0 (eslint . --max-warnings=0), no output.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-15/lint.log"]
+    },
+    {
+      "id": "SEC-R15-06-openapi-lint",
+      "procedure": "Lint the OpenAPI contract.",
+      "command": "pnpm openapi:lint",
+      "environment": "Node 22.22.2; clone $TMPDIR/review-r15 at 9236a9f",
+      "expected": "PASS, 161 operations.",
+      "actual": "'PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 161 operations', exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-15/openapi-lint.log"]
+    },
+    {
+      "id": "SEC-R15-07-no-cdn",
+      "procedure": "Check for public CDN / builder-hosted runtime references.",
+      "command": "pnpm check:no-cdn",
+      "environment": "Node 22.22.2; clone $TMPDIR/review-r15 at 9236a9f",
+      "expected": "PASS.",
+      "actual": "'PASS no-cdn: scanned apps, packages', exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-15/no-cdn.log"]
+    },
+    {
+      "id": "SEC-R15-08-format",
+      "procedure": "Prettier format check.",
+      "command": "pnpm format:check",
+      "environment": "Node 22.22.2; clone $TMPDIR/review-r15 at 9236a9f",
+      "expected": "Exit 0.",
+      "actual": "Exit 0, all files formatted.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-15/format-check.log"]
+    },
+    {
+      "id": "SEC-R15-09-unit-node22",
+      "procedure": "Full unit suite (all projects) on Node 22.",
+      "command": "pnpm test --reporter=verbose",
+      "environment": "Node 22.22.2; clone $TMPDIR/review-r15 at 9236a9f; LC_CTYPE=C.UTF-8 inherited",
+      "expected": "All tests pass.",
+      "actual": "48 files, 866/866 passed, 0 failed, exit 0. It includes FE13's session-identity.test.tsx (EN/AR) and FE10's session-end tests. The one warning line is '(node) [FSTDEP022] FastifyWarning: The router options for constraints property access is deprecated', emitted once by Fastify in an API unit test. It is a deprecation notice from the framework and has no effect on results. No stderr blocks and no failures.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-15/unit-node22.log"]
+    },
+    {
+      "id": "SEC-R15-10-unit-node24",
+      "procedure": "Full unit suite (all projects) on Node 24.",
+      "command": "pnpm test --reporter=verbose",
+      "environment": "Node 24.21.0; clone $TMPDIR/review-r15 at 9236a9f",
+      "expected": "All tests pass.",
+      "actual": "48 files, 866/866 passed, exit 0. The same single FSTDEP022 Fastify deprecation warning appears; it is benign, as explained for Node 22. No failures.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-15/unit-node24.log"]
+    },
+    {
+      "id": "SEC-R15-11-unit-under-load",
+      "procedure": "Full unit suite on Node 22 then Node 24 while a second clone repeatedly runs `pnpm -r build` and an integration test against a disposable PostgreSQL (port 30191) as concurrent CPU load (load-repro.sh).",
+      "command": "bash docs/delivery/test-evidence/DG2/code-security/round-15/load-repro.sh",
+      "environment": "4 vCPU; Node 22.22.2 and 24.21.0; clones $TMPDIR/review-r15 and $TMPDIR/r15p at 9236a9f; load average 2.1 -> 9.5",
+      "expected": "All tests pass under load.",
+      "actual": "Node 22: 866/866, exit 0, load average 2.11 at the start and 7.83 at the end. Node 24: 866/866, exit 0, load average 7.83 at the start and 9.53 at the end. The load generator ran 3 build and 2 integration iterations. Their own output was discarded by design, since they were load only, so their exit statuses were not recorded and are not claimed. Each unit log has the single benign FSTDEP022 deprecation warning and no failures.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-15/unit-under-load-node22.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-15/unit-under-load-node24.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-15/load-generator.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-15/load-repro.sh"
+      ]
+    },
+    {
+      "id": "SEC-R15-12-integration-run1",
+      "procedure": "Integration suite on a disposable PostgreSQL 16 cluster with LANG/LC_ALL/LC_CTYPE unset; the cluster default follows the locale (SQL_ASCII, C).",
+      "command": "with-pg.sh 30171 pnpm test:integration --reporter=verbose",
+      "environment": "Node 22.22.2; PostgreSQL 16 on 127.0.0.1:30171 (template1 SQL_ASCII, collate C); clone at 9236a9f; cluster deleted afterwards",
+      "expected": "All integration tests pass.",
+      "actual": "39 files, 612/612 passed, exit 0. No stderr blocks, no error or warning lines.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-15/integration-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-15/with-pg.sh",
+        "docs/delivery/test-evidence/DG2/code-security/round-15/checks.sh"
+      ]
+    },
+    {
+      "id": "SEC-R15-13-integration-run2",
+      "procedure": "Integration suite on a second disposable PostgreSQL 16 cluster with LANG=C.UTF-8 (UTF8 cluster).",
+      "command": "LANG=C.UTF-8 with-pg.sh 30172 pnpm test:integration --reporter=verbose",
+      "environment": "Node 24.21.0; PostgreSQL 16 on 127.0.0.1:30172 (template1 UTF8, collate C.UTF-8); clone at 9236a9f; cluster deleted afterwards",
+      "expected": "All integration tests pass.",
+      "actual": "39 files, 612/612 passed, exit 0. No stderr blocks, no error or warning lines.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-15/integration-run2-lang-c-utf8.log"]
+    },
+    {
+      "id": "SEC-R15-14-required-suites",
+      "procedure": "Confirm that every suite the assignment names ran and passed in BOTH integration runs (per-file counts).",
+      "command": "grep -E '^ +(✓|×) \\|integration\\| ' <log> | sed 's/ >.*//' | sort | uniq -c (requirements-suites.log, aux-checks.sh)",
+      "environment": "The two integration logs above",
+      "expected": "Each named suite present with 0 failures in both runs.",
+      "actual": "In both runs, with 0 failures: contract.test.ts 18, media-types.test.ts 21, connection-hygiene.test.ts 13 (BE16 connection/shutdown), request-io.test.ts 10 and packages/db pool-bounds.test.ts 7 (BE17), commit-time-auth.test.ts 8 and shutdown-cleanup.test.ts 4 (BE18A), blank-text 29, oidc 33, invalid-character 20, framework-errors 11, invalid-utf8 14, encoding 8, the evidence tests 31 test lines and the migration tests 20 test lines. No failing test in either run.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-15/requirements-suites.log"]
+    },
+    {
+      "id": "SEC-R15-15-contract-migrations",
+      "procedure": "Contract coverage of 161 operations and migrations 0001->0019.",
+      "command": "grep -c '^ *operationId:' docs/api/openapi.yaml; ls packages/db/migrations; contract/migrate test lines (contract-ops.log)",
+      "environment": "Clone at 9236a9f; both integration logs",
+      "expected": "161 operationIds, all covered by contract.test.ts; migrations 0001..0019 applied on a fresh database.",
+      "actual": "161 operationIds. contract.test.ts passes in both runs: route<->operation mapping both ways, every operation exercised against the contract, and 'covers every operation with at least one success'. Migrations 0001_identity_access.sql to 0019_evidence_review_separation.sql are shipped. migrate.test.ts 'applies every shipped migration, then reports up to date' passes in both runs, as do the idempotency, checksum and atomicity guards.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-15/contract-ops.log"]
+    },
+    {
+      "id": "SEC-R15-16-aud-403-sweep",
+      "procedure": "AUD-403 sweep: the read-only auditor gets 403 and nothing is written on every P2 mutating operation (generated from the contract), plus the KPI set.",
+      "command": "grep -E '^ +(✓|×).*aud-write-deny' <both integration logs>",
+      "environment": "Both integration logs",
+      "expected": "All pass, 0 failures, in both runs.",
+      "actual": "Run 1: 146 passed, 0 failed (of which kpi-aud-write-deny 18). Run 2: 146 passed, 0 failed. This includes 'the generated list covers the P2 mutations (128 P2 operations in the contract)'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S10-001", "REQ-S16-013"],
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-15/aud-403-sweep.log"]
+    },
+    {
+      "id": "SEC-R15-17-f500-r14-probe-rerun",
+      "procedure": "Re-run my round-14 web probe UNCHANGED (W1-W6, including W5/W5b) on this candidate.",
+      "command": "pnpm vitest run --project unit-web apps/web/src/auth/zz-sec-r14-web-probe.test.tsx (probe-runs.sh)",
+      "environment": "Probe clone $TMPDIR/r15p at 9236a9f; Node 22.22.2 LANG unset, and Node 24.21.0 LANG=C.UTF-8; jsdom; SYNTHETIC data; probe sha256 2b64ba54",
+      "expected": "26/26 pass; W5 and W5b (which failed by design in round 14) now pass.",
+      "actual": "26/26 passed on both runtimes, exit 0, no stderr. W5: 'phase after A's end on /login=ended; transformations queries cached=0; B sees A's row=false'. W5b: 'B sees A's row=false'. W1: all 16 hostile returnTo values give '/', and the Navigate target and OIDC href stay same-origin. W2/W3: 403 forbidden, 403 csrf and 401 auth.login_failed keep the phase active and the shell. W4: 4 requests and 1 navigation in 2 s, final /login. W6: 1 request after 3x Back, no stale shell.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-15/probe-r14-web-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-15/probe-r14-web-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-15/probe-runs.sh"
+      ]
+    },
+    {
+      "id": "SEC-R15-18-fe10-guarantees",
+      "procedure": "Confirm that FE10's guarantees still hold: one navigation, bounded /me, no stale shell, a 403 never a session end, returnTo safe. Evidence: the round-14 probe (W1-W6), the class probe X7 (403 csrf on a PATCH) and the source.",
+      "command": "See SEC-R15-17 and SEC-R15-19; source reading of session.tsx, client.ts and LoginPage.tsx",
+      "environment": "Probe clone at 9236a9f, Node 22 and 24",
+      "expected": "Each guarantee holds.",
+      "actual": "One navigation: W4 records 1 navigation, and the redirected ref in RequireSession is unchanged. Bounded /me: W4 makes 4 requests in 2 s; W6 makes 1 request after 3x Back. No stale shell: W6 shows false,false,false, and RequireSession still returns null while ended. 403: W2/W3 for GETs, and X7 for a PATCH answered 403 csrf (phase stays active, me stays cached, queries with data 3 -> 3, no reset). returnTo: W1 (16 hostile values plus the Navigate/OIDC href), with safeReturnTo unchanged.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S10-001"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-15/probe-r14-web-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-15/probe-r15-web-node22-lang-unset.log",
+        "apps/web/src/auth/session.tsx",
+        "apps/web/src/pages/LoginPage.tsx"
+      ]
+    },
+    {
+      "id": "SEC-R15-19-class-probe",
+      "procedure": "Probe the F-DG2-500 class with a new probe (users A and B differ in user id AND session). Cases: X2 Back/Forward after an identity change; X3 an in-flight edit (PATCH) answered after an identity change; X3b the same after a session end in this tab and B's sign-in; X4 an in-flight query answered after an identity change; X6 observation of a refocus within /me's 60 s staleTime; X7 403 csrf on a PATCH. Plus a source sweep for other carriers: localStorage, sessionStorage, IndexedDB, service worker, BroadcastChannel, module singletons and setQueryData call sites.",
+      "command": "pnpm vitest run --project unit-web apps/web/src/auth/zz-sec-r15-web-probe.test.tsx (probe-runs.sh); grep -rn 'localStorage|sessionStorage|indexedDB|BroadcastChannel|serviceWorker|setQueryData' apps/web/src",
+      "environment": "Probe clone $TMPDIR/r15p at 9236a9f; Node 22.22.2 LANG unset, and Node 24.21.0 LANG=C.UTF-8; jsdom; SYNTHETIC data; probe sha256 bd97dbc9",
+      "expected": "No case shows A's data to B.",
+      "actual": "Exit 1 on both runtimes, BY DESIGN, with exactly one failing assertion: X3 `expect(cached?.name).toBeUndefined()` received 'A-PATCHED-SECRET'. A's edit, answered after B's identity arrived, is written into the cache by TransformationEditPage's success handler (setQueryData), and B is navigated to it and sees it, even after B's own refetch answers 404 (new finding F-DG2-530, Low). The other 5 cases pass on both runtimes. X2: B never sees A's record after Back/Back/Forward. X3b: the late write after a session END is removed at B's /me. X4: A's late query answer never lands. X7: a 403 csrf PATCH is not an end. X6 is an observation that always passes: within /me's staleTime a refocus refetches page queries with the new cookie but not /me, so the tab shows A's name with B's own rows. That shows the cookie holder's own data and not A's, so it is not raised. Sweep: localStorage holds only the locale and the column-visibility preferences; there is no sessionStorage, IndexedDB, service worker or BroadcastChannel. The only module singletons are the CSRF token, the phase and the identity key, all reset. No stderr in either log.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-15/probe-r15-web-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-15/probe-r15-web-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-15/probes/zz-sec-r15-web-probe.test.tsx",
+        "docs/delivery/test-evidence/DG2/code-security/round-15/probes/README.md"
+      ]
+    },
+    {
+      "id": "SEC-R15-20-f500-verification",
+      "procedure": "Verify F-DG2-500 (Medium) on this candidate: the session-scoped cache is cleared where the session ends, whatever is mounted, and an identity change purges every session query before rendering.",
+      "command": "SEC-R15-17 + SEC-R15-19 + source reading (client.ts endSession/runSessionReset, App.tsx createQueryClient/resetSessionCache, queries.ts fetchMe)",
+      "environment": "Probe clone at 9236a9f; Node 22 and 24",
+      "expected": "W5/W5b pass; clearing does not depend on <RequireSession>; an identity change removes A's queries before B renders.",
+      "actual": "Genuine. endSession runs the reset hook synchronously before the phase is announced. The hook is registered with the QueryClient at creation, so it works on the sign-in page. W5/W5b pass on Node 22 and 24, and FE13's own tests pass in the unit runs. The identity change at fetchMe removes all non-'me' queries and remounts the subtree for another person (X2, X4). F-DG2-500 -> CLOSED_VERIFIED (verifications sidecar). The late-write residual (X3) is a different mechanism and is tracked as the new Low finding F-DG2-530.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/reviews/DG2/round-15/code-security-reviewer.verifications.json",
+        "docs/delivery/test-evidence/DG2/code-security/round-15/probe-r14-web-node24-lang-c-utf8.log"
+      ]
+    },
+    {
+      "id": "SEC-R15-21-validate-historical-DG0",
+      "procedure": "Validator against the approved DG0 gate.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG0",
+      "environment": "Node 22.22.2; working tree at 9236a9f",
+      "expected": "PASS, exit 0.",
+      "actual": "'PASS gate DG0 (historical)', exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-15/validate-historical-DG0.log"]
+    },
+    {
+      "id": "SEC-R15-22-validate-historical-DG1",
+      "procedure": "Validator against the approved DG1 gate.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG1",
+      "environment": "Node 22.22.2; working tree at 9236a9f",
+      "expected": "PASS, exit 0.",
+      "actual": "'PASS gate DG1 (historical)', exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-15/validate-historical-DG1.log"]
+    },
+    {
+      "id": "SEC-R15-23-env-live-registry",
+      "procedure": "Environmental residual (REQ-DLV-042 AC-1, D-057): dependency resolution through the offline/config surface.",
+      "command": "pnpm install --offline --frozen-lockfile (install.log, install2.log)",
+      "environment": "Sandbox without network",
+      "expected": "Offline frozen-lockfile install succeeds; live registry is a recorded residual.",
+      "actual": "PASS on the offline surface: frozen-lockfile install exit 0 twice. Residual: no live-registry resolution was possible (no network), as recorded in D-057.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-15/env-residuals.log"]
+    },
+    {
+      "id": "SEC-R15-24-env-live-ci",
+      "procedure": "Environmental residual (REQ-DLV-025 A24, D-058): the CI workflow's structure and gating, offline.",
+      "command": "node deploy/scripts/check-ci-needs.mjs; node --test deploy/scripts/tests/check-ci-needs.test.mjs; grep the workflow",
+      "environment": "Node 22.22.2; clone at 9236a9f",
+      "expected": "Config checks pass; live CI is a recorded residual.",
+      "actual": "check-ci-needs: OK, 5 jobs, delivery-gates first and every job depending on it, exit 0. Its tests: 46/46 pass, exit 0. The workflow runs format, lint, typecheck, build, test, openapi:lint, no-cdn and the integration suite. Residual: no live CI run (D-058).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-15/env-residuals.log"]
+    },
+    {
+      "id": "SEC-R15-25-env-keycloak",
+      "procedure": "Environmental residual (D-049): OIDC against the in-process test IdP rather than Keycloak.",
+      "command": "oidc.test.ts in both integration runs",
+      "environment": "Both integration runs",
+      "expected": "OIDC tests pass; Keycloak is a recorded residual.",
+      "actual": "oidc.test.ts: 33 passed and 0 failed in each run. Residual: no Keycloak instance in the sandbox (D-049).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-15/env-residuals.log"]
+    }
+  ],
+  "findings": ["F-DG2-530"],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG2/round-15/code-security-reviewer.verifications.json",
+    "docs/delivery/reviews/DG2/round-15/code-security-reviewer.findings.json",
+    "docs/delivery/reviews/DG2/round-15/code-security-reviewer.md",
+    "docs/delivery/test-evidence/DG2/code-security/round-15/all-exit-statuses.txt",
+    "docs/delivery/test-evidence/DG2/code-security/round-15/summary.txt",
+    "docs/delivery/test-evidence/DG2/code-security/round-15/probe-summary.txt",
+    "docs/delivery/test-evidence/DG2/code-security/round-15/checks.sh",
+    "docs/delivery/test-evidence/DG2/code-security/round-15/aux-checks.sh",
+    "docs/delivery/test-evidence/DG2/code-security/round-15/probe-runs.sh",
+    "docs/delivery/test-evidence/DG2/code-security/round-15/probes/README.md"
+  ],
+  "reviewed_at": "2026-10-07T13:34:00Z",
+  "summary": "PASS with one new Low finding that is not a mandatory violation (F-DG2-530). F-DG2-500 is genuinely fixed and verified CLOSED. The session-end reset now runs inside the API client wherever the session ends, and my round-14 W5/W5b leak is gone on Node 22 and 24. An identity change at /me purges every session query before B renders, and Back/Forward and late query answers carry nothing across. FE10's guarantees hold: one navigation, bounded requests, no stale shell, a 403 is never an end, and returnTo is safe. One residual of the class remains, F-DG2-530: a write of A's still in flight across an identity change is written into B's cache by the page's success handler. Every required check ran and passed: typecheck, build, lint, openapi:lint (161 ops), no-cdn, format, unit tests 866/866 on Node 22 and 24 and under load, integration 612/612 in both locales, AUD-403 146/146, migrations 0001-0019, and historical DG0/DG1. The only non-zero exits are the class probe's single by-design X3 assertion. The only warnings are benign: a Fastify FSTDEP022 deprecation, a Vite chunk-size advisory and pnpm pre-build bin links."
+}
