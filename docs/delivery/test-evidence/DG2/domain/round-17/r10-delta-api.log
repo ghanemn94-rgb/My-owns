@@ -1,0 +1,20 @@
+### v24.21.0 rv/r10-delta-api.mjs (clone at 23edabf) TAG= TRIGGERS=
+PASS R10.unknown-address-404:"application/octet-stream" :: expected 404 not_found :: actual 404 ["not_found"]
+PASS R10.unknown-address-404:"text/plain" :: expected 404 not_found :: actual 404 ["not_found"]
+PASS R10.unknown-address-404:"application/json" :: expected 404 not_found :: actual 404 ["not_found"]
+PASS R10.unknown-address-404:"application/json\t; charset=utf-8" :: expected 404 not_found :: actual 404 ["not_found"]
+PASS R10.upload-ows-accepted:"application/octet-stream\t; x=1" :: expected 200; download byte-identical; Arabic file name kept :: actual 200 fileName="خط-الأساس R10 ‏📊.xlsx"; 292/292 bytes sha 5fc92bdf314f2bf0 vs 5fc92bdf314f2bf0
+PASS R10.upload-ows-accepted:"application/octet-stream ;x=\"a b\"" :: expected 200; download byte-identical; Arabic file name kept :: actual 200 fileName="خط-الأساس R10 ‏📊.xlsx"; 292/292 bytes sha 5fc92bdf314f2bf0 vs 5fc92bdf314f2bf0
+PASS R10.upload-refusal-detail:"text/plain" :: expected 400 validation.content_type; detail names application/octet-stream only; no revision :: actual 400 ["validation.content_type","validation"] detail="Send the request body as application/octet-stream."; revisions 2->2
+PASS R10.upload-refusal-detail:"application/json\t; charset=utf-8" :: expected 400 validation.content_type; detail names application/octet-stream only; no revision :: actual 400 ["validation.content_type","validation"] detail="Send the request body as application/octet-stream."; revisions 2->2
+PASS R10.upload-refusal-detail:"application/json" :: expected 400 validation.content_type; detail names application/octet-stream only; no revision :: actual 400 ["validation.content_type","validation"] detail="Send the request body as application/octet-stream."; revisions 2->2
+PASS R10.upload-duplicate-content-type :: expected 400 validation.content_type; no revision :: actual 400 ["validation.content_type","validation"]; revisions 2->2
+PASS R10.charter-refused:"application/octet-stream" :: expected 400 validation.content_type naming application/json; GET charter 404 :: actual 400 ["validation.content_type","validation"] detail="Send the request body as application/json."; GET 404
+PASS R10.charter-refused:"application/json; charset=iso-8859-1" :: expected 400 validation.content_type naming application/json; GET charter 404 :: actual 400 ["validation.content_type","validation"] detail="Send the request body as application/json."; GET 404
+PASS R10.charter-refused:"application/json; charset=\"windows-1256\"" :: expected 400 validation.content_type naming application/json; GET charter 404 :: actual 400 ["validation.content_type","validation"] detail="Send the request body as application/json."; GET 404
+PASS R10.charter-ows-arabic-verbatim :: expected 201; caseForChange code-point identical; inScope Arabic :: actual 201; verbatim=true; inScope=نطاق تجريبي
+PASS R10.invisible-only-blank :: expected 400 validation.blank at /caseForChange :: actual 400 [["/caseForChange","validation.blank"]]
+PASS R10.localized:validation.content_type :: expected EN and AR present, AR Arabic :: actual en='The request format is not supported.' ar='صيغة الطلب غير مدعومة.'
+PASS R10.gate-codes :: expected G1..G6 only :: actual G1,G2,G3,G4,G5,G6
+SUMMARY 17/17 PASS
+### r10-delta-api exit=0

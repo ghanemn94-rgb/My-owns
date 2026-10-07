@@ -1,0 +1,14 @@
+### v24.21.0 rv/r13-ui.mjs (clone at 23edabf) TAG= TRIGGERS=
+PASS en.dev-signin :: expected My work reached; html lang=en dir=ltr; login page showed the development-only warning :: actual url=/my-work lang=en dir=ltr; login page lang=ar dir=rtl warning(en|ar) shown=true
+PASS en.sign-out-localized :: expected 'You have signed out.' shown; /me 401 for the browser :: actual url=/login shown=true me=401
+PASS en.sign-in-again :: expected My work reached again :: actual /my-work
+PASS en.evidence-upload-download-unchanged :: expected 200; download byte-identical; Arabic file name suggested :: actual status=200 bytes 300281/300281 sha a304639ad88c399b/a304639ad88c399b suggested=خط-الأساس-r13-en.bin
+PASS en.upload-refused-after-access-withdrawn :: expected assignment 201, revoke 200; upload answer 401; localized session-ended message shown; no English leak in AR; 0 revisions :: actual assign=201 evidenceCreate=201 revoke=200 upload=401 url=/login shown=["Your session ended. Please sign in again.","Your session ended. Please sign in again."] enLeak=false revisions=0 dir=ltr
+PASS ar.dev-signin :: expected My work reached; html lang=ar dir=rtl; login page showed the development-only warning :: actual url=/my-work lang=ar dir=rtl; login page lang=ar dir=rtl warning(en|ar) shown=true
+PASS ar.sign-out-localized :: expected 'تم تسجيل خروجك.' shown; /me 401 for the browser :: actual url=/login shown=true me=401
+PASS ar.sign-in-again :: expected My work reached again :: actual /my-work
+PASS ar.evidence-upload-download-unchanged :: expected 200; download byte-identical; Arabic file name suggested :: actual status=200 bytes 300281/300281 sha a304639ad88c399b/a304639ad88c399b suggested=خط-الأساس-r13-ar.bin
+PASS ar.upload-refused-after-access-withdrawn :: expected assignment 201, revoke 200; upload answer 401; localized session-ended message shown; no English leak in AR; 0 revisions :: actual assign=201 evidenceCreate=201 revoke=200 upload=401 url=/login shown=["انتهت جلستك. يُرجى تسجيل الدخول مجددًا.","انتهت جلستك. يُرجى تسجيل الدخول مجددًا."] enLeak=false revisions=0 dir=rtl
+PASS no-page-errors :: expected no page errors / console errors (other than Chromium's own 'Failed to load resource' lines for the expected 401) :: actual []
+SUMMARY {"pass":11,"fail":0}
+### r13-ui exit=0

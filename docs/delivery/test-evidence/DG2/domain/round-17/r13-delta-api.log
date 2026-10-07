@@ -1,0 +1,18 @@
+### v24.21.0 rv/r13-delta-api.mjs (clone at 23edabf) TAG= TRIGGERS=
+PASS R13.en.normal-upload-download-unchanged :: expected 200; download byte-identical; file name kept; one revision :: actual upload 200 fileName="Baseline R13 extract 📊.xlsx"; download 200 2097444/2097444 bytes sha 3422162a8ecd5a5a vs 3422162a8ecd5a5a; revisions=1
+PASS R13.ar.normal-upload-download-unchanged :: expected 200; download byte-identical; file name kept; one revision :: actual upload 200 fileName="خط-الأساس R13 ‏📊.xlsx"; download 200 2097444/2097444 bytes sha 3422162a8ecd5a5a vs 3422162a8ecd5a5a; revisions=1
+PASS R13.access-ends-mid-upload-403 :: expected assignment 201; evidence 201; temp object during stream; then 403 forbidden; 0 revisions; item version unchanged; authorization.denied audited; no .part left :: actual assign=201 evidence=201 partsDuring=1 response=403 code=forbidden detail="Your access to this record changed while the request was in progress." revisions=0 version 1->1 denials="1 transformation POST /api/v1/transformations/:transformationId/evidence/:evidenceId/content requires transformation.read" partsLeft=0
+INFO revoke expired assignment -> 200; re-assign -> 201 
+PASS R13.upload-after-403-regranted :: expected new assignment 201; 200 by the re-granted uploader; download byte-identical; 1 revision :: actual assign=201 upload=200; identical=true; revisions=1
+INFO the lead uploading to dev.nobody's item -> 403 (forbidden); ownership rule, as in attempt 1
+INFO cleanup revoke -> 200
+PASS R13.revoked-mid-upload-refused :: expected revoke 200; upload refused 401 unauthenticated (revocation ends the sessions); 0 revisions; version unchanged; no .part left; /me 401 :: actual assign=201 revoke=200 response=401 code=unauthenticated revisions=0 version 1->1 partsLeft=0 me=401
+PASS R13.signout-mid-upload-401 :: expected logout 2xx; upload refused 401 unauthenticated; 0 revisions; version unchanged; no .part left :: actual logout=200 response=401 code=unauthenticated revisions=0 version 1->1 partsLeft=0
+PASS R13.upload-after-signout-other-session :: expected the lead's other session still works: 200; byte-identical :: actual 200; identical=true; revisions=1
+PASS R13.localized:forbidden :: expected EN and AR present, AR Arabic :: actual en='You do not have permission for this action.' ar='ليست لديك صلاحية لهذا الإجراء.'
+PASS R13.localized:unauthenticated :: expected EN and AR present, AR Arabic :: actual en='Your session ended. Please sign in again.' ar='انتهت جلستك. يُرجى تسجيل الدخول مجددًا.'
+PASS R13.dev-signin-all-users :: expected dev-login 2xx and /me 200 for each seeded synthetic user :: actual dev.admin:204/200/Synthetic Dev Admin/en dev.office:204/200/Synthetic Transformation Office/ar dev.lead:204/200/Synthetic Transformation Lead/ar dev.auditor:204/200/Synthetic Auditor/en dev.nobody:204/200/Synthetic User Without Roles/ar
+INFO GET /api/v1/auth/login in AUTH_MODE=dev -> 404 {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found","requestId":"01a117bf-7c49-75af-b003-c598edfa357e"}
+PASS R13.gate-codes :: expected G1..G6 only :: actual G1,G2,G3,G4,G5,G6
+SUMMARY 11/11 PASS
+### r13-delta-api exit=0

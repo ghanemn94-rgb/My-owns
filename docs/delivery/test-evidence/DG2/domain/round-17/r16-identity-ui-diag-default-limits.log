@@ -1,0 +1,27 @@
+### v24.21.0 rv/r16-identity-ui-diag.mjs (clone at 23edabf) TAG= TRIGGERS=
+saved language of dev.lead and dev.nobody set to en: 2 row(s)
+setup en: A's transformation 'R16 A-ONLY en 4fee2a5c' create=201 id=01a117e0-79c7-7328-8883-be9fe6d28099
+PASS en.S2b.control-a-sees-record :: expected tab 1: A ('Synthetic Transformation Lead') sees 'R16 A-ONLY en 4fee2a5c' :: actual shown=true
+DIAG en tab2 GET /api/v1/me -> 401 retry-after=
+DIAG en tab2 POST /api/v1/auth/dev-login -> 400 retry-after=
+PASS en.S2b.me-first-then-b-name :: expected refocus 16001 ms after tab 1's last /me (< 60 s /me staleTime, > 15 s page staleTime): first request after refocus is /api/v1/me; header shows B ('Synthetic User Without Roles'); 'R16 A-ONLY en 4fee2a5c' never shown together with B's name and shown in at most 2 samples, 'Synthetic Transformation Lead' in at most 2 samples (both only before /me answers: A's own screen) and gone at the end :: actual requestsAfterRefocus=["/api/v1/me@+10","/api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units@+59","/api/v1/transformations@+59"] bName='Synthetic User Without Roles' samples=48 seen={"R16 A-ONLY en 4fee2a5c":1,"Synthetic Transformation Lead":1,"Synthetic User Without Roles":47} finalHasSecret=false finalHasAName=false path=/transformations dir=ltr
+timeline [secret aName bName] per 100 ms: 110 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001 001
+DIAG en tab2 GET /api/v1/me -> 401 retry-after=
+DIAG en tab2 POST /api/v1/auth/dev-login -> 429 retry-after=10
+DIAG en sign-in form missing: url=http://localhost:3927/login?signedOut=1 text="Mobily Transformation Hub\nProvisional\nProvisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.\nالعربية\nSign in\n\nSign in with your corporate account to continue.\n\n You have signed out.\n\nSign in with corporate account\n\nYou will be redirected to your organization's identity provider.\n\nBranding is provisional: the text wordmark "
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+locator.waitFor: Timeout 8000ms exceeded.
+Call log:
+[2m  - waiting for locator('input').first() to be visible[22m
+
+    at formSignIn (/var/tmp/mth-run.pThIyz/claude-0/review-dom-r17/rv/r16-identity-ui-diag.mjs:40:84)
+    at switchInTab2 (/var/tmp/mth-run.pThIyz/claude-0/review-dom-r17/rv/r16-identity-ui-diag.mjs:61:15)
+    at async file:///var/tmp/mth-run.pThIyz/claude-0/review-dom-r17/rv/r16-identity-ui-diag.mjs:96:22 {
+  name: 'TimeoutError'
+}
+
+Node.js v24.21.0
+### r16-identity-ui-diag exit=1
