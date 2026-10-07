@@ -77,6 +77,7 @@
    - **Out of the contract by design (D-067).** These are deliberately **not** declared on any operation:
      - **500 `internal`.** It is a failure (including the fail-closed authorization guard), never a contract response; a test that receives one fails.
      - **408 request timeout.** It is a transport-level answer of Node's `clientError` handler and can occur before any operation is matched.
+     - **503 `unavailable` from an exhausted database pool (D-072, T-DG2-BE17).** A checkout that waits longer than the pool's `connectionTimeoutMillis` is an operational failure, like 500, never a contract response. Only `getReadiness` declares 503, as its documented not-ready answer.
      - **404 for an unmatched route.** No operation matched, so there is no operation to declare it on. This includes the dev-login and OIDC routes in a mode where they are not registered. 404 *as a handler answer* (missing or unreadable record) stays declared where the operation gives it.
      - **429 for an unmatched route (D-071, T-DG2-BE16).** The not-found handler is rate-limited with the same limiter, key and bucket as the operations (`registerNotFoundHandler` with `preHandler: app.rateLimit()`). No operation matched, so, as for the unmatched 404, there is no operation to declare it on.
      - The other connection- or router-level answers (`clientError`'s malformed request and oversized headers, `FST_ERR_BAD_URL`) are also written before an operation is matched. They are 400 `ValidationError` problems, which every operation but the OIDC callback declares anyway.
