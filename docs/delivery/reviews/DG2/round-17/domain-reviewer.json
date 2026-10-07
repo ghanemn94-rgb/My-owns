@@ -1,0 +1,387 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG2",
+  "round": 17,
+  "candidate_id": "sha256:ddaab3cc264b0e13caadcb17f0d1811eff8ad1ec9364b7ba9c03727b83350750",
+  "source_commit": "805da3e26bed3572ca2fc32365934e57b2e84eeb",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG2-T-DG2-REV-DOM-R17-domain-reviewer-20261007T185446Z-1c1fbb0d",
+    "session_id": "1c1fbb0d-060b-4b6d-9473-0b8e5d5ecd9e"
+  },
+  "implementation_author": [
+    "backend-workflow-engineer",
+    "frontend-ux-engineer",
+    "kpi-benefits-engineer",
+    "solution-architect",
+    "transformation-analyst",
+    "devops-engineer",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "domain-reviewer authored no DG2 implementation, test, register row or ADR in the reviewed candidate. I formed this verdict from my own runs in a disposable clone at 23edabf, the freeze commit on source 805da3e2. I did not open any other reviewer's round-17 record or evidence. During my run the orchestrator auto-committed the code-security reviewer's round-17 evidence, moving HEAD to e7cb441. I saw only the commit subjects, and the candidate ID is unchanged. I read D-077 and the FE15 diff (ac81298) only to learn which user paths FE15 claims to fix. My probes are my own: rounds 13-16 probes reused unchanged, plus the new r17-identity-residual.mjs and the diagnostic r16-identity-ui-diag.mjs."
+  },
+  "assignment": "docs/delivery/assignments/DG2/round-17/domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-PB-003",
+    "REQ-PB-012",
+    "REQ-PB-016",
+    "REQ-PB-017",
+    "REQ-PB-018",
+    "REQ-PB-023",
+    "REQ-PB-024",
+    "REQ-PB-025",
+    "REQ-PB-026",
+    "REQ-PB-029",
+    "REQ-PB-030",
+    "REQ-PB-031",
+    "REQ-PB-033",
+    "REQ-PB-034",
+    "REQ-PB-035",
+    "REQ-PB-036",
+    "REQ-PB-037",
+    "REQ-PB-038",
+    "REQ-PB-039",
+    "REQ-PB-041",
+    "REQ-PB-042",
+    "REQ-PB-043",
+    "REQ-S04-003",
+    "REQ-S04-004",
+    "REQ-S04-005",
+    "REQ-S05-003"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-R17-00-candidate",
+      "procedure": "Verify the assignment sha256, the HEAD lineage and the candidate ID on the repository and on a fresh clone, before and after the runs. Run the DG1 historical validator.",
+      "command": "sha256sum <assignment>; git log 805da3e..HEAD; git diff --name-only 805da3e HEAD; node tools/gates/candidate.mjs --stage DG2 (repo + clone, before and after); node tools/gates/validate.mjs --historical --stage DG1",
+      "environment": "Node 24.21.0; repo /home/user/My-owns at 23edabf; disposable clone $TMPDIR/review-dom-r17 at 23edabf",
+      "expected": "Assignment sha 1164eb85…. 805da3e2 is an ancestor and the freeze commit adds only delivery records. Candidate sha256:ddaab3cc… with 564 files everywhere. DG1 historical PASS.",
+      "actual": "The assignment sha256 matches. HEAD 23edabf is one commit on 805da3e2 and adds only the 3 round-17 assignments, the manifest and stages.json. The candidate ID is sha256:ddaab3cc264b0e13caadcb17f0d1811eff8ad1ec9364b7ba9c03727b83350750 with 564 files on the repo and on the clone before the runs. After the runs it is unchanged on the clone (rv/ removed) and on the repo, where HEAD had moved to e7cb441 through the orchestrator's auto-commit of code-security evidence. The validator printed 'PASS gate DG1 (historical)', exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-17/candidate-and-dg1.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/env.txt"
+      ]
+    },
+    {
+      "id": "DOM-R17-01-typecheck",
+      "procedure": "pnpm -r typecheck on Node 22 and Node 24 in the disposable clone (offline frozen install).",
+      "command": "bash docs/delivery/test-evidence/DG2/domain/round-17/checks.sh",
+      "environment": "Node 22.22.2 and 24.21.0, pnpm 10.33.0, clone at 23edabf",
+      "expected": "exit 0 on both",
+      "actual": "Both logs end '### exit=0'. No error lines.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-17/typecheck-node22.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/typecheck-node24.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/install.log"
+      ]
+    },
+    {
+      "id": "DOM-R17-02-build",
+      "procedure": "pnpm -r build on Node 22 and Node 24.",
+      "command": "bash docs/delivery/test-evidence/DG2/domain/round-17/checks.sh",
+      "environment": "Node 22.22.2 and 24.21.0, clone at 23edabf",
+      "expected": "exit 0 on both",
+      "actual": "Both logs end '### exit=0'. The only warning is Vite's chunk-size advisory (not an error).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-17/build-node22.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/build-node24.log"
+      ]
+    },
+    {
+      "id": "DOM-R17-03-lint",
+      "procedure": "pnpm lint (eslint --max-warnings=0, including FE15's no-restricted-imports/no-restricted-syntax rules for raw navigate/setQueryData) on Node 22 and Node 24, before any probe was added to the clone.",
+      "command": "bash docs/delivery/test-evidence/DG2/domain/round-17/checks.sh",
+      "environment": "Node 22.22.2 and 24.21.0, clone at 23edabf",
+      "expected": "exit 0 on both",
+      "actual": "Both logs end '### exit=0', with 0 warnings.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-17/lint-node22.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/lint-node24.log"
+      ]
+    },
+    {
+      "id": "DOM-R17-04-test",
+      "procedure": "pnpm test on Node 22 and Node 24.",
+      "command": "bash docs/delivery/test-evidence/DG2/domain/round-17/checks.sh",
+      "environment": "Node 22.22.2 and 24.21.0, clone at 23edabf",
+      "expected": "All suites pass on both",
+      "actual": "Test Files 50 passed (50), Tests 926 passed (926) on both, and both logs end '### exit=0'. The only warning is the Fastify FSTDEP022 deprecation notice. Every other 'error' match is the name of a passing test. No failed suite and no hook timeout.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-17/test-node22.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/test-node24.log"
+      ]
+    },
+    {
+      "id": "DOM-R17-05-contrast",
+      "procedure": "pnpm --filter @mth/design-tokens run check:contrast on Node 22 and Node 24.",
+      "command": "bash docs/delivery/test-evidence/DG2/domain/round-17/checks.sh",
+      "environment": "Node 22.22.2 and 24.21.0",
+      "expected": "PASS; the only 'fails' lines are the documented prohibited pairs",
+      "actual": "'PASS contrast: 50 pairs meet WCAG AA; 3 prohibited pairs fail as documented', exit 0 on both. The 3 'fails' lines are those documented prohibited pairs (e.g. a decorative divider).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-17/contrast-node22.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/contrast-node24.log"
+      ]
+    },
+    {
+      "id": "DOM-R17-06-source-fidelity-static",
+      "procedure": "Compare the playbook blocks with the methodology catalogue, the access seeds and the EN catalogues: B0009 mode guidance verbatim; B0018 six roles and their accountability; B0023 G1-G6 name, question and evidence; B0029 six workstreams; B0035 fourteen charter fields; B0037 four thesis connectors; B0039-B0043 scope checks; B0056 ten TOM dimensions; B0062 ten canvas cells. Also read playbook.md B0009-B0062 by hand.",
+      "command": "node rv/source-fidelity.mjs (round-13 probe, unchanged)",
+      "environment": "Node 24.21.0, clone at 23edabf, no stack",
+      "expected": "24/24",
+      "actual": "SUMMARY 24/24 PASS, exit 0. FE15 changed no catalogue, i18n, API, DB or shared file (invariants.log), so the methodology content is unchanged from round 16.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-17/source-fidelity.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/invariants.log"
+      ]
+    },
+    {
+      "id": "DOM-R17-07-live-scenario",
+      "procedure": "Live API scenario on a disposable stack (UTF8 PostgreSQL :55027, API :3927, AUTH_MODE=dev, synthetic seed). Create a transformation; walk Diagnose→Define→Design; check the G1/G2/G3 decisions in sequence and refuse out-of-sequence gates. Also check: the charter with Arabic + RLM text stored verbatim; invisible-only values refused; the five scope pre-checks; the top-outcome warning; incomplete-thesis flags; G2 blocked at zero guardrails; the 10 TOM dimensions and the canvas; the per-dimension register; T01 six dimensions. Plus design-registers and 8 API delta/regression probes.",
+      "command": "bash with-stack.sh bash runp.sh live-scenario design-registers r13-delta-api r12-delta-api r11-delta-api r10-delta-api regress-d069-api regress-d068-api regress-d067-api regress-d066-api",
+      "environment": "Node 24.21.0, PostgreSQL 16 disposable cluster, synthetic dev seed",
+      "expected": "All PASS; G1→G2→G3 approved in order (demo decisions on synthetic data); out-of-sequence 422",
+      "actual": "live-scenario 101/101: G2 and G3 before G1 and G3 before G2 each get 422 gate.out_of_sequence. LIVE.G1-decision moves the phase diagnose→define, G2 moves it define→design and G3 moves it design→mobilize, ending with G1-G3 approved and G4-G6 draft. Gate names equal B0023. Zero guardrails give 422 naming g2.guardrails. Invisible-only values are refused with validation.blank, and a lone surrogate with validation.invalid_character. design-registers 11/11; r10 17/17, r11 13/13, r12 9/9, r13 11/11; d066 16/16, d067 11/11, d068 21/21, d069 18/18. Every exit is 0 and EXIT=0. The SQL_ASCII lines in stack-run-1.log are the intended D-065 UTF8 fail-closed probe. These are demo decisions on synthetic data; they approve nothing real and are unrelated to DG0-DG7.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-17/stack-run-1.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/live-scenario.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/design-registers.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r13-delta-api.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/regress-d069-api.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/with-stack.sh"
+      ]
+    },
+    {
+      "id": "DOM-R17-08-ui-signin-charter-evidence-team-design-en-ar",
+      "procedure": "Real Chromium against the live stack, in EN (LTR) and AR (RTL). Cover sign-in, mode guidance on create, a charter with Arabic+RLM and with invisible-only values (localized refusal), and an evidence upload and download. Walk Diagnose→Define→Design, the Team screen (assign), journey steps, the Design canvas and the Gates screen.",
+      "command": "bash with-stack.sh bash runp.sh r13-ui r9-ui:ui-upload-alert charter-blank-ui dom-shots walk-ui r12-team-ui r12-journey-steps-ui regress-d067-ui regress-d066-ui r16-edit-archive-ui",
+      "environment": "Node 24.21.0, Chromium (/opt/pw-browsers), stack as DOM-R17-07",
+      "expected": "All PASS. Arabic+RLM accepted verbatim. Invisible-only values refused with the localized message in EN and AR. Evidence download byte-identical.",
+      "actual": "r13-ui 11/11 (the evidence download is byte-identical: 300281/300281 bytes, same sha, Arabic file name suggested); ui-upload-alert 8/8; charter-blank-ui 14/14; walk-ui 28/28; r12-team-ui 10/10; r12-journey-steps-ui 6/6; regress-d067-ui 8/8; regress-d066-ui 8/8. All exit 0 (stack-run-2 EXIT=0). Every 'error' match is inside a PASS line, e.g. 'no-page-errors ... actual []'. Screens show the AR design canvas RTL with the 10 B0062 cells, Unknown target state and 'not set' owner (not 0 or green). The EN gates screen shows the B0023 names and a 'Business approval' notice saying the software never approves anything itself.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-17/stack-run-2.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r13-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/ui-upload-alert.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/charter-blank-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/walk-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r12-team-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r12-journey-steps-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/regress-d067-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/regress-d066-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/dom-shots.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/ar-r13-design.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/en-r13-gates.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/ar-r13-gates.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/en-r13-design.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/en-r13-evidence-uploaded.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/ar-r13-evidence-uploaded.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/en-r12-team-assigned.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/ar-r12-team-assigned.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/en-charter-arabic-rlm-created.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/ar-charter-arabic-rlm-created.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/en-charter-create-invisible.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/ar-charter-create-invisible.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/en-create-mode-guidance.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/ar-create-mode-guidance.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/en-r13-signed-in.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/ar-r13-signed-in.png"
+      ]
+    },
+    {
+      "id": "DOM-R17-09-ui-create-edit-archive-en-ar",
+      "procedure": "Create, edit and archive a transformation through the UI in EN and AR (FE15 rewired the create, edit and archive handlers onto session-bound actions).",
+      "command": "node rv/r16-edit-archive-ui.mjs (round-16 probe, unchanged), within stack-run-2; creation also in r13-ui and walk-ui",
+      "environment": "Node 24.21.0, Chromium, stack as DOM-R17-07",
+      "expected": "The edit saves and navigates to the detail page (version 1→2, stored verbatim). The archive with a visible reason stores RLM verbatim and shows a read-only note. An invisible-only reason is refused. No errors.",
+      "actual": "7/7 PASS, exit 0: edit-saves-and-navigates (dir ltr/rtl), archive-visible-reason (RLM kept), archive-invisible-refused, no-page-errors []. The 'error' matches are inside PASS lines ('no error banner').",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-17/r16-edit-archive-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/en-r16-edited.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/ar-r16-edited.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/en-r16-archived.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/ar-r16-archived.png"
+      ]
+    },
+    {
+      "id": "DOM-R17-10-ui-withdrawn-and-shutdown",
+      "procedure": "Access withdrawn during use (EN/AR), then API shutdown behaviour.",
+      "command": "bash with-stack.sh bash runp.sh r13-ui-withdrawn r13-shutdown",
+      "environment": "Node 24.21.0, Chromium, fresh stack",
+      "expected": "All PASS",
+      "actual": "r13-ui-withdrawn 5/5, r13-shutdown 2/2, exit 0 each, EXIT=0. The '/login?…error=session_expired' matches are the URL of the expected session-ended message, not errors.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-17/stack-run-3.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r13-ui-withdrawn.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r13-shutdown.log"
+      ]
+    },
+    {
+      "id": "DOM-R17-11-F570-identity-navigation-en-ar",
+      "procedure": "Verify F-DG2-570 by rerunning my round-16 reproduction r16-identity-nav.mjs unchanged. A is in tab 1; tab 2 signs out and signs B in; tab 1 returns within the fresh window, opens A's own record, and opens Transformations 16 s later. Also rerun r15-identity-ui and r16-identity-ui. Do this with raised limits and with default limits.",
+      "command": "bash with-stack.sh bash runp.sh r16-identity-nav r17-identity-residual r16-identity-ui r15-identity-ui r13-session-end-ui r14-session-end-ui r14-language-ui (stack-run-4); PACE_MS=62000 bash with-stack-default-limits.sh bash runp.sh ... (stack-run-7, -8, -9)",
+      "environment": "Node 24.21.0, Chromium, fresh stacks; raised limits (stack-run-4) and default limits (AUTH 20/min, general 300/min; stack-run-7/8/9)",
+      "expected": "Header, permissions and data of one identity after in-app navigation (B's name with B's data); r15 13/13; r16 5/5",
+      "actual": "r16-identity-nav: 5/5 with raised and with default limits. It failed 4/5 in round 16. N1 now asks /me (meRequests=1) and shows B's name with B's 'Not found'; N2 shows B's name with B's list, without A's record, in EN and AR. r15-identity-ui: 13/13 with raised and default limits. r16-identity-ui: 5/5 with raised limits (stack-run-4) and 5/5 with default limits when run first (stack-run-9). Under default limits in stack-run-7, r16-identity-ui exited 1: EN 2/2 PASS, then an uncaught TimeoutError in the AR half while waiting for tab 2's dev sign-in input, with no SUMMARY. stack-run-8 established the cause with a diagnostic copy, which also exited 1, as expected for the diagnosis. The probe ignores PACE_MS and ran right after probes that spent the default 20/min auth budget, so LoginPage's dev-login availability probe got 429 (retry-after=10) and the DEV-ONLY sign-in form was hidden (screens/en-r16-diag-tab2-login.png). This is pre-existing dev-mode behaviour, not an FE15 or domain defect. stack-run-4 EXIT=1 comes solely from r17-identity-residual attempt 1 (DOM-R17-12). All other probes in those runs exited 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-17/r16-identity-nav.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r16-identity-nav-default-limits.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r16-identity-nav.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r15-identity-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r15-identity-ui-default-limits.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r16-identity-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r16-identity-ui-default-limits.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r16-identity-ui-diag-default-limits.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r16-identity-ui-diag.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r16-identity-ui-default-limits-run9.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/stack-run-4.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/stack-run-7.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/stack-run-8.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/stack-run-9.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/with-stack-default-limits.sh",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/en-r16-N1-own-record-after-fix.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/ar-r16-N1-own-record-after-fix.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/en-r16-N2-list-after-fix.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/ar-r16-N2-list-after-fix.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/en-r16-diag-tab2-login.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/env.txt"
+      ]
+    },
+    {
+      "id": "DOM-R17-12-D077-residual-challenge-en-ar",
+      "procedure": "Challenge the documented D-077 residual with my own probe r17-identity-residual.mjs. A opens Transformations through the nav (the /me fires); B is signed into the same cookie jar 70-90 ms later. R1: toggle 'Include archived' inside the 2 s window (search parameter only), then search a never-fetched term after the window. R2: navigate inside the window.",
+      "command": "node rv/r17-identity-residual.mjs (stack-run-4 attempt 1, stack-run-5 attempt 2, stack-run-6 attempt 3; also stack-run-7 and -8 with default limits)",
+      "environment": "Node 24.21.0, Chromium, fresh stacks; raised and default limits",
+      "expected": "Navigations inside the window switch to B at once. The next uncached GET after the window asks /me first and shows B. The inside-window filter is the documented residual: an observation, judged for disclosure.",
+      "actual": "Attempt 3: 5/5 with raised limits (stack-run-6) and 5/5 with default limits (stack-run-7 and stack-run-8). R2 asks /me (meGETs=2), and the timeline is A1 (A's own screen, first sample) then B0 throughout: B's name, no A record. R1 after the window: meFirst=true, header B. R1 inside the window (OBS): header A, list GET under B's cookie ('no transformations match', A's New transformation button), meGETs=0. That reproduces the documented residual exactly. I accept it as bounded and non-disclosing: the data is the current cookie holder's own, signed in from the same browser; nothing of A reaches B; writes carry A's CSRF token. Attempt 1 exited 1 on a probe mistake: Playwright check() threw 'Clicking the checkbox did not change its state' because the checkbox is URL-driven, and no assertion ran. Attempt 2 exited 1 with 2 FAIL lines (en/ar.R1.after-window), also a probe mistake: unticking returned to a still-fresh cached list, so no GET was sent (listGETs=0) and the screen showed A's own cached list under A's own header. Both attempts are kept with their probes. stack-run-4 and -5 EXIT=1 come solely from these attempts.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-17/r17-identity-residual.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r17-identity-residual.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r17-identity-residual-default-limits.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r17-identity-residual-default-limits-run8.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r17-identity-residual-attempt1.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r17-identity-residual-attempt1.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r17-identity-residual-attempt2.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r17-identity-residual-attempt2.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-17/stack-run-5.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/stack-run-6.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/en-r17-R1-filter-inside-window.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/ar-r17-R1-filter-inside-window.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/en-r17-R1-filter-after-window.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/ar-r17-R1-filter-after-window.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/en-r17-R2-nav-inside-window.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/ar-r17-R2-nav-inside-window.png"
+      ]
+    },
+    {
+      "id": "DOM-R17-13-session-end-and-language-en-ar",
+      "procedure": "Sign-out, the session-ended message (other-tab sign-out, API logout, idle and absolute expiry, revocation, in-app link) and the language notice at 320/768/1280, in EN and AR.",
+      "command": "node rv/r13-session-end-ui.mjs, rv/r14-session-end-ui.mjs, rv/r14-language-ui.mjs (stack-run-4); session-end probes again with default limits (stack-run-7)",
+      "environment": "Node 24.21.0, Chromium; raised and default limits",
+      "expected": "All PASS",
+      "actual": "r13-session-end-ui 4/4 and r14-session-end-ui 31/31 with raised and default limits; r14-language-ui 20/20. Exit 0 each. The 'error=session_expired' matches are the expected message URL.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-17/r13-session-end-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r14-session-end-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r13-session-end-ui-default-limits.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r14-session-end-ui-default-limits.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r14-language-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/en-r14-language-notice-1280.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/ar-r14-language-notice-1280.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/en-r14-session-end-other-tab-signout-raised-limits.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/ar-r14-session-end-other-tab-signout-raised-limits.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/en-r13-session-end-in-app-link.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/ar-r13-session-end-in-app-link.png"
+      ]
+    },
+    {
+      "id": "DOM-R17-14-invariants",
+      "procedure": "Static invariants and the delta: manifest delta vs round 16; no API/DB/shared/i18n change; EN/AR key parity; no certification or official claims except negations; no float columns; provisional brand token; DG0-DG7 appear only in comments asserting separation; no DG in user-facing i18n; the generation check on every apiRequest exit path; a sweep for raw useNavigate/setQueryData.",
+      "command": "bash docs/delivery/test-evidence/DG2/domain/round-17/invariants.sh; grep -rnE 'useNavigate|setQueryData|setQueriesData|router.navigate' apps/web/src",
+      "environment": "clone at 23edabf",
+      "expected": "Web-only delta; parity 0 missing; only negations; 0 float columns; #0078FF provisional; no product gate implies DG0-DG7",
+      "actual": "Delta: 27 web files, sessionBound.ts and its test, eslint.config.js and decisions.md. No API, DB, shared or i18n change. EN keys missing in AR: 0. The certification/official matches are all negations ('not an official PMI standard', 'not official Mobily brand assets'). Float columns: 0. tokens.json shows provisional:true with #0078FF. DG0-DG7 appear only in comments stating separation. Raw useNavigate appears only in session.tsx (session-end redirect), Shell.tsx (sign out) and LoginPage.tsx (sign in), each the documented session transition. Every setQueryData goes through action.setQueryData. exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-17/invariants.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/invariants.sh"
+      ]
+    },
+    {
+      "id": "DOM-R17-15-utf8-fail-closed",
+      "procedure": "In every stack start, migrate into a SQL_ASCII database first, which must be refused before any table is created; the mth database must be UTF8.",
+      "command": "with-stack.sh UTF8-PROBE lines",
+      "environment": "PostgreSQL disposable cluster",
+      "expected": "migrate exit 1, 0 tables; mth encoding UTF8",
+      "actual": "Every stack-run-N.log shows 'mth-db: the database must use UTF8 encoding (found SQL_ASCII)', 'UTF8-PROBE sql_ascii migrate exit=1 tables_created=0' and 'UTF8-PROBE mth encoding=UTF8'. That exit 1 is the intended fail-closed behaviour.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-17/stack-run-1.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/with-stack.sh"
+      ]
+    },
+    {
+      "id": "DOM-R17-16-env-residuals",
+      "procedure": "Environmental residuals, checked only on the offline/config surface as instructed: live registry (D-057), live CI (D-058), Keycloak (D-049).",
+      "command": "see env-residuals.log (offline frozen install; cmp .github/workflows/ci.yml deploy/ci/ci.yml; Keycloak config surface listing)",
+      "environment": "sandbox without network; no IdP",
+      "expected": "The offline/config surface is consistent; residuals named",
+      "actual": "Offline frozen install exit 0 (residual D-057: live registry not reached). The CI files are identical, cmp exit 0 (residual D-058: live CI not run). The Keycloak realm and compose surfaces are present (residual D-049: OIDC sign-in not exercised live; dev sign-in only).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-17/env-residuals.log"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG2/round-17/domain-reviewer.verifications.json",
+    "docs/delivery/test-evidence/DG2/domain/round-17/env.txt",
+    "docs/delivery/test-evidence/DG2/domain/round-17/candidate-and-dg1.log",
+    "docs/delivery/test-evidence/DG2/domain/round-17/probe-sha256.txt",
+    "docs/delivery/test-evidence/DG2/domain/round-17/checks.sh",
+    "docs/delivery/test-evidence/DG2/domain/round-17/runp.sh",
+    "docs/delivery/test-evidence/DG2/domain/round-17/live-scenario.log",
+    "docs/delivery/test-evidence/DG2/domain/round-17/source-fidelity.log",
+    "docs/delivery/test-evidence/DG2/domain/round-17/r16-identity-nav.log",
+    "docs/delivery/test-evidence/DG2/domain/round-17/r17-identity-residual.log",
+    "docs/delivery/test-evidence/DG2/domain/round-17/handback-T-DG2-REV-DOM-R17-domain-reviewer.md"
+  ],
+  "reviewed_at": "2026-10-07T19:50:00Z",
+  "summary": "PASS on candidate ddaab3cc (564 files, source 805da3e2). F-DG2-570 is CLOSED_VERIFIED: my round-16 reproduction now passes 5/5 in EN and AR with raised and default limits, and in-app navigations confirm the identity before page data. My new probe reproduces the documented D-077 2 s residual for non-navigation GETs exactly. I judge it bounded and non-disclosing, and accept it. Full re-review: all 26 requirements are faithful to the playbook (B0009, B0018, B0023, B0029-B0043, B0048-B0051, B0056-B0062) and work live in EN and AR. G1→G2→G3 advance sequentially, as demo decisions on synthetic data, unrelated to DG0-DG7. Typecheck, build, lint, test (926/926) and contrast pass on Node 22 and 24. No new findings. Every non-zero exit in my evidence is explained in env.txt: three probe-authoring mistakes, kept as attempts, and one default-limits auth-budget exhaustion caused by my probe order, with its diagnosis."
+}

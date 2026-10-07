@@ -1,0 +1,26 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG2-570",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:ddaab3cc264b0e13caadcb17f0d1811eff8ad1ec9364b7ba9c03727b83350750 (source 805da3e2, FE15 ac81298) in a real browser, EN (LTR) and AR (RTL). (1) My round-16 reproduction r16-identity-nav.mjs, rerun unchanged, now passes 5/5 with raised limits and 5/5 with default limits; in round 16 it failed 4/5. After the user changed in another tab and tab 1 returned within the fresh window, opening A's own record asks GET /me (meRequests=1) and shows B's name with B's 'Not found'. Opening Transformations 16 s later shows B's name with B's list, without A's record. (2) My round-15 r15-identity-ui (13/13) and round-16 r16-identity-ui (5/5) pass with raised and default limits. Under default limits r16-identity-ui must not run straight after probes that spend the 20/min auth budget (env.txt, stack-run-7/8/9). (3) The new r17-identity-residual challenges the D-077 residual, 5/5 with raised and default limits. A navigation sent 70-120 ms after the last /me and after B's sign-in asks /me, and the timeline shows A's own record under A's name only in the first sample, then B's name and no A record. Inside the 2 s window, a filter (search parameter only) is fetched under B's cookie under A's header: 'no transformations match', with A's New transformation button. That is exactly the documented residual. The next uncached GET after the window asks /me first and shows B's name. I accept the residual (D-077) as bounded and non-disclosing: the data fetched in the window is the CURRENT cookie holder's own data, signed in from the same browser. No data of A reaches B beyond what was already on A's screen. Writes carry A's CSRF token and cannot go out as B. It ends at the next navigation, the next uncached GET after 2 s or a refocus. The code agrees: client.ts gates every page GET on revalidation when /me is older than SESSION_RECHECK_MS, and session.tsx revalidates on every pathname change in a layout effect. A sweep finds no raw useNavigate/setQueryData outside the documented session transitions, and the ESLint rule enforces it.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-17/r16-identity-nav.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r16-identity-nav-default-limits.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r16-identity-nav.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r17-identity-residual.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r17-identity-residual-default-limits.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r17-identity-residual.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r15-identity-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r16-identity-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/r16-identity-ui-default-limits-run9.log",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/en-r16-N1-own-record-after-fix.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/ar-r16-N2-list-after-fix.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/ar-r17-R1-filter-inside-window.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/screens/en-r17-R2-nav-inside-window.png",
+        "docs/delivery/test-evidence/DG2/domain/round-17/env.txt"
+      ]
+    }
+  ]
+}
