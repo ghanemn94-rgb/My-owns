@@ -19,7 +19,9 @@ import { reasonRequest } from "@mth/shared/schemas";
 import { z } from "zod";
 import {
   auditContextOf,
+  commitTimeDenial,
   principalOf,
+  refreshPrincipal,
   requireRecordWrite,
   requireTransformationRead,
   type Ownership,
@@ -238,6 +240,16 @@ export async function writableTransformation(tx: Tx, transformationId: string) {
   return t;
 }
 
+export interface OpenWriteOptions {
+  /**
+   * T-DG2-BE18 (F-DG2-440): the write commits after waiting on the client (a streamed request body), so authorise it
+   * again at commit time: the session is re-resolved and the grants reloaded inside `tx` (401 when the session ended
+   * meanwhile), and the gates below decide on those. A read right revoked meanwhile is 403 (the caller already knows
+   * the record exists), audited as a failed mutation like any other denial.
+   */
+  readonly atCommit?: boolean;
+}
+
 /** The read + write gates of a mutation inside a transformation; returns the context for the write. */
 export async function openWrite(
   tx: Tx,
@@ -245,10 +257,16 @@ export async function openWrite(
   transformationId: string,
   rules: readonly WriteRule[],
   ownership: Ownership | null,
+  options: OpenWriteOptions = {},
 ): Promise<WriteContext> {
-  const principal = principalOf(request);
-  const target = await requireTransformationRead(tx, principal, transformationId);
-  await requireRecordWrite(tx, principal, target, rules, ownership ?? { createdBy: principal.userId });
+  const principal = options.atCommit ? await refreshPrincipal(tx, request) : principalOf(request);
+  let target: ResolvedTarget;
+  try {
+    target = await requireTransformationRead(tx, principal, transformationId);
+    await requireRecordWrite(tx, principal, target, rules, ownership ?? { createdBy: principal.userId });
+  } catch (err) {
+    throw options.atCommit ? commitTimeDenial(err) : err;
+  }
   const t = await writableTransformation(tx, transformationId);
   return {
     tx,

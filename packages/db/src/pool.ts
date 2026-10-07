@@ -31,9 +31,14 @@ export const DEFAULT_STATEMENT_TIMEOUT_MS = 30_000;
  * T-DG2-BE17 (F-DG2-411, defence in depth): server-side `idle_in_transaction_session_timeout` on every pooled session.
  * A session that sits inside an open transaction without running a statement for this long is terminated by
  * PostgreSQL (SQLSTATE 25P03), which rolls the transaction back and releases its row locks; node-postgres then drops the
- * client from the pool. No application transaction waits on anything but the database (no client I/O, no remote
- * call: T-DG2-BE17 sweep), so its idle gaps are microseconds; 30 s (the statement timeout) is far above any of them and
- * still bounds a lock holder if a future handler regresses. `statement_timeout` does NOT cover idle time.
+ * client from the pool. No application transaction waits on anything but the database: no client I/O (T-DG2-BE17), no
+ * remote call (T-DG2-BE18 / F-DG2-441 moved OIDC discovery out of the login transaction), no timer, queue call or
+ * child process. The one non-database step inside a transaction is the evidence store's documented finalise (a local
+ * atomic rename, apps/api evidence/routes.ts), and the worker's pg-boss `send`, which runs its SQL on the same
+ * transaction. The T-DG2-BE18 sweep (an AST scan of every `await` inside a transaction callback, a function taking a
+ * transaction or client, or a pooled-client checkout, in apps/api, apps/worker and packages; handback T-DG2-BE18)
+ * found no other. So the idle gaps are microseconds; 30 s (the statement timeout) is far above any of them and still
+ * bounds a lock holder if a future handler regresses. `statement_timeout` does NOT cover idle time.
  */
 export const DEFAULT_IDLE_IN_TRANSACTION_TIMEOUT_MS = 30_000;
 /**

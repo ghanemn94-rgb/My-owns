@@ -6,11 +6,43 @@
 // makes every content operation 503 (never a silent fallback).
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
-import { mkdir, open, rename, rm, stat } from "node:fs/promises";
-import { dirname, join, resolve, sep } from "node:path";
+import { lstat, mkdir, open, readdir, rename, rm, stat } from "node:fs/promises";
+import { dirname, join, relative, resolve, sep } from "node:path";
 
 /** Hard ceiling of the evidence_content.size_bytes CHECK is 1 GiB; the API accepts at most this much per upload. */
 export const EVIDENCE_MAX_BYTES = 25 * 1024 * 1024;
+
+/**
+ * T-DG2-BE18A (F-DG2-460, defence in depth): the start-up sweep removes a TEMPORARY object (`<uuid>.part`) only when
+ * it was last written more than this long ago. A temporary is owned by a live upload only while that request runs:
+ *  - its body must arrive within Node's requestTimeout (300 s, platform/connection-hygiene.ts), and every write updates
+ *    the file's mtime, so a live temporary is at most 300 s old while the body streams;
+ *  - phase 3 (commit-time authorisation, the row lock, the content row, finalise) follows at once and is bounded by the
+ *    pool checkout timeout (10 s) and the statement / idle-in-transaction timeouts (30 s each);
+ *  - shutdown adds at most the grace and the backstop (10 s).
+ * That is under 10 minutes for the longest legitimate ownership on ANY API instance sharing the store. One hour is six
+ * times that, and leaves a large margin for clock skew between instances (on shared storage the mtime may come from
+ * another host's clock). So no live request, on this instance or another, can own a temporary the sweep removes.
+ */
+export const STALE_TEMPORARY_AGE_MS = 60 * 60 * 1000;
+
+/** The only names the sweep ever removes: an upload's temporary object (a UUID key + `.part`). */
+const TEMPORARY_NAME = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.part$/;
+/** Keys are organization/transformation/evidence/uuid: temporaries live exactly 3 directories below the root. */
+const KEY_DEPTH = 3;
+
+export interface RemovedTemporary {
+  /** The temporary's path relative to the store root (opaque identifiers only, never content). */
+  readonly key: string;
+  readonly sizeBytes: number;
+  readonly ageMs: number;
+}
+
+export interface SweepResult {
+  readonly removed: number;
+  /** Temporaries younger than the threshold (possibly owned by a live upload), left alone. */
+  readonly keptFresh: number;
+}
 
 export interface StoredObject {
   readonly key: string;
@@ -54,6 +86,11 @@ export interface EvidenceStore {
    * that was received but not finalised. Idempotent. Retention deletes are P6.
    */
   discardUncommitted(key: string): Promise<void>;
+  /**
+   * T-DG2-BE18A (F-DG2-460): removes temporary objects last written more than `olderThanMs` ago (see
+   * STALE_TEMPORARY_AGE_MS), calling `onRemoved` for each. Never removes a final (committed or committable) object.
+   */
+  sweepStaleTemporaries(olderThanMs: number, onRemoved: (removed: RemovedTemporary) => void): Promise<SweepResult>;
 }
 
 const KEY = /^[A-Za-z0-9][A-Za-z0-9/_.-]{0,199}$/;
@@ -104,8 +141,12 @@ export class FilesystemEvidenceStore implements EvidenceStore {
       }
       await handle.sync();
     } catch (err) {
-      await handle.close();
-      await rm(temp, { force: true });
+      // T-DG2-BE18A: the temporary is removed even when closing the handle fails.
+      try {
+        await handle.close();
+      } finally {
+        await rm(temp, { force: true });
+      }
       throw err;
     }
     await handle.close();
@@ -134,6 +175,53 @@ export class FilesystemEvidenceStore implements EvidenceStore {
     await rm(this.pathOf(key), { force: true });
     await rm(this.tempOf(key), { force: true });
   }
+
+  async sweepStaleTemporaries(
+    olderThanMs: number,
+    onRemoved: (removed: RemovedTemporary) => void,
+  ): Promise<SweepResult> {
+    let removed = 0;
+    let keptFresh = 0;
+    const visit = async (dir: string, depth: number): Promise<void> => {
+      let entries;
+      try {
+        entries = await readdir(dir, { withFileTypes: true });
+      } catch (err) {
+        if ((err as { code?: string }).code === "ENOENT") return; // no store yet, or removed concurrently
+        throw err;
+      }
+      for (const entry of entries) {
+        const path = join(dir, entry.name);
+        if (depth < KEY_DEPTH) {
+          // Real directories only: a symbolic link is never followed out of the store.
+          if (entry.isDirectory()) await visit(path, depth + 1);
+          continue;
+        }
+        if (!entry.isFile() || !TEMPORARY_NAME.test(entry.name)) continue; // final objects are never touched
+        let info;
+        try {
+          info = await lstat(path);
+        } catch {
+          continue; // finalised or removed meanwhile
+        }
+        if (!info.isFile()) continue;
+        const ageMs = Date.now() - info.mtimeMs;
+        if (ageMs <= olderThanMs) {
+          keptFresh += 1;
+          continue;
+        }
+        await rm(path, { force: true });
+        removed += 1;
+        onRemoved({
+          key: relative(this.root, path).split(sep).join("/"),
+          sizeBytes: info.size,
+          ageMs: Math.round(ageMs),
+        });
+      }
+    };
+    await visit(this.root, 0);
+    return { removed, keptFresh };
+  }
 }
 
 /** The configured store; the S3-compatible adapter is not part of P2 (ADR-0010 §3). */
@@ -149,5 +237,6 @@ export function evidenceStoreFor(config: { driver: "filesystem" | "s3"; path: st
     get: unavailable,
     head: unavailable,
     discardUncommitted: async () => undefined,
+    sweepStaleTemporaries: async () => ({ removed: 0, keptFresh: 0 }),
   };
 }

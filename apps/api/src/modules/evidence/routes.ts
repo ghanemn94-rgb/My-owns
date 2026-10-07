@@ -76,6 +76,7 @@ import {
   EvidenceStoreUnavailable,
   EvidenceTooLarge,
   evidenceStoreFor,
+  STALE_TEMPORARY_AGE_MS,
   type EvidenceStore,
 } from "./store.ts";
 
@@ -389,6 +390,28 @@ export function registerEvidenceModule(
     restrictParserTo(OCTET_STREAM_MEDIA_TYPE, (_request, payload, done) => done(null, payload)),
   );
 
+  // T-DG2-BE18A (F-DG2-460, defence in depth behind the shutdown wait in main.ts): once the instance is ready, remove
+  // temporary objects that no live upload can still own (STALE_TEMPORARY_AGE_MS explains the age), e.g. left by a
+  // crash or a SIGKILL. In the background, so readiness never waits on a large store; tracked, so a shutdown waits.
+  app.addHook("onReady", async () => {
+    const sweep = store
+      .sweepStaleTemporaries(STALE_TEMPORARY_AGE_MS, (removed) =>
+        app.log.info(
+          { key: removed.key, sizeBytes: removed.sizeBytes, ageMs: removed.ageMs },
+          "evidence store: stale temporary object removed",
+        ),
+      )
+      .then(
+        (result) =>
+          app.log.info(
+            { ...result, olderThanMs: STALE_TEMPORARY_AGE_MS },
+            "evidence store: start-up sweep of stale temporary objects finished",
+          ),
+        (err: unknown) => app.log.warn({ err }, "evidence store: start-up sweep of stale temporary objects failed"),
+      );
+    void (app.hasDecorator("inFlight") ? app.inFlight.track(sweep) : sweep);
+  });
+
   registerRegister(app, db, evidenceRegister);
   registerContentRoutes(app, db, store);
   registerReviewRoute(app, db);
@@ -432,7 +455,10 @@ function registerContentRoutes(app: FastifyInstance, db: Db, store: EvidenceStor
   //      the file name, the body's form); every refusal here is answered before a byte of the body is consumed;
   //   2. the body is received into the store's TEMPORARY object (size limit and SHA-256 while streaming) holding no
   //      connection: a slow or stalled client costs a socket and a file handle, never database capacity;
-  //   3. a short write transaction: authorization again, the row lock, If-Match re-checked against the LOCKED version
+  //   3. a short write transaction: authorization again AT COMMIT TIME (T-DG2-BE18, F-DG2-440: the session is
+  //      re-resolved and the grants reloaded inside this transaction, so a logout, session revocation or expiry while
+  //      the body streamed is 401 and a revoked grant is 403, audited as a denied mutation; never the request-start
+  //      snapshot), the row lock, If-Match re-checked against the LOCKED version
   //      (a concurrent edit during the upload is the declared 409 version_conflict), the content row, the item update
   //      and the audit event; the object is finalised (atomic rename, local I/O only) as the last step before COMMIT,
   //      as before BE17, so a committed content row never points at a missing object.
@@ -492,6 +518,7 @@ function registerContentRoutes(app: FastifyInstance, db: Db, store: EvidenceStor
           transformationId,
           EDIT_OWN,
           await ownershipOf(tx, transformationId, evidenceId),
+          { atCommit: true },
         );
         const current = await checkEvidenceVersion(tx, request, transformationId, evidenceId, true);
         if (current.kind !== "file")

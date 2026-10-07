@@ -1,0 +1,737 @@
+# T-DG2-BE18 sweep (F-DG2-441 class): every await while a transaction or pooled client is held. AST scan (TypeScript compiler API),
+# scripts reproduced verbatim at the end of this log. Scope: 121 non-test source files under apps/api/src, apps/worker/src, packages/*/src.
+# 2026-10-07T05:45:30Z; working tree based on 8c02475 + this change
+
+## BEFORE (HEAD 8c02475, disposable clone): REVIEW lines
+REVIEW	apps/api/src/modules/access/assignments.ts:195	await	[fn getAssignment(db) @192]	q.executeTakeFirst()
+REVIEW	apps/api/src/modules/access/assignments.ts:315	await	[fn listAssignments(db) @290]	q .orderBy("a.id", "desc") .limit(query.limit + 1) .execute()
+REVIEW	apps/api/src/modules/access/team.ts:236	await	[transaction callback @142]	run()
+REVIEW	apps/api/src/modules/audit/index.ts:60	await	[fn listTransformationAudit(db) @30]	q .orderBy("e.seq", "desc") .limit(page.limit + 1) .execute()
+REVIEW	apps/api/src/modules/evidence/routes.ts:291	await	[fn checkEvidenceVersion(tx) @278]	(lock ? query.forUpdate() : query).executeTakeFirst()
+REVIEW	apps/api/src/modules/evidence/routes.ts:542	await	[transaction callback @488]	store.finalise(key)
+REVIEW	apps/api/src/modules/identity/oidc.ts:59	await	[fn startLogin(tx) @57]	this.configuration_()
+REVIEW	apps/api/src/modules/identity/oidc.ts:78	await	[fn startLogin(tx) @57]	client.calculatePKCECodeChallenge(codeVerifier)
+REVIEW	apps/api/src/modules/identity/users.ts:236	await	[fn listUsers(db) @217]	q .orderBy(sql`lower(display_name)`) .orderBy("id") .limit(query.limit + 1) .execute()
+REVIEW	apps/api/src/modules/kpi/support.ts:210	await	[transaction callback @207]	exec()
+REVIEW	apps/api/src/modules/platform/health.ts:30	connect	[pool client checkout]	pool.connect()
+REVIEW	apps/api/src/modules/platform/idempotency.ts:57	await	[fn withIdempotency(tx) @29]	run()
+REVIEW	apps/api/src/modules/transformations/charter.ts:231	await (nested fn)	[fn scopeCheckPrechecks(db) @225]	q
+REVIEW	apps/api/src/modules/transformations/register-kit.ts:279	await	[fn maybeIdempotent(tx) @271]	run()
+REVIEW	apps/api/src/modules/transformations/register-kit.ts:338	await	[fn (anonymous)(dbx) @330]	q.executeTakeFirst()
+REVIEW	apps/api/src/modules/transformations/register-kit.ts:400	await (nested fn)	[transaction callback @384]	spec.check(values, ctx, null)
+REVIEW	apps/api/src/modules/transformations/register-kit.ts:401	await (nested fn)	[transaction callback @384]	spec.beforeInsert(values, ctx)
+REVIEW	apps/api/src/modules/transformations/register-kit.ts:478	await	[transaction callback @463]	spec.check({ ...(current as unknown as LooseRow), ...changes }, ctx, current)
+REVIEW	apps/api/src/modules/transformations/routes.ts:261	await	[transaction callback @155]	run()
+REVIEW	apps/api/src/modules/workflows/canvas.ts:51	await	[fn canvasViews(db) @43]	cellsQ.orderBy("d.ordinal").execute()
+REVIEW	apps/api/src/modules/workflows/gates.ts:222	await	[fn instanceOf(db) @215]	q.executeTakeFirst()
+REVIEW	packages/db/src/cli.ts:51	connect	[pool client checkout]	pool.connect()
+REVIEW	packages/db/src/migrate.ts:133	connect	[pool client checkout]	client.connect()
+
+## AFTER (this change): summary
+awaits scanned: 569; classified db: 548; REVIEW: 21
+
+## AFTER: REVIEW lines (each is resolved in the handback's sweep table)
+REVIEW	apps/api/src/modules/access/assignments.ts:195	await	[fn getAssignment(db) @192]	q.executeTakeFirst()
+REVIEW	apps/api/src/modules/access/assignments.ts:315	await	[fn listAssignments(db) @290]	q .orderBy("a.id", "desc") .limit(query.limit + 1) .execute()
+REVIEW	apps/api/src/modules/access/team.ts:236	await	[transaction callback @142]	run()
+REVIEW	apps/api/src/modules/audit/index.ts:60	await	[fn listTransformationAudit(db) @30]	q .orderBy("e.seq", "desc") .limit(page.limit + 1) .execute()
+REVIEW	apps/api/src/modules/evidence/routes.ts:292	await	[fn checkEvidenceVersion(tx) @279]	(lock ? query.forUpdate() : query).executeTakeFirst()
+REVIEW	apps/api/src/modules/evidence/routes.ts:569	await	[transaction callback @514]	store.finalise(key)
+REVIEW	apps/api/src/modules/identity/users.ts:236	await	[fn listUsers(db) @217]	q .orderBy(sql`lower(display_name)`) .orderBy("id") .limit(query.limit + 1) .execute()
+REVIEW	apps/api/src/modules/kpi/support.ts:210	await	[transaction callback @207]	exec()
+REVIEW	apps/api/src/modules/platform/health.ts:30	connect	[pool client checkout]	pool.connect()
+REVIEW	apps/api/src/modules/platform/idempotency.ts:57	await	[fn withIdempotency(tx) @29]	run()
+REVIEW	apps/api/src/modules/transformations/charter.ts:231	await (nested fn)	[fn scopeCheckPrechecks(db) @225]	q
+REVIEW	apps/api/src/modules/transformations/register-kit.ts:297	await	[fn maybeIdempotent(tx) @289]	run()
+REVIEW	apps/api/src/modules/transformations/register-kit.ts:356	await	[fn (anonymous)(dbx) @348]	q.executeTakeFirst()
+REVIEW	apps/api/src/modules/transformations/register-kit.ts:418	await (nested fn)	[transaction callback @402]	spec.check(values, ctx, null)
+REVIEW	apps/api/src/modules/transformations/register-kit.ts:419	await (nested fn)	[transaction callback @402]	spec.beforeInsert(values, ctx)
+REVIEW	apps/api/src/modules/transformations/register-kit.ts:496	await	[transaction callback @481]	spec.check({ ...(current as unknown as LooseRow), ...changes }, ctx, current)
+REVIEW	apps/api/src/modules/transformations/routes.ts:261	await	[transaction callback @155]	run()
+REVIEW	apps/api/src/modules/workflows/canvas.ts:51	await	[fn canvasViews(db) @43]	cellsQ.orderBy("d.ordinal").execute()
+REVIEW	apps/api/src/modules/workflows/gates.ts:222	await	[fn instanceOf(db) @215]	q.executeTakeFirst()
+REVIEW	packages/db/src/cli.ts:51	connect	[pool client checkout]	pool.connect()
+REVIEW	packages/db/src/migrate.ts:133	connect	[pool client checkout]	client.connect()
+
+## AFTER: register spec hooks (check/beforeInsert run inside the register kit's transaction with ctx.tx)
+     29 db
+
+## AFTER: full list
+db	apps/api/src/modules/access/assignments.ts:68	await	[fn activeAssignmentsOf(db) @67]	selectAssignment(db) .where("a.user_id", "=", userId) .where("a.revoked_at", "is", null) .where("a.effective_from", "<=", sql<Date>`now()`) .where((eb) => eb.or
+db	apps/api/src/modules/access/assignments.ts:90	await	[fn createAssignment(tx) @78]	resolveTarget(tx, { type: input.scope.type, id: input.scope.id })
+db	apps/api/src/modules/access/assignments.ts:92	await	[fn createAssignment(tx) @78]	authorize(tx, principal, "access.assign", target)
+db	apps/api/src/modules/access/assignments.ts:114	await	[fn createAssignment(tx) @78]	tx .selectFrom("app_user") .select(["id", "status"]) .where("id", "=", input.userId) .executeTakeFirst()
+db	apps/api/src/modules/access/assignments.ts:122	await	[fn createAssignment(tx) @78]	tx .selectFrom("role") .select(["id", "code", "kind"]) .where("code", "=", input.roleCode) .executeTakeFirst()
+db	apps/api/src/modules/access/assignments.ts:130	await	[fn createAssignment(tx) @78]	tx .selectFrom("role_permission as rp") .innerJoin("permission as p", "p.code", "rp.permission_code") .select("p.code") .where("rp.role_id", "=", role.id) .wher
+db	apps/api/src/modules/access/assignments.ts:146	await	[fn createAssignment(tx) @78]	tx .insertInto("scoped_assignment") .values({ id, organization_id: target.organizationId, user_id: input.userId, role_id: role.id, scope_type: input.scope.type,
+db	apps/api/src/modules/access/assignments.ts:172	await	[fn createAssignment(tx) @78]	record(tx, audit, { action: "scoped_assignment.create", recordType: "scoped_assignment", recordId: id, organizationId: target.organizationId, transformationId: 
+db	apps/api/src/modules/access/assignments.ts:188	await	[fn createAssignment(tx) @78]	selectAssignment(tx).where("a.id", "=", id).executeTakeFirstOrThrow()
+REVIEW	apps/api/src/modules/access/assignments.ts:195	await	[fn getAssignment(db) @192]	q.executeTakeFirst()
+db	apps/api/src/modules/access/assignments.ts:200	await	[fn getAssignment(db) @192]	requireRead(db, principal, "access.read", { type: row.scope_type as TargetLevel, id: row.scope_id, })
+db	apps/api/src/modules/access/assignments.ts:215	await	[fn revokeAssignment(tx) @207]	getAssignment(tx, principal, id, { forUpdate: true })
+db	apps/api/src/modules/access/assignments.ts:216	await	[fn revokeAssignment(tx) @207]	requireAction(tx, principal, "access.assign", target)
+db	apps/api/src/modules/access/assignments.ts:221	await	[fn revokeAssignment(tx) @207]	tx .updateTable("scoped_assignment") .set({ revoked_at: sql<Date>`now()`, revoked_by: principal.userId, revoke_reason: reason, version: sql<number>`version + 1`
+db	apps/api/src/modules/access/assignments.ts:236	await	[fn revokeAssignment(tx) @207]	record(tx, audit, { action: "scoped_assignment.revoke", recordType: "scoped_assignment", recordId: id, organizationId: row.organization_id, transformationId: ta
+db	apps/api/src/modules/access/assignments.ts:250	await	[fn revokeAssignment(tx) @207]	tx .updateTable("scoped_assignment") .set({ revoked_at: sql<Date>`now()`, revoked_by: principal.userId, revoke_reason: derivedReason, version: sql<number>`versi
+db	apps/api/src/modules/access/assignments.ts:265	await	[fn revokeAssignment(tx) @207]	record(tx, audit, { action: "scoped_assignment.revoke", recordType: "scoped_assignment", recordId: d.id, organizationId: d.organization_id, transformationId: d.
+db	apps/api/src/modules/access/assignments.ts:277	await	[fn revokeAssignment(tx) @207]	selectAssignment(tx).where("a.id", "=", id).executeTakeFirstOrThrow()
+REVIEW	apps/api/src/modules/access/assignments.ts:315	await	[fn listAssignments(db) @290]	q .orderBy("a.id", "desc") .limit(query.limit + 1) .execute()
+db	apps/api/src/modules/access/assignments.ts:324	await	[fn listRoles(db) @323]	db .selectFrom("role as r") .leftJoin("role_permission as rp", "rp.role_id", "r.id") .select(["r.id", "r.code", "r.name_en", "r.name_ar", "r.kind", "r.inherits_
+db	apps/api/src/modules/access/assignments.ts:363	await	[fn listPermissions(db) @362]	db.selectFrom("permission").select(["code", "category"]).orderBy("code").execute()
+db	apps/api/src/modules/access/assignments.ts:391	await	[fn grantCreatorAdminRoles(tx) @373]	tx .selectFrom("role") .select(["id", "code"]) .where("code", "in", [...roleCodes]) .where("kind", "=", "technical_admin") .execute()
+db	apps/api/src/modules/access/assignments.ts:400	await	[fn grantCreatorAdminRoles(tx) @373]	tx .insertInto("scoped_assignment") .values({ id, organization_id: newOrganizationId, user_id: principal.userId, role_id: role.id, scope_type: "organization", s
+db	apps/api/src/modules/access/assignments.ts:415	await	[fn grantCreatorAdminRoles(tx) @373]	record(tx, audit, { action: "scoped_assignment.create", recordType: "scoped_assignment", recordId: id, organizationId: newOrganizationId, newVersion: 1, reason,
+db	apps/api/src/modules/access/assignments.ts:471	await	[fn grantCreatorTransformationRoles(tx) @442]	tx .selectFrom("scoped_assignment as a") .innerJoin("role as r", "r.id", "a.role_id") .select(["a.id", "a.role_id", "a.effective_to", "a.revoked_at", "r.code", 
+db	apps/api/src/modules/access/assignments.ts:501	await	[fn grantCreatorTransformationRoles(tx) @442]	tx .insertInto("scoped_assignment") .values({ id, organization_id: created.organizationId, user_id: principal.userId, role_id: src.role_id, scope_type: "transfo
+db	apps/api/src/modules/access/assignments.ts:518	await	[fn grantCreatorTransformationRoles(tx) @442]	record(tx, audit, { action: "scoped_assignment.create", recordType: "scoped_assignment", recordId: id, organizationId: created.organizationId, transformationId:
+db	apps/api/src/modules/access/policy.ts:40	await	[fn loadGrants(db) @39]	db .selectFrom("scoped_assignment as a") .innerJoin("role as r", "r.id", "a.role_id") .leftJoin("role_permission as rp", "rp.role_id", "r.id") .select([ "a.id",
+db	apps/api/src/modules/access/policy.ts:82	await	[fn resolveTarget(db) @81]	db .selectFrom("scope_node") .select(["organization_id", "business_unit_id", "transformation_id"]) .where("scope_type", "=", ref.type) .where("scope_id", "=", r
+db	apps/api/src/modules/access/policy.ts:94	await	[fn resolveTarget(db) @81]	businessUnitAncestry(db, node.business_unit_id)
+db	apps/api/src/modules/access/policy.ts:100	await	[fn businessUnitAncestry(db) @99]	db .selectFrom("business_unit_closure") .select(["ancestor_id", "depth"]) .where("descendant_id", "=", businessUnitId) .orderBy("depth") .execute()
+db	apps/api/src/modules/access/policy.ts:121	await	[fn targetFor(db) @110]	businessUnitAncestry(db, bu)
+db	apps/api/src/modules/access/policy.ts:134	await	[fn authorize(db) @126]	resolveTarget(db, target)
+db	apps/api/src/modules/access/policy.ts:146	await	[fn requireRead(db) @140]	authorize(db, principal, permission, target)
+db	apps/api/src/modules/access/policy.ts:177	await	[fn requireAction(db) @170]	authorize(db, principal, permission, target, context)
+db	apps/api/src/modules/access/records.ts:52	await	[fn requireRecordWrite(db) @43]	authorize(db, principal, rule.permission, target)
+db	apps/api/src/modules/access/records.ts:79	await	[fn holds(db) @72]	authorize(db, principal, permission, target, requesterId === undefined ? {} : { requesterId })
+db	apps/api/src/modules/access/records.ts:102	await	[fn actsOnBehalfOf(db) @88]	db .selectFrom("delegation") .select(["scope_type", "scope_id", "record_types"]) .where("delegator_user_id", "=", delegatorUserId) .where("delegate_user_id", "=
+db	apps/api/src/modules/access/request.ts:46	await	[fn refreshPrincipal(tx) @42]	resolve(tx)
+db	apps/api/src/modules/access/team.ts:39	await	[fn accountabilities(db) @38]	db .selectFrom("role_accountability as ra") .innerJoin("role as r", "r.id", "ra.role_id") .selectAll("ra") .select("r.code") .orderBy("r.code") .execute()
+db	apps/api/src/modules/access/team.ts:143	await	[transaction callback @142]	requireRead(tx, principal, "transformation.read", { type: "transformation", id: transformationId, })
+db	apps/api/src/modules/access/team.ts:148	await	[transaction callback @142]	requireAction(tx, principal, "team.assign", target)
+db	apps/api/src/modules/access/team.ts:153	await (nested fn)	[transaction callback @142]	tx .selectFrom("transformation") .select(["archived_at"]) .where("id", "=", transformationId) .executeTakeFirstOrThrow()
+db	apps/api/src/modules/access/team.ts:160	await (nested fn)	[transaction callback @142]	tx .selectFrom("app_user") .select(["id", "status", "organization_id"]) .where("id", "=", body.userId) .executeTakeFirst()
+db	apps/api/src/modules/access/team.ts:168	await (nested fn)	[transaction callback @142]	tx .selectFrom("role") .select(["id", "code"]) .where("code", "=", body.roleCode) .executeTakeFirstOrThrow()
+db	apps/api/src/modules/access/team.ts:174	await (nested fn)	[transaction callback @142]	tx .selectFrom("role_permission as rp") .innerJoin("permission as p", "p.code", "rp.permission_code") .select("p.code") .where("rp.role_id", "=", role.id) .wher
+db	apps/api/src/modules/access/team.ts:193	await (nested fn)	[transaction callback @142]	tx .insertInto("scoped_assignment") .values({ id, organization_id: target.organizationId, user_id: body.userId, role_id: role.id, scope_type: "transformation", 
+db	apps/api/src/modules/access/team.ts:218	await (nested fn)	[transaction callback @142]	record(tx, audit, { action: "scoped_assignment.create", recordType: "scoped_assignment", recordId: id, organizationId: target.organizationId, transformationId, 
+db	apps/api/src/modules/access/team.ts:233	await (nested fn)	[transaction callback @142]	selectAssignment(tx).where("a.id", "=", id).executeTakeFirstOrThrow()
+REVIEW	apps/api/src/modules/access/team.ts:236	await	[transaction callback @142]	run()
+db	apps/api/src/modules/admin/routes.ts:115	await	[fn readableUser(tx) @113]	findUserRow(tx, userId, forUpdate)
+db	apps/api/src/modules/admin/routes.ts:124	await	[fn readableUser(tx) @113]	authorize(tx, principal, "user.read", { type: "organization", id: row.organization_id })
+db	apps/api/src/modules/admin/routes.ts:141	await	[transaction callback @140]	readableUser(request, userId, true, tx)
+db	apps/api/src/modules/admin/routes.ts:142	await	[transaction callback @140]	requireAction( tx, principal, "user.manage", await targetFor(tx, "organization", { organizationId: current.organization_id }), )
+db	apps/api/src/modules/admin/routes.ts:146	await	[transaction callback @140]	targetFor(tx, "organization", { organizationId: current.organization_id })
+db	apps/api/src/modules/admin/routes.ts:202	await	[transaction callback @201]	revokeAssignment( tx, principal, auditContextOf(request), assignmentId, () => requireIfMatch(request), reason, )
+db	apps/api/src/modules/admin/routes.ts:212	await	[transaction callback @201]	revokeUserSessions(tx, revoked.userId)
+db	apps/api/src/modules/admin/routes.ts:215	await	[transaction callback @201]	record(tx, auditContextOf(request), { action: "session.revoke", recordType: "app_user", recordId: revoked.userId, organizationId: revoked.organizationId, reason
+REVIEW	apps/api/src/modules/audit/index.ts:60	await	[fn listTransformationAudit(db) @30]	q .orderBy("e.seq", "desc") .limit(page.limit + 1) .execute()
+db	apps/api/src/modules/evidence/repository.ts:83	await	[fn loadVerifiedEvidenceFacts(db) @77]	db .selectFrom("evidence_link as l") .innerJoin("evidence as e", "e.id", "l.evidence_id") .select([ "l.evidence_id", "l.record_type", "l.record_id", "e.kind", "
+REVIEW	apps/api/src/modules/evidence/routes.ts:292	await	[fn checkEvidenceVersion(tx) @279]	(lock ? query.forUpdate() : query).executeTakeFirst()
+db	apps/api/src/modules/evidence/routes.ts:305	await	[fn ownershipOf(tx) @304]	tx .selectFrom("evidence") .select(["created_by", "owner_user_id"]) .where("id", "=", evidenceId) .where("transformation_id", "=", transformationId) .executeTak
+db	apps/api/src/modules/evidence/routes.ts:317	await	[fn recordOwnership(tx) @316]	loose(tx) .selectFrom(recordType) .select([ sql<string>`created_by`.as("created_by"), sql<string | null>`to_jsonb(${sql.table(recordType)})->>'owner_user_id'`.a
+db	apps/api/src/modules/evidence/routes.ts:335	await	[fn suppliersOf(tx) @332]	tx .selectFrom("evidence_content") .select("uploaded_by") .where("id", "=", row.current_content_id) .where("evidence_id", "=", row.id) .executeTakeFirst()
+db	apps/api/src/modules/evidence/routes.ts:352	await	[fn assertReviewerIndependent(tx) @347]	suppliersOf(tx, row)
+db	apps/api/src/modules/evidence/routes.ts:471	await	[transaction callback @469]	requireTransformationRead(tx, principalOf(request), transformationId)
+db	apps/api/src/modules/evidence/routes.ts:472	await	[transaction callback @469]	tx .selectFrom("evidence") .select(["created_by", "owner_user_id"]) .where("id", "=", evidenceId) .where("transformation_id", "=", transformationId) .executeTak
+db	apps/api/src/modules/evidence/routes.ts:479	await	[transaction callback @469]	openWrite(tx, request, transformationId, EDIT_OWN, { createdBy: seen.created_by, ownerUserId: seen.owner_user_id, })
+db	apps/api/src/modules/evidence/routes.ts:497	await	[transaction callback @469]	checkEvidenceVersion(tx, request, transformationId, evidenceId, false)
+db	apps/api/src/modules/evidence/routes.ts:515	await	[transaction callback @514]	openWrite( tx, request, transformationId, EDIT_OWN, await ownershipOf(tx, transformationId, evidenceId), { atCommit: true }, )
+db	apps/api/src/modules/evidence/routes.ts:520	await	[transaction callback @514]	ownershipOf(tx, transformationId, evidenceId)
+db	apps/api/src/modules/evidence/routes.ts:523	await	[transaction callback @514]	checkEvidenceVersion(tx, request, transformationId, evidenceId, true)
+db	apps/api/src/modules/evidence/routes.ts:526	await	[transaction callback @514]	tx .selectFrom("evidence_content") .select((eb) => eb.fn.max<number>("revision").as("n")) .where("evidence_id", "=", evidenceId) .executeTakeFirst()
+db	apps/api/src/modules/evidence/routes.ts:532	await	[transaction callback @514]	tx .insertInto("evidence_content") .values({ id: contentId, organization_id: ctx.organizationId, transformation_id: transformationId, evidence_id: evidenceId, r
+db	apps/api/src/modules/evidence/routes.ts:548	await	[transaction callback @514]	tx .updateTable("evidence") .set({ current_content_id: contentId, file_name: fileName, ...RESET_REVIEW, ...bumpStamps(ctx.userId) }) .where("id", "=", evidenceI
+db	apps/api/src/modules/evidence/routes.ts:555	await	[transaction callback @514]	record(tx, ctx.audit, { action: "evidence.upload_content", recordType: "evidence", recordId: evidenceId, organizationId: ctx.organizationId, transformationId, p
+REVIEW	apps/api/src/modules/evidence/routes.ts:569	await	[transaction callback @514]	store.finalise(key)
+db	apps/api/src/modules/evidence/routes.ts:584	await	[transaction callback @583]	openWrite(tx, request, transformationId, [{ permission: "evidence.review" }], null)
+db	apps/api/src/modules/evidence/routes.ts:585	await	[transaction callback @583]	tx .selectFrom("evidence") .select(["id", "created_by", "content_authored_by", "current_content_id"]) .where("id", "=", evidenceId) .where("transformation_id", 
+db	apps/api/src/modules/evidence/routes.ts:594	await	[transaction callback @583]	assertReviewerIndependent(tx, ctx, seen)
+db	apps/api/src/modules/evidence/routes.ts:596	await	[transaction callback @583]	lockEvidence(tx, request, transformationId, evidenceId)
+db	apps/api/src/modules/evidence/routes.ts:598	await	[transaction callback @583]	assertReviewerIndependent(tx, ctx, current)
+db	apps/api/src/modules/evidence/routes.ts:616	await	[transaction callback @583]	tx .updateTable("evidence") .set({ review_status: body.result, accessibility_status: body.accessibilityStatus, reviewed_by: ctx.userId, reviewed_at: sql<Date>`n
+db	apps/api/src/modules/evidence/routes.ts:631	await	[transaction callback @583]	record(tx, ctx.audit, { action: "evidence.review", recordType: "evidence", recordId: evidenceId, organizationId: ctx.organizationId, transformationId, priorVers
+db	apps/api/src/modules/evidence/routes.ts:672	await	[transaction callback @671]	openWrite(tx, request, transformationId, CREATE, null)
+db	apps/api/src/modules/evidence/routes.ts:675	await (nested fn)	[transaction callback @671]	tx .selectFrom("evidence") .select(["id", "status"]) .where("id", "=", body.evidenceId) .where("transformation_id", "=", transformationId) .executeTakeFirst()
+db	apps/api/src/modules/evidence/routes.ts:686	await (nested fn)	[transaction callback @671]	recordOwnership(tx, transformationId, body.recordType, body.recordId)
+db	apps/api/src/modules/evidence/routes.ts:689	await (nested fn)	[transaction callback @671]	requireRecordWrite(tx, ctx.principal, ctx.target, RECORD_WRITE_RULES.get(body.recordType)!, target)
+db	apps/api/src/modules/evidence/routes.ts:691	await (nested fn)	[transaction callback @671]	tx .insertInto("evidence_link") .values({ id, organization_id: ctx.organizationId, transformation_id: transformationId, evidence_id: body.evidenceId, record_typ
+db	apps/api/src/modules/evidence/routes.ts:710	await (nested fn)	[transaction callback @671]	record(tx, ctx.audit, { action: "evidence_link.create", recordType: "evidence_link", recordId: id, organizationId: ctx.organizationId, transformationId, newVers
+db	apps/api/src/modules/evidence/routes.ts:734	await	[transaction callback @733]	tx .selectFrom("evidence_link") .select(["record_type", "record_id"]) .where("id", "=", linkId) .where("transformation_id", "=", transformationId) .executeTakeF
+db	apps/api/src/modules/evidence/routes.ts:740	await	[transaction callback @733]	openWrite(tx, request, transformationId, CREATE, null)
+db	apps/api/src/modules/evidence/routes.ts:746	await	[transaction callback @733]	requireRecordWrite( tx, ctx.principal, ctx.target, rules, (await recordOwnership(tx, transformationId, seen.record_type, seen.record_id)) ?? {}, )
+db	apps/api/src/modules/evidence/routes.ts:751	await	[transaction callback @733]	recordOwnership(tx, transformationId, seen.record_type, seen.record_id)
+db	apps/api/src/modules/evidence/routes.ts:755	await	[transaction callback @733]	tx .selectFrom("evidence_link") .selectAll() .where("id", "=", linkId) .forUpdate() .executeTakeFirstOrThrow()
+db	apps/api/src/modules/evidence/routes.ts:764	await	[transaction callback @733]	tx .updateTable("evidence_link") .set({ status: "removed", removed_at: sql<Date>`now()`, removed_by: ctx.userId, remove_reason: reason, ...bumpStamps(ctx.userId
+db	apps/api/src/modules/evidence/routes.ts:777	await	[transaction callback @733]	record(tx, ctx.audit, { action: "evidence_link.remove", recordType: "evidence_link", recordId: linkId, organizationId: ctx.organizationId, transformationId, pri
+db	apps/api/src/modules/identity/oidc.ts:91	await	[fn saveLoginState(tx) @90]	tx .insertInto("oidc_login_state") .values({ state_hash: sha256(login.state), code_verifier: login.codeVerifier, nonce: login.nonce, return_to: login.returnTo, 
+db	apps/api/src/modules/identity/oidc.ts:113	await	[fn consumeState(tx) @110]	tx .deleteFrom("oidc_login_state") .where("state_hash", "=", stateHash) .where("browser_binding_hash", "=", sha256(browserBinding)) .where("expires_at", ">", sq
+db	apps/api/src/modules/identity/oidc.ts:122	await	[fn consumeState(tx) @110]	tx .selectFrom("oidc_login_state") .select("state_hash") .where("state_hash", "=", stateHash) .where("expires_at", ">", sql<Date>`now()`) .executeTakeFirst()
+db	apps/api/src/modules/identity/oidc.ts:240	await	[fn resolveOidcUser(tx) @239]	tx .selectFrom("user_identity as i") .innerJoin("app_user as u", "u.id", "i.user_id") .select(["i.id as identity_id", "u.id", "u.organization_id", "u.status"]) 
+db	apps/api/src/modules/identity/oidc.ts:250	await	[fn resolveOidcUser(tx) @239]	tx .updateTable("user_identity") .set({ last_login_at: sql<Date>`now()` }) .where("id", "=", existing.identity_id) .execute()
+db	apps/api/src/modules/identity/oidc.ts:266	await	[fn resolveOidcUser(tx) @239]	tx .selectFrom("app_user as u") .select(["u.id", "u.organization_id"]) .where(sql<boolean>`lower(u.email) = lower(${email})`) .where("u.status", "=", "active") 
+db	apps/api/src/modules/identity/oidc.ts:286	await	[fn resolveOidcUser(tx) @239]	tx .insertInto("user_identity") .values({ id: uuidv7(), user_id: u.id, issuer: claims.iss, subject: claims.sub, email_at_binding: email, last_login_at: sql<Date
+db	apps/api/src/modules/identity/oidc.ts:297	await	[fn resolveOidcUser(tx) @239]	record( tx, { actorUserId: null, actorType: "system", requestId }, { action: "user_identity.bind", recordType: "app_user", recordId: u.id, organizationId: u.org
+db	apps/api/src/modules/identity/oidc.ts:313	await	[fn resolveOidcUser(tx) @239]	tx.selectFrom("organization").select("id").where("status", "=", "active").limit(2).execute()
+db	apps/api/src/modules/identity/oidc.ts:318	await	[fn resolveOidcUser(tx) @239]	tx .selectFrom("app_user") .select("id") .where("organization_id", "=", organizationId) .where(sql<boolean>`lower(email) = lower(${email})`) .executeTakeFirst()
+db	apps/api/src/modules/identity/oidc.ts:326	await	[fn resolveOidcUser(tx) @239]	tx .insertInto("app_user") .values({ id: userId, organization_id: organizationId, display_name: displayNameOf(claims), email: emailFree ? email : null, created_
+db	apps/api/src/modules/identity/oidc.ts:337	await	[fn resolveOidcUser(tx) @239]	tx .insertInto("user_identity") .values({ id: uuidv7(), user_id: userId, issuer: claims.iss, subject: claims.sub, email_at_binding: email, last_login_at: sql<Da
+db	apps/api/src/modules/identity/oidc.ts:348	await	[fn resolveOidcUser(tx) @239]	record( tx, { actorUserId: null, actorType: "system", requestId }, { action: "app_user.create", recordType: "app_user", recordId: userId, organizationId, newVer
+db	apps/api/src/modules/identity/routes.ts:131	await	[fn principalFor(dbOrTx) @125]	resolveSession(dbOrTx, token)
+db	apps/api/src/modules/identity/routes.ts:139	await	[fn principalFor(dbOrTx) @125]	loadGrants(dbOrTx, session.userId)
+db	apps/api/src/modules/identity/routes.ts:164	await	[fn (anonymous)(tx) @163]	principalFor(tx, request, token, session.userId)
+db	apps/api/src/modules/identity/routes.ts:190	await	[transaction callback @187]	revokeSession(tx, request.session.id)
+db	apps/api/src/modules/identity/routes.ts:193	await	[transaction callback @187]	createSession(tx, { userId, authMode: mode, idpIssuer: issuer, idpSessionId: null, // F-DG2-231 / F-DG2-260: a User-Agent with U+0000 or a lone surrogate is not
+db	apps/api/src/modules/identity/routes.ts:207	await	[transaction callback @187]	record( tx, { actorUserId: userId, requestId: request.id }, { action: "session.create", recordType: "session", recordId: s.sessionId, organizationId, reason: mo
+db	apps/api/src/modules/identity/routes.ts:410	await	[transaction callback @409]	revokeSession(tx, session.id)
+db	apps/api/src/modules/identity/routes.ts:411	await	[transaction callback @409]	record(tx, auditContextOf(request), { action: "session.revoke", recordType: "session", recordId: session.id, organizationId: principal.organizationId, reason: "
+db	apps/api/src/modules/identity/sessions.ts:41	await	[fn createSession(tx) @38]	tx .insertInto("session") .values({ id: sessionId, token_hash: sha256(token), user_id: s.userId, auth_mode: s.authMode, idp_issuer: s.idpIssuer, idp_session_id:
+db	apps/api/src/modules/identity/sessions.ts:56	await	[fn createSession(tx) @38]	tx .updateTable("app_user") .set({ last_login_at: sql<Date>`now()` }) .where("id", "=", s.userId) .execute()
+db	apps/api/src/modules/identity/sessions.ts:77	await	[fn resolveSession(db) @75]	db .selectFrom("session as s") .innerJoin("app_user as u", "u.id", "s.user_id") .select([ "s.id", "s.user_id", "u.organization_id", "s.auth_mode", "s.idp_issuer
+db	apps/api/src/modules/identity/sessions.ts:111	await	[fn touchSession(db) @109]	db .updateTable("session") .set({ last_seen_at: sql<Date>`now()`, idle_expires_at: sql<Date>`least(now() + make_interval(mins => ${idleMinutes}), absolute_expir
+db	apps/api/src/modules/identity/sessions.ts:123	await	[fn revokeSession(tx) @122]	tx .updateTable("session") .set({ revoked_at: sql<Date>`now()` }) .where("id", "=", sessionId) .where("revoked_at", "is", null) .executeTakeFirst()
+db	apps/api/src/modules/identity/sessions.ts:134	await	[fn revokeUserSessions(tx) @133]	tx .updateTable("session") .set({ revoked_at: sql<Date>`now()` }) .where("user_id", "=", userId) .where("revoked_at", "is", null) .executeTakeFirst()
+db	apps/api/src/modules/identity/users.ts:15	await	[fn identitiesOf(db) @13]	db .selectFrom("user_identity") .select(["user_id", "issuer", "subject", "created_at", "last_login_at"]) .where("user_id", "in", [...userIds]) .orderBy("created
+db	apps/api/src/modules/identity/users.ts:58	await	[fn loadUser(db) @57]	findUserRow(db, id)
+db	apps/api/src/modules/identity/users.ts:60	await	[fn loadUser(db) @57]	identitiesOf(db, [id])
+db	apps/api/src/modules/identity/users.ts:76	await	[fn createUser(tx) @74]	tx .insertInto("app_user") .values({ id, organization_id: input.organizationId, display_name: input.displayName, email: input.email ?? null, preferred_locale: i
+db	apps/api/src/modules/identity/users.ts:91	await	[fn createUser(tx) @74]	tx .insertInto("user_identity") .values({ id: uuidv7(), user_id: id, issuer: input.identity.issuer, subject: input.identity.subject, email_at_binding: input.ema
+db	apps/api/src/modules/identity/users.ts:103	await	[fn createUser(tx) @74]	record(tx, audit, { action: "app_user.create", recordType: "app_user", recordId: id, organizationId: input.organizationId, newVersion: 1, changes: { ...diffFiel
+db	apps/api/src/modules/identity/users.ts:114	await	[fn createUser(tx) @74]	loadUser(tx, id)
+db	apps/api/src/modules/identity/users.ts:136	await	[fn updateUser(tx) @118]	tx .updateTable("app_user") .set({ ...(input.displayName !== undefined ? { display_name: input.displayName } : {}), ...(input.email !== undefined ? { email: inp
+db	apps/api/src/modules/identity/users.ts:153	await	[fn updateUser(tx) @118]	revokeUserSessions(tx, current.id)
+db	apps/api/src/modules/identity/users.ts:154	await	[fn updateUser(tx) @118]	record(tx, audit, { action: updated.status !== current.status ? updated.status === "disabled" ? "app_user.disable" : "app_user.enable" : "app_user.update", reco
+db	apps/api/src/modules/identity/users.ts:171	await	[fn updateUser(tx) @118]	loadUser(tx, current.id)
+db	apps/api/src/modules/identity/users.ts:181	await	[fn updatePreferences(tx) @174]	findUserRow(tx, userId, true)
+db	apps/api/src/modules/identity/users.ts:184	await	[fn updatePreferences(tx) @174]	tx .updateTable("app_user") .set({ ...(input.preferredLocale !== undefined ? { preferred_locale: input.preferredLocale } : {}), ...(input.timezone !== undefined
+db	apps/api/src/modules/identity/users.ts:197	await	[fn updatePreferences(tx) @174]	record(tx, audit, { action: "app_user.update_preferences", recordType: "app_user", recordId: userId, organizationId: current.organization_id, priorVersion: curr
+db	apps/api/src/modules/identity/users.ts:206	await	[fn updatePreferences(tx) @174]	loadUser(tx, userId)
+REVIEW	apps/api/src/modules/identity/users.ts:236	await	[fn listUsers(db) @217]	q .orderBy(sql`lower(display_name)`) .orderBy("id") .limit(query.limit + 1) .execute()
+db	apps/api/src/modules/identity/users.ts:242	await	[fn listUsers(db) @217]	identitiesOf( db, page.items.map((r) => r.id), )
+db	apps/api/src/modules/jobs/index.ts:24	await	[fn enqueueOutboxEvent(tx) @19]	tx .insertInto("outbox_event") .values({ id, organization_id: event.organizationId, aggregate_type: event.aggregateType, aggregate_id: event.aggregateId, event_
+db	apps/api/src/modules/kpi/baselines.ts:37	await	[fn requireKpiDefinition(db) @35]	referenceStatus(db, "kpi_definition", transformationId, id)
+db	apps/api/src/modules/kpi/baselines.ts:61	await	[fn (anonymous)(tx) @58]	requireKpiDefinition(tx, transformationId, body.kpiDefinitionId)
+db	apps/api/src/modules/kpi/baselines.ts:62	await	[fn (anonymous)(tx) @58]	requireActiveUsers(tx, transformation.organization_id, [["ownerUserId", body.ownerUserId]])
+db	apps/api/src/modules/kpi/baselines.ts:64	await	[fn (anonymous)(tx) @58]	tx .insertInto("baseline") .values({ id, organization_id: transformation.organization_id, transformation_id: transformationId, metric: body.metric, kpi_definiti
+db	apps/api/src/modules/kpi/baselines.ts:84	await	[fn (anonymous)(tx) @58]	record(tx, audit, { action: "baseline.create", recordType: "baseline", recordId: id, organizationId: row.organization_id, transformationId, newVersion: 1, chang
+db	apps/api/src/modules/kpi/baselines.ts:111	await	[transaction callback @110]	writeScope(tx, request, transformationId, PERMISSION)
+db	apps/api/src/modules/kpi/baselines.ts:114	await	[transaction callback @110]	findBaseline(tx, transformationId, id, true)
+db	apps/api/src/modules/kpi/baselines.ts:119	await	[transaction callback @110]	requireKpiDefinition(tx, transformationId, body.kpiDefinitionId)
+db	apps/api/src/modules/kpi/baselines.ts:120	await	[transaction callback @110]	requireActiveUsers(tx, transformation.organization_id, [["ownerUserId", body.ownerUserId]])
+db	apps/api/src/modules/kpi/baselines.ts:123	await	[transaction callback @110]	tx .updateTable("baseline") .set({ ...(body.metric !== undefined ? { metric: body.metric } : {}), ...(body.kpiDefinitionId !== undefined ? { kpi_definition_id: 
+db	apps/api/src/modules/kpi/baselines.ts:144	await	[transaction callback @110]	record(tx, audit, { action: "baseline.update", recordType: "baseline", recordId: id, organizationId: current.organization_id, transformationId, priorVersion: cu
+db	apps/api/src/modules/kpi/baselines.ts:164	await	[transaction callback @163]	writeScope(tx, request, transformationId, PERMISSION)
+db	apps/api/src/modules/kpi/baselines.ts:167	await	[transaction callback @163]	findBaseline(tx, transformationId, id, true)
+db	apps/api/src/modules/kpi/baselines.ts:172	await	[transaction callback @163]	tx .updateTable("baseline") .set({ status: "archived", archived_at: sql<Date>`now()`, archived_by: principal.userId!, archive_reason: reason, version: sql<numbe
+db	apps/api/src/modules/kpi/baselines.ts:187	await	[transaction callback @163]	record(tx, audit, { action: "baseline.archive", recordType: "baseline", recordId: id, organizationId: current.organization_id, transformationId, priorVersion: c
+db	apps/api/src/modules/kpi/baselines.ts:208	await	[transaction callback @207]	writeScope(tx, request, transformationId, "finance.validate")
+db	apps/api/src/modules/kpi/baselines.ts:211	await	[transaction callback @207]	findBaseline(tx, transformationId, id, true)
+db	apps/api/src/modules/kpi/baselines.ts:235	await	[transaction callback @207]	tx .updateTable("baseline") .set({ validation_status: decision.result, validated_by: principal.userId!, validated_at: sql<Date>`now()`, validation_note: decisio
+db	apps/api/src/modules/kpi/baselines.ts:252	await	[transaction callback @207]	record(tx, audit, { action: decision.result === "validated" ? "baseline.validate" : "baseline.reject", recordType: "baseline", recordId: id, organizationId: cur
+db	apps/api/src/modules/kpi/gate-facts.ts:44	await	[fn loadKpiGateFacts(db) @43]	Promise.all([ db .selectFrom("baseline") .select([ "id", "value", "source", "baseline_date", "validation_status", "validated_record_version", "version", "status
+db	apps/api/src/modules/kpi/kpi-definitions.ts:54	await	[fn (anonymous)(tx) @51]	requireActiveUsers(tx, transformation.organization_id, [ ["ownerUserId", body.ownerUserId], ["stewardUserId", body.stewardUserId], ])
+db	apps/api/src/modules/kpi/kpi-definitions.ts:59	await	[fn (anonymous)(tx) @51]	tx .insertInto("kpi_definition") .values({ id, organization_id: transformation.organization_id, transformation_id: transformationId, name: body.name, descriptio
+db	apps/api/src/modules/kpi/kpi-definitions.ts:85	await	[fn (anonymous)(tx) @51]	record(tx, audit, { action: "kpi_definition.create", recordType: "kpi_definition", recordId: id, organizationId: row.organization_id, transformationId, newVersi
+db	apps/api/src/modules/kpi/kpi-definitions.ts:112	await	[transaction callback @111]	writeScope(tx, request, transformationId, PERMISSION)
+db	apps/api/src/modules/kpi/kpi-definitions.ts:115	await	[transaction callback @111]	findKpiDefinition(tx, transformationId, id, true)
+db	apps/api/src/modules/kpi/kpi-definitions.ts:122	await	[transaction callback @111]	requireActiveUsers(tx, transformation.organization_id, [ ["ownerUserId", body.ownerUserId], ["stewardUserId", body.stewardUserId], ])
+db	apps/api/src/modules/kpi/kpi-definitions.ts:126	await	[transaction callback @111]	tx .updateTable("kpi_definition") .set({ ...(body.name !== undefined ? { name: body.name } : {}), ...(body.description !== undefined ? { description: body.descr
+db	apps/api/src/modules/kpi/kpi-definitions.ts:152	await	[transaction callback @111]	record(tx, audit, { action: "kpi_definition.update", recordType: "kpi_definition", recordId: id, organizationId: current.organization_id, transformationId, prio
+db	apps/api/src/modules/kpi/kpi-definitions.ts:172	await	[transaction callback @171]	writeScope(tx, request, transformationId, PERMISSION)
+db	apps/api/src/modules/kpi/kpi-definitions.ts:174	await	[transaction callback @171]	findKpiDefinition(tx, transformationId, id, true)
+db	apps/api/src/modules/kpi/kpi-definitions.ts:187	await	[transaction callback @171]	tx .updateTable("kpi_definition") .set({ status: "active", version: sql<number>`version + 1`, updated_at: sql<Date>`now()`, updated_by: principal.userId!, }) .w
+db	apps/api/src/modules/kpi/kpi-definitions.ts:200	await	[transaction callback @171]	record(tx, audit, { action: "kpi_definition.activate", recordType: "kpi_definition", recordId: id, organizationId: current.organization_id, transformationId, pr
+db	apps/api/src/modules/kpi/kpi-definitions.ts:220	await	[transaction callback @219]	writeScope(tx, request, transformationId, PERMISSION)
+db	apps/api/src/modules/kpi/kpi-definitions.ts:223	await	[transaction callback @219]	findKpiDefinition(tx, transformationId, id, true)
+db	apps/api/src/modules/kpi/kpi-definitions.ts:228	await	[transaction callback @219]	kpiDefinitionInUse(tx, transformationId, id)
+db	apps/api/src/modules/kpi/kpi-definitions.ts:233	await	[transaction callback @219]	tx .updateTable("kpi_definition") .set({ status: "archived", archived_at: sql<Date>`now()`, archived_by: principal.userId!, archive_reason: reason, version: sql
+db	apps/api/src/modules/kpi/kpi-definitions.ts:248	await	[transaction callback @219]	record(tx, audit, { action: "kpi_definition.archive", recordType: "kpi_definition", recordId: id, organizationId: current.organization_id, transformationId, pri
+db	apps/api/src/modules/kpi/outcome-kpis.ts:72	await	[fn checkRow(db) @62]	referenceStatus(db, table, transformationId, id)
+db	apps/api/src/modules/kpi/outcome-kpis.ts:80	await	[fn checkRow(db) @62]	referenceStatus(db, "baseline", transformationId, r.baselineId)
+db	apps/api/src/modules/kpi/outcome-kpis.ts:119	await	[fn (anonymous)(tx) @107]	checkRow(tx, transformationId, resolved, ALL_FIELDS)
+db	apps/api/src/modules/kpi/outcome-kpis.ts:120	await	[fn (anonymous)(tx) @107]	requireActiveUsers(tx, transformation.organization_id, [["ownerUserId", body.ownerUserId]])
+db	apps/api/src/modules/kpi/outcome-kpis.ts:122	await	[fn (anonymous)(tx) @107]	tx .insertInto("outcome_kpi") .values({ id, organization_id: transformation.organization_id, transformation_id: transformationId, outcome_id: resolved.outcomeId
+db	apps/api/src/modules/kpi/outcome-kpis.ts:144	await	[fn (anonymous)(tx) @107]	record(tx, audit, { action: "outcome_kpi.create", recordType: "outcome_kpi", recordId: id, organizationId: row.organization_id, transformationId, newVersion: 1,
+db	apps/api/src/modules/kpi/outcome-kpis.ts:171	await	[transaction callback @170]	writeScope(tx, request, transformationId, PERMISSION)
+db	apps/api/src/modules/kpi/outcome-kpis.ts:175	await	[transaction callback @170]	findOutcomeKpi(tx, transformationId, id, true)
+db	apps/api/src/modules/kpi/outcome-kpis.ts:189	await	[transaction callback @170]	checkRow(tx, transformationId, resolved, new Set(Object.keys(body)))
+db	apps/api/src/modules/kpi/outcome-kpis.ts:190	await	[transaction callback @170]	requireActiveUsers(tx, transformation.organization_id, [["ownerUserId", body.ownerUserId]])
+db	apps/api/src/modules/kpi/outcome-kpis.ts:191	await	[transaction callback @170]	tx .updateTable("outcome_kpi") .set({ ...(body.outcomeId !== undefined ? { outcome_id: body.outcomeId } : {}), ...(body.kpiDefinitionId !== undefined ? { kpi_de
+db	apps/api/src/modules/kpi/outcome-kpis.ts:224	await	[transaction callback @170]	record(tx, audit, { action: "outcome_kpi.update", recordType: "outcome_kpi", recordId: id, organizationId: current.organization_id, transformationId, priorVersi
+db	apps/api/src/modules/kpi/outcome-kpis.ts:244	await	[transaction callback @243]	writeScope(tx, request, transformationId, PERMISSION)
+db	apps/api/src/modules/kpi/outcome-kpis.ts:247	await	[transaction callback @243]	findOutcomeKpi(tx, transformationId, id, true)
+db	apps/api/src/modules/kpi/outcome-kpis.ts:252	await	[transaction callback @243]	tx .updateTable("outcome_kpi") .set({ status: "archived", archived_at: sql<Date>`now()`, archived_by: principal.userId!, archive_reason: reason, version: sql<nu
+db	apps/api/src/modules/kpi/outcome-kpis.ts:267	await	[transaction callback @243]	record(tx, audit, { action: "outcome_kpi.archive", recordType: "outcome_kpi", recordId: id, organizationId: current.organization_id, transformationId, priorVers
+db	apps/api/src/modules/kpi/outcome-kpis.ts:288	await	[transaction callback @287]	writeScope(tx, request, transformationId, "kpi_target.approve")
+db	apps/api/src/modules/kpi/outcome-kpis.ts:291	await	[transaction callback @287]	findOutcomeKpi(tx, transformationId, id, true)
+db	apps/api/src/modules/kpi/outcome-kpis.ts:302	await	[transaction callback @287]	outcomeKpiChangeEvents(tx, id)
+db	apps/api/src/modules/kpi/outcome-kpis.ts:319	await	[transaction callback @287]	tx .updateTable("outcome_kpi") .set({ trajectory_status: "approved", trajectory_approved_by: principal.userId!, trajectory_approved_at: sql<Date>`now()`, trajec
+db	apps/api/src/modules/kpi/outcome-kpis.ts:334	await	[transaction callback @287]	record(tx, audit, { action: "outcome_kpi.trajectory_approve", recordType: "outcome_kpi", recordId: id, organizationId: current.organization_id, transformationId
+db	apps/api/src/modules/kpi/repository.ts:282	await	[fn referenceStatus(db) @275]	db .selectFrom("baseline") .select(["status", "baseline_date"]) .where("id", "=", id) .where("transformation_id", "=", transformationId) .executeTakeFirst()
+db	apps/api/src/modules/kpi/repository.ts:292	await	[fn referenceStatus(db) @275]	db .selectFrom("kpi_definition") .select("status") .where("id", "=", id) .where("transformation_id", "=", transformationId) .executeTakeFirst()
+db	apps/api/src/modules/kpi/repository.ts:298	await	[fn referenceStatus(db) @275]	db .selectFrom("outcome") .select("status") .where("id", "=", id) .where("transformation_id", "=", transformationId) .executeTakeFirst()
+db	apps/api/src/modules/kpi/repository.ts:315	await	[fn activeOrgUsersExist(db) @308]	db .selectFrom("app_user") .select("id") .where("id", "in", unique) .where("status", "=", "active") .where("organization_id", "=", organizationId) .execute()
+db	apps/api/src/modules/kpi/repository.ts:326	await	[fn workstreamExists(db) @325]	db.selectFrom("diagnostic_workstream").select("code").where("code", "=", code).executeTakeFirst()
+db	apps/api/src/modules/kpi/repository.ts:332	await	[fn kpiDefinitionInUse(db) @331]	db .selectFrom("outcome_kpi") .select("id") .where("transformation_id", "=", transformationId) .where("status", "<>", "archived") .where((eb) => eb.or([eb("kpi_
+db	apps/api/src/modules/kpi/repository.ts:341	await	[fn kpiDefinitionInUse(db) @331]	db .selectFrom("baseline") .select("id") .where("transformation_id", "=", transformationId) .where("status", "<>", "archived") .where("kpi_definition_id", "=", 
+db	apps/api/src/modules/kpi/repository.ts:361	await	[fn outcomeKpiChangeEvents(db) @357]	db .selectFrom("audit_event") .select(["actor_user_id", "on_behalf_of_user_id", "changes"]) .where("record_type", "=", "outcome_kpi") .where("record_id", "=", i
+db	apps/api/src/modules/kpi/support.ts:62	await	[fn readScope(db) @60]	requireRead(db, principal, "transformation.read", { type: "transformation", id: transformationId, })
+db	apps/api/src/modules/kpi/support.ts:66	await	[fn readScope(db) @60]	findTransformation(db, transformationId)
+db	apps/api/src/modules/kpi/support.ts:78	await	[fn writeScope(db) @72]	readScope(db, request, transformationId)
+db	apps/api/src/modules/kpi/support.ts:79	await	[fn writeScope(db) @72]	requireAction(db, principalOf(request), permission, scope.target)
+db	apps/api/src/modules/kpi/support.ts:135	await	[fn requireActiveUsers(db) @129]	activeOrgUsersExist(db, organizationId, [userId])
+db	apps/api/src/modules/kpi/support.ts:208	await	[transaction callback @207]	authorize(tx)
+db	apps/api/src/modules/kpi/support.ts:209	await (nested fn)	[transaction callback @207]	run(tx, scope)
+REVIEW	apps/api/src/modules/kpi/support.ts:210	await	[transaction callback @207]	exec()
+db	apps/api/src/modules/kpi/value-pools.ts:37	await	[fn requireWorkstream(db) @36]	workstreamExists(db, code)
+db	apps/api/src/modules/kpi/value-pools.ts:70	await	[fn (anonymous)(tx) @66]	requireWorkstream(tx, body.workstreamCode)
+db	apps/api/src/modules/kpi/value-pools.ts:71	await	[fn (anonymous)(tx) @66]	requireActiveUsers(tx, transformation.organization_id, [["ownerUserId", body.ownerUserId]])
+db	apps/api/src/modules/kpi/value-pools.ts:73	await	[fn (anonymous)(tx) @66]	tx .insertInto("value_pool") .values({ id, organization_id: transformation.organization_id, transformation_id: transformationId, name: body.name, driver: body.d
+db	apps/api/src/modules/kpi/value-pools.ts:95	await	[fn (anonymous)(tx) @66]	record(tx, audit, { action: "value_pool.create", recordType: "value_pool", recordId: id, organizationId: row.organization_id, transformationId, newVersion: 1, c
+db	apps/api/src/modules/kpi/value-pools.ts:122	await	[transaction callback @121]	writeScope(tx, request, transformationId, PERMISSION)
+db	apps/api/src/modules/kpi/value-pools.ts:125	await	[transaction callback @121]	findValuePool(tx, transformationId, id, true)
+db	apps/api/src/modules/kpi/value-pools.ts:131	await	[transaction callback @121]	requireWorkstream(tx, body.workstreamCode)
+db	apps/api/src/modules/kpi/value-pools.ts:132	await	[transaction callback @121]	requireActiveUsers(tx, transformation.organization_id, [["ownerUserId", body.ownerUserId]])
+db	apps/api/src/modules/kpi/value-pools.ts:138	await	[transaction callback @121]	tx .updateTable("value_pool") .set({ ...(body.name !== undefined ? { name: body.name } : {}), ...(body.driver !== undefined ? { driver: body.driver } : {}), ...
+db	apps/api/src/modules/kpi/value-pools.ts:169	await	[transaction callback @121]	record(tx, audit, { action: "value_pool.update", recordType: "value_pool", recordId: id, organizationId: current.organization_id, transformationId, priorVersion
+db	apps/api/src/modules/kpi/value-pools.ts:189	await	[transaction callback @188]	writeScope(tx, request, transformationId, PERMISSION)
+db	apps/api/src/modules/kpi/value-pools.ts:192	await	[transaction callback @188]	findValuePool(tx, transformationId, id, true)
+db	apps/api/src/modules/kpi/value-pools.ts:197	await	[transaction callback @188]	tx .updateTable("value_pool") .set({ status: "archived", archived_at: sql<Date>`now()`, archived_by: principal.userId!, archive_reason: reason, version: sql<num
+db	apps/api/src/modules/kpi/value-pools.ts:212	await	[transaction callback @188]	record(tx, audit, { action: "value_pool.archive", recordType: "value_pool", recordId: id, organizationId: current.organization_id, transformationId, priorVersio
+db	apps/api/src/modules/kpi/value-pools.ts:233	await	[transaction callback @232]	writeScope(tx, request, transformationId, "finance.validate")
+db	apps/api/src/modules/kpi/value-pools.ts:236	await	[transaction callback @232]	findValuePool(tx, transformationId, id, true)
+db	apps/api/src/modules/kpi/value-pools.ts:252	await	[transaction callback @232]	tx .updateTable("value_pool") .set({ validation_status: decision.result, validated_by: principal.userId!, validated_at: sql<Date>`now()`, validation_note: decis
+db	apps/api/src/modules/kpi/value-pools.ts:268	await	[transaction callback @232]	record(tx, audit, { action: decision.result === "validated" ? "value_pool.validate" : "value_pool.reject", recordType: "value_pool", recordId: id, organizationI
+db	apps/api/src/modules/methodology/repository.ts:94	await	[fn loadGateDefinitions(db) @93]	db.selectFrom("gate_definition").selectAll().orderBy("ordinal").execute()
+db	apps/api/src/modules/methodology/repository.ts:95	await	[fn loadGateDefinitions(db) @93]	db.selectFrom("gate_criterion_definition").selectAll().orderBy("ordinal").execute()
+db	apps/api/src/modules/methodology/repository.ts:173	await	[fn loadMethodologyCatalogue(db) @169]	db .selectFrom("transformation_config_pin") .select("methodology_version_id") .where("transformation_id", "=", transformationId) .where("kind", "=", "methodolog
+db	apps/api/src/modules/methodology/repository.ts:181	await	[fn loadMethodologyCatalogue(db) @169]	db.selectFrom("methodology_version").selectAll().where("id", "=", mv).executeTakeFirstOrThrow()
+db	apps/api/src/modules/methodology/repository.ts:182	await	[fn loadMethodologyCatalogue(db) @169]	Promise.all([ db .selectFrom("diagnostic_dimension") .selectAll() .where("methodology_version_id", "=", mv) .orderBy("ordinal") .execute(), db .selectFrom("diag
+db	apps/api/src/modules/methodology/routes.ts:59	await	[transaction callback @58]	tx .selectFrom("tom_dimension") .selectAll() .where("code", "=", dimensionCode) .executeTakeFirst()
+db	apps/api/src/modules/methodology/routes.ts:87	await	[transaction callback @58]	tx .selectFrom("tom_dimension") .selectAll() .where("id", "=", current.id) .forUpdate() .executeTakeFirstOrThrow()
+db	apps/api/src/modules/methodology/routes.ts:98	await	[transaction callback @58]	tx .updateTable("tom_dimension") .set({ ...changes, version: sql<number>`version + 1`, updated_at: sql<Date>`now()`, updated_by: principal.userId, }) .where("id
+db	apps/api/src/modules/methodology/routes.ts:110	await	[transaction callback @58]	record(tx, audit, { action: "tom_dimension.update_labels", recordType: "tom_dimension", recordId: locked.id, organizationId: principal.organizationId, priorVers
+db	apps/api/src/modules/organization/repository.ts:51	await	[fn subtreeHeight(db) @50]	db .selectFrom("business_unit_closure") .select((eb) => eb.fn.max("depth").as("h")) .where("ancestor_id", "=", id) .executeTakeFirst()
+db	apps/api/src/modules/organization/repository.ts:60	await	[fn isDescendant(db) @59]	db .selectFrom("business_unit_closure") .select("depth") .where("ancestor_id", "=", ancestorId) .where("descendant_id", "=", candidateId) .executeTakeFirst()
+db	apps/api/src/modules/organization/repository.ts:81	await	[fn lockBusinessUnitHierarchy(db) @80]	sql`SELECT pg_advisory_xact_lock(${HIERARCHY_LOCK_CLASS}::integer, hashtext(${organizationId}::text))`.execute( db, )
+db	apps/api/src/modules/organization/routes.ts:135	await	[transaction callback @133]	tx .insertInto("organization") .values({ id, code: body.code, name_en: body.nameEn, name_ar: body.nameAr, default_timezone: body.defaultTimezone ?? config.defau
+db	apps/api/src/modules/organization/routes.ts:151	await	[transaction callback @133]	record(tx, audit, { action: "organization.create", recordType: "organization", recordId: id, organizationId: id, newVersion: 1, changes: diffFields({} as Record
+db	apps/api/src/modules/organization/routes.ts:162	await	[transaction callback @133]	grantCreatorAdminRoles(tx, principal, audit, id, body.code)
+db	apps/api/src/modules/organization/routes.ts:191	await	[transaction callback @190]	requireRead(tx, principal, "organization.read", { type: "organization", id: organizationId, })
+db	apps/api/src/modules/organization/routes.ts:195	await	[transaction callback @190]	requireAction(tx, principal, "organization.manage", target)
+db	apps/api/src/modules/organization/routes.ts:197	await	[transaction callback @190]	findOrganization(tx, organizationId, true)
+db	apps/api/src/modules/organization/routes.ts:200	await	[transaction callback @190]	tx .updateTable("organization") .set({ ...(body.nameEn !== undefined ? { name_en: body.nameEn } : {}), ...(body.nameAr !== undefined ? { name_ar: body.nameAr } 
+db	apps/api/src/modules/organization/routes.ts:217	await	[transaction callback @190]	record(tx, audit, { action: "organization.update", recordType: "organization", recordId: organizationId, organizationId, priorVersion: current.version, newVersi
+db	apps/api/src/modules/organization/routes.ts:278	await	[transaction callback @277]	requireRead(tx, principal, "organization.read", { type: "organization", id: organizationId, })
+db	apps/api/src/modules/organization/routes.ts:282	await	[transaction callback @277]	requireAction(tx, principal, "business_unit.manage", target)
+db	apps/api/src/modules/organization/routes.ts:284	await	[transaction callback @277]	lockBusinessUnitHierarchy(tx, organizationId)
+db	apps/api/src/modules/organization/routes.ts:285	await	[transaction callback @277]	findBusinessUnit(tx, body.parentBusinessUnitId)
+db	apps/api/src/modules/organization/routes.ts:294	await	[transaction callback @277]	targetFor(tx, "business_unit", { organizationId, businessUnitId: parent.id })
+db	apps/api/src/modules/organization/routes.ts:298	await	[transaction callback @277]	tx .insertInto("business_unit") .values({ id, organization_id: organizationId, parent_business_unit_id: body.parentBusinessUnitId ?? null, code: body.code, name
+db	apps/api/src/modules/organization/routes.ts:316	await	[transaction callback @277]	record(tx, audit, { action: "business_unit.create", recordType: "business_unit", recordId: id, organizationId, newVersion: 1, changes: diffFields({} as Record<s
+db	apps/api/src/modules/organization/routes.ts:355	await	[transaction callback @354]	requireRead(tx, principal, "business_unit.read", { type: "business_unit", id: businessUnitId, })
+db	apps/api/src/modules/organization/routes.ts:359	await	[transaction callback @354]	requireAction(tx, principal, "business_unit.manage", target)
+db	apps/api/src/modules/organization/routes.ts:364	await	[transaction callback @354]	lockBusinessUnitHierarchy(tx, target.organizationId)
+db	apps/api/src/modules/organization/routes.ts:365	await	[transaction callback @354]	findBusinessUnit(tx, businessUnitId, true)
+db	apps/api/src/modules/organization/routes.ts:372	await	[transaction callback @354]	requireAction( tx, principal, "business_unit.manage", await targetFor(tx, "organization", { organizationId: current.organization_id }), )
+db	apps/api/src/modules/organization/routes.ts:376	await	[transaction callback @354]	targetFor(tx, "organization", { organizationId: current.organization_id })
+db	apps/api/src/modules/organization/routes.ts:379	await	[transaction callback @354]	findBusinessUnit(tx, parentId)
+db	apps/api/src/modules/organization/routes.ts:389	await	[transaction callback @354]	requireAction( tx, principal, "business_unit.manage", await targetFor(tx, "business_unit", { organizationId: parent.organization_id, businessUnitId: parentId, }
+db	apps/api/src/modules/organization/routes.ts:393	await	[transaction callback @354]	targetFor(tx, "business_unit", { organizationId: parent.organization_id, businessUnitId: parentId, })
+db	apps/api/src/modules/organization/routes.ts:398	await	[transaction callback @354]	isDescendant(tx, businessUnitId, parentId)
+db	apps/api/src/modules/organization/routes.ts:402	await	[transaction callback @354]	targetFor(tx, "business_unit", { organizationId: current.organization_id, businessUnitId: parentId, })
+db	apps/api/src/modules/organization/routes.ts:407	await	[transaction callback @354]	subtreeHeight(tx, businessUnitId)
+db	apps/api/src/modules/organization/routes.ts:410	await	[transaction callback @354]	tx .updateTable("business_unit") .set({ ...(body.nameEn !== undefined ? { name_en: body.nameEn } : {}), ...(body.nameAr !== undefined ? { name_ar: body.nameAr }
+db	apps/api/src/modules/organization/routes.ts:426	await	[transaction callback @354]	record(tx, audit, { action: "business_unit.update", recordType: "business_unit", recordId: businessUnitId, organizationId: current.organization_id, priorVersion
+REVIEW	apps/api/src/modules/platform/health.ts:30	connect	[pool client checkout]	pool.connect()
+db	apps/api/src/modules/platform/idempotency.ts:34	await	[fn withIdempotency(tx) @29]	sql`SELECT pg_advisory_xact_lock(hashtextextended(${`idem:${input.userId}:${input.key}`}, 0))`.execute(tx)
+db	apps/api/src/modules/platform/idempotency.ts:35	await	[fn withIdempotency(tx) @29]	tx .selectFrom("idempotency_record") .select(["request_hash", "response_status", "response_body", sql<boolean>`expires_at > now()`.as("live")]) .where("user_id"
+db	apps/api/src/modules/platform/idempotency.ts:51	await	[fn withIdempotency(tx) @29]	tx .deleteFrom("idempotency_record") .where("user_id", "=", input.userId) .where("key", "=", input.key) .execute()
+REVIEW	apps/api/src/modules/platform/idempotency.ts:57	await	[fn withIdempotency(tx) @29]	run()
+db	apps/api/src/modules/platform/idempotency.ts:58	await	[fn withIdempotency(tx) @29]	tx .insertInto("idempotency_record") .values({ user_id: input.userId, key: input.key, request_hash: input.requestHash, response_status: result.status, response_
+db	apps/api/src/modules/transformations/charter.ts:226	await	[fn scopeCheckPrechecks(db) @225]	db .selectFrom("charter_scope_check_definition") .select(["code", "system_precheck"]) .orderBy("ordinal") .execute()
+REVIEW	apps/api/src/modules/transformations/charter.ts:231	await (nested fn)	[fn scopeCheckPrechecks(db) @225]	q
+db	apps/api/src/modules/transformations/charter.ts:232	await	[fn scopeCheckPrechecks(db) @225]	count( db .selectFrom("diagnostic_finding") .select((eb) => eb.fn.countAll<string>().as("n")) .where("transformation_id", "=", c.transformation_id) .where("stat
+db	apps/api/src/modules/transformations/charter.ts:240	await	[fn scopeCheckPrechecks(db) @225]	db .selectFrom("baseline") .select(["value", "source", "baseline_date"]) .where("transformation_id", "=", c.transformation_id) .where("status", "=", "active") .
+db	apps/api/src/modules/transformations/charter.ts:246	await	[fn scopeCheckPrechecks(db) @225]	db .selectFrom("decision") .select(["owner_user_id"]) .where("transformation_id", "=", c.transformation_id) .where("status", "=", "open") .execute()
+db	apps/api/src/modules/transformations/charter.ts:316	await	[fn charterView(db) @314]	findCurrentNorthStar(db, c.transformation_id)
+db	apps/api/src/modules/transformations/charter.ts:317	await	[fn charterView(db) @314]	topOutcomesOf(db, c.transformation_id)
+db	apps/api/src/modules/transformations/charter.ts:318	await	[fn charterView(db) @314]	activeGuardrailsOf(db, c.transformation_id)
+db	apps/api/src/modules/transformations/charter.ts:338	await	[fn charterView(db) @314]	presentOutcomes(db, topOutcomes)
+db	apps/api/src/modules/transformations/charter.ts:341	await	[fn charterView(db) @314]	scopeCheckPrechecks(db, c)
+db	apps/api/src/modules/transformations/charter.ts:350	await	[fn snapshot(tx) @348]	tx.selectFrom("north_star").select("statement").where("id", "=", c.north_star_id).executeTakeFirst()
+db	apps/api/src/modules/transformations/charter.ts:352	await	[fn snapshot(tx) @348]	topOutcomesOf(tx, c.transformation_id)
+db	apps/api/src/modules/transformations/charter.ts:353	await	[fn snapshot(tx) @348]	activeGuardrailsOf(tx, c.transformation_id)
+db	apps/api/src/modules/transformations/charter.ts:355	await	[fn snapshot(tx) @348]	tx .insertInto("charter_version") .values({ ...fields, id: uuidv7(), charter_id: c.id, version_no: c.version, north_star_statement: ns?.statement ?? null, top_o
+db	apps/api/src/modules/transformations/charter.ts:399	await	[fn checkCharter(tx) @392]	assertActiveUsers(tx, organizationId, [ { id: m.executive_sponsor_user_id ?? null, pointer: "/executiveSponsorUserId" }, { id: m.transformation_lead_user_id ?? 
+db	apps/api/src/modules/transformations/charter.ts:403	await	[fn checkCharter(tx) @392]	assertSameTransformation(tx, "north_star", transformationId, m.north_star_id ?? null, "/northStarId")
+db	apps/api/src/modules/transformations/charter.ts:410	await	[fn assertNorthStarCurrent(tx) @407]	tx .selectFrom("north_star") .select("status") .where("id", "=", id) .where("transformation_id", "=", transformationId) .executeTakeFirst()
+db	apps/api/src/modules/transformations/charter.ts:453	await	[transaction callback @452]	openWrite(tx, request, transformationId, [{ permission: "charter.edit" }], null)
+db	apps/api/src/modules/transformations/charter.ts:456	await (nested fn)	[transaction callback @452]	findCharter(tx, transformationId)
+db	apps/api/src/modules/transformations/charter.ts:462	await (nested fn)	[transaction callback @452]	checkCharter(tx, ctx.organizationId, transformationId, values)
+db	apps/api/src/modules/transformations/charter.ts:463	await (nested fn)	[transaction callback @452]	assertNorthStarCurrent(tx, transformationId, values)
+db	apps/api/src/modules/transformations/charter.ts:465	await (nested fn)	[transaction callback @452]	tx .insertInto("charter") .values({ ...values, id, organization_id: ctx.organizationId, transformation_id: transformationId, created_by: ctx.userId, updated_by:
+db	apps/api/src/modules/transformations/charter.ts:482	await (nested fn)	[transaction callback @452]	snapshot(tx, row, ctx.userId, null)
+db	apps/api/src/modules/transformations/charter.ts:483	await (nested fn)	[transaction callback @452]	record(tx, ctx.audit, { action: "charter.create", recordType: "charter", recordId: id, organizationId: ctx.organizationId, transformationId, newVersion: 1, chan
+db	apps/api/src/modules/transformations/charter.ts:496	await (nested fn)	[transaction callback @452]	charterView(tx, row)
+db	apps/api/src/modules/transformations/charter.ts:511	await	[transaction callback @510]	openWrite(tx, request, transformationId, [{ permission: "charter.edit" }], null)
+db	apps/api/src/modules/transformations/charter.ts:514	await	[transaction callback @510]	findCharter(tx, transformationId, true)
+db	apps/api/src/modules/transformations/charter.ts:518	await	[transaction callback @510]	checkCharter(tx, ctx.organizationId, transformationId, { ...current, ...changes })
+db	apps/api/src/modules/transformations/charter.ts:519	await	[transaction callback @510]	assertNorthStarCurrent(tx, transformationId, changes)
+db	apps/api/src/modules/transformations/charter.ts:522	await	[transaction callback @510]	findCurrentNorthStar(tx, transformationId)
+db	apps/api/src/modules/transformations/charter.ts:525	await	[transaction callback @510]	tx .updateTable("charter") .set({ ...changes, version: sql<number>`version + 1`, updated_at: sql<Date>`now()`, updated_by: ctx.userId }) .where("id", "=", curre
+db	apps/api/src/modules/transformations/charter.ts:532	await	[transaction callback @510]	snapshot(tx, updated, ctx.userId, body.changeSummary ?? null)
+db	apps/api/src/modules/transformations/charter.ts:533	await	[transaction callback @510]	record(tx, ctx.audit, { action: "charter.update", recordType: "charter", recordId: current.id, organizationId: ctx.organizationId, transformationId, priorVersio
+db	apps/api/src/modules/transformations/charter.ts:590	await	[transaction callback @589]	openWrite(tx, request, transformationId, [{ permission: "north_star.edit" }], null)
+db	apps/api/src/modules/transformations/charter.ts:593	await	[transaction callback @589]	sql`SELECT pg_advisory_xact_lock(hashtextextended(${`northstar:${transformationId}`}, 0))`.execute(tx)
+db	apps/api/src/modules/transformations/charter.ts:594	await	[transaction callback @589]	findCurrentNorthStar(tx, transformationId, true)
+db	apps/api/src/modules/transformations/charter.ts:599	await	[transaction callback @589]	tx .updateTable("north_star") .set({ status: "superseded", superseded_at: sql<Date>`now()`, version: sql<number>`version + 1`, updated_at: sql<Date>`now()`, upd
+db	apps/api/src/modules/transformations/charter.ts:612	await	[transaction callback @589]	record(tx, ctx.audit, { action: "north_star.supersede", recordType: "north_star", recordId: current.id, organizationId: ctx.organizationId, transformationId, pr
+db	apps/api/src/modules/transformations/charter.ts:632	await	[transaction callback @589]	tx .insertInto("north_star") .values({ id, organization_id: ctx.organizationId, transformation_id: transformationId, statement, created_by: ctx.userId, updated_
+db	apps/api/src/modules/transformations/charter.ts:644	await	[transaction callback @589]	record(tx, ctx.audit, { action: "north_star.create", recordType: "north_star", recordId: id, organizationId: ctx.organizationId, transformationId, newVersion: 1
+db	apps/api/src/modules/transformations/good-outcome.ts:173	await	[fn loadGoodOutcomeEvaluations(db) @165]	Promise.all([ db .selectFrom("outcome_kpi") .select(["outcome_id", (eb) => eb.fn.countAll<string>().as("n")]) .where("outcome_id", "in", ids) .where("status", "
+db	apps/api/src/modules/transformations/good-outcome.ts:188	await	[fn loadGoodOutcomeEvaluations(db) @165]	criteriaOf(db, t)
+db	apps/api/src/modules/transformations/good-outcome.ts:217	await	[fn loadGoodOutcomeFacts(db) @211]	db .selectFrom("outcome") .selectAll() .where("transformation_id", "=", transformationId) .where("status", "<>", "archived") .orderBy("id") .execute()
+db	apps/api/src/modules/transformations/good-outcome.ts:224	await	[fn loadGoodOutcomeFacts(db) @211]	loadGoodOutcomeEvaluations(db, rows)
+db	apps/api/src/modules/transformations/phase.ts:31	await	[fn advancePhaseOnGateApproval(tx) @22]	tx .selectFrom("transformation") .select(["id", "organization_id", "current_phase", "version"]) .where("id", "=", input.transformationId) .forUpdate() .executeT
+db	apps/api/src/modules/transformations/phase.ts:45	await	[fn advancePhaseOnGateApproval(tx) @22]	tx .updateTable("transformation") .set({ current_phase: input.nextPhase, version: sql<number>`version + 1`, updated_at: sql<Date>`now()`, updated_by: audit.acto
+db	apps/api/src/modules/transformations/phase.ts:57	await	[fn advancePhaseOnGateApproval(tx) @22]	record(tx, audit, { action: "transformation.phase_advance", recordType: "transformation", recordId: t.id, organizationId: t.organization_id, transformationId: t
+db	apps/api/src/modules/transformations/register-kit.ts:160	await	[fn assertActiveUsers(db) @153]	db .selectFrom("app_user") .select("id") .where( "id", "in", named.map((u) => u.id), ) .where("organization_id", "=", organizationId) .where("status", "=", "act
+db	apps/api/src/modules/transformations/register-kit.ts:192	await	[fn assertCatalogueCode(db) @185]	loose(db).selectFrom(table).select("code").where("code", "=", String(code)).executeTakeFirst()
+db	apps/api/src/modules/transformations/register-kit.ts:213	await	[fn assertSameTransformation(db) @205]	loose(db) .selectFrom(table) .select("id") .where("id", "=", String(id)) .where("transformation_id", "=", transformationId) .executeTakeFirst()
+db	apps/api/src/modules/transformations/register-kit.ts:232	await	[fn writableTransformation(tx) @231]	tx .selectFrom("transformation") .select(["id", "organization_id", "archived_at"]) .where("id", "=", transformationId) .executeTakeFirst()
+db	apps/api/src/modules/transformations/register-kit.ts:262	await	[fn openWrite(tx) @254]	refreshPrincipal(tx, request)
+db	apps/api/src/modules/transformations/register-kit.ts:265	await	[fn openWrite(tx) @254]	requireTransformationRead(tx, principal, transformationId)
+db	apps/api/src/modules/transformations/register-kit.ts:266	await	[fn openWrite(tx) @254]	requireRecordWrite(tx, principal, target, rules, ownership ?? { createdBy: principal.userId })
+db	apps/api/src/modules/transformations/register-kit.ts:270	await	[fn openWrite(tx) @254]	writableTransformation(tx, transformationId)
+REVIEW	apps/api/src/modules/transformations/register-kit.ts:297	await	[fn maybeIdempotent(tx) @289]	run()
+db	apps/api/src/modules/transformations/register-kit.ts:335	await	[fn (anonymous)(dbx) @335]	render(dbx, [row])
+db	apps/api/src/modules/transformations/register-kit.ts:340	await	[fn (anonymous)(dbx) @338]	loose(dbx) .selectFrom(spec.parent.table) .select(["id"]) .where("id", "=", params.get(spec.parent.param)!) .where("transformation_id", "=", transformationId) .
+REVIEW	apps/api/src/modules/transformations/register-kit.ts:356	await	[fn (anonymous)(dbx) @348]	q.executeTakeFirst()
+db	apps/api/src/modules/transformations/register-kit.ts:404	await	[transaction callback @402]	openWrite( tx, request, transformationId, spec.writeRules, spec.createOwnership ? spec.createOwnership(request.body, userId) : { createdBy: userId }, )
+db	apps/api/src/modules/transformations/register-kit.ts:411	await	[transaction callback @402]	checkParent(tx, transformationId, params)
+REVIEW	apps/api/src/modules/transformations/register-kit.ts:418	await (nested fn)	[transaction callback @402]	spec.check(values, ctx, null)
+REVIEW	apps/api/src/modules/transformations/register-kit.ts:419	await (nested fn)	[transaction callback @402]	spec.beforeInsert(values, ctx)
+db	apps/api/src/modules/transformations/register-kit.ts:421	await (nested fn)	[transaction callback @402]	loose(tx) .insertInto(spec.table) .values({ ...completed, id, organization_id: ctx.organizationId, transformation_id: transformationId, created_by: ctx.userId, 
+db	apps/api/src/modules/transformations/register-kit.ts:433	await (nested fn)	[transaction callback @402]	record(tx, ctx.audit, { action: `${spec.table}.create`, recordType: spec.table, recordId: id, organizationId: ctx.organizationId, transformationId, newVersion: 
+db	apps/api/src/modules/transformations/register-kit.ts:442	await (nested fn)	[transaction callback @402]	renderOne(tx, row)
+db	apps/api/src/modules/transformations/register-kit.ts:458	await	[fn (anonymous)(tx) @450]	requireTransformationRead(tx, principal, transformationId)
+db	apps/api/src/modules/transformations/register-kit.ts:459	await	[fn (anonymous)(tx) @450]	findRow(tx, params)
+db	apps/api/src/modules/transformations/register-kit.ts:461	await	[fn (anonymous)(tx) @450]	openWrite(tx, request, transformationId, rules, { createdBy: seen.created_by, ownerUserId: seen.owner_user_id ?? null, })
+db	apps/api/src/modules/transformations/register-kit.ts:469	await	[fn (anonymous)(tx) @467]	findRow(tx, params, true)
+db	apps/api/src/modules/transformations/register-kit.ts:482	await	[transaction callback @481]	lockForChange(tx, request, params, spec.updateRules ?? spec.writeRules)
+db	apps/api/src/modules/transformations/register-kit.ts:484	await	[transaction callback @481]	finishLock(tx, request, params)
+REVIEW	apps/api/src/modules/transformations/register-kit.ts:496	await	[transaction callback @481]	spec.check({ ...(current as unknown as LooseRow), ...changes }, ctx, current)
+db	apps/api/src/modules/transformations/register-kit.ts:497	await	[transaction callback @481]	loose(tx) .updateTable(spec.table) .set({ ...changes, ...bumpStamps(ctx.userId) }) .where("id", "=", current.id) .where("version", "=", current.version) .return
+db	apps/api/src/modules/transformations/register-kit.ts:504	await	[transaction callback @481]	record(tx, ctx.audit, { action: `${spec.table}.update`, recordType: spec.table, recordId: current.id, organizationId: ctx.organizationId, transformationId: ctx.
+db	apps/api/src/modules/transformations/register-kit.ts:526	await	[transaction callback @525]	lockForChange(tx, request, params, spec.archiveRules ?? spec.writeRules)
+db	apps/api/src/modules/transformations/register-kit.ts:528	await	[transaction callback @525]	finishLock(tx, request, params)
+db	apps/api/src/modules/transformations/register-kit.ts:531	await	[transaction callback @525]	loose(tx) .updateTable(spec.table) .set({ status: "archived", archived_at: sql<Date>`now()`, archived_by: ctx.userId, archive_reason: reason, ...bumpStamps(ctx.
+db	apps/api/src/modules/transformations/register-kit.ts:544	await	[transaction callback @525]	record(tx, ctx.audit, { action: `${spec.table}.archive`, recordType: spec.table, recordId: current.id, organizationId: ctx.organizationId, transformationId: ctx
+db	apps/api/src/modules/transformations/registers.ts:189	await	[fn presentOutcomes(db) @188]	loadGoodOutcomeEvaluations(db, rows)
+db	apps/api/src/modules/transformations/repository.ts:66	await	[fn nextTransformationCode(tx) @65]	sql`SELECT pg_advisory_xact_lock(hashtextextended(${`trcode:${organizationId}`}, 0))`.execute(tx)
+db	apps/api/src/modules/transformations/repository.ts:67	await	[fn nextTransformationCode(tx) @65]	tx .selectFrom("transformation") .select(sql<number | null>`max((substring(code from '^TR-([0-9]+)$'))::int)`.as("n")) .where("organization_id", "=", organizati
+db	apps/api/src/modules/transformations/repository.ts:79	await	[fn activeUsersExist(db) @76]	db .selectFrom("app_user") .select("id") .where("id", "in", unique) .where("status", "=", "active") .execute()
+db	apps/api/src/modules/transformations/routes.ts:157	await (nested fn)	[transaction callback @155]	findBusinessUnit(tx, body.businessUnitId)
+db	apps/api/src/modules/transformations/routes.ts:159	await (nested fn)	[transaction callback @155]	requireRead( tx, principal, "business_unit.read", await targetFor(tx, "business_unit", { organizationId: bu.organization_id, businessUnitId: bu.id }), )
+db	apps/api/src/modules/transformations/routes.ts:163	await (nested fn)	[transaction callback @155]	targetFor(tx, "business_unit", { organizationId: bu.organization_id, businessUnitId: bu.id })
+db	apps/api/src/modules/transformations/routes.ts:165	await (nested fn)	[transaction callback @155]	requireAction(tx, principal, "transformation.create", target)
+db	apps/api/src/modules/transformations/routes.ts:171	await (nested fn)	[transaction callback @155]	findOrganization(tx, bu.organization_id)
+db	apps/api/src/modules/transformations/routes.ts:174	await (nested fn)	[transaction callback @155]	activeUsersExist(tx, named)
+db	apps/api/src/modules/transformations/routes.ts:181	await (nested fn)	[transaction callback @155]	nextTransformationCode(tx, org.id)
+db	apps/api/src/modules/transformations/routes.ts:182	await (nested fn)	[transaction callback @155]	tx .insertInto("transformation") .values({ id, organization_id: org.id, business_unit_id: bu.id, code, name: body.name, description: body.description ?? null, m
+db	apps/api/src/modules/transformations/routes.ts:214	await (nested fn)	[transaction callback @155]	record(tx, audit, { action: "transformation.create", recordType: "transformation", recordId: id, organizationId: org.id, transformationId: id, newVersion: 1, ch
+db	apps/api/src/modules/transformations/routes.ts:229	await (nested fn)	[transaction callback @155]	sql`SELECT p2_instantiate_transformation(${id}::uuid, ${principal.userId!}::uuid, ${audit.requestId}, 'api')`.execute( tx, )
+db	apps/api/src/modules/transformations/routes.ts:234	await (nested fn)	[transaction callback @155]	grantCreatorTransformationRoles( tx, principal, audit, { transformationId: id, organizationId: org.id, code }, target, )
+db	apps/api/src/modules/transformations/routes.ts:241	await (nested fn)	[transaction callback @155]	enqueueOutboxEvent(tx, { organizationId: org.id, aggregateType: "transformation", aggregateId: id, eventType: "transformation.created", schemaVersion: 1, idempo
+REVIEW	apps/api/src/modules/transformations/routes.ts:261	await	[transaction callback @155]	run()
+db	apps/api/src/modules/transformations/routes.ts:301	await	[transaction callback @300]	lockForChange(tx, request, transformationId, "transformation.update")
+db	apps/api/src/modules/transformations/routes.ts:314	await	[transaction callback @300]	activeUsersExist(tx, named)
+db	apps/api/src/modules/transformations/routes.ts:319	await	[transaction callback @300]	tx .updateTable("transformation") .set({ ...(body.name !== undefined ? { name: body.name } : {}), ...(body.description !== undefined ? { description: body.descr
+db	apps/api/src/modules/transformations/routes.ts:337	await	[transaction callback @300]	record(tx, audit, { action: "transformation.update", recordType: "transformation", recordId: transformationId, organizationId: current.organization_id, transfor
+db	apps/api/src/modules/transformations/routes.ts:363	await	[transaction callback @362]	lockForChange(tx, request, transformationId, "transformation.archive")
+db	apps/api/src/modules/transformations/routes.ts:366	await	[transaction callback @362]	tx .updateTable("transformation") .set({ archived_at: sql<Date>`now()`, archived_by: principal.userId!, archive_reason: reason, version: sql<number>`version + 1
+db	apps/api/src/modules/transformations/routes.ts:380	await	[transaction callback @362]	record(tx, audit, { action: "transformation.archive", recordType: "transformation", recordId: transformationId, organizationId: current.organization_id, transfo
+db	apps/api/src/modules/transformations/routes.ts:426	await	[fn lockForChange(tx) @419]	requireRead(tx, principal, "transformation.read", { type: "transformation", id })
+db	apps/api/src/modules/transformations/routes.ts:427	await	[fn lockForChange(tx) @419]	requireAction(tx, principal, permission, target)
+db	apps/api/src/modules/transformations/routes.ts:429	await	[fn lockForChange(tx) @419]	findTransformation(tx, id, true)
+REVIEW	apps/api/src/modules/workflows/canvas.ts:51	await	[fn canvasViews(db) @43]	cellsQ.orderBy("d.ordinal").execute()
+db	apps/api/src/modules/workflows/canvas.ts:54	await	[fn canvasViews(db) @43]	Promise.all([ db.selectFrom("tom_dimension").selectAll().where("code", "in", codes).execute(), db .selectFrom("tom_gap") .selectAll() .where("transformation_id"
+db	apps/api/src/modules/workflows/canvas.ts:96	await	[fn canvasViews(db) @43]	decisionsWithOptions(db, decisions)
+db	apps/api/src/modules/workflows/canvas.ts:131	await	[transaction callback @130]	openWrite(tx, request, transformationId, [{ permission: "tom.edit" }], null)
+db	apps/api/src/modules/workflows/canvas.ts:134	await	[transaction callback @130]	tx .selectFrom("tom_canvas_cell") .selectAll() .where("transformation_id", "=", transformationId) .where("dimension_code", "=", dimensionCode) .forUpdate() .exe
+db	apps/api/src/modules/workflows/canvas.ts:157	await	[transaction callback @130]	assertActiveUsers(tx, ctx.organizationId, [{ id: merged.owner_user_id, pointer: "/ownerUserId" }])
+db	apps/api/src/modules/workflows/canvas.ts:158	await	[transaction callback @130]	tx .updateTable("tom_canvas_cell") .set({ ...changes, ...bumpStamps(ctx.userId) }) .where("id", "=", current.id) .where("version", "=", current.version) .return
+db	apps/api/src/modules/workflows/canvas.ts:165	await	[transaction callback @130]	record(tx, ctx.audit, { action: "tom_canvas_cell.update", recordType: "tom_canvas_cell", recordId: current.id, organizationId: ctx.organizationId, transformatio
+db	apps/api/src/modules/workflows/codes.ts:10	await	[fn nextCode(tx) @9]	sql<{ last_value: number }>` INSERT INTO record_code_counter (transformation_id, prefix, last_value) VALUES (${transformationId}::uuid, ${prefix}, 1) ON CONFLIC
+db	apps/api/src/modules/workflows/criteria.ts:74	await	[fn loadGateFacts(db) @73]	db .selectFrom("diagnostic_item") .select([ "id", "dimension_code", "current_state", "root_cause", "impact_amount", "impact_kpi_definition_id", "impact_text", "
+db	apps/api/src/modules/workflows/criteria.ts:91	await	[fn loadGateFacts(db) @73]	db .selectFrom("diagnostic_finding") .select(["id", "kind", "status"]) .where("transformation_id", "=", transformationId) .where("status", "<>", "archived") .ex
+db	apps/api/src/modules/workflows/criteria.ts:97	await	[fn loadGateFacts(db) @73]	loadKpiGateFacts(db, transformationId)
+db	apps/api/src/modules/workflows/criteria.ts:98	await	[fn loadGateFacts(db) @73]	findCharter(db, transformationId)
+db	apps/api/src/modules/workflows/criteria.ts:99	await	[fn loadGateFacts(db) @73]	findCurrentNorthStar(db, transformationId)
+db	apps/api/src/modules/workflows/criteria.ts:100	await	[fn loadGateFacts(db) @73]	db .selectFrom("outcome") .select("id") .where("transformation_id", "=", transformationId) .where("is_top_outcome", "=", true) .where("status", "<>", "archived"
+db	apps/api/src/modules/workflows/criteria.ts:108	await	[fn loadGateFacts(db) @73]	loadGoodOutcomeFacts(db, transformationId)
+db	apps/api/src/modules/workflows/criteria.ts:109	await	[fn loadGateFacts(db) @73]	db .selectFrom("strategic_guardrail") .select((eb) => eb.fn.countAll<string>().as("n")) .where("transformation_id", "=", transformationId) .where("status", "=",
+db	apps/api/src/modules/workflows/criteria.ts:115	await	[fn loadGateFacts(db) @73]	db .selectFrom("tom_canvas_cell") .select(["dimension_code", "status"]) .where("transformation_id", "=", transformationId) .execute()
+db	apps/api/src/modules/workflows/criteria.ts:120	await	[fn loadGateFacts(db) @73]	db .selectFrom("tom_gap") .select(["id", "status", "owner_user_id"]) .where("transformation_id", "=", transformationId) .where("status", "<>", "archived") .exec
+db	apps/api/src/modules/workflows/criteria.ts:126	await	[fn loadGateFacts(db) @73]	db .selectFrom("capability") .select(["id", "current_level", "target_level"]) .where("transformation_id", "=", transformationId) .where("status", "=", "active")
+db	apps/api/src/modules/workflows/criteria.ts:132	await	[fn loadGateFacts(db) @73]	db .selectFrom("journey") .select((eb) => eb.fn.countAll<string>().as("n")) .where("transformation_id", "=", transformationId) .where("state", "=", "future") .w
+db	apps/api/src/modules/workflows/criteria.ts:139	await	[fn loadGateFacts(db) @73]	db .selectFrom("decision") .select(["id", "code", "owner_user_id"]) .where("transformation_id", "=", transformationId) .where("kind", "=", "design") .where("sta
+db	apps/api/src/modules/workflows/criteria.ts:146	await	[fn loadGateFacts(db) @73]	loadVerifiedEvidenceFacts(db, transformationId, [ ...items.map((i) => ({ recordType: "diagnostic_item", recordId: i.id })), ...kpi.baselines.map((b) => ({ recor
+db	apps/api/src/modules/workflows/decisions.ts:127	await	[fn decisionsWithOptions(db) @125]	db .selectFrom("decision_option") .selectAll() .where( "decision_id", "in", rows.map((r) => r.id), ) .orderBy("ordinal") .execute()
+db	apps/api/src/modules/workflows/decisions.ts:141	await	[fn loadDecision(db) @140]	db.selectFrom("decision").selectAll().where("id", "=", id).executeTakeFirstOrThrow()
+db	apps/api/src/modules/workflows/decisions.ts:142	await	[fn loadDecision(db) @140]	decisionsWithOptions(db, [row])
+db	apps/api/src/modules/workflows/decisions.ts:164	await	[fn insertDesignDecision(tx) @149]	nextCode(tx, ctx.transformationId, "D")
+db	apps/api/src/modules/workflows/decisions.ts:165	await	[fn insertDesignDecision(tx) @149]	tx .insertInto("decision") .values({ id, organization_id: ctx.organizationId, transformation_id: ctx.transformationId, kind: "design", code, title: input.title,
+db	apps/api/src/modules/workflows/decisions.ts:185	await	[fn insertDesignDecision(tx) @149]	record(tx, ctx.audit, { action: "decision.create", recordType: "decision", recordId: id, organizationId: ctx.organizationId, transformationId: ctx.transformatio
+db	apps/api/src/modules/workflows/decisions.ts:201	await	[fn insertDesignDecision(tx) @149]	insertOption(tx, ctx, id, ordinal, o)
+db	apps/api/src/modules/workflows/decisions.ts:217	await	[fn insertOption(tx) @208]	tx .insertInto("decision_option") .values({ id, organization_id: ctx.organizationId, transformation_id: ctx.transformationId, decision_id: decisionId, label, ti
+db	apps/api/src/modules/workflows/decisions.ts:232	await	[fn insertOption(tx) @208]	record(tx, ctx.audit, { action: "decision_option.create", recordType: "decision_option", recordId: id, organizationId: ctx.organizationId, transformationId: ctx
+db	apps/api/src/modules/workflows/decisions.ts:245	await	[fn readableDecision(db) @244]	db.selectFrom("decision").selectAll().where("id", "=", decisionId).executeTakeFirst()
+db	apps/api/src/modules/workflows/decisions.ts:247	await	[fn readableDecision(db) @244]	requireTransformationRead(db, principalOf(request), d.transformation_id)
+db	apps/api/src/modules/workflows/decisions.ts:254	await	[fn finishDecisionLock(tx) @252]	tx .selectFrom("decision") .selectAll() .where("id", "=", decisionId) .forUpdate() .executeTakeFirstOrThrow()
+db	apps/api/src/modules/workflows/decisions.ts:278	await	[fn bumpDecision(tx,ctx) @271]	tx .updateTable("decision") .set({ ...changes, ...bumpStamps(ctx.userId) }) .where("id", "=", current.id) .where("version", "=", current.version) .returningAll(
+db	apps/api/src/modules/workflows/decisions.ts:285	await	[fn bumpDecision(tx,ctx) @271]	record(tx, ctx.audit, { action, recordType: "decision", recordId: current.id, organizationId: ctx.organizationId, transformationId: ctx.transformationId, priorV
+db	apps/api/src/modules/workflows/decisions.ts:331	await	[transaction callback @330]	openWrite(tx, request, transformationId, EDIT, null)
+db	apps/api/src/modules/workflows/decisions.ts:334	await (nested fn)	[transaction callback @330]	assertActiveUsers(tx, ctx.organizationId, [{ id: body.ownerUserId ?? null, pointer: "/ownerUserId" }])
+db	apps/api/src/modules/workflows/decisions.ts:335	await (nested fn)	[transaction callback @330]	insertDesignDecision(tx, ctx, body)
+db	apps/api/src/modules/workflows/decisions.ts:336	await (nested fn)	[transaction callback @330]	loadDecision(tx, row.id)
+db	apps/api/src/modules/workflows/decisions.ts:351	await	[transaction callback @350]	readableDecision(tx, request, decisionId)
+db	apps/api/src/modules/workflows/decisions.ts:352	await	[transaction callback @350]	openWrite(tx, request, seen.transformation_id, EDIT, null)
+db	apps/api/src/modules/workflows/decisions.ts:354	await	[transaction callback @350]	finishDecisionLock(tx, request, decisionId, ["open", "deferred"])
+db	apps/api/src/modules/workflows/decisions.ts:370	await	[transaction callback @350]	tx .selectFrom("decision_option") .select(["status"]) .where("id", "=", body.recommendationOptionId) .where("decision_id", "=", decisionId) .executeTakeFirst()
+db	apps/api/src/modules/workflows/decisions.ts:383	await	[transaction callback @350]	assertActiveUsers(tx, ctx.organizationId, [{ id: body.ownerUserId ?? null, pointer: "/ownerUserId" }])
+db	apps/api/src/modules/workflows/decisions.ts:384	await	[transaction callback @350]	bumpDecision(tx, ctx, current, changes, "decision.update")
+db	apps/api/src/modules/workflows/decisions.ts:393	await	[transaction callback @392]	readableDecision(tx, request, decisionId)
+db	apps/api/src/modules/workflows/decisions.ts:394	await	[transaction callback @392]	openWrite(tx, request, seen.transformation_id, EDIT, null)
+db	apps/api/src/modules/workflows/decisions.ts:396	await	[transaction callback @392]	finishDecisionLock(tx, request, decisionId, ["open"])
+db	apps/api/src/modules/workflows/decisions.ts:397	await	[transaction callback @392]	tx .selectFrom("decision_option") .select((eb) => eb.fn.max<number>("ordinal").as("n")) .where("decision_id", "=", decisionId) .executeTakeFirst()
+db	apps/api/src/modules/workflows/decisions.ts:404	await	[transaction callback @392]	insertOption(tx, ctx, decisionId, ordinal, body)
+db	apps/api/src/modules/workflows/decisions.ts:405	await	[transaction callback @392]	bumpDecision(tx, ctx, current, {}, "decision.add_option")
+db	apps/api/src/modules/workflows/decisions.ts:414	await	[transaction callback @413]	readableDecision(tx, request, decisionId)
+db	apps/api/src/modules/workflows/decisions.ts:415	await	[transaction callback @413]	openWrite(tx, request, seen.transformation_id, EDIT, null)
+db	apps/api/src/modules/workflows/decisions.ts:417	await	[transaction callback @413]	finishDecisionLock(tx, request, decisionId, ["open"])
+db	apps/api/src/modules/workflows/decisions.ts:418	await	[transaction callback @413]	tx .selectFrom("decision_option") .selectAll() .where("id", "=", optionId) .where("decision_id", "=", decisionId) .forUpdate() .executeTakeFirst()
+db	apps/api/src/modules/workflows/decisions.ts:431	await	[transaction callback @413]	tx .updateTable("decision_option") .set({ ...changes, ...bumpStamps(ctx.userId) }) .where("id", "=", optionId) .where("version", "=", option.version) .returning
+db	apps/api/src/modules/workflows/decisions.ts:438	await	[transaction callback @413]	record(tx, ctx.audit, { action: "decision_option.update", recordType: "decision_option", recordId: optionId, organizationId: ctx.organizationId, transformationI
+db	apps/api/src/modules/workflows/decisions.ts:453	await	[transaction callback @413]	bumpDecision(tx, ctx, current, decisionChanges, "decision.update_option")
+db	apps/api/src/modules/workflows/decisions.ts:465	await	[transaction callback @464]	readableDecision(tx, request, decisionId)
+db	apps/api/src/modules/workflows/decisions.ts:467	await	[transaction callback @464]	openWrite(tx, request, seen.transformation_id, [{ permission: "decision.decide" }], null)
+db	apps/api/src/modules/workflows/decisions.ts:475	await	[transaction callback @464]	actsOnBehalfOf(tx, ctx.principal, owner, "decision", target)
+db	apps/api/src/modules/workflows/decisions.ts:484	await	[transaction callback @464]	finishDecisionLock(tx, request, decisionId, ["open"])
+db	apps/api/src/modules/workflows/decisions.ts:485	await	[transaction callback @464]	tx .selectFrom("decision_option") .select(["status"]) .where("id", "=", body.chosenOptionId) .where("decision_id", "=", decisionId) .executeTakeFirst()
+db	apps/api/src/modules/workflows/decisions.ts:494	await	[transaction callback @464]	bumpDecision( tx, { ...ctx, audit }, current, { status: "decided", chosen_option_id: body.chosenOptionId, outcome_text: body.outcomeText, decided_by: ctx.userId
+db	apps/api/src/modules/workflows/gates.ts:198	await	[fn isApprover(db) @190]	actsOnBehalfOf(db, principal, onBehalfOf, "gate", target)
+db	apps/api/src/modules/workflows/gates.ts:199	await	[fn isApprover(db) @190]	loadGrants(db, onBehalfOf)
+db	apps/api/src/modules/workflows/gates.ts:206	await	[fn isApprover(db) @190]	authorize(db, principal, "gate.decide", target)
+REVIEW	apps/api/src/modules/workflows/gates.ts:222	await	[fn instanceOf(db) @215]	q.executeTakeFirst()
+db	apps/api/src/modules/workflows/gates.ts:238	await	[fn gateView(db) @227]	db .selectFrom("gate_submission") .selectAll() .where("id", "=", instance.current_submission_id) .executeTakeFirst()
+db	apps/api/src/modules/workflows/gates.ts:250	await	[fn gateView(db) @227]	sequenceProblem(db, instance.transformation_id, def, defs)
+db	apps/api/src/modules/workflows/gates.ts:251	await	[fn gateView(db) @227]	holds(db, principal, "gate.submit", target)
+db	apps/api/src/modules/workflows/gates.ts:255	await	[fn gateView(db) @227]	isApprover(db, principal, approverOf(pending, def), target, undefined)
+db	apps/api/src/modules/workflows/gates.ts:279	await	[fn sequenceProblem(db) @273]	db .selectFrom("transformation") .select(["mode", "entry_phase", "current_phase"]) .where("id", "=", transformationId) .executeTakeFirst()
+db	apps/api/src/modules/workflows/gates.ts:288	await	[fn sequenceProblem(db) @273]	db .selectFrom("gate_instance") .select("status") .where("transformation_id", "=", transformationId) .where("gate_code", "=", previous.code) .executeTakeFirst()
+db	apps/api/src/modules/workflows/gates.ts:354	await	[transaction callback @353]	openWrite(tx, request, transformationId, [{ permission: "gate.configure" }], null)
+db	apps/api/src/modules/workflows/gates.ts:356	await	[transaction callback @353]	loadGateDefinitions(tx)
+db	apps/api/src/modules/workflows/gates.ts:358	await	[transaction callback @353]	instanceOf(tx, transformationId, gateCode, true)
+db	apps/api/src/modules/workflows/gates.ts:360	await	[transaction callback @353]	tx .selectFrom("gate_submission") .select("id") .where("gate_instance_id", "=", current.id) .where("status", "=", "pending") .executeTakeFirst()
+db	apps/api/src/modules/workflows/gates.ts:379	await	[transaction callback @353]	assertActiveUsers(tx, ctx.organizationId, [{ id: named, pointer: "/approverUserId" }])
+db	apps/api/src/modules/workflows/gates.ts:381	await	[transaction callback @353]	loadGrants(tx, named)
+db	apps/api/src/modules/workflows/gates.ts:388	await	[transaction callback @353]	tx .updateTable("gate_instance") .set({ approver_role_code: body.approverRoleCode, approver_user_id: named, ...bumpStamps(ctx.userId) }) .where("id", "=", curre
+db	apps/api/src/modules/workflows/gates.ts:395	await	[transaction callback @353]	record(tx, ctx.audit, { action: "gate_instance.configure", recordType: "gate_instance", recordId: current.id, organizationId: ctx.organizationId, transformation
+db	apps/api/src/modules/workflows/gates.ts:514	await	[fn submitGate(tx) @513]	openWrite(tx, request, transformationId, [{ permission: "gate.submit" }], null)
+db	apps/api/src/modules/workflows/gates.ts:516	await	[fn submitGate(tx) @513]	loadGateDefinitions(tx)
+db	apps/api/src/modules/workflows/gates.ts:520	await	[fn submitGate(tx) @513]	instanceOf(tx, transformationId, gateCode, true)
+db	apps/api/src/modules/workflows/gates.ts:524	await	[fn submitGate(tx) @513]	sequenceProblem(tx, transformationId, def, await loadGateDefinitions(tx))
+db	apps/api/src/modules/workflows/gates.ts:524	await	[fn submitGate(tx) @513]	loadGateDefinitions(tx)
+db	apps/api/src/modules/workflows/gates.ts:528	await	[fn submitGate(tx) @513]	loadGateFacts(tx, transformationId)
+db	apps/api/src/modules/workflows/gates.ts:545	await	[fn submitGate(tx) @513]	tx .selectFrom("transformation") .select(["id", "code", "name", "current_phase", "version"]) .where("id", "=", transformationId) .executeTakeFirstOrThrow()
+db	apps/api/src/modules/workflows/gates.ts:582	await	[fn submitGate(tx) @513]	tx .selectFrom("gate_submission") .selectAll() .where("gate_instance_id", "=", instance.id) .where("status", "=", "pending") .executeTakeFirst()
+db	apps/api/src/modules/workflows/gates.ts:601	await	[fn submitGate(tx) @513]	sql`WITH superseded AS ( UPDATE gate_submission SET status = 'superseded', superseded_at = now(), superseded_by_submission_id = ${id}::uuid, version = version +
+db	apps/api/src/modules/workflows/gates.ts:608	await	[fn submitGate(tx) @513]	record(tx, ctx.audit, { action: "gate_submission.supersede", recordType: "gate_submission", recordId: pending.id, organizationId: ctx.organizationId, transforma
+db	apps/api/src/modules/workflows/gates.ts:622	await	[fn submitGate(tx) @513]	sql`INSERT INTO gate_submission ${columns} VALUES ${values}`.execute(tx)
+db	apps/api/src/modules/workflows/gates.ts:624	await	[fn submitGate(tx) @513]	tx.selectFrom("gate_submission").selectAll().where("id", "=", id).executeTakeFirstOrThrow()
+db	apps/api/src/modules/workflows/gates.ts:625	await	[fn submitGate(tx) @513]	record(tx, ctx.audit, { action: "gate_submission.create", recordType: "gate_submission", recordId: id, organizationId: ctx.organizationId, transformationId, new
+db	apps/api/src/modules/workflows/gates.ts:640	await	[fn submitGate(tx) @513]	tx .insertInto("gate_submission_criterion") .values({ id: uuidv7(), organization_id: ctx.organizationId, transformation_id: transformationId, gate_submission_id
+db	apps/api/src/modules/workflows/gates.ts:655	await	[fn submitGate(tx) @513]	tx .updateTable("gate_instance") .set({ status: "submitted", current_submission_id: id, latest_submission_no: submissionNo, approved_at: null, ...bumpStamps(ctx
+db	apps/api/src/modules/workflows/gates.ts:668	await	[fn submitGate(tx) @513]	record(tx, ctx.audit, { action: "gate_instance.submit", recordType: "gate_instance", recordId: instance.id, organizationId: ctx.organizationId, transformationId
+db	apps/api/src/modules/workflows/gates.ts:689	await	[fn decideGate(tx) @686]	requireTransformationRead(tx, principal, transformationId)
+db	apps/api/src/modules/workflows/gates.ts:690	await	[fn decideGate(tx) @686]	loadGateDefinitions(tx)
+db	apps/api/src/modules/workflows/gates.ts:692	await	[fn decideGate(tx) @686]	instanceOf(tx, transformationId, gateCode, true)
+db	apps/api/src/modules/workflows/gates.ts:693	await	[fn decideGate(tx) @686]	tx .selectFrom("gate_submission") .selectAll() .where("gate_instance_id", "=", instance.id) .where("status", "=", "pending") .forUpdate() .executeTakeFirst()
+db	apps/api/src/modules/workflows/gates.ts:705	await	[fn decideGate(tx) @686]	isApprover(tx, principal, approver, target, onBehalfOf)
+db	apps/api/src/modules/workflows/gates.ts:730	await	[fn decideGate(tx) @686]	sequenceProblem(tx, transformationId, def, defs)
+db	apps/api/src/modules/workflows/gates.ts:733	await	[fn decideGate(tx) @686]	writableTransformation(tx, transformationId)
+db	apps/api/src/modules/workflows/gates.ts:739	await	[fn decideGate(tx) @686]	nextCode(tx, transformationId, "GD")
+db	apps/api/src/modules/workflows/gates.ts:740	await	[fn decideGate(tx) @686]	tx .insertInto("decision") .values({ id: decisionId, organization_id: t.organization_id, transformation_id: transformationId, kind: "gate", code, title: `${def.
+db	apps/api/src/modules/workflows/gates.ts:760	await	[fn decideGate(tx) @686]	record(tx, audit, { action: "decision.create", recordType: "decision", recordId: decisionId, organizationId: t.organization_id, transformationId, newVersion: 1,
+db	apps/api/src/modules/workflows/gates.ts:775	await	[fn decideGate(tx) @686]	tx .insertInto("gate_decision") .values({ id: gateDecisionId, organization_id: t.organization_id, transformation_id: transformationId, gate_submission_id: pendi
+db	apps/api/src/modules/workflows/gates.ts:795	await	[fn decideGate(tx) @686]	record(tx, audit, { action: "gate_decision.create", recordType: "gate_decision", recordId: gateDecisionId, organizationId: t.organization_id, transformationId, 
+db	apps/api/src/modules/workflows/gates.ts:809	await	[fn decideGate(tx) @686]	tx .updateTable("gate_submission") .set({ status: "decided", ...bumpStamps(userId) }) .where("id", "=", pending.id) .where("version", "=", pending.version) .exe
+db	apps/api/src/modules/workflows/gates.ts:815	await	[fn decideGate(tx) @686]	record(tx, audit, { action: "gate_submission.decide", recordType: "gate_submission", recordId: pending.id, organizationId: t.organization_id, transformationId, 
+db	apps/api/src/modules/workflows/gates.ts:825	await	[fn decideGate(tx) @686]	tx .updateTable("gate_instance") .set({ status: body.outcome, approved_at: body.outcome === "approved" ? sql<Date>`now()` : null, ...bumpStamps(userId), }) .whe
+db	apps/api/src/modules/workflows/gates.ts:836	await	[fn decideGate(tx) @686]	record(tx, audit, { action: "gate_instance.decide", recordType: "gate_instance", recordId: instance.id, organizationId: t.organization_id, transformationId, pri
+db	apps/api/src/modules/workflows/gates.ts:850	await	[fn decideGate(tx) @686]	advancePhaseOnGateApproval(tx, audit, { transformationId, gatePhase: def.phase, nextPhase: def.nextPhase as Phase, gateCode, decisionId, })
+db	apps/api/src/modules/workflows/workshops.ts:130	await	[transaction callback @129]	openWrite(tx, request, transformationId, FACILITATE, null)
+db	apps/api/src/modules/workflows/workshops.ts:131	await	[transaction callback @129]	workshopOf(tx, transformationId, workshopId)
+db	apps/api/src/modules/workflows/workshops.ts:134	await (nested fn)	[transaction callback @129]	assertActiveUsers(tx, ctx.organizationId, [{ id: body.userId, pointer: "/userId" }])
+db	apps/api/src/modules/workflows/workshops.ts:136	await (nested fn)	[transaction callback @129]	tx .insertInto("tom_workshop_participant") .values({ id, organization_id: ctx.organizationId, transformation_id: transformationId, workshop_id: workshopId, user
+db	apps/api/src/modules/workflows/workshops.ts:155	await (nested fn)	[transaction callback @129]	record(tx, ctx.audit, { action: "tom_workshop_participant.create", recordType: "tom_workshop_participant", recordId: id, organizationId: ctx.organizationId, tra
+db	apps/api/src/modules/workflows/workshops.ts:176	await	[transaction callback @175]	openWrite(tx, request, transformationId, FACILITATE, null)
+db	apps/api/src/modules/workflows/workshops.ts:177	await	[transaction callback @175]	workshopOf(tx, transformationId, workshopId)
+db	apps/api/src/modules/workflows/workshops.ts:180	await	[transaction callback @175]	tx .selectFrom("tom_workshop_participant") .selectAll() .where("id", "=", participantId) .where("workshop_id", "=", workshopId) .forUpdate() .executeTakeFirst()
+db	apps/api/src/modules/workflows/workshops.ts:191	await	[transaction callback @175]	tx .updateTable("tom_workshop_participant") .set({ status: "removed", ...bumpStamps(ctx.userId) }) .where("id", "=", participantId) .where("version", "=", curre
+db	apps/api/src/modules/workflows/workshops.ts:198	await	[transaction callback @175]	record(tx, ctx.audit, { action: "tom_workshop_participant.remove", recordType: "tom_workshop_participant", recordId: participantId, organizationId: ctx.organiza
+db	apps/api/src/modules/workflows/workshops.ts:237	await	[transaction callback @234]	tx .selectFrom("tom_workshop_participant") .select("id") .where("workshop_id", "=", workshopId) .where("user_id", "=", me ?? "00000000-0000-0000-0000-0000000000
+db	apps/api/src/modules/workflows/workshops.ts:247	await	[transaction callback @234]	openWrite(tx, request, transformationId, rules, null)
+db	apps/api/src/modules/workflows/workshops.ts:248	await	[transaction callback @234]	workshopOf(tx, transformationId, workshopId)
+db	apps/api/src/modules/workflows/workshops.ts:251	await (nested fn)	[transaction callback @234]	assertCatalogueCode(tx, "tom_dimension", body.dimensionCode ?? null, "/dimensionCode")
+db	apps/api/src/modules/workflows/workshops.ts:252	await (nested fn)	[transaction callback @234]	assertActiveUsers(tx, ctx.organizationId, [{ id: body.ownerUserId ?? null, pointer: "/ownerUserId" }])
+db	apps/api/src/modules/workflows/workshops.ts:254	await (nested fn)	[transaction callback @234]	tx .insertInto("tom_workshop_item") .values({ id, organization_id: ctx.organizationId, transformation_id: transformationId, workshop_id: workshopId, dimension_c
+db	apps/api/src/modules/workflows/workshops.ts:272	await (nested fn)	[transaction callback @234]	record(tx, ctx.audit, { action: "tom_workshop_item.create", recordType: "tom_workshop_item", recordId: id, organizationId: ctx.organizationId, transformationId,
+db	apps/api/src/modules/workflows/workshops.ts:318	await	[fn convertItem(tx) @311]	openWrite(tx, request, transformationId, FACILITATE, null)
+db	apps/api/src/modules/workflows/workshops.ts:319	await	[fn convertItem(tx) @311]	workshopOf(tx, transformationId, workshopId)
+db	apps/api/src/modules/workflows/workshops.ts:322	await	[fn convertItem(tx) @311]	tx .selectFrom("tom_workshop_item") .selectAll() .where("id", "=", itemId) .where("workshop_id", "=", workshopId) .forUpdate() .executeTakeFirst()
+db	apps/api/src/modules/workflows/workshops.ts:333	await	[fn convertItem(tx) @311]	assertActiveUsers(tx, ctx.organizationId, [{ id: body.ownerUserId, pointer: "/ownerUserId" }])
+db	apps/api/src/modules/workflows/workshops.ts:338	await	[fn convertItem(tx) @311]	insertDesignDecision(tx, ctx, { title: body.title, context: item.body, ownerUserId: body.ownerUserId, dueDate: body.dueDate ?? null, tomDimensionCode: item.dime
+db	apps/api/src/modules/workflows/workshops.ts:349	await	[fn convertItem(tx) @311]	tx .insertInto("action_item") .values({ id: actionId, organization_id: ctx.organizationId, transformation_id: transformationId, title: body.title, description: 
+db	apps/api/src/modules/workflows/workshops.ts:364	await	[fn convertItem(tx) @311]	record(tx, ctx.audit, { action: "action_item.create", recordType: "action_item", recordId: actionId, organizationId: ctx.organizationId, transformationId, newVe
+db	apps/api/src/modules/workflows/workshops.ts:378	await	[fn convertItem(tx) @311]	tx .updateTable("tom_workshop_item") .set({ status: "converted", owner_user_id: body.ownerUserId, converted_decision_id: decisionId, converted_action_id: action
+db	apps/api/src/modules/workflows/workshops.ts:393	await	[fn convertItem(tx) @311]	record(tx, ctx.audit, { action: "tom_workshop_item.convert", recordType: "tom_workshop_item", recordId: item.id, organizationId: ctx.organizationId, transformat
+db	apps/worker/src/handlers.ts:24	await	[transaction callback @23]	tx .selectFrom("transformation") .select(["id", "archived_at"]) .where("id", "=", payload.transformationId) .executeTakeFirst()
+db	apps/worker/src/handlers.ts:30	await	[transaction callback @23]	tx .insertInto("processed_message") .values({ consumer: STARTER_AUTOMATION_CONSUMER, idempotency_key: envelope.idempotencyKey, outcome }) .onConflict((oc) => oc
+db	apps/worker/src/handlers.ts:37	await	[transaction callback @23]	insertAuditEvent( tx, { actorType: "service", actorUserId: null, onBehalfOfUserId: payload.createdBy, requestId: `job:${jobId}`, source: "worker", }, { action: 
+db	apps/worker/src/handlers.ts:74	await	[transaction callback @73]	tx .deleteFrom("session") .where((eb) => eb.or([ eb("absolute_expires_at", "<", sql<Date>`now()`), eb("idle_expires_at", "<", sql<Date>`now()`), eb("revoked_at"
+db	apps/worker/src/handlers.ts:84	await	[transaction callback @73]	tx .deleteFrom("oidc_login_state") .where("expires_at", "<", sql<Date>`now()`) .executeTakeFirst()
+db	apps/worker/src/handlers.ts:88	await	[transaction callback @73]	tx .deleteFrom("idempotency_record") .where("expires_at", "<", sql<Date>`now()`) .executeTakeFirst()
+db	apps/worker/src/relay.ts:22	await (nested fn)	[fn txExecutor(tx) @19]	tx.executeQuery(CompiledQuery.raw(text, values))
+db	apps/worker/src/relay.ts:32	await	[transaction callback @31]	tx .selectFrom("outbox_event") .select(["id", "organization_id", "event_type", "schema_version", "payload", "idempotency_key"]) .where("published_at", "is", nul
+db	apps/worker/src/relay.ts:57	await	[transaction callback @31]	boss.send(queue, envelope, { id: row.id, singletonKey: row.idempotency_key, db: txExecutor(tx) })
+db	apps/worker/src/relay.ts:58	await	[transaction callback @31]	tx .updateTable("outbox_event") .set({ published_at: sql<Date>`now()`, publish_attempts: sql<number>`publish_attempts + 1`, last_error: null }) .where("id", "="
+db	packages/db/src/audit.ts:43	await	[fn insertAuditEvent(tx) @35]	tx .insertInto("audit_event") .values({ id, organization_id: event.organizationId, transformation_id: event.transformationId ?? null, actor_type: actor.actorTyp
+db	packages/db/src/bootstrap.ts:72	await	[transaction callback @70]	tx.selectNoFrom((eb) => eb.fn("pg_advisory_xact_lock", [eb.lit(7_302_190_002)]).as("l")).execute()
+db	packages/db/src/bootstrap.ts:73	await	[transaction callback @70]	tx.selectFrom("organization").select("id").limit(1).executeTakeFirst()
+db	packages/db/src/bootstrap.ts:81	await	[transaction callback @70]	tx .insertInto("organization") .values({ id: organizationId, code: input.orgCode, name_en: input.orgNameEn.trim(), name_ar: input.orgNameAr.trim(), default_time
+db	packages/db/src/bootstrap.ts:94	await	[transaction callback @70]	insertAuditEvent(tx, actor, { action: "organization.create", recordType: "organization", recordId: organizationId, organizationId, newVersion: 1, reason: "mth-d
+db	packages/db/src/bootstrap.ts:103	await	[transaction callback @70]	tx .insertInto("app_user") .values({ id: systemUserId, organization_id: organizationId, display_name: "System (bootstrap)", status: "disabled", created_by: null
+db	packages/db/src/bootstrap.ts:114	await	[transaction callback @70]	insertAuditEvent(tx, actor, { action: "app_user.create", recordType: "app_user", recordId: systemUserId, organizationId, newVersion: 1, reason: "mth-db bootstra
+db	packages/db/src/bootstrap.ts:123	await	[transaction callback @70]	tx .insertInto("app_user") .values({ id: adminUserId, organization_id: organizationId, display_name: input.adminDisplayName.trim(), email: input.adminEmail, cre
+db	packages/db/src/bootstrap.ts:134	await	[transaction callback @70]	tx .insertInto("user_identity") .values({ id: uuidv7(), user_id: adminUserId, issuer: input.adminIssuer, subject: input.adminSubject, email_at_binding: input.ad
+db	packages/db/src/bootstrap.ts:144	await	[transaction callback @70]	insertAuditEvent(tx, actor, { action: "app_user.create", recordType: "app_user", recordId: adminUserId, organizationId, newVersion: 1, reason: "mth-db bootstrap
+db	packages/db/src/bootstrap.ts:154	await	[transaction callback @70]	tx .selectFrom("role") .select(["id", "code", "kind"]) .where("code", "in", [...BOOTSTRAP_ADMIN_ROLES]) .execute()
+db	packages/db/src/bootstrap.ts:164	await	[transaction callback @70]	tx .insertInto("scoped_assignment") .values({ id, organization_id: organizationId, user_id: adminUserId, role_id: role.id, scope_type: "organization", scope_id:
+db	packages/db/src/bootstrap.ts:179	await	[transaction callback @70]	insertAuditEvent(tx, actor, { action: "scoped_assignment.create", recordType: "scoped_assignment", recordId: id, organizationId, newVersion: 1, reason: "mth-db 
+REVIEW	packages/db/src/cli.ts:51	connect	[pool client checkout]	pool.connect()
+db	packages/db/src/dev-seed.ts:54	await	[transaction callback @53]	tx .selectFrom("organization") .select("id") .where("code", "=", data.organization.code) .executeTakeFirst()
+db	packages/db/src/dev-seed.ts:64	await	[transaction callback @53]	tx .insertInto("organization") .values({ id: orgId, code: data.organization.code, name_en: data.organization.nameEn, name_ar: data.organization.nameAr, created_
+db	packages/db/src/dev-seed.ts:75	await	[transaction callback @53]	insertAuditEvent(tx, actor, { action: "organization.create", recordType: "organization", recordId: orgId, organizationId: orgId, newVersion: 1, reason, })
+db	packages/db/src/dev-seed.ts:88	await	[transaction callback @53]	tx .insertInto("business_unit") .values({ id: bu.id, organization_id: orgId, parent_business_unit_id: parent, code: bu.code, name_en: bu.nameEn, name_ar: bu.nam
+db	packages/db/src/dev-seed.ts:101	await	[transaction callback @53]	insertAuditEvent(tx, actor, { action: "business_unit.create", recordType: "business_unit", recordId: bu.id, organizationId: orgId, newVersion: 1, reason, })
+db	packages/db/src/dev-seed.ts:112	await	[transaction callback @53]	tx .insertInto("app_user") .values({ id: data.grantor.id, organization_id: orgId, display_name: data.grantor.displayName, status: "disabled", created_by: null, 
+db	packages/db/src/dev-seed.ts:123	await	[transaction callback @53]	insertAuditEvent(tx, actor, { action: "app_user.create", recordType: "app_user", recordId: data.grantor.id, organizationId: orgId, newVersion: 1, reason, })
+db	packages/db/src/dev-seed.ts:132	await	[transaction callback @53]	tx.selectFrom("role").select(["id", "code"]).execute()
+db	packages/db/src/dev-seed.ts:134	await	[transaction callback @53]	tx .insertInto("app_user") .values({ id: u.id, organization_id: orgId, display_name: u.displayName, email: u.email, preferred_locale: u.preferredLocale, created
+db	packages/db/src/dev-seed.ts:146	await	[transaction callback @53]	tx .insertInto("user_identity") .values({ id: uuidv7(), user_id: u.id, issuer: DEV_ISSUER, subject: u.subject, email_at_binding: u.email }) .execute()
+db	packages/db/src/dev-seed.ts:150	await	[transaction callback @53]	insertAuditEvent(tx, actor, { action: "app_user.create", recordType: "app_user", recordId: u.id, organizationId: orgId, newVersion: 1, reason, })
+db	packages/db/src/dev-seed.ts:164	await	[transaction callback @53]	tx .insertInto("scoped_assignment") .values({ id, organization_id: orgId, user_id: u.id, role_id: roleId, scope_type: g.scope, scope_id: scopeId, reason, grante
+db	packages/db/src/dev-seed.ts:179	await	[transaction callback @53]	insertAuditEvent(tx, actor, { action: "scoped_assignment.create", recordType: "scoped_assignment", recordId: id, organizationId: orgId, newVersion: 1, reason, }
+REVIEW	packages/db/src/migrate.ts:133	connect	[pool client checkout]	client.connect()
+
+## script tx-await-sweep.mjs
+// Lists every `await` / `for await` that runs while a transaction or a checked-out pooled client is held:
+//  (1) inside a callback passed to `<x>.transaction().execute(cb)` or `withTransaction(<db>, cb)`;
+//  (2) inside any function with a parameter typed Tx / DbOrTx / Transaction<...> / PoolClient / pg.PoolClient
+//      (helpers called from a transaction receive it as a parameter, so every helper body is scanned too);
+//  (3) between `<pool>.connect()` and `.release()` in the same function (raw pg clients).
+// Each await is classified "db" when the awaited expression references the handle (the tx/client parameter or a
+// name bound to it) or passes it as an argument, else "REVIEW". Usage: node tx-await-sweep.mjs <repo> <file...>
+import { createRequire } from "node:module";
+import { readFileSync } from "node:fs";
+const repo = process.argv[2];
+const require = createRequire(repo + "/package.json");
+const ts = require("typescript");
+const files = process.argv.slice(3);
+const HANDLE_TYPE = /^(Tx|DbOrTx|Transaction<.*>|PoolClient|pg\.PoolClient|Kysely<.*>|Db|WriteContext)$/;
+const out = [];
+for (const file of files) {
+  const src = ts.createSourceFile(file, readFileSync(file, "utf8"), ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const line = (n) => src.getLineAndCharacterOfPosition(n.getStart(src)).line + 1;
+  const scanBody = (fn, handles, ctx) => {
+    const visit = (n, nested) => {
+      if (n !== fn && ts.isFunctionLike(n)) {
+        // nested function: scanned with the same handles (a callback inside the transaction still runs in it)
+        n.forEachChild((c) => visit(c, true));
+        return;
+      }
+      let expr = null, kind = null;
+      if (ts.isAwaitExpression(n)) { expr = n.expression; kind = "await"; }
+      if (ts.isForOfStatement(n) && n.awaitModifier) { expr = n.expression; kind = "for await"; }
+      if (expr) {
+        const text = expr.getText(src).replace(/\s+/g, " ");
+        const ids = new Set();
+        const collect = (m) => { if (ts.isIdentifier(m)) ids.add(m.text); m.forEachChild(collect); };
+        collect(expr);
+        const isDb = [...handles].some((h) => ids.has(h));
+        out.push({ file, line: line(n), ctx, kind, nested, cls: isDb ? "db" : "REVIEW", text: text.slice(0, 160) });
+      }
+      n.forEachChild((c) => visit(c, nested));
+    };
+    fn.forEachChild((c) => visit(c, false));
+  };
+  const walk = (n) => {
+    // (1) transaction callbacks
+    if (ts.isCallExpression(n)) {
+      const callee = n.expression.getText(src);
+      const isTxExec = /\.transaction\(\)\s*\.execute$/.test(callee.replace(/\s+/g, ""));
+      const isWith = /(^|\.)withTransaction$/.test(callee);
+      const cb = isTxExec ? n.arguments[0] : isWith ? n.arguments[1] : null;
+      if (cb && ts.isFunctionLike(cb)) {
+        const handles = new Set(["tx", "trx"]);
+        for (const p of cb.parameters ?? []) if (ts.isIdentifier(p.name)) handles.add(p.name.text);
+        scanBody(cb, handles, `transaction callback @${line(n)}`);
+      }
+    }
+    // (2) functions with a handle-typed parameter
+    if (ts.isFunctionLike(n) && n.parameters && n.body) {
+      const handles = new Set();
+      for (const p of n.parameters) {
+        if (p.type && ts.isIdentifier(p.name) && HANDLE_TYPE.test(p.type.getText(src).replace(/\s+/g, ""))) handles.add(p.name.text);
+      }
+      // Db/Kysely parameters are NOT a held transaction; only scan when a Tx-like handle is present
+      for (const p of n.parameters) if (ts.isIdentifier(p.name) && /^(tx|trx)$/.test(p.name.text)) handles.add(p.name.text);
+      const txLike = n.parameters.some((p) => (p.type && /^(Tx|DbOrTx|Transaction<.*>|PoolClient|pg\.PoolClient|WriteContext)$/.test(p.type.getText(src).replace(/\s+/g, ""))) || (ts.isIdentifier(p.name) && /^(tx|trx)$/.test(p.name.text)));
+      if (txLike) {
+        const name = n.name ? n.name.getText(src) : "(anonymous)";
+        scanBody(n, handles, `fn ${name}(${[...handles].join(",")}) @${line(n)}`);
+      }
+    }
+    // (3) raw pool clients
+    if (ts.isCallExpression(n) && /\.connect$/.test(n.expression.getText(src)) && n.arguments.length === 0) {
+      out.push({ file, line: line(n), ctx: "pool client checkout", kind: "connect", nested: false, cls: "REVIEW", text: n.getText(src).slice(0, 160) });
+    }
+    n.forEachChild(walk);
+  };
+  walk(src);
+}
+const seen = new Set();
+for (const o of out) {
+  const k = `${o.file}:${o.line}:${o.text}`;
+  if (seen.has(k)) continue; seen.add(k);
+  console.log(`${o.cls}\t${o.file}:${o.line}\t${o.kind}${o.nested ? " (nested fn)" : ""}\t[${o.ctx}]\t${o.text}`);
+}
+
+## script spec-hooks.mjs
+// Every await inside a register spec's `check` / `beforeInsert` property function (they run inside the register
+// kit's write transaction and receive `ctx` = WriteContext, whose `tx` is the open transaction).
+import { createRequire } from "node:module";
+import { readFileSync } from "node:fs";
+const require = createRequire(process.argv[2] + "/package.json");
+const ts = require("typescript");
+for (const file of process.argv.slice(3)) {
+  const src = ts.createSourceFile(file, readFileSync(file, "utf8"), ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const walk = (n) => {
+    if (ts.isPropertyAssignment(n) && ["check", "beforeInsert"].includes(n.name.getText(src)) && ts.isFunctionLike(n.initializer)) {
+      const visit = (m) => {
+        if (ts.isAwaitExpression(m)) {
+          const t = m.expression.getText(src).replace(/\s+/g, " ");
+          const db = /\bctx\.tx\b|\btx\b/.test(t);
+          console.log(`${db ? "db" : "REVIEW"}\t${file}:${src.getLineAndCharacterOfPosition(m.getStart(src)).line + 1}\t[spec.${n.name.getText(src)}]\t${t.slice(0, 160)}`);
+        }
+        m.forEachChild(visit);
+      };
+      visit(n.initializer);
+    }
+    n.forEachChild(walk);
+  };
+  walk(src);
+}

@@ -1,0 +1,44 @@
+$ cd <disposable clone: HEAD 8c02475 + this change, pnpm -r build; qa specs copied from docs/delivery/test-evidence/DG2/qa/tests/round-1{1,2}/e2e/ into e2e/>; env -u LANG -u LC_ALL QA_E2E_API_PORT=3741 QA_E2E_PG_PORT=24741 QA_SHOT_DIR=<tmp> PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r11.spec.ts e2e/dg2-qa-r12.spec.ts -g 'R11-02|R12-07' --workers=1 --reporter=list
+# node v24.21.0; 2026-10-07T06:09:40Z
+port-policy: PostgreSQL listening on port 24741 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 3741 (attempt 1)
+API:     http://localhost:3741
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+
+Running 4 tests using 1 worker
+
+QA-R11 [en] R11-02 (a) GET /me 200 on an idle keep-alive socket + stalled over-limit chunked upload 413 + fully-sent 25 MiB + 1 upload 413 (Connection: keep-alive); SIGTERM -> exit code 0 in 17 ms; both sockets closed: true; 'shut down' logged: true; (b) 2 MiB of a declared 10 MiB upload stalled in flight; SIGTERM -> exit code 0 in 5027 ms; stalled socket closed +5008 ms after SIGTERM; grace warning logged: true; response on the stalled socket: none; content rows 0, stored files 0; shared stack readyz 200; OK
+  ✓  1 [chromium-en] › e2e/dg2-qa-r11.spec.ts:415:1 › R11-02 SIGTERM -> app.close() after a stalled over-limit upload is prompt; with an upload stalled IN FLIGHT it is bounded by the grace period (7.4s)
+QA-R12 [en] R12-07 ["control: client aborts, process stays up: store during the stall [\"/<uuid>/<uuid>/<item>/<uuid>.part (2097152 B)\"]; client destroyed, 1.5 s later SIGTERM -> exit 0 in 17 ms; store after exit []; after a restart on the same store (+2 s) (not needed); content rows 0; currentContentId null; GET content 404","SIGTERM with the upload stalled in flight: store during the stall [\"/<uuid>/<uuid>/<item>/<uuid>.part (2097152 B)\"]; SIGTERM -> exit 0 in 5024 ms; client socket closed by the server true; store after exit []; after a restart on the same store (+2 s) (not needed); content rows 0; currentContentId null; GET content 404"]
+  ✓  2 [chromium-en] › e2e/dg2-qa-r12.spec.ts:778:1 › R12-07 an upload stalled in flight at SIGTERM: what the evidence store keeps after exit and after a restart (control: client abort while the process stays up) (9.6s)
+QA-R11 [ar] R11-02 (a) GET /me 200 on an idle keep-alive socket + stalled over-limit chunked upload 413 + fully-sent 25 MiB + 1 upload 413 (Connection: keep-alive); SIGTERM -> exit code 0 in 20 ms; both sockets closed: true; 'shut down' logged: true; (b) 2 MiB of a declared 10 MiB upload stalled in flight; SIGTERM -> exit code 0 in 5025 ms; stalled socket closed +5006 ms after SIGTERM; grace warning logged: true; response on the stalled socket: none; content rows 0, stored files 0; shared stack readyz 200; OK
+  ✓  3 [chromium-ar] › e2e/dg2-qa-r11.spec.ts:415:1 › R11-02 SIGTERM -> app.close() after a stalled over-limit upload is prompt; with an upload stalled IN FLIGHT it is bounded by the grace period (7.5s)
+QA-R12 [ar] R12-07 ["control: client aborts, process stays up: store during the stall [\"/<uuid>/<uuid>/<item>/<uuid>.part (2097152 B)\"]; client destroyed, 1.5 s later SIGTERM -> exit 0 in 16 ms; store after exit []; after a restart on the same store (+2 s) (not needed); content rows 0; currentContentId null; GET content 404","SIGTERM with the upload stalled in flight: store during the stall [\"/<uuid>/<uuid>/<item>/<uuid>.part (2097152 B)\"]; SIGTERM -> exit 0 in 5023 ms; client socket closed by the server true; store after exit []; after a restart on the same store (+2 s) (not needed); content rows 0; currentContentId null; GET content 404"]
+  ✓  4 [chromium-ar] › e2e/dg2-qa-r12.spec.ts:778:1 › R12-07 an upload stalled in flight at SIGTERM: what the evidence store keeps after exit and after a restart (control: client abort while the process stays up) (9.6s)
+
+  4 passed (36.8s)
+exit 0

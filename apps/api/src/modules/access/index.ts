@@ -38,7 +38,7 @@ export {
   toRoleAssignment,
   type AssignmentListQuery,
 } from "./assignments.ts";
-export { auditContextOf, principalOf } from "./request.ts";
+export { auditContextOf, commitTimeDenial, principalOf, refreshPrincipal, type PrincipalResolver } from "./request.ts";
 export { grantCreatorAdminRoles, grantCreatorTransformationRoles } from "./assignments.ts";
 export { registerDeniedMutationAudit } from "./denials.ts";
 export {

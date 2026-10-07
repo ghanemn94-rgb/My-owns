@@ -44,10 +44,12 @@ import {
   problems,
   registerConnectionHygiene,
   registerHealthRoutes,
+  registerInFlightTracking,
   registerMediaTypeEnforcement,
   registerNotFoundHandler,
   registerPlatformHooks,
   restrictParserTo,
+  type InFlight,
   type ModuleRegistration,
   type SecurityHeaders,
 } from "./modules/platform/index.ts";
@@ -135,9 +137,13 @@ export interface RouteRecord {
   readonly consumes: readonly string[];
 }
 
-export async function buildServer(
-  options: ServerOptions,
-): Promise<{ app: FastifyInstance; db: Db; routes: readonly RouteRecord[]; modules: readonly ModuleRegistration[] }> {
+export async function buildServer(options: ServerOptions): Promise<{
+  app: FastifyInstance;
+  db: Db;
+  routes: readonly RouteRecord[];
+  modules: readonly ModuleRegistration[];
+  inFlight: InFlight;
+}> {
   const { config, pool } = options;
   if (!config.appBaseUrl) throw new Error("APP_BASE_URL is required by the API");
   const webRoot = options.webRoot === undefined ? defaultWebRoot() : options.webRoot;
@@ -221,6 +227,9 @@ export async function buildServer(
   // T-DG2-BE16: a response sent before its request body was consumed closes the connection (bounded lingering close),
   // and app.close() destroys what is still open after the shutdown grace period.
   registerConnectionHygiene(app, { shutdownGraceMs: options.shutdownGraceMs ?? DEFAULT_SHUTDOWN_GRACE_MS });
+  // T-DG2-BE18A (F-DG2-460): every route handler registered from here on is tracked until it settles (including its
+  // cleanup), so shutdown can wait for it before the pool closes (main.ts).
+  const inFlight = registerInFlightTracking(app);
 
   await app.register(helmet, HELMET_OPTIONS);
   await app.register(cookie);
@@ -278,5 +287,5 @@ export async function buildServer(
   }
 
   await app.ready();
-  return { app, db, routes, modules };
+  return { app, db, routes, modules, inFlight };
 }

@@ -96,4 +96,5 @@ export {
   type ConnectionHygieneOptions,
 } from "./connection-hygiene.ts";
 export { registerHealthRoutes } from "./health.ts";
+export { createInFlight, registerInFlightTracking, type InFlight } from "./in-flight.ts";
 export type { ModuleDeps, ModuleRegistration } from "./deps.ts";

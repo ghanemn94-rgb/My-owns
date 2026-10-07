@@ -4,13 +4,13 @@ import { randomBytes } from "node:crypto";
 import type {} from "@fastify/cookie";
 import type {} from "@fastify/rate-limit";
 import { secureOriginAllowed } from "@mth/config";
-import { DEV_ISSUER, type Db } from "@mth/db";
+import { DEV_ISSUER, type Db, type DbOrTx } from "@mth/db";
 import type { Permission, ScopeType } from "@mth/shared";
 import { devLoginRequest, hasInvalidCharacter, preferencesUpdate } from "@mth/shared/schemas";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { activeAssignmentsOf, auditContextOf, loadGrants, principalOf } from "../access/index.ts";
+import { activeAssignmentsOf, auditContextOf, loadGrants, principalOf, type Principal } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import { findOrganization, toOrganization } from "../organization/index.ts";
 import { parseBody, parseQuery, problems, requireIfMatch, sendVersioned, type ModuleDeps } from "../platform/index.ts";
@@ -114,29 +114,54 @@ export function registerIdentity(
 
   app.decorateRequest("principal", null);
   app.decorateRequest("session", null);
+  app.decorateRequest("reauthenticate", null);
+
+  /**
+   * THE session -> principal resolution (one source of truth): the authentication hook uses it when the request
+   * starts, and `refreshPrincipal` (access/request.ts) re-runs it inside a write transaction at commit time
+   * (T-DG2-BE18, F-DG2-440). Null when the session is not valid (revoked, logged out, idle or absolute expiry, user
+   * disabled) or no longer belongs to the user it was resolved for.
+   */
+  async function principalFor(
+    dbOrTx: DbOrTx,
+    request: FastifyRequest,
+    token: string,
+    expectedUserId: string | null,
+  ): Promise<{ session: ActiveSession; principal: Principal } | null> {
+    const session = await resolveSession(dbOrTx, token);
+    if (!session || (expectedUserId !== null && session.userId !== expectedUserId)) return null;
+    return {
+      session,
+      principal: {
+        kind: "user",
+        userId: session.userId,
+        organizationId: session.organizationId,
+        grants: await loadGrants(dbOrTx, session.userId),
+        tracker: request.authz,
+      },
+    };
+  }
 
   // ------------------------------------------------------------ authentication + CSRF (every route)
   // preValidation: runs after the per-route rate limiter (onRequest), so floods are rejected before any DB lookup.
   app.addHook("preValidation", async (request) => {
     request.principal = null;
     request.session = null;
+    request.reauthenticate = null;
     const access = request.routeOptions.config?.access;
     if (!access) return; // unknown route: the not-found handler answers
     const token = cookieValue(request, cookieName);
     if (token) {
-      const session = await resolveSession(db, token);
-      if (!session) subjects?.forget(token);
-      if (session) {
+      const resolved = await principalFor(db, request, token, null);
+      if (!resolved) subjects?.forget(token);
+      if (resolved) {
+        const { session, principal } = resolved;
         subjects?.remember(token, session.userId);
         await touchSession(db, session, config.session.idleMinutes);
         request.session = session;
-        request.principal = {
-          kind: "user",
-          userId: session.userId,
-          organizationId: session.organizationId,
-          grants: await loadGrants(db, session.userId),
-          tracker: request.authz,
-        };
+        request.principal = principal;
+        request.reauthenticate = async (tx) =>
+          (await principalFor(tx, request, token, session.userId))?.principal ?? null;
       }
     }
     if ("public" in access) return;
@@ -265,7 +290,11 @@ export function registerIdentity(
         const { returnTo } = parseQuery(loginQuery, request.query);
         try {
           const binding = randomBytes(32).toString("base64url");
-          const url = await db.transaction().execute((tx) => oidc.startLogin(tx, returnTo ?? "/", binding));
+          // T-DG2-BE18 (F-DG2-441): discovery (a remote call to the IdP) runs BEFORE any transaction is opened; the
+          // login state is then inserted in a short transaction that waits on nothing but the database.
+          const login = await oidc.prepareLogin(returnTo ?? "/", binding);
+          await db.transaction().execute((tx) => oidc.saveLoginState(tx, login));
+          const url = login.url;
           reply.setCookie(loginCookie, binding, { ...loginCookieOptions, maxAge: LOGIN_STATE_TTL_MINUTES * 60 });
           return reply.redirect(url.toString(), 302);
         } catch (err) {

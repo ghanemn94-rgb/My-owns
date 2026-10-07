@@ -53,13 +53,41 @@ The API process (`mth api`, `node dist/main.js`) stops on `SIGTERM` or `SIGINT`:
 3. When the grace period ends, every connection still open is destroyed. Typical causes are a stalled upload, or a
    client that sends nothing more. The log line `shutdown grace period elapsed: closing the remaining connections`
    (level warn) gives the number destroyed.
-4. The database pool is closed and the process exits 0, logging `shut down`. As a backstop, if this hasn't happened
+4. **Handlers finish their cleanup (T-DG2-BE18A).** The process waits until every request handler still running has
+   settled, including its error handling and cleanup. A request cut off in step 3 is the usual case: an evidence upload
+   that was still receiving its body closes its file and removes its temporary `.part` object here. A denied-mutation
+   audit event that is still being written also completes. This wait is bounded at **3 s** (`SHUTDOWN_SETTLE_MS`).
+   If handlers are still running after it, the log line `shutdown: request handlers still running after the settle
+   period; closing the database anyway` (level warn) gives their number.
+5. The database pool is closed and the process exits 0, logging `shut down`. As a backstop, if this hasn't happened
    10 s after the signal, the process logs `shutdown did not finish in time; exiting` and exits 1.
+
+The order is therefore: stop accepting, grace (≤ 5 s), destroy the remaining connections, wait for handlers to settle
+(≤ 3 s), close the pool, exit. The backstop (10 s from the signal) bounds all of it. In practice the settle step takes
+milliseconds, and a stalled upload's shutdown takes about 5 s.
 
 **The trade-off.** An in-flight request that needs more than 5 s after the signal is cut off. This applies, for
 example, to a large evidence upload on a slow link. Its transaction rolls back, and no partial evidence object is
-kept, so the client must retry it. Compose's default stop timeout (10 s, after which it sends `SIGKILL`) leaves room
-for the whole sequence.
+kept: neither a final object nor a temporary `.part` file. The client must retry the upload. Compose's default stop
+timeout (10 s, after which it sends `SIGKILL`) leaves room for the whole sequence.
+
+**Leftovers after a crash: the start-up sweep (T-DG2-BE18A).** A `SIGKILL`, a crash or a power loss can still leave
+an upload's temporary `.part` object behind, because no handler gets to clean up. Each API instance therefore sweeps
+the filesystem evidence store once it has started, in the background:
+
+- It removes only temporary objects: files named `<uuid>.part`, exactly where upload keys put them
+  (`<organization>/<transformation>/<evidence>/`). It never removes a final object, whatever its age. It doesn't follow
+  symbolic links.
+- It removes a temporary only if it was last written **more than 1 hour ago** (`STALE_TEMPORARY_AGE_MS`). A live upload
+  owns its temporary for at most about 6 minutes: the body must arrive within the 300 s request timeout, and every
+  write refreshes the file's modification time. The commit step that follows is bounded by the 10 s pool checkout and
+  the 30 s statement and idle-in-transaction timeouts. Shutdown adds at most 10 s. One hour is well above that, on any
+  instance that shares the store, and leaves room for clock differences between hosts.
+- Each removal is logged at info level as `evidence store: stale temporary object removed`, with the object's key,
+  size and age, never its content. The summary line `evidence store: start-up sweep of stale temporary objects
+  finished` gives the number removed and the number of younger temporaries it kept.
+- A temporary that is younger than 1 hour at start-up is kept, and removed by a later start-up. There is no periodic
+  sweep while the instance runs.
 
 Connection rules while the API is running:
 
@@ -80,9 +108,12 @@ pooled database connection or an open transaction:
 
 - **Evidence upload** (`POST …/evidence/{evidenceId}/content`). The API checks the request (access, the item, `If-Match`,
   the file name) in a short transaction and commits it. Then it receives the body into a temporary file holding no
-  database connection. Finally it writes the content in a second short transaction, which locks the item and checks
-  `If-Match` again. If the item changed while the body was arriving, the answer is 409 `version_conflict` and the
-  received bytes are discarded. A slow or stalled upload therefore costs one socket and one file handle, never a
+  database connection. Finally it writes the content in a second short transaction. That transaction authorises the
+  upload again at commit time (T-DG2-BE18): it re-checks the session and reloads the caller's grants. If the session
+  ended while the body was arriving (logout, revocation, idle or absolute expiry, a disabled user), the answer is 401
+  `unauthenticated`. If the caller lost the right to edit the item, it is 403 `forbidden`, audited as
+  `authorization.denied`. It then locks the item and checks `If-Match` again. If the item changed while the body was
+  arriving, the answer is 409 `version_conflict`. In every refusal the received bytes are discarded. A slow or stalled upload therefore costs one socket and one file handle, never a
   database connection or a row lock.
 - **Evidence download** (`GET …/content`). The metadata query's connection is released before the file is streamed,
   so a slow reader holds no database connection.

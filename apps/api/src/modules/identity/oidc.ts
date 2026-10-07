@@ -12,6 +12,16 @@ import { sha256 } from "./sessions.ts";
 
 export const LOGIN_STATE_TTL_MINUTES = 10;
 
+/** A login prepared outside any transaction (`prepareLogin`); `saveLoginState` persists it. */
+export interface PreparedLogin {
+  readonly url: URL;
+  readonly state: string;
+  readonly nonce: string;
+  readonly codeVerifier: string;
+  readonly returnTo: string;
+  readonly browserBinding: string;
+}
+
 export class OidcService {
   private configuration: Promise<client.Configuration> | null = null;
   private readonly oidc: NonNullable<AppConfig["oidc"]>;
@@ -50,28 +60,21 @@ export class OidcService {
   }
 
   /**
-   * Persist a single-use login state bound to the initiating browser and return the IdP authorization URL.
+   * Starts a login in two steps, so no database transaction is open while the IdP is contacted (T-DG2-BE18,
+   * F-DG2-441). Step 1, `prepareLogin`, runs OUTSIDE any transaction: OIDC discovery (a remote call, up to the
+   * discovery timeout while the IdP is slow or down, retried on the next login after a failure), the random state,
+   * nonce and PKCE verifier, and the authorization URL. Step 2, `saveLoginState`, inserts the single-use login state in
+   * a short transaction that only touches the database.
    * `browserBinding` is the random value the caller puts in the HttpOnly pre-session login cookie; only its SHA-256
    * is stored (F-DG1-103). The PKCE verifier and nonce stay server-side and are released only to that browser.
    */
-  async startLogin(tx: Tx, returnTo: string, browserBinding: string): Promise<URL> {
+  async prepareLogin(returnTo: string, browserBinding: string): Promise<PreparedLogin> {
     if (browserBinding.length < 32) throw new Error("OIDC login: the browser binding must be a high-entropy value");
     const config = await this.configuration_();
     const state = client.randomState();
     const nonce = client.randomNonce();
     const codeVerifier = client.randomPKCECodeVerifier();
-    await tx
-      .insertInto("oidc_login_state")
-      .values({
-        state_hash: sha256(state),
-        code_verifier: codeVerifier,
-        nonce,
-        return_to: returnTo,
-        browser_binding_hash: sha256(browserBinding),
-        expires_at: sql<Date>`now() + make_interval(mins => ${LOGIN_STATE_TTL_MINUTES})`,
-      })
-      .execute();
-    return client.buildAuthorizationUrl(config, {
+    const url = client.buildAuthorizationUrl(config, {
       redirect_uri: this.redirectUri,
       scope: this.oidc.scopes,
       response_type: "code",
@@ -80,6 +83,22 @@ export class OidcService {
       state,
       nonce,
     });
+    return { url, state, nonce, codeVerifier, returnTo, browserBinding };
+  }
+
+  /** Step 2 of a login: persist the prepared login state (database only; call it in its own short transaction). */
+  async saveLoginState(tx: Tx, login: PreparedLogin): Promise<void> {
+    await tx
+      .insertInto("oidc_login_state")
+      .values({
+        state_hash: sha256(login.state),
+        code_verifier: login.codeVerifier,
+        nonce: login.nonce,
+        return_to: login.returnTo,
+        browser_binding_hash: sha256(login.browserBinding),
+        expires_at: sql<Date>`now() + make_interval(mins => ${LOGIN_STATE_TTL_MINUTES})`,
+      })
+      .execute();
   }
 
   /**

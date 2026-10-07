@@ -14,7 +14,8 @@ export function registerDeniedMutationAudit(app: FastifyInstance, db: Db): void 
       return;
     const d = error.denial;
     try {
-      await db.transaction().execute((tx) =>
+      // Tracked (T-DG2-BE18A): this runs after the handler settled, and shutdown must not close the pool under it.
+      const audit = db.transaction().execute((tx) =>
         record(
           tx,
           { actorUserId: request.principal!.userId, requestId: request.id },
@@ -28,6 +29,7 @@ export function registerDeniedMutationAudit(app: FastifyInstance, db: Db): void 
           },
         ),
       );
+      await (app.hasDecorator("inFlight") ? app.inFlight.track(audit) : audit);
     } catch (err) {
       request.log.error({ err }, "could not audit an authorization denial");
     }

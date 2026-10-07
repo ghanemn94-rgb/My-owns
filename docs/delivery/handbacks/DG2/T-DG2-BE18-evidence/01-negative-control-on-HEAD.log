@@ -1,0 +1,224 @@
+$ cd <disposable clone at HEAD 8c02475 (before the fix) + the two new test files, final versions: eadcb1551b1d2fca commit-time-auth, 1d5d8b57d58208c3 shutdown-cleanup>; env -u LC_ALL LANG=C.UTF-8 QA_PG_PORT=24461 tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/commit-time-auth.test.ts apps/api/test/integration/shutdown-cleanup.test.ts
+# node v24.21.0; 8c02475 DG2: import round 12 (F-411/412/430 CLOSED_VERIFIED; F-440/441/460 OPEN); state FIXING; BE18A assignment (BE18 + F-460); 2026-10-07T06:12:46Z
+port-policy: PostgreSQL listening on port 24461 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 $TMPDIR/neg
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muxpnvqw_ebec0a26 (server_encoding UTF8); applied 19 migrations to a fresh database
+stdout | apps/api/test/integration/shutdown-cleanup.test.ts > F-DG2-460: SIGTERM with an upload in flight leaves no temporary and no final object > R12-07: 2 MiB of a declared 10 MiB upload, then the client stalls; SIGTERM -> exit 0 within grace + backstop; the store is empty
+BE18A R12-07 {"during":["01a114fe-49a5-734a-8e50-51dcdbe9d75c/01a114fe-4a24-7391-b0a8-a8060b1f76f3/01a114fe-4dbb-71de-8e48-e58061c5e22a/01a114fe-4dff-7611-953b-53506985e5c5.part (2097152 B)"],"exitCode":0,"signal":null,"ms":5022,"after":["01a114fe-49a5-734a-8e50-51dcdbe9d75c/01a114fe-4a24-7391-b0a8-a8060b1f76f3/01a114fe-4dbb-71de-8e48-e58061c5e22a/01a114fe-4dff-7611-953b-53506985e5c5.part (2097152 B)"],"rows":0,"serverClosed":true,"response":""}
+
+stdout | apps/api/test/integration/shutdown-cleanup.test.ts > F-DG2-460: SIGTERM with an upload in flight leaves no temporary and no final object > an upload that is ACTIVELY streaming through the whole grace period: SIGTERM -> exit 0 within grace + backstop; the store is empty
+BE18A streaming {"sentAtSignal":720896,"sentTotal":7274496,"exitCode":0,"ms":5021,"after":["01a114fe-49a5-734a-8e50-51dcdbe9d75c/01a114fe-4a24-7391-b0a8-a8060b1f76f3/01a114fe-64d8-77df-931c-54bc18bb59db/01a114fe-6500-7207-ad82-f827a4567d1c.part (7274496 B)"],"rows":0,"serverClosed":true}
+
+ ❯ |integration| apps/api/test/integration/shutdown-cleanup.test.ts (4 tests | 3 failed) 24397ms
+   × F-DG2-460: SIGTERM with an upload in flight leaves no temporary and no final object > R12-07: 2 MiB of a declared 10 MiB upload, then the client stalls; SIGTERM -> exit 0 within grace + backstop; the store is empty 5925ms
+     → expected [ Array(1) ] to deeply equal []
+   × F-DG2-460: SIGTERM with an upload in flight leaves no temporary and no final object > an upload that is ACTIVELY streaming through the whole grace period: SIGTERM -> exit 0 within grace + backstop; the store is empty 6401ms
+     → expected [ Array(1) ] to deeply equal []
+   ✓ F-DG2-460: SIGTERM with an upload in flight leaves no temporary and no final object > positive control: an upload that completes before SIGTERM is kept (one final object, its content row), then shutdown is prompt  871ms
+   × F-DG2-460 defence in depth: the start-up sweep of stale temporaries > removes a .part last written over an hour ago, logs it at info (no content), and keeps a fresh .part and every final object 10841ms
+     → expected false to be true // Object.is equality
+stdout | apps/api/test/integration/commit-time-auth.test.ts > F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > Q1 the uploader's only grant is revoked while the body streams: 403 forbidden, audited as authorization.denied, nothing committed or stored
+BE18 Q1 {"during":["01a114fe-ac45-759a-8257-807d809bcfaa.part"],"revoked":1,"response":{"status":200},"after":{"rows":[{"revision":1,"sha256":"c779843f42ed13b90658f214afa3e0101cd99b82e077554c2d36ac81b4706dc7"}],"version":2,"current":"01a114fe-ac45-759a-8257-807d809bcfaa","files":["01a114fe-ac45-759a-8257-807d809bcfaa"],"uploads":1},"denials":[]}
+
+stdout | apps/api/test/integration/commit-time-auth.test.ts > F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > Q1b the uploading session is logged out while the body streams: 401 unauthenticated, nothing committed or stored
+BE18 Q1b {"logout":200,"me":401,"response":{"status":200},"after":{"rows":[{"revision":1,"sha256":"52d8541583f79adfc9c1bd13537e4a0151251988798f385dec140982a52cef63"}],"version":2,"current":"01a114fe-ae38-703f-8ec6-79547f11807d","files":["01a114fe-ae38-703f-8ec6-79547f11807d"],"uploads":1}}
+
+stdout | apps/api/test/integration/commit-time-auth.test.ts > F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > the uploading session reaches its idle expiry while the body streams: 401 unauthenticated, nothing committed or stored
+BE18 idle-expiry {"expired":1,"response":{"status":200},"after":{"rows":[{"revision":1,"sha256":"4f63452b7515a09e092def9fb2098ceb35d826824ead21aafa77be385fc35f2c"}],"version":2,"current":"01a114fe-b023-70dd-86fb-cab4add2990d","files":["01a114fe-b023-70dd-86fb-cab4add2990d"],"uploads":1}}
+
+stdout | apps/api/test/integration/commit-time-auth.test.ts > F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > the uploading session reaches its absolute expiry while the body streams: 401 unauthenticated, nothing committed or stored
+BE18 absolute-expiry {"expired":1,"response":{"status":200},"after":{"rows":[{"revision":1,"sha256":"95c679a841149c72af1253d91ab8eb507cc9178ab8cd6496f1f7c9fa056cf7e0"}],"version":2,"current":"01a114fe-b20c-7391-ab8d-2c0c7af4cd7a","files":["01a114fe-b20c-7391-ab8d-2c0c7af4cd7a"],"uploads":1}}
+
+stdout | apps/api/test/integration/commit-time-auth.test.ts > F-DG2-441: no transaction is open while the API waits on the IdP > Q7 never-answering IdP, pool max 3: three concurrent logins hold no connection or transaction; a signed-in user's /me stays prompt; the logins end in 302 idp_unavailable
+BE18 Q7 {"pgActivityAt1s":[{"state":"idle in transaction","n":3}],"me":200,"meMs":3004,"logins":[{"status":302,"location":"/login?error=idp_unavailable","ms":4011},{"status":302,"location":"/login?error=idp_unavailable","ms":4011},{"status":302,"location":"/login?error=idp_unavailable","ms":4011}]}
+
+ ❯ |integration| apps/api/test/integration/commit-time-auth.test.ts (8 tests | 6 failed) 7547ms
+   × F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > Q1 the uploader's only grant is revoked while the body streams: 403 forbidden, audited as authorization.denied, nothing committed or stored 513ms
+     → expected 200 to be 403 // Object.is equality
+   × F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > Q1b the uploading session is logged out while the body streams: 401 unauthenticated, nothing committed or stored 499ms
+     → expected 200 to be 401 // Object.is equality
+   × F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > the uploading session reaches its idle expiry while the body streams: 401 unauthenticated, nothing committed or stored 480ms
+     → expected 200 to be 401 // Object.is equality
+   × F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > the uploading session reaches its absolute expiry while the body streams: 401 unauthenticated, nothing committed or stored 493ms
+     → expected 200 to be 401 // Object.is equality
+   × F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > the uploader's user account is disabled while the body streams: 401, nothing committed 470ms
+     → expected 200 to be 401 // Object.is equality
+   ✓ F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > positive control: an upload whose session and grant stay valid commits (200), byte-exact, audited once  374ms
+   ✓ F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > a grant revoked and granted again (a new assignment) while the body streams: the commit sees the CURRENT grants and succeeds  384ms
+   × F-DG2-441: no transaction is open while the API waits on the IdP > Q7 never-answering IdP, pool max 3: three concurrent logins hold no connection or transaction; a signed-in user's /me stays prompt; the logins end in 302 idp_unavailable 4086ms
+     → expected [ { …(2) } ] to deeply equal []
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/commit-time-auth.test.ts > F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > Q1 the uploader's only grant is revoked while the body streams: 403 forbidden, audited as authorization.denied, nothing committed or stored
+AssertionError: expected 200 to be 403 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 403[39m
+[31m+ 200[39m
+
+ ❯ apps/api/test/integration/commit-time-auth.test.ts:244:27
+    242|         expect(revoked.rowCount).toBeGreaterThan(0);
+    243|         expect(during.files.every((x) => x.endsWith(".part"))).toBe(tr…
+    244|         expect(r?.status).toBe(403);
+       |                           ^
+    245|         expect(r?.code).toBe("forbidden");
+    246|         expect(after.rows).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  |integration| apps/api/test/integration/commit-time-auth.test.ts > F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > Q1b the uploading session is logged out while the body streams: 401 unauthenticated, nothing committed or stored
+AssertionError: expected 200 to be 401 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 401[39m
+[31m+ 200[39m
+
+ ❯ apps/api/test/integration/commit-time-auth.test.ts:279:25
+    277|       expect(out.status).toBe(200);
+    278|       expect(me.status).toBe(401);
+    279|       expect(r?.status).toBe(401);
+       |                         ^
+    280|       expect(r?.code).toBe("unauthenticated");
+    281|       expect(after.rows).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  |integration| apps/api/test/integration/commit-time-auth.test.ts > F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > the uploading session reaches its idle expiry while the body streams: 401 unauthenticated, nothing committed or stored
+ FAIL  |integration| apps/api/test/integration/commit-time-auth.test.ts > F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > the uploading session reaches its absolute expiry while the body streams: 401 unauthenticated, nothing committed or stored
+AssertionError: expected 200 to be 401 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 401[39m
+[31m+ 200[39m
+
+ ❯ apps/api/test/integration/commit-time-auth.test.ts:311:27
+    309|         );
+    310|         expect(expired.rowCount).toBe(1);
+    311|         expect(r?.status).toBe(401);
+       |                           ^
+    312|         expect(r?.code).toBe("unauthenticated");
+    313|         expect(after.rows).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  |integration| apps/api/test/integration/commit-time-auth.test.ts > F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > the uploader's user account is disabled while the body streams: 401, nothing committed
+AssertionError: expected 200 to be 401 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 401[39m
+[31m+ 200[39m
+
+ ❯ apps/api/test/integration/commit-time-auth.test.ts:333:27
+    331|         const r = await u.finish();
+    332|         const after = await stateOf(f);
+    333|         expect(r?.status).toBe(401);
+       |                           ^
+    334|         expect(after.rows).toEqual([]);
+    335|         expect(after.files).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  |integration| apps/api/test/integration/commit-time-auth.test.ts > F-DG2-441: no transaction is open while the API waits on the IdP > Q7 never-answering IdP, pool max 3: three concurrent logins hold no connection or transaction; a signed-in user's /me stays prompt; the logins end in 302 idp_unavailable
+AssertionError: expected [ { …(2) } ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   {[39m
+[31m+     "n": 3,[39m
+[31m+     "state": "idle in transaction",[39m
+[31m+   },[39m
+[31m+ ][39m
+
+ ❯ apps/api/test/integration/commit-time-auth.test.ts:464:76
+    462|       expect(act.length).toBeGreaterThan(0);
+    463|       expect(act.some((r) => r.state === "<null>")).toBe(false); // th…
+    464|       expect(act.filter((r) => r.state.startsWith("idle in transaction…
+       |                                                                            ^
+    465|       expect(act.filter((r) => r.state === "active")).toEqual([]);
+    466|       expect(me.statusCode).toBe(200);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  |integration| apps/api/test/integration/shutdown-cleanup.test.ts > F-DG2-460: SIGTERM with an upload in flight leaves no temporary and no final object > R12-07: 2 MiB of a declared 10 MiB upload, then the client stalls; SIGTERM -> exit 0 within grace + backstop; the store is empty
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "01a114fe-49a5-734a-8e50-51dcdbe9d75c/01a114fe-4a24-7391-b0a8-a8060b1f76f3/01a114fe-4dbb-71de-8e48-e58061c5e22a/01a114fe-4dff-7611-953b-53506985e5c5.part (2097152 B)",[39m
+[31m+ ][39m
+
+ ❯ apps/api/test/integration/shutdown-cleanup.test.ts:210:21
+    208|       expect(log.some((l) => l.msg === "shut down")).toBe(true);
+    209|       expect(log.filter((l) => l.level >= 50)).toEqual([]);
+    210|       expect(after).toEqual([]);
+       |                     ^
+    211|       expect(await contentRowsOf(f.id)).toBe(0);
+    212|       client.socket.destroy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  |integration| apps/api/test/integration/shutdown-cleanup.test.ts > F-DG2-460: SIGTERM with an upload in flight leaves no temporary and no final object > an upload that is ACTIVELY streaming through the whole grace period: SIGTERM -> exit 0 within grace + backstop; the store is empty
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "01a114fe-49a5-734a-8e50-51dcdbe9d75c/01a114fe-4a24-7391-b0a8-a8060b1f76f3/01a114fe-64d8-77df-931c-54bc18bb59db/01a114fe-6500-7207-ad82-f827a4567d1c.part (7274496 B)",[39m
+[31m+ ][39m
+
+ ❯ apps/api/test/integration/shutdown-cleanup.test.ts:253:21
+    251|       expect(log.some((l) => l.msg === "shut down")).toBe(true);
+    252|       expect(log.filter((l) => l.level >= 50)).toEqual([]);
+    253|       expect(after).toEqual([]);
+       |                     ^
+    254|       expect(await contentRowsOf(f.id)).toBe(0);
+    255|       client.socket.destroy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  |integration| apps/api/test/integration/shutdown-cleanup.test.ts > F-DG2-460 defence in depth: the start-up sweep of stale temporaries > removes a .part last written over an hour ago, logs it at info (no content), and keeps a fresh .part and every final object
+AssertionError: expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+ ❯ apps/api/test/integration/shutdown-cleanup.test.ts:318:9
+    316|       expect(
+    317|         await waitFor(() => api.output().includes("start-up sweep of s…
+    318|       ).toBe(true);
+       |         ^
+    319|       const after = filesUnder(store);
+    320|       const log = logOf(api);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  9 failed | 3 passed (12)
+   Start at  06:12:48
+   Duration  35.69s (transform 916ms, setup 0ms, collect 2.70s, tests 31.94s, environment 0ms, prepare 64ms)
+
+exit 1
