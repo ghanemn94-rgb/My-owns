@@ -1,0 +1,15 @@
+PASS R11.normal-upload-200-keepalive :: expected 200; response not Connection: close; second request on the same socket answered 200 :: actual upload 200 connection=keep-alive; second=200; timeout=false
+PASS R11.normal-download-identical :: expected 200; byte-identical; Arabic file name with RLM/emoji kept :: actual 200 2097444/2097444 bytes sha 3422162a8ecd5a5a vs 3422162a8ecd5a5a; fileName="خط-الأساس R11 ‏📊.xlsx"
+PASS R11.oversized-refused-413 :: expected 413 evidence.too_large problem; Connection: close :: actual 413 code=evidence.too_large connection=close; detail="Evidence content is limited to 26214400 bytes per revision."
+PASS R11.oversized-connection-closed-promptly :: expected socket closed by the server within 5 s of the response (not held ~65 s) :: actual response at 110 ms, closed at 111 ms (socket error code=none)
+PASS R11.oversized-nothing-stored :: expected no new revision; current content still the normal upload byte-identical :: actual revisions 1->1; identical=true
+PASS R11.localized:evidence.too_large :: expected EN and AR present, AR Arabic :: actual en='The file is larger than the allowed maximum (25 MB).' ar='حجم الملف أكبر من الحد المسموح (25 ميغابايت).'
+PASS R11.upload-after-refusal :: expected 200; new revision; download byte-identical :: actual 200; revisions 1->2; identical=true
+PASS R11.spa-deep-link:/transformations :: expected 200 text/html app shell :: actual 200 text/html; charset=utf-8
+PASS R11.spa-deep-link:/transformations/:id/diagnose :: expected 200 text/html app shell :: actual 200 text/html; charset=utf-8
+PASS R11.spa-deep-link:/transformations/:id/define :: expected 200 text/html app shell :: actual 200 text/html; charset=utf-8
+PASS R11.spa-deep-link:/transformations/:id/design :: expected 200 text/html app shell :: actual 200 text/html; charset=utf-8
+PASS R11.unknown-api-404 :: expected 404 not_found :: actual 404 not_found
+PASS R11.gate-codes :: expected G1..G6 only :: actual G1,G2,G3,G4,G5,G6
+SUMMARY 13/13 PASS
+### r11-delta-api exit=0
