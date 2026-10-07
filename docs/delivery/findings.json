@@ -11039,7 +11039,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-15/code-security-reviewer.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-07T13:32:00Z",
@@ -11060,6 +11060,11 @@
           "at": "2026-10-07T18:29:54Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at ac8129810f5e47de97f5b6eb6d1f15b0f3f49527"
+        },
+        {
+          "at": "2026-10-07T19:20:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 17: PASS"
         }
       ],
       "fix_revision": "ac8129810f5e47de97f5b6eb6d1f15b0f3f49527",
@@ -11068,27 +11073,30 @@
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG2-T-DG2-REV-SEC-R16-code-security-reviewer-20261007T154356Z-44d3faac",
-          "session_id": "44d3faac-56a6-4044-a791-9214cdc83057"
+          "run_id": "DG2-T-DG2-REV-SEC-R17-code-security-reviewer-20261007T185426Z-682880ae",
+          "session_id": "682880ae-3a11-4a01-9874-56ea8ba61652"
         },
-        "at": "2026-10-07T16:05:00Z",
-        "result": "FAIL",
+        "at": "2026-10-07T19:20:00Z",
+        "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG2/code-security/round-16/probe-r16-web-node22-lang-unset.log",
-          "docs/delivery/test-evidence/DG2/code-security/round-16/probe-r16-web-node24-lang-c-utf8.log",
-          "docs/delivery/test-evidence/DG2/code-security/round-16/probe-r15-web-node22-lang-unset.log",
-          "docs/delivery/test-evidence/DG2/code-security/round-16/probe-r15-web-node24-lang-c-utf8.log",
-          "docs/delivery/test-evidence/DG2/code-security/round-16/probe-r14-web-node22-lang-unset.log",
-          "docs/delivery/test-evidence/DG2/code-security/round-16/probe-r14-web-node24-lang-c-utf8.log",
-          "docs/delivery/test-evidence/DG2/code-security/round-16/probes/zz-sec-r16-web-probe.test.tsx",
-          "docs/delivery/test-evidence/DG2/code-security/round-16/probes/README.md",
-          "docs/delivery/test-evidence/DG2/code-security/round-16/probe-runs.sh",
-          "apps/web/src/pages/transformations/TransformationCreatePage.tsx",
-          "apps/web/src/pages/transformations/TransformationDetailPage.tsx",
+          "docs/delivery/test-evidence/DG2/code-security/round-17/probe-r16-web-node22-lang-unset.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-17/probe-r16-web-node24-lang-c-utf8.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-17/probe-r15-web-node22-lang-unset.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-17/probe-r15-web-node24-lang-c-utf8.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-17/probe-r14-web-node22-lang-unset.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-17/probe-r14-web-node24-lang-c-utf8.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-17/probe-r17-web-node22-lang-unset.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-17/probe-r17-web-node24-lang-c-utf8.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-17/probes/zz-sec-r17-web-probe.test.tsx",
+          "docs/delivery/test-evidence/DG2/code-security/round-17/probes/README.md",
+          "docs/delivery/test-evidence/DG2/code-security/round-17/probe-runs.sh",
+          "apps/web/src/auth/sessionBound.ts",
           "apps/web/src/api/client.ts",
-          "apps/web/src/app/App.tsx"
+          "apps/web/src/auth/session.tsx",
+          "apps/web/src/pages/transformations/TransformationCreatePage.tsx",
+          "apps/web/src/pages/transformations/TransformationDetailPage.tsx"
         ],
-        "note": "FAIL: the fix is real for the exact reproduction, but incomplete for the class the finding's expected result and FE14's claim cover. Verified on candidate sha256:0cab0a8c (source e3b2375, FE14 44f1cf0) in the disposable clone $TMPDIR/r16p, on Node 22.22.2 (LANG unset) and Node 24.21.0 (LANG=C.UTF-8).\n\nWHAT IS FIXED (genuine):\n- My round-15 probe, rerun UNCHANGED (sha256 bd97dbc9), passes 6/6 on both runtimes. X3 (A's PATCH answered after the identity changed to B) now gives cache name undefined, B does not see A-PATCHED-SECRET, and the path stays on the edit route. X2, X3b, X4 and X7 still pass.\n- apiRequest records sessionGeneration when the request is sent and throws SessionChangedError when the generation moved, on every exit path: network failure, body read, non-OK and OK. The generation moves in endSession, markSignedOut and noteSessionIdentity BEFORE the reset hooks run. A stale 401 no longer ends the new identity's session. shouldRetry never retries a SessionChangedError.\n- X6 holds with the production QUERY_DEFAULTS (my Y4): a refocus sends GET /me first, and the header and the data are B's.\n- The round-14 probe (FE10/FE13 guarantees: 16 hostile returnTo values, a 403 is never an end, one navigation, bounded /me, no stale shell) passes 26/26 on both runtimes. The product's FE14 tests, including a same-person new session that keeps its draft and a same-identity write that still updates the cache and navigates, pass in en and ar.\n\nWHAT IS NOT (my probe Y1, zz-sec-r16-web-probe.test.tsx, sha256 f0d72881, fails by design on both runtimes):\n- FE14 gates the answer of each request. It does not gate what a success handler does after a FURTHER await.\n- TransformationCreatePage.tsx:186-201: after `await api.send(POST)` returns A's 201 under A's generation, the handler awaits invalidateQueries (:193) and refreshEffectivePermissions (:199, a GET /me).\n- If A signed out and B signed in in another tab while the POST was in flight, that very /me returns B. The generation moves 0 -> 1 and the session state is reset, but the handler goes on to navigate to /transformations/<A's new id> with A's code and name in router state (:200-201).\n- B's GET of the record answers 404. TransformationDetailPage.tsx:58-66 then renders CreatedNotVisible from the router state. Under B's header, B reads 'TR-A-NEW-SECRET · A-CREATED-SECRET-NAME was saved as a draft. It is not submitted or approved.', which is A's data, presented as B's own creation.\n- That is exactly what F-DG2-530's expected result excludes: 'No response to a request issued under a previous identity ... is written into the cache or rendered once this tab has moved to another identity'. It also contradicts FE14's claim that no late success handler can 'navigate or render'.\n- The same unguarded navigate-after-await pattern exists in TransformationEditPage.tsx:131-133, OrganizationsPage.tsx:157-159 and UsersPage.tsx:292-294. There it only navigates B to A's record id, and B's view is server-authorised.\n\nSUGGESTED FIX: capture getSessionGeneration() (or the identity key) at submit, and re-check it after every await before setQueryData, navigate or router state. Better, provide one helper, e.g. `stillSameSession(gen)`, or a wrapper around navigate that drops navigations from a previous generation. Cover it with a test of the create flow in which the post-create /me returns another identity.\n\nSEVERITY UNCHANGED: Low, not mandatory. Server-side authorisation is intact. The disclosure is the code and name of the record A just created in that tab. It needs the same narrow race as the original: a sign-out plus a sign-in in another tab of the same browser profile while the POST is in flight. The finding stays OPEN."
+        "note": "PASS. The fix holds for the reproduction and for the class. Verified on candidate sha256:ddaab3cc264b0e13caadcb17f0d1811eff8ad1ec9364b7ba9c03727b83350750 (source 805da3e, FE15 ac81298 + D-077) in the disposable clone $TMPDIR/r17p, on Node 22.22.2 (LANG unset) and Node 24.21.0 (LANG=C.UTF-8). The clone was deleted afterwards.\n\nREPRODUCTION FIXED:\n- My round-16 probe, rerun UNCHANGED (sha256 f0d72881), passes 4/4 on both runtimes (it was 3/4).\n- Y1: A's POST is answered 201 under generation 0, then the post-create GET /me returns B. The generation goes 0 -> 1, the path stays /transformations/new, B's header is shown, and B sees neither A's code nor A's name.\n- Y1c control: under one identity the create still lands on the created record with the draft banner.\n- Y4: a refocus sends /me first. Y5: an in-app navigation now sends /me first and shows B's header over B's rows; in round 16 A's header stayed.\n- My round-15 probe (X1-X7, sha256 bd97dbc9) passes 6/6 on both runtimes.\n- My round-14 probe passes 26/26 on both runtimes: 16 hostile returnTo values, a 403 is never a session end, one navigation, bounded /me, no stale shell.\n\nCLASS (source review of e3b2375..805da3e, 30 files, all web):\n- sessionBound.ts: begin()/beginSessionGuard() capture getSessionGeneration() at the START of the action. action.navigate and action.setQueryData re-check it at call time, so they are no-ops after any number of awaits once the generation has moved.\n- Every begin()/beginSessionGuard() call (10 + 5 sites) sits at the start of its handler, before the first await (grep, record check SEC-R17-01).\n- useSessionNavigate is used only in the two synchronous Cancel handlers.\n- Every `await refresh()` with a continuation is `if (!(await refresh())) return;`. The five unchecked ones are terminal: only setBusy(false) in finally, or a catch that has already shown its error.\n- The raw useNavigate import is left only in the 3 session transitions (session-end redirect, sign-out, sign-in), each with a justified disable comment.\n- ESLint (no-restricted-imports, no-restricted-syntax) plus a source-scanning test enforce this.\n- Navigation-time identity check: RequireSession's layout effect calls revalidateSessionIdentity() on each pathname change. apiRequest holds every GET while a check, or any /me (asIdentityProbe), is in flight, then throws SessionChangedError if the generation moved while it waited.\n\nNEW ADVERSARIAL PROBE (zz-sec-r17-web-probe.test.tsx, sha256 d75da82e), 7/7 on both runtimes:\n- Z1: the post-create /me outlasts refreshEffectivePermissions' 5 s timeout. The handler navigates under A's still-current generation, the detail GET waits for /me, B gets its own 404, and the new createdBy check refuses A's router state. 0 DOM states showed B's header with A's code or name.\n- Z2: an edit whose PATCH takes 3 s while B signs in. The navigation-time /me runs before any page GET, and 0 DOM states showed B's header with A's data. Z2c control: a same-identity slow save still updates and navigates.\n- Z4: navigating immediately after B signed in elsewhere sends /me first, and across every DOM mutation A's header is never shown above B's rows.\n- Z3: the documented D-077 residual is reproduced (B's own rows under A's header for a refetch within 2 s), and its end is asserted (the next GET after the window sends /me first).\n\nRESIDUAL ACCEPTED, not challenged: only the cookie holder's own, server-authorised data is shown, never A's data to B. A write from that view carries A's CSRF token and is refused (r15 X7). It ends at the next navigation, refocus, or GET after 2 s. Z5 (a query-string-only navigation) falls inside the same stated residual.\n\nFE10/FE13/FE14 guarantees hold (r14/r15 probes, and the unit suite 926/926 on Node 22 and 24 and under load)."
       }
     },
     {
@@ -11114,7 +11122,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-16/domain-reviewer.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-07T16:27:33Z",
@@ -11125,10 +11133,42 @@
           "at": "2026-10-07T18:29:54Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at ac8129810f5e47de97f5b6eb6d1f15b0f3f49527"
+        },
+        {
+          "at": "2026-10-07T19:50:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 17: PASS"
         }
       ],
       "fix_revision": "ac8129810f5e47de97f5b6eb6d1f15b0f3f49527",
-      "fix_summary": "FE15 ac81298: one session-bound action (apps/web/src/auth/sessionBound.ts). The session generation is captured at the start of every user action, and every later navigate, setQueryData, router state or render effect is dropped if the generation moved while the action awaited, after any number of awaits. That covers the create flow's post-create /me (Y1/R16-06) and the edit, organisation and user saves. An ESLint rule forbids the raw router navigate and direct setQueryData in app code, and the handback sweeps every site. F-570: the identity is confirmed before page data on in-app navigation (no window), and other page GETs recheck /me when it is older than 2 s (a documented, bounded residual). FE10/FE13/FE14 guarantees are kept. Tests: session-bound.test.tsx (34, EN/AR); qa's R16 spec unchanged on the real stack 12/12 in chromium-en and chromium-ar; session-end e2e green; negative control on HEAD."
+      "fix_summary": "FE15 ac81298: one session-bound action (apps/web/src/auth/sessionBound.ts). The session generation is captured at the start of every user action, and every later navigate, setQueryData, router state or render effect is dropped if the generation moved while the action awaited, after any number of awaits. That covers the create flow's post-create /me (Y1/R16-06) and the edit, organisation and user saves. An ESLint rule forbids the raw router navigate and direct setQueryData in app code, and the handback sweeps every site. F-570: the identity is confirmed before page data on in-app navigation (no window), and other page GETs recheck /me when it is older than 2 s (a documented, bounded residual). FE10/FE13/FE14 guarantees are kept. Tests: session-bound.test.tsx (34, EN/AR); qa's R16 spec unchanged on the real stack 12/12 in chromium-en and chromium-ar; session-end e2e green; negative control on HEAD.",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG2-T-DG2-REV-DOM-R17-domain-reviewer-20261007T185446Z-1c1fbb0d",
+          "session_id": "1c1fbb0d-060b-4b6d-9473-0b8e5d5ecd9e"
+        },
+        "at": "2026-10-07T19:50:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG2/domain/round-17/r16-identity-nav.log",
+          "docs/delivery/test-evidence/DG2/domain/round-17/r16-identity-nav-default-limits.log",
+          "docs/delivery/test-evidence/DG2/domain/round-17/r16-identity-nav.mjs",
+          "docs/delivery/test-evidence/DG2/domain/round-17/r17-identity-residual.log",
+          "docs/delivery/test-evidence/DG2/domain/round-17/r17-identity-residual-default-limits.log",
+          "docs/delivery/test-evidence/DG2/domain/round-17/r17-identity-residual.mjs",
+          "docs/delivery/test-evidence/DG2/domain/round-17/r15-identity-ui.log",
+          "docs/delivery/test-evidence/DG2/domain/round-17/r16-identity-ui.log",
+          "docs/delivery/test-evidence/DG2/domain/round-17/r16-identity-ui-default-limits-run9.log",
+          "docs/delivery/test-evidence/DG2/domain/round-17/screens/en-r16-N1-own-record-after-fix.png",
+          "docs/delivery/test-evidence/DG2/domain/round-17/screens/ar-r16-N2-list-after-fix.png",
+          "docs/delivery/test-evidence/DG2/domain/round-17/screens/ar-r17-R1-filter-inside-window.png",
+          "docs/delivery/test-evidence/DG2/domain/round-17/screens/en-r17-R2-nav-inside-window.png",
+          "docs/delivery/test-evidence/DG2/domain/round-17/env.txt"
+        ],
+        "note": "Verified on candidate sha256:ddaab3cc264b0e13caadcb17f0d1811eff8ad1ec9364b7ba9c03727b83350750 (source 805da3e2, FE15 ac81298) in a real browser, EN (LTR) and AR (RTL). (1) My round-16 reproduction r16-identity-nav.mjs, rerun unchanged, now passes 5/5 with raised limits and 5/5 with default limits; in round 16 it failed 4/5. After the user changed in another tab and tab 1 returned within the fresh window, opening A's own record asks GET /me (meRequests=1) and shows B's name with B's 'Not found'. Opening Transformations 16 s later shows B's name with B's list, without A's record. (2) My round-15 r15-identity-ui (13/13) and round-16 r16-identity-ui (5/5) pass with raised and default limits. Under default limits r16-identity-ui must not run straight after probes that spend the 20/min auth budget (env.txt, stack-run-7/8/9). (3) The new r17-identity-residual challenges the D-077 residual, 5/5 with raised and default limits. A navigation sent 70-120 ms after the last /me and after B's sign-in asks /me, and the timeline shows A's own record under A's name only in the first sample, then B's name and no A record. Inside the 2 s window, a filter (search parameter only) is fetched under B's cookie under A's header: 'no transformations match', with A's New transformation button. That is exactly the documented residual. The next uncached GET after the window asks /me first and shows B's name. I accept the residual (D-077) as bounded and non-disclosing: the data fetched in the window is the CURRENT cookie holder's own data, signed in from the same browser. No data of A reaches B beyond what was already on A's screen. Writes carry A's CSRF token and cannot go out as B. It ends at the next navigation, the next uncached GET after 2 s or a refocus. The code agrees: client.ts gates every page GET on revalidation when /me is older than SESSION_RECHECK_MS, and session.tsx revalidates on every pathname change in a layout effect. A sweep finds no raw useNavigate/setQueryData outside the documented session transitions, and the ESLint rule enforces it."
+      }
     },
     {
       "id": "F-DG2-580",
@@ -11154,7 +11194,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG2/round-16/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-07T17:25:00Z",
@@ -11165,10 +11205,38 @@
           "at": "2026-10-07T18:29:55Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at ac8129810f5e47de97f5b6eb6d1f15b0f3f49527"
+        },
+        {
+          "at": "2026-10-07T20:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 17: PASS"
         }
       ],
       "fix_revision": "ac8129810f5e47de97f5b6eb6d1f15b0f3f49527",
-      "fix_summary": "FE15 ac81298: one session-bound action (apps/web/src/auth/sessionBound.ts). The session generation is captured at the start of every user action, and every later navigate, setQueryData, router state or render effect is dropped if the generation moved while the action awaited, after any number of awaits. That covers the create flow's post-create /me (Y1/R16-06) and the edit, organisation and user saves. An ESLint rule forbids the raw router navigate and direct setQueryData in app code, and the handback sweeps every site. F-570: the identity is confirmed before page data on in-app navigation (no window), and other page GETs recheck /me when it is older than 2 s (a documented, bounded residual). FE10/FE13/FE14 guarantees are kept. Tests: session-bound.test.tsx (34, EN/AR); qa's R16 spec unchanged on the real stack 12/12 in chromium-en and chromium-ar; session-end e2e green; negative control on HEAD."
+      "fix_summary": "FE15 ac81298: one session-bound action (apps/web/src/auth/sessionBound.ts). The session generation is captured at the start of every user action, and every later navigate, setQueryData, router state or render effect is dropped if the generation moved while the action awaited, after any number of awaits. That covers the create flow's post-create /me (Y1/R16-06) and the edit, organisation and user saves. An ESLint rule forbids the raw router navigate and direct setQueryData in app code, and the handback sweeps every site. F-570: the identity is confirmed before page data on in-app navigation (no window), and other page GETs recheck /me when it is older than 2 s (a documented, bounded residual). FE10/FE13/FE14 guarantees are kept. Tests: session-bound.test.tsx (34, EN/AR); qa's R16 spec unchanged on the real stack 12/12 in chromium-en and chromium-ar; session-end e2e green; negative control on HEAD.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG2-T-DG2-REV-QA-R17-qa-verifier-20261007T185506Z-4af87c30",
+          "session_id": "4af87c30-b144-4136-aafc-5acad20e60a3"
+        },
+        "at": "2026-10-07T20:45:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG2/qa/round-17/17-e2e-qa-stack-unset.log",
+          "docs/delivery/test-evidence/DG2/qa/round-17/17-e2e-qa-stack-cutf8.log",
+          "docs/delivery/test-evidence/DG2/qa/round-17/19-e2e-results-summary.log",
+          "docs/delivery/test-evidence/DG2/qa/round-17/23-spec-hashes.log",
+          "docs/delivery/test-evidence/DG2/qa/tests/round-16/e2e/dg2-qa-r16.spec.ts",
+          "docs/delivery/test-evidence/DG2/qa/tests/round-17/e2e/dg2-qa-r17.spec.ts",
+          "docs/delivery/test-evidence/DG2/qa/round-17/screens/unset-en-qa-r16-06-after-delivery.png",
+          "docs/delivery/test-evidence/DG2/qa/round-17/screens/unset-ar-qa-r16-06-after-delivery.png",
+          "docs/delivery/test-evidence/DG2/qa/round-16/19-r16-06-unset.log",
+          "docs/delivery/test-evidence/DG2/qa/round-16/19-r16-06-cutf8.log"
+        ],
+        "note": "Verified on candidate ddaab3cc (source 805da3e2, FE15 ac81298 / D-077) on the REAL built SPA + API + PostgreSQL (e2e/support/qa-stack.sh), chromium-en and chromium-ar, in both locale settings (LANG unset; LANG=C.UTF-8). My round-16 spec dg2-qa-r16.spec.ts was run UNCHANGED (sha256 408a6a14..., the file that reproduced F-DG2-580 4/4 on candidate 0cab0a8c in 19-r16-06-unset.log / 19-r16-06-cutf8.log of round 16, which are the negative control). R16-06 passes in every run: 17-e2e-qa-stack-unset.log tests 77 (EN, 6.6 s) and 183 (AR, 6.5 s), and the same two in 17-e2e-qa-stack-cutf8.log. Its assertions are that A's 201 is real (the server committed A's Finance record, which B, dev.lead, gets as 404), that after delivery tab 1 shows B's header ('Synthetic Transformation Lead'), that the leak observer recorded NO DOM moment with A's new record's name as text, that A's code is nowhere in the document, that the path is NOT /transformations/<A's id>, that the document stayed the same, and that there are no page errors and no 429. Screenshots: screens/unset-en-qa-r16-06-after-delivery.png shows B's header above B's empty create form, nothing of A's record (also -ar-, and cutf8-*). The other R16 tests (R16-01 to R16-05) also pass 6/6 per project in both settings. I added independent negative checks on the same class (dg2-qa-r17.spec.ts, 13 tests x 2 projects x 2 settings, all pass). The class covers the transformation create when tab 1 learns of B through an IN-APP NAVIGATION before A's 201 (R17-01: path /my-work, A's code TR-0041/TR-0108 not shown). It covers an edit, an archive and a user save answered while the tab still believes it is A (R17-02, R17-03 and R17-05b: B never sees A's text under B's header, and B opening A's record gets not-found), and an organisation create learn-first and deliver-first (R17-04a and R17-04b: B is not navigated to A's organisation, and neither its code nor either of its names shows). D-077's declared 2 s residual (4) is characterised separately in R17-04c and is not part of this finding: B lands on A's organisation URL with 'no permission' and never sees its name or code; see the narrative. The fix is genuine, so F-DG2-580 is closed."
+      }
     }
   ]
 }
