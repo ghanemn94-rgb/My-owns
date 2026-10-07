@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG2-440",
+      "stage_id": "DG2",
+      "requirement": "REQ-S10-001",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "An in-flight evidence upload commits after the uploader's grant is revoked or their session is logged out: phase 3 'authorises again' against the request-start snapshot of grants and session, for up to requestTimeout (300 s)",
+      "reproduction": "Cause: apps/api/src/modules/identity/routes.ts:120-140 (preValidation) resolves the session and loads the principal's grants ONCE per request (grants: await loadGrants(...), line 137). The policy decides on principal.grants (access/policy.ts authorize -> decide). The BE17 upload (apps/api/src/modules/evidence/routes.ts:443-548) receives the body between phase 1 and phase 3 with no time bound other than requestTimeout (DEFAULT_REQUEST_TIMEOUT_MS = 300_000, platform/connection-hygiene.ts:46). Its phase-3 openWrite (routes.ts:489) re-reads ownership, the transformation's archive state and the target from the database, but re-runs the policy on the request-start grants and session.\nProbe: docs/delivery/test-evidence/DG2/code-security/round-12/probes/zz-sec-r12-probe.test.ts. Disposable clone at 744af0b (candidate 5dfecce4), disposable PostgreSQL 16, Node 22.22.2 (LANG unset) and Node 24.21.0 (LANG=C.UTF-8); identical in both runs.\n- Q1: the Workstream Lead (only grant: WL at the transformation) creates a file evidence item. They start a 1 MiB upload over a real socket (If-Match, CSRF, Origin) and send 64 KiB. Their only grant is then revoked (scoped_assignment.revoked_at set; rowCount 1), and they send the rest. Result: 200, evidence_content revision 1 committed with the object on disk, evidence version 1 -> 2, review status reset, and one evidence.upload_content audit event attributed to the revoked user. A NEW request by the same session right after the revocation is refused (404: they can no longer read the transformation).\n- Q1b: the Transformation Lead signs in a second session and starts an upload on it. POST /api/v1/auth/logout revokes that session (200), and GET /api/v1/me with it is then 401. The in-flight upload still completes with 200, and its content is committed.\n- The same Q1/Q1b fail identically on the round-11 candidate 23e6c0a2 (clone 309aff2, before BE17; probe-r12-Q1-on-round11-23e6c0a2.log): the gap PRE-DATES BE17. BE17 did not introduce it, but its phase-3 comment ('authorization again') does not cover grants or the session, which is exactly the TOCTOU the round-12 assignment asks about.",
+      "expected": "A write that commits after the body was received is authorised at commit time. Phase 3 re-resolves the session (still active, not revoked or expired) and reloads the caller's grants inside the write transaction before openWrite. A grant revoked or a session logged out while the body streams is then refused (403, or 401 for the session), and the received temporary object is discarded. Equivalent: bound how long an upload may take after its authorization. Applies to every route that waits on the client between authorization and commit; today that is uploadEvidenceContent.",
+      "actual": "For up to requestTimeout (300 s) after a grant revocation or a logout or session revocation, an upload that was already in flight replaces the evidence item's current content and resets its review status (RESET_REVIEW). This is audited, and attributed to the user. New requests are refused correctly. Rated Medium and non-mandatory: every mutation still has a server-side authorization check, made when the request is accepted; the caller held the permission then, gains no access they did not have, and the write is audited. The defect is the revocation latency of in-flight uploads, which BE17's phase 3 claims to close but does not. The auditor may weigh the access-control aspect differently.",
+      "evidence": [
+        "apps/api/src/modules/evidence/routes.ts",
+        "apps/api/src/modules/identity/routes.ts",
+        "apps/api/src/modules/access/policy.ts",
+        "apps/api/src/modules/platform/connection-hygiene.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probes/zz-sec-r12-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probes/README.md",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r12-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r12-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r12-Q1-on-round11-23e6c0a2.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-12/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-07T05:00:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG2 round 12, while adversarially probing the BE17 three-phase upload for 'a TOCTOU between phase 1 and phase 3, a revoked grant' as the assignment directs. Pre-existing (same result at the round-11 candidate 23e6c0a2). Medium, non-mandatory (see actual). It does not block the round under the stated gate rule (no Critical, High or mandatory finding), but it should be repaired: re-resolve the session and reload grants in phase 3."
+        }
+      ]
+    },
+    {
+      "id": "F-DG2-441",
+      "stage_id": "DG2",
+      "requirement": "REQ-S16-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "OIDC discovery (a remote call to the IdP) runs inside an open database transaction in GET /api/v1/auth/login: while the IdP is slow or unreachable, unauthenticated login attempts hold pooled connections 'idle in transaction' for the 10 s discovery timeout and stall signed-in users",
+      "reproduction": "apps/api/src/modules/identity/routes.ts:268 runs db.transaction().execute((tx) => oidc.startLogin(tx, ...)). Kysely checks out a connection and issues BEGIN before the callback. startLogin (apps/api/src/modules/identity/oidc.ts:58-59) first awaits this.configuration_() (oidc.ts:37-50), which performs OIDC discovery over HTTP with a 10 s default timeout. The result is cached only on success; a failure clears the cache, so every login retries discovery while the IdP is down. This contradicts the BE17 sweep note in packages/db/src/pool.ts:34 ('No application transaction waits on anything but the database (no client I/O, no remote call)').\nProbe: docs/delivery/test-evidence/DG2/code-security/round-12/probes/zz-sec-r12-oidc-probe.test.ts. Disposable clone at 744af0b (candidate 5dfecce4), disposable PostgreSQL 16, Node 22.22.2 and 24.21.0, identical results. The IdP is a local TCP server that accepts and never answers. OidcService uses its default discovery timeout (10 s), AUTH_RATE_LIMIT_PER_MINUTE is the product default (20), and the pool max is 3. Three unauthenticated GET /api/v1/auth/login run concurrently. After 1 s, pg_stat_activity read as superuser shows 3 api sessions 'idle in transaction'. A signed-in Sponsor's GET /api/v1/me then takes 9,010-9,029 ms. The logins end at 10.0 s with 302 /login?error=idp_unavailable. With the production pool (max 10) and 20 logins per minute per IP, a login storm during an IdP outage (users retrying) can exhaust the pool. Signed-in users then get the bounded 503 after connectionTimeoutMillis (10 s) instead of being served. Pre-existing since DG1 (8332624).",
+      "expected": "No transaction is open while waiting on the IdP: resolve the OIDC configuration (discovery) before db.transaction(), then insert the login state in a short transaction. The OIDC callback already does this (consumeState in its own transaction, then the token exchange outside any transaction, routes.ts:302-347).",
+      "actual": "Each login attempt holds a pooled connection, and an open transaction, for up to the discovery timeout whenever discovery is not cached. Rated Low and non-mandatory: it needs an IdP outage or slowness, is bounded at 10 s per attempt and rate-limited per IP, needs no credentials, has no confidentiality or integrity impact, and with BE17's connectionTimeoutMillis it degrades to a declared 503 rather than a hang.",
+      "evidence": [
+        "apps/api/src/modules/identity/routes.ts",
+        "apps/api/src/modules/identity/oidc.ts",
+        "packages/db/src/pool.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probes/zz-sec-r12-oidc-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probes/README.md",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r12-oidc-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r12-oidc-node24-lang-c-utf8.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-12/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-07T05:00:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG2 round 12, during the assigned sweep for 'any remaining path that holds a pooled connection, transaction or row lock while it waits'. This one waits on the IdP rather than the HTTP client. Pre-existing since DG1. Low, non-mandatory; it does not block the round."
+        }
+      ]
+    }
+  ]
+}

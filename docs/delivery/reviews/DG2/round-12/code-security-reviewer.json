@@ -1,0 +1,434 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG2",
+  "round": 12,
+  "candidate_id": "sha256:5dfecce44b9d7d4ded6ca45968c9e2686d1c011cdd7c906ba3dc9974bbdf92b8",
+  "source_commit": "8488e7a48c988f891c041dfc5dc4c638d8fb9a24",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG2-T-DG2-REV-SEC-R12-code-security-reviewer-20261007T043332Z-91127ae1",
+    "session_id": "91127ae1-90aa-460e-aed7-09e08e6dafff"
+  },
+  "implementation_author": [
+    "backend-workflow-engineer",
+    "frontend-ux-engineer",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am code-security-reviewer, session 91127ae1. I authored no implementation in the DG2 scope, including:\n- BE17 eb455d3 (backend-workflow-engineer);\n- FE9 644198a (frontend-ux-engineer);\n- the ADR-0007 §5b note be51ad7 and D-072 (delivery-orchestrator).\nI reviewed the frozen candidate directly: the product diff cbdb4f6..8488e7a (21 files) and the full files it touches, plus the authorization, identity and OIDC code those paths rely on. I ran code only in disposable clones under $TMPDIR ($TMPDIR/review-r12 and $TMPDIR/r12p at 744af0b; $TMPDIR/r11c at 309aff2 for one pre-existence check) and on disposable PostgreSQL 16 clusters that were deleted afterwards. I wrote nothing in source paths; my probes live in my evidence directory. I formed this verdict without reading any other reviewer's round-12 record."
+  },
+  "assignment": "docs/delivery/assignments/DG2/round-12/code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-S10-001",
+    "REQ-S16-013",
+    "REQ-S13-012",
+    "REQ-DLV-034",
+    "REQ-PB-016",
+    "REQ-PB-017",
+    "REQ-PB-018",
+    "REQ-PB-027",
+    "REQ-PB-028",
+    "REQ-PB-029"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-R12-00-candidate",
+      "procedure": "Confirm the assignment hash, HEAD and the recomputed candidate ID, in the working tree and in a clean disposable clone at the freeze commit 744af0b. Confirm that the freeze commit 744af0b changes only delivery metadata relative to source 8488e7a.",
+      "command": "sha256sum docs/delivery/assignments/DG2/round-12/code-security-reviewer.md; git rev-parse HEAD; git diff --stat 8488e7a4..HEAD; node tools/gates/candidate.mjs --stage DG2 (working tree and $TMPDIR/review-r12)",
+      "environment": "Node 24.21.0; working tree /home/user/My-owns; disposable clone $TMPDIR/review-r12 at 744af0b",
+      "expected": "assignment sha256 2a109d4d...c7f; candidate_id sha256:5dfecce4...92b8 with 552 files; freeze commit = source + metadata only",
+      "actual": "Assignment sha256 2a109d4d0746b6da8d8542939ee6eb65a51f47970619b9119334e11b3de09f7c matches. HEAD is 744af0b, the freeze commit; source_commit 8488e7a is its parent. 8488e7a..744af0b adds only the three round-12 assignments, the candidate manifest and stages.json (5 files; none of them is in the candidate). The candidate ID recomputes to sha256:5dfecce44b9d7d4ded6ca45968c9e2686d1c011cdd7c906ba3dc9974bbdf92b8 with 552 files, in both the working tree and the clone. Note: the assignment's re-review range 'fe22d759..cbdb4f68' is the round-10 to round-11 range that round 11 already reviewed. The BE17 and FE9 changes it asks about are in cbdb4f6..8488e7a, and I reviewed that range (diff-scan.log lists both).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-12/candidate-id.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/diff-scan.log"
+      ]
+    },
+    {
+      "id": "SEC-R12-01-diff-review-BE17-FE9",
+      "procedure": "Read the product diff cbdb4f6..8488e7a and the full touched files: evidence/routes.ts, evidence/store.ts, platform/hooks.ts, db/pool.ts, web RecordForm, JourneysSection, test/react-warning-guard.ts, test/setup.ts, plus ADR-0007 and health-readiness.md. Check that none of these is weakened: authorization, CSRF, optimistic concurrency, audit, the evidence size limit and raw sha256, BE16 connection hygiene and bounded shutdown, the media-type decision, rate limiting. Check that FE9's warning guard masks nothing. Sweep the API and worker for other client or remote I/O inside a transaction.",
+      "command": "git diff cbdb4f6..8488e7a -- . ':!docs/delivery'; grep -rn 'fetch(|request.raw|reply.raw|for await|pipe(|pipeline(|Readable|hijack' apps/api/src apps/worker/src; review of identity/routes.ts, identity/oidc.ts, access/policy.ts, access/records.ts, worker relay.ts/handlers.ts, db/cli.ts and migrate.ts",
+      "environment": "working tree at 744af0b (read-only review)",
+      "expected": "No weakening; no secrets; no CDN; no path that holds a connection or transaction while waiting on anything but the database",
+      "actual": "Upload: CSRF and authentication still run in preValidation before the handler. Phase 1 runs the same refusals in the same order (404/403/400 file name/428/409/422/not_a_file/body_required/raw stream only) and commits before the body is read; BE16's onSend Connection: close for incomplete bodies still applies. Phase 2 is store.receive, with the size limit and the raw-byte sha256 enforced while streaming, fsync, and no connection held. Phase 3 is openWrite (fresh ownership, transformation read, archived transformation), If-Match on the FOR UPDATE row, revision under the lock, a version-guarded update, the audit event, and finalise before COMMIT; the catch discards the final object and the .part. Download: no transaction while streaming. Worker: transactions run only SQL. Migrate: its own pg.Client, unaffected by the pool options. Pool: statement_timeout and idle_in_transaction_session_timeout 30 s, connectionTimeoutMillis 10 s, and an error listener on every client (connect hook); isPoolCheckoutTimeout maps to 503. Incomplete-body mapping: the strict conjunction in hooks.ts:82-90 (complete === false, no syscall, Node's abort error or premature close of an aborted request), logged at info. FE9: setValues updaters are pure, and onValuesChange is reported from an effect. react-warning-guard.ts forwards every console.error unchanged and only records five React warning patterns; it mocks or silences nothing, and its own test covers the 'other console.error' case. No secrets and no CDN in the diff. Issues found, both PRE-EXISTING and raised as findings: (a) phase 3 re-authorises against the grants and session loaded at request start (identity/routes.ts:137), so an in-flight upload commits after a revocation or logout: F-DG2-440, Medium; (b) OIDC discovery runs inside an open transaction in GET /auth/login (identity/routes.ts:268, oidc.ts:37-59), which contradicts the 'no remote call' note in pool.ts:34: F-DG2-441, Low. Observation, not a finding (not reachable): the upload's catch (routes.ts:546-548) also wraps sendVersioned after COMMIT. A synchronous throw there would discard a committed object, but sendVersioned and toEvidence do not throw for a committed row, and Fastify handles serialization errors inside reply.send.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-013",
+        "REQ-S13-012",
+        "REQ-DLV-034",
+        "REQ-S10-001"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-12/diff-scan.log",
+        "apps/api/src/modules/evidence/routes.ts",
+        "apps/api/src/modules/evidence/store.ts",
+        "apps/api/src/modules/platform/hooks.ts",
+        "packages/db/src/pool.ts",
+        "apps/web/test/react-warning-guard.ts",
+        "apps/web/src/components/RecordForm.tsx"
+      ]
+    },
+    {
+      "id": "SEC-R12-02-verify-F-DG2-411-r11-probe-rerun",
+      "procedure": "Re-run the round-11 probe unchanged (zz-sec-r11-probe.test.ts, sha256 0b60ece2) on this candidate on Node 22 (LANG unset) and Node 24 (LANG=C.UTF-8), each on a disposable PostgreSQL 16, and compare R8, R8b, R6a-e and R1-R7 with round 11.",
+      "command": "probe-runs.sh: with-pg.sh 29981|29982 pnpm vitest run --project integration apps/api/test/integration/zz-sec-r11-probe.test.ts",
+      "environment": "disposable clone $TMPDIR/r12p at 744af0b; Node 22.22.2 LANG unset and Node 24.21.0 LANG=C.UTF-8; PostgreSQL 16.13",
+      "expected": "R8: another user's /me and /readyz answer while uploads stall (F-DG2-411); R6a/R6d: no error-level log (F-DG2-412); R1-R7 unchanged",
+      "actual": "Both runs exit 1, with 16 of 17 passing. The ONLY failing assertion is R8b 'expect(meMs).toBeGreaterThan(1_500)' ('expected 6/7/10 to be greater than 1500'). That assertion encoded the round-11 DEFECT (/me blocked until requestTimeout), and the fix inverts it: /me now answers in 6-10 ms, so this failure is the evidence that the fix works. R8 passes: 6 uploads stalled on pool max 5, /me 200 in 10 ms, /readyz 200 in 3-4 ms (round 11: -1, no answer within 5 s). R6a/R6b/R6c get 408 with errs []; R6d/R6e get errs [] and nothing stored (round 11: R6a and R6d each had a level-50 'unhandled error'). R1/R1c/R2/R2b/R3/R4/R4b/R5/R7 pass as in round 11 (413 + close, sha256 byte-exact, keep-alive after 200, refusals close, rate limiting, bounded shutdown, refusal matrix). No 'Hook timed out', 'Failed Suites' or 'unhandled error' line in either log.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-013",
+        "REQ-DLV-034"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r11-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r11-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probe-runs.sh",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probes/README.md"
+      ]
+    },
+    {
+      "id": "SEC-R12-03-three-phase-upload-races-and-leftovers",
+      "procedure": "Adversarial round-12 probe over real sockets:\n- Q2: transformation archived while the body streams;\n- Q3: two uploads with the same If-Match completing together;\n- Q4: COMMIT failure after finalise (deferred constraint trigger);\n- Q5a: client abort, then check .part leftovers and log level;\n- Q6a: session settings;\n- Q6b: pool max 2 with 6 stalled uploads; pg_stat_activity read as SUPERUSER; FOR UPDATE NOWAIT on a stalled item.",
+      "command": "probe-runs.sh: with-pg.sh 29983|29984 pnpm vitest run --project integration apps/api/test/integration/zz-sec-r12-probe.test.ts",
+      "environment": "disposable clone $TMPDIR/r12p at 744af0b; Node 22.22.2 LANG unset and Node 24.21.0 LANG=C.UTF-8; PostgreSQL 16.13",
+      "expected": "Q2: 422, nothing stored. Q3: [200,409], one revision, one object. Q4: 500, nothing left. Q5a: no .part, info log. Q6: no session idle in transaction, /me prompt, no row lock",
+      "actual": "All seven pass in both runs:\n- Q2: 422 transformation.archived, no content row, no file.\n- Q3: statuses [409 version_conflict, 200], one revision (1), one audit event, the evidence version +1, and one object on disk (the committed key) with the winner's sha256.\n- Q4: 500 internal, an error-level log, no content row, no final object, no .part.\n- Q5a: 0 connections left, no file, one level-30 'request body not received completely', no error line.\n- Q6a: '30s'/'30s'.\n- Q6b: api sessions all 'idle' (none in a transaction), /me 200 in 6-7 ms, NOWAIT lock 'free'.\nThe same file's Q1/Q1b fail (FAIL check SEC-R12-05), so each log exits 1 with 7 passing and 2 failing. The only error-level line in these logs is Q4's deliberate COMMIT failure ('errs':['unhandled error']), which Q4 asserts.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-013",
+        "REQ-S13-012",
+        "REQ-DLV-034"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r12-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r12-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probes/zz-sec-r12-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probes/README.md"
+      ]
+    },
+    {
+      "id": "SEC-R12-04-incomplete-body-over-match",
+      "procedure": "Check that the central incomplete-body mapping never hides a genuine fault: Q5b, a server-side store failure while the body is still incomplete; Q4, a COMMIT failure. Compare with the candidate's own unit and integration over-match tests.",
+      "command": "zz-sec-r12-probe.test.ts Q4/Q5b (as above); pnpm test (incomplete-body.test.ts); request-io.test.ts 'no over-match' (integration runs)",
+      "environment": "as SEC-R12-03; unit runs on Node 22.22.2 and 24.21.0",
+      "expected": "Genuine faults keep their 5xx and their error-level log; only a client abort or requestTimeout becomes 400 at info",
+      "actual": "Q5b: 503 unavailable with an error-level 'request failed' log (not 400). Q4: 500 internal with an error-level log. incomplete-body.test.ts passes 4/4 on both Node versions, including 'does not over-match: a database ECONNRESET'. request-io 'no over-match: a database-side ECONNRESET while the request body is still arriving is a 500 with an error log' passes in both locale runs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-034"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r12-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r12-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/unit-node22.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/integration-run1-lang-unset.log"
+      ]
+    },
+    {
+      "id": "SEC-R12-05-toctou-revoked-grant-and-session",
+      "procedure": "Q1: revoke the uploader's only grant while the body streams. Q1b: log the uploading session out while the body streams. Then finish the body and check the response and the stored state. Control: a new request by the same session after the revocation. Re-run Q1/Q1b on the round-11 candidate 23e6c0a2 (clone 309aff2) to establish whether the behaviour pre-dates BE17.",
+      "command": "zz-sec-r12-probe.test.ts Q1/Q1b (probe-runs.sh); in $TMPDIR/r11c at 309aff2: with-pg.sh 29986 pnpm vitest run --project integration apps/api/test/integration/zz-sec-r12-probe.test.ts -t Q1",
+      "environment": "$TMPDIR/r12p at 744af0b (Node 22 LANG unset; Node 24 LANG=C.UTF-8) and $TMPDIR/r11c at 309aff2 (Node 22, LANG unset); PostgreSQL 16.13",
+      "expected": "The commit is refused (403 grant revoked, 401 session logged out), and nothing is stored",
+      "actual": "Q1 'expected 200 to be 403': the upload commits (revision 1, version 1->2, audit event by the revoked user). The control, a NEW request after the revocation, is correctly 404. Q1b 'expected 200 to be 401': logout is 200 and /me with the session is then 401, yet the in-flight upload commits 200. Identical on Node 22 and 24, and identical at the round-11 candidate (exit 1, 2 failed, 7 skipped by -t): pre-existing, not introduced by BE17. Cause: grants and session are loaded once in preValidation (identity/routes.ts:137), and phase 3 re-runs the policy on that snapshot. Finding F-DG2-440 (Medium, not mandatory).",
+      "exit_status": 1,
+      "result": "FAIL",
+      "requirements": [
+        "REQ-S10-001"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r12-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r12-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r12-Q1-on-round11-23e6c0a2.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probes/README.md"
+      ]
+    },
+    {
+      "id": "SEC-R12-06-sweep-remote-call-in-transaction",
+      "procedure": "Sweep for a transaction held while waiting on anything other than the database. OIDC login against a local IdP that accepts and never answers, with the default 10 s discovery timeout, the default auth rate limit and pool max 3: run 3 concurrent GET /api/v1/auth/login, then read pg_stat_activity as SUPERUSER and time a signed-in user's GET /me.",
+      "command": "probe-runs.sh: with-pg.sh 29988|29989 pnpm vitest run --project integration apps/api/test/integration/zz-sec-r12-oidc-probe.test.ts",
+      "environment": "$TMPDIR/r12p at 744af0b; Node 22.22.2 LANG unset and Node 24.21.0 LANG=C.UTF-8; PostgreSQL 16.13",
+      "expected": "No session idle in transaction while waiting on the IdP; /me answers promptly",
+      "actual": "Both runs exit 1, with 1 test failing: 'expected { state: idle in transaction, n: 3 } to be undefined'. Three api sessions sit idle in transaction; /me 200 after 9,010 / 9,029 ms; the logins get 302 /login?error=idp_unavailable after 10.0 s. Cause: identity/routes.ts:268 runs oidc.startLogin inside db.transaction(), and startLogin awaits discovery first (oidc.ts:37-59). Pre-existing since DG1 (8332624). Finding F-DG2-441 (Low).",
+      "exit_status": 1,
+      "result": "FAIL",
+      "requirements": [
+        "REQ-DLV-034"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r12-oidc-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r12-oidc-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probes/zz-sec-r12-oidc-probe.test.ts"
+      ]
+    },
+    {
+      "id": "SEC-R12-07-build",
+      "procedure": "pnpm -r build in the clean clone",
+      "command": "pnpm -r build",
+      "environment": "$TMPDIR/review-r12 at 744af0b; Node 22.22.2; pnpm 10.33.0; offline install (install.log: exit 0, with 2 expected WARN 'Failed to create bin ... mth-db' because packages/db/dist exists only after the build)",
+      "expected": "exit 0",
+      "actual": "exit 0. One non-failing Vite advisory line in the web build ('Adjust chunk size limit for this warning via build.chunkSizeWarningLimit'), also present in the round-11 build log; no error.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-12/build.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/install.log"
+      ]
+    },
+    {
+      "id": "SEC-R12-08-typecheck",
+      "procedure": "pnpm -r typecheck",
+      "command": "pnpm -r typecheck",
+      "environment": "$TMPDIR/review-r12 at 744af0b; Node 22.22.2",
+      "expected": "exit 0",
+      "actual": "exit 0, no diagnostics",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-12/typecheck.log"
+      ]
+    },
+    {
+      "id": "SEC-R12-09-lint",
+      "procedure": "pnpm lint (eslint --max-warnings=0)",
+      "command": "pnpm lint",
+      "environment": "$TMPDIR/review-r12 at 744af0b; Node 22.22.2",
+      "expected": "exit 0",
+      "actual": "exit 0, no warnings or errors",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-12/lint.log"
+      ]
+    },
+    {
+      "id": "SEC-R12-10-openapi-lint",
+      "procedure": "pnpm openapi:lint, plus a count of operationIds",
+      "command": "pnpm openapi:lint; grep -c '^ *operationId:' docs/api/openapi.yaml",
+      "environment": "$TMPDIR/review-r12 at 744af0b; Node 22.22.2",
+      "expected": "PASS, 161 operations",
+      "actual": "PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 161 operations; grep counts 161",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-12/openapi-lint.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/contract-ops.log"
+      ]
+    },
+    {
+      "id": "SEC-R12-11-no-cdn",
+      "procedure": "pnpm check:no-cdn",
+      "command": "pnpm check:no-cdn",
+      "environment": "$TMPDIR/review-r12 at 744af0b; Node 22.22.2",
+      "expected": "PASS",
+      "actual": "PASS no-cdn: scanned apps, packages",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-12/no-cdn.log"
+      ]
+    },
+    {
+      "id": "SEC-R12-12-format-check",
+      "procedure": "pnpm format:check",
+      "command": "pnpm format:check",
+      "environment": "$TMPDIR/review-r12 at 744af0b; Node 22.22.2",
+      "expected": "exit 0",
+      "actual": "All matched files use Prettier code style; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-12/format-check.log"
+      ]
+    },
+    {
+      "id": "SEC-R12-13-unit-node22",
+      "procedure": "pnpm test (unit-node and unit-web) on Node 22",
+      "command": "pnpm test --reporter=verbose",
+      "environment": "$TMPDIR/review-r12 at 744af0b; Node 22.22.2",
+      "expected": "all pass",
+      "actual": "43 test files, 790 tests passed (530 unit-node and 260 unit-web lines), 0 failed, exit 0. It includes incomplete-body.test.ts (4) and react-warning-guard.test.tsx. One non-failing line: a Fastify deprecation warning FSTDEP022 (router options access), printed by a Vitest worker process ('(node:1031)'). Vitest interleaves process output, so the log does not identify which test emitted it; the same line is in the round-11 unit log, and no test fails on it. No 'Hook timed out' and no failed suite.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-12/unit-node22.log"
+      ]
+    },
+    {
+      "id": "SEC-R12-14-unit-node24",
+      "procedure": "pnpm test on Node 24",
+      "command": "pnpm test --reporter=verbose",
+      "environment": "$TMPDIR/review-r12 at 744af0b; Node 24.21.0",
+      "expected": "all pass",
+      "actual": "43 files, 790 tests passed, 0 failed, exit 0. The same single FSTDEP022 deprecation line from a Vitest worker process (non-failing; see SEC-R12-13); no 'Hook timed out' and no failed suite.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-12/unit-node24.log"
+      ]
+    },
+    {
+      "id": "SEC-R12-15-unit-under-load",
+      "procedure": "pnpm test on Node 22 and then Node 24 while the probe clone loops pnpm -r build plus the round-12 probe on a disposable PostgreSQL (port 29991) as concurrent CPU load, on 4 vCPU",
+      "command": "load-repro.sh",
+      "environment": "$TMPDIR/review-r12 (tests) and $TMPDIR/r12p (load), both at 744af0b",
+      "expected": "all pass under load",
+      "actual": "Node 22: 790/790, exit 0 (load average 3.2 -> 7.7). Node 24: 790/790, exit 0 (7.7 -> 9.6). The load generator ran 3 build iterations and 2 probe iterations. Their output is discarded: they are load only, and that probe's 2 failing assertions are F-DG2-440, see SEC-R12-05.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-12/unit-under-load-node22.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/unit-under-load-node24.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/load-generator.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/load-repro.sh"
+      ]
+    },
+    {
+      "id": "SEC-R12-16-integration-run1-lang-unset",
+      "procedure": "Full integration suite on a disposable PostgreSQL 16 initialised with LANG/LC_ALL/LC_CTYPE unset (SQL_ASCII cluster default), port 29971",
+      "command": "with-pg.sh 29971 pnpm test:integration --reporter=verbose",
+      "environment": "$TMPDIR/review-r12 at 744af0b; Node 22.22.2; PostgreSQL 16.13; LANG unset",
+      "expected": "all pass, including contract (161 ops), media-types, connection-hygiene, request-io, pool-bounds, blank-text, oidc, invalid-character, framework-errors, invalid-utf8, encoding, evidence and migrations 0001-0019",
+      "actual": "37 files, 600 tests passed, 0 failed, exit 0; 19 migrations applied to a fresh UTF8 database. Passing per suite: contract 18; media-types 21; connection-hygiene 13; request-io 10; pool-bounds 7; blank-text 29; oidc 33; invalid-character 20; framework-errors 11; invalid-utf8 14; encoding 8; evidence 6; migrate 7. No 'Hook timed out', no failed suite, no stderr error line.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S10-001",
+        "REQ-S16-013",
+        "REQ-S13-012",
+        "REQ-DLV-034"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-12/integration-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/with-pg.sh",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/checks.sh"
+      ]
+    },
+    {
+      "id": "SEC-R12-17-integration-run2-lang-c-utf8",
+      "procedure": "Full integration suite on a disposable PostgreSQL 16 initialised with LANG=C.UTF-8 (UTF8 cluster), port 29972",
+      "command": "LANG=C.UTF-8 with-pg.sh 29972 pnpm test:integration --reporter=verbose",
+      "environment": "$TMPDIR/review-r12 at 744af0b; Node 22.22.2; PostgreSQL 16.13; LANG=C.UTF-8",
+      "expected": "all pass (same suites as run 1)",
+      "actual": "37 files, 600 tests passed, 0 failed, exit 0; 19 migrations applied; the same per-suite counts as run 1. No 'Hook timed out', no failed suite, no stderr error line.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S10-001",
+        "REQ-S16-013",
+        "REQ-S13-012",
+        "REQ-DLV-034"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-12/integration-run2-lang-c-utf8.log"
+      ]
+    },
+    {
+      "id": "SEC-R12-18-aud-403-sweep",
+      "procedure": "Count the AUD write-deny tests (generated from the contract) in both integration logs",
+      "command": "grep -E '^ +(✓|×).*aud-write-deny' integration-run1-lang-unset.log integration-run2-lang-c-utf8.log",
+      "environment": "the two integration logs above",
+      "expected": "every P2 mutation 403 for AUD; 0 failures",
+      "actual": "Both runs: 146 passing, 0 failing (128 P2 operations generated from the contract plus 18 kpi), including uploadEvidenceContent",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S10-001"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-12/aud-403-sweep.log"
+      ]
+    },
+    {
+      "id": "SEC-R12-19-requirements",
+      "procedure": "Map each assigned requirement to the suites that back it, and confirm that they pass in both locale runs. Read the code paths for REQ-S10-001 (access), REQ-S16-013 and REQ-S13-012 (evidence entity, verification status), REQ-PB-016/017/018 (G1-G3 checklists), REQ-PB-027/028 (baseline, value pools: decimals and Unknown), REQ-PB-029 (charter) and REQ-DLV-034.",
+      "command": "requirements-suites.log (per-file pass/fail counts in both runs)",
+      "environment": "the integration and unit logs above",
+      "expected": "Every backing suite passes; no unresolved Critical, High or mandatory issue against these requirements",
+      "actual": "Every backing suite passes in both runs, with 0 failing in any file: access-scope 18, access-derived-race 4, aud-write-deny 128, kpi-aud-write-deny 18, a12-cross-scope 14, evidence 6, dg2-repairs 13, registers 23, gates 12, kpi-resources 23, kpi-dg2-repairs 11, contract 18, migrate 7. REQ-S10-001 has open Medium finding F-DG2-440 (revocation latency for in-flight uploads; not mandatory, pre-existing). The other requirements have no open finding from this review.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S10-001",
+        "REQ-S16-013",
+        "REQ-S13-012",
+        "REQ-DLV-034",
+        "REQ-PB-016",
+        "REQ-PB-017",
+        "REQ-PB-018",
+        "REQ-PB-027",
+        "REQ-PB-028",
+        "REQ-PB-029"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-12/requirements-suites.log"
+      ]
+    },
+    {
+      "id": "SEC-R12-20-validate-historical-DG0",
+      "procedure": "Gate validator, historical, DG0",
+      "command": "node tools/gates/validate.mjs --historical --stage DG0",
+      "environment": "working tree /home/user/My-owns; Node 22.22.2",
+      "expected": "PASS",
+      "actual": "PASS gate DG0 (historical), exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-12/validate-historical-DG0.log"
+      ]
+    },
+    {
+      "id": "SEC-R12-21-validate-historical-DG1",
+      "procedure": "Gate validator, historical, DG1",
+      "command": "node tools/gates/validate.mjs --historical --stage DG1",
+      "environment": "working tree /home/user/My-owns; Node 22.22.2",
+      "expected": "PASS",
+      "actual": "PASS gate DG1 (historical), exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-12/validate-historical-DG1.log"
+      ]
+    },
+    {
+      "id": "SEC-R12-22-env-residuals",
+      "procedure": "Environmental residuals on the offline and config surfaces: live registry (REQ-DLV-042 AC-1, D-057) as an offline frozen install; live CI (REQ-DLV-025 A24, D-058) as the workflow config and copy identity, unchanged since round 11; Keycloak (D-049) as oidc.test.ts in both runs",
+      "command": "pnpm install --offline --frozen-lockfile; grep/cmp .github/workflows/ci.yml deploy/ci/ci.yml; git diff --stat cbdb4f6..8488e7a -- .github deploy package.json pnpm-lock.yaml; grep -c oidc in the integration logs",
+      "environment": "$TMPDIR/review-r12 at 744af0b; no network; no Keycloak",
+      "expected": "PASS on the offline/config surface, with the residual noted",
+      "actual": "Offline frozen install: exit 0. ci.yml copies are identical, and nothing changed in .github, deploy, package.json or pnpm-lock.yaml since round 11. oidc.test.ts 33/33 in both runs. Residuals, as assigned: the live registry, live CI and a real Keycloak were not exercised (no network in this sandbox). The log's last block ends with a 'grep -c' for failing OIDC lines, which prints 0 and by grep convention exits 1 on zero matches; that is the expected 'no failing test' result and is annotated in the log.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-12/env-residuals.log"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG2-440",
+    "F-DG2-441"
+  ],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG2/round-12/code-security-reviewer.verifications.json",
+    "docs/delivery/reviews/DG2/round-12/code-security-reviewer.findings.json",
+    "docs/delivery/test-evidence/DG2/code-security/round-12/summary.txt",
+    "docs/delivery/test-evidence/DG2/code-security/round-12/probe-summary.txt",
+    "docs/delivery/test-evidence/DG2/code-security/round-12/checks.sh",
+    "docs/delivery/test-evidence/DG2/code-security/round-12/probe-runs.sh",
+    "docs/delivery/test-evidence/DG2/code-security/round-12/probes/README.md",
+    "docs/delivery/test-evidence/DG2/code-security/round-12/probes/zz-sec-r12-probe.test.ts",
+    "docs/delivery/test-evidence/DG2/code-security/round-12/probes/zz-sec-r12-oidc-probe.test.ts",
+    "docs/delivery/test-evidence/DG2/code-security/round-12/diff-scan.log"
+  ],
+  "reviewed_at": "2026-10-07T05:00:00Z",
+  "summary": "DG2 round 12, candidate 5dfecce4 (source 8488e7a, 552 files; recomputed). F-DG2-411 and F-DG2-412 are CLOSED_VERIFIED. The round-11 probe re-run unchanged on Node 22 and 24: R8 /me answers in 10 ms (round 11: no answer), and R6a/R6d log no error. Its only failing assertion, R8b 'meMs > 1500', encoded the round-11 hold and is inverted by the fix. The adversarial round-12 probe confirms: no session idle in transaction and no row lock during stalled uploads; same-If-Match races give exactly [200, 409] with one revision and one object; an archive during the body gives 422; a COMMIT failure after finalise leaves nothing; an abort leaves no .part; genuine faults stay 500/503 at error level. All required checks ran and passed: typecheck, build, lint, OpenAPI lint (161 ops), no-CDN, format, unit 790/790 on Node 22 and 24 and under load, and integration 600/600 in both locale runs (migrations 0001-0019, the AUD sweep 146/146). Historical DG0 and DG1 validation pass. Two new PRE-EXISTING findings: F-DG2-440 (Medium, not mandatory): an in-flight upload commits after the uploader's grant is revoked or their session is logged out, because phase 3 re-authorises on the request-start grants and session (same result at round-11 23e6c0a2). F-DG2-441 (Low): OIDC discovery runs inside an open transaction in GET /auth/login, so an unresponsive IdP stalls signed-in users. Neither is Critical, High or mandatory, so under the assignment's rule the verdict is PASS; both should be repaired."
+}

@@ -1,0 +1,43 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG2-411",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:5dfecce44b9d7d4ded6ca45968c9e2686d1c011cdd7c906ba3dc9974bbdf92b8 (source 8488e7a, 552 files), recomputed in the working tree and in a clean disposable clone at the freeze commit 744af0b. The fix is BE17 eb455d3 (backend-workflow-engineer) plus the ADR-0007 §5b note be51ad7 (delivery-orchestrator); I authored none of it.\n- Code: uploadEvidenceContent (apps/api/src/modules/evidence/routes.ts:443-548) has three phases.\n  - Phase 1 is a short transaction with the same checks in the same order: transformation read, item 404, own-row write rule (403), file name, If-Match 428/409, archived 422, not_a_file, body present, raw byte stream. It commits before a byte of the body is read.\n  - Phase 2 is store.receive into the .part temporary with no connection held. The size limit and the raw-byte sha256 are enforced while streaming, and the file is fsync'd.\n  - Phase 3 is a short write transaction: openWrite (fresh ownership, transformation read, archived transformation), If-Match re-checked on the FOR UPDATE row, revision computed under the row lock, the content row, the version-guarded update, the audit event, then finalise (rename) as the last step before COMMIT. The catch discards both the final object and the .part.\n  - The download route queries without a transaction and streams after the query. Worker transactions run only SQL: pg-boss send on the same tx.\n- Round-11 probe re-run unchanged (sha256 0b60ece2) on Node 22.22.2 (LANG unset) and Node 24.21.0 (LANG=C.UTF-8). R8: 6 uploads stalled on a pool of 5; another user's GET /me answers 200 in 10 ms and /readyz 200 in 3-4 ms (round 11: no answer in 5 s). Its only failing assertion is R8b 'meMs > 1500', which encoded the round-11 hold; the fix inverts it (6-10 ms).\n- Round-12 adversarial probe:\n  - Q6b: pool max 2, 6 stalled uploads. Every api session, read as superuser, is 'idle' (none idle in transaction); /me 200 in 6-7 ms; FOR UPDATE NOWAIT on a stalled item succeeds (no row lock).\n  - Q3: two uploads with the same If-Match complete together: exactly [200, 409 version_conflict], one revision, one audit event, one object on disk, and the winner's sha256 (no double revision).\n  - Q2: transformation archived during the body: 422 transformation.archived, nothing stored.\n  - Q4: COMMIT fails after finalise (deferred constraint): 500 at error level, no content row, no final object, no .part.\n  - Q5a: client abort: no .part left.\n  - Q6a: every pool session has idle_in_transaction_session_timeout 30s and statement_timeout 30s.\n- The candidate's own request-io.test.ts (10/10) and packages/db pool-bounds.test.ts (7/7) pass in both locale integration runs (600/600 each).\n- Pool settings break nothing: the migrate CLI uses its own pg.Client (packages/db/src/migrate.ts:129), not createPool. bootstrap and seed-dev transactions are short. The worker and the API suite pass.\n- Remaining issues of a DIFFERENT class are raised separately; neither is a failure of this fix: F-DG2-440 (the phase-3 re-authorisation uses request-start grants and session; pre-existing) and F-DG2-441 (OIDC discovery inside a transaction, waiting on the IdP, not the client; pre-existing since DG1).",
+      "evidence": [
+        "apps/api/src/modules/evidence/routes.ts",
+        "apps/api/src/modules/evidence/store.ts",
+        "packages/db/src/pool.ts",
+        "apps/api/test/integration/request-io.test.ts",
+        "packages/db/test/integration/pool-bounds.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r11-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r11-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r12-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r12-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probes/zz-sec-r12-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probes/README.md",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/integration-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/integration-run2-lang-c-utf8.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG2-412",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:5dfecce44b9d7d4ded6ca45968c9e2686d1c011cdd7c906ba3dc9974bbdf92b8 (source 8488e7a). The fix is BE17 eb455d3 (backend-workflow-engineer); I authored none of it.\n- Code: isIncompleteBodyError (apps/api/src/modules/platform/hooks.ts:82-90) is checked centrally in mapError right after HttpProblem. It matches only when ALL of these hold:\n  - raw.complete === false (a fully received body never matches, and inject has no such flag);\n  - the error has no syscall (a database socket reset is 'read ECONNRESET' with syscall 'read');\n  - either code ECONNRESET with message 'aborted' (Node's request-abort error), or ERR_STREAM_PREMATURE_CLOSE on a request marked aborted or destroyed.\n  It answers 400 validation.malformed_request and logs at info (hooks.ts:217-219). pg protocol errors carry a SQLSTATE code; the store's EvidenceTooLarge and EvidenceStoreUnavailable carry no such code; fs errors carry a syscall. Phase-3 errors occur after the body completed (complete === true), so they never match.\n- Round-11 probe re-run unchanged, on Node 22 and Node 24: R6a (stalled JSON body, requestTimeout) gets 408 with errs [] (round 11: one level-50 'unhandled error'). R6d (client aborts a JSON body) gets errs [] (round 11: 'unhandled error'). R6c and R6e (upload stalled or aborted) get errs [] with nothing stored.\n- Round-12 probe:\n  - Q5a: client abort mid-upload logs exactly one level-30 'request body not received completely' (code ECONNRESET), no error-level line, connection released, no .part.\n  - Over-match checks: Q5b, a genuine store fault (item directory cannot be created) while the body is still incomplete, gives 503 unavailable at error level, not 400. Q4, a COMMIT failure, gives 500 internal at error level.\n- The candidate's incomplete-body.test.ts (4 unit tests, including the database-ECONNRESET non-match) passes on Node 22 and 24. request-io.test.ts 'no over-match: a database-side ECONNRESET while the request body is still arriving is a 500 with an error log' passes in both locale integration runs.",
+      "evidence": [
+        "apps/api/src/modules/platform/hooks.ts",
+        "apps/api/src/modules/platform/incomplete-body.test.ts",
+        "apps/api/test/integration/request-io.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r11-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r11-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r12-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r12-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probes/README.md",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/unit-node22.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/unit-node24.log"
+      ]
+    }
+  ]
+}
