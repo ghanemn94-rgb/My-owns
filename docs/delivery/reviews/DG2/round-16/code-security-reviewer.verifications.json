@@ -1,0 +1,25 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG2-530",
+      "result": "FAIL",
+      "status_after": "OPEN",
+      "note": "FAIL: the fix is real for the exact reproduction, but incomplete for the class the finding's expected result and FE14's claim cover. Verified on candidate sha256:0cab0a8c (source e3b2375, FE14 44f1cf0) in the disposable clone $TMPDIR/r16p, on Node 22.22.2 (LANG unset) and Node 24.21.0 (LANG=C.UTF-8).\n\nWHAT IS FIXED (genuine):\n- My round-15 probe, rerun UNCHANGED (sha256 bd97dbc9), passes 6/6 on both runtimes. X3 (A's PATCH answered after the identity changed to B) now gives cache name undefined, B does not see A-PATCHED-SECRET, and the path stays on the edit route. X2, X3b, X4 and X7 still pass.\n- apiRequest records sessionGeneration when the request is sent and throws SessionChangedError when the generation moved, on every exit path: network failure, body read, non-OK and OK. The generation moves in endSession, markSignedOut and noteSessionIdentity BEFORE the reset hooks run. A stale 401 no longer ends the new identity's session. shouldRetry never retries a SessionChangedError.\n- X6 holds with the production QUERY_DEFAULTS (my Y4): a refocus sends GET /me first, and the header and the data are B's.\n- The round-14 probe (FE10/FE13 guarantees: 16 hostile returnTo values, a 403 is never an end, one navigation, bounded /me, no stale shell) passes 26/26 on both runtimes. The product's FE14 tests, including a same-person new session that keeps its draft and a same-identity write that still updates the cache and navigates, pass in en and ar.\n\nWHAT IS NOT (my probe Y1, zz-sec-r16-web-probe.test.tsx, sha256 f0d72881, fails by design on both runtimes):\n- FE14 gates the answer of each request. It does not gate what a success handler does after a FURTHER await.\n- TransformationCreatePage.tsx:186-201: after `await api.send(POST)` returns A's 201 under A's generation, the handler awaits invalidateQueries (:193) and refreshEffectivePermissions (:199, a GET /me).\n- If A signed out and B signed in in another tab while the POST was in flight, that very /me returns B. The generation moves 0 -> 1 and the session state is reset, but the handler goes on to navigate to /transformations/<A's new id> with A's code and name in router state (:200-201).\n- B's GET of the record answers 404. TransformationDetailPage.tsx:58-66 then renders CreatedNotVisible from the router state. Under B's header, B reads 'TR-A-NEW-SECRET · A-CREATED-SECRET-NAME was saved as a draft. It is not submitted or approved.', which is A's data, presented as B's own creation.\n- That is exactly what F-DG2-530's expected result excludes: 'No response to a request issued under a previous identity ... is written into the cache or rendered once this tab has moved to another identity'. It also contradicts FE14's claim that no late success handler can 'navigate or render'.\n- The same unguarded navigate-after-await pattern exists in TransformationEditPage.tsx:131-133, OrganizationsPage.tsx:157-159 and UsersPage.tsx:292-294. There it only navigates B to A's record id, and B's view is server-authorised.\n\nSUGGESTED FIX: capture getSessionGeneration() (or the identity key) at submit, and re-check it after every await before setQueryData, navigate or router state. Better, provide one helper, e.g. `stillSameSession(gen)`, or a wrapper around navigate that drops navigations from a previous generation. Cover it with a test of the create flow in which the post-create /me returns another identity.\n\nSEVERITY UNCHANGED: Low, not mandatory. Server-side authorisation is intact. The disclosure is the code and name of the record A just created in that tab. It needs the same narrow race as the original: a sign-out plus a sign-in in another tab of the same browser profile while the POST is in flight. The finding stays OPEN.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-16/probe-r16-web-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-16/probe-r16-web-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-16/probe-r15-web-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-16/probe-r15-web-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-16/probe-r14-web-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-16/probe-r14-web-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-16/probes/zz-sec-r16-web-probe.test.tsx",
+        "docs/delivery/test-evidence/DG2/code-security/round-16/probes/README.md",
+        "docs/delivery/test-evidence/DG2/code-security/round-16/probe-runs.sh",
+        "apps/web/src/pages/transformations/TransformationCreatePage.tsx",
+        "apps/web/src/pages/transformations/TransformationDetailPage.tsx",
+        "apps/web/src/api/client.ts",
+        "apps/web/src/app/App.tsx"
+      ]
+    }
+  ]
+}
