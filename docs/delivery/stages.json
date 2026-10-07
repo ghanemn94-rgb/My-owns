@@ -820,7 +820,7 @@
       "id": "DG2",
       "stage": "P2",
       "name": "Diagnose define and design",
-      "state": "FIXING",
+      "state": "REVIEWING",
       "depends_on": [
         "DG1"
       ],
@@ -839,10 +839,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:7fd1a89ca090dbdea5ae9f014853684239cbf80e89dc5cce50914155cb9d484a",
-        "source_commit": "fe22d75962ca1962df462055645169787ddbc201",
-        "frozen_at": "2026-10-06T23:15:54Z",
-        "manifest_path": "docs/delivery/candidates/DG2/7fd1a89ca090dbde.manifest.json"
+        "candidate_id": "sha256:23e6c0a2834d2f255410e23197864ce283979964128791cfafc3e7075c7f7bad",
+        "source_commit": "cbdb4f68a4d2f67464eb3674133d9086b2fe4e81",
+        "frozen_at": "2026-10-07T01:51:27Z",
+        "manifest_path": "docs/delivery/candidates/DG2/23e6c0a2834d2f25.manifest.json"
       },
       "review_rounds": [
         {
@@ -963,6 +963,18 @@
             "qa-verifier": "docs/delivery/reviews/DG2/round-10/qa-verifier.json"
           },
           "note": "DG2 gate review round 10 on candidate 7fd1a89c (544 files, source fe22d75). F-DG2-350 (an unmatched route is 404 whatever its body) and F-DG2-351 (one RFC 9110 media-type decision that the parser lookup agrees with; every refusal names the route set) are FIXED_PENDING_VERIFICATION (D-070; BE15 WIP 08a4f63, salvaged from a run killed by a container restart, completed by BE15B e974d78). The other 26 DG2 findings are CLOSED_VERIFIED. Orchestrator pre-review verification in both locale settings: all 32 steps exit 0. Disjoint id ranges: code-security 380-389, domain 390-399, qa 400-409."
+        },
+        {
+          "round": 11,
+          "candidate_id": "sha256:23e6c0a2834d2f255410e23197864ce283979964128791cfafc3e7075c7f7bad",
+          "frozen_at": "2026-10-07T01:51:27Z",
+          "source_commit": "cbdb4f68a4d2f67464eb3674133d9086b2fe4e81",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG2/round-11/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG2/round-11/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG2/round-11/qa-verifier.json"
+          },
+          "note": "DG2 gate review round 11 on candidate 23e6c0a2 (547 files, source cbdb4f6), after the round-10 audit BLOCKED (D-071). It contains BE16 258b7e5 (a response sent before its body arrived closes the connection; bounded shutdown; requestTimeout; unmatched routes rate-limited) and the ADR-0007 §5b amendment. F-DG2-206 owner record corrected. All 28 DG2 findings CLOSED_VERIFIED. code-security reproduces the auditor defect at 7fd1a89c, raises it and verifies the BE16 fix on this candidate. Every reviewer discloses each failure in its cited logs. Orchestrator pre-review verification in both locale settings: all 32 steps exit 0, with no hidden failures in the logs. Disjoint id ranges: code-security 410-419, domain 420-429, qa 430-439."
         }
       ],
       "gate_record": "docs/delivery/gates/DG2.json",
@@ -1081,6 +1093,11 @@
           "state": "FIXING",
           "at": "2026-10-07T00:18:45Z",
           "note": "Release-auditor T-DG2-AUDIT-R10 on candidate 7fd1a89c: BLOCKED (docs/delivery/gates/DG2.json). Every other audit condition held: identity, DG1 historical, provenance, 28/28 findings with correct ancestry, 32/32 requirements, D-059 to D-070, residuals. Blocking conditions: (1) the code-security round-10 probe logs show a second failure that its record does not disclose (afterAll api.close() hook timeout); (2) an untriaged product defect the auditor reproduced: after an over-limit chunked evidence upload the API answers 413 but holds the connection about 65 s, and app.close()/SIGTERM stalls (pre-existing; present at 041478cb); (3) F-DG2-206 recorded owner=qa-verifier while its fix ee46813 was orchestrator-authored, so the validator saw an owner self-verification. Actions (D-071): the F-206 owner record is corrected to delivery-orchestrator (the fix author; status and verification unchanged); backend-workflow-engineer T-DG2-BE16 repairs the connection-holding class and bounds shutdown; round 11 is a full review in which code-security triages and verifies the auditor defect and the records disclose every non-zero exit; then a fresh audit."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-10-07T01:51:41Z",
+          "note": "BE16 (connection-holding class, bounded shutdown) and the ADR-0007 §5b amendment integrated; D-071 recorded. Orchestrator verification green in both locale settings (unit 771x4 per setting, integration 583, e2e 60). Candidate frozen as 23e6c0a2 for gate review round 11."
         }
       ]
     },
