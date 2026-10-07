@@ -10688,7 +10688,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-12/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-07T05:00:00Z",
@@ -10699,10 +10699,43 @@
           "at": "2026-10-07T06:16:30Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 8c0083e990a39bf061c7ecd4a45cf0281f5d5a9d"
+        },
+        {
+          "at": "2026-10-07T06:58:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 13: PASS"
         }
       ],
       "fix_revision": "8c0083e990a39bf061c7ecd4a45cf0281f5d5a9d",
-      "fix_summary": "BE18A 8c0083e: before the change, the upload's phase-3 write transaction re-authorises against fresh state through the identity module's own resolution: the session must still be active (not revoked, logged out, idle- or absolute-expired, user not disabled; else 401 and the session-ended problem), and the caller's grants are reloaded and the policy re-run (403 with the denied-mutation audit). The received object is discarded on refusal. Sweep: uploadEvidenceContent is the only route that waits on the client between preValidation and its commit. Residual window: the few ms of phase 3's own transaction. Tests Q1 (grant revoked mid-body: 403, nothing committed), Q1b (logout: 401), idle and absolute expiry, disabled user, a re-grant control; negative control on 8c02475."
+      "fix_summary": "BE18A 8c0083e: before the change, the upload's phase-3 write transaction re-authorises against fresh state through the identity module's own resolution: the session must still be active (not revoked, logged out, idle- or absolute-expired, user not disabled; else 401 and the session-ended problem), and the caller's grants are reloaded and the policy re-run (403 with the denied-mutation audit). The received object is discarded on refusal. Sweep: uploadEvidenceContent is the only route that waits on the client between preValidation and its commit. Residual window: the few ms of phase 3's own transaction. Tests Q1 (grant revoked mid-body: 403, nothing committed), Q1b (logout: 401), idle and absolute expiry, disabled user, a re-grant control; negative control on 8c02475.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG2-T-DG2-REV-SEC-R13-code-security-reviewer-20261007T063843Z-6525d5f1",
+          "session_id": "6525d5f1-ee95-49b6-a17a-7aab947b449b"
+        },
+        "at": "2026-10-07T06:58:00Z",
+        "result": "PASS",
+        "evidence": [
+          "apps/api/src/modules/evidence/routes.ts",
+          "apps/api/src/modules/access/request.ts",
+          "apps/api/src/modules/transformations/register-kit.ts",
+          "apps/api/src/modules/identity/routes.ts",
+          "apps/api/src/modules/identity/sessions.ts",
+          "apps/api/test/integration/commit-time-auth.test.ts",
+          "docs/delivery/test-evidence/DG2/code-security/round-12/probes/zz-sec-r12-probe.test.ts",
+          "docs/delivery/test-evidence/DG2/code-security/round-13/probes/zz-sec-r13-probe.test.ts",
+          "docs/delivery/test-evidence/DG2/code-security/round-13/probes/README.md",
+          "docs/delivery/test-evidence/DG2/code-security/round-13/probe-r12-node22-lang-unset.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-13/probe-r12-node24-lang-c-utf8.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-13/probe-r13-node22-lang-unset.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-13/probe-r13-node24-lang-c-utf8.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-13/integration-run1-lang-unset.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-13/integration-run2-lang-c-utf8.log"
+        ],
+        "note": "Verified on candidate sha256:6824b8b8d36a688178a058c11c4882737a79cf7f39b438dcf2390eafb88d3afc (source aa0a68f, 556 files), recomputed in the working tree and in a clean disposable clone at the freeze commit 5699f72. The fix is BE18A 8c0083e (backend-workflow-engineer) plus D-073 (delivery-orchestrator); I authored none of it.\n- Code:\n  - Phase 3 of uploadEvidenceContent (apps/api/src/modules/evidence/routes.ts:514-571) calls openWrite(..., { atCommit: true }) inside its write transaction.\n  - openWrite (transformations/register-kit.ts:262-269) then calls refreshPrincipal (access/request.ts:42-50), which runs request.reauthenticate(tx). That is the identity module's own principalFor (identity/routes.ts:124-140), the same function the preValidation hook uses. It runs resolveSession on the tx (token hash, revoked_at null, idle and absolute expiry vs now(), user status active, identity/sessions.ts:75-94), checks the same user id and reloads the grants with loadGrants(tx).\n  - A null result is 401 unauthenticated. The read and write gates then run on the RELOADED principal, and a 404 from the read gate becomes 403 forbidden with the denial kept (commitTimeDenial), so denials.ts audits authorization.denied.\n  - The catch at routes.ts:572-575 discards the temporary and the final object on every refusal. It fails closed: a request without a resolver gets 401.\n  - JSON routes are not exposed: Fastify parses the whole body BEFORE preValidation, so their request-start snapshot is taken after the client has finished sending. The upload is the only route whose parser passes the raw stream (evidence/routes.ts:388-391; the other parser is JSON, server.ts:207-210).\n- My round-12 reproductions, re-run UNCHANGED (zz-sec-r12-probe sha 71cbe705) on Node 22.22.2 (LANG unset) and Node 24.21.0 (LANG=C.UTF-8):\n  - Q1 (grant revoked while the body streams) is now 403 forbidden with nothing stored, no .part and no upload audit (round 12: 200).\n  - Q1b (session logged out while the body streams) is now 401 unauthenticated with nothing stored (round 12: 200).\n  - Q2-Q6b are unchanged (9/9 pass).\n- New adversarial probe zz-sec-r13-probe (sha 8ae4840f), on both Node versions:\n  - S1: a role DOWNGRADE (WL -> AUD at the same scope, read kept, evidence.create lost) while the body streams gives 403, one authorization.denied audit '... requires evidence.create', and nothing stored.\n  - S2: the item's owner reassigned away from the uploader while the body streams gives 403, nothing stored.\n- The candidate's commit-time-auth.test.ts (8/8) passes in both locale integration runs. It covers revocation, logout, idle and absolute expiry, a disabled user, a positive control and re-grant (the current grants win).\n- Residual (measured, S3; NOT a finding):\n  - The authority is read at the start of phase 3, and the item's FOR UPDATE lock is taken after it. A revocation that commits while phase 3 waits for that lock does not stop the commit (200).\n  - This is the stated residual window (phase 3's own transaction). Only a concurrent transaction holding the item's row lock can lengthen it, and since BE17 none waits on a client. statement_timeout (30 s) bounds it, and the uploader cannot extend it through the API.\n  - Suggested hardening, optional: take the row lock before re-authorising."
+      }
     },
     {
       "id": "F-DG2-441",
@@ -10726,7 +10759,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-12/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-07T05:00:00Z",
@@ -10737,10 +10770,37 @@
           "at": "2026-10-07T06:16:30Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 8c0083e990a39bf061c7ecd4a45cf0281f5d5a9d"
+        },
+        {
+          "at": "2026-10-07T06:58:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 13: PASS"
         }
       ],
       "fix_revision": "8c0083e990a39bf061c7ecd4a45cf0281f5d5a9d",
-      "fix_summary": "BE18A 8c0083e: GET /auth/login resolves the OIDC configuration (discovery) via prepareLogin before any transaction, then saveLoginState inserts the state in a short transaction. Discovery failure is still 302 /login?error=idp_unavailable. A class sweep of every non-database await inside a db.transaction callback or a checked-out client (API, worker, packages) found and fixed this one; the evidence finalise rename is the documented exception. The pool.ts sweep note is corrected. Test Q7: a never-answering IdP with pool max 3 leaves no session idle in transaction, and /me stays prompt; negative control."
+      "fix_summary": "BE18A 8c0083e: GET /auth/login resolves the OIDC configuration (discovery) via prepareLogin before any transaction, then saveLoginState inserts the state in a short transaction. Discovery failure is still 302 /login?error=idp_unavailable. A class sweep of every non-database await inside a db.transaction callback or a checked-out client (API, worker, packages) found and fixed this one; the evidence finalise rename is the documented exception. The pool.ts sweep note is corrected. Test Q7: a never-answering IdP with pool max 3 leaves no session idle in transaction, and /me stays prompt; negative control.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG2-T-DG2-REV-SEC-R13-code-security-reviewer-20261007T063843Z-6525d5f1",
+          "session_id": "6525d5f1-ee95-49b6-a17a-7aab947b449b"
+        },
+        "at": "2026-10-07T06:58:00Z",
+        "result": "PASS",
+        "evidence": [
+          "apps/api/src/modules/identity/oidc.ts",
+          "apps/api/src/modules/identity/routes.ts",
+          "apps/api/test/integration/commit-time-auth.test.ts",
+          "apps/api/test/integration/oidc.test.ts",
+          "docs/delivery/test-evidence/DG2/code-security/round-12/probes/zz-sec-r12-oidc-probe.test.ts",
+          "docs/delivery/test-evidence/DG2/code-security/round-13/probe-r12-oidc-node22-lang-unset.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-13/probe-r12-oidc-node24-lang-c-utf8.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-13/await-sweep.mjs",
+          "docs/delivery/test-evidence/DG2/code-security/round-13/await-sweep.log"
+        ],
+        "note": "Verified on candidate sha256:6824b8b8d36a688178a058c11c4882737a79cf7f39b438dcf2390eafb88d3afc (source aa0a68f). The fix is BE18A 8c0083e (backend-workflow-engineer); I authored none of it.\n- Code:\n  - GET /api/v1/auth/login (identity/routes.ts:290-296) now calls oidc.prepareLogin first, outside any transaction (identity/oidc.ts:71-88). That covers OIDC discovery via configuration_(), the random state, nonce and PKCE verifier, and the authorization URL. Only then does it run saveLoginState in a short transaction that does nothing but INSERT INTO oidc_login_state.\n  - The state is still stored as sha256 with the nonce, PKCE verifier, return_to and sha256(browser binding), and the 10-minute expiry is unchanged. The login cookie is still set only after the insert succeeded.\n  - The callback is unchanged. consumeState (its own transaction), exchange (remote, outside any transaction) and resolveOidcUser (its own transaction) run one after another. endSessionUrl runs after the logout transaction.\n- My round-12 reproduction, re-run UNCHANGED (zz-sec-r12-oidc-probe sha db10609c) on Node 22 and Node 24, with a never-answering IdP, pool max 3 and three concurrent logins:\n  - all three API sessions are 'idle' (round 12: 'idle in transaction');\n  - a signed-in user's /me answers 200 in 18-22 ms (round 12: 9.0 s);\n  - the logins end in 302 /login?error=idp_unavailable after the 10 s discovery timeout.\n  The candidate's commit-time-auth.test.ts Q7 and oidc.test.ts (33/33: state, nonce, PKCE, browser binding) pass in both locale runs.\n- Independent sweep:\n  - I wrote my own TypeScript-AST scan (await-sweep.mjs, 135 files across apps/*/src and packages/*/src) of every await in a transaction callback, in a function taking a Tx, DbOrTx, Transaction or client, and in pooled-client checkouts.\n  - It found no remote or slow non-database await inside a transaction. The only one is the documented store.finalise (a local atomic rename) as the last step before COMMIT.\n  - The worker's pg-boss send runs on the same transaction. The rest are Kysely builders, closures over tx, the /readyz checkout and the operator CLI."
+      }
     },
     {
       "id": "F-DG2-460",
@@ -10768,7 +10828,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG2/round-12/qa-verifier.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-07T05:20:00Z",
@@ -10779,10 +10839,81 @@
           "at": "2026-10-07T06:16:30Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 8c0083e990a39bf061c7ecd4a45cf0281f5d5a9d"
+        },
+        {
+          "at": "2026-10-07T07:50:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 13: PASS"
         }
       ],
       "fix_revision": "8c0083e990a39bf061c7ecd4a45cf0281f5d5a9d",
-      "fix_summary": "BE18A 8c0083e: an in-flight tracker (platform/in-flight.ts) lets graceful shutdown wait, bounded at 3 s and within the backstop, for every handler to settle, including its catch/finally cleanup, before db.destroy() and process.exit. The filesystem evidence store sweeps .part temporaries older than a safe age (1 h, beyond requestTimeout plus grace, across instances) at start-up, logged at info; final objects are never touched. Tests: R12-07 (stalled upload then SIGTERM: no .part, no final object, exit 0), an actively streaming upload, and the sweep keeping fresh temporaries and final objects; qa's R11-02 and R12-07 specs pass byte-identical; negative control on 8c02475."
+      "fix_summary": "BE18A 8c0083e: an in-flight tracker (platform/in-flight.ts) lets graceful shutdown wait, bounded at 3 s and within the backstop, for every handler to settle, including its catch/finally cleanup, before db.destroy() and process.exit. The filesystem evidence store sweeps .part temporaries older than a safe age (1 h, beyond requestTimeout plus grace, across instances) at start-up, logged at info; final objects are never touched. Tests: R12-07 (stalled upload then SIGTERM: no .part, no final object, exit 0), an actively streaming upload, and the sweep keeping fresh temporaries and final objects; qa's R11-02 and R12-07 specs pass byte-identical; negative control on 8c02475.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG2-T-DG2-REV-QA-R13-qa-verifier-20261007T063923Z-094d9ec5",
+          "session_id": "094d9ec5-0651-4cf0-9d47-cf02298090b5"
+        },
+        "at": "2026-10-07T07:50:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG2/qa/round-13/19-qa-r13-results.log",
+          "docs/delivery/test-evidence/DG2/qa/round-13/17-e2e-qa-stack-unset.log",
+          "docs/delivery/test-evidence/DG2/qa/round-13/17-e2e-qa-stack-cutf8.log",
+          "docs/delivery/test-evidence/DG2/qa/round-13/19-negative-control-744af0b.log",
+          "docs/delivery/test-evidence/DG2/qa/round-13/19-static-inspection.log",
+          "docs/delivery/test-evidence/DG2/qa/round-13/18-r13-spec-dev-run1.log",
+          "docs/delivery/test-evidence/DG2/qa/round-13/18-r13-spec-dev-run2.log",
+          "docs/delivery/test-evidence/DG2/qa/tests/round-13/e2e/dg2-qa-r13.spec.ts",
+          "docs/delivery/test-evidence/DG2/qa/tests/round-12/e2e/dg2-qa-r12.spec.ts",
+          "docs/delivery/test-evidence/DG2/qa/tests/round-11/e2e/dg2-qa-r11.spec.ts",
+          "apps/api/src/main.ts",
+          "apps/api/src/modules/platform/in-flight.ts",
+          "apps/api/src/modules/evidence/store.ts",
+          "apps/api/src/modules/evidence/routes.ts"
+        ],
+        "note": "Verified on candidate sha256:6824b8b8d36a688178a058c11c4882737a79cf7f39b438dcf2390eafb88d3afc (556 files, source aa0a68f1, freeze 5699f72). The fix is BE18A 8c0083e (D-073) by backend-workflow-engineer; qa-verifier authored none of it. All runs used the real built API (apps/api/dist/main.js), a disposable PostgreSQL 16 (UTF8, C) and the filesystem evidence store, through e2e/support/qa-stack.sh, with --workers=1. Each spec ran in chromium-en and chromium-ar, once with LANG/LC_ALL unset and once with LANG=C.UTF-8. (1) My original reproductions now pass in all 4 runs per test. R12-07: an upload stalled in flight at SIGTERM exits 0 in about 5.02-5.04 s; the store held a 2,097,152 B .part during the stall and holds nothing after exit; no content row, currentContentId null, GET content 404. The client-abort control also leaves nothing. R11-02(b): stored files 0 and exit 0. (2) New R13-01: two uploads were ACTIVELY STREAMING through the whole 5 s grace (about 6.7 MB of a declared 24 MiB sent when the server cut them) and a third was stalled. SIGTERM exits 0 in 5,023-5,045 ms, inside the 10 s backstop. The server closed all 3 sockets, 'shut down' is logged, there is no settle-period warning and no error-level line. Nothing is left in the store after exit or after a restart on the same store; 0 content rows and versions unchanged. (3) New R13-02 drain check: an upload that finishes inside the grace still commits (200), byte-exact with sha256 = DB, leaves only its final object (no .part) and exits 0. (4) New R13-03 start-up sweep on a new API process over the shared store. Exactly the stale <uuid>.part (mtime 2 h ago, 4,096 B) is removed. It is logged at info as 'evidence store: stale temporary object removed' with the root-relative key (no absolute path), sizeBytes 4096 and ageMs about 7.2e6. The finished line reports removed 1 and keptFresh equal to the number of fresh temporaries actually present, with olderThanMs 3600000. All of these are kept: a fresh .part, a 50-minute-old .part, a 3-hour-old FINAL object, a real committed object back-dated to 2 h (still downloadable byte-exact), a stale 'notes.part', an upper-case-UUID .part, stale .part files at depth 2 and depth 4, a stale '<uuid>.part' DIRECTORY, a directory symlink to an outside tree holding a stale .part, and a '<uuid>.part' symlink to an outside stale file. The sha256 of every other object in the store is unchanged. (5) Negative control: the same R13-01 and R13-03 on the round-12 freeze 744af0b (pre-BE18A) fail in both projects, as expected. After SIGTERM, .part files of 6,782,976 B, 6,782,976 B and 1,048,576 B remain, and no sweep runs (no finished line, nothing removed). So the probes detect the defect. (6) Static reading agrees with this: main.ts runs app.close(), then inFlight.settled(3 000 ms), then db.destroy(), then process.exit(0). Every route registered after registerInFlightTracking is tracked, and so are the failed-mutation audit and the sweep. During my development of R13-03, the first run failed because my own snapshot followed a symlink; the product's sweep was correct. That is explained in 18-r13-spec-dev-run1.log and the record."
+      }
+    },
+    {
+      "id": "F-DG2-480",
+      "stage_id": "DG2",
+      "requirement": "REQ-S16-030",
+      "severity": "High",
+      "mandatory_violation": false,
+      "title": "When a session ends while the app is open (access revoked, signed out elsewhere, expiry, or the D-073 commit-time refusal of an upload), the web client loops forever between /login?error=session_expired and the page: blank screen, no sign-in form, no localized message, about 130-140 /me requests per second; with default rate limits it locks the IP out and shows a stale signed-in shell",
+      "reproduction": "Disposable clone at 5699f721 (candidate 6824b8b8…, source aa0a68f1). Fresh PostgreSQL 16 and API (AUTH_MODE=dev, synthetic seed, apps/web/dist served), Chromium, Node 24.21.0.\n(1) Generic case, `with-stack.sh node rv/r13-session-end-ui.mjs`: dev.lead signs in through the form and is on My work. The session is ended from outside the page (POST /api/v1/auth/logout with the browser's own cookie, i.e. 'signed out in another tab'). The user clicks the in-app link to /transformations. Sampled every 250 ms for 10 s, the URL alternates /transformations <-> /login?returnTo=…&error=session_expired 18 (EN) and 21 (AR) times. The page is blank (no text, no input) the whole time, the localized 'Your session ended…' / 'انتهت جلستك…' message never appears, and the tab sends 1411 (EN) and 1265 (AR) /me requests in 10 s. Control: the same session end followed by a page reload lands on the sign-in form in about 0.4 s with 2 /me requests.\n(2) The D-073 case, `r13-ui.mjs` (c) and `r13-ui-withdrawn.mjs`: dev.nobody holds TL on a transformation and opens the evidence Upload dialog. An administrator revokes the assignment through POST /api/v1/role-assignments/{id}/revoke, which also ends the sessions. The user confirms the upload: the API answers 401 unauthenticated, correctly, and nothing is stored. The dialog shows the localized message for a few ms, then the page enters the same blank loop: 15 s of alternation and thousands of /me 401s.\n(3) Default rate limits (RATE_LIMIT_PER_MINUTE=300, `with-stack-default-limits.sh node rv/r13-session-end-ui.mjs`): after about 283 /me calls in about 1.8 s the client-IP bucket is exhausted, because an ended session's cookie is keyed by IP. The page then shows the signed-out user the app shell with their stale name, 'Sign out' and 'Something went wrong / Too many requests', not the sign-in form. The next browser context from the same IP could not get a sign-in form at all (locator timeout).\nCause, by reading the code: apps/web/src/auth/session.tsx RequireSession redirects to /login?…&error=session_expired when /me answers 401 while me.data (the last successful /me) is still cached. apps/web/src/pages/LoginPage.tsx line 66 `if (me.data) return <Navigate to={returnTo} replace />` sees that same stale cached me.data and sends the user straight back, and each mount re-probes /me. The code is unchanged since DG1 (4cd9224) and the web was not touched by D-073. The defect is pre-existing, but D-073's new commit-time 401 on uploads now leads into it too.",
+      "expected": "When a request answers 401 because the session ended (revocation, sign-out elsewhere, idle or absolute expiry, or the D-073 commit-time re-authorisation), the user lands once on the sign-in page. It shows the localized session-ended message (auth.errors.session_expired, EN LTR / AR RTL) and the sign-in form, with a bounded number of /me requests. Signing in again returns them to their page. The cached identity is cleared, so a signed-out user never sees a stale signed-in shell, and one stuck tab never exhausts the rate-limit bucket of everyone behind the same IP.",
+      "actual": "The user is stuck on a blank page that alternates between /login and the original route indefinitely, until they manually reload. There is no message and no form. The tab sends about 130-140 /me requests per second. With the product's default limits this exhausts the shared per-IP bucket in about 2 s. The tab then shows a stale signed-in shell with 'Too many requests', and other sign-ins from that IP are refused for the rest of the minute. The server side behaves correctly throughout: 401 unauthenticated, nothing stored, no temporary file left. Only the client's session-end handling is broken.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-13/r13-session-end-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-13/r13-session-end-ui.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-13/r13-session-end-ui-default-limits.log",
+        "docs/delivery/test-evidence/DG2/domain/round-13/with-stack-default-limits.sh",
+        "docs/delivery/test-evidence/DG2/domain/round-13/r13-ui-withdrawn.log",
+        "docs/delivery/test-evidence/DG2/domain/round-13/r13-ui-withdrawn.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-13/r13-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-13/screens/en-r13-session-end-in-app-link-blank-loop.png",
+        "docs/delivery/test-evidence/DG2/domain/round-13/screens/ar-r13-session-end-in-app-link-blank-loop.png",
+        "docs/delivery/test-evidence/DG2/domain/round-13/screens/en-r13-session-end-default-limits-429.png",
+        "docs/delivery/test-evidence/DG2/domain/round-13/screens/ar-r13-session-end-reload-control.png",
+        "apps/web/src/pages/LoginPage.tsx",
+        "apps/web/src/auth/session.tsx",
+        "apps/web/src/api/queries.ts",
+        "apps/api/src/server.ts"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-13/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-07T07:00:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG2 round 13 (T-DG2-REV-DOM-R13) while confirming the D-073 user outcomes ('an upload is refused if access is withdrawn or the user signs out' and 'sign-in still works'). Reproduced in EN and AR, with and without the D-073 upload path, and with the product's default rate limits. Pre-existing since DG1 (4cd9224) in the web client; the D-073 server behaviour itself is correct. High: the re-authentication workflow after a session ends is broken for every screen, and with default limits one stuck tab locks its IP out. Not marked mandatory: no access-control, data-integrity or calculation breach (the server refuses correctly)."
+        }
+      ]
     }
   ]
 }
