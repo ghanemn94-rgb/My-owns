@@ -10688,14 +10688,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-12/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-07T05:00:00Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG2 round 12, while adversarially probing the BE17 three-phase upload for 'a TOCTOU between phase 1 and phase 3, a revoked grant' as the assignment directs. Pre-existing (same result at the round-11 candidate 23e6c0a2). Medium, non-mandatory (see actual). It does not block the round under the stated gate rule (no Critical, High or mandatory finding), but it should be repaired: re-resolve the session and reload grants in phase 3."
+        },
+        {
+          "at": "2026-10-07T06:16:30Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 8c0083e990a39bf061c7ecd4a45cf0281f5d5a9d"
         }
-      ]
+      ],
+      "fix_revision": "8c0083e990a39bf061c7ecd4a45cf0281f5d5a9d",
+      "fix_summary": "BE18A 8c0083e: before the change, the upload's phase-3 write transaction re-authorises against fresh state through the identity module's own resolution: the session must still be active (not revoked, logged out, idle- or absolute-expired, user not disabled; else 401 and the session-ended problem), and the caller's grants are reloaded and the policy re-run (403 with the denied-mutation audit). The received object is discarded on refusal. Sweep: uploadEvidenceContent is the only route that waits on the client between preValidation and its commit. Residual window: the few ms of phase 3's own transaction. Tests Q1 (grant revoked mid-body: 403, nothing committed), Q1b (logout: 401), idle and absolute expiry, disabled user, a re-grant control; negative control on 8c02475."
     },
     {
       "id": "F-DG2-441",
@@ -10719,14 +10726,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-12/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-07T05:00:00Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG2 round 12, during the assigned sweep for 'any remaining path that holds a pooled connection, transaction or row lock while it waits'. This one waits on the IdP rather than the HTTP client. Pre-existing since DG1. Low, non-mandatory; it does not block the round."
+        },
+        {
+          "at": "2026-10-07T06:16:30Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 8c0083e990a39bf061c7ecd4a45cf0281f5d5a9d"
         }
-      ]
+      ],
+      "fix_revision": "8c0083e990a39bf061c7ecd4a45cf0281f5d5a9d",
+      "fix_summary": "BE18A 8c0083e: GET /auth/login resolves the OIDC configuration (discovery) via prepareLogin before any transaction, then saveLoginState inserts the state in a short transaction. Discovery failure is still 302 /login?error=idp_unavailable. A class sweep of every non-database await inside a db.transaction callback or a checked-out client (API, worker, packages) found and fixed this one; the evidence finalise rename is the documented exception. The pool.ts sweep note is corrected. Test Q7: a never-answering IdP with pool max 3 leaves no session idle in transaction, and /me stays prompt; negative control."
     },
     {
       "id": "F-DG2-460",
@@ -10754,14 +10768,21 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG2/round-12/qa-verifier.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-07T05:20:00Z",
           "status": "OPEN",
           "note": "Raised by qa-verifier in DG2 round 12 (T-DG2-REV-QA-R12). The full regression's R11-02(b) failed 4 of 4 runs. The dedicated probe R12-07 identifies the leftover .part and shows it survives a restart. The same probe on the round-11 freeze 309aff2 leaves nothing, so this is a BE17 regression. Medium, non-mandatory. Because it is a regression, the round-12 qa verdict is FAIL."
+        },
+        {
+          "at": "2026-10-07T06:16:30Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 8c0083e990a39bf061c7ecd4a45cf0281f5d5a9d"
         }
-      ]
+      ],
+      "fix_revision": "8c0083e990a39bf061c7ecd4a45cf0281f5d5a9d",
+      "fix_summary": "BE18A 8c0083e: an in-flight tracker (platform/in-flight.ts) lets graceful shutdown wait, bounded at 3 s and within the backstop, for every handler to settle, including its catch/finally cleanup, before db.destroy() and process.exit. The filesystem evidence store sweeps .part temporaries older than a safe age (1 h, beyond requestTimeout plus grace, across instances) at start-up, logged at info; final objects are never touched. Tests: R12-07 (stalled upload then SIGTERM: no .part, no final object, exit 0), an actively streaming upload, and the sweep keeping fresh temporaries and final objects; qa's R11-02 and R12-07 specs pass byte-identical; negative control on 8c02475."
     }
   ]
 }
