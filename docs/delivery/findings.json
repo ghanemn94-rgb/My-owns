@@ -10906,14 +10906,21 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-13/domain-reviewer.json",
       "owner": "frontend-ux-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-07T07:00:00Z",
           "status": "OPEN",
           "note": "Raised by domain-reviewer in DG2 round 13 (T-DG2-REV-DOM-R13) while confirming the D-073 user outcomes ('an upload is refused if access is withdrawn or the user signs out' and 'sign-in still works'). Reproduced in EN and AR, with and without the D-073 upload path, and with the product's default rate limits. Pre-existing since DG1 (4cd9224) in the web client; the D-073 server behaviour itself is correct. High: the re-authentication workflow after a session ends is broken for every screen, and with default limits one stuck tab locks its IP out. Not marked mandatory: no access-control, data-integrity or calculation breach (the server refuses correctly)."
+        },
+        {
+          "at": "2026-10-07T08:30:34Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 8cb3bb8d0006d0dbe4a7ea0b4322e97f9d4e4858"
         }
-      ]
+      ],
+      "fix_revision": "8cb3bb8d0006d0dbe4a7ea0b4322e97f9d4e4858",
+      "fix_summary": "FE10 8cb3bb8: one session-end rule in the web API client (module phase unknown/active/ended). Any request (including /me, a page query, a mutation or the upload dialog) that answers 401 unauthenticated while the phase is active ends the session exactly once and drops the CSRF token. A 403, another 401 code, or a 401 with no active session is not a session end. RequireSession then renders nothing (no stale shell), disables its /me query, clears the cached identity and every session-scoped query once, and navigates once to /login?returnTo=...&error=session_expired. LoginPage decides 'already signed in' only from a fresh /me (refetchOnMount always, dataUpdatedAt >= mount). Signing out in this tab is not a session end. At most 2 /me per session end. Tests: session-end.test.tsx (EN/AR, every trigger, bounded /me, 403 not an end) and e2e session-end.spec.ts (sign-out elsewhere and an in-app link, the commit-time upload refusal, product default rate limits with a second context from the same IP signing in, axe 0); negative control on HEAD."
     }
   ]
 }
