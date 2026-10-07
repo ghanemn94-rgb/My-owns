@@ -1,0 +1,404 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG2",
+  "round": 11,
+  "candidate_id": "sha256:23e6c0a2834d2f255410e23197864ce283979964128791cfafc3e7075c7f7bad",
+  "source_commit": "cbdb4f68a4d2f67464eb3674133d9086b2fe4e81",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG2-T-DG2-REV-DOM-R11-domain-reviewer-20261007T015249Z-62b36a38",
+    "session_id": "62b36a38-dcd4-4757-9311-995d3f7b6699"
+  },
+  "implementation_author": [
+    "backend-workflow-engineer",
+    "frontend-ux-engineer",
+    "kpi-benefits-engineer",
+    "solution-architect",
+    "transformation-analyst",
+    "devops-engineer",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "domain-reviewer authored no DG2 implementation, test, register row or ADR in the reviewed candidate. I formed this verdict from my own runs in a disposable clone at 309aff2c (freeze commit on source cbdb4f68). I did not open any other reviewer's round-11 record. The only earlier material I reused was my own domain-review tooling from rounds 9-10; only the ports and clone path in with-stack.sh changed. Two new probes were added: r11-delta-api.mjs (D-071 / BE16 from the domain angle) and walk-ui.mjs (EN/AR walk of the P2 screens)."
+  },
+  "assignment": "docs/delivery/assignments/DG2/round-11/domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-PB-003",
+    "REQ-PB-012",
+    "REQ-PB-016",
+    "REQ-PB-017",
+    "REQ-PB-018",
+    "REQ-PB-023",
+    "REQ-PB-024",
+    "REQ-PB-025",
+    "REQ-PB-026",
+    "REQ-PB-029",
+    "REQ-PB-030",
+    "REQ-PB-031",
+    "REQ-PB-033",
+    "REQ-PB-034",
+    "REQ-PB-035",
+    "REQ-PB-036",
+    "REQ-PB-037",
+    "REQ-PB-038",
+    "REQ-PB-039",
+    "REQ-PB-041",
+    "REQ-PB-042",
+    "REQ-PB-043",
+    "REQ-S04-003",
+    "REQ-S04-004",
+    "REQ-S04-005",
+    "REQ-S05-003"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-R11-00-candidate",
+      "procedure": "Confirm the frozen candidate:\n- check the assignment's sha256;\n- recompute the candidate ID in the repository, and in the disposable clone after the runs with the probe copy moved out;\n- confirm that HEAD is the freeze commit on top of source_commit and that only delivery records changed since;\n- run the DG1 historical validation.",
+      "command": "sha256sum docs/delivery/assignments/DG2/round-11/domain-reviewer.md; git rev-parse HEAD; git diff --name-only cbdb4f6 309aff2; node tools/gates/candidate.mjs --stage DG2; node tools/gates/validate.mjs --historical --stage DG1",
+      "environment": "/home/user/My-owns (HEAD 309aff2c) and disposable clone $TMPDIR/review-dom-r11 at 309aff2c; Node 24.21.0",
+      "expected": "assignment sha256 c963a7f1…0a35; candidate sha256:23e6c0a2…7bad over 547 files in both trees; only docs/delivery/** differs since cbdb4f68; DG1 historical PASS",
+      "actual": "The assignment hash matches. HEAD is 309aff2cdb93e816bbd4284a76cdf463bc00bc65, the freeze commit; cbdb4f6..309aff2 touches only the three round-11 assignments, the candidate manifest and stages.json. Both trees give sha256:23e6c0a2834d2f255410e23197864ce283979964128791cfafc3e7075c7f7bad over 547 files, before and after the runs. The validator prints 'PASS gate DG1 (historical)' and exits 0. No non-zero exit or error line in this evidence.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-11/candidate-and-dg1.log",
+        "docs/delivery/test-evidence/DG2/domain/round-11/env.txt"
+      ]
+    },
+    {
+      "id": "DOM-R11-01-typecheck",
+      "procedure": "Run the workspace typecheck in the disposable clone on both Node versions.",
+      "command": "pnpm -r typecheck",
+      "environment": "disposable clone at 309aff2c after pnpm install --offline --frozen-lockfile; Node 22.22.2 and Node 24.21.0, pnpm 10.33.0",
+      "expected": "exit 0 on both",
+      "actual": "EXIT=0 on Node 22 and on Node 24; every package reports 'typecheck: Done'. No error or warning lines in either log. The offline install itself exited 0. It printed two 'WARN Failed to create bin … mth-db' lines because @mth/db/dist/cli.js does not exist until the build runs (expected; the build creates it, and the stack later runs that CLI successfully).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-11/typecheck-node22.log",
+        "docs/delivery/test-evidence/DG2/domain/round-11/typecheck-node24.log",
+        "docs/delivery/test-evidence/DG2/domain/round-11/node22.txt",
+        "docs/delivery/test-evidence/DG2/domain/round-11/node24.txt"
+      ]
+    },
+    {
+      "id": "DOM-R11-02-build",
+      "procedure": "Build every workspace package on both Node versions (Node 24 last, so the stack serves the Node 24 build).",
+      "command": "pnpm -r build",
+      "environment": "disposable clone at 309aff2c; Node 22.22.2 and Node 24.21.0",
+      "expected": "exit 0 on both",
+      "actual": "EXIT=0 on both. The only notable line in each log (line 41) is Vite's advisory chunk-size notice ('Adjust chunk size limit for this warning via build.chunkSizeWarningLimit'): a bundle-size advisory, not an error; the build completes and the SPA is served and works in stack-run-2.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-11/build-node22.log",
+        "docs/delivery/test-evidence/DG2/domain/round-11/build-node24.log"
+      ]
+    },
+    {
+      "id": "DOM-R11-03-lint",
+      "procedure": "Run ESLint with zero warnings allowed on both Node versions.",
+      "command": "pnpm lint",
+      "environment": "disposable clone at 309aff2c; Node 22.22.2 and Node 24.21.0",
+      "expected": "exit 0, no warnings",
+      "actual": "EXIT=0 on both (eslint . --max-warnings=0); no findings printed.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-11/lint-node22.log",
+        "docs/delivery/test-evidence/DG2/domain/round-11/lint-node24.log"
+      ]
+    },
+    {
+      "id": "DOM-R11-04-test",
+      "procedure": "Run the unit suites (unit-node and unit-web) on both Node versions, then grep each log for fail, error and timeout lines.",
+      "command": "pnpm test",
+      "environment": "disposable clone at 309aff2c; Node 22.22.2 and Node 24.21.0",
+      "expected": "all test files and tests pass on both; no failed suite or hook timeout",
+      "actual": "Node 22: Test Files 41 passed (41), Tests 771 passed (771), EXIT=0. Node 24: Test Files 41 passed (41), Tests 771 passed (771), EXIT=0. No failed suite, failed test or hook timeout. Lines matching 'error' or 'fail' are only names of passing tests (for example '… is an inline blank error …'). One stderr notice per run: '(node) [FSTDEP022] FastifyWarning: The router options for constraints property access is deprecated' while apps/api/src/modules/platform/framework-errors.test.ts runs. This is a Fastify deprecation notice about router-option access, not a failure, and that file's 6 tests pass on both versions.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-11/test-node22.log",
+        "docs/delivery/test-evidence/DG2/domain/round-11/test-node24.log"
+      ]
+    },
+    {
+      "id": "DOM-R11-05-contrast",
+      "procedure": "Run the design-token contrast check on both Node versions.",
+      "command": "pnpm --filter @mth/design-tokens run check:contrast",
+      "environment": "disposable clone at 309aff2c; Node 22.22.2 and Node 24.21.0",
+      "expected": "PASS, exit 0",
+      "actual": "'PASS contrast: 50 pairs meet WCAG AA; 3 prohibited pairs fail as documented', EXIT=0 on both. The three 'fails' lines (white on #0078FF 4.09:1, #0078FF on surface.page 3.84:1, border.default divider 1.27:1) are listed under 'Prohibited combinations (must fail; never used by the UI)'. These are the tool's expected negative controls, not a failure. #0078FF stays a provisional token.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-11/contrast-node22.log",
+        "docs/delivery/test-evidence/DG2/domain/round-11/contrast-node24.log"
+      ]
+    },
+    {
+      "id": "DOM-R11-06-live-scenario",
+      "procedure": "On a fresh disposable stack (PG16 UTF8 + API, synthetic seed), create transformations and walk Diagnose→Define→Design through the API as dev.lead/dev.office/dev.admin:\n- modes and the B0018 roles;\n- B0023 gate names and sequential G1→G2→G3 (out-of-sequence refused);\n- T01 six dimensions with H/M/L confidence, the six B0029 workstreams and the ten B0056 dimensions;\n- the 14-field charter with versions, the composed four-part B0037 thesis (incomplete when a part is blank or invisible-only), and the five B0039-B0043 scope checks;\n- one current North Star, the 3-5 outcome warning, the good-outcome test and guardrails (G2 blocked at zero);\n- T02 target date;\n- the TOM canvas (ten boxes, B0062 prompts; ready needs target and owner) and G3 blocked until the gap matrix, capability gaps and future journeys exist;\n- live G1, G2 and G3 decisions;\n- Arabic charter text with RLM/ALM accepted verbatim, and invisible-only values refused (validation.blank) across fields.",
+      "command": "bash with-stack.sh bash -c 'node rv/live-scenario.mjs …' (stack-run-1)",
+      "environment": "disposable PG16 127.0.0.1:55021 (UTF8) + API :3921 AUTH_MODE=dev, Node 24 build, SYNTHETIC seed-dev data (stack-run-1)",
+      "expected": "every assertion PASS; G1→G2→G3 decided in order; phase design→mobilize after G3",
+      "actual": "SUMMARY pass 101, fail []; exit 0. Included: REQ-PB-017.api-gate-names-b0023 (the six 'Gx - Name' strings exactly as B0023); REQ-PB-016 G2-before-G1 and G3-before-G1 refused 422 gate.out_of_sequence; REQ-PB-018 G3-before-G2 refused; LIVE.G1-decision, LIVE.G2-decision and LIVE.G3-decision (phase design→mobilize); REQ-S04-005.g3-incomplete-blocked (422 naming g3.gap_matrix, g3.capability_gaps, g3.future_journeys); REQ-PB-012.b0018-text; REQ-PB-003 modes; REQ-PB-023.b0029-verbatim; REQ-PB-038.ten-dimensions and b0056-verbatim; REQ-PB-041.b0062-prompts and ten-boxes; REQ-PB-031.five-checks and b0039-43-verbatim; REQ-PB-030.thesis-incomplete; R4.thesis-composed; REQ-PB-033.exactly-one-current; REQ-PB-035.top-outcome-warning; REQ-PB-036.launch-fails; REQ-PB-037.zero-guardrails-blocks; REQ-PB-034.target-date-required; R5.arabic-rlm-charter-accepted-verbatim and db-stores-codepoints; INV.unquantified-label; INV.product-gates-only. The log's non-PASS lines are diagnostic prints (GATES, PRECHECKS, METHODOLOGY_KEYS, WORKSTREAMS, 'activate 200'), not failures. The PRECHECKS 'attention'/'unknown' values are the expected states on a fresh transformation. stack-run-1.log has 'mth-db: the database must use UTF8 encoding (found SQL_ASCII)' and 'UTF8-PROBE sql_ascii migrate exit=1 tables_created=0': the intended D-065 fail-closed probe (refusal is the expected result).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-003",
+        "REQ-PB-012",
+        "REQ-PB-016",
+        "REQ-PB-017",
+        "REQ-PB-018",
+        "REQ-PB-023",
+        "REQ-PB-026",
+        "REQ-PB-029",
+        "REQ-PB-030",
+        "REQ-PB-031",
+        "REQ-PB-033",
+        "REQ-PB-034",
+        "REQ-PB-035",
+        "REQ-PB-036",
+        "REQ-PB-037",
+        "REQ-PB-038",
+        "REQ-PB-041",
+        "REQ-S04-003",
+        "REQ-S04-004",
+        "REQ-S04-005"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-11/live-scenario.log",
+        "docs/delivery/test-evidence/DG2/domain/round-11/live-scenario.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-11/stack-run-1.log",
+        "docs/delivery/test-evidence/DG2/domain/round-11/with-stack.sh"
+      ]
+    },
+    {
+      "id": "DOM-R11-07-design-registers",
+      "procedure": "Live API checks of T03/T04 columns and the design registers: T04 codes and status, seven columns; T03 six columns with dimension required; capability heatmap linked to a gap; journey with decimal cycle time and a pain point linked to T01; workshop item conversion to T04 needs an owner; per-dimension view.",
+      "command": "bash with-stack.sh bash -c 'node rv/design-registers.mjs …' (stack-run-1)",
+      "environment": "stack-run-1, SYNTHETIC data",
+      "expected": "all assertions PASS",
+      "actual": "SUMMARY pass 11, fail 0; exit 0: T04.codes-status, T04.seven-columns, T04.invisible-title-refused, T03.dimension-required, T03.six-columns, REQ-PB-024.capability-linked-to-gap, REQ-PB-025.journey-decimal-cycle-time, REQ-PB-025.pain-point-links-t01, REQ-PB-042.convert-needs-owner, REQ-PB-042.convert-to-t04, REQ-S05-003.dimension-view. The non-PASS lines are diagnostic prints of created records (workshop 201, item 201) with Arabic RLM text stored verbatim.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-024",
+        "REQ-PB-025",
+        "REQ-PB-039",
+        "REQ-PB-042",
+        "REQ-PB-043",
+        "REQ-S05-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-11/design-registers.log",
+        "docs/delivery/test-evidence/DG2/domain/round-11/design-registers.mjs"
+      ]
+    },
+    {
+      "id": "DOM-R11-08-d071-evidence-upload",
+      "procedure": "New probe for D-071 / T-DG2-BE16, from the domain angle:\n- a 2 MiB evidence file with an Arabic file name (RLM, emoji) is uploaded over a raw keep-alive socket, and a second request is sent on the same socket;\n- the file is downloaded and compared byte for byte;\n- a 26 MiB upload (over the 25 MiB limit) is streamed: check the declared refusal, Connection: close, the time until the server closes the socket, that no revision is added and that the previous content is unchanged;\n- the EN/AR localized message is checked;\n- a normal upload after the refusal is checked;\n- SPA deep links (Diagnose/Define/Design, served by the not-found handler that is now rate-metered) and an unknown API address are checked;\n- product gate codes are listed.",
+      "command": "bash with-stack.sh bash -c 'node rv/r11-delta-api.mjs …' (stack-run-1)",
+      "environment": "stack-run-1, SYNTHETIC data",
+      "expected": "the normal upload gives 200 with keep-alive kept and the download byte-identical with the Arabic name; the oversized upload gives 413 evidence.too_large with Connection: close, the socket closed within 5 s, nothing stored and the prior content unchanged; a later upload works; deep links give 200 html; an unknown API address gives 404 not_found; gates are G1..G6",
+      "actual": "13/13 PASS, exit 0. Normal upload: 200 with connection=keep-alive, and the second request on the same socket gave 200. Download: 2097444/2097444 bytes, sha 3422162a… identical; fileName 'خط-الأساس R11 ‏📊.xlsx' kept. Oversized upload: 413 evidence.too_large, Connection: close, detail 'Evidence content is limited to 26214400 bytes per revision.'; response at 151 ms and socket closed at 152 ms (no ~65 s hold); revisions 1→1 and content still identical. EN 'The file is larger than the allowed maximum (25 MB).' / AR 'حجم الملف أكبر من الحد المسموح (25 ميغابايت).' Upload after the refusal: 200, revisions 1→2, identical. /transformations, /:id/diagnose, /:id/define and /:id/design gave 200 text/html. /api/v1/no-such-address gave 404 not_found. Gates: G1,G2,G3,G4,G5,G6. No error lines.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-11/r11-delta-api.log",
+        "docs/delivery/test-evidence/DG2/domain/round-11/r11-delta-api.mjs"
+      ]
+    },
+    {
+      "id": "DOM-R11-09-regression-d066-to-d070-api",
+      "procedure": "Re-run my earlier-round API probes unchanged as regressions:\n- r10-delta-api (D-070 media types, Arabic verbatim, invisible-only refusal, localized validation.content_type, gate codes);\n- regress-d069-api (binary evidence round trip, content-type refusals);\n- regress-d068, regress-d067 and regress-d066 (earlier text and validation repairs).",
+      "command": "bash with-stack.sh bash -c 'node rv/r10-delta-api.mjs; node rv/regress-d069-api.mjs; node rv/regress-d068-api.mjs; node rv/regress-d067-api.mjs; node rv/regress-d066-api.mjs' (stack-run-1)",
+      "environment": "stack-run-1, SYNTHETIC data",
+      "expected": "all PASS",
+      "actual": "r10-delta-api 17/17 PASS; regress-d069-api 18/18 PASS (binary evidence byte-identical with chunked and content-length bodies; refusals store no revision); regress-d068-api 21/21; regress-d067-api 11/11; regress-d066-api 16/16. Every run exits 0 with no FAIL or error lines.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-11/r10-delta-api.log",
+        "docs/delivery/test-evidence/DG2/domain/round-11/r10-delta-api.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-11/regress-d069-api.log",
+        "docs/delivery/test-evidence/DG2/domain/round-11/regress-d069-api.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-11/regress-d068-api.log",
+        "docs/delivery/test-evidence/DG2/domain/round-11/regress-d068-api.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-11/regress-d067-api.log",
+        "docs/delivery/test-evidence/DG2/domain/round-11/regress-d067-api.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-11/regress-d066-api.log",
+        "docs/delivery/test-evidence/DG2/domain/round-11/regress-d066-api.mjs"
+      ]
+    },
+    {
+      "id": "DOM-R11-10-ui-evidence-upload-and-arabic-charter",
+      "procedure": "In Chromium on a fresh stack, EN (LTR) and AR (RTL):\n- a charter with Arabic text containing RLM and emoji is created through the UI and read back;\n- a malformed request's form-level problem is shown once;\n- an evidence file is uploaded through the UI (the request content type is captured) and the download is compared byte for byte, with the Arabic file name suggested.",
+      "command": "bash with-stack.sh bash -c 'node rv/r9-ui.mjs …' (stack-run-2)",
+      "environment": "stack-run-2 (fresh disposable stack PG :55021, API :3921), Chromium /opt/pw-browsers, SYNTHETIC data",
+      "expected": "all PASS in EN and AR",
+      "actual": "8/8 PASS, exit 0: en.dir ltr / ar.dir rtl; form-level problem once in each language; charter Arabic RLM/emoji verbatim (EN and AR); evidence upload via the web client sends application/octet-stream, 200, 284/284 bytes sha 8429089a… identical in both languages. 'DIAG evidence create 201 file null' is a diagnostic print (file evidence created with no content yet), not an error.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-11/ui-upload-alert.log",
+        "docs/delivery/test-evidence/DG2/domain/round-11/r9-ui.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-11/stack-run-2.log",
+        "docs/delivery/test-evidence/DG2/domain/round-11/screens/en-evidence-uploaded.png",
+        "docs/delivery/test-evidence/DG2/domain/round-11/screens/ar-evidence-uploaded.png",
+        "docs/delivery/test-evidence/DG2/domain/round-11/screens/ar-charter-arabic-emoji-rlm-created.png"
+      ]
+    },
+    {
+      "id": "DOM-R11-11-ui-invisible-only-refused",
+      "procedure": "In Chromium, EN and AR:\n- invisible-only, default-ignorable-only and spaces-only Case for change values on charter create are refused inline with the localized message, aria-invalid and focus, and nothing is sent;\n- visible text is accepted verbatim;\n- the thesis shows Incomplete with four empty parts;\n- an invisible-only Out of scope on edit is refused and no version is written.\nThen re-run the regress-d067/d066 UI probes.",
+      "command": "bash with-stack.sh bash -c 'node rv/charter-blank-ui.mjs; node rv/regress-d067-ui.mjs; node rv/regress-d066-ui.mjs' (stack-run-2)",
+      "environment": "stack-run-2, Chromium, SYNTHETIC data",
+      "expected": "all PASS; EN message 'Enter some text; spaces alone are not a value.', AR 'أدخِل نصاً؛ المسافات وحدها ليست قيمة.'",
+      "actual": "charter-blank-ui 14/14 PASS (both localized messages shown, aria-invalid=true, sent=[]; thesis 'Incomplete' / 'غير مكتملة'; edit version stays 1); regress-d067-ui 8/8; regress-d066-ui 8/8; all exit 0. One wording note on my own probe: the 'charter-create-visible' expected text says '201 created', but its assertion reads the follow-up GET /charter, whose status is 200. The 200 in 'actual' is that GET, which proves the charter was stored verbatim. It is not a mismatch.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-029",
+        "REQ-PB-030"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-11/charter-blank-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-11/charter-blank-ui.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-11/regress-d067-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-11/regress-d067-ui.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-11/regress-d066-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-11/regress-d066-ui.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-11/screens/en-charter-create-invisible.png",
+        "docs/delivery/test-evidence/DG2/domain/round-11/screens/ar-charter-create-invisible.png"
+      ]
+    },
+    {
+      "id": "DOM-R11-12-ui-mode-guidance-b0009",
+      "procedure": "In Chromium, EN and AR, on New transformation: confirm html lang/dir, and that the verbatim B0009 'How' text is present for End-to-End and, after selecting Modular, for Modular. Inspect the AR screenshot.",
+      "command": "bash with-stack.sh bash -c 'node rv/dom-shots.mjs' (stack-run-2)",
+      "environment": "stack-run-2, Chromium, SYNTHETIC data",
+      "expected": "en ltr / ar rtl; the B0009 E2E text is shown by default; the B0009 Modular text is shown after selecting Modular, in both languages",
+      "actual": "This probe prints observations rather than PASS lines; exit 0. en ltr and ar rtl. E2E 'Run Phases 1-6 sequentially. Do not launch initiatives before the North Star, outcomes and target state are clear.' is present: true (EN and AR). The Modular text is 'false' before selecting Modular, which is by design: guidance follows the selected mode. After selecting Modular it is present: true (EN and AR). The AR screenshot shows an RTL Arabic guidance panel, the English source text verbatim labelled 'النص الأصلي للمصدر (بالإنجليزية)', and a note that the Arabic is a provisional translation of playbook v1.0 B0009.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-11/dom-shots.log",
+        "docs/delivery/test-evidence/DG2/domain/round-11/dom-shots.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-11/screens/en-create-mode-guidance-modular.png",
+        "docs/delivery/test-evidence/DG2/domain/round-11/screens/ar-create-mode-guidance-modular.png"
+      ]
+    },
+    {
+      "id": "DOM-R11-13-ui-walk-p2-screens",
+      "procedure": "New probe. In Chromium, EN and AR, for one synthetic transformation, open Diagnose, Define, Design, Gates, the G1 detail and Evidence:\n- check html lang/dir and that each page renders (not the not-found page);\n- check that no text claims PMI certification or official Mobily branding and none names DG0-DG7;\n- check the gate names on Gates (B0023 EN; Arabic names AR) and the provisional wordmark.\nInspect the screenshots.",
+      "command": "bash with-stack.sh bash -c 'node rv/walk-ui.mjs' (stack-run-2)",
+      "environment": "stack-run-2, Chromium, SYNTHETIC data",
+      "expected": "all PASS",
+      "actual": "28/28 PASS, exit 0. Every page is lang=en dir=ltr or lang=ar dir=rtl and rendered. No certification claim and no DG0-DG7 text. EN Gates lists 'G1 - Case for Change' … 'G6 - Sustain' with the B0023 decision questions; AR lists 'مبررات التغيير', 'التوجّه' and 'الحالة المستهدفة'. Provisional wordmark present. Screens: the Gates page carries the 'Business approval' notice ('This software checks readiness and records the decision; it never approves anything itself'), and G4-G6 are 'Not available in this release' (honest planned state). The AR Design page shows the ten TOM canvas boxes with the B0062 prompts, with unknown target designs shown as 'غير معروف' (Unknown) rather than blank or green. It also shows the T03 gap matrix, capability heatmap, journeys and workshops. G3 on a fresh transformation reads '1 of 5 mandatory outputs complete' in red: the complete one is g3.design_decisions ('every open design decision has an owner'), vacuously met with zero decisions. The gate as a whole stays incomplete, so this is not a false green.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-017",
+        "REQ-PB-041",
+        "REQ-S05-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-11/walk-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-11/walk-ui.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-11/screens/en-r11-gates.png",
+        "docs/delivery/test-evidence/DG2/domain/round-11/screens/ar-r11-gates.png",
+        "docs/delivery/test-evidence/DG2/domain/round-11/screens/ar-r11-design.png"
+      ]
+    },
+    {
+      "id": "DOM-R11-14-source-fidelity-and-d071-scope",
+      "procedure": "Read playbook blocks B0009, B0018, B0023, B0029, B0031 (T01), B0035 (14 charter fields), B0037, B0038-B0043, B0048-B0051 (T02, good-outcome test), B0056, B0058 (T03), B0062, B0063 and B0065 (T04), and the master-prompt T01-T04 rows, then compare them with the live outputs above and the i18n column labels. Read the full cbdb4f68 source diff since the round-10 source fe22d759 (git diff fe22d759 cbdb4f6 -- apps packages docs) to confirm D-071's scope.",
+      "command": "sed -n over docs/source/playbook.md; grep T01-T04 docs/source/master-prompt-v2.0.md; git diff --stat fe22d759 cbdb4f6 -- apps packages docs/architecture docs/api docs/operations tests e2e scripts deploy; git diff fe22d759 cbdb4f6 -- apps/api/src",
+      "environment": "/home/user/My-owns and disposable clone at 309aff2c",
+      "expected": "methodology text, columns, gate names and sequencing match the source; D-071 touches no methodology, gate criterion, register, i18n or UI file",
+      "actual": "The source texts match the live outputs verbatim:\n- B0018 roles;\n- B0023 gate names and questions;\n- the six B0029 workstreams;\n- the ten B0056 dimensions;\n- the B0062 prompts;\n- the five B0039-B0043 checks;\n- the B0009 How texts.\nT01 is Dimension / Current state / Evidence/baseline / Root cause / Impact / Confidence H/M/L, seeded with six dimensions. T02 adds target date and leading indicator. T03 has six columns and T04 seven (generated D-NN codes, Open by default).\nThe D-071 diff touches only apps/api/src/main.ts, evidence/routes.ts (an aborted-body 400 mapping), platform connection-hygiene/framework-errors/hooks/index, server.ts (requestTimeout, forceCloseConnections 'idle', the not-found handler registered after the rate limiter), API tests, ADR-0007 §5b and the ops docs. Zero files changed under apps/web, packages or docs/source. No methodology, gate criterion, sequence, register column, i18n string or UI changed. The SPA fallback still serves deep links (DOM-R11-08).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-026",
+        "REQ-PB-034",
+        "REQ-PB-039",
+        "REQ-PB-043"
+      ],
+      "evidence": [
+        "docs/source/playbook.md",
+        "docs/delivery/test-evidence/DG2/domain/round-11/invariants.log"
+      ]
+    },
+    {
+      "id": "DOM-R11-15-invariants",
+      "procedure": "Grep the clone for:\n- certification/official claims in i18n;\n- DG0-DG7 references in product source;\n- gate codes in migrations;\n- numeric vs float columns;\n- the brand token comment;\n- the unquantified label (EN/AR).",
+      "command": "see invariants.log (grep over apps/web/src/i18n, apps/*/src, packages/*/src, packages/db/migrations, packages/design-tokens/src/tokens.json)",
+      "environment": "disposable clone at 309aff2c",
+      "expected": "only negating statements about PMI and Mobily; no DG0-DG7 in product logic or UI; gates G1..G6; money and rates as numeric; no float columns; #0078FF provisional; Unquantified labelled in EN and AR",
+      "actual": "Certification: the only statements are negations ('It is not an official PMI standard, and this product is not certi[fied]…'; the AR equivalent; the provisional-brand notices). The other 'معتمد' hits mean approved/validated (for example 'معتمد من الإدارة المالية', Finance-validated), not certification. DG references: only finding IDs (F-DG1-…, F-DG2-…) inside code comments in identity routes; no product logic or user-facing string. Migrations: gate codes 'G1'..'G6'; numeric(14,4)×1, numeric(20,4)×3, numeric(24,6)×3; 0 real/double/float columns. tokens.json says #0078FF is 'NOT verified or official Mobily colours', with provisional: true. Unquantified: 'Unquantified' / 'غير مُقدَّر كمّياً'. The 'fails' word matched on invariants.log lines 20 and 36 is inside code comments, not a failure.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-11/invariants.log"
+      ]
+    },
+    {
+      "id": "DOM-R11-16-utf8-fail-closed",
+      "procedure": "Each stack start tries to migrate a SQL_ASCII database before the real UTF8 one (D-065).",
+      "command": "with-stack.sh (UTF8-PROBE lines)",
+      "environment": "disposable PG16 clusters 127.0.0.1:55021 (stack-run-1 and stack-run-2)",
+      "expected": "the SQL_ASCII migrate is refused with 0 tables; the real database is UTF8; migrations applied; readyz ready",
+      "actual": "In both runs: 'mth-db: the database must use UTF8 encoding (found SQL_ASCII)…', 'UTF8-PROBE sql_ascii migrate exit=1 tables_created=0' (the intended refusal), 'mth encoding=UTF8', 'applied 19 migration(s)', seeded SYNTHETIC dev users, and readyz {status: ready, database ok, migrations ok}. Both stack scripts exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-11/stack-run-1.log",
+        "docs/delivery/test-evidence/DG2/domain/round-11/stack-run-2.log"
+      ]
+    },
+    {
+      "id": "DOM-R11-17-env-residuals",
+      "procedure": "Offline/config surface for the environmental residuals: offline frozen install, the CI workflow mirror, and the Keycloak config presence.",
+      "command": "pnpm install --offline --frozen-lockfile; cmp .github/workflows/ci.yml deploy/ci/ci.yml; ls deploy; grep -rli keycloak deploy",
+      "environment": "disposable clone at 309aff2c, no network",
+      "expected": "the install succeeds offline; the CI mirror is identical; Keycloak config is present. Residuals are noted, not gate failures",
+      "actual": "The offline frozen install exits 0 (the two expected mth-db bin WARN lines are explained in DOM-R11-01). ci.yml is identical to its deploy mirror. deploy/keycloak exists, and Keycloak is referenced in deploy/images.lock.json and the compose files. Residuals, not checked live and not gate checks: live registry (D-057), live CI (D-058), Keycloak (D-049).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-11/invariants.log",
+        "docs/delivery/test-evidence/DG2/domain/round-11/env.txt"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG2/domain/round-11/env.txt",
+    "docs/delivery/test-evidence/DG2/domain/round-11/candidate-and-dg1.log",
+    "docs/delivery/test-evidence/DG2/domain/round-11/with-stack.sh",
+    "docs/delivery/test-evidence/DG2/domain/round-11/stack-run-1.log",
+    "docs/delivery/test-evidence/DG2/domain/round-11/stack-run-2.log",
+    "docs/delivery/test-evidence/DG2/domain/round-11/live-scenario.log",
+    "docs/delivery/test-evidence/DG2/domain/round-11/design-registers.log",
+    "docs/delivery/test-evidence/DG2/domain/round-11/r11-delta-api.log",
+    "docs/delivery/test-evidence/DG2/domain/round-11/walk-ui.log",
+    "docs/delivery/test-evidence/DG2/domain/round-11/invariants.log",
+    "docs/delivery/test-evidence/DG2/domain/round-11/test-node22.log",
+    "docs/delivery/test-evidence/DG2/domain/round-11/test-node24.log",
+    "docs/delivery/reviews/DG2/round-11/domain-reviewer.md"
+  ],
+  "reviewed_at": "2026-10-07T02:10:00Z",
+  "summary": "PASS. The repaired DG2 candidate 23e6c0a2 is faithful to the playbook for all 26 requirements. D-071 / BE16 changes only API connection handling (an unread body closes its connection, bounded shutdown, requestTimeout, a rate-metered not-found handler). It touches no methodology text, gate criterion, sequencing, register column, i18n string or UI. A normal evidence file still uploads and downloads byte-identical with its Arabic file name, on a connection that stays keep-alive. An oversized upload is refused with the localized 413 evidence.too_large, the connection is closed at once, and nothing is stored. Static checks, 771/771 unit tests on Node 22 and 24, and 274 live API/UI assertions pass (plus the observational B0009 dom-shots probe). Every warning line in the evidence is explained. No new findings.",
+  "narrative": "docs/delivery/reviews/DG2/round-11/domain-reviewer.md"
+}
