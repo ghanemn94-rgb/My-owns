@@ -1,0 +1,19 @@
+### v24.21.0 rv/regress-d066-api.mjs (clone at f4242ae) TAG= TRIGGERS=
+PASS D066.nul-transformation-name :: expected 400 validation.invalid_character at /name :: actual 400 [["/name","validation.invalid_character"]]
+PASS D066.nul-charter-create :: expected 400 validation.invalid_character at /caseForChange; no charter created :: actual 400 [["/caseForChange","validation.invalid_character"]]; GET charter=404
+PASS D066.nul-arabic-one-error :: expected 400 with exactly one error validation.invalid_character :: actual 400 [["/caseForChange","validation.invalid_character"]]
+PASS D066.nul-only :: expected 400 validation.invalid_character (single error) :: actual 400 [["/caseForChange","validation.invalid_character"]]
+PASS D066.arabic-rlm-charter-verbatim :: expected 201; caseForChange/inScope/outOfScope/name stored code point for code point :: actual 201; verbatim=true,true,true,true
+PASS D066.arabic-oos-b0041-pass :: expected B0041 exclusions_documented pass :: actual pass
+PASS D066.nul-charter-update :: expected 400 validation.invalid_character at /outOfScope; version unchanged; value unchanged :: actual 400 [["/outOfScope","validation.invalid_character"]] v 1->1 verbatim=true
+PASS D066.placeholder-blank:KHITAN FILLER U+16FE4 :: expected 400 validation.blank at /outOfScope; version unchanged :: actual 400 [["/outOfScope","validation.blank"]]
+PASS D066.placeholder-blank:NULL NOTEHEAD U+1D159 :: expected 400 validation.blank at /outOfScope; version unchanged :: actual 400 [["/outOfScope","validation.blank"]]
+PASS D066.placeholder-blank:both + RLM :: expected 400 validation.blank at /outOfScope; version unchanged :: actual 400 [["/outOfScope","validation.blank"]]
+PASS D066.placeholder-with-arabic-content :: expected 200; stored verbatim; version +1 :: actual 200 verbatim=true v=2
+PASS D066.params-pointer-names-parameter :: expected 400 pointer /params/transformationId :: actual 400 [["/params/transformationId","validation.invalid_format"]]
+PASS D066.params-nul :: expected 400 validation.invalid_character at /params/transformationId :: actual 400 [["/params/transformationId","validation.invalid_character"]]
+PASS D066.record-param-pointer :: expected 400 pointer names the record parameter (not /params/id) :: actual 400 [["/params/outcomeId","validation.invalid_format"]]
+PASS D066.nul-outcome :: expected 400 validation.invalid_character :: actual 400 [["/statement","validation.invalid_character"]]
+PASS D066.query-nul :: expected 400 validation.invalid_character at /query/q :: actual 400 [["/query/q","validation.invalid_character"]]
+SUMMARY {"pass":16,"fail":[]}
+### regress-d066-api exit=0

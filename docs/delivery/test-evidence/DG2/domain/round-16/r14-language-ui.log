@@ -1,0 +1,85 @@
+### v24.21.0 rv/r14-language-ui.mjs (clone at f4242ae) TAG= TRIGGERS=
+reset preferences: 01920000-0000-7000-9000-000000000202|ar; 01920000-0000-7000-9000-000000000203|en
+PASS FE11.en->ar.refused-notice-in-chosen-language :: expected start lang=en; PUT 503; html lang=ar dir=rtl; notice = 'تغيّرت اللغة في هذا المتصفح مؤقتًا، لكن تعذّر حفظها في ملفك الشخصي. ستعود لغتك المحفوظة عند فتح التطبيق مرة أخرى.' (lang ar); still ar 2.5 s later after an in-app navigation :: actual start={"lang":"en","dir":"ltr","notice":"","regionLang":"en"} put=503 after={"lang":"ar","dir":"rtl","notice":"تغيّرت اللغة في هذا المتصفح مؤقتًا، لكن تعذّر حفظها في ملفك الشخصي. ستعود لغتك المحفوظة عند فتح التطبيق مرة أخرى.","regionLang":"ar"} later={"lang":"ar","dir":"rtl","notice":"تغيّرت اللغة في هذا المتصفح مؤ","regionLang":"ar"}
+PASS FE11.en->ar->en.refused-again :: expected notice = 'Language changed in this browser for now, but it could not be saved to your profile. Your saved language returns the next time you open the app.' in en :: actual {"lang":"en","dir":"ltr","notice":"Language changed in this browser for now, but it could not be saved to your profile. Your saved language returns the next time you open the app.","regionLang":"en"}
+PASS FE11.en->ar.saved-clears-notice :: expected lang=ar, no notice, preferredLocale=ar :: actual {"lang":"ar","dir":"rtl","notice":"","regionLang":"ar"} preferredLocale=ar
+PASS FE11.ar->en.refused-notice-in-chosen-language :: expected start lang=ar; PUT 503; html lang=en dir=ltr; notice = 'Language changed in this browser for now, but it could not be saved to your profile. Your saved language returns the next time you open the app.' (lang en); still en 2.5 s later after an in-app navigation :: actual start={"lang":"ar","dir":"rtl","notice":"","regionLang":"ar"} put=503 after={"lang":"en","dir":"ltr","notice":"Language changed in this browser for now, but it could not be saved to your profile. Your saved language returns the next time you open the app.","regionLang":"en"} later={"lang":"en","dir":"ltr","notice":"Language changed in this brows","regionLang":"en"}
+PASS FE11.ar->en->ar.refused-again :: expected notice = 'تغيّرت اللغة في هذا المتصفح مؤقتًا، لكن تعذّر حفظها في ملفك الشخصي. ستعود لغتك المحفوظة عند فتح التطبيق مرة أخرى.' in ar :: actual {"lang":"ar","dir":"rtl","notice":"تغيّرت اللغة في هذا المتصفح مؤقتًا، لكن تعذّر حفظها في ملفك الشخصي. ستعود لغتك المحفوظة عند فتح التطبيق مرة أخرى.","regionLang":"ar"}
+PASS FE11.ar->en.saved-clears-notice :: expected lang=en, no notice, preferredLocale=en :: actual {"lang":"en","dir":"ltr","notice":"","regionLang":"en"} preferredLocale=en
+PASS FE12.header.en.320px :: expected notice in the shown language, below the header; header height and wordmark width unchanged; no horizontal overflow :: actual lang=en noticeOk=true header h 93.390625->93.390625 bottom=93.390625 noticeTop=93.390625 wordmark w 127->127 overflowX=0
+PASS FE12.header.ar.320px :: expected notice in the shown language, below the header; header height and wordmark width unchanged; no horizontal overflow :: actual lang=ar noticeOk=true header h 74.390625->74.390625 bottom=74.390625 noticeTop=74.390625 wordmark w 115->115 overflowX=0
+PASS FE12.header.en.768px :: expected notice in the shown language, below the header; header height and wordmark width unchanged; no horizontal overflow :: actual lang=en noticeOk=true header h 56->56 bottom=56 noticeTop=56 wordmark w 305->305 overflowX=0
+PASS FE12.header.ar.768px :: expected notice in the shown language, below the header; header height and wordmark width unchanged; no horizontal overflow :: actual lang=ar noticeOk=true header h 56->56 bottom=56 noticeTop=56 wordmark w 199->199 overflowX=0
+PASS FE12.header.en.1280px :: expected notice in the shown language, below the header; header height and wordmark width unchanged; no horizontal overflow :: actual lang=en noticeOk=true header h 56->56 bottom=56 noticeTop=56 wordmark w 305->305 overflowX=0
+PASS FE12.header.ar.1280px :: expected notice in the shown language, below the header; header height and wordmark width unchanged; no horizontal overflow :: actual lang=ar noticeOk=true header h 56->56 bottom=56 noticeTop=56 wordmark w 199->199 overflowX=0
+PASS FE12.login.invalid-username.en->ar :: expected 'Enter a user name of 2 to 64 lowercase letters, digits, dots, hyphens or underscores.' then, after switching, 'أدخل اسم مستخدم من 2 إلى 64 حرفًا من الأحرف اللاتينية الصغيرة أو الأرقام أو النقاط أو الشرطات أو الشرطات السفلية.' (dir rtl) and not the en text :: actual before=true after=true stale=false dir=rtl
+PASS FE12.login.server-error.en->ar :: expected dev-login refused (4xx); the alert is in en, then in ar after the switch, and differs :: actual status=401 before='Sign-in failed: the user does not exist or is disabled.' after='فشل تسجيل الدخول: المستخدم غير موجود أو معطّل.'
+PASS FE12.login.invalid-username.ar->en :: expected 'أدخل اسم مستخدم من 2 إلى 64 حرفًا من الأحرف اللاتينية الصغيرة أو الأرقام أو النقاط أو الشرطات أو الشرطات السفلية.' then, after switching, 'Enter a user name of 2 to 64 lowercase letters, digits, dots, hyphens or underscores.' (dir ltr) and not the ar text :: actual before=true after=true stale=false dir=ltr
+PASS FE12.login.server-error.ar->en :: expected dev-login refused (4xx); the alert is in ar, then in en after the switch, and differs :: actual status=401 before='فشل تسجيل الدخول: المستخدم غير موجود أو معطّل.' after='Sign-in failed: the user does not exist or is disabled.'
+PASS FE12.team.role-assigned.en->ar :: expected 201; banner starts 'Role assigned:' in EN, then 'أُسند الدور:' after switching to AR (dir rtl), with the role name in Arabic :: actual status=201 role=WL before='Role assigned: Workstream Lead. The assignment is recorded in the audit trail.' after='أُسند الدور: قائد مسار العمل. الإسناد مسجَّل في سجل التدقيق.' dir=rtl
+PASS FE12.team.role-assigned.ar->en :: expected banner back to 'Role assigned:…' :: actual 'Role assigned: Workstream Lead. The assignment is recorded in the audit trail.'
+STEPS before (EN dialog text):
+  Steps of Synthetic R14 journey
+  Step 1
+  Name (required)
+  
+  This field is required.
+  
+  Actor
+  Hand-off to
+  Systems (separate with commas)
+  Controls (separate with commas)
+  Cycle time
+  
+  At most 10 digits before and 4 after the decimal point, not negative.
+  
+  Cycle time unit
+  None
+  minutes
+  hours
+  days
+  weeks
+  Move up
+  : Step 1
+  Move down
+  : Step 1
+  Remove step
+  : Step 1
+  Add step
+  Cancel
+  Save changes
+STEPS switch: dispatched (header inert behind the modal)
+STEPS after:
+  خطوات Synthetic R14 journey
+  الخطوة 1
+  الاسم (مطلوب)
+  
+  هذا الحقل مطلوب.
+  
+  المنفّذ
+  التسليم إلى
+  الأنظمة (افصل بينها بفواصل)
+  الضوابط (افصل بينها بفواصل)
+  مدة الدورة
+  
+  بحد أقصى 10 خانات قبل الفاصلة العشرية و4 بعدها، ودون قيمة سالبة.
+  
+  وحدة مدة الدورة
+  لا يوجد
+  دقائق
+  ساعات
+  أيام
+  أسابيع
+  نقل لأعلى
+  : الخطوة 1
+  نقل لأسفل
+  : الخطوة 1
+  حذف الخطوة
+  : الخطوة 1
+  إضافة خطوة
+  إلغاء
+  حفظ التغييرات
+PASS FE12.journey-steps-error.en->ar :: expected a validation error is shown in EN; after switching to AR while it is visible the dialog (labels and error) is in Arabic, no English error text remains, dir rtl :: actual errorLinesEN=["Name (required)","This field is required.","At most 10 digits before and 4 after the decimal point, not negative."] switch=dispatched (header inert behind the modal) arabicLines=25 englishErrorRemains=false dir=rtl
+PASS no-page-errors :: expected no page errors or console errors/warnings (Chromium's 'Failed to load resource' lines for the intended 4xx/5xx excluded) :: actual []
+SUMMARY {"pass":20,"fail":0}
+### r14-language-ui exit=0

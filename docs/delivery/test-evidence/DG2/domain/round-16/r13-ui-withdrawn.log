@@ -1,0 +1,17 @@
+### v24.21.0 rv/r13-ui-withdrawn.mjs (clone at f4242ae) TAG= TRIGGERS=
+TIMELINE en
+  +11ms /transformations/01a11713-6696-778c-b845-31ac4a8e148b/evidence | text="Mobily Transformation Hub\nProvisional\nProvisional wordmark: " | msg=true
+  +264ms /login?…error=session_expired | text="Mobily Transformation Hub\nProvisional\nProvisional wordmark: " | msg=true
+  +264ms on /login with the message
+  /me answers after the upload: [401]
+PASS en.upload-refused-after-access-withdrawn :: expected assign 201; evidence 201; revoke 200; upload 401; the message 'Your session ended. Please sign in again.' (localized) is shown and the user ends on the sign-in page showing it, within 15 s; dir ltr; no English leak in AR; 0 revisions :: actual assign=201 evidence=201 revoke=200 upload=401 shownAt=11ms url=/login?returnTo=%2Ftransformations%2F01a11713-6696-778c-b845-31ac4a8e148b%2Fevidence&error=session_expired dir=ltr enLeak=false revisions=0
+PASS en.sign-in-after-refusal :: expected the sign-in form on that page signs in again (dev.lead) :: actual /transformations/01a11713-6696-778c-b845-31ac4a8e148b/evidence
+TIMELINE ar
+  +6ms /login?…error=session_expired | text="منصة موبايلي للتحوّل\nمؤقت\nشعار نصي مؤقت: لم يُقدَّم شعار رسم" | msg=true
+  +7ms on /login with the message
+  /me answers after the upload: [401]
+PASS ar.upload-refused-after-access-withdrawn :: expected assign 201; evidence 201; revoke 200; upload 401; the message 'انتهت جلستك. يُرجى تسجيل الدخول مجددًا.' (localized) is shown and the user ends on the sign-in page showing it, within 15 s; dir rtl; no English leak in AR; 0 revisions :: actual assign=201 evidence=201 revoke=200 upload=401 shownAt=7ms url=/login?returnTo=%2Ftransformations%2F01a11713-7a61-746e-909e-78228dc0f603%2Fevidence&error=session_expired dir=rtl enLeak=false revisions=0
+PASS ar.sign-in-after-refusal :: expected the sign-in form on that page signs in again (dev.lead) :: actual /transformations/01a11713-7a61-746e-909e-78228dc0f603/evidence
+PASS no-page-errors :: expected no page errors or console errors other than Chromium's 'Failed to load resource' lines for the expected 401s :: actual []
+SUMMARY {"pass":5,"fail":0}
+### r13-ui-withdrawn exit=0
