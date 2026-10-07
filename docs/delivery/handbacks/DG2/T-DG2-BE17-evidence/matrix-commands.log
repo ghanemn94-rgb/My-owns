@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# T-DG2-BE17 check matrix. Usage: checks.sh <nolocale|cutf8>
+set -u
+MODE=$1
+cd /home/user/My-owns
+EV=docs/delivery/handbacks/DG2/T-DG2-BE17-evidence
+N24=/opt/nvm/versions/node/v24.21.0/bin
+N22=/opt/node22/bin
+UNSET="env -u LANG -u LC_ALL -u LC_CTYPE -u LC_COLLATE -u LC_MESSAGES -u LC_NUMERIC -u LC_TIME -u LC_MONETARY"
+if [ "$MODE" = cutf8 ]; then LOC="LANG=C.UTF-8"; QPG=24681; EPG=24682; EAPI=3632; else LOC=""; QPG=24691; EPG=24692; EAPI=3631; fi
+MASKED='!.bash_profile !.bashrc !.gitconfig !.gitmodules !.idea !.mcp.json !.profile !.ripgreprc !.vscode !.zprofile !.zshrc !CLAUDE.local.md'
+NEW="apps/api/test/integration/request-io.test.ts packages/db/test/integration/pool-bounds.test.ts apps/api/test/integration/connection-hygiene.test.ts apps/api/test/integration/evidence.test.ts apps/api/test/integration/contract/contract.test.ts apps/api/test/integration/media-types.test.ts"
+run() { # id nodebin command...
+  local id=$1 nb=$2; shift 2
+  local log="$EV/$MODE-$id.log"
+  {
+    echo "# check: $id   mode: $MODE   started: $(date -u +%FT%TZ)"
+    echo "# command: $UNSET $LOC PATH=$nb:\$PATH $*"
+    $UNSET $LOC PATH=$nb:$PATH bash -c 'echo "# node $(node -v); LANG=${LANG:-<unset>} LC_ALL=${LC_ALL:-<unset>} LC_CTYPE=${LC_CTYPE:-<unset>}"'
+    $UNSET $LOC PATH=$nb:$PATH bash -c "$*" 2>&1
+    echo "# exit: $?   finished: $(date -u +%FT%TZ)"
+  } > "$log" 2>&1
+  echo "$MODE $id: $(tail -1 "$log")" >> "$EV/$MODE-00-summary.log"
+}
+: > "$EV/$MODE-00-summary.log"
+run 01-typecheck $N24 "pnpm -r typecheck"
+run 02-build $N24 "pnpm -r build"
+run 03-lint $N24 "pnpm lint"
+run 04-format-check $N24 "pnpm format:check"
+run 05-format-check-excluding-masked-dotfiles $N24 "npx prettier --check . $MASKED"
+run 06-openapi-lint $N24 "pnpm openapi:lint"
+run 07-unit-node22 $N22 "pnpm test"
+run 08-unit-node24 $N24 "pnpm test"
+run 09a-integration-run1 $N24 "env QA_PG_PORT=$QPG tests/qa/support/with-pg.sh pnpm test:integration"
+run 09b-integration-run2 $N24 "env QA_PG_PORT=$QPG tests/qa/support/with-pg.sh pnpm test:integration"
+run 09c-new-and-related-tests-node22 $N22 "env QA_PG_PORT=$QPG tests/qa/support/with-pg.sh npx vitest run --project integration $NEW"
+run 10-web-e2e $N24 "env E2E_PG_PORT=$EPG E2E_API_PORT=$EAPI PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e/journeys.spec.ts apps/web/e2e/p2-journeys.spec.ts apps/web/e2e/p2-blank-text.spec.ts --project=chromium-en --project=chromium-ar --workers=1"
+run 11-validate-historical-DG1 $N24 "node tools/gates/validate.mjs --historical --stage DG1"

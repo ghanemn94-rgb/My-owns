@@ -8,7 +8,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { loadConfig, type AppConfig } from "@mth/config";
-import { createDb, createPool, DEV_ISSUER, type Db } from "@mth/db";
+import { createDb, createPool, DEV_ISSUER, type Db, type PoolOptions } from "@mth/db";
 import type { FastifyInstance, LightMyRequestResponse } from "fastify";
 import pg from "pg";
 import { v7 as uuidv7 } from "uuid";
@@ -68,13 +68,15 @@ export async function startApi(
     logStream?: ServerOptions["logStream"];
     /** T-DG2-BE16: connection and shutdown settings, and the SPA directory (default: none). */
     server?: Pick<ServerOptions, "shutdownGraceMs" | "requestTimeoutMs" | "connectionsCheckingIntervalMs" | "webRoot">;
+    /** T-DG2-BE17: pool bounds of this instance (default: createPool's defaults, max 5). */
+    pool?: Pick<PoolOptions, "max" | "connectionTimeoutMs" | "idleInTransactionTimeoutMs" | "applicationName">;
   } = {},
 ): Promise<TestApi> {
   const { adminUrl } = inject("mthDb");
   const config = testConfig(
     options.database ? { DATABASE_URL: roleUrl(adminUrl, options.database, "mth_app"), ...options.env } : options.env,
   );
-  const pool = createPool(config.databaseUrl!, { max: 5, applicationName: "api-test" });
+  const pool = createPool(config.databaseUrl!, { max: 5, applicationName: "api-test", ...options.pool });
   const { app, db, routes } = await buildServer({
     config,
     pool,

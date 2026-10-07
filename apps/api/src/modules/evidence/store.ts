@@ -33,11 +33,26 @@ export class EvidenceStoreUnavailable extends Error {
   }
 }
 
+export type EvidenceBody = AsyncIterable<Uint8Array | string> | Uint8Array;
+
 export interface EvidenceStore {
-  put(key: string, body: AsyncIterable<Uint8Array | string> | Uint8Array, maxBytes: number): Promise<StoredObject>;
+  /** `receive` + `finalise` in one call (tests and tools; the upload route uses the two steps, T-DG2-BE17). */
+  put(key: string, body: EvidenceBody, maxBytes: number): Promise<StoredObject>;
+  /**
+   * T-DG2-BE17 step 1: streams `body` into the key's TEMPORARY object (never readable through `get`), computing the
+   * SHA-256 over the raw bytes and enforcing `maxBytes` while streaming, and makes it durable (fsync). On any failure
+   * (too large, client abort, I/O error) the temporary object is removed and the error is rethrown. The upload route
+   * calls it while holding NO database connection or transaction.
+   */
+  receive(key: string, body: EvidenceBody, maxBytes: number): Promise<StoredObject>;
+  /** Step 2: makes a received object readable under its key (atomic rename of the temporary object). */
+  finalise(key: string): Promise<void>;
   get(key: string): Promise<AsyncIterable<Uint8Array>>;
   head(key: string): Promise<{ size: number } | null>;
-  /** Removes an object that never became committed metadata (failed upload). Retention deletes are P6. */
+  /**
+   * Removes an object that never became committed metadata (failed upload): the final object AND a temporary one
+   * that was received but not finalised. Idempotent. Retention deletes are P6.
+   */
   discardUncommitted(key: string): Promise<void>;
 }
 
@@ -56,13 +71,19 @@ export class FilesystemEvidenceStore implements EvidenceStore {
     return p;
   }
 
-  async put(
-    key: string,
-    body: AsyncIterable<Uint8Array | string> | Uint8Array,
-    maxBytes: number,
-  ): Promise<StoredObject> {
+  private tempOf(key: string): string {
+    return `${this.pathOf(key)}.part`;
+  }
+
+  async put(key: string, body: EvidenceBody, maxBytes: number): Promise<StoredObject> {
+    const stored = await this.receive(key, body, maxBytes);
+    await this.finalise(key);
+    return stored;
+  }
+
+  async receive(key: string, body: EvidenceBody, maxBytes: number): Promise<StoredObject> {
     const final = this.pathOf(key);
-    const temp = `${final}.part`;
+    const temp = this.tempOf(key);
     try {
       await mkdir(dirname(final), { recursive: true, mode: 0o700 });
     } catch (err) {
@@ -88,8 +109,11 @@ export class FilesystemEvidenceStore implements EvidenceStore {
       throw err;
     }
     await handle.close();
-    await rename(temp, final);
     return { key, sha256: hash.digest("hex"), size };
+  }
+
+  async finalise(key: string): Promise<void> {
+    await rename(this.tempOf(key), this.pathOf(key));
   }
 
   async get(key: string): Promise<AsyncIterable<Uint8Array>> {
@@ -108,6 +132,7 @@ export class FilesystemEvidenceStore implements EvidenceStore {
 
   async discardUncommitted(key: string): Promise<void> {
     await rm(this.pathOf(key), { force: true });
+    await rm(this.tempOf(key), { force: true });
   }
 }
 
@@ -117,5 +142,12 @@ export function evidenceStoreFor(config: { driver: "filesystem" | "s3"; path: st
   const unavailable = async (): Promise<never> => {
     throw new EvidenceStoreUnavailable("The S3-compatible evidence store is not available in this release (P6).");
   };
-  return { put: unavailable, get: unavailable, head: unavailable, discardUncommitted: async () => undefined };
+  return {
+    put: unavailable,
+    receive: unavailable,
+    finalise: unavailable,
+    get: unavailable,
+    head: unavailable,
+    discardUncommitted: async () => undefined,
+  };
 }

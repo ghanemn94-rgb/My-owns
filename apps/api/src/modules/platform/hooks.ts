@@ -4,6 +4,7 @@
 //      the server refuses to start;
 //   2. at RESPONSE time: a successful response from a route that declares a business permission must have consulted
 //      the policy function at least once (request.authz.decisions > 0), otherwise the response is replaced by a 500.
+import { isPoolCheckoutTimeout } from "@mth/db";
 import type { Permission } from "@mth/shared";
 import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest, preHandlerAsyncHookHandler } from "fastify";
 import { v7 as uuidv7 } from "uuid";
@@ -53,11 +54,55 @@ export function sendProblem(reply: FastifyReply, request: FastifyRequest, proble
   return reply.code(problem.status).type("application/problem+json").send(problem.toBody(request.id));
 }
 
+/** The parts of the raw Node request that tell whether its body arrived (absent under light-my-request `inject`). */
+export interface RawBodyState {
+  readonly complete?: unknown;
+  readonly aborted?: unknown;
+  readonly destroyed?: unknown;
+}
+
+/** The request facts `mapError` reads: the route's media types and the raw request's body state. */
+export type ErrorRequestSource = RouteConsumesSource & { readonly raw?: RawBodyState | undefined };
+
+/**
+ * T-DG2-BE17 (F-DG2-412): the error is the request body's own stream failing because the body was NOT RECEIVED
+ * COMPLETELY: the client disconnected mid-body, or Node's requestTimeout (408) cut the connection. One rule for every
+ * route and media type: the JSON parser (Fastify rawBody, which stamps statusCode 400 on the stream error) and the
+ * octet-stream upload (the handler iterating the request stream) both end here.
+ * Matched only when ALL hold, so a server fault is never mistaken for a client abort:
+ *   1. the raw request is incomplete (`complete === false`; a fully received body never matches, and `inject` has no
+ *      such flag);
+ *   2. the error is not a socket error of another connection: Node's own request-abort error carries no `syscall`,
+ *      whereas a database socket reset is `read ECONNRESET` with `syscall: "read"` (and pg's protocol errors carry a
+ *      SQLSTATE `code`, never ECONNRESET);
+ *   3. it is Node's request-abort error (`code ECONNRESET`, message `aborted`), or a premature-close error of a request
+ *      stream that Node marked aborted/destroyed.
+ * Exported for unit tests.
+ */
+export function isIncompleteBodyError(error: unknown, request: { readonly raw?: RawBodyState | undefined }): boolean {
+  const raw = request.raw;
+  if (!raw || raw.complete !== false) return false;
+  if (typeof error !== "object" || error === null) return false;
+  const e = error as { code?: unknown; message?: unknown; syscall?: unknown };
+  if (e.syscall !== undefined) return false;
+  if (e.code === "ECONNRESET" && e.message === "aborted") return true;
+  return e.code === "ERR_STREAM_PREMATURE_CLOSE" && (raw.aborted === true || raw.destroyed === true);
+}
+
+/** The declared answer to an incomplete body (nobody may receive it: the socket is usually gone). */
+export function incompleteBodyProblem(): HttpProblem {
+  return problems.badRequest("validation.malformed_request", "The request body was not received completely.");
+}
+
 function mapError(
   error: FastifyError & { code?: string; constraint?: string; table?: string; column?: string },
-  request: RouteConsumesSource,
+  request: ErrorRequestSource,
 ): HttpProblem | null {
   if (error instanceof HttpProblem) return error;
+  if (isIncompleteBodyError(error, request)) return incompleteBodyProblem();
+  // T-DG2-BE17 (F-DG2-411): no pooled connection became free within the pool's connectionTimeoutMillis. A bounded,
+  // declared "not available" answer (ADR-0007 §3: 503) instead of a request that hangs; /readyz answers its own 503.
+  if (isPoolCheckoutTimeout(error)) return problems.unavailable();
   // P2 database record guards and template constraints (ADR-0016 §3, ADR-0015) first: they are more specific.
   const guarded = mapDatabaseGuardError(error);
   if (guarded) return guarded;
@@ -93,7 +138,7 @@ function mapError(
  * The problem for any error that reaches an error handler: the specific mapping, else 500 internal (never a plain or
  * internal-leaking body). Shared by `setErrorHandler` and the router-level `frameworkErrors` handler (T-DG2-BE12).
  */
-export function problemForError(error: FastifyError, request: RouteConsumesSource): HttpProblem {
+export function problemForError(error: FastifyError, request: ErrorRequestSource): HttpProblem {
   return mapError(error, request) ?? problems.internal();
 }
 
@@ -169,6 +214,9 @@ export function registerPlatformHooks(app: FastifyInstance, options: PlatformOpt
     const problem = mapError(error, request);
     if (problem) {
       if (problem.status >= 500) request.log.error({ err: error }, "request failed");
+      // T-DG2-BE17: a client that went away (or timed out) mid-body is not a server fault: below error level.
+      else if (isIncompleteBodyError(error, request))
+        request.log.info({ code: (error as { code?: unknown }).code }, "request body not received completely");
       return sendProblem(reply, request, problem);
     }
     request.log.error({ err: error }, "unhandled error");

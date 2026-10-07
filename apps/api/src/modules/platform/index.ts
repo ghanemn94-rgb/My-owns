@@ -28,14 +28,18 @@ export {
 } from "./idempotency.ts";
 export {
   genReqId,
+  incompleteBodyProblem,
+  isIncompleteBodyError,
   isValidAccess,
   problemForError,
   registerNotFoundHandler,
   registerPlatformHooks,
   sendProblem,
   type AuthzTracker,
+  type ErrorRequestSource,
   type NotFoundOptions,
   type PlatformOptions,
+  type RawBodyState,
   type RouteAccess,
 } from "./hooks.ts";
 export {

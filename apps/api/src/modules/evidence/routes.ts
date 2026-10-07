@@ -272,29 +272,43 @@ function storeProblem(err: unknown): HttpProblem | null {
 }
 
 /**
- * T-DG2-BE16: the client went away (or Node's requestTimeout cut the connection) while the body was streaming. The
- * store removed its temporary file and the transaction rolls back; the answer is the declared 400 (nobody receives it:
- * the socket is gone), never an "unhandled error" 500.
+ * The evidence row for a write: 428 without If-Match, 404 when missing, 409 when If-Match is not its version, 422 when
+ * archived. `lock`: FOR UPDATE (the write itself); without it, the upload's pre-check before the body is read.
  */
-function abortedBodyProblem(request: FastifyRequest, err: unknown): HttpProblem | null {
-  const aborted = (request.raw as { aborted?: unknown }).aborted === true;
-  if (!aborted && (err as { code?: unknown } | null)?.code !== "ECONNRESET") return null;
-  return problems.badRequest("validation.malformed_request", "The request body was not received completely.");
-}
-
-async function lockEvidence(tx: Tx, request: FastifyRequest, transformationId: string, evidenceId: string) {
+async function checkEvidenceVersion(
+  tx: Tx,
+  request: FastifyRequest,
+  transformationId: string,
+  evidenceId: string,
+  lock: boolean,
+) {
   const expected = requireIfMatch(request);
-  const current = await tx
+  const query = tx
     .selectFrom("evidence")
     .selectAll()
     .where("id", "=", evidenceId)
-    .where("transformation_id", "=", transformationId)
-    .forUpdate()
-    .executeTakeFirst();
+    .where("transformation_id", "=", transformationId);
+  const current = await (lock ? query.forUpdate() : query).executeTakeFirst();
   if (!current) throw problems.notFound();
   if (current.version !== expected) throw problems.versionConflict(current.version);
   if (current.status === "archived") throw problems.businessRule("record.archived", "Archived records are read-only.");
   return current;
+}
+
+async function lockEvidence(tx: Tx, request: FastifyRequest, transformationId: string, evidenceId: string) {
+  return checkEvidenceVersion(tx, request, transformationId, evidenceId, true);
+}
+
+/** Creator and named owner of an evidence item (404 when it is gone), for the `own`-scoped write rules. */
+async function ownershipOf(tx: Tx, transformationId: string, evidenceId: string) {
+  const row = await tx
+    .selectFrom("evidence")
+    .select(["created_by", "owner_user_id"])
+    .where("id", "=", evidenceId)
+    .where("transformation_id", "=", transformationId)
+    .executeTakeFirst();
+  if (!row) throw problems.notFound();
+  return { createdBy: row.created_by, ownerUserId: row.owner_user_id };
 }
 
 /** Created-by / owner of a linkable record in this transformation (null when it does not exist there). */
@@ -413,56 +427,81 @@ function registerContentRoutes(app: FastifyInstance, db: Db, store: EvidenceStor
   });
 
   // F-DG2-320: the contract declares only application/octet-stream for this operation.
+  // T-DG2-BE17 (F-DG2-411): NO client I/O while a pooled connection or a transaction is held. Three phases:
+  //   1. preconditions in a short transaction, COMMITTED before the body is read (authorization, the item, If-Match,
+  //      the file name, the body's form); every refusal here is answered before a byte of the body is consumed;
+  //   2. the body is received into the store's TEMPORARY object (size limit and SHA-256 while streaming) holding no
+  //      connection: a slow or stalled client costs a socket and a file handle, never database capacity;
+  //   3. a short write transaction: authorization again, the row lock, If-Match re-checked against the LOCKED version
+  //      (a concurrent edit during the upload is the declared 409 version_conflict), the content row, the item update
+  //      and the audit event; the object is finalised (atomic rename, local I/O only) as the last step before COMMIT,
+  //      as before BE17, so a committed content row never points at a missing object.
+  //   Any failure after phase 2 started discards the temporary and the final object.
   const uploadConfig = { access: { permission: "evidence.create" }, consumes: [OCTET_STREAM_MEDIA_TYPE] } as const;
   app.post(`${ITEM}/content`, { config: uploadConfig }, async (request, reply) => {
     const { transformationId, evidenceId } = parse(itemParams, request.params, "params");
-    let storedKey: string | null = null;
+    const { organizationId, fileName, body } = await db.transaction().execute(async (tx) => {
+      // Replacing the stored content is an edit: only the item's creator or named owner (F-DG2-140).
+      await requireTransformationRead(tx, principalOf(request), transformationId);
+      const seen = await tx
+        .selectFrom("evidence")
+        .select(["created_by", "owner_user_id"])
+        .where("id", "=", evidenceId)
+        .where("transformation_id", "=", transformationId)
+        .executeTakeFirst();
+      if (!seen) throw problems.notFound();
+      const ctx = await openWrite(tx, request, transformationId, EDIT_OWN, {
+        createdBy: seen.created_by,
+        ownerUserId: seen.owner_user_id,
+      });
+      const rawName = request.headers["x-file-name"];
+      const fileName = parse(
+        z
+          .string()
+          .min(1)
+          .max(255)
+          .regex(/^[^\\/\x00-\x1f]+$/, "validation.file_name")
+          // F-DG2-260: the same storability rule as every other client string (defence in depth: a header value is
+          // Latin-1 decoded and decodeURIComponent refuses CESU-8 surrogate bytes, so none can arrive today).
+          .refine((v) => !hasInvalidCharacter(v), INVALID_CHARACTER_CODE),
+        decodeFileName(Array.isArray(rawName) ? rawName[0] : rawName),
+        "header",
+      );
+      // The same checks, in the same order, as on the locked row in phase 3 (428, 404, 409, 422), without the lock.
+      const current = await checkEvidenceVersion(tx, request, transformationId, evidenceId, false);
+      if (current.kind !== "file")
+        throw ruleProblem("evidence.not_a_file", "Only file evidence has stored content.", "");
+      const body: unknown = request.body;
+      if (body === undefined || body === null)
+        throw problems.badRequest("validation.body_required", "Send the file bytes as application/octet-stream.");
+      // F-DG2-320 (defence in depth): only the raw request byte stream is ever stored, never a parsed value.
+      if (!isRawByteBody(body)) throw undeclaredMediaTypeProblem(uploadConfig.consumes);
+      return { organizationId: ctx.organizationId, fileName, body };
+    });
+
+    const contentId = uuidv7();
+    const key = `${organizationId}/${transformationId}/${evidenceId}/${contentId}`;
     try {
+      // Phase 2: no connection, no transaction. An incomplete body (client abort, requestTimeout) is mapped centrally
+      // (platform/hooks.ts isIncompleteBodyError): 400 validation.malformed_request, below error level.
+      const stored = await store.receive(key, body, EVIDENCE_MAX_BYTES);
       const row = await db.transaction().execute(async (tx) => {
-        // Replacing the stored content is an edit: only the item's creator or named owner (F-DG2-140).
-        await requireTransformationRead(tx, principalOf(request), transformationId);
-        const seen = await tx
-          .selectFrom("evidence")
-          .select(["created_by", "owner_user_id"])
-          .where("id", "=", evidenceId)
-          .where("transformation_id", "=", transformationId)
-          .executeTakeFirst();
-        if (!seen) throw problems.notFound();
-        const ctx = await openWrite(tx, request, transformationId, EDIT_OWN, {
-          createdBy: seen.created_by,
-          ownerUserId: seen.owner_user_id,
-        });
-        const rawName = request.headers["x-file-name"];
-        const fileName = parse(
-          z
-            .string()
-            .min(1)
-            .max(255)
-            .regex(/^[^\\/\x00-\x1f]+$/, "validation.file_name")
-            // F-DG2-260: the same storability rule as every other client string (defence in depth: a header value is
-            // Latin-1 decoded and decodeURIComponent refuses CESU-8 surrogate bytes, so none can arrive today).
-            .refine((v) => !hasInvalidCharacter(v), INVALID_CHARACTER_CODE),
-          decodeFileName(Array.isArray(rawName) ? rawName[0] : rawName),
-          "header",
+        const ctx = await openWrite(
+          tx,
+          request,
+          transformationId,
+          EDIT_OWN,
+          await ownershipOf(tx, transformationId, evidenceId),
         );
-        const current = await lockEvidence(tx, request, transformationId, evidenceId);
+        const current = await checkEvidenceVersion(tx, request, transformationId, evidenceId, true);
         if (current.kind !== "file")
           throw ruleProblem("evidence.not_a_file", "Only file evidence has stored content.", "");
-        const body: unknown = request.body;
-        if (body === undefined || body === null)
-          throw problems.badRequest("validation.body_required", "Send the file bytes as application/octet-stream.");
-        // F-DG2-320 (defence in depth): only the raw request byte stream is ever stored, never a parsed value.
-        if (!isRawByteBody(body)) throw undeclaredMediaTypeProblem(uploadConfig.consumes);
         const last = await tx
           .selectFrom("evidence_content")
           .select((eb) => eb.fn.max<number>("revision").as("n"))
           .where("evidence_id", "=", evidenceId)
           .executeTakeFirst();
         const revision = (last?.n ?? 0) + 1;
-        const contentId = uuidv7();
-        const key = `${ctx.organizationId}/${transformationId}/${evidenceId}/${contentId}`;
-        const stored = await store.put(key, body, EVIDENCE_MAX_BYTES);
-        storedKey = key;
         await tx
           .insertInto("evidence_content")
           .values({
@@ -500,13 +539,13 @@ function registerContentRoutes(app: FastifyInstance, db: Db, store: EvidenceStor
             contentSize: { from: null, to: stored.size },
           },
         });
+        await store.finalise(key);
         return updated;
       });
-      storedKey = null;
       return sendVersioned(reply, 200, toEvidence(row));
     } catch (err) {
-      if (storedKey !== null) await store.discardUncommitted(storedKey).catch(() => undefined);
-      throw storeProblem(err) ?? abortedBodyProblem(request, err) ?? err;
+      await store.discardUncommitted(key).catch(() => undefined);
+      throw storeProblem(err) ?? err;
     }
   });
 }

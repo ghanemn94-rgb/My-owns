@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# T-DG2-BE17 negative control: the final new tests against HEAD's source (src files restored afterwards).
+set -u
+cd /home/user/My-owns
+EV=docs/delivery/handbacks/DG2/T-DG2-BE17-evidence
+BK=$TMPDIR/mine-final; rm -rf $BK; mkdir -p $BK
+SRC="apps/api/src/modules/evidence/routes.ts apps/api/src/modules/evidence/store.ts apps/api/src/modules/platform/hooks.ts apps/api/src/modules/platform/index.ts packages/db/src/index.ts packages/db/src/pool.ts"
+for f in $SRC; do mkdir -p $BK/$(dirname $f); cp $f $BK/$f; git show HEAD:$f > $f; done
+export PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH
+LOG=$EV/negative-control-head-18694ca.log
+{
+  echo "# T-DG2-BE17 negative control: the final new tests against HEAD $(git rev-parse --short HEAD) source   started: $(date -u +%FT%TZ)"
+  echo "# reverted to HEAD (git show HEAD:<path>): $SRC"
+  echo "# kept: the new/changed tests and the harness pool option (apps/api/test/support/harness.ts)"
+  echo "# git status --short (tracked):"; git status --short | grep -v '^??'
+  echo "# node $(node -v)"
+  echo "# command: QA_PG_PORT=24571 tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/request-io.test.ts packages/db/test/integration/pool-bounds.test.ts"
+  QA_PG_PORT=24571 timeout 900 tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/request-io.test.ts packages/db/test/integration/pool-bounds.test.ts 2>&1
+  echo "# exit: $?"
+  echo "# command: npx vitest run --project unit-node apps/api/src/modules/platform/incomplete-body.test.ts apps/api/src/modules/evidence/evidence.test.ts"
+  npx vitest run --project unit-node apps/api/src/modules/platform/incomplete-body.test.ts apps/api/src/modules/evidence/evidence.test.ts 2>&1
+  echo "# exit: $?   finished: $(date -u +%FT%TZ)"
+} > $LOG 2>&1
+for f in $SRC; do cp $BK/$f $f; done
+for f in $SRC; do cmp -s $f $BK/$f && echo "restored $f" >> $LOG || echo "NOT RESTORED $f" >> $LOG; done

@@ -104,7 +104,44 @@ describe("FilesystemEvidenceStore (ADR-0010)", () => {
     await expect(store.put("/abs", chunks("x"), 10)).rejects.toThrow();
   });
 
+  it("T-DG2-BE17: receive holds the bytes in a temporary object that get() cannot read until finalise", async () => {
+    const got = await store.receive("org/t/e/two", chunks("staged ", "bytes"), 1024);
+    expect(got).toEqual({
+      key: "org/t/e/two",
+      sha256: createHash("sha256").update("staged bytes").digest("hex"),
+      size: 12,
+    });
+    expect(readdirSync(join(root, "org/t/e")).filter((f) => f.startsWith("two"))).toEqual(["two.part"]);
+    await expect(store.get("org/t/e/two")).rejects.toThrow();
+    expect(await store.head("org/t/e/two")).toBeNull();
+    await store.finalise("org/t/e/two");
+    expect(readdirSync(join(root, "org/t/e")).filter((f) => f.startsWith("two"))).toEqual(["two"]);
+    expect(await store.head("org/t/e/two")).toEqual({ size: 12 });
+  });
+
+  it("T-DG2-BE17: discardUncommitted removes a received-but-not-finalised object and a finalised one", async () => {
+    await store.receive("org/t/e/three", chunks("x"), 10);
+    await store.discardUncommitted("org/t/e/three");
+    expect(readdirSync(join(root, "org/t/e")).filter((f) => f.startsWith("three"))).toEqual([]);
+    await store.put("org/t/e/four", chunks("y"), 10);
+    await store.discardUncommitted("org/t/e/four");
+    await store.discardUncommitted("org/t/e/four"); // idempotent
+    expect(readdirSync(join(root, "org/t/e")).filter((f) => f.startsWith("four"))).toEqual([]);
+  });
+
+  it("T-DG2-BE17: a body stream that fails mid-way leaves no temporary object", async () => {
+    async function* failing() {
+      yield Buffer.from("partial");
+      throw Object.assign(new Error("aborted"), { code: "ECONNRESET" });
+    }
+    await expect(store.receive("org/t/e/five", failing(), 1024)).rejects.toThrow("aborted");
+    expect(readdirSync(join(root, "org/t/e")).filter((f) => f.startsWith("five"))).toEqual([]);
+  });
+
   it("the S3-compatible driver is not part of P2 and fails closed", async () => {
-    await expect(evidenceStoreFor({ driver: "s3", path: root }).put("k", chunks("x"), 10)).rejects.toThrow(/P6/);
+    const s3 = evidenceStoreFor({ driver: "s3", path: root });
+    await expect(s3.put("k", chunks("x"), 10)).rejects.toThrow(/P6/);
+    await expect(s3.receive("k", chunks("x"), 10)).rejects.toThrow(/P6/);
+    await expect(s3.finalise("k")).rejects.toThrow(/P6/);
   });
 });

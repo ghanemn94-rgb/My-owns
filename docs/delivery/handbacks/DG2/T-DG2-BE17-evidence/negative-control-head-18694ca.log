@@ -1,0 +1,454 @@
+# T-DG2-BE17 negative control: the final new tests against HEAD 18694ca source   started: 2026-10-07T03:28:17Z
+# reverted to HEAD (git show HEAD:<path>): apps/api/src/modules/evidence/routes.ts apps/api/src/modules/evidence/store.ts apps/api/src/modules/platform/hooks.ts apps/api/src/modules/platform/index.ts packages/db/src/index.ts packages/db/src/pool.ts
+# kept: the new/changed tests and the harness pool option (apps/api/test/support/harness.ts)
+# git status --short (tracked):
+ M apps/api/src/modules/evidence/evidence.test.ts
+ M apps/api/test/support/harness.ts
+ M docs/operations/health-readiness.md
+# node v24.21.0
+# command: QA_PG_PORT=24571 tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/request-io.test.ts packages/db/test/integration/pool-bounds.test.ts
+port-policy: PostgreSQL listening on port 24571 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/My-owns
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muxjscl8_fbba8f8c (server_encoding UTF8); applied 19 migrations to a fresh database
+ ❯ |integration| packages/db/test/integration/pool-bounds.test.ts (7 tests | 6 failed) 12272ms
+   × createPool session settings > every session runs with the documented statement, idle-in-transaction and UTC settings 19ms
+     → expected { s: '30s', i: '0', tz: 'UTC' } to deeply equal { s: '30s', i: 'NaNs', tz: 'UTC' }
+   × createPool session settings > keeps a role (or other) option given in the URL next to the pool's own session options 6ms
+     → expected { p: 'public', i: '0' } to deeply equal { p: 'public', i: '30s' }
+   × bounded checkout (connectionTimeoutMillis) > a checkout from an exhausted pool fails after the timeout (never hangs) and is recognised 5011ms
+     → expected 'hang' to be an instance of Error
+   × bounded checkout (connectionTimeoutMillis) > through Kysely the same error reaches the caller 5008ms
+     → (0 , isPoolCheckoutTimeout) is not a function
+   × bounded checkout (connectionTimeoutMillis) > other errors are not mistaken for a checkout timeout 1ms
+     → (0 , isPoolCheckoutTimeout) is not a function
+   × bounded idle-in-transaction time (idle_in_transaction_session_timeout) > PostgreSQL ends a transaction left idle past the limit, releasing its row lock; the pool recovers 1207ms
+     → expected null not to be null
+   ✓ bounded idle-in-transaction time (idle_in_transaction_session_timeout) > a transaction that keeps running statements is not affected  1017ms
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-411: a stalled upload holds no pooled connection and no row lock > reviewer's R8: N stalled uploads (N = pool size) leave /me and /readyz answering promptly; nothing is stored
+BE17 R8: {"poolSize":5,"stalledUploads":5,"sessions":{"sessions":5,"visible":5,"idleInTx":5,"nonIdle":5},"me":{"status":-1,"ms":5005},"ready":{"status":-1,"ms":5002},"patch":{"status":-1,"ms":5003},"leftovers":[],"rows":0,"closeMs":0,"errors":[]}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-411: a stalled upload holds no pooled connection and no row lock > an upload whose If-Match goes stale during the body: 409 version_conflict, no content row, no object
+BE17 stale-if-match: {"patchDuringBody":null,"patch":{"status":409,"ms":3023},"upload":{"status":"active","id":"01a11468-2332-743a-ae13-91b8f34cbd1c","organizationId":"01a11467-e105-726b-b83c-8aad604c65b7","transformationId":"01a11467-e180-7060-83c2-cf57ab39d5c5","kind":"file","title":"Synthetic BE17 stale","description":null,"evidenceType":"document","source":null,"ownerUserId":"01a11467-e12d-729a-a85a-4e2b21a8b640","observationStart":null,"observationEnd":null,"noteBody":null,"url":null,"fileName":"synthetic.bin","currentContentId":"01a11468-234a-77cb-917f-dcdd7fbe8260","reviewStatus":"unverified","accessibilityStatus":"unchecked","reviewedContentId":null,"reviewedBy":null,"reviewedAt":null,"reviewNote":null,"archivedAt":null,"archivedBy":null,"archiveReason":null,"version":2,"createdAt":"2026-10-07T03:28:51.502Z","createdBy":"01a11467-e12d-729a-a85a-4e2b21a8b640","updatedAt":"2026-10-07T03:28:51.522Z","updatedBy":"01a11467-e12d-729a-a85a-4e2b21a8b640"},"rows":1,"files":["/var/tmp/mth-run.WqMKuk/claude-0/mth-evidence-it-4sHxva/01a11467-e105-726b-b83c-8aad604c65b7/01a11467-e180-7060-83c2-cf57ab39d5c5/01a11468-2332-743a-ae13-91b8f34cbd1c/01a11468-234a-77cb-917f-dcdd7fbe8260"],"version":2,"closeMs":1}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-411: a stalled upload holds no pooled connection and no row lock > valid uploads stay byte-exact with their sha256 (stored, recorded and downloaded), no temporary object left
+BE17 valid-uploads: {"out":[{"size":1,"status":200,"rows":1,"sha":true,"files":["/var/tmp/mth-run.WqMKuk/claude-0/mth-evidence-it-4sHxva/01a11467-e105-726b-b83c-8aad604c65b7/01a11467-e180-7060-83c2-cf57ab39d5c5/01a11468-305f-7301-89d5-69445ee10f78/01a11468-3076-72c7-bd6d-028db3eb79cd"]},{"size":65536,"status":200,"rows":1,"sha":true,"files":["/var/tmp/mth-run.WqMKuk/claude-0/mth-evidence-it-4sHxva/01a11467-e105-726b-b83c-8aad604c65b7/01a11467-e180-7060-83c2-cf57ab39d5c5/01a11468-30ab-71dd-bf84-6cdbca1a3e49/01a11468-30b7-77b9-93fc-ad5998d57c51"]},{"size":3145728,"status":200,"rows":1,"sha":true,"files":["/var/tmp/mth-run.WqMKuk/claude-0/mth-evidence-it-4sHxva/01a11467-e105-726b-b83c-8aad604c65b7/01a11467-e180-7060-83c2-cf57ab39d5c5/01a11468-30d8-73bc-b661-1a2cf86a679d/01a11468-30eb-72fb-ab01-8ae59c200ad5"]}],"closeMs":0}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-411: a stalled upload holds no pooled connection and no row lock > sweep: downloads to slow readers (N+1 paused readers, pool size N) hold no pooled connection
+BE17 slow-readers: {"poolSize":2,"readers":3,"bytesReceivedWhilePaused":[65536,65536,65536],"fileBytes":25165824,"me":{"status":200,"ms":6},"ready":{"status":200,"ms":2},"sessions":{"sessions":2,"visible":2,"idleInTx":0,"nonIdle":0},"closeMs":2}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6a stalled JSON body, requestTimeout 408: answered (if at all) below 500, logged below error level, nothing stored
+BE17 R6a: {"status":408,"classified":-1,"completed":[],"errors":[{"level":50,"time":1791343798082,"pid":245,"hostname":"vm","requestId":"01a11469-211d-703a-a1e2-2d86dcac7b0e","err":{"type":"Error","message":"aborted","stack":"Error: aborted\n    at abortIncoming (node:_http_server:921:17)\n    at socketOnClose (node:_http_server:914:3)\n    at Socket.emit (node:events:526:24)\n    at TCP.<anonymous> (node:net:362:12)","code":"ECONNRESET","statusCode":400},"msg":"unhandled error"}],"rows":0,"files":[],"closeMs":0}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6d JSON body aborted by the client: answered (if at all) below 500, logged below error level, nothing stored
+BE17 R6d: {"status":null,"classified":-1,"completed":[],"errors":[{"level":50,"time":1791343801758,"pid":245,"hostname":"vm","requestId":"01a11469-3470-74fa-ae25-ef71f1804b29","err":{"type":"Error","message":"aborted","stack":"Error: aborted\n    at abortIncoming (node:_http_server:921:17)\n    at socketOnClose (node:_http_server:914:3)\n    at Socket.emit (node:events:526:24)\n    at TCP.<anonymous> (node:net:362:12)","code":"ECONNRESET","statusCode":400},"msg":"unhandled error"}],"rows":0,"files":[],"closeMs":0}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6c stalled upload body, requestTimeout 408: answered (if at all) below 500, logged below error level, nothing stored
+BE17 R6c: {"status":408,"classified":-1,"completed":[],"errors":[],"rows":0,"files":[],"closeMs":0}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6e upload body aborted by the client: answered (if at all) below 500, logged below error level, nothing stored
+BE17 R6e: {"status":null,"classified":-1,"completed":[],"errors":[],"rows":0,"files":[],"closeMs":0}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > no over-match: a database-side ECONNRESET while the request body is still arriving is a 500 with an error log
+BE17 db-econnreset: {"status":500,"resets":4,"errors":[{"msg":"unhandled error","code":"ECONNRESET","message":"read ECONNRESET"}]}
+
+ ❯ |integration| apps/api/test/integration/request-io.test.ts (10 tests | 7 failed) 99603ms
+   × F-DG2-411: a stalled upload holds no pooled connection and no row lock > reviewer's R8: N stalled uploads (N = pool size) leave /me and /readyz answering promptly; nothing is stored 16662ms
+     → expected 5 to be +0 // Object.is equality
+   × F-DG2-411: a stalled upload holds no pooled connection and no row lock > an upload whose If-Match goes stale during the body: 409 version_conflict, no content row, no object 3389ms
+     → expected undefined to be 200 // Object.is equality
+   ✓ F-DG2-411: a stalled upload holds no pooled connection and no row lock > valid uploads stay byte-exact with their sha256 (stored, recorded and downloaded), no temporary object left  323ms
+   ✓ F-DG2-411: a stalled upload holds no pooled connection and no row lock > sweep: downloads to slow readers (N+1 paused readers, pool size N) hold no pooled connection  1241ms
+   × F-DG2-411: a stalled upload holds no pooled connection and no row lock > defence in depth: an exhausted pool answers 503 after the bounded checkout wait (and /readyz 503), never a hang 60033ms
+     → Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+   × F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6a stalled JSON body, requestTimeout 408: answered (if at all) below 500, logged below error level, nothing stored 4964ms
+     → expected -1 to be greater than or equal to 0
+   × F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6d JSON body aborted by the client: answered (if at all) below 500, logged below error level, nothing stored 3662ms
+     → expected -1 to be greater than or equal to 0
+   × F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6c stalled upload body, requestTimeout 408: answered (if at all) below 500, logged below error level, nothing stored 4951ms
+     → expected -1 to be greater than or equal to 0
+   × F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6e upload body aborted by the client: answered (if at all) below 500, logged below error level, nothing stored 3666ms
+     → expected -1 to be greater than or equal to 0
+   ✓ F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > no over-match: a database-side ECONNRESET while the request body is still arriving is a 500 with an error log  381ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/request-io.test.ts > F-DG2-411: a stalled upload holds no pooled connection and no row lock > reviewer's R8: N stalled uploads (N = pool size) leave /me and /readyz answering promptly; nothing is stored
+AssertionError: expected 5 to be +0 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 0[39m
+[31m+ 5[39m
+
+ ❯ apps/api/test/integration/request-io.test.ts:285:31
+    283|     });
+    284|     expect(sessions.visible).toBe(sessions.sessions); // the check see…
+    285|     expect(sessions.idleInTx).toBe(0);
+       |                               ^
+    286|     expect(me.status).toBe(200);
+    287|     expect(me.ms).toBeLessThan(PROMPT_MS);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/request-io.test.ts > F-DG2-411: a stalled upload holds no pooled connection and no row lock > an upload whose If-Match goes stale during the body: 409 version_conflict, no content row, no object
+AssertionError: expected undefined to be 200 // Object.is equality
+
+[32m- Expected:[39m 
+200
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ apps/api/test/integration/request-io.test.ts:333:29
+    331|       closeMs,
+    332|     });
+    333|     expect(patched?.status).toBe(200);
+       |                             ^
+    334|     expect(patched!.ms).toBeLessThan(PROMPT_MS);
+    335|     expect(res?.status).toBe(409);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/request-io.test.ts > F-DG2-411: a stalled upload holds no pooled connection and no row lock > defence in depth: an exhausted pool answers 503 after the bounded checkout wait (and /readyz 503), never a hang
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ apps/api/test/integration/request-io.test.ts:436:3
+    434|   }, 60_000);
+    435| 
+    436|   it("defence in depth: an exhausted pool answers 503 after the bounde…
+       |   ^
+    437|     const { api } = await fresh({ pool: { max: 2, connectionTimeoutMs:…
+    438|     // Hold every pooled connection of this instance through its own K…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/request-io.test.ts > F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6a stalled JSON body, requestTimeout 408: answered (if at all) below 500, logged below error level, nothing stored
+ FAIL  |integration| apps/api/test/integration/request-io.test.ts > F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6d JSON body aborted by the client: answered (if at all) below 500, logged below error level, nothing stored
+ FAIL  |integration| apps/api/test/integration/request-io.test.ts > F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6c stalled upload body, requestTimeout 408: answered (if at all) below 500, logged below error level, nothing stored
+ FAIL  |integration| apps/api/test/integration/request-io.test.ts > F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6e upload body aborted by the client: answered (if at all) below 500, logged below error level, nothing stored
+AssertionError: expected -1 to be greater than or equal to 0
+ ❯ apps/api/test/integration/request-io.test.ts:549:26
+    547|       });
+    548|       if (k.timeout) expect(res?.status).toBe(408);
+    549|       expect(classified).toBeGreaterThanOrEqual(0);
+       |                          ^
+    550|       expect(errors).toEqual([]);
+    551|       expect(serverErrors).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+
+ FAIL  |integration| packages/db/test/integration/pool-bounds.test.ts > createPool session settings > every session runs with the documented statement, idle-in-transaction and UTC settings
+AssertionError: expected { s: '30s', i: '0', tz: 'UTC' } to deeply equal { s: '30s', i: 'NaNs', tz: 'UTC' }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "i": "NaNs",[39m
+[31m+   "i": "0",[39m
+[2m    "s": "30s",[22m
+[2m    "tz": "UTC",[22m
+[2m  }[22m
+
+ ❯ packages/db/test/integration/pool-bounds.test.ts:31:23
+     29|       "select current_setting('statement_timeout') s, current_setting(…
+     30|     );
+     31|     expect(r.rows[0]).toEqual({ s: "30s", i: `${DEFAULT_IDLE_IN_TRANSA…
+       |                       ^
+     32|     expect((pool as unknown as { options: { connectionTimeoutMillis: n…
+     33|       DEFAULT_CONNECTION_TIMEOUT_MS,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/13]⎯
+
+ FAIL  |integration| packages/db/test/integration/pool-bounds.test.ts > createPool session settings > keeps a role (or other) option given in the URL next to the pool's own session options
+AssertionError: expected { p: 'public', i: '0' } to deeply equal { p: 'public', i: '30s' }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "i": "30s",[39m
+[31m+   "i": "0",[39m
+[2m    "p": "public",[22m
+[2m  }[22m
+
+ ❯ packages/db/test/integration/pool-bounds.test.ts:45:23
+     43|       "select current_setting('search_path') p, current_setting('idle_…
+     44|     );
+     45|     expect(r.rows[0]).toEqual({ p: "public", i: "30s" });
+       |                       ^
+     46|   });
+     47| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/13]⎯
+
+ FAIL  |integration| packages/db/test/integration/pool-bounds.test.ts > bounded checkout (connectionTimeoutMillis) > a checkout from an exhausted pool fails after the timeout (never hangs) and is recognised
+AssertionError: expected 'hang' to be an instance of Error
+ ❯ packages/db/test/integration/pool-bounds.test.ts:68:17
+     66|     const waited = Date.now() - t0;
+     67|     held.release();
+     68|     expect(err).toBeInstanceOf(Error);
+       |                 ^
+     69|     expect((err as Error).message).toBe("timeout exceeded when trying …
+     70|     expect(isPoolCheckoutTimeout(err)).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/13]⎯
+
+ FAIL  |integration| packages/db/test/integration/pool-bounds.test.ts > bounded checkout (connectionTimeoutMillis) > through Kysely the same error reaches the caller
+TypeError: (0 , isPoolCheckoutTimeout) is not a function
+ ❯ packages/db/test/integration/pool-bounds.test.ts:92:12
+     90|     ]);
+     91|     held.release();
+     92|     expect(isPoolCheckoutTimeout(err)).toBe(true);
+       |            ^
+     93|   });
+     94| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/13]⎯
+
+ FAIL  |integration| packages/db/test/integration/pool-bounds.test.ts > bounded checkout (connectionTimeoutMillis) > other errors are not mistaken for a checkout timeout
+TypeError: (0 , isPoolCheckoutTimeout) is not a function
+ ❯ packages/db/test/integration/pool-bounds.test.ts:96:12
+     94| 
+     95|   it("other errors are not mistaken for a checkout timeout", () => {
+     96|     expect(isPoolCheckoutTimeout(new Error("read ECONNRESET"))).toBe(f…
+       |            ^
+     97|     expect(isPoolCheckoutTimeout(new Error("Connection terminated unex…
+     98|     expect(isPoolCheckoutTimeout("timeout exceeded when trying to conn…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/13]⎯
+
+ FAIL  |integration| packages/db/test/integration/pool-bounds.test.ts > bounded idle-in-transaction time (idle_in_transaction_session_timeout) > PostgreSQL ends a transaction left idle past the limit, releasing its row lock; the pool recovers
+AssertionError: expected null not to be null
+ ❯ packages/db/test/integration/pool-bounds.test.ts:121:23
+    119|     stalled.release(true);
+    120|     // 25P03 idle_in_transaction_session_timeout (or the connection al…
+    121|     expect(after).not.toBeNull();
+       |                       ^
+    122|     expect(after?.code === "25P03" || /terminat|not queryable|closed/i…
+    123|     // The lock is gone: another session takes it at once.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/13]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  13 failed | 4 passed (17)
+   Start at  03:28:19
+   Duration  114.77s (transform 811ms, setup 0ms, collect 1.85s, tests 111.87s, environment 0ms, prepare 63ms)
+
+# exit: 1
+# command: npx vitest run --project unit-node apps/api/src/modules/platform/incomplete-body.test.ts apps/api/src/modules/evidence/evidence.test.ts
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/My-owns
+
+ ❯ |unit-node| apps/api/src/modules/platform/incomplete-body.test.ts (10 tests | 7 failed) 64ms
+   × isIncompleteBodyError: only a body that did not arrive, never a server fault > matches Node's request-abort error on an incomplete request (client disconnect or requestTimeout) 5ms
+     → (0 , isIncompleteBodyError) is not a function
+   × isIncompleteBodyError: only a body that did not arrive, never a server fault > matches a premature close only when Node marked the request aborted or destroyed 0ms
+     → (0 , isIncompleteBodyError) is not a function
+   × isIncompleteBodyError: only a body that did not arrive, never a server fault > never matches when the body arrived completely, or under inject (no `complete` flag) 0ms
+     → (0 , isIncompleteBodyError) is not a function
+   × isIncompleteBodyError: only a body that did not arrive, never a server fault > does not over-match: a database ECONNRESET is not a client abort, even while the body is incomplete 0ms
+     → (0 , isIncompleteBodyError) is not a function
+   × problemForError > an incomplete body is the declared 400 validation.malformed_request 1ms
+     → (0 , incompleteBodyProblem) is not a function
+   ✓ problemForError > the same error on a fully received request, and a database reset, stay 500 internal 1ms
+   × problemForError > a pool checkout timeout (pg-pool's messages) is 503 unavailable, any other pg connect error stays 500 5ms
+     → expected [ 500, 'internal' ] to deeply equal [ 503, 'unavailable' ]
+   × setErrorHandler: the log level and the answer > an incomplete body: 400 validation.malformed_request, logged at info, no error-level line 39ms
+     → expected 500 to be 400 // Object.is equality
+   ✓ setErrorHandler: the log level and the answer > a database socket reset while the body is incomplete: 500 with an error-level log 5ms
+   ✓ setErrorHandler: the log level and the answer > an abort-shaped error on a fully received request is a genuine fault: 500 with an error-level log 5ms
+ ❯ |unit-node| apps/api/src/modules/evidence/evidence.test.ts (11 tests | 4 failed) 265ms
+   ✓ evidence module (P2) > is a P2 module that depends on platform, audit, access and transformations (register kit) 2ms
+   ✓ evidence module (P2) > has a public index.ts exposing its wiring hook and the gate-evaluator facts 1ms
+   ✓ evidence module (P2) > registers the eleven contract routes, each declaring its access 18ms
+   ✓ evidence module (P2) > its declared boundary holds 225ms
+   ✓ FilesystemEvidenceStore (ADR-0010) > stores atomically and computes SHA-256 and size while streaming 8ms
+   ✓ FilesystemEvidenceStore (ADR-0010) > refuses content over the limit and leaves no partial file 2ms
+   ✓ FilesystemEvidenceStore (ADR-0010) > confines keys to the store root 1ms
+   × FilesystemEvidenceStore (ADR-0010) > T-DG2-BE17: receive holds the bytes in a temporary object that get() cannot read until finalise 4ms
+     → store.receive is not a function
+   × FilesystemEvidenceStore (ADR-0010) > T-DG2-BE17: discardUncommitted removes a received-but-not-finalised object and a finalised one 0ms
+     → store.receive is not a function
+   × FilesystemEvidenceStore (ADR-0010) > T-DG2-BE17: a body stream that fails mid-way leaves no temporary object 0ms
+     → store.receive is not a function
+   × FilesystemEvidenceStore (ADR-0010) > the S3-compatible driver is not part of P2 and fails closed 1ms
+     → s3.receive is not a function
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| apps/api/src/modules/evidence/evidence.test.ts > FilesystemEvidenceStore (ADR-0010) > T-DG2-BE17: receive holds the bytes in a temporary object that get() cannot read until finalise
+TypeError: store.receive is not a function
+ ❯ apps/api/src/modules/evidence/evidence.test.ts:108:29
+    106| 
+    107|   it("T-DG2-BE17: receive holds the bytes in a temporary object that g…
+    108|     const got = await store.receive("org/t/e/two", chunks("staged ", "…
+       |                             ^
+    109|     expect(got).toEqual({
+    110|       key: "org/t/e/two",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/evidence/evidence.test.ts > FilesystemEvidenceStore (ADR-0010) > T-DG2-BE17: discardUncommitted removes a received-but-not-finalised object and a finalised one
+TypeError: store.receive is not a function
+ ❯ apps/api/src/modules/evidence/evidence.test.ts:123:17
+    121| 
+    122|   it("T-DG2-BE17: discardUncommitted removes a received-but-not-finali…
+    123|     await store.receive("org/t/e/three", chunks("x"), 10);
+       |                 ^
+    124|     await store.discardUncommitted("org/t/e/three");
+    125|     expect(readdirSync(join(root, "org/t/e")).filter((f) => f.startsWi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/evidence/evidence.test.ts > FilesystemEvidenceStore (ADR-0010) > T-DG2-BE17: a body stream that fails mid-way leaves no temporary object
+TypeError: store.receive is not a function
+ ❯ apps/api/src/modules/evidence/evidence.test.ts:137:24
+    135|       throw Object.assign(new Error("aborted"), { code: "ECONNRESET" }…
+    136|     }
+    137|     await expect(store.receive("org/t/e/five", failing(), 1024)).rejec…
+       |                        ^
+    138|     expect(readdirSync(join(root, "org/t/e")).filter((f) => f.startsWi…
+    139|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/evidence/evidence.test.ts > FilesystemEvidenceStore (ADR-0010) > the S3-compatible driver is not part of P2 and fails closed
+TypeError: s3.receive is not a function
+ ❯ apps/api/src/modules/evidence/evidence.test.ts:144:21
+    142|     const s3 = evidenceStoreFor({ driver: "s3", path: root });
+    143|     await expect(s3.put("k", chunks("x"), 10)).rejects.toThrow(/P6/);
+    144|     await expect(s3.receive("k", chunks("x"), 10)).rejects.toThrow(/P6…
+       |                     ^
+    145|     await expect(s3.finalise("k")).rejects.toThrow(/P6/);
+    146|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/incomplete-body.test.ts > isIncompleteBodyError: only a body that did not arrive, never a server fault > matches Node's request-abort error on an incomplete request (client disconnect or requestTimeout)
+TypeError: (0 , isIncompleteBodyError) is not a function
+ ❯ apps/api/src/modules/platform/incomplete-body.test.ts:25:12
+     23| describe("isIncompleteBodyError: only a body that did not arrive, neve…
+     24|   it("matches Node's request-abort error on an incomplete request (cli…
+     25|     expect(isIncompleteBodyError(nodeAbortError(), req({ complete: fal…
+       |            ^
+     26|     expect(isIncompleteBodyError(nodeAbortError(), req({ complete: fal…
+     27|     // Without Fastify's statusCode stamp (the upload route iterating …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/incomplete-body.test.ts > isIncompleteBodyError: only a body that did not arrive, never a server fault > matches a premature close only when Node marked the request aborted or destroyed
+TypeError: (0 , isIncompleteBodyError) is not a function
+ ❯ apps/api/src/modules/platform/incomplete-body.test.ts:34:12
+     32| 
+     33|   it("matches a premature close only when Node marked the request abor…
+     34|     expect(isIncompleteBodyError(prematureClose(), req({ complete: fal…
+       |            ^
+     35|     expect(isIncompleteBodyError(prematureClose(), req({ complete: fal…
+     36|     expect(isIncompleteBodyError(prematureClose(), req({ complete: fal…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/incomplete-body.test.ts > isIncompleteBodyError: only a body that did not arrive, never a server fault > never matches when the body arrived completely, or under inject (no `complete` flag)
+TypeError: (0 , isIncompleteBodyError) is not a function
+ ❯ apps/api/src/modules/platform/incomplete-body.test.ts:40:12
+     38| 
+     39|   it("never matches when the body arrived completely, or under inject …
+     40|     expect(isIncompleteBodyError(nodeAbortError(), req({ complete: tru…
+       |            ^
+     41|     expect(isIncompleteBodyError(nodeAbortError(), req({}))).toBe(fals…
+     42|     expect(isIncompleteBodyError(nodeAbortError(), req())).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/incomplete-body.test.ts > isIncompleteBodyError: only a body that did not arrive, never a server fault > does not over-match: a database ECONNRESET is not a client abort, even while the body is incomplete
+TypeError: (0 , isIncompleteBodyError) is not a function
+ ❯ apps/api/src/modules/platform/incomplete-body.test.ts:46:12
+     44| 
+     45|   it("does not over-match: a database ECONNRESET is not a client abort…
+     46|     expect(isIncompleteBodyError(dbSocketReset(), req({ complete: fals…
+       |            ^
+     47|     expect(isIncompleteBodyError(dbSocketReset(), req({ complete: fals…
+     48|     expect(isIncompleteBodyError(new Error("Connection terminated unex…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/incomplete-body.test.ts > problemForError > an incomplete body is the declared 400 validation.malformed_request
+TypeError: (0 , incompleteBodyProblem) is not a function
+ ❯ apps/api/src/modules/platform/incomplete-body.test.ts:67:35
+     65|   it("an incomplete body is the declared 400 validation.malformed_requ…
+     66|     const p = problemForError(nodeAbortError() as never, req({ complet…
+     67|     expect(p.toBody("r")).toEqual(incompleteBodyProblem().toBody("r"));
+       |                                   ^
+     68|     expect(p.status).toBe(400);
+     69|     expect(p.errors?.[0]?.code).toBe("validation.malformed_request");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/incomplete-body.test.ts > problemForError > a pool checkout timeout (pg-pool's messages) is 503 unavailable, any other pg connect error stays 500
+AssertionError: expected [ 500, 'internal' ] to deeply equal [ 503, 'unavailable' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   503,[39m
+[32m-   "unavailable",[39m
+[31m+   500,[39m
+[31m+   "internal",[39m
+[2m  ][22m
+
+ ❯ apps/api/src/modules/platform/incomplete-body.test.ts:83:34
+     81|     ]) {
+     82|       const p = problemForError(new Error(message) as never, req({ com…
+     83|       expect([p.status, p.code]).toEqual([503, "unavailable"]);
+       |                                  ^
+     84|     }
+     85|     expect(problemForError(new Error("connect ECONNREFUSED 127.0.0.1:5…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/incomplete-body.test.ts > setErrorHandler: the log level and the answer > an incomplete body: 400 validation.malformed_request, logged at info, no error-level line
+AssertionError: expected 500 to be 400 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 400[39m
+[31m+ 500[39m
+
+ ❯ apps/api/src/modules/platform/incomplete-body.test.ts:108:22
+    106|   it("an incomplete body: 400 validation.malformed_request, logged at …
+    107|     const r = await run(nodeAbortError, false);
+    108|     expect(r.status).toBe(400);
+       |                      ^
+    109|     expect(r.body.errors[0].code).toBe("validation.malformed_request");
+    110|     expect(r.errorLines).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/11]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  11 failed | 10 passed (21)
+   Start at  03:30:15
+   Duration  1.74s (transform 618ms, setup 0ms, collect 1.95s, tests 329ms, environment 0ms, prepare 136ms)
+
+# exit: 1   finished: 2026-10-07T03:30:16Z
+restored apps/api/src/modules/evidence/routes.ts
+restored apps/api/src/modules/evidence/store.ts
+restored apps/api/src/modules/platform/hooks.ts
+restored apps/api/src/modules/platform/index.ts
+restored packages/db/src/index.ts
+restored packages/db/src/pool.ts

@@ -72,3 +72,35 @@ Connection rules while the API is running:
   `requestTimeout`) is answered with 408 `request_timeout` and its connection is closed.
 - **Rate limiting.** Requests to unmatched routes count against the same per-minute limit as every other request,
   and so does the SPA fallback page. Once the limit is reached they are answered with 429 `rate_limited`.
+
+## Database connections and incomplete request bodies (T-DG2-BE17)
+
+**No client I/O while a database connection is held.** No request handler waits for the client while it holds a
+pooled database connection or an open transaction:
+
+- **Evidence upload** (`POST …/evidence/{evidenceId}/content`). The API checks the request (access, the item, `If-Match`,
+  the file name) in a short transaction and commits it. Then it receives the body into a temporary file holding no
+  database connection. Finally it writes the content in a second short transaction, which locks the item and checks
+  `If-Match` again. If the item changed while the body was arriving, the answer is 409 `version_conflict` and the
+  received bytes are discarded. A slow or stalled upload therefore costs one socket and one file handle, never a
+  database connection or a row lock.
+- **Evidence download** (`GET …/content`). The metadata query's connection is released before the file is streamed,
+  so a slow reader holds no database connection.
+
+**Pool bounds** (`packages/db` `createPool`, used by the API, the worker and the `mth-db` CLI pools):
+
+| Setting | Value | Effect when it is reached |
+|---|---|---|
+| `connectionTimeoutMillis` (`DEFAULT_CONNECTION_TIMEOUT_MS`) | 10 s | A request that waits this long for a pooled connection is answered 503 `unavailable` (logged at error level as `request failed`). `/readyz` answers its usual 503 `not_ready`. A worker job fails and is retried with backoff. Nothing hangs. |
+| `idle_in_transaction_session_timeout` (`DEFAULT_IDLE_IN_TRANSACTION_TIMEOUT_MS`) | 30 s | PostgreSQL ends a session that sits inside an open transaction without running a statement for this long. The transaction rolls back and its locks are released, and the pool discards the connection. |
+| `statement_timeout` (`DEFAULT_STATEMENT_TIMEOUT_MS`) | 30 s | Unchanged. It limits a single statement. It does not cover idle time inside a transaction, which is why the setting above exists. |
+
+The API pool has 20 connections and the worker pool 5. `mth-db migrate` uses its own single connection, so neither
+setting applies to it. The settings are code constants (`PoolOptions` overrides them per pool); there is no
+environment variable for them yet.
+
+**Incomplete request bodies.** A request whose body was not received completely is answered (if the client is still
+there) with 400 `validation.malformed_request`, and logged at info level as `request body not received completely`.
+This applies to every route and media type, whether the client disconnected or the 300 s request timeout cut the
+connection. Such a request is never logged as an error and never answered 500. A server fault in the same moment (for
+example, the database connection resetting) is still a 500 with an error-level log line.
