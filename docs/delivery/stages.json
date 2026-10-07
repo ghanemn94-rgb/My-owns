@@ -820,7 +820,7 @@
       "id": "DG2",
       "stage": "P2",
       "name": "Diagnose define and design",
-      "state": "FIXING",
+      "state": "REVIEWING",
       "depends_on": [
         "DG1"
       ],
@@ -839,10 +839,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:6824b8b8d36a688178a058c11c4882737a79cf7f39b438dcf2390eafb88d3afc",
-        "source_commit": "aa0a68f1aad3f19776760a0d3bff6bf81e9f3fb4",
-        "frozen_at": "2026-10-07T06:37:06Z",
-        "manifest_path": "docs/delivery/candidates/DG2/6824b8b8d36a6881.manifest.json"
+        "candidate_id": "sha256:9f3ca298d029f691330de1eddab806df57d5876307926b50df0312f8882b684e",
+        "source_commit": "ea9051b21b4a4192629078a31faca0a93edfb36a",
+        "frozen_at": "2026-10-07T10:05:31Z",
+        "manifest_path": "docs/delivery/candidates/DG2/9f3ca298d029f691.manifest.json"
       },
       "review_rounds": [
         {
@@ -999,6 +999,18 @@
             "qa-verifier": "docs/delivery/reviews/DG2/round-13/qa-verifier.json"
           },
           "note": "DG2 gate review round 13 on candidate 6824b8b8 (556 files, source aa0a68f). Three findings are FIXED_PENDING_VERIFICATION (D-073), all fixed by BE18A 8c0083e: F-DG2-440 (commit-time authorisation of the upload), F-DG2-441 (OIDC discovery outside any transaction, plus an AST sweep of awaits inside transactions) and F-DG2-460 (shutdown waits for handler cleanup; start-up sweep of stale temporaries). 32 DG2 findings CLOSED_VERIFIED. Orchestrator pre-review verification in both locale settings: all 32 steps exit 0, with no hidden failures. Disjoint id ranges: code-security 470-479, domain 480-489, qa 490-499."
+        },
+        {
+          "round": 14,
+          "candidate_id": "sha256:9f3ca298d029f691330de1eddab806df57d5876307926b50df0312f8882b684e",
+          "frozen_at": "2026-10-07T10:05:31Z",
+          "source_commit": "ea9051b21b4a4192629078a31faca0a93edfb36a",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG2/round-14/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG2/round-14/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG2/round-14/qa-verifier.json"
+          },
+          "note": "DG2 gate review round 14 on candidate 9f3ca298 (560 files, source ea9051b). F-DG2-480 (session-end loop) is FIXED_PENDING_VERIFICATION by FE10 8cb3bb8 (D-074). FE11 59d38ad and FE12 7f03453 close bilingual gaps flagged in handbacks. 35 DG2 findings CLOSED_VERIFIED. Orchestrator pre-review verification in both locale settings: all 32 steps exit 0, with no hidden failures. Disjoint id ranges: code-security 500-509, domain 510-519, qa 520-529."
         }
       ],
       "gate_record": "docs/delivery/gates/DG2.json",
@@ -1147,6 +1159,11 @@
           "state": "FIXING",
           "at": "2026-10-07T07:45:18Z",
           "note": "Round 13 on candidate 6824b8b8. code-security PASS (28 checks, every exit 0): it closed F-DG2-440 and F-DG2-441 and raised nothing new. qa PASS (22 checks): it closed F-DG2-460 and raised nothing new. domain FAIL: it raised F-DG2-480 (High, non-mandatory; pre-existing since DG1, with D-073's commit-time 401 as a new trigger). When a session ends while the app is open, the web client loops between /login?error=session_expired and the page, because LoginPage trusts a stale cached /me. The user sees a blank page with no message and about 130 /me requests per second; with the default limits this exhausts the per-IP bucket and shows a stale shell. Every failure in the cited logs was disclosed and explained. 35 CLOSED_VERIFIED, 1 OPEN. Round-14 repair: frontend-ux-engineer T-DG2-FE10 (one session-ended rule: clear the cached identity, land once on sign-in with the message, bounded /me)."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-10-07T10:05:45Z",
+          "note": "FE10 (F-480), FE11 and FE12 integrated; D-074 recorded. 35 CLOSED_VERIFIED, 1 FIXED_PENDING_VERIFICATION, 0 OPEN. Orchestrator verification green in both locale settings (unit 848x4 per setting, integration 612, e2e 60). Candidate frozen as 9f3ca298 for gate review round 14."
         }
       ]
     },
