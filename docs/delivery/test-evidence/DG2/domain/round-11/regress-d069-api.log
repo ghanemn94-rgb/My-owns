@@ -1,0 +1,20 @@
+PASS R9.evidence-create :: expected 201 file evidence :: actual 201 kind=file
+PASS R9.evidence-binary-roundtrip:content-length :: expected upload 200; download 200 byte-identical; Digest = sha-256 of the sent bytes; Arabic file name kept :: actual upload 200 fileName="خط-الأساس 2026 ‏📊.xlsx"; download 200 301/301 bytes sha256 f05075771461dfab vs f05075771461dfab; digest=sha-256=8FB1dxRh36ui8Tz7Btc7K+zcR/MJt9Rf2zv0Nv1mYYI=; disposition=attachment; filename="__-______ 2026 ___.xlsx"; filename*=UTF-8''%D8%AE%D8%B7-%D8%A7%D9%84%D8%A3%D8%B3%D8%A7%D8%B3%202026%20%E2%80%8F%F0%9F%93%8A.xlsx
+PASS R9.evidence-binary-roundtrip:chunked :: expected upload 200; download 200 byte-identical; Digest = sha-256 of the sent bytes; Arabic file name kept :: actual upload 200 fileName="خط-الأساس 2026 ‏📊.xlsx"; download 200 301/301 bytes sha256 f05075771461dfab vs f05075771461dfab; digest=sha-256=8FB1dxRh36ui8Tz7Btc7K+zcR/MJt9Rf2zv0Nv1mYYI=; disposition=attachment; filename="__-______ 2026 ___.xlsx"; filename*=UTF-8''%D8%AE%D8%B7-%D8%A7%D9%84%D8%A3%D8%B3%D8%A7%D8%B3%202026%20%E2%80%8F%F0%9F%93%8A.xlsx
+PASS R9.evidence-upload-refused:text/plain; charset=utf-8:length :: expected 400 problem+json validation.content_type; no new revision :: actual 400 application/problem+json; charset=utf-8 code=validation errors=[["","validation.content_type"]]; revisions 2->2
+PASS R9.evidence-upload-refused:text/plain:chunked :: expected 400 problem+json validation.content_type; no new revision :: actual 400 application/problem+json; charset=utf-8 code=validation errors=[["","validation.content_type"]]; revisions 2->2
+PASS R9.evidence-upload-refused:application/json:length :: expected 400 problem+json validation.content_type; no new revision :: actual 400 application/problem+json; charset=utf-8 code=validation errors=[["","validation.content_type"]]; revisions 2->2
+PASS R9.evidence-upload-refused:application/json:chunked :: expected 400 problem+json validation.content_type; no new revision :: actual 400 application/problem+json; charset=utf-8 code=validation errors=[["","validation.content_type"]]; revisions 2->2
+PASS R9.evidence-unchanged-after-refusals :: expected current content still byte-identical to the binary upload :: actual true
+PASS R9.json-op-refuses:text/plain :: expected 400 validation.content_type; no charter :: actual 400 [["","validation.content_type"]] code=validation; GET charter 404
+PASS R9.json-op-refuses:application/octet-stream :: expected 400 validation.content_type; no charter :: actual 400 [["","validation.content_type"]] code=validation; GET charter 404
+PASS R9.json-op-refuses:application/x-www-form-urlencoded :: expected 400 validation.content_type; no charter :: actual 400 [["","validation.content_type"]] code=validation; GET charter 404
+PASS R9.json-op-refuses:multipart/form-data :: expected 400 validation.content_type; no charter :: actual 400 [["","validation.content_type"]] code=validation; GET charter 404
+PASS R9.json-arabic-emoji-rlm-verbatim :: expected 201; caseForChange equal code point for code point; inScope Arabic kept :: actual 201; verbatim=true; inScope=نطاق تجريبي
+PASS R9.invisible-only-blank :: expected 400 validation.blank at /caseForChange :: actual 400 [["/caseForChange","validation.blank"]]
+PASS R9.localized:validation.content_type :: expected EN and AR present, AR is Arabic :: actual en='The request format is not supported.' ar='صيغة الطلب غير مدعومة.'
+PASS R9.localized:validation.blank :: expected EN and AR present, AR is Arabic :: actual en='Enter some text; spaces alone are not a value.' ar='أدخِل نصاً؛ المسافات وحدها ليست قيمة.'
+PASS R9.localized:validation.json :: expected EN and AR present, AR is Arabic :: actual en='The request was not valid JSON.' ar='الطلب ليس بصيغة JSON صالحة.'
+PASS R9.gate-codes :: expected G1..G6 only :: actual G1,G2,G3,G4,G5,G6
+SUMMARY 18/18 PASS
+### regress-d069-api exit=0

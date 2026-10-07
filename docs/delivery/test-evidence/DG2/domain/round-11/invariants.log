@@ -1,0 +1,47 @@
+### source diff fe22d759..cbdb4f6 outside apps/api + docs (expect none in apps/web, packages, migrations, i18n, playbook):
+0
+### certification/official claims in user-facing i18n (expect only negations):
+apps/web/src/i18n/en/common.json:129:ce with custom extensions. It is not an official PMI standard, and this product is not certi
+apps/web/src/i18n/ar/gates.json:100:tory__not_approved": "مسار المستهدف غير معتمد",
+apps/web/src/i18n/ar/common.json:5:تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة.",
+apps/web/src/i18n/ar/common.json:126:دَّم شعار رسمي لموبايلي ولا ألوان علامة معتمدة. يعرض الترويسة شعارًا نصيًا مؤقتًا، وا
+apps/web/src/i18n/ar/common.json:129: معيارًا رسميًا من PMI، وهذا المنتج غير معتمد من PMI أو من أي جهة أخرى.",
+apps/web/src/i18n/ar/kpi.json:5:    "unvalidated": "غير معتمد",
+apps/web/src/i18n/ar/kpi.json:6:    "validated": "معتمد من الإدارة المالية",
+apps/web/src/i18n/ar/kpi.json:142:    "trajectoryApproved": "معتمد",
+apps/web/src/i18n/ar/kpi.json:143:    "trajectoryDraft": "مسودة – غير معتمد",
+apps/web/src/i18n/ar/problems.json:104:ne__not_measurable": "يحتاج خط الأساس المعتمد إلى قيمة ومصدر وتاريخ.",
+### DG0-DG7 references in product source apps/*/src packages/*/src (non-test):
+apps/api/src/modules/identity/routes.ts:39: * source has no computed member with a non-literal key (F-DG1-124), and own entries never reach the prototype chain.
+apps/api/src/modules/identity/routes.ts:72:   * Validated-session subjects for the global rate limiter's key (F-DG1-142). The composition root shares one instance
+apps/api/src/modules/identity/routes.ts:84:  // Defence in depth for F-DG1-112 (the loader already refuses this): never issue non-Secure, non-__Host- session
+apps/api/src/modules/identity/routes.ts:109:  // Pre-session login cookie (F-DG1-103): binds the OIDC state to the browser that started the login. SameSite=Lax
+apps/api/src/modules/identity/routes.ts:173:        // F-DG2-231 / F-DG2-260: a User-Agent with U+0000 or a lone surrogate is not stored. Neither can arrive over HTTP
+apps/api/src/modules/identity/routes.ts:278:    // F-DG2-231 / F-DG2-260: a value with U+0000 or a lone surrogate fails here and redirects with invalid_request (the
+apps/api/src/modules/identity/routes.ts:335:          // F-DG2-231 / F-DG2-260: an issuer or subject with U+0000 or a lone surrogate (or empty, or too long for its
+apps/api/src/modules/identity/routes.ts:349:          // F-DG2-260 (defence in depth behind identityClaimsStorable): a claim value the database refuses (SQLSTATE
+apps/api/src/modules/identity/rate-limit-subjects.ts:1:// Trustworthy rate-limit keys (F-DG1-142, ADR-0007 T-3). The global limiter runs on onRequest, BEFORE the session is
+apps/api/src/modules/identity/oidc.ts:55:   * is stored (F-DG1-103). The PKCE verifier and nonce stay server-side and are released only to that browser.
+### gate_definition codes in migrations:
+'G1' 'G2' 'G3' 'G4' 'G5' 'G6' 
+### money/decimal columns (numeric) in migrations count:
+      1 numeric(14,4)
+      3 numeric(20,4)
+      3 numeric(24,6)
+### float/real columns in migrations (expect 0):
+0
+### brand token:
+2:  "$comment": "Single design-token source (ADR-0009). PROVISIONAL values from master prompt §15 (REQ-S15-002). They are NOT verified or official Mobily colours; #0078FF is a provisional brand token. Replace only through the Branding Settings flow (REQ-S15-004) once official values are supplied.",
+5:    "brand.primary": { "value": "#0078FF", "purpose": "Primary accents and selected elements", "provisional": true },
+18:    "$comment": "Derived from the seeded tokens by a rule (REQ-S15-003). `value` is the result of the rule and a test re-derives it, so a change to a seed without regenerating fails. #0078FF itself is NOT used behind small white text.",
+### unquantified label i18n:
+apps/web/src/i18n/en/kpi.json:50:"unquantified": "Unquantified"
+apps/web/src/i18n/en/kpi.json:51:"unquantifiedReason": "Why it is not quantified"
+apps/web/src/i18n/ar/kpi.json:50:"unquantified": "غير مُقدَّر كمّياً"
+apps/web/src/i18n/ar/kpi.json:51:"unquantifiedReason": "سبب عدم التقدير الكمّي"
+### residuals: offline install exit=0 (see top); CI mirror:
+ci.yml identical
+ci compose docker images.lock.json keycloak scripts 
+deploy/images.lock.json
+deploy/compose/compose.no-egress.yaml
+deploy/compose/compose.yaml
