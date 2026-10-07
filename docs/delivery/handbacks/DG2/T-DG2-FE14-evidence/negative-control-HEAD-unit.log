@@ -1,0 +1,1184 @@
+# negative control: HEAD 7905e8b sources + new test file + reviewer probe copy; node v24.21.0
+
+ RUN  v3.2.4 /home/user/My-owns
+
+stdout | src/auth/zz-sec-r15-web-probe.test.tsx > X2 Back/Forward after an identity change > B pressing Back to A's detail page never sees A's cached record
+X2: path /transformations/01920000-0000-7000-9000-000000000301; A's record seen after Back/Back/Forward = false,false,false
+
+stdout | src/auth/zz-sec-r15-web-probe.test.tsx > X3 a mutation of A's in flight across an identity change > its success (A's record) is not written into B's cache nor shown to B
+X3: GET detail requests so far 2 (1 = A's own edit-page load; a 2nd would be B refetching); path /transformations/01920000-0000-7000-9000-000000000301; header B=true; cache[transformation 01920000-0000-7000-9000-000000000301].name=A-PATCHED-SECRET; B sees A-PATCHED-SECRET=true
+
+stdout | src/auth/zz-sec-r15-web-probe.test.tsx > X3 a mutation of A's in flight across an identity change > its success (A's record) is not written into B's cache nor shown to B
+X3 after B's refetch (404): B still sees A-PATCHED-SECRET=true; cache name=A-PATCHED-SECRET
+
+stdout | src/auth/zz-sec-r15-web-probe.test.tsx > X3 a mutation of A's in flight across an identity change > X3b the same after a session END in this tab and B's sign-in: the identity change at B's /me removes it
+X3b: cache after the end and the late PATCH = A-PATCHED-SECRET; after B's sign-in path /transformations/01920000-0000-7000-9000-000000000301; cache name=undefined; B sees it=false
+
+stdout | src/auth/zz-sec-r15-web-probe.test.tsx > X4 a query of A's in flight across an identity change > A's late answer never lands in B's cache or screen
+X4: transformations queries after release = 
+
+stdout | src/auth/zz-sec-r15-web-probe.test.tsx > X6 OBSERVATION: refocus within GET /me's 60 s staleTime > logs what the tab shows after B signs in elsewhere and the window regains focus (always passes)
+X6: requests on refocus = ["GET /api/v1/transformations"]; header A=true; B's row shown=true; A's row shown=false
+
+stdout | src/auth/zz-sec-r15-web-probe.test.tsx > X7 403 csrf on a mutation is not a session end > PATCH 403 csrf keeps the phase, the identity and the cache
+X7: phase active; queries with data before 3 after 3; me cached true
+
+ ❯ |unit-web| src/auth/zz-sec-r15-web-probe.test.tsx (6 tests | 1 failed) 3115ms
+   ✓ X2 Back/Forward after an identity change > B pressing Back to A's detail page never sees A's cached record  660ms
+   × X3 a mutation of A's in flight across an identity change > its success (A's record) is not written into B's cache nor shown to B 949ms
+     → expected 'A-PATCHED-SECRET' to be undefined
+   ✓ X3 a mutation of A's in flight across an identity change > X3b the same after a session END in this tab and B's sign-in: the identity change at B's /me removes it  471ms
+   ✓ X4 a query of A's in flight across an identity change > A's late answer never lands in B's cache or screen  301ms
+   ✓ X6 OBSERVATION: refocus within GET /me's 60 s staleTime > logs what the tab shows after B signs in elsewhere and the window regains focus (always passes)  361ms
+   ✓ X7 403 csrf on a mutation is not a session end > PATCH 403 csrf keeps the phase, the identity and the cache  371ms
+ ❯ |unit-web| src/auth/session-generation.test.tsx (26 tests | 24 failed) 16970ms
+   × F-DG2-530 a write in flight across an identity change (en) > X3: A's PATCH answered after B's /me is not written into B's cache, not shown, and does not navigate B 716ms
+     → expected 'A-PATCHED-SECRET' to be undefined
+   × F-DG2-530 a write in flight across an identity change (en) > X3b: the same after a session END here and B's sign-in: A's late answer never lands 417ms
+     → expected { …(22) } to be undefined
+   × F-DG2-530 a write in flight across an identity change (en) > an archive in flight across an identity change: A's archived record never lands in B's cache 517ms
+     → expected 'A-ARCHIVED-SECRET' not to be 'A-ARCHIVED-SECRET' // Object.is equality
+   × F-DG2-530 a write in flight across an identity change (en) > an organization save in flight across an identity change: A's change is never stored under B 481ms
+     → expected <input id="_r_1a_" …(4)></input> to be null
+   × F-DG2-530 a write in flight across an identity change (en) > a user save in flight across an identity change: A's change is never stored under B 417ms
+     → expected <input id="_r_1n_" …(3)></input> to be null
+   × F-DG2-530 a write in flight across an identity change (en) > a same-person new session: the in-flight save is dropped silently, the draft is kept and usable 416ms
+     → expected '/transformations/01920000-0000-7000-9…' to be '/transformations/01920000-0000-7000-9…' // Object.is equality
+   × F-DG2-530 a write in flight across an identity change (en) > a language save retried after a 409 is never written for the identity that replaced A 270ms
+     → expected [ { method: 'PUT', …(3) }, …(1) ] to have a length of 1 but got 2
+   ✓ F-DG2-530 a write in flight across an identity change (en) > sanity: a write in flight that finishes under the SAME identity still updates the cache and navigates 148ms
+   × F-DG2-530 X6: refocus and reconnect revalidate GET /me first (en) > after B signs in elsewhere, a refocus within /me's staleTime shows B's header with B's data, never A's 187ms
+     → expected [ 'GET /api/v1/transformations' ] to deeply equal [ 'GET /api/v1/me' ]
+   × F-DG2-530 X6: refocus and reconnect revalidate GET /me first (en) > the same identity: a refocus refetches /me once, then the stale page queries; nothing when all is fresh 153ms
+     → expected [ { method: 'GET', …(3) } ] to deeply equal []
+   × F-DG2-530 X6: refocus and reconnect revalidate GET /me first (en) > a refocus whose /me finds the session ended navigates once to sign-in and refetches no page data 5053ms
+     → expected '/transformations' to be '/login' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head>[39m
+    [36m<title>[39m
+      [0mTransformations · Mobily Transformation Hub[0m
+    [36m</title>[39m
+  [36m</head>[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"app"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"skip-link"[39m
+          [33mhref[39m=[32m"#main"[39m
+        [36m>[39m
+          [0mSkip to main content[0m
+        [36m</a>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"app-header"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-controls[39m=[32m"_r_2m_"[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33mclass[39m=[32m"button button--ghost-inverse nav-toggle"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.8"[39m
+              [33mviewBox[39m=[32m"0 0 20 20"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 5h14M3 10h14M3 15h14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+            [36m>[39m
+              [0mShow or hide navigation[0m
+            [36m</span>[39m
+          [36m</button>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"wordmark"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mdata-testid[39m=[32m"wordmark"[39m
+            [33mhref[39m=[32m"/"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"wordmark__name"[39m
+            [36m>[39m
+              [0mMobily Transformation Hub[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"badge badge--provisional"[39m
+              [33mdata-testid[39m=[32m"provisional-badge"[39m
+              [33mtitle[39m=[32m"Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values."[39m
+            [36m>[39m
+              [0mProvisional[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+            [36m>[39m
+              [0mProvisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.[0m
+            [36m</span>[39m
+          [36m</a>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"app-header__spacer"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"language-switch"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Switch language to العربية"[39m
+              [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+              [33mlang[39m=[32m"ar"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mالعربية[0m
+            [36m</button>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"user-box"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"user-box__name"[39m
+            [36m>[39m
+              [0mSynthetic User A[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"user-box__org"[39m
+            [36m>[39m
+              [0mSynthetic Organization[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.8"[39m
+              [33mviewBox[39m=[32m"0 0 20 20"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 4H4v12h4M12 6l4 4-4 4M16 10H8"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"app-header__label"[39m
+            [36m>[39m
+              [0mSign out[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33maria-atomic[39m=[32m"true"[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"app-notice language-switch__live"[39m
+          [33mlang[39m=[32m"en"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"app-body"[39m
+        [36m>[39m
+          [36m<nav[39m
+            [33maria-label[39m=[32m"Primary navigation"[39m
+            [33mclass[39m=[32m"app-nav"[39m
+            [33mid[39m=[32m"_r_2m_"[39m
+          [36m>[39m
+            [36m<ul[39m
+              [33mclass[39m=[32m"app-nav__list"[39m
+            [36m>[39m
+              [36m<li>[39m
+                [36m<a[39m
+                  [33mclass[39m=[32m"app-nav__link"[39m
+                  [33mdata-area[39m=[32m"myWork"[39m
+                  [33mdata-discover[39m=[32m"true"[39m
+                  [33mhref[39m=[32m"/my-work"[39m
+                [36m>[39m
+                  [36m<span>[39m
+                    [0mMy Work[0m
+                  [36m</span>[39m
+                [36m</a>[39m
+              [36m</li>[39m
+              [36m<li>[39m
+                [36m<a[39m
+                  [33mclass[39m=[32m"app-nav__link"[39m
+                  [33mdata-area[39m=[32m"executive"[39m
+                  [33mdata-discover[39m=[32m"true"[39m
+                  [33mhref[39m=[32m"/executive-overview"[39m
+                [36m>[39m
+                  [36m<span>[39m
+                    [0mExecutive Overview[0m
+                  [36m</span>[39m
+                  [36m<span[39m
+   ...
+   × F-DG2-530 a write in flight across an identity change (ar) > X3: A's PATCH answered after B's /me is not written into B's cache, not shown, and does not navigate B 339ms
+     → expected 'A-PATCHED-SECRET' to be undefined
+   × F-DG2-530 a write in flight across an identity change (ar) > X3b: the same after a session END here and B's sign-in: A's late answer never lands 300ms
+     → expected { …(22) } to be undefined
+   × F-DG2-530 a write in flight across an identity change (ar) > an archive in flight across an identity change: A's archived record never lands in B's cache 464ms
+     → expected 'A-ARCHIVED-SECRET' not to be 'A-ARCHIVED-SECRET' // Object.is equality
+   × F-DG2-530 a write in flight across an identity change (ar) > an organization save in flight across an identity change: A's change is never stored under B 398ms
+     → expected <input id="_r_44_" …(4)></input> to be null
+   × F-DG2-530 a write in flight across an identity change (ar) > a user save in flight across an identity change: A's change is never stored under B 493ms
+     → expected <input id="_r_4h_" …(3)></input> to be null
+   × F-DG2-530 a write in flight across an identity change (ar) > a same-person new session: the in-flight save is dropped silently, the draft is kept and usable 403ms
+     → expected '/transformations/01920000-0000-7000-9…' to be '/transformations/01920000-0000-7000-9…' // Object.is equality
+   × F-DG2-530 a write in flight across an identity change (ar) > a language save retried after a 409 is never written for the identity that replaced A 258ms
+     → expected [ { method: 'PUT', …(3) }, …(1) ] to have a length of 1 but got 2
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > sanity: a write in flight that finishes under the SAME identity still updates the cache and navigates 130ms
+   × F-DG2-530 X6: refocus and reconnect revalidate GET /me first (ar) > after B signs in elsewhere, a refocus within /me's staleTime shows B's header with B's data, never A's 159ms
+     → expected [ 'GET /api/v1/transformations' ] to deeply equal [ 'GET /api/v1/me' ]
+   × F-DG2-530 X6: refocus and reconnect revalidate GET /me first (ar) > the same identity: a refocus refetches /me once, then the stale page queries; nothing when all is fresh 165ms
+     → expected [ { method: 'GET', …(3) } ] to deeply equal []
+   × F-DG2-530 X6: refocus and reconnect revalidate GET /me first (ar) > a refocus whose /me finds the session ended navigates once to sign-in and refetches no page data 5076ms
+     → expected '/transformations' to be '/login' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"rtl"[39m
+  [33mlang[39m=[32m"ar"[39m
+[36m>[39m
+  [36m<head>[39m
+    [36m<title>[39m
+      [0mالتحوّلات · منصة موبايلي للتحوّل[0m
+    [36m</title>[39m
+  [36m</head>[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"app"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"skip-link"[39m
+          [33mhref[39m=[32m"#main"[39m
+        [36m>[39m
+          [0mانتقل إلى المحتوى الرئيسي[0m
+        [36m</a>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"app-header"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-controls[39m=[32m"_r_5g_"[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33mclass[39m=[32m"button button--ghost-inverse nav-toggle"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.8"[39m
+              [33mviewBox[39m=[32m"0 0 20 20"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 5h14M3 10h14M3 15h14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+            [36m>[39m
+              [0mإظهار التنقل أو إخفاؤه[0m
+            [36m</span>[39m
+          [36m</button>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"wordmark"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mdata-testid[39m=[32m"wordmark"[39m
+            [33mhref[39m=[32m"/"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"wordmark__name"[39m
+            [36m>[39m
+              [0mمنصة موبايلي للتحوّل[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"badge badge--provisional"[39m
+              [33mdata-testid[39m=[32m"provisional-badge"[39m
+              [33mtitle[39m=[32m"شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة."[39m
+            [36m>[39m
+              [0mمؤقت[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+            [36m>[39m
+              [0mشعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة.[0m
+            [36m</span>[39m
+          [36m</a>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"app-header__spacer"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"language-switch"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"تغيير اللغة إلى English"[39m
+              [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+              [33mlang[39m=[32m"en"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mEnglish[0m
+            [36m</button>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"user-box"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"user-box__name"[39m
+            [36m>[39m
+              [0mSynthetic User A[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"user-box__org"[39m
+            [36m>[39m
+              [0mجهة اصطناعية[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.8"[39m
+              [33mviewBox[39m=[32m"0 0 20 20"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 4H4v12h4M12 6l4 4-4 4M16 10H8"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"app-header__label"[39m
+            [36m>[39m
+              [0mتسجيل الخروج[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33maria-atomic[39m=[32m"true"[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"app-notice language-switch__live"[39m
+          [33mlang[39m=[32m"ar"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"app-body"[39m
+        [36m>[39m
+          [36m<nav[39m
+            [33maria-label[39m=[32m"التنقل الرئيسي"[39m
+            [33mclass[39m=[32m"app-nav"[39m
+            [33mid[39m=[32m"_r_5g_"[39m
+          [36m>[39m
+            [36m<ul[39m
+              [33mclass[39m=[32m"app-nav__list"[39m
+            [36m>[39m
+              [36m<li>[39m
+                [36m<a[39m
+                  [33mclass[39m=[32m"app-nav__link"[39m
+                  [33mdata-area[39m=[32m"myWork"[39m
+                  [33mdata-discover[39m=[32m"true"[39m
+                  [33mhref[39m=[32m"/my-work"[39m
+                [36m>[39m
+                  [36m<span>[39m
+                    [0mعملي[0m
+                  [36m</span>[39m
+                [36m</a>[39m
+              [36m</li>[39m
+              [36m<li>[39m
+                [36m<a[39m
+                  [33mclass[39m=[32m"app-nav__link"[39m
+                  [33mdata-area[39m=[32m"executive"[39m
+                  [33mdata-discover[39m=[32m"true"[39m
+                  [33mhref[39m=[32m"/executive-overview"[39m
+                [36m>[39m
+                  [36m<span>[39m
+                    [0mالنظرة التنفيذية[0m
+                  [36m</span>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"app-nav__tag"[39m
+                  [36m>[39m
+               ...
+   × F-DG2-530 the API client's session generation > an answer that arrives after an identity change is a SessionChangedError, with nothing logged at error level 2ms
+     → The instanceof assertion needs a constructor but undefined was given.
+   × F-DG2-530 the API client's session generation > an answer after a session end or a sign-out here is a SessionChangedError too 5ms
+     → promise resolved "{ data: { items: [ 'A' ] }, …(2) }" instead of rejecting
+   × F-DG2-530 the API client's session generation > a 401 for a request sent under the previous identity never ends the identity that replaced it 1ms
+     → (0 , getSessionGeneration) is not a function
+   × F-DG2-530 the API client's session generation > a network failure of a request sent under the previous identity is a SessionChangedError (silent) 1ms
+     → The instanceof assertion needs a constructor but undefined was given.
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 25 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/auth/session-generation.test.tsx > F-DG2-530 a write in flight across an identity change (en) > X3: A's PATCH answered after B's /me is not written into B's cache, not shown, and does not navigate B
+ FAIL  |unit-web| src/auth/session-generation.test.tsx > F-DG2-530 a write in flight across an identity change (ar) > X3: A's PATCH answered after B's /me is not written into B's cache, not shown, and does not navigate B
+AssertionError: expected 'A-PATCHED-SECRET' to be undefined
+
+[32m- Expected:[39m 
+undefined
+
+[31m+ Received:[39m 
+"A-PATCHED-SECRET"
+
+ ❯ src/auth/session-generation.test.tsx:230:92
+    228|       releasePatch();
+    229|       await wait(200);
+    230|       expect(queryClient.getQueryData<{ name: string }>(keys.transform…
+       |                                                                                            ^
+    231|       expect(screen.queryAllByText("A-PATCHED-SECRET")).toEqual([]);
+    232|       expect(router.state.location.pathname).toBe(`/transformations/${…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/25]⎯
+
+ FAIL  |unit-web| src/auth/session-generation.test.tsx > F-DG2-530 a write in flight across an identity change (en) > X3b: the same after a session END here and B's sign-in: A's late answer never lands
+ FAIL  |unit-web| src/auth/session-generation.test.tsx > F-DG2-530 a write in flight across an identity change (ar) > X3b: the same after a session END here and B's sign-in: A's late answer never lands
+AssertionError: expected { …(22) } to be undefined
+
+[32m- Expected:[39m 
+undefined
+
+[31m+ Received:[39m 
+{
+  "archiveReason": null,
+  "archivedAt": null,
+  "businessUnitId": "01920000-0000-7000-9000-000000000101",
+  "code": "TR-A-SECRET",
+  "createdAt": "2026-09-30T09:00:00Z",
+  "createdBy": "01920000-0000-7000-9000-000000000201",
+  "currency": "SAR",
+  "currentPhase": "design",
+  "description": null,
+  "entryPhase": "design",
+  "id": "01920000-0000-7000-9000-000000000301",
+  "leadUserId": null,
+  "mode": "modular",
+  "name": "A-PATCHED-SECRET",
+  "organizationId": "01920000-0000-7000-9000-000000000001",
+  "sponsorUserId": null,
+  "standaloneDeliverableType": null,
+  "status": "draft",
+  "timezone": "Asia/Riyadh",
+  "updatedAt": "2026-09-30T09:00:00Z",
+  "updatedBy": "01920000-0000-7000-9000-000000000201",
+  "version": 2,
+}
+
+ ❯ src/auth/session-generation.test.tsx:258:68
+    256|       releasePatch();
+    257|       await wait(200);
+    258|       expect(queryClient.getQueryData(keys.transformation(TR_ID))).toB…
+       |                                                                    ^
+    259|       expect(router.state.location.pathname).toBe("/login"); // one na…
+    260|       fireEvent.change(await screen.findByLabelText(T.auth.dev.usernam…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/25]⎯
+
+ FAIL  |unit-web| src/auth/session-generation.test.tsx > F-DG2-530 a write in flight across an identity change (en) > an archive in flight across an identity change: A's archived record never lands in B's cache
+ FAIL  |unit-web| src/auth/session-generation.test.tsx > F-DG2-530 a write in flight across an identity change (ar) > an archive in flight across an identity change: A's archived record never lands in B's cache
+AssertionError: expected 'A-ARCHIVED-SECRET' not to be 'A-ARCHIVED-SECRET' // Object.is equality
+ ❯ src/auth/session-generation.test.tsx:284:96
+    282|       releaseArchive();
+    283|       await wait(300);
+    284|       expect(queryClient.getQueryData<{ name: string }>(keys.transform…
+       |                                                                                                ^
+    285|         "A-ARCHIVED-SECRET",
+    286|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/25]⎯
+
+ FAIL  |unit-web| src/auth/session-generation.test.tsx > F-DG2-530 a write in flight across an identity change (en) > an organization save in flight across an identity change: A's change is never stored under B
+AssertionError: expected <input id="_r_1a_" …(4)></input> to be null
+
+[32m- Expected:[39m 
+null
+
+[31m+ Received:[39m 
+<input
+  aria-required="true"
+  dir="ltr"
+  id="_r_1a_"
+  lang="en"
+  name="nameEn"
+/>
+
+ ❯ src/auth/session-generation.test.tsx:305:59
+    303|       release();
+    304|       await wait(300);
+    305|       expect(screen.queryByDisplayValue("A-ORG-PATCHED")).toBeNull();
+       |                                                           ^
+    306|       releaseB();
+    307|       await wait(100);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/25]⎯
+
+ FAIL  |unit-web| src/auth/session-generation.test.tsx > F-DG2-530 a write in flight across an identity change (en) > a user save in flight across an identity change: A's change is never stored under B
+AssertionError: expected <input id="_r_1n_" …(3)></input> to be null
+
+[32m- Expected:[39m 
+null
+
+[31m+ Received:[39m 
+<input
+  aria-required="true"
+  id="_r_1n_"
+  maxlength="200"
+  name="displayName"
+/>
+
+ ❯ src/auth/session-generation.test.tsx:326:60
+    324|       release();
+    325|       await wait(300);
+    326|       expect(screen.queryByDisplayValue("A-USER-PATCHED")).toBeNull();
+       |                                                            ^
+    327|       releaseB();
+    328|       await wait(100);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/25]⎯
+
+ FAIL  |unit-web| src/auth/session-generation.test.tsx > F-DG2-530 a write in flight across an identity change (en) > a same-person new session: the in-flight save is dropped silently, the draft is kept and usable
+ FAIL  |unit-web| src/auth/session-generation.test.tsx > F-DG2-530 a write in flight across an identity change (ar) > a same-person new session: the in-flight save is dropped silently, the draft is kept and usable
+AssertionError: expected '/transformations/01920000-0000-7000-9…' to be '/transformations/01920000-0000-7000-9…' // Object.is equality
+
+Expected: [32m"/transformations/01920000-0000-7000-9000-000000000301[7m/edit[27m"[39m
+Received: [31m"/transformations/01920000-0000-7000-9000-000000000301"[39m
+
+ ❯ src/auth/session-generation.test.tsx:351:46
+    349|       releasePatch();
+    350|       await wait(300);
+    351|       expect(router.state.location.pathname).toBe(`/transformations/${…
+       |                                              ^
+    352|       expect(queryClient.getQueryData<{ name: string }>(keys.transform…
+    353|       expect((screen.getByDisplayValue("my own draft") as HTMLInputEle…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/25]⎯
+
+ FAIL  |unit-web| src/auth/session-generation.test.tsx > F-DG2-530 a write in flight across an identity change (en) > a language save retried after a 409 is never written for the identity that replaced A
+ FAIL  |unit-web| src/auth/session-generation.test.tsx > F-DG2-530 a write in flight across an identity change (ar) > a language save retried after a 409 is never written for the identity that replaced A
+AssertionError: expected [ { method: 'PUT', …(3) }, …(1) ] to have a length of 1 but got 2
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 1[39m
+[31m+ 2[39m
+
+ ❯ src/auth/session-generation.test.tsx:374:60
+    372|       await waitFor(() => expect(s.requests.filter(isMe).length).toBeG…
+    373|       await wait(200);
+    374|       expect(s.requests.filter((r) => r.method === "PUT")).toHaveLengt…
+       |                                                            ^
+    375|     });
+    376| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/25]⎯
+
+ FAIL  |unit-web| src/auth/session-generation.test.tsx > F-DG2-530 X6: refocus and reconnect revalidate GET /me first (en) > after B signs in elsewhere, a refocus within /me's staleTime shows B's header with B's data, never A's
+ FAIL  |unit-web| src/auth/session-generation.test.tsx > F-DG2-530 X6: refocus and reconnect revalidate GET /me first (ar) > after B signs in elsewhere, a refocus within /me's staleTime shows B's header with B's data, never A's
+AssertionError: expected [ 'GET /api/v1/transformations' ] to deeply equal [ 'GET /api/v1/me' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "GET /api/v1/me",[39m
+[31m+   "GET /api/v1/transformations",[39m
+[2m  ][22m
+
+ ❯ src/auth/session-generation.test.tsx:413:87
+    411|       await wait(100);
+    412|       // While /me is unanswered, no page query has been sent with the…
+    413|       expect(s.requests.slice(from).map((r) => `${r.method} ${r.url.sp…
+       |                                                                                       ^
+    414|       expect(screen.getByText("Synthetic User A")).toBeTruthy();
+    415|       expect(screen.queryByText("TR-B-OWN")).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/25]⎯
+
+ FAIL  |unit-web| src/auth/session-generation.test.tsx > F-DG2-530 X6: refocus and reconnect revalidate GET /me first (en) > the same identity: a refocus refetches /me once, then the stale page queries; nothing when all is fresh
+ FAIL  |unit-web| src/auth/session-generation.test.tsx > F-DG2-530 X6: refocus and reconnect revalidate GET /me first (ar) > the same identity: a refocus refetches /me once, then the stale page queries; nothing when all is fresh
+AssertionError: expected [ { method: 'GET', …(3) } ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   {[39m
+[31m+     "body": undefined,[39m
+[31m+     "headers": {[39m
+[31m+       "accept": "application/json, application/problem+json",[39m
+[31m+     },[39m
+[31m+     "method": "GET",[39m
+[31m+     "url": "/api/v1/transformations?sort=updatedAt%3Adesc&limit=25",[39m
+[31m+   },[39m
+[31m+ ][39m
+
+ ❯ src/auth/session-generation.test.tsx:436:38
+    434|       });
+    435|       await wait(100);
+    436|       expect(s.requests.slice(from)).toEqual([]);
+       |                                      ^
+    437|       // Stale: three focus events in a row and a reconnect share ONE …
+    438|       vi.spyOn(Date, "now").mockReturnValue(Date.now() + 20_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/25]⎯
+
+ FAIL  |unit-web| src/auth/session-generation.test.tsx > F-DG2-530 X6: refocus and reconnect revalidate GET /me first (en) > a refocus whose /me finds the session ended navigates once to sign-in and refetches no page data
+AssertionError: expected '/transformations' to be '/login' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head>[39m
+    [36m<title>[39m
+      [0mTransformations · Mobily Transformation Hub[0m
+    [36m</title>[39m
+  [36m</head>[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"app"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"skip-link"[39m
+          [33mhref[39m=[32m"#main"[39m
+        [36m>[39m
+          [0mSkip to main content[0m
+        [36m</a>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"app-header"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-controls[39m=[32m"_r_2m_"[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33mclass[39m=[32m"button button--ghost-inverse nav-toggle"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.8"[39m
+              [33mviewBox[39m=[32m"0 0 20 20"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 5h14M3 10h14M3 15h14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+            [36m>[39m
+              [0mShow or hide navigation[0m
+            [36m</span>[39m
+          [36m</button>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"wordmark"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mdata-testid[39m=[32m"wordmark"[39m
+            [33mhref[39m=[32m"/"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"wordmark__name"[39m
+            [36m>[39m
+              [0mMobily Transformation Hub[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"badge badge--provisional"[39m
+              [33mdata-testid[39m=[32m"provisional-badge"[39m
+              [33mtitle[39m=[32m"Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values."[39m
+            [36m>[39m
+              [0mProvisional[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+            [36m>[39m
+              [0mProvisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.[0m
+            [36m</span>[39m
+          [36m</a>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"app-header__spacer"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"language-switch"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Switch language to العربية"[39m
+              [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+              [33mlang[39m=[32m"ar"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mالعربية[0m
+            [36m</button>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"user-box"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"user-box__name"[39m
+            [36m>[39m
+              [0mSynthetic User A[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"user-box__org"[39m
+            [36m>[39m
+              [0mSynthetic Organization[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.8"[39m
+              [33mviewBox[39m=[32m"0 0 20 20"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 4H4v12h4M12 6l4 4-4 4M16 10H8"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"app-header__label"[39m
+            [36m>[39m
+              [0mSign out[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33maria-atomic[39m=[32m"true"[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"app-notice language-switch__live"[39m
+          [33mlang[39m=[32m"en"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"app-body"[39m
+        [36m>[39m
+          [36m<nav[39m
+            [33maria-label[39m=[32m"Primary navigation"[39m
+            [33mclass[39m=[32m"app-nav"[39m
+            [33mid[39m=[32m"_r_2m_"[39m
+          [36m>[39m
+            [36m<ul[39m
+              [33mclass[39m=[32m"app-nav__list"[39m
+            [36m>[39m
+              [36m<li>[39m
+                [36m<a[39m
+                  [33mclass[39m=[32m"app-nav__link"[39m
+                  [33mdata-area[39m=[32m"myWork"[39m
+                  [33mdata-discover[39m=[32m"true"[39m
+                  [33mhref[39m=[32m"/my-work"[39m
+                [36m>[39m
+                  [36m<span>[39m
+                    [0mMy Work[0m
+                  [36m</span>[39m
+                [36m</a>[39m
+              [36m</li>[39m
+              [36m<li>[39m
+                [36m<a[39m
+                  [33mclass[39m=[32m"app-nav__link"[39m
+                  [33mdata-area[39m=[32m"executive"[39m
+                  [33mdata-discover[39m=[32m"true"[39m
+                  [33mhref[39m=[32m"/executive-overview"[39m
+                [36m>[39m
+                  [36m<span>[39m
+                    [0mExecutive Overview[0m
+                  [36m</span>[39m
+                  [36m<span[39m
+   ...
+
+Expected: [32m"/[7mlogin[27m"[39m
+Received: [31m"/[7mtransformations[27m"[39m
+
+ ❯ src/auth/session-generation.test.tsx:471:66
+    469|         focusManager.setFocused(true);
+    470|       });
+    471|       await waitFor(() => expect(router.state.location.pathname).toBe(…
+       |                                                                  ^
+    472|       const sent = s.requests.slice(from);
+    473|       expect(isMe(sent[0]!)).toBe(true);
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/25]⎯
+
+ FAIL  |unit-web| src/auth/session-generation.test.tsx > F-DG2-530 a write in flight across an identity change (ar) > an organization save in flight across an identity change: A's change is never stored under B
+AssertionError: expected <input id="_r_44_" …(4)></input> to be null
+
+[32m- Expected:[39m 
+null
+
+[31m+ Received:[39m 
+<input
+  aria-required="true"
+  dir="ltr"
+  id="_r_44_"
+  lang="en"
+  name="nameEn"
+/>
+
+ ❯ src/auth/session-generation.test.tsx:305:59
+    303|       release();
+    304|       await wait(300);
+    305|       expect(screen.queryByDisplayValue("A-ORG-PATCHED")).toBeNull();
+       |                                                           ^
+    306|       releaseB();
+    307|       await wait(100);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/25]⎯
+
+ FAIL  |unit-web| src/auth/session-generation.test.tsx > F-DG2-530 a write in flight across an identity change (ar) > a user save in flight across an identity change: A's change is never stored under B
+AssertionError: expected <input id="_r_4h_" …(3)></input> to be null
+
+[32m- Expected:[39m 
+null
+
+[31m+ Received:[39m 
+<input
+  aria-required="true"
+  id="_r_4h_"
+  maxlength="200"
+  name="displayName"
+/>
+
+ ❯ src/auth/session-generation.test.tsx:326:60
+    324|       release();
+    325|       await wait(300);
+    326|       expect(screen.queryByDisplayValue("A-USER-PATCHED")).toBeNull();
+       |                                                            ^
+    327|       releaseB();
+    328|       await wait(100);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/25]⎯
+
+ FAIL  |unit-web| src/auth/session-generation.test.tsx > F-DG2-530 X6: refocus and reconnect revalidate GET /me first (ar) > a refocus whose /me finds the session ended navigates once to sign-in and refetches no page data
+AssertionError: expected '/transformations' to be '/login' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"rtl"[39m
+  [33mlang[39m=[32m"ar"[39m
+[36m>[39m
+  [36m<head>[39m
+    [36m<title>[39m
+      [0mالتحوّلات · منصة موبايلي للتحوّل[0m
+    [36m</title>[39m
+  [36m</head>[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"app"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"skip-link"[39m
+          [33mhref[39m=[32m"#main"[39m
+        [36m>[39m
+          [0mانتقل إلى المحتوى الرئيسي[0m
+        [36m</a>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"app-header"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-controls[39m=[32m"_r_5g_"[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33mclass[39m=[32m"button button--ghost-inverse nav-toggle"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.8"[39m
+              [33mviewBox[39m=[32m"0 0 20 20"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 5h14M3 10h14M3 15h14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+            [36m>[39m
+              [0mإظهار التنقل أو إخفاؤه[0m
+            [36m</span>[39m
+          [36m</button>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"wordmark"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mdata-testid[39m=[32m"wordmark"[39m
+            [33mhref[39m=[32m"/"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"wordmark__name"[39m
+            [36m>[39m
+              [0mمنصة موبايلي للتحوّل[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"badge badge--provisional"[39m
+              [33mdata-testid[39m=[32m"provisional-badge"[39m
+              [33mtitle[39m=[32m"شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة."[39m
+            [36m>[39m
+              [0mمؤقت[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+            [36m>[39m
+              [0mشعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة.[0m
+            [36m</span>[39m
+          [36m</a>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"app-header__spacer"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"language-switch"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"تغيير اللغة إلى English"[39m
+              [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+              [33mlang[39m=[32m"en"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mEnglish[0m
+            [36m</button>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"user-box"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"user-box__name"[39m
+            [36m>[39m
+              [0mSynthetic User A[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"user-box__org"[39m
+            [36m>[39m
+              [0mجهة اصطناعية[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.8"[39m
+              [33mviewBox[39m=[32m"0 0 20 20"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 4H4v12h4M12 6l4 4-4 4M16 10H8"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"app-header__label"[39m
+            [36m>[39m
+              [0mتسجيل الخروج[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33maria-atomic[39m=[32m"true"[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"app-notice language-switch__live"[39m
+          [33mlang[39m=[32m"ar"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"app-body"[39m
+        [36m>[39m
+          [36m<nav[39m
+            [33maria-label[39m=[32m"التنقل الرئيسي"[39m
+            [33mclass[39m=[32m"app-nav"[39m
+            [33mid[39m=[32m"_r_5g_"[39m
+          [36m>[39m
+            [36m<ul[39m
+              [33mclass[39m=[32m"app-nav__list"[39m
+            [36m>[39m
+              [36m<li>[39m
+                [36m<a[39m
+                  [33mclass[39m=[32m"app-nav__link"[39m
+                  [33mdata-area[39m=[32m"myWork"[39m
+                  [33mdata-discover[39m=[32m"true"[39m
+                  [33mhref[39m=[32m"/my-work"[39m
+                [36m>[39m
+                  [36m<span>[39m
+                    [0mعملي[0m
+                  [36m</span>[39m
+                [36m</a>[39m
+              [36m</li>[39m
+              [36m<li>[39m
+                [36m<a[39m
+                  [33mclass[39m=[32m"app-nav__link"[39m
+                  [33mdata-area[39m=[32m"executive"[39m
+                  [33mdata-discover[39m=[32m"true"[39m
+                  [33mhref[39m=[32m"/executive-overview"[39m
+                [36m>[39m
+                  [36m<span>[39m
+                    [0mالنظرة التنفيذية[0m
+                  [36m</span>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"app-nav__tag"[39m
+                  [36m>[39m
+               ...
+
+Expected: [32m"/[7mlogin[27m"[39m
+Received: [31m"/[7mtransformations[27m"[39m
+
+ ❯ src/auth/session-generation.test.tsx:471:66
+    469|         focusManager.setFocused(true);
+    470|       });
+    471|       await waitFor(() => expect(router.state.location.pathname).toBe(…
+       |                                                                  ^
+    472|       const sent = s.requests.slice(from);
+    473|       expect(isMe(sent[0]!)).toBe(true);
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/25]⎯
+
+ FAIL  |unit-web| src/auth/session-generation.test.tsx > F-DG2-530 the API client's session generation > an answer that arrives after an identity change is a SessionChangedError, with nothing logged at error level
+AssertionError: The instanceof assertion needs a constructor but undefined was given.
+ ❯ src/auth/session-generation.test.tsx:516:17
+    514|     f.answer(json(200, { secret: "A" }));
+    515|     const err = await pending.catch((e: unknown) => e);
+    516|     expect(err).toBeInstanceOf(SessionChangedError);
+       |                 ^
+    517|     expect(isSessionChangedError(err)).toBe(true);
+    518|     expect(errors).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/25]⎯
+
+ FAIL  |unit-web| src/auth/session-generation.test.tsx > F-DG2-530 the API client's session generation > an answer after a session end or a sign-out here is a SessionChangedError too
+AssertionError: promise resolved "{ data: { items: [ 'A' ] }, …(2) }" instead of rejecting
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- Error {[39m
+[32m-   "message": "rejected promise",[39m
+[31m+ {[39m
+[31m+   "data": {[39m
+[31m+     "items": [[39m
+[31m+       "A",[39m
+[31m+     ],[39m
+[31m+   },[39m
+[31m+   "etag": null,[39m
+[31m+   "status": 200,[39m
+[2m  }[22m
+
+ ❯ src/auth/session-generation.test.tsx:532:23
+    530|     expect(getSessionPhase()).toBe("ended");
+    531|     f.answer(json(200, { items: ["A"] })); // third: sent before the e…
+    532|     await expect(third).rejects.toBeInstanceOf(SessionChangedError);
+       |                       ^
+    533| 
+    534|     markSessionActive();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/25]⎯
+
+ FAIL  |unit-web| src/auth/session-generation.test.tsx > F-DG2-530 the API client's session generation > a 401 for a request sent under the previous identity never ends the identity that replaced it
+TypeError: (0 , getSessionGeneration) is not a function
+ ❯ src/auth/session-generation.test.tsx:547:24
+    545|     registerSessionReset((reason) => resets.push(reason));
+    546|     noteSessionIdentity(`${ORG_ID}\u0000B\u0000${"b".repeat(43)}`);
+    547|     const generation = getSessionGeneration();
+       |                        ^
+    548|     f.answer(json(401, unauthenticated().body));
+    549|     await expect(old).rejects.toBeInstanceOf(SessionChangedError);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/25]⎯
+
+ FAIL  |unit-web| src/auth/session-generation.test.tsx > F-DG2-530 the API client's session generation > a network failure of a request sent under the previous identity is a SessionChangedError (silent)
+AssertionError: The instanceof assertion needs a constructor but undefined was given.
+ ❯ src/auth/session-generation.test.tsx:567:5
+    565|     noteSessionIdentity(`${ORG_ID}\u0000B\u0000${"b".repeat(43)}`);
+    566|     reject(new TypeError("Failed to fetch"));
+    567|     await expect(pending).rejects.toBeInstanceOf(SessionChangedError);
+       |     ^
+    568|   });
+    569| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/25]⎯
+
+ FAIL  |unit-web| src/auth/zz-sec-r15-web-probe.test.tsx > X3 a mutation of A's in flight across an identity change > its success (A's record) is not written into B's cache nor shown to B
+AssertionError: expected 'A-PATCHED-SECRET' to be undefined
+
+[32m- Expected:[39m 
+undefined
+
+[31m+ Received:[39m 
+"A-PATCHED-SECRET"
+
+ ❯ src/auth/zz-sec-r15-web-probe.test.tsx:183:26
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/25]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  25 failed | 7 passed (32)
+   Start at  14:43:26
+   Duration  20.41s (transform 1.54s, setup 246ms, collect 4.52s, tests 20.08s, environment 1.09s, prepare 380ms)
+
+# exit status: 1

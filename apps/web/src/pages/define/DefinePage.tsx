@@ -20,7 +20,7 @@ import {
   strategicGuardrailCreate,
   strategicGuardrailUpdate,
 } from "@mth/shared/schemas";
-import { ApiError, api } from "../../api/client.ts";
+import { api, ApiError, isSessionChangedError } from "../../api/client.ts";
 import { useNorthStar, useNorthStarHistory, useP2Refresh, useRegister } from "../../api/queries.ts";
 import type { Baseline, KpiDefinition, NorthStar, Outcome, OutcomeKpi, StrategicGuardrail } from "../../api/types.ts";
 import { useLocale } from "../../app/locale.ts";
@@ -175,10 +175,12 @@ function NorthStarForm({ current, onDone }: { current: NorthStar | null; onDone:
       await refresh();
       onDone();
     } catch (e) {
+      if (isSessionChangedError(e)) return; // F-DG2-530: silent, the session state was already reset
       if (e instanceof ApiError && e.status === 409) {
         try {
           setConflict(await api.get<NorthStar>(`/api/v1/transformations/${ws.tid}/north-star`));
-        } catch {
+        } catch (ge) {
+          if (isSessionChangedError(ge)) return; // F-DG2-530: silent, the session state was already reset
           setConflict(null);
         }
       }
@@ -1032,6 +1034,7 @@ function ActivateKpiDialog({
       await onDone();
       onClose();
     } catch (e) {
+      if (isSessionChangedError(e)) return; // F-DG2-530: silent, the session state was already reset
       setServerError(e);
       if (e instanceof ApiError && e.status === 409) await onDone();
     } finally {

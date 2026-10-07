@@ -5,6 +5,7 @@ import {
   ApiError,
   api,
   apiRequest,
+  isSessionChangedError,
   markSessionActive,
   noteSessionIdentity,
   sessionIdentityKey,
@@ -56,6 +57,7 @@ export const keys = {
 /** No retry for 4xx (they will not change by retrying); two retries for network/5xx. */
 export function shouldRetry(failureCount: number, error: unknown): boolean {
   if (error instanceof ApiError && error.status < 500) return false;
+  if (isSessionChangedError(error)) return false; // F-DG2-530: the answer belongs to a previous identity
   return failureCount < 2;
 }
 

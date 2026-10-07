@@ -8,7 +8,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router";
-import { ApiError, api } from "../../api/client.ts";
+import { api, ApiError, isSessionChangedError } from "../../api/client.ts";
 import { keys, useAllUsers, useTransformation } from "../../api/queries.ts";
 import type { Transformation } from "../../api/types.ts";
 import { canAnywhere, canOn } from "../../auth/permissions.ts";
@@ -133,12 +133,14 @@ function EditForm({ loaded }: { loaded: Transformation }) {
       void navigate(`/transformations/${on.id}`);
     } catch (e) {
       setBusy(false);
+      if (isSessionChangedError(e)) return; // F-DG2-530: silent, the session state was already reset
       if (e instanceof ApiError && e.isConflict) {
         let latest: Transformation | null = null;
         try {
           latest = await api.get<Transformation>(`/api/v1/transformations/${on.id}`);
           queryClient.setQueryData(keys.transformation(on.id), latest);
-        } catch {
+        } catch (ge) {
+          if (isSessionChangedError(ge)) return; // F-DG2-530: silent, the session state was already reset
           latest = null;
         }
         setConflict({ latest, currentVersion: e.currentVersion ?? latest?.version ?? null });

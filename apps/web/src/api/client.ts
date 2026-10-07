@@ -41,6 +41,28 @@ export class NetworkError extends Error {
   }
 }
 
+/**
+ * F-DG2-530: the answer to a request that was SENT under another session generation than the current one (the session
+ * ended, this tab signed out, or GET /me returned another identity in between). Its data belongs to the previous
+ * identity, so the client never returns it: no caller can write it into the cache, navigate on it or show it. Callers
+ * treat it as silent (no error banner, no navigation): the identity change has already reset the session state.
+ */
+export class SessionChangedError extends Error {
+  readonly sentGeneration: number;
+  readonly currentGeneration: number;
+
+  constructor(sentGeneration: number, currentGeneration: number) {
+    super("session changed while the request was in flight");
+    this.name = "SessionChangedError";
+    this.sentGeneration = sentGeneration;
+    this.currentGeneration = currentGeneration;
+  }
+}
+
+export function isSessionChangedError(err: unknown): err is SessionChangedError {
+  return err instanceof SessionChangedError;
+}
+
 let csrfToken: string | null = null;
 
 /** Set from GET /api/v1/me (ADR-0005 §4). */
@@ -74,6 +96,12 @@ export type SessionResetReason = "ended" | "identity-changed";
 export type SessionResetHook = (reason: SessionResetReason) => void;
 
 let sessionPhase: SessionPhase = "unknown";
+/**
+ * F-DG2-530: the session generation. Every request records it when it is sent; it moves on every session end, every
+ * sign-out here and every identity change, BEFORE the reset hooks run. An answer that arrives under a later generation
+ * becomes a SessionChangedError (see apiRequest).
+ */
+let sessionGeneration = 0;
 /** The last identity GET /me returned in this document: organization, user and session (see sessionIdentityKey). */
 let lastIdentity: string | null = null;
 const phaseListeners = new Set<() => void>();
@@ -83,6 +111,15 @@ function setPhase(next: SessionPhase): void {
   if (next === sessionPhase) return;
   sessionPhase = next;
   phaseListeners.forEach((l) => l());
+}
+
+/** The current session generation (tests and diagnostics). */
+export function getSessionGeneration(): number {
+  return sessionGeneration;
+}
+
+function nextSessionGeneration(): void {
+  sessionGeneration += 1;
 }
 
 export function getSessionPhase(): SessionPhase {
@@ -116,6 +153,7 @@ export function markSessionActive(): void {
 /** Signed out in this tab on purpose: later 401s are expected and not a "session ended" event. */
 export function markSignedOut(): void {
   csrfToken = null;
+  nextSessionGeneration();
   setPhase("unknown");
 }
 
@@ -139,7 +177,11 @@ export function sessionIdentityKey(me: {
 export function noteSessionIdentity(key: string): void {
   const previous = lastIdentity;
   lastIdentity = key;
-  if (previous !== null && previous !== key) runSessionReset("identity-changed");
+  if (previous !== null && previous !== key) {
+    // F-DG2-530: answers to requests sent under the previous identity can no longer be returned to any caller.
+    nextSessionGeneration();
+    runSessionReset("identity-changed");
+  }
 }
 
 /** The last identity seen by this document (test and diagnostics only). */
@@ -155,6 +197,7 @@ export function isSessionEndedError(err: unknown): boolean {
 function endSession(): void {
   if (sessionPhase !== "active") return; // never signed in here, already ended, or signed out on purpose
   csrfToken = null;
+  nextSessionGeneration(); // F-DG2-530: nothing sent under the ended session is returned to a caller any more
   // F-DG2-500: clear the session-scoped cache here, before any component can observe the phase (and whichever page is
   // mounted), then announce the end.
   runSessionReset("ended");
@@ -166,6 +209,7 @@ export function resetSessionStateForTests(): void {
   csrfToken = null;
   sessionPhase = "unknown";
   lastIdentity = null;
+  sessionGeneration = 0;
   resetHooks.clear();
 }
 
@@ -216,6 +260,9 @@ export interface ApiResponse<T> {
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<ApiResponse<T>> {
   const method = options.method ?? "GET";
+  // F-DG2-530: the generation this request is sent under. Checked again when its answer (or failure) arrives.
+  const sentGeneration = sessionGeneration;
+  const changed = () => sessionGeneration !== sentGeneration;
   const headers: Record<string, string> = {
     ...options.headers,
     Accept: "application/json, application/problem+json",
@@ -241,10 +288,17 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     });
   } catch (err) {
     if ((err as { name?: string }).name === "AbortError") throw err;
+    if (changed()) throw new SessionChangedError(sentGeneration, sessionGeneration);
     throw new NetworkError(err);
   }
 
-  const text = response.status === 204 ? "" : await response.text();
+  let text: string;
+  try {
+    text = response.status === 204 ? "" : await response.text();
+  } catch (err) {
+    if (changed()) throw new SessionChangedError(sentGeneration, sessionGeneration);
+    throw err;
+  }
   let parsed: unknown = null;
   if (text) {
     try {
@@ -254,11 +308,15 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     }
   }
   if (!response.ok) {
+    // A failure of a request sent under a previous generation says nothing about the current session: in particular
+    // its 401 must not end the session of the identity that has replaced it.
+    if (changed()) throw new SessionChangedError(sentGeneration, sessionGeneration);
     const problem = isProblem(parsed) ? parsed : null;
     const error = new ApiError(response.status, problem);
     if (!options.silent401 && isSessionEndedError(error)) endSession();
     throw error;
   }
+  if (changed()) throw new SessionChangedError(sentGeneration, sessionGeneration);
   return { data: parsed as T, status: response.status, etag: response.headers.get("ETag") };
 }
 

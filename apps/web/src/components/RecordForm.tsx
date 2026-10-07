@@ -14,7 +14,7 @@ import { hasText } from "@mth/shared/schemas";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import type { z } from "zod";
-import { ApiError, api, newIdempotencyKey } from "../api/client.ts";
+import { api, ApiError, isSessionChangedError, newIdempotencyKey } from "../api/client.ts";
 import {
   distinctFormMessages,
   errorMessage,
@@ -318,7 +318,8 @@ export function useRecordForm<R extends Record<string, unknown>>(props: RecordFo
           latest = props.loadLatest
             ? await props.loadLatest(against)
             : await api.get<R & { version: number }>(props.updateUrl!(against));
-        } catch {
+        } catch (ge) {
+          if (isSessionChangedError(ge)) return; // F-DG2-530: silent, the session state was already reset
           latest = null;
         }
         setConflict({ latest, currentVersion: e.currentVersion ?? latest?.version ?? null });
@@ -335,7 +336,7 @@ export function useRecordForm<R extends Record<string, unknown>>(props: RecordFo
         }
         showErrors(next, other);
       }
-      setBannerError(e);
+      if (!isSessionChangedError(e)) setBannerError(e); // F-DG2-530: silent, the session state was already reset
     } finally {
       setBusy(false);
     }

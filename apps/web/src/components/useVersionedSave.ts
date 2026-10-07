@@ -2,7 +2,7 @@
 // If-Match; on 409 nothing was written, so the hook loads the latest version and lets the screen offer
 // "re-apply my change on the latest version" or "discard".
 import { useState } from "react";
-import { ApiError, api } from "../api/client.ts";
+import { api, ApiError, isSessionChangedError } from "../api/client.ts";
 
 export interface Versioned {
   readonly id: string;
@@ -15,7 +15,8 @@ export interface Conflict<R> {
 }
 
 export interface SaveResult {
-  readonly outcome: "saved" | "unchanged" | "conflict" | "error";
+  /** "session-changed" (F-DG2-530): the answer belonged to a previous session; nothing was stored or shown. */
+  readonly outcome: "saved" | "unchanged" | "conflict" | "error" | "session-changed";
   readonly error?: unknown;
 }
 
@@ -49,11 +50,13 @@ export function useVersionedSave<R extends Versioned, V>(options: {
       await options.onSaved(updated);
       return { outcome: "saved" };
     } catch (e) {
+      if (isSessionChangedError(e)) return { outcome: "session-changed" }; // F-DG2-530: silent, the session state was already reset
       if (e instanceof ApiError && e.isConflict) {
         let latest: R | null = null;
         try {
           latest = await api.get<R>(options.url(on));
-        } catch {
+        } catch (ge) {
+          if (isSessionChangedError(ge)) return { outcome: "session-changed" };
           latest = null;
         }
         setConflict({ latest, currentVersion: e.currentVersion ?? latest?.version ?? null });

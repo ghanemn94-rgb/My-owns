@@ -3,7 +3,7 @@
 import { Fragment, createContext, useContext, useEffect, useRef, useSyncExternalStore, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useLocation, useNavigate } from "react-router";
-import { ApiError, getSessionPhase, subscribeSessionPhase } from "../api/client.ts";
+import { ApiError, getSessionPhase, isSessionChangedError, subscribeSessionPhase } from "../api/client.ts";
 import { useMeQuery } from "../api/queries.ts";
 import type { Me } from "../api/types.ts";
 import { ErrorState, LoadingState } from "../components/States.tsx";
@@ -66,9 +66,19 @@ export function RequireSession({ children }: { children: ReactNode }) {
     rememberLocale(preferred);
   }, [preferred, i18n]);
 
+  // F-DG2-530: a GET /me sent before the session generation moved (another /me of this tab brought a new identity
+  // meanwhile) answers SessionChangedError instead of data. It is probed again once, under the current generation, so
+  // the cached identity is never left behind the one the API client now holds. Bounded: one probe per such failure.
+  const meSessionChanged = me.isError && isSessionChangedError(me.error);
+  const { refetch: refetchMe } = me;
+  useEffect(() => {
+    if (meSessionChanged && !ended) void refetchMe();
+  }, [meSessionChanged, me.errorUpdatedAt, ended, refetchMe]);
+
   // Never render the signed-in shell (stale name, navigation, sign-out) for a session that has ended.
   if (ended) return null;
   if (me.isPending) return <LoadingState />;
+  if (meSessionChanged && !me.data) return <LoadingState />;
   if (me.isError) {
     // No session in this tab yet (a 401 while active would have ended it above): plain redirect, no message.
     if (me.error instanceof ApiError && me.error.status === 401) {

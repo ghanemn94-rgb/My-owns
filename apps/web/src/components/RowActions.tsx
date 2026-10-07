@@ -5,7 +5,7 @@
 // with no visible content is an inline `validation.blank` error and nothing is sent, and visible text is sent verbatim.
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ApiError, api } from "../api/client.ts";
+import { api, ApiError, isSessionChangedError } from "../api/client.ts";
 import { errorMessage, fieldErrorMessages } from "../lib/problem.ts";
 import { BLANK_CODE, Dialog, Field, isBlankText, REQUIRED_CODE, useFocusFirstInvalid } from "./Form.tsx";
 import { Icon } from "./Icon.tsx";
@@ -129,6 +129,7 @@ export function NoteDecisionDialog({
       await onDone();
       onClose();
     } catch (e) {
+      if (isSessionChangedError(e)) return; // F-DG2-530: silent, the session state was already reset
       const onNote = e instanceof ApiError ? e.fieldErrors.find((fe) => fe.pointer === notePointer) : undefined;
       if (onNote) {
         setErrors({ note: onNote.code });

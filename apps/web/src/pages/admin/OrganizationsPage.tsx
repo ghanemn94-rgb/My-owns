@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate, useParams } from "react-router";
-import { ApiError, api } from "../../api/client.ts";
+import { api, ApiError, isSessionChangedError } from "../../api/client.ts";
 import { keys, useBusinessUnit, useBusinessUnits, useOrganization, useOrganizations } from "../../api/queries.ts";
 import type { BusinessUnit, Organization } from "../../api/types.ts";
 import { localName, useLocale } from "../../app/locale.ts";
@@ -158,6 +158,7 @@ function CreateOrganization({ onDone }: { onDone: () => void }) {
       onDone();
       void navigate(`/admin/organizations/${org.id}`);
     } catch (e) {
+      if (isSessionChangedError(e)) return; // F-DG2-530: silent, the session state was already reset
       applyServerErrors(e, setError as never);
       setServerError(e);
     }
@@ -474,6 +475,7 @@ function CreateBusinessUnit({
       await queryClient.invalidateQueries({ queryKey: keys.businessUnits(org.id) });
       onDone();
     } catch (e) {
+      if (isSessionChangedError(e)) return; // F-DG2-530: silent, the session state was already reset
       applyServerErrors(e, setError as never);
       setServerError(e);
     }

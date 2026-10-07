@@ -1,0 +1,38 @@
+# reviewer probe zz-sec-r15-web-probe.test.tsx (sha256 bd97dbc9) on the FE14 working tree; node v24.21.0
+
+ RUN  v3.2.4 /home/user/My-owns
+
+stdout | src/auth/zz-sec-r15-web-probe.test.tsx > X2 Back/Forward after an identity change > B pressing Back to A's detail page never sees A's cached record
+X2: path /transformations/01920000-0000-7000-9000-000000000301; A's record seen after Back/Back/Forward = false,false,false
+
+stdout | src/auth/zz-sec-r15-web-probe.test.tsx > X3 a mutation of A's in flight across an identity change > its success (A's record) is not written into B's cache nor shown to B
+X3: GET detail requests so far 2 (1 = A's own edit-page load; a 2nd would be B refetching); path /transformations/01920000-0000-7000-9000-000000000301/edit; header B=true; cache[transformation 01920000-0000-7000-9000-000000000301].name=undefined; B sees A-PATCHED-SECRET=false
+
+stdout | src/auth/zz-sec-r15-web-probe.test.tsx > X3 a mutation of A's in flight across an identity change > its success (A's record) is not written into B's cache nor shown to B
+X3 after B's refetch (404): B still sees A-PATCHED-SECRET=false; cache name=undefined
+
+stdout | src/auth/zz-sec-r15-web-probe.test.tsx > X3 a mutation of A's in flight across an identity change > X3b the same after a session END in this tab and B's sign-in: the identity change at B's /me removes it
+X3b: cache after the end and the late PATCH = undefined; after B's sign-in path /transformations/01920000-0000-7000-9000-000000000301/edit; cache name=undefined; B sees it=false
+
+stdout | src/auth/zz-sec-r15-web-probe.test.tsx > X4 a query of A's in flight across an identity change > A's late answer never lands in B's cache or screen
+X4: transformations queries after release = 
+
+stdout | src/auth/zz-sec-r15-web-probe.test.tsx > X6 OBSERVATION: refocus within GET /me's 60 s staleTime > logs what the tab shows after B signs in elsewhere and the window regains focus (always passes)
+X6: requests on refocus = ["GET /api/v1/me","GET /api/v1/transformations","GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units","GET /api/v1/transformations","GET /api/v1/transformations"]; header A=false; B's row shown=true; A's row shown=false
+
+stdout | src/auth/zz-sec-r15-web-probe.test.tsx > X7 403 csrf on a mutation is not a session end > PATCH 403 csrf keeps the phase, the identity and the cache
+X7: phase active; queries with data before 3 after 3; me cached true
+
+ ✓ |unit-web| src/auth/zz-sec-r15-web-probe.test.tsx (6 tests) 2740ms
+   ✓ X2 Back/Forward after an identity change > B pressing Back to A's detail page never sees A's cached record  509ms
+   ✓ X3 a mutation of A's in flight across an identity change > its success (A's record) is not written into B's cache nor shown to B  740ms
+   ✓ X3 a mutation of A's in flight across an identity change > X3b the same after a session END in this tab and B's sign-in: the identity change at B's /me removes it  444ms
+   ✓ X6 OBSERVATION: refocus within GET /me's 60 s staleTime > logs what the tab shows after B signs in elsewhere and the window regains focus (always passes)  382ms
+   ✓ X7 403 csrf on a mutation is not a session end > PATCH 403 csrf keeps the phase, the identity and the cache  370ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  14:43:56
+   Duration  5.35s (transform 1.09s, setup 154ms, collect 1.62s, tests 2.74s, environment 460ms, prepare 117ms)
+
+# exit status: 0

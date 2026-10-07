@@ -1,9 +1,9 @@
 // Explicit data states (ADR-0009 §8, REQ-S15-011): loading, empty, error, stale, conflict and no-permission. Every
 // state has a text label and an icon, a live-region role, and never renders a missing value as 0 or green.
 import type { UseQueryResult } from "@tanstack/react-query";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { ApiError } from "../api/client.ts";
+import { ApiError, isSessionChangedError } from "../api/client.ts";
 import { errorMessage, isNoPermission } from "../lib/problem.ts";
 import { useLocale } from "../app/locale.ts";
 import { formatDateTime } from "../lib/format.ts";
@@ -34,6 +34,8 @@ export function EmptyState({ title, body, action }: { title: string; body?: stri
 
 export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
   const { t } = useTranslation();
+  // F-DG2-530: an answer that belonged to a previous session is not an error of this one: nothing is shown.
+  if (isSessionChangedError(error)) return null;
   const requestId = error instanceof ApiError ? error.requestId : null;
   return (
     <div className="state state--error banner banner--error" role="alert" data-state="error">
@@ -186,7 +188,15 @@ export function QueryState<T>({
   empty?: ReactNode;
   children: (data: T) => ReactNode;
 }) {
+  // F-DG2-530: the query's answer belonged to a previous session. It is not an error of this one: it is loaded again
+  // under the current session (once per such failure, so bounded), and shown as loading meanwhile.
+  const sessionChanged = query.isError && isSessionChangedError(query.error);
+  const { refetch, errorUpdatedAt } = query;
+  useEffect(() => {
+    if (sessionChanged) void refetch();
+  }, [sessionChanged, errorUpdatedAt, refetch]);
   if (query.isPending) return <LoadingState />;
+  if (sessionChanged && query.data === undefined) return <LoadingState />;
   if (query.isError && query.data === undefined) {
     if (isNoPermission(query.error)) return <NoPermissionState error={query.error} />;
     return <ErrorState error={query.error} onRetry={() => void query.refetch()} />;
@@ -194,7 +204,7 @@ export function QueryState<T>({
   const data = query.data as T;
   return (
     <>
-      {query.isRefetchError ? (
+      {query.isRefetchError && !sessionChanged ? (
         <StaleBanner updatedAt={query.dataUpdatedAt} onRetry={() => void query.refetch()} />
       ) : null}
       {isEmpty?.(data) && empty ? empty : children(data)}

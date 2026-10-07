@@ -5,7 +5,7 @@
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { EVIDENCE_TYPES, evidenceCreate, evidenceLinkCreate, evidenceUpdate } from "@mth/shared/schemas";
-import { ApiError, api, newIdempotencyKey } from "../../api/client.ts";
+import { api, ApiError, isSessionChangedError, newIdempotencyKey } from "../../api/client.ts";
 import { useCharter, useDecisions, useNorthStar, useP2Refresh, useRegister, useTomCanvas } from "../../api/queries.ts";
 import type { Evidence, EvidenceLink } from "../../api/types.ts";
 import { useLocale } from "../../app/locale.ts";
@@ -389,6 +389,7 @@ function UploadDialog({ item, onClose }: { item: Evidence; onClose: () => void }
       await refresh();
       onClose();
     } catch (e) {
+      if (isSessionChangedError(e)) return; // F-DG2-530: silent, the session state was already reset
       setError(e);
       if (e instanceof ApiError && e.status === 409) await refresh();
     } finally {
@@ -526,6 +527,7 @@ function LinkDialog({ item, onClose }: { item: Evidence; onClose: () => void }) 
       await refresh();
       onClose();
     } catch (e) {
+      if (isSessionChangedError(e)) return; // F-DG2-530: silent, the session state was already reset
       setError(e);
     } finally {
       setBusy(false);

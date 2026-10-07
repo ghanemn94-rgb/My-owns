@@ -10,7 +10,7 @@ import {
   journeyUpdate,
   type JourneyStep,
 } from "@mth/shared/schemas";
-import { ApiError, api } from "../../api/client.ts";
+import { api, ApiError, isSessionChangedError } from "../../api/client.ts";
 import { usePainPoints, useP2Refresh, useRegister } from "../../api/queries.ts";
 import type { DiagnosticItem, Journey, JourneyPainPoint } from "../../api/types.ts";
 import { useLocale } from "../../app/locale.ts";
@@ -587,6 +587,7 @@ function StepsEditor({ journey, onClose }: { journey: Journey; onClose: () => vo
       await refresh();
       onClose();
     } catch (e) {
+      if (isSessionChangedError(e)) return; // F-DG2-530: silent, the session state was already reset
       const mapped: Record<string, string> = {};
       if (e instanceof ApiError) {
         for (const fe of e.fieldErrors) {

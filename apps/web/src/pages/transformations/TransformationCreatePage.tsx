@@ -8,7 +8,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
-import { ApiError, api, newIdempotencyKey } from "../../api/client.ts";
+import { api, ApiError, isSessionChangedError, newIdempotencyKey } from "../../api/client.ts";
 import { keys, useAllUsers } from "../../api/queries.ts";
 import type { Transformation } from "../../api/types.ts";
 import { localName, useLocale } from "../../app/locale.ts";
@@ -200,6 +200,7 @@ export function TransformationCreatePage() {
       const state: CreatedNavigationState = { created: { id: created.id, code: created.code, name: created.name } };
       void navigate(`/transformations/${created.id}`, { state });
     } catch (e) {
+      if (isSessionChangedError(e)) return; // F-DG2-530: silent, the session state was already reset
       if (e instanceof ApiError && e.fieldErrors.length > 0) {
         for (const fe of e.fieldErrors) {
           const field = pointerToField(fe.pointer) as keyof CreateFormValues;

@@ -15,7 +15,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Locale } from "@mth/shared";
-import { ApiError, api } from "../api/client.ts";
+import { api, ApiError, isSessionChangedError, sessionIdentityKey } from "../api/client.ts";
 import { fetchMe, keys } from "../api/queries.ts";
 import type { Me, User } from "../api/types.ts";
 import { useLocale } from "../app/locale.ts";
@@ -59,6 +59,8 @@ export function LanguageSwitch({
       if (err instanceof ApiError && err.status === 409 && attempt === 0) {
         const fresh = await fetchMe();
         queryClient.setQueryData(keys.me, fresh);
+        // F-DG2-530: a choice made under one identity (or session) is never written for the one that replaced it.
+        if (sessionIdentityKey(fresh) !== sessionIdentityKey(me)) return;
         return persist(target, 1);
       }
       throw err;
@@ -73,7 +75,8 @@ export function LanguageSwitch({
     if (!signedIn) return;
     try {
       await persist(target);
-    } catch {
+    } catch (err) {
+      if (isSessionChangedError(err)) return; // F-DG2-530: silent, the session state was already reset
       setRefused(target);
     }
   };

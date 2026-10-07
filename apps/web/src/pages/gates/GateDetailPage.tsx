@@ -6,7 +6,7 @@ import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router";
 import { GATE_OUTCOMES, gateApproverConfig, gateDecisionCreate, gateSubmissionCreate } from "@mth/shared/schemas";
-import { ApiError, api } from "../../api/client.ts";
+import { api, ApiError, isSessionChangedError } from "../../api/client.ts";
 import { useGate, useGateSubmission, useGateSubmissions, useP2Refresh, useRegister } from "../../api/queries.ts";
 import type {
   Evidence,
@@ -458,6 +458,7 @@ function SubmitDialog({ view, onClose, onDone }: { view: GateView; onClose: () =
       });
       await onDone();
     } catch (e) {
+      if (isSessionChangedError(e)) return; // F-DG2-530: silent, the session state was already reset
       const onNote = e instanceof ApiError ? e.fieldErrors.find((fe) => fe.pointer === "/submissionNote") : undefined;
       if (onNote) showNoteError(onNote.code);
       else setError(e);
@@ -560,6 +561,7 @@ function DecideDialog({
       });
       await onDone();
     } catch (e) {
+      if (isSessionChangedError(e)) return; // F-DG2-530: silent, the session state was already reset
       const mapped: Record<string, string> = {};
       if (e instanceof ApiError) {
         for (const fe of e.fieldErrors) {

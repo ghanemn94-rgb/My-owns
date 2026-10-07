@@ -7,7 +7,7 @@ import { useEffect, useId, useMemo, useState, type FormEvent } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
-import { ApiError, api } from "../../api/client.ts";
+import { api, ApiError, isSessionChangedError } from "../../api/client.ts";
 import { keys, useOrganizations, useUser, useUsers } from "../../api/queries.ts";
 import type { User } from "../../api/types.ts";
 import { localName, useLocale } from "../../app/locale.ts";
@@ -293,6 +293,7 @@ function CreateUser({ organizationId, onDone }: { organizationId: string; onDone
       onDone();
       void navigate(`/admin/users/${user.id}`);
     } catch (e) {
+      if (isSessionChangedError(e)) return; // F-DG2-530: silent, the session state was already reset
       if (e instanceof ApiError) {
         for (const fe of e.fieldErrors) {
           const field = pointerToField(fe.pointer).replace(/^identity\./, "");

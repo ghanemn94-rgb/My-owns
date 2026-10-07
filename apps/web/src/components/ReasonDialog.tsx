@@ -6,7 +6,7 @@
 import { reasonRequest } from "@mth/shared/schemas";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ApiError } from "../api/client.ts";
+import { ApiError, isSessionChangedError } from "../api/client.ts";
 import { errorMessage, fieldErrorMessage } from "../lib/problem.ts";
 import { BLANK_CODE, Dialog, Field, isBlankText, issueCode, useFocusFirstInvalid } from "./Form.tsx";
 
@@ -54,6 +54,10 @@ export function ReasonDialog({
     try {
       await onConfirm(reason);
     } catch (err) {
+      if (isSessionChangedError(err)) {
+        setBusy(false);
+        return; // F-DG2-530: silent, the session state was already reset
+      }
       const onReason = err instanceof ApiError ? err.fieldErrors.find((fe) => fe.pointer === "/reason") : undefined;
       if (onReason) showFieldError(onReason.code);
       else setServerError(err);

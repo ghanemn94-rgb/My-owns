@@ -9,7 +9,7 @@ import {
   tomWorkshopItemCreate,
   tomWorkshopUpdate,
 } from "@mth/shared/schemas";
-import { api } from "../../api/client.ts";
+import { api, isSessionChangedError } from "../../api/client.ts";
 import { useP2Refresh, useRegister, useWorkshopItems } from "../../api/queries.ts";
 import type { ActionItem, TomWorkshop, TomWorkshopItem } from "../../api/types.ts";
 import { useLocale } from "../../app/locale.ts";
@@ -200,6 +200,7 @@ function WorkshopMode({ workshop, onClose }: { workshop: TomWorkshop; onClose: (
       });
       await refresh();
     } catch (e) {
+      if (isSessionChangedError(e)) return; // F-DG2-530: silent, the session state was already reset
       setStatusError(e);
       await refresh();
     } finally {

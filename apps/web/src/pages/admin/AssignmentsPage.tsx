@@ -9,7 +9,7 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router";
-import { ApiError, api } from "../../api/client.ts";
+import { api, ApiError, isSessionChangedError } from "../../api/client.ts";
 import {
   useAllUsers,
   useAssignments,
@@ -435,6 +435,7 @@ function GrantForm({
       await queryClient.invalidateQueries({ queryKey: ["role-assignments"] });
       onDone();
     } catch (e) {
+      if (isSessionChangedError(e)) return; // F-DG2-530: silent, the session state was already reset
       if (e instanceof ApiError) {
         for (const fe of e.fieldErrors) {
           const field = pointerToField(fe.pointer)

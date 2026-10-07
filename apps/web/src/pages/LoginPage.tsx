@@ -9,7 +9,7 @@ import { devLoginRequest } from "@mth/shared/schemas";
 import { useId, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useNavigate, useSearchParams } from "react-router";
-import { ApiError, apiRequest } from "../api/client.ts";
+import { ApiError, apiRequest, isSessionChangedError } from "../api/client.ts";
 import { keys, useMeQuery } from "../api/queries.ts";
 import { Icon } from "../components/Icon.tsx";
 import { LanguageSwitch } from "../components/LanguageSwitch.tsx";
@@ -135,8 +135,9 @@ function DevLoginForm({ returnTo }: { returnTo: string }) {
       await queryClient.invalidateQueries({ queryKey: keys.me });
       void navigate(returnTo, { replace: true });
     } catch (err) {
-      setFailure({ error: err });
       setBusy(false);
+      if (isSessionChangedError(err)) return; // F-DG2-530: silent, the session state was already reset
+      setFailure({ error: err });
     }
   };
 
