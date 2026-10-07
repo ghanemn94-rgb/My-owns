@@ -1,0 +1,17 @@
+#!/bin/bash
+# qa-verifier DG2 round 13: e2e per locale setting on the disposable clone $TMPDIR/review-dg2-e2e @5699f72 (freeze;
+# candidate 6824b8b8, source aa0a68f1), pre-installed Chromium, --workers=1, unique ports. Setup (once, clone only, never
+# the candidate tree): `pnpm -r build`; the clone's docs/delivery/test-evidence copy is deleted (playwright testMatch
+# e2e/**/*.spec.ts) after the qa-verifier specs dg2-qa-r8..r13 are copied into the clone's e2e/.
+# usage: run-e2e.sh <unset|cutf8> <api port> <pg port> <qa api port> <qa pg port>
+cd $TMPDIR/review-dg2-e2e
+export PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers
+E=/home/user/My-owns/docs/delivery/test-evidence/DG2/qa/round-13
+loc=$1; api=$2; pg=$3; qapi=$4; qpg=$5
+if [ $loc = unset ]; then L="env -u LANG -u LC_ALL"; else L="env -u LC_ALL LANG=C.UTF-8"; fi
+S=$TMPDIR/shots-$loc; rm -rf $S; mkdir -p $S/product $S/qa
+{ echo "\$ $L E2E_API_PORT=$api E2E_PG_PORT=$pg E2E_SCREENSHOT_DIR=<shots> apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e e2e/a20-bilingual-shell.spec.ts --workers=1 --reporter=list"; echo "# node $(node -v); $(date -u +%FT%TZ)";
+  $L E2E_API_PORT=$api E2E_PG_PORT=$pg E2E_SCREENSHOT_DIR=$S/product apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e e2e/a20-bilingual-shell.spec.ts --workers=1 --reporter=list 2>&1; echo "exit $?"; } | sed "s#$TMPDIR#\$TMPDIR#g" > $E/15-e2e-product-$loc.log
+{ echo "\$ $L QA_E2E_API_PORT=$qapi QA_E2E_PG_PORT=$qpg QA_SHOT_DIR=<shots> E2E_SCREENSHOT_DIR=<shots> QA_R8_QUERY_OPS=<21-query-ops.py output> e2e/support/qa-stack.sh npx playwright test e2e apps/web/e2e --workers=1 --reporter=list"; echo "# node $(node -v); $(date -u +%FT%TZ)";
+  $L QA_E2E_API_PORT=$qapi QA_E2E_PG_PORT=$qpg QA_SHOT_DIR=$S/qa E2E_SCREENSHOT_DIR=$S/qa QA_R8_QUERY_OPS=$TMPDIR/query-ops.json e2e/support/qa-stack.sh npx playwright test e2e apps/web/e2e --workers=1 --reporter=list 2>&1; echo "exit $?"; } | sed "s#$TMPDIR#\$TMPDIR#g" > $E/17-e2e-qa-stack-$loc.log
+echo done $loc

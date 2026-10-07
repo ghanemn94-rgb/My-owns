@@ -1,0 +1,57 @@
+# qa-verifier R13 spec development run2 (clone $TMPDIR/review-dg2-e2e @5699f72; env -u LANG -u LC_ALL e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r13.spec.ts --workers=1 --reporter=list)
+port-policy: PostgreSQL listening on port 24953 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 3393 (attempt 1)
+API:     http://localhost:3393
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 10 tests using 1 worker
+
+QA-R13 [en] R13-01 store during (A,B streaming; C stalled) [["/<uuid>/<uuid>/<item>/<uuid>.part (1572864 B)"],["/<uuid>/<uuid>/<item>/<uuid>.part (1572864 B)"],["/<uuid>/<uuid>/<item>/<uuid>.part (1048576 B)"]]; SIGTERM -> exit 0 in 5023 ms; bytes the client had streamed when the server closed A,B [6782976,6782976] of 25165824; server closed sockets [true,true,true]; 'shut down' logged true; settle warnings 0; error-level lines 0; store after exit [[],[],[]]; after a restart [[],[],[]] (restart SIGTERM -> exit 0 in 12 ms); content rows [0,0,0]; currentContentId [null,null,null]; versions ["1->1","1->1","1->1"]; GET content [404,404,404]
+  ✓   1 [chromium-en] › e2e/dg2-qa-r13.spec.ts:309:1 › R13-01 SIGTERM while uploads are ACTIVELY STREAMING (and one stalled): exit 0 inside the backstop, no settle warning, no error line, nothing stored, no .part, a restart finds nothing (10.0s)
+QA-R13 [en] R13-02 upload (3145735 B over ~1.5 s, SIGTERM at +0.5 s) -> 200; SIGTERM -> exit 0 in 1035 ms; download 200 byte-exact true; DB 87a53313e1611807869f… vs sha256 87a53313e1611807…; store ["/<uuid>/<uuid>/<item>/<uuid> (3145735 B)"]; error-level lines 0
+  ✓   2 [chromium-en] › e2e/dg2-qa-r13.spec.ts:360:1 › R13-02 SIGTERM while a short upload streams that FINISHES inside the grace: it commits (200) byte-exact, exit 0, no .part left (2.7s)
+QA-R13 [en] R13-03 store files before 10 (stale <uuid>.part at key depth 1, fresh 2); sweep finished line {"removed":1,"keptFresh":2,"olderThanMs":3600000}; removed lines [{"level":30,"key":"8ce0612a-fc67-435e-8d23-f7dc2c6f5b59/15db8f2d-b117-4bc1-89ab-d6a1a5a1af82/6c521be0-37b8-4ede-a99d-88a5e3b72d54/4e6f6bbe-e288-4bf8-a8ff-48f83878d4ba.part","sizeBytes":4096,"ageMs":7201021}]; absolute path in a removal line false; gone ["8ce0612a-fc67-435e-8d23-f7dc2c6f5b59/15db8f2d-b117-4bc1-89ab-d6a1a5a1af82/6c521be0-37b8-4ede-a99d-88a5e3b72d54/4e6f6bbe-e288-4bf8-a8ff-48f83878d4ba.part"] (expected ["8ce0612a-fc67-435e-8d23-f7dc2c6f5b59/15db8f2d-b117-4bc1-89ab-d6a1a5a1af82/6c521be0-37b8-4ede-a99d-88a5e3b72d54/4e6f6bbe-e288-4bf8-a8ff-48f83878d4ba.part"]); bytes changed 0; kept {"fresh":true,"near":true,"oldFinal":true,"lookalike":true,"upper":true,"wrongDepth":true,"tooDeep":true,"partDir":true,"outsideStale":true,"outsideFile":true,"linkPart":true,"realFinal":true}; real back-dated final object GET 200 byte-exact true; SIGTERM -> exit 0 in 28 ms
+  ✓   3 [chromium-en] › e2e/dg2-qa-r13.spec.ts:400:1 › R13-03 start-up sweep: only a stale <uuid>.part at the key depth is removed and logged; fresh/near-threshold temporaries, old final objects, look-alikes, wrong depth, directories and symlinked paths are kept (1.3s)
+QA-R13 [en] R13-04 ["(a) control -> 200; download 200 byte-exact true; DB = sha256 true","(b) API revoke mid-upload (revokedAt set true) -> 401 unauthenticated; member sessions revoked by the product (session.revoke audit rows) 0; member GET /me afterwards 401; content rows 0; store []; item version/current 1 null (was 1 null)","(b2) grant expired mid-upload (upload started before effectiveTo true) -> 403 forbidden; audit actions for the request \"authorization.denied\"; content rows 0; store []; item version/current 1 null (was 1 null); session GET /me afterwards 200","(c) logout mid-upload (logout 200) -> 401 unauthenticated; content rows 0; store []; item v1->v1 current null; logged-out session GET /me 401; the user's other session GET /me 200"]
+  ✓   4 [chromium-en] › e2e/dg2-qa-r13.spec.ts:534:1 › R13-04 commit-time authorisation: positive control 200; grant revoked mid-upload -> 403, nothing stored, audited; logout mid-upload -> 401, nothing stored, the other session unaffected (9.5s)
+QA-R13 [en] R13-05 IdP connections accepted 2; mth-api sessions idle in transaction while 25 logins wait 0; /readyz 200 in 5 ms; signed-in GET /me 200 in 24 ms; login outcomes ["302 /login?…"]; logged 5xx 0; SIGTERM -> exit 0 in 19 ms
+  ✓   5 [chromium-en] › e2e/dg2-qa-r13.spec.ts:683:1 › R13-05 /auth/login against a never-answering IdP (AUTH_MODE=oidc, pool max 20): 25 concurrent logins hold no transaction; /readyz and a signed-in GET /me stay prompt; no 5xx; SIGTERM exits 0 (11.0s)
+QA-R13 [ar] R13-01 store during (A,B streaming; C stalled) [["/<uuid>/<uuid>/<item>/<uuid>.part (1572864 B)"],["/<uuid>/<uuid>/<item>/<uuid>.part (1572864 B)"],["/<uuid>/<uuid>/<item>/<uuid>.part (1048576 B)"]]; SIGTERM -> exit 0 in 5045 ms; bytes the client had streamed when the server closed A,B [6717440,6717440] of 25165824; server closed sockets [true,true,true]; 'shut down' logged true; settle warnings 0; error-level lines 0; store after exit [[],[],[]]; after a restart [[],[],[]] (restart SIGTERM -> exit 0 in 14 ms); content rows [0,0,0]; currentContentId [null,null,null]; versions ["1->1","1->1","1->1"]; GET content [404,404,404]
+  ✓   6 [chromium-ar] › e2e/dg2-qa-r13.spec.ts:309:1 › R13-01 SIGTERM while uploads are ACTIVELY STREAMING (and one stalled): exit 0 inside the backstop, no settle warning, no error line, nothing stored, no .part, a restart finds nothing (11.0s)
+QA-R13 [ar] R13-02 upload (3145735 B over ~1.5 s, SIGTERM at +0.5 s) -> 200; SIGTERM -> exit 0 in 1033 ms; download 200 byte-exact true; DB d5a11127ca800253f2c9… vs sha256 d5a11127ca800253…; store ["/<uuid>/<uuid>/<item>/<uuid> (3145735 B)"]; error-level lines 0
+  ✓   7 [chromium-ar] › e2e/dg2-qa-r13.spec.ts:360:1 › R13-02 SIGTERM while a short upload streams that FINISHES inside the grace: it commits (200) byte-exact, exit 0, no .part left (2.9s)
+QA-R13 [ar] R13-03 store files before 20 (stale <uuid>.part at key depth 1, fresh 4); sweep finished line {"removed":1,"keptFresh":4,"olderThanMs":3600000}; removed lines [{"level":30,"key":"fc282a6e-2c94-472b-8680-960a6c35cc96/fc6a2c5c-087d-444c-87a0-e1b3e49d9535/e37ffb5a-9049-4ba7-8c0b-7b11fe1317d5/d789a14b-3c5d-4ffe-81f5-5a3184ab0ee7.part","sizeBytes":4096,"ageMs":7200952}]; absolute path in a removal line false; gone ["fc282a6e-2c94-472b-8680-960a6c35cc96/fc6a2c5c-087d-444c-87a0-e1b3e49d9535/e37ffb5a-9049-4ba7-8c0b-7b11fe1317d5/d789a14b-3c5d-4ffe-81f5-5a3184ab0ee7.part"] (expected ["fc282a6e-2c94-472b-8680-960a6c35cc96/fc6a2c5c-087d-444c-87a0-e1b3e49d9535/e37ffb5a-9049-4ba7-8c0b-7b11fe1317d5/d789a14b-3c5d-4ffe-81f5-5a3184ab0ee7.part"]); bytes changed 0; kept {"fresh":true,"near":true,"oldFinal":true,"lookalike":true,"upper":true,"wrongDepth":true,"tooDeep":true,"partDir":true,"outsideStale":true,"outsideFile":true,"linkPart":true,"realFinal":true}; real back-dated final object GET 200 byte-exact true; SIGTERM -> exit 0 in 18 ms
+  ✓   8 [chromium-ar] › e2e/dg2-qa-r13.spec.ts:400:1 › R13-03 start-up sweep: only a stale <uuid>.part at the key depth is removed and logged; fresh/near-threshold temporaries, old final objects, look-alikes, wrong depth, directories and symlinked paths are kept (1.1s)
+QA-R13 [ar] R13-04 ["(a) control -> 200; download 200 byte-exact true; DB = sha256 true","(b) API revoke mid-upload (revokedAt set true) -> 401 unauthenticated; member sessions revoked by the product (session.revoke audit rows) 0; member GET /me afterwards 401; content rows 0; store []; item version/current 1 null (was 1 null)","(b2) grant expired mid-upload (upload started before effectiveTo true) -> 403 forbidden; audit actions for the request \"authorization.denied\"; content rows 0; store []; item version/current 1 null (was 1 null); session GET /me afterwards 200","(c) logout mid-upload (logout 200) -> 401 unauthenticated; content rows 0; store []; item v1->v1 current null; logged-out session GET /me 401; the user's other session GET /me 200"]
+  ✓   9 [chromium-ar] › e2e/dg2-qa-r13.spec.ts:534:1 › R13-04 commit-time authorisation: positive control 200; grant revoked mid-upload -> 403, nothing stored, audited; logout mid-upload -> 401, nothing stored, the other session unaffected (9.3s)
+QA-R13 [ar] R13-05 IdP connections accepted 2; mth-api sessions idle in transaction while 25 logins wait 0; /readyz 200 in 5 ms; signed-in GET /me 200 in 27 ms; login outcomes ["302 /login?…"]; logged 5xx 0; SIGTERM -> exit 0 in 20 ms
+  ✓  10 [chromium-ar] › e2e/dg2-qa-r13.spec.ts:683:1 › R13-05 /auth/login against a never-answering IdP (AUTH_MODE=oidc, pool max 20): 25 concurrent logins hold no transaction; /readyz and a signed-in GET /me stay prompt; no 5xx; SIGTERM exits 0 (10.9s)
+
+  10 passed (1.2m)

@@ -1,0 +1,177 @@
+$ env -u LANG -u LC_ALL QA_E2E_API_PORT=3421 QA_E2E_PG_PORT=24981 e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r13.spec.ts -g 'R13-01|R13-03' --workers=1 --reporter=list
+# NEGATIVE CONTROL: throwaway clone $TMPDIR/review-dg2-base @744af0b (round-12 freeze, candidate 5dfecce4, source 8488e7a = pre-BE18A); pnpm install --offline + pnpm -r build exit 0; node v24.21.0; 2026-10-07T07:39:03Z. EXPECTED to fail: R13-01 (a .part survives SIGTERM, F-DG2-460) and R13-03 (no start-up sweep exists before BE18A).
+port-policy: PostgreSQL listening on port 24981 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 3421 (attempt 1)
+API:     http://localhost:3421
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 4 tests using 1 worker
+
+QA-R13 [en] R13-01 store during (A,B streaming; C stalled) [["/<uuid>/<uuid>/<item>/<uuid>.part (1572864 B)"],["/<uuid>/<uuid>/<item>/<uuid>.part (1572864 B)"],["/<uuid>/<uuid>/<item>/<uuid>.part (1048576 B)"]]; SIGTERM -> exit 0 in 5020 ms; bytes the client had streamed when the server closed A,B [6782976,6782976] of 25165824; server closed sockets [true,true,true]; 'shut down' logged true; settle warnings 0; error-level lines 0; store after exit [["/<uuid>/<uuid>/<item>/<uuid>.part (6782976 B)"],["/<uuid>/<uuid>/<item>/<uuid>.part (6782976 B)"],["/<uuid>/<uuid>/<item>/<uuid>.part (1048576 B)"]]; after a restart [["/<uuid>/<uuid>/<item>/<uuid>.part (6782976 B)"],["/<uuid>/<uuid>/<item>/<uuid>.part (6782976 B)"],["/<uuid>/<uuid>/<item>/<uuid>.part (1048576 B)"]] (restart SIGTERM -> exit 0 in 13 ms); content rows [0,0,0]; currentContentId [null,null,null]; versions ["1->1","1->1","1->1"]; GET content [404,404,404]
+  ✘  1 [chromium-en] › e2e/dg2-qa-r13.spec.ts:309:1 › R13-01 SIGTERM while uploads are ACTIVELY STREAMING (and one stalled): exit 0 inside the backstop, no settle warning, no error line, nothing stored, no .part, a restart finds nothing (9.9s)
+QA-R13 [en] R13-03 store files before 12 (stale <uuid>.part at key depth 1, fresh 5); sweep finished line undefined; removed lines []; absolute path in a removal line false; gone [] (expected ["d420e939-9b52-4fbc-a666-7f997d77e20a/802246e5-0d64-4327-aa5e-09553205c78b/8ddf3c93-c782-4692-9894-ec81211e3f80/05148f03-31b6-4d32-9c8c-3ab7857510e5.part"]); bytes changed 0; kept {"fresh":true,"near":true,"oldFinal":true,"lookalike":true,"upper":true,"wrongDepth":true,"tooDeep":true,"partDir":true,"outsideStale":true,"outsideFile":true,"linkPart":true,"realFinal":true}; real back-dated final object GET 200 byte-exact true; SIGTERM -> exit 0 in 14 ms
+  ✘  2 [chromium-en] › e2e/dg2-qa-r13.spec.ts:400:1 › R13-03 start-up sweep: only a stale <uuid>.part at the key depth is removed and logged; fresh/near-threshold temporaries, old final objects, look-alikes, wrong depth, directories and symlinked paths are kept (11.0s)
+QA-R13 [ar] R13-01 store during (A,B streaming; C stalled) [["/<uuid>/<uuid>/<item>/<uuid>.part (1572864 B)"],["/<uuid>/<uuid>/<item>/<uuid>.part (1572864 B)"],["/<uuid>/<uuid>/<item>/<uuid>.part (1048576 B)"]]; SIGTERM -> exit 0 in 5025 ms; bytes the client had streamed when the server closed A,B [6782976,6782976] of 25165824; server closed sockets [true,true,true]; 'shut down' logged true; settle warnings 0; error-level lines 0; store after exit [["/<uuid>/<uuid>/<item>/<uuid>.part (6782976 B)"],["/<uuid>/<uuid>/<item>/<uuid>.part (6782976 B)"],["/<uuid>/<uuid>/<item>/<uuid>.part (1048576 B)"]]; after a restart [["/<uuid>/<uuid>/<item>/<uuid>.part (6782976 B)"],["/<uuid>/<uuid>/<item>/<uuid>.part (6782976 B)"],["/<uuid>/<uuid>/<item>/<uuid>.part (1048576 B)"]] (restart SIGTERM -> exit 0 in 16 ms); content rows [0,0,0]; currentContentId [null,null,null]; versions ["1->1","1->1","1->1"]; GET content [404,404,404]
+  ✘  3 [chromium-ar] › e2e/dg2-qa-r13.spec.ts:309:1 › R13-01 SIGTERM while uploads are ACTIVELY STREAMING (and one stalled): exit 0 inside the backstop, no settle warning, no error line, nothing stored, no .part, a restart finds nothing (9.9s)
+QA-R13 [ar] R13-03 store files before 24 (stale <uuid>.part at key depth 2, fresh 10); sweep finished line undefined; removed lines []; absolute path in a removal line false; gone [] (expected ["275c8bd7-2cec-40b3-9011-5d6e88aad3fe/e49c53e1-6bb7-4b55-a4c3-1c908773cede/8063f01e-cb0d-4a03-a1b5-9b7d4d6aae89/06cc5ab6-d269-4024-b281-df9d5a24c6f5.part","d420e939-9b52-4fbc-a666-7f997d77e20a/802246e5-0d64-4327-aa5e-09553205c78b/8ddf3c93-c782-4692-9894-ec81211e3f80/05148f03-31b6-4d32-9c8c-3ab7857510e5.part"]); bytes changed 0; kept {"fresh":true,"near":true,"oldFinal":true,"lookalike":true,"upper":true,"wrongDepth":true,"tooDeep":true,"partDir":true,"outsideStale":true,"outsideFile":true,"linkPart":true,"realFinal":true}; real back-dated final object GET 200 byte-exact true; SIGTERM -> exit 0 in 16 ms
+  ✘  4 [chromium-ar] › e2e/dg2-qa-r13.spec.ts:400:1 › R13-03 start-up sweep: only a stale <uuid>.part at the key depth is removed and logged; fresh/near-threshold temporaries, old final objects, look-alikes, wrong depth, directories and symlinked paths are kept (11.0s)
+
+
+  1) [chromium-en] › e2e/dg2-qa-r13.spec.ts:309:1 › R13-01 SIGTERM while uploads are ACTIVELY STREAMING (and one stalled): exit 0 inside the backstop, no settle warning, no error line, nothing stored, no .part, a restart finds nothing 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  - 3[39m
+    [31m+ Received  + 9[39m
+
+    [2m  Array [[22m
+    [32m-   Array [],[39m
+    [32m-   Array [],[39m
+    [32m-   Array [],[39m
+    [31m+   Array [[39m
+    [31m+     "/<uuid>/<uuid>/<item>/<uuid>.part (6782976 B)",[39m
+    [31m+   ],[39m
+    [31m+   Array [[39m
+    [31m+     "/<uuid>/<uuid>/<item>/<uuid>.part (6782976 B)",[39m
+    [31m+   ],[39m
+    [31m+   Array [[39m
+    [31m+     "/<uuid>/<uuid>/<item>/<uuid>.part (1048576 B)",[39m
+    [31m+   ],[39m
+    [2m  ][22m
+
+      312 |   expect(settleWarnings).toEqual([]);
+      313 |   expect(errors).toEqual([]);
+    > 314 |   expect(afterExit).toEqual([[], [], []]);
+          |                     ^
+      315 |   expect(afterRestart).toEqual([[], [], []]);
+      316 |   expect(stop2.code).toBe(0);
+      317 |   expect(rows).toEqual([0, 0, 0]);
+        at $TMPDIR/review-dg2-base/e2e/dg2-qa-r13.spec.ts:314:21
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r13-R13-01-SIGT-41b05-art-a-restart-finds-nothing-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg2-qa-r13-R13-01-SIGT-41b05-art-a-restart-finds-nothing-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-en] › e2e/dg2-qa-r13.spec.ts:400:1 › R13-03 start-up sweep: only a stale <uuid>.part at the key depth is removed and logged; fresh/near-threshold temporaries, old final objects, look-alikes, wrong depth, directories and symlinked paths are kept 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeDefined[2m()[22m
+
+    Received: [31mundefined[39m
+
+      443 |   );
+      444 |   expect(staleParts).toContain(rel(stale));
+    > 445 |   expect(finished).toBeDefined();
+          |                    ^
+      446 |   expect(finished!["removed"]).toBe(staleParts.length);
+      447 |   expect(finished!["keptFresh"]).toBe(freshParts);
+      448 |   expect(finished!["olderThanMs"]).toBe(3600_000);
+        at $TMPDIR/review-dg2-base/e2e/dg2-qa-r13.spec.ts:445:20
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r13-R13-03-star-e8399-nd-symlinked-paths-are-kept-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg2-qa-r13-R13-03-star-e8399-nd-symlinked-paths-are-kept-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium-ar] › e2e/dg2-qa-r13.spec.ts:309:1 › R13-01 SIGTERM while uploads are ACTIVELY STREAMING (and one stalled): exit 0 inside the backstop, no settle warning, no error line, nothing stored, no .part, a restart finds nothing 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  - 3[39m
+    [31m+ Received  + 9[39m
+
+    [2m  Array [[22m
+    [32m-   Array [],[39m
+    [32m-   Array [],[39m
+    [32m-   Array [],[39m
+    [31m+   Array [[39m
+    [31m+     "/<uuid>/<uuid>/<item>/<uuid>.part (6782976 B)",[39m
+    [31m+   ],[39m
+    [31m+   Array [[39m
+    [31m+     "/<uuid>/<uuid>/<item>/<uuid>.part (6782976 B)",[39m
+    [31m+   ],[39m
+    [31m+   Array [[39m
+    [31m+     "/<uuid>/<uuid>/<item>/<uuid>.part (1048576 B)",[39m
+    [31m+   ],[39m
+    [2m  ][22m
+
+      312 |   expect(settleWarnings).toEqual([]);
+      313 |   expect(errors).toEqual([]);
+    > 314 |   expect(afterExit).toEqual([[], [], []]);
+          |                     ^
+      315 |   expect(afterRestart).toEqual([[], [], []]);
+      316 |   expect(stop2.code).toBe(0);
+      317 |   expect(rows).toEqual([0, 0, 0]);
+        at $TMPDIR/review-dg2-base/e2e/dg2-qa-r13.spec.ts:314:21
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r13-R13-01-SIGT-41b05-art-a-restart-finds-nothing-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg2-qa-r13-R13-01-SIGT-41b05-art-a-restart-finds-nothing-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) [chromium-ar] › e2e/dg2-qa-r13.spec.ts:400:1 › R13-03 start-up sweep: only a stale <uuid>.part at the key depth is removed and logged; fresh/near-threshold temporaries, old final objects, look-alikes, wrong depth, directories and symlinked paths are kept 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeDefined[2m()[22m
+
+    Received: [31mundefined[39m
+
+      443 |   );
+      444 |   expect(staleParts).toContain(rel(stale));
+    > 445 |   expect(finished).toBeDefined();
+          |                    ^
+      446 |   expect(finished!["removed"]).toBe(staleParts.length);
+      447 |   expect(finished!["keptFresh"]).toBe(freshParts);
+      448 |   expect(finished!["olderThanMs"]).toBe(3600_000);
+        at $TMPDIR/review-dg2-base/e2e/dg2-qa-r13.spec.ts:445:20
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r13-R13-03-star-e8399-nd-symlinked-paths-are-kept-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg2-qa-r13-R13-03-star-e8399-nd-symlinked-paths-are-kept-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4 failed
+    [chromium-en] › e2e/dg2-qa-r13.spec.ts:309:1 › R13-01 SIGTERM while uploads are ACTIVELY STREAMING (and one stalled): exit 0 inside the backstop, no settle warning, no error line, nothing stored, no .part, a restart finds nothing 
+    [chromium-en] › e2e/dg2-qa-r13.spec.ts:400:1 › R13-03 start-up sweep: only a stale <uuid>.part at the key depth is removed and logged; fresh/near-threshold temporaries, old final objects, look-alikes, wrong depth, directories and symlinked paths are kept 
+    [chromium-ar] › e2e/dg2-qa-r13.spec.ts:309:1 › R13-01 SIGTERM while uploads are ACTIVELY STREAMING (and one stalled): exit 0 inside the backstop, no settle warning, no error line, nothing stored, no .part, a restart finds nothing 
+    [chromium-ar] › e2e/dg2-qa-r13.spec.ts:400:1 › R13-03 start-up sweep: only a stale <uuid>.part at the key depth is removed and logged; fresh/near-threshold temporaries, old final objects, look-alikes, wrong depth, directories and symlinked paths are kept 
+---- api.log (tail)
+exit 1

@@ -1,0 +1,19 @@
+$ git rev-parse HEAD; git log --oneline 5699f72..HEAD; node tools/gates/candidate.mjs --stage DG2; node tools/gates/candidate.mjs --stage DG2 --diff | tail -6
+# end of run; 2026-10-07T07:40:00Z
+2f8a11c1fee659389182faad3829942f3f248eed
+2f8a11c DG2 round-14 repair assignment T-DG2-FE10 (F-DG2-480: a session that ends while the app is open lands once on sign-in)
+ee70170 DG2 round 13: domain test evidence
+afa87e5 run: DG2-T-DG2-REV-DOM-R13-domain-reviewer-20261007T063903Z-5d6c8af9 (review evidence, auto-committed by run-agent.sh)
+afcf40e DG2 round 13: code-security test evidence
+2eeb435 run: DG2-T-DG2-REV-SEC-R13-code-security-reviewer-20261007T063843Z-6525d5f1 (review evidence, auto-committed by run-agent.sh)
+{"stage":"DG2","source":"working-tree","candidate_id":"sha256:6824b8b8d36a688178a058c11c4882737a79cf7f39b438dcf2390eafb88d3afc","files":556}
+  "working_tree": "sha256:6824b8b8d36a688178a058c11c4882737a79cf7f39b438dcf2390eafb88d3afc",
+  "matches": true,
+  "added": [],
+  "removed": [],
+  "changed": []
+}
+exit 0
+$ git diff --name-only 5699f72 HEAD | grep -vE "^docs/delivery/(reviews|runs|test-evidence)/"   (file NAMES only; contents not opened)
+docs/delivery/assignments/DG2/round-14/T-DG2-FE10.md
+exit 0
