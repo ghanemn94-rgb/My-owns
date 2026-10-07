@@ -820,7 +820,7 @@
       "id": "DG2",
       "stage": "P2",
       "name": "Diagnose define and design",
-      "state": "FIXING",
+      "state": "REVIEWING",
       "depends_on": [
         "DG1"
       ],
@@ -839,10 +839,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:9f3ca298d029f691330de1eddab806df57d5876307926b50df0312f8882b684e",
-        "source_commit": "ea9051b21b4a4192629078a31faca0a93edfb36a",
-        "frozen_at": "2026-10-07T10:05:31Z",
-        "manifest_path": "docs/delivery/candidates/DG2/9f3ca298d029f691.manifest.json"
+        "candidate_id": "sha256:3f01c61090435f114b52150d1ab73818839530ede08a4c07d04936175f7fe8f9",
+        "source_commit": "ed80b234d7ad6af3503aa04bb3a6f49cea2c1b65",
+        "frozen_at": "2026-10-07T13:07:23Z",
+        "manifest_path": "docs/delivery/candidates/DG2/3f01c61090435f11.manifest.json"
       },
       "review_rounds": [
         {
@@ -1011,6 +1011,18 @@
             "qa-verifier": "docs/delivery/reviews/DG2/round-14/qa-verifier.json"
           },
           "note": "DG2 gate review round 14 on candidate 9f3ca298 (560 files, source ea9051b). F-DG2-480 (session-end loop) is FIXED_PENDING_VERIFICATION by FE10 8cb3bb8 (D-074). FE11 59d38ad and FE12 7f03453 close bilingual gaps flagged in handbacks. 35 DG2 findings CLOSED_VERIFIED. Orchestrator pre-review verification in both locale settings: all 32 steps exit 0, with no hidden failures. Disjoint id ranges: code-security 500-509, domain 510-519, qa 520-529."
+        },
+        {
+          "round": 15,
+          "candidate_id": "sha256:3f01c61090435f114b52150d1ab73818839530ede08a4c07d04936175f7fe8f9",
+          "frozen_at": "2026-10-07T13:07:23Z",
+          "source_commit": "ed80b234d7ad6af3503aa04bb3a6f49cea2c1b65",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG2/round-15/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG2/round-15/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG2/round-15/qa-verifier.json"
+          },
+          "note": "DG2 gate review round 15 on candidate 3f01c610 (561 files, source ed80b23). F-DG2-500 (session data crossing identities in a tab) is FIXED_PENDING_VERIFICATION by FE13 29da00d (D-075). 36 DG2 findings CLOSED_VERIFIED. Orchestrator pre-review verification in both locale settings: all 32 steps exit 0, with no hidden failures. Disjoint id ranges: code-security 530-539, domain 540-549, qa 550-559."
         }
       ],
       "gate_record": "docs/delivery/gates/DG2.json",
@@ -1169,6 +1181,11 @@
           "state": "FIXING",
           "at": "2026-10-07T12:10:45Z",
           "note": "Round 14 on candidate 9f3ca298. domain PASS (18 checks): it closed F-DG2-480 and raised nothing new. qa PASS (23 checks, every exit 0, no findings); the first qa run was killed by a container restart before writing a record and was re-run from round-14/qa-verifier-rerun.md, with the orphaned run kept under test-evidence/DG2/qa-r14-orphaned/. code-security PASS (30 checks): returnTo, 403 handling, bounded requests and no stale shell all verified; it raised F-DG2-500 (Medium; FE10 clears the session-scoped cache only inside RequireSession, so a session that ends while the sign-in page is shown never clears it and the next identity to sign in in that tab sees the previous user's records). Every failure in the cited logs was disclosed. 36 CLOSED_VERIFIED, 1 OPEN. Round-15 repair: frontend-ux-engineer T-DG2-FE13 (clear the cache where the session ends, plus a defence-in-depth reset on identity change)."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-10-07T13:07:38Z",
+          "note": "FE13 integrated; D-075 recorded. 36 CLOSED_VERIFIED, 1 FIXED_PENDING_VERIFICATION, 0 OPEN. Orchestrator verification green in both locale settings (unit 866x4 per setting, integration 612, e2e 60). Candidate frozen as 3f01c610 for gate review round 15."
         }
       ]
     },
