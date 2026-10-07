@@ -1,0 +1,32 @@
+port-policy: PostgreSQL listening on port 23312 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg3-be-d
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muyr1ja9_68c9b78d (server_encoding UTF8); applied 25 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/portfolio/prioritization.test.ts > scores (REQ-PB-047, REQ-PB-048, REQ-S09-001) > score 6 -> 400; 0, 2.5 and '4' -> 400; a weightedScore property -> 400 (read-only); nothing written 257ms
+ ✓ |integration| apps/api/test/integration/portfolio/prioritization.test.ts > scores (REQ-PB-047, REQ-PB-048, REQ-S09-001) > 5,4,3,2,1 under v1 -> stored 3.3000, shown 3.30, 0-100 view 57.5 with its label; appended with its cause; audited 275ms
+ ✓ |integration| apps/api/test/integration/portfolio/prioritization.test.ts > scores (REQ-PB-047, REQ-PB-048, REQ-S09-001) > a missing score -> 'incomplete' with weightedScore null (never a number, never 0) 172ms
+ ✓ |integration| apps/api/test/integration/portfolio/prioritization.test.ts > scores (REQ-PB-047, REQ-PB-048, REQ-S09-001) > PATCH: If-Match 428/409; clearing (null) makes it incomplete again; duplicate POST 409; AUD 403 on POST and PATCH 202ms
+ ✓ |integration| apps/api/test/integration/portfolio/prioritization.test.ts > weight sets (REQ-PB-049) > 95% and 105% -> 422 prioritization.weights_total, nothing written; 0 -> 422 weight_range; bad pattern -> 400 93ms
+ ✓ |integration| apps/api/test/integration/portfolio/prioritization.test.ts > weight sets (REQ-PB-049) > v2 with risk_compliance 10 and strategic fit 15 is accepted as version 2; the proposer cannot approve; the Sponsor does; AUD 403; If-Match 428/409; audited 172ms
+ ✓ |integration| apps/api/test/integration/portfolio/prioritization.test.ts > weight sets (REQ-PB-049) > the v2 set is used for rescoring; v1 results keep v1; a set is immutable (DB guard) 194ms
+ ✓ |integration| apps/api/test/integration/portfolio/prioritization.test.ts > weight sets (REQ-PB-049) > withdraw: proposed -> withdrawn with a reason (If-Match 428/409, AUD 403, audited); an active set cannot be withdrawn 137ms
+ ✓ |integration| apps/api/test/integration/portfolio/prioritization.test.ts > rankings and history (REQ-S09-005, REQ-S09-003) > snapshot: deterministic tie-break, incomplete unranked, submitted -> ranked with audit; v2 activation -> history shows 'weight version 2' as the cause of the rank change 429ms
+ ✓ |integration| apps/api/test/integration/portfolio/prioritization.test.ts > rankings and history (REQ-S09-005, REQ-S09-003) > score cause lists the criteria; relative cause when another initiative moved 276ms
+ ✓ |integration| apps/api/test/integration/portfolio/prioritization.test.ts > rankings and history (REQ-S09-005, REQ-S09-003) > rankOrder: score desc, code asc, overrides move to their position (pure) 0ms
+ ✓ |integration| apps/api/test/integration/portfolio/prioritization.test.ts > overrides (REQ-S09-005) > an override without a reason is rejected (missing/empty -> 400 at /reason; blank/invisible -> 422); the proposer cannot approve; approved applies with 'override: <reason>'; revoke; AUD 403; If-Match 370ms
+ ✓ |integration| apps/api/test/integration/portfolio/prioritization.test.ts > overrides (REQ-S09-005) > the DB refuses an approval by the proposer even without the API (ranking_override_approver_not_proposer) 92ms
+ ✓ |integration| apps/api/test/integration/portfolio/prioritization.test.ts > every BE-D mutation re-authorises inside its transaction (BE18A) > weight sets, scores, rankings and overrides: 403 at commit and nothing changes 542ms
+ ✓ |integration| apps/api/test/integration/portfolio/prioritization.test.ts > every BE-D mutation re-authorises inside its transaction (BE18A) > control: the same pause WITHOUT a revocation commits (so the 403 above comes from the commit-time check) 135ms
+ ✓ |integration| apps/api/test/integration/portfolio/prioritization.test.ts > comparison view (REQ-S09-004) > axes, filters (status, completeness, funding, flag) and injected sequencing/capacity flags 172ms
+ ✓ |integration| apps/api/test/integration/portfolio/prioritization.test.ts > comparison view (REQ-S09-004) > more than 500 initiatives -> 422 prioritization.portfolio_too_large 1183ms
+
+ Test Files  1 passed (1)
+      Tests  17 passed (17)
+   Start at  23:39:11
+   Duration  9.17s (transform 1.40s, setup 0ms, collect 3.04s, tests 4.84s, environment 0ms, prepare 68ms)
+
