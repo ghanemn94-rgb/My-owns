@@ -1,0 +1,108 @@
+# command: per-suite pass/fail counts from integration-run1-lang-unset.log and integration-run2-lang-c-utf8.log (grep '^ +(✓|×) |integration| <file>')
+## integration-run1-lang-unset.log
+contract.test.ts                 pass=18 fail=0
+media-types.test.ts              pass=21 fail=0
+connection-hygiene.test.ts       pass=13 fail=0
+blank-text.test.ts               pass=29 fail=0
+oidc.test.ts                     pass=33 fail=0
+invalid-character.test.ts        pass=20 fail=0
+framework-errors.test.ts         pass=11 fail=0
+invalid-utf8.test.ts             pass=14 fail=0
+encoding.test.ts                 pass=8 fail=0
+aud-write-deny.test.ts           pass=128 fail=0
+evidence suites:
+      6  ✓ |integration| apps/api/test/integration/evidence.test.ts
+migrations:
+ ✓ |integration| apps/api/test/integration/bu-hierarchy-guard.test.ts > F-DG1-140 the database guard (migration 0009) fails closed on its own > refuses a direct cycle and an over-deep chain with 23514 and the named con
+ ✓ |integration| apps/api/test/integration/bu-hierarchy-guard.test.ts > F-DG1-140 the database guard (migration 0009) fails closed on its own > READ COMMITTED: two raw transactions forming A->C->B->A - the second fails
+ ✓ |integration| apps/api/test/integration/bu-hierarchy-guard.test.ts > F-DG1-140 the database guard (migration 0009) fails closed on its own > REPEATABLE READ with a snapshot older than the first commit: the second fa
+ ✓ |integration| apps/api/test/integration/bu-hierarchy-guard.test.ts > F-DG1-140 the database guard (migration 0009) fails closed on its own > READ COMMITTED depth race: a move that makes a subtree 10 deep and a concu
+ ✓ |integration| apps/api/test/integration/platform.test.ts > health and readiness > reports ready when the database answers and every shipped migration is applied 9ms
+ ✓ |integration| apps/api/test/integration/platform.test.ts > health and readiness > reports 503 not_ready/pending when the build ships a migration the database lacks, and fail on checksum drift 58ms
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts > pg-boss schema (installed by mth-db migrate) > migration 0006 is exactly pg-boss 11's construction plan without its transaction wrapper 1ms
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts > pg-boss schema (installed by mth-db migrate) > runs as mth_app with migrate=false (the version check passes; no DDL rights needed) 4ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts > schema.ts matches the migrated database > has exactly the same relations and columns as public 15ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts > schema.ts matches the migrated database > marks exactly the views as views 2ms
+ ✓ |integration| packages/db/test/integration/encoding.test.ts > a SQL_ASCII database is refused before anything is created > mth-db migrate: exit 1, the message on stderr, nothing applied, no schema_migration table 30
+ ✓ |integration| packages/db/test/integration/encoding.test.ts > a SQL_ASCII database is refused before anything is created > migrate() (library entry point) throws DatabaseEncodingError and creates nothing 14ms
+ ✓ |integration| packages/db/test/integration/encoding.test.ts > a SQL_ASCII database is refused before anything is created > control: the same CLI migrates a UTF8 scratch database created the same way 1072ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > applies every shipped migration, then reports up to date 439ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > is idempotent on an up-to-date database 10ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > records id, name, sha256, applied_at and applied_by = mth_owner 7ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > refuses to run when an applied file changed on disk 26ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > refuses to run when the database has a migration the build does not ship 30ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > applies a new forward migration atomically: a failing file leaves no trace 30ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate guards > refuses to run as the app role (objects must be owned by mth_owner) 64ms
+## integration-run2-lang-c-utf8.log
+contract.test.ts                 pass=18 fail=0
+media-types.test.ts              pass=21 fail=0
+connection-hygiene.test.ts       pass=13 fail=0
+blank-text.test.ts               pass=29 fail=0
+oidc.test.ts                     pass=33 fail=0
+invalid-character.test.ts        pass=20 fail=0
+framework-errors.test.ts         pass=11 fail=0
+invalid-utf8.test.ts             pass=14 fail=0
+encoding.test.ts                 pass=8 fail=0
+aud-write-deny.test.ts           pass=128 fail=0
+evidence suites:
+      6  ✓ |integration| apps/api/test/integration/evidence.test.ts
+migrations:
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts > pg-boss schema (installed by mth-db migrate) > migration 0006 is exactly pg-boss 11's construction plan without its transaction wrapper 1ms
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts > pg-boss schema (installed by mth-db migrate) > runs as mth_app with migrate=false (the version check passes; no DDL rights needed) 4ms
+ ✓ |integration| packages/db/test/integration/encoding.test.ts > a SQL_ASCII database is refused before anything is created > mth-db migrate: exit 1, the message on stderr, nothing applied, no schema_migration table 34
+ ✓ |integration| packages/db/test/integration/encoding.test.ts > a SQL_ASCII database is refused before anything is created > migrate() (library entry point) throws DatabaseEncodingError and creates nothing 15ms
+ ✓ |integration| packages/db/test/integration/encoding.test.ts > a SQL_ASCII database is refused before anything is created > control: the same CLI migrates a UTF8 scratch database created the same way 975ms
+ ✓ |integration| apps/api/test/integration/bu-hierarchy-guard.test.ts > F-DG1-140 the database guard (migration 0009) fails closed on its own > refuses a direct cycle and an over-deep chain with 23514 and the named con
+ ✓ |integration| apps/api/test/integration/bu-hierarchy-guard.test.ts > F-DG1-140 the database guard (migration 0009) fails closed on its own > READ COMMITTED: two raw transactions forming A->C->B->A - the second fails
+ ✓ |integration| apps/api/test/integration/bu-hierarchy-guard.test.ts > F-DG1-140 the database guard (migration 0009) fails closed on its own > REPEATABLE READ with a snapshot older than the first commit: the second fa
+ ✓ |integration| apps/api/test/integration/bu-hierarchy-guard.test.ts > F-DG1-140 the database guard (migration 0009) fails closed on its own > READ COMMITTED depth race: a move that makes a subtree 10 deep and a concu
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > applies every shipped migration, then reports up to date 643ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > is idempotent on an up-to-date database 9ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > records id, name, sha256, applied_at and applied_by = mth_owner 7ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > refuses to run when an applied file changed on disk 19ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > refuses to run when the database has a migration the build does not ship 18ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate on a fresh database > applies a new forward migration atomically: a failing file leaves no trace 18ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate guards > refuses to run as the app role (objects must be owned by mth_owner) 139ms
+ ✓ |integration| apps/api/test/integration/platform.test.ts > health and readiness > reports ready when the database answers and every shipped migration is applied 7ms
+ ✓ |integration| apps/api/test/integration/platform.test.ts > health and readiness > reports 503 not_ready/pending when the build ships a migration the database lacks, and fail on checksum drift 49ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts > schema.ts matches the migrated database > has exactly the same relations and columns as public 13ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts > schema.ts matches the migrated database > marks exactly the views as views 2ms
+# exit_status: 0
+
+# per-file counts (all integration files), run1 | run2
+apps/api/test/integration/access-derived-race.test.ts                       run1 pass=4 fail=0 | run2 pass=4 fail=0
+apps/api/test/integration/access-scope.test.ts                              run1 pass=18 fail=0 | run2 pass=18 fail=0
+apps/api/test/integration/admin.test.ts                                     run1 pass=11 fail=0 | run2 pass=11 fail=0
+apps/api/test/integration/aud-write-deny.test.ts                            run1 pass=128 fail=0 | run2 pass=128 fail=0
+apps/api/test/integration/blank-text.test.ts                                run1 pass=29 fail=0 | run2 pass=29 fail=0
+apps/api/test/integration/bu-hierarchy-guard.test.ts                        run1 pass=7 fail=0 | run2 pass=7 fail=0
+apps/api/test/integration/connection-hygiene.test.ts                        run1 pass=13 fail=0 | run2 pass=13 fail=0
+apps/api/test/integration/contract/contract.test.ts                         run1 pass=18 fail=0 | run2 pass=18 fail=0
+apps/api/test/integration/dg2-repairs.test.ts                               run1 pass=13 fail=0 | run2 pass=13 fail=0
+apps/api/test/integration/evidence.test.ts                                  run1 pass=6 fail=0 | run2 pass=6 fail=0
+apps/api/test/integration/framework-errors.test.ts                          run1 pass=11 fail=0 | run2 pass=11 fail=0
+apps/api/test/integration/gates.test.ts                                     run1 pass=12 fail=0 | run2 pass=12 fail=0
+apps/api/test/integration/identity.test.ts                                  run1 pass=13 fail=0 | run2 pass=13 fail=0
+apps/api/test/integration/invalid-character.test.ts                         run1 pass=20 fail=0 | run2 pass=20 fail=0
+apps/api/test/integration/invalid-utf8.test.ts                              run1 pass=14 fail=0 | run2 pass=14 fail=0
+apps/api/test/integration/kpi/kpi-aud-write-deny.test.ts                    run1 pass=18 fail=0 | run2 pass=18 fail=0
+apps/api/test/integration/kpi/kpi-dg2-repairs.test.ts                       run1 pass=11 fail=0 | run2 pass=11 fail=0
+apps/api/test/integration/kpi/kpi-resources.test.ts                         run1 pass=23 fail=0 | run2 pass=23 fail=0
+apps/api/test/integration/media-types.test.ts                               run1 pass=21 fail=0 | run2 pass=21 fail=0
+apps/api/test/integration/oidc.test.ts                                      run1 pass=33 fail=0 | run2 pass=33 fail=0
+apps/api/test/integration/organizations.test.ts                             run1 pass=10 fail=0 | run2 pass=10 fail=0
+apps/api/test/integration/platform.test.ts                                  run1 pass=12 fail=0 | run2 pass=12 fail=0
+apps/api/test/integration/registers.test.ts                                 run1 pass=23 fail=0 | run2 pass=23 fail=0
+apps/api/test/integration/transformations.test.ts                           run1 pass=30 fail=0 | run2 pass=30 fail=0
+apps/worker/test/integration/maintenance.test.ts                            run1 pass=2 fail=0 | run2 pass=2 fail=0
+apps/worker/test/integration/outbox.test.ts                                 run1 pass=10 fail=0 | run2 pass=10 fail=0
+packages/db/test/integration/bootstrap.test.ts                              run1 pass=5 fail=0 | run2 pass=5 fail=0
+packages/db/test/integration/catalogue.test.ts                              run1 pass=9 fail=0 | run2 pass=9 fail=0
+packages/db/test/integration/encoding.test.ts                               run1 pass=8 fail=0 | run2 pass=8 fail=0
+packages/db/test/integration/migrate.test.ts                                run1 pass=7 fail=0 | run2 pass=7 fail=0
+packages/db/test/integration/protection.test.ts                             run1 pass=17 fail=0 | run2 pass=17 fail=0
+packages/db/test/integration/scratch-drop.test.ts                           run1 pass=3 fail=0 | run2 pass=3 fail=0
+tests/qa/integration/a12-cross-scope.test.ts                                run1 pass=14 fail=0 | run2 pass=14 fail=0
+tests/qa/integration/a13-job-idempotency.test.ts                            run1 pass=5 fail=0 | run2 pass=5 fail=0
+tests/qa/integration/a14-concurrency.test.ts                                run1 pass=5 fail=0 | run2 pass=5 fail=0
+# exit_status: 0

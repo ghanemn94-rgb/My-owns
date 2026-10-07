@@ -1,0 +1,17 @@
+commit ee4681378ed48b9f4209bae27e6a83bf766f56b6
+author Claude <noreply@anthropic.com> Fri Oct 2 11:50:03 2026 +0000
+
+DG2: fix F-DG2-206 — qa acceptance stack sets evidence storage env
+
+e2e/support/qa-stack.sh now exports EVIDENCE_STORAGE_DRIVER=filesystem and
+EVIDENCE_STORAGE_PATH=$WORK/evidence (mirrors apps/web/e2e/support/with-stack.sh),
+so P2 evidence uploads no longer 503 and the serial P2 acceptance journey no
+longer skips 8 tests per locale. Orchestrator-authored (qa raised F-206, so qa
+verifies rather than self-authors) — qa confirms in its round-2 re-review.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01BRvdRig4zy9C74ui8P4WXU
+
+
+ e2e/support/qa-stack.sh | 3 +++
+ 1 file changed, 3 insertions(+)

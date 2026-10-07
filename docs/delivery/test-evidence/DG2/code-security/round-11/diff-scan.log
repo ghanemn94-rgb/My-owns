@@ -1,0 +1,24 @@
+# command: git diff fe22d759..cbdb4f68 -- . ':!docs/delivery' | grep -nE '<patterns>' (secrets, URLs, eval/Function, child_process, fs writes, process.env, rejectUnauthorized, innerHTML)
+# commit 309aff2cdb93e816bbd4284a76cdf463bc00bc65; 2026-10-07T02:14:16Z
+ apps/api/src/main.ts                               |  11 +
+ apps/api/src/modules/evidence/routes.ts            |  13 +-
+ .../modules/platform/connection-hygiene.test.ts    | 146 ++++
+ .../api/src/modules/platform/connection-hygiene.ts | 138 ++++
+ apps/api/src/modules/platform/framework-errors.ts  |   3 +
+ apps/api/src/modules/platform/hooks.ts             |  26 +-
+ apps/api/src/modules/platform/index.ts             |  13 +
+ apps/api/src/server.ts                             |  41 +-
+ .../test/integration/connection-hygiene.test.ts    | 843 +++++++++++++++++++++
+ apps/api/test/integration/framework-errors.test.ts |  12 +-
+ apps/api/test/support/harness.ts                   |   3 +
+ docs/architecture/adr/ADR-0007-api-conventions.md  |   1 +
+ docs/operations/README.md                          |   2 +-
+ docs/operations/health-readiness.md                |  30 +
+ 14 files changed, 1272 insertions(+), 10 deletions(-)
+--- matches:
+406:+import { spawn } from "node:child_process";
+408:+import { mkdtempSync, readdirSync, writeFileSync } from "node:fs";
+1137:+          PATH: process.env["PATH"] ?? "",
+1201:+    writeFileSync(join(webRoot, "index.html"), "<!doctype html><title>Synthetic SPA</title>");
+--- (end; matches above are reviewed in the record)
+# exit_status: 0
