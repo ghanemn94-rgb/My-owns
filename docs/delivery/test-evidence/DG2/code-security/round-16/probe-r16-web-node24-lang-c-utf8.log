@@ -1,0 +1,43 @@
+# command: pnpm vitest run --project unit-web apps/web/src/auth/zz-sec-r16-web-probe.test.tsx
+# clone HEAD f4242ae490763aae55bb3c8a445f9c8a53c49b61 (candidate 0cab0a8c = source e3b2375 + metadata); node v24.21.0; LANG=C.UTF-8 LC_ALL=<unset>; probe sha256 f0d72881653669de; started 2026-10-07T15:51:31Z
+
+ RUN  v3.2.4 /var/tmp/mth-run.9Q4jrF/claude-0/r16p
+
+stdout | src/auth/zz-sec-r16-web-probe.test.tsx > Y1 a create of A's whose success continuation runs after the tab moved to B > B is never navigated to A's new record nor shown A's code/name
+Y1 requests after the POST: ["POST /api/v1/transformations","GET /api/v1/me","GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units","GET /api/v1/transformations/01920000-0000-7000-9000-0000000003a1"]
+Y1: generation at send 0, now 1; GET /me count 2; path /transformations/01920000-0000-7000-9000-0000000003a1; header B=true; B sees A's code=true; B sees A's name=true; body excerpt="TR-A-NEW-SECRET · A-CREATED-SECRET-NAME was saved as a draft. It is not submitted or approved. Your current role assignments do not let you view this transformation.Ask an access administrator for a r"
+
+stdout | src/auth/zz-sec-r16-web-probe.test.tsx > Y4 X6 with the production query defaults > a refocus after B signed in elsewhere fetches /me first and never shows A's header with B's data
+Y4: requests on refocus = ["GET /api/v1/me","GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units","GET /api/v1/transformations"]; header A=false; header B=true; B's row=true; A's row=false
+
+stdout | src/auth/zz-sec-r16-web-probe.test.tsx > Y5 OBSERVATION: in-app navigation with no focus event after B signed in elsewhere > logs which header is shown above the newly fetched page data (always passes)
+Y5: requests on navigation = ["GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units","GET /api/v1/transformations"]; header A=true; B's row=true; A's row=false
+
+ ❯ |unit-web| src/auth/zz-sec-r16-web-probe.test.tsx (4 tests | 1 failed) 1956ms
+   × Y1 a create of A's whose success continuation runs after the tab moved to B > B is never navigated to A's new record nor shown A's code/name 930ms
+     → expected '/transformations/01920000-0000-7000-9…' not to be '/transformations/01920000-0000-7000-9…' // Object.is equality
+   ✓ Y1 a create of A's whose success continuation runs after the tab moved to B > Y1c control: under one identity the create still lands on the created record 229ms
+   ✓ Y4 X6 with the production query defaults > a refocus after B signed in elsewhere fetches /me first and never shows A's header with B's data  428ms
+   ✓ Y5 OBSERVATION: in-app navigation with no focus event after B signed in elsewhere > logs which header is shown above the newly fetched page data (always passes)  367ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/auth/zz-sec-r16-web-probe.test.tsx > Y1 a create of A's whose success continuation runs after the tab moved to B > B is never navigated to A's new record nor shown A's code/name
+AssertionError: expected '/transformations/01920000-0000-7000-9…' not to be '/transformations/01920000-0000-7000-9…' // Object.is equality
+ ❯ src/auth/zz-sec-r16-web-probe.test.tsx:136:22
+    134|     );
+    135|     expect(headerB).toBe(true);
+    136|     expect(path).not.toBe(`/transformations/${NEW_A_ID}`);
+       |                      ^
+    137|     expect(shownCode || shownName).toBe(false);
+    138|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  15:51:32
+   Duration  5.58s (transform 1.48s, setup 150ms, collect 2.23s, tests 1.96s, environment 622ms, prepare 146ms)
+
+# exit_status: 1 finished 2026-10-07T15:51:38Z

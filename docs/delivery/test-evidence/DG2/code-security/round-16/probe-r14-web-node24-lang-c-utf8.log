@@ -1,0 +1,37 @@
+# command: pnpm vitest run --project unit-web apps/web/src/auth/zz-sec-r14-web-probe.test.tsx
+# clone HEAD f4242ae490763aae55bb3c8a445f9c8a53c49b61 (candidate 0cab0a8c = source e3b2375 + metadata); node v24.21.0; LANG=C.UTF-8 LC_ALL=<unset>; probe sha256 2b64ba542fcb5ab7; started 2026-10-07T15:50:46Z
+
+ RUN  v3.2.4 /var/tmp/mth-run.9Q4jrF/claude-0/r16p
+
+stdout | src/auth/zz-sec-r14-web-probe.test.tsx > W4 request storm against an inconsistent server > GET /me 200 but other GETs 401 unauthenticated: request count over 2 s
+W4 bare=false: 4 requests in 2 s; 1 navigations; final /login
+
+stdout | src/auth/zz-sec-r14-web-probe.test.tsx > W4 request storm against an inconsistent server > GET /me 200 but other GETs 401 (no problem body): request count over 2 s
+W4 bare=true: 4 requests in 2 s; 1 navigations; final /login
+
+stdout | src/auth/zz-sec-r14-web-probe.test.tsx > W5 cross-user cache after a session end on the sign-in page > user B never sees user A's cached transformations
+W5: phase after A's end on /login=ended; transformations queries cached=0; B sees A's row=false
+
+stdout | src/auth/zz-sec-r14-web-probe.test.tsx > W5b same, OIDC mode (no development sign-in): the next identity arrives through a /me re-probe > user B (signed in in another tab) never sees user A's cached transformations in this tab
+W5b: phase after A's end on /login=ended; B sees A's row=false
+
+stdout | src/auth/zz-sec-r14-web-probe.test.tsx > W6 back button after a session-end landing > never renders the stale shell and stays bounded
+W6: requests after 3x Back 1; final /login; shell seen false,false,false
+
+ ✓ |unit-web| src/auth/zz-sec-r14-web-probe.test.tsx (26 tests) 8032ms
+   ✓ W1 returnTo > the sign-in page with hostile returnTo never leaves the origin (Navigate target and OIDC href)  408ms
+   ✓ W2/W3 non-session 4xx are not a session end > 403 forbidden on GET keeps the session and the shell  422ms
+   ✓ W2/W3 non-session 4xx are not a session end > 403 csrf on GET keeps the session and the shell  475ms
+   ✓ W2/W3 non-session 4xx are not a session end > 401 auth.login_failed on GET keeps the session and the shell  422ms
+   ✓ W4 request storm against an inconsistent server > GET /me 200 but other GETs 401 unauthenticated: request count over 2 s  2057ms
+   ✓ W4 request storm against an inconsistent server > GET /me 200 but other GETs 401 (no problem body): request count over 2 s  2085ms
+   ✓ W5 cross-user cache after a session end on the sign-in page > user B never sees user A's cached transformations  543ms
+   ✓ W5b same, OIDC mode (no development sign-in): the next identity arrives through a /me re-probe > user B (signed in in another tab) never sees user A's cached transformations in this tab  554ms
+   ✓ W6 back button after a session-end landing > never renders the stale shell and stays bounded  1019ms
+
+ Test Files  1 passed (1)
+      Tests  26 passed (26)
+   Start at  15:50:47
+   Duration  12.82s (transform 2.18s, setup 167ms, collect 3.40s, tests 8.03s, environment 494ms, prepare 316ms)
+
+# exit_status: 0 finished 2026-10-07T15:51:00Z

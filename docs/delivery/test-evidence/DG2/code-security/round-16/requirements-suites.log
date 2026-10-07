@@ -1,0 +1,93 @@
+# command: per integration test file, passing (✓) / failing (×) counts in both locale runs: grep -E '^ +(✓|×) \|integration\| ' <log> | sed 's/ >.*//' | sort | uniq -c
+# required by the assignment: contract.test.ts (161 ops), media-types.test.ts, connection-hygiene.test.ts (BE16 connection/shutdown), request-io.test.ts (BE17), packages/db pool-bounds.test.ts (BE17), commit-time-auth.test.ts + shutdown-cleanup.test.ts (BE18A), blank-text, oidc, invalid-character, framework-errors, invalid-utf8, encoding, evidence tests, migrations 0001->0019
+== integration-run1-lang-unset.log
+-- passing
+      4 apps/api/test/integration/access-derived-race.test.ts
+     18 apps/api/test/integration/access-scope.test.ts
+     11 apps/api/test/integration/admin.test.ts
+    128 apps/api/test/integration/aud-write-deny.test.ts
+     29 apps/api/test/integration/blank-text.test.ts
+      7 apps/api/test/integration/bu-hierarchy-guard.test.ts
+      8 apps/api/test/integration/commit-time-auth.test.ts
+     13 apps/api/test/integration/connection-hygiene.test.ts
+     18 apps/api/test/integration/contract/contract.test.ts
+     13 apps/api/test/integration/dg2-repairs.test.ts
+      6 apps/api/test/integration/evidence.test.ts
+     11 apps/api/test/integration/framework-errors.test.ts
+     12 apps/api/test/integration/gates.test.ts
+     13 apps/api/test/integration/identity.test.ts
+     20 apps/api/test/integration/invalid-character.test.ts
+     14 apps/api/test/integration/invalid-utf8.test.ts
+     18 apps/api/test/integration/kpi/kpi-aud-write-deny.test.ts
+     11 apps/api/test/integration/kpi/kpi-dg2-repairs.test.ts
+     23 apps/api/test/integration/kpi/kpi-resources.test.ts
+     21 apps/api/test/integration/media-types.test.ts
+     33 apps/api/test/integration/oidc.test.ts
+     10 apps/api/test/integration/organizations.test.ts
+     12 apps/api/test/integration/platform.test.ts
+     23 apps/api/test/integration/registers.test.ts
+     10 apps/api/test/integration/request-io.test.ts
+      4 apps/api/test/integration/shutdown-cleanup.test.ts
+     30 apps/api/test/integration/transformations.test.ts
+      2 apps/worker/test/integration/maintenance.test.ts
+     10 apps/worker/test/integration/outbox.test.ts
+      5 packages/db/test/integration/bootstrap.test.ts
+      9 packages/db/test/integration/catalogue.test.ts
+      8 packages/db/test/integration/encoding.test.ts
+      7 packages/db/test/integration/migrate.test.ts
+      7 packages/db/test/integration/pool-bounds.test.ts
+     17 packages/db/test/integration/protection.test.ts
+      3 packages/db/test/integration/scratch-drop.test.ts
+     14 tests/qa/integration/a12-cross-scope.test.ts
+      5 tests/qa/integration/a13-job-idempotency.test.ts
+      5 tests/qa/integration/a14-concurrency.test.ts
+-- failing
+-- totals
+ Test Files  39 passed (39)
+      Tests  612 passed (612)
+== integration-run2-lang-c-utf8.log
+-- passing
+      4 apps/api/test/integration/access-derived-race.test.ts
+     18 apps/api/test/integration/access-scope.test.ts
+     11 apps/api/test/integration/admin.test.ts
+    128 apps/api/test/integration/aud-write-deny.test.ts
+     29 apps/api/test/integration/blank-text.test.ts
+      7 apps/api/test/integration/bu-hierarchy-guard.test.ts
+      8 apps/api/test/integration/commit-time-auth.test.ts
+     13 apps/api/test/integration/connection-hygiene.test.ts
+     18 apps/api/test/integration/contract/contract.test.ts
+     13 apps/api/test/integration/dg2-repairs.test.ts
+      6 apps/api/test/integration/evidence.test.ts
+     11 apps/api/test/integration/framework-errors.test.ts
+     12 apps/api/test/integration/gates.test.ts
+     13 apps/api/test/integration/identity.test.ts
+     20 apps/api/test/integration/invalid-character.test.ts
+     14 apps/api/test/integration/invalid-utf8.test.ts
+     18 apps/api/test/integration/kpi/kpi-aud-write-deny.test.ts
+     11 apps/api/test/integration/kpi/kpi-dg2-repairs.test.ts
+     23 apps/api/test/integration/kpi/kpi-resources.test.ts
+     21 apps/api/test/integration/media-types.test.ts
+     33 apps/api/test/integration/oidc.test.ts
+     10 apps/api/test/integration/organizations.test.ts
+     12 apps/api/test/integration/platform.test.ts
+     23 apps/api/test/integration/registers.test.ts
+     10 apps/api/test/integration/request-io.test.ts
+      4 apps/api/test/integration/shutdown-cleanup.test.ts
+     30 apps/api/test/integration/transformations.test.ts
+      2 apps/worker/test/integration/maintenance.test.ts
+     10 apps/worker/test/integration/outbox.test.ts
+      5 packages/db/test/integration/bootstrap.test.ts
+      9 packages/db/test/integration/catalogue.test.ts
+      8 packages/db/test/integration/encoding.test.ts
+      7 packages/db/test/integration/migrate.test.ts
+      7 packages/db/test/integration/pool-bounds.test.ts
+     17 packages/db/test/integration/protection.test.ts
+      3 packages/db/test/integration/scratch-drop.test.ts
+     14 tests/qa/integration/a12-cross-scope.test.ts
+      5 tests/qa/integration/a13-job-idempotency.test.ts
+      5 tests/qa/integration/a14-concurrency.test.ts
+-- failing
+-- totals
+ Test Files  39 passed (39)
+      Tests  612 passed (612)
+# exit_status: 0
