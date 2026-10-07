@@ -140,7 +140,7 @@ A G4 submission with any incomplete criterion is refused with the existing **422
 
 **Snapshot.** The G4 snapshot freezes the in-scope initiative ids and versions, the ranking snapshot id, the active weight-set version, case ids and versions, formula version ids and their validation state, funding decision ids, committed demand ids and the wave assignment.
 
-**Enabling.** `0024` seeds the G4 criteria but leaves `gate_definition.submission_enabled = false`, so the DG2 API and its tests are unchanged until the backend task (BE-B, `p3-work-split.md`) ships the evaluators together with its migration `UPDATE gate_definition SET submission_enabled = true … WHERE code = 'G4'` (and updates the one DG2 test that asserts G4 is not submittable). Until then the G4 view lists the eight criteria as `incomplete` with `gate.criterion_not_evaluable` (the DG2 fail-closed rule).
+**Enabling.** `0024` seeds the G4 criteria but leaves `gate_definition.submission_enabled = false`, so the DG2 API and its tests are unchanged until the backend task (BE-E, `p3-work-split.md` §2) ships the evaluators together with its migration `0026_p3_enable_g4.sql`: `UPDATE gate_definition SET submission_enabled = true … WHERE code = 'G4'` (and updates the one DG2 test that asserts G4 is not submittable). Until then the G4 view lists the eight criteria as `incomplete` with `gate.criterion_not_evaluable` (the DG2 fail-closed rule).
 
 ### 8. G1 extension: leadership agreement confirmations (REQ-PB-022, B0032)
 
