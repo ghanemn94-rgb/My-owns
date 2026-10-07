@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG2-570",
+      "stage_id": "DG2",
+      "requirement": "REQ-S16-030",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "After the user changes in another tab, a return to the tab within the 15 s fresh window asks no GET /me. Pages the user then opens are fetched under the new identity while the header, permissions and empty-state text stay those of the previous identity until a later refocus finds /me stale (60 s)",
+      "reproduction": "Candidate 0cab0a8c (source e3b2375a, FE14 / D-076), disposable clone, PostgreSQL 16 + API AUTH_MODE=dev with synthetic seed, Chromium, Node 24.21.0. Run `with-stack.sh runp.sh r16-identity-nav` (probe docs/delivery/test-evidence/DG2/domain/round-16/r16-identity-nav.mjs, log r16-identity-nav.log, stack-run-7.log). In tab 1, A (dev.lead) opens Transformations and sees A's own transformation. Tab 2, in the same browser context, presses Sign out and signs in B (dev.nobody, no roles). Tab 1 regains focus about 4.5 s after its last /me. Nothing is stale yet, so revalidateSessionFirst (App.tsx) correctly does nothing. Without another focus event, the user then (N1) clicks A's own record, which is not cached, and (N2) 16 s later opens Transformations, which is now stale and refetches on mount. Same result in EN and AR.",
+      "expected": "The header and the data on screen belong to one identity (D-076 (2): 'the header and the data belong to the same identity'). Either the identity change is detected before data fetched under the new cookie is shown (for example, /me is revalidated when a page query returns 401/403/404 or before page refetches), or the previous identity's screen stays as it is with its own data.",
+      "actual": "N1: the header shows A ('Synthetic Transformation Lead'), and A's own record shows 'Not found: This record does not exist, or your role assignments do not allow you to see it'. N2: the header still shows A, while the Transformations list is B's (empty), rendered with A's permissions: A's create-your-first-transformation empty-state text and the 'New transformation' button. B's own view (S2b) shows the no-transformation-visible-to-you text and no create button. No GET /me is sent in either step (meRequests=0, 25.7 s after the last /me). No record of A's is shown to B, and the server stays authoritative: every request runs under B's cookie, so this is a consistency and usability residual, not a disclosure. It persists until a focus or reconnect event occurs after /me is stale (60 s). The refocus path itself works: in S2b (refocus 16 s after the last /me), /me is the first request and B's name replaces A's within one 100 ms sample (r16-identity-ui.log).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-16/r16-identity-nav.log",
+        "docs/delivery/test-evidence/DG2/domain/round-16/r16-identity-nav.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-16/stack-run-7.log",
+        "docs/delivery/test-evidence/DG2/domain/round-16/r16-identity-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-16/screens/en-r16-S3-tab1-fresh-nav.png",
+        "docs/delivery/test-evidence/DG2/domain/round-16/screens/ar-r16-N2-list-under-a-name.png",
+        "docs/delivery/test-evidence/DG2/domain/round-16/screens/en-r16-N2-list-under-a-name.png",
+        "docs/delivery/test-evidence/DG2/domain/round-16/screens/ar-r16-S2b-tab1-after-switch.png"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-16/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-07T16:27:33Z",
+          "status": "OPEN",
+          "note": "Raised in round 16 by domain-reviewer on candidate 0cab0a8c. Low, non-mandatory: no data disclosure, the server stays authoritative, and none of the 26 DG2 requirements under domain review is affected. It is the navigation variant of round-15 observation X6, which D-076 fixed for the refocus path."
+        }
+      ]
+    }
+  ]
+}
