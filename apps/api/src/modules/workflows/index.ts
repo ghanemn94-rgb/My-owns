@@ -12,10 +12,14 @@ import { registerRegister } from "../transformations/index.ts";
 import { registerCanvasRoutes } from "./canvas.ts";
 import { registerDecisionRoutes } from "./decisions.ts";
 import { actionItemRegister, dependencyRegister, tomWorkshopRegister } from "./design-registers.ts";
+import { UNWIRED_GATE_FACTS, type GateFactsProvider } from "./g4.ts";
 import { registerGateRoutes } from "./gates.ts";
 import { registerWorkshopRoutes } from "./workshops.ts";
 
 export { EVALUATORS, evaluateGate, loadGateFacts, type GateFacts } from "./criteria.ts";
+export { isGateApprover } from "./gates.ts";
+// P3 (ADR-0021 §1, T-DG3-BE-A): the interface through which the G4 evaluators read portfolio and kpi facts.
+export type { GateFactsProvider, KpiP3GateFacts, PortfolioGateFacts } from "./g4.ts";
 
 /** The playbook's product gates (business approvals), in order. Not the engineering gates DG0-DG7. */
 export const PRODUCT_GATES = ["G1", "G2", "G3", "G4", "G5", "G6"] as const;
@@ -24,8 +28,12 @@ export type ProductGate = (typeof PRODUCT_GATES)[number];
 /** The gate whose business approval is required before a transformation may be closed (P4). */
 export const CLOSURE_GATE: ProductGate = "G6";
 
-/** Wiring hook called by the composition root (server.ts). */
-export function registerWorkflowsModule(app: FastifyInstance, { db }: ModuleDeps): ModuleRegistration {
+/** Wiring hook called by the composition root (server.ts), which passes the P3 GateFactsProvider (ADR-0021 §1). */
+export function registerWorkflowsModule(
+  app: FastifyInstance,
+  { db }: ModuleDeps,
+  options: { readonly gateFacts?: GateFactsProvider } = {},
+): ModuleRegistration {
   const routes = [
     ...registerDecisionRoutes(app, db),
     ...registerRegister(app, db, dependencyRegister),
@@ -33,7 +41,7 @@ export function registerWorkflowsModule(app: FastifyInstance, { db }: ModuleDeps
     ...registerRegister(app, db, tomWorkshopRegister),
     ...registerWorkshopRoutes(app, db),
     ...registerCanvasRoutes(app, db),
-    ...registerGateRoutes(app, db),
+    ...registerGateRoutes(app, db, options.gateFacts ?? UNWIRED_GATE_FACTS),
   ];
   return Object.freeze({ module: "workflows", status: "active", deliversIn: "P2", routes: Object.freeze(routes) });
 }

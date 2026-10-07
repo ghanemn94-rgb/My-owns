@@ -103,7 +103,17 @@ describe("module composition (D-048, P2)", () => {
     try {
       const { app, modules, routes } = await buildServer({ config, pool, logger: false, webRoot: null });
       await app.close();
-      expect(modules.map((m) => m.module)).toEqual(["workflows", "kpi", "reporting", "methodology", "evidence"]);
+      expect(modules.map((m) => m.module)).toEqual([
+        "workflows",
+        "kpi",
+        "reporting",
+        "methodology",
+        "evidence",
+        "portfolio",
+      ]);
+      // P3 (T-DG3-BE-A): the portfolio module is active and registers routes (readiness, hierarchy, dispensations).
+      expect(modules.find((m) => m.module === "portfolio")).toMatchObject({ status: "active", deliversIn: "P3" });
+      expect(modules.find((m) => m.module === "portfolio")!.routes.length).toBeGreaterThan(0);
       for (const m of modules.filter((x) => ["workflows", "methodology", "evidence"].includes(x.module))) {
         expect([m.status, m.deliversIn], m.module).toEqual(["active", "P2"]);
         expect(m.routes.length, m.module).toBeGreaterThan(0);

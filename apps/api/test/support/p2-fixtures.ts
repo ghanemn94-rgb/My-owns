@@ -20,6 +20,12 @@ import {
 
 export const ifm = (v: number | string): Record<string, string> => ({ "if-match": `"${v}"` });
 
+/**
+ * P3 (ADR-0021 §8; REQ-PB-022, B0032): approving G1 needs the three leadership agreement confirmations. Every test that
+ * approves G1 sends them (a synthetic demo decision; it approves nothing real).
+ */
+export const G1_AGREEMENTS = Object.freeze({ problem: true, baseline: true, materialValuePools: true });
+
 export interface P2World {
   readonly transformationId: string;
   readonly lead: { id: string; session: Session };

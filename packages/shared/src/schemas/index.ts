@@ -18,3 +18,5 @@ export * from "./evidence.ts";
 export * from "./decision.ts";
 export * from "./gate.ts";
 export * from "./team.ts";
+// P3 portfolio-tag mirrors (backend-workflow-engineer, T-DG3-BE-A; p3-work-split §2).
+export * from "./portfolio.ts";

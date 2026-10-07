@@ -38,6 +38,8 @@ describe("workflows module (P2)", () => {
       "EVALUATORS",
       "PRODUCT_GATES",
       "evaluateGate",
+      // P3 (T-DG3-BE-A): a waiver is granted by the waived gate's configured approver (portfolio dispensations).
+      "isGateApprover",
       "loadGateFacts",
       "registerWorkflowsModule",
     ]);

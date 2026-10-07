@@ -82,6 +82,25 @@ export const gateSubmissionCriterion = z.strictObject({
   evaluatedAt: timestamp,
 });
 
+/**
+ * P3 (REQ-PB-022, B0032; ADR-0021 §8): leadership agreement on the problem, the baseline and the material value pools.
+ * Required, all `true`, for an approved G1 decision; absent otherwise. Mirrors GateAgreements.
+ */
+export const gateAgreements = z.strictObject({
+  problem: z.literal(true),
+  baseline: z.literal(true),
+  materialValuePools: z.literal(true),
+});
+export type GateAgreements = z.infer<typeof gateAgreements>;
+/** The agreement codes as stored (gate_decision_agreement.agreement_code), in the order of GateAgreements. */
+export const GATE_AGREEMENT_CODES = ["problem", "baseline", "material_value_pools"] as const;
+export const gateAgreementRecord = z.strictObject({
+  agreementCode: z.enum(GATE_AGREEMENT_CODES),
+  confirmedBy: uuid,
+  confirmedAt: timestamp,
+});
+export type GateAgreementRecord = z.infer<typeof gateAgreementRecord>;
+
 export const gateDecision = z.strictObject({
   id: uuid,
   organizationId: uuid,
@@ -99,6 +118,8 @@ export const gateDecision = z.strictObject({
   decidedAt: timestamp,
   approverBasis: z.enum(APPROVER_BASES),
   approverRoleCode: z.string(),
+  // P3 (ADR-0021 §8): the three B0032 confirmations of an approved G1 decision; absent or empty otherwise.
+  agreements: z.array(gateAgreementRecord).optional(),
 });
 export type GateDecision = z.infer<typeof gateDecision>;
 
@@ -141,10 +162,12 @@ export const gateSubmissionCreate = z.strictObject({
   submissionNote: freeText(1, 4000).optional(),
   dueDate: businessDate.optional(),
 });
+
 export const gateDecisionCreate = z.strictObject({
   submissionNo: z.number().int().min(1),
   outcome: z.enum(GATE_OUTCOMES),
   rationale: freeText(3, 8000),
   comments: freeText(1, 8000).optional(),
   onBehalfOfUserId: uuid.optional(),
+  agreements: gateAgreements.optional(),
 });

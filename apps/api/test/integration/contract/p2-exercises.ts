@@ -6,7 +6,7 @@
 // unrelated to the engineering delivery gates DG0-DG7).
 import { expect } from "vitest";
 import { createUser, type RequestOptions, type Res, type TestApi, type World } from "../../support/harness.ts";
-import { gateVersion, ifm, makeG1Ready, setupP2World } from "../../support/p2-fixtures.ts";
+import { G1_AGREEMENTS, gateVersion, ifm, makeG1Ready, setupP2World } from "../../support/p2-fixtures.ts";
 
 export interface P2ContractContext {
   readonly api: TestApi;
@@ -439,7 +439,13 @@ export async function exerciseP2BackendOperations({ api, world: w, mirrored: m }
   );
   const decided = await m("POST", `${T}/gates/G1/decision`, {
     session: p.sponsor.session,
-    body: { submissionNo: 1, outcome: "approved", rationale: "Synthetic demo approval on synthetic data." },
+    body: {
+      submissionNo: 1,
+      outcome: "approved",
+      rationale: "Synthetic demo approval on synthetic data.",
+      // P3 (ADR-0021 §8): G1 approval carries the three B0032 leadership agreement confirmations.
+      agreements: G1_AGREEMENTS,
+    },
   });
   expectStatus(decided, 201, "decideGate");
 }

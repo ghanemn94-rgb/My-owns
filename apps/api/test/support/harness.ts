@@ -365,4 +365,17 @@ export async function auditCount(db: Db): Promise<number> {
   return Number(r.n);
 }
 
+/**
+ * What contract.test.ts hands every P3 exercise seam (`test/integration/contract/p3-exercises-<task>.ts`,
+ * p3-work-split §5): the API, the seeded world, and `mirrored`, the validating call that also checks each successful
+ * body against the zod mirror the seam exports in its `P3_MIRRORS_<TASK>` map. Seams sign in their own sessions.
+ */
+export interface P3ExerciseContext {
+  readonly api: TestApi;
+  readonly world: World;
+  // Test responses are asserted structurally; the body type is deliberately loose (as in `call`).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  readonly mirrored: (method: string, url: string, opts?: RequestOptions) => Promise<Res<any>>;
+}
+
 export { createDb, createPool };

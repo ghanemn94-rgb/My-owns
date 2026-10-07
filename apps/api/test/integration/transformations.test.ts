@@ -479,7 +479,8 @@ describe("audit trail endpoint", () => {
       { session: office },
     );
     // Oldest last: the create itself, preceded (newer) by the 23 audited rows of the P2 starter structure created in
-    // the same transaction (ADR-0016 §4: 1 methodology pin, 6 T01 rows, 10 canvas boxes, 6 product gate instances).
+    // the same transaction (ADR-0016 §4: 1 methodology pin, 6 T01 rows, 10 canvas boxes, 6 product gate instances)
+    // and, since T-DG3-BE-A (p3_instantiate_transformation), the 5 P3 rows (four B0079 waves, T06 weight set v1).
     const actions = page2.body.items.map((i) => i.action);
     expect(actions.at(-1)).toBe("transformation.create");
     expect(actions.slice(0, -1).sort()).toEqual(
@@ -488,6 +489,8 @@ describe("audit trail endpoint", () => {
         ...Array<string>(6).fill("diagnostic_item.create"),
         ...Array<string>(10).fill("tom_canvas_cell.create"),
         ...Array<string>(6).fill("gate_instance.create"),
+        ...Array<string>(4).fill("roadmap_wave.create"),
+        "scoring_weight_set.create",
       ].sort(),
     );
     expect(page2.body.nextCursor).toBeNull();

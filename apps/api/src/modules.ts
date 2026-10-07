@@ -51,6 +51,14 @@ export const API_MODULES = {
     dependsOn: ["platform", "audit", "access", "transformations"],
   },
   jobs: { responsibility: "Outbox writer and job/automation administration views", dependsOn: ["platform", "audit"] },
+  portfolio: {
+    responsibility:
+      "Initiatives (T05) and their links, waves, deliverables, milestones, prioritization, capacity, selection, funding, readiness, outcome hierarchy and gate dispensations (P3)",
+    // ADR-0021 §1: portfolio reads gate status and creates canonical decision rows through workflows' public interface.
+    // workflows never imports portfolio: its G4 evaluators read portfolio facts through the GateFactsProvider interface
+    // it defines (workflows/g4.ts), wired by server.ts, so the graph stays acyclic.
+    dependsOn: ["platform", "audit", "access", "transformations", "kpi", "evidence", "workflows"],
+  },
   admin: {
     responsibility: "Administration endpoints composed from other modules",
     dependsOn: ["platform", "audit", "access", "organization", "identity", "jobs"],
@@ -82,8 +90,11 @@ export const P1_MODULES: readonly ApiModule[] = [
 /** Modules added in P2 (ADR-0015, ADR-0018; p2-work-split §2): each with a public index.ts and its own test suite. */
 export const P2_MODULES: readonly ApiModule[] = ["methodology", "evidence"];
 
-/** Every module directory that exists under src/modules (P1 + P2). */
-export const IMPLEMENTED_MODULES: readonly ApiModule[] = [...P1_MODULES, ...P2_MODULES];
+/** Modules added in P3 (ADR-0021 §1; p3-work-split §2 BE-A): each with a public index.ts and its own test suite. */
+export const P3_MODULES: readonly ApiModule[] = ["portfolio"];
+
+/** Every module directory that exists under src/modules (P1 + P2 + P3). */
+export const IMPLEMENTED_MODULES: readonly ApiModule[] = [...P1_MODULES, ...P2_MODULES, ...P3_MODULES];
 
 /** The six §16 business modules (master prompt M0308; REQ-S16-003 / A12): each exists with its own test suite. */
 export const SECTION16_MODULES = {

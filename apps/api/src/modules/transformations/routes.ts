@@ -225,8 +225,9 @@ export function registerTransformationRoutes(app: FastifyInstance, { db }: Modul
           // P2 starter structure (ADR-0016 §4; REQ-S12-004, REQ-PB-026, REQ-PB-041): the methodology pin, the six
           // seeded T01 rows, the ten TOM canvas boxes and the six product gate instances, each with its own audit
           // event, in THIS transaction - the gate and T01 screens exist as soon as the record does. Both modes
-          // (End-to-End and Modular) get the same structure (REQ-PB-003).
-          await sql`SELECT p2_instantiate_transformation(${id}::uuid, ${principal.userId!}::uuid, ${audit.requestId}, 'api')`.execute(
+          // (End-to-End and Modular) get the same structure (REQ-PB-003). P3 (T-DG3-BE-A, ADR-0023 §1, ADR-0022 §1):
+          // p3_instantiate_transformation() runs the P2 structure and adds the four B0079 waves and T06 weight set v1.
+          await sql`SELECT p3_instantiate_transformation(${id}::uuid, ${principal.userId!}::uuid, ${audit.requestId}, 'api')`.execute(
             tx,
           );
           // F-DG1-106: a creator authorized only by a non-inheriting business-unit grant (TL) gets an explicit,

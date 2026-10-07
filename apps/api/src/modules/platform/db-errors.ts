@@ -11,8 +11,16 @@
 //                                              the central U+0000 request check; text the database cannot store)
 //   <table>_audit_required, append-only,
 //   identity/organization guards, snapshots   -> 500 (a programming error, never user-facing detail)
-// Pure: no I/O, unit-tested in platform.test.ts.
-import { PROBLEM_TYPES } from "@mth/shared";
+// P3 (T-DG3-BE-A; p3-work-split §2 BE-A; ADR-0021..0024):
+//   initiative_status_transition             -> 422 invalid-transition (an edge outside ADR-0021 §3)
+//   dependency_acyclic                       -> 422 dependency.cycle, detail "Dependency cycle: INI-01 → … → INI-01"
+//                                              and the `cycle` member, both from the database message (ADR-0023 §4)
+//   scoring_weight_set_total                 -> 422 prioritization.weights_total, "Weights must total 100% (got N%)"
+//   *_validator_not_author, *_approver_not_proposer, *_decider_not_recorder,
+//   deliverable_acceptor_not_submitter       -> 403 (separation of duties)
+//   named P3 CHECKs (date ranges, shapes)    -> 422 validation.constraint with the field pointer
+// Pure: no I/O, unit-tested in platform.test.ts and db-errors.test.ts.
+import { PROBLEM_TYPES, type ProblemDetails } from "@mth/shared";
 import { HttpProblem, problems } from "./problem.ts";
 import { invalidCharacterProblem } from "./validation.ts";
 
@@ -22,7 +30,91 @@ export interface PgErrorLike {
   readonly constraint?: string;
   readonly table?: string;
   readonly column?: string;
+  /** The primary message (P3: the dependency cycle path and the weight total are read from it). */
+  readonly message?: string;
+  /** DETAIL (P3: dependency_acyclic puts the cycle's initiative ids here, comma-separated). */
+  readonly detail?: string;
 }
+
+/** One node of a reported dependency cycle (ADR-0023 §4); the first node is repeated at the end. */
+export interface CycleNode {
+  readonly initiativeId: string;
+  readonly code: string;
+  readonly name?: string;
+}
+
+/**
+ * 422 dependency.cycle (ADR-0023 §4) with the `cycle` extension member. Used for the mapped database error and by the
+ * API's own friendly check (BE-C), so both answer the same body: detail "Dependency cycle: INI-01 → INI-02 → INI-01",
+ * errors[0] at /toInitiativeId with the same text.
+ */
+export class DependencyCycleProblem extends HttpProblem {
+  readonly cycle: readonly CycleNode[];
+  constructor(cycle: readonly CycleNode[]) {
+    const text = `Dependency cycle: ${cycle.map((n) => n.code).join(" → ")}`;
+    super({
+      status: 422,
+      type: PROBLEM_TYPES.validation,
+      code: "dependency.cycle",
+      title: "Business rule violated",
+      detail: text,
+      errors: [{ pointer: "/toInitiativeId", code: "dependency.cycle", message: text }],
+    });
+    this.cycle = cycle;
+  }
+  override toBody(requestId: string, instance?: string): ProblemDetails & { cycle: readonly CycleNode[] } {
+    return { ...super.toBody(requestId, instance), cycle: this.cycle };
+  }
+}
+
+/** The cycle of a dependency_acyclic error: codes from "dependency cycle: A -> B -> A", ids from DETAIL. */
+export function cycleOfDatabaseError(error: PgErrorLike): CycleNode[] {
+  const path = /dependency cycle: (.+)$/.exec(error.message ?? "")?.[1] ?? "";
+  const codes = path === "" ? [] : path.split(" -> ").map((c) => c.trim());
+  const ids = (error.detail ?? "").split(",").map((i) => i.trim());
+  return codes.map((code, i) => ({ initiativeId: ids.at(i) ?? "", code }));
+}
+
+/** Separation-of-duties CHECKs (P3) -> 403 with a stable code. Suffix rules; the first match wins. */
+const SEPARATION_OF_DUTIES: ReadonlyArray<{ suffix: string; code: string; detail: string }> = [
+  {
+    suffix: "_validator_not_author",
+    code: "finance.validator_is_author",
+    detail: "Finance validation is done by someone other than the record's author (separation of duties).",
+  },
+  {
+    suffix: "_approver_not_proposer",
+    code: "approval.approver_is_proposer",
+    detail: "The person who proposed this cannot approve it (separation of duties).",
+  },
+  {
+    suffix: "_decider_not_recorder",
+    code: "dispensation.decider_is_recorder",
+    detail:
+      "A dispensation is accepted or rejected by someone other than the person who recorded it (separation of duties).",
+  },
+  {
+    suffix: "_acceptor_not_submitter",
+    code: "deliverable.acceptor_is_submitter",
+    detail:
+      "A deliverable is accepted or rejected by someone other than the person who submitted it (separation of duties).",
+  },
+];
+
+/** Named P3 CHECK constraints and the request field they concern (the generic 23514 mapping cannot derive it). */
+const P3_CHECK_POINTERS: ReadonlyMap<string, string> = new Map([
+  ["initiative_planned_range", "/plannedEnd"],
+  ["roadmap_wave_planned_range", "/plannedEnd"],
+  ["roadmap_wave_horizon_range", "/horizonToWeeks"],
+  ["initiative_gap_link_one_target", "/targetId"],
+  ["dependency_not_self", "/toInitiativeId"],
+  ["gate_dispensation_gate", "/gateCode"],
+  ["gate_dispensation_inherited_shape", "/evidenceId"],
+  ["gate_dispensation_waiver_shape", "/reason"],
+  ["business_case_line_one_class", "/investmentClass"],
+  ["business_case_line_period_range", "/periodEnd"],
+  ["benefit_calculation_period_range", "/periodEnd"],
+]);
 
 const SQLSTATE = /^[0-9A-Z]{5}$/;
 
@@ -35,6 +127,8 @@ export function pointerOfColumn(column: string): string {
 const PROGRAMMING_ERROR_SUFFIXES = ["_audit_required", "_identity_immutable", "_organization_matches"] as const;
 const PROGRAMMING_ERROR_CONSTRAINTS: ReadonlySet<string> = new Set([
   "charter_version_required",
+  // 0025 (ADR-0021 §8): the API answers 422 gate.g1_agreements_required first; reaching the guard is a code defect.
+  "gate_decision_g1_agreements",
   "gate_submission_immutable",
   "gate_submission_status_final",
   "methodology_version_published_immutable",
@@ -149,6 +243,36 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
       title: "Version conflict",
       detail: "Only the current pending submission can be decided; this one was superseded or already decided.",
     });
+  if (constraint === "initiative_status_transition")
+    return new HttpProblem({
+      status: 422,
+      type: PROBLEM_TYPES.invalidTransition,
+      code: "invalid_transition",
+      title: "Invalid transition",
+      detail: "This status change is not allowed for the initiative in its current status.",
+    });
+  if (constraint === "dependency_acyclic") return new DependencyCycleProblem(cycleOfDatabaseError(error));
+  if (constraint === "scoring_weight_set_total") {
+    const got = /\(got ([0-9.-]+) over/.exec(error.message ?? "")?.[1];
+    const detail = got !== undefined ? `Weights must total 100% (got ${got}%)` : "Weights must total 100%";
+    return new HttpProblem({
+      status: 422,
+      type: PROBLEM_TYPES.validation,
+      code: "prioritization.weights_total",
+      title: "Business rule violated",
+      detail,
+      errors: [{ pointer: "/weights", code: "prioritization.weights_total", message: detail }],
+    });
+  }
+  const sod = SEPARATION_OF_DUTIES.find((r) => constraint.endsWith(r.suffix));
+  if (sod !== undefined)
+    return new HttpProblem({
+      status: 403,
+      type: PROBLEM_TYPES.forbidden,
+      code: sod.code,
+      title: "Forbidden",
+      detail: sod.detail,
+    });
   if (
     PROGRAMMING_ERROR_CONSTRAINTS.has(constraint) ||
     PROGRAMMING_ERROR_SUFFIXES.some((s) => constraint.endsWith(s)) ||
@@ -188,7 +312,7 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
         table !== "" && constraint.startsWith(`${table}_`) && constraint.endsWith("_check")
           ? constraint.slice(table.length + 1, -"_check".length)
           : "";
-      const pointer = column !== "" ? pointerOfColumn(column) : "";
+      const pointer = column !== "" ? pointerOfColumn(column) : (P3_CHECK_POINTERS.get(constraint) ?? "");
       return new HttpProblem({
         status: 422,
         type: PROBLEM_TYPES.validation,

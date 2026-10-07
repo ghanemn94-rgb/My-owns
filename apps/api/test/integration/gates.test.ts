@@ -15,7 +15,7 @@ import {
   type TestApi,
   type World,
 } from "../support/harness.ts";
-import { gateVersion, ifm, makeG1Ready, setupP2World, type P2World } from "../support/p2-fixtures.ts";
+import { G1_AGREEMENTS, gateVersion, ifm, makeG1Ready, setupP2World, type P2World } from "../support/p2-fixtures.ts";
 
 let api: TestApi;
 let w: World;
@@ -35,10 +35,16 @@ async function submit(p: P2World, session = p.lead.session, code = "G1") {
     body: { submissionNote: "Synthetic submission" },
   });
 }
+// G1 approval sends the three B0032 leadership agreement confirmations (P3, ADR-0021 §8).
 const decide = (p: P2World, session: P2World["lead"]["session"], submissionNo: number, outcome = "approved") =>
   call(api.app, "POST", `${gateUrl(p)}/decision`, {
     session,
-    body: { submissionNo, outcome, rationale: "Synthetic rationale for a demo decision." },
+    body: {
+      submissionNo,
+      outcome,
+      rationale: "Synthetic rationale for a demo decision.",
+      ...(outcome === "approved" ? { agreements: G1_AGREEMENTS } : {}),
+    },
   });
 
 describe("starter structure and live readiness", () => {
@@ -418,7 +424,7 @@ describe("decision outcome text is cut on a code-point boundary (F-DG2-260)", ()
     const rationale = `${"x".repeat(7989)}\u{1F600}`;
     const res = await call(api.app, "POST", `${gateUrl(p)}/decision`, {
       session: p.sponsor.session,
-      body: { submissionNo: 1, outcome: "approved", rationale },
+      body: { submissionNo: 1, outcome: "approved", rationale, agreements: G1_AGREEMENTS },
     });
     expect(res.status, JSON.stringify(res.body)).toBe(201);
     expect(res.body.rationale).toBe(rationale);

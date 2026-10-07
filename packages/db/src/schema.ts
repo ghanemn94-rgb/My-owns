@@ -1171,7 +1171,8 @@ export interface RoleAccountabilityTable {
 }
 
 // ---------------------------------------------------------------------------------------------------------------
-// P3 (migrations 0020-0024; ADR-0021..0024). Generated from the migrated catalogue by solution-architect (T-DG3-ARCH-01)
+// P3 (migrations 0020-0024; ADR-0021..0024; 0025_p3_g1_agreement_guard adds a deferred trigger only - no relation or
+// column, T-DG3-BE-A). Generated from the migrated catalogue by solution-architect (T-DG3-ARCH-01)
 // and checked by packages/db/test/integration/catalogue.test.ts like every other table.
 
 export interface RoadmapWaveTable {

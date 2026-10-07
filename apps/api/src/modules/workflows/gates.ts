@@ -10,6 +10,9 @@
 // delivery gates DG0-DG7, and no product gate implies one (G6 never implies DG7). The API never approves by itself:
 // a decision is always a named person's request with a rationale. Checks are enforced again in the database
 // (gate_decision_guard: submitter never decides, only the current pending submission; criterion CHECK on submit).
+// P3 (T-DG3-BE-A, ADR-0021 §8; REQ-PB-022, B0032): approving G1 needs the three leadership agreement confirmations
+// (problem, baseline, material value pools), stored as gate_decision_agreement rows in the approving transaction and
+// enforced at COMMIT by migration 0025; G4 submissions add the G4 snapshot built by g4.ts (GateFactsProvider).
 import { createHash } from "node:crypto";
 import {
   sql,
@@ -22,9 +25,11 @@ import {
 } from "@mth/db";
 import { PHASES, type Phase, type Permission } from "@mth/shared";
 import {
+  GATE_AGREEMENT_CODES,
   gateApproverConfig,
   gateDecisionCreate,
   gateSubmissionCreate,
+  type GateAgreementRecord,
   type GateCriterionEvaluation,
   type GateDecision,
   type GateDefinition,
@@ -77,6 +82,7 @@ import {
 } from "../transformations/index.ts";
 import { nextCode } from "./codes.ts";
 import { evaluateGate, loadGateFacts, type GateFacts } from "./criteria.ts";
+import { buildG4Snapshot, type GateFactsProvider } from "./g4.ts";
 
 const G = "/api/v1/transformations/:transformationId/gates";
 const tParams = z.strictObject({ transformationId: z.uuid() });
@@ -133,7 +139,21 @@ export const toGateSubmission = (r: GateSubmissionRow): GateSubmission => ({
   updatedBy: r.updated_by,
 });
 
-export const toGateDecision = (r: GateDecisionRow): GateDecision => ({
+/** The B0032 confirmations of a gate decision (ADR-0021 §8): three rows for an approved G1 decision, none otherwise. */
+async function agreementsOf(db: DbOrTx, gateDecisionId: string): Promise<GateAgreementRecord[]> {
+  const rows = await db
+    .selectFrom("gate_decision_agreement")
+    .select(["agreement_code", "confirmed_by", "confirmed_at"])
+    .where("gate_decision_id", "=", gateDecisionId)
+    .execute();
+  return GATE_AGREEMENT_CODES.flatMap((code) =>
+    rows
+      .filter((r) => r.agreement_code === code)
+      .map((r) => ({ agreementCode: code, confirmedBy: r.confirmed_by, confirmedAt: iso(r.confirmed_at) })),
+  );
+}
+
+export const toGateDecision = (r: GateDecisionRow, agreements: readonly GateAgreementRecord[] = []): GateDecision => ({
   id: r.id,
   organizationId: r.organization_id,
   transformationId: r.transformation_id,
@@ -150,6 +170,7 @@ export const toGateDecision = (r: GateDecisionRow): GateDecision => ({
   decidedAt: iso(r.decided_at),
   approverBasis: r.approver_basis as GateDecision["approverBasis"],
   approverRoleCode: r.approver_role_code,
+  agreements: [...agreements],
 });
 
 // ------------------------------------------------------------------------------------------------ approver rules
@@ -208,6 +229,30 @@ async function isApprover(
   return approver.userId !== null
     ? approver.userId === principal.userId
     : holdsApproverRole(principal.grants, approver.roleCode, target);
+}
+
+/**
+ * Is `principal` the configured approver of the transformation's gate (named user, or a holder of the approver role
+ * with gate.decide there)? Used by gate dispensations (ADR-0021 §5: a waiver is granted by the waived gate's approver).
+ * In person only: delegation is not considered here.
+ */
+export async function isGateApprover(
+  db: DbOrTx,
+  principal: Principal,
+  transformationId: string,
+  gateCode: string,
+  target: ResolvedTarget,
+): Promise<boolean> {
+  const def = (await loadGateDefinitions(db)).find((d) => d.code === gateCode);
+  if (!def) return false;
+  const instance = await db
+    .selectFrom("gate_instance")
+    .select(["approver_role_code", "approver_user_id"])
+    .where("transformation_id", "=", transformationId)
+    .where("gate_code", "=", gateCode)
+    .executeTakeFirst();
+  if (!instance) return false;
+  return isApprover(db, principal, approverOf(instance, def), target, undefined);
 }
 
 // ------------------------------------------------------------------------------------------------ views
@@ -313,7 +358,7 @@ function definitionOf(defs: readonly GateDefinition[], gateCode: string): GateDe
 
 // ------------------------------------------------------------------------------------------------ routes
 
-export function registerGateRoutes(app: FastifyInstance, db: Db): string[] {
+export function registerGateRoutes(app: FastifyInstance, db: Db, gateFacts: GateFactsProvider): string[] {
   const read = { access: { permission: "transformation.read" as const } };
 
   app.get(G, { config: read }, async (request) => {
@@ -468,7 +513,7 @@ export function registerGateRoutes(app: FastifyInstance, db: Db): string[] {
         detail: c.detail as Record<string, unknown>,
         evaluatedAt: iso(c.evaluated_at),
       })),
-      decision: decision ? toGateDecision(decision) : null,
+      decision: decision ? toGateDecision(decision, await agreementsOf(db, decision.id)) : null,
     };
   });
 
@@ -477,7 +522,9 @@ export function registerGateRoutes(app: FastifyInstance, db: Db): string[] {
     { config: { access: { permission: "gate.submit" } } },
     async (request, reply) => {
       const { transformationId, gateCode } = parse(gParams, request.params, "params");
-      const submission = await db.transaction().execute((tx) => submitGate(tx, request, transformationId, gateCode));
+      const submission = await db
+        .transaction()
+        .execute((tx) => submitGate(tx, request, transformationId, gateCode, gateFacts));
       return sendVersioned(
         reply,
         201,
@@ -489,12 +536,14 @@ export function registerGateRoutes(app: FastifyInstance, db: Db): string[] {
 
   app.post(`${G}/:gateCode/decision`, { config: { access: { permission: "gate.decide" } } }, async (request, reply) => {
     const { transformationId, gateCode } = parse(gParams, request.params, "params");
-    const decision = await db.transaction().execute((tx) => decideGate(tx, request, transformationId, gateCode));
+    const { row, agreements } = await db
+      .transaction()
+      .execute((tx) => decideGate(tx, request, transformationId, gateCode));
     reply.header(
       "Location",
-      `/api/v1/transformations/${transformationId}/gates/${gateCode}/submissions/${decision.submission_no}`,
+      `/api/v1/transformations/${transformationId}/gates/${gateCode}/submissions/${row.submission_no}`,
     );
-    return reply.code(201).send(toGateDecision(decision));
+    return reply.code(201).send(toGateDecision(row, agreements));
   });
 
   return [
@@ -510,7 +559,13 @@ export function registerGateRoutes(app: FastifyInstance, db: Db): string[] {
 
 // ------------------------------------------------------------------------------------------------ submit
 
-async function submitGate(tx: Tx, request: FastifyRequest, transformationId: string, gateCode: string) {
+async function submitGate(
+  tx: Tx,
+  request: FastifyRequest,
+  transformationId: string,
+  gateCode: string,
+  gateFacts: GateFactsProvider,
+) {
   const ctx = await openWrite(tx, request, transformationId, [{ permission: "gate.submit" }], null);
   const body = parseBody(gateSubmissionCreate, request.body);
   const def = definitionOf(await loadGateDefinitions(tx), gateCode);
@@ -550,6 +605,9 @@ async function submitGate(tx: Tx, request: FastifyRequest, transformationId: str
   const approver = approverOf(instance, def);
   const submissionNo = instance.latest_submission_no + 1;
   const id = uuidv7();
+  // P3 (ADR-0021 §7): the G4 snapshot (in-scope initiatives, ranking, weight set, cases, formulas, funding, demand,
+  // waves) built by g4.ts through the GateFactsProvider. Only G4 calls it, so G1-G3 snapshots stay byte-stable.
+  const g4 = gateCode === "G4" ? await buildG4Snapshot(tx, gateFacts, transformationId) : null;
   const snapshot = {
     schema: "mth.gate-submission/1",
     gateCode,
@@ -575,6 +633,7 @@ async function submitGate(tx: Tx, request: FastifyRequest, transformationId: str
       record: `${e.recordType}:${e.recordId}`,
       verified: e.verified,
     })),
+    ...(g4 !== null ? { g4 } : {}),
     note: "Product gate (business approval inside the product); unrelated to the engineering delivery gates DG0-DG7.",
   };
   const snapshotJson = canonicalJson(snapshot);
@@ -712,7 +771,7 @@ async function decideGate(tx: Tx, request: FastifyRequest, transformationId: str
       "gate.submitter_cannot_decide",
       "The person who submitted the gate cannot decide it (separation of duties).",
     ).withDenial(denialOf("gate.decide", target));
-  const body = parseBody(gateDecisionCreate, request.body);
+  const body = parseBody(decisionRequest, request.body);
   // 4. Only the current PENDING submission can be decided; nothing is written otherwise.
   if (!pending || pending.submission_no !== body.submissionNo)
     throw new HttpProblem({
@@ -725,6 +784,8 @@ async function decideGate(tx: Tx, request: FastifyRequest, transformationId: str
         : "There is no pending submission to decide.",
       currentVersion: pending?.submission_no ?? Math.max(instance.latest_submission_no, 1),
     });
+  // 4a. P3 (ADR-0021 §8; REQ-PB-022, B0032): after checks 1-4, the G1 leadership agreements. Nothing is written.
+  const agreed = agreementRule(gateCode, body);
   // 5. Sequence: an approval never skips a phase or a preceding gate (F-DG2-205); nothing is written otherwise.
   if (body.outcome === "approved") {
     const outOfSequence = await sequenceProblem(tx, transformationId, def, defs);
@@ -804,8 +865,24 @@ async function decideGate(tx: Tx, request: FastifyRequest, transformationId: str
       submissionNo: { from: null, to: pending.submission_no },
       outcome: { from: null, to: body.outcome },
       approverBasis: { from: null, to: approver.basis },
+      ...(agreed ? { agreements: { from: null, to: [...GATE_AGREEMENT_CODES] } } : {}),
     },
   });
+  // The three B0032 confirmations of an approved G1 decision, confirmed by the decider (0024 guard), in THIS
+  // transaction; the deferred 0025 guard refuses the COMMIT of an approved G1 decision without exactly these three.
+  if (agreed)
+    for (const code of GATE_AGREEMENT_CODES)
+      await tx
+        .insertInto("gate_decision_agreement")
+        .values({
+          id: uuidv7(),
+          organization_id: t.organization_id,
+          transformation_id: transformationId,
+          gate_decision_id: gateDecisionId,
+          agreement_code: code,
+          confirmed_by: userId,
+        })
+        .execute();
   await tx
     .updateTable("gate_submission")
     .set({ status: "decided", ...bumpStamps(userId) })
@@ -854,7 +931,71 @@ async function decideGate(tx: Tx, request: FastifyRequest, transformationId: str
       gateCode,
       decisionId,
     });
-  return row;
+  return { row, agreements: agreed ? await agreementsOf(tx, gateDecisionId) : [] };
+}
+
+/**
+ * The decision body as the API reads it: the contract's GateDecisionCreate, except that `agreements` confirmations may
+ * be missing or false here so that the rule below answers 422 (not 400) for them, as ADR-0021 §8 requires. Unknown
+ * properties and non-boolean confirmations stay 400.
+ */
+const decisionRequest = gateDecisionCreate.extend({
+  agreements: z
+    .strictObject({ problem: z.boolean(), baseline: z.boolean(), materialValuePools: z.boolean() })
+    .partial()
+    .optional(),
+});
+
+/**
+ * ADR-0021 §8: G1 approved needs all three confirmations true (422 gate.g1_agreements_required, one pointer per
+ * missing one); any other gate or outcome must not send them (422 gate.agreements_not_applicable). Returns whether
+ * the three agreement rows are to be written.
+ */
+export function agreementRule(gateCode: string, body: z.infer<typeof decisionRequest>): boolean {
+  if (gateCode === "G1" && body.outcome === "approved") {
+    const a = body.agreements;
+    const confirmed = {
+      problem: a?.problem === true,
+      baseline: a?.baseline === true,
+      materialValuePools: a?.materialValuePools === true,
+    };
+    const missing = Object.entries(confirmed)
+      .filter(([, ok]) => !ok)
+      .map(([k]) => k);
+    if (missing.length > 0) {
+      const detail =
+        "G1 approval requires leadership agreement on the problem, the baseline and the material value pools (B0032)";
+      throw new HttpProblem({
+        status: 422,
+        type: "urn:mth:problem:validation",
+        code: "gate.g1_agreements_required",
+        title: "Business rule violated",
+        detail,
+        errors: missing.map((k) => ({
+          pointer: `/agreements/${k}`,
+          code: "gate.g1_agreements_required",
+          message: detail,
+        })),
+      });
+    }
+    return true;
+  }
+  if (body.agreements !== undefined)
+    throw new HttpProblem({
+      status: 422,
+      type: "urn:mth:problem:validation",
+      code: "gate.agreements_not_applicable",
+      title: "Business rule violated",
+      detail: "Leadership agreement confirmations apply only to approving G1; send them only with a G1 approval.",
+      errors: [
+        {
+          pointer: "/agreements",
+          code: "gate.agreements_not_applicable",
+          message: "Leadership agreement confirmations apply only to approving G1.",
+        },
+      ],
+    });
+  return false;
 }
 
 /** Permissions a gate route declares (for the generated AUD write-deny sweep and documentation). */

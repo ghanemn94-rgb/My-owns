@@ -43,7 +43,10 @@ function wellFormed(name: string, transformationId: string): string {
   if (name === "transformationId") return transformationId;
   if (name === "gateCode") return "G1";
   if (name === "dimensionCode") return "strategy";
-  if (name === "submissionNo" || name === "versionNo") return "1";
+  if (name === "submissionNo" || name === "versionNo" || name === "snapshotNo") return "1";
+  // P3 (p3-work-split §2 BE-A): a T06 criterion code and a T08 dependency type code.
+  if (name === "criterionCode") return "feasibility";
+  if (name === "dependencyTypeCode") return "tech";
   return crypto.randomUUID();
 }
 

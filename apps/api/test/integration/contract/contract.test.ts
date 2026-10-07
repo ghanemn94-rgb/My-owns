@@ -81,6 +81,14 @@ import { exercised, openapi, operations } from "../../support/contract.ts";
 import { P2_PENDING_OPERATIONS } from "../../support/p2-pending.ts";
 import { exerciseKpiOperations } from "./kpi-exercises.ts";
 import { exerciseP2BackendOperations } from "./p2-exercises.ts";
+// P3 seams (p3-work-split §5): one file per task, each exporting its exercise function and its zod mirror map.
+import { exerciseP3BeAOperations, P3_MIRRORS_BE_A } from "./p3-exercises-be-a.ts";
+import { exerciseP3BeBOperations, P3_MIRRORS_BE_B } from "./p3-exercises-be-b.ts";
+import { exerciseP3BeCOperations, P3_MIRRORS_BE_C } from "./p3-exercises-be-c.ts";
+import { exerciseP3BeDOperations, P3_MIRRORS_BE_D } from "./p3-exercises-be-d.ts";
+import { exerciseP3BeEOperations, P3_MIRRORS_BE_E } from "./p3-exercises-be-e.ts";
+import { exerciseP3KbeBOperations, P3_MIRRORS_KBE_B } from "./p3-exercises-kbe-b.ts";
+import { exerciseP3KbeCOperations, P3_MIRRORS_KBE_C } from "./p3-exercises-kbe-c.ts";
 import {
   exerciseInvalidCharacterQuery,
   exerciseMalformedPathParams,
@@ -235,6 +243,14 @@ const ZOD_MIRRORS: Record<string, z.ZodType> = {
   submitGate: gateSubmission,
   getGateSubmission: gateSubmissionView,
   decideGate: gateDecision,
+  // P3 operations: each task's mirrors come from its own seam file (p3-work-split §5).
+  ...P3_MIRRORS_BE_A,
+  ...P3_MIRRORS_BE_B,
+  ...P3_MIRRORS_BE_C,
+  ...P3_MIRRORS_BE_D,
+  ...P3_MIRRORS_BE_E,
+  ...P3_MIRRORS_KBE_B,
+  ...P3_MIRRORS_KBE_C,
 };
 
 let api: TestApi;
@@ -476,6 +492,34 @@ describe("every operation, validated against the contract and the zod mirrors", 
     await exerciseP2BackendOperations({ api, world: w, mirrored: (m, u, o) => mirrored(m, u, o) });
   });
 
+  // P3 seams (p3-work-split §5): each task's routed operations, exercised through the same validating client.
+  const p3 = () => ({
+    api,
+    world: w,
+    mirrored: (m: string, u: string, o?: Parameters<typeof call>[3]) => mirrored(m, u, o),
+  });
+  it("P3 BE-A operations (p3-exercises-be-a.ts): readiness, outcome hierarchy, gate dispensations", async () => {
+    await exerciseP3BeAOperations(p3());
+  });
+  it("P3 BE-B operations (p3-exercises-be-b.ts)", async () => {
+    await exerciseP3BeBOperations(p3());
+  });
+  it("P3 BE-C operations (p3-exercises-be-c.ts)", async () => {
+    await exerciseP3BeCOperations(p3());
+  });
+  it("P3 BE-D operations (p3-exercises-be-d.ts)", async () => {
+    await exerciseP3BeDOperations(p3());
+  });
+  it("P3 BE-E operations (p3-exercises-be-e.ts)", async () => {
+    await exerciseP3BeEOperations(p3());
+  });
+  it("P3 KBE-B operations (p3-exercises-kbe-b.ts)", async () => {
+    await exerciseP3KbeBOperations(p3());
+  });
+  it("P3 KBE-C operations (p3-exercises-kbe-c.ts)", async () => {
+    await exerciseP3KbeCOperations(p3());
+  });
+
   // T-DG2-ARCH-02 (ADR-0007 §5a): every operation that validates input declares 400.
   it("every GET operation with a path parameter: a malformed id is a declared 400 at /params/<name>; nothing written", async () => {
     // A fresh session: `office` signed out in "transformations and audit".
@@ -515,7 +559,8 @@ describe("every operation, validated against the contract and the zod mirrors", 
       (o) => !P2_PENDING_OPERATIONS.has(o.operationId) && declaredRequestMediaTypes(o) !== null,
     );
     const byType = (t: string) => withBody.filter((o) => declaredRequestMediaTypes(o)!.includes(t)).length;
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([87, 86, 1]);
+    // T-DG3-BE-A: + createGateDispensation, decideGateDispensation, revokeGateDispensation (JSON bodies).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([90, 89, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);
@@ -560,7 +605,8 @@ describe("every operation, validated against the contract and the zod mirrors", 
       const live = operations.filter((o) => !P2_PENDING_OPERATIONS.has(o.operationId));
       const checked = await exerciseRateLimitSweep(limited, live);
       expect(checked).toHaveLength(live.length);
-      expect(live.length).toBeGreaterThanOrEqual(161);
+      // 161 P1/P2 operations + the 6 BE-A P3 operations (T-DG3-BE-A); rises as the other P3 tasks route theirs.
+      expect(live.length).toBeGreaterThanOrEqual(167);
     } finally {
       await limited.close();
     }

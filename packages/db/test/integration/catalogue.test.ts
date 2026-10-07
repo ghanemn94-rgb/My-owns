@@ -23,6 +23,14 @@ describe("schema.ts matches the migrated database", () => {
     expect(Object.fromEntries(Object.entries(actual).map(([t, cols]) => [t, cols.sort()]))).toEqual(expected);
   });
 
+  it("0025: an approved G1 decision is guarded by the deferred gate_decision_g1_agreements constraint trigger", async () => {
+    const rows = await q<{ tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred FROM pg_trigger t
+       WHERE t.tgrelid = 'public.gate_decision'::regclass AND t.tgname = 'gate_decision_g1_agreements'`,
+    );
+    expect(rows).toEqual([{ tgname: "gate_decision_g1_agreements", deferrable: true, deferred: true }]);
+  });
+
   it("marks exactly the views as views", async () => {
     const views = await q<{ table_name: string }>(
       `SELECT table_name FROM information_schema.views WHERE table_schema = 'public' ORDER BY 1`,

@@ -31,6 +31,7 @@ import { registerEvidenceModule } from "./modules/evidence/index.ts";
 import { registerKpiModule } from "./modules/kpi/index.ts";
 import { registerMethodologyModule } from "./modules/methodology/index.ts";
 import { registerOrganizationRoutes } from "./modules/organization/index.ts";
+import { loadPortfolioGateFacts, registerPortfolioModule } from "./modules/portfolio/index.ts";
 import {
   createClientErrorHandler,
   createFrameworkErrorHandler,
@@ -55,7 +56,7 @@ import {
 } from "./modules/platform/index.ts";
 import { registerReportingModule } from "./modules/reporting/index.ts";
 import { registerTransformationRoutes } from "./modules/transformations/index.ts";
-import { registerWorkflowsModule } from "./modules/workflows/index.ts";
+import { registerWorkflowsModule, type GateFactsProvider } from "./modules/workflows/index.ts";
 
 export const JSON_BODY_LIMIT_BYTES = 1_048_576;
 
@@ -272,14 +273,23 @@ export async function buildServer(options: ServerOptions): Promise<{
   registerAdminRoutes(app, deps);
   registerAccessP2Routes(app, deps);
   registerBrandingRoutes(app, { colorTokens, tokensAreProvisional });
+  // P3 (ADR-0021 §1): workflows' G4 evaluators read portfolio and kpi facts through this provider (dependency
+  // injection; workflows never imports portfolio). The kpi part is wired with kpi's P3 loader when it lands (KBE-C,
+  // kpi/p3-gate-facts.ts); until then it yields no facts and every G4 criterion stays incomplete (fail closed).
+  const gateFacts: GateFactsProvider = {
+    portfolio: loadPortfolioGateFacts,
+    kpi: async (_db, transformationId) => ({ transformationId }),
+  };
   // Business modules reporting their registration (D-048): the P2 modules (workflows, methodology, evidence; kpi by
-  // kpi-benefits-engineer) and the remaining scaffold (reporting, P5), which registers no routes until its stage.
+  // kpi-benefits-engineer), the P3 portfolio module, and the remaining scaffold (reporting, P5), which registers no
+  // routes until its stage.
   const modules: ModuleRegistration[] = [
-    registerWorkflowsModule(app, deps),
+    registerWorkflowsModule(app, deps, { gateFacts }),
     registerKpiModule(app, deps),
     registerReportingModule(app, deps),
     registerMethodologyModule(app, deps),
     registerEvidenceModule(app, deps),
+    registerPortfolioModule(app, deps),
   ];
 
   if (webRoot) {

@@ -52,6 +52,7 @@ import {
   P1_MODULES,
   P1_SCAFFOLD_MODULES,
   P2_MODULES,
+  P3_MODULES,
   SECTION16_MODULES,
   type ApiModule,
 } from "./modules.ts";
@@ -65,13 +66,34 @@ describe("API module boundaries (ADR-0002)", () => {
     expect(moduleDirs.filter((d) => !(d in API_MODULES))).toEqual([]);
     for (const m of IMPLEMENTED_MODULES) expect(existsSync(join(MODULES_DIR, m, "index.ts")), m).toBe(true);
     expect([...moduleDirs].sort()).toEqual([...IMPLEMENTED_MODULES].sort());
-    // Every mapped module exists now: P1 plus the two P2 modules (methodology, evidence).
+    // Every mapped module exists now: P1, the two P2 modules (methodology, evidence) and the P3 module (portfolio).
     expect([...IMPLEMENTED_MODULES].sort()).toEqual(Object.keys(API_MODULES).sort());
   });
 
   it("the P2 modules methodology and evidence each have their own test suite (p2-work-split §2)", () => {
     expect([...P2_MODULES].sort()).toEqual(["evidence", "methodology"]);
     for (const m of P2_MODULES) expect(existsSync(join(MODULES_DIR, m, `${m}.test.ts`)), m).toBe(true);
+  });
+
+  it("the P3 module portfolio has its own test suite and exactly the ADR-0021 §1 dependencies (p3-work-split §2)", () => {
+    expect([...P3_MODULES]).toEqual(["portfolio"]);
+    for (const m of P3_MODULES)
+      expect(
+        readdirSync(join(MODULES_DIR, m)).some((f) => f.endsWith(".test.ts")),
+        `${m} has its own test suite`,
+      ).toBe(true);
+    expect([...API_MODULES.portfolio.dependsOn].sort()).toEqual([
+      "access",
+      "audit",
+      "evidence",
+      "kpi",
+      "platform",
+      "transformations",
+      "workflows",
+    ]);
+    // workflows reads portfolio facts only through its GateFactsProvider (workflows/g4.ts), wired by server.ts.
+    for (const m of Object.keys(API_MODULES) as ApiModule[])
+      expect(API_MODULES[m].dependsOn as readonly string[], m).not.toContain("portfolio");
   });
 
   it("workflows reaches kpi and evidence (G1-G3 evaluators), and none of them reaches back (no cycle)", () => {
