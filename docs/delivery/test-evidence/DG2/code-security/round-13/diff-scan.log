@@ -1,0 +1,51 @@
+# command: git diff --stat 8488e7a..aa0a68f -- . ':!docs/delivery'  (round-12 source -> round-13 source, product). NOTE: the assignment names fe22d759..cbdb4f68, which is the round-10->round-11 range (cbdb4f6 = D-071), already reviewed in round 11; the BE18A changes it asks about are in 8488e7a..aa0a68f (single product commit 8c0083e).
+ apps/api/src/main.ts                               |  17 +-
+ apps/api/src/modules/access/denials.ts             |   4 +-
+ apps/api/src/modules/access/index.ts               |   2 +-
+ apps/api/src/modules/access/request.ts             |  45 +-
+ apps/api/src/modules/evidence/evidence.test.ts     |  65 ++-
+ apps/api/src/modules/evidence/routes.ts            |  29 +-
+ apps/api/src/modules/evidence/store.ts             |  97 ++++-
+ apps/api/src/modules/identity/oidc.ts              |  47 +-
+ apps/api/src/modules/identity/routes.ts            |  55 ++-
+ apps/api/src/modules/platform/in-flight.test.ts    |  76 ++++
+ apps/api/src/modules/platform/in-flight.ts         |  91 ++++
+ apps/api/src/modules/platform/index.ts             |   1 +
+ .../src/modules/transformations/register-kit.ts    |  24 +-
+ apps/api/src/server.ts                             |  17 +-
+ apps/api/test/integration/commit-time-auth.test.ts | 476 +++++++++++++++++++++
+ apps/api/test/integration/shutdown-cleanup.test.ts | 336 +++++++++++++++
+ docs/operations/health-readiness.md                |  43 +-
+ packages/db/src/pool.ts                            |  11 +-
+ 18 files changed, 1382 insertions(+), 54 deletions(-)
+# exit_status: 0
+# command: git log --oneline 8488e7a..aa0a68f
+aa0a68f DG2: D-073 (round-13 repairs: commit-time authorisation, no remote call inside a transaction, shutdown leaves no temporaries)
+33af9ae DG2: F-DG2-440/441/460 FIXED_PENDING_VERIFICATION (BE18A)
+8c0083e DG2 T-DG2-BE18A: authorise at commit time (F-DG2-440); no remote call inside a transaction (F-DG2-441); shutdown waits for handler cleanup and stale temporaries are swept (F-DG2-460)
+8c02475 DG2: import round 12 (F-411/412/430 CLOSED_VERIFIED; F-440/441/460 OPEN); state FIXING; BE18A assignment (BE18 + F-460)
+09c226b DG2 round 12: qa test evidence
+219cc46 run: DG2-T-DG2-REV-QA-R12-qa-verifier-20261007T043412Z-ef3a0a5e (review evidence, auto-committed by run-agent.sh)
+26d0c60 DG2 round-13 repair assignment T-DG2-BE18 (F-DG2-440 authorise at commit time; F-DG2-441 no remote call inside a transaction)
+1092a77 DG2 round 12: code-security test evidence
+a69a81f run: DG2-T-DG2-REV-SEC-R12-code-security-reviewer-20261007T043332Z-91127ae1 (review evidence, auto-committed by run-agent.sh)
+7d6ed05 DG2 round 12: domain test evidence
+dabb1a6 run: DG2-T-DG2-REV-DOM-R12-domain-reviewer-20261007T043352Z-6788c52e (review evidence, auto-committed by run-agent.sh)
+744af0b DG2: freeze round-12 candidate 5dfecce4 (552 files, source 8488e7a); state REVIEWING round 12; round-12 review assignments (sec 440-449, domain 450-459, qa 460-469)
+# command: git diff --stat aa0a68f..5699f72 (freeze commit = metadata only)
+ .../DG2/round-13/code-security-reviewer.md         |  105 +
+ .../assignments/DG2/round-13/domain-reviewer.md    |  113 +
+ .../assignments/DG2/round-13/qa-verifier.md        |  107 +
+ .../candidates/DG2/6824b8b8d36a6881.manifest.json  | 2798 ++++++++++++++++++++
+ docs/delivery/stages.json                          |   27 +-
+ 5 files changed, 3145 insertions(+), 5 deletions(-)
+# command: git diff 8488e7a..aa0a68f -- apps packages | grep -nE '^\+.*(fetch\(|eval\(|new Function|child_process|exec\(|http://|https://|cdn|secret|password|token\s*=)' (new-line risk scan)
+1341:+        OIDC_ISSUER_URL: `http://127.0.0.1:${holePort}/realms/slow`,
+1406:+import { spawn, type ChildProcess } from "node:child_process";
+1691:+    const secret = "SYNTHETIC-PARTIAL-CONTENT-must-never-be-logged";
+1692:+    const put = (name: string, at: Date | null, content = secret) => {
+1705:+    writeFileSync(join(shallowDir, `${uuidv7()}.part`), secret);
+1722:+      expect(removals[0]).toMatchObject({ level: 30, key: stale.replace(/ \(\d+ B\)$/, ""), sizeBytes: secret.length });
+1725:+      expect(api.output()).not.toContain(secret);
+# exit_status: 0 (1 = no match)
+# Reviewer note: every match above is in a TEST file (commit-time-auth.test.ts: a loopback never-answering IdP URL; shutdown-cleanup.test.ts: child_process to run main.ts, and a SYNTHETIC marker string asserted NOT to appear in logs). No match in product source. No new dependency (package.json / pnpm-lock.yaml unchanged in 8488e7a..aa0a68f).

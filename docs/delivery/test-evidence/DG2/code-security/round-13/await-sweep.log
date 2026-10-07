@@ -1,0 +1,40 @@
+# command: node await-sweep.mjs $TMPDIR/review-r13   (node v22.22.2; clone HEAD 5699f72 = candidate 6824b8b8; typescript from the clone's node_modules; script: await-sweep.mjs in this directory)
+# files scanned: 135; in-transaction / tx-taking / client-checkout functions: 193; awaits NOT evidently database work: 22
+apps/api/src/modules/access/assignments.ts:195 [param] await q.executeTakeFirst()
+apps/api/src/modules/access/assignments.ts:315 [param] await q .orderBy("a.id", "desc") .limit(query.limit + 1) .execute()
+apps/api/src/modules/access/team.ts:236 [tx-callback] await run()
+apps/api/src/modules/audit/index.ts:60 [param] await q .orderBy("e.seq", "desc") .limit(page.limit + 1) .execute()
+apps/api/src/modules/evidence/routes.ts:292 [param] await (lock ? query.forUpdate() : query).executeTakeFirst()
+apps/api/src/modules/evidence/routes.ts:569 [tx-callback] await store.finalise(key)
+apps/api/src/modules/identity/users.ts:236 [param] await q .orderBy(sql`lower(display_name)`) .orderBy("id") .limit(query.limit + 1) .execute()
+apps/api/src/modules/kpi/support.ts:210 [tx-callback] await exec()
+apps/api/src/modules/platform/health.ts:30 [client-checkout] await pool.connect()
+apps/api/src/modules/platform/idempotency.ts:57 [param] await run()
+apps/api/src/modules/transformations/register-kit.ts:297 [param] await run()
+apps/api/src/modules/transformations/register-kit.ts:335 [param] await render(dbx, [row])
+apps/api/src/modules/transformations/register-kit.ts:340 [param] await loose(dbx) .selectFrom(spec.parent.table) .select(["id"]) .where("id", "=", params.get(spec.parent.param)!) .where("transformation_id"
+apps/api/src/modules/transformations/register-kit.ts:356 [param] await q.executeTakeFirst()
+apps/api/src/modules/transformations/register-kit.ts:496 [tx-callback] await spec.check({ ...(current as unknown as LooseRow), ...changes }, ctx, current)
+apps/api/src/modules/transformations/routes.ts:261 [tx-callback] await run()
+apps/api/src/modules/workflows/canvas.ts:51 [param] await cellsQ.orderBy("d.ordinal").execute()
+apps/api/src/modules/workflows/gates.ts:222 [param] await q.executeTakeFirst()
+packages/db/src/cli.ts:37 [client-checkout] await migrate(ownerUrl, { log: (l) => console.log(`mth-db migrate: ${l}`) })
+packages/db/src/cli.ts:49 [client-checkout] await assertUtf8Database(pool)
+packages/db/src/cli.ts:51 [client-checkout] await pool.connect()
+packages/db/src/cli.ts:124 [client-checkout] await pool.end().catch(() => undefined)
+# exit_status: 0
+# Classification by the reviewer (each flagged line read in source):
+#  - q / query / cellsQ / loose(dbx)... .execute*(): Kysely query builders built on the transaction -> database work.
+#  - run() / exec() (team.ts:236, kpi/support.ts:210, idempotency.ts:57, register-kit.ts:297, transformations/routes.ts:261):
+#    closures defined in the same transaction callback that only issue tx.* statements and record(tx, ...) -> database work.
+#  - render(dbx, [row]) (register-kit.ts:335) and spec.check(...) (register-kit.ts:496; registers.ts / design-registers.ts
+#    check bodies: assertSameTransformation(ctx.tx, ...) etc.) -> database work on the transaction.
+#  - evidence/routes.ts:569 await store.finalise(key): the DOCUMENTED exception (local atomic rename, last step before COMMIT).
+#  - platform/health.ts:30 await pool.connect(): /readyz checkout itself, then SELECT 1 / encoding read: database only.
+#  - packages/db/src/cli.ts:37-124: operator CLI (migrate/status/bootstrap) - not a request path, no remote call.
+#  - apps/worker: relay.ts boss.send(..., { db: txExecutor(tx) }) runs its SQL on the same transaction (not flagged: passes tx);
+#    worker.ts:67 setTimeout is the poll interval OUTSIDE any transaction (after `await running`).
+# Remote calls (openid-client discovery / authorizationCodeGrant / buildEndSessionUrl via configuration_()) are called only from
+# prepareLogin (before the login transaction), exchange (between consumeState's and resolveOidcUser's transactions) and
+# endSessionUrl (after the logout transaction): identity/routes.ts:295-296, 331-376, 409-421.
+# RESULT: no remote or slow non-database await inside any transaction or held client, other than the documented finalise.

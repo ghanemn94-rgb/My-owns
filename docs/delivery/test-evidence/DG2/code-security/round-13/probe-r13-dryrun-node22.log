@@ -1,0 +1,42 @@
+# dry run before the recorded runs: with-pg.sh 29983 pnpm vitest run --project integration apps/api/test/integration/zz-sec-r13-probe.test.ts (clone $TMPDIR/r13p at 5699f72, node v22.22.2, LANG unset, same probe sha 8ae4840f); exit_status 0
+[with-pg initdb] The database cluster will be initialized with locale "C".
+[with-pg initdb] The default database encoding has accordingly been set to "SQL_ASCII".
+[with-pg] cluster template1 encoding SQL_ASCII, collate C
+
+ RUN  v3.2.4 /var/tmp/mth-run.RxmdtI/claude-0/r13p
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muxqu4ga_4c85de2a (server_encoding UTF8); applied 19 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-r13-probe.test.ts > S commit-time authorisation, adversarial (F-DG2-440) > S1 role DOWNGRADE (WL -> AUD, read kept, evidence.create lost) while the body streams: 403, denial audited, nothing stored
+PROBE S1: {"roles":["AUD"],"readAfterDowngrade":200,"response":{"status":403,"code":"forbidden"},"after":{"rows":[],"version":1,"current":null,"files":[],"uploads":0},"denials":[{"record_type":"transformation","reason":"POST /api/v1/transformations/:transformationId/evidence/:evidenceId/content requires evidence.create"}]}
+
+stdout | apps/api/test/integration/zz-sec-r13-probe.test.ts > S commit-time authorisation, adversarial (F-DG2-440) > S2 the item's owner is reassigned away from the uploader while the body streams: never 200, nothing stored
+PROBE S2: {"patch":200,"response":{"status":403,"code":"forbidden"},"after":{"rows":0,"files":[],"version":2}}
+
+stdout | apps/api/test/integration/zz-sec-r13-probe.test.ts > S commit-time authorisation, adversarial (F-DG2-440) > S3 MEASUREMENT of the residual: phase 3 authorises, then waits for the item's row lock; a revocation committed during that wait
+PROBE S3: {"lockWaiters":1,"response":{"status":200},"msAfterRelease":35,"after":{"rows":1,"files":["01a1151c-6694-704e-9507-4a09fc8baddf"],"uploads":1}}
+
+stdout | apps/api/test/integration/zz-sec-r13-probe.test.ts > V start-up sweep of stale temporaries: traversal, symlinks, names, live uploads on shared storage > V1 only a REAL stale <uuid>.part exactly 3 levels deep is removed; symlinks, wrong depth, wrong names, directories and outside files survive
+PROBE V1: {"waited":25,"finished":{"msg":"evidence store: start-up sweep of stale temporary objects finished","removed":1,"keptFresh":1},"removedLogs":["o1/t1/e1/f664671c-4276-4b63-a729-00e16047bc8e.part"],"staleRealGone":true,"present":{"fresh":true,"finalStale":true,"depth2":true,"depth4":true,"upper":true,"suffix":true,"outsideViaDirLink":true,"outsideFileTarget":true},"dirNamedPart":true,"fileLink":true}
+
+stdout | apps/api/test/integration/zz-sec-r13-probe.test.ts > V start-up sweep of stale temporaries: traversal, symlinks, names, live uploads on shared storage > V2 a LIVE upload on shared storage: a second instance's sweep keeps its fresh .part; the upload then commits (200)
+PROBE V2: {"sweep":{"removed":0,"keptFresh":1},"response":{"status":200},"after":{"rows":1,"files":["01a1151c-6b88-7285-9983-d8fbba6c68ab"]}}
+
+stdout | apps/api/test/integration/zz-sec-r13-probe.test.ts > V start-up sweep of stale temporaries: traversal, symlinks, names, live uploads on shared storage > V3 a LIVE .part whose mtime is >1 h in the past (clock skew beyond the margin) IS swept: the upload must then fail closed (no content row pointing at a missing object)
+PROBE V3: {"sweptRemoved":1,"response":{"status":500,"code":"internal"},"after":{"rows":[],"version":1,"current":null,"files":[],"uploads":0},"errs":["unhandled error"]}
+
+stdout | apps/api/test/integration/zz-sec-r13-probe.test.ts > X shutdown: a handler stuck on the database cannot hold the process past the backstop > X1 PATCH blocked on a row lock, then SIGTERM: the process exits within grace+settle+backstop (<= ~10.5 s), and the PATCH does not commit
+PROBE X1: {"exit":{"code":1,"ms":10018},"response":null,"after":{"version":1,"title":"Synthetic X1"},"lines":[{"level":30,"msg":"shutting down"},{"level":40,"msg":"shutdown grace period elapsed: closing the remaining connections"},{"level":40,"msg":"shutdown: request handlers still running after the settle period; closing the database anyway","pending":1},{"level":50,"msg":"shutdown did not finish in time; exiting"}]}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r13-probe.test.ts (7 tests) 16190ms
+   ✓ S commit-time authorisation, adversarial (F-DG2-440) > S1 role DOWNGRADE (WL -> AUD, read kept, evidence.create lost) while the body streams: 403, denial audited, nothing stored  628ms
+   ✓ S commit-time authorisation, adversarial (F-DG2-440) > S2 the item's owner is reassigned away from the uploader while the body streams: never 200, nothing stored  564ms
+   ✓ S commit-time authorisation, adversarial (F-DG2-440) > S3 MEASUREMENT of the residual: phase 3 authorises, then waits for the item's row lock; a revocation committed during that wait  1219ms
+   ✓ V start-up sweep of stale temporaries: traversal, symlinks, names, live uploads on shared storage > V2 a LIVE upload on shared storage: a second instance's sweep keeps its fresh .part; the upload then commits (200)  450ms
+   ✓ V start-up sweep of stale temporaries: traversal, symlinks, names, live uploads on shared storage > V3 a LIVE .part whose mtime is >1 h in the past (clock skew beyond the margin) IS swept: the upload must then fail closed (no content row pointing at a missing object)  475ms
+   ✓ X shutdown: a handler stuck on the database cannot hold the process past the backstop > X1 PATCH blocked on a row lock, then SIGTERM: the process exits within grace+settle+backstop (<= ~10.5 s), and the PATCH does not commit  12324ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  06:45:39
+   Duration  20.37s (transform 1.18s, setup 0ms, collect 2.65s, tests 16.19s, environment 0ms, prepare 71ms)
+

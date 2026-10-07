@@ -1,0 +1,36 @@
+# environmental residuals (D-049, D-057, D-058): offline/config surface checks, clone HEAD 5699f7216088a989189fca14d19c53d215a6308e, node v22.22.2
+## REQ-DLV-042 AC-1 / D-057 (live registry): offline frozen install from a scratch copy of the host pnpm store - see install.log / install2.log (both exit 0). The sandbox has no network: the live registry is a documented residual.
+## REQ-DLV-025 A24 / D-058 (live CI): config surface
+# command: node deploy/scripts/check-ci-needs.mjs
+OK: .github/workflows/ci.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it with no status-function if:; installs only via ci-install-deps.sh
+  verify <- delivery-gates
+  integration <- verify
+  e2e <- verify
+  images <- integration, e2e
+# exit_status: 0
+# command: node --test deploy/scripts/tests/check-ci-needs.test.mjs
+# tests 46
+# suites 0
+# pass 46
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 7771.758821
+# exit_status: 0
+# command: grep -n 'run:' .github/workflows/ci.yml (the gate steps CI would run; their local equivalents ran in checks.sh)
+.github/workflows/ci.yml:38:        run: node tools/gates/validate.mjs --pipeline
+.github/workflows/ci.yml:62:      - run: pnpm format:check
+.github/workflows/ci.yml:63:      - run: pnpm lint
+.github/workflows/ci.yml:64:      - run: pnpm typecheck
+.github/workflows/ci.yml:65:      - run: pnpm build
+.github/workflows/ci.yml:66:      - run: pnpm test
+.github/workflows/ci.yml:67:      - run: pnpm openapi:lint
+.github/workflows/ci.yml:68:      - run: pnpm check:no-cdn
+.github/workflows/ci.yml:100:      - run: pnpm -r build
+.github/workflows/ci.yml:101:      - run: pnpm test:integration
+.github/workflows/ci.yml:135:      - run: pnpm -r build
+.github/workflows/ci.yml:142:      - run: pnpm e2e --workers=1
+.github/workflows/delivery-gates.yml:40:        run: node tools/gates/validate.mjs --pipeline
+.github/workflows/delivery-gates.yml:42:        run: node tools/gates/validate.mjs --reconcile
+## D-049 (Keycloak): no Keycloak in the sandbox; the OIDC login/callback (state, nonce, PKCE, browser binding) is exercised against an in-process stub IdP in apps/api/test/integration/oidc.test.ts and commit-time-auth.test.ts Q7 (see integration-run*.log), and by the probe zz-sec-r12-oidc-probe (probe-r12-oidc-*.log).
