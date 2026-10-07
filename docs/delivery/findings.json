@@ -11039,14 +11039,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-15/code-security-reviewer.json",
       "owner": "frontend-ux-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-07T13:32:00Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG2 round 15 (T-DG2-REV-SEC-R15) while probing the F-DG2-500 class on candidate 3f01c610; reproduced on Node 22 and Node 24 (probe X3). Low and not mandatory: it needs a write to stay in flight across a sign-out and another user's sign-in in another tab, and server-side authorisation is intact. It does not block the round."
+        },
+        {
+          "at": "2026-10-07T15:19:31Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 44f1cf0d8b1ed79954c2d77caab41831162049de"
         }
-      ]
+      ],
+      "fix_revision": "44f1cf0d8b1ed79954c2d77caab41831162049de",
+      "fix_summary": "FE14 44f1cf0: an identity or session generation in the web API client. Every request records the generation current when it is sent. If the session ended or the identity changed before the answer arrives, apiRequest throws a typed SessionChangedError instead of returning data (no error-level log), so no late success handler (TransformationEdit/Detail, Organizations, Users and the rest of the grep sweep) can write it into the cache, navigate on it or show it. Callers treat the error as silent: no banner, no navigation. Observation X6: on refocus or reconnect /me is revalidated before the page queries, so the header and the data always belong to the same identity. FE10/FE13 guarantees are unchanged, and a normal same-identity write still updates and navigates. Tests: session-generation.test.tsx (26, incl. the reviewer's X3/X3b and X6); negative control on HEAD."
     }
   ]
 }
