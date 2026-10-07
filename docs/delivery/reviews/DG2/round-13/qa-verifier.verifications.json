@@ -1,0 +1,26 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG2-460",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:6824b8b8d36a688178a058c11c4882737a79cf7f39b438dcf2390eafb88d3afc (556 files, source aa0a68f1, freeze 5699f72). The fix is BE18A 8c0083e (D-073) by backend-workflow-engineer; qa-verifier authored none of it. All runs used the real built API (apps/api/dist/main.js), a disposable PostgreSQL 16 (UTF8, C) and the filesystem evidence store, through e2e/support/qa-stack.sh, with --workers=1. Each spec ran in chromium-en and chromium-ar, once with LANG/LC_ALL unset and once with LANG=C.UTF-8. (1) My original reproductions now pass in all 4 runs per test. R12-07: an upload stalled in flight at SIGTERM exits 0 in about 5.02-5.04 s; the store held a 2,097,152 B .part during the stall and holds nothing after exit; no content row, currentContentId null, GET content 404. The client-abort control also leaves nothing. R11-02(b): stored files 0 and exit 0. (2) New R13-01: two uploads were ACTIVELY STREAMING through the whole 5 s grace (about 6.7 MB of a declared 24 MiB sent when the server cut them) and a third was stalled. SIGTERM exits 0 in 5,023-5,045 ms, inside the 10 s backstop. The server closed all 3 sockets, 'shut down' is logged, there is no settle-period warning and no error-level line. Nothing is left in the store after exit or after a restart on the same store; 0 content rows and versions unchanged. (3) New R13-02 drain check: an upload that finishes inside the grace still commits (200), byte-exact with sha256 = DB, leaves only its final object (no .part) and exits 0. (4) New R13-03 start-up sweep on a new API process over the shared store. Exactly the stale <uuid>.part (mtime 2 h ago, 4,096 B) is removed. It is logged at info as 'evidence store: stale temporary object removed' with the root-relative key (no absolute path), sizeBytes 4096 and ageMs about 7.2e6. The finished line reports removed 1 and keptFresh equal to the number of fresh temporaries actually present, with olderThanMs 3600000. All of these are kept: a fresh .part, a 50-minute-old .part, a 3-hour-old FINAL object, a real committed object back-dated to 2 h (still downloadable byte-exact), a stale 'notes.part', an upper-case-UUID .part, stale .part files at depth 2 and depth 4, a stale '<uuid>.part' DIRECTORY, a directory symlink to an outside tree holding a stale .part, and a '<uuid>.part' symlink to an outside stale file. The sha256 of every other object in the store is unchanged. (5) Negative control: the same R13-01 and R13-03 on the round-12 freeze 744af0b (pre-BE18A) fail in both projects, as expected. After SIGTERM, .part files of 6,782,976 B, 6,782,976 B and 1,048,576 B remain, and no sweep runs (no finished line, nothing removed). So the probes detect the defect. (6) Static reading agrees with this: main.ts runs app.close(), then inFlight.settled(3 000 ms), then db.destroy(), then process.exit(0). Every route registered after registerInFlightTracking is tracked, and so are the failed-mutation audit and the sweep. During my development of R13-03, the first run failed because my own snapshot followed a symlink; the product's sweep was correct. That is explained in 18-r13-spec-dev-run1.log and the record.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-13/19-qa-r13-results.log",
+        "docs/delivery/test-evidence/DG2/qa/round-13/17-e2e-qa-stack-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-13/17-e2e-qa-stack-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-13/19-negative-control-744af0b.log",
+        "docs/delivery/test-evidence/DG2/qa/round-13/19-static-inspection.log",
+        "docs/delivery/test-evidence/DG2/qa/round-13/18-r13-spec-dev-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-13/18-r13-spec-dev-run2.log",
+        "docs/delivery/test-evidence/DG2/qa/tests/round-13/e2e/dg2-qa-r13.spec.ts",
+        "docs/delivery/test-evidence/DG2/qa/tests/round-12/e2e/dg2-qa-r12.spec.ts",
+        "docs/delivery/test-evidence/DG2/qa/tests/round-11/e2e/dg2-qa-r11.spec.ts",
+        "apps/api/src/main.ts",
+        "apps/api/src/modules/platform/in-flight.ts",
+        "apps/api/src/modules/evidence/store.ts",
+        "apps/api/src/modules/evidence/routes.ts"
+      ]
+    }
+  ]
+}
