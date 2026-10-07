@@ -1,6 +1,12 @@
 // Persistent language switch (REQ-S15-007): changes <html lang dir> immediately, stores the choice in localStorage
 // (pre-sign-in hint) and, when signed in, persists it with PUT /api/v1/me/preferences (If-Match on the user version;
 // a 409 re-reads /me and retries once).
+//
+// A refused save (T-DG2-FE11, behaviour (a)): the language the user chose stays on screen in this browser (it is not
+// reverted), and the "not saved" notice is shown in that language. RequireSession only re-applies the persisted
+// preference when that preference itself changes, so a refused save cannot flip the page back. The notice is rendered
+// from its key at render time (never a string frozen in the previous language) inside a live region that is always in
+// the DOM, so it is announced once, and its lang follows the displayed language.
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -17,7 +23,8 @@ export function LanguageSwitch({ signedIn }: { signedIn: boolean }) {
   const { t, i18n } = useTranslation();
   const locale = useLocale();
   const queryClient = useQueryClient();
-  const [notice, setNotice] = useState<string | null>(null);
+  // The language whose save was refused; null = no notice.
+  const [refused, setRefused] = useState<Locale | null>(null);
   const next: Locale = locale === "ar" ? "en" : "ar";
 
   const persist = async (target: Locale, attempt = 0): Promise<void> => {
@@ -40,14 +47,15 @@ export function LanguageSwitch({ signedIn }: { signedIn: boolean }) {
   };
 
   const onClick = async () => {
-    setNotice(null);
-    rememberLocale(next);
-    await i18n.changeLanguage(next);
+    setRefused(null);
+    const target = next; // captured before the language (and so `next`) changes
+    rememberLocale(target);
+    await i18n.changeLanguage(target);
     if (!signedIn) return;
     try {
-      await persist(next);
+      await persist(target);
     } catch {
-      setNotice(t("common.language.notSaved"));
+      setRefused(target);
     }
   };
 
@@ -62,9 +70,17 @@ export function LanguageSwitch({ signedIn }: { signedIn: boolean }) {
       >
         {LANGUAGE_NAMES[next]}
       </button>
-      {notice ? (
-        <span role="status" className="language-switch__notice">
-          {notice}
+      {signedIn ? (
+        // A polite live region that is always in the DOM while signed in (no role="status", so it never competes with a
+        // page's own status message): inserting the notice into it is announced once.
+        <span className="language-switch__live" aria-live="polite" aria-atomic="true" lang={locale}>
+          {refused ? (
+            <span className="language-switch__notice" data-testid="language-not-saved">
+              {/* Normally the chosen language is still shown. If the persisted preference was changed meanwhile (e.g. a
+                  409 re-read of /me brought another tab's choice) and re-applied, say so instead, in that language. */}
+              {t(refused === locale ? "common.language.notSaved" : "common.language.notSavedReverted")}
+            </span>
+          ) : null}
         </span>
       ) : null}
     </span>

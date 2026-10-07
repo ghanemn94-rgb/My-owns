@@ -59,10 +59,16 @@ export function RequireSession({ children }: { children: ReactNode }) {
     void navigate(sessionEndedLoginPath(here), { replace: true });
   }, [ended, here, navigate, queryClient]);
 
-  // The persisted preference wins after sign-in (REQ-S15-007); it also becomes the pre-sign-in hint.
+  // The persisted preference wins after sign-in (REQ-S15-007); it also becomes the pre-sign-in hint. It is applied
+  // when it is first known and whenever it changes, never merely because the displayed language changed: react-i18next
+  // hands out a new `i18n` wrapper on every language change, and re-applying an unchanged preference then reverted a
+  // switch whose save was refused (T-DG2-FE11) and briefly flipped back a switch whose save was still in flight.
+  const appliedPreferred = useRef<string | null>(null);
   useEffect(() => {
-    if (preferred && preferred !== i18n.language) void i18n.changeLanguage(preferred);
-    if (preferred) rememberLocale(preferred);
+    if (!preferred || appliedPreferred.current === preferred) return;
+    appliedPreferred.current = preferred;
+    if (preferred !== i18n.language) void i18n.changeLanguage(preferred);
+    rememberLocale(preferred);
   }, [preferred, i18n]);
 
   // Never render the signed-in shell (stale name, navigation, sign-out) for a session that has ended.

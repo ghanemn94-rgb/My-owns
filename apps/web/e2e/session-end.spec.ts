@@ -20,7 +20,6 @@ import {
   SYN_RETAIL,
   apiSession,
   axeSummary,
-  escape,
   expectAccessible,
   fieldLabel,
   langOf,
@@ -257,16 +256,25 @@ test("a 403 is not a session end: a refused change keeps the user signed in wher
     })
     .click();
   expect((await refused).status()).toBe(403);
-  // The "not saved" notice (in whichever language the page shows afterwards: the persisted preference is re-applied
-  // when the save is refused, a pre-existing behaviour outside F-DG2-480, reported in the handback).
-  const notSaved = new RegExp(
-    `${escape(tr("en", "common.language.notSaved"))}|${escape(tr("ar", "common.language.notSaved"))}`,
-  );
-  await expect(page.getByRole("status").filter({ hasText: notSaved })).toBeVisible();
+  // T-DG2-FE11, behaviour (a): the language the user chose stays on screen, and the "not saved" notice says so in
+  // exactly that language (never the previous one), inside one polite live region whose lang is that language.
+  const notice = page.getByTestId("language-not-saved");
+  await expect(notice).toHaveText(tr(other, "common.language.notSaved"));
+  await expect(page.locator("html")).toHaveAttribute("lang", other);
+  await expect(page.locator("html")).toHaveAttribute("dir", other === "ar" ? "rtl" : "ltr");
+  const live = page.locator('.language-switch__live[aria-live="polite"]');
+  await expect(live).toHaveCount(1);
+  await expect(live).toHaveAttribute("lang", other);
+  await expect(live).toHaveAttribute("aria-atomic", "true");
+  await expect(live.getByTestId("language-not-saved")).toHaveCount(1);
+  await expectAccessible(page, lang, "language-not-saved");
+  await shot(page, lang, "language-not-saved");
   await page.waitForTimeout(1_000);
   expect(new URL(page.url()).pathname).toBe("/about");
-  const signOut = new RegExp(`^\\s*(${escape(tr("en", "auth.signOut"))}|${escape(tr("ar", "auth.signOut"))})\\s*$`);
-  await expect(page.getByRole("button", { name: signOut })).toBeVisible();
+  // A second later nothing has flipped the page back: same language, same notice, signed in (in that language).
+  await expect(page.locator("html")).toHaveAttribute("lang", other);
+  await expect(notice).toHaveText(tr(other, "common.language.notSaved"));
+  await expect(page.getByRole("button", { name: tr(other, "auth.signOut"), exact: true })).toBeVisible();
   expect(watched.me - meAt).toBeLessThanOrEqual(1);
   expect(watched.tooMany).toEqual([]);
 });
