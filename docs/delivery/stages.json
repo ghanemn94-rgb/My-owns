@@ -820,7 +820,7 @@
       "id": "DG2",
       "stage": "P2",
       "name": "Diagnose define and design",
-      "state": "FIXING",
+      "state": "REVIEWING",
       "depends_on": [
         "DG1"
       ],
@@ -839,10 +839,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:5dfecce44b9d7d4ded6ca45968c9e2686d1c011cdd7c906ba3dc9974bbdf92b8",
-        "source_commit": "8488e7a48c988f891c041dfc5dc4c638d8fb9a24",
-        "frozen_at": "2026-10-07T04:31:28Z",
-        "manifest_path": "docs/delivery/candidates/DG2/5dfecce44b9d7d4d.manifest.json"
+        "candidate_id": "sha256:6824b8b8d36a688178a058c11c4882737a79cf7f39b438dcf2390eafb88d3afc",
+        "source_commit": "aa0a68f1aad3f19776760a0d3bff6bf81e9f3fb4",
+        "frozen_at": "2026-10-07T06:37:06Z",
+        "manifest_path": "docs/delivery/candidates/DG2/6824b8b8d36a6881.manifest.json"
       },
       "review_rounds": [
         {
@@ -987,6 +987,18 @@
             "qa-verifier": "docs/delivery/reviews/DG2/round-12/qa-verifier.json"
           },
           "note": "DG2 gate review round 12 on candidate 5dfecce4 (552 files, source 8488e7a). F-DG2-411 (no client I/O inside a database transaction; pool bounds) and F-DG2-412 (incomplete bodies are a declared 400 on every route), both fixed by BE17 eb455d3, and F-DG2-430 (pure state updaters plus a React-warning guard; FE9 644198a) are FIXED_PENDING_VERIFICATION (D-072). ADR-0007 §5b now lists the exhausted-pool 503 as out of contract by design. 29 DG2 findings CLOSED_VERIFIED. Orchestrator pre-review verification in both locale settings: all 32 steps exit 0, with no hidden failures. Disjoint id ranges: code-security 440-449, domain 450-459, qa 460-469."
+        },
+        {
+          "round": 13,
+          "candidate_id": "sha256:6824b8b8d36a688178a058c11c4882737a79cf7f39b438dcf2390eafb88d3afc",
+          "frozen_at": "2026-10-07T06:37:06Z",
+          "source_commit": "aa0a68f1aad3f19776760a0d3bff6bf81e9f3fb4",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG2/round-13/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG2/round-13/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG2/round-13/qa-verifier.json"
+          },
+          "note": "DG2 gate review round 13 on candidate 6824b8b8 (556 files, source aa0a68f). Three findings are FIXED_PENDING_VERIFICATION (D-073), all fixed by BE18A 8c0083e: F-DG2-440 (commit-time authorisation of the upload), F-DG2-441 (OIDC discovery outside any transaction, plus an AST sweep of awaits inside transactions) and F-DG2-460 (shutdown waits for handler cleanup; start-up sweep of stale temporaries). 32 DG2 findings CLOSED_VERIFIED. Orchestrator pre-review verification in both locale settings: all 32 steps exit 0, with no hidden failures. Disjoint id ranges: code-security 470-479, domain 480-489, qa 490-499."
         }
       ],
       "gate_record": "docs/delivery/gates/DG2.json",
@@ -1125,6 +1137,11 @@
           "state": "FIXING",
           "at": "2026-10-07T05:30:38Z",
           "note": "Round 12 on candidate 5dfecce4: domain PASS (20 checks; tenth clean pass). code-security PASS: it closed F-DG2-411 and F-DG2-412 and raised F-DG2-440 (Medium; an in-flight upload commits after its grant is revoked or its session is logged out, because phase 3 re-runs the policy on the request-start grants; pre-existing) and F-DG2-441 (Low; OIDC discovery runs inside an open transaction in /auth/login; pre-existing since DG1). qa FAIL: it closed F-DG2-430 and raised F-DG2-460 (Medium; a BE17 regression: an upload in flight at SIGTERM leaves an orphaned .part because db.destroy() no longer waits for the handler's async cleanup). Every failure in the cited logs was disclosed and explained. 32 CLOSED_VERIFIED, 3 OPEN. Round-13 repair: backend-workflow-engineer T-DG2-BE18A (assignments T-DG2-BE18 + BE18A): authorise at commit time, no remote call inside a transaction, and a shutdown that waits for handler cleanup, with a start-up sweep of stale temporaries."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-10-07T06:37:20Z",
+          "note": "BE18A integrated; D-073 recorded. 32 CLOSED_VERIFIED, 3 FIXED_PENDING_VERIFICATION, 0 OPEN. Orchestrator verification green in both locale settings (unit 796x4 per setting, integration 612, e2e 60). Candidate frozen as 6824b8b8 for gate review round 13."
         }
       ]
     },
