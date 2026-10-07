@@ -145,7 +145,9 @@ function NorthStarForm({ current, onDone }: { current: NorthStar | null; onDone:
   const ws = useWorkspace();
   const refresh = useP2Refresh(ws.tid);
   const [statement, setStatement] = useState(current?.statement ?? "");
-  const [error, setError] = useState<string | undefined>();
+  /** FE12: the statement's field-error code; translated at render time so a visible message follows a language switch. */
+  const [errorCode, setError] = useState<string | undefined>();
+  const error = errorCode === undefined ? undefined : fieldErrorMessage(t, errorCode);
   const [serverError, setServerError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
   const [base, setBase] = useState(current);
@@ -157,7 +159,7 @@ function NorthStarForm({ current, onDone }: { current: NorthStar | null; onDone:
     // F-DG2-210: a statement with no visible content is refused inline (never sent); visible text is sent verbatim.
     const parsed = northStarWrite.safeParse({ statement });
     if (isBlankText(statement) || !parsed.success) {
-      setError(fieldErrorMessage(t, isBlankText(statement) ? BLANK_CODE : issueCode(parsed.error!.issues[0]!)));
+      setError(isBlankText(statement) ? BLANK_CODE : issueCode(parsed.error!.issues[0]!));
       focusInvalid();
       return;
     }
@@ -182,7 +184,7 @@ function NorthStarForm({ current, onDone }: { current: NorthStar | null; onDone:
       }
       const onStatement = e instanceof ApiError ? e.fieldErrors.find((fe) => fe.pointer === "/statement") : undefined;
       if (onStatement) {
-        setError(fieldErrorMessage(t, onStatement.code));
+        setError(onStatement.code);
         focusInvalid();
       } else setServerError(e);
     } finally {

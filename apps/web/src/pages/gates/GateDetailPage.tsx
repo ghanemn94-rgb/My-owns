@@ -29,7 +29,7 @@ import { EmptyState, QueryState } from "../../components/States.tsx";
 import { useWorkspace, WorkspaceFrame } from "../../components/Workspace.tsx";
 import { formatBusinessDate, formatDateTime } from "../../lib/format.ts";
 import { diagnosticDimensionLabel, gateLabel, pick, tomDimensionLabel } from "../../lib/methodology.ts";
-import { errorMessage, fieldErrorMessage } from "../../lib/problem.ts";
+import { errorMessage, fieldErrorMessage, fieldErrorMessages } from "../../lib/problem.ts";
 import { BusinessApprovalNote, readiness } from "./GatesPage.tsx";
 
 export function GateDetailPage() {
@@ -421,13 +421,15 @@ function SubmitDialog({ view, onClose, onDone }: { view: GateView; onClose: () =
   const [note, setNote] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [error, setError] = useState<unknown>(null);
-  const [fieldError, setFieldError] = useState<string | undefined>();
+  /** FE12: the note's field-error code; translated at render time so a visible message follows a language switch. */
+  const [fieldErrorCode, setFieldErrorCode] = useState<string | undefined>();
+  const fieldError = fieldErrorCode === undefined ? undefined : fieldErrorMessage(t, fieldErrorCode);
   const [busy, setBusy] = useState(false);
   const r = readiness(view);
   const dialogRef = useRef<HTMLDivElement>(null);
   const focusInvalid = useFocusFirstInvalid(dialogRef);
   const showNoteError = (code: string) => {
-    setFieldError(fieldErrorMessage(t, code));
+    setFieldErrorCode(code);
     focusInvalid();
   };
 
@@ -445,7 +447,7 @@ function SubmitDialog({ view, onClose, onDone }: { view: GateView; onClose: () =
       showNoteError(issueCode(parsed.error.issues[0]!));
       return;
     }
-    setFieldError(undefined);
+    setFieldErrorCode(undefined);
     setBusy(true);
     setError(null);
     try {
@@ -520,7 +522,9 @@ function DecideDialog({
   const [outcome, setOutcome] = useState("");
   const [rationale, setRationale] = useState("");
   const [comments, setComments] = useState("");
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  /** FE12: field-error codes; translated at render time so a visible message follows a language switch. */
+  const [errorCodes, setErrors] = useState<Record<string, string>>({});
+  const errors = fieldErrorMessages(t, errorCodes);
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -534,13 +538,13 @@ function DecideDialog({
     // F-DG2-210: the rationale and comments are sent verbatim. "" keeps its meaning (rationale required, no comments);
     // text with no visible content is refused inline before anything is sent.
     const next: Record<string, string> = {};
-    if (isBlankText(rationale)) next["rationale"] = fieldErrorMessage(t, BLANK_CODE);
-    if (isBlankText(comments)) next["comments"] = fieldErrorMessage(t, BLANK_CODE);
+    if (isBlankText(rationale)) next["rationale"] = BLANK_CODE;
+    if (isBlankText(comments)) next["comments"] = BLANK_CODE;
     const body: Record<string, unknown> = { submissionNo, outcome, rationale };
     if (comments !== "") body["comments"] = comments;
     const parsed = gateDecisionCreate.safeParse(body);
     if (!parsed.success) {
-      for (const issue of parsed.error.issues) next[String(issue.path[0])] ??= fieldErrorMessage(t, issueCode(issue));
+      for (const issue of parsed.error.issues) next[String(issue.path[0])] ??= issueCode(issue);
     }
     if (Object.keys(next).length > 0) {
       showErrors(next);
@@ -560,7 +564,7 @@ function DecideDialog({
       if (e instanceof ApiError) {
         for (const fe of e.fieldErrors) {
           const field = /^\/(outcome|rationale|comments)$/.exec(fe.pointer)?.[1];
-          if (field) mapped[field] ??= fieldErrorMessage(t, fe.code);
+          if (field) mapped[field] ??= fe.code;
         }
       }
       if (Object.keys(mapped).length > 0) showErrors(mapped);

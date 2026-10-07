@@ -80,6 +80,8 @@ export function isBlankText(value: string): boolean {
 
 /** Field-error code for blank text (`BLANK_TEXT_CODE` of the shared schemas). */
 export const BLANK_CODE = "validation.blank";
+/** The field-error code of a required value that is missing ("problems.validation__required"). */
+export const REQUIRED_CODE = "validation.required";
 
 /**
  * Moves focus to the first `[aria-invalid="true"]` control inside `container` after each call of the returned

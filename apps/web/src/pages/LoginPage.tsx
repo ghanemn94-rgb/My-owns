@@ -115,24 +115,27 @@ function DevLoginForm({ returnTo }: { returnTo: string }) {
   const hintId = useId();
   const errorId = useId();
   const [username, setUsername] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  /** FE12: the cause, never translated text; the message is translated at render time so it follows a language switch. */
+  const [failure, setFailure] = useState<{ invalidUsername: true } | { error: unknown } | null>(null);
+  const error =
+    failure === null ? null : "error" in failure ? errorMessage(t, failure.error) : t("auth.dev.invalidUsername");
   const [busy, setBusy] = useState(false);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const parsed = devLoginRequest.safeParse({ username: username.trim() });
     if (!parsed.success) {
-      setError(t("auth.dev.invalidUsername"));
+      setFailure({ invalidUsername: true });
       return;
     }
     setBusy(true);
-    setError(null);
+    setFailure(null);
     try {
       await apiRequest("/api/v1/auth/dev-login", { method: "POST", body: parsed.data, silent401: true });
       await queryClient.invalidateQueries({ queryKey: keys.me });
       void navigate(returnTo, { replace: true });
     } catch (err) {
-      setError(errorMessage(t, err));
+      setFailure({ error: err });
       setBusy(false);
     }
   };

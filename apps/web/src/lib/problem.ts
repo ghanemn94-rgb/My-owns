@@ -42,6 +42,16 @@ export function fieldErrorMessage(t: TFunction, code: string): string {
 }
 
 /**
+ * FE12: component state holds field-error *codes*, never translated text, and they are translated here at render time,
+ * so a message that is visible while the user switches language follows the new language.
+ */
+export function fieldErrorMessages(t: TFunction, codes: Readonly<Record<string, string>>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [name, code] of Object.entries(codes)) out[name] = fieldErrorMessage(t, code);
+  return out;
+}
+
+/**
  * The messages of a form's error live regions, each shown once (F-DG2-340). `banner` is the message of the problem
  * banner (already rendered in its own `role="alert"` region); `others` are the form-level messages that are not
  * attached to a field. Returns the `others` that say something the banner does not, without repeats, in order: a

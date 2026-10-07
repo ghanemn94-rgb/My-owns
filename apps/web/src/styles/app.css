@@ -224,10 +224,13 @@ a:hover {
   align-items: center;
   gap: var(--mth-space-2);
 }
-.language-switch__notice {
-  font-size: 0.8rem;
+/* FE12: the language-not-saved notice is an app-level banner below the header (never in the header row, so it cannot
+   wrap the header or squeeze the wordmark): full width, square corners, wrapping inside its own box. */
+.app-notice > .banner {
+  border-radius: 0;
+  overflow-wrap: anywhere;
 }
-/* The live region stays in the DOM (so its first message is announced); while empty it takes no space in the flex row. */
+/* The live region stays in the DOM (so its first message is announced); while empty it takes no space. */
 .language-switch__live:empty {
   position: absolute;
   inline-size: 1px;
@@ -1078,18 +1081,21 @@ input[type="radio"] {
   }
   .app-body {
     grid-template-columns: minmax(0, 1fr);
+    position: relative;
   }
   .app-nav {
     display: none;
   }
+  /* T-DG2-FE12: the open menu starts right below the header and any app banner (e.g. the language notice), whatever
+     their height, instead of at a fixed 3.5rem that a taller (320 px) header or a banner would overlap. */
   .app-nav--open {
     display: block;
-    position: fixed;
-    inset-block: 3.5rem 0;
+    position: absolute;
+    inset-block: 0 auto;
     inset-inline-start: 0;
+    min-block-size: 100%;
     inline-size: min(18rem, 85vw);
     z-index: 40;
-    overflow-y: auto;
   }
   .user-box {
     display: none;
@@ -1099,6 +1105,35 @@ input[type="radio"] {
   }
   .phase-stepper {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* T-DG2-FE12: very small screens (320 px phones). The header row fits without horizontal scrolling: tighter gaps, the
+   sign-out label is visually hidden (the button keeps its accessible name and icon), and the wordmark may wrap its own
+   name and badge inside its box instead of pushing the row wider. Nothing here depends on the language notice, which
+   is a banner below the header. */
+@media (max-width: 30rem) {
+  .app-header {
+    gap: var(--mth-space-2);
+    padding-inline: var(--mth-space-3);
+  }
+  .wordmark {
+    flex-wrap: wrap;
+    row-gap: 0;
+    min-inline-size: 0;
+    font-size: 0.95rem;
+    line-height: 1.25;
+  }
+  .app-header__label {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .app-header .button--small {
+    padding-inline: var(--mth-space-2);
   }
 }
 

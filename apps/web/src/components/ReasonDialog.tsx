@@ -25,14 +25,16 @@ export function ReasonDialog({
 }) {
   const { t } = useTranslation();
   const [reason, setReason] = useState("");
-  const [fieldError, setFieldError] = useState<string | undefined>();
+  /** FE12: the field-error code; translated at render time so a visible message follows a language switch. */
+  const [fieldErrorCode, setFieldErrorCode] = useState<string | undefined>();
+  const fieldError = fieldErrorCode === undefined ? undefined : fieldErrorMessage(t, fieldErrorCode);
   const [serverError, setServerError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const focusInvalid = useFocusFirstInvalid(dialogRef);
 
   const showFieldError = (code: string) => {
-    setFieldError(fieldErrorMessage(t, code));
+    setFieldErrorCode(code);
     focusInvalid();
   };
 
@@ -47,7 +49,7 @@ export function ReasonDialog({
       showFieldError(issueCode(parsed.error.issues[0]!));
       return;
     }
-    setFieldError(undefined);
+    setFieldErrorCode(undefined);
     setBusy(true);
     try {
       await onConfirm(reason);

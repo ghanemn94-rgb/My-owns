@@ -27,7 +27,7 @@ import { Section, TextCell } from "../../components/Section.tsx";
 import { EmptyState, QueryState } from "../../components/States.tsx";
 import { useWorkspace } from "../../components/Workspace.tsx";
 import { diagnosticDimensionLabel, tomDimensionLabel, tomDimensionOptions } from "../../lib/methodology.ts";
-import { errorMessage, fieldErrorMessage } from "../../lib/problem.ts";
+import { errorMessage, fieldErrorMessage, fieldErrorMessages } from "../../lib/problem.ts";
 
 const DURATION_UNITS = ["minutes", "hours", "days", "weeks"] as const;
 
@@ -525,9 +525,18 @@ function StepsEditor({ journey, onClose }: { journey: Journey; onClose: () => vo
   const [steps, setSteps] = useState<StepDraft[]>(() =>
     [...journey.steps].sort((a, b) => a.ordinal - b.ordinal).map(toDraft),
   );
-  const [error, setError] = useState<string | null>(null);
-  /** Field errors keyed "<step key>/<field>", so they follow a step when it is moved. */
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  /**
+   * A form-level validation problem: its code and the 0-based step it is on, if any. FE12: state holds codes, never
+   * translated text; both this and the field errors are translated at render time, so they follow a language switch.
+   */
+  const [problem, setProblem] = useState<{ step: number | null; code: string } | null>(null);
+  /** Field-error codes keyed "<step key>/<field>", so they follow a step when it is moved. */
+  const [fieldErrorCodes, setFieldErrors] = useState<Record<string, string>>({});
+  const fieldErrors = fieldErrorMessages(t, fieldErrorCodes);
+  const error =
+    problem === null
+      ? null
+      : `${problem.step === null ? "" : `${t("design.journeys.step")} ${problem.step + 1}: `}${fieldErrorMessage(t, problem.code)}`;
   const [serverError, setServerError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -549,22 +558,19 @@ function StepsEditor({ journey, onClose }: { journey: Journey; onClose: () => vo
 
   const save = async () => {
     const next: Record<string, string> = {};
-    for (const s of steps) for (const f of blankStepFields(s)) next[`${s.key}/${f}`] = fieldErrorMessage(t, BLANK_CODE);
+    for (const s of steps) for (const f of blankStepFields(s)) next[`${s.key}/${f}`] = BLANK_CODE;
     const body = { steps: steps.map(stepBody) };
     const parsed = journeyUpdate.safeParse(body);
-    let other: string | null = null;
+    let other: { step: number | null; code: string } | null = null;
     if (!parsed.success) {
       for (const issue of parsed.error.issues) {
         const [, i, field] = issue.path;
         const step = typeof i === "number" ? steps[i] : undefined;
-        if (step && isStepTextField(field)) next[`${step.key}/${field}`] ??= fieldErrorMessage(t, issueCode(issue));
-        else if (other === null) {
-          const at = typeof i === "number" ? `${t("design.journeys.step")} ${i + 1}: ` : "";
-          other = `${at}${fieldErrorMessage(t, issueCode(issue))}`;
-        }
+        if (step && isStepTextField(field)) next[`${step.key}/${field}`] ??= issueCode(issue);
+        else other ??= { step: typeof i === "number" ? i : null, code: issueCode(issue) };
       }
     }
-    setError(other);
+    setProblem(other);
     if (other !== null || Object.keys(next).length > 0) {
       showFieldErrors(next);
       return;
@@ -586,7 +592,7 @@ function StepsEditor({ journey, onClose }: { journey: Journey; onClose: () => vo
         for (const fe of e.fieldErrors) {
           const m = /^\/steps\/(\d+)\/([A-Za-z]+)$/.exec(fe.pointer);
           const step = m ? steps[Number(m[1])] : undefined;
-          if (step && isStepTextField(m?.[2])) mapped[`${step.key}/${m[2]}`] ??= fieldErrorMessage(t, fe.code);
+          if (step && isStepTextField(m?.[2])) mapped[`${step.key}/${m[2]}`] ??= fe.code;
         }
       }
       if (Object.keys(mapped).length > 0) showFieldErrors(mapped);

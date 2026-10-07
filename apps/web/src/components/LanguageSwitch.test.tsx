@@ -149,6 +149,26 @@ describe("the live region and the persisted preference", () => {
     expect(notice.parentElement!.getAttribute("lang")).toBe("en");
   });
 
+  // T-DG2-FE12: the notice is a banner below the header, never in the header row (so it cannot wrap the header or
+  // squeeze the wordmark). The one live region sits between the header and the app body, while empty as well.
+  it.each(["en", "ar"] as const)("%s: the notice is a warning banner below the header, not inside it", async (from) => {
+    setup(from, problem(403, "csrf"));
+    await waitFor(() => expect(document.querySelector("header.app-header")).not.toBeNull());
+    const live = document.querySelector(".language-switch__live")!;
+    expect(live.previousElementSibling).toBe(document.querySelector("header.app-header"));
+    expect(live.nextElementSibling!.classList.contains("app-body")).toBe(true);
+    expect(live.childElementCount).toBe(0);
+    await switchTo(other(from), from);
+    const notice = await screen.findByTestId("language-not-saved");
+    expect(document.querySelector("header.app-header")!.contains(notice)).toBe(false);
+    expect(notice.parentElement).toBe(live);
+    expect(notice.classList.contains("banner")).toBe(true);
+    expect(notice.classList.contains("banner--warning")).toBe(true);
+    // A non-colour cue: the warning icon (decorative, aria-hidden) next to the words.
+    expect(notice.querySelector("svg[aria-hidden='true']")).not.toBeNull();
+    expect(document.querySelectorAll(".language-switch__live")).toHaveLength(1);
+  });
+
   it("the signed-out sign-in page has no live region (and so no competing status)", async () => {
     mockApi(route("GET", /\/api\/v1\/me$/, () => ({ status: 401, body: { status: 401, code: "unauthenticated" } })));
     renderApp("/login", { i18n: createI18n("en") });

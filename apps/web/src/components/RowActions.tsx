@@ -6,8 +6,8 @@
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ApiError, api } from "../api/client.ts";
-import { errorMessage, fieldErrorMessage } from "../lib/problem.ts";
-import { BLANK_CODE, Dialog, Field, isBlankText, useFocusFirstInvalid } from "./Form.tsx";
+import { errorMessage, fieldErrorMessages } from "../lib/problem.ts";
+import { BLANK_CODE, Dialog, Field, isBlankText, REQUIRED_CODE, useFocusFirstInvalid } from "./Form.tsx";
 import { Icon } from "./Icon.tsx";
 import { ReasonDialog } from "./ReasonDialog.tsx";
 
@@ -99,7 +99,9 @@ export function NoteDecisionDialog({
   const [choice, setChoice] = useState("");
   const [extraValue, setExtraValue] = useState("");
   const [note, setNote] = useState("");
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  /** FE12: field-error codes; translated at render time so a visible message follows a language switch. */
+  const [errorCodes, setErrors] = useState<Record<string, string>>({});
+  const errors = fieldErrorMessages(t, errorCodes);
   const [serverError, setServerError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -107,10 +109,10 @@ export function NoteDecisionDialog({
 
   const submit = async () => {
     const next: Record<string, string> = {};
-    if (choices && !choice) next["choice"] = t("problems.validation__required");
-    if (extra && !extraValue) next["extra"] = t("problems.validation__required");
-    if (isBlankText(note)) next["note"] = fieldErrorMessage(t, BLANK_CODE);
-    else if (noteRequired && note === "") next["note"] = t("problems.validation__required");
+    if (choices && !choice) next["choice"] = REQUIRED_CODE;
+    if (extra && !extraValue) next["extra"] = REQUIRED_CODE;
+    if (isBlankText(note)) next["note"] = BLANK_CODE;
+    else if (noteRequired && note === "") next["note"] = REQUIRED_CODE;
     setErrors(next);
     if (Object.keys(next).length > 0) {
       focusInvalid();
@@ -129,7 +131,7 @@ export function NoteDecisionDialog({
     } catch (e) {
       const onNote = e instanceof ApiError ? e.fieldErrors.find((fe) => fe.pointer === notePointer) : undefined;
       if (onNote) {
-        setErrors({ note: fieldErrorMessage(t, onNote.code) });
+        setErrors({ note: onNote.code });
         focusInvalid();
       } else setServerError(e);
       if (e instanceof ApiError && e.status === 409) await onDone();

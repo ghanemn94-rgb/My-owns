@@ -15,7 +15,13 @@ import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import type { z } from "zod";
 import { ApiError, api, newIdempotencyKey } from "../api/client.ts";
-import { distinctFormMessages, errorMessage, fieldErrorMessage, pointerToField } from "../lib/problem.ts";
+import {
+  distinctFormMessages,
+  errorMessage,
+  fieldErrorMessage,
+  fieldErrorMessages,
+  pointerToField,
+} from "../lib/problem.ts";
 import { Dialog, Field, issueCode } from "./Form.tsx";
 import { Icon } from "./Icon.tsx";
 import type { Person } from "./People.tsx";
@@ -176,9 +182,13 @@ export function useRecordForm<R extends Record<string, unknown>>(props: RecordFo
   const [values, setValues] = useState<FormValues>(() =>
     formValuesOf(fields, (record as Record<string, unknown> | null) ?? props.defaults ?? null),
   );
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  // FE12: field and form-level errors are held as *codes* and translated at render time, so a message that is visible
+  // while the user switches language follows the new language. The hook still returns translated `errors`/`unmapped`.
+  const [errorCodes, setErrors] = useState<Record<string, string>>({});
   const [bannerError, setBannerError] = useState<unknown>(null);
-  const [unmapped, setUnmapped] = useState<string[]>([]);
+  const [unmappedCodes, setUnmapped] = useState<string[]>([]);
+  const errors = fieldErrorMessages(t, errorCodes);
+  const unmapped = unmappedCodes.map((code) => fieldErrorMessage(t, code));
   const [conflict, setConflict] = useState<{
     latest: (R & { version: number }) | null;
     currentVersion: number | null;
@@ -245,7 +255,7 @@ export function useRecordForm<R extends Record<string, unknown>>(props: RecordFo
       if (f.readOnly) continue;
       if (against === null ? f.editOnly : f.createOnly) continue;
       if (before !== null && vals[f.name] === before[f.name]) continue;
-      if (isBlankText(f, vals[f.name])) out[f.name] = fieldErrorMessage(t, "validation.blank");
+      if (isBlankText(f, vals[f.name])) out[f.name] = "validation.blank";
     }
     return out;
   };
@@ -261,9 +271,9 @@ export function useRecordForm<R extends Record<string, unknown>>(props: RecordFo
     if (result && !result.success) {
       for (const issue of result.error.issues) {
         const name = String(issue.path[0] ?? "");
-        const message = fieldErrorMessage(t, issueCode(issue));
-        if (fields.some((f) => f.name === name)) next[name] ??= message;
-        else other.push(message);
+        const code = issueCode(issue);
+        if (fields.some((f) => f.name === name)) next[name] ??= code;
+        else other.push(code);
       }
     }
     showErrors(next, other);
@@ -277,7 +287,7 @@ export function useRecordForm<R extends Record<string, unknown>>(props: RecordFo
       // Nothing changed, or only annotations (a change summary) changed: never write a content-free version.
       const changed = Object.keys(body).filter((k) => !fields.find((f) => f.name === k)?.annotation);
       if (changed.length === 0) {
-        showErrors({}, [t("problems.validation__empty_update")]);
+        showErrors({}, ["validation.empty_update"]);
         return;
       }
     }
@@ -319,9 +329,9 @@ export function useRecordForm<R extends Record<string, unknown>>(props: RecordFo
         const other: string[] = [];
         for (const fe of e.fieldErrors) {
           const name = pointerToField(fe.pointer).split(".")[0] ?? "";
-          if (fields.some((f) => f.name === name)) next[name] ??= fieldErrorMessage(t, fe.code);
+          if (fields.some((f) => f.name === name)) next[name] ??= fe.code;
           // A business rule repeats its own code as `validation.<code>`: the banner already says it.
-          else if (fe.code !== e.code && fe.code !== `validation.${e.code}`) other.push(fieldErrorMessage(t, fe.code));
+          else if (fe.code !== e.code && fe.code !== `validation.${e.code}`) other.push(fe.code);
         }
         showErrors(next, other);
       }

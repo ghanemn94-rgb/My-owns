@@ -42,6 +42,45 @@ test.afterAll(async ({}, info) => {
   writeFileSync(join(SHOTS, lang, "axe-summary-session-end.json"), `${JSON.stringify(axeSummary, null, 2)}\n`);
 });
 
+/** T-DG2-FE12: the header and wordmark boxes, the language-not-saved notice's box, and the horizontal overflow. */
+async function headerLayout(page: Page) {
+  return page.evaluate(() => {
+    const box = (el: Element) => {
+      const b = el.getBoundingClientRect();
+      return { top: b.top, bottom: b.bottom, left: b.left, right: b.right, width: b.width, height: b.height };
+    };
+    const header = document.querySelector("header.app-header")!;
+    const wordmark = header.querySelector<HTMLElement>("[data-testid='wordmark']")!;
+    const notice = document.querySelector("[data-testid='language-not-saved']");
+    const root = document.documentElement;
+    return {
+      header: box(header),
+      wordmark: box(wordmark),
+      /** > 0 when the wordmark's content no longer fits its box (squeezed). */
+      wordmarkOverflow: wordmark.scrollWidth - wordmark.clientWidth,
+      notice: notice ? box(notice) : null,
+      noticeInHeader: notice ? header.contains(notice) : null,
+      /** > 0 when the page scrolls horizontally. */
+      horizontalOverflow: root.scrollWidth - root.clientWidth,
+    };
+  });
+}
+const LAYOUT_WIDTHS = [320, 768, 1280] as const;
+
+/** Runs `measure` with the language notice's live region (and the notice in it) removed from the layout. */
+async function withoutNotice<T>(page: Page, measure: () => Promise<T>): Promise<T> {
+  await page.evaluate(() => {
+    for (const el of document.querySelectorAll<HTMLElement>(".language-switch__live")) el.style.display = "none";
+  });
+  try {
+    return await measure();
+  } finally {
+    await page.evaluate(() => {
+      for (const el of document.querySelectorAll<HTMLElement>(".language-switch__live")) el.style.display = "";
+    });
+  }
+}
+
 /** Counts GET /me requests and records every 429 the page receives. */
 function watch(page: Page) {
   const state = { me: 0, tooMany: [] as string[] };
@@ -247,6 +286,7 @@ test("a 403 is not a session end: a refused change keeps the user signed in wher
     headers: { Origin: BASE },
   });
   expect(relogin.status()).toBe(204);
+  const viewport = page.viewportSize()!;
   const meAt = watched.me;
   const refused = page.waitForResponse((r) => new URL(r.url()).pathname === "/api/v1/me/preferences");
   const other: Lang = lang === "ar" ? "en" : "ar";
@@ -269,6 +309,43 @@ test("a 403 is not a session end: a refused change keeps the user signed in wher
   await expect(live.getByTestId("language-not-saved")).toHaveCount(1);
   await expectAccessible(page, lang, "language-not-saved");
   await shot(page, lang, "language-not-saved");
+  // T-DG2-FE12: the notice is a banner below the header. At 320, 768 and 1280 px it neither wraps the header nor
+  // squeezes the wordmark (same header height and wordmark box as before the notice, the wordmark's content fits), it
+  // does not overlap the wordmark, and the page does not scroll horizontally. axe at each width.
+  for (const width of LAYOUT_WIDTHS) {
+    await page.setViewportSize({ width, height: viewport.height });
+    await expect(notice).toBeVisible();
+    const now = await headerLayout(page);
+    // The reference: the same page, language and width with the notice's region taken out of the layout, so any
+    // difference in the header is caused by the notice alone (wrapping the header or squeezing the wordmark).
+    const ref = await withoutNotice(page, () => headerLayout(page));
+    const at = `${lang} ${width}px`;
+    expect(now.noticeInHeader, at).toBe(false);
+    expect(Math.abs(now.header.height - ref.header.height), `${at} header height`).toBeLessThanOrEqual(0.5);
+    expect(Math.abs(now.wordmark.width - ref.wordmark.width), `${at} wordmark width`).toBeLessThanOrEqual(0.5);
+    expect(Math.abs(now.wordmark.height - ref.wordmark.height), `${at} wordmark height`).toBeLessThanOrEqual(0.5);
+    expect(now.wordmarkOverflow, `${at} wordmark content fits`).toBeLessThanOrEqual(0);
+    expect(now.notice!.top, `${at} notice below the header`).toBeGreaterThanOrEqual(now.header.bottom - 0.5);
+    expect(now.notice!.top, `${at} notice clear of the wordmark`).toBeGreaterThanOrEqual(now.wordmark.bottom);
+    expect(now.horizontalOverflow, `${at} no horizontal scroll`).toBeLessThanOrEqual(0);
+    expect(ref.horizontalOverflow, `${at} no horizontal scroll without the notice either`).toBeLessThanOrEqual(0);
+    await expectAccessible(page, lang, `language-not-saved-${width}`);
+    await shot(page, lang, `language-not-saved-${width}`);
+    if (width <= 900) {
+      // The small-screen menu opens below the header and the notice, never over them.
+      const toggle = page.getByRole("button", { name: tr(other, "nav.toggle") });
+      await toggle.click();
+      const nav = page.getByRole("navigation", { name: tr(other, "nav.primary") });
+      await expect(nav).toBeVisible();
+      const navTop = (await nav.boundingBox())!.y;
+      const noticeBox = (await notice.boundingBox())!;
+      expect(navTop, `${at} menu below the header`).toBeGreaterThanOrEqual(now.header.bottom - 0.5);
+      expect(navTop, `${at} menu below the notice`).toBeGreaterThanOrEqual(noticeBox.y + noticeBox.height - 0.5);
+      await toggle.click();
+      await expect(nav).toBeHidden();
+    }
+  }
+  await page.setViewportSize(viewport);
   await page.waitForTimeout(1_000);
   expect(new URL(page.url()).pathname).toBe("/about");
   // A second later nothing has flipped the page back: same language, same notice, signed in (in that language).

@@ -365,3 +365,72 @@ describe("Team assign dialog: accountability preview follows the selected role (
     });
   }
 });
+
+// T-DG2-FE12 (REQ-S15-007): the "Role assigned…" success notice is translated at render time (state holds the role
+// code, never the text), so switching language with the real header switch while it is visible updates its text and
+// direction. EN→AR and AR→EN, under <StrictMode>.
+describe.each([
+  { from: "en" as const, to: "ar" as const },
+  { from: "ar" as const, to: "en" as const },
+])("Team: the success notice follows a language switch, $from → $to", ({ from, to }) => {
+  it("the notice is shown in the language now on screen, not the one it was created in", async () => {
+    // Translators and expected texts are built once, before rendering: createI18n() also applies its locale to <html>,
+    // so building one later would itself change <html lang dir>.
+    const T = { en: createI18n("en").t, ar: createI18n("ar").t };
+    const DONE = {
+      en: T.en("team.assign.done", { role: T.en("transformations.audit.role.WL") }),
+      ar: T.ar("team.assign.done", { role: T.ar("transformations.audit.role.WL") }),
+    };
+    expect(DONE.ar).not.toBe(DONE.en);
+    const done = (l: "en" | "ar") => DONE[l];
+    const t = T[from];
+    const created = { ...member(OTHER_USER, "WL").assignment };
+    // The scripted server keeps the saved preference, so a later /me refetch agrees with the successful save.
+    let me = makeMe(leadGrants(), { preferredLocale: from });
+    const { requests, i18n } = render(
+      leadGrants(),
+      from,
+      [
+        route("GET", /\/api\/v1\/me$/, () => ({ status: 200, body: me })),
+        route("POST", new RegExp(`${esc(TR)}/scoped-assignments$`), () => ({ status: 201, body: created })),
+        route("PUT", /\/api\/v1\/me\/preferences$/, () => {
+          me = { ...me, user: { ...me.user, preferredLocale: to, version: me.user.version + 1 } };
+          return { status: 200, body: me.user };
+        }),
+      ],
+      { strict: true },
+    );
+    const governance = await screen.findByRole("region", { name: t("team.governance.title") });
+    const card = await waitFor(() => {
+      const c = governance.querySelector<HTMLElement>("[data-role='WL']");
+      expect(c).not.toBeNull();
+      return c!;
+    });
+    fireEvent.click(within(card).getByRole("button", { name: new RegExp(`^${esc(t("team.assign.action"))}`) }));
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.change(within(dialog).getByLabelText(new RegExp(`^${esc(t("team.assign.person"))}`)), {
+      target: { value: OTHER_USER },
+    });
+    fireEvent.change(within(dialog).getByLabelText(new RegExp(`^${esc(t("team.assign.reason"))}`)), {
+      target: { value: "Synthetic: leads billing" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: t("team.assign.submit") }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    const notice = document.querySelector<HTMLElement>("[data-state='assigned']")!;
+    await waitFor(() => expect(notice.textContent).toContain(done(from)));
+
+    // The real header switch, while the notice is visible.
+    const other = to === "ar" ? "العربية" : "English";
+    fireEvent.click(screen.getByRole("button", { name: t("common.language.switchTo", { language: other }) }));
+    await waitFor(() => expect(i18n.language).toBe(to));
+    await waitFor(() => expect(notice.textContent).toContain(done(to)));
+    expect(notice.textContent).not.toContain(done(from));
+    expect(notice.isConnected).toBe(true);
+    expect(notice.getAttribute("role")).toBe("status");
+    expect(document.documentElement.lang).toBe(to);
+    expect(document.documentElement.dir).toBe(to === "ar" ? "rtl" : "ltr");
+    await waitFor(() => expect(requests.filter((r) => r.method === "PUT")).toHaveLength(1));
+    // The save succeeded: no language-not-saved notice.
+    expect(screen.queryByTestId("language-not-saved")).toBeNull();
+  });
+});

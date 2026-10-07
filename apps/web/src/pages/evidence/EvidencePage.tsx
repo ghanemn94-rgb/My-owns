@@ -9,7 +9,7 @@ import { ApiError, api, newIdempotencyKey } from "../../api/client.ts";
 import { useCharter, useDecisions, useNorthStar, useP2Refresh, useRegister, useTomCanvas } from "../../api/queries.ts";
 import type { Evidence, EvidenceLink } from "../../api/types.ts";
 import { useLocale } from "../../app/locale.ts";
-import { Dialog, Field } from "../../components/Form.tsx";
+import { Dialog, Field, REQUIRED_CODE } from "../../components/Form.tsx";
 import { Icon } from "../../components/Icon.tsx";
 import { EvidenceStateChip } from "../../components/P2Badges.tsx";
 import { PersonName, usePeople } from "../../components/People.tsx";
@@ -22,7 +22,7 @@ import { QueryState } from "../../components/States.tsx";
 import { useWorkspace, WorkspaceFrame } from "../../components/Workspace.tsx";
 import { formatBusinessDate, formatDateTime } from "../../lib/format.ts";
 import { diagnosticDimensionLabel, pick, tomDimensionLabel } from "../../lib/methodology.ts";
-import { errorMessage } from "../../lib/problem.ts";
+import { errorMessage, fieldErrorMessage, fieldErrorMessages } from "../../lib/problem.ts";
 
 /** Upload limit of one revision (apps/api evidence store: 25 MiB); checked before sending, re-checked by the server. */
 const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
@@ -361,16 +361,18 @@ function UploadDialog({ item, onClose }: { item: Evidence; onClose: () => void }
   const refresh = useP2Refresh(ws.tid);
   const input = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<unknown>(null);
-  const [localError, setLocalError] = useState<string | undefined>();
+  /** FE12: the file's field-error code; translated at render time so a visible message follows a language switch. */
+  const [localErrorCode, setLocalError] = useState<string | undefined>();
+  const localError = localErrorCode === undefined ? undefined : fieldErrorMessage(t, localErrorCode);
   const [busy, setBusy] = useState(false);
   const upload = async () => {
     const file = input.current?.files?.[0];
     if (!file) {
-      setLocalError(t("problems.validation__required"));
+      setLocalError(REQUIRED_CODE);
       return;
     }
     if (file.size > MAX_UPLOAD_BYTES) {
-      setLocalError(t("problems.evidence__too_large"));
+      setLocalError("evidence.too_large");
       return;
     }
     setLocalError(undefined);
@@ -497,7 +499,9 @@ function LinkDialog({ item, onClose }: { item: Evidence; onClose: () => void }) 
   const [type, setType] = useState<LinkType | "">("");
   const [recordId, setRecordId] = useState("");
   const [error, setError] = useState<unknown>(null);
-  const [localError, setLocalError] = useState<Record<string, string>>({});
+  /** FE12: field-error codes; translated at render time so a visible message follows a language switch. */
+  const [localErrorCodes, setLocalError] = useState<Record<string, string>>({});
+  const localError = fieldErrorMessages(t, localErrorCodes);
   const [busy, setBusy] = useState(false);
   const key = useRef(newIdempotencyKey());
   const candidates = useLinkCandidates(type);
@@ -505,8 +509,8 @@ function LinkDialog({ item, onClose }: { item: Evidence; onClose: () => void }) 
     const parsed = evidenceLinkCreate.safeParse({ evidenceId: item.id, recordType: type, recordId });
     if (!parsed.success) {
       setLocalError({
-        ...(type ? {} : { type: t("problems.validation__required") }),
-        ...(recordId ? {} : { record: t("problems.validation__required") }),
+        ...(type ? {} : { type: REQUIRED_CODE }),
+        ...(recordId ? {} : { record: REQUIRED_CODE }),
       });
       return;
     }

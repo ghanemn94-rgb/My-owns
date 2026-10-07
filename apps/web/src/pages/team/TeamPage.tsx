@@ -44,6 +44,7 @@ function TeamBody() {
   const team = useTeam(ws.tid);
   const accountabilities = useRoleAccountabilities();
   const [assigning, setAssigning] = useState<{ roleCode: string } | null>(null);
+  /** The role code just assigned (FE12: the success notice is translated at render time, so it follows a language switch). */
   const [done, setDone] = useState<string | null>(null);
   const canAssign = ws.can("team.assign");
 
@@ -64,9 +65,9 @@ function TeamBody() {
             };
             return (
               <>
-                {done ? (
+                {done !== null ? (
                   <p className="banner banner--success" role="status" data-state="assigned">
-                    <Icon name="check" /> {done}
+                    <Icon name="check" /> {t("team.assign.done", { role: roleName(t, done) })}
                   </p>
                 ) : null}
                 <Section id="team-governance" title={t("team.governance.title")} intro={t("team.governance.intro")}>
@@ -101,7 +102,7 @@ function TeamBody() {
                     onClose={() => setAssigning(null)}
                     onDone={(roleCode) => {
                       setAssigning(null);
-                      setDone(t("team.assign.done", { role: roleName(t, roleCode) }));
+                      setDone(roleCode);
                     }}
                   />
                 ) : null}

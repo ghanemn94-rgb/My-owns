@@ -9,7 +9,7 @@ import { api, markSignedOut } from "../api/client.ts";
 import { canAny } from "../auth/permissions.ts";
 import { useMe } from "../auth/session.tsx";
 import { Icon } from "../components/Icon.tsx";
-import { LanguageSwitch } from "../components/LanguageSwitch.tsx";
+import { LanguageNotSavedNotice, LanguageSwitch, useLanguageNotSaved } from "../components/LanguageSwitch.tsx";
 import { Wordmark } from "../components/Wordmark.tsx";
 import { localName, useLocale } from "./locale.ts";
 import { NAV_AREAS } from "./nav.ts";
@@ -23,6 +23,7 @@ export function Shell() {
   const queryClient = useQueryClient();
   const [navOpen, setNavOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [languageRefused, setLanguageRefused] = useLanguageNotSaved();
   const navId = useId();
 
   // Close the (small-screen) navigation after navigating.
@@ -72,7 +73,7 @@ export function Shell() {
         </button>
         <Wordmark productName={me.productName} />
         <div className="app-header__spacer" />
-        <LanguageSwitch signedIn />
+        <LanguageSwitch signedIn onRefusedChange={setLanguageRefused} />
         <div className="user-box">
           <span className="user-box__name">{me.user.displayName}</span>
           <span className="user-box__org">{localName(me.organization, locale)}</span>
@@ -83,9 +84,11 @@ export function Shell() {
           onClick={() => void signOut()}
           disabled={signingOut}
         >
-          <Icon name="signOut" /> {t("auth.signOut")}
+          <Icon name="signOut" /> <span className="app-header__label">{t("auth.signOut")}</span>
         </button>
       </header>
+      {/* FE12: below the header, so the notice never wraps the header row or squeezes the wordmark. */}
+      <LanguageNotSavedNotice refused={languageRefused} />
       <div className="app-body">
         <nav id={navId} className={`app-nav${navOpen ? " app-nav--open" : ""}`} aria-label={t("nav.primary")}>
           <ul className="app-nav__list">
