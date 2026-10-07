@@ -1,0 +1,407 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG2",
+  "round": 15,
+  "candidate_id": "sha256:3f01c61090435f114b52150d1ab73818839530ede08a4c07d04936175f7fe8f9",
+  "source_commit": "ed80b234d7ad6af3503aa04bb3a6f49cea2c1b65",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG2-T-DG2-REV-DOM-R15-domain-reviewer-20261007T130931Z-8e6ac4a1",
+    "session_id": "8e6ac4a1-0d41-4c33-a97d-62586eca6717"
+  },
+  "implementation_author": [
+    "backend-workflow-engineer",
+    "frontend-ux-engineer",
+    "kpi-benefits-engineer",
+    "solution-architect",
+    "transformation-analyst",
+    "devops-engineer",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "domain-reviewer authored no DG2 implementation, test, register row or ADR in the reviewed candidate. I formed this verdict from my own runs in a disposable clone at 9236a9f (the freeze commit on source ed80b234). I did not open any other reviewer's round-15 record. During my run the orchestrator auto-committed the code-security reviewer's round-15 evidence (HEAD moved to 0cf0d05). Their file names appeared in one git diff --stat line, but I did not read their content, and the candidate ID is unchanged. I read the round-14 finding F-DG2-500 (findings.json) only to learn which user path FE13 claims to fix. My probes are my own: reused unchanged from my rounds 13-14, plus the new r15-identity-ui.mjs."
+  },
+  "assignment": "docs/delivery/assignments/DG2/round-15/domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-PB-003",
+    "REQ-PB-012",
+    "REQ-PB-016",
+    "REQ-PB-017",
+    "REQ-PB-018",
+    "REQ-PB-023",
+    "REQ-PB-024",
+    "REQ-PB-025",
+    "REQ-PB-026",
+    "REQ-PB-029",
+    "REQ-PB-030",
+    "REQ-PB-031",
+    "REQ-PB-033",
+    "REQ-PB-034",
+    "REQ-PB-035",
+    "REQ-PB-036",
+    "REQ-PB-037",
+    "REQ-PB-038",
+    "REQ-PB-039",
+    "REQ-PB-041",
+    "REQ-PB-042",
+    "REQ-PB-043",
+    "REQ-S04-003",
+    "REQ-S04-004",
+    "REQ-S04-005",
+    "REQ-S05-003"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-R15-00-candidate",
+      "procedure": "Verify the assignment hash, HEAD against the source commit, and the candidate ID in the repo and in a complete disposable clone, before and after the runs. Diff the round-14 and round-15 manifests. Run the DG1 historical gate.",
+      "command": "sha256sum docs/delivery/assignments/DG2/round-15/domain-reviewer.md; git rev-parse HEAD; git merge-base --is-ancestor ed80b234 HEAD; node tools/gates/candidate.mjs --stage DG2; node tools/gates/validate.mjs --historical --stage DG1; manifest entry diff 9f3ca298 vs 3f01c610",
+      "environment": "/home/user/My-owns and the disposable clone $TMPDIR/review-dom-r15 at 9236a9f; Node 24.21.0",
+      "expected": "assignment sha256 9540a115...; candidate sha256:3f01c610... over 561 files; DG1 historical PASS; the only product delta is FE13 (web)",
+      "actual": "- The assignment sha256 matches.\n- HEAD at start was 9236a9f, the freeze commit on ed80b234 (ancestor exit 0). It adds only the assignments, the manifest and stages.json.\n- The candidate ID is sha256:3f01c61090435f114b52150d1ab73818839530ede08a4c07d04936175f7fe8f9 over 561 files: in the repo, in the clone before the runs, in the clone after the runs (rv/ removed), and in the repo after the runs. HEAD had moved to 0cf0d05 by then (orchestrator auto-commits of code-security evidence); the candidate ID is unchanged.\n- Manifest delta against round 14: apps/web session files (FE13 29da00d) and docs/delivery/decisions.md only. No i18n, API, DB or catalogue change.\n- DG1 historical: 'PASS gate DG1 (historical)', exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-15/candidate-and-dg1.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/round15-delta.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/env.txt"
+      ]
+    },
+    {
+      "id": "DOM-R15-01-typecheck",
+      "procedure": "Offline frozen install in the disposable clone, then a recursive typecheck on both Node versions.",
+      "command": "pnpm install --offline --frozen-lockfile --store-dir <copy>; pnpm -r typecheck",
+      "environment": "disposable clone; Node 22.22.2 and 24.21.0; pnpm 10.33.0; no network",
+      "expected": "exit 0 on both",
+      "actual": "Install exit 0. Its 'WARN Failed to create bin ... mth-db' lines are expected: packages/db/dist/cli.js only exists after the build. Typecheck: Node 22 exit 0, Node 24 exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-15/install.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/typecheck-node22.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/typecheck-node24.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/checks.sh"
+      ]
+    },
+    {
+      "id": "DOM-R15-02-build",
+      "procedure": "Recursive build on both Node versions.",
+      "command": "pnpm -r build",
+      "environment": "disposable clone; Node 22.22.2 and 24.21.0",
+      "expected": "exit 0 on both",
+      "actual": "exit 0 and exit 0. The only warning is Vite's chunk-size advisory.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-15/build-node22.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/build-node24.log"
+      ]
+    },
+    {
+      "id": "DOM-R15-03-lint",
+      "procedure": "Repository lint on both Node versions, before any probe was copied into the clone.",
+      "command": "pnpm lint",
+      "environment": "disposable clone; Node 22.22.2 and 24.21.0",
+      "expected": "exit 0 on both",
+      "actual": "exit 0 and exit 0 (eslint --max-warnings=0).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-15/lint-node22.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/lint-node24.log"
+      ]
+    },
+    {
+      "id": "DOM-R15-04-test",
+      "procedure": "Repository test suite on both Node versions.",
+      "command": "pnpm test",
+      "environment": "disposable clone; Node 22.22.2 and 24.21.0",
+      "expected": "exit 0 on both; no failed tests",
+      "actual": "Node 22: 48 files, 866/866, exit 0. Node 24: 48 files, 866/866, exit 0. The only warning is Fastify's FSTDEP022 deprecation notice. The one 'failed' text match in test-node24.log is the name of a passing test ('a failed /me refresh never blocks the navigation').",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-15/test-node22.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/test-node24.log"
+      ]
+    },
+    {
+      "id": "DOM-R15-05-contrast",
+      "procedure": "Design-token contrast check on both Node versions.",
+      "command": "pnpm --filter @mth/design-tokens run check:contrast",
+      "environment": "disposable clone; Node 22.22.2 and 24.21.0",
+      "expected": "PASS verdict; prohibited pairs fail as documented",
+      "actual": "'PASS contrast: 50 pairs meet WCAG AA; 3 prohibited pairs fail as documented' on both, exit 0. The three 'fails' lines are those documented prohibited pairs. One of them is white small text on the provisional #0078FF.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-15/contrast-node22.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/contrast-node24.log"
+      ]
+    },
+    {
+      "id": "DOM-R15-06-source-fidelity-static",
+      "procedure": "Extract the source rows straight from docs/source/playbook.md and check them verbatim against the catalogue migrations, the access seeds and the EN i18n: B0009 modes, B0018 roles, B0023 gates, B0039-B0043 scope checks, B0062 canvas cells, B0029 workstreams, B0056 TOM dimensions, B0035 charter fields and the B0037 thesis.",
+      "command": "node rv/source-fidelity.mjs (my round-13 probe, unchanged), from the clone root",
+      "environment": "disposable clone; Node 24.21.0",
+      "expected": "every source row present verbatim",
+      "actual": "24/24 PASS, exit 0.\n- B0009 End-to-End and Modular 'When to use' and 'How' are verbatim.\n- The six B0018 roles and their accountabilities are verbatim. 'Business Owner' and 'Workstream Lead' are the singular of the plural table headers.\n- The B0023 names, questions and evidence for G1-G6 are verbatim.\n- The five B0039-B0043 questions, the 10 B0062 cells, the 6 B0029 rows and the 10 B0056 rows are all present.\n- The 14 B0035 fields are labelled.\n- The thesis uses the four B0037 connectors.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-003",
+        "REQ-PB-012",
+        "REQ-PB-017",
+        "REQ-PB-023",
+        "REQ-PB-029",
+        "REQ-PB-030",
+        "REQ-PB-031",
+        "REQ-PB-038",
+        "REQ-PB-041"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-15/source-fidelity.log"
+      ]
+    },
+    {
+      "id": "DOM-R15-07-live-scenario",
+      "procedure": "On a disposable stack (PG 16 with a UTF8 database, synthetic seed, API in AUTH_MODE=dev), create transformations through the API and walk Diagnose -> Define -> Design, observing the G1, G2 and G3 decisions. Check modes, roles, sequential gates, the charter, thesis and scope checks, the North Star, outcomes, guardrails, registers, the canvas, Arabic text with RLM marks, and invisible-only refusals.",
+      "command": "bash with-stack.sh bash runp.sh live-scenario design-registers ... (stack-run-1)",
+      "environment": "disposable clone; PG 16 on 127.0.0.1:55025; API on :3925; Node 24.21.0; synthetic data",
+      "expected": "every assertion PASS; G1, G2 and G3 approved only in sequence",
+      "actual": "live-scenario 101/101, exit 0. design-registers 11/11, exit 0.\n- Only End-to-End and Modular exist; Modular needs an entry phase.\n- G2 or G3 before G1, and G3 before G2, answer 422 gate.out_of_sequence. The G1, G2 and G3 demo decisions advance diagnose -> define -> design -> mobilize. The submitter cannot decide (403).\n- The API gate names equal the B0023 names.\n- The charter: 14 fields; thesis_incomplete for a blank or invisible part; the five scope checks in source order; >=3 versions retained.\n- The North Star is one sentence, with exactly one current; the earlier one is superseded.\n- The 3-5 top-outcome warning shows. 'Launch new app' fails the good-outcome test and is listed by G2. G2 is blocked with zero guardrails, and a guardrail is stored with its category.\n- The 6 T01 dimensions; confidence accepts H/M/L only.\n- The 10 B0056 dimensions, the 6 B0029 workstreams and the 10 B0062 canvas prompts are verbatim. A cell cannot be marked ready without a target design and an owner. G3 is blocked while the gap matrix, capabilities and journeys are missing.\n- Arabic charter text with RLM/ALM/isolates is stored code-point for code-point.\n- Invisible-only values (RLM, ZWSP, NEL, Hangul filler, VS16, tag characters and others) are refused with 400 validation.blank, and the version is unchanged.\n- An unquantified value pool keeps a null amount (not 0).\n- Gate codes are G1-G6 only.\nThe stack log line 'mth-db: the database must use UTF8 encoding (found SQL_ASCII)' and 'UTF8-PROBE sql_ascii migrate exit=1' are my intended D-065 fail-closed probe, not a failure. Wrapper EXIT=0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-003",
+        "REQ-PB-012",
+        "REQ-PB-016",
+        "REQ-PB-017",
+        "REQ-PB-018",
+        "REQ-PB-023",
+        "REQ-PB-024",
+        "REQ-PB-025",
+        "REQ-PB-026",
+        "REQ-PB-029",
+        "REQ-PB-030",
+        "REQ-PB-031",
+        "REQ-PB-033",
+        "REQ-PB-034",
+        "REQ-PB-035",
+        "REQ-PB-036",
+        "REQ-PB-037",
+        "REQ-PB-038",
+        "REQ-PB-039",
+        "REQ-PB-041",
+        "REQ-PB-042",
+        "REQ-PB-043",
+        "REQ-S04-003",
+        "REQ-S04-004",
+        "REQ-S04-005",
+        "REQ-S05-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-15/stack-run-1.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/live-scenario.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/design-registers.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/with-stack.sh",
+        "docs/delivery/test-evidence/DG2/domain/round-15/runp.sh"
+      ]
+    },
+    {
+      "id": "DOM-R15-08-regression-api",
+      "procedure": "Re-run my earlier-round API delta and regression probes (D-066 to D-069, rounds 10-13) on the same stack.",
+      "command": "runp.sh r13-delta-api r12-delta-api r11-delta-api r10-delta-api regress-d069-api regress-d068-api regress-d067-api regress-d066-api (stack-run-1)",
+      "environment": "stack-run-1",
+      "expected": "all exit 0",
+      "actual": "r13 11/11, r12 9/9, r11 13/13, r10 17/17, d069 18/18, d068 21/21, d067 11/11, d066 16/16. All exit 0, with no FAIL lines.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-15/r13-delta-api.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/r12-delta-api.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/r11-delta-api.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/r10-delta-api.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/regress-d069-api.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/regress-d068-api.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/regress-d067-api.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/regress-d066-api.log"
+      ]
+    },
+    {
+      "id": "DOM-R15-09-ui-signin-signout-evidence-team-design-en-ar",
+      "procedure": "Browser walk in EN (LTR) and AR (RTL) through: dev sign-in, sign-out with the localized message, signing in again, an evidence upload with a byte-identical download, an upload refused after access is withdrawn (localized session-ended message), charter refusals of invisible-only values (localized, shown once), mode guidance, the Team screen (assignment and roles), the journey-steps editor, the Design screen and its registers, and the gates.",
+      "command": "bash with-stack.sh bash runp.sh r13-ui r9-ui:ui-upload-alert charter-blank-ui dom-shots walk-ui r12-team-ui r12-journey-steps-ui regress-d067-ui regress-d066-ui (stack-run-2)",
+      "environment": "stack-run-2; Chromium from /opt/pw-browsers; locales en-US and ar-SA; Asia/Riyadh",
+      "expected": "every probe exits 0; AR is rtl and EN is ltr; localized messages; no English leak in AR",
+      "actual": "r13-ui 11/11:\n- sign-in reaches /my-work with lang=en dir=ltr and lang=ar dir=rtl;\n- sign-out shows 'You have signed out.' or 'تم تسجيل خروجك.';\n- signing in again works;\n- the upload's download is byte-identical (300281 bytes, same sha) with the Arabic file name suggested;\n- the upload after revocation is refused with 401 and the localized session-ended message, and 0 revisions are stored;\n- no page errors.\nOther probes: ui-upload-alert 8/8, charter-blank-ui 14/14, walk-ui 28/28, r12-team-ui 10/10, r12-journey-steps-ui 6/6, regress-d067-ui 8/8, regress-d066-ui 8/8. dom-shots prints facts: B0009 guidance is shown for the selected mode in EN and AR.\nI inspected the screens myself:\n- AR Design shows the 10 canvas cells, Unknown/Unassigned shown as 'غير معروف'/'غير محدد' (not 0 or green), and the T03 register;\n- AR Team shows the six B0018 roles, the minimum-roles notice and the assigned banner;\n- EN Evidence shows the uploaded item as Unverified;\n- AR charter shows the invisible Out-of-scope value refused with the Arabic message under the field;\n- every screen carries the provisional wordmark badge.\nAll exit 0; wrapper EXIT=0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-003",
+        "REQ-PB-012",
+        "REQ-PB-024",
+        "REQ-PB-025",
+        "REQ-PB-029",
+        "REQ-PB-041",
+        "REQ-PB-042",
+        "REQ-S05-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-15/stack-run-2.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/r13-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/ui-upload-alert.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/charter-blank-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/dom-shots.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/walk-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/r12-team-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/r12-journey-steps-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/regress-d067-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/regress-d066-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/screens/ar-r13-design.png",
+        "docs/delivery/test-evidence/DG2/domain/round-15/screens/en-r13-design.png",
+        "docs/delivery/test-evidence/DG2/domain/round-15/screens/ar-r12-team-assigned.png",
+        "docs/delivery/test-evidence/DG2/domain/round-15/screens/en-r12-team-assigned.png",
+        "docs/delivery/test-evidence/DG2/domain/round-15/screens/en-r13-evidence-uploaded.png",
+        "docs/delivery/test-evidence/DG2/domain/round-15/screens/ar-r13-evidence-uploaded.png",
+        "docs/delivery/test-evidence/DG2/domain/round-15/screens/ar-charter-edit-invisible-oos.png",
+        "docs/delivery/test-evidence/DG2/domain/round-15/screens/en-charter-edit-invisible-oos.png",
+        "docs/delivery/test-evidence/DG2/domain/round-15/screens/ar-charter-arabic-rlm-created.png",
+        "docs/delivery/test-evidence/DG2/domain/round-15/screens/ar-r13-signed-in.png",
+        "docs/delivery/test-evidence/DG2/domain/round-15/screens/en-r13-signed-in.png",
+        "docs/delivery/test-evidence/DG2/domain/round-15/screens/ar-r13-gates.png",
+        "docs/delivery/test-evidence/DG2/domain/round-15/screens/en-create-mode-guidance-modular.png",
+        "docs/delivery/test-evidence/DG2/domain/round-15/screens/ar-create-mode-guidance.png"
+      ]
+    },
+    {
+      "id": "DOM-R15-10-ui-withdrawn-and-shutdown",
+      "procedure": "Withdrawn-access timeline in the UI, and an API shutdown during an upload (no partial file is left).",
+      "command": "bash with-stack.sh bash runp.sh r13-ui-withdrawn r13-shutdown (stack-run-3)",
+      "environment": "stack-run-3",
+      "expected": "both exit 0; wrapper EXIT=0",
+      "actual": "r13-ui-withdrawn 5/5, exit 0. r13-shutdown 2/2, exit 0: the API exits with code 0, 0 .part files are left, and the cut item has 0 revisions. The wrapper is now EXIT=0: I added 'set +e' to my teardown trap, so the trap no longer fails when the probe has already stopped the API (round 14's EXIT=1 cause).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-15/stack-run-3.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/r13-ui-withdrawn.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/r13-shutdown.log"
+      ]
+    },
+    {
+      "id": "DOM-R15-11-FE13-identity-en-ar",
+      "procedure": "FE13 / D-075 user outcome, in a real browser, EN (LTR) and AR (RTL), with my new probe r15-identity-ui.mjs.\nS1 (the F-DG2-500 path):\n- A (dev.lead) opens /login?returnTo=%2Fmy-work and clicks the wordmark, which pushes an in-document /login entry. A signs in and sees an A-only transformation on Transformations.\n- A's session ends outside the page. The tab goes Back to the in-document /login entry (no document load), and its /me re-probe gets 401.\n- B (dev.nobody) signs in with the form in the same tab. B's list requests are delayed 3 s, so any cached A record would be what the screen shows.\n- Every 100 ms for about 5 s on My work and on Transformations, check that neither A's record nor A's name is shown.\nS2 (identity changes in another tab, with no 401 in this tab):\n- Tab 2 signs A out with the button and signs B in.\n- Tab 1 regains focus after /me is stale. Check that it shows B's name, never with A's record, and that A's record and name are gone.",
+      "command": "TAG=raised-limits bash with-stack.sh bash runp.sh r15-identity-ui (stack-run-4b); PACE_MS=62000 TAG=default-limits bash with-stack-default-limits.sh ... runp.sh r15-identity-ui:r15-identity-ui-default-limits (stack-run-5)",
+      "environment": "disposable stacks; Chromium; raised and default (product) rate limits; synthetic users",
+      "expected": "S1: 0 samples showing A's record or name to B in EN and AR; B's name shown; correct dir. S2: after the refocus /me, B's name is shown and A's record and name are gone, never shown together with B. No page errors.",
+      "actual": "Final runs: 13/13, exit 0, with raised limits (stack-run-4b) and with default limits (stack-run-5).\n- S1 EN and AR: 46-49 samples on My work and 39 on Transformations each show A's record 0 times and A's name 0 times. B's name 'Synthetic User Without Roles' is shown, with dir ltr and rtl. Back reached /login?returnTo=%2Fmy-work with 0 document loads.\n- S2 EN and AR: tab 1 made 1 /me request after the refocus. B's name is then shown, A's record and name are gone at the end, and both=0 (never together).\nEarlier attempts, each kept and explained (all probe mistakes, none product failures):\n- attempt 1 exit 1 (crash 'Execution context was destroyed'): the wordmark Link to the current location replaces instead of pushing, so history.go(-2) hit about:blank.\n- attempt 2 exit 1: the saved profile language overrode my pre-sign-in language click, so the EN pass ran in Arabic. S2 then timed out looking for an EN 'Sign out' button. S1 had passed.\n- attempt 3 exit 1 (11 PASS, 2 FAIL: en/ar.S2.tab1-after-identity-change): the refocus came within the 15 s staleTime, so nothing refetched and tab 1 kept A's own screen (both=0).\n- attempt 4 exit 1 (same 2 FAILs): after 16 s the list refetched under B's cookie, and A's record disappeared (both=0). But GET /me has staleTime 60 s and was not re-asked (tab1MeAfterRefocus=0), so A's name stayed in tab 1's header. I record this as an observation in the narrative, not a finding: no record of A's is shown to B; the stale label is A's own name in a tab A left open, for at most 60 s, and it self-corrects. The final run waits 61 s.\nWrapper stack-run-4-attempt1.log EXIT=1 comes solely from r15 attempt 1. stack-run-4b-attempt2/3/4 logs EXIT=1 are those attempts.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-15/r15-identity-ui.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-15/r15-identity-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/r15-identity-ui-default-limits.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/stack-run-4b.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/stack-run-5.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/r15-identity-ui-attempt1.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-15/r15-identity-ui-attempt1.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/r15-identity-ui-attempt2.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-15/r15-identity-ui-attempt2.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/r15-identity-ui-attempt3.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-15/r15-identity-ui-attempt3.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/r15-identity-ui-attempt4.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-15/r15-identity-ui-attempt4.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/stack-run-4-attempt1.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/stack-run-4b-attempt2.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/stack-run-4b-attempt3.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/stack-run-4b-attempt4.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/screens/en-r15-S1-b-transformations.png",
+        "docs/delivery/test-evidence/DG2/domain/round-15/screens/ar-r15-S1-b-transformations.png",
+        "docs/delivery/test-evidence/DG2/domain/round-15/screens/en-r15-S1-b-landing.png",
+        "docs/delivery/test-evidence/DG2/domain/round-15/screens/ar-r15-S2-tab1-after-switch.png"
+      ]
+    },
+    {
+      "id": "DOM-R15-12-session-end-and-language-en-ar",
+      "procedure": "Regression of the session-ended message (FE10) and the language notice (FE11/FE12) after FE13, in EN and AR, with raised and with default rate limits.\nSession-ended triggers: other-tab sign-out, revocation, idle expiry, absolute expiry and logout by API. Each must land once on /login?returnTo=..&error=session_expired with the localized message, with no stale shell and no 429; another context can sign in; signing in again returns the user to their page.\nLanguage notice: a refused save keeps the chosen language and shows the notice in that language; the header layout at 320, 768 and 1280 px; render-time translation of login errors, the Team banner and the journey-steps error.",
+      "command": "runp.sh r13-session-end-ui r14-session-end-ui r14-language-ui (stack-run-4-attempt1.log, raised limits); PACE_MS=62000 runp.sh r13-session-end-ui:r13-session-end-ui-default-limits r14-session-end-ui:r14-session-end-ui-default-limits (stack-run-5, default limits)",
+      "environment": "disposable stacks; Chromium; raised and product-default rate limits",
+      "expected": "all PASS, exit 0",
+      "actual": "Raised limits: r13-session-end-ui 4/4, r14-session-end-ui 31/31, r14-language-ui 20/20, all exit 0. They ran in stack-run-4-attempt1, whose wrapper EXIT=1 is solely r15-identity-ui attempt 1; these three probes' own exits are 0.\nDefault limits (stack-run-5, EXIT=0): r13 4/4 and r14 31/31. Every trigger made 1 /me request, 0 x 429 and 1 navigation to /login.\nThe screens show 'انتهت جلستك. يُرجى تسجيل الدخول مجددًا.' in AR rtl, and the AR language-not-saved notice below the header.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-15/stack-run-4-attempt1.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/r13-session-end-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/r14-session-end-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/r14-language-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/stack-run-5.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/r13-session-end-ui-default-limits.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/r14-session-end-ui-default-limits.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/with-stack-default-limits.sh",
+        "docs/delivery/test-evidence/DG2/domain/round-15/screens/en-r14-session-end-other-tab-signout-raised-limits.png",
+        "docs/delivery/test-evidence/DG2/domain/round-15/screens/ar-r14-session-end-other-tab-signout-raised-limits.png",
+        "docs/delivery/test-evidence/DG2/domain/round-15/screens/en-r14-language-not-saved-1280.png",
+        "docs/delivery/test-evidence/DG2/domain/round-15/screens/ar-r14-language-not-saved-1280.png"
+      ]
+    },
+    {
+      "id": "DOM-R15-13-invariants",
+      "procedure": "Static checks of the invariants: the product delta since round 14; i18n key parity between EN and AR; certification and official claims; float columns; the provisional brand token; DG0-DG7 mentions in product source (finding and task IDs excluded); and gate codes.",
+      "command": "see invariants.log (git diff ea9051b2 ed80b234; node key-parity script; grep over apps/web/src/i18n, packages/db/migrations, packages/design-tokens/src/tokens.json, apps/*/src, packages/*/src)",
+      "environment": "disposable clone",
+      "expected": "web-only delta, no i18n change; 0 EN keys missing in AR; only negating 'official/PMI' statements; 0 float columns; #0078FF marked provisional; DG mentions are separation comments only; product gate codes G1-G6 only",
+      "actual": "- The delta is 6 apps/web files, with no non-web and no i18n change.\n- 0 EN keys are missing in AR.\n- The only 'official/PMI' texts are negations: the wordmark is provisional and not an official Mobily asset; the playbook is 'inspired by PMI ... not an official PMI standard'.\n- 0 real/double/float columns.\n- brand.primary #0078FF is marked provisional:true.\n- DG0-DG7 appear only in comments that state the separation (for example 'G6 never implies DG7') and in phase markers.\n- The catalogue gate codes are G1-G6, and there is no DGx code in the migrations.\n- Live: the unquantified value pool keeps a null amount, and Unknown/Unassigned are shown as text (DOM-R15-07/09).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-15/invariants.log"
+      ]
+    },
+    {
+      "id": "DOM-R15-14-utf8-fail-closed",
+      "procedure": "Each stack's preamble creates a SQL_ASCII database and runs the migrations against it before creating the UTF8 database.",
+      "command": "with-stack.sh / with-stack-default-limits.sh preamble",
+      "environment": "every stack run",
+      "expected": "SQL_ASCII migration refused (exit 1, 0 tables); mth database UTF8",
+      "actual": "Every stack log shows 'mth-db: the database must use UTF8 encoding (found SQL_ASCII)', 'UTF8-PROBE sql_ascii migrate exit=1 tables_created=0' and 'UTF8-PROBE mth encoding=UTF8'. That exit 1 is the intended refusal.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-15/stack-run-1.log",
+        "docs/delivery/test-evidence/DG2/domain/round-15/stack-run-5.log"
+      ]
+    },
+    {
+      "id": "DOM-R15-15-env-residuals",
+      "procedure": "The environmental residuals, checked on their offline and configuration surface (assignment: not BLOCKED gate checks).",
+      "command": "pnpm install --offline --frozen-lockfile; cmp .github/workflows/ci.yml deploy/ci/ci.yml; ls deploy; grep -rli keycloak deploy",
+      "environment": "disposable clone; no network",
+      "expected": "offline install OK; CI definition mirrored; Keycloak configuration present",
+      "actual": "- The offline install exits 0.\n- cmp exit 0: the CI workflow is identical to deploy/ci/ci.yml.\n- deploy/keycloak exists and is referenced by compose, CI and scripts.\nResiduals, named: the live registry (D-057), live CI (D-058) and Keycloak (D-049) were not exercised live. GET /api/v1/auth/login is not available in AUTH_MODE=dev, so OIDC sign-in was not run against a real IdP.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-15/env-residuals.log"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG2/domain/round-15/env.txt",
+    "docs/delivery/test-evidence/DG2/domain/round-15/candidate-and-dg1.log",
+    "docs/delivery/test-evidence/DG2/domain/round-15/round15-delta.log",
+    "docs/delivery/test-evidence/DG2/domain/round-15/source-fidelity.log",
+    "docs/delivery/test-evidence/DG2/domain/round-15/live-scenario.log",
+    "docs/delivery/test-evidence/DG2/domain/round-15/r15-identity-ui.log",
+    "docs/delivery/test-evidence/DG2/domain/round-15/r15-identity-ui-default-limits.log",
+    "docs/delivery/test-evidence/DG2/domain/round-15/invariants.log",
+    "docs/delivery/reviews/DG2/round-15/domain-reviewer.md"
+  ],
+  "reviewed_at": "2026-10-07T13:55:00Z",
+  "summary": "PASS, no new findings. FE13 / D-075 delivers its user outcome in a real browser, in EN and AR, with raised and with default rate limits. When A's session ends while the sign-in page is shown (Back to an in-document /login entry) and B signs in in the same tab, B never sees A's record or A's name: 0 of about 85 samples per language, with B's list deliberately delayed 3 s. An identity change made in another tab purges A's data as soon as tab 1 re-asks /me. Sign-in, sign-out, the session-ended message, the language notice, and the Team, Evidence and Design screens are correct in EN (ltr) and AR (rtl). The full re-review of the 26 requirements against playbook B0009, B0018, B0023, B0029, B0035, B0037, B0039-B0043, B0056 and B0062 passed, static and live: G1 to G3 advance sequentially with B0023 names, Arabic RLM text is kept verbatim, invisible-only values are refused with localized messages, and an evidence upload downloads byte-identical. The invariants are intact. Typecheck, build, lint, test (866/866) and contrast pass on Node 22 and 24. One observation, not raised as a finding, is in the narrative: GET /me has a 60 s staleTime, so after an identity change in another tab, tab 1 may show the previous person's name over refetched data for up to 60 s."
+}
