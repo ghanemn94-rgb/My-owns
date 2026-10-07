@@ -1,0 +1,77 @@
+$ env -u LC_ALL LANG=C.UTF-8 QA_E2E_API_PORT=26809 QA_E2E_PG_PORT=26810 QA_SHOT_DIR=<shots> E2E_SCREENSHOT_DIR=<shots> e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r17.spec.ts --grep 'R17-0[49]' --workers=1 --reporter=list   # spec development run 5
+# clone @805da3e2; node v24.21.0; 2026-10-07T19:18:04Z
+port-policy: PostgreSQL listening on port 26810 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 26809 (attempt 1)
+API:     http://localhost:26809
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 8 tests using 1 worker
+
+[chromium-en] r17-04: learn-first after delivery: {"path":"/about","header":"Synthetic Transformation Lead"}; A's org id 01a117cd-5487-72fc-a138-760143df9949
+[chromium-en] r17-04-timeline: ["+0 /admin/organizations | header=Synthetic Dev Admin | marker=false | states=","+3408 /about | header=Synthetic Dev Admin | marker=false | states=","+3445 /about | header=Synthetic Transformation Lead | marker=false | states="]
+[chromium-en] r17-04-api: ["+3730 send POST /api/v1/organizations","+4603 send GET /api/v1/me","+4626 done GET /api/v1/me","+4739 done POST /api/v1/organizations"]
+[chromium-en] observer-hits: none
+[chromium-en] r17-04-observer: "none"
+  ✓  1 [chromium-en] › e2e/dg2-qa-r17.spec.ts:471:3 › R17-04a ORGANISATION create across an identity change (learn-first): B never sees or opens it (8.4s)
+[chromium-en] r17-04: deliver-first after delivery: {"path":"/admin/organizations","header":"Synthetic Transformation Lead"}; A's org id 01a117cd-73ff-748e-95e8-cbb2e8348455
+[chromium-en] r17-04-timeline: ["+0 /admin/organizations | header=Synthetic Dev Admin | marker=false | states=","+3279 /admin/organizations | header=Synthetic Transformation Lead | marker=false | states=loading","+3292 /admin/organizations | header=Synthetic Transformation Lead | marker=false | states="]
+[chromium-en] r17-04-api: ["+3486 send POST /api/v1/organizations","+4179 done POST /api/v1/organizations","+4183 send GET /api/v1/me","+4195 done GET /api/v1/me","+4204 send GET /api/v1/organizations","+4214 done GET /api/v1/organizations"]
+[chromium-en] observer-hits: none
+[chromium-en] r17-04-observer: "none"
+  ✓  2 [chromium-en] › e2e/dg2-qa-r17.spec.ts:471:3 › R17-04b ORGANISATION create across an identity change (deliver-first): B never sees or opens it (7.6s)
+[chromium-en] r17-04: inside-2s-window after delivery: {"path":"/admin/organizations/01a117cd-87c1-71ef-83f5-9eb094602e5e","header":"Synthetic Transformation Lead"}; A's org id 01a117cd-87c1-71ef-83f5-9eb094602e5e
+[chromium-en] r17-04-timeline: ["+0 /admin/organizations | header=Synthetic Dev Admin | marker=false | states=","+742 /admin/organizations/01a117cd-87c1-71ef-83f5-9eb094602e5e | header=Synthetic Dev Admin | marker=false | states=","+748 /admin/organizations/01a117cd-87c1-71ef-83f5-9eb094602e5e | header=Synthetic Dev Admin | marker=false | states=loading","+764 /admin/organizations/01a117cd-87c1-71ef-83f5-9eb094602e5e | header=Synthetic Transformation Lead | marker=false | states=loading","+781 /admin/organizations/01a117cd-87c1-71ef-83f5-9eb094602e5e | header=Synthetic Transformation Lead | marker=false | states=no-permission"]
+[chromium-en] r17-04-api: ["+891 send POST /api/v1/organizations","+1582 done POST /api/v1/organizations","+1584 send GET /api/v1/organizations","+1593 done GET /api/v1/organizations","+1604 send GET /api/v1/me","+1614 done GET /api/v1/me","+1621 send GET /api/v1/organizations/01a117cd-87c1-71ef-83f5-9eb094602e5e","+1635 done GET /api/v1/organizations/01a117cd-87c1-71ef-83f5-9eb094602e5e"]
+[chromium-en] observer-hits: none
+[chromium-en] r17-04-observer: "none"
+  ✓  3 [chromium-en] › e2e/dg2-qa-r17.spec.ts:471:3 › R17-04c ORGANISATION create across an identity change (inside-2s-window): B never sees or opens it (5.0s)
+  ✓  4 [chromium-en] › e2e/dg2-qa-r17.spec.ts:822:1 › R17-09 same-identity admin flows still navigate and update: organisation create and user save (2.4s)
+[chromium-ar] r17-04: learn-first after delivery: {"path":"/about","header":"Synthetic Transformation Lead"}; A's org id 01a117cd-b2c2-74ef-a948-e90536748980
+[chromium-ar] r17-04-timeline: ["+1 /admin/organizations | header=Synthetic Dev Admin | marker=false | states=","+3305 /about | header=Synthetic Dev Admin | marker=false | states=","+3325 /about | header=Synthetic Transformation Lead | marker=false | states="]
+[chromium-ar] r17-04-api: ["+3457 send POST /api/v1/organizations","+4196 send GET /api/v1/me","+4208 done GET /api/v1/me","+4264 done POST /api/v1/organizations"]
+[chromium-ar] observer-hits: none
+[chromium-ar] r17-04-observer: "none"
+  ✓  5 [chromium-ar] › e2e/dg2-qa-r17.spec.ts:471:3 › R17-04a ORGANISATION create across an identity change (learn-first): B never sees or opens it (7.7s)
+[chromium-ar] r17-04: deliver-first after delivery: {"path":"/admin/organizations","header":"Synthetic Transformation Lead"}; A's org id 01a117cd-d00b-76ca-acfd-16647982c3de
+[chromium-ar] r17-04-timeline: ["+0 /admin/organizations | header=Synthetic Dev Admin | marker=false | states=","+3320 /admin/organizations | header=Synthetic Transformation Lead | marker=false | states=loading","+3333 /admin/organizations | header=Synthetic Transformation Lead | marker=false | states="]
+[chromium-ar] r17-04-api: ["+3250 send POST /api/v1/organizations","+3976 done POST /api/v1/organizations","+3978 send GET /api/v1/me","+3989 done GET /api/v1/me","+3999 send GET /api/v1/organizations","+4011 done GET /api/v1/organizations"]
+[chromium-ar] observer-hits: none
+[chromium-ar] r17-04-observer: "none"
+  ✓  6 [chromium-ar] › e2e/dg2-qa-r17.spec.ts:471:3 › R17-04b ORGANISATION create across an identity change (deliver-first): B never sees or opens it (7.4s)
+[chromium-ar] r17-04: inside-2s-window after delivery: {"path":"/admin/organizations/01a117cd-e33c-7271-b1f6-a64898fbb6d9","header":"Synthetic Transformation Lead"}; A's org id 01a117cd-e33c-7271-b1f6-a64898fbb6d9
+[chromium-ar] r17-04-timeline: ["+0 /admin/organizations | header=Synthetic Dev Admin | marker=false | states=","+1006 /admin/organizations/01a117cd-e33c-7271-b1f6-a64898fbb6d9 | header=Synthetic Dev Admin | marker=false | states=","+1013 /admin/organizations/01a117cd-e33c-7271-b1f6-a64898fbb6d9 | header=Synthetic Dev Admin | marker=false | states=loading","+1051 /admin/organizations/01a117cd-e33c-7271-b1f6-a64898fbb6d9 | header=Synthetic Transformation Lead | marker=false | states=loading","+1102 /admin/organizations/01a117cd-e33c-7271-b1f6-a64898fbb6d9 | header=Synthetic Transformation Lead | marker=false | states=no-permission"]
+[chromium-ar] r17-04-api: ["+778 send POST /api/v1/organizations","+1724 done POST /api/v1/organizations","+1727 send GET /api/v1/organizations","+1737 done GET /api/v1/organizations","+1752 send GET /api/v1/me","+1780 done GET /api/v1/me","+1805 send GET /api/v1/organizations/01a117cd-e33c-7271-b1f6-a64898fbb6d9","+1838 done GET /api/v1/organizations/01a117cd-e33c-7271-b1f6-a64898fbb6d9"]
+[chromium-ar] observer-hits: none
+[chromium-ar] r17-04-observer: "none"
+  ✓  7 [chromium-ar] › e2e/dg2-qa-r17.spec.ts:471:3 › R17-04c ORGANISATION create across an identity change (inside-2s-window): B never sees or opens it (5.1s)
+  ✓  8 [chromium-ar] › e2e/dg2-qa-r17.spec.ts:822:1 › R17-09 same-identity admin flows still navigate and update: organisation create and user save (2.2s)
+
+  8 passed (48.8s)
+exit 0

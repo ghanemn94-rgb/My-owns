@@ -1,0 +1,91 @@
+$ env -u LC_ALL LANG=C.UTF-8 QA_E2E_API_PORT=26801 QA_E2E_PG_PORT=26802 QA_SHOT_DIR=<shots> E2E_SCREENSHOT_DIR=<shots> e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r17.spec.ts --project chromium-en --workers=1 --reporter=list   # spec development run 1
+# clone @805da3e2; node v24.21.0; 2026-10-07T19:08:58Z
+port-policy: PostgreSQL listening on port 26802 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 26801 (attempt 1)
+API:     http://localhost:26801
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 12 tests using 1 worker
+
+  ✓   1 [chromium-en] › e2e/dg2-qa-r17.spec.ts:227:1 › R17-01 CREATE held; tab 1 learns of B by an in-app navigation; then A's 201 arrives: B never sees it (6.8s)
+  ✓   2 [chromium-en] › e2e/dg2-qa-r17.spec.ts:284:1 › R17-02 EDIT answered while tab 1 still believes it is A: B never sees A's new name under B's header (8.2s)
+  ✓   3 [chromium-en] › e2e/dg2-qa-r17.spec.ts:339:1 › R17-03 ARCHIVE answered while tab 1 still believes it is A: B never sees A's record or reason (7.6s)
+  ✓   4 [chromium-en] › e2e/dg2-qa-r17.spec.ts:397:3 › R17-04a ORGANISATION create across an identity change (learn-first): B never sees or opens it (5.8s)
+  ✘   5 [chromium-en] › e2e/dg2-qa-r17.spec.ts:397:3 › R17-04b ORGANISATION create across an identity change (deliver-first): B never sees or opens it (5.9s)
+  -   6 [chromium-en] › e2e/dg2-qa-r17.spec.ts:465:3 › R17-05a USER save across an identity change (learn-first): B never sees A's change
+  -   7 [chromium-en] › e2e/dg2-qa-r17.spec.ts:465:3 › R17-05b USER save across an identity change (deliver-first): B never sees A's change
+  -   8 [chromium-en] › e2e/dg2-qa-r17.spec.ts:536:3 › R17-06a in-app navigation at once after another sign-in: GET /me goes first; header and data agree
+  -   9 [chromium-en] › e2e/dg2-qa-r17.spec.ts:536:3 › R17-06b in-app navigation 5 s after another sign-in: GET /me goes first; header and data agree
+  -  10 [chromium-en] › e2e/dg2-qa-r17.spec.ts:586:1 › R17-07 an in-app session end lands ONCE on sign-in with the message, bounded /me, no stale shell
+  -  11 [chromium-en] › e2e/dg2-qa-r17.spec.ts:639:1 › R17-08 a 403 is never a session end; the same person's next save after a new session updates and navigates
+  -  12 [chromium-en] › e2e/dg2-qa-r17.spec.ts:710:1 › R17-09 same-identity admin flows still navigate and update: organisation create and user save
+
+
+  1) [chromium-en] › e2e/dg2-qa-r17.spec.ts:397:3 › R17-04b ORGANISATION create across an identity change (deliver-first): B never sees or opens it 
+
+    Error: B is not navigated to A's new organisation
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mnot[2m.[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: not [32m"/admin/organizations/01a117c5-675a-74cf-95f6-71e7e3a57b09"[39m
+
+      390 |     await bInPlace(page, lang, LEAD_NAME);
+      391 |     await shot(page, lang, `qa-r17-04-${order}-b`);
+    > 392 |     expect(after.path, "B is not navigated to A's new organisation").not.toBe(`/admin/organizations/${org.id}`);
+          |                                                                          ^
+      393 |     await expect(page.getByText(nameEn)).toHaveCount(0);
+      394 |     expect(await leaksNotA(page, info, ADMIN_NAME), "A's organisation under B's header").toEqual([]);
+      395 |     expect(await docId(page)).toBe(doc);
+        at $TMPDIR/review-dg2-e2e/e2e/dg2-qa-r17.spec.ts:392:74
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r17-R17-04b-ORG-a6d53-st-B-never-sees-or-opens-it-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r17-R17-04b-ORG-a6d53-st-B-never-sees-or-opens-it-chromium-en/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-dg2-qa-r17-R17-04b-ORG-a6d53-st-B-never-sees-or-opens-it-chromium-en/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r17-R17-04b-ORG-a6d53-st-B-never-sees-or-opens-it-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg2-qa-r17-R17-04b-ORG-a6d53-st-B-never-sees-or-opens-it-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium-en] › e2e/dg2-qa-r17.spec.ts:397:3 › R17-04b ORGANISATION create across an identity change (deliver-first): B never sees or opens it 
+  7 did not run
+  4 passed (36.7s)
+---- api.log (tail)
+exit 1

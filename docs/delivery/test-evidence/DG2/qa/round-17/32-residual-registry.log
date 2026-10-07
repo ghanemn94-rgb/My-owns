@@ -1,0 +1,11 @@
+$ timeout 60 pnpm deps:verify   (clones installed with pnpm install --frozen-lockfile --offline: 00-install-review-dg2*.log, exit 0)
+# cwd clone @805da3e2; node v24.21.0; 2026-10-07T19:07:05Z; the sandbox has no network (D-057 live registry residual): exit 124 = timeout waiting for the registry
+
+> mobily-transformation-hub@0.1.0 deps:verify $TMPDIR/review-dg2
+> node scripts/verify-dependency-pins.mjs
+
+exit 124
+
+
+$ git diff --stat e3b2375a 805da3e2 -- package.json pnpm-lock.yaml apps/*/package.json packages/*/package.json .npmrc   (empty = no dependency/pin change since the round-16 candidate source)
+exit 0

@@ -1,0 +1,138 @@
+$ env -u LC_ALL LANG=C.UTF-8 QA_E2E_API_PORT=26803 QA_E2E_PG_PORT=26804 QA_SHOT_DIR=<shots> E2E_SCREENSHOT_DIR=<shots> e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r17.spec.ts --grep R17-04 --workers=1 --reporter=list   # spec development run 2 (timeline instrumentation)
+# clone @805da3e2; node v24.21.0; 2026-10-07T19:10:54Z
+port-policy: PostgreSQL listening on port 26804 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 26803 (attempt 1)
+API:     http://localhost:26803
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 4 tests using 1 worker
+
+[chromium-en] r17-04: learn-first after delivery: {"path":"/about","header":"Synthetic Transformation Lead"}; A's org id 01a117c6-b86e-732b-8f20-af0b25996ffb
+[chromium-en] r17-04-timeline: ["+0 /admin/organizations | header=Synthetic Dev Admin | marker=false | states=","+822 /about | header=Synthetic Dev Admin | marker=false | states=","+848 /about | header=Synthetic Transformation Lead | marker=false | states="]
+[chromium-en] r17-04-api: ["+891 send POST /api/v1/organizations","+1668 send GET /api/v1/me","+1688 done GET /api/v1/me","+1715 done POST /api/v1/organizations"]
+[chromium-en] observer-hits: none
+[chromium-en] r17-04-observer: "none"
+  ✓  1 [chromium-en] › e2e/dg2-qa-r17.spec.ts:437:3 › R17-04a ORGANISATION create across an identity change (learn-first): B never sees or opens it (5.2s)
+[chromium-en] r17-04: deliver-first after delivery: {"path":"/admin/organizations/01a117c6-cc1d-7741-81c9-618848f8616e","header":"Synthetic Transformation Lead"}; A's org id 01a117c6-cc1d-7741-81c9-618848f8616e
+[chromium-en] r17-04-timeline: ["+0 /admin/organizations | header=Synthetic Dev Admin | marker=false | states=","+834 /admin/organizations/01a117c6-cc1d-7741-81c9-618848f8616e | header=Synthetic Dev Admin | marker=false | states=","+840 /admin/organizations/01a117c6-cc1d-7741-81c9-618848f8616e | header=Synthetic Dev Admin | marker=false | states=loading","+857 /admin/organizations/01a117c6-cc1d-7741-81c9-618848f8616e | header=Synthetic Transformation Lead | marker=false | states=loading","+882 /admin/organizations/01a117c6-cc1d-7741-81c9-618848f8616e | header=Synthetic Transformation Lead | marker=false | states=no-permission"]
+[chromium-en] r17-04-api: ["+747 send POST /api/v1/organizations","+1519 done POST /api/v1/organizations","+1520 send GET /api/v1/organizations","+1531 done GET /api/v1/organizations","+1542 send GET /api/v1/me","+1553 done GET /api/v1/me","+1563 send GET /api/v1/organizations/01a117c6-cc1d-7741-81c9-618848f8616e","+1583 done GET /api/v1/organizations/01a117c6-cc1d-7741-81c9-618848f8616e"]
+[chromium-en] observer-hits: none
+[chromium-en] r17-04-observer: "none"
+  ✘  2 [chromium-en] › e2e/dg2-qa-r17.spec.ts:437:3 › R17-04b ORGANISATION create across an identity change (deliver-first): B never sees or opens it (5.2s)
+[chromium-ar] r17-04: learn-first after delivery: {"path":"/about","header":"Synthetic Transformation Lead"}; A's org id 01a117c6-e69c-7116-b55e-8243f8aa831e
+[chromium-ar] r17-04-timeline: ["+0 /admin/organizations | header=Synthetic Dev Admin | marker=false | states=","+888 /about | header=Synthetic Dev Admin | marker=false | states=","+930 /about | header=Synthetic Transformation Lead | marker=false | states="]
+[chromium-ar] r17-04-api: ["+1028 send POST /api/v1/organizations","+1896 send GET /api/v1/me","+1915 done GET /api/v1/me","+2025 done POST /api/v1/organizations"]
+[chromium-ar] observer-hits: none
+[chromium-ar] r17-04-observer: "none"
+  ✓  3 [chromium-ar] › e2e/dg2-qa-r17.spec.ts:437:3 › R17-04a ORGANISATION create across an identity change (learn-first): B never sees or opens it (5.5s)
+[chromium-ar] r17-04: deliver-first after delivery: {"path":"/admin/organizations/01a117c6-fbb7-7359-bf8c-79020cef08a1","header":"Synthetic Transformation Lead"}; A's org id 01a117c6-fbb7-7359-bf8c-79020cef08a1
+[chromium-ar] r17-04-timeline: ["+0 /admin/organizations | header=Synthetic Dev Admin | marker=false | states=","+903 /admin/organizations/01a117c6-fbb7-7359-bf8c-79020cef08a1 | header=Synthetic Dev Admin | marker=false | states=","+915 /admin/organizations/01a117c6-fbb7-7359-bf8c-79020cef08a1 | header=Synthetic Dev Admin | marker=false | states=loading","+955 /admin/organizations/01a117c6-fbb7-7359-bf8c-79020cef08a1 | header=Synthetic Transformation Lead | marker=false | states=loading","+973 /admin/organizations/01a117c6-fbb7-7359-bf8c-79020cef08a1 | header=Synthetic Transformation Lead | marker=false | states=no-permission"]
+[chromium-ar] r17-04-api: ["+922 send POST /api/v1/organizations","+1768 done POST /api/v1/organizations","+1770 send GET /api/v1/organizations","+1781 done GET /api/v1/organizations","+1804 send GET /api/v1/me","+1836 done GET /api/v1/me","+1841 send GET /api/v1/organizations/01a117c6-fbb7-7359-bf8c-79020cef08a1","+1858 done GET /api/v1/organizations/01a117c6-fbb7-7359-bf8c-79020cef08a1"]
+[chromium-ar] observer-hits: none
+[chromium-ar] r17-04-observer: "none"
+  ✘  4 [chromium-ar] › e2e/dg2-qa-r17.spec.ts:437:3 › R17-04b ORGANISATION create across an identity change (deliver-first): B never sees or opens it (5.4s)
+
+
+  1) [chromium-en] › e2e/dg2-qa-r17.spec.ts:437:3 › R17-04b ORGANISATION create across an identity change (deliver-first): B never sees or opens it 
+
+    Error: B is not navigated to A's new organisation
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mnot[2m.[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: not [32m"/admin/organizations/01a117c6-cc1d-7741-81c9-618848f8616e"[39m
+
+      430 |     const hits = await leaksNotA(page, info, ADMIN_NAME);
+      431 |     note(info, { type: "r17-04-observer", description: JSON.stringify(info.annotations.find((x) => x.type === "observer-hits")?.description) });
+    > 432 |     expect(after.path, "B is not navigated to A's new organisation").not.toBe(`/admin/organizations/${org.id}`);
+          |                                                                          ^
+      433 |     await expect(page.getByText(nameEn)).toHaveCount(0);
+      434 |     expect(hits, "A's organisation under B's header").toEqual([]);
+      435 |     expect(await docId(page)).toBe(doc);
+        at $TMPDIR/review-dg2-e2e/e2e/dg2-qa-r17.spec.ts:432:74
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r17-R17-04b-ORG-a6d53-st-B-never-sees-or-opens-it-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r17-R17-04b-ORG-a6d53-st-B-never-sees-or-opens-it-chromium-en/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-dg2-qa-r17-R17-04b-ORG-a6d53-st-B-never-sees-or-opens-it-chromium-en/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r17-R17-04b-ORG-a6d53-st-B-never-sees-or-opens-it-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg2-qa-r17-R17-04b-ORG-a6d53-st-B-never-sees-or-opens-it-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-ar] › e2e/dg2-qa-r17.spec.ts:437:3 › R17-04b ORGANISATION create across an identity change (deliver-first): B never sees or opens it 
+
+    Error: B is not navigated to A's new organisation
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mnot[2m.[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: not [32m"/admin/organizations/01a117c6-fbb7-7359-bf8c-79020cef08a1"[39m
+
+      430 |     const hits = await leaksNotA(page, info, ADMIN_NAME);
+      431 |     note(info, { type: "r17-04-observer", description: JSON.stringify(info.annotations.find((x) => x.type === "observer-hits")?.description) });
+    > 432 |     expect(after.path, "B is not navigated to A's new organisation").not.toBe(`/admin/organizations/${org.id}`);
+          |                                                                          ^
+      433 |     await expect(page.getByText(nameEn)).toHaveCount(0);
+      434 |     expect(hits, "A's organisation under B's header").toEqual([]);
+      435 |     expect(await docId(page)).toBe(doc);
+        at $TMPDIR/review-dg2-e2e/e2e/dg2-qa-r17.spec.ts:432:74
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r17-R17-04b-ORG-a6d53-st-B-never-sees-or-opens-it-chromium-ar/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r17-R17-04b-ORG-a6d53-st-B-never-sees-or-opens-it-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-dg2-qa-r17-R17-04b-ORG-a6d53-st-B-never-sees-or-opens-it-chromium-ar/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r17-R17-04b-ORG-a6d53-st-B-never-sees-or-opens-it-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg2-qa-r17-R17-04b-ORG-a6d53-st-B-never-sees-or-opens-it-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium-en] › e2e/dg2-qa-r17.spec.ts:437:3 › R17-04b ORGANISATION create across an identity change (deliver-first): B never sees or opens it 
+    [chromium-ar] › e2e/dg2-qa-r17.spec.ts:437:3 › R17-04b ORGANISATION create across an identity change (deliver-first): B never sees or opens it 
+  2 passed (24.4s)
+---- api.log (tail)
+exit 1

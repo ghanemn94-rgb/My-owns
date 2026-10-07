@@ -1,0 +1,75 @@
+# qa-verifier DG2 round 17: static inspection of FE15's sweep on clone @805da3e2 (2026-10-07T19:19:59Z)
+$ git diff --stat e3b2375a 805da3e2 -- apps packages tests e2e eslint.config.js
+ .../transformations/TransformationEditPage.tsx     |  25 +-
+ eslint.config.js                                   |  42 ++
+ 30 files changed, 1197 insertions(+), 130 deletions(-)
+
+$ grep -rn 'useNavigate\|redirect(' apps/web/src --include=*.ts --include=*.tsx | grep -v '\.test\.'
+apps/web/src/auth/session.tsx:15:import { Navigate, useLocation, useNavigate } from "react-router";
+apps/web/src/auth/session.tsx:57:  const navigate = useNavigate();
+apps/web/src/auth/sessionBound.ts:9://  - app code never calls the raw router `navigate` (useNavigate, router.navigate) nor `queryClient.setQueryData` /
+apps/web/src/auth/sessionBound.ts:23:import { useNavigate, type NavigateOptions, type To } from "react-router";
+apps/web/src/auth/sessionBound.ts:93:  const navigate = useNavigate();
+apps/web/src/app/Shell.tsx:8:import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
+apps/web/src/app/Shell.tsx:23:  const navigate = useNavigate();
+apps/web/src/pages/LoginPage.tsx:12:import { Navigate, useNavigate, useSearchParams } from "react-router";
+apps/web/src/pages/LoginPage.tsx:113:  const navigate = useNavigate();
+
+$ grep -rnE '\.(setQueryData|setQueriesData|navigate)\(' apps/web/src (non-test) -- every hit must be action./deps./raw transition
+apps/web/src/auth/sessionBound.ts:11://    `action.navigate(...)` / `action.setQueryData(...)`, which silently do nothing once the session generation moved.
+apps/web/src/auth/sessionBound.ts:80:      void deps.navigate(to, options);
+apps/web/src/auth/sessionBound.ts:101:  return useCallback((to: To, options?: NavigateOptions) => begin().navigate(to, options), [begin]);
+apps/web/src/pages/admin/OrganizationsPage.tsx:162:      action.navigate(`/admin/organizations/${org.id}`);
+apps/web/src/pages/admin/OrganizationsPage.tsx:259:      action.setQueryData(keys.organization(updated.id), updated);
+apps/web/src/pages/admin/OrganizationsPage.tsx:580:      action.setQueryData(keys.businessUnit(updated.id), updated);
+apps/web/src/pages/admin/UsersPage.tsx:297:      action.navigate(`/admin/users/${user.id}`);
+apps/web/src/pages/admin/UsersPage.tsx:391:      action.setQueryData(keys.user(updated.id), updated);
+apps/web/src/pages/transformations/TransformationEditPage.tsx:123:      action.navigate(`/transformations/${on.id}`);
+apps/web/src/pages/transformations/TransformationEditPage.tsx:134:      if (!action.setQueryData(keys.transformation(on.id), updated)) return;
+apps/web/src/pages/transformations/TransformationEditPage.tsx:137:      action.navigate(`/transformations/${on.id}`);
+apps/web/src/pages/transformations/TransformationEditPage.tsx:145:          if (!action.setQueryData(keys.transformation(on.id), latest)) return;
+apps/web/src/pages/transformations/TransformationDetailPage.tsx:163:      if (!action.setQueryData(keys.transformation(tr.id), updated)) return;
+apps/web/src/pages/transformations/TransformationCreatePage.tsx:215:      action.navigate(`/transformations/${created.id}`, { state });
+
+$ grep -rnE '(^|[^.a-zA-Z])navigate\(' apps/web/src (non-test): bare navigate( calls (must be useSessionNavigate or a transition)
+apps/web/src/auth/session.tsx:70:    void navigate(sessionEndedLoginPath(here), { replace: true });
+apps/web/src/auth/sessionBound.ts:44:  navigate(to: To, options?: NavigateOptions): boolean;
+apps/web/src/app/Shell.tsx:56:    else void navigate(ok ? "/login?signedOut=1" : "/login", { replace: true });
+apps/web/src/pages/transformations/TransformationEditPage.tsx:329:            onClick={() => navigate(`/transformations/${base.id}`)}
+apps/web/src/pages/transformations/TransformationCreatePage.tsx:397:            <button type="button" className="button button--secondary" onClick={() => navigate("/transformations")}>
+apps/web/src/pages/LoginPage.tsx:137:      void navigate(returnTo, { replace: true });
+
+$ grep -rn 'eslint-disable' apps/web/src (non-test)
+apps/web/src/components/DataTable.tsx:18:  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TanStack column value types vary per column
+apps/web/src/auth/session.tsx:14:// eslint-disable-next-line no-restricted-imports -- session transition: the redirect after a session END navigates because the generation moved
+apps/web/src/auth/sessionBound.ts:18://  - only the session transitions themselves may use the raw navigate, each with a justified eslint-disable comment:
+apps/web/src/app/Shell.tsx:7:// eslint-disable-next-line no-restricted-imports -- session transition: signing out here moves the generation (markSignedOut) and then navigates
+apps/web/src/pages/LoginPage.tsx:11:// eslint-disable-next-line no-restricted-imports -- session transition: signing in establishes the new generation and then navigates to returnTo
+
+$ grep -c 'if (!(await refresh())) return;' per file
+apps/web/src/pages/team/TeamPage.tsx:1
+apps/web/src/pages/design/WorkshopsSection.tsx:3
+apps/web/src/pages/design/DesignPage.tsx:3
+apps/web/src/pages/design/JourneysSection.tsx:3
+apps/web/src/pages/gates/GateDetailPage.tsx:3
+apps/web/src/pages/define/CharterPage.tsx:2
+apps/web/src/pages/define/DefinePage.tsx:5
+apps/web/src/pages/decisions/DecisionsPage.tsx:2
+apps/web/src/pages/evidence/EvidencePage.tsx:5
+apps/web/src/pages/diagnose/DiagnosePage.tsx:5
+total: 32
+
+$ grep -n 'no-restricted' eslint.config.js
+27:      "no-restricted-syntax": [
+54:      "no-restricted-imports": [
+67:      "no-restricted-syntax": [
+
+$ grep -rnE '(setQueryData|setQueriesData|navigate)<' apps/web/src (non-test): generic-typed calls the pattern above misses
+apps/web/src/components/LanguageSwitch.tsx:63:      action.setQueryData<Me>(keys.me, (old) => (old ? { ...old, user } : old));
+apps/web/src/auth/sessionBound.ts:46:  setQueryData<T>(key: QueryKey, updater: Updater<T | undefined, T | undefined>): boolean;
+apps/web/src/auth/sessionBound.ts:85:      deps.queryClient.setQueryData<T>(key, updater);
+$ grep -rn 'queryClient\.\|getQueryClient' apps/web/src (non-test) | grep -vE 'invalidateQueries|fetchQuery|cancelQueries|removeQueries|getQueryData|refetchQueries|resetQueries|getMutationCache|getQueryCache|clear\(|isFetching|ensureQueryData'
+apps/web/src/auth/sessionBound.ts:9://  - app code never calls the raw router `navigate` (useNavigate, router.navigate) nor `queryClient.setQueryData` /
+apps/web/src/auth/sessionBound.ts:85:      deps.queryClient.setQueryData<T>(key, updater);
+apps/web/src/test/fixtures.tsx:236:  queryClient.setDefaultOptions({
+(end)

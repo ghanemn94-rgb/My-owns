@@ -1,0 +1,223 @@
+$ env -u LC_ALL LANG=C.UTF-8 QA_E2E_API_PORT=26805 QA_E2E_PG_PORT=26806 QA_SHOT_DIR=<shots> E2E_SCREENSHOT_DIR=<shots> e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r17.spec.ts --workers=1 --reporter=list   # spec development run 3
+# clone @805da3e2; node v24.21.0; 2026-10-07T19:12:56Z
+port-policy: PostgreSQL listening on port 26806 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 26805 (attempt 1)
+API:     http://localhost:26805
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 26 tests using 1 worker
+
+[chromium-en] r17-01: path /my-work; A's code TR-0001 shown false
+[chromium-en] observer-hits: none
+  ✓   1 [chromium-en] › e2e/dg2-qa-r17.spec.ts:269:1 › R17-01 CREATE held; tab 1 learns of B by an in-app navigation; then A's 201 arrives: B never sees it (6.2s)
+[chromium-en] r17-02-timeline: ["+0 /transformations/01a117c8-a81e-77ef-8e07-843e343a5f79/edit | header=Synthetic Transformation Office | marker=true | states=","+3425 /transformations/01a117c8-a81e-77ef-8e07-843e343a5f79 | header=Synthetic Transformation Office | marker=true | states=","+3453 /transformations/01a117c8-a81e-77ef-8e07-843e343a5f79 | header=Synthetic Transformation Office | marker=true | states=loading","+3478 /transformations/01a117c8-a81e-77ef-8e07-843e343a5f79 | header=Synthetic Transformation Lead | marker=false | states=loading","+3498 /transformations/01a117c8-a81e-77ef-8e07-843e343a5f79 | header=Synthetic Transformation Lead | marker=false | states=no-permission"]
+[chromium-en] r17-02-api: ["+3434 send PATCH /api/v1/transformations/01a117c8-a81e-77ef-8e07-843e343a5f79","+4284 done PATCH /api/v1/transformations/01a117c8-a81e-77ef-8e07-843e343a5f79","+4318 send GET /api/v1/me","+4335 done GET /api/v1/me","+4344 send GET /api/v1/transformations/01a117c8-a81e-77ef-8e07-843e343a5f79","+4361 done GET /api/v1/transformations/01a117c8-a81e-77ef-8e07-843e343a5f79"]
+[chromium-en] r17-02: after delivery: {"path":"/transformations/01a117c8-a81e-77ef-8e07-843e343a5f79","header":"Synthetic Transformation Lead"}
+[chromium-en] observer-hits: before-switch | header=Synthetic Transformation Office | /transformations/01a117c8-a81e-77ef-8e07-843e343a5f79/edit | states= ;; before-switch | header=Synthetic Transformation Office | /transformations/01a117c8-a81e-77ef-8e07-843e343a5f79/edit | states= ;; B signed in elsewhere; answer delivered (tab 1 unaware) | header=Synthetic Transformation Office | /transformations/01a117c8-a81e-77ef-8e07-843e343a5f79 | states=loading
+  ✓   2 [chromium-en] › e2e/dg2-qa-r17.spec.ts:326:1 › R17-02 EDIT answered while tab 1 still believes it is A: B never sees A's new name under B's header (10.3s)
+[chromium-en] r17-03-timeline: ["+0 /transformations/01a117c8-d08a-700a-9c24-edf01a2f7785 | header=Synthetic Transformation Office | marker=true | states=","+3329 /transformations/01a117c8-d08a-700a-9c24-edf01a2f7785 | header=Synthetic Transformation Lead | marker=false | states=loading","+3348 /transformations/01a117c8-d08a-700a-9c24-edf01a2f7785 | header=Synthetic Transformation Lead | marker=false | states=no-permission"]
+[chromium-en] r17-03-api: ["+3505 send POST /api/v1/transformations/01a117c8-d08a-700a-9c24-edf01a2f7785/archive","+4259 done POST /api/v1/transformations/01a117c8-d08a-700a-9c24-edf01a2f7785/archive","+4261 send GET /api/v1/me","+4277 done GET /api/v1/me","+4283 send GET /api/v1/transformations/01a117c8-d08a-700a-9c24-edf01a2f7785","+4298 done GET /api/v1/transformations/01a117c8-d08a-700a-9c24-edf01a2f7785"]
+[chromium-en] r17-03: after delivery: {"path":"/transformations/01a117c8-d08a-700a-9c24-edf01a2f7785","header":"Synthetic Transformation Lead"}
+[chromium-en] observer-hits: before-switch | header=Synthetic Transformation Office | /transformations/01a117c8-d08a-700a-9c24-edf01a2f7785 | states= ;; before-switch | header=Synthetic Transformation Office | /transformations/01a117c8-d08a-700a-9c24-edf01a2f7785 | states= ;; B signed in elsewhere; answer delivered (tab 1 unaware) | header=Synthetic Transformation Office | /transformations/01a117c8-d08a-700a-9c24-edf01a2f7785 | states=
+  ✓   3 [chromium-en] › e2e/dg2-qa-r17.spec.ts:392:1 › R17-03 ARCHIVE answered while tab 1 still believes it is A: B never sees A's record or reason (9.7s)
+[chromium-en] r17-04: learn-first after delivery: {"path":"/about","header":"Synthetic Transformation Lead"}; A's org id 01a117c9-03e3-7200-9668-11d794cc1bb0
+[chromium-en] r17-04-timeline: ["+0 /admin/organizations | header=Synthetic Dev Admin | marker=false | states=","+3209 /about | header=Synthetic Dev Admin | marker=false | states=","+3231 /about | header=Synthetic Transformation Lead | marker=false | states="]
+[chromium-en] r17-04-api: ["+3483 send POST /api/v1/organizations","+4149 send GET /api/v1/me","+4167 done GET /api/v1/me","+4194 done POST /api/v1/organizations"]
+[chromium-en] observer-hits: none
+[chromium-en] r17-04-observer: "none"
+  ✓   4 [chromium-en] › e2e/dg2-qa-r17.spec.ts:471:3 › R17-04a ORGANISATION create across an identity change (learn-first): B never sees or opens it (7.6s)
+[chromium-en] r17-04: deliver-first after delivery: {"path":"/admin/organizations","header":"Synthetic Transformation Lead"}; A's org id 01a117c9-20ee-7236-8f59-585f3f7f3838
+[chromium-en] r17-04-timeline: ["+0 /admin/organizations | header=Synthetic Dev Admin | marker=false | states=","+3349 /admin/organizations | header=Synthetic Transformation Lead | marker=false | states=loading","+3362 /admin/organizations | header=Synthetic Transformation Lead | marker=false | states="]
+[chromium-en] r17-04-api: ["+3348 send POST /api/v1/organizations","+4116 done POST /api/v1/organizations","+4119 send GET /api/v1/me","+4130 done GET /api/v1/me","+4138 send GET /api/v1/organizations","+4150 done GET /api/v1/organizations"]
+[chromium-en] observer-hits: none
+[chromium-en] r17-04-observer: "none"
+  ✓   5 [chromium-en] › e2e/dg2-qa-r17.spec.ts:471:3 › R17-04b ORGANISATION create across an identity change (deliver-first): B never sees or opens it (7.5s)
+[chromium-en] r17-04: inside-2s-window after delivery: {"path":"/admin/organizations/01a117c9-35fb-771d-bae1-793008db73af","header":"Synthetic Transformation Lead"}; A's org id 01a117c9-35fb-771d-bae1-793008db73af
+[chromium-en] r17-04-timeline: ["+0 /admin/organizations | header=Synthetic Dev Admin | marker=false | states=","+984 /admin/organizations/01a117c9-35fb-771d-bae1-793008db73af | header=Synthetic Dev Admin | marker=false | states=","+989 /admin/organizations/01a117c9-35fb-771d-bae1-793008db73af | header=Synthetic Dev Admin | marker=false | states=loading","+1033 /admin/organizations/01a117c9-35fb-771d-bae1-793008db73af | header=Synthetic Transformation Lead | marker=false | states=loading","+1048 /admin/organizations/01a117c9-35fb-771d-bae1-793008db73af | header=Synthetic Transformation Lead | marker=false | states=no-permission"]
+[chromium-en] r17-04-api: ["+1163 send POST /api/v1/organizations","+2060 done POST /api/v1/organizations","+2061 send GET /api/v1/organizations","+2089 done GET /api/v1/organizations","+2089 send GET /api/v1/me","+2119 done GET /api/v1/me","+2128 send GET /api/v1/organizations/01a117c9-35fb-771d-bae1-793008db73af","+2156 done GET /api/v1/organizations/01a117c9-35fb-771d-bae1-793008db73af"]
+[chromium-en] observer-hits: none
+[chromium-en] r17-04-observer: "none"
+  ✓   6 [chromium-en] › e2e/dg2-qa-r17.spec.ts:471:3 › R17-04c ORGANISATION create across an identity change (inside-2s-window): B never sees or opens it (5.5s)
+[chromium-en] r17-05-timeline: ["+0 /admin/users/01a117c9-46eb-727b-a047-771eb9b09fe9 | header=Synthetic Dev Admin | marker=true | states=empty","+3237 /about | header=Synthetic Dev Admin | marker=false | states=","+3253 /about | header=Synthetic Transformation Lead | marker=false | states="]
+[chromium-en] r17-05-api: ["+3304 send PATCH /api/v1/users/01a117c9-46eb-727b-a047-771eb9b09fe9","+3990 send GET /api/v1/me","+4001 done GET /api/v1/me","+4021 done PATCH /api/v1/users/01a117c9-46eb-727b-a047-771eb9b09fe9"]
+[chromium-en] r17-05: learn-first after delivery: {"path":"/about","header":"Synthetic Transformation Lead"}
+[chromium-en] observer-hits: before-switch | header=Synthetic Dev Admin | /admin/users/01a117c9-46eb-727b-a047-771eb9b09fe9 | states=empty ;; before-switch | header=Synthetic Dev Admin | /admin/users/01a117c9-46eb-727b-a047-771eb9b09fe9 | states=empty
+  ✓   7 [chromium-en] › e2e/dg2-qa-r17.spec.ts:561:3 › R17-05a USER save across an identity change (learn-first): B never sees A's change (9.5s)
+[chromium-en] r17-05-timeline: ["+0 /admin/users/01a117c9-6c00-7426-bbd1-3213537339de | header=Synthetic Dev Admin | marker=true | states=empty"]
+[chromium-en] r17-05-api: ["+3291 send PATCH /api/v1/users/01a117c9-6c00-7426-bbd1-3213537339de","+3892 done PATCH /api/v1/users/01a117c9-6c00-7426-bbd1-3213537339de"]
+[chromium-en] r17-05: deliver-first after delivery: {"path":"/admin/users/01a117c9-6c00-7426-bbd1-3213537339de","header":"Synthetic Dev Admin"}
+  ✘   8 [chromium-en] › e2e/dg2-qa-r17.spec.ts:561:3 › R17-05b USER save across an identity change (deliver-first): B never sees A's change (19.4s)
+  -   9 [chromium-en] › e2e/dg2-qa-r17.spec.ts:643:3 › R17-06a in-app navigation at once after another sign-in: GET /me goes first; header and data agree
+  -  10 [chromium-en] › e2e/dg2-qa-r17.spec.ts:643:3 › R17-06b in-app navigation 5 s after another sign-in: GET /me goes first; header and data agree
+  -  11 [chromium-en] › e2e/dg2-qa-r17.spec.ts:693:1 › R17-07 an in-app session end lands ONCE on sign-in with the message, bounded /me, no stale shell
+  -  12 [chromium-en] › e2e/dg2-qa-r17.spec.ts:746:1 › R17-08 a 403 is never a session end; the same person's next save after a new session updates and navigates
+  -  13 [chromium-en] › e2e/dg2-qa-r17.spec.ts:817:1 › R17-09 same-identity admin flows still navigate and update: organisation create and user save
+[chromium-ar] r17-01: path /my-work; A's code TR-0004 shown false
+[chromium-ar] observer-hits: none
+  ✓  14 [chromium-ar] › e2e/dg2-qa-r17.spec.ts:269:1 › R17-01 CREATE held; tab 1 learns of B by an in-app navigation; then A's 201 arrives: B never sees it (6.1s)
+[chromium-ar] r17-02-timeline: ["+0 /transformations/01a117c9-d45b-702c-a4ea-fb749ad41fb8/edit | header=Synthetic Transformation Office | marker=true | states=","+3299 /transformations/01a117c9-d45b-702c-a4ea-fb749ad41fb8 | header=Synthetic Transformation Office | marker=true | states=","+3307 /transformations/01a117c9-d45b-702c-a4ea-fb749ad41fb8 | header=Synthetic Transformation Office | marker=true | states=loading","+3325 /transformations/01a117c9-d45b-702c-a4ea-fb749ad41fb8 | header=Synthetic Transformation Lead | marker=false | states=loading","+3339 /transformations/01a117c9-d45b-702c-a4ea-fb749ad41fb8 | header=Synthetic Transformation Lead | marker=false | states=no-permission"]
+[chromium-ar] r17-02-api: ["+3288 send PATCH /api/v1/transformations/01a117c9-d45b-702c-a4ea-fb749ad41fb8","+3992 done PATCH /api/v1/transformations/01a117c9-d45b-702c-a4ea-fb749ad41fb8","+4022 send GET /api/v1/me","+4032 done GET /api/v1/me","+4040 send GET /api/v1/transformations/01a117c9-d45b-702c-a4ea-fb749ad41fb8","+4054 done GET /api/v1/transformations/01a117c9-d45b-702c-a4ea-fb749ad41fb8"]
+[chromium-ar] r17-02: after delivery: {"path":"/transformations/01a117c9-d45b-702c-a4ea-fb749ad41fb8","header":"Synthetic Transformation Lead"}
+[chromium-ar] observer-hits: before-switch | header=Synthetic Transformation Office | /transformations/01a117c9-d45b-702c-a4ea-fb749ad41fb8/edit | states= ;; before-switch | header=Synthetic Transformation Office | /transformations/01a117c9-d45b-702c-a4ea-fb749ad41fb8/edit | states= ;; B signed in elsewhere; answer delivered (tab 1 unaware) | header=Synthetic Transformation Office | /transformations/01a117c9-d45b-702c-a4ea-fb749ad41fb8 | states=loading
+  ✓  15 [chromium-ar] › e2e/dg2-qa-r17.spec.ts:326:1 › R17-02 EDIT answered while tab 1 still believes it is A: B never sees A's new name under B's header (9.9s)
+[chromium-ar] r17-03-timeline: ["+0 /transformations/01a117c9-fb26-715c-bbc2-672416d84d79 | header=Synthetic Transformation Office | marker=true | states=","+3258 /transformations/01a117c9-fb26-715c-bbc2-672416d84d79 | header=Synthetic Transformation Lead | marker=false | states=loading","+3270 /transformations/01a117c9-fb26-715c-bbc2-672416d84d79 | header=Synthetic Transformation Lead | marker=false | states=no-permission"]
+[chromium-ar] r17-03-api: ["+3441 send POST /api/v1/transformations/01a117c9-fb26-715c-bbc2-672416d84d79/archive","+4126 done POST /api/v1/transformations/01a117c9-fb26-715c-bbc2-672416d84d79/archive","+4129 send GET /api/v1/me","+4140 done GET /api/v1/me","+4147 send GET /api/v1/transformations/01a117c9-fb26-715c-bbc2-672416d84d79","+4157 done GET /api/v1/transformations/01a117c9-fb26-715c-bbc2-672416d84d79"]
+[chromium-ar] r17-03: after delivery: {"path":"/transformations/01a117c9-fb26-715c-bbc2-672416d84d79","header":"Synthetic Transformation Lead"}
+[chromium-ar] observer-hits: before-switch | header=Synthetic Transformation Office | /transformations/01a117c9-fb26-715c-bbc2-672416d84d79 | states= ;; before-switch | header=Synthetic Transformation Office | /transformations/01a117c9-fb26-715c-bbc2-672416d84d79 | states= ;; B signed in elsewhere; answer delivered (tab 1 unaware) | header=Synthetic Transformation Office | /transformations/01a117c9-fb26-715c-bbc2-672416d84d79 | states=
+  ✓  16 [chromium-ar] › e2e/dg2-qa-r17.spec.ts:392:1 › R17-03 ARCHIVE answered while tab 1 still believes it is A: B never sees A's record or reason (9.5s)
+[chromium-ar] r17-04: learn-first after delivery: {"path":"/about","header":"Synthetic Transformation Lead"}; A's org id 01a117ca-2dbd-74f0-8eab-db6967ca23c2
+[chromium-ar] r17-04-timeline: ["+0 /admin/organizations | header=Synthetic Dev Admin | marker=false | states=","+3248 /about | header=Synthetic Dev Admin | marker=false | states=","+3268 /about | header=Synthetic Transformation Lead | marker=false | states="]
+[chromium-ar] r17-04-api: ["+3449 send POST /api/v1/organizations","+4133 send GET /api/v1/me","+4147 done GET /api/v1/me","+4172 done POST /api/v1/organizations"]
+[chromium-ar] observer-hits: none
+[chromium-ar] r17-04-observer: "none"
+  ✓  17 [chromium-ar] › e2e/dg2-qa-r17.spec.ts:471:3 › R17-04a ORGANISATION create across an identity change (learn-first): B never sees or opens it (7.5s)
+[chromium-ar] r17-04: deliver-first after delivery: {"path":"/admin/organizations","header":"Synthetic Transformation Lead"}; A's org id 01a117ca-4a3c-7619-a933-a85d544e6b5e
+[chromium-ar] r17-04-timeline: ["+0 /admin/organizations | header=Synthetic Dev Admin | marker=false | states=","+3348 /admin/organizations | header=Synthetic Transformation Lead | marker=false | states=loading","+3360 /admin/organizations | header=Synthetic Transformation Lead | marker=false | states="]
+[chromium-ar] r17-04-api: ["+3210 send POST /api/v1/organizations","+3995 done POST /api/v1/organizations","+3996 send GET /api/v1/me","+4012 done GET /api/v1/me","+4015 send GET /api/v1/organizations","+4025 done GET /api/v1/organizations"]
+[chromium-ar] observer-hits: none
+[chromium-ar] r17-04-observer: "none"
+  ✓  18 [chromium-ar] › e2e/dg2-qa-r17.spec.ts:471:3 › R17-04b ORGANISATION create across an identity change (deliver-first): B never sees or opens it (7.4s)
+[chromium-ar] r17-04: inside-2s-window after delivery: {"path":"/admin/organizations/01a117ca-5e0a-7516-b45d-007873eaaddb","header":"Synthetic Transformation Lead"}; A's org id 01a117ca-5e0a-7516-b45d-007873eaaddb
+[chromium-ar] r17-04-timeline: ["+0 /admin/organizations | header=Synthetic Dev Admin | marker=false | states=","+785 /admin/organizations/01a117ca-5e0a-7516-b45d-007873eaaddb | header=Synthetic Dev Admin | marker=false | states=","+792 /admin/organizations/01a117ca-5e0a-7516-b45d-007873eaaddb | header=Synthetic Dev Admin | marker=false | states=loading","+824 /admin/organizations/01a117ca-5e0a-7516-b45d-007873eaaddb | header=Synthetic Transformation Lead | marker=false | states=loading","+841 /admin/organizations/01a117ca-5e0a-7516-b45d-007873eaaddb | header=Synthetic Transformation Lead | marker=false | states=no-permission"]
+[chromium-ar] r17-04-api: ["+859 send POST /api/v1/organizations","+1562 done POST /api/v1/organizations","+1562 send GET /api/v1/organizations","+1577 done GET /api/v1/organizations","+1597 send GET /api/v1/me","+1615 done GET /api/v1/me","+1622 send GET /api/v1/organizations/01a117ca-5e0a-7516-b45d-007873eaaddb","+1636 done GET /api/v1/organizations/01a117ca-5e0a-7516-b45d-007873eaaddb"]
+[chromium-ar] observer-hits: none
+[chromium-ar] r17-04-observer: "none"
+  ✓  19 [chromium-ar] › e2e/dg2-qa-r17.spec.ts:471:3 › R17-04c ORGANISATION create across an identity change (inside-2s-window): B never sees or opens it (4.9s)
+[chromium-ar] r17-05-timeline: ["+0 /admin/users/01a117ca-6e28-7579-b633-3e9276244a47 | header=Synthetic Dev Admin | marker=true | states=empty","+3358 /about | header=Synthetic Dev Admin | marker=false | states=","+3379 /about | header=Synthetic Transformation Lead | marker=false | states="]
+[chromium-ar] r17-05-api: ["+3298 send PATCH /api/v1/users/01a117ca-6e28-7579-b633-3e9276244a47","+4113 send GET /api/v1/me","+4127 done GET /api/v1/me","+4150 done PATCH /api/v1/users/01a117ca-6e28-7579-b633-3e9276244a47"]
+[chromium-ar] r17-05: learn-first after delivery: {"path":"/about","header":"Synthetic Transformation Lead"}
+[chromium-ar] observer-hits: before-switch | header=Synthetic Dev Admin | /admin/users/01a117ca-6e28-7579-b633-3e9276244a47 | states=empty ;; before-switch | header=Synthetic Dev Admin | /admin/users/01a117ca-6e28-7579-b633-3e9276244a47 | states=empty
+  ✓  20 [chromium-ar] › e2e/dg2-qa-r17.spec.ts:561:3 › R17-05a USER save across an identity change (learn-first): B never sees A's change (9.5s)
+[chromium-ar] r17-05-timeline: ["+0 /admin/users/01a117ca-9357-758e-8af3-9a07e7fa52a1 | header=Synthetic Dev Admin | marker=true | states=empty"]
+[chromium-ar] r17-05-api: ["+3275 send PATCH /api/v1/users/01a117ca-9357-758e-8af3-9a07e7fa52a1","+3939 done PATCH /api/v1/users/01a117ca-9357-758e-8af3-9a07e7fa52a1"]
+[chromium-ar] r17-05: deliver-first after delivery: {"path":"/admin/users/01a117ca-9357-758e-8af3-9a07e7fa52a1","header":"Synthetic Dev Admin"}
+  ✘  21 [chromium-ar] › e2e/dg2-qa-r17.spec.ts:561:3 › R17-05b USER save across an identity change (deliver-first): B never sees A's change (19.4s)
+  -  22 [chromium-ar] › e2e/dg2-qa-r17.spec.ts:643:3 › R17-06a in-app navigation at once after another sign-in: GET /me goes first; header and data agree
+  -  23 [chromium-ar] › e2e/dg2-qa-r17.spec.ts:643:3 › R17-06b in-app navigation 5 s after another sign-in: GET /me goes first; header and data agree
+  -  24 [chromium-ar] › e2e/dg2-qa-r17.spec.ts:693:1 › R17-07 an in-app session end lands ONCE on sign-in with the message, bounded /me, no stale shell
+  -  25 [chromium-ar] › e2e/dg2-qa-r17.spec.ts:746:1 › R17-08 a 403 is never a session end; the same person's next save after a new session updates and navigates
+  -  26 [chromium-ar] › e2e/dg2-qa-r17.spec.ts:817:1 › R17-09 same-identity admin flows still navigate and update: organisation create and user save
+
+
+  1) [chromium-en] › e2e/dg2-qa-r17.spec.ts:561:3 › R17-05b USER save across an identity change (deliver-first): B never sees A's change 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  locator('.user-box__name')
+    Expected: [32m"Synthetic [7mTransformation Lead[27m"[39m
+    Received: [31m"Synthetic [7mDev Admin[27m"[39m
+    Timeout:  10000ms
+
+    Call log:
+    [2m  - Expect "toHaveText" with timeout 10000ms[22m
+    [2m  - waiting for locator('.user-box__name')[22m
+    [2m    14 × locator resolved to <span class="user-box__name">Synthetic Dev Admin</span>[22m
+    [2m       - unexpected value "Synthetic Dev Admin"[22m
+
+
+      243 | /** After B is in place in tab 1: B's header, then this project's language (a real preference save for B). */
+      244 | async function bInPlace(page: Page, lang: Lang, bName: string) {
+    > 245 |   await expect(header(page)).toHaveText(bName, { timeout: 10_000 });
+          |                              ^
+      246 |   await ensureLanguage(page, lang);
+      247 | }
+      248 |
+        at bInPlace ($TMPDIR/review-dg2-e2e/e2e/dg2-qa-r17.spec.ts:245:30)
+        at $TMPDIR/review-dg2-e2e/e2e/dg2-qa-r17.spec.ts:517:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r17-R17-05b-USE-c9750-rst-B-never-sees-A-s-change-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r17-R17-05b-USE-c9750-rst-B-never-sees-A-s-change-chromium-en/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-dg2-qa-r17-R17-05b-USE-c9750-rst-B-never-sees-A-s-change-chromium-en/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r17-R17-05b-USE-c9750-rst-B-never-sees-A-s-change-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg2-qa-r17-R17-05b-USE-c9750-rst-B-never-sees-A-s-change-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-ar] › e2e/dg2-qa-r17.spec.ts:561:3 › R17-05b USER save across an identity change (deliver-first): B never sees A's change 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  locator('.user-box__name')
+    Expected: [32m"Synthetic [7mTransformation Lead[27m"[39m
+    Received: [31m"Synthetic [7mDev Admin[27m"[39m
+    Timeout:  10000ms
+
+    Call log:
+    [2m  - Expect "toHaveText" with timeout 10000ms[22m
+    [2m  - waiting for locator('.user-box__name')[22m
+    [2m    14 × locator resolved to <span class="user-box__name">Synthetic Dev Admin</span>[22m
+    [2m       - unexpected value "Synthetic Dev Admin"[22m
+
+
+      243 | /** After B is in place in tab 1: B's header, then this project's language (a real preference save for B). */
+      244 | async function bInPlace(page: Page, lang: Lang, bName: string) {
+    > 245 |   await expect(header(page)).toHaveText(bName, { timeout: 10_000 });
+          |                              ^
+      246 |   await ensureLanguage(page, lang);
+      247 | }
+      248 |
+        at bInPlace ($TMPDIR/review-dg2-e2e/e2e/dg2-qa-r17.spec.ts:245:30)
+        at $TMPDIR/review-dg2-e2e/e2e/dg2-qa-r17.spec.ts:517:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r17-R17-05b-USE-c9750-rst-B-never-sees-A-s-change-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r17-R17-05b-USE-c9750-rst-B-never-sees-A-s-change-chromium-ar/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-dg2-qa-r17-R17-05b-USE-c9750-rst-B-never-sees-A-s-change-chromium-ar/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r17-R17-05b-USE-c9750-rst-B-never-sees-A-s-change-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg2-qa-r17-R17-05b-USE-c9750-rst-B-never-sees-A-s-change-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium-en] › e2e/dg2-qa-r17.spec.ts:561:3 › R17-05b USER save across an identity change (deliver-first): B never sees A's change 
+    [chromium-ar] › e2e/dg2-qa-r17.spec.ts:561:3 › R17-05b USER save across an identity change (deliver-first): B never sees A's change 
+  10 did not run
+  14 passed (2.6m)
+---- api.log (tail)
+exit 1

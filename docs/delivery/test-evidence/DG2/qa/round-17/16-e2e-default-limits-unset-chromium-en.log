@@ -1,0 +1,40 @@
+$ env -u LANG -u LC_ALL E2E_DEFAULT_RATE_LIMITS=1 E2E_API_PORT=26905 E2E_PG_PORT=26906 E2E_SCREENSHOT_DIR=<shots> apps/web/e2e/support/with-stack.sh npx playwright test e2e/dg2-qa-r14.spec.ts apps/web/e2e/session-end.spec.ts --project chromium-en --grep 'R14-03|another browser context from the same IP' --workers=1 --reporter=list
+# clone @805da3e2; node v24.21.0; 2026-10-07T19:55:28Z
+port-policy: PostgreSQL listening on port 26906 (attempt 1)
+e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+rate limits: product defaults (AUTH_RATE_LIMIT_PER_MINUTE and RATE_LIMIT_PER_MINUTE unset)
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 26905 (attempt 1)
+API: http://localhost:26905 (APP_BASE_URL=http://localhost:26905, PORT=26905)
+{"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 2 tests using 1 worker
+
+  ✓  1 [chromium-en] › apps/web/e2e/session-end.spec.ts:266:1 › after a session end, another browser context from the same IP can still sign in (no 429, product default limits) (6.8s)
+  ✓  2 [chromium-en] › e2e/dg2-qa-r14.spec.ts:340:1 › R14-03 three tabs ended at once, open 10 s; another context signs in (no 429, PRODUCT DEFAULT LIMITS) (22.1s)
+
+  2 passed (30.2s)
+exit 0

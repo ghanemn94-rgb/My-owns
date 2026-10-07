@@ -1,0 +1,118 @@
+$ env -u LC_ALL LANG=C.UTF-8 QA_E2E_API_PORT=26807 QA_E2E_PG_PORT=26808 QA_SHOT_DIR=<shots> E2E_SCREENSHOT_DIR=<shots> e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r17.spec.ts --grep 'R17-0[5-9]' --workers=1 --reporter=list   # spec development run 4
+# clone @805da3e2; node v24.21.0; 2026-10-07T19:15:54Z
+port-policy: PostgreSQL listening on port 26808 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 26807 (attempt 1)
+API:     http://localhost:26807
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 14 tests using 1 worker
+
+[chromium-en] r17-05-timeline: ["+0 /admin/users/01a117cb-46b0-72ab-abac-7be159e35630 | header=Synthetic Dev Admin | marker=true | states=empty","+3382 /about | header=Synthetic Dev Admin | marker=false | states=","+3412 /about | header=Synthetic Transformation Lead | marker=false | states="]
+[chromium-en] r17-05-api: ["+3486 send PATCH /api/v1/users/01a117cb-46b0-72ab-abac-7be159e35630","+4301 send GET /api/v1/me","+4326 done GET /api/v1/me","+4448 done PATCH /api/v1/users/01a117cb-46b0-72ab-abac-7be159e35630"]
+[chromium-en] r17-05: learn-first after delivery: {"path":"/about","header":"Synthetic Transformation Lead"}
+[chromium-en] observer-hits: before-switch | header=Synthetic Dev Admin | /admin/users/01a117cb-46b0-72ab-abac-7be159e35630 | states=empty ;; before-switch | header=Synthetic Dev Admin | /admin/users/01a117cb-46b0-72ab-abac-7be159e35630 | states=empty
+  ✓   1 [chromium-en] › e2e/dg2-qa-r17.spec.ts:561:3 › R17-05a USER save across an identity change (learn-first): B never sees A's change (10.0s)
+[chromium-en] r17-05-timeline: ["+0 /admin/users/01a117cb-6d7e-7322-9d92-ae712390a1f6 | header=Synthetic Dev Admin | marker=true | states=empty"]
+[chromium-en] r17-05-api: ["+3458 send PATCH /api/v1/users/01a117cb-6d7e-7322-9d92-ae712390a1f6","+4157 done PATCH /api/v1/users/01a117cb-6d7e-7322-9d92-ae712390a1f6"]
+[chromium-en] r17-05: deliver-first after delivery: {"path":"/admin/users/01a117cb-6d7e-7322-9d92-ae712390a1f6","header":"Synthetic Dev Admin"}
+[chromium-en] observer-hits: before-switch | header=Synthetic Dev Admin | /admin/users/01a117cb-6d7e-7322-9d92-ae712390a1f6 | states=empty ;; before-switch | header=Synthetic Dev Admin | /admin/users/01a117cb-6d7e-7322-9d92-ae712390a1f6 | states=empty ;; answer delivered | header=Synthetic Dev Admin | /admin/users/01a117cb-6d7e-7322-9d92-ae712390a1f6 | states=empty
+  ✓   2 [chromium-en] › e2e/dg2-qa-r17.spec.ts:561:3 › R17-05b USER save across an identity change (deliver-first): B never sees A's change (9.6s)
+[chromium-en] r17-06: api after click: ["send GET /api/v1/me","done GET /api/v1/me","send GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units","send GET /api/v1/transformations","done GET /api/v1/transformations","done GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units"]
+  ✓   3 [chromium-en] › e2e/dg2-qa-r17.spec.ts:647:3 › R17-06a in-app navigation at once after another sign-in: GET /me goes first; header and data agree (4.0s)
+[chromium-en] r17-06: api after click: ["send GET /api/v1/me","done GET /api/v1/me","send GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units","send GET /api/v1/transformations","done GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units","done GET /api/v1/transformations"]
+  ✓   4 [chromium-en] › e2e/dg2-qa-r17.spec.ts:647:3 › R17-06b in-app navigation 5 s after another sign-in: GET /me goes first; header and data agree (8.9s)
+[chromium-en] r17-07: history writes: ["pushState /my-work","replaceState /login"]; /me 2
+  ✓   5 [chromium-en] › e2e/dg2-qa-r17.spec.ts:697:1 › R17-07 an in-app session end lands ONCE on sign-in with the message, bounded /me, no stale shell (4.9s)
+[chromium-en] r17-08: first save: 403 {"type":"urn:mth:problem:csrf","title":"CSRF check failed","status":403,"detail":"The X-CSRF-Token header is missing or does not match the session.","code":"csr
+  ✓   6 [chromium-en] › e2e/dg2-qa-r17.spec.ts:750:1 › R17-08 a 403 is never a session end; the same person's next save after a new session updates and navigates (5.7s)
+  ✓   7 [chromium-en] › e2e/dg2-qa-r17.spec.ts:821:1 › R17-09 same-identity admin flows still navigate and update: organisation create and user save (2.5s)
+[chromium-ar] r17-05-timeline: ["+0 /admin/users/01a117cb-fda7-70db-9efc-9fa27b95c4ac | header=Synthetic Dev Admin | marker=true | states=empty","+3360 /about | header=Synthetic Dev Admin | marker=false | states=","+3386 /about | header=Synthetic Transformation Lead | marker=false | states="]
+[chromium-ar] r17-05-api: ["+3396 send PATCH /api/v1/users/01a117cb-fda7-70db-9efc-9fa27b95c4ac","+4185 send GET /api/v1/me","+4199 done GET /api/v1/me","+4228 done PATCH /api/v1/users/01a117cb-fda7-70db-9efc-9fa27b95c4ac"]
+[chromium-ar] r17-05: learn-first after delivery: {"path":"/about","header":"Synthetic Transformation Lead"}
+[chromium-ar] observer-hits: before-switch | header=Synthetic Dev Admin | /admin/users/01a117cb-fda7-70db-9efc-9fa27b95c4ac | states=empty ;; before-switch | header=Synthetic Dev Admin | /admin/users/01a117cb-fda7-70db-9efc-9fa27b95c4ac | states=empty
+  ✓   8 [chromium-ar] › e2e/dg2-qa-r17.spec.ts:561:3 › R17-05a USER save across an identity change (learn-first): B never sees A's change (9.7s)
+[chromium-ar] r17-05-timeline: ["+0 /admin/users/01a117cc-2389-7654-8284-6d3018a8e419 | header=Synthetic Dev Admin | marker=true | states=empty"]
+[chromium-ar] r17-05-api: ["+3396 send PATCH /api/v1/users/01a117cc-2389-7654-8284-6d3018a8e419","+4209 done PATCH /api/v1/users/01a117cc-2389-7654-8284-6d3018a8e419"]
+[chromium-ar] r17-05: deliver-first after delivery: {"path":"/admin/users/01a117cc-2389-7654-8284-6d3018a8e419","header":"Synthetic Dev Admin"}
+[chromium-ar] observer-hits: before-switch | header=Synthetic Dev Admin | /admin/users/01a117cc-2389-7654-8284-6d3018a8e419 | states=empty ;; before-switch | header=Synthetic Dev Admin | /admin/users/01a117cc-2389-7654-8284-6d3018a8e419 | states=empty ;; answer delivered | header=Synthetic Dev Admin | /admin/users/01a117cc-2389-7654-8284-6d3018a8e419 | states=empty
+  ✓   9 [chromium-ar] › e2e/dg2-qa-r17.spec.ts:561:3 › R17-05b USER save across an identity change (deliver-first): B never sees A's change (9.7s)
+[chromium-ar] r17-06: api after click: ["send GET /api/v1/me","done GET /api/v1/me","send GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units","send GET /api/v1/transformations","done GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units","done GET /api/v1/transformations"]
+  ✓  10 [chromium-ar] › e2e/dg2-qa-r17.spec.ts:647:3 › R17-06a in-app navigation at once after another sign-in: GET /me goes first; header and data agree (4.2s)
+[chromium-ar] r17-06: api after click: ["send GET /api/v1/me","done GET /api/v1/me","send GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units","send GET /api/v1/transformations","done GET /api/v1/transformations","done GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units"]
+  ✓  11 [chromium-ar] › e2e/dg2-qa-r17.spec.ts:647:3 › R17-06b in-app navigation 5 s after another sign-in: GET /me goes first; header and data agree (9.0s)
+[chromium-ar] r17-07: history writes: ["pushState /my-work","replaceState /login"]; /me 2
+  ✓  12 [chromium-ar] › e2e/dg2-qa-r17.spec.ts:697:1 › R17-07 an in-app session end lands ONCE on sign-in with the message, bounded /me, no stale shell (5.1s)
+[chromium-ar] r17-08: first save: 403 {"type":"urn:mth:problem:csrf","title":"CSRF check failed","status":403,"detail":"The X-CSRF-Token header is missing or does not match the session.","code":"csr
+  ✓  13 [chromium-ar] › e2e/dg2-qa-r17.spec.ts:750:1 › R17-08 a 403 is never a session end; the same person's next save after a new session updates and navigates (5.8s)
+  ✘  14 [chromium-ar] › e2e/dg2-qa-r17.spec.ts:821:1 › R17-09 same-identity admin flows still navigate and update: organisation create and user save (6.1s)
+
+
+  1) [chromium-ar] › e2e/dg2-qa-r17.spec.ts:821:1 › R17-09 same-identity admin flows still navigate and update: organisation create and user save 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByText('Synthetic QA R17-09 org AR MUYHP0F6FM').first()
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByText('Synthetic QA R17-09 org AR MUYHP0F6FM').first()[22m
+
+
+      697 |   await page.getByRole("button", { name: tr(lang, "common.action.create"), exact: true }).click();
+      698 |   await page.waitForURL(/\/admin\/organizations\/[0-9a-f-]{36}$/);
+    > 699 |   await expect(page.getByText(nameEn).first()).toBeVisible();
+          |                                                ^
+      700 |   await shot(page, lang, "qa-r17-09-org-created");
+      701 |   const admin = await apiSession(playwright, "dev.admin");
+      702 |   const u = await admin.call<{ id: string }>("POST", "/api/v1/users", {
+        at $TMPDIR/review-dg2-e2e/e2e/dg2-qa-r17.spec.ts:699:48
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r17-R17-09-same-25a50-sation-create-and-user-save-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-dg2-qa-r17-R17-09-same-25a50-sation-create-and-user-save-chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r17-R17-09-same-25a50-sation-create-and-user-save-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg2-qa-r17-R17-09-same-25a50-sation-create-and-user-save-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium-ar] › e2e/dg2-qa-r17.spec.ts:821:1 › R17-09 same-identity admin flows still navigate and update: organisation create and user save 
+  13 passed (1.6m)
+---- api.log (tail)
+exit 1
