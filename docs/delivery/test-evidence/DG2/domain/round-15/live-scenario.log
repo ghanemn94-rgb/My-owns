@@ -1,0 +1,132 @@
+### v24.21.0 rv/live-scenario.mjs (clone at 9236a9f) TAG= TRIGGERS=
+PASS REQ-PB-012.b0018-text :: expected the six B0018 governance roles present with verbatim accountability :: actual catalogue count=14; missing=[]
+PASS REQ-PB-003.modular-needs-entry-phase :: expected 400 validation (ADR-0007) :: actual 400 [{"pointer":"/entryPhase","code":"validation.required","message":"validation.required"}]
+PASS REQ-PB-003.only-two-modes :: expected 400 for mode 'hybrid' :: actual 400
+PASS REQ-PB-003.modular-with-entry :: expected 201 :: actual 201 mode=modular entryPhase=design
+PASS REQ-PB-003.e2e-created :: expected 201 end_to_end, phase diagnose :: actual mode=end_to_end phase=diagnose
+GATES ["G1|G1 - Case for Change|G1 - مبررات التغيير|","G2|G2 - Direction|G2 - التوجّه|","G3|G3 - Target State|G3 - الحالة المستهدفة|","G4|G4 - Mobilization|G4 - التعبئة|","G5|G5 - Scale|G5 - التوسّع|","G6|G6 - Sustain|G6 - الاستدامة|"]
+PASS REQ-PB-017.api-gate-names-b0023 :: expected API sourceNameEn equals B0023 gate column :: actual ["G1 - Case for Change","G2 - Direction","G3 - Target State","G4 - Mobilization","G5 - Scale","G6 - Sustain"]
+PASS REQ-PB-016.G2-before-G1-refused :: expected 422 gate.out_of_sequence :: actual 422 "gate.out_of_sequence"
+PASS REQ-PB-016.G3-before-G1-refused :: expected 422 gate.out_of_sequence :: actual 422 "gate.out_of_sequence"
+PRECHECKS(no out of scope) [{"code":"outcome_linkage","result":"not_applicable","detail":"Answered by people; no system pre-check."},{"code":"problem_traceability","result":"attention","detail":"No confirmed diagnostic finding traces the scope yet."},{"code":"exclusions_documented","result":"attention","detail":"No explicit exclusions (out of scope) are documented; this check fails until Out of scope is completed."},{"code":"baseline_measurable","result":"unknown","detail":"No baseline is recorded yet."},{"code":"executive_decisions_visible","result":"unknown","detail":"No open decision is recorded yet."}]
+PASS F-DG2-150.empty-out-of-scope-fails :: expected exclusions_documented = attention (fails) on a saved charter with null Out of scope :: actual attention: No explicit exclusions (out of scope) are documented; this check fails until Out of scope is completed.
+G1 initial_charter (null oos) {"key":"g1.initial_charter","ordinal":6,"labelEn":"Initial charter","labelAr":"الميثاق الأولي","mandatory":true,"requiresVerifiedEvidence":false,"completeness":"incomplete","missing":[{"code":"g1.initial_charter.field_missing","message":"The charter lacks its scope out.","pointer":"/charter/outOfScope"}],"unverifiedEvidenceIds":[]}
+PASS F-DG2-150.g1-null-oos :: expected g1.initial_charter incomplete, names scope out :: actual incomplete [{"code":"g1.initial_charter.field_missing","message":"The charter lacks its scope out.","pointer":"/charter/outOfScope"}]
+PASS F-DG2-150.empty-string-rejected :: expected 400 :: actual 400 [{"pointer":"/outOfScope","code":"validation.too_small","message":"Too small: expected string to have >=1 characters"}]
+PASS F-DG2-150.whitespace-rejected:"   " :: expected 400 validation.blank at /outOfScope; nothing written (version unchanged) :: actual 400 [{"pointer":"/outOfScope","code":"validation.blank","message":"validation.blank"}]; version 1->1; stored=null
+PASS F-DG2-150.whitespace-rejected:"\t\n " :: expected 400 validation.blank at /outOfScope; nothing written (version unchanged) :: actual 400 [{"pointer":"/outOfScope","code":"validation.blank","message":"validation.blank"}]; version 1->1; stored=null
+PASS F-DG2-150.whitespace-rejected:" 　" :: expected 400 validation.blank at /outOfScope; nothing written (version unchanged) :: actual 400 [{"pointer":"/outOfScope","code":"validation.blank","message":"validation.blank"}]; version 1->1; stored=null
+PASS D-063.blank-in-scope-rejected :: expected 400 validation.blank :: actual 400 [{"pointer":"/inScope","code":"validation.blank","message":"validation.blank"}]
+PASS D-063.blank-change-summary-rejected :: expected 400 validation.blank :: actual 400 [{"pointer":"/changeSummary","code":"validation.blank","message":"validation.blank"}]
+PASS D-063.null-clears :: expected 200 (null clears a nullable field) :: actual 200
+PASS R4.invisible-oos-rejected:RLM :: expected 400 validation.blank at /outOfScope; version unchanged :: actual 400 [["/outOfScope","validation.blank"]]; v 2->2
+PASS R4.invisible-oos-rejected:ZWSP x3 :: expected 400 validation.blank at /outOfScope; version unchanged :: actual 400 [["/outOfScope","validation.blank"]]; v 2->2
+PASS R4.invisible-oos-rejected:WORD JOINER :: expected 400 validation.blank at /outOfScope; version unchanged :: actual 400 [["/outOfScope","validation.blank"]]; v 2->2
+PASS R4.invisible-oos-rejected:NEL :: expected 400 validation.blank at /outOfScope; version unchanged :: actual 400 [["/outOfScope","validation.blank"]]; v 2->2
+PASS R4.invisible-oos-rejected:HANGUL FILLER :: expected 400 validation.blank at /outOfScope; version unchanged :: actual 400 [["/outOfScope","validation.blank"]]; v 2->2
+PASS R4.invisible-oos-rejected:BRAILLE BLANK :: expected 400 validation.blank at /outOfScope; version unchanged :: actual 400 [["/outOfScope","validation.blank"]]; v 2->2
+PASS R4.invisible-oos-rejected:ALM+NBSP :: expected 400 validation.blank at /outOfScope; version unchanged :: actual 400 [["/outOfScope","validation.blank"]]; v 2->2
+PASS R4.invisible-charter-field-rejected:caseForChange :: expected 400 validation.blank :: actual 400 [["/caseForChange","validation.blank"]]
+PASS R4.invisible-charter-field-rejected:inScope :: expected 400 validation.blank :: actual 400 [["/inScope","validation.blank"]]
+PASS R4.invisible-charter-field-rejected:thesisChange :: expected 400 validation.blank :: actual 400 [["/thesisChange","validation.blank"]]
+PASS R4.invisible-charter-field-rejected:thesisBecause :: expected 400 validation.blank :: actual 400 [["/thesisBecause","validation.blank"]]
+PASS R4.invisible-charter-field-rejected:transformationName :: expected 400 validation.blank :: actual 400 [["/transformationName","validation.blank"]]
+PASS R4.invisible-change-summary-rejected :: expected 400 validation.blank on changeSummary :: actual 400 [["/changeSummary","validation.blank"]]
+PASS R4.visible-arabic-with-marks-accepted-verbatim :: expected 200; stored byte-for-byte; B0041 pre-check pass :: actual 200; verbatim=true; precheck=pass
+PASS R5.invisible-oos-rejected:VS16 only :: expected 400 validation.blank at /outOfScope; version unchanged :: actual 400 [["/outOfScope","validation.blank"]]; v 3->3
+PASS R5.invisible-oos-rejected:VS16+CGJ :: expected 400 validation.blank at /outOfScope; version unchanged :: actual 400 [["/outOfScope","validation.blank"]]; v 3->3
+PASS R5.invisible-oos-rejected:C0 control U+0001 :: expected 400 validation.blank at /outOfScope; version unchanged :: actual 400 [["/outOfScope","validation.blank"]]; v 3->3
+PASS R5.invisible-oos-rejected:lone surrogate U+D800 :: expected 400 validation.invalid_character at /outOfScope (D-067); version unchanged :: actual 400 [["/outOfScope","validation.invalid_character"]]; v 3->3
+PASS R5.invisible-oos-rejected:Mongolian FVS1 :: expected 400 validation.blank at /outOfScope; version unchanged :: actual 400 [["/outOfScope","validation.blank"]]; v 3->3
+PASS R5.invisible-oos-rejected:tag LATIN A :: expected 400 validation.blank at /outOfScope; version unchanged :: actual 400 [["/outOfScope","validation.blank"]]; v 3->3
+PASS R5.invisible-oos-rejected:Khmer inherent vowel :: expected 400 validation.blank at /outOfScope; version unchanged :: actual 400 [["/outOfScope","validation.blank"]]; v 3->3
+PASS R5.invisible-oos-rejected:RLM+LRM+ALM :: expected 400 validation.blank at /outOfScope; version unchanged :: actual 400 [["/outOfScope","validation.blank"]]; v 3->3
+PASS R5.arabic-rlm-charter-accepted-verbatim :: expected 200; all 7 Arabic fields with RLM/ALM/isolates stored code-point-for-code-point; change summary verbatim in version history; B0041 pre-check pass :: actual 200; mismatched=[]; summaryVerbatim=true; precheck=pass
+PASS R5.db-stores-codepoints :: expected char_length counts characters (UTF8): 22 chars, more octets :: actual 23/46
+PASS R5.arabic-200-chars-accepted :: expected 200 for a 200-character Arabic name (401 bytes); stored verbatim :: actual 200; verbatim=true; bytes=401
+PASS R5.arabic-201-chars-refused :: expected 400 (max 200 characters) :: actual 400 [["/transformationName","validation.too_big"]]
+PASS R5.emoji-vs16-visible-accepted :: expected 200 verbatim :: actual 200 verbatim=true
+PASS R4.short-visible-accepted:- :: expected 200 (any visible content is a value; the human scope answer still decides) :: actual 200 precheck=pass
+PASS R4.short-visible-accepted:N/A :: expected 200 (any visible content is a value; the human scope answer still decides) :: actual 200 precheck=pass
+PASS R4.short-visible-accepted:0 :: expected 200 (any visible content is a value; the human scope answer still decides) :: actual 200 precheck=pass
+PASS R4.db-invisible-oos-absent:ZWSP :: expected precheck attention; G1 initial_charter incomplete :: actual stored="​" precheck=attention; g1=incomplete
+PASS R4.db-invisible-oos-absent:RLM+NBSP :: expected precheck attention; G1 initial_charter incomplete :: actual stored="‏ " precheck=attention; g1=incomplete
+PASS R4.db-invisible-oos-absent:HANGUL FILLER :: expected precheck attention; G1 initial_charter incomplete :: actual stored="ㅤ" precheck=attention; g1=incomplete
+PASS F-DG2-150.db-blank-fails :: expected precheck attention and G1 initial_charter incomplete for a whitespace value stored directly :: actual stored="   " precheck=attention (No explicit exclusions (out of scope) are documented; this check fails until Out of scope is completed.); g1=incomplete ["g1.initial_charter.field_missing"]
+human answer 'yes' with blank exclusions: PATCH 200; answer=yes
+PASS REQ-PB-031.out-of-scope-present-passes :: expected pass :: actual pass
+PASS REQ-PB-031.five-checks :: expected 5 pre-check entries in source order :: actual ["outcome_linkage","problem_traceability","exclusions_documented","baseline_measurable","executive_decisions_visible"]
+PASS REQ-PB-029.versions-retained :: expected >=3 versions :: actual 13
+PASS REQ-PB-035.top-outcome-warning :: expected charter.top_outcomes_count warning with 0 top outcomes :: actual ["charter.top_outcomes_count","charter.thesis_incomplete","charter.thesis_incomplete","charter.thesis_incomplete"]
+PASS REQ-PB-030.thesis-incomplete :: expected thesis incomplete warning :: actual ["charter.top_outcomes_count","charter.thesis_incomplete","charter.thesis_incomplete","charter.thesis_incomplete"]
+PASS REQ-PB-029.baseline-date-valid :: expected 400 for 2026-02-30 :: actual 400
+PASS REQ-PB-026.six-dimensions :: expected 6 seeded rows (Financial..Data) :: actual ["customer","financial","people_org","process","technology","data"]
+PASS REQ-PB-026.confidence-hml :: expected 400 for confidence X :: actual 400
+PASS REQ-PB-038.ten-dimensions :: expected 10 dimensions with B0056 design questions :: actual 10; first={"id":"01920002-0003-7000-8000-000000000001","code":"customer_value_proposition","methodologyVersionId":"01920002-0000-7000-8000-000000000001","ordinal":1,"sourceNameEn":"Customer & Value Proposition"
+PASS REQ-PB-023.six-workstreams :: expected 6 workstreams :: actual 6: ["business_financial","customer","process_operations","organization_governance","technology_data","capability"]
+METHODOLOGY_KEYS [
+  'methodologyVersion',
+  'diagnosticDimensions',
+  'diagnosticWorkstreams',
+  'tomDimensions',
+  'gateDefinitions',
+  'charterScopeChecks',
+  'goodOutcomeCriteria'
+]
+PASS REQ-PB-038.b0056-verbatim :: expected design questions equal B0056 in order :: actual [true,true,true,true,true,true,true,true,true,true]
+PASS REQ-PB-023.b0029-verbatim :: expected key questions equal B0029 in order :: actual ["Where is value created/lost? Revenue, margin, cost, churn, productivity?","Where does the customer experience break?","Where are delays, rework, bottlenecks, handoffs?","Are roles, decision rights, incentives and accountability clear?","What systems/data constrain performance?","What skills/capabilities are missing?"]
+PASS REQ-PB-041.b0062-prompts :: expected canvas prompts equal B0062 :: actual [true,true,true,true,true,true,true,true,true,true]
+PASS REQ-PB-031.b0039-43-verbatim :: expected five questions verbatim :: actual ["Is scope tied to outcomes rather than departments?","Can each major scope item be traced to a diagnosed problem or opportunity?","Are explicit exclusions documented?","Is the baseline measurable?","Are executive decisions required to unblock the transformation visible?"]
+GATEDEFS [["G1","Do we agree on the problem/opportunity and value at stake?","Diagnostic, baseline, root causes, value pools."],["G2","Are outcomes specific enough to steer decisions?","North Star, outcome tree, KPI definitions, guardrails."],["G3","Do we know what must be different operationally?","Target Operating Model, capability gaps, future journeys."],["G4","Is the portfolio executable and value-backed?","Initiative cards, business cases, roadmap, owners, capacity."],["G5","Are pilots/results sufficient to scale?","Performance evidence, adoption, risk closure, decision log."],["G6","Is value embedded in BAU?","Benefits evidence, ownership transfer, controls, continuous improvement backlog."]]
+SCOPECHECKDEF_KEYS ["id","code","methodologyVersionId","ordinal","sourceQuestionEn","questionAr","sourceRef","systemPrecheck","version","createdAt","createdBy","updatedAt","updatedBy"]
+DIMS [[1,"Customer & Value Proposition","What experience/value should customers receive?","CUSTOMER & VALUE","Segments / needs / promise / experience principles"],[2,"Products & Services","What portfolio, pricing, features and service model are required?","PRODUCTS & SERVICES","Portfolio / bundles / pricing / service model"],[3,"Journeys & Processes","What end-to-end journeys/processes must change?","JOURNEYS & PROCESSES","Critical E2E journeys / automation / controls"],[4,"Organization","What structure, roles and accountabilities are needed?","ORGANIZATION","Structure / role clarity / accountability"],[5,"Governance & Decision Rights","Who decides what, at what level, using what forums?","GOVERNANCE","Decision rights / forums / escalation"],[6,"People & Capabilities","What skills, capacity, behaviors and incentives are required?","PEOPLE & CAPABILITY","Skills / capacity / incentives / behaviors"],[7,"Technology","What platforms, systems and integration are required?","TECHNOLOGY","Platforms / architecture / integration"],[8,"Data & Analytics","What data, metrics, models and ownership are needed?","DATA & ANALYTICS","Sources / ownership / insight / AI / measurement"],[9,"Partners & Sourcing","What should be built, bought, outsourced or partnered?","PARTNERS & SOURCING","Partner model / vendors / build-buy-partner"],[10,"Performance Management","How will KPIs, benefits and continuous improvement be managed?","PERFORMANCE","KPIs / benefits / management cadence / CI"]]
+WORKSTREAMS [["Business & Financial","Where is value created/lost? Revenue, margin, cost, churn, productivity?","Baseline P&L bridge, value pools, trend analysis."],["Customer","Where does the customer experience break?","Journey pain points, complaints, NPS/CSAT drivers."],["Process & Operations","Where are delays, rework, bottlenecks, handoffs?","Process map, cycle time, failure demand."],["Organization & Governance","Are roles, decision rights, incentives and accountability clear?","RACI gaps, decision latency, governance map."],["Technology & Data","What systems/data constrain performance?","Architecture pain points, automation/data gaps."],["Capability","What skills/capabilities are missing?","Capability heatmap, build/buy/partner needs."]]
+PASS R4.invisible-t01-current-state-rejected :: expected 400 validation.blank :: actual 400 [["/currentState","validation.blank"]]
+PASS INV.unquantified-label :: expected value pool unquantified, amount null (not 0) :: actual [["unquantified",null]]
+G1 criteria [["g1.diagnostic","complete"],["g1.baseline","complete"],["g1.root_causes","complete"],["g1.value_pools","complete"],["g1.case_for_change","complete"],["g1.initial_charter","complete"]]
+PASS REQ-S04-003.g1-six-outputs :: expected G1 lists six required outputs :: actual 6
+PASS R4.invisible-submission-note :: expected 400 validation.blank (or note ignored); gate not submitted :: actual 400 [["/submissionNote","validation.blank"]]
+PASS REQ-S04-003.submitter-cannot-decide :: expected 403 :: actual 403
+PASS R4.invisible-decision-rationale-rejected :: expected 400 validation.blank; no decision recorded :: actual 400 [["/rationale","validation.blank"]]
+PASS LIVE.G1-decision :: expected 201/200 approved; phase advances diagnose->define :: actual 201; phase=define
+PASS REQ-PB-018.G3-before-G2-refused :: expected 422 :: actual 422 "gate.out_of_sequence"
+ns1 200 {"id":"01a11681-63b1-7535-9e67-e4e5cf0a8e1e","organizationId":"01920000-0000-7000-9000-000000000001","transformationId":"01a11681-5c7f-7468-8937-99b9ce534183","statement":"Every synthetic bill is right first time","status":"current","supersededAt":null,"version":1,"createdAt":"2026-10-07T13:15:40.84
+PASS REQ-PB-033.one-sentence :: expected 400/422 for two sentences :: actual 400 [{"pointer":"/statement","code":"validation.single_sentence","message":"validation.single_sentence"}]
+PASS REQ-PB-033.exactly-one-current :: expected exactly 1 current after refine; older superseded :: actual POST2=200; statuses=["current","superseded"]
+PASS REQ-PB-036.launch-fails :: expected goodOutcomePass=false with reasons :: actual false [["specific","fail"],["measurable","fail"],["strategically_relevant","unknown"],["owned_by_business_leader","fail"],["causal_chain","unknown"]]
+activate 200 {"id":"01a11681-63ee-73c8-a718-f47c7fb861c1","organizationId":"01920000-0000-7000-9000-000000000001","transformationId":"01a11681-5c7f-7468-8937-99b9ce534183","name":"Synthetic billing error rate","de
+PASS REQ-PB-034.target-date-required :: expected 400/422 without targetDate :: actual 422
+G2 criteria [["g2.north_star","complete",[]],["g2.outcome_tree","incomplete",["g2.outcome_tree.thesis_incomplete","g2.outcome_tree.thesis_incomplete","g2.outcome_tree.thesis_incomplete","g2.outcome_tree.good_outcome_test_not_passing"]],["g2.kpi_definitions","complete",[]],["g2.target_trajectory","incomplete",["g2.target_trajectory.not_approved"]],["g2.guardrails","incomplete",["g2.guardrails.none"]]]
+PASS REQ-PB-036.g2-lists-failing :: expected G2 readiness lists 'Launch new app' as failing :: actual true
+PASS REQ-PB-037.zero-guardrails-blocks :: expected 422 naming g2.guardrails :: actual 422 ["/criteria/g2.outcome_tree","/criteria/g2.target_trajectory","/criteria/g2.guardrails"]
+PASS R4.invisible-archive-reason-rejected :: expected 400 validation.blank :: actual 400 [["/reason","validation.blank"]]
+PASS R4.invisible-outcome-rejected :: expected 400 :: actual 400
+PASS R4.invisible-guardrail-title-rejected :: expected 400 :: actual 400
+PASS R4.invisible-north-star-rejected :: expected 400 :: actual 400
+PASS R5.arabic-rlm-outcome-verbatim :: expected 201; statement stored verbatim :: actual 201 verbatim=true
+PASS R5.arabic-rlm-archive-reason :: expected 200 (Arabic reason with RLM is content) :: actual 200
+PASS R5.arabic-rlm-north-star-verbatim :: expected 200/201; current statement verbatim :: actual 200 verbatim=true status=current
+PASS REQ-PB-037.guardrail-category :: expected persisted with category :: actual cx
+trajectory 200 {"id":"01a11681-6416-713f-987f-c63db5d7ceb8","organizationId":"01920000-0000-7000-9000-000000000001","transformationId":"01a11681-5c7f-7468-8937-99b9ce534183","outcomeId":"01a11681-63e3-748b-bf5f-828d
+PASS R4.thesis-composed :: expected thesis complete; composed sentence contains all four parts :: actual warnings=["charter.top_outcomes_count"]; parts=["the order-to-bill journey","first-time-right bills","a lower cost to serve","rework drives cost"]
+PASS R4.thesis-invisible-part-incomplete :: expected charter.thesis_incomplete warning for an invisible-only benefits part :: actual ["charter.top_outcomes_count","charter.thesis_incomplete"] stored benefits="​⁠"
+PASS R4.thesis-restored-complete :: expected no thesis_incomplete after restoring visible text :: actual ["charter.top_outcomes_count"]
+PASS REQ-PB-033.charter-shows-current :: expected charter northStar = current statement :: actual Every synthetic bill is right first time, every month / current
+G2 criteria(after) [["g2.north_star","complete",[]],["g2.outcome_tree","complete",[]],["g2.kpi_definitions","complete",[]],["g2.target_trajectory","complete",[]],["g2.guardrails","complete",[]]]
+submit G2 201 {"id":"01a11681-65bb-771d-a0e8-dd83401146cf","organizationId":"01920000-0000-7000-9000-000000000001","transformationId":"01a11681-5c7f-7468-8937-99b9ce534183","gateInstanceId":"01a11681-5c87-77b9-8906-76593bd26e4c","gateCode":"G2","submissionNo":1,"status":"pending","submittedBy":"01920000-0000-7000-9000-000000000203","submittedAt":"2026-10-07T13:15:41.359Z","submissionNote":"Synthetic G2","approv
+PASS LIVE.G2-decision :: expected approved; phase define->design :: actual 201; phase=design
+PASS REQ-PB-041.ten-boxes :: expected 10 canvas cells in B0062 order :: actual 10 ["customer_value_proposition","products_services","journeys_processes","organization","governance_decision_rights","people_capabilities","technology","data_analytics","partners_sourcing","performance_management"]
+PASS F-DG2-152.register-contract :: expected GET tom-canvas/{dim} 200 with cell/dimension/gaps/decisions/dependencies/evidence; old register path 404 :: actual new=200 keys=["cell","dimension","gaps","decisions","dependencies","evidence"]; old=404
+PASS REQ-PB-041.ready-needs-target-owner :: expected 422 when marking ready without target design/owner :: actual 422
+G3 criteria (canvas only) [["g3.target_operating_model","complete",[]],["g3.gap_matrix","incomplete",["g3.gap_matrix.none"]],["g3.capability_gaps","incomplete",["g3.capability_gaps.none"]],["g3.future_journeys","incomplete",["g3.future_journeys.none"]],["g3.design_decisions","complete",[]]]
+PASS REQ-S04-005.g3-incomplete-blocked :: expected 422 while gap matrix/capability/journey missing :: actual 422 ["/criteria/g3.gap_matrix","/criteria/g3.capability_gaps","/criteria/g3.future_journeys"]
+PASS D-063.blank-gap-rejected :: expected 400 validation.blank :: actual 400
+G3 criteria (after) [["g3.target_operating_model","complete",[]],["g3.gap_matrix","complete",[]],["g3.capability_gaps","complete",[]],["g3.future_journeys","complete",[]],["g3.design_decisions","complete",[]]]
+submit G3 201 {"id":"01a11681-67e3-7539-a3c8-bfffb84fc2d1","organizationId":"01920000-0000-7000-9000-000000000001","transformationId":"01a11681-5c7f-7468-8937-99b9ce534183","gateInstanceId":"01a11681-5c87-74fd-9bc2-5442e079a99c","gateCode":"G3","submissionNo":1,"status":"pending","submittedBy":"01920000-0000-7000
+PASS R7.gate-rationale-lone-surrogate :: expected 400 validation.invalid_character at /rationale; G3 not approved :: actual 400 [["/rationale","validation.invalid_character"]] status=submitted
+PASS R7.gate-outcome-text-codepoint-cut :: expected rationale length 8000 accepted; decision log outcome_text = 7999 units ending before the emoji, no U+FFFD, no lone surrogate :: actual rationaleLen=8000 d3=201 decisions=3 len=7999 tail="xxx" fffd=false lone=false
+PASS LIVE.G3-decision :: expected approved; phase design->mobilize :: actual 201; phase=mobilize
+GATES END [["G1","approved"],["G2","approved"],["G3","approved"],["G4","draft"],["G5","draft"],["G6","draft"]]
+PASS INV.product-gates-only :: expected gate codes G1..G6 only :: actual ["G1","G2","G3","G4","G5","G6"]
+SUMMARY {"pass":101,"fail":[]}
+### live-scenario exit=0

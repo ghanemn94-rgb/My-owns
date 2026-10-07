@@ -1,0 +1,51 @@
+### product (non-docs) files changed ea9051b (round-14 source)..ed80b23 (round-15 source):
+apps/web/e2e/session-end.spec.ts
+apps/web/src/api/client.ts
+apps/web/src/api/queries.ts
+apps/web/src/app/App.tsx
+apps/web/src/auth/session-identity.test.tsx
+apps/web/src/auth/session.tsx
+### non-web product changes (expect none):
+(end)
+### i18n changes (expect none):
+(end)
+### i18n keys parity EN vs AR:
+EN keys missing in AR: 0 []
+### certification/official claims in user-facing i18n (expect only negations):
+apps/web/src/i18n/en/common.json:5:    "provisionalHint": "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.",
+apps/web/src/i18n/en/common.json:6:    "provisionalNotice": "Branding is provisional: the text wordmark and colours are placeholders, not official Mobily brand assets."
+apps/web/src/i18n/en/common.json:127:    "brandBody": "No official Mobily logo or verified brand colours have been supplied. The header shows a provisional text wordmark, and the colours (including #0078FF) are provisional design tokens that can be replaced th
+apps/web/src/i18n/en/common.json:130:    "methodBody": "The product operationalizes the Business Transformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with custom extensions. It is not an official PMI standard, and th
+apps/web/src/i18n/ar/common.json:130:    "methodBody": "يطبّق المنتج دليل تحوّل الأعمال الإصدار 1.0، وهو خلاصة عملية مستوحاة من ممارسات PMI وBrightline وBRM مع إضافات مخصصة. وهو 
+### float/real/double columns in migrations (expect 0):
+0
+### provisional brand token:
+2:  "$comment": "Single design-token source (ADR-0009). PROVISIONAL values from master prompt §15 (REQ-S15-002). They are NOT verified or official Mobily colours; #0078FF is a provisional brand token. Replace only through the Branding Settings flow (REQ-S15-004) once official values are supplied.",
+5:    "brand.primary": { "value": "#0078FF", "purpose": "Primary accents and selected elements", "provisional": true },
+18:    "$comment": "Derived from the seeded tokens by a rule (REQ-S15-003). `value` is the result of the rule and a test re-derives it, so a change to a seed without regenerating fails. #0078FF itself is NOT used behind small white text.",
+### DG0-DG7 mentions in product source, excluding finding/task ids F-DGx-/T-DGx- (expect comments asserting separation only):
+apps/api/src/modules/reporting/index.ts:3:// (modules.ts `dependsOn`), this public interface, its wiring hook and its own test suite exist from DG1, so later
+apps/api/src/modules/admin/branding.ts:1:// GET /api/v1/branding/tokens (REQ-S15-002, contract operation getBrandingTokens). Read-only at DG1: Branding
+apps/api/src/modules/admin/branding.ts:33:  // Computed once: the source is static per process at DG1 (no Branding Settings writes yet).
+apps/api/src/modules/transformations/routes.ts:66: * This is a PRODUCT gate (G6), unrelated to the engineering delivery gates DG0-DG7.
+apps/api/src/modules/transformations/phase.ts:4:// delivery gates DG0-DG7.
+apps/api/src/modules/workflows/index.ts:7:// phase. They are unrelated to the engineering delivery gates DG0-DG7 (G6 never implies DG7, and the reverse).
+apps/api/src/modules/workflows/index.ts:20:/** The playbook's product gates (business approvals), in order. Not the engineering gates DG0-DG7. */
+apps/api/src/modules/workflows/criteria.ts:11:// These are BUSINESS gates inside the product; nothing here reads or writes the engineering gates DG0-DG7.
+apps/api/src/modules/workflows/gates.ts:10:// delivery gates DG0-DG7, and no product gate implies one (G6 never implies DG7). The API never approves by itself:
+apps/api/src/modules/workflows/gates.ts:578:    note: "Product gate (business approval inside the product); unrelated to the engineering delivery gates DG0-DG7.",
+apps/api/src/modules/kpi/gate-facts.ts:3:// the product (G1-G6), unrelated to the engineering delivery gates DG0-DG7.
+apps/api/src/modules.ts:65: * existed from DG1; their business behaviour lands in P2 / P4 / P5. `methodology` and `evidence` were reserved names
+apps/web/src/api/queries.ts:244:// ------------------------------------------------------------------------------------------------ P2 (DG2)
+apps/web/src/api/types.ts:66:// ------------------------------------------------------------------------------------------------ P2 (DG2)
+packages/shared/src/schemas/gate.ts:2:// decided by people; they are unrelated to the engineering delivery gates DG0-DG7 and never imply them.
+packages/shared/src/schemas/methodology.ts:14:/** Product gates G1-G6: BUSINESS approvals inside the product, never the engineering delivery gates DG0-DG7. */
+(end)
+### product gate codes G1-G6 vs engineering gate codes in migrations:
+packages/db/migrations/0011_p2_methodology_catalogue.sql:290:  ('01920002-0004-7000-8000-000000000001', 'G1', '01920002-0000-7000-8000-000000000001', 1, 'diagnose', 'define', 'G1 - Case for Change', '
+packages/db/migrations/0011_p2_methodology_catalogue.sql:291:  ('01920002-0004-7000-8000-000000000002', 'G2', '01920002-0000-7000-8000-000000000001', 2, 'define', 'design', 'G2 - Direction', 'G2 - ا�
+packages/db/migrations/0011_p2_methodology_catalogue.sql:292:  ('01920002-0004-7000-8000-000000000003', 'G3', '01920002-0000-7000-8000-000000000001', 3, 'design', 'mobilize', 'G3 - Target State', 'G3 
+packages/db/migrations/0011_p2_methodology_catalogue.sql:293:  ('01920002-0004-7000-8000-000000000004', 'G4', '01920002-0000-7000-8000-000000000001', 4, 'mobilize', 'transform', 'G4 - Mobilization', '
+packages/db/migrations/0011_p2_methodology_catalogue.sql:294:  ('01920002-0004-7000-8000-000000000005', 'G5', '01920002-0000-7000-8000-000000000001', 5, 'transform', 'realize', 'G5 - Scale', 'G5 - ا�
+packages/db/migrations/0011_p2_methodology_catalogue.sql:295:  ('01920002-0004-7000-8000-000000000006', 'G6', '01920002-0000-7000-8000-000000000001', 6, 'realize', NULL, 'G6 - Sustain', 'G6 - الاس
+(end)

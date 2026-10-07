@@ -1,0 +1,12 @@
+### v24.21.0 rv/r12-delta-api.mjs (clone at 9236a9f) TAG= TRIGGERS=
+PASS R12.normal-upload-download-unchanged :: expected 200; download byte-identical; Arabic+RLM+emoji file name kept; one revision :: actual upload 200 fileName="خط-الأساس R12 ‏📊.xlsx"; download 200 1048868/1048868 bytes sha f48f414df22105c8 vs f48f414df22105c8; revisions=1
+PASS R12.slow-uploads-do-not-block-others :: expected while 24 uploads (> pool max 20) trickle their bodies, other users' reads and a charter write answer 2xx within 2 s; no session idle in transaction :: actual statuses=[200,200,200,200,200,201] worst=19 ms; idle-in-transaction mth-api sessions during uploads=0
+PASS R12.slow-uploads-complete-unchanged :: expected all 24 slow uploads 200; each download byte-identical :: actual 200=24/24 statuses=[200]; identical=24/24; slowest=4158 ms
+PASS R12.arabic-rlm-charter-verbatim :: expected charter created 201; caseForChange stored verbatim incl. U+200F :: actual create=201; verbatim=true
+PASS R12.interrupted-json-400 :: expected 400 validation.malformed_request (not 500); nothing created :: actual 400 code=validation errors=["validation.malformed_request"] err=none; evidence rows 25->25
+PASS R12.interrupted-upload-400 :: expected 400 validation.malformed_request (not 500); no revision stored :: actual 400 code=validation errors=["validation.malformed_request"] err=none; revisions=0
+PASS R12.upload-after-interruption :: expected 200 on the same item afterwards; byte-identical :: actual 200; identical=true; revisions=1
+PASS R12.localized:validation.malformed_request :: expected EN and AR present, AR Arabic :: actual en='The request was not a valid HTTP request.' ar='الطلب ليس طلب HTTP صالحًا.'
+PASS R12.gate-codes :: expected G1..G6 only :: actual G1,G2,G3,G4,G5,G6
+SUMMARY 9/9 PASS
+### r12-delta-api exit=0

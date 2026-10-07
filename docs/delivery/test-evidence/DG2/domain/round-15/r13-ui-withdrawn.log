@@ -1,0 +1,18 @@
+### v24.21.0 rv/r13-ui-withdrawn.mjs (clone at 9236a9f) TAG= TRIGGERS=
+TIMELINE en
+  +18ms /transformations/01a11684-378c-74eb-92dc-6dd378513b98/evidence | text="Mobily Transformation Hub\nProvisional\nProvisional wordmark: " | msg=true
+  +271ms /login?…error=session_expired | text="Mobily Transformation Hub\nProvisional\nProvisional wordmark: " | msg=true
+  +271ms on /login with the message
+  /me answers after the upload: [401]
+PASS en.upload-refused-after-access-withdrawn :: expected assign 201; evidence 201; revoke 200; upload 401; the message 'Your session ended. Please sign in again.' (localized) is shown and the user ends on the sign-in page showing it, within 15 s; dir ltr; no English leak in AR; 0 revisions :: actual assign=201 evidence=201 revoke=200 upload=401 shownAt=18ms url=/login?returnTo=%2Ftransformations%2F01a11684-378c-74eb-92dc-6dd378513b98%2Fevidence&error=session_expired dir=ltr enLeak=false revisions=0
+PASS en.sign-in-after-refusal :: expected the sign-in form on that page signs in again (dev.lead) :: actual /transformations/01a11684-378c-74eb-92dc-6dd378513b98/evidence
+TIMELINE ar
+  +6ms /transformations/01a11684-4c93-776b-8028-2e42a69ae4be/evidence | text=(blank) | msg=false
+  +278ms /login?…error=session_expired | text="منصة موبايلي للتحوّل\nمؤقت\nشعار نصي مؤقت: لم يُقدَّم شعار رسم" | msg=true
+  +278ms on /login with the message
+  /me answers after the upload: [401]
+PASS ar.upload-refused-after-access-withdrawn :: expected assign 201; evidence 201; revoke 200; upload 401; the message 'انتهت جلستك. يُرجى تسجيل الدخول مجددًا.' (localized) is shown and the user ends on the sign-in page showing it, within 15 s; dir rtl; no English leak in AR; 0 revisions :: actual assign=201 evidence=201 revoke=200 upload=401 shownAt=278ms url=/login?returnTo=%2Ftransformations%2F01a11684-4c93-776b-8028-2e42a69ae4be%2Fevidence&error=session_expired dir=rtl enLeak=false revisions=0
+PASS ar.sign-in-after-refusal :: expected the sign-in form on that page signs in again (dev.lead) :: actual /transformations/01a11684-4c93-776b-8028-2e42a69ae4be/evidence
+PASS no-page-errors :: expected no page errors or console errors other than Chromium's 'Failed to load resource' lines for the expected 401s :: actual []
+SUMMARY {"pass":5,"fail":0}
+### r13-ui-withdrawn exit=0
