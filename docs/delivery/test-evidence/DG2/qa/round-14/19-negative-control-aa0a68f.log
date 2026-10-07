@@ -1,0 +1,138 @@
+$ env -u LC_ALL LANG=C.UTF-8 QA_E2E_API_PORT=25205 QA_E2E_PG_PORT=25206 E2E_SCREENSHOT_DIR=<shots> e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r14.spec.ts --workers=1 --reporter=list
+# NEGATIVE CONTROL: clone @aa0a68f1 (round-13 source, before FE10/FE11/FE12) + the R14 spec; failures are EXPECTED; node v24.21.0; 2026-10-07T11:12:21Z
+port-policy: PostgreSQL listening on port 25206 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 25205 (attempt 1)
+API:     http://localhost:25205
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 14 tests using 1 worker
+
+  ✘   1 [chromium-en] › e2e/dg2-qa-r14.spec.ts:177:1 › R14-01 sign-out in a real second tab, then an in-app link: one landing; Back; language switch on sign-in (3.8s)
+  -   2 [chromium-en] › e2e/dg2-qa-r14.spec.ts:248:1 › R14-02 upload refused with 401 after revocation: message, sign-in, nothing stored, audited
+  -   3 [chromium-en] › e2e/dg2-qa-r14.spec.ts:340:1 › R14-03 three tabs ended at once, open 10 s; another context signs in (no 429)
+  -   4 [chromium-en] › e2e/dg2-qa-r14.spec.ts:392:1 › R14-04a a 403 forbidden on a read [route-replaced] is not a session end
+  -   5 [chromium-en] › e2e/dg2-qa-r14.spec.ts:421:1 › R14-04b+06 a 403 forbidden on create [route-replaced] keeps the user; errors follow a language switch
+  -   6 [chromium-en] › e2e/dg2-qa-r14.spec.ts:513:1 › R14-05+06 refused preference save (real 403 csrf) both directions; 403 not a session end; header layout 320/768/1280
+  -   7 [chromium-en] › e2e/dg2-qa-r14.spec.ts:609:1 › R14-06b dev-login invalid-username error follows a language switch (signed out)
+  ✘   8 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:177:1 › R14-01 sign-out in a real second tab, then an in-app link: one landing; Back; language switch on sign-in (4.1s)
+  -   9 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:248:1 › R14-02 upload refused with 401 after revocation: message, sign-in, nothing stored, audited
+  -  10 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:340:1 › R14-03 three tabs ended at once, open 10 s; another context signs in (no 429)
+  -  11 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:392:1 › R14-04a a 403 forbidden on a read [route-replaced] is not a session end
+  -  12 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:421:1 › R14-04b+06 a 403 forbidden on create [route-replaced] keeps the user; errors follow a language switch
+  -  13 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:513:1 › R14-05+06 refused preference save (real 403 csrf) both directions; 403 not a session end; header layout 320/768/1280
+  -  14 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:609:1 › R14-06b dev-login invalid-username error follows a language switch (signed out)
+
+
+  1) [chromium-en] › e2e/dg2-qa-r14.spec.ts:177:1 › R14-01 sign-out in a real second tab, then an in-app link: one landing; Back; language switch on sign-in 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByLabel(/^Synthetic user name(?:\s*\(required\))?$/)
+    Expected: visible
+    Timeout: 2000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 2000ms[22m
+    [2m  - waiting for getByLabel(/^Synthetic user name(?:\s*\(required\))?$/)[22m
+
+
+      114 |   const message = tr(lang, "auth.errors.session_expired");
+      115 |   await expect(page.getByRole("alert").filter({ hasText: message })).toBeVisible({ timeout: 2_000 });
+    > 116 |   await expect(page.getByLabel(fieldLabel(lang, "auth.dev.username"))).toBeVisible({ timeout: 2_000 });
+          |                                                                        ^
+      117 |   await expectDir(page, lang);
+      118 |   const url = new URL(page.url());
+      119 |   expect(url.pathname).toBe("/login");
+        at expectEndedLanding ($TMPDIR/nc-aa0a68f/e2e/dg2-qa-r14.spec.ts:116:72)
+        at $TMPDIR/nc-aa0a68f/e2e/dg2-qa-r14.spec.ts:181:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-01-sign-d037d--language-switch-on-sign-in-chromium-en/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-01-sign-d037d--language-switch-on-sign-in-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-01-sign-d037d--language-switch-on-sign-in-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg2-qa-r14-R14-01-sign-d037d--language-switch-on-sign-in-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-ar] › e2e/dg2-qa-r14.spec.ts:177:1 › R14-01 sign-out in a real second tab, then an in-app link: one landing; Back; language switch on sign-in 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByRole('alert').filter({ hasText: 'انتهت جلستك. يُرجى تسجيل الدخول مجددًا.' })
+    Expected: visible
+    Timeout: 2000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 2000ms[22m
+    [2m  - waiting for getByRole('alert').filter({ hasText: 'انتهت جلستك. يُرجى تسجيل الدخول مجددًا.' })[22m
+
+
+      113 | async function expectEndedLanding(page: Page, lang: Lang, returnTo: string | null) {
+      114 |   const message = tr(lang, "auth.errors.session_expired");
+    > 115 |   await expect(page.getByRole("alert").filter({ hasText: message })).toBeVisible({ timeout: 2_000 });
+          |                                                                      ^
+      116 |   await expect(page.getByLabel(fieldLabel(lang, "auth.dev.username"))).toBeVisible({ timeout: 2_000 });
+      117 |   await expectDir(page, lang);
+      118 |   const url = new URL(page.url());
+        at expectEndedLanding ($TMPDIR/nc-aa0a68f/e2e/dg2-qa-r14.spec.ts:115:70)
+        at $TMPDIR/nc-aa0a68f/e2e/dg2-qa-r14.spec.ts:181:9
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-01-sign-d037d--language-switch-on-sign-in-chromium-ar/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-01-sign-d037d--language-switch-on-sign-in-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-01-sign-d037d--language-switch-on-sign-in-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg2-qa-r14-R14-01-sign-d037d--language-switch-on-sign-in-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium-en] › e2e/dg2-qa-r14.spec.ts:177:1 › R14-01 sign-out in a real second tab, then an in-app link: one landing; Back; language switch on sign-in 
+    [chromium-ar] › e2e/dg2-qa-r14.spec.ts:177:1 › R14-01 sign-out in a real second tab, then an in-app link: one landing; Back; language switch on sign-in 
+  12 did not run
+---- api.log (tail)
+exit 1

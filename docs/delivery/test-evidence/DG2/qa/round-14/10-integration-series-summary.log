@@ -1,0 +1,13 @@
+# qa-verifier DG2 r14 (R14B) integration series summary (clone $TMPDIR/review-dg2 @ea9051b2 + 5 qa-verifier suites in tests/qa/integration of the clone only); script integration/run-integration-series.sh; disposable PostgreSQL per run on ports 25131-25136
+integration-cutf8-run1.log:  Test Files 44 passed (44)  Tests 652 passed (652) | exit 0 | ×/FAIL lines: 0 | server_encoding UTF8, lc_collate C, lc_ctype C
+integration-cutf8-run2.log:  Test Files 44 passed (44)  Tests 652 passed (652) | exit 0 | ×/FAIL lines: 0 | server_encoding UTF8, lc_collate C, lc_ctype C
+integration-cutf8-run3.log:  Test Files 44 passed (44)  Tests 652 passed (652) | exit 0 | ×/FAIL lines: 0 | server_encoding UTF8, lc_collate C, lc_ctype C
+integration-unset-run1.log:  Test Files 44 passed (44)  Tests 652 passed (652) | exit 0 | ×/FAIL lines: 0 | server_encoding UTF8, lc_collate C, lc_ctype C
+integration-unset-run2.log:  Test Files 44 passed (44)  Tests 652 passed (652) | exit 0 | ×/FAIL lines: 0 | server_encoding UTF8, lc_collate C, lc_ctype C
+integration-unset-run3.log:  Test Files 44 passed (44)  Tests 652 passed (652) | exit 0 | ×/FAIL lines: 0 | server_encoding UTF8, lc_collate C, lc_ctype C
+named suites present and passing in every run: migrations (12-migrations.log: 0001..0019 applied, idempotent re-run), DB guards (bu-hierarchy-guard 0009, dg2-repairs 0019, platform fail-closed guards), contract.test.ts (161 ops: toHaveLength(161) x2), blank-text, encoding, invalid-character, framework-errors, invalid-utf8, media-types, evidence (dg2-repairs, evidence suites, dg2-qa-acceptance)
+error-looking lines explained (each appears once per run, all inside PASSING tests):
+ - 'BE17 db-econnreset: {status:500 ... unhandled error ECONNRESET}' is the passing negative control 'no over-match' in apps/api/test/integration/request-io.test.ts: a DATABASE-side ECONNRESET must still be a 500 + error log.
+ - 'stdout | ...request-io.test.ts / connection-hygiene.test.ts' blocks are measurement output of passing tests whose names contain 'error-level log'.
+ - 'BE18 Q7 ... /login?error=idp_unavailable' is the passing commit-time-auth.test.ts Q7 (never-answering IdP; logins end 302 idp_unavailable as designed).
+ - 'npm warn Unknown project config ...' (3 lines per run) come from npx reading the repository's pnpm-oriented .npmrc; tooling notice, not a test result.

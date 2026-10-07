@@ -1,0 +1,64 @@
+$ python3 -I axe-agg.py <dirs>   # aggregator script text below; cwd docs/delivery/test-evidence/DG2/qa/round-14; 2026-10-07T12:05:41Z
+#   import json,sys,glob,os
+#   tot=0;bad=[];minor={}
+#   for d in sys.argv[1:]:
+#     for f in sorted(glob.glob(d+"/*.json")):
+#       j=json.load(open(f)); n=len(j); tot+=n
+#       for k,v in j.items():
+#         for x in v["violations"]:
+#           if x["impact"] in ("serious","critical"): bad.append((f,k,x))
+#           else: minor[(x["id"],x["impact"])]=minor.get((x["id"],x["impact"]),0)+1
+#       print(f"{os.path.basename(d)}/{os.path.basename(f)}: {n} scans")
+#   keys=set()
+#   for d in sys.argv[1:]:
+#     for f in glob.glob(d+"/*.json"): keys |= {os.path.basename(d).split("-")[1]+":"+k for k in json.load(open(f))}
+#   print("unique scans (stack:lang/name; per-spec files are cumulative within a worker)",len(keys),"| file entries",tot,"| serious/critical violations:",len(bad),bad[:5])
+#   print("other (non-serious) violations by id/impact:",minor or "none")
+== e2e-product-unset e2e-qa-unset
+e2e-product-unset/product-ar-summary-p2-blank.json: 9 scans
+e2e-product-unset/product-ar-summary-p2.json: 50 scans
+e2e-product-unset/product-ar-summary-session-end.json: 56 scans
+e2e-product-unset/product-ar-summary.json: 17 scans
+e2e-product-unset/product-en-summary-p2-blank.json: 9 scans
+e2e-product-unset/product-en-summary-p2.json: 50 scans
+e2e-product-unset/product-en-summary-session-end.json: 56 scans
+e2e-product-unset/product-en-summary.json: 17 scans
+e2e-qa-unset/qa-ar-summary-p2-blank.json: 9 scans
+e2e-qa-unset/qa-ar-summary-p2.json: 50 scans
+e2e-qa-unset/qa-ar-summary-qa-r14.json: 70 scans
+e2e-qa-unset/qa-ar-summary-qa-r9.json: 7 scans
+e2e-qa-unset/qa-ar-summary-session-end.json: 56 scans
+e2e-qa-unset/qa-ar-summary.json: 17 scans
+e2e-qa-unset/qa-en-summary-p2-blank.json: 9 scans
+e2e-qa-unset/qa-en-summary-p2.json: 50 scans
+e2e-qa-unset/qa-en-summary-qa-r14.json: 70 scans
+e2e-qa-unset/qa-en-summary-qa-r9.json: 7 scans
+e2e-qa-unset/qa-en-summary-session-end.json: 56 scans
+e2e-qa-unset/qa-en-summary.json: 17 scans
+unique scans (stack:lang/name; per-spec files are cumulative within a worker) 334 | file entries 682 | serious/critical violations: 0 []
+other (non-serious) violations by id/impact: none
+== e2e-product-cutf8 e2e-qa-cutf8
+e2e-product-cutf8/product-ar-summary-p2-blank.json: 9 scans
+e2e-product-cutf8/product-ar-summary-p2.json: 50 scans
+e2e-product-cutf8/product-ar-summary-session-end.json: 56 scans
+e2e-product-cutf8/product-ar-summary.json: 17 scans
+e2e-product-cutf8/product-en-summary-p2-blank.json: 9 scans
+e2e-product-cutf8/product-en-summary-p2.json: 50 scans
+e2e-product-cutf8/product-en-summary-session-end.json: 56 scans
+e2e-product-cutf8/product-en-summary.json: 17 scans
+e2e-qa-cutf8/qa-ar-summary-p2-blank.json: 9 scans
+e2e-qa-cutf8/qa-ar-summary-p2.json: 50 scans
+e2e-qa-cutf8/qa-ar-summary-qa-r14.json: 70 scans
+e2e-qa-cutf8/qa-ar-summary-qa-r9.json: 7 scans
+e2e-qa-cutf8/qa-ar-summary-session-end.json: 56 scans
+e2e-qa-cutf8/qa-ar-summary.json: 17 scans
+e2e-qa-cutf8/qa-en-summary-p2-blank.json: 9 scans
+e2e-qa-cutf8/qa-en-summary-p2.json: 50 scans
+e2e-qa-cutf8/qa-en-summary-qa-r14.json: 70 scans
+e2e-qa-cutf8/qa-en-summary-qa-r9.json: 7 scans
+e2e-qa-cutf8/qa-en-summary-session-end.json: 56 scans
+e2e-qa-cutf8/qa-en-summary.json: 17 scans
+unique scans (stack:lang/name; per-spec files are cumulative within a worker) 334 | file entries 682 | serious/critical violations: 0 []
+other (non-serious) violations by id/impact: none
+(the default-limits runs, 16-*.log, scan nothing: those two tests have no axe step)
+exit 0

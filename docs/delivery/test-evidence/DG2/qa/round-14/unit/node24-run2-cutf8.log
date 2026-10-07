@@ -1,0 +1,132 @@
+$ PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH env -u LC_ALL LANG=C.UTF-8 pnpm test
+# node v24.21.0; 2026-10-07T11:04:31Z
+
+> mobily-transformation-hub@0.1.0 test $TMPDIR/review-dg2
+> vitest run --project unit-node --project unit-web
+
+
+ RUN  v3.2.4 $TMPDIR/review-dg2
+
+ ✓ |unit-web| src/pages/render-time-language.test.tsx (28 tests) 7624ms
+   ✓ sign-in (dev form), 'en' → 'ar' > an invalid user name: the inline message follows the switch  307ms
+   ✓ journey step editor, 'en' → 'ar' > a field error on a step follows the switch  700ms
+   ✓ journey step editor, 'en' → 'ar' > the form-level "Step N:" error follows the switch (prefix and message)  542ms
+   ✓ journey step editor, 'ar' → 'en' > a field error on a step follows the switch  489ms
+   ✓ journey step editor, 'ar' → 'en' > the form-level "Step N:" error follows the switch (prefix and message)  510ms
+   ✓ row-action note and reason dialog, 'en' → 'ar' > the Finance validation note's 'required' follows the switch  404ms
+   ✓ row-action note and reason dialog, 'en' → 'ar' > the Finance validation choice's 'required' follows the switch  352ms
+   ✓ row-action note and reason dialog, 'ar' → 'en' > the Finance validation note's 'required' follows the switch  331ms
+   ✓ row-action note and reason dialog, 'ar' → 'en' > the Finance validation choice's 'required' follows the switch  360ms
+   ✓ North Star statement, 'ar' → 'en' > the statement's field error follows the switch  304ms
+   ✓ evidence dialogs, 'en' → 'ar' > upload without a file: 'required' follows the switch  306ms
+   ✓ evidence dialogs, 'en' → 'ar' > a link without a record type or record: both 'required' messages follow the switch  324ms
+   ✓ evidence dialogs, 'ar' → 'en' > upload without a file: 'required' follows the switch  364ms
+ ✓ |unit-web| src/pages/p2-blank-forms.test.tsx (52 tests) 12482ms
+   ✓ gate submission note (en) > a whitespace-only note is refused inline and nothing is sent  543ms
+   ✓ gate submission note (en) > visible text is sent verbatim; an empty note is omitted  460ms
+   ✓ journey step editor (en) > a whitespace-only actor is refused inline (not turned into null) and nothing is sent  337ms
+   ✓ journey step editor (en) > a invisible-only actor is refused inline (not turned into null) and nothing is sent  330ms
+   ✓ journey step editor (en) > visible text is sent verbatim; emptied optional text is null; an empty name is required  554ms
+   ✓ journey step editor (ar) > a whitespace-only actor is refused inline (not turned into null) and nothing is sent  372ms
+   ✓ journey step editor (ar) > visible text is sent verbatim; emptied optional text is null; an empty name is required  440ms
+ ✓ |unit-web| src/pages/p2.test.tsx (56 tests) 13211ms
+   ✓ Diagnose > shows the six T01 dimensions with Unknown for missing values, and value pools that are never 0  700ms
+   ✓ Diagnose > renders the six workstreams with their key questions  307ms
+   ✓ Diagnose > edits a T01 row with only the changed fields and If-Match  465ms
+   ✓ Diagnose > a 409 on save writes nothing, compares, and re-applies on the current version  445ms
+   ✓ Diagnose > a 400 validation.blank shows a localized message on its field ('en')  559ms
+   ✓ Diagnose > a 400 validation.blank shows a localized message on its field ('ar')  550ms
+   ✓ Diagnose > an invisible-only value is blocked client-side with validation.blank ('en')  464ms
+   ✓ Diagnose > an invisible-only value is blocked client-side with validation.blank ('ar')  456ms
+   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('en')  450ms
+   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('ar')  443ms
+   ✓ Diagnose > T01: an emptied field is sent as an explicit null; visible text is sent verbatim  602ms
+   ✓ Define: KPI activation (F-DG2-201) > Arabic: the Activate action and the 422 reason are in Arabic  370ms
+   ✓ Charter > scope pre-check: an empty Out of scope reads as failing (EN and AR)  313ms
+   ✓ Charter > edit: emptying a filled field sends null; visible text is verbatim (en)  316ms
+   ✓ Design > shows the ten canvas boxes and the per-dimension view  348ms
+   ✓ Design > converts an unresolved workshop item into a design decision with If-Match  508ms
+ ✓ |unit-web| src/auth/session-end.test.tsx (12 tests) 6382ms
+   ✓ session end while the app is open (en) > a 401 on navigation lands once on sign-in with the message; signing in again returns to the page  1052ms
+   ✓ session end while the app is open (en) > a 401 on a dialog mutation (the commit-time upload refusal) closes the dialog and lands once on sign-in  778ms
+   ✓ session end while the app is open (en) > a sign-out elsewhere noticed by the next /me probe lands once on sign-in, never on the stale shell  481ms
+   ✓ session end while the app is open (en) > a 403 (forbidden) is never treated as a session end  469ms
+   ✓ session end while the app is open (ar) > a 401 on navigation lands once on sign-in with the message; signing in again returns to the page  668ms
+   ✓ session end while the app is open (ar) > a 401 on a dialog mutation (the commit-time upload refusal) closes the dialog and lands once on sign-in  694ms
+   ✓ session end while the app is open (ar) > a sign-out elsewhere noticed by the next /me probe lands once on sign-in, never on the stale shell  467ms
+   ✓ session end while the app is open (ar) > a 403 (forbidden) is never treated as a session end  443ms
+   ✓ session end under <StrictMode> (as in production) > still lands exactly once on sign-in  590ms
+   ✓ sign-in page and the cached identity > decides 'already signed in' only from a fresh /me, never from a stale cache  368ms
+   ✓ sign-in page and the cached identity > signing out here shows 'signed out', not 'session ended', and no /me loop  351ms
+ ✓ |unit-web| src/pages/team/team.test.tsx (10 tests) 3076ms
+   ✓ Team (English LTR) > shows the six governance roles with B0018 accountability text verbatim and who holds each  409ms
+   ✓ Team (English LTR) > lists team members with the accountability on each assignment, sortable and filterable  323ms
+   ✓ Team assign dialog: accountability preview follows the selected role (F-DG2-430) > en: WL on open, then KDS, TD, none and WL again, in StrictMode with no React warning  325ms
+   ✓ Team assign dialog: accountability preview follows the selected role (F-DG2-430) > ar: WL on open, then KDS, TD, none and WL again, in StrictMode with no React warning  351ms
+   ✓ Team: the success notice follows a language switch, 'en' → 'ar' > the notice is shown in the language now on screen, not the one it was created in  521ms
+   ✓ Team: the success notice follows a language switch, 'ar' → 'en' > the notice is shown in the language now on screen, not the one it was created in  345ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx (21 tests) 3359ms
+   ✓ after create (F-DG1-004) > shows the created record when the server lets the creator read it  471ms
+   ✓ effective permissions refresh after create (F-DG1-210) > English: Edit, Archive and the audit trail appear after create, without a reload  517ms
+   ✓ effective permissions refresh after create (F-DG1-210) > Arabic (RTL): the same controls and the audit trail appear after create, without a reload  428ms
+ ✓ |unit-web| src/components/LanguageSwitch.test.tsx (10 tests) 2656ms
+   ✓ a refused language save, 'en' → other ('403 csrf') > keeps ar on screen and says, in ar, that it was not saved  624ms
+   ✓ a refused language save, 'ar' → other ('403 csrf') > keeps en on screen and says, in en, that it was not saved  474ms
+   ✓ a refused language save, 'en' → other ('403 forbidden') > keeps ar on screen and says, in ar, that it was not saved  441ms
+   ✓ a refused language save, 'ar' → other ('503') > keeps en on screen and says, in en, that it was not saved  434ms
+ ✓ |unit-web| src/app/app.test.tsx (17 tests) 1861ms
+   ✓ transformations > lists transformations with a sortable code column and removable filter chips  351ms
+ ✓ |unit-web| src/components/RecordForm.alerts.test.tsx (16 tests) 1325ms
+ ✓ |unit-web| src/components/States.test.tsx (15 tests) 436ms
+ ✓ |unit-web| src/pages/transformations/modeGuidance.test.tsx (5 tests) 1115ms
+   ✓ New transformation: mode guidance (English LTR) > shows When to use and How for the selected mode and switches with the mode  479ms
+ ✓ |unit-web| src/lib/lib.test.ts (24 tests) 86ms
+ ✓ |unit-web| src/test/react-warning-guard.test.tsx (4 tests) 33ms
+ ✓ |unit-web| src/i18n/i18n.test.ts (11 tests) 45ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts (15 tests) 22ms
+ ✓ |unit-web| src/i18n/glossary.test.ts (8 tests) 13ms
+ ✓ |unit-web| src/styles/styles.test.ts (6 tests) 10ms
+ ✓ |unit-web| src/test/harness-config.test.ts (2 tests) 4ms
+ ✓ |unit-node| apps/api/src/modules/workflows/workflows.test.ts (14 tests) 714ms
+   ✓ workflows module (P2) > its declared boundary holds, and an undeclared dependency would be caught  644ms
+ ✓ |unit-node| apps/api/src/modules/kpi/kpi.test.ts (18 tests) 728ms
+   ✓ kpi module (P2) > its declared boundary holds, and a planted bypass or undeclared dependency would be caught  667ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (135 tests) 2918ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  1649ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)  695ms
+ ✓ |unit-node| apps/api/src/modules/platform/in-flight.test.ts (4 tests) 290ms
+ ✓ |unit-node| apps/api/src/modules/evidence/evidence.test.ts (13 tests) 408ms
+   ✓ evidence module (P2) > its declared boundary holds  339ms
+ ✓ |unit-node| apps/api/src/server.test.ts (6 tests) 351ms
+ ✓ |unit-node| packages/shared/src/value.test.ts (29 tests) 153ms
+ ✓ |unit-node| apps/api/src/modules/methodology/methodology.test.ts (4 tests) 200ms
+ ✓ |unit-node| packages/shared/src/schemas/schemas.test.ts (69 tests) 172ms
+ ✓ |unit-node| apps/api/src/modules/platform/media-types.test.ts (57 tests) 213ms
+ ✓ |unit-node| apps/api/src/modules/platform/platform.test.ts (19 tests) 147ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reporting.test.ts (4 tests) 142ms
+ ✓ |unit-node| packages/config/src/load.test.ts (17 tests) 88ms
+ ✓ |unit-node| apps/api/src/modules/platform/connection-hygiene.test.ts (6 tests) 89ms
+ ✓ |unit-node| packages/design-tokens/src/tokens.test.ts (15 tests) 45ms
+ ✓ |unit-node| apps/api/src/request-encoding.test.ts (11 tests) 81ms
+ ✓ |unit-node| apps/api/src/modules/platform/incomplete-body.test.ts (10 tests) 63ms
+ ✓ |unit-node| apps/api/src/modules/kpi/rules.test.ts (30 tests) 50ms
+(node:3952) [FSTDEP022] FastifyWarning: The router options for constraints property access is deprecated. Please use "options.routerOptions" instead for accessing router options. The router options will be removed in `fastify@6`.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |unit-node| apps/api/src/modules/platform/framework-errors.test.ts (6 tests) 37ms
+ ✓ |unit-node| packages/db/src/seed.test.ts (7 tests) 20ms
+ ✓ |unit-node| apps/api/src/modules/admin/branding.test.ts (4 tests) 35ms
+ ✓ |unit-node| apps/api/src/modules/platform/health.test.ts (2 tests) 38ms
+ ✓ |unit-node| apps/api/src/modules/access/rules.test.ts (12 tests) 8ms
+ ✓ |unit-node| apps/api/src/modules/platform/request-encoding.test.ts (7 tests) 7ms
+ ✓ |unit-node| apps/api/src/modules/transformations/good-outcome.test.ts (7 tests) 30ms
+ ✓ |unit-node| apps/api/src/modules/transformations/thesis.test.ts (4 tests) 8ms
+ ✓ |unit-node| apps/api/src/modules/identity/oidc-claims.test.ts (5 tests) 6ms
+ ✓ |unit-node| apps/api/src/modules/transformations/exclusions.test.ts (19 tests) 5ms
+ ✓ |unit-node| apps/api/src/modules/transformations/transitions.test.ts (2 tests) 5ms
+
+ Test Files  47 passed (47)
+      Tests  848 passed (848)
+   Start at  11:04:32
+   Duration  36.34s (transform 2.86s, setup 2.03s, collect 23.66s, tests 60.79s, environment 9.02s, prepare 3.61s)
+
+exit 0

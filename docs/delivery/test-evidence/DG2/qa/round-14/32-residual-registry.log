@@ -1,0 +1,12 @@
+$ timeout 60 pnpm deps:verify   (clones installed with pnpm install --frozen-lockfile --offline: 00-install-review-dg2*.log, exit 0)
+# cwd $TMPDIR/review-dg2-e2e @ea9051b2; node v24.21.0; 2026-10-07T11:16:05Z; the sandbox has no network (D-057 live registry residual): exit 124 = timeout waiting for the registry, EXPECTED
+
+> mobily-transformation-hub@0.1.0 deps:verify $TMPDIR/review-dg2-e2e
+> node scripts/verify-dependency-pins.mjs
+
+ ELIFECYCLE  Command failed.
+exit 124
+
+$ git diff --stat 5699f72 ea9051b2 -- package.json pnpm-lock.yaml apps/*/package.json packages/*/package.json .npmrc
+(empty = no dependency/pin change since the round-13 freeze)
+exit 0

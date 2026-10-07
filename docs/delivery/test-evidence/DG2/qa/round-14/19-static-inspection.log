@@ -1,0 +1,35 @@
+$ git diff --stat aa0a68f1 ea9051b2 -- apps packages; grep session-end rule sites; grep render-time translation sites
+# cwd repository (read-only); 2026-10-07T11:17:55Z; aa0a68f1 = round-13 source, ea9051b2 = round-14 source
+ apps/web/src/styles/app.css                      |  54 ++-
+ apps/web/src/test/fixtures.tsx                   |   5 +-
+ 26 files changed, 1830 insertions(+), 132 deletions(-)
+--- product files outside apps/web changed since round 13 (expect none: FE10-FE12 are web-only):
+(end)
+--- isSessionEndedError / endSession call sites:
+apps/web/src/app/Shell.tsx:8:import { api, markSignedOut } from "../api/client.ts";
+apps/web/src/app/Shell.tsx:34:  // Signing out here is on purpose: markSignedOut() first, so the 401s that follow are not a "session ended" event (and
+apps/web/src/app/Shell.tsx:44:        silent401: true,
+apps/web/src/app/Shell.tsx:51:    markSignedOut();
+apps/web/src/api/client.ts:84:export function markSessionActive(): void {
+apps/web/src/api/client.ts:89:export function markSignedOut(): void {
+apps/web/src/api/client.ts:95:export function isSessionEndedError(err: unknown): boolean {
+apps/web/src/api/client.ts:99:function endSession(): void {
+apps/web/src/api/client.ts:210:    if (!options.silent401 && isSessionEndedError(error)) endSession();
+apps/web/src/api/queries.ts:4:import { ApiError, api, apiRequest, markSessionActive, setCsrfToken } from "./client.ts";
+apps/web/src/api/queries.ts:62:  markSessionActive();
+apps/web/src/pages/LoginPage.tsx:41:    await apiRequest("/api/v1/auth/dev-login", { method: "POST", body: {}, silent401: true });
+apps/web/src/pages/LoginPage.tsx:134:      await apiRequest("/api/v1/auth/dev-login", { method: "POST", body: parsed.data, silent401: true });
+--- 403 handling: endSession only on status 401 + code unauthenticated (or no problem body):
+96:  return err instanceof ApiError && err.status === 401 && (err.problem === null || err.code === "unauthenticated");
+--- setError/useState holding translated strings (FE12: expect causes, not text):
+apps/web/src/components/ReasonDialog.tsx:29:  const [fieldErrorCode, setFieldErrorCode] = useState<string | undefined>();
+apps/web/src/components/RecordForm.tsx:189:  const [unmappedCodes, setUnmapped] = useState<string[]>([]);
+apps/web/src/pages/team/TeamPage.tsx:48:  const [done, setDone] = useState<string | null>(null);
+apps/web/src/pages/design/WorkshopsSection.tsx:36:  const [openId, setOpenId] = useState<string | null>(null);
+apps/web/src/pages/design/DesignPage.tsx:70:  const [selected, setSelected] = useState<string | null>(null);
+apps/web/src/pages/design/JourneysSection.tsx:42:  const [selectedId, setSelectedId] = useState<string | null>(null);
+apps/web/src/pages/gates/GateDetailPage.tsx:425:  const [fieldErrorCode, setFieldErrorCode] = useState<string | undefined>();
+apps/web/src/pages/define/DefinePage.tsx:149:  const [errorCode, setError] = useState<string | undefined>();
+apps/web/src/pages/evidence/EvidencePage.tsx:365:  const [localErrorCode, setLocalError] = useState<string | undefined>();
+(end)
+exit 0

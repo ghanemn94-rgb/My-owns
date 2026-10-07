@@ -1,0 +1,461 @@
+# NEGATIVE CONTROL per test: clone @aa0a68f1 (round-13 source, before FE10/FE11/FE12) + the R14 spec, each test alone (--grep) so a failure does not skip the rest; failures are EXPECTED where the test targets FE10/FE11/FE12; 2026-10-07T11:12:51Z
+======== --grep R14-02
+$ env -u LC_ALL LANG=C.UTF-8 QA_E2E_API_PORT=25211 QA_E2E_PG_PORT=25212 e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r14.spec.ts --workers=1 --reporter=list --grep 'R14-02'
+port-policy: PostgreSQL listening on port 25212 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 25211 (attempt 1)
+API:     http://localhost:25211
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+Running 2 tests using 1 worker
+  ✘  1 [chromium-en] › e2e/dg2-qa-r14.spec.ts:248:1 › R14-02 upload refused with 401 after revocation: message, sign-in, nothing stored, audited (4.1s)
+  ✘  2 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:248:1 › R14-02 upload refused with 401 after revocation: message, sign-in, nothing stored, audited (3.9s)
+  1) [chromium-en] › e2e/dg2-qa-r14.spec.ts:248:1 › R14-02 upload refused with 401 after revocation: message, sign-in, nothing stored, audited 
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+    Locator: getByRole('alert').filter({ hasText: 'Your session ended. Please sign in again.' })
+    Expected: visible
+    Timeout: 2000ms
+    Error: element(s) not found
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 2000ms[22m
+    [2m  - waiting for getByRole('alert').filter({ hasText: 'Your session ended. Please sign in again.' })[22m
+      113 | async function expectEndedLanding(page: Page, lang: Lang, returnTo: string | null) {
+      114 |   const message = tr(lang, "auth.errors.session_expired");
+    > 115 |   await expect(page.getByRole("alert").filter({ hasText: message })).toBeVisible({ timeout: 2_000 });
+          |                                                                      ^
+      116 |   await expect(page.getByLabel(fieldLabel(lang, "auth.dev.username"))).toBeVisible({ timeout: 2_000 });
+      117 |   await expectDir(page, lang);
+      118 |   const url = new URL(page.url());
+        at expectEndedLanding ($TMPDIR/nc-aa0a68f/e2e/dg2-qa-r14.spec.ts:115:70)
+        at $TMPDIR/nc-aa0a68f/e2e/dg2-qa-r14.spec.ts:271:9
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-02-uplo-c28aa-n-in-nothing-stored-audited-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-02-uplo-c28aa-n-in-nothing-stored-audited-chromium-en/trace.zip
+    Usage:
+        npx playwright show-trace test-results/e2e-dg2-qa-r14-R14-02-uplo-c28aa-n-in-nothing-stored-audited-chromium-en/trace.zip
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+  2) [chromium-ar] › e2e/dg2-qa-r14.spec.ts:248:1 › R14-02 upload refused with 401 after revocation: message, sign-in, nothing stored, audited 
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+    Locator: getByRole('alert').filter({ hasText: 'انتهت جلستك. يُرجى تسجيل الدخول مجددًا.' })
+    Expected: visible
+    Timeout: 2000ms
+    Error: element(s) not found
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 2000ms[22m
+    [2m  - waiting for getByRole('alert').filter({ hasText: 'انتهت جلستك. يُرجى تسجيل الدخول مجددًا.' })[22m
+      113 | async function expectEndedLanding(page: Page, lang: Lang, returnTo: string | null) {
+      114 |   const message = tr(lang, "auth.errors.session_expired");
+    > 115 |   await expect(page.getByRole("alert").filter({ hasText: message })).toBeVisible({ timeout: 2_000 });
+          |                                                                      ^
+      116 |   await expect(page.getByLabel(fieldLabel(lang, "auth.dev.username"))).toBeVisible({ timeout: 2_000 });
+      117 |   await expectDir(page, lang);
+      118 |   const url = new URL(page.url());
+        at expectEndedLanding ($TMPDIR/nc-aa0a68f/e2e/dg2-qa-r14.spec.ts:115:70)
+        at $TMPDIR/nc-aa0a68f/e2e/dg2-qa-r14.spec.ts:271:9
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-02-uplo-c28aa-n-in-nothing-stored-audited-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-02-uplo-c28aa-n-in-nothing-stored-audited-chromium-ar/trace.zip
+    Usage:
+        npx playwright show-trace test-results/e2e-dg2-qa-r14-R14-02-uplo-c28aa-n-in-nothing-stored-audited-chromium-ar/trace.zip
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+  2 failed
+    [chromium-en] › e2e/dg2-qa-r14.spec.ts:248:1 › R14-02 upload refused with 401 after revocation: message, sign-in, nothing stored, audited 
+    [chromium-ar] › e2e/dg2-qa-r14.spec.ts:248:1 › R14-02 upload refused with 401 after revocation: message, sign-in, nothing stored, audited 
+---- api.log (tail)
+exit 1
+======== --grep R14-03
+$ env -u LC_ALL LANG=C.UTF-8 QA_E2E_API_PORT=25213 QA_E2E_PG_PORT=25214 e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r14.spec.ts --workers=1 --reporter=list --grep 'R14-03'
+port-policy: PostgreSQL listening on port 25214 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 25213 (attempt 1)
+API:     http://localhost:25213
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+Running 2 tests using 1 worker
+  ✘  1 [chromium-en] › e2e/dg2-qa-r14.spec.ts:340:1 › R14-03 three tabs ended at once, open 10 s; another context signs in (no 429) (4.1s)
+  ✘  2 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:340:1 › R14-03 three tabs ended at once, open 10 s; another context signs in (no 429) (4.4s)
+  1) [chromium-en] › e2e/dg2-qa-r14.spec.ts:340:1 › R14-03 three tabs ended at once, open 10 s; another context signs in (no 429) 
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+    Locator: getByRole('alert').filter({ hasText: 'Your session ended. Please sign in again.' })
+    Expected: visible
+    Timeout: 2000ms
+    Error: element(s) not found
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 2000ms[22m
+    [2m  - waiting for getByRole('alert').filter({ hasText: 'Your session ended. Please sign in again.' })[22m
+      113 | async function expectEndedLanding(page: Page, lang: Lang, returnTo: string | null) {
+      114 |   const message = tr(lang, "auth.errors.session_expired");
+    > 115 |   await expect(page.getByRole("alert").filter({ hasText: message })).toBeVisible({ timeout: 2_000 });
+          |                                                                      ^
+      116 |   await expect(page.getByLabel(fieldLabel(lang, "auth.dev.username"))).toBeVisible({ timeout: 2_000 });
+      117 |   await expectDir(page, lang);
+      118 |   const url = new URL(page.url());
+        at expectEndedLanding ($TMPDIR/nc-aa0a68f/e2e/dg2-qa-r14.spec.ts:115:70)
+        at $TMPDIR/nc-aa0a68f/e2e/dg2-qa-r14.spec.ts:316:11
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-03-thre-82548-er-context-signs-in-no-429--chromium-en/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-03-thre-82548-er-context-signs-in-no-429--chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+    attachment #3: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-03-thre-82548-er-context-signs-in-no-429--chromium-en/test-failed-3.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-03-thre-82548-er-context-signs-in-no-429--chromium-en/trace.zip
+    Usage:
+        npx playwright show-trace test-results/e2e-dg2-qa-r14-R14-03-thre-82548-er-context-signs-in-no-429--chromium-en/trace.zip
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+  2) [chromium-ar] › e2e/dg2-qa-r14.spec.ts:340:1 › R14-03 three tabs ended at once, open 10 s; another context signs in (no 429) 
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+    Locator: getByRole('alert').filter({ hasText: 'انتهت جلستك. يُرجى تسجيل الدخول مجددًا.' })
+    Expected: visible
+    Timeout: 2000ms
+    Error: element(s) not found
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 2000ms[22m
+    [2m  - waiting for getByRole('alert').filter({ hasText: 'انتهت جلستك. يُرجى تسجيل الدخول مجددًا.' })[22m
+      113 | async function expectEndedLanding(page: Page, lang: Lang, returnTo: string | null) {
+      114 |   const message = tr(lang, "auth.errors.session_expired");
+    > 115 |   await expect(page.getByRole("alert").filter({ hasText: message })).toBeVisible({ timeout: 2_000 });
+          |                                                                      ^
+      116 |   await expect(page.getByLabel(fieldLabel(lang, "auth.dev.username"))).toBeVisible({ timeout: 2_000 });
+      117 |   await expectDir(page, lang);
+      118 |   const url = new URL(page.url());
+        at expectEndedLanding ($TMPDIR/nc-aa0a68f/e2e/dg2-qa-r14.spec.ts:115:70)
+        at $TMPDIR/nc-aa0a68f/e2e/dg2-qa-r14.spec.ts:316:11
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-03-thre-82548-er-context-signs-in-no-429--chromium-ar/test-failed-3.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-03-thre-82548-er-context-signs-in-no-429--chromium-ar/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+    attachment #3: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-03-thre-82548-er-context-signs-in-no-429--chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-03-thre-82548-er-context-signs-in-no-429--chromium-ar/trace.zip
+    Usage:
+        npx playwright show-trace test-results/e2e-dg2-qa-r14-R14-03-thre-82548-er-context-signs-in-no-429--chromium-ar/trace.zip
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+  2 failed
+    [chromium-en] › e2e/dg2-qa-r14.spec.ts:340:1 › R14-03 three tabs ended at once, open 10 s; another context signs in (no 429) 
+    [chromium-ar] › e2e/dg2-qa-r14.spec.ts:340:1 › R14-03 three tabs ended at once, open 10 s; another context signs in (no 429) 
+---- api.log (tail)
+exit 1
+======== --grep R14-04a
+$ env -u LC_ALL LANG=C.UTF-8 QA_E2E_API_PORT=25215 QA_E2E_PG_PORT=25216 e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r14.spec.ts --workers=1 --reporter=list --grep 'R14-04a'
+port-policy: PostgreSQL listening on port 25216 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 25215 (attempt 1)
+API:     http://localhost:25215
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+Running 2 tests using 1 worker
+  ✓  1 [chromium-en] › e2e/dg2-qa-r14.spec.ts:392:1 › R14-04a a 403 forbidden on a read [route-replaced] is not a session end (4.3s)
+  ✓  2 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:392:1 › R14-04a a 403 forbidden on a read [route-replaced] is not a session end (4.5s)
+  2 passed (11.1s)
+exit 0
+======== --grep R14-04b
+$ env -u LC_ALL LANG=C.UTF-8 QA_E2E_API_PORT=25217 QA_E2E_PG_PORT=25218 e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r14.spec.ts --workers=1 --reporter=list --grep 'R14-04b'
+port-policy: PostgreSQL listening on port 25218 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 25217 (attempt 1)
+API:     http://localhost:25217
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+Running 2 tests using 1 worker
+  ✓  1 [chromium-en] › e2e/dg2-qa-r14.spec.ts:421:1 › R14-04b+06 a 403 forbidden on create [route-replaced] keeps the user; errors follow a language switch (6.3s)
+  ✓  2 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:421:1 › R14-04b+06 a 403 forbidden on create [route-replaced] keeps the user; errors follow a language switch (6.8s)
+  2 passed (15.3s)
+exit 0
+======== --grep R14-05
+$ env -u LC_ALL LANG=C.UTF-8 QA_E2E_API_PORT=25219 QA_E2E_PG_PORT=25220 e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r14.spec.ts --workers=1 --reporter=list --grep 'R14-05'
+port-policy: PostgreSQL listening on port 25220 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 25219 (attempt 1)
+API:     http://localhost:25219
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+Running 2 tests using 1 worker
+  ✘  1 [chromium-en] › e2e/dg2-qa-r14.spec.ts:513:1 › R14-05+06 refused preference save (real 403 csrf) both directions; 403 not a session end; header layout 320/768/1280 (7.5s)
+  ✘  2 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:513:1 › R14-05+06 refused preference save (real 403 csrf) both directions; 403 not a session end; header layout 320/768/1280 (7.4s)
+  1) [chromium-en] › e2e/dg2-qa-r14.spec.ts:513:1 › R14-05+06 refused preference save (real 403 csrf) both directions; 403 not a session end; header layout 320/768/1280 
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveText[2m([22m[32mexpected[39m[2m)[22m failed
+    Locator: getByTestId('language-not-saved')
+    Expected: [32m"تغيّرت اللغة في هذا المتصفح، لكن تعذّر حفظها في ملفك الشخصي."[39m
+    Timeout: 5000ms
+    Error: element(s) not found
+    Call log:
+    [2m  - Expect "toHaveText" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('language-not-saved')[22m
+      495 |     shown = to;
+      496 |     const notice = page.getByTestId("language-not-saved");
+    > 497 |     await expect(notice).toHaveText(tr(to, "common.language.notSaved"));
+          |                          ^
+      498 |     await expectDir(page, to);
+      499 |     await expect(page.locator(".language-switch__live")).toHaveAttribute("lang", to);
+      500 |     await expect(page.getByTestId("language-not-saved")).toHaveCount(1);
+        at $TMPDIR/nc-aa0a68f/e2e/dg2-qa-r14.spec.ts:497:26
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-05-06-r-e0dd4--header-layout-320-768-1280-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+    Error Context: test-results/e2e-dg2-qa-r14-R14-05-06-r-e0dd4--header-layout-320-768-1280-chromium-en/error-context.md
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-05-06-r-e0dd4--header-layout-320-768-1280-chromium-en/trace.zip
+    Usage:
+        npx playwright show-trace test-results/e2e-dg2-qa-r14-R14-05-06-r-e0dd4--header-layout-320-768-1280-chromium-en/trace.zip
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+  2) [chromium-ar] › e2e/dg2-qa-r14.spec.ts:513:1 › R14-05+06 refused preference save (real 403 csrf) both directions; 403 not a session end; header layout 320/768/1280 
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveText[2m([22m[32mexpected[39m[2m)[22m failed
+    Locator: getByTestId('language-not-saved')
+    Expected: [32m"Language changed in this browser, but it could not be saved to your profile."[39m
+    Timeout: 5000ms
+    Error: element(s) not found
+    Call log:
+    [2m  - Expect "toHaveText" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('language-not-saved')[22m
+      495 |     shown = to;
+      496 |     const notice = page.getByTestId("language-not-saved");
+    > 497 |     await expect(notice).toHaveText(tr(to, "common.language.notSaved"));
+          |                          ^
+      498 |     await expectDir(page, to);
+      499 |     await expect(page.locator(".language-switch__live")).toHaveAttribute("lang", to);
+      500 |     await expect(page.getByTestId("language-not-saved")).toHaveCount(1);
+        at $TMPDIR/nc-aa0a68f/e2e/dg2-qa-r14.spec.ts:497:26
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-05-06-r-e0dd4--header-layout-320-768-1280-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+    Error Context: test-results/e2e-dg2-qa-r14-R14-05-06-r-e0dd4--header-layout-320-768-1280-chromium-ar/error-context.md
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-05-06-r-e0dd4--header-layout-320-768-1280-chromium-ar/trace.zip
+    Usage:
+        npx playwright show-trace test-results/e2e-dg2-qa-r14-R14-05-06-r-e0dd4--header-layout-320-768-1280-chromium-ar/trace.zip
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+  2 failed
+    [chromium-en] › e2e/dg2-qa-r14.spec.ts:513:1 › R14-05+06 refused preference save (real 403 csrf) both directions; 403 not a session end; header layout 320/768/1280 
+    [chromium-ar] › e2e/dg2-qa-r14.spec.ts:513:1 › R14-05+06 refused preference save (real 403 csrf) both directions; 403 not a session end; header layout 320/768/1280 
+---- api.log (tail)
+exit 1
+======== --grep R14-06b
+$ env -u LC_ALL LANG=C.UTF-8 QA_E2E_API_PORT=25221 QA_E2E_PG_PORT=25222 e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r14.spec.ts --workers=1 --reporter=list --grep 'R14-06b'
+port-policy: PostgreSQL listening on port 25222 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 25221 (attempt 1)
+API:     http://localhost:25221
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+Running 2 tests using 1 worker
+  ✘  1 [chromium-en] › e2e/dg2-qa-r14.spec.ts:609:1 › R14-06b dev-login invalid-username error follows a language switch (signed out) (5.8s)
+  ✘  2 [chromium-ar] › e2e/dg2-qa-r14.spec.ts:609:1 › R14-06b dev-login invalid-username error follows a language switch (signed out) (5.7s)
+  1) [chromium-en] › e2e/dg2-qa-r14.spec.ts:609:1 › R14-06b dev-login invalid-username error follows a language switch (signed out) 
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+    Locator: getByText('أدخل اسم مستخدم من 2 إلى 64 حرفًا من الأحرف اللاتينية الصغيرة أو الأرقام أو النقاط أو الشرطات أو الشرطات السفلية.', { exact: true })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByText('أدخل اسم مستخدم من 2 إلى 64 حرفًا من الأحرف اللاتينية الصغيرة أو الأرقام أو النقاط أو الشرطات أو الشرطات السفلية.', { exact: true })[22m
+      546 |   const o = other(lang);
+      547 |   await expectDir(page, o);
+    > 548 |   await expect(page.getByText(tr(o, "auth.dev.invalidUsername"), { exact: true })).toBeVisible();
+          |                                                                                    ^
+      549 |   await expect(page.getByText(tr(lang, "auth.dev.invalidUsername"), { exact: true })).toHaveCount(0);
+      550 |   await expectAccessible(page, lang, "qa-r14-06b-invalid-username-switched");
+      551 |   await shot(page, lang, "qa-r14-06b-invalid-username-switched");
+        at $TMPDIR/nc-aa0a68f/e2e/dg2-qa-r14.spec.ts:548:84
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-06b-dev-caa98-language-switch-signed-out--chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+    Error Context: test-results/e2e-dg2-qa-r14-R14-06b-dev-caa98-language-switch-signed-out--chromium-en/error-context.md
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-06b-dev-caa98-language-switch-signed-out--chromium-en/trace.zip
+    Usage:
+        npx playwright show-trace test-results/e2e-dg2-qa-r14-R14-06b-dev-caa98-language-switch-signed-out--chromium-en/trace.zip
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+  2) [chromium-ar] › e2e/dg2-qa-r14.spec.ts:609:1 › R14-06b dev-login invalid-username error follows a language switch (signed out) 
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+    Locator: getByText('Enter a user name of 2 to 64 lowercase letters, digits, dots, hyphens or underscores.', { exact: true })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByText('Enter a user name of 2 to 64 lowercase letters, digits, dots, hyphens or underscores.', { exact: true })[22m
+      546 |   const o = other(lang);
+      547 |   await expectDir(page, o);
+    > 548 |   await expect(page.getByText(tr(o, "auth.dev.invalidUsername"), { exact: true })).toBeVisible();
+          |                                                                                    ^
+      549 |   await expect(page.getByText(tr(lang, "auth.dev.invalidUsername"), { exact: true })).toHaveCount(0);
+      550 |   await expectAccessible(page, lang, "qa-r14-06b-invalid-username-switched");
+      551 |   await shot(page, lang, "qa-r14-06b-invalid-username-switched");
+        at $TMPDIR/nc-aa0a68f/e2e/dg2-qa-r14.spec.ts:548:84
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-06b-dev-caa98-language-switch-signed-out--chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+    Error Context: test-results/e2e-dg2-qa-r14-R14-06b-dev-caa98-language-switch-signed-out--chromium-ar/error-context.md
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r14-R14-06b-dev-caa98-language-switch-signed-out--chromium-ar/trace.zip
+    Usage:
+        npx playwright show-trace test-results/e2e-dg2-qa-r14-R14-06b-dev-caa98-language-switch-signed-out--chromium-ar/trace.zip
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+  2 failed
+    [chromium-en] › e2e/dg2-qa-r14.spec.ts:609:1 › R14-06b dev-login invalid-username error follows a language switch (signed out) 
+    [chromium-ar] › e2e/dg2-qa-r14.spec.ts:609:1 › R14-06b dev-login invalid-username error follows a language switch (signed out) 
+---- api.log (tail)
+exit 1

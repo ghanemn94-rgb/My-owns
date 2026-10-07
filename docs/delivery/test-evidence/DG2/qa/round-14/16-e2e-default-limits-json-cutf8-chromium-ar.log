@@ -1,0 +1,10 @@
+$ env -u LC_ALL LANG=C.UTF-8 E2E_DEFAULT_RATE_LIMITS=1 E2E_API_PORT=25343 E2E_PG_PORT=25344 apps/web/e2e/support/with-stack.sh npx playwright test e2e/dg2-qa-r14.spec.ts apps/web/e2e/session-end.spec.ts --project chromium-ar --grep 'R14-03|another browser context from the same IP' --workers=1 --reporter=json  | (annotations, status and errors extracted with node)
+# purpose: the list reporter does not print annotations; this run records R14-03's measured GET /me and API request counts under the PRODUCT DEFAULT limits; node v24.21.0; 2026-10-07T12:04:51Z
+rate limits: product defaults (AUTH_RATE_LIMIT_PER_MINUTE and RATE_LIMIT_PER_MINUTE unset)
+API: http://localhost:25343 (APP_BASE_URL=http://localhost:25343, PORT=25343)
+                  "description": "rate limits=product defaults; /me after the end in 5 s=1; 429s=0"
+                      "description": "rate limits=product defaults; /me after the end in 5 s=1; 429s=0"
+{"title":"after a session end, another browser context from the same IP can still sign in (no 429, product default limits)","project":"chromium-ar","status":"passed","annotations":[{"type":"session-end","description":"rate limits=product defaults; /me after the end in 5 s=1; 429s=0"}],"errors":[]}
+{"title":"R14-03 three tabs ended at once, open 10 s; another context signs in (no 429, PRODUCT DEFAULT LIMITS)","project":"chromium-ar","status":"passed","annotations":[{"type":"r14-03","description":"limits=product defaults; GET /me per ended tab in ~16 s=1,1,1; API requests per ended tab=4,4,4; 429s=0"}],"errors":[]}
+stats {"startTime":"2026-10-07T12:04:56.090Z","duration":30087.885000000002,"expected":2,"skipped":0,"unexpected":0,"flaky":0}
+exit 0
