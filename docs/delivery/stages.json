@@ -820,7 +820,7 @@
       "id": "DG2",
       "stage": "P2",
       "name": "Diagnose define and design",
-      "state": "REVIEWING",
+      "state": "FIXING",
       "depends_on": [
         "DG1"
       ],
@@ -1120,6 +1120,11 @@
           "state": "REVIEWING",
           "at": "2026-10-07T04:31:43Z",
           "note": "Round-12 repairs integrated (D-072): BE17 eb455d3 (three-phase upload, pool bounds, central incomplete-body mapping), FE9 644198a (pure updaters, warning guard), ADR-0007 §5b 503 note. 29 CLOSED_VERIFIED, 3 FIXED_PENDING_VERIFICATION, 0 OPEN. Orchestrator verification green in both locale settings (unit 790x4 per setting, integration 600, e2e 60). Candidate frozen as 5dfecce4 for gate review round 12."
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-10-07T05:30:38Z",
+          "note": "Round 12 on candidate 5dfecce4: domain PASS (20 checks; tenth clean pass). code-security PASS: it closed F-DG2-411 and F-DG2-412 and raised F-DG2-440 (Medium; an in-flight upload commits after its grant is revoked or its session is logged out, because phase 3 re-runs the policy on the request-start grants; pre-existing) and F-DG2-441 (Low; OIDC discovery runs inside an open transaction in /auth/login; pre-existing since DG1). qa FAIL: it closed F-DG2-430 and raised F-DG2-460 (Medium; a BE17 regression: an upload in flight at SIGTERM leaves an orphaned .part because db.destroy() no longer waits for the handler's async cleanup). Every failure in the cited logs was disclosed and explained. 32 CLOSED_VERIFIED, 3 OPEN. Round-13 repair: backend-workflow-engineer T-DG2-BE18A (assignments T-DG2-BE18 + BE18A): authorise at commit time, no remote call inside a transaction, and a shutdown that waits for handler cleanup, with a start-up sweep of stale temporaries."
         }
       ]
     },

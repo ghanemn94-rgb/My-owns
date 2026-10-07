@@ -10483,7 +10483,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-11/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-07T02:30:00Z",
@@ -10494,10 +10494,41 @@
           "at": "2026-10-07T03:52:46Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at eb455d35c8f4345ddc837c073ff449566de819fc"
+        },
+        {
+          "at": "2026-10-07T05:00:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 12: PASS"
         }
       ],
       "fix_revision": "eb455d35c8f4345ddc837c073ff449566de819fc",
-      "fix_summary": "BE17 eb455d3: uploadEvidenceContent now runs in three phases. (1) A short transaction runs the same checks in the same order (read, exists, EDIT_OWN, file name, If-Match 428/409, archived, kind, body present/raw) and commits before any body byte is read. (2) The body is received into the store's .part (size limit 413, sha256 over the raw bytes, fsync, removed on failure) holding no connection. (3) A short write transaction re-authorises, locks the row FOR UPDATE, re-checks If-Match against the locked version (409 on a concurrent edit), inserts the content and audit, and finalises the object before commit (discarded on any failure). Sweep: no other handler awaits client I/O holding a connection or transaction (download already released). Pool defence in depth: connectionTimeoutMillis 10 s (bounded 503; /readyz not_ready), idle_in_transaction_session_timeout 30 s, a per-client error listener. Tests: R8 with pool = N (0 sessions idle in transaction; /me and /readyz prompt), stale If-Match during the body, slow-reader download, and a negative control."
+      "fix_summary": "BE17 eb455d3: uploadEvidenceContent now runs in three phases. (1) A short transaction runs the same checks in the same order (read, exists, EDIT_OWN, file name, If-Match 428/409, archived, kind, body present/raw) and commits before any body byte is read. (2) The body is received into the store's .part (size limit 413, sha256 over the raw bytes, fsync, removed on failure) holding no connection. (3) A short write transaction re-authorises, locks the row FOR UPDATE, re-checks If-Match against the locked version (409 on a concurrent edit), inserts the content and audit, and finalises the object before commit (discarded on any failure). Sweep: no other handler awaits client I/O holding a connection or transaction (download already released). Pool defence in depth: connectionTimeoutMillis 10 s (bounded 503; /readyz not_ready), idle_in_transaction_session_timeout 30 s, a per-client error listener. Tests: R8 with pool = N (0 sessions idle in transaction; /me and /readyz prompt), stale If-Match during the body, slow-reader download, and a negative control.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG2-T-DG2-REV-SEC-R12-code-security-reviewer-20261007T043332Z-91127ae1",
+          "session_id": "91127ae1-90aa-460e-aed7-09e08e6dafff"
+        },
+        "at": "2026-10-07T05:00:00Z",
+        "result": "PASS",
+        "evidence": [
+          "apps/api/src/modules/evidence/routes.ts",
+          "apps/api/src/modules/evidence/store.ts",
+          "packages/db/src/pool.ts",
+          "apps/api/test/integration/request-io.test.ts",
+          "packages/db/test/integration/pool-bounds.test.ts",
+          "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r11-node22-lang-unset.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r11-node24-lang-c-utf8.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r12-node22-lang-unset.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r12-node24-lang-c-utf8.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-12/probes/zz-sec-r12-probe.test.ts",
+          "docs/delivery/test-evidence/DG2/code-security/round-12/probes/README.md",
+          "docs/delivery/test-evidence/DG2/code-security/round-12/integration-run1-lang-unset.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-12/integration-run2-lang-c-utf8.log"
+        ],
+        "note": "Verified on candidate sha256:5dfecce44b9d7d4ded6ca45968c9e2686d1c011cdd7c906ba3dc9974bbdf92b8 (source 8488e7a, 552 files), recomputed in the working tree and in a clean disposable clone at the freeze commit 744af0b. The fix is BE17 eb455d3 (backend-workflow-engineer) plus the ADR-0007 §5b note be51ad7 (delivery-orchestrator); I authored none of it.\n- Code: uploadEvidenceContent (apps/api/src/modules/evidence/routes.ts:443-548) has three phases.\n  - Phase 1 is a short transaction with the same checks in the same order: transformation read, item 404, own-row write rule (403), file name, If-Match 428/409, archived 422, not_a_file, body present, raw byte stream. It commits before a byte of the body is read.\n  - Phase 2 is store.receive into the .part temporary with no connection held. The size limit and the raw-byte sha256 are enforced while streaming, and the file is fsync'd.\n  - Phase 3 is a short write transaction: openWrite (fresh ownership, transformation read, archived transformation), If-Match re-checked on the FOR UPDATE row, revision computed under the row lock, the content row, the version-guarded update, the audit event, then finalise (rename) as the last step before COMMIT. The catch discards both the final object and the .part.\n  - The download route queries without a transaction and streams after the query. Worker transactions run only SQL: pg-boss send on the same tx.\n- Round-11 probe re-run unchanged (sha256 0b60ece2) on Node 22.22.2 (LANG unset) and Node 24.21.0 (LANG=C.UTF-8). R8: 6 uploads stalled on a pool of 5; another user's GET /me answers 200 in 10 ms and /readyz 200 in 3-4 ms (round 11: no answer in 5 s). Its only failing assertion is R8b 'meMs > 1500', which encoded the round-11 hold; the fix inverts it (6-10 ms).\n- Round-12 adversarial probe:\n  - Q6b: pool max 2, 6 stalled uploads. Every api session, read as superuser, is 'idle' (none idle in transaction); /me 200 in 6-7 ms; FOR UPDATE NOWAIT on a stalled item succeeds (no row lock).\n  - Q3: two uploads with the same If-Match complete together: exactly [200, 409 version_conflict], one revision, one audit event, one object on disk, and the winner's sha256 (no double revision).\n  - Q2: transformation archived during the body: 422 transformation.archived, nothing stored.\n  - Q4: COMMIT fails after finalise (deferred constraint): 500 at error level, no content row, no final object, no .part.\n  - Q5a: client abort: no .part left.\n  - Q6a: every pool session has idle_in_transaction_session_timeout 30s and statement_timeout 30s.\n- The candidate's own request-io.test.ts (10/10) and packages/db pool-bounds.test.ts (7/7) pass in both locale integration runs (600/600 each).\n- Pool settings break nothing: the migrate CLI uses its own pg.Client (packages/db/src/migrate.ts:129), not createPool. bootstrap and seed-dev transactions are short. The worker and the API suite pass.\n- Remaining issues of a DIFFERENT class are raised separately; neither is a failure of this fix: F-DG2-440 (the phase-3 re-authorisation uses request-start grants and session; pre-existing) and F-DG2-441 (OIDC discovery inside a transaction, waiting on the IdP, not the client; pre-existing since DG1)."
+      }
     },
     {
       "id": "F-DG2-412",
@@ -10520,7 +10551,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-11/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-07T02:30:00Z",
@@ -10531,10 +10562,38 @@
           "at": "2026-10-07T03:52:46Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at eb455d35c8f4345ddc837c073ff449566de819fc"
+        },
+        {
+          "at": "2026-10-07T05:00:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 12: PASS"
         }
       ],
       "fix_revision": "eb455d35c8f4345ddc837c073ff449566de819fc",
-      "fix_summary": "BE17 eb455d3: central isIncompleteBodyError checked first in mapError (setErrorHandler and frameworkErrors). It matches only when request.raw.complete is false, the error has no syscall, and it is Node's request abort (ECONNRESET 'aborted', Fastify rawBody statusCode 400) or ERR_STREAM_PREMATURE_CLOSE on an aborted/destroyed request. The answer is the declared 400 validation.malformed_request, logged at info; the route-local abortedBodyProblem is removed. A real database ECONNRESET (read, via a resetting TCP proxy) stays a 500 with an error log. Tests: R6a (requestTimeout) and R6d (client abort) on JSON and octet-stream, plus unit over-match cases; negative control."
+      "fix_summary": "BE17 eb455d3: central isIncompleteBodyError checked first in mapError (setErrorHandler and frameworkErrors). It matches only when request.raw.complete is false, the error has no syscall, and it is Node's request abort (ECONNRESET 'aborted', Fastify rawBody statusCode 400) or ERR_STREAM_PREMATURE_CLOSE on an aborted/destroyed request. The answer is the declared 400 validation.malformed_request, logged at info; the route-local abortedBodyProblem is removed. A real database ECONNRESET (read, via a resetting TCP proxy) stays a 500 with an error log. Tests: R6a (requestTimeout) and R6d (client abort) on JSON and octet-stream, plus unit over-match cases; negative control.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG2-T-DG2-REV-SEC-R12-code-security-reviewer-20261007T043332Z-91127ae1",
+          "session_id": "91127ae1-90aa-460e-aed7-09e08e6dafff"
+        },
+        "at": "2026-10-07T05:00:00Z",
+        "result": "PASS",
+        "evidence": [
+          "apps/api/src/modules/platform/hooks.ts",
+          "apps/api/src/modules/platform/incomplete-body.test.ts",
+          "apps/api/test/integration/request-io.test.ts",
+          "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r11-node22-lang-unset.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r11-node24-lang-c-utf8.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r12-node22-lang-unset.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r12-node24-lang-c-utf8.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-12/probes/README.md",
+          "docs/delivery/test-evidence/DG2/code-security/round-12/unit-node22.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-12/unit-node24.log"
+        ],
+        "note": "Verified on candidate sha256:5dfecce44b9d7d4ded6ca45968c9e2686d1c011cdd7c906ba3dc9974bbdf92b8 (source 8488e7a). The fix is BE17 eb455d3 (backend-workflow-engineer); I authored none of it.\n- Code: isIncompleteBodyError (apps/api/src/modules/platform/hooks.ts:82-90) is checked centrally in mapError right after HttpProblem. It matches only when ALL of these hold:\n  - raw.complete === false (a fully received body never matches, and inject has no such flag);\n  - the error has no syscall (a database socket reset is 'read ECONNRESET' with syscall 'read');\n  - either code ECONNRESET with message 'aborted' (Node's request-abort error), or ERR_STREAM_PREMATURE_CLOSE on a request marked aborted or destroyed.\n  It answers 400 validation.malformed_request and logs at info (hooks.ts:217-219). pg protocol errors carry a SQLSTATE code; the store's EvidenceTooLarge and EvidenceStoreUnavailable carry no such code; fs errors carry a syscall. Phase-3 errors occur after the body completed (complete === true), so they never match.\n- Round-11 probe re-run unchanged, on Node 22 and Node 24: R6a (stalled JSON body, requestTimeout) gets 408 with errs [] (round 11: one level-50 'unhandled error'). R6d (client aborts a JSON body) gets errs [] (round 11: 'unhandled error'). R6c and R6e (upload stalled or aborted) get errs [] with nothing stored.\n- Round-12 probe:\n  - Q5a: client abort mid-upload logs exactly one level-30 'request body not received completely' (code ECONNRESET), no error-level line, connection released, no .part.\n  - Over-match checks: Q5b, a genuine store fault (item directory cannot be created) while the body is still incomplete, gives 503 unavailable at error level, not 400. Q4, a COMMIT failure, gives 500 internal at error level.\n- The candidate's incomplete-body.test.ts (4 unit tests, including the database-ECONNRESET non-match) passes on Node 22 and 24. request-io.test.ts 'no over-match: a database-side ECONNRESET while the request body is still arriving is a 500 with an error log' passes in both locale integration runs."
+      }
     },
     {
       "id": "F-DG2-430",
@@ -10557,7 +10616,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG2/round-11/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-07T02:25:00Z",
@@ -10568,10 +10627,141 @@
           "at": "2026-10-07T04:12:26Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 644198a3a47c1885241b250ec5da58de8cda45fd"
+        },
+        {
+          "at": "2026-10-07T05:30:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 12: PASS"
         }
       ],
       "fix_revision": "644198a3a47c1885241b250ec5da58de8cda45fd",
-      "fix_summary": "FE9 644198a: RecordForm's set() is now a pure updater, and committed values are reported to onValuesChange from an effect on values (once per new values object, never for the initial values). The sweep also made StepsEditor generate its row key outside the updater. A unit-web guard (test/react-warning-guard.ts, installed in test/setup.ts) fails any test that prints React's 'Cannot update a component ... while rendering a different component' or an act() warning; other console.error output passes through. Tests: EN/AR Team assign-dialog preview component tests, the guard's own tests, and an e2e step for the role preview; negative control."
+      "fix_summary": "FE9 644198a: RecordForm's set() is now a pure updater, and committed values are reported to onValuesChange from an effect on values (once per new values object, never for the initial values). The sweep also made StepsEditor generate its row key outside the updater. A unit-web guard (test/react-warning-guard.ts, installed in test/setup.ts) fails any test that prints React's 'Cannot update a component ... while rendering a different component' or an act() warning; other console.error output passes through. Tests: EN/AR Team assign-dialog preview component tests, the guard's own tests, and an e2e step for the role preview; negative control.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG2-T-DG2-REV-QA-R12-qa-verifier-20261007T043412Z-ef3a0a5e",
+          "session_id": "ef3a0a5e-8b55-4214-b48e-9cf549fb6ba1"
+        },
+        "at": "2026-10-07T05:30:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG2/qa/round-12/08-unit-series-summary.log",
+          "docs/delivery/test-evidence/DG2/qa/round-12/unit/node22-run1-unset.log",
+          "docs/delivery/test-evidence/DG2/qa/round-12/unit/node24-run2-cutf8.log",
+          "docs/delivery/test-evidence/DG2/qa/round-12/unit/node24-load-cutf8.log",
+          "docs/delivery/test-evidence/DG2/qa/round-12/09-guard-negative-control-A.log",
+          "docs/delivery/test-evidence/DG2/qa/round-12/09-guard-negative-control-C.log",
+          "docs/delivery/test-evidence/DG2/qa/round-12/09-updater-sweep.log",
+          "docs/delivery/test-evidence/DG2/qa/round-12/19-qa-r12-results.log",
+          "docs/delivery/test-evidence/DG2/qa/round-12/e2e-qa-screens/en-qa-r12-06-team-preview-sec.png",
+          "docs/delivery/test-evidence/DG2/qa/round-12/e2e-qa-screens/ar-qa-r12-06-team-preview-sec.png",
+          "docs/delivery/test-evidence/DG2/qa/tests/round-12/e2e/dg2-qa-r12.spec.ts",
+          "apps/web/src/components/RecordForm.tsx",
+          "apps/web/test/react-warning-guard.ts",
+          "apps/web/test/setup.ts"
+        ],
+        "note": "Verified on candidate sha256:5dfecce44b9d7d4ded6ca45968c9e2686d1c011cdd7c906ba3dc9974bbdf92b8 (552 files, source 8488e7a, freeze 744af0b). The fix is FE9 644198a by frontend-ux-engineer; qa-verifier authored none of it. (1) Unit logs: `pnpm test` ran 7 times: Node 22.22.2 x3 and Node 24.21.0 x3, alternating LANG/LC_ALL unset and LANG=C.UTF-8, plus one Node 24 run under CPU load. Every run passed 43 files / 790 tests with exit 0. `grep 'Cannot update a component'` finds 0 lines in all 7 logs, and `grep 'not wrapped in act'` and 'stderr |' blocks also find 0. In round 11 every run had one such warning. The only warning line is the known FSTDEP022 deprecation, which comes from a test-only Fastify instance in framework-errors.test.ts and also appeared in rounds 10 and 11. (2) Code: RecordForm.set now uses a pure updater, `setValues((v) => ({ ...v, [name]: value }))`. onValuesChange is called from a useEffect on `values` and skips the initial values (useRef guard). My own sweep of all 13 functional state updaters in apps/web/src found every one pure, including the StepsEditor key, which is now generated before its updater. There is no useReducer and no setState in the app. (3) Team preview, EN and AR: the product e2e step p2-17d1 passed in chromium-en and chromium-ar under both locale settings, in the product stack and the QA stack. My own UI test R12-06 cycles the Role select through KDS, TD, CM, SEC, WL, KDS and back to WL. Each time, exactly one preview is shown, and its text equals GET /role-accountabilities in the page language. The page is dir=ltr in EN and dir=rtl in AR, and the preview's computed direction matches. After Cancel, nothing is assigned and no React update warning appears. The browser console has 6 messages, all by design: the 401 from /me before sign-in, the 400 from the documented dev-login availability probe, and four 404s for GET /users/{id}, because the lead cannot read the user directory (People.tsx). Screenshots: e2e-qa-screens/{en,ar}-qa-r12-06-team-preview-sec.png. (4) The guard catches a reintroduced violation. In a throwaway clone I restored the pre-FE9 impure updater in RecordForm.set. Under both locale settings `vitest --project unit-web` then exits 1: team.test.tsx > 'shows a 403 from the server in words' fails with 'React warning printed to console.error during this test (F-DG2-430 guard ...): Cannot update a component (`AssignDialog`) while rendering a different component (`RecordDialog`)'. That gives 1 failed and 259 passed. Control C used the same violation with the guard's afterEach/afterAll removed: 8/8 pass but the warning is printed, so the guard is what fails the test. One note: React prints this warning only once per component pair per test file, so only the first offending test in a file fails. That is enough to make the suite fail."
+      }
+    },
+    {
+      "id": "F-DG2-440",
+      "stage_id": "DG2",
+      "requirement": "REQ-S10-001",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "An in-flight evidence upload commits after the uploader's grant is revoked or their session is logged out: phase 3 'authorises again' against the request-start snapshot of grants and session, for up to requestTimeout (300 s)",
+      "reproduction": "Cause: apps/api/src/modules/identity/routes.ts:120-140 (preValidation) resolves the session and loads the principal's grants ONCE per request (grants: await loadGrants(...), line 137). The policy decides on principal.grants (access/policy.ts authorize -> decide). The BE17 upload (apps/api/src/modules/evidence/routes.ts:443-548) receives the body between phase 1 and phase 3 with no time bound other than requestTimeout (DEFAULT_REQUEST_TIMEOUT_MS = 300_000, platform/connection-hygiene.ts:46). Its phase-3 openWrite (routes.ts:489) re-reads ownership, the transformation's archive state and the target from the database, but re-runs the policy on the request-start grants and session.\nProbe: docs/delivery/test-evidence/DG2/code-security/round-12/probes/zz-sec-r12-probe.test.ts. Disposable clone at 744af0b (candidate 5dfecce4), disposable PostgreSQL 16, Node 22.22.2 (LANG unset) and Node 24.21.0 (LANG=C.UTF-8); identical in both runs.\n- Q1: the Workstream Lead (only grant: WL at the transformation) creates a file evidence item. They start a 1 MiB upload over a real socket (If-Match, CSRF, Origin) and send 64 KiB. Their only grant is then revoked (scoped_assignment.revoked_at set; rowCount 1), and they send the rest. Result: 200, evidence_content revision 1 committed with the object on disk, evidence version 1 -> 2, review status reset, and one evidence.upload_content audit event attributed to the revoked user. A NEW request by the same session right after the revocation is refused (404: they can no longer read the transformation).\n- Q1b: the Transformation Lead signs in a second session and starts an upload on it. POST /api/v1/auth/logout revokes that session (200), and GET /api/v1/me with it is then 401. The in-flight upload still completes with 200, and its content is committed.\n- The same Q1/Q1b fail identically on the round-11 candidate 23e6c0a2 (clone 309aff2, before BE17; probe-r12-Q1-on-round11-23e6c0a2.log): the gap PRE-DATES BE17. BE17 did not introduce it, but its phase-3 comment ('authorization again') does not cover grants or the session, which is exactly the TOCTOU the round-12 assignment asks about.",
+      "expected": "A write that commits after the body was received is authorised at commit time. Phase 3 re-resolves the session (still active, not revoked or expired) and reloads the caller's grants inside the write transaction before openWrite. A grant revoked or a session logged out while the body streams is then refused (403, or 401 for the session), and the received temporary object is discarded. Equivalent: bound how long an upload may take after its authorization. Applies to every route that waits on the client between authorization and commit; today that is uploadEvidenceContent.",
+      "actual": "For up to requestTimeout (300 s) after a grant revocation or a logout or session revocation, an upload that was already in flight replaces the evidence item's current content and resets its review status (RESET_REVIEW). This is audited, and attributed to the user. New requests are refused correctly. Rated Medium and non-mandatory: every mutation still has a server-side authorization check, made when the request is accepted; the caller held the permission then, gains no access they did not have, and the write is audited. The defect is the revocation latency of in-flight uploads, which BE17's phase 3 claims to close but does not. The auditor may weigh the access-control aspect differently.",
+      "evidence": [
+        "apps/api/src/modules/evidence/routes.ts",
+        "apps/api/src/modules/identity/routes.ts",
+        "apps/api/src/modules/access/policy.ts",
+        "apps/api/src/modules/platform/connection-hygiene.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probes/zz-sec-r12-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probes/README.md",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r12-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r12-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r12-Q1-on-round11-23e6c0a2.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-12/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-07T05:00:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG2 round 12, while adversarially probing the BE17 three-phase upload for 'a TOCTOU between phase 1 and phase 3, a revoked grant' as the assignment directs. Pre-existing (same result at the round-11 candidate 23e6c0a2). Medium, non-mandatory (see actual). It does not block the round under the stated gate rule (no Critical, High or mandatory finding), but it should be repaired: re-resolve the session and reload grants in phase 3."
+        }
+      ]
+    },
+    {
+      "id": "F-DG2-441",
+      "stage_id": "DG2",
+      "requirement": "REQ-S16-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "OIDC discovery (a remote call to the IdP) runs inside an open database transaction in GET /api/v1/auth/login: while the IdP is slow or unreachable, unauthenticated login attempts hold pooled connections 'idle in transaction' for the 10 s discovery timeout and stall signed-in users",
+      "reproduction": "apps/api/src/modules/identity/routes.ts:268 runs db.transaction().execute((tx) => oidc.startLogin(tx, ...)). Kysely checks out a connection and issues BEGIN before the callback. startLogin (apps/api/src/modules/identity/oidc.ts:58-59) first awaits this.configuration_() (oidc.ts:37-50), which performs OIDC discovery over HTTP with a 10 s default timeout. The result is cached only on success; a failure clears the cache, so every login retries discovery while the IdP is down. This contradicts the BE17 sweep note in packages/db/src/pool.ts:34 ('No application transaction waits on anything but the database (no client I/O, no remote call)').\nProbe: docs/delivery/test-evidence/DG2/code-security/round-12/probes/zz-sec-r12-oidc-probe.test.ts. Disposable clone at 744af0b (candidate 5dfecce4), disposable PostgreSQL 16, Node 22.22.2 and 24.21.0, identical results. The IdP is a local TCP server that accepts and never answers. OidcService uses its default discovery timeout (10 s), AUTH_RATE_LIMIT_PER_MINUTE is the product default (20), and the pool max is 3. Three unauthenticated GET /api/v1/auth/login run concurrently. After 1 s, pg_stat_activity read as superuser shows 3 api sessions 'idle in transaction'. A signed-in Sponsor's GET /api/v1/me then takes 9,010-9,029 ms. The logins end at 10.0 s with 302 /login?error=idp_unavailable. With the production pool (max 10) and 20 logins per minute per IP, a login storm during an IdP outage (users retrying) can exhaust the pool. Signed-in users then get the bounded 503 after connectionTimeoutMillis (10 s) instead of being served. Pre-existing since DG1 (8332624).",
+      "expected": "No transaction is open while waiting on the IdP: resolve the OIDC configuration (discovery) before db.transaction(), then insert the login state in a short transaction. The OIDC callback already does this (consumeState in its own transaction, then the token exchange outside any transaction, routes.ts:302-347).",
+      "actual": "Each login attempt holds a pooled connection, and an open transaction, for up to the discovery timeout whenever discovery is not cached. Rated Low and non-mandatory: it needs an IdP outage or slowness, is bounded at 10 s per attempt and rate-limited per IP, needs no credentials, has no confidentiality or integrity impact, and with BE17's connectionTimeoutMillis it degrades to a declared 503 rather than a hang.",
+      "evidence": [
+        "apps/api/src/modules/identity/routes.ts",
+        "apps/api/src/modules/identity/oidc.ts",
+        "packages/db/src/pool.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probes/zz-sec-r12-oidc-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probes/README.md",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r12-oidc-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probe-r12-oidc-node24-lang-c-utf8.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-12/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-07T05:00:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG2 round 12, during the assigned sweep for 'any remaining path that holds a pooled connection, transaction or row lock while it waits'. This one waits on the IdP rather than the HTTP client. Pre-existing since DG1. Low, non-mandatory; it does not block the round."
+        }
+      ]
+    },
+    {
+      "id": "F-DG2-460",
+      "stage_id": "DG2",
+      "requirement": "REQ-S16-013",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Regression (BE17): an evidence upload in flight at SIGTERM leaves an orphaned .part file with the partial upload bytes in the evidence store, and it is never removed",
+      "reproduction": "Disposable clone at 744af0b (candidate 5dfecce4, source 8488e7a), `pnpm -r build`, e2e/support/qa-stack.sh (real API apps/api/dist/main.js + disposable PostgreSQL 16 + filesystem evidence store). Probe R12-07 in docs/delivery/test-evidence/DG2/qa/tests/round-12/e2e/dg2-qa-r12.spec.ts: (1) start a separate API process from the same build. (2) As the item's owner, POST /transformations/{t}/evidence/{e}/content with Content-Length 10 MiB and If-Match, send 2 MiB, then stall with the client socket left open. The store now holds <org>/<t>/<e>/<content>.part (2,097,152 B). (3) Send SIGTERM to the API. main.ts runs app.close(), the 5 s grace expires, the connection is destroyed, and the process exits 0 in about 5.02 s. (4) List the store. The same failure also shows in qa-verifier's round-11 regression test R11-02(b) ('stored files 1'), which fails in chromium-en and chromium-ar under both locale settings (4 of 4 runs). The probe was run in both projects and both locale settings with the same result. Control 1, same build: the same stall, but the CLIENT aborts while the process keeps running, leaves nothing (the .part is removed). Control 2, the round-11 freeze 309aff2 (pre-BE17): the identical probe leaves nothing after SIGTERM, and R11-02(b) passed there in 4 of 4 runs. Probable cause (static read): BE17 moved the body into phase 2, store.receive(), which holds no pooled connection. receive() removes its temporary only in its catch block, after the request stream errors, and that cleanup is asynchronous (handle.close, then rm). main.ts calls `await app.close(); await db.destroy(); process.exit(0)`. Before BE17 the in-flight upload held a checked-out pool client, so db.destroy() waited until the handler had cleaned up and rolled back. Now db.destroy() resolves at once and process.exit(0) runs before rm(temp). Nothing else removes a .part file: there is no startup sweep and no worker job, and retention deletes are P6.",
+      "expected": "A failed upload stores nothing, which is the BE17 contract ('Any failure after phase 2 started discards the temporary and the final object') and was the behaviour before BE17. That includes an upload cut by a graceful shutdown: SIGTERM with an upload in flight leaves no final object and no .part file. For example, shutdown could wait, within the grace or backstop, for in-flight upload handlers to finish their cleanup before process.exit. Or the store could sweep stale .part objects at start-up.",
+      "actual": "After SIGTERM the store keeps <org>/<t>/<e>/<uuid>.part (2,097,152 B of the user's partial upload) with no evidence_content row. It is not downloadable (GET content returns 404, currentContentId is null). It is still there after a new API process starts on the same store. Every rolling restart or deploy with an upload in flight leaks up to 25 MiB of user-supplied evidence bytes per upload. Nothing reports, governs or deletes them. Record integrity is intact: no committed row points at a missing or partial object, and the bytes are never served. That is why this is Medium and not mandatory. The leftover is an unbounded storage leak and uncontrolled retention of partial evidence content, a regression from round 11.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/19-qa-r12-07-shutdown-leftover-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/19-qa-r12-07-shutdown-leftover-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/19-qa-r12-07-baseline-309aff2.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/17-e2e-qa-stack-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/17-e2e-qa-stack-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-11/17-e2e-qa-stack-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/tests/round-12/e2e/dg2-qa-r12.spec.ts",
+        "docs/delivery/test-evidence/DG2/qa/tests/round-11/e2e/dg2-qa-r11.spec.ts",
+        "apps/api/src/modules/evidence/store.ts",
+        "apps/api/src/modules/evidence/routes.ts",
+        "apps/api/src/main.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG2/round-12/qa-verifier.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-07T05:20:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG2 round 12 (T-DG2-REV-QA-R12). The full regression's R11-02(b) failed 4 of 4 runs. The dedicated probe R12-07 identifies the leftover .part and shows it survives a restart. The same probe on the round-11 freeze 309aff2 leaves nothing, so this is a BE17 regression. Medium, non-mandatory. Because it is a regression, the round-12 qa verdict is FAIL."
+        }
+      ]
     }
   ]
 }
