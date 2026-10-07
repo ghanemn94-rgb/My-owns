@@ -11039,7 +11039,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-15/code-security-reviewer.json",
       "owner": "frontend-ux-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-07T13:32:00Z",
@@ -11055,10 +11055,15 @@
           "at": "2026-10-07T16:05:00Z",
           "status": "OPEN",
           "note": "verified by code-security-reviewer round 16: FAIL"
+        },
+        {
+          "at": "2026-10-07T18:29:54Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at ac8129810f5e47de97f5b6eb6d1f15b0f3f49527"
         }
       ],
-      "fix_revision": "44f1cf0d8b1ed79954c2d77caab41831162049de",
-      "fix_summary": "FE14 44f1cf0: an identity or session generation in the web API client. Every request records the generation current when it is sent. If the session ended or the identity changed before the answer arrives, apiRequest throws a typed SessionChangedError instead of returning data (no error-level log), so no late success handler (TransformationEdit/Detail, Organizations, Users and the rest of the grep sweep) can write it into the cache, navigate on it or show it. Callers treat the error as silent: no banner, no navigation. Observation X6: on refocus or reconnect /me is revalidated before the page queries, so the header and the data always belong to the same identity. FE10/FE13 guarantees are unchanged, and a normal same-identity write still updates and navigates. Tests: session-generation.test.tsx (26, incl. the reviewer's X3/X3b and X6); negative control on HEAD.",
+      "fix_revision": "ac8129810f5e47de97f5b6eb6d1f15b0f3f49527",
+      "fix_summary": "FE15 ac81298: one session-bound action (apps/web/src/auth/sessionBound.ts). The session generation is captured at the start of every user action, and every later navigate, setQueryData, router state or render effect is dropped if the generation moved while the action awaited, after any number of awaits. That covers the create flow's post-create /me (Y1/R16-06) and the edit, organisation and user saves. An ESLint rule forbids the raw router navigate and direct setQueryData in app code, and the handback sweeps every site. F-570: the identity is confirmed before page data on in-app navigation (no window), and other page GETs recheck /me when it is older than 2 s (a documented, bounded residual). FE10/FE13/FE14 guarantees are kept. Tests: session-bound.test.tsx (34, EN/AR); qa's R16 spec unchanged on the real stack 12/12 in chromium-en and chromium-ar; session-end e2e green; negative control on HEAD.",
       "verification": {
         "by_role": "code-security-reviewer",
         "invocation_reference": {
@@ -11109,14 +11114,21 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-16/domain-reviewer.json",
       "owner": "frontend-ux-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-07T16:27:33Z",
           "status": "OPEN",
           "note": "Raised in round 16 by domain-reviewer on candidate 0cab0a8c. Low, non-mandatory: no data disclosure, the server stays authoritative, and none of the 26 DG2 requirements under domain review is affected. It is the navigation variant of round-15 observation X6, which D-076 fixed for the refocus path."
+        },
+        {
+          "at": "2026-10-07T18:29:54Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at ac8129810f5e47de97f5b6eb6d1f15b0f3f49527"
         }
-      ]
+      ],
+      "fix_revision": "ac8129810f5e47de97f5b6eb6d1f15b0f3f49527",
+      "fix_summary": "FE15 ac81298: one session-bound action (apps/web/src/auth/sessionBound.ts). The session generation is captured at the start of every user action, and every later navigate, setQueryData, router state or render effect is dropped if the generation moved while the action awaited, after any number of awaits. That covers the create flow's post-create /me (Y1/R16-06) and the edit, organisation and user saves. An ESLint rule forbids the raw router navigate and direct setQueryData in app code, and the handback sweeps every site. F-570: the identity is confirmed before page data on in-app navigation (no window), and other page GETs recheck /me when it is older than 2 s (a documented, bounded residual). FE10/FE13/FE14 guarantees are kept. Tests: session-bound.test.tsx (34, EN/AR); qa's R16 spec unchanged on the real stack 12/12 in chromium-en and chromium-ar; session-end e2e green; negative control on HEAD."
     },
     {
       "id": "F-DG2-580",
@@ -11142,14 +11154,21 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG2/round-16/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-07T17:25:00Z",
           "status": "OPEN",
           "note": "Raised by qa-verifier in DG2 round 16 (T-DG2-REV-QA-R16). Probe R16-06 reproduced it on candidate 0cab0a8c, EN and AR, in both locale settings, and on FE14's parent 7905e8b. Low, not mandatory, same class as F-DG2-530."
+        },
+        {
+          "at": "2026-10-07T18:29:55Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at ac8129810f5e47de97f5b6eb6d1f15b0f3f49527"
         }
-      ]
+      ],
+      "fix_revision": "ac8129810f5e47de97f5b6eb6d1f15b0f3f49527",
+      "fix_summary": "FE15 ac81298: one session-bound action (apps/web/src/auth/sessionBound.ts). The session generation is captured at the start of every user action, and every later navigate, setQueryData, router state or render effect is dropped if the generation moved while the action awaited, after any number of awaits. That covers the create flow's post-create /me (Y1/R16-06) and the edit, organisation and user saves. An ESLint rule forbids the raw router navigate and direct setQueryData in app code, and the handback sweeps every site. F-570: the identity is confirmed before page data on in-app navigation (no window), and other page GETs recheck /me when it is older than 2 s (a documented, bounded residual). FE10/FE13/FE14 guarantees are kept. Tests: session-bound.test.tsx (34, EN/AR); qa's R16 spec unchanged on the real stack 12/12 in chromium-en and chromium-ar; session-end e2e green; negative control on HEAD."
     }
   ]
 }
