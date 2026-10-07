@@ -1,0 +1,44 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG2-440",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:6824b8b8d36a688178a058c11c4882737a79cf7f39b438dcf2390eafb88d3afc (source aa0a68f, 556 files), recomputed in the working tree and in a clean disposable clone at the freeze commit 5699f72. The fix is BE18A 8c0083e (backend-workflow-engineer) plus D-073 (delivery-orchestrator); I authored none of it.\n- Code:\n  - Phase 3 of uploadEvidenceContent (apps/api/src/modules/evidence/routes.ts:514-571) calls openWrite(..., { atCommit: true }) inside its write transaction.\n  - openWrite (transformations/register-kit.ts:262-269) then calls refreshPrincipal (access/request.ts:42-50), which runs request.reauthenticate(tx). That is the identity module's own principalFor (identity/routes.ts:124-140), the same function the preValidation hook uses. It runs resolveSession on the tx (token hash, revoked_at null, idle and absolute expiry vs now(), user status active, identity/sessions.ts:75-94), checks the same user id and reloads the grants with loadGrants(tx).\n  - A null result is 401 unauthenticated. The read and write gates then run on the RELOADED principal, and a 404 from the read gate becomes 403 forbidden with the denial kept (commitTimeDenial), so denials.ts audits authorization.denied.\n  - The catch at routes.ts:572-575 discards the temporary and the final object on every refusal. It fails closed: a request without a resolver gets 401.\n  - JSON routes are not exposed: Fastify parses the whole body BEFORE preValidation, so their request-start snapshot is taken after the client has finished sending. The upload is the only route whose parser passes the raw stream (evidence/routes.ts:388-391; the other parser is JSON, server.ts:207-210).\n- My round-12 reproductions, re-run UNCHANGED (zz-sec-r12-probe sha 71cbe705) on Node 22.22.2 (LANG unset) and Node 24.21.0 (LANG=C.UTF-8):\n  - Q1 (grant revoked while the body streams) is now 403 forbidden with nothing stored, no .part and no upload audit (round 12: 200).\n  - Q1b (session logged out while the body streams) is now 401 unauthenticated with nothing stored (round 12: 200).\n  - Q2-Q6b are unchanged (9/9 pass).\n- New adversarial probe zz-sec-r13-probe (sha 8ae4840f), on both Node versions:\n  - S1: a role DOWNGRADE (WL -> AUD at the same scope, read kept, evidence.create lost) while the body streams gives 403, one authorization.denied audit '... requires evidence.create', and nothing stored.\n  - S2: the item's owner reassigned away from the uploader while the body streams gives 403, nothing stored.\n- The candidate's commit-time-auth.test.ts (8/8) passes in both locale integration runs. It covers revocation, logout, idle and absolute expiry, a disabled user, a positive control and re-grant (the current grants win).\n- Residual (measured, S3; NOT a finding):\n  - The authority is read at the start of phase 3, and the item's FOR UPDATE lock is taken after it. A revocation that commits while phase 3 waits for that lock does not stop the commit (200).\n  - This is the stated residual window (phase 3's own transaction). Only a concurrent transaction holding the item's row lock can lengthen it, and since BE17 none waits on a client. statement_timeout (30 s) bounds it, and the uploader cannot extend it through the API.\n  - Suggested hardening, optional: take the row lock before re-authorising.",
+      "evidence": [
+        "apps/api/src/modules/evidence/routes.ts",
+        "apps/api/src/modules/access/request.ts",
+        "apps/api/src/modules/transformations/register-kit.ts",
+        "apps/api/src/modules/identity/routes.ts",
+        "apps/api/src/modules/identity/sessions.ts",
+        "apps/api/test/integration/commit-time-auth.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probes/zz-sec-r12-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-13/probes/zz-sec-r13-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-13/probes/README.md",
+        "docs/delivery/test-evidence/DG2/code-security/round-13/probe-r12-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-13/probe-r12-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-13/probe-r13-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-13/probe-r13-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-13/integration-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-13/integration-run2-lang-c-utf8.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG2-441",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:6824b8b8d36a688178a058c11c4882737a79cf7f39b438dcf2390eafb88d3afc (source aa0a68f). The fix is BE18A 8c0083e (backend-workflow-engineer); I authored none of it.\n- Code:\n  - GET /api/v1/auth/login (identity/routes.ts:290-296) now calls oidc.prepareLogin first, outside any transaction (identity/oidc.ts:71-88). That covers OIDC discovery via configuration_(), the random state, nonce and PKCE verifier, and the authorization URL. Only then does it run saveLoginState in a short transaction that does nothing but INSERT INTO oidc_login_state.\n  - The state is still stored as sha256 with the nonce, PKCE verifier, return_to and sha256(browser binding), and the 10-minute expiry is unchanged. The login cookie is still set only after the insert succeeded.\n  - The callback is unchanged. consumeState (its own transaction), exchange (remote, outside any transaction) and resolveOidcUser (its own transaction) run one after another. endSessionUrl runs after the logout transaction.\n- My round-12 reproduction, re-run UNCHANGED (zz-sec-r12-oidc-probe sha db10609c) on Node 22 and Node 24, with a never-answering IdP, pool max 3 and three concurrent logins:\n  - all three API sessions are 'idle' (round 12: 'idle in transaction');\n  - a signed-in user's /me answers 200 in 18-22 ms (round 12: 9.0 s);\n  - the logins end in 302 /login?error=idp_unavailable after the 10 s discovery timeout.\n  The candidate's commit-time-auth.test.ts Q7 and oidc.test.ts (33/33: state, nonce, PKCE, browser binding) pass in both locale runs.\n- Independent sweep:\n  - I wrote my own TypeScript-AST scan (await-sweep.mjs, 135 files across apps/*/src and packages/*/src) of every await in a transaction callback, in a function taking a Tx, DbOrTx, Transaction or client, and in pooled-client checkouts.\n  - It found no remote or slow non-database await inside a transaction. The only one is the documented store.finalise (a local atomic rename) as the last step before COMMIT.\n  - The worker's pg-boss send runs on the same transaction. The rest are Kysely builders, closures over tx, the /readyz checkout and the operator CLI.",
+      "evidence": [
+        "apps/api/src/modules/identity/oidc.ts",
+        "apps/api/src/modules/identity/routes.ts",
+        "apps/api/test/integration/commit-time-auth.test.ts",
+        "apps/api/test/integration/oidc.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probes/zz-sec-r12-oidc-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-13/probe-r12-oidc-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-13/probe-r12-oidc-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-13/await-sweep.mjs",
+        "docs/delivery/test-evidence/DG2/code-security/round-13/await-sweep.log"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,425 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG2",
+  "round": 13,
+  "candidate_id": "sha256:6824b8b8d36a688178a058c11c4882737a79cf7f39b438dcf2390eafb88d3afc",
+  "source_commit": "aa0a68f1aad3f19776760a0d3bff6bf81e9f3fb4",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG2-T-DG2-REV-SEC-R13-code-security-reviewer-20261007T063843Z-6525d5f1",
+    "session_id": "6525d5f1-ee95-49b6-a17a-7aab947b449b"
+  },
+  "implementation_author": ["backend-workflow-engineer", "frontend-ux-engineer", "delivery-orchestrator"],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am code-security-reviewer, session 6525d5f1. I authored no implementation in the DG2 scope, including BE18A 8c0083e (backend-workflow-engineer) and D-073 aa0a68f (delivery-orchestrator). I reviewed the frozen candidate directly: the product diff 8488e7a..aa0a68f (18 files) and the full files it touches, plus the identity, access, evidence-store and OIDC code those paths rely on. I ran code only in disposable clones under $TMPDIR ($TMPDIR/review-r13 and $TMPDIR/r13p, both at 5699f72) and on disposable PostgreSQL 16 clusters that were deleted afterwards. I wrote nothing in source paths; my probes live in my evidence directory. I formed this verdict without reading any other reviewer's round-13 record."
+  },
+  "assignment": "docs/delivery/assignments/DG2/round-13/code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-S10-001",
+    "REQ-S16-013",
+    "REQ-S13-012",
+    "REQ-DLV-034",
+    "REQ-PB-016",
+    "REQ-PB-017",
+    "REQ-PB-018",
+    "REQ-PB-027",
+    "REQ-PB-028",
+    "REQ-PB-029"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-R13-00-candidate",
+      "procedure": "Confirm the assignment hash, HEAD and the recomputed candidate ID, in the working tree and in a clean disposable clone at the freeze commit 5699f72. Confirm that the freeze commit changes only delivery metadata relative to source aa0a68f.",
+      "command": "sha256sum docs/delivery/assignments/DG2/round-13/code-security-reviewer.md; git rev-parse HEAD; git diff --stat aa0a68f..HEAD; node tools/gates/candidate.mjs --stage DG2 (working tree and $TMPDIR/review-r13)",
+      "environment": "Node 24.21.0; working tree /home/user/My-owns; disposable clone $TMPDIR/review-r13 at 5699f72",
+      "expected": "assignment sha256 ba394e9e...be75; candidate_id sha256:6824b8b8...afc with 556 files; freeze commit = source + metadata only",
+      "actual": "Assignment sha256 ba394e9e048ea121f3f58d3fed86075029596a53f0a6b9463d94b9a7382dbe75 matches. HEAD is 5699f72, the freeze commit, and source_commit aa0a68f is its parent. aa0a68f..5699f72 adds only the three round-13 assignments, the candidate manifest and stages.json (5 files; none is in the candidate). The candidate ID recomputes to sha256:6824b8b8d36a688178a058c11c4882737a79cf7f39b438dcf2390eafb88d3afc with 556 files, in both the working tree and the clone. Note: the assignment's re-review range 'fe22d759..cbdb4f68' is the round-10 to round-11 range (cbdb4f6 = D-071) that round 11 already reviewed. The BE18A changes it asks about are in 8488e7a..aa0a68f (single product commit 8c0083e), and I reviewed that range (diff-scan.log).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-13/candidate-id.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-13/diff-scan.log",
+        "docs/delivery/candidates/DG2/6824b8b8d36a6881.manifest.json"
+      ]
+    },
+    {
+      "id": "SEC-R13-01-diff-review",
+      "procedure": "Line-by-line source review of every product change in 8488e7a..aa0a68f and the full files it touches: access/request.ts, access/denials.ts, transformations/register-kit.ts openWrite, evidence/routes.ts (three-phase upload, start-up sweep hook), evidence/store.ts (sweep, receive cleanup), identity/routes.ts (principalFor, login), identity/oidc.ts, platform/in-flight.ts, server.ts, main.ts and packages/db/src/pool.ts. The review checks for weakened authorization, CSRF, optimistic concurrency, the audit trail, the evidence size limit and raw sha256, BE16/BE17 connection and pool behaviour, and OIDC state/nonce/PKCE/binding, and scans the added lines for risky constructs.",
+      "command": "git diff 8488e7a..aa0a68f -- apps packages; git diff --stat 8488e7a..aa0a68f -- . ':!docs/delivery'; grep scan of added lines (diff-scan.log)",
+      "environment": "disposable clone $TMPDIR/review-r13 at 5699f72",
+      "expected": "No regression in authorization, CSRF, If-Match/version checks, audit, size limit or sha256, pool/connection behaviour or the OIDC login/callback; no new dependency, secret, CDN or remote call",
+      "actual": "No regression found.\n- Authorization and CSRF: the preValidation hook still resolves the session and loads the grants via the same resolution, now factored into principalFor. CSRF and origin checks are unchanged. refreshPrincipal only re-resolves the SAME token and requires the SAME user id, and it fails closed (no resolver or null result gives 401). Re-authorisation can only narrow authority, never widen it.\n- Optimistic concurrency, audit and denials: the If-Match check on the FOR UPDATE row, the version-guarded update and the evidence.upload_content audit are unchanged. commitTimeDenial keeps the denial, so the failed-mutation audit still fires.\n- Upload limits: store.receive keeps the 25 MiB limit and the streaming sha256 over the raw bytes. Its cleanup now removes the temporary even when handle.close() fails.\n- OIDC: prepareLogin and saveLoginState keep state, nonce and PKCE server-side and store sha256(state) and sha256(binding). The cookie is set after the insert. The callback code is unchanged.\n- Shutdown tracking: in-flight.ts wraps every handler registered after it, which is all routes (server.ts order). It returns the handler's own promise, and settled() is bounded. main.ts orders app.close -> settled(3 s) -> db.destroy -> exit inside the 10 s backstop.\n- Start-up sweep: readdir withFileTypes never follows symlinked directories below the root. The name filter is strict (/^uuid\\.part$/), the depth is exactly 3, lstat confirms a regular file, the cutoff is 1 h by mtime, it runs in the background, it is tracked, and failures are logged at warn.\n- Diff scan: package.json and the lockfile are unchanged, there is no new dependency, and no product line adds fetch, eval, exec, a URL or a secret. The matches are all in test files: a loopback IdP, child_process in the shutdown test, and a synthetic marker asserted NOT to be logged.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S10-001", "REQ-S16-013", "REQ-S13-012", "REQ-DLV-034"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-13/diff-scan.log",
+        "apps/api/src/modules/access/request.ts",
+        "apps/api/src/modules/transformations/register-kit.ts",
+        "apps/api/src/modules/evidence/routes.ts",
+        "apps/api/src/modules/evidence/store.ts",
+        "apps/api/src/modules/identity/routes.ts",
+        "apps/api/src/modules/identity/oidc.ts",
+        "apps/api/src/modules/platform/in-flight.ts",
+        "apps/api/src/main.ts",
+        "apps/api/src/server.ts"
+      ]
+    },
+    {
+      "id": "SEC-R13-02-install",
+      "procedure": "Offline frozen install of the workspace in the disposable clone (twice: before and after the build so the mth-db bin links).",
+      "command": "pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pstore/v10",
+      "environment": "Node 22.22.2, pnpm 10.33.0; clone $TMPDIR/review-r13 at 5699f72; store = scratch copy of /root/.local/share/pnpm/store/v10 (sandbox has no network)",
+      "expected": "exit 0, lockfile unchanged",
+      "actual": "Both installs exit 0 and the lockfile is up to date. The first install prints 2 'WARN Failed to create bin ... mth-db' lines. They are expected: packages/db/dist/cli.js exists only after the build. install2.log, run after the build, has no such warning.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-13/install.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-13/install2.log"
+      ]
+    },
+    {
+      "id": "SEC-R13-03-typecheck",
+      "procedure": "Recursive TypeScript typecheck.",
+      "command": "pnpm -r typecheck",
+      "environment": "Node 22.22.2; clone $TMPDIR/review-r13 at 5699f72",
+      "expected": "exit 0",
+      "actual": "Exit 0; every workspace reports 'typecheck: Done'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-13/typecheck.log"]
+    },
+    {
+      "id": "SEC-R13-04-build",
+      "procedure": "Recursive build of every workspace.",
+      "command": "pnpm -r build",
+      "environment": "Node 22.22.2; clone $TMPDIR/review-r13 at 5699f72",
+      "expected": "exit 0",
+      "actual": "Exit 0; apps/api, apps/worker, apps/web and the packages all report 'build: Done'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-13/build.log"]
+    },
+    {
+      "id": "SEC-R13-05-lint",
+      "procedure": "ESLint over the repository with zero warnings allowed.",
+      "command": "pnpm lint",
+      "environment": "Node 22.22.2; clone $TMPDIR/review-r13 at 5699f72",
+      "expected": "exit 0, no findings",
+      "actual": "Exit 0 with no output from eslint (--max-warnings=0).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-13/lint.log"]
+    },
+    {
+      "id": "SEC-R13-06-openapi-lint",
+      "procedure": "OpenAPI contract lint.",
+      "command": "pnpm openapi:lint",
+      "environment": "Node 22.22.2; clone $TMPDIR/review-r13 at 5699f72",
+      "expected": "PASS, 161 operations",
+      "actual": "'PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 161 operations'; exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-034"],
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-13/openapi-lint.log"]
+    },
+    {
+      "id": "SEC-R13-07-no-cdn",
+      "procedure": "Portability check: no public CDN or builder-hosted runtime dependency.",
+      "command": "pnpm check:no-cdn",
+      "environment": "Node 22.22.2; clone $TMPDIR/review-r13 at 5699f72",
+      "expected": "PASS",
+      "actual": "'PASS no-cdn: scanned apps, packages'; exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-13/no-cdn.log"]
+    },
+    {
+      "id": "SEC-R13-08-format",
+      "procedure": "Prettier format check.",
+      "command": "pnpm format:check",
+      "environment": "Node 22.22.2; clone $TMPDIR/review-r13 at 5699f72",
+      "expected": "exit 0",
+      "actual": "'All matched files use Prettier code style!'; exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-13/format-check.log"]
+    },
+    {
+      "id": "SEC-R13-09-unit-node22",
+      "procedure": "Unit suites (unit-node + unit-web projects) on Node 22.",
+      "command": "pnpm test --reporter=verbose",
+      "environment": "Node 22.22.2; clone $TMPDIR/review-r13 at 5699f72",
+      "expected": "all pass",
+      "actual": "Test Files 44 passed (44); Tests 796 passed (796); exit 0. There are no failing (x) lines, no hook timeouts, no failed suites and no stderr blocks. This includes in-flight.test.ts and evidence.test.ts (BE18A).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-13/unit-node22.log"]
+    },
+    {
+      "id": "SEC-R13-10-unit-node24",
+      "procedure": "Unit suites on Node 24.",
+      "command": "pnpm test --reporter=verbose",
+      "environment": "Node 24.21.0; clone $TMPDIR/review-r13 at 5699f72",
+      "expected": "all pass",
+      "actual": "Test Files 44 passed (44); Tests 796 passed (796); exit 0. There are no failing (x) lines, no hook timeouts, no failed suites and no stderr blocks.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-13/unit-node24.log"]
+    },
+    {
+      "id": "SEC-R13-11-unit-under-load",
+      "procedure": "Unit suites on Node 22 then Node 24 while the probe clone repeatedly runs 'pnpm -r build' and the round-13 integration probe on a disposable PostgreSQL (port 29991) as concurrent CPU load (4 vCPU).",
+      "command": "bash load-repro.sh",
+      "environment": "Node 22.22.2 and 24.21.0; clone $TMPDIR/review-r13 at 5699f72; load from $TMPDIR/r13p; loadavg 3.99 -> 8.43 on 4 vCPU",
+      "expected": "all pass under load",
+      "actual": "Node 22: 44 files / 796 tests passed, exit 0, loadavg up to 7.26. Node 24: 44 files / 796 tests passed, exit 0, loadavg up to 8.43. There are no failing lines, hook timeouts or stderr blocks. The load generator ran 2 build+probe iterations; its own output is discarded by design (load only).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-13/unit-under-load-node22.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-13/unit-under-load-node24.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-13/load-generator.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-13/load-repro.sh"
+      ]
+    },
+    {
+      "id": "SEC-R13-12-integration-run1",
+      "procedure": "Full integration project on a disposable PostgreSQL 16 cluster with LANG/LC_ALL/LC_CTYPE unset (cluster defaults to SQL_ASCII, locale C).",
+      "command": "with-pg.sh 29971 pnpm test:integration --reporter=verbose",
+      "environment": "Node 22.22.2; LANG/LC_ALL/LC_CTYPE unset; clone $TMPDIR/review-r13 at 5699f72; port 29971; cluster deleted afterwards",
+      "expected": "all pass",
+      "actual": "Test Files 39 passed (39); Tests 612 passed (612); exit 0. There are no failing (x) lines, no hook timeouts, no failed suites, no stderr blocks and no level-50/60 log lines. The only grep hits on 'Error' are test NAMES (framework-errors FST_ERR_BAD_URL cases) and a SWEEP observation line, not failures.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S10-001", "REQ-S16-013", "REQ-S13-012", "REQ-DLV-034", "REQ-PB-016", "REQ-PB-017", "REQ-PB-018", "REQ-PB-027", "REQ-PB-028", "REQ-PB-029"],
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-13/integration-run1-lang-unset.log", "docs/delivery/test-evidence/DG2/code-security/round-13/with-pg.sh", "docs/delivery/test-evidence/DG2/code-security/round-13/checks.sh"]
+    },
+    {
+      "id": "SEC-R13-13-integration-run2",
+      "procedure": "Full integration project on a disposable PostgreSQL 16 cluster with LANG=C.UTF-8 (cluster UTF8).",
+      "command": "with-pg.sh 29972 pnpm test:integration --reporter=verbose",
+      "environment": "Node 24.21.0; LANG=C.UTF-8, LC_ALL/LC_CTYPE unset; clone $TMPDIR/review-r13 at 5699f72; port 29972; cluster deleted afterwards",
+      "expected": "all pass",
+      "actual": "Test Files 39 passed (39); Tests 612 passed (612); exit 0. There are no failing lines, no hook timeouts, no failed suites, no stderr blocks and no level-50/60 log lines.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S10-001", "REQ-S16-013", "REQ-S13-012", "REQ-DLV-034", "REQ-PB-016", "REQ-PB-017", "REQ-PB-018", "REQ-PB-027", "REQ-PB-028", "REQ-PB-029"],
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-13/integration-run2-lang-c-utf8.log"]
+    },
+    {
+      "id": "SEC-R13-14-required-suites",
+      "procedure": "Per-file pass/fail counts in both integration runs for every suite the assignment names, and mapping to the requirements.",
+      "command": "grep -E '^ +(✓|×) \\|integration\\| ' <log> | sed 's/ >.*//' | sort | uniq -c (requirements-suites.log)",
+      "environment": "the two integration logs above",
+      "expected": "each named suite present with zero failures in both runs",
+      "actual": "Identical in both runs, with zero failures anywhere. Passing tests per suite:\n- contract.test.ts 18 (161 operations);\n- media-types 21;\n- connection-hygiene (BE16) 13;\n- request-io (BE17) 10;\n- packages/db pool-bounds (BE17) 7;\n- commit-time-auth (BE18A) 8;\n- shutdown-cleanup (BE18A) 4;\n- blank-text 29;\n- oidc 33;\n- invalid-character 20;\n- framework-errors 11;\n- invalid-utf8 14;\n- encoding 8;\n- evidence 6;\n- migrate 7 ('applies every shipped migration' over 0001-0019).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S10-001", "REQ-S16-013", "REQ-S13-012", "REQ-DLV-034", "REQ-PB-016", "REQ-PB-017", "REQ-PB-018", "REQ-PB-027", "REQ-PB-028", "REQ-PB-029"],
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-13/requirements-suites.log"]
+    },
+    {
+      "id": "SEC-R13-15-contract-migrations",
+      "procedure": "Count contract operations and list the shipped migrations; confirm the contract coverage tests passed.",
+      "command": "grep -c '^ *operationId:' docs/api/openapi.yaml; ls packages/db/migrations; contract coverage lines",
+      "environment": "clone $TMPDIR/review-r13 at 5699f72",
+      "expected": "161 operations; migrations 0001-0019; route coverage and every-operation tests pass",
+      "actual": "161 operationIds; 19 migrations from 0001_identity_access.sql to 0019_evidence_review_separation.sql. 'maps every governed Fastify route to an OpenAPI operation ... and back', 'declares access on every governed route' and 'covers every operation with at least one success ...' all pass.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-034", "REQ-PB-029"],
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-13/contract-ops.log"]
+    },
+    {
+      "id": "SEC-R13-16-aud-403-sweep",
+      "procedure": "AUD-403 sweep: the read-only auditor is refused on every P2 mutating operation generated from the contract (both runs).",
+      "command": "grep -E '^ +(✓|×).*aud-write-deny' integration-run1-lang-unset.log integration-run2-lang-c-utf8.log",
+      "environment": "the two integration logs above",
+      "expected": "0 failures, 128 P2 + 16 kpi mutations covered",
+      "actual": "Run 1: 146 pass, 0 fail (kpi-aud-write-deny 18). Run 2: 146 pass, 0 fail (kpi 18). The generated lists cover the 128 P2 operations and the 16 kpi mutations, including uploadEvidenceContent.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S10-001"],
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-13/aud-403-sweep.log"]
+    },
+    {
+      "id": "SEC-R13-17-probe-r12-rerun",
+      "procedure": "Re-run my round-12 probe UNCHANGED (sha 71cbe705: Q1/Q1b = F-DG2-440 reproductions; Q2-Q6b regression) on Node 22 (LANG unset) and Node 24 (LANG=C.UTF-8), each on its own disposable cluster.",
+      "command": "probe-runs.sh: with-pg.sh 29981|29982 pnpm vitest run --project integration apps/api/test/integration/zz-sec-r12-probe.test.ts",
+      "environment": "probe clone $TMPDIR/r13p at 5699f72 + probe file; Node 22.22.2 / 24.21.0",
+      "expected": "Q1 403 and Q1b 401 with nothing stored; Q2-Q6b unchanged",
+      "actual": "9/9 pass on both Node versions, exit 0 (round 12: Q1 and Q1b failed with 200).\n- Q1: 403 forbidden, no row, no .part, no upload audit. A new request by the revoked user gets 404.\n- Q1b: 401 unauthenticated after logout, nothing stored.\n- Q2 422 transformation.archived; Q3 [200, 409] with one revision; Q6b /me 6-8 ms with no session idle in transaction.\n- Error-level lines in the log, both deliberately induced and asserted: Q4 'unhandled error' (a deferred trigger fails the COMMIT, so 500 at error level is the asserted correct answer) and Q5b 'request failed' (a genuine store fault, asserted 503 at error level and not hidden as 400). There are no hook timeouts, failed suites or stderr blocks.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S10-001", "REQ-S16-013", "REQ-S13-012"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-13/probe-r12-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-13/probe-r12-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probes/zz-sec-r12-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-13/probe-runs.sh",
+        "docs/delivery/test-evidence/DG2/code-security/round-13/probes/README.md"
+      ]
+    },
+    {
+      "id": "SEC-R13-18-probe-r12-oidc-rerun",
+      "procedure": "Re-run my round-12 OIDC probe UNCHANGED (sha db10609c, Q7 = F-DG2-441 reproduction: never-answering IdP, pool max 3, three concurrent logins) on Node 22 and Node 24.",
+      "command": "probe-runs.sh: with-pg.sh 29983|29984 pnpm vitest run --project integration apps/api/test/integration/zz-sec-r12-oidc-probe.test.ts",
+      "environment": "probe clone $TMPDIR/r13p at 5699f72; Node 22.22.2 / 24.21.0",
+      "expected": "no session idle in transaction while the IdP hangs; /me prompt; logins 302 idp_unavailable",
+      "actual": "1/1 pass on both, exit 0 (round 12: failed). At 1 s all 3 API sessions are 'idle' (none idle in transaction). /me answers 200 in 18 ms (Node 22) and 22 ms (Node 24); round 12 took 9.0 s. Each login ends 302 /login?error=idp_unavailable at 10.0 s (the discovery timeout). There are no error-level lines, hook timeouts or stderr blocks.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S10-001"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-13/probe-r12-oidc-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-13/probe-r12-oidc-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-12/probes/zz-sec-r12-oidc-probe.test.ts"
+      ]
+    },
+    {
+      "id": "SEC-R13-19-probe-commit-time-auth",
+      "procedure": "Adversarial round-13 probe, group S (stale authority at phase boundaries). S1: role DOWNGRADE WL -> AUD mid-body. S2: the item's owner reassigned away from the uploader mid-body. S3: MEASUREMENT of the residual, where phase 3 waits on the item's row lock (FOR KEY SHARE held by another transaction) while a revocation commits. (Archive mid-body = r12 Q2; re-grant race = candidate commit-time-auth.test.ts; idle/absolute expiry and disabled user = candidate tests, all passing.)",
+      "command": "probe-runs.sh: with-pg.sh 29985|29986 pnpm vitest run --project integration apps/api/test/integration/zz-sec-r13-probe.test.ts",
+      "environment": "probe clone $TMPDIR/r13p at 5699f72; Node 22.22.2 (LANG unset) and 24.21.0 (LANG=C.UTF-8)",
+      "expected": "S1 403 + authorization.denied audit, nothing stored; S2 never 200, nothing stored; S3 consistent (either refused with nothing stored, or committed with its object)",
+      "actual": "Same result on both Node versions:\n- S1: 403 forbidden, one authorization.denied audit '... requires evidence.create', no row, version unchanged, no object; the downgraded user still reads the item (200).\n- S2: 403 forbidden, nothing stored.\n- S3: 200, with one row and its object (consistent). This confirms that a revocation committing during phase 3's lock wait does not stop the commit. That is the documented residual (phase 3's own transaction): only a concurrent transaction holding the item's row lock can lengthen it, none waits on a client since BE17, and statement_timeout bounds it at 30 s. The uploader cannot extend it through the API. It is recorded as an observation, not a finding.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S10-001", "REQ-S16-013", "REQ-S13-012"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-13/probes/zz-sec-r13-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-13/probes/README.md",
+        "docs/delivery/test-evidence/DG2/code-security/round-13/probe-r13-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-13/probe-r13-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-13/probe-r13-dryrun-node22.log"
+      ]
+    },
+    {
+      "id": "SEC-R13-20-probe-startup-sweep",
+      "procedure": "Adversarial round-13 probe, group V (start-up sweep).\n- V1 traversal, symlinks and names: one real stale <uuid>.part at depth 3, plus decoys.\n  - Kept by design: a fresh .part, a stale final object, .part at depth 2 and 4, an upper-case UUID, <uuid>.part.bak, a DIRECTORY named <uuid>.part.\n  - Outside the store: a stale <uuid>.part SYMLINK to an outside file, and a depth-0 directory SYMLINK to an outside tree that holds a stale .part.\n- V2: a live upload on instance A while instance B starts on the same store.\n- V3: the live .part back-dated by 2 h, beyond the documented clock-skew margin, then B's sweep.",
+      "command": "same probe runs as SEC-R13-19",
+      "environment": "as SEC-R13-19; per-test evidence store directories under $TMPDIR",
+      "expected": "V1 only the real stale .part removed, everything else (incl. outside targets) intact; V2 removed 0 and the upload commits 200; V3 fail closed: no committed row pointing at a missing object",
+      "actual": "Same on both Node versions:\n- V1: removed 1 / keptFresh 1. Every decoy survives, including the symlinked outside file and the outside tree. One info log line with the relative key o1/t1/e1/<uuid>.part.\n- V2: B's sweep removed 0, keptFresh 1; A's upload then 200 with one row.\n- V3: B's sweep removed the live .part. A's finalise rename then fails (ENOENT), answered 500 internal with the error-level 'unhandled error' log; the probe induced this fault deliberately and asserts it. No content row, current_content_id null, no object. This needs >1 h of clock skew between hosts or a >1 h body, which requestTimeout (300 s) precludes. Integrity holds either way.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-013", "REQ-S13-012"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-13/probe-r13-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-13/probe-r13-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-13/probes/README.md"
+      ]
+    },
+    {
+      "id": "SEC-R13-21-probe-shutdown-stuck-handler",
+      "procedure": "Adversarial round-13 probe, X1. Start the REAL API process (src/main.ts). The probe holds a FOR UPDATE row lock on an evidence item, sends a JSON PATCH to that item (its handler blocks inside the transaction), then sends SIGTERM. Measure the exit time and code, then verify that the PATCH did not commit.",
+      "command": "same probe runs as SEC-R13-19",
+      "environment": "as SEC-R13-19; child process node --conditions=@mth/source apps/api/src/main.ts on a random port 26000-31999",
+      "expected": "exit within grace (5 s) + settle (3 s) + backstop bound (10 s total, < 11.5 s asserted); PATCH not committed",
+      "actual": "On both Node versions the process exits at 10.0 s (10017 ms) with code 1, by the backstop. Log sequence: 'shutting down' -> warn 'shutdown grace period elapsed' -> warn 'request handlers still running after the settle period; closing the database anyway' (pending 1) -> error (level 50) 'shutdown did not finish in time; exiting'. The probe induced this level-50 line deliberately and asserts it; it is the backstop working as designed. The item keeps version 1 and its original title. The settle wait cannot hold the process past the backstop.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-013"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-13/probe-r13-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-13/probe-r13-node24-lang-c-utf8.log"
+      ]
+    },
+    {
+      "id": "SEC-R13-22-await-sweep",
+      "procedure": "Independent TypeScript-AST sweep (my own script) of every await inside a transaction callback, a function taking Tx/DbOrTx/Transaction/client, or a pooled-client checkout, over apps/*/src and packages/*/src (135 files). Each flagged await not evidently database work was classified by reading the source.",
+      "command": "node await-sweep.mjs $TMPDIR/review-r13",
+      "environment": "Node 22.22.2; typescript from the clone's node_modules; clone at 5699f72",
+      "expected": "no remote or slow non-database await inside a transaction, other than the documented finalise",
+      "actual": "193 in-scope functions; 22 flagged awaits, all classified.\n- Kysely builders, and run/exec/render/spec.check closures over tx: database work.\n- store.finalise: the documented local rename.\n- The /readyz checkout itself.\n- packages/db cli.ts: the operator CLI, not a request path.\nThe worker's boss.send runs on the same tx. The OIDC remote calls happen only outside transactions. Exit 0. A first run used a pathspec that missed files directly under src/ (91 files); the recorded run uses ':(glob)' and covers 135.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S10-001", "REQ-DLV-034"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-13/await-sweep.mjs",
+        "docs/delivery/test-evidence/DG2/code-security/round-13/await-sweep.log"
+      ]
+    },
+    {
+      "id": "SEC-R13-23-validate-historical-DG0",
+      "procedure": "Historical validation of the approved DG0 gate.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG0",
+      "environment": "Node 22.22.2; working tree /home/user/My-owns at 5699f72",
+      "expected": "PASS, exit 0",
+      "actual": "'PASS gate DG0 (historical)'; exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-13/validate-historical-DG0.log"]
+    },
+    {
+      "id": "SEC-R13-24-validate-historical-DG1",
+      "procedure": "Historical validation of the approved DG1 gate.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG1",
+      "environment": "Node 22.22.2; working tree /home/user/My-owns at 5699f72",
+      "expected": "PASS, exit 0",
+      "actual": "'PASS gate DG1 (historical)'; exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-13/validate-historical-DG1.log"]
+    },
+    {
+      "id": "SEC-R13-25-env-live-registry",
+      "procedure": "REQ-DLV-042 AC-1 / D-057 (live registry), offline surface: a frozen offline install from a scratch copy of the host pnpm store.",
+      "command": "pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pstore/v10",
+      "environment": "Node 22.22.2, pnpm 10.33.0; sandbox without network",
+      "expected": "frozen install succeeds offline; the live registry is a documented residual (D-057)",
+      "actual": "Exit 0 and the lockfile is up to date (install.log, install2.log). Residual: the live registry cannot be reached from the sandbox, which has no network (D-057). This is not a gate-blocking check.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-13/env-residuals.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-13/install2.log"
+      ]
+    },
+    {
+      "id": "SEC-R13-26-env-live-ci",
+      "procedure": "REQ-DLV-025 A24 / D-058 (live CI), config surface: run the CI 'needs' checker and its tests, and confirm the CI workflow runs the same gate steps that ran locally here.",
+      "command": "node deploy/scripts/check-ci-needs.mjs; node --test deploy/scripts/tests/check-ci-needs.test.mjs; grep 'run: pnpm|validate.mjs' .github/workflows/*.yml",
+      "environment": "Node 22.22.2; clone $TMPDIR/review-r13 at 5699f72",
+      "expected": "checker and tests exit 0; workflow runs format/lint/typecheck/build/test/openapi/no-cdn/integration and validate --pipeline",
+      "actual": "Both exit 0. ci.yml runs format:check, lint, typecheck, build, test, openapi:lint, check:no-cdn, test:integration, e2e and 'validate.mjs --pipeline'. Residual: no live GitHub Actions run is possible from the sandbox (D-058). This is not a gate-blocking check.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-13/env-residuals.log"]
+    },
+    {
+      "id": "SEC-R13-27-env-keycloak",
+      "procedure": "D-049 (Keycloak), offline surface: the OIDC login and callback (state, nonce, PKCE, browser binding, failure paths) are exercised against an in-process stub IdP and a never-answering IdP socket.",
+      "command": "integration runs (oidc.test.ts, commit-time-auth.test.ts Q7) and zz-sec-r12-oidc-probe",
+      "environment": "the two integration runs and the OIDC probe runs above",
+      "expected": "oidc suites pass; residual: no real Keycloak",
+      "actual": "oidc.test.ts 33/33 and commit-time-auth 8/8 (including Q7) pass in both locale runs. The OIDC probe passes on Node 22 and 24. Residual: no Keycloak container is reachable in the sandbox (D-049). This is not a gate-blocking check.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-13/env-residuals.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-13/requirements-suites.log"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG2/round-13/code-security-reviewer.verifications.json",
+    "docs/delivery/test-evidence/DG2/code-security/round-13/summary.txt",
+    "docs/delivery/test-evidence/DG2/code-security/round-13/probe-summary.txt",
+    "docs/delivery/test-evidence/DG2/code-security/round-13/checks.sh",
+    "docs/delivery/test-evidence/DG2/code-security/round-13/probe-runs.sh",
+    "docs/delivery/test-evidence/DG2/code-security/round-13/probes/README.md",
+    "docs/delivery/test-evidence/DG2/code-security/round-13/probes/zz-sec-r13-probe.test.ts",
+    "docs/delivery/test-evidence/DG2/code-security/round-13/integration-run1-lang-unset.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-13/integration-run2-lang-c-utf8.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-13/await-sweep.log"
+  ],
+  "reviewed_at": "2026-10-07T06:58:00Z",
+  "summary": "DG2 round 13, candidate 6824b8b8 (source aa0a68f, 556 files; recomputed in the working tree and in a clean clone). F-DG2-440 and F-DG2-441 are CLOSED_VERIFIED.\n- F-DG2-440: my round-12 Q1 (grant revoked mid-body) now gets 403, and Q1b (logout mid-body) gets 401; nothing is stored in either case (round 12: 200 for both). New adversarial checks pass:\n  - a role downgrade mid-body gives 403 with an authorization.denied audit;\n  - an owner reassignment mid-body gives 403.\n  The remaining window is the documented one (phase 3's own transaction). I measured it, including a row-lock wait, and record it as an observation.\n- F-DG2-441: my round-12 Q7 now shows no session idle in transaction while the IdP hangs, and /me answers in 18-22 ms (round 12: 9 s). My own AST sweep finds no other non-database await inside a transaction besides the documented finalise.\n- BE18A shutdown and sweep add no new hole:\n  - the sweep ignores symlinks, wrong depths, wrong names and directories;\n  - it keeps a live temporary on shared storage;\n  - when clock skew exceeds the margin, it fails closed with no committed row;\n  - a handler stuck on the database cannot hold shutdown past the 10 s backstop.\n- All required checks ran and passed: typecheck, build, lint, OpenAPI lint (161 ops), no-CDN, format, unit 796/796 on Node 22 and 24 and under load, integration 612/612 in both locale runs (migrations 0001-0019, AUD sweep 146/146), and historical DG0 and DG1 validation.\n- Every error-level line in the cited logs comes from a deliberately induced fault, and each is explained.\n- No new findings."
+}
