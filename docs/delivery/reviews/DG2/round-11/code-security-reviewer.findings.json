@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG2-410",
+      "stage_id": "DG2",
+      "requirement": "REQ-S16-013",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "A response sent before the request body is consumed leaves the connection held: an over-limit evidence upload (413 evidence.too_large) keeps its socket about 70 s after the client has gone and app.close()/SIGTERM stalls about 72 s; a refusal before the body is read (401/403/428/404) drains an unbounded body over a kept-alive connection",
+      "reproduction": "Triage of the release-auditor's round-10 blocking condition 2 (docs/delivery/gates/DG2.json). Reproduced independently on the round-10 candidate sha256:7fd1a89ca090dbdea5ae9f014853684239cbf80e89dc5cce50914155cb9d484a (disposable clone at 68fe3394 = source fe22d759 + delivery metadata, candidate recomputed in the clone), Node 22.22.2, disposable PostgreSQL 16, probe docs/delivery/test-evidence/DG2/code-security/round-11/probes/zz-sec-r11-probe.test.ts over a real socket (llhttp), all data synthetic.\n(1) R1: the Transformation Lead creates a file evidence item and POSTs 30 MiB to POST /api/v1/transformations/{T}/evidence/{id}/content (octet-stream, valid CSRF/Origin/If-Match/X-File-Name), written without waiting for backpressure, once chunked and once with Content-Length. Both: 413 evidence.too_large after 125-286 ms with Connection: keep-alive; the server never closes the socket on its own (observed 3 s); after the client destroys its socket the server still holds it and releases it only after 69,985 ms (chunked) / 69,998 ms (CL). Nothing is stored (transaction rolled back).\n(2) R1c: same chunked upload, client destroys its socket 1 s after the 413, then app.close() (what src/main.ts runs on SIGTERM): 1 open connection, app.close() takes 71,994 ms.\n(3) R3 (sibling): a chunked endless body to the upload route refused BEFORE the body is read - 401 (no cookie), 403 (no CSRF token), 428 (no If-Match), 404 (unknown evidence id): the refusal arrives in 25-62 ms with Connection: keep-alive, the server never closes, and the client pushes 292-302 MiB in 6 s, all read and discarded by the server. 401 needs no credentials.\nRoot cause (code, fe22d759): FilesystemEvidenceStore.put throws EvidenceTooLarge inside `for await (const chunk of chunks)` (apps/api/src/modules/evidence/store.ts:77-80); the async iterator's return() destroys the IncomingMessage after detaching its socket, the parser's next push() fails and it readStop()s a socket nothing reads again; the response is keep-alive, so only keepAliveTimeout (72 s) ends it and forceCloseConnections 'idle' skips it in close(). For refusals before the body is read, Node's resOnFinish calls req._dump(), which reads the whole body on a keep-alive connection; Fastify's requestTimeout 0 (apps/api/src/server.ts Fastify({...}) at fe22d759 sets none) never cuts it. Not a BE15 regression (the auditor also saw it at 041478cb).\nImpact: availability only - sockets and server memory/CPU held per request, an unauthenticated client can stream an unbounded body into a kept-alive connection, and a graceful stop exceeds Compose's 10 s stop timeout (SIGKILL). No data is stored, no authorization is bypassed.",
+      "expected": "A response sent while the request body is not completely received closes the connection promptly (Connection: close, bounded close), never drains an unbounded body, never holds a socket after the client is gone, and app.close()/SIGTERM completes within a documented bound.",
+      "actual": "At 7fd1a89c: 413 with Connection: keep-alive, socket held about 70 s after the client destroyed it, app.close() 71,994 ms; refusals before the body is read keep the connection alive and drain about 300 MiB in 6 s.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-11/repro-7fd1a89c.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/probes/zz-sec-r11-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/probes/README.md",
+        "docs/delivery/test-evidence/DG2/audit/round-10/repro-diag.log",
+        "apps/api/src/modules/evidence/store.ts#L77-L80"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-11/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-07T02:30:00Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer DG2 round 11 (triage of release-auditor round-10 blocking condition 2), reproduced at 7fd1a89c. The claimed fix (BE16 258b7e5) precedes the round-11 freeze; its verification on candidate 23e6c0a2 is in code-security-reviewer.verifications.json of the same round."
+        }
+      ]
+    },
+    {
+      "id": "F-DG2-411",
+      "stage_id": "DG2",
+      "requirement": "REQ-S16-013",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "uploadEvidenceContent opens its database transaction before reading the body, so a few stalled uploads by one authorized user hold every pooled connection: all other users' requests and /readyz hang until requestTimeout (300 s; unbounded before BE16)",
+      "reproduction": "Code (candidate 23e6c0a2, source cbdb4f6): the upload handler (apps/api/src/modules/evidence/routes.ts:417) starts db.transaction() at :421, takes the row lock (lockEvidence FOR UPDATE, :448) and only then streams the request body into the store (store.put, :464). A pooled connection stays checked out, idle in transaction, for as long as the body takes to arrive. The API pool has max 20 (apps/api/src/main.ts:25) and no checkout timeout (packages/db/src/pool.ts:42-50; statement_timeout does not apply to an idle-in-transaction session). Since BE16 the body is bounded only by requestTimeout 300 s (apps/api/src/modules/platform/connection-hygiene.ts:46); before BE16 it was unbounded.\nProbe R8 (zz-sec-r11-probe.test.ts, harness pool max 5, disposable PostgreSQL 16, synthetic data): the Transformation Lead creates 6 file evidence items and opens 6 uploads over real sockets (Content-Length 10 MiB, 1 KiB sent, then nothing). 1 s later the Sponsor's GET /api/v1/me and GET /readyz get no answer within 5 s (status -1 at 5,001-5,002 ms); once the stalled sockets are destroyed /me answers 200 in 19-22 ms. Identical on 23e6c0a2 (Node 22 LANG unset; Node 24 LANG=C.UTF-8) and on 7fd1a89c. R8b on 23e6c0a2 with requestTimeoutMs 3000: the 6 uploads get 408 and /me answers 200 after about 3.1 s, i.e. the hold lasts exactly requestTimeout (default 300 s). At 7fd1a89c R8b /me is still blocked after 15 s (no request timeout there).\nAttack cost: 20 sockets of about 1 KiB each, well under the 300/min rate limit, re-issued every 300 s, by any user who may upload content to an item they created (evidence.create).",
+      "expected": "A slow or stalled request body cannot exhaust shared database capacity: the body is received (or spooled to the store) before a pooled connection and row lock are taken, or pool checkouts and idle-in-transaction sessions are bounded so other users and /readyz keep working.",
+      "actual": "N stalled uploads (N = pool size, 20 in production) block every DB-backed request of every user, and /readyz, for up to 300 s per wave (indefinitely at 7fd1a89c).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-11/probe-23e6c0a2-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/probe-23e6c0a2-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/repro-7fd1a89c.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/probes/zz-sec-r11-probe.test.ts",
+        "apps/api/src/modules/evidence/routes.ts#L417-L464",
+        "apps/api/src/main.ts#L25",
+        "packages/db/src/pool.ts#L42-L50"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-11/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-07T02:30:00Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer DG2 round 11 (class probe requested by the assignment); pre-existing at 7fd1a89c, bounded but not removed by BE16's requestTimeout."
+        }
+      ]
+    },
+    {
+      "id": "F-DG2-412",
+      "stage_id": "DG2",
+      "requirement": "REQ-DLV-034",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "A JSON request body that is aborted mid-way (client disconnect, or BE16's new requestTimeout 408) reaches the error handler as an unmapped ECONNRESET: an error-level 'unhandled error' log line and a 500 internal problem for every such request",
+      "reproduction": "Probe R6 (zz-sec-r11-probe.test.ts, one fresh API instance per case, disposable PostgreSQL 16, synthetic data), candidate 23e6c0a2, identical on Node 22 (LANG unset) and Node 24 (LANG=C.UTF-8):\n- R6d: POST /api/v1/transformations/{T}/evidence with valid session/CSRF, Content-Type application/json, Content-Length 100, 9 bytes sent, then the client destroys the socket: one log line level 50 msg 'unhandled error', err {message 'aborted', code ECONNRESET, statusCode 400}. Also at 7fd1a89c.\n- R6a: the same stalled JSON body with requestTimeoutMs 1500: Node answers 408 and closes (correct), and the same 'unhandled error' line follows.\n- Controls: R6b (stalled headers) and R6c (stalled upload) 408 with no error log; R6e (upload aborted) no error log - BE16 fixed only the upload route (abortedBodyProblem, apps/api/src/modules/evidence/routes.ts:279-283).\nCause: the JSON parser (parseAs buffer) uses Fastify's rawBody, which on a request-stream error sets err.statusCode = 400 (fastify 5.6.1 lib/contentTypeParser.js:271-273) and passes the raw Node error on. mapError (apps/api/src/modules/platform/hooks.ts:56-92) maps neither ECONNRESET/'aborted' nor a statusCode-400 error, so setErrorHandler logs 'unhandled error' (:174) and sends problems.internal() (500) to a socket that is already gone.\nImpact: no client receives the 500, but any client can produce error-level log lines at will (one per aborted request, up to the rate limit), which pollutes alerting; ADR-0007 §5b treats a 500 as a failure.",
+      "expected": "A request whose body was not received completely is logged below error level and answered (if at all) with the declared 400 validation.malformed_request, on every body-reading route, not only uploadEvidenceContent.",
+      "actual": "On JSON routes it is logged as 'unhandled error' (level 50) and mapped to 500 internal.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-11/probe-23e6c0a2-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/probe-23e6c0a2-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/repro-7fd1a89c.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/probes/zz-sec-r11-probe.test.ts",
+        "apps/api/src/modules/platform/hooks.ts#L56-L92",
+        "apps/api/src/modules/platform/hooks.ts#L174"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-11/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-07T02:30:00Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer DG2 round 11 (class probe); the client-abort case is pre-existing at 7fd1a89c, the requestTimeout case is a new trigger of the same gap since BE16."
+        }
+      ]
+    }
+  ]
+}

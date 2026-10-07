@@ -1,0 +1,433 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG2",
+  "round": 11,
+  "candidate_id": "sha256:23e6c0a2834d2f255410e23197864ce283979964128791cfafc3e7075c7f7bad",
+  "source_commit": "cbdb4f68a4d2f67464eb3674133d9086b2fe4e81",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG2-T-DG2-REV-SEC-R11-code-security-reviewer-20261007T015229Z-00836eea",
+    "session_id": "00836eea-afb9-4c06-820d-f3ee3a9800e9"
+  },
+  "implementation_author": ["backend-workflow-engineer", "delivery-orchestrator"],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am code-security-reviewer, session 00836eea. I authored no implementation in the DG2 scope. That includes BE16 258b7e5 (backend-workflow-engineer), the ADR-0007 §5b amendment 5b0ea31 and D-071 (delivery-orchestrator), and the F-DG2-206 fix ee46813 (delivery-orchestrator). I reviewed the frozen candidate directly: the product diff fe22d759..cbdb4f68 (14 files) and the full files it touches, plus the Node 22.22.2/24.21.0 built-in sources the design relies on (_http_server resOnFinish, net Socket.destroySoon). I ran code only in disposable clones under $TMPDIR and on disposable PostgreSQL 16 clusters, which were deleted afterwards. I wrote nothing in source paths. My probe lives in my evidence directory. I formed this verdict without reading any other reviewer's round-11 record. While my run was in progress, the domain-reviewer's round-11 evidence was committed to the main tree (bea2697, b6da065). I did not open it. It changes no candidate file: the candidate still recomputes to 23e6c0a2 (547 files)."
+  },
+  "assignment": "docs/delivery/assignments/DG2/round-11/code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-S10-001",
+    "REQ-S16-013",
+    "REQ-S13-012",
+    "REQ-DLV-034",
+    "REQ-PB-016",
+    "REQ-PB-017",
+    "REQ-PB-018",
+    "REQ-PB-027",
+    "REQ-PB-028",
+    "REQ-PB-029"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-R11-00-candidate",
+      "procedure": "Confirm the assignment hash, HEAD and the recomputed candidate ID. Do it in the working tree and in clean disposable clones at the freeze commit 309aff2 and at source cbdb4f6. Confirm the round-10 candidate the same way in a clone at 68fe3394.",
+      "command": "sha256sum docs/delivery/assignments/DG2/round-11/code-security-reviewer.md; git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG2 (working tree, $TMPDIR/r11 at 309aff2 and cbdb4f6, $TMPDIR/review-r11 at 309aff2, $TMPDIR/r10 at 68fe3394)",
+      "environment": "Node 24.21.0 and 22.22.2; working tree /home/user/My-owns; disposable clones under $TMPDIR",
+      "expected": "candidate_id sha256:23e6c0a2...7bad with 547 files; assignment sha256 7e25033d...808a; the round-10 clone gives 7fd1a89c (544 files)",
+      "actual": "Assignment sha256 matches. HEAD was 309aff2 at the start: the freeze commit on top of cbdb4f6, adding only delivery metadata. Every computation gives {\"candidate_id\":\"sha256:23e6c0a2834d2f255410e23197864ce283979964128791cfafc3e7075c7f7bad\",\"files\":547}. The clone at 68fe3394 gives sha256:7fd1a89ca090dbdea5ae9f014853684239cbf80e89dc5cce50914155cb9d484a (544 files), and git diff fe22d75 68fe3394 -- apps packages is empty. During my run the main tree moved to b6da065, which adds only domain-reviewer round-11 evidence; the candidate still recomputes to 23e6c0a2 (547). The validate-historical logs therefore record commit b6da065.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/candidates/DG2/23e6c0a2834d2f25.manifest.json",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/candidate-id.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/checks.sh"
+      ]
+    },
+    {
+      "id": "SEC-R11-01-reproduce-auditor-defect-7fd1a89c",
+      "procedure": "Reproduce the release-auditor's round-10 defect independently on the round-10 candidate with my own raw-socket probe (zz-sec-r11-probe.test.ts R1, R1c, R3). It was copied into a disposable clone at 68fe3394 and run on a disposable PostgreSQL 16. Triage it.",
+      "command": "with-pg.sh 29321 pnpm vitest run --project integration apps/api/test/integration/zz-sec-r11-probe.test.ts   (clone 68fe3394, LANG unset)",
+      "environment": "Node 22.22.2, LANG/LC_ALL/LC_CTYPE unset, PostgreSQL 16 SQL_ASCII cluster, port 29321, synthetic data",
+      "expected": "If the defect is real: 413 with the connection held well beyond any bound after the client has gone, and app.close() stalls",
+      "actual": "Reproduced; raised as F-DG2-410 (Medium, not mandatory).\nR1, chunked and Content-Length 30 MiB: 413 evidence.too_large with Connection: keep-alive. The server never closes. It releases the socket only 69,985 / 69,998 ms after the client destroyed it, and nothing is stored.\nR1c: with 1 connection still open, app.close() takes 71,994 ms.\nR3, the sibling defect: refusals before the body is read (401 without credentials, 403, 428, 404) stay keep-alive and drain 292-302 MiB in 6 s.\nThe probe exits 1 by design: 3 passed, 14 failed (17). The failures are:\n- the defect itself: R1 x2, R1c, R3;\n- F-DG2-411: R8, R8b (8b: /me still blocked after 15 s, no request timeout there);\n- F-DG2-412: R6d;\n- R6e: an upload abort gave 'unhandled error' here, fixed by BE16;\n- options that do not exist at 7fd1a89c and that the harness ignores, so these failures are not evidence: R4 and R4b (no SPA webRoot, unmatched routes not metered), R5 (no shutdown grace), R6a/R6b/R6c (no requestTimeout).\nThe log has no 'Hook timed out' and no 'Failed Suites'.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-S13-012", "REQ-S16-013"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-11/repro-7fd1a89c.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/probes/zz-sec-r11-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/probes/README.md",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/with-pg.sh",
+        "docs/delivery/test-evidence/DG2/audit/round-10/repro-diag.log"
+      ]
+    },
+    {
+      "id": "SEC-R11-02-verify-F-DG2-410",
+      "procedure": "Run the same probe unchanged on this candidate in a disposable clone at 309aff2, on Node 22 with LANG unset and on Node 24 with LANG=C.UTF-8. Read connection-hygiene.ts, server.ts, main.ts, framework-errors.ts and evidence/routes.ts. Check the root-cause claim and the Node sources the fix relies on.",
+      "command": "with-pg.sh 29322 / 29323 pnpm vitest run --project integration apps/api/test/integration/zz-sec-r11-probe.test.ts; node -e 'process.binding(\"natives\")._http_server / .net' (resOnFinish, destroySoon call sites)",
+      "environment": "Node 22.22.2 (LANG unset, SQL_ASCII cluster) and Node 24.21.0 (LANG=C.UTF-8, UTF8 cluster); disposable PostgreSQL 16; synthetic data",
+      "expected": "413 with Connection: close and a bounded close; the socket released promptly after the client goes; app.close() prompt; refusals before the body is read close without draining",
+      "actual": "Fix genuine: F-DG2-410 is CLOSED_VERIFIED in code-security-reviewer.verifications.json. Results are identical on both runs.\n- R1: 413 with Connection: close. The server closes 128-284 ms after connect and releases the socket 479-507 ms after the client destroys it.\n- R1c: app.close() takes 0-1 ms.\n- R3: Connection: close, and the client gets only 0.1-0.9 MiB out.\n- R2b: an over-limit body received in full gets 413, and the same connection then serves 200.\n- Root cause confirmed in the code. Node 22/24 resOnFinish calls socket.destroySoon() only when res._last, and that is its only server call site.\nEach probe run exits 1 by design: 14 passed, 3 failed. The failures are R6a and R6d (F-DG2-412) and R8 (F-DG2-411), both outside this fix. Neither log has 'Hook timed out' or 'Failed Suites'.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-S13-012", "REQ-S16-013"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-11/probe-23e6c0a2-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/probe-23e6c0a2-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/probes/README.md",
+        "apps/api/src/modules/platform/connection-hygiene.ts",
+        "apps/api/src/modules/platform/framework-errors.ts",
+        "apps/api/src/server.ts",
+        "apps/api/src/main.ts"
+      ]
+    },
+    {
+      "id": "SEC-R11-03-no-regression-limits-csrf-authz",
+      "procedure": "Probe sections R2 and R7 on both candidates over real sockets. R2: a normal keep-alive client after a 200, and the raw-byte sha256. R7: bodyLimit, the strict UTF-8 JSON parser, the media-type decision (D-070), CSRF/Origin and authorization, with statuses and codes compared across the two candidates. Read the diff for any change to those paths.",
+      "command": "zz-sec-r11-probe.test.ts R2, R2b, R7 (same runs as SEC-R11-01/02); git diff fe22d759..cbdb4f68 -- apps/api/src",
+      "environment": "as SEC-R11-01/02",
+      "expected": "200 responses stay keep-alive and the socket serves further requests; the stored sha256 is that of the raw bytes; every refusal is unchanged",
+      "actual": "R2: a 2 MiB upload with invalid-UTF-8 bytes gets 200 keep-alive and is stored with the sent sha256. The same socket then serves GET /me (200) and a JSON POST with UTF-8 text (201), and the server keeps the connection open.\nR7 is identical at both candidates:\n- JSON over bodyLimit (CL and chunked): 400 validation.body_too_large, close;\n- invalid UTF-8 JSON: 400 validation.json;\n- text/plain on a JSON route, and JSON on the upload: 400 validation.content_type;\n- no CSRF token, or a foreign Origin: 403 csrf;\n- another user's upload: 403 forbidden, nothing stored.\nThe diff does not touch the JSON parser, media-types.ts, the CSRF hook, the limiter's key or store, bodyLimit, EVIDENCE_MAX_BYTES or the store's hashing.\nThe probe runs' exit 1 is explained in SEC-R11-01/02.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-S10-001", "REQ-S16-013"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-11/probe-23e6c0a2-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/repro-7fd1a89c.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/diff-scan.log"
+      ]
+    },
+    {
+      "id": "SEC-R11-04-bounded-shutdown-and-destroySoon",
+      "procedure": "Probe R5, with grace 3 s: an idle keep-alive socket, an upload that finishes in about 1.5 s, and a stalled upload, then app.close(). Read the preClose hook, the main.ts backstop and the lingerOnClose override and its fallback against Node's net.Socket.destroySoon. Check the candidate's SIGTERM test.",
+      "command": "zz-sec-r11-probe.test.ts R5; connection-hygiene.test.ts 'shutdown is bounded' (integration runs)",
+      "environment": "as SEC-R11-02",
+      "expected": "Idle sockets are closed at once. In-flight requests that finish within the grace complete normally, with Connection: close. Stalled ones are cut at the grace. The override is used only for the sockets that close, and is safe.",
+      "actual": "R5 (both runs): the idle socket closes 0-1 ms after close() starts. The finishing upload gets 200 with Connection: close and is stored byte-exact. The stalled socket is closed at 3,001-3,002 ms, and app.close() returns at 3,001-3,002 ms.\nThe lingerOnClose override is per-socket and idempotent. Node calls destroySoon only from resOnFinish under res._last. The override replicates Node's end() and adds a 500 ms delay after flush with a 2 s cap. Its timers are unref'd, and the cap is cleared on 'close'. A socket without destroySoon is left to Node's socket.end().\nThe backstop in main.ts is an unref'd 10 s exit(1).\nThe candidate's SIGTERM test (src/main.ts exits 0 within the grace with a stalled upload) passes in both integration runs. The policy is documented in docs/operations/health-readiness.md: in-flight requests longer than 5 s are cut.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-S16-013"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-11/probe-23e6c0a2-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/probe-23e6c0a2-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/integration-run1-lang-unset.log",
+        "docs/operations/health-readiness.md",
+        "apps/api/src/modules/platform/connection-hygiene.ts"
+      ]
+    },
+    {
+      "id": "SEC-R11-05-unmatched-route-rate-limit",
+      "procedure": "Probe R4 (signed-in session, limit 6/min, SPA webRoot) and R4b (anonymous, limit 5/min). Check for double metering, SPA fallback, CSRF and authorization behaviour, the 429 shape, and the /healthz exemption.",
+      "command": "zz-sec-r11-probe.test.ts R4, R4b",
+      "environment": "as SEC-R11-02",
+      "expected": "Each unmatched request counts once in the same bucket as the routes. The SPA fallback serves index.html until the limit. No CSRF or authorization bypass, and no state change. Every 429 is the rate_limited problem with security headers.",
+      "actual": "R4b (one IP bucket): spa 200, unmatched GET/POST/HEAD 404, matched /me 401, with remaining 4, 3, 2, 1, 0 (exactly one count each). Then the unmatched route, the SPA and /me all get 429 rate_limited with CSP and Retry-After 60, and /healthz still gets 200.\nR4: the bucket key is the validated session subject once resolved, else the IP (F-DG1-142 design). Each bucket decrements once per request. An unmatched POST without CSRF is 404, and 0 audit events are added. Every response carries CSP, nosniff and X-Request-Id.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-S10-001"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-11/probe-23e6c0a2-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/probe-23e6c0a2-node24-lang-c-utf8.log",
+        "docs/architecture/adr/ADR-0007-api-conventions.md"
+      ]
+    },
+    {
+      "id": "SEC-R11-06-class-probe-aborted-and-stalled-bodies",
+      "procedure": "Probe R6a-e, one fresh instance per case, attributing error-level logs to each case: a stalled JSON body, stalled headers and a stalled upload (requestTimeoutMs 1500), and client aborts of a JSON body and of an upload",
+      "command": "zz-sec-r11-probe.test.ts R6a-R6e",
+      "environment": "as SEC-R11-01/02",
+      "expected": "408 and close for each stall, no error-level log, nothing stored; an abort leaves no error log",
+      "actual": "Finding F-DG2-412 (Low, not mandatory). R6a (stalled JSON body) gets 408 and close correctly, but one level-50 'unhandled error' line follows (aborted, ECONNRESET, statusCode 400, mapped to 500). R6d (JSON body aborted by the client) produces the same line at both candidates. R6b, R6c and R6e give 408 or close with no error log. At 7fd1a89c R6e also logged 'unhandled error': BE16 fixed that for the upload route only.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "requirements": ["REQ-DLV-034"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-11/probe-23e6c0a2-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/probe-23e6c0a2-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/repro-7fd1a89c.log",
+        "apps/api/src/modules/platform/hooks.ts"
+      ]
+    },
+    {
+      "id": "SEC-R11-07-class-probe-stalled-upload-db-pool",
+      "procedure": "Probe R8 and R8b. One authorized user opens 6 stalled uploads to 6 distinct items (harness pool max 5). Then another user calls GET /api/v1/me and GET /readyz. R8b repeats this with requestTimeoutMs 3000.",
+      "command": "zz-sec-r11-probe.test.ts R8, R8b",
+      "environment": "as SEC-R11-01/02",
+      "expected": "Stalled request bodies do not exhaust shared database capacity",
+      "actual": "Finding F-DG2-411 (Medium, not mandatory). With the uploads stalled, /me and /readyz get no answer within 5 s (5,001-5,002 ms). After the sockets are destroyed, /me returns 200 in 19-22 ms. The result is the same at 7fd1a89c. R8b on this candidate: all 6 uploads get 408, and /me returns 200 at about 3.1 s, so the hold equals requestTimeout (default 300 s). At 7fd1a89c it was unbounded (/me still blocked at 15 s). Cause: the upload handler takes a pooled connection and the row lock before reading the body (routes.ts:421-464). The pool max is 20, with no checkout timeout.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "requirements": ["REQ-S16-013"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-11/probe-23e6c0a2-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/probe-23e6c0a2-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/repro-7fd1a89c.log",
+        "apps/api/src/modules/evidence/routes.ts"
+      ]
+    },
+    {
+      "id": "SEC-R11-08-diff-review",
+      "procedure": "Review the product diff fe22d759..cbdb4f68 (14 files) and the files it touches. Scan the added lines for secrets, URLs, eval, child_process, filesystem writes and environment access. Search apps/api/src for hijack or raw writes that would bypass onSend.",
+      "command": "git diff fe22d759..cbdb4f68 -- . ':!docs/delivery' | grep -nE '<patterns>'; grep -rnE 'hijack\\(|raw\\.writeHead|raw\\.write\\(|raw\\.end\\(' apps/api/src",
+      "environment": "disposable clone $TMPDIR/review-r11 at 309aff2",
+      "expected": "No weakening, no secrets, no CDN; every response path passes the connection policy",
+      "actual": "The scan matched 4 lines, all in apps/api/test/integration/connection-hygiene.test.ts: spawn for the SIGTERM test, PATH for that child, and a synthetic index.html. There are no secrets, URLs or CDNs. apps/api/src has no hijack and no raw writes.\nabortedBodyProblem maps only request.raw.aborted or ECONNRESET to 400. With the filesystem-only store, ECONNRESET can come only from the request stream.\nharness.ts gains an optional `server` pass-through used only by tests.\nADR-0007 §5b now lists the unmatched-route 429 as out of contract, consistent with R4/R4b.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-034"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-11/diff-scan.log",
+        "apps/api/src/modules/evidence/routes.ts",
+        "apps/api/src/modules/platform/hooks.ts",
+        "docs/architecture/adr/ADR-0007-api-conventions.md"
+      ]
+    },
+    {
+      "id": "SEC-R11-09-F-DG2-206-owner-record",
+      "procedure": "Confirm the D-071 correction of F-DG2-206: findings.json owner versus the author of fix ee46813. Run the validator's closure check.",
+      "command": "git show --stat ee46813; python (findings.json F-DG2-206); node tools/gates/validate.mjs --stage DG2",
+      "environment": "main working tree, Node 22.22.2",
+      "expected": "The owner is the fix author (not qa-verifier); status, fix and verification are unchanged; the validator no longer reports 'verified by its own owner'",
+      "actual": "ee46813 is a direct commit, not a run auto-commit. It touches only e2e/support/qa-stack.sh, and its message says 'Orchestrator-authored (qa raised F-206, so qa verifies rather than self-authors)'.\nfindings.json F-DG2-206 now has owner delivery-orchestrator, fix_revision ee46813, verification.by_role qa-verifier and status CLOSED_VERIFIED. A history entry dated 2026-10-07T00:17:42Z records the correction, matching D-071(a). This is a records-only change: the round-10 to round-11 product diff contains no e2e/ file.\nvalidate --stage DG2 exits 1, which is expected while DG2 is REVIEWING: the round-11 records are absent and the gate record is still the round-10 BLOCKED one. Its 21 problems include no 'own owner' item; the phrase appears only inside the quoted round-10 blocking-condition text.",
+      "exit_status": 1,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-11/validate-dg2-f206.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/f206-fix-commit-ee46813.log",
+        "docs/delivery/findings.json",
+        "docs/delivery/decisions.md"
+      ]
+    },
+    {
+      "id": "SEC-R11-10-build",
+      "procedure": "Build every workspace package",
+      "command": "pnpm -r build",
+      "environment": "Node 22.22.2, $TMPDIR/review-r11 at 309aff2",
+      "expected": "exit 0",
+      "actual": "All packages built, exit 0. The one warning line is Vite's advisory 'Some chunks are larger than 500 kB' for apps/web. It is not an error and is unrelated to this round.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-11/build.log"]
+    },
+    {
+      "id": "SEC-R11-11-typecheck",
+      "procedure": "Typecheck every package",
+      "command": "pnpm -r typecheck",
+      "environment": "Node 22.22.2, $TMPDIR/review-r11",
+      "expected": "exit 0",
+      "actual": "exit 0, no errors",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-11/typecheck.log"]
+    },
+    {
+      "id": "SEC-R11-12-lint",
+      "procedure": "ESLint over the repository with zero warnings allowed",
+      "command": "pnpm lint",
+      "environment": "Node 22.22.2, $TMPDIR/review-r11",
+      "expected": "exit 0",
+      "actual": "eslint . --max-warnings=0, exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-11/lint.log"]
+    },
+    {
+      "id": "SEC-R11-13-openapi-lint",
+      "procedure": "Lint the OpenAPI contract",
+      "command": "pnpm openapi:lint",
+      "environment": "Node 22.22.2, $TMPDIR/review-r11",
+      "expected": "PASS, 161 operations",
+      "actual": "PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 161 operations; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-11/openapi-lint.log"]
+    },
+    {
+      "id": "SEC-R11-14-no-cdn",
+      "procedure": "Portability check: no public CDN references",
+      "command": "pnpm check:no-cdn",
+      "environment": "Node 22.22.2, $TMPDIR/review-r11",
+      "expected": "PASS",
+      "actual": "PASS no-cdn: scanned apps, packages; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-11/no-cdn.log"]
+    },
+    {
+      "id": "SEC-R11-15-format-check",
+      "procedure": "Prettier check",
+      "command": "pnpm format:check",
+      "environment": "Node 22.22.2, $TMPDIR/review-r11 (clean clone: no sandbox dotfiles at the top level)",
+      "expected": "exit 0",
+      "actual": "All matched files use Prettier code style! exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-11/format-check.log"]
+    },
+    {
+      "id": "SEC-R11-16-unit-node22",
+      "procedure": "Unit suites (unit-node and unit-web) on Node 22",
+      "command": "pnpm test --reporter=verbose",
+      "environment": "Node 22.22.2, $TMPDIR/review-r11",
+      "expected": "all pass",
+      "actual": "Test Files 41 passed (41); Tests 771 passed (771); exit 0. There are no failures, skips or hook timeouts. One FSTDEP022 FastifyWarning line (a router-options deprecation notice) appears, as it did in round 10. It is a deprecation notice, not a failure.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-11/unit-node22.log"]
+    },
+    {
+      "id": "SEC-R11-17-unit-node24",
+      "procedure": "Unit suites on Node 24",
+      "command": "pnpm test --reporter=verbose",
+      "environment": "Node 24.21.0, $TMPDIR/review-r11",
+      "expected": "all pass",
+      "actual": "Test Files 41 passed (41); Tests 771 passed (771); exit 0. The same FSTDEP022 deprecation notice appears, with no failures or hook timeouts. This run (02:12:49-02:13:32Z) overlapped my roughly 25 s R7/R8 probe runs (finished 02:13:28Z), so it ran under extra load and still passed.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-11/unit-node24.log"]
+    },
+    {
+      "id": "SEC-R11-18-unit-under-load",
+      "procedure": "Unit suites on Node 22 and then Node 24, while a concurrent load generator repeatedly runs pnpm -r build and the round-11 integration probe",
+      "command": "load-repro.sh",
+      "environment": "Node 22.22.2 / 24.21.0, 4 vCPU; load average 3.89 rising to 9.16",
+      "expected": "all pass under load",
+      "actual": "Node 22: 771/771, exit 0, load average 3.89 to 6.25. Node 24: 771/771, exit 0, load average 6.25 to 9.16. No hook timeouts and no failed suites. The load generator completed 2 build iterations and 1 probe iteration. The probe's output was discarded (load only); its 3 failing assertions are F-DG2-411/412 (see the probe logs).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-11/unit-under-load-node22.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/unit-under-load-node24.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/load-generator.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/load-repro.sh"
+      ]
+    },
+    {
+      "id": "SEC-R11-19-integration-run1-lang-unset",
+      "procedure": "Full integration suite on a disposable PostgreSQL 16 with LANG, LC_ALL and LC_CTYPE unset (the initdb default becomes SQL_ASCII, collation C)",
+      "command": "with-pg.sh 29961 pnpm test:integration --reporter=verbose",
+      "environment": "Node 22.22.2, $TMPDIR/review-r11, port 29961",
+      "expected": "all pass",
+      "actual": "Test Files 35 passed (35); Tests 583 passed (583); exit 0. No failures, skips or hook timeouts. Per suite:\n- contract 18 (161 operations), media-types 21, connection-hygiene 13 (BE16, including SIGTERM);\n- blank-text 29, oidc 33, invalid-character 20, framework-errors 11, invalid-utf8 14, encoding 8;\n- evidence 6;\n- migrate 7: every shipped migration, 0001 to 0019.\nThe cluster is SQL_ASCII with collation C.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S10-001", "REQ-S16-013", "REQ-S13-012", "REQ-DLV-034", "REQ-PB-016", "REQ-PB-017", "REQ-PB-018", "REQ-PB-027", "REQ-PB-028", "REQ-PB-029"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-11/integration-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/requirements-suites.log"
+      ]
+    },
+    {
+      "id": "SEC-R11-20-integration-run2-lang-c-utf8",
+      "procedure": "Full integration suite on a disposable PostgreSQL 16 with LANG=C.UTF-8 (the cluster becomes UTF8)",
+      "command": "with-pg.sh 29962 pnpm test:integration --reporter=verbose",
+      "environment": "Node 22.22.2, $TMPDIR/review-r11, port 29962, LANG=C.UTF-8",
+      "expected": "all pass",
+      "actual": "Test Files 35 passed (35); Tests 583 passed (583); exit 0. Per-suite counts are identical to run 1, with no failures, skips or hook timeouts. The cluster is UTF8 with collation C.UTF-8.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S10-001", "REQ-S16-013", "REQ-S13-012", "REQ-DLV-034", "REQ-PB-016", "REQ-PB-017", "REQ-PB-018", "REQ-PB-027", "REQ-PB-028", "REQ-PB-029"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-11/integration-run2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/requirements-suites.log"
+      ]
+    },
+    {
+      "id": "SEC-R11-21-aud-403-sweep",
+      "procedure": "Read-only auditor write-deny sweep over every P2 and KPI mutation, from both integration runs",
+      "command": "grep -E '^ +(✓|×).*aud-write-deny' integration-run1-lang-unset.log integration-run2-lang-c-utf8.log",
+      "environment": "integration logs of SEC-R11-19/20",
+      "expected": "every mutation 403 for AUD; 0 failures",
+      "actual": "Run 1: 146 pass, 0 fail (kpi 18). Run 2: 146 pass, 0 fail. The generated lists cover 128 P2 and 16 KPI mutations, including uploadEvidenceContent.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S10-001"],
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-11/aud-403-sweep.log"]
+    },
+    {
+      "id": "SEC-R11-22-requirements",
+      "procedure": "Map the 10 assigned requirements to their suites in both integration runs; per-file pass/fail counts",
+      "command": "requirements-suites.log (per-file counts from both integration logs)",
+      "environment": "integration logs of SEC-R11-19/20",
+      "expected": "every suite backing the requirements passes in both runs",
+      "actual": "The counts are identical in both runs, with 0 failures:\n- REQ-S10-001: access-scope 18, access-derived-race 4, aud-write-deny 128 + kpi 18, qa a12-cross-scope 14;\n- REQ-S16-013 and REQ-S13-012: evidence 6, connection-hygiene 13, registers 23;\n- REQ-PB-016/017/018: gates 12;\n- REQ-PB-027/028/029: registers 23, transformations 30, dg2-repairs 13, kpi-resources 23, kpi-dg2-repairs 11;\n- REQ-DLV-034: contract 18 (161 operations).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S10-001", "REQ-S16-013", "REQ-S13-012", "REQ-DLV-034", "REQ-PB-016", "REQ-PB-017", "REQ-PB-018", "REQ-PB-027", "REQ-PB-028", "REQ-PB-029"],
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-11/requirements-suites.log"]
+    },
+    {
+      "id": "SEC-R11-23-validate-historical-DG0",
+      "procedure": "Validate the approved DG0 gate historically",
+      "command": "node tools/gates/validate.mjs --historical --stage DG0",
+      "environment": "Node 22.22.2, main working tree (HEAD b6da065 by then; see SEC-R11-00)",
+      "expected": "PASS",
+      "actual": "PASS gate DG0 (historical); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-11/validate-historical-DG0.log"]
+    },
+    {
+      "id": "SEC-R11-24-validate-historical-DG1",
+      "procedure": "Validate the approved DG1 gate historically",
+      "command": "node tools/gates/validate.mjs --historical --stage DG1",
+      "environment": "Node 22.22.2, main working tree",
+      "expected": "PASS",
+      "actual": "PASS gate DG1 (historical); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-11/validate-historical-DG1.log"]
+    },
+    {
+      "id": "SEC-R11-25-env-residuals",
+      "procedure": "Environmental residuals on their offline/config surfaces: the live registry (REQ-DLV-042 AC-1, D-057), live CI (REQ-DLV-025 A24, D-058) and Keycloak (D-049)",
+      "command": "pnpm install --offline --frozen-lockfile; grep ci.yml pins; cmp ci.yml copies; git diff --stat fe22d759..cbdb4f68 -- .github deploy package.json pnpm-lock.yaml; parse deploy/keycloak/realm-mth-test.json",
+      "environment": "Node 22.22.2, pnpm 10.33.0, $TMPDIR/review-r11",
+      "expected": "PASS on the offline/config surface; the residual noted",
+      "actual": "The offline frozen install exits 0. The ci.yml actions are pinned by SHA and the images by digest, and the two ci.yml copies are identical. CI, deploy, package.json and the lockfile are unchanged since round 10. The Keycloak realm mth-test parses (1 client).\nResidual: no live registry, no GitHub Actions runner and no Keycloak server is reachable from this sandbox. Per D-057/D-058/D-049 this is not a BLOCKED gate check.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-11/env-residuals.log"]
+    }
+  ],
+  "findings": ["F-DG2-410", "F-DG2-411", "F-DG2-412"],
+  "verdict": "PASS",
+  "summary": "DG2 round 11, candidate 23e6c0a2 (source cbdb4f6). The release-auditor's defect is triaged as F-DG2-410 (Medium, not mandatory). I reproduced it independently at 7fd1a89c: 413 with keep-alive, the socket held about 70 s after the client left, app.close() 71,994 ms, and refusals before the body is read draining about 300 MiB per 6 s. The BE16 fix verifies on this candidate on Node 22 and 24 and in both locales: Connection: close, release within about 0.5 s, and a prompt app.close(). F-DG2-410 is CLOSED_VERIFIED.\nNo regression: keep-alive after a 200, the raw-byte sha256, bodyLimit, strict UTF-8, media type, CSRF, authorization and rate limiting are all unchanged. Unmatched routes are metered once, and the SPA fallback works.\nThe F-DG2-206 owner correction (D-071) matches fix ee46813.\nThe class probe found two further defects, both OPEN:\n- F-DG2-411 (Medium, not mandatory): stalled uploads hold pooled DB connections, blocking all users and /readyz until requestTimeout (300 s). It is pre-existing, and BE16 makes it bounded.\n- F-DG2-412 (Low, not mandatory): an aborted JSON body logs 'unhandled error' and maps to a 500.\nAll required checks ran and passed:\n- build, typecheck, lint, openapi-lint (161 operations), no-cdn and format;\n- unit 771/771 on Node 22 and on Node 24, and under load;\n- integration 583/583 twice (SQL_ASCII and UTF8);\n- the AUD-403 sweep (146/146 twice);\n- DG0 and DG1 historical validation.\nEvery non-zero exit in a cited log is explained in its check: the probe runs exit 1 by design, and validate --stage DG2 exits 1 as expected while DG2 is REVIEWING. No log has a hook timeout or a failed suite. Nothing Critical, High or mandatory is unresolved, hence PASS. F-DG2-411 and F-DG2-412 stay OPEN for the orchestrator and the auditor. This is an engineering delivery-gate review only: it grants no business, Finance or IT approval and implies nothing about product gates G1-G6.",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG2/round-11/code-security-reviewer.findings.json",
+    "docs/delivery/reviews/DG2/round-11/code-security-reviewer.verifications.json",
+    "docs/delivery/test-evidence/DG2/code-security/round-11/probes/zz-sec-r11-probe.test.ts",
+    "docs/delivery/test-evidence/DG2/code-security/round-11/probes/README.md",
+    "docs/delivery/test-evidence/DG2/code-security/round-11/repro-7fd1a89c.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-11/probe-23e6c0a2-node22-lang-unset.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-11/probe-23e6c0a2-node24-lang-c-utf8.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-11/checks.sh",
+    "docs/delivery/test-evidence/DG2/code-security/round-11/summary.txt",
+    "docs/delivery/test-evidence/DG2/code-security/round-11/with-pg.sh",
+    "docs/delivery/test-evidence/DG2/code-security/round-11/candidate-id.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-11/build.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-11/typecheck.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-11/lint.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-11/openapi-lint.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-11/no-cdn.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-11/format-check.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-11/unit-node22.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-11/unit-node24.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-11/unit-under-load-node22.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-11/unit-under-load-node24.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-11/load-generator.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-11/load-repro.sh",
+    "docs/delivery/test-evidence/DG2/code-security/round-11/integration-run1-lang-unset.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-11/integration-run2-lang-c-utf8.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-11/aud-403-sweep.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-11/requirements-suites.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-11/diff-scan.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-11/validate-dg2-f206.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-11/f206-fix-commit-ee46813.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-11/validate-historical-DG0.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-11/validate-historical-DG1.log",
+    "docs/delivery/test-evidence/DG2/code-security/round-11/env-residuals.log"
+  ],
+  "reviewed_at": "2026-10-07T02:35:00Z"
+}

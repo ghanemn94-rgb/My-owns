@@ -1,0 +1,24 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG2-410",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:23e6c0a2834d2f255410e23197864ce283979964128791cfafc3e7075c7f7bad (source cbdb4f6, 547 files), recomputed in the working tree and in a disposable clone at the freeze commit 309aff2. The fix is BE16 258b7e5 (backend-workflow-engineer); I authored none of it. The same probe that reproduces the defect at 7fd1a89c was run unchanged on this candidate, on Node 22.22.2 (LANG unset) and on Node 24.21.0 (LANG=C.UTF-8), over real sockets against disposable PostgreSQL 16:\n- R1 (30 MiB over-limit upload, chunked and Content-Length): 413 evidence.too_large with Connection: close; the server closes its side on its own 128-284 ms after connect; it releases the socket 479-507 ms after the client destroys it; nothing is stored. Round 10: keep-alive, never closed, released after about 70 s.\n- R1c (the auditor's shutdown symptom): app.close() right after the client destroy takes 0-1 ms with 0 open connections. Round 10: 71,994 ms.\n- R3 (sibling): 401/403/428/404/400/unmatched refusals of an endless chunked body: Connection: close, and the server's close (response and FIN) arrives 1-22 ms after connect. The client gets only 0.1-0.9 MiB out before the close. Round 10: keep-alive, never closed, about 300 MiB drained in 6 s.\n- R2b: an over-limit body received in full (LIMIT+1, LIMIT+64 KiB) gets 413, and the same connection serves the next request (200). The connection is then released.\n- No regression:\n  - R2: a 2 MiB upload with invalid-UTF-8 bytes is stored with the sha256 of the raw bytes. The 200 stays keep-alive, and the same socket serves GET /me (200) and a JSON POST (201).\n  - R7: bodyLimit (CL and chunked), strict UTF-8 JSON, media type (D-070), CSRF/Origin and authorization give the same status and code as at 7fd1a89c.\n  - R4/R4b: unmatched routes are metered once per request in the limiter's bucket. The SPA fallback still serves index.html. Unmatched POSTs without CSRF stay 404 with no audit event. /healthz stays exempt, and every 429 carries the security headers.\n  - R5 shutdown: an idle keep-alive socket is closed at once. An in-flight upload that finishes within the grace gets 200 + Connection: close and is stored byte-exact. A stalled one is cut at the grace (3,001-3,002 ms with a 3 s grace).\n  - R6b/R6c/R6e: stalled headers and a stalled upload get 408 + close. An upload aborted mid-way leaves no file and no error log.\n- Code:\n  - connection-hygiene.ts onSend sets Connection: close only when request.raw.complete === false or while closing, and frameworkErrors applies the same. No route bypasses onSend (no hijack or raw writes in apps/api/src).\n  - The destroySoon override is installed per socket, only when that close is decided. In Node 22.22.2 and 24.21.0 the only server call site is _http_server resOnFinish under res._last (checked in the built-in sources). Without destroySoon, the fallback is Node's own socket.end(). Timers are unref'd, and the cap is cleared on close.\n- The candidate's own suite connection-hygiene.test.ts passes 13/13 in both locale integration runs (583/583 overall), including the SIGTERM test of src/main.ts.\nRemaining in the same class, raised separately and not part of this fix: F-DG2-411 (stalled uploads hold pooled DB connections up to requestTimeout) and F-DG2-412 (an aborted JSON body logs 'unhandled error' / 500).",
+      "evidence": [
+        "apps/api/src/modules/platform/connection-hygiene.ts",
+        "apps/api/src/server.ts",
+        "apps/api/src/main.ts",
+        "apps/api/src/modules/evidence/routes.ts",
+        "apps/api/test/integration/connection-hygiene.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/repro-7fd1a89c.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/probe-23e6c0a2-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/probe-23e6c0a2-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/probes/zz-sec-r11-probe.test.ts",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/probes/README.md",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/integration-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-11/integration-run2-lang-c-utf8.log"
+      ]
+    }
+  ]
+}
