@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG2-500",
+      "stage_id": "DG2",
+      "requirement": "REQ-S16-030",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "A session that ends while the sign-in page is shown never clears the session-scoped query cache: the next identity to sign in in that tab (development form, or a /me re-probe after an IdP sign-in in another tab) is shown the previous user's cached records",
+      "reproduction": "FE10 moved the session-end rule into the API client (apps/web/src/api/client.ts:99 endSession: a 401 `unauthenticated` while the phase is \"active\" makes it \"ended\"). The cache is cleared only by <RequireSession> (apps/web/src/auth/session.tsx:52-58: claimSessionEnd() then queryClient.removeQueries()), so only when that component is mounted, or mounts later while the phase is still \"ended\". The sign-in page is outside <RequireSession> (apps/web/src/app/router.tsx:38). It re-probes /me on mount (apps/web/src/pages/LoginPage.tsx:60, refetchOnMount \"always\") through the same client, so a 401 there ends the session but clears nothing. The next successful GET /me then sets the phase back to \"active\" (apps/web/src/api/queries.ts:62 markSessionActive), the end is never claimed, and the sign-in page navigates to returnTo (LoginPage.tsx:70) with the previous user's queries still cached.\nThe precondition is the sign-in page being shown in the same document while the phase is \"active\". That happens when the browser Back button returns to an in-document /login history entry, for example one pushed by the sign-in page's own wordmark link (LoginPage.tsx:80), after the user signed in in that document (development form, or a refocus /me re-probe after an IdP sign-in in another tab).\nProbe: docs/delivery/test-evidence/DG2/code-security/round-14/probes/zz-sec-r14-web-probe.test.tsx (sha256 2b64ba54), copied into a disposable clone of candidate 9f3ca298 (d99de98), unit-web project, jsdom, the product's own fixtures, SYNTHETIC data. Identical on Node 22.22.2 and Node 24.21.0 (probe-web-node22.log, probe-web-node24.log).\nW5 (development sign-in): user A is on /transformations and sees TR-A-SECRET. A's session ends, and the tab goes Back to /login?returnTo=%2Ftransformations: GET /me 401, phase \"ended\", and 1 transformations query is still cached. User B signs in with the development form (POST /auth/dev-login 204, GET /me 200 as \"Synthetic User B\"). The app navigates to /transformations, and with B's list request still in flight the page shows B's name and A's row TR-A-SECRET.\nW5b (OIDC mode, development sign-in 404): same, but B signs in at the IdP in another tab and this tab's /me is re-probed (as refetchOnWindowFocus does in production). Same result: B sees TR-A-SECRET.\nControl: when the session ends while <RequireSession> is mounted (the product's own session-end.test.tsx, and W6 here), the cache is cleared and nothing leaks.",
+      "expected": "When a session ends, whatever page is shown, the cached identity and every session-scoped query are removed before any later identity can render. A user who signs in afterwards in the same tab never sees records fetched under the previous session.",
+      "actual": "The cache is cleared only if <RequireSession> observes the \"ended\" phase. A session that ends on the sign-in page is never claimed. The next sign-in in that tab renders the previous user's cached records (TR-A-SECRET) under the new user's identity, until the new user's own requests replace them. In production (OIDC; development sign-in is refused under NODE_ENV=production) this needs an in-document /login history entry, a session end, Back to that entry, and a different identity signing in on the same browser profile in another tab. Server-side authorisation is intact: no API response ever carries A's data to B; the exposure is data A already held in that tab's memory. Rated Medium, not mandatory, for that reason and the narrow preconditions. Suggested fix: clear the session-scoped cache where the phase changes, independent of which route is mounted (for example a phase subscriber in AppProviders that removes every query when the phase becomes \"ended\"), or remove every query on any transition into \"active\" whose user differs from the cached one.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-14/probes/zz-sec-r14-web-probe.test.tsx",
+        "docs/delivery/test-evidence/DG2/code-security/round-14/probe-web-node22.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-14/probe-web-node24.log",
+        "apps/web/src/auth/session.tsx",
+        "apps/web/src/pages/LoginPage.tsx",
+        "apps/web/src/api/client.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-14/code-security-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-07T10:19:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG2 round 14 (T-DG2-REV-SEC-R14) on candidate 9f3ca298; reproduced on Node 22 and Node 24 (W5 development sign-in, W5b OIDC-mode /me re-probe)."
+        }
+      ]
+    }
+  ]
+}
