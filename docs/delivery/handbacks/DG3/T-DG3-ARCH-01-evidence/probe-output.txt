@@ -1,0 +1,46 @@
+port-policy: PostgreSQL listening on port 24617 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+migrations shipped: 24 (0001_identity_access.sql .. 0024_p3_gates_access_instantiation.sql)
+PASS  fresh database: all migrations apply  -- applied 24: 0020_p3_portfolio_roadmap.sql, 0021_p3_prioritization.sql, 0022_p3_dependency_capacity_funding.sql, 0023_p3_business_case_formula.sql, 0024_p3_gates_access_instantiation.sql
+PASS  P2 database populated (0001-0019 + synthetic transformation, P2 starter rows, DG2 dependency)  -- applied 19, p2 starter rows 23
+PASS  P3 over P2 database: 0020+ apply  -- applied 0020_p3_portfolio_roadmap.sql, 0021_p3_prioritization.sql, 0022_p3_dependency_capacity_funding.sql, 0023_p3_business_case_formula.sql, 0024_p3_gates_access_instantiation.sql
+PASS  backfill: four source waves verbatim  -- [{"code":"wave_0","name_en":"Wave 0 — Mobilize","horizon_en":"0-6 weeks","entry_criteria_en":"Sponsor + charter"},{"code":"wave_1","name_en":"Wave 1 — Prove","horizon_en":"1-3 months","entry_criteria_en":"Prioritized initiatives"},{"code":"wave_2","name_en":"Wave 2 — Scale","horizon_en":"3-9 months","entry_criteria_en":"Evidence + capacity"},{"code":"wave_3","name_en":"Wave 3 — Embed","horizon_en"
+PASS  backfill: weight set v1 = 25/25/20/15/15, active, source_default  -- [{"version_no":1,"status":"active","approval_basis":"source_default","w":"customer_impact=20.00,feasibility=15.00,financial_value=25.00,strategic_fit=25.00,time_to_value=15.00"}]
+PASS  backfill audited as migration/system  -- audit rows 5
+PASS  DG2 dependency row survives (type 'other' now an FK to a system type)  -- [{"code":"DEP-01","dependency_type":"other","from_initiative_id":null}]
+PASS  p3_instantiate_transformation is idempotent  -- second run created 0
+PASS  fresh instantiate + seeds  -- {"waves":4,"weights":5,"sys_types":5,"examples":2,"g4":8,"g4_enabled":false}
+PASS  P01 initiative insert WITHOUT its audit event fails at COMMIT  -- 23000 initiative_audit_required no audit_event for initiative 01990000-0000-7000-8000-000000000066 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  P02 initiative insert WITH its audit event commits  -- 01990000-0000-7000-8000-000000000067
+PASS  P03 initiative version must step by exactly 1  -- 23514 initiative_version_step initiative: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  P04 initiative illegal status edge draft -> launched  -- 23514 initiative_status_transition initiative 01990000-0000-7000-8000-000000000067: draft -> launched is not a legal transition (ADR-0021)
+PASS  P05 milestone UPDATE without audit fails at COMMIT  -- 23000 milestone_audit_required no audit_event for milestone 01990000-0000-7000-8000-000000000069 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  P06 weight set totalling 95% fails at COMMIT  -- 23514 scoring_weight_set_total scoring_weight_set 01990000-0000-7000-8000-00000000006a: weights must total 100% over 2-6 criteria (got 95.00 over 5)
+PASS  P07 weight set v2 with risk_compliance 10 and strategic_fit 15 (total 100) commits  -- weight set 01990000-0000-7000-8000-000000000071 version 2
+PASS  P08 scoring_weight is append-only (UPDATE)  -- 42501 scoring_weight is append-only: UPDATE is not allowed
+PASS  P09 scoring_weight is append-only (DELETE)  -- 42501 scoring_weight is append-only: DELETE is not allowed
+PASS  P10 initiative score 6 is refused  -- 23514 initiative_score_score_check new row for relation "initiative_score" violates check constraint "initiative_score_score_check"
+PASS  P11 dependencies INI-01 -> INI-02 -> INI-03 commit  -- two edges
+PASS  P12 cycle-closing INI-03 -> INI-01 refused by the database, naming the cycle  -- 23514 dependency_acyclic dependency cycle: INI-03 -> INI-01 -> INI-02 -> INI-03
+PASS  P13 two-node cycle INI-02 -> INI-01 refused the same way  -- 23514 dependency_acyclic dependency cycle: INI-02 -> INI-01 -> INI-02
+PASS  P14 concurrent A->B / B->A: exactly one commits (advisory lock + guard)  -- second writer: dependency_acyclic dependency cycle: INI-05 -> INI-04 -> INI-05; rows committed 1
+PASS  P15 system dependency type cannot be deleted  -- 23514 dependency_type_system_undeletable dependency_type vendor: types are never deleted (system types are permanent, custom types retire)
+PASS  P16 system dependency type cannot be retired  -- 23514 dependency_type_system_undeletable dependency_type decision: the code and system flag are immutable and a system type cannot be retired
+PASS  P17 unknown dependency type refused  -- 23514 dependency_type_active dependency 01990000-0000-7000-8000-00000000008b: unknown or retired dependency type telepathy
+PASS  P18 transformation-level business case commits  -- 01990000-0000-7000-8000-00000000008c
+PASS  P19 business case line with two classes refused  -- 23514 business_case_line_one_class new row for relation "business_case_line" violates check constraint "business_case_line_one_class"
+PASS  P20 an initiative case must link to a transformation case  -- 23514 business_case_level_shape new row for relation "business_case" violates check constraint "business_case_level_shape"
+PASS  P21 benefit formula + version 1 commit  -- 01990000-0000-7000-8000-000000000091
+PASS  P22 benefit formula confidence outside H/M/L refused  -- 23514 benefit_formula_confidence_check new row for relation "benefit_formula" violates check constraint "benefit_formula_confidence_check"
+PASS  P23 formula version expression is immutable  -- 23514 benefit_formula_version_immutable benefit_formula_version 01990000-0000-7000-8000-000000000091: a formula version is immutable; create a new version
+PASS  P24 the author cannot Finance-validate their own formula version  -- 23514 benefit_formula_version_validator_not_author new row for relation "benefit_formula_version" violates check constraint "benefit_formula_version_validator_not_author"
+PASS  P25 benefit_calculation (lineage) is append-only  -- 42501 benefit_calculation is append-only: UPDATE is not allowed
+PASS  P26a ranking snapshot + entry and a funding decision (canonical executive decision) commit  -- snapshot 01990000-0000-7000-8000-000000000095, funding_decision 01990000-0000-7000-8000-00000000009a
+PASS  P26 ranking_entry is append-only (DELETE)  -- 42501 ranking_entry is append-only: DELETE is not allowed
+PASS  P27 funding_decision is append-only (UPDATE)  -- 42501 funding_decision is append-only: UPDATE is not allowed
+PASS  P27b funding decision without its audit event fails at COMMIT  -- 23000 funding_decision_audit_required no audit_event for funding_decision 01990000-0000-7000-8000-00000000009e at version - (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  P28 gate_decision_agreement only for an approved G1 decision  -- 23514 gate_decision_agreement_g1_approved gate_decision_agreement: 01990000-0000-7000-8000-0000000000a0 must belong to an approved G1 decision and be confirmed by its decider
+PASS  P29 seeded wave source text is immutable  -- 23514 roadmap_wave_source_immutable roadmap_wave 01a11846-9b84-769d-9fce-76dd5c629b91: the source text of a seeded wave is immutable (B0079)
+PASS  P30 inherited approval without evidence refused  -- 23514 gate_dispensation_inherited_shape new row for relation "gate_dispensation" violates check constraint "gate_dispensation_inherited_shape"
+PASS  P31 mth_app cannot DELETE an initiative (no DELETE grant)  -- 42501 permission denied for table initiative
+PROBE RESULT: PASS (all guards fired as specified)

@@ -15,8 +15,12 @@ import {
   type Session,
   type TestApi,
 } from "../../support/harness.ts";
-import { operations } from "../../support/contract.ts";
+import { operations as allOperations } from "../../support/contract.ts";
+import { P2_PENDING_OPERATIONS } from "../../support/p2-pending.ts";
 import type { World } from "../../support/harness.ts";
+
+// Contract-first operations without a route yet (p2-pending.ts, p3-pending.ts) are swept once they are routed.
+const operations = allOperations.filter((o) => !P2_PENDING_OPERATIONS.has(o.operationId));
 
 /** Fails every path-parameter schema: not a uuid, not lower-case (dimension codes), not an integer, not a gate code. */
 export const MALFORMED = "NOT-VALID";

@@ -505,13 +505,15 @@ describe("every operation, validated against the contract and the zod mirrors", 
 
   it("every operation but the OIDC callback: U+0000 in the query is a declared 400 invalid_character", async () => {
     const checked = await exerciseInvalidCharacterQuery({ api, world: w, session: admin });
-    expect(checked).toHaveLength(operations.length - NO_400_OPERATIONS.size);
+    expect(checked).toHaveLength(operations.length - P2_PENDING_OPERATIONS.size - NO_400_OPERATIONS.size);
   });
 
   // F-DG2-320 (T-DG2-BE14): every operation accepts only the request media types it declares (media-types.ts).
   it("the contract: every route accepts exactly the request media types its operation declares", () => {
     expect(consumesDrift(operations, api.routes)).toEqual([]);
-    const withBody = operations.filter((o) => declaredRequestMediaTypes(o) !== null);
+    const withBody = operations.filter(
+      (o) => !P2_PENDING_OPERATIONS.has(o.operationId) && declaredRequestMediaTypes(o) !== null,
+    );
     const byType = (t: string) => withBody.filter((o) => declaredRequestMediaTypes(o)!.includes(t)).length;
     expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([87, 86, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
@@ -555,8 +557,10 @@ describe("every operation, validated against the contract and the zod mirrors", 
     );
     const limited = await startApi({ oidc, env: { RATE_LIMIT_PER_MINUTE: "1", AUTH_RATE_LIMIT_PER_MINUTE: "1" } });
     try {
-      const checked = await exerciseRateLimitSweep(limited, operations);
-      expect(checked).toHaveLength(161);
+      const live = operations.filter((o) => !P2_PENDING_OPERATIONS.has(o.operationId));
+      const checked = await exerciseRateLimitSweep(limited, live);
+      expect(checked).toHaveLength(live.length);
+      expect(live.length).toBeGreaterThanOrEqual(161);
     } finally {
       await limited.close();
     }
@@ -573,8 +577,8 @@ describe("every operation, validated against the contract and the zod mirrors", 
     expect(noSuccess).toEqual([]);
     const mirrorsNotChecked = Object.keys(ZOD_MIRRORS).filter((id) => !zodChecked.has(id));
     expect(mirrorsNotChecked).toEqual([]);
-    // 33 P1 operations + 128 P2 operations (T-DG2-ARCH-01B, plus activateKpiDefinition: D-061, F-DG2-201). A new
-    // operation needs a contract change first.
-    expect(operations).toHaveLength(161);
+    // 33 P1 operations + 128 P2 operations (T-DG2-ARCH-01B, plus activateKpiDefinition: D-061, F-DG2-201) + 109 P3
+    // operations (T-DG3-ARCH-01). A new operation needs a contract change first.
+    expect(operations).toHaveLength(270);
   });
 });

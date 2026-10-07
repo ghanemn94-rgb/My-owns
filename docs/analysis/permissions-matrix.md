@@ -244,3 +244,63 @@ Legend: **C** create, **E** edit (incl. archive), **E(own)** edit own rows only,
 - T04 "Ap (decision owner)" is implemented as `decision.decide` with an owner-only record rule. It is available to SP, TL, BO and WL, so whichever of them is the named T04 owner decides (B0065 names a decision owner, not a role).
 - "Charter: SP Ap" and "North Star/outcomes: SP Ap" are exercised through the G1/G2 gate decisions, not a separate charter approval.
 - TL's team-assignment right is narrowed to roles without approval or assignment rights.
+
+## 9. P3 implementation (DG3): permission codes and per-entity rights
+
+- **Added by:** T-DG3-ARCH-01 (solution-architect), 2026-10-07.
+- **Implements:** sections 1–5 for the P3 records (Mobilize: portfolio, T05–T09, business cases, capacity, funding, G4). The design is ADR-0021…0024. The seed is migration `0024`, mirrored in `packages/shared/src/permissions.ts` (`P3_PERMISSIONS`, `P3_ROLE_PERMISSIONS`) and compared by `packages/db/src/seed.test.ts`.
+- **Status:** configurable defaults and implementation assumptions. Mobily's business owners must confirm them before production. The product records business approvals as a named person's decision; no engineering agent, seed or job grants a real business, Finance or IT approval. G1–G6 are product gates, never DG0–DG7.
+
+### 9.1 P3 permission catalogue
+
+| Code | Category | Meaning | Default roles |
+|---|---|---|---|
+| `initiative.edit` | write | Create and edit initiatives, their links, deliverables and milestones; submit, withdraw, cancel | TL, WL, TO |
+| `initiative.launch` | write | Launch a funded initiative when the sequencing rules allow it | TL |
+| `portfolio.select` | business_approval | Approved portfolio selection / deselection | SP |
+| `prioritization.score` | write | Enter T06 scores | TL, WL, BO |
+| `prioritization.edit` | write | Propose weight sets, ranking snapshots and overrides | TL, TO |
+| `prioritization.approve` | business_approval | Approve weight sets and overrides (never the proposer) | SP |
+| `roadmap.edit` | write | Waves, wave assignment, milestone forecasts | TL, WL, TO |
+| `roadmap.approve` | write | Approve milestone baseline dates | TL, TO |
+| `deliverable.accept` | write | Accept or reject deliverables (record-level: the initiative's executive owner or delegate) | SP, TL, BO |
+| `capacity.edit` | write | Resourcing roles, capacity, demand | TL, WL, TO |
+| `capacity.commit` | write | Commit or release demand against capacity (record-level: the capacity owner, or transformation scope) | BO, TO |
+| `funding.approve` | business_approval | Record a funding decision (canonical executive decision) | SP, FIN |
+| `business_case.edit` | write | Business cases and lines (WL: record-level, initiative cases of initiatives they lead) | TL, WL, TO |
+| `benefit_formula.edit` | write | T09 formulas and versions, calculations | TL, BO, KDS |
+| `dependency_type.configure` | configure | Add, relabel and retire custom dependency types | ADM_METHOD |
+
+P1/P2 permissions that P3 uses: `finance.validate` (FIN: business-case baselines and formula versions; never the author), `gate.submit` (TL: G4 submission, dispensation records), `gate.decide` (SP, BO: G4 decision, dispensation acceptance; G1 agreement confirmations), `gate.configure` (TO), `dependency.edit` (TL, WL, TO, TD: T08 rows), `decision.edit` (required decisions).
+
+### 9.2 Per-entity rights in P3
+
+Legend as in 8.3. **D** = decide/approve/validate. Every cell is checked server-side by the one policy function, re-authorised at commit (BE18A pattern), plus the record-level rule named.
+
+| Entity (table) | SP | TL | BO | WL | FIN | TO | KDS | TD | CM/SEC | AUD | ADM_* |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Initiative T05 (`initiative` + gap links, contributions, decision links) | V | C E, launch | V | C E | V | C E | V | V | V | V | — |
+| Selection (`portfolio_selection`) | D | V | V | V | V | V | V | V | V | V | — |
+| Funding decision (`funding_decision`) | D | V | V | V | D | V | V | V | V | V | — |
+| Deliverables (`deliverable`) | D (accept, own initiative) | C E, D (own initiative) | D (accept, own initiative) | C E | V | C E | V | V | V | V | — |
+| Milestones (`milestone`) | V | C E D (approved date) | V | C E | V | C E D (approved date) | V | V | V | V | — |
+| Waves T07 (`roadmap_wave`) | V | C E | V | C E | V | C E | V | V | V | V | — |
+| Weight sets T06 (`scoring_weight_set`, `scoring_weight`) | D | C | V | V | V | C | V | V | V | V | — |
+| Scores (`initiative_score`; results read-only) | V | C E | C E | C E | V | V | V | V | V | V | — |
+| Ranking snapshots (`ranking_snapshot`, `ranking_entry`) | V | C | V | V | V | C | V | V | V | V | — |
+| Ranking overrides (`ranking_override`) | D | C | V | V | V | C | V | V | V | V | — |
+| T08 dependencies (`dependency`) | V | C E | V | C E | V | C E | V | C E | V | V | — |
+| Dependency types (`dependency_type`) | V | V | V | V | V | V | V | V | V | V | ADM_METHOD: C E (custom only) |
+| Resource roles, capacity, demand | V | C E | commit | C E | V | C E, commit | V | V | V | V | — |
+| Business cases + lines (`business_case`, `business_case_line`) | V | C E | V | C E (own initiatives) | D (baseline) | C E | V | V | V | V | — |
+| T09 formulas, versions, calculations | V | C E | C E | V | D (version) | V | C E | V | V | V | — |
+| Gate dispensations (`gate_dispensation`) | D (accept) | C | D (accept, where approver) | V | V | V | V | V | V | V | — |
+| G4 (`gate_*`, reused) | D (default approver) | submit | D (if configured) | V | V | configure approver | V | V | V | V | — |
+| G1 agreement confirmations (`gate_decision_agreement`) | D (with the G1 approval) | V | D (if configured approver) | V | V | V | V | V | V | V | — |
+
+**Rules (binding for the P3 implementers):**
+
+- **AUD (read-only auditor):** every P3 mutating operation returns **403** for AUD (it can read, so not 404) and writes nothing. The P3 integration suite calls every mutating P3 operation as AUD and expects 403.
+- **Separation of duties:** the weight-set approver ≠ proposer; override approver ≠ proposer (DB CHECKs); a dispensation is accepted by someone other than its recorder; Finance validation ≠ author (DB CHECKs); deliverable acceptor ≠ submitter; G4 decision never by the submitter (ADR-0015 trigger, 403).
+- **Technical admins:** `dependency_type.configure` is the only P3 right of any technical-admin role; it is `configure`, never an approval (the `0001` trigger refuses a technical admin holding `business_approval`/`finance_validation`).
+- **Changes against sections 1–5, flagged as assumptions:** FIN may record funding decisions (B0018 "validates … value realization"; the funding approver may be configured to SP only); TL launches initiatives (execution authority after the business approvals); capacity commitments are a resourcing commitment by BO/TO, not a business approval.

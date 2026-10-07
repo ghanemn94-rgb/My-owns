@@ -1,10 +1,11 @@
-# Data dictionary: P1 and P2 tables and views
+# Data dictionary: P1, P2 and P3 tables and views
 
 - **Task:** T-DG1-ARCH-01 (solution-architect), 2026-09-30.
 - **Contract for:** backend-workflow-engineer's P1 migrations (`packages/db/migrations/**`).
 - **Governed by:** ADR-0003 (types, IDs, time, concurrency, retention), ADR-0004 (audit), ADR-0005 (sessions), ADR-0006 (access) and ADR-0008 (outbox/jobs).
 - **Changes:** changes to this contract after DG1 approval go through the orchestrator.
 - **P2 (DG2):** the P2 tables (migrations 0010–0018) are in the section "P2 tables" at the end of this file (T-DG2-ARCH-01B). The P1 sections are unchanged.
+- **P3 (DG3):** the P3 tables (migrations 0020–0024) are in the section "P3 tables" at the end of this file (T-DG3-ARCH-01). Two P2 entries were regenerated because P3 migrations change them compatibly: `record_code_counter` (prefixes INI/BC/BF) and `dependency` (initiative endpoints, type FK, cycle guard). Every P3 entry is generated from the migrated catalogue (`pg_catalog`), so it matches the migrations exactly.
 
 ## Global rules
 
@@ -1762,14 +1763,14 @@ The P1 migrations create three views, owned by `mth_owner`. `mth_app` has `SELEC
 
 ## record_code_counter
 
-- **Purpose:** Per-transformation counters for human-readable codes (D-01, DEC-01, GD-01, DEP-01).
-- **Migration:** `0017_p2_decisions_gates.sql`. **API module:** `workflows`. **Who writes:** system (code generation). **Lifecycle:** —.
+- **Purpose:** Per-transformation counters for human-readable codes (D-01, DEC-01, GD-01, DEP-01; P3 adds INI-01, BC-01, BF-01).
+- **Migration:** `0017_p2_decisions_gates.sql (prefix CHECK widened by 0020)`. **API module:** `workflows`. **Who writes:** system (code generation). **Lifecycle:** —.
 - **`mth_app` privileges:** INSERT, SELECT, UPDATE.
 
 | Column | Type | Null | Default | Column constraints |
 |---|---|---|---|---|
 | transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
-| prefix | text | NOT NULL |  | `CHECK ((prefix = ANY (ARRAY['D', 'DEC', 'GD', 'DEP'])))` |
+| prefix | text | NOT NULL |  | `CHECK ((prefix = ANY (ARRAY['D', 'DEC', 'GD', 'DEP', 'INI', 'BC', 'BF'])))` |
 | last_value | integer | NOT NULL |  | `CHECK ((last_value >= 0))` |
 
 **Table constraints:**
@@ -1934,8 +1935,8 @@ The P1 migrations create three views, owned by `mth_owner`. `mth_app` has `SELEC
 
 ## dependency
 
-- **Purpose:** THE canonical dependency record shared by T08 and RAID (P2 subset: TOM-level dependencies; P3 adds initiative endpoints and cycle checks).
-- **Migration:** `0017_p2_decisions_gates.sql`. **API module:** `workflows`. **Who writes:** dependency.edit (TL, WL, TO, TD). **Lifecycle:** open ↔ at_risk → resolved; → archived.
+- **Purpose:** THE canonical dependency record shared by T08 and RAID. P2: TOM-level dependencies; P3 (0022): initiative endpoints (`from_initiative_id`, `to_initiative_id`), configurable types (FK to `dependency_type`) and the race-free cycle guard (ADR-0023 §4–§5).
+- **Migration:** `0017_p2_decisions_gates.sql; extended by 0022`. **API module:** `workflows`. **Who writes:** dependency.edit (TL, WL, TO, TD). **Lifecycle:** open ↔ at_risk → resolved; → archived.
 - **`mth_app` privileges:** INSERT, SELECT, UPDATE.
 
 | Column | Type | Null | Default | Column constraints |
@@ -1949,7 +1950,7 @@ The P1 migrations create three views, owned by `mth_owner`. `mth_app` has `SELEC
 | from_label | text | NULL |  | `CHECK (((from_label IS NULL) OR ((char_length(from_label) >= 1) AND (char_length(from_label) <= 300))))` |
 | to_kind | text | NOT NULL |  | `CHECK ((to_kind = ANY (ARRAY['initiative', 'external', 'tom_dimension', 'decision', 'other'])))` |
 | to_label | text | NULL |  | `CHECK (((to_label IS NULL) OR ((char_length(to_label) >= 1) AND (char_length(to_label) <= 300))))` |
-| dependency_type | text | NOT NULL |  | `CHECK ((dependency_type = ANY (ARRAY['decision', 'tech', 'data', 'vendor', 'other'])))` |
+| dependency_type | text | NOT NULL |  | FK → dependency_type(code) |
 | needed_by | date | NULL |  |  |
 | owner_user_id | uuid | NULL |  | FK → app_user(id) |
 | status | text | NOT NULL | `'open'` | `CHECK ((status = ANY (ARRAY['open', 'at_risk', 'resolved', 'archived'])))` |
@@ -1964,23 +1965,34 @@ The P1 migrations create three views, owned by `mth_owner`. `mth_app` has `SELEC
 | created_by | uuid | NOT NULL |  | FK → app_user(id) |
 | updated_at | timestamp with time zone | NOT NULL | `now()` |  |
 | updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+| from_initiative_id | uuid | NULL |  |  |
+| to_initiative_id | uuid | NULL |  |  |
 
 **Table constraints:**
 
 - `dependency_archive_complete` (CHECK): `CHECK ((((status = 'archived') = (archived_at IS NOT NULL)) AND ((archived_at IS NULL) = (archived_by IS NULL)) AND ((archived_at IS NULL) = (archive_reason IS NULL))))`
 - `dependency_code_key` (UNIQUE): `UNIQUE (transformation_id, code)`
-- `dependency_decision_id_fkey` (FK): `FOREIGN KEY (transformation_id, decision_id) REFERENCES decision(transformation_id, id)`
+- `dependency_decision_id_fkey` (FK): `FOREIGN KEY (transformation_id, decision_id) REFERENCES decision(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `dependency_from_initiative_id_fkey` (FK): `FOREIGN KEY (transformation_id, from_initiative_id) REFERENCES initiative(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `dependency_from_initiative_kind` (CHECK): `CHECK (((from_initiative_id IS NULL) OR (from_kind = 'initiative')))`
+- `dependency_not_self` (CHECK): `CHECK (((from_initiative_id IS NULL) OR (from_initiative_id IS DISTINCT FROM to_initiative_id)))`
+- `dependency_to_initiative_id_fkey` (FK): `FOREIGN KEY (transformation_id, to_initiative_id) REFERENCES initiative(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `dependency_to_initiative_kind` (CHECK): `CHECK (((to_initiative_id IS NULL) OR (to_kind = 'initiative')))`
 - `dependency_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
 
 **Indexes:**
 
 - `dependency_dimension_idx`: `(transformation_id, tom_dimension_code) WHERE (status <> 'archived'::text)`
+- `dependency_from_initiative_idx`: `(transformation_id, from_initiative_id) WHERE ((from_initiative_id IS NOT NULL) AND (status <> 'archived'::text))`
+- `dependency_to_initiative_idx`: `(transformation_id, to_initiative_id) WHERE ((to_initiative_id IS NOT NULL) AND (status <> 'archived'::text))`
 - `dependency_transformation_updated_idx`: `(transformation_id, updated_at DESC, id DESC)`
 
 **Triggers:**
 
 - `dependency_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `dependency_cycle_guard`: AFTER INSERT OR UPDATE OF from_initiative_id, to_initiative_id, status FOR EACH ROW → `dependency_cycle_guard()`
 - `dependency_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+- `dependency_type_active`: BEFORE INSERT OR UPDATE OF dependency_type FOR EACH ROW → `dependency_type_active()`
 
 ## gate_instance
 
@@ -2181,3 +2193,1328 @@ The P1 migrations create three views, owned by `mth_owner`. `mth_app` has `SELEC
 | Database | Everything above, plus the P2 record guards (version step, audit coverage, append-only, same-transformation references) and the per-template rules: T01 confidence H/M/L and the six seeded rows; T02 target date NOT NULL; T03 dimension NOT NULL; T04 code format, default `open`, chosen option when decided. Also unquantified value pools never carry amounts, a filename is never verified evidence, and gate SoD/staleness. |
 | API (`@mth/shared/schemas`) | Shapes (OpenAPI `docs/api/openapi.yaml` P2 schemas), decimal strings within the column scale, ISO dates, one-sentence North Star, journey step shape, trajectory points |
 | Service | Permissions and record-level rules (ADR-0020), If-Match, status transitions, gate criteria evaluation (ADR-0015), charter versioning (ADR-0017), evidence verification (ADR-0018), totals with an unquantified count (ADR-0019) |
+
+---
+
+# P3 tables (migrations 0020–0024, DG3)
+
+- **Task:** T-DG3-ARCH-01 (solution-architect), 2026-10-07. **ADRs:** ADR-0021 (portfolio, lifecycle, G4, G1 extension), ADR-0022 (prioritization), ADR-0023 (roadmap, dependencies, capacity, funding), ADR-0024 (business case, formula foundation).
+- **Global rules** are those at the top of this file and the P2 record guards (`p2_attach_guards`: row guard, version step by 1, deferred audit coverage; `p2_attach_append_only` on history and decision tables). Money `numeric(20,4)`, measures and formula values `numeric(24,6)`, weights `numeric(5,2)`, weighted scores `numeric(7,4)`, FTE `numeric(6,2)`; no floating point.
+- **No DELETE** grant on any P3 table.
+
+## roadmap_wave
+
+- **Purpose:** T07 wave of one transformation (B0079). The four source waves are instantiated with VERBATIM text (immutable); horizons may overlap (ADR-0023 §1).
+- **Migration:** `0020_p3_portfolio_roadmap.sql`. **API module:** `portfolio`. **Who writes:** system (instantiation); roadmap.edit (TL, TO, WL) for planned dates, owner, notes and added waves. **Lifecycle:** active → archived (seeded waves never archived).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| code | text | NOT NULL |  | `CHECK ((code ~ '^[a-z][a-z0-9_]{0,47}$'))` |
+| ordinal | smallint | NOT NULL |  | `CHECK (((ordinal >= 0) AND (ordinal <= 99)))` |
+| is_source_seeded | boolean | NOT NULL | `false` |  |
+| source_ref | text | NULL |  | `CHECK (((source_ref IS NULL) OR ((char_length(source_ref) >= 1) AND (char_length(source_ref) <= 50))))` |
+| name_en | text | NOT NULL |  | `CHECK (((char_length(name_en) >= 1) AND (char_length(name_en) <= 200)))` |
+| name_ar | text | NOT NULL |  | `CHECK (((char_length(name_ar) >= 1) AND (char_length(name_ar) <= 200)))` |
+| purpose_en | text | NOT NULL |  | `CHECK (((char_length(purpose_en) >= 1) AND (char_length(purpose_en) <= 500)))` |
+| purpose_ar | text | NOT NULL |  | `CHECK (((char_length(purpose_ar) >= 1) AND (char_length(purpose_ar) <= 500)))` |
+| horizon_en | text | NOT NULL |  | `CHECK (((char_length(horizon_en) >= 1) AND (char_length(horizon_en) <= 100)))` |
+| horizon_ar | text | NOT NULL |  | `CHECK (((char_length(horizon_ar) >= 1) AND (char_length(horizon_ar) <= 100)))` |
+| entry_criteria_en | text | NOT NULL |  | `CHECK (((char_length(entry_criteria_en) >= 1) AND (char_length(entry_criteria_en) <= 500)))` |
+| entry_criteria_ar | text | NOT NULL |  | `CHECK (((char_length(entry_criteria_ar) >= 1) AND (char_length(entry_criteria_ar) <= 500)))` |
+| exit_evidence_en | text | NOT NULL |  | `CHECK (((char_length(exit_evidence_en) >= 1) AND (char_length(exit_evidence_en) <= 500)))` |
+| exit_evidence_ar | text | NOT NULL |  | `CHECK (((char_length(exit_evidence_ar) >= 1) AND (char_length(exit_evidence_ar) <= 500)))` |
+| horizon_from_weeks | smallint | NOT NULL |  | `CHECK (((horizon_from_weeks >= 0) AND (horizon_from_weeks <= 520)))` |
+| horizon_to_weeks | smallint | NOT NULL |  | `CHECK (((horizon_to_weeks >= 0) AND (horizon_to_weeks <= 520)))` |
+| planned_start | date | NULL |  |  |
+| planned_end | date | NULL |  |  |
+| owner_user_id | uuid | NULL |  | FK → app_user(id) |
+| notes | text | NULL |  | `CHECK (((notes IS NULL) OR ((char_length(notes) >= 1) AND (char_length(notes) <= 4000))))` |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'archived'])))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `roadmap_wave_code_key` (UNIQUE): `UNIQUE (transformation_id, code)`
+- `roadmap_wave_horizon_range` (CHECK): `CHECK ((horizon_to_weeks >= horizon_from_weeks))`
+- `roadmap_wave_planned_range` (CHECK): `CHECK (((planned_end IS NULL) OR (planned_start IS NULL) OR (planned_end >= planned_start)))`
+- `roadmap_wave_seeded_has_source` (CHECK): `CHECK (((NOT is_source_seeded) OR (source_ref IS NOT NULL)))`
+- `roadmap_wave_seeded_not_archived` (CHECK): `CHECK ((NOT (is_source_seeded AND (status = 'archived'))))`
+- `roadmap_wave_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `roadmap_wave_transformation_idx`: `(transformation_id, ordinal)`
+
+**Triggers:**
+
+- `roadmap_wave_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `roadmap_wave_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+- `roadmap_wave_source_immutable`: BEFORE UPDATE FOR EACH ROW → `roadmap_wave_source_immutable()`
+
+## initiative
+
+- **Purpose:** T05 Initiative Card (B0072) and the portfolio lifecycle (ADR-0021 §2–§3). A vehicle, never part of the TOM (B0059).
+- **Migration:** `0020_p3_portfolio_roadmap.sql`. **API module:** `portfolio`. **Who writes:** initiative.edit (TL, WL, TO); initiative.launch (TL); status mirrors selection/funding records. **Lifecycle:** draft → submitted → ranked → selected → funded → launched → completed; cancelled (edges: `initiative_status_step`).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| code | text | NOT NULL |  | `CHECK ((code ~ '^INI-[0-9]{2,6}$'))` |
+| name | text | NOT NULL |  | `CHECK (((char_length(name) >= 1) AND (char_length(name) <= 300)))` |
+| executive_owner_user_id | uuid | NULL |  | FK → app_user(id) |
+| workstream_lead_user_id | uuid | NULL |  | FK → app_user(id) |
+| problem_statement | text | NULL |  | `CHECK (((problem_statement IS NULL) OR ((char_length(problem_statement) >= 1) AND (char_length(problem_statement) <= 8000))))` |
+| objective | text | NULL |  | `CHECK (((objective IS NULL) OR ((char_length(objective) >= 1) AND (char_length(objective) <= 4000))))` |
+| scope_in | text | NULL |  | `CHECK (((scope_in IS NULL) OR ((char_length(scope_in) >= 1) AND (char_length(scope_in) <= 8000))))` |
+| scope_out | text | NULL |  | `CHECK (((scope_out IS NULL) OR ((char_length(scope_out) >= 1) AND (char_length(scope_out) <= 8000))))` |
+| financial_benefit_summary | text | NULL |  | `CHECK (((financial_benefit_summary IS NULL) OR ((char_length(financial_benefit_summary) >= 1) AND (char_length(financial_benefit_summary) <= 4000))))` |
+| customer_benefit_summary | text | NULL |  | `CHECK (((customer_benefit_summary IS NULL) OR ((char_length(customer_benefit_summary) >= 1) AND (char_length(customer_benefit_summary) <= 4000))))` |
+| risks_summary | text | NULL |  | `CHECK (((risks_summary IS NULL) OR ((char_length(risks_summary) >= 1) AND (char_length(risks_summary) <= 4000))))` |
+| wave_id | uuid | NULL |  |  |
+| planned_start | date | NULL |  |  |
+| planned_end | date | NULL |  |  |
+| status | text | NOT NULL | `'draft'` | `CHECK ((status = ANY (ARRAY['draft', 'submitted', 'ranked', 'selected', 'funded', 'launched', 'completed', 'cancelled'])))` |
+| launched_at | timestamp with time zone | NULL |  |  |
+| launched_by | uuid | NULL |  | FK → app_user(id) |
+| cancelled_at | timestamp with time zone | NULL |  |  |
+| cancelled_by | uuid | NULL |  | FK → app_user(id) |
+| cancel_reason | text | NULL |  | `CHECK (((cancel_reason IS NULL) OR ((char_length(cancel_reason) >= 3) AND (char_length(cancel_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `initiative_cancelled_complete` (CHECK): `CHECK ((((status = 'cancelled') = (cancelled_at IS NOT NULL)) AND ((cancelled_at IS NULL) = (cancelled_by IS NULL)) AND ((cancelled_at IS NULL) = (cancel_reason IS NULL))))`
+- `initiative_code_key` (UNIQUE): `UNIQUE (transformation_id, code)`
+- `initiative_launched_complete` (CHECK): `CHECK ((((status = ANY (ARRAY['launched', 'completed'])) = (launched_at IS NOT NULL)) AND ((launched_at IS NULL) = (launched_by IS NULL))))`
+- `initiative_planned_range` (CHECK): `CHECK (((planned_end IS NULL) OR (planned_start IS NULL) OR (planned_end >= planned_start)))`
+- `initiative_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+- `initiative_wave_id_fkey` (FK): `FOREIGN KEY (transformation_id, wave_id) REFERENCES roadmap_wave(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+
+**Indexes:**
+
+- `initiative_status_idx`: `(transformation_id, status)`
+- `initiative_transformation_updated_idx`: `(transformation_id, updated_at DESC, id DESC)`
+- `initiative_wave_idx`: `(wave_id) WHERE (wave_id IS NOT NULL)`
+
+**Triggers:**
+
+- `initiative_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `initiative_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+- `initiative_status_step`: BEFORE UPDATE OF status FOR EACH ROW → `initiative_status_step()`
+
+## initiative_gap_link
+
+- **Purpose:** T05 'Problem / gap addressed': the initiative is a vehicle for a TOM gap (T03) or a diagnosed finding; never TOM evidence (REQ-PB-040, REQ-PB-046).
+- **Migration:** `0020_p3_portfolio_roadmap.sql`. **API module:** `portfolio`. **Who writes:** initiative.edit. **Lifecycle:** active → removed.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| initiative_id | uuid | NOT NULL |  |  |
+| target_type | text | NOT NULL |  | `CHECK ((target_type = ANY (ARRAY['tom_gap', 'diagnostic_finding'])))` |
+| tom_gap_id | uuid | NULL |  |  |
+| diagnostic_finding_id | uuid | NULL |  |  |
+| note | text | NULL |  | `CHECK (((note IS NULL) OR ((char_length(note) >= 1) AND (char_length(note) <= 2000))))` |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'removed'])))` |
+| removed_at | timestamp with time zone | NULL |  |  |
+| removed_by | uuid | NULL |  | FK → app_user(id) |
+| remove_reason | text | NULL |  | `CHECK (((remove_reason IS NULL) OR ((char_length(remove_reason) >= 3) AND (char_length(remove_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `initiative_gap_link_diagnostic_finding_id_fkey` (FK): `FOREIGN KEY (transformation_id, diagnostic_finding_id) REFERENCES diagnostic_finding(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `initiative_gap_link_initiative_id_fkey` (FK): `FOREIGN KEY (transformation_id, initiative_id) REFERENCES initiative(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `initiative_gap_link_one_target` (CHECK): `CHECK ((((target_type = 'tom_gap') = (tom_gap_id IS NOT NULL)) AND ((target_type = 'diagnostic_finding') = (diagnostic_finding_id IS NOT NULL))))`
+- `initiative_gap_link_removal_complete` (CHECK): `CHECK ((((status = 'removed') = (removed_at IS NOT NULL)) AND ((removed_at IS NULL) = (removed_by IS NULL)) AND ((removed_at IS NULL) = (remove_reason IS NULL))))`
+- `initiative_gap_link_tom_gap_id_fkey` (FK): `FOREIGN KEY (transformation_id, tom_gap_id) REFERENCES tom_gap(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+
+**Indexes:**
+
+- `initiative_gap_link_finding_active_key`: `UNIQUE (initiative_id, diagnostic_finding_id) WHERE ((status = 'active'::text) AND (diagnostic_finding_id IS NOT NULL))`
+- `initiative_gap_link_initiative_idx`: `(initiative_id) WHERE (status = 'active'::text)`
+- `initiative_gap_link_tom_gap_active_key`: `UNIQUE (initiative_id, tom_gap_id) WHERE ((status = 'active'::text) AND (tom_gap_id IS NOT NULL))`
+
+**Triggers:**
+
+- `initiative_gap_link_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `initiative_gap_link_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## initiative_outcome_contribution
+
+- **Purpose:** T05 'Outcome/KPI contribution', fifth level of the outcome hierarchy (B0048); outcome mandatory, T02 row (KPI) optional and must belong to the outcome (REQ-PB-032, REQ-PB-006).
+- **Migration:** `0020_p3_portfolio_roadmap.sql`. **API module:** `portfolio`. **Who writes:** initiative.edit. **Lifecycle:** active → removed.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| initiative_id | uuid | NOT NULL |  |  |
+| outcome_id | uuid | NOT NULL |  |  |
+| outcome_kpi_id | uuid | NULL |  |  |
+| contribution_statement | text | NOT NULL |  | `CHECK (((char_length(contribution_statement) >= 1) AND (char_length(contribution_statement) <= 2000)))` |
+| expected_kpi_movement | text | NULL |  | `CHECK (((expected_kpi_movement IS NULL) OR ((char_length(expected_kpi_movement) >= 1) AND (char_length(expected_kpi_movement) <= 500))))` |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'removed'])))` |
+| removed_at | timestamp with time zone | NULL |  |  |
+| removed_by | uuid | NULL |  | FK → app_user(id) |
+| remove_reason | text | NULL |  | `CHECK (((remove_reason IS NULL) OR ((char_length(remove_reason) >= 3) AND (char_length(remove_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `initiative_outcome_contribution_initiative_id_fkey` (FK): `FOREIGN KEY (transformation_id, initiative_id) REFERENCES initiative(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `initiative_outcome_contribution_outcome_id_fkey` (FK): `FOREIGN KEY (transformation_id, outcome_id) REFERENCES outcome(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `initiative_outcome_contribution_outcome_kpi_id_fkey` (FK): `FOREIGN KEY (transformation_id, outcome_kpi_id) REFERENCES outcome_kpi(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `initiative_outcome_contribution_removal_complete` (CHECK): `CHECK ((((status = 'removed') = (removed_at IS NOT NULL)) AND ((removed_at IS NULL) = (removed_by IS NULL)) AND ((removed_at IS NULL) = (remove_reason IS NULL))))`
+
+**Indexes:**
+
+- `initiative_outcome_contribution_initiative_idx`: `(initiative_id) WHERE (status = 'active'::text)`
+- `initiative_outcome_contribution_outcome_idx`: `(outcome_id) WHERE (status = 'active'::text)`
+
+**Triggers:**
+
+- `initiative_contribution_kpi_matches_outcome`: BEFORE INSERT OR UPDATE OF outcome_id, outcome_kpi_id FOR EACH ROW → `initiative_contribution_kpi_matches_outcome()`
+- `initiative_outcome_contribution_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `initiative_outcome_contribution_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## initiative_decision_link
+
+- **Purpose:** T05 'Required decisions': references to canonical `decision` rows (owner and due date come from the decision).
+- **Migration:** `0020_p3_portfolio_roadmap.sql`. **API module:** `portfolio`. **Who writes:** initiative.edit. **Lifecycle:** active → removed.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| initiative_id | uuid | NOT NULL |  |  |
+| decision_id | uuid | NOT NULL |  |  |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'removed'])))` |
+| removed_at | timestamp with time zone | NULL |  |  |
+| removed_by | uuid | NULL |  | FK → app_user(id) |
+| remove_reason | text | NULL |  | `CHECK (((remove_reason IS NULL) OR ((char_length(remove_reason) >= 3) AND (char_length(remove_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `initiative_decision_link_decision_id_fkey` (FK): `FOREIGN KEY (transformation_id, decision_id) REFERENCES decision(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `initiative_decision_link_initiative_id_fkey` (FK): `FOREIGN KEY (transformation_id, initiative_id) REFERENCES initiative(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `initiative_decision_link_removal_complete` (CHECK): `CHECK ((((status = 'removed') = (removed_at IS NOT NULL)) AND ((removed_at IS NULL) = (removed_by IS NULL)) AND ((removed_at IS NULL) = (remove_reason IS NULL))))`
+
+**Indexes:**
+
+- `initiative_decision_link_active_key`: `UNIQUE (initiative_id, decision_id) WHERE (status = 'active'::text)`
+
+**Triggers:**
+
+- `initiative_decision_link_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `initiative_decision_link_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## deliverable
+
+- **Purpose:** T05 'Key deliverables' (3–7 is a warning) with acceptance status (ADR-0023 §2).
+- **Migration:** `0020_p3_portfolio_roadmap.sql`. **API module:** `portfolio`. **Who writes:** initiative.edit; deliverable.accept (SP, TL, BO) and record-level executive owner for acceptance. **Lifecycle:** acceptance pending → submitted → accepted | rejected (rejected → submitted); status active → archived.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| initiative_id | uuid | NOT NULL |  |  |
+| ordinal | smallint | NOT NULL | `1` | `CHECK (((ordinal >= 1) AND (ordinal <= 999)))` |
+| title | text | NOT NULL |  | `CHECK (((char_length(title) >= 1) AND (char_length(title) <= 300)))` |
+| description | text | NULL |  | `CHECK (((description IS NULL) OR ((char_length(description) >= 1) AND (char_length(description) <= 4000))))` |
+| owner_user_id | uuid | NULL |  | FK → app_user(id) |
+| due_date | date | NULL |  |  |
+| acceptance_status | text | NOT NULL | `'pending'` | `CHECK ((acceptance_status = ANY (ARRAY['pending', 'submitted', 'accepted', 'rejected'])))` |
+| submitted_by | uuid | NULL |  | FK → app_user(id) |
+| submitted_at | timestamp with time zone | NULL |  |  |
+| decided_by | uuid | NULL |  | FK → app_user(id) |
+| decided_at | timestamp with time zone | NULL |  |  |
+| acceptance_note | text | NULL |  | `CHECK (((acceptance_note IS NULL) OR ((char_length(acceptance_note) >= 1) AND (char_length(acceptance_note) <= 2000))))` |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'archived'])))` |
+| archived_at | timestamp with time zone | NULL |  |  |
+| archived_by | uuid | NULL |  | FK → app_user(id) |
+| archive_reason | text | NULL |  | `CHECK (((archive_reason IS NULL) OR ((char_length(archive_reason) >= 3) AND (char_length(archive_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `deliverable_acceptor_not_submitter` (CHECK): `CHECK (((decided_by IS NULL) OR (decided_by <> submitted_by)))`
+- `deliverable_archive_complete` (CHECK): `CHECK ((((status = 'archived') = (archived_at IS NOT NULL)) AND ((archived_at IS NULL) = (archived_by IS NULL)) AND ((archived_at IS NULL) = (archive_reason IS NULL))))`
+- `deliverable_decided_complete` (CHECK): `CHECK ((((acceptance_status = ANY (ARRAY['accepted', 'rejected'])) = (decided_at IS NOT NULL)) AND ((decided_at IS NULL) = (decided_by IS NULL))))`
+- `deliverable_initiative_id_fkey` (FK): `FOREIGN KEY (transformation_id, initiative_id) REFERENCES initiative(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `deliverable_submitted_complete` (CHECK): `CHECK ((((acceptance_status = ANY (ARRAY['submitted', 'accepted', 'rejected'])) = (submitted_at IS NOT NULL)) AND ((submitted_at IS NULL) = (submitted_by IS NULL))))`
+- `deliverable_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `deliverable_initiative_idx`: `(initiative_id, ordinal) WHERE (status = 'active'::text)`
+
+**Triggers:**
+
+- `deliverable_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `deliverable_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## milestone
+
+- **Purpose:** T05/T07 milestone with approved (baseline) vs forecast date (ADR-0023 §2).
+- **Migration:** `0020_p3_portfolio_roadmap.sql`. **API module:** `portfolio`. **Who writes:** roadmap.edit / initiative.edit (forecast); roadmap.approve (TL, TO) for the approved date. **Lifecycle:** planned → achieved | missed | cancelled.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| initiative_id | uuid | NOT NULL |  |  |
+| wave_id | uuid | NULL |  |  |
+| title | text | NOT NULL |  | `CHECK (((char_length(title) >= 1) AND (char_length(title) <= 300)))` |
+| description | text | NULL |  | `CHECK (((description IS NULL) OR ((char_length(description) >= 1) AND (char_length(description) <= 4000))))` |
+| owner_user_id | uuid | NULL |  | FK → app_user(id) |
+| approved_date | date | NULL |  |  |
+| approved_by | uuid | NULL |  | FK → app_user(id) |
+| approved_at | timestamp with time zone | NULL |  |  |
+| approval_reason | text | NULL |  | `CHECK (((approval_reason IS NULL) OR ((char_length(approval_reason) >= 3) AND (char_length(approval_reason) <= 1000))))` |
+| forecast_date | date | NULL |  |  |
+| actual_date | date | NULL |  |  |
+| status | text | NOT NULL | `'planned'` | `CHECK ((status = ANY (ARRAY['planned', 'achieved', 'missed', 'cancelled'])))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `milestone_achieved_actual` (CHECK): `CHECK (((status = 'achieved') = (actual_date IS NOT NULL)))`
+- `milestone_approved_complete` (CHECK): `CHECK ((((approved_date IS NULL) = (approved_by IS NULL)) AND ((approved_by IS NULL) = (approved_at IS NULL))))`
+- `milestone_initiative_id_fkey` (FK): `FOREIGN KEY (transformation_id, initiative_id) REFERENCES initiative(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `milestone_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+- `milestone_wave_id_fkey` (FK): `FOREIGN KEY (transformation_id, wave_id) REFERENCES roadmap_wave(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+
+**Indexes:**
+
+- `milestone_initiative_idx`: `(initiative_id)`
+- `milestone_transformation_forecast_idx`: `(transformation_id, forecast_date)`
+
+**Triggers:**
+
+- `milestone_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `milestone_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## gate_dispensation
+
+- **Purpose:** Modular inherited approval (captured as verified evidence, never a gate decision) or End-to-End waiver for G1–G3 sequencing (ADR-0021 §5).
+- **Migration:** `0020_p3_portfolio_roadmap.sql`. **API module:** `portfolio`. **Who writes:** gate.submit records; gate.decide holder (not the recorder) accepts/rejects/revokes. **Lifecycle:** pending → accepted | rejected; accepted → revoked.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| kind | text | NOT NULL |  | `CHECK ((kind = ANY (ARRAY['inherited_approval', 'waiver'])))` |
+| gate_code | text | NOT NULL |  | FK → gate_definition(code) |
+| initiative_id | uuid | NULL |  |  |
+| reason | text | NULL |  | `CHECK (((reason IS NULL) OR ((char_length(reason) >= 3) AND (char_length(reason) <= 4000))))` |
+| approving_body | text | NULL |  | `CHECK (((approving_body IS NULL) OR ((char_length(approving_body) >= 1) AND (char_length(approving_body) <= 300))))` |
+| approved_on | date | NULL |  |  |
+| evidence_id | uuid | NULL |  |  |
+| expires_on | date | NULL |  |  |
+| status | text | NOT NULL | `'pending'` | `CHECK ((status = ANY (ARRAY['pending', 'accepted', 'rejected', 'revoked'])))` |
+| recorded_by | uuid | NOT NULL |  | FK → app_user(id) |
+| decided_by | uuid | NULL |  | FK → app_user(id) |
+| decided_at | timestamp with time zone | NULL |  |  |
+| decision_note | text | NULL |  | `CHECK (((decision_note IS NULL) OR ((char_length(decision_note) >= 1) AND (char_length(decision_note) <= 2000))))` |
+| revoked_by | uuid | NULL |  | FK → app_user(id) |
+| revoked_at | timestamp with time zone | NULL |  |  |
+| revoke_reason | text | NULL |  | `CHECK (((revoke_reason IS NULL) OR ((char_length(revoke_reason) >= 3) AND (char_length(revoke_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `gate_dispensation_decided_complete` (CHECK): `CHECK ((((status = ANY (ARRAY['accepted', 'rejected', 'revoked'])) = (decided_at IS NOT NULL)) AND ((decided_at IS NULL) = (decided_by IS NULL))))`
+- `gate_dispensation_decider_not_recorder` (CHECK): `CHECK (((decided_by IS NULL) OR (decided_by <> recorded_by)))`
+- `gate_dispensation_evidence_id_fkey` (FK): `FOREIGN KEY (transformation_id, evidence_id) REFERENCES evidence(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `gate_dispensation_gate` (CHECK): `CHECK ((gate_code = ANY (ARRAY['G1', 'G2', 'G3'])))`
+- `gate_dispensation_inherited_shape` (CHECK): `CHECK (((kind <> 'inherited_approval') OR ((evidence_id IS NOT NULL) AND (approving_body IS NOT NULL) AND (approved_on IS NOT NULL) AND (initiative_id IS NULL))))`
+- `gate_dispensation_initiative_id_fkey` (FK): `FOREIGN KEY (transformation_id, initiative_id) REFERENCES initiative(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `gate_dispensation_revoked_complete` (CHECK): `CHECK ((((status = 'revoked') = (revoked_at IS NOT NULL)) AND ((revoked_at IS NULL) = (revoked_by IS NULL)) AND ((revoked_at IS NULL) = (revoke_reason IS NULL))))`
+- `gate_dispensation_waiver_shape` (CHECK): `CHECK (((kind <> 'waiver') OR ((reason IS NOT NULL) AND (evidence_id IS NULL) AND (approving_body IS NULL) AND (approved_on IS NULL))))`
+
+**Indexes:**
+
+- `gate_dispensation_transformation_idx`: `(transformation_id, gate_code, status)`
+
+**Triggers:**
+
+- `gate_dispensation_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `gate_dispensation_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## scoring_weight_set
+
+- **Purpose:** Versioned, immutable T06 weight set per transformation; v1 = source defaults (B0076), instantiated by `p3_instantiate_transformation()` (ADR-0022 §1).
+- **Migration:** `0021_p3_prioritization.sql`. **API module:** `portfolio`. **Who writes:** prioritization.edit (TL, TO) proposes; prioritization.approve (SP) activates; never the proposer. **Lifecycle:** proposed → active → superseded; proposed → withdrawn.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| version_no | integer | NOT NULL |  | `CHECK ((version_no >= 1))` |
+| status | text | NOT NULL | `'proposed'` | `CHECK ((status = ANY (ARRAY['proposed', 'active', 'superseded', 'withdrawn'])))` |
+| approval_basis | text | NULL |  | `CHECK (((approval_basis IS NULL) OR (approval_basis = ANY (ARRAY['source_default', 'approved']))))` |
+| rationale | text | NULL |  | `CHECK (((rationale IS NULL) OR ((char_length(rationale) >= 1) AND (char_length(rationale) <= 4000))))` |
+| approved_by | uuid | NULL |  | FK → app_user(id) |
+| approved_at | timestamp with time zone | NULL |  |  |
+| activated_at | timestamp with time zone | NULL |  |  |
+| superseded_at | timestamp with time zone | NULL |  |  |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `scoring_weight_set_activated_complete` (CHECK): `CHECK ((((status = ANY (ARRAY['active', 'superseded'])) = (activated_at IS NOT NULL)) AND ((activated_at IS NULL) = (approval_basis IS NULL))))`
+- `scoring_weight_set_approval_complete` (CHECK): `CHECK ((((approved_by IS NULL) = (approved_at IS NULL)) AND ((approval_basis IS DISTINCT FROM 'approved') OR (approved_by IS NOT NULL)) AND ((approval_basis IS DISTINCT FROM 'source_default') OR (approved_by IS NULL))))`
+- `scoring_weight_set_approver_not_proposer` (CHECK): `CHECK (((approved_by IS NULL) OR (approved_by <> created_by)))`
+- `scoring_weight_set_id_version_no_key` (UNIQUE): `UNIQUE (id, version_no)`
+- `scoring_weight_set_superseded_complete` (CHECK): `CHECK (((status = 'superseded') = (superseded_at IS NOT NULL)))`
+- `scoring_weight_set_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+- `scoring_weight_set_version_no_key` (UNIQUE): `UNIQUE (transformation_id, version_no)`
+
+**Indexes:**
+
+- `scoring_weight_set_one_active_key`: `UNIQUE (transformation_id) WHERE (status = 'active'::text)`
+
+**Triggers:**
+
+- `scoring_weight_set_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `scoring_weight_set_freeze`: BEFORE UPDATE FOR EACH ROW → `scoring_weight_set_freeze()`
+- `scoring_weight_set_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+- `scoring_weight_set_total`: CONSTRAINT AFTER INSERT DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `scoring_weight_set_total()`
+
+## scoring_weight
+
+- **Purpose:** One weight of a weight set (percent, two decimals); a set totals exactly 100.00 over 2–6 criteria (deferred check).
+- **Migration:** `0021_p3_prioritization.sql`. **API module:** `portfolio`. **Who writes:** with its weight set. **Lifecycle:** append-only.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| weight_set_id | uuid | NOT NULL |  |  |
+| criterion_code | text | NOT NULL |  | `CHECK ((criterion_code = ANY (ARRAY['strategic_fit', 'financial_value', 'customer_impact', 'feasibility', 'time_to_value', 'risk_compliance'])))` |
+| weight_percent | numeric(5,2) | NOT NULL |  | `CHECK (((weight_percent > (0)::numeric) AND (weight_percent <= (100)::numeric)))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `scoring_weight_criterion_key` (UNIQUE): `UNIQUE (weight_set_id, criterion_code)`
+- `scoring_weight_weight_set_id_fkey` (FK): `FOREIGN KEY (transformation_id, weight_set_id) REFERENCES scoring_weight_set(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+
+**Triggers:**
+
+- `scoring_weight_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `scoring_weight_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `scoring_weight_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+- `scoring_weight_total`: CONSTRAINT AFTER INSERT DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `scoring_weight_set_total()`
+
+## initiative_score
+
+- **Purpose:** Current 1–5 T06 score of an initiative on one criterion (NULL = cleared).
+- **Migration:** `0021_p3_prioritization.sql`. **API module:** `portfolio`. **Who writes:** prioritization.score (TL, WL, BO). **Lifecycle:** —.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| initiative_id | uuid | NOT NULL |  |  |
+| criterion_code | text | NOT NULL |  | `CHECK ((criterion_code = ANY (ARRAY['strategic_fit', 'financial_value', 'customer_impact', 'feasibility', 'time_to_value', 'risk_compliance'])))` |
+| score | smallint | NULL |  | `CHECK (((score IS NULL) OR ((score >= 1) AND (score <= 5))))` |
+| note | text | NULL |  | `CHECK (((note IS NULL) OR ((char_length(note) >= 1) AND (char_length(note) <= 2000))))` |
+| scored_by | uuid | NULL |  | FK → app_user(id) |
+| scored_at | timestamp with time zone | NULL |  |  |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `initiative_score_criterion_key` (UNIQUE): `UNIQUE (initiative_id, criterion_code)`
+- `initiative_score_initiative_id_fkey` (FK): `FOREIGN KEY (transformation_id, initiative_id) REFERENCES initiative(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `initiative_score_scored_complete` (CHECK): `CHECK ((((score IS NULL) = (scored_by IS NULL)) AND ((scored_by IS NULL) = (scored_at IS NULL))))`
+
+**Triggers:**
+
+- `initiative_score_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `initiative_score_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## initiative_score_result
+
+- **Purpose:** Calculated weighted score, pinned to the weight-set version it used; NULL = incomplete, never 0 (ADR-0022 §2).
+- **Migration:** `0021_p3_prioritization.sql`. **API module:** `portfolio`. **Who writes:** system (on score change / weight-set activation). **Lifecycle:** append-only.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| initiative_id | uuid | NOT NULL |  |  |
+| weight_set_id | uuid | NOT NULL |  |  |
+| weight_set_version_no | integer | NOT NULL |  | `CHECK ((weight_set_version_no >= 1))` |
+| weighted_score | numeric(7,4) | NULL |  | `CHECK (((weighted_score IS NULL) OR ((weighted_score >= (1)::numeric) AND (weighted_score <= (5)::numeric))))` |
+| completeness | text | NOT NULL |  | `CHECK ((completeness = ANY (ARRAY['complete', 'incomplete'])))` |
+| missing_criteria | text[] | NOT NULL | `'{}'::text[]` |  |
+| inputs | jsonb | NOT NULL |  | `CHECK ((jsonb_typeof(inputs) = 'object'))` |
+| cause | text | NOT NULL |  | `CHECK ((cause = ANY (ARRAY['initial', 'score_change', 'weight_set_activated'])))` |
+| computed_at | timestamp with time zone | NOT NULL | `now()` |  |
+| computed_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `initiative_score_result_complete` (CHECK): `CHECK ((((completeness = 'complete') = (weighted_score IS NOT NULL)) AND ((completeness = 'complete') = (cardinality(missing_criteria) = 0))))`
+- `initiative_score_result_initiative_id_fkey` (FK): `FOREIGN KEY (transformation_id, initiative_id) REFERENCES initiative(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `initiative_score_result_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+- `initiative_score_result_weight_set_fkey` (FK): `FOREIGN KEY (weight_set_id, weight_set_version_no) REFERENCES scoring_weight_set(id, version_no) ON UPDATE RESTRICT ON DELETE RESTRICT`
+
+**Indexes:**
+
+- `initiative_score_result_latest_idx`: `(initiative_id, weight_set_id, computed_at DESC, id DESC)`
+
+**Triggers:**
+
+- `initiative_score_result_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `initiative_score_result_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `initiative_score_result_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## ranking_snapshot
+
+- **Purpose:** A proposed ranking (advisory; never a selection) under one weight set (ADR-0022 §4).
+- **Migration:** `0021_p3_prioritization.sql`. **API module:** `portfolio`. **Who writes:** prioritization.edit (TL, TO). **Lifecycle:** current → superseded.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| snapshot_no | integer | NOT NULL |  | `CHECK ((snapshot_no >= 1))` |
+| weight_set_id | uuid | NOT NULL |  |  |
+| status | text | NOT NULL | `'current'` | `CHECK ((status = ANY (ARRAY['current', 'superseded'])))` |
+| note | text | NULL |  | `CHECK (((note IS NULL) OR ((char_length(note) >= 1) AND (char_length(note) <= 2000))))` |
+| proposed_by | uuid | NOT NULL |  | FK → app_user(id) |
+| proposed_at | timestamp with time zone | NOT NULL | `now()` |  |
+| superseded_at | timestamp with time zone | NULL |  |  |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `ranking_snapshot_no_key` (UNIQUE): `UNIQUE (transformation_id, snapshot_no)`
+- `ranking_snapshot_superseded_complete` (CHECK): `CHECK (((status = 'superseded') = (superseded_at IS NOT NULL)))`
+- `ranking_snapshot_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+- `ranking_snapshot_weight_set_id_fkey` (FK): `FOREIGN KEY (transformation_id, weight_set_id) REFERENCES scoring_weight_set(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+
+**Indexes:**
+
+- `ranking_snapshot_one_current_key`: `UNIQUE (transformation_id) WHERE (status = 'current'::text)`
+
+**Triggers:**
+
+- `ranking_snapshot_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `ranking_snapshot_freeze`: BEFORE UPDATE FOR EACH ROW → `ranking_snapshot_freeze()`
+- `ranking_snapshot_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## ranking_override
+
+- **Purpose:** A manual rank with a mandatory reason and an approver who is not the proposer (REQ-S09-005).
+- **Migration:** `0021_p3_prioritization.sql`. **API module:** `portfolio`. **Who writes:** prioritization.edit proposes; prioritization.approve (SP) decides. **Lifecycle:** proposed → approved | rejected; approved → revoked.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| initiative_id | uuid | NOT NULL |  |  |
+| override_rank | integer | NOT NULL |  | `CHECK ((override_rank >= 1))` |
+| reason | text | NOT NULL |  | `CHECK (((char_length(reason) >= 3) AND (char_length(reason) <= 2000)))` |
+| status | text | NOT NULL | `'proposed'` | `CHECK ((status = ANY (ARRAY['proposed', 'approved', 'rejected', 'revoked'])))` |
+| proposed_by | uuid | NOT NULL |  | FK → app_user(id) |
+| decided_by | uuid | NULL |  | FK → app_user(id) |
+| decided_at | timestamp with time zone | NULL |  |  |
+| decision_note | text | NULL |  | `CHECK (((decision_note IS NULL) OR ((char_length(decision_note) >= 1) AND (char_length(decision_note) <= 2000))))` |
+| revoked_by | uuid | NULL |  | FK → app_user(id) |
+| revoked_at | timestamp with time zone | NULL |  |  |
+| revoke_reason | text | NULL |  | `CHECK (((revoke_reason IS NULL) OR ((char_length(revoke_reason) >= 3) AND (char_length(revoke_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `ranking_override_approver_not_proposer` (CHECK): `CHECK (((decided_by IS NULL) OR (decided_by <> proposed_by)))`
+- `ranking_override_decided_complete` (CHECK): `CHECK ((((status = ANY (ARRAY['approved', 'rejected', 'revoked'])) = (decided_at IS NOT NULL)) AND ((decided_at IS NULL) = (decided_by IS NULL))))`
+- `ranking_override_initiative_id_fkey` (FK): `FOREIGN KEY (transformation_id, initiative_id) REFERENCES initiative(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `ranking_override_revoked_complete` (CHECK): `CHECK ((((status = 'revoked') = (revoked_at IS NOT NULL)) AND ((revoked_at IS NULL) = (revoked_by IS NULL)) AND ((revoked_at IS NULL) = (revoke_reason IS NULL))))`
+- `ranking_override_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `ranking_override_one_live_key`: `UNIQUE (initiative_id) WHERE (status = ANY (ARRAY['proposed'::text, 'approved'::text]))`
+
+**Triggers:**
+
+- `ranking_override_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `ranking_override_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## ranking_entry
+
+- **Purpose:** One initiative in one ranking snapshot, with its rank-change causes (new, score, weight, override, relative, removed).
+- **Migration:** `0021_p3_prioritization.sql`. **API module:** `portfolio`. **Who writes:** with its snapshot. **Lifecycle:** append-only.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| snapshot_id | uuid | NOT NULL |  |  |
+| initiative_id | uuid | NOT NULL |  |  |
+| rank | integer | NULL |  | `CHECK (((rank IS NULL) OR (rank >= 1)))` |
+| weighted_score | numeric(7,4) | NULL |  | `CHECK (((weighted_score IS NULL) OR ((weighted_score >= (1)::numeric) AND (weighted_score <= (5)::numeric))))` |
+| completeness | text | NOT NULL |  | `CHECK ((completeness = ANY (ARRAY['complete', 'incomplete', 'removed'])))` |
+| score_result_id | uuid | NULL |  |  |
+| previous_rank | integer | NULL |  | `CHECK (((previous_rank IS NULL) OR (previous_rank >= 1)))` |
+| causes | text[] | NOT NULL | `'{}'::text[]` | `CHECK ((causes <@ ARRAY['new', 'score', 'weight', 'override', 'relative', 'removed']))` |
+| cause_detail | jsonb | NOT NULL | `'{}'::jsonb` | `CHECK ((jsonb_typeof(cause_detail) = 'object'))` |
+| override_id | uuid | NULL |  |  |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `ranking_entry_initiative_id_fkey` (FK): `FOREIGN KEY (transformation_id, initiative_id) REFERENCES initiative(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `ranking_entry_initiative_key` (UNIQUE): `UNIQUE (snapshot_id, initiative_id)`
+- `ranking_entry_override_id_fkey` (FK): `FOREIGN KEY (transformation_id, override_id) REFERENCES ranking_override(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `ranking_entry_rank_complete` (CHECK): `CHECK ((((rank IS NOT NULL) = (completeness = 'complete')) AND ((completeness = 'complete') = (weighted_score IS NOT NULL))))`
+- `ranking_entry_score_result_id_fkey` (FK): `FOREIGN KEY (transformation_id, score_result_id) REFERENCES initiative_score_result(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `ranking_entry_snapshot_id_fkey` (FK): `FOREIGN KEY (transformation_id, snapshot_id) REFERENCES ranking_snapshot(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+
+**Indexes:**
+
+- `ranking_entry_initiative_idx`: `(initiative_id, created_at DESC)`
+- `ranking_entry_rank_key`: `UNIQUE (snapshot_id, rank) WHERE (rank IS NOT NULL)`
+
+**Triggers:**
+
+- `ranking_entry_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `ranking_entry_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `ranking_entry_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## dependency_type
+
+- **Purpose:** T08 dependency types: Decision/Tech/Data/Vendor (B0081) and Other are system rows that cannot be deleted or retired; admins add types (REQ-PB-052).
+- **Migration:** `0022_p3_dependency_capacity_funding.sql`. **API module:** `workflows`. **Who writes:** seed; dependency_type.configure (ADM_METHOD). **Lifecycle:** active → retired (custom only); never deleted.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| code | text | NOT NULL |  | `CHECK ((code ~ '^[a-z][a-z0-9_]{1,47}$'))`; UNIQUE (`dependency_type_code_key`) |
+| label_en | text | NOT NULL |  | `CHECK (((char_length(label_en) >= 1) AND (char_length(label_en) <= 100)))` |
+| label_ar | text | NOT NULL |  | `CHECK (((char_length(label_ar) >= 1) AND (char_length(label_ar) <= 100)))` |
+| is_system | boolean | NOT NULL | `false` |  |
+| source_ref | text | NULL |  | `CHECK (((source_ref IS NULL) OR ((char_length(source_ref) >= 1) AND (char_length(source_ref) <= 50))))` |
+| ordinal | smallint | NOT NULL |  | `CHECK (((ordinal >= 1) AND (ordinal <= 999)))` |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'retired'])))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `dependency_type_system_active` (CHECK): `CHECK (((NOT is_system) OR (status = 'active')))`
+
+**Triggers:**
+
+- `dependency_type_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `dependency_type_no_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `dependency_type_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+- `dependency_type_system_guard`: BEFORE DELETE OR UPDATE FOR EACH ROW → `dependency_type_system_guard()`
+
+## resource_role
+
+- **Purpose:** Resourcing role of one transformation (not an access role).
+- **Migration:** `0022_p3_dependency_capacity_funding.sql`. **API module:** `portfolio`. **Who writes:** capacity.edit (TL, WL, TO). **Lifecycle:** active → archived.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| code | text | NOT NULL |  | `CHECK ((code ~ '^[a-z][a-z0-9_]{0,47}$'))` |
+| label_en | text | NOT NULL |  | `CHECK (((char_length(label_en) >= 1) AND (char_length(label_en) <= 200)))` |
+| label_ar | text | NOT NULL |  | `CHECK (((char_length(label_ar) >= 1) AND (char_length(label_ar) <= 200)))` |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'archived'])))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `resource_role_code_key` (UNIQUE): `UNIQUE (transformation_id, code)`
+- `resource_role_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Triggers:**
+
+- `resource_role_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `resource_role_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## capacity
+
+- **Purpose:** Available FTE of one resourcing role in one month (REQ-PB-059).
+- **Migration:** `0022_p3_dependency_capacity_funding.sql`. **API module:** `portfolio`. **Who writes:** capacity.edit. **Lifecycle:** active → archived.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| resource_role_id | uuid | NOT NULL |  |  |
+| period_month | date | NOT NULL |  | `CHECK ((EXTRACT(day FROM period_month) = (1)::numeric))` |
+| available_fte | numeric(6,2) | NOT NULL |  | `CHECK ((available_fte >= (0)::numeric))` |
+| owner_user_id | uuid | NULL |  | FK → app_user(id) |
+| note | text | NULL |  | `CHECK (((note IS NULL) OR ((char_length(note) >= 1) AND (char_length(note) <= 2000))))` |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'archived'])))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `capacity_resource_role_id_fkey` (FK): `FOREIGN KEY (transformation_id, resource_role_id) REFERENCES resource_role(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+
+**Indexes:**
+
+- `capacity_role_month_active_key`: `UNIQUE (resource_role_id, period_month) WHERE (status = 'active'::text)`
+- `capacity_transformation_month_idx`: `(transformation_id, period_month)`
+
+**Triggers:**
+
+- `capacity_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `capacity_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## resource_demand
+
+- **Purpose:** FTE an initiative needs from a role in a month; `committed` is the capacity commitment G4 requires (ADR-0023 §6).
+- **Migration:** `0022_p3_dependency_capacity_funding.sql`. **API module:** `portfolio`. **Who writes:** capacity.edit plans; capacity.commit (TO, BO) commits/releases. **Lifecycle:** planned → committed → released; → archived.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| initiative_id | uuid | NOT NULL |  |  |
+| resource_role_id | uuid | NOT NULL |  |  |
+| period_month | date | NOT NULL |  | `CHECK ((EXTRACT(day FROM period_month) = (1)::numeric))` |
+| demand_fte | numeric(6,2) | NOT NULL |  | `CHECK ((demand_fte > (0)::numeric))` |
+| owner_user_id | uuid | NULL |  | FK → app_user(id) |
+| note | text | NULL |  | `CHECK (((note IS NULL) OR ((char_length(note) >= 1) AND (char_length(note) <= 2000))))` |
+| status | text | NOT NULL | `'planned'` | `CHECK ((status = ANY (ARRAY['planned', 'committed', 'released', 'archived'])))` |
+| committed_by | uuid | NULL |  | FK → app_user(id) |
+| committed_at | timestamp with time zone | NULL |  |  |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `resource_demand_committed_complete` (CHECK): `CHECK ((((committed_at IS NULL) = (committed_by IS NULL)) AND ((status <> 'committed') OR (committed_at IS NOT NULL))))`
+- `resource_demand_initiative_id_fkey` (FK): `FOREIGN KEY (transformation_id, initiative_id) REFERENCES initiative(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `resource_demand_resource_role_id_fkey` (FK): `FOREIGN KEY (transformation_id, resource_role_id) REFERENCES resource_role(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+
+**Indexes:**
+
+- `resource_demand_initiative_idx`: `(initiative_id)`
+- `resource_demand_role_month_idx`: `(resource_role_id, period_month) WHERE (status = ANY (ARRAY['planned'::text, 'committed'::text]))`
+
+**Triggers:**
+
+- `resource_demand_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `resource_demand_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## portfolio_selection
+
+- **Purpose:** Approved portfolio selection decision (business approval, REQ-S09-003); the latest row per initiative decides.
+- **Migration:** `0022_p3_dependency_capacity_funding.sql`. **API module:** `portfolio`. **Who writes:** portfolio.select (SP). **Lifecycle:** append-only.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| initiative_id | uuid | NOT NULL |  |  |
+| action | text | NOT NULL |  | `CHECK ((action = ANY (ARRAY['selected', 'deselected'])))` |
+| rationale | text | NOT NULL |  | `CHECK (((char_length(rationale) >= 3) AND (char_length(rationale) <= 4000)))` |
+| ranking_snapshot_id | uuid | NULL |  |  |
+| decided_by | uuid | NOT NULL |  | FK → app_user(id) |
+| on_behalf_of_user_id | uuid | NULL |  | FK → app_user(id) |
+| decided_at | timestamp with time zone | NOT NULL | `now()` |  |
+
+**Table constraints:**
+
+- `portfolio_selection_initiative_id_fkey` (FK): `FOREIGN KEY (transformation_id, initiative_id) REFERENCES initiative(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `portfolio_selection_ranking_snapshot_id_fkey` (FK): `FOREIGN KEY (transformation_id, ranking_snapshot_id) REFERENCES ranking_snapshot(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `portfolio_selection_selected_from_ranking` (CHECK): `CHECK (((action <> 'selected') OR (ranking_snapshot_id IS NOT NULL)))`
+
+**Indexes:**
+
+- `portfolio_selection_initiative_idx`: `(initiative_id, decided_at DESC, id DESC)`
+
+**Triggers:**
+
+- `portfolio_selection_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `portfolio_selection_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `portfolio_selection_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `portfolio_selection_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## funding_decision
+
+- **Purpose:** Recorded human funding decision (business approval) for one initiative, specialising a canonical `decision` row of kind `executive` (ADR-0023 §7); latest row decides.
+- **Migration:** `0022_p3_dependency_capacity_funding.sql (business_case FK added by 0023)`. **API module:** `portfolio`. **Who writes:** funding.approve (SP, FIN). **Lifecycle:** append-only.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| initiative_id | uuid | NOT NULL |  |  |
+| decision_id | uuid | NOT NULL |  | UNIQUE (`funding_decision_decision_id_key`) |
+| decision_kind | text | NOT NULL | `'executive'` | `CHECK ((decision_kind = 'executive'))` |
+| outcome | text | NOT NULL |  | `CHECK ((outcome = ANY (ARRAY['approved', 'rejected', 'deferred', 'revoked'])))` |
+| amount | numeric(20,4) | NULL |  | `CHECK (((amount IS NULL) OR (amount >= (0)::numeric)))` |
+| currency | character(3) | NOT NULL |  | `CHECK ((currency ~ '^[A-Z]{3}$'))` |
+| funding_source | text | NULL |  | `CHECK (((funding_source IS NULL) OR ((char_length(funding_source) >= 1) AND (char_length(funding_source) <= 300))))` |
+| conditions | text | NULL |  | `CHECK (((conditions IS NULL) OR ((char_length(conditions) >= 1) AND (char_length(conditions) <= 4000))))` |
+| rationale | text | NOT NULL |  | `CHECK (((char_length(rationale) >= 3) AND (char_length(rationale) <= 8000)))` |
+| business_case_id | uuid | NULL |  |  |
+| approver_role_code | text | NOT NULL |  | FK → role(code) |
+| decided_by | uuid | NOT NULL |  | FK → app_user(id) |
+| on_behalf_of_user_id | uuid | NULL |  | FK → app_user(id) |
+| decided_at | timestamp with time zone | NOT NULL | `now()` |  |
+
+**Table constraints:**
+
+- `funding_decision_business_case_id_fkey` (FK): `FOREIGN KEY (transformation_id, business_case_id) REFERENCES business_case(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `funding_decision_decision_fkey` (FK): `FOREIGN KEY (decision_id, decision_kind) REFERENCES decision(id, kind) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `funding_decision_initiative_id_fkey` (FK): `FOREIGN KEY (transformation_id, initiative_id) REFERENCES initiative(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `funding_decision_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `funding_decision_initiative_idx`: `(initiative_id, decided_at DESC, id DESC)`
+
+**Triggers:**
+
+- `funding_decision_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `funding_decision_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `funding_decision_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `funding_decision_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## benefit_formula
+
+- **Purpose:** T09 Benefit Formula row (B0087): benefit, baseline driver, change assumption, formula (= current version), ramp, confidence H/M/L.
+- **Migration:** `0023_p3_business_case_formula.sql`. **API module:** `kpi`. **Who writes:** benefit_formula.edit (TL, BO, KDS). **Lifecycle:** active → archived.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| code | text | NOT NULL |  | `CHECK ((code ~ '^BF-[0-9]{2,6}$'))` |
+| benefit_name | text | NOT NULL |  | `CHECK (((char_length(benefit_name) >= 1) AND (char_length(benefit_name) <= 300)))` |
+| baseline_driver | text | NULL |  | `CHECK (((baseline_driver IS NULL) OR ((char_length(baseline_driver) >= 1) AND (char_length(baseline_driver) <= 1000))))` |
+| change_assumption | text | NULL |  | `CHECK (((change_assumption IS NULL) OR ((char_length(change_assumption) >= 1) AND (char_length(change_assumption) <= 1000))))` |
+| ramp | text | NULL |  | `CHECK (((ramp IS NULL) OR ((char_length(ramp) >= 1) AND (char_length(ramp) <= 100))))` |
+| confidence | character(1) | NULL |  | `CHECK (((confidence IS NULL) OR (confidence = ANY (ARRAY['H'::bpchar, 'M'::bpchar, 'L'::bpchar]))))` |
+| owner_user_id | uuid | NULL |  | FK → app_user(id) |
+| current_version_no | integer | NULL |  | `CHECK (((current_version_no IS NULL) OR (current_version_no >= 1)))` |
+| is_illustrative | boolean | NOT NULL | `false` |  |
+| example_code | text | NULL |  | `CHECK (((example_code IS NULL) OR (example_code = ANY (ARRAY['revenue_uplift', 'cost_reduction']))))` |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'archived'])))` |
+| archived_at | timestamp with time zone | NULL |  |  |
+| archived_by | uuid | NULL |  | FK → app_user(id) |
+| archive_reason | text | NULL |  | `CHECK (((archive_reason IS NULL) OR ((char_length(archive_reason) >= 3) AND (char_length(archive_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `benefit_formula_archive_complete` (CHECK): `CHECK ((((status = 'archived') = (archived_at IS NOT NULL)) AND ((archived_at IS NULL) = (archived_by IS NULL)) AND ((archived_at IS NULL) = (archive_reason IS NULL))))`
+- `benefit_formula_code_key` (UNIQUE): `UNIQUE (transformation_id, code)`
+- `benefit_formula_current_version_fkey` (FK): `FOREIGN KEY (id, current_version_no) REFERENCES benefit_formula_version(formula_id, version_no) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `benefit_formula_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `benefit_formula_transformation_updated_idx`: `(transformation_id, updated_at DESC, id DESC)`
+
+**Triggers:**
+
+- `benefit_formula_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `benefit_formula_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## benefit_formula_version
+
+- **Purpose:** Immutable restricted-language expression (ADR-0024 §6) with its Finance validation (validator ≠ author).
+- **Migration:** `0023_p3_business_case_formula.sql`. **API module:** `kpi`. **Who writes:** benefit_formula.edit creates; finance.validate (FIN) validates. **Lifecycle:** validation unvalidated → validated | rejected (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| formula_id | uuid | NOT NULL |  |  |
+| version_no | integer | NOT NULL |  | `CHECK ((version_no >= 1))` |
+| expression | text | NOT NULL |  | `CHECK (((char_length(expression) >= 1) AND (char_length(expression) <= 2000)))` |
+| expression_sha256 | character(64) | NOT NULL |  | `CHECK ((expression_sha256 ~ '^[0-9a-f]{64}$'))` |
+| result_kind | text | NOT NULL |  | `CHECK ((result_kind = ANY (ARRAY['fraction', 'fraction_delta', 'percent_change', 'count', 'currency', 'quantity', 'number'])))` |
+| result_unit | text | NULL |  | `CHECK (((result_unit IS NULL) OR ((char_length(result_unit) >= 1) AND (char_length(result_unit) <= 50))))` |
+| result_currency | character(3) | NULL |  | `CHECK (((result_currency IS NULL) OR (result_currency ~ '^[A-Z]{3}$')))` |
+| result_period | text | NOT NULL |  | `CHECK ((result_period = ANY (ARRAY['none', 'month', 'quarter', 'year'])))` |
+| preview_result | numeric(24,6) | NULL |  |  |
+| engine_version | text | NOT NULL |  | `CHECK (((char_length(engine_version) >= 1) AND (char_length(engine_version) <= 50)))` |
+| change_note | text | NULL |  | `CHECK (((change_note IS NULL) OR ((char_length(change_note) >= 1) AND (char_length(change_note) <= 2000))))` |
+| validation_status | text | NOT NULL | `'unvalidated'` | `CHECK ((validation_status = ANY (ARRAY['unvalidated', 'validated', 'rejected'])))` |
+| validated_by | uuid | NULL |  | FK → app_user(id) |
+| validated_at | timestamp with time zone | NULL |  |  |
+| validation_note | text | NULL |  | `CHECK (((validation_note IS NULL) OR ((char_length(validation_note) >= 1) AND (char_length(validation_note) <= 2000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `benefit_formula_version_currency_kind` (CHECK): `CHECK (((result_kind = 'currency') = (result_currency IS NOT NULL)))`
+- `benefit_formula_version_formula_id_fkey` (FK): `FOREIGN KEY (transformation_id, formula_id) REFERENCES benefit_formula(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `benefit_formula_version_no_key` (UNIQUE): `UNIQUE (formula_id, version_no)`
+- `benefit_formula_version_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+- `benefit_formula_version_validation_complete` (CHECK): `CHECK ((((validation_status = 'unvalidated') = (validated_by IS NULL)) AND ((validated_by IS NULL) = (validated_at IS NULL))))`
+- `benefit_formula_version_validator_not_author` (CHECK): `CHECK (((validated_by IS NULL) OR (validated_by <> created_by)))`
+
+**Triggers:**
+
+- `benefit_formula_version_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `benefit_formula_version_freeze`: BEFORE UPDATE FOR EACH ROW → `benefit_formula_version_freeze()`
+- `benefit_formula_version_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## benefit_formula_variable
+
+- **Purpose:** Typed variable of one formula version: kind (fraction, fraction_delta, percent_change, count, currency, quantity, number), unit, currency, period.
+- **Migration:** `0023_p3_business_case_formula.sql`. **API module:** `kpi`. **Who writes:** with its version. **Lifecycle:** append-only.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| formula_version_id | uuid | NOT NULL |  |  |
+| ordinal | smallint | NOT NULL |  | `CHECK (((ordinal >= 1) AND (ordinal <= 30)))` |
+| name | text | NOT NULL |  | `CHECK ((name ~ '^[a-z][a-z0-9_]{0,47}$'))` |
+| kind | text | NOT NULL |  | `CHECK ((kind = ANY (ARRAY['fraction', 'fraction_delta', 'percent_change', 'count', 'currency', 'quantity', 'number'])))` |
+| unit | text | NULL |  | `CHECK (((unit IS NULL) OR ((char_length(unit) >= 1) AND (char_length(unit) <= 50))))` |
+| currency | character(3) | NULL |  | `CHECK (((currency IS NULL) OR (currency ~ '^[A-Z]{3}$')))` |
+| period | text | NOT NULL | `'none'` | `CHECK ((period = ANY (ARRAY['none', 'month', 'quarter', 'year'])))` |
+| value | numeric(24,6) | NULL |  |  |
+| description | text | NULL |  | `CHECK (((description IS NULL) OR ((char_length(description) >= 1) AND (char_length(description) <= 1000))))` |
+| source | text | NULL |  | `CHECK (((source IS NULL) OR ((char_length(source) >= 1) AND (char_length(source) <= 500))))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `benefit_formula_variable_currency_kind` (CHECK): `CHECK (((kind = 'currency') = (currency IS NOT NULL)))`
+- `benefit_formula_variable_name_key` (UNIQUE): `UNIQUE (formula_version_id, name)`
+- `benefit_formula_variable_ordinal_key` (UNIQUE): `UNIQUE (formula_version_id, ordinal)`
+- `benefit_formula_variable_reserved_name` (CHECK): `CHECK ((name <> ALL (ARRAY['to_period', 'min', 'max', 'abs', 'month', 'quarter', 'year'])))`
+- `benefit_formula_variable_version_id_fkey` (FK): `FOREIGN KEY (transformation_id, formula_version_id) REFERENCES benefit_formula_version(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+
+**Triggers:**
+
+- `benefit_formula_variable_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `benefit_formula_variable_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `benefit_formula_variable_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## benefit_calculation
+
+- **Purpose:** Calculation lineage: inputs, formula version, assumptions, period, result (NULL = Unknown), engine version.
+- **Migration:** `0023_p3_business_case_formula.sql`. **API module:** `kpi`. **Who writes:** system (preview/calculation). **Lifecycle:** append-only.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| formula_version_id | uuid | NOT NULL |  |  |
+| inputs | jsonb | NOT NULL |  | `CHECK ((jsonb_typeof(inputs) = 'object'))` |
+| assumptions | text | NULL |  | `CHECK (((assumptions IS NULL) OR ((char_length(assumptions) >= 1) AND (char_length(assumptions) <= 4000))))` |
+| period_start | date | NULL |  |  |
+| period_end | date | NULL |  |  |
+| outcome | text | NOT NULL |  | `CHECK ((outcome = ANY (ARRAY['ok', 'error'])))` |
+| result | numeric(24,6) | NULL |  |  |
+| result_kind | text | NOT NULL |  | `CHECK ((result_kind = ANY (ARRAY['fraction', 'fraction_delta', 'percent_change', 'count', 'currency', 'quantity', 'number'])))` |
+| result_unit | text | NULL |  | `CHECK (((result_unit IS NULL) OR ((char_length(result_unit) >= 1) AND (char_length(result_unit) <= 50))))` |
+| result_currency | character(3) | NULL |  | `CHECK (((result_currency IS NULL) OR (result_currency ~ '^[A-Z]{3}$')))` |
+| result_period | text | NOT NULL |  | `CHECK ((result_period = ANY (ARRAY['none', 'month', 'quarter', 'year'])))` |
+| error_code | text | NULL |  | `CHECK (((error_code IS NULL) OR (error_code ~ '^formula\.[a-z_]{1,48}$')))` |
+| rounded | boolean | NOT NULL | `false` |  |
+| engine_version | text | NOT NULL |  | `CHECK (((char_length(engine_version) >= 1) AND (char_length(engine_version) <= 50)))` |
+| computed_at | timestamp with time zone | NOT NULL | `now()` |  |
+| computed_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `benefit_calculation_outcome_shape` (CHECK): `CHECK ((((outcome = 'error') = (error_code IS NOT NULL)) AND ((outcome = 'ok') OR (result IS NULL))))`
+- `benefit_calculation_period_range` (CHECK): `CHECK (((period_end IS NULL) OR (period_start IS NULL) OR (period_end >= period_start)))`
+- `benefit_calculation_version_id_fkey` (FK): `FOREIGN KEY (transformation_id, formula_version_id) REFERENCES benefit_formula_version(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+
+**Indexes:**
+
+- `benefit_calculation_version_idx`: `(formula_version_id, computed_at DESC)`
+
+**Triggers:**
+
+- `benefit_calculation_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `benefit_calculation_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `benefit_calculation_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## business_case
+
+- **Purpose:** Transformation-level business case (ten B0085 sections) or a lighter initiative case linked to it (ADR-0024 §1, §3), with the Finance baseline validation.
+- **Migration:** `0023_p3_business_case_formula.sql`. **API module:** `kpi`. **Who writes:** business_case.edit (TL, WL record-level, TO); finance.validate (FIN) validates the baseline. **Lifecycle:** draft → archived.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| code | text | NOT NULL |  | `CHECK ((code ~ '^BC-[0-9]{2,6}$'))` |
+| level | text | NOT NULL |  | `CHECK ((level = ANY (ARRAY['transformation', 'initiative'])))` |
+| initiative_id | uuid | NULL |  |  |
+| parent_case_id | uuid | NULL |  |  |
+| title | text | NOT NULL |  | `CHECK (((char_length(title) >= 1) AND (char_length(title) <= 300)))` |
+| currency | character(3) | NOT NULL |  | `CHECK ((currency ~ '^[A-Z]{3}$'))` |
+| strategic_rationale | text | NULL |  | `CHECK (((strategic_rationale IS NULL) OR ((char_length(strategic_rationale) >= 1) AND (char_length(strategic_rationale) <= 20000))))` |
+| baseline_summary | text | NULL |  | `CHECK (((baseline_summary IS NULL) OR ((char_length(baseline_summary) >= 1) AND (char_length(baseline_summary) <= 20000))))` |
+| value_pools_summary | text | NULL |  | `CHECK (((value_pools_summary IS NULL) OR ((char_length(value_pools_summary) >= 1) AND (char_length(value_pools_summary) <= 20000))))` |
+| interventions_summary | text | NULL |  | `CHECK (((interventions_summary IS NULL) OR ((char_length(interventions_summary) >= 1) AND (char_length(interventions_summary) <= 20000))))` |
+| investment_summary | text | NULL |  | `CHECK (((investment_summary IS NULL) OR ((char_length(investment_summary) >= 1) AND (char_length(investment_summary) <= 20000))))` |
+| benefits_summary | text | NULL |  | `CHECK (((benefits_summary IS NULL) OR ((char_length(benefits_summary) >= 1) AND (char_length(benefits_summary) <= 20000))))` |
+| benefit_ramp | text | NULL |  | `CHECK (((benefit_ramp IS NULL) OR ((char_length(benefit_ramp) >= 1) AND (char_length(benefit_ramp) <= 4000))))` |
+| recurrence_summary | text | NULL |  | `CHECK (((recurrence_summary IS NULL) OR ((char_length(recurrence_summary) >= 1) AND (char_length(recurrence_summary) <= 4000))))` |
+| implementation_horizon | text | NULL |  | `CHECK (((implementation_horizon IS NULL) OR ((char_length(implementation_horizon) >= 1) AND (char_length(implementation_horizon) <= 4000))))` |
+| key_assumptions | text | NULL |  | `CHECK (((key_assumptions IS NULL) OR ((char_length(key_assumptions) >= 1) AND (char_length(key_assumptions) <= 20000))))` |
+| downside_case | text | NULL |  | `CHECK (((downside_case IS NULL) OR ((char_length(downside_case) >= 1) AND (char_length(downside_case) <= 8000))))` |
+| upside_case | text | NULL |  | `CHECK (((upside_case IS NULL) OR ((char_length(upside_case) >= 1) AND (char_length(upside_case) <= 8000))))` |
+| benefit_owner_user_id | uuid | NULL |  | FK → app_user(id) |
+| initiative_owner_user_id | uuid | NULL |  | FK → app_user(id) |
+| finance_validator_user_id | uuid | NULL |  | FK → app_user(id) |
+| decision_ask_types | text[] | NOT NULL | `'{}'::text[]` | `CHECK ((decision_ask_types <@ ARRAY['funding', 'policy', 'resource', 'prioritization']))` |
+| decision_ask_text | text | NULL |  | `CHECK (((decision_ask_text IS NULL) OR ((char_length(decision_ask_text) >= 1) AND (char_length(decision_ask_text) <= 8000))))` |
+| baseline_validation_status | text | NOT NULL | `'unvalidated'` | `CHECK ((baseline_validation_status = ANY (ARRAY['unvalidated', 'validated', 'rejected'])))` |
+| baseline_validated_by | uuid | NULL |  | FK → app_user(id) |
+| baseline_validated_at | timestamp with time zone | NULL |  |  |
+| baseline_validation_note | text | NULL |  | `CHECK (((baseline_validation_note IS NULL) OR ((char_length(baseline_validation_note) >= 1) AND (char_length(baseline_validation_note) <= 2000))))` |
+| baseline_validated_sha256 | character(64) | NULL |  | `CHECK (((baseline_validated_sha256 IS NULL) OR (baseline_validated_sha256 ~ '^[0-9a-f]{64}$')))` |
+| status | text | NOT NULL | `'draft'` | `CHECK ((status = ANY (ARRAY['draft', 'archived'])))` |
+| archived_at | timestamp with time zone | NULL |  |  |
+| archived_by | uuid | NULL |  | FK → app_user(id) |
+| archive_reason | text | NULL |  | `CHECK (((archive_reason IS NULL) OR ((char_length(archive_reason) >= 3) AND (char_length(archive_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `business_case_archive_complete` (CHECK): `CHECK ((((status = 'archived') = (archived_at IS NOT NULL)) AND ((archived_at IS NULL) = (archived_by IS NULL)) AND ((archived_at IS NULL) = (archive_reason IS NULL))))`
+- `business_case_baseline_validation_complete` (CHECK): `CHECK ((((baseline_validation_status = 'unvalidated') = (baseline_validated_by IS NULL)) AND ((baseline_validated_by IS NULL) = (baseline_validated_at IS NULL)) AND ((baseline_validation_status = 'validated') = (baseline_validated_sha256 IS NOT NULL))))`
+- `business_case_code_key` (UNIQUE): `UNIQUE (transformation_id, code)`
+- `business_case_initiative_id_fkey` (FK): `FOREIGN KEY (transformation_id, initiative_id) REFERENCES initiative(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `business_case_level_shape` (CHECK): `CHECK ((((level = 'transformation') AND (initiative_id IS NULL) AND (parent_case_id IS NULL)) OR ((level = 'initiative') AND (initiative_id IS NOT NULL) AND (parent_case_id IS NOT NULL))))`
+- `business_case_parent_case_id_fkey` (FK): `FOREIGN KEY (transformation_id, parent_case_id) REFERENCES business_case(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `business_case_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+- `business_case_validator_not_author` (CHECK): `CHECK (((baseline_validated_by IS NULL) OR (baseline_validated_by <> created_by)))`
+
+**Indexes:**
+
+- `business_case_one_initiative_case_key`: `UNIQUE (initiative_id) WHERE ((level = 'initiative'::text) AND (status <> 'archived'::text))`
+- `business_case_one_transformation_case_key`: `UNIQUE (transformation_id) WHERE ((level = 'transformation'::text) AND (status <> 'archived'::text))`
+- `business_case_parent_idx`: `(parent_case_id) WHERE (parent_case_id IS NOT NULL)`
+
+**Triggers:**
+
+- `business_case_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `business_case_parent_is_transformation`: BEFORE INSERT OR UPDATE OF parent_case_id FOR EACH ROW → `business_case_parent_is_transformation()`
+- `business_case_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## business_case_line
+
+- **Purpose:** Investment or benefit line with exactly one class and a value basis; one T09 formula backs at most one active line (ADR-0024 §2).
+- **Migration:** `0023_p3_business_case_formula.sql`. **API module:** `kpi`. **Who writes:** business_case.edit. **Lifecycle:** active → archived.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| business_case_id | uuid | NOT NULL |  |  |
+| line_kind | text | NOT NULL |  | `CHECK ((line_kind = ANY (ARRAY['investment', 'benefit'])))` |
+| investment_class | text | NULL |  | `CHECK (((investment_class IS NULL) OR (investment_class = ANY (ARRAY['capex', 'opex', 'internal_fte', 'vendor_cost', 'opportunity_cost']))))` |
+| benefit_class | text | NULL |  | `CHECK (((benefit_class IS NULL) OR (benefit_class = ANY (ARRAY['revenue', 'cost_reduction', 'cost_avoidance', 'working_capital', 'strategic_non_financial']))))` |
+| value_basis | text | NOT NULL |  | `CHECK ((value_basis = ANY (ARRAY['revenue_uplift', 'margin_uplift', 'cash_saving', 'avoided_cost', 'working_capital_release', 'non_financial', 'cash', 'non_cash'])))` |
+| title | text | NOT NULL |  | `CHECK (((char_length(title) >= 1) AND (char_length(title) <= 300)))` |
+| description | text | NULL |  | `CHECK (((description IS NULL) OR ((char_length(description) >= 1) AND (char_length(description) <= 4000))))` |
+| amount | numeric(20,4) | NULL |  | `CHECK (((amount IS NULL) OR (amount >= (0)::numeric)))` |
+| currency | character(3) | NOT NULL |  | `CHECK ((currency ~ '^[A-Z]{3}$'))` |
+| fte | numeric(6,2) | NULL |  | `CHECK (((fte IS NULL) OR (fte > (0)::numeric)))` |
+| period_start | date | NULL |  |  |
+| period_end | date | NULL |  |  |
+| recurrence | text | NULL |  | `CHECK (((recurrence IS NULL) OR (recurrence = ANY (ARRAY['one_off', 'recurring']))))` |
+| benefit_formula_id | uuid | NULL |  |  |
+| owner_user_id | uuid | NULL |  | FK → app_user(id) |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'archived'])))` |
+| archived_at | timestamp with time zone | NULL |  |  |
+| archived_by | uuid | NULL |  | FK → app_user(id) |
+| archive_reason | text | NULL |  | `CHECK (((archive_reason IS NULL) OR ((char_length(archive_reason) >= 3) AND (char_length(archive_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `business_case_line_archive_complete` (CHECK): `CHECK ((((status = 'archived') = (archived_at IS NOT NULL)) AND ((archived_at IS NULL) = (archived_by IS NULL)) AND ((archived_at IS NULL) = (archive_reason IS NULL))))`
+- `business_case_line_case_id_fkey` (FK): `FOREIGN KEY (transformation_id, business_case_id) REFERENCES business_case(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `business_case_line_formula_id_fkey` (FK): `FOREIGN KEY (transformation_id, benefit_formula_id) REFERENCES benefit_formula(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `business_case_line_formula_only_benefit` (CHECK): `CHECK (((benefit_formula_id IS NULL) OR (line_kind = 'benefit')))`
+- `business_case_line_fte_only_internal` (CHECK): `CHECK (((fte IS NULL) OR (investment_class = 'internal_fte')))`
+- `business_case_line_non_financial_unmonetised` (CHECK): `CHECK (((benefit_class IS DISTINCT FROM 'strategic_non_financial') OR (amount IS NULL)))`
+- `business_case_line_one_class` (CHECK): `CHECK (((num_nonnulls(investment_class, benefit_class) = 1) AND ((line_kind = 'investment') = (investment_class IS NOT NULL))))`
+- `business_case_line_period_range` (CHECK): `CHECK (((period_end IS NULL) OR (period_start IS NULL) OR (period_end >= period_start)))`
+- `business_case_line_value_basis` (CHECK): `CHECK ((((investment_class = ANY (ARRAY['capex', 'opex', 'vendor_cost'])) AND (value_basis = 'cash')) OR ((investment_class = ANY (ARRAY['internal_fte', 'opportunity_cost'])) AND (value_basis = 'non_cash')) OR ((benefit_class = 'revenue') AND (value_basis = ANY (ARRAY['revenue_uplift', 'margin_uplift']))) OR ((benefit_class = 'cost_reduction') AND (value_basis = 'cash_saving')) OR ((benefit_class = 'cost_avoidance') AND (value_basis = 'avoided_cost')) OR ((benefit_class = 'working_capital') AND (value_basis = 'working_capital_release')) OR ((benefit_class = 'strategic_non_financial') AND (value_basis = 'non_financial'))))`
+
+**Indexes:**
+
+- `business_case_line_case_idx`: `(business_case_id) WHERE (status = 'active'::text)`
+- `business_case_line_one_formula_key`: `UNIQUE (benefit_formula_id) WHERE ((status = 'active'::text) AND (benefit_formula_id IS NOT NULL))`
+
+**Triggers:**
+
+- `business_case_line_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `business_case_line_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## benefit_formula_example
+
+- **Purpose:** The two B0087 source examples, ILLUSTRATIVE with synthetic values (REQ-PB-057).
+- **Migration:** `0023_p3_business_case_formula.sql`. **API module:** `kpi`. **Who writes:** seed. **Lifecycle:** —.
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| code | text | NOT NULL |  | UNIQUE (`benefit_formula_example_code_key`) |
+| methodology_version_id | uuid | NOT NULL |  | FK → methodology_version(id) |
+| ordinal | smallint | NOT NULL |  | `CHECK (((ordinal >= 1) AND (ordinal <= 99)))` |
+| source_benefit_en | text | NOT NULL |  | `CHECK (((char_length(source_benefit_en) >= 1) AND (char_length(source_benefit_en) <= 200)))` |
+| source_baseline_driver_en | text | NOT NULL |  | `CHECK (((char_length(source_baseline_driver_en) >= 1) AND (char_length(source_baseline_driver_en) <= 300)))` |
+| source_change_assumption_en | text | NOT NULL |  | `CHECK (((char_length(source_change_assumption_en) >= 1) AND (char_length(source_change_assumption_en) <= 300)))` |
+| source_formula_en | text | NOT NULL |  | `CHECK (((char_length(source_formula_en) >= 1) AND (char_length(source_formula_en) <= 300)))` |
+| source_ramp_en | text | NOT NULL |  | `CHECK (((char_length(source_ramp_en) >= 1) AND (char_length(source_ramp_en) <= 50)))` |
+| source_confidence | character(1) | NOT NULL |  | `CHECK ((source_confidence = ANY (ARRAY['H'::bpchar, 'M'::bpchar, 'L'::bpchar])))` |
+| benefit_ar | text | NOT NULL |  | `CHECK (((char_length(benefit_ar) >= 1) AND (char_length(benefit_ar) <= 200)))` |
+| baseline_driver_ar | text | NOT NULL |  | `CHECK (((char_length(baseline_driver_ar) >= 1) AND (char_length(baseline_driver_ar) <= 300)))` |
+| change_assumption_ar | text | NOT NULL |  | `CHECK (((char_length(change_assumption_ar) >= 1) AND (char_length(change_assumption_ar) <= 300)))` |
+| formula_ar | text | NOT NULL |  | `CHECK (((char_length(formula_ar) >= 1) AND (char_length(formula_ar) <= 300)))` |
+| expression | text | NOT NULL |  | `CHECK (((char_length(expression) >= 1) AND (char_length(expression) <= 2000)))` |
+| result_kind | text | NOT NULL |  | `CHECK ((result_kind = ANY (ARRAY['currency', 'count', 'quantity', 'number'])))` |
+| result_currency | character(3) | NULL |  | `CHECK (((result_currency IS NULL) OR (result_currency ~ '^[A-Z]{3}$')))` |
+| result_period | text | NOT NULL |  | `CHECK ((result_period = ANY (ARRAY['none', 'month', 'quarter', 'year'])))` |
+| example_result | numeric(24,6) | NOT NULL |  |  |
+| is_illustrative | boolean | NOT NULL | `true` | `CHECK (is_illustrative)` |
+| source_ref | text | NOT NULL |  | `CHECK (((char_length(source_ref) >= 1) AND (char_length(source_ref) <= 50)))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `benefit_formula_example_code_check1` (CHECK): `CHECK ((code ~ '^[a-z][a-z0-9_]{0,47}$'))`
+
+## benefit_formula_example_variable
+
+- **Purpose:** Typed variables and illustrative values of a seeded example.
+- **Migration:** `0023_p3_business_case_formula.sql`. **API module:** `kpi`. **Who writes:** seed. **Lifecycle:** —.
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| example_id | uuid | NOT NULL |  | FK → benefit_formula_example(id) |
+| ordinal | smallint | NOT NULL |  | `CHECK (((ordinal >= 1) AND (ordinal <= 30)))` |
+| name | text | NOT NULL |  | `CHECK ((name ~ '^[a-z][a-z0-9_]{0,47}$'))` |
+| kind | text | NOT NULL |  | `CHECK ((kind = ANY (ARRAY['fraction', 'fraction_delta', 'percent_change', 'count', 'currency', 'quantity', 'number'])))` |
+| unit | text | NULL |  | `CHECK (((unit IS NULL) OR ((char_length(unit) >= 1) AND (char_length(unit) <= 50))))` |
+| currency | character(3) | NULL |  | `CHECK (((currency IS NULL) OR (currency ~ '^[A-Z]{3}$')))` |
+| period | text | NOT NULL |  | `CHECK ((period = ANY (ARRAY['none', 'month', 'quarter', 'year'])))` |
+| example_value | numeric(24,6) | NOT NULL |  |  |
+| label_en | text | NOT NULL |  | `CHECK (((char_length(label_en) >= 1) AND (char_length(label_en) <= 200)))` |
+| label_ar | text | NOT NULL |  | `CHECK (((char_length(label_ar) >= 1) AND (char_length(label_ar) <= 200)))` |
+
+**Table constraints:**
+
+- `benefit_formula_example_variable_currency_kind` (CHECK): `CHECK (((kind = 'currency') = (currency IS NOT NULL)))`
+- `benefit_formula_example_variable_name_key` (UNIQUE): `UNIQUE (example_id, name)`
+
+## gate_decision_agreement
+
+- **Purpose:** The three B0032 leadership agreement confirmations of an approved G1 decision (REQ-PB-022; ADR-0021 §8).
+- **Migration:** `0024_p3_gates_access_instantiation.sql`. **API module:** `workflows`. **Who writes:** the G1 decider, in the approving transaction. **Lifecycle:** append-only.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| gate_decision_id | uuid | NOT NULL |  | FK → gate_decision(id) |
+| agreement_code | text | NOT NULL |  | `CHECK ((agreement_code = ANY (ARRAY['problem', 'baseline', 'material_value_pools'])))` |
+| confirmed_by | uuid | NOT NULL |  | FK → app_user(id) |
+| confirmed_at | timestamp with time zone | NOT NULL | `now()` |  |
+
+**Table constraints:**
+
+- `gate_decision_agreement_key` (UNIQUE): `UNIQUE (gate_decision_id, agreement_code)`
+
+**Triggers:**
+
+- `gate_decision_agreement_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `gate_decision_agreement_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `gate_decision_agreement_guard`: BEFORE INSERT FOR EACH ROW → `gate_decision_agreement_guard()`
+- `gate_decision_agreement_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## P3 functions
+
+| Function | Migration | Purpose | Callable by `mth_app` |
+|---|---|---|---|
+| `roadmap_wave_source_immutable()` | 0020 | the verbatim B0079 text of a seeded wave never changes | via trigger |
+| `initiative_status_step()` | 0020 | only the ADR-0021 §3 status edges | via trigger |
+| `initiative_contribution_kpi_matches_outcome()` | 0020 | a contribution's T02 row belongs to its outcome | via trigger |
+| `scoring_weight_set_freeze()` | 0021 | weight set content immutable; status edges proposed→active/withdrawn, active→superseded | via trigger |
+| `scoring_weight_set_total()` | 0021 | deferred: every touched set has 2–6 weights totalling exactly 100.00 | via constraint triggers |
+| `ranking_snapshot_freeze()` | 0021 | a ranking snapshot is immutable except its status | via trigger |
+| `dependency_type_system_guard()` | 0022 | system types never deleted, retired or renamed; no type is ever deleted | via trigger |
+| `dependency_type_active()` | 0022 | a new or changed dependency type must be active | via trigger |
+| `dependency_cycle_guard()` | 0022 | race-free acyclic initiative graph: advisory lock (730221, hashtext(transformation_id)) shared with the API, BFS re-check, fails closed outside READ COMMITTED; error `dependency_acyclic` with the cycle path | via trigger |
+| `benefit_formula_version_freeze()` | 0023 | formula version immutable; Finance validation final once set | via trigger |
+| `business_case_parent_is_transformation()` | 0023 | an initiative case's parent is the transformation-level case | via trigger |
+| `gate_decision_agreement_guard()` | 0024 | agreement rows only for an approved G1 decision, confirmed by its decider | via trigger |
+| `p3_instantiate_transformation(uuid, uuid, text, text)` | 0024 | P2 starter structure + four verbatim waves + weight set v1 (25/25/20/15/15), idempotent, audited; backfilled for existing transformations | yes |
+
+## P3 validation rules summary
+
+| Layer | What it checks |
+|---|---|
+| Database | The P2 record guards on every P3 table; the closed sets (statuses, criteria, classes, kinds, periods, confidence H/M/L); score 1–5; weights total 100; one class per business-case line and the class/value-basis pairing; non-financial lines unmonetised; one active line per T09 formula; one active transformation case and one active case per initiative; formula versions immutable; validators ≠ authors; inherited approvals need evidence; dispensation decider ≠ recorder; override approver ≠ proposer; acyclic initiative graph; system dependency types permanent |
+| API (`@mth/shared/schemas`) | Shapes (OpenAPI P3 schemas), decimal strings within the column scale, the formula grammar and type rules (`packages/shared/src/formula`), one `class` per line, free-text rules |
+| Service | Permissions and record-level rules, If-Match, the ADR-0021 transition preconditions and their exact 422 texts, ranking causes, schedule and capacity flags, G4 criteria evaluation |

@@ -1,7 +1,7 @@
 // Permission catalogue and seeded role defaults (ADR-0006). Source: docs/analysis/permissions-matrix.md.
 // These are a CONFIGURABLE STARTING POINT, not a Mobily-approved access policy. The database is the runtime
 // source of truth (role, permission, role_permission tables); the seed migrations insert exactly these rows (P1:
-// 0005_seed_roles_permissions.sql; P2: 0018_p2_access_instantiation.sql), and a unit test in @mth/db asserts each
+// 0005_seed_roles_permissions.sql; P2: 0018_p2_access_instantiation.sql; P3: 0024_p3_gates_access_instantiation.sql), and a unit test in @mth/db asserts each
 // seed matches this file.
 
 export const PERMISSION_CATEGORIES = ["read", "write", "configure", "business_approval", "finance_validation"] as const;
@@ -54,7 +54,26 @@ export const P2_PERMISSIONS = {
   "methodology.configure": "configure",
 } as const satisfies Record<string, PermissionCategory>;
 
-export const PERMISSIONS = { ...P1_PERMISSIONS, ...P2_PERMISSIONS } as const satisfies Record<
+/** P3 catalogue (Mobilize: portfolio, prioritization, roadmap, capacity, funding, business case, T09, G4; ADR-0021..0024). Seeded by migration 0024. */
+export const P3_PERMISSIONS = {
+  "initiative.edit": "write",
+  "initiative.launch": "write",
+  "portfolio.select": "business_approval",
+  "prioritization.score": "write",
+  "prioritization.edit": "write",
+  "prioritization.approve": "business_approval",
+  "roadmap.edit": "write",
+  "roadmap.approve": "write",
+  "deliverable.accept": "write",
+  "capacity.edit": "write",
+  "capacity.commit": "write",
+  "funding.approve": "business_approval",
+  "business_case.edit": "write",
+  "benefit_formula.edit": "write",
+  "dependency_type.configure": "configure",
+} as const satisfies Record<string, PermissionCategory>;
+
+export const PERMISSIONS = { ...P1_PERMISSIONS, ...P2_PERMISSIONS, ...P3_PERMISSIONS } as const satisfies Record<
   string,
   PermissionCategory
 >;
@@ -131,11 +150,46 @@ export const P2_ROLE_PERMISSIONS = {
   ADM_METHOD: ["methodology.configure"],
 } as const satisfies Record<string, readonly (keyof typeof P2_PERMISSIONS)[]>;
 
+/**
+ * P3 role defaults (seeded by 0024; ADR-0021 §6, permissions matrix "P3"). Business approvals (portfolio selection,
+ * weight sets and overrides, funding) go to SP, and funding also to FIN; finance.validate (P1 catalogue) stays FIN's.
+ * AUD, CM, SEC, TD, ADM_TECH and ADM_ACCESS get no P3 permission.
+ */
+export const P3_ROLE_PERMISSIONS = {
+  SP: ["portfolio.select", "prioritization.approve", "deliverable.accept", "funding.approve"],
+  TL: [
+    "initiative.edit",
+    "initiative.launch",
+    "prioritization.score",
+    "prioritization.edit",
+    "roadmap.edit",
+    "roadmap.approve",
+    "deliverable.accept",
+    "capacity.edit",
+    "business_case.edit",
+    "benefit_formula.edit",
+  ],
+  BO: ["prioritization.score", "deliverable.accept", "capacity.commit", "benefit_formula.edit"],
+  WL: ["initiative.edit", "prioritization.score", "roadmap.edit", "capacity.edit", "business_case.edit"],
+  FIN: ["funding.approve"],
+  TO: [
+    "initiative.edit",
+    "prioritization.edit",
+    "roadmap.edit",
+    "roadmap.approve",
+    "capacity.edit",
+    "capacity.commit",
+    "business_case.edit",
+  ],
+  KDS: ["benefit_formula.edit"],
+  ADM_METHOD: ["dependency_type.configure"],
+} as const satisfies Record<string, readonly (keyof typeof P3_PERMISSIONS)[]>;
+
 export const ROLES = {
   SP: {
     kind: "source",
     inheritsDownward: false,
-    permissions: [...BASE_READ, "gate.decide", ...P2_ROLE_PERMISSIONS.SP],
+    permissions: [...BASE_READ, "gate.decide", ...P2_ROLE_PERMISSIONS.SP, ...P3_ROLE_PERMISSIONS.SP],
   },
   TL: {
     kind: "source",
@@ -147,18 +201,23 @@ export const ROLES = {
       "transformation.archive",
       "audit.read",
       ...P2_ROLE_PERMISSIONS.TL,
+      ...P3_ROLE_PERMISSIONS.TL,
     ],
   },
   BO: {
     kind: "source",
     inheritsDownward: false,
-    permissions: [...BASE_READ, "gate.decide", ...P2_ROLE_PERMISSIONS.BO],
+    permissions: [...BASE_READ, "gate.decide", ...P2_ROLE_PERMISSIONS.BO, ...P3_ROLE_PERMISSIONS.BO],
   },
-  WL: { kind: "source", inheritsDownward: false, permissions: [...BASE_READ, ...P2_ROLE_PERMISSIONS.WL] },
+  WL: {
+    kind: "source",
+    inheritsDownward: false,
+    permissions: [...BASE_READ, ...P2_ROLE_PERMISSIONS.WL, ...P3_ROLE_PERMISSIONS.WL],
+  },
   FIN: {
     kind: "source",
     inheritsDownward: false,
-    permissions: [...BASE_READ, "finance.validate", ...P2_ROLE_PERMISSIONS.FIN],
+    permissions: [...BASE_READ, "finance.validate", ...P2_ROLE_PERMISSIONS.FIN, ...P3_ROLE_PERMISSIONS.FIN],
   },
   TO: {
     kind: "source",
@@ -170,9 +229,14 @@ export const ROLES = {
       "transformation.archive",
       "audit.read",
       ...P2_ROLE_PERMISSIONS.TO,
+      ...P3_ROLE_PERMISSIONS.TO,
     ],
   },
-  KDS: { kind: "implementation", inheritsDownward: false, permissions: [...BASE_READ, ...P2_ROLE_PERMISSIONS.KDS] },
+  KDS: {
+    kind: "implementation",
+    inheritsDownward: false,
+    permissions: [...BASE_READ, ...P2_ROLE_PERMISSIONS.KDS, ...P3_ROLE_PERMISSIONS.KDS],
+  },
   TD: { kind: "implementation", inheritsDownward: false, permissions: [...BASE_READ, ...P2_ROLE_PERMISSIONS.TD] },
   CM: { kind: "implementation", inheritsDownward: false, permissions: [...BASE_READ] },
   SEC: { kind: "implementation", inheritsDownward: false, permissions: [...BASE_READ] },
@@ -210,7 +274,12 @@ export const ROLES = {
   ADM_METHOD: {
     kind: "technical_admin",
     inheritsDownward: false,
-    permissions: ["organization.read", "role.read", ...P2_ROLE_PERMISSIONS.ADM_METHOD],
+    permissions: [
+      "organization.read",
+      "role.read",
+      ...P2_ROLE_PERMISSIONS.ADM_METHOD,
+      ...P3_ROLE_PERMISSIONS.ADM_METHOD,
+    ],
   },
 } as const satisfies Record<string, RoleDefinition>;
 export type RoleCode = keyof typeof ROLES;

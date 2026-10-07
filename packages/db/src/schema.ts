@@ -1,5 +1,5 @@
-// Kysely `Database` interface for the P1 and P2 tables (ADR-0003, ADR-0016), written from
-// docs/architecture/data-dictionary.md (P2 tables: migrations 0010-0018; 0019+ by backend-workflow-engineer). An integration test (packages/db/test/integration/catalogue.test.ts)
+// Kysely `Database` interface for the P1, P2 and P3 tables (ADR-0003, ADR-0016, ADR-0021..0024), written from
+// docs/architecture/data-dictionary.md (P2 tables: migrations 0010-0018; 0019+ by backend-workflow-engineer; P3: 0020-0024). An integration test (packages/db/test/integration/catalogue.test.ts)
 // compares every table, view and column here with information_schema after the migrations run, so a drift fails CI.
 //
 // Type mapping (node-postgres defaults): timestamptz -> Date, bigint -> string, numeric -> string,
@@ -1075,6 +1075,9 @@ export interface DependencyTable {
   created_by: string;
   updated_at: TimestampDefault;
   updated_by: string;
+  /** P3 (0022): initiative endpoints of a T08 dependency. */
+  from_initiative_id: string | null;
+  to_initiative_id: string | null;
 }
 
 export interface GateInstanceTable {
@@ -1167,6 +1170,646 @@ export interface RoleAccountabilityTable {
   updated_by: string | null;
 }
 
+// ---------------------------------------------------------------------------------------------------------------
+// P3 (migrations 0020-0024; ADR-0021..0024). Generated from the migrated catalogue by solution-architect (T-DG3-ARCH-01)
+// and checked by packages/db/test/integration/catalogue.test.ts like every other table.
+
+export interface RoadmapWaveTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  code: string;
+  ordinal: number;
+  is_source_seeded: Generated<boolean>;
+  source_ref: string | null;
+  name_en: string;
+  name_ar: string;
+  purpose_en: string;
+  purpose_ar: string;
+  horizon_en: string;
+  horizon_ar: string;
+  entry_criteria_en: string;
+  entry_criteria_ar: string;
+  exit_evidence_en: string;
+  exit_evidence_ar: string;
+  horizon_from_weeks: number;
+  horizon_to_weeks: number;
+  planned_start: string | null;
+  planned_end: string | null;
+  owner_user_id: string | null;
+  notes: string | null;
+  status: Generated<string>;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface InitiativeTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  code: string;
+  name: string;
+  executive_owner_user_id: string | null;
+  workstream_lead_user_id: string | null;
+  problem_statement: string | null;
+  objective: string | null;
+  scope_in: string | null;
+  scope_out: string | null;
+  financial_benefit_summary: string | null;
+  customer_benefit_summary: string | null;
+  risks_summary: string | null;
+  wave_id: string | null;
+  planned_start: string | null;
+  planned_end: string | null;
+  status: Generated<string>;
+  launched_at: NullableTimestamp;
+  launched_by: string | null;
+  cancelled_at: NullableTimestamp;
+  cancelled_by: string | null;
+  cancel_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface InitiativeGapLinkTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  initiative_id: string;
+  target_type: string;
+  tom_gap_id: string | null;
+  diagnostic_finding_id: string | null;
+  note: string | null;
+  status: Generated<string>;
+  removed_at: NullableTimestamp;
+  removed_by: string | null;
+  remove_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface InitiativeOutcomeContributionTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  initiative_id: string;
+  outcome_id: string;
+  outcome_kpi_id: string | null;
+  contribution_statement: string;
+  expected_kpi_movement: string | null;
+  status: Generated<string>;
+  removed_at: NullableTimestamp;
+  removed_by: string | null;
+  remove_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface InitiativeDecisionLinkTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  initiative_id: string;
+  decision_id: string;
+  status: Generated<string>;
+  removed_at: NullableTimestamp;
+  removed_by: string | null;
+  remove_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface DeliverableTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  initiative_id: string;
+  ordinal: Generated<number>;
+  title: string;
+  description: string | null;
+  owner_user_id: string | null;
+  due_date: string | null;
+  acceptance_status: Generated<string>;
+  submitted_by: string | null;
+  submitted_at: NullableTimestamp;
+  decided_by: string | null;
+  decided_at: NullableTimestamp;
+  acceptance_note: string | null;
+  status: Generated<string>;
+  archived_at: NullableTimestamp;
+  archived_by: string | null;
+  archive_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface MilestoneTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  initiative_id: string;
+  wave_id: string | null;
+  title: string;
+  description: string | null;
+  owner_user_id: string | null;
+  approved_date: string | null;
+  approved_by: string | null;
+  approved_at: NullableTimestamp;
+  approval_reason: string | null;
+  forecast_date: string | null;
+  actual_date: string | null;
+  status: Generated<string>;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface GateDispensationTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  kind: string;
+  gate_code: string;
+  initiative_id: string | null;
+  reason: string | null;
+  approving_body: string | null;
+  approved_on: string | null;
+  evidence_id: string | null;
+  expires_on: string | null;
+  status: Generated<string>;
+  recorded_by: string;
+  decided_by: string | null;
+  decided_at: NullableTimestamp;
+  decision_note: string | null;
+  revoked_by: string | null;
+  revoked_at: NullableTimestamp;
+  revoke_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface ScoringWeightSetTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  version_no: number;
+  status: Generated<string>;
+  approval_basis: string | null;
+  rationale: string | null;
+  approved_by: string | null;
+  approved_at: NullableTimestamp;
+  activated_at: NullableTimestamp;
+  superseded_at: NullableTimestamp;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface ScoringWeightTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  weight_set_id: string;
+  criterion_code: string;
+  weight_percent: string;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
+export interface InitiativeScoreTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  initiative_id: string;
+  criterion_code: string;
+  score: number | null;
+  note: string | null;
+  scored_by: string | null;
+  scored_at: NullableTimestamp;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface InitiativeScoreResultTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  initiative_id: string;
+  weight_set_id: string;
+  weight_set_version_no: number;
+  weighted_score: string | null;
+  completeness: string;
+  missing_criteria: Generated<string[]>;
+  inputs: Json;
+  cause: string;
+  computed_at: TimestampDefault;
+  computed_by: string;
+}
+
+export interface RankingSnapshotTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  snapshot_no: number;
+  weight_set_id: string;
+  status: Generated<string>;
+  note: string | null;
+  proposed_by: string;
+  proposed_at: TimestampDefault;
+  superseded_at: NullableTimestamp;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface RankingOverrideTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  initiative_id: string;
+  override_rank: number;
+  reason: string;
+  status: Generated<string>;
+  proposed_by: string;
+  decided_by: string | null;
+  decided_at: NullableTimestamp;
+  decision_note: string | null;
+  revoked_by: string | null;
+  revoked_at: NullableTimestamp;
+  revoke_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface RankingEntryTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  snapshot_id: string;
+  initiative_id: string;
+  rank: number | null;
+  weighted_score: string | null;
+  completeness: string;
+  score_result_id: string | null;
+  previous_rank: number | null;
+  causes: Generated<string[]>;
+  cause_detail: JsonDefault;
+  override_id: string | null;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
+export interface DependencyTypeTable {
+  id: string;
+  code: string;
+  label_en: string;
+  label_ar: string;
+  is_system: Generated<boolean>;
+  source_ref: string | null;
+  ordinal: number;
+  status: Generated<string>;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface ResourceRoleTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  code: string;
+  label_en: string;
+  label_ar: string;
+  status: Generated<string>;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface CapacityTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  resource_role_id: string;
+  period_month: string;
+  available_fte: string;
+  owner_user_id: string | null;
+  note: string | null;
+  status: Generated<string>;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface ResourceDemandTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  initiative_id: string;
+  resource_role_id: string;
+  period_month: string;
+  demand_fte: string;
+  owner_user_id: string | null;
+  note: string | null;
+  status: Generated<string>;
+  committed_by: string | null;
+  committed_at: NullableTimestamp;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface PortfolioSelectionTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  initiative_id: string;
+  action: string;
+  rationale: string;
+  ranking_snapshot_id: string | null;
+  decided_by: string;
+  on_behalf_of_user_id: string | null;
+  decided_at: TimestampDefault;
+}
+
+export interface FundingDecisionTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  initiative_id: string;
+  decision_id: string;
+  decision_kind: Generated<string>;
+  outcome: string;
+  amount: string | null;
+  currency: string;
+  funding_source: string | null;
+  conditions: string | null;
+  rationale: string;
+  business_case_id: string | null;
+  approver_role_code: string;
+  decided_by: string;
+  on_behalf_of_user_id: string | null;
+  decided_at: TimestampDefault;
+}
+
+export interface BenefitFormulaTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  code: string;
+  benefit_name: string;
+  baseline_driver: string | null;
+  change_assumption: string | null;
+  ramp: string | null;
+  confidence: string | null;
+  owner_user_id: string | null;
+  current_version_no: number | null;
+  is_illustrative: Generated<boolean>;
+  example_code: string | null;
+  status: Generated<string>;
+  archived_at: NullableTimestamp;
+  archived_by: string | null;
+  archive_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface BenefitFormulaVersionTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  formula_id: string;
+  version_no: number;
+  expression: string;
+  expression_sha256: string;
+  result_kind: string;
+  result_unit: string | null;
+  result_currency: string | null;
+  result_period: string;
+  preview_result: string | null;
+  engine_version: string;
+  change_note: string | null;
+  validation_status: Generated<string>;
+  validated_by: string | null;
+  validated_at: NullableTimestamp;
+  validation_note: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface BenefitFormulaVariableTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  formula_version_id: string;
+  ordinal: number;
+  name: string;
+  kind: string;
+  unit: string | null;
+  currency: string | null;
+  period: Generated<string>;
+  value: string | null;
+  description: string | null;
+  source: string | null;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
+export interface BenefitCalculationTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  formula_version_id: string;
+  inputs: Json;
+  assumptions: string | null;
+  period_start: string | null;
+  period_end: string | null;
+  outcome: string;
+  result: string | null;
+  result_kind: string;
+  result_unit: string | null;
+  result_currency: string | null;
+  result_period: string;
+  error_code: string | null;
+  rounded: Generated<boolean>;
+  engine_version: string;
+  computed_at: TimestampDefault;
+  computed_by: string;
+}
+
+export interface BusinessCaseTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  code: string;
+  level: string;
+  initiative_id: string | null;
+  parent_case_id: string | null;
+  title: string;
+  currency: string;
+  strategic_rationale: string | null;
+  baseline_summary: string | null;
+  value_pools_summary: string | null;
+  interventions_summary: string | null;
+  investment_summary: string | null;
+  benefits_summary: string | null;
+  benefit_ramp: string | null;
+  recurrence_summary: string | null;
+  implementation_horizon: string | null;
+  key_assumptions: string | null;
+  downside_case: string | null;
+  upside_case: string | null;
+  benefit_owner_user_id: string | null;
+  initiative_owner_user_id: string | null;
+  finance_validator_user_id: string | null;
+  decision_ask_types: Generated<string[]>;
+  decision_ask_text: string | null;
+  baseline_validation_status: Generated<string>;
+  baseline_validated_by: string | null;
+  baseline_validated_at: NullableTimestamp;
+  baseline_validation_note: string | null;
+  baseline_validated_sha256: string | null;
+  status: Generated<string>;
+  archived_at: NullableTimestamp;
+  archived_by: string | null;
+  archive_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface BusinessCaseLineTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  business_case_id: string;
+  line_kind: string;
+  investment_class: string | null;
+  benefit_class: string | null;
+  value_basis: string;
+  title: string;
+  description: string | null;
+  amount: string | null;
+  currency: string;
+  fte: string | null;
+  period_start: string | null;
+  period_end: string | null;
+  recurrence: string | null;
+  benefit_formula_id: string | null;
+  owner_user_id: string | null;
+  status: Generated<string>;
+  archived_at: NullableTimestamp;
+  archived_by: string | null;
+  archive_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface BenefitFormulaExampleTable {
+  id: string;
+  code: string;
+  methodology_version_id: string;
+  ordinal: number;
+  source_benefit_en: string;
+  source_baseline_driver_en: string;
+  source_change_assumption_en: string;
+  source_formula_en: string;
+  source_ramp_en: string;
+  source_confidence: string;
+  benefit_ar: string;
+  baseline_driver_ar: string;
+  change_assumption_ar: string;
+  formula_ar: string;
+  expression: string;
+  result_kind: string;
+  result_currency: string | null;
+  result_period: string;
+  example_result: string;
+  is_illustrative: Generated<boolean>;
+  source_ref: string;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface BenefitFormulaExampleVariableTable {
+  id: string;
+  example_id: string;
+  ordinal: number;
+  name: string;
+  kind: string;
+  unit: string | null;
+  currency: string | null;
+  period: string;
+  example_value: string;
+  label_en: string;
+  label_ar: string;
+}
+
+export interface GateDecisionAgreementTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  gate_decision_id: string;
+  agreement_code: string;
+  confirmed_by: string;
+  confirmed_at: TimestampDefault;
+}
+
 export interface Database {
   schema_migration: SchemaMigrationTable;
   organization: OrganizationTable;
@@ -1230,6 +1873,36 @@ export interface Database {
   gate_submission_criterion: GateSubmissionCriterionTable;
   gate_decision: GateDecisionTable;
   role_accountability: RoleAccountabilityTable;
+  roadmap_wave: RoadmapWaveTable;
+  initiative: InitiativeTable;
+  initiative_gap_link: InitiativeGapLinkTable;
+  initiative_outcome_contribution: InitiativeOutcomeContributionTable;
+  initiative_decision_link: InitiativeDecisionLinkTable;
+  deliverable: DeliverableTable;
+  milestone: MilestoneTable;
+  gate_dispensation: GateDispensationTable;
+  scoring_weight_set: ScoringWeightSetTable;
+  scoring_weight: ScoringWeightTable;
+  initiative_score: InitiativeScoreTable;
+  initiative_score_result: InitiativeScoreResultTable;
+  ranking_snapshot: RankingSnapshotTable;
+  ranking_override: RankingOverrideTable;
+  ranking_entry: RankingEntryTable;
+  dependency_type: DependencyTypeTable;
+  resource_role: ResourceRoleTable;
+  capacity: CapacityTable;
+  resource_demand: ResourceDemandTable;
+  portfolio_selection: PortfolioSelectionTable;
+  funding_decision: FundingDecisionTable;
+  benefit_formula: BenefitFormulaTable;
+  benefit_formula_version: BenefitFormulaVersionTable;
+  benefit_formula_variable: BenefitFormulaVariableTable;
+  benefit_calculation: BenefitCalculationTable;
+  business_case: BusinessCaseTable;
+  business_case_line: BusinessCaseLineTable;
+  benefit_formula_example: BenefitFormulaExampleTable;
+  benefit_formula_example_variable: BenefitFormulaExampleVariableTable;
+  gate_decision_agreement: GateDecisionAgreementTable;
 }
 
 /** Relations that are views (read-only); excluded from the table/column drift test's table list. */
@@ -1255,6 +1928,36 @@ export type GateSubmissionRow = Selectable<GateSubmissionTable>;
 export type GateDecisionRow = Selectable<GateDecisionTable>;
 export type EvidenceRow = Selectable<EvidenceTable>;
 export type ValuePoolRow = Selectable<ValuePoolTable>;
+export type RoadmapWaveRow = Selectable<RoadmapWaveTable>;
+export type InitiativeRow = Selectable<InitiativeTable>;
+export type InitiativeGapLinkRow = Selectable<InitiativeGapLinkTable>;
+export type InitiativeOutcomeContributionRow = Selectable<InitiativeOutcomeContributionTable>;
+export type InitiativeDecisionLinkRow = Selectable<InitiativeDecisionLinkTable>;
+export type DeliverableRow = Selectable<DeliverableTable>;
+export type MilestoneRow = Selectable<MilestoneTable>;
+export type GateDispensationRow = Selectable<GateDispensationTable>;
+export type ScoringWeightSetRow = Selectable<ScoringWeightSetTable>;
+export type ScoringWeightRow = Selectable<ScoringWeightTable>;
+export type InitiativeScoreRow = Selectable<InitiativeScoreTable>;
+export type InitiativeScoreResultRow = Selectable<InitiativeScoreResultTable>;
+export type RankingSnapshotRow = Selectable<RankingSnapshotTable>;
+export type RankingOverrideRow = Selectable<RankingOverrideTable>;
+export type RankingEntryRow = Selectable<RankingEntryTable>;
+export type DependencyTypeRow = Selectable<DependencyTypeTable>;
+export type ResourceRoleRow = Selectable<ResourceRoleTable>;
+export type CapacityRow = Selectable<CapacityTable>;
+export type ResourceDemandRow = Selectable<ResourceDemandTable>;
+export type PortfolioSelectionRow = Selectable<PortfolioSelectionTable>;
+export type FundingDecisionRow = Selectable<FundingDecisionTable>;
+export type BenefitFormulaRow = Selectable<BenefitFormulaTable>;
+export type BenefitFormulaVersionRow = Selectable<BenefitFormulaVersionTable>;
+export type BenefitFormulaVariableRow = Selectable<BenefitFormulaVariableTable>;
+export type BenefitCalculationRow = Selectable<BenefitCalculationTable>;
+export type BusinessCaseRow = Selectable<BusinessCaseTable>;
+export type BusinessCaseLineRow = Selectable<BusinessCaseLineTable>;
+export type BenefitFormulaExampleRow = Selectable<BenefitFormulaExampleTable>;
+export type BenefitFormulaExampleVariableRow = Selectable<BenefitFormulaExampleVariableTable>;
+export type GateDecisionAgreementRow = Selectable<GateDecisionAgreementTable>;
 
 /**
  * Runtime column catalogue of `Database`. The compiler forces it to list exactly the interface's columns (both
@@ -2234,6 +2937,8 @@ export const SCHEMA_COLUMNS = {
     "created_by",
     "updated_at",
     "updated_by",
+    "from_initiative_id",
+    "to_initiative_id",
   ],
   gate_instance: [
     "id",
@@ -2319,6 +3024,612 @@ export const SCHEMA_COLUMNS = {
     "created_by",
     "updated_at",
     "updated_by",
+  ],
+  roadmap_wave: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "code",
+    "ordinal",
+    "is_source_seeded",
+    "source_ref",
+    "name_en",
+    "name_ar",
+    "purpose_en",
+    "purpose_ar",
+    "horizon_en",
+    "horizon_ar",
+    "entry_criteria_en",
+    "entry_criteria_ar",
+    "exit_evidence_en",
+    "exit_evidence_ar",
+    "horizon_from_weeks",
+    "horizon_to_weeks",
+    "planned_start",
+    "planned_end",
+    "owner_user_id",
+    "notes",
+    "status",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  initiative: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "code",
+    "name",
+    "executive_owner_user_id",
+    "workstream_lead_user_id",
+    "problem_statement",
+    "objective",
+    "scope_in",
+    "scope_out",
+    "financial_benefit_summary",
+    "customer_benefit_summary",
+    "risks_summary",
+    "wave_id",
+    "planned_start",
+    "planned_end",
+    "status",
+    "launched_at",
+    "launched_by",
+    "cancelled_at",
+    "cancelled_by",
+    "cancel_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  initiative_gap_link: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "initiative_id",
+    "target_type",
+    "tom_gap_id",
+    "diagnostic_finding_id",
+    "note",
+    "status",
+    "removed_at",
+    "removed_by",
+    "remove_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  initiative_outcome_contribution: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "initiative_id",
+    "outcome_id",
+    "outcome_kpi_id",
+    "contribution_statement",
+    "expected_kpi_movement",
+    "status",
+    "removed_at",
+    "removed_by",
+    "remove_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  initiative_decision_link: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "initiative_id",
+    "decision_id",
+    "status",
+    "removed_at",
+    "removed_by",
+    "remove_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  deliverable: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "initiative_id",
+    "ordinal",
+    "title",
+    "description",
+    "owner_user_id",
+    "due_date",
+    "acceptance_status",
+    "submitted_by",
+    "submitted_at",
+    "decided_by",
+    "decided_at",
+    "acceptance_note",
+    "status",
+    "archived_at",
+    "archived_by",
+    "archive_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  milestone: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "initiative_id",
+    "wave_id",
+    "title",
+    "description",
+    "owner_user_id",
+    "approved_date",
+    "approved_by",
+    "approved_at",
+    "approval_reason",
+    "forecast_date",
+    "actual_date",
+    "status",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  gate_dispensation: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "kind",
+    "gate_code",
+    "initiative_id",
+    "reason",
+    "approving_body",
+    "approved_on",
+    "evidence_id",
+    "expires_on",
+    "status",
+    "recorded_by",
+    "decided_by",
+    "decided_at",
+    "decision_note",
+    "revoked_by",
+    "revoked_at",
+    "revoke_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  scoring_weight_set: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "version_no",
+    "status",
+    "approval_basis",
+    "rationale",
+    "approved_by",
+    "approved_at",
+    "activated_at",
+    "superseded_at",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  scoring_weight: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "weight_set_id",
+    "criterion_code",
+    "weight_percent",
+    "created_at",
+    "created_by",
+  ],
+  initiative_score: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "initiative_id",
+    "criterion_code",
+    "score",
+    "note",
+    "scored_by",
+    "scored_at",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  initiative_score_result: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "initiative_id",
+    "weight_set_id",
+    "weight_set_version_no",
+    "weighted_score",
+    "completeness",
+    "missing_criteria",
+    "inputs",
+    "cause",
+    "computed_at",
+    "computed_by",
+  ],
+  ranking_snapshot: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "snapshot_no",
+    "weight_set_id",
+    "status",
+    "note",
+    "proposed_by",
+    "proposed_at",
+    "superseded_at",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  ranking_override: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "initiative_id",
+    "override_rank",
+    "reason",
+    "status",
+    "proposed_by",
+    "decided_by",
+    "decided_at",
+    "decision_note",
+    "revoked_by",
+    "revoked_at",
+    "revoke_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  ranking_entry: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "snapshot_id",
+    "initiative_id",
+    "rank",
+    "weighted_score",
+    "completeness",
+    "score_result_id",
+    "previous_rank",
+    "causes",
+    "cause_detail",
+    "override_id",
+    "created_at",
+    "created_by",
+  ],
+  dependency_type: [
+    "id",
+    "code",
+    "label_en",
+    "label_ar",
+    "is_system",
+    "source_ref",
+    "ordinal",
+    "status",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  resource_role: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "code",
+    "label_en",
+    "label_ar",
+    "status",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  capacity: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "resource_role_id",
+    "period_month",
+    "available_fte",
+    "owner_user_id",
+    "note",
+    "status",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  resource_demand: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "initiative_id",
+    "resource_role_id",
+    "period_month",
+    "demand_fte",
+    "owner_user_id",
+    "note",
+    "status",
+    "committed_by",
+    "committed_at",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  portfolio_selection: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "initiative_id",
+    "action",
+    "rationale",
+    "ranking_snapshot_id",
+    "decided_by",
+    "on_behalf_of_user_id",
+    "decided_at",
+  ],
+  funding_decision: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "initiative_id",
+    "decision_id",
+    "decision_kind",
+    "outcome",
+    "amount",
+    "currency",
+    "funding_source",
+    "conditions",
+    "rationale",
+    "business_case_id",
+    "approver_role_code",
+    "decided_by",
+    "on_behalf_of_user_id",
+    "decided_at",
+  ],
+  benefit_formula: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "code",
+    "benefit_name",
+    "baseline_driver",
+    "change_assumption",
+    "ramp",
+    "confidence",
+    "owner_user_id",
+    "current_version_no",
+    "is_illustrative",
+    "example_code",
+    "status",
+    "archived_at",
+    "archived_by",
+    "archive_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  benefit_formula_version: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "formula_id",
+    "version_no",
+    "expression",
+    "expression_sha256",
+    "result_kind",
+    "result_unit",
+    "result_currency",
+    "result_period",
+    "preview_result",
+    "engine_version",
+    "change_note",
+    "validation_status",
+    "validated_by",
+    "validated_at",
+    "validation_note",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  benefit_formula_variable: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "formula_version_id",
+    "ordinal",
+    "name",
+    "kind",
+    "unit",
+    "currency",
+    "period",
+    "value",
+    "description",
+    "source",
+    "created_at",
+    "created_by",
+  ],
+  benefit_calculation: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "formula_version_id",
+    "inputs",
+    "assumptions",
+    "period_start",
+    "period_end",
+    "outcome",
+    "result",
+    "result_kind",
+    "result_unit",
+    "result_currency",
+    "result_period",
+    "error_code",
+    "rounded",
+    "engine_version",
+    "computed_at",
+    "computed_by",
+  ],
+  business_case: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "code",
+    "level",
+    "initiative_id",
+    "parent_case_id",
+    "title",
+    "currency",
+    "strategic_rationale",
+    "baseline_summary",
+    "value_pools_summary",
+    "interventions_summary",
+    "investment_summary",
+    "benefits_summary",
+    "benefit_ramp",
+    "recurrence_summary",
+    "implementation_horizon",
+    "key_assumptions",
+    "downside_case",
+    "upside_case",
+    "benefit_owner_user_id",
+    "initiative_owner_user_id",
+    "finance_validator_user_id",
+    "decision_ask_types",
+    "decision_ask_text",
+    "baseline_validation_status",
+    "baseline_validated_by",
+    "baseline_validated_at",
+    "baseline_validation_note",
+    "baseline_validated_sha256",
+    "status",
+    "archived_at",
+    "archived_by",
+    "archive_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  business_case_line: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "business_case_id",
+    "line_kind",
+    "investment_class",
+    "benefit_class",
+    "value_basis",
+    "title",
+    "description",
+    "amount",
+    "currency",
+    "fte",
+    "period_start",
+    "period_end",
+    "recurrence",
+    "benefit_formula_id",
+    "owner_user_id",
+    "status",
+    "archived_at",
+    "archived_by",
+    "archive_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  benefit_formula_example: [
+    "id",
+    "code",
+    "methodology_version_id",
+    "ordinal",
+    "source_benefit_en",
+    "source_baseline_driver_en",
+    "source_change_assumption_en",
+    "source_formula_en",
+    "source_ramp_en",
+    "source_confidence",
+    "benefit_ar",
+    "baseline_driver_ar",
+    "change_assumption_ar",
+    "formula_ar",
+    "expression",
+    "result_kind",
+    "result_currency",
+    "result_period",
+    "example_result",
+    "is_illustrative",
+    "source_ref",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  benefit_formula_example_variable: [
+    "id",
+    "example_id",
+    "ordinal",
+    "name",
+    "kind",
+    "unit",
+    "currency",
+    "period",
+    "example_value",
+    "label_en",
+    "label_ar",
+  ],
+  gate_decision_agreement: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "gate_decision_id",
+    "agreement_code",
+    "confirmed_by",
+    "confirmed_at",
   ],
 } as const satisfies { readonly [T in keyof Database]: readonly (keyof Database[T] & string)[] };
 

@@ -1,14 +1,26 @@
 // Unit test (no database): the role/permission seed migrations equal packages/shared/src/permissions.ts
-// (data dictionary "role" seed rule, ADR-0006, ADR-0020): 0005 seeds the P1 part, 0018 the P2 part. The integration
+// (data dictionary "role" seed rule, ADR-0006, ADR-0020): 0005 seeds the P1 part, 0018 the P2 part, 0024 the P3 part. The integration
 // tests check the seeded ROWS too.
 import { readFileSync } from "node:fs";
-import { P1_PERMISSIONS, P2_PERMISSIONS, P2_ROLE_PERMISSIONS, PERMISSIONS, ROLES } from "@mth/shared";
+import {
+  P1_PERMISSIONS,
+  P2_PERMISSIONS,
+  P2_ROLE_PERMISSIONS,
+  P3_PERMISSIONS,
+  P3_ROLE_PERMISSIONS,
+  PERMISSIONS,
+  ROLES,
+} from "@mth/shared";
 import { describe, expect, it } from "vitest";
 import { defaultMigrationsDir, listMigrationFiles } from "./migrate.ts";
 
 const sql = readFileSync(`${defaultMigrationsDir()}/0005_seed_roles_permissions.sql`, "utf8");
 const sqlP2 = readFileSync(`${defaultMigrationsDir()}/0018_p2_access_instantiation.sql`, "utf8");
-const P2_PERMISSION_SET: ReadonlySet<string> = new Set(Object.keys(P2_PERMISSIONS));
+const sqlP3 = readFileSync(`${defaultMigrationsDir()}/0024_p3_gates_access_instantiation.sql`, "utf8");
+const LATER_PERMISSION_SET: ReadonlySet<string> = new Set([
+  ...Object.keys(P2_PERMISSIONS),
+  ...Object.keys(P3_PERMISSIONS),
+]);
 
 function section(header: string, text: string = sql): string {
   const start = text.indexOf(header);
@@ -51,7 +63,7 @@ describe("0005 seed equals permissions.ts", () => {
     const byRole: Record<string, string[]> = {};
     for (const l of links) (byRole[idToCode.get(l[1]!)!] ??= []).push(l[2]!);
     const expected = Object.fromEntries(
-      Object.entries(ROLES).map(([c, d]) => [c, d.permissions.filter((p) => !P2_PERMISSION_SET.has(p)).sort()]),
+      Object.entries(ROLES).map(([c, d]) => [c, d.permissions.filter((p) => !LATER_PERMISSION_SET.has(p)).sort()]),
     );
     expect(Object.fromEntries(Object.entries(byRole).map(([c, p]) => [c, p.sort()]))).toEqual(
       Object.fromEntries(Object.entries(expected).filter(([, p]) => p.length > 0)),
@@ -77,7 +89,7 @@ describe("0018 seed equals the P2 part of permissions.ts", () => {
     );
     expect(Object.fromEntries(rows)).toEqual(P2_PERMISSIONS);
     expect(rows).toHaveLength(Object.keys(P2_PERMISSIONS).length);
-    expect({ ...P1_PERMISSIONS, ...P2_PERMISSIONS }).toEqual(PERMISSIONS);
+    expect({ ...P1_PERMISSIONS, ...P2_PERMISSIONS, ...P3_PERMISSIONS }).toEqual(PERMISSIONS);
   });
 
   it("role_permission links", () => {
@@ -96,6 +108,39 @@ describe("0018 seed equals the P2 part of permissions.ts", () => {
 
   it("gives the read-only auditor no write, configure or approval permission (ADR-0020)", () => {
     for (const p of ROLES.AUD.permissions) expect([p, PERMISSIONS[p]]).toEqual([p, "read"]);
+  });
+});
+
+describe("0024 seed equals the P3 part of permissions.ts", () => {
+  it("permission rows", () => {
+    const rows = [...section("INSERT INTO permission", sqlP3).matchAll(/^\s*\('([a-z_.]+)', '([a-z_]+)'/gm)].map(
+      (m) => [m[1], m[2]],
+    );
+    expect(Object.fromEntries(rows)).toEqual(P3_PERMISSIONS);
+    expect(rows).toHaveLength(Object.keys(P3_PERMISSIONS).length);
+  });
+
+  it("role_permission links", () => {
+    const idToCode = new Map(
+      [...section("INSERT INTO role (").matchAll(/^\s*\('([0-9a-f-]{36})', '([A-Z_]+)'/gm)].map((m) => [m[1]!, m[2]!]),
+    );
+    const byRole: Record<string, string[]> = {};
+    for (const l of section("INSERT INTO role_permission", sqlP3).matchAll(/\('([0-9a-f-]{36})', '([a-z_.]+)'\)/g))
+      (byRole[idToCode.get(l[1]!)!] ??= []).push(l[2]!);
+    const sorted = (o: Record<string, readonly string[]>) =>
+      Object.fromEntries(Object.entries(o).map(([c, p]) => [c, [...p].sort()]));
+    expect(sorted(byRole)).toEqual(sorted(P3_ROLE_PERMISSIONS));
+    for (const [code, perms] of Object.entries(P3_ROLE_PERMISSIONS))
+      for (const p of perms) expect(ROLES[code as keyof typeof ROLES].permissions).toContain(p);
+  });
+
+  it("gives no business_approval or finance_validation permission to a technical admin, and none to AUD", () => {
+    for (const [code, perms] of Object.entries(P3_ROLE_PERMISSIONS)) {
+      if (ROLES[code as keyof typeof ROLES].kind !== "technical_admin") continue;
+      for (const p of perms)
+        expect([p, P3_PERMISSIONS[p]]).not.toEqual([p, expect.stringMatching(/business_approval|finance_validation/)]);
+    }
+    expect(Object.keys(P3_ROLE_PERMISSIONS)).not.toContain("AUD");
   });
 });
 

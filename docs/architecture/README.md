@@ -1,4 +1,4 @@
-# Architecture (P1 / DG1, P2 / DG2)
+# Architecture (P1 / DG1, P2 / DG2, P3 / DG3)
 
 This folder holds the architecture of the Mobily Transformation Hub, a modular monolith. solution-architect
 owns it; changes after DG1 approval go through the orchestrator.
@@ -25,12 +25,17 @@ owns it; changes after DG1 approval go through the orchestrator.
 | [adr/ADR-0018](adr/ADR-0018-evidence-repository-and-verification.md) | P2: evidence items, content revisions, links, verification state |
 | [adr/ADR-0019](adr/ADR-0019-value-pool-quantification-decimal-unknown.md) | P2: value pools quantified (decimal upside/downside) or explicitly unquantified, never zero; Unknown rule |
 | [adr/ADR-0020](adr/ADR-0020-role-catalogue-p2-authorization.md) | P2: permission catalogue + role defaults; record-level rules; read-only auditor write-deny |
-| [erd.md](erd.md) | P1 physical ERD, the P2 physical ERD (§1b, migrations 0010–0018) and the conceptual ERD of all 81 §16 entities |
-| [data-dictionary.md](data-dictionary.md) | P1 and P2 tables: columns, types, constraints, indexes, triggers, grants, invariants |
+| [adr/ADR-0021](adr/ADR-0021-p3-portfolio-initiative-lifecycle-g4.md) | P3: S16-016 entity group, initiative lifecycle with exact 422 texts, End-to-End vs Modular (inherited approvals as evidence, waivers), TOM/portfolio separation, G4 criteria, G1 agreement extension, readiness view, implementer rules |
+| [adr/ADR-0022](adr/ADR-0022-p3-prioritization-scoring-ranking.md) | P3: T06 versioned immutable weight sets, exact decimal weighted score (3.30), 'incomplete', 0–100 view, ranking snapshots with causes, overrides |
+| [adr/ADR-0023](adr/ADR-0023-p3-roadmap-dependencies-capacity-funding.md) | P3: T07 waves verbatim, milestones/deliverables, one roadmap read model, T08 on the canonical dependency with a race-free cycle guard, schedule flags (no critical path), capacity, selection and funding |
+| [adr/ADR-0024](adr/ADR-0024-p3-business-case-and-formula-foundation.md) | P3: ten-section business case, one class per line, set-based roll-up, Finance validation before G4, T09 restricted formula language (EBNF, typed units/periods, decimal.js only), seeded examples |
+| [erd.md](erd.md) | P1 physical ERD, the P2 physical ERD (§1b, migrations 0010–0018), the P3 physical ERD (§1c, migrations 0020–0024) and the conceptual ERD of all 81 §16 entities |
+| [data-dictionary.md](data-dictionary.md) | P1, P2 and P3 tables: columns, types, constraints, indexes, triggers, grants, invariants |
 | [p1-work-split.md](p1-work-split.md) | File ownership and integration order for the parallel P1 tasks |
 | [p2-work-split.md](p2-work-split.md) | File ownership, contracts, seams and integration order for the parallel P2 tasks |
+| [p3-work-split.md](p3-work-split.md) | File ownership, contracts, seams, integration order and requirement owners for the eleven P3 tasks |
 | [discovery/p1-stack-discovery.md](discovery/p1-stack-discovery.md) | Version, licence and support evidence ([V-LOCAL] vs [UNVERIFIED]) |
-| [../api/openapi.yaml](../api/openapi.yaml) | The API contract (OpenAPI 3.1.1): 33 P1 + 127 P2 operations |
+| [../api/openapi.yaml](../api/openapi.yaml) | The API contract (OpenAPI 3.1.1): 33 P1 + 128 P2 + 109 P3 operations (270) |
 
 The playbook is a practical synthesis inspired by PMI, Brightline and BRM. Nothing here claims official PMI
 status, Mobily brand compliance or regulatory compliance. `#0078FF` is a provisional brand token.

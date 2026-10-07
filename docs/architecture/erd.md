@@ -6,6 +6,7 @@
 - **Marking:**
   - **P1** means the table is created by P1 migrations.
   - **P2** in bold means the table is created by the P2 migrations 0010–0018 (section 1b; T-DG2-ARCH-01B).
+  - **P3** tables are created by the P3 migrations 0020–0024 (section 1c; T-DG3-ARCH-01).
   - `Px` names the stage that adds the table.
   - Entity names are conceptual. Table names are snake_case singular, and `User` becomes `app_user` because `user` is a reserved word.
 
@@ -670,6 +671,277 @@ erDiagram
 - `process` as its own table (a process is a `journey` row with `kind = 'process'`);
 - `approval` (P2 gate approvals are `gate_decision`; the generic approval table comes in P4).
 
+## 1c. P3 physical model (migrations 0020–0024, DG3)
+
+- **Task:** T-DG3-ARCH-01 (solution-architect), 2026-10-07. **ADRs:** ADR-0021…0024. Columns, constraints, indexes and triggers are in `data-dictionary.md` ("P3 tables"), generated from the migrated catalogue.
+- **Guards:** every P3 table attaches the P2 guards (row guard, version step, deferred audit coverage). History and decision tables are append-only. `T-FK` = composite foreign key `(transformation_id, x_id)`, so every reference stays inside one transformation.
+
+### 1c.1 Portfolio: initiatives, links, waves, deliverables, milestones, dispensations — `portfolio` module
+
+```mermaid
+erDiagram
+    transformation ||--o{ initiative : "T05 (INI-01…)"
+    transformation ||--o{ roadmap_wave : "T07: 4 verbatim source waves + added"
+    roadmap_wave |o--o{ initiative : "wave_id (T-FK)"
+    initiative ||--o{ initiative_gap_link : "vehicle for (1..n)"
+    tom_gap |o--o{ initiative_gap_link : "T03 gap (T-FK)"
+    diagnostic_finding |o--o{ initiative_gap_link : "diagnosed issue (T-FK)"
+    initiative ||--o{ initiative_outcome_contribution : "level 5 of B0048"
+    outcome ||--o{ initiative_outcome_contribution : "outcome (NOT NULL, T-FK)"
+    outcome_kpi |o--o{ initiative_outcome_contribution : "KPI + target (T-FK)"
+    initiative ||--o{ initiative_decision_link : "required decisions"
+    decision ||--o{ initiative_decision_link : "canonical decision (T-FK)"
+    initiative ||--o{ deliverable : "key deliverables (acceptance)"
+    initiative ||--o{ milestone : "approved vs forecast"
+    roadmap_wave |o--o{ milestone : "T-FK"
+    transformation ||--o{ gate_dispensation : "inherited approval | waiver (G1-G3)"
+    evidence |o--o{ gate_dispensation : "inherited approval evidence (T-FK)"
+    initiative |o--o{ gate_dispensation : "waiver scope (T-FK)"
+
+    initiative {
+        uuid id PK
+        text code UK "INI-nn"
+        text name
+        uuid executive_owner_user_id FK
+        uuid workstream_lead_user_id FK
+        text problem_statement
+        text objective
+        text scope_in
+        text scope_out
+        text financial_benefit_summary
+        text customer_benefit_summary
+        text risks_summary
+        uuid wave_id FK
+        date planned_start
+        date planned_end
+        text status "draft|submitted|ranked|selected|funded|launched|completed|cancelled"
+        int version
+    }
+    roadmap_wave {
+        uuid id PK
+        text code UK "wave_0..wave_3 seeded"
+        bool is_source_seeded
+        text name_en "verbatim B0079"
+        text horizon_en "e.g. 0-6 weeks"
+        text entry_criteria_en "e.g. Sponsor + charter"
+        smallint horizon_from_weeks
+        smallint horizon_to_weeks
+        text status "active|archived"
+        int version
+    }
+    milestone {
+        uuid id PK
+        uuid initiative_id FK
+        date approved_date "baseline"
+        date forecast_date "moves on the timeline"
+        date actual_date
+        text status "planned|achieved|missed|cancelled"
+        int version
+    }
+    deliverable {
+        uuid id PK
+        uuid initiative_id FK
+        text acceptance_status "pending|submitted|accepted|rejected"
+        text status "active|archived"
+        int version
+    }
+    gate_dispensation {
+        uuid id PK
+        text kind "inherited_approval|waiver"
+        text gate_code "G1|G2|G3"
+        uuid evidence_id FK "required for inherited_approval"
+        text status "pending|accepted|rejected|revoked"
+        uuid recorded_by FK
+        uuid decided_by FK "not the recorder"
+        int version
+    }
+```
+
+### 1c.2 Prioritization (T06) — `portfolio` module
+
+```mermaid
+erDiagram
+    transformation ||--o{ scoring_weight_set : "v1 source default, v2…"
+    scoring_weight_set ||--|{ scoring_weight : "2-6 weights = 100.00 (append-only)"
+    initiative ||--o{ initiative_score : "1-5 per criterion"
+    initiative ||--o{ initiative_score_result : "calculated (append-only)"
+    scoring_weight_set ||--o{ initiative_score_result : "pinned (id, version_no)"
+    scoring_weight_set ||--o{ ranking_snapshot : "ranked under"
+    ranking_snapshot ||--o{ ranking_entry : "rank + causes (append-only)"
+    initiative ||--o{ ranking_entry : "T-FK"
+    initiative_score_result |o--o{ ranking_entry : "T-FK"
+    initiative ||--o{ ranking_override : "reason + approver"
+    ranking_override |o--o{ ranking_entry : "applied override"
+
+    scoring_weight_set {
+        uuid id PK
+        int version_no UK
+        text status "proposed|active|superseded|withdrawn"
+        text approval_basis "source_default|approved"
+        uuid approved_by FK "not the proposer"
+        int version
+    }
+    scoring_weight {
+        uuid id PK
+        text criterion_code "5 source + risk_compliance"
+        numeric weight_percent "numeric(5,2)"
+    }
+    initiative_score_result {
+        uuid id PK
+        int weight_set_version_no
+        numeric weighted_score "numeric(7,4); NULL = incomplete"
+        text completeness "complete|incomplete"
+        jsonb inputs
+    }
+    ranking_entry {
+        uuid id PK
+        int rank "NULL when incomplete"
+        int previous_rank
+        text_array causes "new|score|weight|override|relative|removed"
+        jsonb cause_detail
+    }
+```
+
+### 1c.3 Dependencies (T08), capacity, selection and funding — `workflows` / `portfolio` modules
+
+```mermaid
+erDiagram
+    dependency_type ||--o{ dependency : "type (FK on code)"
+    initiative |o--o{ dependency : "from_initiative_id (T-FK)"
+    initiative |o--o{ dependency : "to_initiative_id (T-FK)"
+    transformation ||--o{ resource_role : has
+    resource_role ||--o{ capacity : "available FTE per month"
+    resource_role ||--o{ resource_demand : "demand FTE per month"
+    initiative ||--o{ resource_demand : "T-FK"
+    initiative ||--o{ portfolio_selection : "selected|deselected (append-only)"
+    ranking_snapshot |o--o{ portfolio_selection : "selected from"
+    initiative ||--o{ funding_decision : "append-only"
+    decision ||--o| funding_decision : "kind executive (composite FK id+kind)"
+    business_case |o--o{ funding_decision : "T-FK"
+
+    dependency {
+        uuid id PK
+        text code UK "DEP-nn"
+        text from_kind "initiative|external|…"
+        uuid from_initiative_id FK
+        text to_kind
+        uuid to_initiative_id FK
+        text dependency_type FK
+        date needed_by
+        uuid owner_user_id FK
+        text status "open|at_risk|resolved|archived"
+        text mitigation
+        int version
+    }
+    dependency_type {
+        uuid id PK
+        text code UK "decision|tech|data|vendor|other + custom"
+        bool is_system "never deleted or retired"
+        text status "active|retired"
+        int version
+    }
+    capacity {
+        uuid id PK
+        date period_month "first day"
+        numeric available_fte "numeric(6,2)"
+        text status "active|archived"
+        int version
+    }
+    resource_demand {
+        uuid id PK
+        date period_month
+        numeric demand_fte "numeric(6,2)"
+        text status "planned|committed|released|archived"
+        int version
+    }
+    funding_decision {
+        uuid id PK
+        uuid decision_id FK "canonical DEC-nn"
+        text outcome "approved|rejected|deferred|revoked"
+        numeric amount "numeric(20,4); NULL = Unknown"
+        char currency
+        uuid decided_by FK
+    }
+```
+
+### 1c.4 Business case and the T09 formula foundation — `kpi` module
+
+```mermaid
+erDiagram
+    transformation ||--o| business_case : "one active transformation-level case"
+    business_case ||--o{ business_case : "parent of initiative cases (T-FK)"
+    initiative ||--o| business_case : "one active initiative case"
+    business_case ||--o{ business_case_line : "lines (exactly one class)"
+    benefit_formula |o--o| business_case_line : "one active line per formula"
+    transformation ||--o{ benefit_formula : "T09 (BF-nn)"
+    benefit_formula ||--|{ benefit_formula_version : "immutable versions"
+    benefit_formula_version ||--o{ benefit_formula_variable : "typed (append-only)"
+    benefit_formula_version ||--o{ benefit_calculation : "lineage (append-only)"
+    benefit_formula_example ||--|{ benefit_formula_example_variable : "2 illustrative B0087 examples"
+    gate_decision ||--o{ gate_decision_agreement : "G1: problem, baseline, material value pools"
+
+    business_case {
+        uuid id PK
+        text code UK "BC-nn"
+        text level "transformation|initiative"
+        uuid parent_case_id FK
+        text strategic_rationale "section 1 … 10 typed columns"
+        text baseline_validation_status "unvalidated|validated|rejected"
+        char baseline_validated_sha256 "stale when the baseline changes"
+        char currency
+        int version
+    }
+    business_case_line {
+        uuid id PK
+        text line_kind "investment|benefit"
+        text investment_class "capex|opex|internal_fte|vendor_cost|opportunity_cost"
+        text benefit_class "revenue|cost_reduction|cost_avoidance|working_capital|strategic_non_financial"
+        text value_basis
+        numeric amount "numeric(20,4); NULL = Unknown"
+        uuid benefit_formula_id FK
+        int version
+    }
+    benefit_formula {
+        uuid id PK
+        text benefit_name
+        text baseline_driver
+        text change_assumption
+        text ramp
+        char confidence "H|M|L"
+        int current_version_no FK
+        int version
+    }
+    benefit_formula_version {
+        uuid id PK
+        int version_no UK
+        text expression "restricted language (ADR-0024)"
+        text validation_status "unvalidated|validated|rejected"
+        uuid validated_by FK "not the author"
+        int version
+    }
+```
+
+### 1c.5 P3 entity register: §16 S16-016 and template entities → tables
+
+| Entity (§16 / template) | Table | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| **Initiative** (§16) / T05 | `initiative` (+ `initiative_gap_link`, `initiative_outcome_contribution`, `initiative_decision_link`) | `id` (code `INI-nn` UK) | `executive_owner_user_id`, `workstream_lead_user_id` | TL, WL, TO (`initiative.edit`); TL launches | `status` (ADR-0021 §3) | yes | portfolio |
+| **Deliverable** (§16) | `deliverable` | `id` | `owner_user_id` | `initiative.edit`; acceptance `deliverable.accept` + executive owner | `acceptance_status`, `status` | yes | portfolio |
+| **Milestone** (§16) | `milestone` | `id` | `owner_user_id` | `roadmap.edit` / `initiative.edit`; `roadmap.approve` for approved dates | `status` | yes | portfolio |
+| **RoadmapWave** (§16) / T07 | `roadmap_wave` | `id` (code UK) | `owner_user_id` | system seed; `roadmap.edit` | `status` | yes | portfolio |
+| **Dependency** (§16) / T08 | `dependency` (canonical, extended) + `dependency_type` | `id` (code `DEP-nn` UK) | `owner_user_id` | `dependency.edit`; types `dependency_type.configure` | `status` | yes | workflows |
+| **ResourceDemand** (§16) | `resource_demand` | `id` | `owner_user_id` | `capacity.edit`; commit `capacity.commit` | `status` | yes | portfolio |
+| **Capacity** (§16) | `capacity` (+ `resource_role`) | `id` | `owner_user_id` | `capacity.edit` | `status` | yes | portfolio |
+| **FundingDecision** (§16) | `funding_decision` → canonical `decision` (kind `executive`) | `id` | `decided_by` | `funding.approve` (SP, FIN) | `outcome` | append-only | portfolio |
+| T06 Prioritization Scorecard | `scoring_weight_set`, `scoring_weight`, `initiative_score`, `initiative_score_result`, `ranking_snapshot`, `ranking_entry`, `ranking_override` | `id` | — | `prioritization.score/edit/approve` | per table | headers yes, results append-only | portfolio |
+| Portfolio selection | `portfolio_selection` | `id` | `decided_by` | `portfolio.select` (SP) | `action` | append-only | portfolio |
+| BusinessCase (§16, P3 part) | `business_case`, `business_case_line` | `id` (code `BC-nn` UK) | ownership columns (section 9) | `business_case.edit`; FIN validates the baseline | `status`, `baseline_validation_status` | yes | kpi |
+| BenefitFormulaVersion (§16, P3 part) / T09 | `benefit_formula`, `benefit_formula_version`, `benefit_formula_variable`, `benefit_calculation`; seed `benefit_formula_example(_variable)` | `id` (code `BF-nn` UK) | `owner_user_id` | `benefit_formula.edit`; FIN validates | `status`, `validation_status` | yes (variables, lineage append-only) | kpi |
+| Gate G4 / G1 extension | `gate_criterion_definition` rows `g4.*`; `gate_decision_agreement` | `id` | — | seed; the G1 decider | — | append-only | workflows |
+| Modular entry / waiver | `gate_dispensation` | `id` | `recorded_by` | `gate.submit`; accepted by `gate.decide` | `status` | yes | portfolio |
+
+**Not built in P3** (stay as in section 2): `benefit`, `benefit_allocation`, `scenario`, `benefit_measurement`, `finance_validation` as generic tables (P4; the P3 Finance validations are columns on `business_case` and `benefit_formula_version`), `approval` (P4), critical-path scheduling (out of P3 scope, ADR-0023 §5).
+
 ## 2. Conceptual model, all §16 entity groups
 
 ### 2.1 Identity and access (REQ-S16-011; final gate DG4)
@@ -820,6 +1092,8 @@ erDiagram
 | ResourceDemand | `resource_demand` | P3 |
 | Capacity | `capacity` | P3 |
 | FundingDecision | `funding_decision` → references `decision` | P3 |
+
+All eight are implemented by migrations 0020–0022 (section 1c, **P3**).
 
 ### 2.7 Business case and benefits (REQ-S16-017; DG4)
 
