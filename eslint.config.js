@@ -35,6 +35,54 @@ export default tseslint.config(
     },
   },
   {
+    // ADR-0024 §6 "No dynamic code" (T-DG3-KBE-A): the T09 formula engine is a hand-written tokenizer, parser and AST
+    // walker. Nothing under packages/shared/src/formula may evaluate text as code. no-restricted-syntax replaces the
+    // generic list for these files, so the parseFloat ban is repeated here.
+    files: ["packages/shared/src/formula/**/*.{ts,tsx,js,mjs}"],
+    rules: {
+      "no-eval": "error",
+      "no-implied-eval": "error",
+      "no-new-func": "error",
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            { name: "vm", message: "The formula engine never runs code (ADR-0024 §6)." },
+            { name: "node:vm", message: "The formula engine never runs code (ADR-0024 §6)." },
+          ],
+        },
+      ],
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "CallExpression[callee.name='parseFloat']",
+          message: "Use Decimal (decimal.js via @mth/shared) for money, rates and KPI values, never parseFloat.",
+        },
+        {
+          selector: "ImportExpression",
+          message: "No dynamic import() in the formula engine (ADR-0024 §6).",
+        },
+        {
+          selector: "WithStatement",
+          message: "No with statement in the formula engine (ADR-0024 §6).",
+        },
+        {
+          // no-implied-eval only sees declared globals and the root config declares none, so timers (which accept
+          // a code string) are banned outright: the engine is synchronous and needs none.
+          selector:
+            "CallExpression[callee.name=/^(setTimeout|setInterval|setImmediate|execScript)$/], CallExpression[callee.property.name=/^(setTimeout|setInterval|setImmediate|execScript)$/]",
+          message: "No timers in the formula engine: a timer can take a code string (ADR-0024 §6).",
+        },
+        {
+          // (() => {}).constructor("code") is the Function constructor without the name no-new-func looks for.
+          selector:
+            "CallExpression[callee.property.name='constructor'], NewExpression[callee.property.name='constructor']",
+          message: "No .constructor(...) calls in the formula engine: that is the Function constructor (ADR-0024 §6).",
+        },
+      ],
+    },
+  },
+  {
     files: ["apps/web/**/*.{ts,tsx}"],
     plugins: { "react-hooks": reactHooks },
     rules: {
