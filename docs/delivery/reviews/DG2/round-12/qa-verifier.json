@@ -1,0 +1,583 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG2",
+  "round": 12,
+  "candidate_id": "sha256:5dfecce44b9d7d4ded6ca45968c9e2686d1c011cdd7c906ba3dc9974bbdf92b8",
+  "source_commit": "8488e7a48c988f891c041dfc5dc4c638d8fb9a24",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG2-T-DG2-REV-QA-R12-qa-verifier-20261007T043412Z-ef3a0a5e",
+    "session_id": "ef3a0a5e-8b55-4214-b48e-9cf549fb6ba1"
+  },
+  "implementation_author": [
+    "transformation-analyst",
+    "frontend-ux-engineer",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "solution-architect",
+    "devops-engineer"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "qa-verifier authored no product implementation in the DG2 scope. Its only authored files are QA tests, harnesses and evidence (tests/qa/**, e2e/**, docs/delivery/test-evidence/DG2/qa/**). The round-12 repairs (D-072: BE17 eb455d3 by backend-workflow-engineer, FE9 644198a by frontend-ux-engineer) are not mine. Every result here comes from qa-verifier's own runs in three disposable clones under $TMPDIR, all removed at the end. Two clones are at 744af0b, the round-12 freeze on top of source 8488e7a. The third is a throwaway clone used for the guard negative controls at 744af0b and for the pre-BE17 baseline at 309aff2. At the start HEAD was 744af0b; 8488e7a..744af0b changes only assignments, the manifest and stages.json. The recomputed candidate ID matched (552 files) in the tree and in both clones. During the run HEAD moved to 26d0c60 through the other reviewers' auto-committed round-12 evidence and a round-13 assignment. I did not open those files; I saw only their commit subjects in `git log`. At the end the candidate ID was still 5dfecce4... with 552 files (00-candidate-end.log). My verdict and F-DG2-460 come from my own runs and were formed without reading any other reviewer's round-12 record."
+  },
+  "assignment": "docs/delivery/assignments/DG2/round-12/qa-verifier.md",
+  "requirements_checked": [
+    "REQ-PB-003",
+    "REQ-PB-012",
+    "REQ-PB-016",
+    "REQ-PB-017",
+    "REQ-PB-018",
+    "REQ-PB-023",
+    "REQ-PB-024",
+    "REQ-PB-025",
+    "REQ-PB-026",
+    "REQ-PB-027",
+    "REQ-PB-028",
+    "REQ-PB-029",
+    "REQ-PB-030",
+    "REQ-PB-031",
+    "REQ-PB-033",
+    "REQ-PB-034",
+    "REQ-PB-035",
+    "REQ-PB-036",
+    "REQ-PB-037",
+    "REQ-PB-038",
+    "REQ-PB-039",
+    "REQ-PB-041",
+    "REQ-PB-042",
+    "REQ-PB-043",
+    "REQ-DLV-034",
+    "REQ-S04-003",
+    "REQ-S04-004",
+    "REQ-S04-005",
+    "REQ-S05-003",
+    "REQ-S10-001",
+    "REQ-S13-012",
+    "REQ-S16-013"
+  ],
+  "checks_run": [
+    {
+      "id": "QA-R12-00-candidate",
+      "procedure": "Confirm the frozen candidate with git rev-parse HEAD and the recomputed candidate ID: at the start in the candidate tree and both clones, and at the end in the candidate tree.",
+      "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG2",
+      "environment": "candidate tree HEAD 744af0b at the start and 26d0c60 at the end; clones $TMPDIR/review-dg2 and $TMPDIR/review-dg2-e2e @744af0b; node v24.21.0",
+      "expected": "sha256:5dfecce44b9d7d4ded6ca45968c9e2686d1c011cdd7c906ba3dc9974bbdf92b8 with 552 files, unchanged throughout",
+      "actual": "Matched at the start in the tree and both clones, and again at the end (552 files, exit 0 each time). HEAD 744af0b is the freeze commit on top of source 8488e7a; 8488e7a..744af0b touches only assignments, the candidate manifest and stages.json. HEAD later moved through other reviewers' evidence commits and a round-13 assignment commit (dabb1a6, 7d6ed05, a69a81f, 1092a77, 26d0c60). Outside reviews/runs/test-evidence they change only one assignment file. No candidate file changed.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/00-candidate.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/00-candidate-end.log"
+      ]
+    },
+    {
+      "id": "QA-R12-00-historical-DG1",
+      "procedure": "Validate the previously approved gate DG1 in historical mode.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG1",
+      "environment": "candidate tree, node v24.21.0",
+      "expected": "PASS, exit 0",
+      "actual": "PASS gate DG1 (historical), exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/00-historical-DG1.log"
+      ]
+    },
+    {
+      "id": "QA-R12-00-install",
+      "procedure": "Offline frozen install in both clones, from a copy of the pre-populated pnpm store.",
+      "command": "pnpm install --frozen-lockfile --offline --store-dir $TMPDIR/pnpm-store/v10",
+      "environment": "clones @744af0b, node v24.21.0, pnpm 10.33.0, no network",
+      "expected": "exit 0 with the lockfile unchanged",
+      "actual": "exit 0 in both clones ('Lockfile is up to date'). Two WARN lines say the mth-db bin link could not be created because packages/db/dist/cli.js does not exist before the build. That is expected on a fresh clone; the bin exists after `pnpm -r build`, which the qa-stack then uses.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/00-install-review-dg2.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/00-install-review-dg2-e2e.log"
+      ]
+    },
+    {
+      "id": "QA-R12-01-typecheck",
+      "procedure": "Typecheck every workspace package.",
+      "command": "pnpm -r typecheck",
+      "environment": "clone $TMPDIR/review-dg2 @744af0b, node v24.21.0",
+      "expected": "exit 0",
+      "actual": "exit 0, no errors",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/01-typecheck.log"
+      ]
+    },
+    {
+      "id": "QA-R12-02-build",
+      "procedure": "Build every workspace package, in both clones.",
+      "command": "pnpm -r build",
+      "environment": "clones @744af0b, node v24.21.0",
+      "expected": "exit 0",
+      "actual": "exit 0 in both clones. The only advisory is Vite's '(!) Some chunks are larger than 500 kB' for index-*.js (519 kB); it is a size hint, not an error.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/02-build.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/02-build-e2e-clone.log"
+      ]
+    },
+    {
+      "id": "QA-R12-03-lint",
+      "procedure": "ESLint with zero warnings allowed.",
+      "command": "pnpm lint",
+      "environment": "clone $TMPDIR/review-dg2 @744af0b",
+      "expected": "exit 0",
+      "actual": "eslint . --max-warnings=0, exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/03-lint.log"
+      ]
+    },
+    {
+      "id": "QA-R12-04-openapi-lint",
+      "procedure": "Lint the OpenAPI contract.",
+      "command": "pnpm openapi:lint",
+      "environment": "clone $TMPDIR/review-dg2 @744af0b",
+      "expected": "PASS, 161 operations",
+      "actual": "PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 161 operations; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/04-openapi-lint.log"
+      ]
+    },
+    {
+      "id": "QA-R12-05-no-cdn",
+      "procedure": "Check that no public CDN is referenced.",
+      "command": "pnpm check:no-cdn",
+      "environment": "clone $TMPDIR/review-dg2 @744af0b",
+      "expected": "PASS",
+      "actual": "PASS no-cdn: scanned apps, packages; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/05-no-cdn.log"
+      ]
+    },
+    {
+      "id": "QA-R12-06-format",
+      "procedure": "Prettier formatting check.",
+      "command": "pnpm format:check",
+      "environment": "clone $TMPDIR/review-dg2 @744af0b",
+      "expected": "All matched files use Prettier code style, exit 0",
+      "actual": "All matched files use Prettier code style! exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/06-format-check.log"
+      ]
+    },
+    {
+      "id": "QA-R12-07-contrast",
+      "procedure": "Design-token contrast check (WCAG AA).",
+      "command": "pnpm --filter @mth/design-tokens run check:contrast",
+      "environment": "clone $TMPDIR/review-dg2 @744af0b",
+      "expected": "every used pair meets WCAG AA; documented prohibited pairs fail",
+      "actual": "PASS contrast: 50 pairs meet WCAG AA; the 3 prohibited pairs fail as documented, including white on the provisional #0078FF at 4.09:1, which the UI never uses. The 'fails' lines are those expected prohibited pairs. Exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/07-contrast.log"
+      ]
+    },
+    {
+      "id": "QA-R12-08-unit-series",
+      "procedure": "pnpm test (unit-node + unit-web) 3 times on Node 22 and 3 times on Node 24, alternating locale settings (LANG/LC_ALL unset vs LANG=C.UTF-8), plus once on Node 24 under CPU load. Grep every log for 'Cannot update a component', act() warnings, stderr blocks and failures.",
+      "command": "docs/delivery/test-evidence/DG2/qa/round-12/unit/run-unit-series.sh (pnpm test)",
+      "environment": "clone $TMPDIR/review-dg2 @744af0b; node 22.22.2 and 24.21.0; 4 CPUs; load run with 3 busy-loop hogs (loadavg 8.71 before, 9.41 after)",
+      "expected": "all runs exit 0 with every test passing; zero 'Cannot update a component' and zero act() warnings; every other warning explained",
+      "actual": "7 of 7 runs: 43 files / 790 tests passed, exit 0. 'Cannot update a component': 0 in all 7 logs; 'not wrapped in act': 0; 'stderr |' blocks: 0; failed tests: 0. The only warning line, once per run, is FSTDEP022 (fastify 5.6.1 deprecation) and its '(Use node --trace-warnings ...)' line. It comes from the test-only Fastify instance in apps/api/src/modules/platform/framework-errors.test.ts; product server.ts uses routerOptions. It was also present in rounds 10 and 11 and has no behavioural effect.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-012"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/08-unit-series-summary.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/unit/run-unit-series.sh",
+        "docs/delivery/test-evidence/DG2/qa/round-12/unit/node22-run1-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/unit/node22-run2-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/unit/node22-run3-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/unit/node24-run1-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/unit/node24-run2-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/unit/node24-run3-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/unit/node24-load-cutf8.log"
+      ]
+    },
+    {
+      "id": "QA-R12-09-F430-guard-negative-control",
+      "procedure": "Show that the F-DG2-430 guard catches a reintroduced violation. In a throwaway clone at 744af0b: (A) restore the pre-FE9 impure updater in RecordForm.set (onValuesChange called inside setValues) and run unit-web under both locale settings; (C) keep the same violation, remove the guard's afterEach/afterAll checks, and run team.test.tsx. Also do a static sweep of every functional state updater in apps/web/src.",
+      "command": "npx vitest run --project unit-web (A, both locale settings); npx vitest run --project unit-web src/pages/team/team.test.tsx (C); python3 updater sweep",
+      "environment": "throwaway clone $TMPDIR/review-dg2-guard @744af0b with the diffs shown in the logs (clone only, reverted and then removed); node v24.21.0",
+      "expected": "A fails and names the F-DG2-430 guard; C passes but prints the React warning; the sweep finds no other side-effecting updater",
+      "actual": "A exits 1 (non-zero by design) in both locale settings. 1 failed and 259 passed; the failing test is team.test.tsx > 'Team (English LTR) > shows a 403 from the server in words; nothing is assigned', with 'React warning printed to console.error during this test (F-DG2-430 guard ...): 1 warning(s). First: Cannot update a component (`AssignDialog`) while rendering a different component (`RecordDialog`)'. The FE9 preview tests themselves pass under the violation because behaviour is still correct, and React prints the warning only once per component pair per file, so only the first offending test in the file fails. That still fails the suite. C exits 0: 8/8 pass and the warning text is printed, so it is the guard that turns the warning into a failure. Sweep: 13 updaters, all pure; there is no useReducer and no setState call in apps/web/src.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-012"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/09-guard-negative-control-A.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/09-guard-negative-control-C.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/09-updater-sweep.log"
+      ]
+    },
+    {
+      "id": "QA-R12-10-integration-series",
+      "procedure": "The full integration project 3 times per locale setting (6 runs), each on its own disposable PostgreSQL 16 with a unique port. The clone also gets the 5 qa-verifier integration suites (clone only).",
+      "command": "docs/delivery/test-evidence/DG2/qa/round-12/integration/run-integration-series.sh (QA_PG_PORT=<port> tests/qa/support/with-pg.sh npx vitest run --project integration --reporter=verbose)",
+      "environment": "clone $TMPDIR/review-dg2 @744af0b; PostgreSQL 16.13 on ports 24911-24916; cluster UTF8 / C; node v24.21.0; locale settings unset and C.UTF-8",
+      "expected": "6 of 6 runs exit 0 with every file and test passing, including request-io.test.ts and pool-bounds.test.ts (BE17)",
+      "actual": "6 of 6 runs: 42 files / 640 tests passed, 0 failed, exit 0. The required files pass in every run: migrate 7, protection 17, bu-hierarchy-guard 7, contract 18, blank-text 29, encoding 8, invalid-character 20, framework-errors 11, invalid-utf8 14, media-types 21, evidence 6, request-io 10, pool-bounds 7, oidc 33, and qa-verifier's dg2-qa-acceptance. One error-looking line appears once per run: 'BE17 db-econnreset: {status:500, errors:[unhandled error ECONNRESET read ECONNRESET]}'. That is the PASSING negative control 'no over-match' (request-io.test.ts:558), which asserts that a database-side ECONNRESET stays a 500 with an error log and is not mistaken for a client abort. Every other 'error'-matching line is a passing test name or a BE17/SWEEP measurement with errors:[].",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/10-integration-series-summary.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/integration/run-integration-series.sh",
+        "docs/delivery/test-evidence/DG2/qa/round-12/integration/integration-unset-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/integration/integration-unset-run2.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/integration/integration-unset-run3.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/integration/integration-cutf8-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/integration/integration-cutf8-run2.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/integration/integration-cutf8-run3.log"
+      ]
+    },
+    {
+      "id": "QA-R12-12-migrations-guards-contract",
+      "procedure": "Migrations 0001 to 0019, the DB guard suites and the contract test's 161-operation assertion, taken from the integration and e2e logs.",
+      "command": "ls packages/db/migrations/*.sql; grep -n 'toHaveLength(161)' apps/api/test/integration/contract/contract.test.ts; grep the result lines",
+      "environment": "clone @744af0b; integration and e2e logs above",
+      "expected": "19 migrations applied; guard suites green; 161 operations routed and validated",
+      "actual": "Migrations 0001_identity_access through 0019_evidence_review_separation are present, and every qa-stack/with-stack log reports 'mth-db migrate: applied 19 migration(s)'. migrate/protection/bu-hierarchy-guard/scratch-drop pass in all 6 integration runs. contract.test.ts asserts toHaveLength(161) at lines 559 and 578, and all 18 of its tests pass in all 6 runs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/12-migrations-guards-contract.log"
+      ]
+    },
+    {
+      "id": "QA-R12-15-e2e-product",
+      "procedure": "The product e2e suite (P1 + P2 journeys, p2-blank-text, a20 shell) once per locale setting in chromium-en and chromium-ar, including Define->G2, Design->G3 and the Team preview step p2-17d1.",
+      "command": "E2E_API_PORT=3281|3282 E2E_PG_PORT=24981|24982 apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e e2e/a20-bilingual-shell.spec.ts --workers=1 --reporter=list",
+      "environment": "clone $TMPDIR/review-dg2-e2e @744af0b; pre-installed Chromium (PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers); node v24.21.0; locale settings unset and C.UTF-8",
+      "expected": "every test passes in both projects and both locale settings",
+      "actual": "unset: 64 passed, exit 0 (4.1 min). C.UTF-8: 64 passed, exit 0 (4.0 min). That includes 'Define -> G2' and 'Design -> G3' and the Team test with the new preview step, in EN and AR. Both logs carry the server_encoding UTF8 line and 'applied 19 migration(s)'. The only warnings are 3 'npm warn Unknown project config' lines from npx reading the pnpm-specific .npmrc keys; they are harmless.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-003",
+        "REQ-PB-012",
+        "REQ-PB-017",
+        "REQ-PB-018",
+        "REQ-S04-004",
+        "REQ-S04-005"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/15-e2e-product-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/15-e2e-product-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/run-e2e.sh",
+        "docs/delivery/test-evidence/DG2/qa/round-12/19-qa-r12-results.log"
+      ]
+    },
+    {
+      "id": "QA-R12-17-e2e-qa-stack",
+      "procedure": "qa-verifier's acceptance journey on the real built stack (e2e/support/qa-stack.sh) once per locale setting: all product specs plus qa-verifier's dg2-qa-r8..r12 specs (copied into the clone's e2e/ only) in chromium-en and chromium-ar.",
+      "command": "QA_E2E_API_PORT=3291|3292 QA_E2E_PG_PORT=24991|24992 QA_R8_QUERY_OPS=$TMPDIR/query-ops.json e2e/support/qa-stack.sh npx playwright test e2e apps/web/e2e --workers=1 --reporter=list",
+      "environment": "clone $TMPDIR/review-dg2-e2e @744af0b; pre-installed Chromium; node v24.21.0; locale settings unset and C.UTF-8; r12 spec = the first 652 lines of tests/round-12/e2e/dg2-qa-r12.spec.ts (sha256 e21b7b78...; R12-07 was added afterwards and run separately)",
+      "expected": "every test passes, with the server_encoding line in the log",
+      "actual": "unset: 128 passed, 2 failed, exit 1 (7.1 min). C.UTF-8: 128 passed, 2 failed, exit 1 (7.5 min). Both logs carry 'qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C'. The 2 failures are the same test in both projects and both settings: dg2-qa-r11.spec.ts:415 'R11-02 ... with an upload stalled IN FLIGHT it is bounded by the grace period'. Assertion `expect(failures).toEqual([])` received ['content rows 0, stored files 1']. Part (a) passes (SIGTERM exits 0 in about 21 ms, sockets closed, 'shut down' logged), and so does the timing of part (b) (exit 0 in about 5.02 s, stalled socket closed at the grace). But a file is left in the evidence store for the item after the process exits. In round 11 this test passed 4 of 4. Investigated in QA-R12-R12-07 and raised as F-DG2-460. Everything else passes: all r8/r9/r10 tests (44 per setting), R11-01/03/04-05/06, all 12 R12 tests, and every product spec. The only other warnings are the 3 harmless 'npm warn Unknown project config' lines.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "requirements": [
+        "REQ-S16-013"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/17-e2e-qa-stack-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/17-e2e-qa-stack-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/run-e2e.sh",
+        "docs/delivery/test-evidence/DG2/qa/round-12/21-query-ops.log",
+        "docs/delivery/test-evidence/DG2/qa/tests/round-11/e2e/dg2-qa-r11.spec.ts"
+      ]
+    },
+    {
+      "id": "QA-R12-R12-01-edit-during-body",
+      "procedure": "Edit the item while the upload body is still streaming: PATCH the title during a Content-Length body and during a chunked body, and archive during a Content-Length body. Then two uploads race with the same If-Match. Checked over raw sockets against the real API, with psql and the store inspected.",
+      "command": "(inside the QA-R12-17 runs) e2e/dg2-qa-r12.spec.ts R12-01",
+      "environment": "qa-stack, chromium-en and chromium-ar, both locale settings",
+      "expected": "the edit is not blocked (< 2 s); the completed upload gets 409 version_conflict; no content row, no final or .part file, no audit row; the item keeps the edit; the race has exactly one 200 and one 409, with one content row and the winner's bytes",
+      "actual": "4 of 4 executions passed. The edit completed in 18-30 ms while the upload was open and unanswered. Each upload then got 409 version_conflict with Connection: keep-alive. Content rows 0, stored files 0, audit rows for the upload 0. The item is v2 with the new title, or archived. Race: statuses 200 and 409, one content row, one file and no .part; the download equals the winner's bytes.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-013",
+        "REQ-S13-012"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/19-qa-r12-results.log",
+        "docs/delivery/test-evidence/DG2/qa/tests/round-12/e2e/dg2-qa-r12.spec.ts"
+      ]
+    },
+    {
+      "id": "QA-R12-R12-02-stalled-uploads-isolation",
+      "procedure": "Open 25 stalled uploads, more than the API pool's 20 connections, each sending 64 KiB of a declared 10 MiB. While they stall, read pg_stat_activity as the cluster superuser, with a positive control (a psql session named mth-api that idles in a transaction). Time /readyz, another user's GET /me, a JSON create, and a PATCH of the very item being uploaded. Then complete 3 uploads (their If-Match is now stale), drop the rest, and inspect the store.",
+      "command": "(inside the QA-R12-17 runs) e2e/dg2-qa-r12.spec.ts R12-02",
+      "environment": "qa-stack, chromium-en and chromium-ar, both locale settings",
+      "expected": "no session idle in a transaction (and the control is detected); every other request answers in < 2 s; the 3 completed uploads get 409; nothing is stored",
+      "actual": "4 of 4 executions passed. While stalled: 25 client sockets open and 0 answered. pg_stat_activity was read as postgres (superuser=true); all mth-api sessions were 'idle', none had an unknown state, 0 were 'idle in transaction', and the positive control was detected (1). /readyz 200 in 18-24 ms; dev.office GET /me 200 in 9-14 ms; JSON create 201 in 18-29 ms; PATCH of the uploading item 18-30 ms. The 3 completed uploads each got 409 version_conflict. Content rows 0, stored files 0, /readyz still 200. (An earlier debug run read pg_stat_activity as mth_owner, which cannot see other roles' state; it was replaced by the superuser read plus the positive control before the full runs.)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-013"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/19-qa-r12-results.log",
+        "docs/delivery/test-evidence/DG2/qa/tests/round-12/e2e/dg2-qa-r12.spec.ts"
+      ]
+    },
+    {
+      "id": "QA-R12-R12-03-aborted-bodies",
+      "procedure": "On a separate API process (LOG_LEVEL=info), abort these requests mid-body: JSON create (Content-Length, chunked, and cut inside an Arabic character), JSON PATCH, octet-stream upload (Content-Length and chunked). Parse every log line; check the DB and the store; then /readyz and SIGTERM.",
+      "command": "(inside the QA-R12-17 runs) e2e/dg2-qa-r12.spec.ts R12-03",
+      "environment": "qa-stack plus a spawned apps/api/dist/main.js, chromium-en and chromium-ar, both locale settings",
+      "expected": "no 500 and no error-level (>= 50) or 'unhandled error' log line; incomplete bodies logged below error level; nothing created, changed or stored; process ready and exits 0",
+      "actual": "4 of 4 executions passed. Of 26 log lines, 0 were at error level or 'unhandled error', and 0 responses were >= 500. 6 of 6 aborts were logged as 'request body not received completely' at level 30 (info). Nobody received a response because each client was gone; the only logged completions were the /readyz probes (200). Evidence rows unchanged (1 -> 1), item version and title unchanged, content rows 0, stored files 0. readyz 200; SIGTERM -> exit 0 in 13-18 ms.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-013"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/19-qa-r12-results.log",
+        "docs/delivery/test-evidence/DG2/qa/tests/round-12/e2e/dg2-qa-r12.spec.ts"
+      ]
+    },
+    {
+      "id": "QA-R12-R12-04-binary-byte-exact",
+      "procedure": "Upload binaries: 3 MiB random plus all 256 byte values with Content-Length, 1 MiB plus CRLF/'0 CRLF' lookalikes chunked in 77,777-byte pieces, and 512 KiB sent slowly over about 3 s. Download each and compare bytes, the sha256 (computed vs DB vs Digest header) and the audit row; check for .part files. The R9-02/R10-02/R11-03 binary tests also ran in the same full runs.",
+      "command": "(inside the QA-R12-17 runs) e2e/dg2-qa-r12.spec.ts R12-04",
+      "environment": "qa-stack, chromium-en and chromium-ar, both locale settings",
+      "expected": "200 each; byte-exact; sha256 = DB = Digest; audited; no .part left",
+      "actual": "4 of 4 executions passed. Every upload got 200 (the slow one about 3.2 s), downloaded byte-exact, with sha256 = DB = Digest and 1 audit row, and no .part file (files 1, 2, 3 for revisions 1-3). R11-03 (exactly 25 MiB accepted, 25 MiB + 1 refused) and R9-02/R10-02 also passed in both settings.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-013"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/19-qa-r12-results.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/17-e2e-qa-stack-unset.log"
+      ]
+    },
+    {
+      "id": "QA-R12-R12-05-unicode",
+      "procedure": "Round-trip Arabic, emoji and ZWJ text: a JSON create sent chunked and cut at every UTF-8 continuation byte, an Arabic PATCH, and an Arabic/emoji file name. Compare the API response and the DB with the original. R8-02/R9-04/R10-03/R11-04-05 also ran.",
+      "command": "(inside the QA-R12-17 runs) e2e/dg2-qa-r12.spec.ts R12-05",
+      "environment": "qa-stack, chromium-en and chromium-ar, both locale settings",
+      "expected": "verbatim in the API and in the DB",
+      "actual": "4 of 4 executions passed. 72 chunks -> 201; title and note verbatim in the API and the DB (note compared byte for byte); Arabic PATCH verbatim; file name 'ملف en|ar 👩🏽‍💻 r12.bin' verbatim in the API and the DB. The earlier rounds' Unicode tests also passed.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-013",
+        "REQ-PB-029"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/19-qa-r12-results.log"
+      ]
+    },
+    {
+      "id": "QA-R12-R12-06-team-preview",
+      "procedure": "UI check of the Team assign dialog's role-accountability preview (F-DG2-430). Cycle the Role select through KDS, TD, CM, SEC, WL, KDS and WL. Compare the preview text with GET /role-accountabilities in the page language, and check page and preview direction. Cancel and confirm nothing was assigned. Collect browser console messages and HTTP >= 400 responses.",
+      "command": "(inside the QA-R12-17 runs) e2e/dg2-qa-r12.spec.ts R12-06",
+      "environment": "qa-stack, chromium-en and chromium-ar, both locale settings",
+      "expected": "exactly one preview per selection, matching the API text; EN ltr, AR rtl; nothing assigned; no React update warning",
+      "actual": "4 of 4 executions passed. Every selection showed exactly one preview with the API text. EN: html dir ltr, preview ltr. AR: rtl and rtl. Nothing assigned; 0 React warnings (the SPA is a production build). The 6 console messages are by design: GET /me 401 before sign-in; POST /auth/dev-login 400, the documented dev-mode availability probe in LoginPage.tsx; and 4 x GET /users/{id} 404, because the lead cannot read the user directory (People.tsx).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-012",
+        "REQ-S10-001"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/19-qa-r12-results.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/e2e-qa-screens/en-qa-r12-06-team-preview-sec.png",
+        "docs/delivery/test-evidence/DG2/qa/round-12/e2e-qa-screens/ar-qa-r12-06-team-preview-sec.png",
+        "docs/delivery/test-evidence/DG2/qa/round-12/e2e-qa-screens/en-p2-17d1-team-assign-preview-kds.png",
+        "docs/delivery/test-evidence/DG2/qa/round-12/e2e-qa-screens/ar-p2-17d1-team-assign-preview-kds.png"
+      ]
+    },
+    {
+      "id": "QA-R12-R12-07-shutdown-leftover",
+      "procedure": "Investigation of the R11-02(b) failure. On a separate API process, stall an upload in flight (2 MiB of 10 MiB), send SIGTERM, then list every file the store holds for the item (name and size). Start a new API process on the same store and list again. Check the content row, currentContentId and the download. Control: the same stall, but the client aborts while the process keeps running. Baseline: the identical probe on the round-11 freeze 309aff2 (pre-BE17).",
+      "command": "e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r12.spec.ts -g R12-07 --workers=1 (744af0b, both locale settings; and 309aff2, C.UTF-8)",
+      "environment": "clone $TMPDIR/review-dg2-e2e @744af0b and throwaway clone $TMPDIR/review-dg2-guard @309aff2 (built); pre-installed Chromium; chromium-en and chromium-ar",
+      "expected": "no file left in the store after any failed upload, including one cut by a graceful shutdown",
+      "actual": "At 744af0b: exit 1 in both locale settings, 2 failed (en and ar). Assertion 'files left in the evidence store after the process exited' expected [] but received ['/<uuid>/<uuid>/<item>/<uuid>.part (2097152 B)']. SIGTERM -> exit 0 in about 5.02 s. The .part is still there after a restart on the same store. Content rows 0, currentContentId null, GET content 404. The control part of the same test (client abort while the process stays up) leaves [] in every run. At 309aff2 the identical probe exits 0 (2 passed): after SIGTERM the store is []. So this is a regression introduced by BE17: the body is now received without a pooled connection, so main.ts's db.destroy() no longer waits for the upload handler's async cleanup before process.exit(0). Raised as F-DG2-460 (Medium, non-mandatory).",
+      "exit_status": 1,
+      "result": "FAIL",
+      "requirements": [
+        "REQ-S16-013"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/19-qa-r12-07-shutdown-leftover-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/19-qa-r12-07-shutdown-leftover-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/19-qa-r12-07-baseline-309aff2.log",
+        "docs/delivery/test-evidence/DG2/qa/tests/round-12/e2e/dg2-qa-r12.spec.ts"
+      ]
+    },
+    {
+      "id": "QA-R12-R8-05-said-once",
+      "procedure": "Regression of the R8-05/R9-05 form-error specs: each message is shown once, in the charter, transformation create, organization create and ReasonDialog.",
+      "command": "(inside the QA-R12-17 runs) e2e/dg2-qa-r8.spec.ts R8-05; e2e/dg2-qa-r9.spec.ts R9-05a..e",
+      "environment": "qa-stack, chromium-en and chromium-ar, both locale settings",
+      "expected": "all pass",
+      "actual": "R8-05 and R9-05a, 05b, 05c, 05d and 05e passed in en and ar under both locale settings: 12 of 12 per setting.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-029"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/19-qa-r12-results.log"
+      ]
+    },
+    {
+      "id": "QA-R12-20-axe",
+      "procedure": "Summarise every axe scan written by the four e2e runs, error states included (p2-blank inline errors, conflict and invalid-body states).",
+      "command": "python3 over docs/delivery/test-evidence/DG2/qa/round-12/e2e-*/*axe-summary*.json",
+      "environment": "axe summaries copied from the e2e runs' screenshot directories",
+      "expected": "0 serious or critical violations",
+      "actual": "636 scans in total; 0 serious or critical violations, and no violations of any impact.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/20-axe-summary.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/e2e-product-unset/product-en-axe-summary-p2-blank.json",
+        "docs/delivery/test-evidence/DG2/qa/round-12/e2e-qa-cutf8/qa-ar-axe-summary-p2.json"
+      ]
+    },
+    {
+      "id": "QA-R12-30-validate",
+      "procedure": "Run the gate validators in register, pipeline and reconcile modes.",
+      "command": "node tools/gates/validate.mjs --register DG2; --pipeline DG2; --reconcile DG2",
+      "environment": "candidate tree (HEAD 7d6ed05 at the time; the candidate ID was unchanged), node v24.21.0",
+      "expected": "PASS for each, exit 0",
+      "actual": "'PASS register rules at DG2', 'PASS pipeline (active stage: DG2 REVIEWING)' and 'PASS reconcile (structure)', each exit 0. In reconcile, the round-12 records were reported as 'missing (STALE for current content)' because they were not written yet, and the round-11 ones as stale for the new candidate. Both are expected during a review.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/30-validate-register.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/30-validate-pipeline.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/30-validate-reconcile.log"
+      ]
+    },
+    {
+      "id": "QA-R12-31-register-rows",
+      "procedure": "Confirm that the 32 assigned requirement rows exist in the register.",
+      "command": "grep '^<id>,' docs/delivery/requirements.csv for each id",
+      "environment": "candidate tree",
+      "expected": "32 rows, none missing",
+      "actual": "32 rows found and 0 missing; all show status IMPLEMENTED.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/31-register-rows.log"
+      ]
+    },
+    {
+      "id": "QA-R12-32-residual-registry-D057",
+      "procedure": "Live registry residual (D-057), checked on the offline surface: the offline frozen install succeeds, and deps:verify is attempted.",
+      "command": "pnpm install --frozen-lockfile --offline (exit 0); timeout 120 pnpm deps:verify",
+      "environment": "throwaway clone @744af0b; no network in the sandbox",
+      "expected": "offline install exit 0; deps:verify needs the live registry (residual D-057, not a gate block)",
+      "actual": "Offline frozen install: exit 0 in both clones. deps:verify ran until the timeout and exited 124 (ELIFECYCLE). This is by design: scripts/verify-dependency-pins.mjs says it 'Needs registry access; run it where npm view works', and the sandbox has no network. PASS on the offline/config surface; residual D-057 remains for the live registry.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/32-residual-registry.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/00-install-review-dg2.log"
+      ]
+    },
+    {
+      "id": "QA-R12-33-residual-ci-D058",
+      "procedure": "Live CI residual (D-058), checked on the config surface: the workflows exist and are unchanged since round 11; the CI steps cover the checks run here.",
+      "command": "ls .github/workflows; git diff --stat 309aff2 744af0b -- .github deploy/scripts; grep ci.yml",
+      "environment": "throwaway clone @744af0b",
+      "expected": "workflows present and unchanged; steps match",
+      "actual": "ci.yml and delivery-gates.yml are present, with no diff since 309aff2. ci.yml runs format:check, lint, typecheck, build, test, openapi:lint, check:no-cdn, test:integration and Playwright, in the digest-pinned image, without `playwright install`. PASS on the config surface; residual D-058 remains because no live CI run is available.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/33-residual-ci-config.log"
+      ]
+    },
+    {
+      "id": "QA-R12-34-residual-keycloak-D049",
+      "procedure": "Keycloak residual (D-049), checked on the offline surface: the OIDC integration suite against the in-process stub IdP.",
+      "command": "(inside the QA-R12-10 runs) apps/api/test/integration/oidc.test.ts",
+      "environment": "integration runs, 6 of 6",
+      "expected": "oidc.test.ts green in every run",
+      "actual": "oidc.test.ts passed 33 of 33 in each of the 6 runs. PASS on the offline surface; residual D-049 (a real Keycloak) remains.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/10-integration-series-summary.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/integration/integration-unset-run1.log"
+      ]
+    },
+    {
+      "id": "QA-R12-40-requirements-regression",
+      "procedure": "Map the 32 assigned requirements to the unit, integration, product e2e and QA e2e results above.",
+      "command": "(the QA-R12-08/10/15/17 runs and the R12 probes)",
+      "environment": "as in the referenced checks",
+      "expected": "every requirement verifiable with passing evidence and no regression",
+      "actual": "31 of 32 requirements are verified with passing evidence and no regression. Charter and thesis (REQ-PB-029/030/031), diagnose and G1 (REQ-PB-016/023/026/027/028, REQ-S04-003), define and G2 (REQ-PB-017/033-037, REQ-S04-004), design and G3 (REQ-PB-018/024/025/038/039/041/042/043, REQ-S04-005, REQ-S05-003), roles and the Team preview (REQ-PB-012, REQ-S10-001), modes (REQ-PB-003), unverified evidence (REQ-S13-012) and the P2 deliverables (REQ-DLV-034) all pass in unit, integration and e2e, in EN and AR, under both locale settings. REQ-S16-013 (the Evidence entity) has regressed: an upload cut by a graceful shutdown leaves an orphaned .part file, a regression from round 11 (F-DG2-460, QA-R12-R12-07). All its other evidence behaviour passes (R12-01..05).",
+      "exit_status": 1,
+      "result": "FAIL",
+      "requirements": [
+        "REQ-S16-013"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/19-qa-r12-07-shutdown-leftover-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/19-qa-r12-results.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/10-integration-series-summary.log"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG2-460"
+  ],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG2/qa/round-12/env.txt",
+    "docs/delivery/test-evidence/DG2/qa/round-12/00-candidate.log",
+    "docs/delivery/test-evidence/DG2/qa/round-12/00-candidate-end.log",
+    "docs/delivery/test-evidence/DG2/qa/round-12/08-unit-series-summary.log",
+    "docs/delivery/test-evidence/DG2/qa/round-12/09-guard-negative-control-A.log",
+    "docs/delivery/test-evidence/DG2/qa/round-12/10-integration-series-summary.log",
+    "docs/delivery/test-evidence/DG2/qa/round-12/15-e2e-product-unset.log",
+    "docs/delivery/test-evidence/DG2/qa/round-12/15-e2e-product-cutf8.log",
+    "docs/delivery/test-evidence/DG2/qa/round-12/17-e2e-qa-stack-unset.log",
+    "docs/delivery/test-evidence/DG2/qa/round-12/17-e2e-qa-stack-cutf8.log",
+    "docs/delivery/test-evidence/DG2/qa/round-12/19-qa-r12-results.log",
+    "docs/delivery/test-evidence/DG2/qa/round-12/19-qa-r12-07-shutdown-leftover-unset.log",
+    "docs/delivery/test-evidence/DG2/qa/round-12/19-qa-r12-07-baseline-309aff2.log",
+    "docs/delivery/test-evidence/DG2/qa/round-12/20-axe-summary.log",
+    "docs/delivery/test-evidence/DG2/qa/tests/round-12/e2e/dg2-qa-r12.spec.ts",
+    "docs/delivery/reviews/DG2/round-12/qa-verifier.verifications.json",
+    "docs/delivery/reviews/DG2/round-12/qa-verifier.findings.json"
+  ],
+  "reviewed_at": "2026-10-07T05:30:00Z",
+  "summary": "FAIL on candidate 5dfecce4 (552 files, source 8488e7a). F-DG2-430 is CLOSED_VERIFIED. The 'Cannot update a component' warning is gone from all 7 unit runs (Node 22 and 24, both locale settings, plus a run under load); the guard fails the suite when the impure updater is reintroduced; and the Team preview follows the role in EN (LTR) and AR (RTL). The BE17 regression focus passes: an edit during the body gets 409 with nothing stored; 25 stalled uploads (more than the pool's 20) block neither other users nor /readyz, and no session idles in a transaction (positive control detected); aborted JSON and upload bodies cause no 500 and no error-level log; binaries are stored byte-exact; Unicode round-trips verbatim; R8-05/R9-05 messages are shown once. Static checks, unit (7 of 7 runs, 790 tests each), integration (6 of 6 runs, 640 tests each), product e2e (64 of 64 per setting) and axe (636 scans, 0 serious or critical) are green. One regression: an upload in flight at SIGTERM now leaves an orphaned .part file holding the partial user bytes in the evidence store. It survives a restart and nothing removes it. The round-11 freeze left nothing in the same probe. This failed R11-02 in 4 of 4 QA-stack executions and the dedicated probe R12-07 in both settings. Raised as F-DG2-460 (Medium, non-mandatory, owner backend-workflow-engineer). Because something has regressed, the verdict is FAIL. Residuals D-057, D-058 and D-049 are PASS on the offline/config surface. No business approval is implied."
+}

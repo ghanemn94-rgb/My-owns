@@ -1,0 +1,26 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG2-430",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:5dfecce44b9d7d4ded6ca45968c9e2686d1c011cdd7c906ba3dc9974bbdf92b8 (552 files, source 8488e7a, freeze 744af0b). The fix is FE9 644198a by frontend-ux-engineer; qa-verifier authored none of it. (1) Unit logs: `pnpm test` ran 7 times: Node 22.22.2 x3 and Node 24.21.0 x3, alternating LANG/LC_ALL unset and LANG=C.UTF-8, plus one Node 24 run under CPU load. Every run passed 43 files / 790 tests with exit 0. `grep 'Cannot update a component'` finds 0 lines in all 7 logs, and `grep 'not wrapped in act'` and 'stderr |' blocks also find 0. In round 11 every run had one such warning. The only warning line is the known FSTDEP022 deprecation, which comes from a test-only Fastify instance in framework-errors.test.ts and also appeared in rounds 10 and 11. (2) Code: RecordForm.set now uses a pure updater, `setValues((v) => ({ ...v, [name]: value }))`. onValuesChange is called from a useEffect on `values` and skips the initial values (useRef guard). My own sweep of all 13 functional state updaters in apps/web/src found every one pure, including the StepsEditor key, which is now generated before its updater. There is no useReducer and no setState in the app. (3) Team preview, EN and AR: the product e2e step p2-17d1 passed in chromium-en and chromium-ar under both locale settings, in the product stack and the QA stack. My own UI test R12-06 cycles the Role select through KDS, TD, CM, SEC, WL, KDS and back to WL. Each time, exactly one preview is shown, and its text equals GET /role-accountabilities in the page language. The page is dir=ltr in EN and dir=rtl in AR, and the preview's computed direction matches. After Cancel, nothing is assigned and no React update warning appears. The browser console has 6 messages, all by design: the 401 from /me before sign-in, the 400 from the documented dev-login availability probe, and four 404s for GET /users/{id}, because the lead cannot read the user directory (People.tsx). Screenshots: e2e-qa-screens/{en,ar}-qa-r12-06-team-preview-sec.png. (4) The guard catches a reintroduced violation. In a throwaway clone I restored the pre-FE9 impure updater in RecordForm.set. Under both locale settings `vitest --project unit-web` then exits 1: team.test.tsx > 'shows a 403 from the server in words' fails with 'React warning printed to console.error during this test (F-DG2-430 guard ...): Cannot update a component (`AssignDialog`) while rendering a different component (`RecordDialog`)'. That gives 1 failed and 259 passed. Control C used the same violation with the guard's afterEach/afterAll removed: 8/8 pass but the warning is printed, so the guard is what fails the test. One note: React prints this warning only once per component pair per test file, so only the first offending test in a file fails. That is enough to make the suite fail.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/08-unit-series-summary.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/unit/node22-run1-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/unit/node24-run2-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/unit/node24-load-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/09-guard-negative-control-A.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/09-guard-negative-control-C.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/09-updater-sweep.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/19-qa-r12-results.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/e2e-qa-screens/en-qa-r12-06-team-preview-sec.png",
+        "docs/delivery/test-evidence/DG2/qa/round-12/e2e-qa-screens/ar-qa-r12-06-team-preview-sec.png",
+        "docs/delivery/test-evidence/DG2/qa/tests/round-12/e2e/dg2-qa-r12.spec.ts",
+        "apps/web/src/components/RecordForm.tsx",
+        "apps/web/test/react-warning-guard.ts",
+        "apps/web/test/setup.ts"
+      ]
+    }
+  ]
+}

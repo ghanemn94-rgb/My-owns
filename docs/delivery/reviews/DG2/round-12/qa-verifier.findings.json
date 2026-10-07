@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG2-460",
+      "stage_id": "DG2",
+      "requirement": "REQ-S16-013",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Regression (BE17): an evidence upload in flight at SIGTERM leaves an orphaned .part file with the partial upload bytes in the evidence store, and it is never removed",
+      "reproduction": "Disposable clone at 744af0b (candidate 5dfecce4, source 8488e7a), `pnpm -r build`, e2e/support/qa-stack.sh (real API apps/api/dist/main.js + disposable PostgreSQL 16 + filesystem evidence store). Probe R12-07 in docs/delivery/test-evidence/DG2/qa/tests/round-12/e2e/dg2-qa-r12.spec.ts: (1) start a separate API process from the same build. (2) As the item's owner, POST /transformations/{t}/evidence/{e}/content with Content-Length 10 MiB and If-Match, send 2 MiB, then stall with the client socket left open. The store now holds <org>/<t>/<e>/<content>.part (2,097,152 B). (3) Send SIGTERM to the API. main.ts runs app.close(), the 5 s grace expires, the connection is destroyed, and the process exits 0 in about 5.02 s. (4) List the store. The same failure also shows in qa-verifier's round-11 regression test R11-02(b) ('stored files 1'), which fails in chromium-en and chromium-ar under both locale settings (4 of 4 runs). The probe was run in both projects and both locale settings with the same result. Control 1, same build: the same stall, but the CLIENT aborts while the process keeps running, leaves nothing (the .part is removed). Control 2, the round-11 freeze 309aff2 (pre-BE17): the identical probe leaves nothing after SIGTERM, and R11-02(b) passed there in 4 of 4 runs. Probable cause (static read): BE17 moved the body into phase 2, store.receive(), which holds no pooled connection. receive() removes its temporary only in its catch block, after the request stream errors, and that cleanup is asynchronous (handle.close, then rm). main.ts calls `await app.close(); await db.destroy(); process.exit(0)`. Before BE17 the in-flight upload held a checked-out pool client, so db.destroy() waited until the handler had cleaned up and rolled back. Now db.destroy() resolves at once and process.exit(0) runs before rm(temp). Nothing else removes a .part file: there is no startup sweep and no worker job, and retention deletes are P6.",
+      "expected": "A failed upload stores nothing, which is the BE17 contract ('Any failure after phase 2 started discards the temporary and the final object') and was the behaviour before BE17. That includes an upload cut by a graceful shutdown: SIGTERM with an upload in flight leaves no final object and no .part file. For example, shutdown could wait, within the grace or backstop, for in-flight upload handlers to finish their cleanup before process.exit. Or the store could sweep stale .part objects at start-up.",
+      "actual": "After SIGTERM the store keeps <org>/<t>/<e>/<uuid>.part (2,097,152 B of the user's partial upload) with no evidence_content row. It is not downloadable (GET content returns 404, currentContentId is null). It is still there after a new API process starts on the same store. Every rolling restart or deploy with an upload in flight leaks up to 25 MiB of user-supplied evidence bytes per upload. Nothing reports, governs or deletes them. Record integrity is intact: no committed row points at a missing or partial object, and the bytes are never served. That is why this is Medium and not mandatory. The leftover is an unbounded storage leak and uncontrolled retention of partial evidence content, a regression from round 11.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-12/19-qa-r12-07-shutdown-leftover-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/19-qa-r12-07-shutdown-leftover-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/19-qa-r12-07-baseline-309aff2.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/17-e2e-qa-stack-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-12/17-e2e-qa-stack-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-11/17-e2e-qa-stack-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/tests/round-12/e2e/dg2-qa-r12.spec.ts",
+        "docs/delivery/test-evidence/DG2/qa/tests/round-11/e2e/dg2-qa-r11.spec.ts",
+        "apps/api/src/modules/evidence/store.ts",
+        "apps/api/src/modules/evidence/routes.ts",
+        "apps/api/src/main.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG2/round-12/qa-verifier.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-07T05:20:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG2 round 12 (T-DG2-REV-QA-R12). The full regression's R11-02(b) failed 4 of 4 runs. The dedicated probe R12-07 identifies the leftover .part and shows it survives a restart. The same probe on the round-11 freeze 309aff2 leaves nothing, so this is a BE17 regression. Medium, non-mandatory. Because it is a regression, the round-12 qa verdict is FAIL."
+        }
+      ]
+    }
+  ]
+}
