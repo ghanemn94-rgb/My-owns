@@ -820,7 +820,7 @@
       "id": "DG2",
       "stage": "P2",
       "name": "Diagnose define and design",
-      "state": "REVIEWING",
+      "state": "FIXING",
       "depends_on": [
         "DG1"
       ],
@@ -1186,6 +1186,11 @@
           "state": "REVIEWING",
           "at": "2026-10-07T13:07:38Z",
           "note": "FE13 integrated; D-075 recorded. 36 CLOSED_VERIFIED, 1 FIXED_PENDING_VERIFICATION, 0 OPEN. Orchestrator verification green in both locale settings (unit 866x4 per setting, integration 612, e2e 60). Candidate frozen as 3f01c610 for gate review round 15."
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-10-07T14:26:01Z",
+          "note": "Round 15 on candidate 3f01c610, all three verdicts PASS. domain (16 checks): no findings. qa (23 checks): no findings. code-security (26 checks): closed F-DG2-500 and raised F-DG2-530 (Low; the success handler of a write still in flight when the tab's identity changes writes the previous user's record into the new identity's cache after FE13's reset). Both code-security and domain noted a related observation, X6: within /me's staleTime a refocus refetches page data under the new cookie while the header keeps the previous name, up to 60 s; no record of one user is shown to another. Every failure in the cited logs was disclosed and explained. 37 CLOSED_VERIFIED, 1 OPEN. Round-16 repair: frontend-ux-engineer T-DG2-FE14 (an identity generation in the API client, so no answer to a request sent under a previous identity is returned; /me revalidated with page data on refocus)."
         }
       ]
     },
