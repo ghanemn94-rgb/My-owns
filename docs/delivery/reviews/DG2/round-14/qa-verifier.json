@@ -1,0 +1,463 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG2",
+  "round": 14,
+  "candidate_id": "sha256:9f3ca298d029f691330de1eddab806df57d5876307926b50df0312f8882b684e",
+  "source_commit": "ea9051b21b4a4192629078a31faca0a93edfb36a",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG2-T-DG2-REV-QA-R14B-qa-verifier-20261007T105926Z-8629d15f",
+    "session_id": "8629d15f-1c5a-4cf3-8491-009b7da92718"
+  },
+  "implementation_author": [
+    "transformation-analyst",
+    "frontend-ux-engineer",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "solution-architect",
+    "devops-engineer"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "qa-verifier authored no product implementation in the DG2 scope. The files I wrote are QA tests and evidence: docs/delivery/test-evidence/DG2/qa/** (this round: the R14 spec under tests/round-14/ and the evidence under round-14/), plus this record. The round-14 repairs (D-074: FE10 8cb3bb8, FE11 59d38ad, FE12 7f03453) are frontend-ux-engineer's. This is the re-run (R14B) of task T-DG2-REV-QA-R14. The first run was killed by a container restart. I did not open or cite its material in qa-r14-orphaned/; all evidence here is fresh. Every result comes from my own runs in disposable clones under $TMPDIR, removed at the end: two clones at the source commit ea9051b2, and one negative-control clone at aa0a68f1, the round-13 source. At the start HEAD was e351a34a, not ea9051b2. Every commit in ea9051b2..HEAD (203 changed files) is an orchestrator or review-evidence commit, and none of those files is among the 560 manifest entries (00-candidate.log). The recomputed candidate ID is sha256:9f3ca298... with 560 files in the tree, at --ref ea9051b2 and in both clones, and --diff reports matches with no added, removed or changed files, at the start and at the end. The other reviewers' round-14 records were already committed when I started. I did not open them. I formed my verdict from my own runs before reading any other reviewer's round-14 conclusions. The validate --reconcile output I produced lists per-round verdicts; I read it only up to round 12 and my own 'round 14 qa-verifier: missing' line."
+  },
+  "assignment": "docs/delivery/assignments/DG2/round-14/qa-verifier-rerun.md",
+  "requirements_checked": [
+    "REQ-PB-003",
+    "REQ-PB-012",
+    "REQ-PB-016",
+    "REQ-PB-017",
+    "REQ-PB-018",
+    "REQ-PB-023",
+    "REQ-PB-024",
+    "REQ-PB-025",
+    "REQ-PB-026",
+    "REQ-PB-027",
+    "REQ-PB-028",
+    "REQ-PB-029",
+    "REQ-PB-030",
+    "REQ-PB-031",
+    "REQ-PB-033",
+    "REQ-PB-034",
+    "REQ-PB-035",
+    "REQ-PB-036",
+    "REQ-PB-037",
+    "REQ-PB-038",
+    "REQ-PB-039",
+    "REQ-PB-041",
+    "REQ-PB-042",
+    "REQ-PB-043",
+    "REQ-DLV-034",
+    "REQ-S04-003",
+    "REQ-S04-004",
+    "REQ-S04-005",
+    "REQ-S05-003",
+    "REQ-S10-001",
+    "REQ-S13-012",
+    "REQ-S16-013"
+  ],
+  "checks_run": [
+    {
+      "id": "QA-R14-00-candidate",
+      "procedure": "Confirm the frozen candidate at the start and the end of the run: git rev-parse HEAD; recompute the candidate ID in the tree, at --ref ea9051b2 and in both clones; run --diff; check that no file changed in ea9051b2..HEAD is a manifest entry.",
+      "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG2; node tools/gates/candidate.mjs --stage DG2 --ref ea9051b2; node tools/gates/candidate.mjs --stage DG2 --diff; git log --oneline ea9051b2..HEAD; manifest-overlap check (node)",
+      "environment": "repository tree (read-only), HEAD e351a34a at the start and the end; clones $TMPDIR/review-dg2 and $TMPDIR/review-dg2-e2e @ea9051b2; node v24.21.0",
+      "expected": "sha256:9f3ca298d029f691330de1eddab806df57d5876307926b50df0312f8882b684e with 560 files everywhere; HEAD differs from the source commit only by files outside the manifest",
+      "actual": "The candidate matched in all four places (tree, --ref ea9051b2, both clones), 560 files. --diff reports matches=true with no added, removed or changed files. ea9051b2..e351a34a holds 6 commits: the round-14 freeze d99de98, the other reviewers' auto-committed runs and evidence, and the rerun assignment e351a34. Together they change 203 files, none of them a manifest entry (overlap 0). At the end HEAD was still e351a34a and the candidate unchanged. Every command exited 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-14/00-candidate.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/00-candidate-end.log"
+      ]
+    },
+    {
+      "id": "QA-R14-00-historical-DG1",
+      "procedure": "Validate the previous approved gate in historical mode.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG1",
+      "environment": "repository @e351a34a (read-only); node v24.21.0",
+      "expected": "PASS gate DG1 (historical), exit 0",
+      "actual": "PASS gate DG1 (historical), exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-14/00-historical-DG1.log"
+      ]
+    },
+    {
+      "id": "QA-R14-00-install",
+      "procedure": "Install the clones' dependencies offline from the frozen lockfile.",
+      "command": "pnpm install --frozen-lockfile --offline [--store-dir $TMPDIR/pnpm-store/v10]",
+      "environment": "$TMPDIR/review-dg2 and $TMPDIR/review-dg2-e2e @ea9051b2; node v24.21.0; pnpm 10.33.0; no network",
+      "expected": "both installs exit 0 with the lockfile up to date",
+      "actual": "First attempt: exit 226 (EROFS). pnpm tried to register the clone in HOME's store (/root/.local/share/pnpm/store/v10/projects), which is read-only in the reviewer sandbox by design (agent protocol: HOME is read-only). This is a sandbox constraint, not a product defect (00-install-attempt1-erofs.log). I then copied that pre-populated store into $TMPDIR and passed --store-dir. Both installs exited 0, with 'Lockfile is up to date' and nothing downloaded. Two pnpm WARN lines say a bin for mth-db could not be created before packages/db/dist existed; the CLI is used later through `node packages/db/dist/cli.js`, after the build.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-14/00-install-attempt1-erofs.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/00-install-review-dg2.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/00-install-review-dg2-e2e.log"
+      ]
+    },
+    {
+      "id": "QA-R14-01-static",
+      "procedure": "Build and static checks, one log per command: typecheck, build, lint, OpenAPI lint (161 operations), no-CDN, format check, contrast.",
+      "command": "pnpm -r typecheck; pnpm -r build; pnpm lint; pnpm openapi:lint; pnpm check:no-cdn; pnpm format:check; pnpm --filter @mth/design-tokens run check:contrast (run-static.sh)",
+      "environment": "$TMPDIR/review-dg2 @ea9051b2; node v24.21.0",
+      "expected": "every command exits 0; OpenAPI 3.1.1 with 161 operations; no CDN; WCAG AA pairs pass",
+      "actual": "All 7 exit 0. openapi:lint: 'PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 161 operations'. no-cdn: 'PASS no-cdn: scanned apps, packages'. eslint --max-warnings=0 is clean, and prettier reports 'All matched files use Prettier code style!'. Contrast: 50 pairs meet WCAG AA. Its three 'fails' lines are the documented PROHIBITED pairs, which the check expects to fail and the UI never uses (white on #0078FF 4.09:1, #0078FF on the page surface 3.84:1, the decorative divider 1.27:1). The build prints Vite's advisory chunk-size warning ('Adjust chunk size limit ...'), which is not an error. The e2e clone's build also exits 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-14/run-static.sh",
+        "docs/delivery/test-evidence/DG2/qa/round-14/01-typecheck.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/02-build.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/02-build-e2e-clone.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/03-lint.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/04-openapi-lint.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/05-no-cdn.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/06-format-check.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/07-contrast.log"
+      ]
+    },
+    {
+      "id": "QA-R14-08-unit-series",
+      "procedure": "pnpm test 3 times on Node 22 and 3 times on Node 24, alternating locale settings, plus once on Node 24 under CPU load (3 busy-loop hogs on 4 CPUs).",
+      "command": "unit/run-unit-series.sh (PATH=<node22|node24>:$PATH <env -u LANG -u LC_ALL | env -u LC_ALL LANG=C.UTF-8> pnpm test)",
+      "environment": "$TMPDIR/review-dg2 @ea9051b2; node v22.22.2 and v24.21.0; 4 CPUs",
+      "expected": "7 of 7 runs exit 0 with no failed test",
+      "actual": "7 of 7 runs exit 0, each 47 files / 848 tests passed (796 in round 13; the additions are FE10-FE12's session-end, LanguageSwitch, render-time-language and team tests). There are 0 failure lines. The load run's loadavg went from 5.03 to 8.08. Each log has one '(node:N) [FSTDEP022] FastifyWarning ... deprecated' line, a fastify 5 deprecation notice printed by a test that builds the app; it is not a test result. No other error or warning line appears.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-14/08-unit-series-summary.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/unit/run-unit-series.sh",
+        "docs/delivery/test-evidence/DG2/qa/round-14/unit/node22-run1-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/unit/node22-run2-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/unit/node22-run3-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/unit/node24-run1-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/unit/node24-run2-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/unit/node24-run3-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/unit/node24-load-cutf8.log"
+      ]
+    },
+    {
+      "id": "QA-R14-10-integration-series",
+      "procedure": "The integration project 3 times per locale setting, each on its own disposable PostgreSQL (unique ports 25131-25136). My earlier QA integration suites (dg2-qa-acceptance, round-2 design/journey, round-3 blank-sweep/regress) are copied into the CLONE's tests/qa/integration. This covers migrations, DB guards, contract.test.ts (161 operations routed), blank-text, encoding, invalid-character, framework-errors, invalid-utf8, media-types and the evidence tests.",
+      "command": "integration/run-integration-series.sh (<locale> QA_PG_PORT=<port> tests/qa/support/with-pg.sh npx vitest run --project integration --reporter=verbose)",
+      "environment": "$TMPDIR/review-dg2 @ea9051b2 + 5 QA suites (clone only); PostgreSQL 16.13 disposable clusters (UTF8, C locale); node v24.21.0",
+      "expected": "6 of 6 runs exit 0 with no failed test; the database is UTF8; every named suite passes",
+      "actual": "6 of 6 runs exit 0, each 44 files / 652 tests passed, 0 failure lines, 'server_encoding UTF8, lc_collate C, lc_ctype C' under both locale settings. Every named suite is present and passes in every run: contract.test.ts (route coverage plus every operation; asserts toHaveLength(161) twice), blank-text, encoding, invalid-character, framework-errors, invalid-utf8, media-types, DB guards (bu-hierarchy-guard / migration 0009, dg2-repairs / migration 0019, platform fail-closed guards) and the evidence suites. Error-looking lines, each once per run and all inside PASSING tests: 'BE17 db-econnreset {status:500 ... ECONNRESET}' is request-io.test.ts's negative control (a database-side reset must still be a 500); 'stdout | ...' blocks are measurement output of tests whose names contain 'error-level log'; 'BE18 Q7 ... /login?error=idp_unavailable' is the never-answering-IdP test; 3 'npm warn Unknown project config' lines come from npx reading the pnpm .npmrc. One of my wait-loop helper commands (not a test) was stopped by its background time limit because it watched for a word the series script never writes; the series itself finished and every run log ends with exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-14/10-integration-series-summary.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/integration/run-integration-series.sh",
+        "docs/delivery/test-evidence/DG2/qa/round-14/integration/integration-unset-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/integration/integration-unset-run2.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/integration/integration-unset-run3.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/integration/integration-cutf8-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/integration/integration-cutf8-run2.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/integration/integration-cutf8-run3.log"
+      ]
+    },
+    {
+      "id": "QA-R14-12-migrations",
+      "procedure": "Apply migrations 0001 to 0019 with the built CLI to a fresh disposable database, list schema_migration, then run migrate again (it must be idempotent).",
+      "command": "env -u LC_ALL LANG=C.UTF-8 QA_PG_PORT=25143 tests/qa/support/with-pg.sh bash mig.sh (NODE_ENV=development node packages/db/dist/cli.js migrate, twice; psql select from schema_migration)",
+      "environment": "$TMPDIR/review-dg2 @ea9051b2; PostgreSQL 16.13 disposable cluster, UTF8/C; node v24.21.0",
+      "expected": "19 migrations applied in order 0001..0019; the second migrate applies nothing",
+      "actual": "Attempt 1 exited 1 with 'mth-db: Invalid configuration: NODE_ENV is required for db-cli'. My script forgot NODE_ENV, which the stack scripts always set; that is a fail-closed configuration check, not a defect (12-migrations-attempt1-no-node-env.log). Attempt 2, with NODE_ENV=development: 'applying 0001_identity_access.sql' ... '0019_evidence_review_separation.sql', 'applied 19 migration(s)'. schema_migration lists ids 1..19 (count 19, min 1, max 19). The second migrate prints 'database is up to date'. Exit 0. The database is server_encoding UTF8, lc_collate C, lc_ctype C.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-14/12-migrations.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/12-migrations-attempt1-no-node-env.log"
+      ]
+    },
+    {
+      "id": "QA-R14-15-e2e-product",
+      "procedure": "Product e2e once per locale setting: apps/web/e2e (P1 journeys, P2 journeys including Define->G2 and Design->G3, p2-blank-text.spec.ts, session-end.spec.ts) plus e2e/a20-bilingual-shell.spec.ts, in chromium-en and chromium-ar, on apps/web/e2e/support/with-stack.sh (real API + PostgreSQL).",
+      "command": "<locale> E2E_API_PORT=<p> E2E_PG_PORT=<p+1> apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e e2e/a20-bilingual-shell.spec.ts --workers=1 --reporter=list (run-e2e.sh)",
+      "environment": "$TMPDIR/review-dg2-e2e @ea9051b2 (built); pre-installed Chromium chromium-1194 (/opt/pw-browsers); ports 25301/25302 (unset) and 25321/25322 (cutf8)",
+      "expected": "every test passes in both projects and both locale settings",
+      "actual": "unset: 72 passed (4.9m), exit 0. cutf8: 72 passed (4.9m), exit 0. That is 64 in round 13 plus session-end.spec.ts's 4 tests x 2 projects. 0 failed. 'Define -> G2 ... G2 is decided' and 'Design -> G3 ... G3 is decided by the Sponsor' pass in chromium-en and chromium-ar. The cluster line is 'server_encoding UTF8, lc_collate C, lc_ctype C'. The only non-test lines are 3 'npm warn Unknown project config' notices from npx reading the pnpm .npmrc.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-14/run-e2e.sh",
+        "docs/delivery/test-evidence/DG2/qa/round-14/15-e2e-product-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/15-e2e-product-cutf8.log"
+      ]
+    },
+    {
+      "id": "QA-R14-17-e2e-qa-stack",
+      "procedure": "Acceptance journey on my own stack (e2e/support/qa-stack.sh), once per locale setting: every spec in e2e/** (a20, my R8-R13 regression specs and the new R14 spec, copied into the clone) and apps/web/e2e/**, chromium-en and chromium-ar.",
+      "command": "<locale> QA_E2E_API_PORT=<p+2> QA_E2E_PG_PORT=<p+3> QA_R8_QUERY_OPS=<query-ops.json> e2e/support/qa-stack.sh npx playwright test e2e apps/web/e2e --workers=1 --reporter=list (run-e2e.sh)",
+      "environment": "$TMPDIR/review-dg2-e2e @ea9051b2 + dg2-qa-r8..r14 specs in the clone's e2e/; Chromium chromium-1194; ports 25303/25304 and 25323/25324",
+      "expected": "every test passes; the log shows the server_encoding line",
+      "actual": "unset: 164 passed (11.7m), exit 0. cutf8: 164 passed (11.6m), exit 0. 164 = round 13's 142 + session-end 8 + R14 14. 0 failed. Both logs show 'qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C'. R8-R13 all still pass in each run: r8 12/12, r9 20/20, r10 12/12, r11 10/10, r12 14/14, r13 10/10. The only lines with 'error'-like words are measurement output of passing R11/R12 tests (for example 'audit repro: 30 MiB chunked ... 413', 'response before the abort none') and 3 'npm warn Unknown project config' notices. query-ops input: 161 operations, 32 GET operations with 103 query parameters.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-14/17-e2e-qa-stack-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/17-e2e-qa-stack-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/19-qa-r14-results.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/21-query-ops.log"
+      ]
+    },
+    {
+      "id": "QA-R14-F480-a-other-tab-signout",
+      "procedure": "R14-01 (my own test), EN and AR, both locale settings. Sign in; open a REAL second tab of the same browser and press its own Sign out button. Then in the first tab follow the in-app 'Transformations' link. Then press Back. Then switch the language on the sign-in page. Then sign in again.",
+      "command": "part of QA-R14-17 (e2e/dg2-qa-r14.spec.ts R14-01)",
+      "environment": "as QA-R14-17",
+      "expected": "one landing on /login?returnTo=/transformations&error=session_expired with the localized message and the form within 2 s; dir/lang right; the URL stays on /login for 3 s; at most 3 GET /me after the trigger; no signed-in shell. The second tab shows 'signed out', not 'session ended'. Back never renders the shell or loops (at most 6 /me). The language switch translates the message and flips dir. Signing in returns to /transformations. No 429, no page error.",
+      "actual": "Passes 4 of 4 (en/ar x unset/cutf8). The second tab shows the signed-out status and no session-ended alert. After Back the page stays on /login with no shell. On the sign-in page the message switches to the other language with the right dir (screenshots *-qa-r14-01-landing*.png). axe reports 0 serious/critical on both landings. On the pre-fix code (aa0a68f1) the same test fails: the message alert renders but the sign-in form never appears within 2 s (the F-DG2-480 blank/loop state).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S10-001"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/tests/round-14/e2e/dg2-qa-r14.spec.ts",
+        "docs/delivery/test-evidence/DG2/qa/round-14/19-qa-r14-results.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/e2e-qa-screens/unset-en-qa-r14-01-landing.png",
+        "docs/delivery/test-evidence/DG2/qa/round-14/e2e-qa-screens/unset-ar-qa-r14-01-landing.png",
+        "docs/delivery/test-evidence/DG2/qa/round-14/e2e-qa-screens/unset-ar-qa-r14-01-landing-switched.png"
+      ]
+    },
+    {
+      "id": "QA-R14-F480-b-upload-401-after-revocation",
+      "procedure": "R14-02 (my own test), EN and AR, both locale settings. An administrator grants dev.nobody TL on a synthetic transformation. dev.nobody creates an evidence item, opens the Upload dialog and chooses a file. The administrator then revokes the assignment through the API (the revoke ends the user's sessions, D-073), and dev.nobody confirms the upload.",
+      "command": "part of QA-R14-17 (e2e/dg2-qa-r14.spec.ts R14-02)",
+      "environment": "as QA-R14-17; the real database is checked with psql (DATABASE_OWNER_URL exported by qa-stack.sh)",
+      "expected": "the upload POST answers 401 'unauthenticated'; the user sees the localized 'session ended' message on the sign-in page (returnTo = the evidence page); the dialog is gone; at most 3 /me; no evidence_content row; a session.revoke audit event is added. Signing in again (no grant left) shows a no-permission/error state on the evidence page, with no loop back to sign-in.",
+      "actual": "Passes 4 of 4. Response 401 with code 'unauthenticated'. The landing shows the message and form in the project's language, with no dialog. evidence_content for the item is 0, and the session.revoke count went up. After signing in again, the evidence page shows the explained state and stays on the same path for 2 s. axe 0 serious/critical. How 'the dialog shows its message' is met: the FE10 design unmounts the dialog with the page when the session ends. The message the user sees is the localized 'Your session ended. Please sign in again.' / 'انتهت جلستك. يُرجى تسجيل الدخول مجددًا.' on the sign-in page, shown at once (screenshots *-qa-r14-02-upload-refused.png). The dialog does not show its own error before the redirect. I do not treat this as a defect: the cause is stated in the user's language, and nothing was stored. On aa0a68f1 the test fails: no session-ended message appears.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S13-012",
+        "REQ-S10-001"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/tests/round-14/e2e/dg2-qa-r14.spec.ts",
+        "docs/delivery/test-evidence/DG2/qa/round-14/19-qa-r14-results.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/e2e-qa-screens/unset-en-qa-r14-02-upload-refused.png",
+        "docs/delivery/test-evidence/DG2/qa/round-14/e2e-qa-screens/unset-ar-qa-r14-02-upload-refused.png"
+      ]
+    },
+    {
+      "id": "QA-R14-F480-c-default-rate-limits",
+      "procedure": "R14-03 (my own test): one browser with THREE tabs whose shared session is ended from outside. Each tab follows an in-app link that needs the API; the tabs then stay open for 10 s. A second browser context from the same IP then signs in and navigates two pages. Run with the harness limits (in QA-R14-17) and, on separate stacks, with the product's DEFAULT limits (E2E_DEFAULT_RATE_LIMITS=1: 20 auth/min, 300 general/min), one project per stack, together with the product's own session-end test 3. A JSON-reporter re-run records the measured counts.",
+      "command": "<locale> E2E_DEFAULT_RATE_LIMITS=1 E2E_API_PORT=<q> E2E_PG_PORT=<q+1> apps/web/e2e/support/with-stack.sh npx playwright test e2e/dg2-qa-r14.spec.ts apps/web/e2e/session-end.spec.ts --project <chromium-en|chromium-ar> --grep 'R14-03|another browser context from the same IP' --workers=1 (--reporter=list; then --reporter=json)",
+      "environment": "$TMPDIR/review-dg2-e2e @ea9051b2; with-stack.sh printed 'rate limits: product defaults (AUTH_RATE_LIMIT_PER_MINUTE and RATE_LIMIT_PER_MINUTE unset)'; ports 25305-25312 and 25325-25332 (list), 25341-25344 (json)",
+      "expected": "each tab lands once with the message; at most 3 /me per ended tab; no 429 in any tab or context; the second context signs in and navigates",
+      "actual": "Default limits: 2 passed in each of the 4 list runs (unset/cutf8 x en/ar) and in both JSON runs, all exit 0. Measured under default limits: GET /me per ended tab in about 16 s = 1,1,1; API requests per ended tab = 4,4,4; 429s = 0 (the product test: '/me after the end in 5 s=1; 429s=0'). Before FE10 the domain reviewer measured about 130 /me per second. With harness limits R14-03 passes 4 of 4 in QA-R14-17. On aa0a68f1 R14-03 fails: no tab shows the session-ended message.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-14/16-e2e-default-limits-unset-chromium-en.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/16-e2e-default-limits-unset-chromium-ar.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/16-e2e-default-limits-cutf8-chromium-en.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/16-e2e-default-limits-cutf8-chromium-ar.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/16-e2e-default-limits-json-cutf8-chromium-en.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/16-e2e-default-limits-json-cutf8-chromium-ar.log"
+      ]
+    },
+    {
+      "id": "QA-R14-F480-d-403-is-not-a-session-end",
+      "procedure": "Three cases. R14-04a: a 403 'forbidden' on the transformations list read. R14-04b: a 403 'forbidden' on the create POST. In both, the ONE response is replaced with page.route, because the seed cannot produce that status through the UI, and the test name says so. R14-05: a REAL 403 'csrf' on the language-preference save (another sign-in of the same browser replaces the cookie), twice in a row. Plus a static check of the client rule.",
+      "command": "part of QA-R14-17 (R14-04a, R14-04b+06, R14-05+06); grep in 19-static-inspection.log",
+      "environment": "as QA-R14-17",
+      "expected": "the user stays signed in on the same page (no /login for 2 s), sees an explained state or banner, at most 1 /me (2 for the two refused saves), no 429; the client ends a session only on 401 'unauthenticated' (or a 401 without a problem body)",
+      "actual": "All three pass 4 of 4: the URL stays put, Sign out stays visible, and the no-permission/error state or the localized 'You do not have permission...' banner shows. The real 403 responses carry code 'csrf'. Static: client.ts:96 isSessionEndedError = status 401 && (problem null || code 'unauthenticated'). The sign-in form, its probe and sign-out pass silent401. R14-04a/b also pass on aa0a68f1: 403 handling was already correct and these are regression guards, as the negative control expects.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S10-001"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-14/19-qa-r14-results.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/19-static-inspection.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/e2e-qa-screens/unset-en-qa-r14-04a-403-read.png",
+        "docs/delivery/test-evidence/DG2/qa/round-14/e2e-qa-screens/unset-ar-qa-r14-04b-403-create.png"
+      ]
+    },
+    {
+      "id": "QA-R14-FE11-refused-language-save",
+      "procedure": "R14-05 (my own test): with a real 403 csrf, switch EN->AR and then AR->EN in chromium-en (AR->EN then EN->AR in chromium-ar). Each save is refused. After each refusal, check the notice text against the shown language's catalogue string, html lang/dir, the live region's lang, a single notice, and the notice's computed direction. Then reload.",
+      "command": "part of QA-R14-17 (e2e/dg2-qa-r14.spec.ts R14-05+06)",
+      "environment": "as QA-R14-17",
+      "expected": "after each refused save the notice is exactly common.language.notSaved in the language now shown; lang/dir and the live region's lang match; computed direction rtl for AR and ltr for EN; still signed in on /about; a reload restores the persisted (unchanged) language with no notice",
+      "actual": "Passes 4 of 4, both directions in each project. The notice text equals the shown language's string, direction rtl/ltr is as expected, and there is exactly one notice. After the reload the original language is back and no notice shows. On aa0a68f1 the test fails: after the refused switch no language-not-saved notice is found.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/tests/round-14/e2e/dg2-qa-r14.spec.ts",
+        "docs/delivery/test-evidence/DG2/qa/round-14/19-qa-r14-results.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/e2e-qa-screens/unset-en-qa-r14-05-step1-ar-1280.png",
+        "docs/delivery/test-evidence/DG2/qa/round-14/e2e-qa-screens/unset-ar-qa-r14-05-step1-en-1280.png"
+      ]
+    },
+    {
+      "id": "QA-R14-FE12-switch-while-error-visible-and-header-layout",
+      "procedure": "Switch the language while each of these is visible: required-field errors on the create form; a 403 server banner on create; the no-permission/error state of a 403 read; the sign-in page's session-ended alert; the dev-login invalid-username error (signed out). Check that the text changes to the other catalogue's string and that dir flips. With the language-not-saved notice shown in each language, measure the header at 320, 768 and 1280 px against the same page measured WITHOUT the notice, and run axe at each width.",
+      "command": "part of QA-R14-17 (R14-01, R14-04a, R14-04b+06, R14-05+06, R14-06b)",
+      "environment": "as QA-R14-17",
+      "expected": "every visible error/notice is re-rendered in the new language with the right direction, and no old-language text remains; header height and wordmark width within 0.5 px of the no-notice reference; wordmark content fits; the notice is below the header; no horizontal scroll; axe 0 serious/critical",
+      "actual": "All pass 4 of 4. The required errors switch to the other language's problems.validation__required string (same count, computed direction matches). The 403 banner and the no-permission state switch. The session-ended alert and the invalid-username error switch, with no old-language text left. At 320/768/1280 in both languages, with the notice shown, header height and wordmark width match the no-notice reference within 0.5 px, the wordmark does not overflow, the notice sits below the header, and nothing scrolls horizontally (screenshots *-qa-r14-05-step*-{320,768,1280}.png). On aa0a68f1 R14-06b fails: the invalid-username error stays in the previous language.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/tests/round-14/e2e/dg2-qa-r14.spec.ts",
+        "docs/delivery/test-evidence/DG2/qa/round-14/19-qa-r14-results.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/e2e-qa-screens/unset-en-qa-r14-05-step1-ar-320.png",
+        "docs/delivery/test-evidence/DG2/qa/round-14/e2e-qa-screens/unset-en-qa-r14-05-step2-en-768.png",
+        "docs/delivery/test-evidence/DG2/qa/round-14/e2e-qa-screens/unset-ar-qa-r14-05-step2-ar-320.png",
+        "docs/delivery/test-evidence/DG2/qa/round-14/e2e-qa-screens/unset-en-qa-r14-06-required-switched.png",
+        "docs/delivery/test-evidence/DG2/qa/round-14/e2e-qa-screens/unset-ar-qa-r14-06-403-create-switched.png",
+        "docs/delivery/test-evidence/DG2/qa/round-14/e2e-qa-screens/unset-en-qa-r14-06b-invalid-username-switched.png"
+      ]
+    },
+    {
+      "id": "QA-R14-19-negative-control",
+      "procedure": "Run the R14 spec unchanged against a clone of aa0a68f1 (round-13 source, before FE10/FE11/FE12) on its own QA stack. First as a whole (serial mode stops at the first failure), then each test alone with --grep.",
+      "command": "env -u LC_ALL LANG=C.UTF-8 QA_E2E_API_PORT=<p> QA_E2E_PG_PORT=<p+1> e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r14.spec.ts --workers=1 [--grep <test>]",
+      "environment": "$TMPDIR/nc-aa0a68f @aa0a68f1 (built; removed afterwards); ports 25205-25222",
+      "expected": "BY DESIGN, R14-01/02/03 (FE10), R14-05 (FE11) and R14-06b (FE12) fail on the pre-fix code; R14-04a/b (a 403 is not a session end) pass there too, as regression guards",
+      "actual": "Whole-file run: exit 1. R14-01 fails in en and ar: 'getByLabel(/^Synthetic user name.../) not found' (the alert is there but no form: the F-480 blank/loop). The other 12 tests did not run, because serial mode stops after a failure. Per-test runs: R14-02 exit 1 and R14-03 exit 1, both failing on 'getByRole(alert).filter(session ended) not found', en and ar. R14-04a exit 0 and R14-04b exit 0 (2 passed each). R14-05 exit 1: 'getByTestId(language-not-saved)' not found (en and ar). R14-06b exit 1: the other-language invalid-username text not found (en and ar). Every non-zero exit is one of these designed failures. The same spec passes 14/14 on the candidate.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-14/19-negative-control-aa0a68f.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/19-negative-control-aa0a68f-per-test.log"
+      ]
+    },
+    {
+      "id": "QA-R14-18-spec-development",
+      "procedure": "Development runs of the new R14 spec on the candidate (before the official runs; concurrent with the integration series).",
+      "command": "env -u LC_ALL LANG=C.UTF-8 QA_E2E_API_PORT=2520x e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r14.spec.ts --workers=1",
+      "environment": "$TMPDIR/review-dg2-e2e @ea9051b2",
+      "expected": "explain every failure; the final spec passes",
+      "actual": "Dev run 1: exit 1, 4 passed, 2 failed, 8 did not run. Both failures were R14-03 TEST defects, not product defects. (1) In AR, getByRole('link', {name:'عملي'}) matched 2 links (strict mode: 'My Work' and the 'BAU and Improvement' entry also contains that word), so I made the name exact. (2) In EN, tab 1 followed the 'My Work' link and showed the signed-in My Work page, with no session-ended message (dev-run1-r14-03-en/test-failed-2.png). My Work is a static P2 page that makes no API request (apps/web/src/pages/AreaPages.tsx has no query), so the client cannot learn that the session ended until the next API call or the /me refetch after its 60 s staleTime. FE10 defines a session end as a 401 from a request, so this is expected behaviour, not an F-DG2-480 regression. I recorded it as an observation, not a finding: no data is exposed (the server refuses every request), and the next action that needs the API lands once on sign-in, which R14-01/R14-03 verify. All three tabs now follow the API-backed 'Transformations' link. Dev run 2: 14 passed, exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-14/18-r14-spec-dev-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/18-r14-spec-dev-run2.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/dev-run1-r14-03-en/test-failed-2.png",
+        "docs/delivery/test-evidence/DG2/qa/round-14/dev-run1-r14-03-en/error-context.md"
+      ]
+    },
+    {
+      "id": "QA-R14-20-axe",
+      "procedure": "Aggregate every axe summary written by the product and QA stacks in both locale settings, including error states (session-ended landing, upload refused, 403 read/create, required errors, the language-not-saved notice at 3 widths, invalid username).",
+      "command": "python3 -I axe-agg.py e2e-product-<loc> e2e-qa-<loc> (script text in 20-axe-summary.log)",
+      "environment": "summaries copied from the runs of QA-R14-15 and QA-R14-17",
+      "expected": "0 serious/critical violations",
+      "actual": "unset: 334 unique scans, 0 serious/critical and no other violations. cutf8: 334 unique scans, 0 serious/critical and no other violations. The per-spec files repeat entries (682 entries) because the shared axeSummary object accumulates within a worker, so I count unique scans. The default-limits runs scan nothing: those tests have no axe step.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-14/20-axe-summary.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/e2e-qa-unset/qa-en-summary-qa-r14.json",
+        "docs/delivery/test-evidence/DG2/qa/round-14/e2e-qa-cutf8/qa-ar-summary-qa-r14.json",
+        "docs/delivery/test-evidence/DG2/qa/round-14/e2e-product-unset/product-ar-summary-session-end.json",
+        "docs/delivery/test-evidence/DG2/qa/round-14/e2e-product-cutf8/product-en-summary-p2.json"
+      ]
+    },
+    {
+      "id": "QA-R14-19-static-inspection",
+      "procedure": "Read the D-074 product diff aa0a68f1..ea9051b2: the session-end rule, the 403 path, sign-out, LoginPage, and the FE12 render-time translation (state holds causes, not translated text).",
+      "command": "git diff aa0a68f1 ea9051b2 -- apps packages; grep (19-static-inspection.log)",
+      "environment": "repository (read-only)",
+      "expected": "web-only change; one session-end rule (401 unauthenticated while active); no translated string frozen in state",
+      "actual": "26 files changed, all under apps/web (no API, DB or package change). endSession() is called only from apiRequest, on isSessionEndedError, unless silent401. markSignedOut runs before an on-purpose sign-out. LoginPage trusts only a /me answered after it mounted. The useState<string> holders are codes or ids (fieldErrorCode, errorCode, localErrorCode, TeamPage role code), translated at render time. Exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-14/19-static-inspection.log"
+      ]
+    },
+    {
+      "id": "QA-R14-30-validators",
+      "procedure": "Register, pipeline and reconcile validators, plus the register rows of the 32 assigned requirements.",
+      "command": "node tools/gates/validate.mjs --register DG2; node tools/gates/validate.mjs --pipeline; node tools/gates/validate.mjs --reconcile; python3 -I (read requirements.csv)",
+      "environment": "repository @e351a34a (read-only); node v24.21.0",
+      "expected": "all exit 0; the 32 requirements exist with final_gate DG2",
+      "actual": "'PASS register rules at DG2' exit 0. 'PASS pipeline (active stage: DG2 REVIEWING)' exit 0. 'PASS reconcile (structure)' exit 0, with the frozen candidate 9f3ca298 matching the working tree; it lists 'round 14 qa-verifier: missing' because this record did not exist yet. Its 'FAIL (STALE ...)' lines are earlier rounds' verdicts on earlier candidates (rounds 1, 2, 3 and 12), information only. 31-register-rows.log: 32 ids, 32 unique, all IMPLEMENTED with final_gate DG2.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-14/30-validate-register.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/30-validate-pipeline.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/30-validate-reconcile.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/31-register-rows.log"
+      ]
+    },
+    {
+      "id": "QA-R14-32-residual-registry-D057",
+      "procedure": "Live registry residual (D-057), checked on the offline surface: frozen-lockfile offline installs, then deps:verify, which needs the live registry, plus a check that no package.json, lockfile or .npmrc changed since the round-13 freeze.",
+      "command": "pnpm install --frozen-lockfile --offline; timeout 60 pnpm deps:verify; git diff --stat 5699f72 ea9051b2 -- package.json pnpm-lock.yaml apps/*/package.json packages/*/package.json .npmrc",
+      "environment": "$TMPDIR/review-dg2-e2e @ea9051b2; sandbox without network",
+      "expected": "the offline surface passes; the live registry check cannot complete without network and stays the D-057 residual",
+      "actual": "Both frozen offline installs exit 0, lockfile up to date. deps:verify exits 124: the 60 s timeout killed it while it waited for the unreachable registry, and 'ELIFECYCLE Command failed' is that kill. This is the expected D-057 residual, not a defect. No dependency or pin file changed since round 13 (empty diff). Recorded as PASS on the offline/config surface; the live-registry residual remains.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-14/00-install-review-dg2.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/00-install-review-dg2-e2e.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/32-residual-registry.log"
+      ]
+    },
+    {
+      "id": "QA-R14-33-residual-ci-D058",
+      "procedure": "Live CI residual (D-058), checked on the config surface: workflow files unchanged since round 13, check-ci-needs, and its 46 tests.",
+      "command": "ls .github/workflows; git diff --stat 5699f72 ea9051b2 -- .github deploy/scripts; node deploy/scripts/check-ci-needs.mjs; node --test deploy/scripts/tests/check-ci-needs.test.mjs",
+      "environment": "$TMPDIR/review-dg2-e2e @ea9051b2; no live CI available",
+      "expected": "config checks pass; a live CI run stays the D-058 residual",
+      "actual": "CI config is unchanged since round 13 (empty diff). check-ci-needs: 'OK: .github/workflows/ci.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline ...', exit 0. node --test: 46 pass, 0 fail, exit 0. Recorded as PASS on the offline/config surface; the live-CI residual remains.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-14/33-residual-ci-config.log"
+      ]
+    },
+    {
+      "id": "QA-R14-34-residual-keycloak-D049",
+      "procedure": "Keycloak residual (D-049), checked on the offline surface: the OIDC integration tests (oidc.test.ts, identity.test.ts) and commit-time-auth (including Q7, IdP down) in every integration run, and my R13-05 (real AUTH_MODE=oidc API process, never-answering IdP) in both QA-stack runs.",
+      "command": "part of QA-R14-10 and QA-R14-17",
+      "environment": "as QA-R14-10 and QA-R14-17; no Keycloak instance available",
+      "expected": "the offline OIDC surface passes; a live Keycloak run stays the D-049 residual",
+      "actual": "In 6 of 6 integration runs: oidc.test.ts 33 passing tests, identity.test.ts 13 and commit-time-auth.test.ts 8. dg2-qa-r13 (including R13-05) passes 10/10 in both QA-stack runs. Recorded as PASS on the offline surface; the live Keycloak residual remains.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-14/10-integration-series-summary.log",
+        "docs/delivery/test-evidence/DG2/qa/round-14/19-qa-r14-results.log"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG2/qa/round-14/env.txt",
+    "docs/delivery/test-evidence/DG2/qa/round-14/00-candidate.log",
+    "docs/delivery/test-evidence/DG2/qa/round-14/00-candidate-end.log",
+    "docs/delivery/test-evidence/DG2/qa/round-14/08-unit-series-summary.log",
+    "docs/delivery/test-evidence/DG2/qa/round-14/10-integration-series-summary.log",
+    "docs/delivery/test-evidence/DG2/qa/round-14/12-migrations.log",
+    "docs/delivery/test-evidence/DG2/qa/round-14/15-e2e-product-unset.log",
+    "docs/delivery/test-evidence/DG2/qa/round-14/15-e2e-product-cutf8.log",
+    "docs/delivery/test-evidence/DG2/qa/round-14/17-e2e-qa-stack-unset.log",
+    "docs/delivery/test-evidence/DG2/qa/round-14/17-e2e-qa-stack-cutf8.log",
+    "docs/delivery/test-evidence/DG2/qa/round-14/19-qa-r14-results.log",
+    "docs/delivery/test-evidence/DG2/qa/round-14/19-negative-control-aa0a68f-per-test.log",
+    "docs/delivery/test-evidence/DG2/qa/round-14/20-axe-summary.log",
+    "docs/delivery/test-evidence/DG2/qa/tests/round-14/e2e/dg2-qa-r14.spec.ts"
+  ],
+  "reviewed_at": "2026-10-07T12:12:00Z",
+  "summary": "PASS on candidate 9f3ca298 (560 files, source ea9051b2). No new findings; no open finding of mine to verify. Regression of the D-074 repairs. FE10 / F-DG2-480: a sign-out in a real second tab followed by an in-app link lands once on sign-in with the localized message in EN and AR. The URL holds on /login, /me stays bounded, Back never re-renders the shell, and signing in again returns to the page. An upload refused with 401 after the grant's revocation stores nothing, is audited as session.revoke and lands once with the message. Under the product's default limits, three ended tabs make 1 GET /me each in about 16 s, with no 429, and a second context from the same IP signs in. A 403 (forbidden on a read or a create, a real csrf on the preference save) never ends the session. FE11: a refused preference save shows the notice in the shown language, EN->AR and AR->EN, with lang/dir right. FE12: required errors, 403 banners, no-permission states, the session-ended alert and the invalid-username error all follow a language switch. The header holds at 320/768/1280 px in both languages. A negative control on aa0a68f1 fails the FE10/FE11/FE12 probes by design. Full regression in both locale settings: static checks exit 0 (161 ops); unit 7/7 (848 tests); integration 6/6 (652 tests; migrations 0001-0019); product e2e 72/72 x 2; QA-stack e2e 164/164 x 2 (R8-R13 all pass); axe 0 serious/critical over 334 unique scans per setting. Observation, not a finding: a page that makes no API request (static My Work) keeps the signed-in shell until the next API call, consistent with FE10's 401-based rule.",
+  "narrative": "docs/delivery/reviews/DG2/round-14/qa-verifier.md"
+}
