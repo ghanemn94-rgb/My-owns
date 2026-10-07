@@ -14,6 +14,18 @@ import type { ModuleDeps, ModuleRegistration } from "../platform/index.ts";
 import { registerKpiRoutes } from "./routes.ts";
 
 export { loadKpiGateFacts, type KpiGateFacts } from "./gate-facts.ts";
+// P3 business cases (T-DG3-KBE-B): section completeness, baseline validation state (incl. Stale) and totals, for
+// KBE-C's G4 fact loader.
+export {
+  baselineSha256,
+  baselineValidationState,
+  includedCaseIds,
+  loadCaseTotals,
+  missingSections,
+  presentCases,
+} from "./business-cases.ts";
+export { activeLinesOf, toBusinessCaseLine } from "./business-case-lines.ts";
+export { computeTotals, type TotalsInput, type TotalsLine } from "./totals.ts";
 
 /** Freshness of a KPI or benefit value. Missing data is "unknown" and outdated data "stale", never zero or green. */
 export const VALUE_FRESHNESS = ["unknown", "stale", "current"] as const;

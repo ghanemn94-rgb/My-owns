@@ -47,6 +47,20 @@ const KPI_OPERATIONS = [
   "validateValuePool",
   "approveOutcomeKpiTrajectory",
 ];
+/** The 11 business-case operations of the P3 contract (T-DG3-KBE-B; ADR-0024 §1-§5). */
+const KPI_P3_BUSINESS_CASE_OPERATIONS = [
+  "listBusinessCases",
+  "createBusinessCase",
+  "getBusinessCase",
+  "updateBusinessCase",
+  "archiveBusinessCase",
+  "getBusinessCaseTotals",
+  "validateBusinessCaseBaseline",
+  "listBusinessCaseLines",
+  "createBusinessCaseLine",
+  "updateBusinessCaseLine",
+  "archiveBusinessCaseLine",
+];
 
 const openapi = parseYaml(
   readFileSync(fileURLToPath(new URL("../../../../../docs/api/openapi.yaml", import.meta.url)), "utf8"),
@@ -89,7 +103,21 @@ describe("kpi module (P2)", () => {
 
   it("exposes exactly its wiring hook, the gate-facts loader and the freshness vocabulary", () => {
     expect(moduleFiles("kpi")).toContain("index.ts");
-    expect(Object.keys(mod).sort()).toEqual(["VALUE_FRESHNESS", "loadKpiGateFacts", "registerKpiModule"]);
+    expect(Object.keys(mod).sort()).toEqual([
+      "VALUE_FRESHNESS",
+      // P3 business cases (T-DG3-KBE-B): read helpers for KBE-C's G4 fact loader.
+      "activeLinesOf",
+      "baselineSha256",
+      "baselineValidationState",
+      "computeTotals",
+      "includedCaseIds",
+      "loadCaseTotals",
+      "loadKpiGateFacts",
+      "missingSections",
+      "presentCases",
+      "registerKpiModule",
+      "toBusinessCaseLine",
+    ]);
     expect(typeof mod.loadKpiGateFacts).toBe("function");
     expect(mod.loadKpiGateFacts.length).toBe(2); // (db, transformationId)
   });
@@ -98,15 +126,15 @@ describe("kpi module (P2)", () => {
     expect(mod.VALUE_FRESHNESS).toEqual(["unknown", "stale", "current"]);
   });
 
-  it("registers exactly the 24 kpi operations of the contract, and reports them", async () => {
+  it("registers exactly the 24 P2 kpi operations and the 11 P3 business-case operations, and reports them", async () => {
     const { routes, registration } = await registered();
     const byKey = new Map(contractOps.map((o) => [o.key, o.operationId]));
     const ids = routes.map((r) => byKey.get(r.key));
     expect(ids.filter((id) => id === undefined)).toEqual([]);
-    expect([...ids].sort()).toEqual([...KPI_OPERATIONS].sort());
+    expect([...ids].sort()).toEqual([...KPI_OPERATIONS, ...KPI_P3_BUSINESS_CASE_OPERATIONS].sort());
     expect(registration.module).toBe("kpi");
     expect(registration.status).toBe("active");
-    expect(registration.routes).toHaveLength(24);
+    expect(registration.routes).toHaveLength(35);
     expect(Object.isFrozen(registration)).toBe(true);
   });
 
@@ -133,6 +161,7 @@ describe("kpi module (P2)", () => {
         "diagnostic.edit",
         "finance.validate",
         "kpi_target.approve",
+        "business_case.edit",
       ]),
     );
   });

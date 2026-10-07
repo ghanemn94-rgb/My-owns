@@ -560,7 +560,7 @@ describe("every operation, validated against the contract and the zod mirrors", 
     );
     const byType = (t: string) => withBody.filter((o) => declaredRequestMediaTypes(o)!.includes(t)).length;
     // T-DG3-BE-A: + createGateDispensation, decideGateDispensation, revokeGateDispensation (JSON bodies).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([90, 89, 1]);
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([97, 96, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);
@@ -606,7 +606,7 @@ describe("every operation, validated against the contract and the zod mirrors", 
       const checked = await exerciseRateLimitSweep(limited, live);
       expect(checked).toHaveLength(live.length);
       // 161 P1/P2 operations + the 6 BE-A P3 operations (T-DG3-BE-A); rises as the other P3 tasks route theirs.
-      expect(live.length).toBeGreaterThanOrEqual(167);
+      expect(live.length).toBeGreaterThanOrEqual(178);
     } finally {
       await limited.close();
     }

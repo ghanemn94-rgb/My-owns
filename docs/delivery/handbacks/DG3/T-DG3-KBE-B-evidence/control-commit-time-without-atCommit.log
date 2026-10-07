@@ -1,0 +1,51 @@
+port-policy: PostgreSQL listening on port 23360 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg3-kbe-b
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muyqp4cp_c83eb037 (server_encoding UTF8); applied 25 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/kpi/business-cases.test.ts (12 tests | 1 failed | 11 skipped) 513ms
+   ↓ transformation case: the ten B0085 sections (REQ-PB-053) > all ten sections persist and read back; missingSections clears once lines and owners exist
+   ↓ transformation case: the ten B0085 sections (REQ-PB-053) > one active transformation case per transformation (409); configurable currency; blank text 400
+   ↓ initiative cases and the roll-up (REQ-PB-054, REQ-S05-005) > an initiative case links to the one transformation case and fills the lighter set
+   ↓ initiative cases and the roll-up (REQ-PB-054, REQ-S05-005) > the total equals the distinct lines once; editing an initiative line changes the roll-up without duplication
+   ↓ initiative cases and the roll-up (REQ-PB-054, REQ-S05-005) > Unknown is never 0; per currency; revenue vs margin and non-financial kept apart
+   ↓ lines: exactly one class (REQ-PB-053, REQ-S05-005) > two classes -> 400 at /class; class/kind and class/value-basis mismatch -> 422; value rules
+   ↓ lines: exactly one class (REQ-PB-053, REQ-S05-005) > one benefit formula backs at most one active line in the transformation (409)
+   ↓ Finance validation of the baseline (REQ-PB-055 part) > FIN validates; the author is refused 403; the hash is stored; a baseline change shows Stale
+   ↓ every mutation: AUD 403, If-Match 428/409, audit, WL record-level > the read-only auditor gets 403 (audited) on all seven mutations, whatever the body
+   ↓ every mutation: AUD 403, If-Match 428/409, audit, WL record-level > If-Match: 428 without, 409 stale, on update/archive of cases and lines; each success audited
+   ↓ every mutation: AUD 403, If-Match 428/409, audit, WL record-level > WL edits only the initiative cases of initiatives they lead (record-level, 403 otherwise)
+   × every mutation: AUD 403, If-Match 428/409, audit, WL record-level > authorization is re-checked at commit time: a grant revoked after the request was authenticated -> 403, nothing written 334ms
+     → {"id":"01a118b3-7346-77bf-aeab-6196eacf3036","organizationId":"01a118b3-71f0-70c8-a634-fc9b16100b2b","transformationId":"01a118b3-7285-72ad-b7e7-900d2d206f65","businessCaseId":"01a118b3-7307-703c-a3e7-d529ef66b855","lineKind":"investment","class":"capex","valueBasis":"cash","title":"Line racing a revocation","description":null,"amount":"42.0000","currency":"SAR","fte":null,"periodStart":null,"periodEnd":null,"recurrence":null,"benefitFormulaId":null,"ownerUserId":null,"status":"active","archivedAt":null,"archivedBy":null,"archiveReason":null,"version":1,"createdAt":"2026-10-07T23:29:36.059Z","createdBy":"01a118b3-7325-73bc-bcc6-e4e7d842a552","updatedAt":"2026-10-07T23:29:36.059Z","updatedBy":"01a118b3-7325-73bc-bcc6-e4e7d842a552"}: expected 201 to be 403 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/kpi/business-cases.test.ts > every mutation: AUD 403, If-Match 428/409, audit, WL record-level > authorization is re-checked at commit time: a grant revoked after the request was authenticated -> 403, nothing written
+AssertionError: {"id":"01a118b3-7346-77bf-aeab-6196eacf3036","organizationId":"01a118b3-71f0-70c8-a634-fc9b16100b2b","transformationId":"01a118b3-7285-72ad-b7e7-900d2d206f65","businessCaseId":"01a118b3-7307-703c-a3e7-d529ef66b855","lineKind":"investment","class":"capex","valueBasis":"cash","title":"Line racing a revocation","description":null,"amount":"42.0000","currency":"SAR","fte":null,"periodStart":null,"periodEnd":null,"recurrence":null,"benefitFormulaId":null,"ownerUserId":null,"status":"active","archivedAt":null,"archivedBy":null,"archiveReason":null,"version":1,"createdAt":"2026-10-07T23:29:36.059Z","createdBy":"01a118b3-7325-73bc-bcc6-e4e7d842a552","updatedAt":"2026-10-07T23:29:36.059Z","updatedBy":"01a118b3-7325-73bc-bcc6-e4e7d842a552"}: expected 201 to be 403 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 403[39m
+[31m+ 201[39m
+
+ ❯ apps/api/test/integration/kpi/business-cases.test.ts:694:50
+    692|       locker.release();
+    693|     }
+    694|     expect(res.status, JSON.stringify(res.body)).toBe(403);
+       |                                                  ^
+    695|     expect(await auditOfRequest(api.db, String(res.headers["x-request-…
+    696|       expect.objectContaining({ action: "authorization.denied" }),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)
+   Start at  23:29:32
+   Duration  3.97s (transform 945ms, setup 0ms, collect 2.23s, tests 513ms, environment 0ms, prepare 73ms)
+

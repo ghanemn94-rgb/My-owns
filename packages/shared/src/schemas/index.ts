@@ -20,3 +20,5 @@ export * from "./gate.ts";
 export * from "./team.ts";
 // P3 portfolio-tag mirrors (backend-workflow-engineer, T-DG3-BE-A; p3-work-split §2).
 export * from "./portfolio.ts";
+// P3 business-case mirrors (kpi-benefits-engineer, T-DG3-KBE-B; p3-work-split §3). Line added by KBE-B, see its handback.
+export * from "./business-case.ts";

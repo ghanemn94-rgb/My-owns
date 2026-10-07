@@ -5,6 +5,8 @@ import type { Permission } from "@mth/shared";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import type { ModuleDeps } from "../platform/index.ts";
 import { registerBaselineRoutes } from "./baselines.ts";
+import { registerBusinessCaseLineRoutes } from "./business-case-lines.ts";
+import { registerBusinessCaseRoutes } from "./business-cases.ts";
 import { registerKpiDefinitionRoutes } from "./kpi-definitions.ts";
 import { registerOutcomeKpiRoutes } from "./outcome-kpis.ts";
 import { registerValuePoolRoutes } from "./value-pools.ts";
@@ -28,5 +30,7 @@ export function registerKpiRoutes(app: FastifyInstance, deps: ModuleDeps): reado
   registerBaselineRoutes(app, deps, add);
   registerOutcomeKpiRoutes(app, deps, add);
   registerValuePoolRoutes(app, deps, add);
+  // P3 business cases and lines (T-DG3-KBE-B; ADR-0024 §1-§5): 11 operations, each with its own config.consumes.
+  routes.push(...registerBusinessCaseRoutes(app, deps), ...registerBusinessCaseLineRoutes(app, deps));
   return routes;
 }
