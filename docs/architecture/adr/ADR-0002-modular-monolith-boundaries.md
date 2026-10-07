@@ -62,12 +62,19 @@ The only shared runtime service is PostgreSQL. There is no Redis and no message 
 
 | Package | Owns | Consumers |
 |---|---|---|
-| `@mth/shared` | constants, permission catalogue, problem types, zod schemas | api, worker, web, db |
+| `@mth/shared` | constants, permission catalogue, problem types (top level, dependency-free); zod schemas (`@mth/shared/schemas`); decimal calculation code: T06 scoring and the T09 formula engine (`@mth/shared/calc`, P3, ADR-0024 §6) | api, worker, web, db |
 | `@mth/config` | env var catalogue and validated loader | api, worker, db CLI |
 | `@mth/db` | SQL migrations, migration CLI, Kysely types, pool/transaction helpers, test DB setup | api, worker |
 | `@mth/design-tokens` | token source, CSS generation, contrast checker | web |
 | `packages/calc` (reserved, P4) | pure decimal KPI/benefit calculation engine | api `kpi`, worker |
 | `packages/reporting` (reserved, P5) | snapshot assembly and document exports | api `reporting`, worker |
+
+**`@mth/shared` entry points** (T-DG3-ARCH-02). The top-level `@mth/shared` exports only dependency-free constants and types. Code that needs a runtime library goes on a subpath, so a consumer of the top level never loads it:
+
+- `@mth/shared/schemas` (zod, plus `value.ts` on decimal.js);
+- `@mth/shared/calc` (decimal.js: `scoring.ts` and `formula/`).
+
+Each subpath is one `exports` entry in `packages/shared/package.json`, with the conditions `@mth/source` → `src/…`, `types` → `dist/….d.ts` and `default` → `dist/….js`. tsc (`customConditions`), Node (`--conditions=@mth/source`), Vite and vitest resolve it the same way. A new subpath needs an ADR note; it is never added by a feature task.
 
 ## Alternatives considered
 

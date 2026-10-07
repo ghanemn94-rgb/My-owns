@@ -113,6 +113,10 @@ INSERT INTO role_permission (role_id, permission_code) VALUES
 -- the four B0079 waves VERBATIM and the T06 weight set v1 at the B0076 source defaults. Same contract as the P2
 -- function: idempotent, serialized by the row lock, every created row audited (actor 'user' from the API, 'system' on
 -- behalf of the creator in a backfill). The API's POST /transformations switches to this function (backend task).
+-- Every audit event's `changes` uses the AuditEvent diff shape {"<field>": {"from", "to"}} (ADR-0004); the weight set's
+-- event is {"weights": {"from": null, "to": {...}}}. Corrected in place by T-DG3-ARCH-02 (0024 was unreleased and
+-- ungated; the DG2 ARCH-01B precedent), so neither a fresh nor an upgraded database ever holds the earlier malformed
+-- {"weights": {...}} row that T-DG3-BE-A found (finding 6.1).
 CREATE FUNCTION p3_instantiate_transformation(p_transformation_id uuid, p_actor_user_id uuid, p_request_id text, p_source text)
 RETURNS integer
 LANGUAGE plpgsql SET search_path = public, pg_temp AS $$
@@ -172,7 +176,7 @@ BEGIN
                              record_type, record_id, new_version, request_id, source, changes)
     VALUES (mth_uuid_v7(), t.organization_id, t.id, a_type, p_actor_user_id, on_behalf, 'scoring_weight_set.create',
             'scoring_weight_set', rid, 1, p_request_id, p_source,
-            '{"weights": {"strategic_fit": "25.00", "financial_value": "25.00", "customer_impact": "20.00", "feasibility": "15.00", "time_to_value": "15.00"}}'::jsonb);
+            '{"weights": {"from": null, "to": {"strategic_fit": "25.00", "financial_value": "25.00", "customer_impact": "20.00", "feasibility": "15.00", "time_to_value": "15.00"}}}'::jsonb);
     created := created + 1;
   END IF;
   RETURN created;

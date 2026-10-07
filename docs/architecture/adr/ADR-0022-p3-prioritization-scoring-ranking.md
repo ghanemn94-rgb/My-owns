@@ -4,7 +4,7 @@
 - **Requirements:** REQ-PB-047, REQ-PB-048, REQ-PB-049, REQ-S09-001, REQ-S09-003, REQ-S09-004 (comparison, ranked tables), REQ-S09-005, REQ-DLV-035 (3.30, 95%).
 - **Sources:** playbook B0074–B0077; master prompt §9 (lines ~286–288), M0176, M0177.
 - **Builds on:** ADR-0003, ADR-0004, ADR-0014 (configuration versioning), ADR-0016 (guards), ADR-0019 (decimal), ADR-0021 (initiative lifecycle).
-- **Physical model:** migration `0021_p3_prioritization.sql`; seed per transformation in `p3_instantiate_transformation()` (`0024`). Module `portfolio` (`prioritization.ts`); pure arithmetic in `packages/shared/src/scoring.ts`.
+- **Physical model:** migration `0021_p3_prioritization.sql`; seed per transformation in `p3_instantiate_transformation()` (`0024`). Module `portfolio` (`prioritization.ts`); pure arithmetic in `packages/shared/src/scoring.ts`, imported from `@mth/shared/calc` (§2a).
 
 ## Context
 
@@ -29,6 +29,16 @@ T06 (B0076) scores each initiative 1–5 on five criteria with default weights s
 - **Incomplete.** If any criterion of the set has no score, the result is `{ completeness: "incomplete", weightedScore: null, missingCriteria: [...] }`. The API and web show **'incomplete'** (AR 'غير مكتمل'), never a number, never 0. Incomplete initiatives are listed after the ranked ones with rank null.
 - **Read-only result (REQ-PB-047).** The weighted score is never accepted as input: no request schema has a `weightedScore` property (strict objects → 400). It is computed server-side and stored in **`initiative_score_result`** (append-only): `initiative_id`, `weight_set_id`, `weight_set_version_no`, `weighted_score`, `completeness`, `missing_criteria`, `inputs` (jsonb object `{criterion: {score, weightPercent}}`, validated by zod and a `jsonb_typeof` CHECK), `cause` (`initial` | `score_change` | `weight_set_activated`), `computed_at`, `computed_by`. A new row is appended when a score changes (for the active set) and, for every submitted initiative, when a set is activated. **Results computed under v1 keep `weight_set_id` = v1** forever; rescoring under v2 appends v2 rows.
 - **Storage vs display.** Storage: exact `numeric(7,4)`. Display: 2 fraction digits, ROUND_HALF_UP, locale digits (`formatDecimal`). Sorting uses the stored exact value.
+
+### 2a. Scoring details confirmed (T-DG3-ARCH-02)
+
+T-DG3-KBE-A implemented `scoring.ts` and raised three interpretations (handback §6, items 1–3). They are confirmed here as the rule, and reviewers test against this text. The import path is `@mth/shared/calc` (ADR-0024 §6, note "Import path"); the top-level `@mth/shared` does not export the arithmetic.
+
+- **(1) A weight is > 0.** `0 < weight_percent ≤ 100` (§1, the `0021` CHECK). The KBE-A assignment's "≥ 0" was wrong. The contract pattern for `weightPercent` admits `"0"`, so a zero weight passes the 400 schema check and is refused with **422** `prioritization.weight_range`, pointer `/weights/{i}/weightPercent`. A criterion that should not count is left out of the set, not given weight 0.
+- **(2) Machine codes beyond `prioritization.weights_total`.** `prioritization.weight_format`, `prioritization.weight_range`, `prioritization.unknown_criterion`, `prioritization.duplicate_criterion`, `prioritization.criteria_count` and `prioritization.score_range` are part of the code set and i18n keys. Rule for BE-D: the request schema runs first, so anything the contract refuses (pattern, enum, `minimum`/`maximum`, `minItems`/`maxItems`) is **400**. Every `validateWeightSet` problem on a schema-valid body is **422** `urn:mth:problem:validation`, with `code`, `detail` and `pointer` from the first problem; `weights_total` is checked last, so its detail is the one in §1 when the set is otherwise well formed. A `ScoringInputError` thrown while reading **stored** rows means corrupt data: it is 500 and is logged, never shown as a score. FE-B translates every code it can display.
+- **(3) Scores as integers.** A score is accepted as the digit string `"1"`…`"5"` or as a JavaScript **integer** 1…5, because the contract has `score: integer` and node-postgres returns `smallint` as a number. It is converted at once to its digit string and then to decimal.js; no arithmetic ever runs on a `number`. Non-integers (`2.5`, `"4.0"`), 0 and 6 are refused with `prioritization.score_range`.
+
+No item is changed, so **BE-D and KBE-C have no code change to make** in `scoring.ts`.
 
 ### 3. The 0–100 view (REQ-S09-001)
 

@@ -84,9 +84,9 @@ G4 `g4.finance_validation` is complete only when every in-scope case (and the tr
 
 ### 6. The formula foundation (T09)
 
-**Package.** `packages/shared/src/formula/` (`tokenize.ts`, `parse.ts`, `typecheck.ts`, `evaluate.ts`, `index.ts`, exported from `@mth/shared`). The API (`kpi` module) and the web (preview) import the same code, and decimal.js 10.6.0 is already a dependency of `@mth/shared`, so **no new dependency** is needed. `packages/calc` stays reserved for the P4 KPI/benefit engine, which will import this module rather than duplicate it.
+**Package.** `packages/shared/src/formula/` (`tokenize.ts`, `parse.ts`, `typecheck.ts`, `evaluate.ts`, `index.ts`), exported from the **`@mth/shared/calc`** subpath together with `scoring.ts` (ADR-0022). The barrel is `packages/shared/src/calc.ts`. It is not exported from the top-level `@mth/shared` entry, which ADR-0002 keeps dependency-free (T-DG3-ARCH-02; see the note at the end of §6). The API (`kpi` module) and the web (preview) import the same code from `@mth/shared/calc`, and decimal.js 10.6.0 is already a dependency of `@mth/shared`, so **no new dependency** is needed. `packages/calc` stays reserved for the P4 KPI/benefit engine, which will import this module rather than duplicate it.
 
-**No dynamic code.** The engine is a hand-written tokenizer, recursive-descent parser and AST walker. `eval`, `new Function`, `Function(...)`, `vm`/`node:vm`, `setTimeout(string)`, dynamic `import()` and `with` are forbidden in `packages/shared/src/formula/**`; an ESLint override (`no-eval`, `no-implied-eval`, `no-new-func`, `no-restricted-imports: vm, node:vm`, `no-restricted-syntax: ImportExpression`) enforces it.
+**No dynamic code.** The engine is a hand-written tokenizer, recursive-descent parser and AST walker. `eval`, `new Function`, `Function(...)`, `vm`/`node:vm`, `setTimeout(string)`, dynamic `import()` and `with` are forbidden in `packages/shared/src/formula/**`; an ESLint override (`no-eval`, `no-implied-eval`, `no-new-func`, `no-restricted-imports: vm, node:vm`, `no-restricted-syntax: ImportExpression`, `WithStatement`, timer calls `setTimeout`/`setInterval`/`setImmediate`/`execScript` as plain or member calls, and `.constructor(...)` calls) enforces it. The timer selectors are needed because core `no-implied-eval` only recognises declared globals (T-DG3-KBE-A lint probe); a source scan in `fuzz.test.ts` backs the rule up.
 
 **Grammar (EBNF).**
 
@@ -146,9 +146,40 @@ Percentages are never stored as 12 for 12%: the API takes and returns fractions,
 | Code | Source row (B0087) | Expression | Variables (kind, period, illustrative value) | Result |
 |---|---|---|---|---|
 | `revenue_uplift` | Revenue uplift · Customers × attach rate × ARPU · Attach +X pp · Δ attach × customers × ARPU · Q1-Q4 · M | `(target_attach_rate - baseline_attach_rate) * eligible_customers * arpu` | `baseline_attach_rate` fraction, none, 0.10; `target_attach_rate` fraction, none, 0.12; `eligible_customers` count, year, 100000; `arpu` currency SAR, year, 50 | 0.02 × 100000 × 50 = **100000 SAR** per year, exact |
-| `cost_reduction` | Cost reduction · Volume × unit cost · Unit cost -X% · Volume × Δ unit cost · Q2-Q3 · H | `eligible_volume * (baseline_unit_cost - target_unit_cost)` | `eligible_volume` count, year, 200000; `baseline_unit_cost` currency SAR, none, 12.50; `target_unit_cost` currency SAR, none, 10.00 | 200000 × 2.50 = **500000.00 SAR** per year, exact |
+| `cost_reduction` | Cost reduction · Volume × unit cost · Unit cost -X% · Volume × Δ unit cost · Q2-Q3 · H | `eligible_volume * (baseline_unit_cost - target_unit_cost)` | `eligible_volume` count, year, 200000; `baseline_unit_cost` currency SAR, none, 12.50; `target_unit_cost` currency SAR, none, 10.00 | 200000 × 2.50 = **500000.00 SAR** per year, exact (canonical `result` `"500000"`, stored `500000.000000`; see item 12 below) |
 
 A team instantiates an example into its own T09 register (`POST /benefit-formulas` with `fromExample`), which creates a normal, unvalidated formula marked `is_illustrative = true` until edited. Changing `arpu` to `period = month` while `eligible_customers` stays `year` is rejected with `formula.period_mismatch` (REQ-S08-007).
+
+**Engine details confirmed (T-DG3-ARCH-02).** T-DG3-KBE-A implemented the engine and raised its interpretations of points this section left open (handback §6, items 4–13). They are confirmed here as the rule, and reviewers test against this text. KBE-C (API) and FE-C (web) build on them. Code references are to `packages/shared/src/formula/`.
+
+- **(4) Limit codes.** A limit violation is `formula.syntax` with `params.reason` ∈ `too_long` | `too_many_nodes` | `too_deep` | `too_many_variables` and `params.limit` (the number). The other syntax reasons are `character`, `number`, `number_digits`, `identifier_length`, `unknown_function`, `period`, `arity`, `empty`, `end` and `unexpected`. A *declared* variable list longer than 30 is `formula.invalid_variable` with `params.reason = too_many_variables`. No separate limit codes exist. The API problem carries `code` and `detail`; `params` are available to in-process callers such as the web preview, which may use them for i18n.
+- **(5) `formula.invalid_variable`** is part of the code set: name pattern, reserved words (`to_period`, `min`, `max`, `abs`, `month`, `quarter`, `year`), duplicate names, kind/period enum, a currency exactly for kind `currency` (ISO 4217, upper case), and the value as a `numeric(24,6)` decimal string. It is defensive: the API's zod mirror of `FormulaVariable` refuses most of these with **400** first. A reserved name, a duplicate name and a missing or superfluous currency pass the schema, so the API answers them with **422** and this code.
+- **Status boundary for KBE-C.** The request schema runs first, then the engine. Anything the contract schema refuses (for example `expression` longer than 2000, or a malformed `FormulaVariable`) is **400**. Anything it admits but the engine refuses is **422** `urn:mth:problem:validation`, with the first engine error's `code` as `code` and its `message` as `detail`. `too_long` is therefore reachable only through direct calls (the web preview), never through the API. Code-point vs UTF-16 counting at exactly 2000 cannot admit an invalid formula, because every character outside the grammar is a syntax error.
+- **(6) Depth.** Parentheses, function calls and unary minus each add one level; the top level is depth 1. Left-associative binary chains add no depth (`a + b + …` with 30 terms is depth 1). Height is bounded anyway by the 200-node cap. Both limits are enforced while parsing, so deeply nested input fails cleanly and never exhausts the stack.
+- **(7) Characters** are Unicode code points (the JSON Schema `maxLength` unit). The `offset` of a problem is a code-point offset from the start of the expression.
+- **(8) Arity.** `to_period(expr, period)` takes exactly 2 arguments, the second a period name; `abs(expr)` exactly 1; `min` and `max` 2 or more expressions. A violation is `formula.syntax` with `reason = arity`.
+- **(9) Type rules, completing the list above.**
+  - Dimensionless × dimensionless: `number × X → X`, two operands of the same kind keep it, any other pair gives `number`.
+  - `quantity ± quantity` needs the same `unit` label, or it is `formula.kind_mismatch`, so minutes + hours never sum silently.
+  - Pairs not listed above (quantity × currency, quantity × quantity, fraction ÷ fraction, number ÷ fraction and the like) are `formula.kind_mismatch`.
+  - Periods are "per period" labels. The result takes the operands' shared non-`none` period. `currency ÷ currency` with the same period gives `number` with period `none`. `+`, `−`, `min` and `max` also refuse a period against no period: 'Period mismatch: {a} is per {p} but {b} has no period'. `to_period` on a value without a period is `formula.period_mismatch` ('Period mismatch: to_period needs a value with a period, but {x} has no period').
+  - In `period_mismatch` the operand with the finer period is named first and converted to the coarser one, so the message above is the same in either operand order.
+  - One currency per formula is checked over the whole formula, so `sar / sar_b * usd` is refused even though each operation alone is well typed.
+- **(10) English texts** (the codes come from this ADR; these texts are now authoritative too, and Arabic is rendered by the web from the code and `params`):
+  - `formula.kind_mismatch`: 'Kind mismatch: {left} ({leftKind}) {op} {right} ({rightKind}) is not allowed'
+  - `formula.currency_product`: 'Currency product: {left} and {right} are both currency amounts and cannot be multiplied'
+  - `formula.currency_mismatch`: 'Currency mismatch: {left} is in {lc} but {right} is in {rc}; there is no FX conversion'
+  - `formula.division_by_zero`: 'Division by zero: {divisor} is 0; the result is Unknown'
+  - `formula.missing_input`: 'Missing input: {names}; the result is Unknown'
+  - `formula.result_out_of_range`: 'Result out of range: {value} does not fit numeric(24,6)'
+  - `formula.syntax`: 'Syntax error at offset {n}: {detail}'
+- **(11) Exactness record.** The lineage's `rounding` object is `{column: "numeric(24,6)", scale: 6, mode: "ROUND_HALF_UP", precision: 80, exact, stored, rounded, inexactIntermediate}`. `rounded` reports the single storage rounding. `inexactIntermediate` is true when a division, an inverse period conversion or the 80-digit cap actually rounded an intermediate value, and every operation is re-checked against an unbounded-precision computation to set it. KBE-C stores this object in the `benefit_calculation` lineage as is.
+- **(12) "500000" vs "500000.00".** These are the same value. The canonical `result` is the normalised decimal string `"500000"` (API `result`, comparison by `compareDecimal`). The stored column value is `"500000.000000"` (`rounding.stored`, `benefit_calculation.result`). The currency display is `SAR 500,000.00`. "500000.00 SAR" in the example table is the display form.
+- **(13) Display suffixes.** `formatFormulaValue` defaults to "pp" / `نقطة مئوية` for `fraction_delta` and "%" / `٪` for the percent kinds. The Arabic default is **provisional**. The web (FE-C) renders the suffix through i18next from the suffix code that `displayNumber` returns (`percentage_points` | `percent`), so translators own the text. The defaults are a fallback for non-UI callers (for example exports).
+
+None of items 4–13 is changed, so **KBE-C has no code change to make** to the engine. KBE-C owns the 400/422 boundary above.
+
+**Import path (T-DG3-ARCH-02).** The engine and `scoring.ts` pull in decimal.js, so they are exported from the subpath **`@mth/shared/calc`** (`packages/shared/package.json` `exports["./calc"]`, with the conditions `@mth/source` → `src/calc.ts`, `types` → `dist/calc.d.ts`, `default` → `dist/calc.js`). The top-level `@mth/shared` stays dependency-free (ADR-0002). The API, the worker, the web (Vite) and vitest resolve the subpath exactly like `@mth/shared/schemas`. The lower-level parts of the engine (`tokenize`, `parseFormula` and the rest) are re-exported from the same subpath; no consumer imports files under `src/formula/` directly.
 
 ### 7. Permissions
 
@@ -161,7 +192,8 @@ The canonical benefit register with allocations, shared-benefit groups, contribu
 ## Alternatives considered
 
 1. **A third-party expression library** (for example `expr-eval`, `mathjs`). Rejected: they evaluate floats, carry far more surface than needed, and some compile to `Function`; a 300-line parser is auditable and has no new licence or supply-chain risk.
-2. **New `packages/calc` package now.** Rejected for P3: it adds a workspace package and lockfile churn for code the web and API already share through `@mth/shared`. P4 may move it.
+2. **New `packages/calc` package now.** Rejected for P3: it adds a workspace package and lockfile churn for code the web and API already share through `@mth/shared/calc`. P4 may move it.
+5. **Exporting the engine from the top-level `@mth/shared`.** Rejected (T-DG3-ARCH-02): it would pull decimal.js into every consumer of the dependency-free top-level entry. A subpath costs one `exports` entry and no dependency change.
 3. **One `classes text[]` column.** Rejected: "exactly one class" is simplest as two nullable typed columns with `num_nonnulls = 1`.
 4. **Copying initiative lines into the transformation case.** Rejected: copies drift and double count; the roll-up is a set union of references.
 

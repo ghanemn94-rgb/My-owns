@@ -1,0 +1,15 @@
+// TEMPORARY T-DG3-ARCH-02 resolution probe (deleted after the run; kept in the handback evidence).
+import { describe, expect, it } from "vitest";
+import * as calc from "@mth/shared/calc";
+import * as top from "@mth/shared";
+import * as src from "../../../packages/shared/src/calc.ts";
+
+describe("@mth/shared/calc resolves to the TypeScript source (@mth/source)", () => {
+  it("is the same module instance as packages/shared/src/calc.ts", { timeout: 10_000 }, () => {
+    expect(calc.validateFormula).toBe(src.validateFormula);
+    expect(calc.weightedScore).toBe(src.weightedScore);
+    const w: readonly calc.CriterionWeight[] = calc.DEFAULT_WEIGHTS_V1;
+    expect(calc.weightedScore({ strategic_fit: 5, financial_value: 4, customer_impact: 3, feasibility: 2, time_to_value: 1 }, w).weightedScore).toBe("3.3000");
+    expect("validateFormula" in top).toBe(false);
+  });
+});

@@ -6,6 +6,11 @@
 - `src/permissions.ts`: the permission catalogue and seeded role defaults (from `docs/analysis/permissions-matrix.md`).
 - `src/problem.ts`: RFC 9457 problem types.
 - `src/schemas/` (subpath `@mth/shared/schemas`): zod mirrors of `docs/api/openapi.yaml`.
+- `src/calc.ts` (subpath `@mth/shared/calc`): the decimal.js calculation code, i.e. T06 scoring (`src/scoring.ts`, ADR-0022)
+  and the T09 restricted formula engine (`src/formula/`, ADR-0024 §6).
+
+The top-level `@mth/shared` entry stays dependency-free (constants and types only, ADR-0002). Code that needs zod or
+decimal.js is on a subpath.
 
 Rules: no I/O, no Node-only or DOM-only APIs, and no dependencies beyond zod and decimal.js.
 

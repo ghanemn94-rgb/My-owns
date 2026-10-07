@@ -1,6 +1,6 @@
 # P3 work split: file ownership, contracts and integration order
 
-- **Task:** T-DG3-ARCH-01 (solution-architect), 2026-10-07. **Stage:** P3 "Mobilization and portfolio" (DG3).
+- **Task:** T-DG3-ARCH-01 (solution-architect), 2026-10-07; amended by T-DG3-ARCH-02 after wave 1 (§9). **Stage:** P3 "Mobilization and portfolio" (DG3).
 - **Scope:** the parallel P3 implementation tasks, each sized for about 60–75 minutes of agent time:
   - **backend-workflow-engineer:** BE-A, BE-B, BE-C, BE-D, BE-E;
   - **kpi-benefits-engineer:** KBE-A, KBE-B, KBE-C;
@@ -29,8 +29,8 @@
 |---|---|
 | `docs/api/openapi.yaml` | The API contract (ADR-0007). A needed change is raised in the handback; the architect amends it. |
 | `docs/architecture/**`, `docs/analysis/permissions-matrix.md` | Architecture and access decisions |
-| `packages/db/migrations/0001`–`0024` | Schema foundation, forward-only |
-| `packages/shared/src/permissions.ts`, `constants.ts`, `problem.ts`, `value.ts` | Consumed by db, api, worker and web (`value.ts` is DG2-approved; KBE-A adds new files instead) |
+| `packages/db/migrations/0001`–`0024` | Schema foundation, forward-only. *(T-DG3-ARCH-02 corrected the audit `changes` shape in `0024` in place, before any release or gate, §9.)* |
+| `packages/shared/src/permissions.ts`, `constants.ts`, `problem.ts`, `value.ts`, `index.ts`, `calc.ts`, `package.json` `exports` | Consumed by db, api, worker and web (`value.ts` is DG2-approved; KBE-A adds new files instead). The top-level entry stays dependency-free; the calculation code is on `@mth/shared/calc` (ADR-0002, ADR-0024 §6). |
 | `packages/db/src/schema.ts` entries for 0001–0024, `packages/db/src/seed.test.ts`, `packages/db/test/integration/catalogue.test.ts` lines for 0001–0024 | Catalogue contract (BE-A appends entries for its `0025+` migrations; §2) |
 | `apps/api/test/support/p3-pending.ts`, `p2-pending.ts`, `p2-pending-kpi.ts` | Seams; each task edits only its own `p3-pending-<task>.ts` |
 | Root build configuration (`package.json`, `pnpm-workspace.yaml`, `tsconfig.base.json`, `eslint.config.js`, `.prettierrc.json`, `.prettierignore`, `vitest.config.ts`, `playwright.config.ts`), `scripts/**` | Shared build and checks. Exception: KBE-A adds the ESLint override for `packages/shared/src/formula/**` (§3) |
@@ -64,11 +64,15 @@
 
 **Owns:** `portfolio/initiatives.ts`, `portfolio/links.ts`, `portfolio/transitions.ts`, `portfolio/selections.ts`, `portfolio/repository.ts`; `test/integration/portfolio/initiatives.test.ts`, `links.test.ts`, `transitions.test.ts` (every ADR-0021 §3 transition, every 422 with its exact text, End-to-End vs Modular, AUD 403); `test/support/p3-pending-be-b.ts`; `test/integration/contract/p3-exercises-be-b.ts`.
 
-**Resources:** `/initiatives` (CRUD, submit, withdraw, select, deselect, launch, cancel), `/initiatives/{id}/gap-links`, `outcome-contributions`, `decision-links`, `selections`. Launch reads funding through `portfolio/funding.ts`'s exported `latestFundingState()` (BE-E; BE-A's stub returns `unfunded` until BE-E lands).
+**Also owns (T-DG3-ARCH-02):** `latestFundingState()` in `portfolio/funding.ts`, a read-only query over `funding_decision` (the latest decision of the initiative decides; none means `unfunded`, fail closed), with its unit or integration test. BE-B edits only that function and its imports; BE-E later adds the funding routes to the same file, after BE-B has merged.
+
+**Resources:** `/initiatives` (CRUD, submit, withdraw, select, deselect, launch, cancel), `/initiatives/{id}/gap-links`, `outcome-contributions`, `decision-links`, `selections`. Launch reads funding through `portfolio/funding.ts`'s exported `latestFundingState()` (BE-B implements it; BE-A's stub returned `unfunded`).
 
 ### BE-C — roadmap, deliverables, milestones, T08 dependencies
 
 **Owns:** `portfolio/waves.ts`, `portfolio/deliverables.ts`, `portfolio/milestones.ts`, `portfolio/roadmap.ts`, `portfolio/schedule.ts` (+ unit test: needed-by conflict, before-predecessor, unknown); `apps/api/src/modules/workflows/t08-dependencies.ts`, `workflows/dependency-types.ts`, `workflows/design-registers.ts` (only the DG2 dependency projection rule: non-DG2 type codes shown as `other`, 422 `dependency.managed_by_t08`); `test/integration/portfolio/roadmap.test.ts`, `test/integration/dependencies/t08.test.ts` (A→B→C→A and A→B→A named; two-connection race, exactly one commits; external From; unknown type; system type DELETE 422); `test/support/p3-pending-be-c.ts`; `test/integration/contract/p3-exercises-be-c.ts`.
+
+**Also edits (T-DG3-ARCH-02):** the T08 and dependency-type route registration lines in `apps/api/src/modules/workflows/index.ts` (BE-A's file), registration lines only.
 
 **Resources:** `waves`, `roadmap`, `deliverables` (+ submit, acceptance), `milestones` (+ approve-date), `/dependencies` (T08), `/dependency-types`. The cycle check takes `pg_advisory_xact_lock(730221, hashtext(transformation_id))` (export `DEPENDENCY_GRAPH_LOCK_CLASS = 730221`) before its friendly BFS check, then writes; the DB guard re-checks.
 
@@ -76,11 +80,13 @@
 
 **Owns:** `portfolio/prioritization.ts`, `portfolio/scores.ts`, `portfolio/rankings.ts`, `portfolio/overrides.ts`; `test/integration/portfolio/prioritization.test.ts` (score 6 → 400; 95%/105% → 422 nothing written; v2 with risk_compliance 10 and strategic fit 15 accepted and approved by SP; v1 results keep v1; history shows 'weight version 2'; override without reason rejected; proposer cannot approve); `test/support/p3-pending-be-d.ts`; `test/integration/contract/p3-exercises-be-d.ts`.
 
-**Consumes:** `@mth/shared` `scoring.ts` (KBE-A) for every calculation; never re-implements the arithmetic.
+**Consumes:** `scoring.ts` (KBE-A) from **`@mth/shared/calc`** for every calculation; never re-implements the arithmetic. The problem-code and status rules are in ADR-0022 §2a.
 
 ### BE-E — capacity, funding, G4 (lands last on the backend)
 
-**Owns:** `portfolio/capacity.ts`, `portfolio/resource-demands.ts`, `portfolio/funding.ts`, `portfolio/gate-facts.ts` (the portfolio part of `GateFactsProvider`); `apps/api/src/modules/workflows/g4.ts` (the eight `g4.*` evaluators and the G4 snapshot builder, ADR-0021 §7) and `workflows/criteria.ts` (register the G4 evaluators in `EVALUATORS`); `packages/db/migrations/0026_p3_enable_g4.sql` (`UPDATE gate_definition SET submission_enabled = true … WHERE code = 'G4'`); the DG2 assertion in `apps/api/test/integration/gates.test.ts` that G4 is not submittable (change it to G5/G6 only) — coordinated: BE-A owns `gates.test.ts` until BE-A merges, BE-E edits it afterwards; `test/integration/portfolio/capacity.test.ts`, `funding.test.ts`, `test/integration/gates/g4.test.ts` (G4 submit 422 listing 'Owners', 'Finance validation', the initiative names, funding and capacity; decide 403 not approver, 403 submitter, 409 superseded; approved G4 → phase `transform`; G4 end-to-end with distinct synthetic TL/FIN/SP users); `test/support/p3-pending-be-e.ts`; `test/integration/contract/p3-exercises-be-e.ts`.
+**Owns:** `portfolio/capacity.ts`, `portfolio/resource-demands.ts`, `portfolio/funding.ts` (the funding routes, added after BE-B's `latestFundingState()`; BE-E does not rewrite that function), `portfolio/gate-facts.ts` (the portfolio part of `GateFactsProvider`); `apps/api/src/modules/workflows/g4.ts` (the eight `g4.*` evaluators and the G4 snapshot builder, ADR-0021 §7) and `workflows/criteria.ts` (register the G4 evaluators in `EVALUATORS`); `packages/db/migrations/0026_p3_enable_g4.sql` (`UPDATE gate_definition SET submission_enabled = true … WHERE code = 'G4'`); the DG2 assertion in `apps/api/test/integration/gates.test.ts` that G4 is not submittable (change it to G5/G6 only) — coordinated: BE-A owns `gates.test.ts` until BE-A merges, BE-E edits it afterwards; `test/integration/portfolio/capacity.test.ts`, `funding.test.ts`, `test/integration/gates/g4.test.ts` (G4 submit 422 listing 'Owners', 'Finance validation', the initiative names, funding and capacity; decide 403 not approver, 403 submitter, 409 superseded; approved G4 → phase `transform`; G4 end-to-end with distinct synthetic TL/FIN/SP users); `test/support/p3-pending-be-e.ts`; `test/integration/contract/p3-exercises-be-e.ts`.
+
+**Also edits (T-DG3-ARCH-02), only after the named task has merged:** the one line in `apps/api/src/server.ts` that wires the `kpi` half of `GateFactsProvider` (`kpi: loadKpiP3GateFacts` from `kpi/index.ts`, after KBE-C); and in BE-D's `portfolio/prioritization.ts`, only the lines that inject the schedule flags (BE-C's `schedule.ts`) and the capacity flags (BE-E's `capacity.ts`) into the prioritization view.
 
 **Resources:** `resource-roles`, `/capacity`, `capacity-plan`, `/resource-demands` (+ commit, release), `/funding-decisions` (creates the canonical executive `decision` row and moves `selected → funded`), G4 through the existing gate paths.
 
@@ -88,7 +94,7 @@
 
 ### KBE-A — shared calculation code (lands first, in parallel with BE-A)
 
-**Owns:** `packages/shared/src/scoring.ts` (+ `scoring.test.ts`: 5,4,3,2,1 → 3.3000/3.30; 0–100 of 3.30 → 57.5; 95/105 rejected; incomplete; property test over all 5^5 combinations), `packages/shared/src/formula/**` (`tokenize.ts`, `parse.ts`, `typecheck.ts`, `evaluate.ts`, `index.ts` and tests: grammar table, undefined variable, period mismatch monthly × annual, `to_period`, division by zero → Unknown, revenue example 100000 exact, cost example 500000 exact, limits), the export lines for both in `packages/shared/src/index.ts` (the only edit to that file), and the ESLint override block for `packages/shared/src/formula/**` in `eslint.config.js` (`no-eval`, `no-implied-eval`, `no-new-func`, `no-restricted-imports` vm/node:vm, `no-restricted-syntax` ImportExpression) — the only edit to that file.
+**Owns:** `packages/shared/src/scoring.ts` (+ `scoring.test.ts`: 5,4,3,2,1 → 3.3000/3.30; 0–100 of 3.30 → 57.5; 95/105 rejected; incomplete; property test over all 5^5 combinations), `packages/shared/src/formula/**` (`tokenize.ts`, `parse.ts`, `typecheck.ts`, `evaluate.ts`, `index.ts` and tests: grammar table, undefined variable, period mismatch monthly × annual, `to_period`, division by zero → Unknown, revenue example 100000 exact, cost example 500000 exact, limits), the export lines for both in `packages/shared/src/index.ts` (the only edit to that file; T-DG3-ARCH-02 moved them to the `@mth/shared/calc` barrel `packages/shared/src/calc.ts`), and the ESLint override block for `packages/shared/src/formula/**` in `eslint.config.js` (`no-eval`, `no-implied-eval`, `no-new-func`, `no-restricted-imports` vm/node:vm, `no-restricted-syntax` ImportExpression) — the only edit to that file. **Delivered** (T-DG3-KBE-A); its interpretations are confirmed in ADR-0022 §2a and ADR-0024 §6.
 
 ### KBE-B — business cases
 
@@ -98,11 +104,13 @@
 
 **Owns:** `apps/api/src/modules/kpi/benefit-formulas.ts`, `kpi/formula-versions.ts`, `kpi/calculations.ts`, `kpi/p3-gate-facts.ts` (the `kpi` part of `GateFactsProvider`: business cases, section completeness, baseline validation state incl. Stale, formula version validation per benefit line); the export lines for these in `apps/api/src/modules/kpi/index.ts` and the route registration lines in `kpi/routes.ts` (KBE-B adds its own registration lines first; KBE-C merges after KBE-B, so the two edits are sequential, not concurrent); `test/integration/kpi/benefit-formulas.test.ts` (six T09 columns; confidence X → 400; undefined variable → 422; the two seeded examples; monthly ARPU × annual population → 422; lineage rows; FIN validation, author 403); `packages/shared/src/schemas/benefit-formula.ts`; `test/support/p3-pending-kbe-c.ts`; `test/integration/contract/p3-exercises-kbe-c.ts`.
 
+KBE-C imports the engine from **`@mth/shared/calc`**. The 400/422 boundary and the lineage `rounding` record are fixed in ADR-0024 §6 ("Engine details confirmed").
+
 **Must not touch (all KBE tasks):** `modules.ts`, `server.ts`, `contract.test.ts`, migrations, `schema.ts`, `apps/web/**`.
 
 ## 4. frontend-ux-engineer
 
-Shared rules: every string through i18next in `ar` (RTL) and `en` (LTR); RecordForm and the hand-written-form blank rules (one form-level alert in one live region, axe-clean banners); session-bound actions through `apps/web/src/auth/sessionBound.ts` (ESLint forbids raw `navigate` and direct `setQueryData`); amounts, scores, weights and FTE formatted with `@mth/shared` (`formatDecimal`, `scoring.ts`), never `Number()`; Unknown/Stale shown as such, never 0 or green; AUD sees read-only views; `#0078FF` stays provisional; "business approval" labels on selection, funding, weight-set, override, dispensation and G4 actions, never DG0–DG7. Each FE task owns its own i18n namespaces and route files; `app/router.tsx`, `app/nav.ts`, `api/client.ts`, `api/queries.ts`, `api/types.ts` are owned by **FE-A**, which adds the routes, nav entries and query keys for all three FE tasks in its first change (query keys: `["roadmap", transformationId]` is the one cache entry the timeline, table and board share).
+Shared rules: every string through i18next in `ar` (RTL) and `en` (LTR); RecordForm and the hand-written-form blank rules (one form-level alert in one live region, axe-clean banners); session-bound actions through `apps/web/src/auth/sessionBound.ts` (ESLint forbids raw `navigate` and direct `setQueryData`); amounts, scores, weights and FTE formatted with `@mth/shared/schemas` (`formatDecimal`) and `@mth/shared/calc` (`scoring.ts`), never `Number()`; Unknown/Stale shown as such, never 0 or green; AUD sees read-only views; `#0078FF` stays provisional; "business approval" labels on selection, funding, weight-set, override, dispensation and G4 actions, never DG0–DG7. Each FE task owns its own i18n namespaces and route files; `app/router.tsx`, `app/nav.ts`, `api/client.ts`, `api/queries.ts`, `api/types.ts` are owned by **FE-A**, which adds the routes, nav entries and query keys for all three FE tasks in its first change (query keys: `["roadmap", transformationId]` is the one cache entry the timeline, table and board share).
 
 ### FE-A — portfolio, readiness, G1 agreements, G4
 
@@ -114,7 +122,7 @@ Shared rules: every string through i18next in `ar` (RTL) and `en` (LTR); RecordF
 
 ### FE-C — business cases and T09
 
-**Owns:** `pages/business-cases/**` (ten sections, lines with exactly one class, totals with gross/cost/net separate, roll-up, Finance validation state incl. Stale), `pages/benefit-formulas/**` (T09 register, formula builder using `@mth/shared` `formula` for live parse/type-check/preview, units and periods, fraction vs percentage points, examples marked illustrative, Finance validation); `i18n/{en,ar}/{business-cases,benefit-formulas}.json`; their tests.
+**Owns:** `pages/business-cases/**` (ten sections, lines with exactly one class, totals with gross/cost/net separate, roll-up, Finance validation state incl. Stale), `pages/benefit-formulas/**` (T09 register, formula builder using `@mth/shared/calc` (`validateFormula`, `evaluateFormula`, `displayNumber`) for live parse/type-check/preview, units and periods, fraction vs percentage points (suffix text through i18next from `displayNumber`'s suffix code, ADR-0024 §6 item 13), examples marked illustrative, Finance validation); `i18n/{en,ar}/{business-cases,benefit-formulas}.json`; their tests.
 
 **Must not touch (all FE tasks):** `apps/api/**`, `apps/worker/**`, `packages/**`, `docs/**`.
 
@@ -122,7 +130,7 @@ Shared rules: every string through i18next in `ar` (RTL) and `en` (LTR); RecordF
 
 - Every P3 operation is in exactly one `apps/api/test/support/p3-pending-<task>.ts` (BE-A 6, BE-B 20, BE-C 25, BE-D 17, BE-E 17, KBE-B 11, KBE-C 13 = 109). The aggregate `p3-pending.ts` feeds `P2_PENDING_OPERATIONS`, so route coverage, the exercised-operations check, the media-type sweep, the malformed-input sweeps and the rate-limit sweep skip unrouted operations, and the route-coverage test fails if a listed operation is routed or exercised.
 - Each task exercises its operations in its own `test/integration/contract/p3-exercises-<task>.ts`; BE-A's first change wires all seven into `contract.test.ts`.
-- Pinned counts that move as operations are routed (BE-A owns `contract.test.ts`; the other tasks report their new counts in the handback and BE-A or the integrator updates them): the media-type triple `[87, 86, 1]` (live operations with a body) and the rate-limit floor (`>= 161`).
+- Pinned counts that move as operations are routed (BE-A owns `contract.test.ts`; the other tasks report their new counts in the handback and BE-A or the integrator updates them): the media-type triple `[87, 86, 1]` (live operations with a body) and the rate-limit floor (`>= 161`). **After BE-A they are `[90, 89, 1]` and `>= 167`** (T-DG3-ARCH-02); each later task reports its own new values in its handback.
 - **All pending lists must be empty when the DG3 candidate freezes.** qa-verifier checks this.
 
 ## 6. Integration order
@@ -191,3 +199,14 @@ Shared rules: every string through i18next in `ar` (RTL) and `en` (LTR); RecordF
 | REQ-S20-005, REQ-S20-008, REQ-S20-010, REQ-S20-014 | P3 parts of A05 (3.30, 100000), A08 (G4 controls), A10 (line classes, roll-up), A14 (409 on milestone moves) | qa-verifier |
 | REQ-S01-*, REQ-S02-006, REQ-S15-*, REQ-S19-*, REQ-S21-*, REQ-DLV-* | Platform-wide and delivery rules applied by every task (bilingual, server-side controls, no builder-hosted services, handbacks, independent reviews) | all / orchestrator |
 | REQ-PB-009, REQ-S03-003, REQ-S09-010, REQ-S04-014, REQ-S16-017 (Scenario, Benefit, BenefitAllocation, BenefitMeasurement), REQ-S08-005, REQ-S08-018 | Not built in P3 (`completed` status reserved; rebaseline change control, impact assessment, scenarios, benefit register and studio previews are later stages). No P3 table blocks them. | Later stages |
+
+## 9. Amendments after wave 1 (T-DG3-ARCH-02, 2026-10-07)
+
+Recorded from the T-DG3-BE-A and T-DG3-KBE-A handbacks; wave 2 (BE-B, BE-C, BE-D, KBE-B) builds on them.
+
+1. **BE-A's files outside its "Owns" list are accepted as BE-A's:** `packages/shared/src/schemas/gate.ts` (G1 `agreements`), `apps/api/src/modules/workflows/index.ts`, `workflows/workflows.test.ts`, `apps/api/src/server.test.ts`, `apps/api/test/integration/registers.test.ts` and `transformations.test.ts`. Later edits by other tasks are only those named in this file (BE-C's registration lines in `workflows/index.ts`).
+2. **Shared edit points, sequenced** (the "Also owns/edits" notes in §2): BE-C adds its route registration lines to `workflows/index.ts`. BE-B implements `latestFundingState()` in `portfolio/funding.ts`, and BE-E adds the funding routes to that file after BE-B. BE-E wires the `kpi` half of `GateFactsProvider` in `server.ts` (one line, after KBE-C), and the schedule and capacity flag injection lines in BE-D's prioritization view.
+3. **Import path:** the T06 arithmetic and the T09 engine are imported from **`@mth/shared/calc`**, not from `@mth/shared` (ADR-0002 "`@mth/shared` entry points", ADR-0024 §6).
+4. **`0024` audit shape:** the `scoring_weight_set.create` event now writes `{"weights": {"from": null, "to": {…}}}` in `0024` itself (function and backfill path); `0025`'s identical `CREATE OR REPLACE` is kept and marked redundant. A database that applied the earlier `0024` must be rebuilt, because the migrator refuses checksum drift (unreleased and ungated, so only scratch and dev databases are affected).
+5. **Pinned contract counts:** `[90, 89, 1]` and `>= 167` (§5).
+6. **Dispensation decisions:** `POST …/gate-dispensations/{dispensationId}/decision` with `AcceptanceDecision`; delegated decisions are refused with 422 `dispensation.on_behalf_not_supported` (ADR-0021 §5).

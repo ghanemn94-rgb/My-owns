@@ -39,12 +39,13 @@ CREATE CONSTRAINT TRIGGER gate_decision_g1_agreements AFTER INSERT ON gate_decis
 REVOKE ALL ON FUNCTION gate_decision_g1_agreements() FROM PUBLIC;
 
 -- -----------------------------------------------------------------------------------------------------------------
--- p3_instantiate_transformation(): same function as 0024, with ONE change. Its scoring_weight_set.create audit event
--- wrote `changes` as {"weights": {...}}, which is not the audit diff shape ({"<field>": {"from", "to"}}) that every
--- other event uses and that the AuditEvent contract requires (GET /transformations/{id}/audit then failed contract
--- validation). It now writes {"weights": {"from": null, "to": {...}}}. Found when POST /transformations switched to
--- this function in the same release (T-DG3-BE-A); reported in the handback. Rows written by 0024's backfill on an
--- upgraded database keep the old shape (audit_event is append-only); a fresh database has none.
+-- p3_instantiate_transformation(): REDUNDANT since T-DG3-ARCH-02, kept so that 0025 applies unchanged and the
+-- function has one definition in both files. T-DG3-BE-A found that 0024's scoring_weight_set.create audit event wrote
+-- `changes` as {"weights": {...}}, which is not the audit diff shape ({"<field>": {"from", "to"}}) that every other
+-- event uses and that the AuditEvent contract requires (GET /transformations/{id}/audit then failed contract
+-- validation), and fixed it here. T-DG3-ARCH-02 then corrected 0024 in place (unreleased, ungated; DG2 ARCH-01B
+-- precedent), including its backfill path, so this body is now byte-identical to 0024's and replacing it is a no-op.
+-- No database, fresh or upgraded, holds the malformed row. Do not change this body without changing 0024's.
 CREATE OR REPLACE FUNCTION p3_instantiate_transformation(p_transformation_id uuid, p_actor_user_id uuid, p_request_id text, p_source text)
 RETURNS integer
 LANGUAGE plpgsql SET search_path = public, pg_temp AS $$
