@@ -1,0 +1,27 @@
+# command: pnpm vitest run --project unit-web apps/web/src/auth/zz-sec-r16-web-probe.test.tsx
+# clone HEAD 23edabfb498b74053c266ef0efb1dda18c4ed928 (candidate ddaab3cc = source 805da3e + metadata); node v22.22.2; LANG=<unset> LC_ALL=<unset>; probe sha256 f0d72881653669de; started 2026-10-07T19:01:00Z
+
+ RUN  v3.2.4 /var/tmp/mth-run.2FpVJf/claude-0/r17p
+
+stdout | src/auth/zz-sec-r16-web-probe.test.tsx > Y1 a create of A's whose success continuation runs after the tab moved to B > B is never navigated to A's new record nor shown A's code/name
+Y1 requests after the POST: ["POST /api/v1/transformations","GET /api/v1/me","GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units"]
+Y1: generation at send 0, now 1; GET /me count 2; path /transformations/new; header B=true; B sees A's code=false; B sees A's name=false; body excerpt=""
+
+stdout | src/auth/zz-sec-r16-web-probe.test.tsx > Y4 X6 with the production query defaults > a refocus after B signed in elsewhere fetches /me first and never shows A's header with B's data
+Y4: requests on refocus = ["GET /api/v1/me","GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units","GET /api/v1/transformations"]; header A=false; header B=true; B's row=true; A's row=false
+
+stdout | src/auth/zz-sec-r16-web-probe.test.tsx > Y5 OBSERVATION: in-app navigation with no focus event after B signed in elsewhere > logs which header is shown above the newly fetched page data (always passes)
+Y5: requests on navigation = ["GET /api/v1/me","GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units","GET /api/v1/transformations"]; header A=false; B's row=true; A's row=false
+
+ ✓ |unit-web| src/auth/zz-sec-r16-web-probe.test.tsx (4 tests) 5523ms
+   ✓ Y1 a create of A's whose success continuation runs after the tab moved to B > B is never navigated to A's new record nor shown A's code/name  4263ms
+   ✓ Y1 a create of A's whose success continuation runs after the tab moved to B > Y1c control: under one identity the create still lands on the created record  427ms
+   ✓ Y4 X6 with the production query defaults > a refocus after B signed in elsewhere fetches /me first and never shows A's header with B's data  443ms
+   ✓ Y5 OBSERVATION: in-app navigation with no focus event after B signed in elsewhere > logs which header is shown above the newly fetched page data (always passes)  388ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  19:01:01
+   Duration  9.59s (transform 1.62s, setup 225ms, collect 2.50s, tests 5.52s, environment 562ms, prepare 202ms)
+
+# exit_status: 0 finished 2026-10-07T19:01:11Z

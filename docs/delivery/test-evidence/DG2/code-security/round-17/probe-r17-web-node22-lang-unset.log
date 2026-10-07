@@ -1,0 +1,36 @@
+# command: pnpm vitest run --project unit-web apps/web/src/auth/zz-sec-r17-web-probe.test.tsx
+# clone HEAD 23edabfb498b74053c266ef0efb1dda18c4ed928 (candidate ddaab3cc = source 805da3e + metadata); node v22.22.2; LANG=<unset> LC_ALL=<unset>; probe sha256 d75da82e07142569; started 2026-10-07T19:01:21Z
+
+ RUN  v3.2.4 /var/tmp/mth-run.2FpVJf/claude-0/r17p
+
+stdout | src/auth/zz-sec-r17-web-probe.test.tsx > Z1 create whose post-create GET /me outlasts the 5 s permission-refresh timeout > B is never shown A's new record code or name, at any DOM state
+Z1: requests ["POST /api/v1/transformations","GET /api/v1/me","GET /api/v1/transformations/01920000-0000-7000-9000-0000000003a1"]; path before /me answered /transformations/01920000-0000-7000-9000-0000000003a1 (gen 0); now /transformations/01920000-0000-7000-9000-0000000003a1 (gen 1); header Synthetic User B; mixed states 0; body "Not foundThis record does not exist, or your role assignments do not allow you to see it."
+
+stdout | src/auth/zz-sec-r17-web-probe.test.tsx > Z2 edit whose PATCH is in flight beyond the recheck window while B signs in > A's save does not navigate B, and B never sees A's record data under B's header
+Z2: requests ["PATCH /api/v1/transformations/01920000-0000-7000-9000-000000000301","GET /api/v1/me","GET /api/v1/transformations/01920000-0000-7000-9000-000000000301/gates","GET /api/v1/transformations/01920000-0000-7000-9000-000000000301/north-star","GET /api/v1/decisions","GET /api/v1/transformations/01920000-0000-7000-9000-000000000301/audit","GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units","GET /api/v1/transformations/01920000-0000-7000-9000-000000000301"]; path /transformations/01920000-0000-7000-9000-000000000301; header Synthetic User B; mixed states 0
+
+stdout | src/auth/zz-sec-r17-web-probe.test.tsx > Z3 the documented residual: a non-navigation GET inside the 2 s window > demonstrates it (logged) and asserts its end: after the window the next GET asks /me first
+Z3 residual: inside window {"urls":["GET /api/v1/transformations"],"header":"Synthetic User A","bRow":true,"aRow":false}; after window requests ["GET /api/v1/me","GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units","GET /api/v1/transformations","GET /api/v1/transformations"]; header Synthetic User B; B row true; A row false
+
+stdout | src/auth/zz-sec-r17-web-probe.test.tsx > Z4 (Y5 made asserting) navigation immediately after B signed in elsewhere > /me first; A's header is never rendered above B's rows
+Z4: requests ["GET /api/v1/me","GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units","GET /api/v1/transformations"]; header Synthetic User B; mixed states 0
+
+stdout | src/auth/zz-sec-r17-web-probe.test.tsx > Z5 OBSERVATION: query-string-only navigation inside the window > logs whether /me is asked (always passes)
+Z5: requests ["GET /api/v1/transformations"]; header Synthetic User A; B row true; A row false
+
+stdout | src/auth/zz-sec-r17-web-probe.test.tsx > Z6 OBSERVATION (liveness): a navigation whose GET /me hangs > logs which page GETs were sent while /me was held, and after it was released (always passes)
+Z6: while /me held ["GET /api/v1/me"]; after release ["GET /api/v1/me","GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units","GET /api/v1/transformations"]
+
+ ✓ |unit-web| src/auth/zz-sec-r17-web-probe.test.tsx (7 tests) 10257ms
+   ✓ Z1 create whose post-create GET /me outlasts the 5 s permission-refresh timeout > B is never shown A's new record code or name, at any DOM state  6644ms
+   ✓ Z2 edit whose PATCH is in flight beyond the recheck window while B signs in > A's save does not navigate B, and B never sees A's record data under B's header  864ms
+   ✓ Z3 the documented residual: a non-navigation GET inside the 2 s window > demonstrates it (logged) and asserts its end: after the window the next GET asks /me first  624ms
+   ✓ Z5 OBSERVATION: query-string-only navigation inside the window > logs whether /me is asked (always passes)  614ms
+   ✓ Z6 OBSERVATION (liveness): a navigation whose GET /me hangs > logs which page GETs were sent while /me was held, and after it was released (always passes)  1108ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  19:01:22
+   Duration  14.39s (transform 1.91s, setup 165ms, collect 2.52s, tests 10.26s, environment 561ms, prepare 249ms)
+
+# exit_status: 0 finished 2026-10-07T19:01:37Z

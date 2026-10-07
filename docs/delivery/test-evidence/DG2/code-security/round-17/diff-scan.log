@@ -1,0 +1,43 @@
+# command: git diff e3b2375..805da3e --stat -- . ':!docs'; then the product diff (non-test) scanned for risky patterns
+ apps/web/src/api/client.ts                         | 124 ++++
+ apps/web/src/api/queries.ts                        |  28 +-
+ apps/web/src/app/App.tsx                           |   9 +-
+ apps/web/src/app/Shell.tsx                         |   1 +
+ apps/web/src/auth/session-bound.test.tsx           | 670 +++++++++++++++++++++
+ apps/web/src/auth/session.tsx                      |  31 +-
+ apps/web/src/auth/sessionBound.ts                  | 102 ++++
+ apps/web/src/components/LanguageSwitch.tsx         |  28 +-
+ apps/web/src/components/ReasonDialog.tsx           |   6 +-
+ apps/web/src/components/RecordForm.tsx             |  14 +-
+ apps/web/src/components/RowActions.tsx             |  18 +-
+ apps/web/src/components/useVersionedSave.ts        |  21 +-
+ apps/web/src/pages/LoginPage.tsx                   |   1 +
+ apps/web/src/pages/admin/AssignmentsPage.tsx       |  16 +-
+ apps/web/src/pages/admin/OrganizationsPage.tsx     |  26 +-
+ apps/web/src/pages/admin/UsersPage.tsx             |  17 +-
+ apps/web/src/pages/decisions/DecisionsPage.tsx     |   4 +-
+ apps/web/src/pages/define/CharterPage.tsx          |   6 +-
+ apps/web/src/pages/define/DefinePage.tsx           |  19 +-
+ apps/web/src/pages/design/DesignPage.tsx           |   6 +-
+ apps/web/src/pages/design/JourneysSection.tsx      |   6 +-
+ apps/web/src/pages/design/WorkshopsSection.tsx     |   8 +-
+ apps/web/src/pages/diagnose/DiagnosePage.tsx       |  12 +-
+ apps/web/src/pages/evidence/EvidencePage.tsx       |  10 +-
+ apps/web/src/pages/gates/GateDetailPage.tsx        |  10 +-
+ apps/web/src/pages/team/TeamPage.tsx               |   2 +-
+ .../transformations/TransformationCreatePage.tsx   |  32 +-
+ .../transformations/TransformationDetailPage.tsx   |  33 +-
+ .../transformations/TransformationEditPage.tsx     |  25 +-
+ eslint.config.js                                   |  42 ++
+ 30 files changed, 1197 insertions(+), 130 deletions(-)
+# pattern: https?://|cdn|unpkg|jsdelivr|googleapis|innerHTML|dangerously|eval\(|new Function|localStorage|sessionStorage|password|secret|token|api[_-]?key|window\.location|returnTo|console\.(log|debug)
+5:+// also on in-app navigation and inside the query fresh window. The session cookie is HttpOnly and the CSRF token is
+19:+//  - unsafe methods (writes) neither trigger nor wait for it: they are sent as before with the CSRF token of the
+64:+ * Runs one GET /me and the bookkeeping of its answer (noteSessionIdentity, the CSRF token, the phase): page GETs sent
+134:+    setCsrfToken(me.csrfToken);
+354:+// eslint-disable-next-line no-restricted-imports -- session transition: signing in establishes the new generation and then navigates to returnTo
+# note: the assignment names the range fe22d759..cbdb4f68 (round 10 -> 11, already reviewed in rounds 11-16); the product change since round 16 is e3b2375..805da3e (round-16 source -> round-17 source; FE15 ac81298, D-077 805da3e). Stat of the named range for the record:
+ apps/api/test/integration/framework-errors.test.ts |  12 +-
+ apps/api/test/support/harness.ts                   |   3 +
+ 11 files changed, 1240 insertions(+), 9 deletions(-)
+# exit_status: 0

@@ -1,0 +1,36 @@
+# command: node deploy/scripts/check-ci-needs.mjs; node --test deploy/scripts/tests/check-ci-needs.test.mjs; grep -nE 'run: pnpm|validate.mjs' .github/workflows/*.yml  (clone HEAD 23edabf; node v22.22.2)
+## live registry (D-057): offline frozen-lockfile install - see install.log/install2.log (exit 0); no network in the sandbox
+## live CI (D-058):
+OK: .github/workflows/ci.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it with no status-function if:; installs only via ci-install-deps.sh
+  verify <- delivery-gates
+  integration <- verify
+  e2e <- verify
+  images <- integration, e2e
+check-ci-needs exit=0
+1..46
+# tests 46
+# suites 0
+# pass 46
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 7916.05809
+check-ci-needs.test exit=0
+.github/workflows/ci.yml:38:        run: node tools/gates/validate.mjs --pipeline
+.github/workflows/ci.yml:62:      - run: pnpm format:check
+.github/workflows/ci.yml:63:      - run: pnpm lint
+.github/workflows/ci.yml:64:      - run: pnpm typecheck
+.github/workflows/ci.yml:65:      - run: pnpm build
+.github/workflows/ci.yml:66:      - run: pnpm test
+.github/workflows/ci.yml:67:      - run: pnpm openapi:lint
+.github/workflows/ci.yml:68:      - run: pnpm check:no-cdn
+.github/workflows/ci.yml:100:      - run: pnpm -r build
+.github/workflows/ci.yml:101:      - run: pnpm test:integration
+.github/workflows/ci.yml:135:      - run: pnpm -r build
+.github/workflows/ci.yml:142:      - run: pnpm e2e --workers=1
+.github/workflows/delivery-gates.yml:40:        run: node tools/gates/validate.mjs --pipeline
+.github/workflows/delivery-gates.yml:42:        run: node tools/gates/validate.mjs --reconcile
+## Keycloak (D-049): OIDC is exercised against the in-process test IdP in oidc.test.ts (33 passed in each integration run); no Keycloak in the sandbox
+oidc.test.ts run1 pass=33 fail=0; run2 pass=33 fail=0
+# finished
