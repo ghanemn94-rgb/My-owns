@@ -1,0 +1,197 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG2",
+  "round": 10,
+  "candidate_id": "sha256:7fd1a89ca090dbdea5ae9f014853684239cbf80e89dc5cce50914155cb9d484a",
+  "source_commit": "fe22d75962ca1962df462055645169787ddbc201",
+  "reviewer_role": "release-auditor",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG2-T-DG2-AUDIT-R10-release-auditor-20261006T235838Z-1b3a719f",
+    "session_id": "1b3a719f-57f6-455d-b417-8b726e6e2b2f"
+  },
+  "implementation_author": [
+    "transformation-analyst",
+    "solution-architect",
+    "backend-workflow-engineer",
+    "frontend-ux-engineer",
+    "kpi-benefits-engineer",
+    "devops-engineer",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "release-auditor authored no implementation, test, review or finding fix in the DG2 scope. I audited the frozen candidate, the three round-10 specialist records, their run evidence, the findings register, the requirement register and decisions D-059 to D-070. Code ran only in disposable clones under $TMPDIR (fe22d759 and the round-9 candidate 041478cb) against disposable PostgreSQL 16 clusters, never in the candidate tree. I wrote only this record, my audit evidence under docs/delivery/test-evidence/DG2/audit/round-10/, and the gate record."
+  },
+  "assignment": "docs/delivery/assignments/DG2/round-10/release-auditor.md",
+  "requirements_checked": [
+    "REQ-PB-003", "REQ-PB-012", "REQ-PB-016", "REQ-PB-017", "REQ-PB-018", "REQ-PB-023", "REQ-PB-024", "REQ-PB-025",
+    "REQ-PB-026", "REQ-PB-027", "REQ-PB-028", "REQ-PB-029", "REQ-PB-030", "REQ-PB-031", "REQ-PB-033", "REQ-PB-034",
+    "REQ-PB-035", "REQ-PB-036", "REQ-PB-037", "REQ-PB-038", "REQ-PB-039", "REQ-PB-041", "REQ-PB-042", "REQ-PB-043",
+    "REQ-DLV-034", "REQ-S04-003", "REQ-S04-004", "REQ-S04-005", "REQ-S05-003", "REQ-S10-001", "REQ-S13-012", "REQ-S16-013"
+  ],
+  "checks_run": [
+    {
+      "id": "AUD-1",
+      "procedure": "Complete-clone check and candidate recomputation; previous gate historical validation; register rules at DG2.",
+      "command": "git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG2; node tools/gates/validate.mjs --historical --stage DG1; node tools/gates/validate.mjs --register DG2",
+      "environment": "repository working tree at HEAD 254f336, node v24.21.0, auditor sandbox",
+      "expected": "not shallow; sha256:7fd1a89c…cb9d484a with 544 files; DG1 historical PASS; register PASS",
+      "actual": "is-shallow=false; candidate_id sha256:7fd1a89ca090dbdea5ae9f014853684239cbf80e89dc5cce50914155cb9d484a, 544 files; 'PASS gate DG1 (historical)' exit 0; 'PASS register rules at DG2' exit 0. fe22d759 is a commit and an ancestor of HEAD.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/audit/round-10/01-audit-checks.log",
+        "docs/delivery/candidates/DG2/7fd1a89ca090dbde.manifest.json"
+      ]
+    },
+    {
+      "id": "AUD-2",
+      "procedure": "Provenance and independence of the three round-10 specialist runs: meta.json exit code, sandbox.json sha256 equals meta.process_sandbox_sha256, distinct run and session ids, the assignment sha256 matches, and independence declarations exist.",
+      "command": "inline node over docs/delivery/runs/DG2/<run_id>/{meta,sandbox}.json; sha256sum docs/delivery/assignments/DG2/round-10/*.md",
+      "environment": "repository working tree, node v24.21.0",
+      "expected": "3 distinct successful sandboxed round-10 runs; no reviewer authored DG2 implementation",
+      "actual": "domain 2657ded0, code-security 99fcef43 and qa 04b293ab: exit_code 0 and sandbox_match true for each. Assignment hashes a3afcfc3/b0808fbb/14b2d52b match meta. Each independence declaration sets reviewer_authored_reviewed_scope=false; qa authored only QA tests and evidence.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/audit/round-10/01-audit-checks.log",
+        "docs/delivery/runs/DG2/DG2-T-DG2-REV-DOM-R10-domain-reviewer-20261006T231717Z-2657ded0/meta.json",
+        "docs/delivery/runs/DG2/DG2-T-DG2-REV-SEC-R10-code-security-reviewer-20261006T231657Z-99fcef43/meta.json",
+        "docs/delivery/runs/DG2/DG2-T-DG2-REV-QA-R10-qa-verifier-20261006T231737Z-04b293ab/meta.json"
+      ]
+    },
+    {
+      "id": "AUD-3",
+      "procedure": "Findings: every DG2 finding is CLOSED_VERIFIED; F-DG2-350/351 are closed by code-security on this candidate; every earlier round's source_commit and the BE15/BE15B fix commits are ancestors of fe22d759; mandatory High/Medium findings are closed.",
+      "command": "inline node over docs/delivery/findings.json and stages.json; git merge-base --is-ancestor",
+      "environment": "repository working tree, node v24.21.0",
+      "expected": "28 findings CLOSED_VERIFIED; 0 OPEN or FIXED_PENDING_VERIFICATION; ancestry holds",
+      "actual": "28 DG2 findings, all CLOSED_VERIFIED. Mandatory F-DG2-140/141/201/202 (High) and 142/150/203 (Medium) are closed by their raising reviewers. F-350/351 are closed in code-security-reviewer.verifications.json (round 10). The round-1 to round-10 source commits, 08a4f63 and e974d78 are all ancestors of fe22d759. The non-author rule is checked separately in AUD-9.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/audit/round-10/01-audit-checks.log",
+        "docs/delivery/findings.json",
+        "docs/delivery/reviews/DG2/round-10/code-security-reviewer.verifications.json"
+      ]
+    },
+    {
+      "id": "AUD-4",
+      "procedure": "Requirement coverage: each of the 32 final_gate=DG2 register rows is IMPLEMENTED, is in qa's requirements_checked, and is in domain's or code-security's.",
+      "command": "python3 csv read of requirements.csv; inline node set comparison of the three round-10 records",
+      "environment": "repository working tree",
+      "expected": "32 rows IMPLEMENTED; 0 missing from qa; 0 missing from domain ∪ code-security",
+      "actual": "32 rows, all IMPLEMENTED; missing from qa: []; missing from domain ∪ code-security: []",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/requirements.csv",
+        "docs/delivery/reviews/DG2/round-10/qa-verifier.json",
+        "docs/delivery/reviews/DG2/round-10/domain-reviewer.json",
+        "docs/delivery/reviews/DG2/round-10/code-security-reviewer.json"
+      ]
+    },
+    {
+      "id": "AUD-5",
+      "procedure": "Decisions D-059 to D-070 recorded with rationale (D-062 user-authorized surgical rewrite; D-067 unreproduced integration setup failure, later attributed to port collisions and fixed by F-DG2-310 in D-068; D-069 the two media-type design choices; D-070 the BE15 salvage, with the orphaned transcript kept as provenance only). Product gates G1-G6 are not tied to DG0-DG7.",
+      "command": "grep '^| D-0NN |' docs/delivery/decisions.md; grep product sources for DG references",
+      "environment": "repository working tree",
+      "expected": "12 decision rows with rationale; no product code grants a real approval or links G1-G6 to DG gates",
+      "actual": "D-059 to D-070 are present (1.7k-3.4k characters each). D-062 records the user's explicit 'Surgical rewrite' approval. D-067 records the file-level setup failure whose log was lost; D-068 records the F-DG2-310 port-policy fix. D-069 has the 'design choices, recorded so reviewers can challenge them'. D-070 says the orphaned run is 'provenance only; they are not cited as evidence'. DG mentions in apps/ are only F-DG2-* code comments. The domain probe confirms gate codes are only G1..G6.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/decisions.md",
+        "docs/delivery/test-evidence/DG2/domain/round-10/r10-delta-api.log"
+      ]
+    },
+    {
+      "id": "AUD-6",
+      "procedure": "Spot-check the specialist evidence against the claims it is cited for: the qa unit/integration/axe series summaries, the domain candidate/delta/residual logs, and code-security's probe logs for SEC-R10-01/02, both recorded PASS with exit_status 1.",
+      "command": "grep 'Hook timed out|Failed Suites|Test Files|Tests' docs/delivery/test-evidence/DG2/code-security/round-10/probe-run*.log",
+      "environment": "repository working tree",
+      "expected": "Every non-zero exit is fully explained by the record. SEC-R10-01 says 'the only failure is an assertion that encoded the round-9 behaviour', and the probes README says '28 pass, 1 fail: r9 S11'.",
+      "actual": "The qa and domain evidence supports their claims: unit 765x7, integration 610x6, axe 636 scans with 0 serious, R10 delta 17/17. The code-security probe logs do NOT support the claim. In BOTH locale runs, besides r9 S11, vitest reports 'Failed Suites 1': zz-sec-r10-probe.test.ts fails at file level with 'Error: Hook timed out in 30000ms' at afterAll(() => api.close()), and 'Test Files 2 failed (2)'. Neither the record, the summary, the probes README nor the verifications sidecar discloses or explains this second failure. SEC-R10-02 says 'All 18 tests pass in both runs' with exit 1 and gives no cause for the exit.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-10/probe-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-10/probe-run2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-10/probes/README.md",
+        "docs/delivery/test-evidence/DG2/audit/round-10/01-audit-checks.log"
+      ]
+    },
+    {
+      "id": "AUD-7",
+      "procedure": "Reproduce and bisect the undisclosed afterAll hang in a disposable clone of fe22d759, with node_modules copied from the workspace (same lockfile) and pnpm -r build exit 0. Then compare against the pre-BE15 round-9 candidate 041478cb, and instrument teardown to find what holds app.close().",
+      "command": "with-pg.sh <port> pnpm vitest run --project integration zz-sec-r10-probe.test.ts [-t <group>]; same with a copy whose HTAB spelling is replaced by canonical application/octet-stream (zz-aud-canon); same at 041478cb; zz-aud-diag (teardown timed, server.getConnections every 5 s)",
+      "environment": "$TMPDIR/repro at fe22d759 and $TMPDIR/base at 041478cb, Node 22.22.2, disposable PostgreSQL 16 (code-security's with-pg.sh), LANG unset",
+      "expected": "If the hang is a probe artifact, no product behaviour is implicated",
+      "actual": "Reproduced: 18/18 tests pass, the file fails with 'Hook timed out in 30000ms'. Bisection: P1, P4, P5 inject and P5c alone do not hang. P5s alone hangs: a 30 MiB CHUNKED over-limit evidence upload over a real socket. It also hangs with canonical 'application/octet-stream', so it does not depend on the HTAB spelling, and it hangs identically at 041478cb, so it is NOT a BE15 regression. The diagnostic shows the server answers 413 evidence.too_large WITHOUT closing the connection (closedByServer=false). After the client destroyed its socket at 8 s, the server still held 1 connection for about 65 s, and app.close() completed only at 64.9 s. src/main.ts runs this same graceful app.close() on SIGTERM. So an authenticated over-limit chunked upload pins a server connection for about a minute and stalls graceful shutdown. This is an untriaged, unregistered pre-existing defect in the DG2 evidence-upload scope (REQ-S13-012, REQ-S16-013). Severity and mandatory classification belong to a specialist; I cannot accept or waive it.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "requirements": ["REQ-S13-012", "REQ-S16-013"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/audit/round-10/repro-r10-alone.log",
+        "docs/delivery/test-evidence/DG2/audit/round-10/repro-bis-p5sock.log",
+        "docs/delivery/test-evidence/DG2/audit/round-10/repro-bis-p5inject.log",
+        "docs/delivery/test-evidence/DG2/audit/round-10/repro-bis-p4.log",
+        "docs/delivery/test-evidence/DG2/audit/round-10/repro-bis-p5c.log",
+        "docs/delivery/test-evidence/DG2/audit/round-10/repro-bis-canon-sock.log",
+        "docs/delivery/test-evidence/DG2/audit/round-10/repro-base-canon-sock.log",
+        "docs/delivery/test-evidence/DG2/audit/round-10/repro-diag.log",
+        "docs/delivery/test-evidence/DG2/audit/round-10/zz-aud-diag.test.ts.txt",
+        "docs/delivery/test-evidence/DG2/audit/round-10/zz-aud-canon.diff"
+      ]
+    },
+    {
+      "id": "AUD-8",
+      "procedure": "Environmental residuals: no round-10 specialist recorded a BLOCKED check; D-057 (live registry), D-058 (live CI) and D-049 (Keycloak) were verified on their offline or config surface by all three reviewers.",
+      "command": "inspection of checks_run results and residual logs",
+      "environment": "repository working tree",
+      "expected": "0 BLOCKED checks; residual surfaces PASS",
+      "actual": "0 BLOCKED checks across the three records. qa QA-R10 residual checks PASS; domain residuals.log covers the D-057 offline install, D-058 CI copies 'identical' and the D-049 keycloak config; code-security env-residuals PASS.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-10/residuals.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-10/env-residuals.log"
+      ]
+    },
+    {
+      "id": "AUD-9",
+      "procedure": "Non-author verification of every closed DG2 finding, as checked by the gate validator (checkClosure: the verifying role must differ from the finding owner).",
+      "command": "node tools/gates/validate.mjs --stage DG2; inline node over findings.json F-DG2-206; git show --stat ee46813",
+      "environment": "repository working tree, node v24.21.0",
+      "expected": "No finding is verified by its own owner",
+      "actual": "The validator reports 'finding F-DG2-206 (Low): verified by its own owner (qa-verifier)'. findings.json gives reported_by=owner=qa-verifier and verification.by_role=qa-verifier, with fix ee46813 (e2e/support/qa-stack.sh). stages.json describes that fix as the orchestrator's, so either the owner field is wrong or the fixer verified its own fix. In either case the closure fails the non-author rule as recorded, and the assignment's premise that all 28 are closed by non-authors does not hold mechanically. It is Low and non-mandatory, but the auditor cannot waive it.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/audit/round-10/02-f206-ownership.log",
+        "docs/delivery/findings.json"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG2/audit/round-10/01-audit-checks.log",
+    "docs/delivery/test-evidence/DG2/audit/round-10/02-f206-ownership.log",
+    "docs/delivery/test-evidence/DG2/audit/round-10/repro-r10-alone.log",
+    "docs/delivery/test-evidence/DG2/audit/round-10/repro-bis-p5sock.log",
+    "docs/delivery/test-evidence/DG2/audit/round-10/repro-bis-canon-sock.log",
+    "docs/delivery/test-evidence/DG2/audit/round-10/repro-base-canon-sock.log",
+    "docs/delivery/test-evidence/DG2/audit/round-10/repro-diag.log",
+    "docs/delivery/reviews/DG2/round-10/domain-reviewer.json",
+    "docs/delivery/reviews/DG2/round-10/code-security-reviewer.json",
+    "docs/delivery/reviews/DG2/round-10/qa-verifier.json",
+    "docs/delivery/reviews/DG2/round-10/code-security-reviewer.verifications.json",
+    "docs/delivery/findings.json",
+    "docs/delivery/candidates/DG2/7fd1a89ca090dbde.manifest.json",
+    "docs/delivery/gates/DG1.json"
+  ],
+  "reviewed_at": "2026-10-07T00:16:00Z",
+  "summary": "FAIL, so the gate is BLOCKED. Identity, DG1 historical, register, provenance (3 distinct successful sandboxed runs), 28 findings CLOSED_VERIFIED with correct ancestry, requirement coverage (32/32), decisions D-059 to D-070, the residuals and G1-G6 separation all PASS. Three conditions fail. (1) Evidence does not support a recorded claim. code-security's SEC-R10-01/02 are PASS with exit 1, and the record says the only failure is the obsolete r9 S11 assertion. Both probe logs show a second, undisclosed failure: zz-sec-r10-probe.test.ts 'Hook timed out in 30000ms' in afterAll(api.close). (2) I reproduced that failure as a real, pre-existing product behaviour. After a chunked over-limit evidence upload over a socket, the API answers 413 without closing the connection and holds it for about 65 s after the client has gone, stalling the graceful app.close() that main.ts also runs on SIGTERM. It also occurs at 041478cb, so it is not a BE15 regression and F-DG2-350/351 remain validly closed. Proposed finding for orchestrator allocation (F-DG2-audit-1): REQ-S13-012/REQ-S16-013, a server connection is held after the 413 evidence.too_large and graceful shutdown stalls. Expected: the 413 closes or drains the connection and close() returns promptly. Actual: about 65 s. code-security-reviewer is to triage severity and mandatory_violation. (3) The validator rejects the F-DG2-206 closure: 'verified by its own owner (qa-verifier)'. To unblock: a new review round in which code-security completes its evidence and triages the proposed finding, which is then repaired and verified, or, only if Low and non-mandatory, accepted by a specialist and by the auditor with rationale and owner. Also correct the F-DG2-206 ownership record or obtain a non-owner verification. Then re-audit."
+}

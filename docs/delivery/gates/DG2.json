@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG2",
+  "decision": "BLOCKED",
+  "candidate_id": "sha256:7fd1a89ca090dbdea5ae9f014853684239cbf80e89dc5cce50914155cb9d484a",
+  "source_commit": "fe22d75962ca1962df462055645169787ddbc201",
+  "manifest_path": "docs/delivery/candidates/DG2/7fd1a89ca090dbde.manifest.json",
+  "previous_gate": "DG1",
+  "reviews": {
+    "domain-reviewer": "docs/delivery/reviews/DG2/round-10/domain-reviewer.json",
+    "code-security-reviewer": "docs/delivery/reviews/DG2/round-10/code-security-reviewer.json",
+    "qa-verifier": "docs/delivery/reviews/DG2/round-10/qa-verifier.json"
+  },
+  "release_audit": "docs/delivery/reviews/DG2/round-10/release-auditor.json",
+  "requirements": {
+    "final_gate_ids": [
+      "REQ-PB-003",
+      "REQ-PB-012",
+      "REQ-PB-016",
+      "REQ-PB-017",
+      "REQ-PB-018",
+      "REQ-PB-023",
+      "REQ-PB-024",
+      "REQ-PB-025",
+      "REQ-PB-026",
+      "REQ-PB-027",
+      "REQ-PB-028",
+      "REQ-PB-029",
+      "REQ-PB-030",
+      "REQ-PB-031",
+      "REQ-PB-033",
+      "REQ-PB-034",
+      "REQ-PB-035",
+      "REQ-PB-036",
+      "REQ-PB-037",
+      "REQ-PB-038",
+      "REQ-PB-039",
+      "REQ-PB-041",
+      "REQ-PB-042",
+      "REQ-PB-043",
+      "REQ-DLV-034",
+      "REQ-S04-003",
+      "REQ-S04-004",
+      "REQ-S04-005",
+      "REQ-S05-003",
+      "REQ-S10-001",
+      "REQ-S13-012",
+      "REQ-S16-013"
+    ],
+    "notes": "All 32 register rows with final_gate DG2 are IMPLEMENTED. qa-verifier checked all 32, and domain ∪ code-security cover all 32. validate --register DG2 PASS. Coverage holds, but REQ-S13-012/REQ-S16-013 (evidence upload) carry the untriaged connection-hold defect in blocking condition 2."
+  },
+  "tests": [
+    {
+      "name": "Candidate recomputation and complete-clone check",
+      "command": "git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG2",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/audit/round-10/01-audit-checks.log",
+        "docs/delivery/test-evidence/DG2/qa/round-10/00-candidate.log",
+        "docs/delivery/test-evidence/DG2/domain/round-10/candidate-and-dg1.log"
+      ]
+    },
+    {
+      "name": "Previous gate DG1 historical validation",
+      "command": "node tools/gates/validate.mjs --historical --stage DG1",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/audit/round-10/01-audit-checks.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-10/validate-historical-DG1.log"
+      ]
+    },
+    {
+      "name": "Unit (765, Node 22 and 24, both locale settings, under load) and integration (610 qa / 570 code-security, both locale settings)",
+      "command": "pnpm test; pnpm test:integration on disposable PostgreSQL 16",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-10/08-unit-series-summary.log",
+        "docs/delivery/test-evidence/DG2/qa/round-10/10-integration-series-summary.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-10/integration-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-10/integration-run2-lang-c-utf8.log"
+      ]
+    },
+    {
+      "name": "E2E qa-stack EN+AR and axe (636 scans, 0 serious/critical); QA-R10 raw-socket regression",
+      "command": "qa-stack playwright runs, both locale settings",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-10/17-e2e-qa-stack-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-10/17-e2e-qa-stack-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-10/19-qa-r10-results.log",
+        "docs/delivery/test-evidence/DG2/qa/round-10/20-axe-summary.log"
+      ]
+    },
+    {
+      "name": "code-security round-10 probe (SEC-R10-01/02): evidence vs claim",
+      "command": "with-pg.sh <port> pnpm vitest run --project integration zz-sec-r9-probe.test.ts zz-sec-r10-probe.test.ts",
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-10/probe-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-10/probe-run2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/audit/round-10/repro-r10-alone.log"
+      ]
+    },
+    {
+      "name": "Auditor reproduction: over-limit chunked evidence upload holds the connection and stalls app.close (candidate and pre-BE15 041478cb)",
+      "command": "vitest -t 'over llhttp: a 30 MiB' (zz-aud-canon, zz-aud-diag) on disposable PostgreSQL 16",
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/audit/round-10/repro-bis-p5sock.log",
+        "docs/delivery/test-evidence/DG2/audit/round-10/repro-bis-canon-sock.log",
+        "docs/delivery/test-evidence/DG2/audit/round-10/repro-base-canon-sock.log",
+        "docs/delivery/test-evidence/DG2/audit/round-10/repro-diag.log"
+      ]
+    },
+    {
+      "name": "Non-author verification of every closed DG2 finding (validator checkClosure)",
+      "command": "node tools/gates/validate.mjs --stage DG2",
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/audit/round-10/02-f206-ownership.log"
+      ]
+    },
+    {
+      "name": "Register, provenance, findings status/ancestry and requirement coverage audit",
+      "command": "node tools/gates/validate.mjs --register DG2; inline audit over runs/, reviews/, findings.json, requirements.csv, decisions.md",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/audit/round-10/01-audit-checks.log",
+        "docs/delivery/findings.json"
+      ]
+    }
+  ],
+  "blocking_conditions": [
+    "Evidence does not support a recorded specialist claim. code-security-reviewer SEC-R10-01 and SEC-R10-02 are PASS with exit_status 1, and the record and probes README attribute the non-zero exit only to the obsolete round-9 S11 assertion ('28 pass, 1 fail'). Both probe logs (probe-run1-lang-unset.log and probe-run2-lang-c-utf8.log, lines 128-131 and 171) show a second failure: 'Failed Suites 1', zz-sec-r10-probe.test.ts 'Error: Hook timed out in 30000ms' at afterAll(() => api.close()), 'Test Files 2 failed (2)'. No record discloses or explains it.",
+    "Untriaged product defect in the DG2 evidence-upload scope (REQ-S13-012, REQ-S16-013), reproduced by the auditor. After a 30 MiB CHUNKED over-limit upload to uploadEvidenceContent over a real socket, the API answers 413 evidence.too_large without closing the connection. It still holds the socket about 65 s after the client destroyed it, and app.close() (also run by src/main.ts on SIGTERM) completes only after about 65 s. This is independent of the Content-Type spelling and also present at the round-9 candidate 041478cb, so it is not a BE15 regression. It has no finding ID, severity, mandatory classification, repair or acceptance. A specialist (code-security-reviewer) must triage it. If raised, it must be repaired and verified by a non-author, or, only if Low and non-mandatory, accepted as an observation by a specialist and by the release-auditor with rationale and owner. The auditor cannot waive it.",
+    "The gate validator rejects the closure of F-DG2-206 (Low, non-mandatory): 'verified by its own owner (qa-verifier)'. findings.json records owner=qa-verifier and verification.by_role=qa-verifier, while stages.json attributes fix ee46813 to the orchestrator. Either correct the ownership record or obtain a verification by a non-owner.",
+    "Consequently, code-security-reviewer's round-10 PASS cannot be relied on as a complete record of its checks. A new review round with corrected or complete evidence is required before re-audit, because round-10 records are write-once."
+  ],
+  "accepted_observations": [],
+  "decided_at": "2026-10-07T00:16:30Z",
+  "decided_by": "release-auditor",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG2-T-DG2-AUDIT-R10-release-auditor-20261006T235838Z-1b3a719f",
+    "session_id": "1b3a719f-57f6-455d-b417-8b726e6e2b2f"
+  },
+  "notes": "DG2 engineering delivery gate only. It grants no real business, Finance or IT approval, and implies nothing about product gates G1-G6. Every other audit condition holds: identity, DG1 historical, register, provenance, 28/28 findings CLOSED_VERIFIED with correct ancestry (F-DG2-350/351 validly closed on this candidate), 32/32 requirement coverage, D-059 to D-070, residuals D-057/D-058/D-049 on their verified surfaces, and 0 BLOCKED specialist checks. Gate BLOCKED until the conditions above are resolved and a fresh audit passes."
+}
