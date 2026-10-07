@@ -1,0 +1,108 @@
+# command: with-pg.sh 29981 pnpm vitest run --project integration apps/api/test/integration/zz-sec-r11-probe.test.ts
+# clone HEAD 744af0b2298e8d4aab102481278ffc28c37e992c (candidate 5dfecce4 = source 8488e7a + metadata); node v22.22.2; LANG=<unset> LC_ALL=<unset>; probe sha256 0b60ece28601515b; started 2026-10-07T04:55:09Z
+[with-pg initdb] The database cluster will be initialized with locale "C".
+[with-pg initdb] The default database encoding has accordingly been set to "SQL_ASCII".
+[with-pg] cluster template1 encoding SQL_ASCII, collate C
+
+ RUN  v3.2.4 /var/tmp/mth-run.lSxxky/claude-0/r12p
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muxmw2b7_0aa6ef56 (server_encoding UTF8); applied 19 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-r11-probe.test.ts > R1 an over-limit 30 MiB upload over a real socket: 413, then the server lets go of the socket and app.close() is prompt > R1 chunked: 413 evidence.too_large, connection released <= 2.5 s after the client destroys it, app.close() <= 3 s
+PROBE R1-chunked: {"gotResponseMs":177,"status":413,"connection":"close","code":"evidence.too_large","serverClosedOnItsOwnMs":206,"serverReleasedAfterClientDestroyMs":505,"connectionsAtClose":0,"appClose":{"ms":1,"completed":true},"stored":null}
+
+stdout | apps/api/test/integration/zz-sec-r11-probe.test.ts > R1 an over-limit 30 MiB upload over a real socket: 413, then the server lets go of the socket and app.close() is prompt > R1 content-length: 413 evidence.too_large, connection released <= 2.5 s after the client destroys it, app.close() <= 3 s
+PROBE R1-content-length: {"gotResponseMs":126,"status":413,"connection":"close","code":"evidence.too_large","serverClosedOnItsOwnMs":124,"serverReleasedAfterClientDestroyMs":482,"connectionsAtClose":0,"appClose":{"ms":0,"completed":true},"stored":null}
+
+stdout | apps/api/test/integration/zz-sec-r11-probe.test.ts > R1c the auditor's shutdown symptom: app.close() called right after the client destroys an over-limit chunked upload > R1c chunked 30 MiB: app.close() completes <= 3 s (cap 100 s)
+PROBE R1c: {"status":413,"connection":"close","connsAtClose":0,"appClose":{"ms":0,"completed":true}}
+
+stdout | apps/api/test/integration/zz-sec-r11-probe.test.ts > R2 normal keep-alive traffic is unchanged > R2 a 2 MiB upload (CL) is stored byte-exact; response keep-alive; the same socket then serves GET /api/v1/me and a JSON POST
+PROBE R2: {"thirdBody":"{\"id\":\"01a114b7-4869-7771-83a6-7f2286f1b1e5\",\"organizationId\":\"01a114b7-3bb5-7140-a459-bbe4f9fece27\",\"transformationId\":\"01a114b7-3c45-77c9-813b-d26909fc268e\",\"kind\":\"note\",\"title\":\"Synthetic R2 note â Ø¹Ø±Ø¨Ù\",\"description\":null,\"evidenceType\":\"document\",\"source\":null,\"ownerUserId\":\"01a114b7-3bf","statuses":[200,200,201],"connection":["keep-alive","keep-alive","keep-alive"],"stillOpen":true,"sent":"49b66b558db9a6c2a35b51fb16930f71d263e313a7207fabbbd8e7a813f6b684","stored":"49b66b558db9a6c2a35b51fb16930f71d263e313a7207fabbbd8e7a813f6b684","appClose":{"ms":0,"completed":true}}
+
+stdout | apps/api/test/integration/zz-sec-r11-probe.test.ts > R2 normal keep-alive traffic is unchanged > R2b an over-limit body sent in full (LIMIT+1 and LIMIT+64 KiB, CL): 413; the connection is either closed by the server or serves the next request; never held
+PROBE R2b-1: [{"extra":1,"statuses":[413,200],"connection":["keep-alive","keep-alive"],"serverEndAt":null},{"released":26,"appClose":{"ms":0,"completed":true}}]
+
+stdout | apps/api/test/integration/zz-sec-r11-probe.test.ts > R2 normal keep-alive traffic is unchanged > R2b an over-limit body sent in full (LIMIT+1 and LIMIT+64 KiB, CL): 413; the connection is either closed by the server or serves the next request; never held
+PROBE R2b-65536: [{"extra":65536,"statuses":[413,200],"connection":["keep-alive","keep-alive"],"serverEndAt":null},{"released":24,"appClose":{"ms":1,"completed":true}}]
+PROBE R2b: [{"extra":1,"statuses":[413,200],"connection":["keep-alive","keep-alive"],"serverEndAt":null},{"released":26,"appClose":{"ms":0,"completed":true}},{"extra":65536,"statuses":[413,200],"connection":["keep-alive","keep-alive"],"serverEndAt":null},{"released":24,"appClose":{"ms":1,"completed":true}}]
+
+stdout | apps/api/test/integration/zz-sec-r11-probe.test.ts > R3 refusals before the body is read close the connection promptly and do not drain an endless body > R3 401 (no cookie) / 403 (no CSRF) / 428 (no If-Match) / 404 (unknown id) / 400 (content type) / unmatched POST: Connection: close, server FIN <= 2.5 s while the client keeps sending
+PROBE R3: [{"name":"401-no-cookie","status":401,"connection":"close","respAt":26,"serverEndAt":2,"sentMiB":0.1},{"name":"403-no-csrf","status":403,"connection":"close","respAt":25,"serverEndAt":14,"sentMiB":0.4},{"name":"428-no-if-match","status":428,"connection":"close","respAt":26,"serverEndAt":13,"sentMiB":0.6},{"name":"404-unknown","status":404,"connection":"close","respAt":25,"serverEndAt":8,"sentMiB":0.4},{"name":"400-content-type","status":400,"connection":"close","respAt":25,"serverEndAt":1,"sentMiB":0.1},{"name":"404-unmatched","status":404,"connection":"close","respAt":25,"serverEndAt":3,"sentMiB":0.1}]
+
+stdout | apps/api/test/integration/zz-sec-r11-probe.test.ts > R3 refusals before the body is read close the connection promptly and do not drain an endless body > R3 401 (no cookie) / 403 (no CSRF) / 428 (no If-Match) / 404 (unknown id) / 400 (content type) / unmatched POST: Connection: close, server FIN <= 2.5 s while the client keeps sending
+PROBE R3-close: {"released":0,"close":{"ms":0,"completed":true}}
+
+stdout | apps/api/test/integration/zz-sec-r11-probe.test.ts > R4 unmatched-route rate limiting: one count per request, same bucket, SPA fallback intact, no CSRF/authz bypass > R4 limit 6/min
+PROBE R4: {"rec":[{"name":"me","status":200,"remaining":"5","ct":"application/json; charset=utf-8","csp":true,"nosniff":"nosniff","rid":true,"body":"{\"user\":{\"id\":\"01a114b7-3bf1-7528-8910-da5da8868816\",\"organi"},{"name":"spa-deep-link","status":200,"remaining":"4","ct":"text/html; charset=utf-8","csp":true,"nosniff":"nosniff","rid":true,"body":"<!doctype html><title>Synthetic SPA R11</title>"},{"name":"unmatched-api-get","status":404,"remaining":"5","ct":"application/problem+json; charset=utf-8","csp":true,"nosniff":"nosniff","rid":true,"body":"{\"type\":\"urn:mth:problem:not-found\",\"title\":\"Not found\",\"sta"},{"name":"unmatched-post-no-csrf","status":404,"remaining":"4","ct":"application/problem+json; charset=utf-8","csp":true,"nosniff":"nosniff","rid":true,"body":"{\"type\":\"urn:mth:problem:not-found\",\"title\":\"Not found\",\"sta"},{"name":"matched-post-csrf","status":400,"remaining":"3","ct":"application/problem+json; charset=utf-8","csp":true,"nosniff":"nosniff","rid":true,"body":"{\"type\":\"urn:mth:problem:validation\",\"title\":\"Validation fai"},{"name":"static-asset","status":200,"remaining":"3","ct":"application/javascript; charset=utf-8","csp":true,"nosniff":"nosniff","rid":true,"body":"/* synthetic */"},{"name":"over-limit-unmatched","status":404,"remaining":"2","ct":"application/problem+json; charset=utf-8","csp":true,"nosniff":"nosniff","rid":true,"body":"{\"type\":\"urn:mth:problem:not-found\",\"title\":\"Not found\",\"sta"},{"name":"over-limit-spa","status":200,"remaining":"2","ct":"text/html; charset=utf-8","csp":true,"nosniff":"nosniff","rid":true,"body":"<!doctype html><title>Synthetic SPA R11</title>"},{"name":"over-limit-me","status":200,"remaining":"1","ct":"application/json; charset=utf-8","csp":true,"nosniff":"nosniff","rid":true,"body":"{\"user\":{\"id\":\"01a114b7-3bf1-7528-8910-da5da8868816\",\"organi"},{"name":"healthz","status":200,"ct":"application/json; charset=utf-8","csp":true,"nosniff":"nosniff","rid":true,"body":"{\"status\":\"ok\"}"},{"name":"anon-unmatched","status":404,"remaining":"1","ct":"application/problem+json; charset=utf-8","csp":true,"nosniff":"nosniff","rid":true,"body":"{\"type\":\"urn:mth:problem:not-found\",\"title\":\"Not found\",\"sta"}],"auditDelta":0}
+
+stdout | apps/api/test/integration/zz-sec-r11-probe.test.ts > R4b anonymous (one IP bucket): exactly one count per unmatched request; 429 after the limit everywhere but /healthz > R4b limit 5/min
+PROBE R4b: [{"name":"spa","status":200,"remaining":"4","csp":true},{"name":"unmatched-get","status":404,"remaining":"3","csp":true},{"name":"unmatched-post","status":404,"remaining":"2","csp":true},{"name":"unmatched-head","status":404,"remaining":"1","csp":true},{"name":"matched-me-401","status":401,"remaining":"0","csp":true},{"name":"unmatched-429","status":429,"remaining":"0","code":"rate_limited","csp":true,"retryAfter":"60"},{"name":"spa-429","status":429,"remaining":"0","code":"rate_limited","csp":true,"retryAfter":"60"},{"name":"me-429","status":429,"remaining":"0","code":"rate_limited","csp":true,"retryAfter":"60"},{"name":"healthz","status":200,"csp":true}]
+
+stdout | apps/api/test/integration/zz-sec-r11-probe.test.ts > R5 shutdown: idle keep-alive closed at once; an in-flight upload that completes within grace succeeds; a stalled one is cut at grace > R5 idle socket + slow-but-finishing upload (1.5 s) + stalled upload, grace 3 s
+PROBE R5: {"idleClosedAt":350,"idleClosedRelToClose":0,"upload":{"status":200,"connection":"close"},"stalledClosedRelToClose":3003,"appCloseMs":3003,"stored":true,"stalledStored":null}
+
+stdout | apps/api/test/integration/zz-sec-r11-probe.test.ts > R6 requestTimeout and client abort (one instance per case, error-level logs attributed) > R6a stalled JSON body -> requestTimeout 408: 408 and connection closed; no error-level log; nothing stored
+PROBE R6a: {"status":408,"serverEndAt":1583,"released":1,"errs":[],"stored":null,"close":{"ms":0,"completed":true}}
+
+stdout | apps/api/test/integration/zz-sec-r11-probe.test.ts > R6 requestTimeout and client abort (one instance per case, error-level logs attributed) > R6b stalled headers (slowloris) -> requestTimeout 408: 408 and connection closed; no error-level log; nothing stored
+PROBE R6b: {"status":408,"serverEndAt":1589,"released":0,"errs":[],"stored":null,"close":{"ms":1,"completed":true}}
+
+stdout | apps/api/test/integration/zz-sec-r11-probe.test.ts > R6 requestTimeout and client abort (one instance per case, error-level logs attributed) > R6c stalled upload body -> requestTimeout 408: 408 and connection closed; no error-level log; nothing stored
+PROBE R6c: {"status":408,"serverEndAt":1589,"released":0,"errs":[],"stored":null,"close":{"ms":0,"completed":true}}
+
+stdout | apps/api/test/integration/zz-sec-r11-probe.test.ts > R6 requestTimeout and client abort (one instance per case, error-level logs attributed) > R6d client aborts a JSON body mid-way (no timeout): connection released; no error-level log; nothing stored
+PROBE R6d: {"status":null,"serverEndAt":null,"released":0,"errs":[],"stored":null,"close":{"ms":0,"completed":true}}
+
+stdout | apps/api/test/integration/zz-sec-r11-probe.test.ts > R6 requestTimeout and client abort (one instance per case, error-level logs attributed) > R6e client aborts an upload mid-way (no timeout): connection released; no error-level log; nothing stored
+PROBE R6e: {"status":null,"serverEndAt":null,"released":0,"errs":[],"stored":null,"close":{"ms":0,"completed":true}}
+
+stdout | apps/api/test/integration/zz-sec-r11-probe.test.ts > R7 bodyLimit, strict UTF-8 JSON, media type and CSRF answers are unchanged (statuses/codes compared across candidates) > R7 refusal matrix over a real socket
+PROBE R7: {"out":[{"name":"json-over-bodylimit-cl","status":400,"code":"validation.body_too_large","connection":"close"},{"name":"json-over-bodylimit-chunked","status":400,"code":"validation.body_too_large","connection":"close"},{"name":"json-invalid-utf8","status":400,"code":"validation.json","connection":"close"},{"name":"json-as-text-plain","status":400,"code":"validation.content_type","connection":"close"},{"name":"json-no-csrf","status":403,"code":"csrf","connection":"keep-alive"},{"name":"json-bad-origin","status":403,"code":"csrf","connection":"keep-alive"},{"name":"upload-json-type","status":400,"code":"validation.content_type","connection":"close"},{"name":"upload-other-user-403","status":403,"code":"forbidden","connection":"keep-alive"}],"close":{"ms":1,"completed":true},"stored":null}
+
+stdout | apps/api/test/integration/zz-sec-r11-probe.test.ts > R8 stalled uploads hold pooled DB connections (pre-existing class check; harness pool max 5) > R8 6 stalled uploads (6 distinct items) by one authorized user, then another user's GET /api/v1/me and /readyz within 5 s
+PROBE R8: {"pgSessions":{"n":"4","s":null},"meWhileStalled":{"status":200,"ms":7},"readyWhileStalled":{"status":200,"ms":3},"meAfterRelease":{"status":200,"ms":9},"close":{"ms":0,"completed":true}}
+
+stdout | apps/api/test/integration/zz-sec-r11-probe.test.ts > R8b on the round-11 candidate the hold ends at requestTimeout (here 3 s): the stalled uploads get 408 and the pool recovers > R8b 6 stalled uploads, requestTimeoutMs 3000
+PROBE R8b: {"meStatus":200,"meMsAfterStallStart":506,"stalledStatuses":[null,null,null,null,null,null],"close":{"ms":2,"completed":true}}
+
+ ❯ |integration| apps/api/test/integration/zz-sec-r11-probe.test.ts (17 tests | 1 failed) 19583ms
+   ✓ R1 an over-limit 30 MiB upload over a real socket: 413, then the server lets go of the socket and app.close() is prompt > R1 chunked: 413 evidence.too_large, connection released <= 2.5 s after the client destroys it, app.close() <= 3 s  819ms
+   ✓ R1 an over-limit 30 MiB upload over a real socket: 413, then the server lets go of the socket and app.close() is prompt > R1 content-length: 413 evidence.too_large, connection released <= 2.5 s after the client destroys it, app.close() <= 3 s  682ms
+   ✓ R1c the auditor's shutdown symptom: app.close() called right after the client destroys an over-limit chunked upload > R1c chunked 30 MiB: app.close() completes <= 3 s (cap 100 s)  1352ms
+   ✓ R2 normal keep-alive traffic is unchanged > R2 a 2 MiB upload (CL) is stored byte-exact; response keep-alive; the same socket then serves GET /api/v1/me and a JSON POST  458ms
+   ✓ R2 normal keep-alive traffic is unchanged > R2b an over-limit body sent in full (LIMIT+1 and LIMIT+64 KiB, CL): 413; the connection is either closed by the server or serves the next request; never held  499ms
+   ✓ R3 refusals before the body is read close the connection promptly and do not drain an endless body > R3 401 (no cookie) / 403 (no CSRF) / 428 (no If-Match) / 404 (unknown id) / 400 (content type) / unmatched POST: Connection: close, server FIN <= 2.5 s while the client keeps sending 202ms
+   ✓ R4 unmatched-route rate limiting: one count per request, same bucket, SPA fallback intact, no CSRF/authz bypass > R4 limit 6/min 75ms
+   ✓ R4b anonymous (one IP bucket): exactly one count per unmatched request; 429 after the limit everywhere but /healthz > R4b limit 5/min 45ms
+   ✓ R5 shutdown: idle keep-alive closed at once; an in-flight upload that completes within grace succeeds; a stalled one is cut at grace > R5 idle socket + slow-but-finishing upload (1.5 s) + stalled upload, grace 3 s  3409ms
+   ✓ R6 requestTimeout and client abort (one instance per case, error-level logs attributed) > R6a stalled JSON body -> requestTimeout 408: 408 and connection closed; no error-level log; nothing stored  2440ms
+   ✓ R6 requestTimeout and client abort (one instance per case, error-level logs attributed) > R6b stalled headers (slowloris) -> requestTimeout 408: 408 and connection closed; no error-level log; nothing stored  2461ms
+   ✓ R6 requestTimeout and client abort (one instance per case, error-level logs attributed) > R6c stalled upload body -> requestTimeout 408: 408 and connection closed; no error-level log; nothing stored  2453ms
+   ✓ R6 requestTimeout and client abort (one instance per case, error-level logs attributed) > R6d client aborts a JSON body mid-way (no timeout): connection released; no error-level log; nothing stored  1150ms
+   ✓ R6 requestTimeout and client abort (one instance per case, error-level logs attributed) > R6e client aborts an upload mid-way (no timeout): connection released; no error-level log; nothing stored  1139ms
+   ✓ R7 bodyLimit, strict UTF-8 JSON, media type and CSRF answers are unchanged (statuses/codes compared across candidates) > R7 refusal matrix over a real socket 257ms
+   ✓ R8 stalled uploads hold pooled DB connections (pre-existing class check; harness pool max 5) > R8 6 stalled uploads (6 distinct items) by one authorized user, then another user's GET /api/v1/me and /readyz within 5 s  1147ms
+   × R8b on the round-11 candidate the hold ends at requestTimeout (here 3 s): the stalled uploads get 408 and the pool recovers > R8b 6 stalled uploads, requestTimeoutMs 3000 619ms
+     → expected 6 to be greater than 1500
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r11-probe.test.ts > R8b on the round-11 candidate the hold ends at requestTimeout (here 3 s): the stalled uploads get 408 and the pool recovers > R8b 6 stalled uploads, requestTimeoutMs 3000
+AssertionError: expected 6 to be greater than 1500
+ ❯ apps/api/test/integration/zz-sec-r11-probe.test.ts:598:18
+    596|     log("R8b", { meStatus, meMsAfterStallStart: meMs + 500, stalledSta…
+    597|     expect(meStatus).toBe(200);
+    598|     expect(meMs).toBeGreaterThan(1_500);
+       |                  ^
+    599|   }, 60_000);
+    600| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 16 passed (17)
+   Start at  04:55:11
+   Duration  23.18s (transform 982ms, setup 0ms, collect 2.18s, tests 19.58s, environment 0ms, prepare 70ms)
+
+# exit_status: 1 finished 2026-10-07T04:55:35Z

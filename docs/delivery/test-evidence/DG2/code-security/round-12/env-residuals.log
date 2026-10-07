@@ -1,0 +1,36 @@
+# REQ-DLV-042 AC-1 / D-057 (live registry): offline frozen install from a scratch copy of the host store; the sandbox has no network, so the live registry is a documented residual
+# command: pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pstore/v10   (commit 744af0b2298e8d4aab102481278ffc28c37e992c, node v22.22.2, pnpm 10.33.0)
+Scope: all 8 workspace projects
+Lockfile is up to date, resolution step is skipped
+Already up to date
+
+Done in 835ms using pnpm v10.33.0
+# exit_status: 0
+
+# REQ-DLV-025 A24 / D-058 (live CI): workflow config surface (no live CI runner reachable: documented residual)
+# command: grep -nE 'run: pnpm|image:' .github/workflows/ci.yml; cmp .github/workflows/ci.yml deploy/ci/ci.yml; git diff --stat cbdb4f6..8488e7a -- .github deploy package.json pnpm-lock.yaml
+62:      - run: pnpm format:check
+63:      - run: pnpm lint
+64:      - run: pnpm typecheck
+65:      - run: pnpm build
+66:      - run: pnpm test
+67:      - run: pnpm openapi:lint
+68:      - run: pnpm check:no-cdn
+75:        image: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722 # devops-engineer: pin by digest (ADR-0003/ADR-0011)
+100:      - run: pnpm -r build
+101:      - run: pnpm test:integration
+108:      image: mcr.microsoft.com/playwright:v1.56.1-noble@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a # devops-engineer: pin by digest
+117:        image: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722 # devops-engineer: pin by digest
+135:      - run: pnpm -r build
+142:      - run: pnpm e2e --workers=1
+ci.yml copies identical
+(empty = unchanged since round 11)
+# exit_status: 0
+
+# D-049 (Keycloak): no Keycloak instance in this sandbox; the OIDC offline surface is oidc.test.ts in both integration runs
+# command: grep -cE '^ +✓ .*oidc.test.ts' integration-run1-lang-unset.log integration-run2-lang-c-utf8.log; grep -cE '^ +× .*oidc' (same logs)
+integration-run1-lang-unset.log:33
+integration-run2-lang-c-utf8.log:33
+integration-run1-lang-unset.log:0
+integration-run2-lang-c-utf8.log:0
+# exit_status: 0 (the block's last command, grep -c for failing '×' OIDC lines, prints 0 and by grep convention itself exits 1 on zero matches: that is the expected 'no failing test' result, not a failure)

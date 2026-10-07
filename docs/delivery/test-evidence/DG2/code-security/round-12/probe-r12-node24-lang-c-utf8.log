@@ -1,0 +1,96 @@
+# command: with-pg.sh 29984 pnpm vitest run --project integration apps/api/test/integration/zz-sec-r12-probe.test.ts
+# clone HEAD 744af0b2298e8d4aab102481278ffc28c37e992c (candidate 5dfecce4 = source 8488e7a + metadata); node v24.21.0; LANG=C.UTF-8 LC_ALL=<unset>; probe sha256 71cbe705545c06bf; started 2026-10-07T04:56:12Z
+[with-pg initdb] The database cluster will be initialized with locale "C.UTF-8".
+[with-pg initdb] The default database encoding has accordingly been set to "UTF8".
+[with-pg] cluster template1 encoding UTF8, collate C.UTF-8
+
+ RUN  v3.2.4 /var/tmp/mth-run.lSxxky/claude-0/r12p
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muxmxenr_10d40f18 (server_encoding UTF8); applied 19 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-r12-probe.test.ts > Q TOCTOU between phase 1 and phase 3 of the three-phase upload > Q1 grant revoked while the body streams: 403, no content row, no object, version unchanged
+PROBE Q1: {"midUpload":{"rows":[],"version":1,"current":null,"files":["01a114b8-318c-77bf-aaf2-5bb57c546282.part"],"audits":0},"revoked":1,"response":{"status":200,"connection":"keep-alive"},"after":{"rows":[{"revision":1,"sha256":"b13736f04b638f43a558bd588417813030ff0c637aec5af2c4b8fbac59a5f8c2","storage_key":"01a114b8-300f-7746-b68a-f61c731de644/01a114b8-30a3-7690-8b15-7512cc639ed8/01a114b8-315f-76ae-99f2-31afc7e3c7e2/01a114b8-318c-77bf-aaf2-5bb57c546282"}],"version":2,"current":"01a114b8-318c-77bf-aaf2-5bb57c546282","files":["01a114b8-318c-77bf-aaf2-5bb57c546282"],"audits":1},"newRequestAfterRevocation":404}
+
+stdout | apps/api/test/integration/zz-sec-r12-probe.test.ts > Q TOCTOU between phase 1 and phase 3 of the three-phase upload > Q1b the uploading SESSION is logged out while the body streams: the upload must not commit (401), nothing stored
+PROBE Q1b: {"logout":200,"meAfterLogout":401,"response":{"status":200},"after":{"rows":[{"revision":1,"sha256":"429a46651b16983a35e44c5763aa08ea148a29cc12a447e40554fccca87c670f","storage_key":"01a114b8-300f-7746-b68a-f61c731de644/01a114b8-30a3-7690-8b15-7512cc639ed8/01a114b8-33d0-71e1-9c35-43eed58072d2/01a114b8-3401-71fc-a66a-9fc2020fb4d0"}],"version":2,"current":"01a114b8-3401-71fc-a66a-9fc2020fb4d0","files":["01a114b8-3401-71fc-a66a-9fc2020fb4d0"],"audits":1}}
+
+stdout | apps/api/test/integration/zz-sec-r12-probe.test.ts > Q TOCTOU between phase 1 and phase 3 of the three-phase upload > Q2 transformation archived while the body streams: 422 transformation.archived, nothing stored
+PROBE Q2: {"archive":200,"response":{"status":422,"connection":"keep-alive","code":"transformation.archived"},"after":{"rows":[],"version":1,"current":null,"files":[],"audits":0}}
+
+stdout | apps/api/test/integration/zz-sec-r12-probe.test.ts > Q TOCTOU between phase 1 and phase 3 of the three-phase upload > Q3 two uploads with the same If-Match whose bodies complete together: one 200, one 409, one revision, one object
+PROBE Q3: {"statuses":[200,409],"codes":[null,"version_conflict"],"after":{"rows":[{"revision":1,"sha256":"96545392b515b2a13d6287cd9d46141106fa1ff62b9090c2e266f301e782f1fc","storage_key":"01a114b8-300f-7746-b68a-f61c731de644/01a114b8-30a3-7690-8b15-7512cc639ed8/01a114b8-376b-7754-ba98-90798fcd356f/01a114b8-3789-7569-bef7-67d48b8a0589"}],"version":2,"current":"01a114b8-3789-7569-bef7-67d48b8a0589","files":["01a114b8-3789-7569-bef7-67d48b8a0589"],"audits":1}}
+
+stdout | apps/api/test/integration/zz-sec-r12-probe.test.ts > Q4 a failure at COMMIT after the object was finalised > Q4 deferred constraint fails the commit: 500 (not a 4xx), error-level log, no content row, no final object and no temporary
+PROBE Q4: {"response":{"status":500,"connection":"keep-alive","code":"internal"},"after":{"rows":[],"version":1,"current":null,"files":[],"audits":0},"errs":["unhandled error"]}
+
+stdout | apps/api/test/integration/zz-sec-r12-probe.test.ts > Q5 incomplete-body mapping: no over-match, no leftovers > Q5a client aborts mid-upload: released, info-level 'request body not received completely', no error log, no .part left
+PROBE Q5a: {"conns":0,"after":{"rows":[],"version":1,"current":null,"files":[],"audits":0},"lines":[{"level":30,"msg":"request body not received completely","code":"ECONNRESET"}]}
+
+stdout | apps/api/test/integration/zz-sec-r12-probe.test.ts > Q5 incomplete-body mapping: no over-match, no leftovers > Q5b a genuine store fault while the body is still incomplete is NOT hidden as 400 (the store answers 503 unavailable, logged at error level)
+PROBE Q5b: {"response":{"status":503,"code":"unavailable"},"errs":["request failed"],"rows":[]}
+
+stdout | apps/api/test/integration/zz-sec-r12-probe.test.ts > Q6 pool settings and stalled uploads > Q6a every API pool session carries idle_in_transaction_session_timeout 30s and statement_timeout 30s
+PROBE Q6a: {"i":"30s","s":"30s"}
+
+stdout | apps/api/test/integration/zz-sec-r12-probe.test.ts > Q6 pool settings and stalled uploads > Q6b pool max 2, 6 stalled uploads: no session idle in transaction, another user's /me answers promptly, no row lock held
+PROBE Q6b: {"pgActivity":[{"state":"idle","n":5}],"me":200,"meMs":6,"lock":"free"}
+
+ ❯ |integration| apps/api/test/integration/zz-sec-r12-probe.test.ts (9 tests | 2 failed) 4901ms
+   × Q TOCTOU between phase 1 and phase 3 of the three-phase upload > Q1 grant revoked while the body streams: 403, no content row, no object, version unchanged 659ms
+     → expected 200 to be 403 // Object.is equality
+   × Q TOCTOU between phase 1 and phase 3 of the three-phase upload > Q1b the uploading SESSION is logged out while the body streams: the upload must not commit (401), nothing stored 510ms
+     → expected 200 to be 401 // Object.is equality
+   ✓ Q TOCTOU between phase 1 and phase 3 of the three-phase upload > Q2 transformation archived while the body streams: 422 transformation.archived, nothing stored  412ms
+   ✓ Q TOCTOU between phase 1 and phase 3 of the three-phase upload > Q3 two uploads with the same If-Match whose bodies complete together: one 200, one 409, one revision, one object  406ms
+   ✓ Q4 a failure at COMMIT after the object was finalised > Q4 deferred constraint fails the commit: 500 (not a 4xx), error-level log, no content row, no final object and no temporary 93ms
+   ✓ Q5 incomplete-body mapping: no over-match, no leftovers > Q5a client aborts mid-upload: released, info-level 'request body not received completely', no error log, no .part left  1238ms
+   ✓ Q5 incomplete-body mapping: no over-match, no leftovers > Q5b a genuine store fault while the body is still incomplete is NOT hidden as 400 (the store answers 503 unavailable, logged at error level) 62ms
+   ✓ Q6 pool settings and stalled uploads > Q6a every API pool session carries idle_in_transaction_session_timeout 30s and statement_timeout 30s 1ms
+   ✓ Q6 pool settings and stalled uploads > Q6b pool max 2, 6 stalled uploads: no session idle in transaction, another user's /me answers promptly, no row lock held  1144ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r12-probe.test.ts > Q TOCTOU between phase 1 and phase 3 of the three-phase upload > Q1 grant revoked while the body streams: 403, no content row, no object, version unchanged
+AssertionError: expected 200 to be 403 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 403[39m
+[31m+ 200[39m
+
+ ❯ apps/api/test/integration/zz-sec-r12-probe.test.ts:140:23
+    138|     expect(rev.rowCount).toBeGreaterThan(0);
+    139|     expect(mid.files.every((x) => x.endsWith(".part"))).toBe(true); //…
+    140|     expect(r?.status).toBe(403);
+       |                       ^
+    141|     expect(s.rows).toEqual([]);
+    142|     expect(s.version).toBe(f.version);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r12-probe.test.ts > Q TOCTOU between phase 1 and phase 3 of the three-phase upload > Q1b the uploading SESSION is logged out while the body streams: the upload must not commit (401), nothing stored
+AssertionError: expected 200 to be 401 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 401[39m
+[31m+ 200[39m
+
+ ❯ apps/api/test/integration/zz-sec-r12-probe.test.ts:161:23
+    159|     log("Q1b", { logout: out.status, meAfterLogout, response: { status…
+    160|     expect(meAfterLogout).toBe(401);
+    161|     expect(r?.status).toBe(401);
+       |                       ^
+    162|     expect(s.rows).toEqual([]);
+    163|   }, 60_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 7 passed (9)
+   Start at  04:56:14
+   Duration  8.40s (transform 874ms, setup 0ms, collect 2.03s, tests 4.90s, environment 0ms, prepare 71ms)
+
+# exit_status: 1 finished 2026-10-07T04:56:22Z

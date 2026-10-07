@@ -1,0 +1,47 @@
+# command: with-pg.sh 29988 pnpm vitest run --project integration apps/api/test/integration/zz-sec-r12-oidc-probe.test.ts
+# clone HEAD 744af0b2298e8d4aab102481278ffc28c37e992c (candidate 5dfecce4 = source 8488e7a + metadata); node v22.22.2; LANG=<unset> LC_ALL=<unset>; probe sha256 db10609c2939e142; started 2026-10-07T04:56:22Z
+[with-pg initdb] The database cluster will be initialized with locale "C".
+[with-pg initdb] The default database encoding has accordingly been set to "SQL_ASCII".
+[with-pg] cluster template1 encoding SQL_ASCII, collate C
+
+ RUN  v3.2.4 /var/tmp/mth-run.lSxxky/claude-0/r12p
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muxmxmo4_dc985311 (server_encoding UTF8); applied 19 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-r12-oidc-probe.test.ts > Q7 OIDC discovery runs inside an open transaction (identity/routes.ts startLogin) > Q7 IdP unresponsive, pool max 3: 3 unauthenticated GET /auth/login hold every pooled connection 'idle in transaction'; a signed-in user's GET /me must still answer promptly
+PROBE Q7: {"pgActivityAt1s":[{"state":"idle","n":3},{"state":"idle in transaction","n":3}],"meWhileIdpSlow":{"status":200,"ms":9010},"logins":[{"status":302,"location":"/login?error=idp_unavailable","ms":10017},{"status":302,"location":"/login?error=idp_unavailable","ms":10017},{"status":302,"location":"/login?error=idp_unavailable","ms":10017}]}
+
+ ❯ |integration| apps/api/test/integration/zz-sec-r12-oidc-probe.test.ts (1 test | 1 failed) 10471ms
+   × Q7 OIDC discovery runs inside an open transaction (identity/routes.ts startLogin) > Q7 IdP unresponsive, pool max 3: 3 unauthenticated GET /auth/login hold every pooled connection 'idle in transaction'; a signed-in user's GET /me must still answer promptly 10081ms
+     → expected { state: 'idle in transaction', n: 3 } to be undefined
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r12-oidc-probe.test.ts > Q7 OIDC discovery runs inside an open transaction (identity/routes.ts startLogin) > Q7 IdP unresponsive, pool max 3: 3 unauthenticated GET /auth/login hold every pooled connection 'idle in transaction'; a signed-in user's GET /me must still answer promptly
+AssertionError: expected { state: 'idle in transaction', n: 3 } to be undefined
+
+[32m- Expected:[39m 
+undefined
+
+[31m+ Received:[39m 
+{
+  "n": 3,
+  "state": "idle in transaction",
+}
+
+ ❯ apps/api/test/integration/zz-sec-r12-oidc-probe.test.ts:52:66
+     50|       log("Q7", { pgActivityAt1s: act, meWhileIdpSlow: me, logins: log…
+     51|       expect(act.some((r) => r.state === "<null>")).toBe(false); // th…
+     52|       expect(act.find((r) => r.state === "idle in transaction")).toBeU…
+       |                                                                  ^
+     53|       expect(me.status).toBe(200);
+     54|       expect(me.ms).toBeLessThan(1_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  04:56:24
+   Duration  13.91s (transform 931ms, setup 0ms, collect 2.10s, tests 10.47s, environment 0ms, prepare 103ms)
+
+# exit_status: 1 finished 2026-10-07T04:56:38Z
