@@ -1,0 +1,133 @@
+$ PATH=/opt/node22/bin:$PATH env -u LC_ALL LANG=C.UTF-8 pnpm test
+# node v22.22.2; 2026-10-07T04:40:18Z
+
+> mobily-transformation-hub@0.1.0 test $TMPDIR/review-dg2
+> vitest run --project unit-node --project unit-web
+
+
+ RUN  v3.2.4 $TMPDIR/review-dg2
+
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx (21 tests) 3713ms
+   ✓ after create (F-DG1-004) > shows the created record when the server lets the creator read it  478ms
+   ✓ effective permissions refresh after create (F-DG1-210) > English: Edit, Archive and the audit trail appear after create, without a reload  464ms
+   ✓ effective permissions refresh after create (F-DG1-210) > Arabic (RTL): the same controls and the audit trail appear after create, without a reload  502ms
+ ✓ |unit-web| src/pages/team/team.test.tsx (8 tests) 3454ms
+   ✓ Team (English LTR) > shows the six governance roles with B0018 accountability text verbatim and who holds each  573ms
+   ✓ Team (English LTR) > lists team members with the accountability on each assignment, sortable and filterable  373ms
+   ✓ Team (English LTR) > a Transformation Lead assigns a Workstream Lead: Idempotency-Key, reason, accountability preview  503ms
+   ✓ Team (English LTR) > shows a 403 from the server in words; nothing is assigned  406ms
+   ✓ Team assign dialog: accountability preview follows the selected role (F-DG2-430) > en: WL on open, then KDS, TD, none and WL again, in StrictMode with no React warning  572ms
+   ✓ Team assign dialog: accountability preview follows the selected role (F-DG2-430) > ar: WL on open, then KDS, TD, none and WL again, in StrictMode with no React warning  545ms
+ ✓ |unit-web| src/app/app.test.tsx (17 tests) 2937ms
+   ✓ bilingual shell > switches to English LTR and persists the preference with If-Match  331ms
+   ✓ bilingual shell > shows all fourteen areas to an administrator  367ms
+   ✓ bilingual shell > a partial area (Governance) leads into the Gates tab of each transformation; its portfolio view stays planned  394ms
+   ✓ transformations > lists transformations with a sortable code column and removable filter chips  562ms
+ ✓ |unit-web| src/pages/p2-blank-forms.test.tsx (52 tests) 16193ms
+   ✓ gate submission note (en) > a whitespace-only note is refused inline and nothing is sent  443ms
+   ✓ gate submission note (en) > visible text is sent verbatim; an empty note is omitted  438ms
+   ✓ gate submission note (ar) > visible text is sent verbatim; an empty note is omitted  369ms
+   ✓ journey step editor (en) > a whitespace-only actor is refused inline (not turned into null) and nothing is sent  441ms
+   ✓ journey step editor (en) > a invisible-only actor is refused inline (not turned into null) and nothing is sent  370ms
+   ✓ journey step editor (en) > several blank fields: each gets the message and focus goes to the first (name)  333ms
+   ✓ journey step editor (en) > visible text is sent verbatim; emptied optional text is null; an empty name is required  507ms
+   ✓ journey step editor (ar) > a whitespace-only actor is refused inline (not turned into null) and nothing is sent  429ms
+   ✓ journey step editor (ar) > a invisible-only actor is refused inline (not turned into null) and nothing is sent  370ms
+   ✓ journey step editor (ar) > several blank fields: each gets the message and focus goes to the first (name)  530ms
+   ✓ journey step editor (ar) > visible text is sent verbatim; emptied optional text is null; an empty name is required  599ms
+   ✓ Finance validation note and archive reason (en) > note: a whitespace-only note is refused inline and nothing is sent  466ms
+   ✓ Finance validation note and archive reason (en) > note: a invisible-only note is refused inline and nothing is sent  330ms
+   ✓ Finance validation note and archive reason (en) > note: empty is 'required'; visible text is sent verbatim  473ms
+   ✓ Finance validation note and archive reason (en) > reason: a whitespace-only reason is refused inline and nothing is archived  427ms
+   ✓ Finance validation note and archive reason (en) > reason: a invisible-only reason is refused inline and nothing is archived  315ms
+   ✓ Finance validation note and archive reason (en) > reason: a server 400 validation.blank on /reason is the field message, not a generic error  468ms
+   ✓ Finance validation note and archive reason (en) > reason: a reason with U+0000 is refused inline with the localized message and nothing is archived  385ms
+   ✓ Finance validation note and archive reason (en) > reason: a server 400 validation.invalid_character on /reason is the localized field message  350ms
+   ✓ Finance validation note and archive reason (en) > reason: empty keeps 'too short'; visible text is sent verbatim  444ms
+   ✓ Finance validation note and archive reason (ar) > note: a whitespace-only note is refused inline and nothing is sent  505ms
+   ✓ Finance validation note and archive reason (ar) > note: a invisible-only note is refused inline and nothing is sent  483ms
+   ✓ Finance validation note and archive reason (ar) > note: empty is 'required'; visible text is sent verbatim  496ms
+   ✓ Finance validation note and archive reason (ar) > reason: a whitespace-only reason is refused inline and nothing is archived  372ms
+   ✓ Finance validation note and archive reason (ar) > reason: a invisible-only reason is refused inline and nothing is archived  300ms
+   ✓ Finance validation note and archive reason (ar) > reason: a server 400 validation.blank on /reason is the field message, not a generic error  302ms
+   ✓ Finance validation note and archive reason (ar) > reason: a server 400 validation.invalid_character on /reason is the localized field message  302ms
+ ✓ |unit-web| src/pages/p2.test.tsx (56 tests) 17115ms
+   ✓ Diagnose > shows the six T01 dimensions with Unknown for missing values, and value pools that are never 0  687ms
+   ✓ Diagnose > renders the six workstreams with their key questions  401ms
+   ✓ Diagnose > edits a T01 row with only the changed fields and If-Match  465ms
+   ✓ Diagnose > a 409 on save writes nothing, compares, and re-applies on the current version  424ms
+   ✓ Diagnose > a 400 validation.blank shows a localized message on its field ('en')  481ms
+   ✓ Diagnose > a 400 validation.blank shows a localized message on its field ('ar')  428ms
+   ✓ Diagnose > an invisible-only value is blocked client-side with validation.blank ('en')  473ms
+   ✓ Diagnose > an invisible-only value is blocked client-side with validation.blank ('ar')  446ms
+   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('en')  601ms
+   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('ar')  625ms
+   ✓ Diagnose > T01: an emptied field is sent as an explicit null; visible text is sent verbatim  534ms
+   ✓ Define: KPI activation (F-DG2-201) > Arabic: the Activate action and the 422 reason are in Arabic  413ms
+   ✓ Charter > shows the 14 fields, the thesis, the five scope checks with pre-checks and the top-outcomes warning  316ms
+   ✓ Charter > scope pre-check: an empty Out of scope reads as failing (EN and AR)  605ms
+   ✓ Charter > thesis: the four parts compose the B0037 sentence (EN and AR)  385ms
+   ✓ Charter > compares a version with the previous one  385ms
+   ✓ Charter > create: a whitespace Case for change is an inline blank error and creates nothing ('ar')  310ms
+   ✓ Charter > edit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (en)  526ms
+   ✓ Charter > edit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (ar)  310ms
+   ✓ Charter > edit: emptying a filled field sends null; visible text is verbatim (en)  446ms
+   ✓ Charter > edit: emptying a filled field sends null; visible text is verbatim (ar)  637ms
+   ✓ Charter > edit: a change summary alone is not a change (never a content-free version)  339ms
+   ✓ Design > shows the ten canvas boxes and the per-dimension view  702ms
+   ✓ Design > converts an unresolved workshop item into a design decision with If-Match  729ms
+   ✓ Gates (business approval) > the approver's decision: rationale required; 403 and 409 problems in words  343ms
+ ✓ |unit-web| src/pages/transformations/modeGuidance.test.tsx (5 tests) 1358ms
+   ✓ New transformation: mode guidance (English LTR) > shows When to use and How for the selected mode and switches with the mode  595ms
+ ✓ |unit-web| src/lib/lib.test.ts (24 tests) 106ms
+ ✓ |unit-web| src/components/States.test.tsx (15 tests) 585ms
+ ✓ |unit-web| src/components/RecordForm.alerts.test.tsx (16 tests) 1794ms
+   ✓ record form: one alert per distinct form error (en) > dialog > a 400 whose only field error has pointer "" says its message once, in one live region  370ms
+ ✓ |unit-web| src/i18n/glossary.test.ts (8 tests) 20ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts (15 tests) 48ms
+ ✓ |unit-web| src/test/react-warning-guard.test.tsx (4 tests) 77ms
+ ✓ |unit-web| src/styles/styles.test.ts (6 tests) 11ms
+ ✓ |unit-web| src/i18n/i18n.test.ts (11 tests) 41ms
+ ✓ |unit-web| src/test/harness-config.test.ts (2 tests) 3ms
+ ✓ |unit-node| apps/api/src/modules/workflows/workflows.test.ts (14 tests) 1030ms
+   ✓ workflows module (P2) > its declared boundary holds, and an undeclared dependency would be caught  964ms
+ ✓ |unit-node| apps/api/src/modules/kpi/kpi.test.ts (18 tests) 952ms
+   ✓ kpi module (P2) > its declared boundary holds, and a planted bypass or undeclared dependency would be caught  901ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (135 tests) 4003ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  2278ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)  872ms
+ ✓ |unit-node| packages/shared/src/value.test.ts (29 tests) 313ms
+ ✓ |unit-node| apps/api/src/server.test.ts (6 tests) 534ms
+ ✓ |unit-node| apps/api/src/modules/evidence/evidence.test.ts (11 tests) 648ms
+   ✓ evidence module (P2) > its declared boundary holds  568ms
+ ✓ |unit-node| packages/shared/src/schemas/schemas.test.ts (69 tests) 238ms
+ ✓ |unit-node| apps/api/src/modules/methodology/methodology.test.ts (4 tests) 288ms
+ ✓ |unit-node| apps/api/src/modules/platform/media-types.test.ts (57 tests) 136ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reporting.test.ts (4 tests) 130ms
+ ✓ |unit-node| apps/api/src/modules/platform/incomplete-body.test.ts (10 tests) 68ms
+ ✓ |unit-node| apps/api/src/modules/platform/platform.test.ts (19 tests) 112ms
+ ✓ |unit-node| packages/config/src/load.test.ts (17 tests) 109ms
+ ✓ |unit-node| apps/api/src/modules/platform/connection-hygiene.test.ts (6 tests) 88ms
+ ✓ |unit-node| packages/design-tokens/src/tokens.test.ts (15 tests) 62ms
+ ✓ |unit-node| apps/api/src/request-encoding.test.ts (11 tests) 58ms
+ ✓ |unit-node| apps/api/src/modules/admin/branding.test.ts (4 tests) 42ms
+(node:2658) [FSTDEP022] FastifyWarning: The router options for constraints property access is deprecated. Please use "options.routerOptions" instead for accessing router options. The router options will be removed in `fastify@6`.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |unit-node| apps/api/src/modules/platform/framework-errors.test.ts (6 tests) 42ms
+ ✓ |unit-node| apps/api/src/modules/kpi/rules.test.ts (30 tests) 41ms
+ ✓ |unit-node| apps/api/src/modules/platform/health.test.ts (2 tests) 45ms
+ ✓ |unit-node| packages/db/src/seed.test.ts (7 tests) 22ms
+ ✓ |unit-node| apps/api/src/modules/transformations/good-outcome.test.ts (7 tests) 8ms
+ ✓ |unit-node| apps/api/src/modules/access/rules.test.ts (12 tests) 7ms
+ ✓ |unit-node| apps/api/src/modules/transformations/thesis.test.ts (4 tests) 9ms
+ ✓ |unit-node| apps/api/src/modules/platform/request-encoding.test.ts (7 tests) 8ms
+ ✓ |unit-node| apps/api/src/modules/identity/oidc-claims.test.ts (5 tests) 5ms
+ ✓ |unit-node| apps/api/src/modules/transformations/exclusions.test.ts (19 tests) 5ms
+ ✓ |unit-node| apps/api/src/modules/transformations/transitions.test.ts (2 tests) 4ms
+
+ Test Files  43 passed (43)
+      Tests  790 passed (790)
+   Start at  04:40:19
+   Duration  38.55s (transform 3.65s, setup 2.62s, collect 28.26s, tests 56.46s, environment 10.38s, prepare 4.81s)
+
+exit 0

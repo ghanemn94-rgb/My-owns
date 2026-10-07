@@ -1,0 +1,8 @@
+# qa-verifier DG2 r12 integration series summary (clone $TMPDIR/review-dg2 @744af0b + 5 qa-verifier suites in tests/qa/integration of the clone only); script integration/run-integration-series.sh; disposable PostgreSQL per run on ports 24911-24916
+integration-cutf8-run1.log:  Test Files 42 passed (42)  Tests 640 passed (640) | exit 0 | ×/FAIL lines: 0 | server_encoding: server_encoding UTF8, lc_collate C, lc_ctype C
+integration-cutf8-run2.log:  Test Files 42 passed (42)  Tests 640 passed (640) | exit 0 | ×/FAIL lines: 0 | server_encoding: server_encoding UTF8, lc_collate C, lc_ctype C
+integration-cutf8-run3.log:  Test Files 42 passed (42)  Tests 640 passed (640) | exit 0 | ×/FAIL lines: 0 | server_encoding: server_encoding UTF8, lc_collate C, lc_ctype C
+integration-unset-run1.log:  Test Files 42 passed (42)  Tests 640 passed (640) | exit 0 | ×/FAIL lines: 0 | server_encoding: server_encoding UTF8, lc_collate C, lc_ctype C
+integration-unset-run2.log:  Test Files 42 passed (42)  Tests 640 passed (640) | exit 0 | ×/FAIL lines: 0 | server_encoding: server_encoding UTF8, lc_collate C, lc_ctype C
+integration-unset-run3.log:  Test Files 42 passed (42)  Tests 640 passed (640) | exit 0 | ×/FAIL lines: 0 | server_encoding: server_encoding UTF8, lc_collate C, lc_ctype C
+error-looking lines explained: 'BE17 db-econnreset: {status:500 ... unhandled error ECONNRESET}' (once per run) is the PASSING negative control 'no over-match' in apps/api/test/integration/request-io.test.ts:558 which asserts a DATABASE-side read ECONNRESET is still a 500 + error log (not mistaken for a client abort). Every other 'error'-matching line is a passing test name or a BE17/SWEEP measurement line with errors:[].

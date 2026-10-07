@@ -1,0 +1,150 @@
+# qa-verifier r12 negative control A: disposable clone $TMPDIR/review-dg2-guard @744af0b with RecordForm.set reverted to the pre-FE9 impure updater (git diff below); the guard must FAIL the tests that print the warning
+diff --git a/apps/web/src/components/RecordForm.tsx b/apps/web/src/components/RecordForm.tsx
+index c9620ec..003fe7f 100644
+--- a/apps/web/src/components/RecordForm.tsx
++++ b/apps/web/src/components/RecordForm.tsx
+@@ -202,15 +202,12 @@ export function useRecordForm<R extends Record<string, unknown>>(props: RecordFo
+   // parent's onValuesChange (which sets the parent's own state) is never called from inside it. Committed values are
+   // reported from an effect instead: once per new `values` object, never for the initial values on mount.
+   const set = (name: string, value: FormValue) => {
+-    setValues((v) => ({ ...v, [name]: value }));
++    setValues((v) => {
++      const next = { ...v, [name]: value };
++      props.onValuesChange?.(next); // QA r12 NEGATIVE CONTROL: the pre-FE9 impure updater, reintroduced
++      return next;
++    });
+   };
+-  const onValuesChange = props.onValuesChange;
+-  const reportedValues = useRef(values);
+-  useEffect(() => {
+-    if (reportedValues.current === values) return;
+-    reportedValues.current = values;
+-    onValuesChange?.(values);
+-  }, [values, onValuesChange]);
+ 
+   const payloadFor = (vals: FormValues, against: R | null): Record<string, unknown> => {
+     const body: Record<string, unknown> = {};
+$ env -u LANG -u LC_ALL npx vitest run --project unit-web   # locale unset
+   ✓ journey step editor (en) > a invisible-only actor is refused inline (not turned into null) and nothing is sent  464ms
+   ✓ journey step editor (en) > several blank fields: each gets the message and focus goes to the first (name)  316ms
+   ✓ journey step editor (en) > visible text is sent verbatim; emptied optional text is null; an empty name is required  536ms
+   ✓ journey step editor (ar) > a whitespace-only actor is refused inline (not turned into null) and nothing is sent  322ms
+   ✓ journey step editor (ar) > a invisible-only actor is refused inline (not turned into null) and nothing is sent  309ms
+   ✓ journey step editor (ar) > several blank fields: each gets the message and focus goes to the first (name)  346ms
+   ✓ journey step editor (ar) > visible text is sent verbatim; emptied optional text is null; an empty name is required  424ms
+   ✓ Finance validation note and archive reason (en) > reason: a server 400 validation.blank on /reason is the field message, not a generic error  333ms
+ ✓ |unit-web| src/lib/lib.test.ts (24 tests) 60ms
+ ✓ |unit-web| src/pages/p2.test.tsx (56 tests) 14927ms
+   ✓ Diagnose > shows the six T01 dimensions with Unknown for missing values, and value pools that are never 0  883ms
+   ✓ Diagnose > shows the totals as Unknown when no pool is quantified  342ms
+   ✓ Diagnose > renders the six workstreams with their key questions  381ms
+   ✓ Diagnose > edits a T01 row with only the changed fields and If-Match  777ms
+   ✓ Diagnose > a 409 on save writes nothing, compares, and re-applies on the current version  681ms
+   ✓ Diagnose > a 400 validation.blank shows a localized message on its field ('en')  698ms
+   ✓ Diagnose > a 400 validation.blank shows a localized message on its field ('ar')  599ms
+   ✓ Diagnose > an invisible-only value is blocked client-side with validation.blank ('en')  572ms
+   ✓ Diagnose > an invisible-only value is blocked client-side with validation.blank ('ar')  504ms
+   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('en')  580ms
+   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('ar')  522ms
+   ✓ Diagnose > T01: an emptied field is sent as an explicit null; visible text is sent verbatim  589ms
+   ✓ Define: KPI activation (F-DG2-201) > Arabic: the Activate action and the 422 reason are in Arabic  329ms
+   ✓ Charter > scope pre-check: an empty Out of scope reads as failing (EN and AR)  442ms
+   ✓ Charter > edit: emptying a filled field sends null; visible text is verbatim (en)  318ms
+   ✓ Charter > edit: emptying a filled field sends null; visible text is verbatim (ar)  364ms
+   ✓ Design > shows the ten canvas boxes and the per-dimension view  412ms
+   ✓ Design > converts an unresolved workshop item into a design decision with If-Match  573ms
+ ✓ |unit-web| src/i18n/glossary.test.ts (8 tests) 12ms
+ ✓ |unit-web| src/i18n/i18n.test.ts (11 tests) 30ms
+ ✓ |unit-web| src/pages/transformations/modeGuidance.test.tsx (5 tests) 980ms
+   ✓ New transformation: mode guidance (English LTR) > shows When to use and How for the selected mode and switches with the mode  395ms
+ ✓ |unit-web| src/test/react-warning-guard.test.tsx (4 tests) 45ms
+ ✓ |unit-web| src/components/States.test.tsx (15 tests) 448ms
+ ✓ |unit-web| src/styles/styles.test.ts (6 tests) 11ms
+ ✓ |unit-web| src/test/harness-config.test.ts (2 tests) 4ms
+ ✓ |unit-web| src/components/RecordForm.alerts.test.tsx (16 tests) 1497ms
+   ✓ record form: one alert per distinct form error (en) > dialog > a 400 whose only field error has pointer "" says its message once, in one live region  384ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/pages/team/team.test.tsx > Team (English LTR) > shows a 403 from the server in words; nothing is assigned
+Error: React warning printed to console.error during this test (F-DG2-430 guard, apps/web/test/react-warning-guard.ts): 1 warning(s). First: Cannot update a component (`AssignDialog`) while rendering a different component (`RecordDialog`). To locate the bad setState() call inside `RecordDialog`, follow the stack trace as described in https://react.dev/link/setstate-in-render
+ ❯ assertNoReactWarnings test/react-warning-guard.ts:60:9
+     58|   if (found.length === 0) return;
+     59|   const first = found[0]!.split("\n")[0];
+     60|   throw new Error(
+       |         ^
+     61|     `React warning printed to console.error ${where} (F-DG2-430 guard,…
+     62|       `${found.length} warning(s). First: ${first}`,
+ ❯ test/setup.ts:26:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 14 passed (15)
+      Tests  1 failed | 259 passed (260)
+   Start at  04:52:52
+   Duration  21.74s (transform 1.57s, setup 1.77s, collect 8.14s, tests 41.55s, environment 8.19s, prepare 1.54s)
+
+exit 1
+$ env -u LC_ALL LANG=C.UTF-8 npx vitest run --project unit-web   # locale cutf8
+   ✓ gate submission note (ar) > visible text is sent verbatim; an empty note is omitted  402ms
+   ✓ gate decision rationale and comments (en) > a whitespace-only rationale is refused inline and nothing is sent  366ms
+   ✓ journey step editor (en) > a whitespace-only actor is refused inline (not turned into null) and nothing is sent  612ms
+   ✓ journey step editor (en) > a invisible-only actor is refused inline (not turned into null) and nothing is sent  466ms
+   ✓ journey step editor (en) > several blank fields: each gets the message and focus goes to the first (name)  306ms
+   ✓ journey step editor (en) > visible text is sent verbatim; emptied optional text is null; an empty name is required  397ms
+   ✓ journey step editor (ar) > visible text is sent verbatim; emptied optional text is null; an empty name is required  444ms
+   ✓ Finance validation note and archive reason (en) > note: a invisible-only note is refused inline and nothing is sent  311ms
+   ✓ Finance validation note and archive reason (en) > reason: a server 400 validation.invalid_character on /reason is the localized field message  306ms
+   ✓ Finance validation note and archive reason (ar) > reason: a server 400 validation.blank on /reason is the field message, not a generic error  320ms
+ ✓ |unit-web| src/pages/p2.test.tsx (56 tests) 14006ms
+   ✓ Diagnose > shows the six T01 dimensions with Unknown for missing values, and value pools that are never 0  743ms
+   ✓ Diagnose > renders the six workstreams with their key questions  404ms
+   ✓ Diagnose > edits a T01 row with only the changed fields and If-Match  614ms
+   ✓ Diagnose > a 409 on save writes nothing, compares, and re-applies on the current version  495ms
+   ✓ Diagnose > a 400 validation.blank shows a localized message on its field ('en')  637ms
+   ✓ Diagnose > a 400 validation.blank shows a localized message on its field ('ar')  511ms
+   ✓ Diagnose > an invisible-only value is blocked client-side with validation.blank ('en')  453ms
+   ✓ Diagnose > an invisible-only value is blocked client-side with validation.blank ('ar')  524ms
+   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('en')  641ms
+   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('ar')  518ms
+   ✓ Diagnose > T01: an emptied field is sent as an explicit null; visible text is sent verbatim  463ms
+   ✓ Define: KPI activation (F-DG2-201) > offers Activate on a draft KPI, states the unmet precondition on 422, then activates with If-Match  351ms
+   ✓ Define: KPI activation (F-DG2-201) > Arabic: the Activate action and the 422 reason are in Arabic  365ms
+   ✓ Charter > scope pre-check: an empty Out of scope reads as failing (EN and AR)  371ms
+   ✓ Design > converts an unresolved workshop item into a design decision with If-Match  508ms
+ ✓ |unit-web| src/components/RecordForm.alerts.test.tsx (16 tests) 1410ms
+ ✓ |unit-web| src/components/States.test.tsx (15 tests) 487ms
+ ✓ |unit-web| src/lib/lib.test.ts (24 tests) 78ms
+ ✓ |unit-web| src/pages/transformations/modeGuidance.test.tsx (5 tests) 1360ms
+   ✓ New transformation: mode guidance (English LTR) > shows When to use and How for the selected mode and switches with the mode  591ms
+   ✓ New transformation: mode guidance (English LTR) > Modular requires an entry phase before anything is sent  363ms
+ ✓ |unit-web| src/test/react-warning-guard.test.tsx (4 tests) 42ms
+ ✓ |unit-web| src/i18n/i18n.test.ts (11 tests) 34ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts (15 tests) 24ms
+ ✓ |unit-web| src/i18n/glossary.test.ts (8 tests) 14ms
+ ✓ |unit-web| src/styles/styles.test.ts (6 tests) 12ms
+ ✓ |unit-web| src/test/harness-config.test.ts (2 tests) 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/pages/team/team.test.tsx > Team (English LTR) > shows a 403 from the server in words; nothing is assigned
+Error: React warning printed to console.error during this test (F-DG2-430 guard, apps/web/test/react-warning-guard.ts): 1 warning(s). First: Cannot update a component (`AssignDialog`) while rendering a different component (`RecordDialog`). To locate the bad setState() call inside `RecordDialog`, follow the stack trace as described in https://react.dev/link/setstate-in-render
+ ❯ assertNoReactWarnings test/react-warning-guard.ts:60:9
+     58|   if (found.length === 0) return;
+     59|   const first = found[0]!.split("\n")[0];
+     60|   throw new Error(
+       |         ^
+     61|     `React warning printed to console.error ${where} (F-DG2-430 guard,…
+     62|       `${found.length} warning(s). First: ${first}`,
+ ❯ test/setup.ts:26:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 14 passed (15)
+      Tests  1 failed | 259 passed (260)
+   Start at  04:53:15
+   Duration  21.45s (transform 1.47s, setup 1.92s, collect 8.37s, tests 39.70s, environment 8.50s, prepare 1.52s)
+
+exit 1

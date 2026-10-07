@@ -1,0 +1,18 @@
+# qa-verifier r12 static sweep (clone @744af0b): every functional state updater set<Name>((x) => ...) in apps/web/src (non-test .ts/.tsx), body printed; reviewed by hand for side effects (calls to props/parent setters, I/O, random/uuid generation)
+$ python3 sweep (regex \bset[A-Z]\w*\(\s*\(?\s*\w*\s*\)?\s*=> + balanced-paren body)
+apps/web/src/app/Shell.tsx:60: setNavOpen((o) => !o)
+apps/web/src/components/DataTable.tsx:139: setOpen((o) => !o)
+apps/web/src/components/DataTable.tsx:223: setStack((s) => [...s, nextCursor])
+apps/web/src/components/DataTable.tsx:225: setStack((s) => (s.length > 1 ? s.slice(0, -1) : s))
+apps/web/src/components/DataTable.tsx:227: setStack((s) => (s.length === 1 && s[0] === null ? s : [null]))
+apps/web/src/components/Form.tsx:94: setRequest((n) => n + 1)
+apps/web/src/components/RecordForm.tsx:198: setFocusRequest((n) => n + 1)
+apps/web/src/components/RecordForm.tsx:205: setValues((v) => ({ ...v, [name]: value }))
+apps/web/src/components/RegisterTable.tsx:93: setSort((s) => s?.id !== columnId ? { id: columnId, dir: "asc" } : s.dir === "asc" ? { id: columnId, dir: "desc" } : null, )
+apps/web/src/pages/design/JourneysSection.tsx:541: setSteps((s) => s.map((x, j) => (j === i ? { ...x, ...patch } : x)))
+apps/web/src/pages/design/JourneysSection.tsx:543: setSteps((s) => { const next = [...s]; const [item] = next.splice(i, 1); next.splice(i + by, 0, item!); return next; })
+apps/web/src/pages/design/JourneysSection.tsx:736: setSteps((x) => x.filter((_, j) => j !== i))
+apps/web/src/pages/design/JourneysSection.tsx:752: setSteps((s) => [ ...s, { key, name: "", actor: "", handoffTo: "", systems: "", controls: "", cycleTimeValue: "", cycleTimeUnit: "", }, ])
+# result: 13 updaters, all pure (toggle, counter, array/object copy, splice on a local copy). The F-DG2-430 site (RecordForm:205) and the sweep site (JourneysSection:752, key generated before the updater) are pure. No other side-effecting updater found.
+$ grep -rnE 'useReducer|setState\(' apps/web/src --include=*.tsx --include=*.ts | grep -v '.test.'
+exit (grep) 1

@@ -1,0 +1,42 @@
+$ ls packages/db/migrations/*.sql
+0001_identity_access.sql
+0002_transformation.sql
+0003_audit_event.sql
+0004_outbox_jobs.sql
+0005_seed_roles_permissions.sql
+0006_pgboss_schema_v25.sql
+0007_oidc_login_browser_binding.sql
+0008_scoped_assignment_derived_from.sql
+0009_business_unit_hierarchy_guard.sql
+0010_p2_record_guards.sql
+0011_p2_methodology_catalogue.sql
+0012_p2_evidence.sql
+0013_p2_direction_charter.sql
+0014_p2_kpi_baseline_value_pool.sql
+0015_p2_diagnose.sql
+0016_p2_design_tom.sql
+0017_p2_decisions_gates.sql
+0018_p2_access_instantiation.sql
+0019_evidence_review_separation.sql
+$ grep -n 'toHaveLength(161)' apps/api/test/integration/contract/contract.test.ts
+559:      expect(checked).toHaveLength(161);
+578:    expect(operations).toHaveLength(161);
+# result lines from integration/integration-unset-run1.log (identical file/test sets in all 6 runs: see 10-integration-series-summary.log)
+migrate.test.ts: passed 7, failed 0
+protection.test.ts: passed 17, failed 0
+bu-hierarchy-guard.test.ts: passed 7, failed 0
+scratch-drop.test.ts: passed 3, failed 0
+contract.test.ts: passed 18, failed 0
+blank-text.test.ts: passed 29, failed 0
+encoding.test.ts: passed 8, failed 0
+invalid-character.test.ts: passed 20, failed 0
+framework-errors.test.ts: passed 11, failed 0
+invalid-utf8.test.ts: passed 14, failed 0
+media-types.test.ts: passed 21, failed 0
+evidence.test.ts: passed 6, failed 0
+request-io.test.ts: passed 10, failed 0
+pool-bounds.test.ts: passed 7, failed 0
+oidc.test.ts: passed 33, failed 0
+# migrations applied in the e2e qa-stack (from the debug log of the same build):
+(see 17-e2e-qa-stack-*.log)
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > P2 backend operations (p2-exercises.ts): every routed operation exercised with a success 2370ms

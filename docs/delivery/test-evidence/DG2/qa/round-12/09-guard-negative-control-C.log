@@ -1,0 +1,60 @@
+# qa-verifier r12 control C: same clone, the impure updater of control A AND the guard's afterEach/afterAll checks removed (git diff below). Expected: every test passes but the React warning is printed: so in control A it was the guard that failed the test
+diff --git a/apps/web/src/components/RecordForm.tsx b/apps/web/src/components/RecordForm.tsx
+index c9620ec..003fe7f 100644
+--- a/apps/web/src/components/RecordForm.tsx
++++ b/apps/web/src/components/RecordForm.tsx
+@@ -202,15 +202,12 @@ export function useRecordForm<R extends Record<string, unknown>>(props: RecordFo
+   // parent's onValuesChange (which sets the parent's own state) is never called from inside it. Committed values are
+   // reported from an effect instead: once per new `values` object, never for the initial values on mount.
+   const set = (name: string, value: FormValue) => {
+-    setValues((v) => ({ ...v, [name]: value }));
++    setValues((v) => {
++      const next = { ...v, [name]: value };
++      props.onValuesChange?.(next); // QA r12 NEGATIVE CONTROL: the pre-FE9 impure updater, reintroduced
++      return next;
++    });
+   };
+-  const onValuesChange = props.onValuesChange;
+-  const reportedValues = useRef(values);
+-  useEffect(() => {
+-    if (reportedValues.current === values) return;
+-    reportedValues.current = values;
+-    onValuesChange?.(values);
+-  }, [values, onValuesChange]);
+ 
+   const payloadFor = (vals: FormValues, against: R | null): Record<string, unknown> => {
+     const body: Record<string, unknown> = {};
+diff --git a/apps/web/test/setup.ts b/apps/web/test/setup.ts
+index 00fed16..b7ee52f 100644
+--- a/apps/web/test/setup.ts
++++ b/apps/web/test/setup.ts
+@@ -23,5 +23,5 @@ configure({ asyncUtilTimeout: UNIT_WEB_ASYNC_UTIL_TIMEOUT_MS });
+ // Vitest runs afterEach hooks in reverse order, so the check runs last: after Testing Library's cleanup (unmount), so a
+ // warning printed while unmounting is caught too. afterAll catches one printed after the last test of a file.
+ installReactWarningGuard();
+-afterEach(() => assertNoReactWarnings("during this test"));
+-afterAll(() => assertNoReactWarnings("after the last test of this file"));
++// QA r12 control C: guard check removed
++// QA r12 control C: guard check removed
+$ env -u LC_ALL LANG=C.UTF-8 npx vitest run --project unit-web src/pages/team/team.test.tsx
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 $TMPDIR/review-dg2-guard
+
+stderr | src/pages/team/team.test.tsx > Team (English LTR) > shows a 403 from the server in words; nothing is assigned
+Cannot update a component (`AssignDialog`) while rendering a different component (`RecordDialog`). To locate the bad setState() call inside `RecordDialog`, follow the stack trace as described in https://react.dev/link/setstate-in-render
+
+ ✓ |unit-web| src/pages/team/team.test.tsx (8 tests) 2372ms
+   ✓ Team (English LTR) > shows the six governance roles with B0018 accountability text verbatim and who holds each  456ms
+   ✓ Team (English LTR) > lists team members with the accountability on each assignment, sortable and filterable  368ms
+   ✓ Team (English LTR) > shows a 403 from the server in words; nothing is assigned  341ms
+   ✓ Team assign dialog: accountability preview follows the selected role (F-DG2-430) > en: WL on open, then KDS, TD, none and WL again, in StrictMode with no React warning  320ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  04:53:49
+   Duration  4.96s (transform 1.11s, setup 128ms, collect 1.68s, tests 2.37s, environment 437ms, prepare 118ms)
+
+exit 0

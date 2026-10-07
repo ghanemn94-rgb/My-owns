@@ -1,0 +1,37 @@
+$ ls .github/workflows; git diff --stat 309aff2 744af0b -- .github deploy/scripts; grep -nE 'runs-on|node-version|pnpm |playwright|initdb|ENCODING' .github/workflows/ci.yml
+# cwd $TMPDIR/review-dg2-guard @744af0b; 2026-10-07T04:58:14Z; no live CI run available (D-058)
+ci.yml
+delivery-gates.yml
+(diff stat end)
+10:# (BLOCKED) and the job fails. pnpm is provisioned as a real binary at the packageManager version (not a Corepack
+11:# shim: the sandbox clears HOME, so a shim would re-download pnpm inside it). check-ci-needs.mjs fails any other
+29:    runs-on: ubuntu-24.04
+36:          node-version: "22"
+42:    runs-on: ubuntu-24.04
+51:          node-version: ${{ matrix.node }}
+52:      - name: pnpm at the packageManager version (real binary on PATH; no install scripts)
+62:      - run: pnpm format:check
+63:      - run: pnpm lint
+64:      - run: pnpm typecheck
+65:      - run: pnpm build
+66:      - run: pnpm test
+67:      - run: pnpm openapi:lint
+68:      - run: pnpm check:no-cdn
+72:    runs-on: ubuntu-24.04
+89:          node-version: "24"
+90:      - name: pnpm at the packageManager version (real binary on PATH; no install scripts)
+100:      - run: pnpm -r build
+101:      - run: pnpm test:integration
+105:    runs-on: ubuntu-24.04
+106:    # CF-2 (ADR-0012): browsers come baked into the version-matched Playwright image; `playwright install` is never run.
+108:      image: mcr.microsoft.com/playwright:v1.56.1-noble@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a # devops-engineer: pin by digest
+125:      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+129:      - name: pnpm at the packageManager version (real binary on PATH; no install scripts)
+135:      - run: pnpm -r build
+142:      - run: pnpm e2e --workers=1
+146:          name: playwright-report
+147:          path: playwright-report/
+154:    runs-on: ubuntu-24.04
+161:          node-version: "24"
+162:      - name: pnpm at the packageManager version (real binary on PATH; no install scripts)
+exit 0

@@ -1,0 +1,109 @@
+$ env -u LC_ALL LANG=C.UTF-8 QA_E2E_API_PORT=3294 QA_E2E_PG_PORT=24994 e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r12.spec.ts -g R12-07 --workers=1 --reporter=list   # spec sha256 1221ea10bc0c2bd5befd0ab00cca5e2085c2f6aba05513740a769a123d2bf56e
+# clone @744af0b; node v24.21.0; 2026-10-07T05:22:10Z
+port-policy: PostgreSQL listening on port 24994 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 3294 (attempt 1)
+API:     http://localhost:3294
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 2 tests using 1 worker
+
+QA-R12 [en] R12-07 ["control: client aborts, process stays up: store during the stall [\"/<uuid>/<uuid>/<item>/<uuid>.part (2097152 B)\"]; client destroyed, 1.5 s later SIGTERM -> exit 0 in 16 ms; store after exit []; after a restart on the same store (+2 s) (not needed); content rows 0; currentContentId null; GET content 404","SIGTERM with the upload stalled in flight: store during the stall [\"/<uuid>/<uuid>/<item>/<uuid>.part (2097152 B)\"]; SIGTERM -> exit 0 in 5025 ms; client socket closed by the server true; store after exit [\"/<uuid>/<uuid>/<item>/<uuid>.part (2097152 B)\"]; after a restart on the same store (+2 s) [\"/<uuid>/<uuid>/<item>/<uuid>.part (2097152 B)\"]; content rows 0; currentContentId null; GET content 404"]
+  ✘  1 [chromium-en] › e2e/dg2-qa-r12.spec.ts:778:1 › R12-07 an upload stalled in flight at SIGTERM: what the evidence store keeps after exit and after a restart (control: client abort while the process stays up) (12.3s)
+QA-R12 [ar] R12-07 ["control: client aborts, process stays up: store during the stall [\"/<uuid>/<uuid>/<item>/<uuid>.part (2097152 B)\"]; client destroyed, 1.5 s later SIGTERM -> exit 0 in 18 ms; store after exit []; after a restart on the same store (+2 s) (not needed); content rows 0; currentContentId null; GET content 404","SIGTERM with the upload stalled in flight: store during the stall [\"/<uuid>/<uuid>/<item>/<uuid>.part (2097152 B)\"]; SIGTERM -> exit 0 in 5020 ms; client socket closed by the server true; store after exit [\"/<uuid>/<uuid>/<item>/<uuid>.part (2097152 B)\"]; after a restart on the same store (+2 s) [\"/<uuid>/<uuid>/<item>/<uuid>.part (2097152 B)\"]; content rows 0; currentContentId null; GET content 404"]
+  ✘  2 [chromium-ar] › e2e/dg2-qa-r12.spec.ts:778:1 › R12-07 an upload stalled in flight at SIGTERM: what the evidence store keeps after exit and after a restart (control: client abort while the process stays up) (12.3s)
+
+
+  1) [chromium-en] › e2e/dg2-qa-r12.spec.ts:778:1 › R12-07 an upload stalled in flight at SIGTERM: what the evidence store keeps after exit and after a restart (control: client abort while the process stays up) 
+
+    Error: SIGTERM with the upload stalled in flight: files left in the evidence store after the process exited
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  - 1[39m
+    [31m+ Received  + 3[39m
+
+    [32m- Array [][39m
+    [31m+ Array [[39m
+    [31m+   "/<uuid>/<uuid>/<item>/<uuid>.part (2097152 B)",[39m
+    [31m+ ][39m
+
+      713 |     expect(r.download, r.label).not.toBe(200);
+      714 |     // "nothing stored": no final object and no temporary object may outlive a failed upload.
+    > 715 |     expect(r.afterExit, `${r.label}: files left in the evidence store after the process exited`).toEqual([]);
+          |                                                                                                  ^
+      716 |   }
+      717 | });
+      718 |
+        at $TMPDIR/review-dg2-e2e/e2e/dg2-qa-r12.spec.ts:715:98
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r12-R12-07-an-u-8781c-while-the-process-stays-up--chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg2-qa-r12-R12-07-an-u-8781c-while-the-process-stays-up--chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-ar] › e2e/dg2-qa-r12.spec.ts:778:1 › R12-07 an upload stalled in flight at SIGTERM: what the evidence store keeps after exit and after a restart (control: client abort while the process stays up) 
+
+    Error: SIGTERM with the upload stalled in flight: files left in the evidence store after the process exited
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  - 1[39m
+    [31m+ Received  + 3[39m
+
+    [32m- Array [][39m
+    [31m+ Array [[39m
+    [31m+   "/<uuid>/<uuid>/<item>/<uuid>.part (2097152 B)",[39m
+    [31m+ ][39m
+
+      713 |     expect(r.download, r.label).not.toBe(200);
+      714 |     // "nothing stored": no final object and no temporary object may outlive a failed upload.
+    > 715 |     expect(r.afterExit, `${r.label}: files left in the evidence store after the process exited`).toEqual([]);
+          |                                                                                                  ^
+      716 |   }
+      717 | });
+      718 |
+        at $TMPDIR/review-dg2-e2e/e2e/dg2-qa-r12.spec.ts:715:98
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg2-qa-r12-R12-07-an-u-8781c-while-the-process-stays-up--chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg2-qa-r12-R12-07-an-u-8781c-while-the-process-stays-up--chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium-en] › e2e/dg2-qa-r12.spec.ts:778:1 › R12-07 an upload stalled in flight at SIGTERM: what the evidence store keeps after exit and after a restart (control: client abort while the process stays up) 
+    [chromium-ar] › e2e/dg2-qa-r12.spec.ts:778:1 › R12-07 an upload stalled in flight at SIGTERM: what the evidence store keeps after exit and after a restart (control: client abort while the process stays up) 
+---- api.log (tail)
+exit 1
