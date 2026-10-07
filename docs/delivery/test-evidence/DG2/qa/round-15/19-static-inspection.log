@@ -1,0 +1,47 @@
+# qa-verifier DG2 r15 static inspection of FE13 (29da00d) in clone $TMPDIR/review-dg2 @ed80b234; 2026-10-07T13:39:40Z
+$ git diff --stat ea9051b2 ed80b234 -- apps packages
+ apps/web/e2e/session-end.spec.ts            |  97 +++++++
+ apps/web/src/api/client.ts                  |  81 ++++--
+ apps/web/src/api/queries.ts                 |  13 +-
+ apps/web/src/app/App.tsx                    |  24 +-
+ apps/web/src/auth/session-identity.test.tsx | 411 ++++++++++++++++++++++++++++
+ apps/web/src/auth/session.tsx               |  29 +-
+ 6 files changed, 623 insertions(+), 32 deletions(-)
+$ grep -n "runSessionReset\|registerSessionReset\|noteSessionIdentity\|claimSessionEnd" apps/web/src --include=*.ts* -r (non-test)
+apps/web/src/app/App.tsx:7:import { registerSessionReset, type SessionResetReason } from "../api/client.ts";
+apps/web/src/app/App.tsx:13: * change, whatever page is mounted (see registerSessionReset). In-flight requests are cancelled first so that an answer
+apps/web/src/app/App.tsx:35:  registerSessionReset((reason) => resetSessionCache(queryClient, reason));
+apps/web/src/api/client.ts:62:// (the sign-in page included): endSession() and noteSessionIdentity() call the registered session-reset hooks
+apps/web/src/api/client.ts:102:export function registerSessionReset(hook: SessionResetHook): () => void {
+apps/web/src/api/client.ts:107:function runSessionReset(reason: SessionResetReason): void {
+apps/web/src/api/client.ts:139:export function noteSessionIdentity(key: string): void {
+apps/web/src/api/client.ts:142:  if (previous !== null && previous !== key) runSessionReset("identity-changed");
+apps/web/src/api/client.ts:160:  runSessionReset("ended");
+apps/web/src/api/queries.ts:9:  noteSessionIdentity,
+apps/web/src/api/queries.ts:67: * session-scoped query (noteSessionIdentity), before the answer is stored and so before anything renders under it.
+apps/web/src/api/queries.ts:71:  noteSessionIdentity(sessionIdentityKey(me));
+$ grep -rn "localStorage\|sessionStorage" apps/web/src (non-test): no record data persisted outside memory
+apps/web/src/components/DataTable.tsx:231:/** Column visibility persisted in localStorage per table id. */
+apps/web/src/components/DataTable.tsx:236:      const raw = globalThis.localStorage?.getItem(key);
+apps/web/src/components/DataTable.tsx:245:      globalThis.localStorage?.setItem(key, JSON.stringify(next));
+apps/web/src/components/LanguageSwitch.tsx:1:// Persistent language switch (REQ-S15-007): changes <html lang dir> immediately, stores the choice in localStorage
+apps/web/src/i18n/index.ts:3:// The locale choice: /me `preferredLocale` after sign-in (persisted with PUT /me/preferences), and localStorage as
+apps/web/src/i18n/index.ts:85:    const v = globalThis.localStorage?.getItem(LOCALE_STORAGE_KEY);
+apps/web/src/i18n/index.ts:94:    globalThis.localStorage?.setItem(LOCALE_STORAGE_KEY, locale);
+$ grep -n "staleTime" apps/web/src/api/queries.ts apps/web/src/app/App.tsx (explains R15-02/R15-03 waits)
+apps/web/src/api/queries.ts:78:  return useQuery({ queryKey: keys.me, queryFn: fetchMe, staleTime: 60_000, retry: shouldRetry, ...options });
+apps/web/src/api/queries.ts:118:    staleTime: 60_000,
+apps/web/src/api/queries.ts:151:    staleTime: 60_000,
+apps/web/src/api/queries.ts:160:    staleTime: 60_000,
+apps/web/src/api/queries.ts:168:    staleTime: 300_000,
+apps/web/src/api/queries.ts:176:    staleTime: 300_000,
+apps/web/src/api/queries.ts:282:    staleTime: 300_000,
+apps/web/src/api/queries.ts:390:    staleTime: 60_000,
+apps/web/src/api/queries.ts:400:    staleTime: 5 * 60_000,
+apps/web/src/app/App.tsx:30:      queries: { retry: shouldRetry, staleTime: 15_000, refetchOnWindowFocus: true },
+$ grep -n "status === 401\|isSessionEndedError" apps/web/src/api/client.ts (403 never a session end)
+59:// A 403 (forbidden, CSRF) is never a session end, and neither is a 401 with another code (e.g. auth.login_failed).
+151:export function isSessionEndedError(err: unknown): boolean {
+152:  return err instanceof ApiError && err.status === 401 && (err.problem === null || err.code === "unauthenticated");
+259:    if (!options.silent401 && isSessionEndedError(error)) endSession();
+exit 0

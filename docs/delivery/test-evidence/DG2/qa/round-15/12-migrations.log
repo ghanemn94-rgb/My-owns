@@ -1,0 +1,68 @@
+$ env -u LC_ALL LANG=C.UTF-8 QA_PG_PORT=25343 tests/qa/support/with-pg.sh bash $TMPDIR/mig.sh   # script below
+#   set -e
+#   A="$TEST_DATABASE_ADMIN_URL"
+#   psql "$A" -q -v ON_ERROR_STOP=1 -c "CREATE ROLE mth_owner NOLOGIN" -c "CREATE ROLE mth_app NOLOGIN" -c "CREATE DATABASE mth OWNER mth_owner ENCODING 'UTF8' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0"
+#   U=$(node -e 'const u=new URL(process.argv[1]);u.pathname="/mth";u.searchParams.set("options","-c role=mth_owner");console.log(u.toString())' "$A")
+#   export NODE_ENV=development DATABASE_OWNER_URL="$U"
+#   psql "${A%/postgres}/mth" -qAtc "select 'server_encoding ' || pg_encoding_to_char(encoding) || ', lc_collate ' || datcollate || ', lc_ctype ' || datctype from pg_database where datname = 'mth'"
+#   echo "--- migrate (fresh database)"; node packages/db/dist/cli.js migrate; echo "migrate exit $?"
+#   echo "--- applied migrations (schema_migration)"; psql "${A%/postgres}/mth" -qAtc "select id || ' ' || name from schema_migration order by id"
+#   echo "--- migrate again (idempotent: nothing to apply)"; node packages/db/dist/cli.js migrate; echo "migrate exit $?"
+#   echo "--- count"; psql "${A%/postgres}/mth" -qAtc "select count(*), min(id), max(id) from schema_migration"
+# cwd $TMPDIR/review-dg2 @ed80b234; node v24.21.0; 2026-10-07T13:36:43Z
+port-policy: PostgreSQL listening on port 25343 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+server_encoding UTF8, lc_collate C, lc_ctype C
+--- migrate (fresh database)
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+migrate exit 0
+--- applied migrations (schema_migration)
+1 0001_identity_access.sql
+2 0002_transformation.sql
+3 0003_audit_event.sql
+4 0004_outbox_jobs.sql
+5 0005_seed_roles_permissions.sql
+6 0006_pgboss_schema_v25.sql
+7 0007_oidc_login_browser_binding.sql
+8 0008_scoped_assignment_derived_from.sql
+9 0009_business_unit_hierarchy_guard.sql
+10 0010_p2_record_guards.sql
+11 0011_p2_methodology_catalogue.sql
+12 0012_p2_evidence.sql
+13 0013_p2_direction_charter.sql
+14 0014_p2_kpi_baseline_value_pool.sql
+15 0015_p2_diagnose.sql
+16 0016_p2_design_tom.sql
+17 0017_p2_decisions_gates.sql
+18 0018_p2_access_instantiation.sql
+19 0019_evidence_review_separation.sql
+--- migrate again (idempotent: nothing to apply)
+mth-db migrate: database is up to date
+migrate exit 0
+--- count
+19|1|19
+exit 0
+
+$ grep -n 'toHaveLength(161)' apps/api/test/integration/contract/contract.test.ts
+559:      expect(checked).toHaveLength(161);
+578:    expect(operations).toHaveLength(161);
+exit 0
