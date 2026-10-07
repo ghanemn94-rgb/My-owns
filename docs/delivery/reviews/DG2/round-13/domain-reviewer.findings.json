@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG2-480",
+      "stage_id": "DG2",
+      "requirement": "REQ-S16-030",
+      "severity": "High",
+      "mandatory_violation": false,
+      "title": "When a session ends while the app is open (access revoked, signed out elsewhere, expiry, or the D-073 commit-time refusal of an upload), the web client loops forever between /login?error=session_expired and the page: blank screen, no sign-in form, no localized message, about 130-140 /me requests per second; with default rate limits it locks the IP out and shows a stale signed-in shell",
+      "reproduction": "Disposable clone at 5699f721 (candidate 6824b8b8…, source aa0a68f1). Fresh PostgreSQL 16 and API (AUTH_MODE=dev, synthetic seed, apps/web/dist served), Chromium, Node 24.21.0.\n(1) Generic case, `with-stack.sh node rv/r13-session-end-ui.mjs`: dev.lead signs in through the form and is on My work. The session is ended from outside the page (POST /api/v1/auth/logout with the browser's own cookie, i.e. 'signed out in another tab'). The user clicks the in-app link to /transformations. Sampled every 250 ms for 10 s, the URL alternates /transformations <-> /login?returnTo=…&error=session_expired 18 (EN) and 21 (AR) times. The page is blank (no text, no input) the whole time, the localized 'Your session ended…' / 'انتهت جلستك…' message never appears, and the tab sends 1411 (EN) and 1265 (AR) /me requests in 10 s. Control: the same session end followed by a page reload lands on the sign-in form in about 0.4 s with 2 /me requests.\n(2) The D-073 case, `r13-ui.mjs` (c) and `r13-ui-withdrawn.mjs`: dev.nobody holds TL on a transformation and opens the evidence Upload dialog. An administrator revokes the assignment through POST /api/v1/role-assignments/{id}/revoke, which also ends the sessions. The user confirms the upload: the API answers 401 unauthenticated, correctly, and nothing is stored. The dialog shows the localized message for a few ms, then the page enters the same blank loop: 15 s of alternation and thousands of /me 401s.\n(3) Default rate limits (RATE_LIMIT_PER_MINUTE=300, `with-stack-default-limits.sh node rv/r13-session-end-ui.mjs`): after about 283 /me calls in about 1.8 s the client-IP bucket is exhausted, because an ended session's cookie is keyed by IP. The page then shows the signed-out user the app shell with their stale name, 'Sign out' and 'Something went wrong / Too many requests', not the sign-in form. The next browser context from the same IP could not get a sign-in form at all (locator timeout).\nCause, by reading the code: apps/web/src/auth/session.tsx RequireSession redirects to /login?…&error=session_expired when /me answers 401 while me.data (the last successful /me) is still cached. apps/web/src/pages/LoginPage.tsx line 66 `if (me.data) return <Navigate to={returnTo} replace />` sees that same stale cached me.data and sends the user straight back, and each mount re-probes /me. The code is unchanged since DG1 (4cd9224) and the web was not touched by D-073. The defect is pre-existing, but D-073's new commit-time 401 on uploads now leads into it too.",
+      "expected": "When a request answers 401 because the session ended (revocation, sign-out elsewhere, idle or absolute expiry, or the D-073 commit-time re-authorisation), the user lands once on the sign-in page. It shows the localized session-ended message (auth.errors.session_expired, EN LTR / AR RTL) and the sign-in form, with a bounded number of /me requests. Signing in again returns them to their page. The cached identity is cleared, so a signed-out user never sees a stale signed-in shell, and one stuck tab never exhausts the rate-limit bucket of everyone behind the same IP.",
+      "actual": "The user is stuck on a blank page that alternates between /login and the original route indefinitely, until they manually reload. There is no message and no form. The tab sends about 130-140 /me requests per second. With the product's default limits this exhausts the shared per-IP bucket in about 2 s. The tab then shows a stale signed-in shell with 'Too many requests', and other sign-ins from that IP are refused for the rest of the minute. The server side behaves correctly throughout: 401 unauthenticated, nothing stored, no temporary file left. Only the client's session-end handling is broken.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-13/r13-session-end-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-13/r13-session-end-ui.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-13/r13-session-end-ui-default-limits.log",
+        "docs/delivery/test-evidence/DG2/domain/round-13/with-stack-default-limits.sh",
+        "docs/delivery/test-evidence/DG2/domain/round-13/r13-ui-withdrawn.log",
+        "docs/delivery/test-evidence/DG2/domain/round-13/r13-ui-withdrawn.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-13/r13-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-13/screens/en-r13-session-end-in-app-link-blank-loop.png",
+        "docs/delivery/test-evidence/DG2/domain/round-13/screens/ar-r13-session-end-in-app-link-blank-loop.png",
+        "docs/delivery/test-evidence/DG2/domain/round-13/screens/en-r13-session-end-default-limits-429.png",
+        "docs/delivery/test-evidence/DG2/domain/round-13/screens/ar-r13-session-end-reload-control.png",
+        "apps/web/src/pages/LoginPage.tsx",
+        "apps/web/src/auth/session.tsx",
+        "apps/web/src/api/queries.ts",
+        "apps/api/src/server.ts"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-13/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-07T07:00:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG2 round 13 (T-DG2-REV-DOM-R13) while confirming the D-073 user outcomes ('an upload is refused if access is withdrawn or the user signs out' and 'sign-in still works'). Reproduced in EN and AR, with and without the D-073 upload path, and with the product's default rate limits. Pre-existing since DG1 (4cd9224) in the web client; the D-073 server behaviour itself is correct. High: the re-authentication workflow after a session ends is broken for every screen, and with default limits one stuck tab locks its IP out. Not marked mandatory: no access-control, data-integrity or calculation breach (the server refuses correctly)."
+        }
+      ]
+    }
+  ]
+}
