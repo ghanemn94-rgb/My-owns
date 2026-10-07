@@ -1,0 +1,440 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG2",
+  "round": 16,
+  "candidate_id": "sha256:0cab0a8c37924ead608f23b37be51336504ada1c95c928a4f80e2a93d2a4bb70",
+  "source_commit": "e3b2375a45b5f8965454ab7b1a65698ec01040c5",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG2-T-DG2-REV-QA-R16-qa-verifier-20261007T154436Z-ac2c975a",
+    "session_id": "ac2c975a-5420-4fcd-8d93-3760bc66744f"
+  },
+  "implementation_author": [
+    "transformation-analyst",
+    "frontend-ux-engineer",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "solution-architect",
+    "devops-engineer"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "qa-verifier authored no product implementation in the DG2 scope. This round I wrote only QA tests and evidence: the R16 spec at docs/delivery/test-evidence/DG2/qa/tests/round-16/e2e/dg2-qa-r16.spec.ts (outside the candidate, because the candidate is frozen), the evidence under docs/delivery/test-evidence/DG2/qa/round-16/, and this record, its findings sidecar and its narrative. The round-16 repair FE14 (44f1cf0, D-076, F-DG2-530) is frontend-ux-engineer's. Every result comes from my own runs in disposable clones under $TMPDIR, all removed at the end: three clones at the source commit e3b2375a, and one negative-control clone at 7905e8b, FE14's parent. HEAD was f4242ae4 at the start, the round-16 freeze and assignment commit. During my run it moved to f81b75a9 through the other reviewers' auto-committed round-16 runs and evidence. Of the 157 files changed in e3b2375a..HEAD, none is among the 562 manifest entries. The candidate ID recomputes as sha256:0cab0a8c... with 562 files in the tree, at --ref e3b2375a and in each clone, and --diff reports a match with no added, removed or changed files, both at the start and at the end. I did not open the other reviewers' round-16 records or evidence. I formed this verdict from my own runs. Of the validate --reconcile output, I read only the round-15 and round-16 status lines."
+  },
+  "assignment": "docs/delivery/assignments/DG2/round-16/qa-verifier.md",
+  "requirements_checked": [
+    "REQ-PB-003",
+    "REQ-PB-012",
+    "REQ-PB-016",
+    "REQ-PB-017",
+    "REQ-PB-018",
+    "REQ-PB-023",
+    "REQ-PB-024",
+    "REQ-PB-025",
+    "REQ-PB-026",
+    "REQ-PB-027",
+    "REQ-PB-028",
+    "REQ-PB-029",
+    "REQ-PB-030",
+    "REQ-PB-031",
+    "REQ-PB-033",
+    "REQ-PB-034",
+    "REQ-PB-035",
+    "REQ-PB-036",
+    "REQ-PB-037",
+    "REQ-PB-038",
+    "REQ-PB-039",
+    "REQ-PB-041",
+    "REQ-PB-042",
+    "REQ-PB-043",
+    "REQ-DLV-034",
+    "REQ-S04-003",
+    "REQ-S04-004",
+    "REQ-S04-005",
+    "REQ-S05-003",
+    "REQ-S10-001",
+    "REQ-S13-012",
+    "REQ-S16-013"
+  ],
+  "checks_run": [
+    {
+      "id": "QA-R16-00-candidate",
+      "procedure": "Confirm the frozen candidate at the start and the end of the run. Run git rev-parse HEAD. Recompute the candidate ID in the tree and at --ref e3b2375a, and run --diff. Check that no file changed in e3b2375a..HEAD is a manifest entry. Recompute the ID in each clone.",
+      "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG2; node tools/gates/candidate.mjs --stage DG2 --ref e3b2375a; node tools/gates/candidate.mjs --stage DG2 --diff; git log --oneline e3b2375a..HEAD; manifest-overlap check (node)",
+      "environment": "repository tree (read-only), HEAD f4242ae4 at the start and f81b75a9 at the end; clones $TMPDIR/review-dg2, $TMPDIR/review-dg2-e2e and $TMPDIR/review-dg2-r1606 @e3b2375a; node v24.21.0",
+      "expected": "sha256:0cab0a8c37924ead608f23b37be51336504ada1c95c928a4f80e2a93d2a4bb70 with 562 files; HEAD differs from the source commit only in files outside the manifest",
+      "actual": "Start: 562 files and the expected ID in the tree and at --ref e3b2375a. --diff reports matches=true with no added, removed or changed files. e3b2375a..f4242ae4 is the freeze commit alone (5 files, overlap 0). HEAD f4242ae4 is not the source commit e3b2375a. That is expected, because the candidate is identified by its ID and the commit is only a traceability pointer. End: HEAD f81b75a9, after the code-security and domain reviewers' auto-committed runs and evidence (4 more commits). That makes 157 changed files, overlap 0, with the same ID, --diff result and --ref result. All three clones recomputed the same ID with 562 files. Every command exited 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-16/00-candidate.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/00-candidate-end.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/env.txt"
+      ]
+    },
+    {
+      "id": "QA-R16-00-historical-DG1",
+      "procedure": "Validate the previous approved gate in historical mode.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG1",
+      "environment": "repository tree (read-only); node v24.21.0",
+      "expected": "PASS gate DG1 (historical), exit 0",
+      "actual": "PASS gate DG1 (historical); exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-16/00-historical-DG1.log"
+      ]
+    },
+    {
+      "id": "QA-R16-00-install",
+      "procedure": "Install the frozen lockfile offline in both main clones, from a copy of the pre-populated pnpm store.",
+      "command": "pnpm install --frozen-lockfile --offline --store-dir $TMPDIR/pnpm-store-root/v10",
+      "environment": "clones $TMPDIR/review-dg2 and $TMPDIR/review-dg2-e2e @e3b2375a; node v24.21.0; pnpm 10.33.0; no network",
+      "expected": "exit 0 in both clones",
+      "actual": "Both installs exit 0 with 371 packages. Each log has 4 'WARN Failed to create bin ... mth-db ... packages/db/dist/cli.js' lines (8 in total). These are expected before the first build: the bin target is a build output, and every later use of mth-db (migrations, integration, e2e stacks) ran after pnpm -r build and exited 0. The R16-06 clone and the negative-control clone were installed the same way, with exit 0. Their install and build logs were scratch and were removed together with those clones. The R16-06 clone's build exit status (0) is recorded in 18-r16-06-candidate.log.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-16/00-install-review-dg2.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/00-install-review-dg2-e2e.log"
+      ]
+    },
+    {
+      "id": "QA-R16-01-static",
+      "procedure": "Build and static checks, one log per command (run-static.sh).",
+      "command": "pnpm -r typecheck; pnpm -r build; pnpm lint; pnpm openapi:lint; pnpm check:no-cdn; pnpm format:check; pnpm --filter @mth/design-tokens run check:contrast",
+      "environment": "clone $TMPDIR/review-dg2 @e3b2375a; node v24.21.0",
+      "expected": "every command exits 0; openapi:lint reports 161 operations; contrast reports the documented prohibited pairs only",
+      "actual": "All 7 commands exit 0. openapi:lint: 'PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 161 operations'. lint runs with --max-warnings=0. Contrast: 'PASS contrast: 50 pairs meet WCAG AA; 3 prohibited pairs fail as documented'. Those 3 'fails' lines are the documented prohibited combinations, which the UI never uses. One line that looks like an error is not one: build prints Vite's chunk-size advisory ('Adjust chunk size limit for this warning'). The e2e clone's own build also exited 0 (02-build-e2e-clone.log).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-16/run-static.sh",
+        "docs/delivery/test-evidence/DG2/qa/round-16/01-typecheck.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/02-build.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/03-lint.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/04-openapi-lint.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/05-no-cdn.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/06-format-check.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/07-contrast.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/02-build-e2e-clone.log"
+      ]
+    },
+    {
+      "id": "QA-R16-08-unit-series",
+      "procedure": "pnpm test: 3 runs on Node 22 and 3 on Node 24, alternating the locale settings, plus one run on Node 24 under CPU load (3 busy-loop hogs on 4 CPUs).",
+      "command": "run-unit-series.sh (PATH=<node22|node24>:$PATH env -u LANG -u LC_ALL | env -u LC_ALL LANG=C.UTF-8 pnpm test)",
+      "environment": "clone $TMPDIR/review-dg2 @e3b2375a; node v22.22.2 and v24.21.0; loadavg 6.29 before and 8.21 after the load run",
+      "expected": "7/7 runs exit 0 with no failed test",
+      "actual": "7/7 runs exit 0: 49 files and 892 tests passed in each, including FE14's src/auth/session-generation.test.tsx (26 tests). That is 866 in round 15 plus FE14's 26. No line outside a passing test matches error, fail or timeout in any of the 7 logs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-16/08-unit-series-summary.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/unit/run-unit-series.sh",
+        "docs/delivery/test-evidence/DG2/qa/round-16/unit/node22-run1-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/unit/node24-load-cutf8.log"
+      ]
+    },
+    {
+      "id": "QA-R16-10-integration-series",
+      "procedure": "The integration project: 3 runs per locale setting, each on its own disposable PostgreSQL. The qa-verifier evidence suites (dg2-qa-acceptance, round-2 design/journey and round-3 blank-sweep/regress) are copied into the clone only.",
+      "command": "run-integration-series.sh (env ... QA_PG_PORT=<port> tests/qa/support/with-pg.sh npx vitest run --project integration --reporter=verbose)",
+      "environment": "clone $TMPDIR/review-dg2 @e3b2375a; PostgreSQL 16.13 disposable clusters on ports 25331-25336; server_encoding UTF8, lc_collate C, lc_ctype C; node v24.21.0",
+      "expected": "6/6 runs exit 0. They must include contract.test.ts (161 ops routed), blank-text, encoding, invalid-character, framework-errors, invalid-utf8, media-types, the DB guards and the evidence tests.",
+      "actual": "6/6 runs exit 0, with 44 files and 652 tests passed in each, on fresh databases with 19 migrations applied. Per run: contract.test.ts 18 tests ('maps every governed Fastify route to an OpenAPI operation ... and back', 'covers every operation with at least one success'; 161 ops per openapi:lint), blank-text 29, encoding 8, invalid-character 20, framework-errors 11, invalid-utf8 14, media-types 21. DB guards: bu-hierarchy-guard 7, aud-write-deny 128 and kpi-aud-write-deny 18. Evidence: evidence.test.ts 6, plus the others in the 32 evidence-named tests. The QA suites also pass. On ports: I intended 26161, but the sed edit was not applied (its command was backgrounded and discarded), so the script kept round 15's base port 25331. Every cluster listened on its first attempt ('port-policy ... (attempt 1)'), so no port collided. The 65 lines per log that match error, fail or timeout are 49 names of passing tests and 16 measurement lines printed by passing tests (the BE17/BE18 negative-control output, which includes the deliberate ECONNRESET 500 case, and the QA-R2 journey output). None is a failure. In the summary, the 'db-guards 0' row is an unmatched grep pattern; the guard files are named above.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-16/10-integration-series-summary.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/integration/run-integration-series.sh",
+        "docs/delivery/test-evidence/DG2/qa/round-16/integration/integration-unset-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/integration/integration-unset-run2.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/integration/integration-unset-run3.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/integration/integration-cutf8-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/integration/integration-cutf8-run2.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/integration/integration-cutf8-run3.log"
+      ]
+    },
+    {
+      "id": "QA-R16-12-migrations",
+      "procedure": "Apply migrations 0001 to 0019 to a fresh UTF8 database with the mth-db CLI. Then re-run them to show the second run applies nothing.",
+      "command": "env -u LC_ALL LANG=C.UTF-8 QA_PG_PORT=26171 tests/qa/support/with-pg.sh bash $TMPDIR/mig.sh (script text in the log)",
+      "environment": "clone $TMPDIR/review-dg2 @e3b2375a; PostgreSQL 16.13 disposable cluster; node v24.21.0",
+      "expected": "19 migrations applied in order; second run 'database is up to date'; exit 0",
+      "actual": "server_encoding UTF8. Migrations 0001_identity_access to 0019_evidence_review_separation applied ('applied 19 migration(s)'). schema_migration count 19, ids 1 to 19. The second run reports 'database is up to date'. Exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-16/12-migrations.log"
+      ]
+    },
+    {
+      "id": "QA-R16-15-e2e-product",
+      "procedure": "Run the product journeys once per locale setting on the product harness: P1 (journeys.spec), P2 (p2-journeys.spec, including Define→G2 and Design→G3), p2-blank-text.spec, session-end.spec and e2e/a20, in chromium-en and chromium-ar.",
+      "command": "run-e2e.sh <unset|cutf8> <port>: apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e e2e/a20-bilingual-shell.spec.ts --workers=1 --reporter=list",
+      "environment": "clone $TMPDIR/review-dg2-e2e @e3b2375a (built); pre-installed Chromium (PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers); API/PG ports 26501/26502 (unset) and 26601/26602 (cutf8)",
+      "expected": "all tests pass in both projects and both locale settings",
+      "actual": "unset: 74 passed (5.0m), exit 0. cutf8: 74 passed (4.9m), exit 0. No failed, flaky or retried tests. 'Define → G2' and 'Design → G3' pass in EN and AR in both settings.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-16/run-e2e.sh",
+        "docs/delivery/test-evidence/DG2/qa/round-16/15-e2e-product-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/15-e2e-product-cutf8.log"
+      ]
+    },
+    {
+      "id": "QA-R16-17-e2e-qa-stack",
+      "procedure": "Run every e2e spec once per locale setting on the QA acceptance harness (e2e/support/qa-stack.sh): the qa-verifier specs dg2-qa-r8 to r16 and every product spec, in chromium-en and chromium-ar. R16-06 is excluded here and run on its own (QA-R16-F580-reproduction).",
+      "command": "run-e2e.sh <unset|cutf8> <port>: e2e/support/qa-stack.sh npx playwright test e2e apps/web/e2e --grep-invert R16-06 --workers=1 --reporter=list",
+      "environment": "clone $TMPDIR/review-dg2-e2e @e3b2375a with the docs/delivery/test-evidence copy removed and the dg2-qa-r8..r16 specs copied into e2e/ (clone only); ports 26503/26504 (unset) and 26603/26604 (cutf8)",
+      "expected": "every test passes; the log carries the server_encoding line",
+      "actual": "unset: 184 passed (23.2m), exit 0. cutf8: 184 passed (23.0m), exit 0. That is 174 from round 15 plus my 10 new R16 runs. Per spec in each setting: r8 12, r9 20, r10 12, r11 10, r12 14, r13 10, r14 14, r15 8, r16 10, session-end 10, p2-journeys 24, journeys 18, p2-blank-text 18, a20 4. No test failed. Both logs carry 'qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C'. The error-looking lines are QA-R9/R11/R12/R13 measurement lines from passing tests. Examples: the 400 problem bodies of R9's negative requests, and R12-06's 'console errors/warnings 6', which are the expected 401/400/404 resource loads of that probe.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-16/17-e2e-qa-stack-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/17-e2e-qa-stack-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/19-qa-r16-results.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/21-query-ops.log"
+      ]
+    },
+    {
+      "id": "QA-R16-F530-a-write-in-flight-identity-change",
+      "procedure": "My R16-01 (create), R16-02 (edit/PATCH) and R16-03 (archive). The write is sent to the real API at once with A's cookie (route.fetch: the server commits it), and only its answer to the page is held. A (dev.office) signs out and B (dev.lead) signs in in a real second tab. Tab 1 is refocused after /me's 60 s staleTime, and /me returns B. Only then is A's answer delivered. A MutationObserver records every DOM moment with A's new name, new record or archive reason as text, with the phase and the header name. B then opens A's record id in-app. Part of QA-R16-17.",
+      "command": "dg2-qa-r16.spec.ts R16-01, R16-02, R16-03 (inside the QA-R16-17 runs)",
+      "environment": "as QA-R16-17; chromium-en and chromium-ar; both locale settings",
+      "expected": "After the switch, B never sees the write's record. B is not navigated to it, no error banner or page error appears, A's record id gives not-found or no-permission for B, and the server did commit A's write.",
+      "actual": "8/8 passes (3 tests × 2 projects × 2 settings, plus dev run 5's 6). In every run the server committed A's write (201/200, as A could read back), the observer recorded nothing outside A's own view, there was no data-state=error, and B got not-found on A's id. The same probes FAIL on FE14's parent 7905e8b (QA-R16-19), which shows they detect F-DG2-530. One limit: this covers the path where the tab learns of B before A's answer arrives. The other order, where A's create answer arrives first and the handler's own /me refresh then returns B, still shows A's record to B. That is reported as F-DG2-580 (Low): see QA-R16-F580-reproduction.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/tests/round-16/e2e/dg2-qa-r16.spec.ts",
+        "docs/delivery/test-evidence/DG2/qa/round-16/19-qa-r16-results.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/e2e-qa-screens/cutf8/en-qa-r16-02-b-on-a-detail-url.png",
+        "docs/delivery/test-evidence/DG2/qa/round-16/e2e-qa-screens/cutf8/ar-qa-r16-03-b-after-delivery.png"
+      ]
+    },
+    {
+      "id": "QA-R16-F530-b-refocus-header-and-data-agree",
+      "procedure": "My R16-05 (X6). Tab 1 shows A's (dev.lead) list. In tab 2, A signs out and B (dev.office) signs in. Tab 1 is refocused after the list's 15 s staleTime but before /me's 60 s staleTime. An observer records any moment when the header's .user-box__name is A's name while a Finance record that only B can read is in the document. Then a second refocus right away. Part of QA-R16-17.",
+      "command": "dg2-qa-r16.spec.ts R16-05",
+      "environment": "as QA-R16-17; chromium-en and chromium-ar; both locale settings",
+      "expected": "no moment with A's name and B-only data; the header then shows B and the list shows B's record; /me after the refocus ≤ 3; a second refocus with nothing stale fetches no /me",
+      "actual": "4/4 passes in the full runs and 2/2 in dev run 5: no mismatched moment. The header shows 'Synthetic Transformation Office' and the list shows the B-only record (screenshot). The second refocus fetched 0 /me. On 7905e8b the probe fails: tab 1's header still showed A ('Synthetic Transformation Lead') 10 s after the refocus, because /me was not revalidated.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-16/19-qa-r16-results.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/e2e-qa-screens/cutf8/en-qa-r16-05-after-refocus.png",
+        "docs/delivery/test-evidence/DG2/qa/round-16/e2e-qa-screens/unset/ar-qa-r16-05-after-refocus.png"
+      ]
+    },
+    {
+      "id": "QA-R16-F530-c-normal-writes-still-work",
+      "procedure": "My R16-04, in one document: create through the UI, which lands on the detail page with the 'created' status; edit, which returns to the detail page with the new name; upload an evidence file item, after which the download link appears; archive with a reason, after which the note shows and Edit is gone. Also the product journeys' create, edit-409-reapply, archive and evidence upload. Part of QA-R16-15/17.",
+      "command": "dg2-qa-r16.spec.ts R16-04; apps/web/e2e/journeys.spec.ts; apps/web/e2e/p2-journeys.spec.ts",
+      "environment": "as QA-R16-15/17; chromium-en and chromium-ar; both locale settings",
+      "expected": "the screen updates and navigation happens as before, with no reload and no page error",
+      "actual": "R16-04 passes 4/4 in the full runs and 2/2 in dev run 5, in about 4 s each. The same document was kept throughout, with no page error and no 429. It also passes on 7905e8b, as a regression baseline. The product journeys pass in both settings (QA-R16-15).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-16/e2e-qa-screens/cutf8/en-qa-r16-04-after-upload.png",
+        "docs/delivery/test-evidence/DG2/qa/round-16/e2e-qa-screens/cutf8/ar-qa-r16-04-archived.png",
+        "docs/delivery/test-evidence/DG2/qa/round-16/19-qa-r16-results.log"
+      ]
+    },
+    {
+      "id": "QA-R16-session-end-403-language-notice",
+      "procedure": "Regression of the earlier session repairs on FE14 code. R15-03: an in-app session end lands once on sign-in with the message, /me is bounded, there is no stale shell, and Back never renders A's record. R15-04: a real 403 csrf and a route-replaced 403 forbidden are never a session end, the cache is kept, and the language notice equals the shown language's string in both directions. R14-05/06/06b cover the language notice. The product session-end.spec covers the rest. Part of QA-R16-17.",
+      "command": "dg2-qa-r15.spec.ts, dg2-qa-r14.spec.ts, apps/web/e2e/session-end.spec.ts",
+      "environment": "as QA-R16-17; both projects and settings",
+      "expected": "all pass",
+      "actual": "r15 8/8, r14 14/14 and session-end 10/10 in each setting, all passed.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-16/19-qa-r16-results.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/17-e2e-qa-stack-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/17-e2e-qa-stack-cutf8.log"
+      ]
+    },
+    {
+      "id": "QA-R16-16-default-rate-limits",
+      "procedure": "With the product's default limits (20 auth/min, 300 general/min), one project per stack: QA R14-03 and the product's same-IP session-end test.",
+      "command": "E2E_DEFAULT_RATE_LIMITS=1 apps/web/e2e/support/with-stack.sh npx playwright test e2e/dg2-qa-r14.spec.ts apps/web/e2e/session-end.spec.ts --project <p> --grep 'R14-03|another browser context from the same IP' --workers=1",
+      "environment": "clone $TMPDIR/review-dg2-e2e @e3b2375a; both settings; chromium-en and chromium-ar",
+      "expected": "4 logs, 2 passed each",
+      "actual": "8/8 passed, and all 4 logs exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-16/16-e2e-default-limits-unset-chromium-en.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/16-e2e-default-limits-unset-chromium-ar.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/16-e2e-default-limits-cutf8-chromium-en.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/16-e2e-default-limits-cutf8-chromium-ar.log"
+      ]
+    },
+    {
+      "id": "QA-R16-18-spec-development",
+      "procedure": "Develop my R16 spec on the candidate before the counted runs. Every non-zero exit is explained here.",
+      "command": "e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r16.spec.ts [--project chromium-en] [--grep R16-03] --workers=1",
+      "environment": "clone $TMPDIR/review-dg2-e2e @e3b2375a; cutf8; ports 26201/26202",
+      "expected": "the final spec passes (R16-01 to R16-05)",
+      "actual": "Dev run 1 exited 1. My radio locator 'End-to-End' (exact) timed out, because the radio's accessible name also carries its guidance text. End-to-End is the default, so I removed the step. Dev run 2 exited 1. After B's sign-in, tab 1 switches to B's preferred language (AR), so my EN nav-link locator was not found. The spec now calls ensureLanguage after the switch. Dev run 3 exited 1 with 4 passed and 2 failed (R16-03 EN/AR). The observer had counted A's own typed archive reason, held in the textarea's text node, while A was still shown in the header. Dev run 4 (R16-03 EN only, exit 1) confirmed that, with phases: both hits were 'before-switch | header=Synthetic Transformation Office | ... textarea ... in-dialog'. The assertion now excludes A's own view and keeps every raw hit as an annotation. Dev run 5 exited 0 with 10 passed. All of these were defects in my test, not in the product. R16-06 was added after dev run 5 (see QA-R16-F580-reproduction).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-16/18-r16-spec-dev-run1.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/18-r16-spec-dev-run2.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/18-r16-spec-dev-run3.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/18-r16-spec-dev-run4.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/18-r16-spec-dev-run5.log"
+      ]
+    },
+    {
+      "id": "QA-R16-19-negative-control",
+      "procedure": "Run each R16 probe on its own (chromium-en, cutf8) in a clone at 7905e8b, FE14's parent. In apps/packages, 7905e8b..e3b2375a is exactly FE14's 22 files.",
+      "command": "e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r16.spec.ts --project chromium-en --grep R16-0N --workers=1",
+      "environment": "clone $TMPDIR/nc-pre-fe14 @7905e8b (built); ports 26301/26302",
+      "expected": "R16-01, 02, 03 and 05 fail on pre-FE14 code (they detect F-DG2-530 and X6); R16-04 passes",
+      "actual": "Designed non-zero exits: 4 of the 5 per-test runs exited 1. R16-01 failed on 'B is not navigated to A's new record': the page was at /transformations/<A's id>. R16-02 failed because no not-found or no-permission state appeared on A's id for B within 5 s, since the cache held A's edited record. R16-03 failed because A's record name was visible to B (count 1, expected 0). R16-05 failed because the header was still 'Synthetic Transformation Lead' 10 s after the refocus, where 'Office' was expected. R16-04 passed (exit 0). In a separate run, R16-06 also fails on 7905e8b (19-negative-control-pre-fe14-r16-06.log), so F-DG2-580 is not a regression.",
+      "exit_status": 1,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-16/19-negative-control-pre-fe14-per-test.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/19-negative-control-pre-fe14-r16-06.log"
+      ]
+    },
+    {
+      "id": "QA-R16-F580-reproduction",
+      "procedure": "Reproduction of finding F-DG2-580 (Low), raised in this round; this is not a passing check of the behaviour. R16-06: A's create is answered (real 201) after B has signed in in another tab, with no refocus, so tab 1 still holds A's session generation. The create handler's own GET /me refresh (F-DG1-210) then returns B. Run on the candidate in a fresh clone (both projects, cutf8) and inside both full runs (unset and cutf8, both projects).",
+      "command": "e2e/support/qa-stack.sh npx playwright test e2e/dg2-qa-r16.spec.ts --grep R16-06 --workers=1",
+      "environment": "clones $TMPDIR/review-dg2-r1606 and $TMPDIR/review-dg2-e2e @e3b2375a; ports 26401/26402, 26509/26510 and 26609/26610",
+      "expected": "for this check: the reproduction is deterministic and its failure is exactly the documented F-DG2-580 behaviour",
+      "actual": "Designed non-zero exits: 3 runs, each exit 1 with 2 failed (EN and AR), 6/6 reproductions. The only failing assertion each time is 'A's new record's name shown as text in tab 1 (now B's)', with the observer hit 'header=Synthetic Transformation Lead | /transformations/<A's new id> | p state=created-not-visible page'. B is shown A's code (TR-0001 in the fresh clone) and name, presented as 'created, but you cannot open it'. The server answered B's GET 404. The product behaviour is therefore NOT as the assignment requires on this path; F-DG2-580 records it, rated Low and not mandatory (same class as F-DG2-530), owned by frontend-ux-engineer. In the unset full run, this separate run wrote to the same shots directory, and its afterAll overwrote that run's axe-summary-qa-r16.json. See QA-R16-20.",
+      "exit_status": 1,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-16/18-r16-06-candidate.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/19-r16-06-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/19-r16-06-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/screens/en-qa-r16-06-after-delivery.png",
+        "docs/delivery/test-evidence/DG2/qa/round-16/screens/ar-qa-r16-06-candidate-b-sees-a-record.png"
+      ]
+    },
+    {
+      "id": "QA-R16-20-axe",
+      "procedure": "Aggregate every axe summary written by the product and QA-stack runs in both settings: wcag2a/2aa/21a/21aa, including error and state screens. In addition, every expectAccessible call asserts in-test that there is no serious or critical violation.",
+      "command": "python3 -I axe-agg.py e2e-product-<loc> e2e-qa-<loc> (script text in 20-axe-summary.log)",
+      "environment": "evidence directory; python3 3.11",
+      "expected": "0 serious or critical violations",
+      "actual": "unset: 350 unique scans, 0 serious/critical, no other violations. cutf8: 362 unique scans, 0 serious/critical, no other violations, including all 14 R16 scans (01 to 06 in EN and AR). For unset, the file qa-<lang>-summary-qa-r16.json holds only R16-06's scan, because the separate R16-06 run overwrote it (same shots directory). I changed run-e2e.sh before the cutf8 run, and the script records the change. The R16-01 to R16-05 scans of the unset run still ran expectAccessible, which asserts no serious or critical violation, and those tests passed. Only their summary file is missing.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-16/20-axe-summary.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/e2e-qa-cutf8/qa-en-summary-qa-r16.json",
+        "docs/delivery/test-evidence/DG2/qa/round-16/e2e-qa-cutf8/qa-ar-summary-qa-r16.json"
+      ]
+    },
+    {
+      "id": "QA-R16-19-static-inspection",
+      "procedure": "Inspect the FE14 diff: the code change since round 15's source, the setQueryData call sites, and every web file with an API write and its isSessionChangedError handling.",
+      "command": "git diff --stat ed80b234 e3b2375a -- apps packages tests e2e; git grep setQueryData / api.send at e3b2375a (see log)",
+      "environment": "repository @e3b2375a via git (read-only)",
+      "expected": "FE14 touches web code only; every write path is covered",
+      "actual": "22 web files (+785/-34), with no API or DB change. The client-level generation check (apiRequest throws SessionChangedError for an answer sent under a previous generation) covers every call site, including Shell.tsx and the TransformationDetailPage archive, which have no local reference but rethrow. The inspection found the F-DG2-580 sequence: TransformationCreatePage continues after accepting the 201, refetches /me (refreshEffectivePermissions) and then navigates with the created record in the navigation state. Probe R16-06 confirmed it.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-16/19-static-inspection.log"
+      ]
+    },
+    {
+      "id": "QA-R16-30-validators",
+      "procedure": "Register, pipeline and reconcile validators, plus the register rows of the 32 assigned requirements.",
+      "command": "node tools/gates/validate.mjs --register DG2; --pipeline DG2; --reconcile DG2; python3 -I (register rows, script in 31-register-rows.log header)",
+      "environment": "repository (read-only), HEAD 2ff0079; node v24.21.0",
+      "expected": "all exit 0; 32/32 rows IMPLEMENTED with final gate DG2",
+      "actual": "--register: 'PASS register rules at DG2', exit 0. --pipeline: 'PASS pipeline (active stage: DG2 REVIEWING)', exit 0. --reconcile: 'PASS reconcile (structure)', exit 0; it lists 'round 16 qa-verifier: missing', which is this record before it is written. Register: 32 ids found, 32 unique, none missing, all IMPLEMENTED with final_gate DG2.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-16/30-validate-register.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/30-validate-pipeline.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/30-validate-reconcile.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/31-register-rows.log"
+      ]
+    },
+    {
+      "id": "QA-R16-32-residual-registry-D057",
+      "procedure": "Live-registry residual (D-057): offline surface. Install the frozen lockfile offline. Show that no dependency or pin changed since round 15's source. Attempt deps:verify, bounded by a timeout.",
+      "command": "timeout 60 pnpm deps:verify; git diff --stat ed80b234 e3b2375a -- package.json pnpm-lock.yaml apps/*/package.json packages/*/package.json .npmrc",
+      "environment": "clone $TMPDIR/review-dg2 @e3b2375a; no network",
+      "expected": "offline install exit 0; no pin change; the live check cannot complete (residual)",
+      "actual": "PASS on the offline surface: the installs exit 0 (QA-R16-00-install) and the dependency diff is empty. deps:verify exited 124: the timeout killed it while it waited for the unreachable registry. That is the documented D-057 residual, not a failure of the candidate. The log's final 'exit 0' line is the status of the echo after the empty diff, not of the diff itself. The live registry verification remains a residual.",
+      "exit_status": 124,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-16/32-residual-registry.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/00-install-review-dg2.log"
+      ]
+    },
+    {
+      "id": "QA-R16-33-residual-ci-D058",
+      "procedure": "Live-CI residual (D-058): configuration surface. List the workflows and show no CI change since round 15. Run the needs checker and its tests.",
+      "command": "ls .github/workflows; git diff --stat ed80b234 e3b2375a -- .github deploy/scripts; node deploy/scripts/check-ci-needs.mjs; node --test deploy/scripts/tests/check-ci-needs.test.mjs",
+      "environment": "clone $TMPDIR/review-dg2 @e3b2375a; node v24.21.0",
+      "expected": "checker OK; tests pass",
+      "actual": "ci.yml and delivery-gates.yml; no CI change. check-ci-needs: 'OK ... 5 jobs; first job delivery-gates runs validate.mjs --pipeline', exit 0. node --test: 46 pass, 0 fail, exit 0. A live CI run remains a residual.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-16/33-residual-ci-config.log"
+      ]
+    },
+    {
+      "id": "QA-R16-34-residual-keycloak-D049",
+      "procedure": "Keycloak residual (D-049): offline surface. The OIDC integration tests (oidc.test.ts, 33 per run, including IdP-unavailable handling) and the e2e session flows on the development sign-in.",
+      "command": "part of QA-R16-10 and QA-R16-17",
+      "environment": "as QA-R16-10/17",
+      "expected": "OIDC integration tests and session e2e pass",
+      "actual": "PASS on the offline surface: oidc.test.ts passes in 6/6 integration runs (BE18 Q7 shows login 302 to /login?error=idp_unavailable), and the session e2e specs pass in both settings. A live Keycloak remains a residual.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/round-16/10-integration-series-summary.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/integration/integration-cutf8-run1.log"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG2-580"
+  ],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG2/qa/round-16/env.txt",
+    "docs/delivery/test-evidence/DG2/qa/round-16/00-candidate.log",
+    "docs/delivery/test-evidence/DG2/qa/round-16/00-candidate-end.log",
+    "docs/delivery/test-evidence/DG2/qa/round-16/08-unit-series-summary.log",
+    "docs/delivery/test-evidence/DG2/qa/round-16/10-integration-series-summary.log",
+    "docs/delivery/test-evidence/DG2/qa/round-16/12-migrations.log",
+    "docs/delivery/test-evidence/DG2/qa/round-16/15-e2e-product-unset.log",
+    "docs/delivery/test-evidence/DG2/qa/round-16/15-e2e-product-cutf8.log",
+    "docs/delivery/test-evidence/DG2/qa/round-16/17-e2e-qa-stack-unset.log",
+    "docs/delivery/test-evidence/DG2/qa/round-16/17-e2e-qa-stack-cutf8.log",
+    "docs/delivery/test-evidence/DG2/qa/round-16/18-r16-06-candidate.log",
+    "docs/delivery/test-evidence/DG2/qa/round-16/19-negative-control-pre-fe14-per-test.log",
+    "docs/delivery/test-evidence/DG2/qa/round-16/19-qa-r16-results.log",
+    "docs/delivery/test-evidence/DG2/qa/round-16/20-axe-summary.log",
+    "docs/delivery/test-evidence/DG2/qa/round-16/30-validate-reconcile.log",
+    "docs/delivery/test-evidence/DG2/qa/tests/round-16/e2e/dg2-qa-r16.spec.ts"
+  ],
+  "reviewed_at": "2026-10-07T17:30:00Z",
+  "summary": "PASS, with one new Low finding, F-DG2-580 (not mandatory, not a regression). I re-verified the repaired DG2 candidate 0cab0a8c (562 files, source e3b2375a); its ID was confirmed at the start and the end. All 7 static checks exit 0, and openapi:lint reports 161 operations. Unit: 7/7 runs with 892 tests each, on Node 22 and 24 and under load. Integration: 6/6 runs with 652 tests each, 3 per locale setting, on UTF8 databases; migrations 0001-0019 are idempotent. Product e2e: 74/74 per setting. QA-stack e2e: 184/184 per setting, all R8-R15 regression specs included. Default limits: 8/8. axe: 0 serious or critical violations. My FE14 probes R16-01 to R16-05 pass 18/18: a create, edit or archive in flight across an identity change, header/data agreement on refocus, and normal create, edit, upload and archive. R16-01, 02, 03 and 05 fail on FE14's parent, so they detect F-DG2-530 and X6. Gap: a create answered before the tab learns of the new identity still shows A's new record (code and name) to B. The handler's own /me refresh returns B, and the handler then navigates B to A's record with A's data in the navigation state. That is F-DG2-580 (Low, frontend-ux-engineer), reproduced 6/6 on the candidate and also present before FE14. All 32 requirements are IMPLEMENTED and the validators pass. The D-057, D-058 and D-049 residuals pass on the offline surface.",
+  "narrative": "docs/delivery/reviews/DG2/round-16/qa-verifier.md"
+}

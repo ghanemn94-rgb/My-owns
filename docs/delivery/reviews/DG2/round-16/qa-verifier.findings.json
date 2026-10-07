@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG2-580",
+      "stage_id": "DG2",
+      "requirement": "REQ-S16-030",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "FE14 residual: a create whose 201 arrives before the tab learns of the new identity still shows user A's new record (code and name) to user B. The create handler's own GET /me refresh is the first to return B, and the handler then navigates B to A's record with A's code and name in the navigation state ('created, but you cannot open it')",
+      "reproduction": "Candidate 0cab0a8c (source e3b2375a), disposable clone, real built SPA + API + PostgreSQL (e2e/support/qa-stack.sh), chromium-en and chromium-ar, spec docs/delivery/test-evidence/DG2/qa/tests/round-16/e2e/dg2-qa-r16.spec.ts test R16-06. (1) Tab 1: dev.office (A) opens /transformations/new, chooses Synthetic Finance (dev.lead cannot read it) and types a unique name. (2) A clicks Create. The POST /api/v1/transformations is sent to the real API at once with A's cookie (route.fetch), so the server commits A's record (201). Only the delivery of the answer to the page is held. (3) In a second tab of the same browser, A clicks Sign out and dev.lead (B) signs in through the development form. (4) Tab 1 is NOT refocused. The held 201 is delivered. Tab 1 still holds A's session generation, so apiRequest returns the data. TransformationCreatePage then awaits refreshEffectivePermissions (F-DG1-210), whose GET /me returns B. noteSessionIdentity moves the generation and resets the cache. The handler then continues with navigate('/transformations/<A's id>', { state: { created: { id, code, name } } }). (5) B's GET of that id answers 404, and TransformationDetailPage renders CreatedNotVisible from the navigation state. Reproduced 4/4 on the candidate per run: 18-r16-06-candidate.log, 19-r16-06-unset.log and 19-r16-06-cutf8.log, each EN + AR. It also fails on FE14's parent 7905e8b (19-negative-control-pre-fe14-r16-06.log), so it is not a regression. FE14 did not close this path.",
+      "expected": "The assignment's negative check: when a write is in flight and another user signs in through another tab, the new user never sees the write's record. Once the tab's identity has changed to B, nothing of A's new record (its name or code) is shown, and B is not navigated to it. For example, the create flow could stop silently when the session generation moves during its post-create steps, or it could recheck the generation before navigating.",
+      "actual": "Under B's header ('Synthetic Transformation Lead'), tab 1 is at /transformations/<A's new id> with data-state=created-not-visible. The panel reads 'TR-0001 · Synthetic QA R16-06 created by A EN …' and the title says the transformation was created but cannot be opened. B is shown A's record code and name, and the record is presented as if B had just created it. Observer hit: 'header=Synthetic Transformation Lead | /transformations/<id> | p state=created-not-visible page'. Server-side authorization is intact: B's GET answers 404, and the API never sends A's data to B. The exposure is the name and code that A had just typed and created in that same browser. It needs a narrow race: A's create must be answered after B signs in elsewhere and before tab 1 learns of B. F-DG2-530 covers the same class and is rated Low, so this is rated Low and not mandatory. The paths R16-01 (create), R16-02 (edit) and R16-03 (archive), where tab 1 learns of B (refocus /me) before the answer arrives, pass on the candidate and fail on 7905e8b.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/tests/round-16/e2e/dg2-qa-r16.spec.ts",
+        "docs/delivery/test-evidence/DG2/qa/round-16/18-r16-06-candidate.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/19-r16-06-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/19-r16-06-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/19-negative-control-pre-fe14-r16-06.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/screens/en-qa-r16-06-after-delivery.png",
+        "docs/delivery/test-evidence/DG2/qa/round-16/screens/ar-qa-r16-06-after-delivery.png",
+        "docs/delivery/test-evidence/DG2/qa/round-16/screens/en-qa-r16-06-candidate-b-sees-a-record.png",
+        "docs/delivery/test-evidence/DG2/qa/round-16/19-static-inspection.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG2/round-16/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-07T17:25:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG2 round 16 (T-DG2-REV-QA-R16). Probe R16-06 reproduced it on candidate 0cab0a8c, EN and AR, in both locale settings, and on FE14's parent 7905e8b. Low, not mandatory, same class as F-DG2-530."
+        }
+      ]
+    }
+  ]
+}
