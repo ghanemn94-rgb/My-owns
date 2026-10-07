@@ -1,0 +1,346 @@
+### product (non-docs) files changed aa0a68f (round-13 source)..ea9051b (round-14 source):
+apps/web/e2e/session-end.spec.ts
+apps/web/e2e/support/with-stack.sh
+apps/web/src/api/client.ts
+apps/web/src/api/queries.ts
+apps/web/src/app/Shell.tsx
+apps/web/src/auth/session-end.test.tsx
+apps/web/src/auth/session.tsx
+apps/web/src/components/Form.tsx
+apps/web/src/components/LanguageSwitch.test.tsx
+apps/web/src/components/LanguageSwitch.tsx
+apps/web/src/components/ReasonDialog.tsx
+apps/web/src/components/RecordForm.tsx
+apps/web/src/components/RowActions.tsx
+apps/web/src/i18n/ar/common.json
+apps/web/src/i18n/en/common.json
+apps/web/src/lib/problem.ts
+apps/web/src/pages/LoginPage.tsx
+apps/web/src/pages/define/DefinePage.tsx
+apps/web/src/pages/design/JourneysSection.tsx
+apps/web/src/pages/evidence/EvidencePage.tsx
+apps/web/src/pages/gates/GateDetailPage.tsx
+apps/web/src/pages/render-time-language.test.tsx
+apps/web/src/pages/team/TeamPage.tsx
+apps/web/src/pages/team/team.test.tsx
+apps/web/src/styles/app.css
+apps/web/src/test/fixtures.tsx
+### non-web product changes (expect none):
+(end)
+### i18n changes:
+-    "notSaved": "تغيّرت اللغة في هذا المتصفح، لكن تعذّر حفظها في ملفك الشخصي.",
++    "notSaved": "تغيّرت اللغة في هذا المتصفح مؤقتًا، لكن تعذّر حفظها في ملفك الشخصي. ستعود لغتك المحفوظة عند فتح التطبيق مرة أخرى.",
++    "notSavedReverted": "تعذّر حفظ تغيير اللغة في ملفك الشخصي، لذا تُعرض لغتك المحفوظة.",
+-    "notSaved": "Language changed in this browser, but it could not be saved to your profile.",
++    "notSaved": "Language changed in this browser for now, but it could not be saved to your profile. Your saved language returns the next time you open the app.",
++    "notSavedReverted": "Your language change could not be saved to your profile, so your saved language is shown.",
+### i18n keys parity EN vs AR:
+EN keys missing in AR: 0 []
+### certification/official claims in user-facing i18n (expect only negations):
+    "provisionalHint": "Provisional wordmark: no official logo has been supplied. Colours are provisional design toke
+nalNotice": "Branding is provisional: the text wordmark and colours are placeholders, not official Mobily brand assets."
+    "brandBody": "No official Mobily logo or verified brand colours have been supplied. T
+0078FF) are provisional design tokens that can be replaced through Branding Settings once official values are approved.",
+nthesis inspired by PMI, Brightline and BRM practice with custom extensions. It is not an official PMI standard, and this product is not certified by PMI or a
+    "g2__target_trajectory__not_approved": "مسار المستهدف غير معتمد",
+شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة.",
+    "brandBody": "لم يُقدَّم شعار رسمي لموبايلي ولا ألوان علامة معتمدة. يعرض الترويسة شعارًا نصيًا مؤقتًا، والألوان (�
+رسات PMI وBrightline وBRM مع إضافات مخصصة. وهو ليس معيارًا رسميًا من PMI، وهذا المنتج غير معتمد من PMI أو من أي جهة أخرى.",
+    "unvalidated": "غير معتمد",
+    "validated": "معتمد من الإدارة المالية",
+    "trajectoryApproved": "معتمد",
+    "trajectoryDraft": "مسودة – غير معتمد",
+  "baseline__not_measurable": "يحتاج خط الأساس المعتمد إلى قيمة ومصدر وتاريخ.",
+  "outcome_kpi__already_approved": "هذا الإصدار من المسار معتمد بالفعل.",
+### gate_definition codes in migrations:
+      1 'G1'
+      1 'G2'
+      1 'G3'
+      1 'G4'
+      1 'G5'
+      1 'G6'
+### float/real/double columns in migrations (expect 0):
+0
+### provisional brand token:
+1-{
+2:  "$comment": "Single design-token source (ADR-0009). PROVISIONAL values from master prompt §15 (REQ-S15-002). They are NOT verified or official Mobily colours; #0078FF is a provisional brand token. Replace only through the Branding Settings flow (REQ-S15-004) once official values are supplied.",
+3-  "provisional": true,
+4-  "color": {
+5:    "brand.primary": { "value": "#0078FF", "purpose": "Primary accents and selected elements", "provisional": true },
+6-    "brand.deep": {
+7-      "value": "#003B73",
+--
+### DG0-DG7 mentions in product source (expect comments asserting separation only):
+apps/api/src/modules/identity/routes.ts:39: * source has no computed member with a non-literal key (F-DG1-124), and own entries never reach the prototype chain.
+apps/api/src/modules/identity/routes.ts:72:   * Validated-session subjects for the global rate limiter's key (F-DG1-142). The composition root shares one instance
+apps/api/src/modules/identity/routes.ts:84:  // Defence in depth for F-DG1-112 (the loader already refuses this): never issue non-Secure, non-__Host- session
+apps/api/src/modules/identity/routes.ts:109:  // Pre-session login cookie (F-DG1-103): binds the OIDC state to the browser that started the login. SameSite=Lax
+apps/api/src/modules/identity/routes.ts:122:   * (T-DG2-BE18, F-DG2-440). Null when the session is not valid (revoked, logged out, idle or absolute expiry, user
+apps/api/src/modules/identity/routes.ts:198:        // F-DG2-231 / F-DG2-260: a User-Agent with U+0000 or a lone surrogate is not stored. Neither can arrive over HTTP
+apps/api/src/modules/identity/routes.ts:293:          // T-DG2-BE18 (F-DG2-441): discovery (a remote call to the IdP) runs BEFORE any transaction is opened; the
+apps/api/src/modules/identity/routes.ts:307:    // F-DG2-231 / F-DG2-260: a value with U+0000 or a lone surrogate fails here and redirects with invalid_request (the
+apps/api/src/modules/identity/routes.ts:364:          // F-DG2-231 / F-DG2-260: an issuer or subject with U+0000 or a lone surrogate (or empty, or too long for its
+apps/api/src/modules/identity/routes.ts:378:          // F-DG2-260 (defence in depth behind identityClaimsStorable): a claim value the database refuses (SQLSTATE
+apps/api/src/modules/identity/rate-limit-subjects.ts:1:// Trustworthy rate-limit keys (F-DG1-142, ADR-0007 T-3). The global limiter runs on onRequest, BEFORE the session is
+apps/api/src/modules/identity/oidc.ts:63:   * Starts a login in two steps, so no database transaction is open while the IdP is contacted (T-DG2-BE18,
+apps/api/src/modules/identity/oidc.ts:64:   * F-DG2-441). Step 1, `prepareLogin`, runs OUTSIDE any transaction: OIDC discovery (a remote call, up to the
+apps/api/src/modules/identity/oidc.ts:69:   * is stored (F-DG1-103). The PKCE verifier and nonce stay server-side and are released only to that browser.
+apps/api/src/modules/identity/oidc.ts:106:   * it is bound to (F-DG1-103; RFC 6749 §10.12). A valid state presented by another browser (no login cookie, or a
+apps/api/src/modules/identity/oidc.ts:165:/** Pre-session login cookie (F-DG1-103): `__Host-` prefixed on https, like the session cookie (ADR-0005 §3). */
+apps/api/src/modules/identity/oidc.ts:187: * F-DG2-181: the display name candidate a claim yields, or null. The claim is trimmed and truncated FIRST, by code
+apps/api/src/modules/identity/oidc.ts:195:  // F-DG2-160 / F-DG2-180: a value with no visible content (spaces, U+200F, U+2060, VS16, controls, ...) is absent.
+apps/api/src/modules/identity/oidc.ts:196:  // F-DG2-231 / F-DG2-260: so is a value with U+0000 or a lone UTF-16 surrogate (`hasInvalidCharacter`), which cannot
+apps/api/src/modules/identity/oidc.ts:221: * F-DG2-231 / F-DG2-260: true when the identifying claims can be stored, looked up and audited faithfully. An ID token
+apps/api/src/modules/identity/oidc.ts:258:  // F-DG2-231 / F-DG2-260: an e-mail claim with U+0000 or a lone surrogate cannot be stored or matched faithfully, so
+apps/api/src/modules/reporting/index.ts:2:// by the same scoped policy function as every other read. P1 SCAFFOLD (D-048, T-DG1-BE3): the module, its boundary
+apps/api/src/modules/reporting/index.ts:3:// (modules.ts `dependsOn`), this public interface, its wiring hook and its own test suite exist from DG1, so later
+apps/api/src/modules/admin/routes.ts:103:    // (F-DG2-160): an issuer with no visible content (spaces, U+200F, U+2060, U+0085, ...) is empty too.
+apps/api/src/modules/admin/branding.ts:1:// GET /api/v1/branding/tokens (REQ-S15-002, contract operation getBrandingTokens). Read-only at DG1: Branding
+apps/api/src/modules/admin/branding.ts:33:  // Computed once: the source is static per process at DG1 (no Branding Settings writes yet).
+apps/api/src/modules/platform/media-types.ts:1:// F-DG2-320 (T-DG2-BE14): every operation accepts only the request media types its contract declares.
+apps/api/src/modules/platform/media-types.ts:36:     * F-DG2-320: the request media types the operation declares in docs/api/openapi.yaml (lower-case essences).
+apps/api/src/modules/platform/media-types.ts:59:// T-DG2-BE15 (F-DG2-350, F-DG2-351): ONE media-type decision per request, made in the central preParsing hook.
+apps/api/src/modules/platform/media-types.ts:208: * decision refuses them instead of silently picking one (T-DG2-BE15B).
+apps/api/src/modules/platform/in-flight.ts:1:// T-DG2-BE18A (F-DG2-460): graceful shutdown waits for in-flight request handlers to SETTLE, including their
+apps/api/src/modules/platform/health.ts:2:// shipped with this build applied with the same checksum). ADR-0007 §1, REQ-S19-010; encoding: ADR-0003, T-DG2-BE9.
+apps/api/src/modules/platform/hooks.ts:28:     * F-DG2-231: `"route"` exempts the route from the central U+0000 request check because the route rejects such
+apps/api/src/modules/platform/hooks.ts:68: * T-DG2-BE17 (F-DG2-412): the error is the request body's own stream failing because the body was NOT RECEIVED
+apps/api/src/modules/platform/hooks.ts:103:  // T-DG2-BE17 (F-DG2-411): no pooled connection became free within the pool's connectionTimeoutMillis. A bounded,
+apps/api/src/modules/platform/hooks.ts:114:      // F-DG2-351: like every media-type refusal, the detail names the media types the operation declares. The central
+apps/api/src/modules/platform/hooks.ts:120:      // F-DG2-290: the body's byte count differs from its Content-Length. The JSON parser now counts raw bytes, so a
+apps/api/src/modules/platform/hooks.ts:139: * internal-leaking body). Shared by `setErrorHandler` and the router-level `frameworkErrors` handler (T-DG2-BE12).
+apps/api/src/modules/platform/hooks.ts:149:   * T-DG2-BE16: preHandler hooks of the not-found handler. An unmatched route has no route, so no `onRoute`-attached
+apps/api/src/modules/platform/hooks.ts:183:  // F-DG2-231: the central request check. preHandler runs after authentication and CSRF (identity's preValidation
+apps/api/src/modules/platform/hooks.ts:186:  // F-DG2-290: a query component that is not valid percent-encoded UTF-8 (`%FF`, CESU-8 `%ED%A0%80`) is a 400
+apps/api/src/modules/platform/hooks.ts:217:      // T-DG2-BE17: a client that went away (or timed out) mid-body is not a server fault: below error level.
+apps/api/src/modules/platform/validation.ts:64: * F-DG2-231 / F-DG2-260: the RFC 6901 pointer of the first string (value or object key) under `value` that contains
+apps/api/src/modules/platform/validation.ts:89:/** The 400 problem for a request string that contains U+0000 or a lone surrogate (F-DG2-231, F-DG2-260). */
+apps/api/src/modules/platform/validation.ts:101: * F-DG2-231 / F-DG2-260: the central request check. Rejects a JSON body, query string or path parameter that contains
+apps/api/src/modules/platform/cursor.ts:15:      // Same order as Object.keys(...).sort() (UTF-16 code units); entries avoid a runtime-keyed read (F-DG1-124).
+apps/api/src/modules/platform/problem.ts:131:  /** Node's request timeout (connection level, before routing; T-DG2-BE12). */
+apps/api/src/modules/platform/request-encoding.ts:1:// F-DG2-290 (T-DG2-BE13): client bytes become text only through a strict UTF-8 decoder. Ill-formed input is the
+apps/api/src/modules/platform/request-encoding.ts:3:// that the client meant to be decoded. This is the byte-level counterpart of F-DG2-260 (lone surrogates in JSON
+apps/api/src/modules/platform/request-encoding.ts:4:// escapes) and F-DG2-231 (U+0000).
+apps/api/src/modules/platform/framework-errors.ts:1:// Errors that Fastify or Node answer BEFORE any route, hook or error handler runs (T-DG2-BE12). Without these handlers
+apps/api/src/modules/platform/framework-errors.ts:50:    // T-DG2-BE16: nor the connection-hygiene onSend hook: an unread body is never drained into the server.
+apps/api/src/modules/platform/connection-hygiene.ts:1:// T-DG2-BE16: a request body the server answered before consuming never holds a connection, and shutdown is bounded.
+apps/api/src/modules/platform/db-errors.ts:6://   evidence_review_separation (0019)        -> 403 evidence.reviewer_is_author (separation of duties, F-DG2-140)
+apps/api/src/modules/platform/db-errors.ts:10://   22P05 untranslatable_character          -> 400 validation.invalid_character (F-DG2-231: defence in depth behind
+apps/api/src/modules/platform/db-errors.ts:214:    case "22021": // character_not_in_repertoire (U+0000 in text; F-DG2-231)
+apps/api/src/modules/platform/db-errors.ts:215:    case "22P05": // untranslatable_character (a character the server encoding cannot hold; F-DG2-231)
+apps/api/src/modules/transformations/registers.ts:92:/** Merged-row reader without computed member access (F-DG1-124). */
+apps/api/src/modules/transformations/routes.ts:61: * Statuses that an ordinary status edit can NEVER set (F-DG1-001). Closure is terminal and is the outcome of the
+apps/api/src/modules/transformations/routes.ts:66: * This is a PRODUCT gate (G6), unrelated to the engineering delivery gates DG0-DG7.
+apps/api/src/modules/transformations/routes.ts:76:// Runtime-keyed lookups go through a Map (F-DG1-124: module source has no computed member with a non-literal key).
+apps/api/src/modules/transformations/routes.ts:232:          // F-DG1-106: a creator authorized only by a non-inheriting business-unit grant (TL) gets an explicit,
+apps/api/src/modules/transformations/phase.ts:4:// delivery gates DG0-DG7.
+apps/api/src/modules/transformations/phase.ts:6:// Sequence integrity (B0009 "Run Phases 1-6 sequentially", B0023; F-DG2-205): a gate closes ITS OWN phase, so an
+apps/api/src/modules/transformations/charter.ts:7://   warning `charter.north_star_superseded`, and its next save re-links the current one (F-DG2-204, REQ-PB-033).
+apps/api/src/modules/transformations/charter.ts:8://   Thesis (B0037, REQ-PB-030): an empty part is flagged `charter.thesis_incomplete` (F-DG2-203); the sentence is
+apps/api/src/modules/transformations/charter.ts:215: * True when the charter's Out of scope documents at least one exclusion: the text has visible content (F-DG2-150,
+apps/api/src/modules/transformations/charter.ts:216: * F-DG2-160).
+apps/api/src/modules/transformations/charter.ts:256:        // F-DG2-150: blank In scope is not recorded content (defense in depth; the API rejects blank text with 400).
+apps/api/src/modules/transformations/charter.ts:263:        // F-DG2-150 (REQ-PB-031 A01, B0041): on a saved charter an empty or blank Out of scope is a definite answer
+apps/api/src/modules/transformations/register-kit.ts:108:   * evidence.create adds an item, but only its creator/owner edits its content (F-DG2-140).
+apps/api/src/modules/transformations/register-kit.ts:143: * `parse`; T-DG2-ARCH-02). All names are validated together, so every malformed parameter is reported.
+apps/api/src/modules/transformations/register-kit.ts:245:   * T-DG2-BE18 (F-DG2-440): the write commits after waiting on the client (a streamed request body), so authorise it
+apps/api/src/modules/access/policy.ts:152:/** Denial details for the failed-mutation audit (denials.ts); also used by the creator-derive step (F-DG1-115). */
+apps/api/src/modules/access/request.ts:2:// T-DG2-BE18 (F-DG2-440): authorisation at COMMIT time. The identity hook resolves the session and loads the grants
+apps/api/src/modules/access/request.ts:37: * Commit-time authorisation, step 1 (F-DG2-440): re-resolves the caller's session and reloads their grants inside
+apps/api/src/modules/access/assignments.ts:247:  // F-DG1-106: creator assignments derived from this grant never outlive it (same transaction, one audit event each).
+apps/api/src/modules/access/assignments.ts:248:  // F-DG2-260: cut on a code-point boundary, so an emoji at the 1000 boundary never becomes a lone surrogate.
+apps/api/src/modules/access/assignments.ts:432: * F-DG1-106 (ADR-0006): a role granted at BUSINESS-UNIT scope without downward inheritance (TL by default) may create
+apps/api/src/modules/access/assignments.ts:464:  // F-DG1-115: the source grants were read (loadGrants) without a lock, so a revoke of a source can be in flight.
+apps/api/src/modules/access/denials.ts:17:      // Tracked (T-DG2-BE18A): this runs after the handler settled, and shutdown must not close the pool under it.
+apps/api/src/modules/access/rules.ts:54:/** Permission -> category as a Map: module source looks up runtime keys only through a Map (F-DG1-124). */
+apps/api/src/modules/workflows/index.ts:7:// phase. They are unrelated to the engineering delivery gates DG0-DG7 (G6 never implies DG7, and the reverse).
+apps/api/src/modules/workflows/index.ts:20:/** The playbook's product gates (business approvals), in order. Not the engineering gates DG0-DG7. */
+apps/api/src/modules/workflows/criteria.ts:11:// These are BUSINESS gates inside the product; nothing here reads or writes the engineering gates DG0-DG7.
+apps/api/src/modules/workflows/criteria.ts:154:      // F-DG2-150/160: every free-text "is present" test is `hasText` (visible content); blank text is not content.
+apps/api/src/modules/workflows/criteria.ts:172:          // F-DG2-150: a blank Out of scope documents no exclusion (same rule as the `exclusions_present` pre-check).
+apps/api/src/modules/workflows/criteria.ts:224:  // F-DG2-260: cut on a code-point boundary, so the quoted statement never ends in a lone surrogate.
+apps/api/src/modules/workflows/criteria.ts:365:      // REQ-PB-030 (F-DG2-203): the thesis states the causal chain change -> outcomes -> benefits (B0037) that the
+apps/api/src/modules/workflows/gates.ts:10:// delivery gates DG0-DG7, and no product gate implies one (G6 never implies DG7). The API never approves by itself:
+apps/api/src/modules/workflows/gates.ts:268: * Sequence integrity (B0009 "Run Phases 1-6 sequentially", B0023; F-DG2-205, REQ-S04-005): a gate can be submitted or
+apps/api/src/modules/workflows/gates.ts:578:    note: "Product gate (business approval inside the product); unrelated to the engineering delivery gates DG0-DG7.",
+apps/api/src/modules/workflows/gates.ts:728:  // 5. Sequence: an approval never skips a phase or a preceding gate (F-DG2-205); nothing is written otherwise.
+apps/api/src/modules/workflows/gates.ts:752:      // F-DG2-260: cut on a code-point boundary (a rationale of up to 8000 characters plus the outcome prefix).
+apps/api/src/modules/kpi/support.ts:45: * 400 at `/params/<name>` (e.g. `/params/baselineId`), the pointer style of `parse` (T-DG2-ARCH-02).
+apps/api/src/modules/kpi/kpi-definitions.ts:2:// archive. Activate (F-DG2-201) is the only draft -> active path; G2's g2.kpi_definitions criterion needs it.
+apps/api/src/modules/kpi/gate-facts.ts:3:// the product (G1-G6), unrelated to the engineering delivery gates DG0-DG7.
+apps/api/src/modules/kpi/gate-facts.ts:102:      hasSource: hasText(b.source), // F-DG2-150: a blank source is not a source
+apps/api/src/modules/kpi/outcome-kpis.ts:5:// (F-DG2-141): the approver is never the row's creator NOR anyone who last set a part of the current trajectory
+apps/api/src/modules/kpi/outcome-kpis.ts:300:      // F-DG2-141: holding outcome.edit and kpi_target.approve (BO) must not let a person set a target and then
+apps/api/src/modules/kpi/rules.ts:44:  // `.at(i)`: module source has no runtime-keyed computed member (architecture lint rule 2, F-DG1-124).
+apps/api/src/modules/kpi/rules.ts:97: * The T02 columns that make up the target trajectory an approver signs off (F-DG2-141): which KPI, measured from
+apps/api/src/modules/kpi/rules.ts:145: * A KPI definition can be activated (draft -> active, F-DG2-201) only when it is measurable: a unit kind and a
+apps/api/src/modules/kpi/repository.ts:354: * current trajectory (rules.ts trajectoryAuthors; F-DG2-141). audit_event is append-only and written in the same
+apps/api/src/modules/organization/routes.ts:284:          await lockBusinessUnitHierarchy(tx, organizationId); // F-DG1-140: depth check vs a concurrent move
+apps/api/src/modules/organization/routes.ts:361:        // F-DG1-140: a re-parent serializes on the organization's hierarchy lock BEFORE reading anything it checks, so
+apps/api/src/modules/organization/routes.ts:371:            // F-DG1-141: the destination of a move to the top level is the organization itself.
+apps/api/src/modules/organization/routes.ts:386:            // F-DG1-141: a move writes into the destination branch, so the actor needs business_unit.manage on the
+apps/api/src/modules/organization/repository.ts:71: * (migration 0009, F-DG1-140). Same (class, hashtext(organization_id)) key on both sides.
+apps/api/src/modules/organization/repository.ts:76: * Serialize hierarchy changes of one organization for the rest of the transaction (F-DG1-140). Taken BEFORE the
+apps/api/src/modules/evidence/routes.ts:10://                                                       edit rights as creating the link (F-DG2-142)
+apps/api/src/modules/evidence/routes.ts:13:// Separation of duties (F-DG2-140, REQ-S13-012): nobody verifies content they supplied. The content author is kept in
+apps/api/src/modules/evidence/routes.ts:90:/** Editing or replacing an item's content: only its creator or named owner (F-DG2-140; no evidence.edit right exists). */
+apps/api/src/modules/evidence/routes.ts:241: * with a stray `%` and no percent escape at all (`50%.csv`) is taken literally. F-DG2-290: a name that holds a
+apps/api/src/modules/evidence/routes.ts:386:  // authorization checks (never buffered whole; the size limit is enforced while streaming). F-DG2-320: only routes
+apps/api/src/modules/evidence/routes.ts:393:  // T-DG2-BE18A (F-DG2-460, defence in depth behind the shutdown wait in main.ts): once the instance is ready, remove
+apps/api/src/modules/evidence/routes.ts:452:  // F-DG2-320: the contract declares only application/octet-stream for this operation.
+apps/api/src/modules/evidence/routes.ts:453:  // T-DG2-BE17 (F-DG2-411): NO client I/O while a pooled connection or a transaction is held. Three phases:
+apps/api/src/modules/evidence/routes.ts:458:  //   3. a short write transaction: authorization again AT COMMIT TIME (T-DG2-BE18, F-DG2-440: the session is
+apps/api/src/modules/evidence/routes.ts:470:      // Replacing the stored content is an edit: only the item's creator or named owner (F-DG2-140).
+apps/api/src/modules/evidence/routes.ts:490:          // F-DG2-260: the same storability rule as every other client string (defence in depth: a header value is
+apps/api/src/modules/evidence/routes.ts:503:      // F-DG2-320 (defence in depth): only the raw request byte stream is ever stored, never a parsed value.
+apps/api/src/modules/evidence/routes.ts:592:      // Separation of duties (ADR-0018 §3, ADR-0020 §3, F-DG2-140): nobody reviews evidence they created, nor content
+apps/api/src/modules/evidence/routes.ts:742:        // F-DG2-142: removing a link needs the SAME record-level edit rights as creating it (ADR-0018 §4), so a
+apps/api/src/modules/evidence/store.ts:16: * T-DG2-BE18A (F-DG2-460, defence in depth): the start-up sweep removes a TEMPORARY object (`<uuid>.part`) only when
+apps/api/src/modules/evidence/store.ts:71:  /** `receive` + `finalise` in one call (tests and tools; the upload route uses the two steps, T-DG2-BE17). */
+apps/api/src/modules/evidence/store.ts:74:   * T-DG2-BE17 step 1: streams `body` into the key's TEMPORARY object (never readable through `get`), computing the
+apps/api/src/modules/evidence/store.ts:90:   * T-DG2-BE18A (F-DG2-460): removes temporary objects last written more than `olderThanMs` ago (see
+apps/api/src/modules/evidence/store.ts:144:      // T-DG2-BE18A: the temporary is removed even when closing the handle fails.
+apps/api/src/server.ts:5:// `frameworkErrors` / `clientErrorHandler` server options (platform/framework-errors.ts, T-DG2-BE12).
+apps/api/src/server.ts:7:// JSON bodies and query strings are decoded as strict UTF-8 (platform/request-encoding.ts, T-DG2-BE13).
+apps/api/src/server.ts:11://      hygiene (T-DG2-BE16: an unread body closes its connection; bounded shutdown);
+apps/api/src/server.ts:75:  /** T-DG2-BE16: time in-flight requests get after `app.close()` (default DEFAULT_SHUTDOWN_GRACE_MS, 5 s). */
+apps/api/src/server.ts:77:  /** T-DG2-BE16: Node `requestTimeout` for headers + body (default DEFAULT_REQUEST_TIMEOUT_MS, 300 s). */
+apps/api/src/server.ts:105: * T-DG2-BE12: the exact headers helmet adds with HELMET_OPTIONS, captured once from a throwaway Fastify instance with
+apps/api/src/server.ts:136:  /** The request media types the route accepts (F-DG2-320). */
+apps/api/src/server.ts:151:  // T-DG2-BE12: errors raised before routing answer the declared problem+json, with the same security headers.
+apps/api/src/server.ts:180:    // F-DG2-290: strict percent-decoding; an undecodable component is refused by the central preHandler check.
+apps/api/src/server.ts:184:    // T-DG2-BE16: a request (headers and body) must arrive within requestTimeout, else Node answers 408 and closes the
+apps/api/src/server.ts:200:  // F-DG2-290: JSON bodies are read as raw bytes and decoded as strict UTF-8 (never rewritten to U+FFFD), then parsed
+apps/api/src/server.ts:203:  // F-DG2-320: each route accepts only its declared `config.consumes` media types (platform/media-types.ts): the
+apps/api/src/server.ts:225:  // The not-found handler is registered after the rate limiter, which meters it too (T-DG2-BE16).
+apps/api/src/server.ts:227:  // T-DG2-BE16: a response sent before its request body was consumed closes the connection (bounded lingering close),
+apps/api/src/server.ts:230:  // T-DG2-BE18A (F-DG2-460): every route handler registered from here on is tracked until it settles (including its
+apps/api/src/server.ts:238:  // F-DG1-142: the limiter never trusts a presented cookie value. Only a cookie the identity hook has RESOLVED to a
+apps/api/src/server.ts:257:  // T-DG2-BE16 (audit round 10, P3): `global: true` attaches the limiter through `onRoute`, and an unmatched route has
+apps/api/src/modules.ts:65: * existed from DG1; their business behaviour lands in P2 / P4 / P5. `methodology` and `evidence` were reserved names
+apps/api/src/architecture.testkit.ts:4:// FILE SCOPE (F-DG1-134): walk() collects EVERY buildable JS/TS module file, `/\.[cm]?[jt]sx?$/` (.ts .tsx .mts .cts
+apps/api/src/architecture.testkit.ts:8:// TEST CLASSIFICATION (F-DG1-135): the test-only allowances (importing `modules.ts`/`architecture.testkit.ts`, and
+apps/api/src/architecture.testkit.ts:12:// It walks the TypeScript AST of each file (F-DG1-109: `ts.preProcessFile` saw only literal specifiers) and reports:
+apps/api/src/architecture.testkit.ts:16://  - DEFAULT-DENY for Node built-ins (D-055; F-DG1-129/213, F-DG1-010): a `node:` specifier is allowed only when it
+apps/api/src/architecture.testkit.ts:22:// F-DG1-124 - BLANKET BAN of the dynamic-code-loading primitives in module source. F-DG1-117 and F-DG1-121 matched
+apps/api/src/architecture.testkit.ts:33://     native loader    setEngine (F-DG1-130: `crypto.setEngine(path)` dlopen()s an arbitrary shared object, whose
+apps/api/src/architecture.testkit.ts:47://     are allowed. Everything else - kill, _kill, _debugProcess (both start the in-process V8 inspector, F-DG1-129 /
+apps/api/src/architecture.testkit.ts:48://     F-DG1-213), execve, binding, _linkedBinding, dlopen, getBuiltinModule, abort, reallyExit, ... and any member a
+apps/api/src/architecture.testkit.ts:54://     today only `node:crypto`, because of `setEngine`; F-DG1-132/133). Without a namespace or default binding the
+apps/api/src/architecture.testkit.ts:64:// SCOPE OF THE DEFAULT-DENY (F-DG1-130): it decides which built-in MODULES may be imported; it does NOT allow-list
+apps/api/src/architecture.testkit.ts:68:// T-DG1-BE11): the ONLY member that loads, evaluates or executes code or loads a native object is
+apps/api/src/architecture.testkit.ts:72:// exist in module source; F-DG1-132/133). Name matches checked and cleared by hand:
+apps/api/src/architecture.testkit.ts:86://      no longer be namespace- or default-bound (rule 5, F-DG1-132/133), so the former enumeration route
+apps/api/src/architecture.testkit.ts:90://  (b) F-DG1-127: runtime code GENERATION followed by a dynamic import of a literal same-module path (an allowed
+apps/api/src/architecture.testkit.ts:95:// SCOPE: FIRST-PARTY SOURCE ONLY (F-DG1-143, D-055). The lint governs what first-party module source WRITES: its
+apps/api/src/architecture.testkit.ts:101:// F-DG1-143, so module source importing them is a violation), and adding a runtime dependency is a reviewed change
+apps/api/src/architecture.testkit.ts:112: * F-DG2-143: per-test timeout for every test that walks module sources through this lint (TypeScript parse plus
+apps/api/src/architecture.testkit.ts:127: * F-DG1-143: packages a TEST file (TEST_FILE, excluded from the build) may import in addition to THIRD_PARTY: the
+apps/api/src/architecture.testkit.ts:139: * member audit in the header (F-DG1-130), they expose no member that loads, evaluates or executes code, opens a
+apps/api/src/architecture.testkit.ts:144: * wasi, v8, net, http, https, dgram, async_hooks, ...): those routes were closed one by one by F-DG1-109/117/125/127/128
+apps/api/src/architecture.testkit.ts:149: * Rule 5 (F-DG1-132/133): allow-listed built-ins that carry a rule-1-banned member (node:crypto -> setEngine) may be
+apps/api/src/architecture.testkit.ts:155:/** F-DG1-124: dynamic-code primitives, banned in every SPELLED form (rule 1), by the kind of bypass they give. */
+apps/api/src/architecture.testkit.ts:161:  // F-DG1-130: a native-loader MEMBER of the allow-listed node:crypto (dlopen of an arbitrary shared object).
+apps/api/src/architecture.testkit.ts:180: * debugger / exec / native-loader routes, F-DG1-125/128/129/213).
+apps/api/src/architecture.testkit.ts:201: * F-DG1-134: every buildable JS/TS module file - .ts .tsx .mts .cts .js .jsx .mjs .cjs. Matching only .ts/.tsx let a
+apps/api/src/architecture.testkit.ts:229:/** A test-only package import (F-DG1-143): only for TEST_FILE files, never a `node:` built-in. */
+apps/api/src/architecture.testkit.ts:477: * F-DG1-137 / F-DG1-218: is `fileName` a declaration file, by TypeScript's OWN classification (no hand-rolled regex
+apps/api/src/architecture.testkit.ts:489: * F-DG1-217: `ts.transpileModule` emits, and emitting a declaration-file name throws an internal
+apps/api/src/architecture.testkit.ts:491: * F-DG1-137 / F-DG1-218: every name TypeScript classifies as a declaration file (`isDeclarationFileName` above,
+apps/api/src/architecture.testkit.ts:519: * F-DG1-137 / F-DG1-218: the declaration-file branch follows TypeScript's own classification
+apps/api/src/main.ts:4:// T-DG2-BE16 shutdown policy (docs/operations/health-readiness.md "Shutdown"): app.close() stops accepting, closes idle
+apps/api/src/main.ts:7:// T-DG2-BE18A (F-DG2-460) shutdown ORDER: 1. app.close() (stop accepting; idle connections at once; in-flight requests
+apps/web/src/components/ReasonDialog.tsx:3:// dialog. The blank-text rule of every P2 form applies (F-DG2-210, BE7): a non-empty reason with no visible content
+apps/web/src/components/RowActions.tsx:4:// The note follows the blank-text rule of every P2 form (F-DG2-210): "" is "no note" (or "required"), a non-empty note
+apps/web/src/components/Form.tsx:73: * The one blank-text rule of every hand-written P2 form (F-DG2-210, D-063): a control that holds text but none of it is
+apps/web/src/components/Section.tsx:51:/** Multi-line user text; "None" when it has no visible content (the shared `hasText`, F-DG2-150 / F-DG2-160). */
+apps/web/src/components/RecordForm.tsx:12://    nothing is sent and focus moves to the first invalid field (F-DG2-210).
+apps/web/src/components/RecordForm.tsx:67:   * annotations is "no changes to save", never a content-free new version (F-DG2-210).
+apps/web/src/components/RecordForm.tsx:122:      // null; it is caught as `validation.blank` before sending (blankErrors) and by the shared schema (F-DG2-210).
+apps/web/src/components/RecordForm.tsx:211:  // F-DG2-430: a state updater must stay pure. React may run it while rendering (and twice under StrictMode), so the
+apps/web/src/components/RecordForm.tsx:393:  // F-DG2-340: a form-level problem is announced once. The banner already says the message of a validation problem
+apps/web/src/components/RecordForm.tsx:402:        // The live region is the wrapper; the <ul> keeps its list role so its <li> are valid (F-DG2-211, WCAG 1.3.1).
+apps/web/src/components/LanguageSwitch.tsx:5:// A refused save (T-DG2-FE11, behaviour (a)): the language the user chose stays on screen in this browser (it is not
+apps/web/src/components/LanguageSwitch.tsx:11:// T-DG2-FE12: the notice is a banner *below* the header (LanguageNotSavedNotice, rendered by the Shell), never inside
+apps/web/src/auth/session.tsx:36:  // F-DG2-480: the session-end rule lives in the API client (any 401 `unauthenticated` while the session was active,
+apps/web/src/auth/session.tsx:65:  // switch whose save was refused (T-DG2-FE11) and briefly flipped back a switch whose save was still in flight.
+apps/web/src/api/client.ts:52:// F-DG2-480: one rule for "the session has ended". The phase is module state (not React Query state), so a stale cached
+apps/web/src/api/queries.ts:233:// ------------------------------------------------------------------------------------------------ P2 (DG2)
+apps/web/src/api/types.ts:66:// ------------------------------------------------------------------------------------------------ P2 (DG2)
+apps/web/src/test/p2fixtures.ts:73:    // Verbatim B0023 form, as seeded (migration 0011): the source gate name already carries the code (F-DG2-151).
+apps/web/src/test/p2fixtures.ts:456:      // Mirrors the server (F-DG2-150, F-DG2-160: the shared `hasText`): an empty or blank Out of scope FAILS the check ("attention"), never "unknown".
+apps/web/src/test/fixtures.tsx:223: * of that path can pass 0 so the same retries run immediately (F-DG2-143). Unset keeps the library default.
+apps/web/src/test/fixtures.tsx:225: * functions twice and an impure updater shows up in the test (F-DG2-430).
+apps/web/src/lib/problem.ts:55: * The messages of a form's error live regions, each shown once (F-DG2-340). `banner` is the message of the problem
+apps/web/src/lib/auditChanges.ts:1:// Audit-trail "Changes" in human terms (F-DG1-005, REQ-S15-007, M0302). The API records changed fields with their
+apps/web/src/lib/auditChanges.ts:7:// F-DG1-008: a transformation's trail also carries the role-assignment events written on it (`scoped_assignment.*`,
+apps/web/src/lib/auditChanges.ts:8:// e.g. the derived creator assignment of F-DG1-106: userId, roleCode, scope, effectiveTo, derivedFromAssignmentId),
+apps/web/src/lib/auditChanges.ts:77:  // The creator assignment carried over from a business-unit grant (F-DG1-106) reads differently from a manual grant.
+apps/web/src/lib/methodology.ts:24: * The ONE place a product gate's display name is composed (F-DG2-151, REQ-PB-017 / B0023). The catalogue carries the
+apps/web/src/pages/transformations/TransformationEditPage.tsx:63: * Target statuses the API refuses as a status edit in P1 (F-DG1-001). Mirrors `GOVERNED_TARGET_STATUSES` in
+apps/web/src/pages/transformations/TransformationDetailPage.tsx:93: * The creator got a 201 but may not read the record (F-DG1-004: e.g. a grant that covers create at a business unit
+apps/web/src/pages/transformations/TransformationDetailPage.tsx:508:/** One side of an audited change, localized (F-DG1-005). Untranslated codes stay visible, LTR-isolated and marked. */
+apps/web/src/pages/transformations/TransformationCreatePage.tsx:117: * Re-reads GET /me (effective permissions) after a mutation that may change the caller's grants (F-DG1-210).
+apps/web/src/pages/transformations/TransformationCreatePage.tsx:194:      // F-DG1-210: creating a record can grant the creator a derived transformation-scope assignment (F-DG1-106), so
+apps/web/src/pages/LoginPage.tsx:57:  // F-DG2-480: "already signed in" is decided only from a /me answered after this page mounted, never from the cached
+apps/web/src/pages/design/JourneysSection.tsx:495: * F-DG2-210: the blank-text rule on a step. A control that holds text but nothing visible is `validation.blank` (also a
+apps/web/src/pages/design/JourneysSection.tsx:631:      {/* F-DG2-340: a client message identical to the (earlier) server banner is not announced a second time. */}
+apps/web/src/pages/design/JourneysSection.tsx:756:          // Generated outside the updater, which stays pure (F-DG2-430 sweep): a re-run updater gets the same key.
+apps/web/src/pages/gates/GateDetailPage.tsx:437:    // F-DG2-210: "" means "no note"; a note with no visible content is refused inline; visible text is sent verbatim.
+apps/web/src/pages/gates/GateDetailPage.tsx:538:    // F-DG2-210: the rationale and comments are sent verbatim. "" keeps its meaning (rationale required, no comments);
+apps/web/src/pages/define/CharterPage.tsx:195:      // A summary alone is not a change: never a content-free charter version (F-DG2-210).
+apps/web/src/pages/define/CharterPage.tsx:524: * The four-part transformation thesis (B0037, REQ-PB-030; F-DG2-203): the composed sentence "If we change […], then
+apps/web/src/pages/define/CharterPage.tsx:579: * Charter field 5 (F-DG2-204, REQ-PB-033): the CURRENT North Star returned by the API. When the API reports that the
+apps/web/src/pages/define/DefinePage.tsx:159:    // F-DG2-210: a statement with no visible content is refused inline (never sent); visible text is sent verbatim.
+apps/web/src/pages/define/DefinePage.tsx:1006: * Activate a draft KPI definition (POST …/kpi-definitions/{id}/activate, If-Match; F-DG2-201, REQ-PB-017). The server
+packages/config/src/index.ts:152:// Validated loader over the catalogue above (T-DG1-BE).
+packages/config/src/load.ts:164:  // ADR-0005 §3 / F-DG1-112: the session cookie is Secure and __Host- prefixed only on an https origin, so production
+packages/config/src/load.ts:244: * The application origin's cookie-security rule (ADR-0005 §3, F-DG1-112): outside production any http(s) origin is
+packages/db/src/cli.ts:10:// Every command first requires a UTF8 database (encoding.ts, T-DG2-BE9): on any other encoding it prints
+packages/db/src/schema.ts:113:  /** SHA-256 of the browser-binding cookie set by GET /auth/login (migration 0007, F-DG1-103). */
+packages/db/src/schema.ts:154:  /** Source grant of a derived creator assignment (migration 0008, F-DG1-106); null for direct grants. */
+packages/db/src/schema.ts:260:// ---- P2 (migrations 0010-0018; T-DG2-ARCH-01/01B). `date` columns are "YYYY-MM-DD" strings (pool.ts), numeric is a
+packages/db/src/schema.ts:467:  /** 0019 (F-DG2-140): who supplied the current content; maintained by the evidence_review_separation trigger. */
+packages/db/src/encoding.ts:1:// Database encoding guard (ADR-0003 "Database encoding", T-DG2-BE9). The product requires a UTF8 database.
+packages/db/src/pool.ts:9:// zone differs from UTC. Registered once per process, for every pool (T-DG2-ARCH-01).
+packages/db/src/pool.ts:31: * T-DG2-BE17 (F-DG2-411, defence in depth): server-side `idle_in_transaction_session_timeout` on every pooled session.
+packages/db/src/pool.ts:34: * client from the pool. No application transaction waits on anything but the database: no client I/O (T-DG2-BE17), no
+packages/db/src/pool.ts:35: * remote call (T-DG2-BE18 / F-DG2-441 moved OIDC discovery out of the login transaction), no timer, queue call or
+packages/db/src/pool.ts:38: * transaction. The T-DG2-BE18 sweep (an AST scan of every `await` inside a transaction callback, a function taking a
+packages/db/src/pool.ts:39: * transaction or client, or a pooled-client checkout, in apps/api, apps/worker and packages; handback T-DG2-BE18)
+packages/db/src/pool.ts:45: * T-DG2-BE17 (F-DG2-411, defence in depth): node-postgres `connectionTimeoutMillis`, the longest a caller waits for a
+packages/db/src/pool.ts:101:  // T-DG2-BE17: nor may an error on a CHECKED-OUT client. pg-pool removes its own 'error' listener while a client is
+packages/db/src/migrate.ts:137:    // (DatabaseEncodingError; T-DG2-BE9).
+packages/shared/src/schemas/diagnose.ts:9:// F-DG2-150: blank (whitespace-only) free text is rejected with `validation.blank`; stored exactly as entered.
+packages/shared/src/schemas/direction.ts:7:// F-DG2-150: blank (whitespace-only) free text is rejected with `validation.blank`; stored exactly as entered.
+packages/shared/src/schemas/common.ts:35: * F-DG2-160 / F-DG2-180 (residuals of F-DG2-150 / D-063; ADR-0017 §2): the single "has visible content" predicate for
+packages/shared/src/schemas/common.ts:38: *   - `\p{Cc}` (C0/C1 control characters, e.g. a lone U+0001; F-DG2-180);
+packages/shared/src/schemas/common.ts:41: *   - `\p{Cs}` (lone surrogates, e.g. an unpaired U+D800; F-DG2-180. Since F-DG2-260 the schemas refuse them first as
+packages/shared/src/schemas/common.ts:43: *   - `\p{Default_Ignorable_Code_Point}` (F-DG2-180: variation selectors U+FE00-FE0F and U+E0100-E01EF, U+034F
+packages/shared/src/schemas/common.ts:48: *     NULL NOTEHEAD (gc=So, a notehead with no visible head) (F-DG2-230: the last two were the only residuals of an
+packages/shared/src/schemas/common.ts:58:/** True when `value` contains at least one visible code point (F-DG2-160, F-DG2-180, F-DG2-230); see `VISIBLE_CONTENT`. */
+packages/shared/src/schemas/common.ts:64: * F-DG2-150 / F-DG2-160: blank free text is never content. True only for a string with visible content
+packages/shared/src/schemas/common.ts:73:/** Field-error code for a blank (whitespace- or invisible-only) free-text value (F-DG2-150, F-DG2-160); localized in EN and AR by the web. */
+packages/shared/src/schemas/common.ts:77: * F-DG2-231 / F-DG2-260: field-error code for text that contains a character that cannot be stored faithfully:
+packages/shared/src/schemas/common.ts:79: * come back as an undeclared 500) or a lone UTF-16 surrogate (F-DG2-260; see `hasInvalidCharacter`). Localized in EN
+packages/shared/src/schemas/common.ts:85: * F-DG2-231 / F-DG2-260: true when `value` contains a character that cannot be stored faithfully:
+packages/shared/src/schemas/common.ts:87: *   - a lone (unpaired) UTF-16 surrogate (F-DG2-260). A JSON string escape such as "\ud800" survives `JSON.parse`, but
+packages/shared/src/schemas/common.ts:99: * F-DG2-260: `value` cut to at most `max` UTF-16 code units WITHOUT splitting a surrogate pair. A plain
+packages/shared/src/schemas/common.ts:113: * Free text of `min`..`max` characters that is not blank (F-DG2-150, F-DG2-160). A value with no visible content
+packages/shared/src/schemas/common.ts:117: * F-DG2-231 / F-DG2-260: a value that contains U+0000 or a lone surrogate is rejected with
+packages/shared/src/schemas/common.ts:130: * Trimmed text of `min`..`max` characters that is not blank (F-DG2-160, ADR-0017 §2): the P1/admin `name` and the
+packages/shared/src/schemas/common.ts:136: * F-DG2-231 / F-DG2-260: a value that contains U+0000 or a lone surrogate is rejected with
+packages/shared/src/schemas/evidence.ts:11:// F-DG2-150: blank (whitespace-only) free text is rejected with `validation.blank`; stored exactly as entered.
+packages/shared/src/schemas/gate.ts:2:// decided by people; they are unrelated to the engineering delivery gates DG0-DG7 and never imply them.
+packages/shared/src/schemas/kpi.ts:1:// P2 kpi-module zod mirrors (kpi-benefits-engineer; T-DG2-ARCH-01B seam): KpiDefinition, Baseline, OutcomeKpi,
+packages/shared/src/schemas/kpi.ts:48:// F-DG2-150: blank (whitespace-only) free text is rejected with `validation.blank`; stored exactly as entered.
+packages/shared/src/schemas/design.ts:10:// F-DG2-150: blank (whitespace-only) free text is rejected with `validation.blank`; stored exactly as entered.
+packages/shared/src/schemas/charter.ts:10:// F-DG2-150: blank (whitespace-only) free text is rejected with `validation.blank`; `null` clears the field.
+packages/shared/src/schemas/charter.ts:119:// ---- Transformation thesis (B0036/B0037, REQ-PB-030; F-DG2-203) ------------------------------------------------------
+packages/shared/src/schemas/charter.ts:152: * the shared `hasText`, F-DG2-160) -> null.
+packages/shared/src/schemas/decision.ts:12:// F-DG2-150: blank (whitespace-only) free text is rejected with `validation.blank`; stored exactly as entered.
+packages/shared/src/schemas/methodology.ts:9:// F-DG2-150: blank (whitespace-only) free text is rejected with `validation.blank`; stored exactly as entered.
+packages/shared/src/schemas/methodology.ts:14:/** Product gates G1-G6: BUSINESS approvals inside the product, never the engineering delivery gates DG0-DG7. */
+### unquantified label EN/AR:
+"unquantified": "Unquantified"
+"unquantified": "غير مُقدَّر كمّياً"

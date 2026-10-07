@@ -1,0 +1,64 @@
+### v24.21.0 rv/r14-session-end-ui.mjs (clone at d99de98) TAG=raised-limits TRIGGERS=
+TIMELINE en other-tab-signout [raised-limits] (second tab signed out -> /login?signedOut=1; /me requests in 10 s: 1; 429s: 0; navigations to /login: 1)
+  +42ms /transformations blank=false form=false msg=false shell=true
+  +301ms /login blank=false form=true msg=true shell=false
+PASS en.other-tab-signout.lands-once-on-sign-in :: expected one navigation to /login?returnTo=/transformations&error=session_expired; sign-in form; 'Your session ended. Please sign in again.'; dir ltr; /me < 10; no 429; no stale shell; no EN leak :: actual second tab signed out -> /login?signedOut=1; final={"path":"/login","returnTo":"/transformations","error":"session_expired","form":true,"msg":true,"shell":false,"nameShown":false,"dir":"ltr","lang":"en"}; loginNavs=1; /me=1; 429=0; staleShellOnLogin=false; settled=301ms; enLeak=false
+PASS en.other-tab-signout.other-context-signs-in :: expected a second context from the same IP signs in (dev.auditor reaches /my-work) :: actual /my-work ok=true
+PASS en.other-tab-signout.sign-in-returns :: expected signing in again (dev.lead) lands on /transformations :: actual landed=/transformations ok=true msgStillShown=false
+TIMELINE en revocation [raised-limits] (revoke=200; /me requests in 10 s: 1; 429s: 0; navigations to /login: 1)
+  +34ms /transformations blank=false form=false msg=false shell=true
+  +292ms /login blank=false form=true msg=true shell=false
+PASS en.revocation.lands-once-on-sign-in :: expected one navigation to /login?returnTo=/transformations&error=session_expired; sign-in form; 'Your session ended. Please sign in again.'; dir ltr; /me < 10; no 429; no stale shell; no EN leak :: actual revoke=200; final={"path":"/login","returnTo":"/transformations","error":"session_expired","form":true,"msg":true,"shell":false,"nameShown":false,"dir":"ltr","lang":"en"}; loginNavs=1; /me=1; 429=0; staleShellOnLogin=false; settled=292ms; enLeak=false
+PASS en.revocation.other-context-signs-in :: expected a second context from the same IP signs in (dev.auditor reaches /my-work) :: actual /my-work ok=true
+PASS en.revocation.sign-in-returns :: expected signing in again (dev.nobody) lands on /transformations :: actual landed=/transformations ok=true msgStillShown=false
+TIMELINE en idle-expiry [raised-limits] (idle_expires_at moved to the past for 3 live dev.lead session(s); /me requests in 10 s: 1; 429s: 0; navigations to /login: 1)
+  +41ms /transformations blank=false form=false msg=false shell=true
+  +299ms /login blank=false form=true msg=true shell=false
+PASS en.idle-expiry.lands-once-on-sign-in :: expected one navigation to /login?returnTo=/transformations&error=session_expired; sign-in form; 'Your session ended. Please sign in again.'; dir ltr; /me < 10; no 429; no stale shell; no EN leak :: actual idle_expires_at moved to the past for 3 live dev.lead session(s); final={"path":"/login","returnTo":"/transformations","error":"session_expired","form":true,"msg":true,"shell":false,"nameShown":false,"dir":"ltr","lang":"en"}; loginNavs=1; /me=1; 429=0; staleShellOnLogin=false; settled=299ms; enLeak=false
+PASS en.idle-expiry.other-context-signs-in :: expected a second context from the same IP signs in (dev.auditor reaches /my-work) :: actual /my-work ok=true
+PASS en.idle-expiry.sign-in-returns :: expected signing in again (dev.lead) lands on /transformations :: actual landed=/transformations ok=true msgStillShown=false
+TIMELINE en absolute-expiry [raised-limits] (absolute_expires_at moved to the past for 5 live dev.lead session(s); /me requests in 10 s: 1; 429s: 0; navigations to /login: 1)
+  +76ms /transformations blank=false form=true msg=false shell=false
+  +338ms /login blank=false form=true msg=true shell=false
+PASS en.absolute-expiry.lands-once-on-sign-in :: expected one navigation to /login?returnTo=/transformations&error=session_expired; sign-in form; 'Your session ended. Please sign in again.'; dir ltr; /me < 10; no 429; no stale shell; no EN leak :: actual absolute_expires_at moved to the past for 5 live dev.lead session(s); final={"path":"/login","returnTo":"/transformations","error":"session_expired","form":true,"msg":true,"shell":false,"nameShown":false,"dir":"ltr","lang":"en"}; loginNavs=1; /me=1; 429=0; staleShellOnLogin=false; settled=338ms; enLeak=false
+PASS en.absolute-expiry.other-context-signs-in :: expected a second context from the same IP signs in (dev.auditor reaches /my-work) :: actual /my-work ok=true
+PASS en.absolute-expiry.sign-in-returns :: expected signing in again (dev.lead) lands on /transformations :: actual landed=/transformations ok=true msgStillShown=false
+TIMELINE en api-logout [raised-limits] (logout by API from the page = 200; /me requests in 10 s: 1; 429s: 0; navigations to /login: 1)
+  +36ms /transformations blank=false form=false msg=false shell=true
+  +299ms /login blank=false form=true msg=true shell=false
+PASS en.api-logout.lands-once-on-sign-in :: expected one navigation to /login?returnTo=/transformations&error=session_expired; sign-in form; 'Your session ended. Please sign in again.'; dir ltr; /me < 10; no 429; no stale shell; no EN leak :: actual logout by API from the page = 200; final={"path":"/login","returnTo":"/transformations","error":"session_expired","form":true,"msg":true,"shell":false,"nameShown":false,"dir":"ltr","lang":"en"}; loginNavs=1; /me=1; 429=0; staleShellOnLogin=false; settled=299ms; enLeak=false
+PASS en.api-logout.other-context-signs-in :: expected a second context from the same IP signs in (dev.auditor reaches /my-work) :: actual /my-work ok=true
+PASS en.api-logout.sign-in-returns :: expected signing in again (dev.lead) lands on /transformations :: actual landed=/transformations ok=true msgStillShown=false
+TIMELINE ar other-tab-signout [raised-limits] (second tab signed out -> /login?signedOut=1; /me requests in 10 s: 1; 429s: 0; navigations to /login: 1)
+  +47ms /transformations blank=false form=false msg=false shell=true
+  +306ms /login blank=false form=true msg=true shell=false
+PASS ar.other-tab-signout.lands-once-on-sign-in :: expected one navigation to /login?returnTo=/transformations&error=session_expired; sign-in form; 'انتهت جلستك. يُرجى تسجيل الدخول مجددًا.'; dir rtl; /me < 10; no 429; no stale shell; no EN leak :: actual second tab signed out -> /login?signedOut=1; final={"path":"/login","returnTo":"/transformations","error":"session_expired","form":true,"msg":true,"shell":false,"nameShown":false,"dir":"rtl","lang":"ar"}; loginNavs=1; /me=1; 429=0; staleShellOnLogin=false; settled=306ms; enLeak=false
+PASS ar.other-tab-signout.other-context-signs-in :: expected a second context from the same IP signs in (dev.auditor reaches /my-work) :: actual /my-work ok=true
+PASS ar.other-tab-signout.sign-in-returns :: expected signing in again (dev.lead) lands on /transformations :: actual landed=/transformations ok=true msgStillShown=false
+TIMELINE ar revocation [raised-limits] (revoke=400; /me requests in 10 s: 0; 429s: 0; navigations to /login: 0)
+  +33ms /transformations blank=false form=false msg=false shell=true
+  +291ms /transformations blank=false form=true msg=false shell=true
+FAIL ar.revocation.lands-once-on-sign-in :: expected one navigation to /login?returnTo=/transformations&error=session_expired; sign-in form; 'انتهت جلستك. يُرجى تسجيل الدخول مجددًا.'; dir rtl; /me < 10; no 429; no stale shell; no EN leak :: actual revoke=400; final={"path":"/transformations","returnTo":null,"error":null,"form":true,"msg":false,"shell":true,"nameShown":true,"dir":"rtl","lang":"ar"}; loginNavs=0; /me=0; 429=0; staleShellOnLogin=false; settled=nullms; enLeak=false
+PASS ar.revocation.other-context-signs-in :: expected a second context from the same IP signs in (dev.auditor reaches /my-work) :: actual /my-work ok=true
+FAIL ar.revocation.sign-in-returns :: expected signing in again (dev.nobody) lands on null :: actual landed=/transformations ok=true msgStillShown=false
+TIMELINE ar idle-expiry [raised-limits] (idle_expires_at moved to the past for 9 live dev.lead session(s); /me requests in 10 s: 1; 429s: 0; navigations to /login: 1)
+  +39ms /transformations blank=false form=false msg=false shell=true
+  +300ms /login blank=false form=true msg=true shell=false
+PASS ar.idle-expiry.lands-once-on-sign-in :: expected one navigation to /login?returnTo=/transformations&error=session_expired; sign-in form; 'انتهت جلستك. يُرجى تسجيل الدخول مجددًا.'; dir rtl; /me < 10; no 429; no stale shell; no EN leak :: actual idle_expires_at moved to the past for 9 live dev.lead session(s); final={"path":"/login","returnTo":"/transformations","error":"session_expired","form":true,"msg":true,"shell":false,"nameShown":false,"dir":"rtl","lang":"ar"}; loginNavs=1; /me=1; 429=0; staleShellOnLogin=false; settled=300ms; enLeak=false
+PASS ar.idle-expiry.other-context-signs-in :: expected a second context from the same IP signs in (dev.auditor reaches /my-work) :: actual /my-work ok=true
+PASS ar.idle-expiry.sign-in-returns :: expected signing in again (dev.lead) lands on /transformations :: actual landed=/transformations ok=true msgStillShown=false
+TIMELINE ar absolute-expiry [raised-limits] (absolute_expires_at moved to the past for 11 live dev.lead session(s); /me requests in 10 s: 1; 429s: 0; navigations to /login: 1)
+  +37ms /transformations blank=false form=false msg=false shell=true
+  +299ms /login blank=false form=true msg=true shell=false
+PASS ar.absolute-expiry.lands-once-on-sign-in :: expected one navigation to /login?returnTo=/transformations&error=session_expired; sign-in form; 'انتهت جلستك. يُرجى تسجيل الدخول مجددًا.'; dir rtl; /me < 10; no 429; no stale shell; no EN leak :: actual absolute_expires_at moved to the past for 11 live dev.lead session(s); final={"path":"/login","returnTo":"/transformations","error":"session_expired","form":true,"msg":true,"shell":false,"nameShown":false,"dir":"rtl","lang":"ar"}; loginNavs=1; /me=1; 429=0; staleShellOnLogin=false; settled=299ms; enLeak=false
+PASS ar.absolute-expiry.other-context-signs-in :: expected a second context from the same IP signs in (dev.auditor reaches /my-work) :: actual /my-work ok=true
+PASS ar.absolute-expiry.sign-in-returns :: expected signing in again (dev.lead) lands on /transformations :: actual landed=/transformations ok=true msgStillShown=false
+TIMELINE ar api-logout [raised-limits] (logout by API from the page = 200; /me requests in 10 s: 1; 429s: 0; navigations to /login: 1)
+  +26ms /transformations blank=false form=false msg=false shell=true
+  +288ms /login blank=false form=true msg=true shell=false
+PASS ar.api-logout.lands-once-on-sign-in :: expected one navigation to /login?returnTo=/transformations&error=session_expired; sign-in form; 'انتهت جلستك. يُرجى تسجيل الدخول مجددًا.'; dir rtl; /me < 10; no 429; no stale shell; no EN leak :: actual logout by API from the page = 200; final={"path":"/login","returnTo":"/transformations","error":"session_expired","form":true,"msg":true,"shell":false,"nameShown":false,"dir":"rtl","lang":"ar"}; loginNavs=1; /me=1; 429=0; staleShellOnLogin=false; settled=288ms; enLeak=false
+PASS ar.api-logout.other-context-signs-in :: expected a second context from the same IP signs in (dev.auditor reaches /my-work) :: actual /my-work ok=true
+PASS ar.api-logout.sign-in-returns :: expected signing in again (dev.lead) lands on /transformations :: actual landed=/transformations ok=true msgStillShown=false
+PASS no-page-errors :: expected no page errors / console errors other than Chromium's 'Failed to load resource' for the expected 401s :: actual []
+SUMMARY {"pass":29,"fail":2}
+### r14-session-end-ui exit=1

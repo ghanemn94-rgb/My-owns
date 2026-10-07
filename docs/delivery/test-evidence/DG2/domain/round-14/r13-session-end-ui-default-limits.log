@@ -1,0 +1,19 @@
+### v24.21.0 rv/r13-session-end-ui.mjs (clone at d99de98) TAG=default-limits TRIGGERS=
+TIMELINE en in-app-link (logout=200; /me requests in 10 s: 1)
+  +27ms /transformations blank=false signInForm=false msg=false
+  +281ms /login?error=session_expired blank=false signInForm=true msg=true
+PASS en.in-app-link :: expected after the session ends, the user lands on the sign-in form (dir ltr) with 'Your session ended. Please sign in again.', with a bounded number of /me requests :: actual logout=200; final={"path":"/login","form":true,"msg":true,"dir":"ltr"}; reached sign-in form at 281ms; state changes=2; /me requests in 10 s=1
+TIMELINE en reload-control (logout=200; /me requests in 10 s: 2)
+  +137ms /my-work blank=false signInForm=false msg=false
+  +393ms /login blank=false signInForm=true msg=false
+PASS en.reload-control :: expected after the session ends, the user lands on the sign-in form (dir ltr), with a bounded number of /me requests :: actual logout=200; final={"path":"/login","form":true,"msg":false,"dir":"ltr"}; reached sign-in form at 393ms; state changes=2; /me requests in 10 s=2
+TIMELINE ar in-app-link (logout=200; /me requests in 10 s: 1)
+  +33ms /transformations blank=false signInForm=false msg=false
+  +288ms /login?error=session_expired blank=false signInForm=true msg=true
+PASS ar.in-app-link :: expected after the session ends, the user lands on the sign-in form (dir rtl) with 'انتهت جلستك. يُرجى تسجيل الدخول مجددًا.', with a bounded number of /me requests :: actual logout=200; final={"path":"/login","form":true,"msg":true,"dir":"rtl"}; reached sign-in form at 288ms; state changes=2; /me requests in 10 s=1
+TIMELINE ar reload-control (logout=200; /me requests in 10 s: 2)
+  +130ms /my-work blank=false signInForm=false msg=false
+  +386ms /login blank=false signInForm=true msg=false
+PASS ar.reload-control :: expected after the session ends, the user lands on the sign-in form (dir rtl), with a bounded number of /me requests :: actual logout=200; final={"path":"/login","form":true,"msg":false,"dir":"rtl"}; reached sign-in form at 386ms; state changes=2; /me requests in 10 s=2
+SUMMARY {"pass":4,"fail":0}
+### r13-session-end-ui exit=0
