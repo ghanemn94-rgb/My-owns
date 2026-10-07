@@ -820,7 +820,7 @@
       "id": "DG2",
       "stage": "P2",
       "name": "Diagnose define and design",
-      "state": "REVIEWING",
+      "state": "FIXING",
       "depends_on": [
         "DG1"
       ],
@@ -1098,6 +1098,11 @@
           "state": "REVIEWING",
           "at": "2026-10-07T01:51:41Z",
           "note": "BE16 (connection-holding class, bounded shutdown) and the ADR-0007 §5b amendment integrated; D-071 recorded. Orchestrator verification green in both locale settings (unit 771x4 per setting, integration 583, e2e 60). Candidate frozen as 23e6c0a2 for gate review round 11."
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-10-07T02:41:00Z",
+          "note": "Round 11 on candidate 23e6c0a2: all three verdicts PASS.\n- domain (18 checks): no findings, the ninth clean pass in a row.\n- code-security (26 checks): reproduced the round-10 auditor defect at 7fd1a89c, raised it as F-DG2-410 (Medium, non-mandatory) and verified the BE16 fix (CLOSED_VERIFIED; fix_revision 258b7e5 recorded by the orchestrator after import, D-071). Its class probe found two new findings: F-DG2-411 (Medium; the evidence upload holds a pooled connection and row lock while reading the body, so N stalled uploads block every user and /readyz until requestTimeout) and F-DG2-412 (Low; an aborted JSON body is an unmapped ECONNRESET, giving an unhandled-error 500).\n- qa (28 checks): raised F-DG2-430 (Low; React setState-in-render warning from RecordForm onValuesChange inside a state updater; predates BE16).\nEvery failure in the cited logs was disclosed and explained. Totals: 29 CLOSED_VERIFIED, 3 OPEN. Round-12 repairs run in sequence: backend-workflow-engineer T-DG2-BE17 (no client I/O inside a transaction, plus pool and session timeouts; aborted bodies mapped centrally to 400), then frontend-ux-engineer T-DG2-FE9 (pure state updaters, plus a warning guard)."
         }
       ]
     },
