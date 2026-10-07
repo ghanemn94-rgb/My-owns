@@ -13,8 +13,26 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
   - **Rounds 11-13** fixed operational server defects (D-071 to D-073): connection hygiene, pool bounds, the three-phase upload, commit-time re-authorisation and graceful shutdown.
   - **Rounds 13-17** closed session and identity edge cases in the web client (D-074 to D-077). The D-077 2 s residual for non-navigation GETs was judged acceptable as declared.
   - **Auditor observation (non-blocking), an orchestrator error:** the D-067 summary in the round-9 to round-17 auditor assignments said the unreproduced setup failure was "later attributed to port collisions and fixed by F-DG2-310". The records say the opposite: F-DG2-310's EADDRINUSE mechanism does not explain the D-067 symptom, and the symptom simply never recurred (D-068). The records are accurate; only the assignment text was wrong. Future assignment templates must quote decisions from `decisions.md`, not paraphrase them from memory.
-- **DG3 state: BUILDING** (P3 Mobilization and portfolio, 32 DG3-final requirements; D-078). `validate --historical --stage DG2` exit 0. The solution-architect runs first: `T-DG3-ARCH-01` (`docs/delivery/assignments/DG3/T-DG3-ARCH-01.md`). It delivers ADR-0021 onward, migrations `0020+`, the schema and permission types, a guard probe, the ERD and dictionary, the contract, the permissions matrix and `p3-work-split.md`.
-- **Next action:** when ARCH-01 returns, verify the handback against its acceptance list. Then write the implementer assignments from `p3-work-split.md`, each task sized at about 60–75 minutes, and launch them in parallel where file ownership is disjoint. Environmental residuals stay PASS-on-evidence, never BLOCKED: D-057 (online registry), D-058 (live CI), D-049 (Keycloak).
+- **DG3 state: BUILDING** (P3 Mobilization and portfolio, 32 DG3-final requirements; D-078). The implementation runs in waves. Per D-004 there are at most 4 workers at a time, and each concurrent writer has its own git worktree under `/home/user/wt/`, merged back with `--no-ff`.
+  - **Done, integrated and verified by the orchestrator:**
+    - `T-DG3-ARCH-01`: ADR-0021–0024, migrations `0020`–`0024`, contract (109 P3 operations), work split.
+    - Wave 1:
+      - `T-DG3-BE-A`: portfolio module foundation, G1 agreements + `0025`, readiness, hierarchy, dispensations, P3 problem mapping, contract seams.
+      - `T-DG3-KBE-A`: T06 scoring and the T09 restricted formula engine.
+    - `T-DG3-ARCH-02`:
+      - the `@mth/shared/calc` subpath;
+      - the `0024` audit shape fixed at source;
+      - ADR alignment;
+      - KBE-A interpretations confirmed;
+      - ownership amendments, recorded in work split §9.
+  - **Results:** unit 1123 in both locale settings, integration 638, `validate --historical --stage DG2` exit 0.
+  - **Running: wave 2** (from about 23:12Z), each in its own worktree: `T-DG3-BE-B` (initiatives, links, transitions, selection), `T-DG3-BE-C` (roadmap, deliverables, milestones, T08), `T-DG3-BE-D` (prioritization) and `T-DG3-KBE-B` (business cases).
+- **Next action:**
+  1. Verify each wave-2 handback in its worktree, commit on its branch, and merge all four into the main branch. Reconcile only the pinned contract counts, then verify the merged tree.
+  2. Wave 3: KBE-C, FE-A, FE-B, FE-C.
+  3. Wave 4: BE-E (capacity, funding, G4 evaluators, `0026`).
+  4. Then the P3 e2e journeys, the register update, the freeze and review round 1.
+- **Environmental residuals** stay PASS-on-evidence, never BLOCKED: D-057 (online registry), D-058 (live CI), D-049 (Keycloak).
 
 ## DG2 scope (P2 — diagnose, define and design)
 
