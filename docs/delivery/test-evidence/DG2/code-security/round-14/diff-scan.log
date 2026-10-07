@@ -1,0 +1,13 @@
+# command: git diff aa0a68f..ea9051b -- apps packages ':!**/*.test.*' ':!**/e2e/**' | grep '^+' | grep -nEi '<pattern>' (pattern below); diff product files: 26
+# pattern: https?://|cdn|unpkg|jsdelivr|googleapis|innerHTML|dangerously|eval\(|new Function|localStorage|sessionStorage|password|secret|token|api[_-]?key|window\.location|returnTo|console\.(log|debug)
+41:+  csrfToken = null;
+52:+  csrfToken = null;
+69:+  csrfToken = null;
+80:+import { ApiError, api, apiRequest, markSessionActive, setCsrfToken } from "./client.ts";
+107:+    if (endSessionUrl) window.location.assign(endSessionUrl);
+119:+export function sessionEndedLoginPath(returnTo: string): string {
+120:+  return `/login?returnTo=${encodeURIComponent(returnTo)}&error=session_expired`;
+159:+      return <Navigate to={`/login?returnTo=${encodeURIComponent(here)}`} replace />;
+287:+  if (signedIn) return <Navigate to={returnTo} replace />;
+405:+  // The session phase and CSRF token are module state of the API client; every rendered app starts signed out.
+# exit_status: 0 (grep matches listed above; each reviewed in code-security-reviewer.md)

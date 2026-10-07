@@ -1,0 +1,95 @@
+# command: pnpm vitest run --project unit-web apps/web/src/auth/zz-sec-r14-web-probe.test.tsx --reporter=verbose  (probe clone $TMPDIR/r14p HEAD d99de98 = candidate 9f3ca298 + this probe file; probe sha256 2b64ba542fcb5ab7; node v22.22.2; started 2026-10-07T10:13:43Z)
+
+ RUN  v3.2.4 /var/tmp/mth-run.cid3T8/claude-0/r14p
+
+ ✓ |unit-web| src/auth/zz-sec-r14-web-probe.test.tsx > W1 returnTo > refuses "//evil.example" 4ms
+ ✓ |unit-web| src/auth/zz-sec-r14-web-probe.test.tsx > W1 returnTo > refuses "///evil.example" 1ms
+ ✓ |unit-web| src/auth/zz-sec-r14-web-probe.test.tsx > W1 returnTo > refuses "/\\evil.example" 0ms
+ ✓ |unit-web| src/auth/zz-sec-r14-web-probe.test.tsx > W1 returnTo > refuses "\\\\evil.example" 0ms
+ ✓ |unit-web| src/auth/zz-sec-r14-web-probe.test.tsx > W1 returnTo > refuses "/\t/evil.example" 0ms
+ ✓ |unit-web| src/auth/zz-sec-r14-web-probe.test.tsx > W1 returnTo > refuses "/\n/evil.example" 0ms
+ ✓ |unit-web| src/auth/zz-sec-r14-web-probe.test.tsx > W1 returnTo > refuses "/ /evil.example" 0ms
+ ✓ |unit-web| src/auth/zz-sec-r14-web-probe.test.tsx > W1 returnTo > refuses "https://evil.example" 0ms
+ ✓ |unit-web| src/auth/zz-sec-r14-web-probe.test.tsx > W1 returnTo > refuses "javascript:alert(1)" 0ms
+ ✓ |unit-web| src/auth/zz-sec-r14-web-probe.test.tsx > W1 returnTo > refuses "JaVaScRiPt:alert(1)" 0ms
+ ✓ |unit-web| src/auth/zz-sec-r14-web-probe.test.tsx > W1 returnTo > refuses "data:text/html,x" 0ms
+ ✓ |unit-web| src/auth/zz-sec-r14-web-probe.test.tsx > W1 returnTo > refuses "evil.example" 0ms
+ ✓ |unit-web| src/auth/zz-sec-r14-web-probe.test.tsx > W1 returnTo > refuses "/ /evil.example" 0ms
+ ✓ |unit-web| src/auth/zz-sec-r14-web-probe.test.tsx > W1 returnTo > refuses "/ /evil.example" 0ms
+ ✓ |unit-web| src/auth/zz-sec-r14-web-probe.test.tsx > W1 returnTo > refuses "/login?returnTo=//evil.example" 0ms
+ ✓ |unit-web| src/auth/zz-sec-r14-web-probe.test.tsx > W1 returnTo > refuses "" 0ms
+ ✓ |unit-web| src/auth/zz-sec-r14-web-probe.test.tsx > W1 returnTo > the sign-in page with hostile returnTo never leaves the origin (Navigate target and OIDC href) 682ms
+ ✓ |unit-web| src/auth/zz-sec-r14-web-probe.test.tsx > W1 returnTo > signed in + hostile returnTo: the Navigate goes to '/' on the same origin 31ms
+ ✓ |unit-web| src/auth/zz-sec-r14-web-probe.test.tsx > W2/W3 non-session 4xx are not a session end > 403 forbidden on GET keeps the session and the shell 520ms
+ ✓ |unit-web| src/auth/zz-sec-r14-web-probe.test.tsx > W2/W3 non-session 4xx are not a session end > 403 csrf on GET keeps the session and the shell 550ms
+ ✓ |unit-web| src/auth/zz-sec-r14-web-probe.test.tsx > W2/W3 non-session 4xx are not a session end > 401 auth.login_failed on GET keeps the session and the shell 645ms
+stdout | src/auth/zz-sec-r14-web-probe.test.tsx > W4 request storm against an inconsistent server > GET /me 200 but other GETs 401 unauthenticated: request count over 2 s
+W4 bare=false: 4 requests in 2 s; 1 navigations; final /login
+
+ ✓ |unit-web| src/auth/zz-sec-r14-web-probe.test.tsx > W4 request storm against an inconsistent server > GET /me 200 but other GETs 401 unauthenticated: request count over 2 s 2024ms
+stdout | src/auth/zz-sec-r14-web-probe.test.tsx > W4 request storm against an inconsistent server > GET /me 200 but other GETs 401 (no problem body): request count over 2 s
+W4 bare=true: 4 requests in 2 s; 1 navigations; final /login
+
+ ✓ |unit-web| src/auth/zz-sec-r14-web-probe.test.tsx > W4 request storm against an inconsistent server > GET /me 200 but other GETs 401 (no problem body): request count over 2 s 2020ms
+stdout | src/auth/zz-sec-r14-web-probe.test.tsx > W5 cross-user cache after a session end on the sign-in page > user B never sees user A's cached transformations
+W5: phase after A's end on /login=ended; transformations queries cached=1; B sees A's row=true
+
+ × |unit-web| src/auth/zz-sec-r14-web-probe.test.tsx > W5 cross-user cache after a session end on the sign-in page > user B never sees user A's cached transformations 618ms
+   → expected true to be false // Object.is equality
+stdout | src/auth/zz-sec-r14-web-probe.test.tsx > W5b same, OIDC mode (no development sign-in): the next identity arrives through a /me re-probe > user B (signed in in another tab) never sees user A's cached transformations in this tab
+W5b: phase after A's end on /login=ended; B sees A's row=true
+
+ × |unit-web| src/auth/zz-sec-r14-web-probe.test.tsx > W5b same, OIDC mode (no development sign-in): the next identity arrives through a /me re-probe > user B (signed in in another tab) never sees user A's cached transformations in this tab 542ms
+   → expected true to be false // Object.is equality
+stdout | src/auth/zz-sec-r14-web-probe.test.tsx > W6 back button after a session-end landing > never renders the stale shell and stays bounded
+W6: requests after 3x Back 1; final /login; shell seen false,false,false
+
+ ✓ |unit-web| src/auth/zz-sec-r14-web-probe.test.tsx > W6 back button after a session-end landing > never renders the stale shell and stays bounded 993ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/auth/zz-sec-r14-web-probe.test.tsx > W5 cross-user cache after a session end on the sign-in page > user B never sees user A's cached transformations
+AssertionError: expected true to be false // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- false[39m
+[31m+ true[39m
+
+ ❯ src/auth/zz-sec-r14-web-probe.test.tsx:208:20
+    209| });
+    210| 
+    211| describe("W5b same, OIDC mode (no development sign-in): the next ident…
+       |         ^
+    212|   it("user B (signed in in another tab) never sees user A's cached tra…
+    213|     let user: "A" | "B" | null = "A";
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |unit-web| src/auth/zz-sec-r14-web-probe.test.tsx > W5b same, OIDC mode (no development sign-in): the next identity arrives through a /me re-probe > user B (signed in in another tab) never sees user A's cached transformations in this tab
+AssertionError: expected true to be false // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- false[39m
+[31m+ true[39m
+
+ ❯ src/auth/zz-sec-r14-web-probe.test.tsx:256:20
+    257| });
+    258| 
+    259| describe("W6 back button after a session-end landing", () => {
+       |         ^
+    260|   it("never renders the stale shell and stays bounded", async () => {
+    261|     let ended = false;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 24 passed (26)
+   Start at  10:13:45
+   Duration  13.98s (transform 2.45s, setup 240ms, collect 3.42s, tests 8.64s, environment 559ms, prepare 309ms)
+
+# exit_status: 1 finished 2026-10-07T10:13:59Z
