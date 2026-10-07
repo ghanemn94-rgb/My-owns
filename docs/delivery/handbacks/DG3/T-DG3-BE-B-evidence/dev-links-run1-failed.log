@@ -1,0 +1,72 @@
+port-policy: PostgreSQL listening on port 23208 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg3-be-b
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muyqn63m_bcd1e0b0 (server_encoding UTF8); applied 25 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/portfolio/links.test.ts (12 tests | 2 failed) 1361ms
+   ✓ gap links (REQ-PB-040, REQ-PB-046) > accepts 1..n links to a TOM gap and a diagnosed finding, each audited; no_gap_link clears and returns 153ms
+   ✓ gap links (REQ-PB-040, REQ-PB-046) > targetType tom_canvas_cell (TOM record) -> 422 initiative.not_tom_evidence with the exact text; nothing written 22ms
+   ✓ gap links (REQ-PB-040, REQ-PB-046) > targetType capability (TOM record) -> 422 initiative.not_tom_evidence with the exact text; nothing written 21ms
+   ✓ gap links (REQ-PB-040, REQ-PB-046) > targetType journey (TOM record) -> 422 initiative.not_tom_evidence with the exact text; nothing written 20ms
+   ✓ gap links (REQ-PB-040, REQ-PB-046) > targetType tom_dimension (TOM record) -> 422 initiative.not_tom_evidence with the exact text; nothing written 17ms
+   × gap links (REQ-PB-040, REQ-PB-046) > other target types are 422, a malformed one 400; a foreign or archived target 422; a duplicate active link 409 62ms
+     → /api/v1/transformations/01a118b2-0e1a-72c0-9e62-bcb3f84c7efe/tom-gaps: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"Unknown tom dimension code.","code":"validation.unknown_code","requestId":"01a118b2-101a-7628-b4c6-051e8977cdfd","errors":[{"pointer":"/dimensionCode","code":"validation.unknown_code","message":"No tom_dimension with this code."}]}: expected 422 to be 201 // Object.is equality
+   × gap links (REQ-PB-040, REQ-PB-046) > G3 completeness is identical with and without initiatives and gap links (TOM is not the portfolio) 133ms
+     → expected 400 to be 201 // Object.is equality
+   ✓ outcome contributions (REQ-PB-032) > needs an outcome (400 at /outcomeId) and a statement; the KPI must belong to the outcome (422) 121ms
+   ✓ outcome contributions (REQ-PB-032) > the database trigger refuses a KPI of another outcome (defence in depth) and maps to a 422 problem 14ms
+   ✓ decision links (T05 'Required decisions', one decision model) > links a canonical decision of the transformation; foreign 422, duplicate 409; removable 178ms
+   ✓ authorization on every link mutation > AUD gets 403 on the three creates and the three removes (audited denial, nothing written); a 404 for no access 150ms
+   ✓ authorization on every link mutation > links of a cancelled initiative are read-only (422 initiative.read_only) 35ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/portfolio/links.test.ts > gap links (REQ-PB-040, REQ-PB-046) > other target types are 422, a malformed one 400; a foreign or archived target 422; a duplicate active link 409
+AssertionError: /api/v1/transformations/01a118b2-0e1a-72c0-9e62-bcb3f84c7efe/tom-gaps: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"Unknown tom dimension code.","code":"validation.unknown_code","requestId":"01a118b2-101a-7628-b4c6-051e8977cdfd","errors":[{"pointer":"/dimensionCode","code":"validation.unknown_code","message":"No tom_dimension with this code."}]}: expected 422 to be 201 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 201[39m
+[31m+ 422[39m
+
+ ❯ made apps/api/test/integration/portfolio/links.test.ts:39:61
+     37| async function made(url: string, body: unknown, session = p.lead.sessi…
+     38|   const res = await send("POST", url, { session, body });
+     39|   expect(res.status, `${url}: ${JSON.stringify(res.body)}`).toBe(201);
+       |                                                             ^
+     40|   return res.body as { id: string; version: number } & Record<string, …
+     41| }
+ ❯ apps/api/test/integration/portfolio/links.test.ts:136:25
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| apps/api/test/integration/portfolio/links.test.ts > gap links (REQ-PB-040, REQ-PB-046) > G3 completeness is identical with and without initiatives and gap links (TOM is not the portfolio)
+AssertionError: expected 400 to be 201 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 201[39m
+[31m+ 400[39m
+
+ ❯ apps/api/test/integration/portfolio/links.test.ts:170:27
+    168|         body: { targetType: "tom_gap", targetId: gap },
+    169|       });
+    170|       expect(link.status).toBe(201);
+       |                           ^
+    171|     }
+    172|     expect(await g3()).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 10 passed (12)
+   Start at  23:28:01
+   Duration  4.71s (transform 861ms, setup 0ms, collect 2.01s, tests 1.36s, environment 0ms, prepare 60ms)
+

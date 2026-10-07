@@ -1,0 +1,51 @@
+port-policy: PostgreSQL listening on port 23206 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg3-be-b
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muyqlkj8_c745f566 (server_encoding UTF8); applied 25 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/portfolio/initiatives.test.ts (12 tests | 1 failed | 11 skipped) 915ms
+   ↓ create and read an Initiative through the API (REQ-S16-016, REQ-PB-045) > creates a draft with every T05 card field, INI-nn, version 1, ETag/Location and one audit event; reads it back
+   ↓ create and read an Initiative through the API (REQ-S16-016, REQ-PB-045) > codes are sequential per transformation and a minimal draft carries all three warnings (before G1: drafting is allowed)
+   ↓ create and read an Initiative through the API (REQ-S16-016, REQ-PB-045) > a caller without access to the transformation gets 404 (existence never disclosed); no session -> 401
+   ↓ create and read an Initiative through the API (REQ-S16-016, REQ-PB-045) > lists newest change first, filters by status, and pages with a cursor
+   ↓ validation (nothing written on a refusal) > 400 for schema errors (missing or blank name, unknown field, status in the body)
+   ↓ validation (nothing written on a refusal) > 422 initiative.planned_range when plannedEnd < plannedStart (create and PATCH)
+   ↓ validation (nothing written on a refusal) > 422 for a named person outside the organization and for a wave of another transformation
+   ↓ PATCH: If-Match, audit diff, warnings move, read-only once cancelled > 428 without If-Match, 409 stale, 200 with version + 1 and the field diff; setting the owner clears no_owner
+   ↓ PATCH: If-Match, audit diff, warnings move, read-only once cancelled > a cancelled initiative is read-only (archive, never delete; no DELETE route)
+   ↓ authorization on every initiative mutation > AUD gets 403 on create and PATCH, the denial is audited and nothing is written
+   ↓ authorization on every initiative mutation > the Sponsor (no initiative.edit) gets 403; the workstream lead (WL, initiative.edit) may edit
+   × authorization on every initiative mutation > BE18A: the write gate is re-checked at commit - a grant revoked while the request waits is 403, nothing written 481ms
+     → {"id":"01a118b0-f011-7555-b0b6-a9587b0b30b7","organizationId":"01a118b0-ee94-74de-b706-5d6f81db3395","transformationId":"01a118b0-efc9-71ad-bc8e-453c98b96adb","code":"INI-01","name":"Synthetic: should not commit","executiveOwnerUserId":null,"workstreamLeadUserId":null,"problemStatement":null,"objective":"Synthetic: grow roaming revenue per user.","scopeIn":null,"scopeOut":null,"financialBenefitSummary":null,"customerBenefitSummary":null,"risksSummary":null,"waveId":null,"plannedStart":null,"plannedEnd":null,"status":"draft","fundingState":"not_applicable","displayStatus":"initiative.status.draft","launchedAt":null,"launchedBy":null,"cancelledAt":null,"cancelledBy":null,"cancelReason":null,"warnings":[{"code":"initiative.deliverable_count","message":"Key deliverables: 3 to 7 are recommended (currently 0).","pointer":"/deliverables"},{"code":"initiative.no_gap_link","message":"No gap link: link the initiative to at least one TOM gap or diagnosed finding.","pointer":"/gapLinks"},{"code":"initiative.no_owner","message":"No executive owner is named.","pointer":"/executiveOwnerUserId"}],"flags":[],"version":2,"createdAt":"2026-10-07T23:26:51.403Z","createdBy":"01a118b0-efb8-737c-837e-daca32dfb04d","updatedAt":"2026-10-07T23:26:51.453Z","updatedBy":"01a118b0-efba-734e-8db8-0e8ae45e3366"}: expected 200 to be 403 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/portfolio/initiatives.test.ts > authorization on every initiative mutation > BE18A: the write gate is re-checked at commit - a grant revoked while the request waits is 403, nothing written
+AssertionError: {"id":"01a118b0-f011-7555-b0b6-a9587b0b30b7","organizationId":"01a118b0-ee94-74de-b706-5d6f81db3395","transformationId":"01a118b0-efc9-71ad-bc8e-453c98b96adb","code":"INI-01","name":"Synthetic: should not commit","executiveOwnerUserId":null,"workstreamLeadUserId":null,"problemStatement":null,"objective":"Synthetic: grow roaming revenue per user.","scopeIn":null,"scopeOut":null,"financialBenefitSummary":null,"customerBenefitSummary":null,"risksSummary":null,"waveId":null,"plannedStart":null,"plannedEnd":null,"status":"draft","fundingState":"not_applicable","displayStatus":"initiative.status.draft","launchedAt":null,"launchedBy":null,"cancelledAt":null,"cancelledBy":null,"cancelReason":null,"warnings":[{"code":"initiative.deliverable_count","message":"Key deliverables: 3 to 7 are recommended (currently 0).","pointer":"/deliverables"},{"code":"initiative.no_gap_link","message":"No gap link: link the initiative to at least one TOM gap or diagnosed finding.","pointer":"/gapLinks"},{"code":"initiative.no_owner","message":"No executive owner is named.","pointer":"/executiveOwnerUserId"}],"flags":[],"version":2,"createdAt":"2026-10-07T23:26:51.403Z","createdBy":"01a118b0-efb8-737c-837e-daca32dfb04d","updatedAt":"2026-10-07T23:26:51.453Z","updatedBy":"01a118b0-efba-734e-8db8-0e8ae45e3366"}: expected 200 to be 403 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 403[39m
+[31m+ 200[39m
+
+ ❯ apps/api/test/integration/portfolio/initiatives.test.ts:277:52
+    275|       await lockConn.query("COMMIT");
+    276|       const res = await pending;
+    277|       expect(res.status, JSON.stringify(res.body)).toBe(403);
+       |                                                    ^
+    278|       expect((await auditOfRequest(api.db, String(res.headers["x-reque…
+    279|         "authorization.denied",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)
+   Start at  23:26:46
+   Duration  5.35s (transform 1.29s, setup 0ms, collect 2.91s, tests 915ms, environment 0ms, prepare 67ms)
+
