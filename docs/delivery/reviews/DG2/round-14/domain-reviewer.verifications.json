@@ -1,0 +1,22 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG2-480",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:9f3ca298 (source ea9051b2, FE10 8cb3bb8), in EN (LTR) and AR (RTL), in a disposable stack with synthetic data.\n- My round-13 reproductions now pass unchanged. r13-session-end-ui: in-app link and reload, 4/4, with raised and default limits; each in-app link makes 1 /me where round 13 made about 130 per second. r13-ui (c): after the 401 upload refusal the user is on /login with the localized message, with no EN leak and 0 revisions. r13-ui-withdrawn: the message on /login at about 270 ms, and signing in again returns to the evidence page.\n- New r14-session-end-ui, 31/31 with raised limits and 31/31 with the product's default limits. It covers a real second tab clicking Sign out, an administrator revocation, idle expiry, absolute expiry and logout by API. Every trigger lands exactly once on /login?returnTo=/transformations&error=session_expired, with the form and the localized message and the correct dir. Each makes /me = 1 in 10 s, with 0 429s and no stale shell. A second context from the same IP signs in, and signing in again returns to /transformations.\n- Source: the session phase lives in the API client (unknown/active/ended). A 401 'unauthenticated' while active ends the session once, and a 403 never does. RequireSession disables /me, clears the cache once and navigates once. LoginPage trusts only a /me answered after it mounted.\n- Limit noted, not a defect: a tab learns that its session ended only from its next server request. A navigation served entirely from cache shows the page until then.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-14/r14-session-end-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/r14-session-end-ui-default-limits.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/r13-session-end-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/r13-session-end-ui-default-limits.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/r13-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/r13-ui-withdrawn.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/r14-session-end-ui.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-14/screens/ar-r14-session-end-revocation-raised-limits.png",
+        "docs/delivery/test-evidence/DG2/domain/round-14/screens/en-r14-session-end-other-tab-signout-raised-limits.png",
+        "docs/delivery/test-evidence/DG2/domain/round-14/env.txt"
+      ]
+    }
+  ]
+}

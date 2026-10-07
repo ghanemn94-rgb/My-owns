@@ -1,0 +1,428 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG2",
+  "round": 14,
+  "candidate_id": "sha256:9f3ca298d029f691330de1eddab806df57d5876307926b50df0312f8882b684e",
+  "source_commit": "ea9051b21b4a4192629078a31faca0a93edfb36a",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG2-T-DG2-REV-DOM-R14-domain-reviewer-20261007T100739Z-92b93a49",
+    "session_id": "92b93a49-01d8-4e08-98ef-3b5adf0365bd"
+  },
+  "implementation_author": [
+    "backend-workflow-engineer",
+    "frontend-ux-engineer",
+    "kpi-benefits-engineer",
+    "solution-architect",
+    "transformation-analyst",
+    "devops-engineer",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "domain-reviewer authored no DG2 implementation, test, register row or ADR in the reviewed candidate. I formed this verdict from my own runs in a disposable clone at d99de987 (the freeze commit on source ea9051b2). I did not open any other reviewer's round-14 record. During my run the orchestrator auto-committed the code-security reviewer's round-14 evidence (HEAD moved to 64e2082). Their file names appeared in one git diff --stat line of my candidate-and-dg1.log, but I did not read their content, and the candidate ID is unchanged. The only earlier material I reused is my own domain-review tooling from rounds 4-13, unchanged from docs/delivery/test-evidence/DG2/domain/round-13/. The with-stack scripts changed only in ports, clone path and comment. I read the implementers' session-end tests only to see what they claimed to cover."
+  },
+  "assignment": "docs/delivery/assignments/DG2/round-14/domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-PB-003",
+    "REQ-PB-012",
+    "REQ-PB-016",
+    "REQ-PB-017",
+    "REQ-PB-018",
+    "REQ-PB-023",
+    "REQ-PB-024",
+    "REQ-PB-025",
+    "REQ-PB-026",
+    "REQ-PB-029",
+    "REQ-PB-030",
+    "REQ-PB-031",
+    "REQ-PB-033",
+    "REQ-PB-034",
+    "REQ-PB-035",
+    "REQ-PB-036",
+    "REQ-PB-037",
+    "REQ-PB-038",
+    "REQ-PB-039",
+    "REQ-PB-041",
+    "REQ-PB-042",
+    "REQ-PB-043",
+    "REQ-S04-003",
+    "REQ-S04-004",
+    "REQ-S04-005",
+    "REQ-S05-003"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-R14-00-candidate",
+      "procedure": "Verify the assignment hash, HEAD against the source commit, the candidate ID (repo, and a complete disposable clone before and after the runs), and the DG1 historical gate.",
+      "command": "sha256sum docs/delivery/assignments/DG2/round-14/domain-reviewer.md; git rev-parse HEAD; git merge-base --is-ancestor ea9051b2 HEAD; node tools/gates/candidate.mjs --stage DG2; node tools/gates/validate.mjs --historical --stage DG1",
+      "environment": "/home/user/My-owns and the disposable clone $TMPDIR/review-dom-r14 at d99de987; Node 24.21.0",
+      "expected": "assignment sha256 cdc2b124...; candidate sha256:9f3ca298... over 560 files; DG1 historical PASS",
+      "actual": "- The assignment sha256 matches.\n- HEAD at start was d99de987, the freeze commit on ea9051b2. It adds only the round-14 assignments, the manifest and stages.json.\n- The candidate ID is sha256:9f3ca298d029f691330de1eddab806df57d5876307926b50df0312f8882b684e over 560 files, the same in the repo and in the clone, before and after the runs (rv/ removed first).\n- HEAD later moved to 64e2082, the orchestrator's auto-commit of code-security evidence. The candidate ID is unchanged.\n- DG1 historical: 'PASS gate DG1 (historical)', exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-14/candidate-and-dg1.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/env.txt"
+      ]
+    },
+    {
+      "id": "DOM-R14-01-typecheck",
+      "procedure": "Offline frozen install in the disposable clone, then a recursive typecheck on both Node versions.",
+      "command": "pnpm install --offline --frozen-lockfile --store-dir <copy>; pnpm -r typecheck",
+      "environment": "disposable clone; Node 22.22.2 and 24.21.0; pnpm 10.33.0; no network",
+      "expected": "exit 0 on both",
+      "actual": "Install exit 0. Its two 'WARN Failed to create bin ... mth-db' lines are expected: dist/cli.js only exists after the build. Typecheck: Node 22 exit 0, Node 24 exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-14/typecheck-node22.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/typecheck-node24.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/checks.sh"
+      ]
+    },
+    {
+      "id": "DOM-R14-02-build",
+      "procedure": "Recursive build on both Node versions.",
+      "command": "pnpm -r build",
+      "environment": "disposable clone; Node 22.22.2 and 24.21.0",
+      "expected": "exit 0 on both",
+      "actual": "exit 0 and exit 0. The only warning is Vite's chunk-size advisory.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-14/build-node22.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/build-node24.log"
+      ]
+    },
+    {
+      "id": "DOM-R14-03-lint",
+      "procedure": "Repository lint on both Node versions. The probes were copied into the clone only after these checks had finished.",
+      "command": "pnpm lint",
+      "environment": "disposable clone; Node 22.22.2 and 24.21.0",
+      "expected": "exit 0 on both",
+      "actual": "exit 0 and exit 0 (eslint --max-warnings=0).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-14/lint-node22.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/lint-node24.log"
+      ]
+    },
+    {
+      "id": "DOM-R14-04-test",
+      "procedure": "Repository test suite on both Node versions.",
+      "command": "pnpm test",
+      "environment": "disposable clone; Node 22.22.2 and 24.21.0",
+      "expected": "all suites pass, exit 0",
+      "actual": "Node 22: 47 files, 848/848, exit 0. Node 24: 47 files, 848/848, exit 0. The only warning line in either log is Fastify's FSTDEP022 deprecation notice (router options). There are no failed suites, no hook timeouts and no stderr blocks.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-14/test-node22.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/test-node24.log"
+      ]
+    },
+    {
+      "id": "DOM-R14-05-contrast",
+      "procedure": "Design-token contrast check on both Node versions.",
+      "command": "pnpm --filter @mth/design-tokens run check:contrast",
+      "environment": "disposable clone; Node 22.22.2 and 24.21.0",
+      "expected": "PASS, exit 0",
+      "actual": "'PASS contrast: 50 pairs meet WCAG AA; 3 prohibited pairs fail as documented', exit 0 on both. The three 'fails' lines are the documented prohibited pairs, which must fail.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-14/contrast-node22.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/contrast-node24.log"
+      ]
+    },
+    {
+      "id": "DOM-R14-06-source-fidelity-static",
+      "requirements": [
+        "REQ-PB-003",
+        "REQ-PB-012",
+        "REQ-PB-017",
+        "REQ-PB-023",
+        "REQ-PB-029",
+        "REQ-PB-030",
+        "REQ-PB-031",
+        "REQ-PB-038",
+        "REQ-PB-041"
+      ],
+      "procedure": "Extract the source rows straight from docs/source/playbook.md and compare them with the candidate's seeds and i18n:\n- B0009 modes (When to use / How);\n- B0018 roles and accountabilities;\n- B0023 gate names, questions and evidence;\n- B0039-B0043 scope checks;\n- B0062 canvas cells;\n- B0029 workstreams and B0056 TOM dimensions;\n- B0035 charter fields;\n- the B0037 thesis connectors.",
+      "command": "node docs/delivery/test-evidence/DG2/domain/round-13/source-fidelity.mjs (run unchanged from the clone root)",
+      "environment": "disposable clone at d99de987; Node 24.21.0; read-only",
+      "expected": "every source text is present verbatim where the product shows or seeds it",
+      "actual": "24/24 PASS, exit 0.\n- B0009: both modes verbatim.\n- B0018: all six roles. Business Owner and Workstream Lead use the singular of the plural table headers, and every accountability is verbatim.\n- B0023: G1-G6 name, question and evidence verbatim.\n- B0039-B0043: the five scope questions verbatim.\n- B0062: 10 cells. B0029: 6 rows. B0056: 10 rows.\n- B0035: 14 fields. 'Top 3-5 outcomes' is labelled 'Top outcomes', and the 3-5 count is carried by the guidance and warning text.\n- B0037: the four connectors are present.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-14/source-fidelity.log",
+        "docs/delivery/test-evidence/DG2/domain/round-13/source-fidelity.mjs"
+      ]
+    },
+    {
+      "id": "DOM-R14-07-live-scenario",
+      "requirements": [
+        "REQ-PB-003",
+        "REQ-PB-012",
+        "REQ-PB-016",
+        "REQ-PB-017",
+        "REQ-PB-018",
+        "REQ-PB-023",
+        "REQ-PB-026",
+        "REQ-PB-029",
+        "REQ-PB-030",
+        "REQ-PB-031",
+        "REQ-PB-033",
+        "REQ-PB-034",
+        "REQ-PB-035",
+        "REQ-PB-036",
+        "REQ-PB-037",
+        "REQ-PB-038",
+        "REQ-PB-041",
+        "REQ-S04-003",
+        "REQ-S04-004",
+        "REQ-S04-005"
+      ],
+      "procedure": "Live API walk on a fresh stack. Create a transformation, then go through Diagnose, Define and Design, submitting and deciding G1, G2 and G3. Probe sequencing, the charter (14 fields, thesis, scope checks, versions), Arabic text with RLM, and invisible-only refusals across fields. Then the North Star, outcomes, the good-outcome test, guardrails, the TOM dimensions and canvas, and the invariants.",
+      "command": "bash with-stack.sh runp.sh live-scenario ... (stack-run-1)",
+      "environment": "disposable PG 16 (UTF8) on 127.0.0.1:55024; API AUTH_MODE=dev on :3924 serving the Node 24 build; synthetic seed-dev users",
+      "expected": "every assertion passes",
+      "actual": "101/101 PASS, exit 0.\n- Modes: exactly two; Modular needs an entry phase.\n- Gates: G2 or G3 before G1 → 422 gate.out_of_sequence; G3 before G2 → 422.\n- G1 approved → phase define; G2 approved → design; G3 approved → mobilize.\n- The submitter cannot decide (403).\n- G1 lists six outputs. G2 with zero guardrails → 422 naming g2.guardrails. G3 is blocked while the gap matrix, capability and journey are missing.\n- North Star: one sentence (two sentences → 400); exactly one current after a refinement.\n- 'Launch new app' fails the good-outcome test with reasons. The top-outcome warning works, and a T02 target date is required.\n- Arabic charter text with RLM/ALM/isolates is stored code point for code point. Invisible-only values are refused in every field.\n- The value pool is unquantified with a null amount, not 0. Product gate codes are G1-G6 only.\nAll data is synthetic. The G1/G2/G3 decisions are demo decisions: they approve nothing real and are unrelated to DG0-DG7.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-14/live-scenario.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/stack-run-1.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/with-stack.sh",
+        "docs/delivery/test-evidence/DG2/domain/round-14/runp.sh",
+        "docs/delivery/test-evidence/DG2/domain/round-13/live-scenario.mjs"
+      ]
+    },
+    {
+      "id": "DOM-R14-08-design-registers",
+      "requirements": [
+        "REQ-PB-024",
+        "REQ-PB-025",
+        "REQ-PB-039",
+        "REQ-PB-042",
+        "REQ-PB-043",
+        "REQ-S05-003"
+      ],
+      "procedure": "Live checks of:\n- T03/T04;\n- the capability heatmap;\n- journeys and pain points;\n- TOM workshop conversion;\n- the per-dimension view.",
+      "command": "runp.sh design-registers (stack-run-1)",
+      "environment": "same stack as DOM-R14-07",
+      "expected": "every assertion passes",
+      "actual": "11/11 PASS, exit 0.\n- A capability with sourcing need 'partner' is linked to its TOM gap.\n- A journey's cycle time is kept as the decimal 3.2500 days.\n- A pain point is linked to its T01 row, with Arabic and RLM verbatim.\n- A workshop conversion needs an owner and creates an Open T04 decision (D-03).\n- GET tom-canvas/{dim} returns cell, dimension, gaps, decisions, dependencies and evidence.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-14/design-registers.log",
+        "docs/delivery/test-evidence/DG2/domain/round-13/design-registers.mjs"
+      ]
+    },
+    {
+      "id": "DOM-R14-09-regression-api",
+      "procedure": "Re-run my earlier-round API probes against this candidate:\n- r13-delta-api: D-073 commit-time authorisation, evidence and sign-in;\n- r12, r11 and r10 delta probes;\n- regress-d066 to d069: text handling.",
+      "command": "runp.sh r13-delta-api r12-delta-api r11-delta-api r10-delta-api regress-d069-api regress-d068-api regress-d067-api regress-d066-api (stack-run-1)",
+      "environment": "same stack as DOM-R14-07",
+      "expected": "all pass; no regression from the web-only D-074 change",
+      "actual": "All exit 0. r13-delta-api 11/11, r12 9/9, r11 13/13, r10 17/17, d069 18/18, d068 21/21, d067 11/11, d066 16/16.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-14/r13-delta-api.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/r12-delta-api.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/r11-delta-api.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/r10-delta-api.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/regress-d069-api.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/regress-d068-api.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/regress-d067-api.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/regress-d066-api.log"
+      ]
+    },
+    {
+      "id": "DOM-R14-10-ui-signin-evidence-charter-en-ar",
+      "requirements": [
+        "REQ-PB-003",
+        "REQ-PB-012",
+        "REQ-PB-029",
+        "REQ-PB-030",
+        "REQ-PB-025"
+      ],
+      "procedure": "Browser checks, EN (LTR) and AR (RTL):\n- r13-ui: dev sign-in, sign-out, sign-in again; upload through the dialog and download unchanged; access withdrawn before the upload is confirmed.\n- ui-upload-alert: the form-level problem is shown once; an Arabic charter with RLM and emoji is created verbatim; an evidence upload downloads byte-identical.\n- charter-blank-ui: invisible-only, default-ignorable-only and spaces-only values are refused inline with the localized message; the thesis-incomplete flag.\n- dom-shots: the verbatim B0009 'How' text.\n- walk-ui: Diagnose, Define, Design, Gates, G1 and Evidence screens.\n- r12-team-ui: B0018 previews.\n- r12-journey-steps-ui: the steps editor.\n- regress-d066/d067-ui: text handling.",
+      "command": "bash with-stack.sh runp.sh r13-ui r9-ui:ui-upload-alert charter-blank-ui dom-shots walk-ui r12-team-ui r12-journey-steps-ui regress-d067-ui regress-d066-ui (stack-run-2)",
+      "environment": "fresh disposable stack (raised rate limits); Chromium from /opt/pw-browsers; Node 24.21.0",
+      "expected": "all pass in EN and AR",
+      "actual": "All 9 probes exit 0.\n- r13-ui 11/11. This now includes (c): after the upload is refused with 401, url=/login with the localized message ('Your session ended…' / 'انتهت جلستك…'), dir ltr/rtl, no EN leak and 0 revisions. Round 13 FAILED this.\n- ui-upload-alert 8/8. Downloads are byte-identical in EN and AR.\n- charter-blank-ui 14/14. The invisible-only value is refused with the localized message in EN and AR.\n- dom-shots: the B0009 'How' text for E2E and, after selecting it, for Modular, in EN and AR.\n- walk-ui 28/28: dir, no certification claim, gate names, provisional brand.\n- r12-team-ui 10/10, r12-journey-steps-ui 6/6. Cycle time 1.5 days is kept as a decimal.\n- regress-d067-ui 8/8, regress-d066-ui 8/8.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-14/stack-run-2.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/r13-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/ui-upload-alert.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/charter-blank-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/dom-shots.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/walk-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/r12-team-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/r12-journey-steps-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/regress-d067-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/regress-d066-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/screens/en-r13-upload-access-withdrawn.png",
+        "docs/delivery/test-evidence/DG2/domain/round-14/screens/ar-r13-upload-access-withdrawn.png"
+      ]
+    },
+    {
+      "id": "DOM-R14-11-ui-withdrawn-timeline-and-shutdown",
+      "procedure": "r13-ui-withdrawn: the time course after an upload is refused because an administrator revoked the uploader's assignment, in EN and AR, then sign-in again on that page. r13-shutdown: SIGTERM during an upload leaves no partial file, and evidence works after a restart.",
+      "command": "bash with-stack.sh runp.sh r13-ui-withdrawn r13-shutdown (stack-run-3)",
+      "environment": "fresh disposable stack (raised rate limits)",
+      "expected": "the localized message on /login within 15 s in EN and AR; sign-in again works; shutdown 2/2",
+      "actual": "- r13-ui-withdrawn 5/5, exit 0. EN: on /login?…error=session_expired with the message at +270 ms. AR: at +263 ms, RTL, no EN leak, 0 revisions. Signing in again returns to the evidence page. No page errors.\n- r13-shutdown 2/2, exit 0.\n- The wrapper's final EXIT=1 comes from with-stack.sh's teardown trap. r13-shutdown had already stopped the stack's API, so 'kill $API' fails under set -e and the trap exits 1 before removing its scratch directory, which I removed by hand. Both probes exited 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-14/r13-ui-withdrawn.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/r13-shutdown.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/stack-run-3.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/env.txt"
+      ]
+    },
+    {
+      "id": "DOM-R14-12-F-DG2-480-session-end-raised-limits",
+      "procedure": "Verify F-DG2-480 in EN and AR.\n- r13-session-end-ui, unchanged from round 13: sign-out by API, then an in-app link; plus a reload control.\n- New r14-session-end-ui, five triggers while the app is open:\n  - a real second tab clicks Sign out;\n  - an administrator revokes the role assignment;\n  - idle expiry and absolute expiry (the session row's expiry set into the past with psql);\n  - logout by API.\n- For each trigger the user then clicks an in-app link. Sampled for 10 s:\n  - path, sign-in form, localized message;\n  - stale shell (user box or sign-out button);\n  - /me count, 429s and navigations to /login.\n- Then a second browser context from the same IP signs in, and the same page signs in again and must land on returnTo.",
+      "command": "bash with-stack.sh runp.sh r13-session-end-ui r14-session-end-ui r14-language-ui (stack-run-4; TAG=raised-limits)",
+      "environment": "fresh disposable stack (raised rate limits); Chromium; Node 24.21.0",
+      "expected": "each trigger: exactly one navigation to /login?returnTo=<page>&error=session_expired; form and localized message; correct dir; /me < 10 in 10 s; no 429; no stale shell; a second context signs in; signing in again returns to the page",
+      "actual": "Final run: r13-session-end-ui 4/4, r14-session-end-ui 31/31, exit 0. For every trigger in EN and AR:\n- one navigation to /login with returnTo=/transformations and error=session_expired;\n- the form and the localized message, dir ltr/rtl, no EN leak in AR;\n- /me requests in 10 s = 1, 429s = 0, no stale shell at any sample, settled in about 300 ms;\n- dev.auditor signs in from a second context;\n- signing in again lands on /transformations.\nThe reload controls make 2 /me requests. The round-13 run of this probe had looped at about 130 /me per second.\nNon-zero attempts, all my probe's mistakes:\n- stack-run-4-attempt1 / r14-session-end-ui-attempt1 (exit 1). The revocation case clicked My work, whose data was cached since sign-in. No request was made, so the tab could not learn the session had ended (/me=0, stayed on /my-work). The probe then crashed waiting for the input. Fixed: every trigger clicks Transformations, which is not yet loaded.\n- stack-run-4-attempt2 / r14-session-end-ui-attempt2 (exit 1; 29 PASS and 2 FAIL, both in ar.revocation). The EN expiry steps had expired the probe's own API session, so the AR revocation setup failed (revoke=400). Fixed: the probe signs its API user in afresh first.\nIn both attempts the r13 probe itself passed 4/4.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-14/r14-session-end-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/r13-session-end-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/stack-run-4.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/r14-session-end-ui.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-14/r14-session-end-ui-attempt1.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/r14-session-end-ui-attempt1.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-14/r14-session-end-ui-attempt2.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/r14-session-end-ui-attempt2.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-14/stack-run-4-attempt1.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/stack-run-4-attempt2.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/r13-session-end-ui-run4-attempt1.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/r13-session-end-ui-run4-attempt2.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/screens/en-r14-session-end-other-tab-signout-raised-limits.png",
+        "docs/delivery/test-evidence/DG2/domain/round-14/screens/ar-r14-session-end-revocation-raised-limits.png",
+        "docs/delivery/test-evidence/DG2/domain/round-14/screens/en-r14-session-end-idle-expiry-raised-limits.png",
+        "docs/delivery/test-evidence/DG2/domain/round-14/screens/ar-r14-session-end-absolute-expiry-raised-limits.png",
+        "docs/delivery/test-evidence/DG2/domain/round-14/env.txt"
+      ]
+    },
+    {
+      "id": "DOM-R14-13-F-DG2-480-session-end-default-limits",
+      "procedure": "The same two session-end probes on a stack with the product's DEFAULT rate limits (with-stack-default-limits.sh: AUTH_RATE_LIMIT_PER_MINUTE and RATE_LIMIT_PER_MINUTE unset, so 20 and 300). Round 13 locked out the IP here. PACE_MS=62000 waits before each trigger, so my probe's own sign-ins stay inside the 20/min auth budget.",
+      "command": "PACE_MS=62000 TAG=default-limits bash with-stack-default-limits.sh runp.sh r13-session-end-ui:r13-session-end-ui-default-limits r14-session-end-ui:r14-session-end-ui-default-limits (stack-run-5)",
+      "environment": "fresh disposable stack with default rate limits; Chromium; Node 24.21.0",
+      "expected": "as DOM-R14-12, and no 429 or IP lock-out",
+      "actual": "Final run: r13 4/4 and r14 31/31, exit 0, EXIT=0. Every trigger in EN and AR made 1 /me, got 0 429s and landed once on sign-in with the message. The second context signed in and the user returned to the page.\nAttempt 1 (stack-run-5-attempt1; r14-session-end-ui-default-limits-attempt1, exit 1):\n- The first four EN triggers passed, each with 1 /me and no 429.\n- Then en.absolute-expiry.other-context-signs-in and en.absolute-expiry.sign-in-returns FAILED, and the next sign-in crashed waiting for the form.\n- Cause: my probe's own volume against the per-IP auth budget. Each form sign-in costs two auth requests (the dev-login availability probe and the POST), the probe signs in about three times per trigger, and the r13 probe ran just before. Once the budget is exhausted, the dev form is hidden, by the pre-existing LoginPage design (dev mode only).\n- The session-end handling itself used 1 /me per trigger. Pacing removed the failure.\nThe r13 probe in attempt 1 passed 4/4.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-14/r14-session-end-ui-default-limits.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/r13-session-end-ui-default-limits.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/stack-run-5.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/with-stack-default-limits.sh",
+        "docs/delivery/test-evidence/DG2/domain/round-14/r14-session-end-ui-default-limits-attempt1.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/r14-session-end-ui-attempt3.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-14/r13-session-end-ui-default-limits-run5-attempt1.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/stack-run-5-attempt1.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/env.txt"
+      ]
+    },
+    {
+      "id": "DOM-R14-14-FE11-FE12-language-en-ar",
+      "procedure": "New r14-language-ui.\n(1) FE11: PUT /me/preferences is answered 503 by a Playwright route. Check EN→AR (dev.lead) and AR→EN (dev.office): the chosen language and direction are kept, and the notice is in that language. It is still there 2.5 s later after an in-app navigation. Switch back (also refused), then save successfully, which clears the notice.\n(2) FE12 header at 320, 768 and 1280 px in EN and AR, with the notice visible: the notice is below the header, header height and wordmark width are unchanged, and there is no horizontal overflow.\n(3) FE12 render-time translation, EN↔AR:\n- the dev-login client and server errors;\n- the Team 'Role assigned' notice;\n- the journey steps validation error.",
+      "command": "runp.sh r14-language-ui (stack-run-4)",
+      "environment": "fresh disposable stack (raised rate limits); Chromium; Node 24.21.0",
+      "expected": "all pass; no page errors or console warnings",
+      "actual": "Final run: 20/20, exit 0.\n- FE11: in both directions the notice equals common.language.notSaved of the chosen language, and html/region lang and dir follow it. Nothing flips back. A successful save clears the notice and persists preferredLocale.\n- Header: 6/6 sizes. For example, at EN 320 px the header is 93.39 px with and without the notice, the notice's top equals the header's bottom, the wordmark is 127 px before and after, and overflowX is 0.\n- Login: the invalid-username text and the server refusal ('Sign-in failed…' / 'فشل تسجيل الدخول…') switch language and direction in both directions.\n- Team: 'Role assigned: Workstream Lead…' becomes 'أُسند الدور: قائد مسار العمل…' and switches back.\n- Journey steps: 'This field is required.' and the cycle-time error become Arabic, and no English error text remains.\n- No page errors.\nNon-zero attempts, all my probe's mistakes:\n- Attempt 1 (exit 1): the header switch is inert while the modal steps editor is open, which is expected modal behaviour. The probe now dispatches the click to exercise render-time translation, which is the path a preference change applied while a dialog is open takes.\n- Attempt 2 (exit 1): the preceding probe had saved dev.lead's language as AR. The probe now resets the synthetic users' seed preferences.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-14/r14-language-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/r14-language-ui.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-14/r14-language-ui-attempt1.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/r14-language-ui-attempt1.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-14/r14-language-ui-attempt2.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/r14-language-ui-attempt2.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-14/screens/ar-r14-language-not-saved-1280.png",
+        "docs/delivery/test-evidence/DG2/domain/round-14/screens/en-r14-language-notice-320.png",
+        "docs/delivery/test-evidence/DG2/domain/round-14/screens/ar-r14-language-notice-320.png",
+        "docs/delivery/test-evidence/DG2/domain/round-14/screens/ar-r14-login-error-after-switch.png",
+        "docs/delivery/test-evidence/DG2/domain/round-14/screens/ar-r14-team-assigned-after-switch.png",
+        "docs/delivery/test-evidence/DG2/domain/round-14/screens/ar-r14-journey-steps-error-after-switch.png"
+      ]
+    },
+    {
+      "id": "DOM-R14-15-invariants",
+      "procedure": "Check the D-074 change scope and the product invariants:\n- product files changed since round 13; any non-web change;\n- i18n changes and EN/AR key parity;\n- certification or 'official' claims;\n- gate codes; float columns; the provisional brand token;\n- DG0-DG7 mentions in product source;\n- the unquantified label.",
+      "command": "see invariants.log (git diff aa0a68f ea9051b; grep over apps/web/src/i18n, packages/db/migrations, packages/design-tokens/src/tokens.json, apps/*/src, packages/*/src)",
+      "environment": "disposable clone at d99de987",
+      "expected": "D-074 web-only; invariants unchanged",
+      "actual": "- D-074 changed 26 files, all under apps/web: the web client, styles, unit tests and e2e. There are no non-web product changes.\n- i18n: only common.language.notSaved was reworded and notSavedReverted added, in EN and AR. No EN key is missing in AR.\n- The 'official', 'certif' and PMI mentions are all negations, provisional-brand notices or the 'inspired by' wording. The AR 'معتمد' hits are approval states, not certification claims.\n- Gates are G1-G6 only. There are 0 float, real or double columns.\n- #0078FF is marked provisional, and the wordmark is a provisional text wordmark (see walk-ui).\n- DG0-DG7 appear in product source only in comments asserting that product gates are separate from them. The grep also matches F-DG1/F-DG2 finding ids in comments.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-14/invariants.log"
+      ]
+    },
+    {
+      "id": "DOM-R14-16-utf8-fail-closed",
+      "procedure": "On every stack, run the migration against a SQL_ASCII database. It must be refused before anything is created (D-065), and the mth database must be UTF8.",
+      "command": "with-stack.sh / with-stack-default-limits.sh preamble",
+      "environment": "every disposable stack of this review",
+      "expected": "SQL_ASCII migrate exit 1 with 0 tables; mth encoding UTF8",
+      "actual": "Every stack log has 'mth-db: the database must use UTF8 encoding (found SQL_ASCII)', 'UTF8-PROBE sql_ascii migrate exit=1 tables_created=0' and 'mth encoding=UTF8'. That exit=1 is the intended refusal.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-14/stack-run-1.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/stack-run-5.log"
+      ]
+    },
+    {
+      "id": "DOM-R14-17-env-residuals",
+      "procedure": "Check the environmental residuals on the offline/config surface: live registry (D-057), live CI (D-058) and Keycloak (D-049).",
+      "command": "pnpm install --offline --frozen-lockfile; cmp .github/workflows/ci.yml deploy/ci/ci.yml; ls deploy; grep -rli keycloak deploy",
+      "environment": "disposable clone; no network",
+      "expected": "offline install works; the CI mirror is identical; Keycloak configuration is present. The residuals are named, not gate checks.",
+      "actual": "The offline frozen install exited 0. ci.yml and deploy/ci/ci.yml are identical. deploy/ has ci, compose, docker, images.lock.json, keycloak and scripts, and Keycloak is referenced in compose, images.lock.json, ci.yml and init-secrets.sh. Residuals, not gate checks: D-057 live registry, D-058 live CI, D-049 Keycloak. OIDC sign-in was not exercised live, because /auth/login is 404 in AUTH_MODE=dev.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-14/env-residuals.log",
+        "docs/delivery/test-evidence/DG2/domain/round-14/env.txt"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG2/domain/round-14/env.txt",
+    "docs/delivery/test-evidence/DG2/domain/round-14/candidate-and-dg1.log",
+    "docs/delivery/test-evidence/DG2/domain/round-14/r14-session-end-ui.log",
+    "docs/delivery/test-evidence/DG2/domain/round-14/r14-session-end-ui-default-limits.log",
+    "docs/delivery/test-evidence/DG2/domain/round-14/r14-language-ui.log",
+    "docs/delivery/test-evidence/DG2/domain/round-14/live-scenario.log",
+    "docs/delivery/test-evidence/DG2/domain/round-14/source-fidelity.log",
+    "docs/delivery/test-evidence/DG2/domain/round-14/invariants.log",
+    "docs/delivery/reviews/DG2/round-14/domain-reviewer.verifications.json",
+    "docs/delivery/reviews/DG2/round-14/domain-reviewer.md"
+  ],
+  "reviewed_at": "2026-10-07T10:58:00Z",
+  "summary": "PASS. F-DG2-480 is CLOSED_VERIFIED. A session that ends while the app is open lands exactly once on /login?returnTo=<page>&error=session_expired with the sign-in form and the localized message. I checked this in EN/AR for other-tab sign-out, revocation, idle expiry, absolute expiry, logout by API and the refused upload. Each made 1 /me request and no 429, with no stale shell, both with raised and with default rate limits. A second context signs in, and signing in again returns the user to their page. FE11/FE12 are verified in EN/AR. The full re-review of the 26 requirements against playbook B0009, B0018, B0023, B0029, B0035, B0037, B0039-B0043, B0056 and B0062 passed: static and live, G1 to G3 sequential, and invariants intact. Typecheck, build, lint, test (848/848) and contrast pass on Node 22 and 24. No new findings."
+}
