@@ -54,7 +54,11 @@ export function LoginPage() {
   const returnTo = safeReturnTo(params.get("returnTo"));
   const errorCode = params.get("error");
   const signedOut = params.get("signedOut") === "1";
-  const me = useMeQuery();
+  // F-DG2-480: "already signed in" is decided only from a /me answered after this page mounted, never from the cached
+  // identity of a session that may have ended (that stale value used to bounce the user straight back: a loop).
+  const [mountedAt] = useState(() => Date.now());
+  const me = useMeQuery({ refetchOnMount: "always" });
+  const signedIn = me.isSuccess && !me.isFetching && me.dataUpdatedAt >= mountedAt;
   const devLogin = useQuery({
     queryKey: ["dev-login-availability"],
     queryFn: probeDevLogin,
@@ -63,7 +67,7 @@ export function LoginPage() {
     enabled: me.isError,
   });
 
-  if (me.data) return <Navigate to={returnTo} replace />;
+  if (signedIn) return <Navigate to={returnTo} replace />;
 
   const loginHref = `/api/v1/auth/login?returnTo=${encodeURIComponent(returnTo)}`;
   const errorText = errorCode

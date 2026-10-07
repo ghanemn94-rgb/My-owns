@@ -5,7 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
-import { api, setCsrfToken } from "../api/client.ts";
+import { api, markSignedOut } from "../api/client.ts";
 import { canAny } from "../auth/permissions.ts";
 import { useMe } from "../auth/session.tsx";
 import { Icon } from "../components/Icon.tsx";
@@ -30,20 +30,28 @@ export function Shell() {
 
   const areas = NAV_AREAS.filter((a) => !a.requiresAny || canAny(me, a.requiresAny));
 
+  // Signing out here is on purpose: markSignedOut() first, so the 401s that follow are not a "session ended" event (and
+  // RequireSession does not redirect with that message), then the whole session cache is dropped. A logout that
+  // answers 401 means the session had already ended: the user is signed out either way (silent401).
   const signOut = async () => {
     setSigningOut(true);
+    let endSessionUrl: string | null = null;
+    let ok = false;
     try {
-      const result = await api.send<{ endSessionUrl: string | null }>("/api/v1/auth/logout", { method: "POST" });
-      setCsrfToken(null);
-      queryClient.clear();
-      if (result.endSessionUrl) window.location.assign(result.endSessionUrl);
-      else void navigate("/login?signedOut=1", { replace: true });
+      const result = await api.send<{ endSessionUrl: string | null }>("/api/v1/auth/logout", {
+        method: "POST",
+        silent401: true,
+      });
+      endSessionUrl = result.endSessionUrl;
+      ok = true;
     } catch {
       setSigningOut(false);
-      setCsrfToken(null);
-      queryClient.clear();
-      void navigate("/login", { replace: true });
     }
+    markSignedOut();
+    void queryClient.cancelQueries();
+    queryClient.clear();
+    if (endSessionUrl) window.location.assign(endSessionUrl);
+    else void navigate(ok ? "/login?signedOut=1" : "/login", { replace: true });
   };
 
   return (

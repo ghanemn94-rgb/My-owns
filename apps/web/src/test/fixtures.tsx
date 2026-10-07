@@ -6,7 +6,7 @@ import { StrictMode } from "react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { vi } from "vitest";
 import type { Permission } from "@mth/shared";
-import { setCsrfToken } from "../api/client.ts";
+import { resetSessionStateForTests } from "../api/client.ts";
 import type { Me, Transformation } from "../api/types.ts";
 import { AppProviders, createQueryClient } from "../app/App.tsx";
 import { routes } from "../app/router.tsx";
@@ -228,7 +228,8 @@ export function renderApp(
   path: string,
   options: { i18n?: I18n; retryDelayMs?: number; strict?: boolean | undefined } = {},
 ) {
-  setCsrfToken(null);
+  // The session phase and CSRF token are module state of the API client; every rendered app starts signed out.
+  resetSessionStateForTests();
   const i18n = options.i18n ?? createI18n("ar");
   const router = createMemoryRouter(routes, { initialEntries: [path] });
   const queryClient = createQueryClient();

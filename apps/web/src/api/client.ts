@@ -42,17 +42,82 @@ export class NetworkError extends Error {
 }
 
 let csrfToken: string | null = null;
-const unauthenticatedListeners = new Set<() => void>();
 
 /** Set from GET /api/v1/me (ADR-0005 §4). */
 export function setCsrfToken(token: string | null): void {
   csrfToken = token;
 }
 
-/** Called when any request other than the session probe answers 401 (session expired or revoked). */
-export function onUnauthenticated(listener: () => void): () => void {
-  unauthenticatedListeners.add(listener);
-  return () => unauthenticatedListeners.delete(listener);
+// ------------------------------------------------------------------------------------------------ session phase
+// F-DG2-480: one rule for "the session has ended". The phase is module state (not React Query state), so a stale cached
+// identity can never contradict it:
+//  - "unknown": no session confirmed in this tab (first load, or after signing out here);
+//  - "active": the last GET /me succeeded;
+//  - "ended": a request answered 401 `unauthenticated` while the session was active (revoked, signed out in another
+//    tab, idle/absolute expiry, the D-073 commit-time refusal). <RequireSession> reacts to it: it clears the cached
+//    identity and every session-scoped query once (claimSessionEnd) and navigates once to the sign-in page. The next
+//    successful GET /me (signing in again) makes the phase "active" again.
+// A 403 (forbidden, CSRF) is never a session end, and neither is a 401 with another code (e.g. auth.login_failed).
+export type SessionPhase = "unknown" | "active" | "ended";
+
+let sessionPhase: SessionPhase = "unknown";
+let sessionEndClaimed = false;
+const phaseListeners = new Set<() => void>();
+
+function setPhase(next: SessionPhase): void {
+  if (next === sessionPhase) return;
+  sessionPhase = next;
+  phaseListeners.forEach((l) => l());
+}
+
+export function getSessionPhase(): SessionPhase {
+  return sessionPhase;
+}
+
+/** For useSyncExternalStore. */
+export function subscribeSessionPhase(listener: () => void): () => void {
+  phaseListeners.add(listener);
+  return () => phaseListeners.delete(listener);
+}
+
+/** A GET /me succeeded: a session exists (again). */
+export function markSessionActive(): void {
+  setPhase("active");
+}
+
+/** Signed out in this tab on purpose: later 401s are expected and not a "session ended" event. */
+export function markSignedOut(): void {
+  csrfToken = null;
+  setPhase("unknown");
+}
+
+/** True for the API's "your session is not valid" answer: 401 `unauthenticated` (or a 401 without a problem body). */
+export function isSessionEndedError(err: unknown): boolean {
+  return err instanceof ApiError && err.status === 401 && (err.problem === null || err.code === "unauthenticated");
+}
+
+function endSession(): void {
+  if (sessionPhase !== "active") return; // never signed in here, already ended, or signed out on purpose
+  csrfToken = null;
+  sessionEndClaimed = false;
+  setPhase("ended");
+}
+
+/**
+ * The first caller after a session end gets true and clears the session-scoped cache; every later caller (a StrictMode
+ * re-run, a remount after the back button) gets false.
+ */
+export function claimSessionEnd(): boolean {
+  if (sessionPhase !== "ended" || sessionEndClaimed) return false;
+  sessionEndClaimed = true;
+  return true;
+}
+
+/** Test isolation only: module state survives between tests in one file. */
+export function resetSessionStateForTests(): void {
+  csrfToken = null;
+  sessionPhase = "unknown";
+  sessionEndClaimed = false;
 }
 
 export interface RequestOptions {
@@ -63,7 +128,10 @@ export interface RequestOptions {
   readonly ifMatch?: number;
   readonly idempotencyKey?: string;
   readonly signal?: AbortSignal;
-  /** Do not notify 401 listeners (used by the session probe itself). */
+  /**
+   * A 401 from this request is not a session end (the sign-in form, its contract probe and sign-out, whose 401 means
+   * "already signed out").
+   */
   readonly silent401?: boolean;
   /**
    * Raw request body (file upload, application/octet-stream). Mutually exclusive with `body`; the bytes are sent
@@ -138,8 +206,9 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   }
   if (!response.ok) {
     const problem = isProblem(parsed) ? parsed : null;
-    if (response.status === 401 && !options.silent401) unauthenticatedListeners.forEach((l) => l());
-    throw new ApiError(response.status, problem);
+    const error = new ApiError(response.status, problem);
+    if (!options.silent401 && isSessionEndedError(error)) endSession();
+    throw error;
   }
   return { data: parsed as T, status: response.status, etag: response.headers.get("ETag") };
 }

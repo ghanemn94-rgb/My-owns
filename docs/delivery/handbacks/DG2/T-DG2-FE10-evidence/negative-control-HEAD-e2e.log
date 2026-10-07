@@ -1,0 +1,122 @@
+# negative control: apps/web/e2e/session-end.spec.ts against a web build of HEAD e3b00c01cdd04ce6ccb8f1503211c97cb79e2853 sources (apps/web/src fix reverted; harness with-stack.sh as changed)
+# env E2E_PG_PORT=24570 E2E_API_PORT=3570 apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e/session-end.spec.ts --project=chromium-en --project=chromium-ar --workers=1 --reporter=list
+port-policy: PostgreSQL listening on port 24570 (attempt 1)
+e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applied 19 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 3570 (attempt 1)
+API: http://localhost:3570 (APP_BASE_URL=http://localhost:3570, PORT=3570)
+{"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 8 tests using 1 worker
+
+  ✘  1 [chromium-en] › apps/web/e2e/session-end.spec.ts:110:1 › signed out in another tab, then an in-app link: one landing on sign-in with the message (2.7s)
+  -  2 [chromium-en] › apps/web/e2e/session-end.spec.ts:141:1 › access withdrawn while the Upload dialog is open: the upload is refused, the dialog closes, one landing on sign-in
+  -  3 [chromium-en] › apps/web/e2e/session-end.spec.ts:220:1 › after a session end, another browser context from the same IP can still sign in (no 429)
+  -  4 [chromium-en] › apps/web/e2e/session-end.spec.ts:253:1 › a 403 is not a session end: a refused change keeps the user signed in where they are
+  ✘  5 [chromium-ar] › apps/web/e2e/session-end.spec.ts:110:1 › signed out in another tab, then an in-app link: one landing on sign-in with the message (2.6s)
+  -  6 [chromium-ar] › apps/web/e2e/session-end.spec.ts:141:1 › access withdrawn while the Upload dialog is open: the upload is refused, the dialog closes, one landing on sign-in
+  -  7 [chromium-ar] › apps/web/e2e/session-end.spec.ts:220:1 › after a session end, another browser context from the same IP can still sign in (no 429)
+  -  8 [chromium-ar] › apps/web/e2e/session-end.spec.ts:253:1 › a 403 is not a session end: a refused change keeps the user signed in where they are
+
+
+  1) [chromium-en] › apps/web/e2e/session-end.spec.ts:110:1 › signed out in another tab, then an in-app link: one landing on sign-in with the message 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByRole('alert').filter({ hasText: 'Your session ended. Please sign in again.' })
+    Expected: visible
+    Timeout: 1500ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 1500ms[22m
+    [2m  - waiting for getByRole('alert').filter({ hasText: 'Your session ended. Please sign in again.' })[22m
+
+
+      75 |   const message = tr(lang, "auth.errors.session_expired");
+      76 |   // Within about 1 s of the trigger (1.5 s budget for a loaded CI machine).
+    > 77 |   await expect(page.getByRole("alert").filter({ hasText: message })).toBeVisible({ timeout: 1_500 });
+         |                                                                      ^
+      78 |   await expect(page.getByLabel(devUsername(lang))).toBeVisible({ timeout: 1_500 });
+      79 |   await expect(page.locator("html")).toHaveAttribute("dir", lang === "ar" ? "rtl" : "ltr");
+      80 |   const url = new URL(page.url());
+        at expectSessionEndedSignIn (/home/user/My-owns/apps/web/e2e/session-end.spec.ts:77:70)
+        at /home/user/My-owns/apps/web/e2e/session-end.spec.ts:121:9
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-session-end-s-c8d73-on-sign-in-with-the-message-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-session-end-s-c8d73-on-sign-in-with-the-message-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-session-end-s-c8d73-on-sign-in-with-the-message-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-ar] › apps/web/e2e/session-end.spec.ts:110:1 › signed out in another tab, then an in-app link: one landing on sign-in with the message 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByRole('alert').filter({ hasText: 'انتهت جلستك. يُرجى تسجيل الدخول مجددًا.' })
+    Expected: visible
+    Timeout: 1500ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 1500ms[22m
+    [2m  - waiting for getByRole('alert').filter({ hasText: 'انتهت جلستك. يُرجى تسجيل الدخول مجددًا.' })[22m
+
+
+      75 |   const message = tr(lang, "auth.errors.session_expired");
+      76 |   // Within about 1 s of the trigger (1.5 s budget for a loaded CI machine).
+    > 77 |   await expect(page.getByRole("alert").filter({ hasText: message })).toBeVisible({ timeout: 1_500 });
+         |                                                                      ^
+      78 |   await expect(page.getByLabel(devUsername(lang))).toBeVisible({ timeout: 1_500 });
+      79 |   await expect(page.locator("html")).toHaveAttribute("dir", lang === "ar" ? "rtl" : "ltr");
+      80 |   const url = new URL(page.url());
+        at expectSessionEndedSignIn (/home/user/My-owns/apps/web/e2e/session-end.spec.ts:77:70)
+        at /home/user/My-owns/apps/web/e2e/session-end.spec.ts:121:9
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-session-end-s-c8d73-on-sign-in-with-the-message-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-session-end-s-c8d73-on-sign-in-with-the-message-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-session-end-s-c8d73-on-sign-in-with-the-message-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium-en] › apps/web/e2e/session-end.spec.ts:110:1 › signed out in another tab, then an in-app link: one landing on sign-in with the message 
+    [chromium-ar] › apps/web/e2e/session-end.spec.ts:110:1 › signed out in another tab, then an in-app link: one landing on sign-in with the message 
+  6 did not run
+---- api.log (tail)
+# exit status: 1

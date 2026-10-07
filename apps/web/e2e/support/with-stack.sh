@@ -69,8 +69,14 @@ export NODE_ENV=development AUTH_MODE=dev LOG_LEVEL=warn
 mkdir -p "$WORK/evidence"
 export EVIDENCE_STORAGE_DRIVER=filesystem EVIDENCE_STORAGE_PATH="$WORK/evidence"
 export DATABASE_OWNER_URL="$(role_url mth_owner)" DATABASE_URL="$(role_url mth_app)"
-# The journeys sign in many times in a minute; production defaults are unchanged.
-export AUTH_RATE_LIMIT_PER_MINUTE=1000 RATE_LIMIT_PER_MINUTE=10000
+# The journeys sign in many times in a minute; production defaults are unchanged. E2E_DEFAULT_RATE_LIMITS=1 runs the
+# API with the product's DEFAULT limits instead (both variables unset; session-end.spec.ts, F-DG2-480).
+if [ "${E2E_DEFAULT_RATE_LIMITS:-}" = "1" ]; then
+  unset AUTH_RATE_LIMIT_PER_MINUTE RATE_LIMIT_PER_MINUTE
+  echo "rate limits: product defaults (AUTH_RATE_LIMIT_PER_MINUTE and RATE_LIMIT_PER_MINUTE unset)"
+else
+  export AUTH_RATE_LIMIT_PER_MINUTE=1000 RATE_LIMIT_PER_MINUTE=10000
+fi
 
 node packages/db/dist/cli.js migrate
 node packages/db/dist/cli.js seed-dev
