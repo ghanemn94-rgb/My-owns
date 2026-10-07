@@ -1,0 +1,28 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG2-530",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "PASS. The fix holds for the reproduction and for the class. Verified on candidate sha256:ddaab3cc264b0e13caadcb17f0d1811eff8ad1ec9364b7ba9c03727b83350750 (source 805da3e, FE15 ac81298 + D-077) in the disposable clone $TMPDIR/r17p, on Node 22.22.2 (LANG unset) and Node 24.21.0 (LANG=C.UTF-8). The clone was deleted afterwards.\n\nREPRODUCTION FIXED:\n- My round-16 probe, rerun UNCHANGED (sha256 f0d72881), passes 4/4 on both runtimes (it was 3/4).\n- Y1: A's POST is answered 201 under generation 0, then the post-create GET /me returns B. The generation goes 0 -> 1, the path stays /transformations/new, B's header is shown, and B sees neither A's code nor A's name.\n- Y1c control: under one identity the create still lands on the created record with the draft banner.\n- Y4: a refocus sends /me first. Y5: an in-app navigation now sends /me first and shows B's header over B's rows; in round 16 A's header stayed.\n- My round-15 probe (X1-X7, sha256 bd97dbc9) passes 6/6 on both runtimes.\n- My round-14 probe passes 26/26 on both runtimes: 16 hostile returnTo values, a 403 is never a session end, one navigation, bounded /me, no stale shell.\n\nCLASS (source review of e3b2375..805da3e, 30 files, all web):\n- sessionBound.ts: begin()/beginSessionGuard() capture getSessionGeneration() at the START of the action. action.navigate and action.setQueryData re-check it at call time, so they are no-ops after any number of awaits once the generation has moved.\n- Every begin()/beginSessionGuard() call (10 + 5 sites) sits at the start of its handler, before the first await (grep, record check SEC-R17-01).\n- useSessionNavigate is used only in the two synchronous Cancel handlers.\n- Every `await refresh()` with a continuation is `if (!(await refresh())) return;`. The five unchecked ones are terminal: only setBusy(false) in finally, or a catch that has already shown its error.\n- The raw useNavigate import is left only in the 3 session transitions (session-end redirect, sign-out, sign-in), each with a justified disable comment.\n- ESLint (no-restricted-imports, no-restricted-syntax) plus a source-scanning test enforce this.\n- Navigation-time identity check: RequireSession's layout effect calls revalidateSessionIdentity() on each pathname change. apiRequest holds every GET while a check, or any /me (asIdentityProbe), is in flight, then throws SessionChangedError if the generation moved while it waited.\n\nNEW ADVERSARIAL PROBE (zz-sec-r17-web-probe.test.tsx, sha256 d75da82e), 7/7 on both runtimes:\n- Z1: the post-create /me outlasts refreshEffectivePermissions' 5 s timeout. The handler navigates under A's still-current generation, the detail GET waits for /me, B gets its own 404, and the new createdBy check refuses A's router state. 0 DOM states showed B's header with A's code or name.\n- Z2: an edit whose PATCH takes 3 s while B signs in. The navigation-time /me runs before any page GET, and 0 DOM states showed B's header with A's data. Z2c control: a same-identity slow save still updates and navigates.\n- Z4: navigating immediately after B signed in elsewhere sends /me first, and across every DOM mutation A's header is never shown above B's rows.\n- Z3: the documented D-077 residual is reproduced (B's own rows under A's header for a refetch within 2 s), and its end is asserted (the next GET after the window sends /me first).\n\nRESIDUAL ACCEPTED, not challenged: only the cookie holder's own, server-authorised data is shown, never A's data to B. A write from that view carries A's CSRF token and is refused (r15 X7). It ends at the next navigation, refocus, or GET after 2 s. Z5 (a query-string-only navigation) falls inside the same stated residual.\n\nFE10/FE13/FE14 guarantees hold (r14/r15 probes, and the unit suite 926/926 on Node 22 and 24 and under load).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-17/probe-r16-web-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/probe-r16-web-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/probe-r15-web-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/probe-r15-web-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/probe-r14-web-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/probe-r14-web-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/probe-r17-web-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/probe-r17-web-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/probes/zz-sec-r17-web-probe.test.tsx",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/probes/README.md",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/probe-runs.sh",
+        "apps/web/src/auth/sessionBound.ts",
+        "apps/web/src/api/client.ts",
+        "apps/web/src/auth/session.tsx",
+        "apps/web/src/pages/transformations/TransformationCreatePage.tsx",
+        "apps/web/src/pages/transformations/TransformationDetailPage.tsx"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,422 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG2",
+  "round": 17,
+  "candidate_id": "sha256:ddaab3cc264b0e13caadcb17f0d1811eff8ad1ec9364b7ba9c03727b83350750",
+  "source_commit": "805da3e26bed3572ca2fc32365934e57b2e84eeb",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG2-T-DG2-REV-SEC-R17-code-security-reviewer-20261007T185426Z-682880ae",
+    "session_id": "682880ae-3a11-4a01-9874-56ea8ba61652"
+  },
+  "implementation_author": ["frontend-ux-engineer", "delivery-orchestrator"],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am code-security-reviewer, session 682880ae. I authored no implementation in the DG2 scope, including FE15 ac81298 (frontend-ux-engineer) and D-077 805da3e (delivery-orchestrator). I reviewed the frozen candidate directly: the product diff e3b2375..805da3e (30 files: apps/web and eslint.config.js) and the full files it touches. I ran code only in disposable clones under $TMPDIR: $TMPDIR/review-r17 for the checks and $TMPDIR/r17p for the probes. Both were deleted afterwards. I formed this verdict before reading any other reviewer's round-17 record; none were visible to me."
+  },
+  "assignment": "docs/delivery/assignments/DG2/round-17/code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-S10-001",
+    "REQ-S16-013",
+    "REQ-S13-012",
+    "REQ-DLV-034",
+    "REQ-PB-016",
+    "REQ-PB-017",
+    "REQ-PB-018",
+    "REQ-PB-027",
+    "REQ-PB-028",
+    "REQ-PB-029"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-R17-00-candidate",
+      "procedure": "Verify the assignment hash, HEAD and the candidate ID in the working tree and in a clean clone.",
+      "command": "sha256sum docs/delivery/assignments/DG2/round-17/code-security-reviewer.md; git rev-parse HEAD; git diff --stat 805da3e..23edabf; node tools/gates/candidate.mjs --stage DG2 (working tree and $TMPDIR/review-r17)",
+      "environment": "Node 24.21.0; working tree and disposable clone $TMPDIR/review-r17 at 23edabf",
+      "expected": "Assignment sha256 56eb3a54...; candidate sha256:ddaab3cc..., 564 files; HEAD differs from 805da3e only by delivery metadata.",
+      "actual": "The assignment sha256 is 56eb3a5475810cd338ea669c1de86abc7ed5a335d63bfc48e061b40da3469da8, which matches. HEAD 23edabf = 805da3e (its parent) plus the round-17 freeze: 3 assignments, the candidate manifest and stages.json (5 files, all under docs/delivery). candidate.mjs gives sha256:ddaab3cc264b0e13caadcb17f0d1811eff8ad1ec9364b7ba9c03727b83350750 and 564 files in both the working tree and the clean clone. Exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-17/candidate-id.log"]
+    },
+    {
+      "id": "SEC-R17-01-diff-review",
+      "procedure": "Direct source review of the product change since round 16 and the full files it touches: sessionBound.ts, client.ts (identity recheck, asIdentityProbe, GET hold), queries.ts, App.tsx, session.tsx (navigation layout effect), the create/edit/detail pages, the admin pages, RecordForm/RowActions/ReasonDialog/useVersionedSave/LanguageSwitch, the P2 pages (refresh() checks) and eslint.config.js. Then grep for unguarded effects: raw setQueryData/navigate/<Navigate>/window.location, `await refresh()` without the check, the position of every begin()/beginSessionGuard()/useSessionNavigate call, other /me callers, and other effect channels (useMutation, postMessage, BroadcastChannel). Then a risky-pattern scan of the diff.",
+      "command": "git diff e3b2375..805da3e -- . ':!docs/delivery'; grep -rnE 'setQueryData|setQueriesData|\\.navigate\\(|<Navigate|window\\.location' apps/web/src; grep -rn 'await refresh()' apps/web/src; grep -rn -B4 '= begin()' apps/web/src; bash aux-checks.sh (diff-scan)",
+      "environment": "Working tree at 23edabf (read-only review); Node 22.22.2 for aux-checks.sh in $TMPDIR/review-r17",
+      "expected": "Each effect of a user action is re-checked against the generation it began under; navigations hold page GETs behind /me; no weakening of sign-in/sign-out, CSRF, returnTo or the bilingual messages; no CDN, secrets or unsafe sinks introduced.",
+      "actual": "The assignment's named range fe22d759..cbdb4f68 is the round-10->11 BE16 change, reviewed in rounds 11-16. The real since-round-16 range is e3b2375..805da3e: 30 files under apps/web plus eslint.config.js, with no apps/api, packages or worker change.\n- All 10 begin() and 5 beginSessionGuard() sites capture the generation before their first await. useSessionNavigate is used only in two synchronous Cancel handlers. action.navigate/setQueryData re-check at call time.\n- The raw useNavigate is left only in session.tsx, Shell.tsx and LoginPage.tsx (session transitions, justified disables). <Navigate> appears only in render paths (router index, session-end redirect, LoginPage signed-in redirect). safeReturnTo is unchanged.\n- The 5 unchecked `await refresh()` calls are terminal: only setBusy(false) in finally follows, or a catch that has already set its error under the original generation.\n- refreshEffectivePermissions goes through invalidateQueries(keys.me) -> fetchMe (sessionProbe). Its 5 s timeout path is covered by the createdBy check in TransformationDetailPage (probe Z1).\n- endSession, noteSessionIdentity and markSignedOut all move the generation before the reset, so GETs held behind /me are refused if it moved.\n- Writes neither wait for nor trigger the recheck, so they still carry the acting identity's CSRF token. The CSRF header code is unchanged.\n- No new user-facing strings (no i18n diff).\n- The diff scan hits only comments, setCsrfToken (moved into asIdentityProbe) and the LoginPage disable comment. No URL, CDN, eval, innerHTML or storage use was introduced.\n- There is no useMutation, postMessage or BroadcastChannel in apps/web/src.\n- Observation (not raised): the lint convention can be evaded by deliberate obfuscation (SEC-R17-19).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-17/diff-scan.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/aux-checks.sh",
+        "apps/web/src/auth/sessionBound.ts",
+        "apps/web/src/api/client.ts",
+        "apps/web/src/auth/session.tsx",
+        "eslint.config.js"
+      ]
+    },
+    {
+      "id": "SEC-R17-02-install",
+      "procedure": "Offline frozen-lockfile install in the clean clone, before and after the build.",
+      "command": "pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pstore/v10 (store copied from /root/.local/share/pnpm/store/v10)",
+      "environment": "Node 24.21.0 (install.log) and Node 22.22.2 (install2.log); $TMPDIR/review-r17 at 23edabf; no network",
+      "expected": "Exit 0, lockfile up to date.",
+      "actual": "Both installs exit 0. install.log has 4 WARN lines 'Failed to create bin ... mth-db ... dist/cli.js ENOENT': packages/db had not been built yet when the bin links were made. install2.log, run after `pnpm -r build`, links them with no WARN. This is a known first-install ordering effect, not a failure.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-17/install.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/install2.log"
+      ]
+    },
+    {
+      "id": "SEC-R17-03-typecheck",
+      "procedure": "Typecheck every workspace package.",
+      "command": "pnpm -r typecheck",
+      "environment": "Node 22.22.2; $TMPDIR/review-r17 at 23edabf",
+      "expected": "Exit 0.",
+      "actual": "Exit 0, with no errors.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-17/typecheck.log"]
+    },
+    {
+      "id": "SEC-R17-04-build",
+      "procedure": "Build every workspace package.",
+      "command": "pnpm -r build",
+      "environment": "Node 22.22.2; $TMPDIR/review-r17 at 23edabf",
+      "expected": "Exit 0.",
+      "actual": "Exit 0. The only warning line is Vite's advisory '(!) Some chunks are larger than 500 kB after minification' for apps/web. It is a bundle-size hint, present in earlier rounds, and not a failure.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-17/build.log"]
+    },
+    {
+      "id": "SEC-R17-05-lint",
+      "procedure": "Repository lint, including FE15's new no-restricted-imports/no-restricted-syntax block for apps/web/src.",
+      "command": "pnpm lint (eslint . --max-warnings=0)",
+      "environment": "Node 22.22.2; $TMPDIR/review-r17 at 23edabf",
+      "expected": "Exit 0, zero warnings.",
+      "actual": "Exit 0 with zero problems. The 3 justified eslint-disable-next-line comments are the session transitions. The new block re-includes the earlier parseFloat selector, so that rule is not lost by the override.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-17/lint.log"]
+    },
+    {
+      "id": "SEC-R17-06-openapi-lint",
+      "procedure": "Lint the OpenAPI contract and count its operations.",
+      "command": "pnpm openapi:lint; grep -c '^ *operationId:' docs/api/openapi.yaml",
+      "environment": "Node 22.22.2; $TMPDIR/review-r17 at 23edabf",
+      "expected": "Exit 0; 161 operations.",
+      "actual": "Exit 0. 161 operationIds (contract-ops.log).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-17/openapi-lint.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/contract-ops.log"
+      ]
+    },
+    {
+      "id": "SEC-R17-07-no-cdn",
+      "procedure": "Portability check: no public CDN or builder-hosted runtime dependency.",
+      "command": "pnpm check:no-cdn",
+      "environment": "Node 22.22.2; $TMPDIR/review-r17 at 23edabf",
+      "expected": "Exit 0.",
+      "actual": "Exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-17/no-cdn.log"]
+    },
+    {
+      "id": "SEC-R17-08-format",
+      "procedure": "Formatting check.",
+      "command": "pnpm format:check",
+      "environment": "Node 22.22.2; $TMPDIR/review-r17 at 23edabf",
+      "expected": "Exit 0.",
+      "actual": "Exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-17/format-check.log"]
+    },
+    {
+      "id": "SEC-R17-09-unit-node22",
+      "procedure": "Full unit suite (unit-node, unit-web, qa unit).",
+      "command": "pnpm test --reporter=verbose",
+      "environment": "Node 22.22.2; $TMPDIR/review-r17 at 23edabf",
+      "expected": "Exit 0, no failures.",
+      "actual": "50 files and 926/926 tests passed, exit 0, no failing (×) line. The one warning line is Fastify's '[FSTDEP022] FastifyWarning: The router options for constraints property access is deprecated', printed by a unit test that builds the app. It is a library deprecation notice, present in earlier rounds, and not a failure.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-17/unit-node22.log"]
+    },
+    {
+      "id": "SEC-R17-10-unit-node24",
+      "procedure": "Full unit suite on Node 24.",
+      "command": "pnpm test --reporter=verbose",
+      "environment": "Node 24.21.0; $TMPDIR/review-r17 at 23edabf",
+      "expected": "Exit 0, no failures.",
+      "actual": "50 files and 926/926 tests passed, exit 0, no failing line. The only warning is the same FSTDEP022 deprecation notice (see SEC-R17-09).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-17/unit-node24.log"]
+    },
+    {
+      "id": "SEC-R17-11-unit-under-load",
+      "procedure": "Run the full unit suite on Node 22 then Node 24 while a second clone repeatedly runs `pnpm -r build` and the commit-time-auth integration test against a disposable PostgreSQL (port 30391) as concurrent CPU load.",
+      "command": "bash docs/delivery/test-evidence/DG2/code-security/round-17/load-repro.sh",
+      "environment": "4 vCPU; loadavg 8.51 at start, 10.85 at the Node 22/24 boundary, 9.11 at the end; Node 22.22.2 and 24.21.0",
+      "expected": "Exit 0 on both runtimes under load.",
+      "actual": "Node 22: 926/926, exit 0. Node 24: 926/926, exit 0. No failing line; the only warning is FSTDEP022 (see SEC-R17-09). The load generator ran 3 build and 2 integration iterations; its own output is discarded, because it is load only.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-17/unit-under-load-node22.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/unit-under-load-node24.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/load-generator.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/load-repro.sh"
+      ]
+    },
+    {
+      "id": "SEC-R17-12-integration-run1",
+      "procedure": "Integration suite on a disposable PostgreSQL 16 cluster with LANG/LC_ALL/LC_CTYPE unset.",
+      "command": "with-pg.sh 30371 pnpm test:integration --reporter=verbose",
+      "environment": "Node 22.22.2; PostgreSQL 16 on 127.0.0.1:30371; cluster encoding SQL_ASCII, collate C; LANG unset",
+      "expected": "Exit 0, no failures.",
+      "actual": "39 files and 612/612 tests passed, exit 0, 0 failing (×) lines and 0 error-level log lines. The 'SWEEP {...FST_ERR_BAD_URL...}' stdout line is framework-errors.test.ts printing an asserted case, not an error. The cluster was deleted afterwards.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-17/integration-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/with-pg.sh"
+      ]
+    },
+    {
+      "id": "SEC-R17-13-integration-run2",
+      "procedure": "Integration suite on a disposable PostgreSQL 16 cluster with LANG=C.UTF-8.",
+      "command": "LANG=C.UTF-8 with-pg.sh 30372 pnpm test:integration --reporter=verbose",
+      "environment": "Node 24.21.0; PostgreSQL 16 on 127.0.0.1:30372; cluster encoding UTF8, collate C.UTF-8",
+      "expected": "Exit 0, no failures.",
+      "actual": "39 files and 612/612 tests passed, exit 0, 0 failing lines and 0 error-level lines. The SWEEP stdout line is the same asserted case as in run 1. The cluster was deleted afterwards.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-17/integration-run2-lang-c-utf8.log"]
+    },
+    {
+      "id": "SEC-R17-14-required-suites",
+      "procedure": "Per-file pass/fail counts of the suites the assignment names, in both locale runs.",
+      "command": "bash aux-checks.sh (requirements-suites.log)",
+      "environment": "Node 22.22.2; reads both integration logs",
+      "expected": "Each named suite present and fully passing in both runs.",
+      "actual": "Per-suite pass counts, the same in both runs, with no failing line in either:\n- contract.test.ts 18\n- media-types 21\n- connection-hygiene (BE16) 13\n- request-io (BE17) 10\n- pool-bounds (BE17) 7\n- commit-time-auth (BE18A) 8\n- shutdown-cleanup (BE18A) 4\n- blank-text 29\n- oidc 33\n- invalid-character 20\n- framework-errors 11\n- invalid-utf8 14\n- encoding 8\n- evidence 6\n- migrate 7",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-17/requirements-suites.log"]
+    },
+    {
+      "id": "SEC-R17-15-contract-migrations",
+      "procedure": "Contract coverage (161 ops) and migrations 0001-0019 in both runs.",
+      "command": "bash aux-checks.sh (contract-ops.log)",
+      "environment": "Node 22.22.2; clone at 23edabf",
+      "expected": "161 operationIds; contract route-coverage and every-operation tests pass; migrations 0001-0019 present and migrate.test passes.",
+      "actual": "161 operationIds. contract.test.ts route coverage (every governed Fastify route maps to an operation and back, and declares access) and the every-operation validation groups pass in both runs. Migrations 0001_identity_access.sql through 0019_evidence_review_separation.sql are present; migrate.test.ts passes 7/7 in both runs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-17/contract-ops.log"]
+    },
+    {
+      "id": "SEC-R17-16-aud-403-sweep",
+      "procedure": "Read-only auditor write-deny sweep over every P2 mutating operation (generated from the contract), both runs.",
+      "command": "bash aux-checks.sh (aud-403-sweep.log)",
+      "environment": "Node 22.22.2; reads both integration logs",
+      "expected": "Every case passes, none fails.",
+      "actual": "Run 1: 146 passed, 0 failed (kpi-aud-write-deny 18 of them). Run 2: the same. The '×' in the log is only in the grep pattern of the command header.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S10-001"],
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-17/aud-403-sweep.log"]
+    },
+    {
+      "id": "SEC-R17-17-prior-probes-rerun",
+      "procedure": "Rerun my round-14 (FE10/FE13), round-15 (X1-X7) and round-16 (Y1/Y1c/Y4/Y5) web probes UNCHANGED on this candidate, on Node 22 (LANG unset) and Node 24 (LANG=C.UTF-8).",
+      "command": "bash docs/delivery/test-evidence/DG2/code-security/round-17/probe-runs.sh",
+      "environment": "$TMPDIR/r17p at 23edabf with the probe files copied to apps/web/src/auth/; unit-web (jsdom); production createQueryClient via renderApp",
+      "expected": "All pass, including Y1, which failed in round 16.",
+      "actual": "All six runs exit 0 with no failing, error or warning line:\n- r14 (sha256 2b64ba54): 26/26 on both runtimes.\n- r15 (sha256 bd97dbc9): 6/6 on both.\n- r16 (sha256 f0d72881): 4/4 on both.\nY1 now passes: the requests after the POST are POST, GET /me, GET business-units; the generation goes 0 -> 1; the path stays /transformations/new; B's header is shown and B sees neither A's code nor A's name. Y4 and Y5 both send GET /me first; in Y5 the header is B's above B's rows.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-17/probe-r14-web-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/probe-r14-web-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/probe-r15-web-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/probe-r15-web-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/probe-r16-web-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/probe-r16-web-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/probe-summary.txt",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/probe-runs.sh"
+      ]
+    },
+    {
+      "id": "SEC-R17-18-class-probe",
+      "procedure": "New adversarial class probe Z1-Z6: any path where an effect of an action or request started under A lands under B after any number of awaits, plus the D-077 residual. A MutationObserver checks every DOM state, not only the final one.",
+      "command": "pnpm vitest run --project unit-web apps/web/src/auth/zz-sec-r17-web-probe.test.tsx (via probe-runs.sh)",
+      "environment": "$TMPDIR/r17p at 23edabf; Node 22.22.2 LANG unset and Node 24.21.0 LANG=C.UTF-8; resetSessionStateForTests in beforeEach",
+      "expected": "No DOM state shows B's header with A's data, or A's header with B's data, outside the documented 2 s residual. Same-identity controls still update and navigate.",
+      "actual": "7/7 pass on both runtimes, exit 0, no error lines.\n- Z1: the /me outlasts the 5 s permission-refresh timeout. The navigation runs under A's still-current generation, the detail GET is held behind /me, and B gets its own 404. 0 mixed states.\n- Z2: an edit with a 3 s PATCH. The navigation-time /me is sent before any page GET. 0 mixed states. Z2c control passes.\n- Z3: the residual is reproduced (a refetch within 2 s shows B's rows under A's header) and ends (the next GET after the window sends /me first; header B; A's rows gone).\n- Z4: an immediate navigation sends /me first. 0 states with A's header over B's rows.\n- Z5 (observation): a query-string-only navigation does not re-ask /me, which is within the documented residual.\n- Z6 (observation): page GETs are held while /me is in flight.\nDISCLOSURE: one dry run before the recorded runs failed Z2's original assertion (path stays /edit). The edit's awaits send no GET, so it navigates under A's still-current generation, which is not a stale effect. I replaced the assertion with the class invariant; probes/README.md records the history.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-17/probe-r17-web-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/probe-r17-web-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/probes/zz-sec-r17-web-probe.test.tsx",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/probes/README.md"
+      ]
+    },
+    {
+      "id": "SEC-R17-19-lint-convention-probe",
+      "procedure": "Lint a scratch page that tries to evade FE15's convention: a namespace import (RR.useNavigate), a renamed useNavigate import, a destructured setQueryData, a computed queryClient['setQueryData'], and an alias named `action`.",
+      "command": "pnpm exec eslint apps/web/src/pages/zzprobe/zz-sec-r17-lint-bypass.tsx (in $TMPDIR/r17p)",
+      "environment": "Node 22.22.2; $TMPDIR/r17p at 23edabf with the candidate's eslint.config.js",
+      "expected": "Accidental raw navigation imports are refused. This probe records which deliberately evasive forms pass.",
+      "actual": "Exit 1 BY DESIGN: the 2 errors are '5:8 * import is invalid because useNavigate and redirect from react-router are restricted' and '6:10 useNavigate import from react-router is restricted'. The three evasive cache-write forms (destructured, computed member, alias `action`) are not flagged, and the scan test's regexes would not match them either. No candidate code uses any of them (grep in SEC-R17-01). The runtime guard does not depend on lint. Recorded as a non-blocking observation, not a finding.",
+      "exit_status": 1,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-17/lint-bypass-probe.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/probes/zz-sec-r17-lint-bypass.tsx"
+      ]
+    },
+    {
+      "id": "SEC-R17-20-fe10-fe14-guarantees",
+      "procedure": "Confirm that the FE10/FE13/FE14 guarantees and the sign-in/sign-out, CSRF, returnTo and bilingual behaviour still hold after FE15.",
+      "command": "r14/r15/r16 probes (SEC-R17-17); unit suites (SEC-R17-09/10/11); source review of Shell.tsx, LoginPage.tsx, session.tsx and client.ts (SEC-R17-01)",
+      "environment": "As in the cited checks",
+      "expected": "No regression.",
+      "actual": "- r14 passes 26/26: 16 hostile returnTo values are refused, a 403 is never a session end, one navigation, bounded /me, no stale shell.\n- r15 X1-X7 pass, and r15 X7 shows a write under a foreign cookie is refused with 403 csrf.\n- The product's FE14/FE15 tests pass in en and ar (926/926), including a same-identity edit that still updates the cache and navigates, and writes that do not wait for the recheck and carry their own CSRF token.\n- Shell.tsx and LoginPage.tsx changed only by an eslint-disable comment. safeReturnTo and the CSRF header code are unchanged, and there is no i18n change.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-17/probe-r14-web-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/probe-r15-web-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/unit-node22.log"
+      ]
+    },
+    {
+      "id": "SEC-R17-21-f530-verification",
+      "procedure": "Adversarially verify F-DG2-530 on this candidate, and assess the documented D-077 residual.",
+      "command": "See SEC-R17-01, SEC-R17-17 and SEC-R17-18",
+      "environment": "As in the cited checks",
+      "expected": "No effect of an action or request started under one identity lands under another; the residual is either acceptable or reproduced as a finding.",
+      "actual": "The fix is genuine for the reproduction (Y1) and for the class (Z1, Z2, Z4, and the per-site source review). The residual is accepted: only the cookie holder's own, server-authorised data is ever shown, never A's data to B; writes are refused 403 csrf; and the residual is bounded by the next navigation, refocus, or GET after 2 s. F-DG2-530 -> CLOSED_VERIFIED (verifications sidecar).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/reviews/DG2/round-17/code-security-reviewer.verifications.json"]
+    },
+    {
+      "id": "SEC-R17-22-requirements",
+      "procedure": "Check the 10 assigned requirements against the suites that exercise them. The server code (apps/api, packages, worker) is unchanged since round 16.",
+      "command": "grep of both integration logs and unit-node22.log for the covering tests",
+      "environment": "Logs of SEC-R17-09, SEC-R17-12 and SEC-R17-13",
+      "expected": "Each requirement's acceptance is covered by passing tests in both runs.",
+      "actual": "- REQ-S10-001: aud-write-deny 146/146 per run; access-scope 18; a12-cross-scope 14.\n- REQ-S13-012: gates.test 'evidence that is only a filename (or an inaccessible link) leaves g1.diagnostic incomplete'; evidence.test 'a bare filename reference can never be verified'.\n- REQ-PB-016/017/018: gates.test 12 (G1 incomplete refusal, G2 guardrails/failing outcomes); dg2-repairs G2/G3 sequencing; unit workflows.test 'G1-G3 criterion evaluators: missing data is never complete: no charter, no value pool, no T02 row, no gap'.\n- REQ-PB-027/028: kpi-resources 23; registers 23 (2 'not measurable' and 2 'unquantified' cases).\n- REQ-PB-029: 25 charter cases.\n- REQ-S16-013: migrations 0001-0019 and migrate.test.\n- REQ-DLV-034: the above suites together.\nAll pass in both runs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S10-001",
+        "REQ-S16-013",
+        "REQ-S13-012",
+        "REQ-DLV-034",
+        "REQ-PB-016",
+        "REQ-PB-017",
+        "REQ-PB-018",
+        "REQ-PB-027",
+        "REQ-PB-028",
+        "REQ-PB-029"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-17/integration-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/integration-run2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/unit-node22.log"
+      ]
+    },
+    {
+      "id": "SEC-R17-23-validate-historical-DG0",
+      "procedure": "Gate validator against the approved DG0 gate.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG0",
+      "environment": "Node 22.22.2; working tree at 23edabf",
+      "expected": "PASS, exit 0.",
+      "actual": "'PASS gate DG0 (historical)', exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-17/validate-historical-DG0.log"]
+    },
+    {
+      "id": "SEC-R17-24-validate-historical-DG1",
+      "procedure": "Gate validator against the approved DG1 gate.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG1",
+      "environment": "Node 22.22.2; working tree at 23edabf",
+      "expected": "PASS, exit 0.",
+      "actual": "'PASS gate DG1 (historical)', exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-17/validate-historical-DG1.log"]
+    },
+    {
+      "id": "SEC-R17-25-env-live-registry",
+      "procedure": "REQ-DLV-042 AC-1 on the offline/config surface (D-057 residual).",
+      "command": "pnpm install --offline --frozen-lockfile (install.log, install2.log)",
+      "environment": "Sandbox without network",
+      "expected": "Offline frozen-lockfile install succeeds; the live-registry effect is a disclosed residual.",
+      "actual": "The offline frozen-lockfile installs exit 0 (the WARNs are explained in SEC-R17-02). Residual (D-057): an install against a live package registry cannot run here because the sandbox has no network.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/code-security/round-17/env-residuals.log",
+        "docs/delivery/test-evidence/DG2/code-security/round-17/install2.log"
+      ]
+    },
+    {
+      "id": "SEC-R17-26-env-live-ci",
+      "procedure": "REQ-DLV-025 A24 on the offline/config surface (D-058 residual).",
+      "command": "node deploy/scripts/check-ci-needs.mjs; node --test deploy/scripts/tests/check-ci-needs.test.mjs; grep the workflow steps",
+      "environment": "Node 22.22.2; $TMPDIR/review-r17 at 23edabf",
+      "expected": "The CI job graph is gated on validate.mjs --pipeline, and the workflow runs the same checks; live Actions execution is a disclosed residual.",
+      "actual": "check-ci-needs: OK, 5 jobs. delivery-gates runs validate.mjs --pipeline and every other job depends on it. Exit 0. check-ci-needs.test: 46/46 pass, exit 0. ci.yml runs format:check, lint, typecheck, build, test, openapi:lint, check:no-cdn, test:integration and e2e. Residual (D-058): GitHub Actions cannot execute in the sandbox.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-17/env-residuals.log"]
+    },
+    {
+      "id": "SEC-R17-27-env-keycloak",
+      "procedure": "OIDC against the in-process test IdP (D-049 residual for Keycloak).",
+      "command": "oidc.test.ts in both integration runs",
+      "environment": "As in SEC-R17-12/13",
+      "expected": "oidc.test passes in both runs; live Keycloak is a disclosed residual.",
+      "actual": "oidc.test.ts passes 33 and fails 0 in each run. Residual (D-049): there is no Keycloak in the sandbox.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG2/code-security/round-17/env-residuals.log"]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG2/round-17/code-security-reviewer.verifications.json",
+    "docs/delivery/reviews/DG2/round-17/code-security-reviewer.md",
+    "docs/delivery/test-evidence/DG2/code-security/round-17/all-exit-statuses.txt",
+    "docs/delivery/test-evidence/DG2/code-security/round-17/summary.txt",
+    "docs/delivery/test-evidence/DG2/code-security/round-17/probe-summary.txt",
+    "docs/delivery/test-evidence/DG2/code-security/round-17/checks.sh",
+    "docs/delivery/test-evidence/DG2/code-security/round-17/aux-checks.sh",
+    "docs/delivery/test-evidence/DG2/code-security/round-17/probe-runs.sh",
+    "docs/delivery/test-evidence/DG2/code-security/round-17/load-repro.sh",
+    "docs/delivery/test-evidence/DG2/code-security/round-17/with-pg.sh",
+    "docs/delivery/test-evidence/DG2/code-security/round-17/probes/README.md",
+    "docs/delivery/test-evidence/DG2/code-security/round-17/probes/zz-sec-r17-web-probe.test.tsx",
+    "docs/delivery/test-evidence/DG2/code-security/round-17/probes/zz-sec-r17-lint-bypass.tsx"
+  ],
+  "reviewed_at": "2026-10-07T19:20:00Z",
+  "summary": "PASS. F-DG2-530 verifies CLOSED_VERIFIED, and no new findings are raised.\n- FE15's session-bound actions capture the generation at the start of each action and re-check it at every navigate and cache write. Navigations hold page GETs behind a /me.\n- My round-16 Y1 now passes, and the round-14/15/16 probes pass unchanged on Node 22 and 24.\n- A new class probe (Z1-Z6) found no DOM state mixing identities outside the documented D-077 residual. I accept that residual: it shows only the cookie holder's own data, writes are refused 403 csrf, and it is bounded.\n- Observations (not raised): the lint convention can be evaded by deliberate obfuscation; a hung /me holds the page.\n- Every required check ran and passed:\n  - typecheck, build, lint, openapi-lint (161 ops), no-cdn and format;\n  - unit 926/926 on Node 22, on Node 24 and under load;\n  - integration 612/612 in both locale runs, with every named suite and migrations 0001-0019;\n  - the AUD-403 sweep 146/146 per run;\n  - validate --historical for DG0 and DG1.\n- The only non-zero exit, the lint-bypass probe, is by design. Every warning line is explained.\n- The assignment's named diff range fe22d759..cbdb4f68 is stale; I reviewed the actual since-round-16 range e3b2375..805da3e."
+}
