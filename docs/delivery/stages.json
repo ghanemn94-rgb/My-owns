@@ -820,7 +820,7 @@
       "id": "DG2",
       "stage": "P2",
       "name": "Diagnose define and design",
-      "state": "REVIEWING",
+      "state": "FIXING",
       "depends_on": [
         "DG1"
       ],
@@ -1208,6 +1208,11 @@
           "state": "REVIEWING",
           "at": "2026-10-07T15:42:22Z",
           "note": "FE14 integrated; D-076 recorded. 37 CLOSED_VERIFIED, 1 FIXED_PENDING_VERIFICATION, 0 OPEN. Orchestrator verification green in both locale settings (unit 892x4 per setting, integration 612, e2e 60). Candidate frozen as 0cab0a8c for gate review round 16."
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-10-07T17:25:20Z",
+          "note": "Round 16 on candidate 0cab0a8c.\n- code-security FAIL (26 checks): FE14 closes the original X3 path, but the verification of F-DG2-530 FAILED for the class. Handlers that navigate after a further await, such as TransformationCreatePage after its post-create /me, still act across an identity change: B is shown A's new record code and name in CreatedNotVisible. F-530 stays OPEN.\n- domain PASS (17 checks): it raised F-DG2-570 (Low; code-security observation Y5): within the 15 s fresh window, in-app navigations fetch under the new identity while the header and permissions stay the previous identity's.\n- qa PASS (23 checks): it raised F-DG2-580 (Low; the same create path reproduced on the real stack, EN and AR; not a regression).\nEvery failure in the cited logs was disclosed and explained. 37 CLOSED_VERIFIED, 3 OPEN (530, 570, 580; all Low, non-mandatory, one class). Round-17 repair: frontend-ux-engineer T-DG2-FE15 (generation captured per user action and re-checked after every await before any effect; identity change detected on in-app navigation)."
         }
       ]
     },

@@ -11039,7 +11039,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-15/code-security-reviewer.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "OPEN",
       "history": [
         {
           "at": "2026-10-07T13:32:00Z",
@@ -11050,10 +11050,106 @@
           "at": "2026-10-07T15:19:31Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 44f1cf0d8b1ed79954c2d77caab41831162049de"
+        },
+        {
+          "at": "2026-10-07T16:05:00Z",
+          "status": "OPEN",
+          "note": "verified by code-security-reviewer round 16: FAIL"
         }
       ],
       "fix_revision": "44f1cf0d8b1ed79954c2d77caab41831162049de",
-      "fix_summary": "FE14 44f1cf0: an identity or session generation in the web API client. Every request records the generation current when it is sent. If the session ended or the identity changed before the answer arrives, apiRequest throws a typed SessionChangedError instead of returning data (no error-level log), so no late success handler (TransformationEdit/Detail, Organizations, Users and the rest of the grep sweep) can write it into the cache, navigate on it or show it. Callers treat the error as silent: no banner, no navigation. Observation X6: on refocus or reconnect /me is revalidated before the page queries, so the header and the data always belong to the same identity. FE10/FE13 guarantees are unchanged, and a normal same-identity write still updates and navigates. Tests: session-generation.test.tsx (26, incl. the reviewer's X3/X3b and X6); negative control on HEAD."
+      "fix_summary": "FE14 44f1cf0: an identity or session generation in the web API client. Every request records the generation current when it is sent. If the session ended or the identity changed before the answer arrives, apiRequest throws a typed SessionChangedError instead of returning data (no error-level log), so no late success handler (TransformationEdit/Detail, Organizations, Users and the rest of the grep sweep) can write it into the cache, navigate on it or show it. Callers treat the error as silent: no banner, no navigation. Observation X6: on refocus or reconnect /me is revalidated before the page queries, so the header and the data always belong to the same identity. FE10/FE13 guarantees are unchanged, and a normal same-identity write still updates and navigates. Tests: session-generation.test.tsx (26, incl. the reviewer's X3/X3b and X6); negative control on HEAD.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG2-T-DG2-REV-SEC-R16-code-security-reviewer-20261007T154356Z-44d3faac",
+          "session_id": "44d3faac-56a6-4044-a791-9214cdc83057"
+        },
+        "at": "2026-10-07T16:05:00Z",
+        "result": "FAIL",
+        "evidence": [
+          "docs/delivery/test-evidence/DG2/code-security/round-16/probe-r16-web-node22-lang-unset.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-16/probe-r16-web-node24-lang-c-utf8.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-16/probe-r15-web-node22-lang-unset.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-16/probe-r15-web-node24-lang-c-utf8.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-16/probe-r14-web-node22-lang-unset.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-16/probe-r14-web-node24-lang-c-utf8.log",
+          "docs/delivery/test-evidence/DG2/code-security/round-16/probes/zz-sec-r16-web-probe.test.tsx",
+          "docs/delivery/test-evidence/DG2/code-security/round-16/probes/README.md",
+          "docs/delivery/test-evidence/DG2/code-security/round-16/probe-runs.sh",
+          "apps/web/src/pages/transformations/TransformationCreatePage.tsx",
+          "apps/web/src/pages/transformations/TransformationDetailPage.tsx",
+          "apps/web/src/api/client.ts",
+          "apps/web/src/app/App.tsx"
+        ],
+        "note": "FAIL: the fix is real for the exact reproduction, but incomplete for the class the finding's expected result and FE14's claim cover. Verified on candidate sha256:0cab0a8c (source e3b2375, FE14 44f1cf0) in the disposable clone $TMPDIR/r16p, on Node 22.22.2 (LANG unset) and Node 24.21.0 (LANG=C.UTF-8).\n\nWHAT IS FIXED (genuine):\n- My round-15 probe, rerun UNCHANGED (sha256 bd97dbc9), passes 6/6 on both runtimes. X3 (A's PATCH answered after the identity changed to B) now gives cache name undefined, B does not see A-PATCHED-SECRET, and the path stays on the edit route. X2, X3b, X4 and X7 still pass.\n- apiRequest records sessionGeneration when the request is sent and throws SessionChangedError when the generation moved, on every exit path: network failure, body read, non-OK and OK. The generation moves in endSession, markSignedOut and noteSessionIdentity BEFORE the reset hooks run. A stale 401 no longer ends the new identity's session. shouldRetry never retries a SessionChangedError.\n- X6 holds with the production QUERY_DEFAULTS (my Y4): a refocus sends GET /me first, and the header and the data are B's.\n- The round-14 probe (FE10/FE13 guarantees: 16 hostile returnTo values, a 403 is never an end, one navigation, bounded /me, no stale shell) passes 26/26 on both runtimes. The product's FE14 tests, including a same-person new session that keeps its draft and a same-identity write that still updates the cache and navigates, pass in en and ar.\n\nWHAT IS NOT (my probe Y1, zz-sec-r16-web-probe.test.tsx, sha256 f0d72881, fails by design on both runtimes):\n- FE14 gates the answer of each request. It does not gate what a success handler does after a FURTHER await.\n- TransformationCreatePage.tsx:186-201: after `await api.send(POST)` returns A's 201 under A's generation, the handler awaits invalidateQueries (:193) and refreshEffectivePermissions (:199, a GET /me).\n- If A signed out and B signed in in another tab while the POST was in flight, that very /me returns B. The generation moves 0 -> 1 and the session state is reset, but the handler goes on to navigate to /transformations/<A's new id> with A's code and name in router state (:200-201).\n- B's GET of the record answers 404. TransformationDetailPage.tsx:58-66 then renders CreatedNotVisible from the router state. Under B's header, B reads 'TR-A-NEW-SECRET · A-CREATED-SECRET-NAME was saved as a draft. It is not submitted or approved.', which is A's data, presented as B's own creation.\n- That is exactly what F-DG2-530's expected result excludes: 'No response to a request issued under a previous identity ... is written into the cache or rendered once this tab has moved to another identity'. It also contradicts FE14's claim that no late success handler can 'navigate or render'.\n- The same unguarded navigate-after-await pattern exists in TransformationEditPage.tsx:131-133, OrganizationsPage.tsx:157-159 and UsersPage.tsx:292-294. There it only navigates B to A's record id, and B's view is server-authorised.\n\nSUGGESTED FIX: capture getSessionGeneration() (or the identity key) at submit, and re-check it after every await before setQueryData, navigate or router state. Better, provide one helper, e.g. `stillSameSession(gen)`, or a wrapper around navigate that drops navigations from a previous generation. Cover it with a test of the create flow in which the post-create /me returns another identity.\n\nSEVERITY UNCHANGED: Low, not mandatory. Server-side authorisation is intact. The disclosure is the code and name of the record A just created in that tab. It needs the same narrow race as the original: a sign-out plus a sign-in in another tab of the same browser profile while the POST is in flight. The finding stays OPEN."
+      }
+    },
+    {
+      "id": "F-DG2-570",
+      "stage_id": "DG2",
+      "requirement": "REQ-S16-030",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "After the user changes in another tab, a return to the tab within the 15 s fresh window asks no GET /me. Pages the user then opens are fetched under the new identity while the header, permissions and empty-state text stay those of the previous identity until a later refocus finds /me stale (60 s)",
+      "reproduction": "Candidate 0cab0a8c (source e3b2375a, FE14 / D-076), disposable clone, PostgreSQL 16 + API AUTH_MODE=dev with synthetic seed, Chromium, Node 24.21.0. Run `with-stack.sh runp.sh r16-identity-nav` (probe docs/delivery/test-evidence/DG2/domain/round-16/r16-identity-nav.mjs, log r16-identity-nav.log, stack-run-7.log). In tab 1, A (dev.lead) opens Transformations and sees A's own transformation. Tab 2, in the same browser context, presses Sign out and signs in B (dev.nobody, no roles). Tab 1 regains focus about 4.5 s after its last /me. Nothing is stale yet, so revalidateSessionFirst (App.tsx) correctly does nothing. Without another focus event, the user then (N1) clicks A's own record, which is not cached, and (N2) 16 s later opens Transformations, which is now stale and refetches on mount. Same result in EN and AR.",
+      "expected": "The header and the data on screen belong to one identity (D-076 (2): 'the header and the data belong to the same identity'). Either the identity change is detected before data fetched under the new cookie is shown (for example, /me is revalidated when a page query returns 401/403/404 or before page refetches), or the previous identity's screen stays as it is with its own data.",
+      "actual": "N1: the header shows A ('Synthetic Transformation Lead'), and A's own record shows 'Not found: This record does not exist, or your role assignments do not allow you to see it'. N2: the header still shows A, while the Transformations list is B's (empty), rendered with A's permissions: A's create-your-first-transformation empty-state text and the 'New transformation' button. B's own view (S2b) shows the no-transformation-visible-to-you text and no create button. No GET /me is sent in either step (meRequests=0, 25.7 s after the last /me). No record of A's is shown to B, and the server stays authoritative: every request runs under B's cookie, so this is a consistency and usability residual, not a disclosure. It persists until a focus or reconnect event occurs after /me is stale (60 s). The refocus path itself works: in S2b (refocus 16 s after the last /me), /me is the first request and B's name replaces A's within one 100 ms sample (r16-identity-ui.log).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/domain/round-16/r16-identity-nav.log",
+        "docs/delivery/test-evidence/DG2/domain/round-16/r16-identity-nav.mjs",
+        "docs/delivery/test-evidence/DG2/domain/round-16/stack-run-7.log",
+        "docs/delivery/test-evidence/DG2/domain/round-16/r16-identity-ui.log",
+        "docs/delivery/test-evidence/DG2/domain/round-16/screens/en-r16-S3-tab1-fresh-nav.png",
+        "docs/delivery/test-evidence/DG2/domain/round-16/screens/ar-r16-N2-list-under-a-name.png",
+        "docs/delivery/test-evidence/DG2/domain/round-16/screens/en-r16-N2-list-under-a-name.png",
+        "docs/delivery/test-evidence/DG2/domain/round-16/screens/ar-r16-S2b-tab1-after-switch.png"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG2/round-16/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-07T16:27:33Z",
+          "status": "OPEN",
+          "note": "Raised in round 16 by domain-reviewer on candidate 0cab0a8c. Low, non-mandatory: no data disclosure, the server stays authoritative, and none of the 26 DG2 requirements under domain review is affected. It is the navigation variant of round-15 observation X6, which D-076 fixed for the refocus path."
+        }
+      ]
+    },
+    {
+      "id": "F-DG2-580",
+      "stage_id": "DG2",
+      "requirement": "REQ-S16-030",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "FE14 residual: a create whose 201 arrives before the tab learns of the new identity still shows user A's new record (code and name) to user B. The create handler's own GET /me refresh is the first to return B, and the handler then navigates B to A's record with A's code and name in the navigation state ('created, but you cannot open it')",
+      "reproduction": "Candidate 0cab0a8c (source e3b2375a), disposable clone, real built SPA + API + PostgreSQL (e2e/support/qa-stack.sh), chromium-en and chromium-ar, spec docs/delivery/test-evidence/DG2/qa/tests/round-16/e2e/dg2-qa-r16.spec.ts test R16-06. (1) Tab 1: dev.office (A) opens /transformations/new, chooses Synthetic Finance (dev.lead cannot read it) and types a unique name. (2) A clicks Create. The POST /api/v1/transformations is sent to the real API at once with A's cookie (route.fetch), so the server commits A's record (201). Only the delivery of the answer to the page is held. (3) In a second tab of the same browser, A clicks Sign out and dev.lead (B) signs in through the development form. (4) Tab 1 is NOT refocused. The held 201 is delivered. Tab 1 still holds A's session generation, so apiRequest returns the data. TransformationCreatePage then awaits refreshEffectivePermissions (F-DG1-210), whose GET /me returns B. noteSessionIdentity moves the generation and resets the cache. The handler then continues with navigate('/transformations/<A's id>', { state: { created: { id, code, name } } }). (5) B's GET of that id answers 404, and TransformationDetailPage renders CreatedNotVisible from the navigation state. Reproduced 4/4 on the candidate per run: 18-r16-06-candidate.log, 19-r16-06-unset.log and 19-r16-06-cutf8.log, each EN + AR. It also fails on FE14's parent 7905e8b (19-negative-control-pre-fe14-r16-06.log), so it is not a regression. FE14 did not close this path.",
+      "expected": "The assignment's negative check: when a write is in flight and another user signs in through another tab, the new user never sees the write's record. Once the tab's identity has changed to B, nothing of A's new record (its name or code) is shown, and B is not navigated to it. For example, the create flow could stop silently when the session generation moves during its post-create steps, or it could recheck the generation before navigating.",
+      "actual": "Under B's header ('Synthetic Transformation Lead'), tab 1 is at /transformations/<A's new id> with data-state=created-not-visible. The panel reads 'TR-0001 · Synthetic QA R16-06 created by A EN …' and the title says the transformation was created but cannot be opened. B is shown A's record code and name, and the record is presented as if B had just created it. Observer hit: 'header=Synthetic Transformation Lead | /transformations/<id> | p state=created-not-visible page'. Server-side authorization is intact: B's GET answers 404, and the API never sends A's data to B. The exposure is the name and code that A had just typed and created in that same browser. It needs a narrow race: A's create must be answered after B signs in elsewhere and before tab 1 learns of B. F-DG2-530 covers the same class and is rated Low, so this is rated Low and not mandatory. The paths R16-01 (create), R16-02 (edit) and R16-03 (archive), where tab 1 learns of B (refocus /me) before the answer arrives, pass on the candidate and fail on 7905e8b.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG2/qa/tests/round-16/e2e/dg2-qa-r16.spec.ts",
+        "docs/delivery/test-evidence/DG2/qa/round-16/18-r16-06-candidate.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/19-r16-06-unset.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/19-r16-06-cutf8.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/19-negative-control-pre-fe14-r16-06.log",
+        "docs/delivery/test-evidence/DG2/qa/round-16/screens/en-qa-r16-06-after-delivery.png",
+        "docs/delivery/test-evidence/DG2/qa/round-16/screens/ar-qa-r16-06-after-delivery.png",
+        "docs/delivery/test-evidence/DG2/qa/round-16/screens/en-qa-r16-06-candidate-b-sees-a-record.png",
+        "docs/delivery/test-evidence/DG2/qa/round-16/19-static-inspection.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG2/round-16/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-07T17:25:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG2 round 16 (T-DG2-REV-QA-R16). Probe R16-06 reproduced it on candidate 0cab0a8c, EN and AR, in both locale settings, and on FE14's parent 7905e8b. Low, not mandatory, same class as F-DG2-530."
+        }
+      ]
     }
   ]
 }
