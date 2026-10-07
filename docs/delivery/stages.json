@@ -820,7 +820,7 @@
       "id": "DG2",
       "stage": "P2",
       "name": "Diagnose define and design",
-      "state": "FIXING",
+      "state": "REVIEWING",
       "depends_on": [
         "DG1"
       ],
@@ -839,10 +839,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:23e6c0a2834d2f255410e23197864ce283979964128791cfafc3e7075c7f7bad",
-        "source_commit": "cbdb4f68a4d2f67464eb3674133d9086b2fe4e81",
-        "frozen_at": "2026-10-07T01:51:27Z",
-        "manifest_path": "docs/delivery/candidates/DG2/23e6c0a2834d2f25.manifest.json"
+        "candidate_id": "sha256:5dfecce44b9d7d4ded6ca45968c9e2686d1c011cdd7c906ba3dc9974bbdf92b8",
+        "source_commit": "8488e7a48c988f891c041dfc5dc4c638d8fb9a24",
+        "frozen_at": "2026-10-07T04:31:28Z",
+        "manifest_path": "docs/delivery/candidates/DG2/5dfecce44b9d7d4d.manifest.json"
       },
       "review_rounds": [
         {
@@ -975,6 +975,18 @@
             "qa-verifier": "docs/delivery/reviews/DG2/round-11/qa-verifier.json"
           },
           "note": "DG2 gate review round 11 on candidate 23e6c0a2 (547 files, source cbdb4f6), after the round-10 audit BLOCKED (D-071). It contains BE16 258b7e5 (a response sent before its body arrived closes the connection; bounded shutdown; requestTimeout; unmatched routes rate-limited) and the ADR-0007 §5b amendment. F-DG2-206 owner record corrected. All 28 DG2 findings CLOSED_VERIFIED. code-security reproduces the auditor defect at 7fd1a89c, raises it and verifies the BE16 fix on this candidate. Every reviewer discloses each failure in its cited logs. Orchestrator pre-review verification in both locale settings: all 32 steps exit 0, with no hidden failures in the logs. Disjoint id ranges: code-security 410-419, domain 420-429, qa 430-439."
+        },
+        {
+          "round": 12,
+          "candidate_id": "sha256:5dfecce44b9d7d4ded6ca45968c9e2686d1c011cdd7c906ba3dc9974bbdf92b8",
+          "frozen_at": "2026-10-07T04:31:28Z",
+          "source_commit": "8488e7a48c988f891c041dfc5dc4c638d8fb9a24",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG2/round-12/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG2/round-12/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG2/round-12/qa-verifier.json"
+          },
+          "note": "DG2 gate review round 12 on candidate 5dfecce4 (552 files, source 8488e7a). F-DG2-411 (no client I/O inside a database transaction; pool bounds) and F-DG2-412 (incomplete bodies are a declared 400 on every route), both fixed by BE17 eb455d3, and F-DG2-430 (pure state updaters plus a React-warning guard; FE9 644198a) are FIXED_PENDING_VERIFICATION (D-072). ADR-0007 §5b now lists the exhausted-pool 503 as out of contract by design. 29 DG2 findings CLOSED_VERIFIED. Orchestrator pre-review verification in both locale settings: all 32 steps exit 0, with no hidden failures. Disjoint id ranges: code-security 440-449, domain 450-459, qa 460-469."
         }
       ],
       "gate_record": "docs/delivery/gates/DG2.json",
@@ -1103,6 +1115,11 @@
           "state": "FIXING",
           "at": "2026-10-07T02:41:00Z",
           "note": "Round 11 on candidate 23e6c0a2: all three verdicts PASS.\n- domain (18 checks): no findings, the ninth clean pass in a row.\n- code-security (26 checks): reproduced the round-10 auditor defect at 7fd1a89c, raised it as F-DG2-410 (Medium, non-mandatory) and verified the BE16 fix (CLOSED_VERIFIED; fix_revision 258b7e5 recorded by the orchestrator after import, D-071). Its class probe found two new findings: F-DG2-411 (Medium; the evidence upload holds a pooled connection and row lock while reading the body, so N stalled uploads block every user and /readyz until requestTimeout) and F-DG2-412 (Low; an aborted JSON body is an unmapped ECONNRESET, giving an unhandled-error 500).\n- qa (28 checks): raised F-DG2-430 (Low; React setState-in-render warning from RecordForm onValuesChange inside a state updater; predates BE16).\nEvery failure in the cited logs was disclosed and explained. Totals: 29 CLOSED_VERIFIED, 3 OPEN. Round-12 repairs run in sequence: backend-workflow-engineer T-DG2-BE17 (no client I/O inside a transaction, plus pool and session timeouts; aborted bodies mapped centrally to 400), then frontend-ux-engineer T-DG2-FE9 (pure state updaters, plus a warning guard)."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-10-07T04:31:43Z",
+          "note": "Round-12 repairs integrated (D-072): BE17 eb455d3 (three-phase upload, pool bounds, central incomplete-body mapping), FE9 644198a (pure updaters, warning guard), ADR-0007 §5b 503 note. 29 CLOSED_VERIFIED, 3 FIXED_PENDING_VERIFICATION, 0 OPEN. Orchestrator verification green in both locale settings (unit 790x4 per setting, integration 600, e2e 60). Candidate frozen as 5dfecce4 for gate review round 12."
         }
       ]
     },
