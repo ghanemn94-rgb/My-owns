@@ -10483,14 +10483,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-11/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-07T02:30:00Z",
           "status": "OPEN",
           "note": "raised by code-security-reviewer DG2 round 11 (class probe requested by the assignment); pre-existing at 7fd1a89c, bounded but not removed by BE16's requestTimeout."
+        },
+        {
+          "at": "2026-10-07T03:52:46Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at eb455d35c8f4345ddc837c073ff449566de819fc"
         }
-      ]
+      ],
+      "fix_revision": "eb455d35c8f4345ddc837c073ff449566de819fc",
+      "fix_summary": "BE17 eb455d3: uploadEvidenceContent now runs in three phases. (1) A short transaction runs the same checks in the same order (read, exists, EDIT_OWN, file name, If-Match 428/409, archived, kind, body present/raw) and commits before any body byte is read. (2) The body is received into the store's .part (size limit 413, sha256 over the raw bytes, fsync, removed on failure) holding no connection. (3) A short write transaction re-authorises, locks the row FOR UPDATE, re-checks If-Match against the locked version (409 on a concurrent edit), inserts the content and audit, and finalises the object before commit (discarded on any failure). Sweep: no other handler awaits client I/O holding a connection or transaction (download already released). Pool defence in depth: connectionTimeoutMillis 10 s (bounded 503; /readyz not_ready), idle_in_transaction_session_timeout 30 s, a per-client error listener. Tests: R8 with pool = N (0 sessions idle in transaction; /me and /readyz prompt), stale If-Match during the body, slow-reader download, and a negative control."
     },
     {
       "id": "F-DG2-412",
@@ -10513,14 +10520,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG2/round-11/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-07T02:30:00Z",
           "status": "OPEN",
           "note": "raised by code-security-reviewer DG2 round 11 (class probe); the client-abort case is pre-existing at 7fd1a89c, the requestTimeout case is a new trigger of the same gap since BE16."
+        },
+        {
+          "at": "2026-10-07T03:52:46Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at eb455d35c8f4345ddc837c073ff449566de819fc"
         }
-      ]
+      ],
+      "fix_revision": "eb455d35c8f4345ddc837c073ff449566de819fc",
+      "fix_summary": "BE17 eb455d3: central isIncompleteBodyError checked first in mapError (setErrorHandler and frameworkErrors). It matches only when request.raw.complete is false, the error has no syscall, and it is Node's request abort (ECONNRESET 'aborted', Fastify rawBody statusCode 400) or ERR_STREAM_PREMATURE_CLOSE on an aborted/destroyed request. The answer is the declared 400 validation.malformed_request, logged at info; the route-local abortedBodyProblem is removed. A real database ECONNRESET (read, via a resetting TCP proxy) stays a 500 with an error log. Tests: R6a (requestTimeout) and R6d (client abort) on JSON and octet-stream, plus unit over-match cases; negative control."
     },
     {
       "id": "F-DG2-430",
