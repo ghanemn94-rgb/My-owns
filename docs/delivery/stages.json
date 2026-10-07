@@ -820,7 +820,7 @@
       "id": "DG2",
       "stage": "P2",
       "name": "Diagnose define and design",
-      "state": "VERIFYING",
+      "state": "FIXING",
       "depends_on": [
         "DG1"
       ],
@@ -1076,6 +1076,11 @@
           "state": "VERIFYING",
           "at": "2026-10-06T23:57:55Z",
           "note": "Round 10 on candidate 7fd1a89c: all three verdicts PASS with no new findings. code-security (22 checks) closed F-DG2-350 and F-DG2-351, its first clean round. domain (16 checks) passed cleanly for the eighth round in a row. qa (32 checks, both locale settings) passed with no findings. All 28 DG2 findings are CLOSED_VERIFIED by non-authors; there are zero unresolved Critical/High findings and zero unresolved mandatory violations. Release-auditor T-DG2-AUDIT-R10 runs on the same candidate."
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-10-07T00:18:45Z",
+          "note": "Release-auditor T-DG2-AUDIT-R10 on candidate 7fd1a89c: BLOCKED (docs/delivery/gates/DG2.json). Every other audit condition held: identity, DG1 historical, provenance, 28/28 findings with correct ancestry, 32/32 requirements, D-059 to D-070, residuals. Blocking conditions: (1) the code-security round-10 probe logs show a second failure that its record does not disclose (afterAll api.close() hook timeout); (2) an untriaged product defect the auditor reproduced: after an over-limit chunked evidence upload the API answers 413 but holds the connection about 65 s, and app.close()/SIGTERM stalls (pre-existing; present at 041478cb); (3) F-DG2-206 recorded owner=qa-verifier while its fix ee46813 was orchestrator-authored, so the validator saw an owner self-verification. Actions (D-071): the F-206 owner record is corrected to delivery-orchestrator (the fix author; status and verification unchanged); backend-workflow-engineer T-DG2-BE16 repairs the connection-holding class and bounds shutdown; round 11 is a full review in which code-security triages and verifies the auditor defect and the records disclose every non-zero exit; then a fresh audit."
         }
       ]
     },
