@@ -560,7 +560,10 @@ describe("every operation, validated against the contract and the zod mirrors", 
     );
     const byType = (t: string) => withBody.filter((o) => declaredRequestMediaTypes(o)!.includes(t)).length;
     // T-DG3-BE-A: + createGateDispensation, decideGateDispensation, revokeGateDispensation (JSON bodies).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([104, 103, 1]);
+    // Wave 2 of P3 (orchestrator reconciliation of the per-task pins): 90 after BE-A, + 14 JSON bodies T-DG3-BE-B,
+    // + 14 T-DG3-BE-C (waves 2, deliverables 4, milestones 3, T08 dependencies 3, dependency types 2), + 9 T-DG3-BE-D,
+    // + 7 T-DG3-KBE-B.
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([134, 133, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);
@@ -605,8 +608,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
       const live = operations.filter((o) => !P2_PENDING_OPERATIONS.has(o.operationId));
       const checked = await exerciseRateLimitSweep(limited, live);
       expect(checked).toHaveLength(live.length);
-      // 161 P1/P2 operations + the 6 BE-A P3 operations (T-DG3-BE-A); rises as the other P3 tasks route theirs.
-      expect(live.length).toBeGreaterThanOrEqual(187);
+      // 161 P1/P2 operations + the P3 operations routed so far: 6 T-DG3-BE-A, 20 T-DG3-BE-B, 25 T-DG3-BE-C,
+      // 17 T-DG3-BE-D, 11 T-DG3-KBE-B (orchestrator reconciliation); rises as the other P3 tasks route theirs.
+      expect(live.length).toBeGreaterThanOrEqual(240);
     } finally {
       await limited.close();
     }

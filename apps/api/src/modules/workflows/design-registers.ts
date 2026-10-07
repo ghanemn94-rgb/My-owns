@@ -5,6 +5,7 @@ import { sql, type ActionItemTable, type DependencyTable, type TomWorkshopTable 
 import {
   actionItemCreate,
   actionItemUpdate,
+  DEPENDENCY_TYPES,
   dependencyCreate,
   dependencyUpdate,
   tomWorkshopCreate,
@@ -66,6 +67,11 @@ const DEPENDENCY_COLS = [
   ["tomDimensionCode", "tom_dimension_code"],
   ["decisionId", "decision_id"],
 ] as const;
+// P3 (ADR-0023 §4, T-DG3-BE-C): the DG2 paths stay byte-stable. A type code outside the five DG2 values (a custom
+// T08 type) is projected as "other" there; the true code is on the T08 path (/api/v1/dependencies).
+const DG2_DEPENDENCY_TYPES: ReadonlySet<string> = new Set(DEPENDENCY_TYPES);
+const dg2DependencyType = (code: string): Dependency["dependencyType"] =>
+  DG2_DEPENDENCY_TYPES.has(code) ? (code as Dependency["dependencyType"]) : "other";
 export const toDependency = (r: DependencyRow): Dependency => ({
   ...stamps(r),
   code: r.code,
@@ -74,7 +80,7 @@ export const toDependency = (r: DependencyRow): Dependency => ({
   fromLabel: r.from_label,
   toKind: r.to_kind as Dependency["toKind"],
   toLabel: r.to_label,
-  dependencyType: r.dependency_type as Dependency["dependencyType"],
+  dependencyType: dg2DependencyType(r.dependency_type),
   neededBy: r.needed_by,
   ownerUserId: r.owner_user_id,
   status: r.status as Dependency["status"],
@@ -95,13 +101,25 @@ export const dependencyRegister: RegisterSpec<DependencyRow, Dependency> = {
   toApi: toDependency,
   insertValues: (b: z.infer<typeof dependencyCreate>) => pick(b, DEPENDENCY_COLS),
   updateValues: (b: z.infer<typeof dependencyUpdate>) => pick(b, DEPENDENCY_COLS),
-  check: async (m, ctx) => {
+  check: async (m, ctx, current) => {
+    // P3 (ADR-0023 §4, T-DG3-BE-C): a row with initiative endpoints is managed on the T08 path; a DG2 PATCH may not
+    // change its endpoint kinds.
+    if (current !== null && (current.from_initiative_id !== null || current.to_initiative_id !== null))
+      for (const side of ["from", "to"] as const)
+        if (col(m, `${side}_kind`) !== (side === "from" ? current.from_kind : current.to_kind))
+          throw ruleProblem(
+            "dependency.managed_by_t08",
+            "This dependency links initiatives and is managed on the T08 dependency map; change its endpoints there.",
+            `/${side}Kind`,
+          );
     await assertCatalogueCode(ctx.tx, "tom_dimension", col(m, "tom_dimension_code"), "/tomDimensionCode");
     await assertSameTransformation(ctx.tx, "decision", ctx.transformationId, col(m, "decision_id"), "/decisionId");
     // An endpoint of kind tom_dimension / decision names its record (P2 subset; initiatives arrive in P3).
     for (const side of ["from", "to"] as const) {
       const kind = col(m, `${side}_kind`);
       const label = col(m, `${side}_label`) ?? null;
+      // P3: an initiative endpoint set on the T08 path names its initiative by id, not by label.
+      if ((col(m, `${side}_initiative_id`) ?? null) !== null) continue;
       if ((kind === "external" || kind === "other" || kind === "initiative") && label === null)
         throw ruleProblem("dependency.endpoint_label", "Name the other side of the dependency.", `/${side}Label`);
     }
