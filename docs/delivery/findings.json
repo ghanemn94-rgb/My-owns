@@ -10557,14 +10557,21 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG2/round-11/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-07T02:25:00Z",
           "status": "OPEN",
           "note": "Raised by qa-verifier in DG2 round 11 (T-DG2-REV-QA-R11) under the round-10 audit's evidence-honesty condition: every stderr line in the cited unit logs must be explained. Low, non-mandatory; pre-existing (also in round 10); not a BE16 regression; it does not affect the verdict."
+        },
+        {
+          "at": "2026-10-07T04:12:26Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 644198a3a47c1885241b250ec5da58de8cda45fd"
         }
-      ]
+      ],
+      "fix_revision": "644198a3a47c1885241b250ec5da58de8cda45fd",
+      "fix_summary": "FE9 644198a: RecordForm's set() is now a pure updater, and committed values are reported to onValuesChange from an effect on values (once per new values object, never for the initial values). The sweep also made StepsEditor generate its row key outside the updater. A unit-web guard (test/react-warning-guard.ts, installed in test/setup.ts) fails any test that prints React's 'Cannot update a component ... while rendering a different component' or an act() warning; other console.error output passes through. Tests: EN/AR Team assign-dialog preview component tests, the guard's own tests, and an e2e step for the role preview; negative control."
     }
   ]
 }
