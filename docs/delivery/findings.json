@@ -11330,7 +11330,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG3/round-1/code-security-reviewer.json",
       "owner": "kpi-benefits-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-08T07:30:00Z",
@@ -11356,10 +11356,15 @@
           "at": "2026-10-08T12:55:00Z",
           "status": "OPEN",
           "note": "verified by code-security-reviewer round 3: FAIL"
+        },
+        {
+          "at": "2026-10-08T14:12:06Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 0fb892c891ebafee30f194f805a46a4fd5a67f3b"
         }
       ],
-      "fix_revision": "de0613850e94c06e7fafaad1a2ffca4b7cb23cd2",
-      "fix_summary": "T-DG3-KBE-E de06138 (second pass, after the round-2 verification FAILED): a spelling-independent run-time layer -- the whole formula test corpus runs again as Vitest project unit-formula-nocodegen in forks started with --disallow-code-generation-from-strings (pnpm test runs it as a second invocation), with a canary asserting the flag and EvalError for Function, eval, AsyncFunction and GeneratorFunction; static layer for engine sources: import allowlist (relative + decimal.js), process/global/globalThis/self/window (and frames/parent/top/opener/document) refused as globals and identifiers, constructor literals/templates/identifiers (class constructors excepted), prototype reflection, string-assembled computed keys and import.meta refused; the fuzz.test.ts scan mirrors them, with O2 and N1-N12 in its probe table. Per-form table: every round-2 form is refused by at least one layer; every code-generation form by all three. ADR-0024 §6 rewritten to state each layer's guarantee and the residual; CSP claim verified. Engine sources unchanged.",
+      "fix_revision": "0fb892c891ebafee30f194f805a46a4fd5a67f3b",
+      "fix_summary": "T-DG3-KBE-F 0fb892c (third pass, after the round-3 verification FAILED): every catch in the engine's import closure (validateFormula, evaluateFormula, evaluateAst, value.ts formatDecimal) rethrows EvalError, so an exercised code-generating path fails every no-codegen test that reaches it; independently, every fuzz.test.ts outcome check and every formula.test.ts rejection row refuses params.reason 'internal'; regression tests in the no-codegen project. value.ts gets the engine-source lint block with a decimal.js-only allowlist and joins the scan; engineImportClosure() pins the transitive closure (six formula sources + value.ts, decimal.js only) to the guarded set, with a lint-coverage test (unit-node). Reviewer probes: S1 and S3 now refused at run time, V1 by lint+scan, V2 by all three; the 18 earlier forms stay refused. ADR-0024 §6 corrected. Production behaviour for non-EvalError internal errors unchanged (422 formula.syntax 'internal'); integration 793/793.",
       "verification": {
         "by_role": "code-security-reviewer",
         "invocation_reference": {
