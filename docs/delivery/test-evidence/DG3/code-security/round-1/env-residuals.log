@@ -1,0 +1,34 @@
+# command: node deploy/scripts/check-ci-needs.mjs; node --test deploy/scripts/tests/check-ci-needs.test.mjs; grep -nE 'run: pnpm|validate.mjs' .github/workflows/*.yml  (fresh disposable clone $TMPDIR/review-env at ec45ef1, offline frozen install; node v22.22.2); regenerated 2026-10-08T07:27:44Z
+## live registry (D-057, REQ-DLV-042 AC-1): offline frozen-lockfile install - install2.log exit 0 (and again in this clone); the sandbox has no network.
+## 'pnpm deps:verify' needs 'npm view' against the registry by design. An attempt printed nothing for 300 s in the network-less sandbox and was killed; it is the D-057 live-registry residual, not a candidate failure. (Its late output had corrupted the first version of this log after its clone was deleted; this file is regenerated in a fresh clone.)
+## lockfile/manifest changes in the P3 diff 2376ca4..928b7654: lockfile+root+apps manifests []; packages/shared/package.json [ 1 file changed, 5 insertions(+)] (a './calc' export entry only, no dependency)
+## live CI (D-058, REQ-DLV-025 A24):
+OK: .github/workflows/ci.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it with no status-function if:; installs only via ci-install-deps.sh
+  verify <- delivery-gates
+  integration <- verify
+  e2e <- verify
+  images <- integration, e2e
+check-ci-needs exit=0
+check-ci-needs.test exit=0
+# tests 46
+# pass 46
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+.github/workflows/ci.yml:38:        run: node tools/gates/validate.mjs --pipeline
+.github/workflows/ci.yml:62:      - run: pnpm format:check
+.github/workflows/ci.yml:63:      - run: pnpm lint
+.github/workflows/ci.yml:64:      - run: pnpm typecheck
+.github/workflows/ci.yml:65:      - run: pnpm build
+.github/workflows/ci.yml:66:      - run: pnpm test
+.github/workflows/ci.yml:67:      - run: pnpm openapi:lint
+.github/workflows/ci.yml:68:      - run: pnpm check:no-cdn
+.github/workflows/ci.yml:100:      - run: pnpm -r build
+.github/workflows/ci.yml:101:      - run: pnpm test:integration
+.github/workflows/ci.yml:135:      - run: pnpm -r build
+.github/workflows/ci.yml:142:      - run: pnpm e2e --workers=1
+.github/workflows/delivery-gates.yml:40:        run: node tools/gates/validate.mjs --pipeline
+.github/workflows/delivery-gates.yml:42:        run: node tools/gates/validate.mjs --reconcile
+## Keycloak (D-049): no Keycloak in the sandbox; the OIDC flow is covered offline by apps/api/test/integration/oidc.test.ts (fake IdP) in both integration runs.
+oidc.test.ts passing tests (rerun 1): 33  (rerun 2): 33

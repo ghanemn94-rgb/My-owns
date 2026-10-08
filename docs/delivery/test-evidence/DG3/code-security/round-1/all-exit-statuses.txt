@@ -1,0 +1,26 @@
+# code-security-reviewer DG3 round-1: exit status of every step (from each log's final '# exit_status' line or the probe log's own exit line)
+candidate-id 0
+build 0
+install2 0
+typecheck 0
+lint 0
+openapi-lint 0
+no-cdn 0
+format-check 0
+unit-node22 0
+unit-node24 0
+integration-run1-lang-unset 126
+integration-run2-lang-c-utf8 126
+integration-rerun1-lang-unset 0
+integration-rerun2-lang-c-utf8 0
+validate-historical-DG2 0
+validate-historical-DG1 0
+probe-A-aud-sweep-node22-lang-unset 0
+probe-B-integrity-node22-lang-unset 0
+probe-A-B-node24-lang-c-utf8 0
+probe-C-formula-fuzz-node22 0
+probe-C-formula-fuzz-node24 0
+lint-bypass-probe part1 eslint 1 (by design: the 5 named forms refused; the 6 bypasses not)
+lint-bypass-probe part2 eslint 0 / source-scan vitest 0 (the defect: both guards pass with dynamic code in evaluate.ts)
+env-residuals check-ci-needs 0, check-ci-needs.test 0; deps:verify killed after 300 s without output (needs registry; D-057 residual)
+# integration-run1/run2 exit 126: harness error (with-pg.sh not executable), no test ran; re-run as integration-rerun1/rerun2 (exit 0).

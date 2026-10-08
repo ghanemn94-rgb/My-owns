@@ -1,0 +1,117 @@
+# static scans of the P3 product diff 2376ca4..928b7654 (clone $TMPDIR/review-p1 at ec45ef1)
+# diff stat (apps, packages):
+ 245 files changed, 59866 insertions(+), 862 deletions(-)
+## S1 openWrite calls in P3 write modules and their atCommit option (every one must carry atCommit: true; dependency-types uses refreshPrincipal):
+apps/api/src/modules/kpi/benefit-formulas.ts openWrite=3 atCommit=3 refreshPrincipal=0
+apps/api/src/modules/kpi/business-case-lines.ts openWrite=3 atCommit=3 refreshPrincipal=0
+apps/api/src/modules/kpi/business-cases.ts openWrite=4 atCommit=4 refreshPrincipal=0
+apps/api/src/modules/kpi/calculations.ts openWrite=1 atCommit=1 refreshPrincipal=0
+apps/api/src/modules/kpi/formula-versions.ts openWrite=2 atCommit=2 refreshPrincipal=0
+apps/api/src/modules/portfolio/capacity.ts openWrite=2 atCommit=2 refreshPrincipal=0
+apps/api/src/modules/portfolio/deliverables.ts openWrite=1 atCommit=1 refreshPrincipal=0
+apps/api/src/modules/portfolio/dispensations.ts openWrite=3 atCommit=3 refreshPrincipal=0
+apps/api/src/modules/portfolio/funding.ts openWrite=1 atCommit=1 refreshPrincipal=0
+apps/api/src/modules/portfolio/initiatives.ts openWrite=2 atCommit=2 refreshPrincipal=0
+apps/api/src/modules/portfolio/links.ts openWrite=1 atCommit=1 refreshPrincipal=0
+apps/api/src/modules/portfolio/milestones.ts openWrite=1 atCommit=1 refreshPrincipal=0
+apps/api/src/modules/portfolio/overrides.ts openWrite=3 atCommit=3 refreshPrincipal=0
+apps/api/src/modules/portfolio/prioritization.ts openWrite=3 atCommit=3 refreshPrincipal=0
+apps/api/src/modules/portfolio/rankings.ts openWrite=1 atCommit=1 refreshPrincipal=0
+apps/api/src/modules/portfolio/repository.ts openWrite=1 atCommit=1 refreshPrincipal=0
+apps/api/src/modules/portfolio/resource-demands.ts openWrite=1 atCommit=1 refreshPrincipal=0
+apps/api/src/modules/portfolio/scores.ts openWrite=2 atCommit=2 refreshPrincipal=0
+apps/api/src/modules/portfolio/waves.ts openWrite=2 atCommit=2 refreshPrincipal=0
+apps/api/src/modules/workflows/dependency-types.ts openWrite=0 atCommit=0 refreshPrincipal=1
+apps/api/src/modules/workflows/t08-dependencies.ts openWrite=2 atCommit=2 refreshPrincipal=0
+## S2 module import graph (apps/api/src/modules, non-test):
+access -> audit,platform
+admin -> audit,access,identity,platform
+audit -> platform
+evidence -> platform,access,audit,transformations
+identity -> audit,access,organization,platform
+jobs -> 
+kpi -> access,audit,platform,transformations
+methodology -> platform,access,audit
+organization -> platform,audit,access
+platform -> 
+portfolio -> access,audit,platform,transformations,workflows
+reporting -> platform
+transformations -> access,audit,platform,jobs,organization
+workflows -> access,audit,evidence,methodology,platform,transformations,kpi
+cycles: none
+workflows imports portfolio: false
+## S3 advisory-lock class numbers spelled anywhere (apps, packages; non-test):
+apps/api/src/modules/platform/advisory-locks.ts:6:// one write wait for an unrelated one (T-DG3-ARCH-03: prioritization and dependency-type creation both used 730222).
+apps/api/src/modules/platform/advisory-locks.ts:18:  businessUnitHierarchy: 730219,
+apps/api/src/modules/platform/advisory-locks.ts:20:  outcomeTree: 730220,
+apps/api/src/modules/platform/advisory-locks.ts:22:  dependencyGraph: 730221,
+apps/api/src/modules/platform/advisory-locks.ts:24:  prioritization: 730222,
+apps/api/src/modules/platform/advisory-locks.ts:26:  dependencyType: 730223,
+packages/db/migrations/0013_p2_direction_charter.sql:92:  outcome_lock_class CONSTANT integer := 730220;
+packages/db/migrations/0022_p3_dependency_capacity_funding.sql:85:--  1. SERIALIZE per transformation with the transaction-scoped advisory lock (730221, hashtext(transformation_id)); the
+packages/db/migrations/0022_p3_dependency_capacity_funding.sql:95:  graph_lock_class CONSTANT integer := 730221;
+packages/db/migrations/0009_business_unit_hierarchy_guard.sql:44:  hierarchy_lock_class CONSTANT integer := 730219;
+## S4 LOCK_CLASS constants:
+apps/api/src/modules/workflows/dependency-types.ts:42:export const DEPENDENCY_TYPE_LOCK_CLASS = ADVISORY_LOCK_CLASSES.dependencyType;
+apps/api/src/modules/workflows/t08-dependencies.ts:64:export const DEPENDENCY_GRAPH_LOCK_CLASS = ADVISORY_LOCK_CLASSES.dependencyGraph;
+apps/api/src/modules/portfolio/scores.ts:66:export const PRIORITIZATION_LOCK_CLASS = ADVISORY_LOCK_CLASSES.prioritization;
+apps/api/src/modules/organization/repository.ts:74:export const HIERARCHY_LOCK_CLASS = ADVISORY_LOCK_CLASSES.businessUnitHierarchy;
+## S5 float conversions on P3 decimal paths (Number(, parseFloat, toNumber):
+apps/api/src/modules/portfolio/capacity.ts:17:// never through Number(). G4 uses committed demand only (workflows/g4.ts).
+packages/shared/src/formula/index.ts:181:export function displayNumber(
+packages/shared/src/formula/index.ts:208:  const n = displayNumber(value, kind);
+## S6 dynamic code in the formula engine (non-test):
+packages/shared/src/formula/types.ts:4:// expression text is ever handed to a JavaScript evaluator (eval, Function, vm, dynamic import are forbidden in this
+## S7 remote / client I/O in P3 write modules:
+(none)
+## S8 P3 tables: guards / append-only / grants:
+roadmap_wave | p2_attach_guards('roadmap_wave', true) | append_only=0 | GRANT SELECT, INSERT, UPDATE ON roadmap_wave TO mth_app
+initiative | p2_attach_guards('initiative', true) | append_only=0 | GRANT SELECT, INSERT, UPDATE ON initiative TO mth_app
+initiative_gap_link | p2_attach_guards('initiative_gap_link', true) | append_only=0 | GRANT SELECT, INSERT, UPDATE ON initiative_gap_link TO mth_app
+initiative_outcome_contribution | p2_attach_guards('initiative_outcome_contribution', true) | append_only=0 | GRANT SELECT, INSERT, UPDATE ON initiative_outcome_contribution TO mth_app
+initiative_decision_link | p2_attach_guards('initiative_decision_link', true) | append_only=0 | GRANT SELECT, INSERT, UPDATE ON initiative_decision_link TO mth_app
+deliverable | p2_attach_guards('deliverable', true) | append_only=0 | GRANT SELECT, INSERT, UPDATE ON deliverable TO mth_app
+milestone | p2_attach_guards('milestone', true) | append_only=0 | GRANT SELECT, INSERT, UPDATE ON milestone TO mth_app
+gate_dispensation | p2_attach_guards('gate_dispensation', true) | append_only=0 | GRANT SELECT, INSERT, UPDATE ON gate_dispensation TO mth_app
+scoring_weight_set | p2_attach_guards('scoring_weight_set', true) | append_only=0 | GRANT SELECT, INSERT, UPDATE ON scoring_weight_set TO mth_app
+scoring_weight | p2_attach_guards('scoring_weight', false) | append_only=1 | GRANT SELECT, INSERT ON scoring_weight TO mth_app
+initiative_score | p2_attach_guards('initiative_score', true) | append_only=0 | GRANT SELECT, INSERT, UPDATE ON initiative_score TO mth_app
+initiative_score_result | p2_attach_guards('initiative_score_result', false) | append_only=1 | GRANT SELECT, INSERT ON initiative_score_result TO mth_app
+ranking_snapshot | p2_attach_guards('ranking_snapshot', true) | append_only=0 | GRANT SELECT, INSERT, UPDATE ON ranking_snapshot TO mth_app
+ranking_override | p2_attach_guards('ranking_override', true) | append_only=0 | GRANT SELECT, INSERT, UPDATE ON ranking_override TO mth_app
+ranking_entry | p2_attach_guards('ranking_entry', false) | append_only=1 | GRANT SELECT, INSERT ON ranking_entry TO mth_app
+dependency_type | p2_attach_guards('dependency_type', true) | append_only=0 | GRANT SELECT, INSERT, UPDATE ON dependency_type TO mth_app
+resource_role | p2_attach_guards('resource_role', true) | append_only=0 | GRANT SELECT, INSERT, UPDATE ON resource_role TO mth_app
+capacity | p2_attach_guards('capacity', true) | append_only=0 | GRANT SELECT, INSERT, UPDATE ON capacity TO mth_app
+resource_demand | p2_attach_guards('resource_demand', true) | append_only=0 | GRANT SELECT, INSERT, UPDATE ON resource_demand TO mth_app
+portfolio_selection | p2_attach_guards('portfolio_selection', true) | append_only=1 | GRANT SELECT, INSERT ON portfolio_selection TO mth_app
+funding_decision | p2_attach_guards('funding_decision', true) | append_only=1 | GRANT SELECT, INSERT ON funding_decision TO mth_app
+benefit_formula | p2_attach_guards('benefit_formula', true) | append_only=0 | GRANT SELECT, INSERT, UPDATE ON benefit_formula TO mth_app
+benefit_formula_version | p2_attach_guards('benefit_formula_version', true) | append_only=0 | GRANT SELECT, INSERT, UPDATE ON benefit_formula_version TO mth_app
+benefit_formula_variable | p2_attach_guards('benefit_formula_variable', false) | append_only=1 | GRANT SELECT, INSERT ON benefit_formula_variable TO mth_app
+benefit_calculation | p2_attach_guards('benefit_calculation', false) | append_only=1 | GRANT SELECT, INSERT ON benefit_calculation TO mth_app
+business_case | p2_attach_guards('business_case', true) | append_only=0 | GRANT SELECT, INSERT, UPDATE ON business_case TO mth_app
+business_case_line | p2_attach_guards('business_case_line', true) | append_only=0 | GRANT SELECT, INSERT, UPDATE ON business_case_line TO mth_app
+benefit_formula_example | no guards | append_only=0 | GRANT SELECT ON benefit_formula_example TO mth_app
+benefit_formula_example_variable | no guards | append_only=0 | GRANT SELECT ON benefit_formula_example_variable TO mth_app
+gate_decision_agreement | p2_attach_guards('gate_decision_agreement', false) | append_only=1 | GRANT SELECT, INSERT ON gate_decision_agreement TO mth_app
+## S9 DB separation-of-duties CHECKs:
+packages/db/migrations/0020_p3_portfolio_roadmap.sql:276:  CONSTRAINT deliverable_acceptor_not_submitter CHECK (decided_by IS NULL OR decided_by <> submitted_by),
+packages/db/migrations/0020_p3_portfolio_roadmap.sql:352:  CONSTRAINT gate_dispensation_decider_not_recorder CHECK (decided_by IS NULL OR decided_by <> recorded_by)
+packages/db/migrations/0021_p3_prioritization.sql:32:  CONSTRAINT scoring_weight_set_approver_not_proposer CHECK (approved_by IS NULL OR approved_by <> created_by)
+packages/db/migrations/0021_p3_prioritization.sql:220:  CONSTRAINT ranking_override_approver_not_proposer CHECK (decided_by IS NULL OR decided_by <> proposed_by)
+packages/db/migrations/0023_p3_business_case_formula.sql:72:  CONSTRAINT benefit_formula_version_validator_not_author CHECK (validated_by IS NULL OR validated_by <> created_by)
+packages/db/migrations/0023_p3_business_case_formula.sql:205:  CONSTRAINT business_case_validator_not_author CHECK (baseline_validated_by IS NULL OR baseline_validated_by <> created_by),
+## S10 web: raw navigate / setQueryData outside session-bound actions in the P3 web diff:
+apps/web/src/pages/portfolio/PortfolioPage.tsx:267:            if (id) navigate(`${base}/initiatives/${id}`);
+## S11 dependency manifests/lockfile changed by P3:
+ packages/shared/package.json | 5 +++++
+ 1 file changed, 5 insertions(+)
+## S12 p3-pending lists:
+apps/api/test/support/p3-pending-be-a.ts:export const P3_PENDING_BE_A: readonly string[] = [];
+apps/api/test/support/p3-pending-be-b.ts:export const P3_PENDING_BE_B: readonly string[] = [];
+apps/api/test/support/p3-pending-be-c.ts:export const P3_PENDING_BE_C: readonly string[] = [];
+apps/api/test/support/p3-pending-be-d.ts:export const P3_PENDING_BE_D: readonly string[] = [];
+apps/api/test/support/p3-pending-be-e.ts:export const P3_PENDING_BE_E: readonly string[] = [];
+apps/api/test/support/p3-pending-kbe-b.ts:export const P3_PENDING_KBE_B: readonly string[] = [];
+apps/api/test/support/p3-pending-kbe-c.ts:export const P3_PENDING_KBE_C: readonly string[] = [];

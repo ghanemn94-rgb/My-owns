@@ -1,0 +1,144 @@
+[with-pg initdb] The database cluster will be initialized with locale "C".
+[with-pg initdb] The default database encoding has accordingly been set to "SQL_ASCII".
+[with-pg] cluster template1 encoding SQL_ASCII, collate C
+
+ RUN  v3.2.4 /var/tmp/mth-run.aCEGd4/claude-0/review-p1
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muz791ym_41622163 (server_encoding UTF8); applied 27 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts
+[probe-B] raw pool role mth_app superuser=false
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > scoring_weight_set: a copy with approved_by = created_by is refused by scoring_weight_set_approver_not_proposer
+[probe-B1] scoring_weight_set: decided source rows available=1
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > scoring_weight_set: a copy with approved_by = created_by is refused by scoring_weight_set_approver_not_proposer
+[probe-B1] scoring_weight_set: 23514 scoring_weight_set_approver_not_proposer new row for relation "scoring_weight_set" violates check constraint "scoring_weight_set_approver_not_proposer"
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > ranking_override: a copy with decided_by = proposed_by is refused by ranking_override_approver_not_proposer
+[probe-B1] ranking_override: decided source rows available=1
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > ranking_override: a copy with decided_by = proposed_by is refused by ranking_override_approver_not_proposer
+[probe-B1] ranking_override: 23514 ranking_override_approver_not_proposer new row for relation "ranking_override" violates check constraint "ranking_override_approver_not_proposer"
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > business_case: a copy with baseline_validated_by = created_by is refused by business_case_validator_not_author
+[probe-B1] business_case: decided source rows available=1
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > business_case: a copy with baseline_validated_by = created_by is refused by business_case_validator_not_author
+[probe-B1] business_case: 23514 business_case_validator_not_author new row for relation "business_case" violates check constraint "business_case_validator_not_author"
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > benefit_formula_version: a copy with validated_by = created_by is refused by benefit_formula_version_validator_not_author
+[probe-B1] benefit_formula_version: decided source rows available=1
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > benefit_formula_version: a copy with validated_by = created_by is refused by benefit_formula_version_validator_not_author
+[probe-B1] benefit_formula_version: 23514 benefit_formula_version_validator_not_author new row for relation "benefit_formula_version" violates check constraint "benefit_formula_version_validator_not_author"
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > gate_dispensation: a copy with decided_by = recorded_by is refused by gate_dispensation_decider_not_recorder
+[probe-B1] gate_dispensation: decided source rows available=1
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > gate_dispensation: a copy with decided_by = recorded_by is refused by gate_dispensation_decider_not_recorder
+[probe-B1] gate_dispensation: 23514 gate_dispensation_decider_not_recorder new row for relation "gate_dispensation" violates check constraint "gate_dispensation_decider_not_recorder"
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > deliverable: a copy with decided_by = submitted_by is refused by deliverable_acceptor_not_submitter
+[probe-B1] deliverable: decided source rows available=1
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > deliverable: a copy with decided_by = submitted_by is refused by deliverable_acceptor_not_submitter
+[probe-B1] deliverable: 23514 deliverable_acceptor_not_submitter new row for relation "deliverable" violates check constraint "deliverable_acceptor_not_submitter"
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > the same UPDATE route: setting an existing decided row's approver to its proposer is refused
+[probe-B1u] scoring_weight_set: 23514 scoring_weight_set_immutable scoring_weight_set 01a11a5b-c73b-75d1-b268-c05e3de6cdbe: approval columns change only with the status
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > the same UPDATE route: setting an existing decided row's approver to its proposer is refused
+[probe-B1u] ranking_override: 23514 ranking_override_approver_not_proposer new row for relation "ranking_override" violates check constraint "ranking_override_approver_not_proposer"
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > the same UPDATE route: setting an existing decided row's approver to its proposer is refused
+[probe-B1u] business_case: 23514 business_case_validator_not_author new row for relation "business_case" violates check constraint "business_case_validator_not_author"
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > the same UPDATE route: setting an existing decided row's approver to its proposer is refused
+[probe-B1u] benefit_formula_version: 23514 benefit_formula_version_validator_not_author new row for relation "benefit_formula_version" violates check constraint "benefit_formula_version_validator_not_author"
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > the same UPDATE route: setting an existing decided row's approver to its proposer is refused
+[probe-B1u] gate_dispensation: 23514 gate_dispensation_decider_not_recorder new row for relation "gate_dispensation" violates check constraint "gate_dispensation_decider_not_recorder"
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > the same UPDATE route: setting an existing decided row's approver to its proposer is refused
+[probe-B1u] deliverable: 23514 deliverable_acceptor_not_submitter new row for relation "deliverable" violates check constraint "deliverable_acceptor_not_submitter"
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B2 the runtime role cannot switch the guards off > session_replication_role, DISABLE TRIGGER and ALTER on guarded tables are denied to mth_app
+[probe-B2] SET session_replication_role = replica -> 42501 permission denied to set parameter "session_replication_role"
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B2 the runtime role cannot switch the guards off > session_replication_role, DISABLE TRIGGER and ALTER on guarded tables are denied to mth_app
+[probe-B2] ALTER TABLE gate_decision DISABLE TRIGGER gate_decision_g1_agreements -> 42501 must be owner of table gate_decision
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B2 the runtime role cannot switch the guards off > session_replication_role, DISABLE TRIGGER and ALTER on guarded tables are denied to mth_app
+[probe-B2] ALTER TABLE dependency DISABLE TRIGGER dependency_cycle_guard -> 42501 must be owner of table dependency
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B2 the runtime role cannot switch the guards off > session_replication_role, DISABLE TRIGGER and ALTER on guarded tables are denied to mth_app
+[probe-B2] ALTER TABLE scoring_weight_set DROP CONSTRAINT scoring_weight_set_appr -> 42501 must be owner of table scoring_weight_set
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B2 the runtime role cannot switch the guards off > session_replication_role, DISABLE TRIGGER and ALTER on guarded tables are denied to mth_app
+[probe-B2] DROP TRIGGER dependency_cycle_guard ON dependency -> 42501 must be owner of relation dependency
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B2 the runtime role cannot switch the guards off > session_replication_role, DISABLE TRIGGER and ALTER on guarded tables are denied to mth_app
+[probe-B2] CREATE OR REPLACE FUNCTION dependency_cycle_guard() RETURNS trigger LA -> 42501 permission denied for schema public
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B3 the dependency-graph guard alone (raw SQL, no API) > 25 races A->B vs B->A on two connections: exactly one commits each time; the loser names the cycle
+[probe-B3] race 0: first=commit second=23514 dependency_acyclic dependency cycle: INI-02 -> INI-01 -> INI-02
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B3 the dependency-graph guard alone (raw SQL, no API) > 25 races A->B vs B->A on two connections: exactly one commits each time; the loser names the cycle
+[probe-B3] race 1: first=commit second=23514 dependency_acyclic dependency cycle: INI-02 -> INI-01 -> INI-02
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B3 the dependency-graph guard alone (raw SQL, no API) > 25 races A->B vs B->A on two connections: exactly one commits each time; the loser names the cycle
+[probe-B3] race 2: first=commit second=23514 dependency_acyclic dependency cycle: INI-02 -> INI-01 -> INI-02
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B3 the dependency-graph guard alone (raw SQL, no API) > 25 races A->B vs B->A on two connections: exactly one commits each time; the loser names the cycle
+[probe-B3] races with exactly one commit: 25/25
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B3 the dependency-graph guard alone (raw SQL, no API) > A->B->C->A by raw SQL is refused naming the cycle; nothing persists
+[probe-B3] 3-cycle: 23514 dependency_acyclic dependency cycle: INI-03 -> INI-01 -> INI-02 -> INI-03
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B3 the dependency-graph guard alone (raw SQL, no API) > API: A->B->C->A is 422 dependency.cycle naming the cycle; nothing written
+[probe-B3] API 3-cycle: 422 dependency.cycle Dependency cycle: INI-03 → INI-01 → INI-02 → INI-03 pointer=/toInitiativeId
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B3 the dependency-graph guard alone (raw SQL, no API) > re-activating an archived edge, or re-pointing an edge, that closes a cycle is refused by the guard
+[probe-B3] un-archive closing a cycle: 23514 dependency_acyclic dependency cycle: INI-01 -> INI-02 -> INI-01
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B3 the dependency-graph guard alone (raw SQL, no API) > re-activating an archived edge, or re-pointing an edge, that closes a cycle is refused by the guard
+[probe-B3] re-point into a cycle: 23514 dependency_acyclic dependency cycle: INI-01 -> INI-02 -> INI-01
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B4 API: weights, on-behalf on the strict approvals, self-approval by a dual-role proposer > 95% and 105% -> 422 prioritization.weights_total with the exact text; nothing written
+[probe-B4] weights total 95.00: 422 prioritization.weights_total "Weights must total 100% (got 95.00%)"
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B4 API: weights, on-behalf on the strict approvals, self-approval by a dual-role proposer > 95% and 105% -> 422 prioritization.weights_total with the exact text; nothing written
+[probe-B4] weights total 105.00: 422 prioritization.weights_total "Weights must total 100% (got 105.00%)"
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B4 API: weights, on-behalf on the strict approvals, self-approval by a dual-role proposer > 95% and 105% -> 422 prioritization.weights_total with the exact text; nothing written
+[probe-B4] weights total 99.99: 422 prioritization.weights_total "Weights must total 100% (got 99.99%)"
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B4 API: weights, on-behalf on the strict approvals, self-approval by a dual-role proposer > 95% and 105% -> 422 prioritization.weights_total with the exact text; nothing written
+[probe-B4] 50.005 + 49.995: 400 validation
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B4 API: weights, on-behalf on the strict approvals, self-approval by a dual-role proposer > a proposer who ALSO holds SP cannot approve their own weight set (403); onBehalfOfUserId on approve is 400
+[probe-B4] dual-role self-approve: 403 approval.approver_is_proposer
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B4 API: weights, on-behalf on the strict approvals, self-approval by a dual-role proposer > a proposer who ALSO holds SP cannot approve their own weight set (403); onBehalfOfUserId on approve is 400
+[probe-B4] weight-set approve onBehalfOf: 400 validation
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B4 API: weights, on-behalf on the strict approvals, self-approval by a dual-role proposer > Finance validations and override revoke refuse onBehalfOfUserId (strict 400); nothing written
+[probe-B4] baseline-validation onBehalfOf: 400 validation pointer= audit=[]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B4 API: weights, on-behalf on the strict approvals, self-approval by a dual-role proposer > Finance validations and override revoke refuse onBehalfOfUserId (strict 400); nothing written
+[probe-B4] formula-version-validation onBehalfOf: 400 validation pointer= audit=[]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B4 API: weights, on-behalf on the strict approvals, self-approval by a dual-role proposer > Finance validations and override revoke refuse onBehalfOfUserId (strict 400); nothing written
+[probe-B4] override-revoke onBehalfOf: 400 validation pointer= audit=[]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B5 audit `changes` shape on every P3 audit event written by the exercises > every top-level member of `changes` is exactly {from, to} (ADR-0004 diff shape)
+[probe-B5] audit events with changes: 282 (80 actions); malformed members: 0
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts (16 tests) 9119ms
+   ✓ B3 the dependency-graph guard alone (raw SQL, no API) > 25 races A->B vs B->A on two connections: exactly one commits each time; the loser names the cycle  3122ms
+
+ Test Files  1 passed (1)
+      Tests  16 passed (16)
+   Start at  07:12:56
+   Duration  14.90s (transform 1.80s, setup 0ms, collect 3.84s, tests 9.12s, environment 0ms, prepare 85ms)
+

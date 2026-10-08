@@ -1,0 +1,53 @@
+# command: npx eslint packages/shared/src/formula/zz-lint-probe.ts (disposable clone $TMPDIR/review-p1 at ec45ef1; node v22.22.2); file removed afterwards
+# probe source (lines 4-8 = forms the override names; lines 9-16 = bypass candidates B1-B6):
+ 1 // code-security-reviewer DG3 round-1 lint-bypass probe (disposable clone only).
+ 2 import { createRequire } from "node:module";
+ 3 export const k = (): unknown => [
+ 4   eval("1"), // L1 expected: no-eval
+ 5   new Function("return 1"), // L2 expected: no-new-func
+ 6   setTimeout("1", 0), // L3 expected: timer ban
+ 7   (() => 0).constructor("return 1"), // L4 expected: .constructor ban
+ 8   import("node:fs"), // L5 expected: ImportExpression ban
+ 9   Reflect.construct(Function, ["return 1"]), // B1 bypass?
+10   (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1"), // B2 bypass?
+11   createRequire(import.meta.url)("vm"), // B3 bypass?
+12   Reflect.apply(Function, null, ["return 1"]), // B4 bypass?
+13   Object.getPrototypeOf(function* () {})["constructor"]("yield 1"), // B5 computed .constructor bypass?
+14 ];
+15 const F = Function;
+16 export const b6 = () => F("return 1"); // B6 alias bypass?
+# eslint output:
+
+/var/tmp/mth-run.aCEGd4/claude-0/review-p1/packages/shared/src/formula/zz-lint-probe.ts
+  4:3  error  `eval` can be harmful                                                                             no-eval
+  5:3  error  The Function constructor is eval                                                                  no-new-func
+  6:3  error  No timers in the formula engine: a timer can take a code string (ADR-0024 §6)                     no-restricted-syntax
+  7:3  error  No .constructor(...) calls in the formula engine: that is the Function constructor (ADR-0024 §6)  no-restricted-syntax
+  8:3  error  No dynamic import() in the formula engine (ADR-0024 §6)                                           no-restricted-syntax
+
+✖ 5 problems (5 errors, 0 warnings)
+
+exit 1
+# RESULT: lines 4-8 refused (5 errors); lines 9-16 (B1-B6: Reflect.construct/apply(Function), globalThis['ev'+'al'], createRequire()('vm'), computed ['constructor'], alias F=Function) produce NO error.
+
+################ part 2: the same bypasses INSIDE an engine source file (evaluate.ts), against BOTH guards
+# bypass candidates B1,B3,B4,B5,B6 appended to packages/shared/src/formula/evaluate.ts (disposable clone $TMPDIR/review-p1); then eslint on that file and the engine's own source-scan test (fuzz.test.ts)
+
+// code-security-reviewer DG3 round-1 bypass probe (disposable clone only; never committed).
+import { createRequire } from "node:module";
+export const __probeB1 = (): unknown => Reflect.construct(Function, ["return 1"]);
+export const __probeB3 = (): unknown => createRequire(import.meta.url)("vm");
+export const __probeB4 = (): unknown => Reflect.apply(Function, null, ["return 1"]);
+export const __probeB5 = (): unknown => (Object.getPrototypeOf(function* () {}) as Record<string, (s: string) => unknown>)["constructor"]!("yield 1");
+const __F = Function;
+export const __probeB6 = (): unknown => __F("return 1");
+## eslint packages/shared/src/formula/evaluate.ts:
+eslint exit=0
+## vitest fuzz.test.ts -t 'source scan':
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts (5 tests | 4 skipped) 6ms
+      Tests  1 passed | 4 skipped (5)
+vitest exit=0
+## sanity: does the appended code actually run code? (node, built from source via tsx-free check)
+alias F("return 6*7")() = 42
+Reflect.construct = 2
+# evaluate.ts restored from backup afterwards (git status of the formula dir shows only the reviewer's own untracked probe test).
