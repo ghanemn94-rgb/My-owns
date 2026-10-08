@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG3-100",
+      "stage_id": "DG3",
+      "requirement": "REQ-PB-056",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The formula engine's 'no dynamic code' guards (ESLint override and the fuzz.test.ts source scan) both accept code that builds and runs a function from a string",
+      "reproduction": "In a disposable clone at ec45ef1, append to packages/shared/src/formula/evaluate.ts: `import { createRequire } from \"node:module\"`; `Reflect.construct(Function, [\"return 1\"])`; `Reflect.apply(Function, null, [\"return 1\"])`; `createRequire(import.meta.url)(\"vm\")`; `Object.getPrototypeOf(function* () {})[\"constructor\"](\"yield 1\")`; `const __F = Function; __F(\"return 1\")`. Run `npx eslint packages/shared/src/formula/evaluate.ts` and `pnpm vitest run --project unit-node packages/shared/src/formula/fuzz.test.ts -t \"source scan\"`. In Node, `const F = Function; F(\"return 6*7\")()` returns 42, so these forms do run code. The override at eslint.config.js:37-84 lists only no-eval, no-implied-eval, no-new-func, vm/node:vm import paths, ImportExpression, WithStatement, plain or member timer calls and non-computed `.constructor(...)` calls. The scan at packages/shared/src/formula/fuzz.test.ts:214-240 matches `eval(`, `new Function`, `Function(`, vm `from`/`require(`, `import(`, `with(`, timers and `globalThis`. A separate file with the same bypasses passes lint the same way: the five named forms are refused and the six bypasses are not.",
+      "expected": "ADR-0024 §6 says the ESLint override 'enforces' that nothing under packages/shared/src/formula evaluates text as code, and that the source scan backs it up. Any reference to the Function constructor (direct, aliased, through Reflect.construct or Reflect.apply, or as a computed ['constructor'] member) and any module loading other than static imports (createRequire, require) should fail lint or the scan. Examples: no-restricted-globals for Function, eval and Reflect; no-restricted-syntax for Identifier[name='Function'], computed MemberExpression 'constructor' and createRequire/require calls; the same patterns added to the scan.",
+      "actual": "eslint exits 0 and the source-scan test passes (1 passed, 4 skipped by -t) with all five bypass forms present in evaluate.ts. The shipped engine itself contains no dynamic code path: the S6 scan found none and probe C ran 20,000 fuzz strings plus injection strings and evaluated nothing outside the grammar. The defect is that the guard does not hold against these forms if one is introduced later. The engine's actual security is not affected.",
+      "evidence": [
+        "eslint.config.js",
+        "packages/shared/src/formula/fuzz.test.ts",
+        "docs/architecture/adr/ADR-0024-p3-business-case-and-formula-foundation.md",
+        "docs/delivery/test-evidence/DG3/code-security/round-1/lint-bypass-probe.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-1/probe-C-formula-fuzz-node22.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG3/round-1/code-security-reviewer.json",
+      "owner": "kpi-benefits-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-08T07:30:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG3 round 1 (session afa637ec). Low and non-mandatory: the guard has a coverage gap, and the shipped engine has no dynamic code. It does not block the gate verdict."
+        }
+      ]
+    }
+  ]
+}

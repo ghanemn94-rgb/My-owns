@@ -1,0 +1,429 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG3",
+  "round": 1,
+  "candidate_id": "sha256:873115d9bc84f763d8ec0670f0e5e320b013dc26faba6e3026395b09ed5c9f33",
+  "source_commit": "928b765419e7e84feeaae1a60724a11c318799a8",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG3-T-DG3-REV-SEC-R1-code-security-reviewer-20261008T064650Z-afa637ec",
+    "session_id": "afa637ec-0d6b-41c4-9ae4-bcec62c0e5cf"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am code-security-reviewer, session afa637ec. I authored no implementation in the DG3 scope. The ARCH-01..04, BE-A..G, KBE-A..C, FE-A0..F and AN-P3/P3B tasks were authored by solution-architect, backend-workflow-engineer, kpi-benefits-engineer, frontend-ux-engineer and transformation-analyst, and the D-079 integration edits by delivery-orchestrator. I reviewed the frozen candidate directly: the product diff 2376ca4..928b7654 (245 files in apps and packages, including migrations 0020-0027) and the full files it touches. I ran code only in disposable clones under $TMPDIR (review-r1 for the checks, review-p1 for the probes, review-env for the residual surfaces), each with an offline frozen install and throwaway PostgreSQL 16 clusters on ports 26301/26302/26310-26312. All of them were deleted afterwards. I formed this verdict before reading any other reviewer's round-1 record; I have read none."
+  },
+  "assignment": "docs/delivery/assignments/DG3/round-1/code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-S16-016",
+    "REQ-S09-008",
+    "REQ-DLV-035",
+    "REQ-S08-007",
+    "REQ-PB-004",
+    "REQ-PB-007",
+    "REQ-PB-022",
+    "REQ-S04-006",
+    "REQ-PB-048",
+    "REQ-PB-049",
+    "REQ-PB-051",
+    "REQ-PB-052",
+    "REQ-PB-055",
+    "REQ-PB-056",
+    "REQ-S09-003",
+    "REQ-S09-006"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-R1-00-candidate",
+      "procedure": "Verify the assignment hash, HEAD and the candidate ID in the working tree and in a clean clone.",
+      "command": "sha256sum docs/delivery/assignments/DG3/round-1/code-security-reviewer.md; git rev-parse HEAD; git diff --stat 928b7654..HEAD; node tools/gates/candidate.mjs --stage DG3 (working tree and $TMPDIR/review-r1)",
+      "environment": "Node 24.21.0; working tree and disposable clone $TMPDIR/review-r1 at ec45ef1",
+      "expected": "Assignment sha256 39699ca4...; candidate sha256:873115d9..., 753 files; HEAD differs from 928b765 only by delivery metadata.",
+      "actual": "The assignment sha256 is 39699ca4ef4a0c57bc844586fe170eae52bfaade0d8b4fdaa1328defdfbc5f4d, which matches. HEAD ec45ef1 = 928b765 (its parent) plus the round-1 freeze: three assignments, the candidate manifest, progress.md and stages.json (6 files, all under docs/delivery). candidate.mjs gives sha256:873115d9bc84f763d8ec0670f0e5e320b013dc26faba6e3026395b09ed5c9f33 and 753 files in both the working tree and the clean, non-shallow clone. Exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG3/code-security/round-1/candidate-id.log"]
+    },
+    {
+      "id": "SEC-R1-01-build",
+      "procedure": "Offline frozen install, then build every workspace package.",
+      "command": "pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pstore/v10; pnpm -r build",
+      "environment": "Node 22.22.2, pnpm 10.33.0; clone $TMPDIR/review-r1 at ec45ef1; no network",
+      "expected": "Exit 0 for both.",
+      "actual": "install exit 0. The two 'Failed to create bin ... mth-db' WARN lines appear because packages/db/dist did not exist before the build; this is the same pnpm warning as in DG2 r17. The second install after the build (install2.log) is exit 0 with no WARN. build exit 0. Its one warning is Vite's 'Some chunks are larger than 500 kB after minification' for apps/web, an advisory that was already in DG2 r17's build.log. Not an error.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-1/build.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-1/install2.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-02-typecheck",
+      "procedure": "TypeScript typecheck of every workspace package.",
+      "command": "pnpm -r typecheck",
+      "environment": "Node 22.22.2; clone $TMPDIR/review-r1",
+      "expected": "Exit 0, no errors.",
+      "actual": "Exit 0. No 'error TS' lines.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG3/code-security/round-1/typecheck.log"]
+    },
+    {
+      "id": "SEC-R1-03-lint",
+      "procedure": "ESLint over the repository with --max-warnings=0, including the formula-engine and session-bound web overrides.",
+      "command": "pnpm lint",
+      "environment": "Node 22.22.2; clone $TMPDIR/review-r1",
+      "expected": "Exit 0, 0 warnings.",
+      "actual": "Exit 0, no problems reported. The new P3 eslint-disable comments are type-only `no-explicit-any` lines in tests/harness, two justified react-hooks/exhaustive-deps lines, and the eval tripwire inside a formula test file (it saves and restores the global; it never calls eval). The override's coverage gap is SEC-R1-21.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG3/code-security/round-1/lint.log"]
+    },
+    {
+      "id": "SEC-R1-04-openapi-lint",
+      "procedure": "Lint the frozen OpenAPI contract.",
+      "command": "pnpm openapi:lint",
+      "environment": "Node 22.22.2; clone $TMPDIR/review-r1",
+      "expected": "PASS, OpenAPI 3.1, 270 operations.",
+      "actual": "'PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 270 operations'. Exit 0. A separate count from the YAML gives 270 operations, of which 109 are in P3_OPERATION_IDS and 64 of those are mutating.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG3/code-security/round-1/openapi-lint.log"]
+    },
+    {
+      "id": "SEC-R1-05-no-cdn",
+      "procedure": "Portability check: no public CDN or builder-hosted runtime reference in apps or packages, and no dependency added by P3.",
+      "command": "pnpm check:no-cdn; git diff --stat 2376ca4..928b7654 -- pnpm-lock.yaml package.json apps/*/package.json packages/*/package.json",
+      "environment": "Node 22.22.2; clone $TMPDIR/review-r1",
+      "expected": "PASS; no new dependency.",
+      "actual": "'PASS no-cdn: scanned apps, packages'. Exit 0. The lockfile and the root and app manifests are unchanged. packages/shared/package.json adds only a './calc' export entry (diff-scan.log S11, env-residuals.log).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-1/no-cdn.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-1/diff-scan.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-06-format",
+      "procedure": "Prettier check of the repository.",
+      "command": "pnpm format:check",
+      "environment": "Node 22.22.2; clone $TMPDIR/review-r1",
+      "expected": "All files formatted.",
+      "actual": "'All matched files use Prettier code style!' Exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG3/code-security/round-1/format-check.log"]
+    },
+    {
+      "id": "SEC-R1-07-unit-node22",
+      "procedure": "Unit suites (unit-node and unit-web) on Node 22.",
+      "command": "pnpm test --reporter=verbose",
+      "environment": "Node 22.22.2; clone $TMPDIR/review-r1",
+      "expected": "Every test passes; no failure, hook timeout or skip.",
+      "actual": "Test Files 80 passed (80); Tests 1528 passed (1528). Exit 0. A grep for ' × ', 'FAIL' and 'skipped' matches only test names that contain the × operator or the word 'skipped'. No test failed or was skipped, and there is no hook timeout. One stderr line: '[FSTDEP022] FastifyWarning: The router options for constraints property access is deprecated', a framework deprecation notice already in DG2 r17's unit log. The relevant suites pass: scoring 5,4,3,2,1 -> 3.30 and the 33.33x3 total check; formula period_mismatch for monthly ARPU x annual population; revenue example 0.02x100000x50 = 100000 SAR exactly; the formula fuzz.test.ts source scan.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-048", "REQ-S08-007", "REQ-DLV-035", "REQ-PB-056"],
+      "evidence": ["docs/delivery/test-evidence/DG3/code-security/round-1/unit-node22.log"]
+    },
+    {
+      "id": "SEC-R1-08-unit-node24",
+      "procedure": "Unit suites (unit-node and unit-web) on Node 24.",
+      "command": "pnpm test --reporter=verbose",
+      "environment": "Node 24.21.0; clone $TMPDIR/review-r1",
+      "expected": "Every test passes.",
+      "actual": "Test Files 80 passed (80); Tests 1528 passed (1528). Exit 0. Same single FSTDEP022 deprecation notice as on Node 22. No failure, skip or hook timeout.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG3/code-security/round-1/unit-node24.log"]
+    },
+    {
+      "id": "SEC-R1-09-integration-lang-unset",
+      "procedure": "Full integration suite, including contract.test.ts with all 270 operations live and migrations 0001->0027 applied to a fresh database, on a disposable PostgreSQL 16 cluster with LANG/LC_ALL/LC_CTYPE unset (SQL_ASCII, C cluster).",
+      "command": "(unset LANG LC_ALL LC_CTYPE; bash with-pg.sh 26301 pnpm test:integration --reporter=verbose)",
+      "environment": "Node 22.22.2; clone $TMPDIR/review-r1; PostgreSQL 16.13; cluster template1 SQL_ASCII / C",
+      "expected": "Every test passes; the contract covers every operation; every p3-pending list is empty.",
+      "actual": "Harness error, disclosed: the first attempt in checks.sh (integration-run1-lang-unset.log) exited 126 'with-pg.sh: Permission denied' before any test ran. The Write tool creates the helper without the execute bit. checks-integration.sh re-ran the same step as `bash with-pg.sh` (integration-rerun1-lang-unset.log): Test Files 56 passed (56); Tests 791 passed (791). Exit 0. 'applied 27 migrations to a fresh database'. contract.test.ts passes: route coverage both ways, every operation with a success and its zod mirror, the P3 BE-A..E/KBE-B/KBE-C exercise seams, ADR-0007 §5b platform statuses on every operation, media types equal to the declared request types, undeclared media type -> 400, U+0000 -> 400, 429 declared. All eight p3-pending lists are empty (diff-scan.log S12). Error-looking lines are deliberate negative-control output, not failures: 'BE17 db-econnreset ... unhandled error ECONNRESET' is the 'no over-match' test asserting that a DB-side reset is a 500, and the BE18 Q7 'idp_unavailable' logins are the fake-IdP outage test. There is no hook timeout and no failed or skipped test.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-016", "REQ-S09-008", "REQ-DLV-035", "REQ-PB-004", "REQ-PB-007", "REQ-PB-022", "REQ-S04-006", "REQ-PB-049", "REQ-PB-051", "REQ-PB-052", "REQ-PB-055", "REQ-PB-056", "REQ-S09-003", "REQ-S09-006"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-1/integration-rerun1-lang-unset.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-1/integration-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-1/checks-integration.sh",
+        "docs/delivery/test-evidence/DG3/code-security/round-1/with-pg.sh"
+      ]
+    },
+    {
+      "id": "SEC-R1-10-integration-lang-c-utf8",
+      "procedure": "Full integration suite again, on Node 24 with LANG=C.UTF-8 (UTF8 cluster).",
+      "command": "(unset LC_ALL LC_CTYPE; LANG=C.UTF-8 bash with-pg.sh 26302 pnpm test:integration --reporter=verbose)",
+      "environment": "Node 24.21.0; clone $TMPDIR/review-r1; PostgreSQL 16.13; cluster template1 UTF8 / C.UTF-8",
+      "expected": "Every test passes.",
+      "actual": "The same harness error as SEC-R1-09 on the first attempt (integration-run2-lang-c-utf8.log, exit 126, no test ran). The re-run (integration-rerun2-lang-c-utf8.log): Test Files 56 passed (56); Tests 791 passed (791). Exit 0. Same deliberate negative-control output, no hook timeout, no failed or skipped test.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-1/integration-rerun2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-1/integration-run2-lang-c-utf8.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-11-validate-historical-DG2",
+      "procedure": "Validator against the previously approved gate DG2.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG2",
+      "environment": "Node 22.22.2; repository working tree (read-only)",
+      "expected": "PASS, exit 0.",
+      "actual": "'PASS gate DG2 (historical)'. Exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG3/code-security/round-1/validate-historical-DG2.log"]
+    },
+    {
+      "id": "SEC-R1-12-validate-historical-DG1",
+      "procedure": "Validator against DG1.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG1",
+      "environment": "Node 22.22.2; repository working tree (read-only)",
+      "expected": "PASS, exit 0.",
+      "actual": "'PASS gate DG1 (historical)'. Exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG3/code-security/round-1/validate-historical-DG1.log"]
+    },
+    {
+      "id": "SEC-R1-13-aud-sweep",
+      "procedure": "Probe A, the reviewer's own AUD sweep generated from the contract. First populate every P3 record type by running the seven P3 exercise seams. Then call each of the 64 P3 mutating operations as the org-wide read-only auditor, with every path parameter filled from an existing row and If-Match \"1\". Send two bodies: {} and a plausible body with transformationId and initiativeId. Expect 403 with exactly one audit event, authorization.denied. Finally, checksum every row of all 29 P3 tables before and after the sweep.",
+      "command": "bash with-pg.sh 26310 pnpm vitest run --project integration apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts (copied from probes/; Node 22, LANG unset), and again with probe B (26312, Node 24, LANG=C.UTF-8)",
+      "environment": "Disposable clone $TMPDIR/review-p1 at ec45ef1; PostgreSQL 16 (SQL_ASCII and UTF8 clusters)",
+      "expected": "403 + ['authorization.denied'] on every call; no P3 table changes.",
+      "actual": "66/66 tests pass on Node 22 (LANG unset) and on Node 24 (LANG=C.UTF-8). 128 calls were made. Every call with a target got 403 and exactly one authorization.denied event, and all 29 table checksums are identical before and after. Two kinds of call have no target to authorize against. (a) The empty body on the seven top-level creates whose scope is in the body: createInitiative, createT08Dependency, createCapacity, createResourceDemand and createFundingDecision answer 400 validation, and createBusinessCase/createBenefitFormula answer 403 through the holdsAnywhere gate. All of them write nothing. (b) checkBenefitFormula is a write-free check with no transformation; it answers 403 with nothing written. The probe was revised twice before this run, and both earlier runs failed only on the probe's own bodies. Revision 1 failed 8 tests because the empty body on top-level creates gave 400. Revision 2 failed 3 tests because createResourceDemand and createFundingDecision take initiativeId, not transformationId, and because checkBenefitFormula correctly records no denial when there is no target. Each revision is documented in the probe header.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-016"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-1/probes/sec-r1-aud-sweep.test.ts",
+        "docs/delivery/test-evidence/DG3/code-security/round-1/probe-A-aud-sweep-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-1/probe-A-B-node24-lang-c-utf8.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-14-commit-time-authz",
+      "procedure": "Static and suite review of authorization on every P3 write path: openWrite with atCommit (refreshPrincipal inside the write transaction), validation, If-Match, and an audit event. Also check for client or remote I/O inside a transaction, and confirm that every P3 GET has a read gate.",
+      "command": "diff-scan.log S1 (openWrite/atCommit per module), S7 (remote I/O), GET-handler scan; integration logs grep 'commit time|BE18A'",
+      "environment": "Disposable clone $TMPDIR/review-p1; integration rerun logs",
+      "expected": "Every P3 mutation re-authorizes at commit time, and no non-database await runs inside a transaction.",
+      "actual": "Every openWrite call in the P3 write modules (portfolio/*, kpi business-case/line/formula/version/calculation, workflows T08) passes { atCommit: true }. dependency-types.ts calls refreshPrincipal(tx) directly. runInitiativeAction runs the read gate (404), then the write gate at commit (403), then validation, then If-Match + FOR UPDATE + version check (428/409), then the step and its audit. No fetch, fs or request-stream use exists in these modules (S7 none). Every P3 GET resolves its record and calls requireTransformationRead, directly or through readCase, readFormula or readVersion. The only exceptions are the authenticated catalogues of dependency types and formula examples. 25 commit-time/BE18A integration tests pass in each run. Observation, not raised: the product-gate submit and decide routes reused for G4 are DG2-approved P2 operations, not among the 109. They still authorize on the request's principal, which is resolved in preValidation after the body has arrived, and do not use refreshPrincipal. The residual window is the handler's own execution. These routes are unchanged in kind from DG2.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-016"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-1/diff-scan.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-1/integration-rerun1-lang-unset.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-15-separation-of-duties",
+      "procedure": "Separation of duties in the business approvals, through the API and below it. Probe B1 runs as the runtime role mth_app on a raw pg pool and INSERTs a copy (version 1) of an already decided row with the approver column set to its proposer, author, recorder or submitter. It then UPDATEs an existing decided row the same way. Probe B4 has a proposer who also holds SP try to approve their own weight set. The suites cover the remaining cases: override proposer, Finance author on baseline and formula version, dispensation recorder, G4 non-approver/submitter/superseded, and the deliverable submitter.",
+      "command": "probe B (sec-r1-integrity.test.ts) on 26311 (Node 22, LANG unset) and 26312 (Node 24, LANG=C.UTF-8); integration rerun logs",
+      "environment": "Disposable clone $TMPDIR/review-p1; PostgreSQL 16; raw pool role mth_app (superuser=false)",
+      "expected": "Each of the six approvals is refused by the API (403) and by the named DB CHECK (23514).",
+      "actual": "B1 INSERT: 23514 with exactly scoring_weight_set_approver_not_proposer, ranking_override_approver_not_proposer, business_case_validator_not_author, benefit_formula_version_validator_not_author, gate_dispensation_decider_not_recorder and deliverable_acceptor_not_submitter. B1 UPDATE: the same CHECKs. On scoring_weight_set the freeze trigger refuses first (scoring_weight_set_immutable: 'approval columns change only with the status'). B4: the dual-role proposer gets 403 approval.approver_is_proposer, and the row stays proposed with approved_by NULL. The suites pass in both runs: prioritization approver_is_proposer for sets and overrides; finance.validator_is_author for baseline and formula version; dispensation.decider_is_recorder; gate.not_approver, gate.submitter_cannot_decide and 409 gate.submission_superseded on G4 (g4.test.ts, g1-agreements.test.ts); deliverable.acceptor_is_submitter, including through a delegate. Probe revision 1 failed 6 B1 tests because the copied rows kept version > 1 and the row guard's version_step fired before the CHECK; revision 2 sets version 1. The ADR-0024 decision that the baseline author is created_by (a later baseline editor may validate) is documented and is not raised.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S04-006", "REQ-PB-049", "REQ-PB-055", "REQ-S09-003"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-1/probes/sec-r1-integrity.test.ts",
+        "docs/delivery/test-evidence/DG3/code-security/round-1/probe-B-integrity-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-1/probe-A-B-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-1/integration-rerun1-lang-unset.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-16-no-on-behalf",
+      "procedure": "Try onBehalfOfUserId on every P3 business approval. Probe B4 covers weight-set approve, baseline validation, formula-version validation and override revoke, from a caller who holds FIN and SP on the target. The suites cover selection, funding, override decision and dispensation decision.",
+      "command": "probe B4; integration rerun logs (transitions/funding/prioritization/dispensations tests)",
+      "environment": "Disposable clone $TMPDIR/review-p1; PostgreSQL 16",
+      "expected": "ADR-0021 §6: 422 *.on_behalf_not_supported at /onBehalfOfUserId (selection, funding, override decision, dispensation), or 400 strict schema (weight-set approve, revoke, Finance validations). Nothing written.",
+      "actual": "B4: weight-set approve, baseline validation, formula-version validation and override revoke all return 400 validation with no audit event. The suites, passing in both runs, cover 422 selection.on_behalf_not_supported even under an active delegation, 422 funding.on_behalf_not_supported with on_behalf_of_user_id always NULL, 422 prioritization.on_behalf_not_supported, and 422 dispensation.on_behalf_not_supported. Two exceptions are by design: the G4 gate decision and deliverable acceptance are record-owner decisions that ADR-0021 §6 keeps on one-hop delegation (actsOnBehalfOf). For those, the code refuses the submitter acting either in person or as delegator (gates.ts submitter/onBehalfOf check; deliverables.ts submitted_by === onBehalf). These are documented and not raised.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S09-003", "REQ-PB-049", "REQ-PB-055"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-1/probe-B-integrity-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-1/integration-rerun1-lang-unset.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-17-g1-agreements",
+      "procedure": "Check the G1 leadership agreements (0025 guard): approving without them gives 422 through the API, the database refuses an approved G1 decision at COMMIT, and the runtime role cannot disable the guard.",
+      "command": "integration rerun logs (g1-agreements.test.ts); probe B2 (SET session_replication_role, ALTER TABLE ... DISABLE TRIGGER, DROP CONSTRAINT/TRIGGER, CREATE OR REPLACE FUNCTION as mth_app)",
+      "environment": "Disposable clone $TMPDIR/review-p1; PostgreSQL 16",
+      "expected": "422 gate.g1_agreements_required; COMMIT refused with gate_decision_g1_agreements; 42501 for every bypass attempt.",
+      "actual": "The g1-agreements.test.ts cases pass in both runs: without agreements 422 with nothing written; partial or false confirmations 422; all three 201; precedence of 403 not-approver, 403 submitter and 409 superseded; a direct approved-G1 insert with 0 or 2 agreements fails at COMMIT with 23000 gate_decision_g1_agreements and persists nothing, while 3 agreements commit. B2: all six bypass statements return 42501 (permission denied / must be owner).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-022", "REQ-PB-007"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-1/integration-rerun1-lang-unset.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-1/probe-B-integrity-node22-lang-unset.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-18-dependency-graph",
+      "procedure": "Test the dependency-graph guard on its own with raw SQL as mth_app, without the API's friendly check. Run 25 two-connection races of A->B vs B->A. Close a 3-cycle. Close a cycle by un-archiving an edge, and by re-pointing one. Check the API 3-cycle answer. Check the advisory-lock registry: every class distinct, and none spelled outside the registry or the migration constants.",
+      "command": "probe B3; diff-scan.log S3/S4; integration rerun logs (t08.test.ts)",
+      "environment": "Disposable clone $TMPDIR/review-p1; PostgreSQL 16 (both clusters)",
+      "expected": "Exactly one commit per race; 23514 dependency_acyclic naming the cycle; API 422 dependency.cycle; registry classes distinct.",
+      "actual": "25/25 races had exactly one commit; the loser got 'dependency cycle: INI-02 -> INI-01 -> INI-02'. Raw 3-cycle: 'dependency cycle: INI-03 -> INI-01 -> INI-02 -> INI-03' with nothing persisted. Un-archive and re-point are both refused with dependency_acyclic. API: 422 dependency.cycle 'Dependency cycle: INI-03 → INI-01 → INI-02 → INI-03', pointer /toInitiativeId, no audit event. Registry: 730219 businessUnitHierarchy, 730220 outcomeTree, 730221 dependencyGraph, 730222 prioritization and 730223 dependencyType are all distinct. The only literals outside the registry are the PL/pgSQL CONSTANTs in 0009 (730219), 0013 (730220) and 0022 (730221), and they match. Every module constant derives from ADVISORY_LOCK_CLASSES. The t08.test.ts cycle, race and schedule-flag tests pass in both runs. Probe revision 1 failed these raw-SQL tests on the probe's own edge code ('DEP-<9 digits>' violates dependency_code_check ^DEP-[0-9]{2,6}$); revision 2 uses DEP-nnnnnn.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S09-008", "REQ-PB-051", "REQ-PB-052", "REQ-DLV-035"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-1/probe-B-integrity-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-1/probe-A-B-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-1/diff-scan.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-19-decimals-weights",
+      "procedure": "Check that weights, scores, money and FTE are decimal end to end, the weighted score is exact, and the 95%/105% weight totals are refused with nothing written.",
+      "command": "diff-scan.log S5; grep of the P3 web pages for Number()/toNumber; probe B4 (95.00, 105.00, 99.99, 50.005+49.995); unit and integration logs (3.3000)",
+      "environment": "Disposable clone $TMPDIR/review-p1; unit and integration rerun logs",
+      "expected": "No Number()/parseFloat on decimal values; 422 prioritization.weights_total 'Weights must total 100% (got 95.00%)' etc. with no row or audit; 3.3000 stored, 3.30 shown.",
+      "actual": "S5 (P3 server modules, scoring.ts and the formula engine) finds only Number.parseInt on path version numbers and on count(*) results. A separate grep of the P3 web pages finds only an integer override rank, a version-number select, and a Decimal->pixel conversion for the chart in RankedTable.tsx; every label there is the decimal string. B4: 95.00, 105.00 and 99.99 each return 422 with the exact detail and write no audit event and no row. 50.005+49.995 is 400 (format, at most 2 fraction digits), never rounded to 100. prioritization.test.ts '5,4,3,2,1 under v1 -> stored 3.3000, shown 3.30' and the 95%/105% test pass in both runs, as does scoring.test.ts in the unit runs. Probe B4's Finance on-behalf call first got 403 in revision 1, because FIN does not inherit downward from an organization grant; revision 2 grants FIN/SP per transformation.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-048", "REQ-PB-049", "REQ-DLV-035"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-1/probe-B-integrity-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-1/diff-scan.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-1/unit-node22.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-20-formula-engine-hostile-input",
+      "procedure": "Probe C, a hostile-input and correctness probe of packages/shared/src/formula. C1: 41 injection strings (JS code, prototype names, unicode digits, comments, NaN/Infinity). C2: hostile sizes, including in-limit depth and node cases. C3: division by zero anywhere in the tree. C4: 20,000 random strings over the token alphabet plus raw UTF-16. C5: 3,000 random + - * / trees checked against an independent BigInt-rational oracle with half-up rounding to 6 dp. C6: hostile inputs keys.",
+      "command": "pnpm vitest run --project unit-node packages/shared/src/formula/zz-sec-r1-fuzz.test.ts (copied from probes/), on Node 22 and Node 24",
+      "environment": "Disposable clone $TMPDIR/review-p1",
+      "expected": "Never throws; nothing outside the grammar evaluates; limits refuse as formula.syntax quickly; division by zero gives null (Unknown); stored result = oracle; inputs cannot inject values.",
+      "actual": "65/65 pass on both Node versions. Grammar-invalid strings return ok=false, null. '-0' evaluates to 0, and that is a valid expression. Limits: too_long for >2000 characters (1e5 parens, 1e6 chars, 10k terms); too_deep for 900 nested parens and 40 nested abs(); too_many_nodes for a 150-term sum; number_digits for a 25-digit literal; all in <1 ms. A product of 100 x 24-digit values gives result_out_of_range in 23 ms, and 99 chained divisions return inexactIntermediate=true in 7 ms. Division by zero gives null with formula.division_by_zero in all 7 shapes. 20,000 fuzz strings: no throw, slowest 8.6 ms, 83 valid ones evaluated to plain decimals. Oracle: 2,853 trees match exactly, including 1,577 that needed rounding, and every tree that is exact at 6 dp has rounded=false. __proto__/constructor keys cannot satisfy a variable. Code review: evaluate.ts uses decimal.js at precision 80 with an exactness oracle, Map lookups for variables, Object.create(null) for the inputs record and own-property checks. The rounding record is on the row (0027 CHECKs bind rounded/stored to the columns, NOT VALID rounding_required for new rows), and benefit_calculation is append-only (p2_attach_append_only) (diff-scan.log S8).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-056", "REQ-S08-007", "REQ-DLV-035"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-1/probes/sec-r1-formula-fuzz.test.ts",
+        "docs/delivery/test-evidence/DG3/code-security/round-1/probe-C-formula-fuzz-node22.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-1/probe-C-formula-fuzz-node24.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-21-formula-no-dynamic-code-guard",
+      "procedure": "Check that the formula engine has no dynamic code path and that the ESLint override (backed by the fuzz.test.ts source scan) enforces this against bypass forms. Part 1: a new file under formula/ containing the five named forms and six bypass candidates, run through eslint. Part 2: the bypasses appended to evaluate.ts, then eslint plus the engine's source-scan test.",
+      "command": "npx eslint packages/shared/src/formula/zz-lint-probe.ts; npx eslint packages/shared/src/formula/evaluate.ts; pnpm vitest run --project unit-node packages/shared/src/formula/fuzz.test.ts -t 'source scan' (disposable clone; files removed or restored afterwards)",
+      "environment": "Disposable clone $TMPDIR/review-p1, Node 22.22.2",
+      "expected": "There is no dynamic code in the engine, and the guard refuses every way of building code from a string.",
+      "actual": "The engine has no dynamic code: the S6 scan is empty. Part 1, eslint exit 1 as designed: the five named forms (eval, new Function, setTimeout(string), .constructor(...), import()) are refused, and the six bypasses produce no error: Reflect.construct(Function, …), globalThis['ev'+'al'], createRequire(import.meta.url)('vm'), Reflect.apply(Function, …), computed ['constructor'], and alias F = Function. Part 2: with five bypasses inside evaluate.ts, eslint exits 0 and the source scan passes. In Node the alias form returns 42 for 'return 6*7'. The guard therefore does not enforce the ADR-0024 §6 'no dynamic code' rule against these forms. Raised as F-DG3-100 (Low, non-mandatory): the coverage gap is real and the shipped engine is not affected.",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": ["REQ-PB-056"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-1/lint-bypass-probe.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-1/diff-scan.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-22-migrations-guards-audit-shape",
+      "procedure": "Check migrations 0020-0027: forward-only, every mutable table carries the row guard (version step) and the deferred audit-coverage constraint, history and lineage tables are append-only, and grants are minimal. Check the audit changes shape across every P3 audit event the seven exercise seams write (probe B5).",
+      "command": "diff-scan.log S8/S9; git diff --stat 2376ca4..928b7654 -- packages/db/migrations; probe B5; integration log (migrate 27, catalogue.test.ts)",
+      "environment": "Disposable clone $TMPDIR/review-p1; PostgreSQL 16",
+      "expected": "Guards on every table; only additions in packages/db/migrations; no malformed changes member.",
+      "actual": "The P3 diff adds 0020-0027 and changes no earlier migration (0024's in-place correction happened before freeze and is documented as unreleased, D-079/ARCH-02). All 20 new tables with an UPDATE grant carry p2_attach_guards(..., true), which is the row guard with version step plus the deferred audit_required constraint trigger. The 8 INSERT-only tables carry p2_attach_append_only: scoring_weight, initiative_score_result, ranking_entry, benefit_formula_variable, benefit_calculation and gate_decision_agreement with guards(false), and portfolio_selection and funding_decision with guards(true). The two seeded example tables are SELECT-only. B5: 282 audit events with changes across 80 actions, 0 malformed members, so every member is exactly {from, to}. The suite reports 'applied 27 migrations to a fresh database' and catalogue.test.ts (schema.ts = migrated DB, including 0027's rounding column) passes.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-016", "REQ-PB-056"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-1/diff-scan.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-1/probe-B-integrity-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-1/integration-rerun1-lang-unset.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-23-module-graph-seams-web",
+      "procedure": "Check the module graph and seams: the API module import graph is acyclic; workflows does not import portfolio; GateFactsProvider and t08ScheduleFlags are injected by server.ts. Check the web: P3 pages navigate and write the cache only through session-bound actions.",
+      "command": "diff-scan.log S2 and S10; git diff 2376ca4..928b7654 -- apps/api/src/server.ts apps/api/src/modules.ts; eslint session-bound override (lint.log)",
+      "environment": "Disposable clone $TMPDIR/review-p1",
+      "expected": "No cycle; workflows does not import portfolio; providers are wired in the composition root; no raw navigate or setQueryData.",
+      "actual": "Graph: portfolio -> workflows and workflows -> kpi, with no cycle ('cycles: none', 'workflows imports portfolio: false'). server.ts builds gateFacts = { portfolio: loadPortfolioGateFacts, kpi: loadKpiP3GateFacts } and passes it together with t08ScheduleFlags to registerWorkflowsModule. Unwired, the defaults are UNWIRED_GATE_FACTS and schedule.unknown. In the web, S10 lists one bare navigate( at PortfolioPage.tsx:267: that is the useSessionNavigate() result (line 79; sessionBound.ts:99 wraps begin().navigate). Every other navigation and cache write is action.navigate or action.setQueryData. The lint override that bans useNavigate and raw .navigate/.setQueryData is clean.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S09-006", "REQ-S04-006"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-1/diff-scan.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-1/lint.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-24-requirement-acceptance",
+      "procedure": "Map each assigned requirement's binding acceptance text (requirements.csv) to passing tests in this round's logs and probes.",
+      "command": "grep of the integration rerun and unit logs for the acceptance behaviours; probes A-C",
+      "environment": "Logs of SEC-R1-07..10 and probes",
+      "expected": "Each acceptance criterion is evidenced by a passing test.",
+      "actual": "S16-016: every P3 entity is created and read through the API with authorization (contract seams + probe A). S09-008/PB-051: A->B->C->A is refused naming the cycle; a late predecessor is flagged and Unknown is never 'no conflict' (t08.test.ts); the seven T08 columns round-trip and From can be external. PB-052: the four source types plus 'other' cannot be deleted; an unknown type gives 422. DLV-035: 3.30, 95% refused, cycles reported, and the 'G4 end to end with distinct synthetic TL, FIN, SP and capacity-owner users' test. S08-007: period_mismatch for monthly ARPU x annual population; 0.02x100000x50 = 100000 SAR exactly. PB-004: End-to-End launch gives 422 'North Star, outcomes and target state not yet approved'. PB-007/PB-022: before G1 submit gives 422 invalid-transition; readiness lists the missing diagnostic areas; G1 without agreements is refused. S04-006: a G4 submission names the missing items; 403 for non-approver and submitter; 409 superseded. PB-048: 5,4,3,2,1 gives 3.3000; 6 gives 400; incomplete is never numeric. PB-049: 95%/105% refused; v2 with risk_compliance 10% accepted; v1 results keep their reference. PB-055: G4 refused listing 'Finance validation'; FIN validates and the author gets 403. PB-056: confidence outside H/M/L gives 400; an undefined variable gives 422. S09-003: 'Selected - unfunded' cannot launch. S09-006: milestone forecast If-Match 428 and stale 409 (API side). The UI timeline/board propagation is exercised by the e2e specs, which are qa-verifier's run, not mine.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-016", "REQ-S09-008", "REQ-DLV-035", "REQ-S08-007", "REQ-PB-004", "REQ-PB-007", "REQ-PB-022", "REQ-S04-006", "REQ-PB-048", "REQ-PB-049", "REQ-PB-051", "REQ-PB-052", "REQ-PB-055", "REQ-PB-056", "REQ-S09-003", "REQ-S09-006"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-1/integration-rerun1-lang-unset.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-1/integration-rerun2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-1/unit-node22.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-25-environment-residuals",
+      "procedure": "Check the environmental residuals on their offline/config surface: live registry (REQ-DLV-042 AC-1, D-057), live CI (REQ-DLV-025 A24, D-058) and Keycloak (D-049).",
+      "command": "offline frozen install; node deploy/scripts/check-ci-needs.mjs; node --test deploy/scripts/tests/check-ci-needs.test.mjs; grep workflows; oidc.test.ts in both integration runs",
+      "environment": "Fresh disposable clone $TMPDIR/review-env at ec45ef1 (offline install), Node 22.22.2; no network, no Keycloak",
+      "expected": "Offline surface passes; the live parts are recorded as residuals.",
+      "actual": "Registry: the offline frozen install exits 0 and P3 adds no dependency. The live registry is the residual. A 'pnpm deps:verify' attempt, which needs npm view by design, printed nothing for 300 s and was killed. Its late output corrupted the first version of env-residuals.log after its clone was deleted, so the log was regenerated in a fresh clone. CI: check-ci-needs OK (5 jobs, delivery-gates first, every other job depends on it) exit 0; its tests show 46 pass, 0 fail, 0 skipped. Live CI is the residual. Keycloak: 33 oidc.test.ts tests pass with the fake IdP in each integration run; live Keycloak is the residual.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG3/code-security/round-1/env-residuals.log"]
+    }
+  ],
+  "findings": ["F-DG3-100"],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG3/round-1/code-security-reviewer.findings.json",
+    "docs/delivery/reviews/DG3/round-1/code-security-reviewer.md",
+    "docs/delivery/test-evidence/DG3/code-security/round-1/all-exit-statuses.txt",
+    "docs/delivery/test-evidence/DG3/code-security/round-1/summary.txt",
+    "docs/delivery/test-evidence/DG3/code-security/round-1/summary-integration.txt",
+    "docs/delivery/test-evidence/DG3/code-security/round-1/checks.sh",
+    "docs/delivery/test-evidence/DG3/code-security/round-1/checks-integration.sh",
+    "docs/delivery/test-evidence/DG3/code-security/round-1/with-pg.sh",
+    "docs/delivery/test-evidence/DG3/code-security/round-1/diff-scan.log",
+    "docs/delivery/test-evidence/DG3/code-security/round-1/lint-bypass-probe.log",
+    "docs/delivery/test-evidence/DG3/code-security/round-1/env-residuals.log",
+    "docs/delivery/test-evidence/DG3/code-security/round-1/probes/sec-r1-aud-sweep.test.ts",
+    "docs/delivery/test-evidence/DG3/code-security/round-1/probes/sec-r1-integrity.test.ts",
+    "docs/delivery/test-evidence/DG3/code-security/round-1/probes/sec-r1-formula-fuzz.test.ts",
+    "docs/delivery/test-evidence/DG3/code-security/round-1/probe-A-aud-sweep-node22-lang-unset.log",
+    "docs/delivery/test-evidence/DG3/code-security/round-1/probe-B-integrity-node22-lang-unset.log",
+    "docs/delivery/test-evidence/DG3/code-security/round-1/probe-A-B-node24-lang-c-utf8.log",
+    "docs/delivery/test-evidence/DG3/code-security/round-1/probe-C-formula-fuzz-node22.log",
+    "docs/delivery/test-evidence/DG3/code-security/round-1/probe-C-formula-fuzz-node24.log"
+  ],
+  "reviewed_at": "2026-10-08T07:30:00Z",
+  "summary": "PASS, with one new Low, non-mandatory finding (F-DG3-100) and no Critical, High or mandatory issue.\n- Every required check ran and exited 0: build, typecheck, lint, openapi (270 operations), no-cdn, format, unit 1528/1528 on Node 22 and 24, integration 791/791 in both locale settings, and validate --historical for DG2 and DG1. The first integration attempt was a disclosed harness error (exit 126, helper not executable, no test ran) and was re-run.\n- Probe A, a generated AUD sweep over all 64 P3 mutating operations, gets 403 with only authorization.denied on every targeted call, and no P3 table changes.\n- Probe B: the database refuses all six SoD bypasses with the named CHECKs; mth_app cannot disable the guards; 25/25 raw-SQL A->B/B->A races commit exactly once; 3-cycles, un-archive and re-point are refused naming the cycle; 95%/105% weights are refused with nothing written; onBehalfOf is refused on the strict approvals; the audit changes shape is valid on 282 events.\n- Probe C: the formula engine withstands injection, size and fuzz inputs and matches an exact BigInt oracle on 2,853 trees.\n- F-DG3-100: the formula engine's 'no dynamic code' lint override and source scan both accept Reflect.construct/apply(Function), an aliased Function, computed ['constructor'] and createRequire('vm'). The engine itself has no dynamic code. Check SEC-R1-21 is FAIL for this Low finding, which does not block (DG2 r14/r15 precedent)."
+}
