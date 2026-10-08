@@ -1683,6 +1683,8 @@ export interface BenefitCalculationTable {
   engine_version: string;
   computed_at: TimestampDefault;
   computed_by: string;
+  /** Engine rounding record (ADR-0024 §6 item 11; 0027). NULL only for rows written before migration 0027. */
+  rounding: NullableJson;
 }
 
 export interface BusinessCaseTable {
@@ -3510,6 +3512,7 @@ export const SCHEMA_COLUMNS = {
     "engine_version",
     "computed_at",
     "computed_by",
+    "rounding",
   ],
   business_case: [
     "id",

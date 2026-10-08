@@ -344,10 +344,28 @@ describe("the two seeded B0087 examples (REQ-PB-057, REQ-S08-007)", () => {
     ]).toEqual([201, "100000", "SAR", "year", false]);
     const stored = await api.db
       .selectFrom("benefit_calculation")
-      .select("result")
+      .select(["result", "rounding"])
       .where("id", "=", calc.body.id)
       .executeTakeFirstOrThrow();
     expect(stored.result).toBe("100000.000000");
+    // ADR-0024 §6 item 11 (migration 0027): the engine's full rounding record is on the lineage row as is, and the
+    // response returns the same object.
+    const revenueRounding = {
+      column: "numeric(24,6)",
+      scale: 6,
+      mode: "ROUND_HALF_UP",
+      precision: 80,
+      exact: "100000",
+      stored: "100000.000000",
+      rounded: false,
+      inexactIntermediate: false,
+    };
+    expect(stored.rounding).toStrictEqual(revenueRounding);
+    expect(calc.body.rounding).toStrictEqual(revenueRounding);
+    const listed = await call<Body>(api.app, "GET", `${F}/${rev.body.id}/versions/1/calculations`, {
+      session: p.lead.session,
+    });
+    expect(listed.body.items.map((c: Body) => c.rounding)).toStrictEqual([revenueRounding]);
 
     const cost = await create(p.lead.session, {
       transformationId: p.transformationId,
@@ -473,10 +491,8 @@ describe("calculations and lineage", () => {
     });
     expect(res.body.inputs.arpu).toMatchObject({ kind: "currency", currency: "SAR", period: "year", value: "50" });
     expect(res.body.inputs.baseline_attach_rate.source).toBe("Synthetic CRM extract");
-    // The engine's rounding record is kept with the lineage row's audit event.
-    const [event] = await auditOf(api.db, res.body.id);
-    expect(event).toMatchObject({ action: "benefit_calculation.create", record_type: "benefit_calculation" });
-    expect((event!.changes as Body).rounding.to).toEqual({
+    // The engine's rounding record is on the row and in the response (0027), and the audit event repeats it.
+    const overrideRounding = {
       column: "numeric(24,6)",
       scale: 6,
       mode: "ROUND_HALF_UP",
@@ -485,7 +501,11 @@ describe("calculations and lineage", () => {
       stored: "120000.000000",
       rounded: false,
       inexactIntermediate: false,
-    });
+    };
+    expect(res.body.rounding).toStrictEqual(overrideRounding);
+    const [event] = await auditOf(api.db, res.body.id);
+    expect(event).toMatchObject({ action: "benefit_calculation.create", record_type: "benefit_calculation" });
+    expect((event!.changes as Body).rounding.to).toEqual(overrideRounding);
 
     // Missing input -> Unknown (null), outcome error, never 0.
     const missing = await call<Body>(api.app, "POST", C, { session: p.lead.session, body: {} });
@@ -534,10 +554,42 @@ describe("calculations and lineage", () => {
     ]);
     const row = await api.db
       .selectFrom("benefit_calculation")
-      .select(["result", "outcome"])
+      .select(["result", "outcome", "rounding"])
       .where("id", "=", miss.body.id)
       .executeTakeFirstOrThrow();
-    expect(row).toEqual({ result: null, outcome: "error" });
+    // Unknown: no exact or stored value in the rounding record either (never 0).
+    const unknownRounding = {
+      column: "numeric(24,6)",
+      scale: 6,
+      mode: "ROUND_HALF_UP",
+      precision: 80,
+      exact: null,
+      stored: null,
+      rounded: false,
+      inexactIntermediate: false,
+    };
+    expect(row).toStrictEqual({ result: null, outcome: "error", rounding: unknownRounding });
+    expect(miss.body.rounding).toStrictEqual(unknownRounding);
+    // 0027: a new row without the record, or with a record that disagrees with its own columns, is refused by the
+    // database (the CHECKs fire on INSERT, before the audit trigger is reached).
+    const copy = (rounding: string) =>
+      api.owner.query(
+        `insert into benefit_calculation (id, organization_id, transformation_id, formula_version_id, inputs, outcome,
+           result, result_kind, result_unit, result_currency, result_period, error_code, rounded, engine_version,
+           computed_by, rounding)
+         select gen_random_uuid(), organization_id, transformation_id, formula_version_id, inputs, outcome, result,
+           result_kind, result_unit, result_currency, result_period, error_code, rounded, engine_version, computed_by,
+           ${rounding}
+         from benefit_calculation where id = $1`,
+        [res.body.id],
+      );
+    await expect(copy("NULL")).rejects.toThrow(/benefit_calculation_rounding_required/);
+    await expect(copy(`'[]'::jsonb`)).rejects.toThrow(/benefit_calculation_rounding_check/);
+    await expect(copy(`rounding || '{"rounded": true}'::jsonb`)).rejects.toThrow(/benefit_calculation_rounding_shape/);
+    await expect(copy(`rounding || '{"stored": "120000.000001"}'::jsonb`)).rejects.toThrow(
+      /benefit_calculation_rounding_shape/,
+    );
+    await expect(copy(`rounding - 'inexactIntermediate'`)).rejects.toThrow(/benefit_calculation_rounding_shape/);
 
     // An input that is not a variable -> 422; a reversed period -> 422; nothing written.
     const before = await counts(p.transformationId);

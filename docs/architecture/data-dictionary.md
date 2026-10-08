@@ -6,6 +6,7 @@
 - **Changes:** changes to this contract after DG1 approval go through the orchestrator.
 - **P2 (DG2):** the P2 tables (migrations 0010–0018) are in the section "P2 tables" at the end of this file (T-DG2-ARCH-01B). The P1 sections are unchanged.
 - **P3 (DG3):** the P3 tables (migrations 0020–0024) are in the section "P3 tables" at the end of this file (T-DG3-ARCH-01). Two P2 entries were regenerated because P3 migrations change them compatibly: `record_code_counter` (prefixes INI/BC/BF) and `dependency` (initiative endpoints, type FK, cycle guard). Every P3 entry is generated from the migrated catalogue (`pg_catalog`), so it matches the migrations exactly.
+- **0027 (T-DG3-ARCH-04):** adds `benefit_calculation.rounding` and its three CHECKs. That entry was updated from `pg_get_constraintdef` on a database migrated `0001`→`0027` (the `catalogue.test.ts` 0027 case pins the definitions). As in the other entries, the `::text` casts on literals are omitted.
 
 ## Global rules
 
@@ -3231,8 +3232,9 @@ The P1 migrations create three views, owned by `mth_owner`. `mth_app` has `SELEC
 ## benefit_calculation
 
 - **Purpose:** Calculation lineage: inputs, formula version, assumptions, period, result (NULL = Unknown), engine version.
-- **Migration:** `0023_p3_business_case_formula.sql`. **API module:** `kpi`. **Who writes:** system (preview/calculation). **Lifecycle:** append-only.
+- **Migration:** `0023_p3_business_case_formula.sql`; column `rounding` added by `0027_p3_calculation_rounding.sql` (T-DG3-ARCH-04, ADR-0024 §6 item 11). **API module:** `kpi`. **Who writes:** system (preview/calculation). **Lifecycle:** append-only.
 - **`mth_app` privileges:** INSERT, SELECT.
+- **`rounding` (0027):** the engine's rounding record `{column, scale, mode, precision, exact, stored, rounded, inexactIntermediate}` as is. It is NULL only on rows written before 0027: there is no backfill, because the table is append-only and each such row's record is already in its `benefit_calculation.create` audit event. `benefit_calculation_rounding_required` is `NOT VALID`, so PostgreSQL enforces it on every new row but does not check the older ones. `benefit_calculation_rounding_shape` binds `rounded` to the column and `stored` to `result::text` (JSON null when the result is Unknown).
 
 | Column | Type | Null | Default | Column constraints |
 |---|---|---|---|---|
@@ -3255,9 +3257,12 @@ The P1 migrations create three views, owned by `mth_owner`. `mth_app` has `SELEC
 | engine_version | text | NOT NULL |  | `CHECK (((char_length(engine_version) >= 1) AND (char_length(engine_version) <= 50)))` |
 | computed_at | timestamp with time zone | NOT NULL | `now()` |  |
 | computed_by | uuid | NOT NULL |  | FK → app_user(id) |
+| rounding | jsonb | NULL |  | `CHECK (((rounding IS NULL) OR (jsonb_typeof(rounding) = 'object')))` |
 
 **Table constraints:**
 
+- `benefit_calculation_rounding_required` (CHECK, NOT VALID): `CHECK ((rounding IS NOT NULL)) NOT VALID`
+- `benefit_calculation_rounding_shape` (CHECK): `CHECK (((rounding IS NULL) OR ((rounding ?& ARRAY['column', 'scale', 'mode', 'precision', 'exact', 'stored', 'rounded', 'inexactIntermediate']) AND ((rounding -> 'column') = '"numeric(24,6)"'::jsonb) AND ((rounding -> 'scale') = '6'::jsonb) AND ((rounding -> 'mode') = '"ROUND_HALF_UP"'::jsonb) AND ((rounding -> 'precision') = '80'::jsonb) AND (jsonb_typeof((rounding -> 'exact')) = ANY (ARRAY['string', 'null'])) AND (jsonb_typeof((rounding -> 'inexactIntermediate')) = 'boolean') AND ((rounding -> 'rounded') = to_jsonb(rounded)) AND ((rounding -> 'stored') = CASE WHEN (result IS NULL) THEN 'null'::jsonb ELSE to_jsonb((result)::text) END))))`
 - `benefit_calculation_outcome_shape` (CHECK): `CHECK ((((outcome = 'error') = (error_code IS NOT NULL)) AND ((outcome = 'ok') OR (result IS NULL))))`
 - `benefit_calculation_period_range` (CHECK): `CHECK (((period_end IS NULL) OR (period_start IS NULL) OR (period_end >= period_start)))`
 - `benefit_calculation_version_id_fkey` (FK): `FOREIGN KEY (transformation_id, formula_version_id) REFERENCES benefit_formula_version(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`

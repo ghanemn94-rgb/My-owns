@@ -1,7 +1,7 @@
 // P3 T09 benefit-formula zod mirrors (kpi-benefits-engineer, T-DG3-KBE-C; ADR-0024 §5-§6; p3-work-split §3 KBE-C).
 // Mirrors the docs/api/openapi.yaml components of the `benefit-formulas` tag: FormulaKind, FormulaPeriod,
 // FormulaVariable, FormulaCheckRequest/Result, BenefitFormula(+Create, Update, Page), BenefitFormulaVersion(+Create,
-// List), BenefitCalculation(+Create, Page) and BenefitFormulaExample(+List). The API validates requests with them
+// List), FormulaRounding, BenefitCalculation(+Create, Page) and BenefitFormulaExample(+List). The API validates requests with them
 // (400 when a body breaks one of these schemas) and the web reuses them.
 //
 // Rules carried by these schemas:
@@ -208,6 +208,25 @@ export const benefitCalculationCreate = z.strictObject({
 });
 export type BenefitCalculationCreate = z.infer<typeof benefitCalculationCreate>;
 
+/**
+ * The engine's storage-rounding record (`@mth/shared/calc` FormulaRounding; ADR-0024 §6 item 11), stored on the lineage
+ * row as is (migration 0027). `exact` and `stored` are null when the result is Unknown.
+ */
+export const formulaRounding = z.strictObject({
+  column: z.literal("numeric(24,6)"),
+  scale: z.literal(6),
+  mode: z.literal("ROUND_HALF_UP"),
+  precision: z.literal(80),
+  exact: z.string().nullable(),
+  stored: z
+    .string()
+    .regex(/^-?[0-9]{1,18}\.[0-9]{6}$/)
+    .nullable(),
+  rounded: z.boolean(),
+  inexactIntermediate: z.boolean(),
+});
+export type FormulaRoundingView = z.infer<typeof formulaRounding>;
+
 export const benefitCalculation = z.strictObject({
   id: uuid,
   formulaVersionId: uuid,
@@ -226,6 +245,8 @@ export const benefitCalculation = z.strictObject({
     .regex(/^formula\.[a-z_]{1,48}$/)
     .nullable(),
   rounded: z.boolean(),
+  /** Null only for a row written before migration 0027 (its record is in the row's audit event). */
+  rounding: formulaRounding.nullable(),
   engineVersion: z.string(),
   computedAt: timestamp,
   computedBy: uuid,

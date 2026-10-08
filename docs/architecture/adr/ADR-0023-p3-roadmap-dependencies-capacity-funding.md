@@ -95,6 +95,34 @@
 - **One cycle-problem class.** The T08 friendly check throws the platform's `DependencyCycleProblem` (now on `platform/index.ts`; its `CycleNode.name` is filled by T08), the same class the mapped database error uses. BE-C's copy `T08CycleProblem` is deleted. The §5 422 body is byte-identical: `workflows/t08-cycle-problem.test.ts` compares the JSON with a frozen copy of the deleted class, and the T08 integration test checks it over HTTP.
 - **Dependency-type creation lock.** Creating a type code serializes on `pg_advisory_xact_lock(730223, hashtext(code))` (`DEPENDENCY_TYPE_LOCK_CLASS`), so that a race answers the friendly 409 rather than a unique violation. Until T-DG3-ARCH-03 it used 730222, which collided with prioritization. Registry: ADR-0016 §6.
 
+### 9. Decisions recorded after wave 4 (T-DG3-BE-E handback §7, T-DG3-FE-B handback §4; T-DG3-ARCH-04, 2026-10-08)
+
+These are the rule, and reviewers test against this text.
+
+- **Commit authority (§6).** Committing and releasing a resource demand (`POST /resource-demands/{id}/commit`, `/release`) need `capacity.commit` (BO and TO by default), checked through the policy function at transformation scope and re-checked at commit. §6's "capacity owner (record-level: the capacity row's owner, or a holder of `capacity.commit`)" is read **conservatively**: being the capacity row's `ownerUserId` grants nothing by itself, so an owner without `capacity.commit` cannot commit. Committing over capacity is allowed, because a commitment records a resourcing decision and does not test it. The over-allocation is then visible as `capacity.over_allocated` on the plan and as `g4.capacity_conflict` at G4.
+- **G4 capacity (§6, ADR-0021 §11 item 4).** G4 counts **committed** demand only. A role and month with committed demand and no active capacity row is Unknown, and it is a conflict: 'Capacity conflict: {role} {YYYY-MM}'.
+- **Deselect voids funding (§7).** A funding decision counts only for the selection it was recorded under, and re-selection needs a new approved decision. The full rule is in ADR-0021 §11 item 1.
+- **Codes and texts** (BE-E's wording, as built; FE-E translates from `code`, Arabic provisional):
+
+| Code | Status | English `detail` |
+|---|---|---|
+| `funding.not_selected` | 422 invalid-transition | 'Funding can only be approved for a selected initiative' |
+| `funding.not_revocable` | 422 invalid-transition | 'Only the funding of a funded initiative that is not launched can be revoked' (revoking needs status `funded`; a launched or unfunded initiative is refused) |
+| `funding.amount_invalid` | 422 at `/amount` | 'The funding amount must be zero or more, with at most 16 digits before and 4 after the decimal point.' (so `numeric(20,4)` never rounds silently) |
+| `resource_demand.not_planned` | 422 invalid-transition | 'Only a planned resource demand can be changed or committed' |
+| `resource_demand.not_committed` | 422 invalid-transition | 'Only a committed resource demand can be released' |
+| `resource_demand.release_first` | 422 invalid-transition | 'A committed resource demand must be released before it is archived' |
+| `resource_role.code_taken` | 409 | "A resourcing role with the code '{code}' already exists." |
+| `capacity.duplicate` | 409 | 'This resourcing role already has active capacity for that month; update that row instead.' |
+| `resource_role.archived` | 422 at `/resourceRoleId` | 'The resourcing role is archived.' |
+
+  The source files (`portfolio/funding.ts`, `resource-demands.ts`, `capacity.ts`) are the single place for these texts. This table fixes the codes and their meaning.
+- **Cycle path order (§5; FE-B §4.4).** The 422 `dependency.cycle` path runs `from → to → … → from` of the **refused** edge. Which initiative comes first therefore depends on the edge that closes the cycle. The UI shows the server's path verbatim and does not reorder it.
+- **Approve-date reason (§2; FE-B §4.7).** The frozen `MilestoneDateApproval` requires `reason` on **every** approve-date call, including the first approval, where it says why that baseline date was chosen. That is stricter than "a mandatory reason on re-approval", and the contract stands. It is not loosened.
+- **Dependency-type administration (§8; FE-B §4.5).** The catalogue is global, so the web checks `dependency_type.configure` at any scope it holds (`canAnywhere`), not at transformation scope. The server is unchanged: the permission is held at organization scope (ADM_METHOD).
+- **The work board is read-only (§3; FE-B §4.6).** P3's board displays the ADR-0021 status of each card. Status changes are made on the initiative through the ADR-0021 transition actions, and the board does not offer drag-to-transition. This satisfies the §3 rule "moving a card calls the ADR-0021 transition actions" by having no move action, not by adding a second path.
+- **Shared mirrors.** The roadmap, T08 and capacity response mirrors are in `@mth/shared/schemas` (`roadmap.ts`; ADR-0021 §11 item 7).
+
 ## Alternatives considered
 
 1. **A separate T08 table for initiative dependencies.** Rejected: one canonical dependency record shared by T08 and RAID is a stated rule.

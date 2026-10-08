@@ -13,9 +13,10 @@
 //   `error_code` (formula.division_by_zero, formula.missing_input), never 0 and never Infinity.
 // - The lineage row records the inputs actually used with their kind, unit, currency, period and source, the
 //   assumptions, the period, the result (null when Unknown), the result type, the outcome, the error code, whether the
-//   storage rounding changed the value (`rounded`) and the engine version. `benefit_calculation` is append-only (DB
-//   trigger), and the full engine rounding record ({column, scale, mode, precision, exact, stored, rounded,
-//   inexactIntermediate}) is kept as is in the row's audit event (the table has no column for it).
+//   storage rounding changed the value (`rounded`), the engine's full rounding record as is (`rounding`: {column,
+//   scale, mode, precision, exact, stored, rounded, inexactIntermediate}; ADR-0024 §6 item 11, migration 0027) and the
+//   engine version. `benefit_calculation` is append-only (DB trigger); the row's audit event repeats the record. A row
+//   written before 0027 has `rounding` NULL (no backfill: the table is append-only) and the API returns null.
 // - The request schema runs first (400); anything it admits but the engine refuses is 422 with the engine's first
 //   error `code` and `message`.
 import { type BenefitCalculationRow, type BenefitFormulaVariableRow, type Tx } from "@mth/db";
@@ -84,6 +85,7 @@ export function toBenefitCalculation(r: BenefitCalculationRow): BenefitCalculati
     resultPeriod: r.result_period as BenefitCalculation["resultPeriod"],
     errorCode: r.error_code,
     rounded: r.rounded,
+    rounding: (r.rounding ?? null) as BenefitCalculation["rounding"],
     engineVersion: r.engine_version,
     computedAt: iso(r.computed_at),
     computedBy: r.computed_by,
@@ -200,6 +202,7 @@ async function createCalculation(tx: Tx, request: FastifyRequest, formulaId: str
       result_period: version.result_period,
       error_code: errorCode,
       rounded: evaluation.rounding.rounded,
+      rounding: JSON.stringify(evaluation.rounding),
       engine_version: evaluation.engineVersion,
       computed_by: ctx.userId,
     })

@@ -45,6 +45,29 @@ describe("schema.ts matches the migrated database", () => {
     ]);
   });
 
+  it("0027: benefit_calculation.rounding is a nullable jsonb object, bound to the row and required on new rows (ADR-0024 §6 item 11)", async () => {
+    const cols = await q<{ d: string; n: string }>(
+      `SELECT data_type AS d, is_nullable AS n FROM information_schema.columns
+       WHERE table_schema = 'public' AND table_name = 'benefit_calculation' AND column_name = 'rounding'`,
+    );
+    expect(cols).toEqual([{ d: "jsonb", n: "YES" }]);
+    const checks = await q<{ name: string; validated: boolean; def: string }>(
+      `SELECT conname AS name, convalidated AS validated, pg_get_constraintdef(oid) AS def FROM pg_constraint
+       WHERE conrelid = 'public.benefit_calculation'::regclass AND conname LIKE 'benefit_calculation_rounding%'
+       ORDER BY conname`,
+    );
+    // Pre-0027 rows keep NULL (no backfill: the table is append-only), so the NOT NULL rule is a NOT VALID CHECK:
+    // enforced on every new row, not checked against the rows that existed before 0027.
+    expect(checks.map((c) => [c.name, c.validated])).toEqual([
+      ["benefit_calculation_rounding_check", true],
+      ["benefit_calculation_rounding_required", false],
+      ["benefit_calculation_rounding_shape", true],
+    ]);
+    expect(checks[0]!.def).toBe("CHECK (((rounding IS NULL) OR (jsonb_typeof(rounding) = 'object'::text)))");
+    expect(checks[1]!.def).toBe("CHECK ((rounding IS NOT NULL)) NOT VALID");
+    expect(checks[2]!.def).toContain("(rounding -> 'rounded'::text) = to_jsonb(rounded)");
+  });
+
   it("marks exactly the views as views", async () => {
     const views = await q<{ table_name: string }>(
       `SELECT table_name FROM information_schema.views WHERE table_schema = 'public' ORDER BY 1`,

@@ -11709,12 +11709,12 @@ components:
     BenefitCalculation:
       type: object
       description: "Calculation lineage: inputs, formula version, assumptions, period, result (null = Unknown) and engine version."
-      required: [id, formulaVersionId, inputs, assumptions, periodStart, periodEnd, outcome, result, resultKind, resultUnit, resultCurrency, resultPeriod, errorCode, rounded, engineVersion, computedAt, computedBy]
+      required: [id, formulaVersionId, inputs, assumptions, periodStart, periodEnd, outcome, result, resultKind, resultUnit, resultCurrency, resultPeriod, errorCode, rounded, rounding, engineVersion, computedAt, computedBy]
       additionalProperties: false
       properties:
         id: { $ref: "#/components/schemas/Uuid" }
         formulaVersionId: { $ref: "#/components/schemas/Uuid" }
-        inputs: { type: object, additionalProperties: { $ref: "#/components/schemas/FormulaVariable" } }
+        inputs: { type: object, additionalProperties: { $ref: "#/components/schemas/FormulaVariable" }, description: "Every variable with the value actually used. When the value was given in the calculation request, `source` is exactly 'Calculation input (overrides the version value)', a fixed English marker that clients may match and translate (ADR-0024 §10); otherwise it is the version variable's own source." }
         assumptions: { type: [string, "null"], minLength: 1, maxLength: 4000 }
         periodStart: { $ref: "#/components/schemas/NullableBusinessDate" }
         periodEnd: { $ref: "#/components/schemas/NullableBusinessDate" }
@@ -11726,9 +11726,28 @@ components:
         resultPeriod: { $ref: "#/components/schemas/FormulaPeriod" }
         errorCode: { type: [string, "null"], pattern: "^formula\\.[a-z_]{1,48}$" }
         rounded: { type: boolean, description: "Whether the stored result was rounded once to numeric(24,6)." }
+        rounding:
+          description: "The engine's rounding record, stored on the lineage row as is (ADR-0024 §6 item 11; migration 0027). Null only for a row written before migration 0027; that row's record is in its benefit_calculation.create audit event."
+          oneOf:
+            - { $ref: "#/components/schemas/FormulaRounding" }
+            - { type: "null" }
         engineVersion: { type: string }
         computedAt: { $ref: "#/components/schemas/Timestamp" }
         computedBy: { $ref: "#/components/schemas/Uuid" }
+    FormulaRounding:
+      type: object
+      description: "Storage rounding of a formula result: rounded once to numeric(24,6) with ROUND_HALF_UP after decimal evaluation at precision 80. `exact` and `stored` are null when the result is Unknown."
+      required: [column, scale, mode, precision, exact, stored, rounded, inexactIntermediate]
+      additionalProperties: false
+      properties:
+        column: { type: string, const: "numeric(24,6)" }
+        scale: { type: integer, const: 6 }
+        mode: { type: string, const: ROUND_HALF_UP }
+        precision: { type: integer, const: 80 }
+        exact: { type: [string, "null"], description: "The value before storage rounding (plain notation)." }
+        stored: { type: [string, "null"], pattern: "^-?[0-9]{1,18}\\.[0-9]{6}$", description: "The stored value with exactly 6 fraction digits." }
+        rounded: { type: boolean, description: "True when storage rounding changed the value." }
+        inexactIntermediate: { type: boolean, description: "True when precision 80 rounded an intermediate value (an inexact division or inverse period conversion)." }
     BenefitCalculationCreate:
       type: object
       additionalProperties: false

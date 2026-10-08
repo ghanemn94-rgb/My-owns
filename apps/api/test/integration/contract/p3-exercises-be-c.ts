@@ -5,27 +5,28 @@
 // BE-B's; these rows are inserted with their audit event, as the database's audit guard requires).
 // All data is synthetic; a deliverable acceptance or an approved milestone date below is a demo business decision by
 // a synthetic user and approves nothing real; nothing here touches the engineering gates DG0-DG7.
-import { deliverable, deliverableList, milestone, milestoneList } from "@mth/shared/schemas";
+import {
+  deliverable,
+  deliverableList,
+  dependencyType,
+  dependencyTypeList,
+  milestone,
+  milestoneList,
+  roadmapView,
+  roadmapWave,
+  roadmapWaveList,
+  t08Dependency,
+  t08DependencyPage,
+} from "@mth/shared/schemas";
 import { v7 as uuidv7 } from "uuid";
 import { expect } from "vitest";
-import { z } from "zod";
+import type { z } from "zod";
 import { record } from "../../../src/modules/audit/index.ts";
-import { dependencyType, dependencyTypeList } from "../../../src/modules/workflows/dependency-types.ts";
-import { t08Dependency, t08DependencyPage } from "../../../src/modules/workflows/t08-dependencies.ts";
-import { roadmapWave, roadmapWaveList } from "../../../src/modules/portfolio/waves.ts";
-import { initiative } from "@mth/shared/schemas";
 import { ifm, setupP2World, type P2World } from "../../support/p2-fixtures.ts";
 import { uniq, type P3ExerciseContext, type TestApi } from "../../support/harness.ts";
 
-/** Zod mirror of RoadmapView (docs/api/openapi.yaml). */
-export const roadmapView = z.strictObject({
-  transformationId: z.uuid(),
-  waves: z.array(roadmapWave),
-  initiatives: z.array(initiative),
-  milestones: z.array(milestone),
-  deliverables: z.array(deliverable),
-  dependencies: z.array(t08Dependency),
-});
+// The roadmap, T08 and dependency-type mirrors are the shared ones (`@mth/shared/schemas` roadmap.ts, T-DG3-ARCH-04);
+// RoadmapView used to be defined here.
 
 export const P3_MIRRORS_BE_C: Readonly<Record<string, z.ZodType>> = {
   listRoadmapWaves: roadmapWaveList,

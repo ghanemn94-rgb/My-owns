@@ -13,7 +13,15 @@
 // FTE is a decimal string (numeric(6,2)); the conflict rule lives in capacity.ts.
 import type { DbOrTx, InitiativeRow, ResourceDemandTable, Tx } from "@mth/db";
 import { sql } from "@mth/db";
-import { freeText, reasonRequest, transitionNote, uuid } from "@mth/shared/schemas";
+import {
+  freeText,
+  reasonRequest,
+  resourceDemand,
+  resourceDemandPage,
+  transitionNote,
+  uuid,
+  type ResourceDemand,
+} from "@mth/shared/schemas";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Selectable } from "kysely";
 import { v7 as uuidv7 } from "uuid";
@@ -44,28 +52,8 @@ export type ResourceDemandRow = Selectable<ResourceDemandTable>;
 
 // ------------------------------------------------------------------------------------------------ zod mirrors
 
-const DEMAND_STATUSES = ["planned", "committed", "released", "archived"] as const;
-export const resourceDemand = z.strictObject({
-  id: uuid,
-  organizationId: uuid,
-  transformationId: uuid,
-  initiativeId: uuid,
-  resourceRoleId: uuid,
-  periodMonth,
-  demandFte: fte,
-  ownerUserId: uuid.nullable(),
-  note: z.string().min(1).max(2000).nullable(),
-  status: z.enum(DEMAND_STATUSES),
-  committedBy: uuid.nullable(),
-  committedAt: z.string().nullable(),
-  version: z.number().int().min(1),
-  createdAt: z.string(),
-  createdBy: uuid,
-  updatedAt: z.string(),
-  updatedBy: uuid,
-});
-export type ResourceDemand = z.infer<typeof resourceDemand>;
-export const resourceDemandPage = z.strictObject({ items: z.array(resourceDemand), nextCursor: z.string().nullable() });
+// The ResourceDemand(+Page) response mirrors live in `@mth/shared/schemas` (roadmap.ts, T-DG3-ARCH-04), re-exported here.
+export { resourceDemand, resourceDemandPage, type ResourceDemand };
 export const resourceDemandCreate = z.strictObject({
   initiativeId: uuid,
   resourceRoleId: uuid,

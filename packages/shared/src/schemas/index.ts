@@ -26,3 +26,6 @@ export * from "./business-case.ts";
 export * from "./prioritization.ts";
 // P3 T09 benefit-formula mirrors (kpi-benefits-engineer, T-DG3-KBE-C; p3-work-split §3). Line added by KBE-C.
 export * from "./benefit-formula.ts";
+// P3 roadmap, T08 dependency and capacity view mirrors (solution-architect, T-DG3-ARCH-04; moved from the BE-C/BE-E
+// route files for FE-A/FE-B).
+export * from "./roadmap.ts";
