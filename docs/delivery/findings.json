@@ -11330,7 +11330,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG3/round-1/code-security-reviewer.json",
       "owner": "kpi-benefits-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-08T07:30:00Z",
@@ -11346,10 +11346,15 @@
           "at": "2026-10-08T09:34:58Z",
           "status": "OPEN",
           "note": "verified by code-security-reviewer round 2: FAIL"
+        },
+        {
+          "at": "2026-10-08T10:28:37Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at de0613850e94c06e7fafaad1a2ffca4b7cb23cd2"
         }
       ],
-      "fix_revision": "41752629c3676e127dc91cd2b456be3de0ca2c70",
-      "fix_summary": "T-DG3-KBE-D 4175262: the ESLint override for packages/shared/src/formula/** adds no-restricted-globals (Function, eval, Reflect), no-restricted-syntax (any Function identifier, computed/template ['constructor']/['Function'] members, any .constructor read or destructuring, require/createRequire calls and the createRequire name, Reflect members) and no-restricted-imports (module, node:module, worker_threads, child_process, with and without node:). The fuzz.test.ts scan becomes scanSource() over a FORBIDDEN table (comments stripped) with the same forms, a 20-probe it.each pinning each form as a hit and a false-positive test. Engine code unchanged; lint probe 22 errors after vs 0 before (handback evidence). ADR-0024 §6 'Extended guard'; p3-work-split §9 item 23.",
+      "fix_revision": "de0613850e94c06e7fafaad1a2ffca4b7cb23cd2",
+      "fix_summary": "T-DG3-KBE-E de06138 (second pass, after the round-2 verification FAILED): a spelling-independent run-time layer -- the whole formula test corpus runs again as Vitest project unit-formula-nocodegen in forks started with --disallow-code-generation-from-strings (pnpm test runs it as a second invocation), with a canary asserting the flag and EvalError for Function, eval, AsyncFunction and GeneratorFunction; static layer for engine sources: import allowlist (relative + decimal.js), process/global/globalThis/self/window (and frames/parent/top/opener/document) refused as globals and identifiers, constructor literals/templates/identifiers (class constructors excepted), prototype reflection, string-assembled computed keys and import.meta refused; the fuzz.test.ts scan mirrors them, with O2 and N1-N12 in its probe table. Per-form table: every round-2 form is refused by at least one layer; every code-generation form by all three. ADR-0024 §6 rewritten to state each layer's guarantee and the residual; CSP claim verified. Engine sources unchanged.",
       "verification": {
         "by_role": "code-security-reviewer",
         "invocation_reference": {
@@ -11402,14 +11407,21 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG3/round-2/domain-reviewer.json",
       "owner": "frontend-ux-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-08T09:35:00Z",
           "status": "OPEN",
           "note": "Raised by domain-reviewer in DG3 round 2 while verifying F-DG3-120. Medium, non-mandatory layout defect; not blocking (no approval is fabricated or implied: the gate status chip, neutral styling and the evidence sentence stay visible)."
+        },
+        {
+          "at": "2026-10-08T10:28:37Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 6b30768d599b61845d1819e6b4b6a2fdb783f659"
         }
-      ]
+      ],
+      "fix_revision": "6b30768d599b61845d1819e6b4b6a2fdb783f659",
+      "fix_summary": "T-DG3-FE-G 6b30768: InheritedApprovalBadge gains the scoped modifier status-chip--wrap (white-space normal, overflow-wrap anywhere, max-inline-size 100%, logical properties) with its text in a span; the global .status-chip nowrap rule is unchanged. New real-browser spec apps/web/e2e/p3-inherited-approval.spec.ts asserts, at 1024/1366/1920/390 in EN and AR, the badge inside its card/row, no clipping, no horizontal document scroll, the full disclaimer, the neutral draft status and axe 0 serious/critical. The domain probe dg3-ui-overflow.mjs goes from 2/12 to 12/12."
     },
     {
       "id": "F-DG3-180",
@@ -11437,14 +11449,21 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG3/round-2/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-08T10:25:00Z",
           "status": "OPEN",
           "note": "Raised by qa-verifier in DG3 round 2 from its own layout probe (F180), run before it saw any other reviewer's conclusion. At the end of the run, HEAD's commit subjects showed that the domain reviewer raised F-DG3-170 ('inherited-approval badge overflow') in the same round. qa-verifier did not open that record, so it cannot confirm that the two are the same. The orchestrator may treat F-DG3-180 as a duplicate and verify both with one repair."
+        },
+        {
+          "at": "2026-10-08T10:28:37Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 6b30768d599b61845d1819e6b4b6a2fdb783f659"
         }
-      ]
+      ],
+      "fix_revision": "6b30768d599b61845d1819e6b4b6a2fdb783f659",
+      "fix_summary": "T-DG3-FE-G 6b30768: InheritedApprovalBadge gains the scoped modifier status-chip--wrap (white-space normal, overflow-wrap anywhere, max-inline-size 100%, logical properties) with its text in a span; the global .status-chip nowrap rule is unchanged. New real-browser spec apps/web/e2e/p3-inherited-approval.spec.ts asserts, at 1024/1366/1920/390 in EN and AR, the badge inside its card/row, no clipping, no horizontal document scroll, the full disclaimer, the neutral draft status and axe 0 serious/critical. The domain probe dg3-ui-overflow.mjs goes from 2/12 to 12/12."
     }
   ]
 }
