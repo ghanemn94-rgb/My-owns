@@ -31,7 +31,7 @@ import { registerEvidenceModule } from "./modules/evidence/index.ts";
 import { registerKpiModule } from "./modules/kpi/index.ts";
 import { registerMethodologyModule } from "./modules/methodology/index.ts";
 import { registerOrganizationRoutes } from "./modules/organization/index.ts";
-import { loadPortfolioGateFacts, registerPortfolioModule } from "./modules/portfolio/index.ts";
+import { loadPortfolioGateFacts, registerPortfolioModule, t08ScheduleFlags } from "./modules/portfolio/index.ts";
 import {
   createClientErrorHandler,
   createFrameworkErrorHandler,
@@ -284,7 +284,7 @@ export async function buildServer(options: ServerOptions): Promise<{
   // kpi-benefits-engineer), the P3 portfolio module, and the remaining scaffold (reporting, P5), which registers no
   // routes until its stage.
   const modules: ModuleRegistration[] = [
-    registerWorkflowsModule(app, deps, { gateFacts }),
+    registerWorkflowsModule(app, deps, { gateFacts, t08ScheduleFlags }),
     registerKpiModule(app, deps),
     registerReportingModule(app, deps),
     registerMethodologyModule(app, deps),

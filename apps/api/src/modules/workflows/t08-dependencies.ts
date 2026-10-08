@@ -18,9 +18,9 @@
 // `cycle` member [{initiativeId, code, name}, …] with the first node repeated at the end. Nothing is written.
 //
 // Schedule flags (ADR-0023 §5) are computed by portfolio/schedule.ts. workflows never imports portfolio (module
-// graph), so the flags arrive through T08ScheduleFlagsProvider, which the portfolio module decorates onto the Fastify
-// instance as `t08ScheduleFlags` (declared below) when it registers. Unwired, every scheduled dependency is flagged schedule.unknown:
-// Unknown is never shown as "no conflict".
+// graph), so the flags arrive through T08ScheduleFlagsProvider, which the composition root (server.ts) passes in
+// explicitly, like the G4 GateFactsProvider (ADR-0023 §5, T-DG3-ARCH-03). Unwired, every scheduled dependency is
+// flagged schedule.unknown: Unknown is never shown as "no conflict".
 import { sql, type DbOrTx, type DependencyTable, type Tx } from "@mth/db";
 import { businessDate, freeText, timestamp, uuid, version, type ScheduleFlag } from "@mth/shared/schemas";
 import type { FastifyInstance, FastifyRequest } from "fastify";
@@ -30,7 +30,9 @@ import { z } from "zod";
 import { principalOf, requireTransformationRead } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
+  ADVISORY_LOCK_CLASSES,
   cursorSchema,
+  DependencyCycleProblem,
   decodeCursor,
   filterHash,
   HttpProblem,
@@ -44,12 +46,13 @@ import {
   problems,
   requireIfMatch,
   sendVersioned,
+  type CycleNode as PlatformCycleNode,
 } from "../platform/index.ts";
 import { assertActiveUsers, assertSameTransformation, openWrite, type WriteContext } from "../transformations/index.ts";
 import { nextCode } from "./codes.ts";
 
 /** Advisory-lock class of a transformation's dependency graph; the database guard takes the same (0022). */
-export const DEPENDENCY_GRAPH_LOCK_CLASS = 730221;
+export const DEPENDENCY_GRAPH_LOCK_CLASS = ADVISORY_LOCK_CLASSES.dependencyGraph;
 /** ADR-0023 §5: the friendly search is bounded; past it the database guard (unbounded) decides. */
 const MAX_VISITED_EDGES = 10_000;
 
@@ -135,13 +138,6 @@ export type T08ScheduleFlagsProvider = (
   transformationId: string,
 ) => Promise<ReadonlyMap<string, readonly ScheduleFlag[]>>;
 
-declare module "fastify" {
-  interface FastifyInstance {
-    /** Set by the portfolio module (roadmap.ts); absent until it registers. */
-    t08ScheduleFlags?: T08ScheduleFlagsProvider;
-  }
-}
-
 type DependencyRow = Selectable<DependencyTable>;
 
 /** Does a dependency take part in the schedule checks (ADR-0023 §5)? */
@@ -159,11 +155,10 @@ const UNWIRED_FLAG = (r: DependencyRow): ScheduleFlag[] => [
 ];
 
 async function flagsFor(
-  app: FastifyInstance,
+  provider: T08ScheduleFlagsProvider | undefined,
   db: DbOrTx,
   transformationId: string,
 ): Promise<(r: DependencyRow) => ScheduleFlag[]> {
-  const provider = app.t08ScheduleFlags;
   if (provider === undefined) return (r) => (scheduled(r) ? UNWIRED_FLAG(r) : []);
   const byDependency = await provider(db, transformationId);
   return (r) => [...(byDependency.get(r.id) ?? (scheduled(r) ? UNWIRED_FLAG(r) : []))];
@@ -210,35 +205,12 @@ const rule = (code: string, detail: string, pointer: string) =>
     errors: [{ pointer, code, message: detail }],
   });
 
-/** One node of a reported cycle (ADR-0023 §5); the first node is repeated at the end. */
-export interface CycleNode {
-  readonly initiativeId: string;
-  readonly code: string;
-  readonly name: string;
-}
-
 /**
- * 422 dependency.cycle with the `cycle` extension member: the same body as the mapped database error (platform
- * db-errors.ts DependencyCycleProblem, which is not on platform's public interface), plus each initiative's name.
+ * One node of a reported cycle (ADR-0023 §5); the first node is repeated at the end. The T08 check always fills the
+ * name. The 422 itself is the platform's `DependencyCycleProblem` (one class for this check and the mapped database
+ * error; T-DG3-ARCH-03), so both answer the same body.
  */
-export class T08CycleProblem extends HttpProblem {
-  readonly cycle: readonly CycleNode[];
-  constructor(cycle: readonly CycleNode[]) {
-    const text = `Dependency cycle: ${cycle.map((n) => n.code).join(" → ")}`;
-    super({
-      status: 422,
-      type: "urn:mth:problem:validation",
-      code: "dependency.cycle",
-      title: "Business rule violated",
-      detail: text,
-      errors: [{ pointer: "/toInitiativeId", code: "dependency.cycle", message: text }],
-    });
-    this.cycle = cycle;
-  }
-  override toBody(requestId: string, instance?: string) {
-    return { ...super.toBody(requestId, instance), cycle: this.cycle };
-  }
-}
+export type CycleNode = PlatformCycleNode & { readonly name: string };
 
 /** The type must be an active catalogue code (ADR-0023 §4); the FK and dependency_type_active are the backstop. */
 async function assertActiveType(db: DbOrTx, code: string): Promise<void> {
@@ -324,8 +296,10 @@ async function assertAcyclic(tx: Tx, transformationId: string, from: string, to:
     .where("id", "in", [...new Set(cycle)])
     .execute();
   const byId = new Map(names.map((n) => [n.id, n]));
-  throw new T08CycleProblem(
-    cycle.map((id) => ({ initiativeId: id, code: byId.get(id)?.code ?? id, name: byId.get(id)?.name ?? "" })),
+  throw new DependencyCycleProblem(
+    cycle.map(
+      (id): CycleNode => ({ initiativeId: id, code: byId.get(id)?.code ?? id, name: byId.get(id)?.name ?? "" }),
+    ),
   );
 }
 
@@ -596,13 +570,24 @@ const listQuery = z.strictObject({
   limit: limitSchema,
 });
 
-async function presentOne(app: FastifyInstance, db: DbOrTx, row: DependencyRow): Promise<T08Dependency> {
-  const flags = await flagsFor(app, db, row.transformation_id);
+async function presentOne(
+  provider: T08ScheduleFlagsProvider | undefined,
+  db: DbOrTx,
+  row: DependencyRow,
+): Promise<T08Dependency> {
+  const flags = await flagsFor(provider, db, row.transformation_id);
   return toT08Dependency(row, flags(row));
 }
 
-/** Registers the T08 dependency routes (workflows/index.ts) and returns them as "METHOD /path". */
-export function registerT08DependencyRoutes(app: FastifyInstance, db: DbOrTx): string[] {
+/**
+ * Registers the T08 dependency routes (workflows/index.ts) and returns them as "METHOD /path". `scheduleFlags` is the
+ * portfolio provider passed in by the composition root; undefined = unwired (fail closed: schedule.unknown).
+ */
+export function registerT08DependencyRoutes(
+  app: FastifyInstance,
+  db: DbOrTx,
+  scheduleFlags?: T08ScheduleFlagsProvider,
+): string[] {
   app.get(BASE, { config: { access: { permission: "transformation.read" } } }, async (request) => {
     const query = parseQuery(listQuery, request.query);
     await requireTransformationRead(db, principalOf(request), query.transformationId);
@@ -631,7 +616,7 @@ export function registerT08DependencyRoutes(app: FastifyInstance, db: DbOrTx): s
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.updated_at.toISOString(), r.id], hash);
-    const flags = await flagsFor(app, db, query.transformationId);
+    const flags = await flagsFor(scheduleFlags, db, query.transformationId);
     return { items: page.items.map((r) => toT08Dependency(r, flags(r))), nextCursor: page.nextCursor };
   });
 
@@ -640,7 +625,7 @@ export function registerT08DependencyRoutes(app: FastifyInstance, db: DbOrTx): s
     { config: { access: { permission: "dependency.edit" }, consumes: JSON_BODY } },
     async (request, reply) => {
       const row = await db.transaction().execute((tx) => createDependency(tx, request));
-      return sendVersioned(reply, 201, await presentOne(app, db, row), `${BASE}/${row.id}`);
+      return sendVersioned(reply, 201, await presentOne(scheduleFlags, db, row), `${BASE}/${row.id}`);
     },
   );
 
@@ -652,7 +637,7 @@ export function registerT08DependencyRoutes(app: FastifyInstance, db: DbOrTx): s
       const row = await db.selectFrom("dependency").selectAll().where("id", "=", dependencyId).executeTakeFirst();
       if (!row) throw problems.notFound();
       await requireTransformationRead(db, principalOf(request), row.transformation_id);
-      return sendVersioned(reply, 200, await presentOne(app, db, row));
+      return sendVersioned(reply, 200, await presentOne(scheduleFlags, db, row));
     },
   );
 
@@ -662,7 +647,7 @@ export function registerT08DependencyRoutes(app: FastifyInstance, db: DbOrTx): s
     async (request, reply) => {
       const { dependencyId } = parse(dParams, request.params, "params");
       const row = await db.transaction().execute((tx) => updateDependency(tx, request, dependencyId));
-      return sendVersioned(reply, 200, await presentOne(app, db, row));
+      return sendVersioned(reply, 200, await presentOne(scheduleFlags, db, row));
     },
   );
 
@@ -672,7 +657,7 @@ export function registerT08DependencyRoutes(app: FastifyInstance, db: DbOrTx): s
     async (request, reply) => {
       const { dependencyId } = parse(dParams, request.params, "params");
       const row = await db.transaction().execute((tx) => archiveDependency(tx, request, dependencyId));
-      return sendVersioned(reply, 200, await presentOne(app, db, row));
+      return sendVersioned(reply, 200, await presentOne(scheduleFlags, db, row));
     },
   );
 

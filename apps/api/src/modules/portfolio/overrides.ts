@@ -11,7 +11,13 @@
 // never the approver (403 `approval.approver_is_proposer`; DB CHECK `ranking_override_approver_not_proposer`). An
 // approved override applies from the next ranking snapshot. Nothing here touches DG0-DG7.
 import type { DbOrTx, RankingOverrideRow, Tx } from "@mth/db";
-import { freeText, hasInvalidCharacter, hasText, reasonRequest, timestamp, uuid, version } from "@mth/shared/schemas";
+import {
+  approvalDecision,
+  hasText,
+  rankingOverrideCreate,
+  reasonRequest,
+  type RankingOverride,
+} from "@mth/shared/schemas";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
@@ -45,56 +51,7 @@ const oParams = z.strictObject({ transformationId: z.uuid(), overrideId: z.uuid(
 
 // ------------------------------------------------------------------------------------------------ schemas (contract)
 
-/**
- * The override reason at the schema level: 3-2000 characters (missing, empty or shorter -> 400 at /reason) and no NUL
- * or lone surrogate (400 validation.invalid_character). Blank text is NOT refused here: it is the business rule 422
- * prioritization.override_reason_required (ADR-0022 §5), checked with the shared `hasText`.
- */
-const overrideReason = z
-  .string()
-  .min(3)
-  .max(2000)
-  .refine((v) => !hasInvalidCharacter(v), "validation.invalid_character");
-
-/** Contract `RankingOverrideCreate` (strict). */
-export const rankingOverrideCreate = z.strictObject({
-  initiativeId: uuid,
-  overrideRank: z.number().int().min(1).max(2_147_483_647),
-  reason: overrideReason,
-});
-/** Contract `ApprovalDecision`. */
-export const approvalDecision = z.strictObject({
-  result: z.enum(["approved", "rejected"]),
-  note: freeText(1, 2000).optional(),
-  onBehalfOfUserId: uuid.optional(),
-});
-/** Contract `RankingOverride`. */
-export const rankingOverride = z.strictObject({
-  id: uuid,
-  organizationId: uuid,
-  transformationId: uuid,
-  initiativeId: uuid,
-  overrideRank: z.number().int().min(1),
-  reason: z.string().min(3).max(2000),
-  status: z.enum(["proposed", "approved", "rejected", "revoked"]),
-  proposedBy: uuid,
-  decidedBy: uuid.nullable(),
-  decidedAt: timestamp.nullable(),
-  decisionNote: z.string().min(1).max(2000).nullable(),
-  revokedBy: uuid.nullable(),
-  revokedAt: timestamp.nullable(),
-  revokeReason: z.string().min(3).max(1000).nullable(),
-  version,
-  createdAt: timestamp,
-  createdBy: uuid,
-  updatedAt: timestamp,
-  updatedBy: uuid,
-});
-export type RankingOverride = z.infer<typeof rankingOverride>;
-export const rankingOverridePage = z.strictObject({
-  items: z.array(rankingOverride),
-  nextCursor: z.string().nullable(),
-});
+// Moved to @mth/shared/schemas (prioritization.ts; T-DG3-ARCH-03): RankingOverride*, ApprovalDecision.
 
 export const OVERRIDE_REASON_REQUIRED_DETAIL = "An override needs a reason.";
 

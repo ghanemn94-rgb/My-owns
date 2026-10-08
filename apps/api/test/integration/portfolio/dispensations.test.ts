@@ -129,6 +129,19 @@ describe("waivers (End-to-End launch sequencing)", () => {
     expect([byBo.status, byBo.body.code]).toEqual([403, "gate.not_approver"]);
     expect((await readiness(p)).body.sequencing.canLaunchInitiatives).toBe(false);
 
+    // ADR-0021 §6 (T-DG3-ARCH-03): a P3 business approval is decided in person; nothing is written (version stays 1).
+    const onBehalf = await call<D & { code: string; type: string; errors: { pointer: string }[] }>(api.app, "POST", D, {
+      session: p.sponsor.session,
+      headers: ifm(created.version),
+      body: { result: "accepted", onBehalfOfUserId: p.office.id },
+    });
+    expect([onBehalf.status, onBehalf.body.type, onBehalf.body.code, onBehalf.body.errors[0]!.pointer]).toEqual([
+      422,
+      "urn:mth:problem:validation",
+      "dispensation.on_behalf_not_supported",
+      "/onBehalfOfUserId",
+    ]);
+
     const accepted = await decideD(p, created, "accepted");
     expect(accepted.status, JSON.stringify(accepted.body)).toBe(200);
     expect(accepted.body).toMatchObject({ status: "accepted", counts: true, version: 2 });

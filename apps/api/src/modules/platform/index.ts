@@ -1,6 +1,12 @@
 // platform: HTTP plumbing (ADR-0002). Depends on no other module.
 export { HttpProblem, problems, type DenialInfo } from "./problem.ts";
-export { mapDatabaseGuardError, pointerOfColumn, type PgErrorLike } from "./db-errors.ts";
+export {
+  DependencyCycleProblem,
+  mapDatabaseGuardError,
+  pointerOfColumn,
+  type CycleNode,
+  type PgErrorLike,
+} from "./db-errors.ts";
 export {
   assertNoInvalidCharacters,
   findInvalidCharacter,
@@ -98,3 +104,4 @@ export {
 export { registerHealthRoutes } from "./health.ts";
 export { createInFlight, registerInFlightTracking, type InFlight } from "./in-flight.ts";
 export type { ModuleDeps, ModuleRegistration } from "./deps.ts";
+export { ADVISORY_LOCK_CLASSES, type AdvisoryLockClassName } from "./advisory-locks.ts";

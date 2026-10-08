@@ -64,7 +64,17 @@ Supporting P3 tables (all in the data dictionary): `initiative_gap_link`, `initi
 | 13 | Milestones | `milestone` rows (approved vs forecast dates) |
 | 14 | Required decisions | `initiative_decision_link` rows → canonical `decision` (decision, owner and due date come from the decision row; one decision model, ADR-0015) |
 
-Further columns: `code` (`INI-01`…, from `record_code_counter` prefix `INI`), `wave_id` (ADR-0023), `planned_start`, `planned_end` (dates; `planned_end >= planned_start`), the lifecycle columns of §3, `archived_*`.
+Further columns: `code` (`INI-01`…, from `record_code_counter` prefix `INI`), `wave_id` (ADR-0023), `planned_start`, `planned_end` (dates; `planned_end >= planned_start`) and the lifecycle columns of §3.
+
+**Retirement, never deletion (aligned with what was built, T-DG3-ARCH-03).** An earlier draft of this paragraph listed `archived_*` columns. They do not exist: migration `0020` has no archive columns on `initiative`, and the contract has no archive route and no archive fields on `Initiative`. The rule as built by T-DG3-BE-B is:
+
+- There is **no DELETE** of an initiative, in the API or in the grants.
+- **`cancelled` is the terminal retirement** (`POST /initiatives/{id}/cancel`, with a reason and the `cancelled_*` stamps; §3).
+- **A `cancelled` or `completed` initiative is read-only, and so are its links.** A `PATCH` of the T05 card, or a create, change or archive of a gap link, outcome contribution or decision link, answers **422** `urn:mth:problem:validation`, code `initiative.read_only`, detail "A {status} initiative is read-only; its card and links can no longer be changed." (`portfolio/repository.ts` `assertEditable`, `READ_ONLY_STATUSES`).
+
+The individual link rows keep their own `active` → `archived` status (archive, never delete).
+
+*Open point, not built in P3:* the same guard is **not** applied to the records other tasks hang off an initiative: scores (BE-D) and deliverables and milestones (BE-C). Writing them on a cancelled initiative is not refused today. BE-E should apply it to resource demand when it builds those writes. The consequence is limited, because a cancelled initiative is out of rankings, the view, G4 scope and capacity demand. Extending `assertEditable` to those writes is a follow-up for BE-E or a repair round; it is listed in `p3-work-split.md` §9 (item 14).
 
 **Outcome hierarchy (REQ-PB-032).** The five B0048 levels are canonical records: North Star (`north_star`) → strategic outcome (`outcome`) → KPI (`outcome_kpi` → `kpi_definition`) → target (`outcome_kpi.target_value`, `target_date`, trajectory) → **initiative contribution** (`initiative_outcome_contribution`). `outcome_id` is `NOT NULL` with a composite FK into the same transformation: a contribution without an outcome is rejected by the schema (API 400 at `/outcomeId`, DB `not_null_violation`). When `outcome_kpi_id` is set it must belong to that outcome (DB trigger `initiative_contribution_kpi_matches_outcome`). `GET /transformations/{id}/outcome-hierarchy` (P3 read view, `portfolio` module) returns the five levels as one tree.
 
@@ -112,11 +122,35 @@ Notes:
   - It **never** creates a `gate_decision`, never changes `gate_instance.status`, and the gate list keeps showing the gate as `draft` with an `inheritedApproval` annotation. The product-gate history therefore never contains an approval the product did not record.
 - **Waiver** (End-to-End, REQ-PB-004 procedure "or an authorized waiver is recorded"): `gate_dispensation` with `kind = 'waiver'`, `gate_code`, mandatory `reason`, optional `initiative_id` (null = the whole transformation), `expires_on`, `granted_by` (must hold `gate.decide` and be the gate's configured approver; not the requester; business approval). A waiver unblocks the sequencing precondition for that gate only; it is shown on the initiative and in readiness as "launched under waiver of G3", and it can be revoked (`status = 'revoked'`, audited). It never approves the gate.
 - Routes (as in the frozen contract, `docs/api/openapi.yaml`): `GET/POST /transformations/{id}/gate-dispensations`, `POST …/{dispensationId}/decision` with body `AcceptanceDecision {result: accepted | rejected, note?}` and `If-Match` (operation `decideGateDispensation`; a `pending` dispensation becomes `accepted` or `rejected`), and `POST …/{dispensationId}/revoke` (`accepted` → `revoked`). Permissions: recording `gate.submit`; deciding (accepting, rejecting, revoking) `gate.decide`, held by the waived gate's configured approver. *(T-DG3-ARCH-02: this line earlier said `…/accept`; the contract's `…/decision` is authoritative and is what T-DG3-BE-A implemented.)*
-- **No delegated dispensation decisions (confirmed, T-DG3-ARCH-02).** `AcceptanceDecision` is a shared schema and carries an optional `onBehalfOfUserId`. On a gate dispensation it is refused with **422** `urn:mth:problem:validation`, code `dispensation.on_behalf_not_supported`, pointer `/onBehalfOfUserId`, and nothing is written. A waiver or an inherited-approval acceptance is a business approval that stands in for a product gate, so the waived gate's configured approver decides it in person. The ADR-0015 delegation path (`actsOnBehalfOf`) applies to `gate_decision` only. This is the rule T-DG3-BE-A implemented; no backend follow-up is needed. If delegation is wanted later, it is a change to this ADR, and it would reuse the `gates.ts` delegation logic.
+- **No delegated dispensation decisions (confirmed, T-DG3-ARCH-02).** `AcceptanceDecision` is a shared schema and carries an optional `onBehalfOfUserId`. On a gate dispensation it is refused with **422** `urn:mth:problem:validation`, code `dispensation.on_behalf_not_supported`, pointer `/onBehalfOfUserId`, and nothing is written. A waiver or an inherited-approval acceptance is a business approval that stands in for a product gate, so the waived gate's configured approver decides it in person. This is the rule T-DG3-BE-A implemented. T-DG3-ARCH-03 made it the rule for **every** P3 business approval: see §6.
 
 ### 6. Business approvals are recorded human decisions
 
 Selection (`portfolio.select`), funding (`funding.approve`), weight-set approval and ranking overrides (`prioritization.approve`), dispensations and G4 (`gate.decide`) are *business approvals inside the product*. The product records a named person's decision with rationale, timestamp, approver basis and audit event. Nothing auto-approves: no job, rule, seed or migration writes an approval. Demo seed data may contain clearly synthetic approvals, which approve nothing real. A technical-admin role can never hold these permissions (DB trigger from `0001`). These are G-level business records and never DG0–DG7 engineering gate records.
+
+**Delegation: one rule for the P3 business approvals (decided T-DG3-ARCH-03, 2026-10-08).** Until then the rule differed by action: selection allowed one-hop delegation, while dispensations and prioritization decisions refused it.
+
+**The rule: a P3 business approval is decided by the approver in person. Acting on someone's behalf is refused.**
+
+| Action | Body carrying `onBehalfOfUserId` | Answer when it is present |
+|---|---|---|
+| Select / deselect (`portfolio.select`) | `SelectionRequest` | 422 `selection.on_behalf_not_supported` (changed from one-hop delegation) |
+| Funding decision (`funding.approve`, BE-E) | `FundingDecisionCreate` | 422 `funding.on_behalf_not_supported` (BE-E implements it) |
+| Ranking-override decision (`prioritization.approve`) | `ApprovalDecision` | 422 `prioritization.on_behalf_not_supported` (as built) |
+| Weight-set approval and override revoke (`prioritization.approve`) | `TransitionNote` / `ReasonRequest`, which have no such property | 400: the strict schema refuses an unknown property (as built) |
+| Dispensation decision (`gate.decide`) | `AcceptanceDecision` | 422 `dispensation.on_behalf_not_supported` (as built) |
+
+Every 422 has the same form: `type` `urn:mth:problem:validation`, `errors[0].pointer` `/onBehalfOfUserId`, the English detail "A {record} is decided by the approver in person; deciding on someone's behalf is not available.", and **nothing is written** (no row, no version bump, no audit event). The check runs after the `If-Match` check, before the separation-of-duties and business preconditions, and before any write. The contract is unchanged: the property stays in the frozen schemas, and the 422 is already declared on every one of these operations.
+
+Why "refused" and not "allowed":
+
+1. **In P3 delegation adds no capability.** Selection, funding, weight-set approval and override decisions are granted by permission, not to one named person. Any other holder of the permission can decide in their own name when the usual approver is absent. Dispensations name an approver, but a waiver stands in for a product-gate approval, so T-DG3-ARCH-02 already required that approver to decide in person.
+2. **The delegation feature itself is P4.** REQ-S10-010 (final gate DG4) covers delegation records with effective dates, absence handling, loop rejection and "B on behalf of A" in the audit trail. Allowing delegation now, in five places, ahead of that feature would create five separate SoD paths (REQ-S10-016) to keep consistent later. Refusing keeps one path.
+3. **It is the smaller change.** Three of the five actions already refused delegation, and only selection changes.
+
+Not covered by this rule: **record-owner decisions** keep the ADR-0015 one-hop delegation path (`actsOnBehalfOf`). These are the design decision (`decision.decide`), the product gate decision (`gate_decision`, including G4, §7) and deliverable acceptance by the executive owner (ADR-0023 §2). Each can be made only by one named person, so absence would otherwise block them. Their contracts were approved at DG2 or are owner-based by design.
+
+**In P4**, REQ-S10-010 revisits this table in one place: one shared helper reusing `actsOnBehalfOf`, the delegator's and the caller's SoD checked against the proposer, and both identities recorded. The `on_behalf_of_user_id` columns of `portfolio_selection` and `funding_decision` (ADR-0023 §7) stay in the schema for that and are always NULL in P3.
 
 ### 7. Product gate G4 (REQ-PB-019, REQ-S04-006, REQ-PB-046, REQ-PB-055, REQ-PB-059)
 

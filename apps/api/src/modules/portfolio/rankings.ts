@@ -15,7 +15,7 @@
 // with its own audit event. Labels: 'weight version {n}', 'score change ({criteria})', 'override: {reason}'.
 import type { DbOrTx, InitiativeScoreResultRow, RankingEntryRow, RankingSnapshotRow, Tx } from "@mth/db";
 import { sql } from "@mth/db";
-import { timestamp, transitionNote, uuid, version } from "@mth/shared/schemas";
+import { transitionNote, type RankingCause, type RankingEntry, type RankingSnapshot } from "@mth/shared/schemas";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
@@ -59,52 +59,8 @@ const sParams = z.strictObject({ transformationId: z.uuid(), snapshotNo: positiv
 
 // ------------------------------------------------------------------------------------------------ schemas (contract)
 
-export const RANKING_CAUSES = ["new", "score", "weight", "override", "relative", "removed"] as const;
-export type RankingCause = (typeof RANKING_CAUSES)[number];
-const nullableScore = z
-  .string()
-  .regex(/^[1-5]\.[0-9]{4}$/)
-  .nullable();
-
-/** Contract `RankingEntry`. */
-export const rankingEntry = z.strictObject({
-  initiativeId: uuid,
-  rank: z.number().int().min(1).nullable(),
-  previousRank: z.number().int().min(1).nullable(),
-  weightedScore: nullableScore,
-  completeness: z.enum(["complete", "incomplete", "removed"]),
-  causes: z.array(z.enum(RANKING_CAUSES)),
-  causeLabels: z.array(z.string()),
-  causeDetail: z.record(z.string(), z.unknown()),
-  overrideId: uuid.nullable(),
-});
-export type RankingEntry = z.infer<typeof rankingEntry>;
-/** Contract `RankingSnapshot`. */
-export const rankingSnapshot = z.strictObject({
-  id: uuid,
-  transformationId: uuid,
-  snapshotNo: z.number().int().min(1),
-  weightSetId: uuid,
-  weightSetVersionNo: z.number().int().min(1),
-  status: z.enum(["current", "superseded"]),
-  note: z.string().min(1).max(2000).nullable(),
-  proposedBy: uuid,
-  proposedAt: timestamp,
-  supersededAt: timestamp.nullable(),
-  version,
-});
-export type RankingSnapshot = z.infer<typeof rankingSnapshot>;
-export const rankingSnapshotView = z.strictObject({ snapshot: rankingSnapshot, entries: z.array(rankingEntry) });
-export const rankingSnapshotPage = z.strictObject({
-  items: z.array(rankingSnapshot),
-  nextCursor: z.string().nullable(),
-});
-export const rankingChange = z.strictObject({
-  snapshotNo: z.number().int().min(1),
-  proposedAt: timestamp,
-  entry: rankingEntry,
-});
-export const rankingHistoryPage = z.strictObject({ items: z.array(rankingChange), nextCursor: z.string().nullable() });
+// Moved to @mth/shared/schemas (prioritization.ts; T-DG3-ARCH-03): RANKING_CAUSES, RankingEntry, RankingSnapshot*,
+// RankingChange and the history page.
 
 // ------------------------------------------------------------------------------------------------ labels
 

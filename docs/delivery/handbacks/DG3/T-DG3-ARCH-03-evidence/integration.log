@@ -1,0 +1,277 @@
+$ QA_PG_PORT=23760 MTH_PORT_POOL=23761-23799 tests/qa/support/with-pg.sh pnpm test:integration
+port-policy: PostgreSQL listening on port 23760 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+> mobily-transformation-hub@0.1.0 test:integration /home/user/wt/dg3-arch-03
+> vitest run --project integration
+
+
+ RUN  v3.2.4 /home/user/wt/dg3-arch-03
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muysqqdz_523c1d24 (server_encoding UTF8); applied 25 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/portfolio/prioritization.test.ts (17 tests) 5599ms
+   ✓ rankings and history (REQ-S09-005, REQ-S09-003) > snapshot: deterministic tie-break, incomplete unranked, submitted -> ranked with audit; v2 activation -> history shows 'weight version 2' as the cause of the rank change  516ms
+   ✓ rankings and history (REQ-S09-005, REQ-S09-003) > score cause lists the criteria; relative cause when another initiative moved  362ms
+   ✓ overrides (REQ-S09-005) > an override without a reason is rejected (missing/empty -> 400 at /reason; blank/invisible -> 422); the proposer cannot approve; approved applies with 'override: <reason>'; revoke; AUD 403; If-Match  471ms
+   ✓ every BE-D mutation re-authorises inside its transaction (BE18A) > weight sets, scores, rankings and overrides: 403 at commit and nothing changes  600ms
+   ✓ comparison view (REQ-S09-004) > more than 500 initiatives -> 422 prioritization.portfolio_too_large  1271ms
+ ✓ |integration| apps/api/test/integration/portfolio/roadmap.test.ts (12 tests) 2483ms
+stdout | apps/api/test/integration/connection-hygiene.test.ts > an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB chunked, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt
+SWEEP {"path":"upload 30 MiB chunked over the limit","status":413,"code":"evidence.too_large","connection":"close","serverCloseMs":0,"connectionsZeroMs":505}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB chunked, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt
+SWEEP-CLOSE {"label":"after upload 30 MiB chunked over the limit","ms":0,"completed":true}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB content-length, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt
+SWEEP {"path":"upload 30 MiB content-length over the limit","status":413,"code":"evidence.too_large","connection":"close","serverCloseMs":0,"connectionsZeroMs":503}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB content-length, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt
+SWEEP-CLOSE {"label":"after upload 30 MiB content-length over the limit","ms":1,"completed":true}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 401 no session","status":401,"code":"unauthenticated","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 403 no CSRF token","status":403,"code":"csrf","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 404 unknown evidence","status":404,"code":"not_found","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 409 stale If-Match","status":409,"code":"version_conflict","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 428 no If-Match","status":428,"code":"precondition_required","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 400 bad X-File-Name","status":400,"code":"validation.file_name","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 422 not a file","status":422,"code":"validation.evidence.not_a_file","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 400 undeclared media type (text/plain)","status":400,"code":"validation.content_type","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 401 Content-Length 30 MiB","status":401,"code":"unauthenticated","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 428 Content-Length 30 MiB","status":428,"code":"precondition_required","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"JSON over bodyLimit, chunked","status":400,"code":"validation.body_too_large","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"JSON over bodyLimit, Content-Length","status":400,"code":"validation.body_too_large","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"unmatched route 404, chunked","status":404,"code":"not_found","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"unmatched route 404, Content-Length 30 MiB","status":404,"code":"not_found","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"router-level 400 bad URL (FST_ERR_BAD_URL), chunked","status":400,"code":"validation.format","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP-CLOSE {"label":"after the refusals sweep","ms":0,"completed":true}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > app.close() while a refused client (403, no CSRF token) KEEPS SENDING its body completes promptly
+SWEEP-CLOSE {"label":"while a refused (403) client keeps sending its body","ms":0,"completed":true}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a client that aborts mid-upload leaves no partial object and no leaked socket > content-length: 2 MiB of a 10 MiB upload, then the client destroys the socket
+SWEEP {"path":"client abort mid-upload content-length","connectionsZeroMs":25,"partialFilesGoneMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a client that aborts mid-upload leaves no partial object and no leaked socket > chunked: 2 MiB of a 10 MiB upload, then the client destroys the socket
+SWEEP {"path":"client abort mid-upload chunked","connectionsZeroMs":25,"partialFilesGoneMs":1}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > shutdown is bounded > app.close() with a STALLED upload in flight completes within the grace period (default 5 s); the stalled socket is closed by the server
+SWEEP-CLOSE {"label":"stalled upload in flight (default grace 5 s)","ms":5001,"completed":true}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > shutdown is bounded > an in-flight upload that finishes within the grace period completes normally (200, stored byte-exact, Connection: close), then app.close() returns
+SWEEP-CLOSE {"label":"in-flight upload finishing during shutdown","ms":477,"completed":true}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > shutdown is bounded > a body that stalls outside shutdown is cut by Node's requestTimeout (408, connection closed), nothing stored, no error log
+SWEEP {"path":"stalled body, requestTimeout 1.5 s","status":["HTTP/1.1 408"],"closedMs":1732}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > shutdown is bounded > SIGTERM: the API process (src/main.ts) exits 0 within the grace period with a stalled upload in flight
+SWEEP-CLOSE {"label":"SIGTERM with a stalled upload (main.ts)","ms":5031,"exitCode":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > unmatched-route 404s are rate limited (audit round 10 observation P3) > a flood on unmatched routes gets 429 rate_limited after the limit (same key and limit as the routes); the SPA fallback still serves index.html
+SWEEP {"path":"unmatched-route flood, limit 4/min","statuses":[404,404,404,429]}
+
+ ✓ |integration| apps/api/test/integration/connection-hygiene.test.ts (13 tests) 18578ms
+   ✓ an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB chunked, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt  685ms
+   ✓ an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB content-length, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt  709ms
+   ✓ a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt  548ms
+   ✓ a client that aborts mid-upload leaves no partial object and no leaked socket > content-length: 2 MiB of a 10 MiB upload, then the client destroys the socket  373ms
+   ✓ a client that aborts mid-upload leaves no partial object and no leaked socket > chunked: 2 MiB of a 10 MiB upload, then the client destroys the socket  358ms
+   ✓ normal traffic is unchanged > a valid 3 MiB upload over a real socket is stored byte-exact with its sha256, and the keep-alive connection serves the next request  860ms
+   ✓ shutdown is bounded > app.close() with a STALLED upload in flight completes within the grace period (default 5 s); the stalled socket is closed by the server  5362ms
+   ✓ shutdown is bounded > an in-flight upload that finishes within the grace period completes normally (200, stored byte-exact, Connection: close), then app.close() returns  720ms
+   ✓ shutdown is bounded > a body that stalls outside shutdown is cut by Node's requestTimeout (408, connection closed), nothing stored, no error log  1791ms
+   ✓ shutdown is bounded > SIGTERM: the API process (src/main.ts) exits 0 within the grace period with a stalled upload in flight  6475ms
+ ✓ |integration| apps/api/test/integration/registers.test.ts (23 tests) 2128ms
+ ✓ |integration| apps/api/test/integration/media-types.test.ts (21 tests) 1468ms
+   ✓ the media-type check and the parser lookup agree for every spelling (F-DG2-351) > every OWS/whitespace spelling of octet-stream reaches the octet parser: stored byte-exact (sha256), downloadable  476ms
+ ✓ |integration| apps/api/test/integration/kpi/business-cases.test.ts (17 tests) 2923ms
+   ✓ transformation case: the ten B0085 sections (REQ-PB-053) > all ten sections persist and read back; missingSections clears once lines and owners exist  315ms
+ ✓ |integration| apps/api/test/integration/portfolio/transitions.test.ts (21 tests) 5237ms
+   ✓ submit (draft -> submitted) > REQ-PB-007/REQ-PB-022: before G1 -> 422 invalid-transition with the exact G1 text; errors[] lists every failing precondition; nothing written  303ms
+   ✓ withdraw and cancel > cancel: any non-terminal status -> cancelled with reason and stamps; launched or cancelled -> 422 not_cancellable  580ms
+   ✓ selection (REQ-S09-003): a recorded business approval; ranking never selects; selection never funds > deselect: selected or funded -> ranked with a rationale; ranked or launched -> 422 not_deselectable  351ms
+   ✓ launch (funded -> launched) > 'Selected - unfunded' cannot launch (also after a rejected/deferred or revoked funding decision); other statuses are not launchable  437ms
+ ✓ |integration| apps/api/test/integration/dependencies/t08.test.ts (19 tests) 2477ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts (33 tests) 1237ms
+ ✓ |integration| apps/api/test/integration/kpi/kpi-resources.test.ts (23 tests) 1005ms
+ ✓ |integration| apps/api/test/integration/blank-text.test.ts (29 tests) 2903ms
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-411: a stalled upload holds no pooled connection and no row lock > reviewer's R8: N stalled uploads (N = pool size) leave /me and /readyz answering promptly; nothing is stored
+BE17 R8: {"poolSize":5,"stalledUploads":5,"sessions":{"sessions":5,"visible":5,"idleInTx":0,"nonIdle":0},"me":{"status":200,"ms":4},"ready":{"status":200,"ms":2},"patch":{"status":200,"ms":14},"leftovers":[],"rows":0,"closeMs":1,"errors":[]}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-411: a stalled upload holds no pooled connection and no row lock > an upload whose If-Match goes stale during the body: 409 version_conflict, no content row, no object
+BE17 stale-if-match: {"patchDuringBody":{"status":200,"ms":21},"patch":{"status":200,"ms":21},"upload":{"status":409,"type":"urn:mth:problem:version-conflict","title":"Version conflict","detail":"The record was changed by someone else. Review the current version and re-apply your change.","code":"version_conflict","requestId":"01a118e8-b304-7347-ae83-34302ede109c","currentVersion":2},"rows":0,"files":[],"version":2,"closeMs":0}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-411: a stalled upload holds no pooled connection and no row lock > valid uploads stay byte-exact with their sha256 (stored, recorded and downloaded), no temporary object left
+BE17 valid-uploads: {"out":[{"size":1,"status":200,"rows":1,"sha":true,"files":["/var/tmp/mth-run.xGFg9X/claude-0/mth-evidence-it-36mMAj/01a118e8-abec-7443-8c16-77d75be0252e/01a118e8-ac22-730c-9986-5b6ae1b21ef1/01a118e8-b477-705b-96d3-d2c25ed8f2d9/01a118e8-b487-72f8-8e04-fbedc618cc99"]},{"size":65536,"status":200,"rows":1,"sha":true,"files":["/var/tmp/mth-run.xGFg9X/claude-0/mth-evidence-it-36mMAj/01a118e8-abec-7443-8c16-77d75be0252e/01a118e8-ac22-730c-9986-5b6ae1b21ef1/01a118e8-b4b9-744a-a332-185d98cb9da2/01a118e8-b4c4-7738-b546-8a7c7bb0602c"]},{"size":3145728,"status":200,"rows":1,"sha":true,"files":["/var/tmp/mth-run.xGFg9X/claude-0/mth-evidence-it-36mMAj/01a118e8-abec-7443-8c16-77d75be0252e/01a118e8-ac22-730c-9986-5b6ae1b21ef1/01a118e8-b4e1-72c5-83ff-21f547644083/01a118e8-b4eb-721b-b28b-6f510057de33"]}],"closeMs":0}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-411: a stalled upload holds no pooled connection and no row lock > sweep: downloads to slow readers (N+1 paused readers, pool size N) hold no pooled connection
+BE17 slow-readers: {"poolSize":2,"readers":3,"bytesReceivedWhilePaused":[65536,65536,65536],"fileBytes":25165824,"me":{"status":200,"ms":5},"ready":{"status":200,"ms":3},"sessions":{"sessions":2,"visible":2,"idleInTx":0,"nonIdle":0},"closeMs":2}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-411: a stalled upload holds no pooled connection and no row lock > defence in depth: an exhausted pool answers 503 after the bounded checkout wait (and /readyz 503), never a hang
+BE17 pool-exhausted: {"me":{"status":503,"ms":405},"meCode":"unavailable","ready":{"status":503,"ms":402},"meAfter":{"status":200,"ms":8},"closeMs":0}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6a stalled JSON body, requestTimeout 408: answered (if at all) below 500, logged below error level, nothing stored
+BE17 R6a: {"status":408,"classified":0,"completed":[],"errors":[],"rows":0,"files":[],"closeMs":0}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6d JSON body aborted by the client: answered (if at all) below 500, logged below error level, nothing stored
+BE17 R6d: {"status":null,"classified":26,"completed":[],"errors":[],"rows":0,"files":[],"closeMs":0}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6c stalled upload body, requestTimeout 408: answered (if at all) below 500, logged below error level, nothing stored
+BE17 R6c: {"status":408,"classified":0,"completed":[],"errors":[],"rows":0,"files":[],"closeMs":0}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6e upload body aborted by the client: answered (if at all) below 500, logged below error level, nothing stored
+BE17 R6e: {"status":null,"classified":25,"completed":[],"errors":[],"rows":0,"files":[],"closeMs":1}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > no over-match: a database-side ECONNRESET while the request body is still arriving is a 500 with an error log
+BE17 db-econnreset: {"status":500,"resets":4,"errors":[{"msg":"unhandled error","code":"ECONNRESET","message":"read ECONNRESET"}]}
+
+ ✓ |integration| apps/api/test/integration/request-io.test.ts (10 tests) 10669ms
+   ✓ F-DG2-411: a stalled upload holds no pooled connection and no row lock > reviewer's R8: N stalled uploads (N = pool size) leave /me and /readyz answering promptly; nothing is stored  1622ms
+   ✓ F-DG2-411: a stalled upload holds no pooled connection and no row lock > an upload whose If-Match goes stale during the body: 409 version_conflict, no content row, no object  383ms
+   ✓ F-DG2-411: a stalled upload holds no pooled connection and no row lock > sweep: downloads to slow readers (N+1 paused readers, pool size N) hold no pooled connection  1231ms
+   ✓ F-DG2-411: a stalled upload holds no pooled connection and no row lock > defence in depth: an exhausted pool answers 503 after the bounded checkout wait (and /readyz 503), never a hang  1438ms
+   ✓ F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6a stalled JSON body, requestTimeout 408: answered (if at all) below 500, logged below error level, nothing stored  1945ms
+   ✓ F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6d JSON body aborted by the client: answered (if at all) below 500, logged below error level, nothing stored  659ms
+   ✓ F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6c stalled upload body, requestTimeout 408: answered (if at all) below 500, logged below error level, nothing stored  1943ms
+   ✓ F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6e upload body aborted by the client: answered (if at all) below 500, logged below error level, nothing stored  662ms
+   ✓ F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > no over-match: a database-side ECONNRESET while the request body is still arriving is a 500 with an error log  376ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts (25 tests) 11467ms
+   ✓ every operation, validated against the contract and the zod mirrors > kpi module operations (P2; kpi-exercises.ts, owned by kpi-benefits-engineer)  518ms
+   ✓ every operation, validated against the contract and the zod mirrors > P2 backend operations (p2-exercises.ts): every routed operation exercised with a success  1928ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-B operations (p3-exercises-be-b.ts)  684ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-C operations (p3-exercises-be-c.ts)  543ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-D operations (p3-exercises-be-d.ts)  1100ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 KBE-B operations (p3-exercises-kbe-b.ts)  357ms
+   ✓ every operation, validated against the contract and the zod mirrors > every GET operation with a path parameter: a malformed id is a declared 400 at /params/<name>; nothing written  568ms
+   ✓ every operation, validated against the contract and the zod mirrors > every operation but the OIDC callback: U+0000 in the query is a declared 400 invalid_character  1261ms
+   ✓ every operation, validated against the contract and the zod mirrors > every operation: an undeclared request media type is a declared 400 validation.content_type; nothing written  2759ms
+   ✓ every operation, validated against the contract and the zod mirrors > every operation: the rate limiter's 429 is a declared RateLimited problem (live, limits of 1 per minute)  895ms
+ ✓ |integration| apps/api/test/integration/dg2-repairs.test.ts (13 tests) 1398ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts (30 tests) 1152ms
+ ✓ |integration| apps/api/test/integration/gates.test.ts (12 tests) 2576ms
+   ✓ starter structure and live readiness > REQ-S13-012: evidence that is only a filename (or an inaccessible link) leaves g1.diagnostic incomplete  376ms
+   ✓ G2 Direction readiness (REQ-PB-036 failing outcomes, REQ-PB-037 guardrails) > lists every outcome whose good outcome test is not passing (ids + criteria); zero guardrails blocks submission  463ms
+ ✓ |integration| apps/api/test/integration/invalid-utf8.test.ts (14 tests) 1458ms
+   ✓ a JSON body with invalid UTF-8 is 400 validation.json, the same with Content-Length and chunked > charter create: 400 for every invalid sequence and framing; no charter, no audit row, no U+FFFD stored  367ms
+ ✓ |integration| apps/api/test/integration/invalid-character.test.ts (20 tests) 1410ms
+stdout | apps/api/test/integration/commit-time-auth.test.ts > F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > Q1 the uploader's only grant is revoked while the body streams: 403 forbidden, audited as authorization.denied, nothing committed or stored
+BE18 Q1 {"during":["01a118e9-31fa-75d9-bd94-046473fe1582.part"],"revoked":1,"response":{"status":403,"code":"forbidden"},"after":{"rows":[],"version":1,"current":null,"files":[],"uploads":0},"denials":[{"record_type":"transformation","record_id":"01a118e9-3149-7348-b445-6952bdb2dea5","reason":"POST /api/v1/transformations/:transformationId/evidence/:evidenceId/content requires transformation.read"}]}
+
+stdout | apps/api/test/integration/commit-time-auth.test.ts > F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > Q1b the uploading session is logged out while the body streams: 401 unauthenticated, nothing committed or stored
+BE18 Q1b {"logout":200,"me":401,"response":{"status":401,"code":"unauthenticated"},"after":{"rows":[],"version":1,"current":null,"files":[],"uploads":0}}
+
+stdout | apps/api/test/integration/commit-time-auth.test.ts > F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > the uploading session reaches its idle expiry while the body streams: 401 unauthenticated, nothing committed or stored
+BE18 idle-expiry {"expired":1,"response":{"status":401,"code":"unauthenticated"},"after":{"rows":[],"version":1,"current":null,"files":[],"uploads":0}}
+
+stdout | apps/api/test/integration/commit-time-auth.test.ts > F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > the uploading session reaches its absolute expiry while the body streams: 401 unauthenticated, nothing committed or stored
+BE18 absolute-expiry {"expired":1,"response":{"status":401,"code":"unauthenticated"},"after":{"rows":[],"version":1,"current":null,"files":[],"uploads":0}}
+
+stdout | apps/api/test/integration/commit-time-auth.test.ts > F-DG2-441: no transaction is open while the API waits on the IdP > Q7 never-answering IdP, pool max 3: three concurrent logins hold no connection or transaction; a signed-in user's /me stays prompt; the logins end in 302 idp_unavailable
+BE18 Q7 {"pgActivityAt1s":[{"state":"idle","n":3}],"me":200,"meMs":6,"logins":[{"status":302,"location":"/login?error=idp_unavailable","ms":4003},{"status":302,"location":"/login?error=idp_unavailable","ms":4003},{"status":302,"location":"/login?error=idp_unavailable","ms":4003}]}
+
+ ✓ |integration| apps/api/test/integration/commit-time-auth.test.ts (8 tests) 7443ms
+   ✓ F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > Q1 the uploader's only grant is revoked while the body streams: 403 forbidden, audited as authorization.denied, nothing committed or stored  484ms
+   ✓ F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > Q1b the uploading session is logged out while the body streams: 401 unauthenticated, nothing committed or stored  481ms
+   ✓ F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > the uploading session reaches its idle expiry while the body streams: 401 unauthenticated, nothing committed or stored  479ms
+   ✓ F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > the uploading session reaches its absolute expiry while the body streams: 401 unauthenticated, nothing committed or stored  470ms
+   ✓ F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > the uploader's user account is disabled while the body streams: 401, nothing committed  467ms
+   ✓ F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > positive control: an upload whose session and grant stay valid commits (200), byte-exact, audited once  372ms
+   ✓ F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > a grant revoked and granted again (a new assignment) while the body streams: the commit sees the CURRENT grants and succeeds  381ms
+   ✓ F-DG2-441: no transaction is open while the API waits on the IdP > Q7 never-answering IdP, pool max 3: three concurrent logins hold no connection or transaction; a signed-in user's /me stays prompt; the logins end in 302 idp_unavailable  4046ms
+ ✓ |integration| apps/api/test/integration/portfolio/links.test.ts (12 tests) 1399ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts (18 tests) 828ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts (11 tests) 463ms
+ ✓ |integration| apps/api/test/integration/bu-hierarchy-guard.test.ts (7 tests) 1013ms
+stdout | apps/api/test/integration/shutdown-cleanup.test.ts > F-DG2-460: SIGTERM with an upload in flight leaves no temporary and no final object > R12-07: 2 MiB of a declared 10 MiB upload, then the client stalls; SIGTERM -> exit 0 within grace + backstop; the store is empty
+BE18A R12-07 {"during":["01a118e9-67f1-736e-b98e-0491322ccbeb/01a118e9-683d-7657-a8b2-cf152673390d/01a118e9-6cef-720a-a6d8-3e35f1ef1f58/01a118e9-6d2d-710c-88d4-fc384e614fc3.part (2097152 B)"],"exitCode":0,"signal":null,"ms":5032,"after":[],"rows":0,"serverClosed":true,"response":""}
+
+stdout | apps/api/test/integration/shutdown-cleanup.test.ts > F-DG2-460: SIGTERM with an upload in flight leaves no temporary and no final object > an upload that is ACTIVELY streaming through the whole grace period: SIGTERM -> exit 0 within grace + backstop; the store is empty
+BE18A streaming {"sentAtSignal":720896,"sentTotal":7077888,"exitCode":0,"ms":5022,"after":[],"rows":0,"serverClosed":true}
+
+stdout | apps/api/test/integration/shutdown-cleanup.test.ts > F-DG2-460 defence in depth: the start-up sweep of stale temporaries > removes a .part last written over an hour ago, logs it at info (no content), and keeps a fresh .part and every final object
+BE18A sweep {"after":["01a118e9-9e6c-7638-a40c-18da1486ec23/01a118e9-9e6c-7638-a40c-1e101398fb2c/01a118e9-9e6d-765c-bb4c-c940d037e855/01a118e9-9e6e-73df-925e-1c7482a45f69.part (46 B)","01a118e9-9e6c-7638-a40c-18da1486ec23/01a118e9-9e6c-7638-a40c-1e101398fb2c/01a118e9-9e6d-765c-bb4c-c940d037e855/01a118e9-9e6e-73df-925e-2223b5e3b434 (46 B)","01a118e9-9e6c-7638-a40c-18da1486ec23/01a118e9-9e6c-7638-a40c-1e101398fb2c/01a118e9-9e6d-765c-bb4c-c940d037e855/01a118e9-9e6f-72aa-879c-5c733b16d8e8 (46 B)","01a118e9-9e6c-7638-a40c-18da1486ec23/01a118e9-9e6c-7638-a40c-1e101398fb2c/01a118e9-9e6d-765c-bb4c-c940d037e855/notes.part (46 B)","01a118e9-9e70-702b-8151-d825348c8012/01a118e9-9e70-702b-8151-dee6d075bccb.part (46 B)"],"removals":[{"level":30,"time":1791419327060,"pid":388,"hostname":"vm","key":"01a118e9-9e6c-7638-a40c-18da1486ec23/01a118e9-9e6c-7638-a40c-1e101398fb2c/01a118e9-9e6d-765c-bb4c-c940d037e855/01a118e9-9e6d-765c-bb4c-cd198190a420.part","sizeBytes":46,"ageMs":7200999,"msg":"evidence store: stale temporary object removed"}],"summary":{"level":30,"time":1791419327061,"pid":388,"hostname":"vm","removed":1,"keptFresh":1,"olderThanMs":3600000,"msg":"evidence store: start-up sweep of stale temporary objects finished"}}
+
+ ✓ |integration| apps/api/test/integration/shutdown-cleanup.test.ts (4 tests) 15022ms
+   ✓ F-DG2-460: SIGTERM with an upload in flight leaves no temporary and no final object > R12-07: 2 MiB of a declared 10 MiB upload, then the client stalls; SIGTERM -> exit 0 within grace + backstop; the store is empty  6180ms
+   ✓ F-DG2-460: SIGTERM with an upload in flight leaves no temporary and no final object > an upload that is ACTIVELY streaming through the whole grace period: SIGTERM -> exit 0 within grace + backstop; the store is empty  6542ms
+   ✓ F-DG2-460: SIGTERM with an upload in flight leaves no temporary and no final object > positive control: an upload that completes before SIGTERM is kept (one final object, its content row), then shutdown is prompt  1013ms
+   ✓ F-DG2-460 defence in depth: the start-up sweep of stale temporaries > removes a .part last written over an hour ago, logs it at info (no content), and keeps a fresh .part and every final object  1025ms
+ ✓ |integration| apps/api/test/integration/kpi/kpi-dg2-repairs.test.ts (11 tests) 971ms
+ ✓ |integration| apps/api/test/integration/portfolio/initiatives.test.ts (12 tests) 1318ms
+   ✓ authorization on every initiative mutation > BE18A: the write gate is re-checked at commit - a grant revoked while the request waits is 403, nothing written  457ms
+ ✓ |integration| apps/api/test/integration/access-derived-race.test.ts (4 tests) 1190ms
+ ✓ |integration| apps/api/test/integration/portfolio/dispensations.test.ts (5 tests) 1196ms
+ ✓ |integration| apps/api/test/integration/framework-errors.test.ts (11 tests) 414ms
+ ✓ |integration| apps/api/test/integration/portfolio/g1-agreements.test.ts (7 tests) 1237ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts (13 tests) 303ms
+ ✓ |integration| apps/api/test/integration/platform.test.ts (12 tests) 554ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts (14 tests) 625ms
+ ✓ |integration| tests/qa/integration/a13-job-idempotency.test.ts (5 tests) 3527ms
+   ✓ A13 running worker: a duplicate delivery is a no-op > consumes the event once; an extra job with the same message completes as 'duplicate'  2606ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts (10 tests) 46ms
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts (10 tests) 5404ms
+   ✓ worker runtime: end to end, restarts and the dead-letter queue > relays and handles a created transformation, and survives a restart without losing the job  3645ms
+   ✓ worker runtime: end to end, restarts and the dead-letter queue > moves a job that keeps failing to ops.failed after the bounded retries  1032ms
+ ✓ |integration| apps/api/test/integration/evidence.test.ts (6 tests) 824ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts (10 tests) 401ms
+ ✓ |integration| apps/api/test/integration/aud-write-deny.test.ts (128 tests) 2117ms
+ ✓ |integration| tests/qa/integration/a14-concurrency.test.ts (5 tests) 528ms
+ ✓ |integration| apps/api/test/integration/portfolio/readiness.test.ts (6 tests) 1115ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts (17 tests) 99ms
+ ✓ |integration| packages/db/test/integration/pool-bounds.test.ts (7 tests) 2846ms
+   ✓ bounded checkout (connectionTimeoutMillis) > a checkout from an exhausted pool fails after the timeout (never hangs) and is recognised  305ms
+   ✓ bounded checkout (connectionTimeoutMillis) > through Kysely the same error reaches the caller  305ms
+   ✓ bounded idle-in-transaction time (idle_in_transaction_session_timeout) > PostgreSQL ends a transaction left idle past the limit, releasing its row lock; the pool recovers  1212ms
+   ✓ bounded idle-in-transaction time (idle_in_transaction_session_timeout) > a transaction that keeps running statements is not affected  1016ms
+ ✓ |integration| packages/db/test/integration/encoding.test.ts (8 tests) 2315ms
+   ✓ a SQL_ASCII database is refused before anything is created > mth-db migrate: exit 1, the message on stderr, nothing applied, no schema_migration table  301ms
+   ✓ a SQL_ASCII database is refused before anything is created > control: the same CLI migrates a UTF8 scratch database created the same way  1011ms
+ ✓ |integration| apps/api/test/integration/kpi/kpi-aud-write-deny.test.ts (18 tests) 553ms
+ ✓ |integration| packages/db/test/integration/bootstrap.test.ts (5 tests) 2717ms
+   ✓ mth-db bootstrap > creates the first organization and a technical/access admin with no business permission, fully audited  795ms
+   ✓ mth-db bootstrap > refuses to run twice  713ms
+   ✓ mth-db bootstrap > validates its input and refuses the dev-login issuer  650ms
+   ✓ mth-db seed-dev (synthetic, development only) > seeds synthetic users bound to urn:mth:dev-local once, idempotently  461ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts (7 tests) 676ms
+   ✓ mth-db migrate on a fresh database > applies every shipped migration, then reports up to date  435ms
+ ✓ |integration| apps/worker/test/integration/maintenance.test.ts (2 tests) 589ms
+ ✓ |integration| packages/db/test/integration/scratch-drop.test.ts (3 tests) 4607ms
+   ✓ dropScratchDatabase never terminates a live client (F-DG1-009) > a drop right after pool.end() raises no 57P01 on the closing pool (40 rounds, 8 clients each)  4176ms
+   ✓ dropScratchDatabase never terminates a live client (F-DG1-009) > a client that is still connected is NOT terminated: the drop refuses, names it, and succeeds once it ends  431ms
+
+ Test Files  49 passed (49)
+      Tests  748 passed (748)
+   Start at  00:26:46
+   Duration  166.52s (transform 2.42s, setup 0ms, collect 26.42s, tests 138.50s, environment 0ms, prepare 88ms)
+
+EXIT=0

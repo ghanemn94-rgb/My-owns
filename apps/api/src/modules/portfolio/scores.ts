@@ -23,13 +23,20 @@ import {
   type CriterionWeight,
   type ScoreMap,
 } from "@mth/shared/calc";
-import { freeText, timestamp, uuid, version } from "@mth/shared/schemas";
+import {
+  criterionCode,
+  initiativeScoreCreate,
+  initiativeScoreUpdate,
+  type InitiativeScore,
+  type ScoreResult,
+} from "@mth/shared/schemas";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
 import { principalOf, requireTransformationRead } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
+  ADVISORY_LOCK_CLASSES,
   iso,
   isoOrNull,
   parse,
@@ -45,73 +52,17 @@ const JSON_BODY = ["application/json"] as const;
 
 // ------------------------------------------------------------------------------------------------ schemas (contract)
 
-/** Contract `CriterionCode`: the five B0076 criteria plus the B0077 risk/compliance extension. */
-export const criterionCode = z.enum(CRITERION_CODES);
-const nullableUuid = uuid.nullable();
-const nullableTimestamp = timestamp.nullable();
-const stamps = { version, createdAt: timestamp, createdBy: uuid, updatedAt: timestamp, updatedBy: uuid };
-
-/** Contract `integer, minimum 1, maximum 5`: 6, 0, 2.5 and "4" are 400 (ADR-0022 §2). */
-const scoreValue = z.number().int().min(1).max(5);
-
-/** Contract `InitiativeScoreCreate` (strict: a `weightedScore` property is 400). */
-export const initiativeScoreCreate = z.strictObject({
-  criterionCode,
-  score: scoreValue,
-  note: freeText(1, 2000).optional(),
-});
-/** Contract `InitiativeScoreUpdate` (strict). */
-export const initiativeScoreUpdate = z.strictObject({
-  score: scoreValue.nullable(),
-  note: freeText(1, 2000).nullable().optional(),
-});
-
-/** Contract `ScoreResult` (read-only). */
-export const scoreResult = z.strictObject({
-  weightSetVersionNo: z.number().int().min(1),
-  completeness: z.enum(["complete", "incomplete"]),
-  weightedScore: z
-    .string()
-    .regex(/^[1-5]\.[0-9]{4}$/)
-    .nullable(),
-  weightedScoreDisplay: z.string().nullable(),
-  display100: z.string().nullable(),
-  conversion: z.literal("(score-1)/4*100"),
-  missingCriteria: z.array(criterionCode),
-  computedAt: nullableTimestamp,
-});
-export type ScoreResult = z.infer<typeof scoreResult>;
-
-/** Contract `InitiativeScore`. */
-export const initiativeScore = z.strictObject({
-  id: uuid,
-  organizationId: uuid,
-  transformationId: uuid,
-  initiativeId: uuid,
-  criterionCode,
-  score: z.number().int().min(1).max(5).nullable(),
-  note: freeText(1, 2000).nullable(),
-  scoredBy: nullableUuid,
-  scoredAt: nullableTimestamp,
-  ...stamps,
-});
-export type InitiativeScore = z.infer<typeof initiativeScore>;
-
-/** Contract `InitiativeScoreSheet`. */
-export const initiativeScoreSheet = z.strictObject({
-  initiativeId: uuid,
-  scores: z.array(initiativeScore),
-  result: scoreResult,
-});
+// Moved to @mth/shared/schemas (prioritization.ts; T-DG3-ARCH-03): criterionCode, InitiativeScore*, ScoreResult.
 
 // ------------------------------------------------------------------------------------------------ shared helpers
 
 /**
  * Advisory-lock class of the prioritization writes of one transformation (weight-set proposal and activation, ranking
- * snapshots, score results): they serialize on `pg_advisory_xact_lock(730222, hashtext(transformation_id))`, so the
+ * snapshots, score results): they serialize on `pg_advisory_xact_lock(PRIORITIZATION_LOCK_CLASS, hashtext(transformation_id))`, so the
  * next version/snapshot number and the "latest result" are never computed from a concurrent, uncommitted state.
+ * Registry: ADVISORY_LOCK_CLASSES (platform), ADR-0016.
  */
-export const PRIORITIZATION_LOCK_CLASS = 730222;
+export const PRIORITIZATION_LOCK_CLASS = ADVISORY_LOCK_CLASSES.prioritization;
 
 export async function lockPrioritization(tx: Tx, transformationId: string): Promise<void> {
   await sql`select pg_advisory_xact_lock(${PRIORITIZATION_LOCK_CLASS}, hashtext(${transformationId}))`.execute(tx);

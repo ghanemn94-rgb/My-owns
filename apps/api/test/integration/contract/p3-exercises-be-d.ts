@@ -1,21 +1,27 @@
 // P3 contract exercises of BE-D (T-DG3-BE-D; p3-work-split §5): the 17 prioritization operations (weight sets, scores,
-// ranking snapshots and history, overrides, the prioritization view). Every call goes through `ctx.mirrored` (OpenAPI
-// status/body/headers + problem mirror) and every success body is parsed with the zod mirror in P3_MIRRORS_BE_D.
+// ranking snapshots and history, overrides, the prioritization view, incl. its `funding` filter and 422 added by
+// T-DG3-ARCH-03). Every call goes through `ctx.mirrored` (OpenAPI status/body/headers + problem mirror) and every
+// success body is parsed with the zod mirror in P3_MIRRORS_BE_D, imported from `@mth/shared/schemas`
+// (prioritization.ts).
 // All data is SYNTHETIC. The weight-set and override approvals below are demo business decisions by a synthetic
 // Sponsor on synthetic data and approve nothing real; nothing here touches the engineering gates DG0-DG7.
 import { sql } from "@mth/db";
+import {
+  initiativeScore,
+  initiativeScoreSheet,
+  prioritizationView,
+  rankingHistoryPage,
+  rankingOverride,
+  rankingOverridePage,
+  rankingSnapshotPage,
+  rankingSnapshotView,
+  weightSet,
+  weightSetList,
+} from "@mth/shared/schemas";
 import { expect } from "vitest";
 import type { z } from "zod";
 import { v7 as uuidv7 } from "uuid";
 import { record } from "../../../src/modules/audit/index.ts";
-import { rankingOverride, rankingOverridePage } from "../../../src/modules/portfolio/overrides.ts";
-import { prioritizationView, weightSet, weightSetList } from "../../../src/modules/portfolio/prioritization.ts";
-import {
-  rankingHistoryPage,
-  rankingSnapshotPage,
-  rankingSnapshotView,
-} from "../../../src/modules/portfolio/rankings.ts";
-import { initiativeScore, initiativeScoreSheet } from "../../../src/modules/portfolio/scores.ts";
 import type { P3ExerciseContext, TestApi } from "../../support/harness.ts";
 import { ifm, setupP2World } from "../../support/p2-fixtures.ts";
 
@@ -121,6 +127,60 @@ export async function cancelInitiative(api: TestApi, initiativeId: string, actor
         newVersion: updated.version,
       },
     );
+  });
+}
+
+/**
+ * Inserts `count` SYNTHETIC submitted initiatives in one transaction, each with its audit event (fixture; BE-B owns the
+ * real create). Codes continue after the transformation's existing ones (INI-003, INI-004, ...). Used to push one
+ * transformation's eligible portfolio above PORTFOLIO_VIEW_MAX (500) for the getPrioritization 422 (T-DG3-ARCH-03).
+ */
+export async function insertInitiatives(
+  api: TestApi,
+  transformationId: string,
+  actorUserId: string,
+  count: number,
+): Promise<void> {
+  await api.db.transaction().execute(async (tx) => {
+    const t = await tx
+      .selectFrom("transformation")
+      .select("organization_id")
+      .where("id", "=", transformationId)
+      .executeTakeFirstOrThrow();
+    const n = await tx
+      .selectFrom("initiative")
+      .select((eb) => eb.fn.countAll<string>().as("n"))
+      .where("transformation_id", "=", transformationId)
+      .executeTakeFirstOrThrow();
+    const first = BigInt(n.n) + 1n;
+    const rows = Array.from({ length: count }, (_, i) => {
+      const code = `INI-${String(first + BigInt(i)).padStart(3, "0")}`;
+      return {
+        id: uuidv7(),
+        organization_id: t.organization_id,
+        transformation_id: transformationId,
+        code,
+        name: `Synthetic initiative ${code}`,
+        status: "submitted",
+        created_by: actorUserId,
+        updated_by: actorUserId,
+      };
+    });
+    await tx.insertInto("initiative").values(rows).execute();
+    const requestId = `fixture-${uuidv7()}`;
+    for (const r of rows)
+      await record(
+        tx,
+        { actorUserId, requestId },
+        {
+          action: "initiative.fixture_create",
+          recordType: "initiative",
+          recordId: r.id,
+          organizationId: t.organization_id,
+          transformationId,
+          newVersion: 1,
+        },
+      );
   });
 }
 
@@ -251,5 +311,23 @@ export async function exerciseP3BeDOperations(ctx: P3ExerciseContext): Promise<v
     200,
     1,
     "0–100 view = (weighted score − 1) ÷ 4 × 100",
+  ]);
+
+  // T-DG3-ARCH-03 (BE-D §6.2): the `funding` filter through HTTP. Nothing is selected, so both initiatives are
+  // `not_applicable` and none is `funded` (selection and funding stay separate columns, REQ-S09-003).
+  const notApplicable = await m("GET", `${T}?funding=not_applicable`, { session: p.auditor.session });
+  expect([notApplicable.status, notApplicable.body.items.length]).toEqual([200, 2]);
+  expect(notApplicable.body.items.every((i: { funding: string }) => i.funding === "not_applicable")).toBe(true);
+  const funded = await m("GET", `${T}?funding=funded`, { session: p.auditor.session });
+  expect([funded.status, funded.body.items.length]).toEqual([200, 0]);
+  expect((await m("GET", `${T}?funding=approved`, { session: p.auditor.session })).status).toBe(400);
+
+  // ... and the declared 422 above PORTFOLIO_VIEW_MAX (500) eligible initiatives: 2 + 499 synthetic = 501.
+  await insertInitiatives(ctx.api, p.transformationId, p.lead.id, 499);
+  const tooLarge = await m("GET", T, { session: p.auditor.session });
+  expect([tooLarge.status, tooLarge.body.code, tooLarge.body.detail]).toEqual([
+    422,
+    "prioritization.portfolio_too_large",
+    "The prioritization view covers at most 500 initiatives (got 501).",
   ]);
 }

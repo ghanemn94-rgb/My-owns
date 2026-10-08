@@ -1,0 +1,34 @@
+base: 6e5a0fb0dccf42851a1f82a5e7aa8624406cd7fc
+ apps/api/src/modules/organization/repository.ts    |  7 +-
+ apps/api/src/modules/platform/index.ts             |  9 +-
+ apps/api/src/modules/portfolio/index.ts            |  1 +
+ apps/api/src/modules/portfolio/overrides.ts        | 59 ++-----------
+ apps/api/src/modules/portfolio/prioritization.ts   | 83 ++----------------
+ apps/api/src/modules/portfolio/rankings.ts         | 50 +----------
+ apps/api/src/modules/portfolio/roadmap.ts          | 13 ++-
+ apps/api/src/modules/portfolio/scores.ts           | 73 +++-------------
+ apps/api/src/modules/portfolio/selections.ts       | 37 ++++----
+ apps/api/src/modules/workflows/dependency-types.ts |  9 +-
+ apps/api/src/modules/workflows/index.ts            | 13 +--
+ apps/api/src/modules/workflows/t08-dependencies.ts | 87 ++++++++-----------
+ apps/api/src/server.ts                             |  4 +-
+ .../test/integration/contract/p3-exercises-be-d.ts | 98 +++++++++++++++++++---
+ apps/api/test/integration/dependencies/t08.test.ts |  3 +-
+ .../integration/portfolio/dispensations.test.ts    | 13 +++
+ .../integration/portfolio/prioritization.test.ts   | 13 +++
+ .../test/integration/portfolio/transitions.test.ts | 70 +++++++++++++++-
+ docs/api/openapi.yaml                              |  4 +-
+ .../adr/ADR-0016-p2-data-model-registers-guards.md | 20 +++++
+ ...DR-0021-p3-portfolio-initiative-lifecycle-g4.md | 38 ++++++++-
+ .../ADR-0022-p3-prioritization-scoring-ranking.md  | 27 +++++-
+ ...023-p3-roadmap-dependencies-capacity-funding.md | 17 +++-
+ ...0024-p3-business-case-and-formula-foundation.md | 26 ++++++
+ docs/architecture/p3-work-split.md                 | 24 ++++++
+ packages/shared/src/schemas/index.ts               |  2 +
+ 26 files changed, 455 insertions(+), 345 deletions(-)
+
+new files:
+apps/api/src/modules/platform/advisory-locks.test.ts
+apps/api/src/modules/platform/advisory-locks.ts
+apps/api/src/modules/workflows/t08-cycle-problem.test.ts
+packages/shared/src/schemas/prioritization.ts

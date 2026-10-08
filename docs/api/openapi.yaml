@@ -5459,11 +5459,12 @@ paths:
     get:
       tags: [prioritization]
       operationId: getPrioritization
-      summary: "Ranked table and value/feasibility comparison under the active weight set, with the labelled 0-100 view, selection and funding state, and sequencing and capacity flags (REQ-S09-001, REQ-S09-004)."
+      summary: "Ranked table and value/feasibility comparison under the active weight set, with the labelled 0-100 view, selection and funding state, and sequencing and capacity flags (REQ-S09-001, REQ-S09-004). One transformation's portfolio holds at most 500 eligible initiatives; above that the view is refused with 422 `prioritization.portfolio_too_large` (ADR-0022 §7; no cursor pagination)."
       parameters:
         - { name: status, in: query, required: false, schema: { $ref: "#/components/schemas/InitiativeStatus" } }
         - { name: waveId, in: query, required: false, schema: { $ref: "#/components/schemas/Uuid" } }
         - { name: completeness, in: query, required: false, schema: { type: string, enum: [complete, incomplete] } }
+        - { name: funding, in: query, required: false, schema: { type: string, enum: [not_applicable, unfunded, funded, revoked] } }
         - { name: flag, in: query, required: false, schema: { type: string, pattern: "^[a-z][a-z0-9_.]*$", maxLength: 64 } }
       responses:
         "200":
@@ -5474,6 +5475,7 @@ paths:
         "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
         "429": { $ref: "#/components/responses/RateLimited" }
   /api/v1/transformations/{transformationId}/prioritization/weight-sets:
     parameters:

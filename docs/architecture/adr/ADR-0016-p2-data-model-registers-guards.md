@@ -100,6 +100,26 @@ The P1 audit helpers (`@mth/db` `insertAuditEvent` and `diffFields`) handle step
 - **Money and quantities** are `numeric`, carried as decimal strings in the API and as `decimal.js` values in code (ADR-0019).
 - **Unknown:** a missing value is `NULL`, which the API returns as `null` and the UI shows as Unknown/Stale. It is never `0`.
 
+### 6. Advisory-lock registry (all stages; T-DG3-ARCH-03, 2026-10-08)
+
+This is the **one registry** of the transaction-scoped advisory-lock classes. ADR-0022 and ADR-0023 point here. A guard that must be race-free across concurrent writers takes `pg_advisory_xact_lock(<class>::integer, hashtext(<key>::text))` (the F-DG1-140 pattern). A class names exactly **one kind of resource**: two kinds must never share a class, or unrelated writes would serialize on each other whenever their keys hash alike.
+
+| Class | Constant (module) | Resource serialized | Key (`hashtext` of …) | Taken by |
+|---|---|---|---|---|
+| 730219 | `HIERARCHY_LOCK_CLASS` (organization) | business-unit hierarchy of one organization | `organization_id` | API + trigger `business_unit_hierarchy_guard` (0009) |
+| 730220 | — (database only) | outcome tree of one transformation | `transformation_id` | trigger in 0013 (`outcome_lock_class`) |
+| 730221 | `DEPENDENCY_GRAPH_LOCK_CLASS` (workflows) | initiative dependency graph of one transformation | `transformation_id` | API (T08) + trigger `dependency_cycle_guard` (0022) |
+| 730222 | `PRIORITIZATION_LOCK_CLASS` (portfolio) | prioritization writes of one transformation (weight-set proposal and activation, ranking snapshots, score results) | `transformation_id` | API only (ADR-0022) |
+| 730223 | `DEPENDENCY_TYPE_LOCK_CLASS` (workflows) | creation of one dependency-type code | the requested code | API only (ADR-0023 §4) |
+
+Rules:
+
+- **Single source.** The numbers live in `apps/api/src/modules/platform/advisory-locks.ts` (`ADVISORY_LOCK_CLASSES`, exported by `platform/index.ts`). Each module's constant is defined from it, and no other module file spells a number. A migration that shares a lock declares the same number as a PL/pgSQL `*_lock_class CONSTANT`.
+- **Tested.** `platform/advisory-locks.test.ts` asserts that the classes are distinct int4 values, that every `*_lock_class` constant in `packages/db/migrations/` equals its registry entry, and that no module source outside the registry spells a class number.
+- **The 730222 collision (fixed).** Until T-DG3-ARCH-03, dependency-type creation (BE-C) and prioritization (BE-D) both used 730222. Dependency-type creation now has 730223. No migration was involved: both locks are API-only.
+- **A new class** takes the next free number (730224, …), adds a row here and an entry in the registry file in the same change.
+- **Out of scope** (a different key space, so no collision with the two-int4 form): the single-bigint locks `pg_advisory_xact_lock(hashtextextended(<text>, 0))` used for idempotency keys, the North Star and readable codes, and the fixed bigint keys of the migration runner and bootstrap in `packages/db`.
+
 ## Alternatives considered
 
 - **EAV / generic template engine for T01–T04 now:** rejected (see §1). The P5 form designer (ADR-0014) adds *custom* fields on top of the typed tables. It never replaces them.
