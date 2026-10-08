@@ -1,0 +1,19 @@
+$ git rev-parse HEAD (repo, start)
+fd27c10046a416d5ce6e576b88e1fd4f9f60a972
+$ git merge-base --is-ancestor 171a0b5 HEAD
+ANCESTOR (exit 0)
+$ git diff --name-only 171a0b5..HEAD | grep -v ^docs/delivery/ | wc -l
+0
+$ node tools/gates/candidate.mjs --stage DG3 (repo working tree)
+{"stage":"DG3","source":"working-tree","candidate_id":"sha256:8376d762920591f1348e321dc36aaa806793efe2238af113f903b76b016fc455","files":757}
+$ (clone $TMPDIR/review-dg3 @ 171a0b5) node tools/gates/candidate.mjs --stage DG3
+{"stage":"DG3","source":"working-tree","candidate_id":"sha256:8376d762920591f1348e321dc36aaa806793efe2238af113f903b76b016fc455","files":757}
+$ (repo) node tools/gates/candidate.mjs --stage DG3 --ref 171a0b5
+{"stage":"DG3","source":"171a0b57f9b8d2112891d1284adda6f0384da090","candidate_id":"sha256:8376d762920591f1348e321dc36aaa806793efe2238af113f903b76b016fc455","files":757}
+$ manifest file candidate_id / source / entries
+sha256:8376d762920591f1348e321dc36aaa806793efe2238af113f903b76b016fc455 171a0b57f9b8d2112891d1284adda6f0384da090 757
+$ git -C clone status --short | wc -l
+0
+$ is-shallow (repo, clone)
+false
+false

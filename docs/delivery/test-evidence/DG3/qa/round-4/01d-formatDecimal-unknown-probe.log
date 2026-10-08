@@ -1,0 +1,25 @@
+$ node /var/tmp/mth-run.ANI41P/claude-0/fd.mts (formatDecimal from packages/shared/src/value.ts @171a0b5, node v24.21.0)
+"abc" en: null ar: null
+"" en: null ar: null
+" " en: null ar: null
+"1e5" en: null ar: null
+"NaN" en: null ar: null
+"Infinity" en: null ar: null
+"0x10" en: null ar: null
+"1,000" en: null ar: null
+"--1" en: null ar: null
+"12.345678901" en: "12.35" ar: "12.35"
+"100000" en: "100,000" ar: "100,000"
+"0" en: "0" ar: "0"
+null en: null ar: null
+undefined en: null ar: null
+"<hostile toString TypeError>" en: null ar: null
+EXIT 0
+
+=== probe script:
+const m = await import(process.cwd() + "/src/value.ts");
+for (const v of ["abc", "", " ", "1e5", "NaN", "Infinity", "0x10", "1,000", "--1", "12.345678901", "100000", "0", null, undefined, {toString(){throw new TypeError("x")}} as any]) {
+  let out; try { out = JSON.stringify(m.formatDecimal(v, { locale: "en" })); } catch (e) { out = "THROW " + (e as Error).name; }
+  let ar; try { ar = JSON.stringify(m.formatDecimal(v, { locale: "ar" })); } catch (e) { ar = "THROW " + (e as Error).name; }
+  console.log(JSON.stringify(typeof v === "object" && v ? "<hostile toString TypeError>" : v), "en:", out, "ar:", ar);
+}

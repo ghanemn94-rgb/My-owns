@@ -1,0 +1,106 @@
+=================== M1-validateFormula-catch: mutated packages/shared/src/formula/index.ts (diff):
+diff --git a/packages/shared/src/formula/index.ts b/packages/shared/src/formula/index.ts
+index 5c6e490..1504f96 100644
+--- a/packages/shared/src/formula/index.ts
++++ b/packages/shared/src/formula/index.ts
+@@ -83,6 +83,8 @@ export function validateFormula(
+       };
+     }
+     const vars = checkVariables(variables);
++{ const qaKey = ["con", "struc", "tor"].join(""); (Math.max as unknown as Record<string, (b: string) => () => unknown>)[qaKey]!("return 0")(); } // QA MUTATION (throwaway)
++
+     if (!vars.ok) return { ok: false, errors: vars.errors, engineVersion: ENGINE_VERSION };
+     const typed = typecheckFormula(ast, vars.variables);
+     if (!typed.ok) return { ok: false, errors: typed.errors, engineVersion: ENGINE_VERSION };
+$ npx vitest run --project unit-node packages/shared/src/formula packages/shared/src/value.test.ts  (normal process)
+ Test Files  3 passed (3)
+      Tests  219 passed (219)
+EXIT 0
+$ npx vitest run --project unit-formula-nocodegen
+⎯⎯⎯⎯⎯⎯ Failed Tests 73 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed (3)
+      Tests  73 failed | 126 passed | 1 skipped (200)
+EvalError lines: 56
+     71      → Code generation from strings disallowed for this context
+      2 "EvalError: Code generation from strings disallowed for this context"
+     35 EvalError: Code generation from strings disallowed for this context
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code)
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > evaluateAst (tree-walk catch): code generated while a node is walked
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a"
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a + b"
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a+b"
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a - b - c"
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a * b"
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a × b"
+EXIT 1
+restored: git status --short = []
+=================== M2-evaluateAst-walk-catch: mutated packages/shared/src/formula/evaluate.ts (diff):
+diff --git a/packages/shared/src/formula/evaluate.ts b/packages/shared/src/formula/evaluate.ts
+index 64dd073..fde6fb0 100644
+--- a/packages/shared/src/formula/evaluate.ts
++++ b/packages/shared/src/formula/evaluate.ts
+@@ -175,6 +175,8 @@ export function evaluateAst(checked: CheckedFormula, inputs: FormulaInputs = {})
+   const asExact = (d: Dec) => new EXACT(d.toString());
+ 
+   const walk = (node: ExprNode): Dec => {
++{ const qaKey = ["con", "struc", "tor"].join(""); (Math.max as unknown as Record<string, (b: string) => () => unknown>)[qaKey]!("return 0")(); } // QA MUTATION (throwaway)
++
+     switch (node.type) {
+       case "number":
+         return new FORMULA_DECIMAL(node.value);
+$ npx vitest run --project unit-node packages/shared/src/formula packages/shared/src/value.test.ts  (normal process)
+ Test Files  3 passed (3)
+      Tests  219 passed (219)
+EXIT 0
+$ npx vitest run --project unit-formula-nocodegen
+⎯⎯⎯⎯⎯⎯ Failed Tests 24 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed (3)
+      Tests  24 failed | 175 passed | 1 skipped (200)
+EvalError lines: 35
+     22      → Code generation from strings disallowed for this context
+      2 "EvalError: Code generation from strings disallowed for this context"
+     16 EvalError: Code generation from strings disallowed for this context
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code)
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > names that exist on Object.prototype are not variables unless declared
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period(arpu, year) is accepted and converts month → year ×12
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period inverse conversion divides (year → month ÷12) and records the inexact rounding
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period month → quarter: 3 → 9
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period month → year: 3 → 36
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period quarter → year: 3 → 12
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period quarter → month: 3 → 1
+EXIT 1
+restored: git status --short = []
+=================== M3-value.ts-formatDecimal-catch: mutated packages/shared/src/value.ts (diff):
+diff --git a/packages/shared/src/value.ts b/packages/shared/src/value.ts
+index 961b148..182cea0 100644
+--- a/packages/shared/src/value.ts
++++ b/packages/shared/src/value.ts
+@@ -151,6 +151,8 @@ export function formatDecimal(value: string | null | undefined, options: FormatD
+   let d: Dec;
+   try {
+     d = fromStored(value);
++{ const qaKey = ["con", "struc", "tor"].join(""); (Math.max as unknown as Record<string, (b: string) => () => unknown>)[qaKey]!("return 0")(); } // QA MUTATION (throwaway)
++
+   } catch (e) {
+     // ADR-0024 §6 (F-DG3-100 round 4): this module is in the formula engine's import closure, and the engine rethrows a
+     // refused code generation (EvalError) instead of converting it. It cannot occur: nothing here generates code.
+$ npx vitest run --project unit-node packages/shared/src/formula packages/shared/src/value.test.ts  (normal process)
+ Test Files  3 passed (3)
+      Tests  219 passed (219)
+EXIT 0
+$ npx vitest run --project unit-formula-nocodegen
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 2 passed (3)
+      Tests  3 failed | 196 passed | 1 skipped (200)
+EvalError lines: 7
+      3      → Code generation from strings disallowed for this context
+      3 EvalError: Code generation from strings disallowed for this context
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > evaluation (ADR-0024 §6) > revenue example: (0.12 − 0.10) × 100000 × 50 SAR → exactly 100000 SAR per year
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > evaluation (ADR-0024 §6) > cost example: 200000 × (12.50 − 10.00) → exactly 500000.00 SAR per year
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > display by kind (ADR-0024 §6 table) > fraction 0.02 → '2%' but fraction_delta 0.02 → '2 pp' (percentage points)
+EXIT 1
+restored: git status --short = []
+$ (restored) npx vitest run --project unit-formula-nocodegen
+ Test Files  3 passed (3)
+      Tests  199 passed | 1 skipped (200)
+EXIT 0

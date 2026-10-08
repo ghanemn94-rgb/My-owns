@@ -1,0 +1,20 @@
+$ python3 s16.py (clone @171a0b5; independent re-derivation of the REQ-S16-016 entity table)
+initiative | 0020_p3_portfolio_roadmap.sql | PK True | owner ['executive_owner_user_id'] | status ['status'] | erd mentions 29 | ALTERs []
+deliverable | 0020_p3_portfolio_roadmap.sql | PK True | owner ['owner_user_id', 'decided_by'] | status ['acceptance_status', 'status'] | erd mentions 5 | ALTERs []
+milestone | 0020_p3_portfolio_roadmap.sql | PK True | owner ['owner_user_id'] | status ['status'] | erd mentions 5 | ALTERs []
+roadmap_wave | 0020_p3_portfolio_roadmap.sql | PK True | owner ['owner_user_id'] | status ['status'] | erd mentions 6 | ALTERs []
+dependency | 0017_p2_decisions_gates.sql | PK True | owner ['owner_user_id'] | status ['status'] | erd mentions 12 | ALTERs ['0022_p3_dependency_capacity_funding.sql']
+resource_demand | 0022_p3_dependency_capacity_funding.sql | PK True | owner ['owner_user_id'] | status ['status'] | erd mentions 5 | ALTERs []
+capacity | 0022_p3_dependency_capacity_funding.sql | PK True | owner ['owner_user_id'] | status ['status'] | erd mentions 8 | ALTERs []
+funding_decision | 0022_p3_dependency_capacity_funding.sql | PK True | owner ['decided_by'] | status ['outcome'] | erd mentions 6 | ALTERs ['0023_p3_business_case_formula.sql']
+
+$ git diff --stat ce988e20..171a0b5 -- packages/db docs/architecture/erd.md
+(empty = no migration/ERD change in the round-4 repair)
+$ ls packages/db/migrations/*.sql | wc -l
+27
+
+$ grep REQ-S16-016 03-integration-run1.log (integration create+read per entity)
+ ✓ |integration| apps/api/test/integration/portfolio/initiatives.test.ts > create and read an Initiative through the API (REQ-S16-016, REQ-PB-045) > creates a draft with every T05 card field, INI-nn, version 1, ETag/Lo
+ ✓ |integration| apps/api/test/integration/portfolio/initiatives.test.ts > create and read an Initiative through the API (REQ-S16-016, REQ-PB-045) > codes are sequential per transformation and a minimal draft carries a
+ ✓ |integration| apps/api/test/integration/portfolio/initiatives.test.ts > create and read an Initiative through the API (REQ-S16-016, REQ-PB-045) > a caller without access to the transformation gets 404 (existence nev
+ ✓ |integration| apps/api/test/integration/portfolio/initiatives.test.ts > create and read an Initiative through the API (REQ-S16-016, REQ-PB-045) > lists newest change first, filters by status, and pages with a cursor

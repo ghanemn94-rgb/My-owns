@@ -1,0 +1,54 @@
+=== appended to packages/shared/src/value.ts (probe clone, throwaway):
+diff --git a/packages/shared/src/value.ts b/packages/shared/src/value.ts
+index 961b148..18ab008 100644
+--- a/packages/shared/src/value.ts
++++ b/packages/shared/src/value.ts
+@@ -293,3 +293,16 @@ export function totalValuePoolsIn(
+ export function isPartialTotal(total: ValuePoolTotal): boolean {
+   return total.unquantifiedCount > 0;
+ }
++// QA PROBE (throwaway, round 4): forbidden forms appended to ../value.ts, the engine's closure file outside formula/.
++import { readFileSync as qaRead } from "node:fs";
++import { formatAmount as qaFa } from "@mth/shared";
++import "./transformation.ts";
++export const qa1 = (globalThis as Record<string, unknown>)["ev" + "al"];
++export const qa2 = Object.getPrototypeOf(qaRead);
++export const qa3 = (Math.max as unknown as Record<string, unknown>)["constructor"];
++export const qa4 = Function;
++export const qa5 = Reflect.construct;
++export const qa6 = process.getBuiltinModule;
++export const qa7 = import.meta;
++export const qa8 = (qaFa as unknown as { constructor: unknown }).constructor;
++export const qa9 = eval("1");
+$ npx eslint packages/shared/src/value.ts
+
+/var/tmp/mth-run.ANI41P/claude-0/probe-dg3/packages/shared/src/value.ts
+  297:1   error  'node:fs' import is restricted from being used by a pattern. The formula engine's import closure outside formula/ imports only decimal.js (ADR-0024 §6)              no-restricted-imports
+  298:1   error  '@mth/shared' import is restricted from being used by a pattern. The formula engine's import closure outside formula/ imports only decimal.js (ADR-0024 §6)          no-restricted-imports
+  299:1   error  './transformation.ts' import is restricted from being used by a pattern. The formula engine's import closure outside formula/ imports only decimal.js (ADR-0024 §6)  no-restricted-imports
+  300:21  error  Unexpected use of 'globalThis'. No globalThis in the formula engine: it reaches eval or a module loader (ADR-0024 §6)                                                no-restricted-globals
+  300:21  error  No global object, process or document in the formula engine (ADR-0024 §6)                                                                                            no-restricted-syntax
+  300:60  error  No string-assembled computed key or computed member of a function expression in the formula engine (ADR-0024 §6)                                                     no-restricted-syntax
+  300:67  error  No string-assembled computed key or computed member of a function expression in the formula engine (ADR-0024 §6)                                                     no-restricted-syntax
+  301:27  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                                                                          no-restricted-syntax
+  302:20  error  No ["constructor"] or ["Function"] member in the formula engine: that is the Function constructor (ADR-0024 §6)                                                      no-restricted-syntax
+  302:69  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)                                              no-restricted-syntax
+  303:20  error  Unexpected use of 'Function'. No Function constructor in the formula engine (ADR-0024 §6)                                                                            no-restricted-globals
+  303:20  error  No Function constructor in the formula engine, not even through an alias (ADR-0024 §6)                                                                               no-restricted-syntax
+  304:20  error  Unexpected use of 'Reflect'. No Reflect in the formula engine: Reflect.construct/apply reach Function (ADR-0024 §6)                                                  no-restricted-globals
+  304:20  error  No Reflect in the formula engine: Reflect.construct/apply reach Function (ADR-0024 §6)                                                                               no-restricted-syntax
+  305:20  error  Unexpected use of 'process'. No process in the formula engine: it reaches eval or a module loader (ADR-0024 §6)                                                      no-restricted-globals
+  305:20  error  No global object, process or document in the formula engine (ADR-0024 §6)                                                                                            no-restricted-syntax
+  306:20  error  No import.meta in the formula engine (ADR-0024 §6)                                                                                                                   no-restricted-syntax
+  307:20  error  No .constructor access in the formula engine: that reaches the Function constructor (ADR-0024 §6)                                                                    no-restricted-syntax
+  307:42  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)                                              no-restricted-syntax
+  307:66  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)                                              no-restricted-syntax
+  308:20  error  Unexpected use of 'eval'. No eval in the formula engine (ADR-0024 §6)                                                                                                no-restricted-globals
+  308:20  error  `eval` can be harmful                                                                                                                                                no-eval
+
+✖ 22 problems (22 errors, 0 warnings)
+
+EXIT 1
+$ restored; git status --short
+$ npx eslint packages/shared/src/value.ts (restored)
+EXIT 0
