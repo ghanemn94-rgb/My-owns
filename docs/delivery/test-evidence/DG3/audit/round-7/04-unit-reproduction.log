@@ -1,0 +1,26 @@
+# Auditor reproduction in a complete disposable clone $TMPDIR/c at d3e6fe62 (offline frozen install from a private copy of the local pnpm store; node v24.21.0)
+$ pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pstore/v10  -> exit 0
+ WARN  Failed to create bin at /var/tmp/mth-run.SZzUMS/claude-0/c/apps/worker/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/var/tmp/mth-run.SZzUMS/claude-0/c/apps/worker/node_modules/@mth/db/dist/cli.js'
+ WARN  Failed to create bin at /var/tmp/mth-run.SZzUMS/claude-0/c/apps/api/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/var/tmp/mth-run.SZzUMS/claude-0/c/apps/api/node_modules/@mth/db/dist/cli.js'
+Done in 971ms using pnpm v10.33.0
+$ pnpm -r build -> exit 0
+$ pnpm test -> exit 0
+> vitest run --project unit-node --project unit-web && vitest run --project unit-formula-nocodegen
+ RUN  v3.2.4 /var/tmp/mth-run.SZzUMS/claude-0/c
+ Test Files  81 passed (81)
+      Tests  1654 passed (1654)
+ RUN  v3.2.4 /var/tmp/mth-run.SZzUMS/claude-0/c
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts (10 tests) 12ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts (140 tests) 107ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts (111 tests | 2 skipped) 4571ms
+ Test Files  3 passed (3)
+      Tests  259 passed | 2 skipped (261)
+$ npx vitest run --project unit-node packages/shared/src/formula/fuzz.test.ts -> exit 0
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts (111 tests) 5567ms
+   ✓ fuzz: no uncaught exception, no code execution > 10 000 random byte strings (0–255, up to 80 bytes)  1157ms
+   ✓ fuzz: no uncaught exception, no code execution > 10 000 random UTF-16 strings including astral code points and lone surrogates  1090ms
+   ✓ fuzz: no uncaught exception, no code execution > 20 000 random strings over the grammar alphabet reach parser, type checker and evaluator  2225ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > every file of the engine's import closure gets the engine-source lint rules (eslint.config.js)  767ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > ESLint refuses the round-5 handler forms (G1, G2, A1, A2), F1 and every lintable probe-table row in an engine source  303ms
+ Test Files  1 passed (1)
+      Tests  111 passed (111)

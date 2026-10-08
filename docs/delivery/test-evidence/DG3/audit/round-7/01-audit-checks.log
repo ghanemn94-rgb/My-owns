@@ -1,0 +1,33 @@
+# DG3 round-7 audit checks (release-auditor, run DG3-T-DG3-AUDIT-R7-release-auditor-20261008T225848Z-bbce06d4)
+2026-10-08T23:06:58Z
+node v24.21.0
+$ sha256sum docs/delivery/assignments/DG3/round-7/release-auditor.md
+7a6dcf2957f5de92df19986e552e3cfb6a419136eb172d6fec238a9cb493114f  docs/delivery/assignments/DG3/round-7/release-auditor.md
+$ git rev-parse HEAD
+0cb289850974ee77af486be003daee2429286738
+$ git merge-base --is-ancestor d3e6fe62 HEAD
+exit=0
+$ git diff --stat d3e6fe62..HEAD -- . ':!docs/delivery' | tail -1
+(empty = no change outside docs/delivery)
+$ node tools/gates/candidate.mjs --stage DG3   (working tree)
+{"stage":"DG3","source":"working-tree","candidate_id":"sha256:f55095dbec364594d25a624261512239854f233d3ee0b5c8ecc210d1602bf6e0","files":757}
+exit=0
+$ [clone $TMPDIR/c] git rev-parse --is-shallow-repository; git rev-list --count HEAD
+false
+736
+$ [clone] git fsck --connectivity-only
+exit=0
+$ [clone @d3e6fe62 + offline install] node tools/gates/candidate.mjs --stage DG3
+0
+d3e6fe62d9a4a3a0e8d08fcf273aef74857b3e81
+{"stage":"DG3","source":"working-tree","candidate_id":"sha256:f55095dbec364594d25a624261512239854f233d3ee0b5c8ecc210d1602bf6e0","files":757}
+exit=0
+$ node tools/gates/validate.mjs --historical --stage DG2
+PASS gate DG2 (historical)
+exit=0
+$ node tools/gates/validate.mjs --historical --stage DG1
+PASS gate DG1 (historical)
+exit=0
+$ node tools/gates/validate.mjs --register DG3
+PASS register rules at DG3
+exit=0

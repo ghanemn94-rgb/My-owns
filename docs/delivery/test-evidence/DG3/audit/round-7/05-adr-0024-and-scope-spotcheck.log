@@ -1,0 +1,67 @@
+# ADR-0024 §6 spot-check, product/engineering gate separation, D-079 limitation (clone @d3e6fe6)
+$ git diff --name-status c40232b0..d3e6fe62 -- . ':!docs/delivery'   (round-7 repair scope)
+M	docs/architecture/adr/ADR-0024-p3-business-case-and-formula-foundation.md
+M	docs/architecture/p3-work-split.md
+M	packages/shared/src/formula/fuzz.test.ts
+
+$ catch clauses in the seven engine sources and their first statement
+packages/shared/src/formula/evaluate.ts:256 -> line 260: rethrow
+packages/shared/src/formula/index.ts:102 -> line 103: rethrow
+packages/shared/src/formula/index.ts:134 -> line 135: rethrow
+packages/shared/src/formula/parse.ts:67 -> line 70: rethrow
+packages/shared/src/value.ts:154 -> line 157: rethrow
+count of 'catch (' : 5
+
+$ grep -n -w -E 'finally|yield|async|await|Promise|then|fromAsync|asyncIterator|eval|Function|function\*' <seven engine sources> (non-comment lines)
+(no output = none)
+
+$ decimal.js 10.6.0: lines with try|catch|finally|Promise|async|await|then|yield|fromAsync|asyncIterator
+342:   // Pass x to Math.pow as integer, then adjust the exponent of the result.
+401:        // If not, then there are further digits and m will be truthy.
+1597:    // Prepend zeros to equalise exponents. Note: Faster to use reverse then do unshifts.
+1740:  // Pass x to Math.sqrt as integer, then adjust the exponent of the result.
+1791:        // If not, then there are further digits and m will be truthy.
+1939: * If the optional `sd` argument is present then return binary exponential notation.
+2120: * If the optional `sd` argument is present then return binary exponential notation.
+2209: * If the optional `sd` argument is present then return binary exponential notation.
+2574:  // then i = 4, k = 1000, rd = 3487563 % 1000 = 563
+3426:    // later be divided by this number, then separate out the power of 10 using
+3635:  // Convert `str` as an integer then divide the result by `base` raised to a power such that the
+3833:    // Convert the number as an integer then divide the result by its base raised to a power such
+(all of the above are comment lines)
+/home/user/My-owns/node_modules/.pnpm/decimal.js@10.6.0/node_modules/decimal.js/decimal.js:0
+/home/user/My-owns/node_modules/.pnpm/decimal.js@10.6.0/node_modules/decimal.js/decimal.mjs:0
+
+$ engine import specifiers
+from "../value.ts"
+from "./evaluate.ts"
+from "./parse.ts"
+from "./tokenize.ts"
+from "./typecheck.ts"
+from "./types.ts"
+from "decimal.js"
+
+$ CSP in apps/api/src/server.ts
+92:    useDefaults: false,
+95:      scriptSrc: ["'self'"],
+
+$ Product code on product gates vs DG0-DG7
+apps/api/src/modules/transformations/routes.ts:66: * This is a PRODUCT gate (G6), unrelated to the engineering delivery gates DG0-DG7.
+apps/api/src/modules/transformations/phase.ts:4:// delivery gates DG0-DG7.
+apps/api/src/modules/workflows/g4.test.ts:3:// Unknown capacity as a conflict. G4 is a business approval inside the product; nothing here touches DG0-DG7.
+apps/api/src/modules/workflows/index.ts:7:// phase. They are unrelated to the engineering delivery gates DG0-DG7 (G6 never implies DG7, and the reverse).
+apps/api/src/modules/workflows/index.ts:29:/** The playbook's product gates (business approvals), in order. Not the engineering gates DG0-DG7. */
+apps/api/src/modules/workflows/g4.ts:14:// approves anything, and it never implies an engineering gate DG0-DG7.
+
+$ synthetic seed guard
+1:// Development-only seed of SYNTHETIC sign-in users for AUTH_MODE=dev (ADR-0005 §5, REQ-S18-001).
+42:    throw new DevSeedRefused("refusing to seed synthetic dev users with NODE_ENV=production");
+43:  if (env.AUTH_MODE !== "dev") throw new DevSeedRefused("refusing to seed synthetic dev users unless AUTH_MODE=dev");
+63:    const reason = "mth-db seed-dev: SYNTHETIC development data";
+
+$ D-079 limitation: G4 capacity-conflict item role label (FE-F handback §4)
+105:- **Some subjects are server data, shown as the server returns them.** Dependency codes (`DEP-nn`) and capacity-conflict role and period come from the single item's message, after the label. They are data, not label text. The role label there is the role's English `labelEn` from the server, so in AR a role's English name can appear as data. The fix would be a backend change (structured item data), which is out of scope.
+
+$ Later-gate requirements that own bilingual API messages / mobile layout
+REQ-S15-007 DG6 SPECIFIED | A20;A15: a test finds no missing ar or en key; a validation error returned by the API is shown in the selected language; an Arabic export keeps 'KPI-001' and '12.5%' readable
+REQ-S15-009 DG6 SPECIFIED | A20: e2e tests at 360 px approve a gate item and submit a KPI actual in Arabic and English
