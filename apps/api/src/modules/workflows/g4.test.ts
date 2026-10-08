@@ -42,6 +42,7 @@ const complete = (
     ranking: { snapshotId: "s", weightSetId: "ws", entries: [{ initiativeId: INI.id, completeness: "complete" }] },
     activeWeightSet: { id: "ws", versionNo: 1 },
     scheduleConflicts: [],
+    scheduleUnknowns: [],
     capacityConflicts: [],
     ...over.portfolio,
   },
@@ -152,6 +153,14 @@ describe("G4 evaluators", () => {
     expect(
       evaluate(complete({ portfolio: { scheduleConflicts: [{ dependencyId: "d", code: "DEP-03" }] } }))["g4.roadmap"],
     ).toEqual([{ code: "g4.schedule_conflict", message: "Schedule conflict: DEP-03", pointer: "/dependencies/d" }]);
+    // D-079: an Unknown schedule is a missing item, never "no conflict"; unloaded schedule facts fail closed.
+    expect(
+      evaluate(complete({ portfolio: { scheduleUnknowns: [{ dependencyId: "u", code: "DEP-04" }] } }))["g4.roadmap"],
+    ).toEqual([{ code: "g4.schedule_unknown", message: "Schedule unknown: DEP-04", pointer: "/dependencies/u" }]);
+    const { scheduleUnknowns: _notLoaded, ...withoutUnknowns } = complete().portfolio;
+    expect(evaluate({ ...complete(), portfolio: withoutUnknowns })["g4.roadmap"]).toEqual([
+      { code: "g4.roadmap_missing", message: "Roadmap" },
+    ]);
     const unknown = evaluate(
       complete({
         portfolio: {

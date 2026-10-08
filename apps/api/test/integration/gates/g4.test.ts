@@ -7,7 +7,8 @@
 //    gate.submission_superseded;
 //  - G4 end to end with DISTINCT synthetic users: TL builds and submits; FIN validates the case baselines and the formula
 //    version and records the funding; the capacity owner (BO) commits the demand; SP approves -> phase `transform`;
-//  - the snapshot freezes the in-scope initiatives, ranking, weight set, cases, formula versions, funding and demand.
+//  - the snapshot freezes the in-scope initiatives, ranking, weight set, cases, formula versions, funding and demand;
+//  - an Unknown schedule (schedule.unknown) on an unmitigated dependency is 'Schedule unknown: DEP-nn' (D-079).
 // G1-G3 statuses and the `mobilize` phase are staged with audited test fixtures. All data is SYNTHETIC; every decision
 // here is a demo business decision that approves nothing real, and nothing touches the engineering gates DG0-DG7.
 import { sql } from "@mth/db";
@@ -464,6 +465,92 @@ describe("G4 submission refused with the missing items named (ADR-0021 §7)", ()
     expect(cap2.message).toBe(
       "Capacity conflict: Synthetic analyst 2027-02 Capacity conflict: Synthetic unplanned role 2027-04",
     );
+  });
+});
+
+describe("G4 treats an Unknown schedule as a missing item (D-079; ADR-0021 §7, §11 item 3)", () => {
+  it("'Schedule unknown: DEP-nn' refuses the submission; a mitigation or the missing date clears it", async () => {
+    const a = await mobilizeWorld();
+    // One in-scope (selected, complete) successor; the internal predecessor is a draft with complete dates.
+    const succ = await selectedInitiative(a, "Synthetic roaming analytics", true);
+    const pred = await createInitiative(send, a.p, {
+      name: "Synthetic data platform",
+      plannedStart: "2026-07-01",
+      plannedEnd: "2026-12-31",
+    });
+    const dependency = async (body: Record<string, unknown>) =>
+      ok(
+        await send("POST", "/api/v1/dependencies", {
+          session: a.p.lead.session,
+          body: { transformationId: a.p.transformationId, dependencyType: "tech", ...body },
+        }),
+        201,
+        "dependency",
+      );
+    // External predecessor: the product holds no finish date, so the schedule is Unknown.
+    const ext = await dependency({
+      description: "Synthetic vendor platform delivery",
+      from: { kind: "external", label: "Synthetic vendor" },
+      toInitiativeId: succ.id,
+      neededBy: "2027-01-01",
+    });
+    // Initiative predecessor without a needed-by date: Unknown too.
+    const internal = await dependency({
+      description: "Synthetic: analytics needs the data platform",
+      from: { kind: "initiative", initiativeId: pred.id },
+      toInitiativeId: succ.id,
+    });
+    const roadmapItems = async () => {
+      const view = ok(await send("GET", G(a.p), { session: a.p.lead.session }), 200, "view");
+      return view.criteria.find((c: Body) => c.key === "g4.roadmap").missing as Body[];
+    };
+    const unknownItems = async () => (await roadmapItems()).filter((m) => m.code === "g4.schedule_unknown");
+
+    const refused = await submitG4(a.p);
+    expect([refused.status, refused.body.code]).toEqual([422, "gate_criteria_incomplete"]);
+    const roadmap = refused.body.errors.find((e: Body) => e.pointer === "/criteria/g4.roadmap");
+    expect(roadmap.code).toBe("g4.schedule_unknown");
+    expect(roadmap.message).toContain(`Schedule unknown: ${ext.code}`);
+    expect(roadmap.message).toContain(`Schedule unknown: ${internal.code}`);
+    expect(String(ext.code)).toMatch(/^DEP-\d+$/);
+    expect(await auditOfRequest(api.db, String(refused.headers["x-request-id"]))).toEqual([]);
+    expect(await unknownItems()).toEqual(
+      [ext, internal]
+        .sort((x, y) => String(x.code).localeCompare(String(y.code)))
+        .map((d) => ({
+          code: "g4.schedule_unknown",
+          message: `Schedule unknown: ${d.code}`,
+          pointer: `/dependencies/${d.id}`,
+        })),
+    );
+
+    // A mitigation on the external dependency clears its item (the T08 flag stays visible there).
+    ok(
+      await send("PATCH", `/api/v1/dependencies/${ext.id}`, {
+        session: a.p.lead.session,
+        headers: ifm(ext.version),
+        body: { mitigation: "Synthetic: weekly vendor checkpoint; fallback to the current platform." },
+      }),
+      200,
+      "mitigation",
+    );
+    expect((await unknownItems()).map((m) => m.message)).toEqual([`Schedule unknown: ${internal.code}`]);
+
+    // Resolving the unknown date (needed-by after the predecessor's 2026-12-31 finish) clears the other, no conflict.
+    ok(
+      await send("PATCH", `/api/v1/dependencies/${internal.id}`, {
+        session: a.p.lead.session,
+        headers: ifm(internal.version),
+        body: { neededBy: "2027-12-31" },
+      }),
+      200,
+      "needed-by",
+    );
+    const after = await roadmapItems();
+    expect(after.filter((m) => m.code.startsWith("g4.schedule_"))).toEqual([]);
+    const again = await submitG4(a.p);
+    const roadmapAgain = again.body.errors?.find((e: Body) => e.pointer === "/criteria/g4.roadmap");
+    expect(roadmapAgain?.message ?? "").not.toContain("Schedule unknown");
   });
 });
 

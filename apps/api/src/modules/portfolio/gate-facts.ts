@@ -8,7 +8,8 @@
 //  - committed resource demand, and every (role, month) where COMMITTED demand exceeds the active capacity or no
 //    capacity row exists (Unknown is a conflict, never "no conflict"; ADR-0023 §6 "G4 uses committed demand only");
 //  - the current proposed ranking and the active weight set;
-//  - needed-by conflicts (BE-C schedule.ts) of unresolved dependencies into in-scope initiatives without a mitigation.
+//  - needed-by conflicts and Unknown schedules (BE-C schedule.ts flags schedule.needed_by_conflict and schedule.unknown)
+//    of unresolved dependencies into in-scope initiatives without a mitigation (Unknown is never "no conflict"; D-079).
 // G4 is a business approval decided by a person; nothing here approves anything, and nothing touches DG0-DG7.
 import { sql, type DbOrTx } from "@mth/db";
 import { hasText } from "@mth/shared/schemas";
@@ -162,28 +163,39 @@ export async function loadPortfolioGateFacts(db: DbOrTx, transformationId: strin
         }
       : null,
     activeWeightSet: weightSet ? { id: weightSet.id, versionNo: weightSet.version_no } : null,
-    scheduleConflicts: await scheduleConflicts(db, transformationId, new Set(ids)),
+    ...(await scheduleItems(db, transformationId, new Set(ids))),
     capacityConflicts: await committedCapacityConflicts(db, transformationId),
   };
 }
 
-/** Needed-by conflicts (schedule.ts) of unresolved dependencies into in-scope initiatives that have no mitigation. */
-async function scheduleConflicts(db: DbOrTx, transformationId: string, scope: ReadonlySet<string>) {
+/**
+ * The schedule.ts flags G4 lists, on unresolved dependencies into in-scope initiatives that have no mitigation:
+ * schedule.needed_by_conflict (scheduleConflicts) and schedule.unknown (scheduleUnknowns). The flags are BE-C's,
+ * computed once; nothing here re-implements the schedule rule. A mitigation text clears both.
+ */
+async function scheduleItems(db: DbOrTx, transformationId: string, scope: ReadonlySet<string>) {
   const { byDependency } = computeScheduleFlags(await loadScheduleFacts(db, transformationId));
-  const conflicting = [...byDependency.entries()]
-    .filter(([, flags]) => flags.some((f) => f.code === SCHEDULE_FLAG_CODES.neededByConflict))
-    .map(([id]) => id);
-  if (conflicting.length === 0) return [];
-  const deps = await db
-    .selectFrom("dependency")
-    .select(["id", "code", "mitigation", "to_initiative_id"])
-    .where("id", "in", conflicting)
-    .orderBy("code")
-    .execute();
-  return deps
+  const flagged = (code: string) =>
+    new Set([...byDependency.entries()].filter(([, flags]) => flags.some((f) => f.code === code)).map(([id]) => id));
+  const conflicting = flagged(SCHEDULE_FLAG_CODES.neededByConflict);
+  const unknown = flagged(SCHEDULE_FLAG_CODES.unknown);
+  const listed = [...new Set([...conflicting, ...unknown])];
+  if (listed.length === 0) return { scheduleConflicts: [], scheduleUnknowns: [] };
+  const deps = (
+    await db
+      .selectFrom("dependency")
+      .select(["id", "code", "mitigation", "to_initiative_id"])
+      .where("id", "in", listed)
+      .orderBy("code")
+      .execute()
+  )
     .filter((d) => d.to_initiative_id !== null && scope.has(d.to_initiative_id))
-    .filter((d) => d.mitigation === null || !hasText(d.mitigation))
-    .map((d) => ({ dependencyId: d.id, code: d.code }));
+    .filter((d) => d.mitigation === null || !hasText(d.mitigation));
+  const fact = (d: (typeof deps)[number]) => ({ dependencyId: d.id, code: d.code });
+  return {
+    scheduleConflicts: deps.filter((d) => conflicting.has(d.id)).map(fact),
+    scheduleUnknowns: deps.filter((d) => unknown.has(d.id)).map(fact),
+  };
 }
 
 /**

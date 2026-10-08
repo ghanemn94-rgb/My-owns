@@ -260,3 +260,7 @@ Recorded from the T-DG3-BE-E handback (built in wave 3, integrated with wave 4 i
     - **The lineage override marker** (FE-C §4.3) is now documented in the contract (ADR-0024 §10).
     - **There is no single-line business-case GET** (FE-C §4.4), by intent (ADR-0024 §10).
     - **The anticipated BE-E audit action names** (FE-A §5.5) match what BE-E writes: `funding_decision.create` (with `decision.create`), `resource_role.create`, `.update` and `.archive`, `capacity.create`, `.update` and `.archive`, and `resource_demand.create`, `.update`, `.archive`, `.commit` and `.release`. FE-E owns their labels.
+
+### Amendments in wave 6 (T-DG3-BE-F, 2026-10-08)
+
+22. **G4 lists an Unknown schedule (D-079).** `g4.roadmap` adds `g4.schedule_unknown` → 'Schedule unknown: {dependency code}' (pointer `/dependencies/{id}`) for each unresolved dependency into an in-scope initiative with the T08 flag `schedule.unknown` and a blank mitigation; a mitigation or the missing dates clear it (ADR-0021 §7, §11 item 3). ADR-0023 §1 is corrected to the built wave model: no label overrides in P3.
