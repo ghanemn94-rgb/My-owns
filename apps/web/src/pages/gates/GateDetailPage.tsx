@@ -2,16 +2,29 @@
 // with its evidence state, submission (gate.submit; If-Match on the gate), the approver's decision with a mandatory
 // rationale, and the submission history with the frozen criteria. The 403 (not the approver / submitter cannot decide)
 // and 409 (submission superseded, version conflict) problems are shown as translated messages; nothing is assumed.
+import { useQuery } from "@tanstack/react-query";
 import { useRef, useState } from "react";
+import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router";
 import { GATE_OUTCOMES, gateApproverConfig, gateDecisionCreate, gateSubmissionCreate } from "@mth/shared/schemas";
 import { api, ApiError, isSessionChangedError } from "../../api/client.ts";
-import { useGate, useGateSubmission, useGateSubmissions, useP2Refresh, useRegister } from "../../api/queries.ts";
+import {
+  fetchAllPages,
+  p3Keys,
+  shouldRetry,
+  useGate,
+  useGateSubmission,
+  useGateSubmissions,
+  useP2Refresh,
+  useP3Refresh,
+  useRegister,
+} from "../../api/queries.ts";
 import type {
   Evidence,
   GateCriterionEvaluation,
   GateView,
+  Initiative,
   KpiDefinition,
   Outcome,
   TomGap,
@@ -265,7 +278,7 @@ function CriteriaTable({ criteria }: { criteria: readonly GateCriterionEvaluatio
   const locale = useLocale();
   const ws = useWorkspace();
   const evidence = useRegister<Evidence>(ws.tid, "evidence");
-  const resolve = useSubjectResolver();
+  const resolve = useSubjectResolver(criteria.some((c) => c.key.startsWith("g4.")));
   return (
     <div className="table-wrap">
       <table className="table criteria-table">
@@ -358,8 +371,12 @@ function CriteriaTable({ criteria }: { criteria: readonly GateCriterionEvaluatio
   );
 }
 
-/** Resolves a criterion pointer ("/outcomes/<id>", "/tomCanvas/<code>", "/charter/<field>") to a localized name. */
-function useSubjectResolver() {
+/**
+ * Resolves a criterion pointer ("/outcomes/<id>", "/tomCanvas/<code>", "/charter/<field>", "/initiatives/<id>" …) to a
+ * localized name. `withInitiatives` (G4 only) reads the transformation's initiatives (T05) so an initiative item shows
+ * its code and name from the record, not from the server's English label; G1-G3 never send that request.
+ */
+function useSubjectResolver(withInitiatives = false) {
   const { t } = useTranslation();
   const locale = useLocale();
   const ws = useWorkspace();
@@ -367,25 +384,57 @@ function useSubjectResolver() {
   const kpis = useRegister<KpiDefinition>(ws.tid, "kpi-definitions");
   const gaps = useRegister<TomGap>(ws.tid, "tom-gaps");
   const decisions = useDecisions(ws.tid, "design");
+  const initiatives = useQuery({
+    queryKey: p3Keys.initiatives(ws.tid, {}),
+    queryFn: () => fetchAllPages<Initiative>("/api/v1/initiatives", { transformationId: ws.tid }),
+    enabled: withInitiatives && Boolean(ws.tid),
+    retry: shouldRetry,
+  });
   const base = `/transformations/${ws.tid}`;
   return (
     pointer: string | undefined,
     item?: { code: string; message?: string | undefined },
   ): { label: string; to?: string } | null => {
-    // G4 (ADR-0021 §7): the item's subject is the data part of the server label ("Owners: INI-01 Name" -> "INI-01
-    // Name"): initiative codes and names, sections, roles and periods are shown as the server returns them.
+    // G4 (ADR-0021 §7): the item's subject is the DATA part of the server label ("Owners: INI-01 Name" -> "INI-01
+    // Name"): initiative codes and names, dependency codes, roles and periods. The label text itself is never shown;
+    // it is translated from the item's code. Section codes and card field names are translated here too.
     const g4 = item ? g4Subject(item) : null;
+    const fields = item ? g4CardFields(item) : [];
+    const fieldList =
+      fields.length > 0
+        ? ` (${new Intl.ListFormat(locale, { type: "conjunction", style: "narrow" }).format(
+            fields.map((f) => t(`portfolio.field.${f}`)),
+          )})`
+        : "";
     if (!pointer) return g4 ? { label: g4 } : null;
     const [, kind = "", id = ""] = pointer.split("/");
     switch (kind) {
-      case "initiatives":
-        return { label: g4 ?? t("gates.subject.initiative"), to: `${base}/initiatives/${id}` };
+      case "initiatives": {
+        if (!id) return null; // "/initiatives": the empty portfolio, the label says it all
+        const ini = initiatives.data?.find((x) => x.id === id);
+        const named = ini ? `${ini.code} ${ini.name}` : g4;
+        return {
+          label: named ? `${named}${fieldList}` : t("gates.subject.initiative"),
+          to: `${base}/initiatives/${id}`,
+        };
+      }
       case "business-cases":
-      case "businessCases":
-        return { label: g4 ?? t("gates.subject.businessCase"), to: `${base}/business-cases/${id}` };
+      case "businessCases": {
+        if (!id) return null; // "/business-cases": no transformation case yet
+        if (item?.code === "g4.business_case_section_missing" && g4)
+          return {
+            label: t(`businessCases.section.${g4}.title`, { defaultValue: t("gates.subject.businessCase") }),
+            to: `${base}/business-cases/${id}`,
+          };
+        return { label: t("gates.subject.businessCase"), to: `${base}/business-cases/${id}` };
+      }
       case "benefit-formulas":
       case "benefitFormulas":
         return { label: g4 ?? t("gates.subject.benefitFormula"), to: `${base}/benefit-formulas/${id}` };
+      case "dependencies":
+        return { label: g4 ?? t("gates.subject.dependency"), to: `${base}/dependencies` };
+      case "resource-roles":
+        return { label: g4 ?? t("gates.subject.resourceRole"), to: `${base}/capacity` };
       case "diagnosticItems":
         return { label: diagnosticDimensionLabel(ws.methodology, id, locale) ?? id, to: `${base}/diagnose#t01` };
       case "outcomes":
@@ -428,22 +477,100 @@ function useSubjectResolver() {
   };
 }
 
+/** The T05 card fields `g4.initiative_card_incomplete` can name (ADR-0021 §11 item 2). */
+const G4_CARD_FIELDS = ["name", "objective", "scopeIn"] as const;
+const CARD_FIELDS_SUFFIX = / \(([A-Za-z, ]+)\)$/;
+
 /**
- * The data part of a G4 missing item's English label ("Owners: INI-01 Name" -> "INI-01 Name"; "Finance validation" ->
+ * The data part of ONE G4 missing item's English label ("Owners: INI-01 Name" -> "INI-01 Name"; "Finance validation" ->
  * null). Only G4 items carry their subject in `message` (ADR-0021 §7); the label itself is translated from the code.
+ * The card field list of `g4.initiative_card_incomplete` ("… (objective, scopeIn)") is not part of the subject; it is
+ * read by g4CardFields and translated. Never call this on a 422 entry: its message joins several items' labels.
  */
 export function g4Subject(item: { code: string; message?: string | undefined }): string | null {
   if (!item.code.startsWith("g4.") || !item.message) return null;
   const at = item.message.indexOf(": ");
   if (at < 0) return null;
-  const rest = item.message.slice(at + 2).trim();
+  let rest = item.message.slice(at + 2).trim();
+  if (item.code === "g4.initiative_card_incomplete" && g4CardFields(item).length > 0)
+    rest = rest.replace(CARD_FIELDS_SUFFIX, "").trim();
   return rest === "" ? null : rest;
+}
+
+/** The missing T05 card fields named by a `g4.initiative_card_incomplete` item, known keys only (else []). */
+export function g4CardFields(item: { code: string; message?: string | undefined }): string[] {
+  if (item.code !== "g4.initiative_card_incomplete" || !item.message) return [];
+  const m = CARD_FIELDS_SUFFIX.exec(item.message);
+  if (!m) return [];
+  const fields = m[1]!.split(",").map((f) => f.trim());
+  return fields.every((f) => (G4_CARD_FIELDS as readonly string[]).includes(f)) ? fields : [];
+}
+
+/** The G4 criterion keys a 422 `gate_criteria_incomplete` names ("/criteria/g4.owners" -> "g4.owners"), or null. */
+export function g4RefusedCriteria(error: ApiError): string[] | null {
+  if (error.code !== "gate_criteria_incomplete" || error.fieldErrors.length === 0) return null;
+  const keys = error.fieldErrors.map((fe) => /^\/criteria\/(g4\.[a-z_]+)$/.exec(fe.pointer ?? "")?.[1]);
+  return keys.every((k): k is string => k !== undefined) ? keys : null;
+}
+
+/**
+ * A refused G4 submission, item by item (ADR-0021 §7 "The refusal shape"; T-DG3-FE-F). The 422 names the incomplete
+ * criteria; its `message` joins several English labels and is NEVER parsed or shown. The items come from the live gate
+ * view (`criteria[].missing[]`, one Warning per record), which the submit dialog refreshes after the 422 through the
+ * session-bound refresh. Each item: its translated label (from the code) and its subject (initiative code and name,
+ * dependency, case section, role and period). Without a usable view, one translated line per refused criterion.
+ */
+function G4RefusalItems({ criteria }: { criteria: readonly string[] }) {
+  const { t } = useTranslation();
+  const ws = useWorkspace();
+  const gate = useGate(ws.tid, "G4");
+  const resolve = useSubjectResolver(true);
+  const view = gate.isError ? undefined : gate.data;
+  return (
+    <ul className="plain-list missing-list" data-g4-refusal={view ? "items" : "criteria"}>
+      {criteria.map((key) => {
+        const live = view?.criteria.find((c) => c.key === key);
+        if (!live || live.missing.length === 0)
+          return (
+            <li key={key} data-refused-criterion={key} data-missing={key}>
+              <Icon name="cross" /> {criterionTitle(t, key)}
+            </li>
+          );
+        return live.missing.map((m, i) => {
+          const subject = resolve(m.pointer, m);
+          return (
+            <li key={`${key}-${m.code}-${m.pointer ?? ""}-${i}`} data-refused-criterion={key} data-missing={m.code}>
+              <Icon name="cross" />{" "}
+              {t(`gates.missingItems.${m.code.replace(/\./g, "__")}`, {
+                defaultValue: criterionTitle(t, key),
+              })}
+              {/* Plain text inside the modal alert: the readiness table behind it links each record. */}
+              {subject ? (
+                <>
+                  {" — "}
+                  <bdi>{subject.label}</bdi>
+                </>
+              ) : null}
+            </li>
+          );
+        });
+      })}
+    </ul>
+  );
+}
+
+/** A G4 criterion's translated title ("g4.owners" -> gates.criterionTitle.g4__owners), never the server's English. */
+function criterionTitle(t: TFunction, key: string): string {
+  return t(`gates.criterionTitle.${key.replace(/\./g, "__")}`, {
+    defaultValue: t("gates.missingItems.gate__criterion_incomplete"),
+  });
 }
 
 function SubmitDialog({ view, onClose, onDone }: { view: GateView; onClose: () => void; onDone: () => Promise<void> }) {
   const { t } = useTranslation();
   const ws = useWorkspace();
-  const refresh = useP2Refresh(ws.tid);
+  // P2 and P3 keys (the gate view, and the initiatives a G4 refusal names), session-bound; never setQueryData.
+  const refresh = useP3Refresh(ws.tid);
   const [note, setNote] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [error, setError] = useState<unknown>(null);
@@ -747,6 +874,8 @@ export function GateProblem({ error }: { error: unknown }) {
   const code = error instanceof ApiError ? error.code : null;
   const conflict = error instanceof ApiError && error.status === 409;
   const incomplete = error instanceof ApiError && code === "gate_criteria_incomplete";
+  // G4 (T-DG3-FE-F): listed item by item from the gate view, never from the joined English 422 message.
+  const g4Refused = incomplete && error instanceof ApiError ? g4RefusedCriteria(error) : null;
   // ADR-0021 §8: the two agreement problems, translated from gates.json; the missing confirmations are listed by name.
   const agreementsRequired = code === "gate.g1_agreements_required";
   const agreementsNotApplicable = code === "gate.agreements_not_applicable";
@@ -778,7 +907,8 @@ export function GateProblem({ error }: { error: unknown }) {
           ))}
         </ul>
       ) : null}
-      {incomplete && error instanceof ApiError ? (
+      {g4Refused ? <G4RefusalItems criteria={g4Refused} /> : null}
+      {incomplete && error instanceof ApiError && !g4Refused ? (
         <ul className="plain-list">
           {error.fieldErrors.map((fe, i) => {
             const subject = g4Subject(fe);
