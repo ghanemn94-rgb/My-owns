@@ -1247,7 +1247,7 @@
       "id": "DG3",
       "stage": "P3",
       "name": "Mobilization and portfolio",
-      "state": "FIXING",
+      "state": "REVIEWING",
       "depends_on": [
         "DG2"
       ],
@@ -1265,10 +1265,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:f2b4c77a026c6825d323cdc89782d63410ec9ead05666e06d90a4d51988d1d1d",
-        "source_commit": "ce988e20f7ea2752cd3283995fbf7ed05b704485",
-        "frozen_at": "2026-10-08T11:07:45Z",
-        "manifest_path": "docs/delivery/candidates/DG3/f2b4c77a026c6825.manifest.json"
+        "candidate_id": "sha256:8376d762920591f1348e321dc36aaa806793efe2238af113f903b76b016fc455",
+        "source_commit": "171a0b57f9b8d2112891d1284adda6f0384da090",
+        "frozen_at": "2026-10-08T14:52:36Z",
+        "manifest_path": "docs/delivery/candidates/DG3/8376d762920591f1.manifest.json"
       },
       "review_rounds": [
         {
@@ -1306,6 +1306,18 @@
             "qa-verifier": "docs/delivery/reviews/DG3/round-3/qa-verifier.json"
           },
           "note": "DG3 gate review round 3 on candidate f2b4c77a (757 files, source ce988e2). Repairs since round 2 (D-082, D-083): T-DG3-KBE-E (F-DG3-100 second pass: run-time no-codegen test project, import allowlist, host-global and constructor bans, ADR-0024 §6 rewritten) and T-DG3-FE-G (F-DG3-170/180: the inherited-approval badge wraps; new e2e layout spec). The manifest diff against 58ef3f47 is exactly their 10 modified + 3 added files and D-082/D-083. Orchestrator pre-freeze verification of the merged tree 048b8af: static checks exit 0; pnpm test 1587 + 190 (no-codegen) with the locale unset, C.UTF-8 and Node 22; integration 793/793; e2e 178/178 in chromium-en + chromium-ar under both locale settings; register DG3 and pipeline PASS. A full re-review: the round-2 code-security and qa runs are not gate evidence (D-082)."
+        },
+        {
+          "round": 4,
+          "candidate_id": "sha256:8376d762920591f1348e321dc36aaa806793efe2238af113f903b76b016fc455",
+          "frozen_at": "2026-10-08T14:52:36Z",
+          "source_commit": "171a0b57f9b8d2112891d1284adda6f0384da090",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG3/round-4/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG3/round-4/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG3/round-4/qa-verifier.json"
+          },
+          "note": "DG3 gate review round 4 on candidate 8376d762 (757 files, source 171a0b5). Repair since round 3 (D-084): T-DG3-KBE-F (F-DG3-100 third pass: EvalError rethrow across the engine's import closure, internal-failure rule in the tests, value.ts under the engine-source rules, import-closure test, ADR-0024 §6 corrected). The manifest diff against f2b4c77a is exactly its 9 files and D-084. Orchestrator pre-freeze verification of b54b2d6: static checks; pnpm test 1593 + 199/1 skipped with the locale unset, C.UTF-8 and Node 22; integration 793/793; e2e 178/178 in both locale settings; register and pipeline PASS. Full re-review by all three reviewers; code-security verifies F-DG3-100."
         }
       ],
       "gate_record": "docs/delivery/gates/DG3.json",
@@ -1349,6 +1361,11 @@
           "state": "FIXING",
           "at": "2026-10-08T13:38:40Z",
           "note": "Round 3 on candidate f2b4c77a. A container restart (~12:00Z) killed the first code-security and qa runs; their material is kept under test-evidence/DG3/{code-security,qa}-r3-orphaned/ and both were re-run from round-3/*-rerun.md (as D-075). domain PASS (F-DG3-170 CLOSED_VERIFIED); qa (rerun) PASS (F-DG3-180 CLOSED_VERIFIED; 32/32 acceptance, e2e 182/182 product per setting); code-security (rerun) FAIL: F-DG3-100 verification failed again (the engine's catch-all turns an exercised EvalError into an accepted 'internal' formula.syntax; ../value.ts is outside every formula rule); no new finding. All three round-3 runs report no configuration change. Repair: T-DG3-KBE-F."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-10-08T14:52:36Z",
+          "note": "KBE-F merged and verified (D-084). Candidate frozen as 8376d762 (757 files, source 171a0b5) for DG3 gate review round 4: code-security verifies F-DG3-100; domain and qa re-review in full. No worktree or install activity while reviewers run (D-082)."
         }
       ]
     },

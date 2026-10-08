@@ -13,30 +13,24 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
   - **Rounds 11-13** fixed operational server defects (D-071 to D-073): connection hygiene, pool bounds, the three-phase upload, commit-time re-authorisation and graceful shutdown.
   - **Rounds 13-17** closed session and identity edge cases in the web client (D-074 to D-077). The D-077 2 s residual for non-navigation GETs was judged acceptable as declared.
   - **Auditor observation (non-blocking), an orchestrator error:** the D-067 summary in the round-9 to round-17 auditor assignments said the unreproduced setup failure was "later attributed to port collisions and fixed by F-DG2-310". The records say the opposite: F-DG2-310's EADDRINUSE mechanism does not explain the D-067 symptom, and the symptom simply never recurred (D-068). The records are accurate; only the assignment text was wrong. Future assignment templates must quote decisions from `decisions.md`, not paraphrase them from memory.
-- **DG3 state: REVIEWING, gate round 3** on candidate `sha256:f2b4c77a…` (757 files, source `ce988e2`, frozen 2026-10-08T11:07Z).
-  - **How it was built (D-079):** 23 implementer runs in worktree waves (D-004).
-  - **Round 1** (`873115d9`): 3× PASS with two Low findings, F-DG3-100 and F-DG3-120. Both were repaired (D-080, D-081).
-  - **Round 2** (`58ef3f47`):
-    - domain PASS: F-DG3-120 CLOSED_VERIFIED; raised F-DG3-170 (Medium, the badge overflows);
-    - code-security FAIL: its F-DG3-100 verification failed, because the guards were still spelling denylists;
-    - qa FAIL: raised F-DG3-180 (Medium, the same badge defect).
-  - **Orchestrator error (D-082).** Repair worktrees were created while the round-2 code-security and qa runs were active. Both report `external_config_changed` and are not gate evidence.
-    - **Rule:** no worktree or install activity while any review or audit run is active.
-  - **Round-3 repairs (D-083):**
-    - T-DG3-KBE-E (`de06138`) fixes F-100: the no-codegen run-time test project, the import allowlist and the bans.
-    - T-DG3-FE-G (`6b30768`) fixes F-170 and F-180: the badge wraps, plus an e2e layout spec.
-    - All three findings are FIXED_PENDING_VERIFICATION.
-  - **Pre-freeze verification** (`docs/delivery/test-evidence/DG3/orchestrator/round-3-prefreeze/`):
-    - unit 1587 + 190 (no-codegen), with the locale unset, with `C.UTF-8` and on Node 22;
+- **DG3 state: REVIEWING, gate round 4** on candidate `sha256:8376d762…` (757 files, source `171a0b5`, frozen 2026-10-08).
+  - **Rounds 1–3** (D-080 to D-084):
+    - five findings raised: F-DG3-100, 120, 170, 180, plus one duplicate pair;
+    - F-120, F-170 and F-180 are CLOSED_VERIFIED;
+    - F-DG3-100 (Low, the formula engine's no-dynamic-code guard) failed verification twice and has had three repairs: KBE-D, KBE-E and KBE-F.
+  - **Incidents:**
+    - D-082: repair worktrees were created during reviews, so those runs are not gate evidence. Rule: no worktree or install activity while any review or audit run is active.
+    - D-084: a container restart killed two round-3 reviews. They were re-run, with the orphaned material kept for provenance.
+  - **Pre-freeze verification** (`docs/delivery/test-evidence/DG3/orchestrator/round-4-prefreeze/`):
+    - unit 1593 + 199 (1 skipped by design), in both locale settings and on Node 22;
     - integration 793;
     - e2e 178 in both locale settings;
     - register and pipeline PASS.
-  - **Round 3:** a full re-review (`docs/delivery/assignments/DG3/round-3/`).
-    - code-security verifies F-100; domain verifies F-170; qa verifies F-180 and runs the full regression.
-    - New finding ids: code-security F-DG3-190–199, domain 200–209, qa 210–219.
+  - **Round 4:** a full re-review by all three reviewers. code-security verifies F-DG3-100.
+    - New finding ids: code-security F-DG3-220–229, domain 230–239, qa 240–249.
 - **Next action:**
-  1. When the three round-3 records return, check each run's `meta.json` (exit 0, no `external_config_changed`). Commit the evidence selectively and import (`import-findings --stage DG3 --round 3`).
-  2. If all three PASS and every finding is CLOSED_VERIFIED, run `validate --stage DG3` yourself, then set VERIFYING and run the release-auditor (mirror the DG2 round-17 auditor assignment; the final-gate ids are the 32 DG3 rows).
+  1. When the three round-4 records return, check each run's `meta.json` (exit 0, no config change). Commit the evidence and import (`--round 4`).
+  2. If all three PASS and F-100 is CLOSED_VERIFIED, run `validate --stage DG3`, set VERIFYING and run the release-auditor. The draft is `scratchpad/dg3/auditor-r3-draft.md`; update it to round 4.
   3. Environmental residuals stay PASS-on-evidence: D-057, D-058, D-049.
 
 ## DG2 scope (P2 — diagnose, define and design)
