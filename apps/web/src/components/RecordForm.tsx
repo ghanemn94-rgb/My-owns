@@ -13,6 +13,7 @@
 import { hasText } from "@mth/shared/schemas";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import type { z } from "zod";
 import { api, ApiError, newIdempotencyKey } from "../api/client.ts";
 import { beginSessionGuard } from "../auth/sessionBound.ts";
@@ -173,6 +174,31 @@ export interface RecordFormProps<R> {
    * form's values is committed (a user edit, or a conflict reapply/discard), not for the initial values.
    */
   readonly onValuesChange?: (values: FormValues) => void;
+  /**
+   * Screen namespaces whose `<ns>.problem.<code>` translations are tried first, for the form-level alert and the inline
+   * field errors (e.g. ["portfolio"] for `initiative.read_only`); then the shared `problems.*` catalogue as before.
+   */
+  readonly namespaces?: readonly string[];
+}
+
+/** `<ns>.problem.<code>` of the first namespace that translates the code ("a.b" -> "a__b"), or "". */
+function namespacedText(t: TFunction, namespaces: readonly string[] | undefined, code: string): string {
+  for (const ns of namespaces ?? []) {
+    const text = t(`${ns}.problem.${code.replace(/\./g, "__")}`, { defaultValue: "" });
+    if (text) return text;
+  }
+  return "";
+}
+
+/** The form-level message of a failed save: the screen namespaces first (problem code, then its field codes). */
+function bannerMessage(t: TFunction, namespaces: readonly string[] | undefined, error: unknown): string {
+  if (namespaces && namespaces.length > 0 && error instanceof ApiError && error.code) {
+    for (const code of [error.code, ...error.fieldErrors.map((fe) => fe.code)]) {
+      const own = namespacedText(t, namespaces, code);
+      if (own) return own;
+    }
+  }
+  return errorMessage(t, error);
 }
 
 export function useRecordForm<R extends Record<string, unknown>>(props: RecordFormProps<R>) {
@@ -188,8 +214,16 @@ export function useRecordForm<R extends Record<string, unknown>>(props: RecordFo
   const [errorCodes, setErrors] = useState<Record<string, string>>({});
   const [bannerError, setBannerError] = useState<unknown>(null);
   const [unmappedCodes, setUnmapped] = useState<string[]>([]);
-  const errors = fieldErrorMessages(t, errorCodes);
-  const unmapped = unmappedCodes.map((code) => fieldErrorMessage(t, code));
+  const ns = props.namespaces;
+  const errors = ns
+    ? Object.fromEntries(
+        Object.entries(errorCodes).map(([name, code]) => [
+          name,
+          namespacedText(t, ns, code) || fieldErrorMessage(t, code),
+        ]),
+      )
+    : fieldErrorMessages(t, errorCodes);
+  const unmapped = unmappedCodes.map((code) => namespacedText(t, ns, code) || fieldErrorMessage(t, code));
   const [conflict, setConflict] = useState<{
     latest: (R & { version: number }) | null;
     currentVersion: number | null;
@@ -350,6 +384,7 @@ export function useRecordForm<R extends Record<string, unknown>>(props: RecordFo
 
   return {
     t,
+    namespaces: ns,
     values,
     set,
     errors,
@@ -396,7 +431,7 @@ export function RecordFields({
   people?: readonly Person[] | undefined;
 }) {
   const { t } = form;
-  const banner = form.bannerError ? errorMessage(t, form.bannerError) : null;
+  const banner = form.bannerError ? bannerMessage(t, form.namespaces, form.bannerError) : null;
   // F-DG2-340: a form-level problem is announced once. The banner already says the message of a validation problem
   // whose only field error has pointer "" (errorMessage), so the form-errors list keeps only what the banner does not.
   const formErrors = distinctFormMessages(banner, form.unmapped);

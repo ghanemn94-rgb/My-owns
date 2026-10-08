@@ -15,10 +15,8 @@ import { initiativeUpdate } from "@mth/shared/schemas";
 import { api, ApiError } from "../../api/client.ts";
 import {
   useDecisionLinks,
-  useDeliverables,
   useGapLinks,
   useInitiative,
-  useMilestones,
   useOutcomeContributions,
   useSelections,
   useWaves,
@@ -53,10 +51,13 @@ import {
   FundingCell,
   InitiativeStatusChip,
   p3ProblemMessage,
+  PORTFOLIO_NS,
   SelectionCell,
   WarningList,
   waveName,
 } from "./common.tsx";
+import { FundingSection } from "./funding.tsx";
+import { DeliverablesSection, MilestonesSection } from "./roadmapParts.tsx";
 
 const READ_ONLY_STATUSES: ReadonlySet<string> = new Set(["cancelled", "completed"]);
 
@@ -150,6 +151,7 @@ function InitiativeCard({ initiative: i }: { initiative: Initiative }) {
           { id: "gap-links", title: t("portfolio.gap.title") },
           { id: "contributions", title: t("portfolio.contribution.title") },
           { id: "decision-links", title: t("portfolio.decisionLink.title") },
+          { id: "funding", title: t("portfolio.fundingDecision.title") },
           { id: "deliverables", title: t("portfolio.deliverable.title") },
           { id: "milestones", title: t("portfolio.milestone.title") },
           { id: "selections", title: t("portfolio.selectionHistory.title") },
@@ -159,8 +161,9 @@ function InitiativeCard({ initiative: i }: { initiative: Initiative }) {
       <GapLinks initiative={i} readOnly={readOnly} />
       <Contributions initiative={i} readOnly={readOnly} />
       <DecisionLinks initiative={i} readOnly={readOnly} />
-      <Deliverables initiative={i} />
-      <Milestones initiative={i} />
+      <FundingSection initiative={i} readOnly={readOnly} />
+      <DeliverablesSection initiative={i} readOnly={readOnly} />
+      <MilestonesSection initiative={i} readOnly={readOnly} />
       <SelectionHistory initiative={i} />
     </div>
   );
@@ -455,6 +458,7 @@ function T05Card({ initiative: i, readOnly }: { initiative: Initiative; readOnly
       {editing ? (
         <RecordDialog<Initiative>
           title={t("portfolio.card.editTitle", { code: i.code })}
+          namespaces={PORTFOLIO_NS}
           fields={fields}
           record={i}
           updateSchema={initiativeUpdate}
@@ -1053,104 +1057,6 @@ function DecisionLinks({ initiative: i, readOnly }: { initiative: Initiative; re
           onClose={() => setAdding(false)}
         />
       ) : null}
-    </Section>
-  );
-}
-
-// ------------------------------------------------------------------------------------------------ roadmap parts
-
-function Deliverables({ initiative: i }: { initiative: Initiative }) {
-  const { t } = useTranslation();
-  const locale = useLocale();
-  const ws = useWorkspace();
-  const list = useDeliverables(ws.tid, i.id);
-  const { byId } = usePeople(ws.tid);
-  return (
-    <Section
-      id="deliverables"
-      title={t("portfolio.deliverable.title")}
-      intro={t("portfolio.deliverable.intro")}
-      actions={
-        <Link className="link" to={`/transformations/${ws.tid}/roadmap`}>
-          {t("portfolio.card.openRoadmap")}
-        </Link>
-      }
-    >
-      <QueryState query={list}>
-        {(d) => {
-          const active = d.items.filter((x) => x.status === "active");
-          return (
-            <>
-              <p data-deliverable-count={active.length}>{t("portfolio.deliverable.count", { count: active.length })}</p>
-              {d.countWarning ? (
-                <p className="banner banner--warning" role="note" data-warning={d.countWarning.code}>
-                  <Icon name="alert" /> {t("portfolio.warning.initiative__deliverable_count")}{" "}
-                  {t("portfolio.deliverable.notABlock")}
-                </p>
-              ) : null}
-              {active.length === 0 ? null : (
-                <ul className="plain-list">
-                  {active
-                    .sort((a, b) => a.ordinal - b.ordinal)
-                    .map((x) => (
-                      <li key={x.id} data-deliverable={x.id}>
-                        <bdi dir="ltr">{x.ordinal}.</bdi> {x.title}{" "}
-                        <span className="small muted">
-                          <PersonName id={x.ownerUserId} people={byId} /> ·{" "}
-                          {formatBusinessDate(x.dueDate, locale) ?? t("common.value.none")} ·{" "}
-                          {t(`portfolio.deliverable.acceptance.${x.acceptanceStatus}`)}
-                        </span>
-                      </li>
-                    ))}
-                </ul>
-              )}
-            </>
-          );
-        }}
-      </QueryState>
-    </Section>
-  );
-}
-
-function Milestones({ initiative: i }: { initiative: Initiative }) {
-  const { t } = useTranslation();
-  const locale = useLocale();
-  const ws = useWorkspace();
-  const list = useMilestones(ws.tid, i.id);
-  return (
-    <Section
-      id="milestones"
-      title={t("portfolio.milestone.title")}
-      intro={t("portfolio.milestone.intro")}
-      actions={
-        <Link className="link" to={`/transformations/${ws.tid}/roadmap`}>
-          {t("portfolio.card.openRoadmap")}
-        </Link>
-      }
-    >
-      <QueryState query={list}>
-        {(items) =>
-          items.length === 0 ? (
-            <p className="muted" data-state="empty">
-              {t("portfolio.milestone.empty")}
-            </p>
-          ) : (
-            <ul className="plain-list">
-              {items.map((m) => (
-                <li key={m.id} data-milestone={m.id}>
-                  {m.title}{" "}
-                  <span className="small muted">
-                    {t("portfolio.milestone.approved")}:{" "}
-                    {formatBusinessDate(m.approvedDate, locale) ?? t("portfolio.milestone.notApproved")} ·{" "}
-                    {t("portfolio.milestone.forecast")}:{" "}
-                    {formatBusinessDate(m.forecastDate, locale) ?? t("common.value.none")}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )
-        }
-      </QueryState>
     </Section>
   );
 }

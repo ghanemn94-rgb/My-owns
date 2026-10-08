@@ -5,6 +5,8 @@
 //    (useRoadmap): moving a milestone (PATCH forecastDate with If-Match) refreshes that entry once and all three follow;
 //    a 409 shows the conflict notice and reloads;
 //  - approve-date (roadmap.approve; reason required, also explaining a re-approval) and deliverable submit / accept;
+//  - T-DG3-FE-E: a wave's planned dates, owner and notes are editable and a non-source wave can be added (waves.tsx);
+//    the verbatim source text never is;
 //  - schedule flags translated from their codes; Unknown is shown as Unknown, never as "no conflict". There is no
 //    critical-path highlighting: P3 has no duration model (ADR-0023 §5).
 import type { Deliverable, Initiative, Milestone } from "@mth/shared/schemas";
@@ -32,6 +34,8 @@ import {
   p3ErrorMessage,
 } from "../prioritization/p3ui.tsx";
 import { roadmapUrls, useRoadmap, type RoadmapView, type RoadmapWave } from "./api.ts";
+import { AddWaveButton, AddWaveDialog, EditWaveDialog, useWaveDialogs, useWaveEditing } from "./waves.tsx";
+import { PersonName, usePeople } from "../../components/People.tsx";
 
 export function RoadmapPage() {
   const { t } = useTranslation();
@@ -94,8 +98,16 @@ function WavesSection({ waves }: { waves: readonly RoadmapWave[] }) {
   const locale = useLocale();
   const text = useWaveText();
   const active = waves.filter((w) => w.status === "active").sort(byOrdinal);
+  const { canEdit, tid } = useWaveEditing();
+  const dialogs = useWaveDialogs();
+  const { byId } = usePeople(tid);
   return (
-    <Section id="waves" title={t("roadmap.waves.title")} intro={t("roadmap.waves.intro")}>
+    <Section
+      id="waves"
+      title={t("roadmap.waves.title")}
+      intro={t("roadmap.waves.intro")}
+      actions={canEdit ? <AddWaveButton onClick={() => dialogs.setAdding(true)} /> : null}
+    >
       {locale === "ar" ? (
         <p className="badge badge--provisional" role="note">
           {t("roadmap.waves.provisionalAr")}
@@ -111,6 +123,9 @@ function WavesSection({ waves }: { waves: readonly RoadmapWave[] }) {
               <th scope="col">{t("roadmap.waves.horizon")}</th>
               <th scope="col">{t("roadmap.waves.entry")}</th>
               <th scope="col">{t("roadmap.waves.exit")}</th>
+              <th scope="col">{t("roadmap.waves.planned")}</th>
+              <th scope="col">{t("roadmap.waves.owner")}</th>
+              {canEdit ? <th scope="col">{t("roadmap.waves.actions")}</th> : null}
             </tr>
           </thead>
           <tbody>
@@ -129,12 +144,43 @@ function WavesSection({ waves }: { waves: readonly RoadmapWave[] }) {
                 <td>{text(w, "horizon")}</td>
                 <td>{text(w, "entryCriteria")}</td>
                 <td>{text(w, "exitEvidence")}</td>
+                <td data-planned={`${w.plannedStart ?? ""}/${w.plannedEnd ?? ""}`}>
+                  {w.plannedStart || w.plannedEnd ? (
+                    <bdi>
+                      {formatBusinessDate(w.plannedStart, locale) ?? t("common.value.none")} –{" "}
+                      {formatBusinessDate(w.plannedEnd, locale) ?? t("common.value.none")}
+                    </bdi>
+                  ) : (
+                    <span className="muted">{t("common.value.none")}</span>
+                  )}
+                </td>
+                <td>
+                  {w.ownerUserId ? (
+                    <PersonName id={w.ownerUserId} people={byId} />
+                  ) : (
+                    <span className="muted">{t("common.value.none")}</span>
+                  )}
+                </td>
+                {canEdit ? (
+                  <td>
+                    <button
+                      type="button"
+                      className="button button--secondary button--small"
+                      onClick={() => dialogs.setEditing(w)}
+                    >
+                      {t("roadmap.waves.edit")}
+                      <span className="visually-hidden">: {text(w, "name")}</span>
+                    </button>
+                  </td>
+                ) : null}
               </tr>
             ))}
           </tbody>
         </table>
       </TableRegion>
       {active.some((w) => w.isSourceSeeded) ? <p className="muted">{t("roadmap.waves.source")}</p> : null}
+      {dialogs.editing ? <EditWaveDialog wave={dialogs.editing} onClose={() => dialogs.setEditing(null)} /> : null}
+      {dialogs.adding ? <AddWaveDialog onClose={() => dialogs.setAdding(false)} /> : null}
     </Section>
   );
 }

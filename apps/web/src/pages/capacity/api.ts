@@ -6,14 +6,14 @@ import { api } from "../../api/client.ts";
 import { fetchAllPages, p3Keys, shouldRetry } from "../../api/queries.ts";
 
 /** Contract `ResourceRole`. */
-export interface ResourceRole {
+export type ResourceRole = {
   readonly id: string;
   readonly code: string;
   readonly labelEn: string;
   readonly labelAr: string;
   readonly status: "active" | "archived";
   readonly version: number;
-}
+};
 
 /** Contract `CapacityPlanCell`. availableFte null = Unknown (no capacity row), never 0. */
 export interface CapacityPlanCell {
@@ -34,7 +34,7 @@ export interface CapacityPlan {
 }
 
 /** Contract `ResourceDemand`. */
-export interface ResourceDemand {
+export type ResourceDemand = {
   readonly id: string;
   readonly transformationId: string;
   readonly initiativeId: string;
@@ -47,7 +47,7 @@ export interface ResourceDemand {
   readonly committedBy: string | null;
   readonly committedAt: string | null;
   readonly version: number;
-}
+};
 
 export function useCapacityPlan(tid: string) {
   return useQuery({

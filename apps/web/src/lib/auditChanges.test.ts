@@ -471,3 +471,121 @@ describe("P3 record events on the transformation trail", () => {
     expect(describeAuditChange(ar, "agreements", { from: null, to: ["problem"] }).label).toBe("اتفاق القيادة (G1)");
   });
 });
+
+// T-DG3-FE-E: BE-E's ACTUAL audit writes (apps/api/src/modules/portfolio/{funding,capacity,resource-demands}.ts), and
+// the remaining P3 enum codes (FE-A §5.6), labelled in both languages.
+describe("BE-E audit writes and the remaining P3 enums (T-DG3-FE-E)", () => {
+  /** action -> the `changes` keys BE-E records for it (copied from the API source, 2026-10-08). */
+  const BE_E_WRITES: Record<string, Record<string, { from: unknown; to: unknown }>> = {
+    "funding_decision.create": {
+      initiativeId: { from: null, to: "01920000-0000-7000-b000-000000000001" },
+      decisionCode: { from: null, to: "DEC-07" },
+      outcome: { from: null, to: "approved" },
+      amount: { from: null, to: "1250000.5000" },
+      currency: { from: null, to: "SAR" },
+      approverRoleCode: { from: null, to: "FIN" },
+    },
+    "decision.create": {
+      kind: { from: null, to: "executive" },
+      code: { from: null, to: "DEC-07" },
+      outcome: { from: null, to: "approved" },
+    },
+    "resource_role.create": {
+      code: { from: null, to: "data_engineer" },
+      label_en: { from: null, to: "Data engineer" },
+      label_ar: { from: null, to: "مهندس بيانات" },
+    },
+    "resource_role.update": { label_en: { from: "Data engineer", to: "Senior data engineer" } },
+    "resource_role.archive": { status: { from: "active", to: "archived" } },
+    "capacity.create": {
+      resource_role_id: { from: null, to: "01920000-0000-7000-aa00-000000000001" },
+      period_month: { from: null, to: "2026-11-01" },
+      available_fte: { from: null, to: "2.00" },
+      owner_user_id: { from: null, to: "01920000-0000-7000-9000-000000000202" },
+    },
+    "capacity.update": { available_fte: { from: "2.00", to: "2.50" }, note: { from: null, to: "Synthetic" } },
+    "capacity.archive": { status: { from: "active", to: "archived" } },
+    "resource_demand.create": {
+      initiative_id: { from: null, to: "01920000-0000-7000-b000-000000000001" },
+      resource_role_id: { from: null, to: "01920000-0000-7000-aa00-000000000001" },
+      period_month: { from: null, to: "2026-11-01" },
+      demand_fte: { from: null, to: "2.50" },
+      status: { from: null, to: "planned" },
+    },
+    "resource_demand.update": { demand_fte: { from: "2.50", to: "1.75" } },
+    "resource_demand.archive": { status: { from: "planned", to: "archived" } },
+    "resource_demand.commit": {
+      status: { from: "planned", to: "committed" },
+      committed_by: { from: null, to: "01920000-0000-7000-9000-000000000202" },
+    },
+    "resource_demand.release": { status: { from: "committed", to: "released" } },
+    "initiative.fund": { status: { from: "selected", to: "funded" } },
+    "initiative.unfund": { status: { from: "funded", to: "selected" } },
+  };
+
+  it.each(Object.keys(BE_E_WRITES))(
+    "%s: the action, every field and every enum value are labelled (EN and AR)",
+    (action) => {
+      for (const t of [en, ar]) {
+        expect(describeAuditAction(t, action, BE_E_WRITES[action])).toBeTruthy();
+        for (const c of describeAuditChanges(t, BE_E_WRITES[action]!)) {
+          expect(c.label, `${action} ${c.field}`).toBeTruthy();
+          expect(c.from.kind, `${action} ${c.field} from`).not.toBe("untranslated");
+          expect(c.to.kind, `${action} ${c.field} to`).not.toBe("untranslated");
+        }
+      }
+    },
+  );
+
+  it("the funding approver role and the executive decision kind read as labels", () => {
+    expect(describeAuditValue(en, "approverRoleCode", "FIN").kind).toBe("label");
+    expect(describeAuditValue(en, "kind", "executive")).toEqual({
+      kind: "label",
+      text: "Executive decision",
+      code: "executive",
+    });
+    expect(describeAuditValue(ar, "kind", "executive")).toEqual({
+      kind: "label",
+      text: "قرار تنفيذي",
+      code: "executive",
+    });
+  });
+
+  const ENUMS: Record<string, readonly string[]> = {
+    line_kind: ["investment", "benefit"],
+    benefit_class: ["revenue", "cost_reduction", "cost_avoidance", "working_capital", "strategic_non_financial"],
+    investment_class: ["capex", "opex", "internal_fte", "vendor_cost", "opportunity_cost"],
+    unit_kind: ["currency", "percentage", "count", "ratio", "duration", "score", "other"],
+    polarity: ["higher_is_better", "lower_is_better", "within_band"],
+    confidence: ["H", "M", "L"],
+    result_kind: ["fraction", "fraction_delta", "percent_change", "count", "currency", "quantity", "number"],
+    result_period: ["none", "month", "quarter", "year"],
+    frequency: ["daily", "weekly", "monthly", "quarterly", "annual", "ad_hoc"],
+    recurrence: ["one_off", "recurring"],
+  };
+
+  it.each(Object.keys(ENUMS))("%s: every code is a localized label in EN and AR, never the raw code", (field) => {
+    for (const code of ENUMS[field]!) {
+      const e = describeAuditValue(en, field, code);
+      const a = describeAuditValue(ar, field, code);
+      expect(e.kind, `${field}=${code}`).toBe("label");
+      expect(a.kind, `${field}=${code}`).toBe("label");
+      if (e.kind === "label" && a.kind === "label") {
+        expect(e.text).not.toBe(a.text);
+        expect(a.text).not.toMatch(/^[a-z_]+$/);
+      }
+    }
+  });
+
+  it("a char-padded confidence is trimmed; an unknown or dotted code stays marked", () => {
+    expect(describeAuditValue(en, "confidence", "M ")).toEqual({ kind: "label", text: "Medium (M)", code: "M" });
+    expect(describeAuditValue(en, "line_kind", "loan").kind).toBe("untranslated");
+    expect(describeAuditValue(en, "polarity", "status.draft").kind).toBe("untranslated");
+    expect(describeAuditValue(en, "frequency", 3).kind).toBe("untranslated");
+  });
+
+  it("result_unit and result_currency stay exact technical codes (free unit text, ISO 4217)", () => {
+    expect(describeAuditValue(en, "resultUnit", "minutes")).toEqual({ kind: "code", text: "minutes" });
+    expect(describeAuditValue(ar, "resultCurrency", "SAR")).toEqual({ kind: "code", text: "SAR" });
+  });
+});

@@ -2,6 +2,8 @@
 //  - a role × month grid of decimal FTE: available, demand (planned + committed) and committed; a conflict
 //    (capacity.over_allocated) shows its shortfall (demand − available, decimal); a month without a capacity row is
 //    Unknown (capacity.unknown), never 0 and never "no conflict";
+//  - T-DG3-FE-E: resourcing roles, capacity rows and resource demand are created and edited here (editing.tsx);
+//    after each save the grid (conflict indicator, shortfall, Unknown) is re-read from the server;
 //  - resource demands with commit (capacity.commit: a resourcing commitment, NOT a business approval) and release
 //    (reason required), both with If-Match; a 409 shows the conflict notice and reloads.
 // FTE strings are formatted with the shared formatDecimal; nothing is converted to a JS number.
@@ -35,6 +37,7 @@ import {
   type ResourceDemand,
   type ResourceRole,
 } from "./api.ts";
+import { CapacityRowsSection, DemandDialog, RolesSection } from "./editing.tsx";
 
 export function CapacityPage() {
   const { t } = useTranslation();
@@ -87,6 +90,8 @@ function CapacityBody() {
         </QueryState>
       </Section>
       <DemandsSection roles={plan.data?.roles ?? []} onConflict={() => setConflict(true)} />
+      <RolesSection onConflict={() => setConflict(true)} />
+      <CapacityRowsSection />
     </>
   );
 }
@@ -190,8 +195,12 @@ function DemandsSection({ roles, onConflict }: { roles: readonly ResourceRole[];
   const roleLabel = useRoleLabel();
   const month = useMonthLabel();
   const [releasing, setReleasing] = useState<ResourceDemand | null>(null);
+  const [editing, setEditing] = useState<{ demand: ResourceDemand | null } | null>(null);
+
   const [error, setError] = useState<unknown>(null);
   const canCommit = can("capacity.commit");
+  const canEdit = can("capacity.edit");
+  const showActions = canCommit || canEdit;
   const ini = new Map((roadmap.data?.initiatives ?? []).map((i) => [i.id, i]));
 
   const commit = async (d: ResourceDemand) => {
@@ -213,7 +222,23 @@ function DemandsSection({ roles, onConflict }: { roles: readonly ResourceRole[];
   };
 
   return (
-    <Section id="demands" title={t("capacity.demands.title")} intro={t("capacity.demands.intro")}>
+    <Section
+      id="demands"
+      title={t("capacity.demands.title")}
+      intro={t("capacity.demands.intro")}
+      actions={
+        canEdit ? (
+          <button
+            type="button"
+            className="button button--secondary button--small"
+            data-action="add-demand"
+            onClick={() => setEditing({ demand: null })}
+          >
+            <Icon name="plus" /> {t("capacity.demands.add")}
+          </button>
+        ) : null
+      }
+    >
       <FormAlert message={error ? p3ErrorMessage(t, error) : null} />
       <QueryState
         query={demands}
@@ -231,7 +256,7 @@ function DemandsSection({ roles, onConflict }: { roles: readonly ResourceRole[];
                   <th scope="col">{t("capacity.demands.month")}</th>
                   <th scope="col">{t("capacity.demands.fte")}</th>
                   <th scope="col">{t("capacity.demands.status")}</th>
-                  {canCommit ? <th scope="col">{t("capacity.demands.actions")}</th> : null}
+                  {showActions ? <th scope="col">{t("capacity.demands.actions")}</th> : null}
                 </tr>
               </thead>
               <tbody>
@@ -259,10 +284,23 @@ function DemandsSection({ roles, onConflict }: { roles: readonly ResourceRole[];
                           <bdi>{fmt(d.demandFte, 0, 2)}</bdi>
                         </td>
                         <td>{t(`capacity.demands.state.${d.status}`)}</td>
-                        {canCommit ? (
+                        {showActions ? (
                           <td>
                             <div className="toolbar">
-                              {d.status === "planned" ? (
+                              {canEdit && d.status === "planned" ? (
+                                <button
+                                  type="button"
+                                  className="button button--secondary button--small"
+                                  onClick={() => setEditing({ demand: d })}
+                                >
+                                  {t("capacity.edit.edit")}
+                                  <span className="visually-hidden">
+                                    : {i ? `${i.code} ` : ""}
+                                    {month(d.periodMonth)}
+                                  </span>
+                                </button>
+                              ) : null}
+                              {canCommit && d.status === "planned" ? (
                                 <button
                                   type="button"
                                   className="button button--primary button--small"
@@ -271,7 +309,7 @@ function DemandsSection({ roles, onConflict }: { roles: readonly ResourceRole[];
                                   {t("capacity.demands.commit")}
                                 </button>
                               ) : null}
-                              {d.status === "committed" || d.status === "planned" ? (
+                              {canCommit && (d.status === "committed" || d.status === "planned") ? (
                                 <button
                                   type="button"
                                   className="button button--secondary button--small"
@@ -292,6 +330,13 @@ function DemandsSection({ roles, onConflict }: { roles: readonly ResourceRole[];
         )}
       </QueryState>
       <p className="muted">{t("capacity.demands.notApproval")}</p>
+      {editing ? (
+        <DemandDialog
+          demand={editing.demand}
+          initiatives={roadmap.data?.initiatives ?? []}
+          onClose={() => setEditing(null)}
+        />
+      ) : null}
       {releasing ? (
         <ReasonDialog
           title={t("capacity.demands.releaseTitle")}

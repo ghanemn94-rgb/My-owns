@@ -12,7 +12,7 @@ import { api } from "../../api/client.ts";
 import { p3Keys, shouldRetry } from "../../api/queries.ts";
 
 /** Contract `RoadmapWave` (T07). For the four seeded waves the *En text is the B0079 source verbatim. */
-export interface RoadmapWave {
+export type RoadmapWave = {
   readonly id: string;
   readonly transformationId: string;
   readonly code: string;
@@ -37,7 +37,7 @@ export interface RoadmapWave {
   readonly notes: string | null;
   readonly status: "active" | "archived";
   readonly version: number;
-}
+};
 
 /** Contract `T08Dependency`: the 7 B0081 columns on the canonical dependency record. */
 export interface T08Dependency {

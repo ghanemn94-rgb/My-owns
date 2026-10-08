@@ -26,7 +26,15 @@ import { Section, SectionNav } from "../../components/Section.tsx";
 import { QueryState } from "../../components/States.tsx";
 import { useWorkspace, WorkspaceFrame } from "../../components/Workspace.tsx";
 import { formatBusinessDate, formatDecimal } from "../../lib/format.ts";
-import { FundingCell, InitiativeStatusChip, SelectionCell, statusLabel, WarningList, waveName } from "./common.tsx";
+import {
+  FundingCell,
+  InitiativeStatusChip,
+  PORTFOLIO_NS,
+  SelectionCell,
+  statusLabel,
+  WarningList,
+  waveName,
+} from "./common.tsx";
 
 export const PORTFOLIO_WRITE = ["initiative.edit", "initiative.launch", "portfolio.select"] as const;
 
@@ -243,6 +251,7 @@ function InitiativeList() {
       {creating ? (
         <RecordDialog<Initiative>
           title={t("portfolio.create.title")}
+          namespaces={PORTFOLIO_NS}
           description={t("portfolio.create.note")}
           fields={createFields}
           record={null}

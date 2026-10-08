@@ -21,8 +21,23 @@
 // acceptance, decision result) have `transformations.audit.value.<field>.*` labels. Decimal strings (amounts, scores,
 // FTE) are shown exactly as recorded (never converted to numbers); dates, ids, counts and engine codes are shown as
 // technical identifiers; structured values (trajectories, variables, agreements) as compact LTR JSON.
+//
+// T-DG3-FE-E: the remaining P3 enum codes are labelled too (`line_kind`, `benefit_class`, `investment_class`,
+// `unit_kind`, `polarity`, `confidence`, `result_kind`, `result_period`, `frequency`, `recurrence`). `result_unit` and
+// `result_currency` stay technical codes: they are a free unit text and an ISO 4217 code, not enums.
 import type { TFunction } from "i18next";
 import { CRITERION_CODES, isCriterionCode } from "@mth/shared/calc";
+import {
+  BENEFIT_CLASSES,
+  BENEFIT_FORMULA_KINDS,
+  BENEFIT_FORMULA_PERIODS,
+  CONFIDENCES,
+  INVESTMENT_CLASSES,
+  KPI_FREQUENCIES,
+  KPI_POLARITIES,
+  KPI_UNIT_KINDS,
+  LINE_KINDS,
+} from "@mth/shared/schemas";
 
 /** How one side (from / to) of a change is shown. */
 export type AuditValue =
@@ -56,7 +71,7 @@ export interface AuditFieldChange {
 
 type ValueKind =
   | { readonly kind: "enum"; readonly prefix: string }
-  | { readonly kind: "p3enum"; readonly prefix: string }
+  | { readonly kind: "p3enum"; readonly prefix: string; readonly codes?: readonly string[] }
   | {
       readonly kind:
         | "text"
@@ -79,7 +94,13 @@ const USER = { kind: "user" } as const;
 const DATETIME = { kind: "datetime" } as const;
 const JSON_VALUE = { kind: "json" } as const;
 const BOOL = { kind: "boolean" } as const;
-const p3enum = (field: string): ValueKind => ({ kind: "p3enum", prefix: `transformations.audit.value.${field}` });
+/** Business-case line recurrence (shared business-case schema: `z.enum(["one_off", "recurring"])`). */
+const RECURRENCES = ["one_off", "recurring"] as const;
+const p3enum = (field: string, codes?: readonly string[]): ValueKind => ({
+  kind: "p3enum",
+  prefix: `transformations.audit.value.${field}`,
+  ...(codes ? { codes } : {}),
+});
 
 /**
  * P3 record fields (T-DG3-FE-A): initiative (T05) and its links, selection, ranking and scores, waves, deliverables,
@@ -201,50 +222,53 @@ const P3_FIELDS: Readonly<Record<string, ValueKind>> = {
   baseline_validation_status: p3enum("validation_status"),
   validation_status: p3enum("validation_status"),
   validation_note: TEXT,
-  benefit_class: CODE,
+  benefit_class: p3enum("benefit_class", BENEFIT_CLASSES),
   benefit_name: TEXT,
   business_purpose: TEXT,
   change_assumption: TEXT,
   change_note: TEXT,
-  confidence: CODE,
+  confidence: p3enum("confidence", CONFIDENCES),
   data_source: TEXT,
   decision_ask_types: JSON_VALUE,
   driver: TEXT,
   engine_version: CODE,
   example_code: CODE,
   expression: CODE,
-  frequency: CODE,
-  investment_class: CODE,
+  frequency: p3enum("frequency", KPI_FREQUENCIES),
+  investment_class: p3enum("investment_class", INVESTMENT_CLASSES),
   is_illustrative: BOOL,
   is_leading: BOOL,
   kpi_definition_id: CODE,
   leading_indicator_text: TEXT,
   leading_kpi_definition_id: CODE,
-  line_kind: CODE,
+  line_kind: p3enum("line_kind", LINE_KINDS),
   materiality: CODE,
   metric: TEXT,
-  polarity: CODE,
+  polarity: p3enum("polarity", KPI_POLARITIES),
   preview_result: JSON_VALUE,
   quantification_status: CODE,
   ramp: JSON_VALUE,
-  recurrence: CODE,
+  recurrence: p3enum("recurrence", RECURRENCES),
   result_currency: CODE,
-  result_kind: CODE,
-  result_period: CODE,
+  result_kind: p3enum("result_kind", BENEFIT_FORMULA_KINDS),
+  result_period: p3enum("result_period", BENEFIT_FORMULA_PERIODS),
   result_unit: CODE,
   source: TEXT,
   steward_user_id: USER,
   trajectory_points: JSON_VALUE,
   trajectory_status: CODE,
   unit: CODE,
-  unit_kind: CODE,
+  unit_kind: p3enum("unit_kind", KPI_UNIT_KINDS),
   unit_label: TEXT,
   unquantified_reason: TEXT,
   value_basis: CODE,
   workstream_code: CODE,
   variables: JSON_VALUE,
   id: CODE,
-  // funding, capacity and resource demand (BE-E)
+  // funding, capacity and resource demand (BE-E; checked against apps/api/src/modules/portfolio/{funding,capacity,
+  // resource-demands}.ts by T-DG3-FE-E: resource_role.* writes `code`, `label_en`, `label_ar` and `status`)
+  label_en: TEXT,
+  label_ar: TEXT,
   funding_source: TEXT,
   conditions: TEXT,
   business_case_id: CODE,
@@ -350,6 +374,14 @@ export function describeAuditValue(t: TFunction, field: string, value: unknown):
       return text ? { kind: "label", text, code: value } : { kind: "untranslated", raw: value };
     }
     case "p3enum": {
+      if (spec.codes) {
+        // A closed code set (T-DG3-FE-E): only a listed code becomes a key. `confidence` is stored as char(1)-like
+        // H/M/L, so surrounding spaces are trimmed first.
+        const code = typeof value === "string" ? value.trim() : "";
+        if (!spec.codes.includes(code)) return { kind: "untranslated", raw: raw(value) };
+        const text = t(`${spec.prefix}.${code}`, { defaultValue: "" });
+        return text ? { kind: "label", text, code } : { kind: "untranslated", raw: code };
+      }
       if (typeof value !== "string" || !ENUM_CODE.test(value)) return { kind: "untranslated", raw: raw(value) };
       const text = t(`${spec.prefix}.${value}`, { defaultValue: "" });
       return text ? { kind: "label", text, code: value } : { kind: "untranslated", raw: value };
