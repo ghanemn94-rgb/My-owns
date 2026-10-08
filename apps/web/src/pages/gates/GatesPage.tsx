@@ -56,12 +56,14 @@ export function InheritedApprovalBadge({ annotation }: { annotation: InheritedAp
   if (annotation === null) return null;
   const state = annotation.status === "accepted" && !annotation.counts ? "acceptedNotCounting" : annotation.status;
   return (
+    // status-chip--wrap (F-DG3-170): the ~80-character text wraps inside its card (list) or row (gate view), so the
+    // whole of it, including "(does not approve this gate)", stays visible at every width, in LTR and RTL.
     <span
-      className="status-chip status-chip--unknown"
+      className="status-chip status-chip--unknown status-chip--wrap"
       data-inherited-approval={annotation.status}
       data-counts={annotation.counts ? "true" : "false"}
     >
-      <Icon name="info" /> {t(`gates.inheritedApproval.status.${state}`)}
+      <Icon name="info" /> <span>{t(`gates.inheritedApproval.status.${state}`)}</span>
     </span>
   );
 }

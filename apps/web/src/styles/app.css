@@ -822,6 +822,25 @@ input[type="radio"] {
   background: var(--mth-status-stale-bg);
   color: var(--mth-status-stale-fg);
 }
+/* A chip whose text is long (e.g. the inherited-approval badge, F-DG3-170) wraps inside its container instead of
+   overflowing it. Opt-in: the base .status-chip stays nowrap for the short chips that rely on it. Logical properties
+   only, so it behaves the same in RTL. The icon stays on the first line, at the start. */
+.status-chip--wrap {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+  align-items: flex-start;
+  text-align: start;
+  border-radius: var(--mth-radius);
+  padding-block: 0.2rem;
+}
+.status-chip--wrap > .icon {
+  margin-block-start: 0.2em;
+}
+.status-chip--wrap > span {
+  min-inline-size: 0;
+}
 .lifecycle-chip {
   background: var(--mth-surface-card);
   color: var(--mth-text-primary);
