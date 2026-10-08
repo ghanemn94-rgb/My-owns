@@ -1,0 +1,37 @@
+$ python3 s16.py $TMPDIR/review-dg3   (clone @c40232b; independent re-derivation of the REQ-S16-016 entity table)
+initiative | 0020_p3_portfolio_roadmap.sql | PK True | owner ['executive_owner_user_id'] | status ['status'] | erd mentions 43 | ALTERs []
+deliverable | 0020_p3_portfolio_roadmap.sql | PK True | owner ['owner_user_id', 'decided_by'] | status ['acceptance_status', 'status'] | erd mentions 9 | ALTERs []
+milestone | 0020_p3_portfolio_roadmap.sql | PK True | owner ['owner_user_id'] | status ['status'] | erd mentions 9 | ALTERs []
+roadmap_wave | 0020_p3_portfolio_roadmap.sql | PK True | owner ['owner_user_id'] | status ['status'] | erd mentions 6 | ALTERs []
+dependency | 0017_p2_decisions_gates.sql | PK True | owner ['owner_user_id'] | status ['status'] | erd mentions 19 | ALTERs ['0022_p3_dependency_capacity_funding.sql']
+resource_demand | 0022_p3_dependency_capacity_funding.sql | PK True | owner ['owner_user_id'] | status ['status'] | erd mentions 5 | ALTERs []
+capacity | 0022_p3_dependency_capacity_funding.sql | PK True | owner ['owner_user_id'] | status ['status'] | erd mentions 12 | ALTERs []
+funding_decision | 0022_p3_dependency_capacity_funding.sql | PK True | owner ['decided_by'] | status ['outcome'] | erd mentions 6 | ALTERs ['0023_p3_business_case_formula.sql']
+EXIT 0
+
+$ git diff --stat 21e2742e..c40232b -- packages/db docs/architecture/erd.md
+(empty = no migration/ERD change in the round-6 repair)
+$ ls packages/db/migrations/*.sql | wc -l
+27
+
+=== script:
+import re,glob,os,sys
+R=sys.argv[1]
+mig=sorted(glob.glob(R+'/packages/db/migrations/*.sql'))
+erd=open(R+'/docs/architecture/erd.md').read()
+ents=['initiative','deliverable','milestone','roadmap_wave','dependency','resource_demand','capacity','funding_decision']
+for t in ents:
+    found=None
+    for f in mig:
+        s=open(f).read()
+        m=re.search(r'CREATE TABLE (?:IF NOT EXISTS )?(?:public\.)?'+t+r'\s*\((.*?)\n\);',s,re.S)
+        if m: found=(os.path.basename(f),m.group(1)); break
+    if not found: print(t,'| NOT FOUND'); continue
+    f,body=found
+    cols=[l.strip().split()[0] for l in body.split('\n') if l.strip() and not l.strip().upper().startswith(('CONSTRAINT','PRIMARY','UNIQUE','CHECK','FOREIGN','EXCLUDE','--'))]
+    pk=bool(re.search(r'PRIMARY KEY',body))
+    owner=[c for c in cols if re.search(r'owner|decided_by',c)]
+    status=[c for c in cols if re.search(r'status|outcome',c)]
+    alters=[os.path.basename(g) for g in mig if re.search(r'ALTER TABLE (?:ONLY )?(?:public\.)?'+t+r'\b',open(g).read())]
+    n=len(re.findall(r"\b"+t+r"\b",erd,re.I))
+    print(f"{t} | {f} | PK {pk} | owner {owner} | status {status} | erd mentions {n} | ALTERs {alters}")

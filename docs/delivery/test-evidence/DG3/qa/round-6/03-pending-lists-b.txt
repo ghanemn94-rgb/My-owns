@@ -1,0 +1,28 @@
+== P2_PENDING_BACKEND_OPERATIONS definition (non-exported const in apps/api/test/support/p2-pending.ts):
+12:const P2_PENDING_BACKEND_OPERATIONS: readonly string[] = [];
+== apps/api/test/integration/contract/contract.test.ts (pending lists / operation count):
+80:import { exercised, openapi, operations } from "../../support/contract.ts";
+81:import { P2_PENDING_OPERATIONS } from "../../support/p2-pending.ts";
+142:  // P2 backend operations (p2-exercises.ts). downloadEvidenceContent returns bytes (no JSON mirror).
+246:  // P3 operations: each task's mirrors come from its own seam file (p3-work-split §5).
+267:  const op = operations.find((o) => o.method === method && o.regex.test(url.split("?")[0]!))!;
+269:    expect(problem.safeParse(res.body).success, `problem mirror for ${op.operationId} ${res.status}`).toBe(true);
+272:    expect(
+275:    ).toBe(true);
+306:    const contract = operations
+307:      .filter((o) => !P2_PENDING_OPERATIONS.has(o.operationId))
+311:    expect(governed).toEqual(contract);
+312:    // Pending P2 operations (p2-pending.ts) are declared but not routed yet; a routed one must leave the list.
+313:    const pending = operations.filter((o) => P2_PENDING_OPERATIONS.has(o.operationId));
+314:    expect(pending.map((o) => o.operationId).sort()).toEqual([...P2_PENDING_OPERATIONS].sort());
+315:    expect(pending.filter((o) => governed.includes(`${o.method} ${o.path}`)).map((o) => o.operationId)).toEqual([]);
+320:      expect(r.access, `${r.method} ${r.url}`).toBeTruthy();
+360:    expect([cb.status, cb.headers["location"]]).toEqual([302, "/"]);
+361:    expect(
+366:    ).toBe(true);
+457:    expect([close.status, (close.body as unknown as { code: string }).code]).toEqual([422, "invalid_transition"]);
+469:    expect(anonymous.status).toBe(401);
+475:    expect(res.status).toBe(200);
+477:    expect(res.body.provenance).toBe("provisional");
+478:    expect(res.body.tokens.length).toBeGreaterThan(0);
+479:    expect(res.body.tokens.some((t) => t.value.toUpperCase() === "#0078FF" && t.provisional)).toBe(true);

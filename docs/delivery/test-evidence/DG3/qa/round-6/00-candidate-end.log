@@ -1,0 +1,30 @@
+$ git rev-parse HEAD (repo, end)
+00cb9fa3211768940e68ebba550d266fc1f5ed4e
+$ git merge-base --is-ancestor c40232b HEAD; echo $?
+0
+$ git diff --name-only c40232b..HEAD | grep -v ^docs/delivery/ | wc -l
+0
+$ node tools/gates/candidate.mjs --stage DG3 --ref HEAD
+{"stage":"DG3","source":"HEAD","candidate_id":"sha256:7049d793cd20ed7718e84ff4aa3bf940f99b5e2507e964660ef3b3545c1f3c96","files":757}
+$ node tools/gates/candidate.mjs --stage DG3 --ref c40232b01b7ec3cbf24759617bc645847a517a7e
+{"stage":"DG3","source":"c40232b01b7ec3cbf24759617bc645847a517a7e","candidate_id":"sha256:7049d793cd20ed7718e84ff4aa3bf940f99b5e2507e964660ef3b3545c1f3c96","files":757}
+$ (clone review-dg3, spec copy already removed) git status --porcelain; candidate
+c40232b01b7ec3cbf24759617bc645847a517a7e
+porcelain: []
+{"stage":"DG3","source":"working-tree","candidate_id":"sha256:7049d793cd20ed7718e84ff4aa3bf940f99b5e2507e964660ef3b3545c1f3c96","files":757}
+$ (clone probe-dg3) git status --porcelain
+porcelain: []
+{"stage":"DG3","source":"working-tree","candidate_id":"sha256:7049d793cd20ed7718e84ff4aa3bf940f99b5e2507e964660ef3b3545c1f3c96","files":757}
+$ node tools/gates/validate.mjs --register DG3 (end)
+PASS register rules at DG3
+EXIT 0
+$ node tools/gates/validate.mjs --pipeline (end)
+PASS pipeline (active stage: DG3 REVIEWING)
+EXIT 0
+$ node tools/gates/validate.mjs --historical --stage DG2 (end)
+PASS gate DG2 (historical)
+EXIT 0
+$ node tools/gates/validate.mjs --historical --stage DG1 (end)
+PASS gate DG1 (historical)
+EXIT 0
+2026-10-08T20:48:20Z
